@@ -6,10 +6,13 @@
 # 9 jobs, but only 6 services ever sent spans (cv-application, crush-daily,
 # browser-history, discordsync, file-and-image-renamer, gotenberg) because:
 #
-#   - dnsblockd: FULL trace instrumentation upstream, but the otlp_endpoint
-#     YAML config key was never set (traces silently off)
-#   - bank-sync: cqrsotel.Setup wired for stdout/noop only — OTLP exporter
-#     support added upstream 2026-08-31, pending tag + flake bump
+#   - dnsblockd: otlp_endpoint YAML key was never set (traces silently off)
+#     + the exporter forced TLS. RESOLVED: key live since 2026-08-31,
+#     scheme-aware fix shipped upstream (dnsblockd 70ca2ea, pushed), spans
+#     verified flowing 2026-09-13 (flipped to wiring "config")
+#   - bank-sync: cqrsotel.Setup wired for stdout/noop only. RESOLVED
+#     2026-08-31: OTLP/HTTP export added upstream (901978e), flipped to
+#     "env", spans reporting
 #   - overview / projects-management-automation: TracerProvider initialized
 #     ("OTel tracing enabled" in the journal) but ZERO span sites in the
 #     codebase — the env var is a perfect noop
@@ -381,22 +384,25 @@
             file-and-image-renamer-health = env "file-and-image-renamer" 720;
             gotenberg = env "gotenberg" 720; # spans only when paperless converts office docs
 
-            # ── Known upstream gaps (env set, binary cannot emit yet) ──
-            # dnsblockd: otlp_endpoint config key IS set (dns-blocker.nix) but
-            # upstream's exporter omitted WithInsecure() — every export died
-            # "https://localhost:4318 … server gave HTTP response to HTTPS
-            # client" (caught by this coverage audit within minutes of the
-            # first-ever enablement, 2026-08-31). Fix applied in the dnsblockd
-            # checkout (scheme-aware transport). Flip wiring to "config" after
-            # push + flake bump; the config key is already live.
+            # FLIPPED to enforced 2026-09-13 (task queue): the flip's own
+            # prerequisites were already satisfied when audited — the
+            # scheme-aware exporter fix shipped upstream (dnsblockd 70ca2ea,
+            # 2026-09-01, pushed via 8aa005f) and the lock carried it since
+            # 94c9cb93 (2026-09-06); otlp_endpoint is live in dns-blocker.nix
+            # since 2026-08-31. Spans verified flowing live 2026-09-13
+            # (signoz_traces_reporting{service="dnsblockd"} 1 against the
+            # deployed dnsblockd-94c9cb9). Config-key wiring, so no env
+            # assertion; the runtime collector enforces freshness.
             dnsblockd = {
               serviceName = "dnsblockd";
-              wiring = "upstream";
+              wiring = "config";
             };
             # FLIPPED to enforced 2026-08-31: upstream 901978e (pushed) added
             # OTLP/HTTP trace export (DiscordSync pattern); flake input bumped
             # same day. Spans must now flow within the 26h budget.
             bank-sync = env "bank-sync" 26;
+
+            # ── Known upstream gaps (binary cannot emit yet) ──
             overview = {
               serviceName = "overview";
               # SetupFromEnv runs ("OTel tracing enabled" in journal) but the
@@ -418,6 +424,12 @@
               wiring = "upstream";
             };
           };
+
+        # Ratchet DOWN with the registry (2026-09-13): dnsblockd flipped to
+        # "config", leaving exactly these 4 upstream gaps (overview,
+        # projects-management-automation, papdashboard, hermes). Any NEW
+        # silent noop must trip the budget check again.
+        services.signoz-coverage.maxUpstreamGaps = 4;
 
         assertions = map (msg: {
           assertion = false;
