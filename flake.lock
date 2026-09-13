@@ -507,16 +507,16 @@
     "cqrs-htmx_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1786133653,
-        "narHash": "sha256-DU4RLb/G+C8KnUhZQqMuZrltyhTI/4vCOg5Bh/5HLL8=",
-        "ref": "refs/tags/v4.7.0",
-        "rev": "1de7db63a279030495458e332310a9ba4a3b2970",
-        "revCount": 1929,
+        "lastModified": 1788294652,
+        "narHash": "sha256-tBDlZAzP+pEgwNEjTWE2kWzeKSB9NAY3lLm8TshaJrE=",
+        "ref": "refs/tags/v4.9.0",
+        "rev": "87024c545ddf375e9cd019c8e864186a530da404",
+        "revCount": 2212,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/cqrs-htmx"
       },
       "original": {
-        "ref": "refs/tags/v4.7.0",
+        "ref": "refs/tags/v4.9.0",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/cqrs-htmx"
       }
@@ -812,11 +812,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1789263329,
-        "narHash": "sha256-bMre79t44PY9R0plAElx/0lTjbciEZno5m3Gv5jOSoI=",
+        "lastModified": 1789275203,
+        "narHash": "sha256-0k7y1WsV5Qf2bBEKROkgGF6XEvvibXAfPNT1aY5MhXs=",
         "owner": "LarsArtmann",
         "repo": "dnsblockd",
-        "rev": "cf2b69019efcf02e7321f244037b3e11ef2ad9a8",
+        "rev": "7792fc936486e486f6351147a744e3ddbec827c6",
         "type": "github"
       },
       "original": {
