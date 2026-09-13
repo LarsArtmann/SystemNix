@@ -504,7 +504,13 @@ if [ -s "$METRICS_FILE" ]; then
   # hand-maintained list. The self-cleaning branch in metrics-gate.sh warns
   # on any loan entry already present in /metrics, so stale loans (the
   # 11-entry 2026-08-30 backlog) surface on every run until retired.
-  DEPLOYED_GATUS_CFG=$(systemctl cat gatus 2>/dev/null | grep -oE -- '--config\.file[= ][^[:space:]]+' | awk '{print $NF}' | head -1 || true)
+  # Locator: nixpkgs' gatus module passes the config via the GATUS_CONFIG_PATH
+  # env var (verified live 2026-09-13); --config.file is the upstream-CLI
+  # fallback. tr -d '"' strips the systemd Environment quoting.
+  DEPLOYED_GATUS_CFG=$(systemctl cat gatus 2>/dev/null | grep -oE 'GATUS_CONFIG_PATH=[^[:space:]]+' | head -1 | cut -d= -f2- | tr -d '"' || true)
+  if [ -z "$DEPLOYED_GATUS_CFG" ]; then
+    DEPLOYED_GATUS_CFG=$(systemctl cat gatus 2>/dev/null | grep -oE -- '--config\.file[= ][^[:space:]]+' | awk '{print $NF}' | head -1 || true)
+  fi
   if [ -n "$DEPLOYED_GATUS_CFG" ] && [ -r "$DEPLOYED_GATUS_CFG" ]; then
     DEPLOYED_METRICS=$(GATUS_CONFIG="$DEPLOYED_GATUS_CFG" extract_gatus_metrics || true)
     AUTO_NEW_METRICS=$(comm -23 <(extract_gatus_metrics) <(printf '%s\n' "$DEPLOYED_METRICS" | sort -u) || true)
