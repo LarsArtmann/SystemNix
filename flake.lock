@@ -244,6 +244,7 @@
         "gogenfilter": "gogenfilter_4",
         "golangci-lint-auto-configure": "golangci-lint-auto-configure",
         "licenseforge": "licenseforge",
+        "linter-autoconfigure-sdk": "linter-autoconfigure-sdk",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -252,11 +253,11 @@
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1789129524,
-        "narHash": "sha256-LNUTFRYj8ntEe/Du0ZSYKfPz0NN9GF2zrJq+4flqDr4=",
+        "lastModified": 1789267643,
+        "narHash": "sha256-U5U39tLgc68V9EOQkYGS4yOJzLCroqLIbaW+XwBCplk=",
         "owner": "LarsArtmann",
         "repo": "BuildFlow",
-        "rev": "8158af7fe37e94f7c606cea17809535a4f517e04",
+        "rev": "eda46ae31f1b47dff9b928d4d43134763457d34c",
         "type": "github"
       },
       "original": {
@@ -4467,16 +4468,16 @@
     "go-workflow-auditlog": {
       "flake": false,
       "locked": {
-        "lastModified": 1789108058,
-        "narHash": "sha256-fYEbEUUHew7ZfwtUWPXI4lh9rE/u/mY1blMfHmaaQLk=",
+        "lastModified": 1789131745,
+        "narHash": "sha256-jA3gkW1zuRzRhGeS1cs8IYJRL+rG4l3rYvjnRSbEV00=",
         "owner": "LarsArtmann",
         "repo": "go-workflow-auditlog",
-        "rev": "47ea750e184d304a7ca413f6298c0f5c768f280b",
+        "rev": "b35eff2b248a4a5c7191ca3d89e4443c2b98673b",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "refs/tags/v0.10.0",
+        "ref": "refs/tags/v0.11.0",
         "repo": "go-workflow-auditlog",
         "type": "github"
       }
@@ -5161,6 +5162,23 @@
         "ref": "refs/tags/v0.2.0",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/licenseforge"
+      }
+    },
+    "linter-autoconfigure-sdk": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1789129974,
+        "narHash": "sha256-/A8aI656uMGgyluSIcIbQRisaoKxrKsfE3yhsUnRUEA=",
+        "owner": "LarsArtmann",
+        "repo": "linter-autoconfigure-sdk",
+        "rev": "5dec8d9b1f347bdd0483417b305d16f6f07c8d0a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "refs/tags/v0.2.0",
+        "repo": "linter-autoconfigure-sdk",
+        "type": "github"
       }
     },
     "md-go-validator": {
