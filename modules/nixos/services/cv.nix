@@ -323,60 +323,73 @@
         # missing the unit exits 0 WITHOUT writing the env file, so OIDC
         # sign-in stays off instead of blocking the service (the API-key
         # machine path keeps working).
-        systemd.services.cv-oidc-env = lib.mkIf
-          (
-            ((cfg.settings.oidc.enabled or false) && (config.services.pocket-id-config.provision.enable or false))
-          )
-          {
-            description = "CV — Pocket ID OIDC client secret provisioning";
-            after = [ "pocket-id-provision.service" ];
-            wants = [ "pocket-id-provision.service" ];
-            before = [ "cv-server.service" ];
-            wantedBy = [ "cv-server.service" ];
-            startLimitBurst = 5;
-            startLimitIntervalSec = 300;
+        systemd.services.cv-oidc-env =
+          lib.mkIf
+            (
+              (
+                (cfg.settings.oidc.enabled or false) && (config.services.pocket-id-config.provision.enable or false)
+              )
+            )
+            {
+              description = "CV — Pocket ID OIDC client secret provisioning";
+              after = [ "pocket-id-provision.service" ];
+              wants = [ "pocket-id-provision.service" ];
+              before = [ "cv-server.service" ];
+              wantedBy = [ "cv-server.service" ];
+              startLimitBurst = 5;
+              startLimitIntervalSec = 300;
 
-            serviceConfig = {
-              Type = "oneshot";
-              RemainAfterExit = true;
-              StateDirectory = "cv-oidc";
-              LoadCredential = [
-                "pocket-id-secret:${
-                  config.services.pocket-id.dataDir or "/var/lib/pocket-id"
-                }/client-secrets/cv"
-              ];
+              serviceConfig = {
+                Type = "oneshot";
+                RemainAfterExit = true;
+                StateDirectory = "cv-oidc";
+                LoadCredential = [
+                  "pocket-id-secret:${config.services.pocket-id.dataDir or "/var/lib/pocket-id"}/client-secrets/cv"
+                ];
+              };
+
+              path = [ pkgs.coreutils ];
+
+              script = ''
+                SECRET_FILE="$CREDENTIALS_DIRECTORY/pocket-id-secret"
+
+                if [ ! -s "$SECRET_FILE" ]; then
+                  echo "cv-oidc-env: Pocket ID secret not found — removing env file so OIDC sign-in stays off"
+                  rm -f "${oidcEnvFile}"
+                  exit 0
+                fi
+
+                install -d -m 0755 "$(dirname "${oidcEnvFile}")"
+                echo "CV_OIDC_CLIENT_SECRET=$(cat "$SECRET_FILE")" > "${oidcEnvFile}"
+                chmod 600 "${oidcEnvFile}"
+                echo "cv-oidc-env: Pocket ID client secret written"
+              '';
             };
-
-            path = [ pkgs.coreutils ];
-
-            script = ''
-              SECRET_FILE="$CREDENTIALS_DIRECTORY/pocket-id-secret"
-
-              if [ ! -s "$SECRET_FILE" ]; then
-                echo "cv-oidc-env: Pocket ID secret not found — removing env file so OIDC sign-in stays off"
-                rm -f "${oidcEnvFile}"
-                exit 0
-              fi
-
-              install -d -m 0755 "$(dirname "${oidcEnvFile}")"
-              echo "CV_OIDC_CLIENT_SECRET=$(cat "$SECRET_FILE")" > "${oidcEnvFile}"
-              chmod 600 "${oidcEnvFile}"
-              echo "cv-oidc-env: Pocket ID client secret written"
-            '';
-          };
 
         systemd.services.cv-server = {
           after = [
             "sops-nix.service"
-          ] ++ lib.optionals ((cfg.settings.oidc.enabled or false) && (config.services.pocket-id-config.provision.enable or false)) [
-            "pocket-id-provision.service"
-            "cv-oidc-env.service"
-          ];
+          ]
+          ++
+            lib.optionals
+              (
+                (cfg.settings.oidc.enabled or false) && (config.services.pocket-id-config.provision.enable or false)
+              )
+              [
+                "pocket-id-provision.service"
+                "cv-oidc-env.service"
+              ];
           wants = [
             "sops-nix.service"
-          ] ++ lib.optionals ((cfg.settings.oidc.enabled or false) && (config.services.pocket-id-config.provision.enable or false)) [
-            "pocket-id-provision.service"
-          ];
+          ]
+          ++
+            lib.optionals
+              (
+                (cfg.settings.oidc.enabled or false) && (config.services.pocket-id-config.provision.enable or false)
+              )
+              [
+                "pocket-id-provision.service"
+              ];
           inherit onFailure;
 
           serviceConfig = lib.mkMerge [
@@ -394,17 +407,22 @@
                 "OTEL_ENVIRONMENT=production"
               ];
             }
-            (lib.mkIf ((cfg.settings.oidc.enabled or false) && (config.services.pocket-id-config.provision.enable or false)) {
-              # mkForce: upstream sets EnvironmentFile as a plain single-value
-              # list from services.cv-server.environmentFile (the sops
-              # cv-env template); this wrapper EXTENDS it with the OIDC
-              # bridge's env file. cfg.environmentFile is this wrapper's
-              # own mkDefault (the sops template), so no duplication.
-              EnvironmentFile = lib.mkForce [
-                cfg.environmentFile
-                oidcEnvFile
-              ];
-            })
+            (lib.mkIf
+              (
+                (cfg.settings.oidc.enabled or false) && (config.services.pocket-id-config.provision.enable or false)
+              )
+              {
+                # mkForce: upstream sets EnvironmentFile as a plain single-value
+                # list from services.cv-server.environmentFile (the sops
+                # cv-env template); this wrapper EXTENDS it with the OIDC
+                # bridge's env file. cfg.environmentFile is this wrapper's
+                # own mkDefault (the sops template), so no duplication.
+                EnvironmentFile = lib.mkForce [
+                  cfg.environmentFile
+                  oidcEnvFile
+                ];
+              }
+            )
           ];
         };
 
