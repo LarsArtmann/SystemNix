@@ -489,6 +489,20 @@ _: {
                 pkceEnabled = true;
               }
               {
+                # Native OIDC in CV's admin hub (coreos/go-oidc,
+                # authorization-code + PKCE S256): the locked /admin access
+                # card renders the provider sign-in button; success mints
+                # the app's operator session. The secret lands in
+                # /var/lib/pocket-id/client-secrets/cv and reaches the
+                # service via the cv-oidc-env bridge (cv.nix). The API key
+                # stays CV's machine path (cron timers keep X-API-Key).
+                name = "CV";
+                clientId = "cv";
+                launchURL = "https://cv.${domain}";
+                callbackURLs = [ "https://cv.${domain}/admin/auth/oidc/callback" ];
+                pkceEnabled = true;
+              }
+              {
                 # Native OIDC in paperless-ngx via django-allauth
                 # (allauth.socialaccount.providers.openid_connect). Callback
                 # path is fixed by allauth's URL routing:

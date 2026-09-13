@@ -176,11 +176,20 @@ _: {
               '';
             };
             "dash.${domain}" = protectedVHost "dash" config.services.homepage.port;
-            # CV server — resume site + Typst PDF export + pipeline dashboard.
-            # LAN bypass direct proxy; external via forward-auth. The pipeline
-            # dashboard's mutating routes are additionally guarded by
-            # CV_API_KEY inside the app.
-            "cv.${domain}" = protectedVHost "cv" ports.cv;
+            # CV server — resume site + Typst PDF export + pipeline
+            # dashboard. Native OIDC via Pocket ID (2026-09-13, Layer 1):
+            # the locked /admin access card signs in with a passkey and the
+            # app mints its own operator session; mutating funnel routes
+            # stay API-key guarded in-app. protectedVHost would double-auth
+            # (forward-auth + the app's own OIDC sign-in) — plain
+            # reverse_proxy per the AGENTS.md doctrine.
+            "cv.${domain}" = {
+              extraConfig = ''
+                ${tlsConfig}
+                ${commonConfig}
+                ${proxyTo ports.cv}
+              '';
+            };
             # InboxClean — Gmail AI assistant dashboard. Renders from CQRS
             # data even before the one-time OAuth flow completes.
             "inbox.${domain}" = protectedVHost "inbox" ports.inboxclean;
