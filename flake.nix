@@ -106,11 +106,14 @@
 
     # SigNoz observability platform sources
     signoz-src = {
-      url = "github:SigNoz/signoz";
+      # INTERIM: pinned to pre-2026-09-13-update rev (upstream HEAD has a stale
+      # vendorHash from source-only churn; no CI to catch it). Drop pin when fixed.
+      url = "github:SigNoz/signoz/e0da06f76d6d6a84c4f02fe1f4775d8acae7032f";
       flake = false;
     };
     signoz-collector-src = {
-      url = "github:SigNoz/signoz-otel-collector";
+      # INTERIM: pinned to pre-2026-09-13-update rev (stale vendorHash upstream).
+      url = "github:SigNoz/signoz-otel-collector/b514eb4a60aab6b2233288052446d33c60ceadec";
       flake = false;
     };
 
@@ -237,7 +240,8 @@
 
     # library-policy — Banned/vulnerable library detector for Go projects
     library-policy = {
-      url = "github:LarsArtmann/library-policy?ref=master";
+      # INTERIM: pinned to pre-2026-09-13-update rev (stale vendorHash upstream).
+      url = "github:LarsArtmann/library-policy/1bf02c1173caf6c9a77bc873fb993123d89657aa";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
@@ -394,7 +398,8 @@
 
     # go-auto-upgrade — Automate Go library upgrades
     go-auto-upgrade = {
-      url = "github:LarsArtmann/go-auto-upgrade?ref=master";
+      # INTERIM: pinned to pre-2026-09-13-update rev (stale vendorHash upstream).
+      url = "github:LarsArtmann/go-auto-upgrade/eb97a8b2bdce894b90a6ba5749c3062beccb0b9c";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
@@ -470,7 +475,8 @@
     # master moved past PMA's own pin under the old follows wiring).
     # PMA must consume its own locked build environment.
     projects-management-automation = {
-      url = "github:LarsArtmann/projects-management-automation?ref=master";
+      # INTERIM: pinned to pre-2026-09-13-update rev (stale vendorHash upstream).
+      url = "github:LarsArtmann/projects-management-automation/9bbc7dfb9ecc02358b1502fbc34a8ffbffed05be";
       inputs = {
         flake-parts.follows = "flake-parts";
       };
@@ -503,7 +509,8 @@
 
     # Overview — local project dashboard (discovers and browses git repos via web UI)
     overview = {
-      url = "github:LarsArtmann/overview?ref=master";
+      # INTERIM: pinned to pre-2026-09-13-update rev (stale vendorHash upstream).
+      url = "github:LarsArtmann/overview/73738794dcaadc242519e98042c942ab3df96df2";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
@@ -557,7 +564,8 @@
     };
     # md-go-validator — Validate code blocks embedded in Markdown/MDX docs
     md-go-validator = {
-      url = "github:LarsArtmann/md-go-validator?ref=master";
+      # INTERIM: pinned to pre-2026-09-13-update rev (stale vendorHash upstream).
+      url = "github:LarsArtmann/md-go-validator/5b72f894dff1ec8b3e8668e47e5b518f175b4206";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         systems.follows = "systems";
