@@ -253,8 +253,8 @@ reconstruction if `INBOXCLEAN_CONFIG` is needed.
 failures — link the collector if task 11 gets built.
 24. Reboot the box (owed since 2026-08-31): clears the flm zombie, D-state
 corpses, NPU wedge — dozens of P0/P1 items depend on it (pre-existing).
-25. attic VM check red (pre-existing P1) — unrelated but blocking clean
-`nix flake check` CI runs.
+25. ~~attic VM check red (pre-existing P1) — unrelated but blocking clean
+`nix flake check` CI runs.~~ FALSIFIED 2026-09-13 (`a4d1470d`/`9e972a5f`): never reproduced — the cited drv rebuilds GREEN; the hook's full flake check is unblocked.
 26. Consider `nix flake check` re-run cadence after daemon commits when
 multiple sessions are active (a daemon commit can carry a merge loss).
 27. Add the decrypt env var to post-deploy smoke (grep the sync unit env or

@@ -85,7 +85,7 @@ No system damage possible this session: the only write was a markdown bullet. No
 15. Google Sync go-live or mark DORMANT (module built, ships disabled; OAuth + sops fill pending).
 16. Off-site 3-2-1 decision (StorageBox+Borg vs Google-vs-nothing vs sdf vault).
 17. 🔑 Rotate leaked/stale keys: Resend (Pocket ID mail broken + unblocks Mail Relay go-live), Context7, Synthetic confirm.
-18. attic VM check RED (deterministic) — `test -d /var/lib/atticd/storage` fails at checks.attic.
+18. ~~attic VM check RED (deterministic) — `test -d /var/lib/atticd/storage` fails at checks.attic.~~ FALSIFIED 2026-09-13 (`a4d1470d`, re-based `9e972a5f`): the cited drv rebuilt verbatim PASSES + two current-tree greens; at-most-a-flake on a storm day, carried 9 days without a re-run.
 19. SigNoz upstream trace gaps: dnsblockd push+tag+relock; bank-sync relock; overview/PMA/papdashboard/hermes wiring flips.
 20. `website-deploy-monitor` + 4 long-failed units: per-unit triage (group-label was never verified).
 21. KNOWN_NEW_METRICS retirement sweep (11 entries; self-cleaning allowlist + auto-derive fix).
