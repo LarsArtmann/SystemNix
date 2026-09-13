@@ -252,11 +252,11 @@
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1789085034,
-        "narHash": "sha256-dcVnd3G+BczoQmuSyhk1KYFpjRB6j75kSqVUmT/sAFc=",
+        "lastModified": 1789129524,
+        "narHash": "sha256-LNUTFRYj8ntEe/Du0ZSYKfPz0NN9GF2zrJq+4flqDr4=",
         "owner": "LarsArtmann",
         "repo": "BuildFlow",
-        "rev": "d082b7e706a260e834aef27693143a152f6d1f2b",
+        "rev": "8158af7fe37e94f7c606cea17809535a4f517e04",
         "type": "github"
       },
       "original": {
@@ -869,17 +869,17 @@
     "erraudit_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1787055359,
-        "narHash": "sha256-Y1TxaLwjM/WWGXbSIe4VyIrEwAQhZOQ++Uymu/63lNI=",
+        "lastModified": 1789116098,
+        "narHash": "sha256-sKUEZrXFwDJ8+7QqQncRwnfKMe7YNA3+8VKz7zfldHs=",
         "owner": "LarsArtmann",
         "repo": "erraudit",
-        "rev": "6d0c9d2d64ad451dd05929311bbd510814edd4a2",
+        "rev": "3a212a7d7ac5ccfcc7fd3d9f2b2882d108f842dc",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "refs/tags/v0.4.0",
         "repo": "erraudit",
+        "rev": "3a212a7d7ac5ccfcc7fd3d9f2b2882d108f842dc",
         "type": "github"
       }
     },
@@ -1704,16 +1704,16 @@
     "go-auto-upgrade": {
       "flake": false,
       "locked": {
-        "lastModified": 1789005162,
-        "narHash": "sha256-jBpvvS246jvUYvgu6gI7Z7Sg+qdbugb6QVPnsmZirBo=",
+        "lastModified": 1789120485,
+        "narHash": "sha256-P1vZMy6+duJEFlozvKXHiKeeFq6daQAApt0J6vIWEbI=",
         "owner": "LarsArtmann",
         "repo": "go-auto-upgrade",
-        "rev": "9564f63cf78301be5a57990a1eb89e51f60b032c",
+        "rev": "f3d9c2823d9bdf91cfb9fc1a0e4f59ff135da999",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "refs/tags/v0.5.0",
+        "ref": "refs/tags/v0.5.1",
         "repo": "go-auto-upgrade",
         "type": "github"
       }
@@ -4467,16 +4467,16 @@
     "go-workflow-auditlog": {
       "flake": false,
       "locked": {
-        "lastModified": 1786520556,
-        "narHash": "sha256-hIpy0v5hL27NJvnaKkfV6x1ouiTo1PqY4pYLLAqUPU8=",
+        "lastModified": 1789108058,
+        "narHash": "sha256-fYEbEUUHew7ZfwtUWPXI4lh9rE/u/mY1blMfHmaaQLk=",
         "owner": "LarsArtmann",
         "repo": "go-workflow-auditlog",
-        "rev": "685bf99b88cd1e397283b338e695e4f0c801fb58",
+        "rev": "47ea750e184d304a7ca413f6298c0f5c768f280b",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "refs/tags/v0.9.0",
+        "ref": "refs/tags/v0.10.0",
         "repo": "go-workflow-auditlog",
         "type": "github"
       }
@@ -4756,16 +4756,16 @@
     "golangci-lint-auto-configure": {
       "flake": false,
       "locked": {
-        "lastModified": 1789034402,
-        "narHash": "sha256-xHx6ucLvy9e4WMZpLobkMbvwtL/Ef+XUkhlCuHNlifw=",
+        "lastModified": 1789118160,
+        "narHash": "sha256-a7YC50TY0wDNALBbXD3gByy3v7oZiOFCA9dUN0k+DR4=",
         "owner": "LarsArtmann",
         "repo": "golangci-lint-auto-configure",
-        "rev": "1f653cb96fbf08c095dd4893d1593f07df44c778",
+        "rev": "f1464a2f59e37df0917dd46e1a7deeda004722cb",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "refs/tags/v0.8.0",
+        "ref": "refs/tags/v0.8.1",
         "repo": "golangci-lint-auto-configure",
         "type": "github"
       }
@@ -5747,16 +5747,16 @@
     "oxlint-auto-configure": {
       "flake": false,
       "locked": {
-        "lastModified": 1778986218,
-        "narHash": "sha256-5cujOdSAeXwYmHImbgRsVbvZIHGL3iEgnZURgIOkOWw=",
+        "lastModified": 1789118550,
+        "narHash": "sha256-Z4TFUyjnkp4nyGixrIQiydvECEJ5eXITjV4VXUwP0kU=",
         "owner": "LarsArtmann",
         "repo": "oxlint-auto-configure",
-        "rev": "dccd53cc5cc985cd73b939c2d43edde8295f6177",
+        "rev": "3276a6cf484fe5b4145284e18a91ea03103305ac",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "refs/tags/v0.4.0",
+        "ref": "refs/tags/v0.6.0",
         "repo": "oxlint-auto-configure",
         "type": "github"
       }
