@@ -334,6 +334,34 @@ lib.mkIf cfg.components.nodeExporter {
                       io_some_avg300="''${io_some_avg300:-0}"
                       io_full_avg300="''${io_full_avg300:-0}"
                       awk "BEGIN{exit !($io_some_avg300 > 0.10)}" && io_alert=1
+
+                    # ── Disk %util corroboration (crash3 phantom-saturation) ───
+                    # D-state tasks parked on dead automounts saturate I/O PSI
+                    # while disks sit idle. Sample io_ticks over 1s, take the
+                    # BUSIEST disk; io_alert only stands when a real disk
+                    # corroborates the stall, phantom waits stay observable.
+                    disk_busy_max=0
+                    io_corroborated=0
+                    io_phantom=0
+                    sample_io_ticks() {
+                      local d
+                      for d in /sys/block/sd* /sys/block/nvme*n* /sys/block/vd*; do
+                        [ -e "$d/stat" ] && awk '{printf "%s ", $10}' "$d/stat"
+                      done
+                      return 0
+                    }
+                    io_ticks_a="$(sample_io_ticks)"
+                    sleep 1
+                    io_ticks_b="$(sample_io_ticks)"
+                    disk_busy_max="$(paste <(tr ' ' '\n' <<<"''${io_ticks_a}") <(tr ' ' '\n' <<<"''${io_ticks_b}") \
+                      | awk 'NF == 2 {d = $2 - $1; if (d > m) m = d} END {printf "%.1f", m / 10.0}')"
+                    if [ "$io_alert" = "1" ]; then
+                      if awk "BEGIN{exit !($disk_busy_max >= 10.0)}"; then
+                        io_corroborated=1
+                      else
+                        io_phantom=1
+                      fi
+                    fi
                     fi
 
                     {
@@ -358,9 +386,15 @@ lib.mkIf cfg.components.nodeExporter {
                       echo "# HELP node_psi_io_full_avg300 Proportion of last 5min where all tasks stalled on I/O"
                       echo "# TYPE node_psi_io_full_avg300 gauge"
                       echo "node_psi_io_full_avg300 ''${io_full_avg300}"
-                      echo "# HELP node_psi_io_alert Derived boolean: 1 when I/O stall rate exceeds 10% (5min avg)"
+                      echo "# HELP node_psi_io_alert Derived boolean: 1 when I/O stall exceeds threshold AND disk %util corroborates (phantom-filtered, crash3)"
                       echo "# TYPE node_psi_io_alert gauge"
-                      echo "node_psi_io_alert ''${io_alert}"
+                      echo "node_psi_io_alert ''${io_corroborated}"
+                      echo "# HELP node_psi_io_phantom Derived boolean: 1 when I/O PSI exceeds threshold but disks are idle — D-state tasks on a dead automount (corpse-pile signature; the Stuck D-State check owns paging this)"
+                      echo "# TYPE node_psi_io_phantom gauge"
+                      echo "node_psi_io_phantom ''${io_phantom}"
+                      echo "# HELP node_disk_busy_percent_max Busiest single-disk %util over the last 1s window"
+                      echo "# TYPE node_disk_busy_percent_max gauge"
+                      echo "node_disk_busy_percent_max ''${disk_busy_max}"
                     } > "$TMP"
 
                     mv "$TMP" "$OUT"

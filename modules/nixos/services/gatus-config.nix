@@ -1076,7 +1076,7 @@ _: {
                     "[STATUS] == 200"
                     "[BODY] == pat(*node_psi_io_alert 0*)"
                   ];
-                  alerts = discordAlert "I/O pressure CRITICAL — PSI I/O stall >10% over 5min. SLC cache exhaustion or sustained I/O starvation. Check: nvme smart-log, fstrim status, btrfs filesystem usage.";
+                  alerts = discordAlert "I/O pressure CRITICAL — PSI I/O stall high AND disk %util corroborates (crash3 phantom-filtered: idle-disk PSI = D-state corpse pile, covered by the Stuck D-State check, not this one). Check: nvme smart-log, fstrim status, btrfs filesystem usage.";
                 })
               ]
               ++ lib.optionals (config.services.system-health.enable or false) [

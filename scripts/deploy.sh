@@ -212,6 +212,29 @@ if nix run .#pre-deploy-check; then
   # needed, hence DEPLOY_FORCE_PRESSURE=1 as the escape hatch. Reads the
   # kernel directly (no curl, no metrics dependency).
   psi_avg10=$(awk '/^some/ {split($2, a, "="); print a[2]}' /proc/pressure/memory 2>/dev/null || echo 0)
+  # I/O PSI + disk %util correlation (crash3 phantom-saturation class,
+  # 2026-08-31 deploy at 78-80% IO PSI): D-state tasks parked on dead
+  # automounts saturate PSI while disks sit IDLE. Read io_ticks twice 1s
+  # apart, max %util across disks; a 1000ms window means delta_ms/10 = %.
+  io_psi_avg10=$(awk '/^some/ {split($2, a, "="); print a[2]}' /proc/pressure/io 2>/dev/null || echo 0)
+  # Per-disk %util, MAX across disks (a sum would exceed 100% on multi-disk
+  # boxes; the phantom/real discriminator wants the busiest single disk).
+  # io_ticks is field 10 of each /sys/block/<dev>/stat line; a 1000ms window
+  # means delta_ms/10 = %util. Glob-guarded: an unmatched pattern must not
+  # fail the sample under set -euo pipefail.
+  sample_io_ticks() {
+    local d
+    for d in /sys/block/sd* /sys/block/nvme*n* /sys/block/vd*; do
+      [ -e "$d/stat" ] && awk '{printf "%s ", $10}' "$d/stat"
+    done
+    return 0
+  }
+  disk_busy=""
+  io_ticks_a=$(sample_io_ticks)
+  sleep 1
+  io_ticks_b=$(sample_io_ticks)
+  disk_busy=$(paste <(tr ' ' '\n' <<<"$io_ticks_a") <(tr ' ' '\n' <<<"$io_ticks_b") \
+                | awk 'NF == 2 {d = $2 - $1; if (d > m) m = d} END {printf "%.1f", m / 10.0}')
   zram_fill=""
   if [ -r /sys/block/zram0/mm_stat ] && [ -r /sys/block/zram0/disksize ]; then
     zram_orig=$(awk '{print $1}' /sys/block/zram0/mm_stat 2>/dev/null || echo 0)
@@ -240,6 +263,17 @@ if nix run .#pre-deploy-check; then
     pressure_blocked=1
     echo "✗ zram swap fill = ${zram_fill}% (>= 95%) WITH PSI some avg10 = ${psi_avg10}% (>= 5%) — combined pre-freeze zone"
   fi
+  if awk "BEGIN{exit !(${io_psi_avg10:-0} >= 20)}"; then
+    pressure_blocked=1
+    if awk "BEGIN{exit !(${disk_busy:-0} >= 20)}"; then
+      echo "✗ I/O PSI some avg10 = ${io_psi_avg10}% (>= 20%) WITH disk busy = ${disk_busy}% (>= 20%) — REAL I/O storm (crash #3 precursor class)"
+    else
+      echo "✗ I/O PSI some avg10 = ${io_psi_avg10}% (>= 20%) with IDLE disks (busy = ${disk_busy}%) — D-state phantom on a dead automount (corpse-pile signature, crash3):"
+      echo "  top D-state processes:"
+      ps -eo pid,stat,wchan:30,comm | awk '$2 ~ /D/' | head -8 | sed 's/^/    /'
+      echo "  PSI still means tasks are stalled — activation restarts units INTO it and strands more corpses. Verify the missing device / corpse pile before forcing."
+    fi
+  fi
   if [ "$pressure_blocked" = "1" ]; then
     echo ""
     echo "  Deploying under this pressure risks contributing to a kernel freeze"
@@ -251,7 +285,7 @@ if nix run .#pre-deploy-check; then
     fi
     echo "  DEPLOY_FORCE_PRESSURE=1 set — proceeding anyway"
   else
-    echo "  OK (PSI some avg10 = ${psi_avg10}%, zram = ${zram_fill:-n/a}%, MemAvailable = ${avail_pct}%)"
+    echo "  OK (PSI mem some avg10 = ${psi_avg10}%, PSI io some avg10 = ${io_psi_avg10:-0}%, disk busy = ${disk_busy:-n/a}%, zram = ${zram_fill:-n/a}%, MemAvailable = ${avail_pct}%)"
   fi
 
   echo ""
