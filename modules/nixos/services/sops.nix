@@ -220,6 +220,13 @@ in
                 group = "bank-sync";
                 restartUnits = [ "bank-sync.service" ];
               } [ "encryption_key" ]
+              // mkSecrets "bank-sync-paperless.yaml" {
+                owner = "bank-sync";
+                group = "bank-sync";
+                # Only the archival oneshot consumes these; rotating the
+                # archive token must not restart the sync daemon.
+                restartUnits = [ "bank-sync-paperless.service" ];
+              } [ "paperless_url" "paperless_token" ]
             )
             // lib.optionalAttrs (svcEnabled "file-and-image-renamer") (
               mkKeyedSecrets "crush-daily.yaml"
@@ -531,6 +538,20 @@ in
               content = lib.generators.toKeyValue { } {
                 BANK_SYNC_WISE_API_KEY = config.sops.placeholder.wise_api_key;
                 BANK_SYNC_SECURITY_ENCRYPTION_KEY = config.sops.placeholder.encryption_key;
+              };
+            };
+            # Archival env: URL + token for the weekly paperless oneshot
+            # (bank-sync paperless --receipts). Kept SEPARATE from
+            # bank-sync-env so the daemon never sees the archive token and
+            # token rotation restarts nothing but the oneshot.
+            "bank-sync-paperless-env" = {
+              owner = "bank-sync";
+              group = "bank-sync";
+              mode = "0400";
+              restartUnits = [ "bank-sync-paperless.service" ];
+              content = lib.generators.toKeyValue { } {
+                BANK_SYNC_PAPERLESS_URL = config.sops.placeholder.paperless_url;
+                BANK_SYNC_PAPERLESS_TOKEN = config.sops.placeholder.paperless_token;
               };
             };
           }

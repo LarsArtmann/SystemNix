@@ -55,6 +55,21 @@ _: {
       };
     in
     {
+      options.services.bank-sync.paperlessArchive = {
+        enable = lib.mkEnableOption "weekly Paperless-ngx archival (statements + receipts)";
+
+        timerCalendar = lib.mkOption {
+          type = lib.types.str;
+          default = "Sun *-*-* 03:00:00";
+          description = ''
+            systemd calendar for the archival timer. Default lands after the
+            canary's Sunday 00:00 + 1h jitter window so the tripwire runs
+            first and archival never alerts for an outage the canary already
+            caught.
+          '';
+        };
+      };
+
       config = lib.mkIf cfg.enable {
         services.bank-sync = {
           # Caddy is the sole external entry point (defense-in-depth: the raw
@@ -211,6 +226,70 @@ _: {
             RandomizedDelaySec = "1h";
           };
         };
+
+        # Weekly Paperless-ngx archival (statements + transfer receipts).
+        # Enable-gated like inboxclean's paperless wiring: the sops token
+        # ships as PLACEHOLDER, and enabling with a placeholder means a loud
+        # 401 failure into OnFailure alerting — the operator flips this flag
+        # in the same deploy that pastes the real token (runbook:
+        # docs/services/bank-sync.md + upstream docs/runbooks/paperless.md).
+        # The oneshot shares the daemon's DB and Wise key but NEVER restarts
+        # the daemon: idempotent ledgers make concurrent runs safe, and a
+        # failed archival run must not perturb continuous sync.
+        systemd.services.bank-sync-paperless =
+          lib.mkIf config.services.bank-sync.paperlessArchive.enable
+            {
+              description = "Bank-Sync weekly Paperless-ngx archival";
+              after = [
+                "network-online.target"
+                "bank-sync-storage-dir.service"
+              ];
+              wants = [
+                "network-online.target"
+                "bank-sync-storage-dir.service"
+              ];
+              # The run opens and WRITES the SQLite DB (ledger rows) — fail
+              # loudly on a detached pool instead of touching the root fs.
+              unitConfig.RequiresMountsFor = [ cfg.dataDir ];
+              inherit onFailure;
+              startLimitBurst = 5;
+              startLimitIntervalSec = 300;
+              serviceConfig = lib.mkMerge [
+                {
+                  Type = "oneshot";
+                  User = "bank-sync";
+                  Group = "bank-sync";
+                  ExecStart = "${lib.getExe cfg.package} paperless --receipts";
+                  Environment = [ "BANK_SYNC_DATABASE_PATH=${cfg.dataDir}/data.db" ];
+                  # Wise key + encryption key from the daemon env, archive
+                  # URL/token from the dedicated template, optional SCA OTT
+                  # drop-in (statements ride the same challenge flow).
+                  EnvironmentFile = [
+                    envTemplate.path
+                    config.sops.templates."bank-sync-paperless-env".path
+                    "-/var/lib/bank-sync-sca/token.env"
+                  ];
+                }
+                (harden {
+                  # Ledger writes land next to the DB.
+                  ReadWritePaths = [ cfg.dataDir ];
+                })
+                (serviceOneshotDefaults { })
+              ];
+            };
+
+        systemd.timers.bank-sync-paperless =
+          lib.mkIf config.services.bank-sync.paperlessArchive.enable
+            {
+              description = "Bank-Sync weekly Paperless-ngx archival timer";
+              wantedBy = [ "timers.target" ];
+              timerConfig = {
+                OnCalendar = cfg.paperlessArchive.timerCalendar;
+                # Catch up when the box was off.
+                Persistent = true;
+                RandomizedDelaySec = "30m";
+              };
+            };
       };
     };
 }
