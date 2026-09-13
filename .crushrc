@@ -4,6 +4,7 @@
 # Explicit declaration with --disabled overrides the auto entry.
 lsp add statix --disabled true
 # >>> tq bootstrap (managed) >>>
-permissions allow view ls grep glob edit write bash
+permissions allow view ls grep glob edit multiedit write bash fetch download todos
+option metrics false
 model large zai/glm-5.3-flash --reasoning-effort xhigh
 # <<< tq bootstrap (managed) <<<
