@@ -234,7 +234,9 @@
 
     # todo-list-ai — AI-powered CLI tool for extracting TODOs from codebases
     todo-list-ai = {
-      url = "github:LarsArtmann/todo-list-ai?ref=master";
+      # INTERIM: pinned to pre-2026-09-13-update rev (later auto-commit left the
+      # frozen bun lockfile stale; depsHash refresh commit f9f3b33 is last-good).
+      url = "github:LarsArtmann/todo-list-ai/f9f3b33586d647df09c7e35fe8da9ad02cf579d2";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -348,7 +350,9 @@
       flake = false;
     };
     go-nix-helpers = {
-      url = "github:LarsArtmann/go-nix-helpers?ref=master";
+      # INTERIM local pin (do NOT flip to github: until upstream carries the
+      # /vN pseudo-version normalization fix — worktree commit 8c87f26).
+      url = "git+file:///home/lars/worktrees/go-nix-helpers-vnfix?rev=8c87f2654f546bcf22a302833cf0f5d2dfe30ea2";
       # project-meta consumes go-nix-helpers.flakeModules.go-standard, so this
       # must remain a flake input even though Go libraries are the primary use.
     };

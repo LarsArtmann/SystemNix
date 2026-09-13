@@ -3904,18 +3904,18 @@
         "treefmt-nix": "treefmt-nix_6"
       },
       "locked": {
-        "lastModified": 1789008741,
-        "narHash": "sha256-UNEyHXDhu0a3HINDuETaszDkoPiD/A71096arbZbZkI=",
-        "owner": "LarsArtmann",
-        "repo": "go-nix-helpers",
-        "rev": "16c3184262c55377aba2126dc20e028637f58aa0",
-        "type": "github"
+        "lastModified": 1789306088,
+        "narHash": "sha256-hjKKTX4Q2TxMBxius45X5WpCgFnx6DD1W56Ps2X0EMQ=",
+        "ref": "refs/heads/systemnix-vn-version-fix",
+        "rev": "8c87f2654f546bcf22a302833cf0f5d2dfe30ea2",
+        "revCount": 156,
+        "type": "git",
+        "url": "file:///home/lars/worktrees/go-nix-helpers-vnfix"
       },
       "original": {
-        "owner": "LarsArtmann",
-        "ref": "master",
-        "repo": "go-nix-helpers",
-        "type": "github"
+        "rev": "8c87f2654f546bcf22a302833cf0f5d2dfe30ea2",
+        "type": "git",
+        "url": "file:///home/lars/worktrees/go-nix-helpers-vnfix"
       }
     },
     "go-nix-helpers_5": {
@@ -6965,17 +6965,17 @@
         "treefmt-nix": "treefmt-nix_13"
       },
       "locked": {
-        "lastModified": 1789285168,
-        "narHash": "sha256-INq92JnXvhS/lYPEuaM5N4FG9VGaP4K3IEpZBQlRcAw=",
+        "lastModified": 1788614050,
+        "narHash": "sha256-XTPMkq1i0U2yXDtvOwp+p9Jt8fgNNwVhPCDUL6g1hqE=",
         "owner": "LarsArtmann",
         "repo": "todo-list-ai",
-        "rev": "137d015d3da6e06c151523c3d2f5741de878e73d",
+        "rev": "f9f3b33586d647df09c7e35fe8da9ad02cf579d2",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "master",
         "repo": "todo-list-ai",
+        "rev": "f9f3b33586d647df09c7e35fe8da9ad02cf579d2",
         "type": "github"
       }
     },
