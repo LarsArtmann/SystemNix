@@ -667,7 +667,10 @@ in
                     THRESHOLD=$((5 * 1024 * 1024 * 1024))
                     MOUNT_POINT="/data"
 
-                    current_bytes=$(df --output=used --block-size=1 "$MOUNT_POINT" | tail -1 | tr -d ' ')
+                    # errexit+pipefail: `|| true` rescues a df failure so the
+                    # empty-capture guard below stays REACHABLE and exits 1
+                    # (absent /data is an alert, not a unit crash)
+                    current_bytes=$(df --output=used --block-size=1 "$MOUNT_POINT" 2>/dev/null | tail -1 | tr -d ' ') || true
 
                     if [ -z "$current_bytes" ]; then
                       echo "ERROR: could not read disk usage for $MOUNT_POINT"

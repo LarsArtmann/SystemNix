@@ -24,19 +24,28 @@ _: {
         mkdir -p "$STATE_DIR"
         STATE_FILE="$STATE_DIR/last-alerted-built-at"
 
-        info=$(curl --silent --max-time 10 "${cfg.url}" 2>/dev/null)
+        # writeShellApplication runs errexit+pipefail: every capture below is
+        # deliberate-degradation, so each needs `|| true` or its guard is DEAD
+        # CODE (live bug: a curl failure exited with curl's status before the
+        # [ -z "$info" ] check ever ran, failing the unit on every network
+        # transient — the 2026-08-30 "long-failed units" triage root cause).
+        info=$(curl --silent --max-time 10 "${cfg.url}" 2>/dev/null || true)
         if [ -z "$info" ]; then
           logger -t "website-deploy-monitor" "fetch failed: ${cfg.url} unreachable (uptime checks own availability)"
           exit 0
         fi
 
-        built_at=$(printf '%s' "$info" | jq -r '.builtAt // empty')
+        built_at=$(printf '%s' "$info" | jq -r '.builtAt // empty' 2>/dev/null || true)
         if [ -z "$built_at" ]; then
           logger -t "website-deploy-monitor" "marker has no builtAt field: $info"
           exit 0
         fi
 
-        built_epoch=$(date --date="$built_at" +%s)
+        built_epoch=$(date --date="$built_at" +%s 2>/dev/null || true)
+        if [ -z "$built_epoch" ]; then
+          logger -t "website-deploy-monitor" "unparseable builtAt: $built_at"
+          exit 0
+        fi
         now_epoch=$(date +%s)
         age_seconds=$(( now_epoch - built_epoch ))
         max_age_seconds=$(( ${toString cfg.maxAgeDays} * 86400 ))
