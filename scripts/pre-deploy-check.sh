@@ -486,18 +486,16 @@ if [ -s "$METRICS_FILE" ]; then
   # The list is empty; re-add ONLY when a deploy introduces metrics the
   # running generation's collector cannot yet emit.
   # Read by the sourced metrics-gate.sh.
-  # 2026-09-12 pool-smart-metrics first deploy: the running generation has no
-  # pool-smart-metrics.service, so the four gatus-referenced aggregates are
-  # absent until the switch lands (deploy.sh restarts the collector
-  # post-switch). Clear this list on the NEXT collector-adding deploy.
-  # 2026-09-13 btrfs snapshot canary first deploy (glob-delete incident):
-  # the three canary gauges live in the btrfs-health-metrics collector, but
-  # the RUNNING generation's collector script predates the canary block —
-  # same-collector btrfs_scrub_error_free IS present, proving the unit runs
-  # and the absence is version-skew, not a phantom. Clear on the next
-  # btrfs-health-metrics-changing deploy.
+  # Loan-list history: 2026-09-12 pool-smart quartile (first deploy of
+  # pool-smart-metrics.service) + 2026-09-13 btrfs canary trio
+  # (btrfs_root_snapshots / btrfs_rescue_snapshots / btrfs_rescue_append_only
+  # — new block in the EXISTING btrfs-health-metrics collector; same-collector
+  # btrfs_scrub_error_free stayed present, proving version-skew not phantom).
+  # BOTH sets confirmed live in their textfiles post-switch on 2026-09-13 —
+  # retired same day. The list is empty; re-add ONLY when a deploy introduces
+  # metrics the running generation's collector cannot yet emit.
   # shellcheck disable=SC2034
-  KNOWN_NEW_METRICS="pool_smart_all_healthy pool_smart_scrape_errors pool_smart_media_flag pool_smart_temp_over btrfs_root_snapshots btrfs_rescue_snapshots btrfs_rescue_append_only"
+  KNOWN_NEW_METRICS=""
   for metric in $(extract_gatus_metrics); do
     metrics_gate_classify_absence "$metric" || MISSING_METRICS=$((MISSING_METRICS + 1))
   done
