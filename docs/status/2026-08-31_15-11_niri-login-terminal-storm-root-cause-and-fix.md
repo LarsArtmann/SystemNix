@@ -4,6 +4,8 @@
 **Scope:** This session only — the "million empty terminal sessions at niri login" incident.
 **Host:** evo-x2, boot of 14:33, session 11 (tty1, SDDM login).
 
+> **RESOLVED (2026-09-14, task queue `000001a09ccb4f08362f8556be4a64fee251`):** the storm's root causes are fixed UPSTREAM in `LarsArtmann/niri-session-manager` v0.4.0–v0.4.1 + the [Unreleased] block (boot-scoped restore gate, single-instance save dedupe, stateless-terminal guard, `--max-restore-windows` cap, per-app warn). The SystemNix lock pins `ebdf04f` = that upstream HEAD, and the DEPLOYED evo-x2 binary (`niri-session-manager-0.4.1` store path) already contains every cure — the storm class is structurally dead on the running system, not just in the repo. Release **v0.5.0** cut at `00424ca` (tag NOT yet pushed at annotation time). Full disposition: `docs/status/2026-09-14_00-23_task-000001a09ccb4f08362f8556be4a64fee251.md`.
+
 ---
 
 ## 1. Incident Summary
