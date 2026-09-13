@@ -846,11 +846,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1789291651,
-        "narHash": "sha256-+ZH0BbIkPvUD0BfF2FW6z12X6C380srobGk8kDdUpAE=",
+        "lastModified": 1789303837,
+        "narHash": "sha256-h71qWBmTWymMDlNSp1vyXY2tOgIz/H4K1l07RKdqkT0=",
         "owner": "LarsArtmann",
         "repo": "dnsblockd",
-        "rev": "ebea648fe61d52d7e33e9c9b98cf5a67a83c1434",
+        "rev": "3be58aa5de8d31d56dcfcf66a09185578bfabc38",
         "type": "github"
       },
       "original": {
@@ -6977,16 +6977,16 @@
     "templ-components_5": {
       "flake": false,
       "locked": {
-        "lastModified": 1788922038,
-        "narHash": "sha256-+81ZgvPkSw1cGygPk4Iz2sSh+Y85OvwkJirlPB+Q5dA=",
-        "ref": "refs/tags/v1.16.0",
-        "rev": "74b07e1f5779a9214d9f86fdae91811c464183b2",
-        "revCount": 1456,
+        "lastModified": 1789297283,
+        "narHash": "sha256-MKiodnTyasRjoYF+cqqfUu/23y5WtLWxWnQqMWLvnAI=",
+        "ref": "refs/tags/v1.17.0",
+        "rev": "8a046c489218b903a0519f6b052ceaad0a26c99f",
+        "revCount": 1585,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/templ-components"
       },
       "original": {
-        "ref": "refs/tags/v1.16.0",
+        "ref": "refs/tags/v1.17.0",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/templ-components"
       }
