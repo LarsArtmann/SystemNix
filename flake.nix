@@ -1309,6 +1309,19 @@
                 pkgs.procps # ps/pgrep — wedged switch-to-configuration detection
               ] ./scripts/deploy.sh;
               validate = mkApp "validate" "Validate flake without building" [ pkgs.nix ] ./scripts/validate.sh;
+              io-psi-forensics =
+                mkApp
+                  "io-psi-forensics"
+                  "Snapshot per-cgroup I/O attribution + D-state stacks to /var/tmp (run during an I/O storm; same script the guard fires on trip)"
+                  [
+                    pkgs.coreutils
+                    pkgs.procps
+                    pkgs.gawk
+                    pkgs.gnugrep
+                    pkgs.findutils
+                    pkgs.systemd
+                  ]
+                  ./scripts/io-psi-forensics.sh;
               fix-nixpkgs-lock =
                 mkApp "fix-nixpkgs-lock"
                   "Restore the flake.lock nixpkgs node to github type (one-command recovery from the tarball regression)"

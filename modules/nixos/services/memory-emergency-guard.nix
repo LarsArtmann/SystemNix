@@ -433,6 +433,13 @@ _: {
                 # shellcheck disable=SC2086
                 systemctl stop $CHURN_UNITS 2>/dev/null || true
               fi
+              # Attribution capture at trap time (2026-09-14): the trip says
+              # "I/O stalled", not WHO stalled it. The forensics bundle
+              # (cgroup io.stat + top offenders + D-state stacks) is the
+              # evidence gate for every "X is the driver" claim. Transient
+              # unit so the capture survives this oneshot's exit; best-effort
+              # — a failed capture must never fail the trip itself.
+              systemd-run --collect "${lib.getExe ioPsiForensics}" "zone''${zone}-trip" 2>/dev/null || true
               echo "$now" > "$LAST_TRIP_FILE"
               tripped_total=$((tripped_total + 1))
               echo "$tripped_total" > "$COUNT_FILE"
@@ -587,6 +594,25 @@ _: {
           } > "$TMP"
           mv "$TMP" "$OUT"
         '';
+      };
+
+      # Attribution capture at trap time: per-cgroup io.stat, top offenders,
+      # D-state stacks. Spawned as a TRANSIENT unit on every trip action —
+      # the guard's own cgroup reaps backgrounded children when this oneshot
+      # exits, so the capture cannot simply be `&`-backgrounded here. Source
+      # of truth: scripts/io-psi-forensics.sh (also a flake app for manual
+      # runs, so the guard and the operator capture identically).
+      ioPsiForensics = pkgs.writeShellApplication {
+        name = "io-psi-forensics";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.procps
+          pkgs.gawk
+          pkgs.gnugrep
+          pkgs.findutils
+          pkgs.systemd
+        ];
+        text = builtins.readFile ../../../scripts/io-psi-forensics.sh;
       };
     in
     {

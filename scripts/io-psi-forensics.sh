@@ -47,6 +47,11 @@ timeout 5 cat /proc/diskstats > "${OUT}/diskstats.txt" 2>&1 || true
   echo "# cgroup io.stat totals (rbytes+wbytes bytes, desc) — top 40"
   find /sys/fs/cgroup -name io.stat -print0 2>/dev/null |
     while IFS= read -r -d "" f; do
+      case "$f" in
+        # the root cgroup aggregates the whole system — it would be the
+        # permanent #1 and tell us nothing about WHO holds the I/O
+        "/sys/fs/cgroup/io.stat") continue ;;
+      esac
       total="$(awk '{for (i = 2; i <= NF; i++) {split($i, kv, "="); if (kv[1] == "rbytes" || kv[1] == "wbytes") t += kv[2]}} END {print t + 0}' "$f" 2>/dev/null)" || total=0
       printf '%s %s\n' "${total:-0}" "$f"
     done |
