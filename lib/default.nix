@@ -143,6 +143,16 @@ in
     // lib.optionalAttrs (client != { }) { inherit client; }
     // lib.optionalAttrs (headers != { }) { inherit headers; };
 
+  # Discord alert for a gatus endpoint. NOTE: the YAML field is
+  # `description` (gatus alert.Alert yaml tag) — `desc:` is silently
+  # dropped by yaml.v3 and never reaches Discord.
+  discordAlert = desc: [
+    {
+      type = "discord";
+      description = desc;
+    }
+  ];
+
   ports =
     let
       raw = (import ./ports.nix).ports;

@@ -17,6 +17,7 @@ _: {
         mkHttpCheck
         mkSecretCheck
         mkOidcGate
+        discordAlert
         ports
         ;
 
@@ -29,16 +30,6 @@ _: {
           config.sops.templates."gatus-env".path
         }) — Discord alerting will fail";
       };
-
-      # NOTE: the YAML field is `description` (gatus alert.Alert yaml tag).
-      # The old `inherit desc` emitted `desc:`, which yaml.v3 silently ignores —
-      # descriptions never reached Discord messages.
-      discordAlert = desc: [
-        {
-          type = "discord";
-          description = desc;
-        }
-      ];
 
       # Smart alerting: append a PapDashboard ingest alert (type "custom") to
       # every endpoint when the hub is enabled. Gatus' provider default-alert
@@ -152,6 +143,16 @@ _: {
       options.services.gatus-config = {
         enable = lib.mkEnableOption "Gatus health check monitoring with pre-configured endpoints";
         port = serviceTypes.servicePort ports.gatus "HTTP port for Gatus web interface";
+
+        # Extension seam for services.integration registry fan-out. Endpoints
+        # here ride the SAME withPapIngest pass as the built-in list —
+        # appending to services.gatus.settings.endpoints directly from other
+        # modules would bypass the PapDashboard ingest alert pass.
+        extraEndpoints = lib.mkOption {
+          type = lib.types.listOf lib.types.attrs;
+          default = [ ];
+          description = "Extra gatus endpoints appended after the built-in ones (pass mkHttpCheck-shaped attrsets)";
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -2419,6 +2420,10 @@ _: {
                 })
               ]
               ++ map mkWebsiteCheck ossWebsites
+              # Registry fan-out (services.integration.<name>.checks) — inside
+              # the withPapIngest pass so registry endpoints get the
+              # PapDashboard ingest alert appended like every built-in one.
+              ++ cfg.extraEndpoints
             );
           };
         };
