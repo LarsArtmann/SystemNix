@@ -32,7 +32,9 @@ let
     "RemainAfterExit"
     "Restart"
   ];
-  lifecycleOffenders = builtins.attrNames (builtins.intersectAttrs (lib.genAttrs lifecycleKeys (_: null)) args);
+  lifecycleOffenders = builtins.attrNames (
+    builtins.intersectAttrs (lib.genAttrs lifecycleKeys (_: null)) args
+  );
   guard =
     if lifecycleOffenders != [ ] then
       throw ''

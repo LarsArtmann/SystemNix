@@ -20,7 +20,8 @@
 let
   lib = inputs.nixpkgs.lib;
 
-  audit = (import ../modules/nixos/services/systemd-shape-audit.nix).flake.nixosModules.systemd-shape-audit;
+  audit =
+    (import ../modules/nixos/services/systemd-shape-audit.nix).flake.nixosModules.systemd-shape-audit;
 
   evalAssertions =
     extraModules:
@@ -35,132 +36,118 @@ let
 
   flaggedWith =
     infix: assertions:
-    let f = failing assertions; in
+    let
+      f = failing assertions;
+    in
     f != [ ] && lib.hasInfix infix (builtins.head f).message;
 
   cases = [
     {
       name = "oneshot-always-not-caught";
-      pass = flaggedWith "invalid Restart" (
-        evalAssertions [
-          {
-            systemd.services.bad-oneshot = {
-              serviceConfig = {
-                Type = "oneshot";
-                Restart = "always";
-              };
+      pass = flaggedWith "invalid Restart" (evalAssertions [
+        {
+          systemd.services.bad-oneshot = {
+            serviceConfig = {
+              Type = "oneshot";
+              Restart = "always";
             };
-          }
-        ]
-      );
+          };
+        }
+      ]);
     }
     {
       name = "timer-restart-race-not-caught";
-      pass = flaggedWith "Restart != no" (
-        evalAssertions [
-          {
-            systemd.services.racy-sync = {
-              serviceConfig = {
-                Type = "oneshot";
-                Restart = "on-failure";
-                RestartSec = "5min";
-              };
+      pass = flaggedWith "Restart != no" (evalAssertions [
+        {
+          systemd.services.racy-sync = {
+            serviceConfig = {
+              Type = "oneshot";
+              Restart = "on-failure";
+              RestartSec = "5min";
             };
-            systemd.timers.racy-sync = {
-              wantedBy = [ "timers.target" ];
-              timerConfig.OnUnitActiveSec = "5min";
-            };
-          }
-        ]
-      );
+          };
+          systemd.timers.racy-sync = {
+            wantedBy = [ "timers.target" ];
+            timerConfig.OnUnitActiveSec = "5min";
+          };
+        }
+      ]);
     }
     {
       name = "allowlist-not-honored";
       pass =
-        failing (
-          evalAssertions [
-            {
-              services.systemd-shape-audit.allowTimerRestart = [ "racy-sync" ];
-              systemd.services.racy-sync = {
-                serviceConfig = {
-                  Type = "oneshot";
-                  Restart = "on-failure";
-                };
+        failing (evalAssertions [
+          {
+            services.systemd-shape-audit.allowTimerRestart = [ "racy-sync" ];
+            systemd.services.racy-sync = {
+              serviceConfig = {
+                Type = "oneshot";
+                Restart = "on-failure";
               };
-              systemd.timers.racy-sync = {
-                wantedBy = [ "timers.target" ];
-                timerConfig.OnCalendar = "daily";
-              };
-            }
-          ]
-        ) == [ ];
+            };
+            systemd.timers.racy-sync = {
+              wantedBy = [ "timers.target" ];
+              timerConfig.OnCalendar = "daily";
+            };
+          }
+        ]) == [ ];
     }
     {
       name = "pathexists-not-caught";
-      pass = flaggedWith "PathExists" (
-        evalAssertions [
-          {
-            systemd.paths.bad-path = {
-              wantedBy = [ "multi-user.target" ];
-              pathConfig.PathExists = "/run/some-trigger";
-            };
-          }
-        ]
-      );
+      pass = flaggedWith "PathExists" (evalAssertions [
+        {
+          systemd.paths.bad-path = {
+            wantedBy = [ "multi-user.target" ];
+            pathConfig.PathExists = "/run/some-trigger";
+          };
+        }
+      ]);
     }
     {
       name = "pathchanged-falsely-flagged";
       pass =
-        failing (
-          evalAssertions [
-            {
-              systemd.paths.good-path = {
-                wantedBy = [ "multi-user.target" ];
-                pathConfig.PathChanged = "/run/some-trigger";
-              };
-            }
-          ]
-        ) == [ ];
+        failing (evalAssertions [
+          {
+            systemd.paths.good-path = {
+              wantedBy = [ "multi-user.target" ];
+              pathConfig.PathChanged = "/run/some-trigger";
+            };
+          }
+        ]) == [ ];
     }
     {
       name = "clean-timer-oneshot-falsely-flagged";
       pass =
-        failing (
-          evalAssertions [
-            {
-              systemd.services.clean-sync.serviceConfig.Type = "oneshot";
-              systemd.timers.clean-sync = {
-                wantedBy = [ "timers.target" ];
-                timerConfig.OnCalendar = "daily";
-              };
-            }
-          ]
-        ) == [ ];
+        failing (evalAssertions [
+          {
+            systemd.services.clean-sync.serviceConfig.Type = "oneshot";
+            systemd.timers.clean-sync = {
+              wantedBy = [ "timers.target" ];
+              timerConfig.OnCalendar = "daily";
+            };
+          }
+        ]) == [ ];
     }
     {
       name = "home-in-user-execstart-not-caught";
-      pass = flaggedWith "$HOME" (
-        evalAssertions [
-          {
-            systemd.user.services.home-user = {
-              serviceConfig.ExecStart = "/bin/app --config $HOME/.config/app";
-            };
-          }
-        ]
-      );
+      pass = flaggedWith "$HOME" (evalAssertions [
+        {
+          systemd.user.services.home-user = {
+            serviceConfig.ExecStart = "/bin/app --config $HOME/.config/app";
+          };
+        }
+      ]);
     }
     {
       name = "percent-h-falsely-flagged";
       pass =
-        failing (
-          evalAssertions [
-            {
-              systemd.user.services.specifier-user = {
-                serviceConfig.ExecStart = "/bin/app --config %h/.config/app";
-              };
-            }
-          ]
-        ) == [ ];
+        failing (evalAssertions [
+          {
+            systemd.user.services.specifier-user = {
+              serviceConfig.ExecStart = "/bin/app --config %h/.config/app";
+            };
+          }
+        ]) == [ ];
     }
   ];
 
@@ -169,9 +156,7 @@ in
 if broken == [ ] then
   pkgs.runCommand "systemd-shape-audit-negative-test" { } "touch $out"
 else
-  pkgs.runCommand "systemd-shape-audit-negative-test"
-    { }
-    ''
-      echo "systemd-shape-audit negative test FAILED for: ${lib.concatStringsSep ", " broken}"
-      exit 1
-    ''
+  pkgs.runCommand "systemd-shape-audit-negative-test" { } ''
+    echo "systemd-shape-audit negative test FAILED for: ${lib.concatStringsSep ", " broken}"
+    exit 1
+  ''

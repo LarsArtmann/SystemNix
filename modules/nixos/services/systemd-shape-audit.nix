@@ -171,6 +171,16 @@
             gate and is NOT flagged.)
           '';
         }
+        {
+          assertion = homeOffenders == [ ];
+          message = ''
+            systemd-shape-audit: user unit(s) with a literal $HOME in Exec lines:
+            ${lib.concatStringsSep ", " homeOffenders}
+            Hardened user services may not expand $HOME (environment stripped).
+            Use the systemd specifier %h instead:
+              ExecStart = "/bin/app --config %h/.config/app";
+          '';
+        }
       ];
     };
 }

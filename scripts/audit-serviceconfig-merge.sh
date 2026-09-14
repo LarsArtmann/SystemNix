@@ -27,11 +27,11 @@ scan_file() {
   local f="$1" rel="$2"
   # Comments may quote the banned shape to document it — strip them.
   # Exclusions: mkMerge mentions (sanctioned wrapper), :// URL schemes.
-  grep -vE '^[[:space:]]*#' "$f" 2>/dev/null \
-    | grep -nE 'serviceConfig[[:space:]]*=.*//' \
-    | grep -v 'mkMerge' \
-    | grep -v '://' \
-    | while IFS= read -r line; do
+  grep -vE '^[[:space:]]*#' "$f" 2>/dev/null |
+    grep -nE 'serviceConfig[[:space:]]*=.*//' |
+    grep -v 'mkMerge' |
+    grep -v '://' |
+    while IFS= read -r line; do
       echo "FAIL [$rel]: serviceConfig assigned with a shallow // merge (discards mkDefault/mkForce priority — use lib.mkMerge [...]):"
       echo "  $line"
     done

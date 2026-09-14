@@ -21,7 +21,8 @@
 let
   lib = inputs.nixpkgs.lib;
 
-  audit = (import ../modules/nixos/services/port-registry-audit.nix).flake.nixosModules.port-registry-audit;
+  audit =
+    (import ../modules/nixos/services/port-registry-audit.nix).flake.nixosModules.port-registry-audit;
 
   evalAssertions =
     extraModules:
@@ -36,88 +37,79 @@ let
 
   flaggedWith =
     infix: assertions:
-    let f = failing assertions; in
+    let
+      f = failing assertions;
+    in
     f != [ ] && lib.hasInfix infix (builtins.head f).message;
 
   cases = [
     {
       name = "unregistered-host-form-not-caught";
-      pass = flaggedWith "bad-svc: 8150" (
-        evalAssertions [
-          {
-            systemd.services.bad-svc.serviceConfig.ExecStart = "/bin/app --listen 127.0.0.1:8150";
-          }
-        ]
-      );
+      pass = flaggedWith "bad-svc: 8150" (evalAssertions [
+        {
+          systemd.services.bad-svc.serviceConfig.ExecStart = "/bin/app --listen 127.0.0.1:8150";
+        }
+      ]);
     }
     {
       name = "registered-port-falsely-flagged";
       pass =
-        failing (
-          evalAssertions [
-            {
-              systemd.services.good-svc.serviceConfig.ExecStart = "/bin/app --listen 127.0.0.1:8099";
-            }
-          ]
-        ) == [ ];
+        failing (evalAssertions [
+          {
+            systemd.services.good-svc.serviceConfig.ExecStart = "/bin/app --listen 127.0.0.1:8099";
+          }
+        ]) == [ ];
     }
     {
       name = "allowports-not-honored";
       pass =
-        failing (
-          evalAssertions [
-            {
-              services.port-registry-audit.allowPorts = [ 8150 ];
-              systemd.services.exempt-svc.serviceConfig.ExecStart = "/bin/app --listen 127.0.0.1:8150";
-            }
-          ]
-        ) == [ ];
+        failing (evalAssertions [
+          {
+            services.port-registry-audit.allowPorts = [ 8150 ];
+            systemd.services.exempt-svc.serviceConfig.ExecStart = "/bin/app --listen 127.0.0.1:8150";
+          }
+        ]) == [ ];
     }
     {
       name = "environment-attrset-form-not-caught";
-      pass = flaggedWith "env-svc: 8151" (
-        evalAssertions [
-          {
-            systemd.services.env-svc.serviceConfig = {
-              ExecStart = "/bin/app";
-              Environment = {
-                UPSTREAM = "http://127.0.0.1:8151";
-                MODE = "plain";
-              };
+      pass = flaggedWith "env-svc: 8151" (evalAssertions [
+        {
+          systemd.services.env-svc.serviceConfig = {
+            ExecStart = "/bin/app";
+            Environment = {
+              UPSTREAM = "http://127.0.0.1:8151";
+              MODE = "plain";
             };
-          }
-        ]
-      );
+          };
+        }
+      ]);
     }
     {
       name = "url-colon-form-not-caught";
-      pass = flaggedWith "url-svc: 8152" (
-        evalAssertions [
-          {
-            systemd.services.url-svc.serviceConfig.ExecStart = "/bin/app --webhook http://example.test:8152/hook";
-          }
-        ]
-      );
+      pass = flaggedWith "url-svc: 8152" (evalAssertions [
+        {
+          systemd.services.url-svc.serviceConfig.ExecStart =
+            "/bin/app --webhook http://example.test:8152/hook";
+        }
+      ]);
     }
     {
       name = "lookalikes-falsely-flagged";
       pass =
-        failing (
-          evalAssertions [
-            {
-              systemd.services.lookalike-svc.serviceConfig = {
-                ExecStart = "/bin/app --toolchain 1.26 --meeting 2:30";
-                Environment = [
-                  "PATH=/nix/store/abc123-bin:/nix/store/def456-lib"
-                  "GOFLAGS=-trimpath"
-                  # Live false positive on first deploy of the guard (2026-09-14):
-                  # fastflowlm/PMA model name parsed as host:port 35.
-                  "OPENAI_MODEL=qwen3.6-moe:35b-a3b"
-                ];
-              };
-            }
-          ]
-        ) == [ ];
+        failing (evalAssertions [
+          {
+            systemd.services.lookalike-svc.serviceConfig = {
+              ExecStart = "/bin/app --toolchain 1.26 --meeting 2:30";
+              Environment = [
+                "PATH=/nix/store/abc123-bin:/nix/store/def456-lib"
+                "GOFLAGS=-trimpath"
+                # Live false positive on first deploy of the guard (2026-09-14):
+                # fastflowlm/PMA model name parsed as host:port 35.
+                "OPENAI_MODEL=qwen3.6-moe:35b-a3b"
+              ];
+            };
+          }
+        ]) == [ ];
     }
   ];
 
@@ -126,9 +118,7 @@ in
 if broken == [ ] then
   pkgs.runCommand "port-registry-audit-negative-test" { } "touch $out"
 else
-  pkgs.runCommand "port-registry-audit-negative-test"
-    { }
-    ''
-      echo "port-registry-audit negative test FAILED for: ${lib.concatStringsSep ", " broken}"
-      exit 1
-    ''
+  pkgs.runCommand "port-registry-audit-negative-test" { } ''
+    echo "port-registry-audit negative test FAILED for: ${lib.concatStringsSep ", " broken}"
+    exit 1
+  ''

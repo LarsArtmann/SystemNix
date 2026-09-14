@@ -70,9 +70,7 @@ in
 if broken == [ ] then
   pkgs.runCommand "harden-lifecycle-negative-test" { } "touch $out"
 else
-  pkgs.runCommand "harden-lifecycle-negative-test"
-    { }
-    ''
-      echo "harden lifecycle guard negative test FAILED for: ${lib.concatStringsSep ", " broken}"
-      exit 1
-    ''
+  pkgs.runCommand "harden-lifecycle-negative-test" { } ''
+    echo "harden lifecycle guard negative test FAILED for: ${lib.concatStringsSep ", " broken}"
+    exit 1
+  ''

@@ -59,9 +59,9 @@
         text:
         let
           parts = builtins.split portRegex text;
-          digitGroups =
-            builtins.filter (g: builtins.isString g && builtins.match "[0-9]+" g != null)
-              (lib.flatten (map (x: if builtins.isList x then x else [ ]) parts));
+          digitGroups = builtins.filter (g: builtins.isString g && builtins.match "[0-9]+" g != null) (
+            lib.flatten (map (x: if builtins.isList x then x else [ ]) parts)
+          );
         in
         lib.unique (builtins.filter (p: p >= 2 && p <= 65535) (map lib.toInt digitGroups));
 
@@ -74,11 +74,16 @@
 
       unitText =
         svc:
-        lib.concatStringsSep " \n "
-          (
-            (map (k: if svc.serviceConfig ? ${k} then (lib.concatMapStringsSep " " toString (lib.toList svc.serviceConfig.${k})) else "") scanKeys)
-            ++ (lib.optionals (svc.serviceConfig ? Environment) (envToString svc.serviceConfig.Environment))
-          );
+        lib.concatStringsSep " \n " (
+          (map (
+            k:
+            if svc.serviceConfig ? ${k} then
+              (lib.concatMapStringsSep " " toString (lib.toList svc.serviceConfig.${k}))
+            else
+              ""
+          ) scanKeys)
+          ++ (lib.optionals (svc.serviceConfig ? Environment) (envToString svc.serviceConfig.Environment))
+        );
 
       # tryEval: a unit whose Exec text cannot be coerced (exotic
       # self-referential config) must never break eval — it is skipped.
