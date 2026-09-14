@@ -51,6 +51,34 @@ in
         "/dev/vdc"
       ];
       settleTimeoutSeconds = 10;
+      # Isolated convergence fixtures — the real default list exercises the
+      # same code path, but the VM must not depend on production unit names.
+      restartUnits = [
+        "pool-consumer-test-enabled.service"
+        "pool-consumer-test-disabled.service"
+      ];
+    };
+
+    # Boot-transaction dropout fixtures (2026-09-14 class): an enabled unit
+    # stopped out from under the boot (inactive, NOT failed) must be
+    # converged by recovery; an explicitly disabled unit must never be.
+    systemd.services.pool-consumer-test-enabled = {
+      description = "pool-recovery convergence fixture (enabled)";
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = "${pkgs.coreutils}/bin/sleep infinity";
+        Restart = "no";
+      };
+    };
+    systemd.services.pool-consumer-test-disabled = {
+      description = "pool-recovery convergence fixture (disabled)";
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = "${pkgs.coreutils}/bin/sleep infinity";
+        Restart = "no";
+      };
     };
     # VM tests must use virtualisation.fileSystems: qemu-vm.nix replaces the
     # whole `fileSystems` option with virtualisation.fileSystems at priority
@@ -136,6 +164,19 @@ in
     # 1. healthy mount: recovery is a clean no-op
     healthy.succeed("systemctl start pool-usb-recovery.service")
     healthy.succeed("journalctl -u pool-usb-recovery.service | grep -q 'mount healthy'")
+
+    # 1b. CONSUMER CONVERGENCE (boot-dropout class): an enabled-but-inactive
+    #     consumer gets started by the healthy-path recovery run; an
+    #     explicitly disabled consumer is left untouched.
+    healthy.succeed("systemctl stop pool-consumer-test-enabled.service")
+    healthy.succeed("systemctl disable pool-consumer-test-disabled.service")
+    healthy.succeed("systemctl stop pool-consumer-test-disabled.service")
+    healthy.succeed("systemctl start pool-usb-recovery.service")
+    healthy.succeed("systemctl is-active --quiet pool-consumer-test-enabled.service")
+    healthy.succeed(
+      "journalctl -u pool-usb-recovery.service | grep -q 'starting enabled-but-inactive pool service: pool-consumer-test-enabled.service'"
+    )
+    healthy.fail("systemctl is-active --quiet pool-consumer-test-disabled.service")
 
     # 3+2. ZOMBIE SIMULATION: foreign disk at the mountpoint → reap + remount
     healthy.succeed("systemctl stop mnt-pool.mount")

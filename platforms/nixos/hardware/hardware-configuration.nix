@@ -133,9 +133,10 @@ in
         "commit=300"
       ];
     };
-    # ClickHouse telemetry store on a dedicated XFS filesystem (nvme0n1p9,
-    # ~100 GiB tail freed when the old p9 /rust-cache ext4 was deleted
-    # 2026-08-17). Created + populated by scripts/migrate-clickhouse-xfs.sh
+    # ClickHouse telemetry store on a dedicated XFS filesystem (the QLC
+    # disk's ~100 GiB tail partition, mounted by-label; kernel nvme0/nvme1
+    # enumeration FLIPS across boots — live 2026-09-14: nvme1n1p9; freed
+    # when the old p9 /rust-cache ext4 was removed 2026-08-16/17). Created + populated by scripts/migrate-clickhouse-xfs.sh
     # (prepare phase) BEFORE the first deploy of this entry — deploy-before-
     # script is safe: the by-label device is then absent, the mount fails,
     # nofail keeps boot going, and clickhouse.service's ConditionPathIsMountPoint
@@ -167,7 +168,7 @@ in
         "nofail"
       ];
     };
-    # Old /rust-cache mount (nvme0n1p9, ext4, by-partlabel/rust-cache) removed
+    # Old /rust-cache mount (p9, ext4, by-partlabel/rust-cache) removed
     # 2026-08-16: Rust targets moved to /mnt/buildcache/rust + sccache. The
     # partition slot now carries the XFS ClickHouse store above.
   };

@@ -25,9 +25,14 @@
 #   - Plain `mount /mnt/pool` via fstab (by-label) — full membership only.
 #   - REAL I/O verification (timeout ls -A), never mount-table presence
 #     (phantom-green lesson, 2026-08-16 twice).
-#   - Restart pool consumers that FAILED during the outage (is-failed gated:
-#     never touches intentionally-disabled or healthy units; enabled units
-#     that merely stopped are left to their normal wants/deps).
+#   - Converge pool consumers against a healthy mount: restart FAILED units
+#     (died against the EIO mount) AND start enabled-but-INACTIVE units —
+#     the boot-transaction dropout class (2026-09-14: a cancelled
+#     mnt-pool.mount start job left enabled consumers inactive for the whole
+#     boot; no failed state, so the old is-failed-only gate never touched
+#     them and nothing else started them). Disabled/masked units are never
+#     touched; every restartUnits entry is an always-on daemon and Gatus
+#     owns stop-alerting.
 #   - Deliberately NOT harden {} — PrivateTmp/ProtectSystem create a slave
 #     mount namespace in which umount(2) cannot touch the HOST mount table;
 #     the reaper would silently no-op (buildcache lesson). Only non-namespace
@@ -106,11 +111,16 @@
             "bank-sync.service"
           ];
           description = ''
-            Pool consumers to restart when they are in FAILED state after the
-            pool comes back. is-failed gated on purpose: intentionally
-            disabled services (monitor365, bank-sync when disabled) and units
-            that are merely inactive are never touched — failed means "should
-            have been running and died against the EIO mount".
+            Pool consumers to converge once the pool mount is healthy: FAILED
+            units are restarted (died against the EIO mount), and units that
+            are enabled but merely INACTIVE are started — the boot-transaction
+            dropout class (2026-09-14: a cancelled mnt-pool.mount start job
+            left enabled consumers inactive for the whole boot, with no
+            failed state for the old is-failed gate to catch). Only explicit
+            disabled/masked states are respected (e.g. a service disabled in
+            config); deliberately hand-stopped units come back on the next
+            recovery run — every entry here is an always-on daemon whose stop
+            Gatus alerts on anyway.
           '';
         };
 
@@ -132,7 +142,7 @@
         );
 
         systemd.services.pool-usb-recovery = {
-          description = "Recover pool mount after DAS replug (zombie reaper + remount + failed-service restart)";
+          description = "Recover pool mount after DAS replug (zombie reaper + remount + consumer convergence)";
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
           inherit onFailure;
@@ -162,6 +172,32 @@
             ''
               set -eu
               mnt="${cfg.mountPoint}"
+
+              # Converge pool consumers against a healthy mount: restart
+              # FAILED units AND start enabled-but-inactive units. The
+              # inactive class is the boot-transaction dropout (2026-09-14):
+              # a cancelled mnt-pool.mount start job leaves enabled consumers
+              # inactive for the whole boot — no failed state, so an
+              # is-failed-only gate never touched them and nothing else
+              # started them. Disabled/masked units are never touched.
+              converge_consumers() {
+                for unit in ${unitsStr}; do
+                  if systemctl is-failed --quiet "$unit" 2>/dev/null; then
+                    echo "pool-usb-recovery: restarting failed pool service: $unit"
+                    systemctl reset-failed "$unit" 2>/dev/null || true
+                    systemctl start "$unit" 2>/dev/null || echo "pool-usb-recovery: start $unit failed (non-fatal)" >&2
+                  else
+                    en="$(systemctl is-enabled "$unit" 2>/dev/null || true)"
+                    case "$en" in
+                      disabled | masked) continue ;;
+                    esac
+                    if ! systemctl is-active --quiet "$unit" 2>/dev/null; then
+                      echo "pool-usb-recovery: starting enabled-but-inactive pool service: $unit"
+                      systemctl start "$unit" 2>/dev/null || echo "pool-usb-recovery: start $unit failed (non-fatal)" >&2
+                    fi
+                  fi
+                done
+              }
 
               # Two serials fire two add events — a second run must not race
               # the first (flock held fd, held-for-duration pattern).
@@ -221,6 +257,7 @@
                 if [ -n "$expected_uuid" ] && [ "$mounted_uuid" != "$expected_uuid" ]; then uuid_ok=0; fi
                 if [ "$io_ok" -eq 1 ] && [ "$uuid_ok" -eq 1 ]; then
                   echo "pool-usb-recovery: mount healthy ($mnt) — no action"
+                  converge_consumers
                   systemctl start pool-recovery-metrics.service 2>/dev/null || true
                   exit 0
                 fi
@@ -247,16 +284,9 @@
               #    5-min metrics collector surfaces them).
               btrfs device stats "$mnt" || true
 
-              # 8. Restart pool consumers that FAILED against the dead mount.
-              #    is-failed gated: disabled-but-present units and healthy ones
-              #    are untouched.
-              for unit in ${unitsStr}; do
-                if systemctl is-failed --quiet "$unit" 2>/dev/null; then
-                  echo "pool-usb-recovery: restarting failed pool service: $unit"
-                  systemctl reset-failed "$unit" 2>/dev/null || true
-                  systemctl start "$unit" 2>/dev/null || echo "pool-usb-recovery: start $unit failed (non-fatal)" >&2
-                fi
-              done
+              # 8. Converge pool consumers against the freshly recovered
+              #    mount (failed restarts + enabled-but-inactive starts).
+              converge_consumers
 
               # 9. Counters + immediate metrics refresh so Gatus flips now.
               mkdir -p "${stateDir}"
