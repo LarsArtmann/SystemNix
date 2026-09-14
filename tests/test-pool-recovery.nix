@@ -179,6 +179,11 @@ in
     healthy.succeed(
       "journalctl -u pool-usb-recovery.service | grep -q 'starting enabled-but-inactive pool service: pool-consumer-test-enabled.service'"
     )
+    healthy.succeed(
+      "systemctl is-enabled pool-consumer-test-disabled.service || true; "
+      "systemctl status pool-consumer-test-disabled.service --no-pager -n 3 || true; "
+      "ls -la /run/systemd/system/ | grep pool || true"
+    )
     healthy.fail("systemctl is-active --quiet pool-consumer-test-disabled.service")
 
     # 3+2. ZOMBIE SIMULATION: foreign disk at the mountpoint → reap + remount
