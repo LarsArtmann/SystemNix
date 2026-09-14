@@ -378,8 +378,8 @@ _: {
           };
 
           # Client type shared with services.integration.<name>.oidc — lives
-          # in lib/types.nix (serviceTypes.oidcClient).
-          oidcClients = serviceTypes.oidcClient // {
+          # in lib/types.nix (serviceTypes.oidcClients).
+          oidcClients = serviceTypes.oidcClients // {
             default = [
               {
                 name = "oauth2-proxy";
@@ -490,7 +490,7 @@ _: {
           # modules register their own client here instead of editing the
           # default list above. The provisioner iterates
           # oidcClients ++ extraOidcClients, so both stay one flow.
-          extraOidcClients = serviceTypes.oidcClient // {
+          extraOidcClients = serviceTypes.oidcClients // {
             description = "Additional OIDC clients from service modules (services.integration fan-out), appended after the default list";
           };
 

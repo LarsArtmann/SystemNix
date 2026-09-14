@@ -1,6 +1,59 @@
 lib:
 let
   inherit (lib) mkOption types;
+
+  # Pocket ID OIDC client registration — shared by
+  # services.pocket-id-config.provision.{oidcClients,extraOidcClients} and
+  # services.integration.<name>.oidc so service modules can register their
+  # own clients without editing pocket-id.nix's default list. Lives in the
+  # let so the list-shaped option below can reference it lexically.
+  oidcClientType = types.submodule {
+    options = {
+      name = mkOption {
+        type = types.str;
+        description = "Display name for the OIDC client";
+      };
+      clientId = mkOption {
+        type = types.str;
+        description = "Client ID (must be unique)";
+      };
+      callbackURLs = mkOption {
+        type = types.listOf types.str;
+        default = [ ];
+        description = "Allowed callback URLs";
+      };
+      logoutCallbackURLs = mkOption {
+        type = types.listOf types.str;
+        default = [ ];
+        description = "Allowed logout callback URLs";
+      };
+      launchURL = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Launch URL shown in Pocket ID UI (clicking the app redirects here)";
+      };
+      pkceEnabled = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Whether PKCE is enabled for this client";
+      };
+      isPublic = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Whether this is a public client (no client secret)";
+      };
+      requiresReauthentication = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Whether to force passkey re-authentication on each login";
+      };
+      logoFile = mkOption {
+        type = types.nullOr types.path;
+        default = null;
+        description = "Path to logo image for the client (PNG or SVG)";
+      };
+    };
+  };
 in
 {
   systemdServiceIdentity =
@@ -59,58 +112,6 @@ in
       };
       inherit default;
       description = "Pinned Docker image tag (must not be 'latest')";
-    };
-
-  # Pocket ID OIDC client registration — shared by
-  # services.pocket-id-config.provision.{oidcClients,extraOidcClients} and
-  # services.integration.<name>.oidc so service modules can register their
-  # own clients without editing pocket-id.nix's default list.
-  oidcClientType = types.submodule {
-    options = {
-        name = mkOption {
-          type = types.str;
-          description = "Display name for the OIDC client";
-        };
-        clientId = mkOption {
-          type = types.str;
-          description = "Client ID (must be unique)";
-        };
-        callbackURLs = mkOption {
-          type = types.listOf types.str;
-          default = [ ];
-          description = "Allowed callback URLs";
-        };
-        logoutCallbackURLs = mkOption {
-          type = types.listOf types.str;
-          default = [ ];
-          description = "Allowed logout callback URLs";
-        };
-        launchURL = mkOption {
-          type = types.nullOr types.str;
-          default = null;
-          description = "Launch URL shown in Pocket ID UI (clicking the app redirects here)";
-        };
-        pkceEnabled = mkOption {
-          type = types.bool;
-          default = false;
-          description = "Whether PKCE is enabled for this client";
-        };
-        isPublic = mkOption {
-          type = types.bool;
-          default = false;
-          description = "Whether this is a public client (no client secret)";
-        };
-        requiresReauthentication = mkOption {
-          type = types.bool;
-          default = false;
-          description = "Whether to force passkey re-authentication on each login";
-        };
-        logoFile = mkOption {
-          type = types.nullOr types.path;
-          default = null;
-          description = "Path to logo image for the client (PNG or SVG)";
-        };
-      };
     };
 
   # List-of-clients option built from oidcClientType. Options compose via
