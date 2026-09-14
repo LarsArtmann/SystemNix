@@ -405,6 +405,9 @@ in
           [
             # Privacy / Content Blocking
             (ext "cjpalhdlnbpafiamejdnhcphjbkeiagm" "uBlock Origin")
+            # Secrets — ID must stay in sync with allowed_origins in
+            # platforms/common/programs/keepassxc.nix (native messaging)
+            (ext "oboonakemofpalcgghocfoadofidjkkk" "KeePassXC-Browser")
             # Productivity
             (ext "chphlpgkkbolifaimnlloiipkdnihall" "OneTab")
             # Time Tracking

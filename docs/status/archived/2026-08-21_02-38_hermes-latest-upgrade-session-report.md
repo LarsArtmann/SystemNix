@@ -83,7 +83,7 @@ and left debug scratch behind. Details below.
    Live journal shows no cwd warnings, but nobody grepped specifically.
    (S–M effort: grep live journal + read the two commits)
 3. **AGENTS.md not updated** — the hermes section still documents the
-   `registration_lifecycle` patch as load-bearing and says "delete it when
+   ~~`registration_lifecycle` patch as load-bearing and says "delete it when~~ done (docs-health 2026-09-14: patch deleted + AGENTS updated same day — the drift class is gone upstream since v0.21.0)
    upstream adds it to py-modules". Upstream HAS (verified this session).
    I flagged it in chat but skipped the memory-file update (defensible only
    because `hermes.nix` was being edited concurrently — the AGENTS.md edit

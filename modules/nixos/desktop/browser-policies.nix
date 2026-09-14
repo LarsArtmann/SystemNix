@@ -5,8 +5,19 @@
 # written by the NixOS programs.chromium module apply to both Chromium and Helium.
 #
 # ExtensionSettings supersedes ExtensionInstallForcelist. We use it exclusively
-# with proper update_url (required for force_installed) to avoid the silent
-# no-install bug that missing update_url causes.
+# with an update_url (required for force_installed).
+#
+# The update_url MUST be Helium's extension proxy, NOT clients2.google.com:
+# Helium's spoof-extension-downloader-platform.patch makes the downloader send
+# prod=chromecrx, and the Chrome Web Store answers prod=chromecrx update checks
+# with <updatecheck status="noupdate"/> — verified live 2026-09-14 (all 20
+# policy extensions had NEVER installed; the profile had no Extensions/ dir at
+# all). Pending policy installs whose update_url host differs from Helium's
+# placeholder host fall through to a RAW fetch (proxy-extension-downloads.patch
+# only rewrites the placeholder host), so pointing the policy at the proxy
+# directly routes installs through Helium's Omaha-compatible endpoint
+# (services.helium.imput.net/ext) — verified serving CRX metadata + sha256.
+# See docs/planning/2026-09-14_18-59_helium-extension-pipeline-keepassxc-fix.md
 {
   flake.nixosModules.browser-policies =
     {
@@ -101,7 +112,9 @@
               value = {
                 installation_mode = ext.installationMode;
                 toolbar_pin = ext.toolbarPin;
-                update_url = "https://clients2.google.com/service/update2/crx";
+                # Helium extension proxy — see header comment. Using
+                # clients2.google.com here silently installs NOTHING.
+                update_url = "https://services.helium.imput.net/ext";
               };
             }) cfg.chromiumExtensions
           ));

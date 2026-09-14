@@ -33,7 +33,7 @@ The review's verdict on the `AddAuthCredentialHelperForRemote` error spam — _"
 
 ## b) PARTIALLY DONE
 
-1. **Mirror-sync monitoring end-to-end green:** metrics + Gatus check deployed and live, but **the check is permanently RED on a false alarm** — the collector emits only `scrape_errors=1` with NO stderr diagnostic line, meaning `[ -r /var/lib/forgejo/data/forgejo.db ]` fails inside the root-run unit → the DB is almost certainly at a **different path** (old `gitea.db` from the pre-rename instance era, or a non-default app.ini `PATH`). One sudo grep of `app.ini` + a `forgejo.dbPath` override fixes it. (My shell has no sudo — see questions.)
+1. **Mirror-sync monitoring end-to-end green:** metrics + Gatus check deployed and live, but ~~**the check is permanently RED on a false alarm** — the collector emits only `scrape_errors=1` with NO stderr diagnostic line, meaning `[ -r /var/lib/forgejo/data/forgejo.db ]` fails inside the root-run unit → the DB is almost certainly at a **different path**~~ resolved (docs-health 2026-09-14: `forgejo.dbPath` now defaults to the stateDir path with fail-closed stderr diagnostics — `system-health.nix:~1509`; the check is green) (old `gitea.db` from the pre-rename instance era, or a non-default app.ini `PATH`). One sudo grep of `app.ini` + a `forgejo.dbPath` override fixes it. (My shell has no sudo — see questions.)
 2. **Upstream forgejo issues:** evidence fully verified from v15.0.6 source (three distinct bugs: ENOENT abort, TouchMirror-masks-failures, silent dead queue) but **nothing filed** — needs the verify-before-filing outbound pass + a Codeberg account decision.
 
 ## c) NOT STARTED

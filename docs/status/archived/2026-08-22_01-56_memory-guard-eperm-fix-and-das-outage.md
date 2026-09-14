@@ -31,7 +31,7 @@ Root causes found and addressed:
 
 ## b) PARTIALLY DONE
 
-1. **Guard fix deployed? NO** — the fix is committed and the live process is healed (stale file gone), but the **deployed unit on disk still has `CapabilityBoundingSet=` (empty)**. The fix only takes effect on the next `nix run .#deploy`. Live is fine now, but if another foreign-owned `.prom` appears before deploy, it would fail again.
+1. **Guard fix deployed? NO** — the fix is committed and the live process is healed (stale file gone), but ~~the **deployed unit on disk still has `CapabilityBoundingSet=` (empty)**. The fix only takes effect on the next `nix run .#deploy`.~~ done (docs-health 2026-09-14: deployed via the following deploys — module in tree carries `CAP_FOWNER CAP_DAC_OVERRIDE`) Live is fine now, but if another foreign-owned `.prom` appears before deploy, it would fail again.
 2. **atticd/cache 502** — diagnosed only. No code fix possible; requires physical DAS reseat (USB cable + enclosure power) then reboot. The 4 narinfo 502s were benign (local build fallback succeeded), but `cache.home.lan` remains down for all consumers until this is done.
 
 ## c) NOT STARTED

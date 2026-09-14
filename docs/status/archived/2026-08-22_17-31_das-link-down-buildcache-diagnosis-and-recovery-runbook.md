@@ -89,4 +89,4 @@
 
 **Verification commands used this session:** `findmnt`, `lsblk`, sysfs walks (`/sys/bus/usb/devices`, `/sys/class/block`), `journalctl` (kernel + systemd + gatus), `rg`/grep over repo + fish history, `stat`/`ls` via `/mnt/btrfs-root/@` toplevel, `bash -n`, `shellcheck --severity=warning`, live script run, `nix flake check --no-build`.
 
-**State at report time (17:31):** DAS still down (0 storage interfaces, 0 sd* devices, autofs-only mount), tree clean at `40fad948`, no commit made by this session (daemon owns commits).
+**State at report time (17:31):** ~~DAS still down (0 storage interfaces, 0 sd* devices, autofs-only mount)~~ done (docs-health 2026-09-14: DAS recovered 2026-08-31 — pool mounted, both RAID1 members, zero device errors; the buildcache phantom-green also fixed — anchored `buildcache_mounted` presence in gatus-config), tree clean at `40fad948`, no commit made by this session (daemon owns commits).
