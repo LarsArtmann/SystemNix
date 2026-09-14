@@ -29,8 +29,18 @@ let
   cvWrapperFlakeOutput = (import ../modules/nixos/services/cv.nix) { inherit inputs; };
   cvNixosModule = cvWrapperFlakeOutput.flake.nixosModules.cv;
 
+  # CV_API_KEY: the scan-timer auth chain (step 7 asserts 401/403/200).
+  # CV_OIDC_CLIENT_SECRET: cv.nix ships oidc.enabled=true with the secret
+  # EMPTY in config.yaml by design (env-only credential via the cv-oidc-env
+  # bridge in production). Without this seed the server fails config
+  # validation ("oidc.client_secret is required when oidc.enabled is true")
+  # before binding :8098 — the known-red that silenced the pre-commit
+  # full-flake-check leg 2026-09-13→14. Discovery is LAZY upstream
+  # (OIDCFlow.ensureProvider on first /admin use), so no auth.home.lan
+  # contact happens in the VM.
   mockCvEnv = pkgs.writeText "cv-env" ''
     CV_API_KEY=test-api-key-for-vm-only
+    CV_OIDC_CLIENT_SECRET=vm-test-oidc-secret
   '';
 
   # lib/ports.nix: cv = 8098. Hardcoded here because the testScript is a
