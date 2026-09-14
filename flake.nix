@@ -727,8 +727,7 @@
           lib.mapAttrsToList (
             name: node:
             let
-              url =
-                if builtins.isString node then nodeUrl node else ""
+              url = if builtins.isString node then nodeUrl node else "";
             in
             if builtins.match ".*[?&]rev=.*" url != null && !lib.hasPrefix "git+file:" url then name else null
           ) rootInputs
