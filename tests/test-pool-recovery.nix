@@ -166,10 +166,13 @@ in
     healthy.succeed("journalctl -u pool-usb-recovery.service | grep -q 'mount healthy'")
 
     # 1b. CONSUMER CONVERGENCE (boot-dropout class): an enabled-but-inactive
-    #     consumer gets started by the healthy-path recovery run; an
-    #     explicitly disabled consumer is left untouched.
+    #     consumer gets started by the healthy-path recovery run; a masked
+    #     consumer is left untouched. (mask instead of disable: the VM's
+    #     multi-user.target.wants is a read-only store symlink, so disable
+    #     cannot remove the enablement symlink — mask only writes into the
+    #     writable /etc/systemd/system dir and exercises the same skip.)
     healthy.succeed("systemctl stop pool-consumer-test-enabled.service")
-    healthy.succeed("systemctl disable pool-consumer-test-disabled.service")
+    healthy.succeed("systemctl mask --force pool-consumer-test-disabled.service")
     healthy.succeed("systemctl stop pool-consumer-test-disabled.service")
     healthy.succeed("systemctl start pool-usb-recovery.service")
     healthy.succeed("systemctl is-active --quiet pool-consumer-test-enabled.service")
