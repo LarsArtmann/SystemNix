@@ -28,7 +28,7 @@
 #
 # Assertions are forced by `nix flake check` (pre-commit + CI); a bare
 # `nix eval ...toplevel.drvPath` does NOT check them.
-_: {
+{
   flake.nixosModules.systemd-shape-audit =
     {
       config,
