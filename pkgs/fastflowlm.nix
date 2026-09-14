@@ -34,6 +34,12 @@
 # "No such device with index '0'" in ~2s — strace-verified both ways live).
 # The retry gate (reboot into kernel ≥ 7.2.2, live `flm serve` validation)
 # is met since the 2026-09-07 boot (kernel 7.2.3). Release notes for
+# REVERTED to v1.0.2 (2026-09-14): v1.0.3's NPU enumeration failure went
+# LIVE at the first boot carrying it (gen 774, kernel 7.2.5): `No such device
+# with index '0'` with /dev/accel/accel0 present — the dual-lib-dir
+# LD_LIBRARY_PATH wrapper did NOT fix the hardcoded-prefix probe. Per the
+# staged-bump gate: revert on failure; retry only with upstream evidence.
+#
 # v1.0.3-1.0.5 remain weights-only — no kernel/XRT requirement documented.
 #
 # v1.0.3 (2026-08-27): re-quantized Qwen3.5 + Qwen3.6-MoE weights (Q4_1 →
@@ -47,11 +53,11 @@
 # Output: a single derivation exposing `flm` (the wrapper) on $PATH.
 stdenv.mkDerivation (finalAttrs: {
   pname = "fastflowlm";
-  version = "1.0.3";
+  version = "1.0.2";
 
   src = fetchurl {
     url = "https://github.com/ROCm/FastFlowLM/releases/download/v${finalAttrs.version}/fastflowlm_${finalAttrs.version}_linux.tar.gz";
-    hash = "sha256-9yElTmoeBsvXKYg+ikvVg/o5aq3nYdWbtDM86o9Z69E=";
+    hash = "sha256-em+KMNs86DLMVGyJzmvG5oYon5OnX0V/rldc+jOkYEo=";
   };
 
   nativeBuildInputs = [
