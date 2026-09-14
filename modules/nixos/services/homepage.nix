@@ -395,11 +395,79 @@ _: {
         { Productivity = productivityServices; }
       ]
       ++ lib.optional (reviewToolsServices != [ ]) { "Review Tools" = reviewToolsServices; };
+
+      # Registry fan-out (services.integration.<name>.homepage): tiles fold
+      # into an existing group's tab by name, or open a new tab at the end
+      # (the layout derives from groups, so new tabs get styled automatically).
+      # Caveat: targeting a CONDITIONALLY-EMPTY group ("Sync & Backup", "AI",
+      # "Review Tools") when its built-in list is empty opens a SECOND tab of
+      # that name at the end — registry tiles imply their service is enabled,
+      # which normally populates the built-in group too.
+      tileProps =
+        t:
+        lib.optionalAttrs (t.href != null) { inherit (t) href; }
+        // lib.optionalAttrs (t.description != null) { inherit (t) description; }
+        // lib.optionalAttrs (t.icon != null) { inherit (t) icon; };
+
+      addTile =
+        accGroups: tile:
+        let
+          groupName = tile.group;
+          entry = mkService tile.name (tileProps tile);
+        in
+        if lib.any (g: builtins.hasAttr groupName g) accGroups then
+          map (
+            g: if builtins.hasAttr groupName g then { ${groupName} = builtins.getAttr groupName g ++ [ entry ]; } else g
+          ) accGroups
+        else
+          accGroups ++ [ { ${groupName} = [ entry ]; } ];
+
+      allGroups = lib.foldl addTile groups cfg.extraTiles;
     in
     {
       options.services.homepage = {
         enable = lib.mkEnableOption "Homepage Dashboard service";
         port = serviceTypes.servicePort ports.homepage "HTTP port for Homepage Dashboard";
+
+        # Extension seam for services.integration registry fan-out. Tiles
+        # here render through the same mkService/groups pipeline as the
+        # built-in tiles (settings.yaml layout stays derived from groups).
+        extraTiles = lib.mkOption {
+          type = lib.types.listOf (
+            lib.types.submodule {
+              options = {
+                name = lib.mkOption {
+                  type = lib.types.str;
+                  description = "Tile label shown on the dashboard";
+                };
+                group = lib.mkOption {
+                  type = lib.types.str;
+                  description = ''
+                    Dashboard tab the tile belongs to (existing group name
+                    appends to that tab; any other name opens a new tab).
+                  '';
+                };
+                href = lib.mkOption {
+                  type = lib.types.nullOr lib.types.str;
+                  default = null;
+                  description = "Link target (omit for decorative tiles)";
+                };
+                description = lib.mkOption {
+                  type = lib.types.nullOr lib.types.str;
+                  default = null;
+                  description = "Tile subtitle";
+                };
+                icon = lib.mkOption {
+                  type = lib.types.nullOr lib.types.str;
+                  default = null;
+                  description = "Icon name from the bundled dashboard-icons pack";
+                };
+              };
+            }
+          );
+          default = [ ];
+          description = "Registry-managed dashboard tiles (services.integration fan-out)";
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -463,7 +531,7 @@ _: {
                 hideInternetSearch = false;
                 showSearchSuggestions = true;
               };
-              # Derived from `groups` (module let) so services.yaml and
+              # Derived from `allGroups` (module let) so services.yaml and
               # the layout can never drift (orphan empty tabs, missing
               # entries for new groups).
               layout = lib.listToAttrs (
@@ -473,13 +541,13 @@ _: {
                     style = "row";
                     columns = 4;
                   }
-                ) groups
+                ) allGroups
               );
             };
 
         environment.etc."homepage/services.yaml".source =
           (pkgs.formats.yaml { }).generate "homepage-services.yaml"
-            groups;
+            allGroups;
 
         systemd.tmpfiles.rules = [
           (mkStateDir stateDir "0755" "homepage" "homepage")

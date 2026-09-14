@@ -13,6 +13,7 @@ _: {
       serverKey = config.sops.secrets.dnsblockd_server_key.path;
       authPort = config.services.pocket-id-config.port;
       proxyPort = config.services.oauth2-proxy-config.port;
+      registryVHosts = config.services.caddy-config.extraVHosts;
       inherit (import ../../../lib/default.nix lib)
         harden
         serviceDefaults
@@ -88,8 +89,50 @@ _: {
           }
         '';
       };
+
+      plainVHost = port: {
+        extraConfig = ''
+          ${tlsConfig}
+          ${commonConfig}
+          ${proxyTo port}
+        '';
+      };
+
+      renderVHost =
+        v: if v.layer == "protected" then protectedVHost null v.port else plainVHost v.port;
     in
     {
+      options.services.caddy-config = {
+        # Extension seam for services.integration registry fan-out: entries
+        # render through the SAME tlsConfig/commonConfig/forwardAuth helpers
+        # as the hand-written vHosts below — no second source of truth for
+        # the Caddyfile building blocks.
+        extraVHosts = lib.mkOption {
+          type = lib.types.attrsOf (
+            lib.types.submodule {
+              options = {
+                port = lib.mkOption {
+                  type = lib.types.port;
+                  description = "Backend port to proxy to (from lib/ports.nix)";
+                };
+                layer = lib.mkOption {
+                  type = lib.types.enum [ "plain" "protected" ];
+                  default = "protected";
+                  description = ''
+                    "protected" = Layer 2 (oauth2-proxy forward-auth for external, LAN bypass) —
+                    for apps without their own auth. "plain" = Layer 0/1 direct
+                    reverse_proxy — for LAN-only UIs and apps with native OIDC
+                    (forward-auth would double-auth them).
+                  '';
+                };
+              };
+            }
+          );
+          default = { };
+          description = "Registry-managed vHosts, keyed by subdomain (rendered as <subdomain>.<domain>)";
+        };
+      };
+
       config = lib.mkIf config.services.caddy.enable {
         services.caddy = {
           # logFormat is wrapped by the NixOS module as `log { ${logFormat} }`
@@ -390,7 +433,12 @@ _: {
                 ${proxyTo ports.miniflux}
               '';
             };
-          };
+          }
+          # Registry fan-out (services.integration.<name>.vHost) — rendered
+          # through the same helpers as every hand-written vHost above.
+          // (lib.mapAttrs' (
+              sub: v: lib.nameValuePair "${sub}.${domain}" (renderVHost v)
+            ) registryVHosts);
         };
 
         networking.firewall.allowedTCPPorts = [

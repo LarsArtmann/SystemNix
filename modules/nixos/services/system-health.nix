@@ -28,6 +28,10 @@ _: {
         ;
 
       cfg = config.services.system-health;
+      # Built-in default list plus the registry fan-out seam
+      # (services.integration.<name>.monitored) — services registering through
+      # the integration registry append here instead of editing the default.
+      allMonitoredServices = cfg.monitoredServices ++ cfg.extraMonitoredServices;
       textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
 
       # 40 GiB in bytes — user-1000.slice threshold (AGENTS.md: MemoryHigh=56G, MemoryMax=64G)
@@ -220,7 +224,7 @@ _: {
 
           # Write new state for next run
           : > "''${CPU_STATE}.tmp"
-          for svc in ${lib.concatMapStringsSep " " (s: "'${s}'") cfg.monitoredServices}; do
+          for svc in ${lib.concatMapStringsSep " " (s: "'${s}'") allMonitoredServices}; do
             cpu_nsec=$(systemctl_value "$svc" -p CPUUsageNSec)
             cpu_nsec="''${cpu_nsec:-0}"
             echo "$svc $cpu_nsec $NOW_EPOCH" >> "''${CPU_STATE}.tmp"
@@ -235,7 +239,7 @@ _: {
             done < "$RESTART_STATE"
           fi
           : > "''${RESTART_STATE}.tmp"
-          for svc in ${lib.concatMapStringsSep " " (s: "'${s}'") cfg.monitoredServices}; do
+          for svc in ${lib.concatMapStringsSep " " (s: "'${s}'") allMonitoredServices}; do
             cur_r=$(systemctl_value "$svc" -p NRestarts)
             echo "$svc ''${cur_r:-0}" >> "''${RESTART_STATE}.tmp"
           done
@@ -779,7 +783,7 @@ _: {
 
             ${lib.concatMapStrings (svc: ''
               emit_service "${svc}"
-            '') cfg.monitoredServices}
+            '') allMonitoredServices}
 
             echo "# HELP system_service_cpu_percent Average CPU percentage since last collection interval"
             echo "# TYPE system_service_cpu_percent gauge"
@@ -811,7 +815,7 @@ _: {
               fi
               echo "system_service_cpu_percent{service=\"$svc\"} ''${cpu_pct}"
               echo "system_service_cpu_over_threshold{service=\"$svc\"} ''${cpu_over}"
-            '') cfg.monitoredServices}
+            '') allMonitoredServices}
 
             echo "# HELP system_any_service_cpu_over_threshold 1 if ANY monitored service exceeds ${toString cpuAlertThreshold}% CPU average, 0 otherwise"
             echo "# TYPE system_any_service_cpu_over_threshold gauge"
@@ -842,7 +846,7 @@ _: {
                 mem_over=1
               fi
               echo "system_service_memory_over_threshold{service=\"$svc\"} ''${mem_over}"
-            '') cfg.monitoredServices}
+            '') allMonitoredServices}
 
             echo "# HELP system_service_memory_events_max Cgroup memory.events max counter (times service hit MemoryMax)"
             echo "# TYPE system_service_memory_events_max gauge"
@@ -866,7 +870,7 @@ _: {
               fi
               echo "system_service_memory_events_high{service=\"$svc\"} ''${events_high}"
               if [ "$events_high" = "1" ]; then any_events_high=1; fi
-            '') cfg.monitoredServices}
+            '') allMonitoredServices}
 
             echo "# HELP system_memory_events_any_high 1 if ANY monitored service exceeds the memory.events max threshold, 0 otherwise"
             echo "# TYPE system_memory_events_any_high gauge"
@@ -1134,7 +1138,7 @@ _: {
                 ANY_CHURN=1
               fi
               echo "system_service_restart_churn{service=\"$svc\"} ''${churn}"
-            '') cfg.monitoredServices}
+            '') allMonitoredServices}
 
             echo "# HELP system_any_service_crash_loop 1 if ANY monitored service is crash-looping (>=${toString crashLoopRestartThreshold} restarts per interval), 0 otherwise"
             echo "# TYPE system_any_service_crash_loop gauge"
@@ -1294,6 +1298,16 @@ _: {
             "wifi-failover"
           ];
           description = "Systemd services to monitor for state, restart count, crash-loop detection, and start-limit-hit";
+        };
+
+        # Extension seam for services.integration registry fan-out — appending
+        # to monitoredServices directly from other modules would REPLACE this
+        # default list (listOf drops lower-priority definitions), so registry
+        # entries land in this separate option instead.
+        extraMonitoredServices = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = "Registry-managed additions to monitoredServices (services.integration fan-out)";
         };
 
         collectUserSlice = lib.mkOption {

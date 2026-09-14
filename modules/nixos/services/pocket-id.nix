@@ -305,7 +305,7 @@ _: {
                 fi
               fi
             ''
-          ) cfg.provision.oidcClients}
+          ) (cfg.provision.oidcClients ++ cfg.provision.extraOidcClients)}
 
           echo "=== Pocket ID Provisioning Complete ==="
         '';
@@ -377,56 +377,9 @@ _: {
             description = "Admin user to create declaratively";
           };
 
-          oidcClients = lib.mkOption {
-            type = lib.types.listOf (
-              lib.types.submodule {
-                options = {
-                  name = lib.mkOption {
-                    type = lib.types.str;
-                    description = "Display name for the OIDC client";
-                  };
-                  clientId = lib.mkOption {
-                    type = lib.types.str;
-                    description = "Client ID (must be unique)";
-                  };
-                  callbackURLs = lib.mkOption {
-                    type = lib.types.listOf lib.types.str;
-                    default = [ ];
-                    description = "Allowed callback URLs";
-                  };
-                  logoutCallbackURLs = lib.mkOption {
-                    type = lib.types.listOf lib.types.str;
-                    default = [ ];
-                    description = "Allowed logout callback URLs";
-                  };
-                  launchURL = lib.mkOption {
-                    type = lib.types.nullOr lib.types.str;
-                    default = null;
-                    description = "Launch URL shown in Pocket ID UI (clicking the app redirects here)";
-                  };
-                  pkceEnabled = lib.mkOption {
-                    type = lib.types.bool;
-                    default = false;
-                    description = "Whether PKCE is enabled for this client";
-                  };
-                  isPublic = lib.mkOption {
-                    type = lib.types.bool;
-                    default = false;
-                    description = "Whether this is a public client (no client secret)";
-                  };
-                  requiresReauthentication = lib.mkOption {
-                    type = lib.types.bool;
-                    default = false;
-                    description = "Whether to force passkey re-authentication on each login";
-                  };
-                  logoFile = lib.mkOption {
-                    type = lib.types.nullOr lib.types.path;
-                    default = null;
-                    description = "Path to logo image for the client (PNG or SVG)";
-                  };
-                };
-              }
-            );
+          # Client type shared with services.integration.<name>.oidc — lives
+          # in lib/types.nix (serviceTypes.oidcClient).
+          oidcClients = serviceTypes.oidcClient // {
             default = [
               {
                 name = "oauth2-proxy";
@@ -533,6 +486,14 @@ _: {
             description = "OIDC clients to create declaratively";
           };
 
+          # Extension seam for services.integration registry fan-out: service
+          # modules register their own client here instead of editing the
+          # default list above. The provisioner iterates
+          # oidcClients ++ extraOidcClients, so both stay one flow.
+          extraOidcClients = serviceTypes.oidcClient // {
+            description = "Additional OIDC clients from service modules (services.integration fan-out), appended after the default list";
+          };
+
           avatarFile = lib.mkOption {
             type = lib.types.path;
             default = ../../../assets/avatar.png;
@@ -590,7 +551,9 @@ _: {
               !cfg.provision.enable
               || !options ? services.paperless
               || !config.services.paperless.enable
-              || builtins.any paperlessOidcClientOk cfg.provision.oidcClients;
+              || builtins.any paperlessOidcClientOk (
+                cfg.provision.oidcClients ++ cfg.provision.extraOidcClients
+              );
             message = ''pocket-id: paperless is SSO-only but the paperless OIDC client registration is missing or malformed (expected clientId "paperless", pkceEnabled = true, exact callback "https://paperless.${domain}/accounts/oidc/pocket-id/login/callback/") — every paperless login would break with no fallback. Fix services.pocket-id-config.provision.oidcClients.'';
           }
         ];
