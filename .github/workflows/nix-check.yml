@@ -112,6 +112,14 @@ jobs:
       - name: Textfile tmp-path audit
         run: scripts/audit-textfile-tmp.sh
 
+      # serviceConfig = X // Y shallow-merges discard mkDefault/mkForce
+      # priority silently — lib.mkMerge [...] is the only sanctioned merge.
+      # Selftest first (a scanner must prove it still detects), then scan.
+      - name: serviceConfig shallow-merge audit
+        run: |
+          scripts/audit-serviceconfig-merge.sh --selftest
+          scripts/audit-serviceconfig-merge.sh
+
       - name: Flake input hygiene (ref=master + GOTOOLCHAIN)
         run: |
           # Fail on GOTOOLCHAIN=auto (sandbox purity violation)
