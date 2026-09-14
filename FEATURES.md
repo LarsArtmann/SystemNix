@@ -257,7 +257,7 @@ _A brutally honest audit of every feature the project actually has._
 | Zellij (terminal multiplexer) | ✅     | Catppuccin Mocha, tmux-compatible keybindings (Ctrl+A), 3 custom layouts (dev/monitoring/default)                                                                                    |
 | Kitty (terminal)              | ✅     | Font size 16 (TV-friendly), 85% opacity, Catppuccin Mocha, Nix GC resilience patch                                                                                                   |
 | Foot (terminal)               | ✅     | Lightweight Wayland alt, JetBrainsMono size 12, 95% opacity                                                                                                                          |
-| Swayidle                      | ✅     | 1h idle → DPMS off (`niri msg action power-off-monitors`, raised from 20min 2026-09-14), 12h idle → suspend, lock before sleep. `sway-audio-idle-inhibit` prevents idle during audio playback |
+| Swayidle                      | ✅     | 4h idle → DPMS off (`niri msg action power-off-monitors`, raised from 20min 2026-09-14), 12h idle → suspend, lock before sleep. `sway-audio-idle-inhibit` prevents idle during audio playback |
 | SSH suspend guard             | ✅     | Holds `sleep` block inhibitor via `systemd-inhibit` while SSH sessions active — prevents suspend during remote work                                                                  |
 | Cliphist CLI                  | ✅     | Package kept for manual use; always-on service retired (DMS owns clipboard history)                                                                                                  |
 
