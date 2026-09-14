@@ -531,7 +531,13 @@ in
       machine.fail("systemctl is-active --quiet btrfs-balance-data.service")
       prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
       assert "memory_emergency_guard_io_psi_some_avg60_percent 55.00" in prom
-      assert "memory_emergency_guard_io_disk_busy_percent_max 40.0" in prom
+      # The busy% value depends on the integer-second elapsed between the
+      # seeded epoch and the guard run (12000 ms delta / elapsed), so the
+      # exact printed value is timing-flaky (40.0 at elapsed=30, 38.7 at
+      # 31). Assert it is KNOWN and the corroboration gate PASSED — the
+      # trip itself is only reachable with busy >= 20.
+      assert "memory_emergency_guard_io_disk_busy_percent_max " in prom
+      assert "memory_emergency_guard_io_disk_busy_percent_max -1" not in prom
       assert "memory_emergency_guard_zone6_trips_total 1" in prom
 
       # --- 8b. Phantom io PSI (idle disks) must NOT trip -----------------
