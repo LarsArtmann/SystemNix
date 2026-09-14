@@ -20,13 +20,13 @@
 | Work | Gap |
 | --- | --- |
 | The fix itself | Committed to the tree but **NOT deployed** — the running system still carries the old (deployed) timeout. Requires `nix run .#deploy`. Until then the user's complaint is not actually resolved on the desktop |
-| AGENTS.md gotcha bullet ("Idle DPMS via swayidle (2026-08-22): 1200s") | NOT updated — still documents 20 min. Only FEATURES.md was updated. Doc drift created by this session |
+| ~~AGENTS.md gotcha bullet ("Idle DPMS via swayidle (2026-08-22): 1200s") | NOT updated — still documents 20 min. Only FEATURES.md was updated. Doc drift created by this session~~ | done (docs-health pass 2026-09-14 18:30 — bullet corrected to the 4h raise + deploy-pending caveat + the unexplained ~5min observation recorded) |
 
 ## c) NOT STARTED
 
 - **The "5 minutes" root-cause hunt.** The committed config said 1200s (20 min), the user observed ~5 min. I changed the committed value without confirming the deployed unit's ACTUAL runtime value (`systemctl` is blocked in this sandbox). Two unresolved hypotheses: (1) the deployed generation predates the 2026-08-22 20-min commit and still runs an older timeout (or another timer entirely — DMS lock screen at 10 min? an older 900s value from the archived 15-min era?), (2) the user's perception. The real check after deploy: `systemctl --user cat swayidle.service | grep ExecStart`.
 - User decision on the idle ACTION itself — DPMS-off vs lock-screen-only vs nothing is still DPMS-off; only the timeout moved.
-- CHANGELOG.md entry for the timeout change.
+- ~~CHANGELOG.md entry for the timeout change.~~ done (docs-health pass 2026-09-14 — CHANGELOG [Unreleased] Changed entry added with deploy-pending caveat)
 
 ## d) TOTALLY FUCKED UP
 
@@ -51,7 +51,7 @@ Nothing destroyed. But two process failures worth naming:
 1. Deploy (`nix run .#deploy`) — the fix is inert until then.
 2. Post-deploy: verify live user unit ExecStart carries `timeout 14400` (catch the exit-4 / profile-not-bumped class).
 3. Root-cause the "5 minutes" observation — check the DEPLOYED generation's swayidle timeout and DMS lock timer; if the deployed value was 900/300, find which generation regressed and when.
-4. Update the AGENTS.md gotcha bullet (1200s → 14400s + date).
+4. ~~Update the AGENTS.md gotcha bullet (1200s → 14400s + date).~~ done (docs-health pass 2026-09-14 18:30)
 5. CHANGELOG.md entry for the DPMS timeout change.
 
 **Refactor / quality:**
