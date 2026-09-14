@@ -2,15 +2,15 @@
 
 **Date:** 2026-09-14 16:16 CEST
 **Session scope:** Single question — *"Can we configure Signal to be green via Nix?"*
-**Repo changes made this session:** NONE (read-only investigation). The `tests/test-pool-recovery.nix` modification visible at session start belonged to another session/auto-daemon and was not touched here.
+~~**Repo changes made this session:** NONE (read-only investigation). The `tests/test-pool-recovery.nix` modification visible at session start belonged to another session/auto-daemon and was not touched here.~~ **CORRECTED 2026-09-14 (implementation round):** this session shipped `activation.signal-theme` in `platforms/nixos/users/home.nix:490` (auto-committed `28e28055`) + an AGENTS.md Signal gotcha entry + this annotation. Files owned by parallel sessions (probe-audit, forgejo-repos, systemd-shape-audit) were never touched.
 
 ---
 
 ## Executive Summary
 
-The answer delivered: **No supported declarative path exists.** Signal Desktop 8.25.0 stores UI settings (theme, chat color) in a SQLCipher-encrypted SQLite `items` table; the only plaintext hooks are `config.json` (encryption key only) and `ephemeral.json` (a write-through cache for a handful of main-process settings, `theme-setting` among them, whose authoritative value still lives in the encrypted DB). Home-manager has no Signal module at all. Practical routes: one-time UI configuration (delivered), or an opt-in unsupported sqlcipher-seeding script (offered, not built).
+The answer delivered: **No supported declarative path exists.** Signal Desktop 8.25.0 stores UI settings (theme, chat color) in a SQLCipher-encrypted SQLite `items` table; the only plaintext hooks are `config.json` (encryption key only) and `ephemeral.json` (a write-through cache for a handful of main-process settings, `theme-setting` among them, whose authoritative value still lives in the encrypted DB). Home-manager has no Signal module at all. ~~Practical routes: one-time UI configuration (delivered), or an opt-in unsupported sqlcipher-seeding script (offered, not built).~~ **UPDATED 2026-09-14:** THEME is now implemented declaratively (`activation.signal-theme`, commit `28e28055`); chat color remains UI-only (per-conversation rows in the encrypted store) — the sqlcipher-seeding script stays unapproved/unbuilt.
 
-**The intent ambiguity was never resolved:** "green" was assumed to mean the chat-color/accent preset. The user never confirmed which visual target was meant.
+~~**The intent ambiguity was never resolved:** "green" was assumed to mean the chat-color/accent preset. The user never confirmed which visual target was meant.~~ **RESOLVED 2026-09-14:** user clarified "chat-color and or theme" — theme implemented declaratively, chat color confirmed UI-only (see UPDATE appendix).
 
 ---
 
@@ -33,7 +33,7 @@ The answer delivered: **No supported declarative path exists.** Signal Desktop 8
 | Item | Works | Open gap | Blocker | Effort |
 | --- | --- | --- | --- | --- |
 | "No CLI theme flag" verification | Verified via source: `getThemeSetting()` reads only `ephemeral.json`, no argv parsing for theme | Never ran `signal-desktop --help` to enumerate the full flag surface — conclusion rests on source reading of one function, not the binary's own self-description | None — one command away | S |
-| Persisting session findings | Findings exist in conversation only | Nothing written to repo (AGENTS.md gotcha entry / docs/services note / TODO_LIST). Durable knowledge ("Signal settings = SQLCipher items store; ephemeral.json hook; no HM module") will be re-derived from zero next time | Own omission — memory-update protocol says persist immediately | S |
+| Persisting session findings | ~~Findings exist in conversation only~~ Now persisted: AGENTS.md Desktop gotcha entry + annotated report | ~~Nothing written to repo (AGENTS.md gotcha entry / docs/services note / TODO_LIST). Durable knowledge ("Signal settings = SQLCipher items store; ephemeral.json hook; no HM module") will be re-derived from zero next time~~ AGENTS.md done 2026-09-14; docs/services/signal.md runbook + TODO_LIST entry still open | ~~Own omission — memory-update protocol says persist immediately~~ Resolved for AGENTS.md; runbook/TODO_LIST remain | S |
 | Cross-device sync claim in the final answer | Plausible (Signal syncs chat colors via storage service) | **Unverified** — I asserted "appearance syncs to linked devices" without checking which appearance settings actually sync | External behavior, needs Signal docs/testing | S |
 
 ## c) NOT STARTED
@@ -43,7 +43,7 @@ The answer delivered: **No supported declarative path exists.** Signal Desktop 8
 | sqlcipher DB-seeding script (read key from `config.json`, upsert `items` row, gated on Signal not running) | Awaiting user decision; I advised against it and stopped at the offer | Unknown — user decision |
 | Identification of the exact `items`-table key for the global chat color (SELECT over a DB copy) | Blocked behind the seeding decision | Unknown |
 | Darwin-side check (is Signal installed on Lars-MacBook-Air; same `~/Library/Application Support/Signal` layout) | Out of the literal question scope; Electron internals are platform-independent so conclusion likely identical, but unverified | Low |
-| Investigation of whether `ephemeral.json` `theme-setting` actually changes UI theme when the DB carries a different value (renderer reads DB; main reads ephemeral — divergence behavior untested) | Requires a live experiment on the running desktop | Medium — decides whether the one real file hook is usable at all |
+| ~~Investigation of whether `ephemeral.json` `theme-setting` actually changes UI theme when the DB carries a different value (renderer reads DB; main reads ephemeral — divergence behavior untested)~~ RESOLVED 2026-09-14 — source+bundle verification: renderer reads themeSetting via IPC from main, which reads `ephemeral.json` FIRST; no divergence path; hook proven live-authoritative and implemented (`28e28055`) | ~~Requires a live experiment on the running desktop~~ Not needed — settled from source | ~~Medium — decides whether the one real file hook is usable at all~~ Settled: it is |
 | nixpkgs `signal-desktop` wrapper-options check (e.g. `extraCommandLineFlags`-style passthrough) | Not attempted | Low |
 | TODO_LIST entry recording the outcome + pending decision | Not written (same omission as b) | Yes |
 
@@ -54,13 +54,13 @@ The answer delivered: **No supported declarative path exists.** Signal Desktop 8
 | What | Severity | Root cause | Mitigation |
 | --- | --- | --- | --- |
 | The final answer contained at least one **unverified external claim** (appearance settings sync across linked devices). If false, the recommended "one-time UI" route breaks its own justification for multi-device use | Medium — could invalidate the delivered recommendation | verify-external-claims discipline slipped: plausible-from-memory claim encoded into the answer instead of verified | Verify or explicitly retract before any decision is based on it (task f-04) |
-| The session answered a question whose **core term was never defined by the asker**. "Green" was silently mapped to "chat-color preset" — if the user meant something else (classic Signal green branding, dark theme with green tint), the entire investigation answered the wrong question | High — wasted effort class, wrong-answer class | Proceeded on "most reasonable assumption" instead of one clarifying question; the ambiguity was genuinely intent-level, not resolvable from code | Question g-1; no further tooling until answered |
+| The session answered a question whose **core term was never defined by the asker**. "Green" was silently mapped to "chat-color preset" — if the user meant something else (classic Signal green branding, dark theme with green tint), the entire investigation answered the wrong question | High — wasted effort class, wrong-answer class | Proceeded on "most reasonable assumption" instead of one clarifying question; the ambiguity was genuinely intent-level, not resolvable from code | Question g-1; no further tooling until answered — **RESOLVED 2026-09-14:** user answered "chat-color and or theme"; theme implemented, chat color scoped to UI |
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Intent-first for ambiguous one-word goals.** "Green" had ≥3 plausible readings. One clarifying question before the first grep would have cost 10 seconds. The "make reasonable assumptions" rule is for implementation detail, not for the target itself.
-2. **Persist durable gotchas at discovery time, not "later".** The SQLCipher/items-store finding is exactly the class the memory-update protocol exists for; it was left in chat. Fix: write AGENTS.md/docs entries as part of the answer, not after a status demand.
-3. **Local-artifact-first verification order.** The deployed `app.asar` grep was the single most productive probe (authoritative version, exact color list) and was reached only after two `agentic_fetch` crashes, a grep.app 429, and stale Sourcegraph symbol queries. Order should be: deployed bundle → upstream source → remote search tools.
+1. **Intent-first for ambiguous one-word goals.** "Green" had ≥3 plausible readings. One clarifying question before the first grep would have cost 10 seconds. The "make reasonable assumptions" rule is for implementation detail, not for the target itself. — **applied** (asked in section g; answered same day)
+2. **Persist durable gotchas at discovery time, not "later".** The SQLCipher/items-store finding is exactly the class the memory-update protocol exists for; it was left in chat. Fix: write AGENTS.md/docs entries as part of the answer, not after a status demand. — **applied** (AGENTS.md Desktop entry + report annotation, 2026-09-14)
+3. **Local-artifact-first verification order.** The deployed `app.asar` grep was the single most productive probe (authoritative version, exact color list) and was reached only after two `agentic_fetch` crashes, a grep.app 429, and stale Sourcegraph symbol queries. Order should be: deployed bundle → upstream source → remote search tools. — **applied** (implementation round went asar-first for the theme/renderer path)
 4. **Tool-failure reporting.** `agentic_fetch` failed twice with a raw Go unmarshal error (`json: cannot unmarshal string into Go value of type apierror.Error`) — a tool bug, not a query problem. Worth noting to harness maintainers; silently working around hides it.
 5. **Close offers with a decision or a TODO.** Ending on "say the word if you want it built" leaves the loop open with no record. Either recommend-and-stop (done) AND write the TODO entry (not done).
 
@@ -95,10 +95,22 @@ The answer delivered: **No supported declarative path exists.** Signal Desktop 8
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
-1. **What exactly did you mean by "green"?** (a) one of Signal's green chat-color presets — `forest` / `wintergreen` / `basil` / `sea` / `lagoon`; (b) the light/dark theme; (c) Signal's classic green branding/icon; (d) something else. I extracted the full preset list from the deployed 8.25.0 bundle, but your intent is not in any code I can read — everything downstream depends on this.
-2. **Is one-time UI configuration acceptable, or must it be automated for fresh profiles/new machines?** If "set it once in the UI and let Signal's own sync propagate" is acceptable, the investigation is closed and no code is needed. If it must be declarative, the sqlcipher-seeding path (with its risks to an encrypted production DB of your primary messenger) becomes the only candidate.
+1. ~~**What exactly did you mean by "green"?** (a) one of Signal's green chat-color presets — `forest` / `wintergreen` / `basil` / `sea` / `lagoon`; (b) the light/dark theme; (c) Signal's classic green branding/icon; (d) something else. I extracted the full preset list from the deployed 8.25.0 bundle, but your intent is not in any code I can read — everything downstream depends on this.~~ **ANSWERED:** "chat-color and or theme".
+2. **Is one-time UI configuration acceptable, or must it be automated for fresh profiles/new machines?** If "set it once in the UI and let Signal's own sync propagate" is acceptable, the investigation is closed and no code is needed. If it must be declarative, the sqlcipher-seeding path (with its risks to an encrypted production DB of your primary messenger) becomes the only candidate. — **ANSWERED BY ACTION (2026-09-14):** theme automated (`activation.signal-theme`); chat color set once in the UI.
 3. **Do you accept the risk profile of the seeding hack?** It decrypts-and-rewrites the message/settings DB of your E2E-critical daily driver against an undocumented internal schema, gated only on "Signal not running." Only you can weigh that against the convenience; my recommendation stands at "don't."
 
 ---
 
 *Point-in-time snapshot — goes stale. Section (f) is the primary input for a future `docs-health` HARVEST pass. Do not treat these claims as current truth without re-verification.*
+
+---
+
+## UPDATE 2026-09-14 (annotated) — implementation round
+
+After the user clarified the target as **chat-color and/or theme**:
+
+1. **Theme shipped declaratively.** `activation.signal-theme` in `platforms/nixos/users/home.nix:490` (auto-commit `28e28055`) jq-merges `"theme-setting": "dark"` into `~/.config/Signal/ephemeral.json`. Verified: toplevel evals; rendered activation correct (store-pinned jq/procps); `bash -n` clean; merge proven idempotent + key-preserving against the real file (which already carried `"theme-setting": "dark"` — live proof the hook is authoritative). Guards: skip while `signal-desktop` runs (it rewrites the file on exit), fresh-profile seed branch (required — HM activation runs under `set -eu`; a missing-file jq failure would abort activation). Values: light/dark/system. **Pending: `nix run .#deploy` to land it.**
+2. **Chat color confirmed NOT declaratively configurable** — `ChatColorPicker` writes per-conversation `conversationColor` rows into the SQLCipher conversations store; no global default item, no file hook. One-time UI action (green presets: forest, wintergreen, basil, sea, lagoon).
+3. **AGENTS.md gotcha entry written** (Desktop section): storage layout, the ephemeral.json exception, the activation wiring, the chat-color verdict.
+4. **Parallel-session note:** `nix fmt -- --ci` flagged `forgejo-repos.nix`, `systemd-shape-audit.nix`, `probe-audit.nix` — all owned by the concurrent pool-boot-dropout session (its own 16:34 report landed in `28e28055`); treefmt `--ci` does not write, so nothing of theirs was modified by this session.
+5. **Still open (untouched rows above are the live backlog):** Signal runbook (`docs/services/signal.md`), TODO_LIST harvest entry, CLI-flag enumeration (`--help`), cross-device-sync claim verification, chat-color preset choice + UI set, optional sqlcipher-seeding path (unapproved), Darwin check, nixpkgs wrapper-options check.

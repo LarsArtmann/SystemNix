@@ -110,6 +110,9 @@ let
                 Environment = [
                   "PATH=/nix/store/abc123-bin:/nix/store/def456-lib"
                   "GOFLAGS=-trimpath"
+                  # Live false positive on first deploy of the guard (2026-09-14):
+                  # fastflowlm/PMA model name parsed as host:port 35.
+                  "OPENAI_MODEL=qwen3.6-moe:35b-a3b"
                 ];
               };
             }

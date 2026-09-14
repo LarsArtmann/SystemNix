@@ -48,11 +48,12 @@
         "ExecCondition"
       ];
 
-      # host-form | colon-form | flag-form (see header). The character class
-      # before the colon excludes digits so clock times ("2:30") and uid:gid
-      # pairs never match; version strings contain no colon+digits. Letters
-      # ARE allowed before the colon (URL hosts: example.test:8152).
-      portRegex = "((127\\.0\\.0\\.1|localhost|0\\.0\\.0\\.0)[: ]([0-9]{2,5}))|([^0-9]:([0-9]{2,5}))|(--port[ =]([0-9]{2,5}))";
+      # host-form | colon-form | flag-form (see header). Leading class
+      # excludes digits (clock times "2:30", uid:gid never match); trailing
+      # boundary for the colon-form excludes letters so model-tag lookalikes
+      # ("qwen3.6-moe:35b-a3b" — live false positive on first deploy of this
+      # guard) never match; a port is followed by a non-alphanumeric or EOL.
+      portRegex = "((127\\.0\\.0\\.1|localhost|0\\.0\\.0\\.0)[: ]([0-9]{2,5})([^0-9]|$))|([^0-9]:([0-9]{2,5})([^0-9a-zA-Z]|$))|(--port[ =]([0-9]{2,5})([^0-9]|$))";
 
       extractPorts =
         text:
