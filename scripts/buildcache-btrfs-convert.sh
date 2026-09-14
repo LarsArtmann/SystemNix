@@ -33,6 +33,25 @@ read -rp "Maintenance window confirmed, no builds/gopls running? Type 'yes': " a
 }
 
 sudo mkdir -p "$STAGE"
+
+# Content gate: refuse to wipe anything that is not the ext4 buildcache
+# (a wrong DEVICE, a device that flipped to another role, or a future
+# repurposing must never reach mkfs silently)
+FSTYPE_NOW=$(lsblk -nrno FSTYPE "$DEVICE" 2>/dev/null || true)
+LABEL_NOW=$(lsblk -nrno LABEL "$DEVICE" 2>/dev/null || true)
+if [ "$FSTYPE_NOW" != "ext4" ] || [ "$LABEL_NOW" != "buildcache" ]; then
+  echo "REFUSING: $DEVICE is fstype='${FSTYPE_NOW}' label='${LABEL_NOW}' —"
+  echo "expected ext4 + label 'buildcache'. If the device role changed, edit"
+  echo "DEVICE at the top of this script deliberately."
+  exit 1
+fi
+for bin in lsblk mkfs.btrfs rsync; do
+  command -v "$bin" >/dev/null || {
+    echo "FAIL: $bin not on PATH — resolve before stopping anything"
+    exit 1
+  }
+done
+
 echo "1/7 Staging go-mod (private deps, ~9G)..."
 sudo rsync -a --delete "$MOUNT/go-mod/" "$STAGE/go-mod/"
 

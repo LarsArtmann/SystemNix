@@ -10,11 +10,19 @@
 #   C. real content: rsync a fixed sample of real /nix/store paths onto each
 #      fs — copy time + ON-DISK usage (measures zstd compression reality)
 #
-# Usage: bench-nix-fs.sh [device]     (default /dev/nvme0n1 — the blank Samsung)
-# DESTRUCTIVE to the target device. Refuses mounted devices.
+# Usage: bench-nix-fs.sh <device>   (REQUIRED — pass a /dev/disk/by-id path;
+#                                   kernel nvme0n1 names FLIP across boots on
+#                                   this box and one of them is the live root)
+# DESTRUCTIVE to the target device (wipefs + mkfs ×3). Refuses mounted or
+# swap-active devices.
 set -euo pipefail
 
-DEVICE="${1:-/dev/nvme0n1}"
+DEVICE="${1:-}"
+[ -n "$DEVICE" ] || {
+  echo "FAIL: device argument required (use a /dev/disk/by-id path — kernel names flip)"
+  echo "Usage: bench-nix-fs.sh <device>"
+  exit 1
+}
 MNT=/mnt/nixfs-bench
 FIO=/nix/store/gpvq80c0ai5df2b8gaqbb4bfmbq8n4nk-fio-3.42/bin/fio
 RESULT=/tmp/nixfs-bench-results.txt
@@ -47,6 +55,12 @@ if lsblk -nr -o MOUNTPOINTS "$DEVICE" 2>/dev/null | grep -q '[^[:space:]]'; then
   echo "REFUSING: $DEVICE (or partition) is mounted"
   exit 1
 fi
+# lsblk MOUNTPOINTS is EMPTY for swap — compare partition names against the
+# first column of /proc/swaps (zram0 excluded by the zram guard above)
+if lsblk -nr -o NAME "$DEVICE" 2>/dev/null | sed 's|^|/dev/|' | grep -qxF -f <(awk 'NR>1 {print $1}' /proc/swaps); then
+  echo "REFUSING: $DEVICE (or partition) is active swap"
+  exit 1
+fi
 for b in mkfs.ext4 mkfs.xfs mkfs.btrfs wipefs mount umount rsync find xargs jq; do
   command -v "$b" >/dev/null || {
     echo "FAIL: $b not on PATH"
@@ -55,7 +69,7 @@ for b in mkfs.ext4 mkfs.xfs mkfs.btrfs wipefs mount umount rsync find xargs jq; 
 done
 
 psi() {
-  awk 'NR==1{gsub(/.*avg10=/, "", $2); printf "PSI io some avg10=%s%%, load %s", $2,substr($0,0,0)}' /proc/pressure/io
+  awk 'NR==1{gsub(/.*avg10=/, "", $2); printf "PSI io some avg10=%s%%, ", $2}' /proc/pressure/io
   printf "load %s" "$(cut -d' ' -f1-3 /proc/loadavg)"
 }
 

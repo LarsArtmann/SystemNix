@@ -11,8 +11,10 @@
 #   4. 1M sequential read/write (bulk: nix store rsync, snapshot sends)
 #
 # Usage:
-#   scripts/bench-disk.sh [device]        # default /dev/nvme0n1
-#   RUNTIME=30 scripts/bench-disk.sh ...  # longer runs
+#   scripts/bench-disk.sh <device>       # REQUIRED — use a /dev/disk/by-id path
+#                                        # (kernel nvme0n1 names FLIP across boots
+#                                        # on this box; one of them is the live root)
+#   RUNTIME=30 scripts/bench-disk.sh ... # longer runs
 #
 # Re-execs itself via `sudo -n` (non-interactive) when not root — raw-device
 # fio needs root. If sudo requires a password, run: sudo scripts/bench-disk.sh
@@ -22,7 +24,12 @@
 # raw device content — only point it at blank/scratch disks.
 set -euo pipefail
 
-DEVICE="${1:-/dev/nvme0n1}"
+DEVICE="${1:-}"
+[ -n "$DEVICE" ] || {
+  echo "FAIL: device argument required (use a /dev/disk/by-id path — kernel names flip)"
+  echo "Usage: scripts/bench-disk.sh <device>"
+  exit 1
+}
 RUNTIME="${RUNTIME:-15}"
 FIO="${FIO:-/nix/store/gpvq80c0ai5df2b8gaqbb4bfmbq8n4nk-fio-3.42/bin/fio}"
 [ -x "$FIO" ] || FIO="$(command -v fio || true)"
@@ -54,6 +61,17 @@ if lsblk -nr -o MOUNTPOINTS "$DEVICE" 2>/dev/null | grep -q '[^[:space:]]'; then
   echo "REFUSING: $DEVICE (or a partition of it) is mounted — destructive test"
   exit 1
 fi
+# lsblk MOUNTPOINTS is EMPTY for swap — compare partition names against the
+# first column of /proc/swaps (zram0 excluded by the zram guard below)
+case "$DEVICE" in
+/dev/zram* | /dev/loop*) ;;
+*)
+  if lsblk -nr -o NAME "$DEVICE" 2>/dev/null | sed 's|^|/dev/|' | grep -qxF -f <(awk 'NR>1 {print $1}' /proc/swaps); then
+    echo "REFUSING: $DEVICE (or a partition of it) is active swap — destructive test"
+    exit 1
+  fi
+  ;;
+esac
 SIZE=$(lsblk -nrno SIZE "$DEVICE")
 echo "### Benchmarking $DEVICE ($SIZE) with $FIO, ${RUNTIME}s per test"
 echo

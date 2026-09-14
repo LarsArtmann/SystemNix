@@ -8,9 +8,9 @@
 #   1. Sets the ext4 volume label to "buildcache"
 #   2. Mounts the SSD at /mnt/buildcache with the production mount options
 #      (the deploy later takes over the mount via fstab)
-#   3. rsyncs each cache, verifies byte-for-byte (apparent size + file count)
+#   3. rsyncs each cache, verifies via a superset check (apparent size +
+#      file count — content is hash-verified by the cache consumers)
 #   4. Moves migrated sources to trash (trash-put — reclaim with trash-empty)
-#      EXCEPT /rust-cache (its partition reclaim is a separate follow-up)
 #   5. Moves ~/.cache/goimports and ~/.cache/go aside so home-manager can
 #      symlink them to the SSD on the next activation
 #
@@ -142,9 +142,9 @@ migrate "$HOME/.cache/ms-playwright" "playwright"
 migrate "$HOME/.cache/pip" "pip"
 migrate "$HOME/.npm/_cacache" "npm/_cacache"
 migrate "$HOME/.local/share/pnpm/store" "pnpm-store"
-# Old /rust-cache NVMe partition: copy for incremental-build continuity; the
-# source stays until the p9 partition is reclaimed (separate task).
-migrate "/rust-cache/monitor365" "rust/monitor365" keep
+# (Historical: the old /rust-cache NVMe partition was also migrated here on
+#  2026-08-14. Its p9 partition is now the LIVE XFS ClickHouse store —
+#  nothing to migrate; do NOT re-add a /rust-cache source.)
 
 echo
 info "done: $TOTAL_FILES files, $((TOTAL_BYTES / 1024 / 1024 / 1024)) GiB verified on $MNT"

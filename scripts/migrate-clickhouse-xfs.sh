@@ -31,7 +31,17 @@
 #   sudo bash scripts/migrate-clickhouse-xfs.sh finalize  # delete shadowed originals
 set -euo pipefail
 
-DISK="/dev/nvme0n1"
+# Resolve the QLC system disk via by-id (kernel nvme0/nvme1 enumeration
+# FLIPS across boots on this box — a hardcoded /dev/nvme0n1 could one boot
+# point at the Samsung). Falls back to whichever nvme carries the live root.
+DISK="$(ls -d /dev/disk/by-id/nvme-Lexar_NQ790_2TB_* 2>/dev/null | head -1 | xargs -r readlink -f || true)"
+if [ -z "$DISK" ]; then
+  ROOT_DISK=$(findmnt -nno SOURCE / | sed -E 's/p?[0-9]+$//')
+  case "$ROOT_DISK" in
+  /dev/nvme*n1) DISK="$ROOT_DISK" ;;
+  *) die "cannot resolve the QLC system disk by-id and root is not nvme" ;;
+  esac
+fi
 PART="${DISK}p9"
 LABEL="clickhouse" # XFS labels are capped at 12 chars
 SRC="/var/lib/clickhouse"

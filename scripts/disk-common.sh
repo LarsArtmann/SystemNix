@@ -1,18 +1,13 @@
 #!/usr/bin/env bash
-# Shared disk geometry constants for evo-x2.
-# Source from BOTH disk-fix.sh and disk-diagnose.sh to prevent drift.
-#
-# Usage: source "$(dirname "$0")/disk-common.sh"
-
-# shellcheck shell=bash
-# Variables are consumed by sourcing scripts — disable "unused" warnings
-# shellcheck disable=SC2034
-DISK="/dev/nvme0n1"
-P8_START_SECTOR=1097861120    # p8 start — hardcoded, never changes
-BTRFS_SIZE_SECTORS=2147483648 # 1.00 TiB
-BTRFS_END_SECTOR=$((P8_START_SECTOR + BTRFS_SIZE_SECTORS))
-TARGET_P8_END_GIB=1560 # gives ~12.5 GiB margin past BTRFS
-TARGET_P8_END_SECTOR=$((TARGET_P8_END_GIB * 1024 * 1024 * 1024 / 512))
-
-sectors_to_gib() { awk -v sectors="$1" 'BEGIN { printf "%.1f", sectors * 512 / 1073741824 }'; }
-sectors_to_tib() { awk -v sectors="$1" 'BEGIN { printf "%.2f", sectors * 512 / 1099511627776 }'; }
+# ═══════════════════════════════════════════════════════════════════════════
+# RETIRED 2026-09-14 — shared constants of the retired 2026-06-26 p8/p9
+# emergency trio (disk-fix.sh, disk-diagnose.sh, disk-create-p9.sh).
+# No remaining consumers. Original preserved in git history.
+# NOTE: this file also hardcoded the disk by kernel name (/dev/nvme0n1) —
+# nvme enumeration flips across boots on this box, another reason it stays
+# retired. Live device references use /dev/disk/by-id.
+# ═══════════════════════════════════════════════════════════════════════════
+# Intentionally defines nothing — kept as a tombstone so `source` fails
+# loudly rather than silently providing stale constants.
+echo "ERROR: scripts/disk-common.sh is RETIRED (p8/p9 emergency trio)." >&2
+exit 1

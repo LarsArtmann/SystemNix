@@ -134,7 +134,9 @@ echo "=== Importing pool ==="
 ssh_cmd "zpool import datapool 2>/dev/null || zpool import -f datapool"
 
 echo "=== Mounting all datasets ==="
-ssh_cmd 'for ds in $(zfs list -H -o name,mountpoint 2>/dev/null | awk "\$2 != \"legacy\" && \$2 != \"-\" && \$2 != \"none\" {print \$1}"); do zfs mount "$ds" 2>/dev/null || true; done; for ds in $(zfs list -H -o name,mountpoint 2>/dev/null | awk "\$2 == \"legacy\" {print \$1}"); do mnt="/mnt/$ds"; mkdir -p "$mnt"; mount -t zfs "$ds" "$mnt" 2>/dev/null || true; done; echo "All datasets mounted."'
+# Fail (not mask) if nothing mounted — an empty mount set would make the
+# manifest empty and the "backup" verify as empty==empty.
+ssh_cmd 'mounted=0; for ds in $(zfs list -H -o name,mountpoint 2>/dev/null | awk "\$2 != \"legacy\" && \$2 != \"-\" && \$2 != \"none\" {print \$1}"); do zfs mount "$ds" 2>/dev/null && mounted=$((mounted+1)); done; for ds in $(zfs list -H -o name,mountpoint 2>/dev/null | awk "\$2 == \"legacy\" {print \$1}"); do mnt="/mnt/$ds"; mkdir -p "$mnt"; mount -t zfs "$ds" "$mnt" 2>/dev/null && mounted=$((mounted+1)); done; echo "Datasets mounted: $mounted"; [ "$mounted" -gt 0 ] || { echo "ERROR: zero datasets mounted — refusing to continue" >&2; exit 1; }'
 
 # ── Generate SHA256 manifest on source ───────────────────────────────
 echo ""
@@ -166,6 +168,7 @@ find /mnt/datapool \
   sed 's|/mnt/datapool/|legacy/|' >> /tmp/source-manifest.sha256
 
 echo "Manifest entries: $(wc -l < /tmp/source-manifest.sha256)"
+[ "$(wc -l < /tmp/source-manifest.sha256)" -gt 0 ] || { echo "ERROR: empty manifest — nothing mounted/readable on source" >&2; exit 1; }
 echo "Manifest preview:"
 head -20 /tmp/source-manifest.sha256
 REMOTE
@@ -189,7 +192,7 @@ echo "=== Copying /storage (excluding Docker layers + ZFS benchmarks) ==="
 
 "$SSHPASS_BIN" -p zfs ssh $SSH_OPTS -p "$SSH_PORT" root@localhost \
   "tar cf - -C /storage --exclude='./apps' --exclude='./cache/zfs_*' --exclude='./cache/health_check*' --exclude='./cache/immich' --exclude='./cache/paperless' ." |
-  tar xvf - -C "$BACKUP_DIR" 2>&1 | grep -v '^$' || true
+  tar xf - -C "$BACKUP_DIR" || { echo "ERROR: /storage copy pipeline failed (ssh or tar)" >&2; exit 1; }
 
 # ── Copy legacy datasets (ONLY datapool root — documents/ + media/) ──
 echo ""
@@ -198,7 +201,7 @@ mkdir -p "$BACKUP_DIR/legacy"
 
 "$SSHPASS_BIN" -p zfs ssh $SSH_OPTS -p "$SSH_PORT" root@localhost \
   "tar cf - -C /mnt/datapool --exclude='./apps' ." |
-  tar xvf - -C "$BACKUP_DIR/legacy" 2>&1 | grep -v '^$' || true
+  tar xf - -C "$BACKUP_DIR/legacy" || { echo "ERROR: legacy copy pipeline failed (ssh or tar)" >&2; exit 1; }
 
 # ── Save manifest to backup dir ──────────────────────────────────────
 cp "$MANIFEST" "$MANIFEST_DEST"
@@ -226,8 +229,9 @@ popd >/dev/null
 #                                        <hash>  legacy/<relative>   for legacy/
 # Identical — no normalization needed. Source normalize is a no-op kept for clarity.
 
-# Normalize source: strip /storage/ prefix and legacy/ prefix (already absent)
-sort "$MANIFEST" | sed -e 's|  /storage/|  |' -e 's|  legacy/|  |' >/tmp/source-manifest-normalized.sha256
+# Normalize source: strip /storage/ prefix (legacy/ entries already carry
+# the legacy/ prefix and must KEEP it — dest files live under legacy/ too)
+sort "$MANIFEST" | sed -e 's|  /storage/|  |' >/tmp/source-manifest-normalized.sha256
 
 # Normalize dest: strip leading ./
 sort /tmp/dest-manifest.sha256 | sed 's|  \./|  |' >/tmp/dest-manifest-normalized.sha256
@@ -241,6 +245,11 @@ DIFF_OUTPUT="$(diff /tmp/source-manifest-normalized.sha256 /tmp/dest-manifest-no
 
 if [ -z "$DIFF_OUTPUT" ]; then
   echo "✅ ALL FILES VERIFIED — SHA256 hashes match"
+  # Verified — now reclaim the moved-aside previous backup
+  if [ -n "$OLD_BACKUP" ] && [ -d "$OLD_BACKUP" ]; then
+    echo "Removing verified-superseded old backup: $OLD_BACKUP"
+    rm -rf -- "$OLD_BACKUP"
+  fi
 else
   echo "❌ VERIFICATION FAILED — mismatches found:"
   echo "$DIFF_OUTPUT" | head -30
@@ -251,6 +260,10 @@ else
   echo "Files in source but not in dest (missing): $ONLY_SRC"
   echo "Files in dest but not in source (extra):   $ONLY_DST"
   echo "Files with matching hashes (verified):     $MATCHED"
+  echo ""
+  echo "The previous backup was kept at: ${OLD_BACKUP:-<none>}"
+  echo "=== BACKUP FAILED — NOT COMPLETE ==="
+  exit 1
 fi
 
 # ── Final summary ────────────────────────────────────────────────────

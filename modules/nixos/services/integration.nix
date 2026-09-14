@@ -353,57 +353,51 @@ _: {
         description = "Service-integration registry: one entry per service, fanned out to Caddy/Gatus/Homepage/backup/monitoring/OTel/OIDC";
       };
 
-      config = lib.mkMerge [
-        {
-          assertions =
-            let
-              dnsMissing =
-                name: e:
-                e.enable
-                && e.subdomain != null
-                && !builtins.elem e.subdomain dnsLocalSubdomains;
-              vhostIncomplete =
-                name: e:
-                e.enable
-                && e.vHost.layer != "none"
-                && (e.subdomain == null || e.port == null);
-              checkWithoutPort =
-                name: e:
-                e.enable
-                && builtins.any (c: c.url == null) e.checks
-                && e.port == null;
-            in
-            [
-              {
-                assertion = lib.all (name: e: !dnsMissing name e) (lib.attrNames cfg);
-                message = "integration: subdomain(s) missing from platforms/common/dns-local.nix (the cross-host DNS truth served by dnsblockd AND rpi3-dns): ${
-                  lib.concatStringsSep ", " (lib.mapAttrsToList (name: e: lib.optionalString (dnsMissing name e) e.subdomain) cfg)
-                }";
-              }
-              {
-                assertion = lib.all (name: e: !vhostIncomplete name e) (lib.attrNames cfg);
-                message = "integration: vHost layer != none requires BOTH subdomain and port: ${
-                  lib.concatStringsSep ", " (lib.attrNames (lib.filterAttrs (name: e: vhostIncomplete name e) cfg))
-                }";
-              }
-              {
-                assertion = lib.all (name: e: !checkWithoutPort name e) (lib.attrNames cfg);
-                message = "integration: relative-path checks need the entry's port: ${
-                  lib.concatStringsSep ", " (lib.attrNames (lib.filterAttrs (name: e: checkWithoutPort name e) cfg))
-                }";
-              }
-            ];
-        }
+      config = {
+        # NOTE: guards are leaf-level mkIf on `options ?` (module presence),
+        # NEVER top-level optionalAttrs reading option VALUES — a top-level
+        # condition forces evaluation during config traversal and infinite-
+        # recurses through the very option being merged (mkIf is discharged
+        # per-definition before that walk; option-existence reads no values).
+        assertions =
+          let
+            dnsMissing =
+              e: e.enable && e.subdomain != null && !builtins.elem e.subdomain dnsLocalSubdomains;
+            vhostIncomplete =
+              e: e.enable && e.vHost.layer != "none" && (e.subdomain == null || e.port == null);
+            checkWithoutPort =
+              e: e.enable && builtins.any (c: c.url == null) e.checks && e.port == null;
+          in
+          [
+            {
+              assertion = lib.all (e: !dnsMissing e) (builtins.attrValues cfg);
+              message = "integration: subdomain(s) missing from platforms/common/dns-local.nix (the cross-host DNS truth served by dnsblockd AND rpi3-dns): ${
+                lib.concatStringsSep ", " (map (e: e.subdomain) (builtins.filter dnsMissing (builtins.attrValues cfg)))
+              }";
+            }
+            {
+              assertion = lib.all (e: !vhostIncomplete e) (builtins.attrValues cfg);
+              message = "integration: vHost layer != none requires BOTH subdomain and port: ${
+                lib.concatStringsSep ", " (lib.attrNames (lib.filterAttrs (_: vhostIncomplete) cfg))
+              }";
+            }
+            {
+              assertion = lib.all (e: !checkWithoutPort e) (builtins.attrValues cfg);
+              message = "integration: relative-path checks need the entry's port: ${
+                lib.concatStringsSep ", " (lib.attrNames (lib.filterAttrs (_: checkWithoutPort) cfg))
+              }";
+            }
+          ];
 
-        (lib.optionalAttrs (options ? services.caddy-config) {
-          services.caddy-config.extraVHosts = lib.mapAttrs (_: e: {
+        services.caddy-config.extraVHosts = lib.mkIf (options ? services.caddy-config) (
+          lib.mapAttrs (_: e: {
             inherit (e) port;
             inherit (e.vHost) layer;
-          }) vhostEntries;
-        })
+          }) vhostEntries
+        );
 
-        (lib.optionalAttrs (options ? services.gatus-config) {
-          services.gatus-config.extraEndpoints = map (
+        services.gatus-config.extraEndpoints = lib.mkIf (options ? services.gatus-config) (
+          map (
             { name, e, check }:
             mkHttpCheck {
               inherit (check) name group interval conditions;
@@ -412,53 +406,49 @@ _: {
             }
             // lib.optionalAttrs (check.client != { }) { inherit (check) client; }
             // lib.optionalAttrs (check.headers != { }) { inherit (check) headers; }
-          ) entryChecks;
-        })
+          ) entryChecks
+        );
 
-        (lib.optionalAttrs (options ? services.homepage) {
-          services.homepage.extraTiles = lib.mapAttrsToList homepageTile (
-            lib.filterAttrs (_: e: e.homepage != null) enabledEntries
-          );
-        })
+        services.homepage.extraTiles = lib.mkIf (options ? services.homepage) (
+          lib.mapAttrsToList homepageTile (lib.filterAttrs (_: e: e.homepage != null) enabledEntries)
+        );
 
-        (lib.optionalAttrs (options ? services.backup-coordination) {
-          services.backup-coordination.backups = lib.mapAttrs (_: e: e.backup) backupEntries;
-        })
+        services.backup-coordination.backups = lib.mkIf (options ? services.backup-coordination) (
+          lib.mapAttrs (_: e: e.backup) backupEntries
+        );
 
-        (lib.optionalAttrs (options ? services.system-health) {
-          services.system-health.extraMonitoredServices = lib.mapAttrsToList unitOf monitoredEntries;
-        })
+        services.system-health.extraMonitoredServices = lib.mkIf (options ? services.system-health) (
+          lib.mapAttrsToList unitOf monitoredEntries
+        );
 
-        (lib.optionalAttrs (options ? services.signoz-coverage) {
-          services.signoz-coverage.expected = lib.mapAttrs (_: e: {
-            serviceName = e.otel.serviceName;
-            wiring = "env";
-            maxAgeHours = e.otel.maxAgeHours;
-          }) otelEntries;
-        })
+        # Registry keys are UNIT names (the signoz-coverage reverse assertion
+        # maps units that set the OTLP env var to expected keys), not entry
+        # names — honor the unit override.
+        services.signoz-coverage.expected = lib.mkIf (options ? services.signoz-coverage) (
+          lib.mapAttrs' (
+            name: e:
+            lib.nameValuePair (unitOf name e) {
+              serviceName = e.otel.serviceName;
+              wiring = "env";
+              maxAgeHours = e.otel.maxAgeHours;
+            }
+          ) otelEntries
+        );
 
-        (lib.optionalAttrs (options ? services.otel-endpoint-audit) {
-          services.otel-endpoint-audit.expectations = lib.mapAttrs (_: e: e.otel.shape) otelEntries;
-        })
+        services.otel-endpoint-audit.expectations = lib.mkIf (options ? services.otel-endpoint-audit) (
+          lib.mapAttrs' (name: e: lib.nameValuePair (unitOf name e) e.otel.shape) otelEntries
+        );
 
-        (
-          let
-            otelUnitEnv = lib.mapAttrs' (
-              name: e:
-              lib.nameValuePair (unitOf name e) {
-                environment.OTEL_EXPORTER_OTLP_ENDPOINT = otelEndpoint e.otel.shape;
-              }
-            ) otelEntries;
-          in
-          { systemd.services = otelUnitEnv; }
-        )
+        systemd.services = lib.mapAttrs' (
+          name: e:
+          lib.nameValuePair (unitOf name e) {
+            environment.OTEL_EXPORTER_OTLP_ENDPOINT = otelEndpoint e.otel.shape;
+          }
+        ) otelEntries;
 
-        (lib.optionalAttrs (
-          (options ? services.pocket-id-config)
-          && (config.services.pocket-id-config.provision.enable or false)
-        ) {
-          services.pocket-id-config.provision.extraOidcClients = lib.mapAttrsToList (_: e: e.oidc) oidcEntries;
-        })
-      ];
+        services.pocket-id-config.provision.extraOidcClients =
+          lib.mkIf (options ? services.pocket-id-config)
+            (lib.mapAttrsToList (_: e: e.oidc) oidcEntries);
+      };
     };
 }

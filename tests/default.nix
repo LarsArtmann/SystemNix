@@ -48,6 +48,11 @@ in
   systemd-shape-audit = import ./test-systemd-shape-audit.nix { inherit pkgs inputs system; };
   port-registry-audit = import ./test-port-registry-audit.nix { inherit pkgs inputs system; };
   harden-lifecycle = import ./test-harden-lifecycle.nix { inherit pkgs inputs; };
+  mkfilesystem =
+    let
+      outcome = import ./test-mkFilesystem.nix { inherit (pkgs) lib; };
+    in
+    pkgs.runCommand "test-mkFilesystem" { } "echo ${outcome} > $out";
   mount-gating-audit = import ./test-mount-gating-audit.nix { inherit pkgs inputs system; };
   gatus-coverage-audit = import ./test-gatus-coverage-audit.nix { inherit pkgs inputs system; };
   deploy-restart-audit = import ./test-deploy-restart-audit.nix { inherit pkgs inputs system; };
