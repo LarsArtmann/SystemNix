@@ -428,6 +428,8 @@ _: {
               # resumes incrementally; an interrupted receive is healed by
               # btrbk-pool-clean). Stopping an inactive unit is a no-op.
               if [ -n "$CHURN_UNITS" ]; then
+                # deliberate word splitting over the unit list
+                # shellcheck disable=SC2086
                 systemctl stop $CHURN_UNITS 2>/dev/null || true
               fi
               echo "$now" > "$LAST_TRIP_FILE"

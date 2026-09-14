@@ -72,12 +72,13 @@ let
     name: attrs:
     let
       diskTicks = attrs.diskTicks or 1000;
+      ioPsiAvg60 = attrs.ioPsiAvg60 or "0.00";
     in
     "mkdir -p /tmp/gt && "
     + "printf '"
-    + (sourcesBlob attrs)
+    + (sourcesBlob (builtins.removeAttrs attrs [ "diskTicks" ]))
     + "\\nsome avg10=0.00 avg60="
-    + attrs.ioPsiAvg60
+    + ioPsiAvg60
     + " avg300=0.00 total=0\\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
     + "\\n8 0 nvme0n1 1 2 3 4 5 6 7 8 "
     + (toString diskTicks)
@@ -298,6 +299,10 @@ in
           # A stale /run/flm-test.sock (left when the guard stopped the
           # socket mid-listen) makes ListenStream fail with EADDRINUSE.
           machine.succeed("rm -f /run/flm-test.sock")
+          # A still-active backend makes the socket start fail ("Socket
+          # service ... already active, refusing") — stop it first.
+          machine.succeed("systemctl stop fastflowlm.service"
+                          " 'fastflowlm@*.service' || true")
           machine.succeed("systemctl start fastflowlm.socket")
           machine.succeed("systemctl start fastflowlm.service"
                           " 'fastflowlm@1.service'")
