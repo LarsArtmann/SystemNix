@@ -47,6 +47,7 @@ in
   sops-key-audit = import ./test-sops-key-audit.nix { inherit pkgs inputs system; };
   systemd-shape-audit = import ./test-systemd-shape-audit.nix { inherit pkgs inputs system; };
   port-registry-audit = import ./test-port-registry-audit.nix { inherit pkgs inputs system; };
+  harden-lifecycle = import ./test-harden-lifecycle.nix { inherit pkgs inputs; };
   tq-agent-pool = import ./test-tq-agent-pool.nix { inherit pkgs inputs system; };
   inboxclean-paperless = import ./test-inboxclean-paperless.nix { inherit pkgs inputs system; };
   bank-sync-paperless = import ./test-bank-sync-paperless.nix { inherit pkgs inputs system; };

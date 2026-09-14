@@ -13,6 +13,40 @@ args@{
   ...
 }:
 let
+  # Unit LIFECYCLE keys never belong inside a hardening fragment. They are
+  # documented to crash-loop when merged here (the oneshot+Restart=always
+  # class, service-defaults.nix) or silently lose priority in `//` chains.
+  # This throw makes the illegal shape impossible at eval time instead of
+  # failing at unit load — see the "harden {} ExecStart trap" gotcha.
+  lifecycleKeys = [
+    "ExecStart"
+    "ExecStartPre"
+    "ExecStartPost"
+    "ExecStartEx"
+    "ExecStop"
+    "ExecStopPost"
+    "ExecStopEx"
+    "ExecReload"
+    "ExecCondition"
+    "Type"
+    "RemainAfterExit"
+    "Restart"
+  ];
+  lifecycleOffenders = builtins.attrNames (builtins.intersectAttrs (lib.genAttrs lifecycleKeys (_: null)) args);
+  guard =
+    if lifecycleOffenders != [ ] then
+      throw ''
+        harden{} was passed unit lifecycle key(s): ${lib.concatStringsSep ", " lifecycleOffenders}
+        Exec*/Type/RemainAfterExit/Restart NEVER belong inside a hardening
+        fragment — merge them OUTSIDE via lib.mkMerge so priorities survive:
+          serviceConfig = lib.mkMerge [
+            { Type = "oneshot"; ExecStart = "…"; }
+            (harden { MemoryMax = "1G"; })
+          ];
+      ''
+    else
+      true;
+
   isOverride = v: builtins.isAttrs v && v ? _type && v._type == "override";
   mkDefault' = v: if isOverride v then v else lib.mkDefault v;
 
@@ -87,4 +121,4 @@ let
   ];
   passthrough = builtins.removeAttrs args namedKeys;
 in
-shared // lib.optionalAttrs (mode == "system") systemOnly // passthrough
+builtins.seq guard (shared // lib.optionalAttrs (mode == "system") systemOnly // passthrough)
