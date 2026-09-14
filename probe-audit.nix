@@ -43,12 +43,11 @@ let
     text:
     let
       parts = builtins.split portRegex text;
-      groups = builtins.filter builtins.isString (
-        lib.flatten (map (x: if builtins.isList x then (builtins.filter (g: g != null) x) else [ ]) parts)
-      );
-      toNum = v: lib.toInt v;
+      digitGroups =
+        builtins.filter (g: builtins.isString g && builtins.match "[0-9]+" g != null)
+          (lib.flatten (map (x: if builtins.isList x then x else [ ]) parts));
     in
-    builtins.filter (p: p >= 2 && p <= 65535) (map toNum groups);
+    builtins.filter (p: p >= 2 && p <= 65535) (map lib.toInt digitGroups);
 
   unitText =
     name:

@@ -474,6 +474,34 @@ in
       fi
     '';
 
+    # Signal Desktop theme (declarative). The renderer reads `themeSetting`
+    # via IPC from the Electron main process, and the main process reads
+    # `ephemeral.json` FIRST (upstream settingsChannel.main.ts
+    # EPHEMERAL_NAME_MAP + main.main.ts getThemeSetting; verified against the
+    # deployed 8.25.0 bundle) — so this file IS the live-authoritative theme
+    # store, even though other settings live in the SQLCipher items table.
+    # Signal rewrites ephemeral.json at runtime (window geometry etc.), so we
+    # jq-MERGE the key instead of symlinking, and skip while Signal is running
+    # (it would overwrite the file on exit). Valid values: light/dark/system.
+    # Chat color is NOT declaratively configurable: the ChatColorPicker writes
+    # per-conversation `conversationColor` rows into the encrypted
+    # conversations store — set it once in the UI (green presets: forest,
+    # wintergreen, basil, sea, lagoon).
+    activation.signal-theme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      SIGNAL_THEME="dark"
+      SIGNAL_EPHEMERAL="$HOME/.config/Signal/ephemeral.json"
+      if [ -d "$HOME/.config/Signal" ]; then
+        if ${pkgs.procps}/bin/pgrep -x signal-desktop >/dev/null 2>&1; then
+          echo "signal-theme: signal-desktop is running, skipping (it would overwrite ephemeral.json on exit)"
+        else
+          $DRY_RUN_CMD ${pkgs.jq}/bin/jq --arg t "$SIGNAL_THEME" '.["theme-setting"] = $t' \
+            "$SIGNAL_EPHEMERAL" > "$SIGNAL_EPHEMERAL.tmp" \
+            && $DRY_RUN_CMD mv "$SIGNAL_EPHEMERAL.tmp" "$SIGNAL_EPHEMERAL"
+          rm -f "$SIGNAL_EPHEMERAL.tmp"
+        fi
+      fi
+    '';
+
     # NixOS-specific session variables
     sessionVariables = {
       # Build caches on the USB SSD — run nix run .#migrate-buildcache BEFORE
