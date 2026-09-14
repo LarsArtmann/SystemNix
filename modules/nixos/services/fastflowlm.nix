@@ -226,6 +226,18 @@ _: {
           }
         ];
 
+        # gatus-coverage-audit exemption (JUSTIFIED): :52625/:52626 must
+        # NEVER be probed — every probe holds one of flm's hard 10
+        # connection slots (live incident 2026-08-18: HTTP probing during
+        # cold load churned slots and reset genuine clients). Liveness is
+        # asserted via system-health system_service_state_failed /
+        # start_limit_hit metrics instead (the whole point of the
+        # socket-activation design).
+        services.gatus-coverage-audit.allowPorts = [
+          cfg.port
+          cfg.backendPort
+        ];
+
         systemd.sockets.fastflowlm = {
           description = "FastFlowLM NPU LLM server (public socket)";
           wantedBy = [ "sockets.target" ];

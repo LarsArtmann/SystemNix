@@ -49,6 +49,11 @@ _: {
       };
 
       config = lib.mkIf cfg.enable {
+        # gatus-coverage-audit exemption (JUSTIFIED): the gatus check hits
+        # https://graph.home.lan/ through Caddy (full proxy+TLS path), so
+        # the backend port never appears in a gatus URL.
+        services.gatus-coverage-audit.allowPorts = [ cfg.port ];
+
         systemd.services.systemd-graph = {
           description = "systemd-graph — live systemd dependency graph web UI";
           wantedBy = [ "multi-user.target" ];
