@@ -127,6 +127,11 @@ _: {
             immich-db-backup = {
               description = "Immich PostgreSQL database backup";
               inherit onFailure;
+              # ReadWritePaths targets the pool mediaLocation — gate on the
+              # mount (mount-gating-audit class): a detached DAS must fail
+              # loudly (226/NAMESPACE otherwise — the script's own mkdir runs
+              # only AFTER namespace setup, too late to create the path).
+              unitConfig.RequiresMountsFor = "/mnt/pool/services/immich";
               path = [ config.services.postgresql.package ];
               after = [
                 "postgresql.service"

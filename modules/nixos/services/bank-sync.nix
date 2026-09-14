@@ -183,8 +183,18 @@ _: {
         # notifier; the JSON report lands next to the DB for post-mortems.
         systemd.services.bank-sync-canary = {
           description = "Bank-Sync weekly provider canary";
-          after = [ "network-online.target" ];
-          wants = [ "network-online.target" ];
+          after = [
+            "network-online.target"
+            "bank-sync-storage-dir.service"
+          ];
+          wants = [
+            "network-online.target"
+            "bank-sync-storage-dir.service"
+          ];
+          # StandardOutput appends into the pool dataDir — gate on the mount
+          # (mount-gating-audit class; a detached DAS must FAIL loudly, not
+          # append the report onto a root-fs shadow dir).
+          unitConfig.RequiresMountsFor = [ cfg.dataDir ];
           inherit onFailure;
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
