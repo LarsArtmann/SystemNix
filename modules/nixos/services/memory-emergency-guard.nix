@@ -266,13 +266,14 @@ _: {
             elapsed=$((now - prev_epoch))
             if [ "$prev_epoch" -gt 0 ] && [ "$elapsed" -gt 0 ] && [ -f "$TICKS_STATE" ]; then
               disk_busy_max=$(awk -v e="$elapsed" '
+                BEGIN { m = -1 }
                 NR == FNR { ticks[$1] = $2; next }
                 ($1 in ticks) {
                   pct = ($2 - ticks[$1]) / (e * 10.0)
                   if (pct > 100) pct = 100
                   if (pct > m) m = pct
                 }
-                END { print (m == "" ? -1 : sprintf("%.1f", m)) }
+                END { print (m == -1 ? -1 : sprintf("%.1f", m)) }
               ' "$TICKS_STATE" "$TICKS_CUR" 2>/dev/null) || disk_busy_max=-1
               disk_busy_max="''${disk_busy_max:--1}"
             fi
