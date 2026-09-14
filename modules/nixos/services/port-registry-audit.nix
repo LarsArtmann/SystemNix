@@ -83,7 +83,7 @@
       # tryEval: a unit whose Exec text cannot be coerced (exotic
       # self-referential config) must never break eval — it is skipped.
       offenders = lib.filterAttrs (
-        name: svc:
+        _name: svc:
         let
           text = builtins.tryEval (unitText svc);
           unregistered =
@@ -94,7 +94,7 @@
 
       offenderReport = lib.concatStringsSep "\n" (
         lib.mapAttrsToList (
-          _name: svc:
+          name: svc:
           let
             text = builtins.tryEval (unitText svc);
             unregistered = lib.subtractLists allowedPorts (extractPorts text.value);
