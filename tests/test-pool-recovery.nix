@@ -167,12 +167,12 @@ in
 
     # 1b. CONSUMER CONVERGENCE (boot-dropout class): an enabled-but-inactive
     #     consumer gets started by the healthy-path recovery run; a masked
-    #     consumer is left untouched. (mask instead of disable: the VM's
-    #     multi-user.target.wants is a read-only store symlink, so disable
-    #     cannot remove the enablement symlink — mask only writes into the
-    #     writable /etc/systemd/system dir and exercises the same skip.)
+    #     consumer is left untouched. (runtime mask instead of disable: the
+    #     VM's /etc/systemd/system is a read-only store tree, so neither
+    #     disable nor a persistent mask can write there; a runtime mask
+    #     under /run gives the same masked state is-enabled reports.)
     healthy.succeed("systemctl stop pool-consumer-test-enabled.service")
-    healthy.succeed("systemctl mask --force pool-consumer-test-disabled.service")
+    healthy.succeed("systemctl mask --runtime --force pool-consumer-test-disabled.service")
     healthy.succeed("systemctl stop pool-consumer-test-disabled.service")
     healthy.succeed("systemctl start pool-usb-recovery.service")
     healthy.succeed("systemctl is-active --quiet pool-consumer-test-enabled.service")
