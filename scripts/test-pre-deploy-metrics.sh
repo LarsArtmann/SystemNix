@@ -11,6 +11,7 @@
 #   B2 POCKET_ID_SCAN_FAILED  → WARN
 #   D  KNOWN_NEW_METRICS      → WARN (absent until the switch lands)
 #   F  CV_ENDPOINT_UP=false    → WARN (auth-gated /metrics, probe-blind)
+#   G  BANKSYNC_UP=false       → WARN (bank-sync :8097 down, infra signal)
 #   C  present metric         → PASS
 #   E  absent + no flags      → FAIL (the phantom-metric hard block — must
 #                                never silently pass: no phantom green)
@@ -50,6 +51,8 @@ reset_env() {
   DISCORDSYNC_API_UP=false
   CV_METRICS="cv_autoapply_passes cv_autoapply_pass_errors"
   CV_ENDPOINT_UP=false
+  BANKSYNC_METRICS="bank_sync_last_sync_timestamp_seconds bank_sync_sync_errors_total"
+  BANKSYNC_UP=false
   FORGEJO_SCAN_FAILED=false
   POCKET_ID_SCAN_FAILED=false
   TEXTFILE_SCRAPE_ERROR=false
@@ -150,6 +153,24 @@ node_textfile_scrape_error 0
 EOF
 metrics_gate_classify_absence "cv_autoapply_passes"
 expect "warn" "cv metric absent while endpoint probe-blind → WARN (gatus check owns visibility)"
+
+echo "=== Fixture G: bank-sync endpoint down — sync-metric absence is an infra signal ==="
+reset_env
+cat >"$METRICS_FILE" <<'EOF'
+node_textfile_scrape_error 0
+EOF
+metrics_gate_classify_absence "bank_sync_sync_errors_total"
+expect "warn" "bank-sync metric absent while :8097 down → WARN (gatus owns the outage alerting)"
+metrics_gate_classify_absence "bank_sync_last_sync_timestamp_seconds"
+expect "warn" "second bank-sync metric absent while :8097 down → WARN"
+
+reset_env
+BANKSYNC_UP=true
+cat >"$METRICS_FILE" <<'EOF'
+node_textfile_scrape_error 0
+EOF
+metrics_gate_classify_absence "bank_sync_sync_errors_total"
+expect "fail" "bank-sync metric absent while :8097 UP → hard FAIL (endpoint up means the metric truly vanished)"
 
 if [ "$TEST_FAILURES" -gt 0 ]; then
   echo ""

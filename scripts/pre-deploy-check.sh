@@ -326,6 +326,7 @@ GATUS_SERVICE_METRIC_PORTS=$(grep -oE 'localhost:\$\{toString ports\.[a-zA-Z0-9_
 # Read by the sourced metrics-gate.sh.
 # shellcheck disable=SC2034
 DISCORDSYNC_API_UP=false
+BANKSYNC_UP=false
 for port_name in $GATUS_SERVICE_METRIC_PORTS; do
   port_num=$(sed -nE "s/^[[:space:]]*${port_name} = ([0-9]+);.*/\1/p" lib/ports.nix | head -1)
   if [ -n "$port_num" ] && curl -sf --compressed --max-time 5 "http://127.0.0.1:${port_num}/metrics" >>"$METRICS_FILE" 2>/dev/null; then
@@ -337,6 +338,10 @@ for port_name in $GATUS_SERVICE_METRIC_PORTS; do
     if [ "${port_name}" = "cv" ]; then
       # shellcheck disable=SC2034
       CV_ENDPOINT_UP=true
+    fi
+    if [ "${port_name}" = "bank-sync" ]; then
+      # shellcheck disable=SC2034
+      BANKSYNC_UP=true
     fi
   else
     warn "Service metrics '${port_name}' (port ${port_num:-unresolved}) not responding — its gatus pats will flag absent"
@@ -384,6 +389,18 @@ fi
 # Read by the sourced metrics-gate.sh.
 # shellcheck disable=SC2034
 DISCORDSYNC_METRICS="discordsync_projection_dlq_legacy_depth discordsync_projection_dlq_legacy_unchanged discordsync_turso_local_only_mode"
+
+# Same doctrine for bank-sync's OWN :8097 endpoint metrics (2026-09-14 live
+# block: a boot-time mnt-pool.mount job cancellation left bank-sync INACTIVE
+# for the whole boot — enabled, not failed, nothing converged it — and its
+# gatus-patted sync metrics went absent, hard-failing §10 on every deploy,
+# including deploys unrelated to bank-sync. A down service's endpoint metrics
+# are an infrastructure signal, not a config bug: WARN, never block. The
+# gatus Bank-Sync checks go red on their own while it is down — that is the
+# correct visibility; pool-usb-recovery now converges the inactive class.)
+# Read by the sourced metrics-gate.sh.
+# shellcheck disable=SC2034
+BANKSYNC_METRICS="bank_sync_last_sync_timestamp_seconds bank_sync_sync_errors_total"
 
 # Forgejo mirror journal-scan metrics: the collector emits the errors_30m/
 # erroring pair ONLY when its bounded journalctl scan succeeds — on scan
