@@ -148,7 +148,10 @@ echo ""
 echo "5. Service hardening validation"
 # Exclude comment lines (grep -vn ':\s*#') so documentation examples like
 # "#   BAD: harden {} // {Type = ...}" in service-defaults.nix don't trip it.
-HARDEN_USERS=$(grep -rn 'harden {' --include="*.nix" . 2>/dev/null | grep -vE ':[0-9]+:\s*#' | grep -E 'ExecStart|Type|RemainAfterExit' || true)
+# Exclude ./tests/ — negative-test fixtures (test-harden-lifecycle.nix)
+# DELIBERATELY contain these literals to prove the eval-time throw; the
+# throw itself makes the shapes impossible in real modules.
+HARDEN_USERS=$(grep -rn 'harden {' --include="*.nix" . 2>/dev/null | grep -vE ':[0-9]+:\s*#' | grep -vE '^\./tests/' | grep -E 'ExecStart|Type|RemainAfterExit' || true)
 if [ -n "$HARDEN_USERS" ]; then
   fail "ExecStart/Type found inside harden() — will be silently dropped:"
   echo "$HARDEN_USERS"
