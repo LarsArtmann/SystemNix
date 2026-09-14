@@ -75,10 +75,15 @@
           # - postfix-setup:   rendered maps regenerate via the postfix module
           # - postgresql-setup: instance bootstrap owned by the pg module
           # - systemd-tmpfiles-resetup: pulled by tmpfiles lifecycle itself
+          # - resolvconf: default-enabled upstream oneshot whose
+          #   restartTriggers inertia is an nixpkgs quirk, not ours (its
+          #   config regenerates via its own activation path; evo-x2 uses a
+          #   static resolv.conf and never even has the unit)
           default = [
             "postfix-setup"
             "postgresql-setup"
             "systemd-tmpfiles-resetup"
+            "resolvconf"
           ];
           description = ''
             Units exempt from the deploy-restart requirement. Entries beyond
