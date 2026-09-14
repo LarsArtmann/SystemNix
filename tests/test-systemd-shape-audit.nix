@@ -137,6 +137,31 @@ let
           ]
         ) == [ ];
     }
+    {
+      name = "home-in-user-execstart-not-caught";
+      pass = flaggedWith "$HOME" (
+        evalAssertions [
+          {
+            systemd.user.services.home-user = {
+              serviceConfig.ExecStart = "/bin/app --config $HOME/.config/app";
+            };
+          }
+        ]
+      );
+    }
+    {
+      name = "percent-h-falsely-flagged";
+      pass =
+        failing (
+          evalAssertions [
+            {
+              systemd.user.services.specifier-user = {
+                serviceConfig.ExecStart = "/bin/app --config %h/.config/app";
+              };
+            }
+          ]
+        ) == [ ];
+    }
   ];
 
   broken = map (c: c.name) (builtins.filter (c: !c.pass) cases);

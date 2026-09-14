@@ -26,6 +26,13 @@
 #    → re-fire loop → start-limit-hit. Use PathChanged/PathModified
 #    (ConditionPathExists is the correct EXISTENCE gate and is not affected).
 #
+# 4. Literal $HOME in USER unit Exec lines.
+#    Hardened user services may not expand $HOME (environment stripped) —
+#    the systemd specifier %h is the sanctioned form. A unit that works
+#    unhardened silently breaks under hardenUser. Scope: system-declared
+#    user units (config.systemd.user.services — the hardenUser consumers);
+#    Home-Manager-internal units are evaluated in the HM closure, not here.
+#
 # Assertions are forced by `nix flake check` (pre-commit + CI); a bare
 # `nix eval ...toplevel.drvPath` does NOT check them.
 {
@@ -82,6 +89,31 @@
             (p.pathConfig ? PathExists && p.pathConfig.PathExists != null)
             || (p.pathConfig ? PathExistsGlob && p.pathConfig.PathExistsGlob != null)
           ) config.systemd.paths;
+        in
+        lib.attrNames bad;
+
+      # --- class 4: literal $HOME in USER unit Exec lines ---
+      # Hardened user services may not expand $HOME (the environment is
+      # stripped); the systemd specifier %h is the sanctioned form. A unit
+      # that works unhardened silently breaks under hardenUser.
+      userExecKeys = [
+        "ExecStart"
+        "ExecStartPre"
+        "ExecStartPost"
+        "ExecStop"
+        "ExecReload"
+        "ExecCondition"
+      ];
+      homeOffenders =
+        let
+          bad = lib.filterAttrs (
+            _name: svc:
+            builtins.any (
+              k:
+              svc.serviceConfig ? ${k}
+              && lib.hasInfix "$HOME" (lib.concatMapStringsSep " " toString (lib.toList svc.serviceConfig.${k}))
+            ) userExecKeys
+          ) config.systemd.user.services;
         in
         lib.attrNames bad;
     in

@@ -722,7 +722,7 @@ in
                 '';
               };
             in
-            "${lib.getExe' pkgs.swayidle "swayidle"} -w timeout 1200 ${lib.getExe swayidleDpmsOff} timeout 43200 ${lib.getExe swayidleSuspend} before-sleep ${lib.getExe dms-lock}";
+            "${lib.getExe' pkgs.swayidle "swayidle"} -w timeout 3600 ${lib.getExe swayidleDpmsOff} timeout 43200 ${lib.getExe swayidleSuspend} before-sleep ${lib.getExe dms-lock}";
           TimeoutStartSec = "10s";
         };
         Install.WantedBy = [ "graphical-session.target" ];
