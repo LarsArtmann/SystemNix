@@ -30,6 +30,14 @@ let
   llamaRagNixosModule =
     (import ../modules/nixos/services/llama-rag.nix { }).flake.nixosModules.llama-rag;
 
+  # fastflowlm.nix sets services.gatus-coverage-audit.allowPorts under
+  # mkIf — the option PATH must exist in every eval importing the module,
+  # even with the condition false (mkIf defers the value, not the
+  # definition). On real hosts auto-discovery provides it; this minimal
+  # eval must import the audit module itself.
+  gatusCoverageAuditModule =
+    (import ../modules/nixos/services/gatus-coverage-audit.nix).flake.nixosModules.gatus-coverage-audit;
+
   # Option-only mock for the OIDC gate: paperless.nix reads
   # `services.pocket-id-config.enable or false` and falls back to
   # /var/lib/pocket-id for the dataDir (`or` idiom, dns-blocker pattern).
@@ -54,6 +62,7 @@ in
         paperlessNixosModule
         fastflowlmNixosModule
         llamaRagNixosModule
+        gatusCoverageAuditModule
         pocketIdEnableMock
         ./mock-sops.nix
         ./test-helpers.nix
