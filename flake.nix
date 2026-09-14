@@ -708,8 +708,36 @@
             Fix: manually edit flake.lock nodes.nixpkgs.original to type "github".
           '';
         true;
+
+      # Eval-time guard: a `?rev=` in a flake.nix input URL OVERRIDES
+      # flake.lock (the overview templ-components trap — every lock re-sync
+      # re-fetches the pinned tree and re-pins BACKWARD). The ONLY sanctioned
+      # ?rev= is the git+file: interim pin of a local checkout/worktree
+      # (2026-09-13 broken mass-update remediation): there it is the
+      # documented defense against the dirtyRev/narHash lock trap, and CI
+      # cannot fetch git+file anyway. Remote-scheme pins must move in
+      # flake.lock, never in the URL.
+      inputUrlRevOffenders =
+        lib.filter (n: n != null) (
+          lib.mapAttrsToList (
+            name: input:
+            let
+              url = input.original.url or "";
+            in
+            if builtins.match ".*[?&]rev=.*" url != null && !lib.hasPrefix "git+file:" url then name else null
+          ) inputs
+        );
+      inputUrlRevGuard =
+        assert
+          inputUrlRevOffenders == [ ]
+          || throw ''
+            flake.nix input URL carries ?rev= (overrides flake.lock, silently re-pins on every lock re-run): ${lib.concatStringsSep ", " inputUrlRevOffenders}.
+            Fix: drop ?rev= from the URL and pin via flake.lock, or use a git+file: interim pin (local checkouts only).
+          '';
+        true;
     in
-    builtins.seq nixpkgsTarballGuard flake-parts.lib.mkFlake { inherit inputs; } {
+    builtins.seq nixpkgsTarballGuard (
+      builtins.seq inputUrlRevGuard flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [
         "aarch64-darwin"
         "x86_64-linux"
@@ -1485,6 +1513,6 @@
             sharedHomeManagerSpecialArgs
             ;
         };
-      };
+      });
     };
 }
