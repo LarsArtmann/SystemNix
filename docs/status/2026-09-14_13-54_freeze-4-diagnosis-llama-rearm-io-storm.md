@@ -94,7 +94,7 @@ Delivered remediation advice to the user at end of diagnosis: `sudo systemctl st
 10. Generalize the deploy.sh pre-switch guard (flm EADDRINUSE pattern) to a list of "do-not-rearm" units: llama-embeddings, llama-reranker, fastflowlm (corpse case) — stop them pre-switch when their journals show the wedge signatures.
 11. Systemic fix for the stc re-arms-stopped-units class: a small audit/reminder that `systemctl stop` is never containment on this host; add to AGENTS.md Critical Rules.
 12. Zone 6 alert fatigue: 14 trips → Discord every ~10 min all day. Add trip-churn context/cooldown or an escalation tier (notify already exists for churn ≥2/h — verify it fired).
-13. Write the freeze #4 AGENTS.md incident entry (source: this report) + gotchas-archive narrative.
+13. ~~Write the freeze #4 AGENTS.md incident entry (source: this report) + gotchas-archive narrative.~~ done (AGENTS.md freeze #4 bullet added (docs-health pass 2026-09-14 18:30))
 14. Confirm no kernel-side regression angle: freeze #4 is on kernel 7.2.5 (new today); correlate IO PSI behavior 7.2.3 (Sep 7–11 boot, stable 4.5 days) vs 7.2.5. Weak prior, cheap to check.
 15. Check NVMe (QLC root, nvme1n1) SMART/media counters after a full day of ~60% PSI — endurance + health.
 16. Tonight's btrbk/balance/scrub catch-up will stack on any remaining storm: verify the scrub deferral guard + Zone 6 will defer, or pre-emptively quiesce.
@@ -105,7 +105,7 @@ Delivered remediation advice to the user at end of diagnosis: `sudo systemctl st
 
 **P2 — backlog fuel (route via docs-health HARVEST)**
 21. llama.cpp pin back to 20260905-era build or bisect the gfx1150 mid-load spin (already TODO'd; this freeze raises its priority).
-22. Automated post-hard-reset check script (`post-crash-check.sh`, sibling of pre-reboot-check): NIC, DAS, pool, zombie/corpse scan (D-state, EADDRINUSE), llama/flm unit state, generation anchoring after the unclean death.
+22. ~~Automated post-hard-reset check script (`post-crash-check.sh`, sibling of pre-reboot-check): NIC, DAS, pool, zombie/corpse scan (D-state, EADDRINUSE), llama/flm unit state, generation anchoring after the unclean death.~~ done (harvested — TODO_LIST 2026-09-14 18:30 (post-crash-check row))
 23. Consider a "storm source" guard escalation: when Zone 6 trips N times in M hours, capture a hog snapshot to the journal/metrics (pairs with #9).
 24. Guard trip counter semantics (persisted across reboots — where? state file?) — document in AGENTS.md so trip numbers are interpretable.
 25. PMA/overview/discovery daemon discovery cadence: 260+ repo scans; consider making discovery on-demand or event-driven instead of periodic.

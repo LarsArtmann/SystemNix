@@ -74,8 +74,8 @@
 9. Q3 follow-up: file the flm v1.0.3 upstream issue (gate met: live failure with `/dev/accel/accel0` present, kernel + loader theories both dead) or drop 1.0.3 permanently (upstream is at v1.0.5).
 
 **Structural (this session's findings):**
-10. crush-DB migration design (new TODO_LIST P1 item): per-project `.crush/` symlink to Samsung hot-DB dir or /data, or XDG_STATE redirect; measure io PSI before/after. This is the root disease behind today's forced deploys AND the Zone 6 churn.
-11. `scripts/io-psi-forensics.sh` (e.3 / 09:31 e-1) — attribution capture at gate/guard fire.
+10. ~~crush-DB migration design (new TODO_LIST P1 item): per-project `.crush/` symlink to Samsung hot-DB dir or /data, or XDG_STATE redirect; measure io PSI before/after. This is the root disease behind today's forced deploys AND the Zone 6 churn.~~ done (TODO_LIST P1 row landed same day)
+11. ~~`scripts/io-psi-forensics.sh` (e.3 / 09:31 e-1) — attribution capture at gate/guard fire.~~ done (scripts/io-psi-forensics.sh landed 2026-09-14 14:42 + guard wiring (CHANGELOG))
 12. deploy.sh generic "stopped-for-containment" post-switch stop-list (flm corpse-guard pattern generalized; llama is the first consumer).
 13. Verify the pre-deploy §10 eval-added latency (e.5) during the next calm-window deploy.
 14. Soak cadence through ~Sep-17: daily pre-reploy-check + failed-units + smoke-baseline diff; surface new reds (candidates to watch: quickshell 1-error WARN, memory-PSI WARN).

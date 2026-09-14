@@ -208,17 +208,17 @@ sessions):
 
 1. flm E2E: quiet-window `systemctl start fastflowlm.socket` → 200 on
    `:52625/v1/models` → retire the flm smoke baseline entry.
-2. Read memory-emergency-guard source: confirm Zone 6 auto-restores the flm
-   socket (or doesn't) — adjust the AGENTS claim accordingly.
+2. ~~Read memory-emergency-guard source: confirm Zone 6 auto-restores the flm~~ done (AGENTS guard bullet documents restore + daily restore budget (capped))
+   ~~socket (or doesn't) — adjust the AGENTS claim accordingly.~~
 3. Identify the llama-cpp version delta (20260905 vs 20260911 nixpkgs) and
    pin `llama-cpp-rocwmma` back; redeploy; restart llama units; verify 200s +
    1024-dim embeddings + correct rerank order (post-deploy §13 pattern).
 4. Alternative/parallel to 3: perf/strace the spinning llama thread (comgr
    JIT vs GPU-init spinloop) — one good stack decides upstream-vs-pin.
-5. TODO item + fix design: crush session DBs off the QLC root (per-project
-   `.crush/` symlink to a Samsung/`/data` location, or XDG_STATE redirect);
-   measure io PSI before/after — this is what keeps Zone 6 armed and the
-   deploy gate hair-triggered.
+5. ~~TODO item + fix design: crush session DBs off the QLC root (per-project~~ done (TODO_LIST P1 row exists (crush session DBs off the QLC root))
+   ~~`.crush/` symlink to a Samsung/`/data` location, or XDG_STATE redirect);~~
+   ~~measure io PSI before/after — this is what keeps Zone 6 armed and the~~
+   ~~deploy gate hair-triggered.~~
 6. `systemctl reset-failed 'fastflowlm@*'` (clean the proxy instance my
    probe stranded) and re-check FAILED_COUNT=0.
 7. Re-run `nix run .#pre-reboot-check` against gen 775 (validates the new
@@ -227,12 +227,12 @@ sessions):
    survival + first `p0ccbqj5` survival via the new pin.
 9. Soak cadence through ~2026-09-17: daily pre-reboot-check + failed-units +
    smoke-baseline diff; note any new reds.
-10. Check + act on the "BTRFS Emergency Reserve" Gatus red (reserve absent
-    since ~Sep 7 per weekend TODO; needs root start).
-11. journald cap (SystemMaxUse) + health check — 7.7G on the QLC root and a
-    proven ENOSPC-silence failure mode.
-12. Investigate the "SigNoz Coverage" baseline FAIL (inherited; may be a
-    weekend-era instrumentation gap).
+10. ~~Check + act on the "BTRFS Emergency Reserve" Gatus red (reserve absent~~ done (harvested — TODO_LIST 2026-09-14 18:30 (reserve re-provision row))
+    ~~since ~Sep 7 per weekend TODO; needs root start).~~
+11. ~~journald cap (SystemMaxUse) + health check — 7.7G on the QLC root and a~~ done (harvested — TODO_LIST 2026-09-14 18:30 (journald cap row, priority raised))
+    ~~proven ENOSPC-silence failure mode.~~
+12. ~~Investigate the "SigNoz Coverage" baseline FAIL (inherited; may be a~~ done (already tracked — TODO_LIST SigNoz Traces Coverage red row)
+    ~~weekend-era instrumentation gap).~~
 13. Samsung p1 follow-ups (weekend TODO): btrfs-health metrics + Gatus
     mount/space checks for the `tlc` filesystem; attic store-rebuild sanity
     → user deletes QLC `@nix` (118G).

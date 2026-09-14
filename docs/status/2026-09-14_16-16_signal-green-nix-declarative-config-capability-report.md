@@ -85,7 +85,7 @@ The answer delivered: **No supported declarative path exists.** Signal Desktop 8
 | 15 | Confirm whether `theme-setting: 'system'` follows gsettings/portal (relevant only to dark/light, not green) | Low | S | Quality |
 | 16 | Check whether Signal is installed on the Darwin host and whether its userData layout matches the Linux findings | Low | S | Quality |
 | 17 | Track nixpkgs signal-desktop bumps for storage-format changes (future seed-script validity) | Low | S | Cleanup |
-| 18 | Add a TODO_LIST entry capturing the pending decision (b/c items above) so this doesn't evaporate | High | S | Documentation |
+| ~~18~~ | ~~Add a TODO_LIST entry capturing the pending decision (b/c items above) so this doesn't evaporate~~ done — TODO_LIST Signal Desktop backlog row (docs-health pass 2026-09-14 18:30) | ~~High~~ | ~~S~~ | ~~Documentation~~ |
 | 19 | If seed-script pattern proves out: evaluate generalizing to other Electron apps' item stores (pattern reuse only — no new scope) | Low | M | Feature |
 | 20 | Re-check the color list after Signal major bumps (picker list is version-scoped to 8.25.0) | Low | S | Cleanup |
 | ~~21~~ | ~~If user wants green "branding" instead (icon/window styling), scope that separately — it is NOT the chat-color system this session analyzed~~ done — superseded — user confirmed chat-color and/or theme, not branding | ~~Medium~~ | ~~M~~ | ~~Decision-dependent~~ |

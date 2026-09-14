@@ -176,19 +176,19 @@ until reconciled.
 ## f) Next — up to 50 things (prioritized; session-scoped)
 
 **Unblock the box (P0):**
-1. Run `nix run .#pre-reboot-check` (still never executed this boot).
-2. REBOOT evo-x2 in the approved window — clears the flm corpse, :52626 pin, failed-unit
-   pile, and tests whether the phantom PSI survives (if it survives: it was NEVER the
-   corpse pile → real hunt begins).
-3. `nix run .#deploy` clean post-reboot (ships ~7 days of blocked work incl. Zone 6).
-4. Post-deploy §10: confirm `memory_emergency_guard_zone6_trips_total` +
-   `cloud_sync_*`/`collector_events_collected` appear and loans auto-retire.
+1. ~~Run `nix run .#pre-reboot-check` (still never executed this boot).~~ done (re-run against gen 775 post-reboot — the 11-19 report f.7)
+2. ~~REBOOT evo-x2 in the approved window — clears the flm corpse, :52626 pin, failed-unit~~ done (2026-09-14 10:34 boot live — the 11-19 first-reboot report)
+   ~~pile, and tests whether the phantom PSI survives (if it survives: it was NEVER the~~
+   ~~corpse pile → real hunt begins).~~
+3. ~~`nix run .#deploy` clean post-reboot (ships ~7 days of blocked work incl. Zone 6).~~ done (2026-09-14 11:20 deploy landed as system-776)
+4. ~~Post-deploy §10: confirm `memory_emergency_guard_zone6_trips_total` +~~ done (12-06 pass — rendered-config eval landed; no auto-loan printed)
+   ~~`cloud_sync_*`/`collector_events_collected` appear and loans auto-retire.~~
 5. Verify flm serves again (`:52625/v1/models` through the socket) and PMA LLM commits
    resume (duration=10–20s, no heuristic-fallback lines).
 6. Confirm fastflowlm@ failed instances stop accumulating; reset-failed clears the rest.
 
 **Git reconciliation (P0–P1):**
-7. User decision: merge or rebase the 70/43 fork; which side is canonical.
+7. ~~User decision: merge or rebase the 70/43 fork; which side is canonical.~~ done (harvested — TODO_LIST git-reconciliation row 2026-09-14 18:30)
 8. Identify the pushing clone (macOS?) — see question 2.
 9. `git fsck --full` for collateral damage from the 00:54 actor.
 10. Forensics on the 00:54 deletion: tq agent journals (tq.db), worktree shell history,

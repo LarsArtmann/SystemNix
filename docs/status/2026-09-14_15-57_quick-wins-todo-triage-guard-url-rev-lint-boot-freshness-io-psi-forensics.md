@@ -62,10 +62,10 @@ TODO_LIST.md rows updated for all 7 (with annotations; header "Updated:" line NO
 5. Baseline forensics BEFORE the crush-DB wave (run `nix run .#io-psi-forensics` 2-3× across a quiet/storm window) — evidence for the hot-DB P1
 
 **The remaining "easy" TODO items I proposed but didn't do:**
-6. Paperless failed-tasks collector (needs schema verification path: read deployed paperless PG table names via a root-run query at deploy time, or `User=postgres` collector unit)
+6. ~~Paperless failed-tasks collector (needs schema verification path: read deployed paperless PG table names via a root-run query at deploy time, or `User=postgres` collector unit)~~ done (already tracked — TODO_LIST Paperless failed-tasks collector row)
 7. btrfs-compression collector timer health check (live journal)
 8. llama.cpp pin-back to 20260905-era build (RAG dark; every deploy re-breaks it — pair with item 1's deploy)
-9. TODO_LIST header "Updated:" line refresh (2026-09-13 04:00 → stale)
+9. ~~TODO_LIST header "Updated:" line refresh (2026-09-13 04:00 → stale)~~ done (done — TODO_LIST header refreshed 2026-09-14 18:30 (docs-health pass))
 10. Mystery snapshot `data.20260905T2330` root-cause (sudo forensics, P0 line 20)
 
 **From TODO_LIST the session touched peripherally:**

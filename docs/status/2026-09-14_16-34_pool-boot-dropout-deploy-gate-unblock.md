@@ -93,7 +93,7 @@
 | 33 | Make deploy.sh's pool-usb-recovery post-switch run print its convergence lines into the deploy log (visibility) | Low | S | Quality |
 | 34 | Verify no OTHER enabled services besides the three are sitting inactive since 13:35 (full `is-enabled && !is-active` sweep across system + user managers) | High | S | Audit |
 | 35 | Coordinate with the owning session on `scripts/io-psi-forensics.sh` (foreign +5-line edit rode the daemon commits; completeness unverified by me) | Low | S | Coordination |
-| 36 | Harvest this report's items into TODO_LIST.md/ROADMAP.md (docs-health HARVEST) | Medium | S | Docs |
+| ~~36~~ | ~~Harvest this report's items into TODO_LIST.md/ROADMAP.md (docs-health HARVEST)~~ done — harvested to TODO_LIST 2026-09-14 18:30 (docs-health pass) | ~~Medium~~ | ~~S~~ | ~~Docs~~ |
 | 37 | Add the pool-recovery healthy-path metrics-start removal to the CHANGELOG (behavior change: 5-min timer owns freshness now) | Low | S | Docs |
 | 38 | Consider a pre-deploy §6 auto-classifier for tolerated known-red units (inboxclean-sync noise) | Low | M | Quality |
 | 39 | Re-verify Gatus "Pool Mounted"/"Pool RAID1 Membership" stayed truthful through the incident (textfile showed mounted=1 throughout — confirm no alert gaps) | Low | S | Verify |

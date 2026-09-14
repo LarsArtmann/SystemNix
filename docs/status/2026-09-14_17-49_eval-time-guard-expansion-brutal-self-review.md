@@ -59,7 +59,7 @@
 ## f) NEXT: up to 50 things (Pareto order)
 
 **P0 — closes real enforcement gaps (same class as this session):**
-1. Fix `checks.x86_64-linux.cv` VM fixture (seed `CV_OIDC_CLIENT_SECRET`) — re-arms the pre-commit full-flake-check leg.
+1. ~~Fix `checks.x86_64-linux.cv` VM fixture (seed `CV_OIDC_CLIENT_SECRET`) — re-arms the pre-commit full-flake-check leg.~~ done (already tracked — TODO_LIST cv-fixture row (Known pre-existing red))
 2. Gatus-coverage audit: every enabled `services.*` with an HTTP/TCP surface must appear in `gatus-config.nix` (allowlist for unmonitorable).
 3. `system-health.monitoredServices` coverage audit: enabled custom services must be registered (cross-ref at eval).
 4. ReadWritePaths-under-`/mnt|/data`-without-mount-gating audit (226 class; allowlist; design already sketched this session).
@@ -105,13 +105,13 @@
 40. SigNoz `signoz-coverage.expected` vs actual OTel env var carriers — the reverse assertion exists; add the forward one (registry entries for units whose SERVICE isn't enabled).
 
 **P3 — housekeeping from this session:**
-41. Deploy to evo-x2 to confirm activation is clean (eval-only guards; zero runtime delta expected).
+41. ~~Deploy to evo-x2 to confirm activation is clean (eval-only guards; zero runtime delta expected).~~ done (tracked — TODO_LIST OWNER QUESTIONS (deploy now or batch))
 42. Sweep AGENTS.md prevention table for remaining unannotated gotchas (each should name its guard or "UNGUARDED").
 43. Add the 6 new guards to the "Prevention Layers" quick-reference in docs/CONTRIBUTING.md.
 44. Re-run full pre-commit hook end-to-end after cv fix (verify the merge-audit leg's placement in the full flow).
 45. Consider `services.systemd-shape-audit.allowTimerRestart` doc pointer in the offending module's option description (discoverability).
 46. Central-vs-adjacent allowlist policy decision (see question 2).
-47. Probe-file hygiene: add a `scripts/` convention note — probes go to /tmp or `docs/status` scratch, never repo root (daemon commits them).
+47. ~~Probe-file hygiene: add a `scripts/` convention note — probes go to /tmp or `docs/status` scratch, never repo root (daemon commits them).~~ done (harvested — TODO_LIST 2026-09-14 18:30 (probe-leftovers row))
 48. git add discipline: pathspec only (this session's near-miss).
 49. `trash` only, never `rm` fallback (this session's rule slip).
 50. Retire the `probe-assertions.nix` pattern by adding a `nix eval` alias app (e.g. `nix run .#audit-probe`) for future guard work — avoids probe files entirely.

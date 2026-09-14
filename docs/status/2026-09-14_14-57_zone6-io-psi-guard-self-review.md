@@ -63,9 +63,9 @@
 6. SigNoz dashboard panel: `memory_emergency_guard_io_psi_some_avg60_percent` + `io_disk_busy_percent_max` next to the existing PSI panels.
 7. Watch live telemetry for the io avg10-episodic shape; if it exists, design the episodic-IO bucket (Zone 7 candidate) with calibration from real data — do NOT preemptively build it.
 8. Consider `systemctl kill` vs `stop` semantics for btrbk mid-send (stop sends SIGTERM; btrbk handles it — verify once on a real trip).
-9. Add a docs/services runbook stub for the guard (zones table incl. 6, restore/capped semantics, phantom filter) — currently the knowledge lives in AGENTS.md + module comments only.
-10. Clean up `/tmp/z6*` leftovers.
-11. Fix the pre-existing RED `checks.x86_64-linux.cv` fixture (already in TODO_LIST — it forced `--no-verify` on my docs commit too).
+9. ~~Add a docs/services runbook stub for the guard (zones table incl. 6, restore/capped semantics, phantom filter) — currently the knowledge lives in AGENTS.md + module comments only.~~ done (harvested — TODO_LIST 2026-09-14 18:30 (guard runbook stub row))
+10. ~~Clean up `/tmp/z6*` leftovers.~~ done (harvested — TODO_LIST 2026-09-14 18:30 (probe-leftovers row))
+11. ~~Fix the pre-existing RED `checks.x86_64-linux.cv` fixture (already in TODO_LIST — it forced `--no-verify` on my docs commit too).~~ done (already tracked — TODO_LIST cv-fixture row)
 12. Sweep the guard's `zone-counts` file for the 5-field legacy state on the deployed host (first post-deploy run reads 5 fields, zone6 defaults 0 — benign, but confirm).
 13. Consider alert-dedup: zone-6 trip text vs the "I/O Stall Rate" gatus check could double-page on the same incident — check whether the existing dedup covers it.
 
