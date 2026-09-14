@@ -54,7 +54,7 @@
 
       offenders =
         let
-          checked = lib.filterAttrs (_n: svc: !builtins.elem _n cfg.allowUnits) config.systemd.services;
+          checked = lib.filterAttrs (_n: _v: !builtins.elem _n cfg.allowUnits) config.systemd.services;
           bad = lib.concatLists (
             lib.mapAttrsToList (
               name: svc:
