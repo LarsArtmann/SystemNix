@@ -1310,8 +1310,7 @@
               ] ./scripts/deploy.sh;
               validate = mkApp "validate" "Validate flake without building" [ pkgs.nix ] ./scripts/validate.sh;
               io-psi-forensics =
-                mkApp
-                  "io-psi-forensics"
+                mkApp "io-psi-forensics"
                   "Snapshot per-cgroup I/O attribution + D-state stacks to /var/tmp (run during an I/O storm; same script the guard fires on trip)"
                   [
                     pkgs.coreutils

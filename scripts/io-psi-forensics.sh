@@ -34,13 +34,13 @@ chmod 755 "$OUT" 2>/dev/null || true
   echo "loadavg: $(cat /proc/loadavg 2>/dev/null || echo unreadable)"
   echo "meminfo_head:"
   head -5 /proc/meminfo 2>/dev/null || true
-} > "${OUT}/meta.txt" 2>&1
+} >"${OUT}/meta.txt" 2>&1
 
 # Pressure stall information at capture instant.
 timeout 5 cat /proc/pressure/io /proc/pressure/memory /proc/pressure/cpu \
-  > "${OUT}/psi.txt" 2>&1 || true
+  >"${OUT}/psi.txt" 2>&1 || true
 
-timeout 5 cat /proc/diskstats > "${OUT}/diskstats.txt" 2>&1 || true
+timeout 5 cat /proc/diskstats >"${OUT}/diskstats.txt" 2>&1 || true
 
 # Per-cgroup io.stat: rbytes+wbytes totals, top 40 (who is HOLDING the I/O).
 {
@@ -48,15 +48,15 @@ timeout 5 cat /proc/diskstats > "${OUT}/diskstats.txt" 2>&1 || true
   find /sys/fs/cgroup -name io.stat -print0 2>/dev/null |
     while IFS= read -r -d "" f; do
       case "$f" in
-        # the root cgroup aggregates the whole system — it would be the
-        # permanent #1 and tell us nothing about WHO holds the I/O
-        "/sys/fs/cgroup/io.stat") continue ;;
+      # the root cgroup aggregates the whole system — it would be the
+      # permanent #1 and tell us nothing about WHO holds the I/O
+      "/sys/fs/cgroup/io.stat") continue ;;
       esac
       total="$(awk '{for (i = 2; i <= NF; i++) {split($i, kv, "="); if (kv[1] == "rbytes" || kv[1] == "wbytes") t += kv[2]}} END {print t + 0}' "$f" 2>/dev/null)" || total=0
       printf '%s %s\n' "${total:-0}" "$f"
     done |
     sort -rn | head -40 || true
-} > "${OUT}/cgroup-io.txt" 2>&1
+} >"${OUT}/cgroup-io.txt" 2>&1
 
 # Top processes by cumulative read+write bytes (/proc/PID/io). Glob over
 # /proc churns: every per-pid read is guarded, vanished pids are skipped —
@@ -71,7 +71,7 @@ timeout 5 cat /proc/diskstats > "${OUT}/diskstats.txt" 2>&1 || true
     printf '%s %s %s\n' "$bytes" "$pid" "$comm"
   done |
     sort -rn | head -20 || true
-} > "${OUT}/top-io-procs.txt" 2>&1
+} >"${OUT}/top-io-procs.txt" 2>&1
 
 # D-state tasks: wchan + stacks (stacks are root-only; as non-root the file
 # read fails and the note says so — never silently empty).
@@ -86,13 +86,13 @@ timeout 5 cat /proc/diskstats > "${OUT}/diskstats.txt" 2>&1 || true
       [ -n "$p" ] || continue
       echo "== pid ${p} $(cat "/proc/${p}/comm" 2>/dev/null) =="
       cat "/proc/${p}/stack" 2>/dev/null || echo "unreadable (need root)"
-      tr '\0' ' ' < "/proc/${p}/cmdline" 2>/dev/null
+      tr '\0' ' ' <"/proc/${p}/cmdline" 2>/dev/null
       echo
     done
-} > "${OUT}/dstate.txt" 2>&1
+} >"${OUT}/dstate.txt" 2>&1
 
 # Journal tail for trip context — BOUNDED (-n) and timeout-wrapped; journal
 # walks are an IO trap and this runs DURING a storm.
-timeout 10 journalctl -n 100 --no-pager --output short-iso > "${OUT}/journal-tail.txt" 2>&1 || true
+timeout 10 journalctl -n 100 --no-pager --output short-iso >"${OUT}/journal-tail.txt" 2>&1 || true
 
 echo "io-psi-forensics: bundle written to ${OUT}"
