@@ -421,6 +421,19 @@ if nix run .#pre-deploy-check; then
     fi
   done
 
+  # discordsync-db-heal: RemainAfterExit oneshot pulled INDIRECTLY by
+  # discordsync (is-enabled returns rc=1, so the loop above skips it). A
+  # boot that times it out under IO pressure (2026-09-14: the 10-min budget
+  # died inside the boot storm) stays failed until the next reboot — the
+  # idempotent integrity check then never runs all boot. Failed-gated +
+  # --no-block: a healthy check must not delay the deploy by re-running the
+  # minutes-long scan, and a slow re-run must not stall the deploy either.
+  if systemctl is-failed --quiet discordsync-db-heal.service 2>/dev/null; then
+    echo "Restarting failed oneshot: discordsync-db-heal.service (no-block)"
+    sudo systemctl reset-failed discordsync-db-heal.service 2>/dev/null || true
+    sudo systemctl start --no-block discordsync-db-heal.service 2>/dev/null || true
+  fi
+
   # Restart dnsblockd AFTER dnsblockd-oidc-secret so a rotated Pocket ID client
   # secret takes effect. The bridge oneshot is RemainAfterExit=true and only
   # wantedBy=dnsblockd.service (is-enabled returns rc=1 for indirect units —
