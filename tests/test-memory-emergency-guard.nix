@@ -521,7 +521,12 @@ in
           "echo $(( $(date +%s) - 30 )) > /var/lib/memory-emergency-guard/io-ticks.epoch"
       )
       machine.succeed("${writeFakes "zone6real" zone6real}")
+      print("Z6DEBUG iopsi=" + machine.succeed("cat /tmp/gt/zone6real-iopsi"))
+      print("Z6DEBUG ds=" + machine.succeed("cat /tmp/gt/zone6real-diskstats"))
       out = run_guard("zone6real")
+      print("Z6DEBUG out=" + out)
+      print("Z6DEBUG state=" + machine.succeed("ls -la /var/lib/memory-emergency-guard/; cat /var/lib/memory-emergency-guard/io-ticks* 2>&1"))
+      print("Z6DEBUG prom=" + machine.succeed("grep io_ /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom"))
       assert "I/O PSI some avg60" in out, (
           "Zone 6 must trip on sustained io PSI avg60>=40 when real disk "
           "activity corroborates (crash #3: balance at 0% unalloc froze the "
