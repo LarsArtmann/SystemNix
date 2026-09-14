@@ -471,3 +471,14 @@ _Completed work is tracked in [CHANGELOG.md](./CHANGELOG.md)._
 - [ ] **WAV→FLAC/opus mirror + browsable web archive (player/search) over the UCR call archive** — Navidrome feeds on the FLAC leg
 - [ ] **Contacts VCF export to the pool + per-contact card decode** (the index.csv enrichment row covers call-log names, not VCF)
 - [ ] **RAG query CLI over the archive** ("when did we first talk about X") — rides the whisper-transcription row's output
+
+## P3: Repo-cleanup decision items (2026-09-14 sweep — `docs/planning/2026-09-14_20-09_REPO-CLEANUP-PARETO-PLAN.md`)
+
+_The sweep itself is DONE (archives 3→1 at `docs/status/archived/`, docs root 92→8, stale lockfiles/orphan scripts/merged branches gone, `test-mkFilesystem` wired into flake checks — 9/9 at eval time). Companion note for the P0 /data item: the two repair scripts `scripts/data-corruption-repair.sh` + `scripts/find-corrupted-files.sh` were KEPT by the sweep (they are its runbook tools) — this is their living-doc link. Remaining items are OWNER decisions, deliberately not executed:_
+
+- [ ] **D1: minecraft.nix keep-or-remove** — 476 lines at `enable = false` with maintained whitelist config; the largest dormant module
+- [ ] **D2: visionreviewd keep-or-remove** — module + mkLarsPackages entry, never enabled anywhere
+- [ ] **D3: Hook-stack consolidation** — `.githooks/` (active via `core.hooksPath`) vs `.pre-commit-config.yaml` (referenced by `platforms/common/programs/pre-commit.nix`); two hook systems coexist
+- [ ] **D4: History-diet paths for the HELD purge** — extend the pending `--invert-paths` list with `projects-management-automation` (57 MB), `better-claude-go` (3×23 MB binaries), `docs/architecture/Setup-Mac-Darwin.png` (20 MB), old vendored `dnsblockd` binary (11 MB) — ~130 MB of dead blobs in every clone
+- [ ] **D5: Relocate live `data/crush-daily.db` out of the worktree** — into the service StateDirectory (needs a stop window; already git-ignored via `*.db*`)
+- [ ] **D6: `flake-update.yml` validation gate** — already tracked in P1.5 (2026-09-13 mass-breakage class); listed here for the cleanup ledger only

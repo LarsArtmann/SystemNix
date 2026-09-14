@@ -1,7 +1,9 @@
 # Tests for lib/filesystems.nix mkFilesystem helper
 # Standalone: nix eval --impure --file ./tests/test-mkFilesystem.nix --apply 'f: f { }'
 # Registered: tests/default.nix `mkfilesystem` (eval-time — throws on failure)
-{ lib ? (builtins.getFlake (toString /home/lars/projects/SystemNix)).inputs.nixpkgs.lib }:
+{
+  lib ? (builtins.getFlake (toString /home/lars/projects/SystemNix)).inputs.nixpkgs.lib,
+}:
 let
   mkFilesystem = import ../lib/filesystems.nix lib;
 
