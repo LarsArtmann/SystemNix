@@ -55,24 +55,17 @@ in
       # same code path, but the VM must not depend on production unit names.
       restartUnits = [
         "pool-consumer-test-enabled.service"
-        "pool-consumer-test-disabled.service"
+        "pool-consumer-test-nonexistent.service"
       ];
     };
 
-    # Boot-transaction dropout fixtures (2026-09-14 class): an enabled unit
+    # Boot-transaction dropout fixture (2026-09-14 class): an enabled unit
     # stopped out from under the boot (inactive, NOT failed) must be
-    # converged by recovery; an explicitly disabled unit must never be.
+    # converged by recovery. pool-consumer-test-nonexistent.service is
+    # deliberately never defined — a listed-but-missing unit must degrade to
+    # a non-fatal start failure, not break convergence for the list.
     systemd.services.pool-consumer-test-enabled = {
       description = "pool-recovery convergence fixture (enabled)";
-      wantedBy = [ "multi-user.target" ];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${pkgs.coreutils}/bin/sleep infinity";
-        Restart = "no";
-      };
-    };
-    systemd.services.pool-consumer-test-disabled = {
-      description = "pool-recovery convergence fixture (disabled)";
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "simple";
@@ -166,25 +159,23 @@ in
     healthy.succeed("journalctl -u pool-usb-recovery.service | grep -q 'mount healthy'")
 
     # 1b. CONSUMER CONVERGENCE (boot-dropout class): an enabled-but-inactive
-    #     consumer gets started by the healthy-path recovery run; a masked
-    #     consumer is left untouched. (runtime mask instead of disable: the
-    #     VM's /etc/systemd/system is a read-only store tree, so neither
-    #     disable nor a persistent mask can write there; a runtime mask
-    #     under /run gives the same masked state is-enabled reports.)
+    #     consumer gets started by the healthy-path recovery run, and a
+    #     listed unit that does not exist must not break convergence for the
+    #     rest of the list (start failure is non-fatal). The disabled/masked
+    #     skip branch is NOT VM-testable: the guest /etc/systemd/system is a
+    #     read-only store tree, so neither disable nor mask can establish
+    #     that state (a runtime mask symlink is provably ignored by PID1
+    #     here — the fixture unit still started, see the converge function's
+    #     option description for the production semantics).
     healthy.succeed("systemctl stop pool-consumer-test-enabled.service")
-    healthy.succeed("systemctl mask --runtime --force pool-consumer-test-disabled.service")
-    healthy.succeed("systemctl stop pool-consumer-test-disabled.service")
     healthy.succeed("systemctl start pool-usb-recovery.service")
     healthy.succeed("systemctl is-active --quiet pool-consumer-test-enabled.service")
     healthy.succeed(
       "journalctl -u pool-usb-recovery.service | grep -q 'starting enabled-but-inactive pool service: pool-consumer-test-enabled.service'"
     )
     healthy.succeed(
-      "systemctl is-enabled pool-consumer-test-disabled.service || true; "
-      "systemctl status pool-consumer-test-disabled.service --no-pager -n 3 || true; "
-      "ls -la /run/systemd/system/ | grep pool || true"
+      "journalctl -u pool-usb-recovery.service | grep -q 'start pool-consumer-test-nonexistent.service failed (non-fatal)'"
     )
-    healthy.fail("systemctl is-active --quiet pool-consumer-test-disabled.service")
 
     # 3+2. ZOMBIE SIMULATION: foreign disk at the mountpoint → reap + remount
     healthy.succeed("systemctl stop mnt-pool.mount")
