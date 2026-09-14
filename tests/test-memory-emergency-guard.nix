@@ -22,6 +22,13 @@
 #   6b. Zone 5 (episodic avg10 ≥40%, avg60 LOW): 7 episode runs → no trip,
 #      8th → trip — the leaky bucket calibrated against the real incident.
 #   6c. Episode decay: 4 episodes + clean runs → bucket drains, no trip.
+#   8. Zone 6 (io PSI some avg60 >= 40% + DISK BUSY corroborated via the
+#      io_ticks delta): MUST trip — the crash #3 class — AND stop the churn
+#      sources (btrfs balance dummy stopped; the guard never restarts them,
+#      their timers resume).
+#   8b. Phantom io PSI (avg60 90%) with IDLE disks (io_ticks delta 0):
+#      MUST NOT trip — the 2026-08-24 ln phantom class (D-state on dead
+#      automounts saturates io PSI with zero real disk activity).
 #   5. Cooldown: repeat trip within 600 s → service stop skipped (counter
 #      unchanged) but the socket stays enforced down.
 #   6. Restore: healthy margins + last trip 700 s ago → socket restarted,
@@ -46,6 +53,7 @@ let
       zramPct,
       psiAvg10,
       psiAvg60 ? "4.00",
+      ioPsiAvg60 ? "0.00",
     }:
     "MemTotal:       10000000 kB\\nMemAvailable:    "
     + (toString (builtins.floor (10000000 * availPct)))
@@ -57,13 +65,23 @@ let
     + psiAvg60
     + " avg300=5.00 total=1000000\\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=100000";
 
-  # Writes /tmp/gt/<name>-meminfo, -mmstat, -psi from the blob (line 3 is
-  # mm_stat, line 4 the PSI "some" line the guard's awk reads).
+  # Writes /tmp/gt/<name>-meminfo, -mmstat, -psi, -iopsi, -diskstats from
+  # the blob (line 3 is mm_stat, line 4 the memory PSI "some" line, line 5
+  # the io PSI "some" line the guard's awk reads).
   writeFakes =
     name: attrs:
+    let
+      diskTicks = attrs.diskTicks or 1000;
+    in
     "mkdir -p /tmp/gt && "
     + "printf '"
     + (sourcesBlob attrs)
+    + "\\nsome avg10=0.00 avg60="
+    + attrs.ioPsiAvg60
+    + " avg300=0.00 total=0\\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+    + "\\n8 0 nvme0n1 1 2 3 4 5 6 7 8 "
+    + (toString diskTicks)
+    + " 10 11 12"
     + "\\n' > /tmp/gt/"
     + name
     + "-all && "
@@ -81,7 +99,17 @@ let
     + name
     + "-all > /tmp/gt/"
     + name
-    + "-psi";
+    + "-psi && "
+    + "sed -n '5p' /tmp/gt/"
+    + name
+    + "-all > /tmp/gt/"
+    + name
+    + "-iopsi && "
+    + "sed -n '7p' /tmp/gt/"
+    + name
+    + "-all > /tmp/gt/"
+    + name
+    + "-diskstats";
 in
 {
   name = "memory-emergency-guard";
@@ -114,6 +142,12 @@ in
       systemd.services."fastflowlm@" = {
         description = "dummy flm per-connection instance";
         serviceConfig.ExecStart = "${pkgs.coreutils}/bin/sleep infinity";
+      };
+      # Zone 6's churn-stop target (one of the guard's ioChurnUnits).
+      systemd.services.btrfs-balance-data = {
+        description = "dummy btrfs balance churn unit";
+        serviceConfig.ExecStart = "${pkgs.coreutils}/bin/sleep infinity";
+        wantedBy = [ "multi-user.target" ];
       };
       systemd.sockets.fastflowlm = {
         description = "dummy flm activation socket";
@@ -198,6 +232,27 @@ in
         zramPct = 0.97;
         psiAvg10 = "0.26";
       };
+      # The 2026-08-24 crash #3 signature: SUSTAINED io PSI with healthy
+      # memory — and REAL disk activity behind it (io_ticks delta 12000 ms
+      # over a seeded 30 s interval = 40% busy, above the 20% corroboration
+      # floor).
+      zone6real = {
+        availPct = 0.30;
+        zramPct = 0.20;
+        psiAvg10 = "0.10";
+        ioPsiAvg60 = "55.00";
+        diskTicks = 13000;
+      };
+      # The 2026-08-24 ln phantom: io PSI saturated by D-state tasks on a
+      # dead automount while the DISKS ARE IDLE (io_ticks delta 0 over the
+      # same seeded interval). Must NOT trip.
+      zone6phantom = {
+        availPct = 0.30;
+        zramPct = 0.20;
+        psiAvg10 = "0.10";
+        ioPsiAvg60 = "90.00";
+        diskTicks = 1000;
+      };
     in
     ''
       machine.start()
@@ -220,7 +275,9 @@ in
               f"MEMINFO_SRC=/tmp/gt/{case}-meminfo"
               f" ZRAM_MM_STAT_SRC=/tmp/gt/{case}-mmstat"
               f" ZRAM_DISKSIZE_SRC=/tmp/gt/disksize"
-              f" PSI_SRC=/tmp/gt/{case}-psi {script} 2>&1"
+              f" PSI_SRC=/tmp/gt/{case}-psi"
+              f" IO_PSI_SRC=/tmp/gt/{case}-iopsi"
+              f" DISKSTATS_SRC=/tmp/gt/{case}-diskstats {script} 2>&1"
           )
 
       def reset_state():
@@ -229,7 +286,10 @@ in
                           " /var/lib/memory-emergency-guard/psi-episodes"
                           " /var/lib/memory-emergency-guard/zone-counts"
                           " /var/lib/memory-emergency-guard/trip-history"
-                          " /var/lib/memory-emergency-guard/restored.count")
+                          " /var/lib/memory-emergency-guard/restored.count"
+                          " /var/lib/memory-emergency-guard/io-ticks"
+                          " /var/lib/memory-emergency-guard/io-ticks.epoch"
+                          " /var/lib/memory-emergency-guard/io-ticks.cur")
           machine.succeed("rm -f /var/lib/memory-emergency-guard/restores-*")
           # Bring every sacrifice unit back up (the restore path only
           # restarts the socket; activation would re-spawn the backend).
@@ -241,6 +301,9 @@ in
           machine.succeed("systemctl start fastflowlm.socket")
           machine.succeed("systemctl start fastflowlm.service"
                           " 'fastflowlm@1.service'")
+          # The Zone 6 churn-stop target: bring it back so later trips can
+          # stop it again (the guard never restarts churn units).
+          machine.succeed("systemctl start btrfs-balance-data.service")
 
       def assert_all_down():
           machine.fail("systemctl is-active --quiet fastflowlm.socket")
@@ -435,5 +498,47 @@ in
       out = run_guard("psiblock")
       assert "restored" not in out, "restore must be blocked while PSI is elevated"
       machine.fail("systemctl is-active --quiet fastflowlm.socket")
+
+      # --- 8. Zone 6 (crash #3): sustained io PSI + REAL disk busy -------
+      reset_state()
+      machine.succeed("${writeFakes "healthy" healthy}")
+      # Seed the io_ticks state from a run 30 s ago so the busy% is
+      # deterministic: (13000 - 1000) ms / (30 s * 10) = 40% >= 20% floor.
+      machine.succeed(
+          "MEMINFO_SRC=/tmp/gt/healthy-meminfo ZRAM_MM_STAT_SRC=/tmp/gt/healthy-mmstat"
+          " ZRAM_DISKSIZE_SRC=/tmp/gt/disksize PSI_SRC=/tmp/gt/healthy-psi"
+          " IO_PSI_SRC=/tmp/gt/healthy-iopsi DISKSTATS_SRC=/tmp/gt/healthy-diskstats"
+          f" {script} >/dev/null 2>&1 || true"
+      )
+      machine.succeed(
+          "echo $(( $(date +%s) - 30 )) > /var/lib/memory-emergency-guard/io-ticks.epoch"
+      )
+      machine.succeed("${writeFakes "zone6real" zone6real}")
+      out = run_guard("zone6real")
+      assert "I/O PSI some avg60" in out, (
+          "Zone 6 must trip on sustained io PSI avg60>=40 when real disk "
+          "activity corroborates (crash #3: balance at 0% unalloc froze the "
+          "kernel in 2.5 min with healthy memory gauges)"
+      )
+      assert_all_down()
+      machine.fail("systemctl is-active --quiet btrfs-balance-data.service")
+      prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
+      assert "memory_emergency_guard_io_psi_some_avg60_percent 55.00" in prom
+      assert "memory_emergency_guard_io_disk_busy_percent_max 40.0" in prom
+      assert "memory_emergency_guard_zone6_trips_total 1" in prom
+
+      # --- 8b. Phantom io PSI (idle disks) must NOT trip -----------------
+      reset_state()
+      machine.succeed("${writeFakes "zone6phantom" zone6phantom}")
+      machine.succeed(
+          "echo $(( $(date +%s) - 30 )) > /var/lib/memory-emergency-guard/io-ticks.epoch"
+      )
+      out = run_guard("zone6phantom")
+      assert "MEMORY EMERGENCY" not in out, (
+          "io PSI with ZERO io_ticks delta (D-state tasks parked on a dead "
+          "automount — the 2026-08-24 ln phantom) must not sacrifice flm"
+      )
+      machine.succeed("systemctl is-active --quiet fastflowlm.socket")
+      machine.succeed("systemctl is-active --quiet btrfs-balance-data.service")
     '';
 }

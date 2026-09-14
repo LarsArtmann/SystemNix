@@ -1287,7 +1287,7 @@ _: {
                     "[BODY] == pat(*memory_emergency_guard_avail_percent*)"
                     "[BODY] == pat(*memory_emergency_guard_last_trip_recent 0*)"
                   ];
-                  alerts = discordAlert "Memory emergency guard TRIPPED (or the guard died): the machine entered a pre-freeze zone (low MemAvailable, near-full zram, or PSI refault thrash) and FastFlowLM + its activation socket were force-stopped. The socket auto-restores once memory recovers; until then LLM clients get connection-refused by design. Check: journalctl -u memory-emergency-guard -n 30, memory_emergency_guard_{avail,zram_fill,psi_some_avg10}_percent in the textfile collector, what is holding RAM (ps aux --sort=-%mem | head)";
+                  alerts = discordAlert "Memory emergency guard TRIPPED (or the guard died): the machine entered a pre-freeze zone (low MemAvailable, near-full zram, PSI refault thrash, episodic memory stall, or sustained I/O stall with disk-busy corroboration) and FastFlowLM + its activation socket + the resumable I/O churn units (btrbk/balance/scrub) were force-stopped. The socket auto-restores once memory recovers; until then LLM clients get connection-refused by design. Check: journalctl -u memory-emergency-guard -n 30, memory_emergency_guard_{avail,zram_fill,psi_some_avg10,io_psi_some_avg60}_percent in the textfile collector, what is holding RAM (ps aux --sort=-%mem | head)";
                 })
                 (mkHttpCheck {
                   name = "Memory Pressure Warning";
