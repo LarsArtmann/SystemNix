@@ -716,16 +716,22 @@
       # (2026-09-13 broken mass-update remediation): there it is the
       # documented defense against the dirtyRev/narHash lock trap, and CI
       # cannot fetch git+file anyway. Remote-scheme pins must move in
-      # flake.lock, never in the URL.
+      # flake.lock, never in the URL. Reads the LOCK's original URLs (the
+      # resolved-flake `.original` attr infinite-recurses here).
       inputUrlRevOffenders =
+        let
+          rootInputs = lockFile.nodes.${lockFile.root}.inputs or { };
+          nodeUrl = key: lockFile.nodes.${key}.original.url or "";
+        in
         lib.filter (n: n != null) (
           lib.mapAttrsToList (
-            name: input:
+            name: node:
             let
-              url = input.original.url or "";
+              url =
+                if builtins.isString node then nodeUrl node else ""
             in
             if builtins.match ".*[?&]rev=.*" url != null && !lib.hasPrefix "git+file:" url then name else null
-          ) inputs
+          ) rootInputs
         );
       inputUrlRevGuard =
         assert
@@ -735,9 +741,9 @@
             Fix: drop ?rev= from the URL and pin via flake.lock, or use a git+file: interim pin (local checkouts only).
           '';
         true;
+      allEvalGuards = builtins.seq nixpkgsTarballGuard inputUrlRevGuard;
     in
-    builtins.seq nixpkgsTarballGuard (
-      builtins.seq inputUrlRevGuard flake-parts.lib.mkFlake { inherit inputs; } {
+    builtins.seq allEvalGuards flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [
         "aarch64-darwin"
         "x86_64-linux"
@@ -1513,6 +1519,6 @@
             sharedHomeManagerSpecialArgs
             ;
         };
-      });
+      };
     };
 }
