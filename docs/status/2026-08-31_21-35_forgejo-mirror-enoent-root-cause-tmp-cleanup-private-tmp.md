@@ -111,7 +111,7 @@ This upgrades Round 1's caveat ("strong correlation, NOT live repro") to a VM-re
 
 ## 12. Open questions from Round 1 — evidence gathered
 
-- **Q1 (was the 21:16 switch deliberate?):** generation 744 (21:16:25) is still the running system; no switches since. It shipped dd3479e9 (docker-prune rework + tmp-cleanup guard + crush sops) — content is consistent with an intentional deploy of the evening's batch. User confirmation still pending, but nothing anomalous.
+- ~~**Q1 (was the 21:16 switch deliberate?):** generation 744 (21:16:25) is still the running system; no switches since.~~ done (docs-health 2026-09-14: many deploys since; gen-744 long superseded — the switch itself was evidently intentional) It shipped dd3479e9 (docker-prune rework + tmp-cleanup guard + crush sops) — content is consistent with an intentional deploy of the evening's batch. User confirmation still pending, but nothing anomalous.
 - **Q3 (keep the 4h timer given cleanOnBoot?):** RECOMMEND KEEPING, now guarded. The timer's marginal value is intra-boot junk on the 48G tmpfs (this box reboots often, but 100+ day uptimes would accumulate); the entire incident class is now fenced by 4 layers (fix + 2 eval guards + VM test). Removing the timer would drop real protection against tmpfs exhaustion (Gatus alerts at 80% but nothing would reclaim).
 - **Q2 (blast radius):** answered by §9 — no lasting damage beyond the known forgejo gap (self-recovered) and transient celery/wgunicorn failures.
 

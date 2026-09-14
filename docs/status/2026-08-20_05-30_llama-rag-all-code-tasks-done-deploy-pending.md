@@ -1,5 +1,7 @@
 # Status: llama-rag Integration Complete — All Code Tasks Done, Deploy + Push Pending
 
+> [docs-health 2026-09-14] the "Deploy + Push Pending" headline is STALE: deployed and smoke-verified the same day by `2026-08-20_08-06_llama-rag-model-fetch-deploy-fix.md` (63 PASS, embeddings 1024-dim, rerank OK). (Service since BROKEN 2026-09-14 by the 20260911 nixpkgs llama.cpp regression — see FEATURES.md.)
+
 **Date:** 2026-08-20 05:30
 **Session goal:** Complete remaining integration work for the llama-rag module, then deploy and push.
 

@@ -7,7 +7,7 @@
 
 ## a) FULLY DONE (verified)
 
-1. **Fix verified live (again, post-deploy):** `system_forgejo_mirror_errors_30m 0`, `scrape_errors 0`, sync age healthy (~7h < 10h stall threshold), 47 `systemd-private-*` dirs alive, gen-744 (21:16:25) still the running system, fix committed (`dd3479e9`, rebased through daemon batch `f00a33ec`).
+1. **Fix verified live (again, post-deploy):** `system_forgejo_mirror_errors_30m 0`, `scrape_errors 0`, sync age healthy (~7h < 10h stall threshold), 47 `systemd-private-*` dirs alive, gen-744 (21:16:25) still the running system [docs-health 2026-09-14: STALE — many deploys since], fix committed (`dd3479e9`, rebased through daemon batch `f00a33ec`).
 2. **Blast-radius sweep (§7.3 / Q2):** 4 victims, ~16.9k tmp-ENOENT lines, all four `PrivateTmp=true` (verified in deployed unit files):
    - forgejo 16,318 (known); discordsync 550 attachment-download failures — **self-healed**, post-heal reconcile completed with 0 failures; paperless-task-queue 5 (celery `pymp-*`, 01:30 scheduler); immich-ml 2 (wgunicorn `mkstemp`).
    - `mount-rootfs/tmp` systemd warnings (twenty/fail2ban/caddy/manifest, 3-6 each) identified as a DIFFERENT signature and excluded.

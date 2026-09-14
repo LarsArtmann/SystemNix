@@ -12,7 +12,7 @@ auto-commit daemon active throughout (three more daemon-swept commits; all verif
 - All P0/P2 code items from the previous report are **done, verified, pushed**:
   phantom-green gate fixed and live-fired, `restamp` subcommand added, profile-anchor
   tripwire (metric + Gatus + allowlist) added, AGENTS.md lessons recorded.
-- **The machine is STILL un-deployed and now manually-switched a THIRD time**
+- ~~**The machine is STILL un-deployed and now manually-switched a THIRD time**~~ done (docs-health 2026-09-14: deploys long since resumed; generation anchoring verified — see the pre-deploy anchoring checks + `system_booted_is_newest_profile` 2026-09-14)
   (`6wjiga6` → `8y6vdvvd`, still no numbered profile — observed live mid-session).
   The new tripwire will fire `system_current_system_profiled 0` the moment it
   deploys — correct behavior, loud signal.

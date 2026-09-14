@@ -99,7 +99,7 @@ signoz_logs_pipeline_stale 0
 
 ## b) PARTIALLY DONE
 
-1. **DNSBLOCKD still dark** — the WithInsecure fix sits UNCOMMITTED in
+1. ~~**DNSBLOCKD still dark** — the WithInsecure fix sits UNCOMMITTED in~~ resolved (docs-health 2026-09-14: the fix was committed AND pushed upstream `70ca2ea` 2026-09-01, deployed as `dnsblockd-94c9cb9`, wiring flipped to `"config"` + gap budget 5→4 on 2026-09-13 — see TODO_LIST SigNoz row)
    `~/projects/dnsblockd` (`internal/otel/otel.go`, working tree only).
    Everything else is ready: config key live, flip procedure documented,
    budget will go 5 → 4. Blocked on user commit+push (I never push).
