@@ -94,7 +94,7 @@
 
       offenderReport = lib.concatStringsSep "\n" (
         lib.mapAttrsToList (
-          name: svc:
+          _name: svc:
           let
             text = builtins.tryEval (unitText svc);
             unregistered = lib.subtractLists allowedPorts (extractPorts text.value);

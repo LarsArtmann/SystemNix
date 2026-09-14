@@ -33,9 +33,23 @@ the Wise app/web also satisfies it).
    supported for US/CA/AU/NZ/SG/MY profiles on personal tokens). That
    needs an OAuth token or a supported region instead — not this runbook.
 
-2. **Approve in the Wise app** — open Wise on your phone
-   (Settings → Security and privacy → Approvals, or the push
-   notification if one arrived) and approve the pending access request.
+2. **Satisfy the challenge as the account holder** — there is NO
+   "Approvals" screen in the Wise app (live-checked 2026-09-14; an
+   earlier revision of this runbook invented "Settings → Security and
+   privacy → Approvals" — do not look for it). Do one of:
+
+   - **View or download a statement** in the Wise app or on wise.com
+     (Balances → pick a balance → Statements) and complete the 2FA
+     prompt (Face ID/PIN). Statements are low-risk SCA actions; the
+     completed session re-establishes statement access and bank-sync's
+     next 15-min tick succeeds WITHOUT the OTT dance below.
+   - Approve a "confirm it's you" push notification if one arrived.
+
+   Only if the journal still logs `pending SCA approval` after two
+   sync ticks: continue with the OTT below. Fully programmatic
+   clearing for personal tokens is the enrolled-keypair signature
+   flow (Wise `digital-signatures-examples`, sca-personal-tokens) —
+   an upstream wise-go feature, not built yet.
 
 3. **Drop the OTT into the env file** (single use, expires fast — do
    this right after approving):
