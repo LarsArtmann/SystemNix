@@ -1223,8 +1223,8 @@
               # bind (EROFS on read-only binds; cross-filesystem mutation on
               # writable ones). -xdev does NOT protect same-filesystem binds
               # (shared st_dev on one BTRFS subvol) — prune the exact path.
-              # WARNING-only for now (live incident class: hermes 2026-08-20,
-              # down 09:18-09:35); promote to exit 1 after one clean cycle.
+              # FAILING since 2026-09-14 (multiple clean CI cycles passed
+              # since the 2026-08-20 hermes incident).
               chown-vs-bind-audit = pkgs.runCommand "chown-vs-bind-audit" { } ''
                 warn=0
                 for f in $(grep -rlE 'Bind(ReadOnly|ReadWrite)?Paths' ${./modules}); do
@@ -1238,7 +1238,8 @@
                   fi
                 done
                 if [ "$warn" -ne 0 ]; then
-                  echo "WARNING (non-blocking): recursive ownership walks coexist with bind mounts — review the lines above"
+                  echo "FAIL: recursive ownership walks coexist with bind mounts — fix the lines above (find with -prune on the bind target, never chown/chmod -R)"
+                  exit 1
                 fi
                 touch $out
               '';
