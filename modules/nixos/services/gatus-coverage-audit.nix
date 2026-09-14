@@ -97,9 +97,10 @@
               if !t.success then
                 [ ]
               else
-                map (p: { port = p; owner = name; }) (
-                  builtins.filter (p: builtins.elem p registeredPorts) (extractPorts t.value)
-                )
+                map (p: {
+                  port = p;
+                  owner = name;
+                }) (builtins.filter (p: builtins.elem p registeredPorts) (extractPorts t.value))
             ) config.systemd.services
           )
         );
@@ -129,22 +130,18 @@
       uncoveredReport = map (p: "  ${toString p} (referenced by: ${owners p})") uncovered;
 
       # --- class B: loopback gatus URLs must use registered ports ---
-      loopbackUrlPorts =
-        lib.concatLists (
-          map (
-            url:
-            let
-              # IPv6 [::1] literals are not matched — POSIX ERE rejects the
-              # \[ escape, and no gatus URL in this repo uses IPv6 loopback.
-              isLoopback =
-                builtins.match "(http|https|tcp)://(127\\.0\\.0\\.1|localhost).*" url != null;
-            in
-            lib.optionals isLoopback (urlPorts url)
-          ) gatusUrls
-        );
-      unregisteredLoopback = lib.unique (
-        lib.subtractLists allowed loopbackUrlPorts
+      loopbackUrlPorts = lib.concatLists (
+        map (
+          url:
+          let
+            # IPv6 [::1] literals are not matched — POSIX ERE rejects the
+            # \[ escape, and no gatus URL in this repo uses IPv6 loopback.
+            isLoopback = builtins.match "(http|https|tcp)://(127\\.0\\.0\\.1|localhost).*" url != null;
+          in
+          lib.optionals isLoopback (urlPorts url)
+        ) gatusUrls
       );
+      unregisteredLoopback = lib.unique (lib.subtractLists allowed loopbackUrlPorts);
 
     in
     {

@@ -172,11 +172,9 @@ in
 if failedCases == [ ] then
   pkgs.runCommand "test-gatus-coverage-audit-pass" { } "touch $out"
 else
-  pkgs.runCommand "test-gatus-coverage-audit-fail"
-    { }
-    ''
-      echo "gatus-coverage-audit negative test failures:"
-      echo ""
-      ${lib.concatMapStrings (c: "echo '  - ${c.name}'\n") failedCases}
-      exit 1
-    ''
+  pkgs.runCommand "test-gatus-coverage-audit-fail" { } ''
+    echo "gatus-coverage-audit negative test failures:"
+    echo ""
+    ${lib.concatMapStrings (c: "echo '  - ${c.name}'\n") failedCases}
+    exit 1
+  ''

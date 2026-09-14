@@ -133,11 +133,9 @@ in
 if failedCases == [ ] then
   pkgs.runCommand "test-deploy-restart-audit-pass" { } "touch $out"
 else
-  pkgs.runCommand "test-deploy-restart-audit-fail"
-    { }
-    ''
-      echo "deploy-restart-audit negative test failures:"
-      echo ""
-      ${lib.concatMapStrings (c: "echo '  - ${c.name}'\n") failedCases}
-      exit 1
-    ''
+  pkgs.runCommand "test-deploy-restart-audit-fail" { } ''
+    echo "deploy-restart-audit negative test failures:"
+    echo ""
+    ${lib.concatMapStrings (c: "echo '  - ${c.name}'\n") failedCases}
+    exit 1
+  ''

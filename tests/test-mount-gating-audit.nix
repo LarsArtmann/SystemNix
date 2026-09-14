@@ -178,11 +178,9 @@ in
 if failedCases == [ ] then
   pkgs.runCommand "test-mount-gating-audit-pass" { } "touch $out"
 else
-  pkgs.runCommand "test-mount-gating-audit-fail"
-    { }
-    ''
-      echo "mount-gating-audit negative test failures:"
-      echo ""
-      ${lib.concatMapStrings (c: "echo '  - ${c.name}'\n") failedCases}
-      exit 1
-    ''
+  pkgs.runCommand "test-mount-gating-audit-fail" { } ''
+    echo "mount-gating-audit negative test failures:"
+    echo ""
+    ${lib.concatMapStrings (c: "echo '  - ${c.name}'\n") failedCases}
+    exit 1
+  ''

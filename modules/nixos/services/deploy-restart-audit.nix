@@ -45,23 +45,22 @@
 
       offenders =
         let
-          bad =
-            lib.filterAttrs (
-              name: svc:
-              !builtins.elem name cfg.allowUnits
-              && !lib.hasInfix name deploySh
-              && (
-                (
-                  (svc.serviceConfig.Type or null) == "oneshot"
-                  && builtins.any (p: builtins.match p name != null) convergerPatterns
-                )
-                || (
-                  (svc.serviceConfig.Type or null) == "oneshot"
-                  && (svc.serviceConfig.RemainAfterExit or false) == true
-                  && (builtins.length (svc.restartTriggers or [ ])) > 0
-                )
+          bad = lib.filterAttrs (
+            name: svc:
+            !builtins.elem name cfg.allowUnits
+            && !lib.hasInfix name deploySh
+            && (
+              (
+                (svc.serviceConfig.Type or null) == "oneshot"
+                && builtins.any (p: builtins.match p name != null) convergerPatterns
               )
-            ) config.systemd.services;
+              || (
+                (svc.serviceConfig.Type or null) == "oneshot"
+                && (svc.serviceConfig.RemainAfterExit or false) == true
+                && (builtins.length (svc.restartTriggers or [ ])) > 0
+              )
+            )
+          ) config.systemd.services;
         in
         lib.attrNames bad;
     in

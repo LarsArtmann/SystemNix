@@ -41,44 +41,38 @@
 
       # Path-component-aware: "/mnt/pool" is an ancestor of
       # "/mnt/pool/backups/cv" but NOT of "/mnt/poolx".
-      isAncestorOrEqual =
-        ancestor: p: ancestor == p || lib.hasPrefix "${ancestor}/" p;
+      isAncestorOrEqual = ancestor: p: ancestor == p || lib.hasPrefix "${ancestor}/" p;
 
       # A RequiresMountsFor entry gates the mount containing it, so it
       # covers the entry itself, everything BELOW it, and every ancestor
       # on the same mount.
-      rmfCovers =
-        rmf: p:
-        isAncestorOrEqual rmf p
-        || lib.hasPrefix "${p}/" rmf;
+      rmfCovers = rmf: p: isAncestorOrEqual rmf p || lib.hasPrefix "${p}/" rmf;
 
-      condCovers =
-        cond: p: isAncestorOrEqual cond p;
+      condCovers = cond: p: isAncestorOrEqual cond p;
 
       isMntPath = p: lib.hasPrefix "/mnt/" (toString p);
 
       offenders =
         let
           checked = lib.filterAttrs (_n: svc: !builtins.elem _n cfg.allowUnits) config.systemd.services;
-          bad =
-            lib.concatLists (
-              lib.mapAttrsToList (
-                name: svc:
-                let
-                  sc = svc.serviceConfig or { };
-                  rmf = map toString (asList ((svc.unitConfig or { }).RequiresMountsFor or null));
-                  conds = map toString (
-                    asList (sc.ConditionPathIsMountPoint or null)
-                    ++ asList ((svc.unitConfig or { }).ConditionPathIsMountPoint or null)
-                  );
-                  mntPaths = builtins.filter isMntPath (map toString (asList (sc.ReadWritePaths or null)));
-                  ungated = builtins.filter (
-                    p: !(builtins.any (r: rmfCovers r p) rmf || builtins.any (c: condCovers c p) conds)
-                  ) mntPaths;
-                in
-                map (p: "${name}: ${p}") ungated
-              ) checked
-            );
+          bad = lib.concatLists (
+            lib.mapAttrsToList (
+              name: svc:
+              let
+                sc = svc.serviceConfig or { };
+                rmf = map toString (asList ((svc.unitConfig or { }).RequiresMountsFor or null));
+                conds = map toString (
+                  asList (sc.ConditionPathIsMountPoint or null)
+                  ++ asList ((svc.unitConfig or { }).ConditionPathIsMountPoint or null)
+                );
+                mntPaths = builtins.filter isMntPath (map toString (asList (sc.ReadWritePaths or null)));
+                ungated = builtins.filter (
+                  p: !(builtins.any (r: rmfCovers r p) rmf || builtins.any (c: condCovers c p) conds)
+                ) mntPaths;
+              in
+              map (p: "${name}: ${p}") ungated
+            ) checked
+          );
         in
         bad;
     in
