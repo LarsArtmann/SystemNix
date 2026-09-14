@@ -80,9 +80,9 @@ let
     + "\\nsome avg10=0.00 avg60="
     + ioPsiAvg60
     + " avg300=0.00 total=0\\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
-    + "\\n8 0 nvme0n1 1 2 3 4 5 6 7 8 "
+    + "\\n8 0 nvme0n1 1 2 3 4 5 6 7 8 9 "
     + (toString diskTicks)
-    + " 10 11 12"
+    + " 11 12"
     + "\\n' > /tmp/gt/"
     + name
     + "-all && "
@@ -149,6 +149,8 @@ in
         description = "dummy btrfs balance churn unit";
         serviceConfig.ExecStart = "${pkgs.coreutils}/bin/sleep infinity";
         wantedBy = [ "multi-user.target" ];
+        # reset_state restarts it many times within the test window.
+        startLimitBurst = lib.mkForce 100;
       };
       systemd.sockets.fastflowlm = {
         description = "dummy flm activation socket";
