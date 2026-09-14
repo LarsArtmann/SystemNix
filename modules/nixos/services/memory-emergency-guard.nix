@@ -61,6 +61,20 @@
 # avg60 (a full-minute average of ALL tasks stalled on memory) resists the
 # legitimate avg10 bursts a big nix build produces.
 #
+# 2026-08-24 crash #3 (the Zone 6 motivation): a manual btrfs balance at 0%
+# chunk-unalloc, stacked on zram 85% + ClickHouse merge churn, drove I/O PSI
+# to ~99% and the kernel froze in 2.5 min — a scheduler livelock with
+# HEALTHY-looking memory gauges (docs/status/2026-08-24_08-00_crash3-*). The
+# memory zones cannot see this class: the stall axis is I/O, not memory.
+# Zone 6 trips on SUSTAINED io-pressure some avg60 — but ONLY when real disk
+# activity corroborates it (per-disk io_ticks delta vs the previous guard
+# run): D-state tasks parked on dead automounts produce phantom 80-99% I/O
+# PSI with IDLE disks (the 2026-08-24 ln lesson), and tripping the guard on
+# that phantom would needlessly sacrifice flm. On trip the guard stops the
+# resumable churn sources (btrbk sends, btrfs balance + scrub) IN ADDITION
+# to the flm sacrifice — btrbk resumes incrementally from its next timer
+# fire, balance/scrub timers re-fire on schedule; nothing is lost.
+#
 # The guard closes that gap: stop the flm backend BEFORE the cliff. flm is
 # the designated sacrifice (stateless, socket-activated, self-heals on the
 # next connection with a 1-3 min cold load — OOMScoreAdjust=300 already
@@ -115,6 +129,11 @@ _: {
           ZRAM_MM_STAT_SRC="''${ZRAM_MM_STAT_SRC:-/sys/block/zram0/mm_stat}"
           ZRAM_DISKSIZE_SRC="''${ZRAM_DISKSIZE_SRC:-/sys/block/zram0/disksize}"
           PSI_SRC="''${PSI_SRC:-/proc/pressure/memory}"
+          IO_PSI_SRC="''${IO_PSI_SRC:-/proc/pressure/io}"
+          DISKSTATS_SRC="''${DISKSTATS_SRC:-/proc/diskstats}"
+
+          now=$(date +%s)
+          CHURN_UNITS="${lib.concatStringsSep " " cfg.ioChurnUnits}"
 
           mem_available_kb=$(awk '/^MemAvailable:/ {print $2}' "$MEMINFO_SRC")
           mem_total_kb=$(awk '/^MemTotal:/ {print $2}' "$MEMINFO_SRC")
@@ -158,6 +177,15 @@ _: {
             psi_some_avg60="''${psi_some_avg60:--1}"
           fi
 
+          # SUSTAINED I/O stall (some avg60): the Zone 6 signal. Same logic
+          # as Zone 4 but on the io axis — memory gauges stay healthy while
+          # stacked full-disk readers livelock the scheduler (crash #3).
+          io_psi_some_avg60=-1
+          if [ -r "$IO_PSI_SRC" ]; then
+            io_psi_some_avg60=$(awk '/^some/ { for (i = 1; i <= NF; i++) if ($i ~ /^avg60=/) { sub(/^avg60=/, "", $i); print $i; exit } }' "$IO_PSI_SRC" 2>/dev/null) || io_psi_some_avg60=-1
+            io_psi_some_avg60="''${io_psi_some_avg60:--1}"
+          fi
+
           tripped_total=0
           if [ -f "$COUNT_FILE" ]; then
             tripped_total=$(cat "$COUNT_FILE" 2>/dev/null) || tripped_total=0
@@ -176,14 +204,16 @@ _: {
           zone3=0
           zone4=0
           zone5=0
+          zone6=0
           if [ -f "$ZONE_FILE" ]; then
-            read -r zone1 zone2 zone3 zone4 zone5 < "$ZONE_FILE" 2>/dev/null || true
+            read -r zone1 zone2 zone3 zone4 zone5 zone6 < "$ZONE_FILE" 2>/dev/null || true
           fi
           zone1="''${zone1:-0}"
           zone2="''${zone2:-0}"
           zone3="''${zone3:-0}"
           zone4="''${zone4:-0}"
           zone5="''${zone5:-0}"
+          zone6="''${zone6:-0}"
 
           # Episodic-stall leaky bucket (Zone 5): CALIBRATED AGAINST THE REAL
           # 2026-08-31 boot -1 telemetry — node_psi_memory_some_avg60 never
@@ -208,6 +238,50 @@ _: {
           fi
           echo "$psi_episodes" > "$EPISODES_FILE"
 
+          # Disk-busy corroboration for Zone 6 (the phantom-PSI filter):
+          # per-disk io_ticks (ms, /proc/diskstats field 13) delta vs the
+          # PREVIOUS guard run, as percent busy, MAX across real disks
+          # (whole sd*/nvme devices only — no partitions/loop/zram).
+          # D-state tasks on dead automounts saturate io PSI with IDLE disks
+          # (2026-08-24 ln class) — without this gate the guard would
+          # sacrifice flm on a phantom. -1 when unknown (first run, elapsed
+          # 0, or diskstats unreadable): treated as CORROBORATED (fail-safe
+          # toward protecting the kernel; the phantom state is persistent,
+          # so every run after the first has a known value).
+          TICKS_STATE="${stateDir}/io-ticks"
+          TICKS_EPOCH="${stateDir}/io-ticks.epoch"
+          TICKS_CUR="${stateDir}/io-ticks.cur"
+          disk_busy_max=-1
+          cur_ticks=""
+          if [ -r "$DISKSTATS_SRC" ]; then
+            cur_ticks=$(awk '$3 ~ /^(sd[a-z]+|nvme[0-9]+n[0-9]+)$/ { print $3, $13 }' "$DISKSTATS_SRC" 2>/dev/null) || cur_ticks=""
+          fi
+          if [ -n "$cur_ticks" ]; then
+            printf '%s\n' "$cur_ticks" > "$TICKS_CUR"
+            prev_epoch=0
+            if [ -f "$TICKS_EPOCH" ]; then
+              prev_epoch=$(cat "$TICKS_EPOCH" 2>/dev/null) || prev_epoch=0
+            fi
+            prev_epoch="''${prev_epoch:-0}"
+            elapsed=$((now - prev_epoch))
+            if [ "$prev_epoch" -gt 0 ] && [ "$elapsed" -gt 0 ] && [ -f "$TICKS_STATE" ]; then
+              disk_busy_max=$(awk -v e="$elapsed" '
+                NR == FNR { ticks[$1] = $2; next }
+                ($1 in ticks) {
+                  pct = ($2 - ticks[$1]) / (e * 10.0)
+                  if (pct > 100) pct = 100
+                  if (pct > m) m = pct
+                }
+                END { print (m == "" ? -1 : sprintf("%.1f", m)) }
+              ' "$TICKS_STATE" "$TICKS_CUR" 2>/dev/null) || disk_busy_max=-1
+              disk_busy_max="''${disk_busy_max:--1}"
+            fi
+            {
+              cat "$TICKS_CUR"
+            } > "$TICKS_STATE.tmp" 2>/dev/null && mv "$TICKS_STATE.tmp" "$TICKS_STATE" || true
+            echo "$now" > "$TICKS_EPOCH"
+          fi
+
           # --- Trip decision ---
           # Zone 1 (absolute): MemAvailable below the hard floor — freeze is
           #   imminent regardless of zram state (2026-08-22 22:25: ~4-5%).
@@ -226,6 +300,10 @@ _: {
           #   overflowed — the REAL 2026-08-31 16:34 signature (episodes
           #   every few minutes for 2 h, avg60 damped to single digits,
           #   terminal collapse in minutes).
+          # Zone 6 (sustained I/O stall): io-pressure some avg60 high AND
+          #   real disk activity corroborates (per-disk io_ticks delta — the
+          #   phantom-PSI filter). The crash #3 class: memory zones blind,
+          #   scheduler livelock from stacked full-disk readers.
           trip=0
           zone=0
           reason=""
@@ -257,11 +335,20 @@ _: {
             trip=1
             zone=5
             reason="PSI episodic stall: ''${psi_episodes} leaky-bucket episodes of avg10 >= ${toString cfg.psiSomeThresholdPercent}% (avg10=''${psi_some_avg10}%, avg60=''${psi_some_avg60}% stayed LOW — the calibrated 2026-08-31 16:34 signature: episodic spikes for ~2 h, then minutes-fast collapse the averages never saw)"
+          elif
+            awk -v p="$io_psi_some_avg60" 'BEGIN { exit !(p >= ${toString cfg.ioPsiSomeAvg60ThresholdPercent}) }' &&
+              {
+                [ "$disk_busy_max" = "-1" ] ||
+                  awk -v b="$disk_busy_max" 'BEGIN { exit !(b >= ${toString cfg.ioDiskBusyThresholdPercent}) }'
+              }
+          then
+            trip=1
+            zone=6
+            reason="I/O PSI some avg60=''${io_psi_some_avg60}% sustained (max disk busy ''${disk_busy_max}%, MemAvailable=''${avail_pct}% — the crash #3 class: stacked full-disk readers livelocking the scheduler while memory looks healthy)"
           fi
 
           # Last-trip age, computed for BOTH branches (trip gating + socket
           # restore gating below).
-          now=$(date +%s)
           last_trip=0
           if [ -f "$LAST_TRIP_FILE" ]; then
             last_trip=$(cat "$LAST_TRIP_FILE" 2>/dev/null) || last_trip=0
@@ -335,6 +422,14 @@ _: {
               systemctl stop ${
                 lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
               } 2>/dev/null || true
+              # Zone 6's real mitigation: stop the resumable churn sources
+              # (btrbk sends, balance, scrub). They are NOT restarted here —
+              # their own timers re-fire them once I/O has drained (btrbk
+              # resumes incrementally; an interrupted receive is healed by
+              # btrbk-pool-clean). Stopping an inactive unit is a no-op.
+              if [ -n "$CHURN_UNITS" ]; then
+                systemctl stop $CHURN_UNITS 2>/dev/null || true
+              fi
               echo "$now" > "$LAST_TRIP_FILE"
               tripped_total=$((tripped_total + 1))
               echo "$tripped_total" > "$COUNT_FILE"
@@ -344,8 +439,9 @@ _: {
                 3) zone3=$((zone3 + 1)) ;;
                 4) zone4=$((zone4 + 1)) ;;
                 5) zone5=$((zone5 + 1)) ;;
+                6) zone6=$((zone6 + 1)) ;;
               esac
-              echo "$zone1 $zone2 $zone3 $zone4 $zone5" > "$ZONE_FILE"
+              echo "$zone1 $zone2 $zone3 $zone4 $zone5 $zone6" > "$ZONE_FILE"
               echo "$now" >> "$HISTORY_FILE"
               echo "MEMORY EMERGENCY action taken: sockets + sacrifice units stopped (trip #''${tripped_total}, zone ''${zone})" >&2
             fi
@@ -430,6 +526,14 @@ _: {
             echo "# TYPE memory_emergency_guard_psi_episodes gauge"
             echo "memory_emergency_guard_psi_episodes ''${psi_episodes}"
 
+            echo "# HELP memory_emergency_guard_io_psi_some_avg60_percent PSI io some avg60 stall percent — the sustained-I/O-stall (Zone 6) signal (-1 when io PSI is unreadable)"
+            echo "# TYPE memory_emergency_guard_io_psi_some_avg60_percent gauge"
+            echo "memory_emergency_guard_io_psi_some_avg60_percent ''${io_psi_some_avg60}"
+
+            echo "# HELP memory_emergency_guard_io_disk_busy_percent_max Max per-disk busy percent over the previous guard interval (io_ticks delta) — the Zone 6 phantom-PSI filter (-1 when unknown)"
+            echo "# TYPE memory_emergency_guard_io_disk_busy_percent_max gauge"
+            echo "memory_emergency_guard_io_disk_busy_percent_max ''${disk_busy_max}"
+
             echo "# HELP memory_emergency_guard_sacrifice_socket_active 1 when any sacrifice socket is accepting, 0 when sacrificed"
             echo "# TYPE memory_emergency_guard_sacrifice_socket_active gauge"
             echo "memory_emergency_guard_sacrifice_socket_active ''${sacrifice_socket_active}"
@@ -473,6 +577,10 @@ _: {
             echo "# HELP memory_emergency_guard_zone5_trips_total Trips from Zone 5 (episodic avg10 leaky bucket — the calibrated 2026-08-31 signature)"
             echo "# TYPE memory_emergency_guard_zone5_trips_total counter"
             echo "memory_emergency_guard_zone5_trips_total ''${zone5}"
+
+            echo "# HELP memory_emergency_guard_zone6_trips_total Trips from Zone 6 (sustained I/O PSI stall with disk-busy corroboration — the crash #3 class)"
+            echo "# TYPE memory_emergency_guard_zone6_trips_total counter"
+            echo "memory_emergency_guard_zone6_trips_total ''${zone6}"
           } > "$TMP"
           mv "$TMP" "$OUT"
         '';
@@ -528,6 +636,33 @@ _: {
           type = lib.types.int;
           default = 8;
           description = "Leaky-bucket episode count at which the Zone 5 episodic-stall trip fires: +1 per guard run with PSI some avg10 >= psiSomeThresholdPercent, -1 per clean run (floor 0), trip at this count. Default 8 = net 4 min of episode-runs within the decay horizon (~8 min at 30s cadence). CALIBRATED against 2026-08-31 boot -1: avg10 episodes recurred every few minutes for ~2 h while avg60 stayed <=4% — this, not any average, was the observable pre-freeze signal (first episode 14:56, freeze 16:34)";
+        };
+
+        ioPsiSomeAvg60ThresholdPercent = lib.mkOption {
+          type = lib.types.int;
+          default = 40;
+          description = "SUSTAINED PSI io some avg60 stall percentage at or above which the Zone 6 trip fires (requires disk-busy corroboration unless unknown). The crash #3 class: a manual balance at 0% unalloc + zram 85% drove io PSI to ~99% and froze the kernel in 2.5 min while every memory gauge looked healthy";
+        };
+
+        ioDiskBusyThresholdPercent = lib.mkOption {
+          type = lib.types.int;
+          default = 20;
+          description = "Max per-disk busy percent (io_ticks delta vs the previous guard run) at or above which io PSI is treated as REAL for the Zone 6 trip. D-state tasks parked on dead automounts saturate io PSI with idle disks (the 2026-08-24 phantom-PSI class) — without this filter the guard would sacrifice flm on a phantom";
+        };
+
+        ioChurnUnits = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [
+            "btrbk-root.service"
+            "btrbk-data.service"
+            "btrbk-pool.service"
+            "btrfs-balance-metadata.service"
+            "btrfs-balance-data.service"
+            "btrfs-scrub--.service"
+            "btrfs-scrub-data.service"
+            "btrfs-scrub-mnt-pool.service"
+          ];
+          description = "Resumable I/O churn units stopped on ANY trip (Zone 6's real mitigation: crash #3 was stacked full-disk readers). Never restarted by the guard — their own timers re-fire them once I/O drains (btrbk resumes incrementally; an interrupted receive is healed by btrbk-pool-clean). Stopping an inactive unit is a no-op";
         };
 
         actionCooldownSeconds = lib.mkOption {
