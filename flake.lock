@@ -712,6 +712,7 @@
     "cv": {
       "inputs": {
         "flake-parts": "flake-parts_3",
+        "go-business-rules": "go-business-rules",
         "go-cqrs-lite": "go-cqrs-lite_4",
         "go-nix-helpers": "go-nix-helpers_2",
         "nixpkgs": "nixpkgs",
@@ -720,11 +721,11 @@
         "treefmt-nix": "treefmt-nix_4"
       },
       "locked": {
-        "lastModified": 1789300130,
-        "narHash": "sha256-T0LZI5XORRMtp/2FXBqvBOkt1W/Fw9PXEqBweCOcy3U=",
+        "lastModified": 1789382722,
+        "narHash": "sha256-UeatEdDb0TCfxRrqss9u4ce/iBVUYrwPOHDYvT29eCs=",
         "ref": "master",
-        "rev": "76721324e9b351d61d63ff701428d988ad0a31b4",
-        "revCount": 4542,
+        "rev": "0e31d7b00dbf5cf8515186033f6d7e1ddde801a1",
+        "revCount": 4649,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
@@ -2080,6 +2081,23 @@
         "type": "github"
       }
     },
+    "go-business-rules": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1777976639,
+        "narHash": "sha256-0hQjncagW7jV/deoPK7yXPBfEi3ZOLj/jKSSwyxQamk=",
+        "owner": "LarsArtmann",
+        "repo": "go-business-rules",
+        "rev": "d9faacb854eb3a83a77d99234d9f5421a9fb8ccb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "repo": "go-business-rules",
+        "rev": "d9faacb854eb3a83a77d99234d9f5421a9fb8ccb",
+        "type": "github"
+      }
+    },
     "go-checker-helpers": {
       "flake": false,
       "locked": {
@@ -2338,11 +2356,11 @@
     "go-cqrs-lite_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1789287304,
-        "narHash": "sha256-bykJKyUZfgeaScFObi/N3AeiSNVoGL2eZ6OVZlEe6Rs=",
+        "lastModified": 1789356564,
+        "narHash": "sha256-5t4lWHjg2FWXASh/LwYakukh9o7UqCk7pmQ0l8u07fs=",
         "ref": "master",
-        "rev": "2aef35992c422729de81f338efde6c257506dcf0",
-        "revCount": 6564,
+        "rev": "31b5e7adca31dd0b22e681f80b21a09b0b93dee4",
+        "revCount": 6659,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       },
