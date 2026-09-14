@@ -65,9 +65,8 @@ in
   # services.pocket-id-config.provision.{oidcClients,extraOidcClients} and
   # services.integration.<name>.oidc so service modules can register their
   # own clients without editing pocket-id.nix's default list.
-  oidcClient = mkOption {
-    type = types.submodule {
-      options = {
+  oidcClientType = types.submodule {
+    options = {
         name = mkOption {
           type = types.str;
           description = "Display name for the OIDC client";
@@ -113,6 +112,13 @@ in
         };
       };
     };
-    description = "Pocket ID OIDC client registration";
+
+  # List-of-clients option built from oidcClientType. Options compose via
+  # `//` (e.g. pocket-id overrides the default list) — the raw type is
+  # exported separately for single-client options (services.integration).
+  oidcClients = mkOption {
+    type = types.listOf oidcClientType;
+    default = [ ];
+    description = "Pocket ID OIDC client registrations";
   };
 }
