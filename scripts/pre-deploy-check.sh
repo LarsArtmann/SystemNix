@@ -524,7 +524,7 @@ if [ -s "$METRICS_FILE" ]; then
     TOBE_GATUS_CFG=$(mktemp)
     if nix --extra-experimental-features 'nix-command flakes' eval --json \
       '.#nixosConfigurations.evo-x2.config.services.gatus.settings' 2>/dev/null |
-      jq -r '.. | strings | gsub("\n"; "\\n")' > "$TOBE_GATUS_CFG" && [ -s "$TOBE_GATUS_CFG" ]; then
+      jq -r '.. | strings | gsub("\n"; "\\n")' >"$TOBE_GATUS_CFG" && [ -s "$TOBE_GATUS_CFG" ]; then
       AUTO_NEW_METRICS=$(comm -23 <(GATUS_CONFIG="$TOBE_GATUS_CFG" extract_gatus_metrics) <(printf '%s\n' "$DEPLOYED_METRICS" | sort -u) || true)
     else
       warn "Could not eval the to-be-deployed gatus settings — auto-loan fell back to the .nix source (enable-gated blocks may produce false loans)"

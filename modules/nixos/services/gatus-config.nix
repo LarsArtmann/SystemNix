@@ -1268,6 +1268,25 @@ _: {
                   alerts = discordAlert "The RUNNING system is not anchored to any numbered nix profile generation — it was activated manually (banned pattern; deploy.sh post-switch steps and the profile/boot-entry trail are missing). A REBOOT WILL REVERT the machine to the last real generation. Fix: run `nix run .#deploy` NOW to persist the current config. Check: readlink /run/current-system vs ls /nix/var/nix/profiles/";
                 })
                 (mkHttpCheck {
+                  name = "Boot Generation Freshness";
+                  group = "Monitoring";
+                  # The 2026-09-07 stuck-boot class: parallel deploys advanced
+                  # the loader DEFAULT past the store the machine boots from;
+                  # a reboot then hangs pre-journal. Also the exit-4 class:
+                  # activation advances /run/current-system but skips the
+                  # profile bump, and a reboot silently reverts. deploy.sh's
+                  # anchoring print cannot cover the reboot-into-stale case —
+                  # only a runtime metric can. 0 = booted != newest profile.
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*system_booted_is_newest_profile 0\n*)"
+                    "[BODY] == pat(*\nsystem_booted_is_newest_profile *)"
+                  ];
+                  alerts = discordAlert "The BOOTED system does not match the newest numbered nix profile generation — a reboot would boot a DIFFERENT (possibly store-dead) toplevel (2026-09-07 stuck-boot class) or silently revert. Check: `readlink -f /run/booted-system` vs `readlink -f /nix/var/nix/profiles/system`, run `nix run .#deploy` to re-anchor, and `nix run .#pre-reboot-check` BEFORE any reboot.";
+                })
+                (mkHttpCheck {
                   name = "Memory Emergency Guard";
                   group = "Monitoring";
                   # The 2026-08-22 freezes: #1 (00:27) zram 100% full made

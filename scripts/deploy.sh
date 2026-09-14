@@ -233,8 +233,8 @@ if nix run .#pre-deploy-check; then
   io_ticks_a=$(sample_io_ticks)
   sleep 1
   io_ticks_b=$(sample_io_ticks)
-  disk_busy=$(paste <(tr ' ' '\n' <<<"$io_ticks_a") <(tr ' ' '\n' <<<"$io_ticks_b") \
-                | awk 'NF == 2 {d = $2 - $1; if (d > m) m = d} END {printf "%.1f", m / 10.0}')
+  disk_busy=$(paste <(tr ' ' '\n' <<<"$io_ticks_a") <(tr ' ' '\n' <<<"$io_ticks_b") |
+    awk 'NF == 2 {d = $2 - $1; if (d > m) m = d} END {printf "%.1f", m / 10.0}')
   zram_fill=""
   if [ -r /sys/block/zram0/mm_stat ] && [ -r /sys/block/zram0/disksize ]; then
     zram_orig=$(awk '{print $1}' /sys/block/zram0/mm_stat 2>/dev/null || echo 0)

@@ -686,6 +686,22 @@ _: {
             SYSTEM_PROFILED=1
           fi
 
+          # === booted system vs newest profile (reboot-into-stale detector) ===
+          # The 2026-09-07 stuck-boot class: a deploy advances the bootloader
+          # DEFAULT (or the profile) to a toplevel the live store cannot serve,
+          # and a reboot boots a STALE/missing init. Also the exit-4 class:
+          # activation advances /run/current-system but skips the profile bump,
+          # and a reboot reverts. 1 = /run/booted-system IS the newest numbered
+          # profile; 0 = the machine is running (or boots into) something older
+          # than the newest profile. Emitted unconditionally (fail-closed:
+          # unresolvable links = 0).
+          BOOTED_NEWEST=0
+          BOOTED_SYS=$(readlink -f /run/booted-system 2>/dev/null) || BOOTED_SYS=""
+          NEWEST_SYS=$(readlink -f /nix/var/nix/profiles/system 2>/dev/null) || NEWEST_SYS=""
+          if [ -n "$BOOTED_SYS" ] && [ -n "$NEWEST_SYS" ] && [ "$BOOTED_SYS" = "$NEWEST_SYS" ]; then
+            BOOTED_NEWEST=1
+          fi
+
           # === systemd-oomd kills tracking ===
           # systemd-oomd kills (nix-daemon, Twenty worker) went completely
           # undetected. This counts kill events from the journal in the
@@ -1087,6 +1103,10 @@ _: {
             echo "# HELP system_current_system_profiled 1 if /run/current-system matches a numbered nix profile generation (deployed via nix run .#deploy), 0 if manually activated (reboot would revert to the last real generation)"
             echo "# TYPE system_current_system_profiled gauge"
             echo "system_current_system_profiled ''${SYSTEM_PROFILED}"
+
+            echo "# HELP system_booted_is_newest_profile 1 if /run/booted-system IS the newest numbered nix profile generation, 0 if the machine runs (or would boot into) an older toplevel than the newest profile (exit-4 activation class / reboot-into-stale class)"
+            echo "# TYPE system_booted_is_newest_profile gauge"
+            echo "system_booted_is_newest_profile ''${BOOTED_NEWEST}"
 
             echo "# HELP system_service_crash_loop 1 if service restarted >=${toString crashLoopRestartThreshold} times since last collection, 0 otherwise"
             echo "# TYPE system_service_crash_loop gauge"
