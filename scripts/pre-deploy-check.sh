@@ -513,7 +513,24 @@ if [ -s "$METRICS_FILE" ]; then
   fi
   if [ -n "$DEPLOYED_GATUS_CFG" ] && [ -r "$DEPLOYED_GATUS_CFG" ]; then
     DEPLOYED_METRICS=$(GATUS_CONFIG="$DEPLOYED_GATUS_CFG" extract_gatus_metrics || true)
-    AUTO_NEW_METRICS=$(comm -23 <(extract_gatus_metrics) <(printf '%s\n' "$DEPLOYED_METRICS" | sort -u) || true)
+    # The TO-BE-DEPLOYED side must be the RENDERED settings (nix eval), never
+    # the default GATUS_CONFIG (.nix source): the source carries enable-gated
+    # lib.optionals blocks (monitor365, disabled since 2026-08-12) whose pat()
+    # tokens never reach the deployed YAML — source-vs-deployed diffing fired
+    # a permanent false loan for cloud_sync_* / collector_events_collected on
+    # EVERY deploy (observed live 2026-09-14; rendered-vs-deployed diff is
+    # empty both ways). gsub re-escapes real newlines inside condition strings
+    # back to the literal \n the anchored-form extractor matches.
+    TOBE_GATUS_CFG=$(mktemp)
+    if nix --extra-experimental-features 'nix-command flakes' eval --json \
+      '.#nixosConfigurations.evo-x2.config.services.gatus.settings' 2>/dev/null |
+      jq -r '.. | strings | gsub("\n"; "\\n")' > "$TOBE_GATUS_CFG" && [ -s "$TOBE_GATUS_CFG" ]; then
+      AUTO_NEW_METRICS=$(comm -23 <(GATUS_CONFIG="$TOBE_GATUS_CFG" extract_gatus_metrics) <(printf '%s\n' "$DEPLOYED_METRICS" | sort -u) || true)
+    else
+      warn "Could not eval the to-be-deployed gatus settings — auto-loan fell back to the .nix source (enable-gated blocks may produce false loans)"
+      AUTO_NEW_METRICS=$(comm -23 <(extract_gatus_metrics) <(printf '%s\n' "$DEPLOYED_METRICS" | sort -u) || true)
+    fi
+    rm -f "$TOBE_GATUS_CFG"
     if [ -n "$AUTO_NEW_METRICS" ]; then
       warn "Auto-derived new-metric loan from the gatus-config diff (absent from the running generation's config): $(echo "$AUTO_NEW_METRICS" | tr '\n' ' ')"
       KNOWN_NEW_METRICS="$KNOWN_NEW_METRICS $AUTO_NEW_METRICS"
