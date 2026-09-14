@@ -68,19 +68,19 @@ The answer delivered: **No supported declarative path exists.** Signal Desktop 8
 
 | # | Task | Impact | Effort | Category |
 | --- | --- | --- | --- | --- |
-| 01 | Get the definition of "green" (see g-1) before any further work | Critical | S | Decision |
-| 02 | Decide: accept one-time UI configuration vs. require automation for fresh profiles | Critical | S | Decision |
+| ~~01~~ | ~~Get the definition of "green" (see g-1) before any further work~~ done — user clarified "chat-color and or theme" (2026-09-14) | ~~Critical~~ | ~~S~~ | ~~Decision~~ |
+| ~~02~~ | ~~Decide: accept one-time UI configuration vs. require automation for fresh profiles~~ done — theme decided by shipping activation.signal-theme (28e28055); chat color stays one-time UI | ~~Critical~~ | ~~S~~ | ~~Decision~~ |
 | 03 | If UI route: pick the exact preset (forest / wintergreen / basil / sea / lagoon) and set it in Appearance | High | S | Feature |
 | 04 | Verify or retract the "appearance syncs to linked devices" claim (Signal docs or two-device test) | High | S | Bug (claim) |
-| 05 | Write AGENTS.md gotcha entry: Signal settings live in SQLCipher `items` table; `ephemeral.json` is the only file hook; no HM module exists | High | S | Documentation |
+| ~~05~~ | ~~Write AGENTS.md gotcha entry: Signal settings live in SQLCipher `items` table; `ephemeral.json` is the only file hook; no HM module exists~~ done — AGENTS.md Desktop gotcha entry written + theme activation shipped (28e28055) | ~~High~~ | ~~S~~ | ~~Documentation~~ |
 | 06 | Run `signal-desktop --help`; enumerate the full CLI flag surface; confirm no theme/color flag | Medium | S | Quality |
-| 07 | Test whether `ephemeral.json` `theme-setting` affects the UI when the DB holds a different value (renderer-vs-main divergence) | Medium | S | Quality |
+| ~~07~~ | ~~Test whether `ephemeral.json` `theme-setting` affects the UI when the DB holds a different value (renderer-vs-main divergence)~~ done — source+bundle verified — renderer reads themeSetting via IPC from main which reads ephemeral.json FIRST; no divergence; implemented as activation.signal-theme (28e28055) | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
 | 08 | Write a runbook: `docs/services/signal.md` (storage layout, what is/isn't configurable, the green-preset list) | Medium | S | Documentation |
 | 09 | Inspect the `items` schema on a COPY of `db.sqlite` (sqlcipher + key from `config.json`) to identify the global chat-color key | Medium | M | Quality |
 | 10 | If automation is approved: prototype the seeding script (read key → upsert item → gate on `pgrep signal`) | Medium | M | Feature |
 | 11 | Safety harness for the script: operate on a DB copy first; backup original before any write; refuse to run while Signal is up | High | M | Feature |
 | 12 | Choose tooling for the script (nixpkgs `sqlcircher` CLI vs python sqlcipher binding — verify what nixpkgs actually packages) | Medium | S | Quality |
-| 13 | Wrap the script as an HM activation hook with `backupFileExtension`-style collision safety | Medium | M | Feature |
+| ~~13~~ | ~~Wrap the script as an HM activation hook with `backupFileExtension`-style collision safety~~ **Won't implement — moot unless the encrypted-DB seeding path is approved.** | ~~Medium~~ | ~~M~~ | ~~Feature~~ |
 | 14 | Check nixpkgs `signal-desktop` derivation for command-line passthrough options (`extraCommandLineFlags`-style) | Low | S | Quality |
 | 15 | Confirm whether `theme-setting: 'system'` follows gsettings/portal (relevant only to dark/light, not green) | Low | S | Quality |
 | 16 | Check whether Signal is installed on the Darwin host and whether its userData layout matches the Linux findings | Low | S | Quality |
@@ -88,7 +88,7 @@ The answer delivered: **No supported declarative path exists.** Signal Desktop 8
 | 18 | Add a TODO_LIST entry capturing the pending decision (b/c items above) so this doesn't evaporate | High | S | Documentation |
 | 19 | If seed-script pattern proves out: evaluate generalizing to other Electron apps' item stores (pattern reuse only — no new scope) | Low | M | Feature |
 | 20 | Re-check the color list after Signal major bumps (picker list is version-scoped to 8.25.0) | Low | S | Cleanup |
-| 21 | If user wants green "branding" instead (icon/window styling), scope that separately — it is NOT the chat-color system this session analyzed | Medium | M | Decision-dependent |
+| ~~21~~ | ~~If user wants green "branding" instead (icon/window styling), scope that separately — it is NOT the chat-color system this session analyzed~~ done — superseded — user confirmed chat-color and/or theme, not branding | ~~Medium~~ | ~~M~~ | ~~Decision-dependent~~ |
 | 22 | Document the per-conversation vs global chat-color distinction in the runbook (custom colors serialize as `custom` + `customColorId`) | Low | S | Documentation |
 
 *Deliberately fewer than 50: this session was a single read-only capability question; padding to 50 would manufacture fake work. Sections c/e carry the rest of the honest backlog.*
