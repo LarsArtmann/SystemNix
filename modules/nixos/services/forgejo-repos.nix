@@ -295,6 +295,16 @@ _: {
           pkgs.age
         ];
 
+        # Deliberate bounded-retry exception (systemd-shape-audit class 2):
+        # forgejo-ensure-repos retries 3x within ~15s (RestartSec 5s, burst 3)
+        # and self-extinguishes via start-limit LONG before the daily timer
+        # refires — the 2026-08-18 browser-history-agent cascade shape
+        # (RestartSec ≈ timer cadence) does not apply. Next-day timer run
+        # works normally after the 300s rate-limit window clears.
+        services."systemd-shape-audit".allowTimerRestart = lib.mkIf cfg.autoSync [
+          "forgejo-ensure-repos"
+        ];
+
         systemd = lib.mkIf cfg.autoSync {
           services.forgejo-ensure-repos = {
             description = "Ensure GitHub repos are mirrored to Forgejo";

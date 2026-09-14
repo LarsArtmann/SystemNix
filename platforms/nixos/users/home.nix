@@ -494,10 +494,16 @@ in
         if ${pkgs.procps}/bin/pgrep -x signal-desktop >/dev/null 2>&1; then
           echo "signal-theme: signal-desktop is running, skipping (it would overwrite ephemeral.json on exit)"
         else
-          $DRY_RUN_CMD ${pkgs.jq}/bin/jq --arg t "$SIGNAL_THEME" '.["theme-setting"] = $t' \
-            "$SIGNAL_EPHEMERAL" > "$SIGNAL_EPHEMERAL.tmp" \
-            && $DRY_RUN_CMD mv "$SIGNAL_EPHEMERAL.tmp" "$SIGNAL_EPHEMERAL"
-          rm -f "$SIGNAL_EPHEMERAL.tmp"
+          if [ -f "$SIGNAL_EPHEMERAL" ]; then
+            $DRY_RUN_CMD ${pkgs.jq}/bin/jq --arg t "$SIGNAL_THEME" '.["theme-setting"] = $t' \
+              "$SIGNAL_EPHEMERAL" > "$SIGNAL_EPHEMERAL.tmp" \
+              && $DRY_RUN_CMD mv "$SIGNAL_EPHEMERAL.tmp" "$SIGNAL_EPHEMERAL"
+            rm -f "$SIGNAL_EPHEMERAL.tmp"
+          else
+            # Fresh profile: Signal creates the file on first launch; seed it.
+            $DRY_RUN_CMD ${pkgs.jq}/bin/jq -n --arg t "$SIGNAL_THEME" \
+              '{"theme-setting": $t}' > "$SIGNAL_EPHEMERAL"
+          fi
         fi
       fi
     '';
