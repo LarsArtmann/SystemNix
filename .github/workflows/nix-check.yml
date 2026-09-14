@@ -76,10 +76,16 @@ jobs:
 
       - name: Check for unregistered port numbers
         run: |
-          # Catches port assignments in modules that bypass lib/ports.nix.
+          # SOURCE-LEVEL complement to the eval-time port-registry-audit
+          # (modules/nixos/services/port-registry-audit.nix, enforced by
+          # `nix flake check`): the eval audit scans RESOLVED unit
+          # Exec*/Environment text (sees through variable indirection and
+          # FAILS the build), while this warning-only grep catches ports in
+          # source forms that never reach unit text — Caddy configs, docker
+          # compose fragments, inline script literals. The eval audit owns
+          # unit-wired ports; this net owns everything else.
           # The eval-time assertion in lib/default.nix catches duplicates WITHIN
-          # ports.nix. This check catches raw numbers used outside the registry.
-          # Only match bare numeric assignments (= NNNN) or proxy-style :NNNN at
+          # ports.nix. Only match bare numeric assignments (= NNNN) or proxy-style :NNNN at
           # end of string — avoids connection URIs, memory sizes, time values.
           UNREGISTERED=$(
             grep -rnE '(=|:)[[:space:]]*[0-9]{4,5}([^0-9MiB]|$)' --include="*.nix" modules/ 2>/dev/null |

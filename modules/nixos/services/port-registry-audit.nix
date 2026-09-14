@@ -23,8 +23,10 @@
 #
 # Non-goals: UDP ranges written space-separated, ports in nested config
 # files. This is a regression guard over the dominant literal forms, not a
-# total net — a port that slips past every form is invisible to this audit,
-# never a false alarm.
+# total net — a port that slips past every form is invisible to this audit.
+# The one known FALSE-POSITIVE class: word:NNN tokens whose NNN collides
+# with no registered port ("DELAY:300") fire; host:port and word:NNN are
+# lexically identical, so allowPorts is the sanctioned escape.
 {
   flake.nixosModules.port-registry-audit =
     {
@@ -52,8 +54,13 @@
       # excludes digits (clock times "2:30", uid:gid never match); trailing
       # boundary for the colon-form excludes letters so model-tag lookalikes
       # ("qwen3.6-moe:35b-a3b" — live false positive on first deploy of this
-      # guard) never match; a port is followed by a non-alphanumeric or EOL.
-      portRegex = "((127\\.0\\.0\\.1|localhost|0\\.0\\.0\\.0)[: ]([0-9]{2,5})([^0-9]|$))|([^0-9]:([0-9]{2,5})([^0-9a-zA-Z]|$))|(--port[ =]([0-9]{2,5})([^0-9]|$))";
+      # guard) never match; the flag-form carries the same non-letter
+      # trailing boundary ("--port=8100abc" is not a port literal). KNOWN
+      # LIMITATION: a word:NNN token ("DELAY:300") is lexically
+      # indistinguishable from host:port ("resend.com:587" — letters before
+      # the colon are legitimate hostnames) and DOES fire when NNN is
+      # unregistered; allowPorts is the escape.
+      portRegex = "((127\\.0\\.0\\.1|localhost|0\\.0\\.0\\.0)[: ]([0-9]{2,5})([^0-9]|$))|([^0-9]:([0-9]{2,5})([^0-9a-zA-Z]|$))|(--port[ =]([0-9]{2,5})([^0-9a-zA-Z]|$))";
 
       extractPorts =
         text:

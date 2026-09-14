@@ -51,6 +51,30 @@ let
       pass = threw (_: hardenUser { ExecStartPre = "/bin/wait"; });
     }
     {
+      name = "execstartex-inside-harden-not-caught";
+      pass = threw (_: harden { ExecStartEx = "@/bin/x"; });
+    }
+    {
+      name = "execstopost-inside-harden-not-caught";
+      pass = threw (_: harden { ExecStopPost = "/bin/cleanup"; });
+    }
+    {
+      name = "execstopex-inside-harden-not-caught";
+      pass = threw (_: harden { ExecStopEx = "@/bin/stop"; });
+    }
+    {
+      name = "execreload-inside-harden-not-caught";
+      pass = threw (_: harden { ExecReload = "/bin/reload"; });
+    }
+    {
+      name = "execcondition-inside-harden-not-caught";
+      pass = threw (_: harden { ExecCondition = "/bin/check"; });
+    }
+    {
+      name = "remainafterexit-inside-harden-not-caught";
+      pass = threw (_: harden { RemainAfterExit = true; });
+    }
+    {
       name = "legit-args-throw-falsely";
       pass = (builtins.tryEval (builtins.deepSeq result null)).success;
     }

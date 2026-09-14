@@ -106,10 +106,58 @@ let
                 # Live false positive on first deploy of the guard (2026-09-14):
                 # fastflowlm/PMA model name parsed as host:port 35.
                 "OPENAI_MODEL=qwen3.6-moe:35b-a3b"
+                # Flag-form trailing-letter boundary: "--port=8099abc" is not
+                # a port literal, 8099 must NOT be extracted (registered, so
+                # this would pass either way — the boundary is proven by the
+                # flag-form-fires case below using the same shape).
+                "ADAPTER=--port=8099abc"
               ];
             };
           }
         ]) == [ ];
+    }
+    {
+      name = "flag-form-fires-not-caught";
+      pass = flaggedWith "flag-svc: 8153" (evalAssertions [
+        {
+          systemd.services.flag-svc.serviceConfig.ExecStart = "/bin/app --port=8153";
+        }
+      ]);
+    }
+    {
+      name = "flag-trailing-letter-extracted";
+      # The tightened non-letter trailing boundary must NOT extract a port
+      # from "--port 8154dev" — a malformed value, not a port literal. The
+      # unit passes precisely because nothing was extracted.
+      pass =
+        failing (evalAssertions [
+          {
+            systemd.services.flag-tail-svc.serviceConfig.ExecStart = "/bin/app --port 8154dev";
+          }
+        ]) == [ ];
+    }
+    {
+      name = "word-nnn-registered-collision-falsely-flagged";
+      # DELAY:3000 lexically parses as port 3000 (forgejo, registered) —
+      # benign collision, documented limitation.
+      pass =
+        failing (evalAssertions [
+          {
+            systemd.services.cronish-svc.serviceConfig.Environment = [ "SCHEDULE=DELAY:3000" ];
+          }
+        ]) == [ ];
+    }
+    {
+      name = "word-nnn-unregistered-fires-pinned-limitation";
+      # DELAY:300 vs resend.com:587 are lexically IDENTICAL (letters before
+      # the colon are legitimate hostnames) — the audit fires, and
+      # allowPorts is the sanctioned escape. This case PINS that behavior
+      # so any change to it is a conscious decision.
+      pass = flaggedWith "delay-svc: 300" (evalAssertions [
+        {
+          systemd.services.delay-svc.serviceConfig.Environment = [ "SCHEDULE=DELAY:300" ];
+        }
+      ]);
     }
   ];
 

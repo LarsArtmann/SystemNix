@@ -147,12 +147,65 @@ Only override in platform dirs for things that genuinely differ.
 ## Verification
 
 ```bash
-nix flake check --no-build     # Fast syntax-only check
+nix flake check --no-build                      # Fast syntax-only check (forces ALL assertions)
+nix fmt --no-update-lock-file -- --ci           # Formatting gate (never plain `nix fmt` — re-locks inputs)
+nix build .#checks.x86_64-linux.<test-name> --no-link --print-out-paths  # Build+run ONE negative test
 nix run .#pre-deploy-check     # Pre-deploy validation
 nix run .#post-deploy-check    # Post-deploy smoke test
 scripts/health-check.sh        # System health check
 scripts/verify-deployment.sh   # Deployment readiness validator
 ```
+
+## Eval-Time Guards (audit modules)
+
+Most documented incident classes are ENFORCED at eval time — `nix flake check`
+fails with a fix-it message instead of letting the bug reach a host. Current
+guards (all in `modules/nixos/services/`, all with negative tests in `tests/`):
+
+| Guard | Catches | Escape hatch |
+| --- | --- | --- |
+| `systemd-shape-audit` | oneshot+invalid Restart; timer+Restart race; PathExists path units; `$HOME` in user-unit Exec lines | `allowTimerRestart` |
+| `port-registry-audit` | port literals in unit Exec*/Environment outside `lib/ports.nix` | `allowPorts` |
+| `mount-gating-audit` | ReadWritePaths under /mnt/ without RequiresMountsFor/ConditionPathIsMountPoint (226/NAMESPACE + shadow-dir contamination) | `allowUnits` |
+| `gatus-coverage-audit` | in-use registered ports never probed by gatus; loopback gatus URLs with unregistered ports | `allowPorts` |
+| `deploy-restart-audit` | converger oneshots (*-storage-dir/-provision/-setup/…) and oneshot+RemainAfterExit+restartTriggers missing from `scripts/deploy.sh` | `allowUnits` (upstream defaults built in) |
+| `gate-timeout-audit` | gate units without the TimeoutStartSec floor | — |
+| `otel-endpoint-audit` | OTLP endpoint contract violations | `expectations` |
+| `sops-key-audit` | sops secrets declared but absent from encrypted files | — |
+| `dynamic-user-audit` | DynamicUser services owning sops secrets directly | — |
+| `timeout-audit` / `start-limit-audit` / `udev-block-letter-audit` / `session-boot-audit` / `chown-vs-bind-audit` / `tmp-cleaner-audit` | see module headers | various |
+
+Plus the `harden {}` lifecycle-key THROW in `lib/systemd.nix`, and static
+scanners: `scripts/audit-serviceconfig-merge.sh` (pre-commit + CI),
+`audit-shell-nullglob.sh`, `audit-textfile-tmp.sh`, `check-templ-committed.sh`.
+
+### Adding a new guard
+
+1. **Probe the live config FIRST** — write the probe as `/tmp/probe-*.nix`
+   (NEVER repo root: the auto-commit daemon picks up untracked files) and run
+   `nix eval --impure --json --expr 'builtins.fromJSON (import /tmp/probe-*.nix)'`
+   against `builtins.getFlake (toString /home/lars/projects/SystemNix)`. Size
+   the false-positive risk before writing the assertion.
+2. **Module shape** — a bare attrset (NOT a lambda), auto-discovered by
+   filename into `flake.nixosModules.<name>` and imported into every NixOS
+   host: `{ flake.nixosModules.<name> = { config, lib, ... }: { options… ; config.assertions = […]; }; }`.
+   Assert with a message that names offenders AND the fix, including the
+   escape-hatch option.
+3. **Negative test** — `tests/test-<name>.nix` following
+   `test-mount-gating-audit.nix`: `nixosSystem` with the audit module +
+   fixtures, filter `!a.assertion && hasPrefix "<guard>:" a.message` (minimal
+   evals carry 2 unrelated base assertion failures), list cases, pass/fail
+   derivation. Wire it into `tests/default.nix`.
+4. **`git add` every new file IMMEDIATELY** — flakes see only tracked files;
+   an untracked module fails every evo-x2 eval with "attribute missing".
+5. **Verify**: `nix flake check --no-build`, build the check derivation,
+   `nix fmt --no-update-lock-file -- --ci`, and HAND-PROBE one new case via
+   `extendModules` on evo-x2 — a passing negative-test derivation always has
+   the same store path (pass/fail is chosen at eval), so an identical output
+   path cannot distinguish "new cases pass" from "stale eval cache".
+6. **Set justified allowlists ADJACENT to the offending definition site**
+   (e.g. `fastflowlm.nix` sets its own `gatus-coverage-audit.allowPorts`),
+   with a comment explaining WHY — not centrally.
 
 ## Key Patterns to Know
 
@@ -162,15 +215,17 @@ Never wrap config in `lib.mkIf config.services.<nixpkg-option>.enable` AND set a
 
 ### Systemd Hardening
 
-Use the shared `lib/systemd.nix` harden function for consistent security:
+Use the shared `lib/systemd.nix` harden function for consistent security. Lifecycle keys (`Exec*`, `Type`, `RemainAfterExit`, `Restart`) inside `harden {}`/`hardenUser {}` THROW at eval — merge them via `lib.mkMerge`, never `//` (shallow merge discards `mkDefault`/`mkForce` priority; rejected by `scripts/audit-serviceconfig-merge.sh`):
 
 ```nix
 serviceConfig =
-  harden {
-    PrivateTmp = true;
-    MemoryMax = "512M";
-  }
-  // serviceDefaults {};
+  lib.mkMerge [
+    (harden {
+      PrivateTmp = true;
+      MemoryMax = "512M";
+    })
+    (serviceDefaults {})
+  ];
 ```
 
 ### Secrets
