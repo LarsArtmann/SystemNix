@@ -122,4 +122,7 @@ in
     default = [ ];
     description = "Pocket ID OIDC client registrations";
   };
+
+  # Raw single-client type for options like services.integration.<name>.oidc.
+  inherit oidcClientType;
 }
