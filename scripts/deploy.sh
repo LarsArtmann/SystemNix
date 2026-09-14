@@ -447,6 +447,18 @@ if nix run .#pre-deploy-check; then
     sudo systemctl restart dnsblockd.service 2>/dev/null || true
   fi
 
+  # CV's Pocket ID bridge, same desync class as dnsblockd above (found by the
+  # deploy-restart-audit eval guard 2026-09-14): cv-oidc-env is only
+  # wantedBy=cv-server.service (indirect — the provisioner loop's is-enabled
+  # gate skips it) and cv-server reads the CV_OIDC_CLIENT_SECRET env file at
+  # process start only. A provisioner-rotated secret would otherwise never
+  # reach the running server.
+  if systemctl is-active --quiet cv-oidc-env.service 2>/dev/null; then
+    echo "Restarting cv-oidc-env.service + cv-server.service (reload OIDC client secret)"
+    sudo systemctl restart cv-oidc-env.service 2>/dev/null || true
+    sudo systemctl restart cv-server.service 2>/dev/null || true
+  fi
+
   # Restart browser-history AFTER browser-history-oidc-setup (fresh OAuth2 env
   # file) AND AFTER dnsblockd above: its mkOidcGate only proves DNS was up when
   # the gate ran — restarting dnsblockd after browser-history leaves a window

@@ -134,8 +134,10 @@
           map (
             url:
             let
+              # IPv6 [::1] literals are not matched — POSIX ERE rejects the
+              # \[ escape, and no gatus URL in this repo uses IPv6 loopback.
               isLoopback =
-                builtins.match "(https?|tcp)://(127\\.0\\.0\\.1|localhost|\\[::1\\]).*" url != null;
+                builtins.match "(http|https|tcp)://(127\\.0\\.0\\.1|localhost).*" url != null;
             in
             lib.optionals isLoopback (urlPorts url)
           ) gatusUrls

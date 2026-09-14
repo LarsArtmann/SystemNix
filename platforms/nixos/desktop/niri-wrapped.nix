@@ -117,10 +117,16 @@ let
         exit 0
       fi
 
-      # Respect user choice — only seed if nothing is set
-      if dms ipc call wallpaper get &>/dev/null; then
+      # Respect user choice: exit only when the CURRENT wallpaper file exists.
+      # DMS stores a bare file path — if that file is deleted from disk
+      # (2026-09-14: a deletion in ~/projects/wallpapers left DMS pointing
+      # at a ghost path, blank screen), `get` still exits 0 with the dead
+      # path. Dangling pointer = no user choice: re-seed from the collection.
+      current=$(dms ipc call wallpaper get 2>/dev/null || true)
+      if [ -n "$current" ] && [ -f "$current" ]; then
         exit 0
       fi
+      echo "dms-wallpaper-init: current wallpaper unusable (got: ''${current:-<empty>}) — seeding from $wallpaper_dir" >&2
 
       img=$(find -L "$wallpaper_dir" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | shuf -n1)
       if [ -z "$img" ]; then
@@ -684,7 +690,7 @@ in
     systemd.user.services = {
       dms-wallpaper-init = {
         Unit = {
-          Description = "Seed DMS wallpaper from collection on first launch";
+          Description = "Seed or self-heal DMS wallpaper from collection at session start";
           After = [ "graphical-session.target" ];
           PartOf = [ "graphical-session.target" ];
         };

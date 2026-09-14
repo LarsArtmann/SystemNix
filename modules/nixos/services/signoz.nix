@@ -556,7 +556,10 @@ in
               wantedBy = [ "multi-user.target" ];
               startLimitBurst = 5;
               startLimitIntervalSec = 300;
-              restartTriggers = [ (lib.getExe clickhouseLogTtlScript) ];
+              # NO restartTriggers here: on a oneshot+RemainAfterExit unit
+              # switch-to-configuration IGNORES them (deploy-restart-audit
+              # class) — convergence rides on partOf=clickhouse.service +
+              # the daily 04:20 timer below.
               serviceConfig = lib.mkMerge [
                 (harden { MemoryMax = "256M"; })
                 {

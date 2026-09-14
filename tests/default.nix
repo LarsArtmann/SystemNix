@@ -50,6 +50,7 @@ in
   harden-lifecycle = import ./test-harden-lifecycle.nix { inherit pkgs inputs; };
   mount-gating-audit = import ./test-mount-gating-audit.nix { inherit pkgs inputs system; };
   gatus-coverage-audit = import ./test-gatus-coverage-audit.nix { inherit pkgs inputs system; };
+  deploy-restart-audit = import ./test-deploy-restart-audit.nix { inherit pkgs inputs system; };
   tq-agent-pool = import ./test-tq-agent-pool.nix { inherit pkgs inputs system; };
   inboxclean-paperless = import ./test-inboxclean-paperless.nix { inherit pkgs inputs system; };
   bank-sync-paperless = import ./test-bank-sync-paperless.nix { inherit pkgs inputs system; };
