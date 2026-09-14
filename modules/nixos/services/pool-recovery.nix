@@ -258,7 +258,11 @@
                 if [ "$io_ok" -eq 1 ] && [ "$uuid_ok" -eq 1 ]; then
                   echo "pool-usb-recovery: mount healthy ($mnt) — no action"
                   converge_consumers
-                  systemctl start pool-recovery-metrics.service 2>/dev/null || true
+                  # NO immediate metrics start here: counters are unchanged,
+                  # the 5-min timer owns freshness, and a per-run start
+                  # clusters with boot coldplug + timer starts into
+                  # start-limit-hit (2026-09-14 VM-test catch). The recovered
+                  # path below KEEPS the immediate refresh — counters changed.
                   exit 0
                 fi
                 echo "pool-usb-recovery: stale or foreign mount at $mnt (io_ok=$io_ok uuid_ok=$uuid_ok) — remounting" >&2
