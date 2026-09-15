@@ -339,6 +339,13 @@ in
       # Consumers wired to it: paperless (outbound), forgejo (notifications),
       # system/cron mail (root/postmaster aliases).
       mail-relay.enable = true;
+      # Per-project crush session DBs → Samsung TLC (/mnt/hot). Structural
+      # fix for the 2026-09-14 QLC-root IO storm (guard Zone 6 cycling flm,
+      # DEPLOY_FORCE_PRESSURE escapes): crush-hot-db-migrate moves each
+      # ~/projects/*/.crush dir to /mnt/hot/crush and leaves a symlink;
+      # runs from a daily timer + deploy.sh provisioner loop, skips live
+      # sessions. See modules/nixos/services/crush-hot-db.nix.
+      crush-hot-db.enable = true;
       attic-config = {
         enable = true;
         cachePublicKey = "monitor365:/vu56vS4pTdjoltqqqj80dJ6freEdzEEf4ugdZUPpY8=";

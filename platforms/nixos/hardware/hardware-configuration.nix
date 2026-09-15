@@ -98,6 +98,27 @@ in
         "commit=300"
       ];
     };
+    # Hot-DB mount on the Samsung 970 EVO Plus (same TLC filesystem /nix
+    # lives on, mounted at the TOPLEVEL via explicit subvolid=5 — same
+    # pattern as /data, and no subvolume must be pre-created before the
+    # first deploy). Carries the per-project crush session DBs relocated by
+    # services.crush-hot-db (crush-hot-db-migrate) off the QLC `@` root —
+    # the 2026-09-14 IO-storm fix (TODO_LIST P1). nofail: a missing/failed
+    # mount degrades to "symlink target missing" (crush recreates fresh
+    # .crush dirs on the QLC root; the next migrate run re-converges once
+    # the disk is back), never a dead boot.
+    "/mnt/hot" = mkFilesystem {
+      device = "/dev/disk/by-label/tlc";
+      fsType = "btrfs";
+      options = [
+        "subvolid=5"
+        "compress=zstd"
+        "noatime"
+        "nodiscard"
+        "space_cache=v2"
+        "nofail"
+      ];
+    };
     "/boot" = mkFilesystem {
       device = "/dev/disk/by-uuid/80A3-73A9";
       fsType = "vfat";

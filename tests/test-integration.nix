@@ -93,17 +93,21 @@ let
   # consumer modules (all default false — the test enables none of them).
   enableStubs =
     names:
-    lib.listToAttrs (
-      map (
-        n:
-        lib.nameValuePair "services.${n}.enable" (
-          lib.mkOption {
-            type = lib.types.bool;
-            default = false;
+    {
+      # Nested option paths — a flat "services.<n>.enable" STRING key would
+      # declare a literally-named option, not the path config reads.
+      services = lib.listToAttrs (
+        map (
+          n:
+          lib.nameValuePair n {
+            enable = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+            };
           }
-        )
-      ) names
-    );
+        ) names
+      );
+    };
 
   siblingEnableStubs = enableStubs [
     "ai-stack"
@@ -129,7 +133,6 @@ let
     "pool-recovery"
     "pool-smart-metrics"
     "projects-management-automation"
-    "searx"
     "signoz"
     "systemd-graph"
     "systemd-timer-monitor"
@@ -137,6 +140,35 @@ let
     "twenty"
     "voice-agents"
   ];
+
+  # Port-shaped options the UNCONDITIONAL caddy base vHosts force
+  # (signoz/twenty/taskchampion/manifest/openseo/crush-daily/dns-blockd ports).
+  portStubs = {
+    services.signoz.settings.queryService.port = lib.mkOption {
+      type = lib.types.port;
+      default = 8080;
+    };
+    services.twenty.port = lib.mkOption {
+      type = lib.types.port;
+      default = 8081;
+    };
+    services.manifest.port = lib.mkOption {
+      type = lib.types.port;
+      default = 8083;
+    };
+    services.openseo.port = lib.mkOption {
+      type = lib.types.port;
+      default = 8084;
+    };
+    services.crush-daily.port = lib.mkOption {
+      type = lib.types.port;
+      default = 8085;
+    };
+    services.dns-blocker.statsPort = lib.mkOption {
+      type = lib.types.port;
+      default = 8086;
+    };
+  };
 
   baseModules = [
     inputs.sops-nix.nixosModules.sops
@@ -149,7 +181,7 @@ let
     (mod "otel-endpoint-audit.nix" "otel-endpoint-audit")
     (mod "pocket-id.nix" "pocket-id")
     (mod "integration.nix" "integration")
-    { options = stubs // siblingEnableStubs; }
+    { options = lib.recursiveUpdate (lib.recursiveUpdate stubs portStubs) siblingEnableStubs; }
     {
       networking.domain = "home.lan";
       services.caddy.enable = true;
