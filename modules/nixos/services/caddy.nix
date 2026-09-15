@@ -422,18 +422,6 @@ _: {
               '';
             };
           }
-          # Miniflux RSS reader — native OIDC via Pocket ID (Layer 1), plain
-          # reverse_proxy like Forgejo/Gatus. protectedVHost would double-auth
-          # (forward-auth + the app's own OIDC login button).
-          // lib.optionalAttrs config.services.miniflux.enable {
-            "rss.${domain}" = {
-              extraConfig = ''
-                ${tlsConfig}
-                ${commonConfig}
-                ${proxyTo ports.miniflux}
-              '';
-            };
-          }
           # Registry fan-out (services.integration.<name>.vHost) — rendered
           # through the same helpers as every hand-written vHost above.
           // (lib.mapAttrs' (

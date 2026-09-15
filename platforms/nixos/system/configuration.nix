@@ -950,15 +950,6 @@ in
             filePattern = "inboxclean-*.db";
             maxAgeHours = 25;
           };
-        }
-        // lib.optionalAttrs config.services.miniflux.enable {
-          miniflux = {
-            # Nightly pg_dump (custom format) of the RSS reader DB
-            # (miniflux-backup.timer, 02:45) onto the mirrored pool.
-            directory = "/mnt/pool/backups/miniflux";
-            filePattern = "miniflux-*.dump";
-            maxAgeHours = 25;
-          };
         };
       };
 
