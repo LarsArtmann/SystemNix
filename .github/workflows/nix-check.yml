@@ -122,6 +122,14 @@ jobs:
       - name: Textfile tmp-path audit
         run: scripts/audit-textfile-tmp.sh
 
+      # GitHub push protection ignores gitleaks allowlists and
+      # pattern-matches raw blobs — only @HEX40@ template fixtures may be
+      # tracked (2026-09-15 GH013 push block on an allowlisted fixture).
+      - name: Push-protection literal audit
+        run: |
+          scripts/audit-push-protection-literals.sh --selftest
+          scripts/audit-push-protection-literals.sh
+
       # serviceConfig = X // Y shallow-merges discard mkDefault/mkForce
       # priority silently — lib.mkMerge [...] is the only sanctioned merge.
       # Selftest first (a scanner must prove it still detects), then scan.

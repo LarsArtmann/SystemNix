@@ -218,12 +218,17 @@ run_case coverage awk-without-gawk binary-coverage-lint fail "execs 'awk'" \
 # masks single-rule drift on high-entropy values — proven by the first
 # harness run), so drift mutations also collapse entropy; the corrupt
 # mutation swaps in a genuinely detectable token shape.
+# Fixture mutations operate on the @HEX40@ TEMPLATE form (2026-09-15: the
+# literal token shapes moved to templates — GitHub push protection
+# pattern-matches raw blobs and ignores gitleaks allowlists, so no
+# rule-matching literal may be tracked; scripts/audit-push-protection-literals.sh
+# rejects them). Mutations run BEFORE the check's template expansion.
 run_case gitleaks square-fixture-drift gitleaks-coverage-selftest fail 'did NOT detect' \
-  'sed:tests/fixtures/gitleaks/positive-square.txt:s|sq0atp-aB3dEf6hIj9kLm2oPq5rSt8uVw1xYz4A0bC5dE7f|sq0atpX-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|'
+  'sed:tests/fixtures/gitleaks/positive-square.txt:s|sq0atp-@HEX40@|sq0atpX-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|'
 run_case gitleaks sourcegraph-fixture-drift gitleaks-coverage-selftest fail 'did NOT detect' \
   'sed:tests/fixtures/gitleaks/positive-sourcegraph.txt:s|sgp_@HEX40@|sgpX_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|'
 run_case gitleaks negative-fixture-corrupt gitleaks-coverage-selftest fail 'tripped gitleaks' \
-  'sed:tests/fixtures/gitleaks/negative-bare-hex.txt:s|deadbeefdeadbeefdeadbeefdeadbeefdeadbeef|sq0atp-aB3dEf6hIj9kLm2oPq5rSt8uVw1xYz4A0bC5dE7f|'
+  'sed:tests/fixtures/gitleaks/negative-bare-hex.txt:s|@HEX40@|sq0atp-@HEX40@|'
 
 # ── dead-guard-lint: capture-then-guard under errexit ──
 # The evil shape is a capture without `|| true` followed by a -z guard — the

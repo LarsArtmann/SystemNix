@@ -84,6 +84,17 @@ if ! merge_out=$(scripts/audit-serviceconfig-merge.sh --selftest 2>&1 && scripts
     exit 1
 fi
 
+# Fast guard: no tracked file may carry a GitHub push-protection-shaped
+# token literal (sgp_/sq0atp_ + 40 chars) — GitHub pattern-matches raw
+# blobs and IGNORES gitleaks allowlists, so only the @HEX40@ template
+# form may be committed (the 2026-09-15 GH013 push block: an allowlisted
+# gitleaks fixture still blocked the push on 4 commits). Milliseconds.
+if ! pushprot_out=$(scripts/audit-push-protection-literals.sh 2>&1); then
+    echo "$pushprot_out" >&2
+    log_error "push-protection literal audit failed — template fixtures with @HEX40@, never literals."
+    exit 1
+fi
+
 # Fast guard: moved/deleted markdown files must not leave dangling references.
 # The archive-move class (2026-08-18): `git mv docs/status/X.md
 # docs/status/archived/` left stale `docs/status/X.md` links in TODO_LIST and

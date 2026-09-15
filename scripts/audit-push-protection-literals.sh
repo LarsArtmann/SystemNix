@@ -41,12 +41,16 @@ scan_files() {
 }
 
 selftest() {
-  local tmp
+  # NOT local: the EXIT trap must still see it after the function returns
   tmp=$(mktemp -d) || return 1
   trap 'rm -rf "$tmp"' EXIT
 
-  printf 'sourcegraph access token: REDACTED-PUSH-PROTECTION-FIXTURE\n' > "$tmp/sgp.txt"
-  printf 'square access token: sq0atp-REDACTED-PUSH-PROTECTION-FIXTURE\n' > "$tmp/sq.txt"
+  # Compose the negative-case tokens at RUNTIME — the assembled literals
+  # must never appear in this file, or the scanner would flag itself.
+  local hex40='REDACTED-PUSH-PROTECTION-FIXTURE'
+  local mixed='REDACTED-PUSH-PROTECTION-FIXTURE'
+  printf 'sourcegraph access token: sgp_%s\n' "$hex40" > "$tmp/sgp.txt"
+  printf 'square access token: sq0atp-%s\n' "$mixed" > "$tmp/sq.txt"
   printf 'sourcegraph access token: sgp_@HEX40@\n' > "$tmp/templated.txt"
   printf 'bare hex without keywords: 7f3e9a1c48d2b650e4fa93c17b8d05264e9f0a3c\n' > "$tmp/bare.txt"
 
