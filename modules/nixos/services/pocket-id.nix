@@ -422,15 +422,8 @@ _: {
                 callbackURLs = [ "https://monitor.${domain}/v1/auth/sso/callback" ];
                 pkceEnabled = true;
               }
-              {
-                # Native OIDC via browser-history's OAuth2 provider support.
-                # Uses OIDC discovery (IssuerURL) at startup. Callback path is
-                # /auth/oauth/pocket-id/callback — fixed by the oauth2prov library.
-                name = "Browser History";
-                clientId = "browser-history";
-                launchURL = "https://history.${domain}";
-                callbackURLs = [ "https://history.${domain}/auth/oauth/pocket-id/callback" ];
-              }
+              # Browser History's client moved to its owning module:
+              # services.integration.browser-history.oidc (browser-history.nix).
               {
                 # Native OIDC in dnsblockd itself (cqrs-htmx/usermgmt/oauth2
                 # provider, authorization-code + PKCE S256). Binds dashboard

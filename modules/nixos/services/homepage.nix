@@ -49,6 +49,10 @@ _: {
       inboxcleanEnabled = config.services.inboxclean.enable or false;
       cvEnabled = config.services.cv-server.enable or false;
       tqAgentPoolEnabled = config.services.tq-agent-pool.enable or false;
+      # Not a tile flag: the bookmarks.yaml Search group and the widgets.yaml
+      # search provider gate on the SearXNG service state (the SearXNG tile
+      # itself moved to services.integration.searxng.homepage).
+      searxEnabled = config.services.searx.enable or false;
 
       theme = import ../../../platforms/common/theme.nix;
       colors = theme.colorScheme.palette;
@@ -214,7 +218,7 @@ _: {
             description = "Embeddings + Reranking (bge-m3, bge-reranker-v2-m3)";
             icon = "ollama.png";
           }
-        ];
+        );
 
       monitoringServices =
         lib.optional gatusEnabled (
