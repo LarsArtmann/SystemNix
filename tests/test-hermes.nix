@@ -145,6 +145,15 @@ in
     assert gitcfg, f"GIT_CONFIG_GLOBAL missing: {env}"
     gitcfg = gitcfg[0].split("=", 1)[1]
 
+    # 2b. stateDir is mount-gated (@home-hermes subvolume since 2026-09-15):
+    #     RequiresMountsFor must carry the stateDir (loud failure when the
+    #     mount is missing) and the projectsDir bind source. No-op here in
+    #     the VM (plain dir) — this pins the unit config against silent
+    #     removal.
+    rmf = bound.succeed("systemctl show hermes -p RequiresMountsFor")
+    assert "/home/hermes" in rmf, f"RequiresMountsFor missing stateDir: {rmf}"
+    assert "/home/testuser/projects" in rmf, f"RequiresMountsFor missing projectsDir: {rmf}"
+
     # 1. bind mounted read-only in the unit's namespace
     pid = main_pid(bound)
     bound.succeed(f"nsenter -m -t {pid} cat /proc/self/mountinfo | grep ' /home/hermes/workspace/projects ro,'")

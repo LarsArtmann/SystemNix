@@ -144,6 +144,40 @@ grep workspace/projects /proc/<pid>/mountinfo   # verify the ro bind
   `check_fn … returned False` tool-registry lines (optional tools without
   their extras installed); Discord slash-command sync 429 retries.
 
+## Dedicated subvolume (@home-hermes, 2026-09-15)
+
+`/home/hermes` is a toplevel BTRFS subvolume (`@home-hermes`), plain-mounted
+via `snapshots.nix` (declared only while `services.hermes.enable` — never the
+`@cache-home` automount style: tmpfiles rules under `/home/hermes` + automount
+is the shadow-dir class). `hermes.service` carries
+`RequiresMountsFor = [/home/hermes]`, so a missing mount fails loudly instead
+of running against a shadowed home.
+
+**Why:** inside `@`, hermes churn rode every nightly btrbk-root send with
+`target_preserve_min=all` — every byte the agent ever deleted was hoarded on
+the HDD pool forever, and `@` rollbacks always reverted hermes state. The
+subvol gets its own btrbk entry: local snapshots inherit `@`'s 2d/3d-1w;
+pool receives go to the same `/mnt/pool/backups/root` dir but with BOUNDED
+retention (`target_preserve_min=7d`, `target_preserve=14d 4w`).
+`btrfs-verify-pool-backups` and `btrfs-verify-snapshots` check the
+`@home-hermes` prefix whenever the host mounts the subvol.
+
+**Migration runbook** (sudo, quiet window outside 23:00–00:45;
+plan: `docs/planning/2026-09-15_19-59_HERMES-HOME-SUBVOLUME-MIGRATION.md`):
+
+```bash
+sudo bash scripts/migrate-hermes-subvol.sh prepare   # create subvol, 2-phase reflink rsync, verify, swap aside
+nix run .#deploy                                      # activates home-hermes.mount, restarts hermes
+sudo systemctl start btrbk-root.service              # seeds the first full pool send
+sudo bash scripts/migrate-hermes-subvol.sh status    # verify mount + snapshots + receives
+# ...days later, after settling:
+sudo bash scripts/migrate-hermes-subvol.sh finalize  # gated: mount live + hermes active + snapshot exists; trashes /home/hermes.old
+```
+
+Deploy-before-prepare is safe but loud: mount fails `nofail`, hermes fails
+into OnFailure alerting. Space from the old dir frees as `@` snapshots expire
+(3d/1w). Old hermes history stays in the pre-migration pool receives forever.
+
 ## Landmine History
 
 - **ACL grant death (pre-2026-08-20)**: original access used
