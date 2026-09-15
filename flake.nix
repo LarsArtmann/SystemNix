@@ -428,10 +428,14 @@
     # Go dep inputs (go-finding, go-output, etc.) are NOT followed — overriding
     # flake=false tarballs changes vendored content and breaks vendorHash.
     go-cqrs-lite = {
-      # INTERIM local pin (do NOT flip to github: until upstream master carries
-      # the cqrs-lint vendorHash refresh — local worktree commit d84e4d6a).
-      # Upstream HEAD 5cc025c42 shipped a stale cqrs-lint vendorHash.
-      url = "git+file:///home/lars/worktrees/go-cqrs-lite-hashfix?rev=d84e4d6a42b2ed368a7d7110b716448d0c4093f9";
+      # Was INTERIM `git+file:///home/lars/worktrees/go-cqrs-lite-hashfix` - a
+      # local-path input that broke every CI eval (same class as art-dupl,
+      # 2026-09-15). The vendorHash refresh commit now lives on the pushed
+      # branch `cqrs-lint-vendorhash-fix` (d84e4d6a); git+ssh fetches on CI
+      # via the deploy key. master still carries the stale hash, so the
+      # branch (ref+rev, exact pin) stays until master catches up (art-dupl
+      # `refs/heads/fork` precedent).
+      url = "git+ssh://git@github.com/LarsArtmann/go-cqrs-lite?ref=refs/heads/cqrs-lint-vendorhash-fix&rev=d84e4d6a42b2ed368a7d7110b716448d0c4093f9";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
@@ -443,9 +447,13 @@
 
     # branching-flow — Error context preservation analyzer
     branching-flow = {
-      # INTERIM local pin (do NOT flip to github: until upstream master carries
-      # the samber-linter publicDeps + vendorHash fix — commit 46000f38).
-      url = "git+file:///home/lars/projects/branching-flow?rev=46000f38ab44a35692bcdb39d0d061501750dd74";
+      # Was INTERIM `git+file:///home/lars/projects/branching-flow` - a local
+      # path that can never resolve on CI (2026-09-15). Flip condition
+      # satisfied: origin/master (7789334) carries 46000f38 (verified via
+      # `git merge-base --is-ancestor`). git+ssh fetches on CI via the
+      # NIX_DEPLOY_KEY_BRANCHING_FLOW deploy key; the rev keeps the pin exact
+      # as master moves. Locked narHash unchanged vs the local pin.
+      url = "git+ssh://git@github.com/LarsArtmann/branching-flow?ref=refs/heads/master&rev=46000f38ab44a35692bcdb39d0d061501750dd74";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";

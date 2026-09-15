@@ -137,12 +137,13 @@
         "rev": "46000f38ab44a35692bcdb39d0d061501750dd74",
         "revCount": 2462,
         "type": "git",
-        "url": "file:///home/lars/projects/branching-flow"
+        "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
       "original": {
+        "ref": "refs/heads/master",
         "rev": "46000f38ab44a35692bcdb39d0d061501750dd74",
         "type": "git",
-        "url": "file:///home/lars/projects/branching-flow"
+        "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       }
     },
     "branching-flow_2": {
@@ -2420,16 +2421,17 @@
       "locked": {
         "lastModified": 1789304180,
         "narHash": "sha256-DhatdANLhXOJPNZ8yZAFIQPu5Nv3hlEYKT3U9D56buA=",
-        "ref": "refs/heads/systemnix-cqrs-lint-hashfix",
+        "ref": "refs/heads/cqrs-lint-vendorhash-fix",
         "rev": "d84e4d6a42b2ed368a7d7110b716448d0c4093f9",
         "revCount": 6624,
         "type": "git",
-        "url": "file:///home/lars/worktrees/go-cqrs-lite-hashfix"
+        "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       },
       "original": {
+        "ref": "refs/heads/cqrs-lint-vendorhash-fix",
         "rev": "d84e4d6a42b2ed368a7d7110b716448d0c4093f9",
         "type": "git",
-        "url": "file:///home/lars/worktrees/go-cqrs-lite-hashfix"
+        "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       }
     },
     "go-cqrs-lite_7": {
