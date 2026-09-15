@@ -1279,7 +1279,6 @@ _: {
             "lan-nic-watchdog"
             "llama-embeddings"
             "llama-reranker"
-            "miniflux"
             "monitor365"
             "monitor365-server"
             "nix-daemon"
