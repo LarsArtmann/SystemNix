@@ -40,6 +40,12 @@ nixpkgs.lib.nixosSystem {
       };
     }
     inputs.self.nixosModules.dns-blocker
+    # dns-blocker declares a services.integration registry entry (mkIf-wrapped
+    # options?-guard caveat, 2026-09-15): the guard does NOT survive an
+    # enclosing mkIf cfg.enable with enable=true, so the option must exist.
+    # integration.nix guards its own fan-out per consumer (optionalAttrs on
+    # options ?), so importing it on a host without caddy/gatus/pocket-id is inert.
+    inputs.self.nixosModules.integration
     inputs.self.nixosModules.dns-failover
     inputs.sops-nix.nixosModules.sops
     inputs.self.nixosModules.sops
