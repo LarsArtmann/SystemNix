@@ -50,8 +50,10 @@ let
       type = lib.types.str;
       default = "lo";
     };
-    # caddy.nix reads these sibling services' enable UNGUARDED (they are
-    # always co-imported on evo-x2); stub them so the test import stays light.
+    # caddy.nix / gatus-config.nix / homepage.nix / system-health.nix read
+    # these sibling services' enable UNGUARDED (they are always co-imported on
+    # evo-x2); stub them so the test import stays light. Generated from:
+    #   grep -oE "config\.services\.[a-zA-Z0-9_-]+\.enable" <imported modules> | grep -v "or false"
     services.browser-history.enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
@@ -86,6 +88,56 @@ let
     };
   };
 
+
+  # Bulk `.enable` stubs for sibling namespaces read unguarded by the real
+  # consumer modules (all default false — the test enables none of them).
+  enableStubs =
+    names:
+    lib.listToAttrs (
+      map (
+        n:
+        lib.nameValuePair "services.${n}.enable" (
+          lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+          }
+        )
+      ) names
+    );
+
+  siblingEnableStubs = enableStubs [
+    "ai-stack"
+    "attic-config"
+    "bank-sync"
+    "buildcache"
+    "browser-history"
+    "crush-daily"
+    "cv-server"
+    "discordsync"
+    "fastflowlm"
+    "file-and-image-renamer"
+    "google-sync"
+    "hermes"
+    "inboxclean"
+    "llama-rag"
+    "mail-relay"
+    "manifest"
+    "monitor365"
+    "monitor365-server"
+    "overview"
+    "papdashboard"
+    "pool-recovery"
+    "pool-smart-metrics"
+    "projects-management-automation"
+    "searx"
+    "signoz"
+    "systemd-graph"
+    "systemd-timer-monitor"
+    "tq-agent-pool"
+    "twenty"
+    "voice-agents"
+  ];
+
   baseModules = [
     inputs.sops-nix.nixosModules.sops
     (mod "caddy.nix" "caddy")
@@ -97,7 +149,7 @@ let
     (mod "otel-endpoint-audit.nix" "otel-endpoint-audit")
     (mod "pocket-id.nix" "pocket-id")
     (mod "integration.nix" "integration")
-    { options = stubs; }
+    { options = stubs // siblingEnableStubs; }
     {
       networking.domain = "home.lan";
       services.caddy.enable = true;

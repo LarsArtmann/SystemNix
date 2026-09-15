@@ -938,61 +938,78 @@
               # regex (? = optional quantifier), causing silent false
               # negatives in health checks. { is allowed — Prometheus
               # labels use {label="value"} syntax.
-              gatus-pattern-lint = pkgs.runCommand "gatus-pattern-lint" { } ''
-                if grep -v '^[[:space:]]*#' ${./modules/nixos/services/gatus-config.nix} | grep -nE 'pat\(.*[?+]'; then
-                  echo "FAIL: Gatus pat() patterns contain regex-only chars (? or +)."
-                  echo "Gatus pat() uses GLOB, not regex."
-                  echo "  ? = single-char wildcard (NOT optional quantifier)"
-                  echo "  + = literal character (NOT one-or-more quantifier)"
-                  exit 1
-                fi
-                # pat() globs the WHOLE /metrics body, HELP comments included: an
-                # asserted-1 condition pat(*<metric> 1*) silently matches the metric's
-                # own "# HELP <metric> 1 if ..." comment and stays green at ANY value
-                # (phantom green, live on buildcache/pool/lan-nic/signoz 2026-08-22).
-                # Asserted-0 conditions are unaffected ("0 otherwise" never contains
-                # "<metric> 0" as a substring). Use the anchored form instead.
-                if grep -v '^[[:space:]]*#' ${./modules/nixos/services/gatus-config.nix} | grep -nE 'pat\(\*[a-z_0-9]+ 1\*\)'; then
-                  echo "FAIL: bare pat(*<metric> 1*) conditions match the metric's own HELP comment."
-                  echo "Use:  [BODY] != pat(*<metric> 0\\n*)  +  [BODY] == pat(*\\n<metric> *)"
-                  echo "NOTE: the \\n must reach gatus as a REAL newline (nix \"\\n\" string) — a literal"
-                  echo "backslash-n is filepath.Match's ESCAPE for a literal 'n' and can never match"
-                  echo "(2026-08-22 bug: 7 deployed checks permanently red from exactly this)."
-                  echo "Incident: 2026-08-22 DAS USB drop (buildcache/pool stayed green through a live outage) — docs/status/2026-08-22_01-46_das-usb-drop-gatus-phantom-green-fix.md"
-                  exit 1
-                fi
-                # Escape-sequence trap: in a double-quoted nix string the source
-                # bytes backslash-backslash-n evaluate to a LITERAL backslash + 'n'.
-                # gatus 5.36.0 pattern.Match delegates to filepath.Match, which
-                # treats '\' as an escape for the next character — so the glob
-                # "\\n" matches only the letter 'n' and the condition can NEVER
-                # match a real /metrics body (permanently red, zero diagnostics;
-                # 7 checks were live-broken by this on 2026-08-22). The anchored
-                # form needs the REAL newline: single-backslash \n in the nix
-                # source (gatus-config.nix anchored conditions are the reference).
-                if grep -v '^[[:space:]]*#' ${./modules/nixos/services/gatus-config.nix} | grep -nE 'pat\(.*\\\\n'; then
-                  echo "FAIL: pat() contains a literal backslash-n (nix source \"\\\\n\")."
-                  echo "filepath.Match treats '\\' as an ESCAPE, so this glob matches only the letter 'n'"
-                  echo "and the condition can never match a real body. Write the newline as single-"
-                  echo "backslash \"\\n\" in the double-quoted nix string — see gatus-config.nix anchored forms."
-                  exit 1
-                fi
-                # HTTP method tokens are case-SENSITIVE end to end (RFC 9110):
-                # gatus passes the configured method through verbatim and Go's
-                # ServeMux matches method tokens case-sensitively — a lowercase
-                # "post" 405s against a POST-registered route while an
-                # unauthenticated 401 probe CANNOT catch it (auth middleware
-                # runs before routing). Live incident: papdashboard /api/ingest
-                # 405'd 1076× before a journal 200 proved the fix (2026-08-18).
-                if grep -v '^[[:space:]]*#' ${./modules/nixos/services/gatus-config.nix} | grep -nE 'method = "[a-z]+"'; then
-                  echo "FAIL: lowercase HTTP method value in gatus-config.nix."
-                  echo "Method tokens are matched case-sensitively (RFC 9110 + Go ServeMux);"
-                  echo "'post' 405s against POST-registered routes and 401 probes cannot detect it."
-                  echo "Use uppercase: method = \"POST\"."
-                  exit 1
-                fi
-                touch $out
-              '';
+              # Scope: ALL auto-discovered module files, not just
+              # gatus-config.nix — since the services.integration registry
+              # (2026-09-14), gatus endpoint conditions are authored in the
+              # OWNING service modules (entry checks / extraEndpoints), and
+              # pat() anywhere crosses the same Nix→YAML→Go glob layers.
+              # The method lint stays gatus-config-scoped: mkHttpCheck and
+              # the registry checks submodule expose no method field, so
+              # method = "..." outside gatus-config.nix is not a gatus value.
+              gatus-pattern-lint =
+                let
+                  gatusFiles = lib.filter (lib.hasSuffix ".nix") (
+                    lib.filesystem.listFilesRecursive ./modules/nixos
+                  );
+                in
+                pkgs.runCommand "gatus-pattern-lint" { } ''
+                  files="${lib.concatStringsSep " " gatusFiles}"
+                  for f in $files; do
+                    if grep -v '^[[:space:]]*#' "$f" | grep -nE 'pat\(.*[?+]'; then
+                      echo "FAIL: Gatus pat() patterns contain regex-only chars (? or +) in $f."
+                      echo "Gatus pat() uses GLOB, not regex."
+                      echo "  ? = single-char wildcard (NOT optional quantifier)"
+                      echo "  + = literal character (NOT one-or-more quantifier)"
+                      exit 1
+                    fi
+                    # pat() globs the WHOLE /metrics body, HELP comments included: an
+                    # asserted-1 condition pat(*<metric> 1*) silently matches the metric's
+                    # own "# HELP <metric> 1 if ..." comment and stays green at ANY value
+                    # (phantom green, live on buildcache/pool/lan-nic/signoz 2026-08-22).
+                    # Asserted-0 conditions are unaffected ("0 otherwise" never contains
+                    # "<metric> 0" as a substring). Use the anchored form instead.
+                    if grep -v '^[[:space:]]*#' "$f" | grep -nE 'pat\(\*[a-z_0-9]+ 1\*\)'; then
+                      echo "FAIL: bare pat(*<metric> 1*) conditions match the metric's own HELP comment (in $f)."
+                      echo "Use:  [BODY] != pat(*<metric> 0\\n*)  +  [BODY] == pat(*\\n<metric> *)"
+                      echo "NOTE: the \\n must reach gatus as a REAL newline (nix \"\\n\" string) — a literal"
+                      echo "backslash-n is filepath.Match's ESCAPE for a literal 'n' and can never match"
+                      echo "(2026-08-22 bug: 7 deployed checks permanently red from exactly this)."
+                      echo "Incident: 2026-08-22 DAS USB drop (buildcache/pool stayed green through a live outage) — docs/status/2026-08-22_01-46_das-usb-drop-gatus-phantom-green-fix.md"
+                      exit 1
+                    fi
+                    # Escape-sequence trap: in a double-quoted nix string the source
+                    # bytes backslash-backslash-n evaluate to a LITERAL backslash + 'n'.
+                    # gatus 5.36.0 pattern.Match delegates to filepath.Match, which
+                    # treats '\' as an escape for the next character — so the glob
+                    # "\\n" matches only the letter 'n' and the condition can NEVER
+                    # match a real /metrics body (permanently red, zero diagnostics;
+                    # 7 checks were live-broken by this on 2026-08-22). The anchored
+                    # form needs the REAL newline: single-backslash \n in the nix
+                    # source (gatus-config.nix anchored conditions are the reference).
+                    if grep -v '^[[:space:]]*#' "$f" | grep -nE 'pat\(.*\\\\n'; then
+                      echo "FAIL: pat() contains a literal backslash-n (nix source \"\\\\n\") in $f."
+                      echo "filepath.Match treats '\\' as an ESCAPE, so this glob matches only the letter 'n'"
+                      echo "and the condition can never match a real body. Write the newline as single-"
+                      echo "backslash \"\\n\" in the double-quoted nix string — see gatus-config.nix anchored forms."
+                      exit 1
+                    fi
+                  done
+                  # HTTP method tokens are case-SENSITIVE end to end (RFC 9110):
+                  # gatus passes the configured method through verbatim and Go's
+                  # ServeMux matches method tokens case-sensitively — a lowercase
+                  # "post" 405s against a POST-registered route while an
+                  # unauthenticated 401 probe CANNOT catch it (auth middleware
+                  # runs before routing). Live incident: papdashboard /api/ingest
+                  # 405'd 1076× before a journal 200 proved the fix (2026-08-18).
+                  if grep -v '^[[:space:]]*#' ${./modules/nixos/services/gatus-config.nix} | grep -nE 'method = "[a-z]+"'; then
+                    echo "FAIL: lowercase HTTP method value in gatus-config.nix."
+                    echo "Method tokens are matched case-sensitively (RFC 9110 + Go ServeMux);"
+                    echo "'post' 405s against POST-registered routes and 401 probes cannot detect it."
+                    echo "Use uppercase: method = \"POST\"."
+                    exit 1
+                  fi
+                  touch $out
+                '';
 
               # The pre-deploy §10 metric-absence classifier decides whether a
               # deploy is BLOCKED — twice on 2026-09-02 the downgrade branches

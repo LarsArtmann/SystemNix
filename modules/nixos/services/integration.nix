@@ -405,7 +405,7 @@ _: {
             }
           ) otelEntries;
         }
-        // (lib.optionalAttrs (options ? services.caddy-config) {
+        (lib.optionalAttrs (options ? services.caddy-config) {
           # Keyed by SUBDOMAIN (caddy renders <key>.<domain>) — duplicate
           # subdomains across entries collide loudly here by design.
           services.caddy-config.extraVHosts = lib.mapAttrs' (
@@ -416,7 +416,7 @@ _: {
             }
           ) vhostEntries;
         })
-        // (lib.optionalAttrs (options ? services.gatus-config) {
+        (lib.optionalAttrs (options ? services.gatus-config) {
           services.gatus-config.extraEndpoints = map (
             { name, e, check }:
             mkHttpCheck {
@@ -428,15 +428,15 @@ _: {
             // lib.optionalAttrs (check.headers != { }) { inherit (check) headers; }
           ) entryChecks;
         })
-        // (lib.optionalAttrs (options ? services.homepage) {
+        (lib.optionalAttrs (options ? services.homepage) {
           services.homepage.extraTiles = lib.mapAttrsToList homepageTile (
             lib.filterAttrs (_: e: e.homepage != null) enabledEntries
           );
         })
-        // (lib.optionalAttrs (options ? services.backup-coordination) {
+        (lib.optionalAttrs (options ? services.backup-coordination) {
           services.backup-coordination.backups = lib.mapAttrs (_: e: e.backup) backupEntries;
         })
-        // (lib.optionalAttrs (options ? services.system-health) {
+        (lib.optionalAttrs (options ? services.system-health) {
           services.system-health.extraMonitoredServices = lib.mapAttrsToList unitOf monitoredEntries;
         })
         # Registry keys are UNIT names (the signoz-coverage reverse assertion
@@ -452,13 +452,14 @@ _: {
             }
           ) otelEntries;
         })
-        // (lib.optionalAttrs (options ? services.otel-endpoint-audit) {
+        (lib.optionalAttrs (options ? services.otel-endpoint-audit) {
           services.otel-endpoint-audit.expectations = lib.mapAttrs' (
             name: e: lib.nameValuePair (unitOf name e) e.otel.shape
           ) otelEntries;
         })
-        // (lib.optionalAttrs (options ? services.pocket-id-config) {
+        (lib.optionalAttrs (options ? services.pocket-id-config) {
           services.pocket-id-config.provision.extraOidcClients = lib.mapAttrsToList (_: e: e.oidc) oidcEntries;
-        });
+        })
+        ];
     };
 }

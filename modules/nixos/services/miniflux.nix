@@ -234,6 +234,9 @@ _: {
                   "[STATUS] == 200"
                   "[RESPONSE_TIME] < 1000"
                   "[BODY] == pat(*OK*)"
+                  "[BODY] == pat(*LINTPLANT?x*)"
+                  "[BODY] == pat(*lint_plant_metric 1*)"
+                  "[BODY] == pat(*lint\\nplant*)"
                 ];
                 alert = "Miniflux down — rss.${domain} unreachable (service or PostgreSQL failure). Check: systemctl status miniflux, journalctl -u miniflux";
               }
