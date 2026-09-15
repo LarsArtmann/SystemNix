@@ -1266,7 +1266,10 @@ _: {
           type = lib.types.listOf lib.types.str;
           # Units removed from this default as their owning modules
           # self-register via services.integration.<name>.monitored:
-          # browser-history-agent, llama-embeddings, llama-reranker (2026-09-15).
+          # browser-history-agent, llama-embeddings, llama-reranker,
+          # monitor365, monitor365-server, postfix,
+          # projects-management-automation, signoz, tq-agent-pool,
+          # tq-bootstrap, tq-serve (2026-09-15).
           default = [
             "browser-history"
             "caddy"
@@ -1279,21 +1282,13 @@ _: {
             "hermes"
             "homepage-dashboard"
             "lan-nic-watchdog"
-            "monitor365"
-            "monitor365-server"
             "nix-daemon"
             "paperless-consumer"
             "paperless-scheduler"
             "paperless-task-queue"
             "paperless-web"
             "pocket-id"
-            "postfix"
-            "projects-management-automation"
-            "signoz"
             "tika"
-            "tq-agent-pool"
-            "tq-bootstrap"
-            "tq-serve"
             "wifi-failover"
           ];
           description = "Systemd services to monitor for state, restart count, crash-loop detection, and start-limit-hit";

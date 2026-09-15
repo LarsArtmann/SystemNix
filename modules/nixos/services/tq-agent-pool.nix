@@ -182,7 +182,14 @@ _: {
               Type = "oneshot";
               User = primaryUser;
               Group = "users";
-              Environment = [ "TQ_DB=${toString cfg.dbPath}" ];
+              Environment = [
+                "TQ_DB=${toString cfg.dbPath}"
+                # Verify gate + agent-run go commands inherit THIS env (not the
+                # fish session): jsonv2-requiring repos dead-letter without it
+                # (tq facts 2903/2987/2996-3001). Mirrors home.nix
+                # sessionVariables for the systemd context.
+                "GOEXPERIMENT=jsonv2"
+              ];
               ExecStart = lib.escapeShellArgs [
                 (lib.getExe' cfg.package "tq")
                 "bootstrap"
@@ -223,6 +230,10 @@ _: {
           serviceConfig = lib.mkMerge [
             {
               EnvironmentFile = [ config.sops.templates."tq-agent-pool-env".path ];
+              # GOEXPERIMENT must match the interactive session (home.nix):
+              # the verify gate and agent-run go commands inherit THIS env
+              # (jsonv2 build-constraint dead-letter class).
+              Environment = [ "GOEXPERIMENT=jsonv2" ];
               # The pool's children are LLM agents + builds: generous memory
               # ceiling (2 concurrent agents) and CPU headroom beyond the
               # harden{} 200% default, lowest-but-one BFQ tier like the other

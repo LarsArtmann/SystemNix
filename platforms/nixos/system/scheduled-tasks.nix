@@ -683,7 +683,11 @@ in
                     if [ -f "$STATE_FILE" ]; then
                       last_bytes=$(cat "$STATE_FILE")
                       delta=$((current_bytes - last_bytes))
-                      delta_human=$(numfmt --to=iec --suffix=B "$delta")
+                      # `--` is load-bearing: a SHRINKING delta is negative
+                      # and numfmt parses a leading-dash arg as an unknown
+                      # option — under errexit that exits 1 and fails the
+                      # unit (found live by the guard-scripts VM test)
+                      delta_human=$(numfmt --to=iec --suffix=B -- "$delta")
 
                       if [ "$delta" -gt "$THRESHOLD" ]; then
                         echo "WARNING: /data grew $delta_human in 24h (threshold: 5G)"

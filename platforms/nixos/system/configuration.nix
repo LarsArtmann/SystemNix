@@ -930,33 +930,8 @@ in
             directory = "/mnt/pool/backups/pocket-id";
             maxAgeHours = 25;
           };
-        }
-        // lib.optionalAttrs config.services.monitor365-server.enable {
-          # Only monitored while the service exists — a disabled service must
-          # not fire permanent stale-backup alerts.
-          monitor365 = {
-            directory = "/var/lib/monitor365-server";
-            filePattern = "*.backup_*.db";
-            maxAgeHours = 25;
-          };
-        }
-        // lib.optionalAttrs config.services.cv-server.enable {
-          cv = {
-            # Nightly online .backup of the pipeline event store
-            # (cv-backup.timer, 03:17) onto the mirrored pool.
-            directory = "/mnt/pool/backups/cv";
-            filePattern = "pipeline-*.sqlite";
-            maxAgeHours = 25;
-          };
-        }
-        // lib.optionalAttrs config.services.inboxclean.enable {
-          inboxclean = {
-            # Nightly online .backup of the event-store DB
-            # (inboxclean-backup.timer, 04:30) onto the mirrored pool.
-            directory = "/mnt/pool/backups/inboxclean";
-            filePattern = "inboxclean-*.db";
-            maxAgeHours = 25;
-          };
+          # monitor365 / cv / inboxclean rows moved to their owning modules
+          # (services.integration.<name>.backup).
         };
       };
 

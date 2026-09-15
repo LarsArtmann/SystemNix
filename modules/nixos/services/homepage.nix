@@ -39,14 +39,9 @@ _: {
       gatusEnabled = config.services.gatus-config.enable;
       dozzleEnabled = hasContainer "dozzle";
       hermesEnabled = config.services.hermes.enable;
-      monitor365Enabled = config.services.monitor365-server.enable or false;
       overviewEnabled = config.services.overview.enable;
       fastflowlmEnabled = config.services.fastflowlm.enable or false;
       googleSyncEnabled = config.services.google-sync.enable or false;
-      bankSyncEnabled = config.services.bank-sync.enable or false;
-      inboxcleanEnabled = config.services.inboxclean.enable or false;
-      cvEnabled = config.services.cv-server.enable or false;
-      tqAgentPoolEnabled = config.services.tq-agent-pool.enable or false;
       # Not a tile flag: the bookmarks.yaml Search group and the widgets.yaml
       # search provider gate on the SearXNG service state (the SearXNG tile
       # itself moved to services.integration.searxng.homepage).
@@ -115,22 +110,6 @@ _: {
             description = "Google Drive → HDD Pool Mirror (rclone)";
             icon = "google-drive.png";
           }
-        )
-        ++ lib.optional bankSyncEnabled (
-          mkService "Bank Sync" {
-            href = svcUrl "banksync";
-            description = "Wise Transactions → SQLite (Event-Sourced)";
-            # The bundled icon pack has no bank.png — google-finance is the
-            # closest available finance glyph.
-            icon = "google-finance.png";
-          }
-        )
-        ++ lib.optional inboxcleanEnabled (
-          mkService "InboxClean" {
-            href = svcUrl "inbox";
-            description = "Gmail AI Assistant — Backup, Sorting & Tagging";
-            icon = "gmail.png";
-          }
         );
 
       mediaServices = [
@@ -158,12 +137,6 @@ _: {
           icon = "forgejo.png";
         })
       ]
-      ++ lib.optional cvEnabled (
-        mkService "CV" {
-          href = svcUrl "cv";
-          description = "Resume Generator & Career Pipeline";
-        }
-      )
       ++ lib.optional overviewEnabled (
         mkService "Overview" {
           href = svcUrl "overview";
@@ -172,15 +145,7 @@ _: {
         }
       );
 
-      aiServices =
-        lib.optional tqAgentPoolEnabled (
-          mkService "tq Agent Pool" {
-            href = svcUrl "tq";
-            description = "TODO_LIST Harvest + Headless Crush Agents";
-            icon = "mdi-checkbox-marked-circle-outline";
-          }
-        )
-        ++ lib.optional crushDailyEnabled (
+
           mkService "Crush Daily" {
             href = svcUrl "daily";
             description = "AI-Powered Development Insights";
@@ -252,13 +217,6 @@ _: {
             icon = "camera-ui.png";
           })
         ]
-        ++ lib.optional monitor365Enabled (
-          mkService "Monitor365" {
-            href = svcUrl "monitor";
-            description = "Device Monitoring Agent";
-            icon = "uptime-kuma.png";
-          }
-        );
 
       productivityServices =
         lib.optional twentyEnabled (
