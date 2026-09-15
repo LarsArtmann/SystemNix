@@ -40,6 +40,33 @@ let
     };
   }) cacheSubvolumes;
 
+  # Dedicated @home-hermes subvolume for the Hermes Agent Gateway state
+  # (2026-09-15): pulls agent-workspace churn out of btrbk's @ snapshots and
+  # gives hermes state its own mount + backup policy. Declared ONLY while
+  # hermes runs on this host; the subvolume itself is created by
+  # scripts/migrate-hermes-subvol.sh (runbook: docs/services/hermes.md).
+  # Deliberately NOT the cacheSubvolumes automount style: hermes has tmpfiles
+  # rules under /home/hermes, and automount + tmpfiles is the shadow-dir class
+  # (dirs silently created on @ under the mountpoint). A plain mount orders
+  # before local-fs.target, so tmpfiles-setup only ever sees the mounted
+  # subvolume. nofail per the non-root-mount rule; hermes.service's
+  # RequiresMountsFor fails loudly when the subvol is absent, so a
+  # deploy-before-prepare is loud but safe (see the migration script).
+  hermesHomeMount = lib.optionalAttrs (config.services.hermes.enable or false) {
+    "/home/hermes" = {
+      device = rootDevice;
+      fsType = "btrfs";
+      options = [
+        "subvol=@home-hermes"
+        "noatime"
+        "compress=zstd"
+        "nodiscard"
+        "commit=300"
+        "nofail"
+      ];
+    };
+  };
+
   # Rust projects whose target/ dirs should live on ext4 — avoids COW
   # fragmentation from 85K+ small files and keeps them out of btrbk snapshots.
   # Target dirs moved from the old /rust-cache NVMe partition (p9) to the USB
@@ -161,7 +188,8 @@ in
       ];
     };
   }
-  // cacheFileSystems;
+  // cacheFileSystems
+  // hermesHomeMount;
 
   services = {
     btrbk.instances."root" = {
@@ -193,8 +221,29 @@ in
         target_preserve_min = "all";
         volume."/mnt/btrfs-root" = {
           snapshot_dir = "/mnt/btrfs-root/.snapshots";
-          subvolume."@" = {
-            target = "/mnt/pool/backups/root";
+          # Disjoint keys merged explicitly — a `//` one level up would drop
+          # the `subvolume` key of the left branch entirely (the 2026-09-14
+          # integration.nix shallow-merge class).
+          subvolume = {
+            "@" = {
+              target = "/mnt/pool/backups/root";
+            };
+          }
+          // lib.optionalAttrs (config.services.hermes.enable or false) {
+            # Hermes state subvolume (2026-09-15): own pool target with
+            # BOUNDED retention. @'s target_preserve_min="all" would hoard
+            # agent workspace churn on the pool forever (the motivating
+            # problem — every byte hermes ever deleted is pinned pool-side
+            # today); 7d min / 14d 4w keeps skills, cron, memories and
+            # sessions off-NVMe without the forever tier. Local snapshot
+            # retention inherits the volume-level 2d / 3d 1w. Receives land
+            # in the SAME pool dir as @ — btrfs-verify-pool-backups checks
+            # both prefixes.
+            "@home-hermes" = {
+              target = "/mnt/pool/backups/root";
+              target_preserve_min = "7d";
+              target_preserve = "14d 4w";
+            };
           };
         };
       };
@@ -511,6 +560,7 @@ in
           pkgs.util-linux
           pkgs.coreutils
           pkgs.findutils
+          pkgs.gnugrep
           # gawk is REQUIRED by the mirror-health check below. Without it the
           # `if btrfs device stats | awk …` condition evaluates false on
           # "command not found" (pipefail inside `if` is non-fatal) and the
@@ -538,32 +588,25 @@ in
             exit 1
           fi
 
-          for dir in /mnt/pool/backups/root /mnt/pool/backups/data; do
-            # /data is WARN-only while the /data EIO corruption stance holds
-            # (TODO_LIST P0): btrbk-data has not completed a receive since
-            # 2026-08-20, so a hard FAIL here exit-4'd EVERY activation that
-            # touched this unit file (2026-09-08/09: two un-anchored
-            # generations, reboot-revert hazard). The gap stays visible via
-            # btrbk-data OnFailure, backup-coordination, and Gatus
-            # backup_all_healthy. Restore hard-FAIL after the corruption repair.
-            if [ "$dir" = "/mnt/pool/backups/data" ]; then
-              fatal=no
-            else
-              fatal=yes
-            fi
-            latest=$(find "$dir" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort | tail -1) || true || true
+          # Freshness is checked PER PREFIX: receive names are
+          # <subvol>.YYYYMMDDTHHMM, and @home-hermes.* sorts AFTER @.* — a
+          # plain `sort | tail -1` over the whole dir judged only the
+          # lexically-last subvolume and stayed green while the other's sends
+          # died (fixed with the 2026-09-15 hermes-subvol migration).
+          check_freshness() {
+            local dir=$1 prefix=$2 fatal=$3
+            local latest name datestr snap_epoch age_days
+            latest=$(find "$dir" -maxdepth 1 -mindepth 1 -type d -name "$prefix.*" 2>/dev/null | sort | tail -1) || true
             if [ -z "$latest" ]; then
               if [ "$fatal" = "yes" ]; then
-                echo "FAIL: no received backups found in $dir"
+                echo "FAIL: no received backups for prefix '$prefix' in $dir"
                 exit 1
               fi
-              echo "WARN: no received backups found in $dir (known /data EIO stance, see unit comment)"
-              continue
+              echo "WARN: no received backups for prefix '$prefix' in $dir"
+              return
             fi
-
-            # Received subvols keep the snapshot name: @.YYYYMMDDTHHMM /
-            # data.YYYYMMDDTHHMM. Parse the date from the NAME (see
-            # btrfs-verify-snapshots for why stat mtime lies here).
+            # Received subvols keep the snapshot name; parse the date from
+            # the NAME (see btrfs-verify-snapshots for why stat mtime lies).
             name=$(basename "$latest")
             datestr="''${name##*.}"
             datestr="''${datestr%%T*}"
@@ -575,21 +618,46 @@ in
             age_days=$(( ($(date +%s) - snap_epoch) / 86400 ))
             if [ "$age_days" -gt "$MAX_AGE_DAYS" ]; then
               if [ "$fatal" = "yes" ]; then
-                echo "FAIL: newest backup in $dir is $age_days days old (threshold: $MAX_AGE_DAYS)"
+                echo "FAIL: prefix '$prefix' in $dir: newest backup is $age_days days old (threshold: $MAX_AGE_DAYS)"
                 exit 1
               fi
-              echo "WARN: newest backup in $dir is $age_days days old (known /data EIO stance, see unit comment)"
-              continue
+              echo "WARN: prefix '$prefix' in $dir: newest backup is $age_days days old"
+              return
             fi
-            echo "OK: $dir newest backup is $age_days day(s) old"
-          done
+            echo "OK: $dir prefix '$prefix' newest backup is $age_days day(s) old"
+          }
+
+          # @home-hermes receives are only EXPECTED once the host actually
+          # mounts the subvolume — pre-migration generations must stay green.
+          hermes_expected=no
+          if findmnt -n /home/hermes 2>/dev/null | grep -q '@home-hermes'; then
+            hermes_expected=yes
+          fi
+
+          check_freshness /mnt/pool/backups/root "@" yes
+          if [ "$hermes_expected" = "yes" ]; then
+            check_freshness /mnt/pool/backups/root "@home-hermes" yes
+          fi
+          # /data stays WARN-only while the /data EIO corruption stance holds
+          # (TODO_LIST P0): btrbk-data has not completed a receive since
+          # 2026-08-20, so a hard FAIL here exit-4'd EVERY activation that
+          # touched this unit file (2026-09-08/09: two un-anchored
+          # generations, reboot-revert hazard). The gap stays visible via
+          # btrbk-data OnFailure, backup-coordination, and Gatus
+          # backup_all_healthy. Restore hard-FAIL after the corruption repair.
+          check_freshness /mnt/pool/backups/data "data" no
         '';
       };
 
       "btrfs-verify-snapshots" = {
         description = "Verify BTRFS snapshot freshness";
         inherit onFailure;
-        path = [ pkgs.coreutils ];
+        path = [
+          pkgs.coreutils
+          pkgs.findutils
+          pkgs.util-linux
+          pkgs.gnugrep
+        ];
         serviceConfig = lib.mkMerge [
           (harden { })
           {
@@ -637,6 +705,32 @@ in
           fi
 
           echo "OK: Root snapshot is $AGE_DAYS day(s) old"
+
+          # @home-hermes (hermes state subvolume, 2026-09-15): its snapshots
+          # live in the same SNAP_DIR but never match the '@.*' glob above.
+          # Check it only while the host actually mounts the subvolume, so
+          # pre-migration generations stay green.
+          if findmnt -n /home/hermes 2>/dev/null | grep -q '@home-hermes'; then
+            H_LATEST=$(find "$SNAP_DIR" -maxdepth 1 -mindepth 1 -type d -name '@home-hermes.*' | sort | tail -1) || true || true
+            if [ -z "$H_LATEST" ]; then
+              echo "WARNING: No @home-hermes snapshots found while the subvolume is mounted"
+              exit 1
+            fi
+            H_NAME=$(basename "$H_LATEST")
+            H_DATESTR="''${H_NAME#@home-hermes.}"
+            H_DATESTR="''${H_DATESTR%%T*}"
+            if [ ''${#H_DATESTR} -ne 8 ]; then
+              echo "WARNING: Could not parse date from snapshot name: $H_NAME"
+              exit 1
+            fi
+            H_EPOCH=$(date -d "''${H_DATESTR:0:4}-''${H_DATESTR:4:2}-''${H_DATESTR:6:2}" +%s)
+            H_AGE=$(( ($(date +%s) - H_EPOCH) / 86400 ))
+            if [ "$H_AGE" -gt "$MAX_AGE_DAYS" ]; then
+              echo "WARNING: @home-hermes snapshot is $H_AGE days old (threshold: $MAX_AGE_DAYS)"
+              exit 1
+            fi
+            echo "OK: @home-hermes snapshot is $H_AGE day(s) old"
+          fi
         '';
       };
     };

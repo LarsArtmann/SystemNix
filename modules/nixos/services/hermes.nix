@@ -575,11 +575,17 @@
           startLimitIntervalSec = 600;
           startLimitBurst = 5;
 
-          unitConfig = lib.mkIf (cfg.projectsDir != null) {
-            # Order against (and require) the mount backing projectsDir — a
-            # no-op while it lives on the root fs, but fails loudly instead of
-            # binding a dead path if it ever moves onto removable storage.
-            RequiresMountsFor = [ (toString cfg.projectsDir) ];
+          unitConfig = {
+            # Order against (and require) the mounts backing the unit's paths:
+            # stateDir lives on the dedicated @home-hermes subvolume since
+            # 2026-09-15 (declared in snapshots.nix) — a no-op on hosts where
+            # it is a plain dir, but fails loudly instead of running against
+            # a shadowed/empty home when the mount is missing (e.g. a deploy
+            # that landed before scripts/migrate-hermes-subvol.sh prepare).
+            # projectsDir backs the read-only bind — same loud-failure
+            # guarantee if it ever moves onto removable storage.
+            RequiresMountsFor = [ (toString cfg.stateDir) ]
+              ++ lib.optionals (cfg.projectsDir != null) [ (toString cfg.projectsDir) ];
           };
 
           path = [

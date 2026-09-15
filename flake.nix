@@ -1427,6 +1427,13 @@
                   local fixture="$1" label="$2" d
                   d=$(mktemp -d "$work/d.XXXXXX")
                   cp "$fixtures/$fixture" "$d/"
+                  # SAME template expansion as expect_detect — without it the
+                  # negatives are scanned as the literal "@HEX40@" string
+                  # (vacuously clean: no hex for any rule to match, and a
+                  # corrupted fixture stays undetectable — caught by
+                  # scripts/negative-test-lints.sh gitleaks/negative-fixture-corrupt
+                  # on 2026-09-15).
+                  sed -i "s/@HEX40@/$(printf 'systemnix-gitleaks-coverage-fixture' | sha256sum | cut -c1-40)/" "$d/$fixture"
                   if ! ${pkgs.gitleaks}/bin/gitleaks detect --no-git --no-banner --source "$d" --config "$cfg" >/dev/null 2>&1; then
                     echo "SELFTEST FAIL: $label tripped gitleaks (fixture: $fixture)"
                     ${pkgs.gitleaks}/bin/gitleaks detect --no-git --no-banner --source "$d" --config "$cfg" || true
