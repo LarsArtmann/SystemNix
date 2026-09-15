@@ -13,6 +13,11 @@
 #      without the Pocket ID secret, injects it when present, and the
 #      reloaded web unit renders the Pocket ID provider button on the
 #      login page (Django parsed the delivered JSON end-to-end)
+#   7. Declarative dashboards: paperless-dashboard-provision runs at boot
+#      (fallback owner, no-tags skip), creates saved views through the
+#      token-authed REST API once tags resolve, lands them ON the dashboard
+#      (v9 additive UiSettings visibility), and is create-only idempotent
+#      with no token residue in the state dir
 #
 # Tika/Gotenberg are NOT enabled in this test (configureTika = false) —
 # their closure (chromium + libreoffice) is multi-GB; the nixpkgs modules
@@ -114,6 +119,12 @@ in
         dataDir = lib.mkForce "/var/lib/paperless";
         configureTika = lib.mkForce false;
       };
+
+      # Declarative dashboards (steps 9-12): exercised with the DEFAULT
+      # saved-views spec — the boot run has no tags yet (both views skip),
+      # the post-seed run creates one + skips the other, and the third run
+      # proves create-only idempotency.
+      services.paperless-dashboard.enable = true;
     };
 
   testScript = ''
@@ -203,6 +214,56 @@ in
       "curl -sf http://localhost:2892/accounts/login/ | grep -F 'type=\"password\"'"
     )
 
-    print("Paperless v3 wiring verified — units up, PG backend, AI env, trash, exporter, Pocket ID OIDC bridge, SSO-only + auto-break-glass")
+    # 9. Dashboard provisioner: ran at boot (wantedBy paperless-web),
+    #    resolved the fallback owner (no SocialAccount exists in the VM),
+    #    created nothing (neither the gmail nor the encrypted tag exists
+    #    yet — both default views hit the no-resolvable-rules skip).
+    machine.wait_for_unit("paperless-dashboard-provision.service")
+    machine.succeed("journalctl -u paperless-dashboard-provision.service --no-pager | grep -F 'falling back to admin'")
+    machine.succeed("journalctl -u paperless-dashboard-provision.service --no-pager | grep -F \"skipping view 'Gmail Archive'\"")
+
+    # 10. Seed the gmail tag via the API — proves TokenAuthentication with
+    #     a drf_create_token-minted key end-to-end (the exact auth path the
+    #     provisioner uses). The encrypted tag stays absent ON PURPOSE: the
+    #     next step then covers BOTH the created and the skipped path.
+    token = machine.succeed(
+      "runuser -u paperless -- /run/current-system/sw/bin/paperless-manage drf_create_token admin | grep -oE '[0-9a-f]{40}'"
+    ).strip()
+    machine.succeed(
+      f"curl -sf -H 'Authorization: Token {token}' -H 'Content-Type: application/json' "
+      "-d '{\"name\":\"gmail\"}' http://localhost:2892/api/tags/"
+    )
+
+    # 11. Re-run the provisioner: Gmail Archive now resolves its tag and is
+    #     created ON the dashboard (API v9 legacy visibility = the additive
+    #     UiSettings merge); Encrypted still skips (tag absent). The
+    #     ui_settings membership check is the phantom-green killer.
+    machine.succeed("systemctl restart paperless-dashboard-provision.service")
+    machine.wait_for_unit("paperless-dashboard-provision.service")
+    machine.succeed("journalctl -u paperless-dashboard-provision.service --no-pager | grep -F \"created saved view 'Gmail Archive'\"")
+    machine.succeed("journalctl -u paperless-dashboard-provision.service --no-pager | grep -F \"skipping view 'Encrypted (needs attention)'\"")
+    view_id = machine.succeed(
+      f"curl -sf -H 'Authorization: Token {token}' -H 'Accept: application/json; version=9' "
+      "'http://localhost:2892/api/saved_views/?page_size=100000' "
+      "| jq -r '.results[] | select(.name == \"Gmail Archive\") | .id'"
+    ).strip()
+    assert view_id != "", "Gmail Archive saved view missing after provisioning"
+    machine.succeed(
+      f"curl -sf -H 'Authorization: Token {token}' http://localhost:2892/api/ui_settings/ "
+      f"| jq -e --argjson id {view_id} '.settings.saved_views.dashboard_views_visible_ids | index($id) != null'"
+    )
+
+    # 12. Idempotency: create-only — a third run skips, count unchanged,
+    #     and the token file cleanup left nothing behind in the state dir.
+    machine.succeed("systemctl restart paperless-dashboard-provision.service")
+    machine.wait_for_unit("paperless-dashboard-provision.service")
+    machine.succeed("journalctl -u paperless-dashboard-provision.service --no-pager | grep -F \"saved view 'Gmail Archive' already exists - skipping\"")
+    count = machine.succeed(
+      f"curl -sf -H 'Authorization: Token {token}' http://localhost:2892/api/saved_views/ | jq '.count'"
+    ).strip()
+    assert count == "1", f"expected exactly 1 saved view, got {count}"
+    machine.succeed("test -z \"$(ls -A /var/lib/paperless-dashboard)\" ")
+
+    print("Paperless v3 wiring verified — units up, PG backend, AI env, trash, exporter, Pocket ID OIDC bridge, SSO-only + auto-break-glass, declarative dashboards (create-only + v9 visibility + idempotent)")
   '';
 }

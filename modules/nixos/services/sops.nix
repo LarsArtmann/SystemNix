@@ -359,14 +359,16 @@ in
               # categorically skipping for an operator whose citizenship
               # CAN obtain them (PII → sops only, never a tracked config
               # file; staged 2026-09-15 with the defense-portal bundle).
-              mkSecrets "cv.yaml" {
-                owner = "root";
-                group = "root";
-                restartUnits = [ "cv-server.service" ];
-              } [
-                "cv_api_key"
-                "cv_evaluation_citizenships"
-              ]
+              mkSecrets "cv.yaml"
+                {
+                  owner = "root";
+                  group = "root";
+                  restartUnits = [ "cv-server.service" ];
+                }
+                [
+                  "cv_api_key"
+                  "cv_evaluation_citizenships"
+                ]
             )
             // lib.optionalAttrs (svcEnabled "inboxclean") (
               # Raw Google OAuth client credentials.json; the upstream module's

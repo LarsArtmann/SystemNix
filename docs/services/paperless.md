@@ -169,6 +169,59 @@ A PLACEHOLDER value is inert by design (detection + tagging only). The
 ledger records the DECRYPTED checksum, so the same statement via the second
 mailbox dedups instead of re-uploading.
 
+## Declarative dashboards (saved views)
+
+Paperless v3 dashboards are per-user SAVED VIEWS whose visibility lives in
+`UiSettings.settings.saved_views.{dashboard,sidebar}_views_visible_ids`
+(migration `0014_savedview_visibility_to_ui_settings`) — env vars cannot
+reach them. SystemNix provisions them via the `paperless-dashboard-provision`
+oneshot (`services.paperless-dashboard`, enabled in configuration.nix):
+
+- **Mechanism**: mints a DRF token as the paperless OS user
+  (`drf_create_token`, peer-auth DB), then drives the REST API. Visibility
+  rides the **API v9 legacy fields** (`Accept: application/json; version=9`):
+  `SavedViewSerializer.create()` merges them ADDITIVELY into the owner's
+  `dashboard_views_visible_ids`. The v10 `ui_settings` POST is a WHOLESALE
+  settings replacement (dark mode, language, everything) and is never used
+  for writes — only read for the in-provisioner end-to-end assertion.
+- **Owner**: `services.paperless-dashboard.owner`, null (default) =
+  auto-resolve the single Pocket-ID-linked (allauth SocialAccount) user,
+  fallback `admin`. The resolved owner prints in the journal.
+- **Create-only**: same-name views are NEVER modified or deleted — manual
+  UI edits and widget reordering survive every deploy. Changing a view's
+  rules = rename it (or delete it in the UI) and re-run
+  `sudo systemctl restart paperless-dashboard-provision.service`.
+- **Defaults**: "Gmail Archive" (has-tag `gmail`) and "Encrypted (needs
+  attention)" (has-tag `encrypted`). Tag names resolve at runtime; an
+  unresolvable tag DROPS that rule with a WARN, and a view with zero
+  resolvable rules is skipped entirely (a rule-less view shows ALL
+  documents — never provisioned implicitly).
+- **appTitle** (optional): PATCHes `/api/config/` with the admin token
+  (browser title / login page header).
+
+Adding a view (declarative):
+
+```nix
+services.paperless-dashboard.savedViews = [
+  {
+    name = "Statements";
+    icon = "bank";
+    filterRules = [ { ruleType = 6; tagName = "encrypted"; } ];
+  }
+];
+```
+
+Icon enum + rule-type ids are validated at eval time
+(`documents/models.py` source lists; common rule types: 5 = inbox,
+6 = has tag, 17 = not tag, 19 = title/content contains, 43-46 = added /
+created from-to). Verify live:
+
+```bash
+journalctl -u paperless-dashboard-provision.service -o cat --no-pager | tail -20
+# created=N skipped_existing=... dashboard_assertions=N  <- every created
+# view was confirmed present in dashboard_views_visible_ids
+```
+
 ## Known traps (pointers)
 
 - Engine-switch bootstrap (sqlite→PG `src-version`/`superuser-state` survival) — AGENTS Paperless section

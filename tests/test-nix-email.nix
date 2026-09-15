@@ -44,7 +44,8 @@ let
   integrationModule =
     (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration;
 
-  evalConfig = extra:
+  evalConfig =
+    extra:
     (lib.nixosSystem {
       inherit system;
       specialArgs = { inherit inputs; };
@@ -81,61 +82,73 @@ let
   # relay-landing rev, replace this with the relay-credential assertions:
   # services.stalwart.credentials."mail-server-relay" wired from sops
   # exactly when relay.username is set.
-  relayOptionMissing = !(builtins.tryEval
-    (evalConfig {
-      services.mail-server.relay.address = "smtp.resend.com";
-    }).config.services.mail-server.hostname).success;
+  relayOptionMissing =
+    !(builtins.tryEval
+      (evalConfig {
+        services.mail-server.relay.address = "smtp.resend.com";
+      }).config.services.mail-server.hostname
+    ).success;
 
   # Each assertion is `true` by construction (throwIfNot throws at eval on
   # violation); fold to a single boolean for the assert below.
   assertions = lib.all lib.id [
-    (throwIfNot (disabled ? services.dmarc-monitor && disabled ? services.mail-server)
-      "upstream modules did not import: option sets missing in the disabled case")
+    (throwIfNot (
+      disabled ? services.dmarc-monitor && disabled ? services.mail-server
+    ) "upstream modules did not import: option sets missing in the disabled case")
 
-    (throwIfNot (dmarc.services.dmarc-monitor.settings.imap.password._secret
-      == "/run/secrets/dmarc-imap-password")
-      "dmarc imap password is not the sops _secret path")
+    (throwIfNot (
+      dmarc.services.dmarc-monitor.settings.imap.password._secret == "/run/secrets/dmarc-imap-password"
+    ) "dmarc imap password is not the sops _secret path")
 
-    (throwIfNot (dmarc.systemd.services.parsedmarc.onFailure == onFailure)
-      "parsedmarc onFailure routing missing")
+    (throwIfNot (
+      dmarc.systemd.services.parsedmarc.onFailure == onFailure
+    ) "parsedmarc onFailure routing missing")
 
-    (throwIfNot (dmarc.systemd.services.parsedmarc.startLimitBurst == 5
-      && dmarc.systemd.services.parsedmarc.startLimitIntervalSec == 300)
-      "parsedmarc startLimit wiring missing (expected 5 failures / 300 s)")
+    (throwIfNot (
+      dmarc.systemd.services.parsedmarc.startLimitBurst == 5
+      && dmarc.systemd.services.parsedmarc.startLimitIntervalSec == 300
+    ) "parsedmarc startLimit wiring missing (expected 5 failures / 300 s)")
 
-    (throwIfNot (dmarcReg.unit == "parsedmarc.service" && dmarcReg.monitored == true)
-      "integration registry entry missing or wrong for dmarc-monitor")
+    (throwIfNot (
+      dmarcReg.unit == "parsedmarc.service" && dmarcReg.monitored == true
+    ) "integration registry entry missing or wrong for dmarc-monitor")
 
     # Pin the reports-dir contract to the LITERAL default: comparing the
     # registry entry against the wrapper option (not a literal) would let one
     # bug move both sides in lockstep and still pass.
     (throwIfNot (dmarc.services.dmarc-monitor.outputDirectory == "/var/lib/parsedmarc/reports")
-      "dmarc-monitor outputDirectory default changed - re-point the backup-freshness expectation deliberately")
+      "dmarc-monitor outputDirectory default changed - re-point the backup-freshness expectation deliberately"
+    )
 
-    (throwIfNot (dmarcReg.backup.directory == "/var/lib/parsedmarc/reports"
-      && dmarcReg.backup.filePattern == "*.json" && dmarcReg.backup.maxAgeHours == 72)
-      "backup freshness check not wired to the parsedmarc reports directory")
+    (throwIfNot (
+      dmarcReg.backup.directory == "/var/lib/parsedmarc/reports"
+      && dmarcReg.backup.filePattern == "*.json"
+      && dmarcReg.backup.maxAgeHours == 72
+    ) "backup freshness check not wired to the parsedmarc reports directory")
 
-    (throwIfNot (mail.services.stalwart.credentials."fallback-admin"
-      == "/run/secrets/stalwart-fallback-admin")
-      "fallback-admin credential not wired from sops")
+    (throwIfNot (
+      mail.services.stalwart.credentials."fallback-admin" == "/run/secrets/stalwart-fallback-admin"
+    ) "fallback-admin credential not wired from sops")
 
-    (throwIfNot (!(mail.services.stalwart.credentials ? "mail-server-relay"))
-      "relay credential leaked into a relay-less config")
+    (throwIfNot (
+      !(mail.services.stalwart.credentials ? "mail-server-relay")
+    ) "relay credential leaked into a relay-less config")
 
-    (throwIfNot (mail.services.stalwart.settings.authentication.fallback-admin.secret
-      == "%{file:/run/credentials/stalwart.service/fallback-admin}%")
-      "fallback-admin macro does not target the stalwart.service unit (stateVersion 26.11)")
+    (throwIfNot (
+      mail.services.stalwart.settings.authentication.fallback-admin.secret
+      == "%{file:/run/credentials/stalwart.service/fallback-admin}%"
+    ) "fallback-admin macro does not target the stalwart.service unit (stateVersion 26.11)")
 
-    (throwIfNot (mail.systemd.services.stalwart.onFailure == onFailure)
-      "stalwart onFailure routing missing")
+    (throwIfNot (
+      mail.systemd.services.stalwart.onFailure == onFailure
+    ) "stalwart onFailure routing missing")
 
-    (throwIfNot (mailOld.services.stalwart.settings.authentication.fallback-admin.secret
-      == "%{file:/run/credentials/stalwart-mail.service/fallback-admin}%")
-      "fallback-admin macro does not track the stalwart-mail rename (stateVersion 25.11)")
+    (throwIfNot (
+      mailOld.services.stalwart.settings.authentication.fallback-admin.secret
+      == "%{file:/run/credentials/stalwart-mail.service/fallback-admin}%"
+    ) "fallback-admin macro does not track the stalwart-mail rename (stateVersion 25.11)")
 
-    (throwIfNot relayOptionMissing
-      "relay option unexpectedly evaluable at the pinned rev - advance the pin and restore the relay-credential assertions")
+    (throwIfNot relayOptionMissing "relay option unexpectedly evaluable at the pinned rev - advance the pin and restore the relay-credential assertions")
   ];
 in
 assert assertions;

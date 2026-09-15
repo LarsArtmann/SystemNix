@@ -58,7 +58,8 @@ let
   strippedDocFiles = builtins.removeAttrs agentDocFiles [ "crush/AGENTS.md" ];
   strippedLooksWired = strippedDocFiles ? "crush/AGENTS.md";
 
-  doubleBlank = m:
+  doubleBlank =
+    m:
     let
       lines = lib.filter (l: l == "") (lib.splitString "\n" m);
     in
@@ -70,12 +71,16 @@ let
       name = "agent-context-installed-from-repo";
       pass =
         agentDocFiles ? "crush/AGENTS.md"
-        && lib.all (n: lib.hasPrefix "crush/references/" n) (builtins.attrNames (builtins.removeAttrs agentDocFiles [ "crush/AGENTS.md" ]))
+        && lib.all (n: lib.hasPrefix "crush/references/" n) (
+          builtins.attrNames (builtins.removeAttrs agentDocFiles [ "crush/AGENTS.md" ])
+        )
         && builtins.length (builtins.attrNames agentDocFiles) > 2;
     }
     {
       name = "installed-agents-md-is-the-real-guidelines";
-      pass = files ? "crush/AGENTS.md" && lib.hasInfix "# Parakletos" (builtins.readFile files."crush/AGENTS.md".source);
+      pass =
+        files ? "crush/AGENTS.md"
+        && lib.hasInfix "# Parakletos" (builtins.readFile files."crush/AGENTS.md".source);
     }
     {
       name = "host-coupled-values-rendered-quoted";

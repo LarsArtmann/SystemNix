@@ -41,10 +41,7 @@
       # Upstream mirrors nixpkgs: the unit is stalwart-mail.service below
       # stateVersion 26.05 and stalwart.service since — onFailure must land
       # on the real unit name.
-      stalwartUnit =
-        if lib.versionOlder msCfg.stateVersion "26.05"
-        then "stalwart-mail"
-        else "stalwart";
+      stalwartUnit = if lib.versionOlder msCfg.stateVersion "26.05" then "stalwart-mail" else "stalwart";
     in
     {
       imports = [ inputs.nix-email.nixosModules.default ];
@@ -55,9 +52,12 @@
           # The IMAP password is a _secret path contract upstream (absolute
           # path STRING, rendered into the ini at unit start) — feed it the
           # sops-rendered file, never a store path.
-          sops.secrets.${dmarcSecret}.sopsFile = lib.mkDefault ../../../platforms/nixos/secrets/nix-email.yaml;
+          sops.secrets.${dmarcSecret}.sopsFile =
+            lib.mkDefault ../../../platforms/nixos/secrets/nix-email.yaml;
 
-          services.dmarc-monitor.settings.imap.password._secret = lib.mkDefault config.sops.secrets.${dmarcSecret}.path;
+          services.dmarc-monitor.settings.imap.password._secret =
+            lib.mkDefault
+              config.sops.secrets.${dmarcSecret}.path;
 
           systemd.services.parsedmarc = {
             inherit onFailure;
@@ -107,16 +107,15 @@
             # Relay password becomes a LoadCredential only once a relay is
             # configured (upstream asserts the half-configured shapes
             # itself; secretFile without username never reaches Stalwart).
-            credentials =
-              {
-                fallback-admin = lib.mkDefault config.sops.secrets.stalwart-fallback-admin.path;
-              }
-              # Option-existence guard: the PINNED nix-email rev predates the
-              # `relay` option (it rides the next nix-email push); this guard
-              # is dead code once the pin advances past that rev.
-              // lib.optionalAttrs ((msCfg ? "relay") && msCfg.relay != null && msCfg.relay.username != null) {
-                mail-server-relay = lib.mkDefault config.sops.secrets.stalwart-relay-password.path;
-              };
+            credentials = {
+              fallback-admin = lib.mkDefault config.sops.secrets.stalwart-fallback-admin.path;
+            }
+            # Option-existence guard: the PINNED nix-email rev predates the
+            # `relay` option (it rides the next nix-email push); this guard
+            # is dead code once the pin advances past that rev.
+            // lib.optionalAttrs ((msCfg ? "relay") && msCfg.relay != null && msCfg.relay.username != null) {
+              mail-server-relay = lib.mkDefault config.sops.secrets.stalwart-relay-password.path;
+            };
             settings.authentication.fallback-admin.secret = lib.mkDefault "%{file:/run/credentials/${stalwartUnit}.service/fallback-admin}%";
           };
 
