@@ -555,18 +555,20 @@ _: {
           # Churn-stop forensics state (written at trip action, see above):
           # emitted on every run while the drain window lasts, cleared once
           # sustained io PSI falls back under the trip threshold (the churn
-          # units' own timers re-fire them from there — the window is over).
+          # units' own timers re-fire them from there - the window is over).
+          # The clear runs BEFORE the read so the metrics vanish on the very
+          # run that observes the drain (no stale final emission).
           churn_block=""
           churn_ts_line=""
+          if [ -f "$CHURN_STOPPED_FILE" ] && [ "$io_psi_some_avg60" != "-1" ] && awk -v p="$io_psi_some_avg60" 'BEGIN { exit !(p < ${toString cfg.ioPsiSomeAvg60ThresholdPercent}) }'; then
+            rm -f "$CHURN_STOPPED_FILE"
+          fi
           if [ -f "$CHURN_STOPPED_FILE" ]; then
             churn_epoch=$(awk 'NR==1 { print; exit }' "$CHURN_STOPPED_FILE" 2>/dev/null) || churn_epoch=0
             churn_epoch="''${churn_epoch:-0}"
             if [ "$churn_epoch" -gt 0 ]; then
               churn_ts_line="memory_emergency_guard_churn_stopped_timestamp_seconds ''${churn_epoch}"
               churn_block=$(awk 'NR>1 && NF { print "memory_emergency_guard_churn_units_stopped{unit=\"" $0 "\"} 1" }' "$CHURN_STOPPED_FILE" 2>/dev/null) || churn_block=""
-            fi
-            if [ "$io_psi_some_avg60" != "-1" ] && awk -v p="$io_psi_some_avg60" 'BEGIN { exit !(p < ${toString cfg.ioPsiSomeAvg60ThresholdPercent}) }'; then
-              rm -f "$CHURN_STOPPED_FILE"
             fi
           fi
 
