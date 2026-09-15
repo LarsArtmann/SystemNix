@@ -1293,7 +1293,6 @@ _: {
             "paperless-scheduler"
             "paperless-task-queue"
             "paperless-web"
-            "pocket-id"
             "tika"
             "wifi-failover"
           ];
