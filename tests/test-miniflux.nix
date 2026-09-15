@@ -34,6 +34,12 @@ let
           type = lib.types.bool;
           default = false;
         };
+        # The integration registry fan-out appends miniflux's OIDC client
+        # here when the (mocked) namespace exists — declare the leaf.
+        provision.extraOidcClients = lib.mkOption {
+          type = lib.types.listOf lib.types.attrs;
+          default = [ ];
+        };
       };
     };
 
