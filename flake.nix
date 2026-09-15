@@ -1255,6 +1255,48 @@
                   touch $out
                 '';
 
+              # Gitleaks positive-coverage selftest (2026-09-15, closes the
+              # 40-hex saga): turns the retracted TODO rows 357/361 claims
+              # into tested invariants — (1) a sourcegraph-shaped `sq0atp-`
+              # token IS detected (extended default rule), (2) a bare 40-hex
+              # git SHA is NOT (the fabricated row-357 premise, retracted
+              # 2026-09-14), (3) the custom resend + synthetic rules in
+              # .gitleaks.toml actually fire. A config FILE replaces the
+              # default rule set, so a future edit that drops [extend]
+              # useDefault or breaks the custom regexes fails here instead
+              # of silently scanning with zero rules (the 2026-08-18 no-op
+              # config class that let the Resend key leak for 3 months).
+              gitleaks-coverage-selftest =
+                pkgs.runCommand "gitleaks-coverage-selftest" { } ''
+                  set -u
+                  cfg=${./.gitleaks.toml}
+                  work=$(mktemp -d)
+                  trap 'rm -rf "$work"' EXIT
+                  mkdir "$work/positive" "$work/negative" "$work/resend" "$work/synthetic"
+                  # 40 chars after the prefix: the upstream rule quantifier is {40}
+                  printf 'sourcegraph token: sq0atp-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n' > "$work/positive/token.txt"
+                  printf 'parent commit: deadbeefdeadbeefdeadbeefdeadbeefdeadbeef\n' > "$work/negative/sha.txt"
+                  printf 'resend key: re_Ab12Cd34Ef56Gh78Ij90Kl12Mn34Op56\n' > "$work/resend/key.txt"
+                  printf 'synthetic key: syn_Ab12Cd34Ef56Gh78Ij90Kl12Mn34Op56\n' > "$work/synthetic/key.txt"
+                  expect_detect() {
+                    local dir="$1" label="$2"
+                    if ${pkgs.gitleaks}/bin/gitleaks detect --no-git --no-banner --source "$dir" --config "$cfg" >/dev/null 2>&1; then
+                      echo "SELFTEST FAIL: gitleaks did NOT detect the $label fixture — rule dead (phantom coverage)"
+                      exit 1
+                    fi
+                  }
+                  expect_detect "$work/positive" "sq0atp- sourcegraph token"
+                  expect_detect "$work/resend" "resend re_ key"
+                  expect_detect "$work/synthetic" "synthetic syn_ key"
+                  if ! ${pkgs.gitleaks}/bin/gitleaks detect --no-git --no-banner --source "$work/negative" --config "$cfg" >/dev/null 2>&1; then
+                    echo "SELFTEST FAIL: bare 40-hex git SHA tripped gitleaks — the retracted TODO row 357 premise was true after all; re-scope the docs rule"
+                    ${pkgs.gitleaks}/bin/gitleaks detect --no-git --no-banner --source "$work/negative" --config "$cfg" || true
+                    exit 1
+                  fi
+                  echo "gitleaks coverage: 3 positive classes detected, bare 40-hex SHA clean"
+                  touch $out
+                '';
+
               # Recursive chown/chmod walks in modules that also configure
               # Bind*Paths: systemd builds the mount namespace BEFORE any
               # ExecStartPre, so a recursive ownership walk descends into the
