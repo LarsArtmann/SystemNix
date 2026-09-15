@@ -503,6 +503,18 @@ if nix run .#pre-deploy-check; then
     sudo systemctl restart paperless-web.service 2>/dev/null || true
   fi
 
+  # Paperless dashboards: re-run the saved-view provisioner so spec changes
+  # converge at deploy time. The unit is only wantedBy=paperless-web — an
+  # INDIRECT unit the provisioner loop's is-enabled gate skips (dnsblockd
+  # 2026-08-22 lesson) — and stc never re-runs oneshot+RemainAfterExit on
+  # restartTriggers. Ordered after the OIDC block above so it converges
+  # against the freshly restarted web (its preStart health-gate polls the
+  # login page until Django binds).
+  if systemctl is-active --quiet paperless-web.service 2>/dev/null; then
+    echo "Restarting paperless-dashboard-provision.service (converge declarative saved views)"
+    sudo systemctl restart paperless-dashboard-provision.service 2>/dev/null || true
+  fi
+
   # Heal garbled btrbk receive targets at deploy time (before the next nightly
   # window) — see snapshots.nix btrbk-pool-clean for why this must not race a
   # live send. --no-block: the unit's After= ordering makes it WAIT behind any

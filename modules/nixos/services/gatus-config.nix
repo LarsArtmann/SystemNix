@@ -653,17 +653,40 @@ _: {
                   alerts = discordAlert "BTRFS space health CRITICAL — device-unallocated <5% or metadata pool >90% (metadata-ENOSPC precursor, the 2026-06-26 crash class). nix-gc is auto-blocked below a 5GiB unalloc floor or metadata >90%. Recover: 'sudo systemctl start btrfs-balance-metadata.service' (needs >=5GiB unalloc), expire old btrbk snapshots, or use the 10GiB emergency reserve at /btrfs-emergency-reserve. Live values: btrfs_device_unallocated_pct / btrfs_metadata_utilization_pct.";
                 })
                 (mkHttpCheck {
-                  name = "BTRFS Scrub Health";
+                  name = "BTRFS Scrub Errors";
                   group = "Filesystem";
                   url = "http://localhost:${toString nodePort}/metrics";
                   interval = "10m";
+                  # Split from the old "BTRFS Scrub Health" (2026-09-15): the
+                  # single error_free composite conflated ERRORS with an
+                  # incomplete last scrub — a guard-deferred or RUNNING scrub
+                  # red the check with zero errors. Errors now have their own
+                  # composite; incompleteness moved to "BTRFS Scrub
+                  # Incomplete".
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*btrfs_scrub_status*)"
-                    "[BODY] != pat(*btrfs_scrub_error_free 0\n*)"
-                    "[BODY] == pat(*\nbtrfs_scrub_error_free *)"
+                    "[BODY] != pat(*btrfs_scrub_errors_present 1\n*)"
+                    "[BODY] == pat(*\nbtrfs_scrub_errors_present *)"
                   ];
                   alerts = discordAlert "BTRFS scrub found errors — potential data corruption. Run 'btrfs scrub status /' and 'btrfs scrub status /data' to investigate. Check Prometheus btrfs_scrub_errors_total for details.";
+                })
+                (mkHttpCheck {
+                  name = "BTRFS Scrub Incomplete";
+                  group = "Filesystem";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "10m";
+                  # The never-finished/interrupted leg, EXCLUDING the
+                  # guard-deferred class: memory-emergency-guard stops scrub
+                  # units on any trip (never restarts them) — while its
+                  # churn window is open (btrfs_scrub_deferred_by_guard 1)
+                  # an incomplete scrub is EXPECTED. A RUNNING scrub is also
+                  # not incomplete (the old check red during every run).
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*btrfs_scrub_incomplete_unexplained 1\n*)"
+                    "[BODY] == pat(*\nbtrfs_scrub_incomplete_unexplained *)"
+                  ];
+                  alerts = discordAlert "BTRFS scrub is incomplete (never started or interrupted) WITHOUT a guard deferral — a silently wedged scrub, not the memory-guard churn-stop class (that sets btrfs_scrub_deferred_by_guard 1 and this check stays green). Check 'btrfs scrub status /' and '/data', memory-emergency-guard journal for recent trips; the next weekly autoScrub window retries.";
                 })
                 (mkHttpCheck {
                   name = "BTRFS Emergency Reserve";

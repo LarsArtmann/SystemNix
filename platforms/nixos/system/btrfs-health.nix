@@ -167,7 +167,13 @@ let
     text = ''
       set -uo pipefail
       METRICS_FILE="${textfileDir}/btrfs.prom"
-      TMP_FILE="''${METRICS_FILE}.tmp"
+      # mktemp + trap per the repo textfile doctrine: a fixed $METRICS.tmp
+      # wedges on a foreign-owned leftover in the sticky 1777 dir (the
+      # 2026-09-02..06 mail-relay class); unique tmp + CAP_FOWNER on the
+      # unit cannot wedge.
+      TMP_FILE=$(mktemp "''${METRICS_FILE}.XXXXXX") || exit 1
+      chmod 644 "$TMP_FILE"
+      trap 'rm -f "$TMP_FILE"' EXIT
       STATE_FILE="${stateDir}/state"
 
       mkdir -p "${textfileDir}" "${stateDir}"
@@ -256,6 +262,7 @@ let
         echo "# TYPE btrfs_scrub_error_free gauge"
         scrub_total_errors=0
         scrub_all_finished=1
+        scrub_incomplete=0
         for scrub_mnt in / /data; do
           scrub_out=$(timeout 30 btrfs scrub status "$scrub_mnt" 2>/dev/null) || continue
           scrub_err=$(echo "$scrub_out" | awk '
@@ -300,11 +307,52 @@ let
           else
             scrub_all_finished=0
           fi
+          # Never-started (0) or interrupted (3) = an incomplete LAST scrub.
+          # RUNNING (1) is deliberately NOT incomplete — the old composite
+          # red the whole check during every scrub run.
+          if echo "$scrub_out" | grep -q 'no scrub.*started'; then
+            scrub_incomplete=1
+          fi
+          if echo "$scrub_out" | grep -q 'Status:.*interrupted'; then
+            scrub_incomplete=1
+          fi
         done
         if [ "$scrub_all_finished" -eq 1 ] && [ "$scrub_total_errors" -eq 0 ]; then
           echo "btrfs_scrub_error_free 1"
         else
           echo "btrfs_scrub_error_free 0"
+        fi
+
+        # ── Guard-deferral discriminator (2026-09-15) ─────────────────────
+        # The memory-emergency-guard stops the scrub units on ANY trip and
+        # never restarts them (their weekly timer re-fires). While the
+        # guard's churn-stop window is open (its churn-stopped state file
+        # exists, is <24h old, and actually lists a scrub unit), an
+        # incomplete scrub is EXPECTED — deferred, not wedged. Without
+        # this discriminator the guard-stopped class and a silent wedge
+        # were indistinguishable.
+        SCRUB_DEFERRED=0
+        guard_churn="/var/lib/memory-emergency-guard/churn-stopped"
+        if [ -f "$guard_churn" ] && grep -q 'btrfs-scrub' "$guard_churn" 2>/dev/null; then
+          churn_age=$(( $(date +%s) - $(stat -c %Y "$guard_churn" 2>/dev/null || echo 0) ))
+          if [ "$churn_age" -ge 0 ] && [ "$churn_age" -le 86400 ]; then
+            SCRUB_DEFERRED=1
+          fi
+        fi
+        echo "# HELP btrfs_scrub_deferred_by_guard 1 = the memory-emergency-guard stopped scrub units in the last 24h and its churn window is still open — an incomplete scrub is EXPECTED (deferred), not a wedge"
+        echo "# TYPE btrfs_scrub_deferred_by_guard gauge"
+        echo "btrfs_scrub_deferred_by_guard ''${SCRUB_DEFERRED}"
+
+        if [ "$scrub_total_errors" -gt 0 ]; then
+          echo "btrfs_scrub_errors_present 1"
+        else
+          echo "btrfs_scrub_errors_present 0"
+        fi
+
+        if [ "$scrub_incomplete" -eq 1 ] && [ "$SCRUB_DEFERRED" -eq 0 ]; then
+          echo "btrfs_scrub_incomplete_unexplained 1"
+        else
+          echo "btrfs_scrub_incomplete_unexplained 0"
         fi
 
         # ── Emergency reserve ──────────────────────────────────────────────────
@@ -570,7 +618,10 @@ in
           (serviceOneshotDefaults { })
           (harden {
             MemoryMax = "128M";
-            CapabilityBoundingSet = "CAP_SYS_ADMIN";
+            # CAP_SYS_ADMIN: scrub-progress ioctl. CAP_FOWNER +
+            # CAP_DAC_OVERRIDE: mktemp+mv over a foreign-owned leftover in
+            # the sticky textfile dir (repo textfile doctrine).
+            CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_FOWNER CAP_DAC_OVERRIDE";
             ReadWritePaths = [
               textfileDir
               stateDir

@@ -327,6 +327,11 @@ in
       forgejo.enable = true;
       immich.enable = true;
       paperless.enable = true;
+      # Declarative dashboards: saved views provisioned via the REST API
+      # (create-only; defaults = Gmail Archive + Encrypted views). Owner
+      # auto-resolves to the Pocket ID SSO user (fallback admin). Runbook:
+      # docs/services/paperless.md (Dashboards section).
+      paperless-dashboard.enable = true;
       # Miniflux RSS reader (rss.home.lan). Admin password rides sops
       # platforms/nixos/secrets/miniflux.yaml — retrieve with the Sops + Age
       # one-liner; daily login is Pocket ID OIDC (rss.home.lan → sign in with
