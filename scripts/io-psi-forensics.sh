@@ -92,7 +92,15 @@ timeout 5 cat /proc/diskstats >"${OUT}/diskstats.txt" 2>&1 || true
 } >"${OUT}/dstate.txt" 2>&1
 
 # Journal tail for trip context — BOUNDED (-n) and timeout-wrapped; journal
-# walks are an IO trap and this runs DURING a storm.
-timeout 10 journalctl -n 100 --no-pager --output short-iso >"${OUT}/journal-tail.txt" 2>&1 || true
+# walks are an IO trap and this runs DURING a storm. Under heavy stalls
+# journalctl can be killed before its first byte (live 2026-09-15: 0-byte
+# captures on the 17:02/17:12Z trips, clean 22 KB on the 17:47Z one) — an
+# empty file is a REAL finding, so mark it explicitly instead of leaving
+# silent evidence gaps.
+JRC=0
+timeout 30 journalctl -n 100 --no-pager --output short-iso >"${OUT}/journal-tail.txt" 2>&1 || JRC=$?
+if [ ! -s "${OUT}/journal-tail.txt" ]; then
+  echo "journal tail EMPTY: journalctl rc=${JRC} (rc 124 = timeout stall under the storm that triggered this capture)" >"${OUT}/journal-tail.txt"
+fi
 
 echo "io-psi-forensics: bundle written to ${OUT}"
