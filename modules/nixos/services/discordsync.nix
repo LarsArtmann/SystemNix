@@ -384,6 +384,7 @@
               description = "Discord Backup Bot (Messages, Attachments, Reactions)";
               icon = "discord.png";
             };
+            monitored = true;
           };
         };
       };

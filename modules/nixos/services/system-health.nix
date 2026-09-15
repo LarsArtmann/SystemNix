@@ -1266,35 +1266,21 @@ _: {
         monitoredServices = lib.mkOption {
           type = lib.types.listOf lib.types.str;
           # Units removed from this default as their owning modules
-          # self-register via services.integration.<name>.monitored:
-          # browser-history-agent, llama-embeddings, llama-reranker,
-          # postfix, projects-management-automation, signoz,
-          # tq-agent-pool, tq-bootstrap, tq-serve (2026-09-15).
+          # self-register via services.integration.<name>.monitored
+          # (2026-09-15, full P2 sweep): browser-history, browser-history-agent,
+          # dnsblockd, discordsync, fastflowlm, forgejo, gatus, gotenberg,
+          # hermes, homepage-dashboard, lan-nic-watchdog, llama-embeddings,
+          # llama-reranker, nix-daemon, paperless-consumer, paperless-scheduler,
+          # paperless-task-queue, paperless-web, postfix, pocket-id,
+          # projects-management-automation, signoz, tika, tq-agent-pool,
+          # tq-bootstrap, tq-serve.
           # monitor365/monitor365-server STAY: the registry fan-out is
           # enable-gated, but a DISABLED service's unit-state monitoring
           # must persist (missing-unit-tolerant; both disabled here since
           # 2026-08-12 — registry entries own their other surfaces).
           default = [
-            "browser-history"
-            "caddy"
-            "dnsblockd"
-            "discordsync"
-            "fastflowlm"
-            "forgejo"
-            "gatus"
-            "gotenberg"
-            "hermes"
-            "homepage-dashboard"
-            "lan-nic-watchdog"
             "monitor365"
             "monitor365-server"
-            "nix-daemon"
-            "paperless-consumer"
-            "paperless-scheduler"
-            "paperless-task-queue"
-            "paperless-web"
-            "tika"
-            "wifi-failover"
           ];
           description = "Systemd services to monitor for state, restart count, crash-loop detection, and start-limit-hit";
         };

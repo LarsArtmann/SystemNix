@@ -3,9 +3,9 @@ _: {
   flake.nixosModules.caddy =
     {
       config,
+      options,
       lib,
-      ...
-    }:
+      ...\n    }:
     let
       inherit (config.networking) domain;
       lanSubnet = config.networking.local.subnet;
@@ -390,6 +390,17 @@ _: {
               AmbientCapabilities = "CAP_NET_ADMIN CAP_NET_BIND_SERVICE";
             }
           ];
+        };
+
+        # Service-integration registry entry: unit-state monitoring for the
+        # proxy itself (no tile/vHost/checks — Caddy OWNS those surfaces;
+        # a self-referential vHost would be circular).
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          caddy = {
+            enable = config.services.caddy.enable;
+            vHost.layer = "none";
+            monitored = true;
+          };
         };
       };
     };

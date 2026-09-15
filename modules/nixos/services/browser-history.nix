@@ -415,6 +415,7 @@
               subdomain = "history";
               port = ports.browser-history;
               vHost.layer = "plain";
+              monitored = true;
               checks = [
                 {
                   name = "Browser History";
