@@ -41,21 +41,12 @@ _: {
       dozzleEnabled = hasContainer "dozzle";
       hermesEnabled = config.services.hermes.enable;
       monitor365Enabled = config.services.monitor365-server.enable or false;
-      voiceAgentsEnabled = config.services.voice-agents.enable;
-      discordsyncEnabled = config.services.discordsync.enable;
       overviewEnabled = config.services.overview.enable;
-      fileAndImageRenamerEnabled = config.services.file-and-image-renamer.enable or false;
-      browserHistoryEnabled = config.services.browser-history.enable or false;
-      searxEnabled = config.services.searx.enable or false;
-      atticEnabled = config.services.attic-config.enable or false;
       fastflowlmEnabled = config.services.fastflowlm.enable or false;
       llamaRagEnabled = config.services.llama-rag.enable or false;
       googleSyncEnabled = config.services.google-sync.enable or false;
-      papdashboardEnabled = config.services.papdashboard.enable or false;
       bankSyncEnabled = config.services.bank-sync.enable or false;
       inboxcleanEnabled = config.services.inboxclean.enable or false;
-      systemdGraphEnabled = config.services.systemd-graph.enable or false;
-      systemdTimerMonitorEnabled = config.services.systemd-timer-monitor.enable or false;
       cvEnabled = config.services.cv-server.enable or false;
       tqAgentPoolEnabled = config.services.tq-agent-pool.enable or false;
 
@@ -111,31 +102,13 @@ _: {
       # machine (Discord, browsers, Google Drive) or serving stored data
       # back out (Attic). Split from Infrastructure so that group stays
       # the platform core (auth, proxy, db, cache, gateway).
+      # DiscordSync / Browser History / Attic Cache tiles moved to their
+      # owning modules (services.integration.<name>.homepage).
       syncServices =
-        lib.optional discordsyncEnabled (
-          mkService "DiscordSync" {
-            href = svcUrl "discordsync";
-            description = "Discord Backup Bot (Messages, Attachments, Reactions)";
-            icon = "discord.png";
-          }
-        )
-        ++ lib.optional browserHistoryEnabled (
-          mkService "Browser History" {
-            href = svcUrl "history";
-            description = "Browsing Analytics & Productivity Insights";
-          }
-        )
-        ++ lib.optional atticEnabled (
-          mkService "Attic Cache" {
-            href = svcUrl "cache";
-            description = "Self-hosted Nix Binary Cache (CI build artifacts)";
-            icon = "nixos.png";
-          }
-        )
         # No vHost: the sync is a 5-min rclone timer landing on the HDD
         # pool. Freshness is alerted via backup-coordination (Gatus),
         # which is why this tile has no href.
-        ++ lib.optional googleSyncEnabled (
+        lib.optional googleSyncEnabled (
           mkService "Google Sync" {
             description = "Google Drive → HDD Pool Mirror (rclone)";
             icon = "google-drive.png";
@@ -241,18 +214,6 @@ _: {
             description = "Embeddings + Reranking (bge-m3, bge-reranker-v2-m3)";
             icon = "ollama.png";
           }
-        )
-        ++ lib.optionals voiceAgentsEnabled [
-          (mkService "LiveKit" {
-            href = svcUrl "voice";
-            description = "Real-Time Voice Infrastructure";
-            icon = "voip-info.png";
-          })
-          (mkService "Whisper ASR" {
-            href = svcUrl "whisper";
-            description = "Speech-to-Text (Gradio)";
-            icon = "web-whisper.png";
-          })
         ];
 
       monitoringServices =
@@ -263,13 +224,8 @@ _: {
             icon = "gatus.png";
           }
         )
-        ++ lib.optional papdashboardEnabled (
-          mkService "PapDashboard" {
-            href = svcUrl "alerts";
-            description = "Alert Hub with NPU Insights";
-            icon = "alertmanager.png";
-          }
-        )
+        # PapDashboard tile moved to its owning module
+        # (services.integration.papdashboard.homepage in papdashboard.nix).
         ++ lib.optional signozEnabled (
           mkService "SigNoz" {
             href = svcUrl "signoz";
@@ -324,15 +280,6 @@ _: {
             icon = "espocrm.png";
           }
         )
-        ++ lib.optional fileAndImageRenamerEnabled (
-          mkService "File Renamer" {
-            href = svcUrl "renamer";
-            description = "AI-Powered File & Image Renaming";
-            # filebot.png: bundled icon pack has no 'mdi-*' mdi-style icons;
-            # filebot is the canonical self-hosted file-rename tool icon.
-            icon = "filebot.png";
-          }
-        )
         ++ [
           (mkService "Taskwarrior" {
             href = svcUrl "tasks";
@@ -348,45 +295,30 @@ _: {
             description = "SEO Suite (Rank Tracking, Keywords, Backlinks)";
             icon = "google-search-console.png";
           })
-        ]
-        ++ lib.optional searxEnabled (
-          mkService "SearXNG" {
-            href = svcUrl "search";
-            description = "Privacy Metasearch Engine";
-            icon = "searxng.png";
-          }
-        );
+        ];
 
-      reviewToolsServices =
-        lib.optional systemdGraphEnabled (
-          mkService "systemd-graph" {
-            href = svcUrl "graph";
-            description = "Live systemd Dependency Graph";
-            icon = "mdi-graph-outline";
-          }
-        )
-        ++ lib.optional systemdTimerMonitorEnabled (
-          mkService "systemd-timer-monitor" {
-            href = svcUrl "timers";
-            description = "Systemd Services & Timers Audit";
-            icon = "mdi-timer-outline";
-          }
-        );
+      # Both tiles moved to their owning modules
+      # (services.integration.{systemd-graph,systemd-timer-monitor}.homepage).
+      # The group stays listed (see groups below) so registry tiles keep
+      # their canonical tab position.
+      reviewToolsServices = [ ];
 
+      # All groups are ALWAYS emitted so registry tiles land in their
+      # canonical tab position (addTile appends unknown tabs at the end —
+      # a registry-only group would otherwise re-order the dashboard).
+      # Empty groups (no built-in AND no registry tiles) are filtered after
+      # the fold — the old `lib.optional (x != [ ])` behavior, but
+      # order-preserving.
       groups = [
         { Infrastructure = infraServices; }
-      ]
-      ++ lib.optional (syncServices != [ ]) { "Sync & Backup" = syncServices; }
-      ++ [
+        { "Sync & Backup" = syncServices; }
         { Media = mediaServices; }
         { Development = devServices; }
-      ]
-      ++ lib.optional (aiServices != [ ]) { AI = aiServices; }
-      ++ [
+        { AI = aiServices; }
         { Monitoring = monitoringServices; }
         { Productivity = productivityServices; }
-      ]
-      ++ lib.optional (reviewToolsServices != [ ]) { "Review Tools" = reviewToolsServices; };
+        { "Review Tools" = reviewToolsServices; }
+      ];
 
       # Registry fan-out (services.integration.<name>.homepage): tiles fold
       # into an existing group's tab by name, or open a new tab at the end
@@ -418,7 +350,9 @@ _: {
         else
           accGroups ++ [ { ${groupName} = [ entry ]; } ];
 
-      allGroups = lib.foldl addTile groups cfg.extraTiles;
+      allGroups = lib.filter (g: (lib.head (lib.attrValues g)) != [ ]) (
+        lib.foldl addTile groups cfg.extraTiles
+      );
     in
     {
       options.services.homepage = {

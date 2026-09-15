@@ -619,63 +619,6 @@ _: {
                   alerts = discordAlert "External HTTPS connectivity lost — server cannot reach the internet";
                 })
               ]
-              # Ollama is only meaningful when the AI stack is enabled. ai-stack sets
-              # ollama to WantedBy multi-user.target, so when enabled it runs
-              # persistently (unloading idle models via OLLAMA_KEEP_ALIVE). When
-              # ai-stack is disabled, this check is omitted rather than reporting a
-              # permanent false-negative.
-              ++ lib.optionals (config.services.ai-stack.enable or false) [
-                (mkHttpCheck {
-                  name = "Ollama";
-                  group = "AI";
-                  url = "http://localhost:${toString config.services.ollama.port}/api/tags";
-                  interval = "60s";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 2000"
-                  ];
-                  alerts = discordAlert "Ollama LLM inference down — local AI unavailable";
-                })
-              ]
-              ++ lib.optionals (config.services.llama-rag.enable or false) [
-                (mkHttpCheck {
-                  name = "llama.cpp Embeddings";
-                  group = "AI";
-                  url = "http://localhost:${toString config.services.llama-rag.embeddingsPort}/health";
-                  interval = "60s";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 1000"
-                  ];
-                  alerts = discordAlert "llama.cpp embeddings server down — RAG indexing and semantic search unavailable";
-                })
-                (mkHttpCheck {
-                  name = "llama.cpp Reranker";
-                  group = "AI";
-                  url = "http://localhost:${toString config.services.llama-rag.rerankerPort}/health";
-                  interval = "60s";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 1000"
-                  ];
-                  alerts = discordAlert "llama.cpp reranker down — RAG reranking unavailable, search quality degraded";
-                })
-              ]
-              ++ lib.optionals config.services.voice-agents.enable [
-                (mkHttpCheck {
-                  name = "Whisper ASR";
-                  group = "AI";
-                  url = "http://localhost:${toString config.services.voice-agents.whisperPort}";
-                  interval = "60s";
-                })
-                {
-                  name = "LiveKit";
-                  group = "AI";
-                  url = "tcp://127.0.0.1:${toString config.services.livekit.settings.port}";
-                  interval = "60s";
-                  conditions = [ "[CONNECTED] == true" ];
-                }
-              ]
               ++ [
                 (mkHttpCheck {
                   name = "OpenSEO";
@@ -687,30 +630,6 @@ _: {
                     "[RESPONSE_TIME] < 2000"
                   ];
                   alerts = discordAlert "OpenSEO down — SEO rank tracking unavailable";
-                })
-              ]
-              ++ lib.optionals (config.services.attic-config.enable or false) [
-                (mkHttpCheck {
-                  name = "Attic Binary Cache";
-                  group = "Infrastructure";
-                  url = "http://localhost:${toString ports.attic}/";
-                  interval = "60s";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 500"
-                  ];
-                  alerts = discordAlert "Attic binary cache down — CI builds will not push/pull cached paths, causing redundant recompilation";
-                })
-                (mkHttpCheck {
-                  name = "Attic Storage Size";
-                  group = "Infrastructure";
-                  url = "http://localhost:${toString nodePort}/metrics";
-                  interval = "5m";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[BODY] == pat(*attic_storage_over_threshold 0*)"
-                  ];
-                  alerts = discordAlert "Attic storage exceeded maxStorageGigabytes — emergency GC triggered. Check /mnt/pool/services/atticd/storage size.";
                 })
               ]
               ++ lib.optionals (config.services.monitor365-server.enable or false) [
@@ -1861,104 +1780,6 @@ _: {
                   alerts = discordAlert "ClickHouse XFS data filesystem exceeds 85% — XFS cannot shrink and telemetry retention grows unboundedly. Check per-table sizes (clickhouse-client 'SELECT database, formatReadableSize(sum(bytes_on_disk)) FROM system.parts GROUP BY database') and tighten TTLs in signoz.nix (clickhouseInternalLogs / signoz_logs / signoz_traces retention).";
                 })
               ]
-              ++ lib.optionals config.services.discordsync.enable [
-                (mkHttpCheck {
-                  name = "DiscordSync";
-                  group = "Infrastructure";
-                  # Use /healthz for liveness: it returns 200 once the API server is
-                  # bound (after the long thumb-hash backfill), and fails hard
-                  # (connection refused) when the process is down. /readyz returns 503
-                  # during startup which made the previous < 400 condition miss
-                  # connection failures (status 0).
-                  url = "http://localhost:${toString ports.discordsync-api}/healthz";
-                  interval = "60s";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 500"
-                  ];
-                  alerts = discordAlert "DiscordSync backup bot down — Discord messages not being captured";
-                })
-                # M07 alert mirrors (DiscordSync plan F40): an independent
-                # second layer on top of the Prometheus rules in DiscordSync's
-                # monitoring/alerts.yml. /metrics is auth-exempt on localhost.
-                # gatus body patterns can only express "== 0" (prefix match on
-                # the value line), so each check pins a sticky zero-state.
-                # Deliberately NOT mirrored: DB-growth (500 MB/day rate) and
-                # sync-failure COUNT (>5) alerts; a gatus absolute-byte ceiling
-                # or a zero-failure check would false-fire on transients.
-                # Those stay Prometheus-only.
-                (mkHttpCheck {
-                  name = "DiscordSync Legacy DLQ Stable";
-                  group = "Infrastructure";
-                  # Renamed from "Legacy DLQ Empty" (2026-08-25): production
-                  # permanently carries 11,404 frozen legacy dead letters
-                  # until the M09 event-store replay recovers them — a
-                  # depth==0 condition fired Discord every 5 min forever.
-                  # The depth gauge's companion flag (upstream 2862b613)
-                  # pre-computes "unchanged since previous scrape": only NEW
-                  # legacy dead letters (the Jul 3-6 silent-loss class
-                  # regressing) flip it to 0. Anchored form is mandatory —
-                  # the HELP embeds "<metric> 1 if ..." (phantom-green trap).
-                  url = "http://localhost:${toString ports.discordsync-api}/metrics";
-                  interval = "5m";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[BODY] != pat(*discordsync_projection_dlq_legacy_unchanged 0\n*)"
-                    "[BODY] == pat(*\ndiscordsync_projection_dlq_legacy_unchanged *)"
-                  ];
-                  alerts = discordAlert "DiscordSync legacy DLQ GREW: new entries joined the frozen pre-v4.3 backlog (Jul 3-6 silent-loss incident class regressing). Check journalctl -u discordsync for decode failures; recovery of the frozen 11,404 remains plan M09";
-                })
-                (mkHttpCheck {
-                  name = "DiscordSync Turso Sync Active";
-                  group = "Infrastructure";
-                  url = "http://localhost:${toString ports.discordsync-api}/metrics";
-                  interval = "5m";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[BODY] == pat(*discordsync_turso_local_only_mode 0*)"
-                  ];
-                  alerts = discordAlert "DiscordSync in Turso local-only mode: cloud mirror paused (quota exhausted or sync gave up). Local archive intact, mirror is stale";
-                })
-              ]
-              ++ lib.optionals (config.services.file-and-image-renamer.enable or false) [
-                (mkHttpCheck {
-                  name = "File Renamer Health";
-                  group = "Productivity";
-                  url = "http://localhost:${toString ports.file-and-image-renamer-health}/status";
-                  interval = "60s";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 500"
-                  ];
-                  alerts = discordAlert "File and Image Renamer health dashboard down — screenshot renaming may be stuck";
-                })
-              ]
-              ++ lib.optionals (config.services.searx.enable or false) [
-                (mkHttpCheck {
-                  name = "SearXNG";
-                  group = "Productivity";
-                  url = "http://localhost:${toString ports.searxng}/healthz";
-                  interval = "60s";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 1000"
-                  ];
-                  alerts = discordAlert "SearXNG metasearch engine down — privacy search unavailable";
-                })
-              ]
-              ++ lib.optionals config.services.browser-history.enable [
-                (mkHttpCheck {
-                  name = "Browser History";
-                  group = "Productivity";
-                  url = "http://localhost:${toString ports.browser-history}/health";
-                  interval = "5m";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 500"
-                  ];
-                  alerts = discordAlert "Browser History server down — browsing analytics unavailable";
-                })
-              ]
               ++ lib.optionals (config.services.inboxclean.enable or false) [
                 # Liveness: /health behind a 3s TimeoutHandler (always 200
                 # once the process is up; connection-refused when down).
@@ -2309,32 +2130,6 @@ _: {
                     "[BODY] == pat(*\nsystem_pocket_id_busy_over_threshold 0\n*)"
                   ];
                   alerts = discordAlert "Pocket ID SQLite is locking up (SQLITE_BUSY storm or collector scan failed) — paperless SSO, forgejo/gatus/immich logins and every oauth2-proxy vHost are at risk. Check: journalctl -u pocket-id --since -24h --grep 'database is locked'. Collateral of memory/IO pressure (zram-full evenings); resolves when pressure drains.";
-                })
-              ]
-              ++ lib.optionals (config.services.systemd-graph.enable or false) [
-                (mkHttpCheck {
-                  name = "systemd-graph";
-                  group = "Review Tools";
-                  url = "https://graph.home.lan/";
-                  interval = "5m";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 2000"
-                  ];
-                  alerts = discordAlert "systemd-graph UI down — graph.home.lan unreachable";
-                })
-              ]
-              ++ lib.optionals (config.services.systemd-timer-monitor.enable or false) [
-                (mkHttpCheck {
-                  name = "systemd-timer-monitor";
-                  group = "Review Tools";
-                  url = "https://timers.home.lan/";
-                  interval = "5m";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[BODY] == pat(*<!DOCTYPE html*)"
-                  ];
-                  alerts = discordAlert "systemd-timer-monitor report down — timers.home.lan unreachable or stale";
                 })
               ]
               ++ lib.optionals (config.services.mail-relay.enable or false) [

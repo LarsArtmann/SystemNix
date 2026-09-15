@@ -1,0 +1,1 @@
+bare hex without rule keywords nearby stays clean 7f3e9a1c48d2b650e4fa93c17b8d05264e9f0a3c

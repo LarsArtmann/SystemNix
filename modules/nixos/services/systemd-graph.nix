@@ -7,6 +7,7 @@ _: {
   flake.nixosModules.systemd-graph =
     {
       config,
+      options,
       lib,
       pkgs,
       ...
@@ -88,6 +89,38 @@ _: {
             (serviceDefaults { })
             ioTier.background
           ];
+        };
+
+        # Service-integration registry entry: fans out to the Caddy vHost
+        # (plain — read-only public graph data, LAN-bypass, no auth), the
+        # Gatus check, and the homepage tile. Replaces rows in caddy.nix /
+        # gatus-config.nix / homepage.nix.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          systemd-graph = {
+            enable = cfg.enable;
+            subdomain = "graph";
+            port = cfg.port;
+            vHost.layer = "plain";
+            checks = [
+              {
+                name = "systemd-graph";
+                group = "Review Tools";
+                url = "https://graph.home.lan/";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 2000"
+                ];
+                alert = "systemd-graph UI down — graph.home.lan unreachable";
+              }
+            ];
+            homepage = {
+              name = "systemd-graph";
+              group = "Review Tools";
+              description = "Live systemd Dependency Graph";
+              icon = "mdi-graph-outline";
+            };
+          };
         };
       };
     };

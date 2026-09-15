@@ -1,0 +1,1 @@
+sourcegraph commit 3a7f19c2e84b60d5f1ae37c94b28d605e1f4b3a8 introduced the rule

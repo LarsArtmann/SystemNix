@@ -8,6 +8,7 @@ _: {
   flake.nixosModules.systemd-timer-monitor =
     {
       config,
+      options,
       lib,
       pkgs,
       ...
@@ -107,6 +108,38 @@ _: {
         systemd.tmpfiles.rules = [
           (mkStateDir stateDir "0755" "root" "root")
         ];
+
+        # Service-integration registry entry: the Gatus check and homepage
+        # tile. The timers vHost STAYS hand-written in caddy.nix — it is a
+        # file_server over the state dir, not a reverse_proxy (the registry
+        # seam only renders proxy vHosts). Replaces rows in gatus-config.nix
+        # / homepage.nix.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          systemd-timer-monitor = {
+            enable = cfg.enable;
+            subdomain = "timers";
+            vHost.layer = "none";
+            checks = [
+              {
+                name = "systemd-timer-monitor";
+                group = "Review Tools";
+                url = "https://timers.home.lan/";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*<!DOCTYPE html*)"
+                ];
+                alert = "systemd-timer-monitor report down — timers.home.lan unreachable or stale";
+              }
+            ];
+            homepage = {
+              name = "systemd-timer-monitor";
+              group = "Review Tools";
+              description = "Systemd Services & Timers Audit";
+              icon = "mdi-timer-outline";
+            };
+          };
+        };
       };
     };
 }
