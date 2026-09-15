@@ -707,6 +707,22 @@ _: {
             BOOTED_NEWEST=1
           fi
 
+          # === memory-emergency-guard collector freshness (2026-09-15) ===
+          # node_exporter serves a textfile's LAST content forever, so the
+          # guard's own presence metrics stay green after guard death — the
+          # exact phantom-green class this module exists to prevent. Derive
+          # the freshness composite from the guard .prom's MTIME: the guard
+          # rewrites it every 30 s tick, so a frozen mtime = dead guard.
+          # Threshold must match sev1-escalation.staleGuardSeconds (300).
+          GUARD_FRESH=0
+          GUARD_PROM="${textfileDir}/memory-emergency-guard.prom"
+          if [ -f "$GUARD_PROM" ]; then
+            guard_age=$(( $(date +%s) - $(stat -c %Y "$GUARD_PROM" 2>/dev/null || echo 0) ))
+            if [ "$guard_age" -ge 0 ] && [ "$guard_age" -le 300 ]; then
+              GUARD_FRESH=1
+            fi
+          fi
+
           # === systemd-oomd kills tracking ===
           # systemd-oomd kills (nix-daemon, Twenty worker) went completely
           # undetected. This counts kill events from the journal in the
@@ -1112,6 +1128,12 @@ _: {
             echo "# HELP system_booted_is_newest_profile 1 if /run/booted-system IS the newest numbered nix profile generation, 0 if the machine runs (or would boot into) an older toplevel than the newest profile (exit-4 activation class / reboot-into-stale class)"
             echo "# TYPE system_booted_is_newest_profile gauge"
             echo "system_booted_is_newest_profile ''${BOOTED_NEWEST}"
+
+            if [ -f "$GUARD_PROM" ]; then
+              echo "# HELP system_memory_guard_metrics_fresh 1 if the memory-emergency-guard textfile was rewritten within 300s (guard ALIVE), 0 if frozen/stale (guard DEAD — node_exporter serves the last content forever, so the guard's own presence pats cannot see its death; 2026-09-15 gap)"
+              echo "# TYPE system_memory_guard_metrics_fresh gauge"
+              echo "system_memory_guard_metrics_fresh ''${GUARD_FRESH}"
+            fi
 
             echo "# HELP system_service_crash_loop 1 if service restarted >=${toString crashLoopRestartThreshold} times since last collection, 0 otherwise"
             echo "# TYPE system_service_crash_loop gauge"
@@ -2135,6 +2157,33 @@ _: {
                     alert = "A systemd USER unit is in failed state (2026-08-31: smart-audio sat dead in start-limit-hit the whole boot with nothing alerting), OR the user-manager query is wedged (scrape_errors=1). Check: systemctl --machine=lars@.host --user --failed --no-legend, then journalctl --user -u <unit> -n 50";
                   }
 
+                ]
+            ++
+              lib.optionals
+                (
+                  (config.services.system-health.enable or false)
+                  && (config.services.memory-emergency-guard.enable or false)
+                )
+                [
+                  {
+                    name = "Memory Guard Collector Fresh";
+                    group = "Monitoring";
+                    # 2026-09-15 gap: the "Memory Emergency Guard" check's
+                    # presence pats can NEVER see a dead guard — node_exporter
+                    # serves a textfile's last content forever, so a frozen
+                    # .prom passes every pat. This check watches the
+                    # system-health freshness composite (guard .prom mtime,
+                    # threshold = sev1 staleGuardSeconds): 0 = the automated
+                    # pre-freeze protection is DOWN.
+                    url = "http://localhost:${toString nodePort}/metrics";
+                    interval = "2m";
+                    conditions = [
+                      "[STATUS] == 200"
+                      "[BODY] != pat(*system_memory_guard_metrics_fresh 0\n*)"
+                      "[BODY] == pat(*\nsystem_memory_guard_metrics_fresh *)"
+                    ];
+                    alert = "memory-emergency-guard metrics are FROZEN (no rewrite within 300s) — the automated pre-freeze protection is DOWN (crash-looped, wedged, or its timer died). The desktop channel already got the sev1 MEMORY GUARD DEAD notify. Check: systemctl status memory-emergency-guard memory-emergency-guard.timer, journalctl -u memory-emergency-guard -n 30.";
+                  }
                 ];
           };
 
