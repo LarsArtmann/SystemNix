@@ -34,6 +34,12 @@ _: {
         # The module reads config.networking.local.gateway (SystemNix-specific
         # option, normally provided by platforms/nixos/system/local-network.nix).
         (import ../platforms/nixos/system/local-network.nix)
+        # wifi-failover declares a services.integration registry entry
+        # (mkIf-wrapped options?-guard caveat, 2026-09-15): the guard does
+        # NOT survive the enclosing mkIf cfg.enable with enable=true — the
+        # integration module must be co-imported or the option stays
+        # undeclared and the whole driver eval fails.
+        (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration
       ];
 
       services.wifi-failover = {
