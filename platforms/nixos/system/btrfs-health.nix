@@ -578,9 +578,14 @@ let
     text = ''
       set -uo pipefail
       METRICS_FILE="${textfileDir}/btrfs-compression.prom"
-      TMP_FILE="''${METRICS_FILE}.tmp"
-
+      # mktemp + trap per the repo textfile doctrine: a fixed $METRICS.tmp
+      # wedges on a foreign-owned leftover in the sticky 1777 dir (the
+      # 2026-09-02..06 mail-relay class); unique tmp + CAP_FOWNER on the
+      # unit cannot wedge.
       mkdir -p "${textfileDir}"
+      TMP_FILE=$(mktemp "''${METRICS_FILE}.XXXXXX") || exit 1
+      chmod 644 "$TMP_FILE"
+      trap 'rm -f "$TMP_FILE"' EXIT
 
       {
         echo "# HELP btrfs_compression_ratio_pct BTRFS compression ratio percentage"
@@ -673,7 +678,7 @@ in
           (serviceOneshotDefaults { })
           (harden {
             MemoryMax = "2G";
-            CapabilityBoundingSet = "CAP_SYS_ADMIN";
+            CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_FOWNER CAP_DAC_OVERRIDE";
             ReadWritePaths = [ textfileDir ];
           })
           {
