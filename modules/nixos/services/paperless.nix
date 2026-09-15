@@ -18,6 +18,9 @@
 #  - Layer 1 native OIDC SSO via Pocket ID (django-allauth openid_connect):
 #    client registered in pocket-id.nix, secret bridged at runtime by the
 #    paperless-oidc-setup oneshot, Caddy on plain reverse_proxy.
+#  - Declarative dashboards (services.paperless-dashboard): saved views +
+#    visibility provisioned through the REST API by the
+#    paperless-dashboard-provision oneshot (create-only; UI edits stick).
 _: {
   flake.nixosModules.paperless =
     {
@@ -107,9 +110,254 @@ _: {
       oidcEnvFragment = lib.optionalAttrs oidcEnabled {
         EnvironmentFile = [ "-${oidcEnvFile}" ];
       };
+
+      # ── Declarative dashboards (saved views) ────────────────────────────────
+      # Paperless v3 moved dashboard visibility OUT of SavedView into
+      # per-user UiSettings (migration 0014_savedview_visibility_to_ui_settings);
+      # env vars cannot reach it. The paperless-dashboard-provision oneshot
+      # drives the REST API instead — details on the unit below.
+      dcfg = config.services.paperless-dashboard;
+
+      # The declared views, as consumed by the provisioner script (jq).
+      # A store path here means a spec change rewrites the unit file, which
+      # switch-to-configuration restarts (oneshot+RemainAfterExit restarts
+      # DO fire on unit-file diffs; only restartTriggers are inert).
+      viewsJson = pkgs.writeText "paperless-dashboard-views.json" (
+        builtins.toJSON dcfg.savedViews
+      );
+
+      # Executed via `paperless-manage shell < file`: resolves the single
+      # allauth SocialAccount-linked user (the Pocket ID SSO user). Any
+      # failure (import error, missing table) prints nothing and the
+      # provisioner degrades to admin with a WARN — never a crash.
+      ownerResolverPy = pkgs.writeText "paperless-dashboard-owner-resolve.py" ''
+        from allauth.socialaccount.models import SocialAccount
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        linked = list(
+            User.objects.filter(socialaccount__isnull=False, is_active=True)
+            .values_list("username", flat=True)
+            .distinct()
+            .order_by("username")
+        )
+        if len(linked) == 1:
+            print("USER:" + linked[0])
+        elif not linked:
+            print("NONE")
+        else:
+            print("AMBIGUOUS:" + ",".join(linked))
+      '';
+
+      # Null-safe option embeds: interpolating a null option into the script
+      # string would throw at eval time, so resolve emptiness in Nix first.
+      ownerOpt = if dcfg.owner == null then "" else dcfg.owner;
+      appTitleFlag = dcfg.appTitle != null;
+      # File delivery keeps quoting hazards out of the script entirely.
+      appTitleFile = pkgs.writeText "paperless-dashboard-app-title" (
+        if dcfg.appTitle == null then "" else dcfg.appTitle
+      );
     in
     {
-      config = lib.mkIf cfg.enable {
+      options.services.paperless-dashboard = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = ''
+            Provision Paperless saved views (dashboard widgets + sidebar
+            entries) declaratively via the paperless-dashboard-provision
+            oneshot. Create-only: views that already exist under the same
+            name are never modified or deleted, so manual UI edits and
+            widget reordering survive every deploy.
+          '';
+        };
+
+        owner = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = ''
+            Paperless user owning the provisioned views. null auto-resolves
+            at runtime: the single allauth SocialAccount-linked user (the
+            Pocket ID SSO user) when exactly one exists, otherwise the
+            admin superuser. The resolved owner is printed in the
+            provisioner journal.
+          '';
+        };
+
+        appTitle = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = ''
+            Application title applied via PATCH /api/config/ (browser
+            title, login page, dashboard header). Requires the admin
+            superuser token (the config endpoint carries
+            DjangoModelPermissions; the SSO owner may be a regular user).
+            null leaves the title untouched. May not contain single quotes.
+          '';
+        };
+
+        savedViews = lib.mkOption {
+          type = lib.types.listOf (
+            lib.types.submodule {
+              options = {
+                name = lib.mkOption {
+                  type = lib.types.str;
+                  description = "Saved view name; unique among the declared views (the create-only key).";
+                };
+                icon = lib.mkOption {
+                  # SavedView.Icon.choices from the paperless 3.1.3 source
+                  # (documents/models.py) — eval-time rejection instead of
+                  # a runtime 400.
+                  type = lib.types.enum [
+                    "archive"
+                    "bank"
+                    "basket"
+                    "bell"
+                    "bookmark"
+                    "boxes"
+                    "briefcase"
+                    "building"
+                    "calculator"
+                    "calendar"
+                    "camera"
+                    "card-checklist"
+                    "cash"
+                    "chat-left-text"
+                    "check-circle"
+                    "clipboard"
+                    "clock-history"
+                    "credit-card"
+                    "download"
+                    "envelope"
+                    "exclamation-triangle"
+                    "file-earmark"
+                    "file-earmark-check"
+                    "file-earmark-lock"
+                    "file-earmark-medical"
+                    "file-earmark-person"
+                    "file-earmark-spreadsheet"
+                    "file-text"
+                    "files"
+                    "folder"
+                    "funnel"
+                    "gear"
+                    "globe2"
+                    "hash"
+                    "heart"
+                    "house"
+                    "inbox"
+                    "journals"
+                    "list-task"
+                    "newspaper"
+                    "paperclip"
+                    "people"
+                    "person"
+                    "printer"
+                    "receipt"
+                    "safe"
+                    "search"
+                    "send"
+                    "shop"
+                    "stack"
+                    "stars"
+                    "tag"
+                    "tags"
+                    "telephone"
+                    "truck"
+                    "upc-scan"
+                    "wallet2"
+                  ];
+                  default = "funnel";
+                  description = "Icon (paperless SavedView.Icon choices).";
+                };
+                showOnDashboard = lib.mkOption {
+                  type = lib.types.bool;
+                  default = true;
+                  description = "Add the view's widget to the owner's dashboard (API v9 legacy visibility = additive UiSettings merge).";
+                };
+                showInSidebar = lib.mkOption {
+                  type = lib.types.bool;
+                  default = true;
+                  description = "List the view in the owner's sidebar.";
+                };
+                sortField = lib.mkOption {
+                  type = lib.types.str;
+                  default = "added";
+                  description = "Sort field (free-form frontend key: added, created, title, correspondent, asn, ...).";
+                };
+                sortReverse = lib.mkOption {
+                  type = lib.types.bool;
+                  default = true;
+                  description = "Sort descending (newest first).";
+                };
+                filterRules = lib.mkOption {
+                  type = lib.types.listOf (
+                    lib.types.submodule {
+                      options = {
+                        ruleType = lib.mkOption {
+                          type = lib.types.ints.between 0 49;
+                          description = ''
+                            SavedViewFilterRule.RULE_TYPES id. Common:
+                            5 = in inbox, 6 = has tag, 17 = does not have
+                            tag, 19 = title or content contains,
+                            43/44 = added from/to, 45/46 = created from/to.
+                          '';
+                        };
+                        tagName = lib.mkOption {
+                          type = lib.types.nullOr lib.types.str;
+                          default = null;
+                          description = "Resolve this tag NAME to its id at runtime (rule value = tag id as string). Unresolvable tags drop the rule with a warning.";
+                        };
+                        value = lib.mkOption {
+                          type = lib.types.nullOr lib.types.str;
+                          default = null;
+                          description = "Literal rule value (text for contains rules, empty for inbox). Ignored when tagName is set.";
+                        };
+                      };
+                    }
+                  );
+                  default = [ ];
+                  description = "Filters defining the view. A view whose rules ALL fail to resolve is skipped (a rule-less view would show every document).";
+                };
+              };
+            }
+          );
+          # Both target InboxClean papersync tags (documents/bank statements
+          # archived by the Gmail pipeline); the "encrypted" tag marks
+          # password-protected PDFs parked undecrypted (see AGENTS.md).
+          default = [
+            {
+              name = "Gmail Archive";
+              icon = "envelope";
+              filterRules = [ { ruleType = 6; tagName = "gmail"; } ];
+            }
+            {
+              name = "Encrypted (needs attention)";
+              icon = "exclamation-triangle";
+              filterRules = [ { ruleType = 6; tagName = "encrypted"; } ];
+            }
+          ];
+          description = "Saved views to provision on the owner's dashboard.";
+        };
+      };
+
+      config = lib.mkMerge [
+        {
+          assertions = [
+            {
+              assertion = lib.implies dcfg.enable cfg.enable;
+              message = "services.paperless-dashboard.enable requires services.paperless.enable = true";
+            }
+            {
+              assertion =
+                (builtins.length dcfg.savedViews)
+                == (builtins.length (lib.unique (map (v: v.name) dcfg.savedViews)));
+              message = "services.paperless-dashboard.savedViews: duplicate view names are not allowed (create-only convergence keys on the name)";
+            }
+          ];
+        }
+
+        (lib.mkIf cfg.enable {
         services.paperless = {
           port = ports.paperless;
           address = "127.0.0.1";
@@ -471,6 +719,258 @@ _: {
                 echo "paperless-oidc-setup: Pocket ID OIDC env file written (password login disabled, redirect-to-SSO on)"
               '';
             };
+          }
+
+          # ── Declarative dashboards: saved-view provisioner ──────────────────
+          # Drives the REST API with a runtime-minted DRF token. Visibility
+          # rides the API v9 LEGACY fields (Accept: application/json;
+          # version=9): SavedViewSerializer.create() merges them ADDITIVELY
+          # into UiSettings.saved_views.dashboard_views_visible_ids — the
+          # only non-destructive path. The v10 ui_settings POST is a
+          # WHOLESALE settings replacement (dark mode, language, everything)
+          # and is never used for writes here, only read for verification.
+          # Create-only convergence: same-name views are skipped forever, so
+          # the user's manual reordering/edits always win. Indirect unit
+          # (wantedBy = paperless-web) — converged per-deploy by the
+          # dedicated deploy.sh block (the provisioner loop's is-enabled
+          # gate skips indirect units, the dnsblockd 2026-08-22 lesson).
+          # Deliberately no restartTriggers: they are inert on
+          # oneshot+RemainAfterExit (dead config per deploy-restart-audit);
+          # a spec change rewrites the unit file via viewsJson, and stc
+          # restarts units whose FILE changed.
+          // lib.optionalAttrs dcfg.enable {
+            paperless-dashboard-provision = {
+              description = "Paperless - declarative dashboard saved-views provisioner";
+              after = [ "paperless-web.service" ];
+              wants = [ "paperless-web.service" ];
+              wantedBy = [ "paperless-web.service" ];
+              inherit onFailure;
+              startLimitBurst = 5;
+              startLimitIntervalSec = 300;
+
+              serviceConfig = lib.mkMerge [
+                {
+                  Type = "oneshot";
+                  RemainAfterExit = true;
+                  # paperless OS user: paperless-manage + drf_create_token
+                  # need the peer-auth PostgreSQL socket identity.
+                  User = cfg.user;
+                  StateDirectory = "paperless-dashboard";
+                  StateDirectoryMode = "0700";
+                  TimeoutStartSec = "3min";
+                }
+                (harden { ProtectSystem = "strict"; })
+                (serviceOneshotDefaults { })
+              ];
+
+              path = [
+                pkgs.coreutils
+                pkgs.curl
+                pkgs.gnugrep
+                pkgs.jq
+              ];
+
+              # paperless-web is Type=simple: "active" before Django binds
+              # its port — poll the login page before touching the API.
+              preStart = ''
+                curl -sf --retry 30 --retry-delay 2 --retry-all-errors \
+                  -o /dev/null http://127.0.0.1:${toString cfg.port}/accounts/login/
+              '';
+
+              script = ''
+                API_BASE="http://127.0.0.1:${toString cfg.port}"
+                MANAGE="${cfg.manage}/bin/paperless-manage"
+
+                api() {
+                  # api METHOD PATH [JSON_BODY] -> response JSON on stdout.
+                  # On HTTP failure the body is dumped to stderr (journal)
+                  # before returning non-zero.
+                  local out status body
+                  if [ $# -ge 3 ]; then
+                    out=$(curl -s -w '\n%{http_code}' -X "$1" \
+                      --header @"$TOKEN_FILE" \
+                      -H 'Accept: application/json; version=9' \
+                      -H 'Content-Type: application/json' \
+                      -d "$3" "$API_BASE$2") || return 1
+                  else
+                    out=$(curl -s -w '\n%{http_code}' \
+                      --header @"$TOKEN_FILE" \
+                      -H 'Accept: application/json; version=9' \
+                      "$API_BASE$2") || return 1
+                  fi
+                  status="''${out##*$'\n'}"
+                  body="''${out%$'\n'*}"
+                  if [ "$status" -ge 200 ] 2>/dev/null && [ "$status" -lt 300 ] 2>/dev/null; then
+                    printf '%s' "$body"
+                  else
+                    echo "paperless-dashboard-provision: $1 $2 -> HTTP $status: $(printf '%s' "$body" | head -c 400)" >&2
+                    return 1
+                  fi
+                }
+
+                # 1. Owner resolution: config pin > single SocialAccount
+                #    link (the Pocket ID SSO user) > admin fallback.
+                if [ -n "${ownerOpt}" ]; then
+                  OWNER="${ownerOpt}"
+                  echo "paperless-dashboard-provision: owner pinned by config: $OWNER"
+                else
+                  RESOLVED=$("$MANAGE" shell < ${ownerResolverPy} 2>/dev/null || true)
+                  case "$RESOLVED" in
+                    USER:*)
+                      OWNER="''${RESOLVED#USER:}"
+                      echo "paperless-dashboard-provision: owner auto-resolved to SSO user: $OWNER"
+                      ;;
+                    AMBIGUOUS:*)
+                      OWNER=admin
+                      echo "paperless-dashboard-provision: multiple SocialAccount users (''${RESOLVED#AMBIGUOUS:}) - falling back to admin" >&2
+                      ;;
+                    *)
+                      OWNER=admin
+                      echo "paperless-dashboard-provision: no SocialAccount-linked user (or resolver failed) - falling back to admin"
+                      ;;
+                  esac
+                fi
+
+                # 2. Idempotent DRF token mint. stdout is
+                #    "Generated token <40-hex> for user <name>" (DRF 3.17.1
+                #    authtoken/management/commands/drf_create_token.py); the
+                #    key is extracted, validated, then the file is rewritten
+                #    as a curl --header @file so the token never appears in
+                #    argv, an env var, or the journal.
+                TOKEN_FILE=$(mktemp "''${STATE_DIRECTORY}/token.XXXXXX")
+                ADMIN_TOKEN_FILE=""
+                trap 'rm -f "$TOKEN_FILE" "$ADMIN_TOKEN_FILE" 2>/dev/null || true' EXIT
+                if ! "$MANAGE" drf_create_token "$OWNER" > "$TOKEN_FILE"; then
+                  echo "paperless-dashboard-provision: token mint failed for '$OWNER' (user missing?)" >&2
+                  exit 1
+                fi
+                TOKEN=$(grep -oE '[0-9a-f]{40}' "$TOKEN_FILE" | head -n1)
+                if ! printf '%s' "$TOKEN" | grep -qE '^[0-9a-f]{40}$'; then
+                  echo "paperless-dashboard-provision: token extraction failed (unexpected drf_create_token output)" >&2
+                  exit 1
+                fi
+                printf 'Authorization: Token %s\n' "$TOKEN" > "$TOKEN_FILE"
+
+                # 3. Existing view names (owner-scoped: SavedView is an
+                #    owned object) + the tag name->id map. Tag names are NOT
+                #    unique at the DB level (tree tags); exact-match first
+                #    hit wins, deterministically.
+                EXISTING=$(api GET "/api/saved_views/?page_size=100000" | jq -r '.results[].name')
+                TAGS_JSON=$(api GET "/api/tags/?page_size=100000")
+
+                tag_id() {
+                  printf '%s' "$TAGS_JSON" | jq -r --arg n "$1" \
+                    'first(.results[] | select(.name == $n) | .id | tostring) // "MISSING"'
+                }
+
+                # 4. Create-only loop. A subshell would eat the counters, so
+                #    the name list feeds a here-string instead of a pipe.
+                CREATED=0
+                SKIPPED_EXISTING=0
+                SKIPPED_NO_RULES=0
+                DROPPED_RULES=0
+                CREATED_DASH_IDS=""
+
+                while IFS= read -r NAME; do
+                  if printf '%s\n' "$EXISTING" | grep -qxF "$NAME"; then
+                    echo "paperless-dashboard-provision: saved view '$NAME' already exists - skipping (create-only)"
+                    SKIPPED_EXISTING=$((SKIPPED_EXISTING + 1))
+                    continue
+                  fi
+
+                  VIEW=$(jq -c --arg n "$NAME" '.[] | select(.name == $n)' ${viewsJson})
+
+                  RULES=[]
+                  DECLARED_RULES=$(printf '%s' "$VIEW" | jq '.filterRules | length')
+                  IDX=0
+                  while [ "$IDX" -lt "$DECLARED_RULES" ]; do
+                    RULE_TYPE=$(printf '%s' "$VIEW" | jq -r ".filterRules[$IDX].ruleType")
+                    TAG_NAME=$(printf '%s' "$VIEW" | jq -r ".filterRules[$IDX].tagName // \"\"")
+                    if [ -n "$TAG_NAME" ]; then
+                      TID=$(tag_id "$TAG_NAME")
+                      if [ "$TID" = "MISSING" ]; then
+                        echo "paperless-dashboard-provision: dropping rule $RULE_TYPE for '$NAME' - tag '$TAG_NAME' not found" >&2
+                        DROPPED_RULES=$((DROPPED_RULES + 1))
+                      else
+                        RULES=$(printf '%s' "$RULES" | jq -c --argjson t "$RULE_TYPE" --arg v "$TID" '. + [{rule_type: $t, value: $v}]')
+                      fi
+                    else
+                      LITERAL=$(printf '%s' "$VIEW" | jq -r ".filterRules[$IDX].value // \"\"")
+                      RULES=$(printf '%s' "$RULES" | jq -c --argjson t "$RULE_TYPE" --arg v "$LITERAL" '. + [{rule_type: $t, value: $v}]')
+                    fi
+                    IDX=$((IDX + 1))
+                  done
+
+                  RESOLVED_RULE_COUNT=$(printf '%s' "$RULES" | jq 'length')
+                  if [ "$DECLARED_RULES" -gt 0 ] && [ "$RESOLVED_RULE_COUNT" -eq 0 ]; then
+                    echo "paperless-dashboard-provision: skipping view '$NAME' - none of its filter rules resolved (a rule-less view would show ALL documents)" >&2
+                    SKIPPED_NO_RULES=$((SKIPPED_NO_RULES + 1))
+                    continue
+                  fi
+
+                  BODY=$(printf '%s' "$VIEW" | jq -c --argjson rules "$RULES" \
+                    '{name, icon, sort_field: .sortField, sort_reverse: .sortReverse, show_on_dashboard: .showOnDashboard, show_in_sidebar: .showInSidebar, filter_rules: $rules}')
+
+                  NEW_ID=$(api POST /api/saved_views/ "$BODY" | jq -r '.id')
+                  echo "paperless-dashboard-provision: created saved view '$NAME' (id=$NEW_ID, owner=$OWNER, rules=$RESOLVED_RULE_COUNT)"
+                  CREATED=$((CREATED + 1))
+                  if printf '%s' "$VIEW" | grep -q '"showOnDashboard":true'; then
+                    CREATED_DASH_IDS="$CREATED_DASH_IDS $NEW_ID"
+                  fi
+                done <<< "$(jq -r '.[].name' ${viewsJson})"
+
+                # 5. End-to-end assertion (phantom-green killer): every view
+                #    created in THIS run with showOnDashboard=true must
+                #    appear in the owner's dashboard_views_visible_ids (the
+                #    v9 additive merge). Views from PREVIOUS runs that the
+                #    user manually unchecked are deliberately NOT asserted
+                #    (create-only: user edits win).
+                for ID in $CREATED_DASH_IDS; do
+                  if ! api GET /api/ui_settings/ | jq -e --argjson id "$ID" \
+                      '.settings.saved_views.dashboard_views_visible_ids | index($id) != null' > /dev/null; then
+                    echo "paperless-dashboard-provision: view id=$ID missing from dashboard_views_visible_ids after creation - visibility merge failed" >&2
+                    exit 1
+                  fi
+                done
+
+                # 6. Optional app title (cosmetic; WARN-never-fatal). The
+                #    config endpoint requires model permissions, so this
+                #    always uses the admin SUPERUSER token even when the
+                #    views belong to the SSO user.
+                if [ "${toString appTitleFlag}" = "true" ]; then
+                  ADMIN_TOKEN_FILE=$(mktemp "''${STATE_DIRECTORY}/admin-token.XXXXXX")
+                  if "$MANAGE" drf_create_token admin > "$ADMIN_TOKEN_FILE"; then
+                    ATOKEN=$(grep -oE '[0-9a-f]{40}' "$ADMIN_TOKEN_FILE" | head -n1)
+                    printf 'Authorization: Token %s\n' "$ATOKEN" > "$ADMIN_TOKEN_FILE"
+                    CONFIG_RESP=$(curl -s -w '\n%{http_code}' --header @"$ADMIN_TOKEN_FILE" \
+                      -H 'Accept: application/json' "$API_BASE/api/config/?page_size=1")
+                    CONFIG_STATUS="''${CONFIG_RESP##*$'\n'}"
+                    CONFIG_BODY="''${CONFIG_RESP%$'\n'*}"
+                    CONFIG_ID=""
+                    if [ "$CONFIG_STATUS" -ge 200 ] 2>/dev/null && [ "$CONFIG_STATUS" -lt 300 ] 2>/dev/null; then
+                      CONFIG_ID=$(printf '%s' "$CONFIG_BODY" | jq -r '.results[0].id // empty')
+                    fi
+                    if [ -n "$CONFIG_ID" ]; then
+                      PATCH_STATUS=$(curl -s -o /dev/null -w '%{http_code}' --header @"$ADMIN_TOKEN_FILE" -X PATCH \
+                        -H 'Content-Type: application/json' \
+                        -d "$(jq -nc --arg t "$(cat ${appTitleFile})" '{app_title: $t}')" \
+                        "$API_BASE/api/config/$CONFIG_ID/")
+                      if printf '%s' "$PATCH_STATUS" | grep -qE '^2'; then
+                        echo "paperless-dashboard-provision: app_title applied"
+                      else
+                        echo "paperless-dashboard-provision: WARN - PATCH /api/config/ -> HTTP $PATCH_STATUS, app_title not applied" >&2
+                      fi
+                    else
+                      echo "paperless-dashboard-provision: WARN - could not resolve /api/config/ id (GET -> HTTP $CONFIG_STATUS), app_title not applied" >&2
+                    fi
+                  else
+                    echo "paperless-dashboard-provision: WARN - admin token mint failed, app_title not applied" >&2
+                  fi
+                fi
+
+                echo "paperless-dashboard-provision: done - owner=$OWNER created=$CREATED skipped_existing=$SKIPPED_EXISTING skipped_no_rules=$SKIPPED_NO_RULES dropped_rules=$DROPPED_RULES dashboard_assertions=$(printf '%s' "$CREATED_DASH_IDS" | wc -w)"
+              '';
+            };
           };
 
         # Service-integration registry entries: the document-exporter backup
@@ -534,6 +1034,7 @@ _: {
             monitored = true;
           };
         };
-      };
+        })
+      ];
     };
 }
