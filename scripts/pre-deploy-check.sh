@@ -65,7 +65,33 @@ if [ "$SECTION10_ONLY" != true ]; then
   #   syntax/eval problems.
   #   They must never block a deploy: the deploy that RESTORES DNS is exactly
   #   the one this class would block (chicken-and-egg, live 2026-09-02).
-  REAL_ERRORS="$(echo "$FLAKE_CHECK_OUTPUT" | grep 'error:' | grep -vE "is not valid|unable to download 'https?://[^']+\.narinfo" || true)"
+  # Multi-line nix errors print a bare `error:` headline with the actual
+  # message on indented lines below. Line-level benign filtering cannot see
+  # the pair: the headline line survives the filter and fails the gate even
+  # when the block's message is a known-benign class (live 2026-09-15: the
+  # monitor365 drv-not-valid block blocked every deploy). Attribute each bare
+  # headline to its block: a headline is benign when any line before the next
+  # headline matches a benign class.
+  REAL_ERRORS="$(
+    echo "$FLAKE_CHECK_OUTPUT" | awk '
+      {
+        lines[NR] = $0
+        if ($0 ~ /^[[:space:]]*error:$/) { headline = NR; next }
+        if (headline && $0 ~ /is not valid|unable to download .*\.narinfo/) {
+          benign[headline] = 1
+        }
+      }
+      END {
+        for (i = 1; i <= NR; i++) {
+          if (lines[i] ~ /^[[:space:]]*error:$/) {
+            if (!(i in benign)) print lines[i]
+          } else if (lines[i] ~ /error:/ && lines[i] !~ /is not valid|unable to download .*\.narinfo/) {
+            print lines[i]
+          }
+        }
+      }
+    '
+  )"
 
   # Nix >= 2.26 prints multi-line errors where the FIRST line is a bare
   # `error:` and the actual message lives on the following indented lines.

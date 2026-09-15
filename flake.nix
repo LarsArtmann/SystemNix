@@ -842,11 +842,16 @@
               };
             }
             // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+              # monitor365 REMOVED 2026-09-15: nix flake check derivationStrict's
+              # every package, and monitor365's prepared source is permanently
+              # unbuildable (private wireguard-collector crate — the 2026-08-12
+              # disable reason). The entry only ever passed via a stale
+              # store-cached drv; the first input bump after cache eviction
+              # hard-blocked every deploy at pre-deploy check 1.
               inherit (pkgs)
                 openaudible
                 openseo
                 dnsblockd
-                monitor365
                 netwatch
                 systemd-graph
                 systemd-graph-webui
