@@ -21,11 +21,7 @@
 #     declared under virtualisation.fileSystems (test-cv pool-fmt pattern).
 #   - The disk must be formatted BEFORE the by-label mount units start
 #     (pool-fmt: wantedBy + before local-fs.target and the mount units).
-{
-  pkgs,
-  ...
-}:
-let
+{pkgs, ...}: let
   hotDbModule = (import ../modules/nixos/services/hot-db.nix).flake.nixosModules.hot-db;
 
   entryPath = "/var/lib/hotdb-test";
@@ -41,79 +37,76 @@ let
       "nodatacow"
     ];
   };
-in
-{
+in {
   name = "hot-db";
 
-  nodes.machine =
-    { lib, ... }:
-    {
-      imports = [ hotDbModule ];
+  nodes.machine = {lib, ...}: {
+    imports = [hotDbModule];
 
-      boot.supportedFilesystems = [ "btrfs" ];
-      virtualisation.emptyDiskImages = [ 512 ];
-      virtualisation.fileSystems = {
-        "/mnt/hot" = {
-          device = "/dev/disk/by-label/tlc";
-          fsType = "btrfs";
-          options = [
-            "subvolid=5"
-            "noatime"
-            "nodiscard"
-            "space_cache=v2"
-            "nofail"
-          ];
-        };
-        "/var/lib/hotdb-test" = entryMount;
-      };
-
-      services.hot-db = {
-        enable = true;
-        entries.testdb = {
-          path = entryPath;
-          cow = false;
-          unit = "hotdb-consumer.service";
-        };
-      };
-
-      # Probe consumer: writes into the mounted dataDir. Succeeding at all
-      # proves the mount came up first (RequiresMountsFor).
-      systemd.services.hotdb-consumer = {
-        description = "Hot-DB probe consumer";
-        wantedBy = [ "multi-user.target" ];
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-        };
-        script = ''
-          echo probe > ${entryPath}/probe.txt
-        '';
-      };
-
-      # Format the virtio disk as btrfs label `tlc` (production label)
-      # before any by-label mount unit can start.
-      systemd.services.tlc-fmt = {
-        description = "Format the virtio disk as btrfs label tlc (test-only)";
-        wantedBy = [ "local-fs.target" ];
-        before = [
-          "mnt-hot.mount"
-          "local-fs.target"
+    boot.supportedFilesystems = ["btrfs"];
+    virtualisation.emptyDiskImages = [512];
+    virtualisation.fileSystems = {
+      "/mnt/hot" = {
+        device = "/dev/disk/by-label/tlc";
+        fsType = "btrfs";
+        options = [
+          "subvolid=5"
+          "noatime"
+          "nodiscard"
+          "space_cache=v2"
+          "nofail"
         ];
-        serviceConfig = {
-          Type = "oneshot";
-          User = "root";
-        };
-        path = [
-          pkgs.btrfs-progs
-          pkgs.util-linux
-        ];
-        script = ''
-          if ! blkid /dev/vdb | grep -q 'LABEL="tlc"'; then
-            mkfs.btrfs -f -L tlc /dev/vdb
-          fi
-        '';
+      };
+      "/var/lib/hotdb-test" = entryMount;
+    };
+
+    services.hot-db = {
+      enable = true;
+      entries.testdb = {
+        path = entryPath;
+        cow = false;
+        unit = "hotdb-consumer.service";
       };
     };
+
+    # Probe consumer: writes into the mounted dataDir. Succeeding at all
+    # proves the mount came up first (RequiresMountsFor).
+    systemd.services.hotdb-consumer = {
+      description = "Hot-DB probe consumer";
+      wantedBy = ["multi-user.target"];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        echo probe > ${entryPath}/probe.txt
+      '';
+    };
+
+    # Format the virtio disk as btrfs label `tlc` (production label)
+    # before any by-label mount unit can start.
+    systemd.services.tlc-fmt = {
+      description = "Format the virtio disk as btrfs label tlc (test-only)";
+      wantedBy = ["local-fs.target"];
+      before = [
+        "mnt-hot.mount"
+        "local-fs.target"
+      ];
+      serviceConfig = {
+        Type = "oneshot";
+        User = "root";
+      };
+      path = [
+        pkgs.btrfs-progs
+        pkgs.util-linux
+      ];
+      script = ''
+        if ! blkid /dev/vdb | grep -q 'LABEL="tlc"'; then
+          mkfs.btrfs -f -L tlc /dev/vdb
+        fi
+      '';
+    };
+  };
 
   testScript = ''
     machine.start()
@@ -142,12 +135,16 @@ in
 
     # 4: anti-shadow — unmount (detached-Samsung shape). The mount is
     # nofail so nothing else fails; the consumer must condition-SKIP
-    # rather than write into the plain dir left behind.
+    # rather than write into the plain dir left behind. Assert on
+    # observables, not the ConditionResult enum vocabulary: the skip
+    # contract is "conditions failed → unit did not execute → no write".
     machine.succeed("umount /var/lib/hotdb-test")
     machine.succeed("systemctl stop hotdb-consumer.service")
     machine.succeed("systemctl start hotdb-consumer.service")
     cond = machine.succeed("systemctl show -p ConditionResult -o cat hotdb-consumer.service").strip()
-    assert cond == "not-started", f"consumer condition did not skip (ConditionResult={cond})"
+    assert cond != "yes", f"consumer conditions unexpectedly passed (ConditionResult={cond})"
+    state = machine.succeed("systemctl is-active hotdb-consumer.service || true").strip()
+    assert state != "active", f"consumer ran despite failed condition (state={state})"
     # The skip must leave NO shadow write.
     out = machine.succeed("ls -A /var/lib/hotdb-test || true")
     assert "probe.txt" not in out, f"shadow write detected: {out}"
