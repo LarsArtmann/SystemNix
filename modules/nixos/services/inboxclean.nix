@@ -79,6 +79,7 @@
   flake.nixosModules.inboxclean =
     {
       config,
+      options,
       pkgs,
       lib,
       ...
@@ -313,6 +314,124 @@
             OnCalendar = "*-*-* 04:30:00";
             Persistent = true;
             Unit = "inboxclean-backup.service";
+          };
+        };
+
+        # Service-integration registry entry: fans out to the Caddy vHost
+        # (Layer 2), the Gatus checks (liveness + render + projections +
+        # per-account tabs + Paperless archive auth), the homepage tile,
+        # and the backup-freshness row. Replaces rows in caddy.nix /
+        # gatus-config.nix / homepage.nix / configuration.nix.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          inboxclean = {
+            enable = cfg.enable;
+            subdomain = "inbox";
+            port = ports.inboxclean;
+            vHost.layer = "protected";
+            checks = [
+              # Liveness: /health behind a 3s TimeoutHandler (always 200
+              # once the process is up; connection-refused when down).
+              {
+                name = "InboxClean";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.inboxclean}/health";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                ];
+                alert = "InboxClean dashboard down — inbox.home.lan unreachable. Check: systemctl status inboxclean-web, journalctl -u inboxclean-web.";
+              }
+              # Functional: the dashboard renders real HTML from CQRS data
+              # (works even before the Gmail OAuth flow completes).
+              {
+                name = "InboxClean Dashboard Renders";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.inboxclean}/";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*<html*)"
+                  "[RESPONSE_TIME] < 2000"
+                ];
+                alert = "InboxClean dashboard not rendering HTML — check inboxclean-web logs";
+              }
+              # Projection readiness: the endpoint 503s while a worker
+              # drains/fails and 404s on pre-c766c44 binaries (where the
+              # 404 JSON would false-alarm), so this probe only makes the
+              # route's absence visible once — acceptable noise for the
+              # one generation it takes to converge.
+              {
+                name = "InboxClean Projections Ready";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.inboxclean}/health/projections";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*email_state*)"
+                ];
+                alert = "InboxClean projections endpoint degraded — check /health services.projections and journalctl -u inboxclean-web";
+              }
+            ]
+            # Per-extra-account render probes: the ?account=<name> inbox tab
+            # must render HTML for every configured mailbox (graceful
+            # degradation keeps it 200 even when that account awaits its
+            # one-time OAuth runbook).
+            ++ map (
+              account:
+              {
+                name = "InboxClean ${account.name} Inbox Renders";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.inboxclean}/inbox?account=${account.name}";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*<html*)"
+                ];
+                alert = "InboxClean ${account.name} inbox tab not rendering — check inboxclean-web logs and the account OAuth runbook";
+              }
+            ) cfg.extraAccounts
+            # Authenticated probe of the Paperless REST API with the SAME
+            # token inboxclean-sync uploads attachments with — the
+            # unauthenticated Paperless login-page check cannot see token
+            # death, so archiving would degrade silently (upstream treats
+            # upload failures as warnings by design). Endpoint is the
+            # auth-required document list, NOT the API root: paperless
+            # serves the root as browsable HTML only (any JSON Accept is
+            # answered 406 regardless of token — the bug that broke the
+            # InboxClean ping upstream, 2026-09-03), and unauthenticated
+            # browser-y requests get a 302 login redirect instead of 401.
+            # /api/documents/ is unambiguous: valid token -> 200,
+            # dead token -> 401.
+            ++ lib.optionals cfg.paperless.enable [
+              {
+                name = "InboxClean Paperless Archive Auth";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.paperless}/api/documents/";
+                interval = "5m";
+                headers = {
+                  Authorization = "Token $PAPERLESS_TOKEN";
+                };
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                ];
+                alert = "InboxClean Paperless archiving auth failing — Gmail attachments are NOT being archived. Check: token in platforms/nixos/secrets/inboxclean-paperless.yaml vs paperless-manage drf_create_token; journalctl -u inboxclean-sync | grep -i paperless";
+              }
+            ];
+            homepage = {
+              name = "InboxClean";
+              group = "Sync & Backup";
+              description = "Gmail AI Assistant — Backup, Sorting & Tagging";
+              icon = "gmail.png";
+            };
+            backup = {
+              # Nightly online .backup of the event-store DB
+              # (inboxclean-backup.timer, 04:30) onto the mirrored pool.
+              directory = "/mnt/pool/backups/inboxclean";
+              filePattern = "inboxclean-*.db";
+              maxAgeHours = 25;
+            };
           };
         };
       };

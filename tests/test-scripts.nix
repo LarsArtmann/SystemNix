@@ -7,7 +7,7 @@
 #   - awk field extraction
 #   - state file edge cases (empty, missing)
 #   - lib.sh helper functions
-{ pkgs }:
+{ pkgs, self }:
 
 {
   lib-helpers = pkgs.testers.runNixOSTest {
@@ -245,7 +245,7 @@
       webExe = evo.systemd.services.website-deploy-monitor.serviceConfig.ExecStart;
       diskExe = evo.systemd.services.disk-growth-check.serviceConfig.ExecStart;
     in
-    makeTest {
+    pkgs.testers.runNixOSTest {
       name = "guard-scripts-artifacts";
 
       nodes.machine = _: {
@@ -266,26 +266,26 @@
         # 1. degraded path: marker endpoint unreachable → fetch-failed log,
         #    exit 0 (the fixed guard MUST run — the pre-fix script exited
         #    with curl's status here), no state written
-        machine.succeed("rm -f /tmp/bi.json ${state}")
+        machine.succeed("rm -f /tmp/bi.json /root/.local/state/website-deploy-monitor/last-alerted-built-at")
         machine.succeed("HOME=/root /tmp/web-check")
-        machine.succeed("test ! -e ${state}")
+        machine.succeed("test ! -e /root/.local/state/website-deploy-monitor/last-alerted-built-at")
 
         # 2. marker without builtAt → degraded exit 0
         machine.succeed("echo '{\"foo\":1}' > /tmp/bi.json")
         machine.succeed("HOME=/root /tmp/web-check")
-        machine.succeed("test ! -e ${state}")
+        machine.succeed("test ! -e /root/.local/state/website-deploy-monitor/last-alerted-built-at")
 
         # 3. unparseable builtAt → degraded exit 0
         machine.succeed("echo '{\"builtAt\":\"not-a-date\"}' > /tmp/bi.json")
         machine.succeed("HOME=/root /tmp/web-check")
-        machine.succeed("test ! -e ${state}")
+        machine.succeed("test ! -e /root/.local/state/website-deploy-monitor/last-alerted-built-at")
 
         # 4. fresh deploy → exit 0, no alert state
         machine.succeed(
             """ts=$(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%SZ); echo '{"builtAt":"'"$ts"'"}' > /tmp/bi.json"""
         )
         machine.succeed("HOME=/root /tmp/web-check")
-        machine.succeed("test ! -e ${state}")
+        machine.succeed("test ! -e /root/.local/state/website-deploy-monitor/last-alerted-built-at")
 
         # 5. stale deploy → STATE file written (notify-send has no session in
         #    the VM — its `|| true` degraded path is itself part of the fix)
@@ -293,8 +293,8 @@
             """ts=$(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ); echo '{"builtAt":"'"$ts"'"}' > /tmp/bi.json; echo "$ts" > /tmp/stale-ts"""
         )
         machine.succeed("HOME=/root /tmp/web-check")
-        machine.succeed("test -e ${state}")
-        machine.succeed("grep -q \"$(cat /tmp/stale-ts)\" ${state}")
+        machine.succeed("test -e /root/.local/state/website-deploy-monitor/last-alerted-built-at")
+        machine.succeed("grep -q \"$(cat /tmp/stale-ts)\" /root/.local/state/website-deploy-monitor/last-alerted-built-at")
 
         # 6. state-file dedup: same stale builtAt again → silent exit 0, no
         #    second STALE journal line

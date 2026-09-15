@@ -3,6 +3,7 @@ _: {
   flake.nixosModules.dozzle =
     {
       config,
+      options,
       lib,
       ...
     }:
@@ -47,6 +48,24 @@ _: {
             "--security-opt=no-new-privileges:true"
             "--cap-drop=ALL"
           ];
+        };
+
+        # Service-integration registry entry: the Dozzle homepage tile and
+        # the logs vHost (Layer 2 — gated on the container existing, same
+        # predicate as the old hasContainer check in homepage.nix/caddy.nix).
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          dozzle = {
+            enable = cfg.enable;
+            subdomain = "logs";
+            port = dozzlePort;
+            vHost.layer = "protected";
+            homepage = {
+              name = "Dozzle";
+              group = "Monitoring";
+              description = "Docker Log Viewer";
+              icon = "docker.png";
+            };
+          };
         };
       };
     };

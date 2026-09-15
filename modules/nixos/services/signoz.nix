@@ -34,6 +34,7 @@ in
   flake.nixosModules.signoz =
     {
       config,
+      options,
       pkgs,
       lib,
       ...
