@@ -14,18 +14,13 @@
 #      entry fans out the backup-freshness check on the reports dir.
 #   3. mail-server layer (future VPS target): fallback-admin is a
 #      LoadCredential referenced through the %{file:...}% macro on the
-#      stateVersion-correct stalwart unit.
+#      stateVersion-correct stalwart unit; a configured relay wires the
+#      mail-server-relay credential from sops exactly when relay.username
+#      is set (restored 2026-09-15 when the pin advanced to nix-email
+#      v0.2.0, which introduced services.mail-server.relay).
 #   4. The deployment state (plumbing shipped, enabled NOWHERE) still
 #      evaluates - a consumer importing this module without enabling it
 #      must never be broken.
-#
-# PIN NOTE (2026-09-15): the pinned nix-email rev (1f8bb52) predates the
-# upstream `services.mail-server.relay` option (it rides the next
-# nix-email push). The wrapper guards its relay wiring on option
-# existence; the relay-configured cases are replaced by a tryEval
-# absence-proof until the pin advances. RESTORE the relay-credential
-# assertions when bumping the pin (the wrapper's guard comment marks the
-# dead code).
 {
   pkgs,
   inputs,
@@ -77,17 +72,18 @@ let
     };
   };
 
-  # --- Case 5 (PIN NOTE): the relay option must NOT exist at the pin ------
-  # Setting it has to fail eval. When the pin advances past the
-  # relay-landing rev, replace this with the relay-credential assertions:
-  # services.stalwart.credentials."mail-server-relay" wired from sops
-  # exactly when relay.username is set.
-  relayOptionMissing =
-    !(builtins.tryEval
-      (evalConfig {
-        services.mail-server.relay.address = "smtp.resend.com";
-      }).config.services.mail-server.hostname
-    ).success;
+  # --- Case 5: relay configured -> generated route + sops credential ----
+  relayCfg = evalConfig {
+    services.mail-server = {
+      enable = true;
+      relay = {
+        address = "smtp.resend.com";
+        port = 587;
+        username = "resend";
+        secretFile = /run/secrets/stalwart-relay-password;
+      };
+    };
+  };
 
   # Each assertion is `true` by construction (throwIfNot throws at eval on
   # violation); fold to a single boolean for the assert below.
@@ -148,7 +144,23 @@ let
       == "%{file:/run/credentials/stalwart-mail.service/fallback-admin}%"
     ) "fallback-admin macro does not track the stalwart-mail rename (stateVersion 25.11)")
 
-    (throwIfNot relayOptionMissing "relay option unexpectedly evaluable at the pinned rev - advance the pin and restore the relay-credential assertions")
+    # Relay wiring (upstream v0.2.0): the credential appears exactly when a
+    # relay with SASL is configured, and the generated queue route carries
+    # the verified IfBlock strategy with the relay id in the else branch.
+    (throwIfNot (
+      relayCfg.services.stalwart.credentials ? "mail-server-relay"
+      &&
+        relayCfg.services.stalwart.credentials."mail-server-relay" == "/run/secrets/stalwart-relay-password"
+    ) "relay credential not wired from the sops secret path")
+
+    (throwIfNot (
+      relayCfg.services.stalwart.settings.queue.route."smarthost".address == "smtp.resend.com"
+      && relayCfg.services.stalwart.settings.queue.route."smarthost".auth.username == "resend"
+    ) "generated queue route missing or wrong (expected route.smarthost with auth.username)")
+
+    (throwIfNot (
+      relayCfg.services.stalwart.settings.queue.strategy.route."2"."else" == "'smarthost'"
+    ) "queue strategy else-branch does not route to the relay id")
   ];
 in
 assert assertions;

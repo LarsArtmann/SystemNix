@@ -5597,16 +5597,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1789441341,
-        "narHash": "sha256-rjbXnoJWMUW6d59bh1fKovpYhY2054s2bVDQV4nh5mM=",
+        "lastModified": 1789496457,
+        "narHash": "sha256-wWGctHO9ys9Rl+siFHsN1mBKTiaXAIOXkrZJ5X8ro/c=",
         "owner": "LarsArtmann",
         "repo": "nix-email",
-        "rev": "1f8bb523f6f1a42ae38a4d80f8b248e8f63f4c18",
+        "rev": "598db0f96f2ddcc91d6460eedfd58966a190318f",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "1f8bb52",
+        "ref": "v0.2.0",
         "repo": "nix-email",
         "type": "github"
       }
