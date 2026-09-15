@@ -55,7 +55,7 @@
           # The IMAP password is a _secret path contract upstream (absolute
           # path STRING, rendered into the ini at unit start) — feed it the
           # sops-rendered file, never a store path.
-          sops.secrets.${dmarcSecret}.sopsFile = lib.mkDefault ../../../secrets/nix-email.yaml;
+          sops.secrets.${dmarcSecret}.sopsFile = lib.mkDefault ../../../platforms/nixos/secrets/nix-email.yaml;
 
           services.dmarc-monitor.settings.imap.password._secret = lib.mkDefault config.sops.secrets.${dmarcSecret}.path;
 
@@ -99,8 +99,8 @@
           # the macro path must match — upstream's stateVersion option
           # documents this, keep both in sync if ever changed.
           sops.secrets = {
-            stalwart-fallback-admin.sopsFile = lib.mkDefault ../../../secrets/nix-email.yaml;
-            stalwart-relay-password.sopsFile = lib.mkDefault ../../../secrets/nix-email.yaml;
+            stalwart-fallback-admin.sopsFile = lib.mkDefault ../../../platforms/nixos/secrets/nix-email.yaml;
+            stalwart-relay-password.sopsFile = lib.mkDefault ../../../platforms/nixos/secrets/nix-email.yaml;
           };
 
           services.stalwart = {
