@@ -360,7 +360,13 @@ _: {
       #   - top-level `optionalAttrs` (NOT leaf-level mkIf) — a mkIf-wrapped
       #     definition of an UNDECLARED option is still collected and fails
       #     "option does not exist" on hosts importing a module subset.
+      #   - branches combine via mkMerge, NEVER `//` — every branch carries
+      #     the top-level `services` key, and `//` is SHALLOW: a chain keeps
+      #     only the LAST branch's services subtree, silently dropping every
+      #     earlier fan-out (the serviceConfig = X // Y class at module-config
+      #     level; caught live 2026-09-14 when only the pocket-id branch fired).
       config =
+        lib.mkMerge [
         {
           assertions =
             let
@@ -399,13 +405,18 @@ _: {
             }
           ) otelEntries;
         }
-        // lib.optionalAttrs (options ? services.caddy-config) {
-          services.caddy-config.extraVHosts = lib.mapAttrs (_: e: {
-            inherit (e) port;
-            inherit (e.vHost) layer;
-          }) vhostEntries;
-        }
-        // lib.optionalAttrs (options ? services.gatus-config) {
+        (lib.optionalAttrs (options ? services.caddy-config) {
+          # Keyed by SUBDOMAIN (caddy renders <key>.<domain>) — duplicate
+          # subdomains across entries collide loudly here by design.
+          services.caddy-config.extraVHosts = lib.mapAttrs' (
+            _: e:
+            lib.nameValuePair e.subdomain {
+              inherit (e) port;
+              inherit (e.vHost) layer;
+            }
+          ) vhostEntries;
+        })
+        (lib.optionalAttrs (options ? services.gatus-config) {
           services.gatus-config.extraEndpoints = map (
             { name, e, check }:
             mkHttpCheck {
@@ -416,22 +427,22 @@ _: {
             // lib.optionalAttrs (check.client != { }) { inherit (check) client; }
             // lib.optionalAttrs (check.headers != { }) { inherit (check) headers; }
           ) entryChecks;
-        }
-        // lib.optionalAttrs (options ? services.homepage) {
+        })
+        (lib.optionalAttrs (options ? services.homepage) {
           services.homepage.extraTiles = lib.mapAttrsToList homepageTile (
             lib.filterAttrs (_: e: e.homepage != null) enabledEntries
           );
-        }
-        // lib.optionalAttrs (options ? services.backup-coordination) {
+        })
+        (lib.optionalAttrs (options ? services.backup-coordination) {
           services.backup-coordination.backups = lib.mapAttrs (_: e: e.backup) backupEntries;
-        }
-        // lib.optionalAttrs (options ? services.system-health) {
+        })
+        (lib.optionalAttrs (options ? services.system-health) {
           services.system-health.extraMonitoredServices = lib.mapAttrsToList unitOf monitoredEntries;
-        }
+        })
         # Registry keys are UNIT names (the signoz-coverage reverse assertion
         # maps units that set the OTLP env var to expected keys), not entry
         # names — honor the unit override.
-        // lib.optionalAttrs (options ? services.signoz-coverage) {
+        (lib.optionalAttrs (options ? services.signoz-coverage) {
           services.signoz-coverage.expected = lib.mapAttrs' (
             name: e:
             lib.nameValuePair (unitOf name e) {
@@ -440,14 +451,16 @@ _: {
               maxAgeHours = e.otel.maxAgeHours;
             }
           ) otelEntries;
-        }
-        // lib.optionalAttrs (options ? services.otel-endpoint-audit) {
+        })
+        (lib.optionalAttrs (options ? services.otel-endpoint-audit) {
           services.otel-endpoint-audit.expectations = lib.mapAttrs' (
             name: e: lib.nameValuePair (unitOf name e) e.otel.shape
           ) otelEntries;
         }
-        // lib.optionalAttrs (options ? services.pocket-id-config) {
+        })
+        (lib.optionalAttrs (options ? services.pocket-id-config) {
           services.pocket-id-config.provision.extraOidcClients = lib.mapAttrsToList (_: e: e.oidc) oidcEntries;
-        };
+        })
+        ];
     };
 }
