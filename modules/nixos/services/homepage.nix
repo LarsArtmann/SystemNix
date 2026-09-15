@@ -182,32 +182,12 @@ _: {
         )
         # PapDashboard tile moved to its owning module
         # (services.integration.papdashboard.homepage in papdashboard.nix).
-        ++ lib.optional signozEnabled (
-          mkService "SigNoz" {
-            href = svcUrl "signoz";
-            description = "Observability Platform (Traces, Metrics, Logs)";
-            icon = "signoz.png";
-          }
-        )
-        ++ lib.optional dozzleEnabled (
-          mkService "Dozzle" {
-            href = svcUrl "logs";
-            description = "Docker Log Viewer";
-            icon = "docker.png";
-          }
-        )
         ++ [
           (mkService "Node Exporter" {
             description = "System Metrics (CPU, RAM, Disk, Network)";
             icon = "prometheus.png";
           })
         ]
-        ++ lib.optional signozEnabled (
-          mkService "cAdvisor" {
-            description = "Container Metrics";
-            icon = "docker.png";
-          }
-        )
         ++ [
           (mkService "dnsblockd" {
             # Tile exists for parity with other infra services (Node Exporter,

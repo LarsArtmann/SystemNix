@@ -1267,9 +1267,12 @@ _: {
           # Units removed from this default as their owning modules
           # self-register via services.integration.<name>.monitored:
           # browser-history-agent, llama-embeddings, llama-reranker,
-          # monitor365, monitor365-server, postfix,
-          # projects-management-automation, signoz, tq-agent-pool,
-          # tq-bootstrap, tq-serve (2026-09-15).
+          # postfix, projects-management-automation, signoz,
+          # tq-agent-pool, tq-bootstrap, tq-serve (2026-09-15).
+          # monitor365/monitor365-server STAY: the registry fan-out is
+          # enable-gated, but a DISABLED service's unit-state monitoring
+          # must persist (missing-unit-tolerant; both disabled here since
+          # 2026-08-12 — registry entries own their other surfaces).
           default = [
             "browser-history"
             "caddy"
@@ -1282,6 +1285,8 @@ _: {
             "hermes"
             "homepage-dashboard"
             "lan-nic-watchdog"
+            "monitor365"
+            "monitor365-server"
             "nix-daemon"
             "paperless-consumer"
             "paperless-scheduler"

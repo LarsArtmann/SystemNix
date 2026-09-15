@@ -394,6 +394,7 @@ in
       config = lib.mkMerge [
         (lib.mkIf cfg.enable (
           lib.mkMerge [
+            {
               users.users.signoz = {
                 isSystemUser = true;
                 group = "signoz";
@@ -1128,7 +1129,8 @@ in
 
           ]
         ))
-            # Service-integration registry entries: the two ClickHouse XFS
+
+          # Service-integration registry entries: the two ClickHouse XFS
             # data-mount checks, the SigNoz vHost (Layer 2 — impersonation
             # mode has no internal auth; LAN bypass keeps oauth2-proxy
             # failures off the LAN path), the SigNoz + cAdvisor tiles, and
