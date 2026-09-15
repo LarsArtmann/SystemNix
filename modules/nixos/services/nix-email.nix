@@ -111,7 +111,10 @@
               {
                 fallback-admin = lib.mkDefault config.sops.secrets.stalwart-fallback-admin.path;
               }
-              // lib.optionalAttrs (msCfg.relay != null && msCfg.relay.username != null) {
+              # Option-existence guard: the PINNED nix-email rev predates the
+              # `relay` option (it rides the next nix-email push); this guard
+              # is dead code once the pin advances past that rev.
+              // lib.optionalAttrs ((msCfg ? "relay") && msCfg.relay != null && msCfg.relay.username != null) {
                 mail-server-relay = lib.mkDefault config.sops.secrets.stalwart-relay-password.path;
               };
             settings.authentication.fallback-admin.secret = lib.mkDefault "%{file:/run/credentials/${stalwartUnit}.service/fallback-admin}%";

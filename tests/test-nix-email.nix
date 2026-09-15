@@ -29,14 +29,21 @@ let
   lib = inputs.nixpkgs.lib;
   inherit (import ../lib/default.nix lib) onFailure;
 
-  nixEmailWrapper = import ../modules/nixos/services/nix-email.nix { inherit inputs; };
-  integrationModule = (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration;
+  # Wrapper modules are flake-parts-shaped (`{inputs}: {flake.nixosModules.X}`;
+  # test-integration.nix pattern): extract the INNER NixOS module and feed
+  # `inputs` back through specialArgs (the extracted module reads
+  # inputs.nix-email to import the upstream stack).
+  nixEmailModule =
+    ((import ../modules/nixos/services/nix-email.nix) { inherit inputs; }).flake.nixosModules.nix-email;
+  integrationModule =
+    (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration;
 
   evalConfig = extra:
     (lib.nixosSystem {
       inherit system;
+      specialArgs = { inherit inputs; };
       modules = [
-        nixEmailWrapper
+        nixEmailModule
         integrationModule
         ./mock-sops.nix
         extra
