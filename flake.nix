@@ -592,7 +592,7 @@
     # nix-email are its tests' VM runtime, so no other follows exist: the
     # flake has nixpkgs as its only input.
     nix-email = {
-      url = "github:LarsArtmann/nix-email/1f8bb52";
+      url = "github:LarsArtmann/nix-email/v0.2.0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
