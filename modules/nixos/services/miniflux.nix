@@ -212,10 +212,13 @@ _: {
         # REPLACES rows that lived in caddy.nix / gatus-config.nix /
         # homepage.nix / configuration.nix (backup-coordination) /
         # system-health.nix (monitoredServices) / pocket-id.nix (oidcClients).
-        # The optionalAttrs guard keeps VM tests that import only this module
-        # evaluating (mkIf does NOT shield undeclared option definitions —
-        # verified 2026-09-14; an empty services subtree contributes no leaf
-        # definitions and is safe).
+        # CAVEAT (flake-check-proven 2026-09-15): the options?-guard does
+        # NOT keep a standalone import of this module evaluable when
+        # cfg.enable is true — the enclosing config's mkIf(true) wraps the
+        # empty optionalAttrs result and the mkIf-wrapped def at the
+        # undeclared path still fires "option does not exist". VM tests MUST
+        # co-import modules/nixos/services/integration.nix (test-miniflux
+        # does).
         services.integration = lib.optionalAttrs (options ? services.integration) {
           miniflux = {
             subdomain = "rss";

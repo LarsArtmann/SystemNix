@@ -49,6 +49,13 @@ in
     {
       imports = [
         minifluxModule
+        # miniflux.nix declares a services.integration.miniflux registry
+        # entry — the integration module must be co-imported. The
+        # options?-guard inside the entry does NOT survive cfg.enable: the
+        # enclosing config's mkIf(true) wraps the (empty) optionalAttrs
+        # result and an mkIf-wrapped definition at an undeclared path is
+        # still collected (flake-check failure 2026-09-15).
+        (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration
         pocketIdConfigMock
         ./mock-sops.nix
         ./test-helpers.nix
