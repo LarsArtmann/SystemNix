@@ -27,8 +27,14 @@ metrics_gate_classify_absence() {
     # system's /metrics no longer needs its loan — keeping it would mask a
     # future genuine phantom-metric regression under the same name. WARN
     # (never block): the gate's job here is to nag the retirement.
+    # Aggregation (2026-09-15): up to 3 stale loans warn individually
+    # (visibility); beyond that the per-metric lines are noise — collect and
+    # let metrics_gate_stale_loan_summary emit ONE line.
     if echo "$KNOWN_NEW_METRICS" | grep -qw "$metric"; then
-      warn "Metric '$metric' present but STILL LISTED in KNOWN_NEW_METRICS — retire the stale loan entry (it masks phantom regressions)"
+      METRICS_GATE_STALE_LOAN_NAMES="${METRICS_GATE_STALE_LOAN_NAMES:-} $metric"
+      if [ "$(echo ${METRICS_GATE_STALE_LOAN_NAMES:-} | wc -w)" -le 3 ]; then
+        warn "Metric '$metric' present but STILL LISTED in KNOWN_NEW_METRICS — retire the stale loan entry (it masks phantom regressions)"
+      fi
     else
       pass "Metric '$metric' present"
     fi
@@ -51,5 +57,16 @@ metrics_gate_classify_absence() {
   else
     fail "Metric '$metric' ABSENT — Gatus health check will be permanently RED (phantom metric)"
     return 1
+  fi
+}
+
+# Call AFTER the per-metric classify loop: emits the aggregated stale-loan
+# WARN when more than 3 accumulated (individual warns are suppressed past 3
+# inside metrics_gate_classify_absence).
+metrics_gate_stale_loan_summary() {
+  local count
+  count=$(echo ${METRICS_GATE_STALE_LOAN_NAMES:-} | wc -w)
+  if [ "$count" -gt 3 ]; then
+    warn "$count stale loan entries already live in /metrics (aggregate — retire them from KNOWN_NEW_METRICS; each masks phantom regressions under its name):${METRICS_GATE_STALE_LOAN_NAMES}"
   fi
 }

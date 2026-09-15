@@ -41,6 +41,7 @@
   flake.nixosModules.monitor365 =
     {
       config,
+      options,
       pkgs,
       lib,
       ...
@@ -636,6 +637,147 @@
             "input" # keystroke + mouse (/dev/input/event*)
             "video" # camera (V4L2 /dev/video*)
           ];
+        })
+
+        # Service-integration registry entries: the agent/server Gatus
+        # checks, the server backup-freshness row, system-health monitoring
+        # of both units, and the Monitor365 tile. The monitor vHost STAYS
+        # hand-written in caddy.nix (SSO-conditional @noCache custom
+        # block — beyond the registry's plain/protected seam). Replaces
+        # rows in gatus-config.nix / homepage.nix / configuration.nix.
+        (lib.optionalAttrs (options ? services.integration) {
+          services.integration = {
+            monitor365 = {
+              enable = systemAgentCfg.enable;
+              vHost.layer = "none";
+              monitored = true;
+              checks = [
+                {
+                  name = "Monitor365 System Agent";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString ports.monitor365-metrics}/metrics";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*collector_events_collected*)"
+                  ];
+                  alert = "Monitor365 system agent down — headless device telemetry collector not running";
+                }
+                {
+                  name = "Monitor365 Cloud Sync Health";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString ports.monitor365-metrics}/metrics";
+                  interval = "2m";
+                  # Gatus 5.36.0 cannot do numeric comparison on Prometheus text
+                  # metrics ([BODY].jsonpath is broken, pat() is presence-only).
+                  # We verify the sync subsystem is ACTIVE by checking both the
+                  # backlog gauge and the consecutive-failures gauge exist.
+                  # NOTE: cloud_sync_consecutive_failures is always emitted (set
+                  # on every sync cycle: 0 on success, incremented on failure).
+                  # The previous condition used cloud_sync_upload_rejected_events_total
+                  # which is only emitted when rejections > 0, so it's ABSENT when
+                  # the agent has zero rejections — a permanent false negative.
+                  # This check catches the agent STOPPING sync entirely (circuit
+                  # breaker stuck open, crash loop, auth failure). For VALUE-based
+                  # alerting (backlog > N threshold), wire Prometheus/SigNoz
+                  # to scrape this endpoint and add an alert rule there.
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*cloud_sync_upload_backlog_size*)"
+                    "[BODY] == pat(*cloud_sync_consecutive_failures*)"
+                  ];
+                  alert = "Monitor365 cloud sync subsystem not emitting metrics — agent may have stopped syncing (circuit breaker open, auth failure, or crash loop). Check: journalctl -u monitor365 -n 50";
+                }
+              ];
+            };
+            monitor365-server = {
+              enable = serverCfg.enable;
+              subdomain = "monitor";
+              port = ports.monitor365-server;
+              # Custom vHost (SSO-conditional @noCache headers) stays
+              # hand-written in caddy.nix — registry layer "none" keeps the
+              # DNS record + tile href while caddy owns the proxy.
+              vHost.layer = "none";
+              monitored = true;
+              backup = {
+                # Only meaningful while the server runs — a disabled service
+                # must not fire permanent stale-backup alerts (entry enable
+                # gates the fan-out, same as the old configuration.nix
+                # optionalAttrs row).
+                directory = "/var/lib/monitor365-server";
+                filePattern = "*.backup_*.db";
+                maxAgeHours = 25;
+              };
+              checks = [
+                {
+                  name = "Monitor365 Server";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString ports.monitor365-server}/health";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 500"
+                  ];
+                  alert = "Monitor365 server down — device telemetry unavailable";
+                }
+                {
+                  name = "Monitor365 Bootstrap";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString ports.monitor365-server}/health/bootstrap";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY].bootstrapped == true"
+                  ];
+                  alert = "Monitor365 bootstrap incomplete — tenant/SSO provisioning may have failed on first boot";
+                }
+                {
+                  name = "Monitor365 UI";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString ports.monitor365-server}/ui/";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*<html*)"
+                  ];
+                  alert = "Monitor365 UI not serving — WASM dashboard missing";
+                }
+                {
+                  name = "Monitor365 External";
+                  group = "Monitoring";
+                  url = "https://monitor.${domain}/health";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 1000"
+                  ];
+                  alert = "Monitor365 external endpoint down — reverse proxy or TLS issue";
+                }
+                {
+                  name = "Monitor365 Agent Connected";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString ports.monitor365-server}/health";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    # Gatus 5.36.0's [BODY].jsonpath is broken — use pat() instead.
+                    # Match "connected (N devices)" where N >= 1. The [1-9] character
+                    # class ensures at least one digit from 1-9 (excludes 0 devices).
+                    # NOTE: Gatus pat() uses glob, NOT regex — do NOT prefix with ?
+                    # (glob ? = single-char wildcard, which would consume the digit).
+                    "[BODY] == pat(*connected ([1-9]* devices)*)"
+                  ];
+                  alert = "Monitor365 agent not connected to server — API key desync or agent crash";
+                }
+              ];
+              homepage = {
+                name = "Monitor365";
+                group = "Monitoring";
+                description = "Device Monitoring Agent";
+                icon = "uptime-kuma.png";
+              };
+            };
+          };
         })
       ];
     };

@@ -33,6 +33,19 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/metrics-gate.sh"
 echo "=== Pre-Deploy Validation ==="
 echo ""
 
+# --section-10-only (2026-09-15): cheap e2e testing of the §10 metric gate
+# without paying for the flake check / vendorHash dry-runs — the gate that
+# actually blocks deploys is the one that needs the most iterations when its
+# classifiers change. Same summary/exit semantics as a full run.
+SECTION10_ONLY=false
+for arg in "$@"; do
+  case "$arg" in
+  --section-10-only) SECTION10_ONLY=true ;;
+  *) echo "unknown option: $arg" >&2; exit 64 ;;
+  esac
+done
+
+if [ "$SECTION10_ONLY" != true ]; then
 # 1. Flake syntax check
 echo "1. Flake syntax validation"
 FLAKE_CHECK_OUTPUT="$(nix flake check --no-build 2>&1 || true)"
@@ -232,6 +245,7 @@ if [ "$SEARXNG_ENABLED" = "true" ] && [ -n "$SEARXNG_PORT" ]; then
 fi
 
 # 10. Metric presence — verify Gatus pat() metric names actually appear in /metrics
+fi # end of skip-when---section-10-only (sections 1-9)
 echo ""
 echo "10. Metric presence validation (phantom metric detection)"
 GATUS_CONFIG="modules/nixos/services/gatus-config.nix"
@@ -568,6 +582,23 @@ if [ -s "$METRICS_FILE" ]; then
   fi
 else
   warn "No metrics endpoints responding — cannot validate phantom metrics"
+fi
+
+# Stale-loan aggregation (2026-09-15): with >3 self-cleaning WARNs the
+# per-metric lines are noise — one summary line carries the retirement list.
+metrics_gate_stale_loan_summary
+
+if [ "$SECTION10_ONLY" = true ]; then
+  echo ""
+  echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="
+  if [ "$FAIL" -gt 0 ]; then
+    echo ""
+    echo "❌ DEPLOY BLOCKED — fix failures above before deploying"
+    exit 1
+  fi
+  echo ""
+  echo "✅ §10-only run passed — safe (full gate still runs inside nix run .#deploy)"
+  exit 0
 fi
 
 # 11. vendorHash freshness for local Go packages
