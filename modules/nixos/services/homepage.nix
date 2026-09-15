@@ -145,7 +145,10 @@ _: {
         }
       );
 
-
+      # tq Agent Pool tile moved to its owning module
+      # (services.integration.tq-agent-pool.homepage).
+      aiServices =
+        lib.optional crushDailyEnabled (
           mkService "Crush Daily" {
             href = svcUrl "daily";
             description = "AI-Powered Development Insights";
@@ -216,7 +219,7 @@ _: {
             description = "Webcam Auto-Management Daemon";
             icon = "camera-ui.png";
           })
-        ]
+        ];
 
       productivityServices =
         lib.optional twentyEnabled (

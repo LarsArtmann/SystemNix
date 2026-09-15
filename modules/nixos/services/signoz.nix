@@ -391,804 +391,805 @@ in
         };
       };
 
-      config = lib.mkIf cfg.enable (
-        lib.mkMerge [
-          {
-            users.users.signoz = {
-              isSystemUser = true;
-              group = "signoz";
-              home = cfg.settings.queryService.dataDir;
-              createHome = true;
-            };
-            users.groups.signoz = { };
-            systemd.targets.signoz = {
-              description = "SigNoz observability stack";
-              wantedBy = [ "multi-user.target" ];
-            };
-            systemd.tmpfiles.rules = [
-              (mkStateDir cfg.settings.queryService.dataDir "0755" "signoz" "signoz")
-            ];
-
-            environment.etc."signoz/signoz.yaml".text = lib.generators.toYAML { } {
-              gateway = {
-                url = "http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}";
+      config = lib.mkMerge [
+        (lib.mkIf cfg.enable (
+          lib.mkMerge [
+              users.users.signoz = {
+                isSystemUser = true;
+                group = "signoz";
+                home = cfg.settings.queryService.dataDir;
+                createHome = true;
               };
-              telemetrystore = {
-                provider = "clickhouse";
-                clickhouse = {
-                  dsn = cfg.settings.clickhouse.url;
-                  cluster = "default";
+              users.groups.signoz = { };
+              systemd.targets.signoz = {
+                description = "SigNoz observability stack";
+                wantedBy = [ "multi-user.target" ];
+              };
+              systemd.tmpfiles.rules = [
+                (mkStateDir cfg.settings.queryService.dataDir "0755" "signoz" "signoz")
+              ];
+
+              environment.etc."signoz/signoz.yaml".text = lib.generators.toYAML { } {
+                gateway = {
+                  url = "http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}";
+                };
+                telemetrystore = {
+                  provider = "clickhouse";
+                  clickhouse = {
+                    dsn = cfg.settings.clickhouse.url;
+                    cluster = "default";
+                  };
+                };
+                sqlstore = {
+                  provider = "sqlite";
+                  sqlite = {
+                    path = "${cfg.settings.queryService.dataDir}/signoz.db";
+                    mode = "wal";
+                    busy_timeout = "10s";
+                  };
+                };
+                web = {
+                  # Static frontend (flake input -> pnpm/rolldown-vite build ->
+                  # $out/share/signoz/web, symlinked to /etc/signoz/web below).
+                  # The Go binary templates [[.BaseHref]]/[[.Settings]] into
+                  # index.html at startup and serves SPA fallbacks itself.
+                  enabled = true;
+                };
+                alertmanager = {
+                  signoz = {
+                    # Base URL baked into fired alerts (ruleSource label → the
+                    # links Discord messages show). SigNoz defaults to
+                    # http://localhost:8080, which is useless from Discord.
+                    external_url = "https://signoz.${config.networking.domain}";
+                  };
+                };
+                instrumentation = {
+                  logs.level = "info";
+                  metrics.enabled = false;
                 };
               };
-              sqlstore = {
-                provider = "sqlite";
-                sqlite = {
-                  path = "${cfg.settings.queryService.dataDir}/signoz.db";
-                  mode = "wal";
-                  busy_timeout = "10s";
-                };
-              };
-              web = {
-                # Static frontend (flake input -> pnpm/rolldown-vite build ->
-                # $out/share/signoz/web, symlinked to /etc/signoz/web below).
-                # The Go binary templates [[.BaseHref]]/[[.Settings]] into
-                # index.html at startup and serves SPA fallbacks itself.
-                enabled = true;
-              };
-              alertmanager = {
-                signoz = {
-                  # Base URL baked into fired alerts (ruleSource label → the
-                  # links Discord messages show). SigNoz defaults to
-                  # http://localhost:8080, which is useless from Discord.
-                  external_url = "https://signoz.${config.networking.domain}";
-                };
-              };
-              instrumentation = {
-                logs.level = "info";
-                metrics.enabled = false;
-              };
-            };
-          }
+            }
 
-          (lib.mkIf cfg.components.clickhouse {
-            services.clickhouse.enable = true;
-            services.clickhouse.extraServerConfig = ''
-              <clickhouse>
-                <background_schedule_pool_size>8</background_schedule_pool_size>
-                <background_buffer_flush_schedule_pool_size>4</background_buffer_flush_schedule_pool_size>
-                <background_move_pool_size>2</background_move_pool_size>
-                <background_fetches_pool_size>1</background_fetches_pool_size>
-                # Halves the asynchronous metrics sampling rate (1 Hz -> 0.5 Hz):
-                # this is what drives asynchronous_metric_log row volume (one row
-                # per metric per update tick, ~750 metrics = 56M rows/day at 1s).
-                # Also makes the /metrics prometheus endpoint up to 2s stale —
-                # invisible at 15s+ scrape intervals.
-                <asynchronous_metrics_update_period_s>2</asynchronous_metrics_update_period_s>
-              ${clickhouseInternalLogXml}
-                <prometheus>
-                  <endpoint>/metrics</endpoint>
-                  <port>${toString ports.signoz-clickhouse-metrics}</port>
-                  <metrics>true</metrics>
-                  <events>true</events>
-                  <asynchronous_metrics>true</asynchronous_metrics>
-                </prometheus>
-                <keeper_server>
-                  <tcp_port>${toString ports.signoz-clickhouse-keeper}</tcp_port>
-                  <server_id>1</server_id>
-                  <log_storage_path>/var/lib/clickhouse/coordination/log</log_storage_path>
-                  <snapshot_storage_path>/var/lib/clickhouse/coordination/snapshots</snapshot_storage_path>
-                  <raft_configuration>
-                    <server>
-                      <id>1</id>
-                      <hostname>localhost</hostname>
-                      <port>${toString ports.signoz-clickhouse-raft}</port>
-                    </server>
-                  </raft_configuration>
-                </keeper_server>
-                <zookeeper>
-                  <node>
-                    <host>localhost</host>
-                    <port>${toString ports.signoz-clickhouse-keeper}</port>
-                  </node>
-                </zookeeper>
-              </clickhouse>
-            '';
-            services.clickhouse.extraUsersConfig = ''
-              <clickhouse>
-                <profiles>
-                  <default>
-                    <max_threads>2</max_threads>
-                  </default>
-                </profiles>
-              </clickhouse>
-            '';
-            systemd.tmpfiles.rules = [
-              (mkStateDir "/var/log/clickhouse-server" "0755" "clickhouse" "clickhouse")
-            ];
-            systemd.services.clickhouse = {
-              inherit onFailure;
-              startLimitBurst = 5;
-              startLimitIntervalSec = 300;
-              # extraServerConfig lands as an etc file; the nixpkgs module has
-              # no restartTriggers for it, so config edits (e.g. the prometheus
-              # metrics endpoint) deploys silently inert until a manual restart.
-              restartTriggers = [
-                config.environment.etc."clickhouse-server/config.d/200-nixos-module-extra-config.xml".source
+            (lib.mkIf cfg.components.clickhouse {
+              services.clickhouse.enable = true;
+              services.clickhouse.extraServerConfig = ''
+                <clickhouse>
+                  <background_schedule_pool_size>8</background_schedule_pool_size>
+                  <background_buffer_flush_schedule_pool_size>4</background_buffer_flush_schedule_pool_size>
+                  <background_move_pool_size>2</background_move_pool_size>
+                  <background_fetches_pool_size>1</background_fetches_pool_size>
+                  # Halves the asynchronous metrics sampling rate (1 Hz -> 0.5 Hz):
+                  # this is what drives asynchronous_metric_log row volume (one row
+                  # per metric per update tick, ~750 metrics = 56M rows/day at 1s).
+                  # Also makes the /metrics prometheus endpoint up to 2s stale —
+                  # invisible at 15s+ scrape intervals.
+                  <asynchronous_metrics_update_period_s>2</asynchronous_metrics_update_period_s>
+                ${clickhouseInternalLogXml}
+                  <prometheus>
+                    <endpoint>/metrics</endpoint>
+                    <port>${toString ports.signoz-clickhouse-metrics}</port>
+                    <metrics>true</metrics>
+                    <events>true</events>
+                    <asynchronous_metrics>true</asynchronous_metrics>
+                  </prometheus>
+                  <keeper_server>
+                    <tcp_port>${toString ports.signoz-clickhouse-keeper}</tcp_port>
+                    <server_id>1</server_id>
+                    <log_storage_path>/var/lib/clickhouse/coordination/log</log_storage_path>
+                    <snapshot_storage_path>/var/lib/clickhouse/coordination/snapshots</snapshot_storage_path>
+                    <raft_configuration>
+                      <server>
+                        <id>1</id>
+                        <hostname>localhost</hostname>
+                        <port>${toString ports.signoz-clickhouse-raft}</port>
+                      </server>
+                    </raft_configuration>
+                  </keeper_server>
+                  <zookeeper>
+                    <node>
+                      <host>localhost</host>
+                      <port>${toString ports.signoz-clickhouse-keeper}</port>
+                    </node>
+                  </zookeeper>
+                </clickhouse>
+              '';
+              services.clickhouse.extraUsersConfig = ''
+                <clickhouse>
+                  <profiles>
+                    <default>
+                      <max_threads>2</max_threads>
+                    </default>
+                  </profiles>
+                </clickhouse>
+              '';
+              systemd.tmpfiles.rules = [
+                (mkStateDir "/var/log/clickhouse-server" "0755" "clickhouse" "clickhouse")
               ];
-              # Only when the host declares the dedicated data mount (see
-              # hasClickhouseDataMount above). RequiresMountsFor adds
-              # Requires=+After= on var-lib-clickhouse.mount; the Condition
-              # is evaluated after those dependencies are up, so the path is
-              # a mountpoint exactly when the mount succeeded. Belt AND
-              # suspenders: either one alone has a hole (Requires without
-              # the Condition tolerates a leftover plain dir if the mount
-              # unit were masked; the Condition alone doesn't order).
-              unitConfig = lib.optionalAttrs hasClickhouseDataMount {
-                RequiresMountsFor = "/var/lib/clickhouse";
-                ConditionPathIsMountPoint = "/var/lib/clickhouse";
-              };
-              serviceConfig = lib.mkMerge [
-                (harden {
-                  MemoryMax = "4G";
-                  ReadWritePaths = [
-                    "/var/lib/clickhouse"
-                    "/var/log/clickhouse-server"
-                  ];
-                })
-                (serviceDefaults { })
-                ioTier.heavyDB
-                # Root-escape (`+`) ExecStartPre: the ownership heal runs as
-                # PID-1 privileges (harden{}'s empty CapabilityBoundingSet
-                # would EPERM chown inside the sandbox). Gated on the XFS
-                # mount host — the plain-state-dir hosts need no heal.
-                (lib.optionalAttrs hasClickhouseDataMount {
-                  ExecStartPre = [ "+${lib.getExe clickhouseOwnershipHeal}" ];
-                })
-              ];
-            };
-
-            systemd.services.signoz-clickhouse-log-ttl = {
-              description = "ClickHouse internal log TTL convergence (14d retention, incl. zombie _N tables)";
-              after = [ "clickhouse.service" ];
-              wants = [ "clickhouse.service" ];
-              # Re-converge whenever clickhouse restarts (incl. config-triggered
-              # restarts via its restartTriggers).
-              partOf = [ "clickhouse.service" ];
-              inherit onFailure;
-              wantedBy = [ "multi-user.target" ];
-              startLimitBurst = 5;
-              startLimitIntervalSec = 300;
-              # NO restartTriggers here: on a oneshot+RemainAfterExit unit
-              # switch-to-configuration IGNORES them (deploy-restart-audit
-              # class) — convergence rides on partOf=clickhouse.service +
-              # the daily 04:20 timer below.
-              serviceConfig = lib.mkMerge [
-                (harden { MemoryMax = "256M"; })
-                {
-                  Type = "oneshot";
-                  RemainAfterExit = true;
-                }
-              ];
-              script = lib.getExe clickhouseLogTtlScript;
-            };
-
-            # Recurring retention: TTL families self-manage via background
-            # TTL merges, but the wide partition-managed tables (metric_log)
-            # only drop old months when this runs — hence a daily timer,
-            # staggered clear of the 01:00-04:00 backup window.
-            systemd.timers.signoz-clickhouse-log-ttl = {
-              description = "Daily ClickHouse internal log retention pass";
-              wantedBy = [ "timers.target" ];
-              timerConfig = {
-                OnCalendar = "04:20";
-                Persistent = true;
-                Unit = "signoz-clickhouse-log-ttl.service";
-              };
-            };
-
-            # ── Dedicated XFS data mount monitoring (buildcache pattern) ──────
-            # The XFS filesystem at /var/lib/clickhouse is invisible to
-            # btrfs-health metrics by design; these gauges close that hole.
-            # Fail-closed: the .prom file is written on EVERY run (a dead/
-            # absent mount flips clickhouse_xfs_mounted to 0 → Gatus alerts),
-            # and "mounted" gates on REAL I/O, not mount-table presence —
-            # a zombie VFS entry (stale major:minor after device churn)
-            # satisfies findmnt while every read EIOs.
-            systemd.services.clickhouse-xfs-metrics = lib.mkIf hasClickhouseDataMount (
-              let
-                textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
-                mnt = "/var/lib/clickhouse";
-                usageThresholdPercent = 85;
-              in
-              {
-                description = "ClickHouse XFS data mount Prometheus metrics (mount, usage)";
-                startLimitBurst = 3;
-                startLimitIntervalSec = 300;
+              systemd.services.clickhouse = {
                 inherit onFailure;
-                path = [
-                  pkgs.util-linux
-                  pkgs.coreutils
-                  pkgs.gnugrep
+                startLimitBurst = 5;
+                startLimitIntervalSec = 300;
+                # extraServerConfig lands as an etc file; the nixpkgs module has
+                # no restartTriggers for it, so config edits (e.g. the prometheus
+                # metrics endpoint) deploys silently inert until a manual restart.
+                restartTriggers = [
+                  config.environment.etc."clickhouse-server/config.d/200-nixos-module-extra-config.xml".source
+                ];
+                # Only when the host declares the dedicated data mount (see
+                # hasClickhouseDataMount above). RequiresMountsFor adds
+                # Requires=+After= on var-lib-clickhouse.mount; the Condition
+                # is evaluated after those dependencies are up, so the path is
+                # a mountpoint exactly when the mount succeeded. Belt AND
+                # suspenders: either one alone has a hole (Requires without
+                # the Condition tolerates a leftover plain dir if the mount
+                # unit were masked; the Condition alone doesn't order).
+                unitConfig = lib.optionalAttrs hasClickhouseDataMount {
+                  RequiresMountsFor = "/var/lib/clickhouse";
+                  ConditionPathIsMountPoint = "/var/lib/clickhouse";
+                };
+                serviceConfig = lib.mkMerge [
+                  (harden {
+                    MemoryMax = "4G";
+                    ReadWritePaths = [
+                      "/var/lib/clickhouse"
+                      "/var/log/clickhouse-server"
+                    ];
+                  })
+                  (serviceDefaults { })
+                  ioTier.heavyDB
+                  # Root-escape (`+`) ExecStartPre: the ownership heal runs as
+                  # PID-1 privileges (harden{}'s empty CapabilityBoundingSet
+                  # would EPERM chown inside the sandbox). Gated on the XFS
+                  # mount host — the plain-state-dir hosts need no heal.
+                  (lib.optionalAttrs hasClickhouseDataMount {
+                    ExecStartPre = [ "+${lib.getExe clickhouseOwnershipHeal}" ];
+                  })
+                ];
+              };
+
+              systemd.services.signoz-clickhouse-log-ttl = {
+                description = "ClickHouse internal log TTL convergence (14d retention, incl. zombie _N tables)";
+                after = [ "clickhouse.service" ];
+                wants = [ "clickhouse.service" ];
+                # Re-converge whenever clickhouse restarts (incl. config-triggered
+                # restarts via its restartTriggers).
+                partOf = [ "clickhouse.service" ];
+                inherit onFailure;
+                wantedBy = [ "multi-user.target" ];
+                startLimitBurst = 5;
+                startLimitIntervalSec = 300;
+                # NO restartTriggers here: on a oneshot+RemainAfterExit unit
+                # switch-to-configuration IGNORES them (deploy-restart-audit
+                # class) — convergence rides on partOf=clickhouse.service +
+                # the daily 04:20 timer below.
+                serviceConfig = lib.mkMerge [
+                  (harden { MemoryMax = "256M"; })
+                  {
+                    Type = "oneshot";
+                    RemainAfterExit = true;
+                  }
+                ];
+                script = lib.getExe clickhouseLogTtlScript;
+              };
+
+              # Recurring retention: TTL families self-manage via background
+              # TTL merges, but the wide partition-managed tables (metric_log)
+              # only drop old months when this runs — hence a daily timer,
+              # staggered clear of the 01:00-04:00 backup window.
+              systemd.timers.signoz-clickhouse-log-ttl = {
+                description = "Daily ClickHouse internal log retention pass";
+                wantedBy = [ "timers.target" ];
+                timerConfig = {
+                  OnCalendar = "04:20";
+                  Persistent = true;
+                  Unit = "signoz-clickhouse-log-ttl.service";
+                };
+              };
+
+              # ── Dedicated XFS data mount monitoring (buildcache pattern) ──────
+              # The XFS filesystem at /var/lib/clickhouse is invisible to
+              # btrfs-health metrics by design; these gauges close that hole.
+              # Fail-closed: the .prom file is written on EVERY run (a dead/
+              # absent mount flips clickhouse_xfs_mounted to 0 → Gatus alerts),
+              # and "mounted" gates on REAL I/O, not mount-table presence —
+              # a zombie VFS entry (stale major:minor after device churn)
+              # satisfies findmnt while every read EIOs.
+              systemd.services.clickhouse-xfs-metrics = lib.mkIf hasClickhouseDataMount (
+                let
+                  textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
+                  mnt = "/var/lib/clickhouse";
+                  usageThresholdPercent = 85;
+                in
+                {
+                  description = "ClickHouse XFS data mount Prometheus metrics (mount, usage)";
+                  startLimitBurst = 3;
+                  startLimitIntervalSec = 300;
+                  inherit onFailure;
+                  path = [
+                    pkgs.util-linux
+                    pkgs.coreutils
+                    pkgs.gnugrep
+                  ];
+                  serviceConfig = lib.mkMerge [
+                    {
+                      Type = "oneshot";
+                      User = "root";
+                    }
+                    (harden {
+                      ReadWritePaths = [ textfileDir ];
+                      # Sticky-dir rename over a foreign-owned prom (mail-relay
+                      # 2026-09-02..06 class).
+                      CapabilityBoundingSet = "CAP_FOWNER";
+                      MemoryMax = "128M";
+                    })
+                    (serviceOneshotDefaults { })
+                  ];
+                  script = ''
+                    set -eu
+                    OUT="${textfileDir}/clickhouse-xfs.prom"
+                    # Unique tmp per run (mktemp): a fixed .tmp name collides with
+                    # stale foreign-owned leftovers in the sticky 1777 textfile
+                    # dir (mail-relay 2026-09-02..06 outage class).
+                    mkdir -p "${textfileDir}"
+                    TMP="$(mktemp "${textfileDir}/clickhouse-xfs.prom.XXXXXX")"
+                    chmod 644 "$TMP"
+                    trap 'rm -f "$TMP"' EXIT
+                    mnt="${mnt}"
+                    threshold=${toString usageThresholdPercent}
+
+                    mounted=0
+                    fstype=""
+                    if
+                      findmnt -n -o TARGET "$mnt" 2>/dev/null | grep -qx "$mnt" \
+                        && timeout 15 ls -A "$mnt" >/dev/null 2>&1
+                    then
+                      mounted=1
+                      fstype="$(findmnt -no FSTYPE "$mnt" 2>/dev/null || echo unknown)"
+                    fi
+
+                    usage=0
+                    over=0
+                    free_bytes=0
+                    total_bytes=0
+                    if [ "$mounted" = 1 ]; then
+                      usage="$(df --output=pcent "$mnt" | tail -n1 | tr -dc '0-9')"
+                      free_bytes="$(df -B1 --output=avail "$mnt" | tail -n1 | tr -dc '0-9')"
+                      total_bytes="$(df -B1 --output=size "$mnt" | tail -n1 | tr -dc '0-9')"
+                      if [ "''${usage:-0}" -ge "$threshold" ] 2>/dev/null; then
+                        over=1
+                      fi
+                    fi
+
+                    # xfs_mounted doubles as the "is actually XFS" signal: the
+                    # check is written as a separate gauge so a misconfigured
+                    # mount (wrong fs on the partition) is distinguishable from
+                    # a dead one.
+                    is_xfs=0
+                    if [ "$fstype" = "xfs" ]; then
+                      is_xfs=1
+                    fi
+
+                    mkdir -p "${textfileDir}"
+                    cat > "$TMP" <<METRICS
+                    # HELP clickhouse_xfs_mounted 1 if the ClickHouse data mount is mounted and answering I/O, 0 otherwise
+                    # TYPE clickhouse_xfs_mounted gauge
+                    clickhouse_xfs_mounted ''${mounted}
+                    # HELP clickhouse_xfs_is_xfs 1 if the mounted filesystem type is xfs (0 = wrong fs or unmounted)
+                    # TYPE clickhouse_xfs_is_xfs gauge
+                    clickhouse_xfs_is_xfs ''${is_xfs}
+                    # HELP clickhouse_xfs_usage_percent ClickHouse data filesystem usage percentage (0-100)
+                    # TYPE clickhouse_xfs_usage_percent gauge
+                    clickhouse_xfs_usage_percent ''${usage}
+                    # HELP clickhouse_xfs_usage_over_threshold 1 if usage >= ${toString usageThresholdPercent}%
+                    # TYPE clickhouse_xfs_usage_over_threshold gauge
+                    clickhouse_xfs_usage_over_threshold ''${over}
+                    # HELP clickhouse_xfs_free_bytes Free bytes on the ClickHouse data filesystem
+                    # TYPE clickhouse_xfs_free_bytes gauge
+                    clickhouse_xfs_free_bytes ''${free_bytes}
+                    # HELP clickhouse_xfs_total_bytes Total bytes on the ClickHouse data filesystem
+                    # TYPE clickhouse_xfs_total_bytes gauge
+                    clickhouse_xfs_total_bytes ''${total_bytes}
+                    METRICS
+                    mv "$TMP" "$OUT"
+                  '';
+                }
+              );
+
+              systemd.timers.clickhouse-xfs-metrics = lib.mkIf hasClickhouseDataMount {
+                description = "Collect ClickHouse XFS data mount metrics every 5 minutes";
+                wantedBy = [ "timers.target" ];
+                timerConfig = {
+                  OnBootSec = "2min";
+                  OnUnitActiveSec = "5min";
+                  Persistent = true;
+                };
+              };
+            })
+
+            (lib.mkIf cfg.components.queryService {
+              systemd.services.signoz = {
+                description = "SigNoz Observability Platform";
+                after = lib.optional cfg.components.clickhouse "clickhouse.service";
+                requires = lib.optional cfg.components.clickhouse "clickhouse.service";
+                inherit onFailure;
+                wantedBy = [ "signoz.target" ];
+                startLimitBurst = 5;
+                startLimitIntervalSec = 300;
+                # The rules engine bakes external_url into every rule object at
+                # construction (startup); without this trigger signoz.yaml
+                # changes never apply — the 2026-08-16 ruleSource=localhost bug
+                # was exactly this: config deployed, process never restarted.
+                # The web dist is also read/indexed at startup only.
+                restartTriggers = [
+                  config.environment.etc."signoz/signoz.yaml".source
+                  config.environment.etc."signoz/web".source
                 ];
                 serviceConfig = lib.mkMerge [
                   {
-                    Type = "oneshot";
-                    User = "root";
+                    Type = "simple";
+                    User = "signoz";
+                    Group = "signoz";
+                    WorkingDirectory = cfg.settings.queryService.dataDir;
+                    ExecStart =
+                      let
+                        wrapper = pkgs.writeShellApplication {
+                          name = "signoz-wrapper";
+                          runtimeInputs = [ pkgs.openssl ];
+                          text = ''
+                            # Impersonation mode: all requests treated as root admin.
+                            # Auth is enforced by Caddy protectedVHost (Layer 2):
+                            # LAN bypass + external oauth2-proxy forward-auth.
+                            export SIGNOZ_IDENTN_IMPERSONATION_ENABLED=true
+                            export SIGNOZ_IDENTN_TOKENIZER_ENABLED=false
+                            export SIGNOZ_IDENTN_APIKEY_ENABLED=false
+                            export SIGNOZ_USER_ROOT_ENABLED=true
+                            export SIGNOZ_USER_ROOT_EMAIL="admin@${config.networking.domain}"
+                            export SIGNOZ_USER_ROOT_ORG_NAME="default"
+                            ROOT_PW_FILE="${cfg.settings.queryService.dataDir}/root-password"
+                            if [ ! -f "$ROOT_PW_FILE" ]; then
+                              openssl rand -base64 48 > "$ROOT_PW_FILE"
+                              chmod 400 "$ROOT_PW_FILE"
+                            fi
+                            SIGNOZ_USER_ROOT_PASSWORD="$(cat "$ROOT_PW_FILE")"
+                            export SIGNOZ_USER_ROOT_PASSWORD
+                            exec ${lib.getExe packages.signoz} server --config /etc/signoz/signoz.yaml
+                          '';
+                        };
+                      in
+                      "${lib.getExe wrapper}";
+                    ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}/api/v1/version";
+                    TimeoutStartSec = "3min";
+                    ExecStartPre =
+                      let
+                        clearMigrationLock = pkgs.writeShellApplication {
+                          name = "signoz-clear-migration-lock";
+                          runtimeInputs = [ pkgs.sqlite ];
+                          text = ''
+                            sqlite3 '${cfg.settings.queryService.dataDir}/signoz.db' 'DELETE FROM migration_lock;' 2>/dev/null || true
+                          '';
+                        };
+                      in
+                      "${lib.getExe clearMigrationLock}";
                   }
                   (harden {
-                    ReadWritePaths = [ textfileDir ];
-                    # Sticky-dir rename over a foreign-owned prom (mail-relay
-                    # 2026-09-02..06 class).
-                    CapabilityBoundingSet = "CAP_FOWNER";
-                    MemoryMax = "128M";
+                    MemoryMax = lib.mkForce "1G";
+                    ReadWritePaths = [ cfg.settings.queryService.dataDir ];
                   })
-                  (serviceOneshotDefaults { })
+                  (serviceDefaults { RestartSec = "10"; })
+                  ioTier.background
+                  {
+                    Environment = [ "GOMEMLIMIT=768MiB" ];
+                  }
                 ];
-                script = ''
-                  set -eu
-                  OUT="${textfileDir}/clickhouse-xfs.prom"
-                  # Unique tmp per run (mktemp): a fixed .tmp name collides with
-                  # stale foreign-owned leftovers in the sticky 1777 textfile
-                  # dir (mail-relay 2026-09-02..06 outage class).
-                  mkdir -p "${textfileDir}"
-                  TMP="$(mktemp "${textfileDir}/clickhouse-xfs.prom.XXXXXX")"
-                  chmod 644 "$TMP"
-                  trap 'rm -f "$TMP"' EXIT
-                  mnt="${mnt}"
-                  threshold=${toString usageThresholdPercent}
+              };
 
-                  mounted=0
-                  fstype=""
-                  if
-                    findmnt -n -o TARGET "$mnt" 2>/dev/null | grep -qx "$mnt" \
-                      && timeout 15 ls -A "$mnt" >/dev/null 2>&1
-                  then
-                    mounted=1
-                    fstype="$(findmnt -no FSTYPE "$mnt" 2>/dev/null || echo unknown)"
-                  fi
+              systemd.services.signoz-provision = {
+                description = "SigNoz Provisioning — deploy alert rules, channels, and dashboards";
+                after = [ "signoz.service" ];
+                wants = [ "signoz.service" ];
+                inherit onFailure;
+                wantedBy = [ "signoz.service" ];
+                path = [
+                  pkgs.curl
+                  pkgs.jq
+                  pkgs.coreutils
+                ];
+                restartTriggers = [
+                  (lib.getExe provisionScript)
+                ]
+                ++ lib.catAttrs "source" (lib.attrValues alerts.rules)
+                ++ lib.catAttrs "source" (lib.attrValues alerts.dashboards);
+                serviceConfig = lib.mkMerge [
+                  (harden {
+                    MemoryMax = "512M";
+                    ReadWritePaths = [ cfg.settings.queryService.dataDir ];
+                  })
+                  {
+                    Type = "oneshot";
+                    RemainAfterExit = true;
+                  }
+                ];
+                preStart = lib.getExe waitReadyScript;
+                script = lib.getExe provisionScript;
+              };
 
-                  usage=0
-                  over=0
-                  free_bytes=0
-                  total_bytes=0
-                  if [ "$mounted" = 1 ]; then
-                    usage="$(df --output=pcent "$mnt" | tail -n1 | tr -dc '0-9')"
-                    free_bytes="$(df -B1 --output=avail "$mnt" | tail -n1 | tr -dc '0-9')"
-                    total_bytes="$(df -B1 --output=size "$mnt" | tail -n1 | tr -dc '0-9')"
-                    if [ "''${usage:-0}" -ge "$threshold" ] 2>/dev/null; then
-                      over=1
-                    fi
-                  fi
+              environment.etc =
+                alerts.rules
+                // alerts.dashboards
+                // {
+                  "signoz/web".source = "${packages.frontend}/share/signoz/web";
+                };
+            })
 
-                  # xfs_mounted doubles as the "is actually XFS" signal: the
-                  # check is written as a separate gauge so a misconfigured
-                  # mount (wrong fs on the partition) is distinguishable from
-                  # a dead one.
-                  is_xfs=0
-                  if [ "$fstype" = "xfs" ]; then
-                    is_xfs=1
-                  fi
+            signozMetrics
 
-                  mkdir -p "${textfileDir}"
-                  cat > "$TMP" <<METRICS
-                  # HELP clickhouse_xfs_mounted 1 if the ClickHouse data mount is mounted and answering I/O, 0 otherwise
-                  # TYPE clickhouse_xfs_mounted gauge
-                  clickhouse_xfs_mounted ''${mounted}
-                  # HELP clickhouse_xfs_is_xfs 1 if the mounted filesystem type is xfs (0 = wrong fs or unmounted)
-                  # TYPE clickhouse_xfs_is_xfs gauge
-                  clickhouse_xfs_is_xfs ''${is_xfs}
-                  # HELP clickhouse_xfs_usage_percent ClickHouse data filesystem usage percentage (0-100)
-                  # TYPE clickhouse_xfs_usage_percent gauge
-                  clickhouse_xfs_usage_percent ''${usage}
-                  # HELP clickhouse_xfs_usage_over_threshold 1 if usage >= ${toString usageThresholdPercent}%
-                  # TYPE clickhouse_xfs_usage_over_threshold gauge
-                  clickhouse_xfs_usage_over_threshold ''${over}
-                  # HELP clickhouse_xfs_free_bytes Free bytes on the ClickHouse data filesystem
-                  # TYPE clickhouse_xfs_free_bytes gauge
-                  clickhouse_xfs_free_bytes ''${free_bytes}
-                  # HELP clickhouse_xfs_total_bytes Total bytes on the ClickHouse data filesystem
-                  # TYPE clickhouse_xfs_total_bytes gauge
-                  clickhouse_xfs_total_bytes ''${total_bytes}
-                  METRICS
-                  mv "$TMP" "$OUT"
+            (lib.mkIf cfg.components.cadvisor {
+              systemd.services.cadvisor = {
+                description = "cAdvisor — container metrics";
+                wantedBy = [ "signoz.target" ];
+                after = [ "docker.service" ];
+                requires = [ "docker.service" ];
+                startLimitBurst = 5;
+                startLimitIntervalSec = 300;
+                serviceConfig = lib.mkMerge [
+                  {
+                    ExecStart = "${lib.getExe pkgs.cadvisor} --listen_ip=127.0.0.1 --port=${toString cfg.settings.cadvisorPort} --docker_only=true";
+                    NoNewPrivileges = lib.mkForce false;
+                  }
+                  (harden { })
+                  (serviceDefaults { })
+                ];
+              };
+            })
+
+            (lib.mkIf cfg.components.otelCollector {
+              users.groups.systemd-journal-member = lib.mkIf (
+                cfg.components.nodeExporter || cfg.components.cadvisor
+              ) { };
+              systemd.services.signoz-collector = {
+                description = "SigNoz OTel Collector";
+                inherit onFailure;
+                after = [ "signoz.service" ] ++ lib.optional cfg.components.clickhouse "clickhouse.service";
+                wants = [ "signoz.service" ] ++ lib.optional cfg.components.clickhouse "clickhouse.service";
+                wantedBy = [ "signoz.target" ];
+                startLimitBurst = 5;
+                startLimitIntervalSec = 300;
+                # The collector reads its config at startup only — without this
+                # trigger a new collector.yaml deploys silently inert (same trap
+                # class as the signoz.yaml ruleSource=localhost bug).
+                restartTriggers = [
+                  config.environment.etc."signoz/collector.yaml".source
+                ];
+                preStart = ''
+                  ${packages.otelCollector}/bin/signoz-otel-collector migrate bootstrap \
+                    --clickhouse-dsn "${cfg.settings.clickhouse.url}" \
+                    --clickhouse-cluster "default" \
+                    --clickhouse-replication=false || true
+                  ${packages.otelCollector}/bin/signoz-otel-collector migrate sync up \
+                    --clickhouse-dsn "${cfg.settings.clickhouse.url}" \
+                    --clickhouse-cluster "default" \
+                    --clickhouse-replication=false || true
                 '';
-              }
-            );
-
-            systemd.timers.clickhouse-xfs-metrics = lib.mkIf hasClickhouseDataMount {
-              description = "Collect ClickHouse XFS data mount metrics every 5 minutes";
-              wantedBy = [ "timers.target" ];
-              timerConfig = {
-                OnBootSec = "2min";
-                OnUnitActiveSec = "5min";
-                Persistent = true;
-              };
-            };
-          })
-
-          (lib.mkIf cfg.components.queryService {
-            systemd.services.signoz = {
-              description = "SigNoz Observability Platform";
-              after = lib.optional cfg.components.clickhouse "clickhouse.service";
-              requires = lib.optional cfg.components.clickhouse "clickhouse.service";
-              inherit onFailure;
-              wantedBy = [ "signoz.target" ];
-              startLimitBurst = 5;
-              startLimitIntervalSec = 300;
-              # The rules engine bakes external_url into every rule object at
-              # construction (startup); without this trigger signoz.yaml
-              # changes never apply — the 2026-08-16 ruleSource=localhost bug
-              # was exactly this: config deployed, process never restarted.
-              # The web dist is also read/indexed at startup only.
-              restartTriggers = [
-                config.environment.etc."signoz/signoz.yaml".source
-                config.environment.etc."signoz/web".source
-              ];
-              serviceConfig = lib.mkMerge [
-                {
-                  Type = "simple";
-                  User = "signoz";
-                  Group = "signoz";
-                  WorkingDirectory = cfg.settings.queryService.dataDir;
-                  ExecStart =
-                    let
-                      wrapper = pkgs.writeShellApplication {
-                        name = "signoz-wrapper";
-                        runtimeInputs = [ pkgs.openssl ];
-                        text = ''
-                          # Impersonation mode: all requests treated as root admin.
-                          # Auth is enforced by Caddy protectedVHost (Layer 2):
-                          # LAN bypass + external oauth2-proxy forward-auth.
-                          export SIGNOZ_IDENTN_IMPERSONATION_ENABLED=true
-                          export SIGNOZ_IDENTN_TOKENIZER_ENABLED=false
-                          export SIGNOZ_IDENTN_APIKEY_ENABLED=false
-                          export SIGNOZ_USER_ROOT_ENABLED=true
-                          export SIGNOZ_USER_ROOT_EMAIL="admin@${config.networking.domain}"
-                          export SIGNOZ_USER_ROOT_ORG_NAME="default"
-                          ROOT_PW_FILE="${cfg.settings.queryService.dataDir}/root-password"
-                          if [ ! -f "$ROOT_PW_FILE" ]; then
-                            openssl rand -base64 48 > "$ROOT_PW_FILE"
-                            chmod 400 "$ROOT_PW_FILE"
-                          fi
-                          SIGNOZ_USER_ROOT_PASSWORD="$(cat "$ROOT_PW_FILE")"
-                          export SIGNOZ_USER_ROOT_PASSWORD
-                          exec ${lib.getExe packages.signoz} server --config /etc/signoz/signoz.yaml
-                        '';
-                      };
-                    in
-                    "${lib.getExe wrapper}";
-                  ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}/api/v1/version";
-                  TimeoutStartSec = "3min";
-                  ExecStartPre =
-                    let
-                      clearMigrationLock = pkgs.writeShellApplication {
-                        name = "signoz-clear-migration-lock";
-                        runtimeInputs = [ pkgs.sqlite ];
-                        text = ''
-                          sqlite3 '${cfg.settings.queryService.dataDir}/signoz.db' 'DELETE FROM migration_lock;' 2>/dev/null || true
-                        '';
-                      };
-                    in
-                    "${lib.getExe clearMigrationLock}";
-                }
-                (harden {
-                  MemoryMax = lib.mkForce "1G";
-                  ReadWritePaths = [ cfg.settings.queryService.dataDir ];
-                })
-                (serviceDefaults { RestartSec = "10"; })
-                ioTier.background
-                {
-                  Environment = [ "GOMEMLIMIT=768MiB" ];
-                }
-              ];
-            };
-
-            systemd.services.signoz-provision = {
-              description = "SigNoz Provisioning — deploy alert rules, channels, and dashboards";
-              after = [ "signoz.service" ];
-              wants = [ "signoz.service" ];
-              inherit onFailure;
-              wantedBy = [ "signoz.service" ];
-              path = [
-                pkgs.curl
-                pkgs.jq
-                pkgs.coreutils
-              ];
-              restartTriggers = [
-                (lib.getExe provisionScript)
-              ]
-              ++ lib.catAttrs "source" (lib.attrValues alerts.rules)
-              ++ lib.catAttrs "source" (lib.attrValues alerts.dashboards);
-              serviceConfig = lib.mkMerge [
-                (harden {
-                  MemoryMax = "512M";
-                  ReadWritePaths = [ cfg.settings.queryService.dataDir ];
-                })
-                {
-                  Type = "oneshot";
-                  RemainAfterExit = true;
-                }
-              ];
-              preStart = lib.getExe waitReadyScript;
-              script = lib.getExe provisionScript;
-            };
-
-            environment.etc =
-              alerts.rules
-              // alerts.dashboards
-              // {
-                "signoz/web".source = "${packages.frontend}/share/signoz/web";
-              };
-          })
-
-          signozMetrics
-
-          (lib.mkIf cfg.components.cadvisor {
-            systemd.services.cadvisor = {
-              description = "cAdvisor — container metrics";
-              wantedBy = [ "signoz.target" ];
-              after = [ "docker.service" ];
-              requires = [ "docker.service" ];
-              startLimitBurst = 5;
-              startLimitIntervalSec = 300;
-              serviceConfig = lib.mkMerge [
-                {
-                  ExecStart = "${lib.getExe pkgs.cadvisor} --listen_ip=127.0.0.1 --port=${toString cfg.settings.cadvisorPort} --docker_only=true";
-                  NoNewPrivileges = lib.mkForce false;
-                }
-                (harden { })
-                (serviceDefaults { })
-              ];
-            };
-          })
-
-          (lib.mkIf cfg.components.otelCollector {
-            users.groups.systemd-journal-member = lib.mkIf (
-              cfg.components.nodeExporter || cfg.components.cadvisor
-            ) { };
-            systemd.services.signoz-collector = {
-              description = "SigNoz OTel Collector";
-              inherit onFailure;
-              after = [ "signoz.service" ] ++ lib.optional cfg.components.clickhouse "clickhouse.service";
-              wants = [ "signoz.service" ] ++ lib.optional cfg.components.clickhouse "clickhouse.service";
-              wantedBy = [ "signoz.target" ];
-              startLimitBurst = 5;
-              startLimitIntervalSec = 300;
-              # The collector reads its config at startup only — without this
-              # trigger a new collector.yaml deploys silently inert (same trap
-              # class as the signoz.yaml ruleSource=localhost bug).
-              restartTriggers = [
-                config.environment.etc."signoz/collector.yaml".source
-              ];
-              preStart = ''
-                ${packages.otelCollector}/bin/signoz-otel-collector migrate bootstrap \
-                  --clickhouse-dsn "${cfg.settings.clickhouse.url}" \
-                  --clickhouse-cluster "default" \
-                  --clickhouse-replication=false || true
-                ${packages.otelCollector}/bin/signoz-otel-collector migrate sync up \
-                  --clickhouse-dsn "${cfg.settings.clickhouse.url}" \
-                  --clickhouse-cluster "default" \
-                  --clickhouse-replication=false || true
-              '';
-              serviceConfig = lib.mkMerge [
-                {
-                  Type = "simple";
-                  User = "signoz";
-                  Group = "signoz";
-                  SupplementaryGroups = lib.optional (
-                    cfg.components.nodeExporter || cfg.components.cadvisor
-                  ) "systemd-journal";
-                  WorkingDirectory = cfg.settings.queryService.dataDir;
-                  ExecStart = "${lib.getExe packages.otelCollector} --config /etc/signoz/collector.yaml";
-                }
-                (harden {
-                  MemoryMax = lib.mkForce "1G";
-                })
-                (serviceDefaults { RestartSec = "10"; })
-                ioTier.background
-                {
-                  # 75% of MemoryMax (1G) — matches the query service pattern.
-                  # Was 384MiB (37.5%, cargo-culted from a 512M service) since
-                  # the ZRAM tuning commit; normalized 2026-08-14.
-                  Environment = [ "GOMEMLIMIT=768MiB" ];
-                }
-              ];
-            };
-            environment.etc."signoz/collector.yaml".text = lib.generators.toYAML { } {
-              receivers = {
-                otlp = {
-                  protocols = {
-                    grpc = {
-                      endpoint = "127.0.0.1:${toString cfg.settings.collector.port}";
-                    };
-                    http = {
-                      endpoint = "127.0.0.1:${toString cfg.settings.collector.httpPort}";
-                    };
-                  };
-                };
-              }
-              // lib.optionalAttrs cfg.components.nodeExporter {
-                prometheus = {
-                  config = {
-                    global = {
-                      scrape_interval = "30s";
-                    };
-                    scrape_configs = [
-                      {
-                        job_name = "node-exporter";
-                        static_configs = [
-                          { targets = [ "127.0.0.1:${toString config.services.prometheus.exporters.node.port}" ]; }
-                        ];
-                      }
-                      {
-                        job_name = "cadvisor";
-                        static_configs = [ { targets = [ "127.0.0.1:${toString cfg.settings.cadvisorPort}" ]; } ];
-                      }
-                      {
-                        job_name = "caddy";
-                        static_configs = [ { targets = [ "127.0.0.1:${toString ports.caddy-metrics}" ]; } ];
-                      }
-                      {
-                        job_name = "pocket-id";
-                        static_configs = [
-                          { targets = [ "127.0.0.1:${toString config.services.pocket-id-config.metricsPort}" ]; }
-                        ];
-                        metrics_path = "/metrics";
-                      }
-                      {
-                        job_name = "dnsblockd";
-                        static_configs = [
-                          { targets = [ "127.0.0.1:${toString config.services.dns-blocker.statsPort}" ]; }
-                        ];
-                        metrics_path = "/metrics";
-                      }
-                      {
-                        job_name = "emeet-pixyd";
-                        static_configs = [ { targets = [ "127.0.0.1:${toString ports.emeet-pixyd}" ]; } ];
-                        metrics_path = "/metrics";
-                      }
-                      {
-                        # The collector's own self-metrics (bound to :8888 by
-                        # the OTel runtime): receiver accepted/sent rates,
-                        # export failures, processor drops, process health.
-                        # Feeds the overview dashboard telemetry panels and the
-                        # Telemetry Collector Down / Export Failures alerts.
-                        job_name = "signoz-collector";
-                        static_configs = [ { targets = [ "127.0.0.1:${toString ports.signoz-collector-metrics}" ]; } ];
-                      }
-                      {
-                        # ClickHouse's own prometheus endpoint (enabled in
-                        # extraServerConfig below): uptime, parts, merges,
-                        # memory, disks — the telemetry store observing itself.
-                        job_name = "clickhouse";
-                        static_configs = [ { targets = [ "127.0.0.1:${toString ports.signoz-clickhouse-metrics}" ]; } ];
-                        metrics_path = "/metrics";
-                      }
-                      {
-                        # Docker engine metrics (metrics-addr in
-                        # default-services.nix): container counts, daemon health.
-                        job_name = "docker-engine";
-                        static_configs = [ { targets = [ "127.0.0.1:${toString ports.docker-engine-metrics}" ]; } ];
-                        metrics_path = "/metrics";
-                      }
-                    ];
-                  };
-                };
-              }
-              // lib.optionalAttrs cfg.components.journaldLogs {
-                journald = {
-                  directory = "/var/log/journal";
-                  # Whole-journal collection at info+ (PRIORITY 0-5). The old
-                  # 10-unit warning-only config produced ~100 rows/day of raw
-                  # JSON dumps with no severity/service metadata. Total journal
-                  # volume is ~5 MB/h (~6 entries/s) — measured 2026-08-16,
-                  # 500x below the 2026-08 CPU-burn era (monitor365-server at
-                  # 900 entries/s). journald's own per-unit rate limiting
-                  # (10k/30s) bounds a recurrence; the collector self-scrape
-                  # + export-failure alert watch the pipeline.
-                  all = true;
-                  priority = "info";
-                  # NEVER "beginning": without persistent cursor state a
-                  # restart would re-ingest the entire journal.
-                  start_at = "end";
-                };
-              };
-              processors = {
-                # journald entries arrive as body=Map(every journal field),
-                # no severity, no service.name. Extract the useful shape:
-                # body=MESSAGE, severity from PRIORITY (string "0".."7"),
-                # resource service.name from the unit (containers win).
-                # OTLP logs from instrumented services pass through untouched
-                # (guarded on IsMap(body) + PRIORITY, which only journald has).
-                "transform/journald" =
-                  let
-                    journaldGuard = ''IsMap(body) and body["PRIORITY"] != nil'';
-                    # One OTTL statement per list element — the receiver does
-                    # not split embedded newlines.
-                    severity = prio: num: text: [
-                      ''set(severity_number, ${num}) where ${journaldGuard} and body["PRIORITY"] == "${prio}"''
-                      ''set(severity_text, "${text}") where ${journaldGuard} and body["PRIORITY"] == "${prio}"''
-                    ];
-                  in
+                serviceConfig = lib.mkMerge [
                   {
-                    log_statements = [
-                      {
-                        context = "log";
-                        statements = [
-                          ''set(attributes["systemd_unit"], body["_SYSTEMD_UNIT"]) where ${journaldGuard} and body["_SYSTEMD_UNIT"] != nil''
-                          ''set(attributes["syslog_identifier"], body["SYSLOG_IDENTIFIER"]) where ${journaldGuard} and body["SYSLOG_IDENTIFIER"] != nil''
-                          ''set(attributes["pid"], body["_PID"]) where ${journaldGuard} and body["_PID"] != nil''
-                          ''set(attributes["container_name"], body["CONTAINER_NAME"]) where ${journaldGuard} and body["CONTAINER_NAME"] != nil''
-                          ''set(attributes["code_file"], body["CODE_FILE"]) where ${journaldGuard} and body["CODE_FILE"] != nil''
-                          ''set(attributes["code_func"], body["CODE_FUNC"]) where ${journaldGuard} and body["CODE_FUNC"] != nil''
-                          # service.name precedence: kernel identifier < unit < container
-                          ''set(resource.attributes["service.name"], body["SYSLOG_IDENTIFIER"]) where ${journaldGuard} and body["SYSLOG_IDENTIFIER"] != nil''
-                          ''set(resource.attributes["service.name"], body["_SYSTEMD_UNIT"]) where ${journaldGuard} and body["_SYSTEMD_UNIT"] != nil''
-                          ''set(resource.attributes["service.name"], body["CONTAINER_NAME"]) where ${journaldGuard} and body["CONTAINER_NAME"] != nil''
-                        ]
-                        ++ severity "0" "SEVERITY_NUMBER_FATAL" "FATAL"
-                        ++ severity "1" "SEVERITY_NUMBER_FATAL" "FATAL"
-                        ++ severity "2" "SEVERITY_NUMBER_FATAL" "FATAL"
-                        ++ severity "3" "SEVERITY_NUMBER_ERROR" "ERROR"
-                        ++ severity "4" "SEVERITY_NUMBER_WARN" "WARN"
-                        ++ severity "5" "SEVERITY_NUMBER_INFO" "INFO"
-                        ++ severity "6" "SEVERITY_NUMBER_DEBUG" "DEBUG"
-                        ++ severity "7" "SEVERITY_NUMBER_TRACE" "TRACE"
-                        ++ [
-                          # MUST be last: replaces the map body, after which
-                          # the field accesses above would return nil.
-                          ''set(body, body["MESSAGE"]) where ${journaldGuard} and body["MESSAGE"] != nil''
-                        ];
-                      }
-                    ];
-                  };
-                memory_limiter = {
-                  check_interval = "1s";
-                  limit_mib = 768;
-                  spike_limit_mib = 192;
-                };
-                batch = {
-                  timeout = "5s";
-                  send_batch_size = 8192;
-                };
-              };
-              exporters = {
-                clickhousetraces = {
-                  datasource = "${cfg.settings.clickhouse.url}/${cfg.settings.clickhouse.tracesDatabase}";
-                  retry_on_failure = {
-                    enabled = true;
-                    initial_interval = "5s";
-                    max_interval = "30s";
-                    max_elapsed_time = "300s";
-                  };
-                };
-                signozclickhousemetrics = {
-                  dsn = "${cfg.settings.clickhouse.url}/${cfg.settings.clickhouse.database}";
-                };
-                clickhouselogsexporter = {
-                  dsn = "${cfg.settings.clickhouse.url}/${cfg.settings.clickhouse.logsDatabase}";
-                  timeout = "10s";
-                  use_new_schema = true;
-                };
-              };
-              service = {
-                telemetry = {
-                  metrics = {
-                    level = "basic";
-                  };
-                };
-                pipelines = {
-                  traces = {
-                    receivers = [ "otlp" ];
-                    # memory_limiter MUST be first; batch last.
-                    processors = [
-                      "memory_limiter"
-                      "batch"
-                    ];
-                    exporters = [ "clickhousetraces" ];
-                  };
-                  metrics = {
-                    receivers = [ "otlp" ] ++ lib.optional cfg.components.nodeExporter "prometheus";
-                    processors = [
-                      "memory_limiter"
-                      "batch"
-                    ];
-                    exporters = [ "signozclickhousemetrics" ];
-                  };
-                  logs = {
-                    receivers = [
-                      "otlp"
-                    ]
-                    ++ lib.optional cfg.components.journaldLogs "journald";
-                    processors = [
-                      "memory_limiter"
-                      "transform/journald"
-                      "batch"
-                    ];
-                    exporters = [ "clickhouselogsexporter" ];
-                  };
-                };
-              };
-            };
-          })
-
-          { }
-
-          {
-            assertions = lib.optionals cfg.enable [
-              {
-                assertion =
-                  !(lib.hasInfix "<background_pool_size>2</background_pool_size>" (
-                    config.services.clickhouse.extraServerConfig or ""
-                  ));
-                message = "signoz: background_pool_size=2 triggers ClickHouse merge_tree sanity check failures. Use the default (16).";
-              }
-            ];
-          }
-
-          # Service-integration registry entries: the two ClickHouse XFS
-          # data-mount checks, the SigNoz vHost (Layer 2 — impersonation
-          # mode has no internal auth; LAN bypass keeps oauth2-proxy
-          # failures off the LAN path), the SigNoz + cAdvisor tiles, and
-          # system-health monitoring of the signoz target unit. Replaces
-          # rows in gatus-config.nix / homepage.nix.
-          (lib.optionalAttrs (options ? services.integration) {
-            services.integration = {
-              signoz = {
-                enable = cfg.enable;
-                subdomain = "signoz";
-                port = cfg.settings.queryService.port;
-                vHost.layer = "protected";
-                monitored = true;
-                checks = [
-                  {
-                    name = "ClickHouse Data Mount";
-                    group = "Filesystem";
-                    url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
-                    interval = "5m";
-                    conditions = [
-                      "[STATUS] == 200"
-                      # pat() is a GLOB (HELP comments contain "clickhouse_xfs_mounted 1"):
-                      # assert absence of the 0-value line plus presence (buildcache pattern)
-                      "[BODY] != pat(*clickhouse_xfs_mounted 0\n*)"
-                      "[BODY] == pat(*\nclickhouse_xfs_mounted *)"
-                      "[BODY] != pat(*clickhouse_xfs_is_xfs 0\n*)"
-                      "[BODY] == pat(*\nclickhouse_xfs_is_xfs *)"
-                    ];
-                    alert = "ClickHouse XFS data mount (/var/lib/clickhouse) is unmounted, EIO-dead, or not XFS — clickhouse.service refuses to start by design (ConditionPathIsMountPoint, no telemetry written to the root fs). Observability ingestion is DOWN. Check: findmnt /var/lib/clickhouse, systemctl status var-lib-clickhouse.mount, dmesg | grep -i xfs. If the partition/fs is missing: scripts/migrate-clickhouse-xfs.sh (prepare phase), then redeploy.";
+                    Type = "simple";
+                    User = "signoz";
+                    Group = "signoz";
+                    SupplementaryGroups = lib.optional (
+                      cfg.components.nodeExporter || cfg.components.cadvisor
+                    ) "systemd-journal";
+                    WorkingDirectory = cfg.settings.queryService.dataDir;
+                    ExecStart = "${lib.getExe packages.otelCollector} --config /etc/signoz/collector.yaml";
                   }
+                  (harden {
+                    MemoryMax = lib.mkForce "1G";
+                  })
+                  (serviceDefaults { RestartSec = "10"; })
+                  ioTier.background
                   {
-                    name = "ClickHouse Data Usage";
-                    group = "Filesystem";
-                    url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
-                    interval = "30m";
-                    conditions = [
-                      "[STATUS] == 200"
-                      "[BODY] == pat(*clickhouse_xfs_usage_over_threshold 0*)"
-                    ];
-                    alert = "ClickHouse XFS data filesystem exceeds 85% — XFS cannot shrink and telemetry retention grows unboundedly. Check per-table sizes (clickhouse-client 'SELECT database, formatReadableSize(sum(bytes_on_disk)) FROM system.parts GROUP BY database') and tighten TTLs in signoz.nix (clickhouseInternalLogs / signoz_logs / signoz_traces retention).";
+                    # 75% of MemoryMax (1G) — matches the query service pattern.
+                    # Was 384MiB (37.5%, cargo-culted from a 512M service) since
+                    # the ZRAM tuning commit; normalized 2026-08-14.
+                    Environment = [ "GOMEMLIMIT=768MiB" ];
                   }
                 ];
-                homepage = {
-                  name = "SigNoz";
-                  group = "Monitoring";
-                  description = "Observability Platform (Traces, Metrics, Logs)";
-                  icon = "signoz.png";
+              };
+              environment.etc."signoz/collector.yaml".text = lib.generators.toYAML { } {
+                receivers = {
+                  otlp = {
+                    protocols = {
+                      grpc = {
+                        endpoint = "127.0.0.1:${toString cfg.settings.collector.port}";
+                      };
+                      http = {
+                        endpoint = "127.0.0.1:${toString cfg.settings.collector.httpPort}";
+                      };
+                    };
+                  };
+                }
+                // lib.optionalAttrs cfg.components.nodeExporter {
+                  prometheus = {
+                    config = {
+                      global = {
+                        scrape_interval = "30s";
+                      };
+                      scrape_configs = [
+                        {
+                          job_name = "node-exporter";
+                          static_configs = [
+                            { targets = [ "127.0.0.1:${toString config.services.prometheus.exporters.node.port}" ]; }
+                          ];
+                        }
+                        {
+                          job_name = "cadvisor";
+                          static_configs = [ { targets = [ "127.0.0.1:${toString cfg.settings.cadvisorPort}" ]; } ];
+                        }
+                        {
+                          job_name = "caddy";
+                          static_configs = [ { targets = [ "127.0.0.1:${toString ports.caddy-metrics}" ]; } ];
+                        }
+                        {
+                          job_name = "pocket-id";
+                          static_configs = [
+                            { targets = [ "127.0.0.1:${toString config.services.pocket-id-config.metricsPort}" ]; }
+                          ];
+                          metrics_path = "/metrics";
+                        }
+                        {
+                          job_name = "dnsblockd";
+                          static_configs = [
+                            { targets = [ "127.0.0.1:${toString config.services.dns-blocker.statsPort}" ]; }
+                          ];
+                          metrics_path = "/metrics";
+                        }
+                        {
+                          job_name = "emeet-pixyd";
+                          static_configs = [ { targets = [ "127.0.0.1:${toString ports.emeet-pixyd}" ]; } ];
+                          metrics_path = "/metrics";
+                        }
+                        {
+                          # The collector's own self-metrics (bound to :8888 by
+                          # the OTel runtime): receiver accepted/sent rates,
+                          # export failures, processor drops, process health.
+                          # Feeds the overview dashboard telemetry panels and the
+                          # Telemetry Collector Down / Export Failures alerts.
+                          job_name = "signoz-collector";
+                          static_configs = [ { targets = [ "127.0.0.1:${toString ports.signoz-collector-metrics}" ]; } ];
+                        }
+                        {
+                          # ClickHouse's own prometheus endpoint (enabled in
+                          # extraServerConfig below): uptime, parts, merges,
+                          # memory, disks — the telemetry store observing itself.
+                          job_name = "clickhouse";
+                          static_configs = [ { targets = [ "127.0.0.1:${toString ports.signoz-clickhouse-metrics}" ]; } ];
+                          metrics_path = "/metrics";
+                        }
+                        {
+                          # Docker engine metrics (metrics-addr in
+                          # default-services.nix): container counts, daemon health.
+                          job_name = "docker-engine";
+                          static_configs = [ { targets = [ "127.0.0.1:${toString ports.docker-engine-metrics}" ]; } ];
+                          metrics_path = "/metrics";
+                        }
+                      ];
+                    };
+                  };
+                }
+                // lib.optionalAttrs cfg.components.journaldLogs {
+                  journald = {
+                    directory = "/var/log/journal";
+                    # Whole-journal collection at info+ (PRIORITY 0-5). The old
+                    # 10-unit warning-only config produced ~100 rows/day of raw
+                    # JSON dumps with no severity/service metadata. Total journal
+                    # volume is ~5 MB/h (~6 entries/s) — measured 2026-08-16,
+                    # 500x below the 2026-08 CPU-burn era (monitor365-server at
+                    # 900 entries/s). journald's own per-unit rate limiting
+                    # (10k/30s) bounds a recurrence; the collector self-scrape
+                    # + export-failure alert watch the pipeline.
+                    all = true;
+                    priority = "info";
+                    # NEVER "beginning": without persistent cursor state a
+                    # restart would re-ingest the entire journal.
+                    start_at = "end";
+                  };
+                };
+                processors = {
+                  # journald entries arrive as body=Map(every journal field),
+                  # no severity, no service.name. Extract the useful shape:
+                  # body=MESSAGE, severity from PRIORITY (string "0".."7"),
+                  # resource service.name from the unit (containers win).
+                  # OTLP logs from instrumented services pass through untouched
+                  # (guarded on IsMap(body) + PRIORITY, which only journald has).
+                  "transform/journald" =
+                    let
+                      journaldGuard = ''IsMap(body) and body["PRIORITY"] != nil'';
+                      # One OTTL statement per list element — the receiver does
+                      # not split embedded newlines.
+                      severity = prio: num: text: [
+                        ''set(severity_number, ${num}) where ${journaldGuard} and body["PRIORITY"] == "${prio}"''
+                        ''set(severity_text, "${text}") where ${journaldGuard} and body["PRIORITY"] == "${prio}"''
+                      ];
+                    in
+                    {
+                      log_statements = [
+                        {
+                          context = "log";
+                          statements = [
+                            ''set(attributes["systemd_unit"], body["_SYSTEMD_UNIT"]) where ${journaldGuard} and body["_SYSTEMD_UNIT"] != nil''
+                            ''set(attributes["syslog_identifier"], body["SYSLOG_IDENTIFIER"]) where ${journaldGuard} and body["SYSLOG_IDENTIFIER"] != nil''
+                            ''set(attributes["pid"], body["_PID"]) where ${journaldGuard} and body["_PID"] != nil''
+                            ''set(attributes["container_name"], body["CONTAINER_NAME"]) where ${journaldGuard} and body["CONTAINER_NAME"] != nil''
+                            ''set(attributes["code_file"], body["CODE_FILE"]) where ${journaldGuard} and body["CODE_FILE"] != nil''
+                            ''set(attributes["code_func"], body["CODE_FUNC"]) where ${journaldGuard} and body["CODE_FUNC"] != nil''
+                            # service.name precedence: kernel identifier < unit < container
+                            ''set(resource.attributes["service.name"], body["SYSLOG_IDENTIFIER"]) where ${journaldGuard} and body["SYSLOG_IDENTIFIER"] != nil''
+                            ''set(resource.attributes["service.name"], body["_SYSTEMD_UNIT"]) where ${journaldGuard} and body["_SYSTEMD_UNIT"] != nil''
+                            ''set(resource.attributes["service.name"], body["CONTAINER_NAME"]) where ${journaldGuard} and body["CONTAINER_NAME"] != nil''
+                          ]
+                          ++ severity "0" "SEVERITY_NUMBER_FATAL" "FATAL"
+                          ++ severity "1" "SEVERITY_NUMBER_FATAL" "FATAL"
+                          ++ severity "2" "SEVERITY_NUMBER_FATAL" "FATAL"
+                          ++ severity "3" "SEVERITY_NUMBER_ERROR" "ERROR"
+                          ++ severity "4" "SEVERITY_NUMBER_WARN" "WARN"
+                          ++ severity "5" "SEVERITY_NUMBER_INFO" "INFO"
+                          ++ severity "6" "SEVERITY_NUMBER_DEBUG" "DEBUG"
+                          ++ severity "7" "SEVERITY_NUMBER_TRACE" "TRACE"
+                          ++ [
+                            # MUST be last: replaces the map body, after which
+                            # the field accesses above would return nil.
+                            ''set(body, body["MESSAGE"]) where ${journaldGuard} and body["MESSAGE"] != nil''
+                          ];
+                        }
+                      ];
+                    };
+                  memory_limiter = {
+                    check_interval = "1s";
+                    limit_mib = 768;
+                    spike_limit_mib = 192;
+                  };
+                  batch = {
+                    timeout = "5s";
+                    send_batch_size = 8192;
+                  };
+                };
+                exporters = {
+                  clickhousetraces = {
+                    datasource = "${cfg.settings.clickhouse.url}/${cfg.settings.clickhouse.tracesDatabase}";
+                    retry_on_failure = {
+                      enabled = true;
+                      initial_interval = "5s";
+                      max_interval = "30s";
+                      max_elapsed_time = "300s";
+                    };
+                  };
+                  signozclickhousemetrics = {
+                    dsn = "${cfg.settings.clickhouse.url}/${cfg.settings.clickhouse.database}";
+                  };
+                  clickhouselogsexporter = {
+                    dsn = "${cfg.settings.clickhouse.url}/${cfg.settings.clickhouse.logsDatabase}";
+                    timeout = "10s";
+                    use_new_schema = true;
+                  };
+                };
+                service = {
+                  telemetry = {
+                    metrics = {
+                      level = "basic";
+                    };
+                  };
+                  pipelines = {
+                    traces = {
+                      receivers = [ "otlp" ];
+                      # memory_limiter MUST be first; batch last.
+                      processors = [
+                        "memory_limiter"
+                        "batch"
+                      ];
+                      exporters = [ "clickhousetraces" ];
+                    };
+                    metrics = {
+                      receivers = [ "otlp" ] ++ lib.optional cfg.components.nodeExporter "prometheus";
+                      processors = [
+                        "memory_limiter"
+                        "batch"
+                      ];
+                      exporters = [ "signozclickhousemetrics" ];
+                    };
+                    logs = {
+                      receivers = [
+                        "otlp"
+                      ]
+                      ++ lib.optional cfg.components.journaldLogs "journald";
+                      processors = [
+                        "memory_limiter"
+                        "transform/journald"
+                        "batch"
+                      ];
+                      exporters = [ "clickhouselogsexporter" ];
+                    };
+                  };
                 };
               };
-              cadvisor = {
-                enable = cfg.enable;
-                vHost.layer = "none";
-                homepage = {
-                  name = "cAdvisor";
-                  group = "Monitoring";
-                  description = "Container Metrics";
-                  icon = "docker.png";
+            })
+
+            { }
+
+            {
+              assertions = lib.optionals cfg.enable [
+                {
+                  assertion =
+                    !(lib.hasInfix "<background_pool_size>2</background_pool_size>" (
+                      config.services.clickhouse.extraServerConfig or ""
+                    ));
+                  message = "signoz: background_pool_size=2 triggers ClickHouse merge_tree sanity check failures. Use the default (16).";
+                }
+              ];
+            }
+
+          ]
+        ))
+            # Service-integration registry entries: the two ClickHouse XFS
+            # data-mount checks, the SigNoz vHost (Layer 2 — impersonation
+            # mode has no internal auth; LAN bypass keeps oauth2-proxy
+            # failures off the LAN path), the SigNoz + cAdvisor tiles, and
+            # system-health monitoring of the signoz target unit. Replaces
+            # rows in gatus-config.nix / homepage.nix.
+            (lib.optionalAttrs (options ? services.integration) {
+              services.integration = {
+                signoz = {
+                  enable = cfg.enable;
+                  subdomain = "signoz";
+                  port = cfg.settings.queryService.port;
+                  vHost.layer = "protected";
+                  monitored = true;
+                  checks = [
+                    {
+                      name = "ClickHouse Data Mount";
+                      group = "Filesystem";
+                      url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                      interval = "5m";
+                      conditions = [
+                        "[STATUS] == 200"
+                        # pat() is a GLOB (HELP comments contain "clickhouse_xfs_mounted 1"):
+                        # assert absence of the 0-value line plus presence (buildcache pattern)
+                        "[BODY] != pat(*clickhouse_xfs_mounted 0\n*)"
+                        "[BODY] == pat(*\nclickhouse_xfs_mounted *)"
+                        "[BODY] != pat(*clickhouse_xfs_is_xfs 0\n*)"
+                        "[BODY] == pat(*\nclickhouse_xfs_is_xfs *)"
+                      ];
+                      alert = "ClickHouse XFS data mount (/var/lib/clickhouse) is unmounted, EIO-dead, or not XFS — clickhouse.service refuses to start by design (ConditionPathIsMountPoint, no telemetry written to the root fs). Observability ingestion is DOWN. Check: findmnt /var/lib/clickhouse, systemctl status var-lib-clickhouse.mount, dmesg | grep -i xfs. If the partition/fs is missing: scripts/migrate-clickhouse-xfs.sh (prepare phase), then redeploy.";
+                    }
+                    {
+                      name = "ClickHouse Data Usage";
+                      group = "Filesystem";
+                      url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                      interval = "30m";
+                      conditions = [
+                        "[STATUS] == 200"
+                        "[BODY] == pat(*clickhouse_xfs_usage_over_threshold 0*)"
+                      ];
+                      alert = "ClickHouse XFS data filesystem exceeds 85% — XFS cannot shrink and telemetry retention grows unboundedly. Check per-table sizes (clickhouse-client 'SELECT database, formatReadableSize(sum(bytes_on_disk)) FROM system.parts GROUP BY database') and tighten TTLs in signoz.nix (clickhouseInternalLogs / signoz_logs / signoz_traces retention).";
+                    }
+                  ];
+                  homepage = {
+                    name = "SigNoz";
+                    group = "Monitoring";
+                    description = "Observability Platform (Traces, Metrics, Logs)";
+                    icon = "signoz.png";
+                  };
+                };
+                cadvisor = {
+                  enable = cfg.enable;
+                  vHost.layer = "none";
+                  homepage = {
+                    name = "cAdvisor";
+                    group = "Monitoring";
+                    description = "Container Metrics";
+                    icon = "docker.png";
+                  };
                 };
               };
-            };
-          })
-        ]
-      );
+            })
+      ];
     };
 }
