@@ -97,3 +97,13 @@ makes old plaintext residue in session DBs inert.
   crushrc-injected keys are never snapshotted
 - `crush_key` skips absent secrets AND `PLACEHOLDER*` values — a provider
   with a placeholder ships inert, not broken
+
+## Session DBs live on the Samsung hot disk (2026-09-15)
+
+`services.crush-hot-db` relocates each `~/projects/**/.crush/` dir to `/mnt/hot/crush/<project>`
+(Samsung TLC) and leaves a symlink. The `crush-hot-db-migrate` unit (daily 04:10 + every deploy)
+skips live crush sessions and DBs written in the last 10 minutes — a fresh project's `.crush`
+recreated on the QLC root is converged by the next run. Verify after deploy:
+`ls -la ~/projects/*/.crush | grep '^l'` (symlink sweep) and io PSI avg60 vs the pre-move baseline.
+Runbook/source: `modules/nixos/services/crush-hot-db.nix`; see the `services.hot-db` Phase-2 plan
+(`docs/planning/2026-09-14_13-27_SAMSUNG-PHASE2-HOT-DB-NATIVE-PARETO-PLAN.md`) for the long-term home.

@@ -317,7 +317,11 @@ let
       otel-audit-shape = c.services.otel-endpoint-audit.expectations ? demo-server;
       oidc-client-registered =
         builtins.any (cl: cl.clientId == "demo") c.services.pocket-id-config.provision.extraOidcClients;
-      no-failing-assertions = builtins.filter (a: !a.assertion) c.assertions == [ ];
+      # Only INTEGRATION assertions count: the minimal eval also trips
+      # base-NixOS assertions (sops key source, fileSystems root, bootloader)
+      # that are irrelevant to the fan-out.
+      no-failing-assertions =
+        builtins.filter (a: !a.assertion && lib.hasPrefix "integration:" a.message) c.assertions == [ ];
     };
 
   # Negative case: an unregistered subdomain must fail the DNS assertion.
