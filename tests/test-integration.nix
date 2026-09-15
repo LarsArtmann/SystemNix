@@ -50,6 +50,40 @@ let
       type = lib.types.str;
       default = "lo";
     };
+    # caddy.nix reads these sibling services' enable UNGUARDED (they are
+    # always co-imported on evo-x2); stub them so the test import stays light.
+    services.browser-history.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+    };
+    services.monitor365.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+    };
+    services.monitor365-server.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+    };
+    services.voice-agents.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+    };
+    services.discordsync.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+    };
+    services.papdashboard.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+    };
+    services.overview.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+    };
+    services.file-and-image-renamer.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+    };
   };
 
   baseModules = [

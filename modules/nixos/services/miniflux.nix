@@ -17,6 +17,7 @@ _: {
   flake.nixosModules.miniflux =
     {
       config,
+      options,
       pkgs,
       lib,
       ...
@@ -200,6 +201,77 @@ _: {
             OnCalendar = "*-*-* 02:45:00";
             RandomizedDelaySec = "10min";
             Persistent = true;
+          };
+        };
+
+        # Service-integration registry entry (modules/nixos/services/
+        # integration.nix): ONE declaration fans out to every cross-cutting
+        # surface — Caddy vHost (plain, Layer 1: native OIDC, protectedVHost
+        # would double-auth), Gatus checks, homepage tile, backup freshness,
+        # system-health monitored unit, and the Pocket ID client. This entry
+        # REPLACES rows that lived in caddy.nix / gatus-config.nix /
+        # homepage.nix / configuration.nix (backup-coordination) /
+        # system-health.nix (monitoredServices) / pocket-id.nix (oidcClients).
+        # The optionalAttrs guard keeps VM tests that import only this module
+        # evaluating (mkIf does NOT shield undeclared option definitions —
+        # verified 2026-09-14; an empty services subtree contributes no leaf
+        # definitions and is safe).
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          miniflux = {
+            subdomain = "rss";
+            port = ports.miniflux;
+            vHost.layer = "plain";
+            checks = [
+              {
+                # Functional: /healthcheck verifies the DATABASE round-trip
+                # (200 "OK" when healthy, 503 on DB failure) — liveness of the
+                # process alone would stay green through a dead DB.
+                name = "Miniflux";
+                group = "Media";
+                path = "/healthcheck";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                  "[BODY] == pat(*OK*)"
+                ];
+                alert = "Miniflux down — rss.${domain} unreachable (service or PostgreSQL failure). Check: systemctl status miniflux, journalctl -u miniflux";
+              }
+              {
+                name = "Miniflux Login Renders";
+                group = "Media";
+                path = "/";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*<html*)"
+                ];
+                alert = "Miniflux login page not rendering HTML — check journalctl -u miniflux";
+              }
+            ];
+            homepage = {
+              name = "Miniflux";
+              group = "Media";
+              description = "RSS Reader (Pocket ID SSO, Keyboard-Driven)";
+              icon = "miniflux.png";
+            };
+            backup = {
+              # Nightly pg_dump (custom format) of the RSS reader DB
+              # (miniflux-backup.timer, 02:45) onto the mirrored pool.
+              directory = "/mnt/pool/backups/miniflux";
+              filePattern = "miniflux-*.dump";
+              maxAgeHours = 25;
+            };
+            monitored = true;
+            # OAUTH2_REDIRECT_URL in the config block above MUST equal the
+            # callback URL byte-for-byte (upstream default is EMPTY — no
+            # BASE_URL derivation).
+            oidc = {
+              name = "Miniflux";
+              clientId = "miniflux";
+              launchURL = "https://rss.${domain}";
+              callbackURLs = [ "https://rss.${domain}/oauth2/oidc/callback" ];
+            };
           };
         };
       };

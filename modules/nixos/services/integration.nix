@@ -449,6 +449,5 @@ _: {
         // lib.optionalAttrs (options ? services.pocket-id-config) {
           services.pocket-id-config.provision.extraOidcClients = lib.mapAttrsToList (_: e: e.oidc) oidcEntries;
         };
-      };
     };
 }
