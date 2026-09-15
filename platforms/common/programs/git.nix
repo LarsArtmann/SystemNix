@@ -26,6 +26,11 @@
         autocrlf = "input";
         quotePath = false;
         editor = "code --wait";
+        # fsync loose objects + index: the 2026-09-15 09:32 boot death tore the PMA
+        # daemon's in-flight SystemNix commit — loose object files came back 0-byte
+        # (page-cache data lost) while the ref/index metadata survived, wedging every
+        # git command on "bad object HEAD". Git does NOT fsync loose objects by default.
+        fsync = "loose-object,index";
       };
 
       # MUST use nested form (gpg.ssh), NOT dotted-key form ("gpg.ssh").

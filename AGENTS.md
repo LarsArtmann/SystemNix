@@ -681,6 +681,18 @@ serviceConfig = lib.mkMerge [
 
 > Full incident narratives, commit hashes, dates, and root-cause analysis are in [docs/gotchas-archive.md](./docs/gotchas-archive.md). Below are only enduring rules — things hard to discover from code alone.
 
+### Git zero-byte object corruption (boot death mid-commit, 2026-09-15)
+
+A boot death at 09:32:40 (mid PMA-daemon commit) left 10 loose objects as **0-byte files** while the loose ref + index metadata survived → every git command died `fatal: bad object HEAD`, git-town panicked (`branchesQuery` index-out-of-range on git's broken-ref error output). Recovery runbook (zero data loss, ~5 min):
+
+1. `git cat-file -e <sha>` **false-greens on 0-byte loose files** (stat-only check) — validate with `git fsck --full`, never `-e`.
+2. Real tip = the last `.git/logs/refs/heads/master` entry's new-sha (reflog entries are written before corruption; the lost commit's reflog line may never have landed).
+3. Backup `.git` → tar in /tmp; `trash` the 0-byte objects; `git update-ref -m "recover: ..." refs/heads/master <reflog-tip>`.
+4. Missing blobs referenced by the index = staged content: `git hash-object -w <worktree-file>`; a hash EQUAL to the index sha proves byte-exact restoration (it did for all 3 lost blobs).
+5. `git write-tree` rebuilds the whole tree chain from the index AND repopulates the cache-tree ext — here it reproduced the lost root tree byte-exact (`0e45a87d…`, the exact sha the cache-tree pointed at).
+6. fsck validates reflog OLD-shas too — after recovery, `git reflog delete <ref>@{0}` any entry referencing a permanently-lost object, or fsck errors forever.
+7. Prevention now in `platforms/common/programs/git.nix`: `core.fsync = "loose-object,index"` (git does NOT fsync loose objects by default; on this box's crash history that is an unacceptable gamble).
+
 ### Nix & Nixpkgs
 
 - **`mkMerge` on flake-parts top-level `config`** — Does NOT work; use inline config or imports. `mkMerge` on `serviceConfig` inside `systemd.services.<name>` IS safe.
