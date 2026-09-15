@@ -1,1 +1,1 @@
-square access token: sq0atp-aB3dEf6hIj9kLm2oPq5rSt8uVw1xYz4A0bC5dE7f
+square access token: sq0atp-@HEX40@
