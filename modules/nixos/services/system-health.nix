@@ -2151,6 +2151,16 @@ _: {
 
                 ];
           };
+
+          # Self-registration: the LAN NIC watchdog monitors its own unit
+          # (unit declared above, gated on cfg.lanInterface != "" — the
+          # registry enable mirrors that gate so a host without the
+          # watchdog does not monitor a phantom unit).
+          lan-nic-watchdog = {
+            enable = cfg.lanInterface != "";
+            vHost.layer = "none";
+            monitored = true;
+          };
         };
       };
     };

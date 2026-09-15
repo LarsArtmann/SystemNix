@@ -386,62 +386,11 @@ _: {
                 clientId = "oauth2-proxy";
                 callbackURLs = [ "https://auth.${domain}/oauth2/callback" ];
               }
-              # Immich's client moved to its owning module:
-              # services.integration.immich.oidc (immich.nix).
-              {
-                name = "Forgejo";
-                clientId = "forgejo";
-                launchURL = "https://forgejo.${domain}";
-                callbackURLs = [ "https://forgejo.${domain}/user/oauth2/PocketID/callback" ];
-              }
-              {
-                # Native OIDC (Gatus security.oidc block). Callback path is fixed
-                # upstream at /authorization-code/callback.
-                name = "Gatus";
-                clientId = "gatus";
-                launchURL = "https://status.${domain}";
-                callbackURLs = [ "https://status.${domain}/authorization-code/callback" ];
-              }
-              {
-                # Native OIDC via Monitor365's built-in SSO support.
-                # PKCE (S256) is required by Monitor365's authorize flow.
-                name = "Monitor365";
-                clientId = "monitor365";
-                launchURL = "https://monitor.${domain}";
-                callbackURLs = [ "https://monitor.${domain}/v1/auth/sso/callback" ];
-                pkceEnabled = true;
-              }
-              # Browser History's client moved to its owning module:
-              # services.integration.browser-history.oidc (browser-history.nix).
-              {
-                # Native OIDC in dnsblockd itself (cqrs-htmx/usermgmt/oauth2
-                # provider, authorization-code + PKCE S256). Binds dashboard
-                # audit entries to the signed-in identity.
-                name = "dnsblockd";
-                clientId = "dnsblockd";
-                launchURL = "https://dnsblock.${domain}";
-                callbackURLs = [ "https://dnsblock.${domain}/auth/oidc/callback" ];
-                pkceEnabled = true;
-              }
-              # CV's client moved to its owning module: registered via
-              # services.integration.cv.oidc (cv.nix).
-              {
-                # Native OIDC in paperless-ngx via django-allauth
-                # (allauth.socialaccount.providers.openid_connect). Callback
-                # path is fixed by allauth's URL routing:
-                # /accounts/oidc/<provider_id>/login/callback/
-                # allauth sends PKCE (OAUTH_PKCE_ENABLED in the provider JSON).
-                name = "Paperless";
-                clientId = "paperless";
-                launchURL = "https://paperless.${domain}";
-                callbackURLs = [
-                  "https://paperless.${domain}/accounts/oidc/pocket-id/login/callback/"
-                ];
-                pkceEnabled = true;
-              }
-              # Miniflux's client moved to its owning module: registered via
-              # services.integration.miniflux.oidc (miniflux.nix) and lands in
-              # provision.extraOidcClients below.
+              # Every other client moved to its owning module: registered via
+              # services.integration.<name>.oidc (immich.nix, forgejo.nix,
+              # gatus-config.nix, monitor365.nix, dns-blocker.nix, cv.nix,
+              # paperless.nix, browser-history.nix, miniflux.nix) and lands
+              # in provision.extraOidcClients below.
             ];
             description = "OIDC clients to create declaratively";
           };
@@ -748,6 +697,11 @@ _: {
                 alert = "Pocket ID SQLite is locking up (SQLITE_BUSY storm or collector scan failed) — paperless SSO, forgejo/gatus/immich logins and every oauth2-proxy vHost are at risk. Check: journalctl -u pocket-id --since -24h --grep 'database is locked'. Collateral of memory/IO pressure (zram-full evenings); resolves when pressure drains.";
               }
             ];
+            backup = {
+              # Daily sqlite3 .backup of the SSO backbone (04:00 + randomized delay).
+              directory = "/mnt/pool/backups/pocket-id";
+              maxAgeHours = 25;
+            };
           };
         };
       };

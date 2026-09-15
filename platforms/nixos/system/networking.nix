@@ -1,5 +1,6 @@
 {
   config,
+  options,
   lib,
   pkgs,
   ...
@@ -157,4 +158,15 @@
   hardware.sane.extraBackends = [ pkgs.sane-backends ];
 
   # nix.gc is defined in platforms/common/nix-settings.nix (shared)
+
+  # Service-integration registry entry: unit-state monitoring for the nix
+  # daemon (the 2026-08-22 oomd-kill class made daemon liveness a monitored
+  # surface; the daemon is always present on this host, so the entry is
+  # unconditional like the rest of this host-configuration module).
+  services.integration = lib.optionalAttrs (options ? services.integration) {
+    nix-daemon = {
+      vHost.layer = "none";
+      monitored = true;
+    };
+  };
 }

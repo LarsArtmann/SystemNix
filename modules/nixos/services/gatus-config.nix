@@ -295,29 +295,8 @@ _: {
                   ];
                   alerts = discordAlert "ClickHouse down — SigNoz observability broken (traces, logs, metrics)";
                 })
-                (mkHttpCheck {
-                  name = "Forgejo";
-                  group = "Development";
-                  url = "http://localhost:${toString config.services.forgejo.settings.server.HTTP_PORT}/api/v1/version";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 1000"
-                  ];
-                  alerts = discordAlert "Forgejo down — git forge unavailable";
-                })
-                (mkHttpCheck {
-                  name = "Forgejo Mirror Sync";
-                  group = "Development";
-                  url = "http://localhost:${toString nodePort}/metrics";
-                  interval = "5m";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[BODY] == pat(*system_forgejo_mirror_scrape_errors 0*)"
-                    "[BODY] == pat(*system_forgejo_mirror_sync_stalled 0*)"
-                    "[BODY] == pat(*system_forgejo_mirror_erroring 0*)"
-                  ];
-                  alerts = discordAlert "Forgejo pull-mirror syncing broken. stalled=1: freshest mirror sync >10h old — dead queue (restart forgejo.service; the unique queue wedges after a hard freeze, cron pushes then dedup-skip silently). erroring=1: syncs actively failing — journalctl -u forgejo --grep SyncMirrors (credential-helper ENOENT / DNS allowlist rejects). scrape_errors=1: forgejo sqlite unreadable.";
-                })
+                # Forgejo + Forgejo Mirror Sync checks moved to their owning
+                # module (services.integration.forgejo.checks).
                 (mkHttpCheck {
                   name = "Stuck D-State Processes";
                   group = "Infrastructure";
@@ -506,16 +485,8 @@ _: {
                   ];
                   alerts = discordAlert "SigNoz upstream trace-gap budget exceeded — a new silent-noop service entered the registry. Instrument it upstream and flip its wiring, or consciously raise services.signoz-coverage.maxUpstreamGaps (the ratchet goes DOWN as gaps close)";
                 })
-                (mkHttpCheck {
-                  name = "Manifest";
-                  group = "Monitoring";
-                  url = "http://localhost:${toString config.services.manifest.port}/api/v1/health";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 1000"
-                  ];
-                  alerts = discordAlert "Manifest LLM router down — AI cost optimization unavailable";
-                })
+                # Manifest + Twenty CRM checks moved to their owning modules
+                # (services.integration.{manifest,twenty}.checks).
                 {
                   name = "TaskChampion";
                   group = "Productivity";
@@ -524,16 +495,6 @@ _: {
                   conditions = [ "[CONNECTED] == true" ];
                   alerts = discordAlert "TaskChampion sync server down — task syncing broken";
                 }
-                (mkHttpCheck {
-                  name = "Twenty CRM";
-                  group = "Productivity";
-                  url = "http://localhost:${toString config.services.twenty.port}/healthz";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 1000"
-                  ];
-                  alerts = discordAlert "Twenty CRM down — customer data unavailable";
-                })
                 (mkHttpCheck {
                   name = "Node Exporter";
                   group = "Monitoring";
@@ -900,41 +861,9 @@ _: {
                   alerts = discordAlert "I/O pressure CRITICAL — PSI I/O stall high AND disk %util corroborates (crash3 phantom-filtered: idle-disk PSI = D-state corpse pile, covered by the Stuck D-State check, not this one). Check: nvme smart-log, fstrim status, btrfs filesystem usage.";
                 })
               ]
+              # Crush Daily / Dozzle / Overview checks moved to their owning
+              # modules (services.integration.<name>.checks).
               ++ [
-                (mkHttpCheck {
-                  name = "Crush Daily";
-                  group = "AI";
-                  url = "http://localhost:${toString config.services.crush-daily.port}/api/health";
-                  interval = "5m";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 1000"
-                  ];
-                  alerts = discordAlert "Crush Daily down — AI development insights unavailable";
-                })
-                (mkHttpCheck {
-                  name = "Dozzle";
-                  group = "Monitoring";
-                  url = "http://localhost:${toString ports.dozzle}";
-                  interval = "5m";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 500"
-                  ];
-                  alerts = discordAlert "Dozzle down — container log viewing unavailable";
-                })
-                (mkHttpCheck {
-                  name = "Overview";
-                  group = "Productivity";
-                  url = "http://localhost:${toString ports.overview}";
-                  interval = "5m";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 500"
-                    "[BODY] == pat(*<html*)"
-                  ];
-                  alerts = discordAlert "Overview dashboard down — project stats unavailable";
-                })
                 (mkHttpCheck {
                   name = "Gatus";
                   group = "Monitoring";

@@ -770,6 +770,15 @@
                   alert = "Monitor365 agent not connected to server — API key desync or agent crash";
                 }
               ];
+              oidc = {
+                # Native OIDC via Monitor365's built-in SSO support.
+                # PKCE (S256) is required by Monitor365's authorize flow.
+                name = "Monitor365";
+                clientId = "monitor365";
+                launchURL = "https://monitor.${domain}";
+                callbackURLs = [ "https://monitor.${domain}/v1/auth/sso/callback" ];
+                pkceEnabled = true;
+              };
               homepage = {
                 name = "Monitor365";
                 group = "Monitoring";

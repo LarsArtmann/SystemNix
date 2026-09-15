@@ -897,42 +897,10 @@ in
       # Monitor365 03:00.
       backup-coordination = {
         enable = true;
-        backups = {
-          immich = {
-            # mediaLocation moved to the mirrored pool 2026-08-16; the DB
-            # backup timer writes next to the media it protects.
-            directory = "/mnt/pool/services/immich/database-backup";
-            maxAgeHours = 25;
-          };
-          paperless = {
-            # Daily documentexporter output (01:30 + randomized delay).
-            directory = "/mnt/pool/services/paperless/export";
-            maxAgeHours = 25;
-          };
-          twenty = {
-            # pg_dump redirected to the pool 2026-08-16.
-            directory = "/mnt/pool/backups/twenty";
-            maxAgeHours = 31;
-          };
-          manifest = {
-            # pg_dump redirected to the pool 2026-08-16.
-            directory = "/mnt/pool/backups/manifest";
-            maxAgeHours = 31;
-          };
-          forgejo = {
-            # Daily forgejo dump (repos+DB+config, 03:30 + randomized delay).
-            directory = "/mnt/pool/backups/forgejo";
-            filePattern = "*.zip";
-            maxAgeHours = 25;
-          };
-          pocket-id = {
-            # Daily sqlite3 .backup of the SSO backbone (04:00 + randomized delay).
-            directory = "/mnt/pool/backups/pocket-id";
-            maxAgeHours = 25;
-          };
-          # monitor365 / cv / inboxclean rows moved to their owning modules
-          # (services.integration.<name>.backup).
-        };
+        # All backup freshness rows moved to their owning modules
+        # (services.integration.<name>.backup): immich, paperless, twenty,
+        # manifest, forgejo, pocket-id (2026-09-15), and earlier monitor365,
+        # cv, inboxclean.
       };
 
       # SSH server with hardening (from nix-ssh-config)
