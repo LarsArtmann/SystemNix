@@ -34,15 +34,7 @@ _: {
       hasContainer = name: config.virtualisation.oci-containers.containers ? ${name};
 
       signozEnabled = config.services.signoz.enable;
-      twentyEnabled = config.services.twenty.enable;
-      manifestEnabled = config.services.manifest.enable;
-      crushDailyEnabled = config.services.crush-daily.enable;
-      gatusEnabled = config.services.gatus-config.enable;
       dozzleEnabled = hasContainer "dozzle";
-      hermesEnabled = config.services.hermes.enable;
-      overviewEnabled = config.services.overview.enable;
-      fastflowlmEnabled = config.services.fastflowlm.enable or false;
-      googleSyncEnabled = config.services.google-sync.enable or false;
       # Not a tile flag: the bookmarks.yaml Search group and the widgets.yaml
       # search provider gate on the SearXNG service state (the SearXNG tile
       # itself moved to services.integration.searxng.homepage).
@@ -88,13 +80,9 @@ _: {
           description = "Cache (Immich)";
           icon = "redis.png";
         })
-      ]
-      ++ lib.optional hermesEnabled (
-        mkService "Hermes" {
-          description = "AI Agent Gateway (Discord, Cron, Messaging)";
-          icon = "self-hosted-gateway.png";
-        }
-      );
+      ];
+      # Hermes / Google Sync tiles moved to their owning modules
+      # (services.integration.{hermes,google-sync}.homepage).
 
       # Data replication: services whose job is copying data INTO the
       # machine (Discord, browsers, Google Drive) or serving stored data
@@ -102,16 +90,9 @@ _: {
       # the platform core (auth, proxy, db, cache, gateway).
       # DiscordSync / Browser History / Attic Cache tiles moved to their
       # owning modules (services.integration.<name>.homepage).
-      syncServices =
-        # No vHost: the sync is a 5-min rclone timer landing on the HDD
-        # pool. Freshness is alerted via backup-coordination (Gatus),
-        # which is why this tile has no href.
-        lib.optional googleSyncEnabled (
-          mkService "Google Sync" {
-            description = "Google Drive → HDD Pool Mirror (rclone)";
-            icon = "google-drive.png";
-          }
-        );
+      # Google Sync tile moved to its owning module
+      # (services.integration.google-sync.homepage).
+      syncServices = [ ];
 
       mediaServices = [
         (mkService "Immich" {
@@ -137,53 +118,19 @@ _: {
           description = "Git Forge (GitHub Sync)";
           icon = "forgejo.png";
         })
-      ]
-      ++ lib.optional overviewEnabled (
-        mkService "Overview" {
-          href = svcUrl "overview";
-          description = "Project Dashboard (Git Repos, Stats, Activity)";
-          icon = "code.png";
-        }
-      );
+      ];
+      # Overview tile moved to its owning module
+      # (services.integration.overview.homepage).
 
-      # tq Agent Pool tile moved to its owning module
-      # (services.integration.tq-agent-pool.homepage).
-      aiServices =
-        lib.optional crushDailyEnabled (
-          mkService "Crush Daily" {
-            href = svcUrl "daily";
-            description = "AI-Powered Development Insights";
-            icon = "openai.png";
-          }
-        )
-        ++ lib.optional manifestEnabled (
-          mkService "Manifest" {
-            href = svcUrl "manifest";
-            description = "LLM Gateway (Autofix, Fallbacks, Cost Tracking)";
-            icon = "openai.png";
-          }
-        )
-        # Ollama + FastFlowLM remain; the "Ollama" and "llama.cpp RAG" tiles
-        # moved to their owning modules
-        # (services.integration.{ai-stack,llama-rag}.homepage).
-        ++ lib.optional fastflowlmEnabled (
-          mkService "FastFlowLM" {
-            description = "NPU LLM Server (Qwen3.6 MoE, OpenAI-compatible)";
-            icon = "amd.png";
-          }
-        );
+      # tq Agent Pool / Crush Daily / Manifest / FastFlowLM tiles moved to
+      # their owning modules
+      # (services.integration.{tq-agent-pool,crush-daily,manifest,fastflowlm}.homepage).
+      aiServices = [ ];
 
       monitoringServices =
-        lib.optional gatusEnabled (
-          mkService "Gatus" {
-            href = svcUrl "status";
-            description = "Uptime & Health Check Dashboard";
-            icon = "gatus.png";
-          }
-        )
-        # PapDashboard tile moved to its owning module
-        # (services.integration.papdashboard.homepage in papdashboard.nix).
-        ++ [
+        # Gatus tile moved to its owning module
+        # (services.integration.gatus.homepage in gatus-config.nix).
+        [
           (mkService "Node Exporter" {
             description = "System Metrics (CPU, RAM, Disk, Network)";
             icon = "prometheus.png";
@@ -203,14 +150,9 @@ _: {
         ];
 
       productivityServices =
-        lib.optional twentyEnabled (
-          mkService "Twenty CRM" {
-            href = svcUrl "crm";
-            description = "Customer Relationship Management";
-            icon = "espocrm.png";
-          }
-        )
-        ++ [
+        # Twenty CRM tile moved to its owning module
+        # (services.integration.twenty.homepage).
+        [
           (mkService "Taskwarrior" {
             href = svcUrl "tasks";
             description = "Task Sync Server (TaskChampion)";

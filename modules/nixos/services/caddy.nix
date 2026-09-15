@@ -5,7 +5,8 @@ _: {
       config,
       options,
       lib,
-      ...\n    }:
+      ...
+    }:
     let
       inherit (config.networking) domain;
       lanSubnet = config.networking.local.subnet;

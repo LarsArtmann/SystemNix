@@ -13,13 +13,19 @@
 #   bash scripts/crush-rc-test.sh ./my-candidate-rc     # test a candidate file
 #   EXTRA="model add zai/glm-5.3-flash ..." bash scripts/crush-rc-test.sh
 #                                                       # test live rc + extra line
+#   bash scripts/crush-rc-test.sh --expect-model zai/glm-5.3-flash
+#                                                       # assert model IDENTITY
+#                                                       # (repeatable, = form works too)
 #
 # WHAT IT DOES:
 #   1. bash -n syntax check on the rc
 #   2. loads it via `crush models` in a throwaway XDG_CONFIG_HOME
 #      (sops secrets under /run/secrets stay readable — key injections work)
-#   3. prints the loaded provider count; OPTIONAL=true runs one trivial
-#      completion against -m provider/model to prove a key end-to-end
+#   3. prints the loaded provider count; asserts every --expect-model ID is
+#      LISTABLE (a deleted config source may own entities nothing else
+#      provides — assert WHICH entities exist, never just that the load
+#      didn't crash); OPTIONAL --probe runs one trivial completion against
+#      -m provider/model to prove a key end-to-end
 #
 # NOTE: `crush models` load output goes to stderr on rc errors — a failing
 # rc aborts the load and this script exits non-zero with the crush error.
@@ -28,12 +34,24 @@ set -euo pipefail
 
 PROBE=false
 CANDIDATE=""
+EXPECT_MODELS=()
+EXPECT_NEXT=false
 for arg in "$@"; do
-  case "$arg" in
-  --probe) PROBE=true ;;
-  *) CANDIDATE="$arg" ;;
-  esac
+  if [[ $EXPECT_NEXT == true ]]; then
+    EXPECT_MODELS+=("$arg")
+    EXPECT_NEXT=false
+  elif [[ $arg == --expect-model=* ]]; then
+    EXPECT_MODELS+=("${arg#--expect-model=}")
+  elif [[ $arg == --expect-model ]]; then
+    EXPECT_NEXT=true
+  else
+    CANDIDATE="$arg"
+  fi
 done
+if [[ $EXPECT_NEXT == true ]]; then
+  echo "FAIL: --expect-model given without a value" >&2
+  exit 2
+fi
 EXTRA="${EXTRA:-}"
 
 if [[ -n $CANDIDATE ]]; then
@@ -79,6 +97,15 @@ if ! crush models >"$T/models.out" 2>"$T/models.err"; then
 fi
 echo "PASS: rc loads ($PROVIDERS_BEFORE provider add statements)"
 echo "models available: $(wc -l <"$T/models.out")"
+# Model IDENTITY assertions (whole-line match — `provider/model` exactly).
+for m in "${EXPECT_MODELS[@]}"; do
+  if grep -qxF "$m" "$T/models.out"; then
+    echo "PASS: expected model listed: $m"
+  else
+    echo "FAIL: expected model NOT listed: $m" >&2
+    exit 1
+  fi
+done
 grep -E "^(zai|gemini|minimax|kimi-coding|synthetic|llamacpp)/" "$T/models.out" | head -8 || true
 
 # 3. optional end-to-end key probe (costs one trivial completion)
