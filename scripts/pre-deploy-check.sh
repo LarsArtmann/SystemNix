@@ -368,7 +368,19 @@ fi
 # URLs in gatus-config.nix are Nix-interpolated (${toString ports.<name>}),
 # so resolve each name against lib/ports.nix. Non-fatal per endpoint: a down
 # service already fails its own health checks elsewhere.
-GATUS_SERVICE_METRIC_PORTS=$(grep -oE 'localhost:\$\{toString ports\.[a-zA-Z0-9_-]+\}/metrics' "$GATUS_CONFIG" 2>/dev/null | sed -E 's/.*ports\.([a-zA-Z0-9_-]+)\}.*/\1/' | sort -u)
+# Registry refactor (2026-09-15): per-service /metrics pats live in the
+# OWNING service module (discordsync.nix, bank-sync.nix, …), not only
+# gatus-config.nix — scan ALL module files for both host forms. The `|| true`
+# is load-bearing: under set -euo pipefail a zero-match grep (future URL-form
+# drift) previously killed the whole gate mid-section with rc 1 and no
+# summary (live 2026-09-15: silent deploy block, verdict never printed).
+# shellcheck disable=SC2034
+GATUS_SERVICE_METRIC_PORTS=$(
+  grep -rhoE '(localhost|127\.0\.0\.1):\$\{toString ports\.[a-zA-Z0-9_-]+\}/metrics' \
+    modules/nixos/services/ modules/nixos/desktop/ 2>/dev/null |
+    sed -E 's/.*ports\.([a-zA-Z0-9_-]+)\}.*/\1/' |
+    sort -u || true
+)
 # Read by the sourced metrics-gate.sh.
 # shellcheck disable=SC2034
 DISCORDSYNC_API_UP=false
