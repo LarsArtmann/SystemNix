@@ -1,6 +1,8 @@
 # Pre-commit hooks configuration (Cross-Platform)
 # Global default for repos without their own .pre-commit-config.yaml
-# Note: SystemNix repo uses its own .pre-commit-config.yaml (root-level)
+# Note: the SystemNix repo itself does NOT use the pre-commit framework —
+# it runs its committed .githooks/ stack via core.hooksPath (git ignores
+# .git/hooks, where the framework installs, when hooksPath is set).
 _: {
   home.file.".config/pre-commit/config.yaml" = {
     text = ''
