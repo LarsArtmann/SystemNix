@@ -824,6 +824,35 @@
                 ];
                 alert = "CV auto-apply gauges missing from /metrics — the autoapply DI provider or metrics registration regressed (cv.home.lan). Check: journalctl -u cv-server --since -15min; GET /metrics | grep cv_autoapply.";
               }
+              # Auto-apply pass observability (2026-09-15 bundle): the
+              # last-pass endpoint carries the APPLY-side sibling
+              # data/last-autoapply-pass.json — the wire answer to "the
+              # timer POSTs fire but the pass never completes" (a 503 on
+              # the auto-apply POST is warn-not-fail in cv-scan, so scan
+              # + evaluate keep Funnel Freshness green while tailoring
+              # silently dies). Presence-only pat by the same decision as
+              # the metrics check above: RFC3339 timestamps can't be
+              # date-compared in a gatus pat, so this catches
+              # NEVER-completed (key omitted via omitempty when no pass
+              # ever ran), not stale — cadence stays a human read on
+              # /pipeline. DEPLOY-ORDER: needs a CV binary with the
+              # autoApply last-pass wire field (shipped 2026-09-10) —
+              # pin is already past that.
+              {
+                name = "CV Auto-Apply Last Pass";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.cv}/api/pipeline/last-pass";
+                interval = "30m";
+                client.timeout = "10s";
+                headers = {
+                  X-API-Key = "$CV_API_KEY";
+                };
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\"autoApply\":{\"ranAt\":\"20*)"
+                ];
+                alert = "CV auto-apply has never completed a pass (last-pass wire lacks autoApply.ranAt) — the auto-apply timer leg is silently dead while scans stay fresh (cv.home.lan). Check: journalctl -u cv-scan --since -24h for 503s on /api/pipeline/auto-apply; the pass file is data/last-autoapply-pass.json in the state dir.";
+              }
             ];
             homepage = {
               name = "CV";

@@ -353,11 +353,20 @@ in
             // lib.optionalAttrs (svcEnabled "cv-server") (
               # Root-owned raw secret; the service consumes the "cv-env"
               # template (owner cv) which interpolates the placeholder.
+              # cv_evaluation_citizenships: ISO-3166 alpha-2 comma string
+              # (e.g. "de") feeding CV_EVALUATION_CITIZENSHIPS — the D5.1
+              # carve-out that stops SÜG/NATO clearance demands from
+              # categorically skipping for an operator whose citizenship
+              # CAN obtain them (PII → sops only, never a tracked config
+              # file; staged 2026-09-15 with the defense-portal bundle).
               mkSecrets "cv.yaml" {
                 owner = "root";
                 group = "root";
                 restartUnits = [ "cv-server.service" ];
-              } [ "cv_api_key" ]
+              } [
+                "cv_api_key"
+                "cv_evaluation_citizenships"
+              ]
             )
             // lib.optionalAttrs (svcEnabled "inboxclean") (
               # Raw Google OAuth client credentials.json; the upstream module's
@@ -665,6 +674,12 @@ in
                 # Guards mutating/admin API routes (X-API-Key header).
                 # Read/rotate: sudo sops platforms/nixos/secrets/cv.yaml
                 CV_API_KEY = config.sops.placeholder.cv_api_key;
+                # D5.1 citizenship carve-out (defense-market funnel):
+                # comma-joined ISO-3166 alpha-2 ("de") — SÜG/NATO-bearing
+                # rows stop categorical-skipping for obtainable regimes.
+                # Empty value = carve-out off (every clearance demand
+                # keeps skipping); CV parses it leniently either way.
+                CV_EVALUATION_CITIZENSHIPS = config.sops.placeholder.cv_evaluation_citizenships;
               };
             };
           }
