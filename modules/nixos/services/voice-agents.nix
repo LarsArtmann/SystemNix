@@ -3,6 +3,7 @@ _: {
   flake.nixosModules.voice-agents =
     {
       config,
+      options,
       pkgs,
       lib,
       ...
@@ -121,6 +122,55 @@ _: {
               to = ports.livekit-udp-end;
             }
           ];
+        };
+
+        # Service-integration registry entries: the Whisper ASR + LiveKit
+        # Gatus checks and their homepage tiles. The voice/whisper vHosts
+        # STAY hand-written in caddy.nix (the subdomains are not in the
+        # shared dns-local list — voice-agents is not enabled on any current
+        # host). Replaces rows in gatus-config.nix / homepage.nix.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          livekit = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            checks = [
+              {
+                name = "LiveKit";
+                group = "AI";
+                url = "tcp://127.0.0.1:${toString config.services.livekit.settings.port}";
+                interval = "60s";
+                conditions = [ "[CONNECTED] == true" ];
+                alert = "";
+              }
+            ];
+            homepage = {
+              name = "LiveKit";
+              group = "AI";
+              href = "https://voice.${domain}";
+              description = "Real-Time Voice Infrastructure";
+              icon = "voip-info.png";
+            };
+          };
+          whisper = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            checks = [
+              {
+                name = "Whisper ASR";
+                group = "AI";
+                url = "http://localhost:${toString cfg.whisperPort}";
+                interval = "60s";
+                alert = "";
+              }
+            ];
+            homepage = {
+              name = "Whisper ASR";
+              group = "AI";
+              href = "https://whisper.${domain}";
+              description = "Speech-to-Text (Gradio)";
+              icon = "web-whisper.png";
+            };
+          };
         };
       };
     };

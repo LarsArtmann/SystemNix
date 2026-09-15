@@ -4,6 +4,7 @@ _: {
     {
       pkgs,
       config,
+      options,
       lib,
       ...
     }:
@@ -171,6 +172,37 @@ _: {
         # HSA_ENABLE_SDMA=0 avoids SDMA hang bugs on gfx11 APUs.
         environment.sessionVariables = rocmEnv // {
           OLLAMA_HOST = "127.0.0.1:${toString ports.ollama}";
+        };
+
+        # Service-integration registry entry: the Ollama Gatus check and the
+        # decorative homepage tile (loopback-only inference; no vHost).
+        # Replaces rows in gatus-config.nix / homepage.nix.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          ai-stack = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            checks = [
+              {
+                # Ollama runs persistently when enabled (WantedBy
+                # multi-user.target; idle models unload via OLLAMA_KEEP_ALIVE).
+                name = "Ollama";
+                group = "AI";
+                url = "http://localhost:${toString config.services.ollama.port}/api/tags";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 2000"
+                ];
+                alert = "Ollama LLM inference down — local AI unavailable";
+              }
+            ];
+            homepage = {
+              name = "Ollama";
+              group = "AI";
+              description = "Local AI Inference";
+              icon = "ollama.png";
+            };
+          };
         };
       };
     };
