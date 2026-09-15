@@ -45,6 +45,7 @@ in
   tmp-cleanup = makeTest (import ./test-tmp-cleanup.nix { inherit pkgs; });
   tmp-cleaner-audit = import ./test-tmp-cleaner-audit.nix { inherit pkgs inputs system; };
   sops-key-audit = import ./test-sops-key-audit.nix { inherit pkgs inputs system; };
+  integration-registry = import ./test-integration.nix { inherit pkgs inputs system; };
   systemd-shape-audit = import ./test-systemd-shape-audit.nix { inherit pkgs inputs system; };
   port-registry-audit = import ./test-port-registry-audit.nix { inherit pkgs inputs system; };
   harden-lifecycle = import ./test-harden-lifecycle.nix { inherit pkgs inputs; };

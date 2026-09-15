@@ -85,6 +85,15 @@ expect "pass" "present metric (no HELP match needed) → pass"
 metrics_gate_classify_absence "system_totally_phantom_metric"
 expect "fail" "absent metric on a CLEAN body → hard FAIL (phantom-metric block, no downgrade)"
 
+echo "=== Fixture C2: prefix collision — a LONGER sibling metric must NOT count as present ==="
+reset_env
+cat >"$METRICS_FILE" <<'EOF'
+node_textfile_scrape_error 0
+system_zram_swap_fill_percent_v2 1
+EOF
+metrics_gate_classify_absence "system_zram_swap_fill_percent"
+expect "fail" "only system_zram_swap_fill_percent_v2 exists → the shorter name is ABSENT (prefix match would be a phantom green)"
+
 echo "=== Fixture A: node_textfile_scrape_error=1 — absence is an infra signal, never a block ==="
 reset_env
 TEXTFILE_SCRAPE_ERROR=true

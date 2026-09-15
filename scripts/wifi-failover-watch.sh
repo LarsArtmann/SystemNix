@@ -43,6 +43,14 @@ del_route_line() {
   # The kernel ANNOTATES routes of a carrier-down link with the `linkdown`
   # keyword (ip-route(8)) — `ip route del` rejects it ("linkdown is garbage"),
   # so strip every annotation occurrence before handing the line back.
+  # Optional first arg "-6" selects the IPv6 family (otherwise the v6 lines
+  # from `ip -6 route show` are fed to the v4 parser, which rejects the v6
+  # address and the eviction never works).
+  local fam="-4"
+  if [ "${1:-}" = "-6" ]; then
+    fam="-6"
+    shift
+  fi
   local line="$1"
   local -a words=() clean=()
   read -r -a words <<<"$line"
@@ -52,14 +60,20 @@ del_route_line() {
       clean+=("$w")
     fi
   done
-  ip route del "${clean[@]}"
+  ip "$fam" route del "${clean[@]}"
 }
 
 del_pinned_defaults() {
   # Delete every default route bound to the ethernet interface, v4 then v6.
-  # Loop-guarded: each pass must delete one route or bail out.
+  # Loop-guarded: each pass must delete one route or bail out. Line capture
+  # uses grep -m1 + ||true + empty-check: under `set -euo pipefail` a bare
+  # `grep | head -1` assignment SIGPIPEs grep when >=2 routes match (exactly
+  # the multi-pinned-route case) and a grep with zero matches would kill the
+  # daemon mid-failover via set -e (restart into start-limit = dead resolver
+  # of the exact blackhole this daemon exists to prevent).
   while ip -4 route show default 2>/dev/null | grep -Eq "dev ${ENO1_IF}( |$)"; do
-    line="$(ip -4 route show default | grep -E "dev ${ENO1_IF}( |$)" | head -1)"
+    line="$(ip -4 route show default 2>/dev/null | grep -m1 -E "dev ${ENO1_IF}( |$)" || true)"
+    [ -n "$line" ] || break
     log "FAILOVER: carrier lost on ${ENO1_IF} — removing pinned default route (${line})"
     del_route_line "$line" || {
       log "WARN: failed to delete v4 default route — traffic may still pin to ${ENO1_IF}"
@@ -67,9 +81,10 @@ del_pinned_defaults() {
     }
   done
   while ip -6 route show default 2>/dev/null | grep -Eq "dev ${ENO1_IF}( |$)"; do
-    line="$(ip -6 route show default | grep -E "dev ${ENO1_IF}( |$)" | head -1)"
+    line="$(ip -6 route show default 2>/dev/null | grep -m1 -E "dev ${ENO1_IF}( |$)" || true)"
+    [ -n "$line" ] || break
     log "FAILOVER: removing pinned IPv6 default route (${line})"
-    del_route_line "$line" || {
+    del_route_line -6 "$line" || {
       log "WARN: failed to delete v6 default route"
       break
     }

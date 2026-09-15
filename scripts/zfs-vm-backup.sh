@@ -179,11 +179,15 @@ echo "=== Pulling manifest to host ==="
 ssh_cmd "cat /tmp/source-manifest.sha256" >"$MANIFEST"
 echo "Manifest entries: $(wc -l <"$MANIFEST")"
 
-# ── Clear old backup and create fresh dir ────────────────────────────
+# ── Move old backup aside (deleted only after the new one verifies) ──
 echo ""
 echo "=== Preparing backup directory ==="
-echo "Clearing old backup at $BACKUP_DIR..."
-rm -rf "$BACKUP_DIR"
+OLD_BACKUP=""
+if [ -e "$BACKUP_DIR" ]; then
+  OLD_BACKUP="${BACKUP_DIR}.old-$(date +%Y%m%d-%H%M%S)"
+  echo "Moving previous backup aside: $BACKUP_DIR -> $OLD_BACKUP"
+  mv "$BACKUP_DIR" "$OLD_BACKUP"
+fi
 mkdir -p "$BACKUP_DIR"
 
 # ── Copy /storage (excluding Docker + benchmarks) ────────────────────

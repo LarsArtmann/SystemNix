@@ -179,7 +179,7 @@ if nix run .#pre-deploy-check; then
   # about to interrupt. Covers interactive turns (tool_executor activity)
   # and cron/scheduler work in the last 10 minutes.
   if systemctl is-active --quiet hermes.service 2>/dev/null; then
-    activity=$(journalctl -u hermes --since "-10min" --no-pager 2>/dev/null | grep -cE "agent\.tool_executor|scheduler|Executing cron" || true)
+    activity=$(timeout 15 journalctl -u hermes --since "-10min" --no-pager 2>/dev/null | grep -cE "agent\.tool_executor|scheduler|Executing cron" || true)
     if [ "${activity:-0}" -gt 0 ]; then
       echo "⚠ hermes shows agent activity ($activity lines in last 10 min) — the deploy will restart it and drain in-flight sessions"
     else
@@ -270,7 +270,7 @@ if nix run .#pre-deploy-check; then
     else
       echo "✗ I/O PSI some avg10 = ${io_psi_avg10}% (>= 20%) with IDLE disks (busy = ${disk_busy}%) — D-state phantom on a dead automount (corpse-pile signature, crash3):"
       echo "  top D-state processes:"
-      ps -eo pid,stat,wchan:30,comm | awk '$2 ~ /D/' | head -8 | sed 's/^/    /'
+      ps -eo pid,stat,wchan:30,comm | awk '$2 ~ /D/' | head -8 | sed 's/^/    /' || true
       echo "  PSI still means tasks are stalled — activation restarts units INTO it and strands more corpses. Verify the missing device / corpse pile before forcing."
     fi
   fi
@@ -299,7 +299,7 @@ if nix run .#pre-deploy-check; then
   # rebooted away, stop socket+backend pre-switch so nothing can wake the
   # backend mid-transaction. Consumers fail fast (ECONNREFUSED, PMA falls
   # back to heuristic commits); the socket returns on the post-reboot boot.
-  if journalctl -u fastflowlm.service -n 30 --no-pager 2>/dev/null | grep -q 'bind: Address already in use'; then
+  if timeout 15 journalctl -u fastflowlm.service -n 30 --no-pager 2>/dev/null | grep -q 'bind: Address already in use'; then
     flm_state=$(systemctl show fastflowlm.service -p ActiveState --value 2>/dev/null || echo inactive)
     flm_socket_state=$(systemctl show fastflowlm.socket -p ActiveState --value 2>/dev/null || echo inactive)
     if [ "$flm_state" != "inactive" ] || [ "$flm_socket_state" != "inactive" ]; then
@@ -337,8 +337,11 @@ if nix run .#pre-deploy-check; then
     # "activated with failed units" (recoverable) from "activation aborted".
     # set -o pipefail (top of script) preserves nh's status through the tee
     # capture; match the wrapped ExitStatus(4) in nh's output to keep the
-    # post-switch recovery path reachable.
-    if [ "$switch_exit" -eq 4 ] || echo "$nh_output" | grep -q "Exited(4)"; then
+    # post-switch recovery path reachable. Herestring, NOT echo|grep —
+    # grep -q closes early and a >64KB nh output would SIGPIPE echo under
+    # pipefail, misdiagnosing an exit-4 activation as a hard abort (the
+    # exact trap documented in post-deploy-check.sh).
+    if [ "$switch_exit" -eq 4 ] || grep -q "Exited(4)" <<<"$nh_output"; then
       echo ""
       echo "⚠ nh os switch: activation completed with failed units (exit code 4)"
       echo "  (some services failed during activation, but config IS activated)"
@@ -385,7 +388,7 @@ if nix run .#pre-deploy-check; then
   # inside a FUTURE switch transaction is the exit-4 profile-skip class
   # (2026-09-09 16:20). Only a reboot clears the corpse; until then keep both
   # units down post-deploy so consumers fail fast instead of churning.
-  if journalctl -u fastflowlm.service -n 30 --no-pager 2>/dev/null | grep -q 'bind: Address already in use'; then
+  if timeout 15 journalctl -u fastflowlm.service -n 30 --no-pager 2>/dev/null | grep -q 'bind: Address already in use'; then
     flm_post_state=$(systemctl show fastflowlm.service -p ActiveState --value 2>/dev/null || echo inactive)
     flm_post_socket_state=$(systemctl show fastflowlm.socket -p ActiveState --value 2>/dev/null || echo inactive)
     if [ "$flm_post_state" != "inactive" ] || [ "$flm_post_socket_state" != "inactive" ]; then

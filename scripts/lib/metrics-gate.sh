@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Shared metric-absence classifier for the pre-deploy §10 gate.
 # Sourced (NEVER executed) by scripts/pre-deploy-check.sh and
 # scripts/test-pre-deploy-metrics.sh — the classification cascade is
@@ -17,7 +18,11 @@
 #   FORGEJO_SCAN_FAILED / POCKET_ID_SCAN_FAILED / TEXTFILE_SCRAPE_ERROR
 metrics_gate_classify_absence() {
   local metric="$1"
-  if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
+  # Anchor: the metric-name charset is [a-zA-Z0-9_:], so the char after the
+  # exact name must be a NON-name char (space, '{', EOL). A bare prefix match
+  # here would classify `foo` as present when only `foo_total` exists — the
+  # exact phantom-green this gate exists to block (fixture: Prefix Collision).
+  if grep -qE "^${metric}([^a-zA-Z0-9_:]|\$)|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
     # Self-cleaning loan list: an entry ALREADY present in the running
     # system's /metrics no longer needs its loan — keeping it would mask a
     # future genuine phantom-metric regression under the same name. WARN
