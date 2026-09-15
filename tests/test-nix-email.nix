@@ -106,7 +106,13 @@ let
     (throwIfNot (dmarcReg.unit == "parsedmarc.service" && dmarcReg.monitored == true)
       "integration registry entry missing or wrong for dmarc-monitor")
 
-    (throwIfNot (dmarcReg.backup.directory == dmarc.services.dmarc-monitor.outputDirectory
+    # Pin the reports-dir contract to the LITERAL default: comparing the
+    # registry entry against the wrapper option (not a literal) would let one
+    # bug move both sides in lockstep and still pass.
+    (throwIfNot (dmarc.services.dmarc-monitor.outputDirectory == "/var/lib/parsedmarc/reports")
+      "dmarc-monitor outputDirectory default changed - re-point the backup-freshness expectation deliberately")
+
+    (throwIfNot (dmarcReg.backup.directory == "/var/lib/parsedmarc/reports"
       && dmarcReg.backup.filePattern == "*.json" && dmarcReg.backup.maxAgeHours == 72)
       "backup freshness check not wired to the parsedmarc reports directory")
 
