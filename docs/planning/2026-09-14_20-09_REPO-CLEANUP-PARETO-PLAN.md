@@ -1,7 +1,7 @@
 # Repo Cleanup & Tidying — Pareto Plan (EXECUTED)
 
 **Date:** 2026-09-14 20:09
-**Status:** Tiers 1-3 executed and verified same session; decision items (Tier 4) pending owner.
+**Status:** Tiers 1-3 executed and verified same session; Tier 4 decision items (D1-D6) DECIDED + EXECUTED 2026-09-15 — per-item evidence in `TODO_LIST.md` P3.
 **Trigger:** "If you needed to clean/tidy up this repo a bit, what would you do? Deep research!"
 
 ## Context

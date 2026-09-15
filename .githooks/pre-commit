@@ -276,9 +276,15 @@ else
     log_info "No staged .py files — skipping ruff."
 fi
 
-# Nix flake check always runs (validates whole config)
-log_info "Running Nix flake check..."
-if nix flake check > /tmp/nix-check.log 2>&1; then
+# Eval-only flake check (2026-09-14 gate split): the hook validates SYNTAX and
+# EVAL, never BUILDS — plain `nix flake check` realizes every check derivation
+# incl. NixOS VM tests (minutes each), which trained the `--no-verify` habit on
+# docs commits and skipped gitleaks with it (2026-09-14 cv-red saga). VM tests
+# + trap-lint builds run in CI only (.github/workflows/nix-check.yml vm-tests +
+# trap-lint jobs). Eval failures and assertion trips still block here —
+# --no-build only skips derivation realizations.
+log_info "Running Nix flake check (eval-only, no builds)..."
+if nix flake check --no-build > /tmp/nix-check.log 2>&1; then
     log_success "Nix flake check passed!"
 else
     log_error "Nix flake check failed!"
