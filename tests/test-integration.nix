@@ -280,6 +280,8 @@ let
       autoCheck = demoCheck "Demo Auto Alert";
     in
     {
+      # Debug aid for the failure branch (empty on green runs).
+      failingAssertionMessages = map (a: a.message) (builtins.filter (a: !a.assertion) c.assertions);
       caddy-protected-has-forward-auth = lib.hasInfix "forward_auth" protectedCfg;
       caddy-protected-proxies-port = lib.hasInfix "reverse_proxy localhost:8099" protectedCfg;
       caddy-plain-no-forward-auth = !lib.hasInfix "forward_auth" plainCfg;
@@ -335,14 +337,17 @@ let
       a: lib.hasPrefix "integration:" a.message && lib.hasInfix "ghost-zone" a.message
     ) failing;
 
-  failedChecks = lib.filterAttrs (_: v: !v) positive;
+  failedChecks = lib.filterAttrs (_: v: !v) (builtins.removeAttrs positive [ "failingAssertionMessages" ]);
 in
 if failedChecks != { } then
-  pkgs.runCommand "integration-registry-test" { } ''
-    echo "integration registry fan-out FAILED checks:"
-    ${lib.concatStringsSep "\n" (map (n: "  - ${n}") (builtins.attrNames failedChecks))}
-    exit 1
-  ''
+  pkgs.runCommand "integration-registry-test"
+    { messages = builtins.concatStringsSep "\n\n" positive.failingAssertionMessages; }
+    ''
+      echo "integration registry fan-out FAILED checks: ${toString (builtins.attrNames failedChecks)}"
+      echo "failing assertions:"
+      echo "$messages"
+      exit 1
+    ''
 else if !negativeFires then
   pkgs.runCommand "integration-registry-test" { } ''
     echo "integration registry DNS assertion did NOT fire for ghost-zone"
