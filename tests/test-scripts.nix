@@ -329,7 +329,9 @@
         machine.succeed(dg_run(101000000000))
 
         # 4. growth over 5G (threshold 5*1024^3) → WARNING + exit 1
-        machine.fail(dg_run(105368709121))
+        #    (state is 101000000000 after scenario 3 — each run records a new
+        #    baseline; 106368709121 - 101000000000 = 5368709121 > threshold)
+        machine.fail(dg_run(106368709121))
 
         # 5. shrink (negative delta) → exit 0
         machine.succeed(dg_run(90000000000))

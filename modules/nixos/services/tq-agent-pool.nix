@@ -32,6 +32,7 @@ _: {
   flake.nixosModules.tq-agent-pool =
     {
       config,
+      options,
       lib,
       pkgs,
       inputs,
@@ -40,6 +41,7 @@ _: {
     let
       cfg = config.services.tq-agent-pool;
       primaryUser = config.users.primaryUser or "lars";
+      domain = config.networking.domain;
       tqPkg = inputs.go-taskqueue.packages.${pkgs.stdenv.hostPlatform.system}.default;
       inherit (import ../../../lib/default.nix lib)
         harden
@@ -246,6 +248,72 @@ _: {
             (serviceDefaults { })
             ioTier.background
           ];
+        };
+
+        # Service-integration registry entries: the pool liveness check +
+        # the tq Dashboard check (serve-gated) + the homepage tile + the
+        # tq vHost (Layer 2, gated on serve.enable) + system-health
+        # monitoring of all three units. Replaces rows in caddy.nix /
+        # gatus-config.nix / homepage.nix.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          tq-agent-pool = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            monitored = true;
+            checks = [
+              # Pool liveness from the system-health collector: the pool has
+              # no HTTP surface by design (same shape as postfix/fastflowlm).
+              # Dead letters + budget exhaustion alert separately through the
+              # PapDashboard bridge (alert-url in poolSettings).
+              {
+                name = "tq Agent Pool Service";
+                group = "Development";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "2m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_service_state_failed{service=\"tq-agent-pool\"} 0*)"
+                ];
+                alert = "tq agent-pool unit failed — TODO_LIST harvest + agent execution halted (dashboard keeps serving from the journal). Check: systemctl status tq-agent-pool, journalctl -u tq-agent-pool -n 100.";
+              }
+            ];
+            homepage = {
+              name = "tq Agent Pool";
+              group = "AI";
+              href = "https://tq.${domain}";
+              description = "TODO_LIST Harvest + Headless Crush Agents";
+              icon = "mdi-checkbox-marked-circle-outline";
+            };
+          };
+          tq-serve = {
+            enable = cfg.serve.enable;
+            subdomain = "tq";
+            port = ports.tq;
+            vHost.layer = "protected";
+            monitored = true;
+            checks = [
+              # Functional, not just liveness: the constant meta
+              # description of the real dashboard shell (live-verified
+              # against tq serve; the <title> carries a dynamic count).
+              {
+                name = "tq Dashboard";
+                group = "Development";
+                url = "http://localhost:${toString ports.tq}/";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 2000"
+                  "[BODY] == pat(*Live, read-only projection of the tq task-queue journal*)"
+                ];
+                alert = "tq dashboard down — the agent-pool journal view at tq.home.lan is unreachable. Check: systemctl status tq-serve, journalctl -u tq-serve.";
+              }
+            ];
+          };
+          tq-bootstrap = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            monitored = true;
+          };
         };
       };
     };

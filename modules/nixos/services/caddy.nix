@@ -221,29 +221,6 @@ _: {
               '';
             };
             "dash.${domain}" = protectedVHost "dash" config.services.homepage.port;
-            # CV server — resume site + Typst PDF export + pipeline
-            # dashboard. Native OIDC via Pocket ID (2026-09-13, Layer 1):
-            # the locked /admin access card signs in with a passkey and the
-            # app mints its own operator session; mutating funnel routes
-            # stay API-key guarded in-app. protectedVHost would double-auth
-            # (forward-auth + the app's own OIDC sign-in) — plain
-            # reverse_proxy per the AGENTS.md doctrine.
-            "cv.${domain}" = {
-              extraConfig = ''
-                ${tlsConfig}
-                ${commonConfig}
-                ${proxyTo ports.cv}
-              '';
-            };
-            # InboxClean — Gmail AI assistant dashboard. Renders from CQRS
-            # data even before the one-time OAuth flow completes.
-            "inbox.${domain}" = protectedVHost "inbox" ports.inboxclean;
-            # SigNoz runs in impersonation mode (no internal auth — every request
-            # is root admin). Layer 2: LAN bypass (direct proxy, no auth) + external
-            # forward-auth via oauth2-proxy. The previous unconditional forward-auth
-            # (no LAN bypass) caused 500 errors for ALL users when oauth2-proxy
-            # hiccuped. protectedVHost fixes this: LAN requests never touch oauth2-proxy.
-            "signoz.${domain}" = protectedVHost "signoz" config.services.signoz.settings.queryService.port;
             "crm.${domain}" = protectedVHost "crm" config.services.twenty.port;
             "tasks.${domain}" = protectedVHost "tasks" config.services.taskchampion-sync-server.port;
             "manifest.${domain}" = protectedVHost "manifest" config.services.manifest.port;
@@ -309,9 +286,6 @@ _: {
             "voice.${domain}" = protectedVHost "voice" config.services.livekit.settings.port;
             "whisper.${domain}" = protectedVHost "whisper" config.services.voice-agents.whisperPort;
           }
-          // lib.optionalAttrs (config.virtualisation.oci-containers.containers ? dozzle) {
-            "logs.${domain}" = protectedVHost "logs" ports.dozzle;
-          }
           //
             lib.optionalAttrs
               (config.services.monitor365.enable || config.services.monitor365-server.enable or false)
@@ -343,21 +317,6 @@ _: {
           # vHosts moved to the registry (services.integration entries in
           # their owning modules). systemd-timer-monitor stays hand-written
           # below: it is a file_server over the state dir, not a proxy.
-          # bank-sync dashboard — read-only financial data with no built-in
-          # auth: protectedVHost (LAN bypass + external oauth2 forward-auth)
-          # is the minimum acceptable exposure for money data. Gated with the
-          # `or false` trick because services.bank-sync options come from the
-          # upstream flake module (imported on evo-x2 only).
-          // lib.optionalAttrs (config.services.bank-sync.enable or false) {
-            "banksync.${domain}" = protectedVHost "banksync" ports.bank-sync;
-          }
-          # tq dashboard — read-only projection of the agent-pool journal;
-          # renders task payloads + error tails, so external access sits
-          # behind forward-auth (LAN bypass like every Layer 2 vHost).
-          # SSE live-updates stream fine through the standard proxyTo.
-          // lib.optionalAttrs (config.services.tq-agent-pool.serve.enable or false) {
-            "tq.${domain}" = protectedVHost "tq" ports.tq;
-          }
           // lib.optionalAttrs config.services.overview.enable {
             "overview.${domain}" = protectedVHost "overview" ports.overview;
           }
