@@ -37,6 +37,7 @@
   flake.nixosModules.papdashboard =
     {
       config,
+      options,
       lib,
       pkgs,
       ...
@@ -168,6 +169,38 @@
             (serviceDefaults { })
             ioTier.background
           ];
+        };
+
+        # Service-integration registry entry: fans out to the Caddy vHost
+        # (Layer 2 — the UI has no built-in auth), the Gatus /api/health
+        # check, and the homepage tile. Replaces rows in caddy.nix /
+        # gatus-config.nix / homepage.nix.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          papdashboard = {
+            enable = cfg.enable;
+            subdomain = "alerts";
+            port = cfg.port;
+            vHost.layer = "protected";
+            checks = [
+              {
+                name = "PapDashboard";
+                group = "Monitoring";
+                url = "http://localhost:${toString cfg.port}/api/health";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                ];
+                alert = "PapDashboard alert hub down — alert lifecycle UI and NPU insights unavailable (raw Discord alerts still flow)";
+              }
+            ];
+            homepage = {
+              name = "PapDashboard";
+              group = "Monitoring";
+              description = "Alert Hub with NPU Insights";
+              icon = "alertmanager.png";
+            };
+          };
         };
       };
     };

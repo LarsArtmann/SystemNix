@@ -165,7 +165,7 @@ def transcript_cues(path):
     return [(0.0, 0.0, body)] if body else []
 
 
-def cmd_import(root, paths):
+def cmd_import(root, paths, force=False):
     trans_dir = os.path.join(root, "derived", "transcripts")
     files = []
     for p in paths:
@@ -181,7 +181,7 @@ def cmd_import(root, paths):
 
     con = connect(root)
     stems = {r[0]: r[1] for r in con.execute("SELECT stem, filename FROM calls")}
-    imported, orphaned = 0, []
+    imported, orphaned, skipped = 0, [], []
     for f in files:
         stem = os.path.basename(f).rsplit(".", 1)[0]
         stem = re.sub(r"\.[a-z]{2}(-[A-Z]{2})?$", "", stem)  # strip lang suffix foo.de.json
@@ -194,6 +194,10 @@ def cmd_import(root, paths):
             print(f"WARN: no cues parsed from {f}", file=sys.stderr)
             continue
         call_id = con.execute("SELECT rowid FROM calls WHERE stem=?", (stem,)).fetchone()[0]
+        existing = con.execute("SELECT count(*) FROM seg_fts WHERE call_id=?", (call_id,)).fetchone()[0]
+        if existing and not force:
+            skipped.append(os.path.basename(f))
+            continue
         con.execute("DELETE FROM seg_fts WHERE call_id=?", (call_id,))
         con.executemany("INSERT INTO seg_fts(text, call_id, start_s) VALUES (?,?,?)",
                         [(t, call_id, s) for s, _e, t in cues])
@@ -203,6 +207,9 @@ def cmd_import(root, paths):
     total = con.execute("SELECT count(*) FROM seg_fts").fetchone()[0]
     calls = con.execute("SELECT count(DISTINCT call_id) FROM seg_fts").fetchone()[0]
     print(f"imported {imported} transcripts ({calls} calls, {total} segments)")
+    if skipped:
+        print(f"kept existing transcript for {len(skipped)} calls (use --force to replace): "
+              + ", ".join(skipped[:5]))
     if orphaned:
         print(f"WARNING: {len(orphaned)} transcripts match no known call (run init first?): "
               + ", ".join(orphaned[:5]))
@@ -340,6 +347,7 @@ def main():
     sub.add_parser("init")
     imp = sub.add_parser("import")
     imp.add_argument("paths", nargs="*")
+    imp.add_argument("--force", action="store_true", help="replace existing transcripts")
     emb = sub.add_parser("embed")
     emb.add_argument("--batch", type=int, default=16)
     ask = sub.add_parser("ask")
@@ -352,7 +360,8 @@ def main():
     if args.cmd == "init":
         cmd_init(args.root)
     elif args.cmd == "import":
-        cmd_import(args.root, args.paths or [os.path.join(args.root, "derived", "transcripts")])
+        cmd_import(args.root, args.paths or [os.path.join(args.root, "derived", "transcripts")],
+                   args.force)
     elif args.cmd == "embed":
         cmd_embed(args.root, args.batch)
     elif args.cmd == "ask":

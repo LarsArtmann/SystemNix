@@ -48,6 +48,7 @@ in
   nodes.machine =
     { lib, ... }:
     {
+      inherit entryPath;
       imports = [ hotDbModule ];
 
       boot.supportedFilesystems = [ "btrfs" ];
@@ -70,7 +71,7 @@ in
       services.hot-db = {
         enable = true;
         entries.testdb = {
-          inherit path;
+          path = entryPath;
           cow = false;
           unit = "hotdb-consumer.service";
         };

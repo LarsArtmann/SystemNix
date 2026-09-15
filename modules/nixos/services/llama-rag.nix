@@ -26,6 +26,7 @@ _: {
   flake.nixosModules.llama-rag =
     {
       config,
+      options,
       lib,
       pkgs,
       ...
@@ -298,6 +299,61 @@ _: {
 
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
+        };
+
+        # Service-integration registry entry: loopback-only servers (no
+        # vHost — a direct probe policy and port registry forbid external
+        # exposure), the two Gatus health checks, and the decorative
+        # homepage tile. The embeddings/reranker units self-register with
+        # system-health (moved out of monitoredServices' default list).
+        # Replaces rows in gatus-config.nix / homepage.nix.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          llama-rag = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            checks = [
+              {
+                name = "llama.cpp Embeddings";
+                group = "AI";
+                url = "http://localhost:${toString cfg.embeddingsPort}/health";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                ];
+                alert = "llama.cpp embeddings server down — RAG indexing and semantic search unavailable";
+              }
+              {
+                name = "llama.cpp Reranker";
+                group = "AI";
+                url = "http://localhost:${toString cfg.rerankerPort}/health";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                ];
+                alert = "llama.cpp reranker down — RAG reranking unavailable, search quality degraded";
+              }
+            ];
+            # Decorative tile: loopback-only embeddings + reranking on GPU.
+            # Gatus alerts on /health endpoints; no vHost.
+            homepage = {
+              name = "llama.cpp RAG";
+              group = "AI";
+              description = "Embeddings + Reranking (bge-m3, bge-reranker-v2-m3)";
+              icon = "ollama.png";
+            };
+          };
+          llama-embeddings = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            monitored = true;
+          };
+          llama-reranker = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            monitored = true;
+          };
         };
       };
     };

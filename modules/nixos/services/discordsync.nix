@@ -12,6 +12,7 @@
   flake.nixosModules.discordsync =
     {
       config,
+      options,
       pkgs,
       lib,
       ...
@@ -304,6 +305,87 @@
           (mkStateDir cfg.dataDir "2770" cfg.user cfg.group)
           (mkStateDir "${cfg.dataDir}/attachments" "2770" cfg.user cfg.group)
         ];
+
+        # Service-integration registry entry: fans out to the Caddy vHost
+        # (Layer 2), the three Gatus checks (liveness + DLQ + Turso sync),
+        # and the homepage tile. Replaces rows in caddy.nix /
+        # gatus-config.nix / homepage.nix.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          discordsync = {
+            enable = cfg.enable;
+            subdomain = "discordsync";
+            port = ports.discordsync-api;
+            vHost.layer = "protected";
+            checks = [
+              {
+                # Use /healthz for liveness: it returns 200 once the API server is
+                # bound (after the long thumb-hash backfill), and fails hard
+                # (connection refused) when the process is down. /readyz returns 503
+                # during startup which made the previous < 400 condition miss
+                # connection failures (status 0).
+                name = "DiscordSync";
+                group = "Infrastructure";
+                url = "http://localhost:${toString ports.discordsync-api}/healthz";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                ];
+                alert = "DiscordSync backup bot down — Discord messages not being captured";
+              }
+              # M07 alert mirrors (DiscordSync plan F40): an independent
+              # second layer on top of the Prometheus rules in DiscordSync's
+              # monitoring/alerts.yml. /metrics is auth-exempt on localhost.
+              # gatus body patterns can only express "== 0" (prefix match on
+              # the value line), so each check pins a sticky zero-state.
+              # Deliberately NOT mirrored: DB-growth (500 MB/day rate) and
+              # sync-failure COUNT (>5) alerts; a gatus absolute-byte ceiling
+              # or a zero-failure check would false-fire on transients.
+              # Those stay Prometheus-only.
+              {
+                # Renamed from "Legacy DLQ Empty" (2026-08-25): production
+                # permanently carries 11,404 frozen legacy dead letters
+                # until the M09 event-store replay recovers them — a
+                # depth==0 condition fired Discord every 5 min forever.
+                # The depth gauge's companion flag (upstream 2862b613)
+                # pre-computes "unchanged since previous scrape": only NEW
+                # legacy dead letters (the Jul 3-6 silent-loss class
+                # regressing) flip it to 0. Anchored form is mandatory —
+                # the HELP embeds "<metric> 1 if ..." (phantom-green trap).
+                name = "DiscordSync Legacy DLQ Stable";
+                group = "Infrastructure";
+                url = "http://localhost:${toString ports.discordsync-api}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] != pat(*discordsync_projection_dlq_legacy_unchanged 0\n*)"
+                  "[BODY] == pat(*\ndiscordsync_projection_dlq_legacy_unchanged *)"
+                ];
+                alert = "DiscordSync legacy DLQ GREW: new entries joined the frozen pre-v4.3 backlog (Jul 3-6 silent-loss incident class regressing). Check journalctl -u discordsync for decode failures; recovery of the frozen 11,404 remains plan M09";
+              }
+              {
+                # Deliberately RED while local-only — the standing
+                # stale-mirror signal (Turso free plan, decision-pending;
+                # see AGENTS.md). Do not silence it.
+                name = "DiscordSync Turso Sync Active";
+                group = "Infrastructure";
+                url = "http://localhost:${toString ports.discordsync-api}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*discordsync_turso_local_only_mode 0*)"
+                ];
+                alert = "DiscordSync in Turso local-only mode: cloud mirror paused (quota exhausted or sync gave up). Local archive intact, mirror is stale";
+              }
+            ];
+            homepage = {
+              name = "DiscordSync";
+              group = "Sync & Backup";
+              description = "Discord Backup Bot (Messages, Attachments, Reactions)";
+              icon = "discord.png";
+            };
+          };
+        };
       };
     };
 }

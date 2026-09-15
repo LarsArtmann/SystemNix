@@ -3,6 +3,7 @@ _: {
   flake.nixosModules.file-and-image-renamer =
     {
       config,
+      options,
       pkgs,
       lib,
       ...
@@ -190,6 +191,39 @@ _: {
             }
           ];
           wantedBy = [ "multi-user.target" ];
+        };
+
+        # Service-integration registry entry: fans out to the Caddy vHost
+        # (Layer 2 protected), the Gatus health check, and the homepage tile
+        # — replaces rows in caddy.nix / gatus-config.nix / homepage.nix.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          file-and-image-renamer = {
+            enable = cfg.enable;
+            subdomain = "renamer";
+            port = ports.file-and-image-renamer-health;
+            vHost.layer = "protected";
+            checks = [
+              {
+                name = "File Renamer Health";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.file-and-image-renamer-health}/status";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                ];
+                alert = "File and Image Renamer health dashboard down — screenshot renaming may be stuck";
+              }
+            ];
+            homepage = {
+              name = "File Renamer";
+              group = "Productivity";
+              description = "AI-Powered File & Image Renaming";
+              # filebot.png: bundled icon pack has no 'mdi-*' mdi-style icons;
+              # filebot is the canonical self-hosted file-rename tool icon.
+              icon = "filebot.png";
+            };
+          };
         };
       };
     };
