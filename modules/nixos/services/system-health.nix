@@ -723,6 +723,23 @@ _: {
             fi
           fi
 
+          # === niri-health-metrics collector freshness (2026-08-24 SDDM
+          # hard-down false-negative fix) === Same phantom-green class as the
+          # guard above: node_exporter serves niri.prom's LAST content
+          # forever, so every "Niri *" Gatus pat stays green after the
+          # collector dies and the compositor goes unobserved (the incident's
+          # "niri liveness GREEN while hard-down" endpoint class). Same mtime
+          # composite: the collector rewrites niri.prom every 30 s tick;
+          # 300 s = the same 10-missed-ticks budget as the guard.
+          NIRI_FRESH=0
+          NIRI_PROM="${textfileDir}/niri.prom"
+          if [ -f "$NIRI_PROM" ]; then
+            niri_age=$(( $(date +%s) - $(stat -c %Y "$NIRI_PROM" 2>/dev/null || echo 0) ))
+            if [ "$niri_age" -ge 0 ] && [ "$niri_age" -le 300 ]; then
+              NIRI_FRESH=1
+            fi
+          fi
+
           # === systemd-oomd kills tracking ===
           # systemd-oomd kills (nix-daemon, Twenty worker) went completely
           # undetected. This counts kill events from the journal in the
@@ -1133,6 +1150,12 @@ _: {
               echo "# HELP system_memory_guard_metrics_fresh 1 if the memory-emergency-guard textfile was rewritten within 300s (guard ALIVE), 0 if frozen/stale (guard DEAD — node_exporter serves the last content forever, so the guard's own presence pats cannot see its death; 2026-09-15 gap)"
               echo "# TYPE system_memory_guard_metrics_fresh gauge"
               echo "system_memory_guard_metrics_fresh ''${GUARD_FRESH}"
+            fi
+
+            if [ -f "$NIRI_PROM" ]; then
+              echo "# HELP system_niri_metrics_fresh 1 if the niri-health-metrics textfile was rewritten within 300s (collector ALIVE), 0 if frozen/stale (compositor observability DEAD — node_exporter serves the last content forever, so the niri presence pats cannot see collector death)"
+              echo "# TYPE system_niri_metrics_fresh gauge"
+              echo "system_niri_metrics_fresh ''${NIRI_FRESH}"
             fi
 
             echo "# HELP system_service_crash_loop 1 if service restarted >=${toString crashLoopRestartThreshold} times since last collection, 0 otherwise"

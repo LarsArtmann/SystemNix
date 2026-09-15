@@ -765,21 +765,48 @@ _: {
                 (mkHttpCheck {
                   name = "Niri Compositor";
                   group = "Monitoring";
+                  # 2026-08-24 SDDM hard-down false-negative fix: this check
+                  # was a bare presence pat (pat(*niri_running*)) and stayed
+                  # GREEN through the whole incident — a presence pat cannot
+                  # fail while the textfile exists, whatever the compositor
+                  # does. Fail-closed on two layers now: (1) the metric must
+                  # appear in VALUE form (line-anchored — also rejects the
+                  # value-less-line class that gets whole textfiles dropped),
+                  # (2) the collector must be FRESH (system_niri_metrics_fresh,
+                  # system-health's mtime composite) — node_exporter serves a
+                  # frozen textfile forever, so without (2) a dead collector
+                  # leaves every niri check green (memory-guard 2026-09-15
+                  # phantom-green class).
+                  # Compositor DOWNTIME alerts via "Niri Desktop Died"
+                  # (session-aware): niri_running 0 is legitimate when
+                  # headless — do NOT assert niri_running 1 here.
                   url = "http://localhost:${toString nodePort}/metrics";
                   interval = "60s";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*niri_running*)"
+                    "[BODY] == pat(*\nniri_running *)"
+                  ]
+                  ++ lib.optionals (config.services.system-health.enable or false) [
+                    "[BODY] != pat(*system_niri_metrics_fresh 0\n*)"
+                    "[BODY] == pat(*\nsystem_niri_metrics_fresh *)"
                   ];
+                  alerts = discordAlert "niri-health-metrics is FROZEN or its textfile broke — compositor observability is DOWN and every other Niri check is blind (node_exporter serves the last content forever). Check: systemctl status niri-health-metrics.timer niri-health-metrics; journalctl -u niri-health-metrics -n 30; ls -la /var/lib/prometheus-node-exporter/textfile_collectors/niri.prom";
                 })
                 (mkHttpCheck {
                   name = "Niri Graphical Session";
                   group = "Monitoring";
+                  # Debug visibility for the loginctl session detector. Was a
+                  # bare presence pat — value-blind through the 2026-08-24
+                  # SDDM hard-down. Line-anchored VALUE form now: fails when
+                  # the line degrades to a comment or a value-less emission.
+                  # No alert by design — 0 is legitimate when headless; the
+                  # desktop-died check owns the session-without-compositor
+                  # condition.
                   url = "http://localhost:${toString nodePort}/metrics";
                   interval = "60s";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*niri_graphical_session*)"
+                    "[BODY] == pat(*\nniri_graphical_session *)"
                   ];
                 })
                 (mkHttpCheck {

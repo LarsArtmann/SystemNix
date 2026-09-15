@@ -216,11 +216,13 @@ _: {
                           # State files for grace periods — prevent false alerts
                           # during niri's 2s auto-restart window (RestartSec=2s, StartLimitBurst=3)
                           # and during the logout window (session closes before niri exits).
-                          # Requires 2 consecutive checks (~60s) of the condition before
-                          # setting the flag. Same pattern as niri-drm-healthcheck.sh.
+                          # down_count ACCUMULATES (not consecutive — 2026-08-24 SDDM fix,
+                          # see desktop_died below); down_boot records the boot_id so a
+                          # reboot (state dir survives) cannot inherit the fire state.
                           STATE_DIR="/var/lib/niri-health-metrics"
                           mkdir -p "$STATE_DIR" 2>/dev/null || true
                           DOWN_COUNT_FILE="$STATE_DIR/down_count"
+                          DOWN_BOOT_FILE="$STATE_DIR/down_boot"
                           ZOMBIE_COUNT_FILE="$STATE_DIR/zombie_count"
 
                           read_count() {
@@ -258,18 +260,42 @@ _: {
                           # "Desktop died" = user has a graphical session but niri is not running.
                           # This is the only condition that warrants an alert — not "niri down"
                           # when the user simply hasn't logged in (intentionally headless).
-                          # Grace period: 2 consecutive checks (~60s) before alerting, to avoid
-                          # false positives during niri's 2s auto-restart window.
+                          #
+                          # CUMULATIVE accumulation (2026-08-24 SDDM hard-down fix): the
+                          # original logic required 2 CONSECUTIVE bad ticks and RESET the
+                          # counter on every logged-out tick. The incident's login loop
+                          # bounced the wayland session every 20-40s (display-watchdog
+                          # restart), so two consecutive ticks never landed inside one bad
+                          # window and the only alert path for "user locked out of the
+                          # desktop" stayed silent for the whole outage. Now:
+                          #   - bad tick (session=1, running=0): count++
+                          #   - healthy tick (running=1): reset (proven recovery)
+                          #   - logged-out tick: HOLD (fire state survives greeter gaps,
+                          #     so a lockout pages until a login actually succeeds)
+                          # A crash-restart blip still cannot fire: it contributes ONE bad
+                          # tick before niri (RestartSec=2s) proves healthy and resets;
+                          # sustained crash-looping is niri_crash_loop's job. State
+                          # survives reboots, so a boot_id mismatch wipes it (the post-
+                          # reboot greeter must NOT inherit the pre-reboot fire state).
                           desktop_died=0
-                          if [ "$graphical_session" -eq 1 ] && [ "$running" -eq 0 ]; then
+                          if [ "$running" -eq 1 ]; then
+                            rm -f "$DOWN_COUNT_FILE" "$DOWN_BOOT_FILE" 2>/dev/null || true
+                          else
+                            cur_boot="$(cat /proc/sys/kernel/random/boot_id 2>/dev/null || true)"
+                            stored_boot="$(cat "$DOWN_BOOT_FILE" 2>/dev/null || true)"
+                            if [ -n "$cur_boot" ] && [ "$cur_boot" != "$stored_boot" ]; then
+                              rm -f "$DOWN_COUNT_FILE" 2>/dev/null || true
+                              printf '%s\n' "$cur_boot" > "$DOWN_BOOT_FILE" 2>/dev/null || true
+                            fi
+                            if [ "$graphical_session" -eq 1 ]; then
+                              count=$(read_count "$DOWN_COUNT_FILE")
+                              count=$((count + 1))
+                              echo "$count" > "$DOWN_COUNT_FILE" 2>/dev/null || true
+                            fi
                             count=$(read_count "$DOWN_COUNT_FILE")
-                            count=$((count + 1))
-                            echo "$count" > "$DOWN_COUNT_FILE" 2>/dev/null || true
                             if [ "$count" -ge 2 ]; then
                               desktop_died=1
                             fi
-                          else
-                            rm -f "$DOWN_COUNT_FILE" 2>/dev/null || true
                           fi
 
                           # "Zombie session" = niri running with NO graphical session:
