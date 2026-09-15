@@ -292,7 +292,8 @@ in
                           " /var/lib/memory-emergency-guard/restored.count"
                           " /var/lib/memory-emergency-guard/io-ticks"
                           " /var/lib/memory-emergency-guard/io-ticks.epoch"
-                          " /var/lib/memory-emergency-guard/io-ticks.cur")
+                          " /var/lib/memory-emergency-guard/io-ticks.cur"
+                          " /var/lib/memory-emergency-guard/churn-stopped")
           machine.succeed("rm -f /var/lib/memory-emergency-guard/restores-*")
           # Bring every sacrifice unit back up (the restore path only
           # restarts the socket; activation would re-spawn the backend).
@@ -539,6 +540,29 @@ in
       assert "memory_emergency_guard_io_disk_busy_percent_max " in prom
       assert "memory_emergency_guard_io_disk_busy_percent_max -1" not in prom
       assert "memory_emergency_guard_zone6_trips_total 1" in prom
+      # Churn-stop forensics must be a prom read (2026-09-15): the trip
+      # stopped the ACTIVE balance unit, so the per-unit metric names it,
+      # stamped with the trip epoch; the run-freshness stamp is always
+      # present (the guard-death signal system-health derives from).
+      assert (
+          "memory_emergency_guard_churn_units_stopped{unit=\"btrfs-balance-data.service\"} 1" in prom
+      ), "the trip must record WHICH churn units it actually stopped"
+      assert "memory_emergency_guard_churn_stopped_timestamp_seconds " in prom
+      assert "memory_emergency_guard_last_run_timestamp_seconds " in prom
+
+      # --- 8a. Churn window drains: io PSI back under the threshold ------
+      # (healthy fixture: ioPsiAvg60=0.00) clears the churn-stopped state —
+      # the churn metrics VANISH (their timers re-fire the units from here;
+      # the guard never restarts them). The cooldown (trip was just written)
+      # keeps the restore path out of the way.
+      out = run_guard("healthy")
+      assert "MEMORY EMERGENCY" not in out
+      prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
+      assert "memory_emergency_guard_churn_units_stopped" not in prom, (
+          "once io PSI drains under the trip threshold the churn window is "
+          "over — the stopped-units metrics must vanish with the state"
+      )
+      assert "memory_emergency_guard_churn_stopped_timestamp_seconds" not in prom
 
       # --- 8b. Phantom io PSI (idle disks) must NOT trip -----------------
       reset_state()
@@ -557,5 +581,10 @@ in
       )
       machine.succeed("systemctl is-active --quiet fastflowlm.socket")
       machine.succeed("systemctl is-active --quiet btrfs-balance-data.service")
+      prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
+      assert "memory_emergency_guard_churn_units_stopped" not in prom, (
+          "a phantom (no-trip) run must not report churn stops"
+      )
+      assert "memory_emergency_guard_last_run_timestamp_seconds " in prom
     '';
 }
