@@ -1,0 +1,85 @@
+# Window closeout — third run: fresh re-verification of the IO-PSI/Zone 6/InvokeNamed/gitleaks window
+
+**Date:** 2026-09-15 09:22 CEST
+**Queue task:** 000001a0a1f149f8469390a3b300fddf0914 closeout — this is the **THIRD run** of the same closeout (first: `docs/status/2026-09-15_06-10_window-closeout-io-psi-guard-invokenamed-sweep.md`, delivered only via daemon commit `47b0585e`; second: `docs/status/2026-09-15_07-32_window-closeout-rerun-gitleaks-rewrite-regression.md`, committed as `7ebb0863`). Between the second run and now, three more sessions touched the tree (an execution session closing the first closeout's harvest, a GH013 push-protection incident session, and a parallel service-integration-registry migration), so every claim below was **re-verified against the current tree at 09:22**, not copied forward.
+**Window:** 2026-09-14 00:37:44 → 03:11:44 (tq facts 2981–3110, worker-63716; all five tasks `task.completed` — re-read from the journal this run).
+**Method:** `git show`/`git merge-base --is-ancestor` on every cited SHA, `tq facts` against `/mnt/pool/services/tq/tq.db`, `rg` over the live modules, and read-back of CHANGELOG/FEATURES/TODO_LIST. No invented history.
+
+## The window's five tasks (fresh verification table)
+
+| Task | What it was | Cited SHA (dangling) | Reachable counterpart | Verified at 09:22 |
+| --- | --- | --- | --- | --- |
+| 000001a09ceb | Reviewer finding: the gitleaks report claimed the message rewrite landed when `120ada36` was still reachable | `695ffda8` | `638b91a3` | CORRECTION + REGRESSED annotations present in `docs/status/2026-09-13_04-22_task-000001a09873d0ca8d87606b52037ab2158d.md`; the underlying purge has **regressed again** (see §d.1) |
+| 000001a09d06 | Sweep ALL LarsArtmann Go repos for `InvokeNamed[interface]` on concrete `do` registrations | `1483bde0` | `75e76712` | Report archived at `docs/status/archived/2026-09-14_00-00_task-000001a09d06ce7945994b3bef63af3ff419.md` with the cmdguard row (17 repos, all clean — archived file line 38); CHANGELOG line 17 carries the closure |
+| 000001a09d2b | IO-PSI phantom-saturation by D-state tasks on dead automounts — deploy gate + gatus lie | `5daa85cc` | `b34b5fc8` (TODO close) + `be2ead2a` (code) | Code **in the current tree**: `scripts/deploy.sh:215-268` (io PSI some avg10 ≥20% gate + max per-disk `%util` correlation + corpse-pile signature print), `modules/nixos/services/_signoz-metrics.nix:338-397` (`node_psi_io_phantom`, `node_disk_busy_percent_max`, `node_psi_io_alert`), `modules/nixos/services/gatus-config.nix:861` (phantom-filtered "I/O pressure CRITICAL" description) |
+| 000001a09d4250c0 | IO-PSI emergency guard tier (Zone 6) | `bc2d399c` | `a03143ef` | Verification-only run on arrival (Zone 6 was built by a parallel queue run, reports archived `14-52`/`14-57`). Zone 6 **in the current tree**: `modules/nixos/services/memory-emergency-guard.nix` (avg60 trip signal `:180-186`, io_ticks corroboration `:241`, trip branch `:304-348`, churn-unit stop-list `:426`, `zone6_trips_total` metric); FEATURES.md:130 row; CHANGELOG line 19 entry; the freeze #4 postmortem (`docs/status/archived/2026-09-14_13-54_*`) independently confirms the zone fired live and by design |
+| 000001a09d42534b | Reviewer finding: sweep report omitted cmdguard, count 16 vs 17 | `449ef806` | `b481c047` + report `97fbc89a` | cmdguard row present in the archived sweep report; count corrected to 17; conclusion unchanged |
+
+All five cited SHAs remain **unreachable** from HEAD (re-checked this run: `git merge-base --is-ancestor` false for each); all seven counterpart SHAs **are reachable** (re-checked this run). Content survived every lineage abandonment; only the citations died.
+
+## a) FULLY DONE
+
+1. **The `InvokeNamed[interface]` sweep: 17 repos, zero live traps** (task 2 + its reviewer fix, task 5). Every call site cross-checked against its registration's type parameter; DiscordSync remains the only historical instance (fixed upstream `085fa539` with a regression test); cmdguard's generic same-T passthrough documented. Archived report carries both the original sweep and the cmdguard cure. CHANGELOG entry present.
+2. **The crash3 deploy-gate/gatus phantom-PSI lie is closed in code** (task 3). Re-verified in the 09:22 tree, all three surfaces: the deploy pressure gate now correlates io PSI with real disk `%util` (real storm vs D-state corpse-pile, top processes printed, `DEPLOY_FORCE_PRESSURE` escape intact); the psi collector emits `node_psi_io_phantom` + `node_disk_busy_percent_max`; the Gatus "I/O Stall Rate" check fires only when disk %util corroborates.
+3. **Guard Zone 6 exists, is VM-tested, documented, and has fired live** (task 4). Sustained io-PSI some avg60 ≥40% with disk-busy corroboration stops the resumable churn units (btrbk×3, balance×2, scrub×3, never restarted; interrupted receives heal via btrbk-pool-clean). The freeze #4 postmortem (2026-09-14 13:32) independently confirms 14+ real trips, each behaving as designed. FEATURES.md and CHANGELOG carry it.
+4. **The gitleaks report corrections are in reachable history** (task 1, content half): the 04-22 report's false "clean rebase landed" claim carries both the original CORRECTION and the 07:32 REGRESSED annotation, and the corrected §-claims live via `638b91a3` on origin/master.
+5. **All five tasks are `task.completed` in the tq journal** (re-read this run; facts 2981–3110), and the TODO_LIST closures from the window have correctly graduated to CHANGELOG per the docs-health lifecycle (no `[x]` residue).
+
+## b) PARTIALLY DONE
+
+1. **Zone 6 deployed-state verification remains open** (harvested, not lost — TODO_LIST "Added 2026-09-15 06:10" items: deployed-generation parity, live metric probe, isolated VM-test rebuild, counter-reset tolerance, notify-tier routing). The freeze #4 trips prove the deployed generation carries Zone 6, which weakens the parity gap but does not close the metric-liveness and notify-tier probes. "Fix exists and fired once" and "fix is monitored" are still different done-states.
+2. **Provenance split-brain, unchanged:** the window's real code rode unlabeled daemon commits (`be2ead2a`, and `f0e3c493` before the rebase churn); `git log --grep Task-Queue-ID` reconstructs only the docs half of the window. Systemic; the daemon-footer convention item is still open in TODO_LIST.
+3. **The message-only gitleaks rewrite (task 1's operative half) is not durable and is currently regressed** — see §d.1. The *content* corrections are durable; the *message* purge is not.
+4. **The 08:50 execution session's tq env fix is committed but not live** (pool restart + DLQ rescue of dead-lettered tasks awaits the next deploy, which is itself gated on the /nix soak window ~2026-09-17). In passing this window: sibling task `000001a09d2b6d052` dead-lettered at 02:17 after 3 failed verify runs (`go build ./...` on CV `cmd/cv`) — its rescue rides the same pending deploy.
+
+## c) NOT STARTED (skipped, still open — none owned by this window's five tasks)
+
+1. **Repo-generic CI do-analyzer** (provide/invoke type-parameter pairing lint across all Go repos) — the sweep's named future hardening; TODO item exists, untouched.
+2. **Zone 6 threshold recalibration** against first-trip telemetry (40% avg60 / 20% disk-busy are first values), the `zone6_churn_units_stopped` forensics metric, SigNoz dashboard surfaces, Zone 6 runbook entry — all harvested 06:10, none started.
+3. **The still-owed evo-x2 reboot** (flm :52626 corpse) — untouched, correctly; no queue item owns it.
+4. **GH013 push unblock** — noticed in passing (see §d.4): the push-protection block on the synthetic gitleaks fixtures is resolved in-tree (tokens templated) but the ~39-commit backlog is still unpushed; the 09:05 incident report's §f list was never harvested to TODO_LIST (this run appends the missing items).
+
+## d) TOTALLY FUCKED UP
+
+1. **The fabricated-gitleaks sentence is STILL reachable (re-verified 09:22).** `git merge-base --is-ancestor 120ada36 HEAD` → true; `0ae59e3b` → false. The window's task-1 fix performed a local message-only rewrite that was never pushed and was subsequently abandoned by the 2026-09-14 10:00 + 2026-09-15 04:11/05:08 rebases onto origin/master — exactly what the held-purge doctrine predicts. Per the 07:32 closure item: no further local rewrites; the sentence dies at the push-time re-filter or goes inert via key rotation. Third consecutive session to re-verify this; the finding is now triply confirmed, not new.
+2. **Five dangling SHA citations shipped in one window** (all five tasks' commits unreachable within ~30 hours of being written). Annotated with counterparts here and in the prior closeouts. Root cause: rewriting unpushed history while the daemon keeps committing and rebasing — citations must be reachable SHAs or message+date.
+3. **Two of five tasks needed reviewer rejection loops** for 30-second-self-check slips (wrong repo count; the false "rebase landed" claim). The reviewer layer works; both findings were preventable.
+4. **NEW since the prior closeouts — the doctrine work got the repo's push blocked.** The gitleaks-coverage-selftest (the tested invariant born from this window's task-1 falsification) shipped a handcrafted `sgp_`+40-hex literal in tracked fixtures; GitHub push protection (which ignores `.gitleaks.toml` allowlists) rejected the push (GH013, 4 locations, ~32→39 commits stuck for hours). Root-cause fix landed same-morning (fixture tokens are now `@HEX40@` templates expanded at scan time; see `docs/status/2026-09-15_09-05_gh013-push-protection-gitleaks-fixture-allowlist-gap.md`), but the unblock click/bypass is still pending — and until the push happens, the held gitleaks purge (§d.1) cannot land either. Lesson, now in AGENTS.md: enumerate ALL scanners that see a fixture's bytes, not just the repo's own.
+5. **The carried `--no-verify` excuse is now stale — and that is good news.** Every window commit ran `--no-verify` citing the red `checks.x86_64-linux.cv`; the fixture fix (2026-09-14) plus the 08:50 session's green rebuild and pre-commit/CI split retired that red. Future commits have no excuse left.
+6. **Formatter-vs-shared-tree violation (09:05 session, in passing):** `nix fmt --no-update-lock-file -- --ci` was believed check-only and is not — it formats in place and then errors, rewriting 9 in-flight files under a parallel session. AGENTS.md's `nix fmt` bullet still recommended `--ci` as check-only at run start; corrected this pass (see Docs-health pass below).
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Git-state claims need at-write-time AND post-churn verification** — the §d.1 regression has now been re-caught by three consecutive runs; the ancestry check is one command.
+2. **Citation durability:** cite reachable SHAs (or message + date); when a lineage is abandoned, sweep citing reports and annotate counterparts — done here for the third time; the rule (TODO_LIST "Added 2026-09-15 07:32") should make it the last time.
+3. **Closeout runs should converge, not repeat.** This is the third run of the same closeout; each re-verified honestly, but runs two and three found only one genuinely new fact each (the regression; the GH013 interaction). A queue-level dedupe/claim marker (already a TODO item) or a "closeout re-run = delta-only" contract would cut the cost.
+4. **Second-scanner awareness for fixtures/allowlists** (new, from §d.4): every tracked literal that matches a production secret pattern is a push-block waiting to happen; templating doctrine is documented — a mechanical lint is the missing enforcement (TODO item appended).
+5. **Provenance (standing):** the daemon footer convention remains the systemic fix for unlabeled code commits.
+6. **Docs-only task preflight:** the 07:32 run documented ~20 requeue cycles on parallel dirty trees; the dirty-tolerant lane question is still blocked on the owner.
+
+## f) NEXT THINGS
+
+**Already harvested and open (do not re-add):** the 06:10 run's 19 work items + 3 owner questions and the 07:32 run's 3 work items + 1 owner question are in TODO_LIST under their dated sections — Zone 6 deployed-state probes (parity, metric liveness, VM-test rebuild, counter-reset, notify-tier, runbook, dashboard panels, backup-staleness, recalibration, churn-units metric), the CI do-analyzer, the provenance/footer conventions, the verification-transcript rule, and the queue-availability question.
+
+**New this run (appended to TODO_LIST, 5 work items + 2 blocked questions):**
+
+1. Unblock the master push (GH013): push-protection bypass for the four synthetic-fixture locations (the unblock URL from the 09:05 report, or the `gh api` push-protection-bypasses endpoint with reason "used in tests"), then push the ~39-commit backlog.
+2. Before that re-push: run `scripts/scan-history-secrets.sh` (gzip-aware, the authoritative detector) over the unpushed range so the unblock cannot unblock a second leak.
+3. After the push: watch CI green, close GitHub secret-scanning alerts, and confirm the blocked 2026-08-18 purge runbook is now executable at the push point (or formally retired — owner).
+4. Verify the `.tq-verify` rail edits in `~/projects/CV` + `~/projects/go-taskqueue` actually got committed (written but uncommitted at the 08:50 session's end; the PMA daemon or tq bootstrap was expected to converge them).
+5. Mechanical second-scanner guard: lint (pre-commit + CI) rejecting tracked literals matching known push-protection secret patterns unless templated; and template the two remaining literal fixtures (Square `sq0atp-` + bare-hex) for uniformity.
+6. (blocked) Authorize the GH013 unblock + decide push scope: the backlog carries parallel sessions' mid-flight work (hot-db Phase-2, registry migration, pocket-id/system-health churn) — push as-is or let owning sessions settle first?
+7. (blocked) Should repeated closeout runs of the same window be deduped/rate-limited at the queue level (this is run three; delta-only re-runs would be the cheaper contract)?
+
+## g) QUESTIONS FOR THE OWNER
+
+1. **GH013 unblock + push scope:** may I (or should you) execute the push-protection unblock for the four synthetic-fixture blobs (reason "used in tests"), and should the ~39-commit backlog push as-is or wait for the parallel hot-db/registry sessions to settle?
+2. **Closeout-run contract:** this window's closeout has now run three times; do you want repeated closeouts deduped/claimed at the queue level, or is redundant re-verification an acceptable cost for independent confirmation?
+3. *(Carried, still blocked — not re-asked, listed for completeness)*: dirty-tolerant lane for docs-only tasks; DONE-stamp Task-Queue-ID convention; Zone 6 deploy timing vs the /nix soak.
+
+## h) BAND DRIFT
+
+`tq facts` over the whole journal (re-read this run) contains **zero `task.reprioritized` facts** — `grep -ci repriorit` → 0. **None recorded.** The only queue movement in the window's timespan was lifecycle churn, not re-prioritization: all five window tasks went enqueued → claimed → completed (one transient failure each on the Zone 6 task — context deadline at 02:42:44, re-claimed 4 min later — and none other), and two sibling tasks dead-lettered on verify-gate failures (`000001a09d2b6d052` ×3 on CV `cmd/cv` build at 02:17:43; `000001a09d06cf0bc` on go-taskqueue's suite per the 07:32 report). Both dead-letters are verify-environment classes (GOEXPERIMENT env fix landed 08:50, activation pending deploy), not priority moves.
+
+---
+Task-Queue-ID: 000001a0a1f149f8469390a3b300fddf0914
