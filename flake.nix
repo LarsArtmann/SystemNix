@@ -457,9 +457,14 @@
 
     # art-dupl — Code duplication detector
     art-dupl = {
-      # INTERIM local pin (do NOT flip to github: until fork branch pushes the
-      # vendorHash refresh — commit 9c370324).
-      url = "git+file:///home/lars/projects/art-dupl?rev=9c370324dfcfaef23fa60079af0d9ebfcf84a489";
+      # Pinned to the fork-branch rev that carries the vendorHash refresh.
+      # Was INTERIM `git+file:///home/lars/projects/art-dupl` — a local-path
+      # input that made EVERY CI eval fail (`Git repository ... does not
+      # exist`: flake-check VM tests + go-deps-audit input evals, 2026-09-15).
+      # The flip condition (fork branch pushes 9c370324) is satisfied:
+      # origin/fork contains it. A `github:` URL with a rev keeps the pin
+      # exact AND fetches in CI.
+      url = "github:LarsArtmann/art-dupl/9c370324dfcfaef23fa60079af0d9ebfcf84a489";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
