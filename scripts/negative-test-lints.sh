@@ -79,7 +79,13 @@ run_case() {
       local rest="${mut#sed:}"
       local f="${rest%%:*}"
       local expr="${rest#*:}"
-      sed -i "$expr" "$dir/$f"
+      # A silent sed failure (missing file, unmatched expr) leaves the copy
+      # UNMUTATED and the case reports a phantom lint — fail loud instead.
+      if ! sed -i "$expr" "$dir/$f" 2>/dev/null; then
+        say "HARNESS BUG: sed mutation failed (file missing or expr unmatched): $expr on $f"
+        failed=$((failed + 1))
+        return 0
+      fi
       ;;
     *)
       say "HARNESS BUG: unknown mutation [$mut]"
@@ -180,6 +186,19 @@ run_case shape renamed-wrapper module-shape-lint fail 'does not declare flake\.n
 # scanner walks modules/ regardless — exactly the gap this lint guards.)
 run_case coverage awk-without-gawk binary-coverage-lint fail "execs 'awk'" \
   "append:modules/nixos/services/_evil-coverage-fixture.nix:{ config, ... }: { systemd.services.evil.serviceConfig.ExecStart = \"/bin/sh -c 'df | awk NR==1'\"; }"
+
+# ── gitleaks-coverage-selftest: the coverage claims are live invariants ──
+# The selftest scans tests/fixtures/gitleaks/ against the real repo config.
+# Mutations must produce shapes NO default rule catches (generic-api-key
+# masks single-rule drift on high-entropy values — proven by the first
+# harness run), so drift mutations also collapse entropy; the corrupt
+# mutation swaps in a genuinely detectable token shape.
+run_case gitleaks square-fixture-drift gitleaks-coverage-selftest fail 'did NOT detect' \
+  'sed:tests/fixtures/gitleaks/positive-square.txt:s|sq0atp-aB3dEf6hIj9kLm2oPq5rSt8uVw1xYz4A0bC5dE7f|sq0atpX-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|'
+run_case gitleaks sourcegraph-fixture-drift gitleaks-coverage-selftest fail 'did NOT detect' \
+  'sed:tests/fixtures/gitleaks/positive-sourcegraph.txt:s|sgp_7f3e9a1c48d2b650e4fa93c17b8d05264e9f0a3c|sgpX_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|'
+run_case gitleaks negative-fixture-corrupt gitleaks-coverage-selftest fail 'tripped gitleaks' \
+  'sed:tests/fixtures/gitleaks/negative-bare-hex.txt:s|deadbeefdeadbeefdeadbeefdeadbeefdeadbeef|sq0atp-aB3dEf6hIj9kLm2oPq5rSt8uVw1xYz4A0bC5dE7f|'
 
 say ""
 say "=== negative-test-lints: $passed passed, $failed failed ==="

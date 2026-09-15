@@ -2067,19 +2067,8 @@ _: {
                   alerts = discordAlert "tq agent-pool unit failed — TODO_LIST harvest + agent execution halted (dashboard keeps serving from the journal). Check: systemctl status tq-agent-pool, journalctl -u tq-agent-pool -n 100.";
                 })
               ]
-              ++ lib.optionals (config.services.papdashboard.enable or false) [
-                (mkHttpCheck {
-                  name = "PapDashboard";
-                  group = "Monitoring";
-                  url = "http://localhost:${toString ports.papdashboard}/api/health";
-                  interval = "60s";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 500"
-                  ];
-                  alerts = discordAlert "PapDashboard alert hub down — alert lifecycle UI and NPU insights unavailable (raw Discord alerts still flow)";
-                })
-              ]
+              # PapDashboard check moved to its owning module
+              # (services.integration.papdashboard.checks in papdashboard.nix).
               ++ lib.optionals (config.services.backup-coordination.enable or false) [
                 (mkHttpCheck {
                   name = "All Backups Healthy";
