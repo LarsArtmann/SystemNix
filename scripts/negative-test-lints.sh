@@ -79,13 +79,32 @@ run_case() {
       local rest="${mut#sed:}"
       local f="${rest%%:*}"
       local expr="${rest#*:}"
-      # A silent sed failure (missing file, unmatched expr) leaves the copy
-      # UNMUTATED and the case reports a phantom lint — fail loud instead.
-      if ! sed -i "$expr" "$dir/$f" 2>/dev/null; then
-        say "HARNESS BUG: sed mutation failed (file missing or expr unmatched): $expr on $f"
+      local premut
+      premut=$(mktemp)
+      # A silent sed failure (missing file) OR a no-op sed (expr matched
+      # nothing — exit 0!) leaves the copy UNMUTATED and the case reports
+      # the lint phantom-green (the gatus anchor-decay class, 2026-09-15).
+      # Detect BOTH: sed errors loudly, and a byte-identical file after a
+      # substitution expr means nothing matched.
+      if ! cp -- "$dir/$f" "$premut" 2>/dev/null; then
+        say "HARNESS BUG: sed target missing: $f"
         failed=$((failed + 1))
+        rm -f "$premut"
         return 0
       fi
+      if ! sed -i "$expr" "$dir/$f" 2>/dev/null; then
+        say "HARNESS BUG: sed mutation failed (expr invalid): $expr on $f"
+        failed=$((failed + 1))
+        rm -f "$premut"
+        return 0
+      fi
+      if cmp -s -- "$premut" "$dir/$f"; then
+        say "HARNESS BUG: sed mutation was a NO-OP (expr matched nothing): $expr on $f"
+        failed=$((failed + 1))
+        rm -f "$premut"
+        return 0
+      fi
+      rm -f "$premut"
       ;;
     *)
       say "HARNESS BUG: unknown mutation [$mut]"
@@ -169,17 +188,17 @@ run_case signoz comment-ignored signoz-query-lint pass '' \
 # — a definition line breaks downstream references (undefined variable), a
 # header comment sits outside the attrset (syntax error).)
 run_case gatus regex-chars gatus-pattern-lint fail 'regex-only chars' \
-  'sed:modules/nixos/services/gatus-config.nix:s|# Smart alerting: append a PapDashboard ingest alert \(type "custom"\) to|evilPattern = "pat(*metric_z?)";|'
+  'sed:modules/nixos/services/gatus-config.nix:s|# Smart alerting: append a PapDashboard ingest alert .type .custom.. to|evilPattern = "pat(*metric_z?)";|'
 run_case gatus phantom-one gatus-pattern-lint fail 'bare pat\(\*<metric> 1\*\)' \
-  'sed:modules/nixos/services/gatus-config.nix:s|# Smart alerting: append a PapDashboard ingest alert \(type "custom"\) to|evilPattern = "pat(*metric_z 1*)";|'
+  'sed:modules/nixos/services/gatus-config.nix:s|# Smart alerting: append a PapDashboard ingest alert .type .custom.. to|evilPattern = "pat(*metric_z 1*)";|'
 run_case gatus literal-backslash-n gatus-pattern-lint fail 'literal backslash-n' \
-  'sed:modules/nixos/services/gatus-config.nix:s|# Smart alerting: append a PapDashboard ingest alert \(type "custom"\) to|evilPattern = "pat(*m \\\\n*)";|'
+  'sed:modules/nixos/services/gatus-config.nix:s|# Smart alerting: append a PapDashboard ingest alert .type .custom.. to|evilPattern = "pat(*m \\\\n*)";|'
 # NB (backslash accounting, the trap IS the test): the sed replacement above
 # carries FOUR backslashes -> sed emits TWO into the file -> double-quoted
 # nix evals them to ONE literal backslash + n = the broken runtime shape the
 # trap must catch. A single file backslash would be the CORRECT form.
 run_case gatus lowercase-method gatus-pattern-lint fail 'lowercase HTTP method' \
-  'sed:modules/nixos/services/gatus-config.nix:s|# Smart alerting: append a PapDashboard ingest alert \(type "custom"\) to|evilMethod.method = "post";|'
+  'sed:modules/nixos/services/gatus-config.nix:s|# Smart alerting: append a PapDashboard ingest alert .type .custom.. to|evilMethod.method = "post";|'
 
 # ── module-shape-lint: wrapper renamed away from the filename ──
 # (A bare module ALSO breaks flake eval with a worse message — renaming the

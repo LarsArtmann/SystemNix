@@ -84,14 +84,13 @@ in {
     };
 
     # Format the virtio disk as btrfs label `tlc` (production label)
-    # before any by-label mount unit can start.
+    # before any by-label mount unit can start. Tie to the mount unit
+    # itself (atticd-storage-dir shape) — `before local-fs.target` plus
+    # the service's default After=sysinit/basic is an ordering cycle.
     systemd.services.tlc-fmt = {
       description = "Format the virtio disk as btrfs label tlc (test-only)";
-      wantedBy = ["local-fs.target"];
-      before = [
-        "mnt-hot.mount"
-        "local-fs.target"
-      ];
+      wantedBy = ["mnt-hot.mount"];
+      before = ["mnt-hot.mount"];
       serviceConfig = {
         Type = "oneshot";
         User = "root";

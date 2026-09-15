@@ -238,14 +238,25 @@
             # the mounts come up (atticd-storage-dir class, pre-mount).
             hot-db-bootstrap = {
               description = "Create hot-DB subvolumes and apply nodatacow on the Samsung TLC pool";
-              wantedBy = ["local-fs.target"];
-              before = ["local-fs.target"] ++ map (e: mountUnitName e.path) entryList;
+              # atticd-storage-dir pattern: each generated entry mount WANTS
+              # this unit and is ordered AFTER it, so the subvolumes exist
+              # before the mount is attempted. Do NOT use
+              # `before = local-fs.target` here — with the unit's default
+              # `After=sysinit/basic` (local-fs completes before sysinit in
+              # the boot graph) that edge is an ordering cycle, and systemd
+              # breaks it by deleting the local-fs job, voiding the whole
+              # mount transaction (live VM-test failure).
+              wantedBy = map (e: mountUnitName e.path) entryList;
+              before = map (e: mountUnitName e.path) entryList;
+              after = [mountUnitName cfg.toplevelMount];
+              wants = [mountUnitName cfg.toplevelMount];
               unitConfig = {
-                # Samsung detached (nofail toplevel absent) → skip cleanly; the
-                # generated per-entry mounts then fail, and consumers fail on
-                # RequiresMountsFor. Never a dead boot, never a shadow write.
+                # Samsung detached (nofail toplevel absent) → skip cleanly
+                # (Wants, not Requires, so the toplevel's own failure cannot
+                # dependency-fail this unit); the generated per-entry mounts
+                # then fail, and consumers fail on RequiresMountsFor. Never a
+                # dead boot, never a shadow write.
                 ConditionPathIsMountPoint = cfg.toplevelMount;
-                RequiresMountsFor = [cfg.toplevelMount];
               };
               serviceConfig = lib.mkMerge [
                 {
