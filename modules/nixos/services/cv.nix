@@ -13,6 +13,7 @@
   flake.nixosModules.cv =
     {
       config,
+      options,
       pkgs,
       lib,
       ...
@@ -689,6 +690,169 @@
         # the pool mounts — a rule would create a ROOT-fs shadow dir during
         # every DAS outage (the exact 226/NAMESPACE masking class fixed
         # 2026-08-31). cv-backup-dir above is the only sanctioned creator.
+
+        # Service-integration registry entry: fans out to the Caddy vHost
+        # (plain — native OIDC, protectedVHost would double-auth), the six
+        # Gatus checks, the homepage tile, the backup-freshness row, and
+        # the Pocket ID OIDC client. Replaces rows in caddy.nix /
+        # gatus-config.nix / homepage.nix / configuration.nix /
+        # pocket-id.nix.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          cv = {
+            enable = cfg.enable;
+            subdomain = "cv";
+            port = ports.cv;
+            vHost.layer = "plain";
+            checks = [
+              # Liveness: go-health probe served from the raw mux (always
+              # 200 once the process is up; connection-refused when down).
+              {
+                name = "CV";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.cv}/health/live";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                ];
+                alert = "CV server down — resume site and PDF export at cv.home.lan unreachable. Check: systemctl status cv-server, journalctl -u cv-server.";
+              }
+              # Functional: the CV page renders real HTML (liveness alone
+              # would stay green through a broken render/config path).
+              {
+                name = "CV Page Renders";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.cv}/cv";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 2000"
+                  "[BODY] == pat(*<html*)"
+                ];
+                alert = "CV /cv page no longer renders HTML — content sync, config, or the render layer is broken (cv.home.lan)";
+              }
+              # Functional: the PDF export actually compiles — this stayed
+              # green through a real incident where the typst template
+              # vanished from the state dir and /export/pdf 404'd while
+              # /cv kept rendering (2026-08-27). 5m interval stays far
+              # inside the export rate limit (5/min burst 8 per client).
+              {
+                name = "CV PDF Export";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.cv}/export/pdf";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 10000"
+                  "[BODY] == pat(*%PDF*)"
+                ];
+                alert = "CV /export/pdf broken — typst template missing from /var/lib/cv/assets or the typst renderer failed (cv.home.lan). Check: journalctl -u cv-server, restart re-syncs assets.";
+              }
+              # Funnel freshness: the newest job.discovered event must be
+              # younger than 26h (four missed 6h scan ticks). The server
+              # encodes the verdict as the funnelStale boolean so this needs
+              # no JSONPath support; the API key rides the same sops secret
+              # the cv-scan timer uses, rendered into gatus-env.
+              {
+                name = "CV Funnel Freshness";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.cv}/api/pipeline/sse-stats";
+                interval = "30m";
+                # sse-stats scans the WHOLE event log per call (newest
+                # job.discovered). Under IO PSI that took 2.4-12s live
+                # (2026-09-03): the old [RESPONSE_TIME] < 2000 condition
+                # flapped the check 4x/12h while funnelStale stayed false,
+                # and the client's default 10s timeout failed the rest —
+                # every flap paged "funnel stale" for a latency problem.
+                # Liveness stays guarded by [STATUS] + this 30s ceiling;
+                # the freshness verdict IS the check's job.
+                client.timeout = "30s";
+                headers = {
+                  X-API-Key = "$CV_API_KEY";
+                };
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\"funnelStale\":false*)"
+                ];
+                alert = "CV funnel stale — no new job discovered in 26h+ (cv-scan timer dead or every portal failing). Check: systemctl list-timers | grep cv-scan; journalctl -u cv-scan -u cv-server --since -24h";
+              }
+              # Funnel DB health: /health's pipeline-store check pings the
+              # SQLite event store (the irreplaceable tracked-applications
+              # state cv-backup protects). Body pattern is deterministic:
+              # Go marshals the checks map with struct field order
+              # (name, status, …), json.MarshalWrite emits compact JSON.
+              # "disabled" (in-memory backend) also fails the pat — in
+              # production event_store_driver=sqlite by config, so a
+              # disabled/absent verdict means the persistence config
+              # regressed (the config-validation gap the CV repo flagged).
+              # DEPLOY-ORDER: ships together with the cv flake-input bump —
+              # binaries before 2026-09-02 have no pipeline-store key and
+              # would sit permanently red on this check.
+              {
+                name = "CV Pipeline Store Health";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.cv}/health";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 2000"
+                  "[BODY] == pat(*\"pipeline-store\":{\"name\":\"pipeline-store\",\"status\":\"healthy\"*)"
+                ];
+                alert = "CV pipeline event store unreachable — tracked-applications persistence is degraded (cv.home.lan). Check: journalctl -u cv-server --since -15min; sqlite store at /var/lib/cv/data/pipeline.sqlite.";
+              }
+              # Auto-apply surface check: the cv_autoapply_* gauges must be
+              # REGISTERED on /metrics. Presence-only by decision — the
+              # counters are cumulative, so any pat on a VALUE ("errors 0")
+              # permanently breaks after the first transient 429 and pages
+              # forever (the same value-threshold trap as the funnel
+              # freshness RESPONSE_TIME flap). Pass CADENCE is covered by
+              # Funnel Freshness (the timer POSTs scan→evaluate→auto-apply
+              # in sequence; a dead auto-apply leg alone is a CV-side
+              # last-pass-file gap, not alertable here).
+              {
+                name = "CV Auto-Apply Metrics";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.cv}/metrics";
+                interval = "30m";
+                headers = {
+                  X-API-Key = "$CV_API_KEY";
+                };
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*cv_autoapply_passes*)"
+                  "[BODY] == pat(*cv_autoapply_pass_errors*)"
+                ];
+                alert = "CV auto-apply gauges missing from /metrics — the autoapply DI provider or metrics registration regressed (cv.home.lan). Check: journalctl -u cv-server --since -15min; GET /metrics | grep cv_autoapply.";
+              }
+            ];
+            homepage = {
+              name = "CV";
+              group = "Development";
+              description = "Resume Generator & Career Pipeline";
+            };
+            backup = {
+              # Nightly online .backup of the pipeline event store
+              # (cv-backup.timer, 03:17) onto the mirrored pool.
+              directory = "/mnt/pool/backups/cv";
+              filePattern = "pipeline-*.sqlite";
+              maxAgeHours = 25;
+            };
+            # Native OIDC in CV's admin hub (coreos/go-oidc,
+            # authorization-code + PKCE S256): the locked /admin access
+            # card renders the provider sign-in button; success mints
+            # the app's operator session. The secret lands in
+            # /var/lib/pocket-id/client-secrets/cv and reaches the
+            # service via the cv-oidc-env bridge (above). The API key
+            # stays CV's machine path (cron timers keep X-API-Key).
+            oidc = {
+              name = "CV";
+              clientId = "cv";
+              launchURL = "https://cv.${domain}";
+              callbackURLs = [ "https://cv.${domain}/admin/auth/oidc/callback" ];
+              pkceEnabled = true;
+            };
+          };
+        };
       };
     };
 }

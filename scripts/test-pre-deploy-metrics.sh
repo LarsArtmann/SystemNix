@@ -45,6 +45,7 @@ trap 'rm -f "$METRICS_FILE"' EXIT
 # Default environment replicating a healthy pre-deploy run.
 reset_env() {
   KNOWN_NEW_METRICS=""
+  METRICS_GATE_STALE_LOAN_NAMES=""
   MONITOR365_METRICS="collector_events_collected cloud_sync_consecutive_failures"
   MONITOR365_UP=false
   DISCORDSYNC_METRICS="discordsync_turso_local_only_mode"
@@ -180,6 +181,44 @@ node_textfile_scrape_error 0
 EOF
 metrics_gate_classify_absence "bank_sync_sync_errors_total"
 expect "fail" "bank-sync metric absent while :8097 UP → hard FAIL (endpoint up means the metric truly vanished)"
+
+echo "=== Fixture H: stale-loan aggregation — ≤3 warn individually, >3 collapse into one summary ==="
+reset_env
+cat >"$METRICS_FILE" <<'EOF'
+metric_stale_one 1
+metric_stale_two 1
+metric_stale_three 1
+metric_stale_four 1
+metric_stale_five 1
+EOF
+WARN_BEFORE=$WARN
+KNOWN_NEW_METRICS="metric_stale_one metric_stale_two"
+metrics_gate_classify_absence "metric_stale_one"
+expect "warn" "stale loan 1/2 → individual WARN (≤3 keeps per-metric visibility)"
+metrics_gate_classify_absence "metric_stale_two"
+expect "warn" "stale loan 2/2 → individual WARN"
+metrics_gate_stale_loan_summary
+if [ "$WARN" -eq "$((WARN_BEFORE + 2))" ]; then
+  echo "  ok   [warn] summary silent at ≤3 stale loans (no aggregate emitted)"
+else
+  echo "  FAIL [warn] summary must NOT emit at ≤3 stale loans (WARN delta: $((WARN - WARN_BEFORE - 2)))"
+  TEST_FAILURES=$((TEST_FAILURES + 1))
+fi
+
+reset_env
+WARN_BEFORE=$WARN
+KNOWN_NEW_METRICS="metric_stale_one metric_stale_two metric_stale_three metric_stale_four metric_stale_five"
+for m in metric_stale_one metric_stale_two metric_stale_three metric_stale_four metric_stale_five; do
+  metrics_gate_classify_absence "$m"
+done
+metrics_gate_stale_loan_summary
+PER_METRIC_DELTA=$((WARN - WARN_BEFORE))
+if [ "$LAST_CLASS" = "warn" ] && [ "$PER_METRIC_DELTA" -eq 4 ]; then
+  echo "  ok   [warn] >3 stale loans → 3 individual warns suppressed to 0 + exactly ONE aggregated summary WARN (delta 4)"
+else
+  echo "  FAIL [warn] expected delta 4 (3 suppressed + 1 summary) with summary last, got delta $PER_METRIC_DELTA last=$LAST_CLASS"
+  TEST_FAILURES=$((TEST_FAILURES + 1))
+fi
 
 if [ "$TEST_FAILURES" -gt 0 ]; then
   echo ""

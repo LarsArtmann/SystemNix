@@ -36,6 +36,7 @@ _: {
         ioTier
         mkStateDir
         onFailure
+        ports
         serviceOneshotDefaults
         ;
 
