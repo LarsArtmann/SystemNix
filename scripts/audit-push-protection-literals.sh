@@ -49,10 +49,10 @@ selftest() {
   # must never appear in this file, or the scanner would flag itself.
   local hex40='REDACTED-PUSH-PROTECTION-FIXTURE'
   local mixed='REDACTED-PUSH-PROTECTION-FIXTURE'
-  printf 'sourcegraph access token: sgp_%s\n' "$hex40" > "$tmp/sgp.txt"
-  printf 'square access token: sq0atp-%s\n' "$mixed" > "$tmp/sq.txt"
-  printf 'sourcegraph access token: sgp_@HEX40@\n' > "$tmp/templated.txt"
-  printf 'bare hex without keywords: 7f3e9a1c48d2b650e4fa93c17b8d05264e9f0a3c\n' > "$tmp/bare.txt"
+  printf 'sourcegraph access token: sgp_%s\n' "$hex40" >"$tmp/sgp.txt"
+  printf 'square access token: sq0atp-%s\n' "$mixed" >"$tmp/sq.txt"
+  printf 'sourcegraph access token: sgp_@HEX40@\n' >"$tmp/templated.txt"
+  printf 'bare hex without keywords: 7f3e9a1c48d2b650e4fa93c17b8d05264e9f0a3c\n' >"$tmp/bare.txt"
 
   if scan_files "$tmp/sgp.txt" "$tmp/sq.txt" 2>/dev/null; then
     echo "SELFTEST FAIL: the scanner did NOT flag the known push-protection literals" >&2
@@ -68,18 +68,18 @@ selftest() {
 }
 
 case "${1:-}" in
-  --selftest)
-    selftest
-    ;;
-  *)
-    # A scanner must prove it measured: zero tracked files is an error,
-    # not a pass (the gosec Files:0 false-green class).
-    mapfile -d '' files < <(git ls-files -z)
-    if [ "${#files[@]}" -eq 0 ]; then
-      echo "FAIL: no tracked files found — run from the repo root" >&2
-      exit 1
-    fi
-    echo "scanning ${#files[@]} tracked files for push-protection-shaped literals"
-    scan_files "${files[@]}"
-    ;;
+--selftest)
+  selftest
+  ;;
+*)
+  # A scanner must prove it measured: zero tracked files is an error,
+  # not a pass (the gosec Files:0 false-green class).
+  mapfile -d '' files < <(git ls-files -z)
+  if [ "${#files[@]}" -eq 0 ]; then
+    echo "FAIL: no tracked files found — run from the repo root" >&2
+    exit 1
+  fi
+  echo "scanning ${#files[@]} tracked files for push-protection-shaped literals"
+  scan_files "${files[@]}"
+  ;;
 esac

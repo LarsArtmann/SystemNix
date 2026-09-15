@@ -893,7 +893,7 @@ _: {
                     IDX=0
                     while [ "$IDX" -lt "$DECLARED_RULES" ]; do
                       RULE_TYPE=$(printf '%s' "$VIEW" | jq -r ".filterRules[$IDX].ruleType")
-                      TAG_NAME=$(printf '%s' "$VIEW" | jq -r ".filterRules[$IDX].tagName // \"\"")
+                      TAG_NAME=$(printf '%s' "$VIEW" | jq -r ".filterRules[$IDX].tagName // \"\"") || TAG_NAME=""
                       if [ -n "$TAG_NAME" ]; then
                         TID=$(tag_id "$TAG_NAME")
                         if [ "$TID" = "MISSING" ]; then
@@ -956,7 +956,7 @@ _: {
                       CONFIG_BODY="''${CONFIG_RESP%$'\n'*}"
                       CONFIG_ID=""
                       if [ "$CONFIG_STATUS" -ge 200 ] 2>/dev/null && [ "$CONFIG_STATUS" -lt 300 ] 2>/dev/null; then
-                        CONFIG_ID=$(printf '%s' "$CONFIG_BODY" | jq -r '.results[0].id // empty')
+                        CONFIG_ID=$(printf '%s' "$CONFIG_BODY" | jq -r '.results[0].id // empty') || CONFIG_ID=""
                       fi
                       if [ -n "$CONFIG_ID" ]; then
                         PATCH_STATUS=$(curl -s -o /dev/null -w '%{http_code}' --header @"$ADMIN_TOKEN_FILE" -X PATCH \

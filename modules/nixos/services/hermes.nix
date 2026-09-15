@@ -584,8 +584,10 @@
             # that landed before scripts/migrate-hermes-subvol.sh prepare).
             # projectsDir backs the read-only bind — same loud-failure
             # guarantee if it ever moves onto removable storage.
-            RequiresMountsFor = [ (toString cfg.stateDir) ]
-              ++ lib.optionals (cfg.projectsDir != null) [ (toString cfg.projectsDir) ];
+            RequiresMountsFor = [
+              (toString cfg.stateDir)
+            ]
+            ++ lib.optionals (cfg.projectsDir != null) [ (toString cfg.projectsDir) ];
           };
 
           path = [
