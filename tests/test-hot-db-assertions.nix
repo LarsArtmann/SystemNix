@@ -23,19 +23,22 @@ let
 
   hotDb = (import ../modules/nixos/services/hot-db.nix).flake.nixosModules.hot-db;
 
-  base = extraModules: [
-    hotDb
-    {
-      services.hot-db = {
-        enable = true;
-        entries.mydb = {
-          path = "/var/lib/mydb";
-          cow = false;
-          unit = "mydb.service";
+  base =
+    extraModules:
+    [
+      hotDb
+      {
+        services.hot-db = {
+          enable = true;
+          entries.mydb = {
+            path = "/var/lib/mydb";
+            cow = false;
+            unit = "mydb.service";
+          };
         };
-      };
-    }
-  ] ++ extraModules;
+      }
+    ]
+    ++ extraModules;
 
   evalConfig =
     extraModules:
@@ -49,7 +52,9 @@ let
 
   hotDbFailures =
     extraModules:
-    builtins.filter (a: !a.assertion && lib.hasInfix "services.hot-db" a.message) (assertions extraModules);
+    builtins.filter (a: !a.assertion && lib.hasInfix "services.hot-db" a.message) (
+      assertions extraModules
+    );
 
   warnings = extraModules: (evalConfig extraModules).warnings;
 
@@ -72,19 +77,21 @@ let
   cases = [
     {
       name = "btrbk-entry-path-landmine-not-caught";
-      pass = hotDbFailures (btrbkInstance {
-        snapshot_preserve = "3d 1w";
-        volume."/mnt/pool" = {
-          snapshot_dir = "/mnt/pool/.snapshots";
-          subvolume."hot/mydb" = { };
-        };
-      }) != [ ];
+      pass =
+        hotDbFailures (btrbkInstance {
+          snapshot_preserve = "3d 1w";
+          volume."/mnt/pool" = {
+            snapshot_dir = "/mnt/pool/.snapshots";
+            subvolume."hot/mydb" = { };
+          };
+        }) != [ ];
     }
     {
       name = "btrbk-entry-path-reference-not-caught";
-      pass = hotDbFailures (btrbkInstance {
-        volume."/mnt/btrfs-root".subvolume."@".target = "/var/lib/mydb";
-      }) != [ ];
+      pass =
+        hotDbFailures (btrbkInstance {
+          volume."/mnt/btrfs-root".subvolume."@".target = "/var/lib/mydb";
+        }) != [ ];
     }
     {
       name = "clean-btrbk-false-positive";

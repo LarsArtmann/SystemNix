@@ -25,11 +25,23 @@ OUT="$UCR_DIR/integrity-sweep"
 PARALLEL="${PARALLEL:-2}"
 
 for tool in ffprobe ffmpeg sha256sum python3 ionice jq; do
-  command -v "$tool" >/dev/null || { echo "FATAL: missing tool: $tool" >&2; exit 1; }
+  command -v "$tool" >/dev/null || {
+    echo "FATAL: missing tool: $tool" >&2
+    exit 1
+  }
 done
-[ -d "$WAV_DIR" ] || { echo "FATAL: WAV dir missing: $WAV_DIR" >&2; exit 1; }
-[ -s "$UCR_DIR/SHA256SUMS" ] || { echo "FATAL: manifest missing: $UCR_DIR/SHA256SUMS" >&2; exit 1; }
-[ -s "$UCR_DIR/index.csv" ] || { echo "FATAL: index.csv missing" >&2; exit 1; }
+[ -d "$WAV_DIR" ] || {
+  echo "FATAL: WAV dir missing: $WAV_DIR" >&2
+  exit 1
+}
+[ -s "$UCR_DIR/SHA256SUMS" ] || {
+  echo "FATAL: manifest missing: $UCR_DIR/SHA256SUMS" >&2
+  exit 1
+}
+[ -s "$UCR_DIR/index.csv" ] || {
+  echo "FATAL: index.csv missing" >&2
+  exit 1
+}
 
 mkdir -p "$OUT" "$OUT/decode-stderr"
 SWEEP_JSONL="$OUT/sweep.jsonl"
@@ -43,7 +55,7 @@ fi
 echo "== Phase 1: sha256 manifest verification (serial, idle priority)"
 (
   cd "$WAV_DIR"
-  ionice -c3 nice -n19 sha256sum -c "$UCR_DIR/SHA256SUMS" > "$SHA_LOG" 2>&1 || true
+  ionice -c3 nice -n19 sha256sum -c "$UCR_DIR/SHA256SUMS" >"$SHA_LOG" 2>&1 || true
 )
 SHA_OK=$(grep -c ': OK$' "$SHA_LOG" || true)
 SHA_BAD=$(grep -cv ': OK$' "$SHA_LOG" || true)

@@ -55,7 +55,10 @@ def norm_number(num):
 
 
 def looks_like_number(s):
-    return bool(re.fullmatch(r"[+()\d\s\-./]+", s or "")) and any(c.isdigit() for c in s)
+    if not s:
+        return False
+    s = s.translate(ISOLATION)
+    return bool(re.fullmatch(r"[+()\d\s\-./]+", s)) and any(c.isdigit() for c in s)
 
 
 # ---------------------------------------------------------------- evidence
@@ -102,6 +105,12 @@ def cube_evidence(root):
     out = {}
     if not os.path.isdir(props):
         return out
+
+    def entry(key, disp):
+        return out.setdefault(key, {"display": disp, "names": set(), "numbers": set(),
+                                    "ucr_calls": 0, "ucr_first": "", "ucr_last": "",
+                                    "cube_calls": 0, "cube_first": "", "cube_last": ""})
+
     for fn in os.listdir(props):
         if not fn.endswith(".json"):
             continue
@@ -109,35 +118,36 @@ def cube_evidence(root):
             meta = json.load(open(os.path.join(props, fn), encoding="utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError, OSError):
             continue
-        callee = (meta.get("callee") or "").strip()
-        m = re.match(r"^[a-z]+_(\d{8})-(\d{6})[_ ](.*)\.json$", fn, re.S)
+        m = re.match(r"^[a-z]+_(\d{8})-(\d{6})[_ ](.*)\.json$", clean_name(fn), re.S)
         date = ""
         stem_name = ""
         if m:
             date = f"{m.group(1)[:4]}-{m.group(1)[4:6]}-{m.group(1)[6:]} {m.group(2)[:2]}:{m.group(2)[2:]}"
             stem_name = clean_name(m.group(3))
-        if not callee and not stem_name:
+        callee = clean_name((meta.get("callee") or "").strip())
+
+        num_part = callee if callee and looks_like_number(callee) else \
+            (stem_name if stem_name and looks_like_number(stem_name) else "")
+        name_part = callee if callee and not looks_like_number(callee) else \
+            (stem_name if stem_name and not looks_like_number(stem_name) and stem_name not in ("Call ended", "Unknown") else "")
+        if not num_part and not name_part:
             continue
-        if stem_name and looks_like_number(stem_name) and not callee:
-            callee = stem_name
-            stem_name = ""
-        entries = []
-        if callee:
-            entries.append(("num", norm_number(callee), callee))
-        if stem_name and stem_name not in ("Call ended", "Unknown", ""):
-            entries.append(("name", stem_name.casefold(), stem_name))
-        for key, k, disp in entries:
-            e = out.setdefault(key, {"display": disp, "names": set(), "numbers": set(),
-                                     "ucr_calls": 0, "ucr_first": "", "ucr_last": "",
-                                     "cube_calls": 0, "cube_first": date, "cube_last": date})
-            e["cube_calls"] += 1
-            if date:
-                e["cube_first"] = min(x for x in (e["cube_first"], date) if x)
-                e["cube_last"] = max(x for x in (e["cube_last"], date) if x)
-            if key == "num":
-                e["numbers"].add(k)
-            else:
-                e["names"].add(disp)
+
+        norm = norm_number(num_part)
+        if name_part:
+            e = entry(("name", name_part.casefold()), name_part)
+        else:
+            e = entry(("num", norm), num_part)
+        e["cube_calls"] += 1
+        if date:
+            e["cube_first"] = min((x for x in (e["cube_first"], date) if x), default=date)
+            e["cube_last"] = max((x for x in (e["cube_last"], date) if x), default=date)
+        if name_part:
+            e["names"].add(name_part)
+        if norm:
+            e["numbers"].add(norm)
+        if name_part and norm:
+            e["display"] = name_part
     return out
 
 
@@ -246,11 +256,9 @@ def extract_card(card):
                 key, v = pl.split("=", 1)
                 if key == "type" and v:
                     t.append(v.upper())
-            elif pl and pl not in ("voice", "pref", "internet", "home", "cell", "work", "main"):
+            elif pl and pl not in ("voice", "pref", "internet"):
                 t.append(pl.upper())
-            elif pl:
-                t.append(pl.upper())
-        return "/".join(sorted(set(t)) )
+        return "/".join(sorted(set(t)))
 
     fn = next((v for _, v in values("FN")), "")
     n_parts = next((v for _, v in values("N")), "")
@@ -276,23 +284,33 @@ def safe_filename(name, idx):
 
 
 def merge_evidence(card, evidence):
-    best = None
-    for tel in card["tels"]:
-        nd = norm_number(tel["number"])
-        if not nd:
+    """Union ALL evidence entries matching any of the card's numbers or its name."""
+    my_nums = {norm_number(t["number"]) for t in card["tels"]} - {""}
+    my_name = card["fn"].casefold() if card["fn"] else None
+    matches = []
+    for key, e in evidence.items():
+        hit = False
+        if key[0] == "num" and key[1]:
+            hit = any(n == key[1] or (len(n) >= 9 and n.endswith(key[1][-9:]))
+                      for n in my_nums)
+        elif key[0] == "name" and my_name:
+            hit = key[1] == my_name
+        if not hit:
             continue
-        for key, e in evidence.items():
-            if key[0] == "num" and (nd == key[1] or (len(nd) >= 9 and nd.endswith(key[1][-9:]))):
-                best = e if best is None or (e["ucr_calls"] + e["cube_calls"]) > (best["ucr_calls"] + best["cube_calls"]) else best
-    if best is None and card["fn"]:
-        key = ("name", card["fn"].casefold())
-        best = evidence.get(key)
-    if best is None:
+        cross = any(any(n == x or (len(n) >= 9 and n.endswith(x[-9:]))
+                        for n in my_nums) for x in e.get("numbers", ()))
+        if key[0] == "num" or cross or key[1] == my_name:
+            matches.append(e)
+    if not matches:
         return None
-    return {"archive_calls": best["ucr_calls"] + best["cube_calls"],
-            "ucr_calls": best["ucr_calls"], "cube_calls": best["cube_calls"],
-            "ucr_first": best["ucr_first"], "ucr_last": best["ucr_last"],
-            "evidence_names": sorted(best["names"])}
+    firsts = [e["ucr_first"] for e in matches if e["ucr_first"]]
+    lasts = [e["ucr_last"] for e in matches if e["ucr_last"]]
+    return {"archive_calls": sum(e["ucr_calls"] + e["cube_calls"] for e in matches),
+            "ucr_calls": sum(e["ucr_calls"] for e in matches),
+            "cube_calls": sum(e["cube_calls"] for e in matches),
+            "ucr_first": min(firsts) if firsts else "",
+            "ucr_last": max(lasts) if lasts else "",
+            "evidence_names": sorted({n for e in matches for n in e.get("names", ())})}
 
 
 def write_card_vcf(card, path):

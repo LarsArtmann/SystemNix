@@ -1266,36 +1266,35 @@
               # useDefault or breaks the custom regexes fails here instead
               # of silently scanning with zero rules (the 2026-08-18 no-op
               # config class that let the Resend key leak for 3 months).
-              gitleaks-coverage-selftest =
-                pkgs.runCommand "gitleaks-coverage-selftest" { } ''
-                  set -u
-                  cfg=${./.gitleaks.toml}
-                  work=$(mktemp -d)
-                  trap 'rm -rf "$work"' EXIT
-                  mkdir "$work/positive" "$work/negative" "$work/resend" "$work/synthetic"
-                  # 40 chars after the prefix: the upstream rule quantifier is {40}
-                  printf 'sourcegraph token: sq0atp-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n' > "$work/positive/token.txt"
-                  printf 'parent commit: deadbeefdeadbeefdeadbeefdeadbeefdeadbeef\n' > "$work/negative/sha.txt"
-                  printf 'resend key: re_Ab12Cd34Ef56Gh78Ij90Kl12Mn34Op56\n' > "$work/resend/key.txt"
-                  printf 'synthetic key: syn_Ab12Cd34Ef56Gh78Ij90Kl12Mn34Op56\n' > "$work/synthetic/key.txt"
-                  expect_detect() {
-                    local dir="$1" label="$2"
-                    if ${pkgs.gitleaks}/bin/gitleaks detect --no-git --no-banner --source "$dir" --config "$cfg" >/dev/null 2>&1; then
-                      echo "SELFTEST FAIL: gitleaks did NOT detect the $label fixture — rule dead (phantom coverage)"
-                      exit 1
-                    fi
-                  }
-                  expect_detect "$work/positive" "sq0atp- sourcegraph token"
-                  expect_detect "$work/resend" "resend re_ key"
-                  expect_detect "$work/synthetic" "synthetic syn_ key"
-                  if ! ${pkgs.gitleaks}/bin/gitleaks detect --no-git --no-banner --source "$work/negative" --config "$cfg" >/dev/null 2>&1; then
-                    echo "SELFTEST FAIL: bare 40-hex git SHA tripped gitleaks — the retracted TODO row 357 premise was true after all; re-scope the docs rule"
-                    ${pkgs.gitleaks}/bin/gitleaks detect --no-git --no-banner --source "$work/negative" --config "$cfg" || true
+              gitleaks-coverage-selftest = pkgs.runCommand "gitleaks-coverage-selftest" { } ''
+                set -u
+                cfg=${./.gitleaks.toml}
+                work=$(mktemp -d)
+                trap 'rm -rf "$work"' EXIT
+                mkdir "$work/positive" "$work/negative" "$work/resend" "$work/synthetic"
+                # 40 chars after the prefix: the upstream rule quantifier is {40}
+                printf 'sourcegraph token: sq0atp-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n' > "$work/positive/token.txt"
+                printf 'parent commit: deadbeefdeadbeefdeadbeefdeadbeefdeadbeef\n' > "$work/negative/sha.txt"
+                printf 'resend key: re_Ab12Cd34Ef56Gh78Ij90Kl12Mn34Op56\n' > "$work/resend/key.txt"
+                printf 'synthetic key: syn_Ab12Cd34Ef56Gh78Ij90Kl12Mn34Op56\n' > "$work/synthetic/key.txt"
+                expect_detect() {
+                  local dir="$1" label="$2"
+                  if ${pkgs.gitleaks}/bin/gitleaks detect --no-git --no-banner --source "$dir" --config "$cfg" >/dev/null 2>&1; then
+                    echo "SELFTEST FAIL: gitleaks did NOT detect the $label fixture — rule dead (phantom coverage)"
                     exit 1
                   fi
-                  echo "gitleaks coverage: 3 positive classes detected, bare 40-hex SHA clean"
-                  touch $out
-                '';
+                }
+                expect_detect "$work/positive" "sq0atp- sourcegraph token"
+                expect_detect "$work/resend" "resend re_ key"
+                expect_detect "$work/synthetic" "synthetic syn_ key"
+                if ! ${pkgs.gitleaks}/bin/gitleaks detect --no-git --no-banner --source "$work/negative" --config "$cfg" >/dev/null 2>&1; then
+                  echo "SELFTEST FAIL: bare 40-hex git SHA tripped gitleaks — the retracted TODO row 357 premise was true after all; re-scope the docs rule"
+                  ${pkgs.gitleaks}/bin/gitleaks detect --no-git --no-banner --source "$work/negative" --config "$cfg" || true
+                  exit 1
+                fi
+                echo "gitleaks coverage: 3 positive classes detected, bare 40-hex SHA clean"
+                touch $out
+              '';
 
               # Recursive chown/chmod walks in modules that also configure
               # Bind*Paths: systemd builds the mount namespace BEFORE any
@@ -1453,6 +1452,18 @@
                     pkgs.util-linux # findmnt
                   ]
                   ./scripts/pre-reboot-check.sh;
+              migrate-hot-db =
+                mkApp "migrate-hot-db"
+                  "User-run migration of a service dataDir onto the Samsung hot-DB tier (services.hot-db): prepare|finalize with pressure gate + verify"
+                  [
+                    pkgs.bash
+                    pkgs.coreutils
+                    pkgs.findutils
+                    pkgs.gawk
+                    pkgs.rsync
+                    pkgs.util-linux
+                  ]
+                  ./scripts/migrate-hot-db.sh;
               btrfs-inventory = mkApp "btrfs-inventory" "List all BTRFS subvolumes, snapshots, and mount points" [
                 pkgs.btrfs-progs
                 pkgs.util-linux

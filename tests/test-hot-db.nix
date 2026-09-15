@@ -29,19 +29,18 @@ let
   hotDbModule = (import ../modules/nixos/services/hot-db.nix).flake.nixosModules.hot-db;
 
   entryPath = "/var/lib/hotdb-test";
-  entryMount =
-    {
-      device = "/dev/disk/by-label/tlc";
-      fsType = "btrfs";
-      options = [
-        "subvol=hot/testdb"
-        "noatime"
-        "nodiscard"
-        "space_cache=v2"
-        "nofail"
-        "nodatacow"
-      ];
-    };
+  entryMount = {
+    device = "/dev/disk/by-label/tlc";
+    fsType = "btrfs";
+    options = [
+      "subvol=hot/testdb"
+      "noatime"
+      "nodiscard"
+      "space_cache=v2"
+      "nofail"
+      "nodatacow"
+    ];
+  };
 in
 {
   name = "hot-db";
