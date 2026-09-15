@@ -870,6 +870,26 @@ _: {
             (mkStateDir "/var/lib/dnsblockd" "0755" "root" "root")
           ];
         };
+
+        # Service-integration registry entry: unit-state monitoring + the Pocket
+        # ID OIDC client (native OIDC in dnsblockd itself —
+        # authorization-code + PKCE S256). The dnsblock/dnsblockd vHosts
+        # stay hand-written in caddy.nix (redirect pair), and the stats
+        # API health check stays in gatus-config.nix's DNS section.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          dnsblockd = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            monitored = true;
+            oidc = {
+              name = "dnsblockd";
+              clientId = "dnsblockd";
+              launchURL = "https://dnsblock.${config.networking.domain}";
+              callbackURLs = [ "https://dnsblock.${config.networking.domain}/auth/oidc/callback" ];
+              pkceEnabled = true;
+            };
+          };
+        };
       };
     };
 }

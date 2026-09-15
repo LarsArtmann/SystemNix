@@ -227,6 +227,41 @@ _: {
           };
           inherit (docker) timers;
         };
+
+        # Service-integration registry entry: the Twenty CRM homepage tile, crm
+        # vHost (Layer 2 — native SSO is billing-gated), pg_dump backup
+        # freshness, and the Gatus health check.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          twenty = {
+            enable = cfg.enable;
+            subdomain = "crm";
+            port = cfg.port;
+            vHost.layer = "protected";
+            checks = [
+              {
+                name = "Twenty CRM";
+                group = "Productivity";
+                url = "http://localhost:${toString cfg.port}/healthz";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                ];
+                alert = "Twenty CRM down — customer data unavailable";
+              }
+            ];
+            homepage = {
+              name = "Twenty CRM";
+              group = "Productivity";
+              description = "Customer Relationship Management";
+              icon = "espocrm.png";
+            };
+            backup = {
+              # pg_dump redirected to the pool 2026-08-16.
+              directory = "/mnt/pool/backups/twenty";
+              maxAgeHours = 31;
+            };
+          };
+        };
       };
     };
 }

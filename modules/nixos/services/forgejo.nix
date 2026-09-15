@@ -540,6 +540,58 @@ _: {
           mirrorStarredScript
           setupScript
         ];
+
+        # Service-integration registry entry: the forgejo vHost (Layer 1 — native
+        # OIDC via Pocket ID; forward-auth would double-auth), Gatus
+        # health + mirror-sync checks, backup freshness, unit-state
+        # monitoring, and the OIDC client registration. The homepage tile
+        # stays static in homepage.nix (unconditional there).
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          forgejo = {
+            enable = cfg.enable;
+            subdomain = "forgejo";
+            port = cfg.settings.server.HTTP_PORT;
+            vHost.layer = "plain";
+            checks = [
+              {
+                name = "Forgejo";
+                group = "Development";
+                url = "http://localhost:${toString cfg.settings.server.HTTP_PORT}/api/v1/version";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                ];
+                alert = "Forgejo down — git forge unavailable";
+              }
+              {
+                name = "Forgejo Mirror Sync";
+                group = "Development";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_forgejo_mirror_scrape_errors 0*)"
+                  "[BODY] == pat(*system_forgejo_mirror_sync_stalled 0*)"
+                  "[BODY] == pat(*system_forgejo_mirror_erroring 0*)"
+                ];
+                alert = "Forgejo pull-mirror syncing broken. stalled=1: freshest mirror sync >10h old — dead queue (restart forgejo.service; the unique queue wedges after a hard freeze, cron pushes then dedup-skip silently). erroring=1: syncs actively failing — journalctl -u forgejo --grep SyncMirrors (credential-helper ENOENT / DNS allowlist rejects). scrape_errors=1: forgejo sqlite unreadable.";
+              }
+            ];
+            backup = {
+              # Daily forgejo dump (repos+DB+config, 03:30 + randomized delay).
+              directory = "/mnt/pool/backups/forgejo";
+              filePattern = "*.zip";
+              maxAgeHours = 25;
+            };
+            monitored = true;
+            oidc = {
+              name = "Forgejo";
+              clientId = "forgejo";
+              launchURL = "https://forgejo.${config.networking.domain}";
+              callbackURLs = [ "https://forgejo.${config.networking.domain}/user/oauth2/PocketID/callback" ];
+            };
+          };
+        };
       };
     };
 }

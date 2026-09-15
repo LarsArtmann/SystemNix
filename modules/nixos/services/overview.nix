@@ -132,6 +132,38 @@
             };
           };
         };
+
+        # Service-integration registry entry: the Overview homepage tile, the
+        # overview vHost (Layer 2 — no native auth), and the Gatus
+        # health check.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          overview = {
+            enable = cfg.enable;
+            subdomain = "overview";
+            port = ports.overview;
+            vHost.layer = "protected";
+            checks = [
+              {
+                name = "Overview";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.overview}";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                  "[BODY] == pat(*<html*)"
+                ];
+                alert = "Overview dashboard down — project stats unavailable";
+              }
+            ];
+            homepage = {
+              name = "Overview";
+              group = "Development";
+              description = "Project Dashboard (Git Repos, Stats, Activity)";
+              icon = "code.png";
+            };
+          };
+        };
       };
     };
 }

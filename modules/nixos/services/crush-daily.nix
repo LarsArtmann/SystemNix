@@ -100,6 +100,37 @@ _: {
             }
           ];
         };
+
+        # Service-integration registry entry: the Crush Daily homepage tile, the
+        # daily vHost (Layer 2 — no native auth), and the Gatus health
+        # check.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          crush-daily = {
+            enable = cfg.enable;
+            subdomain = "daily";
+            port = cfg.port;
+            vHost.layer = "protected";
+            checks = [
+              {
+                name = "Crush Daily";
+                group = "AI";
+                url = "http://localhost:${toString cfg.port}/api/health";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                ];
+                alert = "Crush Daily down — AI development insights unavailable";
+              }
+            ];
+            homepage = {
+              name = "Crush Daily";
+              group = "AI";
+              description = "AI-Powered Development Insights";
+              icon = "openai.png";
+            };
+          };
+        };
       };
     };
 }

@@ -312,6 +312,23 @@ _: {
             maxAgeHours = 25;
           };
         };
+
+        # Service-integration registry entry: the Google Sync homepage tile only
+        # (no vHost — the sync is a 5-min rclone timer landing on the HDD
+        # pool; freshness alerting stays on the module-level
+        # services.backup-coordination row above).
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          google-sync = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            homepage = {
+              name = "Google Sync";
+              group = "Sync & Backup";
+              description = "Google Drive → HDD Pool Mirror (rclone)";
+              icon = "google-drive.png";
+            };
+          };
+        };
       };
     };
 }

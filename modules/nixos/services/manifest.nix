@@ -184,6 +184,41 @@ _: {
           inherit (docker) services;
           inherit (docker) timers;
         };
+
+        # Service-integration registry entry: the Manifest homepage tile, the
+        # manifest vHost (Layer 2 — no native auth), pg_dump backup
+        # freshness, and the Gatus health check.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          manifest = {
+            enable = cfg.enable;
+            subdomain = "manifest";
+            port = cfg.port;
+            vHost.layer = "protected";
+            checks = [
+              {
+                name = "Manifest";
+                group = "Monitoring";
+                url = "http://localhost:${toString cfg.port}/api/v1/health";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                ];
+                alert = "Manifest LLM router down — AI cost optimization unavailable";
+              }
+            ];
+            homepage = {
+              name = "Manifest";
+              group = "AI";
+              description = "LLM Gateway (Autofix, Fallbacks, Cost Tracking)";
+              icon = "openai.png";
+            };
+            backup = {
+              # pg_dump redirected to the pool 2026-08-16.
+              directory = "/mnt/pool/backups/manifest";
+              maxAgeHours = 31;
+            };
+          };
+        };
       };
     };
 }

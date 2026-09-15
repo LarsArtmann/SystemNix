@@ -6,6 +6,7 @@ _: {
   flake.nixosModules.homepage =
     {
       config,
+      options,
       pkgs,
       lib,
       ...
@@ -627,6 +628,17 @@ _: {
             ::-webkit-scrollbar-thumb:hover { background: var(--catppuccin-overlay0); }
           ''}"
         ];
+
+        # Service-integration registry entry: unit-state monitoring for the
+        # dashboard itself (no tile — a tile pointing at the dashboard
+        # you are already looking at is a no-op).
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          homepage-dashboard = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            monitored = true;
+          };
+        };
       };
     };
 }

@@ -6,6 +6,7 @@
   flake.nixosModules.hermes =
     {
       config,
+      options,
       pkgs,
       lib,
       ...
@@ -719,6 +720,24 @@
               (harden { MemoryMax = "512M"; })
             ];
           };
+
+        # Service-integration registry entry: the Hermes homepage tile +
+        # unit-state monitoring (the gateway has no HTTP health endpoint
+        # by design; the Hermes Agent Gateway Gatus check on the
+        # system-health metrics stays in system-health.nix's own entry).
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          hermes = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            homepage = {
+              name = "Hermes";
+              group = "Infrastructure";
+              description = "AI Agent Gateway (Discord, Cron, Messaging)";
+              icon = "self-hosted-gateway.png";
+            };
+            monitored = true;
+          };
+        };
       };
     };
 }

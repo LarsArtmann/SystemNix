@@ -137,6 +137,16 @@ _: {
             (serviceDefaults { })
           ];
         };
+
+        # Service-integration registry entry: unit-state monitoring only (the
+        # daemon has no HTTP surface, vHost, tile, or backup).
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          wifi-failover = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            monitored = true;
+          };
+        };
       };
     };
 }

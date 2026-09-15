@@ -411,6 +411,25 @@ _: {
         # permanent keepalive). The system-health textfile collector emits
         # fastflowlm_failed and fastflowlm_crash_loop so Gatus can alert on
         # actual failure without pinning the model.
+
+        # Service-integration registry entry: the FastFlowLM homepage tile
+        # (no href — the socket-activated endpoint is for API clients,
+        # not a browsable UI) + unit-state monitoring (Gatus MUST NOT
+        # probe :52625 — every probe pins the model; the system-health
+        # fastflowlm_failed / crash-loop metrics are the alert path).
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          fastflowlm = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            homepage = {
+              name = "FastFlowLM";
+              group = "AI";
+              description = "NPU LLM Server (Qwen3.6 MoE, OpenAI-compatible)";
+              icon = "amd.png";
+            };
+            monitored = true;
+          };
+        };
       };
     };
 }

@@ -3,6 +3,7 @@ _: {
   flake.nixosModules.gatus-config =
     {
       config,
+      options,
       pkgs,
       lib,
       ...
@@ -1011,6 +1012,35 @@ _: {
               }
             ];
           };
+
+        # Service-integration registry entry: the status vHost (Layer 1 — native
+        # OIDC via the security.oidc block above; forward-auth would
+        # double-auth), unit-state monitoring, the OIDC client
+        # registration, and the dashboard homepage tile. The gatus
+        # self-check and the Textfile Collector Health meta-check stay
+        # in the core endpoint list below.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          gatus = {
+            enable = cfg.enable;
+            subdomain = "status";
+            port = cfg.port;
+            vHost.layer = "plain";
+            monitored = true;
+            oidc = {
+              # Callback path is fixed upstream at /authorization-code/callback.
+              name = "Gatus";
+              clientId = "gatus";
+              launchURL = "https://status.${domain}";
+              callbackURLs = [ "https://status.${domain}/authorization-code/callback" ];
+            };
+            homepage = {
+              name = "Gatus";
+              group = "Monitoring";
+              description = "Uptime & Health Check Dashboard";
+              icon = "gatus.png";
+            };
+          };
+        };
       };
     };
 }

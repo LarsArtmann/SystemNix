@@ -472,6 +472,68 @@ _: {
               '';
             };
           };
+
+        # Service-integration registry entries: the document-exporter backup
+        # freshness + the Pocket ID OIDC client (django-allauth;
+        # callback path fixed by allauth URL routing, PKCE both sides)
+        # ride the main entry; the four paperless units + Tika +
+        # Gotenberg self-register for unit-state monitoring. The SSO-only
+        # vHost (plain layer, /admin hard-block) stays hand-written in
+        # caddy.nix; the login-page + sidecar Gatus checks stay in
+        # gatus-config.nix's core list (multi-unit + body-pattern
+        # semantics owned by the SSO bring-up).
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          paperless = {
+            enable = cfg.enable;
+            subdomain = "paperless";
+            port = cfg.port;
+            vHost.layer = "plain";
+            backup = {
+              # Daily documentexporter output (01:30 + randomized delay).
+              directory = "/mnt/pool/services/paperless/export";
+              maxAgeHours = 25;
+            };
+            oidc = {
+              name = "Paperless";
+              clientId = "paperless";
+              launchURL = "https://paperless.${config.networking.domain}";
+              callbackURLs = [
+                "https://paperless.${config.networking.domain}/accounts/oidc/pocket-id/login/callback/"
+              ];
+              pkceEnabled = true;
+            };
+          };
+          paperless-consumer = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            monitored = true;
+          };
+          paperless-scheduler = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            monitored = true;
+          };
+          paperless-task-queue = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            monitored = true;
+          };
+          paperless-web = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            monitored = true;
+          };
+          tika = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            monitored = true;
+          };
+          gotenberg = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            monitored = true;
+          };
+        };
       };
     };
 }

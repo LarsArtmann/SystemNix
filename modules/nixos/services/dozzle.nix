@@ -50,15 +50,29 @@ _: {
           ];
         };
 
-        # Service-integration registry entry: the Dozzle homepage tile and
+        # Service-integration registry entry: the Dozzle homepage tile,
         # the logs vHost (Layer 2 — gated on the container existing, same
-        # predicate as the old hasContainer check in homepage.nix/caddy.nix).
+        # predicate as the old hasContainer check in homepage.nix/caddy.nix),
+        # and the Gatus health check.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           dozzle = {
             enable = cfg.enable;
             subdomain = "logs";
             port = dozzlePort;
             vHost.layer = "protected";
+            checks = [
+              {
+                name = "Dozzle";
+                group = "Monitoring";
+                url = "http://localhost:${toString ports.dozzle}";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                ];
+                alert = "Dozzle down — container log viewing unavailable";
+              }
+            ];
             homepage = {
               name = "Dozzle";
               group = "Monitoring";
