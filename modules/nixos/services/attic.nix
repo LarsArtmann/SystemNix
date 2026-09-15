@@ -242,7 +242,7 @@ _: {
             if [ ! -d "$storage_path" ]; then
               current_bytes=0
             else
-              current_bytes=$(du -sb "$storage_path" 2>/dev/null | cut -f1)
+              current_bytes=$(du -sb "$storage_path" 2>/dev/null | cut -f1) || true
               if [ -z "$current_bytes" ]; then
                 current_bytes=0
               fi
@@ -329,7 +329,7 @@ _: {
               exit 0
             fi
 
-            current_bytes=$(du -sb "$storage_path" 2>/dev/null | cut -f1)
+            current_bytes=$(du -sb "$storage_path" 2>/dev/null | cut -f1) || true
             if [ -z "$current_bytes" ]; then
               echo "Failed to measure $storage_path"
               exit 0
@@ -439,7 +439,7 @@ _: {
 
                       # Extract the server config path from atticd's ExecStart.
                       # atticadm needs -f <config> to initialize (even for make-token).
-                      CONFIG_FILE=$(sed -n 's/^ExecStart=.* -f \([^ ]*\) .*/\1/p' /etc/systemd/system/atticd.service)
+                      CONFIG_FILE=$(sed -n 's/^ExecStart=.* -f \([^ ]*\) .*/\1/p' /etc/systemd/system/atticd.service) || true || true
                       if [ -z "$CONFIG_FILE" ]; then
                         echo "ERROR: Could not find atticd config file path"
                         exit 1

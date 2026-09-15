@@ -114,7 +114,7 @@ _: {
           echo "Checking for admin user: $ADMIN_USERNAME..."
           ALL_USERS=$(api_get "/api/users?pagination%5Blimit%5D=100")
           echo "  Users API response: $(echo "$ALL_USERS" | head -c 200)"
-          ADMIN_USER_ID=$(echo "$ALL_USERS" | jq -r '.data[] | select(.username == "'"$ADMIN_USERNAME"'") | .id // empty' 2>/dev/null | head -1)
+          ADMIN_USER_ID=$(echo "$ALL_USERS" | jq -r '.data[] | select(.username == "'"$ADMIN_USERNAME"'") | .id // empty' 2>/dev/null | head -1) || true
 
           if [ -n "$ADMIN_USER_ID" ]; then
             echo "  Admin user '$ADMIN_USERNAME' already exists (ID: $ADMIN_USER_ID)."
@@ -145,7 +145,7 @@ _: {
               echo "  User already exists (race), fetching ID..."
               ALL_USERS2=$(api_get "/api/users?pagination%5Blimit%5D=100")
               echo "  Users response: $(echo "$ALL_USERS2" | head -c 200)"
-              ADMIN_USER_ID=$(echo "$ALL_USERS2" | jq -r '.data[] | select(.username == "'"$ADMIN_USERNAME"'") | .id // empty' 2>/dev/null | head -1)
+              ADMIN_USER_ID=$(echo "$ALL_USERS2" | jq -r '.data[] | select(.username == "'"$ADMIN_USERNAME"'") | .id // empty' 2>/dev/null | head -1) || true
               if [ -z "$ADMIN_USER_ID" ]; then
                 echo "  ERROR: User exists but could not fetch ID" >&2
                 exit 1
@@ -223,7 +223,7 @@ _: {
               echo "Checking OIDC client: ${client.name}..."
               ALL_CLIENTS=$(api_get "/api/oidc/clients?pagination%5Blimit%5D=100")
               echo "  Clients API response: $(echo "$ALL_CLIENTS" | head -c 200)"
-              EXISTING_CLIENT=$(echo "$ALL_CLIENTS" | jq -r '.data[] | select(.id == "${client.clientId}") | .id // empty' 2>/dev/null | head -1)
+              EXISTING_CLIENT=$(echo "$ALL_CLIENTS" | jq -r '.data[] | select(.id == "${client.clientId}") | .id // empty' 2>/dev/null | head -1) || true
 
               if [ -n "$EXISTING_CLIENT" ]; then
                 echo "  Client '${client.name}' already exists (ID: $EXISTING_CLIENT). Updating..."
@@ -247,7 +247,7 @@ _: {
                 if echo "$RESPONSE_BODY" | grep -qi "already exists"; then
                   echo "  Client '${client.name}' created in race, re-fetching..."
                   ALL_CLIENTS2=$(api_get "/api/oidc/clients?pagination%5Blimit%5D=100")
-                  CLIENT_ID=$(echo "$ALL_CLIENTS2" | jq -r '.data[] | select(.id == "${client.clientId}") | .id // empty' 2>/dev/null | head -1)
+                  CLIENT_ID=$(echo "$ALL_CLIENTS2" | jq -r '.data[] | select(.id == "${client.clientId}") | .id // empty' 2>/dev/null | head -1) || true
                 elif [ -z "$CLIENT_ID" ]; then
                   # POST may have succeeded server-side despite a curl timeout
                   # (SQLite SQLITE_BUSY contention can make writes take 10-15s).
@@ -255,7 +255,7 @@ _: {
                   echo "  WARNING: Create returned no client ID (HTTP $HTTP_CODE). Re-fetching in case of timeout..."
                   sleep 5
                   ALL_CLIENTS2=$(api_get "/api/oidc/clients?pagination%5Blimit%5D=100")
-                  CLIENT_ID=$(echo "$ALL_CLIENTS2" | jq -r '.data[] | select(.id == "${client.clientId}") | .id // empty' 2>/dev/null | head -1)
+                  CLIENT_ID=$(echo "$ALL_CLIENTS2" | jq -r '.data[] | select(.id == "${client.clientId}") | .id // empty' 2>/dev/null | head -1) || true
                   if [ -n "$CLIENT_ID" ]; then
                     echo "  Client '${client.name}' was created despite timeout (ID: $CLIENT_ID)."
                   else

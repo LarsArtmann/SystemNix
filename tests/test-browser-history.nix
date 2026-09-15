@@ -32,9 +32,21 @@ let
   mockPocketId =
     { lib, ... }:
     {
-      options.services.pocket-id-config.enable = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
+      options.services.pocket-id-config = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+        };
+        # The integration registry fan-out appends the module's OIDC client
+        # here when the (mocked) namespace exists — declare the leaf.
+        provision.extraOidcClients = lib.mkOption {
+          type = lib.types.listOf lib.types.attrs;
+          default = [ ];
+        };
+        provision.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+        };
       };
     };
 in

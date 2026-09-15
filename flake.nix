@@ -1112,6 +1112,7 @@
                               # retry loop shape).
                               if (cur ~ /\|\|[[:space:]]+(true|:|echo|printf|exit|return|break|continue)/) protected = 1
                               if (cur ~ /\|\|[[:space:]]*[A-Za-z_][A-Za-z0-9_]*=/) protected = 1
+                              if (cur ~ /\|\|[[:space:]]*\{/) protected = 1
                               if (cur ~ /\)[[:space:]]*&&/) protected = 1
                               lineLen = length(cur)
                               for (charIdx = 1; charIdx <= lineLen; charIdx++) {

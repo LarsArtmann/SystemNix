@@ -131,7 +131,7 @@ _: {
           # host with >10 min uptime (the pre-2026-08-18 bug). Measure the
           # actual age against the monotonic clock now; 600000000 µs = 10 min.
           now_us=$(awk '{printf "%d", $1 * 1000000}' /proc/uptime)
-          active_us=$(systemctl show fastflowlm.service -p ActiveEnterTimestampMonotonic --value)
+          active_us=$(systemctl show fastflowlm.service -p ActiveEnterTimestampMonotonic --value) || true || true
           if [ -z "$active_us" ] || [ $((now_us - active_us)) -lt 600000000 ]; then
             exit 0
           fi

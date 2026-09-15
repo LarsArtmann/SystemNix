@@ -81,7 +81,7 @@
         if ! ok; then
           fail "channel list (HTTP $HTTP_STATUS)"
         else
-          CHANNEL_ID=$(jq -r --arg n "$CHANNEL_NAME" '.data[]? | select(.name == $n) | .id' "$RESP" | head -1)
+          CHANNEL_ID=$(jq -r --arg n "$CHANNEL_NAME" '.data[]? | select(.name == $n) | .id' "$RESP" | head -1) || true
           if [ -z "$CHANNEL_ID" ]; then
             echo "  Creating channel: $CHANNEL_NAME"
             http POST /api/v1/channels "$CHANNEL_JSON"
@@ -133,7 +133,7 @@
 
       for rule_file in /etc/signoz/rules/*.json; do
         [ -f "$rule_file" ] || continue
-        RULE_NAME=$(jq -r '.alert // empty' "$rule_file")
+        RULE_NAME=$(jq -r '.alert // empty' "$rule_file") || true
         if [ -z "$RULE_NAME" ]; then
           fail "$(basename "$rule_file"): no .alert field"
           continue
@@ -367,8 +367,8 @@
       DESIRED_DASH_SLUGS=()
       for dash_file in /etc/signoz/dashboards/*.json; do
         [ -f "$dash_file" ] || continue
-        SLUG=$(jq -r '.name // empty' "$dash_file")
-        DISPLAY=$(jq -r '.spec.display.name // empty' "$dash_file")
+        SLUG=$(jq -r '.name // empty' "$dash_file") || true || true
+        DISPLAY=$(jq -r '.spec.display.name // empty' "$dash_file") || true || true
         if [ -z "$SLUG" ] || [ -z "$DISPLAY" ]; then
           fail "$(basename "$dash_file"): missing .name slug or .spec.display.name"
           continue
@@ -435,7 +435,12 @@
 
       # ---------------- Dashboard convergence assertion ----------------
       echo "Verifying dashboard convergence..."
-      ALL_DASH=$(list_all_dashboards)
+      ALL_DASH=$(list_all_dashboards) || true || true
+      # Dashboard failures are HARD failures (doctrine) — an EMPTY list after
+      # a capture failure must fail the convergence assertion, never skip it.
+      if [ -z "$ALL_DASH" ]; then
+        fail "dashboard list empty — cannot run convergence assertion"
+      fi
       if [ -n "$ALL_DASH" ]; then
         OWNED=$(jq -r '[.[] | select(any(.tags[]?; .key == "owner" and .value == "systemnix"))] | length' <<<"$ALL_DASH")
         if [ "$OWNED" -eq "''${#DESIRED_DASH_SLUGS[@]}" ]; then

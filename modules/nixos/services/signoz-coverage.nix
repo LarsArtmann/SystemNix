@@ -192,7 +192,7 @@
               budget=$(printf '%s' "$entry" | jq -r '.maxAgeSeconds')
               enforced=$(printf '%s' "$entry" | jq -r '.enforced')
 
-              last_ms=$(last_ms_of "$service")
+              last_ms=$(last_ms_of "$service") || true || true
               if [ -n "$last_ms" ] && [ "$last_ms" -gt 0 ] 2>/dev/null; then
                 age_s=$(( (now_ms - last_ms) / 1000 ))
                 reporting=0

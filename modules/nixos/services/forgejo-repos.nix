@@ -207,7 +207,7 @@ _: {
             exit 1
           fi
 
-          GITHUB_TOKEN=$(gh auth token)
+          GITHUB_TOKEN=$(gh auth token) || true || true
 
           if [[ -z "$GITHUB_TOKEN" ]]; then
             echo "Error: Could not get token from gh"

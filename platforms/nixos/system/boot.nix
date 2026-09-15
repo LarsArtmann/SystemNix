@@ -391,7 +391,7 @@ in
           while :; do
             total_bytes=$(${pkgs.coreutils}/bin/du -sb "$CRASH_DIR" 2>/dev/null | ${pkgs.gawk}/bin/awk '{print $1}')
             [ "''${total_bytes:-0}" -lt 21474836480 ] && break
-            oldest=$(list_entries | tail -1 | ${pkgs.gawk}/bin/awk '{ $1=""; sub(/^ /, ""); print }')
+            oldest=$(list_entries | tail -1 | ${pkgs.gawk}/bin/awk '{ $1=""; sub(/^ /, ""); print }') || true || true
             [ -z "$oldest" ] && break
             ${pkgs.coreutils}/bin/rm -rf -- "$oldest"
             echo "kdump-retention: 20G cap exceeded — removed $oldest"

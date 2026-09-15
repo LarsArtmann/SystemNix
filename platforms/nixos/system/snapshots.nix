@@ -551,7 +551,7 @@ in
             else
               fatal=yes
             fi
-            latest=$(find "$dir" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort | tail -1)
+            latest=$(find "$dir" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort | tail -1) || true || true
             if [ -z "$latest" ]; then
               if [ "$fatal" = "yes" ]; then
                 echo "FAIL: no received backups found in $dir"
@@ -608,7 +608,7 @@ in
             exit 1
           fi
 
-          LATEST=$(find "$SNAP_DIR" -maxdepth 1 -mindepth 1 -type d -name '@.*' | sort | tail -1)
+          LATEST=$(find "$SNAP_DIR" -maxdepth 1 -mindepth 1 -type d -name '@.*' | sort | tail -1) || true || true
           if [ -z "$LATEST" ]; then
             echo "WARNING: No root snapshots found"
             exit 1

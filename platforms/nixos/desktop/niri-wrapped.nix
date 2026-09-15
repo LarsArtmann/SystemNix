@@ -128,7 +128,7 @@ let
       fi
       echo "dms-wallpaper-init: current wallpaper unusable (got: ''${current:-<empty>}) — seeding from $wallpaper_dir" >&2
 
-      img=$(find -L "$wallpaper_dir" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | shuf -n1)
+      img=$(find -L "$wallpaper_dir" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | shuf -n1) || true || true
       if [ -z "$img" ]; then
         echo "WARNING: no wallpaper images found in $wallpaper_dir" >&2
         exit 0

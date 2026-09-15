@@ -93,7 +93,7 @@ let
 
       # Parse Metadata utilization (handles Metadata,DUP and Metadata,single).
       # match() with capture group extracts the integer value precisely.
-      META_LINE=$(echo "$USAGE" | awk '/^Metadata/')
+      META_LINE=$(echo "$USAGE" | awk '/^Metadata/')  # dead-guard-ok: awk cannot fail here — the [ -n ] tests OUTPUT emptiness, not capture failure  # dead-guard-ok: capture cannot fail — the guard tests OUTPUT emptiness, not failure
       META_SIZE_BYTES=0
       META_USED_BYTES=0
       META_PCT=0

@@ -446,7 +446,7 @@ in
 
                       while IFS= read -r target_dir; do
                         [ -d "$target_dir" ] || continue
-                        dir_size_kb=$(du -sk "$target_dir" 2>/dev/null | cut -f1)
+                        dir_size_kb=$(du -sk "$target_dir" 2>/dev/null | cut -f1) || true || true
 
                         if [ -z "$dir_size_kb" ] || [ "$dir_size_kb" -lt "$SIZE_THRESHOLD_KB" ]; then
                           SKIPPED=$((SKIPPED + 1))
@@ -535,7 +535,7 @@ in
                     for proc_name in "''${LSP_PROCESS_NAMES[@]}"; do
                       while IFS= read -r pid; do
                         [ -z "$pid" ] && continue
-                        elapsed=$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ')
+                        elapsed=$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ') || true || true
                         [ -z "$elapsed" ] && continue
                         if [ "$elapsed" -gt "$MAX_AGE_SECONDS" ]; then
                           elapsed_m=$((elapsed / 60))

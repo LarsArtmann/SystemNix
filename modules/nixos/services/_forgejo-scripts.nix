@@ -492,7 +492,7 @@ in
       FORGEJO_TOKEN=""
       if [ -f "$TOKEN_FILE" ]; then
         if grep -qE '^FORGEJO_TOKEN=[0-9a-f]{40}$' "$TOKEN_FILE" 2>/dev/null; then
-          FORGEJO_TOKEN=$(grep -E '^FORGEJO_TOKEN=[0-9a-f]{40}$' "$TOKEN_FILE" | cut -d= -f2)
+          FORGEJO_TOKEN=$(grep -E '^FORGEJO_TOKEN=[0-9a-f]{40}$' "$TOKEN_FILE" | cut -d= -f2)  # dead-guard-ok: exempt: guarded by the preceding grep -q pre-check
         fi
         if [ -n "$FORGEJO_TOKEN" ] && curl -sf -H "Authorization: token $FORGEJO_TOKEN" "${forgejoUrl}/api/v1/user" >/dev/null 2>&1; then
           echo "Forgejo API token still valid, skipping regeneration"

@@ -612,7 +612,7 @@
 
                 # Skip if the agent was started less than 60s ago (debounce:
                 # prevents rapid-restart storm during niri Wayland socket bounce)
-                AGENT_UPTIME=$(${pkgs.systemd}/bin/systemctl show -p ActiveEnterTimestamp --value monitor365.service 2>/dev/null)
+                AGENT_UPTIME=$(${pkgs.systemd}/bin/systemctl show -p ActiveEnterTimestamp --value monitor365.service 2>/dev/null) || true || true
                 if [ -n "$AGENT_UPTIME" ]; then
                   NOW=$(${pkgs.coreutils}/bin/date +%s)
                   STARTED=$(${pkgs.coreutils}/bin/date -d "$AGENT_UPTIME" +%s 2>/dev/null || echo 0)

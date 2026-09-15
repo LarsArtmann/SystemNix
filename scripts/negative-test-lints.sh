@@ -129,7 +129,7 @@ SIGNALERTS="modules/nixos/services/_signoz-alerts.nix"
 
 # ── green controls: pristine copy, every touched check must build ──
 if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]]; then
-  for check in signoz-query-lint gatus-pattern-lint module-shape-lint binary-coverage-lint; do
+  for check in signoz-query-lint gatus-pattern-lint module-shape-lint binary-coverage-lint dead-guard-lint gitleaks-coverage-selftest; do
     dir=$(make_copy "pristine-$check")
     out=$(build_check "$dir" "$check") || status=$? || true
     status=${status:-0}
@@ -199,6 +199,18 @@ run_case gitleaks sourcegraph-fixture-drift gitleaks-coverage-selftest fail 'did
   'sed:tests/fixtures/gitleaks/positive-sourcegraph.txt:s|sgp_7f3e9a1c48d2b650e4fa93c17b8d05264e9f0a3c|sgpX_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|'
 run_case gitleaks negative-fixture-corrupt gitleaks-coverage-selftest fail 'tripped gitleaks' \
   'sed:tests/fixtures/gitleaks/negative-bare-hex.txt:s|deadbeefdeadbeefdeadbeefdeadbeefdeadbeef|sq0atp-aB3dEf6hIj9kLm2oPq5rSt8uVw1xYz4A0bC5dE7f|'
+
+# ── dead-guard-lint: capture-then-guard under errexit ──
+# The evil shape is a capture without `|| true` followed by a -z guard — the
+# exact website-deploy-monitor bug. The exempt twin carries `# dead-guard-ok`
+# and must stay green. _-prefixed file: skipped by module auto-discovery, so
+# only the lint sees it (eval is unaffected).
+run_case deadguard evil-capture-guard dead-guard-lint fail 'DEAD GUARD' \
+  'append:modules/nixos/services/_evil-dead-guard.nix:x=$(curl --silent http://x.example)' \
+  'append:modules/nixos/services/_evil-dead-guard.nix:if [ -z "$x" ]; then exit 0; fi'
+run_case deadguard exempt-capture-guard dead-guard-lint pass 'never-match-marker' \
+  'append:modules/nixos/services/_evil-dead-guard.nix:x=$(curl --silent http://x.example) # dead-guard-ok' \
+  'append:modules/nixos/services/_evil-dead-guard.nix:if [ -z "$x" ]; then exit 0; fi'
 
 say ""
 say "=== negative-test-lints: $passed passed, $failed failed ==="

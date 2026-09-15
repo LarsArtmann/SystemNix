@@ -220,7 +220,7 @@
           pkgs.gnugrep
         ];
         text = ''
-          primaryHome=$(getent passwd ${config.users.primaryUser} 2>/dev/null | cut -d: -f6)
+          primaryHome=$(getent passwd ${config.users.primaryUser} 2>/dev/null | cut -d: -f6) || true || true
           [ -n "$primaryHome" ] && [ -d "$primaryHome" ] || exit 0
           if getfacl -p "$primaryHome" 2>/dev/null | grep -q "^group:${cfg.group}:"; then
             setfacl -x "g:${cfg.group}" "$primaryHome"

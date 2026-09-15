@@ -51,11 +51,11 @@ _: {
         # nvme-cli 2.16 JSON keys: avail_spare / percent_used (NOT
         # available_spare / percentage_used). `// empty` — a missing key must
         # skip the check, not fabricate a 0 that triggers false warnings.
-        CRITICAL_WARNING=$(echo "$SMART" | jq -r '.critical_warning // empty')
-        AVAILABLE_SPARE=$(echo "$SMART" | jq -r '.avail_spare // empty')
-        PERCENTAGE_USED=$(echo "$SMART" | jq -r '.percent_used // empty')
-        MEDIA_ERRORS=$(echo "$SMART" | jq -r '.media_errors // empty')
-        TEMP_KELVIN=$(echo "$SMART" | jq -r '.temperature // empty')
+        CRITICAL_WARNING=$(echo "$SMART" | jq -r '.critical_warning // empty') || true
+        AVAILABLE_SPARE=$(echo "$SMART" | jq -r '.avail_spare // empty') || true
+        PERCENTAGE_USED=$(echo "$SMART" | jq -r '.percent_used // empty') || true
+        MEDIA_ERRORS=$(echo "$SMART" | jq -r '.media_errors // empty') || true
+        TEMP_KELVIN=$(echo "$SMART" | jq -r '.temperature // empty') || true || true
         TEMP_CELSIUS=""
         if [ -n "$TEMP_KELVIN" ]; then
           TEMP_CELSIUS=$((TEMP_KELVIN - 273))
