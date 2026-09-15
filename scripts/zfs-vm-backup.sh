@@ -196,7 +196,10 @@ echo "=== Copying /storage (excluding Docker layers + ZFS benchmarks) ==="
 
 "$SSHPASS_BIN" -p zfs ssh $SSH_OPTS -p "$SSH_PORT" root@localhost \
   "tar cf - -C /storage --exclude='./apps' --exclude='./cache/zfs_*' --exclude='./cache/health_check*' --exclude='./cache/immich' --exclude='./cache/paperless' ." |
-  tar xf - -C "$BACKUP_DIR" || { echo "ERROR: /storage copy pipeline failed (ssh or tar)" >&2; exit 1; }
+  tar xf - -C "$BACKUP_DIR" || {
+  echo "ERROR: /storage copy pipeline failed (ssh or tar)" >&2
+  exit 1
+}
 
 # ── Copy legacy datasets (ONLY datapool root — documents/ + media/) ──
 echo ""
@@ -205,7 +208,10 @@ mkdir -p "$BACKUP_DIR/legacy"
 
 "$SSHPASS_BIN" -p zfs ssh $SSH_OPTS -p "$SSH_PORT" root@localhost \
   "tar cf - -C /mnt/datapool --exclude='./apps' ." |
-  tar xf - -C "$BACKUP_DIR/legacy" || { echo "ERROR: legacy copy pipeline failed (ssh or tar)" >&2; exit 1; }
+  tar xf - -C "$BACKUP_DIR/legacy" || {
+  echo "ERROR: legacy copy pipeline failed (ssh or tar)" >&2
+  exit 1
+}
 
 # ── Save manifest to backup dir ──────────────────────────────────────
 cp "$MANIFEST" "$MANIFEST_DEST"

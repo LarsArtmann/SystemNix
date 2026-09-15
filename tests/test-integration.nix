@@ -88,26 +88,23 @@ let
     };
   };
 
-
   # Bulk `.enable` stubs for sibling namespaces read unguarded by the real
   # consumer modules (all default false — the test enables none of them).
-  enableStubs =
-    names:
-    {
-      # Nested option paths — a flat "services.<n>.enable" STRING key would
-      # declare a literally-named option, not the path config reads.
-      services = lib.listToAttrs (
-        map (
-          n:
-          lib.nameValuePair n {
-            enable = lib.mkOption {
-              type = lib.types.bool;
-              default = false;
-            };
-          }
-        ) names
-      );
-    };
+  enableStubs = names: {
+    # Nested option paths — a flat "services.<n>.enable" STRING key would
+    # declare a literally-named option, not the path config reads.
+    services = lib.listToAttrs (
+      map (
+        n:
+        lib.nameValuePair n {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+          };
+        }
+      ) names
+    );
+  };
 
   siblingEnableStubs = enableStubs [
     "ai-stack"
@@ -272,9 +269,7 @@ let
       protectedCfg = c.services.caddy.virtualHosts."graph.home.lan".extraConfig;
       plainCfg = c.services.caddy.virtualHosts."timers.home.lan".extraConfig;
       tile = lib.findFirst (t: t.name == "Demo") null c.services.homepage.extraTiles;
-      demoCheck =
-        n:
-        lib.findFirst (e: e.name == n) null c.services.gatus-config.extraEndpoints;
+      demoCheck = n: lib.findFirst (e: e.name == n) null c.services.gatus-config.extraEndpoints;
       healthCheck = demoCheck "Demo Health";
       tcpCheck = demoCheck "Demo TCP";
       autoCheck = demoCheck "Demo Auto Alert";
@@ -294,8 +289,9 @@ let
       gatus-silent-alert = tcpCheck.alerts == [ ];
       gatus-auto-alert-from-subdomain =
         (lib.head autoCheck.alerts).description == "Demo Auto Alert down — graph.home.lan unreachable";
-      gatus-rides-full-pipeline =
-        builtins.any (e: e.name == "Demo Health") c.services.gatus.settings.endpoints;
+      gatus-rides-full-pipeline = builtins.any (
+        e: e.name == "Demo Health"
+      ) c.services.gatus.settings.endpoints;
       gatus-conditions-default = healthCheck.conditions == [ "[STATUS] == 200" ];
       homepage-tile-present = tile != null;
       homepage-tile-href-derived = tile.href == "https://graph.home.lan";
@@ -305,9 +301,9 @@ let
         && c.services.backup-coordination.backups.demo.directory == "/mnt/pool/backups/demo"
         && c.services.backup-coordination.backups.demo.filePattern == "demo-*.tar";
       monitored-unit-override = c.services.system-health.extraMonitoredServices == [ "demo-server" ];
-      monitored-in-all =
-        builtins.elem "demo-server"
-          (c.services.system-health.monitoredServices ++ c.services.system-health.extraMonitoredServices);
+      monitored-in-all = builtins.elem "demo-server" (
+        c.services.system-health.monitoredServices ++ c.services.system-health.extraMonitoredServices
+      );
       otel-env-on-unit =
         c.systemd.services.demo-server.environment.OTEL_EXPORTER_OTLP_ENDPOINT == "localhost:4318";
       signoz-keyed-by-unit =
@@ -315,8 +311,9 @@ let
         && c.services.signoz-coverage.expected.demo-server.serviceName == "demo"
         && c.services.signoz-coverage.expected.demo-server.wiring == "env";
       otel-audit-shape = c.services.otel-endpoint-audit.expectations ? demo-server;
-      oidc-client-registered =
-        builtins.any (cl: cl.clientId == "demo") c.services.pocket-id-config.provision.extraOidcClients;
+      oidc-client-registered = builtins.any (
+        cl: cl.clientId == "demo"
+      ) c.services.pocket-id-config.provision.extraOidcClients;
       # Only INTEGRATION assertions count: the minimal eval also trips
       # base-NixOS assertions (sops key source, fileSystems root, bootloader)
       # that are irrelevant to the fan-out.
@@ -341,7 +338,9 @@ let
       a: lib.hasPrefix "integration:" a.message && lib.hasInfix "ghost-zone" a.message
     ) failing;
 
-  failedChecks = lib.filterAttrs (_: v: !v) (builtins.removeAttrs positive [ "failingAssertionMessages" ]);
+  failedChecks = lib.filterAttrs (_: v: !v) (
+    builtins.removeAttrs positive [ "failingAssertionMessages" ]
+  );
 in
 if failedChecks != { } then
   pkgs.runCommand "integration-registry-test"

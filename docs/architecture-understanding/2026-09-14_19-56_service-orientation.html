@@ -847,13 +847,15 @@
       <main class="main">
         <!-- Hero -->
         <div class="hero">
-          <div class="hero-badge">Architecture Review · Service Orientation</div>
+          <div class="hero-badge">
+            Architecture Review · Service Orientation
+          </div>
           <h1>Thin Platform, Fat Services</h1>
           <p class="hero-subtitle">
-            The repo already has module-per-service and registry options — but every
-            integration is still a row in a horizontal god file. One logical service
-            scatters across 8–22 files. The fix is inverting integration ownership,
-            not restructuring the tree.
+            The repo already has module-per-service and registry options — but
+            every integration is still a row in a horizontal god file. One
+            logical service scatters across 8–22 files. The fix is inverting
+            integration ownership, not restructuring the tree.
           </p>
         </div>
 
@@ -866,23 +868,29 @@
           </div>
           <div class="stat-card stat-bad">
             <div class="stat-value">8–22</div>
-            <div class="stat-label">Files touched per service (forgejo 18, browser-history 22)</div>
+            <div class="stat-label">
+              Files touched per service (forgejo 18, browser-history 22)
+            </div>
           </div>
           <div class="stat-card stat-warn">
             <div class="stat-value">0</div>
-            <div class="stat-label">Consumers of the 2 existing registry options</div>
+            <div class="stat-label">
+              Consumers of the 2 existing registry options
+            </div>
           </div>
           <div class="stat-card stat-warn">
             <div class="stat-value">2.7</div>
-            <div class="stat-label">Rubric average — Fair (targeted refactor)</div>
+            <div class="stat-label">
+              Rubric average — Fair (targeted refactor)
+            </div>
           </div>
         </div>
         <div class="callout callout-amber">
           <strong>The one-sentence diagnosis.</strong> Service modules own their
-          daemons but not their wiring: vHosts, health checks, dashboard tiles, DNS
-          names, secrets, backups and OIDC clients are all declared inside six
-          shared "layer" files that every service must edit — the exact coupling
-          the registries were built to remove, left unadopted.
+          daemons but not their wiring: vHosts, health checks, dashboard tiles,
+          DNS names, secrets, backups and OIDC clients are all declared inside
+          six shared "layer" files that every service must edit — the exact
+          coupling the registries were built to remove, left unadopted.
         </div>
 
         <!-- Findings -->
@@ -891,15 +899,15 @@
         <div class="card card-problem">
           <h3>1 · Integration inversion — the core structural debt</h3>
           <p>
-            The natural owner of "forgejo's vHost is <code>plain</code> on port X" is
-            forgejo.nix. Instead it lives in caddy.nix; its health checks live in
-            gatus-config.nix; its tile in homepage.nix; its OIDC client in
-            pocket-id.nix; its sqlite staleness logic (70+ lines) in
-            system-health.nix; its secret template in sops.nix; its mirror list and
-            backup entry in configuration.nix. <em>Adding a service</em> in
+            The natural owner of "forgejo's vHost is <code>plain</code> on port
+            X" is forgejo.nix. Instead it lives in caddy.nix; its health checks
+            live in gatus-config.nix; its tile in homepage.nix; its OIDC client
+            in pocket-id.nix; its sqlite staleness logic (70+ lines) in
+            system-health.nix; its secret template in sops.nix; its mirror list
+            and backup entry in configuration.nix. <em>Adding a service</em> in
             AGENTS.md is an 11-step tour across horizontal files. Change ripple:
-            a service question like "which files does forgejo touch?" (asked today)
-            needs a repo-wide grep to answer — 18 files.
+            a service question like "which files does forgejo touch?" (asked
+            today) needs a repo-wide grep to answer — 18 files.
           </p>
         </div>
 
@@ -907,11 +915,12 @@
           <h3>2 · Registries exist but have zero adoption</h3>
           <p>
             <code>services.caddy.extraVHosts</code> (caddy.nix:110) and
-            <code>services.gatus-config.extraEndpoints</code> (gatus-config.nix:151)
-            were built exactly for service-owned contributions. Grep across all
-            service modules: <strong>0 files use either</strong>. Every vHost and
-            endpoint is still hardcoded inside the god files, and no service module
-            writes into <code>services.caddy.*</code> at all. The architecture is
+            <code>services.gatus-config.extraEndpoints</code>
+            (gatus-config.nix:151) were built exactly for service-owned
+            contributions. Grep across all service modules:
+            <strong>0 files use either</strong>. Every vHost and endpoint is
+            still hardcoded inside the god files, and no service module writes
+            into <code>services.caddy.*</code> at all. The architecture is
             half-migrated and the new direction is unproven.
           </p>
         </div>
@@ -919,73 +928,117 @@
         <div class="card card-problem">
           <h3>3 · homepage.nix has no registry — it is the worst offender</h3>
           <p>
-            28 hand-maintained <code>fooEnabled = config.services.foo.enable or
-            false</code> bindings, one per service, then <code>lib.optional</code>
+            28 hand-maintained
+            <code>fooEnabled = config.services.foo.enable or false</code>
+            bindings, one per service, then <code>lib.optional</code>
             gates per tile. Every new service edits this file forever. The
-            <code>groups</code> single-source-of-truth pattern inside it is good —
-            but the tiles themselves can only be added centrally.
+            <code>groups</code> single-source-of-truth pattern inside it is good
+            — but the tiles themselves can only be added centrally.
           </p>
         </div>
 
         <div class="card card-problem">
           <h3>4 · God files concentrate unrelated churn</h3>
           <p>
-            gatus-config.nix <strong>2,479 lines</strong> (every service's checks),
-            system-health.nix <strong>1,616</strong> (per-service sqlite/journal
-            readers inline), configuration.nix <strong>1,038</strong> (enables +
-            backup-coordination + guards), pocket-id.nix <strong>785</strong>
-            (every OIDC client), homepage.nix <strong>773</strong>, sops.nix
-            <strong>753</strong>. These are merge-conflict and
-            parallel-session hotspots by construction (the repo runs concurrent
-            agent sessions — AGENTS.md documents the race rules).
+            gatus-config.nix <strong>2,479 lines</strong> (every service's
+            checks), system-health.nix <strong>1,616</strong> (per-service
+            sqlite/journal readers inline), configuration.nix
+            <strong>1,038</strong> (enables + backup-coordination + guards),
+            pocket-id.nix <strong>785</strong> (every OIDC client), homepage.nix
+            <strong>773</strong>, sops.nix <strong>753</strong>. These are
+            merge-conflict and parallel-session hotspots by construction (the
+            repo runs concurrent agent sessions — AGENTS.md documents the race
+            rules).
           </p>
         </div>
 
         <div class="card card-warning">
           <h3>5 · Flat namespace with unique-filename constraint</h3>
           <p>
-            Auto-discovery maps filename → module name, so names must be globally
-            unique across services/ and desktop/. Helper files hide behind
+            Auto-discovery maps filename → module name, so names must be
+            globally unique across services/ and desktop/. Helper files hide
+            behind
             <code>_</code>: forgejo's 723-line script file is
-            <code>_forgejo-scripts.nix</code> — invisible ownership, name does not
-            say "forgejo" in discovery terms. At 85 files this is friction, not
-            breakage — but it caps discoverability ("where does X live?" relies on
-            grep, and the answer is: everywhere).
+            <code>_forgejo-scripts.nix</code> — invisible ownership, name does
+            not say "forgejo" in discovery terms. At 85 files this is friction,
+            not breakage — but it caps discoverability ("where does X live?"
+            relies on grep, and the answer is: everywhere).
           </p>
         </div>
 
         <div class="card card-solution">
           <h3>The fix: policy stays central, data becomes service-owned</h3>
           <p>
-            Keep the horizontal files as <strong>thin platform renderers</strong>:
-            caddy.nix still owns TLS headers, <code>proxyTo</code>, the
-            protected/plain policy, and renders <code>extraVHosts</code> into
-            real vHosts. gatus-config.nix still applies
-            <code>withPapIngest</code>, alert defaults, and the pat() lint — but
-            endpoints arrive as contributions. homepage.nix gains the one registry
-            it lacks. The NixOS module system merges attrsets for free; every
-            service module already sits in the same flake-parts module set, so a
-            service module can write <code>services.caddy.extraVHosts</code> with
-            no new plumbing. "Add a service" collapses from ~9–11 files to 2–3.
+            Keep the horizontal files as
+            <strong>thin platform renderers</strong>: caddy.nix still owns TLS
+            headers, <code>proxyTo</code>, the protected/plain policy, and
+            renders <code>extraVHosts</code> into real vHosts. gatus-config.nix
+            still applies <code>withPapIngest</code>, alert defaults, and the
+            pat() lint — but endpoints arrive as contributions. homepage.nix
+            gains the one registry it lacks. The NixOS module system merges
+            attrsets for free; every service module already sits in the same
+            flake-parts module set, so a service module can write
+            <code>services.caddy.extraVHosts</code> with no new plumbing. "Add a
+            service" collapses from ~9–11 files to 2–3.
           </p>
         </div>
 
         <!-- Scores -->
         <h2 id="scores"><span class="num">02</span>Scores (1–5 rubric)</h2>
         <div class="scorecard">
-          <div class="score-card score-bad"><div class="score">2</div><div class="label">Coupling — every service coupled to 6+ god files' internals</div></div>
-          <div class="score-card score-warn"><div class="score">3</div><div class="label">Cohesion — service modules focused; god files mix all services</div></div>
-          <div class="score-card score-warn"><div class="score">3</div><div class="label">Modularity — boundaries exist (module-per-service), porous integrations</div></div>
-          <div class="score-card score-warn"><div class="score">3</div><div class="label">Composability — harden/mkHttpCheck/ioTier primitives good; registries unused</div></div>
-          <div class="score-card score-bad"><div class="score">2</div><div class="label">Scalability — rubric fail line: new feature touches &gt;3 files by construction</div></div>
-          <div class="score-card score-warn"><div class="score">3</div><div class="label">Service orientation — daemons isolated, but integration ownership inverted</div></div>
-          <div class="score-card score-warn"><div class="score">3</div><div class="label">Dependency direction — services→lib correct; data flows into layer files</div></div>
+          <div class="score-card score-bad">
+            <div class="score">2</div>
+            <div class="label">
+              Coupling — every service coupled to 6+ god files' internals
+            </div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">3</div>
+            <div class="label">
+              Cohesion — service modules focused; god files mix all services
+            </div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">3</div>
+            <div class="label">
+              Modularity — boundaries exist (module-per-service), porous
+              integrations
+            </div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">3</div>
+            <div class="label">
+              Composability — harden/mkHttpCheck/ioTier primitives good;
+              registries unused
+            </div>
+          </div>
+          <div class="score-card score-bad">
+            <div class="score">2</div>
+            <div class="label">
+              Scalability — rubric fail line: new feature touches &gt;3 files by
+              construction
+            </div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">3</div>
+            <div class="label">
+              Service orientation — daemons isolated, but integration ownership
+              inverted
+            </div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">3</div>
+            <div class="label">
+              Dependency direction — services→lib correct; data flows into layer
+              files
+            </div>
+          </div>
         </div>
-        <p style="margin-top:1rem">
-          Average <strong>2.7 — Fair</strong>: targeted refactoring of the bottom two
-          dimensions (scalability, coupling). No urgent restructuring; the platform
-          primitives and prevention layers are genuinely strong — this is a wiring
-          problem, not a foundation problem.
+        <p style="margin-top: 1rem">
+          Average <strong>2.7 — Fair</strong>: targeted refactoring of the
+          bottom two dimensions (scalability, coupling). No urgent
+          restructuring; the platform primitives and prevention layers are
+          genuinely strong — this is a wiring problem, not a foundation problem.
         </p>
 
         <!-- Target shape -->
@@ -1030,19 +1083,28 @@ modules/nixos/services/foo.nix:
 
         <div class="dep-tree">
           <span class="root">today</span> ├── service module ── daemon only ┐
-          <span class="unwanted">god files own vHost/tile/checks/dns/secrets ← every service edits them</span><br />
-          <span class="root">target</span> ├── service module ─ daemon + all its rows in registries ┐
-          <span class="ok">thin renderers apply POLICY (TLS, alert pass, lint) to contributed DATA</span>
+          <span class="unwanted"
+            >god files own vHost/tile/checks/dns/secrets ← every service edits
+            them</span
+          ><br />
+          <span class="root">target</span> ├── service module ─ daemon + all its
+          rows in registries ┐
+          <span class="ok"
+            >thin renderers apply POLICY (TLS, alert pass, lint) to contributed
+            DATA</span
+          >
         </div>
 
         <div class="callout callout-solution">
-          <strong>Constraint to respect:</strong> the gatus pat()-lint in flake.nix
-          greps <em>gatus-config.nix's source text directly</em> (flake.nix:942–987).
-          Migrating endpoints into service modules must extend that lint to every
-          contributing module (or the rendered settings) <strong>in the same
-          change</strong>, or the phantom-green trap class loses its guard. Same
-          check applies to the CI/eval audits that read file paths: audits reading
-          <code>config</code> are migration-safe; audits reading source files are not.
+          <strong>Constraint to respect:</strong> the gatus pat()-lint in
+          flake.nix greps
+          <em>gatus-config.nix's source text directly</em> (flake.nix:942–987).
+          Migrating endpoints into service modules must extend that lint to
+          every contributing module (or the rendered settings)
+          <strong>in the same change</strong>, or the phantom-green trap class
+          loses its guard. Same check applies to the CI/eval audits that read
+          file paths: audits reading <code>config</code> are migration-safe;
+          audits reading source files are not.
         </div>
 
         <!-- Roadmap -->
@@ -1050,38 +1112,49 @@ modules/nixos/services/foo.nix:
         <div class="migration-step">
           <div class="migration-num">1</div>
           <div class="migration-content">
-            <h4>P0 · Give homepage the registry it lacks <span class="badge badge-low">effort S</span></h4>
+            <h4>
+              P0 · Give homepage the registry it lacks
+              <span class="badge badge-low">effort S</span>
+            </h4>
             <p>
-              Add <code>services.homepage.tiles</code> (list of tile attrsets; groups
-              derived as today). Migrate 3 tiles as proof. This is the only
-              integration surface with NO escape hatch today.
+              Add <code>services.homepage.tiles</code> (list of tile attrsets;
+              groups derived as today). Migrate 3 tiles as proof. This is the
+              only integration surface with NO escape hatch today.
             </p>
           </div>
         </div>
         <div class="migration-step">
           <div class="migration-num">2</div>
           <div class="migration-content">
-            <h4>P0 · Pilot inversion on the NEXT new service <span class="badge badge-fixed">zero risk</span></h4>
+            <h4>
+              P0 · Pilot inversion on the NEXT new service
+              <span class="badge badge-fixed">zero risk</span>
+            </h4>
             <p>
-              No migration required: the next service added wires itself entirely
-              through the existing registries (caddy extraVHosts, gatus
-              extraEndpoints, backup-coordination from its own module). Proves the
-              pattern on a real service and deletes the "edit 9 files" procedure
-              for all future services. Add <code>dns-local.subdomains</code> +
-              <code>pocket-id.oidcClients</code> contributions if not yet options.
+              No migration required: the next service added wires itself
+              entirely through the existing registries (caddy extraVHosts, gatus
+              extraEndpoints, backup-coordination from its own module). Proves
+              the pattern on a real service and deletes the "edit 9 files"
+              procedure for all future services. Add
+              <code>dns-local.subdomains</code> +
+              <code>pocket-id.oidcClients</code> contributions if not yet
+              options.
             </p>
           </div>
         </div>
         <div class="migration-step">
           <div class="migration-num">3</div>
           <div class="migration-content">
-            <h4>P1 · Migrate highest-churn rows out of the god files <span class="badge badge-high">impact</span></h4>
+            <h4>
+              P1 · Migrate highest-churn rows out of the god files
+              <span class="badge badge-high">impact</span>
+            </h4>
             <p>
               Move per-service gatus endpoints (biggest file, 2,479 lines) into
               owning modules, batch per service. Land the lint-coverage change
               (flake.nix:942–987) with the FIRST batch. Then homepage tiles,
-              caddy vHosts, and system-health's per-service readers
-              (forgejo mirror block, 70+ lines, belongs in forgejo's module).
+              caddy vHosts, and system-health's per-service readers (forgejo
+              mirror block, 70+ lines, belongs in forgejo's module).
             </p>
           </div>
         </div>
@@ -1090,23 +1163,28 @@ modules/nixos/services/foo.nix:
           <div class="migration-content">
             <h4>P1 · configuration.nix → pure enable manifest</h4>
             <p>
-              backup-coordination entries, monitoredServices, sops owner guards move
-              into owning modules with <code>mkDefault</code> (host overrides still
-              win). Target: ~1 line per service, host-specific deltas only.
+              backup-coordination entries, monitoredServices, sops owner guards
+              move into owning modules with <code>mkDefault</code> (host
+              overrides still win). Target: ~1 line per service, host-specific
+              deltas only.
             </p>
           </div>
         </div>
         <div class="migration-step">
           <div class="migration-num">5</div>
           <div class="migration-content">
-            <h4>P2 · Optional: per-service directories <span class="badge badge-low">mechanical</span></h4>
+            <h4>
+              P2 · Optional: per-service directories
+              <span class="badge badge-low">mechanical</span>
+            </h4>
             <p>
-              <code>modules/nixos/services/forgejo/{default,scripts}.nix</code> —
-              kills the global filename-uniqueness rule and the <code>_</code>-prefix
-              hiding (the 723-line <code>_forgejo-scripts.nix</code>). Requires
-              flake.nix discovery change (one module per dir) and relative-import
-              fixes across moved files. Do it opportunistically per service, or not
-              at all if flat+grep is preferred — it is the least important item.
+              <code>modules/nixos/services/forgejo/{default,scripts}.nix</code>
+              — kills the global filename-uniqueness rule and the
+              <code>_</code>-prefix hiding (the 723-line
+              <code>_forgejo-scripts.nix</code>). Requires flake.nix discovery
+              change (one module per dir) and relative-import fixes across moved
+              files. Do it opportunistically per service, or not at all if
+              flat+grep is preferred — it is the least important item.
             </p>
           </div>
         </div>
@@ -1117,9 +1195,9 @@ modules/nixos/services/foo.nix:
             <p>
               <code>pkgs/</code> is flat and fine for cross-cutting tools; but
               single-consumer packages (fastflowlm.nix, openseo.nix) could live
-              beside their service module. mkLarsPackages (lib/lars-packages.nix)
-              is already the right single source of truth for the Go ecosystem —
-              leave it.
+              beside their service module. mkLarsPackages
+              (lib/lars-packages.nix) is already the right single source of
+              truth for the Go ecosystem — leave it.
             </p>
           </div>
         </div>
@@ -1127,14 +1205,53 @@ modules/nixos/services/foo.nix:
         <!-- Strengths -->
         <h2 id="strengths"><span class="num">05</span>Strengths to keep</h2>
         <div class="strengths">
-          <div class="strength"><div class="check">+</div><div class="text"><span><strong>Module-per-service + auto-discovery.</strong> Daemons are genuinely isolated, one file each, upstream-module consumption pattern (discordsync/monitor365) is textbook.</span></div></div>
-          <div class="strength"><div class="check">+</div><div class="text"><span><strong>Composable platform primitives.</strong> harden, protectedVHost, proxyTo, mkHttpCheck, ioTier, mkOidcGate/mkDnsGate, mkDockerService — policy as reusable functions, exactly right.</span></div></div>
-          <div class="strength"><div class="check">+</div><div class="text"><span><strong>Registries + eval-time guard layer.</strong> ports.nix, the audits, the VM tests — prevention reads config, so most guards survive the proposed inversion unchanged.</span></div></div>
-          <div class="strength"><div class="check">+</div><div class="text"><span><strong>Single-source-of-truth derivations.</strong> homepage groups→layout, backup-coordination→gatus — derive, never hand-write the derived artifact.</span></div></div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <span
+                ><strong>Module-per-service + auto-discovery.</strong> Daemons
+                are genuinely isolated, one file each, upstream-module
+                consumption pattern (discordsync/monitor365) is textbook.</span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <span
+                ><strong>Composable platform primitives.</strong> harden,
+                protectedVHost, proxyTo, mkHttpCheck, ioTier,
+                mkOidcGate/mkDnsGate, mkDockerService — policy as reusable
+                functions, exactly right.</span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <span
+                ><strong>Registries + eval-time guard layer.</strong> ports.nix,
+                the audits, the VM tests — prevention reads config, so most
+                guards survive the proposed inversion unchanged.</span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <span
+                ><strong>Single-source-of-truth derivations.</strong> homepage
+                groups→layout, backup-coordination→gatus — derive, never
+                hand-write the derived artifact.</span
+              >
+            </div>
+          </div>
         </div>
 
         <footer class="footer">
-          Generated 2026-09-14 · Metrics measured from the working tree (wc/grep); registry-adoption claims grep-verified (caddy.extraVHosts: 0 consumers, gatus-config.extraEndpoints: 0 consumers)
+          Generated 2026-09-14 · Metrics measured from the working tree
+          (wc/grep); registry-adoption claims grep-verified (caddy.extraVHosts:
+          0 consumers, gatus-config.extraEndpoints: 0 consumers)
         </footer>
       </main>
     </div>
