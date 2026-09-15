@@ -101,15 +101,17 @@
       btrbkStrings =
         let
           go =
-            v:
-            if lib.isString v then
-              [ v ]
-            else if lib.isAttrs v then
-              lib.flatten (map go (lib.attrValues v))
-            else if lib.isList v then
-              lib.flatten (map go v)
-            else
-              [ ];
+          v:
+          if lib.isString v then
+          [ v ]
+          else if lib.isAttrs v then
+          # attr NAMES carry the landmine too: `subvolume."hot/mydb" = { }`
+          # names the snapshot target without ever being a leaf string.
+          lib.flatten ((map go (lib.attrValues v)) ++ (lib.attrNames v))
+          else if lib.isList v then
+          lib.flatten (map go v)
+          else
+          [ ];
         in
         lib.flatten (
           map (inst: go (inst.settings or { })) (lib.attrValues (config.services.btrbk.instances or { }))
@@ -117,7 +119,7 @@
 
       landmineHits = lib.filter (
         s:
-        (builtins.match ".*[\" ]${hotParent}/.*" s) != null
+        (builtins.match "(|.*[\" ])${hotParent}/.*" s) != null
         || builtins.any (e: lib.hasInfix e.path s) entryList
       ) btrbkStrings;
 

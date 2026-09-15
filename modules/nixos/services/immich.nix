@@ -3,6 +3,7 @@ _: {
   flake.nixosModules.immich =
     {
       config,
+      options,
       lib,
       ...
     }:
@@ -170,6 +171,33 @@ _: {
               OnCalendar = "*-*-* 01:00:00";
               Persistent = true;
               RandomizedDelaySec = "10m";
+            };
+          };
+        };
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          immich = {
+            enable = config.services.immich.enable;
+            subdomain = "immich";
+            port = config.services.immich.port;
+            vHost.layer = "protected";
+            backup = {
+              # mediaLocation moved to the mirrored pool 2026-08-16; the DB
+              # backup timer writes next to the media it protects.
+              directory = "/mnt/pool/services/immich/database-backup";
+              maxAgeHours = 25;
+            };
+            oidc = {
+              name = "Immich";
+              clientId = "immich";
+              launchURL = "https://immich.${config.networking.domain}";
+              callbackURLs = [
+                "https://immich.${config.networking.domain}/auth/login"
+                "https://immich.${config.networking.domain}/user-settings"
+                "app.immich:///oauth-callback"
+              ];
+              logoutCallbackURLs = [ "https://immich.${config.networking.domain}" ];
+              pkceEnabled = true;
+              logoFile = ../../../assets/immich-logo.svg;
             };
           };
         };

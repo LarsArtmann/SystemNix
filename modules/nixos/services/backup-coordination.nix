@@ -11,6 +11,7 @@ _: {
   flake.nixosModules.backup-coordination =
     {
       config,
+      options,
       lib,
       pkgs,
       ...
@@ -142,6 +143,32 @@ _: {
           timerConfig = {
             OnBootSec = "5m";
             OnUnitActiveSec = "5m";
+          };
+        };
+
+        # Service-integration registry entry: the aggregate backup-health
+        # check (backup_all_healthy metric; per-service freshness rows live
+        # in the OWNING modules' services.integration.<name>.backup).
+        # Replaces the row in gatus-config.nix.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          backup-coordination = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            checks = [
+              {
+                name = "All Backups Healthy";
+                group = "Infrastructure";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "5m";
+                client.timeout = "10s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] != pat(*backup_all_healthy 0\n*)"
+                  "[BODY] == pat(*\nbackup_all_healthy *)"
+                ];
+                alert = "One or more service backups are stale (>25h)";
+              }
+            ];
           };
         };
       };
