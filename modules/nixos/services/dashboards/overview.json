@@ -140,6 +140,86 @@
           "links": []
         }
       },
+      "536607ba-78be-56fb-b36f-a7f76054cf84": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "PSI IO (some avg60) + Disk Busy — Zone 6",
+            "description": "sustained I/O stall (avg60) + the guard's disk-busy corroboration — the crash #3 freeze class: memory gauges stay healthy while stacked full-disk readers livelock the scheduler. io avg60 >= 40 with disk busy >= 20% is a memory-emergency-guard Zone 6 trip."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "percent",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "io psi some avg60",
+                    "name": "A",
+                    "query": "memory_emergency_guard_io_psi_some_avg60_percent",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            },
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "B",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "disk busy max",
+                    "name": "B",
+                    "query": "memory_emergency_guard_io_disk_busy_percent_max",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
       "62143458-38d7-5b77-9e2a-bc2df69f52b3": {
         "kind": "Panel",
         "spec": {
@@ -976,6 +1056,15 @@
               "content": {
                 "$ref": "#/spec/panels/00778ebc-855b-51b9-acb3-bb6b14670dcf"
               }
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/536607ba-78be-56fb-b36f-a7f76054cf84"
+              },
+              "height": 5,
+              "width": 6,
+              "x": 2,
+              "y": 19
             },
             {
               "x": 6,
