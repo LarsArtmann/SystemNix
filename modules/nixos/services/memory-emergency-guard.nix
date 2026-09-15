@@ -81,8 +81,14 @@
 # encodes this philosophy for the kernel OOM killer; this guard acts
 # earlier, deterministically, without waiting for global exhaustion).
 #
-# Fail-closed metrics: the .prom file is written on EVERY run; if the guard
-# itself dies, the metrics go stale and the Gatus presence condition fails.
+# Metric freshness: the .prom file is rewritten on EVERY run (atomic
+# mktemp+mv). If the guard itself dies, the file FREEZES at its last
+# content — node_exporter keeps serving stale text, so a Gatus presence
+# pat alone can NEVER see a dead guard (the 2026-09-15 gap). Two layers
+# close it: this script stamps memory_emergency_guard_last_run_timestamp
+# _seconds on every run, and system-health derives the
+# system_memory_guard_metrics_fresh composite from the textfile mtime
+# (a frozen file flips it to 0 and the Gatus check fires).
 _: {
   flake.nixosModules.memory-emergency-guard =
     {
@@ -114,10 +120,18 @@ _: {
           set -euo pipefail
 
           OUT="${textfileDir}/memory-emergency-guard.prom"
-          TMP="''${OUT}.tmp"
+          # mktemp + trap per the repo textfile doctrine: the 1777 sticky dir
+          # eventually collects foreign-owned leftovers, and a fixed $OUT.tmp
+          # wedges the rename even for root without CAP_FOWNER (the caps
+          # below defeat the sticky-bit rule, but the unique-tmp form needs
+          # no caps and keeps the audit exception list empty).
+          TMP=$(mktemp "''${OUT}.XXXXXX")
+          chmod 644 "$TMP"
+          trap 'rm -f "$TMP"' EXIT
           COUNT_FILE="${stateDir}/tripped.count"
           LAST_TRIP_FILE="${stateDir}/last-trip"
           RESTORED_COUNT_FILE="${stateDir}/restored.count"
+          CHURN_STOPPED_FILE="${stateDir}/churn-stopped"
           SOCKET_UNITS="${lib.concatStringsSep " " cfg.socketUnits}"
           MAX_RESTORES_PER_DAY=${toString cfg.maxRestoresPerDay}
 
@@ -429,6 +443,29 @@ _: {
               # resumes incrementally; an interrupted receive is healed by
               # btrbk-pool-clean). Stopping an inactive unit is a no-op.
               if [ -n "$CHURN_UNITS" ]; then
+                # Record WHICH units were actually ACTIVE before the stop
+                # (post-trip forensics must be a prom read, not a journal
+                # dig — 2026-09-15) so the churn-stopped state file lists
+                # only real stops, never no-ops. The file's first line is
+                # the trip epoch; the drain-clear below removes it once
+                # sustained io PSI falls back under the trip threshold.
+                churn_stopped_now=""
+                for cu in $CHURN_UNITS; do
+                  if systemctl is-active --quiet "$cu" 2>/dev/null; then
+                    churn_stopped_now="$churn_stopped_now $cu"
+                  fi
+                done
+                if [ -n "$churn_stopped_now" ]; then
+                  {
+                    echo "$now"
+                    # deliberate word splitting over the captured units
+                    # shellcheck disable=SC2086
+                    for cu in $churn_stopped_now; do
+                      echo "$cu"
+                    done
+                  } > "$CHURN_STOPPED_FILE.tmp"
+                  mv "$CHURN_STOPPED_FILE.tmp" "$CHURN_STOPPED_FILE"
+                fi
                 # deliberate word splitting over the unit list
                 # shellcheck disable=SC2086
                 systemctl stop $CHURN_UNITS 2>/dev/null || true
@@ -515,6 +552,24 @@ _: {
             last_trip_recent=1
           fi
 
+          # Churn-stop forensics state (written at trip action, see above):
+          # emitted on every run while the drain window lasts, cleared once
+          # sustained io PSI falls back under the trip threshold (the churn
+          # units' own timers re-fire them from there — the window is over).
+          churn_block=""
+          churn_ts_line=""
+          if [ -f "$CHURN_STOPPED_FILE" ]; then
+            churn_epoch=$(awk 'NR==1 { print; exit }' "$CHURN_STOPPED_FILE" 2>/dev/null) || churn_epoch=0
+            churn_epoch="''${churn_epoch:-0}"
+            if [ "$churn_epoch" -gt 0 ]; then
+              churn_ts_line="memory_emergency_guard_churn_stopped_timestamp_seconds ''${churn_epoch}"
+              churn_block=$(awk 'NR>1 && NF { print "memory_emergency_guard_churn_units_stopped{unit=\"" $0 "\"} 1" }' "$CHURN_STOPPED_FILE" 2>/dev/null) || churn_block=""
+            fi
+            if [ "$io_psi_some_avg60" != "-1" ] && awk -v p="$io_psi_some_avg60" 'BEGIN { exit !(p < ${toString cfg.ioPsiSomeAvg60ThresholdPercent}) }'; then
+              rm -f "$CHURN_STOPPED_FILE"
+            fi
+          fi
+
           {
             echo "# HELP memory_emergency_guard_avail_percent MemAvailable as percent of MemTotal"
             echo "# TYPE memory_emergency_guard_avail_percent gauge"
@@ -591,6 +646,22 @@ _: {
             echo "# HELP memory_emergency_guard_zone6_trips_total Trips from Zone 6 (sustained I/O PSI stall with disk-busy corroboration — the crash #3 class)"
             echo "# TYPE memory_emergency_guard_zone6_trips_total counter"
             echo "memory_emergency_guard_zone6_trips_total ''${zone6}"
+
+            echo "# HELP memory_emergency_guard_last_run_timestamp_seconds Epoch of this guard run — freshness signal; a frozen value means the guard is DEAD (node_exporter serves the stale textfile forever, so presence pats alone can never see guard death — the 2026-09-15 gap)"
+            echo "# TYPE memory_emergency_guard_last_run_timestamp_seconds gauge"
+            echo "memory_emergency_guard_last_run_timestamp_seconds ''${now}"
+
+            if [ -n "$churn_ts_line" ]; then
+              echo "# HELP memory_emergency_guard_churn_stopped_timestamp_seconds Epoch of the last trip action that stopped resumable I/O churn units (absent when no churn-stop window is active)"
+              echo "# TYPE memory_emergency_guard_churn_stopped_timestamp_seconds gauge"
+              echo "$churn_ts_line"
+              echo "# HELP memory_emergency_guard_churn_units_stopped Churn units the guard actually stopped (were active pre-stop) at the last trip action, emitted while the io-drain window lasts — post-trip forensics as a prom read"
+              echo "# TYPE memory_emergency_guard_churn_units_stopped gauge"
+              # churn_block may be empty (epoch line only) — never fail the
+              # emission on a no-op test
+              # shellcheck disable=SC2015
+              [ -n "$churn_block" ] && printf '%s\n' "$churn_block" || true
+            fi
           } > "$TMP"
           mv "$TMP" "$OUT"
         '';
