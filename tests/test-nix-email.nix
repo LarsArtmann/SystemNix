@@ -14,12 +14,18 @@
 #      entry fans out the backup-freshness check on the reports dir.
 #   3. mail-server layer (future VPS target): fallback-admin is a
 #      LoadCredential referenced through the %{file:...}% macro on the
-#      stateVersion-correct stalwart unit; the relay credential appears
-#      ONLY when a relay with a username is configured (the half-configured
-#      relay shape must not crash eval - regression: relay-null crash).
+#      stateVersion-correct stalwart unit.
 #   4. The deployment state (plumbing shipped, enabled NOWHERE) still
 #      evaluates - a consumer importing this module without enabling it
 #      must never be broken.
+#
+# PIN NOTE (2026-09-15): the pinned nix-email rev (1f8bb52) predates the
+# upstream `services.mail-server.relay` option (it rides the next
+# nix-email push). The wrapper guards its relay wiring on option
+# existence; the relay-configured cases are replaced by a tryEval
+# absence-proof until the pin advances. RESTORE the relay-credential
+# assertions when bumping the pin (the wrapper's guard comment marks the
+# dead code).
 {
   pkgs,
   inputs,
@@ -62,29 +68,23 @@ let
   # --- Case 3: mail-server enabled, no relay (default stateVersion 26.11) -
   mail = evalConfig { services.mail-server.enable = true; };
 
-  # --- Case 4: old stateVersion + fully-configured relay ------------------
-  mailOldRelay = evalConfig {
+  # --- Case 4: old stateVersion -> stalwart-mail unit name ----------------
+  mailOld = evalConfig {
     services.mail-server = {
       enable = true;
       stateVersion = "25.11";
-      relay = {
-        address = "smtp.resend.com";
-        username = "resend";
-        secretFile = "/run/secrets/stalwart-relay-password";
-      };
     };
   };
 
-  # Half-configured relay (username without secretFile): upstream asserts
-  # this shape at eval; the wrapper must not crash BEFORE that assertion
-  # (regression: the wrapper's optionalAttrs crashed on relay != null with
-  # a null username).
-  relayHalf = evalConfig {
-    services.mail-server = {
-      enable = true;
-      relay.address = "smtp.resend.com";
-    };
-  };
+  # --- Case 5 (PIN NOTE): the relay option must NOT exist at the pin ------
+  # Setting it has to fail eval. When the pin advances past the
+  # relay-landing rev, replace this with the relay-credential assertions:
+  # services.stalwart.credentials."mail-server-relay" wired from sops
+  # exactly when relay.username is set.
+  relayOptionMissing = !(builtins.tryEval
+    (evalConfig {
+      services.mail-server.relay.address = "smtp.resend.com";
+    }).config.services.mail-server.hostname).success;
 
   # Each assertion is `true` by construction (throwIfNot throws at eval on
   # violation); fold to a single boolean for the assert below.
@@ -124,17 +124,12 @@ let
     (throwIfNot (mail.systemd.services.stalwart.onFailure == onFailure)
       "stalwart onFailure routing missing")
 
-    (throwIfNot (mailOldRelay.services.stalwart.credentials ? "mail-server-relay"
-      && mailOldRelay.services.stalwart.credentials."mail-server-relay"
-      == "/run/secrets/stalwart-relay-password")
-      "relay credential missing on a fully-configured relay")
-
-    (throwIfNot (mailOldRelay.services.stalwart.settings.authentication.fallback-admin.secret
+    (throwIfNot (mailOld.services.stalwart.settings.authentication.fallback-admin.secret
       == "%{file:/run/credentials/stalwart-mail.service/fallback-admin}%")
       "fallback-admin macro does not track the stalwart-mail rename (stateVersion 25.11)")
 
-    (throwIfNot (relayHalf.services.stalwart.credentials ? "fallback-admin")
-      "half-configured relay crashed the wrapper eval")
+    (throwIfNot relayOptionMissing
+      "relay option unexpectedly evaluable at the pinned rev - advance the pin and restore the relay-credential assertions")
   ];
 in
 assert assertions;
