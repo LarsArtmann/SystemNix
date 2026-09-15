@@ -63,5 +63,7 @@ in
   mail-relay = makeTest (import ./test-mail-relay.nix { inherit pkgs; });
   wifi-failover = makeTest (import ./test-wifi-failover.nix { inherit pkgs; });
   miniflux = makeTest (import ./test-miniflux.nix { inherit pkgs; });
+  hot-db = makeTest (import ./test-hot-db.nix { inherit pkgs; });
+  hot-db-assertions = import ./test-hot-db-assertions.nix { inherit pkgs inputs system; };
 }
 // (import ./test-scripts.nix { inherit pkgs; })

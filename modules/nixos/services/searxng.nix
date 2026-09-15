@@ -8,6 +8,7 @@ _: {
   flake.nixosModules.searxng =
     {
       config,
+      options,
       lib,
       pkgs,
       ...
@@ -621,6 +622,38 @@ _: {
             ];
             wants = [ "dnsblockd.service" ];
             requires = [ "searxng-secret-key.service" ];
+          };
+        };
+
+        # Service-integration registry entry (modules/nixos/services/
+        # integration.nix): one declaration fans out to Caddy vHost (Layer 2
+        # protected — no native auth), Gatus check, and the homepage tile.
+        # REPLACES rows in caddy.nix (search vHost), gatus-config.nix
+        # (SearXNG check), and homepage.nix (tile + searxEnabled flag).
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          searxng = {
+            subdomain = "search";
+            port = ports.searxng;
+            vHost.layer = "protected";
+            checks = [
+              {
+                name = "SearXNG";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.searxng}/healthz";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                ];
+                alert = "SearXNG metasearch engine down — privacy search unavailable";
+              }
+            ];
+            homepage = {
+              name = "SearXNG";
+              group = "Productivity";
+              description = "Privacy Metasearch Engine";
+              icon = "searxng.png";
+            };
           };
         };
       };
