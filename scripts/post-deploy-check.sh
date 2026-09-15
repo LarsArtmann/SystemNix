@@ -1489,7 +1489,7 @@ if [ -e "$CRUSH_RC" ]; then
   # ENTIRE config load — all providers/LSPs/MCPs vanish).
   smoke_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   if bash "$smoke_dir/crush-rc-test.sh" --expect-model zai/glm-5.3-flash >/tmp/.smoke-crush-rc.log 2>&1; then
-    report_pass "Crush — isolated rc load OK, glm-5.3-flash identity present ($(wc -l </tmp/.smoke-crush-rc.log | tr -d ' ') log lines)"
+    report_pass "Crush — isolated rc load OK, glm-5.3-flash identity present"
   else
     report_fail "Crush — isolated rc load FAILED (see /tmp/.smoke-crush-rc.log tail: $(tail -3 /tmp/.smoke-crush-rc.log | tr '\n' ' '))"
   fi

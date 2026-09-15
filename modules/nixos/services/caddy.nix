@@ -188,17 +188,18 @@ _: {
               '';
             };
 
-            "immich.${domain}" = protectedVHost "immich" config.services.immich.port;
-            # Paperless: native OIDC via Pocket ID (django-allauth) — Layer 1,
-            # plain reverse_proxy like Forgejo/Gatus. protectedVHost would
-            # double-auth (forward-auth + the app's own login). SSO-ONLY:
-            # password login is disabled via the paperless-oidc-setup env
-            # file (auto-break-glass restores it if the bridge degrades).
-            # /admin/* stays hard-blocked: PAPERLESS_DISABLE_REGULAR_LOGIN
-            # does NOT cover the Django admin login (documented), and nobody
-            # uses it here — paperless-manage covers admin operations.
-            # The exact-match handle /admin (2026-09-02) kills the bare
-            # /admin → /admin/ 301 hop that used to leak through to the app.
+            # Immich vHost moved to the registry (services.integration.immich,
+            # Layer 2 protected). Paperless: native OIDC via Pocket ID
+            # (django-allauth) — Layer 1, plain reverse_proxy like
+            # Forgejo/Gatus. protectedVHost would double-auth (forward-auth
+            # + the app's own login). SSO-ONLY: password login is disabled
+            # via the paperless-oidc-setup env file (auto-break-glass
+            # restores it if the bridge degrades). /admin/* stays
+            # hard-blocked: PAPERLESS_DISABLE_REGULAR_LOGIN does NOT cover
+            # the Django admin login (documented), and nobody uses it here —
+            # paperless-manage covers admin operations. The exact-match
+            # handle /admin (2026-09-02) kills the bare /admin → /admin/ 301
+            # hop that used to leak through to the app.
             "paperless.${domain}" = {
               extraConfig = ''
                 ${tlsConfig}
@@ -214,26 +215,13 @@ _: {
                 }
               '';
             };
-            "forgejo.${domain}" = {
-              extraConfig = ''
-                ${tlsConfig}
-                ${commonConfig}
-                ${proxyTo config.services.forgejo.settings.server.HTTP_PORT}
-              '';
-            };
+            # Forgejo / dash / crm / tasks / manifest / status vHosts:
+            # forgejo+crm+manifest+status moved to the registry
+            # (services.integration.<name>, plain/protected per entry). dash
+            # and tasks stay hand-written (homepage + taskchampion have no
+            # registry entries — decorative/relay surfaces).
             "dash.${domain}" = protectedVHost "dash" config.services.homepage.port;
-            "crm.${domain}" = protectedVHost "crm" config.services.twenty.port;
             "tasks.${domain}" = protectedVHost "tasks" config.services.taskchampion-sync-server.port;
-            "manifest.${domain}" = protectedVHost "manifest" config.services.manifest.port;
-            # status uses NATIVE OIDC (Gatus security.oidc), not oauth2-proxy
-            # forward-auth — plain reverse_proxy like Forgejo to avoid double-auth.
-            "status.${domain}" = {
-              extraConfig = ''
-                ${tlsConfig}
-                ${commonConfig}
-                ${proxyTo config.services.gatus-config.port}
-              '';
-            };
             # OpenSEO: Layer 2 (oauth2-proxy forward-auth). The GSC OAuth callback
             # (/api/gsc/oauth/callback) is exempt from forward-auth — OAuth callback
             # endpoints should be directly reachable to prevent cookie-expiry edge
@@ -258,7 +246,8 @@ _: {
                 }
               '';
             };
-            "daily.${domain}" = protectedVHost "daily" config.services.crush-daily.port;
+            # daily vHost moved to the registry (services.integration.crush-daily,
+            # Layer 2 protected).
 
             # dnsblockd has NATIVE OIDC auth since the SSO feature (Pocket ID,
             # authorization-code + PKCE) — plain TLS proxy like Forgejo/Gatus;
@@ -314,13 +303,11 @@ _: {
                   else
                     protectedVHost "monitor" ports.monitor365-server;
               }
-          # DiscordSync / Browser History / Attic / renamer / search / graph
-          # vHosts moved to the registry (services.integration entries in
-          # their owning modules). systemd-timer-monitor stays hand-written
-          # below: it is a file_server over the state dir, not a proxy.
-          // lib.optionalAttrs config.services.overview.enable {
-            "overview.${domain}" = protectedVHost "overview" ports.overview;
-          }
+          # DiscordSync / Browser History / Attic / renamer / search / graph /
+          # overview vHosts moved to the registry (services.integration
+          # entries in their owning modules). systemd-timer-monitor stays
+          # hand-written below: it is a file_server over the state dir, not
+          # a proxy.
           # systemd-timer-monitor — static HTML/JSON served by file_server
           # (no upstream daemon, the audit timer writes files into the state dir).
           // lib.optionalAttrs (config.services.systemd-timer-monitor.enable or false) {

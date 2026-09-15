@@ -31,10 +31,6 @@ _: {
         ports
         ;
 
-      hasContainer = name: config.virtualisation.oci-containers.containers ? ${name};
-
-      signozEnabled = config.services.signoz.enable;
-      dozzleEnabled = hasContainer "dozzle";
       # Not a tile flag: the bookmarks.yaml Search group and the widgets.yaml
       # search provider gate on the SearXNG service state (the SearXNG tile
       # itself moved to services.integration.searxng.homepage).
