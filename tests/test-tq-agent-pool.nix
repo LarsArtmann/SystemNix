@@ -38,6 +38,8 @@ let
         inputs.sops-nix.nixosModules.sops
         inputs.go-taskqueue.nixosModules.default
         house
+        # co-import: the module declares a services.integration entry (mkIf-wrapped options?-guard caveat, 2026-09-15)
+        (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration
         # House sops.nix declares the real template under svcEnabled
         # "tq-agent-pool" (evo-x2 scope); minimal stand-in so the module's
         # EnvironmentFile reference evaluates in this bare eval.

@@ -1104,7 +1104,15 @@
                             endIdx = lnIdx
                             for (endIdx = lnIdx; endIdx <= NR; endIdx++) {
                               cur = lines[endIdx]
-                              if (cur ~ /\|\|[[:space:]]+(true|:|echo|printf|exit)/) protected = 1
+                              # Protection = the failure path is HANDLED inline:
+                              # `|| true`/`:`/degraded echo, a rescue
+                              # reassignment like `|| val=0`, or the
+                              # `VAR=$(cmd) && …` idiom (errexit does not fire
+                              # on the left operand of &&/|| — signoz TTL
+                              # retry loop shape).
+                              if (cur ~ /\|\|[[:space:]]+(true|:|echo|printf|exit|return|break|continue)/) protected = 1
+                              if (cur ~ /\|\|[[:space:]]*[A-Za-z_][A-Za-z0-9_]*=/) protected = 1
+                              if (cur ~ /\)[[:space:]]*&&/) protected = 1
                               lineLen = length(cur)
                               for (charIdx = 1; charIdx <= lineLen; charIdx++) {
                                 chr = substr(cur, charIdx, 1)

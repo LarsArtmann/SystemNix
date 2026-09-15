@@ -58,6 +58,8 @@ in
     {
       imports = [
         cvNixosModule
+        # co-import: the module declares a services.integration entry (mkIf-wrapped options?-guard caveat, 2026-09-15)
+        (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration
         ./mock-sops.nix
         ./test-helpers.nix
       ];

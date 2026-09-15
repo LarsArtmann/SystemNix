@@ -62,6 +62,8 @@ in
         paperlessNixosModule
         fastflowlmNixosModule
         llamaRagNixosModule
+        # co-import: the module declares a services.integration entry (mkIf-wrapped options?-guard caveat, 2026-09-15)
+        (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration
         gatusCoverageAuditModule
         pocketIdEnableMock
         ./mock-sops.nix

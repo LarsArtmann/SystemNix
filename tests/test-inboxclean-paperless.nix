@@ -66,6 +66,8 @@ let
   # derivation is never evaluated (mkDefault loses to mkForce lazily).
   base = [
     inboxcleanModule
+    # co-import: the module declares a services.integration entry (mkIf-wrapped options?-guard caveat, 2026-09-15)
+    (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration
     sopsStub
     (
       { lib, ... }:
