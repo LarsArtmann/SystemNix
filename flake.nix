@@ -1353,6 +1353,11 @@
               # not credentials); gitleaks entropy gates need realistic
               # literals (an all-'a' token passes the regex but dies at
               # entropy ≥2 — the original failure of this selftest).
+              # Fixture tokens are TEMPLATES, never literals: @HEX40@ is
+              # substituted with a deterministic sha256-derived hex at scan
+              # time, because GitHub push protection pattern-matches raw
+              # blobs and IGNORES .gitleaks.toml allowlists — a literal
+              # sgp_ fixture blocked the 2026-09-15 master push (GH013).
               gitleaks-coverage-selftest = pkgs.runCommand "gitleaks-coverage-selftest" { } ''
                 set -u
                 cfg=${./.gitleaks.toml}
@@ -1363,6 +1368,10 @@
                   local fixture="$1" label="$2" d
                   d=$(mktemp -d "$work/d.XXXXXX")
                   cp "$fixtures/$fixture" "$d/"
+                  # Expand the @HEX40@ template (no-op where absent): entropy
+                  # must stay realistic or the rule's entropy gate kills the
+                  # detection this check exists to prove.
+                  sed -i "s/@HEX40@/$(printf 'systemnix-gitleaks-coverage-fixture' | sha256sum | cut -c1-40)/" "$d/$fixture"
                   if ${pkgs.gitleaks}/bin/gitleaks detect --no-git --no-banner --source "$d" --config "$cfg" >/dev/null 2>&1; then
                     echo "SELFTEST FAIL: gitleaks did NOT detect $label (fixture: $fixture) — rule dead or fixture drifted (phantom coverage)"
                     exit 1

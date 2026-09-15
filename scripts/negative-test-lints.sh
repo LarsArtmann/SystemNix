@@ -202,7 +202,7 @@ run_case coverage awk-without-gawk binary-coverage-lint fail "execs 'awk'" \
 run_case gitleaks square-fixture-drift gitleaks-coverage-selftest fail 'did NOT detect' \
   'sed:tests/fixtures/gitleaks/positive-square.txt:s|sq0atp-aB3dEf6hIj9kLm2oPq5rSt8uVw1xYz4A0bC5dE7f|sq0atpX-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|'
 run_case gitleaks sourcegraph-fixture-drift gitleaks-coverage-selftest fail 'did NOT detect' \
-  'sed:tests/fixtures/gitleaks/positive-sourcegraph.txt:s|sgp_7f3e9a1c48d2b650e4fa93c17b8d05264e9f0a3c|sgpX_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|'
+  'sed:tests/fixtures/gitleaks/positive-sourcegraph.txt:s|sgp_@HEX40@|sgpX_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|'
 run_case gitleaks negative-fixture-corrupt gitleaks-coverage-selftest fail 'tripped gitleaks' \
   'sed:tests/fixtures/gitleaks/negative-bare-hex.txt:s|deadbeefdeadbeefdeadbeefdeadbeefdeadbeef|sq0atp-aB3dEf6hIj9kLm2oPq5rSt8uVw1xYz4A0bC5dE7f|'
 
