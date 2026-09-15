@@ -5533,6 +5533,27 @@
         "type": "github"
       }
     },
+    "nix-email": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1789441341,
+        "narHash": "sha256-rjbXnoJWMUW6d59bh1fKovpYhY2054s2bVDQV4nh5mM=",
+        "owner": "LarsArtmann",
+        "repo": "nix-email",
+        "rev": "1f8bb523f6f1a42ae38a4d80f8b248e8f63f4c18",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "1f8bb52",
+        "repo": "nix-email",
+        "type": "github"
+      }
+    },
     "nix-homebrew": {
       "inputs": {
         "brew-src": "brew-src"
@@ -6296,6 +6317,7 @@
         "niri-session-manager": "niri-session-manager",
         "nix-amd-npu": "nix-amd-npu",
         "nix-darwin": "nix-darwin",
+        "nix-email": "nix-email",
         "nix-homebrew": "nix-homebrew",
         "nix-ssh-config": "nix-ssh-config",
         "nixos-hardware": "nixos-hardware",

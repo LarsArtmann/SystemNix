@@ -558,6 +558,24 @@
       };
     };
 
+    # nix-email — Declarative mail stack (Stalwart + DMARC monitoring).
+    # Consumed via the upstream-flake pattern (like inboxclean/discordsync):
+    # flake.nixosModules.default wraps nixpkgs services.stalwart +
+    # services.parsedmarc; the consumer wrapper here layers sops secrets,
+    # onFailure routing, the integration-registry entry and backup
+    # freshness checks (modules/nixos/services/nix-email.nix).
+    #
+    # nixpkgs.follows is REQUIRED, not just convenient: the wrapper is
+    # verified against the nixpkgs services.stalwart module (0.15.5) at its
+    # own lock rev, and both repos pin the SAME rev on purpose (compat
+    # doctrine - bump both together). Deliberately NOT pinned inside
+    # nix-email are its tests' VM runtime, so no other follows exist: the
+    # flake has nixpkgs as its only input.
+    nix-email = {
+      url = "github:LarsArtmann/nix-email/1f8bb52";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # md-go-validator — Validate code blocks embedded in Markdown/MDX docs
     md-go-validator = {
       # INTERIM: pinned to pre-2026-09-13-update rev (stale vendorHash upstream).
