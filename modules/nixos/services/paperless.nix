@@ -22,6 +22,7 @@ _: {
   flake.nixosModules.paperless =
     {
       config,
+      options,
       lib,
       pkgs,
       ...

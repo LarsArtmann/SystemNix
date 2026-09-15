@@ -3,6 +3,7 @@ _: {
   flake.nixosModules.manifest =
     {
       config,
+      options,
       pkgs,
       lib,
       ...

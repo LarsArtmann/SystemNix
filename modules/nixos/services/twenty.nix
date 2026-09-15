@@ -6,6 +6,7 @@ _: {
   flake.nixosModules.twenty =
     {
       config,
+      options,
       pkgs,
       lib,
       ...

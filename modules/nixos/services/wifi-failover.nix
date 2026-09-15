@@ -22,6 +22,7 @@ _: {
   flake.nixosModules.wifi-failover =
     {
       config,
+      options,
       lib,
       pkgs,
       ...

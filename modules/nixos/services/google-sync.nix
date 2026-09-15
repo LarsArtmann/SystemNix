@@ -31,6 +31,7 @@ _: {
   flake.nixosModules.google-sync =
     {
       config,
+      options,
       lib,
       pkgs,
       ...

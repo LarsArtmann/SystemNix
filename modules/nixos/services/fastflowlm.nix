@@ -58,6 +58,7 @@ _: {
   flake.nixosModules.fastflowlm =
     {
       config,
+      options,
       lib,
       pkgs,
       ...

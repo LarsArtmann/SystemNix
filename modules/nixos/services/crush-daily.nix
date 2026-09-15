@@ -7,6 +7,7 @@ _: {
   flake.nixosModules.crush-daily =
     {
       config,
+      options,
       lib,
       pkgs,
       ...

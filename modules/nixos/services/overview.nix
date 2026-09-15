@@ -25,6 +25,7 @@
   flake.nixosModules.overview =
     {
       config,
+      options,
       pkgs,
       lib,
       ...

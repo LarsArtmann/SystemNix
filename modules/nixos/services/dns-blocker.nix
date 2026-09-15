@@ -15,6 +15,7 @@ _: {
   flake.nixosModules.dns-blocker =
     {
       config,
+      options,
       lib,
       pkgs,
       ...
