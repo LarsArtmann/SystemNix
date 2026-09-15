@@ -35,7 +35,6 @@ _: {
       signozEnabled = config.services.signoz.enable;
       twentyEnabled = config.services.twenty.enable;
       manifestEnabled = config.services.manifest.enable;
-      ollamaEnabled = config.services.ai-stack.enable;
       crushDailyEnabled = config.services.crush-daily.enable;
       gatusEnabled = config.services.gatus-config.enable;
       dozzleEnabled = hasContainer "dozzle";
@@ -43,7 +42,6 @@ _: {
       monitor365Enabled = config.services.monitor365-server.enable or false;
       overviewEnabled = config.services.overview.enable;
       fastflowlmEnabled = config.services.fastflowlm.enable or false;
-      llamaRagEnabled = config.services.llama-rag.enable or false;
       googleSyncEnabled = config.services.google-sync.enable or false;
       bankSyncEnabled = config.services.bank-sync.enable or false;
       inboxcleanEnabled = config.services.inboxclean.enable or false;
@@ -196,27 +194,13 @@ _: {
             icon = "openai.png";
           }
         )
-        ++ lib.optional ollamaEnabled (
-          mkService "Ollama" {
-            description = "Local AI Inference";
-            icon = "ollama.png";
-          }
-        )
-        # Decorative tile like Ollama: socket-activated on 127.0.0.1
-        # only (no vHost). Gatus alerts on its state via system-health
-        # metrics; a direct probe would pin the 13.6 GB model in RAM.
+        # Ollama + FastFlowLM remain; the "Ollama" and "llama.cpp RAG" tiles
+        # moved to their owning modules
+        # (services.integration.{ai-stack,llama-rag}.homepage).
         ++ lib.optional fastflowlmEnabled (
           mkService "FastFlowLM" {
             description = "NPU LLM Server (Qwen3.6 MoE, OpenAI-compatible)";
             icon = "amd.png";
-          }
-        )
-        # Decorative tile: loopback-only embeddings + reranking on GPU.
-        # Gatus alerts on /health endpoints; no vHost.
-        ++ lib.optional llamaRagEnabled (
-          mkService "llama.cpp RAG" {
-            description = "Embeddings + Reranking (bge-m3, bge-reranker-v2-m3)";
-            icon = "ollama.png";
           }
         );
 

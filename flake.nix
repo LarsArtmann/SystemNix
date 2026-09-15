@@ -1063,6 +1063,80 @@
                 touch $out
               '';
 
+              # Dead-guard lint (2026-09-15): writeShellApplication runs
+              # errexit+pipefail, so `VAR=$(cmd)` WITHOUT `|| true` EXITS the
+              # script when cmd fails — any `[ -z "$VAR" ]` degraded-path
+              # guard below is unreachable (live class: website-deploy-monitor
+              # failed the unit on every network transient and disk-growth-check
+              # 226'd for days, both because the guard could never run).
+              # Detection: assignment via command substitution with no
+              # `|| true|:|echo|printf|exit` anywhere in the substitution span,
+              # followed within 8 lines by a -z/-n guard on the same variable.
+              # Exempt a deliberate shape with `# dead-guard-ok` on the line.
+              # Heuristic (line-based over .nix sources, not a shell parser):
+              # `local x=$(...)` and `[ "$x" = ... ]` guard forms are out of
+              # scope for v1 — the fleet sweep validated the FP rate on the
+              # real tree.
+              dead-guard-lint =
+                let
+                  lintFiles = builtins.filter (lib.hasSuffix ".nix") (
+                    lib.filesystem.listFilesRecursive ./modules
+                    ++ lib.filesystem.listFilesRecursive ./platforms
+                    ++ lib.filesystem.listFilesRecursive ./lib
+                  );
+                in
+                pkgs.runCommand "dead-guard-lint" { } ''
+                  fail=0
+                  for f in ${lib.concatStringsSep " " lintFiles}; do
+                    awk '
+                      { lines[NR] = $0 }
+                      END {
+                        bad = 0
+                        for (lnIdx = 1; lnIdx <= NR; lnIdx++) {
+                          line = lines[lnIdx]
+                          if (line ~ /# dead-guard-ok/) continue
+                          if (match(line, /^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*=[[:space:]]*\$\(/)) {
+                            varName = line
+                            sub(/^[[:space:]]*/, "", varName)
+                            sub(/=[[:space:]]*\$\(.*/, "", varName)
+                            depth = 0
+                            protected = 0
+                            endIdx = lnIdx
+                            for (endIdx = lnIdx; endIdx <= NR; endIdx++) {
+                              cur = lines[endIdx]
+                              if (cur ~ /\|\|[[:space:]]+(true|:|echo|printf|exit)/) protected = 1
+                              lineLen = length(cur)
+                              for (charIdx = 1; charIdx <= lineLen; charIdx++) {
+                                chr = substr(cur, charIdx, 1)
+                                if (chr == "(") depth++
+                                else if (chr == ")") depth--
+                              }
+                              if (depth <= 0) break
+                            }
+                            if (protected) continue
+                            windowEnd = endIdx + 8
+                            if (windowEnd > NR) windowEnd = NR
+                            for (guardIdx = endIdx + 1; guardIdx <= windowEnd; guardIdx++) {
+                              gl = lines[guardIdx]
+                              if (index(gl, "-z \"$" varName "\"") || index(gl, "-n \"$" varName "\"") || index(gl, "-z \"''${" varName "}") || index(gl, "-n \"''${" varName "}")) {
+                                print FILENAME ":" lnIdx ": DEAD GUARD: " varName "=$(...) lacks `|| true` — under errexit the failed capture exits before the [ -z \"$" varName "\" ] guard at line " guardIdx " can run. Add `|| true` (deliberate degradation) or `# dead-guard-ok`."
+                                bad = 1
+                                break
+                              }
+                            }
+                          }
+                        }
+                        if (bad) exit 1
+                      }
+                    ' "$f" || fail=1
+                  done
+                  if [ "$fail" -ne 0 ]; then
+                    echo "FAIL: dead-guard-lint found unreachable degraded-path guards — fix the captures above"
+                    exit 1
+                  fi
+                  touch $out
+                '';
+
               # Textfile-emission guard: a metric echo line without a VALUE
               # makes the node exporter reject the WHOLE .prom file — one
               # value-less line darked all 38 system_* metrics and blocked
