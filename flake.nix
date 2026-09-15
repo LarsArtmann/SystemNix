@@ -464,7 +464,7 @@
       # The flip condition (fork branch pushes 9c370324) is satisfied:
       # origin/fork contains it. A `github:` URL with a rev keeps the pin
       # exact AND fetches in CI.
-      url = "github:LarsArtmann/art-dupl/9c370324dfcfaef23fa60079af0d9ebfcf84a489";
+      url = "git+https://github.com/LarsArtmann/art-dupl?ref=refs/heads/fork&rev=9c370324dfcfaef23fa60079af0d9ebfcf84a489";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
