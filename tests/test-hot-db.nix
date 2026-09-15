@@ -112,7 +112,9 @@ in {
     machine.wait_for_unit("multi-user.target")
 
     import re
-    print("DEBUG wants/after/before:", machine.execute("systemctl show -p Wants,After,Before var-lib-hotdb-test.mount")[1])
+    print("DEBUG entry-cat:", machine.execute("systemctl cat var-lib-hotdb-test.mount || true")[1])
+    print("DEBUG toplevel-cat:", machine.execute("systemctl cat mnt-hot.mount || true")[1])
+    print("DEBUG toplevel-deps:", machine.execute("systemctl show -p Wants,After,Before mnt-hot.mount || true")[1])
     print("DEBUG re usage:", re.match("x", "x") is not None)
     print("DEBUG bootstrap status:", machine.execute("systemctl status hot-db-bootstrap --no-pager -l || true")[1])
     print("DEBUG bootstrap journal:", machine.execute("journalctl -b --no-pager | grep -i bootstrap | tail -20 || true")[1])

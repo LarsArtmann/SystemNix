@@ -386,19 +386,8 @@ _: {
                 clientId = "oauth2-proxy";
                 callbackURLs = [ "https://auth.${domain}/oauth2/callback" ];
               }
-              {
-                name = "Immich";
-                clientId = "immich";
-                launchURL = "https://immich.${domain}";
-                callbackURLs = [
-                  "https://immich.${domain}/auth/login"
-                  "https://immich.${domain}/user-settings"
-                  "app.immich:///oauth-callback"
-                ];
-                logoutCallbackURLs = [ "https://immich.${domain}" ];
-                pkceEnabled = true;
-                logoFile = ../../../assets/immich-logo.svg;
-              }
+              # Immich's client moved to its owning module:
+              # services.integration.immich.oidc (immich.nix).
               {
                 name = "Forgejo";
                 clientId = "forgejo";
@@ -434,20 +423,8 @@ _: {
                 callbackURLs = [ "https://dnsblock.${domain}/auth/oidc/callback" ];
                 pkceEnabled = true;
               }
-              {
-                # Native OIDC in CV's admin hub (coreos/go-oidc,
-                # authorization-code + PKCE S256): the locked /admin access
-                # card renders the provider sign-in button; success mints
-                # the app's operator session. The secret lands in
-                # /var/lib/pocket-id/client-secrets/cv and reaches the
-                # service via the cv-oidc-env bridge (cv.nix). The API key
-                # stays CV's machine path (cron timers keep X-API-Key).
-                name = "CV";
-                clientId = "cv";
-                launchURL = "https://cv.${domain}";
-                callbackURLs = [ "https://cv.${domain}/admin/auth/oidc/callback" ];
-                pkceEnabled = true;
-              }
+              # CV's client moved to its owning module: registered via
+              # services.integration.cv.oidc (cv.nix).
               {
                 # Native OIDC in paperless-ngx via django-allauth
                 # (allauth.socialaccount.providers.openid_connect). Callback
