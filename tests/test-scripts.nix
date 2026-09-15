@@ -230,4 +230,111 @@
       """)
     '';
   };
+
+  # Artifact-level verification of the two fixed dead-guard scripts (the
+  # 2026-09-13 closeout ask: "the run tested faithful bash reconstructions,
+  # not the artifacts"). Executes the REAL writeShellApplication store
+  # outputs from the evo-x2 config through the degraded/fresh/stale/baseline
+  # scenarios. Mocks are injected by SED into copies of the store scripts —
+  # writeShellApplication pins runtimeInputs FIRST in PATH, so env-PATH
+  # shadowing can never win against them (AGENTS.md rule); renaming the
+  # call inside the script text is the only faithful injection.
+  guard-scripts =
+    let
+      evo = self.nixosConfigurations.evo-x2.config;
+      webExe = evo.systemd.services.website-deploy-monitor.serviceConfig.ExecStart;
+      diskExe = evo.systemd.services.disk-growth-check.serviceConfig.ExecStart;
+    in
+    makeTest {
+      name = "guard-scripts-artifacts";
+
+      nodes.machine = _: {
+        system.stateVersion = "25.11";
+      };
+
+      testScript = ''
+        machine.start()
+        machine.wait_for_unit("multi-user.target")
+
+        # ── website-deploy-monitor-check: sed the prod URL to a file:// URL
+        machine.succeed("cp ${webExe} /tmp/web-check && chmod +x /tmp/web-check")
+        machine.succeed(
+            "sed -i 's|https://larsartmann.com/build-info.json|file:///tmp/bi.json|' /tmp/web-check"
+        )
+        state = "/root/.local/state/website-deploy-monitor/last-alerted-built-at"
+
+        # 1. degraded path: marker endpoint unreachable → fetch-failed log,
+        #    exit 0 (the fixed guard MUST run — the pre-fix script exited
+        #    with curl's status here), no state written
+        machine.succeed("rm -f /tmp/bi.json ${state}")
+        machine.succeed("HOME=/root /tmp/web-check")
+        machine.succeed("test ! -e ${state}")
+
+        # 2. marker without builtAt → degraded exit 0
+        machine.succeed("echo '{\"foo\":1}' > /tmp/bi.json")
+        machine.succeed("HOME=/root /tmp/web-check")
+        machine.succeed("test ! -e ${state}")
+
+        # 3. unparseable builtAt → degraded exit 0
+        machine.succeed("echo '{\"builtAt\":\"not-a-date\"}' > /tmp/bi.json")
+        machine.succeed("HOME=/root /tmp/web-check")
+        machine.succeed("test ! -e ${state}")
+
+        # 4. fresh deploy → exit 0, no alert state
+        machine.succeed(
+            """ts=$(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%SZ); echo '{"builtAt":"'"$ts"'"}' > /tmp/bi.json"""
+        )
+        machine.succeed("HOME=/root /tmp/web-check")
+        machine.succeed("test ! -e ${state}")
+
+        # 5. stale deploy → STATE file written (notify-send has no session in
+        #    the VM — its `|| true` degraded path is itself part of the fix)
+        machine.succeed(
+            """ts=$(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ); echo '{"builtAt":"'"$ts"'"}' > /tmp/bi.json; echo "$ts" > /tmp/stale-ts"""
+        )
+        machine.succeed("HOME=/root /tmp/web-check")
+        machine.succeed("test -e ${state}")
+        machine.succeed("grep -q \"$(cat /tmp/stale-ts)\" ${state}")
+
+        # 6. state-file dedup: same stale builtAt again → silent exit 0, no
+        #    second STALE journal line
+        machine.succeed("HOME=/root /tmp/web-check")
+        _, count = machine.execute("journalctl -t website-deploy-monitor --output cat | grep -c 'STALE:'")
+        assert count.strip() == "1", f"expected exactly 1 STALE journal line, got {count}"
+
+        # ── disk-growth-check: sed-rename the df call to a mock (PATH
+        # shadowing cannot beat runtimeInputs; text injection can)
+        machine.succeed("cp ${diskExe} /tmp/dg-check && chmod +x /tmp/dg-check")
+        machine.succeed("sed -i 's|df --output=used|mock-df --output=used|' /tmp/dg-check")
+        machine.succeed("mkdir -p /tmp/mockbin /var/lib/disk-growth")
+        machine.succeed(
+            """printf '#!/bin/sh\\nif [ -n "$MOCK_FAIL" ]; then exit 1; fi\\nprintf %s "$MOCK_BYTES"\\n' > /tmp/mockbin/mock-df"""
+        )
+        machine.succeed("chmod +x /tmp/mockbin/mock-df")
+
+        def dg_run(bytes_value, fail=False):
+            prefix = "MOCK_FAIL=1" if fail else f"MOCK_BYTES={bytes_value}"
+            return f"{prefix} PATH=/tmp/mockbin:$PATH /tmp/dg-check"
+
+        # 1. degraded path: df fails → ERROR + exit 1 (absent /data is an
+        #    alert, not a crash — and pre-fix the unit 226'd instead)
+        machine.fail(dg_run("", fail=True))
+
+        # 2. baseline: no state file → record and exit 0
+        machine.succeed("rm -f /var/lib/disk-growth/last_usage_bytes")
+        machine.succeed(dg_run(100000000000))
+        machine.succeed("grep -q 100000000000 /var/lib/disk-growth/last_usage_bytes")
+
+        # 3. growth under 5G → exit 0
+        machine.succeed(dg_run(101000000000))
+
+        # 4. growth over 5G (threshold 5*1024^3) → WARNING + exit 1
+        machine.fail(dg_run(105368709121))
+
+        # 5. shrink (negative delta) → exit 0
+        machine.succeed(dg_run(90000000000))
+
+        print("PASS: guard-scripts artifacts (12 scenarios)")
+      '';
+    };
 }

@@ -25,6 +25,7 @@ _: {
   flake.nixosModules.mail-relay =
     {
       config,
+      options,
       lib,
       pkgs,
       ...
@@ -353,6 +354,74 @@ _: {
         };
 
         systemd.tmpfiles.rules = [ (mkStateDir textfileDir "1777" "nobody" "nogroup") ];
+
+        # Service-integration registry entry: the three Gatus checks (SMTP
+        # TCP, postfix unit state, queue depth) and system-health monitoring
+        # of the postfix unit (moved out of monitoredServices' default list;
+        # the unit name differs from the entry name — postfix is the null
+        # client's real unit). Replaces rows in gatus-config.nix.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          mail-relay = {
+            enable = cfg.enable;
+            unit = "postfix";
+            vHost.layer = "none";
+            monitored = true;
+            checks = [
+              {
+                # SMTP is not HTTP — plain TCP connect proves the null
+                # client accepts submissions (loopback, so no auth probe
+                # would even be possible). Follows the TaskChampion /
+                # DNS-Resolver-TCP raw-check shape.
+                name = "Mail Relay (SMTP)";
+                group = "Infrastructure";
+                url = "tcp://127.0.0.1:${toString ports.mail-relay}";
+                interval = "60s";
+                conditions = [ "[CONNECTED] == true" ];
+                alert = "Mail relay down — outbound email is broken (paperless share links, forgejo notifications, system/cron mail queue locally). Check: systemctl status postfix, mailq, journalctl -u postfix -n 50";
+              }
+              {
+                # Second layer: postfix liveness from the system-health
+                # collector (catches failed/crash-loop states even when
+                # the socket is briefly answering). Same shape as the
+                # fastflowlm/hermes service-state checks.
+                name = "Mail Relay Service";
+                group = "Infrastructure";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "2m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_service_state_failed{service=\"postfix\"} 0*)"
+                  "[BODY] == pat(*system_service_start_limit_hit{service=\"postfix\"} 0*)"
+                ];
+                alert = "postfix failed or in start-limit crash-loop — outbound mail halted. Check: journalctl -u postfix -n 50, journalctl -u postfix-setup -n 30, sasl credential in /run/secrets/rendered/mail-relay-sasl (placeholder value = every send defers)";
+              }
+              {
+                # Third layer: the mail-relay-metrics collector's queue
+                # state. A deferred queue is the silent failure mode of a
+                # null client — postfix stays "active", the SMTP socket
+                # answers, and every send quietly parks in mailq. While the
+                # sops credential is still the PLACEHOLDER, the first few
+                # user-triggered sends cross queueAlertThreshold and this
+                # check fires as the pending go-live signal; after the real
+                # Resend key + verified larsartmann.cloud land, a firing
+                # check means genuine upstream rejections (provider outage,
+                # expired key, unverified sender).
+                name = "Mail Relay Queue";
+                group = "Infrastructure";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "2m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*mail_relay_scrape_errors 0*)"
+                  "[BODY] == pat(*mail_relay_queue_over_threshold 0*)"
+                  "[BODY] == pat(*mail_relay_queue_messages*)"
+                  "[BODY] == pat(*mail_relay_credential_placeholder*)"
+                ];
+                alert = "Mail relay queue backed up — sends are deferring (go-live: sops mail_relay_password is still the PLACEHOLDER and/or larsartmann.cloud is not yet verified in Resend; live: provider rejecting — check mailq + journalctl -u postfix -n 50 for the remote server reply)";
+              }
+            ];
+          };
+        };
       };
     };
 }

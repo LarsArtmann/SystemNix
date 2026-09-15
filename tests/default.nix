@@ -8,6 +8,10 @@ let
   # Modern NixOS test runner — replaces the deprecated make-test-python.nix.
   # Same { nodes, testScript, name } shape, cleaner API.
   makeTest = testSpec: pkgs.testers.runNixOSTest testSpec;
+  # evo-x2's config supplies the REAL store scripts for the guard-artifact
+  # test (artifact-level verification: test the shipped writeShellApplication
+  # outputs, not reconstructions).
+  self = inputs.self or (throw "tests/default.nix needs inputs.self");
 in
 {
   boot = makeTest {
@@ -66,4 +70,4 @@ in
   hot-db = makeTest (import ./test-hot-db.nix { inherit pkgs; });
   hot-db-assertions = import ./test-hot-db-assertions.nix { inherit pkgs inputs system; };
 }
-// (import ./test-scripts.nix { inherit pkgs; })
+// (import ./test-scripts.nix { inherit pkgs self; })

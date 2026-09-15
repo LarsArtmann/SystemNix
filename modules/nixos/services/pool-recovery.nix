@@ -43,6 +43,7 @@
   flake.nixosModules.pool-recovery =
     {
       config,
+      options,
       pkgs,
       lib,
       ...
@@ -400,6 +401,37 @@
             OnBootSec = "2min";
             OnUnitActiveSec = "5min";
             Persistent = true;
+          };
+        };
+
+        # Service-integration registry entry: the RAID1-membership check
+        # (pool_mounted/pool_usage above come from the snapshots.nix
+        # pool-metrics collector; this covers membership). Replaces the row
+        # in gatus-config.nix.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          pool-recovery = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            checks = [
+              {
+                name = "Pool RAID1 Membership";
+                group = "Filesystem";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  # Fires when EXACTLY ONE Toshiba member is present (a
+                  # degraded raid1 that still serves, or a partial DAS
+                  # re-enumeration). 0 members → DAS-link + Pool Mounted own
+                  # that alert; 2 = healthy. Also fail-closed on the
+                  # pool-recovery metrics collector dying (presence check).
+                  "[BODY] != pat(*pool_usb_recovery_members_present 1\n*)"
+                  "[BODY] == pat(*\npool_usb_recovery_members_present *)"
+                  "[BODY] == pat(*\npool_usb_recovery_device_errors *)"
+                ];
+                alert = "Pool RAID1 degraded — exactly one Toshiba member present (or pool-recovery metrics died). The pool may be serving from a single member. Check: btrfs device stats /mnt/pool, scripts/das-link-recovery-check.sh. DAS replug procedure: unplug USB cable (VBUS) AND enclosure power 60s, replug; a degraded mount remains a manual decision (never -o degraded automatically).";
+              }
+            ];
           };
         };
       };

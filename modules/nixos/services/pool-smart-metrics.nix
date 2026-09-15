@@ -25,6 +25,7 @@
   flake.nixosModules.pool-smart-metrics =
     {
       config,
+      options,
       pkgs,
       lib,
       ...
@@ -260,6 +261,63 @@
             OnBootSec = "2min";
             OnUnitActiveSec = cfg.interval;
             Persistent = true;
+          };
+        };
+
+        # Service-integration registry entry: per-drive SMART health, media
+        # counters (the leading drive-death indicator), temperature.
+        # Vibration/G-Sense deltas ride the metrics (dashboard +
+        # pool_smart_gsense_increased) WITHOUT a Gatus check — shock
+        # events fire exactly when the enclosure is physically moved,
+        # which would be self-inflicted alert noise. Replaces rows in
+        # gatus-config.nix.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          pool-smart-metrics = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            checks = [
+              {
+                name = "Pool Drives SMART";
+                group = "Filesystem";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  # Anchored forms (HELP comments embed name+digit on one
+                  # line; the \n after the value keeps them out of the
+                  # match).
+                  "[BODY] != pat(*pool_smart_all_healthy 0\n*)"
+                  "[BODY] == pat(*\npool_smart_all_healthy *)"
+                  "[BODY] != pat(*pool_smart_scrape_errors 1\n*)"
+                  "[BODY] == pat(*\npool_smart_scrape_errors *)"
+                ];
+                alert = "Pool HDD SMART failing — a Toshiba MG08 member reports FAILED health, or the SMART collector cannot read it (SAT/bridge failure). smartd's remote alert path rides the mail relay (pending domain verification), so THIS is the remote channel. Check: sudo bash scripts/hdd-vibration-check.sh (full report), sudo smartctl -d sat -H /dev/disk/by-id/ata-TOSHIBA_MG08ACA16TE_*; journalctl -u pool-smart-metrics.";
+              }
+              {
+                name = "Pool Drives Media Counters";
+                group = "Filesystem";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  # reallocated/reallocated_events/pending/uncorrectable must
+                  # all be zero — any nonzero line is the death indicator.
+                  "[BODY] == pat(*\npool_smart_media_flag 0*)"
+                ];
+                alert = "Pool HDD media counters nonzero — reallocated/pending/uncorrectable sectors on a Toshiba member. This is the leading indicator of drive death; the RAID1 still serves but a replace+rebalance window is opening. Check: sudo smartctl -d sat -A /dev/disk/by-id/ata-TOSHIBA_MG08ACA16TE_* | grep -E ' 5 |196|197|198'; btrfs device stats /mnt/pool.";
+              }
+              {
+                name = "Pool Drives Temperature";
+                group = "Filesystem";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\npool_smart_temp_over 0*)"
+                ];
+                alert = "Pool HDD temperature >= 50C — the MG08s are rated to 60C; sustained heat degrades the drives AND is the classic symptom of a dying enclosure fan. Check enclosure ventilation, sudo smartctl -d sat -A /dev/disk/by-id/ata-TOSHIBA_MG08ACA16TE_* | grep 194.";
+              }
+            ];
           };
         };
       };

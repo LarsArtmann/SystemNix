@@ -27,6 +27,7 @@
   flake.nixosModules.buildcache =
     {
       config,
+      options,
       pkgs,
       lib,
       ...
@@ -576,6 +577,78 @@
             OnCalendar = cfg.gc.calendar;
             Persistent = true;
             Unit = "buildcache-gc.service";
+          };
+        };
+
+        # Service-integration registry entry: the buildcache/pool textfile
+        # metric checks (SSD health/usage + pool mount/usage) gated on this
+        # module. Replaces rows in gatus-config.nix.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          buildcache = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            checks = [
+              {
+                name = "Build Cache SSD";
+                group = "Filesystem";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  # pat() is a GLOB: HELP comments contain "metric 1", so assert absence
+                  # of the 0-value line plus presence of the metric instead ('!' is a
+                  # literal in filepath.Match — no glob negation exists).
+                  "[BODY] != pat(*buildcache_mounted 0\n*)"
+                  "[BODY] == pat(*\nbuildcache_mounted *)"
+                  "[BODY] != pat(*buildcache_smart_healthy 0\n*)"
+                  "[BODY] == pat(*\nbuildcache_smart_healthy *)"
+                ];
+                alert = "Build cache SSD (/mnt/buildcache) unmounted or SMART-failing — go/cargo/pnpm builds will fail with missing-directory errors. Check: findmnt /mnt/buildcache, sudo smartctl -d sat -H /dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311. If the drive died: revert GOCACHE/GOMODCACHE in platforms/nixos/users/home.nix and rebuild caches on NVMe.";
+              }
+              {
+                name = "Build Cache Usage";
+                group = "Filesystem";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "30m";
+                conditions = [
+                  "[STATUS] == 200"
+                  # Fail-closed on the dead-drive state (2026-08-22 DAS
+                  # outage): with the drive absent the usage metrics vanish
+                  # but over_threshold last wrote "0" via the always-write
+                  # .prom — this check stayed GREEN on a dead drive for
+                  # days while "Build Cache SSD" alone carried the signal.
+                  # Mounted must be 1; anchored form (HELP embeds "metric 1").
+                  "[BODY] != pat(*buildcache_mounted 0\n*)"
+                  "[BODY] == pat(*\nbuildcache_mounted *)"
+                  "[BODY] == pat(*\nbuildcache_usage_over_threshold 0*)"
+                ];
+                alert = "Build cache SSD exceeds 85% — the 240 GB drive is filling. Prune: GOCACHE=/mnt/buildcache/go-build go clean -cache; cargo clean in monitor365; pnpm store prune; rm old Playwright browsers.";
+              }
+              {
+                name = "Pool Mounted";
+                group = "Filesystem";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  # HELP comment contains "pool_mounted 1" — absence-of-0 + presence.
+                  "[BODY] != pat(*pool_mounted 0\n*)"
+                  "[BODY] == pat(*\npool_mounted *)"
+                ];
+                alert = "Mirrored HDD pool (/mnt/pool) unmounted — immich + paperless data, ALL application backups, and the btrbk safety net are offline. Check: findmnt /mnt/pool, systemctl status mnt-pool.mount. If a DAS member died: the raid1 still serves from the other member; replace the drive and btrfs replace.";
+              }
+              {
+                name = "Pool Usage";
+                group = "Filesystem";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "30m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*pool_usage_over_threshold 0*)"
+                ];
+                alert = "Mirrored HDD pool exceeds 85% — review /mnt/pool usage: backups retention (30d 12w targets, forgejo zips 7d), archive/forensic-snapshots growth.";
+              }
+            ];
           };
         };
       };
