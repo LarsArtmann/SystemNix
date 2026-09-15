@@ -377,20 +377,17 @@
             # must render HTML for every configured mailbox (graceful
             # degradation keeps it 200 even when that account awaits its
             # one-time OAuth runbook).
-            ++ map (
-              account:
-              {
-                name = "InboxClean ${account.name} Inbox Renders";
-                group = "Productivity";
-                url = "http://localhost:${toString ports.inboxclean}/inbox?account=${account.name}";
-                interval = "5m";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[BODY] == pat(*<html*)"
-                ];
-                alert = "InboxClean ${account.name} inbox tab not rendering — check inboxclean-web logs and the account OAuth runbook";
-              }
-            ) cfg.extraAccounts
+            ++ map (account: {
+              name = "InboxClean ${account.name} Inbox Renders";
+              group = "Productivity";
+              url = "http://localhost:${toString ports.inboxclean}/inbox?account=${account.name}";
+              interval = "5m";
+              conditions = [
+                "[STATUS] == 200"
+                "[BODY] == pat(*<html*)"
+              ];
+              alert = "InboxClean ${account.name} inbox tab not rendering — check inboxclean-web logs and the account OAuth runbook";
+            }) cfg.extraAccounts
             # Authenticated probe of the Paperless REST API with the SAME
             # token inboxclean-sync uploads attachments with — the
             # unauthenticated Paperless login-page check cannot see token

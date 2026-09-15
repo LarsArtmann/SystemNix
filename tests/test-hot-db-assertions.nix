@@ -19,12 +19,14 @@
   pkgs,
   inputs,
   system,
-}: let
+}:
+let
   lib = inputs.nixpkgs.lib;
 
   hotDb = (import ../modules/nixos/services/hot-db.nix).flake.nixosModules.hot-db;
 
-  base = extraModules:
+  base =
+    extraModules:
     [
       hotDb
       {
@@ -40,7 +42,8 @@
     ]
     ++ extraModules;
 
-  evalConfig = extraModules:
+  evalConfig =
+    extraModules:
     (lib.nixosSystem {
       inherit system;
       modules = base extraModules;
@@ -49,7 +52,8 @@
   # Forces only the assertions list (mirrors nix flake check semantics).
   assertions = extraModules: (evalConfig extraModules).assertions;
 
-  hotDbFailures = extraModules:
+  hotDbFailures =
+    extraModules:
     builtins.filter (a: !a.assertion && lib.hasInfix "services.hot-db" a.message) (
       assertions extraModules
     );
@@ -73,18 +77,16 @@
           snapshot_preserve = "3d 1w";
           volume."/mnt/pool" = {
             snapshot_dir = "/mnt/pool/.snapshots";
-            subvolume."hot/mydb" = {};
+            subvolume."hot/mydb" = { };
           };
-        })
-        != [];
+        }) != [ ];
     }
     {
       name = "btrbk-entry-path-reference-not-caught";
       pass =
         hotDbFailures (btrbkInstance {
           volume."/mnt/btrfs-root".subvolume."@".target = "/var/lib/mydb";
-        })
-        != [];
+        }) != [ ];
     }
     {
       name = "clean-btrbk-false-positive";
@@ -92,10 +94,9 @@
         hotDbFailures (btrbkInstance {
           volume."/data" = {
             snapshot_dir = "/data/.snapshots";
-            subvolume."." = {};
+            subvolume."." = { };
           };
-        })
-        == [];
+        }) == [ ];
     }
     {
       name = "enable-false-with-entries-not-caught";
@@ -104,8 +105,7 @@
           {
             services.hot-db.enable = lib.mkForce false;
           }
-        ]
-        != [];
+        ] != [ ];
     }
     {
       name = "duplicate-paths-not-caught";
@@ -114,53 +114,54 @@
           {
             services.hot-db.entries.mydb2.path = lib.mkForce "/var/lib/mydb";
           }
-        ]
-        != [];
+        ] != [ ];
     }
     {
       name = "unmanaged-entry-warning-not-emitted";
-      pass = let
-        w = warnings [
-          {
-            services.hot-db.entries.orphan = {
-              path = "/var/lib/orphan";
-              unit = lib.mkForce null;
-            };
-          }
-        ];
-      in
+      pass =
+        let
+          w = warnings [
+            {
+              services.hot-db.entries.orphan = {
+                path = "/var/lib/orphan";
+                unit = lib.mkForce null;
+              };
+            }
+          ];
+        in
         lib.any (lib.hasInfix "orphan") w;
     }
     {
       name = "happy-path-passes-and-wires-consumer";
-      pass = let
-        # cow=true variant (the base fixture is cow=false) so the
-        # no-nodatacow expectation is meaningful; wiring assertions are
-        # cow-independent and checked on the same eval.
-        cfg = evalConfig [
-          {
-            services.hot-db.entries.mydb.cow = lib.mkForce true;
-          }
-        ];
-      in
-        hotDbFailures []
-        == []
-        && cfg.systemd.services."mydb.service".unitConfig.RequiresMountsFor == ["/var/lib/mydb"]
+      pass =
+        let
+          # cow=true variant (the base fixture is cow=false) so the
+          # no-nodatacow expectation is meaningful; wiring assertions are
+          # cow-independent and checked on the same eval.
+          cfg = evalConfig [
+            {
+              services.hot-db.entries.mydb.cow = lib.mkForce true;
+            }
+          ];
+        in
+        hotDbFailures [ ] == [ ]
+        && cfg.systemd.services."mydb.service".unitConfig.RequiresMountsFor == [ "/var/lib/mydb" ]
         && cfg.systemd.services."mydb.service".unitConfig.ConditionPathIsMountPoint == "/var/lib/mydb"
         && cfg.fileSystems ? "/var/lib/mydb"
-        && cfg.fileSystems."/var/lib/mydb".options != []
-        && cfg.systemd.services.hot-db-bootstrap != {}
+        && cfg.fileSystems."/var/lib/mydb".options != [ ]
+        && cfg.systemd.services.hot-db-bootstrap != { }
         && !(builtins.elem "nodatacow" cfg.fileSystems."/var/lib/mydb".options);
     }
     {
       name = "cow-false-emits-nodatacow";
-      pass = builtins.elem "nodatacow" ((evalConfig []).fileSystems."/var/lib/mydb".options);
+      pass = builtins.elem "nodatacow" ((evalConfig [ ]).fileSystems."/var/lib/mydb".options);
     }
   ];
 
   failures = builtins.filter (c: !c.pass) cases;
   report = lib.concatStringsSep "\n" (map (c: "FAIL: ${c.name}") failures);
 in
-  if failures == []
-  then pkgs.runCommand "hot-db-assertions-negative-test" {} "touch $out"
-  else throw "hot-db-assertions negative test failures:\n${report}"
+if failures == [ ] then
+  pkgs.runCommand "hot-db-assertions-negative-test" { } "touch $out"
+else
+  throw "hot-db-assertions negative test failures:\n${report}"

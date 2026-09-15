@@ -1130,68 +1130,68 @@ in
           ]
         ))
 
-          # Service-integration registry entries: the two ClickHouse XFS
-            # data-mount checks, the SigNoz vHost (Layer 2 — impersonation
-            # mode has no internal auth; LAN bypass keeps oauth2-proxy
-            # failures off the LAN path), the SigNoz + cAdvisor tiles, and
-            # system-health monitoring of the signoz target unit. Replaces
-            # rows in gatus-config.nix / homepage.nix.
-            (lib.optionalAttrs (options ? services.integration) {
-              services.integration = {
-                signoz = {
-                  enable = cfg.enable;
-                  subdomain = "signoz";
-                  port = cfg.settings.queryService.port;
-                  vHost.layer = "protected";
-                  monitored = true;
-                  checks = [
-                    {
-                      name = "ClickHouse Data Mount";
-                      group = "Filesystem";
-                      url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
-                      interval = "5m";
-                      conditions = [
-                        "[STATUS] == 200"
-                        # pat() is a GLOB (HELP comments contain "clickhouse_xfs_mounted 1"):
-                        # assert absence of the 0-value line plus presence (buildcache pattern)
-                        "[BODY] != pat(*clickhouse_xfs_mounted 0\n*)"
-                        "[BODY] == pat(*\nclickhouse_xfs_mounted *)"
-                        "[BODY] != pat(*clickhouse_xfs_is_xfs 0\n*)"
-                        "[BODY] == pat(*\nclickhouse_xfs_is_xfs *)"
-                      ];
-                      alert = "ClickHouse XFS data mount (/var/lib/clickhouse) is unmounted, EIO-dead, or not XFS — clickhouse.service refuses to start by design (ConditionPathIsMountPoint, no telemetry written to the root fs). Observability ingestion is DOWN. Check: findmnt /var/lib/clickhouse, systemctl status var-lib-clickhouse.mount, dmesg | grep -i xfs. If the partition/fs is missing: scripts/migrate-clickhouse-xfs.sh (prepare phase), then redeploy.";
-                    }
-                    {
-                      name = "ClickHouse Data Usage";
-                      group = "Filesystem";
-                      url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
-                      interval = "30m";
-                      conditions = [
-                        "[STATUS] == 200"
-                        "[BODY] == pat(*clickhouse_xfs_usage_over_threshold 0*)"
-                      ];
-                      alert = "ClickHouse XFS data filesystem exceeds 85% — XFS cannot shrink and telemetry retention grows unboundedly. Check per-table sizes (clickhouse-client 'SELECT database, formatReadableSize(sum(bytes_on_disk)) FROM system.parts GROUP BY database') and tighten TTLs in signoz.nix (clickhouseInternalLogs / signoz_logs / signoz_traces retention).";
-                    }
+        # Service-integration registry entries: the two ClickHouse XFS
+        # data-mount checks, the SigNoz vHost (Layer 2 — impersonation
+        # mode has no internal auth; LAN bypass keeps oauth2-proxy
+        # failures off the LAN path), the SigNoz + cAdvisor tiles, and
+        # system-health monitoring of the signoz target unit. Replaces
+        # rows in gatus-config.nix / homepage.nix.
+        (lib.optionalAttrs (options ? services.integration) {
+          services.integration = {
+            signoz = {
+              enable = cfg.enable;
+              subdomain = "signoz";
+              port = cfg.settings.queryService.port;
+              vHost.layer = "protected";
+              monitored = true;
+              checks = [
+                {
+                  name = "ClickHouse Data Mount";
+                  group = "Filesystem";
+                  url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    # pat() is a GLOB (HELP comments contain "clickhouse_xfs_mounted 1"):
+                    # assert absence of the 0-value line plus presence (buildcache pattern)
+                    "[BODY] != pat(*clickhouse_xfs_mounted 0\n*)"
+                    "[BODY] == pat(*\nclickhouse_xfs_mounted *)"
+                    "[BODY] != pat(*clickhouse_xfs_is_xfs 0\n*)"
+                    "[BODY] == pat(*\nclickhouse_xfs_is_xfs *)"
                   ];
-                  homepage = {
-                    name = "SigNoz";
-                    group = "Monitoring";
-                    description = "Observability Platform (Traces, Metrics, Logs)";
-                    icon = "signoz.png";
-                  };
-                };
-                cadvisor = {
-                  enable = cfg.enable;
-                  vHost.layer = "none";
-                  homepage = {
-                    name = "cAdvisor";
-                    group = "Monitoring";
-                    description = "Container Metrics";
-                    icon = "docker.png";
-                  };
-                };
+                  alert = "ClickHouse XFS data mount (/var/lib/clickhouse) is unmounted, EIO-dead, or not XFS — clickhouse.service refuses to start by design (ConditionPathIsMountPoint, no telemetry written to the root fs). Observability ingestion is DOWN. Check: findmnt /var/lib/clickhouse, systemctl status var-lib-clickhouse.mount, dmesg | grep -i xfs. If the partition/fs is missing: scripts/migrate-clickhouse-xfs.sh (prepare phase), then redeploy.";
+                }
+                {
+                  name = "ClickHouse Data Usage";
+                  group = "Filesystem";
+                  url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                  interval = "30m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*clickhouse_xfs_usage_over_threshold 0*)"
+                  ];
+                  alert = "ClickHouse XFS data filesystem exceeds 85% — XFS cannot shrink and telemetry retention grows unboundedly. Check per-table sizes (clickhouse-client 'SELECT database, formatReadableSize(sum(bytes_on_disk)) FROM system.parts GROUP BY database') and tighten TTLs in signoz.nix (clickhouseInternalLogs / signoz_logs / signoz_traces retention).";
+                }
+              ];
+              homepage = {
+                name = "SigNoz";
+                group = "Monitoring";
+                description = "Observability Platform (Traces, Metrics, Logs)";
+                icon = "signoz.png";
               };
-            })
+            };
+            cadvisor = {
+              enable = cfg.enable;
+              vHost.layer = "none";
+              homepage = {
+                name = "cAdvisor";
+                group = "Monitoring";
+                description = "Container Metrics";
+                icon = "docker.png";
+              };
+            };
+          };
+        })
       ];
     };
 }

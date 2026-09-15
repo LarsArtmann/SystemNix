@@ -300,66 +300,66 @@ _: {
           };
 
         })
-          # Service-integration registry entry: fans out to the Caddy vHost
-          # (Layer 2 — money data minimum exposure), the two Gatus checks
-          # (dashboard + sync health), and the homepage tile. Replaces rows in
-          # caddy.nix / gatus-config.nix / homepage.nix.
-          (lib.optionalAttrs (options ? services.integration) {
-  services.integration = lib.mkIf cfg.enable {
-              bank-sync = {
-                enable = cfg.enable;
-                subdomain = "banksync";
-                port = ports.bank-sync;
-                vHost.layer = "protected";
-                checks = [
-                  {
-                    name = "Bank-Sync";
-                    group = "Finance";
-                    url = "http://localhost:${toString ports.bank-sync}/";
-                    interval = "60s";
-                    conditions = [
-                      "[STATUS] == 200"
-                      "[RESPONSE_TIME] < 1000"
-                      # Functional, not just liveness: the real dashboard (not
-                      # an error shell) carries the page title.
-                      "[BODY] == pat(*Bank-Sync Dashboard*)"
-                    ];
-                    alert = "Bank-Sync down — Wise transaction sync halted, dashboard at banksync.home.lan unreachable. Check: systemctl status bank-sync, journalctl -u bank-sync.";
-                  }
-                  # Sync-health probe: the dashboard check above stays GREEN
-                  # while every sync cycle fails (the 2026-08 invisible-outage
-                  # class). This endpoint pattern-matches /metrics instead:
-                  # sync_errors_total must be zero AND at least one successful
-                  # sync must have ever happened (the last-sync timestamp
-                  # metric only renders after a success). Gatus cannot compute
-                  # timestamp AGE — a stale-sync (synced once, then scheduler
-                  # died silently) needs PromQL; covered by the sync_total
-                  # delta in post-deploy checks until Prometheus alerting
-                  # lands here.
-                  {
-                    name = "Bank-Sync Sync Health";
-                    group = "Finance";
-                    url = "http://localhost:${toString ports.bank-sync}/metrics";
-                    interval = "5m";
-                    conditions = [
-                      "[STATUS] == 200"
-                      "[BODY] == pat(*bank_sync_sync_errors_total 0*)"
-                      "[BODY] == pat(*bank_sync_last_sync_timestamp_seconds*)"
-                    ];
-                    alert = "Bank-Sync syncs are failing (or never succeeded) while the dashboard stays green — the August invisible-outage class. Check: journalctl -u bank-sync -n 100, then curl localhost:8097/metrics and read bank_sync_sync_errors_total + bank_sync_last_sync_timestamp_seconds.";
-                  }
-                ];
-                homepage = {
-                  name = "Bank Sync";
-                  group = "Sync & Backup";
-                  description = "Wise Transactions → SQLite (Event-Sourced)";
-                  # The bundled icon pack has no bank.png — google-finance is the
-                  # closest available finance glyph.
-                  icon = "google-finance.png";
-                };
+        # Service-integration registry entry: fans out to the Caddy vHost
+        # (Layer 2 — money data minimum exposure), the two Gatus checks
+        # (dashboard + sync health), and the homepage tile. Replaces rows in
+        # caddy.nix / gatus-config.nix / homepage.nix.
+        (lib.optionalAttrs (options ? services.integration) {
+          services.integration = lib.mkIf cfg.enable {
+            bank-sync = {
+              enable = cfg.enable;
+              subdomain = "banksync";
+              port = ports.bank-sync;
+              vHost.layer = "protected";
+              checks = [
+                {
+                  name = "Bank-Sync";
+                  group = "Finance";
+                  url = "http://localhost:${toString ports.bank-sync}/";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 1000"
+                    # Functional, not just liveness: the real dashboard (not
+                    # an error shell) carries the page title.
+                    "[BODY] == pat(*Bank-Sync Dashboard*)"
+                  ];
+                  alert = "Bank-Sync down — Wise transaction sync halted, dashboard at banksync.home.lan unreachable. Check: systemctl status bank-sync, journalctl -u bank-sync.";
+                }
+                # Sync-health probe: the dashboard check above stays GREEN
+                # while every sync cycle fails (the 2026-08 invisible-outage
+                # class). This endpoint pattern-matches /metrics instead:
+                # sync_errors_total must be zero AND at least one successful
+                # sync must have ever happened (the last-sync timestamp
+                # metric only renders after a success). Gatus cannot compute
+                # timestamp AGE — a stale-sync (synced once, then scheduler
+                # died silently) needs PromQL; covered by the sync_total
+                # delta in post-deploy checks until Prometheus alerting
+                # lands here.
+                {
+                  name = "Bank-Sync Sync Health";
+                  group = "Finance";
+                  url = "http://localhost:${toString ports.bank-sync}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*bank_sync_sync_errors_total 0*)"
+                    "[BODY] == pat(*bank_sync_last_sync_timestamp_seconds*)"
+                  ];
+                  alert = "Bank-Sync syncs are failing (or never succeeded) while the dashboard stays green — the August invisible-outage class. Check: journalctl -u bank-sync -n 100, then curl localhost:8097/metrics and read bank_sync_sync_errors_total + bank_sync_last_sync_timestamp_seconds.";
+                }
+              ];
+              homepage = {
+                name = "Bank Sync";
+                group = "Sync & Backup";
+                description = "Wise Transactions → SQLite (Event-Sourced)";
+                # The bundled icon pack has no bank.png — google-finance is the
+                # closest available finance glyph.
+                icon = "google-finance.png";
               };
-  };
-})
+            };
+          };
+        })
       ];
     };
 }

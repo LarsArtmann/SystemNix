@@ -72,7 +72,7 @@ let
       # session: without jsonv2 every Go task on a jsonv2 repo dead-letters
       # (tq facts 2903/2987/2996-3001).
       name = "pool-carries-goexperiment-jsonv2";
-      pass = builtins.elem "GOEXPERIMENT=jsonv2" (pool.serviceConfig.Environment or []);
+      pass = builtins.elem "GOEXPERIMENT=jsonv2" (pool.serviceConfig.Environment or [ ]);
     }
     {
       name = "pool-resource-ceilings";

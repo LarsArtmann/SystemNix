@@ -41,208 +41,211 @@ SECTION10_ONLY=false
 for arg in "$@"; do
   case "$arg" in
   --section-10-only) SECTION10_ONLY=true ;;
-  *) echo "unknown option: $arg" >&2; exit 64 ;;
+  *)
+    echo "unknown option: $arg" >&2
+    exit 64
+    ;;
   esac
 done
 
 if [ "$SECTION10_ONLY" != true ]; then
-# 1. Flake syntax check
-echo "1. Flake syntax validation"
-FLAKE_CHECK_OUTPUT="$(nix flake check --no-build 2>&1 || true)"
+  # 1. Flake syntax check
+  echo "1. Flake syntax validation"
+  FLAKE_CHECK_OUTPUT="$(nix flake check --no-build 2>&1 || true)"
 
-# Filter out known-benign error classes:
-# - "path is not valid": mkPreparedSource (go-nix-helpers) and similar
-#   patterns use builtins.pathExists at eval time; --no-build doesn't
-#   realize source derivations, so these checks spuriously fail. The
-#   toplevel eval (check #2) is authoritative for deployment.
-# - "unable to download 'https://.../<hash>.narinfo'": substituter
-#   unreachability (attic DNS-dead during the 2026-09-02 resolv.conf drift;
-#   attic 502s during DAS outages). Nix prints these as `error:` even when it
-#   falls back to building locally: infrastructure noise, not flake
-#   syntax/eval problems.
-#   They must never block a deploy: the deploy that RESTORES DNS is exactly
-#   the one this class would block (chicken-and-egg, live 2026-09-02).
-REAL_ERRORS="$(echo "$FLAKE_CHECK_OUTPUT" | grep 'error:' | grep -vE "is not valid|unable to download 'https?://[^']+\.narinfo" || true)"
+  # Filter out known-benign error classes:
+  # - "path is not valid": mkPreparedSource (go-nix-helpers) and similar
+  #   patterns use builtins.pathExists at eval time; --no-build doesn't
+  #   realize source derivations, so these checks spuriously fail. The
+  #   toplevel eval (check #2) is authoritative for deployment.
+  # - "unable to download 'https://.../<hash>.narinfo'": substituter
+  #   unreachability (attic DNS-dead during the 2026-09-02 resolv.conf drift;
+  #   attic 502s during DAS outages). Nix prints these as `error:` even when it
+  #   falls back to building locally: infrastructure noise, not flake
+  #   syntax/eval problems.
+  #   They must never block a deploy: the deploy that RESTORES DNS is exactly
+  #   the one this class would block (chicken-and-egg, live 2026-09-02).
+  REAL_ERRORS="$(echo "$FLAKE_CHECK_OUTPUT" | grep 'error:' | grep -vE "is not valid|unable to download 'https?://[^']+\.narinfo" || true)"
 
-# Nix >= 2.26 prints multi-line errors where the FIRST line is a bare
-# `error:` and the actual message lives on the following indented lines.
-# Grep for 'error:' keeps only the headline, so a real eval failure can
-# surface as a context-free `error:` (blocked a deploy 2026-09-05 with
-# zero diagnostic output). Always print raw tail in the fail branch.
-if [ -z "$FLAKE_CHECK_OUTPUT" ]; then
-  pass "nix flake check --no-build"
-elif [ -n "$REAL_ERRORS" ]; then
-  fail "nix flake check --no-build — fix syntax errors before deploying"
-  echo "$FLAKE_CHECK_OUTPUT" | tail -30
-else
-  warn "nix flake check --no-build — only known-benign error classes ('path is not valid' --no-build limitation, substituter narinfo unreachability); toplevel eval is authoritative"
-fi
-
-# 1b. Tracked-files trap — flakes only see TRACKED files: a NEW module under
-# modules/ that is not `git add`ed yet makes EVERY evo-x2 eval fail with
-# "attribute missing" while the file sits visibly on disk (aborted a deploy
-# 2026-08-27). Concurrent-session trees are especially prone: another agent
-# writes the module and imports it before staging it.
-echo ""
-echo "1b. Untracked files under modules/ (tracked-files trap)"
-if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  UNTRACKED_MODULES=$(git status --porcelain modules/ platforms/ 2>/dev/null | grep -E '^\?\?' || true)
-  if [ -n "$UNTRACKED_MODULES" ]; then
-    warn "untracked files invisible to flake evals — git add them or they break the NEXT eval that imports them:"
-    while IFS= read -r line; do echo "      $line"; done <<<"$UNTRACKED_MODULES"
+  # Nix >= 2.26 prints multi-line errors where the FIRST line is a bare
+  # `error:` and the actual message lives on the following indented lines.
+  # Grep for 'error:' keeps only the headline, so a real eval failure can
+  # surface as a context-free `error:` (blocked a deploy 2026-09-05 with
+  # zero diagnostic output). Always print raw tail in the fail branch.
+  if [ -z "$FLAKE_CHECK_OUTPUT" ]; then
+    pass "nix flake check --no-build"
+  elif [ -n "$REAL_ERRORS" ]; then
+    fail "nix flake check --no-build — fix syntax errors before deploying"
+    echo "$FLAKE_CHECK_OUTPUT" | tail -30
   else
-    pass "no untracked files under modules/ or platforms/"
+    warn "nix flake check --no-build — only known-benign error classes ('path is not valid' --no-build limitation, substituter narinfo unreachability); toplevel eval is authoritative"
   fi
-else
-  pass "not a git worktree (deploying from a copy) — check skipped"
-fi
 
-# 2. Eval the system configuration
-echo ""
-echo "2. Configuration evaluation"
-if nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath >/dev/null 2>&1; then
-  pass "nixosConfigurations.evo-x2 evaluates"
-else
-  fail "nixosConfigurations.evo-x2 evaluation failed"
-fi
-
-# 3. Check no Podman/Docker split-brain
-echo ""
-echo "3. Container runtime consistency"
-BACKEND=$(nix eval --raw .#nixosConfigurations.evo-x2.config.virtualisation.oci-containers.backend 2>/dev/null || echo "podman")
-DOCKER_ENABLED=$(nix eval --raw .#nixosConfigurations.evo-x2.config.virtualisation.docker.enable 2>/dev/null || echo "false")
-if [ "$DOCKER_ENABLED" = "true" ] && [ "$BACKEND" = "podman" ]; then
-  fail "oci-containers backend is podman but docker is enabled — split-brain"
-else
-  pass "Single container runtime (docker=$DOCKER_ENABLED, backend=$BACKEND)"
-fi
-
-# 4. Check mount options for nofail on non-critical mounts
-echo ""
-echo "4. Mount safety (non-root mounts need nofail or noauto)"
-MOUNTS=$(nix eval .#nixosConfigurations.evo-x2.config.fileSystems --json 2>/dev/null | jq -r 'to_entries[] | select(.key != "/" and .key != "/boot" and .key != "/nix") | "\(.key)=\(.value.options | join(","))"' 2>/dev/null || echo "")
-if [ -z "$MOUNTS" ]; then
-  warn "Could not evaluate mount options"
-else
-  while IFS= read -r line; do
-    MOUNT=$(echo "$line" | cut -d= -f1)
-    OPTS=$(echo "$line" | cut -d= -f2-)
-    if echo "$OPTS" | grep -qE "nofail|noauto"; then
-      pass "$MOUNT has nofail/noauto"
+  # 1b. Tracked-files trap — flakes only see TRACKED files: a NEW module under
+  # modules/ that is not `git add`ed yet makes EVERY evo-x2 eval fail with
+  # "attribute missing" while the file sits visibly on disk (aborted a deploy
+  # 2026-08-27). Concurrent-session trees are especially prone: another agent
+  # writes the module and imports it before staging it.
+  echo ""
+  echo "1b. Untracked files under modules/ (tracked-files trap)"
+  if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    UNTRACKED_MODULES=$(git status --porcelain modules/ platforms/ 2>/dev/null | grep -E '^\?\?' || true)
+    if [ -n "$UNTRACKED_MODULES" ]; then
+      warn "untracked files invisible to flake evals — git add them or they break the NEXT eval that imports them:"
+      while IFS= read -r line; do echo "      $line"; done <<<"$UNTRACKED_MODULES"
     else
-      fail "$MOUNT missing nofail/noauto — boot will emergency if mount fails"
+      pass "no untracked files under modules/ or platforms/"
     fi
-  done <<<"$MOUNTS"
-fi
+  else
+    pass "not a git worktree (deploying from a copy) — check skipped"
+  fi
 
-# 4b. ClickHouse XFS data mount prerequisite: if the to-be-deployed config
-# declares fileSystems."/var/lib/clickhouse", the labeled fs must already
-# exist (created by scripts/migrate-clickhouse-xfs.sh prepare BEFORE the
-# deploy). A missing device means the deploy would leave the stack down by
-# design (nofail mount fails + ConditionPathIsMountPoint blocks clickhouse).
-echo ""
-echo "4b. ClickHouse XFS data mount prerequisite"
-HAS_CH_MOUNT=$(nix eval .#nixosConfigurations.evo-x2.config.fileSystems --json 2>/dev/null | jq -r 'has("/var/lib/clickhouse")' 2>/dev/null || echo "false")
-if [ "$HAS_CH_MOUNT" = "true" ]; then
-  if [ -e /dev/disk/by-label/clickhouse ]; then
-    pass "labeled XFS device /dev/disk/by-label/clickhouse present"
-    if findmnt -no FSTYPE /var/lib/clickhouse 2>/dev/null | grep -qx xfs; then
+  # 2. Eval the system configuration
+  echo ""
+  echo "2. Configuration evaluation"
+  if nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath >/dev/null 2>&1; then
+    pass "nixosConfigurations.evo-x2 evaluates"
+  else
+    fail "nixosConfigurations.evo-x2 evaluation failed"
+  fi
+
+  # 3. Check no Podman/Docker split-brain
+  echo ""
+  echo "3. Container runtime consistency"
+  BACKEND=$(nix eval --raw .#nixosConfigurations.evo-x2.config.virtualisation.oci-containers.backend 2>/dev/null || echo "podman")
+  DOCKER_ENABLED=$(nix eval --raw .#nixosConfigurations.evo-x2.config.virtualisation.docker.enable 2>/dev/null || echo "false")
+  if [ "$DOCKER_ENABLED" = "true" ] && [ "$BACKEND" = "podman" ]; then
+    fail "oci-containers backend is podman but docker is enabled — split-brain"
+  else
+    pass "Single container runtime (docker=$DOCKER_ENABLED, backend=$BACKEND)"
+  fi
+
+  # 4. Check mount options for nofail on non-critical mounts
+  echo ""
+  echo "4. Mount safety (non-root mounts need nofail or noauto)"
+  MOUNTS=$(nix eval .#nixosConfigurations.evo-x2.config.fileSystems --json 2>/dev/null | jq -r 'to_entries[] | select(.key != "/" and .key != "/boot" and .key != "/nix") | "\(.key)=\(.value.options | join(","))"' 2>/dev/null || echo "")
+  if [ -z "$MOUNTS" ]; then
+    warn "Could not evaluate mount options"
+  else
+    while IFS= read -r line; do
+      MOUNT=$(echo "$line" | cut -d= -f1)
+      OPTS=$(echo "$line" | cut -d= -f2-)
+      if echo "$OPTS" | grep -qE "nofail|noauto"; then
+        pass "$MOUNT has nofail/noauto"
+      else
+        fail "$MOUNT missing nofail/noauto — boot will emergency if mount fails"
+      fi
+    done <<<"$MOUNTS"
+  fi
+
+  # 4b. ClickHouse XFS data mount prerequisite: if the to-be-deployed config
+  # declares fileSystems."/var/lib/clickhouse", the labeled fs must already
+  # exist (created by scripts/migrate-clickhouse-xfs.sh prepare BEFORE the
+  # deploy). A missing device means the deploy would leave the stack down by
+  # design (nofail mount fails + ConditionPathIsMountPoint blocks clickhouse).
+  echo ""
+  echo "4b. ClickHouse XFS data mount prerequisite"
+  HAS_CH_MOUNT=$(nix eval .#nixosConfigurations.evo-x2.config.fileSystems --json 2>/dev/null | jq -r 'has("/var/lib/clickhouse")' 2>/dev/null || echo "false")
+  if [ "$HAS_CH_MOUNT" = "true" ]; then
+    if [ -e /dev/disk/by-label/clickhouse ]; then
+      pass "labeled XFS device /dev/disk/by-label/clickhouse present"
+      if findmnt -no FSTYPE /var/lib/clickhouse 2>/dev/null | grep -qx xfs; then
+        pass "/var/lib/clickhouse already mounted as xfs (migration complete)"
+      fi
+    elif findmnt -no FSTYPE /var/lib/clickhouse 2>/dev/null | grep -qx xfs; then
       pass "/var/lib/clickhouse already mounted as xfs (migration complete)"
+    else
+      fail "/dev/disk/by-label/clickhouse absent — run 'sudo bash scripts/migrate-clickhouse-xfs.sh prepare' BEFORE deploying, or the SigNoz stack stays down post-switch (by design: no root-fs contamination)"
     fi
-  elif findmnt -no FSTYPE /var/lib/clickhouse 2>/dev/null | grep -qx xfs; then
-    pass "/var/lib/clickhouse already mounted as xfs (migration complete)"
-  else
-    fail "/dev/disk/by-label/clickhouse absent — run 'sudo bash scripts/migrate-clickhouse-xfs.sh prepare' BEFORE deploying, or the SigNoz stack stays down post-switch (by design: no root-fs contamination)"
   fi
-fi
 
-# 5. Check no ExecStart inside harden()
-echo ""
-echo "5. Service hardening validation"
-# Exclude comment lines (grep -vn ':\s*#') so documentation examples like
-# "#   BAD: harden {} // {Type = ...}" in service-defaults.nix don't trip it.
-# Exclude ./tests/ — negative-test fixtures (test-harden-lifecycle.nix)
-# DELIBERATELY contain these literals to prove the eval-time throw; the
-# throw itself makes the shapes impossible in real modules.
-HARDEN_USERS=$(grep -rn 'harden {' --include="*.nix" . 2>/dev/null | grep -vE ':[0-9]+:\s*#' | grep -vE '^\./tests/' | grep -E 'ExecStart|Type|RemainAfterExit' || true)
-if [ -n "$HARDEN_USERS" ]; then
-  fail "ExecStart/Type found inside harden() — will be silently dropped:"
-  echo "$HARDEN_USERS"
-else
-  pass "No ExecStart/Type inside harden() calls"
-fi
-
-# 6. Check current system health (if running on target)
-echo ""
-echo "6. Current system health"
-if command -v systemctl &>/dev/null; then
-  FAILED=$(systemctl --failed --no-pager --plain 2>/dev/null | tail -n +2 | grep -c "\.service" || true)
-  FAILED=${FAILED:-0}
-  if [ "$FAILED" -eq 0 ]; then
-    pass "No failed units"
+  # 5. Check no ExecStart inside harden()
+  echo ""
+  echo "5. Service hardening validation"
+  # Exclude comment lines (grep -vn ':\s*#') so documentation examples like
+  # "#   BAD: harden {} // {Type = ...}" in service-defaults.nix don't trip it.
+  # Exclude ./tests/ — negative-test fixtures (test-harden-lifecycle.nix)
+  # DELIBERATELY contain these literals to prove the eval-time throw; the
+  # throw itself makes the shapes impossible in real modules.
+  HARDEN_USERS=$(grep -rn 'harden {' --include="*.nix" . 2>/dev/null | grep -vE ':[0-9]+:\s*#' | grep -vE '^\./tests/' | grep -E 'ExecStart|Type|RemainAfterExit' || true)
+  if [ -n "$HARDEN_USERS" ]; then
+    fail "ExecStart/Type found inside harden() — will be silently dropped:"
+    echo "$HARDEN_USERS"
   else
-    warn "$FAILED failed unit(s) — review before deploying"
-    systemctl --failed --no-pager 2>/dev/null | head -10 || true
+    pass "No ExecStart/Type inside harden() calls"
   fi
-fi
 
-# 7. DMS desktop shell health
-echo ""
-echo "7. DMS desktop shell health"
-if command -v dms &>/dev/null; then
-  if dms doctor &>/dev/null; then
-    pass "dms doctor passed"
+  # 6. Check current system health (if running on target)
+  echo ""
+  echo "6. Current system health"
+  if command -v systemctl &>/dev/null; then
+    FAILED=$(systemctl --failed --no-pager --plain 2>/dev/null | tail -n +2 | grep -c "\.service" || true)
+    FAILED=${FAILED:-0}
+    if [ "$FAILED" -eq 0 ]; then
+      pass "No failed units"
+    else
+      warn "$FAILED failed unit(s) — review before deploying"
+      systemctl --failed --no-pager 2>/dev/null | head -10 || true
+    fi
+  fi
+
+  # 7. DMS desktop shell health
+  echo ""
+  echo "7. DMS desktop shell health"
+  if command -v dms &>/dev/null; then
+    if dms doctor &>/dev/null; then
+      pass "dms doctor passed"
+    else
+      warn "dms doctor reported issues — run 'dms doctor' for details"
+    fi
   else
-    warn "dms doctor reported issues — run 'dms doctor' for details"
+    pass "dms binary not in PATH (may not be deployed yet)"
   fi
-else
-  pass "dms binary not in PATH (may not be deployed yet)"
-fi
 
-# 8. Disk space on root filesystem
-echo ""
-echo "8. Disk space"
-# Byte-based, not percentage: a % threshold scales absurdly on large disks —
-# 95% of the 723G root still leaves ~36G free, which cannot cause the
-# emergency-shell outcome this check guards against (activation needs ~1-2G).
-# FAIL < 5G (activation headroom + margin), WARN < 15G. Percentage shown for
-# context only. Learned 2026-08-17: snapshot-pinned data (btrbk @ retention)
-# cannot be freed by deletion anyway — only expiry reclaims it.
-ROOT_AVAIL_KB=$(df -Pk / 2>/dev/null | awk 'NR==2{print $4}' || echo "0")
-ROOT_PCT=$(df -P / 2>/dev/null | awk 'NR==2{gsub(/%/,""); print $5}' || echo "0")
-ROOT_AVAIL_GB=$((ROOT_AVAIL_KB / 1024 / 1024))
-BUILDS_DIR="/nix/var/nix/builds"
-STALE_BUILDS=0
-if [ -d "$BUILDS_DIR" ]; then
-  STALE_BUILDS=$(find "$BUILDS_DIR" -maxdepth 1 -type d -name 'nix-*' -mmin +60 2>/dev/null | wc -l)
-fi
-if [ "$ROOT_AVAIL_GB" -lt 5 ]; then
-  fail "Root filesystem has only ${ROOT_AVAIL_GB}G free (${ROOT_PCT}%) — deploying risks emergency shell. Free space before deploying"
-elif [ "$ROOT_AVAIL_GB" -lt 15 ]; then
-  warn "Root filesystem has only ${ROOT_AVAIL_GB}G free (${ROOT_PCT}%) — consider freeing space before deploying"
-else
-  pass "Root filesystem usage ${ROOT_PCT}% (${ROOT_AVAIL_GB}G free)"
-fi
-if [ "$STALE_BUILDS" -gt 0 ]; then
-  warn "$STALE_BUILDS stale build sandboxes in /nix/var/nix/builds — run 'sudo systemctl start nix-build-cleanup.service' (the same unit the 4h timer fires; removes only sandboxes untouched >1h — do NOT rm -rf blindly, live builds sit there)"
-fi
-
-# 9. Port availability — check that ports assigned to enabled services are free
-echo ""
-echo "9. Port availability for enabled services"
-CONFLICTED_PORTS=0
-# Check SearXNG port specifically (common conflict with OTel collector on 8888)
-SEARXNG_PORT=$(nix eval --raw .#nixosConfigurations.evo-x2.config.services.searx.settings.server.port 2>/dev/null || echo "")
-SEARXNG_ENABLED=$(nix eval --raw .#nixosConfigurations.evo-x2.config.services.searx.enable 2>/dev/null || echo "false")
-if [ "$SEARXNG_ENABLED" = "true" ] && [ -n "$SEARXNG_PORT" ]; then
-  if ss -tlnH 2>/dev/null | grep -qE "127\.0\.0\.1:$SEARXNG_PORT\b|0\.0\.0\.0:$SEARXNG_PORT\b"; then
-    fail "Port $SEARXNG_PORT (SearXNG) is already in use — searx.service will crash-loop"
-    ss -tlnH "sport = :$SEARXNG_PORT" 2>/dev/null
-    CONFLICTED_PORTS=$((CONFLICTED_PORTS + 1))
+  # 8. Disk space on root filesystem
+  echo ""
+  echo "8. Disk space"
+  # Byte-based, not percentage: a % threshold scales absurdly on large disks —
+  # 95% of the 723G root still leaves ~36G free, which cannot cause the
+  # emergency-shell outcome this check guards against (activation needs ~1-2G).
+  # FAIL < 5G (activation headroom + margin), WARN < 15G. Percentage shown for
+  # context only. Learned 2026-08-17: snapshot-pinned data (btrbk @ retention)
+  # cannot be freed by deletion anyway — only expiry reclaims it.
+  ROOT_AVAIL_KB=$(df -Pk / 2>/dev/null | awk 'NR==2{print $4}' || echo "0")
+  ROOT_PCT=$(df -P / 2>/dev/null | awk 'NR==2{gsub(/%/,""); print $5}' || echo "0")
+  ROOT_AVAIL_GB=$((ROOT_AVAIL_KB / 1024 / 1024))
+  BUILDS_DIR="/nix/var/nix/builds"
+  STALE_BUILDS=0
+  if [ -d "$BUILDS_DIR" ]; then
+    STALE_BUILDS=$(find "$BUILDS_DIR" -maxdepth 1 -type d -name 'nix-*' -mmin +60 2>/dev/null | wc -l)
+  fi
+  if [ "$ROOT_AVAIL_GB" -lt 5 ]; then
+    fail "Root filesystem has only ${ROOT_AVAIL_GB}G free (${ROOT_PCT}%) — deploying risks emergency shell. Free space before deploying"
+  elif [ "$ROOT_AVAIL_GB" -lt 15 ]; then
+    warn "Root filesystem has only ${ROOT_AVAIL_GB}G free (${ROOT_PCT}%) — consider freeing space before deploying"
   else
-    pass "Port $SEARXNG_PORT (SearXNG) is available"
+    pass "Root filesystem usage ${ROOT_PCT}% (${ROOT_AVAIL_GB}G free)"
   fi
-fi
+  if [ "$STALE_BUILDS" -gt 0 ]; then
+    warn "$STALE_BUILDS stale build sandboxes in /nix/var/nix/builds — run 'sudo systemctl start nix-build-cleanup.service' (the same unit the 4h timer fires; removes only sandboxes untouched >1h — do NOT rm -rf blindly, live builds sit there)"
+  fi
+
+  # 9. Port availability — check that ports assigned to enabled services are free
+  echo ""
+  echo "9. Port availability for enabled services"
+  CONFLICTED_PORTS=0
+  # Check SearXNG port specifically (common conflict with OTel collector on 8888)
+  SEARXNG_PORT=$(nix eval --raw .#nixosConfigurations.evo-x2.config.services.searx.settings.server.port 2>/dev/null || echo "")
+  SEARXNG_ENABLED=$(nix eval --raw .#nixosConfigurations.evo-x2.config.services.searx.enable 2>/dev/null || echo "false")
+  if [ "$SEARXNG_ENABLED" = "true" ] && [ -n "$SEARXNG_PORT" ]; then
+    if ss -tlnH 2>/dev/null | grep -qE "127\.0\.0\.1:$SEARXNG_PORT\b|0\.0\.0\.0:$SEARXNG_PORT\b"; then
+      fail "Port $SEARXNG_PORT (SearXNG) is already in use — searx.service will crash-loop"
+      ss -tlnH "sport = :$SEARXNG_PORT" 2>/dev/null
+      CONFLICTED_PORTS=$((CONFLICTED_PORTS + 1))
+    else
+      pass "Port $SEARXNG_PORT (SearXNG) is available"
+    fi
+  fi
 
 # 10. Metric presence — verify Gatus pat() metric names actually appear in /metrics
 fi # end of skip-when---section-10-only (sections 1-9)

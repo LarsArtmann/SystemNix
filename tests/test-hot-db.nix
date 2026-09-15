@@ -21,7 +21,8 @@
 #     declared under virtualisation.fileSystems (test-cv pool-fmt pattern).
 #   - The disk must be formatted BEFORE the by-label mount units start
 #     (pool-fmt: wantedBy + before local-fs.target and the mount units).
-{pkgs, ...}: let
+{ pkgs, ... }:
+let
   hotDbModule = (import ../modules/nixos/services/hot-db.nix).flake.nixosModules.hot-db;
 
   entryPath = "/var/lib/hotdb-test";
@@ -37,14 +38,15 @@
       "nodatacow"
     ];
   };
-in {
+in
+{
   name = "hot-db";
 
-  nodes.machine = {lib, ...}: {
-    imports = [hotDbModule];
+  nodes.machine = { lib, ... }: {
+    imports = [ hotDbModule ];
 
-    boot.supportedFilesystems = ["btrfs"];
-    virtualisation.emptyDiskImages = [512];
+    boot.supportedFilesystems = [ "btrfs" ];
+    virtualisation.emptyDiskImages = [ 512 ];
     virtualisation.fileSystems = {
       "/mnt/hot" = {
         device = "/dev/disk/by-label/tlc";
@@ -73,7 +75,7 @@ in {
     # proves the mount came up first (RequiresMountsFor).
     systemd.services.hotdb-consumer = {
       description = "Hot-DB probe consumer";
-      wantedBy = ["multi-user.target"];
+      wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
@@ -89,8 +91,8 @@ in {
     # the service's default After=sysinit/basic is an ordering cycle.
     systemd.services.tlc-fmt = {
       description = "Format the virtio disk as btrfs label tlc (test-only)";
-      wantedBy = ["mnt-hot.mount"];
-      before = ["mnt-hot.mount"];
+      wantedBy = [ "mnt-hot.mount" ];
+      before = [ "mnt-hot.mount" ];
       serviceConfig = {
         Type = "oneshot";
         User = "root";
