@@ -25,7 +25,11 @@ let
     (import ../modules/nixos/services/pool-recovery.nix).flake.nixosModules.pool-recovery;
 
   baseNode = _: {
-    imports = [ poolRecoveryModule ];
+    imports = [
+      poolRecoveryModule
+      # co-import: the module declares a services.integration entry (mkIf-wrapped options?-guard caveat, 2026-09-15)
+      (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration
+    ];
     boot.supportedFilesystems = [ "btrfs" ];
     system.stateVersion = "25.11";
     environment.systemPackages = [

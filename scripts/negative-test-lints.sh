@@ -160,20 +160,26 @@ run_case signoz comment-ignored signoz-query-lint pass '' \
 # ── gatus-pattern-lint: the 4 trap classes ──
 # gatus-config.nix is an auto-discovered flake-parts wrapper and IS parsed
 # during checks eval (VM-test module merging) — mutations must stay valid
-# nix. Each replaces a `let`-body comment line with an equivalent let
-# binding carrying the trap (unique anchor: the YAML-field NOTE).
+# nix. Each replaces a `let`-body binding line with an equivalent let
+# binding carrying the trap. Anchor note: the 2026-09-15 registry migration
+# rewrote gatus-config.nix and SILENTLY no-op'd the old sed anchor (the
+# harness reported the lint phantom-green); the nodePort let-binding is the
+# current stable anchor — refresh it if this failure class reappears.
+# (Anchor rules learned 2026-09-15: it MUST be a comment INSIDE the let body
+# — a definition line breaks downstream references (undefined variable), a
+# header comment sits outside the attrset (syntax error).)
 run_case gatus regex-chars gatus-pattern-lint fail 'regex-only chars' \
-  'sed:modules/nixos/services/gatus-config.nix:s|# NOTE: the YAML field is .*|evilPattern = "pat(*metric_z?)";|'
+  'sed:modules/nixos/services/gatus-config.nix:s|# Smart alerting: append a PapDashboard ingest alert \(type "custom"\) to|evilPattern = "pat(*metric_z?)";|'
 run_case gatus phantom-one gatus-pattern-lint fail 'bare pat\(\*<metric> 1\*\)' \
-  'sed:modules/nixos/services/gatus-config.nix:s|# NOTE: the YAML field is .*|evilPattern = "pat(*metric_z 1*)";|'
+  'sed:modules/nixos/services/gatus-config.nix:s|# Smart alerting: append a PapDashboard ingest alert \(type "custom"\) to|evilPattern = "pat(*metric_z 1*)";|'
 run_case gatus literal-backslash-n gatus-pattern-lint fail 'literal backslash-n' \
-  'sed:modules/nixos/services/gatus-config.nix:s|# NOTE: the YAML field is .*|evilPattern = "pat(*m \\\\n*)";|'
+  'sed:modules/nixos/services/gatus-config.nix:s|# Smart alerting: append a PapDashboard ingest alert \(type "custom"\) to|evilPattern = "pat(*m \\\\n*)";|'
 # NB (backslash accounting, the trap IS the test): the sed replacement above
 # carries FOUR backslashes -> sed emits TWO into the file -> double-quoted
 # nix evals them to ONE literal backslash + n = the broken runtime shape the
 # trap must catch. A single file backslash would be the CORRECT form.
 run_case gatus lowercase-method gatus-pattern-lint fail 'lowercase HTTP method' \
-  'sed:modules/nixos/services/gatus-config.nix:s|# NOTE: the YAML field is .*|evilMethod.method = "post";|'
+  'sed:modules/nixos/services/gatus-config.nix:s|# Smart alerting: append a PapDashboard ingest alert \(type "custom"\) to|evilMethod.method = "post";|'
 
 # ── module-shape-lint: wrapper renamed away from the filename ──
 # (A bare module ALSO breaks flake eval with a worse message — renaming the

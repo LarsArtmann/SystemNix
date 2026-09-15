@@ -48,7 +48,6 @@ in
   nodes.machine =
     { lib, ... }:
     {
-      inherit entryPath;
       imports = [ hotDbModule ];
 
       boot.supportedFilesystems = [ "btrfs" ];
@@ -98,7 +97,6 @@ in
         wantedBy = [ "local-fs.target" ];
         before = [
           "mnt-hot.mount"
-          "-var-lib-hotdb-test.mount"
           "local-fs.target"
         ];
         serviceConfig = {

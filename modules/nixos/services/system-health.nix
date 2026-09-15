@@ -28,6 +28,7 @@ _: {
         ;
 
       cfg = config.services.system-health;
+      nodePort = config.services.prometheus.exporters.node.port;
       # Built-in default list plus the registry fan-out seam
       # (services.integration.<name>.monitored) — services registering through
       # the integration registry append here instead of editing the default.
@@ -1608,6 +1609,539 @@ _: {
               OnBootSec = "90s";
               OnUnitActiveSec = "10min";
             };
+          };
+        };
+
+        # Service-integration registry entry: this module's own check
+        # suite (moved verbatim from gatus-config.nix — every check
+        # probes the collector's textfile metrics and is fail-closed on
+        # collector death). Sub-gates (lanInterface/dasUsbPath/
+        # monitoredUserManagers) ride the module's own options.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          system-health = {
+            enable = cfg.enable;
+            vHost.layer = "none";
+            checks = [
+                {
+                  name = "Monitor365 Server Crash Loop";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "1m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_service_start_limit_hit{service=\"monitor365-server\"} 0*)"
+                  ];
+                  alert = "Monitor365 server hit start-limit — crash loop detected (DuckDB WAL corruption or OOM). Run: sudo systemctl reset-failed monitor365-server && sudo systemctl start monitor365-server";
+                }
+                {
+                  name = "Nix Daemon";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "1m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_service_active{service=\"nix-daemon\"} 1*)"
+                    "[BODY] == pat(*system_service_start_limit_hit{service=\"nix-daemon\"} 0*)"
+                  ];
+                  alert = "Nix daemon down or in start-limit crash-loop — ALL nix operations fail with 'Connection refused'. Likely killed by systemd-oomd during a build. Fix: sudo systemctl reset-failed nix-daemon && sudo systemctl start nix-daemon";
+                }
+                {
+                  name = "PMA Service";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_service_active{service=\"projects-management-automation\"} 1*)"
+                  ];
+                  alert = "Projects Management Automation daemon down — automated project tracking stopped. Check: journalctl -u projects-management-automation -n 50";
+                }
+                {
+                  name = "PMA CPU Death-Loop";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_service_cpu_over_threshold{service=\"projects-management-automation\"} 0*)"
+                  ];
+                  alert = "PMA CPU exceeds 150% sustained — likely a commit death-loop. The service is technically 'active' but burning CPU. Check: journalctl -u projects-management-automation -n 50. Consider: sudo systemctl restart projects-management-automation";
+                }
+                {
+                  name = "PMA Memory Pressure";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_service_memory_over_threshold{service=\"projects-management-automation\"} 0*)"
+                  ];
+                  alert = "PMA cgroup memory exceeds 90% of its MemoryMax (16G) — a legitimate repo-discovery scan rides MemoryHigh=12G, so this alert means the hard OOM-kill ceiling is in reach. Check: systemctl status projects-management-automation and system_service_memory_bytes in the textfile collector. Full narrative: docs/crash-analysis-2026-08-09.md";
+                }
+                {
+                  name = "PMA Commit Health";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  # Anchored forms (real \n): value must sit at line start —
+                  # collector down or section disabled = metric absent = the
+                  # check fails fail-closed. Catches BOTH directions of the
+                  # 2026-08-22..09-02 blackout class: sustained commit
+                  # failures (dead provider, nothing landing) and sustained
+                  # heuristic fallbacks (work landing with degraded messages
+                  # because the whole AI provider chain is down).
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nsystem_pma_commit_scrape_errors 0\n*)"
+                    "[BODY] == pat(*\nsystem_pma_commit_failures_over_threshold 0\n*)"
+                    "[BODY] == pat(*\nsystem_pma_commit_fallbacks_over_threshold 0\n*)"
+                  ];
+                  alert = "PMA commits are failing or riding heuristic fallbacks — the auto-commit pipeline is degraded (2026-08-22..09-02: 11 days, ~3,800 failed commits on a dead AI provider, invisible to liveness). Failures: journalctl -u projects-management-automation --since -1h --grep 'commit failed'. Fallbacks: same with 'heuristic fallback'. Check the provider chain (FastFlowLM :52625 socket, minimax/zai keys) before it becomes a backlog.";
+                }
+                {
+                  name = "FastFlowLM NPU LLM";
+                  group = "Monitoring";
+                  # MUST NOT probe :52625 — every probe is a TCP connection =
+                  # permanent keepalive. Use the system-health metrics at
+                  # :9100 instead. Idle is healthy (model unloaded); only
+                  # failure + crash-loop alert.
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_service_state_failed{service=\"fastflowlm\"} 0*)"
+                    "[BODY] == pat(*system_service_start_limit_hit{service=\"fastflowlm\"} 0*)"
+                  ];
+                  alert = "FastFlowLM NPU LLM failed or in start-limit crash-loop — local commit-message generation unavailable. Check: journalctl -u fastflowlm -n 50, /dev/accel0 presence, /data/ai/models/fastflowlm contents";
+                }
+                {
+                  name = "FastFlowLM Memory Pressure";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_service_memory_over_threshold{service=\"fastflowlm\"} 0*)"
+                  ];
+                  alert = "FastFlowLM cgroup memory exceeds 90% of its MemoryMax (40G) — the 21.6 GB model mmap'd from /data plus KV cache is reaching the OOM-kill ceiling. Check: flm-loaded models, /data/ai/models/fastflowlm size, pma discovery worker count";
+                }
+              ]
+              ++ lib.optionals (
+                    (config.services.system-health.enable or false)
+                    && (config.services.system-health.lanInterface or "") != ""
+                  ) [
+                    {
+                      name = "LAN NIC Present";
+                      group = "Monitoring";
+                      # 2026-08-22: after a hard crash the RTL8125 fell off the
+                      # PCIe bus — PCI enumeration showed no 10ec:8125 at all,
+                      # r8125 had nothing to probe, eno1 never got its static IP
+                      # and SSH was dead until a second reboot. The metric is
+                      # emitted by system-health whenever lanInterface is set, and
+                      # this check is gated on the SAME condition — a host that
+                      # watches no LAN NIC gets neither metric nor check (no
+                      # phantom 1). If this fires, a warm
+                      # reboot is NOT reliable — power-cycle the machine.
+                      url = "http://localhost:${toString nodePort}/metrics";
+                      interval = "2m";
+                      conditions = [
+                        "[STATUS] == 200"
+                        # pat() is a GLOB over the whole /metrics body and '!' is a LITERAL in
+                        # filepath.Match (no negation syntax): the metric's HELP comment
+                        # ("# HELP system_lan_nic_present 1 if ...") itself contains
+                        # "system_lan_nic_present 1", so pat(*metric 1*) stays green when the
+                        # value is 0. Assert the 0-value line is absent + the metric is present.
+                        "[BODY] != pat(*system_lan_nic_present 0\n*)"
+                        "[BODY] == pat(*\nsystem_lan_nic_present *)"
+                      ];
+                      alert = "LAN NIC (eno1 / RTL8125) is ABSENT from the bus — wired networking is DOWN (static IP + SSH unreachable). A warm reboot does NOT retrain it: POWER-CYCLE the machine (shut down, wait 10s, power on). Check: ls /sys/class/net/eno1, journalctl -k -b -1 | grep 10ec:8125, lspci | grep -i network";
+                    }
+              ]
+              ++ lib.optionals (
+                    (config.services.system-health.enable or false)
+                    && (config.services.system-health.dasUsbPath or "") != ""
+                  ) [
+                    {
+                      name = "DAS USB Link";
+                      group = "Monitoring";
+                      # Root-cause alert for the single-USB-link DAS topology:
+                      # all 4 external disks (2x pool Toshiba, buildcache SSD,
+                      # spare btrfs SSD) sit behind /sys/bus/usb/devices/8-1.
+                      # When the link drops, buildcache + pool + SSD checks all
+                      # fire at once — this check names the CAUSE (2026-08-22:
+                      # zero reconnect attempts for 22+ min). Anchored form is
+                      # mandatory: the metric's HELP embeds "system_das_link_present 1".
+                      url = "http://localhost:${toString nodePort}/metrics";
+                      interval = "2m";
+                      conditions = [
+                        "[STATUS] == 200"
+                        "[BODY] != pat(*system_das_link_present 0\n*)"
+                        "[BODY] == pat(*\nsystem_das_link_present *)"
+                      ];
+                      alert = "DAS USB link (8-1) is DOWN — ALL external disks (pool members, buildcache, spare SSDs) vanished simultaneously. Software recovery is impossible without the link: physically reseat the DAS USB cable + enclosure power, then REBOOT (warm reboot may not re-enumerate). After boot: scripts/das-link-recovery-check.sh, verify findmnt /mnt/pool and /mnt/buildcache, e2fsck decision for buildcache. Runbook: AGENTS.md 'DAS USB link' section.";
+                    }
+              ]
+              ++ lib.optionals (config.services.system-health.enable or false) [
+                {
+                  name = "System Profile Anchor";
+                  group = "Monitoring";
+                  # Manual activations (switch-to-configuration outside
+                  # `nix run .#deploy` — banned; 2026-08-18 google-sync
+                  # crash-loop, 2026-08-22 hand-activated XFS migration) leave
+                  # /run/current-system anchored to NO numbered profile: a
+                  # reboot silently reverts to the last real generation and
+                  # nothing warns. 0 = revert-on-reboot risk. Emitted
+                  # unconditionally by system-health (fail-closed) and the
+                  # anchored form is mandatory: the HELP embeds
+                  # "system_current_system_profiled 1".
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*system_current_system_profiled 0\n*)"
+                    "[BODY] == pat(*\nsystem_current_system_profiled *)"
+                  ];
+                  alert = "The RUNNING system is not anchored to any numbered nix profile generation — it was activated manually (banned pattern; deploy.sh post-switch steps and the profile/boot-entry trail are missing). A REBOOT WILL REVERT the machine to the last real generation. Fix: run `nix run .#deploy` NOW to persist the current config. Check: readlink /run/current-system vs ls /nix/var/nix/profiles/";
+                }
+                {
+                  name = "Boot Generation Freshness";
+                  group = "Monitoring";
+                  # The 2026-09-07 stuck-boot class: parallel deploys advanced
+                  # the loader DEFAULT past the store the machine boots from;
+                  # a reboot then hangs pre-journal. Also the exit-4 class:
+                  # activation advances /run/current-system but skips the
+                  # profile bump, and a reboot silently reverts. deploy.sh's
+                  # anchoring print cannot cover the reboot-into-stale case —
+                  # only a runtime metric can. 0 = booted != newest profile.
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*system_booted_is_newest_profile 0\n*)"
+                    "[BODY] == pat(*\nsystem_booted_is_newest_profile *)"
+                  ];
+                  alert = "The BOOTED system does not match the newest numbered nix profile generation — a reboot would boot a DIFFERENT (possibly store-dead) toplevel (2026-09-07 stuck-boot class) or silently revert. Check: `readlink -f /run/booted-system` vs `readlink -f /nix/var/nix/profiles/system`, run `nix run .#deploy` to re-anchor, and `nix run .#pre-reboot-check` BEFORE any reboot.";
+                }
+                {
+                  name = "Memory Emergency Guard";
+                  group = "Monitoring";
+                  # The 2026-08-22 freezes: #1 (00:27) zram 100% full made
+                  # flm's 25 GB model unevictable; #2 (05:49) the guard tripped
+                  # 7x but flm's activation socket re-woke it via the
+                  # alert→enricher feedback loop, and the final refault-thrash
+                  # freeze (PSI some avg10 >50%, MemAvailable still >=10%) fell
+                  # between the guard's thresholds AND between its 60 s ticks.
+                  # The guard now ALSO stops fastflowlm.socket on trip (restores
+                  # it once memory recovers), trips on PSI>=40% AND zram>=80%,
+                  # and ticks every 30 s. This check alerts when the guard
+                  # FIRED (within the last 30 min) or died (absent metrics).
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*memory_emergency_guard_avail_percent*)"
+                    "[BODY] == pat(*memory_emergency_guard_last_trip_recent 0*)"
+                  ];
+                  alert = "Memory emergency guard TRIPPED (or the guard died): the machine entered a pre-freeze zone (low MemAvailable, near-full zram, PSI refault thrash, episodic memory stall, or sustained I/O stall with disk-busy corroboration) and FastFlowLM + its activation socket + the resumable I/O churn units (btrbk/balance/scrub) were force-stopped. The socket auto-restores once memory recovers; until then LLM clients get connection-refused by design. Check: journalctl -u memory-emergency-guard -n 30, memory_emergency_guard_{avail,zram_fill,psi_some_avg10,io_psi_some_avg60}_percent in the textfile collector, what is holding RAM (ps aux --sort=-%mem | head)";
+                }
+                {
+                  name = "Memory Pressure Warning";
+                  group = "Monitoring";
+                  # The WARNING tier (2026-08-22): the CRITICAL check fired
+                  # 17s before the 05:49 freeze and 43min before the 00:27
+                  # one. some avg60 >= 20% = the storm FORMING — time to
+                  # look, shed load, or cancel heavy jobs while the machine
+                  # still responds. Alert-only by user decision: NO
+                  # automated action beyond the existing guard.
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "1m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*node_psi_memory_warning 1\n*)"
+                    "[BODY] == pat(*\nnode_psi_memory_warning *)"
+                  ];
+                  alert = "Sustained memory pressure WARNING — PSI some avg60 >= 20% for a full minute. The storm is forming (2026-08-22 freeze precursor profile). No action taken yet (alert-only by design). Check: heavy nix builds / VM tests / crush sessions running? node_psi_memory_some_avg60, system_cgroup_mem_bytes{...} top consumers. Consider stopping heavy jobs while the machine still responds.";
+                }
+                {
+                  name = "Crush Session Pressure";
+                  group = "Monitoring";
+                  # Admission-control monitor (2026-08-22 census: ~12
+                  # concurrent sessions were a major freeze contributor;
+                  # user decision: monitor-only). Anchored form mandatory —
+                  # the HELP text embeds the threshold semantics.
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*system_crush_sessions_over_threshold 1\n*)"
+                    "[BODY] == pat(*\nsystem_crush_sessions_over_threshold *)"
+                  ];
+                  alert = "Crush agent session pressure: more than 6 concurrent crush sessions detected (2026-08-22 freeze census ran ~12 = 52 crush + 50 bun processes as a major memory consumer). Monitor-only by decision — consider closing idle sessions (`crush` TUIs left open), or wrap heavy work in heavy-job.";
+                }
+                {
+                  name = "SEV1 Escalation Bridge";
+                  group = "Monitoring";
+                  # The local escalation path (fullscreen overlay + DMS
+                  # notification) for guard-trip/guard-dead/infra-criticals.
+                  # This check guards the GUARD of the human loop: if the
+                  # bridge dies, criticals still reach Discord (gatus) but
+                  # the desktop overlay/notification path is dead. The
+                  # overlay self-expires after 2 min without bridge
+                  # refreshes, so a dead bridge cannot stick an overlay.
+                  # Tiered since 2026-08-31 (hardened 2026-09-02: NO memory
+                  # condition may overlay; page is RESERVED with no current
+                  # emitter): warn-tier conditions (infra hardware
+                  # criticals) show a static yellow banner ONCE and fire
+                  # this Discord alert; notify-tier (memory/meta) fire the
+                  # alert only. sev1_bridge_page_alerts_active distinguishes
+                  # tiers at the metrics level.
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nsev1_bridge_runs_total *)"
+                    "[BODY] != pat(*sev1_bridge_alerts_active [1-9]\n*)"
+                  ];
+                  alert = "SEV1 escalation bridge problem: either the bridge died (desktop escalation for criticals is DOWN — Discord still works) or SEV1 conditions are ACTIVE. Warn-tier (infra hardware criticals: DAS link, LAN NIC, btrfs critical) = a static yellow banner shows ONCE on the desktop + this Discord alert. Notify-tier (ALL memory conditions, SYSTEM MONITORING STALE, zram critical) = notification + this Discord alert only, NO overlay BY DESIGN (2026-09-02: high memory must never flash the screen). Check: journalctl -u sev1-bridge -n 30, cat /run/systemnix/sev1/alert (line 4 = severity).";
+                }
+                {
+                  name = "Hermes Agent Gateway";
+                  group = "Monitoring";
+                  # No HTTP probe: the gateway's only listener is Discord/
+                  # platform webhooks, not a health endpoint. Unit-state
+                  # metrics from system-health are the liveness signal
+                  # (fail-closed: absent metrics fail the pat()s).
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_service_state_failed{service=\"hermes\"} 0*)"
+                    "[BODY] == pat(*system_service_start_limit_hit{service=\"hermes\"} 0*)"
+                  ];
+                  alert = "Hermes agent gateway failed or in start-limit crash-loop — Discord bot and AI gateway are DOWN. Check: journalctl -u hermes -n 50 (ExecStartPre perms/migration, upstream connectivity, config errors)";
+                }
+                {
+                  name = "Hermes Memory Pressure";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_service_memory_over_threshold{service=\"hermes\"} 0*)"
+                  ];
+                  alert = "Hermes cgroup memory exceeds 90% of its MemoryMax (24G) — PyTorch/ROCm mappings plus active agent sessions are reaching the OOM-kill ceiling. Check: journalctl -u hermes -n 50, active sessions, /home/hermes growth";
+                }
+                {
+                  name = "Service Restart Metrics";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_service_nrestarts*)"
+                  ];
+                  alert = "Service restart metrics not being collected — systemd health monitoring disabled";
+                }
+                {
+                  name = "GPUActive Memory Threshold";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "1m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_gpu_active_over_threshold 0*)"
+                  ];
+                  alert = "GPUActive exceeds 60G — GTT buffer objects consuming excessive RAM. Check /proc/meminfo GPUActive. Risk of OOM cascade on Strix Halo (GTT-first: with the 512 MiB carveout ALL GPU memory is shared system RAM).";
+                }
+                {
+                  name = "User Slice Memory";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "1m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_user_slice_memory_over_threshold 0*)"
+                  ];
+                  alert = "user-1000.slice memory exceeds 40G — desktop processes consuming excessive RAM (MemoryHigh=56G, MemoryMax=64G). Risk of journald starvation and WDT reset.";
+                }
+                {
+                  name = "Monitor365 Buffer Pressure";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_monitor365_buffer_pressure 0*)"
+                  ];
+                  alert = "Monitor365 DuckDB exceeds 1.6G — buffer pressure risk. Server may hit MemoryMax under load. Consider reducing retention or increasing MemoryMax.";
+                }
+                {
+                  name = "CPU Runaway (Any Service)";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_any_service_cpu_over_threshold 0*)"
+                  ];
+                  alert = "A monitored service exceeds 150% average CPU — possible busy-loop or runaway. Check: curl localhost:9100/metrics | grep cpu_over_threshold | grep ' 1$'";
+                }
+                {
+                  name = "/tmp TmpFS Usage";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_tmpfs_tmp_over_threshold 0*)"
+                  ];
+                  alert = "/tmp tmpfs exceeds 80% (~38 GiB of 48 GiB cap) — runaway build or temp file accumulation. Check: du -sh /tmp/* | sort -rh | head";
+                }
+                {
+                  name = "DNS Blocker Stats API Fresh";
+                  group = "Infrastructure";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  # Anchored forms: the \n MUST reach gatus as a real newline
+                  # (single-backslash in this double-quoted nix string) —
+                  # presence-of-1 at line start + not-0 keep the check
+                  # fail-closed through probe absence (collector down =
+                  # metric absent = both conditions fail = alert fires).
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*system_dnsblockd_metrics_fresh 0\n*)"
+                    "[BODY] == pat(*\nsystem_dnsblockd_metrics_fresh 1*)"
+                  ];
+                  alert = "dnsblockd :9090 stats API is wedged or unreachable while the DNS resolver may still be healthy (2026-08-27 class). Recovery runbook: sudo systemctl restart dnsblockd — for a goroutine dump FIRST, see scripts/dnsblockd-goroutine-dump.sh (root).";
+                }
+                {
+                  name = "Local DNS System Resolver";
+                  group = "Infrastructure";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  # Anchored forms: the \n MUST reach gatus as a real newline
+                  # (single-backslash in this double-quoted nix string) —
+                  # presence-of-1 at line start + not-0 keep the check
+                  # fail-closed through probe absence (collector down =
+                  # metric absent = both conditions fail = alert fires).
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*system_local_dns_resolves 0\n*)"
+                    "[BODY] == pat(*\nsystem_local_dns_resolves 1*)"
+                  ];
+                  alert = "System resolver cannot resolve *.home.lan — /etc/resolv.conf drifted off 127.0.0.1 (dnsblockd bypassed) while the direct :53 probe stays green (2026-09-02 class: manual resolv.conf edit to 1.1.1.1 during a NIC outage killed local DNS for ~10h and blocked deploys). Fix: restore 'nameserver 127.0.0.1' first in /etc/resolv.conf (a deploy rewrites it via environment.etc), then find what wrote the file.";
+                }
+                {
+                  name = "fstrim Duration";
+                  group = "Filesystem";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "30m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_fstrim_duration_over_threshold 0*)"
+                  ];
+                  alert = "fstrim took >30 min — possible SLC cache churn backlog or I/O contention. Check: journalctl -u fstrim -n 20, btrfs filesystem usage /";
+                }
+                {
+                  name = "Gatus Sustained Failures";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_gatus_meta_scrape_errors 0*)"
+                    "[BODY] == pat(*system_gatus_endpoints_in_error_long 0*)"
+                    "[BODY] == pat(*system_gatus_results_stale 0*)"
+                  ];
+                  alert = "Gatus self-check failed: either endpoints have sustained failures (zero successes in retention), the result DB is stale (>15 min no writes = gatus wedged), or the meta-scrape itself errored (DB unreadable). Check: Gatus dashboard, journalctl -u gatus, /var/lib/private/gatus/gatus.db mtime.";
+                }
+                {
+                  name = "Memory Events Thrash";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_memory_events_any_high 0*)"
+                  ];
+                  alert = "A monitored service is thrashing against its MemoryMax ceiling (memory.events max > 100). Page-cache death-loop pattern (OOM-killer won't fire — page cache is reclaimable). Check: grep system_service_memory_events_high in /var/lib/prometheus-node-exporter/textfile_collectors/system_health.prom to identify which service.";
+                }
+                {
+                  name = "Root Disk Usage";
+                  group = "Filesystem";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_disk_usage_over_threshold 0*)"
+                  ];
+                  alert = "Root filesystem exceeds 85% usage — chronic disk fill issue. Check: du -sh /nix/store/* | sort -rh | head, nix-collect-garbage --delete-older-than 7d, btrfs filesystem usage /";
+                }
+                {
+                  name = "Service Crash Loop";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_any_service_crash_loop 0*)"
+                  ];
+                  alert = "A monitored service is crash-looping (3+ restarts in 2 min). Check: curl localhost:9100/metrics | grep system_service_crash_loop | grep ' 1$'. Run: sudo systemctl reset-failed <svc> && sudo systemctl start <svc>";
+                }
+                {
+                  name = "Service Restart Churn";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_any_service_restart_churn 0*)"
+                  ];
+                  alert = "A monitored service accumulated 5+ automatic restarts since its last explicit start — a slow crash-churn that never trips the 3-in-2min loop detector (e.g. hermes exit-75 drain chains). Check: curl localhost:9100/metrics | grep system_service_restart_churn | grep ' 1$', then journalctl -u <svc> -n 50";
+                }
+                {
+                  name = "OOMD Kills";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_oomd_kills_alert 0*)"
+                    "[BODY] == pat(*system_oomd_kills_scrape_errors 0*)"
+                  ];
+                  alert = "systemd-oomd killed a process since last check (memory pressure OOM; check: journalctl -u systemd-oomd --grep 'Killed' -n 20 — the killed service may be in start-limit-hit state), OR the bounded oomd journal scan timed out (system_oomd_kills_scrape_errors=1; check: systemctl status system-health-metrics)";
+                }
+                {
+                  name = "Docker Container Restarts";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_any_docker_container_restart_alert 0*)"
+                  ];
+                  alert = "A Docker container is rapidly restarting (3+ restarts in 2 min). Check: docker ps -a, docker inspect --format '{{.RestartCount}}' <container>. Likely OOM-killed by systemd-oomd (exit code 137).";
+                }
+              ]
+              ++ lib.optionals (
+                    (config.services.system-health.enable or false)
+                    && config.services.system-health.monitoredUserManagers != [ ]
+                  ) [
+                    {
+                      name = "User Unit Failures";
+                      group = "Monitoring";
+                      url = "http://localhost:${toString nodePort}/metrics";
+                      interval = "2m";
+                      conditions = [
+                        "[STATUS] == 200"
+                        "[BODY] == pat(*\nsystem_user_units_failed{*)"
+                        "[BODY] != pat(*\nsystem_user_units_failed{*} [1-9]*)"
+                        "[BODY] != pat(*\nsystem_user_units_scrape_errors{*} 1*)"
+                      ];
+                      alert = "A systemd USER unit is in failed state (2026-08-31: smart-audio sat dead in start-limit-hit the whole boot with nothing alerting), OR the user-manager query is wedged (scrape_errors=1). Check: systemctl --machine=lars@.host --user --failed --no-legend, then journalctl --user -u <unit> -n 50";
+                    }
+                  
+            ];
           };
         };
       };

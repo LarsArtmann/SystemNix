@@ -71,291 +71,295 @@ _: {
         };
       };
 
-      config = lib.mkIf cfg.enable {
-        services.bank-sync = {
-          # Caddy is the sole external entry point (defense-in-depth: the raw
-          # HTTP server stays unreachable even if a firewall rule appears).
-          addr = "127.0.0.1:${toString ports.bank-sync}";
+      config = lib.mkMerge [
+        (lib.mkIf cfg.enable {
+          services.bank-sync = {
+            # Caddy is the sole external entry point (defense-in-depth: the raw
+            # HTTP server stays unreachable even if a firewall rule appears).
+            addr = "127.0.0.1:${toString ports.bank-sync}";
 
-          # SQLite on the mirrored HDD pool, snapshotted nightly by btrbk-pool.
-          dataDir = lib.mkDefault "/mnt/pool/services/bank-sync";
+            # SQLite on the mirrored HDD pool, snapshotted nightly by btrbk-pool.
+            dataDir = lib.mkDefault "/mnt/pool/services/bank-sync";
 
-          # sops template renders BANK_SYNC_WISE_API_KEY=... and
-          # BANK_SYNC_SECURITY_ENCRYPTION_KEY=... (KEY=VALUE env file).
-          wiseApiKeyFile = config.sops.templates."bank-sync-env".path;
-          encryptionKeyFile = config.sops.templates."bank-sync-env".path;
+            # sops template renders BANK_SYNC_WISE_API_KEY=... and
+            # BANK_SYNC_SECURITY_ENCRYPTION_KEY=... (KEY=VALUE env file).
+            wiseApiKeyFile = config.sops.templates."bank-sync-env".path;
+            encryptionKeyFile = config.sops.templates."bank-sync-env".path;
 
-          # vendorHash override DROPPED 2026-09-03: upstream at lock rev
-          # c6342780 now ships the SAME vendorHash the override carried
-          # (sha256-xkA6…, verified via nix eval on the locked input's
-          # package) — the override had become an identity no-op.
-        };
+            # vendorHash override DROPPED 2026-09-03: upstream at lock rev
+            # c6342780 now ships the SAME vendorHash the override carried
+            # (sha256-xkA6…, verified via nix eval on the locked input's
+            # package) — the override had become an identity no-op.
+          };
 
-        # The pool mounts nofail — systemd-tmpfiles could create the dir on the
-        # ROOT filesystem under the /mnt/pool mountpoint before the pool is up
-        # (contaminating the NVMe). This oneshot runs only while the pool is
-        # actually mounted (RequiresMountsFor fails loudly on a detached DAS) and
-        # creates the directory with the service-user ownership the upstream
-        # module expects (createHome is deliberately false upstream).
-        systemd.services.bank-sync-storage-dir = {
-          description = "Create bank-sync data directory on the HDD pool";
-          wantedBy = [ "multi-user.target" ];
-          unitConfig.RequiresMountsFor = [ cfg.dataDir ];
-          serviceConfig = lib.mkMerge [
-            {
-              Type = "oneshot";
-              User = "root";
-              RemainAfterExit = true;
-            }
-            (harden {
-              # subvolume create needs CAP_SYS_ADMIN, chown CAP_CHOWN; chmod
-              # AFTER chown (and on every re-run) targets a dir owned by
-              # bank-sync, which requires CAP_FOWNER; harden{} defaults to an
-              # empty bounding set which would EPERM all of them. Write access
-              # to the PARENT is required to create the subvolume
-              # (mkdir/chown/chmod on the dir itself is covered).
-              CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
-              ReadWritePaths = [ (dirOf cfg.dataDir) ];
-            })
-            (serviceOneshotDefaults { })
-          ];
-          script = ''
-            dir=${toString cfg.dataDir}
-            if [ ! -e "$dir" ]; then
-              # Subvolume (not plain dir) so btrbk-pool can snapshot it —
-              # mirrors the atticd pool placement. Falls back to a plain dir
-              # only on non-btrfs filesystems.
-              if ! ${pkgs.btrfs-progs}/bin/btrfs subvolume create "$dir"; then
+          # The pool mounts nofail — systemd-tmpfiles could create the dir on the
+          # ROOT filesystem under the /mnt/pool mountpoint before the pool is up
+          # (contaminating the NVMe). This oneshot runs only while the pool is
+          # actually mounted (RequiresMountsFor fails loudly on a detached DAS) and
+          # creates the directory with the service-user ownership the upstream
+          # module expects (createHome is deliberately false upstream).
+          systemd.services.bank-sync-storage-dir = {
+            description = "Create bank-sync data directory on the HDD pool";
+            wantedBy = [ "multi-user.target" ];
+            unitConfig.RequiresMountsFor = [ cfg.dataDir ];
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = "root";
+                RemainAfterExit = true;
+              }
+              (harden {
+                # subvolume create needs CAP_SYS_ADMIN, chown CAP_CHOWN; chmod
+                # AFTER chown (and on every re-run) targets a dir owned by
+                # bank-sync, which requires CAP_FOWNER; harden{} defaults to an
+                # empty bounding set which would EPERM all of them. Write access
+                # to the PARENT is required to create the subvolume
+                # (mkdir/chown/chmod on the dir itself is covered).
+                CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
+                ReadWritePaths = [ (dirOf cfg.dataDir) ];
+              })
+              (serviceOneshotDefaults { })
+            ];
+            script = ''
+              dir=${toString cfg.dataDir}
+              if [ ! -e "$dir" ]; then
+                # Subvolume (not plain dir) so btrbk-pool can snapshot it —
+                # mirrors the atticd pool placement. Falls back to a plain dir
+                # only on non-btrfs filesystems.
+                if ! ${pkgs.btrfs-progs}/bin/btrfs subvolume create "$dir"; then
+                  mkdir -p "$dir"
+                fi
+              else
                 mkdir -p "$dir"
               fi
-            else
-              mkdir -p "$dir"
-            fi
-            # chmod while root still owns a freshly created subvolume, chown
-            # last — re-runs (dir already bank-sync-owned) rely on CAP_FOWNER
-            # for the chmod, see the bounding set above.
-            chmod 0750 "$dir"
-            chown bank-sync:bank-sync "$dir"
-          '';
-        };
-
-        systemd.services.bank-sync = {
-          after = [ "bank-sync-storage-dir.service" ];
-          wants = [ "bank-sync-storage-dir.service" ];
-          # AGENTS.md rule 5: every service sets start-limit bounds + onFailure.
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
-          inherit onFailure;
-          # OTel traces → local SigNoz collector (Go otlptracehttp: bare
-          # host:port, no scheme). Upstream gained OTLP exporter support
-          # 2026-08-31 (cmd/bank-sync/tracing.go, DiscordSync pattern); with
-          # older pinned revs this is a harmless noop until the flake bump.
-          # Enforced by services.signoz-coverage (wiring "upstream" → "env"
-          # after the input bump lands spans).
-          environment.OTEL_EXPORTER_OTLP_ENDPOINT = "localhost:${toString ports.signoz-otlp-http}";
-          serviceConfig = lib.mkMerge [
-            {
-              ExecStartPre = [ (lib.getExe checkEncryptionKey) ];
-              # Wise Strong Customer Authentication (SCA) one-time token (OTT).
-              # Wise gates SCA-protected endpoints (balance statements for
-              # UK/EEA profiles) behind a 403 challenge roughly every 90 days;
-              # approval happens in the Wise app and the OTT is single-use, so
-              # it must never live in sops or the nix store. The leading "-"
-              # makes the absent file a no-op; systemd reads EnvironmentFile
-              # as PID 1, so the drop-in can be root-owned 0400. mkMerge
-              # appends to upstream's EnvironmentFile list.
-              EnvironmentFile = [ "-/var/lib/bank-sync-sca/token.env" ];
-            }
-            (harden {
-              MemoryMax = "512M";
-            })
-            (serviceDefaults { })
-            # SQLite on spinning rust, synced every 15m — never compete with
-            # the desktop for I/O.
-            ioTier.background
-          ];
-        };
-
-        # Weekly live-API canary (landed 2026-09-12, bank-sync master-plan
-        # T8): read-only smoke of every configured non-demo provider against
-        # the real Wise API. The 12-week SCA silence (2026-06→09) was
-        # invisible precisely because no independent tripwire ran; this timer
-        # is that tripwire. Fails closed — OnFailure routes to the house
-        # notifier; the JSON report lands next to the DB for post-mortems.
-        systemd.services.bank-sync-canary = {
-          description = "Bank-Sync weekly provider canary";
-          after = [
-            "network-online.target"
-            "bank-sync-storage-dir.service"
-          ];
-          wants = [
-            "network-online.target"
-            "bank-sync-storage-dir.service"
-          ];
-          # StandardOutput appends into the pool dataDir — gate on the mount
-          # (mount-gating-audit class; a detached DAS must FAIL loudly, not
-          # append the report onto a root-fs shadow dir).
-          unitConfig.RequiresMountsFor = [ cfg.dataDir ];
-          inherit onFailure;
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
-          serviceConfig = lib.mkMerge [
-            {
-              Type = "oneshot";
-              User = "bank-sync";
-              Group = "bank-sync";
-              # lib.getExe already yields <pkg>/bin/bank-sync — no /bin
-              # concatenation (the 2026-08-29 draft's ExecStart bug).
-              ExecStart = "${lib.getExe cfg.package} canary --provider all --json";
-              # Same secret env as the daemon (Wise key; the encryption key
-              # rides along harmlessly) plus the optional SCA OTT drop-in so
-              # a pending approval clears the canary exactly like the daemon.
-              EnvironmentFile = [
-                envTemplate.path
-                "-/var/lib/bank-sync-sca/token.env"
-              ];
-              # Post-mortem report next to the DB (bank-sync-owned dataDir;
-              # weekly JSON lines, btrbk-pool snapshots it with the DB).
-              StandardOutput = "append:${cfg.dataDir}/canary-last.json";
-            }
-            (harden {
-              # Read-only against the system except the report's directory.
-              ReadWritePaths = [ cfg.dataDir ];
-            })
-            (serviceOneshotDefaults { })
-          ];
-        };
-
-        systemd.timers.bank-sync-canary = {
-          description = "Bank-Sync weekly provider canary timer";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnCalendar = "weekly";
-            # Catch up when the box was off; jitter avoids a fixed weekly
-            # thunder minute.
-            Persistent = true;
-            RandomizedDelaySec = "1h";
+              # chmod while root still owns a freshly created subvolume, chown
+              # last — re-runs (dir already bank-sync-owned) rely on CAP_FOWNER
+              # for the chmod, see the bounding set above.
+              chmod 0750 "$dir"
+              chown bank-sync:bank-sync "$dir"
+            '';
           };
-        };
 
-        # Weekly Paperless-ngx archival (statements + transfer receipts).
-        # Enable-gated like inboxclean's paperless wiring: the sops token
-        # ships as PLACEHOLDER, and enabling with a placeholder means a loud
-        # 401 failure into OnFailure alerting — the operator flips this flag
-        # in the same deploy that pastes the real token (runbook:
-        # docs/services/bank-sync.md + upstream docs/runbooks/paperless.md).
-        # The oneshot shares the daemon's DB and Wise key but NEVER restarts
-        # the daemon: idempotent ledgers make concurrent runs safe, and a
-        # failed archival run must not perturb continuous sync.
-        systemd.services.bank-sync-paperless = lib.mkIf config.services.bank-sync.paperlessArchive.enable {
-          description = "Bank-Sync weekly Paperless-ngx archival";
-          after = [
-            "network-online.target"
-            "bank-sync-storage-dir.service"
-          ];
-          wants = [
-            "network-online.target"
-            "bank-sync-storage-dir.service"
-          ];
-          # The run opens and WRITES the SQLite DB (ledger rows) — fail
-          # loudly on a detached pool instead of touching the root fs.
-          unitConfig.RequiresMountsFor = [ cfg.dataDir ];
-          inherit onFailure;
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
-          serviceConfig = lib.mkMerge [
-            {
-              Type = "oneshot";
-              User = "bank-sync";
-              Group = "bank-sync";
-              ExecStart = "${lib.getExe cfg.package} paperless --receipts";
-              Environment = [ "BANK_SYNC_DATABASE_PATH=${cfg.dataDir}/data.db" ];
-              # Wise key + encryption key from the daemon env, archive
-              # URL/token from the dedicated template, optional SCA OTT
-              # drop-in (statements ride the same challenge flow).
-              EnvironmentFile = [
-                envTemplate.path
-                config.sops.templates."bank-sync-paperless-env".path
-                "-/var/lib/bank-sync-sca/token.env"
-              ];
-            }
-            (harden {
-              # Ledger writes land next to the DB.
-              ReadWritePaths = [ cfg.dataDir ];
-            })
-            (serviceOneshotDefaults { })
-          ];
-        };
-
-        systemd.timers.bank-sync-paperless = lib.mkIf config.services.bank-sync.paperlessArchive.enable {
-          description = "Bank-Sync weekly Paperless-ngx archival timer";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnCalendar = cfg.paperlessArchive.timerCalendar;
-            # Catch up when the box was off.
-            Persistent = true;
-            RandomizedDelaySec = "30m";
-          };
-        };
-
-        # Service-integration registry entry: fans out to the Caddy vHost
-        # (Layer 2 — money data minimum exposure), the two Gatus checks
-        # (dashboard + sync health), and the homepage tile. Replaces rows in
-        # caddy.nix / gatus-config.nix / homepage.nix.
-        services.integration = lib.optionalAttrs (options ? services.integration) {
-          bank-sync = {
-            enable = cfg.enable;
-            subdomain = "banksync";
-            port = ports.bank-sync;
-            vHost.layer = "protected";
-            checks = [
+          systemd.services.bank-sync = {
+            after = [ "bank-sync-storage-dir.service" ];
+            wants = [ "bank-sync-storage-dir.service" ];
+            # AGENTS.md rule 5: every service sets start-limit bounds + onFailure.
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+            inherit onFailure;
+            # OTel traces → local SigNoz collector (Go otlptracehttp: bare
+            # host:port, no scheme). Upstream gained OTLP exporter support
+            # 2026-08-31 (cmd/bank-sync/tracing.go, DiscordSync pattern); with
+            # older pinned revs this is a harmless noop until the flake bump.
+            # Enforced by services.signoz-coverage (wiring "upstream" → "env"
+            # after the input bump lands spans).
+            environment.OTEL_EXPORTER_OTLP_ENDPOINT = "localhost:${toString ports.signoz-otlp-http}";
+            serviceConfig = lib.mkMerge [
               {
-                name = "Bank-Sync";
-                group = "Finance";
-                url = "http://localhost:${toString ports.bank-sync}/";
-                interval = "60s";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[RESPONSE_TIME] < 1000"
-                  # Functional, not just liveness: the real dashboard (not
-                  # an error shell) carries the page title.
-                  "[BODY] == pat(*Bank-Sync Dashboard*)"
-                ];
-                alert = "Bank-Sync down — Wise transaction sync halted, dashboard at banksync.home.lan unreachable. Check: systemctl status bank-sync, journalctl -u bank-sync.";
+                ExecStartPre = [ (lib.getExe checkEncryptionKey) ];
+                # Wise Strong Customer Authentication (SCA) one-time token (OTT).
+                # Wise gates SCA-protected endpoints (balance statements for
+                # UK/EEA profiles) behind a 403 challenge roughly every 90 days;
+                # approval happens in the Wise app and the OTT is single-use, so
+                # it must never live in sops or the nix store. The leading "-"
+                # makes the absent file a no-op; systemd reads EnvironmentFile
+                # as PID 1, so the drop-in can be root-owned 0400. mkMerge
+                # appends to upstream's EnvironmentFile list.
+                EnvironmentFile = [ "-/var/lib/bank-sync-sca/token.env" ];
               }
-              # Sync-health probe: the dashboard check above stays GREEN
-              # while every sync cycle fails (the 2026-08 invisible-outage
-              # class). This endpoint pattern-matches /metrics instead:
-              # sync_errors_total must be zero AND at least one successful
-              # sync must have ever happened (the last-sync timestamp
-              # metric only renders after a success). Gatus cannot compute
-              # timestamp AGE — a stale-sync (synced once, then scheduler
-              # died silently) needs PromQL; covered by the sync_total
-              # delta in post-deploy checks until Prometheus alerting
-              # lands here.
-              {
-                name = "Bank-Sync Sync Health";
-                group = "Finance";
-                url = "http://localhost:${toString ports.bank-sync}/metrics";
-                interval = "5m";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[BODY] == pat(*bank_sync_sync_errors_total 0*)"
-                  "[BODY] == pat(*bank_sync_last_sync_timestamp_seconds*)"
-                ];
-                alert = "Bank-Sync syncs are failing (or never succeeded) while the dashboard stays green — the August invisible-outage class. Check: journalctl -u bank-sync -n 100, then curl localhost:8097/metrics and read bank_sync_sync_errors_total + bank_sync_last_sync_timestamp_seconds.";
-              }
+              (harden {
+                MemoryMax = "512M";
+              })
+              (serviceDefaults { })
+              # SQLite on spinning rust, synced every 15m — never compete with
+              # the desktop for I/O.
+              ioTier.background
             ];
-            homepage = {
-              name = "Bank Sync";
-              group = "Sync & Backup";
-              description = "Wise Transactions → SQLite (Event-Sourced)";
-              # The bundled icon pack has no bank.png — google-finance is the
-              # closest available finance glyph.
-              icon = "google-finance.png";
+          };
+
+          # Weekly live-API canary (landed 2026-09-12, bank-sync master-plan
+          # T8): read-only smoke of every configured non-demo provider against
+          # the real Wise API. The 12-week SCA silence (2026-06→09) was
+          # invisible precisely because no independent tripwire ran; this timer
+          # is that tripwire. Fails closed — OnFailure routes to the house
+          # notifier; the JSON report lands next to the DB for post-mortems.
+          systemd.services.bank-sync-canary = {
+            description = "Bank-Sync weekly provider canary";
+            after = [
+              "network-online.target"
+              "bank-sync-storage-dir.service"
+            ];
+            wants = [
+              "network-online.target"
+              "bank-sync-storage-dir.service"
+            ];
+            # StandardOutput appends into the pool dataDir — gate on the mount
+            # (mount-gating-audit class; a detached DAS must FAIL loudly, not
+            # append the report onto a root-fs shadow dir).
+            unitConfig.RequiresMountsFor = [ cfg.dataDir ];
+            inherit onFailure;
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = "bank-sync";
+                Group = "bank-sync";
+                # lib.getExe already yields <pkg>/bin/bank-sync — no /bin
+                # concatenation (the 2026-08-29 draft's ExecStart bug).
+                ExecStart = "${lib.getExe cfg.package} canary --provider all --json";
+                # Same secret env as the daemon (Wise key; the encryption key
+                # rides along harmlessly) plus the optional SCA OTT drop-in so
+                # a pending approval clears the canary exactly like the daemon.
+                EnvironmentFile = [
+                  envTemplate.path
+                  "-/var/lib/bank-sync-sca/token.env"
+                ];
+                # Post-mortem report next to the DB (bank-sync-owned dataDir;
+                # weekly JSON lines, btrbk-pool snapshots it with the DB).
+                StandardOutput = "append:${cfg.dataDir}/canary-last.json";
+              }
+              (harden {
+                # Read-only against the system except the report's directory.
+                ReadWritePaths = [ cfg.dataDir ];
+              })
+              (serviceOneshotDefaults { })
+            ];
+          };
+
+          systemd.timers.bank-sync-canary = {
+            description = "Bank-Sync weekly provider canary timer";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = "weekly";
+              # Catch up when the box was off; jitter avoids a fixed weekly
+              # thunder minute.
+              Persistent = true;
+              RandomizedDelaySec = "1h";
             };
           };
-        };
-      };
+
+          # Weekly Paperless-ngx archival (statements + transfer receipts).
+          # Enable-gated like inboxclean's paperless wiring: the sops token
+          # ships as PLACEHOLDER, and enabling with a placeholder means a loud
+          # 401 failure into OnFailure alerting — the operator flips this flag
+          # in the same deploy that pastes the real token (runbook:
+          # docs/services/bank-sync.md + upstream docs/runbooks/paperless.md).
+          # The oneshot shares the daemon's DB and Wise key but NEVER restarts
+          # the daemon: idempotent ledgers make concurrent runs safe, and a
+          # failed archival run must not perturb continuous sync.
+          systemd.services.bank-sync-paperless = lib.mkIf config.services.bank-sync.paperlessArchive.enable {
+            description = "Bank-Sync weekly Paperless-ngx archival";
+            after = [
+              "network-online.target"
+              "bank-sync-storage-dir.service"
+            ];
+            wants = [
+              "network-online.target"
+              "bank-sync-storage-dir.service"
+            ];
+            # The run opens and WRITES the SQLite DB (ledger rows) — fail
+            # loudly on a detached pool instead of touching the root fs.
+            unitConfig.RequiresMountsFor = [ cfg.dataDir ];
+            inherit onFailure;
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = "bank-sync";
+                Group = "bank-sync";
+                ExecStart = "${lib.getExe cfg.package} paperless --receipts";
+                Environment = [ "BANK_SYNC_DATABASE_PATH=${cfg.dataDir}/data.db" ];
+                # Wise key + encryption key from the daemon env, archive
+                # URL/token from the dedicated template, optional SCA OTT
+                # drop-in (statements ride the same challenge flow).
+                EnvironmentFile = [
+                  envTemplate.path
+                  config.sops.templates."bank-sync-paperless-env".path
+                  "-/var/lib/bank-sync-sca/token.env"
+                ];
+              }
+              (harden {
+                # Ledger writes land next to the DB.
+                ReadWritePaths = [ cfg.dataDir ];
+              })
+              (serviceOneshotDefaults { })
+            ];
+          };
+
+          systemd.timers.bank-sync-paperless = lib.mkIf config.services.bank-sync.paperlessArchive.enable {
+            description = "Bank-Sync weekly Paperless-ngx archival timer";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = cfg.paperlessArchive.timerCalendar;
+              # Catch up when the box was off.
+              Persistent = true;
+              RandomizedDelaySec = "30m";
+            };
+          };
+
+        })
+          # Service-integration registry entry: fans out to the Caddy vHost
+          # (Layer 2 — money data minimum exposure), the two Gatus checks
+          # (dashboard + sync health), and the homepage tile. Replaces rows in
+          # caddy.nix / gatus-config.nix / homepage.nix.
+          (lib.optionalAttrs (options ? services.integration) {
+  services.integration = lib.mkIf cfg.enable {
+              bank-sync = {
+                enable = cfg.enable;
+                subdomain = "banksync";
+                port = ports.bank-sync;
+                vHost.layer = "protected";
+                checks = [
+                  {
+                    name = "Bank-Sync";
+                    group = "Finance";
+                    url = "http://localhost:${toString ports.bank-sync}/";
+                    interval = "60s";
+                    conditions = [
+                      "[STATUS] == 200"
+                      "[RESPONSE_TIME] < 1000"
+                      # Functional, not just liveness: the real dashboard (not
+                      # an error shell) carries the page title.
+                      "[BODY] == pat(*Bank-Sync Dashboard*)"
+                    ];
+                    alert = "Bank-Sync down — Wise transaction sync halted, dashboard at banksync.home.lan unreachable. Check: systemctl status bank-sync, journalctl -u bank-sync.";
+                  }
+                  # Sync-health probe: the dashboard check above stays GREEN
+                  # while every sync cycle fails (the 2026-08 invisible-outage
+                  # class). This endpoint pattern-matches /metrics instead:
+                  # sync_errors_total must be zero AND at least one successful
+                  # sync must have ever happened (the last-sync timestamp
+                  # metric only renders after a success). Gatus cannot compute
+                  # timestamp AGE — a stale-sync (synced once, then scheduler
+                  # died silently) needs PromQL; covered by the sync_total
+                  # delta in post-deploy checks until Prometheus alerting
+                  # lands here.
+                  {
+                    name = "Bank-Sync Sync Health";
+                    group = "Finance";
+                    url = "http://localhost:${toString ports.bank-sync}/metrics";
+                    interval = "5m";
+                    conditions = [
+                      "[STATUS] == 200"
+                      "[BODY] == pat(*bank_sync_sync_errors_total 0*)"
+                      "[BODY] == pat(*bank_sync_last_sync_timestamp_seconds*)"
+                    ];
+                    alert = "Bank-Sync syncs are failing (or never succeeded) while the dashboard stays green — the August invisible-outage class. Check: journalctl -u bank-sync -n 100, then curl localhost:8097/metrics and read bank_sync_sync_errors_total + bank_sync_last_sync_timestamp_seconds.";
+                  }
+                ];
+                homepage = {
+                  name = "Bank Sync";
+                  group = "Sync & Backup";
+                  description = "Wise Transactions → SQLite (Event-Sourced)";
+                  # The bundled icon pack has no bank.png — google-finance is the
+                  # closest available finance glyph.
+                  icon = "google-finance.png";
+                };
+              };
+  };
+})
+      ];
     };
 }
