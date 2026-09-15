@@ -13,16 +13,17 @@
       "locked": {
         "lastModified": 1789302774,
         "narHash": "sha256-2+XqErGWuOxYWjindujr7FiI1Uonca8QUm9es3CQFQY=",
-        "owner": "LarsArtmann",
-        "repo": "art-dupl",
+        "ref": "refs/heads/fork",
         "rev": "9c370324dfcfaef23fa60079af0d9ebfcf84a489",
-        "type": "github"
+        "revCount": 2136,
+        "type": "git",
+        "url": "https://github.com/LarsArtmann/art-dupl"
       },
       "original": {
-        "owner": "LarsArtmann",
-        "repo": "art-dupl",
+        "ref": "refs/heads/fork",
         "rev": "9c370324dfcfaef23fa60079af0d9ebfcf84a489",
-        "type": "github"
+        "type": "git",
+        "url": "https://github.com/LarsArtmann/art-dupl"
       }
     },
     "art-dupl-src": {

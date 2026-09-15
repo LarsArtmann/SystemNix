@@ -462,8 +462,12 @@
       # input that made EVERY CI eval fail (`Git repository ... does not
       # exist`: flake-check VM tests + go-deps-audit input evals, 2026-09-15).
       # The flip condition (fork branch pushes 9c370324) is satisfied:
-      # origin/fork contains it. A `github:` URL with a rev keeps the pin
-      # exact AND fetches in CI.
+      # origin/fork contains it. `git+https` with an explicit ref+rev keeps
+      # the pin exact AND fetches in CI. (A bare `github:<rev>` URL failed
+      # to lock: nix's tarball-to-git-tree import dies with a libgit2
+      # tree-builder error on this repo - the real git+https clone path
+      # handles it, and the locked narHash is byte-identical to the old
+      # local pin, so no consumer hash churn.)
       url = "git+https://github.com/LarsArtmann/art-dupl?ref=refs/heads/fork&rev=9c370324dfcfaef23fa60079af0d9ebfcf84a489";
       inputs.nixpkgs.follows = "nixpkgs";
     };

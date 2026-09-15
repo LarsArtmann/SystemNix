@@ -31,6 +31,17 @@
 #   sudo bash scripts/migrate-clickhouse-xfs.sh finalize  # delete shadowed originals
 set -euo pipefail
 
+RED=$'\033[0;31m'
+GREEN=$'\033[0;32m'
+YELLOW=$'\033[1;33m'
+NC=$'\033[0m'
+info() { echo -e "${GREEN}==>${NC} $1"; }
+warn() { echo -e "${YELLOW}WARNING:${NC} $1"; }
+die() {
+  echo -e "${RED}FAIL:${NC} $1" >&2
+  exit 1
+}
+
 # Resolve the QLC system disk via by-id (kernel nvme0/nvme1 enumeration
 # FLIPS across boots on this box — a hardcoded /dev/nvme0n1 could one boot
 # point at the Samsung). Falls back to whichever nvme carries the live root.
@@ -49,17 +60,6 @@ MNT="/mnt/clickhouse-xfs-migration"
 STATE_FILE=".systemnix-migration-state"
 MIN_FREE_GIB=90              # the tail must be at least this big to proceed
 BTRFS_ROOT="/mnt/btrfs-root" # subvolid=5 automount (snapshots.nix)
-
-RED=$'\033[0;31m'
-GREEN=$'\033[0;32m'
-YELLOW=$'\033[1;33m'
-NC=$'\033[0m'
-info() { echo -e "${GREEN}==>${NC} $1"; }
-warn() { echo -e "${YELLOW}WARNING:${NC} $1"; }
-die() {
-  echo -e "${RED}FAIL:${NC} $1" >&2
-  exit 1
-}
 
 require_root() {
   [ "$(id -u)" -eq 0 ] || die "must run as root (sudo)"
