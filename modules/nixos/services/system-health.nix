@@ -1264,9 +1264,11 @@ _: {
 
         monitoredServices = lib.mkOption {
           type = lib.types.listOf lib.types.str;
+          # Units removed from this default as their owning modules
+          # self-register via services.integration.<name>.monitored:
+          # browser-history-agent, llama-embeddings, llama-reranker (2026-09-15).
           default = [
             "browser-history"
-            "browser-history-agent"
             "caddy"
             "dnsblockd"
             "discordsync"
@@ -1277,8 +1279,6 @@ _: {
             "hermes"
             "homepage-dashboard"
             "lan-nic-watchdog"
-            "llama-embeddings"
-            "llama-reranker"
             "monitor365"
             "monitor365-server"
             "nix-daemon"

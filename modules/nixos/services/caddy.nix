@@ -343,6 +343,14 @@ _: {
           # vHosts moved to the registry (services.integration entries in
           # their owning modules). systemd-timer-monitor stays hand-written
           # below: it is a file_server over the state dir, not a proxy.
+          # bank-sync dashboard — read-only financial data with no built-in
+          # auth: protectedVHost (LAN bypass + external oauth2 forward-auth)
+          # is the minimum acceptable exposure for money data. Gated with the
+          # `or false` trick because services.bank-sync options come from the
+          # upstream flake module (imported on evo-x2 only).
+          // lib.optionalAttrs (config.services.bank-sync.enable or false) {
+            "banksync.${domain}" = protectedVHost "banksync" ports.bank-sync;
+          }
           # tq dashboard — read-only projection of the agent-pool journal;
           # renders task payloads + error tails, so external access sits
           # behind forward-auth (LAN bypass like every Layer 2 vHost).
