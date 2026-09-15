@@ -253,18 +253,18 @@
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1789474397,
-        "narHash": "sha256-bHVc2Wpb75l8Y9NloJNE2a8FXzjT2bNY015zS4jP8z0=",
-        "owner": "LarsArtmann",
-        "repo": "BuildFlow",
-        "rev": "56dc3660217156aae5166719f01f5b4cdad61e63",
-        "type": "github"
+        "lastModified": 1789481128,
+        "narHash": "sha256-FY7Y0psMwFAa/Cu6nj8xuMrswjc3RuxuBLwp8Rz4IzI=",
+        "ref": "refs/heads/master",
+        "rev": "9d11c8fee7c7be6b62e7bc62130a6cf7e397ad83",
+        "revCount": 6018,
+        "type": "git",
+        "url": "file:///home/lars/projects/BuildFlow"
       },
       "original": {
-        "owner": "LarsArtmann",
-        "ref": "master",
-        "repo": "BuildFlow",
-        "type": "github"
+        "rev": "9d11c8fee7c7be6b62e7bc62130a6cf7e397ad83",
+        "type": "git",
+        "url": "file:///home/lars/projects/BuildFlow"
       }
     },
     "clipboard-monitor": {

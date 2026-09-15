@@ -395,7 +395,10 @@
 
     # BuildFlow — Zero-configuration build automation for Go projects
     buildflow = {
-      url = "github:LarsArtmann/BuildFlow?ref=master";
+      # INTERIM: git+file pin — 9d11c8fee fixes a stale vendorHash upstream
+      # (rev 56dc3660 fails every consumer with a go-modules hash mismatch).
+      # Flip back to github:LarsArtmann/BuildFlow?ref=master once pushed.
+      url = "git+file:///home/lars/projects/BuildFlow?rev=9d11c8fee7c7be6b62e7bc62130a6cf7e397ad83";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
