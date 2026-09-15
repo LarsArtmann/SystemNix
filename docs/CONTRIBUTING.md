@@ -156,6 +156,20 @@ scripts/health-check.sh        # System health check
 scripts/verify-deployment.sh   # Deployment readiness validator
 ```
 
+### Verification conventions (2026-09-15, window-closeout harvest)
+
+**The 3-step probe — every "verified" claim names its depth.** A claim that something works is one of exactly three levels; record which steps ran and never skip silently:
+
+1. **Code exists** — the fix/config is present in the tracked tree.
+2. **Regression test executed** — the check/VM test was BUILT AND RUN against the change in this session (a passing eval-cache hit on an unchanged store path is NOT execution — a negative-test derivation always has the same store path; hand-probe new cases via `extendModules` once).
+3. **Deployed-generation parity** — the DEPLOYED system actually carries the change (`readlink /run/current-system`, `grep` the rendered unit/config, the live metric).
+
+Write "VM-tested" only for step 2, "deployed + verified live" only for step 3. The 2026-09-15 Zone 6 closeout needed all three re-proven because the original run claimed step 2 from a parallel session's build without fresh evidence.
+
+**Git-state claims carry the verification transcript at write time.** Any status-report/commit-message/TODO claim about git state (ancestry, reachability, rewrite landing, "rebase done") MUST include the commands AND their output from the same session — e.g. `git merge-base --is-ancestor <new> HEAD && echo OK`, `git log --all --grep=<text>`, `git for-each-ref | grep <old-sha>`. The 2026-09-14 "rewrite landed" claim (false) cost a full reviewer loop because it asserted an exit code instead of transcript evidence. Re-run all three checks after ANY later rebase onto origin history — an unpushed rewrite lineage is silently abandoned by rebasing.
+
+**Cite REACHABLE SHAs; annotate dangling ones.** Cite `message + date + short-rev` where possible, and verify reachability before citing: `git merge-base --is-ancestor <sha> HEAD`. If you must cite a dangling SHA (pre-rewrite work), annotate the citation with its reachable counterpart (found via reflog: `git reflog | grep <subject-fragment>`) at first discovery, not at review time. Unpushed work on this box rewrites frequently (auto-commit daemon + rebases) — a bare dangling SHA in a task description forces every verification session to redo the archaeology.
+
 ## Eval-Time Guards (audit modules)
 
 Most documented incident classes are ENFORCED at eval time — `nix flake check`
