@@ -73,6 +73,8 @@ jobs:
           nix build .#checks.x86_64-linux.chown-vs-bind-audit --no-link --print-out-paths
           nix build .#checks.x86_64-linux.binary-coverage-lint --no-link --print-out-paths
           nix build .#checks.x86_64-linux.binary-coverage-selftest --no-link --print-out-paths
+          nix build .#checks.x86_64-linux.pre-deploy-metrics-selftest --no-link --print-out-paths
+          nix build .#checks.x86_64-linux.post-deploy-pressure-selftest --no-link --print-out-paths
 
       - name: Check for unregistered port numbers
         run: |
@@ -142,6 +144,36 @@ jobs:
 
   vm-tests:
     runs-on: ubuntu-latest
+    # Matrix (2026-09-14 gate split): the pre-commit hook now runs
+    # `nix flake check --no-build` (eval-only), so CI is the ONLY place VM
+    # tests build. One runner per test (fail-fast=false) keeps the wall
+    # clock at the slowest single test instead of the sum.
+    strategy:
+      fail-fast: false
+      matrix:
+        test:
+          - boot
+          - attic
+          - searxng
+          - caddy-auth-patterns
+          - gatus-patterns
+          - pma-identity
+          - ksm
+          - port-uniqueness
+          - browser-history
+          - paperless
+          - hermes
+          - cv
+          - memory-emergency-guard
+          - pool-recovery
+          - btrbk-rescue
+          - niri-session
+          - tmp-cleanup
+          - mail-relay
+          - wifi-failover
+          - miniflux
+          - lib-helpers
+          - sed-delimiter
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -175,13 +207,8 @@ jobs:
             experimental-features = nix-command flakes pipe-operators
             access-tokens = github.com=${{ secrets.NIX_GITHUB_RO_TOKEN || secrets.GITHUB_TOKEN }}
 
-      - name: Run NixOS VM tests
-        run: |
-          nix build .#checks.x86_64-linux.boot --no-link --print-out-paths
-          nix build .#checks.x86_64-linux.attic --no-link --print-out-paths
-          nix build .#checks.x86_64-linux.searxng --no-link --print-out-paths
-          nix build .#checks.x86_64-linux.browser-history --no-link --print-out-paths
-          nix build .#checks.x86_64-linux.cv --no-link --print-out-paths
+      - name: Run NixOS VM test (${{ matrix.test }})
+        run: nix build ".#checks.x86_64-linux.${{ matrix.test }}" --no-link --print-out-paths
 
   shellcheck:
     runs-on: ubuntu-latest

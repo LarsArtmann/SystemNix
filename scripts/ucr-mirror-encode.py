@@ -97,13 +97,14 @@ def build_plan(rows, flac_root):
             dur = int(float(r["duration_s"]))
         except (ValueError, TypeError):
             dur = 0
+        rel = os.path.join(cdir, year, stem)
         plan.append({
             "wav": fname,
             "stem": stem,
             "contact": contact,
             "year": year,
-            "flac": os.path.join(flac_root, cdir, year, stem + ".flac"),
-            "opus_rel": os.path.join(cdir, year, stem + ".opus"),
+            "flac_rel": rel + ".flac",
+            "opus_rel": rel + ".opus",
             "title": f"{title_date} ({dur}s)",
             "album": album,
             "date": date_utc[:10],
@@ -114,16 +115,16 @@ def build_plan(rows, flac_root):
     return plan
 
 
-def encode_flac(item, wav_dir, force, err_log):
-    out = item["flac"]
+def encode_flac(item, wav_dir, flac_root, force, err_log):
+    out = os.path.join(flac_root, item["flac_rel"])
     if os.path.exists(out) and os.path.getsize(out) > 44 and not force:
-        return item["stem"], "skip-flac"
+        return item["stem"], None
     os.makedirs(os.path.dirname(out), exist_ok=True)
     tmp = out + ".part"
     proc = run(IDLE + ["ffmpeg", "-nostdin", "-hide_banner", "-v", "error", "-y",
                        "-i", os.path.join(wav_dir, item["wav"]),
                        "-map", "0:a:0", "-map_metadata", "-1", "-vn",
-                       "-c:a", "flac", "-compression_level", "8",
+                       "-c:a", "flac", "-compression_level", "8", "-f", "flac",
                        "-metadata", f"title={item['title']}",
                        "-metadata", f"artist={item['contact']}",
                        "-metadata", f"albumartist={item['contact']}",
@@ -136,35 +137,34 @@ def encode_flac(item, wav_dir, force, err_log):
                        "-metadata", f"UCR_PREFIX={item['prefix']}",
                        tmp], err_log)
     if proc.returncode != 0:
-        return item["stem"], "fail-flac"
+        return item["stem"], "flac encode failed"
     os.replace(tmp, out)
-    return item["stem"], "flac"
+    return item["stem"], None
 
 
 def encode_opus(item, flac_root, opus_root, force, err_log):
     out = os.path.join(opus_root, item["opus_rel"])
     if os.path.exists(out) and os.path.getsize(out) > 200 and not force:
-        return item["stem"], "skip-opus"
-    src = os.path.join(flac_root, os.path.relpath(out, opus_root)).replace(".opus", ".flac")
+        return item["stem"], None
+    src = os.path.join(flac_root, item["flac_rel"])
     if not os.path.exists(src):
-        return item["stem"], "fail-opus-no-src"
+        return item["stem"], "opus skipped: flac missing"
     os.makedirs(os.path.dirname(out), exist_ok=True)
     tmp = out + ".part"
     proc = run(IDLE + ["ffmpeg", "-nostdin", "-hide_banner", "-v", "error", "-y",
                        "-i", src, "-map", "0:a:0", "-c:a", "libopus",
-                       "-b:a", "32k", "-application", "voip", "-vbr", "on", tmp], err_log)
+                       "-b:a", "32k", "-application", "voip", "-vbr", "on", "-f", "opus", tmp], err_log)
     if proc.returncode != 0:
-        return item["stem"], "fail-opus"
+        return item["stem"], "opus encode failed"
     os.replace(tmp, out)
-    return item["stem"], "opus"
+    return item["stem"], None
 
 
 def verify_flac(item, flac_root, err_log):
-    src = os.path.join(flac_root, os.path.dirname(item["opus_rel"]),
-                       item["stem"] + ".flac")
+    src = os.path.join(flac_root, item["flac_rel"])
     proc = run(IDLE + ["ffmpeg", "-nostdin", "-hide_banner", "-v", "error",
                        "-i", src, "-map", "0:a:0", "-f", "null", "-"], err_log)
-    return item["stem"], "verify-ok" if proc.returncode == 0 else "fail-verify"
+    return item["stem"], None if proc.returncode == 0 else "flac MD5/decode verification failed"
 
 
 def main():
@@ -183,6 +183,8 @@ def main():
     flac_root = os.path.join(args.root, "derived", "flac")
     opus_root = os.path.join(args.root, "derived", "opus")
     err_log = os.path.join(args.root, "derived", "encode-errors.log")
+    os.makedirs(os.path.join(args.root, "derived"), exist_ok=True)
+    open(err_log, "wb").close()
 
     for p in [manifest, wav_dir]:
         if not os.path.exists(p):
@@ -199,51 +201,37 @@ def main():
         counts[p["prefix"] or "-"] = counts.get(p["prefix"] or "-", 0) + 1
     log(f"plan: {len(plan)} files (prefixes {counts})")
 
-    def tally(results):
-        for _, status in results:
-            counts[status] = counts.get(status, 0) + 1
+    failures = []
+
+    def run_phase(name, fn, items):
+        nonlocal failures
+        log(f"phase {name}: {len(items)} files (parallel={args.parallel})")
+        with cf.ThreadPoolExecutor(max_workers=args.parallel) as pool:
+            futs = [pool.submit(fn, it) for it in items]
+            for i, fut in enumerate(cf.as_completed(futs), 1):
+                stem, err = fut.result()
+                if err:
+                    failures.append((stem, err))
+                    log(f"   FAIL {stem}: {err}")
+                if i % 50 == 0:
+                    log(f"   {i}/{len(items)}")
 
     if args.phase in ("all", "flac"):
-        log(f"phase flac: encoding {len(plan)} files (parallel={args.parallel})")
-        with cf.ThreadPoolExecutor(max_workers=args.parallel) as pool:
-            futs = [pool.submit(encode_flac, it, wav_dir, args.force, err_log) for it in plan]
-            for i, fut in enumerate(cf.as_completed(futs), 1):
-                stem, status = fut.result()
-                if status.startswith("fail"):
-                    log(f"   FAIL {stem} ({status})")
-                if i % 50 == 0:
-                    log(f"   {i}/{len(plan)}")
-        tally([])
+        run_phase("flac", lambda it: encode_flac(it, wav_dir, flac_root, args.force, err_log), plan)
     if args.phase in ("all", "opus"):
-        log(f"phase opus: encoding {len(plan)} files from flac")
-        with cf.ThreadPoolExecutor(max_workers=args.parallel) as pool:
-            futs = [pool.submit(encode_opus, it, flac_root, opus_root, args.force, err_log)
-                    for it in plan]
-            for i, fut in enumerate(cf.as_completed(futs), 1):
-                stem, status = fut.result()
-                if status.startswith("fail"):
-                    log(f"   FAIL {stem} ({status})")
-                if i % 50 == 0:
-                    log(f"   {i}/{len(plan)}")
+        run_phase("opus", lambda it: encode_opus(it, flac_root, opus_root, args.force, err_log), plan)
     if args.phase in ("all", "verify"):
-        log(f"phase verify: full decode of {len(plan)} flacs (MD5 check)")
-        with cf.ThreadPoolExecutor(max_workers=args.parallel) as pool:
-            futs = [pool.submit(verify_flac, it, flac_root, err_log) for it in plan]
-            for i, fut in enumerate(cf.as_completed(futs), 1):
-                stem, status = fut.result()
-                if status != "verify-ok":
-                    log(f"   FAIL {stem} ({status})")
-                if i % 50 == 0:
-                    log(f"   {i}/{len(plan)}")
+        run_phase("verify", lambda it: verify_flac(it, flac_root, err_log), plan)
 
-    report = {"total": len(plan), "finished": time.strftime("%Y-%m-%dT%H:%M:%S"),
-              "force": args.force}
+    report = {"total": len(plan), "failures": failures,
+              "finished": time.strftime("%Y-%m-%dT%H:%M:%S"), "force": args.force}
     with open(os.path.join(args.root, "derived", "encode-report.json"), "w") as fh:
         json.dump(report, fh, indent=2)
 
-    problems = [f for f in [err_log] if os.path.exists(f) and os.path.getsize(f) > 0]
-    log("done — check " + ", ".join(problems) if problems else "done, no encode errors")
-    sys.exit(1 if problems and not args.force else 0)
+    if failures:
+        log(f"DONE WITH {len(failures)} FAILURES — details in {err_log} + encode-report.json")
+        sys.exit(1)
+    log("done — no encode errors")
 
 
 if __name__ == "__main__":
