@@ -248,8 +248,10 @@
               # mount transaction (live VM-test failure).
               wantedBy = map (e: mountUnitName e.path) entryList;
               before = map (e: mountUnitName e.path) entryList;
-              after = [mountUnitName cfg.toplevelMount];
-              wants = [mountUnitName cfg.toplevelMount];
+              # Parens REQUIRED: inside a list, `f x` is TWO elements (the
+              # bare lambda trips the unit-name type), not application.
+              after = [(mountUnitName cfg.toplevelMount)];
+              wants = [(mountUnitName cfg.toplevelMount)];
               unitConfig = {
                 # Samsung detached (nofail toplevel absent) → skip cleanly
                 # (Wants, not Requires, so the toplevel's own failure cannot
