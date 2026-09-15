@@ -23,6 +23,7 @@
   flake.nixosModules.browser-history =
     {
       config,
+      options,
       pkgs,
       lib,
       ...
@@ -396,6 +397,54 @@
                 TimeoutStartSec = "3min";
               }
             ];
+          };
+        })
+
+        # Service-integration registry entries (modules/nixos/services/
+        # integration.nix). enable-gated via the registry's own switch so
+        # hosts without the integration module (VM tests) still evaluate.
+        # The server entry REPLACES rows in caddy.nix (history vHost, plain:
+        # native WebAuthn/OIDC — protectedVHost would break passkey flows),
+        # gatus-config.nix (Browser History check), homepage.nix (tile), and
+        # pocket-id.nix (OIDC client). The agent registers its own unit with
+        # system-health (moved out of monitoredServices' default list).
+        (lib.optionalAttrs (options ? services.integration) {
+          services.integration = {
+            browser-history = {
+              enable = cfg.enable;
+              subdomain = "history";
+              port = ports.browser-history;
+              vHost.layer = "plain";
+              checks = [
+                {
+                  name = "Browser History";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.browser-history}/health";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 500"
+                  ];
+                  alert = "Browser History server down — browsing analytics unavailable";
+                }
+              ];
+              homepage = {
+                name = "Browser History";
+                group = "Sync & Backup";
+                description = "Browsing Analytics & Productivity Insights";
+              };
+              oidc = {
+                name = "Browser History";
+                clientId = "browser-history";
+                launchURL = "https://history.${domain}";
+                callbackURLs = [ "https://history.${domain}/auth/oauth/pocket-id/callback" ];
+              };
+            };
+            browser-history-agent = {
+              enable = config.services.browser-history-agent.enable;
+              vHost.layer = "none";
+              monitored = true;
+            };
           };
         })
       ];
