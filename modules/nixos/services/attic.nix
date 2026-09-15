@@ -27,6 +27,7 @@ _: {
   flake.nixosModules.attic =
     {
       pkgs,
+      options,
       lib,
       config,
       ...
@@ -480,6 +481,49 @@ _: {
         nix.settings = lib.mkIf (cfg.cachePublicKey != "") {
           substituters = [ cfg.cacheSubstituter ];
           trusted-public-keys = [ cfg.cachePublicKey ];
+        };
+
+        # Service-integration registry entry: fans out to the Caddy vHost
+        # (plain — Nix substituters need unauthenticated read; push is
+        # token-gated in-app), the two Gatus checks, and the homepage tile.
+        # Replaces rows in caddy.nix / gatus-config.nix / homepage.nix.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          attic = {
+            enable = cfg.enable;
+            subdomain = "cache";
+            port = atticPort;
+            vHost.layer = "plain";
+            checks = [
+              {
+                name = "Attic Binary Cache";
+                group = "Infrastructure";
+                url = "http://localhost:${toString atticPort}/";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                ];
+                alert = "Attic binary cache down — CI builds will not push/pull cached paths, causing redundant recompilation";
+              }
+              {
+                name = "Attic Storage Size";
+                group = "Infrastructure";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*attic_storage_over_threshold 0*)"
+                ];
+                alert = "Attic storage exceeded maxStorageGigabytes — emergency GC triggered. Check /mnt/pool/services/atticd/storage size.";
+              }
+            ];
+            homepage = {
+              name = "Attic Cache";
+              group = "Sync & Backup";
+              description = "Self-hosted Nix Binary Cache (CI build artifacts)";
+              icon = "nixos.png";
+            };
+          };
         };
       };
     };

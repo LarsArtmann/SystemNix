@@ -66,16 +66,25 @@ def now():
 
 
 def cmd_init(root):
-    manifest = os.path.join(root, "universal-call-recorder", "integrity-sweep",
-                            "encode-manifest.tsv")
-    if not os.path.exists(manifest):
-        sys.exit("FATAL: run scripts/ucr-ffprobe-sweep.sh first (manifest missing)")
+    ucr_dir = os.path.join(root, "universal-call-recorder")
+    manifest = os.path.join(ucr_dir, "integrity-sweep", "encode-manifest.tsv")
+    index = os.path.join(ucr_dir, "index.csv")
+    if os.path.exists(manifest):
+        src_desc = f"sweep manifest ({manifest})"
+        delim = "\t"
+        path = manifest
+    elif os.path.exists(index):
+        src_desc = f"index.csv ({index}; run the ffprobe sweep for verified durations)"
+        delim = ","
+        path = index
+    else:
+        sys.exit("FATAL: neither the sweep manifest nor index.csv found")
     con = connect(root)
     con.execute("DELETE FROM calls")
     import csv
     rows = 0
-    with open(manifest, newline="") as fh:
-        for r in csv.DictReader(fh, delimiter="\t"):
+    with open(path, newline="") as fh:
+        for r in csv.DictReader(fh, delimiter=delim):
             stem = r["filename"][:-4]
             cdir = r["contact_or_number"].strip() or "Unknown"
             cdir = "".join(c for c in cdir if c.isprintable() and c not in "\n\r\t/") or "Unknown"
@@ -87,7 +96,7 @@ def cmd_init(root):
             rows += 1
     con.commit()
     n = con.execute("SELECT count(*) FROM seg_fts").fetchone()[0]
-    print(f"calls indexed: {rows}; existing transcript segments: {n}")
+    print(f"calls indexed: {rows} from {src_desc}; existing transcript segments: {n}")
     print("next: drop whisper output into derived/transcripts/<stem>.json|srt|vtt|txt and run `import`")
 
 
