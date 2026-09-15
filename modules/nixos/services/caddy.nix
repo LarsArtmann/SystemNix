@@ -301,10 +301,11 @@ _: {
               '';
             };
           }
-          // lib.optionalAttrs config.services.searx.enable {
-            "search.${domain}" = protectedVHost "search" config.services.searx.settings.server.port;
-          }
           // lib.optionalAttrs config.services.voice-agents.enable {
+            # voice/whisper vHosts stay hand-written: those subdomains are
+            # not in the shared dns-local list (voice-agents is not enabled
+            # on any current host), so registry entries for them would fail
+            # the DNS-consistency assertion.
             "voice.${domain}" = protectedVHost "voice" config.services.livekit.settings.port;
             "whisper.${domain}" = protectedVHost "whisper" config.services.voice-agents.whisperPort;
           }
@@ -338,23 +339,10 @@ _: {
                   else
                     protectedVHost "monitor" ports.monitor365-server;
               }
-          // lib.optionalAttrs config.services.discordsync.enable {
-            "discordsync.${domain}" = protectedVHost "discordsync" ports.discordsync-api;
-          }
-          # PapDashboard — alert hub UI. Layer 2: the app itself has no UI auth
-          # (only the ingest API is key-gated); Gatus posts to the localhost port
-          # directly and never traverses Caddy.
-          // lib.optionalAttrs config.services.papdashboard.enable {
-            "alerts.${domain}" = protectedVHost "alerts" ports.papdashboard;
-          }
-          # bank-sync dashboard — read-only financial data with no built-in
-          # auth: protectedVHost (LAN bypass + external oauth2 forward-auth)
-          # is the minimum acceptable exposure for money data. Gated with the
-          # `or false` trick because services.bank-sync options come from the
-          # upstream flake module (imported on evo-x2 only).
-          // lib.optionalAttrs (config.services.bank-sync.enable or false) {
-            "banksync.${domain}" = protectedVHost "banksync" ports.bank-sync;
-          }
+          # DiscordSync / Browser History / Attic / renamer / search / graph
+          # vHosts moved to the registry (services.integration entries in
+          # their owning modules). systemd-timer-monitor stays hand-written
+          # below: it is a file_server over the state dir, not a proxy.
           # tq dashboard — read-only projection of the agent-pool journal;
           # renders task payloads + error tails, so external access sits
           # behind forward-auth (LAN bypass like every Layer 2 vHost).
@@ -364,45 +352,6 @@ _: {
           }
           // lib.optionalAttrs config.services.overview.enable {
             "overview.${domain}" = protectedVHost "overview" ports.overview;
-          }
-          // lib.optionalAttrs config.services.file-and-image-renamer.enable {
-            "renamer.${domain}" = protectedVHost "renamer" ports.file-and-image-renamer-health;
-          }
-          # Browser History — direct TLS proxy (NOT protectedVHost).
-          # browser-history has native WebAuthn/Passkey auth AND OAuth2/OIDC via
-          # Pocket ID. Forward-auth would intercept WebAuthn and OAuth2 callback
-          # API calls and break registration/login.
-          // lib.optionalAttrs config.services.browser-history.enable {
-            "history.${domain}" = {
-              extraConfig = ''
-                ${tlsConfig}
-                ${commonConfig}
-                ${proxyTo ports.browser-history}
-              '';
-            };
-          }
-          # Attic binary cache — plain reverse proxy (no forward-auth).
-          # Nix substituters need unauthenticated read access; push requires
-          # a valid Attic token.
-          // lib.optionalAttrs (config.services.attic-config.enable or false) {
-            "cache.${domain}" = {
-              extraConfig = ''
-                ${tlsConfig}
-                ${commonConfig}
-                ${proxyTo ports.attic}
-              '';
-            };
-          }
-          # systemd-graph — LAN-bypass plain reverse_proxy (review-only tool).
-          # No auth: the D-Bus-derived graph is read-only public information.
-          // lib.optionalAttrs (config.services.systemd-graph.enable or false) {
-            "graph.${domain}" = {
-              extraConfig = ''
-                ${tlsConfig}
-                ${commonConfig}
-                ${proxyTo ports.systemd-graph}
-              '';
-            };
           }
           # systemd-timer-monitor — static HTML/JSON served by file_server
           # (no upstream daemon, the audit timer writes files into the state dir).

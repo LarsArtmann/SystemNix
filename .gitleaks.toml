@@ -37,7 +37,10 @@ keywords = ["syn_"]
   [[rules.allowlists]]
   paths = ['''(^|/)AGENTS\.md$''']
 
-[allowlist]
+# NOTE: [[allowlists]] (plural, current syntax) throughout — [allowlist]
+# (singular) is deprecated and CANNOT coexist with [[allowlists]] entries
+# (gitleaks 8.30.1 fails config load: "cannot be used alongside").
+[[allowlists]]
 description = "Allowlist for known false positives"
 paths = ['''patches\/.*\.patch$''']
 regexes = [
@@ -51,3 +54,10 @@ regexes = [
   # fixture in VM tests + session docs) — a well-known literal, not a credential
   '''01ARZ3NDEKTSV4RRFFQ69G5FAV''',
 ]
+
+# Detector-coverage fixtures (tests/fixtures/gitleaks/, consumed by the
+# gitleaks-coverage-selftest flake check): deliberate rule-shape strings,
+# not credentials. Without this, committing the fixtures trips the very
+# rules they prove.
+[[allowlists]]
+  paths = ['''(^|/)tests/fixtures/gitleaks/''']
