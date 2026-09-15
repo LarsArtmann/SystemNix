@@ -956,58 +956,6 @@ _: {
                   alerts = discordAlert "node_exporter textfile collector has parse errors — ALL textfile metrics (system_health, psi, nvme, btrfs, niri) are being silently dropped. Check each .prom file in /var/lib/prometheus-node-exporter/textfile_collectors/ for invalid syntax (e.g. [not set] poison values, bare lines). This is a meta-check: when it fires, 14+ Gatus checks go permanently RED because their underlying metrics vanish.";
                 })
               ]
-              ++ lib.optionals (config.services.backup-coordination.enable or false) [
-                (mkHttpCheck {
-                  name = "All Backups Healthy";
-                  group = "Infrastructure";
-                  url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
-                  interval = "5m";
-                  client.timeout = "10s";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[BODY] != pat(*backup_all_healthy 0\n*)"
-                    "[BODY] == pat(*\nbackup_all_healthy *)"
-                  ];
-                  alerts = discordAlert "One or more service backups are stale (>25h)";
-                })
-              ]
-              ++ lib.optionals (config.services.pocket-id-config.enable or false) [
-                (mkHttpCheck {
-                  name = "Secret Rotation Health";
-                  group = "Infrastructure";
-                  url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
-                  interval = "1h";
-                  client.timeout = "10s";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[BODY] != pat(*secret_rotation_all_fresh 0\n*)"
-                    "[BODY] == pat(*\nsecret_rotation_all_fresh *)"
-                  ];
-                  alerts = discordAlert "One or more OIDC client secrets are stale (>90d) — consider rotating";
-                })
-                # Pocket ID is the ONLY login path for the SSO-only surface
-                # (paperless since 2026-09-02 has no second login) plus every
-                # other Layer-1 app — its SQLite locking up under memory/IO
-                # pressure is a homelab-wide auth SPOF event. 2026-08-22: a
-                # fatal locked chain crashed the health check and lost a
-                # client row; 2026-09-02: 30 "database is locked" events/24h
-                # while logins still worked (degraded, not dead). Anchored
-                # patterns (real \n): scan failure = scrape_errors 1 = the
-                # other two conditions fail-closed red.
-                (mkHttpCheck {
-                  name = "Pocket ID SQLite Health";
-                  group = "Infrastructure";
-                  url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
-                  interval = "5m";
-                  client.timeout = "10s";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[BODY] == pat(*\nsystem_pocket_id_busy_scrape_errors 0\n*)"
-                    "[BODY] == pat(*\nsystem_pocket_id_busy_over_threshold 0\n*)"
-                  ];
-                  alerts = discordAlert "Pocket ID SQLite is locking up (SQLITE_BUSY storm or collector scan failed) — paperless SSO, forgejo/gatus/immich logins and every oauth2-proxy vHost are at risk. Check: journalctl -u pocket-id --since -24h --grep 'database is locked'. Collateral of memory/IO pressure (zram-full evenings); resolves when pressure drains.";
-                })
-              ]
               ++ map mkWebsiteCheck ossWebsites
               # Registry fan-out (services.integration.<name>.checks) — inside
               # the withPapIngest pass so registry endpoints get the
