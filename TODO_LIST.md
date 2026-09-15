@@ -482,3 +482,13 @@ _The sweep itself is DONE (archives 3→1 at `docs/status/archived/`, docs root 
 - [ ] **D4: History-diet paths for the HELD purge** — extend the pending `--invert-paths` list with `projects-management-automation` (57 MB), `better-claude-go` (3×23 MB binaries), `docs/architecture/Setup-Mac-Darwin.png` (20 MB), old vendored `dnsblockd` binary (11 MB) — ~130 MB of dead blobs in every clone
 - [ ] **D5: Relocate live `data/crush-daily.db` out of the worktree** — into the service StateDirectory (needs a stop window; already git-ignored via `*.db*`)
 - [ ] **D6: `flake-update.yml` validation gate** — already tracked in P1.5 (2026-09-13 mass-breakage class); listed here for the cleanup ledger only
+
+## P2: Service-integration registry migration (2026-09-14 — `docs/architecture-understanding/2026-09-14_19-56_service-orientation.html`)
+
+_The `services.integration` registry (`modules/nixos/services/integration.nix`, parallel session) + miniflux pilot (registry entry REPLACING rows in caddy/gatus-config/homepage/configuration/system-health/pocket-id, verified byte-identical across all 7 surfaces) landed 2026-09-14. The gatus pat()-lint now scans ALL module files. Remaining: migrate the other services' god-file rows into their owning modules, highest-churn first —`
+
+- [ ] **Migrate gatus-config.nix endpoints per-service into registry entries** — ~160 endpoints / 2,479 lines; move enable-gated blocks (`lib.optionals (config.services.X.enable or false)`) into each owning module's `services.integration.<name>.checks`; batch per service, verify rendered-settings set-equality per batch (miniflux diff is the reference method)
+- [ ] **Migrate homepage.nix tiles + the remaining `*Enabled` flag bindings** — each flag (searxEnabled, cvEnabled, …) disappears with its tile's move into the owning module's registry `homepage` field; `groups` derivation stays in homepage.nix
+- [ ] **Migrate caddy.nix hand-written vHosts to `services.caddy-config.extraVHosts`/registry** — hand-written blocks for enable-gated services (openseo exemption: `/api/gsc/oauth/callback` forward-auth bypass needs custom config — extend the seam or keep hand-written with a comment)
+- [ ] **Migrate backup-coordination + monitoredServices rows from configuration.nix/system-health.nix defaults into owning modules** — configuration.nix shrinks toward a pure enable manifest
+- [ ] **Migrate pocket-id.nix default-list OIDC clients (cv, paperless, forgejo, gatus, dnsblockd, browser-history, immich…) into owning modules' `oidc` fields**

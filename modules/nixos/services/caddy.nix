@@ -98,8 +98,7 @@ _: {
         '';
       };
 
-      renderVHost =
-        v: if v.layer == "protected" then protectedVHost null v.port else plainVHost v.port;
+      renderVHost = v: if v.layer == "protected" then protectedVHost null v.port else plainVHost v.port;
     in
     {
       options.services.caddy-config = {
@@ -116,7 +115,10 @@ _: {
                   description = "Backend port to proxy to (from lib/ports.nix)";
                 };
                 layer = lib.mkOption {
-                  type = lib.types.enum [ "plain" "protected" ];
+                  type = lib.types.enum [
+                    "plain"
+                    "protected"
+                  ];
                   default = "protected";
                   description = ''
                     "protected" = Layer 2 (oauth2-proxy forward-auth for external, LAN bypass) —
@@ -424,9 +426,7 @@ _: {
           }
           # Registry fan-out (services.integration.<name>.vHost) — rendered
           # through the same helpers as every hand-written vHost above.
-          // (lib.mapAttrs' (
-              sub: v: lib.nameValuePair "${sub}.${domain}" (renderVHost v)
-            ) registryVHosts);
+          // (lib.mapAttrs' (sub: v: lib.nameValuePair "${sub}.${domain}" (renderVHost v)) registryVHosts);
         };
 
         networking.firewall.allowedTCPPorts = [

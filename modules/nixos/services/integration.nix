@@ -55,10 +55,7 @@ _: {
       # (tcp://, https://, other hosts) pass through verbatim.
       checkUrl =
         name: e: check:
-        if check.url != null then
-          check.url
-        else
-          "http://127.0.0.1:${toString e.port}${check.path}";
+        if check.url != null then check.url else "http://127.0.0.1:${toString e.port}${check.path}";
 
       entryChecks = lib.concatLists (
         lib.mapAttrsToList (name: e: map (check: { inherit name e check; }) e.checks) enabledEntries
@@ -89,20 +86,18 @@ _: {
         else
           "localhost:${toString ports.signoz-otlp-http}";
 
-      homepageTile =
-        name: e:
-        {
-          name = e.homepage.name;
-          inherit (e.homepage) group;
-          href =
-            if e.homepage.href != null then
-              e.homepage.href
-            else if e.subdomain != null then
-              "https://${e.subdomain}.${domain}"
-            else
-              null;
-          inherit (e.homepage) description icon;
-        };
+      homepageTile = name: e: {
+        name = e.homepage.name;
+        inherit (e.homepage) group;
+        href =
+          if e.homepage.href != null then
+            e.homepage.href
+          else if e.subdomain != null then
+            "https://${e.subdomain}.${domain}"
+          else
+            null;
+        inherit (e.homepage) description icon;
+      };
 
       backupEntries = lib.filterAttrs (_: e: e.backup != null) enabledEntries;
       monitoredEntries = lib.filterAttrs (_: e: e.monitored) enabledEntries;
@@ -365,23 +360,21 @@ _: {
       #     only the LAST branch's services subtree, silently dropping every
       #     earlier fan-out (the serviceConfig = X // Y class at module-config
       #     level; caught live 2026-09-14 when only the pocket-id branch fired).
-      config =
-        lib.mkMerge [
+      config = lib.mkMerge [
         {
           assertions =
             let
-              dnsMissing =
-                e: e.enable && e.subdomain != null && !builtins.elem e.subdomain dnsLocalSubdomains;
-              vhostIncomplete =
-                e: e.enable && e.vHost.layer != "none" && (e.subdomain == null || e.port == null);
-              checkWithoutPort =
-                e: e.enable && builtins.any (c: c.url == null) e.checks && e.port == null;
+              dnsMissing = e: e.enable && e.subdomain != null && !builtins.elem e.subdomain dnsLocalSubdomains;
+              vhostIncomplete = e: e.enable && e.vHost.layer != "none" && (e.subdomain == null || e.port == null);
+              checkWithoutPort = e: e.enable && builtins.any (c: c.url == null) e.checks && e.port == null;
             in
             [
               {
                 assertion = lib.all (e: !dnsMissing e) (builtins.attrValues cfg);
                 message = "integration: subdomain(s) missing from platforms/common/dns-local.nix (the cross-host DNS truth served by dnsblockd AND rpi3-dns): ${
-                  lib.concatStringsSep ", " (map (e: e.subdomain) (builtins.filter dnsMissing (builtins.attrValues cfg)))
+                  lib.concatStringsSep ", " (
+                    map (e: e.subdomain) (builtins.filter dnsMissing (builtins.attrValues cfg))
+                  )
                 }";
               }
               {
@@ -418,9 +411,18 @@ _: {
         })
         (lib.optionalAttrs (options ? services.gatus-config) {
           services.gatus-config.extraEndpoints = map (
-            { name, e, check }:
+            {
+              name,
+              e,
+              check,
+            }:
             mkHttpCheck {
-              inherit (check) name group interval conditions;
+              inherit (check)
+                name
+                group
+                interval
+                conditions
+                ;
               url = checkUrl name e check;
               alerts = checkAlert name e check;
             }
@@ -458,8 +460,10 @@ _: {
           ) otelEntries;
         })
         (lib.optionalAttrs (options ? services.pocket-id-config) {
-          services.pocket-id-config.provision.extraOidcClients = lib.mapAttrsToList (_: e: e.oidc) oidcEntries;
+          services.pocket-id-config.provision.extraOidcClients = lib.mapAttrsToList (
+            _: e: e.oidc
+          ) oidcEntries;
         })
-        ];
+      ];
     };
 }

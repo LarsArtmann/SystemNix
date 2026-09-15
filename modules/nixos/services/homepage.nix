@@ -409,7 +409,11 @@ _: {
         in
         if lib.any (g: builtins.hasAttr groupName g) accGroups then
           map (
-            g: if builtins.hasAttr groupName g then { ${groupName} = builtins.getAttr groupName g ++ [ entry ]; } else g
+            g:
+            if builtins.hasAttr groupName g then
+              { ${groupName} = builtins.getAttr groupName g ++ [ entry ]; }
+            else
+              g
           ) accGroups
         else
           accGroups ++ [ { ${groupName} = [ entry ]; } ];

@@ -148,6 +148,10 @@ let
       type = lib.types.port;
       default = 8080;
     };
+    services.signoz.settings.cadvisorPort = lib.mkOption {
+      type = lib.types.port;
+      default = 8087;
+    };
     services.twenty.port = lib.mkOption {
       type = lib.types.port;
       default = 8081;
@@ -167,6 +171,10 @@ let
     services.dns-blocker.statsPort = lib.mkOption {
       type = lib.types.port;
       default = 8086;
+    };
+    services.dns-blocker.blockIP = lib.mkOption {
+      type = lib.types.str;
+      default = "0.0.0.0";
     };
   };
 

@@ -676,6 +676,7 @@ serviceConfig = lib.mkMerge [
 
 - **`mkMerge` on flake-parts top-level `config`** — Does NOT work; use inline config or imports. `mkMerge` on `serviceConfig` inside `systemd.services.<name>` IS safe.
 - **`//` on `serviceConfig` discards priority** — Shallow merge clobbers `mkDefault`/`mkForce`. Always use `lib.mkMerge [...]`. Enforced: `scripts/audit-serviceconfig-merge.sh` (pre-commit + CI, selftesting) rejects `serviceConfig = X // Y` source lines
+- **`//` between module-config branches that share the `services` key keeps ONLY the last branch** (2026-09-14, integration.nix): `config = { ... } // optionalAttrs (...) { services.a.x = …; } // optionalAttrs (...) { services.b.y = …; }` is a SHALLOW merge — every branch carries the top-level `services` key, so all fan-outs except the LAST silently vanish (live: only the pocket-id branch fired; miniflux's vHost/checks/tile/backup/monitoring went dark while evals stayed green). Same class as the `serviceConfig = X // Y` rule, one level up. Combine cross-module config branches with `lib.mkMerge [ base (lib.optionalAttrs (options ? services.a) {…}) … ]` — never a `//` chain
 - **`with pkgs;` hides missing attrs** — Falls through to enclosing scope on missing attrs. Use explicit `pkgs.` prefixes.
 - **`buildGoModule` silently drops unknown `env` attrs** — Only forwards a whitelist (`CGO_ENABLED`, `GOWORK`, etc.). Use `export VAR=value` in `preBuild` for anything else.
 - **`buildGoDir` swallows build-constraint errors** — Returns 0 with empty output. Add post-build assertion that `$out/bin/` is non-empty.

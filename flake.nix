@@ -948,9 +948,7 @@
               # method = "..." outside gatus-config.nix is not a gatus value.
               gatus-pattern-lint =
                 let
-                  gatusFiles = lib.filter (lib.hasSuffix ".nix") (
-                    lib.filesystem.listFilesRecursive ./modules/nixos
-                  );
+                  gatusFiles = lib.filter (lib.hasSuffix ".nix") (lib.filesystem.listFilesRecursive ./modules/nixos);
                 in
                 pkgs.runCommand "gatus-pattern-lint" { } ''
                   files="${lib.concatStringsSep " " gatusFiles}"
