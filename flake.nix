@@ -1421,13 +1421,20 @@
               # claim was wrong twice — this selftest's first run caught it):
               # (1) `sq0atp-` keys the SQUARE access-token rule, NOT
               # sourcegraph-access-token; (2) sourcegraph-access-token's
-              # bare-40-hex alternative fires only with a rule keyword
-              # (sgp_/sourcegraph) in the chunk — bare hex WITHOUT keywords
-              # stays clean at ANY entropy, so the retracted row-357 premise
-              # ("bare SHAs never trip gitleaks") was directionally right but
-              # keyword-scoped. Fixtures live in tests/fixtures/gitleaks/
-              # (allowlisted in .gitleaks.toml — they are rule-shape strings,
-              # not credentials); gitleaks entropy gates need realistic
+              # bare-40-hex alternative fired with a rule keyword
+              # (sgp_/sourcegraph) ANYWHERE in the file — that class
+              # false-positived on flake.nix's ~15 `github:` rev pins
+              # (2026-09-16: 17 findings blocking every hooked commit), so
+              # .gitleaks.toml now OVERRIDES the rule to sgp_-prefixed
+              # shapes only; the keyword-armed bare-hex positive became a
+              # NEGATIVE (negative-hex-with-keyword.txt) and
+              # positive-sourcegraph-local.txt covers the override's
+              # sgp_local_ alternative. Fixtures live in
+              # tests/fixtures/gitleaks/ with NO path allowlist — gitleaks
+              # skips allowlisted paths at the WALKER level (a real token
+              # pasted into an allowlisted file would be invisible), so the
+              # fixtures must stay clean under the repo config on their
+              # own; gitleaks entropy gates need realistic
               # literals (an all-'a' token passes the regex but dies at
               # entropy ≥2 — the original failure of this selftest).
               # Fixture tokens are TEMPLATES, never literals: @HEX40@ is
@@ -1456,7 +1463,7 @@
                 }
                 expect_detect "positive-square.txt" "the sq0atp- Square access-token rule"
                 expect_detect "positive-sourcegraph.txt" "the sgp_ sourcegraph access-token rule"
-                expect_detect "positive-hex-with-keyword.txt" "bare 40-hex gated by the sourcegraph keyword"
+                expect_detect "positive-sourcegraph-local.txt" "the sgp_local_ sourcegraph access-token alternative"
                 expect_clean() {
                   local fixture="$1" label="$2" d
                   d=$(mktemp -d "$work/d.XXXXXX")
@@ -1476,7 +1483,8 @@
                 }
                 expect_clean "negative-bare-hex.txt" "bare low-entropy 40-hex git SHA"
                 expect_clean "negative-hex-no-keyword.txt" "HIGH-entropy 40-hex without rule keywords"
-                echo "gitleaks coverage: 3 positive classes detected, 2 negative classes clean"
+                expect_clean "negative-hex-with-keyword.txt" "bare 40-hex with rule keywords (sourcegraph rule overridden — the rev-pin false-positive class)"
+                echo "gitleaks coverage: 3 positive classes detected, 3 negative classes clean"
                 touch $out
               '';
 
