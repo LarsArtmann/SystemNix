@@ -117,6 +117,13 @@ in
     machine.wait_for_unit("multi-user.target")
     machine.wait_for_unit("crush-hot-db-migrate.service")
 
+    rc, out = machine.execute("ls -la /home/ /home/lars/ /home/lars/projects")
+    print(f"DEBUG home: {out}")
+    rc, out = machine.execute("journalctl -u crush-hot-db-fixture -o cat --no-pager | tail -n 15")
+    print(f"DEBUG fixture journal: {out}")
+    rc, out = machine.execute("systemctl cat crush-hot-db-fixture.service")
+    print(f"DEBUG fixture unit: {out}")
+
     # ---- Regressions 1: is-enabled (deploy.sh provisioner loop gate) ----
     machine.succeed(
         'test "$(systemctl is-enabled crush-hot-db-migrate.service)" = enabled'
