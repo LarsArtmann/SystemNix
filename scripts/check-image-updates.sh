@@ -45,12 +45,20 @@ current_tag_digest() {
 }
 
 latest_semver_tag() {
-  # Highest x.y.z tag published for a repo
-  hub "$1" "tags?page_size=100&name=" |
-    jq -r '.results[].name' |
-    grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' |
-    sort_versions |
-    tail -1
+  # Highest x.y.z tag published for a repo. Hub tags come back ordered by
+  # last_updated (NOT version) and page 1 caps at 100 — an active repo's
+  # releases can fall off page 1 entirely, making a STALE tag look "latest"
+  # (postgres/immich publish hundreds). Walk up to 5 pages (500 tags).
+  local repo="$1" collected="" page names next url="tags?page_size=100&name="
+  for _ in 1 2 3 4 5; do
+    page=$(hub "$repo" "$url") || break
+    names=$(printf '%s' "$page" | jq -r '.results[].name // empty' 2>/dev/null || true)
+    [ -n "$names" ] && collected="${collected}${names}"$'\n'
+    next=$(printf '%s' "$page" | jq -r '.next // empty' 2>/dev/null || true)
+    [ -n "$next" ] || break
+    url="${next#*/${repo}/}"
+  done
+  printf '%s' "$collected" | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | sort_versions | tail -1
 }
 
 failures=0
@@ -108,6 +116,12 @@ flush
 
 echo
 echo "Checked: $checked, failures: $failures"
+# checked==0 must FAIL: a parser drift (images.nix format change) used to
+# exit 0 while validating NOTHING.
+if [ "$checked" -eq 0 ]; then
+  echo "ERROR: checked NOTHING — images.nix parse drift? (no 'image = \"…\"' lines in $IMAGES_NIX)"
+  exit 1
+fi
 if [ "$failures" -gt 0 ]; then
   echo "Bump lib/images.nix (see docs: images must always be on latest)."
   exit 1
