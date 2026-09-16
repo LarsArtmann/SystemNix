@@ -400,6 +400,28 @@ if test -e /etc/systemd/system/browser-history-agent.service; then
   fi
 fi
 
+# Browser History: agent-activity collector textfile must be fresh and clean
+# (the "Browser History Agent Data" Gatus check pats browser_history_agents_active
+# here). scrape_errors=1 or an absent active metric = collector broken — the
+# zero-agents alert would be flying blind. deploy.sh runs the unit post-switch,
+# so the textfile is fresh at this point (a stale file would mean the unit
+# failed after that run).
+_bham_prom=/var/lib/prometheus-node-exporter/textfile_collectors/browser-history-agent.prom
+if systemctl cat browser-history-agent-metrics.service >/dev/null 2>&1; then
+  if [ -f "$_bham_prom" ]; then
+    if grep -q '^browser_history_agent_scrape_errors 0$' "$_bham_prom" &&
+      grep -q '^browser_history_agents_active [0-9]' "$_bham_prom"; then
+      report_pass "Browser History — agent-activity collector healthy ($(grep -E '^browser_history_agents_(active|last_ingest_age_seconds) ' "$_bham_prom" | tr '\n' ' '))"
+    else
+      report_fail "Browser History — agent-activity flags degraded in $_bham_prom: $(grep -E '^browser_history_agent_(scrape_errors|tokens_total|agents_active) ' "$_bham_prom" | tr '\n' ' ') — check journalctl -u browser-history-agent-metrics"
+    fi
+  else
+    report_fail "Browser History — agent-activity textfile missing (browser-history-agent-metrics unit failing; the zero-agents alert is blind)"
+  fi
+else
+  report_skip "Browser History — agent-activity collector not deployed (agentActivity disabled or old generation)"
+fi
+
 # Paperless: the login page BODY proves the full Django + PostgreSQL + redis
 # stack answers, not just the port. In the 2026-08-18 PG bootstrap incident a
 # stale src-version file made the scheduler skip `migrate`, it crash-looped on
