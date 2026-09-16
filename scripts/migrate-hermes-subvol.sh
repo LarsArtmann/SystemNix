@@ -107,19 +107,19 @@ cmd_prepare() {
   if [ -e "$DST" ]; then
     local first_entry
     first_entry=$(find "$DST" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null || true)
-    if [ -z "$first_entry" ]; then
-      warn "$DST exists but is EMPTY (aborted prepare — e.g. the 2026-09-16 rsync --reflink abort) — reusing it"
-    else
-      die "$DST already exists and is NOT empty (leftover from an aborted prepare?). Inspect it, then:
+    [ -z "$first_entry" ] || die "$DST already exists and is NOT empty (leftover from an aborted prepare?). Inspect it, then:
   sudo btrfs subvolume delete $DST"
-    fi
   fi
   if [ -e "$OLD" ]; then
     die "$OLD already exists — a previous prepare got interrupted mid-swap. Inspect both dirs before continuing."
   fi
 
-  info "creating subvolume $DST"
-  btrfs subvolume create "$DST"
+  if [ ! -e "$DST" ]; then
+    info "creating subvolume $DST"
+    btrfs subvolume create "$DST"
+  else
+    warn "$DST exists and is EMPTY (aborted prepare — e.g. the 2026-09-16 rsync --reflink abort) — reusing it"
+  fi
 
   info "seed pass 1/2 (hermes may keep running; plain copy, ~1 GB)"
   rsync -aHAX --info=stats2 "$SRC/" "$DST/"
