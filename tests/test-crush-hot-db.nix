@@ -86,13 +86,16 @@ let
         "$projects/deep/group/repo/.crush/crush.db"
     '';
   };
-  # A real binary NAMED `crush`: pgrep -x matches comm = basename of the
-  # executed file. coreutils' sleep CANNOT be copied under another name —
-  # nixpkgs builds it as a multi-call dispatcher that fails "unknown
-  # program" exit 1 when executed as `crush` (which is what silently
-  # emptied the first two committed runs' guard windows).
+  # A real binary whose PROCESS NAME (comm) is `crush`: pgrep -x matches
+  # comm, which the kernel seeds from the BASENAME of the executed path —
+  # a store path's basename is `<hash>-crush`, never `crush` — so the
+  # binary sets its own name via prctl(PR_SET_NAME). coreutils' sleep
+  # cannot be copied under another name either: nixpkgs builds it as a
+  # multi-call dispatcher that fails "unknown program" exit 1 when
+  # executed as `crush` (this emptied the first two committed runs'
+  # guard windows).
   crushFakeBin = pkgs.runCommand "crush" { nativeBuildInputs = [ pkgs.stdenv.cc ]; } ''
-    printf '#include <unistd.h>\nint main(void){for(;;)pause();}\n' > main.c
+    printf '#include <unistd.h>\n#include <sys/prctl.h>\nint main(void){prctl(PR_SET_NAME, "crush", 0, 0, 0);for(;;)pause();}\n' > main.c
     cc -O0 -o $out main.c
   '';
 in
