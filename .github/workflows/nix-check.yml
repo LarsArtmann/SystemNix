@@ -26,20 +26,25 @@ jobs:
             # Fallback keeps current behavior until the secret exists.
             access-tokens = github.com=${{ secrets.NIX_GITHUB_RO_TOKEN || secrets.GITHUB_TOKEN }}
 
-      # Private flake inputs (CV, go-cqrs-lite — both git+ssh) need deploy
-      # keys; the public go-nix-helpers input rides a git+ssh URL too (also
+      # Private flake inputs (CV, go-cqrs-lite, branching-flow,
+      # file-and-image-renamer, BuildFlow — all git+ssh) need deploy keys;
+      # the public go-nix-helpers input rides a git+ssh URL too (also
       # transitively through go-cqrs-lite), so rewrite that repo to
-      # anonymous HTTPS instead of a third deploy key.
+      # anonymous HTTPS instead of a deploy key.
       - name: Configure private flake-input auth
         env:
           NIX_DEPLOY_KEY_CV: ${{ secrets.NIX_DEPLOY_KEY_CV }}
           NIX_DEPLOY_KEY_GO_CQRS_LITE: ${{ secrets.NIX_DEPLOY_KEY_GO_CQRS_LITE }}
           NIX_DEPLOY_KEY_BRANCHING_FLOW: ${{ secrets.NIX_DEPLOY_KEY_BRANCHING_FLOW }}
+          NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER: ${{ secrets.NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER }}
+          NIX_DEPLOY_KEY_BUILDFLOW: ${{ secrets.NIX_DEPLOY_KEY_BUILDFLOW }}
         run: |
           eval "$(ssh-agent -s)" >/dev/null
           printf '%s\n' "$NIX_DEPLOY_KEY_CV" | ssh-add -
           printf '%s\n' "$NIX_DEPLOY_KEY_GO_CQRS_LITE" | ssh-add -
           printf '%s\n' "$NIX_DEPLOY_KEY_BRANCHING_FLOW" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_BUILDFLOW" | ssh-add -
           git config --global url."https://github.com/LarsArtmann/go-nix-helpers".insteadOf "git@github.com:LarsArtmann/go-nix-helpers"
           echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
           echo "GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new" >> "$GITHUB_ENV"
@@ -196,11 +201,15 @@ jobs:
           NIX_DEPLOY_KEY_CV: ${{ secrets.NIX_DEPLOY_KEY_CV }}
           NIX_DEPLOY_KEY_GO_CQRS_LITE: ${{ secrets.NIX_DEPLOY_KEY_GO_CQRS_LITE }}
           NIX_DEPLOY_KEY_BRANCHING_FLOW: ${{ secrets.NIX_DEPLOY_KEY_BRANCHING_FLOW }}
+          NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER: ${{ secrets.NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER }}
+          NIX_DEPLOY_KEY_BUILDFLOW: ${{ secrets.NIX_DEPLOY_KEY_BUILDFLOW }}
         run: |
           eval "$(ssh-agent -s)" >/dev/null
           printf '%s\n' "$NIX_DEPLOY_KEY_CV" | ssh-add -
           printf '%s\n' "$NIX_DEPLOY_KEY_GO_CQRS_LITE" | ssh-add -
           printf '%s\n' "$NIX_DEPLOY_KEY_BRANCHING_FLOW" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_BUILDFLOW" | ssh-add -
           git config --global url."https://github.com/LarsArtmann/go-nix-helpers".insteadOf "git@github.com:LarsArtmann/go-nix-helpers"
           echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
           echo "GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new" >> "$GITHUB_ENV"

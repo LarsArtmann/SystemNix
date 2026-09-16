@@ -253,9 +253,15 @@
 
     # file-and-image-renamer — AI-powered screenshot renaming tool
     file-and-image-renamer = {
-      # INTERIM local pin (do NOT flip to github: until upstream carries the
-      # vendorHash refresh forced by the go-nix-helpers /vN fix — commit 494c9b7).
-      url = "git+file:///home/lars/projects/file-and-image-renamer?rev=494c9b7a0a80bdda3a2cb31a4b8c8f2ee315f8f3";
+      # Was INTERIM `git+file:///home/lars/projects/file-and-image-renamer` -
+      # a local-path pin that broke every CI eval (same class as art-dupl,
+      # 2026-09-15). Flip condition satisfied: commit 494c9b7 (the vendorHash
+      # refresh forced by the go-nix-helpers /vN fix) is origin/master HEAD
+      # (verified via branches-where-head, 2026-09-16). git+ssh fetches on CI
+      # via the NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER read-only deploy key;
+      # ref+rev keeps the pin exact as master moves. Locked narHash
+      # unchanged vs the local pin (verified on flip).
+      url = "git+ssh://git@github.com/LarsArtmann/file-and-image-renamer?ref=refs/heads/master&rev=494c9b7a0a80bdda3a2cb31a4b8c8f2ee315f8f3";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
       # Without this, the input locks its own go-nix-helpers via git+ssh:
@@ -352,11 +358,15 @@
       flake = false;
     };
     go-nix-helpers = {
-      # INTERIM local pin (do NOT flip to github: until upstream carries the
-      # /vN pseudo-version normalization fix — worktree commit 8c87f26).
-      url = "git+file:///home/lars/worktrees/go-nix-helpers-vnfix?rev=8c87f2654f546bcf22a302833cf0f5d2dfe30ea2";
+      # Was INTERIM `git+file:///home/lars/worktrees/go-nix-helpers-vnfix` -
+      # the /vN pseudo-version normalization fix (8c87f26) now lives on the
+      # pushed branch `systemnix-vn-version-fix` (public repo, rev verified
+      # on GitHub 2026-09-16). Tarball fetch needs no auth (public repo,
+      # no deploy key); CI's insteadOf rewrite keeps covering the transitive
+      # git+ssh copies. Branch rev stays pinned until master carries the fix.
       # project-meta consumes go-nix-helpers.flakeModules.go-standard, so this
       # must remain a flake input even though Go libraries are the primary use.
+      url = "github:LarsArtmann/go-nix-helpers/8c87f2654f546bcf22a302833cf0f5d2dfe30ea2";
     };
 
     # golangci-lint-auto-configure — auto-configure golangci-lint for Go projects
@@ -395,10 +405,14 @@
 
     # BuildFlow — Zero-configuration build automation for Go projects
     buildflow = {
-      # INTERIM: git+file pin — 9d11c8fee fixes a stale vendorHash upstream
-      # (rev 56dc3660 fails every consumer with a go-modules hash mismatch).
-      # Flip back to github:LarsArtmann/BuildFlow?ref=master once pushed.
-      url = "git+file:///home/lars/projects/BuildFlow?rev=9d11c8fee7c7be6b62e7bc62130a6cf7e397ad83";
+      # Was INTERIM `git+file:///home/lars/projects/BuildFlow` - a local-path
+      # pin that broke every CI eval. 9d11c8fee (the stale-vendorHash fix;
+      # rev 56dc3660 fails every consumer with a go-modules hash mismatch) is
+      # now origin/master HEAD (verified identical via compare API,
+      # 2026-09-16). git+ssh fetches on CI via the NIX_DEPLOY_KEY_BUILDFLOW
+      # read-only deploy key; ref+rev keeps the pin exact as master moves.
+      # Locked narHash unchanged vs the local pin (verified on flip).
+      url = "git+ssh://git@github.com/LarsArtmann/BuildFlow?ref=refs/heads/master&rev=9d11c8fee7c7be6b62e7bc62130a6cf7e397ad83";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";

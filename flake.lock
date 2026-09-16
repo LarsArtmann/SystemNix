@@ -261,12 +261,13 @@
         "rev": "9d11c8fee7c7be6b62e7bc62130a6cf7e397ad83",
         "revCount": 6018,
         "type": "git",
-        "url": "file:///home/lars/projects/BuildFlow"
+        "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
       "original": {
+        "ref": "refs/heads/master",
         "rev": "9d11c8fee7c7be6b62e7bc62130a6cf7e397ad83",
         "type": "git",
-        "url": "file:///home/lars/projects/BuildFlow"
+        "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       }
     },
     "clipboard-monitor": {
@@ -959,12 +960,13 @@
         "rev": "494c9b7a0a80bdda3a2cb31a4b8c8f2ee315f8f3",
         "revCount": 1171,
         "type": "git",
-        "url": "file:///home/lars/projects/file-and-image-renamer"
+        "url": "ssh://git@github.com/LarsArtmann/file-and-image-renamer"
       },
       "original": {
+        "ref": "refs/heads/master",
         "rev": "494c9b7a0a80bdda3a2cb31a4b8c8f2ee315f8f3",
         "type": "git",
-        "url": "file:///home/lars/projects/file-and-image-renamer"
+        "url": "ssh://git@github.com/LarsArtmann/file-and-image-renamer"
       }
     },
     "flake-compat": {
@@ -3963,16 +3965,16 @@
       "locked": {
         "lastModified": 1789306088,
         "narHash": "sha256-hjKKTX4Q2TxMBxius45X5WpCgFnx6DD1W56Ps2X0EMQ=",
-        "ref": "refs/heads/systemnix-vn-version-fix",
+        "owner": "LarsArtmann",
+        "repo": "go-nix-helpers",
         "rev": "8c87f2654f546bcf22a302833cf0f5d2dfe30ea2",
-        "revCount": 156,
-        "type": "git",
-        "url": "file:///home/lars/worktrees/go-nix-helpers-vnfix"
+        "type": "github"
       },
       "original": {
+        "owner": "LarsArtmann",
+        "repo": "go-nix-helpers",
         "rev": "8c87f2654f546bcf22a302833cf0f5d2dfe30ea2",
-        "type": "git",
-        "url": "file:///home/lars/worktrees/go-nix-helpers-vnfix"
+        "type": "github"
       }
     },
     "go-nix-helpers_5": {
