@@ -23,6 +23,7 @@
     {
       config,
       lib,
+      pkgs,
       ...
     }:
     let
@@ -46,7 +47,8 @@
           type = lib.types.str;
           default = "/home/${primaryUser}/projects";
           defaultText = lib.literalExpression ''"/home/${primaryUser}/projects"'';
-          description = "Directory whose immediate children carry `.crush/` session dirs.";
+          description =
+            "Directory tree scanned for `.crush/` session dirs (any checkout down to depth 3, e.g. `<dir>/group/repo`.";
         };
       };
 
@@ -58,6 +60,16 @@
           # deploy-time restart silently never happens (dnsblockd-bridge trap).
           wantedBy = [ "multi-user.target" ];
           unitConfig.RequiresMountsFor = [ cfg.mountPoint ];
+          # List EVERY binary the script execs: the default unit PATH
+          # (coreutils/findutils/gnugrep/gnused/systemd) has NO flock
+          # (util-linux) and NO pgrep (procps) — the awk phantom-binary
+          # class (btrfs-verify-pool-backups 2026-08-18 lesson).
+          path = [
+            pkgs.coreutils
+            pkgs.findutils
+            pkgs.util-linux
+            pkgs.procps
+          ];
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
@@ -112,11 +124,22 @@
             mkdir -p "$dest"
             chown ${primaryUser}:users "$dest"
 
+            # Bounded-depth find covers NESTED checkouts too
+            # ($projects/<group>/<repo>/.crush — archived/*, games/* — 35
+            # nested dirs the old top-level-only glob left on the QLC root).
+            # -prune: never descend into a matched .crush (session DBs are
+            # huge; nothing nests inside a session dir). -type d does not
+            # match the already-migrated symlinks. NUL-delimited mapfile:
+            # checkout names may contain spaces.
+            mapfile -d "" -t crushDirs < <(
+              find "$projects" -mindepth 1 -maxdepth 3 -type d -name .crush -prune -print0 | sort -z
+            )
+
             migrated=0
-            for d in "$projects/.crush" "$projects"/*/.crush; do
+            for d in "''${crushDirs[@]}"; do
               # -d follows symlinks: an already-migrated project matches and is
-              # skipped; the -L guard is belt-and-suspenders for the literal
-              # glob when nothing matches (nullglob-off shell).
+              # skipped; the -L guard is belt-and-suspenders for a race between
+              # find and the loop.
               if [ ! -d "$d" ] || [ -L "$d" ]; then
                 continue
               fi
@@ -136,6 +159,13 @@
               if [ -e "$target" ]; then
                 echo "skip $name: target $target already exists (manual merge needed)"
                 continue
+              fi
+              # Nested names carry slashes (group/repo): the parent hierarchy
+              # must exist before mv (root-owned intermediates stay traversable).
+              parent="$(dirname "$target")"
+              if [ ! -d "$parent" ]; then
+                mkdir -p "$parent"
+                chown ${primaryUser}:users "$parent"
               fi
               if mv "$d" "$target" && ln -s "$target" "$d"; then
                 echo "migrated $name → $target"
