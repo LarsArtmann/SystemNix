@@ -28,6 +28,16 @@
 # fileSystems silently vanish in VM tests, test-cv 2026-09-02); the module's
 # RequiresMountsFor orders the migrate unit after the mount, exactly as the
 # Samsung by-label mount does on evo-x2.
+#
+# The test itself caught a fourth boot-only defect: the module's Persistent
+# timer elapses at BOOT (catch-up, timers.target phase — before the
+# multi-user transaction) and starts the migrate unit as a fresh job that
+# does NOT inherit any multi-user-transaction ordering. A boot-time fixture
+# ordered only Before=multi-user.target therefore RACED the first migrate
+# run (coin-flip: `find: /home/lars/projects: No such file or directory`).
+# The dependency is expressed on the consumer unit (wants/after): unit-level
+# ordering applies to EVERY start job regardless of trigger, so the timer's
+# catch-up job waits for the fixture too.
 { pkgs }:
 let
   # The flake-parts wrapper form: the file evaluates to
@@ -37,7 +47,7 @@ let
   crushHotDbModule =
     (import ../modules/nixos/services/crush-hot-db.nix).flake.nixosModules.crush-hot-db;
 
-  # Fixture tree created BEFORE the migrate unit starts (Before= ordering):
+  # Fixture tree created BEFORE the migrate unit starts (After= ordering):
   # the unit's ReadWritePaths on /home/lars/projects aborts 226/NAMESPACE if
   # the path does not exist at namespace setup — the ordering IS part of the
   # regression. Every crush.db except `recent` is backdated out of the
@@ -109,9 +119,12 @@ in
         };
       };
 
-      systemd.services.crush-hot-db-migrate = { };
-      systemd.services.crush-hot-db-migrate.serviceConfig.ExecStartPost =
-        "/run/current-system/sw/bin/sh -c 'stat /home/lars/projects && /run/current-system/sw/bin/ls /home/lars/'";
+      # Unit-level ordering: the fixture precedes EVERY migrate start job,
+      # including the Persistent timer's boot catch-up (see header).
+      systemd.services.crush-hot-db-migrate = {
+        wants = [ "crush-hot-db-fixture.service" ];
+        after = [ "crush-hot-db-fixture.service" ];
+      };
 
       services.crush-hot-db.enable = true;
     };
@@ -120,33 +133,6 @@ in
     machine.start()
     machine.wait_for_unit("multi-user.target")
     machine.wait_for_unit("crush-hot-db-migrate.service")
-
-    rc, out = machine.execute("ls -la /home/ /home/lars/ /home/lars/projects")
-    print(f"DEBUG home: {out}")
-    rc, out = machine.execute("journalctl -u crush-hot-db-fixture -o cat --no-pager | tail -n 15")
-    print(f"DEBUG fixture journal: {out}")
-    rc, out = machine.execute("systemctl cat crush-hot-db-fixture.service")
-    print(f"DEBUG fixture unit: {out}")
-    rc, out = machine.execute("systemctl cat crush-hot-db-migrate.service")
-    print(f"DEBUG migrate unit: {out}")
-    rc, out = machine.execute("systemctl restart crush-hot-db-migrate.service; journalctl -u crush-hot-db-migrate -o cat --no-pager | tail -n 4")
-    print(f"DEBUG migrate rerun: {out}")
-    caps = "'CapabilityBoundingSet=CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE'";
-    fullns = "-p PrivateTmp=true -p ProtectSystem=full -p ProtectHome=read-only -p ReadWritePaths=/mnt/hot -p ReadWritePaths=/home/lars/projects";
-    unit_path = machine.succeed(
-        "systemctl show -p ExecStart --value crush-hot-db-migrate.service | awk '{print $1}'"
-    ).strip()
-    print(f"DEBUG unit_path=[{unit_path}]")
-    findutils = machine.succeed("ls -d /nix/store/*-findutils-*/bin | head -1").strip()
-    probes = [
-        ("unit-find bare", f"{findutils}/find /home/lars/projects -maxdepth 0"),
-        ("unit-find fullns+caps", f"{fullns} -p {caps} {findutils}/find /home/lars/projects -maxdepth 0"),
-        ("wrapper bare", f"{unit_path}"),
-        ("wrapper fullns+caps", f"{fullns} -p {caps} {unit_path}"),
-    ]
-    for label, cmd in probes:
-        rc, out = machine.execute(f"systemd-run --wait --pipe {cmd} 2>&1")
-        print(f"DEBUG bisect4 [{label}] rc={rc}: {out}")
 
     # ---- Regressions 1: is-enabled (deploy.sh provisioner loop gate) ----
     machine.succeed(
