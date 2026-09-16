@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # ─────────────────────────────────────────────────────────────────────────────
 # Smart direnv extensions for LarsArtmann projects.
 #
