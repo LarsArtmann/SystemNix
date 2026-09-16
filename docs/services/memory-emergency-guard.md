@@ -24,9 +24,9 @@ A 30-second oneshot (`memory-emergency-guard.timer` → `memory-emergency-guard.
 On a Zone 6 trip the guard stops:
 
 - `fastflowlm.socket` + `fastflowlm.service` — restored automatically by the guard (budget permitting).
-- `btrbk-root.service`, `btrbk-data.service`, `btrbk-pool.service`, `btrfs-balance-metadata.service`, `btrfs-balance-data.service`, `btrfs-scrub--.service`, `btrfs-scrub-data.service`, `btrfs-scrub-mnt-pool.service` — **NEVER restarted by the guard.** Their own timers re-fire them once I/O drains. btrbk resumes incrementally from the newest common snapshot (no manual re-seed ever needed — the DAS-outage semantics); an interrupted receive is healed by `btrbk-pool-clean`.
+- `btrbk-root.service`, `btrbk-data.service`, `btrbk-pool.service`, `btrfs-balance-metadata.service`, `btrfs-balance-data.service`, `btrfs-scrub--.service`, `btrfs-scrub-data.service`, `btrfs-scrub-mnt-pool.service` — **RE-ARMED by the guard automatically** once sustained io PSI drains (some avg60 < 40, the Zone 6 trip threshold): on the first tick under the threshold the guard `systemctl start`s exactly the units it recorded stopping, counts the re-arm in `memory_emergency_guard_churn_rearms_total`, and clears the churn-window metrics. Without the re-arm a mid-receive stop pushed the nightly btrbk send a full +24h (the timer had already fired), and a second storm in the 3-day freshness window FAILED the backup check (2026-09-16 23:00 trip #299 class). Each unit's own pre-start guards decide whether it is safe to run; a relapse re-trips within one 30 s tick. btrbk resumes incrementally from the newest common snapshot (no manual re-seed ever needed — the DAS-outage semantics); an interrupted receive is healed by `btrbk-pool-clean`.
 
-**How to re-arm btrbk early** (before its next timer window):
+**How to re-arm btrbk manually** (only if the guard itself is wedged/dead and you need the send now):
 
 ```bash
 sudo systemctl start btrbk-root.service btrbk-data.service btrbk-pool.service
