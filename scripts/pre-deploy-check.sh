@@ -3,6 +3,20 @@
 # Run: nix run .#pre-deploy-check
 set -euo pipefail
 
+# Repo-anchoring: several checks below read repo-relative files
+# (modules/nixos/services/gatus-config.nix, lib/ports.nix, flake.lock). Run
+# from any other cwd those greps silently match nothing and the gate goes
+# PHANTOM GREEN. Anchor to the repo checkout when this file is a checkout
+# copy; for the store wrapper (no repo files next to the binary) require a
+# repo-looking cwd and fail LOUD otherwise.
+_BS_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+if [ -f "${_BS_DIR}/../flake.nix" ] && [ -d "${_BS_DIR}/../modules" ]; then
+  cd "${_BS_DIR}/.."
+elif [ ! -f flake.nix ] || [ ! -d modules ]; then
+  echo "ERROR: run from the SystemNix repo (or via nix run .#pre-deploy-check with the repo as cwd) — repo-relative config files are unreachable from this cwd" >&2
+  exit 2
+fi
+
 PASS=0
 FAIL=0
 WARN=0
@@ -243,7 +257,7 @@ if [ "$SECTION10_ONLY" != true ]; then
   BUILDS_DIR="/nix/var/nix/builds"
   STALE_BUILDS=0
   if [ -d "$BUILDS_DIR" ]; then
-    STALE_BUILDS=$(find "$BUILDS_DIR" -maxdepth 1 -type d -name 'nix-*' -mmin +60 2>/dev/null | wc -l)
+    STALE_BUILDS=$(find "$BUILDS_DIR" -maxdepth 1 -type d -name 'nix-*' -mmin +60 2>/dev/null | wc -l || echo 0)
   fi
   if [ "$ROOT_AVAIL_GB" -lt 5 ]; then
     fail "Root filesystem has only ${ROOT_AVAIL_GB}G free (${ROOT_PCT}%) — deploying risks emergency shell. Free space before deploying"
