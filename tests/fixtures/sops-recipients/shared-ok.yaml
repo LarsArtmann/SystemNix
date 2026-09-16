@@ -6,7 +6,7 @@ sops:
             -----BEGIN AGE ENCRYPTED FILE-----
             Zm9vYmFy
             -----END AGE ENCRYPTED FILE-----
-        - recipient: age1bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+        - recipient: age1bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
             Zm9vYmFy

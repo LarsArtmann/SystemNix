@@ -81,7 +81,11 @@
           # items inside the chunk are its recipients. All other lines are
           # ignored, so the keys: block (which precedes any rule) is inert.
           ruleStart = l: builtins.match "[[:space:]]*- path_regex:[[:space:]]*([^[:space:]]+)" l;
-          ruleRef = l: builtins.match "[[:space:]]*- ([^[:space:]]+)" l;
+          # Only recipient-bearing items: `*anchor` refs and literal age keys.
+          # The trailing-colon exclusion keeps key_groups structure keys
+          # (`- age:`, `- pgp:`) out of refs — the 2026-09-16 false-positive
+          # class where every file was "missing recipient age:".
+          ruleRef = l: builtins.match "[[:space:]]*- (\\*?[A-Za-z0-9_-]+|${ageRecipient})" l;
 
           foldState = builtins.foldl' (
             state: l:
@@ -119,15 +123,25 @@
 
           rawRules = foldState.rules ++ (lib.optional (foldState.cur != null) foldState.cur);
 
+          # A ref is a RECIPIENT only when it is an anchor (`*name`) or a
+          # literal age key — the `ruleRef` line-matcher also captures the
+          # STRUCTURAL items of the nested `key_groups: - age:` shape (e.g.
+          # the literal `age:`), which must NOT count as recipients (every
+          # real file was flagged "MISSING recipients age:" before this filter).
+          isRecipientRef = ref: lib.hasPrefix "*" ref || builtins.match "${ageRecipient}" ref != null;
+
           # Refs to age recipients; `*anchor` refs resolve via the keys: block.
           resolvedRules = map (rule: {
             inherit (rule) regex;
+            recipientRefs = builtins.filter isRecipientRef rule.refs;
             recipients = builtins.filter (r: r != null) (
-              map (ref: if lib.hasPrefix "*" ref then anchors.${lib.removePrefix "*" ref} or null else ref) rule.refs
+              map (ref: if lib.hasPrefix "*" ref then anchors.${lib.removePrefix "*" ref} or null else ref) (
+                builtins.filter isRecipientRef rule.refs
+              )
             );
             unresolved = builtins.filter (
               ref: lib.hasPrefix "*" ref && !(anchors ? ${lib.removePrefix "*" ref})
-            ) rule.refs;
+            ) (builtins.filter isRecipientRef rule.refs);
           }) rawRules;
 
           regexesParse = builtins.all (
