@@ -71,8 +71,15 @@
               # rename over the project's dir + symlink swap (harden{}'s empty
               # bounding set would EPERM both — tq-storage-dir precedent).
               CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
+              # The MOUNT ROOT — never the ${mountPoint}/crush subdir:
+              # ReadWritePaths paths must exist BEFORE the unit starts
+              # (systemd builds the mount namespace before any ExecStart;
+              # a missing entry aborts 226/NAMESPACE and the script's own
+              # mkdir can never create it — mount-gating-audit class).
+              # RequiresMountsFor below guarantees the root exists; the
+              # script's mkdir -p creates the subdir inside it.
               ReadWritePaths = [
-                "${cfg.mountPoint}/crush"
+                cfg.mountPoint
                 cfg.projectsDir
               ];
             })
