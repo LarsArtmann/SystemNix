@@ -61,3 +61,21 @@ regexes = [
 # rules they prove.
 [[allowlists]]
   paths = ['''(^|/)tests/fixtures/gitleaks/''']
+
+# Nix flake input pins: `rev=<40-hex>` and `github:owner/repo/<40-hex>`
+# git SHAs trip the sourcegraph-access-token rule (it matches bare 40-hex
+# in keyword context). Commit IDs, not credentials. Regex-anchored to a
+# BARE lowercase 40-hex secret and path-scoped to flake.nix, so a real
+# sgp_-prefixed token anywhere — including flake.nix — still gets caught.
+[[allowlists]]
+description = "flake input rev pins (git SHAs) in flake.nix"
+paths = ['''(^|/)flake\.nix$''']
+regexes = ['''^[0-9a-f]{40}$''']
+
+# The push-protection audit script composes its negative-case tokens at
+# RUNTIME; the hex40/mixed components it stores as variables are
+# deliberately token-shaped, not credentials (same rationale as the
+# gitleaks fixtures above). Path-scoped to the one script.
+[[allowlists]]
+description = "push-protection audit script runtime fixture components"
+paths = ['''(^|/)scripts/audit-push-protection-literals\.sh$''']
