@@ -121,3 +121,4 @@ sops-nix decrypts ALL secrets atomically. One bad owner → everything fails. Gu
 | `papdashboard-discord.yaml` | papdashboard_insights_webhook_url (insights-channel webhook — separate Discord channel from raw alerts)                                                      |
 | `discordsync.yaml`     | discordsync_discord_token, discordsync_turso_url, discordsync_turso_auth_token                                                                                  |
 | `dns-failover.yaml`    | vrrp_auth_password                                                                                                                                              |
+| `mr-sync.yaml`         | mr_sync_github_token (env-file format `GITHUB_TOKEN=…`; PLACEHOLDER until a fine-grained PAT is pasted — runbook docs/services/mr-sync.md)                       |

@@ -13,17 +13,17 @@ in
     {
       name = "HaGeZi-ultimate";
       url = hagezi "hosts/ultimate.txt";
-      hash = "sha256-JjT81Ya22Fm1FRao/iodzZRduZ2ptECLzQcnlnlwATg=";
+      hash = "sha256-TpkNSSRTbStKDw4ZNrhKU9PGR7x31XYTW6In+K448ig=";
     }
     {
       name = "HaGeZi-tif";
       url = hagezi "hosts/tif.txt";
-      hash = "sha256-swzsG8Q6MUzHk0UynktGLAbnu+/4FacmGRs1n9IaeDU=";
+      hash = "sha256-nfeJy0brn3ICHweoXbYYT2pwgwpSyr+c/g/M3Y8Tzsw=";
     }
     {
       name = "HaGeZi-doh";
       url = hagezi "hosts/doh.txt";
-      hash = "sha256-ERTWIn4wzgbdLXifYmMkD0c95Bsj4Y1Rt4roU5RoLhI=";
+      hash = "sha256-ag2D72d8AWJ3UHXzPu+jgVbeBtY1UOHfHG6J8kj8WkQ=";
     }
     {
       name = "HaGeZi-native-apple";
@@ -53,7 +53,7 @@ in
     {
       name = "HaGeZi-native-lgwebos";
       url = hagezi "hosts/native.lgwebos.txt";
-      hash = "sha256-xlLWC2zGSxIrhLMNgqh75TR5zMQaUuIN5XVrb6of1rU=";
+      hash = "sha256-lPBxpNKw0sLtdptEqBEDt3g4H6HD1bXhiaQdhUhZgGA=";
     }
     {
       name = "HaGeZi-native-oppo-realme";
@@ -83,12 +83,12 @@ in
     {
       name = "HaGeZi-gambling";
       url = hagezi "dnsmasq/gambling.txt";
-      hash = "sha256-SdRIIG4hk63dBLJwiZnQFT4d1CoovHNjG4k6DXu9z/g=";
+      hash = "sha256-1r/aOXwXMyw9lZYFJR3EYkt1ViBgZLM16yYh6cIvjT8=";
     }
     {
       name = "HaGeZi-nsfw";
       url = hagezi "dnsmasq/nsfw.txt";
-      hash = "sha256-KrXVSWdf50156NM33EhPSs6ZdBVodUSQ/H7TADNdDJg=";
+      hash = "sha256-FpTEwXNTUqZg3Nu+UGfwBNXEDwkrDB6QbehNCSMMCLM=";
     }
     {
       name = "HaGeZi-social";
@@ -98,17 +98,17 @@ in
     {
       name = "HaGeZi-dyndns";
       url = hagezi "dnsmasq/dyndns.txt";
-      hash = "sha256-apxCgp6kwifCEQ8tsb13D6mvDhs8E9H85aRii9FCnWc=";
+      hash = "sha256-j7dbXv1KEcqaMsEcDykBXYnfWoxKxxDtdyxOul2x560=";
     }
     {
       name = "HaGeZi-hoster";
       url = hagezi "dnsmasq/hoster.txt";
-      hash = "sha256-pmY+wjiGWPhK9C0xyOPcaH0DoituEzaJ9CiY3n8n54o=";
+      hash = "sha256-RhFVVy5EFqfW7A7aNF9ErJAWFmWRpkUGizANorEJ5Ss=";
     }
     {
       name = "HaGeZi-urlshortener";
       url = hagezi "dnsmasq/urlshortener.txt";
-      hash = "sha256-jX9phBZWPfXT2XK9ndCnZqeY/JDdV2sEolxIHSp1Y+U=";
+      hash = "sha256-rWEQrrBQ0HNdT2ed8l/mwIhAdRkVpMeY4/LBgpCytYM=";
     }
     {
       name = "HaGeZi-nosafesearch";
@@ -118,7 +118,7 @@ in
     {
       name = "HaGeZi-dga7";
       url = hagezi "domains/dga7.txt";
-      hash = "sha256-JMiR3fdmsM5SSl0YKpxS9BXz9DtQRJqttIRH03zW3Sw=";
+      hash = "sha256-ZXfJOWz/wjbFF6e90GJSX+RtgHju3qZqLIw2YvnrsFI=";
     }
   ];
 
