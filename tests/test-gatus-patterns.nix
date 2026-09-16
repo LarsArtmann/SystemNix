@@ -52,6 +52,7 @@ let
     node_amdgpu_mem_info_vram_used_bytes 3000000000
     node_amdgpu_gpu_busy_percent 15
     niri_running 1
+    niri_graphical_session 1
     attic_storage_over_threshold 0
     system_gatus_endpoints_in_error_long 0
     # bank-sync sync-health surface (mirrors the "Bank-Sync Sync Health"
@@ -76,6 +77,11 @@ let
     # TYPE signoz_traces_upstream_gaps_over_threshold gauge
     signoz_traces_upstream_gaps_over_threshold 0
     signoz_logs_pipeline_stale 0
+    # system-health collector-freshness composite (2026-08-24 SDDM fix —
+    # emitted into system_health.prom, same body node_exporter serves):
+    # HELP system_niri_metrics_fresh 1 if the niri-health-metrics textfile was rewritten within 300s (collector ALIVE), 0 if frozen/stale
+    # TYPE system_niri_metrics_fresh gauge
+    system_niri_metrics_fresh 1
   '';
 
   mockMetricsServer = pkgs.writeShellApplication {
@@ -245,6 +251,39 @@ in
             conditions = [
               "[STATUS] == 200"
               "[BODY] == pat(*\nsignoz_traces_missing [1-9]*)"
+            ];
+          }
+          {
+            # "Niri Compositor" (gatus-config.nix) production conditions
+            # verbatim against the HEALTHY mock (2026-08-24 SDDM hard-down
+            # false-negative fix): the niri_running presence pat must be in
+            # line-anchored VALUE form and the system-health freshness
+            # composite must be present and non-zero.
+            name = "[TEST] Niri Compositor (value-anchored + fresh)";
+            url = "http://127.0.0.1:9100/metrics";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] == pat(*\nniri_running *)"
+              "[BODY] == pat(*\nniri_graphical_session *)"
+              "[BODY] != pat(*system_niri_metrics_fresh 0\n*)"
+              "[BODY] == pat(*\nsystem_niri_metrics_fresh *)"
+            ];
+          }
+          {
+            # INVERSE (expected RED, see testScript): the frozen-collector
+            # value must actually MATCH a line-anchored glob — proving the
+            # production reject-half (!= pat(*system_niri_metrics_fresh 0\n*))
+            # trips on a real frozen emission instead of being vacuous. Note
+            # the mock HELP comment above deliberately repeats the metric
+            # name — the anchor must reject comment matches ("# HELP ..."
+            # never starts with the bare name).
+            name = "[TEST-RED] Niri freshness frozen (0 must be matchable)";
+            url = "http://127.0.0.1:9100/metrics";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] == pat(*\nsystem_niri_metrics_fresh 0*)"
             ];
           }
         ];
