@@ -64,9 +64,9 @@ else
 fi
 
 if host google.com 127.0.0.1 >/dev/null 2>&1; then
-  ok "Unbound (127.0.0.1) resolves google.com"
+  ok "dnsblockd (127.0.0.1) resolves google.com"
 else
-  fail "Unbound (127.0.0.1) CANNOT resolve google.com"
+  fail "dnsblockd (127.0.0.1) CANNOT resolve google.com — local zones + *.home.lan are dark too"
 fi
 
 if host google.com 9.9.9.9 >/dev/null 2>&1; then
@@ -76,10 +76,11 @@ else
 fi
 echo
 
-# 7. Dual-WAN services
-echo "--- Dual-WAN Services ---"
-if systemctl is-active route-health-monitor >/dev/null 2>&1; then ok "route-health-monitor: active"; else fail "route-health-monitor: NOT active"; fi
-if systemctl is-active mptcp-endpoint-manager >/dev/null 2>&1; then ok "mptcp-endpoint-manager: active"; else fail "mptcp-endpoint-manager: NOT active"; fi
+# 7. Failover + DNS services (wifi-failover replaced the retired dual-WAN
+#    stack; dnsblockd replaced unbound as the sole resolver on :53)
+echo "--- Failover + DNS Services ---"
+if systemctl is-active wifi-failover >/dev/null 2>&1; then ok "wifi-failover: active"; else fail "wifi-failover: NOT active (eno1→wlan0 standby dead — cable-pull failover will blackhole)"; fi
+if systemctl is-active dnsblockd >/dev/null 2>&1; then ok "dnsblockd: active"; else fail "dnsblockd: NOT active (sole DNS resolver down — *.home.lan unresolvable)"; fi
 echo
 
 # 8. MPTCP endpoints
@@ -92,14 +93,14 @@ echo "--- WiFi State (NetworkManager) ---"
 nmcli device status 2>/dev/null || warn "NetworkManager not running"
 echo
 
-# 10. Route health monitor recent logs
-echo "--- Route Health Monitor (last 10 logs) ---"
-journalctl -u route-health-monitor --no-pager -n 10 2>/dev/null || true
+# 10. Failover daemon recent logs
+echo "--- wifi-failover (last 10 logs) ---"
+timeout 15 journalctl -u wifi-failover --no-pager -n 10 2>/dev/null || true
 echo
 
-# 11. Unbound status
-echo "--- Unbound DNS ---"
-systemctl is-active unbound >/dev/null 2>&1 && ok "unbound: active" || fail "unbound: NOT active"
+# 11. dnsblockd status
+echo "--- dnsblockd DNS ---"
+systemctl is-active dnsblockd >/dev/null 2>&1 && ok "dnsblockd: active" || fail "dnsblockd: NOT active"
 echo
 
 # 12. Summary diagnosis
@@ -107,20 +108,27 @@ echo "=========================================="
 echo "  DIAGNOSIS SUMMARY"
 echo "=========================================="
 
-GATEWAY="${GATEWAY:-192.168.1.1}"
+# Reuse the gateway PARSED in §4 — the old `GATEWAY` var was never set, so the
+# summary always pinged the hardcoded 192.168.1.1 (wrong box on hotspot
+# failover, this host's actual failure mode, while §4 had found the real one).
+GATEWAY="$GW"
 
 ROUTE_TYPE=$(ip route show default | head -1)
-if echo "$ROUTE_TYPE" | grep -q "nexthop"; then
-  warn "ECMP multipath route active (dual-WAN)"
+if ip route show default | grep -q "dev wlan0"; then
+  warn "Default route rides wlan0 (metric-100 fallback) — eno1 is down or evicted; check carrier + wifi-failover journal"
 fi
 
-if ! ping -c 1 -W 2 "$GATEWAY" >/dev/null 2>&1; then
-  fail "Gateway $GATEWAY unreachable — router may be down or cable disconnected"
-fi
+if [ -z "$GATEWAY" ] || [ "$GATEWAY" = "NONE" ]; then
+  fail "No default gateway — nothing to re-ping (see §4)"
+else
+  if ! ping -c 1 -W 2 "$GATEWAY" >/dev/null 2>&1; then
+    fail "Gateway $GATEWAY unreachable — router may be down or cable disconnected"
+  fi
 
-if ! ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1; then
-  if ping -c 1 -W 2 "$GATEWAY" >/dev/null 2>&1; then
-    fail "Gateway reachable but no internet — ISP outage. WiFi failover should activate."
+  if ! ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1; then
+    if ping -c 1 -W 2 "$GATEWAY" >/dev/null 2>&1; then
+      fail "Gateway reachable but no internet — ISP outage. WiFi failover should have evicted the pinned eno1 route (check wifi-failover journal for FAILOVER marker)."
+    fi
   fi
 fi
 
@@ -129,6 +137,7 @@ summary
 
 echo
 echo "Emergency commands:"
-echo "  just wan-status                                # Check current dual-WAN state"
-echo "  sudo journalctl -u route-health-monitor -f     # Watch failover in real-time"
-echo "  sudo systemctl restart route-health-monitor    # Restart monitor (preserves route state)"
+echo "  ip route show default                        # metric 0 = eno1 primary, metric 100 = wlan0 standby"
+echo "  sudo journalctl -u wifi-failover -f          # Watch carrier state + FAILOVER/RESTORE markers"
+echo "  sudo systemctl restart wifi-failover          # Restart the failover daemon (kernel routes untouched)"
+echo "  dig cache.home.lan @127.0.0.1 +short          # Verify dnsblockd answers before blaming DNS"
