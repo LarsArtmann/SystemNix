@@ -15,6 +15,13 @@
 # RequiresMountsFor fails the unit into OnFailure alerting — no data is at
 # risk (the original directory is untouched until finalize).
 #
+# STORM GATE: `prepare` REFUSES to start while io PSI some avg10 >= 20%
+# (the deploy pressure gate's bar) and wipes its own partial staging on
+# retry. 2026-09-16 live lesson: a launch into a storm (avg60 ~60%, 40
+# concurrent crush sessions + a VM-test nix build) sat the rsync D-state at
+# 100% QLC disk busy for 25+ min with no bounded ETA — the guard tripped
+# Zone 6 and sacrificed the flm socket for the duration.
+#
 # DATA-SAFETY CONTRACT (same shape as migrate-clickhouse-xfs.sh):
 #   prepare:  NEVER writes to the source; plain rsync copy (rsync has NO
 #             --reflink flag — that is cp syntax, the 2026-08-17 @nix v1
@@ -46,6 +53,16 @@ die() {
   exit 1
 }
 
+QUIESCED=0
+prepare_exit_hint() {
+  local rc=$?
+  if [ "$QUIESCED" -eq 1 ] && [ "$rc" -ne 0 ]; then
+    warn "prepare failed AFTER quiescing hermes — hermes stays stopped. If you are not retrying right away, restart it:
+  sudo systemctl start hermes.service \"user@\$(id -u hermes).service\""
+  fi
+}
+trap prepare_exit_hint EXIT
+
 SRC="/home/hermes"
 SUBVOL="@home-hermes"
 BTRFS_ROOT="/mnt/btrfs-root" # subvolid=5 automount (snapshots.nix)
@@ -68,7 +85,7 @@ export PATH="/run/current-system/sw/bin:$PATH"
 
 require_bins() {
   local missing=""
-  for bin in btrfs rsync findmnt systemctl find sort stat date; do
+  for bin in btrfs rsync ionice du findmnt systemctl find sort stat date; do
     command -v "$bin" >/dev/null 2>&1 || missing="$missing $bin"
   done
   [ -z "$missing" ] || die "required binaries not found:$missing (PATH=$PATH)"
@@ -87,6 +104,23 @@ ensure_btrfs_root_mounted() {
   ls "$BTRFS_ROOT" >/dev/null 2>&1 || die "cannot access $BTRFS_ROOT (toplevel automount)"
 }
 
+psi_preflight_check() {
+  # Same bar as the deploy pressure gate (deploy.sh exit 12): never stack a
+  # copy onto an IO storm — the copy is bounded, the storm is not, and this
+  # box freezes in exactly that regime (crash #3/#4 class).
+  local line avg10 avg60
+  line=$(awk '/^some/{print $2, $3}' /proc/pressure/io)
+  avg10=${line%% *}; avg10=${avg10#avg10=}
+  avg60=${line##* }; avg60=${avg60#avg60=}
+  if awk -v a="$avg10" 'BEGIN{exit !(a>=20)}'; then
+    die "io PSI some avg10=${avg10}% avg60=${avg60}% — the box is in an IO storm (same 20% bar as the deploy pressure gate). Let it drain, then retry prepare."
+  fi
+  if awk -v a="$avg10" 'BEGIN{exit !(a>=10)}'; then
+    warn "io PSI some avg10=${avg10}% is elevated — the copy runs at idle IO priority and will crawl while this lasts"
+  fi
+  return 0
+}
+
 hermes_mounted_subvol() {
   # Prints 'yes' when /home/hermes is already the @home-hermes mount
   if findmnt -n "$SRC" 2>/dev/null | grep -q '@home-hermes'; then
@@ -99,38 +133,45 @@ hermes_mounted_subvol() {
 cmd_prepare() {
   require_root
   require_bins
+  psi_preflight_check
   btrbk_window_warning
   ensure_btrfs_root_mounted
 
   [ -d "$SRC" ] || die "$SRC does not exist"
   [ "$(hermes_mounted_subvol)" = "yes" ] && die "$SRC is already mounted from $SUBVOL — nothing to prepare"
+  if [ -e "$OLD" ]; then
+    die "$OLD already exists — a previous prepare either COMPLETED (run the deploy next, not prepare) or died mid-swap. Inspect both dirs before continuing."
+  fi
   if [ -e "$DST" ]; then
     local first_entry
     first_entry=$(find "$DST" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null || true)
-    [ -z "$first_entry" ] || die "$DST already exists and is NOT empty (leftover from an aborted prepare?). Inspect it, then:
-  sudo btrfs subvolume delete $DST"
+    if [ -n "$first_entry" ]; then
+      warn "$DST holds a PARTIAL copy (prepare aborted mid-copy; prepare never touches the source). Wiping staging, starting fresh:"
+      btrfs subvolume delete "$DST"
+    else
+      warn "$DST exists and is empty (aborted prepare) — reusing it"
+    fi
   fi
-  if [ -e "$OLD" ]; then
-    die "$OLD already exists — a previous prepare got interrupted mid-swap. Inspect both dirs before continuing."
-  fi
-
   if [ ! -e "$DST" ]; then
     info "creating subvolume $DST"
     btrfs subvolume create "$DST"
-  else
-    warn "$DST exists and is EMPTY (aborted prepare — e.g. the 2026-09-16 rsync --reflink abort) — reusing it"
   fi
 
-  info "seed pass 1/2 (hermes may keep running; plain copy, ~1 GB)"
-  rsync -aHAX --info=stats2 "$SRC/" "$DST/"
+  local src_size
+  src_size=$(du -sh "$SRC" 2>/dev/null | cut -f1 || true)
+  info "source size: ${src_size:-unknown} (file COUNT dominates the copy time on this box, not bytes)"
+
+  info "seed pass 1/2 (hermes may keep running; idle IO priority — yields to everything)"
+  ionice -c 3 nice -n 19 rsync -aHAX --info=progress2,stats2 "$SRC/" "$DST/"
 
   info "quiescing hermes (gateway + its user manager so cron scopes drain)"
+  QUIESCED=1
   systemctl stop hermes.service || true
   systemctl stop "user@$(id -u "$HERMES_USER").service" 2>/dev/null || true
   sleep 2
 
   info "seed pass 2/2 (delta after quiesce)"
-  rsync -aHAX --delete --info=stats2 "$SRC/" "$DST/"
+  ionice -c 3 nice -n 19 rsync -aHAX --delete --info=stats2 "$SRC/" "$DST/"
 
   info "verifying content parity (rsync dry-run delta must be empty)"
   local delta
