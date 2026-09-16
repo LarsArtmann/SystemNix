@@ -585,7 +585,17 @@ in
       # the RAG stack on a single Nix-native engine, zero Docker.
       # Model GGUFs are auto-fetched into /data/ai/models/gguf/ at activation
       # by the llama-rag-model-fetch oneshot.
-      llama-rag.enable = true;
+      # DISABLED 2026-09-16: the 20260911 nixpkgs llama.cpp build wedges both
+      # servers at "model vocab missing newline token" — 94% single-thread CPU
+      # spin forever, /health 503 (3/3 repro, the 2026-09-14 regression).
+      # "systemctl stop" is not containment on this host (stc re-arms the
+      # units on every deploy — they burned 2 cores for 26h straight).
+      # Config-disable is the durable containment. Re-enable when
+      # llama-cpp-rocwmma is pinned back to the 20260905-era build or the
+      # gfx1150 regression is fixed upstream. Paperless AI degrades gracefully
+      # (RAG off) with the endpoint down; SigNoz unit-state rules go dormant
+      # (empty series).
+      llama-rag.enable = false;
 
       file-and-image-renamer = {
         enable = true;
