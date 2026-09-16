@@ -162,9 +162,11 @@ in
     assert "4 project(s) relocated" in boot_log, boot_log
 
     # ---- Migration + symlink + data preserved ----
-    machine.succeed("test -L /home/lars/projects/repo-a")
+    # The module moves the PROJECT'S `.crush` dir and symlinks it back:
+    # `<project>` stays a real dir, `<project>/.crush` becomes the symlink.
+    machine.succeed("test -L /home/lars/projects/repo-a/.crush")
     machine.succeed(
-        'test "$(readlink /home/lars/projects/repo-a)" = /mnt/hot/crush/repo-a'
+        'test "$(readlink /home/lars/projects/repo-a/.crush)" = /mnt/hot/crush/repo-a'
     )
     machine.succeed("grep -q payload-top /mnt/hot/crush/repo-a/crush.db")
     machine.succeed("grep -q payload-wal /mnt/hot/crush/repo-a/crush.db-wal")
@@ -177,11 +179,11 @@ in
     machine.succeed("grep -q payload-root /mnt/hot/crush/projects-root/crush.db")
 
     # Nested checkout: parent hierarchy auto-created under the destination.
-    machine.succeed("test -L /home/lars/projects/archived/repo-b")
+    machine.succeed("test -L /home/lars/projects/archived/repo-b/.crush")
     machine.succeed("grep -q payload-nested /mnt/hot/crush/archived/repo-b/crush.db")
 
     # Space-in-name checkout.
-    machine.succeed("test -L '/home/lars/projects/spaced repo'")
+    machine.succeed("test -L '/home/lars/projects/spaced repo/.crush'")
     machine.succeed("grep -q payload-spaced '/mnt/hot/crush/spaced repo/crush.db'")
 
     # ---- Left in place: depth cap + fresh-write skip ----
