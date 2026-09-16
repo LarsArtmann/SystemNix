@@ -49,6 +49,13 @@ nixpkgs.lib.nixosSystem {
     inputs.self.nixosModules.dns-failover
     inputs.sops-nix.nixosModules.sops
     inputs.self.nixosModules.sops
+    # The sops eval-time guards. rpi3-dns lists modules explicitly (no
+    # auto-discovery like evo-x2), and until 2026-09-16 evaluated its sops
+    # config WITHOUT them — exactly the host where recipient coverage is
+    # actually broken (dns-failover.yaml carries only evo-x2 while this
+    # host consumes it; see the TODO_LIST rpi3-dns recipient runbook).
+    inputs.self.nixosModules.sops-key-audit
+    inputs.self.nixosModules.sops-recipient-audit
     nixos-hardware.nixosModules.raspberry-pi-3
     "${nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64.nix"
     ../platforms/nixos/rpi3/default.nix

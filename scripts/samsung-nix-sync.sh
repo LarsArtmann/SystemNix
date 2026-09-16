@@ -40,7 +40,10 @@ flock -n 9 || die "another samsung-nix-sync is running"
 log "Lock acquired. Preflight: checking tools..."
 
 # --- Preflight: every binary BEFORE any mount/change (clickhouse-migration lesson)
-for bin in rsync ionice nice mount umount findmnt awk grep mkdir flock btrfs df find systemctl nix; do
+# lsblk is load-bearing: the pressure-bypass measures disk IO through it — under
+# sudo's secure PATH a missing lsblk yields EMPTY disk names, the 5s deltas
+# compute 0-0=0, and the gate passes "disks-idle" with NO measurement taken.
+for bin in rsync ionice nice mount umount findmnt lsblk awk grep mkdir flock btrfs df find systemctl nix; do
   command -v "$bin" >/dev/null 2>&1 || die "missing tool '$bin' — aborting before any change"
 done
 
@@ -105,6 +108,11 @@ FAILED=0
 cleanup() {
   if [ "$WE_MOUNTED" -eq 1 ] && [ "$FAILED" -eq 1 ]; then
     umount "$MNT" || true
+  fi
+  # A --final failure path must not leave nix-gc.timer STOPPED forever (the
+  # die mid-sync used to exit with GC silently dead — no nightly reclamation).
+  if [ "${FINAL:-0}" -eq 1 ] && [ "$FAILED" -eq 1 ]; then
+    systemctl start nix-gc.timer 2>/dev/null || log "WARN: could not RE-START nix-gc.timer — start it manually"
   fi
 }
 trap cleanup EXIT

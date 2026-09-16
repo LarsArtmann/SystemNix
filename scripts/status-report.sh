@@ -74,8 +74,11 @@ if [[ "$(uname)" == "Linux" ]]; then
   echo "| Service | Status |" >>"$REPORT_FILE"
   echo "|---------|--------|" >>"$REPORT_FILE"
 
-  for svc in caddy forgejo immich signoz gatus hermes manifest openseo pocket-id oauth2-proxy dnsblockd unbound niri; do
-    status=$(systemctl is-active "$svc" 2>/dev/null || echo "unknown")
+  for svc in caddy forgejo immich signoz gatus hermes manifest openseo pocket-id oauth2-proxy dnsblockd niri; do
+    # is-active PRINTS its verdict (inactive/failed/…) AND exits nonzero for
+    # non-active — `|| echo unknown` double-emits "inactive\nunknown" into
+    # $status (multi-line table cell). Assign-then-fallback keeps its output.
+    status=$(systemctl is-active "$svc" 2>/dev/null) || status="unknown"
     if [ "$status" = "active" ]; then
       echo "| $svc | ✅ $status |" >>"$REPORT_FILE"
     elif [ "$status" = "inactive" ]; then
@@ -93,7 +96,7 @@ if [[ "$(uname)" == "Linux" ]]; then
   echo "|---------|--------|" >>"$REPORT_FILE"
 
   for svc in dms.service emeet-pixyd; do
-    status=$(systemctl --user is-active "$svc" 2>/dev/null || echo "unknown")
+    status=$(systemctl --user is-active "$svc" 2>/dev/null) || status="unknown"
     if [ "$status" = "active" ]; then
       echo "| $svc | ✅ $status |" >>"$REPORT_FILE"
     elif [ "$status" = "inactive" ]; then
@@ -109,14 +112,20 @@ echo "" >>"$REPORT_FILE"
 echo "## Nix Store" >>"$REPORT_FILE"
 echo "" >>"$REPORT_FILE"
 echo "- **Store size:** $(df -h /nix/store 2>/dev/null | tail -1 | awk '{print $2" used: "$3" / "$4" ("$5")"}' || echo 'unknown')" >>"$REPORT_FILE"
-echo "- **Generations:** $(sudo -n nix-env --list-generations --profile /nix/var/nix/profiles/system 2>/dev/null | wc -l || echo 'unknown')" >>"$REPORT_FILE"
+gen_count=$(sudo -n nix-env --list-generations --profile /nix/var/nix/profiles/system 2>/dev/null | wc -l) || gen_count="unknown"
+echo "- **Generations:** ${gen_count}" >>"$REPORT_FILE"
 
 # Flake check
 echo "" >>"$REPORT_FILE"
 echo "## Build Status" >>"$REPORT_FILE"
 echo "" >>"$REPORT_FILE"
 echo '```' >>"$REPORT_FILE"
-if nix eval --raw .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath >/dev/null 2>&1; then
+if [[ "$(uname)" == "Darwin" ]]; then
+  _toplevel='.#darwinConfigurations."Lars-MacBook-Air".config.system.build.toplevel.drvPath'
+else
+  _toplevel='.#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath'
+fi
+if nix eval --raw "$_toplevel" >/dev/null 2>&1; then
   echo '```' >>"$REPORT_FILE"
   echo "" >>"$REPORT_FILE"
   echo "OK **Flake evaluation passes**" >>"$REPORT_FILE"

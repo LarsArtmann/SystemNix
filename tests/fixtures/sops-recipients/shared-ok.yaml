@@ -1,0 +1,15 @@
+fixture_secret: ENC[AES256_GCM,data:Zm9v,type:str]
+sops:
+    age:
+        - recipient: age1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            Zm9vYmFy
+            -----END AGE ENCRYPTED FILE-----
+        - recipient: age1bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            Zm9vYmFy
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-09-16T00:00:00Z"
+    version: 3.13.1

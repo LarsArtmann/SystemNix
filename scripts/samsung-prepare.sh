@@ -25,7 +25,9 @@ readonly ESP_LABEL="SAMSUNG-EFI"
 
 log() { printf '\n==> %s\n' "$*"; }
 die() {
-  printf 'ERROR: %s\n' "$*" >&2
+  # %b: callers embed \n escapes (the signatures block) — %s printed them
+  # as literal backslash-n
+  printf 'ERROR: %b\n' "$*" >&2
   exit 1
 }
 

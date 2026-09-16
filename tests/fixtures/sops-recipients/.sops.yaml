@@ -1,0 +1,14 @@
+keys:
+  - &hostA age1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  - &hostB age1bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+
+creation_rules:
+  - path_regex: ^platforms/nixos/secrets/shared-.*\.yaml$
+    key_groups:
+      - age:
+          - *hostA
+          - *hostB
+  - path_regex: ^platforms/nixos/secrets/hosta-.*\.yaml$
+    key_groups:
+      - age:
+          - *hostA
