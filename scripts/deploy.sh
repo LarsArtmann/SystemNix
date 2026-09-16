@@ -73,6 +73,23 @@ if nix run .#pre-deploy-check; then
   # automatic cleanup with DEPLOY_KILL_WEDGED_STC=1 (kills stc processes
   # older than 30 min).
   stc_lock=/run/nixos/switch-to-configuration.lock
+  # A candidate only counts if it actually HOLDS the lock: pgrep -f matches
+  # the string ANYWHERE, which flagged a parallel session's
+  # `ssh root@pbx... switch-to-configuration` REMOTE deploy (2026-09-16: two
+  # evo-x2 deploys aborted on it, and the printed kill advice would have
+  # killed the remote deploy mid-flight). /proc/<pid>/fd is readable as root
+  # (we run under sudo); an unreadable fd table means not-verified -> not
+  # flagged, so a real wedge then surfaces later as the classic exit-11
+  # "Could not acquire lock", which is recoverable.
+  holds_stc_lock() {
+    local fd
+    for fd in /proc/"$1"/fd/*; do
+      if [ "$(readlink "$fd" 2>/dev/null || true)" = "$stc_lock" ]; then
+        return 0
+      fi
+    done
+    return 1
+  }
   if [ -e "$stc_lock" ]; then
     stc_pids=$(pgrep -f 'switch-to-configuration' || true)
     wedged=""
@@ -83,7 +100,7 @@ if nix run .#pre-deploy-check; then
       # covers the whole pipeline (pipefail included), a vanished PID yields
       # an empty etimes, and the -n guard below skips it.
       etimes=$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ' || true)
-      if [ -n "$etimes" ] && [ "$etimes" -gt 1800 ]; then
+      if [ -n "$etimes" ] && [ "$etimes" -gt 1800 ] && holds_stc_lock "$pid"; then
         wedged="$wedged $pid"
       fi
     done
@@ -115,7 +132,7 @@ if nix run .#pre-deploy-check; then
     young_stc=""
     for pid in $(pgrep -f 'switch-to-configuration' || true); do
       etimes=$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ' || true)
-      if [ -n "$etimes" ] && [ "$etimes" -le 1800 ]; then
+      if [ -n "$etimes" ] && [ "$etimes" -le 1800 ] && holds_stc_lock "$pid"; then
         young_stc="$young_stc $pid"
       fi
     done
