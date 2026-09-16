@@ -91,7 +91,7 @@ in
   name = "crush-hot-db";
 
   nodes.machine =
-    { lib, ... }:
+    { lib, pkgs, ... }:
     {
       imports = [ crushHotDbModule ];
 
@@ -131,6 +131,19 @@ in
       };
 
       services.crush-hot-db.enable = true;
+
+      # A process NAMED `crush` as a real systemd service: pgrep -x must find
+      # it for the whole guard window, and systemd owns its lifetime — a
+      # `&`-backgrounded child of a test-driver shell call does NOT survive
+      # the call (the transient cgroup is cleaned up when the call returns),
+      # which silently emptied the guard window on the first committed run.
+      systemd.services.crush-fake-session = {
+        description = "Fake crush session process (test-only pgrep guard)";
+        serviceConfig = {
+          Type = "exec";
+          ExecStart = "${pkgs.runCommand "crush" { } "cp ${pkgs.coreutils}/bin/sleep $out"} 3600";
+        };
+      };
     };
 
   testScript = ''
@@ -201,8 +214,8 @@ in
         " && echo payload-late > /home/lars/projects/late/.crush/crush.db"
         " && touch -d '@1000000000' /home/lars/projects/late/.crush/crush.db"
     )
-    machine.succeed("cp ${pkgs.coreutils}/bin/sleep /tmp/crush")
-    machine.succeed("/tmp/crush 600 & echo $! > /tmp/crush.pid")
+    machine.succeed("systemctl start crush-fake-session.service")
+    machine.succeed("pgrep -x crush")  # guard must be live BEFORE the restart
     machine.succeed("systemctl restart crush-hot-db-migrate.service")
     guard_log = machine.succeed(
         "journalctl -b -u crush-hot-db-migrate.service --output cat | tail -n 3"
@@ -212,7 +225,7 @@ in
     machine.succeed("test -f /home/lars/projects/late/.crush/crush.db")
 
     # Guard gone → the next run converges the pending project.
-    machine.succeed("kill $(cat /tmp/crush.pid)")
+    machine.succeed("systemctl stop crush-fake-session.service")
     machine.succeed("systemctl restart crush-hot-db-migrate.service")
     machine.succeed("test -L /home/lars/projects/late/.crush")
     machine.succeed("grep -q payload-late /mnt/hot/crush/late/crush.db")
