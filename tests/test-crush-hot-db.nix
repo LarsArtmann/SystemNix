@@ -123,8 +123,24 @@ in
     print(f"DEBUG fixture journal: {out}")
     rc, out = machine.execute("systemctl cat crush-hot-db-fixture.service")
     print(f"DEBUG fixture unit: {out}")
+    rc, out = machine.execute("systemctl cat crush-hot-db-migrate.service")
+    print(f"DEBUG migrate unit: {out}")
     rc, out = machine.execute("systemctl restart crush-hot-db-migrate.service; journalctl -u crush-hot-db-migrate -o cat --no-pager | tail -n 4")
     print(f"DEBUG migrate rerun: {out}")
+    for props in [
+        "",
+        "-p ProtectHome=read-only",
+        "-p ProtectHome=tmpfs",
+        "-p ProtectSystem=full",
+        "-p ProtectHome=read-only -p ReadWritePaths=/home/lars/projects",
+        "-p ReadWritePaths=/home/lars/projects",
+        "-p ReadWritePaths=/mnt/hot",
+        "-p ReadWritePaths=/mnt/hot -p ReadWritePaths=/home/lars/projects",
+    ]:
+        rc, out = machine.execute(
+            f"systemd-run --wait --pipe {props} /run/current-system/sw/bin/ls /home/lars/projects 2>&1"
+        )
+        print(f"DEBUG bisect [{props}] rc={rc}: {out}")
 
     # ---- Regressions 1: is-enabled (deploy.sh provisioner loop gate) ----
     machine.succeed(
