@@ -129,17 +129,19 @@ in
     print(f"DEBUG migrate rerun: {out}")
     caps = "'CapabilityBoundingSet=CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE'";
     fullns = "-p PrivateTmp=true -p ProtectSystem=full -p ProtectHome=read-only -p ReadWritePaths=/mnt/hot -p ReadWritePaths=/home/lars/projects";
-    for props in [
-        f"-p {caps}",
-        f"{fullns} -p {caps}",
-        f"{fullns} -p RestrictNamespaces=true -p NoNewPrivileges=true",
-        f"{fullns} -p {caps} -p RestrictNamespaces=true -p NoNewPrivileges=true",
-        f"{fullns} -p {caps} -p RestrictSUIDSGID=true -p LockPersonality=true -p RestrictRealtime=true -p SystemCallArchitectures=native -p ProtectClock=true -p ProtectControlGroups=true -p ProtectHostname=true -p ProtectKernelLogs=true -p ProtectKernelModules=true -p ProtectKernelTunables=true",
-    ]:
-        rc, out = machine.execute(
-            f"systemd-run --wait --pipe {props} /run/current-system/sw/bin/ls /home/lars/projects 2>&1"
-        )
-        print(f"DEBUG bisect3 [{props}] rc={rc}: {out}")
+    unit_path = machine.succeed(
+        "systemctl show -p ExecStart --value crush-hot-db-migrate.service | awk '{print $1}'"
+    ).strip()
+    findutils = machine.succeed("ls -d /nix/store/*-findutils-*/bin | head -1").strip()
+    probes = [
+        ("unit-find bare", f"{findutils}/find /home/lars/projects -maxdepth 0"),
+        ("unit-find fullns+caps", f"{fullns} -p {caps} {findutils}/find /home/lars/projects -maxdepth 0"),
+        ("stat bare", "/run/current-system/sw/bin/stat /home/lars/projects"),
+        ("wrapper everything", f"-p Type=oneshot -p RequiresMountsFor=/mnt/hot {fullns} -p {caps} {unit_path}"),
+    ]
+    for label, cmd in probes:
+        rc, out = machine.execute(f"systemd-run --wait --pipe {cmd} 2>&1")
+        print(f"DEBUG bisect4 [{label}] rc={rc}: {out}")
 
     # ---- Regressions 1: is-enabled (deploy.sh provisioner loop gate) ----
     machine.succeed(
