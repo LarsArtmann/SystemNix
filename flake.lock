@@ -92,11 +92,11 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1789481276,
-        "narHash": "sha256-GFwwKhnWtfI6YNb2AM0sNhljsDeDxgGTxT9sIyW5SPc=",
+        "lastModified": 1789580312,
+        "narHash": "sha256-PWem9OYxFSUPtGUs61kDfzSs5GeAQpsap5ypCQMedwI=",
         "owner": "LarsArtmann",
         "repo": "bank-sync",
-        "rev": "30a586706c567643928f1b309ac98d09f0ee75b6",
+        "rev": "5e7e3cdd72a604e8119ca9ec97d19c15bf9ba595",
         "type": "github"
       },
       "original": {
@@ -1506,11 +1506,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788267358,
-        "narHash": "sha256-nt+lUqYVpc9Y6JeMd2WmXzCDojasdadKo0mWcluvY2Y=",
+        "lastModified": 1789514889,
+        "narHash": "sha256-PFD1nxptCXJyJoiYO1gf/5Vv43yqGpHtMC6LUhl9/pQ=",
         "owner": "cachix",
         "repo": "git-hooks.nix",
-        "rev": "27555e2624241fb116b49095df4caaee85a25691",
+        "rev": "59f4ca0d063a1a3ec722c88b51a33004862e5379",
         "type": "github"
       },
       "original": {

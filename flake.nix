@@ -853,15 +853,16 @@
               # full toplevel build mid-switch — the domino-deploy class
               # (2026-08-27: four sequential switch attempts, each dying
               # at the next FOD; --keep-going enumerates, this PREVENTS).
-              # NOT included: bank-sync (upstream flake still pins a
-              # stale vendorHash; the module-level override unblocks
-              # deploys — drop the exclusion when the DROP-ME override in
-              # bank-sync.nix goes), monitor365 (its wireguard-collector
-              # git dep is a PRIVATE crate that 404s on anonymous fetch —
-              # the documented reason the service is disabled since
-              # 2026-08-12; a permanent red, not drift — first quick-go
-              # run proved exactly this), cv (built with its real
-              # module-level package by checks.x86_64-linux.cv), hermes
+              # NOT included: bank-sync (rides the bank-sync home-manager
+              # module import in systems/evo-x2.nix, not mkLarsPackages;
+              # the old vendorHash-override exclusion reason died with the
+              # override itself, dropped 2026-09-03 — the daemon build is
+              # exercised by every `nixos-rebuild switch`), monitor365 (its
+              # wireguard-collector git dep is a PRIVATE crate that 404s on
+              # anonymous fetch — the documented reason the service is
+              # disabled since 2026-08-12; a permanent red, not drift —
+              # first quick-go run proved exactly this), cv (built with its
+              # real module-level package by checks.x86_64-linux.cv), hermes
               # (Python/uv2nix, not a vendorHash class).
               quick-go = pkgs.symlinkJoin {
                 name = "quick-go-batch";
