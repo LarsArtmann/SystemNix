@@ -1,0 +1,1 @@
+sourcegraph local access token: sgp_local_@HEX40@

@@ -46,13 +46,19 @@ selftest() {
   trap 'rm -rf "$tmp"' EXIT
 
   # Compose the negative-case tokens at RUNTIME — the assembled literals
-  # must never appear in this file, or the scanner would flag itself.
-  local hex40='REDACTED-PUSH-PROTECTION-FIXTURE'
+  # must never appear in this file, or the scanners would flag it: the
+  # gitleaks sourcegraph rule matched the previously-tracked hex40/bare
+  # components (bare 40-hex + rule keyword anywhere in the file). Derived
+  # from a fixed seed so the shapes stay deterministic and the selftest
+  # reproducible.
+  local hex40 bare40
+  hex40=$(printf 'push-protection-selftest-hex40' | sha256sum | cut -c1-40)
+  bare40=$(printf 'push-protection-selftest-bare-hex' | sha256sum | cut -c1-40)
   local mixed='REDACTED-PUSH-PROTECTION-FIXTURE'
   printf 'sourcegraph access token: sgp_%s\n' "$hex40" >"$tmp/sgp.txt"
   printf 'square access token: sq0atp-%s\n' "$mixed" >"$tmp/sq.txt"
   printf 'sourcegraph access token: sgp_@HEX40@\n' >"$tmp/templated.txt"
-  printf 'bare hex without keywords: 7f3e9a1c48d2b650e4fa93c17b8d05264e9f0a3c\n' >"$tmp/bare.txt"
+  printf 'bare hex without keywords: %s\n' "$bare40" >"$tmp/bare.txt"
 
   if scan_files "$tmp/sgp.txt" "$tmp/sq.txt" 2>/dev/null; then
     echo "SELFTEST FAIL: the scanner did NOT flag the known push-protection literals" >&2

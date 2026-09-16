@@ -10,6 +10,32 @@
 [extend]
 useDefault = true
 
+# OVERRIDE of the default sourcegraph-access-token rule (same id replaces the
+# upstream definition — verified live 2026-09-16). Upstream's regex carries a
+# BARE 40-hex alternative armed by a rule keyword ANYWHERE in the file, so
+# flake.nix's ~15 `github:.../<40-hex>` rev pins tripped it (the pins sit
+# nowhere near the words, but the selftest comments mention "sourcegraph").
+# A path allowlist for flake.nix was tried first (2026-09-16 07:28) and is
+# WORSE: gitleaks applies allowlist paths at the directory-walker level, so
+# the WHOLE file is skipped — a real sgp_/AWS/Slack/whatever token pasted
+# into flake.nix would have been invisible (the allowlist comment claiming
+# "a real sgp_ token anywhere — including flake.nix — still gets caught" was
+# wrong; proven empirically). The override drops ONLY the bare-hex
+# alternative: real Sourcegraph tokens are sgp_-prefixed (the shapes below),
+# and sgp_-prefixed tokens are also what GitHub push protection
+# pattern-matches (the 2026-09-15 GH013 class this file exists for). Side
+# effect: bare 40-hex + rule-keyword is no longer a gitleaks class at all —
+# the git-SHA false-positive class dies with it.
+[[rules]]
+id = "sourcegraph-access-token"
+description = "Sourcegraph Access Token (sgp_ forms only; bare-hex alternative dropped 2026-09-16 — it false-positives on 40-hex git rev pins in keyword-bearing files)"
+regex = '''(?i)\b(sgp_(?:[a-fA-F0-9]{16}|local)_[a-fA-F0-9]{40}|sgp_[a-fA-F0-9]{40})\b'''
+entropy = 3
+keywords = [
+  "sgp_",
+  "sourcegraph",
+]
+
 # gitleaks has no built-in Resend rule (verified 8.30.1) — the exact class that
 # leaked. Keys look like: re_<33 chars, may contain underscores>.
 [[rules]]
@@ -56,26 +82,9 @@ regexes = [
 ]
 
 # Detector-coverage fixtures (tests/fixtures/gitleaks/, consumed by the
-# gitleaks-coverage-selftest flake check): deliberate rule-shape strings,
-# not credentials. Without this, committing the fixtures trips the very
-# rules they prove.
-[[allowlists]]
-  paths = ['''(^|/)tests/fixtures/gitleaks/''']
-
-# Nix flake input pins: `rev=<40-hex>` and `github:owner/repo/<40-hex>`
-# git SHAs trip the sourcegraph-access-token rule (it matches bare 40-hex
-# in keyword context). Commit IDs, not credentials. Regex-anchored to a
-# BARE lowercase 40-hex secret and path-scoped to flake.nix, so a real
-# sgp_-prefixed token anywhere — including flake.nix — still gets caught.
-[[allowlists]]
-description = "flake input rev pins (git SHAs) in flake.nix"
-paths = ['''(^|/)flake\.nix$''']
-regexes = ['''^[0-9a-f]{40}$''']
-
-# The push-protection audit script composes its negative-case tokens at
-# RUNTIME; the hex40/mixed components it stores as variables are
-# deliberately token-shaped, not credentials (same rationale as the
-# gitleaks fixtures above). Path-scoped to the one script.
-[[allowlists]]
-description = "push-protection audit script runtime fixture components"
-paths = ['''(^|/)scripts/audit-push-protection-literals\.sh$''']
+# gitleaks-coverage-selftest flake check) deliberately carry NO path
+# allowlist: with the sourcegraph rule overridden (above) every tracked
+# fixture is clean under the repo config, and keeping them SCANNED means a
+# real secret accidentally pasted into a fixture file still gets caught.
+# The selftest scans fresh tmp copies, so its detection assertions are
+# unaffected by whatever the repo-path scan sees.
