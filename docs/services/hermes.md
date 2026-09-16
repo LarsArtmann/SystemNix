@@ -163,7 +163,11 @@ retention (`target_preserve_min=7d`, `target_preserve=14d 4w`).
 `@home-hermes` prefix whenever the host mounts the subvol.
 
 **Migration runbook** (sudo, quiet window outside 23:00–00:45;
-plan: `docs/planning/2026-09-15_19-59_HERMES-HOME-SUBVOLUME-MIGRATION.md`):
+plan: `docs/planning/2026-09-15_19-59_HERMES-HOME-SUBVOLUME-MIGRATION.md`).
+Measured live 2026-09-16: the state is **92.3 GB / 948,341 files** (workspace
+git clones dominate) — every state-wide operation (copies, perms walks,
+backups) is hours-scale under IO load, minutes-scale when quiet. The first
+full pool send is a ~92 GB transfer on the DAS USB link:
 
 ```bash
 sudo bash scripts/migrate-hermes-subvol.sh prepare   # REFUSES while io PSI some avg10 >=20% (storm gate); wipes partial staging; idle-IO 2-phase rsync with live progress

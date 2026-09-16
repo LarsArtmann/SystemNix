@@ -171,8 +171,8 @@ cmd_map_user() {
   total=$(find $trees -xdev -type f 2>/dev/null | wc -l)
   while IFS= read -r f; do
     n=$((n + 1))
-    if ! dd if="$f" of=/dev/null iflag=direct bs=4M count=100000 2>/dev/null; then
-      if ! dd if="$f" of=/dev/null bs=4M count=100000 2>>"$fails"; then
+    if ! dd if="$f" of=/dev/null iflag=direct bs=4M 2>/dev/null; then
+      if ! dd if="$f" of=/dev/null bs=4M 2>>"$fails"; then
         echo "$f" >>"$fails"
         echo "  EIO: $f"
       fi
@@ -207,7 +207,7 @@ cmd_map_full() {
   local tmp="$STATE_DIR/corrupt-files.root-owned"
   : >"$tmp"
   while IFS= read -r -d '' f; do
-    dd if="$f" of=/dev/null bs=4M count=100000 2>/dev/null ||
+    dd if="$f" of=/dev/null bs=4M 2>/dev/null ||
       echo "$f" >>"$tmp"
   done < <(find /data/docker /data/containers -xdev -type f -print0 2>/dev/null)
   echo "  root-owned read fails: $(wc -l <"$tmp") (listed in $tmp)"
@@ -319,7 +319,10 @@ cmd_metadata_check() {
   }
   local dev
   dev=$(readlink -f "/dev/disk/by-uuid/046ea663-da55-48b7-b516-0dcdb87ba710" 2>/dev/null)
-  [ -n "$dev" ] || dev="/dev/nvme0n1p8"
+  # DIE, never fall back to a kernel name: nvme enumeration FLIPS (Samsung
+  # insertion slid every partition) — a stale /dev/nvme0n1p8 fallback can run
+  # btrfs check against the WRONG partition on a live system.
+  [ -n "$dev" ] || die "/dev/disk/by-uuid/046ea663-… does not resolve — resolve the /data device by-uuid manually; NEVER a kernel nvmeXnYpN name"
   echo "== btrfs check --mode=low-risk (read-only) on $dev =="
   btrfs check --mode=low-risk "$dev"
   local rc=$?
@@ -336,13 +339,20 @@ cmd_scrub() {
   need_bins btrfs
   io_window_clear || die "IO window not clear"
   btrfs scrub start /data || die "scrub start failed"
-  while :; do
+  # Bounded wait: a kernel-side ioctl wedge (AGENTS: scrub status hung 1h+)
+  # used to loop this poll FOREVER. 8h covers a ~1.1 TB scrub with margin.
+  local waited=0
+  while [ "$waited" -lt 480 ]; do
     sleep 60
+    waited=$((waited + 1))
     local line
-    line=$(btrfs scrub status -R /data 2>/dev/null | grep -E "errors:|status:" | tr '\n' ' ')
+    line=$(timeout 30 btrfs scrub status -R /data 2>/dev/null | grep -E "errors:|status:" | tr '\n' ' ') || true
     echo "  $(date +%H:%M:%S) $line"
-    btrfs scrub status /data 2>/dev/null | grep -q "status: finished" && break
+    timeout 30 btrfs scrub status /data 2>/dev/null | grep -q "status: finished" && break
   done
+  if [ "$waited" -ge 480 ]; then
+    die "scrub did not finish within 8h — wedged? Check 'btrfs scrub status /data' manually; do not loop blindly"
+  fi
   local errors
   errors=$(btrfs scrub status -R /data 2>/dev/null | awk '/data_scrub_errors|errors:/ {print $NF}' | tail -1)
   if [ "${errors:-1}" = "0" ]; then
