@@ -258,10 +258,10 @@
       # 2026-09-15). Flip condition satisfied: commit 494c9b7 (the vendorHash
       # refresh forced by the go-nix-helpers /vN fix) is origin/master HEAD
       # (verified via branches-where-head, 2026-09-16). git+ssh fetches on CI
-      # via the NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER read-only deploy key;
-      # ref+rev keeps the pin exact as master moves. Locked narHash
-      # unchanged vs the local pin (verified on flip).
-      url = "git+ssh://git@github.com/LarsArtmann/file-and-image-renamer?ref=refs/heads/master&rev=494c9b7a0a80bdda3a2cb31a4b8c8f2ee315f8f3";
+      # via the NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER read-only deploy key.
+      # Branch-ref governed (pin policy 2026-09-16: ?ref=master as much as
+      # possible; the lock holds the exact rev until an explicit update).
+      url = "git+ssh://git@github.com/LarsArtmann/file-and-image-renamer?ref=refs/heads/master";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
       # Without this, the input locks its own go-nix-helpers via git+ssh:
@@ -414,9 +414,10 @@
       # rev 56dc3660 fails every consumer with a go-modules hash mismatch) is
       # now origin/master HEAD (verified identical via compare API,
       # 2026-09-16). git+ssh fetches on CI via the NIX_DEPLOY_KEY_BUILDFLOW
-      # read-only deploy key; ref+rev keeps the pin exact as master moves.
-      # Locked narHash unchanged vs the local pin (verified on flip).
-      url = "git+ssh://git@github.com/LarsArtmann/BuildFlow?ref=refs/heads/master&rev=9d11c8fee7c7be6b62e7bc62130a6cf7e397ad83";
+      # read-only deploy key. Branch-ref governed (pin policy 2026-09-16:
+      # ?ref=master as much as possible; the lock holds the exact rev until
+      # an explicit update).
+      url = "git+ssh://git@github.com/LarsArtmann/BuildFlow?ref=refs/heads/master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
@@ -451,9 +452,10 @@
       # 2026-09-15). The vendorHash refresh commit now lives on the pushed
       # branch `cqrs-lint-vendorhash-fix` (d84e4d6a); git+ssh fetches on CI
       # via the deploy key. master still carries the stale hash, so the
-      # branch (ref+rev, exact pin) stays until master catches up (art-dupl
-      # `refs/heads/fork` precedent).
-      url = "git+ssh://git@github.com/LarsArtmann/go-cqrs-lite?ref=refs/heads/cqrs-lint-vendorhash-fix&rev=d84e4d6a42b2ed368a7d7110b716448d0c4093f9";
+      # branch ref stays until master catches up (art-dupl
+      # `refs/heads/fork` precedent). Branch-ref governed (pin policy
+      # 2026-09-16): the lock holds the exact rev until an explicit update.
+      url = "git+ssh://git@github.com/LarsArtmann/go-cqrs-lite?ref=refs/heads/cqrs-lint-vendorhash-fix";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
@@ -469,9 +471,10 @@
       # path that can never resolve on CI (2026-09-15). Flip condition
       # satisfied: origin/master (7789334) carries 46000f38 (verified via
       # `git merge-base --is-ancestor`). git+ssh fetches on CI via the
-      # NIX_DEPLOY_KEY_BRANCHING_FLOW deploy key; the rev keeps the pin exact
-      # as master moves. Locked narHash unchanged vs the local pin.
-      url = "git+ssh://git@github.com/LarsArtmann/branching-flow?ref=refs/heads/master&rev=46000f38ab44a35692bcdb39d0d061501750dd74";
+      # NIX_DEPLOY_KEY_BRANCHING_FLOW deploy key. Branch-ref governed (pin
+      # policy 2026-09-16: ?ref=master as much as possible; the lock holds
+      # the exact rev until an explicit update).
+      url = "git+ssh://git@github.com/LarsArtmann/branching-flow?ref=refs/heads/master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
@@ -488,13 +491,15 @@
       # input that made EVERY CI eval fail (`Git repository ... does not
       # exist`: flake-check VM tests + go-deps-audit input evals, 2026-09-15).
       # The flip condition (fork branch pushes 9c370324) is satisfied:
-      # origin/fork contains it. `git+https` with an explicit ref+rev keeps
-      # the pin exact AND fetches in CI. (A bare `github:<rev>` URL failed
+      # origin/fork contains it. `git+https` with an explicit fork ref
+      # fetches in CI and stays lock-governed (pin policy 2026-09-16:
+      # branch refs over rev pins; the lock holds the exact rev until an
+      # explicit update). (A bare `github:<rev>` URL failed
       # to lock: nix's tarball-to-git-tree import dies with a libgit2
       # tree-builder error on this repo - the real git+https clone path
       # handles it, and the locked narHash is byte-identical to the old
       # local pin, so no consumer hash churn.)
-      url = "git+https://github.com/LarsArtmann/art-dupl?ref=refs/heads/fork&rev=9c370324dfcfaef23fa60079af0d9ebfcf84a489";
+      url = "git+https://github.com/LarsArtmann/art-dupl?ref=refs/heads/fork";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -627,8 +632,12 @@
     };
 
     # browser-history — Browser history intelligence server (CQRS/ES, WebAuthn)
+    # Branch-ref governed (pin policy 2026-09-16): the lock still holds
+    # 0971fe9c until an explicit `nix flake lock --update-input
+    # browser-history` — probe the go-modules FOD at the target rev first
+    # (its build rides published cqrs-htmx tags; AGENTS.md probe protocol).
     browser-history = {
-      url = "github:LarsArtmann/browser-history/0971fe9c4487b7c8636195fe922a2476803d7d33";
+      url = "github:LarsArtmann/browser-history?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
