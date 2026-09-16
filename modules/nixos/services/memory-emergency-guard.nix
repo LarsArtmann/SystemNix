@@ -132,6 +132,7 @@ _: {
           LAST_TRIP_FILE="${stateDir}/last-trip"
           RESTORED_COUNT_FILE="${stateDir}/restored.count"
           CHURN_STOPPED_FILE="${stateDir}/churn-stopped"
+          CHURN_REARM_FILE="${stateDir}/churn-rearm.count"
           SOCKET_UNITS="${lib.concatStringsSep " " cfg.socketUnits}"
           MAX_RESTORES_PER_DAY=${toString cfg.maxRestoresPerDay}
 
@@ -438,10 +439,13 @@ _: {
                 lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
               } 2>/dev/null || true
               # Zone 6's real mitigation: stop the resumable churn sources
-              # (btrbk sends, balance, scrub). They are NOT restarted here —
-              # their own timers re-fire them once I/O has drained (btrbk
-              # resumes incrementally; an interrupted receive is healed by
-              # btrbk-pool-clean). Stopping an inactive unit is a no-op.
+              # (btrbk sends, balance, scrub). The post-storm drain path
+              # below RE-ARMS them once sustained io PSI falls back under
+              # the trip threshold — without that re-arm a mid-receive stop
+              # cost the nightly pool send a full +24h (the timers had
+              # already fired; the freshness threshold is 3 days, so a
+              # second storm in the window would FAIL the backup check).
+              # Stopping an inactive unit is a no-op.
               if [ -n "$CHURN_UNITS" ]; then
                 # Record WHICH units were actually ACTIVE before the stop
                 # (post-trip forensics must be a prom read, not a journal
@@ -553,14 +557,27 @@ _: {
           fi
 
           # Churn-stop forensics state (written at trip action, see above):
-          # emitted on every run while the drain window lasts, cleared once
-          # sustained io PSI falls back under the trip threshold (the churn
-          # units' own timers re-fire them from there - the window is over).
-          # The clear runs BEFORE the read so the metrics vanish on the very
-          # run that observes the drain (no stale final emission).
+          # emitted on every run while the drain window lasts; once
+          # sustained io PSI falls back under the trip threshold the
+          # stopped units are RE-ARMED (systemctl start, best-effort — each
+          # unit's own pre-start guards decide whether it is safe to run
+          # again, and a relapse re-trips within one 30 s tick) and the
+          # state file is removed. The clear runs BEFORE the read so the
+          # metrics vanish on the very run that observes the drain (no
+          # stale final emission).
           churn_block=""
           churn_ts_line=""
+          churn_rearm_total=$(cat "$CHURN_REARM_FILE" 2>/dev/null || echo 0)
+          churn_rearm_total="''${churn_rearm_total:-0}"
           if [ -f "$CHURN_STOPPED_FILE" ] && [ "$io_psi_some_avg60" != "-1" ] && awk -v p="$io_psi_some_avg60" 'BEGIN { exit !(p < ${toString cfg.ioPsiSomeAvg60ThresholdPercent}) }'; then
+            # deliberate word splitting over the recorded units
+            # shellcheck disable=SC2086
+            for cu in $(awk 'NR>1 && NF' "$CHURN_STOPPED_FILE" 2>/dev/null); do
+              systemctl start "$cu" 2>/dev/null || true
+            done
+            churn_rearm_total=$((churn_rearm_total + 1))
+            echo "$churn_rearm_total" > "$CHURN_REARM_FILE"
+            echo "MEMORY EMERGENCY io drained (io PSI some avg60=''${io_psi_some_avg60}% < ${toString cfg.ioPsiSomeAvg60ThresholdPercent}%) — churn units re-armed (re-arm #''${churn_rearm_total})" >&2
             rm -f "$CHURN_STOPPED_FILE"
           fi
           if [ -f "$CHURN_STOPPED_FILE" ]; then
@@ -624,6 +641,10 @@ _: {
             echo "# HELP memory_emergency_guard_restore_capped 1 when the socket is down AND the daily restore budget is spent — restart requires manual action (systemctl start <socket>)"
             echo "# TYPE memory_emergency_guard_restore_capped gauge"
             echo "memory_emergency_guard_restore_capped ''${restore_capped}"
+
+            echo "# HELP memory_emergency_guard_churn_rearms_total Total churn-unit re-arms performed after io-PSI drain since first deploy"
+            echo "# TYPE memory_emergency_guard_churn_rearms_total counter"
+            echo "memory_emergency_guard_churn_rearms_total ''${churn_rearm_total}"
 
             echo "# HELP memory_emergency_guard_zone1_trips_total Trips from Zone 1 (MemAvailable below absolute floor)"
             echo "# TYPE memory_emergency_guard_zone1_trips_total counter"
@@ -764,7 +785,7 @@ _: {
             "btrfs-scrub-data.service"
             "btrfs-scrub-mnt-pool.service"
           ];
-          description = "Resumable I/O churn units stopped on ANY trip (Zone 6's real mitigation: crash #3 was stacked full-disk readers). Never restarted by the guard — their own timers re-fire them once I/O drains (btrbk resumes incrementally; an interrupted receive is healed by btrbk-pool-clean). Stopping an inactive unit is a no-op";
+          description = "Resumable I/O churn units stopped on ANY trip (Zone 6's real mitigation: crash #3 was stacked full-disk readers). RE-ARMED (systemctl start, best-effort) by the guard once sustained io PSI drains under the trip threshold — without the re-arm a mid-receive stop pushed the nightly btrbk send a full +24h (the timer had already fired), and a second storm in the 3-day freshness window FAILED the backup check (2026-09-16 23:00 trip #299 class). Each unit's own pre-start guards decide whether it is safe to run; an interrupted receive is healed by btrbk-pool-clean. Stopping an inactive unit is a no-op";
         };
 
         actionCooldownSeconds = lib.mkOption {

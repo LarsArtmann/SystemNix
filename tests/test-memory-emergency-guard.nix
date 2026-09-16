@@ -297,7 +297,8 @@ in
                           " /var/lib/memory-emergency-guard/io-ticks"
                           " /var/lib/memory-emergency-guard/io-ticks.epoch"
                           " /var/lib/memory-emergency-guard/io-ticks.cur"
-                          " /var/lib/memory-emergency-guard/churn-stopped")
+                          " /var/lib/memory-emergency-guard/churn-stopped"
+                          " /var/lib/memory-emergency-guard/churn-rearm.count")
           machine.succeed("rm -f /var/lib/memory-emergency-guard/restores-*")
           # Bring every sacrifice unit back up (the restore path only
           # restarts the socket; activation would re-spawn the backend).
@@ -314,7 +315,7 @@ in
           machine.succeed("systemctl start fastflowlm.service"
                           " 'fastflowlm@1.service'")
           # The Zone 6 churn-stop target: bring it back so later trips can
-          # stop it again (the guard never restarts churn units).
+          # stop it again (the guard only re-arms it on the io-drain path).
           machine.succeed("systemctl start btrfs-balance-data.service")
 
       def assert_all_down():
@@ -555,18 +556,28 @@ in
       assert "memory_emergency_guard_last_run_timestamp_seconds " in prom
 
       # --- 8a. Churn window drains: io PSI back under the threshold ------
-      # (healthy fixture: ioPsiAvg60=0.00) clears the churn-stopped state —
-      # the churn metrics VANISH (their timers re-fire the units from here;
-      # the guard never restarts them). The cooldown (trip was just written)
-      # keeps the restore path out of the way.
+      # (healthy fixture: ioPsiAvg60=0.00) RE-ARMS the stopped churn unit
+      # (the timers had already fired — without the re-arm the nightly
+      # btrbk send would slip a full +24h) and clears the churn-stopped
+      # state — the churn metrics VANISH. The cooldown (trip was just
+      # written) keeps the sacrifice-restore path out of the way.
       out = run_guard("healthy")
-      assert "MEMORY EMERGENCY" not in out
+      assert "churn units re-armed" in out, (
+          "once io PSI drains under the trip threshold the guard must "
+          "re-arm the stopped churn units (2026-09-16 trip #299 class)"
+      )
+      machine.succeed(
+          "systemctl is-active --quiet btrfs-balance-data.service"
+      )  # the re-arm must have actually started the stopped churn unit
       prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
       assert "memory_emergency_guard_churn_units_stopped" not in prom, (
           "once io PSI drains under the trip threshold the churn window is "
           "over — the stopped-units metrics must vanish with the state"
       )
       assert "memory_emergency_guard_churn_stopped_timestamp_seconds" not in prom
+      assert "memory_emergency_guard_churn_rearms_total 1" in prom, (
+          "the drain run must count the re-arm"
+      )
 
       # --- 8b. Phantom io PSI (idle disks) must NOT trip -----------------
       reset_state()
