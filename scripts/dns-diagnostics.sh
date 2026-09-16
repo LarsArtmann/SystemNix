@@ -9,8 +9,9 @@ YELLOW='\033[0;33m'
 NC='\033[0m'
 
 ok() { echo -e "${GREEN}✓${NC} $1"; }
-fail() { echo -e "${RED}✗${NC} $1"; }
+fail() { echo -e "${RED}✗${NC} $1"; FAILS=$((FAILS + 1)); }
 warn() { echo -e "${YELLOW}⚠${NC} $1"; }
+FAILS=0
 
 echo "========== DNS DIAGNOSTICS =========="
 echo ""
@@ -19,12 +20,20 @@ echo ""
 echo "--- Network Connectivity ---"
 DEFAULT_ROUTE=$(ip route show default 2>/dev/null | head -1)
 if [ -n "$DEFAULT_ROUTE" ]; then
-  GATEWAY=$(echo "$DEFAULT_ROUTE" | awk '{print $3}')
-  ok "Default route: $DEFAULT_ROUTE"
-  if ping -c 1 -W 2 "$GATEWAY" >/dev/null 2>&1; then
-    ok "Gateway $GATEWAY reachable"
+  # Only field 3 is a gateway when field 2 is literally 'via' — a via-less
+  # (on-link) default route made $3 the DEVICE name and ping'd it as a host.
+  if [ "$(echo "$DEFAULT_ROUTE" | awk '{print $2}')" = "via" ]; then
+    GATEWAY=$(echo "$DEFAULT_ROUTE" | awk '{print $3}')
   else
+    GATEWAY=""
+  fi
+  ok "Default route: $DEFAULT_ROUTE"
+  if [ -n "$GATEWAY" ] && ping -c 1 -W 2 "$GATEWAY" >/dev/null 2>&1; then
+    ok "Gateway $GATEWAY reachable"
+  elif [ -n "$GATEWAY" ]; then
     fail "Gateway $GATEWAY UNREACHABLE — check physical cable / switch / router"
+  else
+    warn "On-link default route (no via gateway) — skipping gateway ping"
   fi
 else
   fail "No default route — network interface may be down"
@@ -73,10 +82,15 @@ echo ""
 echo "--- DNS Blocking ---"
 if command -v dig >/dev/null 2>&1; then
   BLOCK_RESULT=$(dig @127.0.0.1 doubleclick.net +short +time=3 +tries=1 2>/dev/null | head -1)
-  if [ -n "$BLOCK_RESULT" ]; then
-    ok "doubleclick.net → $BLOCK_RESULT (blocked = sinkhole IP)"
+  if [ -z "$BLOCK_RESULT" ]; then
+    warn "doubleclick.net returned empty (resolution failed — is dnsblockd serving?)"
+  elif [[ "$BLOCK_RESULT" =~ ^(0\.0\.0\.0|127\.|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|::1?$) ]]; then
+    # dnsblockd's sinkhole answer is a LAN IP (192.168.1.200 live) — private =
+    # actually blocked. A PUBLIC answer means blocking is OFF / blocklist empty
+    # (the old check called ANY answer "blocked" = phantom green).
+    ok "doubleclick.net → $BLOCK_RESULT (sinkhole — blocking ACTIVE)"
   else
-    warn "doubleclick.net returned empty (may not be blocked, or resolution failed)"
+    fail "doubleclick.net → $BLOCK_RESULT (PUBLIC IP — blocking is OFF or the blocklist failed to load!)"
   fi
 fi
 echo ""
@@ -95,7 +109,7 @@ echo ""
 
 # --- 7. dnsblockd stats ---
 echo "--- dnsblockd Stats ---"
-STATS=$(curl -sf http://127.0.0.1:9090/stats 2>/dev/null)
+STATS=$(curl -sf --max-time 10 http://127.0.0.1:9090/stats 2>/dev/null)
 if [ -n "$STATS" ]; then
   echo "$STATS" | jq -r '"Queries: \(.dnsQueries) | Blocks: \(.dnsBlocks) | Blocked: \(.totalBlocked) | Uptime: \(.uptime)"' 2>/dev/null || echo "$STATS"
 else
@@ -114,3 +128,11 @@ if [ -n "${GATEWAY:-}" ] && ping -c 1 -W 2 "$GATEWAY" >/dev/null 2>&1; then
 else
   fail "Network connectivity issue — NOT a DNS problem. Check cables/switch/router."
 fi
+
+# Diagnostic exit contract: 0 = everything diagnosed healthy, 1 = findings.
+if [ "$FAILS" -gt 0 ]; then
+  echo ""
+  echo "$FAILS check(s) FAILED — see ✗ lines above."
+  exit 1
+fi
+exit 0
