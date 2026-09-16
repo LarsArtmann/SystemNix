@@ -117,5 +117,11 @@
     # Miniflux — self-hosted RSS reader (services.miniflux), loopback-only;
     # Caddy proxies rss.home.lan to it.
     miniflux = 8101;
+
+    # mr-sync — read-only repo-portfolio web dashboard
+    # (services.mr-sync-dashboard), loopback-only; Caddy proxies
+    # mr-sync.home.lan to it. 7331 is the tool's own default port
+    # (mr-sync dashboard).
+    mr-sync = 7331;
   };
 }

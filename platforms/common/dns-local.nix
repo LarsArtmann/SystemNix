@@ -30,5 +30,6 @@
     "inbox"
     "tq"
     "rss"
+    "mr-sync"
   ];
 }
