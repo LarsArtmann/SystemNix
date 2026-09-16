@@ -619,13 +619,13 @@ in
       (wrapWithMemoryLimit pkgs {
         name = "go-test";
         maxMemory = "4G";
-        command = lib.getExe pkgs.go;
+        command = lib.getExe pkgs.go_1_27;
         extraArgs = [ "test" ];
       })
       (wrapWithMemoryLimit pkgs {
         name = "go-build";
         maxMemory = "4G";
-        command = lib.getExe pkgs.go;
+        command = lib.getExe pkgs.go_1_27;
         extraArgs = [ "build" ];
       })
       (wrapWithMemoryLimit pkgs {
