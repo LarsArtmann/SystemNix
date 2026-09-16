@@ -158,6 +158,16 @@ Reference implementations: `modules/nixos/services/monitor365.nix` (gold standar
 
 All private repos use `git+ssh://` URLs. Go tool packages defined in `mkLarsPackages` in `flake.nix` — NOT overlays.
 
+**Deploy-key recipe for CI-private flake inputs (proven 2026-09-16, file-and-image-renamer + BuildFlow):** a `git+ssh://` input in flake.nix is unreadable from CI (no interactive SSH). Per private repo, one-time:
+
+1. `ssh-keygen -t ed25519 -f /tmp/dk-<repo> -N ''`
+2. `gh api -X POST repos/LarsArtmann/<repo>/keys -f title=systemnix-ci-readonly -f key="$(cat /tmp/dk-<repo>.pub)" -F read_only=true`
+3. `gh secret set NIX_DEPLOY_KEY_<REPO> -R LarsArtmann/SystemNix < /tmp/dk-<repo>`
+4. `trash` both local key files
+5. Wire it in `.github/workflows/nix-check.yml`: env `NIX_DEPLOY_KEY_<REPO>: ${{ secrets.NIX_DEPLOY_KEY_<REPO> }}` + an `ssh-add` step line before any `nix` command (see the existing both-auth-blocks pattern).
+
+The pin itself goes in flake.nix as `git+ssh://git@github.com/LarsArtmann/<repo>?ref=refs/heads/master&rev=<sha>` — narHash stays IDENTICAL to the previous `github:` pin (same tree); verify with a python json compare of flake.lock before/after, never by eyeball. Caveat: pushing such a branch can trip GitHub push protection on fixture literals (see GH013 — server-side only, dry-run does NOT detect it).
+
 `mkPreparedSource` (from `go-nix-helpers`) auto-strips local replaces, normalizes pseudo-versions, generates `replace` directives. Features: `subModules` (handles `/v2` suffixes — include version in list entry, kept in path, stripped from dir), `stripLocalReplaces`, `subModuleVersionNormalize`.
 
 **vendorHash breaking?** Set `vendorHash = ""`, build, paste `got:` hash.
