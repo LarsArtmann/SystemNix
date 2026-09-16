@@ -60,10 +60,6 @@ let
 
   doubleBlank =
     m:
-    let
-      lines = lib.filter (l: l == "") (lib.splitString "\n" m);
-    in
-    # adjacent blank lines exist iff the rc contains "\n\n\n"
     lib.hasInfix "\n\n\n" m;
 
   cases = [

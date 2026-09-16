@@ -40,7 +40,6 @@
       inherit (import ../../../lib/default.nix lib)
         harden
         serviceOneshotDefaults
-        ioTier
         mkFilesystem
         ;
       cfg = config.services.hot-db;

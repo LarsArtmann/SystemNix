@@ -103,7 +103,7 @@ in
   name = "crush-hot-db";
 
   nodes.machine =
-    { lib, pkgs, ... }:
+    { lib, ... }:
     {
       imports = [ crushHotDbModule ];
 

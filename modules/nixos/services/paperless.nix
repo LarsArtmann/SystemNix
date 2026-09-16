@@ -353,7 +353,7 @@ _: {
         {
           assertions = [
             {
-              assertion = (!dcfg.enable || cfg.enable);
+              assertion = !dcfg.enable || cfg.enable;
               message = "services.paperless-dashboard.enable requires services.paperless.enable = true";
             }
             {

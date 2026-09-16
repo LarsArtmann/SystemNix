@@ -53,7 +53,6 @@ let
       zramPct,
       psiAvg10,
       psiAvg60 ? "4.00",
-      ioPsiAvg60 ? "0.00",
     }:
     "MemTotal:       10000000 kB\\nMemAvailable:    "
     + (toString (builtins.floor (10000000 * availPct)))
@@ -76,7 +75,7 @@ let
     in
     "mkdir -p /tmp/gt && "
     + "printf '"
-    + (sourcesBlob (builtins.removeAttrs attrs [ "diskTicks" ]))
+    + (sourcesBlob (builtins.removeAttrs attrs [ "diskTicks" "ioPsiAvg60" ]))
     + "\\nsome avg10=0.00 avg60="
     + ioPsiAvg60
     + " avg300=0.00 total=0\\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"

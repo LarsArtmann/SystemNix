@@ -154,7 +154,7 @@ let
     }
     {
       name = "cow-false-emits-nodatacow";
-      pass = builtins.elem "nodatacow" ((evalConfig [ ]).fileSystems."/var/lib/mydb".options);
+      pass = builtins.elem "nodatacow" (evalConfig [ ]).fileSystems."/var/lib/mydb".options;
     }
   ];
 

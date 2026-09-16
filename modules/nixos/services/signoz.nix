@@ -15,7 +15,6 @@ in
   perSystem =
     {
       pkgs,
-      options,
       lib,
       ...
     }:

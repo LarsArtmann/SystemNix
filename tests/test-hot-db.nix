@@ -42,7 +42,7 @@ in
 {
   name = "hot-db";
 
-  nodes.machine = { lib, ... }: {
+  nodes.machine = { ... }: {
     imports = [ hotDbModule ];
 
     boot.supportedFilesystems = [ "btrfs" ];

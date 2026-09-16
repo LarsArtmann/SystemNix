@@ -327,9 +327,7 @@
         systemd.services.cv-oidc-env =
           lib.mkIf
             (
-              (
-                (cfg.settings.oidc.enabled or false) && (config.services.pocket-id-config.provision.enable or false)
-              )
+              (cfg.settings.oidc.enabled or false) && (config.services.pocket-id-config.provision.enable or false)
             )
             {
               description = "CV — Pocket ID OIDC client secret provisioning";

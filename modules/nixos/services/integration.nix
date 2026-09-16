@@ -54,7 +54,7 @@ _: {
       # Relative check URLs resolve against the entry's port; absolute URLs
       # (tcp://, https://, other hosts) pass through verbatim.
       checkUrl =
-        name: e: check:
+        _name: e: check:
         if check.url != null then check.url else "http://127.0.0.1:${toString e.port}${check.path}";
 
       entryChecks = lib.concatLists (
@@ -86,7 +86,7 @@ _: {
         else
           "localhost:${toString ports.signoz-otlp-http}";
 
-      homepageTile = name: e: {
+      homepageTile = _name: e: {
         name = e.homepage.name;
         inherit (e.homepage) group;
         href =
@@ -107,7 +107,7 @@ _: {
       options.services.integration = lib.mkOption {
         type = lib.types.attrsOf (
           lib.types.submodule (
-            { name, ... }:
+            _:
             {
               options = {
                 enable = lib.mkOption {
