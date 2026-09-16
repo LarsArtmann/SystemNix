@@ -58,9 +58,7 @@ let
   strippedDocFiles = builtins.removeAttrs agentDocFiles [ "crush/AGENTS.md" ];
   strippedLooksWired = strippedDocFiles ? "crush/AGENTS.md";
 
-  doubleBlank =
-    m:
-    lib.hasInfix "\n\n\n" m;
+  doubleBlank = m: lib.hasInfix "\n\n\n" m;
 
   cases = [
     {

@@ -106,243 +106,240 @@ _: {
     {
       options.services.integration = lib.mkOption {
         type = lib.types.attrsOf (
-          lib.types.submodule (
-            _:
-            {
-              options = {
-                enable = lib.mkOption {
-                  type = lib.types.bool;
-                  default = true;
-                  description = ''
-                    Whether this entry's fan-out is active. Service modules
-                    typically define the whole entry inside `lib.mkIf cfg.enable`
-                    instead; this switch covers entries declared unconditionally
-                    (e.g. from configuration.nix).
-                  '';
-                };
-
-                unit = lib.mkOption {
-                  type = lib.types.nullOr lib.types.str;
-                  default = null;
-                  description = ''
-                    Systemd unit name for monitored/otel fan-out. Defaults to
-                    the entry's attribute name.
-                  '';
-                };
-
-                subdomain = lib.mkOption {
-                  type = lib.types.nullOr lib.types.str;
-                  default = null;
-                  description = ''
-                    DNS subdomain under networking.domain (served by dnsblockd
-                    via platforms/common/dns-local.nix). MUST be listed there —
-                    enforced by an eval-time assertion (rpi3-dns serves the same
-                    shared list, so the file stays the cross-host truth).
-                    Drives the vHost hostname and the homepage tile href.
-                  '';
-                };
-
-                port = lib.mkOption {
-                  type = lib.types.nullOr lib.types.port;
-                  default = null;
-                  description = "Backend port (from lib/ports.nix) for the vHost and relative check URLs";
-                };
-
-                vHost.layer = lib.mkOption {
-                  type = lib.types.enum [
-                    "plain"
-                    "protected"
-                    "none"
-                  ];
-                  default = "protected";
-                  description = ''
-                    "protected" = Layer 2 (oauth2-proxy forward-auth for
-                    external clients, LAN bypass) — for apps without their own
-                    auth. "plain" = Layer 0/1 direct reverse_proxy — LAN-only
-                    UIs and apps with native OIDC (forward-auth would
-                    double-auth). "none" = no vHost (DNS/homepage only).
-                  '';
-                };
-
-                checks = lib.mkOption {
-                  type = lib.types.listOf (
-                    lib.types.submodule {
-                      options = {
-                        name = lib.mkOption {
-                          type = lib.types.str;
-                          description = "Gatus endpoint name";
-                        };
-                        group = lib.mkOption {
-                          type = lib.types.str;
-                          default = "Infrastructure";
-                          description = "Gatus endpoint group";
-                        };
-                        path = lib.mkOption {
-                          type = lib.types.str;
-                          default = "/health";
-                          description = "Path appended to the loopback URL when `url` is null";
-                        };
-                        url = lib.mkOption {
-                          type = lib.types.nullOr lib.types.str;
-                          default = null;
-                          description = ''
-                            Absolute URL override (tcp://…, https://…, other
-                            hosts). Defaults to
-                            http://127.0.0.1:<entry.port><path>.
-                          '';
-                        };
-                        interval = lib.mkOption {
-                          type = lib.types.str;
-                          default = "30s";
-                          description = "Check interval (gatus duration)";
-                        };
-                        conditions = lib.mkOption {
-                          type = lib.types.listOf lib.types.str;
-                          default = [ "[STATUS] == 200" ];
-                          description = ''
-                            Gatus conditions. Follow the AGENTS.md pat()
-                            escape rules — `nix fmt`-surviving single-backslash
-                            newlines, no ?/+ wildcards, anchored metric forms.
-                          '';
-                        };
-                        alert = lib.mkOption {
-                          type = lib.types.nullOr lib.types.str;
-                          default = null;
-                          description = ''
-                            Discord alert description. null = auto-generated
-                            ("<name> down — <sub>.<domain> unreachable");
-                            "" = deliberately silent check.
-                          '';
-                        };
-                        client = lib.mkOption {
-                          type = lib.types.attrs;
-                          default = { };
-                          description = "Gatus client settings (e.g. timeout)";
-                        };
-                        headers = lib.mkOption {
-                          type = lib.types.attrs;
-                          default = { };
-                          description = "Extra request headers (e.g. auth)";
-                        };
-                      };
-                    }
-                  );
-                  default = [ ];
-                  description = "Gatus health/liveness checks for this service";
-                };
-
-                homepage = lib.mkOption {
-                  type = lib.types.nullOr (
-                    lib.types.submodule {
-                      options = {
-                        name = lib.mkOption {
-                          type = lib.types.str;
-                          description = "Tile label";
-                        };
-                        group = lib.mkOption {
-                          type = lib.types.str;
-                          description = "Dashboard tab (existing name appends, new name opens a tab)";
-                        };
-                        href = lib.mkOption {
-                          type = lib.types.nullOr lib.types.str;
-                          default = null;
-                          description = "Link target; null derives https://<subdomain>.<domain>";
-                        };
-                        description = lib.mkOption {
-                          type = lib.types.nullOr lib.types.str;
-                          default = null;
-                          description = "Tile subtitle";
-                        };
-                        icon = lib.mkOption {
-                          type = lib.types.nullOr lib.types.str;
-                          default = null;
-                          description = "Icon from the bundled dashboard-icons pack";
-                        };
-                      };
-                    }
-                  );
-                  default = null;
-                  description = "Homepage dashboard tile";
-                };
-
-                backup = lib.mkOption {
-                  type = lib.types.nullOr (
-                    lib.types.submodule {
-                      options = {
-                        directory = lib.mkOption {
-                          type = lib.types.str;
-                          description = "Directory containing backup files";
-                        };
-                        filePattern = lib.mkOption {
-                          type = lib.types.nullOr lib.types.str;
-                          default = null;
-                          description = "Glob pattern for backup files (default: *)";
-                        };
-                        maxAgeHours = lib.mkOption {
-                          type = lib.types.int;
-                          default = 25;
-                          description = "Maximum age before the backup alerts as stale";
-                        };
-                      };
-                    }
-                  );
-                  default = null;
-                  description = "backup-coordination freshness entry (the service still owns its backup unit/timer)";
-                };
-
-                monitored = lib.mkOption {
-                  type = lib.types.bool;
-                  default = false;
-                  description = "Register the unit in system-health monitoredServices (state/restart/crash-loop metrics)";
-                };
-
-                otel = lib.mkOption {
-                  type = lib.types.nullOr (
-                    lib.types.submodule {
-                      options = {
-                        serviceName = lib.mkOption {
-                          type = lib.types.str;
-                          description = "resource.service.name the binary reports to SigNoz";
-                        };
-                        shape = lib.mkOption {
-                          type = lib.types.enum [
-                            "grpc-url"
-                            "http-url"
-                            "http-host-port"
-                          ];
-                          description = ''
-                            OTLP endpoint contract (must match the binary's
-                            SDK — see otel-endpoint-audit): "http-host-port" =
-                            Go otlptracehttp (host:4318, NO scheme);
-                            "http-url" = Python/Node/Docker SDKs
-                            (http://host:4318); "grpc-url" = Go otlptracegrpc /
-                            Rust tonic (http://host:4317).
-                          '';
-                        };
-                        maxAgeHours = lib.mkOption {
-                          type = lib.types.int;
-                          default = 26;
-                          description = "Span freshness budget (event-driven services: 720)";
-                        };
-                      };
-                    }
-                  );
-                  default = null;
-                  description = "OTLP tracing wiring: sets OTEL_EXPORTER_OTLP_ENDPOINT on the unit and registers it in signoz-coverage + otel-endpoint-audit";
-                };
-
-                oidc = lib.mkOption {
-                  type = lib.types.nullOr serviceTypes.oidcClientType;
-                  default = null;
-                  description = ''
-                    Pocket ID OIDC client registration (native OIDC / Layer 1
-                    services). The callback URLs MUST match the consumer's
-                    redirect configuration byte-for-byte.
-                  '';
-                };
+          lib.types.submodule (_: {
+            options = {
+              enable = lib.mkOption {
+                type = lib.types.bool;
+                default = true;
+                description = ''
+                  Whether this entry's fan-out is active. Service modules
+                  typically define the whole entry inside `lib.mkIf cfg.enable`
+                  instead; this switch covers entries declared unconditionally
+                  (e.g. from configuration.nix).
+                '';
               };
-            }
-          )
+
+              unit = lib.mkOption {
+                type = lib.types.nullOr lib.types.str;
+                default = null;
+                description = ''
+                  Systemd unit name for monitored/otel fan-out. Defaults to
+                  the entry's attribute name.
+                '';
+              };
+
+              subdomain = lib.mkOption {
+                type = lib.types.nullOr lib.types.str;
+                default = null;
+                description = ''
+                  DNS subdomain under networking.domain (served by dnsblockd
+                  via platforms/common/dns-local.nix). MUST be listed there —
+                  enforced by an eval-time assertion (rpi3-dns serves the same
+                  shared list, so the file stays the cross-host truth).
+                  Drives the vHost hostname and the homepage tile href.
+                '';
+              };
+
+              port = lib.mkOption {
+                type = lib.types.nullOr lib.types.port;
+                default = null;
+                description = "Backend port (from lib/ports.nix) for the vHost and relative check URLs";
+              };
+
+              vHost.layer = lib.mkOption {
+                type = lib.types.enum [
+                  "plain"
+                  "protected"
+                  "none"
+                ];
+                default = "protected";
+                description = ''
+                  "protected" = Layer 2 (oauth2-proxy forward-auth for
+                  external clients, LAN bypass) — for apps without their own
+                  auth. "plain" = Layer 0/1 direct reverse_proxy — LAN-only
+                  UIs and apps with native OIDC (forward-auth would
+                  double-auth). "none" = no vHost (DNS/homepage only).
+                '';
+              };
+
+              checks = lib.mkOption {
+                type = lib.types.listOf (
+                  lib.types.submodule {
+                    options = {
+                      name = lib.mkOption {
+                        type = lib.types.str;
+                        description = "Gatus endpoint name";
+                      };
+                      group = lib.mkOption {
+                        type = lib.types.str;
+                        default = "Infrastructure";
+                        description = "Gatus endpoint group";
+                      };
+                      path = lib.mkOption {
+                        type = lib.types.str;
+                        default = "/health";
+                        description = "Path appended to the loopback URL when `url` is null";
+                      };
+                      url = lib.mkOption {
+                        type = lib.types.nullOr lib.types.str;
+                        default = null;
+                        description = ''
+                          Absolute URL override (tcp://…, https://…, other
+                          hosts). Defaults to
+                          http://127.0.0.1:<entry.port><path>.
+                        '';
+                      };
+                      interval = lib.mkOption {
+                        type = lib.types.str;
+                        default = "30s";
+                        description = "Check interval (gatus duration)";
+                      };
+                      conditions = lib.mkOption {
+                        type = lib.types.listOf lib.types.str;
+                        default = [ "[STATUS] == 200" ];
+                        description = ''
+                          Gatus conditions. Follow the AGENTS.md pat()
+                          escape rules — `nix fmt`-surviving single-backslash
+                          newlines, no ?/+ wildcards, anchored metric forms.
+                        '';
+                      };
+                      alert = lib.mkOption {
+                        type = lib.types.nullOr lib.types.str;
+                        default = null;
+                        description = ''
+                          Discord alert description. null = auto-generated
+                          ("<name> down — <sub>.<domain> unreachable");
+                          "" = deliberately silent check.
+                        '';
+                      };
+                      client = lib.mkOption {
+                        type = lib.types.attrs;
+                        default = { };
+                        description = "Gatus client settings (e.g. timeout)";
+                      };
+                      headers = lib.mkOption {
+                        type = lib.types.attrs;
+                        default = { };
+                        description = "Extra request headers (e.g. auth)";
+                      };
+                    };
+                  }
+                );
+                default = [ ];
+                description = "Gatus health/liveness checks for this service";
+              };
+
+              homepage = lib.mkOption {
+                type = lib.types.nullOr (
+                  lib.types.submodule {
+                    options = {
+                      name = lib.mkOption {
+                        type = lib.types.str;
+                        description = "Tile label";
+                      };
+                      group = lib.mkOption {
+                        type = lib.types.str;
+                        description = "Dashboard tab (existing name appends, new name opens a tab)";
+                      };
+                      href = lib.mkOption {
+                        type = lib.types.nullOr lib.types.str;
+                        default = null;
+                        description = "Link target; null derives https://<subdomain>.<domain>";
+                      };
+                      description = lib.mkOption {
+                        type = lib.types.nullOr lib.types.str;
+                        default = null;
+                        description = "Tile subtitle";
+                      };
+                      icon = lib.mkOption {
+                        type = lib.types.nullOr lib.types.str;
+                        default = null;
+                        description = "Icon from the bundled dashboard-icons pack";
+                      };
+                    };
+                  }
+                );
+                default = null;
+                description = "Homepage dashboard tile";
+              };
+
+              backup = lib.mkOption {
+                type = lib.types.nullOr (
+                  lib.types.submodule {
+                    options = {
+                      directory = lib.mkOption {
+                        type = lib.types.str;
+                        description = "Directory containing backup files";
+                      };
+                      filePattern = lib.mkOption {
+                        type = lib.types.nullOr lib.types.str;
+                        default = null;
+                        description = "Glob pattern for backup files (default: *)";
+                      };
+                      maxAgeHours = lib.mkOption {
+                        type = lib.types.int;
+                        default = 25;
+                        description = "Maximum age before the backup alerts as stale";
+                      };
+                    };
+                  }
+                );
+                default = null;
+                description = "backup-coordination freshness entry (the service still owns its backup unit/timer)";
+              };
+
+              monitored = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = "Register the unit in system-health monitoredServices (state/restart/crash-loop metrics)";
+              };
+
+              otel = lib.mkOption {
+                type = lib.types.nullOr (
+                  lib.types.submodule {
+                    options = {
+                      serviceName = lib.mkOption {
+                        type = lib.types.str;
+                        description = "resource.service.name the binary reports to SigNoz";
+                      };
+                      shape = lib.mkOption {
+                        type = lib.types.enum [
+                          "grpc-url"
+                          "http-url"
+                          "http-host-port"
+                        ];
+                        description = ''
+                          OTLP endpoint contract (must match the binary's
+                          SDK — see otel-endpoint-audit): "http-host-port" =
+                          Go otlptracehttp (host:4318, NO scheme);
+                          "http-url" = Python/Node/Docker SDKs
+                          (http://host:4318); "grpc-url" = Go otlptracegrpc /
+                          Rust tonic (http://host:4317).
+                        '';
+                      };
+                      maxAgeHours = lib.mkOption {
+                        type = lib.types.int;
+                        default = 26;
+                        description = "Span freshness budget (event-driven services: 720)";
+                      };
+                    };
+                  }
+                );
+                default = null;
+                description = "OTLP tracing wiring: sets OTEL_EXPORTER_OTLP_ENDPOINT on the unit and registers it in signoz-coverage + otel-endpoint-audit";
+              };
+
+              oidc = lib.mkOption {
+                type = lib.types.nullOr serviceTypes.oidcClientType;
+                default = null;
+                description = ''
+                  Pocket ID OIDC client registration (native OIDC / Layer 1
+                  services). The callback URLs MUST match the consumer's
+                  redirect configuration byte-for-byte.
+                '';
+              };
+            };
+          })
         );
         default = { };
         description = "Service-integration registry: one entry per service, fanned out to Caddy/Gatus/Homepage/backup/monitoring/OTel/OIDC";

@@ -75,7 +75,12 @@ let
     in
     "mkdir -p /tmp/gt && "
     + "printf '"
-    + (sourcesBlob (builtins.removeAttrs attrs [ "diskTicks" "ioPsiAvg60" ]))
+    + (sourcesBlob (
+      builtins.removeAttrs attrs [
+        "diskTicks"
+        "ioPsiAvg60"
+      ]
+    ))
     + "\\nsome avg10=0.00 avg60="
     + ioPsiAvg60
     + " avg300=0.00 total=0\\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
