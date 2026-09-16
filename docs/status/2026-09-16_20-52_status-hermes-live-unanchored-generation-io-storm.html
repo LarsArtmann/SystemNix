@@ -1,0 +1,1099 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Status Report — Hermes Live, Generation Un-anchored — 2026-09-16 20:52</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS DARK — Dashboard template
+         Design language: form follows function. Primary colors on graphite.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Dark) --- */
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        /* --- Semantic layer (shared vocabulary with editorial template) --- */
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 15%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px; /* Bauhaus default: sharp corners */
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Sticky-header offset for anchor jumps */
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges (used inside issue cards) --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges (used in tables) --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+
+      /* --- Callouts (used inside issues or standalone) --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      /* --- Stat cards / scorecards (aliased vocabulary) --- */
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad,
+      .score-bad {
+        /* default top bar already set */
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      /* --- Strengths list --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--accent);
+      } /* func, type, struct, if, return */
+      .tok-type {
+        color: var(--warning);
+      } /* int, string, bool, error */
+      .tok-string {
+        color: var(--solution);
+      } /* "quoted strings" */
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      } /* function names */
+      .tok-number {
+        color: var(--accent);
+      } /* 42, 3.14 */
+      .tok-generic {
+        color: var(--problem);
+      } /* T, ID in generics */
+      .tok-builtin {
+        color: #4dd9ff;
+      } /* make, len, append */
+      .tok-punct {
+        color: var(--text-muted);
+      } /* { } ( ) ; = : */
+      .tok-attr {
+        color: var(--accent);
+      } /* Nix attribute names */
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids (responsive) --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC (alternative to sidebar) --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>STATUS REPORT</span>
+      <span>2026-09-16 20:52 CEST</span>
+      <span>evo-x2 — boot 2026-09-15 09:37 (no reboot yet)</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#a">a) Fully Done</a>
+          <a href="#b">b) Partially Done</a>
+          <a href="#c">c) Not Started</a>
+          <a href="#d">d) Fucked Up</a>
+          <a href="#e">e) Improve</a>
+          <a href="#f">f) Top 25 Next</a>
+          <a href="#g">g) Top Question</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">Status Report</div>
+          <h1>Hermes Live on @home-hermes — Generation Still UN-ANCHORED, IO Storm Active</h1>
+          <p class="hero-subtitle">
+            Snapshot at 2026-09-16 20:52 CEST. Migration functionally complete and serving; the
+            reboot-revert landmine persists 26h after the first exit-4; ~110-commit push landed at
+            20:16 (GH013 resolved); machine under a real IO storm with journal reads hanging.
+          </p>
+        </div>
+
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <div class="stat-grid">
+          <div class="stat-card stat-bad">
+            <div class="stat-value">ARMED</div>
+            <div class="stat-label">Un-anchored generation (reboot = revert + brainless hermes)</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">62.6%</div>
+            <div class="stat-label">IO PSI some avg60 (disk 100% busy, load 49–72)</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">LIVE</div>
+            <div class="stat-label">Hermes on @home-hermes (mount + gateway + mnemosyne verified)</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">20:16</div>
+            <div class="stat-label">Push landed (origin = c9f52789; 2 auto-commits ahead)</div>
+          </div>
+        </div>
+
+        <div class="card card-problem">
+          <h4>Read this first</h4>
+          <p>
+            <strong>Anchor before anything reboots this machine.</strong> <code>readlink /run/current-system</code> =
+            <code>…ef34387 (26.11.20260913)</code> but <code>/nix/var/nix/profiles/system</code> → system-779 =
+            <code>…eaad089 (26.11.20260911, PRE-migration)</code>. A crash, WDT reset, or manual reboot boots
+            eaad089: no home-hermes fstab entry → empty placeholder dir mounts over nothing → hermes starts
+            brainless → full config revert. Two un-anchored systems deep (08:25's and 17:48's exit-4s).
+          </p>
+          <pre><code>sudo nix-env --profile /nix/var/nix/profiles/system --set /run/current-system
+sudo /run/current-system/bin/switch-to-configuration boot</code></pre>
+          <p>Alternative: one clean <code>nix run .#deploy</code> (a clean activation bumps the profile) — currently blocked by the IO-storm pressure gate (PSI ≥ 20%).</p>
+        </div>
+
+        <h2 id="a"><span class="num">01</span>a) FULLY DONE</h2>
+        <table>
+          <thead><tr><th>Item</th><th>Evidence</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Hermes @home-hermes migration LIVE</strong> — subvol mounted at /home/hermes, hermes serving from it (gateway PID 3947796, mnemosyne, mcp_death_supervisor)</td><td>findmnt: <code>btrfs nvme0n1p6[/@home-hermes]</code>; pgrep 20:51; parity-verified 92.3 GB / 948,341 files</td></tr>
+            <tr><td><strong>7h hermes outage recovered</strong> (08:25→15:44) without a deploy — mount start + reset-failed + start</td><td>timeline in docs/status/2026-09-16_17-55 report</td></tr>
+            <tr><td><strong>sops-recipient-audit fixed</strong> — list-literal + key_groups false-positive bugs; assertions <code>[]</code>, flake check green</td><td>fixes in HEAD; carried by daemon commits 1a03314d/07f87403; pushed</td></tr>
+            <tr><td><strong>deploy.sh stc-wedge detector fixed</strong> — holds_stc_lock() /proc/fd verification (pbx ssh false positive class)</td><td>commit d5501bdf; pushed</td></tr>
+            <tr><td><strong>Migration script storm-hardened</strong> — PSI preflight, ionice both passes, partial-staging wipe, mock-tested guard flow</td><td>commits 37c6fae6 / ff366633 / daemon 38fc8c8d; pushed</td></tr>
+            <tr><td><strong>~110-commit PUSH LANDED 20:16</strong> — GH013 push block resolved (unblock path; 5 sgp_ literals still in the audit script — see f/#24)</td><td>origin/master = c9f52789 @ 2026-09-16 20:16 +02:00; <code>rev-list --count origin/master..HEAD</code> = 2</td></tr>
+            <tr><td><strong>tq double-pool warning explained + root-caused</strong> — false positive in substance: PID 229432 is a parallel session's redesign dashboard on a mktemp scratch DB (<code>TQ_DB=/tmp/tmp.1iY9io55LR/scratch.db</code>), serve-only, zero shared state with the pool journal (/mnt/pool/services/tq/tq.db)</td><td>/proc/229432/environ + fd list + guard source deploy.sh:206-218; process still up at 20:51</td></tr>
+            <tr><td><strong>17:55 status report</strong> — the 30-task backlog snapshot</td><td>docs/status/2026-09-16_17-55_hermes-migration-execution-day-storm-deploy-unblocking.md</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="b"><span class="num">02</span>b) PARTIALLY DONE</h2>
+        <div class="issue issue-important">
+          <span class="severity severity-important">Blocked on storm</span>
+          <h3>Deploy chain: newest config RUNNING but not anchored</h3>
+          <div class="where">exit-4 class — activation advanced, profile skipped</div>
+          <p>Works: ef34387 config is live (hermes units, fstab, btrbk entry all from it). Missing: profile/boot-entry anchor — hence section d. Blocker: clean re-deploy blocked by pressure gate during the current storm. Effort: S (2 commands, user).</p>
+        </div>
+        <div class="issue issue-important">
+          <span class="severity severity-important">Waiting on tonight</span>
+          <h3>Migration finalize prerequisites</h3>
+          <div class="where">btrbk + settling</div>
+          <p>Open: first <code>@home-hermes</code> btrbk snapshot + ~92 GB pool send runs TONIGHT 23:00 (0 home-hermes snapshots exist yet; latest root snap = @.20260915T2300). <code>/home/hermes.old</code> still on disk (92 GB, hermes-owned, unreadable to lars). Effort: S to verify tomorrow; finalize = M after settling days.</p>
+        </div>
+        <div class="issue issue-important">
+          <span class="severity severity-important">Degraded right now</span>
+          <h3>Observability under IO storm</h3>
+          <div class="where">journalctl reads hang (D-state journal + 100% busy QLC)</div>
+          <p>Works: /proc, findmnt, ps, git. Broken tonight: journal queries timeout — failed-units list, memory-guard restore state, signoz-provision state are UNVERIFIED as of 20:52 (marked, not guessed). Textfile metrics dir not found at either probed path — needs the correct path re-check post-storm. Effort: S to re-verify.</p>
+        </div>
+
+        <h2 id="c"><span class="num">03</span>c) NOT STARTED</h2>
+        <table>
+          <thead><tr><th>Item</th><th>Why not started</th><th>Still wanted?</th></tr></thead>
+          <tbody>
+            <tr><td>tq guard semantic refinement (agent-pool + TQ_DB check)</td><td>explained-only this session; refinement offered, not implemented</td><td>Yes — S effort</td></tr>
+            <tr><td>tests/test-hermes.nix execution (assertion 2b never ran)</td><td>needs quiet IO window (nix build of VM test)</td><td>Yes — after reboot</td></tr>
+            <tr><td>TODO_LIST harvest of the 17:55 report's 30 tasks</td><td>session interruptions; user hasn't sanctioned the doc edit</td><td>Yes — recommended next doc action</td></tr>
+            <tr><td>sops-recipient-audit test fixtures vs real key_groups shape</td><td>module fixed, fixtures still pending</td><td>Yes</td></tr>
+            <tr><td>WAL retired-capture forensics (state.db.retired-wal-20260916-020432)</td><td>deprioritized behind stability</td><td>Yes, low priority</td></tr>
+            <tr><td>Storm governance (crush-session caps)</td><td>known gap since freeze #4; never scheduled</td><td>YES — tonight is exhibit A</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="d"><span class="num">04</span>d) TOTALLY FUCKED UP</h2>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">P0 — armed 26h</span>
+          <h3>Un-anchored generation: ANY reboot reverts the machine and bricks hermes' brain</h3>
+          <div class="where">/run/current-system (ef34387) ≠ profile system-779 (eaad089)</div>
+          <p>
+            Root cause: two exit-4 activations (08:25 hermes/mount failure; 17:48 browser-history
+            failure during switch) — nh advances current-system but skips the profile bump. Severity:
+            reboot-class data-integrity risk for hermes (brainless agent against empty state dir) +
+            full config revert. Mitigation: the 2-command anchor above, or a clean deploy once the
+            storm passes. Nothing else on this box matters more.
+          </p>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Live now</span>
+          <h3>Real IO storm — deploy gate closed, forensics blinded</h3>
+          <div class="where">io PSI some 53% avg10 / 63% avg60; QLC 100% busy; load 49/72/50; journalctl, nix, cp, dprint in D-state</div>
+          <p>
+            Driver mix: 24 crush sessions (was 46), parallel builds/VM tests, repo scanners — on top
+            of the D-state corpse pile (llama-rag/DRM, owed reboot since 2026-09-05). Consequence:
+            no deploy possible (pressure gate ≥20%), journal reads hang, monitoring textfiles
+            unreadable from this session. Mitigation: wait out or shed load; the corpse half only
+            dies at reboot.
+          </p>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Down since ~15:0x</span>
+          <h3>FastFlowLM :52625 has NO listener — NPU LLM dark</h3>
+          <div class="where">/proc/net/tcp: no 52625 bind (only 18472 = tq redesign)</div>
+          <p>
+            Memory-guard sacrificed the socket during the storm; restore state UNVERIFIED tonight
+            (journal hangs; may be restore-capped — budget 3/day). Consumers degraded: PapDashboard
+            enricher, PMA go-commit LLM path (heuristic fallback active), paperless-ai. Mitigation:
+            <code>sudo systemctl start fastflowlm.socket</code> in a quiet window — after anchoring.
+          </p>
+        </div>
+
+        <div class="card card-warning">
+          <h4>Carried over (documented, not re-litigated)</h4>
+          <p>
+            Post-deploy triage backlog from the 17:55 report — CV pipeline-store /health check
+            missing, Bank-Sync sync_errors_total, crush-rc-test.sh phantom smoke fail (parallel
+            session's edit), signoz-provision 1.26s exit failure, InboxClean main-account
+            auth_expired (user OAuth runbook). All still open; all unverifiable tonight via journal.
+          </p>
+        </div>
+
+        <h2 id="e"><span class="num">05</span>e) WHAT WE SHOULD IMPROVE</h2>
+        <div class="card card-warning">
+          <h4>Patterns, not bugs</h4>
+          <ol>
+            <li><strong>Un-anchored state must gate deploys</strong>, not decorate logs — marker file + pre-deploy hard-fail (26h of standing landmine is the evidence).</li>
+            <li><strong>Semantic guards over pattern guards</strong> — /tmp/tq prefix matching trains operators to ignore the real double-run day.</li>
+            <li><strong>Storm admission control</strong> — cap concurrent crush sessions during PSI ≥20%; the box froze 4 times in this regime and we still ran 46 sessions today.</li>
+            <li><strong>Measure-first sizing</strong> — the 92× hermes size error compounded through plan, script, and outage timelines.</li>
+            <li><strong>Journal-independent forensics</strong> — the /proc-based probes that WORKED tonight should be the documented storm playbook (journalctl-first diagnosis dies exactly when it's needed).</li>
+          </ol>
+        </div>
+
+        <h2 id="f"><span class="num">06</span>f) Top 25 next tasks</h2>
+        <table>
+          <thead><tr><th>#</th><th>Task</th><th>Impact</th><th>Effort</th><th>Cat</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td><strong>USER: anchor generation</strong> (2 commands above)</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>Ops</td></tr>
+            <tr><td>2</td><td><strong>USER: decide reboot window</strong> → pre-reboot-check → reboot (kills 24 crush sessions + pbx ssh; clears corpse pile; owed since 09-05)</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>Ops</td></tr>
+            <tr><td>3</td><td>Post-reboot: verify anchor parity, hermes from subvol, D-state gone, PSI truthful → clean <code>nix run .#deploy</code></td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>Ops</td></tr>
+            <tr><td>4</td><td>USER: pool retention decision — Option A bounded 7d / 14d 4w (deployed) vs B forever (92.3 GB per full send)</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Decision</td></tr>
+            <tr><td>5</td><td>Watch tonight 23:00: first @home-hermes snapshot + ~92 GB pool send; verify tomorrow + <code>migrate-hermes-subvol.sh status</code></td><td><span class="badge badge-high">High</span></td><td>S</td><td>Verify</td></tr>
+            <tr><td>6</td><td>Restore flm socket in quiet window; verify guard restore-cap state</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Ops</td></tr>
+            <tr><td>7</td><td>Verify pushed rewritten history (push landed 20:16 WITHOUT the offered review): fsck + reachability + author sanity</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Verify</td></tr>
+            <tr><td>8</td><td>Un-anchored marker as pre-deploy hard gate in deploy.sh/pre-deploy-check</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Quality</td></tr>
+            <tr><td>9</td><td>tq guard semantic refinement + mock-harness tests</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Quality</td></tr>
+            <tr><td>10</td><td>TODO_LIST harvest from the 17:55 report (30 items) + this report</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Docs</td></tr>
+            <tr><td>11</td><td>Build + run test-hermes (assertion 2b never executed)</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td>Test</td></tr>
+            <tr><td>12</td><td>CV pipeline-store /health Gatus check (missing)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Bug</td></tr>
+            <tr><td>13</td><td>Bank-Sync sync_errors_total triage</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td>Bug</td></tr>
+            <tr><td>14</td><td>crush-rc-test.sh missing from post-deploy-check derivation (phantom smoke fail)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Bug</td></tr>
+            <tr><td>15</td><td>signoz-provision 1.26s exit-code failure (re-verify post-storm)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Bug</td></tr>
+            <tr><td>16</td><td>InboxClean main auth_expired → user OAuth re-consent runbook</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Ops</td></tr>
+            <tr><td>17</td><td>Storm governance: crush-session cap during PSI ≥20%</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Feature</td></tr>
+            <tr><td>18</td><td>hermes.old: dated TTL + removal after first pool-verified snapshot (92 GB pinned)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Cleanup</td></tr>
+            <tr><td>19</td><td>sops-recipient-audit fixtures vs real key_groups shape</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Test</td></tr>
+            <tr><td>20</td><td>Post-storm: re-verify failed-units list + guard metrics via correct textfile path (both probed paths empty tonight)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Verify</td></tr>
+            <tr><td>21</td><td>Replace GH013 push-protection literals in audit-push-protection-literals.sh with runtime-derived fixtures (5 sgp_ refs remain → future blocks)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Quality</td></tr>
+            <tr><td>22</td><td>Finalize migration (delete hermes.old, empty @home cleanup) after settling days</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>Cleanup</td></tr>
+            <tr><td>23</td><td>WAL retired-capture forensics</td><td><span class="badge badge-low">Low</span></td><td>M</td><td>Verify</td></tr>
+            <tr><td>24</td><td>Journal-independent storm forensics runbook (the /proc probes that worked tonight)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Docs</td></tr>
+            <tr><td>25</td><td>Empty @home subvol cleanup + migrate script self-neutralization check</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>Cleanup</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="g"><span class="num">07</span>g) Top question I cannot answer myself</h2>
+        <div class="card card-problem">
+          <h4>When is the reboot window — tonight after 23:00 btrbk, or later?</h4>
+          <p>
+            Everything P0 chains behind it (anchor → pre-reboot-check → reboot → clean deploy →
+            verify → corpse pile gone → PSI truthful). I cannot schedule it because it kills 24
+            live crush sessions (parallel agents mid-work) and the pbx ssh deploy session — only you
+            know what those sessions are worth right now. Folded into it: pool retention Option A
+            (bounded, deployed) vs B (forever) — the first 92.3 GB send fires at 23:00 tonight under
+            the DEFAULT (Option A); say nothing and A stands.
+          </p>
+        </div>
+
+        <footer class="footer">
+          Generated 2026-09-16 20:52 CEST &middot; live probes: date/git/readlink/findmnt/ps/proc/net/tcp/diskstats/pressure &middot; journal-dependent items marked UNVERIFIED (journalctl hung under IO storm) &middot; companion: docs/reviews/2026-09-16_20-52_brutal-self-review.html
+        </footer>
+      </main>
+    </div>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
