@@ -47,8 +47,7 @@
           type = lib.types.str;
           default = "/home/${primaryUser}/projects";
           defaultText = lib.literalExpression ''"/home/${primaryUser}/projects"'';
-          description =
-            "Directory tree scanned for `.crush/` session dirs (any checkout down to depth 3, e.g. `<dir>/group/repo`.";
+          description = "Directory tree scanned for `.crush/` session dirs (any checkout down to depth 3, e.g. `<dir>/group/repo`).";
         };
       };
 
