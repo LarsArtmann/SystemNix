@@ -30,7 +30,10 @@ if [ "$(id -u)" -ne 0 ]; then
     echo "✗ this audit needs root (reads /boot) and no sudo was found"
     exit 1
   fi
-  exec "$SUDO" env BOOT_DIR="$BOOT_DIR" bash "$0" "$@"
+  # Preserve PATH through the re-exec: sudo's secure_path would strip the
+  # wrapper's runtimeInputs (btrfs/nix/jq live in the nix store), silently
+  # degrading every downstream probe into 2>/dev/null = phantom-green gates.
+  exec "$SUDO" env PATH="$PATH" BOOT_DIR="$BOOT_DIR" bash "$0" "$@"
 fi
 
 PASS=0
@@ -74,6 +77,18 @@ else
     warn "loader.conf has no 'default' line — systemd-boot will pick by sort-key; auditing ALL entries strictly (§3)"
   elif [ "${DEFAULT_ENTRY#@}" != "$DEFAULT_ENTRY" ]; then
     warn "default is the special selector '$DEFAULT_ENTRY' (EFI-var state, not statically readable) — auditing ALL entries strictly (§3)"
+    DEFAULT_ENTRY=""
+  elif [[ "$DEFAULT_ENTRY" =~ ^[0-9]+$ ]]; then
+    # loader.conf(5): 'default' may be a menu INDEX (0-based, systemd-boot's
+    # runtime sort order) — it is NOT a filename and cannot be resolved to one
+    # without replicating the boot menu sort. Treat like the special-selector
+    # case (audit ALL entries strictly), but still verify the index is in range.
+    ENTRY_COUNT="$(find "$BOOT_DIR/loader/entries" -maxdepth 1 -name '*.conf' -type f | wc -l)"
+    if [ "$DEFAULT_ENTRY" -lt "$ENTRY_COUNT" ]; then
+      warn "default is menu index $DEFAULT_ENTRY of $ENTRY_COUNT entries (runtime order, not a file) — auditing ALL entries strictly (§3)"
+    else
+      fail "default menu index $DEFAULT_ENTRY is out of range ($ENTRY_COUNT entries found)"
+    fi
     DEFAULT_ENTRY=""
   elif [ -f "$BOOT_DIR/loader/entries/$DEFAULT_ENTRY" ]; then
     pass "default entry present: $DEFAULT_ENTRY"
@@ -322,6 +337,10 @@ done
 # Smoke-fail baseline age: how stale is the known-FAIL list the next post-deploy
 # smoke gets compared against? Reboot-clearable classes only drop out of it via
 # one post-reboot deploy.
+# CONTRACT: post-deploy-check writes this to
+# ${XDG_STATE_HOME:-$HOME/.local/state}/systemnix/ — XDG_STATE_HOME is unset on
+# this box (writer default == this glob). If it is ever set for a user, the
+# baseline moves and this glob must follow.
 for BASELINE in /home/*/.local/state/systemnix/smoke-fail-baseline.txt; do
   [ -f "$BASELINE" ] || continue
   BASELINE_COUNT="$(grep -c . "$BASELINE" 2>/dev/null || true)"

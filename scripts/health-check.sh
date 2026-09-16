@@ -26,7 +26,14 @@ fi
 section "Flake"
 if [[ -f flake.nix ]]; then
   ok "flake.nix found"
-  if nix eval --raw .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath >/dev/null 2>&1; then
+  # nix eval of the HOST-RELEVANT toplevel (was hardcoded evo-x2 — on Darwin
+  # that attr fails eval and a healthy flake reported "evaluation fails").
+  if is_darwin; then
+    _toplevel='.#darwinConfigurations."Lars-MacBook-Air".config.system.build.toplevel.drvPath'
+  else
+    _toplevel='.#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath'
+  fi
+  if nix eval --raw "$_toplevel" >/dev/null 2>&1; then
     ok "flake evaluates (nix eval)"
   else
     fail "flake evaluation fails"
@@ -120,27 +127,35 @@ if is_linux; then
   fi
 
   # Systemd failed units
-  failed_system=$(systemctl --failed --no-legend 2>/dev/null | grep -c "failed" || echo "0")
-  failed_user=$(systemctl --user --failed --no-legend 2>/dev/null | grep -c "failed" || echo "0")
+  # grep -c ALWAYS prints the count (0 on no match) and exits 1 — `|| echo "0"
+  # would double-emit "0\n0" and abort the -eq under set -e (every CLEAN run
+  # false-failed). `|| true` keeps grep's own 0.
+  failed_system=$(systemctl --failed --no-legend 2>/dev/null | grep -c "failed") || true
+  failed_user=$(systemctl --user --failed --no-legend 2>/dev/null | grep -c "failed") || true
   if [[ $failed_system -eq 0 ]] && [[ $failed_user -eq 0 ]]; then
     ok "no failed systemd units"
   else
     fail "$failed_system system + $failed_user user failed systemd units"
+    # head closes early → systemctl SIGPIPEs (141) under pipefail and would
+    # kill the script mid-report; || true guards the diagnostic path.
     systemctl --failed --no-legend 2>/dev/null | head -5 | while read -r line; do
       info "  $line"
-    done
+    done || true
   fi
 
-  # Home Manager generation age
-  if [[ -L "/nix/var/nix/profiles/per-user/$USER/home-manager" ]]; then
-    hm_gen=$(readlink "/nix/var/nix/profiles/per-user/$USER/home-manager")
-    hm_date=$(stat -c %Y "$hm_gen" 2>/dev/null || echo "0")
+  # Home Manager freshness: HM is NixOS-module-integrated on this box — there
+  # is NO /nix/var/nix/profiles/per-user/$USER/home-manager link. Probe the
+  # /etc/profiles symlink's OWN mtime (lstat — every deploy recreates it).
+  # NEVER stat the resolved store path: deterministic builds set mtime=1,
+  # making every age read ~20700d (the old permanent-WARN mechanism).
+  if [[ -L "/etc/profiles/per-user/$USER" ]]; then
+    hm_date=$(stat -c %Y "/etc/profiles/per-user/$USER" 2>/dev/null || echo 0)
     now=$(date +%s)
     age_days=$(((now - hm_date) / 86400))
     if [[ $age_days -gt 7 ]]; then
-      warn "HM generation is ${age_days}d old (consider: just switch)"
+      warn "HM profile symlink is ${age_days}d old (consider: nix run .#deploy)"
     else
-      ok "HM generation is ${age_days}d old"
+      ok "HM profile symlink is ${age_days}d old"
     fi
   fi
 

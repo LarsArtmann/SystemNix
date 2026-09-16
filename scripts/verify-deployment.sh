@@ -83,7 +83,21 @@ fi
 
 echo ""
 echo "--- Boot Performance ---"
-BOOT_TIME=$(systemd-analyze 2>/dev/null | head -1 | grep -oP '[\d.]+s' | head -1 || echo "unknown")
+# The TOTAL is the duration after the LAST '=' — the first durations on the
+# line are the firmware/loader/kernel legs (the old first-match grep reported
+# the FIRMWARE leg as "boot time"). Handles "3.662s" and "12min 3.662s".
+BOOT_TIME=unknown
+_analyze_total=$(systemd-analyze 2>/dev/null | head -1 | awk -F'=' '{
+  line = $NF
+  mins = 0
+  if (match(line, /[0-9]+min/)) { mins = substr(line, RSTART, RLENGTH - 3) + 0 }
+  if (match(line, /[0-9]+(\.[0-9]+)?s/)) {
+    printf "%.1fs", mins * 60 + substr(line, RSTART, RLENGTH - 1) + 0
+  }
+}') || true
+if [ -n "$_analyze_total" ]; then
+  BOOT_TIME="$_analyze_total"
+fi
 if [ "$BOOT_TIME" != "unknown" ]; then
   # Extract numeric value
   BT_NUM=$(echo "$BOOT_TIME" | sed 's/s//')
@@ -100,7 +114,7 @@ echo ""
 echo "--- SigNoz Verification ---"
 
 # Check SigNoz is reachable
-if curl -sf --compressed http://localhost:8080/api/v1/health 2>/dev/null | grep -q "ok\|healthy"; then
+if curl -sf --max-time 10 --compressed http://localhost:8080/api/v1/health 2>/dev/null | grep -q "ok\|healthy"; then
   log_pass "SigNoz health check OK"
 else
   log_fail "SigNoz not reachable on localhost:8080"
@@ -109,7 +123,7 @@ fi
 # Check Discord alert channel
 if [ -f /var/lib/signoz/discord-webhook.url ]; then
   WEBHOOK=$(cat /var/lib/signoz/discord-webhook.url)
-  if curl -sf -X POST -H "Content-Type: application/json" -d '{"content":"SigNoz test alert"}' "$WEBHOOK" 2>/dev/null; then
+  if curl -sf --max-time 15 -X POST -H "Content-Type: application/json" -d '{"content":"SigNoz test alert"}' "$WEBHOOK" 2>/dev/null; then
     log_pass "Discord webhook delivery works"
   else
     log_warn "Discord webhook test failed — check URL validity"
@@ -120,7 +134,10 @@ fi
 
 # Check provisioned dashboards exist
 log_info "Checking SigNoz dashboards..."
-DASH_COUNT=$(curl -sf --compressed http://localhost:8080/api/v1/dashboards 2>/dev/null | grep -o '"id"' | wc -l || echo "0")
+# (`|| true`, NOT `|| echo "0"`: wc already printed 0 when curl found nothing —
+# the echo would double-emit "0\n0" and abort the [ -gt ] under set -e.)
+DASH_COUNT=$(curl -sf --max-time 10 --compressed http://localhost:8080/api/v1/dashboards 2>/dev/null | grep -o '"id"' | wc -l) || true
+DASH_COUNT="${DASH_COUNT:-0}"
 if [ "$DASH_COUNT" -gt 0 ]; then
   log_pass "SigNoz dashboards provisioned: $DASH_COUNT"
 else
@@ -129,7 +146,8 @@ fi
 
 # Check alert rules
 log_info "Checking SigNoz alert rules..."
-RULE_COUNT=$(curl -sf --compressed http://localhost:8080/api/v1/rules 2>/dev/null | grep -o '"id"' | wc -l || echo "0")
+RULE_COUNT=$(curl -sf --max-time 10 --compressed http://localhost:8080/api/v1/rules 2>/dev/null | grep -o '"id"' | wc -l) || true
+RULE_COUNT="${RULE_COUNT:-0}"
 if [ "$RULE_COUNT" -gt 0 ]; then
   log_pass "SigNoz alert rules active: $RULE_COUNT"
 else
@@ -139,14 +157,14 @@ fi
 echo ""
 echo "--- Gatus Verification ---"
 
-if curl -sf --compressed http://localhost:9110/api/v1/endpoints/status 2>/dev/null | grep -q "status"; then
+if curl -sf --max-time 10 --compressed http://localhost:9110/api/v1/endpoints/status 2>/dev/null | grep -q "status"; then
   log_pass "Gatus API reachable on localhost:9110"
 else
   log_fail "Gatus not reachable on localhost:9110"
 fi
 
 # Check TLS cert expiry monitoring
-if curl -sf --compressed http://localhost:9110/api/v1/endpoints/status 2>/dev/null | grep -qi "tls\|cert\|expiry"; then
+if curl -sf --max-time 10 --compressed http://localhost:9110/api/v1/endpoints/status 2>/dev/null | grep -qi "tls\|cert\|expiry"; then
   log_pass "TLS certificate checks present in Gatus"
 else
   log_warn "TLS certificate expiry check not found in Gatus"
@@ -162,10 +180,13 @@ SWAP_USED=$(free -m | awk '/^Swap:/{print $3}')
 log_info "Memory: ${MEM_USED}MB / ${MEM_TOTAL}MB used, Swap: ${SWAP_USED}MB used"
 
 # BTRFS snapshot health
-if [ -d /mnt/btrfs-root/@snapshots ]; then
-  LATEST=$(ls -t /mnt/btrfs-root/@snapshots 2>/dev/null | head -1 || true)
+# btrbk root snapshots live under /mnt/btrfs-root/.snapshots/ (dot dir,
+# subvolid=5 toplevel) — the old '@snapshots' path never existed, so this
+# audit silently warned "not mounted" forever.
+if [ -d /mnt/btrfs-root/.snapshots ]; then
+  LATEST=$(ls -t /mnt/btrfs-root/.snapshots 2>/dev/null | head -1 || true)
   if [ -n "$LATEST" ]; then
-    AGE=$((($(date +%s) - $(stat -c %Y "/mnt/btrfs-root/@snapshots/$LATEST" 2>/dev/null || echo 0)) / 86400))
+    AGE=$((($(date +%s) - $(stat -c %Y "/mnt/btrfs-root/.snapshots/$LATEST" 2>/dev/null || echo 0)) / 86400))
     if [ "$AGE" -le 3 ]; then
       log_pass "BTRFS snapshot fresh: $LATEST (${AGE}d old)"
     else

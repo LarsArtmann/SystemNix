@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Shared system-pressure reporting for post-deploy-check.sh, extracted so
 # the WARN/PASS semantics are fixture-testable (2026-09-02 T07: the old
 # inline check printed PASS "healthy" at memory-PSI avg10 48-77% during a

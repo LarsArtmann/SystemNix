@@ -755,7 +755,9 @@ if $papdashboard_enabled; then
   else
     report_fail "PapDashboard — :8088/api/health unreachable (journalctl -u papdashboard -n 30)"
   fi
-  pap_ingest_code=$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{}' "http://127.0.0.1:8088/api/ingest" 2>/dev/null || echo 000)
+  # curl ALWAYS prints the -w output (000) even when it fails — `|| echo 000`
+  # would double-emit "000\n000" into the case; `|| true` keeps curl's own 000.
+  pap_ingest_code=$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{}' "http://127.0.0.1:8088/api/ingest" 2>/dev/null) || true
   case "$pap_ingest_code" in
   401) report_pass "PapDashboard — /api/ingest route exists (401 = auth gate hit before routing)" ;;
   404) report_fail "PapDashboard — /api/ingest 404: deployed binary lacks the ingest route (stale flake pin? nix flake lock --update-input papdashboard)" ;;
@@ -1195,12 +1197,14 @@ echo "=== Auth Gateway Health ==="
 AUTH_VHOSTS=(
   "signoz.$DOMAIN"
   "logs.$DOMAIN"
-  "monitor.$DOMAIN"
   "search.$DOMAIN"
   "daily.$DOMAIN"
   "tasks.$DOMAIN"
   "manifest.$DOMAIN"
 )
+# monitor365 is enable-gated (disabled since 2026-08-12) — probe its vHost only
+# when the server unit is deployed, else it 000-SKIPs on every run forever.
+test -e /etc/systemd/system/monitor365-server.service && AUTH_VHOSTS+=("monitor.$DOMAIN")
 for vhost in "${AUTH_VHOSTS[@]}"; do
   status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://$vhost/" 2>/dev/null || true)
   case "$status" in
@@ -1282,7 +1286,10 @@ fi
 
 # Desktop: quickshell journal errors (last 1h)
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u 2>/dev/null || echo 0)}"
-_qs_errors=$(journalctl --user -u quickshell --since "-1hour" --no-pager -p err 2>/dev/null | wc -l || echo 0)
+# journalctl exits 1 when NO entries match (repo gotcha) — under pipefail that
+# would kill the script mid-gate, but `|| echo 0` double-emits "0\n0" (wc already
+# printed 0). `|| true` keeps wc's own output as the sole value.
+_qs_errors=$(timeout 30 journalctl --user -u quickshell --since "-1hour" --no-pager -p err 2>/dev/null | wc -l) || true
 if [ "${_qs_errors:-0}" -eq 0 ]; then
   report_pass "Desktop — no errors in quickshell journal (last 1h)"
 else
