@@ -372,6 +372,18 @@ in
           # exit-4 class, bounded but not eliminated — the failure stance is
           # deliberate).
           ExecStartPre = "${lib.getExe btrbkDataGate}";
+          # oom-kill containment (2026-08-21 incident): the full-tree send
+          # charged 20.6G of PAGE CACHE to this unit's cgroup, making btrbk-data
+          # the largest /system.slice consumer — systemd-oomd picked it under
+          # pressure and killed a send that was otherwise making progress.
+          # MemoryHigh (not MemoryMax) throttles: the kernel reclaims the
+          # unit's own page cache early, bounding the cgroup without ever
+          # killing the send. OOMScoreAdjust = -250 keeps a restart-expensive
+          # nightly job (a killed send = hours of QLC re-reads re-paid) out of
+          # oomd's preferred victims — flm (+300) remains the designated
+          # global-OOM sacrifice.
+          MemoryHigh = "4G";
+          OOMScoreAdjust = -250;
         };
         inherit onFailure;
       };
