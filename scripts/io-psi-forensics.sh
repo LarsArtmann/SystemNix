@@ -45,7 +45,10 @@ timeout 5 cat /proc/diskstats >"${OUT}/diskstats.txt" 2>&1 || true
 # Per-cgroup io.stat: rbytes+wbytes totals, top 40 (who is HOLDING the I/O).
 {
   echo "# cgroup io.stat totals (rbytes+wbytes bytes, desc) — top 40"
-  find /sys/fs/cgroup -name io.stat -print0 2>/dev/null |
+  # timeout: this script runs DURING IO storms — an unbounded find over
+  # /sys/fs/cgroup (thousands of cgroup dirs, page-cache-starved) can wedge the
+  # forensics tool itself.
+  timeout 30 find /sys/fs/cgroup -name io.stat -print0 2>/dev/null |
     while IFS= read -r -d "" f; do
       case "$f" in
       # the root cgroup aggregates the whole system — it would be the

@@ -566,6 +566,14 @@ if nix run .#pre-deploy-check; then
     sudo systemctl restart pool-smart-metrics.service 2>/dev/null || true
   fi
 
+  # Fresh agent-ingest metrics every deploy: "Browser History Agent Data"
+  # pats browser_history_agents_active — without this the first deploy after
+  # a boot races the 5-min timer and the textfile is absent.
+  if systemctl cat browser-history-agent-metrics.service >/dev/null 2>&1; then
+    echo "Running browser-history-agent-metrics.service (fresh agent ingest metrics)"
+    sudo systemctl restart browser-history-agent-metrics.service 2>/dev/null || true
+  fi
+
   # Run the buildcache GC after recovery so every deploy verifies the prune
   # path end-to-end (a silent pnpm failure hid here for a week) and reclaims
   # incident debris without waiting for the weekly Sun 05:00 timer.

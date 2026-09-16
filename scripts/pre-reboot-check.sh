@@ -78,7 +78,7 @@ else
   elif [ "${DEFAULT_ENTRY#@}" != "$DEFAULT_ENTRY" ]; then
     warn "default is the special selector '$DEFAULT_ENTRY' (EFI-var state, not statically readable) — auditing ALL entries strictly (§3)"
     DEFAULT_ENTRY=""
-  elif [[ "$DEFAULT_ENTRY" =~ ^[0-9]+$ ]]; then
+  elif [[ $DEFAULT_ENTRY =~ ^[0-9]+$ ]]; then
     # loader.conf(5): 'default' may be a menu INDEX (0-based, systemd-boot's
     # runtime sort order) — it is NOT a filename and cannot be resolved to one
     # without replicating the boot menu sort. Treat like the special-selector

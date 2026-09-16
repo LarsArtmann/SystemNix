@@ -49,7 +49,9 @@ for bin in curl ss pidof journalctl systemctl grep wc awk ls cat sleep seq; do
 done
 
 health_code() {
-  curl -s --compressed --max-time "$TIMEOUT_S" -o /dev/null -w '%{http_code}' "$1" 2>/dev/null || echo 000
+  # curl ALWAYS prints the -w output (000) even on failure — `|| echo 000`
+  # double-emits "000\n000"; `|| true` keeps curl's own value.
+  curl -s --compressed --max-time "$TIMEOUT_S" -o /dev/null -w '%{http_code}' "$1" 2>/dev/null || true
 }
 
 echo "=== [1] Wedge confirmation =========================================="
@@ -75,9 +77,9 @@ fi
 
 echo ""
 echo "=== [2] Pre-kill snapshot ==========================================="
-FD_COUNT=$(ls /proc/"$PID"/fd 2>/dev/null | wc -l || echo "?")
-CLOSE_WAIT=$(ss -tan 2>/dev/null | grep -c CLOSE-WAIT || echo 0)
-THREADS=$(awk '/^Threads:/{print $2}' /proc/"$PID"/status 2>/dev/null || echo "?")
+FD_COUNT=$(ls /proc/"$PID"/fd 2>/dev/null | wc -l) || true
+CLOSE_WAIT=$(ss -tan 2>/dev/null | grep -c CLOSE-WAIT) || true
+THREADS=$(awk '/^Threads:/{print $2}' /proc/"$PID"/status 2>/dev/null) || true
 echo "pid=$PID fds=$FD_COUNT threads=$THREADS host-wide CLOSE-WAIT=$CLOSE_WAIT"
 echo "--- last 5 journal lines before the dump ---"
 journalctl -u "$SERVICE" -n 5 --no-pager --output cat 2>/dev/null || true
@@ -106,7 +108,24 @@ POST_HEALTH=$(health_code "http://127.0.0.1:${STATS_PORT}/health")
 echo "post-restart :${STATS_PORT}/health -> ${POST_HEALTH}"
 
 echo ""
-echo "=== [5] The dump ===================================================="
+echo "=== [5] Dump-capture verification ==================================="
+# journald rate-limiting can silently DROP a multi-MB goroutine stack burst —
+# without this check the runbook reports success while the sample (its entire
+# purpose) is lost. Go's SIGQUIT output always starts with 'SIGQUIT: quit'.
+DUMP_HITS=$(timeout 20 journalctl -b "$BOOT_ID" -u "$SERVICE" --no-pager --output cat 2>/dev/null | grep -c 'SIGQUIT: quit') || true
+DUMP_HITS="${DUMP_HITS:-0}"
+if [ "$DUMP_HITS" -ge 1 ]; then
+  echo "✓ goroutine dump CAPTURED in the journal ($DUMP_HITS signature hit(s))."
+else
+  echo "✗✗✗ GOROUTINE DUMP NOT FOUND IN THE JOURNAL ✗✗✗"
+  echo "  The service was restarted but the forensic sample was likely dropped"
+  echo "  by journald rate-limiting (multi-MB stderr bursts). Before the NEXT"
+  echo "  occurrence: raise LogRateLimitBurst/LogRateLimitIntervalSec on the"
+  echo "  dnsblockd unit, or capture stderr to a file. Check manually first:"
+  echo "    journalctl -b '$BOOT_ID' -u $SERVICE --no-pager | tail -200"
+fi
+
+echo ""
 echo "Goroutine stacks (grep-friendly):"
 echo "  journalctl -b '$BOOT_ID' -u $SERVICE --no-pager | grep -A40 'SIGQUIT'"
 echo "Look for: goroutines blocked on sync./sqlite locks (semacquire),"
@@ -118,6 +137,11 @@ if [ "${POST_HEALTH:-000}" = "000" ]; then
   echo ""
   echo "WARNING: stats API STILL not answering after restart — the wedge"
   echo "survives a restart (new failure class). Check: journalctl -u $SERVICE -n 50"
+  exit 1
+fi
+
+if [ "${DUMP_HITS:-0}" -lt 1 ]; then
+  # Dump lost = the runbook's purpose failed even though the service recovered.
   exit 1
 fi
 

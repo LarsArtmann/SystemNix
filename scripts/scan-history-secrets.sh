@@ -31,6 +31,11 @@ patterns = {
     "Resend API key": rb"\bre_[A-Za-z0-9_]{30,}",
     "Synthetic API key": rb"\bsyn_[A-Za-z0-9]{24,}",
     "GitHub token": rb"gh[pousr]_[A-Za-z0-9]{30,}",
+    # Fine-grained PATs (github_pat_<22>_<59>) — hermes consumes exactly this
+    # class (HERMES_GITHUB_READ_TOKEN), and gitleaks' gh[pousr]_ rule misses it.
+    "GitHub fine-grained PAT": rb"github_pat_[A-Za-z0-9_]{22}_[A-Za-z0-9]{59}",
+    "GitLab PAT": rb"glpat-[A-Za-z0-9_\-]{20,}",
+    "Stripe secret key": rb"[sr]k_live_[A-Za-z0-9]{20,}",
     "AWS access key": rb"AKIA[0-9A-Z]{16}",
     "Slack token": rb"xox[baprs]-[A-Za-z0-9\-]{10,}",
     "Private key PEM": rb"-----BEGIN [A-Z ]*PRIVATE KEY-----",
@@ -53,12 +58,17 @@ cat = subprocess.run(
 
 findings = []
 scanned = 0
+oversized = []
 for line in cat:
     parts = line.split()
     if len(parts) != 3 or parts[1] != "blob":
         continue
     sha, size = parts[0], int(parts[2])
     if size > 50_000_000:
+        # Visible, never silent: a skipped blob is unscanned surface (the
+        # gzip'd itermexport class hid keys for 6 months — a skipped zstd/zip
+        # blob hides them again).
+        oversized.append((sha[:12], size, paths.get(sha, "?")))
         continue
     data = subprocess.run(["git", "-C", repo, "cat-file", "blob", sha],
                           capture_output=True, check=True).stdout
@@ -77,6 +87,8 @@ for line in cat:
 
 for name, prefix, length, sha, path in sorted(set(findings)):
     print(f"HIT  {name}: {prefix}...MASKED len={length}  blob={sha}  path={path}")
+for sha, size, path in sorted(set(oversized)):
+    print(f"WARN oversized blob SKIPPED (>50MB, contents unscanned): {sha}  {size} bytes  path={path}")
 print(f"scanned {scanned} blobs")
 if findings:
     print("FAIL: secrets found in git history")

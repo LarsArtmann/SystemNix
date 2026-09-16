@@ -57,8 +57,8 @@ QUIESCED=0
 prepare_exit_hint() {
   local rc=$?
   if [ "$QUIESCED" -eq 1 ] && [ "$rc" -ne 0 ]; then
-    warn "prepare failed AFTER quiescing hermes — hermes stays stopped. If you are not retrying right away, restart it:
-  sudo systemctl start hermes.service \"user@\$(id -u hermes).service\""
+    warn 'prepare failed AFTER quiescing hermes — hermes stays stopped. If you are not retrying right away, restart it:
+  sudo systemctl start hermes.service "user@$(id -u hermes).service"'
   fi
 }
 trap prepare_exit_hint EXIT
@@ -110,8 +110,10 @@ psi_preflight_check() {
   # box freezes in exactly that regime (crash #3/#4 class).
   local line avg10 avg60
   line=$(awk '/^some/{print $2, $3}' /proc/pressure/io)
-  avg10=${line%% *}; avg10=${avg10#avg10=}
-  avg60=${line##* }; avg60=${avg60#avg60=}
+  avg10=${line%% *}
+  avg10=${avg10#avg10=}
+  avg60=${line##* }
+  avg60=${avg60#avg60=}
   if awk -v a="$avg10" 'BEGIN{exit !(a>=20)}'; then
     die "io PSI some avg10=${avg10}% avg60=${avg60}% — the box is in an IO storm (same 20% bar as the deploy pressure gate). Let it drain, then retry prepare."
   fi

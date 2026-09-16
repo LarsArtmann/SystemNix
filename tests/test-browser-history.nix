@@ -138,6 +138,42 @@ in
       "[[ $(systemctl show -p Result --value browser-history-agent.service) == success ]]"
     )
 
+    # 8. Agent-activity collector: timer enabled, fresh ingest → active=1
+    machine.succeed("systemctl is-active browser-history-agent-metrics.timer")
+    machine.succeed(
+      "sqlite3 /var/lib/browser-history/data.db "
+      "\"UPDATE agent_tokens SET last_used_at = (strftime('%s','now') * 1000000000);\""
+    )
+    machine.succeed("systemctl start browser-history-agent-metrics.service")
+    prom = machine.succeed(
+      "cat /var/lib/prometheus-node-exporter/textfile_collectors/browser-history-agent.prom"
+    )
+    assert "browser_history_agent_scrape_errors 0\n" in prom, prom
+    assert "browser_history_agent_tokens_total 1\n" in prom, prom
+    assert "browser_history_agents_active 1\n" in prom, prom
+    assert "browser_history_agent_last_ingest_age_seconds -" not in prom, prom
+
+    # 9. Stale ingest (2h old > default 60min window) → active=0 (the alert)
+    machine.succeed(
+      "sqlite3 /var/lib/browser-history/data.db "
+      "\"UPDATE agent_tokens SET last_used_at = (strftime('%s','now') * 1000000000) - 7200000000000;\""
+    )
+    machine.succeed("systemctl start browser-history-agent-metrics.service")
+    prom = machine.succeed(
+      "cat /var/lib/prometheus-node-exporter/textfile_collectors/browser-history-agent.prom"
+    )
+    assert "browser_history_agents_active 0\n" in prom, prom
+
+    # 10. Scrape failure fails CLOSED: scrape_errors=1, active metric ABSENT
+    machine.succeed("mv /var/lib/browser-history/data.db /var/lib/browser-history/data.db.bak")
+    machine.succeed("systemctl start browser-history-agent-metrics.service")
+    prom = machine.succeed(
+      "cat /var/lib/prometheus-node-exporter/textfile_collectors/browser-history-agent.prom"
+    )
+    assert "browser_history_agent_scrape_errors 1\n" in prom, prom
+    assert "browser_history_agents_active" not in prom, prom
+    machine.succeed("mv /var/lib/browser-history/data.db.bak /var/lib/browser-history/data.db")
+
     print("Browser History verified — server healthy, token provisioning converges, agent runs")
   '';
 }

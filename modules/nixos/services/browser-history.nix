@@ -56,6 +56,8 @@
       agentTokenDir = "/var/lib/browser-history-agent-token";
       agentEnvFile = "${agentTokenDir}/agent.env";
 
+      textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
+
       agentTokenProvisionScript = pkgs.writeShellApplication {
         name = "browser-history-agent-token-provision";
         runtimeInputs = [
@@ -142,6 +144,34 @@
           provision oneshot failing "pass -user-email to disambiguate"
           every agent tick). null keeps the single-user auto-resolution.
         '';
+      };
+
+      options.services.browser-history.agentActivity = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = ''
+            Alert when ZERO agents are sending data: a root textfile collector
+            reads agent_tokens.last_used_at (the server touches it on every
+            authenticated ingest) and the "Browser History Agent Data" Gatus
+            check fires when no agent token is fresh within maxAgeMinutes.
+          '';
+        };
+
+        maxAgeMinutes = lib.mkOption {
+          type = lib.types.int;
+          default = 60;
+          description = ''
+            Ingest freshness window. The agent timer defaults to 5min, so 60
+            tolerates ~12 missed ticks before the alert fires.
+          '';
+        };
+
+        interval = lib.mkOption {
+          type = lib.types.str;
+          default = "5min";
+          description = "Collection interval (OnUnitActiveSec).";
+        };
       };
 
       config = lib.mkMerge [
@@ -400,6 +430,118 @@
           };
         })
 
+        # ── Agent ingest-freshness watch ───────────────────────────────────────
+        # "Server up" is NOT "data flowing": a dead agent timer alerts
+        # nowhere today (the health check pings the server, not the agents).
+        # This collector reads agent_tokens.last_used_at — the server's auth
+        # middleware touches it on EVERY authenticated /ingest batch
+        # (upstream agent_token_store.go: synchronous single-row UPDATE) —
+        # and publishes:
+        #   browser_history_agent_tokens_total             registered DB tokens
+        #   browser_history_agent_last_ingest_age_seconds  -1 = never used
+        #   browser_history_agents_active                  1 = any token fresh
+        #   browser_history_agent_scrape_errors            1 = DB unreadable
+        # Fail-closed: on a scrape error the active metric is OMITTED, so the
+        # Gatus check cannot phantom-green on a frozen textfile.
+        # CAVEAT: agents on the legacy sops env-token path never touch
+        # last_used_at (env resolution short-circuits before the DB lookup) —
+        # only bh_ DB tokens (the co-located provisioner's output) are visible.
+        (lib.mkIf (cfg.enable && cfg.agentActivity.enable) {
+          systemd.services.browser-history-agent-metrics = {
+            description = "Browser History agent ingest freshness (textfile collector)";
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+            inherit onFailure;
+            path = [
+              pkgs.sqlite
+              pkgs.coreutils
+            ];
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = "root";
+                TimeoutStartSec = "3min";
+              }
+              (harden {
+                ReadWritePaths = [ textfileDir ];
+                # DAC_READ_SEARCH: the server's DynamicUser StateDirectory is
+                # 0700 random-uid (token-provisioner precedent). FOWNER: the
+                # sticky 1777 textfile dir rejects rename-over-foreign-owned
+                # even for root (mail-relay 2026-09-02..06 class).
+                CapabilityBoundingSet = "CAP_DAC_READ_SEARCH CAP_FOWNER";
+                MemoryMax = "128M";
+              })
+              (serviceOneshotDefaults { })
+            ];
+            script = ''
+              set -eu
+              OUT="${textfileDir}/browser-history-agent.prom"
+              mkdir -p "${textfileDir}"
+              TMP="$(mktemp "$OUT.XXXXXX")"
+              chmod 644 "$TMP"
+              trap 'rm -f "$TMP"' EXIT
+
+              DB="/var/lib/browser-history/data.db"
+              MAX_AGE_S=$(( ${toString cfg.agentActivity.maxAgeMinutes} * 60 ))
+              scrape_errors=0
+              tokens=""
+              newest_ns=""
+
+              if [ ! -f "$DB" ]; then
+                echo "browser-history-agent-metrics: server DB missing at $DB" >&2
+                scrape_errors=1
+              else
+                tokens="$(sqlite3 -readonly "$DB" 'SELECT count(*) FROM agent_tokens;' 2>/dev/null)" || {
+                  tokens=""
+                  scrape_errors=1
+                }
+                newest_ns="$(sqlite3 -readonly "$DB" 'SELECT max(last_used_at) FROM agent_tokens;' 2>/dev/null)" || {
+                  newest_ns=""
+                  scrape_errors=1
+                }
+              fi
+
+              active=0
+              age=-1
+              if [ "$scrape_errors" -eq 0 ] && [ -n "$newest_ns" ]; then
+                now_ns="$(date +%s%N)"
+                age=$(( (now_ns - newest_ns) / 1000000000 ))
+                if [ "$age" -ge 0 ] && [ "$age" -le "$MAX_AGE_S" ]; then
+                  active=1
+                fi
+              fi
+
+              {
+                echo "# HELP browser_history_agent_scrape_errors 1 when the server's agent_tokens table could not be read"
+                echo "# TYPE browser_history_agent_scrape_errors gauge"
+                echo "browser_history_agent_scrape_errors $scrape_errors"
+                if [ "$scrape_errors" -eq 0 ]; then
+                  echo "# HELP browser_history_agent_tokens_total Registered DB-backed browser-history agent tokens"
+                  echo "# TYPE browser_history_agent_tokens_total gauge"
+                  echo "browser_history_agent_tokens_total $tokens"
+                  echo "# HELP browser_history_agent_last_ingest_age_seconds Seconds since the newest agent ingest (server clock); -1 = never"
+                  echo "# TYPE browser_history_agent_last_ingest_age_seconds gauge"
+                  echo "browser_history_agent_last_ingest_age_seconds $age"
+                  echo "# HELP browser_history_agents_active 1 when at least one agent ingested within the freshness window"
+                  echo "# TYPE browser_history_agents_active gauge"
+                  echo "browser_history_agents_active $active"
+                fi
+              } >> "$TMP"
+
+              mv "$TMP" "$OUT"
+              echo "browser-history-agent-metrics: tokens=''${tokens:-?} active=$active age=''${age}s window=''${MAX_AGE_S}s scrape_errors=$scrape_errors"
+            '';
+          };
+
+          systemd.timers.browser-history-agent-metrics = {
+            timerConfig = {
+              OnBootSec = "2min";
+              OnUnitActiveSec = cfg.agentActivity.interval;
+            };
+            wantedBy = [ "timers.target" ];
+          };
+        })
+
         # Service-integration registry entries (modules/nixos/services/
         # integration.nix). enable-gated via the registry's own switch so
         # hosts without the integration module (VM tests) still evaluate.
@@ -427,6 +569,23 @@
                     "[RESPONSE_TIME] < 500"
                   ];
                   alert = "Browser History server down — browsing analytics unavailable";
+                }
+              ]
+              ++ lib.optionals cfg.agentActivity.enable [
+                {
+                  name = "Browser History Agent Data";
+                  group = "Productivity";
+                  # node_exporter textfile, not the service's own port.
+                  url = "http://localhost:${toString ports.signoz-node-exporter}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    # Anchored (leading \n) so the metric's own HELP comment
+                    # can never satisfy the pattern (2026-08-22 class).
+                    "[BODY] == pat(*\nbrowser_history_agent_scrape_errors 0\n*)"
+                    "[BODY] == pat(*\nbrowser_history_agents_active 1\n*)"
+                  ];
+                  alert = "Browser History has NO agent data — zero agent tokens ingested within the last ${toString cfg.agentActivity.maxAgeMinutes}min (agent timer dead, agent crash-looping, or ingest auth rejecting a revoked token). Check: systemctl status browser-history-agent.timer browser-history-agent.service; journalctl -u browser-history-agent -n 50. Note: legacy sops env-token agents never update last_used_at — DB (bh_) tokens only.";
                 }
               ];
               homepage = {

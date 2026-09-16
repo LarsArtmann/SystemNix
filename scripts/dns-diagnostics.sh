@@ -9,7 +9,10 @@ YELLOW='\033[0;33m'
 NC='\033[0m'
 
 ok() { echo -e "${GREEN}✓${NC} $1"; }
-fail() { echo -e "${RED}✗${NC} $1"; FAILS=$((FAILS + 1)); }
+fail() {
+  echo -e "${RED}✗${NC} $1"
+  FAILS=$((FAILS + 1))
+}
 warn() { echo -e "${YELLOW}⚠${NC} $1"; }
 FAILS=0
 
@@ -84,7 +87,7 @@ if command -v dig >/dev/null 2>&1; then
   BLOCK_RESULT=$(dig @127.0.0.1 doubleclick.net +short +time=3 +tries=1 2>/dev/null | head -1)
   if [ -z "$BLOCK_RESULT" ]; then
     warn "doubleclick.net returned empty (resolution failed — is dnsblockd serving?)"
-  elif [[ "$BLOCK_RESULT" =~ ^(0\.0\.0\.0|127\.|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|::1?$) ]]; then
+  elif [[ $BLOCK_RESULT =~ ^(0\.0\.0\.0|127\.|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|::1?$) ]]; then
     # dnsblockd's sinkhole answer is a LAN IP (192.168.1.200 live) — private =
     # actually blocked. A PUBLIC answer means blocking is OFF / blocklist empty
     # (the old check called ANY answer "blocked" = phantom green).

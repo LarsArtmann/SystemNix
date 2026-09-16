@@ -16,6 +16,7 @@ echo ""
 # Test counter
 TESTS_PASSED=0
 TESTS_FAILED=0
+TESTS_WARN=0
 TESTS_TOTAL=0
 
 # Test counters
@@ -40,10 +41,12 @@ if command -v starship &>/dev/null; then
       TESTS_PASSED=$((TESTS_PASSED + 1))
     else
       echo "  ⚠️  Starship setting: add_newline not found (may be using different config)"
+      TESTS_WARN=$((TESTS_WARN + 1))
     fi
     TESTS_TOTAL=$((TESTS_TOTAL + 1))
   else
     echo "  ⚠️  Starship config not found: ~/.config/starship.toml"
+    TESTS_WARN=$((TESTS_WARN + 1))
     TESTS_TOTAL=$((TESTS_TOTAL + 1))
   fi
 else
@@ -79,6 +82,7 @@ if [[ $SHELL == *"fish"* ]]; then
         TESTS_PASSED=$((TESTS_PASSED + 1))
       else
         echo "  ⚠️  Fish alias: l not found"
+        TESTS_WARN=$((TESTS_WARN + 1))
       fi
       TESTS_TOTAL=$((TESTS_TOTAL + 1))
 
@@ -87,6 +91,7 @@ if [[ $SHELL == *"fish"* ]]; then
         TESTS_PASSED=$((TESTS_PASSED + 1))
       else
         echo "  ⚠️  Fish alias: t not found"
+        TESTS_WARN=$((TESTS_WARN + 1))
       fi
       TESTS_TOTAL=$((TESTS_TOTAL + 1))
 
@@ -98,6 +103,7 @@ if [[ $SHELL == *"fish"* ]]; then
           TESTS_PASSED=$((TESTS_PASSED + 1))
         else
           echo "  ⚠️  Fish alias: nixup not found or not darwin-rebuild"
+          TESTS_WARN=$((TESTS_WARN + 1))
         fi
       else
         # Linux/NixOS
@@ -106,11 +112,13 @@ if [[ $SHELL == *"fish"* ]]; then
           TESTS_PASSED=$((TESTS_PASSED + 1))
         else
           echo "  ⚠️  Fish alias: nixup not found or not nixos-rebuild"
+          TESTS_WARN=$((TESTS_WARN + 1))
         fi
       fi
       TESTS_TOTAL=$((TESTS_TOTAL + 1))
     else
       echo "  ⚠️  Fish config not found: ~/.config/fish/config.fish"
+      TESTS_WARN=$((TESTS_WARN + 1))
       TESTS_TOTAL=$((TESTS_TOTAL + 1))
     fi
   else
@@ -120,6 +128,7 @@ if [[ $SHELL == *"fish"* ]]; then
   fi
 else
   echo "  ⚠️  Fish shell not active: $SHELL (expected: fish)"
+  TESTS_WARN=$((TESTS_WARN + 1))
   echo "  ℹ️  Note: This test is run from $SHELL, not Fish shell"
   echo "  ℹ️  Note: To test Fish shell, run this script from Fish: fish scripts/test-home-manager.sh"
   TESTS_TOTAL=$((TESTS_TOTAL + 1))
@@ -134,6 +143,7 @@ if [ "${EDITOR:-}" == "micro" ]; then
   TESTS_PASSED=$((TESTS_PASSED + 1))
 else
   echo "  ⚠️  EDITOR not set correctly: ${EDITOR:-} (expected: micro)"
+  TESTS_WARN=$((TESTS_WARN + 1))
 fi
 TESTS_TOTAL=$((TESTS_TOTAL + 1))
 
@@ -142,6 +152,7 @@ if [ "${LANG:-}" == "en_GB.UTF-8" ]; then
   TESTS_PASSED=$((TESTS_PASSED + 1))
 else
   echo "  ⚠️  LANG not set correctly: ${LANG:-} (expected: en_GB.UTF-8)"
+  TESTS_WARN=$((TESTS_WARN + 1))
 fi
 TESTS_TOTAL=$((TESTS_TOTAL + 1))
 
@@ -150,6 +161,7 @@ if [ "${LC_ALL:-}" == "en_GB.UTF-8" ]; then
   TESTS_PASSED=$((TESTS_PASSED + 1))
 else
   echo "  ⚠️  LC_ALL not set correctly: ${LC_ALL:-} (expected: en_GB.UTF-8)"
+  TESTS_WARN=$((TESTS_WARN + 1))
 fi
 TESTS_TOTAL=$((TESTS_TOTAL + 1))
 
@@ -164,6 +176,7 @@ if path_has ~/.local/bin; then
   TESTS_PASSED=$((TESTS_PASSED + 1))
 else
   echo "  ⚠️  PATH missing: ~/.local/bin"
+  TESTS_WARN=$((TESTS_WARN + 1))
 fi
 TESTS_TOTAL=$((TESTS_TOTAL + 1))
 
@@ -172,6 +185,7 @@ if path_has ~/go/bin; then
   TESTS_PASSED=$((TESTS_PASSED + 1))
 else
   echo "  ⚠️  PATH missing: ~/go/bin"
+  TESTS_WARN=$((TESTS_WARN + 1))
 fi
 TESTS_TOTAL=$((TESTS_TOTAL + 1))
 
@@ -180,6 +194,7 @@ if path_has ~/.bun/bin; then
   TESTS_PASSED=$((TESTS_PASSED + 1))
 else
   echo "  ⚠️  PATH missing: ~/.bun/bin"
+  TESTS_WARN=$((TESTS_WARN + 1))
 fi
 TESTS_TOTAL=$((TESTS_TOTAL + 1))
 
@@ -204,6 +219,7 @@ if command -v tmux &>/dev/null; then
       TESTS_PASSED=$((TESTS_PASSED + 1))
     else
       echo "  ⚠️  Tmux setting: base-index not found (may be using default)"
+      TESTS_WARN=$((TESTS_WARN + 1))
     fi
     TESTS_TOTAL=$((TESTS_TOTAL + 1))
 
@@ -212,6 +228,7 @@ if command -v tmux &>/dev/null; then
       TESTS_PASSED=$((TESTS_PASSED + 1))
     else
       echo "  ⚠️  Tmux setting: clock24 not found (may be using default)"
+      TESTS_WARN=$((TESTS_WARN + 1))
     fi
     TESTS_TOTAL=$((TESTS_TOTAL + 1))
 
@@ -220,10 +237,12 @@ if command -v tmux &>/dev/null; then
       TESTS_PASSED=$((TESTS_PASSED + 1))
     else
       echo "  ⚠️  Tmux setting: mouse not found (may be using default)"
+      TESTS_WARN=$((TESTS_WARN + 1))
     fi
     TESTS_TOTAL=$((TESTS_TOTAL + 1))
   else
     echo "  ⚠️  Tmux config not found: ~/.config/tmux/tmux.conf"
+    TESTS_WARN=$((TESTS_WARN + 1))
     TESTS_TOTAL=$((TESTS_TOTAL + 1))
   fi
 else
@@ -244,13 +263,13 @@ if [ $TESTS_FAILED -gt 0 ]; then
 else
   echo "  Failed: $TESTS_FAILED"
 fi
+echo "  Warned: $TESTS_WARN"
 echo ""
-
-if [ $TESTS_FAILED -eq 0 ]; then
+if [ $TESTS_FAILED -eq 0 ] && [ $TESTS_WARN -eq 0 ]; then
   echo -e "${GREEN}🎉 All tests passed!${NC}"
   exit 0
 else
-  echo -e "${RED}❌ Some tests failed!${NC}"
+  echo -e "${RED}❌ Some tests failed or warned ($TESTS_FAILED failed, $TESTS_WARN warned)!${NC}"
   echo ""
   echo "Troubleshooting:"
   echo "  1. Restart shell: exec fish"

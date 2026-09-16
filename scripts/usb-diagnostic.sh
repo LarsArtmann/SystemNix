@@ -8,7 +8,10 @@ if [ $# -ne 1 ]; then
   exit 2
 fi
 DEV="$1"
-[ -e "$DEV" ] || { echo "✗ $DEV does not exist" >&2; exit 2; }
+[ -e "$DEV" ] || {
+  echo "✗ $DEV does not exist" >&2
+  exit 2
+}
 BASENAME=$(basename "$DEV")
 # Partition suffix is device-type dependent (nvme → p1); probe both forms.
 if [ -e "${DEV}1" ]; then
