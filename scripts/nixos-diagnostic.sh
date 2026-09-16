@@ -63,9 +63,10 @@ test_flake() {
 
   echo "✅ flake.nix found"
 
-  # Test flake check
-  echo "Running nix flake check..."
-  if nix flake check --quiet; then
+  # Test flake check (eval-only — --no-build skips VM-test builds; the old
+  # --quiet is not a meaningful flag for flake check)
+  echo "Running nix flake check --no-build..."
+  if nix flake check --no-build; then
     echo "✅ nix flake check passed"
   else
     echo "❌ nix flake check failed"
@@ -78,12 +79,14 @@ test_nixos_config() {
   echo ""
   echo "🔍 Testing NixOS configuration build..."
 
-  # Test nixos-rebuild check
-  echo "Running nixos-rebuild check..."
-  if sudo nixos-rebuild check --flake "$FLAKE_REF" --show-trace; then
-    echo "✅ nixos-rebuild check passed"
+  # nixos-rebuild has NO 'check' subcommand (list/build/test/boot/switch/
+  # dry-build/dry-activate/edit/repl) — the old `check` always errored ❌ on a
+  # healthy system. dry-build builds the toplevel without switching.
+  echo "Running nixos-rebuild dry-build..."
+  if sudo nixos-rebuild dry-build --flake "$FLAKE_REF" --show-trace; then
+    echo "✅ nixos-rebuild dry-build passed"
   else
-    echo "❌ nixos-rebuild check failed"
+    echo "❌ nixos-rebuild dry-build failed"
     echo ""
     echo "🔧 Trying to get more detailed error information..."
     sudo nixos-rebuild build --flake "$FLAKE_REF" --show-trace 2>&1 | head -50 || true
@@ -127,12 +130,12 @@ provide_remediation() {
   echo "   nix-env --delete-generations old --profile /nix/var/nix/profiles/per-user/$USER/home-manager"
   echo ""
   echo "3. Rebuild configuration:"
-  echo "   sudo nixos-rebuild switch --flake '$FLAKE_REF'"
+  echo "   nix run .#deploy  # flake app (repo doctrine: never raw nixos-rebuild)"
   echo ""
   echo "4. If still failing, try cleaning the Nix store:"
   echo "   sudo nix-collect-garbage -d"
   echo "   sudo nix-store --optimise"
-  echo "   sudo nixos-rebuild switch --flake '$FLAKE_REF'"
+  echo "   nix run .#deploy  # flake app (repo doctrine: never raw nixos-rebuild)"
 }
 
 # Main execution
@@ -146,7 +149,7 @@ main() {
 
   echo ""
   echo "✅ All diagnostics passed!"
-  echo "You can safely run: sudo nixos-rebuild switch --flake '$FLAKE_REF'"
+  echo "You can safely run: nix run .#deploy  # flake app (repo doctrine: never raw nixos-rebuild)"
 }
 
 # Run with error handling

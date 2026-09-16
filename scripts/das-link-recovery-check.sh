@@ -237,7 +237,10 @@ scan_boot() {
 # never trust the exit code alone (phantom-green guard).
 if [ -n "$(journalctl -k -b --no-pager -n 1 2>/dev/null || true)" ]; then
   scan_boot -b
-  scan_boot "-b -1"
+  # TWO args, never "-b -1" as one argv: the single-string form hands journalctl
+  # an invalid option, the error dies in 2>/dev/null, and the PREVIOUS boot —
+  # the one the crash damage actually lives in — reports a false "clean".
+  scan_boot -b -1
 else
   kernel_log_readable=0
   note "kernel journal unreadable/empty as $(id -un) — damage scan skipped;"

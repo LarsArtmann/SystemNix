@@ -1,9 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DEV="${1:-/dev/sda}"
+# Explicit device REQUIRED — kernel sd-letters reshuffle on every replug, so a
+# /dev/sda default diagnoses whatever drive happened to grab the name.
+if [ $# -ne 1 ]; then
+  echo "usage: $0 <device>   (e.g. /dev/disk/by-id/… or /dev/sdb — NO default)" >&2
+  exit 2
+fi
+DEV="$1"
+[ -e "$DEV" ] || { echo "✗ $DEV does not exist" >&2; exit 2; }
 BASENAME=$(basename "$DEV")
-PART="${DEV}1"
+# Partition suffix is device-type dependent (nvme → p1); probe both forms.
+if [ -e "${DEV}1" ]; then
+  PART="${DEV}1"
+elif [ -e "${DEV}p1" ]; then
+  PART="${DEV}p1"
+else
+  PART="${DEV}1"
+fi
 echo "========================================"
 echo "  USB Stick Diagnostic Report — $DEV"
 echo "========================================"
@@ -16,12 +30,12 @@ echo ""
 echo "=== Mount Status ==="
 findmnt "$DEV" 2>/dev/null || echo "Not mounted"
 findmnt "$PART" 2>/dev/null || echo "$PART not mounted"
-grep "$BASENAME" /proc/mounts || echo "No $BASENAME entries in /proc/mounts"
+grep -w "$BASENAME" /proc/mounts || echo "No $BASENAME entries in /proc/mounts"
 echo ""
 
 echo "=== Swap on $BASENAME? ==="
-swapon --show 2>/dev/null | grep "$BASENAME" || echo "No swap on $BASENAME"
-grep "$BASENAME" /proc/swaps 2>/dev/null || echo "No $BASENAME in /proc/swaps"
+swapon --show 2>/dev/null | grep -w "$BASENAME" || echo "No swap on $BASENAME"
+grep -w "$BASENAME" /proc/swaps 2>/dev/null || echo "No $BASENAME in /proc/swaps"
 echo ""
 
 echo "=== Kernel Disk Stats ==="
@@ -35,11 +49,11 @@ iostat -d "$DEV" 2 3 2>/dev/null || echo "iostat not available"
 echo ""
 
 echo "=== Processes Using the Device (fuser) ==="
-sudo fuser -vm "$DEV" "$PART" 2>&1 || echo "No processes found by fuser"
+timeout 15 sudo fuser -vm "$DEV" "$PART" 2>&1 || echo "No processes found by fuser (or probe timed out)"
 echo ""
 
 echo "=== Open Files on Device (lsof) ==="
-sudo lsof "$DEV" "$PART" 2>&1 || echo "Nothing open"
+timeout 15 sudo lsof "$DEV" "$PART" 2>&1 || echo "Nothing open (or probe timed out)"
 echo ""
 
 echo "=== Udev Info ==="
@@ -47,11 +61,14 @@ udevadm info --query=all --name="$DEV" 2>/dev/null | head -30 || true
 echo ""
 
 echo "=== SMART/Health (if available) ==="
-sudo smartctl -a "$DEV" 2>&1 | head -40 || echo "smartctl not available"
+# timeout: this script runs DURING USB wedges — an unbounded smartctl against a
+# hung bridge hangs the diagnostic itself. head closes early → SIGPIPE under
+# pipefail, hence || true.
+timeout 30 sudo smartctl -a "$DEV" 2>&1 | head -40 || echo "smartctl unavailable or timed out (30s) — a hang here IS a finding (wedged bridge)"
 echo ""
 
-echo "=== Kernel Messages ==="
-journalctl -k --grep "$BASENAME|san|usb" --no-pager -n 20 || true
+echo "=== Kernel Messages (this boot) ==="
+timeout 15 journalctl -k -b --grep "$BASENAME|san|usb" --no-pager -n 20 || true
 echo ""
 
 echo "=== Per-Process I/O (top writers) ==="

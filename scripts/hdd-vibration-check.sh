@@ -83,7 +83,9 @@ if [ -z "$SMARTCTL" ]; then
   exit 2
 fi
 
-smart() { "$SMARTCTL" "$@"; }
+# timeout: pool members can sit behind a wedged JMS567 bridge — an unbounded
+# smartctl then hangs the vibration audit itself (incident-time tool class).
+smart() { timeout 30 "$SMARTCTL" "$@"; }
 
 # Raw value of one SMART attribute id for a device; empty when absent.
 get_raw() {

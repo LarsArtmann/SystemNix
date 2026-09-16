@@ -23,17 +23,19 @@ if [ ! -d "$STATE_DIR" ]; then
 fi
 
 echo "=== Top-level breakdown (2 levels, bind excluded) ==="
-du -h -d 2 --exclude='workspace/projects' "$STATE_DIR" 2>/dev/null | sort -rh | head -30
+# head closes early → SIGPIPE under pipefail kills the audit before sections
+# 2-4 ever run; || true on every sort|head pipeline.
+du -h -d 2 --exclude='workspace/projects' "$STATE_DIR" 2>/dev/null | sort -rh | head -30 || true
 
 echo
 echo "=== 20 largest files (bind excluded) ==="
 find "$STATE_DIR" -xdev -path "$STATE_DIR/workspace/projects" -prune -o \
   -type f -printf '%s\t%p\n' 2>/dev/null | sort -rn | head -20 |
-  awk -F'\t' '{ printf "%.1f GiB\t%s\n", $1/1073741824, $2 }'
+  awk -F'\t' '{ printf "%.1f GiB\t%s\n", $1/1073741824, $2 }' || true
 
 echo
 echo "=== Workspace clone growth (writable, ours to bound) ==="
-du -h -d 1 --exclude='projects' "$STATE_DIR/workspace" 2>/dev/null | sort -rh | head -10
+du -h -d 1 --exclude='projects' "$STATE_DIR/workspace" 2>/dev/null | sort -rh | head -10 || true
 
 echo
 echo "=== MemoryMax context ==="
