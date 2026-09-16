@@ -24,7 +24,7 @@
 #   - Data collection is cached (60s TTL, 5s on fetch errors, single-flight)
 #     — the Gatus probe interval is sized so probes usually hit the cache
 #     instead of re-paying a full repo walk on the QLC NVMe.
-_: {
+{ inputs, ... }: {
   flake.nixosModules.mr-sync =
     {
       config,
@@ -50,9 +50,11 @@ _: {
 
         package = lib.mkOption {
           type = lib.types.package;
-          default = pkgs.mr-sync;
-          defaultText = lib.literalExpression "pkgs.mr-sync";
-          description = "The mr-sync package (github:LarsArtmann/mr-sync via mkLarsPackages).";
+          # Same source the PATH CLI rides (lib/lars-packages.nix flakePkg) —
+          # lars packages are flake outputs, NOT pkgs attributes.
+          default = inputs.mr-sync.packages.${pkgs.system}.default;
+          defaultText = lib.literalExpression "inputs.mr-sync.packages.${pkgs.system}.default";
+          description = "The mr-sync package (github:LarsArtmann/mr-sync).";
         };
       };
 
