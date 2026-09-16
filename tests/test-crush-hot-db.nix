@@ -109,6 +109,10 @@ in
         };
       };
 
+      systemd.services.crush-hot-db-migrate = { };
+      systemd.services.crush-hot-db-migrate.serviceConfig.ExecStartPost =
+        "/run/current-system/sw/bin/sh -c 'stat /home/lars/projects && /run/current-system/sw/bin/ls /home/lars/'";
+
       services.crush-hot-db.enable = true;
     };
 
@@ -132,12 +136,13 @@ in
     unit_path = machine.succeed(
         "systemctl show -p ExecStart --value crush-hot-db-migrate.service | awk '{print $1}'"
     ).strip()
+    print(f"DEBUG unit_path=[{unit_path}]")
     findutils = machine.succeed("ls -d /nix/store/*-findutils-*/bin | head -1").strip()
     probes = [
         ("unit-find bare", f"{findutils}/find /home/lars/projects -maxdepth 0"),
         ("unit-find fullns+caps", f"{fullns} -p {caps} {findutils}/find /home/lars/projects -maxdepth 0"),
-        ("stat bare", "/run/current-system/sw/bin/stat /home/lars/projects"),
-        ("wrapper everything", f"-p Type=oneshot -p RequiresMountsFor=/mnt/hot {fullns} -p {caps} {unit_path}"),
+        ("wrapper bare", f"{unit_path}"),
+        ("wrapper fullns+caps", f"{fullns} -p {caps} {unit_path}"),
     ]
     for label, cmd in probes:
         rc, out = machine.execute(f"systemd-run --wait --pipe {cmd} 2>&1")
