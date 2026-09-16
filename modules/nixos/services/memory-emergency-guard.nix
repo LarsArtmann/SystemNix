@@ -570,11 +570,10 @@ _: {
           churn_rearm_total=$(cat "$CHURN_REARM_FILE" 2>/dev/null || echo 0)
           churn_rearm_total="''${churn_rearm_total:-0}"
           if [ -f "$CHURN_STOPPED_FILE" ] && [ "$io_psi_some_avg60" != "-1" ] && awk -v p="$io_psi_some_avg60" 'BEGIN { exit !(p < ${toString cfg.ioPsiSomeAvg60ThresholdPercent}) }'; then
-            # deliberate word splitting over the recorded units
-            # shellcheck disable=SC2086
-            for cu in $(awk 'NR>1 && NF' "$CHURN_STOPPED_FILE" 2>/dev/null); do
+            while IFS= read -r cu; do
+              [ -n "$cu" ] || continue
               systemctl start "$cu" 2>/dev/null || true
-            done
+            done < <(awk 'NR>1 && NF' "$CHURN_STOPPED_FILE" 2>/dev/null)
             churn_rearm_total=$((churn_rearm_total + 1))
             echo "$churn_rearm_total" > "$CHURN_REARM_FILE"
             echo "MEMORY EMERGENCY io drained (io PSI some avg60=''${io_psi_some_avg60}% < ${toString cfg.ioPsiSomeAvg60ThresholdPercent}%) — churn units re-armed (re-arm #''${churn_rearm_total})" >&2
