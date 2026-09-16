@@ -86,6 +86,15 @@ let
         "$projects/deep/group/repo/.crush/crush.db"
     '';
   };
+  # A real binary NAMED `crush`: pgrep -x matches comm = basename of the
+  # executed file. coreutils' sleep CANNOT be copied under another name —
+  # nixpkgs builds it as a multi-call dispatcher that fails "unknown
+  # program" exit 1 when executed as `crush` (which is what silently
+  # emptied the first two committed runs' guard windows).
+  crushFakeBin = pkgs.runCommand "crush" { nativeBuildInputs = [ pkgs.stdenv.cc ]; } ''
+    printf '#include <unistd.h>\nint main(void){for(;;)pause();}\n' > main.c
+    cc -O0 -o $out main.c
+  '';
 in
 {
   name = "crush-hot-db";
@@ -133,15 +142,12 @@ in
       services.crush-hot-db.enable = true;
 
       # A process NAMED `crush` as a real systemd service: pgrep -x must find
-      # it for the whole guard window, and systemd owns its lifetime — a
-      # `&`-backgrounded child of a test-driver shell call does NOT survive
-      # the call (the transient cgroup is cleaned up when the call returns),
-      # which silently emptied the guard window on the first committed run.
+      # it for the whole guard window, and systemd owns its lifetime.
       systemd.services.crush-fake-session = {
         description = "Fake crush session process (test-only pgrep guard)";
         serviceConfig = {
           Type = "exec";
-          ExecStart = "${pkgs.runCommand "crush" { } "cp ${pkgs.coreutils}/bin/sleep $out"} 3600";
+          ExecStart = crushFakeBin;
         };
       };
     };
