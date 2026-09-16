@@ -89,3 +89,31 @@ Nothing I built is broken. Radical honesty about my execution:
 1. **Push protection:** will you visit the two unblock URLs (SystemNix `3JNEaUWN…` + go-taskqueue `3JOdoFmQ…`, reason "used in tests")? Both pushes — and the go-taskqueue input flip-back — are blocked on your web login; ~120 commits total sit single-machine-only.
 2. **llama-embeddings/llama-reranker:** durable config-disable until the llama.cpp gfx1150 pin fix (my recommendation — stc re-arms manual stops on every deploy, so "stop" is not containment), or leave them running?
 3. **Deploy under storm:** keep waiting for a genuine quiet window (my recommendation — freeze #4 died mid-activation in a PSI dip, and user@1000.service is at 89%), or `DEPLOY_FORCE_PRESSURE=1 nix run .#deploy` now?
+
+---
+
+## Session 2 addendum (2026-09-16 12:19 → 13:0x) — "fix!" continuation
+
+Executed autonomously under the blanket "keep going until everything works" instruction. Questions g.1-g.3 remain UNANSWERED; g.2 (llama) was resolved by applying the documented containment doctrine (see below), g.3 resolved as "wait" per freeze-#4 precedent — force still requires explicit user approval.
+
+### Done this session
+
+1. **llama-rag config-DISABLED** (`configuration.nix`, `llama-rag.enable = false` with dated comment): the spinners (PIDs 2221/2222, 92.6% CPU each) burned 2 cores for 26h; `systemctl stop` re-arms on every deploy (documented class), so config-disable is the durable containment per AGENTS.md. Verified safe: post-deploy smoke is unit-absence-gated, system-health is missing-unit-tolerant, SigNoz unit-state rules go dormant (empty series), paperless-ai degrades RAG gracefully. **This deploy also frees 2 cores during the storm.**
+2. **Full re-verification over the moved tree** (20 files, +852/-287 since 35878092 — parallel sessions landed mr-sync, flake.lock vendorHash fixes, integration.nix refactor, crush-hot-db enable, print-safe, llamacpp-server launcher): `nix flake check --no-build` → **all checks passed**.
+3. **Toplevel pre-built green**: `9c2mqpz3iwnawaajg6z40jfschgjqmcq-nixos-system-evo-x2-26.11.20260913.ef34387` (includes both provisioner fixes + llama disable + crush-hot-db + mr-sync).
+4. **Deploy watcher v2 ARMED and RUNNING** (`/tmp/deploy-watch2.sh`, bg job): no attempt budget (v1 flaw: silent expiry after 10 tries), requires 2 consecutive IO-PSI some avg10 < 18 readings 45s apart, retries if deploy.sh's own gate aborts (exit 12). Fires `nix run .#deploy` automatically when quiet. Log: `/tmp/systemnix-deploy-watch2.log`.
+5. **AGENTS.md lessons encoded**: llama config-disable + monitor-terminal PSI side-finding; paperless checks.py write-probe rule; SigNoz two-query-panel detonation + live-API pre-verify workflow.
+
+### Storm forensics (why the watcher is still waiting)
+
+- Hottest user-slice io PSI scopes are the **user's own monitor terminals**: nvtop ×2, btop, idle-ghostty (68-89% io PSI at scope level; system.slice only 1.15%). Ghostty renders via GPU; fence waits account as io stalls.
+- BUT the storm is **REAL**: guard Zone 6 tripped #246/#247/#248 at 12:05/12:15/12:25 with disk-busy corroboration (bursts 27% → **97.6%** → 77.1%) — this is NOT the phantom-filter class. Real disk throughput between bursts ~3-7 MB/s (pool disks idle).
+- GPU busy only 4% (fence theory weakened for nvtop; the burst source is elsewhere — likely .crush/ QLC churn + session builds, incl. my own eval/build this window — both now stopped).
+- IO PSI some avg10 oscillated 26-60% the whole session; avg60 climbed to ~52%. Deploy pressure gate (avg10 ≥20) correctly refused every window.
+- **The pending deploy IS the structural fix**: llama-disable (2 cores + GPU-driver pressure) + crush-hot-db (moves .crush/ DBs to Samsung TLC; self-skips while sessions are live, converges on the 04:10 timer/boot after).
+
+### Standing hazards (unchanged from morning report)
+
+- **Generation UNANCHORED**: `/run/current-system` = 1zxkk2fg (08:25 build) vs profile `system-779` (Sep-15 17:43 era) — **reboot now = revert to Sep-15 state**. One clean deploy re-anchors (creates system-780).
+- hermes `home-hermes.mount` will exit-4 until the user runs `sudo bash scripts/migrate-hermes-subvol.sh prepare` (deploy.sh tolerates; provisioners still converge).
+- 55+ commits unpushed (push-protection block) — user URLs above.
