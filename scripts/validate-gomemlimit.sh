@@ -63,8 +63,17 @@ for entry in "${SERVICES[@]}"; do
   memcurrent=$(systemctl show "$service" -p MemoryCurrent --value 2>/dev/null || echo "0")
   memmax=$(systemctl show "$service" -p MemoryMax --value 2>/dev/null || echo "infinity")
 
+  # Distinguish "no GOMEMLIMIT" from "unit does not exist": a typo'd/dead
+  # name in the hardcoded list used to SKIP silently (list drift invisible).
+  load_state=$(systemctl show "$service" -p LoadState --value 2>/dev/null || echo unknown)
+  if [ "$load_state" = "not-found" ]; then
+    echo "  WARN: unit not found in systemd — SERVICES list drift (update the hardcoded list)"
+    WARN=$((WARN + 1))
+    continue
+  fi
+
   if [ -z "$memlimit_raw" ]; then
-    echo "  SKIP: no GOMEMLIMIT set (or service not found)"
+    echo "  SKIP: no GOMEMLIMIT set"
     continue
   fi
 
@@ -108,4 +117,10 @@ done
 
 echo ""
 echo "Summary: $PASS OK, $WARN warnings"
+# All-SKIP must FAIL: PASS=0/WARN=0 used to exit 0 — a typo'd name across the
+# whole list was indistinguishable from "no limit needed anywhere".
+if [ $((PASS + WARN)) -eq 0 ]; then
+  echo "FAIL: validated NOTHING (every service skipped) — names typo'd or no GOMEMLIMIT is set via Environment anymore"
+  exit 1
+fi
 [ "$WARN" -eq 0 ]

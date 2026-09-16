@@ -43,11 +43,11 @@ check_alias_config() {
   # ANCHORED match: `alias.*$alias_name` substring-matched alias 'l' against
   # ANY line whose name/command contains an 'l' (alias hello=… passed the 'l'
   # check) — nearly vacuous. The name must be followed by '=' (zsh/bash form).
-  if grep -Eq "^[[:space:]]*alias[[:space:]]+$alias_name=" "$config_file" 2>/dev/null; then
+  if grep -Eq "^[[:space:]]*alias([[:space:]]+--)?[[:space:]]+$alias_name=" "$config_file" 2>/dev/null; then
     # Extract actual command from config (head closes early → SIGPIPE under
     # pipefail; || true keeps the capture)
     local actual_command
-    actual_command=$(grep -E "^[[:space:]]*alias[[:space:]]+$alias_name=" "$config_file" 2>/dev/null | head -1 | sed -E "s/^[[:space:]]*alias[[:space:]]+$alias_name=//" | tr -d "'" | tr -d '"') || true
+    actual_command=$(grep -E "^[[:space:]]*alias([[:space:]]+--)?[[:space:]]+$alias_name=" "$config_file" 2>/dev/null | head -1 | sed -E "s/^[[:space:]]*alias([[:space:]]+--)?[[:space:]]+$alias_name=//" | tr -d "'" | tr -d '"') || true
     echo -e "${GREEN}✓${NC} $shell: $alias_name - $actual_command"
     return 0
   else
