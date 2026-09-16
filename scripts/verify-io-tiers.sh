@@ -21,13 +21,21 @@ fail() {
 echo "=== BFQ I/O Priority Tier Verification ==="
 echo ""
 
-# Check scheduler is BFQ
-SCHEDULER=$(cat /sys/block/nvme0n1/queue/scheduler 2>/dev/null | grep -o '\[bfq\]' || echo "")
-if [ -n "$SCHEDULER" ]; then
-  pass "BFQ scheduler active on nvme0n1"
+# Check scheduler is BFQ — on the ROOT disk, never a hardcoded kernel name
+# (nvme enumeration flips; live 2026-09-14 the root sat on nvme1n1)
+ROOT_SRC=$(findmnt -no SOURCE / 2>/dev/null)
+ROOT_SRC="${ROOT_SRC%%\[*}" # btrfs subvol source is '/dev/nvmeXnYpN[/@]' — strip it
+ROOT_DISK=$(lsblk -no pkname "$ROOT_SRC" 2>/dev/null || true)
+if [ -n "$ROOT_DISK" ] && [ -e "/sys/block/$ROOT_DISK/queue/scheduler" ]; then
+  SCHEDULER=$(grep -o '\[bfq\]' "/sys/block/$ROOT_DISK/queue/scheduler" || true)
+  if [ -n "$SCHEDULER" ]; then
+    pass "BFQ scheduler active on $ROOT_DISK (root disk)"
+  else
+    CURRENT=$(cat "/sys/block/$ROOT_DISK/queue/scheduler" 2>/dev/null || echo unknown)
+    fail "BFQ not active on $ROOT_DISK (current: $CURRENT) — I/O tiers will be ignored"
+  fi
 else
-  CURRENT=$(cat /sys/block/nvme0n1/queue/scheduler 2>/dev/null || echo "unknown")
-  fail "BFQ not active (current: $CURRENT) — I/O tiers will be ignored"
+  fail "could not resolve the root disk for scheduler check (findmnt/lsblk)"
 fi
 echo ""
 
@@ -107,4 +115,5 @@ fi
 
 echo ""
 echo "=== Summary: $PASS passed, $FAIL failed ==="
-exit "$FAIL"
+# Boolean exit contract, never `exit $FAIL` (a count is not a status code)
+[ "$FAIL" -eq 0 ]
