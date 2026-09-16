@@ -7058,17 +7058,17 @@
         "treefmt-nix": "treefmt-nix_13"
       },
       "locked": {
-        "lastModified": 1788614050,
-        "narHash": "sha256-XTPMkq1i0U2yXDtvOwp+p9Jt8fgNNwVhPCDUL6g1hqE=",
+        "lastModified": 1789551324,
+        "narHash": "sha256-YlCvMJJXi6zfL7X1RcSNwJgGiO8rJ7NwwXOGisivqLs=",
         "owner": "LarsArtmann",
         "repo": "todo-list-ai",
-        "rev": "f9f3b33586d647df09c7e35fe8da9ad02cf579d2",
+        "rev": "9406be727a8c546895d9e9549ca9741c5ebd1310",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
+        "ref": "master",
         "repo": "todo-list-ai",
-        "rev": "f9f3b33586d647df09c7e35fe8da9ad02cf579d2",
         "type": "github"
       }
     },

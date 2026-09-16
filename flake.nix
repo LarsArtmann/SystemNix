@@ -233,10 +233,11 @@
     };
 
     # todo-list-ai — AI-powered CLI tool for extracting TODOs from codebases
+    # Was INTERIM-pinned to f9f3b335 (2026-09-13: auto-commit left the frozen
+    # bun lockfile stale); master verified BUILDABLE at HEAD 2026-09-16
+    # (package build probe passed) — pin dropped per the pin policy.
     todo-list-ai = {
-      # INTERIM: pinned to pre-2026-09-13-update rev (later auto-commit left the
-      # frozen bun lockfile stale; depsHash refresh commit f9f3b33 is last-good).
-      url = "github:LarsArtmann/todo-list-ai/f9f3b33586d647df09c7e35fe8da9ad02cf579d2";
+      url = "github:LarsArtmann/todo-list-ai?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
