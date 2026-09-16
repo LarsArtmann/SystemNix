@@ -13,6 +13,10 @@
 # Covered shapes (extend as new partner patterns enter the ecosystem):
 #   sgp_[0-9a-fA-F]{40}     Sourcegraph access token
 #   sq0atp-[0-9a-zA-Z]{40}  Square access token
+#   xox[baprs]-[0-9]{10,13}-[0-9a-zA-Z]{16,26}  Slack token — the
+#     2026-09-16 GH013 block tripped on a 2-segment FAKE fixture quoted
+#     into a status report: even documented-fake tokens block pushes, so
+#     shape-describe them, never quote the literal
 #
 # Usage:
 #   audit-push-protection-literals.sh             # scan all tracked files
@@ -22,6 +26,7 @@ set -uo pipefail
 PATTERNS=(
   'sgp_[0-9a-fA-F]{40}'
   'sq0atp-[0-9a-zA-Z]{40}'
+  'xox[baprs]-[0-9]{10,13}-[0-9a-zA-Z]{16,26}'
 )
 
 scan_files() {
@@ -51,20 +56,26 @@ selftest() {
   # components (bare 40-hex + rule keyword anywhere in the file). Derived
   # from a fixed seed so the shapes stay deterministic and the selftest
   # reproducible.
-  local hex40 bare40
+  local hex40 bare40 mixed slack12 slack16
   hex40=$(printf 'push-protection-selftest-hex40' | sha256sum | cut -c1-40)
   bare40=$(printf 'push-protection-selftest-bare-hex' | sha256sum | cut -c1-40)
-  local mixed='REDACTED-PUSH-PROTECTION-FIXTURE'
+  # case-flipped variant for the Square shape — also runtime-derived: the
+  # previously hardcoded 40-char literal was itself flagged by GitHub
+  # (keyword + 40-char component anywhere in the same file is enough)
+  mixed=$(printf 'push-protection-selftest-mixed' | sha256sum | cut -c1-40 | tr 'acef' 'ACEF')
+  slack12=$(printf 'push-protection-selftest-slack-a' | sha256sum | tr -cd '0-9' | cut -c1-12)
+  slack16=$(printf 'push-protection-selftest-slack-b' | sha256sum | tr -cd 'a-z' | cut -c1-16)
   printf 'sourcegraph access token: sgp_%s\n' "$hex40" >"$tmp/sgp.txt"
   printf 'square access token: sq0atp-%s\n' "$mixed" >"$tmp/sq.txt"
+  printf 'slack token: xoxb-%s-%s\n' "$slack12" "$slack16" >"$tmp/slack.txt"
   printf 'sourcegraph access token: sgp_@HEX40@\n' >"$tmp/templated.txt"
   printf 'bare hex without keywords: %s\n' "$bare40" >"$tmp/bare.txt"
 
-  if scan_files "$tmp/sgp.txt" "$tmp/sq.txt" 2>/dev/null; then
+  if scan_files "$tmp/sgp.txt" "$tmp/sq.txt" "$tmp/slack.txt" 2>/dev/null; then
     echo "SELFTEST FAIL: the scanner did NOT flag the known push-protection literals" >&2
     return 1
   fi
-  echo "selftest: both literal shapes flagged"
+  echo "selftest: all literal shapes flagged"
   if ! scan_files "$tmp/templated.txt" "$tmp/bare.txt" 2>/dev/null; then
     echo "SELFTEST FAIL: the scanner flagged the sanctioned template/bare-hex forms" >&2
     return 1
