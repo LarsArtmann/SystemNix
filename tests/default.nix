@@ -69,6 +69,7 @@ in
   miniflux = makeTest (import ./test-miniflux.nix { inherit pkgs; });
   hot-db = makeTest (import ./test-hot-db.nix { inherit pkgs; });
   hot-db-assertions = import ./test-hot-db-assertions.nix { inherit pkgs inputs system; };
+  crush-hot-db = makeTest (import ./test-crush-hot-db.nix { inherit pkgs; });
   crush-config = import ./test-crush-config.nix { inherit pkgs inputs; };
   nix-email-contract = import ./test-nix-email.nix { inherit pkgs inputs system; };
 }
