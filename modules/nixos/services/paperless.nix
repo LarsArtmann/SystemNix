@@ -995,7 +995,12 @@ _: {
               enable = cfg.enable;
               subdomain = "paperless";
               port = cfg.port;
-              vHost.layer = "plain";
+              # The vHost stays HAND-WRITTEN in caddy.nix (native OIDC plain
+              # proxy + the /admin/* 403 hard-block + SSO-only semantics).
+              # Layer "none" keeps DNS + tile derivation while caddy owns
+              # the proxy — a registry "plain" layer here would silently
+              # overwrite the /admin block (baseline-diff caught 2026-09-15).
+              vHost.layer = "none";
               backup = {
                 # Daily documentexporter output (01:30 + randomized delay).
                 directory = "/mnt/pool/services/paperless/export";
