@@ -136,4 +136,26 @@ PID | Program | exe (nix store path) | THREADS | USER | MEM | cpu-graph | CPU%
 
 ---
 
+## 6. RESOLUTION (14:50 — user re-pasted the row live)
+
+The user pasted the **byte-identical row again 20+ minutes later** (same `20 paperless 31G ⣀⣀⣀⣀⣀ 0.0`, including the CPU dot-graph) while:
+- the kernel reports that PID's lifetime high-water mark as **VmHWM 196MB** (a process cannot have shown 31G RSS at any moment, ever),
+- celery pool children churn every 10 min, so a live memory-sorted list cannot stay byte-identical for 20 min,
+- a **fresh btop instance** (pty reproduction, user's own config) shows no such row anywhere.
+
+New evidence that closed the case:
+- **MemoryMax caps landed 2026-08-16/18** (`8ffb2762`, `ca6dd474`) — paperless v3 bring-up; units have been hard-capped (1G–2G) since their first real day.
+- **60-day numeric sweep (fixed awk pipeline), 174 unit-runs across all 4 paperless units: max memory peak = 0.82G.** Zero kernel OOM kills mentioning paperless/celery in 30d.
+
+### Verdict
+1. **Paperless is exonerated.** Real usage: 365MB slice total right now; 60-day worst unit-run peak 820MB; hard caps; zero OOMs. It never used 31G — not today, not in 60 days.
+2. **The user's btop (1.4.7) process pane is frozen/stale** — box-level graphs update while the proc list shows dead/misassembled data (identity fields of a live celery process + impossible Threads=20/MEM=31G stats; consistent with a stats-array misalignment after list churn under `proc_sorting = "memory"`, or a collector freeze). The 31G value cannot be attributed to any real paperless process in the available kernel history.
+
+### Recommended actions
+- User: restart btop (or resize the pane / press a key forcing a redraw) — the row will vanish. If it recurs, capture `btop --version` + steps and consider reporting upstream.
+- Repo: gotcha documented in AGENTS.md (Shell & DevTools): cross-check `/proc/<pid>/status` before believing per-process memory alarms from long-running monitors; `ps` truncates user names to 8 chars (`paperless` → `paperles`) — use `ps -o user:16`.
+- No config/deploy change warranted. Paperless memory alerting already exists via system-health `system_service_memory_over_threshold` (6 paperless units monitored).
+
+---
+
 *Session artifacts: `/tmp/btop-raw.bin` (pty btop capture), `/tmp/btop-capture.txt` (failed first capture). No repo files were modified in this session.*
