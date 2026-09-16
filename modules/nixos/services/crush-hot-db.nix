@@ -9,9 +9,11 @@
 # hardware-configuration.nix) and leaves a symlink in its place, so every
 # future session write lands on the fast disk.
 #
-# Convergence: `crush-hot-db-migrate` runs from a daily timer AND from
-# deploy.sh's provisioner loop (deploy-restart-audit enforces the latter).
-# A project is skipped while a crush session is live (relocating the
+# Convergence: `crush-hot-db-migrate` is ENABLED (wantedBy
+# multi-user.target — a static unit would silently skip deploy.sh's
+# is-enabled-gated provisioner loop, the dnsblockd-bridge trap class) and
+# runs at boot, from a daily timer, AND from deploy.sh's provisioner loop
+# (deploy-restart-audit enforces the latter). A project is skipped while a crush session is live (relocating the
 # directory under a running writer would strand it on an unlinked inode)
 # or while its DB was written in the last 10 minutes; the next run
 # converges it.
@@ -50,11 +52,18 @@
       config = lib.mkIf cfg.enable {
         systemd.services.crush-hot-db-migrate = {
           description = "Relocate per-project crush session DBs to the hot-DB disk";
+          # Enabled, not static: deploy.sh's provisioner loop gates on
+          # `systemctl is-enabled` (rc=1 for static units) — without this the
+          # deploy-time restart silently never happens (dnsblockd-bridge trap).
+          wantedBy = [ "multi-user.target" ];
           unitConfig.RequiresMountsFor = [ cfg.mountPoint ];
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
               User = "root";
+              # tq-storage-dir shape: stays "active (exited)" so the deploy.sh
+              # restart semantics apply (stc never restarts it on change).
+              RemainAfterExit = true;
             }
             (harden {
               # chown for the hot-DB dir, CAP_FOWNER/CAP_DAC_OVERRIDE for the
