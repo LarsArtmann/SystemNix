@@ -712,6 +712,17 @@ in
         enable = true;
       };
 
+      # mr-sync dashboard — read-only repo-portfolio web UI at
+      # mr-sync.<domain> (mr-sync dashboard, the CLI's web surface; the CLI
+      # itself rides PATH via mkLarsPackages). Reads the live ~/.mrconfig +
+      # ~/.config/mr-sync/config.json and walks ~/projects + ~/forks read-only
+      # as the primary user. GITHUB_TOKEN placeholder until a PAT is pasted
+      # (dashboard degrades to .mrconfig-only data — runbook:
+      # docs/services/mr-sync.md).
+      mr-sync-dashboard = {
+        enable = true;
+      };
+
       # Overview — local project dashboard (discovers git repos, shows stats/activity)
       overview = {
         enable = true;
