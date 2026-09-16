@@ -752,6 +752,9 @@ _: {
                 after = [ "paperless-web.service" ];
                 wants = [ "paperless-web.service" ];
                 wantedBy = [ "paperless-web.service" ];
+                # ReadWritePaths below targets the pool-backed dataDir —
+                # mount-gated like every upstream paperless-* unit.
+                unitConfig.RequiresMountsFor = [ cfg.dataDir ];
                 inherit onFailure;
                 startLimitBurst = 5;
                 startLimitIntervalSec = 300;
@@ -766,6 +769,15 @@ _: {
                     StateDirectory = "paperless-dashboard";
                     StateDirectoryMode = "0700";
                     TimeoutStartSec = "3min";
+                    # EVERY paperless-manage invocation runs Django system
+                    # checks, and paperless-ngx's checks.py writes a
+                    # __paperless_write_test_<pid>__ probe into the dataDir
+                    # (paperless-ngx 3.1.3 src/paperless/checks.py:33).
+                    # Without write access the first manage call dies EROFS —
+                    # the 2026-09-16 failure where BOTH the owner-resolver
+                    # and the drf_create_token mint crashed. Mirror the
+                    # upstream paperless-* units' ReadWritePaths.
+                    ReadWritePaths = [ cfg.dataDir ];
                   }
                   (harden { ProtectSystem = "strict"; })
                   (serviceOneshotDefaults { })

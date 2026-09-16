@@ -190,26 +190,9 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "disabled": false,
-                    "legend": "io psi some avg60",
+                    "legend": "",
                     "name": "A",
-                    "query": "memory_emergency_guard_io_psi_some_avg60_percent",
-                    "stats": false,
-                    "step": 0
-                  }
-                }
-              }
-            },
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "B",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "disabled": false,
-                    "legend": "disk busy max",
-                    "name": "B",
-                    "query": "memory_emergency_guard_io_disk_busy_percent_max",
+                    "query": "{__name__=~\"memory_emergency_guard_(io_psi_some_avg60_percent|io_disk_busy_percent_max)\"}",
                     "stats": false,
                     "step": 0
                   }
