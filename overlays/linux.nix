@@ -227,4 +227,5 @@ in
   discordsync.overlays.default
   bunMemoryLimitOverlay
   systemdGraphOverlay
+  printSafeOverlay
 ]

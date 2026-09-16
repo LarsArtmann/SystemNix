@@ -161,6 +161,38 @@ _: {
                 "''${@}"
             '';
           })
+          # Ad-hoc personal chat server launcher (the crush `llamacpp` provider
+          # on 127.0.0.1:8899). Nixified 2026-09-16 from the hand-rolled
+          # ~/.local/bin/llamacpp-server: routes through llama-server-rocm
+          # (GTT-first gfx1150 detection) instead of the bare binary.
+          (pkgs.writeShellApplication {
+            name = "llamacpp-server";
+            runtimeInputs = [ pkgs.coreutils ];
+            text = ''
+              MODEL_DIR="/data/llamacpp-models/gemma-4-12B-qat-uncensored-hauhaucs-balanced"
+              MODEL="''${MODEL_DIR}/Gemma4-12B-QAT-Uncensored-HauhauCS-Balanced-Q4_K_M.gguf"
+              MMPROJ="''${MODEL_DIR}/mmproj-Gemma4-12B-QAT-Uncensored-HauhauCS-Balanced-BF16.gguf"
+              MTP="''${MODEL_DIR}/mtp-gemma-4-12B-it.gguf"
+              PORT="''${LLAMACPP_PORT:-8899}"
+              HOST="''${LLAMACPP_HOST:-127.0.0.1}"
+              CTX="''${LLAMACPP_CTX:-131072}"
+              SLOTS="''${LLAMACPP_SLOTS:-1}"
+
+              exec llama-server-rocm \
+                -m "$MODEL" \
+                --mmproj "$MMPROJ" \
+                --spec-draft-model "$MTP" \
+                --spec-type draft-mtp \
+                --host "$HOST" \
+                --port "$PORT" \
+                -ngl all \
+                -c "$CTX" \
+                -np "$SLOTS" \
+                --jinja \
+                --flash-attn on \
+                "''${@}"
+            '';
+          })
         ];
 
         # ROCm compute env vars at session level so ANY ROCm application
