@@ -18,6 +18,13 @@ let
     netwatch = prev.callPackage ../pkgs/netwatch.nix { };
   };
 
+  # print-safe: Canon MG2500 black/white-safe printing (host-coupled: rides
+  # the system CUPS filters + PPD). Replaces the hand-installed
+  # ~/.local/bin/print-safe (nixified 2026-09-16).
+  printSafeOverlay = _final: prev: {
+    print-safe = prev.callPackage ../pkgs/print-safe.nix { };
+  };
+
   systemdGraphOverlay = _final: prev: {
     systemd-graph-webui = prev.callPackage ../pkgs/systemd-graph/webui.nix { };
     systemd-graph = prev.callPackage ../pkgs/systemd-graph { };
