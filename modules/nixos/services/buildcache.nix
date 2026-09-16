@@ -585,7 +585,7 @@
         # module. Replaces rows in gatus-config.nix.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           buildcache = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             vHost.layer = "none";
             checks = [
               {

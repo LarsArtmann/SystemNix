@@ -319,7 +319,7 @@ _: {
         # services.backup-coordination row above).
         services.integration = lib.optionalAttrs (options ? services.integration) {
           google-sync = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             vHost.layer = "none";
             homepage = {
               name = "Google Sync";

@@ -131,7 +131,7 @@ _: {
         # host). Replaces rows in gatus-config.nix / homepage.nix.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           livekit = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             vHost.layer = "none";
             checks = [
               {
@@ -152,7 +152,7 @@ _: {
             };
           };
           whisper = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             vHost.layer = "none";
             checks = [
               {

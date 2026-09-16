@@ -97,9 +97,9 @@ _: {
         # gatus-config.nix / homepage.nix.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           systemd-graph = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             subdomain = "graph";
-            port = cfg.port;
+            inherit (cfg) port;
             vHost.layer = "plain";
             checks = [
               {

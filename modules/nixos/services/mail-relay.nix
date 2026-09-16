@@ -363,7 +363,7 @@ _: {
         # client's real unit). Replaces rows in gatus-config.nix.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           mail-relay = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             unit = "postfix";
             vHost.layer = "none";
             monitored = true;

@@ -489,7 +489,7 @@ _: {
         # Replaces rows in caddy.nix / gatus-config.nix / homepage.nix.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           attic = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             subdomain = "cache";
             port = atticPort;
             vHost.layer = "plain";

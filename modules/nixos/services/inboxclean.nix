@@ -324,7 +324,7 @@
         # gatus-config.nix / homepage.nix / configuration.nix.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           inboxclean = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             subdomain = "inbox";
             port = ports.inboxclean;
             vHost.layer = "protected";

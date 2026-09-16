@@ -548,7 +548,7 @@ _: {
         # stays static in homepage.nix (unconditional there).
         services.integration = lib.optionalAttrs (options ? services.integration) {
           forgejo = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             subdomain = "forgejo";
             port = cfg.settings.server.HTTP_PORT;
             vHost.layer = "plain";

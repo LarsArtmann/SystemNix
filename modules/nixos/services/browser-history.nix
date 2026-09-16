@@ -411,7 +411,7 @@
         (lib.optionalAttrs (options ? services.integration) {
           services.integration = {
             browser-history = {
-              enable = cfg.enable;
+              inherit (cfg) enable;
               subdomain = "history";
               port = ports.browser-history;
               vHost.layer = "plain";

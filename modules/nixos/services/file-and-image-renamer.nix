@@ -198,7 +198,7 @@ _: {
         # — replaces rows in caddy.nix / gatus-config.nix / homepage.nix.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           file-and-image-renamer = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             subdomain = "renamer";
             port = ports.file-and-image-renamer-health;
             vHost.layer = "protected";

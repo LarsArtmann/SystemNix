@@ -312,7 +312,7 @@
         # gatus-config.nix / homepage.nix.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           discordsync = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             subdomain = "discordsync";
             port = ports.discordsync-api;
             vHost.layer = "protected";

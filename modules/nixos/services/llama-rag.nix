@@ -309,7 +309,7 @@ _: {
         # Replaces rows in gatus-config.nix / homepage.nix.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           llama-rag = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             vHost.layer = "none";
             checks = [
               {
@@ -345,12 +345,12 @@ _: {
             };
           };
           llama-embeddings = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             vHost.layer = "none";
             monitored = true;
           };
           llama-reranker = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             vHost.layer = "none";
             monitored = true;
           };

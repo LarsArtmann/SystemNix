@@ -572,7 +572,7 @@ _: {
         # you are already looking at is a no-op).
         services.integration = lib.optionalAttrs (options ? services.integration) {
           homepage-dashboard = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             vHost.layer = "none";
             monitored = true;
           };

@@ -992,9 +992,9 @@ _: {
           # semantics owned by the SSO bring-up).
           services.integration = lib.optionalAttrs (options ? services.integration) {
             paperless = {
-              enable = cfg.enable;
+              inherit (cfg) enable;
               subdomain = "paperless";
-              port = cfg.port;
+              inherit (cfg) port;
               # The vHost stays HAND-WRITTEN in caddy.nix (native OIDC plain
               # proxy + the /admin/* 403 hard-block + SSO-only semantics).
               # Layer "none" keeps DNS + tile derivation while caddy owns
@@ -1017,32 +1017,32 @@ _: {
               };
             };
             paperless-consumer = {
-              enable = cfg.enable;
+              inherit (cfg) enable;
               vHost.layer = "none";
               monitored = true;
             };
             paperless-scheduler = {
-              enable = cfg.enable;
+              inherit (cfg) enable;
               vHost.layer = "none";
               monitored = true;
             };
             paperless-task-queue = {
-              enable = cfg.enable;
+              inherit (cfg) enable;
               vHost.layer = "none";
               monitored = true;
             };
             paperless-web = {
-              enable = cfg.enable;
+              inherit (cfg) enable;
               vHost.layer = "none";
               monitored = true;
             };
             tika = {
-              enable = cfg.enable;
+              inherit (cfg) enable;
               vHost.layer = "none";
               monitored = true;
             };
             gotenberg = {
-              enable = cfg.enable;
+              inherit (cfg) enable;
               vHost.layer = "none";
               monitored = true;
             };

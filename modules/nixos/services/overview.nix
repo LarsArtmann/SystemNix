@@ -138,7 +138,7 @@
         # health check.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           overview = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             subdomain = "overview";
             port = ports.overview;
             vHost.layer = "protected";

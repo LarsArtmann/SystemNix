@@ -1649,7 +1649,7 @@ _: {
         # monitoredUserManagers) ride the module's own options.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           system-health = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             vHost.layer = "none";
             checks = [
               {

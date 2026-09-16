@@ -190,9 +190,9 @@ _: {
         # freshness, and the Gatus health check.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           manifest = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             subdomain = "manifest";
-            port = cfg.port;
+            inherit (cfg) port;
             vHost.layer = "protected";
             checks = [
               {

@@ -419,7 +419,7 @@ _: {
         # fastflowlm_failed / crash-loop metrics are the alert path).
         services.integration = lib.optionalAttrs (options ? services.integration) {
           fastflowlm = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             vHost.layer = "none";
             homepage = {
               name = "FastFlowLM";

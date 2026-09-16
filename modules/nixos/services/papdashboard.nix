@@ -177,9 +177,9 @@
         # gatus-config.nix / homepage.nix.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           papdashboard = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             subdomain = "alerts";
-            port = cfg.port;
+            inherit (cfg) port;
             vHost.layer = "protected";
             checks = [
               {

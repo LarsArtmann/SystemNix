@@ -17,7 +17,7 @@
   inputs,
 }:
 let
-  lib = pkgs.lib;
+  inherit (pkgs) lib;
   inherit (inputs.crush-config.homeManagerModules) crush;
 
   # Stub module system: the HM module only writes xdg.configFile entries.

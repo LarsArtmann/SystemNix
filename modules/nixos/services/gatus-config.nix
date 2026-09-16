@@ -1000,9 +1000,9 @@ _: {
         # in the core endpoint list below.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           gatus = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             subdomain = "status";
-            port = cfg.port;
+            inherit (cfg) port;
             vHost.layer = "plain";
             monitored = true;
             oidc = {

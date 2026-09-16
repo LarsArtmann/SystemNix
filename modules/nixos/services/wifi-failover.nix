@@ -142,7 +142,7 @@ _: {
         # daemon has no HTTP surface, vHost, tile, or backup).
         services.integration = lib.optionalAttrs (options ? services.integration) {
           wifi-failover = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             vHost.layer = "none";
             monitored = true;
           };

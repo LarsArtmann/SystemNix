@@ -1139,7 +1139,7 @@ in
         (lib.optionalAttrs (options ? services.integration) {
           services.integration = {
             signoz = {
-              enable = cfg.enable;
+              inherit (cfg) enable;
               subdomain = "signoz";
               port = cfg.settings.queryService.port;
               vHost.layer = "protected";
@@ -1181,7 +1181,7 @@ in
               };
             };
             cadvisor = {
-              enable = cfg.enable;
+              inherit (cfg) enable;
               vHost.layer = "none";
               homepage = {
                 name = "cAdvisor";

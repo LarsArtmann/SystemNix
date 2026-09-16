@@ -699,7 +699,7 @@
         # pocket-id.nix.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           cv = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             subdomain = "cv";
             port = ports.cv;
             vHost.layer = "plain";

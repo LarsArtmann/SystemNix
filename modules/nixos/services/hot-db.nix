@@ -212,7 +212,7 @@
             map (e: {
               name = e.path;
               value = mkFilesystem {
-                device = cfg.device;
+                inherit (cfg) device;
                 fsType = "btrfs";
                 options = [
                   "subvol=${subvolPath e.name}"

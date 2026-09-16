@@ -56,7 +56,7 @@ _: {
         # and the Gatus health check.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           dozzle = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             subdomain = "logs";
             port = dozzlePort;
             vHost.layer = "protected";

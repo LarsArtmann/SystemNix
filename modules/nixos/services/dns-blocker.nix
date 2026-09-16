@@ -878,7 +878,7 @@ _: {
         # API health check stays in gatus-config.nix's DNS section.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           dnsblockd = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             vHost.layer = "none";
             monitored = true;
             oidc = {

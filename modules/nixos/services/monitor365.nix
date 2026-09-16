@@ -648,7 +648,7 @@
         (lib.optionalAttrs (options ? services.integration) {
           services.integration = {
             monitor365 = {
-              enable = systemAgentCfg.enable;
+              inherit (systemAgentCfg) enable;
               vHost.layer = "none";
               monitored = true;
               checks = [
@@ -691,7 +691,7 @@
               ];
             };
             monitor365-server = {
-              enable = serverCfg.enable;
+              inherit (serverCfg) enable;
               subdomain = "monitor";
               port = ports.monitor365-server;
               # Custom vHost (SSO-conditional @noCache headers) stays

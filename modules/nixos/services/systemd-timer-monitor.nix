@@ -116,7 +116,7 @@ _: {
         # / homepage.nix.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           systemd-timer-monitor = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             subdomain = "timers";
             vHost.layer = "none";
             checks = [

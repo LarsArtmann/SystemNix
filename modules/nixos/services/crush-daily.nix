@@ -106,9 +106,9 @@ _: {
         # check.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           crush-daily = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             subdomain = "daily";
-            port = cfg.port;
+            inherit (cfg) port;
             vHost.layer = "protected";
             checks = [
               {

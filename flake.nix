@@ -301,15 +301,19 @@
     };
 
     # go-taskqueue — projects-aware task work queue + agent pool (tq CLI).
-    # github?ref=master since 2026-09-11 (aea63da): upstream refreshed the
-    # vendorHash that HEAD churn had staled (the 3426afc "hash mismatch"
-    # class — same night as buildflow d082b7e70). master also carries
-    # task-closeout support REQUIRED by the tq-agent-pool pool.conf (the
-    # old ca8a2f4 pin start-limit-hit tq-agent-pool on "unknown key").
+    # INTERIM git+file since 2026-09-16: the vendorHash refresh for the
+    # "go-taskqueue-0.3.0-go-modules hash mismatch" deploy block lives in
+    # upstream master (1a4eb48) but the PUSH to origin is BLOCKED by
+    # GitHub push protection (a fake, shape-valid Slack token in
+    # internal/executor/redact_test.go — redaction-test fixture, 4
+    # local-only historical commits). Resolution is the push-protection
+    # unblock URL (reason "used in tests"), then FLIP BACK to
+    # github:LarsArtmann/go-taskqueue?ref=master. ?rev= is REQUIRED on
+    # git+file inputs (dirtyRev trap). CI cannot fetch git+file.
     # go-nix-helpers deliberately NOT followed (bank-sync FOD-mismatch
     # trap): the vendorHash was validated with upstream's locked helper.
     go-taskqueue = {
-      url = "github:LarsArtmann/go-taskqueue?ref=master";
+      url = "git+file:///home/lars/projects/go-taskqueue?rev=1a4eb480367648a7c950df12227db5928a732632";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

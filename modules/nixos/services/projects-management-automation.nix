@@ -198,7 +198,7 @@
         # monitoring of the daemon unit. Replaces rows in gatus-config.nix.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           projects-management-automation = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             vHost.layer = "none";
             monitored = true;
             checks = [

@@ -233,9 +233,9 @@ _: {
         # freshness, and the Gatus health check.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           twenty = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             subdomain = "crm";
-            port = cfg.port;
+            inherit (cfg) port;
             vHost.layer = "protected";
             checks = [
               {

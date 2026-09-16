@@ -307,7 +307,7 @@ _: {
         (lib.optionalAttrs (options ? services.integration) {
           services.integration = lib.mkIf cfg.enable {
             bank-sync = {
-              enable = cfg.enable;
+              inherit (cfg) enable;
               subdomain = "banksync";
               port = ports.bank-sync;
               vHost.layer = "protected";

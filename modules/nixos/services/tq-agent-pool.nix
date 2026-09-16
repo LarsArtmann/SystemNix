@@ -268,7 +268,7 @@ _: {
         # gatus-config.nix / homepage.nix.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           tq-agent-pool = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             vHost.layer = "none";
             monitored = true;
             checks = [
@@ -321,7 +321,7 @@ _: {
             ];
           };
           tq-bootstrap = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             vHost.layer = "none";
             monitored = true;
           };

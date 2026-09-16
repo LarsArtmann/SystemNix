@@ -273,7 +273,7 @@
         # gatus-config.nix.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           pool-smart-metrics = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             vHost.layer = "none";
             checks = [
               {

@@ -735,7 +735,7 @@
         # system-health metrics stays in system-health.nix's own entry).
         services.integration = lib.optionalAttrs (options ? services.integration) {
           hermes = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             vHost.layer = "none";
             homepage = {
               name = "Hermes";

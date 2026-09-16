@@ -852,11 +852,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1789456975,
-        "narHash": "sha256-DnVgvpEiLxtKeNEC7qCDdS9dfKdY7wpvdrBgnXW+/qk=",
+        "lastModified": 1789535441,
+        "narHash": "sha256-hdDm1pHgIE79bVdUqPL4m2rZlzU1Mp7CIYDH/72mni8=",
         "owner": "LarsArtmann",
         "repo": "dnsblockd",
-        "rev": "41742bc833eb36056267d242cd61b5c305fb0497",
+        "rev": "92aeedd0e1ea7147f4cce40b1e7ab4b5ac256062",
         "type": "github"
       },
       "original": {
@@ -1886,11 +1886,11 @@
     "go-branded-id_14": {
       "flake": false,
       "locked": {
-        "lastModified": 1789276015,
-        "narHash": "sha256-3uCw6/n1Ex4Nm2DmuIoTCyfFMua/YC+1QfZQSfiSgSo=",
+        "lastModified": 1789484322,
+        "narHash": "sha256-PQ9BEltK7bW4TZFaiDpgfAe461baiR7fxqfNxjGg3Q0=",
         "owner": "LarsArtmann",
         "repo": "go-branded-id",
-        "rev": "a52c7c3ad2f9bc18a99957bb99886315060caafa",
+        "rev": "331fd3bb44abe4d19747ddbb1949eec842cfe4ed",
         "type": "github"
       },
       "original": {
@@ -2695,16 +2695,16 @@
     "go-error-family_14": {
       "flake": false,
       "locked": {
-        "lastModified": 1785079049,
-        "narHash": "sha256-aKL1tjQ8AQzIV6g5+361HTTOOdtgzfWwwfQCZHwaojo=",
+        "lastModified": 1789492852,
+        "narHash": "sha256-RC1EJpdlRf3eX4K4uq+Xb/BSpIgrWJ6AmXaaCwm3fIk=",
         "owner": "LarsArtmann",
         "repo": "go-error-family",
-        "rev": "4546000adb032fe450d4ea9bfbb2a9f359af3857",
+        "rev": "1d629ba2738cf04645fd08a774aa6f215b1c009a",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "refs/tags/v0.10.0",
+        "ref": "refs/tags/v0.10.1",
         "repo": "go-error-family",
         "type": "github"
       }
@@ -3988,11 +3988,11 @@
         "treefmt-nix": "treefmt-nix_8"
       },
       "locked": {
-        "lastModified": 1789008741,
-        "narHash": "sha256-UNEyHXDhu0a3HINDuETaszDkoPiD/A71096arbZbZkI=",
+        "lastModified": 1789454960,
+        "narHash": "sha256-S5xNOX9javK6YnvyJkKN4S2IhlhfZEV8ZCl0ANF1rJA=",
         "owner": "LarsArtmann",
         "repo": "go-nix-helpers",
-        "rev": "16c3184262c55377aba2126dc20e028637f58aa0",
+        "rev": "c42fd7786ce1d188017c189151bbcb56aad12951",
         "type": "github"
       },
       "original": {
@@ -4614,18 +4614,18 @@
         ]
       },
       "locked": {
-        "lastModified": 1789454925,
-        "narHash": "sha256-dhGzgb2lQS+y7cNHYO5HtyC9U2RfG4RJIbdoaCYMhvU=",
-        "owner": "LarsArtmann",
-        "repo": "go-taskqueue",
-        "rev": "f7fabfe0875d93322a90aac0821c7c5284c63169",
-        "type": "github"
+        "lastModified": 1789536273,
+        "narHash": "sha256-ePiJYv6hgUNnfrAlxvO4CTniWrii96zx72zaD1QGq68=",
+        "ref": "refs/heads/master",
+        "rev": "1a4eb480367648a7c950df12227db5928a732632",
+        "revCount": 1221,
+        "type": "git",
+        "url": "file:///home/lars/projects/go-taskqueue"
       },
       "original": {
-        "owner": "LarsArtmann",
-        "ref": "master",
-        "repo": "go-taskqueue",
-        "type": "github"
+        "rev": "1a4eb480367648a7c950df12227db5928a732632",
+        "type": "git",
+        "url": "file:///home/lars/projects/go-taskqueue"
       }
     },
     "go-workflow-auditlog": {
@@ -5055,11 +5055,11 @@
         "samber-do-auditlog": "samber-do-auditlog_5"
       },
       "locked": {
-        "lastModified": 1789483102,
-        "narHash": "sha256-0AJbkRm+9MBXmtVlXmdAffUVttZvLh35PTK+6J3tbf0=",
+        "lastModified": 1789536440,
+        "narHash": "sha256-scUEUsoWmPi3ADmImB4w3BnyAu1bOUWKEs6ysW0tDjo=",
         "owner": "LarsArtmann",
         "repo": "hierarchical-errors",
-        "rev": "f2e34d5cb6ecdfe065be96dc2b6e1beb29dcbb17",
+        "rev": "7874d84bfb6f02357edaf2ea46440ed0697c98a8",
         "type": "github"
       },
       "original": {
@@ -5451,11 +5451,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789349413,
-        "narHash": "sha256-mksPTmDNVm6JZ3PH4i/MEaWlQw/VnjRYWKYaTYuF+6I=",
+        "lastModified": 1789536361,
+        "narHash": "sha256-eVSlI+dYsaGSeiaciup+nobu7NPb/amHhV20dwQ6G2w=",
         "owner": "LarsArtmann",
         "repo": "mr-sync",
-        "rev": "e0a5c73349bddc9d503169c834ecf2b003e03b51",
+        "rev": "4616723302b95cacd4e0cabd47a6b0c509233bc7",
         "type": "github"
       },
       "original": {
@@ -6061,11 +6061,11 @@
     "project-discovery-sdk": {
       "flake": false,
       "locked": {
-        "lastModified": 1789282347,
-        "narHash": "sha256-VtbZgs/C3gq84/fIfuz35/s/8U/i/g4hgmr5jz90cE0=",
+        "lastModified": 1789389536,
+        "narHash": "sha256-OTzsGvDLpyWNQ+0dEWwSX0l45SIY38BHDlCBLKNKH0k=",
         "owner": "LarsArtmann",
         "repo": "project-discovery-sdk",
-        "rev": "b4c986caa3e30be08d7c736adfb15e39f0d5ef7d",
+        "rev": "e48f2faf1d769a97c07ea2cee5ef33e680053d4b",
         "type": "github"
       },
       "original": {

@@ -666,7 +666,7 @@ _: {
         # gatus-config.nix.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           pocket-id = {
-            enable = cfg.enable;
+            inherit (cfg) enable;
             vHost.layer = "none";
             monitored = true;
             checks = [
