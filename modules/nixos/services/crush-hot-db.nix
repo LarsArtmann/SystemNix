@@ -13,7 +13,8 @@
 # multi-user.target — a static unit would silently skip deploy.sh's
 # is-enabled-gated provisioner loop, the dnsblockd-bridge trap class) and
 # runs at boot, from a daily timer, AND from deploy.sh's provisioner loop
-# (deploy-restart-audit enforces the latter). A project is skipped while a crush session is live (relocating the
+# (deploy-restart-audit enforces the latter).
+# A project is skipped while a crush session is live (relocating the
 # directory under a running writer would strand it on an unlinked inode)
 # or while its DB was written in the last 10 minutes; the next run
 # converges it.
