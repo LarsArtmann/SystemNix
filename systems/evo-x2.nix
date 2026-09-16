@@ -52,7 +52,16 @@ nixpkgs.lib.nixosSystem {
         users.lars = _: {
           imports = [
             ../platforms/nixos/users/home.nix
+            # bank-sync CLI on PATH (programs.bank-sync) — the admin surface
+            # for the daemon deployed via inputs.bank-sync.nixosModules below.
+            # Explicit package pin: SystemNix's nixpkgs carries no bank-sync
+            # attr, so the module's mkPackageOption default cannot resolve.
+            inputs.bank-sync.homeManagerModules.default
           ];
+          programs.bank-sync = {
+            enable = true;
+            package = inputs.bank-sync.packages.x86_64-linux.default;
+          };
         };
         extraSpecialArgs = sharedHomeManagerSpecialArgs // {
           wallpapers = inputs.wallpapers-src;
