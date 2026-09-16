@@ -31,10 +31,26 @@ state_init() {
 state_hit() {
   if [ -f "$_state_file" ]; then
     _state_count=$(cat "$_state_file" 2>/dev/null || echo 0)
+    # Sanitize: a corrupt/garbage state file must degrade to 0, not crash the
+    # watchdog under set -e ($(( garbage + 1 )) is a bash arithmetic error).
+    case "$_state_count" in
+    '' | *[!0-9]*) _state_count=0 ;;
+    esac
   fi
   _state_count=$((_state_count + 1))
   echo "$_state_count" >"$_state_file"
   [ "$_state_count" -ge "$_state_threshold" ]
+}
+
+# True when the intervention ladder is EXHAUSTED (count ≥ threshold).
+state_exhausted() {
+  [ -f "$_state_file" ] || return 1
+  local c
+  c=$(cat "$_state_file" 2>/dev/null || echo 0)
+  case "$c" in
+  '' | *[!0-9]*) return 1 ;;
+  esac
+  [ "$c" -ge "$_state_threshold" ]
 }
 
 state_reset() {
@@ -84,16 +100,16 @@ has_graphical_session=0
 newest_session_monotonic_us=0
 if command -v loginctl >/dev/null 2>&1; then
   found=$(
-    loginctl list-sessions --no-legend 2>/dev/null |
+    timeout 15 loginctl list-sessions --no-legend 2>/dev/null |
       awk '{print $1}' |
       while IFS= read -r sid; do
-        c=$(loginctl show-session "$sid" -p Class --value 2>/dev/null || true)
-        t=$(loginctl show-session "$sid" -p Type --value 2>/dev/null || true)
+        c=$(timeout 10 loginctl show-session "$sid" -p Class --value 2>/dev/null || true)
+        t=$(timeout 10 loginctl show-session "$sid" -p Type --value 2>/dev/null || true)
         if [ "$c" = "user" ] && { [ "$t" = "wayland" ] || [ "$t" = "x11" ]; }; then
           echo 1
           # TimestampMonotonic is ABSOLUTE µs since boot (same trap as the
           # fastflowlm idle-check bug) — age = /proc/uptime µs minus this.
-          ts=$(loginctl show-session "$sid" -p TimestampMonotonic --value 2>/dev/null || echo 0)
+          ts=$(timeout 10 loginctl show-session "$sid" -p TimestampMonotonic --value 2>/dev/null || echo 0)
           echo "ts $ts"
         fi
       done
@@ -134,8 +150,16 @@ fi
 # DRM pipeline is wedged. Restarting niri re-acquires DRM master and resets
 # the output pipeline.
 if [ "$niri_alive" -eq 1 ]; then
+  # Exhausted-ladder guard: the old flow logged CRITICAL then state_reset —
+  # restarting its own 3-strike ladder → infinite niri restarts on a
+  # permanently dead display. Once exhausted, stay loud and DO NOTHING; only
+  # a genuinely recovered display (healthy path above) clears the counter.
+  if state_exhausted; then
+    echo "CRITICAL: display dead beyond $_state_threshold niri restarts — interventions suspended (recovery or operator clears the counter)."
+    exit 0
+  fi
   echo "niri alive but display dead — restarting niri to recover DRM pipeline"
-  systemctl --user -M "${PRIMARY_USER:-lars}@" restart niri.service 2>/dev/null || true
+  timeout 30 systemctl --user -M "${PRIMARY_USER:-lars}@" restart niri.service 2>/dev/null || true
   sleep 5
 
   # Verify recovery
@@ -153,10 +177,10 @@ if [ "$niri_alive" -eq 1 ]; then
     fi
   done
 
-  # niri restart didn't fix it — escalate
+  # niri restart didn't fix it — count toward the ladder; at threshold STOP
+  # (no state_reset — the counter persists so state_exhausted engages).
   if state_hit; then
-    echo "CRITICAL: Display still dead after $_state_count niri restart attempts. Manual intervention required."
-    state_reset
+    echo "CRITICAL: Display still dead after $_state_count niri restart attempts. Interventions suspended — manual intervention required."
   else
     echo "niri restart didn't recover display (attempt $_state_count/$_state_threshold). Will retry."
   fi
@@ -164,14 +188,17 @@ if [ "$niri_alive" -eq 1 ]; then
 fi
 
 # ── Scenario 2: niri dead + display dead (original logic) ──────────────────
+if state_exhausted; then
+  echo "CRITICAL: display dead beyond $_state_threshold display-manager restarts — interventions suspended (recovery or operator clears the counter)."
+  exit 0
+fi
 if state_hit; then
-  echo "CRITICAL: Display watchdog: $_state_count consecutive failures. Manual intervention required."
-  state_reset
+  echo "CRITICAL: Display watchdog: $_state_count consecutive failures. Interventions suspended — manual intervention required."
 else
   echo "Display watchdog: dead display, attempt $_state_count (threshold=$_state_threshold)"
 
   echo "Attempting display-manager restart..."
-  systemctl restart display-manager.service 2>/dev/null || true
+  timeout 60 systemctl restart display-manager.service 2>/dev/null || true
   sleep 10
 
   for status_file in /sys/class/drm/card*/status; do

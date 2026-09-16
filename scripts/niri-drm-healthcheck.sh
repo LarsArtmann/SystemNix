@@ -15,11 +15,16 @@ STATE_DIR="/var/lib/niri-drm-healthcheck"
 mkdir -p "$STATE_DIR" 2>/dev/null || true
 
 read_count() {
+  # Sanitize: a corrupt count file must read as 0 — garbage here crashes
+  # $((count + 1)) under set -e and kills the healthcheck unit (start-limit).
+  local c=0
   if [ -f "$STATE_DIR/$1" ]; then
-    cat "$STATE_DIR/$1" 2>/dev/null || echo 0
-  else
-    echo 0
+    c=$(cat "$STATE_DIR/$1" 2>/dev/null || echo 0)
   fi
+  case "$c" in
+  '' | *[!0-9]*) c=0 ;;
+  esac
+  echo "$c"
 }
 
 write_count() {
@@ -46,10 +51,10 @@ pgrep -x niri >/dev/null 2>&1 || {
 # when a real graphical session exists.
 has_graphical_session=0
 found=$(
-  loginctl list-sessions --no-legend 2>/dev/null |
+  timeout 15 loginctl list-sessions --no-legend 2>/dev/null |
     while read -r sid _rest; do
-      c=$(loginctl show-session "$sid" -p Class --value 2>/dev/null || true)
-      t=$(loginctl show-session "$sid" -p Type --value 2>/dev/null || true)
+      c=$(timeout 10 loginctl show-session "$sid" -p Class --value 2>/dev/null || true)
+      t=$(timeout 10 loginctl show-session "$sid" -p Type --value 2>/dev/null || true)
       if [ "$c" = "user" ] && { [ "$t" = "wayland" ] || [ "$t" = "x11" ]; }; then
         echo 1
       fi
@@ -95,10 +100,15 @@ if [ "$dead_display" -eq 1 ]; then
   count=$((count + 1))
   write_count display "$count"
 
-  if [ "$count" -ge "$DISPLAY_THRESHOLD" ]; then
-    echo "Display dead for $count consecutive checks (threshold=$DISPLAY_THRESHOLD). Restarting niri."
-    reset_count display
+  # Restart EXACTLY ONCE: the count stays AT threshold (no reset — the old
+  # reset_count re-armed the ladder, restarting niri every ~2 min forever on a
+  # persistent wedge). Past threshold = idle + loud; only a healthy display
+  # (reset in the else branch) re-arms the ladder.
+  if [ "$count" -eq "$DISPLAY_THRESHOLD" ]; then
+    echo "Display dead for $count consecutive checks (threshold=$DISPLAY_THRESHOLD). Restarting niri once."
     systemctl --user restart niri.service 2>/dev/null || true
+  elif [ "$count" -gt "$DISPLAY_THRESHOLD" ]; then
+    echo "Display STILL dead after the restart intervention (check $count) — staying idle; manual intervention required."
   else
     echo "Display dead, check $count/$DISPLAY_THRESHOLD. Waiting for confirmation."
   fi
@@ -112,7 +122,7 @@ JOURNAL_THRESHOLD=3
 
 # wc under pipefail can emit "0\n0" when journalctl fails (e.g. this unit
 # also runs for the SDDM user manager) — normalize instead of trusting it.
-drm_errors=$(journalctl --grep "Permission denied|DeviceMissing" --user -u niri -n 11 --since "30 sec ago" --no-pager --output cat 2>/dev/null |
+drm_errors=$(timeout 15 journalctl --grep "Permission denied|DeviceMissing" --user -u niri -n 11 --since "30 sec ago" --no-pager --output cat 2>/dev/null |
   wc -l) || true
 drm_errors="${drm_errors:-0}"
 drm_errors=$(echo "$drm_errors" | tr -cd '0-9')
@@ -123,10 +133,12 @@ if [ "$drm_errors" -ge 10 ]; then
   count=$((count + 1))
   write_count journal "$count"
 
-  if [ "$count" -ge "$JOURNAL_THRESHOLD" ]; then
-    echo "niri DRM zombie confirmed ($count consecutive checks). Restarting niri."
-    reset_count journal
+  # Same once-only semantics as the display check: count stays AT threshold.
+  if [ "$count" -eq "$JOURNAL_THRESHOLD" ]; then
+    echo "niri DRM zombie confirmed ($count consecutive checks). Restarting niri once."
     systemctl --user restart niri.service 2>/dev/null || true
+  elif [ "$count" -gt "$JOURNAL_THRESHOLD" ]; then
+    echo "niri DRM errors persist after the restart intervention (check $count) — staying idle; manual intervention required."
   else
     echo "niri DRM errors detected ($drm_errors in 30s, check $count/$JOURNAL_THRESHOLD). Waiting for confirmation."
   fi

@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# ⚠ RETIRED STACK (banner 2026-09-16): the MPTCP/dual-WAN endpoint manager rode
+# the retired dual-WAN stack (replaced by services.wifi-failover — carrier-based
+# eno1→wlan0 standby, no MPTCP). Nothing invokes this script (no NM dispatcher
+# hooks reference it). Kept as standby tooling; do NOT run without review.
 # mptcp-endpoint-manager — Manages MPTCP subflow endpoints
 #
 # Modes:

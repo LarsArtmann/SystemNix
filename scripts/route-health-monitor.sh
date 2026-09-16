@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+# ⚠ RETIRED STACK (banner 2026-09-16): dual-WAN ECMP/MPTCP was disabled and
+# replaced by services.wifi-failover (eno1 carrier-based standby, modules/
+# nixos/services/wifi-failover.nix). Nothing invokes this script — its
+# probe-based failover was retired after 2×2s-blip false failovers. Kept as
+# standby tooling with known latent bugs (nmcli without timeout); do NOT run
+# without review. Live failover diagnostics: scripts/internet-diagnostic.sh.
 set -euo pipefail
 
 # route-health-monitor — Active-active ECMP with MPTCP for packet-level failover

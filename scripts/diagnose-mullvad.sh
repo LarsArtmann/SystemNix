@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# ⚠ RETIRED STACK (banner 2026-09-16): the Mullvad VPN stack is REMOVED from
+# this host — `mullvad` binary and its nft table no longer exist, so every
+# section below errors. Kept for history; running it proves nothing.
 # Diagnose Mullvad VPN traffic routing issues
 
 echo "=== Mullvad status ==="

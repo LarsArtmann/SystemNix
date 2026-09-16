@@ -1,102 +1,88 @@
 # bank-sync — Wise SCA (Strong Customer Authentication) renewal runbook
 
-Wise gates some endpoints behind SCA for UK/EEA profiles — notably
-`GET /v1/profiles/{id}/balance-statements/{id}/statement.json`, which
-bank-sync uses to reconcile balances. The challenge looks like this:
+Wise gates statement endpoints behind SCA for UK/EEA profiles roughly
+**every 90 days**: the API answers 403 with an `x-2fa-approval` one-time
+token (OTT) header instead of transactions. While blocked, the daemon
+silently degrades to the transfers fallback (outgoing transfers only) and
+the dashboard shows the **"Wise approval needed"** banner — journald logs
+`statements paused pending SCA approval` with `approval_token_issued=true`
+(the OTT value is deliberately NEVER logged anymore).
 
-- HTTP **403 with an EMPTY body** (no JSON error object)
-- Response headers carry the verdict and the one-time token (OTT):
-  - `x-2fa-approval-result: REJECTED`
-  - `x-2fa-approval: <OTT>`
+**Requirements for this procedure** (all landed 2026-09-14/16, ride the
+next `nix flake lock --update-input bank-sync` + deploy):
 
-wise-go v0.6.1+ surfaces this as a `wise.sca_challenge` error whose
-message prints the verdict, the OTT, and these instructions. Until the
-challenge is cleared, balance reconciliation silently syncs zero
-statements (transactions still flow — only statements are gated).
-
-The challenge recurs roughly **every 90 days** (viewing a statement in
-the Wise app/web also satisfies it).
+- bank-sync with the `sca` command (wise-go ≥ v0.11.0 pinned)
+- the deployed binary and this runbook agree on `sca status` / `sca approve`
 
 ## Renewal procedure (root shell on evo-x2)
 
-1. **See the challenge + OTT** — the journal prints it on the next sync
-   (every 15 min):
+1. **Check status** (read-only, no DB, exits non-zero while blocked):
 
    ```bash
-   journalctl -u bank-sync.service --output cat | grep -i 'sca\|403' | tail
+   BIN=$(systemctl cat bank-sync.service | sed -n 's/^ExecStart=//p' | awk '{print $1}')
+   sudo env "BANK_SYNC_WISE_API_KEY=$(sudo sed -n 's/^BANK_SYNC_WISE_API_KEY=//p' /run/secrets/bank-sync-env)" \
+     "$BIN" sca status
    ```
 
-   Expected line: `wise: sca challenge (403): ... x-2fa-approval="<OTT>" ...`
+   `OK` per balance — nothing to do. `BLOCKED` — the command prints the
+   pending challenges (type, channels, validity) and the OTT as
+   `BANK_SYNC_WISE_SCA_APPROVAL_TOKEN=<ott>`. That terminal line is the
+   ONLY place the token value ever appears; treat it as a SECRET.
 
-   A plain 403 WITHOUT any `x-2fa-approval` header is a different
-   problem: a personal-token regional restriction (statements are only
-   supported for US/CA/AU/NZ/SG/MY profiles on personal tokens). That
-   needs an OAuth token or a supported region instead — not this runbook.
+   A plain 403 WITHOUT an SCA challenge is a different problem: a
+   personal-token regional restriction (statements are only supported for
+   US/CA/AU/NZ/SG/MY profiles on personal tokens). That needs an OAuth
+   token or a supported region instead — not this runbook.
 
-2. **Satisfy the challenge as the account holder** — there is NO
-   "Approvals" screen in the Wise app (live-checked 2026-09-14; an
-   earlier revision of this runbook invented "Settings → Security and
-   privacy → Approvals" — do not look for it). Do one of:
-
-   - **View or download a statement** in the Wise app or on wise.com
-     (Balances → pick a balance → Statements) and complete the 2FA
-     prompt (Face ID/PIN). Statements are low-risk SCA actions; the
-     completed session re-establishes statement access and bank-sync's
-     next 15-min tick succeeds WITHOUT the OTT dance below.
-   - Approve a "confirm it's you" push notification if one arrived.
-
-   Only if the journal still logs `pending SCA approval` after two
-   sync ticks: continue with the OTT below. Fully programmatic
-   clearing for personal tokens is the enrolled-keypair signature
-   flow (Wise `digital-signatures-examples`, sca-personal-tokens) —
-   an upstream wise-go feature, not built yet.
-
-3. **Drop the OTT into the env file** (single use, expires fast — do
-   this right after approving):
+2. **Clear it interactively** (same env, needs the TTY for the hidden OTP
+   prompt; sends SMS/WhatsApp/voice to the registered phone):
 
    ```bash
-   sudo install -d -m 0750 /var/lib/bank-sync-sca
-   echo 'BANK_SYNC_WISE_SCA_APPROVAL_TOKEN=<OTT>' | sudo tee /var/lib/bank-sync-sca/token.env
-   sudo chmod 0400 /var/lib/bank-sync-sca/token.env
+   sudo env "BANK_SYNC_WISE_API_KEY=$(sudo sed -n 's/^BANK_SYNC_WISE_API_KEY=//p' /run/secrets/bank-sync-env)" \
+     "$BIN" sca approve
    ```
 
-4. **Restart for exactly one token-carrying sync** (the scheduler runs
-   an initial sync immediately on start):
+   Enter the 6-digit OTP when prompted. The command re-probes every
+   previously blocked balance and confirms statements serve again. No
+   restart: the daemon reconciles on the next 15-min tick.
 
-   ```bash
-   sudo systemctl restart bank-sync.service
-   ```
-
-5. **Verify** the statement call went through and new data landed:
+3. **Verify** on the next tick:
 
    ```bash
    journalctl -u bank-sync.service --output cat -n 50 | grep -i 'statement\|sca\|error'
    ```
 
-   No new `sca challenge` line = cleared.
+   No new `pending SCA approval` line and the dashboard banner is gone =
+   cleared. If the fallback covered a window while blocked, restore it
+   with a backfill (`bank-sync backfill`, bank-sync runbook
+   `docs/runbooks/backfill.md` — fallback rows are never replaced by
+   statement rows on their own).
 
-6. **Remove the token** (it is single-use; leaving it only serves
-   confusion):
+## Break-glass without a TTY (appendix)
 
-   ```bash
-   sudo rm /var/lib/bank-sync-sca/token.env
-   ```
+Only when interactive `sca approve` is impossible (no console on the
+host). `sca status` (step 1) prints the token; carry it for exactly one
+sync via a systemd drop-in:
 
-   The next restart/sync runs without it (`-`-prefixed EnvironmentFile —
-   absence is a no-op).
+```bash
+sudo systemctl edit bank-sync.service
+# [Service]
+# Environment=BANK_SYNC_WISE_SCA_APPROVAL_TOKEN=<ott>
+sudo systemctl restart bank-sync.service   # scheduler syncs immediately on start
+# ...one tick later, REMOVE the drop-in line and restart again
+```
 
-## Why a plain file (not sops)
-
-The OTT is single-use, human-approved, and changes every cycle. A sops
-secret would demand an encrypt + template edit + full redeploy per
-renewal for a value that must be deleted minutes later. systemd reads
-`EnvironmentFile` as PID 1 before dropping privileges, so a root-owned
-0400 file under `/var/lib/bank-sync-sca/` delivers the token to the
-sandboxed service without ever touching the nix store or sops state.
+The OTT is single-use and short-lived — leaving it configured only serves
+confusion. (An earlier revision of this runbook grepped the OTT out of
+journald and dropped it into /var/lib/bank-sync-sca/token.env; journald no
+longer prints the token, and the value now comes from `sca status`.)
 
 ## Reference
 
+- bank-sync: `docs/runbooks/sca.md` (full command reference + failure
+  modes), `wise.sca_approval_token` config / `BANK_SYNC_WISE_SCA_APPROVAL_TOKEN` env
+- wise-go: `WithSCAApprovalToken`, `ClearSCAChallenge` (v0.11.0)
 - Wise docs: "Strong customer authentication and 2FA for API" (OTT flow)
-- wise-go: `WithSCAApprovalToken` option, `SCAChallengeError` (v0.6.1)
-- bank-sync: `wise.sca_approval_token` config / `BANK_SYNC_WISE_SCA_APPROVAL_TOKEN` env
 - Root-cause narrative: `docs/status/2026-08-19_05-10_wise-sca-root-cause-wise-go-v061-bank-sync-wiring.md`
+  and the 2026-09 silent-degradation incident: bank-sync
+  `docs/status/2026-09-04_18-34_*`
