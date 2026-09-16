@@ -1,10 +1,14 @@
 # VM test for the crush-hot-db service module
 # (modules/nixos/services/crush-hot-db.nix).
 #
-# Three review rounds on this module (static-unit enable gap, 226/NAMESPACE
-# ReadWritePaths, nested-discovery glob) each caught a defect that only a
-# BOOTING unit can expose — the pre-review verification was an ephemeral
-# /tmp fixture with stubbed pgrep/PATH. This test boots the REAL module and
+# Four review rounds on this module (static-unit enable gap, 226/NAMESPACE
+# ReadWritePaths, nested-discovery glob, ProtectHome empty-/home trap) each
+# caught a defect that only a BOOTING unit can expose — the pre-review
+# verification was an ephemeral /tmp fixture with stubbed pgrep/PATH, and
+# transient systemd-run flag replicas silently differ from the real unit
+# (round 4: they probed ProtectHome=read-only while the unit carried
+# ProtectHome=true, which systemd maps to inaccessible-and-EMPTY /home).
+# This test boots the REAL module and
 # exercises every behavior the TODO_LIST "fixture-tested" claim listed:
 #
 #   1. migrate + symlink (top-level, NESTED at depth 3, space-in-name,
@@ -147,6 +151,9 @@ in
     assert "RequiresMountsFor" in unit, "RequiresMountsFor missing from unit"
     assert "procps" in unit, "unit path missing pgrep (procps)"
     assert "util-linux" in unit, "unit path missing flock (util-linux)"
+    assert (
+        "ProtectHome=read-only" in unit
+    ), "ProtectHome must be read-only: harden{}'s `true` default maps to systemd yes = inaccessible-and-EMPTY /home, so every find ENOENTs (round-4 trap)"
 
     # ---- Boot-run outcome: exactly the 4 migratable fixtures relocated ----
     boot_log = machine.succeed(

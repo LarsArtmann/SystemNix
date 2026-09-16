@@ -82,6 +82,13 @@
               # rename over the project's dir + symlink swap (harden{}'s empty
               # bounding set would EPERM both — tq-storage-dir precedent).
               CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
+              # MUST override harden{}'s ProtectHome default (`true`): systemd
+              # maps yes/true to INACCESSIBLE-AND-EMPTY (/home becomes an empty
+              # tmpfs inside the unit), so `find ~/projects` ENOENTs every run
+              # (0 relocated, exit 0 — the phantom-green shape). Only a booting
+              # unit exposes it (VM test regression 3); transient replicas that
+              # probe with read-only pass and hide it.
+              ProtectHome = "read-only";
               # The MOUNT ROOT — never the ${mountPoint}/crush subdir:
               # ReadWritePaths paths must exist BEFORE the unit starts
               # (systemd builds the mount namespace before any ExecStart;
