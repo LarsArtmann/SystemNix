@@ -100,7 +100,14 @@
               state
               // {
                 cur = state.cur // {
-                  refs = state.cur.refs ++ [ builtins.head (ruleRef l) ];
+                  # PARENTHESES ARE LOAD-BEARING: on nix 2.34 an UNparenthesized
+                  # application inside a list literal parses as TWO list
+                  # elements — the list then contained the primop `head`
+                  # ITSELF (plus the match result), and forcing refs died
+                  # "cannot coerce the built-in function 'head' to a string",
+                  # breaking every `nix flake check`/eval that touched
+                  # config.assertions.
+                  refs = state.cur.refs ++ [ (builtins.head (ruleRef l)) ];
                 };
               }
             else
@@ -142,15 +149,16 @@
 
           fileRecipients =
             name:
-            builtins.filter (r: r != null) (
-              map
-                (l: builtins.match "[[:space:]]*-?[[:space:]]*recipient:[[:space:]]*(${ageRecipient})" l)
-                (
-                  builtins.filter
-                    (l: builtins.match "[[:space:]]*-?[[:space:]]*recipient:[[:space:]]*${ageRecipient}" l != null)
-                    (contentLines (cfg.secretsDir + "/${name}"))
-                )
-            );
+            # map head unwraps the match result: without it this is a list of
+            # LISTS and the sort in checkFile dies on the first
+            # multi-recipient file ("cannot compare a list with a list").
+            map
+              (l: builtins.head (builtins.match "[[:space:]]*-?[[:space:]]*recipient:[[:space:]]*(${ageRecipient})" l))
+              (
+                builtins.filter
+                  (l: builtins.match "[[:space:]]*-?[[:space:]]*recipient:[[:space:]]*${ageRecipient}" l != null)
+                  (contentLines (cfg.secretsDir + "/${name}"))
+              );
 
           checkFile =
             name:
