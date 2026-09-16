@@ -127,20 +127,19 @@ in
     print(f"DEBUG migrate unit: {out}")
     rc, out = machine.execute("systemctl restart crush-hot-db-migrate.service; journalctl -u crush-hot-db-migrate -o cat --no-pager | tail -n 4")
     print(f"DEBUG migrate rerun: {out}")
+    caps = "'CapabilityBoundingSet=CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE'";
+    fullns = "-p PrivateTmp=true -p ProtectSystem=full -p ProtectHome=read-only -p ReadWritePaths=/mnt/hot -p ReadWritePaths=/home/lars/projects";
     for props in [
-        "",
-        "-p ProtectHome=read-only",
-        "-p ProtectHome=tmpfs",
-        "-p ProtectSystem=full",
-        "-p ProtectHome=read-only -p ReadWritePaths=/home/lars/projects",
-        "-p ReadWritePaths=/home/lars/projects",
-        "-p ReadWritePaths=/mnt/hot",
-        "-p ReadWritePaths=/mnt/hot -p ReadWritePaths=/home/lars/projects",
+        f"-p {caps}",
+        f"{fullns} -p {caps}",
+        f"{fullns} -p RestrictNamespaces=true -p NoNewPrivileges=true",
+        f"{fullns} -p {caps} -p RestrictNamespaces=true -p NoNewPrivileges=true",
+        f"{fullns} -p {caps} -p RestrictSUIDSGID=true -p LockPersonality=true -p RestrictRealtime=true -p SystemCallArchitectures=native -p ProtectClock=true -p ProtectControlGroups=true -p ProtectHostname=true -p ProtectKernelLogs=true -p ProtectKernelModules=true -p ProtectKernelTunables=true",
     ]:
         rc, out = machine.execute(
             f"systemd-run --wait --pipe {props} /run/current-system/sw/bin/ls /home/lars/projects 2>&1"
         )
-        print(f"DEBUG bisect [{props}] rc={rc}: {out}")
+        print(f"DEBUG bisect3 [{props}] rc={rc}: {out}")
 
     # ---- Regressions 1: is-enabled (deploy.sh provisioner loop gate) ----
     machine.succeed(
