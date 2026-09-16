@@ -166,7 +166,7 @@ retention (`target_preserve_min=7d`, `target_preserve=14d 4w`).
 plan: `docs/planning/2026-09-15_19-59_HERMES-HOME-SUBVOLUME-MIGRATION.md`):
 
 ```bash
-sudo bash scripts/migrate-hermes-subvol.sh prepare   # create subvol, 2-phase reflink rsync, verify, swap aside
+sudo bash scripts/migrate-hermes-subvol.sh prepare   # create/reuse subvol, 2-phase plain rsync (rsync has NO --reflink — cp syntax), verify, swap aside
 nix run .#deploy                                      # activates home-hermes.mount, restarts hermes
 sudo systemctl start btrbk-root.service              # seeds the first full pool send
 sudo bash scripts/migrate-hermes-subvol.sh status    # verify mount + snapshots + receives

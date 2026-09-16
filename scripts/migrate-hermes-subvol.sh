@@ -16,8 +16,10 @@
 # risk (the original directory is untouched until finalize).
 #
 # DATA-SAFETY CONTRACT (same shape as migrate-clickhouse-xfs.sh):
-#   prepare:  NEVER writes to the source; reflink rsync copy (space-shared
-#             on the same fs); verifies CONTENT (rsync --dry-run delta == 0)
+#   prepare:  NEVER writes to the source; plain rsync copy (rsync has NO
+#             --reflink flag — that is cp syntax, the 2026-08-17 @nix v1
+#             incident class; hermes state is ~1 GB so a full copy is
+#             trivial); verifies CONTENT (rsync --dry-run delta == 0)
 #             before swapping; the swap is mv-aside (recoverable), never a
 #             delete.
 #   finalize: refuses unless the subvol mount is LIVE, hermes is active,
@@ -103,8 +105,14 @@ cmd_prepare() {
   [ -d "$SRC" ] || die "$SRC does not exist"
   [ "$(hermes_mounted_subvol)" = "yes" ] && die "$SRC is already mounted from $SUBVOL — nothing to prepare"
   if [ -e "$DST" ]; then
-    die "$DST already exists (leftover from an aborted prepare?). Inspect it, then:
+    local first_entry
+    first_entry=$(find "$DST" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null || true)
+    if [ -z "$first_entry" ]; then
+      warn "$DST exists but is EMPTY (aborted prepare — e.g. the 2026-09-16 rsync --reflink abort) — reusing it"
+    else
+      die "$DST already exists and is NOT empty (leftover from an aborted prepare?). Inspect it, then:
   sudo btrfs subvolume delete $DST"
+    fi
   fi
   if [ -e "$OLD" ]; then
     die "$OLD already exists — a previous prepare got interrupted mid-swap. Inspect both dirs before continuing."
@@ -113,8 +121,8 @@ cmd_prepare() {
   info "creating subvolume $DST"
   btrfs subvolume create "$DST"
 
-  info "seed pass 1/2 (hermes may keep running; reflink copy is space-shared)"
-  rsync -aHAX --reflink=always --info=stats2 "$SRC/" "$DST/"
+  info "seed pass 1/2 (hermes may keep running; plain copy, ~1 GB)"
+  rsync -aHAX --info=stats2 "$SRC/" "$DST/"
 
   info "quiescing hermes (gateway + its user manager so cron scopes drain)"
   systemctl stop hermes.service || true
@@ -122,7 +130,7 @@ cmd_prepare() {
   sleep 2
 
   info "seed pass 2/2 (delta after quiesce)"
-  rsync -aHAX --reflink=always --delete --info=stats2 "$SRC/" "$DST/"
+  rsync -aHAX --delete --info=stats2 "$SRC/" "$DST/"
 
   info "verifying content parity (rsync dry-run delta must be empty)"
   local delta

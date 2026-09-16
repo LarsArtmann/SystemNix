@@ -54,7 +54,7 @@ Without these nothing exists. Everything else is safety, correctness, or plumbin
 
 ### The 20% that deliver 80%
 
-- **`scripts/migrate-hermes-subvol.sh`** (prepare/finalize, clickhouse-xfs pattern): binary preflight, two-phase reflink rsync, mountpoint swap that never mounts over populated dirs, finalize refuses unless the mount is live + first pool receive exists.
+- **`scripts/migrate-hermes-subvol.sh`** (prepare/finalize, clickhouse-xfs pattern): binary preflight, two-phase plain rsync (NO `--reflink` — rsync has no such flag, that is cp syntax and exactly the 2026-08-17 `@nix` v1 incident class; state is ~1 GB so a full copy is trivial), mountpoint swap that never mounts over populated dirs, finalize refuses unless the mount is live + first pool receive exists. Prepare reuses an EMPTY existing subvol (the abort shape of the first user run, 2026-09-16).
 - **First-receive seeding** in the runbook (`systemctl start btrbk-root` post-deploy) so the pool guard is green the same day.
 - **Local `btrfs-verify-snapshots` prefix awareness** (`@.*` glob already excludes `@home-hermes.*`; extended to check it explicitly when mounted).
 
@@ -123,7 +123,7 @@ flowchart TD
     end
 
     subgraph USER["User: sudo runbook on evo-x2"]
-        U0["0. Pick a quiet window<br/>(outside 23:00–00:45 btrbk/GC)"] --> U1["1. sudo bash<br/>scripts/migrate-hermes-subvol.sh<br/>prepare<br/>(two-phase reflink rsync,<br/>NEVER writes to source, swaps aside)"]
+        U0["0. Pick a quiet window<br/>(outside 23:00–00:45 btrbk/GC)"] --> U1["1. sudo bash<br/>scripts/migrate-hermes-subvol.sh<br/>prepare<br/>(two-phase plain rsync,<br/>NEVER writes to source, swaps aside)"]
         U1 --> U2["2. nix run .#deploy<br/>(activates home-hermes.mount,<br/>restarts hermes)"]
         U2 --> U3["3. sudo systemctl start<br/>btrbk-root.service<br/>(seeds first full send<br/>+ first pool receive)"]
         U3 --> U4["4. Verify: findmnt subvol,<br/>hermes journal,<br/>pool receive exists"]
