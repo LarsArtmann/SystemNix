@@ -171,7 +171,6 @@ in
     "discord.tools"
     "9gag.com"
     "9cache.com"
-    "us.i.posthog.com"
     "movieffm.net"
     "www.movieffm.net"
     "deref-mail.com"
@@ -209,6 +208,10 @@ in
     "redd.it"
     "redditmedia.com"
     "redditstatic.com"
+    # PostHog US analytics ingest (crush telemetry endpoint) — removed from the
+    # whitelist 2026-09-16; DO_NOT_TRACK=1 already keeps crush silent, this
+    # blocks the endpoint itself at DNS level.
+    "us.i.posthog.com"
   ];
 
   categories = {
