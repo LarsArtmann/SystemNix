@@ -271,6 +271,18 @@ in
       # removed from nixpkgs: systemd 258 ships the android udev rules with
       # uaccess tags, granting the active seat user device ACLs directly.
       pkgs.android-tools
+      # CLI tools replacing hand-installed ~/.local/bin binaries (2026-09-16
+      # audit: uv{,x}, shfmt, the `exec bun` node shim, and the raw buildflow
+      # binary were manual store-less installs; himalaya/flm artifacts were
+      # deleted instead of replaced — dormant/obsolete).
+      pkgs.uv
+      pkgs.shfmt
+      pkgs.nodejs
+      inputs.buildflow.packages.${pkgs.system}.default
+      # flm CLI (NPU LLM; service consumes the same package). Replaces the
+      # deleted ~/.local/bin/flm wrapper — the nix package sets its own
+      # XILINX_XRT/LD_LIBRARY_PATH, no hand-maintained script needed.
+      pkgs.fastflowlm
       # qmd — global on-device RAG/hybrid search CLI (BM25 + vectors + LLM
       # rerank) over markdown/code collections; also the binary Crush spawns
       # for the `qmd` MCP server (crushrc). Upstream flake pin — see flake.nix

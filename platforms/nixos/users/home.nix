@@ -509,6 +509,10 @@ in
     '';
 
     # NixOS-specific session variables
+    # ~/.local/bin on PATH — replaces the uv-installer boilerplate
+    # (~/.local/bin/env + env.fish + fish conf.d/uv.env.fish, removed
+    # 2026-09-16). Prepend semantics preserved: local overrides system.
+    sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];
     sessionVariables = {
       # Build caches on the USB SSD — run nix run .#migrate-buildcache BEFORE
       # the first deploy so the target dirs exist and the symlinked sources

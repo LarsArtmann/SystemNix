@@ -3098,16 +3098,16 @@
     "go-finding-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1785241407,
-        "narHash": "sha256-sV6x4D3FzeXFppFMk2nGJj9yi/8Vp/kheqRDuS0Nk14=",
-        "ref": "refs/tags/v1.4.1",
-        "rev": "44e5c6abea5e163cac940be81591427d7432d291",
-        "revCount": 1056,
+        "lastModified": 1789007954,
+        "narHash": "sha256-mcpAgNn/aFIzN9y4RdrMVNXao2tvytOcC0/C5fHz5kg=",
+        "ref": "refs/tags/v1.10.0",
+        "rev": "fc627fbb00b11005374e04627a2866b8527eb4ea",
+        "revCount": 1285,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-finding"
       },
       "original": {
-        "ref": "refs/tags/v1.4.1",
+        "ref": "refs/tags/v1.10.0",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-finding"
       }
@@ -3958,17 +3958,17 @@
         "treefmt-nix": "treefmt-nix_6"
       },
       "locked": {
-        "lastModified": 1789306088,
-        "narHash": "sha256-hjKKTX4Q2TxMBxius45X5WpCgFnx6DD1W56Ps2X0EMQ=",
+        "lastModified": 1789454960,
+        "narHash": "sha256-S5xNOX9javK6YnvyJkKN4S2IhlhfZEV8ZCl0ANF1rJA=",
         "owner": "LarsArtmann",
         "repo": "go-nix-helpers",
-        "rev": "8c87f2654f546bcf22a302833cf0f5d2dfe30ea2",
+        "rev": "c42fd7786ce1d188017c189151bbcb56aad12951",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
+        "ref": "master",
         "repo": "go-nix-helpers",
-        "rev": "8c87f2654f546bcf22a302833cf0f5d2dfe30ea2",
         "type": "github"
       }
     },
@@ -5356,17 +5356,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1788534808,
-        "narHash": "sha256-fmsCJf/PhuAPLtLcOWN/Lfg96iBlszUi/CjsS0vC0U8=",
+        "lastModified": 1789549067,
+        "narHash": "sha256-0UYPdnbCfMRWFraynjdfCGZwv9SoWTJPtlQz/TZM5Xc=",
         "owner": "LarsArtmann",
         "repo": "md-go-validator",
-        "rev": "5b72f894dff1ec8b3e8668e47e5b518f175b4206",
+        "rev": "2829be24fd9c5609c880b4f6366a138272ed85d8",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
+        "ref": "master",
         "repo": "md-go-validator",
-        "rev": "5b72f894dff1ec8b3e8668e47e5b518f175b4206",
         "type": "github"
       }
     },

@@ -367,10 +367,14 @@
       # pushed branch `systemnix-vn-version-fix` (public repo, rev verified
       # on GitHub 2026-09-16). Tarball fetch needs no auth (public repo,
       # no deploy key); CI's insteadOf rewrite keeps covering the transitive
-      # git+ssh copies. Branch rev stays pinned until master carries the fix.
+      # git+ssh copies. Was pinned to 8c87f265 (systemnix-vn-version-fix
+      # branch) until the fix landed on master as c42fd778 ("preserve
+      # module-path major in pseudo-version normalization", verified
+      # 2026-09-16) — pin dropped per the pin policy; consumer goModules
+      # FODs re-verified after the lock move.
       # project-meta consumes go-nix-helpers.flakeModules.go-standard, so this
       # must remain a flake input even though Go libraries are the primary use.
-      url = "github:LarsArtmann/go-nix-helpers/8c87f2654f546bcf22a302833cf0f5d2dfe30ea2";
+      url = "github:LarsArtmann/go-nix-helpers?ref=master";
     };
 
     # golangci-lint-auto-configure — auto-configure golangci-lint for Go projects
@@ -620,9 +624,11 @@
     };
 
     # md-go-validator — Validate code blocks embedded in Markdown/MDX docs
+    # Was INTERIM-pinned to 5b72f894 (2026-09-13 vendorHash wave); master
+    # verified BUILDABLE at HEAD 2026-09-16 (goModules FOD probe passed) —
+    # pin dropped per the pin policy (?ref=master everywhere possible).
     md-go-validator = {
-      # INTERIM: pinned to pre-2026-09-13-update rev (stale vendorHash upstream).
-      url = "github:LarsArtmann/md-go-validator/5b72f894dff1ec8b3e8668e47e5b518f175b4206";
+      url = "github:LarsArtmann/md-go-validator?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         systems.follows = "systems";
