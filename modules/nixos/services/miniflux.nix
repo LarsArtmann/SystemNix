@@ -101,7 +101,11 @@ _: {
         set -euo pipefail
         sub_file="/run/miniflux-oidc-setup/sub"
         username="${if cfg.oidcLink.username == null then "" else cfg.oidcLink.username}"
-        psql="${config.services.postgresql.package}/bin/psql -v ON_ERROR_STOP=1"
+        # -d miniflux is load-bearing: bare psql connects to the database named
+        # after the invoking USER (postgres), and the miniflux schema lives in
+        # the "miniflux" database (upstream hardcodes the name — its dbsetup
+        # unit runs `psql "miniflux"` for the same reason).
+        psql="${config.services.postgresql.package}/bin/psql -v ON_ERROR_STOP=1 -d miniflux"
 
         sub="$(cat "$sub_file")"
         case "$sub" in
