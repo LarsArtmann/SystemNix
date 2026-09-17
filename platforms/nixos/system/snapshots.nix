@@ -570,6 +570,7 @@ in
         path = [
           pkgs.btrfs-progs
           pkgs.util-linux
+          pkgs.systemd
           pkgs.coreutils
           pkgs.findutils
           pkgs.gnugrep
@@ -641,8 +642,13 @@ in
 
           # @home-hermes receives are only EXPECTED once the host actually
           # mounts the subvolume — pre-migration generations must stay green.
+          # Probe the mount UNIT, never the mountpoint: harden{}'s
+          # ProtectHome=true hides /home from this unit's namespace, so a
+          # findmnt probe here always fails and the gate silently skips
+          # (phantom green live 2026-09-17 00:46 — zero hermes receives,
+          # check passed).
           hermes_expected=no
-          if findmnt -n /home/hermes 2>/dev/null | grep -q '@home-hermes'; then
+          if systemctl is-active --quiet home-hermes.mount; then
             hermes_expected=yes
           fi
 
