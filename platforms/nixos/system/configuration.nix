@@ -382,6 +382,10 @@ in
       btrfs-rescue.enable = true;
       pocket-id-config = {
         enable = true;
+        # Resend only delivers from VERIFIED domains — home.lan can never be
+        # one. Requires larsartmann.cloud verified in Resend (SPF/DKIM) for
+        # delivery beyond the account owner's own address.
+        smtp.from = "noreply@larsartmann.cloud";
         provision = {
           enable = true;
           adminUser = {

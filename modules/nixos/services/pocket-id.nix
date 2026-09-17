@@ -344,6 +344,15 @@ _: {
             default = "noreply@${domain}";
             description = "From email address for outgoing emails";
           };
+          tls = lib.mkOption {
+            type = lib.types.enum [
+              "none"
+              "starttls"
+              "tls"
+            ];
+            default = "tls";
+            description = "SMTP TLS mode: tls = implicit TLS (port 465), starttls = explicit STARTTLS (port 587)";
+          };
           skipSslVerify = lib.mkOption {
             type = lib.types.bool;
             default = false;
@@ -489,7 +498,16 @@ _: {
             SMTP_PORT = toString cfg.smtp.port;
             SMTP_USER = cfg.smtp.user;
             SMTP_FROM = cfg.smtp.from;
+            SMTP_TLS = cfg.smtp.tls;
             SMTP_SKIP_SSL_VERIFY = cfg.smtp.skipSslVerify;
+            # Pocket ID 2.x moved the application configuration into a DB-backed
+            # actor. The SMTP_* env vars above are read ONLY when the UI config
+            # is disabled (source-verified v2.14.0 appconfig/service.go
+            # loadDbConfigFromEnv); otherwise the emailer fails with "SMTP host
+            # is not configured" even though the env vars are set. This keeps
+            # the Nix module the single source of truth and the SMTP password
+            # out of the sqlite DB (and its backups).
+            UI_CONFIG_DISABLED = true;
           };
           credentials = {
             ENCRYPTION_KEY = config.sops.secrets.pocket_id_encryption_key.path;

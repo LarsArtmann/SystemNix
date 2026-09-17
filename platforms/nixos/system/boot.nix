@@ -463,8 +463,9 @@ in
       # non-systemd processes (Helium/Electron renderers, desktop AI tools) that run
       # outside per-service MemoryMax limits.
       # MemoryHigh=80G throttles gradually (kernel increases reclaim pressure);
-      # MemoryMax=90G is the hard kill. With 93G visible RAM, this leaves ~3G for
-      # kernel + system services — tight, but MemoryHigh=80G starts reclaiming user
+      # MemoryMax=90G is the hard kill. With ~124G visible RAM since the
+      # 2026-09-05 GTT flip (~93G when these were sized), this leaves ~34G for
+      # kernel + system services; MemoryHigh=80G starts reclaiming user
       # pages well before the wall, giving system.slice breathing room.
       # Root cause of the 2026-06-19 crash: Helium renderers grew unbounded for 66h
       # → reclaim thrash → journald starved → sp5100-tco WDT hard reset.

@@ -35,8 +35,30 @@ _: {
       allMonitoredServices = cfg.monitoredServices ++ cfg.extraMonitoredServices;
       textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
 
-      # 40 GiB in bytes — user-1000.slice threshold (AGENTS.md: MemoryHigh=56G, MemoryMax=64G)
-      userSliceThreshold = 40 * 1024 * 1024 * 1024;
+      # user-1000.slice alert threshold DERIVED from the slice's own MemoryHigh
+      # (declared in boot.nix). A flat 40G predated the 2026-08-04 limit raise
+      # (56G/64G → 80G/90G) and false-fired on a normal desktop session (50G of
+      # crush agents + browsers, 68G machine-available). Doctrine (same as
+      # serviceMemoryThresholdFallback below): thresholds must derive from the
+      # ceiling they guard — 90% of MemoryHigh fires just before kernel
+      # reclaim-throttling begins; MemoryMax stays the kill line.
+      userSliceMemoryHighRaw = config.systemd.slices."user-1000".sliceConfig.MemoryHigh or "80G";
+      userSliceMemoryMaxRaw = config.systemd.slices."user-1000".sliceConfig.MemoryMax or "90G";
+
+      # systemd size string ("80G"/"512M"/"1024K", binary units) → bytes;
+      # null for "infinity" or anything unparsable.
+      parseSystemdSize = v:
+        let
+          m = builtins.match "([0-9]+)([KMG])?" (toString v);
+          mult = { K = 1024; M = 1048576; G = 1073741824; };
+        in
+        if m == null then null
+        else builtins.fromJSON (builtins.elemAt m 0) * (mult.${builtins.elemAt m 1} or 1);
+
+      userSliceAlertThreshold =
+        let h = parseSystemdSize userSliceMemoryHighRaw;
+        in if h == null then 72 * 1073741824 else h * 9 / 10;
+      userSliceAlertGiB = userSliceAlertThreshold / 1073741824;
 
       # 60 GiB in kB — GPUActive threshold (AGENTS.md: GPUActive can consume 51+ GiB)
       gpuActiveThresholdKb = 60 * 1024 * 1024;
@@ -253,7 +275,7 @@ _: {
           if [ "$collect_user_slice" = "true" ]; then
             SLICE_MEM=$(systemctl_value user-1000.slice -p MemoryCurrent)
             SLICE_MEM="''${SLICE_MEM:-0}"
-            [ "$SLICE_MEM" -gt ${toString userSliceThreshold} ] 2>/dev/null && SLICE_OVER=1
+            [ "$SLICE_MEM" -gt ${toString userSliceAlertThreshold} ] 2>/dev/null && SLICE_OVER=1
           fi
 
           # === GPUActive threshold (Strix Halo only) ===
@@ -914,7 +936,7 @@ _: {
             echo "# TYPE system_user_slice_memory_bytes gauge"
             echo "system_user_slice_memory_bytes ''${SLICE_MEM}"
 
-            echo "# HELP system_user_slice_memory_over_threshold 1 if user-1000.slice exceeds 40G, 0 otherwise"
+            echo "# HELP system_user_slice_memory_over_threshold 1 if user-1000.slice exceeds ${toString userSliceAlertGiB}G (90% of slice MemoryHigh), 0 otherwise"
             echo "# TYPE system_user_slice_memory_over_threshold gauge"
             echo "system_user_slice_memory_over_threshold ''${SLICE_OVER}"
 
@@ -1987,7 +2009,7 @@ _: {
                   "[STATUS] == 200"
                   "[BODY] == pat(*system_gpu_active_over_threshold 0*)"
                 ];
-                alert = "GPUActive exceeds 60G — GTT buffer objects consuming excessive RAM. Check /proc/meminfo GPUActive. Risk of OOM cascade on Strix Halo (GTT-first: with the 512 MiB carveout ALL GPU memory is shared system RAM).";
+                alert = "GPUActive exceeds 60G — GTT buffer objects consuming excessive RAM. Check /proc/meminfo GPUActive. Risk of OOM cascade on Strix Halo (GTT-first: with the 1 GiB carveout ALL GPU memory is shared system RAM).";
               }
               {
                 name = "User Slice Memory";
@@ -1998,7 +2020,7 @@ _: {
                   "[STATUS] == 200"
                   "[BODY] == pat(*system_user_slice_memory_over_threshold 0*)"
                 ];
-                alert = "user-1000.slice memory exceeds 40G — desktop processes consuming excessive RAM (MemoryHigh=56G, MemoryMax=64G). Risk of journald starvation and WDT reset.";
+                alert = "user-1000.slice memory exceeds ${toString userSliceAlertGiB}G (90% of its MemoryHigh=${userSliceMemoryHighRaw}). Throttling starts at ${userSliceMemoryHighRaw}, hard kill at ${userSliceMemoryMaxRaw}. Desktop + crush-agent sessions legitimately use 40-60G; act only if PSI/zram also degrade (memory-emergency-guard owns real pressure).";
               }
               {
                 name = "Monitor365 Buffer Pressure";
