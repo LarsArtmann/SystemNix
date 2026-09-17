@@ -765,11 +765,11 @@
         "treefmt-nix": "treefmt-nix_4"
       },
       "locked": {
-        "lastModified": 1789669410,
-        "narHash": "sha256-KQ/NTa7ncKLCCIbFweITRlfgGji2qvQwdL4NILKzjh8=",
+        "lastModified": 1789653176,
+        "narHash": "sha256-FuCPEoHgAokwfrMqJ18Wa0KTeBFZjU+aV8kVfNMtcWA=",
         "ref": "master",
-        "rev": "65c8fcd5787cb7259c385466467ffb40c24b68ff",
-        "revCount": 5142,
+        "rev": "ef1ce387b8331618816d8c08927232c9cf58f198",
+        "revCount": 5141,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
@@ -857,11 +857,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789670707,
-        "narHash": "sha256-3JLWTdsAQxoadfFy5p7c8EKZBs+LJmhFFivJNumtw2s=",
+        "lastModified": 1789672865,
+        "narHash": "sha256-ERuyVF17KrGXmLd85kZSVhHiVCDBcEvz63BOJykSOSI=",
         "owner": "LarsArtmann",
         "repo": "DiscordSync",
-        "rev": "6a8daf57a4c46d983da075812dd7b7eb271dffb9",
+        "rev": "5fe2af138b8a628e93774b856b3ef0735014596a",
         "type": "github"
       },
       "original": {
