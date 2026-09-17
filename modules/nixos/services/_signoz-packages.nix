@@ -93,7 +93,7 @@ let
     };
   });
 
-  collectorVendorHash = "";
+  collectorVendorHash = "sha256-5sEFPx7+hF0j0EhildiD7KE2obSdwyxfiA8r3kLQwhU=";
 
   schemaMigrator = buildGoModule {
     pname = "signoz-schema-migrator";

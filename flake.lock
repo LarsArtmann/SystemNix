@@ -1882,11 +1882,11 @@
         "samber-do-auditlog": "samber-do-auditlog_4"
       },
       "locked": {
-        "lastModified": 1789670491,
-        "narHash": "sha256-Whbgm/xBmYbPSw6C1dE7aEbq0X1NxrpF+FSIabn7BfA=",
+        "lastModified": 1789670940,
+        "narHash": "sha256-5dc8jmxlstBtmn0oJgdLenRKNgNar9VFCTyZUBJWNbc=",
         "owner": "LarsArtmann",
         "repo": "go-auto-upgrade",
-        "rev": "c6fcaa487ef80dbd8c78289259decb4e617dcbbe",
+        "rev": "086f787e7ee2e9bc2f5dec3ae6a679f819118122",
         "type": "github"
       },
       "original": {
