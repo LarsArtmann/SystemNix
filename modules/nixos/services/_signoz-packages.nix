@@ -128,7 +128,7 @@ let
     pname = "signoz";
     inherit version;
     src = srcPatched;
-    vendorHash = "";
+    vendorHash = "sha256-dI2K3CkRUjRqIAK5KldXnggKNc+Llcqh4RjHMO4ljIQ=";
     subPackages = [ "cmd/community" ];
     proxyVendor = true;
     tags = [ "timetzdata" ];

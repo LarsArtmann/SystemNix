@@ -96,7 +96,8 @@ _: {
       '';
 
       # Phase 2 (postgres, peer auth): converge users.openid_connect_id.
-      # psql -v + :'var' quoting — no shell-interpolated SQL strings.
+      # Interpolated values are charset-guarded above (sub: [A-Za-z0-9-],
+      # username: [A-Za-z0-9@._-]) — single-quoted SQL literals are safe.
       minifluxOidcLinkScript = pkgs.writeShellScript "miniflux-oidc-setup-link" ''
         set -euo pipefail
         sub_file="/run/miniflux-oidc-setup/sub"
@@ -114,13 +115,22 @@ _: {
             exit 1
             ;;
         esac
+        # username is inlined into single-quoted SQL below — the charset guard
+        # makes injection impossible (psql 17 does NOT interpolate :'var'
+        # inside -c, so psql meta-variables are not an option here).
+        case "$username" in
+          *[!A-Za-z0-9@._-]*)
+            echo "miniflux-oidc-setup: configured username has unexpected characters — refusing: $username" >&2
+            exit 1
+            ;;
+        esac
 
         if [ -n "$username" ]; then
           # Bounded wait: CREATE_ADMIN seeds the break-glass user at miniflux
           # first start; on a fresh host that start races this unit.
           target=""
           for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
-            count="$($psql -v u="$username" -tAc "SELECT count(*) FROM users WHERE username = :'u';" || true)"
+            count="$($psql -tAc "SELECT count(*) FROM users WHERE username = '$username';" || true)"
             if [ "''${count:-0}" -ge 1 ] 2>/dev/null; then target="$username"; break; fi
             sleep 2
           done
@@ -148,15 +158,15 @@ _: {
           exit 1
         fi
 
-        current="$($psql -v u="$target" -tAc "SELECT openid_connect_id FROM users WHERE username = :'u' LIMIT 1;")"
+        current="$($psql -tAc "SELECT openid_connect_id FROM users WHERE username = '$target' LIMIT 1;")"
         if [ "$current" = "$sub" ]; then
           echo "miniflux-oidc-setup: already linked (user=$target sub=$sub)"
           exit 0
         fi
 
-        $psql -v u="$target" -v s="$sub" -c "UPDATE users SET openid_connect_id = :'s' WHERE username = :'u';"
+        $psql -c "UPDATE users SET openid_connect_id = '$sub' WHERE username = '$target';"
         echo "miniflux-oidc-setup: linked miniflux user '$target' -> Pocket ID sub $sub (was: ''${current:-<empty>})"
-        $psql -v u="$target" -c "SELECT id, username, openid_connect_id FROM users WHERE username = :'u';"
+        $psql -c "SELECT id, username, openid_connect_id FROM users WHERE username = '$target';"
       '';
     in
     {

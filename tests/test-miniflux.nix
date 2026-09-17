@@ -205,7 +205,7 @@ in
     assert "linked miniflux user" in journal, f"link did not run, journal: {journal!r}"
     assert "vm-sub-uuid-0001" in journal, f"resolved sub missing from journal: {journal!r}"
     linked = machine.succeed(
-      "runuser -u postgres -- psql -tAc \"SELECT openid_connect_id FROM users WHERE username='admin'\""
+      "runuser -u postgres -- psql -d miniflux -tAc \"SELECT openid_connect_id FROM users WHERE username='admin'\""
     ).strip()
     assert linked == "vm-sub-uuid-0001", f"openid_connect_id not converged, got: {linked!r}"
     # Idempotent convergence: a re-run (deploy.sh provisioner loop) no-ops.
