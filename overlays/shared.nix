@@ -30,14 +30,10 @@
         # folds nativeCheckInputs into the derivation before overrideAttrs
         # runs, so the stdenv-level override is a silent no-op here.
         # Drop when nixpkgs drops it or fixes the playwright pin.
-        django-polymorphic =
-          pythonPrev.django-polymorphic.overridePythonAttrs
-            (old: {
-              nativeCheckInputs =
-                prev.lib.remove pythonPrev.pytest-playwright
-                  (old.nativeCheckInputs or [ ]);
-              dontUsePytestCheck = true;
-            });
+        django-polymorphic = pythonPrev.django-polymorphic.overridePythonAttrs (old: {
+          nativeCheckInputs = prev.lib.remove pythonPrev.pytest-playwright (old.nativeCheckInputs or [ ]);
+          dontUsePytestCheck = true;
+        });
       })
     ];
 
