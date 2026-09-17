@@ -1031,11 +1031,11 @@
         "vision-review-agent-src": "vision-review-agent-src"
       },
       "locked": {
-        "lastModified": 1789671692,
-        "narHash": "sha256-6seXSFLggky/p4S/hIftP+xM8+SWPbzWNZ3MEPeCNpY=",
+        "lastModified": 1789672248,
+        "narHash": "sha256-UtsXopdr4+HMCszpbGJRryVWyQPDiqFj+hLeEamfmfw=",
         "ref": "refs/heads/master",
-        "rev": "38b23524e69975bff18b5b8dbeef2cde74fac1aa",
-        "revCount": 1273,
+        "rev": "a6717334ee1ed2a0f9a4c8d20fba52698879d46e",
+        "revCount": 1275,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/file-and-image-renamer"
       },
@@ -1882,11 +1882,11 @@
         "samber-do-auditlog": "samber-do-auditlog_4"
       },
       "locked": {
-        "lastModified": 1789670940,
-        "narHash": "sha256-5dc8jmxlstBtmn0oJgdLenRKNgNar9VFCTyZUBJWNbc=",
+        "lastModified": 1789672247,
+        "narHash": "sha256-JuFMsgHucV3Gn5TmpFc59YGxMtOwofmCQiackyR8Spk=",
         "owner": "LarsArtmann",
         "repo": "go-auto-upgrade",
-        "rev": "086f787e7ee2e9bc2f5dec3ae6a679f819118122",
+        "rev": "2aad9ad8fcc15109fbd6e562eab8842c4604de27",
         "type": "github"
       },
       "original": {
@@ -6133,11 +6133,11 @@
         "treefmt-nix": "treefmt-nix_12"
       },
       "locked": {
-        "lastModified": 1789670161,
-        "narHash": "sha256-X8FfHzrNkZN38v39sfdi1zLU/gND5LE/vhOA5Zzs3XA=",
+        "lastModified": 1789672280,
+        "narHash": "sha256-FSRSTKpuU12bv622HMTYaZjtOmKEAjuhD9vePNr2IMI=",
         "owner": "LarsArtmann",
         "repo": "PapDashboard",
-        "rev": "2f2e6b7ea14893cbe514a4eb2c6701ee6719f1b6",
+        "rev": "a3d6168554eeb2f6435541cb37084e337c6a86a6",
         "type": "github"
       },
       "original": {
