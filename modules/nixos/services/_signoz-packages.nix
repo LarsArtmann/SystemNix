@@ -14,9 +14,20 @@ let
   src = inputs.signoz-src;
   collectorSrc = inputs.signoz-collector-src;
 
-  # go_1_25 was removed from nixpkgs (EOL 2026-09); go_1_26 builds the pinned
-  # revs fine (vendorHashes unchanged).
+  # go_1_25 was removed from nixpkgs (EOL 2026-09). go_1_26 needs the
+  # build-time sonic bump below: the pinned revs' transitive
+  # bytedance/sonic v1.14.x does not compile on Go >= 1.26 (undefined
+  # GoMapIterator — sonic added Go 1.26 support in v1.15.0).
   buildGoModule = pkgs.buildGoModule.override { go = pkgs.go_1_26; };
+
+  # Sonic bump applied in BOTH phases (overrideModAttrs fills the module
+  # FOD/proxy cache with v1.15.4; proxyVendor lets the main build resolve
+  # it from that cache). Drop when the pinned SigNoz revs move and carry
+  # a Go-1.26-compatible sonic on their own.
+  sonicBump = ''
+    go get github.com/bytedance/sonic@v1.15.4
+    go mod tidy
+  '';
 
   # SigNoz frontend: pnpm 10 workspace (engines pin ">=10 <11"), rolldown-vite
   # (npm-aliased as "vite"), built to a static dist served by the Go binary
@@ -75,6 +86,9 @@ let
   });
 
   collectorVendorHash = "sha256-iCkb7IGBT8Ry5m4a++jGhfoRSsrG1OquqWOwHmvACQc=";
+  # otelCollector's FOD includes the sonic bump, so its cache differs from
+  # schemaMigrator's.
+  otelCollectorVendorHash = "";
 
   schemaMigrator = buildGoModule {
     pname = "signoz-schema-migrator";
@@ -93,8 +107,13 @@ let
     pname = "signoz-otel-collector";
     version = collectorVersion;
     src = collectorSrc;
-    vendorHash = collectorVendorHash;
+    vendorHash = otelCollectorVendorHash;
     subPackages = [ "cmd/signozotelcollector" ];
+    proxyVendor = true;
+    overrideModAttrs = _: {
+      preBuild = sonicBump;
+    };
+    preBuild = sonicBump;
     ldflags = [
       "-s"
       "-w"
@@ -109,6 +128,11 @@ let
     inherit src;
     vendorHash = "sha256-1+X3TRfwh1aA/SsZZ84bUXX9RC+wp4uyM2kYNH+Qe3Y=";
     subPackages = [ "cmd/community" ];
+    proxyVendor = true;
+    overrideModAttrs = _: {
+      preBuild = sonicBump;
+    };
+    preBuild = sonicBump;
     tags = [ "timetzdata" ];
 
     ldflags = [
