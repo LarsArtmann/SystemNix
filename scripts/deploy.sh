@@ -170,8 +170,9 @@ if nix run .#pre-deploy-check; then
   # BEFORE nh os switch. Cache data only, exact names, symlink occupants kept;
   # rm (not trash) because trashing gigabytes of rebuildable cache writes them
   # onto the NVMe this whole setup exists to protect. Mirrors the reap loop in
-  # buildcache-usb-recovery.service.
-  for d in goimports go go-build; do
+  # buildcache-usb-recovery.service. 2026-09-17: gobuild/gocache/gomod added —
+  # BuildFlow's cross-repo fallback names the original list evaded forever.
+  for d in goimports go go-build gobuild gocache gomod; do
     if [ -e "$HOME/.cache/$d" ] && [ ! -L "$HOME/.cache/$d" ]; then
       sudo rm -rf -- "$HOME/.cache/$d"
       echo "  Reaped ~/.cache/$d (real dir had displaced the HM symlink)"

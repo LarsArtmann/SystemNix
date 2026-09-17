@@ -325,7 +325,11 @@
             # re-contaminates the NVMe with build churn AND blocks the next
             # home-manager activation (checkLinkTargets "Existing file in the
             # way"). Cache data only, exact paths, symlink occupants kept.
-            for d in goimports go go-build; do
+            # 2026-09-17: added BuildFlow's cross-repo fallback names
+            # (gobuild gocache gomod — set by BuildFlow sessions as dead-mount
+            # fallbacks) — the original 3-name list evaded them forever, leaving
+            # unowned NVMe churn after every dead-mount episode.
+            for d in goimports go go-build gobuild gocache gomod; do
               if [ -e "${homeDir}/.cache/$d" ] && [ ! -L "${homeDir}/.cache/$d" ]; then
                 rm -rf -- "${homeDir}/.cache/$d"
                 echo "reaped real dir at ${homeDir}/.cache/$d (HM symlink will replace it)"
