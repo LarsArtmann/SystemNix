@@ -73,7 +73,7 @@ dedicated success column is the safer shape.
 
 ---
 
-_Drafted with AI assistance (Crush); source claims verified against the `forgejo` branch on 2026-09-18._ 💘 Generated with Crush
+_Drafted with AI assistance (Crush); source claims verified against the `forgejo` branch on 2026-09-18._
 
 
 ---
@@ -127,7 +127,7 @@ Any of these would have caught it:
 
 ---
 
-_Drafted with AI assistance (Crush); source claims verified against the `forgejo` branch on 2026-09-18._ 💘 Generated with Crush
+_Drafted with AI assistance (Crush); source claims verified against the `forgejo` branch on 2026-09-18._
 
 
 ---
@@ -187,5 +187,5 @@ temp file is treated as fatal for the sync with no user-visible notice, and (b) 
 
 ---
 
-_Drafted with AI assistance (Crush); source claims verified against the `forgejo` branch on 2026-09-18._ 💘 Generated with Crush
+_Drafted with AI assistance (Crush); source claims verified against the `forgejo` branch on 2026-09-18._
 
