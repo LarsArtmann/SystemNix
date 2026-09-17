@@ -75,16 +75,27 @@
 
       expectedJson = pkgs.writeText "signoz-coverage-expected.json" (
         builtins.toJSON (
-          lib.mapAttrsToList (unit: e: {
-            service = e.serviceName;
-            inherit unit;
-            inherit (e) wiring;
-            maxAgeSeconds = e.maxAgeHours * 3600;
-            # Freshness enforcement applies ONLY to continuous services.
-            # "event" entries are wired and verified but work-driven: any
-            # finite budget is a standing page between conversions.
-            enforced = e.wiring == "env" || e.wiring == "config";
-          }) cfg.expected
+          # One metrics row per SERVICE: units that share a serviceName (the
+          # main unit + its -health sister run the same binary) would otherwise
+          # emit duplicate series, which node_exporter's registry rejects with
+          # a gather ERROR on every scrape. First entry in attrset order wins.
+          lib.foldl' (
+            acc: e:
+              if lib.any (x: x.service == e.service) acc
+              then acc
+              else acc ++ [ e ]
+          ) [ ] (
+            lib.mapAttrsToList (unit: e: {
+              service = e.serviceName;
+              inherit unit;
+              inherit (e) wiring;
+              maxAgeSeconds = e.maxAgeHours * 3600;
+              # Freshness enforcement applies ONLY to continuous services.
+              # "event" entries are wired and verified but work-driven: any
+              # finite budget is a standing page between conversions.
+              enforced = e.wiring == "env" || e.wiring == "config";
+            }) cfg.expected
+          )
         )
       );
 
