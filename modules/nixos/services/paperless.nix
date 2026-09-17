@@ -476,6 +476,11 @@ _: {
               PAPERLESS_AI_LLM_EMBEDDING_ENDPOINT = embeddingEndpoint;
               PAPERLESS_AI_LLM_EMBEDDING_MODEL = config.services.llama-rag.embeddingsAlias;
               PAPERLESS_AI_LLM_EMBEDDING_API_KEY = "llama-server-no-auth";
+              # Precedence is DB > env (paperless config.py: `app_config.x or
+              # settings.X`), so a UI save in Application Configuration would
+              # silently override these. No PAPERLESS_AI_LLM_RERANKER_* exists
+              # in paperless 3.1.3 (zero rerank support upstream) — do not
+              # attempt to wire the :8849 reranker from env vars.
             }
             # --- Outbound email via the central mail relay ----------------------
             # Point Django's SMTP backend at the loopback relay (no auth, no
