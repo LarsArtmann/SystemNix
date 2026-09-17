@@ -276,15 +276,14 @@
         ],
         "oxlint-auto-configure": "oxlint-auto-configure",
         "samber-do-auditlog": "samber-do-auditlog",
-        "samber-linter": "samber-linter",
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1789634145,
-        "narHash": "sha256-XBZaY+xLZKNZaenaRoRPWpPgL4CbxyAobWkUGMjiT/4=",
+        "lastModified": 1789481128,
+        "narHash": "sha256-FY7Y0psMwFAa/Cu6nj8xuMrswjc3RuxuBLwp8Rz4IzI=",
         "ref": "refs/heads/master",
-        "rev": "42fd89bfba96333984f7f4ee37ca1f84164886c4",
-        "revCount": 6085,
+        "rev": "9d11c8fee7c7be6b62e7bc62130a6cf7e397ad83",
+        "revCount": 6018,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
