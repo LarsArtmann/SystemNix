@@ -15,6 +15,21 @@
           doCheck = false;
         });
       })
+
+      (_pythonFinal: pythonPrev: {
+        # nixpkgs' django-polymorphic carries pytest-playwright in
+        # nativeCheckInputs while DISABLING the very tests that need it
+        # ("disabledTestPaths: Playwright failed to start"). The dep drags
+        # playwright-python's source FOD into every paperless build, and
+        # microsoft RE-TAGGED v1.63.0 — cold fetches fail with a hash
+        # mismatch (live 2026-09-17). Strip the unused check dep.
+        # Drop when nixpkgs drops it or fixes the playwright pin.
+        django-polymorphic = pythonPrev.django-polymorphic.overrideAttrs (old: {
+          nativeCheckInputs =
+            pythonPrev.lib.remove pythonPrev.pytest-playwright
+              (old.nativeCheckInputs or [ ]);
+        });
+      })
     ];
 
     catppuccin-gtk = prev.catppuccin-gtk.override {
@@ -79,6 +94,22 @@
         libgbm = prev.runCommand "libgbm-stub" { } "mkdir $out";
         playwright-driver = {
           browsers = prev.runCommand "playwright-stub" { } "mkdir $out";
+        };
+      };
+    }
+  )
+
+  (
+    _final: prev:
+    prev.lib.optionalAttrs prev.stdenv.hostPlatform.isLinux {
+      # nixpkgs 26.11.20260916's playwright-webkit is cold-build-broken
+      # (auto-patchelf: libmanette-0.2.so.0 missing from webkit-linux
+      # buildInputs). d2 only needs ONE browser for PNG export — serve it
+      # the chromium-only preset until nixpkgs repairs the webkit bundle.
+      # Drop when nixpkgs' playwright-webkit builds from source again.
+      d2 = prev.d2.override {
+        playwright-driver = prev.playwright-driver // {
+          browsers = prev.playwright-driver.browsers-chromium;
         };
       };
     }
