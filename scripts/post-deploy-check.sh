@@ -1552,7 +1552,12 @@ if [ "$FAIL" -gt 0 ]; then
   had_baseline=0
   if [ -f "$baseline_file" ]; then
     had_baseline=1
-    new_fails="$(comm -13 <(LC_ALL=C sort -u "$baseline_file") "$SMOKE_FAIL_NAMES" || true)"
+    # comm MUST run under the same C collation as both sorts — under the
+    # ambient en_US.UTF-8 locale its merge order diverges from the sorted
+    # files ("comm: file N is not in sorted order") and a genuinely new
+    # fail line can be silently mis-merged out of the regression signal
+    # (2026-09-17 smoke warnings).
+    new_fails="$(LC_ALL=C comm -13 <(LC_ALL=C sort -u "$baseline_file") "$SMOKE_FAIL_NAMES" || true)"
   fi
   cp "$SMOKE_FAIL_NAMES" "$baseline_file"
 

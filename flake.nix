@@ -1352,6 +1352,34 @@
                       scan alerts ${alerts}
                       scan dashboards ${dashboards}/*.json
 
+                      # 5. dashboard layout overlaps: the SigNoz v2 validator
+                      # rejects the WHOLE dashboard with HTTP 400
+                      # ("spec.layouts[0].spec.items[N] and items[M] overlap")
+                      # and the provisioner HARD-fails the deploy by design
+                      # (2026-09-16: systemnix-overview Zone 6 panel). Panels
+                      # are rectangles x..x+width, y..y+height on a 12-col
+                      # grid; any pairwise intersection is fatal.
+                      if ! overlap_out=$(${pkgs.python3}/bin/python3 - <<'PYOVERLAP'
+                      import glob, itertools, json, sys
+                      bad = 0
+                      for f in sorted(glob.glob("${dashboards}/*.json")):
+                          items = json.load(open(f))["spec"]["layouts"][0]["spec"]["items"]
+                          for a, b in itertools.combinations(items, 2):
+                              if (a["x"] < b["x"] + b["width"] and b["x"] < a["x"] + a["width"]
+                                      and a["y"] < b["y"] + b["height"] and b["y"] < a["y"] + a["height"]):
+                                  print("%s: panels (x=%d,y=%d,w=%d,h=%d) and (x=%d,y=%d,w=%d,h=%d) intersect" %
+                                        (f, a["x"], a["y"], a["width"], a["height"], b["x"], b["y"], b["width"], b["height"]))
+                                  bad = 1
+                      sys.exit(bad)
+                      PYOVERLAP
+                      ); then
+                        echo "FAIL: dashboard layout overlap(s):"
+                        echo "$overlap_out"
+                        echo "SigNoz v2 rejects the whole dashboard (HTTP 400) and the provisioner unit"
+                        echo "fails the deploy. Give every panel a disjoint grid rectangle."
+                        exit 1
+                      fi
+
                       [ "$fail" -eq 0 ] || exit 1
                       touch $out
                   '';
