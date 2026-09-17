@@ -1,10 +1,11 @@
 # github-auto-assign — periodic GitHub issue/PR self-assignment.
 #
 # Every 6 hours, finds every OPEN issue and PR with NO assignee across ALL
-# repos owned by the configured GitHub owner (gh search --owner, so forks and
-# archived=false are handled by the search itself) and assigns them to the
-# authenticated account ("@me"). Idempotent: a second run finds nothing to do
-# because everything is now assigned.
+# repos owned by the configured GitHub owner (gh search --owner) and assigns
+# them to the authenticated account ("@me"). Forked repos are SKIPPED by
+# default (excludeForks — a fork carries the upstream tracker, so
+# self-assignment there is noise in the assigned-to-me view). Idempotent: a
+# second run finds nothing to do because everything is now assigned.
 #
 #   - Runs as the primary user and reads the user's EXISTING gh CLI auth
 #     (~/.config/gh/hosts.yml, 0600) — no new secret to provision. That is why
@@ -13,6 +14,11 @@
 #     results. If the backlog exceeds that (1000 issues + 339 PRs at
 #     bring-up, 2026-09-17), one run assigns what it sees and the NEXT run
 #     picks up the remainder — self-converging by design.
+#   - Failure paging is thresholded: OnFailure (Discord) fires only on
+#     SYSTEMIC failure (search/fork-list fetch failed, ALL assignments
+#     failed, or >=50% of a substantial run failed). Individual item
+#     failures are WARN-logged and retried on the next tick — one
+#     permanently-weird item must not page every 6h forever.
 #   - No HTTP endpoint, so no Gatus check: failure alerting rides OnFailure
 #     (Discord) + the system-health monitoredServices metric, per the
 #     daemon-less-unit doctrine (cv-scan / backup-timer pattern).
@@ -45,9 +51,29 @@
           owner="''${GITHUB_AUTO_ASSIGN_OWNER:?GITHUB_AUTO_ASSIGN_OWNER is required}"
           limit="''${GITHUB_AUTO_ASSIGN_LIMIT:-1000}"
           dry_run="''${GITHUB_AUTO_ASSIGN_DRY_RUN:-}"
+          exclude_forks="''${GITHUB_AUTO_ASSIGN_EXCLUDE_FORKS:-1}"
 
           assigned=0
           failed=0
+          skipped=0
+
+          fork_file=""
+          cleanup() {
+            if [ -n "$fork_file" ]; then
+              rm -f "$fork_file"
+            fi
+          }
+          trap cleanup EXIT
+
+          if [ "$exclude_forks" = "1" ]; then
+            fork_file="$(mktemp)" || exit 1
+            if ! gh repo list "$owner" --fork --limit 1000 \
+                --json nameWithOwner --jq '.[].nameWithOwner' > "$fork_file"; then
+              echo "ERROR: gh repo list --fork failed (cannot honor excludeForks)" >&2
+              exit 1
+            fi
+            echo "fork exclusion on: $(wc -l < "$fork_file") forked repos will be skipped"
+          fi
 
           for kind in issue pr; do
             plural="''${kind}s"
@@ -65,6 +91,13 @@
             echo "found $count unassigned open $plural"
             while IFS= read -r url; do
               [ -z "$url" ] && continue
+              if [ -n "$fork_file" ]; then
+                repo="$(printf '%s' "$url" | cut -d/ -f4-5)"
+                if grep -qxF "$repo" "$fork_file"; then
+                  skipped=$((skipped + 1))
+                  continue
+                fi
+              fi
               if [ -n "$dry_run" ]; then
                 echo "DRY-RUN would assign $kind: $url"
                 assigned=$((assigned + 1))
@@ -81,8 +114,21 @@
             done <<< "$urls"
           done
 
-          echo "done: assigned=$assigned failed=$failed"
-          [ "$failed" -eq 0 ] || exit 1
+          echo "done: assigned=$assigned failed=$failed skipped-forks=$skipped"
+
+          # OnFailure (Discord) pages only on SYSTEMIC failure: a failed
+          # search/fork-list fetch (exits above), ALL assignments failing,
+          # or >=50% of a substantial run failing. Individual failures are
+          # WARN-logged and retried on the next timer tick.
+          attempts=$((assigned + failed))
+          if [ "$attempts" -gt 0 ] && [ "$assigned" -eq 0 ]; then
+            echo "ERROR: all $attempts assignment attempts failed (systemic)" >&2
+            exit 1
+          fi
+          if [ "$attempts" -ge 10 ] && [ "$failed" -ge $((attempts / 2)) ]; then
+            echo "ERROR: $failed of $attempts assignments failed (>=50%, systemic)" >&2
+            exit 1
+          fi
         '';
       };
     in
@@ -107,6 +153,17 @@
           default = 1000;
           description = "Per-kind search cap (GitHub API maximum is 1000).";
         };
+
+        excludeForks = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = ''
+            Skip issues/PRs on forked repositories. A fork carries the
+            UPSTREAM tracker, so self-assignment there is noise in the
+            assigned-to-me view. Only stops FUTURE assignments —
+            already-assigned fork items are left untouched.
+          '';
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -128,6 +185,7 @@
               Environment = [
                 "GITHUB_AUTO_ASSIGN_OWNER=${cfg.owner}"
                 "GITHUB_AUTO_ASSIGN_LIMIT=${toString cfg.searchLimit}"
+                "GITHUB_AUTO_ASSIGN_EXCLUDE_FORKS=${if cfg.excludeForks then "1" else "0"}"
                 "GH_NO_UPDATE_NOTIFIER=1"
                 "GH_PROMPT_DISABLED=1"
               ];
