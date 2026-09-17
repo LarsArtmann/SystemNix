@@ -22,11 +22,14 @@ let
 
   # Sonic bump applied in BOTH phases (overrideModAttrs fills the module
   # FOD/proxy cache with v1.15.4; proxyVendor lets the main build resolve
-  # it from that cache). Drop when the pinned SigNoz revs move and carry
-  # a Go-1.26-compatible sonic on their own.
+  # it from that cache). The trailing `go mod download all` is REQUIRED:
+  # the FOD's default preBuild (which downloads the full graph) is
+  # REPLACED here, so the cache must be filled explicitly or the main
+  # build finds holes (cel.dev/expr class).
   sonicBump = ''
     go get github.com/bytedance/sonic@v1.15.4
     go mod tidy
+    go mod download all
   '';
 
   # SigNoz frontend: pnpm 10 workspace (engines pin ">=10 <11"), rolldown-vite
