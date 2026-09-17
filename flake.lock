@@ -5942,6 +5942,22 @@
     },
     "nixpkgs_5": {
       "locked": {
+        "lastModified": 1789546076,
+        "narHash": "sha256-zVxLZiSnmaaPLwnhj7pwmqe3axBg/C6nG5JZsJMh2g4=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "b1b875982b17dabde9b4a37f3e229e74913e6db3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_6": {
+      "locked": {
         "lastModified": 1789426278,
         "narHash": "sha256-GnotcvKtbTMnoVx6G4E7ZdUX6487Dky74dqq3pU7iRk=",
         "owner": "NixOS",
@@ -5956,7 +5972,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_6": {
+    "nixpkgs_7": {
       "locked": {
         "lastModified": 1769188852,
         "narHash": "sha256-aBAGyMum27K7cP5OR7BMioJOF3icquJMZDDgk6ZEg1A=",
@@ -6107,18 +6123,16 @@
         "flake-parts": "flake-parts_17",
         "go-cqrs-lite": "go-cqrs-lite_7",
         "go-nix-helpers": "go-nix-helpers_6",
-        "nixpkgs": [
-          "nixpkgs"
-        ],
+        "nixpkgs": "nixpkgs_5",
         "systems": "systems_12",
         "treefmt-nix": "treefmt-nix_12"
       },
       "locked": {
-        "lastModified": 1789672280,
-        "narHash": "sha256-FSRSTKpuU12bv622HMTYaZjtOmKEAjuhD9vePNr2IMI=",
+        "lastModified": 1789672683,
+        "narHash": "sha256-791EuRAB28wmAb2wzF9pXC46TTyfc/gZYpAnAeaUMwg=",
         "owner": "LarsArtmann",
         "repo": "PapDashboard",
-        "rev": "a3d6168554eeb2f6435541cb37084e337c6a86a6",
+        "rev": "ea15eb7a3bf05f72cef9067668f2c9c7d138bb17",
         "type": "github"
       },
       "original": {
@@ -6351,7 +6365,7 @@
         "go-retry": "go-retry_6",
         "go-sse": "go-sse_9",
         "gogenfilter": "gogenfilter_16",
-        "nixpkgs": "nixpkgs_5",
+        "nixpkgs": "nixpkgs_6",
         "project-discovery-daemon": "project-discovery-daemon_2",
         "project-discovery-sdk": "project-discovery-sdk_5",
         "project-meta": "project-meta_2",
@@ -6425,7 +6439,7 @@
     "qmd": {
       "inputs": {
         "flake-utils": "flake-utils_2",
-        "nixpkgs": "nixpkgs_6"
+        "nixpkgs": "nixpkgs_7"
       },
       "locked": {
         "lastModified": 1786919312,

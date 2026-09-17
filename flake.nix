@@ -191,7 +191,11 @@
     # PapDashboard — event-sourced alert hub with NPU insight enricher (Go)
     papdashboard = {
       url = "github:LarsArtmann/PapDashboard?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
+      # nixpkgs deliberately NOT followed (bank-sync/qmd vendorHash doctrine):
+      # upstream derives its vendorHash against ITS pinned buildGoModule —
+      # following our nixpkgs invalidates it on every bump (2026-09-17: 4
+      # revs hunted in one evening, every one hash-mismatched under the
+      # b1b87598 buildGoModule).
     };
 
     # InboxClean — Gmail AI assistant: web dashboard + incremental sync (Go)
