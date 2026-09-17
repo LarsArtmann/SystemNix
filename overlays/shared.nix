@@ -23,12 +23,17 @@
         # playwright-python's source FOD into every paperless build, and
         # microsoft RE-TAGGED v1.63.0 — cold fetches fail with a hash
         # mismatch (live 2026-09-17). Strip the unused check dep.
+        # NOTE: overridePythonAttrs, NOT overrideAttrs — the python builder
+        # folds nativeCheckInputs into the derivation before overrideAttrs
+        # runs, so the stdenv-level override is a silent no-op here.
         # Drop when nixpkgs drops it or fixes the playwright pin.
-        django-polymorphic = pythonPrev.django-polymorphic.overrideAttrs (old: {
-          nativeCheckInputs =
-            pythonPrev.lib.remove pythonPrev.pytest-playwright
-              (old.nativeCheckInputs or [ ]);
-        });
+        django-polymorphic =
+          pythonPrev.django-polymorphic.overridePythonAttrs
+            (old: {
+              nativeCheckInputs =
+                prev.lib.remove pythonPrev.pytest-playwright
+                  (old.nativeCheckInputs or [ ]);
+            });
       })
     ];
 
