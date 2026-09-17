@@ -84,7 +84,7 @@ _: {
           exit 1
         fi
         case "$sub" in
-          *[\!A-Za-z0-9-]*)
+          *[!A-Za-z0-9-]*)
             echo "miniflux-oidc-setup: resolved sub has unexpected characters — refusing to stage: $sub" >&2
             exit 1
             ;;
@@ -105,7 +105,7 @@ _: {
 
         sub="$(cat "$sub_file")"
         case "$sub" in
-          *[\!A-Za-z0-9-]*)
+          *[!A-Za-z0-9-]*)
             echo "miniflux-oidc-setup: staged sub has unexpected characters — refusing: $sub" >&2
             exit 1
             ;;

@@ -13,6 +13,10 @@
 #      fileSystems — the plain fileSystems vanish trap, test-cv 2026-09-02):
 #      the mount-gated dir oneshot creates the postgres-owned leaf, pg_dump
 #      writes a PGDMP-magic artifact, and the timer exists.
+#   5. The declarative Pocket ID account link (miniflux-oidc-setup):
+#      auto-resolves the single Pocket ID user's id (== OIDC sub) from a
+#      fixture SQLite, converges users.openid_connect_id, is idempotent on
+#      re-run ("already linked"), and records the change in its journal.
 _:
 let
   minifluxFlakeOutput = (import ../modules/nixos/services/miniflux.nix) { };
@@ -73,6 +77,7 @@ in
       # — the OIDC-wiring assertions below assert against that derived value.
 
       services.miniflux.enable = true;
+      services.miniflux.oidcLink.enable = true;
       services.pocket-id-config.enable = true;
       services.pocket-id-config.provision.enable = true;
 
@@ -87,18 +92,26 @@ in
 
       # Boot-time fake Pocket ID client secret (test-paperless pattern):
       # miniflux.service carries LoadCredential on that path, and the unit
-      # fails to LOAD if the source file is missing.
+      # fails to LOAD if the source file is missing. Also seeds the fake
+      # Pocket ID SQLite (single user 'vmadmin' — deliberately DIFFERENT from
+      # the miniflux admin username so step 5 proves auto-resolution links by
+      # uniqueness, never by name).
       systemd.services.vm-pocket-id-secret = {
-        description = "VM test: fake Pocket ID client secret";
+        description = "VM test: fake Pocket ID client secret + user DB";
         wantedBy = [ "miniflux.service" ];
         before = [ "miniflux.service" ];
         serviceConfig = {
           Type = "oneshot";
           RemainAfterExit = true;
         };
+        path = [ pkgs.sqlite ];
         script = ''
-          mkdir -p /var/lib/pocket-id/client-secrets
+          mkdir -p /var/lib/pocket-id/client-secrets /var/lib/pocket-id/data
           printf 'vm-fake-oidc-client-secret' > /var/lib/pocket-id/client-secrets/miniflux
+          if [ ! -f /var/lib/pocket-id/data/pocket-id.db ]; then
+            sqlite3 /var/lib/pocket-id/data/pocket-id.db "CREATE TABLE users (id TEXT PRIMARY KEY, username TEXT, email TEXT);"
+            sqlite3 /var/lib/pocket-id/data/pocket-id.db "INSERT INTO users (id, username, email) VALUES ('vm-sub-uuid-0001', 'vmadmin', 'vmadmin@test.local');"
+          fi
         '';
       };
 
@@ -185,5 +198,19 @@ in
     )
     assert magic == "PGDMP", f"artifact is not a pg_dump custom file, magic: {magic!r}"
     machine.succeed("systemctl list-timers | grep -q miniflux-backup")
+
+    # 5. Declarative Pocket ID account link (auto mode: one user per side)
+    machine.wait_for_unit("miniflux-oidc-setup.service", timeout=120)
+    journal = machine.succeed("journalctl -u miniflux-oidc-setup --no-pager")
+    assert "linked miniflux user" in journal, f"link did not run, journal: {journal!r}"
+    assert "vm-sub-uuid-0001" in journal, f"resolved sub missing from journal: {journal!r}"
+    linked = machine.succeed(
+      "runuser -u postgres -- psql -tAc \"SELECT openid_connect_id FROM users WHERE username='admin'\""
+    ).strip()
+    assert linked == "vm-sub-uuid-0001", f"openid_connect_id not converged, got: {linked!r}"
+    # Idempotent convergence: a re-run (deploy.sh provisioner loop) no-ops.
+    machine.succeed("systemctl restart miniflux-oidc-setup.service")
+    rerun = machine.succeed("journalctl -u miniflux-oidc-setup --no-pager")
+    assert "already linked" in rerun, f"re-run not idempotent, journal: {rerun!r}"
   '';
 }

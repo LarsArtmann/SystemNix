@@ -346,9 +346,13 @@ in
       paperless-dashboard.enable = true;
       # Miniflux RSS reader (rss.home.lan). Admin password rides sops
       # platforms/nixos/secrets/miniflux.yaml — retrieve with the Sops + Age
-      # one-liner; daily login is Pocket ID OIDC (rss.home.lan → sign in with
-      # Pocket ID auto-creates the account). Runbook: docs/services/miniflux.md
+      # one-liner (break-glass only); daily login is Pocket ID OIDC. The
+      # account link (users.openid_connect_id) is provisioned declaratively
+      # by miniflux-oidc-setup — WITHOUT it the first SSO login 400s "This
+      # user already exists." (callback never links by username).
+      # Runbook: docs/services/miniflux.md
       miniflux.enable = true;
+      miniflux.oidcLink.enable = true;
       # Central outbound mail relay (Postfix null client on 127.0.0.1:25 →
       # authenticated Resend submission). Ships with a PLACEHOLDER sops
       # credential: every send defers in the postfix queue until the real
