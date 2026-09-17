@@ -6059,11 +6059,11 @@
         "treefmt-nix": "treefmt-nix_12"
       },
       "locked": {
-        "lastModified": 1789634693,
-        "narHash": "sha256-Fj0KNEd5TjkJGvIZ9FR2/te2Al9q5i/b3Q2EhAYpREY=",
+        "lastModified": 1789232901,
+        "narHash": "sha256-Pud8CEO2w89NoSF5345fMKwPwm3r6qKU1+cWSOKEvz8=",
         "owner": "LarsArtmann",
         "repo": "PapDashboard",
-        "rev": "bee108c79eaf9eb1bfcbe3a0a38e0f34de9e3d7c",
+        "rev": "97d9cd857c9810d6b92cfed6f59b933fbed9c559",
         "type": "github"
       },
       "original": {
