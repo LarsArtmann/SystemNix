@@ -1278,115 +1278,115 @@
                     metrics = toString deadMetrics;
                   }
                   ''
-                    fail=0
-                    # An empty blocklist makes trap 4's `for m in $metrics`
-                    # silently skip (empty-var for-list = zero iterations, even
-                    # without nullglob) — an emptied deadMetrics list must fail
-                    # LOUD, not phantom-green.
-                    if [ -z "$metrics" ]; then
-                    echo "FAIL: dead-metrics blocklist is empty — trap 4 would be a phantom green."
-                    exit 1
-                    fi
-                    # NOTE: stdenv setup.sh enables `shopt -s nullglob` — an
-                      # unquoted `$strip` command-string variable would have its
-                      # glob-bearing words (the quoted grep pattern) silently
-                      # DELETED, turning every trap below phantom-green. Command
-                      # indirection MUST use function definitions (quotes parse
-                      # at definition time), never variable expansion.
-                      scan() { # scan <label> <files...>
-                        label="$1"; shift
-                        for f in "$@"; do
-                          case "$f" in
-                            *.nix)
-                              stream() { grep -v '^[[:space:]]*#' "$1"; }
-                              ;;
-                            *)
-                              stream() { cat "$1"; }
-                              ;;
-                          esac
+                                        fail=0
+                                        # An empty blocklist makes trap 4's `for m in $metrics`
+                                        # silently skip (empty-var for-list = zero iterations, even
+                                        # without nullglob) — an emptied deadMetrics list must fail
+                                        # LOUD, not phantom-green.
+                                        if [ -z "$metrics" ]; then
+                                        echo "FAIL: dead-metrics blocklist is empty — trap 4 would be a phantom green."
+                                        exit 1
+                                        fi
+                                        # NOTE: stdenv setup.sh enables `shopt -s nullglob` — an
+                                          # unquoted `$strip` command-string variable would have its
+                                          # glob-bearing words (the quoted grep pattern) silently
+                                          # DELETED, turning every trap below phantom-green. Command
+                                          # indirection MUST use function definitions (quotes parse
+                                          # at definition time), never variable expansion.
+                                          scan() { # scan <label> <files...>
+                                            label="$1"; shift
+                                            for f in "$@"; do
+                                              case "$f" in
+                                                *.nix)
+                                                  stream() { grep -v '^[[:space:]]*#' "$1"; }
+                                                  ;;
+                                                *)
+                                                  stream() { cat "$1"; }
+                                                  ;;
+                                              esac
 
-                          # 1. job= label matchers never match anything
-                          if stream "$f" | grep -nE '\bjob[[:space:]]*=[[:space:]]*["~]' >lint_hits; then
-                            echo "FAIL [$label] $f: job= label matcher — no series carries a job label."
-                            echo "  The OTel prometheus receiver stores the scrape job as resource attr"
-                            echo "  service.name. Use node_systemd_unit_state{name=\"X.service\",state=\"active\"}"
-                            echo "  for liveness, or count(up{service_name=\"X\"}) or vector(0) for scrape health."
-                            sed 's/^/    /' lint_hits
-                            fail=1
-                          fi
+                                              # 1. job= label matchers never match anything
+                                              if stream "$f" | grep -nE '\bjob[[:space:]]*=[[:space:]]*["~]' >lint_hits; then
+                                                echo "FAIL [$label] $f: job= label matcher — no series carries a job label."
+                                                echo "  The OTel prometheus receiver stores the scrape job as resource attr"
+                                                echo "  service.name. Use node_systemd_unit_state{name=\"X.service\",state=\"active\"}"
+                                                echo "  for liveness, or count(up{service_name=\"X\"}) or vector(0) for scrape health."
+                                                sed 's/^/    /' lint_hits
+                                                fail=1
+                                              fi
 
-                          # 2. underscore histogram/summary suffixes are stored DOTTED
-                          if stream "$f" | grep -nE '[a-z_0-9]+_(sum|count|bucket)\b' >lint_hits; then
-                            echo "FAIL [$label] $f: underscore histogram suffix (metric_sum/_count/_bucket)."
-                            echo "  SigNoz stores suffixes DOTTED: metric.sum, metric.count, metric.bucket."
-                            echo "  The underscore form matches zero series (caddy/dns dashboards 2026-08-27)."
-                            echo "  Query as {__name__=\"metric.suffix\"} instead."
-                            sed 's/^/    /' lint_hits
-                            fail=1
-                          fi
+                                              # 2. underscore histogram/summary suffixes are stored DOTTED
+                                              if stream "$f" | grep -nE '[a-z_0-9]+_(sum|count|bucket)\b' >lint_hits; then
+                                                echo "FAIL [$label] $f: underscore histogram suffix (metric_sum/_count/_bucket)."
+                                                echo "  SigNoz stores suffixes DOTTED: metric.sum, metric.count, metric.bucket."
+                                                echo "  The underscore form matches zero series (caddy/dns dashboards 2026-08-27)."
+                                                echo "  Query as {__name__=\"metric.suffix\"} instead."
+                                                sed 's/^/    /' lint_hits
+                                                fail=1
+                                              fi
 
-                          # 3. up{service_name=...} goes STALE mid-outage without a vector(0) fallback
-                          if stream "$f" | grep -nE 'up\{[^}]*service_name' | grep -vE '(or vector\(0\)|absent\()' >lint_hits; then
-                            echo "FAIL [$label] $f: bare up{service_name=...} selector."
-                            echo "  On scrape FAILURE the receiver emits a bare-label up=0 series and the"
-                            echo "  labeled series goes stale — the selector returns nothing exactly when"
-                            echo "  it should fire (dnsblockd :9090 wedge, 2026-08-27)."
-                            echo "  Use: count(up{service_name=\"X\"}) or vector(0)"
-                            sed 's/^/    /' lint_hits
-                            fail=1
-                          fi
+                                              # 3. up{service_name=...} goes STALE mid-outage without a vector(0) fallback
+                                              if stream "$f" | grep -nE 'up\{[^}]*service_name' | grep -vE '(or vector\(0\)|absent\()' >lint_hits; then
+                                                echo "FAIL [$label] $f: bare up{service_name=...} selector."
+                                                echo "  On scrape FAILURE the receiver emits a bare-label up=0 series and the"
+                                                echo "  labeled series goes stale — the selector returns nothing exactly when"
+                                                echo "  it should fire (dnsblockd :9090 wedge, 2026-08-27)."
+                                                echo "  Use: count(up{service_name=\"X\"}) or vector(0)"
+                                                sed 's/^/    /' lint_hits
+                                                fail=1
+                                              fi
 
-                          # 4. known-dead metric names
-                          for m in $metrics; do
-                            if stream "$f" | grep -nE "\b$m\b" >lint_hits; then
-                              echo "FAIL [$label] $f: dead metric '$m' (verified 0 series in the store)."
-                              sed 's/^/    /' lint_hits
-                              fail=1
-                            fi
-                          done
-                        done
-                        rm -f lint_hits
-                        return 0
-                      }
+                                              # 4. known-dead metric names
+                                              for m in $metrics; do
+                                                if stream "$f" | grep -nE "\b$m\b" >lint_hits; then
+                                                  echo "FAIL [$label] $f: dead metric '$m' (verified 0 series in the store)."
+                                                  sed 's/^/    /' lint_hits
+                                                  fail=1
+                                                fi
+                                              done
+                                            done
+                                            rm -f lint_hits
+                                            return 0
+                                          }
 
-                      scan alerts ${alerts}
-                      scan dashboards ${dashboards}/*.json
+                                          scan alerts ${alerts}
+                                          scan dashboards ${dashboards}/*.json
 
-                      # 5. dashboard layout overlaps: the SigNoz v2 validator
-                      # rejects the WHOLE dashboard with HTTP 400
-                      # ("spec.layouts[0].spec.items[N] and items[M] overlap")
-                      # and the provisioner HARD-fails the deploy by design
-                      # (2026-09-16: systemnix-overview Zone 6 panel). Panels
-                      # are rectangles x..x+width, y..y+height on a 12-col
-                      # grid; any pairwise intersection is fatal.
-                      # NOTE: the heredoc body below is written at this
-                      # block's minimal nix-indent level so the terminator
-                      # lands at column 0 after nix strips the common indent
-                      # (an indented terminator never matches and the heredoc
-                      # eats the rest of the script, bash "unexpected EOF").
-                      if ! overlap_out=$(${pkgs.python3}/bin/python3 - <<'PYOVERLAP'
-import glob, itertools, json, sys
-bad = 0
-for f in sorted(glob.glob("${dashboards}/*.json")):
-    items = json.load(open(f))["spec"]["layouts"][0]["spec"]["items"]
-    for a, b in itertools.combinations(items, 2):
-        if (a["x"] < b["x"] + b["width"] and b["x"] < a["x"] + a["width"]
-                and a["y"] < b["y"] + b["height"] and b["y"] < a["y"] + a["height"]):
-            print("%s: panels (x=%d,y=%d,w=%d,h=%d) and (x=%d,y=%d,w=%d,h=%d) intersect" %
-                  (f, a["x"], a["y"], a["width"], a["height"], b["x"], b["y"], b["width"], b["height"]))
-            bad = 1
-sys.exit(bad)
-PYOVERLAP
-); then
-                        echo "FAIL: dashboard layout overlap(s):"
-                        echo "$overlap_out"
-                        echo "SigNoz v2 rejects the whole dashboard (HTTP 400) and the provisioner unit"
-                        echo "fails the deploy. Give every panel a disjoint grid rectangle."
-                        exit 1
-                      fi
+                                          # 5. dashboard layout overlaps: the SigNoz v2 validator
+                                          # rejects the WHOLE dashboard with HTTP 400
+                                          # ("spec.layouts[0].spec.items[N] and items[M] overlap")
+                                          # and the provisioner HARD-fails the deploy by design
+                                          # (2026-09-16: systemnix-overview Zone 6 panel). Panels
+                                          # are rectangles x..x+width, y..y+height on a 12-col
+                                          # grid; any pairwise intersection is fatal.
+                                          # NOTE: the heredoc body below is written at this
+                                          # block's minimal nix-indent level so the terminator
+                                          # lands at column 0 after nix strips the common indent
+                                          # (an indented terminator never matches and the heredoc
+                                          # eats the rest of the script, bash "unexpected EOF").
+                                          if ! overlap_out=$(${pkgs.python3}/bin/python3 - <<'PYOVERLAP'
+                    import glob, itertools, json, sys
+                    bad = 0
+                    for f in sorted(glob.glob("${dashboards}/*.json")):
+                        items = json.load(open(f))["spec"]["layouts"][0]["spec"]["items"]
+                        for a, b in itertools.combinations(items, 2):
+                            if (a["x"] < b["x"] + b["width"] and b["x"] < a["x"] + a["width"]
+                                    and a["y"] < b["y"] + b["height"] and b["y"] < a["y"] + a["height"]):
+                                print("%s: panels (x=%d,y=%d,w=%d,h=%d) and (x=%d,y=%d,w=%d,h=%d) intersect" %
+                                      (f, a["x"], a["y"], a["width"], a["height"], b["x"], b["y"], b["width"], b["height"]))
+                                bad = 1
+                    sys.exit(bad)
+                    PYOVERLAP
+                    ); then
+                                            echo "FAIL: dashboard layout overlap(s):"
+                                            echo "$overlap_out"
+                                            echo "SigNoz v2 rejects the whole dashboard (HTTP 400) and the provisioner unit"
+                                            echo "fails the deploy. Give every panel a disjoint grid rectangle."
+                                            exit 1
+                                          fi
 
-                      [ "$fail" -eq 0 ] || exit 1
-                      touch $out
+                                          [ "$fail" -eq 0 ] || exit 1
+                                          touch $out
                   '';
 
               binary-coverage-lint = pkgs.runCommand "binary-coverage-lint" { } ''

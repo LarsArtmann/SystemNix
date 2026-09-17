@@ -20,7 +20,8 @@
 let
   lib = inputs.nixpkgs.lib;
 
-  audit = (import ../modules/nixos/services/sops-recipient-audit.nix).flake.nixosModules.sops-recipient-audit;
+  audit =
+    (import ../modules/nixos/services/sops-recipient-audit.nix).flake.nixosModules.sops-recipient-audit;
 
   fixtures = ./fixtures/sops-recipients;
 
@@ -67,8 +68,9 @@ let
     {
       name = "conforming-file-falsely-flagged";
       pass =
-        builtins.filter (a: lib.hasInfix "shared-ok.yaml" a.message || lib.hasInfix "hosta-ok.yaml" a.message)
-          (failing fixtureAssertions) == [ ];
+        builtins.filter (
+          a: lib.hasInfix "shared-ok.yaml" a.message || lib.hasInfix "hosta-ok.yaml" a.message
+        ) (failing fixtureAssertions) == [ ];
     }
     {
       name = "real-repo-drift";

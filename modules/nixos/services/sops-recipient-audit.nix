@@ -87,39 +87,43 @@
           # class where every file was "missing recipient age:".
           ruleRef = l: builtins.match "[[:space:]]*- (\\*?[A-Za-z0-9_-]+|${ageRecipient})" l;
 
-          foldState = builtins.foldl' (
-            state: l:
-            let
-              started = ruleStart l;
-            in
-            if started != null then
+          foldState =
+            builtins.foldl'
+              (
+                state: l:
+                let
+                  started = ruleStart l;
+                in
+                if started != null then
+                  {
+                    rules = if state.cur == null then state.rules else state.rules ++ [ state.cur ];
+                    cur = {
+                      regex = builtins.head started;
+                      refs = [ ];
+                    };
+                  }
+                else if state.cur != null && ruleRef l != null then
+                  state
+                  // {
+                    cur = state.cur // {
+                      # PARENTHESES ARE LOAD-BEARING: on nix 2.34 an UNparenthesized
+                      # application inside a list literal parses as TWO list
+                      # elements — the list then contained the primop `head`
+                      # ITSELF (plus the match result), and forcing refs died
+                      # "cannot coerce the built-in function 'head' to a string",
+                      # breaking every `nix flake check`/eval that touched
+                      # config.assertions.
+                      refs = state.cur.refs ++ [ (builtins.head (ruleRef l)) ];
+                    };
+                  }
+                else
+                  state
+              )
               {
-                rules = if state.cur == null then state.rules else state.rules ++ [ state.cur ];
-                cur = {
-                  regex = builtins.head started;
-                  refs = [ ];
-                };
+                rules = [ ];
+                cur = null;
               }
-            else if state.cur != null && ruleRef l != null then
-              state
-              // {
-                cur = state.cur // {
-                  # PARENTHESES ARE LOAD-BEARING: on nix 2.34 an UNparenthesized
-                  # application inside a list literal parses as TWO list
-                  # elements — the list then contained the primop `head`
-                  # ITSELF (plus the match result), and forcing refs died
-                  # "cannot coerce the built-in function 'head' to a string",
-                  # breaking every `nix flake check`/eval that touched
-                  # config.assertions.
-                  refs = state.cur.refs ++ [ (builtins.head (ruleRef l)) ];
-                };
-              }
-            else
-              state
-          ) {
-            rules = [ ];
-            cur = null;
-          } (contentLines cfg.sopsYaml);
+              (contentLines cfg.sopsYaml);
 
           rawRules = foldState.rules ++ (lib.optional (foldState.cur != null) foldState.cur);
 
@@ -158,7 +162,12 @@
             path:
             builtins.foldl' (
               acc: rule:
-              if acc != null then acc else if builtins.match rule.regex path != null then rule else null
+              if acc != null then
+                acc
+              else if builtins.match rule.regex path != null then
+                rule
+              else
+                null
             ) null resolvedRules;
 
           fileRecipients =
@@ -167,11 +176,14 @@
             # LISTS and the sort in checkFile dies on the first
             # multi-recipient file ("cannot compare a list with a list").
             map
-              (l: builtins.head (builtins.match "[[:space:]]*-?[[:space:]]*recipient:[[:space:]]*(${ageRecipient})" l))
               (
-                builtins.filter
-                  (l: builtins.match "[[:space:]]*-?[[:space:]]*recipient:[[:space:]]*${ageRecipient}" l != null)
-                  (contentLines (cfg.secretsDir + "/${name}"))
+                l:
+                builtins.head (builtins.match "[[:space:]]*-?[[:space:]]*recipient:[[:space:]]*(${ageRecipient})" l)
+              )
+              (
+                builtins.filter (
+                  l: builtins.match "[[:space:]]*-?[[:space:]]*recipient:[[:space:]]*${ageRecipient}" l != null
+                ) (contentLines (cfg.secretsDir + "/${name}"))
               );
 
           checkFile =
@@ -213,9 +225,7 @@
             # header). Unresolved anchors are flagged regardless: a
             # malformed .sops.yaml is never silently accepted.
             unresolvedAnchorAssertions
-            ++ lib.optionals regexesParse (
-              builtins.filter (a: a != null) (map checkFile secretFiles)
-            );
+            ++ lib.optionals regexesParse (builtins.filter (a: a != null) (map checkFile secretFiles));
         };
     };
 }
