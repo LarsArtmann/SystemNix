@@ -79,12 +79,7 @@
           # main unit + its -health sister run the same binary) would otherwise
           # emit duplicate series, which node_exporter's registry rejects with
           # a gather ERROR on every scrape. First entry in attrset order wins.
-          lib.foldl' (
-            acc: e:
-              if lib.any (x: x.service == e.service) acc
-              then acc
-              else acc ++ [ e ]
-          ) [ ] (
+          lib.foldl' (acc: e: if lib.any (x: x.service == e.service) acc then acc else acc ++ [ e ]) [ ] (
             lib.mapAttrsToList (unit: e: {
               service = e.serviceName;
               inherit unit;
