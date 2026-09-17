@@ -15,22 +15,23 @@ let
   collectorSrc = inputs.signoz-collector-src;
 
   # go_1_25 was removed from nixpkgs (EOL 2026-09). go_1_26 needs the
-  # build-time sonic bump below: the pinned revs' transitive
-  # bytedance/sonic v1.14.x does not compile on Go >= 1.26 (undefined
-  # GoMapIterator — sonic added Go 1.26 support in v1.15.0).
-  buildGoModule = pkgs.buildGoModule.override { go = pkgs.go_1_26; };
+  # source patches below: the pinned revs' transitive bytedance/sonic
+  # v1.14.x does not compile on Go >= 1.26 (undefined GoMapIterator —
+  # sonic added Go 1.26 support in v1.15.0). The patches bump
+  # sonic + loader in go.mod/go.sum; with proxyVendor = true the
+  # committed vendor/ tree is bypassed and the FOD downloads the patched
+  # graph. Drop the patches when the pinned SigNoz revs move and carry a
+  # Go-1.26-compatible sonic on their own.
+  collectorSrcPatched = pkgs.applyPatches {
+    src = collectorSrc;
+    patches = [ ./patches/signoz-collector-sonic-go126.patch ];
+  };
+  srcPatched = pkgs.applyPatches {
+    src = src;
+    patches = [ ./patches/signoz-sonic-go126.patch ];
+  };
 
-  # Sonic bump applied in BOTH phases (overrideModAttrs fills the module
-  # FOD/proxy cache with v1.15.4; proxyVendor lets the main build resolve
-  # it from that cache). The trailing `go mod download all` is REQUIRED:
-  # the FOD's default preBuild (which downloads the full graph) is
-  # REPLACED here, so the cache must be filled explicitly or the main
-  # build finds holes (cel.dev/expr class).
-  sonicBump = ''
-    go get github.com/bytedance/sonic@v1.15.4
-    go mod tidy
-    go mod download all
-  '';
+  buildGoModule = pkgs.buildGoModule.override { go = pkgs.go_1_26; };
 
   # SigNoz frontend: pnpm 10 workspace (engines pin ">=10 <11"), rolldown-vite
   # (npm-aliased as "vite"), built to a static dist served by the Go binary
@@ -88,16 +89,14 @@ let
     };
   });
 
-  collectorVendorHash = "sha256-iCkb7IGBT8Ry5m4a++jGhfoRSsrG1OquqWOwHmvACQc=";
-  # otelCollector's FOD includes the sonic bump, so its cache differs from
-  # schemaMigrator's.
-  otelCollectorVendorHash = "sha256-b5diCO+sAF5VRCPuo9P1U6A8gq0uyjxu0h/9qp2DwTI=";
+  collectorVendorHash = "";
 
   schemaMigrator = buildGoModule {
     pname = "signoz-schema-migrator";
     version = collectorVersion;
-    src = collectorSrc;
+    src = collectorSrcPatched;
     vendorHash = collectorVendorHash;
+    proxyVendor = true;
     subPackages = [ "cmd/signozschemamigrator" ];
     ldflags = [
       "-s"
@@ -109,14 +108,10 @@ let
   otelCollector = buildGoModule {
     pname = "signoz-otel-collector";
     version = collectorVersion;
-    src = collectorSrc;
-    vendorHash = otelCollectorVendorHash;
+    src = collectorSrcPatched;
+    vendorHash = collectorVendorHash;
     subPackages = [ "cmd/signozotelcollector" ];
     proxyVendor = true;
-    overrideModAttrs = _: {
-      preBuild = sonicBump;
-    };
-    preBuild = sonicBump;
     ldflags = [
       "-s"
       "-w"
@@ -128,14 +123,10 @@ let
   signoz = buildGoModule {
     pname = "signoz";
     inherit version;
-    inherit src;
-    vendorHash = "sha256-1+X3TRfwh1aA/SsZZ84bUXX9RC+wp4uyM2kYNH+Qe3Y=";
+    src = srcPatched;
+    vendorHash = "";
     subPackages = [ "cmd/community" ];
     proxyVendor = true;
-    overrideModAttrs = _: {
-      preBuild = sonicBump;
-    };
-    preBuild = sonicBump;
     tags = [ "timetzdata" ];
 
     ldflags = [
