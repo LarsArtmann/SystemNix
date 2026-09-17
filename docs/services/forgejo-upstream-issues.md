@@ -1,5 +1,8 @@
 # Forgejo upstream issue drafts — mirror-outage trio (verified 2026-09-18)
 
+> Re-verified 2026-09-18 (second session): all three code claims independently checked against the live
+> `forgejo` branch (mirror_pull.go, mirror.go, command.go fetched from codeberg.org) — UNCHANGED, drafts accurate.
+
 Three issues from the 2026-08-22 mirror outage (`docs/status/archived/2026-08-22_08-52_*` §b2/§c),
 verified against the CURRENT upstream `forgejo` branch (codeberg.org/forgejo/forgejo, checked
 2026-09-18) per the verify-before-filing protocol. **Not yet filed — no Codeberg account/token
