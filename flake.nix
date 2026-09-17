@@ -569,20 +569,20 @@
     };
 
     # DiscordSync — Continuous Discord backup with Turso cloud sync
-    # Branch-ref governed since 2026-09-17 (pin policy 2026-09-16):
-    # flake.nix tracks ?ref=master, flake.lock holds the exact rev —
-    # c0604e46 (the 2026-09-05 third lift: command-audit search-corruption
-    # fixes, typed chart pipeline, stats-rollup WARN flood fix). Upstream
-    # master is STILL hash-broken (131 ahead at c3494bd; probe 2026-09-17:
-    # `nix build github:LarsArtmann/DiscordSync/master#default.goModules`
-    # → got sha256-Zu9kdtqb6Af4OjWGNrYySHOgr69PqKEzGLmAnnSv7aw= vs the
-    # stale specified sha256-VvZM/CmH1fxjzI8kkH5rxvlap9s0VSdfIK/cEswRqlQ=),
-    # so the lock deliberately STAYS at c0604e46 — do NOT
-    # `nix flake lock --update-input discordsync` until upstream re-derives
-    # its vendorHash: the lock update succeeds silently and the FOD then
-    # fails LOUDLY at build. The old rev-in-URL pin made --update-input a
-    # silent no-op (the 2026-09-04 02:59 switch failure rode a moving
-    # ?ref=master past the fix; the lock is the safety now).
+    # Branch-ref governed (pin policy 2026-09-16): flake.nix tracks
+    # ?ref=master, flake.lock holds the exact rev — df1a2bf0 (2026-09-17:
+    # first master-head lift since the c0604e46 pin era; upstream's
+    # vendorHashes were refreshed IN DiscordSync df1a2bf0 after the
+    # post-pin churn left BOTH goModules FODs stale, +131 commits incl. a
+    # new ADDITIVE nixos-module option tursoSyncMonthlyBudgetBytes,
+    # default 2.5 GB/month sync breaker). Bumps flow via
+    # `nix flake lock --update-input discordsync --refresh` — the
+    # --refresh is LOAD-BEARING after ref-ahead pushes: the nix daemon
+    # serves the stale ref→rev resolution from its in-memory fetch cache
+    # (a sudo daemon restart also clears it; --refresh is the no-sudo
+    # path, verified 2026-09-17). Known upstream gap: packages.cqrs-lint
+    # fails AFTER its FOD ("updates to go.mod needed" — go-cqrs-lite cmd
+    # module drift); SystemNix consumes only packages.default, green.
     discordsync = {
       url = "github:LarsArtmann/DiscordSync?ref=master";
       inputs = {
