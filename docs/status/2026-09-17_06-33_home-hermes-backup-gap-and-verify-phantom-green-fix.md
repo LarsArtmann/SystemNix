@@ -1,0 +1,139 @@
+# Status Report: home-hermes backup gap + verify phantom-green fix
+
+**Date:** 2026-09-17 06:33 CEST
+**Session scope:** hermes-home subvolume + backup status investigation (5 questions), phantom-green bug found + fixed, guard-kill backup gap root-caused.
+**Evidence base:** live journal, `/mnt/pool` listings, deployed store units, repo evals. All commands/runs cited inline. `sudo`/`systemctl` blocked in this harness — worked around via `journalctl` + world-readable store paths.
+
+---
+
+## Executive summary
+
+The `@home-hermes` subvolume migration landed correctly (mount live Sep 16 15:40, hermes running on it since 15:44, no data fork), **but the state has ZERO pool-side backup**: the first nightly send was SIGTERM'd 6½ minutes in by the memory-emergency-guard (Zone 6 IO-PSI trip #299) and the IO storm that killed it never drained — it is still ongoing at report time (trips every ~10 min since 20:09 yesterday). The verify unit's hermes freshness gate turned out to be **dead code** (`harden{}`'s `ProtectHome=true` hides `/home` from the unit, so its `findmnt` probe always failed silently) — it phantom-greened through the 00:46 run with zero receives. Fixed in the working tree this session; **the fix introduces a chronic-FAIL/exit-4 hazard until the first receive lands (open decision, section g Q1).**
+
+---
+
+## a) FULLY DONE
+
+| # | Item | Evidence |
+|---|------|----------|
+| A1 | All 5 status questions answered with live evidence: location, size, backup state, pool space, mount timeline | `findmnt /home/hermes`, journal, `df`, `docs/services/hermes.md:167` |
+| A2 | Root cause of the missing backup identified: nightly btrbk-root (started 23:00:00) killed by guard trip #299 at 23:06:40 (`code=killed, status=15/TERM`, OnFailure triggered; 3.7G read/1G written, 6min39s) | `journalctl -u btrbk-root`, `journalctl -u memory-emergency-guard` |
+| A3 | Data-fork ruled out: mount came up 15:40:25, hermes started 15:44 (gateway ledger `started_at=2026-09-16T13:44:20Z`) — hermes never ran against the shadowed old dirs post-prepare (it was dead 08:25→15:44; the 08:25 mount failure was the runbook-anticipated deploy-before-prepare, `nofail`, benign) | `journalctl -u home-hermes.mount`, hermes lifecycle ledger |
+| A4 | Phantom-green verify gate root-caused: `harden{}` defaults `ProtectHome = true` (`lib/systemd.nix:8`) → `/home` is an empty inaccessible tmpfs in the unit's namespace → `findmnt -n /home/hermes` always fails with stderr suppressed → `hermes_expected` permanently `no`. Observed live: 00:46:14 run printed `OK prefix '@' newest 2 day(s)` and **Finished successfully** with zero `@home-hermes` receives | deployed unit-script read (8 hermes matches, gate dead at runtime), `journalctl -u btrfs-verify-pool-backups` |
+| A5 | Fix implemented in `platforms/nixos/system/snapshots.nix`: gate → `systemctl is-active --quiet home-hermes.mount` (PID-1 truth, immune to ProtectHome) + `pkgs.systemd` added to the unit's `path`. Eval-verified: rendered script carries the new gate (1×) and zero findmnt probes; `nix fmt` 0-changed; diff +7/−1 | `nix eval .#nixosConfigurations.evo-x2.config.systemd.services.btrfs-verify-pool-backups.script`, git diff |
+| A6 | Enduring gotcha recorded in `AGENTS.md` (Systemd section): findmnt/`/home` probes are blind inside `harden{}` units — probe mount units instead | AGENTS.md edit this session |
+| A7 | Pool capacity verified: **1.7T used / 15T (12%), 13T free** — the ~92 GB first receive is a non-issue | `df -h /mnt/pool` |
+| A8 | No partial/garbled receive targets on the pool: `btrbk-pool-clean` 21:08 printed `<no_action>` for both `@.*` and `@home-hermes.*` patterns | `journalctl -u btrbk-pool-clean` 21:08 window |
+
+---
+
+## b) PARTIALLY DONE
+
+| # | Item | Works now | Open gap | Blocker | Effort |
+|---|------|-----------|----------|---------|--------|
+| B1 | Verify-gate fix | In working tree, eval-verified, formatted (A5) | NOT deployed; and as written it makes the unit chronically FAIL until the first receive → exit-4 activation hazard (the exact `/data` precedent documented ~30 lines below my own edit — I missed connecting it; see D4, Q1) | Needs posture decision (fatal vs WARN-until-first-receive) | S |
+| B2 | Backup remediation | Full diagnosis complete; retry path exists (Persistent timer, tonight 23:00) | First full ~92 GB send not seeded; runbook's manual seed step never executed (no quiet window existed since the deploy) | `sudo` blocked in this harness — one command for you | S |
+| B3 | IO storm attribution | Timeline fully reconstructed: trips #286–#299+ every ~10 min from 20:09 (Sep 16) through 06:03 (Sep 17); PSI some avg60 60–85% sustained, right now 61% (avg10/60/300); memory healthy (58–64% avail) — the crash-#3 class | Driver process NOT identified (only `kworker` caught in D-state snapshots; load 7.7–10) | Root iotop/pidstat needed | M |
+| B4 | Migration finalize preconditions | Mount live, hermes active, first local snapshot exists (finalize's three gates) | Shadowed-dir diff not run (`@/home/hermes` + `@/home/hermes.old` still hold pre-migration bytes); finalize deliberately deferred ("days later" per runbook) | Root diff needed | S–M |
+| B5 | hermes 04:01 SIGKILL attribution | Incident logged: `status=9/KILL` at 04:01:07, `suspected_oom=False`, rss 388 MB, MemAvail 75 GB, swap 52 GB; self-healed (restarted 04:01:53); cron scheduler marked 2 interrupted executions unknown | Cause unattributed — `journalctl -u systemd-oomd --since "04:00"` was one command away and I did not run it (self-critique, section E6) | none — S effort | S |
+
+---
+
+## c) NOT STARTED
+
+| # | Item | Why not started | Priority |
+|---|------|-----------------|----------|
+| C1 | First `@home-hermes` pool receive | Blocked on a quiet window (storm ongoing since 20:09 yesterday); tonight's 23:00 Persistent timer is the fallback | **Critical** |
+| C2 | Deploy of the verify-gate fix | Blocked on B1 posture decision + ideally C1 landing first | High |
+| C3 | Pre-finalize shadowed-dir diff (root) | Root required; deferred to finalize runbook step | High (before finalize) |
+| C4 | `finalize` (trashes `/home/hermes.old`, frees `@` space as snapshots expire) | Runbook: settle for days first; diff (C3) must pass | Medium |
+| C5 | Test coverage for the new gate (VM test or `extendModules` live probe; per the negative-test convention an eval-only green is not proof) | No test harness exists for this unit; follow-up work | Medium |
+| C6 | Backup-starvation escalation (guard churn-stops suppressing the backup chain >24h → alert) | Surfaced by this session, never existed | High |
+| C7 | Adjacent backup-chain debts surfaced by the verify script's own comments — **not touched this session**: `/data` EIO repair → restore hard-FAIL stance (TODO_LIST P0), Hetzner StorageBox + BorgBackup offsite leg (decided 2026-09-11, blueprint exists), clickhouse-backup coverage | Pre-existing, out of session scope | High/Medium |
+
+---
+
+## d) TOTALLY FUCKED UP
+
+1. **`@home-hermes` has ZERO pool backup since it began carrying all hermes state (Sep 16 15:40).** The 92.3 GB / 948,341-file state exists only on the NVMe + one local snapshot. Single NVMe death = total hermes-state loss. Severity: data-loss exposure. Mitigation: tonight 23:00 auto-retry or manual seed in a quiet window. Root cause: guard Zone 6 kill + re-arm requiring a PSI drain that never came.
+2. **The whole root backup chain silently starved 10+ hours.** The same kill also lost the `@.20260916` receive (newest `@` = Sep 15, 2 days old). `MAX_AGE_DAYS=3` gives only ~2 more failed nights before the verify FAILs on `@` too. Nothing re-armed because Zone 6's re-arm requires sustained io avg60 to drain — it never did, and there is no escalation when churn-stops suppress backups for a day.
+3. **The deployed verify gate was dead code its entire life** (phantom green — the worst failure mode in this repo's own taxonomy). Confirmed passing at 00:46 with zero receives. Fixed in tree; **not yet deployed**, so the running system still cannot see the hermes gap.
+4. **My own fix, as written, recreates the exit-4 hazard the file itself documents.** Once deployed, `hermes_expected=yes` + zero receives = FAIL every nightly run; stc restarts the changed unit on the next deploy → exit 4 → un-anchored generation → reboot-revert hazard (the 2026-09-08/09 `/data` class, whose mitigation comment sits ~30 lines below the code I edited — I read it and did not apply it to my change; caught only while writing this report). Needs the Q1 decision before deploy.
+5. **An unattributed 10-hour IO storm is ongoing** (avg60 pinned 60–85%, guard sacrificing flm sockets every ~10 min on cooldown, load ~8–10). Nobody knows the driver. This is the freeze-#4 ingredient list minus the freeze.
+6. **hermes was SIGKILLed unexplained at 04:01** (not memory: 388 MB rss vs 75 GB avail; `suspected_oom=False`). One-off, self-healed, but unattributed kills of the agent gateway deserve 5 minutes of oomd-journal checking.
+
+---
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Guard-vs-backup interplay has no clock.** Zone 6 churn-stops are correct; starving backups indefinitely is not. Add: "backup chain churn-suppressed or failed >24h" → escalation (Discord at minimum), independent of PSI recovery.
+2. **Sandbox-blind probes are a class, not a bug.** Any future `/home` probe inside a `harden{}` unit silently skips. An eval-time audit (hardened unit scripts containing `findmnt`/path tests on ProtectHome-hidden trees) would catch the class; at minimum the AGENTS.md rule (added this session) must be a review-checklist item.
+3. **Prefer mount-UNIT probes over path probes in sandboxed units** (`systemctl is-active --quiet x.mount`). Encode in docs/CONTRIBUTING.md guard-writing guide.
+4. **Storm attribution needs non-interactive tooling.** A root textfile collector emitting top-N IO processes (system-health census pattern) would have named the storm driver without `sudo iotop`.
+5. **Diagnosis discipline:** I chased a wrong hypothesis ("deployed gen lacks the check") for ~3 tool batches; the journal's syslog id `btrfs-verify-pool-backups-start` already told me the script lived in a separate derivation. Read ExecStart indirection BEFORE hypothesizing about unit-file content.
+6. **Closed-loop verification:** I eval-verified the fix but per the repo's own negative-test convention, an eval-only green is not proof — the gate needs one live/VM probe post-deploy (C5).
+7. **First-send economics:** a 92 GB first full send over the shared DAS USB link during a PSI storm is a collision course. Seed it deliberately (quiet window, verified idle IO priority) instead of gambling on the nightly timer.
+8. **Status-report skill vs. this repo's docs:** note for future sessions — skill default is HTML, this repo's convention (and today's explicit user instruction) is Markdown at `docs/status/`.
+
+---
+
+## f) Next tasks (ranked; up to 50, kept honest at 40)
+
+Impact: Critical/High/Medium/Low · Effort: S <30min, M 30min–2h, L >2hr
+
+| # | Task | Impact | Effort | Category |
+|---|------|--------|--------|----------|
+| 1 | Decide verify-gate posture: fatal (requires seed-before-deploy ordering) vs WARN-until-first-receive (the `/data` precedent) — see Q1 | Critical | S | Decision |
+| 2 | Attribute the IO storm: `sudo iotop`/`pidstat -d`, name and stop/requeue the driver | Critical | M | Bug |
+| 3 | Seed the first `@home-hermes` full send in a quiet window (`sudo systemctl start btrbk-root.service`) — or bless tonight's 23:00 run | Critical | S | Feature |
+| 4 | Verify tonight's run lands `@.20260917T2300` + `@home-hermes.*` receives on the pool | Critical | S | Verification |
+| 5 | Deploy the snapshots.nix fix (after #1, ideally after #4) | High | S | Bug |
+| 6 | Pre-empt tonight: if PSI still ≥20% avg10 at 23:00, either quiet the driver or consciously defer | High | S | Operational |
+| 7 | Post-deploy: restart the verify unit live and confirm the gate FAILs with receives missing → OKs after receive (negative-test convention) | High | S | Quality |
+| 8 | Check `journalctl -u systemd-oomd --since "2026-09-17 03:50"` for the hermes 04:01 SIGKILL | Medium | S | Bug |
+| 9 | Run `sudo bash scripts/migrate-hermes-subvol.sh status` (runbook verify step, never executed) | Medium | S | Verification |
+| 10 | Confirm the Sep 16 23:06 OnFailure Discord alert actually fired (visibility assumption unverified) | Medium | S | Verification |
+| 11 | Root-diff shadowed `@/home/hermes` + `@/home/hermes.old` vs the subvol | High | S | Verification |
+| 12 | Run `finalize` after #11 + settling (trashes `hermes.old`) | High | S | Cleanup |
+| 13 | Confirm `@` space reclaim as snapshots expire post-finalize | Medium | S | Verification |
+| 14 | Add backup-starvation escalation (churn-suppressed/failed >24h → Discord) | High | M | Feature |
+| 15 | Guard hardening: when churn-stopped >Xh without PSI recovery, alert instead of silent +24h slip | High | M | Feature |
+| 16 | Add top-N IO-processes textfile collector for storm attribution | Medium | M | Feature |
+| 17 | Verify `btrbk-root` IO tier (idle/background?) before the 92 GB transfer | Medium | S | Quality |
+| 18 | Confirm bounded retention (`target_preserve 14d 4w`) lands on the first hermes receive | Medium | S | Verification |
+| 19 | Add VM/negative test for the gate (mount on → expected=yes) | Medium | M | Quality |
+| 20 | Document deploy-ordering (seed-before-deploy) in `docs/services/hermes.md` + module comment if fatal is kept | Medium | S | Documentation |
+| 21 | Annotate `docs/services/hermes.md` migration status: prepare done, mount live 15:40, hermes on subvol, finalize pending | Medium | S | Documentation |
+| 22 | Ensure Gatus surfaces the verify FAILs (hermes prefix) once the fix deploys | Medium | M | Monitoring |
+| 23 | Coordinate with the parallel session (dirty `signoz-coverage.nix`; 06:06 gen-781 deploy owner) before further tree edits | Medium | S | Process |
+| 24 | Baseline hermes-state size trend (92.3 GB) into a dashboard/collector | Low | S | Monitoring |
+| 25 | Exercise guard-kill-mid-send → next-run recovery for hermes (pool-clean + btrbk invalidate path) once, deliberately | Medium | M | Quality |
+| 26 | `/data` EIO corruption repair → restore `btrbk-data` hard-FAIL stance (pre-existing P0) | High | L | Bug |
+| 27 | Hetzner StorageBox + BorgBackup offsite leg implementation (decided 2026-09-11) | High | L | Feature |
+| 28 | clickhouse-backup coverage (telemetry currently has no backup leg) | Medium | M | Feature |
+| 29 | Run the crush-hot-db first migration in a quiet window (structural fix for the QLC `.crush` churn storm class; still never run — live sessions trip the pgrep guard) | High | S | Feature |
+| 30 | Review Zone 6 churn-unit list vs backup timers (admission control for the backup window) | Medium | M | Design |
+| 31 | Repo-wide sweep: other hardened units probing `/home` or ProtectHome-hidden paths in scripts | Medium | M | Quality |
+| 32 | Consider an eval-time audit: hardened unit scripts with `findmnt`/path probes on hidden trees | Medium | M | Quality |
+| 33 | Verify `btrbk-root` TimeoutStartSec is comfortable for a 92 GB USB-link full send (est. 10–15 min pure transfer; config check only) | Low | S | Verification |
+| 34 | Confirm the journal shows a parent-less FULL-send plan for hermes on the next run (designed self-heal; verify once) | Low | S | Verification |
+| 35 | After receives land: re-run `migrate-hermes-subvol.sh status` + verify unit OK (close the loop) | High | S | Verification |
+| 36 | Decide whether deliberate Zone-6 threshold raise during a monitored seed window is acceptable vs heavy-job admission | Medium | M | Design |
+| 37 | Add hermes-prefix freshness to backup-coordination-style monitoring (subvol sends aren't dump-tracked today) | Low | M | Feature |
+| 38 | Sweep TODO_LIST for items superseded/created by this report (docs-health HARVEST) | Low | S | Process |
+| 39 | Add "read ExecStart indirection before hypothesizing about unit content" to the review checklist (this session burned 3 batches on it) | Low | S | Docs |
+| 40 | Post-incident: check whether the 04:01 hermes restart's "2 interrupted cron executions" lost anything scheduled | Low | S | Verification |
+
+**HARVEST note:** items #14, #15, #16, #26–#32 are durable work → belong in `TODO_LIST.md`/`ROADMAP.md` via docs-health HARVEST when instructed; the rest are point-in-time follow-ups for this incident window.
+
+---
+
+## g) Questions I cannot answer myself (3)
+
+1. **Verify-gate posture.** Keep the hermes check hard-FAIL (correct end-state; but any deploy before the first receive lands will exit-4 and leave an un-anchored generation), or downgrade to WARN until the first receive lands and flip to fatal then (the `/data` precedent, self-neutralizing)? I implemented fatal and can implement either; the activation-blocking risk tolerance is an owner call I cannot derive from the repo.
+2. **Was the 04:01:07 hermes SIGKILL you?** (Manual restart/tool action?) If not you, I will dig into the oomd + kernel journals next — but the RSS/MemAvailable numbers say it was not a memory kill, so an external actor (human or tool) is the leading hypothesis.
+3. **What was running between ~22:40 and 06:03?** Parallel crush sessions, a big build, a download, a scan? One sentence from you attributes the storm driver instantly (no root iotop needed) and decides whether tonight's 23:00 send window is safe or should be pre-empted.
+
+---
+
+*Point-in-time snapshot — goes stale. Evidence excerpts live in this session's tool log; timestamps CEST. No secrets in this report.*
