@@ -2536,24 +2536,6 @@
     "go-cqrs-lite_7": {
       "flake": false,
       "locked": {
-        "lastModified": 1786526711,
-        "narHash": "sha256-EKw0UcUmDSpMZtWj4vVw2NJcgWStpuuJpiBwPXvfMP8=",
-        "ref": "master",
-        "rev": "2b72de54f472fc5807623c8c6915b76e4bc36ebd",
-        "revCount": 5561,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
-      },
-      "original": {
-        "ref": "master",
-        "rev": "2b72de54f472fc5807623c8c6915b76e4bc36ebd",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
-      }
-    },
-    "go-cqrs-lite_8": {
-      "flake": false,
-      "locked": {
         "lastModified": 1789666310,
         "narHash": "sha256-ydVL1HbuzkLuOeBjobhCQkQuNGlcUuE7IkgirpVzBVg=",
         "ref": "master",
@@ -6066,7 +6048,6 @@
         "git-hooks": "git-hooks_4",
         "go-branded-id": "go-branded-id_15",
         "go-composable-business-types": "go-composable-business-types_2",
-        "go-cqrs-lite": "go-cqrs-lite_7",
         "go-error-family": "go-error-family_15",
         "go-etag": "go-etag_5",
         "go-filewatcher": "go-filewatcher_3",
@@ -6090,11 +6071,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789670337,
-        "narHash": "sha256-6J0ROJInKxbkIH/EKN2+WbV/Zc52m64/jHL2M+dIcO8=",
+        "lastModified": 1789673070,
+        "narHash": "sha256-zW2Zv2LU3SIhb682t+IBD4AVgU9KV7MHehTA+BlLDZ0=",
         "owner": "LarsArtmann",
         "repo": "overview",
-        "rev": "d84078fab54380bf61f01cfaae1f2a2d204690f0",
+        "rev": "34217c23ad831a95fcdf323bd92e1fd5def6d753",
         "type": "github"
       },
       "original": {
@@ -6124,7 +6105,7 @@
     "papdashboard": {
       "inputs": {
         "flake-parts": "flake-parts_17",
-        "go-cqrs-lite": "go-cqrs-lite_8",
+        "go-cqrs-lite": "go-cqrs-lite_7",
         "go-nix-helpers": "go-nix-helpers_6",
         "nixpkgs": [
           "nixpkgs"
@@ -6231,17 +6212,16 @@
     "project-discovery-sdk_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1788368751,
-        "narHash": "sha256-rbxTWMJjGVWPuZa5VvjnhYPldYGUuCC+8gS8Y4dbSz0=",
+        "lastModified": 1789619883,
+        "narHash": "sha256-/2uG4jJJTdXkvvXZ1fe4Y1Z/axMclVD0wEe5FeeuWVY=",
         "ref": "master",
-        "rev": "4d946136dd4a5f3662e038f3b7f80f0f07990786",
-        "revCount": 1272,
+        "rev": "e0370668c2c5208b60d7e8112488b852fbee0389",
+        "revCount": 1286,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       },
       "original": {
         "ref": "master",
-        "rev": "4d946136dd4a5f3662e038f3b7f80f0f07990786",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       }
