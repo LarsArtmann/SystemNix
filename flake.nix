@@ -569,23 +569,22 @@
     };
 
     # DiscordSync — Continuous Discord backup with Turso cloud sync
-    # Rev-pinned at c0604e46 (2026-09-05, third lift): febc42a7 → c0604e46
-    # brings the command-audit search-corruption fixes (URL-escape +
-    # LIKE-wildcard escaping), the storage-growth guild filter, the typed
-    # chart pipeline, the stats-rollup per-message WARN flood fix, ingest
-    # dispatch logs demoted to Debug, and gofumpt folded into verify.
-    # Upstream re-derived vendorHash (sha256-n5OcBbjU+SslcLkZjcZpUDpwOXOWZVy4ZcLfj2CKCMs=)
-    # after the daemon's go-health/go-health-dashboard bumps and
-    # build-verified in its own flake; the lift followed the hold's own
-    # rule: `nix build` of the quick-go batch (discordsync included) ran
-    # to COMPLETION in this flake's context BEFORE deploying. Keep pinning
-    # explicit revs — the 02:59 switch failure of 2026-09-04 came from a
-    # moving `?ref=master` resolving past the fix. First hold history
-    # (2026-08-25 → 2026-09-04, upstream Go floor > nixpkgs go) is moot: the
-    # input deliberately does not follow our nixpkgs, so the FOD's go comes
-    # from upstream's own lock.
+    # Branch-ref governed since 2026-09-17 (pin policy 2026-09-16):
+    # flake.nix tracks ?ref=master, flake.lock holds the exact rev —
+    # c0604e46 (the 2026-09-05 third lift: command-audit search-corruption
+    # fixes, typed chart pipeline, stats-rollup WARN flood fix). Upstream
+    # master is STILL hash-broken (131 ahead at c3494bd; probe 2026-09-17:
+    # `nix build github:LarsArtmann/DiscordSync/master#default.goModules`
+    # → got sha256-Zu9kdtqb6Af4OjWGNrYySHOgr69PqKEzGLmAnnSv7aw= vs the
+    # stale specified sha256-VvZM/CmH1fxjzI8kkH5rxvlap9s0VSdfIK/cEswRqlQ=),
+    # so the lock deliberately STAYS at c0604e46 — do NOT
+    # `nix flake lock --update-input discordsync` until upstream re-derives
+    # its vendorHash: the lock update succeeds silently and the FOD then
+    # fails LOUDLY at build. The old rev-in-URL pin made --update-input a
+    # silent no-op (the 2026-09-04 02:59 switch failure rode a moving
+    # ?ref=master past the fix; the lock is the safety now).
     discordsync = {
-      url = "github:LarsArtmann/DiscordSync/c0604e46";
+      url = "github:LarsArtmann/DiscordSync?ref=master";
       inputs = {
         # go-nix-helpers AND nixpkgs deliberately NOT followed (bank-sync +
         # qmd precedents): upstream's vendorHash was validated against ITS

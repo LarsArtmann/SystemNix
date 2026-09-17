@@ -848,7 +848,7 @@
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "c0604e46",
+        "ref": "master",
         "repo": "DiscordSync",
         "type": "github"
       }
