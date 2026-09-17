@@ -18,11 +18,14 @@
 
       (_pythonFinal: pythonPrev: {
         # nixpkgs' django-polymorphic carries pytest-playwright in
-        # nativeCheckInputs while DISABLING the very tests that need it
-        # ("disabledTestPaths: Playwright failed to start"). The dep drags
-        # playwright-python's source FOD into every paperless build, and
-        # microsoft RE-TAGGED v1.63.0 — cold fetches fail with a hash
-        # mismatch (live 2026-09-17). Strip the unused check dep.
+        # nativeCheckInputs while DISABLING the playwright-dependent tests
+        # — but its conftest.py UNCONDITIONALLY reads the plugin's
+        # `--headed` option, so stripping the plugin alone makes pytest
+        # INTERNALERROR at configure. The dep also drags playwright-python's
+        # source FOD into every paperless build, and microsoft RE-TAGGED
+        # v1.63.0 — cold fetches fail with a hash mismatch (live
+        # 2026-09-17). Strip BOTH the dep and the check (paperless does not
+        # need this leaf package's tests).
         # NOTE: overridePythonAttrs, NOT overrideAttrs — the python builder
         # folds nativeCheckInputs into the derivation before overrideAttrs
         # runs, so the stdenv-level override is a silent no-op here.
@@ -33,6 +36,7 @@
               nativeCheckInputs =
                 prev.lib.remove pythonPrev.pytest-playwright
                   (old.nativeCheckInputs or [ ]);
+              dontUsePytestCheck = true;
             });
       })
     ];
