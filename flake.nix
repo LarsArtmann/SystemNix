@@ -408,14 +408,21 @@
 
     # BuildFlow — Zero-configuration build automation for Go projects
     buildflow = {
-      # Was INTERIM `git+file:///home/lars/projects/BuildFlow` - a local-path
-      # pin that broke every CI eval. 9d11c8fee (the stale-vendorHash fix;
-      # rev 56dc3660 fails every consumer with a go-modules hash mismatch) is
-      # now origin/master HEAD (verified identical via compare API,
-      # 2026-09-16). git+ssh fetches on CI via the NIX_DEPLOY_KEY_BUILDFLOW
-      # read-only deploy key. Branch-ref governed (pin policy 2026-09-16:
-      # ?ref=master as much as possible; the lock holds the exact rev until
-      # an explicit update).
+      # Branch-ref governed (pin policy 2026-09-16); the lock deliberately
+      # HOLDS 9d11c8fe (the 2026-09-16 stale-vendorHash fix, proven in
+      # production as buildflow-9d11c8f). Upstream master moved to 42fd89bf
+      # (2026-09-17 08:35) and a parallel session's lock refresh pulled it
+      # in at 11:04 — its vendoredHash is STALE (probe 2026-09-17:
+      # github:LarsArtmann/BuildFlow/master#default.goModules → got
+      # sha256-01KxfpMFhCRStjEAi0tQiC41AjXOpmxXCnxiEiVhBNo= vs the
+      # specified sha256-1No/eetBxYDOygoVjqQw6eza/v2TLuzRZizJF6wEks4=) and
+      # broke the 14:57 deploy with a go-modules hash mismatch. The lock
+      # was rolled back to the last buildable rev same day (deploy-blocker
+      # doctrine: roll back + breadcrumb). Do NOT `nix flake lock
+      # --update-input buildflow` until upstream re-derives its
+      # vendorHash — the update succeeds silently and the FOD then fails
+      # loudly at build. 7e89aef0 (09-17 06:57, interim rev pulled at
+      # 09:31) was never build-verified either.
       url = "git+ssh://git@github.com/LarsArtmann/BuildFlow?ref=refs/heads/master";
       inputs = {
         nixpkgs.follows = "nixpkgs";

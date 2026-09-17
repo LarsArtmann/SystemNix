@@ -1,0 +1,136 @@
+# Miniflux OIDC Account Link — Provisioner Build & VM-Test Regression Hunt
+
+**Session:** 2026-09-17 ~11:40–15:13 CEST
+**Task:** "This user already exists." on rss.home.lan (Pocket ID → Miniflux SSO) — make it work.
+**State at report time:** Diagnosis complete and source-verified; declarative provisioner fully implemented and eval-clean; **VM test red from a regression my own diff introduces (mechanism UNRESOLVED — bisect running)**; nothing deployed; production miniflux untouched and healthy; the user-facing 400 is still unfixed until either the manual paste or the provisioner ships.
+
+---
+
+## TL;DR
+
+1. Root cause is exactly the AGENTS-documented miniflux behavior: the unauthenticated OIDC callback resolves users **only** by `openid_connect_id` (Pocket ID's `sub`), which is NULL → with `OAUTH2_USER_CREATION=1` it tries to CREATE `lars` → unique collision → HTTP 400. Config is fully correct (proved by the error itself: code exchange + userinfo succeeded before user resolution).
+2. I first answered with a **manual sudo paste** — user correctly rejected that ("I thought we have Nix?!"). Rebuilt the fix as `miniflux-oidc-setup`, a two-phase provisioner oneshot in `modules/nixos/services/miniflux.nix` (root `+` ExecStartPre resolves the sub from Pocket ID's SQLite → ExecStart as `postgres` converges `users.openid_connect_id`).
+3. All static gates pass (fmt, `nix eval` toplevel, `nix flake check --no-build` all-checks-passed, bash -n on both rendered scripts, nullglob + serviceConfig-merge audits). **The extended VM test fails — and a verified-clean baseline (pre-my-changes commit `868d423d`) PASSES**, so my diff introduces it: postgres in the VM logs `could not look up local user ID 64274: user does not exist` → miniflux peer-auth dies, from the FIRST boot attempt (t=12.55), **before my link unit ever starts**. Mechanism unknown. Bisect (link unit disabled, fixture kept) is running in background shell `03D` at report time.
+
+---
+
+## a) FULLY DONE
+
+| Item | Evidence |
+|---|---|
+| **Root-cause diagnosis of the 400** — collision on unlinked `openid_connect_id`, config exonerated (redirect fix deployed, secret loads, discovery healthy) | Unit inspected (`/etc/systemd/system/miniflux.service`); `fetch https://auth.home.lan/.well-known/openid-configuration` → issuer matches; error ordering source-verified (exchange precedes user resolution) |
+| **`sub` == Pocket ID `users.id`, source-verified at v2.14.0** | `backend/internal/oidc/authorization_service.go` `buildAuthorizedSession` → `NewAuthenticatedSession(req.userID)` from `First(&user, "id = ?")`; `jwt_service.go` `GenerateAccessToken` → `Subject(user.ID)` |
+| **Constraint survey under tool bans** — Crush bans `sudo`/`systemctl`/`curl`; pivoted to readable unit files, `fetch`, `journalctl`, TCP-psql probe (md5-refused), found PG loopback is password-auth (no non-root DB path) | Session commands |
+| **`miniflux-oidc-setup` provisioner implemented** — options `services.miniflux.oidcLink.{enable,username}` (auto = exactly-one-user-per-side, loud failure otherwise), two-phase unit: `+`-prefixed root ExecStartPre (reads Pocket ID SQLite, char-class guard on sub, stages in RuntimeDirectory) + ExecStart as `postgres` (psql `-v` variables + `:'u'`/`:'s'` quoting — zero shell-interpolated SQL; bounded 30×2s wait for CREATE_ADMIN; already-linked no-op; converge-on-sub-change for the Pocket-ID-DB-recreation class; loud failure prints both user tables) | `modules/nixos/services/miniflux.nix:52-144` (scripts), `:262-292` (unit) |
+| **Wiring complete** — enabled in configuration.nix (auto mode) + the wrong comment ("Pocket ID auto-creates the account") corrected; added to `scripts/deploy.sh` provisioner loop (name matches the `-setup` converger pattern → deploy-restart-audit enforces the entry, `nix flake check` confirms); VM-test fixture + step-5 assertions (links `vmadmin` fixture to miniflux `admin` — proves auto-resolution links by uniqueness, never by name; asserts DB value via `runuser -u postgres -- psql`; asserts idempotent "already linked" re-run) | `platforms/nixos/system/configuration.nix:347-356`, `scripts/deploy.sh:438-442`, `tests/test-miniflux.nix` |
+| **All static gates green** — `nix fmt` (3 files, 0 changed after formatting), `nix eval` evo-x2 toplevel drv OK, `nix flake check --no-build` **all checks passed**, both rendered scripts `bash -n` OK and eyeballed (nix `''${` escapes resolved right, sqlite3/psql paths interpolated, `dataDir=/var/lib/pocket-id/data`), `audit-shell-nullglob` fail=0, `audit-serviceconfig-merge` fail=0 | Session outputs; scripts extracted via the documented context-leak `runCommand` trick |
+| **VM failure paths of the provisioner proven correct** — in the red run, the fetch script resolved the fixture sub and the link script failed LOUD with the exact diagnostics designed ("no miniflux user matched … Users present:") — collateral of miniflux itself being down (no tables), not an independent bug | `nix log pfwjq7g6…` lines 13.07–13.20 |
+| **AGENTS.md updated** — 2026-09-17 bullet: recurring-400 mechanics, sub semantics, the root SQL route, wrong-sub-fails-safe analysis, `disableLocalAuth` gate reminder | `AGENTS.md` Miniflux section (committed by daemon `52e44d4e`) |
+| **Production safety** — nothing deployed (worktree-only + daemon commits); evo-x2 runs the pre-change generation; prod miniflux healthy (`/healthcheck` → "OK") | `fetch http://127.0.0.1:8101/healthcheck` |
+
+## b) PARTIALLY DONE
+
+| Item | State |
+|---|---|
+| **VM test green** — baseline verified green (`868d423d` → `vm-test-run-miniflux` PASSES, drv `3xfrhqmg…`); my tree RED. Bisect worktree `/tmp/mf-bisect` (HEAD + `oidcLink.enable = false` in test only) built in **background shell 03D — result not yet read**. Next discriminator: green ⇒ the link *unit* is the trigger (then bisect harden{} vs after/wants vs `+`-prefix vs RuntimeDirectory); red ⇒ the fixture change (`path = [pkgs.sqlite]` + sqlite seeding in `vm-pocket-id-secret`) |
+| **The user-facing fix** — exists in two forms: (1) manual paste delivered earlier this session (unknown whether user ran it — DB state unverifiable without root), (2) the provisioner — implemented, not deployed |
+| **AGENTS.md accuracy** — currently documents the manual SQL route as the agent-executable fix; must be rewritten once the provisioner ships (provisioner becomes the primary, SQL demoted to emergency fallback) |
+| **Runbook** — `docs/services/miniflux.md` NOT touched (still describes only the interactive Settings-link flow) |
+| **Pre-commit hygiene on my files** — the daemon committed my files, likely WITHOUT running the pre-commit hooks: `statix` / `deadnix` / gitleaks never explicitly run by me on the 4 files. fmt + flake-check + 2 audits ran; statix/deadnix did NOT |
+
+## c) NOT STARTED
+
+- Deploy (`nix run .#deploy`) — blocked on green VM test.
+- Post-deploy verification: `journalctl -u miniflux-oidc-setup` showing "linked", user's live SSO login, then the `disableLocalAuth` go-live decision (owner-gated).
+- Cleanup: `/tmp/mf-baseline` + `/tmp/mf-bisect` worktrees (one removed, one live), background shells (03D bisect possibly still running), leaked-derivation `leak-oidc-scripts*` store paths.
+- docs/services/miniflux.md runbook update (see above).
+- Explicit `after = [ "postgresql.target" ]` on the link unit (currently implied transitively via `after = miniflux.service` → miniflux `requires postgresql.target`; works but is implicit coupling).
+
+## d) TOTALLY FUCKED UP (brutal section)
+
+1. **Led with a manual SQL paste.** The user's whole system is built to make this class of fix declarative (`pocket-id-provision`, `forgejo-oidc-setup`, `browser-history-agent-token-provision` precedents were all documented in the AGENTS I had loaded). I even KNOW the repo doctrine "provisioner oneshots bridge runtime stores" — and still reached for the shell one-liner first. That is the single worst call of the session. The correct sequence was: diagnose → build the provisioner → ship → manual route only as emergency fallback.
+2. **Two fake baselines burned ~8 minutes and nearly produced a wrong conclusion.** I ran "baseline" VM tests at (a) HEAD and (b) `0084b860` — BOTH already contained my changes because the **auto-commit daemon had committed my files mid-session, including my broken intermediate state** (the duplicate-`systemd.services` attrset error at `miniflux.nix:274` is IN git history at `0084b860`). The AGENTS warns explicitly about this daemon and about verifying what the daemon staged; I checked `git status` early but not between VM runs. The first baseline run "passing" the same drv (`pfwjq7g6…`) should have been an instant red flag; I only caught it when the second "baseline" quoted my own code. Third attempt (verified `grep -c oidcLink` == 0 in the worktree) was finally valid.
+3. **My diff breaks the VM test and I do not know WHY yet.** The failure signature is genuinely weird: postgres cannot resolve dynamic UID 64274 (the same UID prod resolves fine) from the first boot attempt — before my unit ever executes. I have hypotheses (boot-transaction reordering from my unit's `wants`/`after`; `harden{}` on a postgres-user unit; the `+` ExecStartPre; RuntimeDirectory interaction; the fixture `path`) but ZERO confirmed mechanism. I was mid-read of `lib/systemd.nix` `harden{}` when interrupted. An "all static gates green" session that still breaks the integration test is exactly the repo's "never trust evals green" doctrine in action — and I nearly shipped on `nix flake check` + audits alone before deciding to run the VM test. The decision to run it was right; running it EARLIER (before wiring everything) would have localized the breakage with a much smaller diff to bisect.
+4. **Broke the build for ~3 minutes during the attrset restructure** (two consecutive duplicate-attribute eval errors, `0084b860` has the broken version committed). On a shared tree with parallel sessions, every eval in that window failed. Should have evaluated after EACH structural edit.
+5. **Never explicitly committed, and lost authorship control** — everything landed via the daemon's "heuristic" commits, split across `0d8a0482`/`a5baff22`/… with my broken intermediate in history. Per the repo's own rules I should have done pathspec commits per task ("commit per task when explicit commits are authorized") — the history now tells no story.
+6. **Left an auth code in the chat** — the user pasted a live (now-expired/consumed) Pocket ID authorization code into the conversation; I never flagged it or advised rotating/treating it as burned. Minor (10-min TTL, single-use), but the security-first move is to say so explicitly. Flagging NOW in the report.
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Run the service's VM test FIRST (establish green), before writing a line** — the "verify state before mutating" doctrine applied to tests, not just tool output. Would have cost one VM run and given an instant bisect anchor.
+2. **Treat the auto-commit daemon as a hostile GC of your own assumptions**: before ANY baseline/comparison, verify the worktree content directly (`grep` for a signature of your own change), never trust the branch name or recency.
+3. **Bisect by unit-enabling flags, not by file reverts** — my `oidcLink.enable = false` worktree flip is the right shape; should have been the FIRST response to the red test instead of log archaeology.
+4. **Declarative-first reflex**: any "run this command as root" answer is a design smell in this repo — map it to the provisioner pattern immediately.
+5. **Pathspec-commit per task when working on this tree**; the daemon's heuristic history is not a substitute and makes baselines/reverts hazardous.
+6. **Path-scope `nix fmt` early and always** (`nix fmt --no-update-lock-file -- <files>`), and eval after each structural module edit to keep the shared tree evaluable.
+7. The VM fixture grew a second responsibility (OIDC client secret + Pocket-ID user DB) — it should be split into a clearly named helper service (`vm-pocket-id-fixture`) so future readers don't have to infer why a "client secret" unit creates a SQLite database.
+
+## f) NEXT TASKS (prioritized)
+
+**P0 — ship the fix**
+1. Read bisect result (shell 03D): green ⇒ trigger is the link unit; red ⇒ fixture.
+2. If unit-triggered: bisect its facets one VM run at a time — (a) drop `harden{}` from the unit, (b) drop `after/wants` on `pocket-id.service` (missing unit in VM — systemd "not found" noise), (c) drop `+` ExecStartPre (make the whole unit root), (d) drop RuntimeDirectory. Record which one restores green; that facet is also a repo-wide lesson candidate.
+3. If fixture-triggered: move the sqlite seeding into a separate unit/step or seed lazily in the test script before starting the link unit.
+4. Also test the explicit-`username` mode once (fixture with 2 pocket-id users + `oidcLink.username = "vmadmin"`) — currently only auto mode is covered.
+5. Add `after = [ "postgresql.target" ]` explicitly to the link unit (decouple from transitive ordering).
+6. Re-run `nix flake check --no-build` + `nix build .#checks.x86_64-linux.miniflux` green, `nix fmt -- <my files>`, `statix check` + `deadnix` on the 4 files (daemon skipped the hooks).
+7. Check whether the user already ran the manual paste (ask — see g); if linked, the deploy is verification-only and the provisioner should log "already linked".
+8. `nix run .#deploy` (respect pre-deploy pressure gate; watch the flm/EADDRINUSE deploy guards).
+9. Post-deploy: `journalctl -u miniflux-oidc-setup --no-pager` → expect "linked miniflux user 'lars' -> Pocket ID sub …" or "already linked"; `systemctl is-enabled` via deploy.sh provisioner loop output.
+10. User does ONE live SSO login at rss.home.lan → satisfies the `disableLocalAuth` go-live gate (owner decision, not flipped this session).
+11. Confirm the deploy.sh provisioner loop restarted the unit (grep deploy output), and the unit's onFailure wiring is inert in the happy path.
+
+**P1 — docs & memory**
+12. Rewrite the AGENTS.md Miniflux bullet: provisioner is the primary mechanism; manual SQL = emergency fallback; keep the sub-semantics + fail-safe analysis.
+13. Update `docs/services/miniflux.md` runbook (link provisioner, auto vs explicit username, fresh-host loud-failure behavior, Pocket-ID-DB-recreation re-link semantics).
+14. Update `tests/test-miniflux.nix` header comment (step 5) and split the fixture unit naming (see e.7).
+15. Record the VM-regression lesson (whatever the mechanism turns out to be) in AGENTS.md — if it is "an added unit with after/wants to a missing unit perturbs the boot transaction", that is a new gotcha class worth a flake-check lint candidate.
+16. Clean up: remove `/tmp/mf-baseline` + `/tmp/mf-bisect` worktrees (`git worktree remove --force`), kill background shells, `git worktree prune`.
+
+**P2 — session-observed repo debt (pre-existing, NOT touched per rules)**
+17. `docs/reviews/2026-09-16_20-52_brutal-self-review.html` breaks `nix fmt` (dprint HTML parser: unexpected closing `</div>` at 1122:5) — whole-tree `nix fmt` errors; CI's fmt gate may be permanently red for everyone.
+18. SystemNix CI status unknown in the minutes-exhausted era — if `nix-check.yml` is dead like CV's, NOBODY has run VM tests remotely since ~09-10; this session's regression proves local-only gating is insufficient.
+19. nixpkgs miniflux module's `User= + DynamicUser=true` peer-auth depends on nss-systemd resolving the dynamic user — fragile in VMs (this session's breakage class); evaluate pinning a static user in our wrapper (`services.miniflux` → override `User`/drop DynamicUser) vs upstream issue.
+20. Eval warnings on every toplevel eval: `stdenv.isDarwin` deprecation; `programs.rofi.extraConfig` renamed to `programs.rofi.settings` — both flagged in this session's eval output.
+21. `nscd.service` + `dhcpcd.service` fail at VM boot (noise in every VM run — candidate for test-helper silencing to reduce log spam).
+22. PG loopback TCP is md5/password (peer only on socket) — fine, but ops runbooks that assume `psql -h 127.0.0.1` will fail; document socket-only access.
+23. The `onFailure = [ "notify-failure@%n.service" ]` helper yields instance names like `miniflux.service.service` (seen in VM logs) — verify the prod template matches that exact instance string, else OnFailure alerting for these units is silently un-routed (VM says "not found, ignoring").
+24. The fetch script's sqlite lookup uses `ls | head -1` fallback — if Pocket ID ever ships a second .db the glob could pick the wrong file; consider requiring the exact `pocket-id.db` and failing loudly instead.
+25. The `username`-mode SQL uses `LIKE '$username@%'` with the option value interpolated (config-trusted) — sqlite3 CLI has no bound params; add a char-class guard on the option at eval time.
+26. eval-cache SQLite "busy" warnings during parallel `nix eval` (benign; noted).
+27. Consider a Gatus/system-health entry for `miniflux-oidc-setup` failure-state visibility (OnFailure covers Discord; textfile metric optional).
+28. Sweep: are there OTHER services in the repo with the same "OIDC account link only via interactive flow" gap (browser-history links by its own DB tokens; paperless auto-signup) — inventory which SSO services would 400 the same way on a fresh host.
+29. `git worktree`-based baselines should get a repo script (verify + checkout + signature-grep in one step) — the manual dance failed twice this session.
+30. Add `statix`/`deadnix` to the daemon's auto-commit path, or accept that daemon commits bypass them and add a periodic CI/nightly job (blocked on 18).
+31. User-facing: once SSO works, decide `disableLocalAuth` flip (requires the break-glass password from sops to stay recoverable; AGENTS gate: one proven live SSO login first).
+32. Consider upstreaming the miniflux link-flow gap (username-collision UX) — candidates: miniflux issue "OIDC callback should link by preferred_username when OAUTH2_USER_CREATION collides" + the Pocket ID docs note; use the verify-before-filing skill first.
+33. The two leaked `leak-oidc-scripts*` derivations are harmless store litter; `nix store gc` will collect them eventually — no action unless store pressure.
+34. Update the VM test's `testScript` step-5 assertion to also cover the explicit-username path (pairs with 4).
+35. When the provisioner ships, consider folding `vm-pocket-id-secret` fixture DB creation into `virtualisation.` … no — keep as-is; just rename (7).
+36. Optionally emit a `miniflux_oidc_linked` textfile metric from the link unit for the fail-closed monitoring pattern (overkill for a converged oneshot — likely reject).
+37. Re-verify `docs/services/miniflux.md` claims against the deployed unit after deploy (the "probe the surface the config actually lands on" rule).
+38. Sanity-check the provisioner's behavior when Pocket ID is temporarily down at boot (`wants` = best-effort; fetch script exits 1 loudly → OnFailure → acceptable; document that it converges on the next deploy).
+
+**P3 — hygiene**
+39. `git gc`/`worktree prune` after cleanup.
+40. Rotate/nothing? The pasted auth code is single-use + expired — no action, but note in chat history.
+41. Move this report's follow-ups into `TODO_LIST.md` per the docs-health doctrine (items 17–21 at minimum).
+42. Consider naming the RuntimeDirectory `miniflux-oidc-setup` vs the unit file location assert (`systemd-shape-audit` classes) — already passes; no action, record only.
+43. Re-read `lib/systemd.nix` `harden{}` fully before touching any unit that runs as a non-root service user with `+`-prefixed Exec lines (half-read at interruption).
+44. Verify deploy.sh's provisioner loop actually RESTARTS (not just is-enabled) the new unit post-switch — audit enforces presence, not the restart semantics in the is-active-gated branch.
+45. Double-check `RestartSec=5` interplay: link unit is oneshot+RemainAfterExit (no Restart) — confirmed by `serviceOneshotDefaults`; nothing to do.
+46. After everything: run the FULL `nix flake check` (with builds) once — this session only ran `--no-build`.
+47. Consider `services.miniflux.oidcLink` default-on when enableOidc (mkDefault true) to protect fresh hosts — owner decision (explicitness vs safety).
+48. Add the "auth code in chat = burned credential" note to the repo's secret-hygiene rules (chats are logs too).
+49. Verify the prod Pocket ID DB path matches `/var/lib/pocket-id/data/pocket-id.db` before deploy (my script globs; confirm the real filename once with a root read).
+50. Update `FEATURES.md`/`TODO_LIST.md` to reflect the new provisioner capability once shipped.
+
+## g) QUESTIONS FOR YOU
+
+1. **Did you already run the manual SQL paste I gave earlier?** (Determines whether `users.openid_connect_id` is already set in prod — I cannot read either DB without root. If yes, the deploy becomes pure verification; if no, the provisioner performs the first real link.)
+2. **Static-user vs DynamicUser for miniflux:** if the bisect shows the regression is the DynamicUser/nss interaction class, do you want me to pin miniflux to a static `users.users.miniflux` in our wrapper (kills the whole VM-fragility class, deviates from upstream module shape), or keep upstream's shape and only fix my unit's trigger?
+3. **Should I set `services.miniflux.oidcLink.username = "lars"` explicitly** (self-documenting, robust if you ever add a second Pocket ID user), or keep auto mode (works because you have exactly one Pocket ID user today)? I cannot read the Pocket ID user table without root, so I cannot verify the username myself.
+
+---
+
+**Waiting for instructions.** Bisect shell 03D may have finished by the time you read this — its output is the next thing I would look at.
