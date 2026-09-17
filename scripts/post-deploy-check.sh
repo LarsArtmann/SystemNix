@@ -323,19 +323,22 @@ if $cv_enabled; then
   else
     report_fail "CV — /export/pdf broken: typst template missing from /var/lib/cv/assets or renderer failed (restart re-syncs assets; journalctl -u cv-server -n 50)"
   fi
-  # Funnel DB health (upstream 2026-09-02): /health's pipeline-store check
-  # pings the SQLite event store the nightly cv-backup protects. Requires a
-  # cv flake input >= a03ff09e — an older deployed binary lacks the key
-  # entirely. NOTE: the sibling "database" check is the optional Turso
-  # analytics DB (disabled by design in prod) — its "not configured"
-  # verdict is benign and deliberately NOT asserted here.
-  cv_store=$(curl -s --compressed --max-time 10 "http://127.0.0.1:8098/health" 2>/dev/null | grep -o '"pipeline-store":{"name":"pipeline-store","status":"[a-z]*"' || true)
+  # Funnel DB health (upstream 2026-09-02; /health shape migrated to the
+  # go-health rich format with the 2026-09-15 defense-portal bundle, ed8b92f):
+  # checks are keyed by fully-qualified Go type (typetostring.GetType) and
+  # the store check pings the SQLite event store the nightly cv-backup
+  # protects. Requires a cv flake input >= the go-health migration: an
+  # older deployed binary has the compact legacy key instead. NOTE: the
+  # sibling "database" check is the optional Turso analytics DB (disabled
+  # by design in prod): its "not configured" verdict is benign and
+  # deliberately NOT asserted here.
+  cv_store=$(curl -s --compressed --max-time 10 "http://127.0.0.1:8098/health" 2>/dev/null | grep -o '"eventstore.PipelineStore":{"status":"[a-z]*"' || true)
   case "$cv_store" in
-  *'"status":"healthy"'*)
+  *'"status":"pass"'*)
     report_pass "CV — pipeline-store healthy (SQLite funnel store reachable)"
     ;;
   *)
-    report_fail "CV — pipeline-store not healthy (${cv_store:-check absent from /health}) — deployed cv binary predates 2026-09-02 or the sqlite store is unreachable (journalctl -u cv-server -n 50)"
+    report_fail "CV — pipeline-store not healthy (${cv_store:-check absent from /health}) — deployed cv binary predates the go-health migration or the sqlite store is unreachable (journalctl -u cv-server -n 50)"
     ;;
   esac
   # Browser-level render check (cv repo, 2026-09-10): curl string pins pass
