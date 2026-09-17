@@ -156,11 +156,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789549072,
-        "narHash": "sha256-sNe3vRJQYzu0bTt0ogzna5yX1GV7h7gH7G9Jhox1hoM=",
+        "lastModified": 1789626250,
+        "narHash": "sha256-uVXqy/IGCGJKr4RV08lMZgEWvaiMfFLYOKmiVS/roQM=",
         "ref": "refs/heads/master",
-        "rev": "55e726d99f37d16518acf55e34f81f8d13b923de",
-        "revCount": 2466,
+        "rev": "faffae66a23bd6371611b743a5dd734e5327906a",
+        "revCount": 2467,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
@@ -3654,11 +3654,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789487724,
-        "narHash": "sha256-pNXuMlrDjEDA9ar2PrjUs7vPrq/us1OD5gPDR+5a38o=",
+        "lastModified": 1789626369,
+        "narHash": "sha256-WcopLpZ5JP2TBc3Jk0DPf2uBY99ASkQc4sszhiyFzWw=",
         "owner": "LarsArtmann",
         "repo": "go-humanize-linter",
-        "rev": "713becabc277fc71b1772d6b6edf433573d0b20b",
+        "rev": "2cbc9db49c2c5882fe741adb51935aa7ada4fe83",
         "type": "github"
       },
       "original": {
@@ -5008,11 +5008,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789489649,
-        "narHash": "sha256-c0Bl7WRdp1uLedkojR7dKFUl8mJ1n+89KOMGu2gSg8Y=",
+        "lastModified": 1789626337,
+        "narHash": "sha256-xtWz1lbJjSGNksm/Ojb/JdbpExgJPM579NwxCUhn3TA=",
         "owner": "LarsArtmann",
         "repo": "golangci-lint-auto-configure",
-        "rev": "a238f32ca6061f2202ffc07d911535c9b88ee725",
+        "rev": "ee47a6d966b88ca930c9df90db5dc00cf557febf",
         "type": "github"
       },
       "original": {
