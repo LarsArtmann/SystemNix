@@ -239,16 +239,23 @@
                   provider = "remoteok";
                 }
               ];
-              # One-click funnel tail. EXPLICITLY DISABLED until gate Q1
-              # (owner-gate-package-going-live.md): the upstream default is
-              # enabled=true (dev demo shape), but under the default dry-run
-              # sender an approve-click marks the application SENT without a
-              # real email — burning it. Flip enabled=true ONLY together
-              # with autosend_driver=agentmail + the agentmail env creds
-              # (see agentmail comment below); then the cv-scan timer's
-              # auto-apply POST activates on its next tick.
+              # One-click funnel tail. STAGED FLIP (2026-09-17, gate Q1):
+              # enabled=true + send_on_approve=true while autosend_driver
+              # stays DRY-RUN (the honest dry-run contract: Success:false,
+              # records NOTHING). The funnel moves end-to-end — tailor →
+              # approve — and every approval holds honestly at
+              # approved-pending-send with ZERO email risk.
+              # THE TRANSPORT IS THE GATE, not send_on_approve: the real
+              # go-live is the driver flip to agentmail (+ sops cv-env
+              # creds, see the agentmail comment below), and it DRAINS
+              # every approved-pending-send in one sweep. Before flipping
+              # the driver: land pipeline.autoapply.max_approval_age_days
+              # (staleness cap) and review per-row pending-send ages —
+              # decision table in owner-gate-package-going-live.md gate Q1.
+              # After the flip, the cv-scan timer's auto-apply POST
+              # activates on its next tick.
               autoapply = {
-                enabled = false;
+                enabled = true;
                 # worth-trying added 2026-09-03 with the recalibrated score
                 # bands (4.5-max corpus tops out ~3.2): apply-only starves
                 # the funnel to zero candidates. The approval click stays
@@ -588,19 +595,20 @@
                   esac
                 }
 
-                # Funnel-tail variant: 503 (auto-apply disabled in config)
-                # is a WARN, not a unit failure — the funnel tail is opt-in
-                # (gate Q1: flip pipeline.autoapply.enabled together with
-                # autosend_driver=agentmail + creds) and its absence must
-                # not fail the scan/evaluate core alerting. 404 still fails:
-                # that means the deployed server predates the endpoint and
+                # Funnel-tail variant (staged flip 2026-09-17): the tail is
+                # ENABLED in config now, so 200/409 is the expected shape.
+                # 503 stays a WARN through the rollback window — it means
+                # the deployed server still predates the flip (flake-input
+                # lag) or the config was rolled back on purpose; neither
+                # should fail the scan/evaluate core alerting. 404 still
+                # fails: the deployed server predates the endpoint and
                 # this script needs a flake-input bump.
                 post_funnel_tail() {
                   code=$("$curl_bin" -sS -o /dev/null -w '%{http_code}' -X POST \
                     -H "X-API-Key: $key" -H 'Content-Type: application/json' -d '{}' "$1")
                   case "$code" in
                     200|409) echo "cv-scan: $1 -> $code (ok)" ;;
-                    503) echo "cv-scan: $1 -> 503 (auto-apply disabled — flip with gate Q1, not an error)" ;;
+                    503) echo "cv-scan: $1 -> 503 (auto-apply disabled on the deployed server — rollback window or stale flake pin, warn only)" ;;
                     *) echo "cv-scan: $1 -> $code (unexpected)" >&2; exit 1 ;;
                   esac
                 }
@@ -613,6 +621,9 @@
                 # anything un-approved (send_on_approve: the dashboard
                 # Approve click IS the send confirmation).
                 post_funnel_tail "$base/api/pipeline/auto-apply"
+                # (staged flip 2026-09-17: the tail now runs every tick —
+                # dry-run transport holds approvals at approved-pending-
+                # send; NOTHING emails until the agentmail driver lands.)
               '';
             }
             (harden { })
@@ -852,6 +863,29 @@
                   "[BODY] == pat(*\"autoApply\":{\"ranAt\":\"20*)"
                 ];
                 alert = "CV auto-apply has never completed a pass (last-pass wire lacks autoApply.ranAt) — the auto-apply timer leg is silently dead while scans stay fresh (cv.home.lan). Check: journalctl -u cv-scan --since -24h for 503s on /api/pipeline/auto-apply; the pass file is data/last-autoapply-pass.json in the state dir.";
+              }
+              # Approvals API surface check (staged flip 2026-09-17): the
+              # guarded approvals endpoint must answer 200. PRESENCE-ONLY
+              # by decision — a "pending > 0" pat would page forever once
+              # the queue is legitimately drained (the value-threshold
+              # trap documented on the metrics checks above), and a
+              # DRY-RUN-banner pat on the /pipeline HTML is flappy the
+              # same way (the banner renders only while approvals are
+              # pending). Queue health stays a human read on /pipeline:
+              # DRY-RUN banner + per-row pending-send ages.
+              {
+                name = "CV Approvals API";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.cv}/api/pipeline/approvals";
+                interval = "30m";
+                client.timeout = "10s";
+                headers = {
+                  X-API-Key = "$CV_API_KEY";
+                };
+                conditions = [
+                  "[STATUS] == 200"
+                ];
+                alert = "CV approvals API unreachable — the approval queue surface regressed or the server is down (cv.home.lan). Check: journalctl -u cv-server --since -15min; GET /api/pipeline/approvals with the CV API key.";
               }
             ];
             homepage = {
