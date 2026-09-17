@@ -1,5 +1,13 @@
 [
   (_final: prev: {
+    # TEMPORARY compat shim (2026-09-17): nixpkgs removed go_1_25 /
+    # buildGo125Module (EOL 2026-09-15), but sops-nix master (13616fff,
+    # still HEAD upstream) builds sops-install-secrets with buildGo125Module
+    # and is evaluated against consumer nixpkgs. Aliased to the go_1_26
+    # builders until upstream sops-nix bumps. Drop after sops-nix > 13616fff.
+    buildGo125Module = prev.buildGo126Module;
+    go_1_25 = prev.go_1_26;
+
     pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
       (_final: prev: {
         catppuccin = prev.catppuccin.overridePythonAttrs (_old: {
