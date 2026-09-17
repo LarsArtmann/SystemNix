@@ -47,17 +47,26 @@ _: {
 
       # systemd size string ("80G"/"512M"/"1024K", binary units) → bytes;
       # null for "infinity" or anything unparsable.
-      parseSystemdSize = v:
+      parseSystemdSize =
+        v:
         let
           m = builtins.match "([0-9]+)([KMG])?" (toString v);
-          mult = { K = 1024; M = 1048576; G = 1073741824; };
+          mult = {
+            K = 1024;
+            M = 1048576;
+            G = 1073741824;
+          };
         in
-        if m == null then null
-        else builtins.fromJSON (builtins.elemAt m 0) * (mult.${builtins.elemAt m 1} or 1);
+        if m == null then
+          null
+        else
+          builtins.fromJSON (builtins.elemAt m 0) * (mult.${builtins.elemAt m 1} or 1);
 
       userSliceAlertThreshold =
-        let h = parseSystemdSize userSliceMemoryHighRaw;
-        in if h == null then 72 * 1073741824 else h * 9 / 10;
+        let
+          h = parseSystemdSize userSliceMemoryHighRaw;
+        in
+        if h == null then 72 * 1073741824 else h * 9 / 10;
       userSliceAlertGiB = userSliceAlertThreshold / 1073741824;
 
       # 60 GiB in kB — GPUActive threshold (AGENTS.md: GPUActive can consume 51+ GiB)
