@@ -35,6 +35,17 @@ Resume/CV generator (`cv serve`, Go + Typst) from the private
 > `4ac7ca7b`, hermetic FOD + full package build GREEN, `nix flake check
 > --no-build` rc=0. Deploys were pending the IO-PSI gate + the user reboot.
 
+> **Lock-state breadcrumb (2026-09-17):** the morning `nix flake update`
+> moved `cv` `c37b8f59` → `6aba2678`, whose go-modules FOD fails upstream
+> (stale vendorHash — CV's CI is dead, so no signal), and local HEAD
+> (`b4aeaa0d`, mid-flight in a parallel session) additionally fails at the
+> `cv-prepared-source-dev` FOD (`interpreter directive changed` on
+> `_local_deps/go-cqrs-lite/scripts/check-error-taxonomy.sh`). Deploy
+> unblocked by rolling the lock node back to the last buildable `c37b8f59`
+> (FOD re-probed GREEN from our flake). Re-bump once the CV session lands
+> a rev with both the vendorHash refresh and the dev-source shebang issue
+> fixed — probe first: `nix build --impure --no-link --expr '(builtins.getFlake (toString /home/lars/projects/CV)).packages.x86_64-linux.cv.goModules'`.
+
 ## State dir contract
 
 - `assets/` and the 8 `data/<content>/` subdirs are **wiped and re-copied**
