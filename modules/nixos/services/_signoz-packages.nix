@@ -88,7 +88,7 @@ let
   collectorVendorHash = "sha256-iCkb7IGBT8Ry5m4a++jGhfoRSsrG1OquqWOwHmvACQc=";
   # otelCollector's FOD includes the sonic bump, so its cache differs from
   # schemaMigrator's.
-  otelCollectorVendorHash = "";
+  otelCollectorVendorHash = "sha256-b5diCO+sAF5VRCPuo9P1U6A8gq0uyjxu0h/9qp2DwTI=";
 
   schemaMigrator = buildGoModule {
     pname = "signoz-schema-migrator";
