@@ -332,7 +332,7 @@ if $cv_enabled; then
   # sibling "database" check is the optional Turso analytics DB (disabled
   # by design in prod): its "not configured" verdict is benign and
   # deliberately NOT asserted here.
-  cv_store=$(curl -s --compressed --max-time 10 "http://127.0.0.1:8098/health" 2>/dev/null | grep -o '"eventstore.PipelineStore":{"status":"[a-z]*"' || true)
+  cv_store=$(curl -s --compressed --max-time 10 "http://127.0.0.1:8098/health" 2>/dev/null | grep -o 'eventstore.PipelineStore":{"status":"[a-z]*"' || true)
   case "$cv_store" in
   *'"status":"pass"'*)
     report_pass "CV — pipeline-store healthy (SQLite funnel store reachable)"

@@ -796,7 +796,7 @@
                 conditions = [
                   "[STATUS] == 200"
                   "[RESPONSE_TIME] < 2000"
-                  "[BODY] == pat(*\"eventstore.PipelineStore\":{\"status\":\"pass\"*)"
+                  "[BODY] == pat(*eventstore.PipelineStore\":{\"status\":\"pass\"*)"
                 ];
                 alert = "CV pipeline event store unreachable — tracked-applications persistence is degraded (cv.home.lan). Check: journalctl -u cv-server --since -15min; sqlite store at /var/lib/cv/data/pipeline.sqlite.";
               }

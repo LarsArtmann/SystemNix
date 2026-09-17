@@ -1626,6 +1626,11 @@
                       mkdir -p $out/bin/lib
                       cp ${inner}/bin/post-deploy-check $out/bin/post-deploy-check
                       cp ${./scripts/lib/pressure-report.sh} $out/bin/lib/pressure-report.sh
+                      # The crush smoke section resolves helpers relative to
+                      # BASH_SOURCE (the store bin dir), so stage the
+                      # rc-test harness too or the check always fails with
+                      # "No such file or directory" (2026-09-17 smoke).
+                      cp ${./scripts/crush-rc-test.sh} $out/bin/crush-rc-test.sh
                       chmod +x $out/bin/post-deploy-check
                     ''
                   }/bin/post-deploy-check";
