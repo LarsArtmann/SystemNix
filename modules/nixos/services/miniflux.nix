@@ -121,10 +121,22 @@ _: {
             sleep 2
           done
         else
-          count="$($psql -tAc "SELECT count(*) FROM users;" || true)"
-          if [ "$count" = "1" ]; then
-            target="$($psql -tAc "SELECT username FROM users LIMIT 1;")"
-          fi
+          # Bounded wait (same fresh-host race as the named branch): miniflux
+          # CREATE_ADMIN seeds the table at first start. Retry while the DB is
+          # empty or unready; fail immediately on 2+ users — auto mode refuses
+          # to guess (never silently link the wrong account).
+          target=""
+          for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+            count="$($psql -tAc "SELECT count(*) FROM users;" || true)"
+            case "''${count:-}" in
+              1)
+                target="$($psql -tAc "SELECT username FROM users LIMIT 1;")"
+                break
+                ;;
+              "" | 0) sleep 2 ;;
+              *) break ;;
+            esac
+          done
         fi
         if [ -z "''${target:-}" ]; then
           echo "miniflux-oidc-setup: no miniflux user matched (configured username: ''${username:-<auto>}). Users present:" >&2
@@ -198,6 +210,21 @@ _: {
           }
         ];
 
+        # Static system user, NOT DynamicUser: postgres peer auth must resolve
+        # the connecting uid via /etc/passwd (files), never via the nscd/nsncd
+        # path — system.nssModules is documented "Only works with nscd!", so a
+        # wedged nsncd makes getpwuid(dynamic-uid) fail in postgres
+        # ("could not look up local user ID …: user does not exist") and
+        # miniflux crash-loops with "Peer authentication failed" (VM-proven
+        # 2026-09-17: the VM test regressed exactly this way when nsncd lost
+        # its boot race). Stateless app — the uid switch is transparent.
+        users.users.miniflux = {
+          isSystemUser = true;
+          group = "miniflux";
+          description = "Miniflux RSS reader service user";
+        };
+        users.groups.miniflux = { };
+
         services.miniflux = {
           config = {
             LISTEN_ADDR = "127.0.0.1:${toString ports.miniflux}";
@@ -248,7 +275,10 @@ _: {
             environment.SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
             inherit (oidcGate) after wants;
             serviceConfig = lib.mkMerge [
-              { MemoryMax = "512M"; }
+              {
+                MemoryMax = "512M";
+                DynamicUser = lib.mkForce false;
+              }
               ioTier.background
               (lib.optionalAttrs enableOidc {
                 LoadCredential = [
