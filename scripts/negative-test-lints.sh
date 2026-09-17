@@ -175,6 +175,11 @@ run_case signoz dead-metric signoz-query-lint fail "dead metric '" \
   "append:$SIGNALERTS:EVIL_MUTATION node_amdgpu_gpu_temp_celsius"
 run_case signoz comment-ignored signoz-query-lint pass '' \
   "append:$SIGNALERTS:# EVIL_MUTATION job=\"gatus\" (commented — must be ignored)"
+# Dashboard layout overlap (2026-09-16 incident shape): a panel moved onto an
+# occupied grid cell must fail the lint the same way the SigNoz v2 validator
+# 400s the provisioner. The mutation shifts a row-y so its rectangles collide.
+run_case signoz dashboard-overlap signoz-query-lint fail 'dashboard layout overlap' \
+  'sed:modules/nixos/services/dashboards/overview.json:s/"y": 24,/"y": 19,/'
 
 # ── gatus-pattern-lint: the 4 trap classes ──
 # gatus-config.nix is an auto-discovered flake-parts wrapper and IS parsed
