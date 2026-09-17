@@ -18,11 +18,11 @@ lib.filterAttrs (_: v: v != null) {
   branching-flow = flakePkg inputs.branching-flow;
   buildflow = flakePkg inputs.buildflow;
   cqrs-lint = inputs.go-cqrs-lite.packages.${system}.cqrs-lint or null;
+  erraudit = flakePkg inputs.erraudit;
   go-auto-upgrade = flakePkg inputs.go-auto-upgrade;
   go-humanize-linter = flakePkg inputs.go-humanize-linter;
   go-structure-linter = flakePkg inputs.go-structure-linter;
   golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
-  hierarchical-errors = flakePkg inputs.hierarchical-errors;
   library-policy = flakePkg inputs.library-policy;
   md-go-validator = flakePkg inputs.md-go-validator;
   # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.

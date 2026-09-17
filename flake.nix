@@ -242,9 +242,12 @@
     };
 
     # library-policy — Banned/vulnerable library detector for Go projects
+    # ?ref=master since 2026-09-17: upstream ef02247 fixed the build chain
+    # (toolchain bumped to go_1_27 for the samber-do-auditlog go.mod floor,
+    # vendorHash refreshed; FOD + package verified). Bumps flow via
+    # `nix flake lock --update-input library-policy --refresh`.
     library-policy = {
-      # INTERIM: pinned to pre-2026-09-13-update rev (stale vendorHash upstream).
-      url = "github:LarsArtmann/library-policy/1bf02c1173caf6c9a77bc873fb993123d89657aa";
+      url = "github:LarsArtmann/library-policy?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
@@ -396,13 +399,15 @@
       };
     };
 
-    # hierarchical-errors — Error handling pattern analyzer for Go projects
-    hierarchical-errors = {
-      url = "github:LarsArtmann/hierarchical-errors?ref=master";
+    # erraudit — Error handling pattern analyzer for Go projects
+    # (GitHub renamed the repo from hierarchical-errors; the input name and
+    # the mkLarsPackages attr follow the new name. 2026-09-17.)
+    erraudit = {
+      url = "github:LarsArtmann/erraudit?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
-        # go-finding: NOT followed — hierarchical-errors hasn't been updated for the new Confidence type API
+        # go-finding: NOT followed — upstream hasn't been updated for the new Confidence type API
       };
     };
 
@@ -431,9 +436,11 @@
     };
 
     # go-auto-upgrade — Automate Go library upgrades
+    # ?ref=master since 2026-09-17: upstream a6d1e65 refreshed the stale
+    # vendorHash (FOD + package verified). Bumps flow via
+    # `nix flake lock --update-input go-auto-upgrade --refresh`.
     go-auto-upgrade = {
-      # INTERIM: pinned to pre-2026-09-13-update rev (stale vendorHash upstream).
-      url = "github:LarsArtmann/go-auto-upgrade/eb97a8b2bdce894b90a6ba5749c3062beccb0b9c";
+      url = "github:LarsArtmann/go-auto-upgrade?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
@@ -453,15 +460,14 @@
     # Go dep inputs (go-finding, go-output, etc.) are NOT followed — overriding
     # flake=false tarballs changes vendored content and breaks vendorHash.
     go-cqrs-lite = {
-      # Was INTERIM `git+file:///home/lars/worktrees/go-cqrs-lite-hashfix` - a
-      # local-path input that broke every CI eval (same class as art-dupl,
-      # 2026-09-15). The vendorHash refresh commit now lives on the pushed
-      # branch `cqrs-lint-vendorhash-fix` (d84e4d6a); git+ssh fetches on CI
-      # via the deploy key. master still carries the stale hash, so the
-      # branch ref stays until master catches up (art-dupl
-      # `refs/heads/fork` precedent). Branch-ref governed (pin policy
-      # 2026-09-16): the lock holds the exact rev until an explicit update.
-      url = "git+ssh://git@github.com/LarsArtmann/go-cqrs-lite?ref=refs/heads/cqrs-lint-vendorhash-fix";
+      # Was the `cqrs-lint-vendorhash-fix` branch pin (d84e4d6a) — a stale
+      # fork of master that CI could only fetch via deploy key. 2026-09-17:
+      # master itself carries a FRESHER cqrs-lint vendorHash refresh
+      # (0b5813f45, FOD + package verified) and 247 commits of the branch
+      # divergence are folded in, so the input rides master again
+      # (branch-ref governed per the 2026-09-16 pin policy). git+ssh kept
+      # (PRIVATE repo; CI fetches via NIX_DEPLOY_KEY_GO_CQRS_LITE).
+      url = "git+ssh://git@github.com/LarsArtmann/go-cqrs-lite?ref=refs/heads/master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
@@ -530,8 +536,10 @@
     # master moved past PMA's own pin under the old follows wiring).
     # PMA must consume its own locked build environment.
     projects-management-automation = {
-      # INTERIM: pinned to pre-2026-09-13-update rev (stale vendorHash upstream).
-      url = "github:LarsArtmann/projects-management-automation/9bbc7dfb9ecc02358b1502fbc34a8ffbffed05be";
+      # ?ref=master since 2026-09-17: upstream 4b634211 refreshed the stale
+      # vendorHash (FOD + package verified, PMA's own lock). Bumps flow via
+      # `nix flake lock --update-input projects-management-automation --refresh`.
+      url = "github:LarsArtmann/projects-management-automation?ref=master";
       inputs = {
         flake-parts.follows = "flake-parts";
       };
@@ -564,8 +572,10 @@
 
     # Overview — local project dashboard (discovers and browses git repos via web UI)
     overview = {
-      # INTERIM: pinned to pre-2026-09-13-update rev (stale vendorHash upstream).
-      url = "github:LarsArtmann/overview/73738794dcaadc242519e98042c942ab3df96df2";
+      # ?ref=master since 2026-09-17: upstream a0cfbc2 refreshed the stale
+      # vendorHash (FOD + package verified). Bumps flow via
+      # `nix flake lock --update-input overview --refresh`.
+      url = "github:LarsArtmann/overview?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
