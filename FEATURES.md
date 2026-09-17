@@ -449,7 +449,7 @@ The DNS blocker uses dnsblockd's embedded sdns recursive resolver — the sole D
 | crush-daily                  | Go          | ✅     | AI-powered dev insights from Crush databases — via flake input overlay                                                                                                                                                                   |
 | discordsync                  | Go          | ✅     | Discord channel backup bot — via flake input overlay                                                                                                                                                                                     |
 | overview                     | Go          | ✅     | Local project dashboard — via flake input overlay                                                                                                                                                                                        |
-| art-dupl + 10 Go tools       | Go          | ✅     | `mkLarsPackages` set (`lib/lars-packages.nix`): art-dupl, branching-flow, buildflow, cqrs-lint, go-auto-upgrade, go-structure-linter, hierarchical-errors, library-policy, md-go-validator, project-meta, projects-management-automation |
+| art-dupl + 10 Go tools       | Go          | ✅     | `mkLarsPackages` set (`lib/lars-packages.nix`): art-dupl, branching-flow, buildflow, cqrs-lint, go-auto-upgrade, go-structure-linter, erraudit, library-policy, md-go-validator, project-meta, projects-management-automation |
 
 ---
 

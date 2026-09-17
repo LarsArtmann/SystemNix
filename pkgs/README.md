@@ -14,7 +14,7 @@ Custom Nix package definitions used across SystemNix. All packages are built via
 
 > **Note:** The following tools are provided via upstream flake input overlays — no local package file needed:
 > dnsblockd, emeet-pixyd, monitor365, file-and-image-renamer, golangci-lint-auto-configure,
-> mr-sync, hierarchical-errors, library-policy, buildflow, go-auto-upgrade, go-structure-linter,
+> mr-sync, erraudit, library-policy, buildflow, go-auto-upgrade, go-structure-linter,
 > branching-flow, art-dupl, todo-list-ai.
 
 ---
