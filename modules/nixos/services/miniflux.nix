@@ -44,6 +44,104 @@ _: {
         inherit pkgs domain;
         serviceName = "miniflux";
       };
+
+      # Phase 1 (root, `+` ExecStartPre): resolve the Pocket ID user id
+      # (== OIDC `sub`, source-verified v2.14.0) from Pocket ID's SQLite and
+      # stage it in the unit's RuntimeDirectory. Loud failure prints the user
+      # table — never a silent skip.
+      minifluxOidcFetchScript = pkgs.writeShellScript "miniflux-oidc-setup-fetch" ''
+        set -euo pipefail
+        data_dir="${config.services.pocket-id.dataDir}/data"
+        sub_file="/run/miniflux-oidc-setup/sub"
+        username="${if cfg.oidcLink.username == null then "" else cfg.oidcLink.username}"
+        sqlite3="${pkgs.sqlite}/bin/sqlite3"
+
+        db="$data_dir/pocket-id.db"
+        if [ ! -f "$db" ]; then
+          db="$(ls -1 "$data_dir"/*.db 2>/dev/null | head -n1 || true)"
+        fi
+        if [ -z "$db" ] || [ ! -f "$db" ]; then
+          echo "miniflux-oidc-setup: Pocket ID SQLite DB not found under $data_dir — is Pocket ID initialized?" >&2
+          exit 1
+        fi
+
+        sub=""
+        if [ -n "$username" ]; then
+          sub="$($sqlite3 -readonly "$db" "SELECT id FROM users WHERE username = '$username' LIMIT 1;" || true)"
+          if [ -z "$sub" ]; then
+            sub="$($sqlite3 -readonly "$db" "SELECT id FROM users WHERE email LIKE '$username@%' LIMIT 1;" || true)"
+          fi
+        else
+          count="$($sqlite3 -readonly "$db" "SELECT count(*) FROM users;")"
+          if [ "$count" = "1" ]; then
+            sub="$($sqlite3 -readonly "$db" "SELECT id FROM users LIMIT 1;")"
+          fi
+        fi
+
+        if [ -z "$sub" ]; then
+          echo "miniflux-oidc-setup: could not resolve the Pocket ID user (configured username: ''${username:-<auto>}). Users present:" >&2
+          $sqlite3 -readonly "$db" "SELECT id, username, email FROM users;" >&2 || true
+          exit 1
+        fi
+        case "$sub" in
+          *[\!A-Za-z0-9-]*)
+            echo "miniflux-oidc-setup: resolved sub has unexpected characters — refusing to stage: $sub" >&2
+            exit 1
+            ;;
+        esac
+
+        printf '%s' "$sub" > "$sub_file"
+        chmod 0644 "$sub_file"
+        echo "miniflux-oidc-setup: resolved Pocket ID user -> sub=$sub (db=$db)"
+      '';
+
+      # Phase 2 (postgres, peer auth): converge users.openid_connect_id.
+      # psql -v + :'var' quoting — no shell-interpolated SQL strings.
+      minifluxOidcLinkScript = pkgs.writeShellScript "miniflux-oidc-setup-link" ''
+        set -euo pipefail
+        sub_file="/run/miniflux-oidc-setup/sub"
+        username="${if cfg.oidcLink.username == null then "" else cfg.oidcLink.username}"
+        psql="${config.services.postgresql.package}/bin/psql -v ON_ERROR_STOP=1"
+
+        sub="$(cat "$sub_file")"
+        case "$sub" in
+          *[\!A-Za-z0-9-]*)
+            echo "miniflux-oidc-setup: staged sub has unexpected characters — refusing: $sub" >&2
+            exit 1
+            ;;
+        esac
+
+        if [ -n "$username" ]; then
+          # Bounded wait: CREATE_ADMIN seeds the break-glass user at miniflux
+          # first start; on a fresh host that start races this unit.
+          target=""
+          for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+            count="$($psql -v u="$username" -tAc "SELECT count(*) FROM users WHERE username = :'u';" || true)"
+            if [ "''${count:-0}" -ge 1 ] 2>/dev/null; then target="$username"; break; fi
+            sleep 2
+          done
+        else
+          count="$($psql -tAc "SELECT count(*) FROM users;" || true)"
+          if [ "$count" = "1" ]; then
+            target="$($psql -tAc "SELECT username FROM users LIMIT 1;")"
+          fi
+        fi
+        if [ -z "''${target:-}" ]; then
+          echo "miniflux-oidc-setup: no miniflux user matched (configured username: ''${username:-<auto>}). Users present:" >&2
+          $psql -c "SELECT id, username, openid_connect_id FROM users;" >&2 || true
+          exit 1
+        fi
+
+        current="$($psql -v u="$target" -tAc "SELECT openid_connect_id FROM users WHERE username = :'u' LIMIT 1;")"
+        if [ "$current" = "$sub" ]; then
+          echo "miniflux-oidc-setup: already linked (user=$target sub=$sub)"
+          exit 0
+        fi
+
+        $psql -v u="$target" -v s="$sub" -c "UPDATE users SET openid_connect_id = :'s' WHERE username = :'u';"
+        echo "miniflux-oidc-setup: linked miniflux user '$target' -> Pocket ID sub $sub (was: ''${current:-<empty>})"
+        $psql -v u="$target" -c "SELECT id, username, openid_connect_id FROM users WHERE username = :'u';"
+      '';
     in
     {
       options.services.miniflux.disableLocalAuth = lib.mkOption {
@@ -61,7 +159,46 @@ _: {
         '';
       };
 
-      config = lib.mkIf cfg.enable {
+      options.services.miniflux.oidcLink = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = ''
+            Provision the miniflux ⇄ Pocket ID account link declaratively
+            (miniflux-oidc-setup oneshot): resolve the Pocket ID user id
+            (== the OIDC `sub` claim — source-verified v2.14.0) from Pocket
+            ID's SQLite and converge miniflux's `users.openid_connect_id`.
+            Without this link the FIRST SSO login hard-fails 400 "This user
+            already exists." — the unauthenticated callback resolves users
+            ONLY by openid_connect_id (never by username) and, with
+            OAUTH2_USER_CREATION=1, tries to CREATE a colliding user instead.
+            Idempotent: converges on every boot + deploy.sh provisioner run;
+            re-links automatically if Pocket ID's DB is ever recreated (its
+            user ids change — the 2026-08-22 SQLITE_BUSY DB-recreation class).
+          '';
+        };
+        username = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = ''
+            Pocket ID username (or exact email prefix) of the human to link,
+            and the miniflux user to attach it to. null = auto: exactly ONE
+            user on each side is required, otherwise the unit fails loudly
+            printing both user tables (browser-history fresh-host doctrine:
+            converge when possible, never guess silently).
+          '';
+        };
+      };
+
+      config =
+        lib.mkIf cfg.enable {
+          assertions = [
+            {
+              assertion = !cfg.oidcLink.enable || enableOidc;
+              message = "services.miniflux.oidcLink.enable requires the Pocket ID OIDC stack (services.pocket-id-config.enable + provision.enable) — there is no Pocket ID sub to link without it.";
+            }
+          ];
+
         services.miniflux = {
           config = {
             LISTEN_ADDR = "127.0.0.1:${toString ports.miniflux}";
@@ -120,6 +257,50 @@ _: {
             })
             oidcGate.serviceConfig
           ];
+        };
+
+        # Declarative account link (Pocket ID sub -> miniflux
+        # users.openid_connect_id). Two-phase unit: the `+`-prefixed
+        # ExecStartPre runs as ROOT (full privileges — reads Pocket ID's
+        # 0700-pocket-id-owned SQLite) and drops the resolved sub into the
+        # shared RuntimeDirectory; ExecStart runs as `postgres` (peer auth)
+        # and converges the SQL. split identity = no su/runuser (PAM dies
+        # under harden{}), no CAP juggling: each phase owns its resource.
+        # Convergence semantics (browser-history provisioner doctrine):
+        # already-linked = no-op; Pocket ID DB recreation (new sub) = clean
+        # re-link; unresolvable user = loud failure + OnFailure alert.
+        # deploy-restart-audit: `-setup` suffix is a converger pattern —
+        # restart per deploy via the scripts/deploy.sh provisioner loop.
+        systemd.services = lib.optionalAttrs (enableOidc && cfg.oidcLink.enable) {
+          miniflux-oidc-setup = {
+            description = "Link miniflux user to Pocket ID (openid_connect_id)";
+            wantedBy = [ "multi-user.target" ];
+            after = [
+              "miniflux.service"
+              "pocket-id.service"
+            ];
+            wants = [
+              "miniflux.service"
+              "pocket-id.service"
+            ];
+            inherit onFailure;
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = "postgres";
+                Group = "postgres";
+                RemainAfterExit = true;
+                RuntimeDirectory = "miniflux-oidc-setup";
+                RuntimeDirectoryMode = "0755";
+                ExecStartPre = "+${minifluxOidcFetchScript}";
+                ExecStart = "${minifluxOidcLinkScript}";
+              }
+              (harden { MemoryMax = "128M"; })
+              (serviceOneshotDefaults { })
+            ];
+          };
         };
 
         # Nightly backup of the whole Miniflux state (PostgreSQL only — the
