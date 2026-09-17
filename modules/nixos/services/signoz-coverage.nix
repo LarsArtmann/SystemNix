@@ -78,8 +78,12 @@
           lib.mapAttrsToList (unit: e: {
             service = e.serviceName;
             inherit unit;
+            inherit (e) wiring;
             maxAgeSeconds = e.maxAgeHours * 3600;
-            enforced = e.wiring != "upstream";
+            # Freshness enforcement applies ONLY to continuous services.
+            # "event" entries are wired and verified but work-driven: any
+            # finite budget is a standing page between conversions.
+            enforced = e.wiring == "env" || e.wiring == "config";
           }) cfg.expected
         )
       );
@@ -153,7 +157,7 @@
           }
 
           ENFORCED_TOTAL=$(jq '[.[] | select(.enforced)] | length' ${expectedJson})
-          UPSTREAM_GAPS=$(jq '[.[] | select(.enforced | not)] | length' ${expectedJson})
+          UPSTREAM_GAPS=$(jq '[.[] | select(.wiring == "upstream")] | length' ${expectedJson})
           # Budget ratchet: a registry that GROWS its upstream-gap count past
           # maxUpstreamGaps must consciously raise the budget — a Gatus check
           # pages on the breach (new silent noops may not slip in unnoticed).
@@ -294,7 +298,7 @@
 
       reverseViolations = lib.map (
         unit:
-        "signoz-coverage: systemd unit \"${unit}\" sets OTEL_EXPORTER_OTLP_ENDPOINT but is NOT in services.signoz-coverage.expected — if the binary cannot emit spans the env var is a silent noop (the fastflowlm/overview class). Register it with the right wiring (\"env\"/\"config\"/\"upstream\") or add it to untrackedOtelUnits with a reason."
+        "signoz-coverage: systemd unit \"${unit}\" sets OTEL_EXPORTER_OTLP_ENDPOINT but is NOT in services.signoz-coverage.expected — if the binary cannot emit spans the env var is a silent noop (the fastflowlm/overview class). Register it with the right wiring (\"env\"/\"config\"/\"upstream\"/\"event\") or add it to untrackedOtelUnits with a reason."
       ) unregisteredOtelUnits;
     in
     {
@@ -315,19 +319,24 @@
                     "env"
                     "config"
                     "upstream"
+                    "event"
                   ];
                   description = ''
                     How traces are wired: "env" = unit sets OTEL_EXPORTER_OTLP_ENDPOINT
                     and spans are ENFORCED within maxAgeHours; "config" = traces enabled
                     via service-native config (no env assertion, still enforced);
                     "upstream" = KNOWN GAP, binary cannot emit yet (env is set in
-                    anticipation) — visible via signoz_traces_upstream_gaps, not alerting.
+                    anticipation) — visible via signoz_traces_upstream_gaps, not alerting;
+                    "event" = env-wired and verified EMITTING, but spans only occur when
+                    actual work happens at an unpredictable cadence, so freshness is
+                    reported (expected/reporting gauges) and never paged — availability
+                    stays owned by the service's own health check.
                   '';
                 };
                 maxAgeHours = lib.mkOption {
                   type = int;
                   default = 26;
-                  description = "Span freshness budget. Dense services: 26h. Event-driven ones (renamer, gotenberg): 720h.";
+                  description = "Span freshness budget (enforced wiring only). Dense services: 26h. Event-driven with regular work (renamer): 720h. Unpredictable-cadence emitters belong in wiring \"event\", not a bigger budget.";
                 };
               };
             });
@@ -382,7 +391,19 @@
             # Same binary (health subcommand), same serviceName — spans of both
             # units are attributed to "file-and-image-renamer".
             file-and-image-renamer-health = env "file-and-image-renamer" 720;
-            gotenberg = env "gotenberg" 720; # spans only when paperless converts office docs
+            # Reclassified to "event" 2026-09-17: 0 spans ALL-TIME in the
+            # retention window (ClickHouse distributed_signoz_index_v3) while
+            # the exporter wiring is proven (it emitted spans pre-2026-09
+            # whenever paperless converted office docs). Zero conversions in
+            # 30d+ is the service working as designed, not a dark exporter —
+            # any freshness budget on this cadence is a standing false page
+            # (the "SigNoz Trace Coverage Missing" firing >24h class).
+            # Liveness stays owned by the gotenberg /health Gatus check.
+            gotenberg = {
+              serviceName = "gotenberg";
+              wiring = "event";
+              maxAgeHours = 720;
+            };
 
             # FLIPPED to enforced 2026-09-13 (task queue): the flip's own
             # prerequisites were already satisfied when audited — the
