@@ -489,6 +489,11 @@ _: {
             LOG_LEVEL = "info";
             VERSION_CHECK_DISABLED = true;
             AUDIT_LOG_RETENTION_DAYS = "90";
+            # Explicit env-mode pin of Pocket ID's CIMD gate (default is also
+            # "[]" = deny-all): keeps the no-CIMD decision load-bearing in the
+            # module instead of relying on upstream defaults. See AGENTS.md,
+            # SSO/OIDC section (decision 2026-09-17).
+            CIMD_URL_ALLOWLIST = "[]";
             DB_CONNECTION_STRING = "data/pocket-id.db";
             # Bind the francis actor-host WebTransport (QUIC) server to localhost
             # only. Single-instance setup doesn't need P2P on 0.0.0.0:1414.
