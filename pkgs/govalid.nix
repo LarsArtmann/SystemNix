@@ -2,9 +2,12 @@
 let
   inherit (pkgs) lib;
 in
-pkgs.buildGo126Module {
+pkgs.buildGo127Module {
   pname = "govalid";
-  version = "0-unstable-2026-05-16";
+  # Built with go1.27 since 2026-09-17: the go1.26-built binary's
+  # source-processing packages cannot type-check `encoding/json/v2` imports,
+  # which broke govalid's markers analysis on go 1.27 workspaces (BuildFlow).
+  version = "0-unstable-2026-09-17";
 
   src = pkgs.fetchFromGitHub {
     owner = "sivchari";
