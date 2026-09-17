@@ -22,11 +22,15 @@ let
   # committed vendor/ tree is bypassed and the FOD downloads the patched
   # graph. Drop the patches when the pinned SigNoz revs move and carry a
   # Go-1.26-compatible sonic on their own.
+  # `name` is REQUIRED since the 2026-09-17 nixpkgs bump: applyPatches
+  # now throws when src is a fetched flake tree (attrset without a name).
   collectorSrcPatched = pkgs.applyPatches {
+    name = "signoz-otel-collector-${collectorVersion}-patched";
     src = collectorSrc;
     patches = [ ./patches/signoz-collector-sonic-go126.patch ];
   };
   srcPatched = pkgs.applyPatches {
+    name = "signoz-${version}-patched";
     src = src;
     patches = [ ./patches/signoz-sonic-go126.patch ];
   };
