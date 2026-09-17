@@ -353,6 +353,11 @@ in
       # Runbook: docs/services/miniflux.md
       miniflux.enable = true;
       miniflux.oidcLink.enable = true;
+      # Explicit, not auto: auto mode requires exactly ONE Pocket ID user and
+      # one miniflux user; prod Pocket ID's user count is not guaranteed to
+      # stay 1. 'lars' matches both the Pocket ID username and the break-glass
+      # miniflux admin (email-prefix fallback: LIKE 'lars@%').
+      miniflux.oidcLink.username = "lars";
       # Central outbound mail relay (Postfix null client on 127.0.0.1:25 →
       # authenticated Resend submission). Ships with a PLACEHOLDER sops
       # credential: every send defers in the postfix queue until the real

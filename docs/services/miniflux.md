@@ -11,7 +11,8 @@ native OIDC via Pocket ID. Wraps the nixpkgs `services.miniflux` module
 | UI/API     | `https://rss.home.lan` (plain Caddy `reverse_proxy` — NEVER protectedVHost, it has native OIDC) |
 | Listen     | `127.0.0.1:8101` (`lib/ports.nix` `miniflux`)                       |
 | Database   | local PostgreSQL `miniflux` (peer auth, `createDatabaseLocally`)    |
-| Daily auth | Pocket ID OIDC — first login auto-creates the user (`OAUTH2_USER_CREATION=1`) |
+| Service user | static system user `miniflux` (wrapper overrides upstream's DynamicUser — see below) |
+| Daily auth | Pocket ID OIDC — the `miniflux-oidc-setup` provisioner links the account declaratively |
 | Break-glass| local admin `lars` — password in sops (below)                        |
 | Monitoring | Gatus "Miniflux" (`/healthcheck` = DB round-trip) + "Miniflux Login Renders"; `miniflux` in system-health `monitoredServices` |
 | Backup     | `miniflux-backup.timer` 02:45 → `pg_dump -Fc` → `/mnt/pool/backups/miniflux/` (14d retention, backup-coordination, maxAge 25h) |
@@ -22,6 +23,14 @@ writes `/var/lib/pocket-id/client-secrets/miniflux`, the unit binds it via
 OIDC discovery is lazy (per login, non-fatal — `internal/oauth2/manager.go`),
 so the service starts even while `auth.home.lan` is briefly unreachable; the
 `mkOidcGate` probe (300s) only gates the boot transaction.
+
+**Static service user (2026-09-17):** upstream sets `DynamicUser = true`, which
+makes postgres peer auth depend on nsncd being alive (glibc can only load
+`libnss_systemd` inside the nscd process — `system.nssModules` "Only works with
+nscd!"). When nsncd wedges, postgres answers `could not look up local user ID:
+user does not exist` and miniflux crash-loops `Peer authentication failed` —
+reproduced in the VM. The wrapper declares a static `users.users.miniflux` +
+`DynamicUser = mkForce false`; peer auth is then a plain /etc/passwd lookup.
 
 ## Go-live / credentials
 
@@ -42,23 +51,59 @@ Daily login: `rss.home.lan` → "Sign in with Pocket ID". If Pocket ID is
 unreachable, the lazy OIDC init logs an error and the login button fails —
 use the admin break-glass (password form stays enabled by design).
 
-**First login 400s "This user already exists." (fixed 2026-09-11):** Miniflux
-2.3.3 never links an OIDC identity by username — the unauthenticated callback
-looks the user up ONLY by `openid_connect_id` (= the Pocket ID `sub` UUID) and,
-with `OAUTH2_USER_CREATION=1`, refuses on a username collision with the
-pre-seeded `lars` break-glass admin (HTTP 400 `error.user_already_exists`;
-source-verified `internal/ui/oauth2_callback.go` at v2.3.3). Fix = upstream's
-designed linking flow, zero SQL:
+**First login 400s "This user already exists." — PRIMARY FIX: the declarative
+link (2026-09-17):** Miniflux never links an OIDC identity by username — the
+unauthenticated callback resolves the user ONLY by `openid_connect_id` (= the
+Pocket ID `sub` UUID; source-verified v2.3.3 `internal/ui/oauth2_callback.go`)
+and, with `OAUTH2_USER_CREATION=1`, refuses on a username collision with the
+pre-seeded `lars` break-glass admin (HTTP 400 `error.user_already_exists`).
+`services.miniflux.oidcLink.enable = true` (set on evo-x2) deploys the
+`miniflux-oidc-setup` oneshot which converges the link declaratively:
 
-1. Log in with the break-glass password (above).
-2. Settings → "Link your Pocket ID account" (= GET `/oauth2/oidc/redirect` —
-   that handler has no auth check, works from any session) → passkey ceremony.
-3. The callback's authenticated branch writes `openid_connect_id = <sub>` and
-   flashes "account linked"; Settings then shows Unlink (upstream refuses
-   unlinking once `DISABLE_LOCAL_AUTH=1`).
-4. Log out → "Sign in with Pocket ID" logs straight in. Journal proof:
-   `User authenticated successfully using OAuth2 … username=lars`. That first
-   live SSO login also satisfies the `disableLocalAuth` go-live gate below.
+- **Resolution**: phase 1 (root `+` ExecStartPre) reads Pocket ID's SQLite
+  (`/var/lib/pocket-id/data/pocket-id.db`) and resolves the user id — explicit
+  `services.miniflux.oidcLink.username`, or auto mode: exactly ONE user on
+  each side is required, otherwise the unit fails LOUDLY printing both user
+  tables (never guesses).
+- **Convergence**: phase 2 (runs as `postgres`, peer auth, `psql -d miniflux`)
+  writes `users.openid_connect_id` after a bounded wait (15×2s) for miniflux's
+  first-start CREATE_ADMIN; already-linked = no-op; a Pocket ID DB recreation
+  (fresh subs) re-links automatically on the next run.
+- **When it runs**: every boot (`wantedBy = multi-user.target`) + every deploy
+  (deploy.sh provisioner loop restarts it — `-setup` converger pattern).
+- **Failure semantics**: wrong/missing sub → loud unit failure + OnFailure
+  alert; SSO keeps failing with the SAME 400 (never lockout, password login
+  unaffected).
+
+Journal check: `journalctl -u miniflux-oidc-setup` → `linked miniflux user
+'lars' -> Pocket ID sub <uuid>` or `already linked`.
+
+**Manual emergency fallback (no deploy):** derive the sub from Pocket ID's
+SQLite and guarded-UPDATE miniflux directly — same end state as upstream's
+`PopulateUserWithProfileID`, no restart needed:
+
+```bash
+# 1. sub (root reads pocket-id's 0700 data dir)
+sudo sqlite3 /var/lib/pocket-id/data/pocket-id.db \
+  "SELECT id, username FROM users;"
+# 2. link (IS-NULL guard = idempotent; wrong sub fails safe: lookup misses →
+#    same 400, no lockout)
+sudo -u postgres psql -d miniflux -c \
+  "UPDATE users SET openid_connect_id='<sub-from-step-1>' WHERE username='lars' AND openid_connect_id IS NULL;"
+```
+
+**Upstream interactive alternative (no SQL):** break-glass password login →
+Settings → "Link your Pocket ID account" (= GET `/oauth2/oidc/redirect` — that
+handler has no auth check, works from any session) → passkey ceremony → the
+callback's authenticated branch writes `openid_connect_id`. Journal proof of
+success either way: `User authenticated successfully using OAuth2 …
+username=lars`. That first live SSO login also satisfies the
+`disableLocalAuth` go-live gate below.
+
+**psql traps (both burned in the VM test 2026-09-17):** without `-d miniflux`,
+psql connects to the database named after the invoking USER (postgres →
+`relation "users" does not exist` while the table is fine), and psql 17 does
+NOT interpolate `:'var'` meta-variables inside `-c` (literal hits the server).
 
 **Login-page URL fact (live-verified 2026-09-11, miniflux 2.3.3):** the
 sign-in page is served at `/` for unauthenticated sessions. `/login` is the
@@ -91,6 +136,9 @@ redeploy; the admin account stays in the database regardless.
 `tests/test-miniflux.nix` (registered in `tests/default.nix`): boots the
 module with mock sops + fake Pocket ID secret against a real PostgreSQL and a
 real mounted pool; asserts `/healthcheck`, login-page HTML, admin API auth,
-OAUTH2/LoadCredential wiring in the unit, and a PGDMP-magic dump landing in
-`/mnt/pool/backups/miniflux`. The OIDC gate curl probe is neutered in the VM
+OAUTH2/LoadCredential wiring in the unit, a PGDMP-magic dump landing in
+`/mnt/pool/backups/miniflux`, and the declarative link (step 5: fixture Pocket
+ID user `vmadmin` ≠ miniflux admin `admin` proves resolution by uniqueness;
+converged `openid_connect_id` asserted via `psql -d miniflux`; idempotent
+re-run logs "already linked"). The OIDC gate curl probe is neutered in the VM
 (no `auth.home.lan` there).
