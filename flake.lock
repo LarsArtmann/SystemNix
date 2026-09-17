@@ -765,11 +765,11 @@
         "treefmt-nix": "treefmt-nix_4"
       },
       "locked": {
-        "lastModified": 1789653176,
-        "narHash": "sha256-FuCPEoHgAokwfrMqJ18Wa0KTeBFZjU+aV8kVfNMtcWA=",
+        "lastModified": 1789669410,
+        "narHash": "sha256-KQ/NTa7ncKLCCIbFweITRlfgGji2qvQwdL4NILKzjh8=",
         "ref": "master",
-        "rev": "ef1ce387b8331618816d8c08927232c9cf58f198",
-        "revCount": 5141,
+        "rev": "65c8fcd5787cb7259c385466467ffb40c24b68ff",
+        "revCount": 5142,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
@@ -857,11 +857,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789662718,
-        "narHash": "sha256-ue3WCLO9ji4Ek77xGyorW4szS+WcVsr9UNEcq3MY8rw=",
+        "lastModified": 1789670707,
+        "narHash": "sha256-3JLWTdsAQxoadfFy5p7c8EKZBs+LJmhFFivJNumtw2s=",
         "owner": "LarsArtmann",
         "repo": "DiscordSync",
-        "rev": "a15d28a3c9b28c53f875d3771ca9383a75e5d3c6",
+        "rev": "6a8daf57a4c46d983da075812dd7b7eb271dffb9",
         "type": "github"
       },
       "original": {
@@ -1031,11 +1031,11 @@
         "vision-review-agent-src": "vision-review-agent-src"
       },
       "locked": {
-        "lastModified": 1789670966,
-        "narHash": "sha256-1QP8rDTBNhMEuN/2et6/lH4vA/JTLEXn0C8cA5XnR+w=",
+        "lastModified": 1789671692,
+        "narHash": "sha256-6seXSFLggky/p4S/hIftP+xM8+SWPbzWNZ3MEPeCNpY=",
         "ref": "refs/heads/master",
-        "rev": "6f58318a60576b5f6fce2cb5403892decbac4af8",
-        "revCount": 1271,
+        "rev": "38b23524e69975bff18b5b8dbeef2cde74fac1aa",
+        "revCount": 1273,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/file-and-image-renamer"
       },
@@ -2460,11 +2460,11 @@
     "go-cqrs-lite_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1789630113,
-        "narHash": "sha256-mjqp0pD0kIWkO3ZoGBHmghK6XUQ8AIs5caMxL8JIwjA=",
+        "lastModified": 1789666310,
+        "narHash": "sha256-ydVL1HbuzkLuOeBjobhCQkQuNGlcUuE7IkgirpVzBVg=",
         "ref": "master",
-        "rev": "f3cd9e16eb2d64fe2f273540ab7bab6c2704c18b",
-        "revCount": 6870,
+        "rev": "0b5813f45de58da6e480967644009874779ff33b",
+        "revCount": 6878,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       },
@@ -5186,11 +5186,11 @@
         "uv2nix": "uv2nix"
       },
       "locked": {
-        "lastModified": 1789668316,
-        "narHash": "sha256-UT8JdY1ey1vgB8JHJLBq/Qna+3LVCYdFGIv2lVQZadw=",
+        "lastModified": 1789671078,
+        "narHash": "sha256-KKtaUv35KTPy1eD7EL8G2S7GTg+nbz5yx9pwxAl7FL8=",
         "owner": "NousResearch",
         "repo": "hermes-agent",
-        "rev": "dd13b475463dc91d37b360dfc674c698b633340a",
+        "rev": "8ffc2f03693f8d502d8d08deb15e21846035d4b4",
         "type": "github"
       },
       "original": {
