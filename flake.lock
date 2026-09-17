@@ -5300,11 +5300,11 @@
         "treefmt-nix": "treefmt-nix_10"
       },
       "locked": {
-        "lastModified": 1789616927,
-        "narHash": "sha256-B1JTwYni/CQcFJm3Kuca5GqOCp2Q7ZhebvWuWFj1erg=",
+        "lastModified": 1789623667,
+        "narHash": "sha256-CBuCRz5HLXLrG3yGbrFEHHowGM5hItPiGtqLsC0kGNg=",
         "owner": "LarsArtmann",
         "repo": "InboxClean",
-        "rev": "1e8357174f7b8771de3e5bdedc694c2ea1cd5111",
+        "rev": "91e5e622af126d69899544265e839d40a9473217",
         "type": "github"
       },
       "original": {
