@@ -14,7 +14,9 @@ let
   src = inputs.signoz-src;
   collectorSrc = inputs.signoz-collector-src;
 
-  buildGoModule = pkgs.buildGoModule.override { go = pkgs.go_1_25; };
+  # go_1_25 was removed from nixpkgs (EOL 2026-09); go_1_26 builds the pinned
+  # revs fine (vendorHashes unchanged).
+  buildGoModule = pkgs.buildGoModule.override { go = pkgs.go_1_26; };
 
   # SigNoz frontend: pnpm 10 workspace (engines pin ">=10 <11"), rolldown-vite
   # (npm-aliased as "vite"), built to a static dist served by the Go binary
