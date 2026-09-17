@@ -190,14 +190,13 @@ _: {
         };
       };
 
-      config =
-        lib.mkIf cfg.enable {
-          assertions = [
-            {
-              assertion = !cfg.oidcLink.enable || enableOidc;
-              message = "services.miniflux.oidcLink.enable requires the Pocket ID OIDC stack (services.pocket-id-config.enable + provision.enable) — there is no Pocket ID sub to link without it.";
-            }
-          ];
+      config = lib.mkIf cfg.enable {
+        assertions = [
+          {
+            assertion = !cfg.oidcLink.enable || enableOidc;
+            message = "services.miniflux.oidcLink.enable requires the Pocket ID OIDC stack (services.pocket-id-config.enable + provision.enable) — there is no Pocket ID sub to link without it.";
+          }
+        ];
 
         services.miniflux = {
           config = {
@@ -238,40 +237,41 @@ _: {
           };
         };
 
-        systemd.services.miniflux = {
-          description = lib.mkForce "Miniflux RSS reader";
-          inherit onFailure;
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
-          # The OIDC discovery/token calls go through Caddy's TLS (dnsblockd-CA
-          # signed) — Go needs the system trust store (browser-history pattern).
-          environment.SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
-          inherit (oidcGate) after wants;
-          serviceConfig = lib.mkMerge [
-            { MemoryMax = "512M"; }
-            ioTier.background
-            (lib.optionalAttrs enableOidc {
-              LoadCredential = [
-                "miniflux-oidc-secret:${config.services.pocket-id.dataDir}/client-secrets/miniflux"
-              ];
-            })
-            oidcGate.serviceConfig
-          ];
-        };
-
-        # Declarative account link (Pocket ID sub -> miniflux
-        # users.openid_connect_id). Two-phase unit: the `+`-prefixed
-        # ExecStartPre runs as ROOT (full privileges — reads Pocket ID's
-        # 0700-pocket-id-owned SQLite) and drops the resolved sub into the
-        # shared RuntimeDirectory; ExecStart runs as `postgres` (peer auth)
-        # and converges the SQL. split identity = no su/runuser (PAM dies
-        # under harden{}), no CAP juggling: each phase owns its resource.
-        # Convergence semantics (browser-history provisioner doctrine):
-        # already-linked = no-op; Pocket ID DB recreation (new sub) = clean
-        # re-link; unresolvable user = loud failure + OnFailure alert.
-        # deploy-restart-audit: `-setup` suffix is a converger pattern —
-        # restart per deploy via the scripts/deploy.sh provisioner loop.
-        systemd.services = lib.optionalAttrs (enableOidc && cfg.oidcLink.enable) {
+        systemd.services = {
+          miniflux = {
+            description = lib.mkForce "Miniflux RSS reader";
+            inherit onFailure;
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+            # The OIDC discovery/token calls go through Caddy's TLS (dnsblockd-CA
+            # signed) — Go needs the system trust store (browser-history pattern).
+            environment.SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
+            inherit (oidcGate) after wants;
+            serviceConfig = lib.mkMerge [
+              { MemoryMax = "512M"; }
+              ioTier.background
+              (lib.optionalAttrs enableOidc {
+                LoadCredential = [
+                  "miniflux-oidc-secret:${config.services.pocket-id.dataDir}/client-secrets/miniflux"
+                ];
+              })
+              oidcGate.serviceConfig
+            ];
+          };
+        }
+        // lib.optionalAttrs (enableOidc && cfg.oidcLink.enable) {
+          # Declarative account link (Pocket ID sub -> miniflux
+          # users.openid_connect_id). Two-phase unit: the `+`-prefixed
+          # ExecStartPre runs as ROOT (full privileges — reads Pocket ID's
+          # 0700-pocket-id-owned SQLite) and drops the resolved sub into the
+          # shared RuntimeDirectory; ExecStart runs as `postgres` (peer auth)
+          # and converges the SQL. Split identity = no su/runuser (PAM dies
+          # under harden{}), no CAP juggling: each phase owns its resource.
+          # Convergence semantics (browser-history provisioner doctrine):
+          # already-linked = no-op; Pocket ID DB recreation (new sub) = clean
+          # re-link; unresolvable user = loud failure + OnFailure alert.
+          # deploy-restart-audit: `-setup` suffix is a converger pattern —
+          # restart per deploy via the scripts/deploy.sh provisioner loop.
           miniflux-oidc-setup = {
             description = "Link miniflux user to Pocket ID (openid_connect_id)";
             wantedBy = [ "multi-user.target" ];
@@ -301,76 +301,77 @@ _: {
               (serviceOneshotDefaults { })
             ];
           };
-        };
+        }
+        // {
+          # Nightly backup of the whole Miniflux state (PostgreSQL only — the
+          # app is stateless). pg_dump custom format as the postgres superuser
+          # over peer auth; cv-backup dir-oneshot pattern for the pool leaf.
+          miniflux-backup-dir = {
+            description = "Create Miniflux backup directory on the HDD pool";
+            wantedBy = [ "multi-user.target" ];
+            unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = "root";
+                RemainAfterExit = true;
+              }
+              # ReadWritePaths targets the MOUNT ROOT (cv-backup-dir 226/NAMESPACE
+              # lesson): on a fresh pool the leaf does not exist yet.
+              (harden {
+                MemoryMax = "128M";
+                ReadWritePaths = [ "/mnt/pool" ];
+                # chown to postgres so the dumper (User=postgres) can write;
+                # harden{}'s empty bounding set would strip CAP_CHOWN.
+                CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
+              })
+              (serviceOneshotDefaults { })
+            ];
+            script = ''
+              mkdir -p ${backupDir}
+              chown postgres:postgres ${backupDir}
+              chmod 0755 ${backupDir}
+            '';
+          };
 
-        # Nightly backup of the whole Miniflux state (PostgreSQL only — the
-        # app is stateless). pg_dump custom format as the postgres superuser
-        # over peer auth; cv-backup dir-oneshot pattern for the pool leaf.
-        systemd.services.miniflux-backup-dir = {
-          description = "Create Miniflux backup directory on the HDD pool";
-          wantedBy = [ "multi-user.target" ];
-          unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
-          serviceConfig = lib.mkMerge [
-            {
-              Type = "oneshot";
-              User = "root";
-              RemainAfterExit = true;
-            }
-            # ReadWritePaths targets the MOUNT ROOT (cv-backup-dir 226/NAMESPACE
-            # lesson): on a fresh pool the leaf does not exist yet.
-            (harden {
-              MemoryMax = "128M";
-              ReadWritePaths = [ "/mnt/pool" ];
-              # chown to postgres so the dumper (User=postgres) can write;
-              # harden{}'s empty bounding set would strip CAP_CHOWN.
-              CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
-            })
-            (serviceOneshotDefaults { })
-          ];
-          script = ''
-            mkdir -p ${backupDir}
-            chown postgres:postgres ${backupDir}
-            chmod 0755 ${backupDir}
-          '';
-        };
-
-        systemd.services.miniflux-backup = {
-          description = "Miniflux PostgreSQL backup (pg_dump custom format)";
-          after = [
-            "postgresql.target"
-            "miniflux.service"
-            "miniflux-backup-dir.service"
-          ];
-          wants = [
-            "miniflux-backup-dir.service"
-            "postgresql.target"
-          ];
-          # Order AFTER the pool mount: a detached DAS fails the run as a clean
-          # dependency error instead of 226/NAMESPACE (btrbk doctrine).
-          unitConfig.RequiresMountsFor = [ backupDir ];
-          inherit onFailure;
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
-          serviceConfig = lib.mkMerge [
-            {
-              Type = "oneshot";
-              User = "postgres";
-              Group = "postgres";
-              ExecStart = pkgs.writeShellScript "miniflux-backup" ''
-                set -euo pipefail
-                dst="${backupDir}/miniflux-$(date +%Y-%m-%d).dump"
-                ${config.services.postgresql.package}/bin/pg_dump \
-                  --format=custom --file="$dst" miniflux
-                chmod 0644 "$dst"
-                # 14-day retention (cv-backup pattern): full dump each night.
-                find ${backupDir} -name "miniflux-*.dump" -mtime +14 -delete
-                echo "miniflux-backup: wrote $dst"
-              '';
-              ReadWritePaths = [ backupDir ];
-            }
-            (serviceOneshotDefaults { })
-            ioTier.background
-          ];
+          miniflux-backup = {
+            description = "Miniflux PostgreSQL backup (pg_dump custom format)";
+            after = [
+              "postgresql.target"
+              "miniflux.service"
+              "miniflux-backup-dir.service"
+            ];
+            wants = [
+              "miniflux-backup-dir.service"
+              "postgresql.target"
+            ];
+            # Order AFTER the pool mount: a detached DAS fails the run as a clean
+            # dependency error instead of 226/NAMESPACE (btrbk doctrine).
+            unitConfig.RequiresMountsFor = [ backupDir ];
+            inherit onFailure;
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = "postgres";
+                Group = "postgres";
+                ExecStart = pkgs.writeShellScript "miniflux-backup" ''
+                  set -euo pipefail
+                  dst="${backupDir}/miniflux-$(date +%Y-%m-%d).dump"
+                  ${config.services.postgresql.package}/bin/pg_dump \
+                    --format=custom --file="$dst" miniflux
+                  chmod 0644 "$dst"
+                  # 14-day retention (cv-backup pattern): full dump each night.
+                  find ${backupDir} -name "miniflux-*.dump" -mtime +14 -delete
+                  echo "miniflux-backup: wrote $dst"
+                '';
+                ReadWritePaths = [ backupDir ];
+              }
+              (serviceOneshotDefaults { })
+              ioTier.background
+            ];
+          };
         };
 
         systemd.timers.miniflux-backup = {
