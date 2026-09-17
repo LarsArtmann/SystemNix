@@ -4032,11 +4032,11 @@
         "treefmt-nix": "treefmt-nix_8"
       },
       "locked": {
-        "lastModified": 1789454960,
-        "narHash": "sha256-S5xNOX9javK6YnvyJkKN4S2IhlhfZEV8ZCl0ANF1rJA=",
+        "lastModified": 1789630646,
+        "narHash": "sha256-rCkNGhVw3bEgdoP+SgbRT/I21YNQRDq6X+Y4OQHOjXE=",
         "owner": "LarsArtmann",
         "repo": "go-nix-helpers",
-        "rev": "c42fd7786ce1d188017c189151bbcb56aad12951",
+        "rev": "19fc8e5986d59f57ff8780fcbc5623fb412c345f",
         "type": "github"
       },
       "original": {
@@ -4658,11 +4658,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789630028,
-        "narHash": "sha256-KaoQHFarUwYBkbnqjlLp2DcfsnCsX3lBZaJzHveBlBM=",
+        "lastModified": 1789630710,
+        "narHash": "sha256-DskfGr+z/k58LAGlp7/AEzyTMKomdkveL/D+17X2d40=",
         "owner": "LarsArtmann",
         "repo": "go-taskqueue",
-        "rev": "1c4847818c7b92f45cbb267bd75bbc5c9c5b4187",
+        "rev": "8d3de303d72c65eda606d93956f113f7a36d423a",
         "type": "github"
       },
       "original": {
