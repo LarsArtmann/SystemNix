@@ -424,6 +424,9 @@ in
       # default, opt-in for ops review. See modules/nixos/services/.
       systemd-graph.enable = true;
       systemd-timer-monitor.enable = true;
+      # Every 6h: self-assign unassigned open issues/PRs across all owned
+      # GitHub repos (rides the user's existing gh CLI auth).
+      github-auto-assign.enable = true;
       browser-policies = {
         enable = true;
         chromiumExtensions =
