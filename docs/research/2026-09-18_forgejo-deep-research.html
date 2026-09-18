@@ -907,10 +907,11 @@
             staleness/failure metrics that caught a real 14-day silent outage, daily
             full dumps to the RAID1 pool, hardened systemd units, and a wired Actions
             runner. The gaps are almost all <em>unused capability</em>, not
-            misconfiguration: Actions has never been given real workflows, the runner
-            still needs its v13 compatibility pass, the 23 package registries are idle,
-            and the community ecosystem (MCP server, Renovate, Pages servers, theming,
-            IaC providers) is untapped.
+            misconfiguration: Actions is live on exactly three repos &mdash; a Rust CI matrix, a
+            fmt/config-guard, and a nightly Nix+attic cache warmer &mdash; out of ~260,
+            the runner still needs its v13 compatibility pass, the 23 package registries
+            are idle, and the community ecosystem (MCP server, Renovate, Pages servers,
+            theming, IaC providers) is untapped.
           </p>
           <p>
             <strong>The single biggest unlock:</strong> Forgejo is not just a GitHub
@@ -942,8 +943,8 @@
               <div class="stat-label">Gatus + mirror metrics</div>
             </div>
             <div class="stat-card stat-warn">
-              <div class="stat-value">0</div>
-              <div class="stat-label">Real Actions workflows</div>
+              <div class="stat-value">3</div>
+              <div class="stat-label">Repos with Actions CI (of ~260)</div>
             </div>
             <div class="stat-card stat-warn">
               <div class="stat-value">0/23</div>
@@ -1117,6 +1118,7 @@
 ├── <span class="ok">identity</span>    SSH keys via admin API · hermes read-only token · admin token oneshot
 ├── <span class="ok">runner</span>      forgejo-runner · labels: ubuntu-latest→node:22-bookworm, native:host
 │              capacity 2 · container.network=host · MemoryMax 16G · ioTier.build
+│              3 repos already run workflows on the `native` label (see §6)
 ├── <span class="warn">actions</span>     ENABLED · DEFAULT_ACTIONS_URL = "github"  ← suboptimal (see R1)
 ├── <span class="warn">storage</span>     SQLite DB + LFS + logs + artifacts on the QLC NVMe stateDir
 ├── <span class="ok">mail</span>        Postfix null-client relay (FROM noreply@larsartmann.cloud)
@@ -1230,12 +1232,15 @@
         <section id="actions">
           <h2><span class="num">06</span>Forgejo Actions &mdash; The Complete Picture</h2>
           <p>
-            Actions is enabled here but idle: the runner is registered (capacity 2,
-            <code>ubuntu-latest&rarr;node:22-bookworm</code> and <code>native:host</code>
-            labels), yet no repository carries a <code>.forgejo/workflows/</code> file
-            doing real work. Meanwhile upstream has turned Actions into a serious CI
-            system. What is available on your v15 LTS, plus what v16 adds when you
-            eventually move:
+            Actions is enabled and already carrying production weight on exactly three
+            repos &mdash; <code>wireguard-collector</code> (Rust CI matrix),
+            <code>collector-utils</code> (fmt + config-guard), and
+            <code>monitor365</code> (nightly Nix+attic cache warmer with secrets and a
+            cron schedule) &mdash; all on the <code>native</code> label. That is 3 of
+            ~260 repos, and all three workflow files say they are kept in sync with
+            their GitHub twins <em>manually</em>. Meanwhile upstream has turned Actions
+            into a serious CI system. What is available on your v15 LTS, plus what v16
+            adds when you eventually move:
           </p>
 
           <div class="grid-2">
@@ -1314,7 +1319,7 @@
           </p>
           <ul class="plain">
             <li><strong><code>container.network = "host"</code></strong> gives containers your host network namespace. Convenient for hitting <code>127.0.0.1</code> services (attic, flm), but workflows can reach every loopback service. Keep it only while the workflow set is 100% yours.</li>
-            <li><strong><code>native:host</code> label</strong> executes jobs directly on the host. Never let it pick up workflows from anything you did not write.</li>
+            <li><strong>The <code>native</code> label</strong> (registered as <code>native:host</code>) executes jobs directly on the host. All three live workflows already use it; never let it pick up workflows from anything you did not write.</li>
           </ul>
         </section>
 
@@ -1439,7 +1444,9 @@
                 GitHub-dependent at exactly the moment you wanted independence.
                 <code>https://data.forgejo.org</code> hosts known-good, FSF-licensed
                 actions (<code>actions</code>, <code>docker</code> orgs) curated for
-                Forgejo Actions.
+                Forgejo Actions &mdash; including <code>actions/checkout</code>, a
+                maintained mirror of the GitHub action (verified via its API
+                2026-09-18), so the three live workflows keep working after the flip.
               </p>
               <pre>services.forgejo.settings.actions.DEFAULT_ACTIONS_URL = "https://data.forgejo.org";</pre>
             </div>
@@ -1527,19 +1534,22 @@ services.forgejo.settings.ui.THEMES =
             <div class="migration-num">R7</div>
             <div class="migration-content">
               <span class="badge badge-high">P1</span>
-              <h4>Ship the first real workflow (Nix CI with attic cache)</h4>
+              <h4>Scale the existing workflow pattern (3 repos &rarr; the active set)</h4>
               <p>
-                The runner already has <code>native:host</code> and docker labels. The
-                highest-value first job: lint + build a Nix-exposed Go repo with the
-                attic cache you already run &mdash; using the v15 reusable-workflow
-                pattern so every repo inherits one library workflow.
+                The pattern already exists &mdash; <code>monitor365</code> runs a nightly
+                Nix build that logs into attic with
+                <code>ATTIC_ENDPOINT/ATTIC_TOKEN</code> secrets on a cron, and the two
+                collector crates run Rust CI on <code>native</code>. What is missing is
+                reach: port that shape to the actively-developed Go repos and to
+                SystemNix itself, and use the v15 reusable-workflow expansion so every
+                repo inherits one library workflow instead of hand-synced copies.
               </p>
-              <pre># .forgejo/workflows/ci.yml  (in the repo)
+              <pre># .forgejo/workflows/ci.yml  (target shape for a Nix-exposed Go repo)
 jobs:
   nix-build:
-    runs-on: native-host        # your native:host label
+    runs-on: native
     steps:
-      - uses: https://data.forgejo.org/actions/checkout@v4
+      - uses: actions/checkout@v4
       - run: |
           nix build .#default --accept-flake-config \
             --option extra-substituters https://cache.home.lan/monitor365
@@ -1547,7 +1557,8 @@ jobs:
               <p>
                 Auth for private inputs rides the deploy-key pattern from
                 <code>nix-check.yml</code>; add the key as an Actions secret (repo or org
-                scope), not a literal.
+                scope), not a literal. Host-mode jobs run inside your nix environment
+                &mdash; keep the &sect;6.3 trust boundary in mind.
               </p>
             </div>
           </div>
@@ -1560,8 +1571,11 @@ jobs:
               <p>
                 Check the deployed runner version, then sweep any workflow for the v13
                 removals (&sect;6.2). Your <code>container.network = "host"</code>
-                setting is already the post-v13 name. Pin/hold the nixpkgs bump if a
-                workflow still uses <code>::set-output</code> until it is migrated.
+                setting is already the post-v13 name. The three existing workflows are
+                clean on a spot-check (no removed commands, no <code>GITEA_*</code>
+                usage); run the sweep to confirm before the next nixpkgs bump lands
+                v13. Pin/hold the bump if any workflow still uses
+                <code>::set-output</code> until it is migrated.
               </p>
               <pre>forgejo-runner --version
 rg -n "::set-output|::set-env|::add-path|DOCKER_USERNAME|GITEA_" ~/projects/*/.forgejo 2>/dev/null</pre>
@@ -1807,6 +1821,8 @@ rg -n "::set-output|::set-env|::add-path|DOCKER_USERNAME|GITEA_" ~/projects/*/.f
             <li>gitea.com/gitea/gitea-mcp (README + repo activity) &mdash; MCP tool surface, read-only mode, transports</li>
             <li>github.com/catppuccin/gitea (README) &mdash; theme install paths + auto variants</li>
             <li>Local: modules/nixos/services/forgejo.nix, _forgejo-scripts.nix, docs/services/forgejo-upstream-issues.md, docs/archive/forgejo-federation.md, AGENTS.md incident history</li>
+            <li>Local workflows: wireguard-collector + collector-utils <code>.forgejo/workflows/ci.yml</code>, monitor365 <code>.forgejo/workflows/nix-cache.yml</code></li>
+            <li>data.forgejo.org API: <code>actions/checkout</code> repo record (public mirror of the GitHub action, mirror_updated 2026-09-18)</li>
           </ul>
           <p class="small" style="color: var(--text-muted)">
             Deliberate omissions: v11.0 feature details (announcement not fetched),
