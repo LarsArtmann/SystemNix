@@ -756,6 +756,17 @@ if $hermes_enabled; then
     else
       report_fail "Hermes — workspace doc ExecStartPre left no journal line this boot (journalctl -u hermes -b | grep hermes-workspace)"
     fi
+    # Discord gateway connectivity (hermes has NO HTTP endpoint — the only
+    # positive functional signal is the adapter's on_ready log line
+    # "[Discord] Connected as <bot>" (plugins/platforms/discord/adapter.py).
+    # Boot-scoped, not window-scoped: a line from any point this boot proves
+    # the gateway reached Discord at least once; a window bound would
+    # false-fail long-lived boots.
+    if journalctl -u hermes -b --no-pager --grep "\\[Discord\\] Connected as" >/dev/null 2>&1; then
+      report_pass "Hermes — Discord gateway connected this boot"
+    else
+      report_fail "Hermes — no Discord 'Connected as' line in this boot's journal (gateway never reached Discord? journalctl -u hermes -b | grep 'Connected as')"
+    fi
   else
     report_fail "Hermes — gateway process not found (journalctl -u hermes -n 50)"
   fi
