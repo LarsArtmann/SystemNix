@@ -1,0 +1,1862 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Forgejo Deep Research — Pushing the Homelab Forge to the Max</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template (html-report-kit)
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 230px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.84rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.35;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+      ul.plain {
+        margin: 0 0 1rem 1.2rem;
+      }
+      ul.plain li {
+        margin: 0.3rem 0;
+      }
+
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, var(--surface-raised));
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 18%, var(--surface-raised));
+      }
+
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+        vertical-align: top;
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+      td .small {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-step.p0 {
+        border-left-color: var(--problem);
+      }
+      .migration-step.p1 {
+        border-left-color: var(--warning);
+      }
+      .migration-step.p2 {
+        border-left-color: var(--solution);
+      }
+      .migration-step.p3 {
+        border-left-color: var(--border-strong);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0.5rem;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+      .migration-content p:last-child {
+        margin-bottom: 0;
+      }
+
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>Deep Research &middot; Forgejo</span>
+      <span>2026-09-18</span>
+      <span>SystemNix &middot; evo-x2</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">01 · Summary</a>
+          <a href="#scorecard">02 · Scorecard</a>
+          <a href="#project">03 · The Forgejo Project</a>
+          <a href="#today">04 · This Instance Today</a>
+          <a href="#features">05 · Unused Features</a>
+          <a href="#actions">06 · Forgejo Actions</a>
+          <a href="#ecosystem">07 · Community Ecosystem</a>
+          <a href="#roadmap">08 · The Max-Out Roadmap</a>
+          <a href="#risks">09 · Risks &amp; Gotchas</a>
+          <a href="#sources">10 · Sources</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <!-- ============ HERO ============ -->
+        <header class="hero">
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">Deep Research Report &middot; Snapshot 2026-09-18</div>
+          <h1>Forgejo, Maxed Out</h1>
+          <p class="subtitle">
+            Everything the Forgejo project and its community shipped up to v16 &mdash;
+            mapped against the SystemNix instance on <code>evo-x2</code>: what is already
+            excellent, which features are sitting idle, what the ecosystem can add, and a
+            prioritized roadmap to push the forge to its limits.
+          </p>
+          <div class="meta">
+            <span class="tag teal">Local: forgejo-lts (v15.0.x) &middot; SQLite &middot; OIDC-only</span>
+            <span class="tag">Upstream stable: v16.0.5 &middot; LTS: v15.0.9</span>
+            <span class="tag amber">134 pull mirrors &middot; Actions + runner enabled</span>
+            <span class="tag">All claims sourced &middot; see &sect;10</span>
+          </div>
+        </header>
+
+        <!-- ============ 01 SUMMARY ============ -->
+        <section id="summary">
+          <h2><span class="num">01</span>Summary</h2>
+          <p>
+            Forgejo is a community-governed, self-hosted software forge (a hard fork of
+            Gitea, stewarded by the German non-profit Codeberg e.V.) that has shipped
+            <strong>119 releases</strong> and moved to a fast 3-month major cadence. The
+            current stable line is <strong>v16.0.5</strong> (2026-09-17) and the current
+            LTS is <strong>v15.0.9</strong> &mdash; which is the branch this instance runs
+            (<code>pkgs.forgejo-lts</code>), supported until <strong>2027-07-15</strong>.
+            v17.0 lands 2026-10-15.
+          </p>
+          <p>
+            The SystemNix deployment is already in the top tier of self-hosted forges on
+            the axes most people get wrong: SSO-only login via Pocket ID (no password
+            surface at all), a monitored GitHub pull-mirror fleet (~134 mirrors) with
+            staleness/failure metrics that caught a real 14-day silent outage, daily
+            full dumps to the RAID1 pool, hardened systemd units, and a wired Actions
+            runner. The gaps are almost all <em>unused capability</em>, not
+            misconfiguration: Actions has never been given real workflows, the runner
+            still needs its v13 compatibility pass, the 23 package registries are idle,
+            and the community ecosystem (MCP server, Renovate, Pages servers, theming,
+            IaC providers) is untapped.
+          </p>
+          <p>
+            <strong>The single biggest unlock:</strong> Forgejo is not just a GitHub
+            mirror cabinet &mdash; with ~15 lines of config plus a handful of workflow
+            files it becomes the CI/CD, artifact registry, and API surface for the whole
+            LarsArtmann portfolio, with the mirror fleet as its outage-immune backup
+            layer.
+          </p>
+        </section>
+
+        <!-- ============ 02 SCORECARD ============ -->
+        <section id="scorecard">
+          <h2><span class="num">02</span>Scorecard &mdash; this instance vs. what Forgejo offers</h2>
+          <div class="stat-grid">
+            <div class="stat-card stat-good">
+              <div class="stat-value">LTS</div>
+              <div class="stat-label">v15.0.x until Jul 2027</div>
+            </div>
+            <div class="stat-card stat-good">
+              <div class="stat-value">SSO</div>
+              <div class="stat-label">Pocket ID, passwordless</div>
+            </div>
+            <div class="stat-card stat-good">
+              <div class="stat-value">~134</div>
+              <div class="stat-label">Monitored pull mirrors</div>
+            </div>
+            <div class="stat-card stat-good">
+              <div class="stat-value">24/7</div>
+              <div class="stat-label">Gatus + mirror metrics</div>
+            </div>
+            <div class="stat-card stat-warn">
+              <div class="stat-value">0</div>
+              <div class="stat-label">Real Actions workflows</div>
+            </div>
+            <div class="stat-card stat-warn">
+              <div class="stat-value">0/23</div>
+              <div class="stat-label">Package registries used</div>
+            </div>
+            <div class="stat-card stat-warn">
+              <div class="stat-value">v?</div>
+              <div class="stat-label">Runner v13 break-check needed</div>
+            </div>
+            <div class="stat-card stat-warn">
+              <div class="stat-value">3</div>
+              <div class="stat-label">Upstream issues drafted, unfiled</div>
+            </div>
+          </div>
+
+          <h3>Already excellent (keep, do not touch)</h3>
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">&#10003;</div>
+              <div class="text">
+                <strong>SSO-only authentication</strong>
+                <span>
+                  <code>ENABLE_INTERNAL_SIGNIN = false</code> + <code>ENABLE_BASIC_AUTHENTICATION = false</code>
+                  behind Pocket ID OIDC; git HTTPS still works via access tokens. This is
+                  the posture most public guides never reach.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">&#10003;</div>
+              <div class="text">
+                <strong>Mirror pipeline with real observability</strong>
+                <span>
+                  6-hourly GitHub sync, 30-min mirror cron (<code>PULL_LIMIT/PUSH_LIMIT = 50</code>),
+                  plus <code>system_forgejo_mirror_*</code> textfile metrics and a Gatus
+                  check that distinguishes <em>stalled</em> (dead queue) from
+                  <em>erroring</em> (sync failures) &mdash; built from a real 14-day
+                  silent-outage post-mortem.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">&#10003;</div>
+              <div class="text">
+                <strong>Application-level backups</strong>
+                <span>
+                  Daily <code>forgejo dump</code> zip (repos + DB + LFS + config) to the
+                  RAID1 pool at 03:30 with 7-day retention, registered in
+                  backup-coordination &mdash; restore-ready even with the NVMe gone.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">&#10003;</div>
+              <div class="text">
+                <strong>Declarative bootstrap &amp; identity</strong>
+                <span>
+                  OIDC source setup, admin setup, runner token generation, SSH key
+                  provisioning, and a read-only hermes-agent token are all idempotent
+                  oneshots &mdash; no snowflake steps.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">&#10003;</div>
+              <div class="text">
+                <strong>LFS + push-to-create enabled</strong>
+                <span>
+                  <code>lfs.enable</code>, <code>ENABLE_PUSH_CREATE_USER</code> (private
+                  by default) &mdash; <code>git push</code> can create repos without
+                  touching the UI at all.
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 03 THE PROJECT ============ -->
+        <section id="project">
+          <h2><span class="num">03</span>The Forgejo Project</h2>
+          <p>
+            Forgejo was forged in late 2022 as a community hard fork of Gitea, after the
+            for-profit Gitea Ltd takeover triggered a broad open letter from the
+            community (including many distros and Codeberg). It is developed in the open
+            on <a href="https://codeberg.org/forgejo/forgejo">codeberg.org/forgejo/forgejo</a>
+            (5.5k stars, 955 forks, 119 releases at snapshot time), governed by
+            Codeberg e.V. teams with transparent funding, and is what powers
+            <a href="https://codeberg.org">Codeberg</a> itself &mdash; which means
+            Codeberg-scale load problems (crawlers, mirror storms, DB deadlocks) get
+            fixed upstream and flow into every instance.
+          </p>
+          <div class="grid-2">
+            <div class="card card-solution">
+              <h3>Release cadence (verified)</h3>
+              <p>
+                A major every ~3 months; the April release each year is LTS. Daily
+                <code>*-test</code> builds and a public next-instance
+                (<code>v16.next.forgejo.org</code>) let you validate upgrades before
+                patch day.
+              </p>
+            </div>
+            <div class="card card-warning">
+              <h3>Support windows are short for non-LTS</h3>
+              <p>
+                v16.0 dies <strong>2026-10-29</strong> when v17 lands. Running the LTS
+                line (as this instance does) is the right call for a homelab: v15.0.9 is
+                patched until <strong>2027-07-15</strong>.
+              </p>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Version</th><th>Released</th><th>End of life</th><th>Line</th><th>Headline (selected, sourced)</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>v16.0</strong> (16.0.5)</td><td>2026-07-16</td><td>2026-10-29</td><td>stable</td>
+                  <td>Authorized Integrations (JWT auth for API/Git), mirror SSRF hardening, granular watch, multi-line reviews, Actions logs/artifacts APIs, run prioritization, <span class="small">+</span> server-side <code>if</code> evaluation</td>
+                </tr>
+                <tr>
+                  <td><strong>v15.0</strong> (15.0.9) &mdash; <em>running here</em></td><td>2026-04-16</td><td><strong>2027-07-15</strong></td><td>LTS (100th release)</td>
+                  <td>Repo-scoped access tokens, reusable-workflow expansion, OIDC identity tokens, ephemeral runners, web-UI runner registration, container auto-linking, sessions only for logged-in users</td>
+                </tr>
+                <tr>
+                  <td>v14.0</td><td>2026-01-15</td><td>2026-04-16</td><td>stable</td>
+                  <td>Issue/PR search syntax, CodeMirror editor, PR trust management, concurrency groups, dynamic matrices, <code>doctor cleanup-commit-status</code>, stateless CSRF, authorized_keys validation</td>
+                </tr>
+                <tr>
+                  <td>v13.0</td><td>2025-10-16</td><td>2026-01-15</td><td>stable</td>
+                  <td>Content-moderation reports, Pagure migration (Fedora&rsquo;s move), global 2FA requirement, EXIF stripping, Actions run-attempt viewer, static workflow validation in UI</td>
+                </tr>
+                <tr>
+                  <td>v12.0</td><td>2025-07-17</td><td>2025-10-16</td><td>stable</td>
+                  <td>Sync-fork button, glTF 3D viewer, Actions failure emails (<code>enable-email-notifications</code>), SSH instance signing, default restrictive robots.txt, faster conflict checks</td>
+                </tr>
+                <tr>
+                  <td>v11.0</td><td>2025-04-16</td><td>2026-07-16</td><td>prev LTS</td>
+                  <td>Federation milestones (federated stars shipped earlier in the arc); long-lived base for the 2025 generation</td>
+                </tr>
+                <tr>
+                  <td>v17.0</td><td><em>due 2026-10-15</em></td><td>2027-01-28</td><td>next stable</td>
+                  <td>Watch the release notes; the LTS after it is the April 2027 release</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="small" style="color: var(--text-muted)">
+            Dates/EOLs from forgejo.org/release announcements and the v16 announcement&rsquo;s
+            schedule table. v11 headline is deliberately terse &mdash; its announcement was
+            not fetched for this report.
+          </p>
+        </section>
+
+        <!-- ============ 04 TODAY ============ -->
+        <section id="today">
+          <h2><span class="num">04</span>This Instance Today &mdash; Inventory</h2>
+          <p>
+            Everything below is read from <code>modules/nixos/services/forgejo.nix</code>,
+            <code>_forgejo-scripts.nix</code>, and the incident docs &mdash; this is the
+            baseline the roadmap builds on.
+          </p>
+          <div class="dep-tree">
+<span class="root">forgejo.home.lan</span>  (Caddy plain vHost, native OIDC — never protectedVHost)
+├── <span class="ok">auth</span>        Pocket ID SSO-only · auto-registration · no password form
+├── <span class="ok">git</span>         LFS on · push-to-create on (private default) · 3 merge timeouts 600s
+├── <span class="ok">mirrors</span>     ~134 GitHub pull mirrors · sync every 6h · cron 30m · limits 50
+│              └── system_forgejo_mirror_{scrape_errors, sync_stalled, erroring, ...} → Gatus
+├── <span class="ok">backups</span>     forgejo-backup oneshot 03:30 daily → /mnt/pool/backups/forgejo (7d)
+├── <span class="ok">identity</span>    SSH keys via admin API · hermes read-only token · admin token oneshot
+├── <span class="ok">runner</span>      forgejo-runner · labels: ubuntu-latest→node:22-bookworm, native:host
+│              capacity 2 · container.network=host · MemoryMax 16G · ioTier.build
+├── <span class="warn">actions</span>     ENABLED · DEFAULT_ACTIONS_URL = "github"  ← suboptimal (see R1)
+├── <span class="warn">storage</span>     SQLite DB + LFS + logs + artifacts on the QLC NVMe stateDir
+├── <span class="ok">mail</span>        Postfix null-client relay (FROM noreply@larsartmann.cloud)
+└── <span class="ok">federation</span>  ENABLED = true (WebFinger/nodeinfo live; features still landing upstream)
+          </div>
+
+          <div class="card card-warning">
+            <h3>Known pain points (documented, monitored, partially upstream)</h3>
+            <ul class="plain">
+              <li>
+                The mirror unique-queue can wedge after a hard freeze &mdash; cron pushes
+                then dedup-skip silently. Detected via <code>mirror_sync_stalled</code>;
+                fix is a <code>forgejo.service</code> restart.
+              </li>
+              <li>
+                Three upstream gaps are fully drafted and source-verified
+                (<code>docs/services/forgejo-upstream-issues.md</code>, re-verified
+                2026-09-18): failed syncs still advance <code>mirror_updated</code>;
+                queue dedup-skips log at Trace only; credential-helper temp-file failures
+                abort syncs with no repository notice. <strong>They are unfiled because no
+                Codeberg account exists yet</strong> &mdash; see R14.
+              </li>
+              <li>
+                SQLite + Actions is fine at this scale, but this host&rsquo;s IO-storm
+                history (the pocket-id <code>SQLITE_BUSY</code> class) applies here too
+                &mdash; keep DB maintenance tasks off-storm-hours.
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- ============ 05 FEATURES ============ -->
+        <section id="features">
+          <h2><span class="num">05</span>Features You Are Not Using Yet</h2>
+          <p>
+            Grouped by what they buy you. <span class="badge">vXX</span> marks the release
+            that shipped the capability (all verified against the release announcements).
+          </p>
+
+          <h3>5.1 Repository power tools</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Feature</th><th>Since</th><th>Why it matters here</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Sync fork</strong> button with behind/ahead counters</td><td><span class="badge">v12</span></td><td>You own 40+ GitHub forks; one click (or API) re-syncs them from upstream without the mirror machinery.</td></tr>
+                <tr><td><strong>Issue/PR search syntax</strong> (<code>is:open author:x sort:...</code>)</td><td><span class="badge">v14</span></td><td>Makes the mirror cabinet actually searchable as a portfolio-wide issue archive.</td></tr>
+                <tr><td><strong>CodeMirror web editor</strong> replacing Monaco</td><td><span class="badge">v14</span></td><td>Fast single-file edits on the go; no more heavyweight editor load.</td></tr>
+                <tr><td><strong>Multi-line review comments</strong> (Shift+drag)</td><td><span class="badge">v16</span></td><td>Real code-review ergonomics; comment placement fixed via <code>git blame --reverse</code>.</td></tr>
+                <tr><td><strong>Granular repo watch</strong> (issues / PRs / releases)</td><td><span class="badge">v16</span></td><td>Watch releases of mirrored tools without drowning in their issues.</td></tr>
+                <tr><td><strong>Git notes editing</strong> in commit views</td><td><span class="badge">v15</span></td><td>Annotate mirror snapshots or research commits in-place.</td></tr>
+                <tr><td><strong>CITATION.cff/bib preview</strong></td><td><span class="badge">v14</span></td><td>Academic-grade citation metadata for published repos.</td></tr>
+                <tr><td><strong>AGit workflow + push-to-create</strong></td><td><span class="badge">v12 docs</span></td><td>Push-to-create is already on; AGit lets you open PRs from a plain <code>git push</code> without forks.</td></tr>
+                <tr><td><strong>glTF viewer</strong></td><td><span class="badge">v12</span></td><td>3D model preview straight in the repo browser.</td></tr>
+                <tr><td><strong>Commit-status cleanup CLI</strong></td><td><span class="badge">v14</span></td><td><code>forgejo doctor cleanup-commit-status</code> &mdash; Forgejo&rsquo;s own instance shed <strong>97%</strong> of its commit_status rows with it (14.9M of 15.2M). Run a dry-run here before you rely on Actions history.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>5.2 Security &amp; operations</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Feature</th><th>Since</th><th>Why it matters here</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Repo-scoped access tokens</strong></td><td><span class="badge">v15</span></td><td>Re-issue the sync/hermes/MCP tokens scoped to specific repos instead of instance-wide.</td></tr>
+                <tr><td><strong>Repository migration progress UI</strong></td><td><span class="badge">v16</span></td><td>Long GitHub imports (issues/PRs) finally show progress instead of a spinner.</td></tr>
+                <tr><td><strong>Mirror SSRF hardening</strong> (<code>http.followRedirects=false</code>, allowlist edge-case fixes)</td><td><span class="badge">v16</span></td><td>Pair with <code>[migrations].ALLOWED_DOMAINS</code> (R3). Note: the redirect edge-case fix is v16-only &mdash; one more reason the allowlist is defense-in-depth on v15.</td></tr>
+                <tr><td><strong>Sessions only for logged-in users</strong></td><td><span class="badge">v15</span></td><td>Anonymous requests no longer get session cookies &mdash; Caddy/WAF can tell bots from users.</td></tr>
+                <tr><td><strong>authorized_keys validation on start</strong></td><td><span class="badge">v14</span></td><td>Forgejo refuses to boot if foreign keys appear in its managed authorized_keys &mdash; a loud tripwire, keep the file forgejo-owned.</td></tr>
+                <tr><td><strong>Stateless CSRF</strong> (fetch-metadata based)</td><td><span class="badge">v14</span></td><td>Tabs can stay open &gt;24h; nothing to configure.</td></tr>
+                <tr><td><strong>Global 2FA requirement</strong></td><td><span class="badge">v13</span></td><td>Moot under SSO-only (Pocket ID holds the passkeys) &mdash; leave off, but know it exists.</td></tr>
+                <tr><td><strong>Git object consistency checks</strong> on push</td><td><span class="badge">v16</span></td><td>Rejects inconsistent incoming objects &mdash; cheap integrity insurance for the mirror fleet.</td></tr>
+                <tr><td><strong>Default restrictive robots.txt</strong></td><td><span class="badge">v12</span></td><td>Already serving on your v15 instance; keeps crawlers out of archive endpoints.</td></tr>
+                <tr><td><strong>SSH instance signing</strong></td><td><span class="badge">v12</span></td><td>Forgejo can sign its own merge/commit artifacts with an SSH key (TPM-agent capable) &mdash; GPG no longer required.</td></tr>
+                <tr><td><strong>Centralized instance git hooks</strong> (no more per-repo example files)</td><td><span class="badge">v16</span></td><td>~20 KiB saved per repository; relevant at 134+ repos.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>5.3 The 23 package registries (all idle right now)</h3>
+          <p>
+            Forgejo ships registries for <strong>Alpine, ALT, Arch, Cargo, Chef, Composer,
+            Conan, Conda, Container (OCI/ Docker), CRAN, Debian, Generic, Go, Helm, Maven,
+            npm, NuGet, Pub, PyPI, RPM, RubyGems, Swift, Vagrant</strong> &mdash; each
+            backed by tokens and per-owner quotas. The three most interesting for this
+            portfolio:
+          </p>
+          <ul class="plain">
+            <li>
+              <strong>Container (OCI)</strong> &mdash; since <span class="badge">v15</span>
+              uploaded containers auto-link to their repo when the image carries
+              <code>org.opencontainers.image.source</code> or is named
+              <code>{owner}/{repo}</code>. Roadmap item R16 uses this as a
+              Docker-Hub-outage-immune mirror of the pinned images in
+              <code>lib/images.nix</code>.
+            </li>
+            <li>
+              <strong>Cargo</strong> &mdash; private registry for the Rust collector
+              crates without publishing to crates.io. Caveat: Nix&rsquo;s
+              <code>buildRustPackage</code> cargo-fetch flow needs registry config +
+              token plumbing; treat as exploratory.
+            </li>
+            <li>
+              <strong>Generic</strong> &mdash; the escape hatch: Nix closure tars,
+              release binaries, benchmark artifacts. Dead simple
+              <code>PUT /api/packages/{owner}/generic/{name}/{version}/{file}</code>.
+            </li>
+          </ul>
+        </section>
+
+        <!-- ============ 06 ACTIONS ============ -->
+        <section id="actions">
+          <h2><span class="num">06</span>Forgejo Actions &mdash; The Complete Picture</h2>
+          <p>
+            Actions is enabled here but idle: the runner is registered (capacity 2,
+            <code>ubuntu-latest&rarr;node:22-bookworm</code> and <code>native:host</code>
+            labels), yet no repository carries a <code>.forgejo/workflows/</code> file
+            doing real work. Meanwhile upstream has turned Actions into a serious CI
+            system. What is available on your v15 LTS, plus what v16 adds when you
+            eventually move:
+          </p>
+
+          <div class="grid-2">
+            <div class="card card-solution">
+              <h3>Workflow language (v15 baseline)</h3>
+              <ul class="plain">
+                <li><strong>Reusable workflow expansion</strong> <span class="badge">v15</span> &mdash; <code>uses:</code> another repo&rsquo;s workflow; jobs expand with separate logs and independent runner labels. This is the building block for a portfolio-wide <code>workflow-library</code> repo.</li>
+                <li><strong>Concurrency groups</strong> + <strong>dynamic matrices</strong> (matrix and <code>runs-on</code> computed by earlier jobs) <span class="badge">v14</span>.</li>
+                <li><strong>OIDC identity tokens</strong> <span class="badge">v15</span> &mdash; workflows get short-lived signed JWTs instead of static secrets for third-party systems (runner &gt; v12.5).</li>
+                <li><strong>Failure email notifications</strong> via <code>enable-email-notifications: true</code> <span class="badge">v12</span> &mdash; lands in your inbox through the mail relay once Resend domain verification completes.</li>
+                <li><strong>Scheduled workflows</strong> (cron, with <code>CRON_TZ</code> timezones in v16) &mdash; cron-as-code for the things currently living in systemd timers.</li>
+              </ul>
+            </div>
+            <div class="card card-solution">
+              <h3>Control plane &amp; APIs</h3>
+              <ul class="plain">
+                <li><strong>PR trust management</strong> <span class="badge">v14</span> &mdash; approve-once / approve-always / deny for workflows from untrusted branches, with revocation.</li>
+                <li><strong>Run attempt viewer</strong> <span class="badge">v13</span> and <strong>manual run prioritization</strong> <span class="badge">v16</span>.</li>
+                <li><strong>Static workflow validation</strong> in the UI <span class="badge">v13</span> &mdash; typos like <code>ruins-on:</code> are caught before dispatch.</li>
+                <li><strong>Full Actions APIs</strong> <span class="badge">v16</span> &mdash; list/download/delete artifacts, fetch workflow/job logs, cancel runs, <code>/actions/run</code> introspection; admin-managed user tokens <span class="badge">v16</span>.</li>
+                <li><strong>Authorized Integrations</strong> <span class="badge">v16</span> &mdash; external systems (or workflows) authenticate to Forgejo&rsquo;s API/Git with JWTs; no static tokens, no permission-escalation surface.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>6.1 Server-side settings you are leaving on defaults</h3>
+          <pre><span class="tok-comment"># app.ini equivalents — verify each against the config cheat-sheet for your version</span>
+[actions]
+<span class="tok-attr">ENABLED</span> = <span class="tok-string">true</span>
+<span class="tok-attr">DEFAULT_ACTIONS_URL</span> = <span class="tok-string">https://data.forgejo.org</span>  <span class="tok-comment"># not "github" (see R1)</span>
+<span class="tok-attr">LOG_RETENTION_DAYS</span> = <span class="tok-number">365</span>          <span class="tok-comment"># default — 30 is plenty here (R2)</span>
+<span class="tok-attr">ARTIFACT_RETENTION_DAYS</span> = <span class="tok-number">90</span>      <span class="tok-comment"># default — 30 fits a homelab (R2)</span>
+
+<span class="tok-comment"># Logs land in storage.actions_log, artifacts in storage.artifacts —</span>
+<span class="tok-comment"># both can be pointed at /mnt/pool later (R11, mind the 226 class).</span>
+<span class="tok-comment"># The Actions cache is stored by the RUNNER, never shipped to Forgejo.</span></pre>
+
+          <h3>6.2 Forgejo Runner v13 &mdash; the compatibility pass you must not skip</h3>
+          <p>
+            The runner line moved to <strong>v13.1.0</strong> (2026-08-31) and v13.0.0
+            shipped deliberate breaking changes (security &amp; predictability). nixpkgs
+            updates <code>forgejo-runner</code> independently of the forge server, so one
+            of these days a routine bump will land it on your runner unit. Before that
+            happens, audit every workflow you own for:
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Removed in v13</th><th>Replacement</th></tr></thead>
+              <tbody>
+                <tr><td><code>::set-output name=X::v</code></td><td><code>echo "X=v" &gt;&gt; "$FORGEJO_OUTPUT"</code></td></tr>
+                <tr><td><code>::set-env name=X::v</code></td><td><code>echo "X=v" &gt;&gt; "$FORGEJO_ENV"</code></td></tr>
+                <tr><td><code>::add-path:: /dir</code></td><td><code>echo "/dir" &gt;&gt; "$FORGEJO_PATH"</code></td></tr>
+                <tr><td><code>DOCKER_USERNAME</code>/<code>DOCKER_PASSWORD</code> secrets for registry pulls</td><td>explicit <code>jobs.&lt;id&gt;.container.credentials</code></td></tr>
+                <tr><td><code>container.network_mode</code> setting</td><td><code>container.network</code> <span class="small">(already set here)</span></td></tr>
+                <tr><td><code>GITEA_*</code> env vars, <code>${{ gitea.* }}</code> context</td><td><code>FORGEJO_*</code> / <code>${{ forgejo.* }}</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout callout-amber">
+            <strong>Also in v13:</strong> expression-evaluation failures now fail the job
+            (no more warn-and-continue), invalid matrices are hard errors, Docker &ge; 25
+            required (IPv6 network parsing bug fixed in Docker 28.0.1 &mdash; this host
+            runs Docker 29.x, fine), Git subprocesses run in a process group, and a
+            <code>refs/replace/*</code> commit-impersonation path during action checkout
+            was closed. New and notable: an experimental <strong>gRPC plugin backend</strong>
+            for custom executors and <code>EnableNamespaces</code> for matrix reusable
+            workflows.
+          </div>
+
+          <h3>6.3 Runner security posture (read before adding workflows)</h3>
+          <p>
+            The runner is, by design, a remote-code-execution service. Yours is
+            single-user and the repositories are mirrors of your own code, which is the
+            low-risk end of the spectrum &mdash; but two of its current settings deserve
+            a conscious decision:
+          </p>
+          <ul class="plain">
+            <li><strong><code>container.network = "host"</code></strong> gives containers your host network namespace. Convenient for hitting <code>127.0.0.1</code> services (attic, flm), but workflows can reach every loopback service. Keep it only while the workflow set is 100% yours.</li>
+            <li><strong><code>native:host</code> label</strong> executes jobs directly on the host. Never let it pick up workflows from anything you did not write.</li>
+          </ul>
+        </section>
+
+        <!-- ============ 07 ECOSYSTEM ============ -->
+        <section id="ecosystem">
+          <h2><span class="num">07</span>What the Community Built &mdash; Ecosystem Catalog</h2>
+          <p>
+            Primary source: <a href="https://codeberg.org/forgejo-contrib/delightful-forgejo">Delightful
+            Forgejo</a> (forgejo-contrib&rsquo;s curated list), cross-checked with the
+            projects&rsquo; own docs where this report makes specific claims. The
+            highlights, filtered for relevance to this instance:
+          </p>
+
+          <h3>7.1 The headline find: an official MCP server</h3>
+          <div class="card card-solution">
+            <h3>gitea-mcp &mdash; your forge as an AI-agent tool surface</h3>
+            <p class="where">gitea.com/gitea/gitea-mcp &middot; official Gitea project, active (commits Sept 2026) &middot; Go</p>
+            <p>
+              Speaks the Gitea API &mdash; which Forgejo implements &mdash; and exposes
+              <strong>60+ MCP tools</strong>: repos, issues, PRs (read/diff/merge),
+              reviews, Actions (dispatch/cancel/rerun, logs, artifacts, secrets),
+              releases, wiki, packages, labels, milestones, notifications, time tracking,
+              file/branch/tag operations. Runs stdio or HTTP, has a
+              <strong>read-only mode</strong> (<code>-r</code> / <code>GITEA_READONLY</code>),
+              scope filtering (<code>-S</code>) and per-tool allowlists (<code>-O</code>),
+              plus a <code>/healthz</code> endpoint.
+            </p>
+            <p>
+              <strong>Fit:</strong> this is the same pattern as the qmd MCP entry in
+              crushrc &mdash; drop it in as a stdio server pointing at
+              <code>https://forgejo.home.lan</code> with a repo-scoped token (v15 tokens!)
+              in read-only mode first. Crush and hermes agents can then triage mirror
+              status, file issues, and dispatch CI runs. See R13.
+            </p>
+            <div class="callout callout-amber">
+              <strong>Caveat:</strong> it is built and tested against Gitea. Forgejo&rsquo;s
+              API compatibility is high but not contractual &mdash; probe the tool set you
+              need (issues, repos, actions) before wiring it into daily-driver agents.
+            </div>
+          </div>
+
+          <h3>7.2 Clients &amp; CLI</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Tool</th><th>What it is</th><th>Notes for this setup</th></tr></thead>
+              <tbody>
+                <tr><td><strong>tea</strong></td><td>The official Gitea CLI (API-compatible)</td><td>Works against Forgejo; good for scripting repo admin.</td></tr>
+                <tr><td><strong>codeberg-cli (&ldquo;berg&rdquo;)</strong></td><td>Rust CLI in the spirit of <code>gh</code></td><td>The closest thing to a Forgejo-native <code>gh</code>.</td></tr>
+                <tr><td><strong>forgejo-cli</strong></td><td>Small official-adjacent CLI (forgejo-contrib)</td><td>Token/auth helper workflows.</td></tr>
+                <tr><td><strong>forgejo-curl</strong></td><td>Official curl wrapper handling Forgejo auth</td><td>Perfect for your sync/mirror scripts, which hand-roll token headers today.</td></tr>
+                <tr><td><strong>GitNex</strong> / <strong>Forji</strong></td><td>Android / iOS clients</td><td>Native mobile access to the mirror cabinet.</td></tr>
+                <tr><td><strong>Sveltia CMS / DecapCMS</strong></td><td>Git-based CMS backends</td><td>Sveltia gained Forgejo support with a v12 bulk-blob API endpoint.</td></tr>
+                <tr><td><strong>emacs-forgejo / fj.el</strong></td><td>Emacs clients</td><td>Issue/PR workflows from the editor.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>7.3 CI/CD beyond Actions</h3>
+          <p>
+            Actions covers this homelab&rsquo;s needs; know the alternatives exist before
+            adding a second system: <strong>Woodpecker CI</strong> (what Codeberg runs;
+            Forgejo-native support) and its soft-fork <strong>Crow CI</strong> (what
+            CodeFloe runs), Jenkins Gitea plugins, <strong>yojo</strong> (build on
+            Sourcehut from a Forgejo repo), agola, Buildbot, and a Concourse resource.
+            Verdict: redundant here &mdash; Actions + one runner is the simpler animal.
+          </p>
+
+          <h3>7.4 Bots &amp; automation</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Project</th><th>What it does</th><th>Fit</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Renovate</strong></td><td>Dependency-update bot with a dedicated <code>forgejo</code> platform module</td><td><strong>High</strong> &mdash; run self-hosted via Actions on native repos (R15). Docs: use <code>platform=forgejo</code>; the gitea platform&rsquo;s Forgejo support is being removed. Note: autodiscovery skips mirror repos &mdash; correct behavior for this instance.</td></tr>
+                <tr><td><strong>git-next</strong></td><td>Trunk-based development manager (Rust)</td><td>Interesting for enforcing trunk-based flow on active repos.</td></tr>
+                <tr><td><strong>Nayrah</strong></td><td>Discord bot surfacing Forgejo activity</td><td>You already route alerts via Gatus&rarr;Discord and PapDashboard; only add if you want repo-event chatter.</td></tr>
+                <tr><td><strong>nagjo</strong></td><td>IRC notification bot</td><td>Skippable.</td></tr>
+                <tr><td><strong>forgejo-guardian</strong> <span class="badge">inactive</span></td><td>Regex-based user banning + admin alerts</td><td>Irrelevant on an SSO-only, registration-disabled instance.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>7.5 Infrastructure as Code</h3>
+          <ul class="plain">
+            <li><strong>Terraform provider for Forgejo</strong> (svalabs) &mdash; manage orgs, repos, users declaratively. Cool, but you already own a strictly stronger mechanism: idempotent API oneshots in Nix. Adopting Terraform would create a second source of truth; note it, don&rsquo;t adopt it (see anti-recommendations).</li>
+            <li><strong>Ansible collection <code>l3d.git.gitea</code></strong> &mdash; installs/manages Forgejo; superseded by the NixOS module here.</li>
+            <li><strong>nixos-forgejo-actions-runner</strong> (whitequark) &mdash; NixOS module for runners on any VPS. If you ever want an off-box runner (e.g. a build machine in the basement), start from this shape; the built-in nixpkgs module already covers the local case.</li>
+          </ul>
+
+          <h3>7.6 Pages, backup, migration</h3>
+          <ul class="plain">
+            <li><strong>Pages servers</strong>: <code>git-pages</code> (scalable, multi-forge), <code>gitgay/pages-server</code> (Forgejo-native, what git.gay runs), <strong>Bovine</strong> (a Traefik plugin &mdash; concept ports to Caddy). This is the community&rsquo;s answer to GitHub Pages; Caddy-fronted, it could serve project sites straight from repo branches. R20.</li>
+            <li><strong>mathisdt/forgejo-backup</strong> &mdash; per-user export of code + issues + PRs + releases (incl. binary assets) + wikis. Complements <code>forgejo dump</code>: the dump is instance-granular and DB-shaped; this is migration-grade, per-repo data. R17.</li>
+            <li><strong>migrate-into-forgejo</strong> &amp; <strong>github2gitea-mirror</strong> &mdash; migration/mirror scripting; your in-repo <code>mirrorGithubScript</code> already covers this niche with better integration.</li>
+          </ul>
+
+          <h3>7.7 API libraries &amp; themes</h3>
+          <ul class="plain">
+            <li><strong>API clients</strong> in Rust (<code>Cyborus/forgejo-api</code>), Python (<code>pyforgejo</code>), Go (<code>forgejo-sdk</code>), TS (<code>forgejo-js</code>), Swift, .NET &mdash; handy for the Go-based tooling you already write.</li>
+            <li><strong>Themes</strong>: <strong>Catppuccin for Gitea</strong> (works on Forgejo; ships <code>catppuccin-*-auto</code> variants that follow light/dark &mdash; the Mocha flavor matches the SystemNix-wide theme), plus Dracula, terminal, Cosmos. R6.</li>
+            <li><strong>Notable forks</strong> (evidence of ecosystem depth): <code>forgejo-aneksajo</code> (git-annex integration for huge-file repos), Codeberg&rsquo;s and CodeFloe&rsquo;s soft-forks, and <strong>Fedora&rsquo;s Forge</strong> (forge.fedoraproject.org) &mdash; Fedora chose Forgejo for its Pagure exit, which is v13&rsquo;s Pagure migration feature in action.</li>
+          </ul>
+        </section>
+
+        <!-- ============ 08 ROADMAP ============ -->
+        <section id="roadmap">
+          <h2><span class="num">08</span>The Max-Out Roadmap</h2>
+          <p>
+            Ordered by impact-per-effort. P0 = config-only, safe, do this week. P1 = real
+            unlocks. P2 = ecosystem adoption. P3 = frontier/watchlist.
+          </p>
+
+          <h3>P0 &mdash; config-only quick wins</h3>
+
+          <div class="migration-step p0">
+            <div class="migration-num">R1</div>
+            <div class="migration-content">
+              <span class="badge badge-critical">P0</span>
+              <h4>Point <code>DEFAULT_ACTIONS_URL</code> at data.forgejo.org</h4>
+              <p>
+                Today it is <code>"github"</code>, so <code>uses: actions/checkout@v4</code>
+                silently clones from GitHub &mdash; making your &ldquo;local&rdquo; CI
+                GitHub-dependent at exactly the moment you wanted independence.
+                <code>https://data.forgejo.org</code> hosts known-good, FSF-licensed
+                actions (<code>actions</code>, <code>docker</code> orgs) curated for
+                Forgejo Actions.
+              </p>
+              <pre>services.forgejo.settings.actions.DEFAULT_ACTIONS_URL = "https://data.forgejo.org";</pre>
+            </div>
+          </div>
+
+          <div class="migration-step p0">
+            <div class="migration-num">R2</div>
+            <div class="migration-content">
+              <span class="badge badge-critical">P0</span>
+              <h4>Cap Actions log &amp; artifact retention</h4>
+              <p>
+                Defaults are 365 days of job logs and 90 days of artifacts on the QLC
+                NVMe &mdash; the exact write-churn profile this host fights. 30 days is
+                generous for a personal forge.
+              </p>
+              <pre>services.forgejo.settings.actions.LOG_RETENTION_DAYS = 30;
+services.forgejo.settings.actions.ARTIFACT_RETENTION_DAYS = 30;</pre>
+            </div>
+          </div>
+
+          <div class="migration-step p0">
+            <div class="migration-num">R3</div>
+            <div class="migration-content">
+              <span class="badge badge-critical">P0</span>
+              <h4>Lock the mirror fleet&rsquo;s network scope (<code>[migrations]</code> allowlist)</h4>
+              <p>
+                134 mirrors all point at GitHub; nothing else should ever be fetched.
+                The allowlist turns any mirror-URL surprise (pastied URL, hijacked
+                upstream redirect) into a loud fetch failure instead of an outbound
+                request.
+              </p>
+              <pre>services.forgejo.settings.migrations = {
+  ALLOWED_DOMAINS = "github.com,api.github.com,codeload.github.com,objects.githubusercontent.com,raw.githubusercontent.com";
+  ALLOW_LOCALNETWORKS = false;
+};</pre>
+              <p>
+                Verify by forcing one mirror sync afterwards
+                (<code>system_forgejo_mirror_erroring</code> must stay 0). Note the
+                full redirect-following fix lands in v16; on v15 this is defense in
+                depth, not completeness.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step p0">
+            <div class="migration-num">R4</div>
+            <div class="migration-content">
+              <span class="badge badge-critical">P0</span>
+              <h4>Dry-run the commit-status doctor</h4>
+              <p>
+                If Actions has ever run here, the <code>commit_status</code> table may
+                carry the historical duplicate-row bug Forgejo fixed in v14 &mdash; on
+                their own instance 97% of rows were redundant. Measure before Actions
+                adoption makes it worse.
+              </p>
+              <pre>sudo -u forgejo forgejo doctor cleanup-commit-status --dry-run
+# On SQLite: run with a small --delete-chunk-size, ideally while the
+# service is quiet (two writers on one SQLite file lock each other).</pre>
+            </div>
+          </div>
+
+          <div class="migration-step p0">
+            <div class="migration-num">R5</div>
+            <div class="migration-content">
+              <span class="badge badge-critical">P0</span>
+              <h4>Adopt the Catppuccin Mocha theme</h4>
+              <p>
+                The instance ships <code>forgejo-auto/arc-green</code> while every other
+                surface in the homelab is Catppuccin Mocha. The community theme installs
+                as CSS into Forgejo&rsquo;s custom dir and its <code>catppuccin-*-auto</code>
+                variants follow system light/dark.
+              </p>
+              <pre># 1. fetch the catppuccin/gitea release CSS into
+#    ${stateDir}/custom/public/assets/css/
+# 2. extend the theme list:
+services.forgejo.settings.ui.THEMES =
+  "forgejo-auto,forgejo-light,forgejo-dark,arc-green,catppuccin-mocha-auto";</pre>
+              <p>Manage the CSS via a small derivation symlinked into <code>custom/</code> so deploys stay declarative.</p>
+            </div>
+          </div>
+
+          <h3>P1 &mdash; real unlocks</h3>
+
+          <div class="migration-step p1">
+            <div class="migration-num">R7</div>
+            <div class="migration-content">
+              <span class="badge badge-high">P1</span>
+              <h4>Ship the first real workflow (Nix CI with attic cache)</h4>
+              <p>
+                The runner already has <code>native:host</code> and docker labels. The
+                highest-value first job: lint + build a Nix-exposed Go repo with the
+                attic cache you already run &mdash; using the v15 reusable-workflow
+                pattern so every repo inherits one library workflow.
+              </p>
+              <pre># .forgejo/workflows/ci.yml  (in the repo)
+jobs:
+  nix-build:
+    runs-on: native-host        # your native:host label
+    steps:
+      - uses: https://data.forgejo.org/actions/checkout@v4
+      - run: |
+          nix build .#default --accept-flake-config \
+            --option extra-substituters https://cache.home.lan/monitor365
+          nix flake check --no-build</pre>
+              <p>
+                Auth for private inputs rides the deploy-key pattern from
+                <code>nix-check.yml</code>; add the key as an Actions secret (repo or org
+                scope), not a literal.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step p1">
+            <div class="migration-num">R8</div>
+            <div class="migration-content">
+              <span class="badge badge-high">P1</span>
+              <h4>Runner v13 compatibility pass &mdash; before nixpkgs forces it</h4>
+              <p>
+                Check the deployed runner version, then sweep any workflow for the v13
+                removals (&sect;6.2). Your <code>container.network = "host"</code>
+                setting is already the post-v13 name. Pin/hold the nixpkgs bump if a
+                workflow still uses <code>::set-output</code> until it is migrated.
+              </p>
+              <pre>forgejo-runner --version
+rg -n "::set-output|::set-env|::add-path|DOCKER_USERNAME|GITEA_" ~/projects/*/.forgejo 2>/dev/null</pre>
+            </div>
+          </div>
+
+          <div class="migration-step p1">
+            <div class="migration-num">R9</div>
+            <div class="migration-content">
+              <span class="badge badge-high">P1</span>
+              <h4>Scheduled workflows with failure emails</h4>
+              <p>
+                Anything currently a hand-rolled timer against a repo (nightly
+                benchmarks, doc regeneration) can become a scheduled workflow; the
+                <code>enable-email-notifications: true</code> flag mails you on failure
+                through the relay. Prereq: finish the Resend domain verification so
+                non-owner delivery works.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step p1">
+            <div class="migration-num">R10</div>
+            <div class="migration-content">
+              <span class="badge badge-high">P1</span>
+              <h4>File the three drafted upstream issues</h4>
+              <p>
+                <code>docs/services/forgejo-upstream-issues.md</code> holds three
+                source-verified drafts (failed-sync TouchMirror masking, Trace-level
+                queue dedup-skips, credential-helper aborts). They are blocked only on
+                the Codeberg-account decision. Filing them converts your worst
+                mirror-pipeline blind spots into upstream fixes that reach every v15.0.x
+                patch.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step p1">
+            <div class="migration-num">R11</div>
+            <div class="migration-content">
+              <span class="badge badge-high">P1</span>
+              <h4>Plan the v15 &rarr; v16 (or v17) upgrade on <em>your</em> terms</h4>
+              <p>
+                Stay on the LTS until at least the first v16.x patches prove out &mdash;
+                then read the breaking changes that actually touch you: (1) mirrors of
+                renamed/transferred upstream repos will hard-fail on redirects
+                (inventory renamed repos first), (2) container-only
+                <code>REVERSE_PROXY_TRUSTED_PROXIES</code> change does not apply (you
+                run the binary), (3) EXIF removal is a no-op for you, (4) cookie rename
+                logs everyone out once. v16&rsquo;s Authorized Integrations + Actions
+                APIs are the carrot.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step p1">
+            <div class="migration-num">R12</div>
+            <div class="migration-content">
+              <span class="badge badge-high">P1</span>
+              <h4>Re-issue long-lived tokens as repo-scoped (v15)</h4>
+              <p>
+                The sync, hermes, and future MCP/MCP-adjacent tokens are
+                instance-wide today. v15 repository-scoped tokens shrink each of them
+                to the repos they touch &mdash; the same least-privilege move the
+                deploy keys got in CI.
+              </p>
+            </div>
+          </div>
+
+          <h3>P2 &mdash; ecosystem adoption</h3>
+
+          <div class="migration-step p2">
+            <div class="migration-num">R13</div>
+            <div class="migration-content">
+              <span class="badge" style="background: var(--solution); color: var(--surface)">P2</span>
+              <h4>Wire gitea-mcp into crushrc (read-only first)</h4>
+              <p>
+                stdio MCP server + <code>GITEA_HOST=https://forgejo.home.lan</code> +
+                repo-scoped token + <code>GITEA_READONLY=1</code>. Agents gain
+                mirror triage, issue filing, and CI dispatch. Remember: Crush loads MCP
+                changes only at session start, and probe the tool set against Forgejo
+                before trusting it daily.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step p2">
+            <div class="migration-num">R14</div>
+            <div class="migration-content">
+              <span class="badge" style="background: var(--solution); color: var(--surface)">P2</span>
+              <h4>Self-hosted Renovate on native repos</h4>
+              <p>
+                Run the Renovate container/CLI as a scheduled workflow (<code>platform=forgejo</code>,
+                PAT with repo/user/issue/org scopes, explicit <code>repository</code>
+                allowlist &mdash; autodiscovery would skip your mirrors anyway, which is
+                exactly right). Dependency PRs then appear on the forge instead of only
+                in GitHub.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step p2">
+            <div class="migration-num">R15</div>
+            <div class="migration-content">
+              <span class="badge" style="background: var(--solution); color: var(--surface)">P2</span>
+              <h4>OCI registry as Docker-Hub outage insurance</h4>
+              <p>
+                A nightly <code>skopeo copy</code> timer mirrors the pinned images from
+                <code>lib/images.nix</code> into the Forgejo container registry (tag +
+                digest preserved). Set <code>org.opencontainers.image.source</code> so
+                v15 auto-links each image to its repo. This is the same
+                &ldquo;GitHub-outage immunity&rdquo; instinct as the Forgejo-mirror
+                infrastructure idea &mdash; applied to images. Mind the pool mount-gating
+                rules for any storage relocation.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step p2">
+            <div class="migration-num">R16</div>
+            <div class="migration-content">
+              <span class="badge" style="background: var(--solution); color: var(--surface)">P2</span>
+              <h4>Add forgejo-backup for migration-grade exports</h4>
+              <p>
+                <code>forgejo dump</code> is instance-shaped; mathisdt/forgejo-backup
+                exports per-repo issues/PRs/releases/wiki in a portable shape. Schedule
+                weekly for the handful of repos whose metadata you could not stand to
+                lose.
+              </p>
+            </div>
+          </div>
+
+          <h3>P3 &mdash; frontier &amp; watchlist</h3>
+          <div class="migration-step p3">
+            <div class="migration-num">R17</div>
+            <div class="migration-content">
+              <span class="badge badge-medium">P3</span>
+              <h4>Pages server for project sites</h4>
+              <p><code>git-pages</code> or <code>gitgay/pages-server</code> behind a Caddy vHost turns repo branches into static sites &mdash; a self-hosted alternative lane to the Firebase website-launch pattern for quick project docs.</p>
+            </div>
+          </div>
+          <div class="migration-step p3">
+            <div class="migration-num">R18</div>
+            <div class="migration-content">
+              <span class="badge badge-medium">P3</span>
+              <h4>Federation watch</h4>
+              <p>Federated stars ship; issues/PRs/reviews are on the ForgeFed roadmap, v13&rsquo;s moderation tooling was built as its groundwork, and v12 is already auto-linking fediverse handles. Keep <code>federation.ENABLED</code> and revisit when cross-instance issues land.</p>
+            </div>
+          </div>
+          <div class="migration-step p3">
+            <div class="migration-num">R19</div>
+            <div class="migration-content">
+              <span class="badge badge-medium">P3</span>
+              <h4>v17.0 (2026-10-15) release watch</h4>
+              <p>Read its release notes for Actions and mirror changes; the next LTS is the April 2027 release. Calendar note: v15.0.x patches continue to 2027-07-15 regardless.</p>
+            </div>
+          </div>
+
+          <h3>Anti-recommendations (considered and rejected)</h3>
+          <div class="card card-problem">
+            <ul class="plain">
+              <li><strong>Woodpecker/Crow alongside Actions</strong> &mdash; two CI systems, one user, zero marginal value.</li>
+              <li><strong>Terraform provider</strong> &mdash; your Nix oneshots are already declarative, idempotent, and reviewed; adding Terraform forks the source of truth.</li>
+              <li><strong>PostgreSQL migration &ldquo;because scale&rdquo;</strong> &mdash; SQLite is the right engine for a single-writer forge; revisit only if Actions jobs + mirrors start contending visibly (then it joins the shared PG instance with peer auth).</li>
+              <li><strong>Global 2FA enforcement</strong> &mdash; meaningless under SSO-only; Pocket ID owns the passkeys.</li>
+              <li><strong>Opening registration / public exposure</strong> &mdash; the forge is LAN-first behind SSO; moderation, quota, and guardian tooling only matter if you ever change that.</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- ============ 09 RISKS ============ -->
+        <section id="risks">
+          <h2><span class="num">09</span>Risks &amp; Gotchas (instance-specific)</h2>
+          <div class="issue issue-critical">
+            <span class="severity severity-critical">Known class</span>
+            <h3>SQLite on a storm-prone filesystem</h3>
+            <p class="where">cf. pocket-id SQLITE_BUSY storms, 2026-08-22 / 2026-09-06 incidents</p>
+            <p>
+              The forge DB shares the QLC-NVMe write profile that produced documented
+              lock storms on sibling services. Keep doctor/cleanup jobs off storm hours,
+              keep the mirror queue healthy (restart on
+              <code>mirror_sync_stalled 1</code>), and don&rsquo;t stack heavy Actions
+              windows with btrbk sends.
+            </p>
+          </div>
+          <div class="issue issue-important">
+            <span class="severity severity-important">Design fact</span>
+            <h3>The runner is RCE by contract</h3>
+            <p class="where">forgejo.org/docs/latest/admin/actions/security/</p>
+            <p>
+              Fine for your own workflows; the guardrails are the two settings called
+              out in &sect;6.3 (host networking, native label). If anyone else ever gets
+              commit access, those settings are the first thing to revoke.
+            </p>
+          </div>
+          <div class="issue issue-important">
+            <span class="severity severity-important">Upgrade trap</span>
+            <h3>v16 mirror redirect strictness</h3>
+            <p>
+              <code>http.followRedirects=false</code> means mirrors of repos that were
+              renamed or transferred upstream stop syncing with a redirect error until
+              their mirror URL is updated. Inventory renames before any v16+ move
+              &mdash; the fleet&rsquo;s own <code>erroring</code> metric will name the
+              victims.
+            </p>
+          </div>
+          <div class="issue issue-important">
+            <span class="severity severity-important">Rate discipline</span>
+            <h3>GitHub API budget</h3>
+            <p>
+              260+ repos enumerated every 6h plus per-repo mirror creation through the
+              API + <code>gh</code>. Watch for secondary rate limits when adding
+              bulk operations (mass re-mirror, issue import) &mdash; stagger them, the
+              way the auto-assign service staggers its edits.
+            </p>
+          </div>
+          <div class="issue issue-nice">
+            <span class="severity severity-nice">Note</span>
+            <h3>Actions on mirrored repos</h3>
+            <p>
+              Workflows live in repo content and Actions is built around native repo
+              events. Treat the mirror fleet as the archival/backup tier and run CI on
+              native repos (or push-mirrored originals) &mdash; that is the designed
+              pattern, and it keeps the runner&rsquo;s trust boundary equal to
+              &ldquo;code you wrote.&rdquo;
+            </p>
+          </div>
+        </section>
+
+        <!-- ============ 10 SOURCES ============ -->
+        <section id="sources">
+          <h2><span class="num">10</span>Sources</h2>
+          <p>All external claims in this report trace to one of these primary sources, fetched 2026-09-18:</p>
+          <ul class="plain" style="font-size: 0.9rem">
+            <li>forgejo.org/releases/ &mdash; current stable v16.0.5, LTS v15.0.9, support windows</li>
+            <li>forgejo.org release announcements: <code>2025-07-release-v12-0</code>, <code>2025-10-release-v13-0</code>, <code>2026-01-release-v14-0</code>, <code>2026-04-release-v15-0</code>, <code>2026-07-release-v16-0</code></li>
+            <li>codeberg.org/forgejo/forgejo/releases &mdash; repo stats, release assets, CI-check layout</li>
+            <li>forgejo.org/docs/latest/admin/actions/ &mdash; Actions admin guide, retention + storage settings, DEFAULT_ACTIONS_URL guidance</li>
+            <li>forgejo.org/docs/latest/ navigation &mdash; 23 package registries, AGit, OAuth2 provider, incoming email, code/issue search docs</li>
+            <li>code.forgejo.org/forgejo/runner/releases &mdash; runner v13.1.0 / v13.0.0 notes; forgejo.org <code>2026-08-runner-release-v13</code> breaking-changes post</li>
+            <li>docs.renovatebot.com/modules/platform/gitea/ &mdash; platform=forgejo directive, token scopes, mirror-skip autodiscovery</li>
+            <li>codeberg.org/forgejo-contrib/delightful-forgejo (README) &mdash; the community catalog (&sect;7)</li>
+            <li>gitea.com/gitea/gitea-mcp (README + repo activity) &mdash; MCP tool surface, read-only mode, transports</li>
+            <li>github.com/catppuccin/gitea (README) &mdash; theme install paths + auto variants</li>
+            <li>Local: modules/nixos/services/forgejo.nix, _forgejo-scripts.nix, docs/services/forgejo-upstream-issues.md, docs/archive/forgejo-federation.md, AGENTS.md incident history</li>
+          </ul>
+          <p class="small" style="color: var(--text-muted)">
+            Deliberate omissions: v11.0 feature details (announcement not fetched),
+            gickup (not verified this session), any claim about exact Actions behavior on
+            mirror-sync events (no upstream doc fetched &mdash; treat &sect;9&rsquo;s note
+            as guidance, not gospel).
+          </p>
+        </section>
+
+        <div class="footer">
+          <p>
+            Forgejo Deep Research &middot; prepared for SystemNix/evo-x2 &middot;
+            2026-09-18 &middot; point-in-time snapshot; re-verify version-specific
+            claims against the linked sources before acting.
+          </p>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // Progressive-enhancement scrollspy: highlights the active sidebar item.
+      (function () {
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = Array.prototype.slice.call(nav.querySelectorAll("a[href^='#']"));
+        var map = {};
+        links.forEach(function (a) {
+          var id = a.getAttribute("href").slice(1);
+          var el = document.getElementById(id);
+          if (el) map[id] = a;
+        });
+        var targets = Object.keys(map).map(function (id) {
+          return document.getElementById(id);
+        });
+        if (!("IntersectionObserver" in window) || targets.length === 0) return;
+        var active = null;
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                if (active) active.classList.remove("active");
+                active = map[e.target.id];
+                if (active) active.classList.add("active");
+              }
+            });
+          },
+          { rootMargin: "-10% 0px -80% 0px" }
+        );
+        targets.forEach(function (t) { io.observe(t); });
+      })();
+    </script>
+  </body>
+</html>
