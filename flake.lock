@@ -297,11 +297,11 @@
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1789718108,
-        "narHash": "sha256-+oEZBWcZBKW5T3aoV5aEY9fzRJqP6loTCKyS+BV9cVA=",
+        "lastModified": 1789748633,
+        "narHash": "sha256-NlT83+rCJ3bafqFpOCNJjqyRg4meOS1Jbi8Gs8nH0g4=",
         "ref": "refs/heads/master",
-        "rev": "f7a0c992763b91cb8ec4c3490ac70a349f2096fb",
-        "revCount": 6123,
+        "rev": "e4659dc87505d6af2cc4ae02a4e8bbfd25e4a3fa",
+        "revCount": 6128,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -5208,11 +5208,11 @@
         "uv2nix": "uv2nix"
       },
       "locked": {
-        "lastModified": 1789748726,
-        "narHash": "sha256-pmZlgNxvoAdfmLMeT8ohxKBhtQFlIasqOS8oKiKsV+k=",
+        "lastModified": 1789749016,
+        "narHash": "sha256-noSiaukbyd7CS6LkLxGi+5unTZhyz2cOO2e0XWHPd04=",
         "owner": "NousResearch",
         "repo": "hermes-agent",
-        "rev": "8fb12bc814dd8b9afed001270619f583e2df5715",
+        "rev": "f29f6a018735db0f7643a73fb32ec20458ebe288",
         "type": "github"
       },
       "original": {
