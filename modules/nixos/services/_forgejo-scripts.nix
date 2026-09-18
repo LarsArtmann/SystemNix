@@ -341,6 +341,16 @@ in
       done < "$STALE"
       mv "$PENDING_NEW" "$PENDING"
 
+      # Persist the full stale-name set (lowercase) for the dead-mirror
+      # collector (forgejo-mirror-health): known-stale = every mirror name
+      # that is NOT a canonical GitHub name (renamed / transferred /
+      # upstream-deleted). Those fail their dead remotes forever BY DESIGN
+      # and must never count as dead candidates. Atomic write: the 5-min
+      # collector may read it concurrently.
+      stale_tmp=$(mktemp "$STATE_DIR/known-stale.XXXXXX")
+      sort -u "$STALE" > "$stale_tmp"
+      mv "$stale_tmp" "$STATE_DIR/known-stale.txt"
+
       echo "=== Reconcile summary ==="
       echo "forgejo pull mirrors: $total"
       echo "stale names examined: $stale_count"
@@ -459,6 +469,382 @@ in
       done < "$STARRED_FILE"
 
       echo "✓ Done!"
+    '';
+  };
+
+  # Outbound GitHub push mirrors for CANONICAL (native, non-mirror) repos
+  # (staged-primary plan M05). The 2026-09-18 audit proved the OLD push
+  # mirror code never worked: the POST omitted the mandatory `interval`
+  # field and forgejo's time.ParseDuration("") 400'd on all 18 attempts
+  # ever journaled. This rebuild always sends interval:"8h" (schema
+  # verified against the deployed v15.0.8 swagger: remote_address /
+  # remote_username / remote_password / interval / sync_on_commit).
+  #
+  # Clobber guard: REFUSES any repo where mirror==true — a push mirror on
+  # a PULL mirror is incoherent (the next pull overwrites forgejo-side
+  # commits). Canonical repos must be flipped native first
+  # (forgejo-flip-repo / forgejo-flip@<name>.service).
+  #
+  # Auth: the GitHub PAT is stored by forgejo as the push remote's
+  # credential — the same secret forgejo already holds for pull
+  # migrations. Wired as phase 3 of forgejo-github-sync behind
+  # services.forgejo.canonicalRepos (default [] = this script never runs).
+  pushMirrorScript = pkgs.writeShellApplication {
+    name = "forgejo-push-mirror";
+    runtimeInputs = [
+      pkgs.curl
+      pkgs.jq
+    ];
+    text = ''
+      FORGEJO_URL="${forgejoUrl}"
+      FORGEJO_OWNER="${primaryUser}"
+      FORGEJO_TOKEN="''${FORGEJO_TOKEN:-}"
+      GITHUB_TOKEN="''${GITHUB_TOKEN:-}"
+      GITHUB_USER="''${GITHUB_USER:-}"
+      REPOS="''${FORGEJO_CANONICAL_REPOS:-}"
+
+      if [[ -z "$FORGEJO_TOKEN" || -z "$GITHUB_TOKEN" || -z "$GITHUB_USER" ]]; then
+        echo "Error: FORGEJO_TOKEN / GITHUB_TOKEN / GITHUB_USER must all be set" >&2
+        exit 1
+      fi
+      if [[ -z "$REPOS" ]]; then
+        echo "forgejo-push-mirror: canonicalRepos empty — nothing to do"
+        exit 0
+      fi
+
+      read -r -a repos <<< "$REPOS"
+      FAILED=0
+      for name in "''${repos[@]}"; do
+        repo=$(curl -sf --compressed \
+          -H "Authorization: token $FORGEJO_TOKEN" \
+          "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name") || {
+          echo "✗ $name: not found on forgejo (canonicalRepos drift? create it natively or flip it)" >&2
+          FAILED=1
+          continue
+        }
+        if [[ "$(echo "$repo" | jq -r '.mirror')" == "true" ]]; then
+          echo "✗ $name: still a PULL mirror — refusing (flip first: sudo systemctl start forgejo-flip@$name.service)" >&2
+          FAILED=1
+          continue
+        fi
+        existing=$(curl -sf --compressed \
+          -H "Authorization: token $FORGEJO_TOKEN" \
+          "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name/push_mirrors" \
+          | jq 'length') || existing=0
+        if [[ "$existing" != "0" ]]; then
+          echo "✓ $name: push mirror already attached"
+          continue
+        fi
+        code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+          -H "Authorization: token $FORGEJO_TOKEN" \
+          -H "Content-Type: application/json" \
+          "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name/push_mirrors" \
+          -d "$(jq -n \
+            --arg remote "https://github.com/$GITHUB_USER/$name.git" \
+            --arg username "$GITHUB_USER" \
+            --arg password "$GITHUB_TOKEN" \
+            '{remote_address: $remote, remote_username: $username, remote_password: $password, interval: "8h", sync_on_commit: true}')")
+        if [[ "$code" == "200" || "$code" == "201" ]]; then
+          echo "✓ $name: push mirror attached (interval 8h, sync_on_commit)"
+        else
+          echo "✗ $name: push mirror POST failed (HTTP $code)" >&2
+          FAILED=1
+        fi
+      done
+      exit "$FAILED"
+    '';
+  };
+
+  # Convert a disposable PULL mirror into a NATIVE canonical repo with a
+  # one-time FULL import (issues/PRs/labels/milestones/releases/wiki/LFS),
+  # then attach the GitHub push mirror (staged-primary plan M06).
+  #
+  # Safety model:
+  # - The mirror is disposable BY DEFINITION (a byte-copy of GitHub):
+  #   deleting it loses nothing GitHub does not still have.
+  # - Refuses anything that is not a pull mirror — a native repo would be
+  #   PRIMARY data, and the plan guardrail "no repository DELETE outside
+  #   forgejo-flip-repo" applies to this script too.
+  # - Refuses names with a pending reconcile verdict (rename in flight).
+  # - On migrate failure AFTER the delete: the repo is gone on forgejo;
+  #   recovery = re-run this script, or forgejo-mirror-github recreates
+  #   the mirror. GitHub never lost anything.
+  #
+  # Operator paths: `sudo systemctl start forgejo-flip@<name>.service`
+  # (env + onFailure wired), `forgejo-flip-check@<name>` for the dry-run
+  # twin, or the PATH binary with the sync unit's env for fixture tests.
+  flipRepoScript = pkgs.writeShellApplication {
+    name = "forgejo-flip-repo";
+    runtimeInputs = [
+      pkgs.curl
+      pkgs.jq
+      pkgs.gh
+      pkgs.coreutils
+      pkgs.gnugrep
+    ];
+    text = ''
+      usage() {
+        echo "Usage: forgejo-flip-repo <name> [--dry-run]" >&2
+        exit 1
+      }
+      die() { echo "ERROR: $*" >&2; exit 1; }
+
+      [[ $# -ge 1 && $# -le 2 ]] || usage
+      name="$1"
+      dry_run=0
+      [[ "''${2:-}" == "--dry-run" ]] && dry_run=1
+      [[ $# -eq 2 && "$dry_run" -eq 0 ]] && usage
+
+      FORGEJO_URL="${forgejoUrl}"
+      FORGEJO_OWNER="${primaryUser}"
+      FORGEJO_TOKEN="''${FORGEJO_TOKEN:-}"
+      GITHUB_TOKEN="''${GITHUB_TOKEN:-}"
+      GITHUB_USER="''${GITHUB_USER:-}"
+      RECONCILE_DIR="''${FORGEJO_RECONCILE_STATE_DIR:-''${XDG_STATE_HOME:-$HOME/.local/state}/forgejo-mirror-reconcile}"
+
+      [[ -n "$FORGEJO_TOKEN" && -n "$GITHUB_TOKEN" && -n "$GITHUB_USER" ]] \
+        || die "FORGEJO_TOKEN / GITHUB_TOKEN / GITHUB_USER must all be set"
+
+      echo "=== forgejo-flip-repo: $name ==="
+
+      repo=$(curl -sf --compressed \
+        -H "Authorization: token $FORGEJO_TOKEN" \
+        "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name") \
+        || die "$name not found on forgejo"
+      [[ "$(echo "$repo" | jq -r '.owner.login')" == "$FORGEJO_OWNER" ]] \
+        || die "$name is not owned by $FORGEJO_OWNER (starred org?) — out of scope"
+      [[ "$(echo "$repo" | jq -r '.mirror')" == "true" ]] \
+        || die "$name is NOT a pull mirror — native repos are primary data, refusing"
+      if [[ -f "$RECONCILE_DIR/pending-deletes.txt" ]] \
+        && grep -ixqF "$name" "$RECONCILE_DIR/pending-deletes.txt"; then
+        die "$name has a pending reconcile verdict (rename in flight) — resolve first"
+      fi
+
+      gh_repo=$(gh api "repos/$GITHUB_USER/$name") \
+        || die "$name not found on GitHub ($GITHUB_USER) — nothing to import from"
+      gh_branch=$(echo "$gh_repo" | jq -r '.default_branch')
+      gh_issues=$(echo "$gh_repo" | jq -r '.open_issues_count')
+      gh_private=$(echo "$gh_repo" | jq -r '.private')
+      gh_desc=$(echo "$gh_repo" | jq -r '.description // ""')
+
+      echo "  source: github.com/$GITHUB_USER/$name (branch=$gh_branch open_issues=$gh_issues private=$gh_private)"
+      echo "  plan:   DELETE disposable mirror -> migrate mirror:false (issues+PRs+labels+milestones+releases+wiki+lfs) -> attach push mirror (8h, sync_on_commit)"
+      if [[ "$dry_run" -eq 1 ]]; then
+        echo "DRY RUN: no changes made"
+        exit 0
+      fi
+
+      code=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE \
+        -H "Authorization: token $FORGEJO_TOKEN" \
+        "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name")
+      [[ "$code" == "204" || "$code" == "200" ]] \
+        || die "DELETE of mirror $name failed (HTTP $code) — nothing changed, aborting"
+
+      code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+        -H "Authorization: token $FORGEJO_TOKEN" \
+        -H "Content-Type: application/json" \
+        "$FORGEJO_URL/api/v1/repos/migrate" \
+        -d "$(jq -n \
+          --arg clone "https://github.com/$GITHUB_USER/$name.git" \
+          --arg repo_name "$name" \
+          --arg description "$gh_desc" \
+          --argjson private "$gh_private" \
+          --arg auth "$GITHUB_TOKEN" \
+          --argjson uid 1 \
+          '{
+            clone_addr: $clone,
+            repo_name: $repo_name,
+            uid: $uid,
+            auth_token: $auth,
+            mirror: false,
+            private: $private,
+            description: $description,
+            wiki: true,
+            labels: true,
+            issues: true,
+            pull_requests: true,
+            releases: true,
+            milestones: true,
+            lfs: true,
+            service: "git"
+          }')")
+      if [[ "$code" != "200" && "$code" != "201" ]]; then
+        die "migrate of $name failed (HTTP $code) — mirror already deleted. Recovery: re-run this script, or forgejo-mirror-github recreates the mirror"
+      fi
+
+      repo2=$(curl -sf --compressed \
+        -H "Authorization: token $FORGEJO_TOKEN" \
+        "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name") \
+        || die "post-flip GET failed — repo not readable after migrate"
+      [[ "$(echo "$repo2" | jq -r '.mirror')" == "false" ]] \
+        || die "post-flip verify failed: mirror flag still true"
+      fj_branch=$(echo "$repo2" | jq -r '.default_branch')
+      [[ "$fj_branch" == "$gh_branch" ]] \
+        || die "post-flip verify failed: default branch '$fj_branch' != GitHub '$gh_branch'"
+      fj_issues=$(echo "$repo2" | jq -r '.open_issues_count')
+      if [[ "$gh_issues" -gt 0 && "$fj_issues" -eq 0 ]]; then
+        die "post-flip verify failed: GitHub had $gh_issues open issues but forgejo imported 0"
+      fi
+
+      attached=$(curl -sf --compressed \
+        -H "Authorization: token $FORGEJO_TOKEN" \
+        "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name/push_mirrors" | jq 'length') || attached=0
+      if [[ "$attached" == "0" ]]; then
+        code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+          -H "Authorization: token $FORGEJO_TOKEN" \
+          -H "Content-Type: application/json" \
+          "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name/push_mirrors" \
+          -d "$(jq -n \
+            --arg remote "https://github.com/$GITHUB_USER/$name.git" \
+            --arg username "$GITHUB_USER" \
+            --arg password "$GITHUB_TOKEN" \
+            '{remote_address: $remote, remote_username: $username, remote_password: $password, interval: "8h", sync_on_commit: true}')")
+        [[ "$code" == "200" || "$code" == "201" ]] \
+          || die "push mirror attach failed (HTTP $code) — repo is native+imported; attach via forgejo-push-mirror later"
+      fi
+      listed=$(curl -sf --compressed \
+        -H "Authorization: token $FORGEJO_TOKEN" \
+        "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name/push_mirrors" | jq 'length') || listed=0
+      [[ "$listed" != "0" ]] || die "post-flip verify failed: no push mirror listed"
+
+      echo "FLIPPED $name: native + full import (branch=$fj_branch issues=$fj_issues) + push mirror attached"
+    '';
+  };
+
+  # Dead pull-mirror detection (staged-primary plan M07 — REDESIGNED
+  # 2026-09-18 after the plan's mirror_updated-vs-updated_at heuristic was
+  # falsified against the live forgejo: every mirror, including the known
+  # frozen ones, carries a FRESH mirror_updated because TouchMirror
+  # advances the same column on FAILED syncs (services/mirror/mirror_pull.go
+  # SyncPullMirror -> models/repo TouchMirror), and idle-but-healthy
+  # mirrors carry frozen updated_at — the pair cannot separate dead from
+  # idle). Authoritative per-repo signal: the `notice` table — every FAILED
+  # pull-mirror sync writes a Type=1 row "Failed to update mirror
+  # repository '<path>.git'" (runSync -> CreateRepositoryNotice). Known
+  # stale names (renamed / transferred / upstream-deleted — they 404
+  # forever by design) are subtracted via the reconcile script's
+  # known-stale.txt state file.
+  #
+  # Fail-closed: unreadable DB, unreadable stale file, or sqlite failure
+  # => scrape_errors 1 and the dead_candidates line is ABSENT (the Gatus
+  # check goes red; no phantom zeros).
+  mirrorHealthScript = pkgs.writeShellApplication {
+    name = "forgejo-mirror-health";
+    runtimeInputs = [
+      pkgs.sqlite
+      pkgs.coreutils
+      pkgs.gnugrep
+    ];
+    text = ''
+      DB="''${FORGEJO_DB:-${stateDir}/data/forgejo.db}"
+      STALE_FILE="''${FORGEJO_KNOWN_STALE:-/home/${primaryUser}/.local/state/forgejo-mirror-reconcile/known-stale.txt}"
+      WINDOW="''${FORGEJO_DEAD_WINDOW:-86400}"
+      TF_DIR="''${FORGEJO_MIRROR_HEALTH_TEXTFILE_DIR:-/var/lib/prometheus-node-exporter/textfile_collectors}"
+
+      publish() {
+        if [[ ! -d "$TF_DIR" ]]; then
+          echo "(metrics: textfile dir absent — skipping prom publish)"
+          return 0
+        fi
+        local tmp
+        tmp=$(mktemp "$TF_DIR/forgejo-mirror-health.XXXXXX") || return 0
+        cat > "$tmp"
+        chmod 644 "$tmp"
+        mv "$tmp" "$TF_DIR/forgejo_mirror_health.prom" 2>/dev/null \
+          || { echo "warn: cannot publish forgejo_mirror_health.prom" >&2; rm -f "$tmp"; }
+      }
+
+      if [[ ! -r "$DB" ]]; then
+        echo "forgejo-mirror-health: DB not readable: $DB" >&2
+        printf '# forgejo mirror health metrics\nforgejo_mirror_health_scrape_errors 1\n' | publish
+        exit 0
+      fi
+      if [[ ! -r "$STALE_FILE" ]]; then
+        echo "forgejo-mirror-health: known-stale file missing: $STALE_FILE (first reconcile run after deploy publishes it)" >&2
+        printf '# forgejo mirror health metrics\nforgejo_mirror_health_scrape_errors 1\n' | publish
+        exit 0
+      fi
+
+      cutoff=$(( $(date +%s) - WINDOW ))
+      rc=0
+      rows=$(sqlite3 -readonly "$DB" ".timeout 5000" \
+        "SELECT description FROM notice WHERE type = 1 AND created_unix > $cutoff" 2>/dev/null) || rc=$?
+      if [[ "$rc" -ne 0 ]]; then
+        echo "forgejo-mirror-health: sqlite query failed (rc=$rc)" >&2
+        printf '# forgejo mirror health metrics\nforgejo_mirror_health_scrape_errors 1\n' | publish
+        exit 0
+      fi
+
+      dead=0
+      while IFS= read -r n; do
+        [[ -n "$n" ]] || continue
+        grep -ixqF "$n" "$STALE_FILE" && continue
+        dead=$((dead + 1))
+        echo "  dead candidate: $n (syncs failing 24h+, not known-stale)"
+      done < <(printf '%s\n' "$rows" \
+        | grep "Failed to update mirror repository '" \
+        | grep -v " repository wiki '" \
+        | cut -d"'" -f2 \
+        | while IFS= read -r p; do basename "$p" .git; done \
+        | sort -u)
+
+      {
+        echo "# forgejo mirror health metrics"
+        echo "forgejo_mirror_health_scrape_errors 0"
+        echo "forgejo_mirror_dead_candidates $dead"
+      } | publish
+    '';
+  };
+
+  # Live-forge census (staged-primary plan M08): native-vs-mirror split
+  # per owner/org — the flip-rollout tracking numbers. Operator-run at
+  # gates (sudo systemctl start forgejo-census; journalctl -u forgejo-census).
+  censusScript = pkgs.writeShellApplication {
+    name = "forgejo-census";
+    runtimeInputs = [
+      pkgs.curl
+      pkgs.jq
+      pkgs.coreutils
+    ];
+    text = ''
+      FORGEJO_URL="${forgejoUrl}"
+      FORGEJO_TOKEN="''${FORGEJO_TOKEN:-}"
+
+      if [[ -z "$FORGEJO_TOKEN" ]]; then
+        echo "Error: FORGEJO_TOKEN not set" >&2
+        exit 1
+      fi
+
+      ALL=$(mktemp)
+      trap 'rm -f "$ALL"' EXIT
+
+      page=1
+      while true; do
+        response=$(curl -s --compressed -H "Authorization: token $FORGEJO_TOKEN" \
+          "$FORGEJO_URL/api/v1/user/repos?limit=50&page=$page")
+        n=$(echo "$response" | jq -r 'if type == "array" then length else -1 end')
+        [[ "$n" == "-1" ]] && { echo "Error: forgejo listing failed: $(echo "$response" | jq -r '.message // "unknown"')" >&2; exit 1; }
+        echo "$response" >> "$ALL"
+        [[ "$n" -lt 50 ]] && break
+        page=$((page + 1))
+      done
+
+      echo "=== forgejo census ($(date -u +%FT%TZ)) ==="
+      jq -s '
+        add
+        | {
+            total: length,
+            native: ([.[] | select(.mirror != true)] | length),
+            mirror: ([.[] | select(.mirror == true)] | length),
+            per_owner: (
+              [group_by(.owner.login)[] | {
+                owner: .[0].owner.login,
+                native: ([.[] | select(.mirror != true)] | length),
+                mirror: ([.[] | select(.mirror == true)] | length)
+              }]
+            )
+          }
+      ' "$ALL"
     '';
   };
 
