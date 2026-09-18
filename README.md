@@ -91,7 +91,7 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **Hermes**          | —                | —                    | AI agent gateway (Discord bot, cron scheduler, multi-provider LLM)                                  |
 | **Twenty CRM**      | 3200             | `crm.home.lan`       | Self-hosted CRM (Docker Compose: PostgreSQL + Redis)                                                |
 | **Paperless-ngx**   | 2892             | `paperless.home.lan` | Document management + OCR + AI tagging (PG backend, Tika/Gotenberg, NPU LLM)                        |
-| **PapDashboard**    | 8088             | `alerts.home.lan`    | Alert lifecycle hub + NPU insight enricher (ingests Gatus)                                          |
+| **PapDashboard**    | 8088             | `dash.home.lan`      | Alert lifecycle hub + NPU insight enricher + services dashboard (ingests Gatus; old `alerts.home.lan` redirects) |
 | **Browser History** | 8087             | `history.home.lan`   | Cross-device browser history (WebAuthn + Pocket ID OIDC)                                            |
 | **InboxClean**      | 8099             | `inbox.home.lan`     | Gmail AI assistant (event-sourced, multi-account, HTMX dashboard)                                   |
 | **CV server**       | 8098             | `cv.home.lan`        | Resume/CV generator (typst PDF, pipeline scanner + LLM evaluation)                                  |
