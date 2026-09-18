@@ -1,4 +1,4 @@
-# Build cache SSD — SanDisk SDSSDA240G on USB 3.0 (SandForce SF-2000, DRAM-less).
+# Build cache SSD - SanDisk SDSSDA240G on USB 3.0 (SandForce SF-2000, DRAM-less).
 #
 # Purpose: keep rebuildable build caches (Go build/module cache, golangci-lint,
 # goimports, Rust target dirs, npm/pnpm, pip, Playwright browsers) OFF the QLC
@@ -17,11 +17,11 @@
 #
 # TRIM does NOT pass through the USB bridge (lsblk -D reports DISC-MAX 0B).
 # If write performance degrades over months from stale-block pressure, the fix
-# is a reformat — the drive is a cache:
+# is a reformat - the drive is a cache:
 #   mkfs.ext4 -L buildcache /dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311-part1
 #
 # Migration of existing caches: `nix run .#migrate-buildcache` (run BEFORE the
-# first deploy of this module — it creates dirs the deploy expects, and moves
+# first deploy of this module - it creates dirs the deploy expects, and moves
 # ~/.cache/goimports + ~/.cache/go aside so home-manager symlinks cleanly).
 {
   flake.nixosModules.buildcache =
@@ -68,7 +68,7 @@
       rustProjectDirs = map (project: "rust/${project}") cfg.rustProjects;
 
       # ID_SERIAL of the cache SSD, parsed from the by-id device path
-      # ("ata-<model>_<serial>-partN"). null for non-by-id devices — the udev
+      # ("ata-<model>_<serial>-partN"). null for non-by-id devices - the udev
       # recovery trigger is then skipped (x-systemd.device-bound still
       # protects the mount).
       deviceSerialMatch = builtins.match "(ata|scsi|usb|virtio)-(.+)-part[0-9]+" (baseNameOf cfg.device);
@@ -111,7 +111,7 @@
           default = [ ];
           description = ''
             Rust project names that get a target/ dir symlinked from
-            ~/projects/<name>/target into the cache (see snapshots.nix — same
+            ~/projects/<name>/target into the cache (see snapshots.nix - same
             pattern the old /rust-cache NVMe partition used, minus COW).
           '';
         };
@@ -143,7 +143,7 @@
               steps, the nuclear option runs: go clean -cache. Rationale: Go's
               native 5-day LRU trim is defeated by gopls refreshing mtimes
               (markUsed), so an unbounded go-build is the one cache that CAN
-              wedge the disk — a cold rebuild is always preferable to a full
+              wedge the disk - a cold rebuild is always preferable to a full
               disk failing all builds.
             '';
           };
@@ -151,7 +151,7 @@
           calendar = lib.mkOption {
             type = lib.types.str;
             default = "Sun *-*-* 05:00:00";
-            description = "OnCalendar for the GC timer (default: Sunday 05:00 — after btrbk 23:00/23:30, before Monday BTRFS balances, idle I/O tier).";
+            description = "OnCalendar for the GC timer (default: Sunday 05:00 - after btrbk 23:00/23:30, before Monday BTRFS balances, idle I/O tier).";
           };
         };
       };
@@ -161,7 +161,7 @@
         # on first access rather than at boot, tolerating late DAS power-up.
         # device-timeout bounds the wait if the enclosure is unplugged.
         # device-bound: the kernel mount table stores device NUMBERS
-        # (major:minor), not paths — a USB reconnect mints a new number, the
+        # (major:minor), not paths - a USB reconnect mints a new number, the
         # by-id symlink cannot re-point the established mount, and a zombie
         # EIOs forever (2026-08-16, twice). device-bound makes systemd stop
         # the mount when the .device unit dies; the automount then re-resolves
@@ -177,7 +177,7 @@
             "nofail"
             "x-systemd.automount"
             # 2s (was 10s): a dead/flapping enclosure must not cost the full
-            # timeout per mount lookup — every D-state probe stalls its caller
+            # timeout per mount lookup - every D-state probe stalls its caller
             # (login chain, units, scripts) and fakes IO PSI saturation
             # (2026-08-24 crash3: phantom PSI from automount waits). A healthy
             # enumerated device answers instantly; USB enumeration happens
@@ -187,7 +187,7 @@
           ];
         };
 
-        # The enclosure is a JMicron JMS567 (152d:0567) — a bridge notorious
+        # The enclosure is a JMicron JMS567 (152d:0567) - a bridge notorious
         # for dropping off the bus under load (9 disconnects in 36 min,
         # 2026-08-16). Two rules make flaps self-healing instead of wedging:
         #  - power/control=on disables USB runtime autosuspend on the bridge
@@ -199,7 +199,7 @@
           ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="152d", ATTR{idProduct}=="0567", TEST=="power/control", ATTR{power/control}="on"
           # Pin all USB host controllers awake: a runtime-suspended (D3cold)
           # controller on this platform raises no PME wake on hotplug, so
-          # replug events are silently LOST — the host looks blind while the
+          # replug events are silently LOST - the host looks blind while the
           # device is healthy (2026-08-29 DAS recovery: all six USB/USB4
           # controllers sat suspended with control=auto). Covers xHCI
           # (0x0c0330) and USB4 (0x0c0340) class devices.
@@ -211,7 +211,7 @@
 
         # Runs on EVERY boot, deliberately: mkdir/chown/chmod are idempotent,
         # and an init-once `.initialized` gate (removed 2026-08-15) made any
-        # newly-added buildcacheDirs entry inert — the sccache dir had to be
+        # newly-added buildcacheDirs entry inert - the sccache dir had to be
         # provisioned by hand after the drive was already initialized.
         systemd.services.buildcache-init = {
           description = "Initialize build cache directories on the USB SSD";
@@ -267,13 +267,13 @@
         # Belt-and-braces for x-systemd.device-bound, triggered by udev when
         # the SSD partition reappears (and by deploy.sh after every switch):
         # reap any zombie mount left behind (e.g. busy writers forced systemd
-        # into a lazy detach), re-arm the automount, verify REAL I/O — then
+        # into a lazy detach), re-arm the automount, verify REAL I/O - then
         # re-provision dirs and refresh metrics immediately so Gatus flips
         # without waiting for the 5-min poll. Also heals the drive-ABSENT case:
         # daemon-reload does NOT retroactively enforce device-bound on an
         # existing zombie, so this unit reaps it even with no device present.
         #
-        # NOTE: deliberately NOT using harden {} — its PrivateTmp/
+        # NOTE: deliberately NOT using harden {} - its PrivateTmp/
         # ProtectSystem options create a slave mount namespace in which
         # umount(2) cannot affect the HOST mount table; the zombie reaper
         # would silently no-op. Only non-namespace directives below.
@@ -290,7 +290,13 @@
           serviceConfig = {
             Type = "oneshot";
             User = "root";
-            CapabilityBoundingSet = "CAP_SYS_ADMIN";
+            # CAP_FOWNER for the /tmp/bc-fallback sweep (step 6): the fallback
+            # dirs are lars-owned under the sticky-bit /tmp, so deleting them
+            # requires CAP_FOWNER even as root (memory-emergency-guard
+            # 2026-08-22 class - hit live 2026-09-18: every recovery run
+            # failed EPERM and OnFailure'd). CAP_DAC_OVERRIDE covers
+            # traversal into foreign-owned trees.
+            CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_FOWNER CAP_DAC_OVERRIDE";
             NoNewPrivileges = true;
             LockPersonality = true;
             MemoryDenyWriteExecute = true;
@@ -326,8 +332,8 @@
             # home-manager activation (checkLinkTargets "Existing file in the
             # way"). Cache data only, exact paths, symlink occupants kept.
             # 2026-09-17: added BuildFlow's cross-repo fallback names
-            # (gobuild gocache gomod — set by BuildFlow sessions as dead-mount
-            # fallbacks) — the original 3-name list evaded them forever, leaving
+            # (gobuild gocache gomod - set by BuildFlow sessions as dead-mount
+            # fallbacks) - the original 3-name list evaded them forever, leaving
             # unowned NVMe churn after every dead-mount episode.
             for d in goimports go go-build gobuild gocache gomod; do
               if [ -e "${homeDir}/.cache/$d" ] && [ ! -L "${homeDir}/.cache/$d" ]; then
@@ -336,12 +342,12 @@
               fi
             done
 
-            # 3. Drive absent: done — zombie (if any) is reaped, automount is
+            # 3. Drive absent: done - zombie (if any) is reaped, automount is
             #    armed, and the udev SYSTEMD_WANTS rule heals on replug. Do NOT
             #    probe I/O here: an armed automount with no device blocks ~10s
             #    (device-timeout) and fails, which would mark this unit failed.
             if [ ! -b "$dev" ]; then
-              echo "buildcache device absent ($dev) — automount armed, will heal on replug"
+              echo "buildcache device absent ($dev) - automount armed, will heal on replug"
               exit 0
             fi
 
@@ -355,7 +361,7 @@
             # 5. Re-provision cache dirs and refresh metrics now.
             systemctl start buildcache-init.service buildcache-metrics.service
             # 6. Sweep the tmpfs fallback caches the fish guard filled during
-            # the outage (/tmp/bc-fallback/* — 00-go-cache-guard redirects
+            # the outage (/tmp/bc-fallback/* - 00-go-cache-guard redirects
             # GOCACHE/GOMODCACHE/etc. there when this mount is dead). The
             # mount is healed and verified above, so the fallback copies are
             # pure duplication; tmpfs reclaims instantly (no snapshots, no
@@ -368,7 +374,7 @@
           '';
         };
 
-        # Always writes the .prom file — including when the drive is absent — so a
+        # Always writes the .prom file - including when the drive is absent - so a
         # dead/unmounted drive flips buildcache_mounted to 0 and Gatus alerts,
         # instead of silently serving a stale green file.
         systemd.services.buildcache-metrics = {
@@ -476,7 +482,7 @@
 
         # Weekly cache GC. Runs as the primary user (all cache dirs are
         # user-owned). rm on stale rust targets instead of trash is deliberate:
-        # trashing 30G of rebuildable cache would write it to the NVMe trash —
+        # trashing 30G of rebuildable cache would write it to the NVMe trash -
         # the exact I/O this SSD exists to keep OFF the NVMe. Cache data only,
         # never user data; paths are anchored under the mount point.
         systemd.services.buildcache-gc = lib.mkIf cfg.gc.enable {
@@ -511,13 +517,13 @@
               WorkingDirectory = cfg.mountPoint;
               # 45min: `go clean -cache` at high-watermark scale (100G+ of
               # small files) and rust-target rm -rf are metadata-bound on a
-              # DRAM-less USB SSD — 20min was too tight to survive the exact
+              # DRAM-less USB SSD - 20min was too tight to survive the exact
               # scenario the watermark guard exists for.
               TimeoutStartSec = "45min";
             }
             (harden {
               # pnpm writes state/metadata under HOME: ~/.cache/pnpm (dlx +
-              # project registries) and ~/.local/state/pnpm (pnpm-state.json) —
+              # project registries) and ~/.local/state/pnpm (pnpm-state.json) -
               # without these holes prune fails under read-only home (verified
               # live 2026-08-15; the state hole added 2026-08-16).
               ProtectHome = "read-only";
@@ -548,24 +554,24 @@
 
             # 2. pnpm: remove packages no longer referenced by any project.
             #    --store is MANDATORY: pnpm resolves its store relative to
-            #    CWD/HOME state when PNPM_HOME/XDG vars are absent — a bare
+            #    CWD/HOME state when PNPM_HOME/XDG vars are absent - a bare
             #    unit cwd=/ made it EACCES on /_tmp_* under ProtectSystem
             #    (silent weekly prune failure, caught 2026-08-16).
             pnpm store prune --store "$mnt/pnpm-store" || echo "buildcache-gc: pnpm store prune failed (non-fatal)"
 
-            # 3. Stale rust target dirs — cheap to lose with sccache
+            # 3. Stale rust target dirs - cheap to lose with sccache
             find "$mnt/rust" -mindepth 1 -maxdepth 1 -type d -mtime "+$max_age" -print -exec rm -rf -- {} + || true
 
             # 4. High watermark: go-build is the only unbounded cache (gopls
             #    mtime refresh defeats Go's 5-day LRU trim). Cold it if needed.
             pct=$(usage)
             if [ -z "''${pct:-}" ]; then
-              echo "buildcache-gc: usage unavailable — mount vanished mid-run?" >&2
+              echo "buildcache-gc: usage unavailable - mount vanished mid-run?" >&2
               exit 1
             fi
             echo "buildcache-gc: after pruning at ''${pct}% usage"
             if [ "$pct" -ge "$watermark" ]; then
-              echo "buildcache-gc: usage >= $watermark% — running go clean -cache (cold rebuild is better than a full disk)"
+              echo "buildcache-gc: usage >= $watermark% - running go clean -cache (cold rebuild is better than a full disk)"
               go clean -cache
               echo "buildcache-gc: post-clean usage: $(usage)%"
             fi
@@ -601,13 +607,13 @@
                   "[STATUS] == 200"
                   # pat() is a GLOB: HELP comments contain "metric 1", so assert absence
                   # of the 0-value line plus presence of the metric instead ('!' is a
-                  # literal in filepath.Match — no glob negation exists).
+                  # literal in filepath.Match - no glob negation exists).
                   "[BODY] != pat(*buildcache_mounted 0\n*)"
                   "[BODY] == pat(*\nbuildcache_mounted *)"
                   "[BODY] != pat(*buildcache_smart_healthy 0\n*)"
                   "[BODY] == pat(*\nbuildcache_smart_healthy *)"
                 ];
-                alert = "Build cache SSD (/mnt/buildcache) unmounted or SMART-failing — go/cargo/pnpm builds will fail with missing-directory errors. Check: findmnt /mnt/buildcache, sudo smartctl -d sat -H /dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311. If the drive died: revert GOCACHE/GOMODCACHE in platforms/nixos/users/home.nix and rebuild caches on NVMe.";
+                alert = "Build cache SSD (/mnt/buildcache) unmounted or SMART-failing - go/cargo/pnpm builds will fail with missing-directory errors. Check: findmnt /mnt/buildcache, sudo smartctl -d sat -H /dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311. If the drive died: revert GOCACHE/GOMODCACHE in platforms/nixos/users/home.nix and rebuild caches on NVMe.";
               }
               {
                 name = "Build Cache Usage";
@@ -619,14 +625,14 @@
                   # Fail-closed on the dead-drive state (2026-08-22 DAS
                   # outage): with the drive absent the usage metrics vanish
                   # but over_threshold last wrote "0" via the always-write
-                  # .prom — this check stayed GREEN on a dead drive for
+                  # .prom - this check stayed GREEN on a dead drive for
                   # days while "Build Cache SSD" alone carried the signal.
                   # Mounted must be 1; anchored form (HELP embeds "metric 1").
                   "[BODY] != pat(*buildcache_mounted 0\n*)"
                   "[BODY] == pat(*\nbuildcache_mounted *)"
                   "[BODY] == pat(*\nbuildcache_usage_over_threshold 0*)"
                 ];
-                alert = "Build cache SSD exceeds 85% — the 240 GB drive is filling. Prune: GOCACHE=/mnt/buildcache/go-build go clean -cache; cargo clean in monitor365; pnpm store prune; rm old Playwright browsers.";
+                alert = "Build cache SSD exceeds 85% - the 240 GB drive is filling. Prune: GOCACHE=/mnt/buildcache/go-build go clean -cache; cargo clean in monitor365; pnpm store prune; rm old Playwright browsers.";
               }
               {
                 name = "Pool Mounted";
@@ -635,11 +641,11 @@
                 interval = "5m";
                 conditions = [
                   "[STATUS] == 200"
-                  # HELP comment contains "pool_mounted 1" — absence-of-0 + presence.
+                  # HELP comment contains "pool_mounted 1" - absence-of-0 + presence.
                   "[BODY] != pat(*pool_mounted 0\n*)"
                   "[BODY] == pat(*\npool_mounted *)"
                 ];
-                alert = "Mirrored HDD pool (/mnt/pool) unmounted — immich + paperless data, ALL application backups, and the btrbk safety net are offline. Check: findmnt /mnt/pool, systemctl status mnt-pool.mount. If a DAS member died: the raid1 still serves from the other member; replace the drive and btrfs replace.";
+                alert = "Mirrored HDD pool (/mnt/pool) unmounted - immich + paperless data, ALL application backups, and the btrbk safety net are offline. Check: findmnt /mnt/pool, systemctl status mnt-pool.mount. If a DAS member died: the raid1 still serves from the other member; replace the drive and btrfs replace.";
               }
               {
                 name = "Pool Usage";
@@ -650,7 +656,7 @@
                   "[STATUS] == 200"
                   "[BODY] == pat(*pool_usage_over_threshold 0*)"
                 ];
-                alert = "Mirrored HDD pool exceeds 85% — review /mnt/pool usage: backups retention (30d 12w targets, forgejo zips 7d), archive/forensic-snapshots growth.";
+                alert = "Mirrored HDD pool exceeds 85% - review /mnt/pool usage: backups retention (30d 12w targets, forgejo zips 7d), archive/forensic-snapshots growth.";
               }
             ];
           };

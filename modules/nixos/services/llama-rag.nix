@@ -1,4 +1,4 @@
-# llama.cpp RAG stack — embeddings + reranking on the GPU (ROCm)
+# llama.cpp RAG stack - embeddings + reranking on the GPU (ROCm)
 #
 # Two lightweight llama-server instances for retrieval-augmented generation:
 #
@@ -6,7 +6,7 @@
 #   llama-reranker    127.0.0.1:8849  bge-reranker-v2-m3  --reranking --pooling rank
 #
 # Both models are ~568M params: cold load ~1s, VRAM ~1-2 GB each. No socket
-# activation needed (unlike FastFlowLM's 13.6 GB NPU model) — always-on is
+# activation needed (unlike FastFlowLM's 13.6 GB NPU model) - always-on is
 # affordable for services that need instant embedding/rerank responses.
 #
 # Why two instances: llama.cpp's --embedding and --reranking modes are
@@ -46,7 +46,7 @@ _: {
       # the last build proven serving on gfx1150. The 0.4.0 build from the
       # root nixpkgs wedges BOTH servers mid-model-load (94% single-thread
       # CPU spin right after "model vocab missing newline token", GPU idle,
-      # /health 503 — live 2026-09-14, 3/3 repros). The whole ROCm runtime
+      # /health 503 - live 2026-09-14, 3/3 repros). The whole ROCm runtime
       # is taken from the same pinned tree so the binary's userspace is
       # exactly the stack it was built and verified against. Drop the pin
       # (flake input + this import) once the 0.4.0+ regression is fixed
@@ -149,10 +149,39 @@ _: {
         + " --port ${toString cfg.rerankerPort}"
         + " --ctx-size ${toString cfg.ctxSize}";
 
+      # Orphan-port guard: kill any llama-server holding this unit's port
+      # that is NOT managed by this module's units. The 2026-09-18 deploy hit
+      # the class live: a rogue 0.4.0 llama-server (spawned by a hermes cron
+      # worker and orphaned to PID 1) survived the config-disable era holding
+      # :8849, so the re-enabled reranker unit bind-failed into
+      # start-limit-hit while the rogue kept serving stale code. Runs
+      # `+`-privileged (root) because the rogue runs as a foreign user;
+      # spares anything inside this module's own unit cgroups. Idempotent:
+      # after the kill the port is free and the real server binds.
+      portGuardScript = pkgs.writeShellScript "llama-rag-port-guard.sh" ''
+        set -euo pipefail
+        port="$1"
+        pids="$("${pkgs.iproute2}/bin/ss" -tlnp "sport = :$port" 2>/dev/null \
+          | "${pkgs.gnused}/bin/sed" -n 's/.*pid=\([0-9]*\).*/\1/p' \
+          | "${pkgs.coreutils}/bin/sort" -u || true)"
+        for pid in $pids; do
+          cgroup="$("${pkgs.coreutils}/bin/cat" "/proc/$pid/cgroup" 2>/dev/null || true)"
+          case "$cgroup" in
+            *llama-embeddings.service*|*llama-reranker.service*) ;;
+            *)
+              echo "llama-rag: stale listener on :$port (pid $pid, foreign cgroup) - killing"
+              "${pkgs.coreutils}/bin/kill" "$pid" 2>/dev/null || true
+              "${pkgs.coreutils}/bin/sleep" 2
+              "${pkgs.coreutils}/bin/kill" -9 "$pid" 2>/dev/null || true
+              ;;
+          esac
+        done
+      '';
+
       # Leak monitor (2026-09-02 incident: 10 leaked llama-server pairs in
       # D-state up to 55h, each restart under QLC saturation stranding
       # another pair that ignores SIGKILL). A llama-server process that does
-      # NOT own a listener on either configured port is leaked/leaking —
+      # NOT own a listener on either configured port is leaked/leaking -
       # either wedged pre-bind or an orphan the unit lost track of.
       # Fail-closed: on scrape failure the leak gauges are OMITTED (absence
       # fails the Gatus pats) and llama_rag_scrape_errors goes to 1.
@@ -244,7 +273,7 @@ _: {
         host = lib.mkOption {
           type = lib.types.str;
           default = "127.0.0.1";
-          description = "Bind address — keep loopback only.";
+          description = "Bind address - keep loopback only.";
         };
 
         embeddingsPort = lib.mkOption {
@@ -329,6 +358,7 @@ _: {
             commonServiceConfig
             {
               ExecStart = embeddingsExecStart;
+              ExecStartPre = "+${portGuardScript} ${toString cfg.embeddingsPort}";
             }
             rocm.deviceCgroup
             (harden { })
@@ -357,6 +387,7 @@ _: {
             commonServiceConfig
             {
               ExecStart = rerankerExecStart;
+              ExecStartPre = "+${portGuardScript} ${toString cfg.rerankerPort}";
             }
             rocm.deviceCgroup
             (harden { })
@@ -369,7 +400,7 @@ _: {
 
         # Leak monitor: 5-min textfile collector counting llama-server
         # processes that hold no :8848/:8849 listener (wedged pre-bind or
-        # orphaned — the 2026-09-02 D-state leak class). Root + CAP_FOWNER
+        # orphaned - the 2026-09-02 D-state leak class). Root + CAP_FOWNER
         # per the sticky-textfile-dir doctrine (unique mktemp, rename-over-
         # foreign fails without it).
         systemd.services.llama-rag-leak-metrics = {
@@ -401,7 +432,7 @@ _: {
         };
 
         # Service-integration registry entry: loopback-only servers (no
-        # vHost — a direct probe policy and port registry forbid external
+        # vHost - a direct probe policy and port registry forbid external
         # exposure), the two Gatus health checks, and the decorative
         # homepage tile. The embeddings/reranker units self-register with
         # system-health (moved out of monitoredServices' default list).
@@ -420,7 +451,7 @@ _: {
                   "[STATUS] == 200"
                   "[RESPONSE_TIME] < 1000"
                 ];
-                alert = "llama.cpp embeddings server down — RAG indexing and semantic search unavailable";
+                alert = "llama.cpp embeddings server down - RAG indexing and semantic search unavailable";
               }
               {
                 name = "llama.cpp Reranker";
@@ -431,11 +462,11 @@ _: {
                   "[STATUS] == 200"
                   "[RESPONSE_TIME] < 1000"
                 ];
-                alert = "llama.cpp reranker down — RAG reranking unavailable, search quality degraded";
+                alert = "llama.cpp reranker down - RAG reranking unavailable, search quality degraded";
               }
               {
                 # Metric-based (node-exporter textfile): leaked llama-server
-                # processes holding no port listener — the restart-under-QLC-
+                # processes holding no port listener - the restart-under-QLC-
                 # saturation D-state leak class. Fail-closed: a dead or
                 # wedged collector omits the gauges and fails the pats.
                 name = "llama.cpp Leaked Instances";
@@ -447,7 +478,7 @@ _: {
                   "[BODY] == pat(*\nllama_rag_leaks_present 0*)"
                   "[BODY] != pat(*\nllama_rag_scrape_errors 1*)"
                 ];
-                alert = "llama.cpp leaked server instances detected (llama-server procs holding no :${toString cfg.embeddingsPort}/:${toString cfg.rerankerPort} listener) — the restart-under-IO-saturation D-state leak class. Check: pgrep -ax llama-server, journalctl -u llama-embeddings -u llama-reranker -n 50; a clean reboot unwinds D-state corpses";
+                alert = "llama.cpp leaked server instances detected (llama-server procs holding no :${toString cfg.embeddingsPort}/:${toString cfg.rerankerPort} listener) - the restart-under-IO-saturation D-state leak class. Check: pgrep -ax llama-server, journalctl -u llama-embeddings -u llama-reranker -n 50; a clean reboot unwinds D-state corpses";
               }
             ];
             # Decorative tile: loopback-only embeddings + reranking on GPU.
