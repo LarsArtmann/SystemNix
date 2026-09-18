@@ -22,11 +22,16 @@ _: {
         ioTier
         mkDnsGate
         mkOidcGate
+        mkFilesystem
         ;
       forgejoPort = config.services.forgejo.settings.server.HTTP_PORT;
       forgejoUrl = "http://localhost:${toString forgejoPort}";
       stateDir = config.services.forgejo.stateDir;
       forgejoBackupDir = "/mnt/pool/backups/forgejo";
+      # Dedicated Samsung-TLC subvolume storage (Set-B, 2026-09-18 staged-
+      # primary plan docs/planning/2026-09-18_16-44_*). Inert until enabled.
+      dedicated = config.services.forgejo.dedicatedSubvolume;
+      dataDirMountUnit = "${utils.escapeSystemdPath stateDir}.mount";
       hostName = config.networking.hostName;
       runnerLabels = [
         "ubuntu-latest:docker://node:22-bookworm"
@@ -127,6 +132,20 @@ _: {
             Defaults to the primary user's NixOS authorized keys.
           '';
         };
+
+        services.forgejo.dedicatedSubvolume = lib.mkEnableOption ''
+          a dedicated BTRFS subvolume (subvol=hot/forgejo on the Samsung TLC
+          disk, by-label tlc) mounted AT the existing stateDir — Set-B
+          storage per docs/planning/2026-09-15_per-service-btrfs-subvolumes-
+          analysis.md: primary-grade state that rides its OWN btrbk
+          snapshot/send leg (8h) instead of the QLC @ snapshots.
+
+          Ships INERT. Enable ONLY after scripts/migrate-forgejo-subvol.sh
+          `finalize` has moved the data — mounting over the un-migrated dir
+          would shadow it (the ClickHouse shadow-dir class), and the unit
+          family below is mount-gated so an absent Samsung degrades to
+          forgejo NOT starting (loud, Gatus-visible), never split-brain.
+        '';
       };
 
       config = lib.mkIf config.services.forgejo.enable {
@@ -255,10 +274,20 @@ _: {
               "pocket-id.service"
             ]
             ++ forgejoMainDnsGate.wants;
-            unitConfig = {
-              StartLimitBurst = lib.mkForce 3;
-              StartLimitIntervalSec = lib.mkForce 300;
-            };
+            unitConfig = lib.mkMerge [
+              {
+                StartLimitBurst = lib.mkForce 3;
+                StartLimitIntervalSec = lib.mkForce 300;
+              }
+              # Dedicated-subvolume storage (plan gate G1): the daemon
+              # pulls the subvol mount into its start transaction and
+              # refuses to start against a shadow dir — an absent Samsung
+              # degrades to forgejo DOWN (loud, Gatus), never split-brain.
+              (lib.mkIf dedicated {
+                RequiresMountsFor = [ stateDir ];
+                ConditionPathIsMountPoint = stateDir;
+              })
+            ];
             serviceConfig = lib.mkMerge [
               (harden {
                 ProtectHome = lib.mkForce false;
@@ -286,6 +315,7 @@ _: {
             wants = [ "network-online.target" ];
             requires = [ "forgejo.service" ];
             inherit onFailure;
+            unitConfig.RequiresMountsFor = lib.optionals dedicated [ stateDir ];
             # Timer-driven oneshot: the timer IS the retry mechanism.
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
@@ -354,7 +384,7 @@ _: {
             after = [ "forgejo.service" ];
             wants = [ "forgejo.service" ];
             inherit onFailure;
-            unitConfig.RequiresMountsFor = [ forgejoBackupDir ];
+            unitConfig.RequiresMountsFor = [ forgejoBackupDir ] ++ lib.optionals dedicated [ stateDir ];
             serviceConfig = lib.mkMerge [
               (harden {
                 MemoryMax = "1G";
@@ -418,6 +448,7 @@ _: {
             (lib.getExe hermesForgejoToken)
             (lib.getExe hermesForgejoTokenDeliver)
           ];
+          unitConfig.RequiresMountsFor = lib.optionals dedicated [ stateDir ];
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
@@ -451,6 +482,7 @@ _: {
           wants = [ "forgejo.service" ];
           wantedBy = [ "forgejo.service" ];
           restartTriggers = [ (lib.getExe tokenGen) ];
+          unitConfig.RequiresMountsFor = lib.optionals dedicated [ stateDir ];
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
@@ -479,6 +511,7 @@ _: {
           ++ forgejoOidcGate.wants;
           wantedBy = [ "forgejo.service" ];
           restartTriggers = [ (lib.getExe oidcSetupScript) ];
+          unitConfig.RequiresMountsFor = lib.optionals dedicated [ stateDir ];
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
@@ -511,6 +544,7 @@ _: {
           startLimitIntervalSec = 300;
           inherit onFailure;
           restartTriggers = [ (lib.getExe addKeysScript) ];
+          unitConfig.RequiresMountsFor = lib.optionals dedicated [ stateDir ];
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
@@ -523,6 +557,83 @@ _: {
           ];
           script = lib.getExe addKeysScript;
         };
+
+        # --- Dedicated Samsung-TLC subvolume at the dataDir (Set-B storage,
+        # staged-primary plan gate G1). Everything below is mkIf dedicated:
+        # the option flips on ONLY after the migration script moved the data.
+        fileSystems.${stateDir} = lib.mkIf dedicated (mkFilesystem {
+          device = "/dev/disk/by-label/tlc";
+          fsType = "btrfs";
+          options = [
+            "subvol=hot/forgejo"
+            "compress=zstd"
+            "noatime"
+            "nodiscard"
+            "space_cache=v2"
+            # nofail: a missing Samsung degrades to forgejo NOT starting
+            # (ConditionPathIsMountPoint on the family head), never a dead
+            # boot.
+            "nofail"
+          ];
+        });
+
+        systemd.services.forgejo-subvol-bootstrap = lib.mkIf dedicated {
+          description = "Idempotently create the forgejo subvolume on the hot-DB disk";
+          # The mount unit pulls this in (WantedBy → Wants) and waits
+          # (before): fstab cannot create BTRFS subvolumes, so the subvol
+          # must exist before ${dataDirMountUnit} can ever mount it — the
+          # test-cv pool-fmt chicken-and-egg class.
+          wantedBy = [ dataDirMountUnit ];
+          before = [ dataDirMountUnit ];
+          after = [ "mnt-hot.mount" ];
+          wants = [ "mnt-hot.mount" ];
+          unitConfig.RequiresMountsFor = [ "/mnt/hot" ];
+          path = [
+            pkgs.btrfs-progs
+            pkgs.coreutils
+          ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "root";
+              RemainAfterExit = true;
+            }
+            (serviceOneshotDefaults { })
+            (harden {
+              # btrfs subvolume create is a privileged ioctl; chown for the
+              # forgejo user (harden{}'s empty bounding set would EPERM both).
+              CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_CHOWN CAP_DAC_OVERRIDE";
+              # The MOUNT ROOT — never a subdir inside it (226 class):
+              # RequiresMountsFor above guarantees the root exists before
+              # the namespace is built.
+              ReadWritePaths = [ "/mnt/hot" ];
+            })
+          ];
+          script = ''
+            set -euo pipefail
+            subvol=/mnt/hot/hot/forgejo
+            if ${pkgs.btrfs-progs}/bin/btrfs subvolume show "$subvol" >/dev/null 2>&1; then
+              echo "forgejo-subvol-bootstrap: $subvol already exists"
+            else
+              mkdir -p /mnt/hot/hot
+              ${pkgs.btrfs-progs}/bin/btrfs subvolume create "$subvol"
+              echo "forgejo-subvol-bootstrap: created $subvol"
+            fi
+            chown forgejo:forgejo "$subvol"
+            chmod 0750 "$subvol"
+          '';
+        };
+
+        # Satellite mount-gating lives inside each unit's own block above
+        # (unitConfig.RequiresMountsFor — same-module attrpaths cannot
+        # re-open an already-defined unit from a second assignment).
+
+        assertions = lib.optionals dedicated [
+          {
+            assertion = config.fileSystems ? "/mnt/hot";
+            message = "services.forgejo.dedicatedSubvolume requires the /mnt/hot Samsung-toplevel mount (hardware-configuration.nix) — forgejo-subvol-bootstrap creates the subvol through it.";
+          }
+        ];
 
         services.gitea-actions-runner = {
           package = pkgs.forgejo-runner;
