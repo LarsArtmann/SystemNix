@@ -58,6 +58,23 @@
       }
     },
     "art-dupl_2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1785811356,
+        "narHash": "sha256-4eH4ookyItLkQBiPENa2bbwKnKNF4JnzigOQQx16qxo=",
+        "owner": "LarsArtmann",
+        "repo": "art-dupl",
+        "rev": "dd56d6a3cbb4e85156d1f7cd34dc35a390666f21",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "v0.6.2",
+        "repo": "art-dupl",
+        "type": "github"
+      }
+    },
+    "art-dupl_3": {
       "inputs": {
         "flake-parts": "flake-parts_14",
         "gogenfilter": "gogenfilter_13",
@@ -755,6 +772,7 @@
     },
     "cv": {
       "inputs": {
+        "art-dupl": "art-dupl_2",
         "flake-parts": "flake-parts_3",
         "go-business-rules": "go-business-rules",
         "go-cqrs-lite": "go-cqrs-lite_4",
@@ -765,11 +783,11 @@
         "treefmt-nix": "treefmt-nix_4"
       },
       "locked": {
-        "lastModified": 1789672837,
-        "narHash": "sha256-tEMU8Kc2aIgERW5PluOUYUIc4j8HiAteq/4+YdFMAaU=",
+        "lastModified": 1789710562,
+        "narHash": "sha256-pqmnSG7Tn0+tclq5xQgY/mC/tomFGo7WYFDBBx8tOgI=",
         "ref": "master",
-        "rev": "1002288183b8bc5835d3ebd719f3790ee5d06ce7",
-        "revCount": 5144,
+        "rev": "93cf5bc0f64697377c68a346992f33b51cced7de",
+        "revCount": 5182,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
@@ -5362,7 +5380,7 @@
     },
     "inboxclean": {
       "inputs": {
-        "art-dupl": "art-dupl_2",
+        "art-dupl": "art-dupl_3",
         "flake-parts": "flake-parts_15",
         "git-hooks": "git-hooks_2",
         "nixpkgs": [
