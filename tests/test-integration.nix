@@ -287,7 +287,19 @@ let
       caddy-protected-proxies-port = lib.hasInfix "reverse_proxy localhost:8099" protectedCfg;
       caddy-plain-no-forward-auth = !lib.hasInfix "forward_auth" plainCfg;
       caddy-plain-proxies-port = lib.hasInfix "reverse_proxy localhost:8098" plainCfg;
-      gatus-three-checks = builtins.length c.services.gatus-config.extraEndpoints == 3;
+      # Pin the demo entry's checks by NAME, not by total count: the
+      # registry legitimately grows (parallel fan-out entries add their own
+      # endpoints), so exact-count assertions go stale on every registry
+      # addition.
+      gatus-demo-checks-present =
+        let
+          names = map (e: e.name) c.services.gatus-config.extraEndpoints;
+        in
+        lib.all (n: builtins.elem n names) [
+          "Demo Health"
+          "Demo TCP"
+          "Demo Auto Alert"
+        ];
       gatus-relative-url = healthCheck.url == "http://127.0.0.1:8099/health";
       gatus-explicit-alert =
         builtins.length healthCheck.alerts == 1
@@ -306,7 +318,12 @@ let
         (c.services.backup-coordination.backups ? demo)
         && c.services.backup-coordination.backups.demo.directory == "/mnt/pool/backups/demo"
         && c.services.backup-coordination.backups.demo.filePattern == "demo-*.tar";
-      monitored-unit-override = c.services.system-health.extraMonitoredServices == [ "demo-server" ];
+      # The unit override must rename the entry ("demo" absent, its unit
+      # "demo-server" present) — without exact-list equality, which the
+      # growing registry makes unassertable (see gatus-demo-checks-present).
+      monitored-unit-override =
+        !builtins.elem "demo" c.services.system-health.extraMonitoredServices
+        && builtins.elem "demo-server" c.services.system-health.extraMonitoredServices;
       monitored-in-all = builtins.elem "demo-server" (
         c.services.system-health.monitoredServices ++ c.services.system-health.extraMonitoredServices
       );

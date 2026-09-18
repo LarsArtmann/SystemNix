@@ -112,16 +112,21 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # SigNoz observability platform sources
+    # SigNoz observability platform sources (flake = false, packaged in
+    # _signoz-packages.nix). Branch-ref governed per the 2026-09-16 pin
+    # policy: 2026-09-18 bump lifted the pre-09-13 INTERIM pins after the
+    # probe+build passed (sonic is STILL v1.14.1 upstream — the Go-1.26
+    # patches in modules/nixos/services/patches/ stay until SigNoz bumps
+    # sonic >= 1.15). Bump = migration-review class: pkg/sqlmigration
+    # (metadata DB) runs at signoz start, the collector's ClickHouse
+    # schema-migrator runs pre-start — review new migrations before
+    # deploying a moved rev.
     signoz-src = {
-      # INTERIM: pinned to pre-2026-09-13-update rev (upstream HEAD has a stale
-      # vendorHash from source-only churn; no CI to catch it). Drop pin when fixed.
-      url = "github:SigNoz/signoz/e0da06f76d6d6a84c4f02fe1f4775d8acae7032f";
+      url = "github:SigNoz/signoz?ref=main";
       flake = false;
     };
     signoz-collector-src = {
-      # INTERIM: pinned to pre-2026-09-13-update rev (stale vendorHash upstream).
-      url = "github:SigNoz/signoz-otel-collector/b514eb4a60aab6b2233288052446d33c60ceadec";
+      url = "github:SigNoz/signoz-otel-collector?ref=main";
       flake = false;
     };
 
@@ -636,13 +641,13 @@
     # freshness checks (modules/nixos/services/nix-email.nix).
     #
     # nixpkgs.follows is REQUIRED, not just convenient: the wrapper is
-    # verified against the nixpkgs services.stalwart module (0.15.5) at its
-    # own lock rev, and both repos pin the SAME rev on purpose (compat
-    # doctrine - bump both together). Deliberately NOT pinned inside
-    # nix-email are its tests' VM runtime, so no other follows exist: the
-    # flake has nixpkgs as its only input.
+    # eval-verified against OUR nixpkgs services.stalwart module by
+    # checks.nix-email-contract on every flake check — follows forces our
+    # pin even when upstream's own lock trails it, so the contract test
+    # (not a shared rev) is the compat doctrine now. Upstream master has
+    # its own CI + stalwart/relay/parsedmarc E2E suites since v0.3.0.
     nix-email = {
-      url = "github:LarsArtmann/nix-email/v0.2.0";
+      url = "github:LarsArtmann/nix-email?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
