@@ -56,7 +56,10 @@ let
       # 1. Install/refresh systemd-boot on the mirror ESP: loader binary +
       #    EFI/BOOT fallback + per-ESP random seed. --variables=no: this unit
       #    never touches EFI variables — NVRAM is owned by boot-mirror-activate.
-      bootctl --esp-path="${mirrorPath}" --variables=no install
+      #    --make-entry-directory=no: the auto entry-token dir would exist ONLY
+      #    on the mirror and trip the diff gate below (NixOS's builder writes
+      #    entries straight into loader/entries/, no token dir).
+      bootctl --esp-path="${mirrorPath}" --variables=no --make-entry-directory=no install
 
       # 2. Full tree mirror (entries, kernels, initrds, loader.conf).
       rsync \

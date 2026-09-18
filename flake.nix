@@ -2111,6 +2111,7 @@
                   [
                     pkgs.coreutils # tr/cut/paste
                     pkgs.efibootmgr
+                    pkgs.gnused
                     pkgs.gawk
                     pkgs.gnugrep
                     pkgs.systemd # bootctl is-installed
