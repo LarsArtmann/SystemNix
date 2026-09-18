@@ -29,6 +29,7 @@ _: {
       options,
       lib,
       pkgs,
+      inputs,
       ...
     }:
     let
@@ -41,8 +42,21 @@ _: {
         ;
       inherit (config.users) primaryUser;
 
-      rocm = libHelpers.rocm { inherit pkgs; };
-      llama-cpp-rocwmma = pkgs.llama-cpp.override { rocmSupport = true; };
+      # REV-PINNED nixpkgs (flake.nix `nixpkgs-llama-rag`): llama.cpp 0.3.0,
+      # the last build proven serving on gfx1150. The 0.4.0 build from the
+      # root nixpkgs wedges BOTH servers mid-model-load (94% single-thread
+      # CPU spin right after "model vocab missing newline token", GPU idle,
+      # /health 503 — live 2026-09-14, 3/3 repros). The whole ROCm runtime
+      # is taken from the same pinned tree so the binary's userspace is
+      # exactly the stack it was built and verified against. Drop the pin
+      # (flake input + this import) once the 0.4.0+ regression is fixed
+      # upstream and re-verified live.
+      llamaPkgs = import inputs.nixpkgs-llama-rag {
+        inherit (pkgs) system;
+        config.allowUnfree = true;
+      };
+      rocm = libHelpers.rocm { pkgs = llamaPkgs; };
+      llama-cpp-rocwmma = llamaPkgs.llama-cpp.override { rocmSupport = true; };
       llamaServer = lib.getExe' llama-cpp-rocwmma "llama-server";
       ldLibPath = rocm.makeLdLibraryPath lib;
 
@@ -57,6 +71,14 @@ _: {
         OOMScoreAdjust = 300;
         MemoryMax = cfg.memoryMax;
         CPUQuota = "200%";
+        # Bounded stop budget. A restart while the disk is saturated can
+        # wedge the server in uninterruptible I/O (SIGTERM/SIGKILL both stay
+        # pending until the read completes); without an explicit bound
+        # systemd's 90s default applies and the unit fails into stop-timeout
+        # anyway. This documents the budget; true D-state corpses can only
+        # be unwound by their I/O completing (monitor: the leak-metrics
+        # collector + Gatus check below).
+        TimeoutStopSec = "2min";
       };
 
       # Deterministic per-model download specs. The fetch oneShot installs
@@ -126,6 +148,50 @@ _: {
         + " --host ${cfg.host}"
         + " --port ${toString cfg.rerankerPort}"
         + " --ctx-size ${toString cfg.ctxSize}";
+
+      # Leak monitor (2026-09-02 incident: 10 leaked llama-server pairs in
+      # D-state up to 55h, each restart under QLC saturation stranding
+      # another pair that ignores SIGKILL). A llama-server process that does
+      # NOT own a listener on either configured port is leaked/leaking —
+      # either wedged pre-bind or an orphan the unit lost track of.
+      # Fail-closed: on scrape failure the leak gauges are OMITTED (absence
+      # fails the Gatus pats) and llama_rag_scrape_errors goes to 1.
+      textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
+      leakMetricsScript = pkgs.writeShellScript "llama-rag-leak-metrics.sh" ''
+        set -euo pipefail
+        OUT="${textfileDir}/llama-rag-leaks.prom"
+        mkdir -p "${textfileDir}"
+        TMP="$(mktemp "${textfileDir}/llama-rag-leaks.prom.XXXXXX")"
+        chmod 644 "$TMP"
+        trap 'rm -f "$TMP"' EXIT
+
+        scrape_errors=1
+        leaks=""
+        if ss_out="$(timeout 10 ${pkgs.iproute2}/bin/ss -tlnp 2>/dev/null)"; then
+          scrape_errors=0
+          leaks=0
+          for pid in $(${pkgs.procps}/bin/pgrep -x llama-server 2>/dev/null || true); do
+            if ! grep -F "pid=''${pid}," <<<"$ss_out" | grep -Eq ":(${toString cfg.embeddingsPort}|${toString cfg.rerankerPort})[^0-9]"; then
+              leaks=$((leaks + 1))
+            fi
+          done
+        fi
+
+        {
+          echo "llama_rag_expected_instances 2"
+          if [ -n "$leaks" ]; then
+            echo "llama_rag_leaked_instances $leaks"
+            if [ "$leaks" -gt 0 ]; then
+              echo "llama_rag_leaks_present 1"
+            else
+              echo "llama_rag_leaks_present 0"
+            fi
+          fi
+          echo "llama_rag_scrape_errors $scrape_errors"
+        } > "$TMP"
+        mv -f "$TMP" "$OUT"
+        trap - EXIT
+      '';
     in
     {
       options.services.llama-rag = {
@@ -301,6 +367,39 @@ _: {
           startLimitIntervalSec = 300;
         };
 
+        # Leak monitor: 5-min textfile collector counting llama-server
+        # processes that hold no :8848/:8849 listener (wedged pre-bind or
+        # orphaned — the 2026-09-02 D-state leak class). Root + CAP_FOWNER
+        # per the sticky-textfile-dir doctrine (unique mktemp, rename-over-
+        # foreign fails without it).
+        systemd.services.llama-rag-leak-metrics = {
+          description = "llama-rag leaked llama-server instance metrics";
+          after = [
+            "llama-embeddings.service"
+            "llama-reranker.service"
+          ];
+          serviceConfig = lib.mkMerge [
+            (harden { })
+            {
+              Type = "oneshot";
+              ExecStart = leakMetricsScript;
+              CapabilityBoundingSet = "CAP_FOWNER CAP_DAC_OVERRIDE";
+              TimeoutStartSec = "1min";
+            }
+            ioTier.background
+          ];
+          startLimitBurst = 3;
+          startLimitIntervalSec = 300;
+        };
+
+        systemd.timers.llama-rag-leak-metrics = {
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "*:0/5";
+            Persistent = true;
+          };
+        };
+
         # Service-integration registry entry: loopback-only servers (no
         # vHost — a direct probe policy and port registry forbid external
         # exposure), the two Gatus health checks, and the decorative
@@ -333,6 +432,22 @@ _: {
                   "[RESPONSE_TIME] < 1000"
                 ];
                 alert = "llama.cpp reranker down — RAG reranking unavailable, search quality degraded";
+              }
+              {
+                # Metric-based (node-exporter textfile): leaked llama-server
+                # processes holding no port listener — the restart-under-QLC-
+                # saturation D-state leak class. Fail-closed: a dead or
+                # wedged collector omits the gauges and fails the pats.
+                name = "llama.cpp Leaked Instances";
+                group = "AI";
+                url = "http://localhost:${toString ports.signoz-node-exporter}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\nllama_rag_leaks_present 0*)"
+                  "[BODY] != pat(*\nllama_rag_scrape_errors 1*)"
+                ];
+                alert = "llama.cpp leaked server instances detected (llama-server procs holding no :${toString cfg.embeddingsPort}/:${toString cfg.rerankerPort} listener) — the restart-under-IO-saturation D-state leak class. Check: pgrep -ax llama-server, journalctl -u llama-embeddings -u llama-reranker -n 50; a clean reboot unwinds D-state corpses";
               }
             ];
             # Decorative tile: loopback-only embeddings + reranking on GPU.
