@@ -765,7 +765,7 @@ if $hermes_enabled; then
     # Boot-scoped, not window-scoped: a line from any point this boot proves
     # the gateway reached Discord at least once; a window bound would
     # false-fail long-lived boots.
-    if journalctl -u hermes -b --no-pager --grep "\\[Discord\\] Connected as" >/dev/null 2>&1; then
+    if journalctl -u hermes -b --no-pager --grep '\[Discord\] Connected as' >/dev/null 2>&1; then
       report_pass "Hermes - Discord gateway connected this boot"
     else
       report_fail "Hermes - no Discord 'Connected as' line in this boot's journal (gateway never reached Discord? journalctl -u hermes -b | grep 'Connected as')"

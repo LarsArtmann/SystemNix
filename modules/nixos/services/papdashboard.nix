@@ -94,11 +94,15 @@
           groupName = tile.group;
         in
         if lib.any (g: g.name == groupName) accGroups then
-          map (
-            g: if g.name == groupName then g // { tiles = g.tiles ++ [ tile ]; } else g
-          ) accGroups
+          map (g: if g.name == groupName then g // { tiles = g.tiles ++ [ tile ]; } else g) accGroups
         else
-          accGroups ++ [ { name = groupName; tiles = [ tile ]; } ];
+          accGroups
+          ++ [
+            {
+              name = groupName;
+              tiles = [ tile ];
+            }
+          ];
 
       allGroups = builtins.filter (g: g.tiles != [ ]) (
         builtins.foldl' addTile cfg.dashboard.groups cfg.extraTiles
@@ -112,12 +116,10 @@
             tempMin = cfg.dashboard.system.tempMin;
             tempMax = cfg.dashboard.system.tempMax;
           };
-          groups = map (
-            g: {
-              name = g.name;
-              tiles = map tileJson g.tiles;
-            }
-          ) allGroups;
+          groups = map (g: {
+            name = g.name;
+            tiles = map tileJson g.tiles;
+          }) allGroups;
         }
         // lib.optionalAttrs (cfg.dashboard.search != null) {
           search = {
@@ -125,21 +127,18 @@
           };
         }
         // lib.optionalAttrs (cfg.dashboard.bookmarks != [ ]) {
-          bookmarks = map (
-            b:
-            {
-              name = b.name;
-              links = map (
-                l:
-                {
-                  name = l.name;
-                  href = l.href;
-                }
-                // lib.optionalAttrs (l.abbr != null) { abbr = l.abbr; }
-                // lib.optionalAttrs (l.description != null) { description = l.description; }
-              ) b.links;
-            }
-          ) cfg.dashboard.bookmarks;
+          bookmarks = map (b: {
+            name = b.name;
+            links = map (
+              l:
+              {
+                name = l.name;
+                href = l.href;
+              }
+              // lib.optionalAttrs (l.abbr != null) { abbr = l.abbr; }
+              // lib.optionalAttrs (l.description != null) { description = l.description; }
+            ) b.links;
+          }) cfg.dashboard.bookmarks;
         }
       );
     in
