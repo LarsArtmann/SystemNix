@@ -203,7 +203,8 @@ in
       # forgejo_mirror_reconcile.prom, so mktemp+mv over an own-owned target is
       # legal without CAP_FOWNER. Best-effort: a foreign-owned leftover must
       # WARN (metrics go stale -> gatus fires), never fail the reconcile.
-      TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
+      # Env override exists for fixture tests (stubbed runs redirect it).
+      TEXTFILE_DIR="''${FORGEJO_MIRROR_TEXTFILE_DIR:-/var/lib/prometheus-node-exporter/textfile_collectors}"
       publish_prom() {
         if [[ ! -d "$TEXTFILE_DIR" ]]; then
           echo "  (metrics: textfile dir absent — skipping prom publish)"

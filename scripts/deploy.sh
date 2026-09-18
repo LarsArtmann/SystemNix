@@ -552,6 +552,18 @@ if nix run .#pre-deploy-check; then
     sudo systemctl start systemd-timer-monitor-audit.service 2>/dev/null || true
   fi
 
+  # Trigger the GitHub→Forgejo mirror sync (mirror-github + reconcile) so
+  # post-deploy state converges immediately instead of at the next 6h tick —
+  # the reconcile-outcome gatus check stays red until the first COMPLETED run
+  # publishes forgejo_mirror_reconcile.prom. Timer-driven oneshot: the service
+  # unit itself is not enabled (only the timer is), so gate on the timer.
+  # --no-block: a first-run mass migration (~200 repos, 2h budget) must never
+  # block the deploy; converged runs take a few minutes.
+  if systemctl is-enabled --quiet forgejo-github-sync.timer 2>/dev/null; then
+    echo "Starting forgejo-github-sync.service (mirror + reconcile, no-block)"
+    sudo systemctl start --no-block forgejo-github-sync.service 2>/dev/null || true
+  fi
+
   # Refresh SigNoz coverage metrics right after switch: the collector is
   # timer-only (up to 5-min lag otherwise), and the post-deploy smoke asserts
   # signoz_traces_missing 0 — without this the smoke races the timer (the
