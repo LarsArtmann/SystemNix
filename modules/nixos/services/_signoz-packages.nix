@@ -52,7 +52,7 @@ let
       inherit (finalAttrs) src sourceRoot pname;
       pnpm = pkgs.pnpm_10;
       fetcherVersion = 3;
-      hash = "sha256-qnVJAiDvbMimmRf8apJrsjSDetJTcqFIyhtD/DkOq60=";
+      hash = lib.fakeHash;
     };
 
     nativeBuildInputs = [
@@ -93,7 +93,7 @@ let
     };
   });
 
-  collectorVendorHash = "sha256-5sEFPx7+hF0j0EhildiD7KE2obSdwyxfiA8r3kLQwhU=";
+  collectorVendorHash = lib.fakeHash;
 
   schemaMigrator = buildGoModule {
     pname = "signoz-schema-migrator";
@@ -128,7 +128,7 @@ let
     pname = "signoz";
     inherit version;
     src = srcPatched;
-    vendorHash = "sha256-dI2K3CkRUjRqIAK5KldXnggKNc+Llcqh4RjHMO4ljIQ=";
+    vendorHash = lib.fakeHash;
     subPackages = [ "cmd/community" ];
     proxyVendor = true;
     tags = [ "timetzdata" ];
