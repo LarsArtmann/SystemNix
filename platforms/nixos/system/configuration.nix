@@ -610,7 +610,19 @@ in
       # verified serving bge-m3 embeddings live. Goes ACTIVE at the next
       # deploy. Re-disable if the spin signature ever reappears on the
       # pinned build; drop the pin once 0.4.0+ is fixed upstream.
-      llama-rag.enable = true;
+      # ESCAPE CONDITION FIRED 2026-09-18 (freeze #5): the PINNED 0.3.0 build
+      # (store path sj4rpa8y…, correct HSA_OVERRIDE env) spins IDENTICALLY
+      # under the systemd units — systemd accounting: 2h33min CPU over 2h43min
+      # wall (~94% ×2), 8.6G written per lifecycle, wedged right after the
+      # vocab warning from 11:28 (gen-784 re-enable) until the 15:27 freeze;
+      # replayed at 15:34 on the post-freeze boot until SIGSTOPped by hand.
+      # The one-off direct-run verification was INSUFFICIENT evidence — it ran
+      # outside the unit context (deviceCgroup/GPU state differ) and passed
+      # while the unit wedges. Re-disabled; do NOT re-enable until the spin is
+      # root-caused at the llama.cpp/ROCm layer (bisect upstream, or verify via
+      # `systemd-run` with the unit's exact sandbox + a 10-min soak under the
+      # real service units — not a shell direct-run).
+      llama-rag.enable = false;
 
       file-and-image-renamer = {
         enable = true;
