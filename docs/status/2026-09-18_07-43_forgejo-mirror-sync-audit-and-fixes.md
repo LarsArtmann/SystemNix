@@ -1,0 +1,153 @@
+# Status Report: Forgejo GitHub Mirror Sync — Audit, Findings, Fixes
+
+**Date:** 2026-09-18 07:43 CEST
+**Session scope:** Answer "How is my org's repos sync for GitHub and Forgejo, and how do we deal with renamed and transferred repos?" → full audit → fixes implemented + fixture-tested.
+**Format note:** Status-report skill defaults to HTML; user explicitly requested `.md` — override honored.
+
+---
+
+## Executive Summary
+
+The Forgejo mirror sync was **structurally broken in three ways** and nobody knew, because every health signal was green:
+
+1. **Private repos were never auto-mirrored** — the GitHub listing endpoint returns public repos only. Coverage was ~2 of 200+ private repos (the 2 declarative ones). The mirror's core purpose (backup / GitHub-outage immunity) was ~1% realized.
+2. **Push mirrors (Forgejo→GitHub) never worked at all** — 18/18 creation attempts ever journaled returned HTTP 400 (missing `interval` field → `time.ParseDuration("")` fails), while the script printed a misleading "may already exist" warning.
+3. **Renames/transfers freeze mirrors silently** — Forgejo v15 sets `http.followRedirects=false` on every pull mirror (SSRF hardening) and GitHub answers moved repos with 301 → the mirror stops syncing forever. No Forgejo API exists to update a mirror's remote address.
+
+All three are now fixed or contained in code (commit(s) `63d93929`/`65f12e7a`, auto-committed by the daemon), but **the changes are NOT deployed** — the system still runs the old code until `nix run .#deploy`.
+
+---
+
+## a) FULLY DONE
+
+| Item | Evidence |
+|---|---|
+| **Full audit of the sync architecture** — 3 sync surfaces (`forgejo-github-sync` 6h, `forgejo-ensure-repos` daily declarative list, manual starred script) + Forgejo's internal 8h pull via 30m cron (PULL_LIMIT 50, `ORDER BY updated_unix ASC` rotation) documented with module + journal evidence | `modules/nixos/services/forgejo.nix`, `_forgejo-scripts.nix`, `forgejo-repos.nix` read in full; journal `SyncMirrors` + router lines analyzed over 7d/full history |
+| **Live mirror inventory** — 158 pull mirrors under `lars/`, every one probed against the GitHub API: 124 healthy, 32 upstream-deleted, 2 transferred, 0 renames in flight | `gh api repos/LarsArtmann/<name>` loop over the clean journal-derived mirror set |
+| **Sync-health verification** — `system_forgejo_mirror_last_sync_age_seconds 874`, `sync_stalled 0`, `erroring 0`, `scrape_errors 0` | node_exporter textfile read at audit time |
+| **Root-caused the transient `migration/cloning from 'github.com' is not allowed` errors** (4 in 7d, dates match infra-disturbance days: Aug 30, Sep 14, Sep 16) — DNS blip during Forgejo's per-sync `LookupIP` recheck; the external-builtin allowlist cannot match an unresolvable host. Self-healing, no action needed | Forgejo `services/migrations/allowlist/is_migrate_allowed.go` source + journal timestamps |
+| **Root-caused the push-mirror 400s** — `CreatePushMirror` calls `time.ParseDuration(mirrorOption.Interval)` before anything else; scripts omitted `interval` → guaranteed 400 on every attempt | Gitea `routers/api/v1/repo/mirror.go` source + 18/18 `POST .../push_mirrors 400` in journal |
+| **Fix 1: private-repo coverage** — listing switched to `GET /user/repos?visibility=all&affiliation=owner`; `TimeoutStartSec = 2h` sized for the one-time ~200-repo migration (synchronous migrate API, 2-8s each; idempotent across runs) | `_forgejo-scripts.nix` mirror-github block; builds clean (shellCheck) |
+| **Fix 2: dead push-mirror code removed** from both `forgejo-mirror-github` and `forgejo-ensure-repos` (behavior-preserving: it was a guaranteed-400 no-op) + design rationale documented (pull+push on one repo clobbers) | same files; `forgejo-repos.nix` evals clean |
+| **Fix 3: new `forgejo-reconcile-mirrors` script** — classifies stale mirrors via GitHub redirects: renamed-in-account → delete stale only after canonical mirror exists AND verdict repeats on second run (state-file `~/.local/state/forgejo-mirror-reconcile/pending-deletes.txt`); transferred-away → report-only; upstream-deleted → report-only (frozen archive kept); transient probe failure → retry, never classify | new block in `_forgejo-scripts.nix`; wired as second ExecStart of `forgejo-github-sync.service` + restartTriggers + systemPackages |
+| **Fixture test of all 5 reconcile branches** (heal-on-2nd-pass with DELETE issued, 1st-pass record, pending-creation reset, deleted-upstream archive, transferred report) via PATH-stubbed `gh`/`curl` against a controlled fixture | runtime test output in session; all branches behaved as designed, rc=0, pending file converged |
+| **Found and fixed 2 of my own bugs during verification** — unescaped `${var,,}` Nix interpolations (caught by eval), and `set -e` killing the probe loop on the first failing `gh` call (caught by the fixture test's `bash -x` — the exact "phantom-green" class; without the runtime test the script would have shipped exiting 1 on the first dead repo) | eval error trace + `bash -x` trace in session |
+| **Verification gates** — `nix eval` of unit ExecStart JSON (both scripts wired), standalone build of both scripts (shellCheck), full `nix flake check --no-build` → "all checks passed" | session command outputs |
+| **AGENTS.md updated** — new section "Forgejo GitHub Mirror Sync (audited + fixed 2026-09-18)" with all enduring facts, live state, and the owner-decision items | AGENTS.md diff |
+| **Live rename/transfer evidence documented** — `lars/DarkBlocks` + `lars/DialogesWebInterface` redirect to `Artmann-Minecraft/*`; 32 deleted-upstream archives enumerated (old Minecraft-plugin-era repos — the Forgejo copies are the only remaining copies) | GitHub redirect probes + `/tmp` probe results (since cleaned) |
+
+## b) PARTIALLY DONE
+
+| Item | What works | What remains | Effort |
+|---|---|---|---|
+| **Deployment of all fixes** | Code committed (`63d93929`/`65f12e7a`), eval + flake check green | `nix run .#deploy` NOT run — live system still has old scripts; first mass-migration (~200 private repos) has not happened; timing should be chosen (IO storm history, see (e)) | S |
+| **Reconcile coverage for the `starred` org** | Personal mirrors fully covered | Starred-org mirrors (`owner-repo` naming) are excluded — name→upstream mapping is ambiguous through dashes; I did not even quantify how many starred mirrors are stale | M |
+| **Post-deploy verification of the reconcile script against real API shapes** | Logic fixture-tested; forgejo `/user/repos` array shape assumed (fail-loud `if type == "array"` guard → OnFailure if wrong) | First live run unwatched; response-shape mismatch would surface as a unit failure, not data damage | S |
+| **Monitoring for reconcile outcomes** | Report lands in the unit journal; OnFailure pages on systemic failures | No metric/Gatus check for "N archived / M transferred" — the report-only classes are journal-only (the silent-visibility class this repo keeps fighting) | S |
+| **Redundancy cleanup** | `forgejo-ensure-repos` declarative list (dnsblockd, BuildFlow) now duplicates what the general listing covers | List not removed — small split brain (two sources of truth for 2 repos), harmless but should be collapsed or kept deliberately | S |
+
+## c) NOT STARTED
+
+| Item | Why not started |
+|---|---|
+| **Forgejo runbook** (`docs/services/forgejo.md` — only `forgejo-upstream-issues.md` exists) | Audit + fixes came first; AGENTS.md section carries the knowledge meanwhile |
+| **VM test for the sync scripts** (the repo standard for service behavior) | Scripts are API-orchestration bash; VM-testing needs forgejo + GitHub mocks — cost/benefit not yet thought through; fixture test covers logic |
+| **Staggering/rate-limiting the first mass-migration** (e.g. batch cap per run) | Decided to flag instead of implement — batching needs an owner decision on how soon full coverage matters |
+| **Org-repo mirroring** (`Artmann-Games`, `Artmann-Technologies`, etc. — 17+6+ private org repos seen in passing) | Never in scope: org repos were never mirrored; needs an org-namespace design (per-org forgejo orgs, name mapping) |
+| **Push-mirror feature (forgejo→GitHub), done right** | Removed as dead code; rebuilding it requires the pull-vs-push clobber design decision first |
+| **`system_forgejo_mirror_*`-style metric for mirror correctness** (count of stale/archived/transferred) | Monitoring gap noted, not built |
+
+## d) TOTALLY FUCKED UP
+
+| What | Severity | Root cause | Mitigation |
+|---|---|---|---|
+| **Push mirrors dead since bring-up with lying logs** — every attempt 400'd while the script said "⚠ may already exist" | Medium (feature never existed; nothing lost) | Missing `interval` field in the POST body | Fixed (removed); re-add needs design decision |
+| **Private-repo backup coverage silently ~1% for the deployment's whole life** | High (the mirror's purpose is outage immunity; 200+ repos — including the core ecosystem: bank-sync, cv, browser-history, discordsync — had zero Forgejo copy) | GitHub `/users/X/repos` returns public only; nobody ever diffed "repos that exist" vs "repos mirrored" | Fixed (listing switch); deploy pending |
+| **Rename/transfer = permanent silent mirror freeze** | High for data freshness (mirror freezes at pre-move state; duplicate created under new name; both facts invisible) | Forgejo v15 `http.followRedirects=false` + no remote-address API + name-keyed create-only script | Contained (reconcile script); deploy pending |
+| **My own audit initially produced a WRONG conclusion** — first journal extraction classified raw-file 404s (`GET /repos/lars/SystemNix/raw/master/go.mod 404`) as "repo not mirrored", yielding a false "7 repos unmirrored" finding | Low (caught in-session by noticing `git/trees` 200s for the same repos) | My grep matched any `/api/v1/repos/lars/NAME` line containing "404", not just existence checks (`repo.Get` route) | Re-extracted with the route-marker filter; result corrected to "0 missing". Lesson already in AGENTS.md ("independently verify tool output") applies to my own pipelines too — the pipeline-mask lesson (`set -e`/filters lying) bit me twice this session: once in extraction, once in the errexit bug the fixture test caught |
+| **`forgejo-ensure-repos` script edit NOT shellcheck-verified** — I removed its push-mirror block but only built `mirror-github` + `reconcile` standalone; `flake check --no-build` does not build script derivations | Low (edit was a pure deletion; eval passes) | My standalone build expression only covered two of the three touched scripts | One-line addition to the existing build expression — listed in (f) |
+| **First mass-migration has no IO containment** — ~200 synchronous migrations over up to 2h on the QLC root fs, in a unit with no ioTier, on the box with 4 recorded IO-PSI freezes | Medium (risk, not certainty; deploy-time pressure gate would block the worst) | I sized the timeout but didn't think about the box's freeze history until after implementation | Add `ioTier.background`/`maintenance` + consider a per-run batch cap before deploying |
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Check the data volume BEFORE enabling mass operations.** I implemented 200-repo auto-migration without measuring `/var/lib/forgejo` size or projecting growth (btrbk root snapshots pin every byte forever pool-side). Next time: `du` first, estimate, then wire.
+2. **Verify API response shapes against the downloaded swagger before writing jq.** I had `swagger.v1.json` (828 KB) downloaded and never checked `/user/repos`' response schema — the reconcile script's array-shape assumption is fail-loud but unverified.
+3. **Fixture-test EVERY script touched, not just the new one.** The errexit bug in the new script was caught by my fixture harness; the same harness should have replayed the edited `mirror-github` end-to-end (stubbed), not only built it.
+4. **Build every `writeShellApplication` you touched** — `nix flake check --no-build` does NOT run shellCheck on script derivations. Cheap standalone build expression exists now; reuse it for all three scripts.
+5. **Add monitoring at implementation time.** Report-only classes that land only in a unit journal are the phantom-green class with extra steps — a small textfile metric (`forgejo_mirror_stale_*`) + Gatus check would close it.
+6. **Session habit that worked and should stick:** journal-derived inventories must be extracted with route/action markers (`repo.Get`), never bare path+status greps — path substrings collide across endpoints (`/raw/`, `/git/trees`).
+7. **When a feature is dead-on-arrival, say so loudly at bring-up time.** The push-mirror 400s were journaled 18 times over months; a one-time "creation of N push mirrors failed" summary metric would have surfaced it in a day.
+
+## f) Up to 50 things we should get done next
+
+*Harvest note: per the status-report skill, this section is the primary input for `docs-health` → HARVEST into TODO_LIST.md / ROADMAP.md. Impact/Effort: S <30min, M 30min-2h, L >2h.*
+
+**Session-direct (forgejo sync):**
+
+| # | Task | Impact | Effort | Category |
+|---|---|---|---|---|
+| 1 | Answer the 3 questions in (g), then `nix run .#deploy` at a quiet-IO moment to ship all sync fixes | Critical | S | Feature |
+| 2 | Watch the first post-deploy sync run: `journalctl -u forgejo-github-sync` for the ~200-repo migration duration, failures, and reconcile summary | High | S | Quality |
+| 3 | ShellCheck-build `forgejo-ensure-repos` (extend the standalone build expression to all three scripts) | Medium | S | Quality |
+| 4 | Add `ioTier.background` (or `maintenance`) + explicit `MemoryMax` to `forgejo-github-sync.service` before the big first run | High | S | Quality |
+| 5 | Measure `/var/lib/forgejo` size pre/post mass-migration (needs forgejo-user shell) + project btrbk root-snapshot growth | High | S | Quality |
+| 6 | Add textfile metric `forgejo_mirror_stale/archived/transferred` + Gatus check for reconcile outcomes | Medium | M | Feature |
+| 7 | Decide + execute the 2 `Artmann-Minecraft` transfers (delete frozen mirrors vs re-mirror into a forgejo org) | Medium | S | Cleanup |
+| 8 | Decide the fate of the 32 deleted-upstream frozen archives (keep-all is the default; verify none are wanted elsewhere) | Low | S | Cleanup |
+| 9 | Extend reconcile to the `starred` org using the mirror remote… — first solve the name→upstream ambiguity (e.g. store full_name in the repo description at create time) | Medium | M | Feature |
+| 10 | Remove/absorb the now-redundant declarative `forgejo-repos` list (dnsblockd, BuildFlow) — collapse the split brain | Low | S | Cleanup |
+| 11 | Write `docs/services/forgejo.md` runbook (sync model, reconcile semantics, break-glass ops) | Medium | M | Documentation |
+| 12 | Fixture-test the edited `forgejo-mirror-github` end-to-end (stubbed), not just build it | Medium | S | Quality |
+| 13 | Add a VM/integration test for the sync pair (forgejo + git-server mock) or document why fixture-only is acceptable | Low | L | Quality |
+| 14 | Guard `mirror-github`'s listing against GitHub error objects (rate-limit) with the same `if type == "array"` fail-loud pattern the reconcile script has | Medium | S | Bug |
+| 15 | Post-deploy: verify `/user/repos?limit=` pagination actually pages (only 50/page assumption untested against real forgejo) | Medium | S | Quality |
+| 16 | Design decision + (maybe) implementation of forgejo→GitHub push (new namespace, `interval` field, clobber policy) | Low | L | Feature |
+| 17 | Wire `forgejo-github-sync` unit failure into a dedicated Gatus check name (today only generic OnFailure) | Low | S | Feature |
+
+**Noticed in passing during this session (AGENTS.md/backlog, not re-verified — treat as pointers):**
+
+| # | Task | Impact | Effort | Category |
+|---|---|---|---|---|
+| 18 | Clean the 2 stale `commit-graph.lock` files (forgejo-user shell) to silence per-sync warnings | Low | S | Cleanup |
+| 19 | Deploy the crush-hot-db first migration (module live since 2026-09-16, still not run — pgrep guard blocked it) | High | S | Bug |
+| 20 | The owed reboot (flm corpse pinning :52626 since 2026-09-07) — run `nix run .#pre-reboot-check` first | High | M | Bug |
+| 21 | Replace the lockdown SPF record with Resend's include (mail relay delivery to non-owner recipients still unproven) | High | S | Bug |
+| 22 | Verify `larsartmann.cloud` in Resend (completes mail relay + Pocket ID SMTP go-live) | High | M | Feature |
+| 23 | btrbk /data EIO inode P0 (known corruption, /data pool receives still abort) | High | L | Bug |
+| 24 | Hetzner StorageBox + BorgBackup offsite leg (decided 2026-09-11, not deployed) | High | L | Feature |
+| 25 | Browser-history upstream regression hold: re-probe master `f3561fd8` checkpoint-write fix when upstream ships it | Medium | S | Bug |
+| 26 | CV lock hold: probe `github:LarsArtmann/CV/master#default.goModules` for the go_1_27 upstream fix, then re-lift | Medium | S | Quality |
+| 27 | Miniflux: prove one live SSO login, then flip `disableLocalAuth` | Medium | S | Quality |
+| 28 | DiscordSync Turso decision: plan upgrade vs permanent local-only (check stays red by design meanwhile) | Low | S | Cleanup |
+| 29 | dnsblockd: cut a release tag carrying the cached-health + OTLP-scheme fixes (tag-pinned consumers miss them) | Low | S | Release |
+| 30 | Fold `crush-hot-db` into the ratified `services.hot-db` Phase-2 module when it lands (two mechanisms must not run in parallel) | Medium | M | Cleanup |
+| 31 | Remove the inert `mimo_api_key` sops line (interactive sudo edit; nothing consumes it) | Low | S | Cleanup |
+| 32 | Delete the dead QLC `@nix` subvol at `/mnt/btrfs-root/@nix` (TODO_LIST Phase 1) | Low | S | Cleanup |
+| 33 | flm v1.0.3 staged-bump go-live decision after the reboot (upgrade validation + weight re-pull discipline) | Low | M | Feature |
+| 34 | Monitor365 re-enable decision (private wireguard-collector crate: publish/vendor/public) | Low | M | Decision |
+| 35 | Google Sync go-live checklist (dormant since 2026-08-31: OAuth production + rclone authorize + sops fill) | Low | M | Feature |
+| 36 | SigNoz signoz pair bump = migration-review task (schema-migrator on service start), not a hash chore | Low | M | Quality |
+| 37 | Groq key or disable the provider for CV `ChatService` (overall /health sits at `warn` by owner choice) | Low | S | Decision |
+| 38 | Retire stale pre-deploy §10 manual metric loans if any WARN about them appears | Low | S | Cleanup |
+| 39 | PMA upstream CI guard: fail when lock's go-commit < 22f0e4c or `OPENAI_BASE_URL` unreadable (TODO_LIST carries it) | Medium | M | Quality |
+| 40 | Per-service BTRFS subvolume doctrine: start routing services to tiers A/B/C per the 2026-09-15 analysis | Medium | L | Architecture |
+| 41 | `github-local-sync`-style check: does the mr-sync dashboard's repo walker know about forgejo mirrors? (noticed the repo exists; unverified — possible overlap with mirror inventory) | Low | S | Quality |
+| 42 | Add `nix-email` to the pin-policy audit trail if it gains a flake (noticed v0.2.0 is current latest) | Low | S | Documentation |
+| 43 | Cache-warm the `starred` org inventory: count + last-sync ages so item 9 has data | Low | S | Quality |
+| 44 | Consider `mirror very-stale` alerting: mirror whose `mirror_updated` > 3× its interval (needs per-mirror interval export — swagger has `mirror_interval`) | Medium | M | Feature |
+| 45 | Document in AGENTS.md that `nix flake check --no-build` does not run script shellChecks (generalize lesson 4) | Low | S | Documentation |
+| 46 | Sweep other LarsArtmann scripts for the missing-`interval` push-mirror pattern (any other API POSTs with duration fields?) | Low | S | Bug |
+| 47 | Check whether CV/inboxclean etc. use the same `POST /repos/migrate` synchronous pattern (deploy-timeout implications) | Low | S | Quality |
+| 48 | Add forgejo to the integration-registry `checks` with an authenticated mirror-freshness probe (system-health reads sqlite as root already; an HTTP path may not exist — else keep metric route) | Low | M | Feature |
+| 49 | Re-run the 158-mirror redirect sweep after mass-migration settles (new private mirrors = new stale-set baseline zero) | Medium | S | Quality |
+| 50 | Retire this report's section (f) into TODO_LIST via HARVEST so items don't die in a timestamped file | Medium | S | Documentation |
+
+## g) Questions I cannot answer myself
+
+1. **Do you actually want ~200 private repos auto-mirrored into Forgejo?** Every one is a full copy on the QLC root fs (`/var/lib/forgejo`), pinned forever in btrbk root snapshots pool-side. If the intent is outage-immunity only for *active* projects, a scope filter (pattern, or "repos with activity in N days") would halve the storage and IO cost. I could not find any doc stating the intended mirror scope.
+2. **Do you want forgejo→GitHub push capability at all?** It never worked (18/18 400s), so nothing was lost — but the scripts *intended* it (`sync_on_commit: true`), and I removed the code based on my own judgment that push-on-pull-mirror is incoherent. If you want GitHub-outage immunity for *writes* too (work on forgejo while GitHub is down, push back later), that's a real design task and I'd build it differently.
+3. **For repos that moved to `Artmann-Minecraft` (and future org transfers): should the mirror follow the org?** Options: delete the frozen mirrors (my reconcile's eventual default), or create forgejo org namespaces mirroring each GitHub org. The second is a per-org design (mapping, tokens, name collisions) I can't size without knowing whether the orgs are yours alone or shared.
+
+---
+
+**Next step per protocol:** WAIT FOR INSTRUCTIONS.
