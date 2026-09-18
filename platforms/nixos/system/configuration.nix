@@ -606,12 +606,12 @@ in
       # spin forever, /health 503 (3/3 repro, the 2026-09-14 regression).
       # "systemctl stop" is not containment on this host (stc re-arms the
       # units on every deploy — they burned 2 cores for 26h straight).
-      # Config-disable is the durable containment. Re-enable when
-      # llama-cpp-rocwmma is pinned back to the 20260905-era build or the
-      # gfx1150 regression is fixed upstream. Paperless AI degrades gracefully
-      # (RAG off) with the endpoint down; SigNoz unit-state rules go dormant
-      # (empty series).
-      llama-rag.enable = false;
+      # Containment lifted 2026-09-18: the module pins llama.cpp to the
+      # 0.3.0 build (rev-pinned `nixpkgs-llama-rag` input) — functionally
+      # verified serving bge-m3 embeddings live. Goes ACTIVE at the next
+      # deploy. Re-disable if the spin signature ever reappears on the
+      # pinned build; drop the pin once 0.4.0+ is fixed upstream.
+      llama-rag.enable = true;
 
       file-and-image-renamer = {
         enable = true;
