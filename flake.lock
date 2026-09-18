@@ -2575,11 +2575,11 @@
     "go-cqrs-lite_7": {
       "flake": false,
       "locked": {
-        "lastModified": 1789666310,
-        "narHash": "sha256-ydVL1HbuzkLuOeBjobhCQkQuNGlcUuE7IkgirpVzBVg=",
+        "lastModified": 1789674562,
+        "narHash": "sha256-QfzkWzwlu52cd6T7tfutG6wQd3hAQShQkEkhO6BGHnk=",
         "ref": "master",
-        "rev": "0b5813f45de58da6e480967644009874779ff33b",
-        "revCount": 6878,
+        "rev": "a0b5429a7a8c0df361f37d451b891caa0bb6816c",
+        "revCount": 6879,
         "type": "git",
         "url": "ssh://git@github.com/larsartmann/go-cqrs-lite"
       },
@@ -6184,11 +6184,11 @@
         "treefmt-nix": "treefmt-nix_12"
       },
       "locked": {
-        "lastModified": 1789672683,
-        "narHash": "sha256-791EuRAB28wmAb2wzF9pXC46TTyfc/gZYpAnAeaUMwg=",
+        "lastModified": 1789715314,
+        "narHash": "sha256-VkV1YvUh12hT6KaGRr9kXIXtrEKz4RWcOwBhIjuWsPA=",
         "owner": "LarsArtmann",
         "repo": "PapDashboard",
-        "rev": "ea15eb7a3bf05f72cef9067668f2c9c7d138bb17",
+        "rev": "9344278593db15dc9f8f4eb30e7df7e398cc1543",
         "type": "github"
       },
       "original": {
