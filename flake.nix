@@ -1347,7 +1347,7 @@
                     export PATH="$STUB_BIN:$PATH"
                     SCRIPT=${./scripts/migrate-forgejo-subvol.sh}
                     rc=0; out=""
-                    run() { out=$(env MIGRATE_FORGEJO_STATE_DIR="$STATE" MIGRATE_FORGEJO_SUBVOL="$SUBV" bash "$SCRIPT" "$@" 2>&1) && rc=0 || rc=$?; }
+                    run() { out=$(env MIGRATE_FORGEJO_STATE_DIR="$STATE" MIGRATE_FORGEJO_SUBVOL="$SUBVOL" bash "$SCRIPT" "$@" 2>&1) && rc=0 || rc=$?; }
                     need_rc() { [ "$rc" = "$2" ] || { echo "FAIL $1: rc=$rc want $2"; printf '%s\n' "$out"; exit 1; }; }
                     need_has() { printf '%s\n' "$out" | grep -qF "$2" || { echo "FAIL $1: missing text: $2"; printf '%s\n' "$out"; exit 1; }; }
 

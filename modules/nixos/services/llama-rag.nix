@@ -335,8 +335,12 @@ _: {
             # Two ~1.2 GB downloads from HuggingFace; slow links need headroom
             # (the global 3min default cannot cover a cold first fetch).
             TimeoutStartSec = "20min";
+            # Stay active after success: the servers' Requires= pulls must be
+            # no-ops — re-running this fetch per server restart piled up starts
+            # past the burst limit and exit-4'd activations (2026-09-18).
+            RemainAfterExit = true;
           };
-          startLimitBurst = 3;
+          startLimitBurst = 5;
           startLimitIntervalSec = 300;
         };
 
