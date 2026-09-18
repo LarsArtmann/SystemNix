@@ -1145,9 +1145,12 @@
 
                     export FORGEJO_TOKEN=fxtok GITHUB_TOKEN=gxtok GITHUB_USER=LarsArtmann
                     rc=0; out=""
-                    run() { out=$("$@" 2>&1) && rc=0 || rc=$?; }
-                    need_rc() { [ "$rc" = "$2" ] || { echo "FAIL $1: rc=$rc want $2"; printf '%s\n' "$out"; exit 1; }; }
-                    need_has() { printf '%s\n' "$out" | grep -qF "$2" || { echo "FAIL $1: missing text: $2"; printf '%s\n' "$out"; exit 1; }; }
+                    # NOTE: capture var is `capt` — `out` is RESERVED (the
+                    # derivation output path); shadowing it made the final
+                    # `echo PASS > "$out"` redirect into a garbage filename.
+                    run() { capt=$("$@" 2>&1) && rc=0 || rc=$?; }
+                    need_rc() { [ "$rc" = "$2" ] || { echo "FAIL $1: rc=$rc want $2"; printf '%s\n' "$capt"; exit 1; }; }
+                    need_has() { printf '%s\n' "$capt" | grep -qF "$2" || { echo "FAIL $1: missing text: $2"; printf '%s\n' "$capt"; exit 1; }; }
 
                     # ============ push-mirror (M05) ============
                     export FORGEJO_CANONICAL_REPOS="push-happy"
@@ -1274,11 +1277,11 @@
                     ]
                     CENSUSEOF
                     run "$CENSUS"; need_rc census 0
-                    census_out=$(printf '%s\n' "$out" | sed -n '/===/,$p' | tail -n +2 | jq -s '.[0]')
+                    census_out=$(printf '%s\n' "$capt" | sed -n '/===/,$p' | tail -n +2 | jq -s '.[0]')
                     echo "$census_out" | jq -e '.total == 3 and .native == 1 and .mirror == 2' >/dev/null \
-                      || { echo "FAIL census: wrong counts"; printf '%s\n' "$out"; exit 1; }
+                      || { echo "FAIL census: wrong counts"; printf '%s\n' "$capt"; exit 1; }
                     echo "$census_out" | jq -e '(.per_owner | length) == 2' >/dev/null \
-                      || { echo "FAIL census: per_owner grouping"; printf '%s\n' "$out"; exit 1; }
+                      || { echo "FAIL census: per_owner grouping"; printf '%s\n' "$capt"; exit 1; }
 
                     echo "PASS: all forgejo staged-primary script fixtures" > "$out"
                   '';
@@ -1344,10 +1347,13 @@
 
                     export PATH="$STUB_BIN:$PATH"
                     SCRIPT=${./scripts/migrate-forgejo-subvol.sh}
-                    rc=0; out=""
-                    run() { out=$(env MIGRATE_FORGEJO_STATE_DIR="$STATE" MIGRATE_FORGEJO_SUBVOL="$SUBVOL" bash "$SCRIPT" "$@" 2>&1) && rc=0 || rc=$?; }
-                    need_rc() { [ "$rc" = "$2" ] || { echo "FAIL $1: rc=$rc want $2"; printf '%s\n' "$out"; exit 1; }; }
-                    need_has() { printf '%s\n' "$out" | grep -qF "$2" || { echo "FAIL $1: missing text: $2"; printf '%s\n' "$out"; exit 1; }; }
+                    rc=0; capt=""
+                    # NOTE: capture var is `capt` — `out` is RESERVED (the
+                    # derivation output path); shadowing it made the final
+                    # `echo PASS > "$out"` redirect into a garbage filename.
+                    run() { capt=$(env MIGRATE_FORGEJO_STATE_DIR="$STATE" MIGRATE_FORGEJO_SUBVOL="$SUBVOL" bash "$SCRIPT" "$@" 2>&1) && rc=0 || rc=$?; }
+                    need_rc() { [ "$rc" = "$2" ] || { echo "FAIL $1: rc=$rc want $2"; printf '%s\n' "$capt"; exit 1; }; }
+                    need_has() { printf '%s\n' "$capt" | grep -qF "$2" || { echo "FAIL $1: missing text: $2"; printf '%s\n' "$capt"; exit 1; }; }
 
                     fresh() {
                       ROOT="$FIX/''${1:-case}"

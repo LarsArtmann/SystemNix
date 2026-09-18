@@ -20,6 +20,7 @@ in
     ../hardware/hardware-configuration.nix
     # ESSENTIAL MODULES FOR FUNCTIONAL DESKTOP
     ./boot.nix
+    ./boot-mirror.nix # Samsung 2nd boot disk: /boot-mirror ESP mirror + boot-mirror-sync
     ./networking.nix
     ./local-network.nix
     ./primary-user.nix
