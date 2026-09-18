@@ -64,6 +64,10 @@ _: {
         mirrorGithubScript
         reconcileMirrorsScript
         mirrorStarredScript
+        pushMirrorScript
+        flipRepoScript
+        mirrorHealthScript
+        censusScript
         setupScript
         ensurePasswordFile
         adminSetup
@@ -146,6 +150,25 @@ _: {
           family below is mount-gated so an absent Samsung degrades to
           forgejo NOT starting (loud, Gatus-visible), never split-brain.
         '';
+
+        # Repos that are CANONICAL on forgejo (native, NOT mirrors) and must
+        # push outbound to GitHub (staged-primary plan M05). Every listed
+        # repo gets a push mirror attached (interval 8h + sync_on_commit) by
+        # forgejo-push-mirror, phase 3 of forgejo-github-sync. The script
+        # REFUSES any repo that is still a pull mirror — flip it first with
+        # forgejo-flip@<name>.service (plan M06). Default [] = the phase is
+        # absent entirely; do NOT add a repo before it exists natively.
+        services.forgejo.canonicalRepos = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = ''
+            Repo names owned by the primary forgejo user that are canonical
+            (native) on forgejo. Each gets an outbound GitHub push mirror
+            (8h interval, sync-on-commit) attached idempotently by the sync
+            unit's third phase. Repos still marked as pull mirrors are
+            refused loudly — run forgejo-flip@<name>.service first.
+          '';
+        };
       };
 
       config = lib.mkIf config.services.forgejo.enable {
@@ -322,6 +345,7 @@ _: {
             restartTriggers = [
               (lib.getExe mirrorGithubScript)
               (lib.getExe reconcileMirrorsScript)
+              (lib.getExe pushMirrorScript)
             ];
             path = [
               pkgs.curl
@@ -338,7 +362,8 @@ _: {
                 ];
                 # Sequential phases: (1) create missing mirrors (incl. private
                 # repos since the listing switch to /user/repos), (2) reconcile
-                # renames/transfers/deletions of existing mirrors.
+                # renames/transfers/deletions of existing mirrors, (3) attach
+                # GitHub push mirrors to canonical repos (plan M05).
                 ExecStart = [
                   (lib.getExe mirrorGithubScript)
                   (lib.getExe reconcileMirrorsScript)
@@ -350,6 +375,15 @@ _: {
                 # the next 6h timer run.
                 TimeoutStartSec = "2h";
               }
+              # Phase 3, gated: with canonicalRepos = [] (default) the phase
+              # is absent; a non-empty list runs forgejo-push-mirror after
+              # reconcile, which refuses any repo still marked mirror==true.
+              (lib.mkIf (cfg.canonicalRepos != [ ]) {
+                Environment = [
+                  "FORGEJO_CANONICAL_REPOS=${lib.concatStringsSep " " cfg.canonicalRepos}"
+                ];
+                ExecStart = [ (lib.getExe pushMirrorScript) ];
+              })
               (serviceOneshotDefaults { })
               (harden {
                 ProtectHome = false;
@@ -426,6 +460,138 @@ _: {
               RandomizedDelaySec = "15m";
             };
           };
+        };
+
+        # --- Staged-primary Phase 1 capability units (plan M05-M08) ---
+
+        # Operator-run flip (plan M06): converts a disposable pull mirror to
+        # a native canonical repo + GitHub push mirror. Template unit so the
+        # operator path gets the sync unit's env (sops GITHUB_TOKEN + forgejo
+        # admin token) and OnFailure paging without any secret landing on a
+        # command line:
+        #   sudo systemctl start forgejo-flip@<name>.service
+        systemd.services."forgejo-flip@" = {
+          description = "Flip %i from disposable pull mirror to native canonical repo";
+          after = [
+            "forgejo.service"
+            "forgejo-generate-token.service"
+          ];
+          wants = [ "forgejo.service" ];
+          inherit onFailure;
+          startLimitBurst = 2;
+          startLimitIntervalSec = 300;
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = primaryUser;
+              EnvironmentFile = [
+                config.sops.templates."forgejo-sync.env".path
+                "-${stateDir}/.admin-token.env"
+              ];
+              ExecStart = "${lib.getExe flipRepoScript} %i";
+              # A migrate (clone + issues/PRs/wiki/LFS import) of a large
+              # repo can take minutes — clear of the 3min global default.
+              TimeoutStartSec = "30min";
+            }
+            (serviceOneshotDefaults { })
+            (harden {
+              # reads the reconcile state (pending-deletes) under $HOME
+              ProtectHome = "read-only";
+              MemoryMax = "1G";
+            })
+            ioTier.background
+          ];
+        };
+
+        # Dry-run twin: precondition checks + the flip PLAN with zero
+        # changes. No onFailure — a refused precondition is a report, not
+        # an incident.
+        systemd.services."forgejo-flip-check@" = {
+          description = "Dry-run precondition check for flipping %i (no changes)";
+          after = [
+            "forgejo.service"
+            "forgejo-generate-token.service"
+          ];
+          wants = [ "forgejo.service" ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = primaryUser;
+              EnvironmentFile = [
+                config.sops.templates."forgejo-sync.env".path
+                "-${stateDir}/.admin-token.env"
+              ];
+              ExecStart = "${lib.getExe flipRepoScript} %i --dry-run";
+              TimeoutStartSec = "5min";
+            }
+            (serviceOneshotDefaults { })
+            (harden {
+              ProtectHome = "read-only";
+              MemoryMax = "1G";
+            })
+          ];
+        };
+
+        # Dead pull-mirror detection (plan M07, redesigned 2026-09-18):
+        # per-repo failing syncs from forgejo's notice table, minus the
+        # reconcile script's known-stale set. TouchMirror-proof — see
+        # mirrorHealthScript's header for the falsified-heuristic evidence.
+        systemd.services.forgejo-mirror-health = {
+          description = "Dead pull-mirror detection (notice table, TouchMirror-proof)";
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "root";
+              ExecStart = lib.getExe mirrorHealthScript;
+            }
+            (serviceOneshotDefaults { })
+            (harden {
+              # reads the reconcile state under the primary user's 0700 home
+              ProtectHome = "read-only";
+              # mktemp+rename over a possible foreign-owned leftover in the
+              # sticky 1777 textfile dir (audit-textfile-tmp pattern)
+              CapabilityBoundingSet = "CAP_FOWNER";
+              ReadWritePaths = [ "/var/lib/prometheus-node-exporter/textfile_collectors" ];
+            })
+          ];
+        };
+
+        systemd.timers.forgejo-mirror-health = {
+          description = "Periodic dead pull-mirror detection";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "*-*-* *:00/5:00";
+            Persistent = true;
+          };
+        };
+
+        # Live-forge census (plan M08): native-vs-mirror split per owner —
+        # the flip-rollout tracking numbers. Manual, no timer:
+        #   sudo systemctl start forgejo-census && journalctl -u forgejo-census
+        systemd.services.forgejo-census = {
+          description = "Live-forge census: native vs mirror split per owner";
+          after = [
+            "forgejo.service"
+            "forgejo-generate-token.service"
+          ];
+          wants = [ "forgejo.service" ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = primaryUser;
+              EnvironmentFile = [
+                config.sops.templates."forgejo-sync.env".path
+                "-${stateDir}/.admin-token.env"
+              ];
+              ExecStart = lib.getExe censusScript;
+              TimeoutStartSec = "10min";
+            }
+            (serviceOneshotDefaults { })
+            (harden {
+              MemoryMax = "512M";
+            })
+            ioTier.background
+          ];
         };
 
         # --- Hermes Agent read-only access (added 2026-08-19, PR: forgejo-hermes-agent) ---
@@ -861,6 +1027,9 @@ _: {
           mirrorGithubScript
           reconcileMirrorsScript
           mirrorStarredScript
+          pushMirrorScript
+          flipRepoScript
+          censusScript
           setupScript
         ];
 
@@ -914,6 +1083,25 @@ _: {
                   "[BODY] != pat(*\nforgejo_mirror_total 0*)"
                 ];
                 alert = "Forgejo mirror reconcile broken or never completed: journalctl -u forgejo-github-sync (listing failure, publish warn, or the unit never finished a run since the 2026-09-18 reconcile ship).";
+              }
+              {
+                # Dead pull-mirror candidates (plan M07, redesigned 2026-09-18):
+                # per-repo failing syncs from forgejo's notice table, minus
+                # known-stale names — catches the redirect-frozen 12-day
+                # outage class that mirror_updated freshness can NEVER see
+                # (TouchMirror advances it on failed syncs too; verified
+                # against v15.0.8 source + live data). Fail-closed: an
+                # absent dead_candidates line = scrape error = RED.
+                name = "Forgejo Dead Mirror Candidates";
+                group = "Development";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\nforgejo_mirror_health_scrape_errors 0*)"
+                  "[BODY] == pat(*\nforgejo_mirror_dead_candidates 0*)"
+                ];
+                alert = "Forgejo pull mirrors failing every sync for 24h+ (redirect-frozen / credential-dead class). Triage: journalctl -u forgejo-mirror-health (names printed), forgejo admin notices. Known-stale (renamed/deleted upstream) are subtracted via reconcile state.";
               }
             ]
             ++ lib.optionals dedicated [

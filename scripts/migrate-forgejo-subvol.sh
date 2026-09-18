@@ -38,8 +38,10 @@
 #   - never deletes the source: rename-only, safety copy stays until burn-in
 set -euo pipefail
 
-STATE_DIR="/var/lib/forgejo"
-SUBVOL="/mnt/hot/hot/forgejo"
+# Env overrides exist ONLY for the fixture test (flake check
+# migrate-forgejo-subvol-fixture); production runs never set them.
+STATE_DIR="${MIGRATE_FORGEJO_STATE_DIR:-/var/lib/forgejo}"
+SUBVOL="${MIGRATE_FORGEJO_SUBVOL:-/mnt/hot/hot/forgejo}"
 SAFETY="${STATE_DIR}.qlc-pre-subvol"
 
 # sudo's secure PATH hides user-profile tools — resolve every binary up front
@@ -89,7 +91,7 @@ ensure_subvol() {
   if "$BTRFS" subvolume show "$SUBVOL" >/dev/null 2>&1; then
     echo "subvol already exists: $SUBVOL"
   else
-    mkdir -p /mnt/hot/hot
+    mkdir -p "$(dirname "$SUBVOL")"
     "$BTRFS" subvolume create "$SUBVOL"
     echo "created subvol: $SUBVOL"
   fi
