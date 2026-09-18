@@ -624,16 +624,201 @@ _: {
           '';
         };
 
-        # Satellite mount-gating lives inside each unit's own block above
-        # (unitConfig.RequiresMountsFor — same-module attrpaths cannot
-        # re-open an already-defined unit from a second assignment).
-
         assertions = lib.optionals dedicated [
           {
             assertion = config.fileSystems ? "/mnt/hot";
             message = "services.forgejo.dedicatedSubvolume requires the /mnt/hot Samsung-toplevel mount (hardware-configuration.nix) — forgejo-subvol-bootstrap creates the subvol through it.";
           }
         ];
+
+        # 8h btrbk leg freshness collector (fail-closed): reads the newest
+        # RECEIVED subvol pool-side and emits forgejo_subvol_backup_* — the
+        # Gatus check on the registry entry below fails on absence of the
+        # fresh=1 metric (no phantom greens; scrape failure writes only
+        # scrape_errors 1). Threshold 12h = one missed 8h slot tolerated.
+        systemd.services.forgejo-subvol-backup-metrics = lib.mkIf dedicated {
+          description = "Forgejo subvol backup freshness metrics (8h btrbk leg)";
+          unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "root";
+            }
+            (serviceOneshotDefaults { })
+            (harden {
+              # mktemp+rename over a possible foreign-owned leftover in the
+              # sticky 1777 textfile dir (audit-textfile-tmp pattern).
+              CapabilityBoundingSet = "CAP_FOWNER CAP_DAC_READ_SEARCH";
+              ReadWritePaths = [ "/var/lib/prometheus-node-exporter/textfile_collectors" ];
+            })
+          ];
+          path = [
+            pkgs.coreutils
+            pkgs.gnugrep
+          ];
+          script = ''
+            set -euo pipefail
+            dir=/mnt/pool/backups/forgejo-subvol
+            tf=/var/lib/prometheus-node-exporter/textfile_collectors
+            tmp=$(mktemp "$tf/forgejo-subvol.XXXXXX")
+            chmod 644 "$tmp"
+            trap 'rm -f "$tmp"' EXIT
+
+            if [ ! -d "$dir" ]; then
+              echo "forgejo-subvol-backup-metrics: $dir missing (btrbk target never created?)" >&2
+              # scrape error — the fresh metric is deliberately ABSENT so the
+              # Gatus check fails (fail-closed absence class).
+              printf '# forgejo subvol backup metrics\nforgejo_subvol_backup_scrape_errors 1\n' > "$tmp"
+              mv "$tmp" "$tf/forgejo_subvol_backup.prom" 2>/dev/null || echo "warn: publish failed (foreign-owned leftover?)" >&2
+              exit 0
+            fi
+
+            newest=$(ls -1 "$dir" | grep -E '^forgejo\.' | sort | tail -1 || true)
+            now=$(date +%s)
+            if [ -n "$newest" ] && [ -d "$dir/$newest" ]; then
+              recv=$(stat -c %Y "$dir/$newest")
+              age=$(( now - recv ))
+              if [ "$age" -lt 43200 ]; then fresh=1; else fresh=0; fi
+              printf '# forgejo subvol backup metrics\nforgejo_subvol_backup_scrape_errors 0\nforgejo_subvol_backup_last_age_seconds %s\nforgejo_subvol_backup_fresh %s\n' "$age" "$fresh" >> "$tmp"
+            else
+              # Leg never completed a receive: fresh=0 pages (by design
+              # until the first 8h slot after the option flip).
+              printf '# forgejo subvol backup metrics\nforgejo_subvol_backup_scrape_errors 0\nforgejo_subvol_backup_last_age_seconds -1\nforgejo_subvol_backup_fresh 0\n' >> "$tmp"
+            fi
+            mv "$tmp" "$tf/forgejo_subvol_backup.prom" 2>/dev/null || echo "warn: publish failed (foreign-owned leftover?)" >&2
+          '';
+        };
+
+        systemd.timers.forgejo-subvol-backup-metrics = lib.mkIf dedicated {
+          description = "Periodic forgejo subvol backup freshness collection";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "*-*-* *:00/5:00";
+            Persistent = true;
+          };
+        };
+
+        # Restore drill (plan M04): weekly, prove BOTH recovery paths —
+        # (1) newest `forgejo dump` zip (transaction-consistent: DB + repos
+        # + config + LFS), (2) newest btrbk-received subvol pool-side
+        # (crash-consistent whole-state). Any failure exits 1 → OnFailure
+        # pages. Deliberate-event alerting (unit-state, github-auto-assign
+        # pattern) instead of a freshness collector — a drill is an event,
+        # not a continuous signal (plan deviation noted: F19's metric+Gatus
+        # simplified to onFailure + monitoredServices).
+        # "Backups you have never restore-tested are hopes, not backups."
+        systemd.services.forgejo-restore-drill = lib.mkIf dedicated {
+          description = "Weekly restore drill: verify forgejo dump zip + received subvol";
+          unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
+          inherit onFailure;
+          path = [
+            pkgs.unzip
+            pkgs.git
+            pkgs.sqlite
+            pkgs.coreutils
+            pkgs.findutils
+            pkgs.gnugrep
+          ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "root";
+              TimeoutStartSec = "30min";
+            }
+            (serviceOneshotDefaults { })
+            (harden {
+              MemoryMax = "2G";
+            })
+            ioTier.background
+          ];
+          script = ''
+            set -euo pipefail
+            fails=0
+
+            fsck_sample() {
+              # $1 = label, $2.. = repo dirs (bare or normal)
+              local label="$1"; shift
+              local n=0
+              for repo in "$@"; do
+                n=$((n + 1))
+                if git -C "$repo" fsck --no-progress >/dev/null 2>&1; then
+                  echo "  drill[$label]: fsck OK  $repo"
+                else
+                  echo "  drill[$label]: fsck FAILED $repo" >&2
+                  fails=$((fails + 1))
+                fi
+                [ "$n" -ge 5 ] && break
+              done
+              [ "$n" -gt 0 ] || { echo "  drill[$label]: NO repos found" >&2; fails=$((fails + 1)); }
+            }
+
+            # ---- Path 1: newest dump zip ----
+            zip=$(ls -1 /mnt/pool/backups/forgejo/forgejo-*.zip 2>/dev/null | sort | tail -1 || true)
+            if [ -n "$zip" ]; then
+              echo "drill: dump path — $(basename "$zip")"
+              scratch=$(mktemp -d)
+              unzip -q "$zip" -d "$scratch"
+              # DB integrity: forgejo dump carries the DB as forgejo-db.sql
+              # (sqlite backend dumps to SQL text). Rebuild + integrity-check.
+              dbsql=$(find "$scratch" -maxdepth 2 -name '*db*.sql' | head -1 || true)
+              if [ -n "$dbsql" ]; then
+                if sqlite3 "$scratch/drill.db" < "$dbsql" \
+                  && sqlite3 "$scratch/drill.db" 'PRAGMA integrity_check;' | grep -q '^ok$'; then
+                  echo "  drill[dump]: db rebuild + integrity_check OK"
+                else
+                  echo "  drill[dump]: db integrity FAILED" >&2
+                  fails=$((fails + 1))
+                fi
+              else
+                echo "  drill[dump]: no *.sql db found in zip" >&2
+                fails=$((fails + 1))
+              fi
+              mapfile -d "" -t repos < <(find "$scratch" -type d -name objects -prune \
+                -execdir test -d '{}/../refs' \; -print0 2>/dev/null \
+                | head -z -n 5 || true)
+              # normalize: we want the repo ROOT (parent of objects/), not objects/
+              roots=()
+              for r in "''${repos[@]}"; do roots+=("$(dirname "$r")"); done
+              fsck_sample dump "''${roots[@]}"
+              rm -rf "$scratch"
+            else
+              echo "drill: dump path — NO zip found in /mnt/pool/backups/forgejo" >&2
+              fails=$((fails + 1))
+            fi
+
+            # ---- Path 2: newest btrbk-received subvol (read in place) ----
+            recv=/mnt/pool/backups/forgejo-subvol
+            newest=$(ls -1 "$recv" 2>/dev/null | grep -E '^forgejo\.' | sort | tail -1 || true)
+            if [ -n "$newest" ]; then
+              echo "drill: subvol path — $newest"
+              mapfile -d "" -t rrepos < <(find "$recv/$newest" -type d -name objects -prune \
+                -execdir test -d '{}/../refs' \; -print0 2>/dev/null \
+                | head -z -n 5 || true)
+              rroots=()
+              for r in "''${rrepos[@]}"; do rroots+=("$(dirname "$r")"); done
+              fsck_sample subvol "''${rroots[@]}"
+            else
+              echo "drill: subvol path — no received subvol yet (pre-first-slot is expected once; persistent absence = btrbk-forgejo broken)" >&2
+              fails=$((fails + 1))
+            fi
+
+            if [ "$fails" -gt 0 ]; then
+              echo "drill: FAILED ($fails problem(s))" >&2
+              exit 1
+            fi
+            echo "drill: OK — both recovery paths verified"
+          '';
+        };
+
+        systemd.timers.forgejo-restore-drill = lib.mkIf dedicated {
+          description = "Weekly forgejo restore drill";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            # Sunday 06:00 — after the 03:30 dump + the 05:40 btrbk slot.
+            OnCalendar = "Sun *-*-* 06:00:00";
+            Persistent = true;
+          };
+        };
 
         services.gitea-actions-runner = {
           package = pkgs.forgejo-runner;
@@ -730,6 +915,22 @@ _: {
                 ];
                 alert = "Forgejo mirror reconcile broken or never completed: journalctl -u forgejo-github-sync (listing failure, publish warn, or the unit never finished a run since the 2026-09-18 reconcile ship).";
               }
+            ]
+            ++ lib.optionals dedicated [
+              {
+                # 8h subvol backup leg (btrbk-forgejo): fail-closed — absence
+                # of fresh=1 (never ran / scrape error) is RED by design.
+                name = "Forgejo Subvol Backup (8h)";
+                group = "Development";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\nforgejo_subvol_backup_scrape_errors 0*)"
+                  "[BODY] == pat(*\nforgejo_subvol_backup_fresh 1*)"
+                ];
+                alert = "Forgejo 8h subvol backup leg stale: no received subvol pool-side within 12h — journalctl -u btrbk-forgejo (send failure, pool absent, or first run still pending post-flip).";
+              }
             ];
             backup = {
               # Daily forgejo dump (repos+DB+config, 03:30 + randomized delay).
@@ -752,7 +953,9 @@ _: {
         # reconcile-outcome gatus check only sees COMPLETED runs, so a failed
         # phase (listing guard, reconcile error) must page through unit state.
         services.system-health = lib.optionalAttrs (options ? services.system-health) {
-          extraMonitoredServices = lib.mkAfter [ "forgejo-github-sync" ];
+          extraMonitoredServices = lib.mkAfter (
+            [ "forgejo-github-sync" ] ++ lib.optionals dedicated [ "forgejo-restore-drill" ]
+          );
         };
       };
     };

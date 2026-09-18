@@ -778,6 +778,10 @@ _: {
             "btrbk-root.service"
             "btrbk-data.service"
             "btrbk-pool.service"
+            # Forgejo 8h subvol leg (staged-primary plan, 2026-09-18): same
+            # stoppable-churn class — an interrupted receive self-heals on
+            # the next 8h slot (own btrbk config, NOT btrbk-pool-clean's).
+            "btrbk-forgejo.service"
             "btrfs-balance-metadata.service"
             "btrfs-balance-data.service"
             "btrfs-scrub--.service"

@@ -8,6 +8,10 @@ let
   inherit (import ../../../lib/default.nix lib) harden onFailure serviceOneshotDefaults;
   rootDevice = config.fileSystems."/".device;
   primaryUser = config.users.primaryUser;
+  # Forgejo dedicated-subvolume storage (forgejo.nix option): the 8h btrbk
+  # leg below only exists once it is enabled — `or false` keeps other hosts'
+  # evals clean when the forgejo module is not imported.
+  forgejoDedicated = config.services.forgejo.dedicatedSubvolume or false;
 
   # Only @cache-home remains as a cache subvolume. The other three
   # (@go, @npm, @cargo) were removed 2026-08-17: their contents moved to
@@ -302,6 +306,38 @@ in
       };
     };
 
+    # Forgejo dedicated subvolume (Set-B storage, staged-primary plan gate
+    # G1): local snapshots on the Samsung + incremental sends to the HDD
+    # pool every 8h. Referenced through the /mnt/hot TOPLEVEL mount (NOT the
+    # /var/lib/forgejo dataDir mount) so the leg stays independent of the
+    # dataDir mount state — btrbk resolves hot/forgejo from the toplevel.
+    # Slots 05/13/21:40 clear of the 23:00-04:00 backup window and the
+    # deploy-heavy evening hours; user requirement: backup at least every 8h.
+    # Freshness is Gatus-watched via forgejo_subvol_backup_fresh (forgejo.nix
+    # collector — 12h threshold = one missed slot tolerated, a dead leg
+    # pages within half a day without flapping on a single miss).
+    btrbk.instances."forgejo" = lib.mkIf forgejoDedicated {
+      onCalendar = "*-*-* 05,13,21:40:00";
+      snapshotOnly = false;
+      settings = {
+        # Local tier: incremental-send parents + short rollback (~9 snaps).
+        snapshot_preserve_min = "2d";
+        snapshot_preserve = "3d";
+        # BOUNDED pool retention (hermes subvol precedent): forgejo state
+        # churns (git objects, mirror syncs); forever-pinning was never the
+        # goal — the transaction-consistent forgejo dump zips (03:30, 7d)
+        # remain the deep-history path.
+        target_preserve_min = "7d";
+        target_preserve = "14d 8w";
+        volume."/mnt/hot" = {
+          snapshot_dir = "/mnt/hot/.snapshots";
+          subvolume."hot/forgejo" = {
+            target = "/mnt/pool/backups/forgejo-subvol";
+          };
+        };
+      };
+    };
+
     # Weekly instead of monthly: the scrub needs ~2h to complete 707 GiB on /data
     # at idle I/O priority. With frequent reboots (58 unsafe shutdowns), a monthly
     # scrub window almost never completes before the next reboot interrupts it.
@@ -337,6 +373,12 @@ in
       "d /mnt/pool/.snapshots 0755 root root -"
       "d /mnt/pool/backups/root 0755 root root -"
       "d /mnt/pool/backups/data 0755 root root -"
+      # Forgejo 8h btrbk leg (gated with the instance above): local snapshot
+      # dir on the Samsung + pool-side receive target. Trailing "-" keeps
+      # detached-DAS/detached-Samsung boots clean; btrbk fails loudly at the
+      # next slot via RequiresMountsFor + onFailure instead.
+      "d /mnt/hot/.snapshots 0755 root root -"
+      "d /mnt/pool/backups/forgejo-subvol 0755 root root -"
     ];
 
     services = {
@@ -390,6 +432,24 @@ in
       btrbk-pool = {
         unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
         serviceConfig.TimeoutStartSec = "1h";
+        inherit onFailure;
+      };
+      btrbk-forgejo = lib.mkIf forgejoDedicated {
+        unitConfig.RequiresMountsFor = [
+          "/mnt/pool"
+          "/mnt/hot"
+        ];
+        serviceConfig = {
+          # First run seeds the whole forgejo tree over the DAS USB link
+          # (size unknown until the M17 measurement; 6h covers a worst-case
+          # multi-GiB seed at DAS-realistic throughput). 8h incrementals
+          # finish in seconds-to-minutes and never approach the ceiling.
+          TimeoutStartSec = "6h";
+          # btrbk-data oom lesson: page cache of the send is charged to this
+          # cgroup — throttle early instead of becoming an oomd victim.
+          MemoryHigh = "4G";
+          OOMScoreAdjust = -250;
+        };
         inherit onFailure;
       };
 
