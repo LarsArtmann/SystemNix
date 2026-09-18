@@ -44,6 +44,7 @@
     }:
     let
       cfg = config.services.papdashboard;
+      inherit (config.networking) domain;
       inherit (import ../../../lib/default.nix lib)
         harden
         serviceDefaults
@@ -63,6 +64,84 @@
           config.sops.templates."papdashboard-env".path
         }) — API-key-gated ingest and outbound Discord will misbehave";
       };
+
+      svcUrl = subdomain: "https://${subdomain}.${domain}";
+
+      # Not a dashboard option: the SearXNG gate decides the default search
+      # provider and the Search bookmark group (the SearXNG tile itself moved
+      # to services.integration.searxng.homepage).
+      searxEnabled = config.services.searx.enable or false;
+
+      # Extra tile from the services.integration registry fan-out. `icon` is
+      # accepted for registry-shape compatibility but ignored: PapDashboard
+      # renders monogram tiles, not an icon pack.
+      tileJson =
+        t:
+        {
+          name = t.name;
+        }
+        // lib.optionalAttrs (t.href != null) { href = t.href; }
+        // lib.optionalAttrs (t.description != null) { description = t.description; };
+
+      # Registry fan-out fold: a tile lands in the group whose name matches,
+      # or opens a new group at the end. Mirrors homepage.nix's addTile so
+      # registry tiles keep their canonical group position; groups whose
+      # built-in list is empty are kept in the option default for positioning
+      # and filtered here after the fold.
+      addTile =
+        accGroups: tile:
+        let
+          groupName = tile.group;
+        in
+        if lib.any (g: g.name == groupName) accGroups then
+          map (
+            g: if g.name == groupName then g // { tiles = g.tiles ++ [ tile ]; } else g
+          ) accGroups
+        else
+          accGroups ++ [ { name = groupName; tiles = [ tile ]; } ];
+
+      allGroups = builtins.filter (g: g.tiles != [ ]) (
+        builtins.foldl' addTile cfg.dashboard.groups cfg.extraTiles
+      );
+
+      servicesConfig = (pkgs.formats.json { }).generate "services.json" (
+        {
+          title = cfg.dashboard.title;
+          system = {
+            disks = cfg.dashboard.system.disks;
+            tempMin = cfg.dashboard.system.tempMin;
+            tempMax = cfg.dashboard.system.tempMax;
+          };
+          groups = map (
+            g: {
+              name = g.name;
+              tiles = map tileJson g.tiles;
+            }
+          ) allGroups;
+        }
+        // lib.optionalAttrs (cfg.dashboard.search != null) {
+          search = {
+            inherit (cfg.dashboard.search) name url;
+          };
+        }
+        // lib.optionalAttrs (cfg.dashboard.bookmarks != [ ]) {
+          bookmarks = map (
+            b:
+            {
+              name = b.name;
+              links = map (
+                l:
+                {
+                  name = l.name;
+                  href = l.href;
+                }
+                // lib.optionalAttrs (l.abbr != null) { abbr = l.abbr; }
+                // lib.optionalAttrs (l.description != null) { description = l.description; }
+              ) b.links;
+            }
+          ) cfg.dashboard.bookmarks;
+        }
+      );
     in
     {
       options.services.papdashboard = {
@@ -120,6 +199,388 @@
           default = "insight";
           description = "Comma-separated sourceApp allowlist for OUTBOUND notifications (insights only by default).";
         };
+
+        # Services dashboard surface (the former homepage-dashboard, merged
+        # 2026-09): rendered to /etc/papdashboard/services.json and consumed
+        # via PAP_SERVICES_CONFIG. Tile status is probed SERVER-SIDE by
+        # PapDashboard itself (http probes against href; ≥500 = down);
+        # uptime history stays with Gatus.
+        extraTiles = lib.mkOption {
+          type = lib.types.listOf (
+            lib.types.submodule {
+              options = {
+                name = lib.mkOption {
+                  type = lib.types.str;
+                  description = "Tile label shown on the dashboard";
+                };
+                group = lib.mkOption {
+                  type = lib.types.str;
+                  description = ''
+                    Dashboard group the tile belongs to (existing group name
+                    appends to that group; any other name opens a new group).
+                  '';
+                };
+                href = lib.mkOption {
+                  type = lib.types.nullOr lib.types.str;
+                  default = null;
+                  description = "Link target; also the default probe URL (omit for decorative tiles)";
+                };
+                description = lib.mkOption {
+                  type = lib.types.nullOr lib.types.str;
+                  default = null;
+                  description = "Tile subtitle";
+                };
+                icon = lib.mkOption {
+                  type = lib.types.nullOr lib.types.str;
+                  default = null;
+                  description = ''
+                    Registry-shape compatibility with services.integration
+                    (…homepage tiles); accepted but ignored — PapDashboard
+                    renders monogram tiles.
+                  '';
+                };
+              };
+            }
+          );
+          default = [ ];
+          description = "Registry-managed dashboard tiles (services.integration fan-out)";
+        };
+
+        dashboard = {
+          title = lib.mkOption {
+            type = lib.types.str;
+            default = config.networking.hostName;
+            defaultText = lib.literalExpression "config.networking.hostName";
+            description = "Dashboard title.";
+          };
+
+          search = lib.mkOption {
+            type = lib.types.nullOr (
+              lib.types.submodule {
+                options = {
+                  name = lib.mkOption {
+                    type = lib.types.str;
+                    description = "Provider label shown in the search box";
+                  };
+                  url = lib.mkOption {
+                    type = lib.types.str;
+                    description = "Search URL template ending in the query parameter (e.g. …/search?q=)";
+                  };
+                };
+              }
+            );
+            default = {
+              name = if searxEnabled then "SearXNG" else "DuckDuckGo";
+              url = if searxEnabled then "https://search.${domain}/search?q=" else "https://duckduckgo.com/?q=";
+            };
+            description = "Quick-search provider (SearXNG when enabled, DuckDuckGo otherwise).";
+          };
+
+          system = {
+            disks = lib.mkOption {
+              type = lib.types.listOf lib.types.str;
+              default = [
+                "/"
+                "/data"
+                "/mnt/pool"
+              ];
+              description = ''
+                Filesystem paths shown in the stats strip. /data is a separate
+                BTRFS partition (Docker volumes, Immich DB, AI models); /mnt/pool
+                is the 2×16TB BTRFS RAID1 HDD pool receiving ALL backups
+                (btrbk sends, forgejo/pocket-id dumps, Docker pg_dumps,
+                Drive mirror): the highest-stakes mount on the box.
+              '';
+            };
+            tempMin = lib.mkOption {
+              type = lib.types.number;
+              default = 30;
+              description = ''
+                Temperature gauge lower bound (°C). Strix Halo (AMD Ryzen AI
+                Max+ 395) idles ~50°C, full load 90-95°C — bounds below color
+                the gauge green/yellow/red.
+              '';
+            };
+            tempMax = lib.mkOption {
+              type = lib.types.number;
+              default = 95;
+              description = "Temperature gauge upper bound (°C).";
+            };
+          };
+
+          groups = lib.mkOption {
+            type = lib.types.listOf (
+              lib.types.submodule {
+                options = {
+                  name = lib.mkOption {
+                    type = lib.types.str;
+                    description = "Group heading on the dashboard";
+                  };
+                  tiles = lib.mkOption {
+                    type = lib.types.listOf (
+                      lib.types.submodule {
+                        options = {
+                          name = lib.mkOption {
+                            type = lib.types.str;
+                            description = "Tile label";
+                          };
+                          href = lib.mkOption {
+                            type = lib.types.nullOr lib.types.str;
+                            default = null;
+                            description = "Link target; probed server-side when set (omit for decorative tiles)";
+                          };
+                          description = lib.mkOption {
+                            type = lib.types.nullOr lib.types.str;
+                            default = null;
+                            description = "Tile subtitle";
+                          };
+                          checkUrl = lib.mkOption {
+                            type = lib.types.nullOr lib.types.str;
+                            default = null;
+                            description = "Override probe URL (default: href)";
+                          };
+                        };
+                      }
+                    );
+                    default = [ ];
+                    description = "Tiles in this group";
+                  };
+                };
+              }
+            );
+            default = [
+              {
+                name = "Infrastructure";
+                tiles = [
+                  {
+                    name = "Pocket ID";
+                    href = svcUrl "auth";
+                    description = "Passkey OIDC Provider";
+                  }
+                  {
+                    name = "Caddy";
+                    description = "Reverse Proxy";
+                  }
+                  # PostgreSQL and Redis are decorative tiles: neither exposes
+                  # a public HTTP health endpoint (pg_isready is TCP-only;
+                  # Redis exports to Prometheus only). Their dependents
+                  # (Immich, Gatus, Manifest) show errors when the DB/cache
+                  # goes down — that's the real signal. All service health
+                  # monitoring is owned by Gatus (Discord alerting); dashboard
+                  # tiles are navigation, the dots are live probes.
+                  {
+                    name = "PostgreSQL";
+                    description = "Database Server";
+                  }
+                  {
+                    name = "Redis";
+                    description = "Cache (Immich)";
+                  }
+                ];
+              }
+              # Kept (even when empty) so registry tiles land in their
+              # canonical group position — a registry-only group would
+              # otherwise open at the end of the dashboard.
+              {
+                name = "Sync & Backup";
+                tiles = [ ];
+              }
+              {
+                name = "Media";
+                tiles = [
+                  {
+                    name = "Immich";
+                    href = svcUrl "immich";
+                    description = "Photo & Video Management";
+                  }
+                  {
+                    name = "Paperless";
+                    href = svcUrl "paperless";
+                    description = "Document Management (OCR, Office/E-Mail, AI, Archive)";
+                  }
+                  {
+                    name = "DNS Blocker";
+                    href = svcUrl "dnsblock";
+                    description = "DNS Block Stats";
+                  }
+                ];
+              }
+              {
+                name = "Development";
+                tiles = [
+                  {
+                    name = "Forgejo";
+                    href = svcUrl "forgejo";
+                    description = "Git Forge (GitHub Sync)";
+                  }
+                ];
+              }
+              {
+                name = "AI";
+                tiles = [ ];
+              }
+              {
+                name = "Monitoring";
+                tiles = [
+                  {
+                    name = "Node Exporter";
+                    description = "System Metrics (CPU, RAM, Disk, Network)";
+                  }
+                  {
+                    name = "dnsblockd";
+                    description = "Block-page HTTP server (localhost-only)";
+                  }
+                  {
+                    name = "EMEET PIXY";
+                    description = "Webcam Auto-Management Daemon";
+                  }
+                ];
+              }
+              {
+                name = "Productivity";
+                tiles = [
+                  {
+                    name = "Taskwarrior";
+                    href = svcUrl "tasks";
+                    description = "Task Sync Server (TaskChampion)";
+                  }
+                  {
+                    name = "OpenSEO";
+                    href = svcUrl "seo";
+                    description = "SEO Suite (Rank Tracking, Keywords, Backlinks)";
+                  }
+                ];
+              }
+              {
+                name = "Review Tools";
+                tiles = [ ];
+              }
+            ];
+            description = ''
+              Dashboard groups in display order. Hermes / Google Sync /
+              Overview / Gatus / FastFlowLM and friends arrive via the
+              services.integration registry fan-out (extraTiles), not here.
+            '';
+          };
+
+          bookmarks = lib.mkOption {
+            type = lib.types.listOf (
+              lib.types.submodule {
+                options = {
+                  name = lib.mkOption {
+                    type = lib.types.str;
+                    description = "Bookmark group label";
+                  };
+                  links = lib.mkOption {
+                    type = lib.types.listOf (
+                      lib.types.submodule {
+                        options = {
+                          name = lib.mkOption {
+                            type = lib.types.str;
+                            description = "Link label";
+                          };
+                          abbr = lib.mkOption {
+                            type = lib.types.nullOr lib.types.str;
+                            default = null;
+                            description = "Two-letter chip abbreviation";
+                          };
+                          href = lib.mkOption {
+                            type = lib.types.str;
+                            description = "Link target";
+                          };
+                          description = lib.mkOption {
+                            type = lib.types.nullOr lib.types.str;
+                            default = null;
+                            description = "Link tooltip";
+                          };
+                        };
+                      }
+                    );
+                    description = "Links in this group";
+                  };
+                };
+              }
+            );
+            default = [
+              {
+                name = "Infrastructure";
+                links = [
+                  {
+                    name = "Pocket-ID";
+                    abbr = "PI";
+                    href = svcUrl "auth";
+                    description = "Passkey OIDC login";
+                  }
+                  {
+                    name = "Gatus";
+                    abbr = "GA";
+                    href = svcUrl "status";
+                    description = "Service uptime dashboard";
+                  }
+                  {
+                    name = "SigNoz";
+                    abbr = "SN";
+                    href = svcUrl "signoz";
+                    description = "Traces, metrics, logs";
+                  }
+                ];
+              }
+              {
+                name = "Development";
+                links = [
+                  {
+                    name = "Forgejo";
+                    abbr = "FJ";
+                    href = svcUrl "forgejo";
+                    description = "Git forge";
+                  }
+                  {
+                    name = "GitHub";
+                    abbr = "GH";
+                    href = "https://github.com/LarsArtmann";
+                    description = "LarsArtmann GitHub";
+                  }
+                  {
+                    name = "NixOS Options";
+                    abbr = "NX";
+                    href = "https://search.nixos.org/options";
+                    description = "NixOS option search";
+                  }
+                  {
+                    name = "Nix Package Search";
+                    abbr = "NP";
+                    href = "https://search.nixos.org/packages";
+                    description = "Find packages";
+                  }
+                ];
+              }
+              {
+                name = "Search";
+                links = [
+                  {
+                    name = "DuckDuckGo";
+                    abbr = "DD";
+                    href = "https://duckduckgo.com";
+                    description = "Privacy-first search";
+                  }
+                  {
+                    name = "Kagi";
+                    abbr = "KG";
+                    href = "https://kagi.com";
+                    description = "Paid, no-ads search";
+                  }
+                ]
+                ++ lib.optional searxEnabled {
+                  name = "SearXNG";
+                  abbr = "SX";
+                  href = svcUrl "search";
+                  description = "Self-hosted metasearch";
+                };
+              }
+            ];
+            description = "Bookmark chip rows shown under the tiles.";
+          };
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -132,7 +593,7 @@
 
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
-
+          restartTriggers = [ servicesConfig ];
           environment = {
             PAP_ENV = cfg.environment;
             # OTel traces → local SigNoz OTLP/HTTP collector (Go otlptracehttp,
@@ -146,6 +607,10 @@
             PAP_INSIGHT_JOURNALCTL_PATH = "/run/current-system/sw/bin/journalctl";
             PAP_INSIGHT_JOURNAL_UNITS = lib.concatStringsSep "," cfg.journalUnits;
             PAP_INSIGHT_EVIDENCE_URLS = lib.concatStringsSep "," cfg.evidenceURLs;
+            # Services dashboard (tiles/status/bookmarks/vitals). The file is
+            # read at startup; restartTriggers below restarts the unit when
+            # the rendered config changes.
+            PAP_SERVICES_CONFIG = "/etc/papdashboard/services.json";
           };
 
           serviceConfig = lib.mkMerge [
@@ -171,14 +636,19 @@
           ];
         };
 
+        # Services dashboard config consumed by the unit (PAP_SERVICES_CONFIG
+        # above). Store-path symlink: world-readable by construction, no
+        # secrets in the file.
+        environment.etc."papdashboard/services.json".source = servicesConfig;
+
         # Service-integration registry entry: fans out to the Caddy vHost
-        # (Layer 2 — the UI has no built-in auth), the Gatus /api/health
-        # check, and the homepage tile. Replaces rows in caddy.nix /
-        # gatus-config.nix / homepage.nix.
+        # (Layer 2 — the UI has no built-in auth) and the Gatus /api/health
+        # check. The dashboard IS this service, so it carries no dashboard
+        # tile of its own (a self-tile is a navigation no-op).
         services.integration = lib.optionalAttrs (options ? services.integration) {
           papdashboard = {
             inherit (cfg) enable;
-            subdomain = "alerts";
+            subdomain = "dash";
             inherit (cfg) port;
             vHost.layer = "protected";
             checks = [
@@ -194,12 +664,6 @@
                 alert = "PapDashboard alert hub down — alert lifecycle UI and NPU insights unavailable (raw Discord alerts still flow)";
               }
             ];
-            homepage = {
-              name = "PapDashboard";
-              group = "Monitoring";
-              description = "Alert Hub with NPU Insights";
-              icon = "alertmanager.png";
-            };
           };
         };
       };

@@ -260,8 +260,8 @@ in
         fi
         up_owner="''${probe%%/*}"
         up_name="''${probe##*/}"
-        if [[ "${up_owner,,}" == "${GITHUB_USER,,}" ]]; then
-          if grep -qxF "${up_name,,}" "$CANONICAL" && grep -ixF "$up_name" "$FJMIRRORS" &>/dev/null; then
+        if [[ "''${up_owner,,}" == "''${GITHUB_USER,,}" ]]; then
+          if grep -qxF "''${up_name,,}" "$CANONICAL" && grep -ixF "$up_name" "$FJMIRRORS" &>/dev/null; then
             # canonical-named mirror already exists → stale copy is redundant.
             # Two-run confirmation: delete only when the verdict repeats.
             if grep -qxF "$name" "$PENDING"; then

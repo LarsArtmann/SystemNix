@@ -6,7 +6,9 @@
 #     port = ports.miniflux;          # vHost backend + relative health URLs
 #     vHost.layer = "plain";          # "plain" (Layer 0/1) | "protected" (Layer 2)
 #     checks = [ { ... } ];           # Gatus endpoints (auto Discord alerting)
-#     homepage = { ... };             # dashboard tile
+#     homepage = { ... };             # dashboard tile (historical name —
+#                                     # feeds the PapDashboard services tab
+#                                     # via services.papdashboard.extraTiles)
 #     backup = { ... };               # backup-coordination freshness entry
 #     monitored = true;               # system-health unit-state metrics
 #     otel = { ... };                 # OTEL env + signoz-coverage registration
@@ -86,7 +88,10 @@ _: {
         else
           "localhost:${toString ports.signoz-otlp-http}";
 
-      homepageTile = _name: e: {
+      # Maps a registry entry's `homepage` field to a dashboard tile. The
+      # registry key keeps its historical name; the consumer is the
+      # PapDashboard services tab (papdashboard.nix extraTiles fold).
+      dashboardTile = _name: e: {
         name = e.homepage.name;
         inherit (e.homepage) group;
         href =
@@ -254,13 +259,13 @@ _: {
                       icon = lib.mkOption {
                         type = lib.types.nullOr lib.types.str;
                         default = null;
-                        description = "Icon from the bundled dashboard-icons pack";
+                        description = "Icon name (accepted for registry compatibility; PapDashboard renders monograms)";
                       };
                     };
                   }
                 );
                 default = null;
-                description = "Homepage dashboard tile";
+                description = "Dashboard tile (historical name; consumed by the PapDashboard services tab)";
               };
 
               backup = lib.mkOption {
@@ -427,8 +432,8 @@ _: {
             // lib.optionalAttrs (check.headers != { }) { inherit (check) headers; }
           ) entryChecks;
         })
-        (lib.optionalAttrs (options ? services.homepage) {
-          services.homepage.extraTiles = lib.mapAttrsToList homepageTile (
+        (lib.optionalAttrs (options ? services.papdashboard) {
+          services.papdashboard.extraTiles = lib.mapAttrsToList dashboardTile (
             lib.filterAttrs (_: e: e.homepage != null) enabledEntries
           );
         })
