@@ -45,10 +45,11 @@ let
   syncScript = pkgs.writeShellApplication {
     name = "boot-mirror-sync";
     runtimeInputs = with pkgs; [
+      coreutils
       diffutils
+      findutils # entry count (shellcheck SC2012: ls|wc is uncountable)
       rsync
       systemd # bootctl
-      coreutils
     ];
     text = ''
       set -euo pipefail
@@ -78,7 +79,7 @@ let
         exit 1
       fi
 
-      echo "boot-mirror-sync: OK — $(ls ${mirrorPath}/loader/entries/nixos-*.conf 2>/dev/null | wc -l) entries, $(du -sh ${mirrorPath} 2>/dev/null | cut -f1) mirrored"
+      echo "boot-mirror-sync: OK — $(find ${mirrorPath}/loader/entries -maxdepth 1 -name 'nixos-*.conf' -type f | wc -l) entries, $(du -sh ${mirrorPath} 2>/dev/null | cut -f1) mirrored"
     '';
   };
 in
@@ -100,7 +101,10 @@ in
   systemd.services.boot-mirror-sync = {
     description = "Mirror /boot (NixOS ESP) to the Samsung 2nd-boot-disk ESP";
     wantedBy = [ "multi-user.target" ];
-    after = [ "boot-mirror.mount" ];
+    # NO explicit after= on the mount unit: systemd escapes the dash, so the
+    # unit is boot\x2dmirror.mount — a literal "boot-mirror.mount" would name
+    # a nonexistent unit. unitConfig.RequiresMountsFor below already implies
+    # Requires=+After= on the real mount.
     unitConfig = {
       RequiresMountsFor = [ mirrorPath ];
       ConditionPathIsMountPoint = mirrorPath;
