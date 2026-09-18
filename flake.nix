@@ -1072,13 +1072,13 @@
                     # stateful scenarios (repo state changes across a flip).
                     cat > "$STUB_BIN/curl" <<'STUBEOF'
                     #!/usr/bin/env bash
-                    method=GET; url=; out=; wcode=; data=; fail=0
+                    method=GET; url=; out=; wcode=; data=; fail=0; payload=
                     while [ $# -gt 0 ]; do
                       case "$1" in
                         -X) method="$2"; shift 2 ;;
                         -o) out="$2"; shift 2 ;;
                         -w) wcode="$2"; shift 2 ;;
-                        -d) data=1; shift 2 ;;
+                        -d) data=1; payload="$2"; shift 2 ;;
                         -sf|-s|-f|-k|-L|--compressed) case "$1" in *f*) fail=1;; esac; shift ;;
                         -H|--connect-timeout|--max-time) shift 2 ;;
                         http*) url="$1"; shift ;;
@@ -1091,6 +1091,7 @@
                     n=0
                     [ -f "$STUB_STATE/n.''${key}.''${method}" ] && n=$(cat "$STUB_STATE/n.''${key}.''${method}")
                     n=$((n + 1)); echo "$n" > "$STUB_STATE/n.''${key}.''${method}"
+                    printf '%s' "''${payload:-}" > "$STUB_STATE/req.''${key}.''${method}.$n.json"
                     code_file=""; body_file=""
                     if [ -f "$base.$n.code" ]; then code_file="$base.$n.code"; body_file="$base.$n.body"
                     elif [ -f "$base.code" ]; then code_file="$base.code"; body_file="$base.body"
@@ -1156,7 +1157,10 @@
                     printf '[]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_push-happy_push_mirrors.GET.body"
                     printf 201 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_push-happy_push_mirrors.POST.code"
                     run "$PUSH"; need_rc push-happy 0; need_has push-happy "push mirror attached"
-                    grep -q '"interval":"8h"' "$STUB_STATE"/req_* 2>/dev/null || true
+                    # The M05 lesson, asserted: the POST MUST carry the
+                    # interval field (the old code 400'd 18/18 without it).
+                    grep -q '"interval": "8h"' "$STUB_STATE/req.localhost_3000_api_v1_repos_lars_push-happy_push_mirrors.POST.1.json" \
+                      || { echo "FAIL push-happy: POST payload lacks interval 8h"; cat "$STUB_STATE/req.localhost_3000_api_v1_repos_lars_push-happy_push_mirrors.POST.1.json"; exit 1; }
 
                     export FORGEJO_CANONICAL_REPOS="push-stuck"
                     printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_push-stuck.GET.code"
@@ -1179,10 +1183,14 @@
                     BASE=gh_repos_LarsArtmann_flip-pilot.body
                     printf '{"default_branch":"main","open_issues_count":3,"private":true,"description":"d"}' > "$STUB_HTTP/$BASE"
                     FJ=localhost_3000_api_v1_repos_lars_flip-pilot
+                    # 3 sequential GET states: dry-run precondition (mirror),
+                    # happy-run precondition (mirror), post-migrate (native).
                     printf 200 > "$STUB_HTTP/$FJ.GET.1.code"
                     printf '{"owner":{"login":"lars"},"mirror":true}' > "$STUB_HTTP/$FJ.GET.1.body"
                     printf 200 > "$STUB_HTTP/$FJ.GET.2.code"
-                    printf '{"owner":{"login":"lars"},"mirror":false,"default_branch":"main","open_issues_count":3}' > "$STUB_HTTP/$FJ.GET.2.body"
+                    printf '{"owner":{"login":"lars"},"mirror":true}' > "$STUB_HTTP/$FJ.GET.2.body"
+                    printf 200 > "$STUB_HTTP/$FJ.GET.3.code"
+                    printf '{"owner":{"login":"lars"},"mirror":false,"default_branch":"main","open_issues_count":3}' > "$STUB_HTTP/$FJ.GET.3.body"
                     printf 204 > "$STUB_HTTP/$FJ.DELETE.1.code"
                     MIG=localhost_3000_api_v1_repos_migrate.POST
                     printf 201 > "$STUB_HTTP/$MIG.1.code"
@@ -1230,7 +1238,7 @@
                     export FORGEJO_KNOWN_STALE="$STALE"
                     printf 'darkblocks\ndialogueswebinterface\n' > "$STALE"
 
-                    printf '' > "$FIX/notices"
+                    : > "$FIX/notices"
                     export STUB_SQLITE_OUT="$FIX/notices"
                     run "$HEALTH"; need_rc health-clean 0
                     grep -q '^forgejo_mirror_dead_candidates 0$' "$TF/forgejo_mirror_health.prom" \
@@ -1356,7 +1364,8 @@
 
                     # 1. mount down -> prepare refuses
                     fresh mountdown
-                    STUB_MOUNT_DOWN=1 run prepare; need_rc mountdown 1; need_has mountdown "not mounted"
+                    export STUB_MOUNT_DOWN=1
+                    run prepare; need_rc mountdown 1; need_has mountdown "not mounted"
                     unset STUB_MOUNT_DOWN
 
                     # 2. prepare happy + idempotent
@@ -1372,7 +1381,8 @@
                     # 4. finalize with family active refuses
                     fresh fam
                     run prepare >/dev/null
-                    STUB_FAMILY_ACTIVE=1 run finalize; need_rc fam 1; need_has fam "still active"
+                    export STUB_FAMILY_ACTIVE=1
+                    run finalize; need_rc fam 1; need_has fam "still active"
                     unset STUB_FAMILY_ACTIVE
 
                     # 5. dry-run: plan only, no swap
@@ -1391,10 +1401,15 @@
                     [ -z "$(ls -A "$STATE")" ] || { echo "FAIL fin: mountpoint not empty"; exit 1; }
                     diff -r "$STATE.qlc-pre-subvol" "$SUBVOL" >/dev/null || { echo "FAIL fin: safety copy != subvol"; exit 1; }
 
-                    # 7. checksum mismatch refuses to swap
+                    # 7. verification guard: tamper the destination with
+                    # IDENTICAL size and mtime so rsync's quick-check SKIPS
+                    # the file — the sampled checksum must then catch it and
+                    # refuse the swap (a plain tamper would just be healed by
+                    # the delta rsync before verification runs).
                     fresh corrupt
                     run prepare >/dev/null
-                    printf 'tampered\n' > "$SUBVOL/data/file-1"
+                    printf 'content-X\n' > "$SUBVOL/data/file-1"
+                    touch -r "$STATE/data/file-1" "$SUBVOL/data/file-1"
                     run finalize; need_rc corrupt 1; need_has corrupt "checksum mismatch"
                     [ -d "$STATE/data" ] || { echo "FAIL corrupt: source was moved despite mismatch"; exit 1; }
                     [ ! -e "$STATE.qlc-pre-subvol" ] || { echo "FAIL corrupt: swapped despite mismatch"; exit 1; }
