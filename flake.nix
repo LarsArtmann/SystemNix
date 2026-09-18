@@ -1057,6 +1057,7 @@
                       coreutils
                       gnused
                       gnugrep
+                      jq
                     ];
                   }
                   ''
@@ -1131,7 +1132,7 @@
                     # come first in the original PATH line).
                     inject() {
                       cp "$1" "$2"
-                      sed -i 's#^export PATH="#export PATH='"$STUB_BIN"':#' "$2"
+                      sed -i 's#^export PATH="#export PATH="'"$STUB_BIN"':#' "$2"
                       chmod +x "$2"
                     }
                     PUSH="$FIX/forgejo-push-mirror"
@@ -1144,7 +1145,7 @@
                     inject ${lib.getExe forgejoScripts.censusScript} "$CENSUS"
 
                     export FORGEJO_TOKEN=fxtok GITHUB_TOKEN=gxtok GITHUB_USER=LarsArtmann
-                    rc=0; out=""
+                    rc=0; capt=""
                     # NOTE: capture var is `capt` — `out` is RESERVED (the
                     # derivation output path); shadowing it made the final
                     # `echo PASS > "$out"` redirect into a garbage filename.
@@ -1380,7 +1381,7 @@
                     # 3. finalize without prepare (empty subvol) refuses
                     fresh noprep
                     run finalize; need_rc noprep 1; need_has noprep "run" # mentions prepare requirement
-                    printf '%s\n' "$out" | grep -qi "prepare" || { echo "FAIL noprep: message lacks prepare hint"; exit 1; }
+                    printf '%s\n' "$capt" | grep -qi "prepare" || { echo "FAIL noprep: message lacks prepare hint"; exit 1; }
 
                     # 4. finalize with family active refuses
                     fresh fam
@@ -2095,14 +2096,27 @@
                   [
                     pkgs.btrfs-progs # filesystem show (MISSING device audit)
                     pkgs.coreutils # stat, timeout, dirname, awk-free parsing helpers
-                    pkgs.diffutils # cmp (exit-4 predictor unit-file diffing)
+                    pkgs.diffutils # cmp (exit-4 predictor unit-file diffing) + boot-mirror tree diff
+                    pkgs.efibootmgr # §11: mirror EFI entry / BootOrder audit
                     pkgs.gawk # loader.conf/entry parsing
                     pkgs.gnugrep
                     pkgs.nix # path-info closure sanity + nix-store gc-root queries
-                    pkgs.systemd # systemctl (quiet-window advisories, nix-gc timer)
-                    pkgs.util-linux # findmnt
+                    pkgs.systemd # systemctl (quiet-window advisories, nix-gc timer, bootctl)
+                    pkgs.util-linux # findmnt + lsblk (mirror ESP device resolution)
                   ]
                   ./scripts/pre-reboot-check.sh;
+              boot-mirror-activate =
+                mkApp "boot-mirror-activate"
+                  "Switch the firmware boot chain to the Samsung 2nd-boot-disk ESP: ensure its EFI entry exists and order it first (idempotent; QLC entries stay fallback)"
+                  [
+                    pkgs.coreutils # tr/cut/paste
+                    pkgs.efibootmgr
+                    pkgs.gawk
+                    pkgs.gnugrep
+                    pkgs.systemd # bootctl is-installed
+                    pkgs.util-linux # findmnt + lsblk
+                  ]
+                  ./scripts/boot-mirror-activate.sh;
               migrate-hot-db =
                 mkApp "migrate-hot-db"
                   "User-run migration of a service dataDir onto the Samsung hot-DB tier (services.hot-db): prepare|finalize with pressure gate + verify"

@@ -411,6 +411,66 @@ if [ -n "$NEXT_GC" ]; then
   echo "  ℹ next nix-gc: $NEXT_GC (rooting audited above)"
 fi
 
+# 11. Boot mirror (Samsung 2nd boot disk) — audits the ESP the firmware may
+#     boot INSTEAD of /boot. Severity scales with who boots first: when the
+#     BootOrder's first entry lives on the mirror partition, mirror problems
+#     FAIL the reboot (the machine WILL boot this ESP); otherwise they only
+#     WARN (the reboot stays safe via the QLC chain — the mirror is purely
+#     additive until `nix run .#boot-mirror-activate` flips the order).
+#     Content correctness reduces to a tree-diff against $BOOT_DIR: §1-§3
+#     already audited those exact files' kernels/initrds/init= paths.
+echo ""
+MIRROR_DIR="${MIRROR_DIR:-/boot-mirror}"
+echo "11. Boot mirror ($MIRROR_DIR)"
+MIRROR_IS_FIRST=0
+mirror_issue() {
+  if [ "$MIRROR_IS_FIRST" -eq 1 ]; then
+    fail "$1"
+  else
+    warn "$1"
+  fi
+}
+if ! findmnt -n "$MIRROR_DIR" >/dev/null 2>&1; then
+  if grep -qs "[[:space:]]$MIRROR_DIR[[:space:]]" /etc/fstab; then
+    warn "$MIRROR_DIR declared in fstab but not mounted — Samsung absent? (reboot falls back to the QLC chain)"
+  else
+    echo "  ℹ no boot mirror declared — skipping"
+  fi
+else
+  if command -v efibootmgr >/dev/null 2>&1; then
+    MIRROR_SRC="$(findmnt -n -o SOURCE "$MIRROR_DIR")"
+    MIRROR_PARTUUID="$(lsblk -no PARTUUID "$MIRROR_SRC" 2>/dev/null || true)"
+    FIRST_ID="$(efibootmgr 2>/dev/null | awk '/^BootOrder:/ {print $2}' | cut -d, -f1)"
+    FIRST_LINE="$(efibootmgr -v 2>/dev/null | grep -E "^Boot${FIRST_ID}\*?" || true)"
+    if [ -n "$MIRROR_PARTUUID" ] && [ -n "$FIRST_LINE" ] && echo "$FIRST_LINE" | grep -qiF "$MIRROR_PARTUUID"; then
+      MIRROR_IS_FIRST=1
+      pass "firmware BootOrder boots the mirror first: $FIRST_ID"
+    elif [ -n "$MIRROR_PARTUUID" ]; then
+      echo "  ℹ mirror is not first in BootOrder — the QLC chain boots; activate with nix run .#boot-mirror-activate"
+    fi
+    if [ -n "$MIRROR_PARTUUID" ] \
+      && efibootmgr -v 2>/dev/null | grep -iF "$MIRROR_PARTUUID" | grep -qiF 'systemd-bootx64.efi'; then
+      pass "mirror EFI boot entry present (systemd-boot loader on the mirror partition)"
+    else
+      mirror_issue "no EFI boot entry points at the mirror's systemd-boot — firmware cannot pick it (run nix run .#boot-mirror-activate)"
+    fi
+  else
+    warn "efibootmgr unavailable — firmware entry/order not audited"
+  fi
+  if command -v bootctl >/dev/null 2>&1; then
+    if bootctl --esp-path="$MIRROR_DIR" is-installed >/dev/null 2>&1; then
+      pass "systemd-boot installed on $MIRROR_DIR"
+    else
+      mirror_issue "systemd-boot NOT installed on $MIRROR_DIR (systemctl restart boot-mirror-sync)"
+    fi
+  fi
+  if diff -r -x random-seed -x "System Volume Information" "$BOOT_DIR" "$MIRROR_DIR" >/dev/null 2>&1; then
+    pass "mirror tree identical to $BOOT_DIR (per-ESP random-seed excluded)"
+  else
+    mirror_issue "mirror tree DIFFERS from $BOOT_DIR — stale 2nd boot disk (systemctl restart boot-mirror-sync)"
+  fi
+fi
+
 echo ""
 echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="
 if [ "$FAIL" -gt 0 ]; then
