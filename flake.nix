@@ -1071,7 +1071,7 @@
                     # $STUB_HTTP; per-key sequential counters serve
                     # stateful scenarios (repo state changes across a flip).
                     cat > "$STUB_BIN/curl" <<'STUBEOF'
-                    #!/usr/bin/env bash
+                    #!${pkgs.bash}/bin/bash
                     method=GET; url=; out=; wcode=; data=; fail=0; payload=
                     while [ $# -gt 0 ]; do
                       case "$1" in
@@ -1109,7 +1109,7 @@
 
                     # ---- gh stub: serves $STUB_HTTP/gh_<sanitized>.body
                     cat > "$STUB_BIN/gh" <<'STUBEOF'
-                    #!/usr/bin/env bash
+                    #!${pkgs.bash}/bin/bash
                     [ "''${1:-}" = "api" ] || { echo "gh stub: only api" >&2; exit 1; }
                     key=gh_$(printf '%s' "''${2:-}" | sed 's|[^A-Za-z0-9._-]|_|g')
                     if [ -f "$STUB_HTTP/$key.body" ]; then cat "$STUB_HTTP/$key.body"; exit 0; fi
@@ -1120,7 +1120,7 @@
 
                     # ---- sqlite3 stub: cats $STUB_SQLITE_OUT (env)
                     cat > "$STUB_BIN/sqlite3" <<'STUBEOF'
-                    #!/usr/bin/env bash
+                    #!${pkgs.bash}/bin/bash
                     [ -n "''${STUB_SQLITE_OUT:-}" ] && [ -f "$STUB_SQLITE_OUT" ] && cat "$STUB_SQLITE_OUT"
                     exit 0
                     STUBEOF
@@ -1308,21 +1308,19 @@
                     STUB_BIN="$FIX/stub-bin"; mkdir -p "$STUB_BIN"
 
                     cat > "$STUB_BIN/btrfs" <<'STUBEOF'
-                    #!/usr/bin/env bash
-                    cmd="''${1:-}"; path="''${2:-}"
+                    #!${pkgs.bash}/bin/bash
+                    # btrfs subvolume <show|create> <path>: path is $3
+                    cmd="''${1:-}/''${2:-}"; path="''${3:-}"
                     case "$cmd" in
-                      subvolume)
-                        case "$2" in
-                          show) [ -f "$path.created" ] && exit 0; exit 1 ;;
-                          create) mkdir -p "$path" && touch "$path.created"; exit 0 ;;
-                        esac ;;
+                      subvolume/show) [ -f "$path.created" ] && exit 0; exit 1 ;;
+                      subvolume/create) mkdir -p "$path" && touch "$path.created"; exit 0 ;;
                     esac
                     exit 1
                     STUBEOF
                     chmod +x "$STUB_BIN/btrfs"
 
                     cat > "$STUB_BIN/systemctl" <<'STUBEOF'
-                    #!/usr/bin/env bash
+                    #!${pkgs.bash}/bin/bash
                     # is-active --quiet <unit>: mnt-hot.mount active unless
                     # STUB_MOUNT_DOWN=1; family units active iff
                     # STUB_FAMILY_ACTIVE=1; everything else inactive.
@@ -1341,7 +1339,7 @@
                     STUBEOF
                     chmod +x "$STUB_BIN/systemctl"
 
-                    printf '#!/usr/bin/env bash\nexit 0\n' > "$STUB_BIN/chown"
+                    printf '#!${pkgs.bash}/bin/bash\nexit 0\n' > "$STUB_BIN/chown"
                     chmod +x "$STUB_BIN/chown"
 
                     export PATH="$STUB_BIN:$PATH"
