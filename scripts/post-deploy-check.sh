@@ -810,6 +810,28 @@ if $papdashboard_enabled; then
   else
     report_warn "PapDashboard - no ingest 200s in the last 30 min (normal when no alert transitioned; re-check after the next Gatus alert)"
   fi
+  # Services surface (2026-09-18 homepage merge): status-code + public-fragment
+  # probes, no API key needed. 401 on /api/services proves BOTH that the route
+  # exists (404 = binary predates the merge or PAP_SERVICES_CONFIG unset) and
+  # that the auth gate is armed; a 200 here would mean the key gate silently
+  # dropped. The fragment is public by contract (same class as /dashboard.js),
+  # so tile rendering is observable without secrets - and it must never carry
+  # inline onclick handlers (the delegated data-action rule, pinned at build
+  # time by cmd/server/no_inline_handlers_test.go).
+  check "PapDashboard services surface keyed" "http://127.0.0.1:8088/api/services" "401" ""
+  check "PapDashboard host vitals live" "http://127.0.0.1:8088/api/system" "200" '"memTotalBytes":[1-9]'
+  check "PapDashboard services fragment renders" "http://127.0.0.1:8088/api/fragments/services" "200" "services-group-heading"
+  # /tmp/.smoke-body still holds the fragment body from the previous check.
+  if grep -q "service-tile" /tmp/.smoke-body 2>/dev/null; then
+    report_pass "PapDashboard - fragment carries rendered tiles"
+  else
+    report_fail "PapDashboard - fragment has group headings but ZERO tiles (registry fan-out empty? services.papdashboard.dashboard.groups)"
+  fi
+  if grep -qiE "onclick" /tmp/.smoke-body 2>/dev/null; then
+    report_fail "PapDashboard - services fragment contains inline onclick (violates the data-action contract)"
+  else
+    report_pass "PapDashboard - fragment free of inline handlers"
+  fi
 else
   report_skip "PapDashboard - service disabled (units absent from systemd)"
 fi
@@ -1207,7 +1229,7 @@ fi
 echo ""
 echo "=== External vHost Checks ==="
 
-check "Homepage (HTTPS)" "https://dash.$DOMAIN/" "200" "<html" 2>/dev/null || true
+check "PapDashboard dash vHost (HTTPS)" "https://dash.$DOMAIN/" "200" "<html" 2>/dev/null || true
 check "Forgejo (HTTPS)" "https://forgejo.$DOMAIN/api/v1/version" "200" "" 2>/dev/null || true
 check "Status (HTTPS)" "https://status.$DOMAIN/" "200" "<html" 2>/dev/null || true
 check "Immich (HTTPS)" "https://immich.$DOMAIN/api/server/ping" "200" "" 2>/dev/null || true
