@@ -57,6 +57,27 @@ The only QLC dependency left in the boot chain is the root `@` subvolume (out of
   restart (seconds), the mirror would boot the PREVIOUS generation — its
   store paths still exist (`/nix` is GC'd with 3d profile retention).
 
+## Mid-flight catches (pre-deploy, recorded as lessons)
+
+1. **`bootctl install` default `--make-entry-directory=auto`** creates an
+   empty `<entry-token>/` dir ONLY on the mirror → the `diff -r` parity gate
+   would permanently false-FAIL. Fixed with `--make-entry-directory=no`
+   (NixOS's builder writes entries straight into `loader/entries/`).
+2. **writeShellApplication runs shellcheck at BUILD time** — `ls | wc -l`
+   (SC2012) would have failed the deploy mid-build. Pre-built both wrapped
+   scripts (`nix build` the app + unit ExecStart drvs) to catch this before
+   the pressure-gated deploy window. Do this for every new wrapped script.
+3. **systemd escapes dashes in unit names**: `/boot-mirror` mounts as
+   `boot\x2dmirror.mount` — a literal `after = ["boot-mirror.mount"]` names
+   a nonexistent unit (verified `systemd-escape`). RequiresMountsFor implies
+   Requires=+After= on the real mount; the explicit after= was dead weight.
+
+## Execution status
+
+- flake check --no-build: green. evo-x2 eval: green. Scripts: shellcheck-green.
+- Deploy queued behind the IO-PSI gate (parallel build storm; freeze #5
+  doctrine: queue, never race dips).
+
 ## Rollback
 
 Firmware boot menu (F8/F11/F12) or `efibootmgr -o 0001,…` (QLC `Linux Boot
