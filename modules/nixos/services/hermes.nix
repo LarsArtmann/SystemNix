@@ -610,7 +610,11 @@
                 "${lib.getExe mergeEnvScript}"
                 "${lib.getExe lspBinHealScript}"
               ];
-              ExecStart = "${lib.getExe' hermesPkg "hermes"} gateway run --replace";
+              # -v (verbosity=1): stderr logs at INFO — without it the
+              # gateway logs WARNING+ only and the "[Discord] Connected as"
+              # on_ready line never reaches journald, leaving the post-deploy
+              # Discord-connectivity smoke with no positive signal.
+              ExecStart = "${lib.getExe' hermesPkg "hermes"} gateway run --replace -v";
               WorkingDirectory = cfg.stateDir;
               Environment = [
                 "HOME=${cfg.stateDir}"
