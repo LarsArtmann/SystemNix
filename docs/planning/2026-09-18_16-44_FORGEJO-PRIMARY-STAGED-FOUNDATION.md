@@ -90,7 +90,7 @@ Sorted by importance (dependency spine first), then impact/effort. "Gate" rows a
 | M17 | Size measurement (`sudo -u forgejo du -sh`) + pool/btrbk growth projection | P0 | Med | S | 30m | G1 |
 | M05 | Push-mirror capability: `services.forgejo.canonicalRepos` option (default `[]` = inert), `forgejo-push-mirror` script (idempotent GET→POST `/push_mirrors` with `interval:"8h"`, `sync_on_commit`, **refuses repos where `mirror==true`**), folded as phase 3 of `forgejo-github-sync` | P1 | High | M | 60m | G1 |
 | M06 | Flip mechanics: `forgejo-flip-repo <name>` — preconditions (pull mirror, exists on GH, no pending reconcile verdict) → DELETE mirror (disposable by definition) → re-migrate `mirror:false` FULL import (issues/PRs/labels/milestones/releases/wiki) → attach push mirror → post-verify (mirror==false, issue count, push mirror listed); `--dry-run`; lossiness notes | P1 | High | L | 90m | M05 |
-| M07 | Dead-mirror monitoring: collector comparing `mirror.updated_unix` vs repo `updated_at` divergence (TouchMirror-proof), `forgejo_mirror_dead_candidates` metric + Gatus (closes the 12-day-outage class) | P1 | High | M | 60m | G1 |
+| M07 | Dead-mirror monitoring (REDESIGNED 2026-09-18 evening, see §10 addendum): notice-table collector (one Type=1 row per FAILED sync) minus the reconcile known-stale set, `forgejo_mirror_dead_candidates` metric + Gatus. The original mirror_updated-vs-updated_at heuristic was FALSIFIED against live data | P1 | High | M | 60m | G1 |
 | M08 | Live-forge census: native-vs-mirror split, real counts, runner version, workflow runs, LFS presence → runbook | P1 | Med | S | 30m | G1 |
 | **G2** | GATE: deploy P1 batch; live-verify push-mirror POST (201) + collector green; fixtures pass | P1 | — | — | 30m | M05-M08 |
 | M09 | `insteadOf` shim behind flag (HM `programs.git`, evo-x2 + darwin) + `scripts/forgejo-remote-audit.sh` (origins census, join vs forgejo repo list) | P2 | High | M | 45m | G2 |
@@ -120,7 +120,7 @@ Grouped by medium task; execution order within groups is top-down unless `dep` s
 | F02 | Add `dedicatedSubvolume` option + conditional `fileSystems."/var/lib/forgejo"` via `mkFilesystem` (tlc by-label, `subvol=hot/forgejo`, nofail, zstd) | 12m | F01 |
 | F03 | `forgejo-subvol-bootstrap` oneshot: idempotent `mkdir -p /mnt/hot/hot` + `btrfs subvolume create`, after `mnt-hot.mount`, before the dataDir mount; add to deploy.sh restart list + deploy-restart-audit expectations | 12m | F02 |
 | F04 | Option-conditional `RequiresMountsFor=/var/lib/forgejo` + `ConditionPathIsMountPoint` on forgejo.service (clickhouse precedent) | 8m | F02 |
-| F05 | Enable option in evo-x2 configuration.nix (ship inert first: option off until migration done — see F22 gate) | 2m | F04 |
+| F05 | Enable option in evo-x2 configuration.nix (ship inert first: option off until migration done — see F22 gate) — state 2026-09-18: option EXISTS + ships inert; the enable line lands WITH the G1 gate (the migration finalize deliberately leaves forgejo down until the mount flips) | 2m | F04 |
 | F06 | Eval `evo-x2` toplevel + `nix flake check --no-build` | 10m | F05 |
 | **M02** | | | |
 | F07 | Script skeleton + tool preflight (resolve every binary up front — the sgdisk lesson; `set -euo pipefail`, dry-run default) | 12m | M01 |
@@ -137,7 +137,7 @@ Grouped by medium task; execution order within groups is top-down unless `dep` s
 | **M04** | | | |
 | F17 | Dump-drill: latest zip → scratch → unzip → `git fsck` on 3 sampled repos → sqlite `integrity_check` on extracted `forgejo.db` → verdict | 12m | M03 |
 | F18 | Subvol-drill: read-only mount of newest received subvol → `git fsck` sample → unmount | 12m | F17 |
-| F19 | Weekly timer + `forgejo_restore_drill_last_age` metric + Gatus (fail-closed absence) | 10m | F18 |
+| F19 | Weekly timer + `forgejo_restore_drill_last_age` metric + Gatus (fail-closed absence) — SHIPPED 2026-09-18 as a deliberate simplification: weekly timer + OnFailure + system-health monitored unit (event alerting, not a freshness metric — a drill is an event, not a continuous signal) | 10m | F18 |
 | F20 | Runbook restore section + evidence formatting | 8m | F19 |
 | **G1** | | | |
 | F21 | DEPLOY (owner): Phase-0 inert batch; watch post-deploy smoke + §10 metric loans | 10m | M01-M04 |
@@ -159,9 +159,9 @@ Grouped by medium task; execution order within groups is top-down unless `dep` s
 | F34 | Fixture test: full stubbed flow + failure mid-flip (migrate 422 → repo recreated as mirror, no data loss) | 12m | F33 |
 | F35 | Lossiness doc: reactions, some review metadata, cross-references, GH-only features (projects, insights) — runbook | 8m | F34 |
 | **M07** | | | |
-| F36 | Collector: page `GET /repos/search?mirror=true`, per repo compare `mirror_updated` age vs `updated_at` age; divergence > 3× interval = dead candidate | 12m | G1 |
-| F37 | Textfile metrics + unit/timer (5m) + registry Gatus check (`forgejo_mirror_dead_candidates 0`) | 12m | F36 |
-| F38 | Calibrate: exclude 8h-interval repos, tolerate in-flight syncs (one-cycle grace via state file) | 8m | F37 |
+| F36 | ~~Collector: page `GET /repos/search?mirror=true`, per repo compare `mirror_updated` age vs `updated_at` age~~ FALSIFIED 2026-09-18: TouchMirror advances mirror_updated on FAILED syncs (all 385 mirrors incl. frozen ones carry fresh mirror_updated), and idle-healthy mirrors carry frozen updated_at — the pair cannot separate dead from idle. REPLACEMENT: notice-table query (Type=1 rows in 24h) + name parse + known-stale subtraction | 12m | G1 |
+| F37 | Textfile metrics + unit/timer (5m) + registry Gatus check (`forgejo_mirror_dead_candidates 0`) — DONE 2026-09-18: `forgejo-mirror-health` unit/timer + `forgejo_mirror_health.prom` + "Forgejo Dead Mirror Candidates" check (fail-closed absence) | 12m | F36 |
+| F38 | Calibrate: exclude 8h-interval repos, tolerate in-flight syncs (one-cycle grace via state file) — superseded by the redesign: known-stale subtraction (reconcile persists `known-stale.txt`) replaces interval tuning; the 24h notice window = 3 missed 8h cycles | 8m | F37 |
 | **M08** | | | |
 | F39 | One-shot census script (native vs mirror counts, per-org) + run | 10m | G1 |
 | F40 | Runner/workflow/LFS facts → runbook "live state" section | 8m | F39 |
@@ -290,3 +290,24 @@ flowchart TD
 - `docs/research/2026-09-18_forgejo-deep-research.html` + `docs/status/2026-09-18_07-47_*` (roadmap R1-R19, 50-item list)
 - AGENTS.md: Forgejo GitHub Mirror Sync section, per-service-subvolume doctrine, `docs/planning/2026-09-15_per-service-btrfs-subvolumes-analysis.md` (Set A/B/C)
 - This conversation (2026-09-18): staged-goal directive, storage requirements, both-ways end-state
+
+---
+
+## 10. Status addendum — 2026-09-18 evening session (Phase-1 code complete)
+
+All Phase-1 capability tasks are now CODE-COMPLETE, fixture-tested, and shipped inert; G1 (data migration) remains the owner gate before any of it deploys. Evidence: flake checks `forgejo-scripts-fixture` + `migrate-forgejo-subvol-fixture` (both green; they also caught four fixture-authoring bugs live, proving they can fail).
+
+| Task | Status | Notes |
+| ---- | ------ | ----- |
+| M05 / F27-F30 | **DONE (inert)** | `services.forgejo.canonicalRepos` (default []), `forgejo-push-mirror` as sync-unit phase 3, fixture asserts the POST payload carries `interval: "8h"` (the exact field whose absence killed the original 18 attempts) |
+| M06 / F31-F35 | **DONE (inert)** | `forgejo-flip-repo` + `forgejo-flip@` / `forgejo-flip-check@` template units (env + OnFailure without secrets on any command line). F34 fixture covers the mid-flip migrate-422 path with recovery guidance. F35 lossiness doc → runbook section |
+| M07 / F36-F38 | **DONE (inert), REDESIGNED** | Original heuristic falsified (F36 row above). `forgejo-mirror-health` 5-min collector reads the `notice` table via `sqlite3 -readonly` + subtracts the reconcile-persisted `known-stale.txt`; Gatus check fails closed on metric absence. Until the first reconcile run post-deploy publishes the stale file, the check is RED BY DESIGN (deploy-order note) |
+| M08 / F39-F40 | **Script DONE; run pending G2** | `forgejo-census` unit (manual `sudo systemctl start forgejo-census`); census numbers land in the runbook at G2 |
+| M02 debt | **DONE** | `migrate-forgejo-subvol-fixture` covers 7 guard branches incl. the checksum-tamper refusal (same size+mtime so rsync quick-check skips it — the only way the verification branch is reachable) |
+| M03 debt | **DONE** | `systemd-analyze calendar '*-*-* 05,13,21:40:00'` normalizes correctly, next elapse verified — 3 slots/day exactly 8h apart |
+| F16 | **partial** | btrbk config evaluated clean; the in-unit dry-run gate was NOT added (btrbk nixpkgs unit has no ExecStartPre hook wired; first-live-run verification stays a G1 checklist row instead) |
+| F76 | **DONE** | supersede annotation added to the 2026-08-31 plan header |
+
+**Deploy-order note (G2):** the reconcile script's `known-stale.txt` persistence ships in the same batch as the `forgejo-mirror-health` timer — deploy.sh starts `forgejo-github-sync` post-switch (`--no-block`), so the stale file exists within minutes; the dead-mirror check may show one red 5-min cycle on the very first post-deploy evaluation. Expected, self-healing.
+
+**Fixture-authoring lessons (for the next PATH-stub fixture):** (1) never name a capture variable `out` in a nix build script — it shadows the derivation output path and the final `echo PASS > "$out"` redirects into a garbage filename; (2) writeShellApplication PATH injection must RE-ADD the opening quote (`export PATH="<stub>:`), dropping it corrupts the whole wrapper; (3) stubs need the store bash shebang — `/usr/bin/env` does not exist in the sandbox; (4) `printf ''` in nix `''`-strings is an escape collision — use `: >`.

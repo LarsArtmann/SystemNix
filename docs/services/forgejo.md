@@ -75,3 +75,70 @@ script probes stale names (mirror exists in Forgejo but not in the GitHub listin
   only if it still exists on GitHub under the same name.
 - **Re-mirror at a new address** (after a rename you want to follow manually): delete the stale
   mirror; the mirror script creates the new-name one on the next run automatically.
+
+## Staged-primary capability (Phase 1, shipped INERT 2026-09-18)
+
+Plan: `docs/planning/2026-09-18_16-44_FORGEJO-PRIMARY-STAGED-FOUNDATION.md`. Everything in this
+section exists in code + fixture tests but is dormant until the G1/G2 owner gates deploy it.
+
+### Canonical repos + push mirrors (`services.forgejo.canonicalRepos`)
+
+- Default `[]` — the sync unit's third phase (`forgejo-push-mirror`) is absent entirely.
+- A listed repo (native, `mirror == false`) gets a GitHub **push mirror** attached idempotently:
+  `interval 8h` + `sync_on_commit` (the interval field is mandatory — the pre-2026-09-18 code
+  omitted it and every POST 400'd; the fixture check asserts the payload carries it).
+- The script REFUSES repos still marked pull-mirror (a push mirror on a pull mirror is incoherent
+  — the next pull clobbers forgejo-side commits). Flip first.
+- Auth: the PAT from `forgejo-sync.env` is stored by forgejo as the push remote credential.
+
+### Flipping a repo to native (`forgejo-flip@<name>`)
+
+```bash
+sudo systemctl start forgejo-flip-check@<name>.service   # dry-run: preconditions + plan
+journalctl -u forgejo-flip-check@<name>                  # read the plan
+sudo systemctl start forgejo-flip@<name>.service         # EXECUTE (OnFailure paged)
+```
+
+What it does: DELETE the disposable mirror → `POST /repos/migrate` with `mirror:false` + FULL
+import (issues, PRs, labels, milestones, releases, wiki, LFS) → verify (native flag, default
+branch, issue count) → attach the push mirror → verify listed. Refuses: non-mirror repos
+(primary data!), pending reconcile verdicts, starred-org repos, repos missing on GitHub.
+**Mid-flip failure recovery** (migrate fails after the delete): re-run the flip, or
+`forgejo-mirror-github` recreates the mirror — GitHub never lost anything.
+
+**Lossiness of the one-time import** (plan F35): reactions, some review-thread metadata,
+cross-repo references, and GitHub-only features (projects, insights) do not transfer. Issue/PR
+bodies, comments, labels, milestones, releases, and wiki DO. Reactions/PR-review edge cases are
+acceptable for the sovereignty goal; if a repo matters historically, snapshot its GitHub state
+before flipping.
+
+### Dead-mirror detection (`forgejo-mirror-health`, 5-min timer)
+
+Detects mirrors whose syncs FAIL persistently (the 12-day redirect-freeze class). Signal:
+forgejo's `notice` table — every FAILED pull-mirror sync writes a Type=1 row
+(`services/mirror/mirror_pull.go` → `CreateRepositoryNotice`), independent of the TouchMirror
+bug that makes `mirror_updated` advance on failures (verified against v15.0.8 source AND live
+data: all 385 mirrors incl. the frozen ones carry fresh `mirror_updated`). Known-stale names
+(renamed/transferred/upstream-deleted — they 404 forever by design) are subtracted via the
+reconcile script's `~/.local/state/forgejo-mirror-reconcile/known-stale.txt` (published atomically
+every completed run). Gatus **"Forgejo Dead Mirror Candidates"** fails closed (absent metric =
+scrape error = red). Expect ONE red cycle right after the first deploy carrying this batch (the
+stale file does not exist until the first reconcile run completes — deploy.sh's post-switch sync
+start publishes it within minutes).
+
+Note: the notices table accumulates one row per failed sync (the frozen mirrors generate
+~1.6k rows/day). Admin UI → Site Administration → Monitor → Notices has a purge; harmless until
+then, but worth a periodic look.
+
+### Census (`forgejo-census`)
+
+`sudo systemctl start forgejo-census && journalctl -u forgejo-census` — native-vs-mirror split
+per owner (the flip-rollout tracking numbers; census results land here at gate G2).
+
+### Storage (staged, G1-gated)
+
+`services.forgejo.dedicatedSubvolume` (default false) mounts the Samsung-TLC subvol
+`hot/forgejo` AT `/var/lib/forgejo` (Set-B: own 8h btrbk leg to `/mnt/pool/backups/forgejo-subvol`
++ weekly restore drill + freshness Gatus). Migration runbook:
+`scripts/migrate-forgejo-subvol.sh` header (prepare → build → finalize → flip option → deploy;
+abort path included). Until G1 runs, storage stays as below (root fs).

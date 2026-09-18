@@ -27,10 +27,10 @@ The only QLC dependency left in the boot chain is the root `@` subvolume (out of
 ## Execution checklist
 
 1. [x] Research (this document's Situation table)
-2. [ ] `platforms/nixos/system/boot-mirror.nix` (mount + sync unit)
-3. [ ] configuration.nix import, deploy.sh restart list, flake app
-4. [ ] `scripts/boot-mirror-activate.sh` + `pre-reboot-check.sh` §11
-5. [ ] `nix flake check --no-build` + evo-x2 eval
+2. [x] `platforms/nixos/system/boot-mirror.nix` (mount + sync unit)
+3. [x] configuration.nix import, deploy.sh restart list, flake app
+4. [x] `scripts/boot-mirror-activate.sh` + `pre-reboot-check.sh` §11
+5. [x] `nix flake check --no-build` + evo-x2 eval (both green)
 6. [ ] Deploy → verify mirror (journal, `bootctl is-installed`, `diff`, df)
 7. [ ] Activate (Samsung first in BootOrder) → `nix run .#pre-reboot-check` green
 8. [ ] Reboot → verify `BootCurrent` = Samsung entry, chain green

@@ -1,7 +1,7 @@
 # Forgejo-Primary Migration Plan (GitHub → Mirror-Only)
 
 **Date:** 2026-08-31
-**Status:** PROPOSAL — decisions taken via Q&A, not yet executed
+**Status:** SUPERSEDED 2026-09-18 by `docs/planning/2026-09-18_16-44_FORGEJO-PRIMARY-STAGED-FOUNDATION.md` — this plan's core premise ("push mirrors already exist") was falsified by the 2026-09-18 audit (all 18 push-mirror POSTs ever attempted 400'd on the missing `interval` field; the code was removed and is being rebuilt correctly as plan task M05). Decisions #1-#5 below still stand (carried forward as D1-D4 in the new plan); the mechanics sections are historical.
 **Instance:** `forgejo.home.lan` (evo-x2, `modules/nixos/services/forgejo.nix`)
 
 ---
