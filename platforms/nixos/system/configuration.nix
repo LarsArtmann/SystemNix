@@ -406,7 +406,6 @@ in
         };
       };
       oauth2-proxy-config.enable = true;
-      homepage.enable = true;
       taskchampion-config.enable = true;
       display-manager-config.enable = true;
       audio-config.enable = true;

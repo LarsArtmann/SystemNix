@@ -1,8 +1,9 @@
 # Regression test for the services.integration registry fan-out (pure eval,
 # test-sops-key-audit pattern — no VM needed: every fan-out surface is an
-# eval-time product; the homepage yaml is a real derivation we grep).
+# eval-time product; the papdashboard services.json is a real derivation we
+# grep).
 #
-# Proves, against the REAL consumer modules (caddy/gatus-config/homepage/
+# Proves, against the REAL consumer modules (caddy/gatus-config/papdashboard/
 # system-health/backup-coordination/signoz-coverage/otel-endpoint-audit/
 # pocket-id):
 #   1. A registry entry fans out to every surface with the right shapes.
@@ -50,7 +51,7 @@ let
       type = lib.types.str;
       default = "lo";
     };
-    # caddy.nix / gatus-config.nix / homepage.nix / system-health.nix read
+    # caddy.nix / gatus-config.nix / system-health.nix read
     # these sibling services' enable UNGUARDED (they are always co-imported on
     # evo-x2); stub them so the test import stays light. Generated from:
     #   grep -oE "config\.services\.[a-zA-Z0-9_-]+\.enable" <imported modules> | grep -v "or false"
@@ -71,10 +72,6 @@ let
       default = false;
     };
     services.discordsync.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-    };
-    services.papdashboard.enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
     };
@@ -126,7 +123,6 @@ let
     "monitor365"
     "monitor365-server"
     "overview"
-    "papdashboard"
     "pool-recovery"
     "pool-smart-metrics"
     "projects-management-automation"
@@ -179,7 +175,7 @@ let
     inputs.sops-nix.nixosModules.sops
     (mod "caddy.nix" "caddy")
     (mod "gatus-config.nix" "gatus-config")
-    (mod "homepage.nix" "homepage")
+    (mod "papdashboard.nix" "papdashboard")
     (mod "system-health.nix" "system-health")
     (mod "backup-coordination.nix" "backup-coordination")
     (mod "signoz-coverage.nix" "signoz-coverage")
@@ -191,7 +187,9 @@ let
       networking.domain = "home.lan";
       services.caddy.enable = true;
       services.gatus-config.enable = true;
-      services.homepage.enable = true;
+      # papdashboard stays DISABLED in the positive case: its module is loaded
+      # (so the extraTiles option + fan-out exist and are assertable) but its
+      # registry entry is mkIf-gated, keeping the Gatus count assertions pure.
       services.system-health.enable = true;
       services.backup-coordination.enable = true;
       services.signoz-coverage.enable = true;
@@ -268,7 +266,7 @@ let
       ];
       protectedCfg = c.services.caddy.virtualHosts."graph.home.lan".extraConfig;
       plainCfg = c.services.caddy.virtualHosts."timers.home.lan".extraConfig;
-      tile = lib.findFirst (t: t.name == "Demo") null c.services.homepage.extraTiles;
+      tile = lib.findFirst (t: t.name == "Demo") null c.services.papdashboard.extraTiles;
       demoCheck = n: lib.findFirst (e: e.name == n) null c.services.gatus-config.extraEndpoints;
       healthCheck = demoCheck "Demo Health";
       tcpCheck = demoCheck "Demo TCP";
@@ -293,9 +291,9 @@ let
         e: e.name == "Demo Health"
       ) c.services.gatus.settings.endpoints;
       gatus-conditions-default = healthCheck.conditions == [ "[STATUS] == 200" ];
-      homepage-tile-present = tile != null;
-      homepage-tile-href-derived = tile.href == "https://graph.home.lan";
-      homepage-tile-group = tile.group == "Media";
+      dashboard-tile-present = tile != null;
+      dashboard-tile-href-derived = tile.href == "https://graph.home.lan";
+      dashboard-tile-group = tile.group == "Media";
       backup-registered =
         (c.services.backup-coordination.backups ? demo)
         && c.services.backup-coordination.backups.demo.directory == "/mnt/pool/backups/demo"
@@ -359,9 +357,12 @@ else if !negativeFires then
 else
   pkgs.runCommand "integration-registry-test"
     {
-      # The rendered dashboard yaml is a real derivation: prove the folded
-      # tile lands in the file homepage will actually serve.
-      yaml =
+      # The rendered dashboard config is a real derivation: prove the folded
+      # tile lands in the services.json PapDashboard will actually serve.
+      # Enabling papdashboard forces its package and sops env template —
+      # stub both (package = cheap stub so the flake's papdashboard input
+      # stays untouched; the content of the env file is irrelevant here).
+      json =
         (evalConfig [
           {
             systemd.services.demo-server.description = "demo upstream unit";
@@ -374,11 +375,15 @@ else
                 description = "Demo service";
               };
             };
+            services.papdashboard.enable = true;
+            services.papdashboard.package = pkgs.hello;
+            sops.templates."papdashboard-env".content = "";
           }
-        ]).environment.etc."homepage/services.yaml".source;
+        ]).environment.etc."papdashboard/services.json".source;
     }
     ''
-      grep -q "Demo" "$yaml" || { echo "tile missing from rendered services.yaml"; exit 1; }
-      grep -q "Media" "$yaml" || { echo "Media group missing from rendered services.yaml"; exit 1; }
+      grep -q '"name": "Demo"' "$json" || { echo "tile missing from rendered services.json"; exit 1; }
+      grep -q '"name": "Media"' "$json" || { echo "Media group missing from rendered services.json"; exit 1; }
+      grep -q '"title"' "$json" || { echo "title missing from rendered services.json"; exit 1; }
       touch "$out"
     ''

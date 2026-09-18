@@ -215,12 +215,14 @@ _: {
                 }
               '';
             };
-            # Forgejo / dash / crm / tasks / manifest / status vHosts:
+            # Forgejo / crm / tasks / manifest / status vHosts:
             # forgejo+crm+manifest+status moved to the registry
             # (services.integration.<name>, plain/protected per entry). dash
-            # and tasks stay hand-written (homepage + taskchampion have no
-            # registry entries — decorative/relay surfaces).
-            "dash.${domain}" = protectedVHost "dash" config.services.homepage.port;
+            # joined them (services.integration.papdashboard, subdomain =
+            # "dash" — the dashboard itself). tasks stays hand-written
+            # (taskchampion has no registry entry).
+            # The old alerts.<domain> PapDashboard alias is covered by the
+            # catch-all below (unknown *.home.lan → redirect to dash).
             "tasks.${domain}" = protectedVHost "tasks" config.services.taskchampion-sync-server.port;
             # OpenSEO: Layer 2 (oauth2-proxy forward-auth). The GSC OAuth callback
             # (/api/gsc/oauth/callback) is exempt from forward-auth — OAuth callback

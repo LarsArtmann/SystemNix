@@ -15,7 +15,6 @@
     # (modules/nixos/services/mail-relay.nix) — loopback only, never exposed.
     mail-relay = 25;
 
-    homepage = 8082;
 
     immich = 2283;
     redis = 6379;

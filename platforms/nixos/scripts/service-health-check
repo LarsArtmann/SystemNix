@@ -36,7 +36,7 @@ check_service forgejo
 check_service caddy
 check_service dnsblockd
 check_service postgresql
-check_service homepage-dashboard
+check_service papdashboard
 check_service immich-server
 check_service immich-machine-learning
 check_service signoz

@@ -308,17 +308,9 @@ _: {
                   ];
                   alerts = discordAlert "Processes stuck in uninterruptible D-state for >1h — unkillable even by SIGKILL (driver/firmware wedge, amdxdna class 2026-09-04). Every restart of the owning unit strands another corpse; REBOOT is the only fix. Find them: ps -eo pid,stat,wchan:30,etime,comm, then filter the STAT column for lines starting with D";
                 })
-                (mkHttpCheck {
-                  name = "Homepage";
-                  group = "Infrastructure";
-                  url = "http://localhost:${toString config.services.homepage.port}";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 500"
-                    "[BODY] == pat(*<html*)"
-                  ];
-                  alerts = discordAlert "Homepage dashboard down";
-                })
+                # The old "Homepage" check died with homepage-dashboard
+                # (2026-09 merge). The dashboard is PapDashboard now; its
+                # /api/health check lives in the papdashboard registry entry.
                 (mkHttpCheck {
                   name = "Immich";
                   group = "Media";

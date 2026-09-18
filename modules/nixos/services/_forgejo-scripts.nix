@@ -248,7 +248,8 @@ in
       while read -r lower; do
         # recover the original-case forgejo name for API calls
         name=$(grep -ixF "$lower" "$FJMIRRORS" | head -1)
-        probe=$(gh api "repos/$GITHUB_USER/$name" --jq .full_name 2>/dev/null)
+        # errexit-safe: a 404/network failure must not kill the loop
+        probe=$(gh api "repos/$GITHUB_USER/$name" --jq .full_name 2>/dev/null || true)
         if [[ -z "$probe" ]]; then
           # 404 = upstream deleted (frozen archive), network blip = retry next run
           if gh api "repos/$GITHUB_USER/$name" --jq .full_name &>/dev/null; then
