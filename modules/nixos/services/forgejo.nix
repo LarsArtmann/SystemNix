@@ -286,6 +286,9 @@ _: {
             wants = [ "network-online.target" ];
             requires = [ "forgejo.service" ];
             inherit onFailure;
+            # Timer-driven oneshot: the timer IS the retry mechanism.
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
             restartTriggers = [
               (lib.getExe mirrorGithubScript)
               (lib.getExe reconcileMirrorsScript)
@@ -317,10 +320,17 @@ _: {
                 # the next 6h timer run.
                 TimeoutStartSec = "2h";
               }
+              (serviceOneshotDefaults { })
               (harden {
                 ProtectHome = false;
                 ProtectSystem = false;
+                # The unit itself only runs curl/jq/gh — the git clones of a
+                # migration happen server-side inside forgejo.service's cgroup.
+                MemoryMax = "1G";
               })
+              # Batch backup job: must never compete with the desktop or
+              # interactive SSH for I/O on the QLC NAND.
+              ioTier.background
             ];
           };
 
