@@ -20,6 +20,21 @@ let
   hermesCfg = config.services.hermes or { };
 in
 {
+  # Listing endpoint: GET /user/repos?visibility=all&affiliation=owner.
+  # The previous endpoint (GET /users/$USER/repos?type=all) only ever returned
+  # PUBLIC repos — private repos were never auto-mirrored (only the two in the
+  # declarative forgejo-repos list were). affiliation=owner covers owned
+  # public+private+forks; org/collaborator repos stay out of scope (they were
+  # never mirrored either — every live mirror is LarsArtmann-owned, verified
+  # 2026-09-18).
+  #
+  # Push mirrors REMOVED (dead code, never worked): the POST omitted the
+  # mandatory `interval` field, so forgejo's time.ParseDuration("") 400'd on
+  # ALL 18 attempts ever journaled — no push mirror was ever created. A push
+  # mirror on a PULL mirror is also incoherent here (the next pull clobbers
+  # any forgejo-side commit), so the step is gone rather than fixed. If
+  # forgejo→GitHub push is ever wanted, re-add the POST with interval: "8h"
+  # AND first settle the pull-vs-push clobber design.
   mirrorGithubScript = pkgs.writeShellApplication {
     name = "forgejo-mirror-github";
     runtimeInputs = [
@@ -54,12 +69,12 @@ in
         exit 1
       fi
 
-      echo "Fetching repositories for GitHub user: $GITHUB_USER"
+      echo "Fetching repositories for GitHub user: $GITHUB_USER (owned, public+private)"
 
       page=1
       while true; do
         response=$(curl -s --compressed -H "Authorization: token $GITHUB_TOKEN" \
-          "https://api.github.com/users/$GITHUB_USER/repos?per_page=100&page=$page&type=all")
+          "https://api.github.com/user/repos?visibility=all&affiliation=owner&per_page=100&page=$page")
         echo "$response" | jq -r '.[] | "\(.name)|\(.clone_url)|\(.private)|\(.description // "")"' >> "$REPOS_FILE"
         [[ $(echo "$response" | jq 'length') -lt 100 ]] && break
         page=$((page + 1))
@@ -119,21 +134,6 @@ in
 
         if [[ "$code" == "200" || "$code" == "201" ]]; then
           echo "  ✓ Created mirror: $name"
-
-          echo "  → Setting up push mirror to GitHub: $name"
-          pmirror=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
-            -H "Authorization: token $FORGEJO_TOKEN" \
-            -H "Content-Type: application/json" \
-            "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name/push_mirrors" \
-            -d "$(jq -n \
-              --arg remote "https://$GITHUB_USER:''${GITHUB_TOKEN}@github.com/$GITHUB_USER/$name.git" \
-              '{
-                remote_address: $remote,
-                sync_on_commit: true
-              }')")
-          if [[ "$pmirror" != "200" && "$pmirror" != "201" ]]; then
-            echo "  ⚠ Push mirror setup HTTP $pmirror (may already exist)"
-          fi
         else
           echo "  ✗ Failed (HTTP $code): $name"
           FAILED=$((FAILED + 1))
