@@ -276,19 +276,29 @@ in
       stale_count=$(wc -l < "$STALE")
 
       # 4. Classify each stale mirror by probing its (old) GitHub path.
+      # gh api prints HTTP error BODIES to stdout even on failure (live-proven
+      # 2026-09-18: every 404 leaked {"message":"Not Found",...} into $probe and
+      # upstream-deleted repos misclassified as "transferred" with a garbage
+      # owner). Trust the EXIT CODE plus an owner/name shape check, never the
+      # captured stdout alone.
       : > "$PENDING_NEW"
       while read -r lower; do
         # recover the original-case forgejo name for API calls
         name=$(grep -ixF "$lower" "$FJMIRRORS" | head -1)
         # errexit-safe: a 404/network failure must not kill the loop
-        probe=$(gh api "repos/$GITHUB_USER/$name" --jq .full_name 2>/dev/null || true)
-        if [[ -z "$probe" ]]; then
-          # 404 = upstream deleted (frozen archive), network blip = retry next run
-          if gh api "repos/$GITHUB_USER/$name" --jq .full_name &>/dev/null; then
-            echo "  unresolved probe (will retry): $name"
-          else
-            echo "$name" >> "$DELETED"
-          fi
+        rc=0
+        probe=$(gh api "repos/$GITHUB_USER/$name" --jq .full_name 2>/dev/null) || rc=$?
+        if [[ "$rc" -eq 0 && "$probe" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]; then
+          :
+        elif [[ "$rc" -eq 0 ]]; then
+          # exit 0 but no owner/name shape (jq oddity) — never classify on garbage
+          echo "  unresolved probe (will retry): $name (raw: ''${probe:0:60})"
+          continue
+        else
+          # gh HTTP/network error — 404 is the overwhelmingly common case here
+          # (the name is already absent from the listing). A rare network blip
+          # misclassifies as archived for ONE report-only run; next run heals.
+          echo "$name" >> "$DELETED"
           continue
         fi
         up_owner="''${probe%%/*}"
