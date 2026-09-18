@@ -47,12 +47,14 @@ let
     in
     f != [ ] && lib.hasInfix infix (builtins.head f).message;
 
-  homepagePort = 8082; # from lib/ports.nix (registered)
+  # 8088 = papdashboard in lib/ports.nix (registered). The old fixture port
+  # 8082 died with homepage-dashboard; the audit only guards REGISTERED ports.
+  fixturePort = 8088;
 
   cases = [
     {
       name = "uncovered-port-not-caught";
-      pass = flaggedWith "8082 (referenced by: homepage-svc)" (evalAssertions [
+      pass = flaggedWith "8088 (referenced by: homepage-svc)" (evalAssertions [
         {
           services.gatus.enable = true;
           services.gatus.settings.endpoints = [
@@ -64,7 +66,7 @@ let
           ];
           systemd.services.homepage-svc = {
             serviceConfig = {
-              ExecStart = "/bin/homepage --listen 127.0.0.1:${toString homepagePort}";
+              ExecStart = "/bin/homepage --listen 127.0.0.1:${toString fixturePort}";
             };
           };
         }
@@ -79,13 +81,13 @@ let
             services.gatus.settings.endpoints = [
               {
                 name = "Homepage";
-                url = "http://localhost:${toString homepagePort}";
+                url = "http://localhost:${toString fixturePort}";
                 conditions = [ "[STATUS] == 200" ];
               }
             ];
             systemd.services.homepage-svc = {
               serviceConfig = {
-                ExecStart = "/bin/homepage --listen 127.0.0.1:${toString homepagePort}";
+                ExecStart = "/bin/homepage --listen 127.0.0.1:${toString fixturePort}";
               };
             };
           }
@@ -97,10 +99,10 @@ let
         failing (evalAssertions [
           {
             services.gatus.enable = true;
-            services.gatus-coverage-audit.allowPorts = [ homepagePort ];
+            services.gatus-coverage-audit.allowPorts = [ fixturePort ];
             systemd.services.homepage-svc = {
               serviceConfig = {
-                ExecStart = "/bin/homepage --listen 127.0.0.1:${toString homepagePort}";
+                ExecStart = "/bin/homepage --listen 127.0.0.1:${toString fixturePort}";
               };
             };
           }
@@ -145,7 +147,7 @@ let
             services.gatus.enable = false;
             systemd.services.homepage-svc = {
               serviceConfig = {
-                ExecStart = "/bin/homepage --listen 127.0.0.1:${toString homepagePort}";
+                ExecStart = "/bin/homepage --listen 127.0.0.1:${toString fixturePort}";
               };
             };
           }

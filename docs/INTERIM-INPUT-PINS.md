@@ -29,19 +29,18 @@ live in the main repos' object stores).
 
 ## B. `github:` pins to last-good revisions (upstream HEAD still broken)
 
-Stale `vendorHash` from source-only churn at HEAD; pinned to the last revision
-that built. Revert when upstream refreshes its own hash.
-
-| Input | Pinned rev | Note |
-|-------|-----------|------|
-| `todo-list-ai` | `f9f3b33586d647df09c7e35fe8da9ad02cf579d2` | later auto-commit left the frozen bun lockfile stale |
-| `library-policy` | `1bf02c1173caf6c9a77bc873fb993123d89657aa` | stale vendorHash at HEAD |
-| `go-auto-upgrade` | `eb97a8b2bdce894b90a6ba5749c3062beccb0b9c` | stale vendorHash at HEAD |
-| `projects-management-automation` | `9bbc7dfb9ecc02358b1502fbc34a8ffbffed05be` | stale vendorHash at HEAD |
-| `overview` | `73738794dcaadc242519e98042c942ab3df96df2` | stale vendorHash at HEAD |
-| `md-go-validator` | `5b72f894dff1ec8b3e8668e47e5b518f175b4206` | stale vendorHash at HEAD |
-| `signoz-src` | `e0da06f76d6d6a84c4f02fe1f4775d8acae7032f` | third-party; vendorHash + frontend pnpm deps drifted |
-| `signoz-collector-src` | `b514eb4a60aab6b2233288052446d33c60ceadec` | third-party; stale vendorHash |
+**RESOLVED 2026-09-16..2026-09-18** — every row was re-verified against
+upstream HEAD (probe + build) and flipped to `?ref=master`/`?ref=main`; the
+locks now track the branches via `nix flake lock --update-input`. Historical
+revs kept for reference: todo-list-ai `f9f3b335`, library-policy `1bf02c11`,
+go-auto-upgrade `eb97a8b2`, projects-management-automation `9bbc7dfb`,
+overview `73738794`, md-go-validator `5b72f894`, signoz-src `e0da06f7`,
+signoz-collector-src `b514eb4a`. The signoz pair carries a standing
+migration-review obligation on every future bump (see `flake.nix`): new
+`pkg/sqlmigration` files run against the metadata sqlite at signoz start and
+the collector's ClickHouse schema-migrator runs pre-start — review the delta
+before deploying (2026-09-18 bump verdict: one transactional quick-filter
+normalization + zero ClickHouse schema changes).
 
 ## C. Re-locked to newer, **fixed** origins (no pin needed)
 
