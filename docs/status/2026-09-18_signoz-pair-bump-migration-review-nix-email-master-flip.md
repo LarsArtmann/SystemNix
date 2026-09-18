@@ -99,6 +99,31 @@ Pins are `?ref=main` accordingly.
   → green.
 - Full evo-x2 toplevel build → green (see session close).
 
+## Interlude: cv lock was already broken (not ours — fixed forward)
+
+The first full toplevel build failed on the `cv` input — `cv-1002288-go-modules`:
+"go mod tidy inside the vendor FOD changed committed go.sum" (go-codec
+v0.2.0 → v0.3.0; the daemon dep-wave class — a transitive dep moved to
+go-codec v0.3.0 while the pinned rev's committed go.mod/go.sum still said
+v0.2.0). Provenance verified before touching anything: our uncommitted
+`flake.lock` diff contains ZERO cv-node changes — `1002288` was re-locked by
+an earlier (parallel-session/daemon) commit and was already broken.
+
+Fix forward, following the documented CV protocol (CI is dead there, so no
+upstream signal — probe first):
+
+1. CV local HEAD `93cf5bc0f` ("restore Go 1.26.7 toolchain floor broken by
+   buildflow repair sweep") carries the TIDIED go.mod+go.sum (both at
+   go-codec v0.3.0) and is PUSHED (verified `gh api .../commits/93cf5bc0f`,
+   2026-09-18T05:49Z).
+2. Probe green: `nix build /home/lars/projects/CV#default.goModules` builds
+   at that rev (prepared source + FOD).
+3. `nix flake lock --update-input cv` → lock `1002288` → `93cf5bc`
+   (upstream also added a `cv/art-dupl` input in that range — upstream's
+   own pin, un-followed, fine).
+4. Full toplevel rebuild → **green (RC=0)**; final `nix flake check
+   --no-build` → all checks passed.
+
 ## Deploy notes
 
 - `nix run .#deploy` builds + restarts the signoz units (restartTriggers on
