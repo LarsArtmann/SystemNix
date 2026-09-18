@@ -11,11 +11,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1789762595,
-        "narHash": "sha256-ahvY6ZqRqlABvzduCJCPDC4YZRPWTfJuB/T5En68UC0=",
+        "lastModified": 1789769717,
+        "narHash": "sha256-OqKc00JDFMq12Mqsd8MiGgESYfTT0PZlt36s7ohmv6M=",
         "ref": "refs/heads/fork",
-        "rev": "484152faac7e9ca68c9192eafdf90006e58800dc",
-        "revCount": 2159,
+        "rev": "c6b9d3ea12f26bc305f4ef5e93fd3e50ee627dc3",
+        "revCount": 2176,
         "type": "git",
         "url": "https://github.com/LarsArtmann/art-dupl"
       },
