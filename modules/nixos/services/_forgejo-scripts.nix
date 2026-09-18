@@ -75,6 +75,15 @@ in
       while true; do
         response=$(curl -s --compressed -H "Authorization: token $GITHUB_TOKEN" \
           "https://api.github.com/user/repos?visibility=all&affiliation=owner&per_page=100&page=$page")
+        # Fail loud on non-array responses (rate limit, auth failure, HTML error
+        # pages): without this guard .[] yields nothing, `length` sees <100, the
+        # loop breaks, and the run reports success with ZERO repos processed —
+        # a phantom green that silently stops all mirror creation.
+        echo "$response" | jq -e 'type == "array"' > /dev/null || {
+          echo "Error: GitHub repo listing (page $page) did not return an array:"
+          echo "$response" | jq -r '.message // tostring' 2>/dev/null | head -3
+          exit 1
+        }
         echo "$response" | jq -r '.[] | "\(.name)|\(.clone_url)|\(.private)|\(.description // "")"' >> "$REPOS_FILE"
         [[ $(echo "$response" | jq 'length') -lt 100 ]] && break
         page=$((page + 1))
