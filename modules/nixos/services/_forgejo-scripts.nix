@@ -199,6 +199,28 @@ in
       GITHUB_USER="''${GITHUB_USER:-$(gh api user -q .login 2>/dev/null || echo "")}"
       STATE_DIR="''${XDG_STATE_HOME:-$HOME/.local/state}/forgejo-mirror-reconcile"
       PENDING="$STATE_DIR/pending-deletes.txt"
+      # node_exporter textfile dir (sticky 1777): this unit is the ONLY writer of
+      # forgejo_mirror_reconcile.prom, so mktemp+mv over an own-owned target is
+      # legal without CAP_FOWNER. Best-effort: a foreign-owned leftover must
+      # WARN (metrics go stale -> gatus fires), never fail the reconcile.
+      TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
+      publish_prom() {
+        if [[ ! -d "$TEXTFILE_DIR" ]]; then
+          echo "  (metrics: textfile dir absent — skipping prom publish)"
+          return 0
+        fi
+        local tmp
+        tmp=$(mktemp "$TEXTFILE_DIR/forgejo_mirror_reconcile.XXXXXX") || {
+          echo "  warn: mktemp in textfile dir failed"
+          return 0
+        }
+        cat > "$tmp"
+        chmod 644 "$tmp"
+        mv "$tmp" "$TEXTFILE_DIR/forgejo_mirror_reconcile.prom" 2>/dev/null || {
+          echo "  warn: cannot publish forgejo_mirror_reconcile.prom (foreign-owned leftover?)"
+          rm -f "$tmp"
+        }
+      }
 
       if [[ -z "$FORGEJO_TOKEN" || -z "$GITHUB_TOKEN" || -z "$GITHUB_USER" ]]; then
         echo "Error: FORGEJO_TOKEN / GITHUB_TOKEN / GITHUB_USER must all be set"
@@ -315,6 +337,23 @@ in
       cat "$DELETED" | sed 's/^/  archived: /'
       echo "transferred away (kept, owner decision): $(wc -l < "$TRANSFERRED")"
       cat "$TRANSFERRED" | sed 's/^/  transferred: /'
+
+      # Reconcile-outcome metrics (report-only classes must not be journal-only —
+      # the phantom-green class this repo keeps fighting). Published ONLY on a
+      # completed run: a mid-run death leaves the previous file in place, and
+      # the unit-state alert (forgejo-github-sync in system-health) owns that
+      # failure mode. Leading comment guarantees every metric line has a
+      # preceding newline for gatus's anchored pat() forms.
+      {
+        echo "# forgejo mirror reconcile metrics"
+        echo "forgejo_mirror_reconcile_scrape_errors 0"
+        echo "forgejo_mirror_total $total"
+        echo "forgejo_mirror_stale_names $stale_count"
+        echo "forgejo_mirror_upstream_deleted_archived $(wc -l < "$DELETED")"
+        echo "forgejo_mirror_transferred $(wc -l < "$TRANSFERRED")"
+        echo "forgejo_mirror_pending_deletes $(wc -l < "$PENDING")"
+        echo "forgejo_mirror_reconcile_last_run_timestamp $(date +%s)"
+      } | publish_prom
     '';
   };
 

@@ -603,6 +603,22 @@ _: {
                 ];
                 alert = "Forgejo pull-mirror syncing broken. stalled=1: freshest mirror sync >10h old — dead queue (restart forgejo.service; the unique queue wedges after a hard freeze, cron pushes then dedup-skip silently). erroring=1: syncs actively failing — journalctl -u forgejo --grep SyncMirrors (credential-helper ENOENT / DNS allowlist rejects). scrape_errors=1: forgejo sqlite unreadable.";
               }
+              {
+                # Reconcile OUTCOMES (renames/transfers/deletions) — the classes
+                # that were journal-only before 2026-09-18. Absent metrics = the
+                # sync unit has never completed a run since the reconcile script
+                # shipped; scrape_errors=0 is only written by a completed run.
+                name = "Forgejo Mirror Reconcile";
+                group = "Development";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\nforgejo_mirror_reconcile_scrape_errors 0*)"
+                  "[BODY] != pat(*\nforgejo_mirror_total 0*)"
+                ];
+                alert = "Forgejo mirror reconcile broken or never completed: journalctl -u forgejo-github-sync (listing failure, publish warn, or the unit never finished a run since the 2026-09-18 reconcile ship).";
+              }
             ];
             backup = {
               # Daily forgejo dump (repos+DB+config, 03:30 + randomized delay).
@@ -618,6 +634,14 @@ _: {
               callbackURLs = [ "https://forgejo.${config.networking.domain}/user/oauth2/PocketID/callback" ];
             };
           };
+        };
+
+        # The sync unit itself (mirror-github + reconcile, timer-driven):
+        # unit failure visibility via system-health state metrics — the
+        # reconcile-outcome gatus check only sees COMPLETED runs, so a failed
+        # phase (listing guard, reconcile error) must page through unit state.
+        services.system-health = lib.optionalAttrs (options ? services.system-health) {
+          extraMonitoredServices = lib.mkAfter [ "forgejo-github-sync" ];
         };
       };
     };
