@@ -12,6 +12,14 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # REV-PINNED nixpkgs holding the llama.cpp 0.3.0 build (the last build
+    # proven serving on gfx1150 before the 0.4.0 mid-model-load CPU-spin
+    # regression, live 2026-09-14). Consumed ONLY by services/llama-rag.nix.
+    # Path-form rev pin is deliberate (a `?rev=` query is eval-guard-blocked
+    # and re-pins backward on lock churn): do NOT `nix flake lock
+    # --update-input nixpkgs-llama-rag` — drop this input entirely once the
+    # 0.4.0+ spin regression is fixed upstream and re-verified live.
+    nixpkgs-llama-rag.url = "github:NixOS/nixpkgs/0968519e14f7aa7d3e9b389682bd74d2b51c8ce8";
     nix-darwin = {
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
