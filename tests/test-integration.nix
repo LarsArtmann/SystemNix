@@ -22,12 +22,20 @@ let
   lib = inputs.nixpkgs.lib;
 
   # Wrapper modules are flake-parts modules — `_: { flake.nixosModules.X = …; }`
-  # functions — while a few are plain attrsets; handle both shapes.
+  # functions — while a few are plain attrsets; handle both shapes. Function
+  # modules that take `inputs` (e.g. papdashboard.nix) get the flake inputs;
+  # their input-dependent values stay lazy unless the test forces them.
   mod =
     file: name:
     let
       imported = import ../modules/nixos/services/${file};
-      wrapper = if builtins.isFunction imported then imported { } else imported;
+      wrapper =
+        if !builtins.isFunction imported then
+          imported
+        else if (builtins.functionArgs imported) ? inputs then
+          imported { inherit inputs; }
+        else
+          imported { };
     in
     wrapper.flake.nixosModules.${name};
 
