@@ -57,6 +57,7 @@ _: {
             ;
         })
         mirrorGithubScript
+        reconcileMirrorsScript
         mirrorStarredScript
         setupScript
         ensurePasswordFile
@@ -285,7 +286,10 @@ _: {
             wants = [ "network-online.target" ];
             requires = [ "forgejo.service" ];
             inherit onFailure;
-            restartTriggers = [ (lib.getExe mirrorGithubScript) ];
+            restartTriggers = [
+              (lib.getExe mirrorGithubScript)
+              (lib.getExe reconcileMirrorsScript)
+            ];
             path = [
               pkgs.curl
               pkgs.jq
@@ -299,7 +303,19 @@ _: {
                   config.sops.templates."forgejo-sync.env".path
                   "-${stateDir}/.admin-token.env"
                 ];
-                ExecStart = lib.getExe mirrorGithubScript;
+                # Sequential phases: (1) create missing mirrors (incl. private
+                # repos since the listing switch to /user/repos), (2) reconcile
+                # renames/transfers/deletions of existing mirrors.
+                ExecStart = [
+                  (lib.getExe mirrorGithubScript)
+                  (lib.getExe reconcileMirrorsScript)
+                ];
+                # First run after the private-repo listing switch migrates
+                # ~200 repos (2-8s each, synchronous migrate API) — the 3min
+                # global default would kill it mid-batch. The migrate is
+                # idempotent (existence checks), so a timeout converges on
+                # the next 6h timer run.
+                TimeoutStartSec = "2h";
               }
               (harden {
                 ProtectHome = false;
@@ -537,6 +553,7 @@ _: {
 
         environment.systemPackages = [
           mirrorGithubScript
+          reconcileMirrorsScript
           mirrorStarredScript
           setupScript
         ];

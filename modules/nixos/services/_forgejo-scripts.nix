@@ -149,6 +149,165 @@ in
     '';
   };
 
+  # Rename/transfer/deletion reconciliation for pull mirrors.
+  #
+  # WHY THIS EXISTS: Forgejo v15 hardens pull mirrors against SSRF by setting
+  # http.followRedirects=false on every mirror (ModernizePullMirrorConfig).
+  # GitHub answers renamed/transferred repos with a 301 redirect — so the
+  # moment a repo moves, its Forgejo mirror STOPS syncing (git refuses the
+  # redirect) and the mirror freezes at the pre-move state. Nothing else
+  # repairs this: the mirror API has no "update pull-mirror address"
+  # endpoint (verified against the deployed swagger.v1.json), and the mirror
+  # scripts are name-keyed create-if-missing (a rename also creates a
+  # DUPLICATE mirror under the new name while the stale one stays broken).
+  #
+  # Classes handled (safe-by-default):
+  #   renamed within account  → phase 1 creates the new-name mirror; this
+  #                             script deletes the stale-name mirror ONLY
+  #                             after the canonical mirror exists AND the
+  #                             same verdict was seen on a previous run
+  #                             (state file, two-run confirmation).
+  #   transferred away        → REPORT ONLY (frozen archive kept; owner
+  #                             decides: delete or re-mirror into an org).
+  #   upstream deleted        → REPORT ONLY (the Forgejo copy is the only
+  #                             remaining copy — 32 such archives exist).
+  #   transient probe failure → retry next run, never classify.
+  reconcileMirrorsScript = pkgs.writeShellApplication {
+    name = "forgejo-reconcile-mirrors";
+    runtimeInputs = [
+      pkgs.curl
+      pkgs.jq
+      pkgs.gh
+      pkgs.coreutils
+      pkgs.gnugrep
+      pkgs.gawk
+    ];
+    text = ''
+      FORGEJO_URL="${forgejoUrl}"
+      FORGEJO_OWNER="${primaryUser}"
+      FORGEJO_TOKEN="''${FORGEJO_TOKEN:-}"
+      GITHUB_TOKEN="''${GITHUB_TOKEN:-$(gh auth token 2>/dev/null || echo "")}"
+      GITHUB_USER="''${GITHUB_USER:-$(gh api user -q .login 2>/dev/null || echo "")}"
+      STATE_DIR="''${XDG_STATE_HOME:-$HOME/.local/state}/forgejo-mirror-reconcile"
+      PENDING="$STATE_DIR/pending-deletes.txt"
+
+      if [[ -z "$FORGEJO_TOKEN" || -z "$GITHUB_TOKEN" || -z "$GITHUB_USER" ]]; then
+        echo "Error: FORGEJO_TOKEN / GITHUB_TOKEN / GITHUB_USER must all be set"
+        exit 1
+      fi
+
+      mkdir -p "$STATE_DIR"
+      touch "$PENDING"
+      CANONICAL=$(mktemp)
+      FJMIRRORS=$(mktemp)
+      STALE=$(mktemp)
+      DELETED=$(mktemp)
+      TRANSFERRED=$(mktemp)
+      PENDING_NEW=$(mktemp)
+      PENDING_TMP=$(mktemp)
+      trap 'rm -f "$CANONICAL" "$FJMIRRORS" "$STALE" "$DELETED" "$TRANSFERRED" "$PENDING_NEW" "$PENDING_TMP"' EXIT
+
+      echo "=== Forgejo mirror reconciliation (owner: $GITHUB_USER) ==="
+
+      # 1. Canonical GitHub repo names (same listing source as the mirror script).
+      page=1
+      while true; do
+        response=$(curl -s --compressed -H "Authorization: token $GITHUB_TOKEN" \
+          "https://api.github.com/user/repos?visibility=all&affiliation=owner&per_page=100&page=$page")
+        n=$(echo "$response" | jq -r 'if type == "array" then length else -1 end')
+        [[ "$n" == "-1" ]] && { echo "Error: GitHub listing failed: $(echo "$response" | jq -r '.message // "unknown"')"; exit 1; }
+        echo "$response" | jq -r '.[].name' | tr '[:upper:]' '[:lower:]' >> "$CANONICAL"
+        [[ "$n" -lt 100 ]] && break
+        page=$((page + 1))
+      done
+      sort -u -o "$CANONICAL" "$CANONICAL"
+
+      # 2. Forgejo pull mirrors owned by the forgejo account.
+      page=1
+      while true; do
+        response=$(curl -s -H "Authorization: token $FORGEJO_TOKEN" \
+          "$FORGEJO_URL/api/v1/user/repos?limit=50&page=$page")
+        n=$(echo "$response" | jq -r 'if type == "array" then length else -1 end')
+        [[ "$n" == "-1" ]] && { echo "Error: Forgejo listing failed: $(echo "$response" | jq -r '.message // "unknown"')"; exit 1; }
+        echo "$response" | jq -r --arg owner "$FORGEJO_OWNER" \
+          '.[] | select((.owner.login | ascii_downcase) == ($owner | ascii_downcase)) | select(.mirror == true) | .name' \
+          >> "$FJMIRRORS"
+        [[ "$n" -lt 50 ]] && break
+        page=$((page + 1))
+      done
+
+      total=$(wc -l < "$FJMIRRORS")
+
+      # 3. Stale = forgejo mirrors whose name is no longer a canonical GitHub name.
+      sort -u -o "$FJMIRRORS" "$FJMIRRORS"
+      comm -23 <(tr '[:upper:]' '[:lower:]' < "$FJMIRRORS" | sort -u) "$CANONICAL" > "$STALE"
+      stale_count=$(wc -l < "$STALE")
+
+      # 4. Classify each stale mirror by probing its (old) GitHub path.
+      : > "$PENDING_NEW"
+      while read -r lower; do
+        # recover the original-case forgejo name for API calls
+        name=$(grep -ixF "$lower" "$FJMIRRORS" | head -1)
+        probe=$(gh api "repos/$GITHUB_USER/$name" --jq .full_name 2>/dev/null)
+        if [[ -z "$probe" ]]; then
+          # 404 = upstream deleted (frozen archive), network blip = retry next run
+          if gh api "repos/$GITHUB_USER/$name" --jq .full_name &>/dev/null; then
+            echo "  unresolved probe (will retry): $name"
+          else
+            echo "$name" >> "$DELETED"
+          fi
+          continue
+        fi
+        up_owner="''${probe%%/*}"
+        up_name="''${probe##*/}"
+        if [[ "${up_owner,,}" == "${GITHUB_USER,,}" ]]; then
+          if grep -qxF "${up_name,,}" "$CANONICAL" && grep -ixF "$up_name" "$FJMIRRORS" &>/dev/null; then
+            # canonical-named mirror already exists → stale copy is redundant.
+            # Two-run confirmation: delete only when the verdict repeats.
+            if grep -qxF "$name" "$PENDING"; then
+              is_mirror=$(curl -s -H "Authorization: token $FORGEJO_TOKEN" \
+                "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name" | jq -r '.mirror // false')
+              if [[ "$is_mirror" == "true" ]]; then
+                code=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE \
+                  -H "Authorization: token $FORGEJO_TOKEN" \
+                  "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name")
+                if [[ "$code" == "204" || "$code" == "200" ]]; then
+                  echo "  healed rename: deleted stale '$name' (canonical '$up_name' mirrored)"
+                else
+                  echo "  FAILED to delete stale '$name' (HTTP $code) — kept"
+                  echo "$name" >> "$PENDING_NEW"
+                fi
+              else
+                echo "  refusing to delete '$name': no longer a pull mirror"
+              fi
+              grep -vxF "$name" "$PENDING" > "$PENDING_TMP" || true
+              mv "$PENDING_TMP" "$PENDING"
+            else
+              echo "  rename confirmed (1st pass, will delete next run): $name → $up_name"
+              echo "$name" >> "$PENDING_NEW"
+            fi
+          else
+            # canonical mirror not created yet — phase 1 creates it; reset any pending verdict
+            echo "  rename pending creation: $name → $up_name"
+            grep -vxF "$name" "$PENDING" > "$PENDING_TMP" || true
+            mv "$PENDING_TMP" "$PENDING"
+          fi
+        else
+          echo "$name ($probe)" >> "$TRANSFERRED"
+        fi
+      done < "$STALE"
+      mv "$PENDING_NEW" "$PENDING"
+
+      echo "=== Reconcile summary ==="
+      echo "forgejo pull mirrors: $total"
+      echo "stale names examined: $stale_count"
+      echo "upstream deleted (kept as frozen archive): $(wc -l < "$DELETED")"
+      cat "$DELETED" | sed 's/^/  archived: /'
+      echo "transferred away (kept, owner decision): $(wc -l < "$TRANSFERRED")"
+      cat "$TRANSFERRED" | sed 's/^/  transferred: /'
+    '';
+  };
+
   mirrorStarredScript = pkgs.writeShellApplication {
     name = "forgejo-mirror-starred";
     runtimeInputs = [

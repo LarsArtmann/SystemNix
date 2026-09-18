@@ -117,18 +117,6 @@ _: {
 
             if echo "$result" | jq -e '.name' &>/dev/null; then
               echo "  ✓ Created mirror: $repo_name"
-
-              echo "  → Setting up push mirror to GitHub: $repo_name"
-              curl -s -X POST \
-                -H "Authorization: token $FORGEJO_TOKEN" \
-                -H "Content-Type: application/json" \
-                "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$repo_name/push_mirrors" \
-                -d "$(jq -n \
-                  --arg remote "https://$GITHUB_USER:''${GITHUB_TOKEN}@github.com/$GITHUB_USER/$repo_name.git" \
-                  '{
-                    remote_address: $remote,
-                    sync_on_commit: true
-                  }')" 2>/dev/null || echo "  ⚠ Push mirror setup failed (may already exist)"
             else
               error_msg=$(echo "$result" | jq -r '.message // "Unknown error"')
               echo "  ✗ Failed: $error_msg"
