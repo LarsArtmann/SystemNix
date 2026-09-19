@@ -224,6 +224,7 @@ _: {
           INACTIVE_UNITS=""
           INACTIVE_COUNT=0
           INACTIVE_SCRAPE_ERRORS=0
+          collect_inactive_enabled=${lib.boolToString cfg.collectEnabledInactive}
           scan_inactive_units() { # $1 = label; remaining args = systemctl prefix ("--machine=u@.host --user" or none)
             local label="$1"
             shift
@@ -251,7 +252,7 @@ _: {
               INACTIVE_COUNT=$((INACTIVE_COUNT + 1))
             done <<< "$out"
           }
-          if [ "$collectEnabledInactive" = "true" ]; then
+          if [ "$collect_inactive_enabled" = "true" ]; then
             scan_inactive_units system
             # shellcheck disable=SC2043  # single-user hosts legitimately iterate once
             for u in ${lib.concatMapStringsSep " " (u: "${u}") cfg.monitoredUserManagers}; do
