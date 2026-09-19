@@ -41,7 +41,10 @@ stdenv.mkDerivation (finalAttrs: {
       '';
     };
     fetcherVersion = 4;
-    hash = "sha256-lZQ5I4ovJoYdGlgVx4J+8REDkCV7UIFH1RPTq9r+XLU=";
+    # 2026-09-19: npm re-tagged a transitive dep in place (the django-polymorphic
+    # playwright class), so the registry tarballs no longer match the hash
+    # computed at commit time. Pin the measured content hash.
+    hash = "sha256-S+4toZOxvEBkXzUSNNSI56zyfagSxxdt9wfLnBwee60=";
   };
 
   dontBuild = true;

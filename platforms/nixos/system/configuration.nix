@@ -616,6 +616,38 @@ in
       # co-loading embed-gemma via --embed 1 was broken (xrt ENOMEM).
       fastflowlm.enable = true;
 
+      # llama.cpp VLM servers (CPU, socket-activated) — NSFW-audit captioning
+      # stack. Replaces the ad-hoc nohup llama-server processes from the
+      # 2026-09-18/19 Immich audit sessions. Public ports 8127 (verdict model)
+      # and 8128 (caption model), OpenAI-compatible at /v1/chat/completions.
+      # E4B needs max_tokens >= 2500 (chain-of-thought); nsfwcaption is a pure
+      # captioner. Models are CPU-inference only — see llama-vlm.nix header
+      # for the ROCm wedge history and the soak-test rule before killing any
+      # manual server.
+      llama-vlm = {
+        enable = true;
+        servers = {
+          e4b = {
+            port = ports.llama-vlm-e4b;
+            backendPort = ports.llama-vlm-e4b-backend;
+            modelPath = /data/ai/models/jan/llamacpp/models/Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q8_K_P/model.gguf;
+            mmprojPath = /data/ai/models/jan/llamacpp/models/Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q8_K_P/mmproj.gguf;
+            keepAlive = "1h";
+            memoryMax = "16G";
+          };
+          cap = {
+            port = ports.llama-vlm-cap;
+            backendPort = ports.llama-vlm-cap-backend;
+            # Snapshot-hash path from the llama-server -hf download
+            # (2026-09-18). Update after any re-download.
+            modelPath = /data/ai/cache/huggingface/hub/models--GitMylo--nsfwcaption-qwen3-vl-8b-v3-gguf/snapshots/eb52b76411f34ea197558ec03eb15b2814d1b0c2/NSFWCaption-v3-Qwen3-VL-8B-Q8_0.gguf;
+            mmprojPath = /data/ai/cache/huggingface/hub/models--GitMylo--nsfwcaption-qwen3-vl-8b-v3-gguf/snapshots/eb52b76411f34ea197558ec03eb15b2814d1b0c2/mmproj-NSFWCaption-v3.gguf;
+            keepAlive = "2h";
+            memoryMax = "16G";
+          };
+        };
+      };
+
       # llama.cpp RAG stack — embeddings (bge-m3) + reranking (bge-reranker-v2-m3)
       # on the GPU (ROCm). Two lightweight llama-server instances, always-on.
       # Replaces the previous plan to use Ollama for embeddings — Ollama does

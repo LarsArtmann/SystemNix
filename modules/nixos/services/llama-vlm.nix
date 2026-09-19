@@ -13,10 +13,9 @@
 #
 # CPU-only by design: the ROCm llama.cpp path on this host has a history of
 # post-load 94%-CPU spins (llama-rag freeze #5, 2026-09-18). These servers
-# run CPU inference deliberately; llama-server's built-in backend probe picks
-# CPU when ROCm offload is impossible/absent for the model. If the spin
-# signature ever appears HERE (high single-thread CPU after load, /health 503),
-# stop the units — do not let them burn cores.
+# run CPU inference; llama-server picks CPU when the model cannot offload.
+# If the spin signature ever appears HERE (high single-thread CPU after
+# load, /health 503), stop the units — do not let them burn cores.
 #
 # Idle TTL: a per-instance timer stops the backend when its journal has no
 # "processing task" lines for ≥ keepAlive AND the backend has been active
@@ -46,55 +45,52 @@ _: {
         ;
       inherit (config.users) primaryUser;
 
-      serverType = lib.types.submodule (
-        { name, ... }:
-        {
-          options = {
-            modelPath = lib.mkOption {
-              type = lib.types.path;
-              description = "Main GGUF model file.";
-            };
-            mmprojPath = lib.mkOption {
-              type = lib.types.nullOr lib.types.path;
-              default = null;
-              description = "Multimodal projector GGUF (required for vision models).";
-            };
-            port = lib.mkOption {
-              type = lib.types.port;
-              description = "Public socket-activated port (stable for clients).";
-            };
-            backendPort = lib.mkOption {
-              type = lib.types.port;
-              description = "Internal backend port — bridge forwards here.";
-            };
-            context = lib.mkOption {
-              type = lib.types.int;
-              default = 8192;
-              description = "Context size (-c).";
-            };
-            keepAlive = lib.mkOption {
-              type = lib.types.str;
-              default = "2h";
-              description = "Idle TTL window before the backend is stopped.";
-            };
-            extraArgs = lib.mkOption {
-              type = lib.types.listOf lib.types.str;
-              default = [ ];
-              description = "Extra llama-server CLI args.";
-            };
-            memoryMax = lib.mkOption {
-              type = lib.types.str;
-              default = "24G";
-              description = "Cgroup MemoryMax ceiling (model + KV + runtime).";
-            };
-            user = lib.mkOption {
-              type = lib.types.str;
-              default = primaryUser;
-              description = "Service user.";
-            };
+      serverType = lib.types.submodule {
+        options = {
+          modelPath = lib.mkOption {
+            type = lib.types.path;
+            description = "Main GGUF model file.";
           };
-        }
-      );
+          mmprojPath = lib.mkOption {
+            type = lib.types.nullOr lib.types.path;
+            default = null;
+            description = "Multimodal projector GGUF (required for vision models).";
+          };
+          port = lib.mkOption {
+            type = lib.types.port;
+            description = "Public socket-activated port (stable for clients).";
+          };
+          backendPort = lib.mkOption {
+            type = lib.types.port;
+            description = "Internal backend port — bridge forwards here.";
+          };
+          context = lib.mkOption {
+            type = lib.types.int;
+            default = 8192;
+            description = "Context size (-c).";
+          };
+          keepAlive = lib.mkOption {
+            type = lib.types.str;
+            default = "2h";
+            description = "Idle TTL window before the backend is stopped.";
+          };
+          extraArgs = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+            description = "Extra llama-server CLI args (each element = one argv token).";
+          };
+          memoryMax = lib.mkOption {
+            type = lib.types.str;
+            default = "24G";
+            description = "Cgroup MemoryMax ceiling (model + KV + runtime).";
+          };
+          user = lib.mkOption {
+            type = lib.types.str;
+            default = primaryUser;
+            description = "Service user.";
+          };
+        };
+      };
 
       mkInstance =
         name: s:
@@ -134,8 +130,8 @@ _: {
                 exit 0
               fi
               # Live per-connection bridges = active traffic; also the only
-              # reliable cold-load guard (backend logs no "processing task"
-              # until the first request is accepted).
+              # reliable cold-load guard (the backend logs no "processing
+              # task" until the first request is accepted).
               if systemctl list-units '${bridgeTemplate}*.service' --state=active --no-legend 2>/dev/null | grep -q .; then
                 exit 0
               fi
@@ -151,9 +147,10 @@ _: {
             '';
           };
 
-          execArgs = [
+          execStart = [
+            (lib.getExe' cfg.package "llama-server")
             "-m"
-            s.modelPath
+            "${s.modelPath}"
             "--port"
             (toString s.backendPort)
             "-c"
@@ -161,7 +158,7 @@ _: {
           ]
           ++ lib.optionals (s.mmprojPath != null) [
             "--mmproj"
-            s.mmprojPath
+            "${s.mmprojPath}"
           ]
           ++ s.extraArgs;
         in
@@ -172,7 +169,7 @@ _: {
             listenStreams = [ "127.0.0.1:${toString s.port}" ];
             socketConfig = {
               Accept = true;
-              # llama-server default n_slots=4; cap bridges below it.
+              # llama-server default n_slots=4; cap concurrent bridges below it.
               MaxConnections = 4;
             };
           };
@@ -206,16 +203,16 @@ _: {
                 Type = "exec";
                 User = s.user;
                 Group = "users";
-                ExecStart = lib.getExe' (
-                  # llama.cpp ≥ 0.4.x ships llama-server in the llama-cpp package.
-                  pkgs.llama-cpp
-                ) "llama-server";
-                ArgumentNames = null;
-                # Pass args via ExecStart expansion below instead:
+                ExecStart = execStart;
+                # Backoff after OOM kills: a fast restart of a multi-GB cold
+                # load pile-drives an exhausted machine (fastflowlm lesson,
+                # 2026-08-18). Exponential: 60→120→240→480→900 s.
                 Restart = "on-failure";
                 RestartSec = "60";
                 RestartSteps = 5;
                 RestartMaxDelaySec = "15min";
+                # Preferred global-OOM victim: stateless, socket-activated,
+                # self-heals on the next connection.
                 OOMScoreAdjust = 300;
                 MemoryMax = s.memoryMax;
                 MemoryHigh = s.memoryMax;
@@ -257,7 +254,7 @@ _: {
           ];
         };
 
-      all = lib.mapAttrsToList mkInstance cfg.servers;
+      instances = lib.mapAttrsToList mkInstance cfg.servers;
     in
     {
       options.services.llama-vlm = {
@@ -272,35 +269,32 @@ _: {
         };
       };
 
-      config = lib.mkIf cfg.enable {
-        assertions = lib.concatLists (
-          lib.mapAttrsToList (
-            name: s:
-            [
-              {
-                assertion = s.port != s.backendPort;
-                message = "llama-vlm ${name}: port and backendPort must differ (proxy hop).";
-              }
-              {
-                assertion = s.port < 8124 || s.port > 8129;
-                message = "llama-vlm ${name}: ports 8124-8129 collide with signoz-clickhouse-http (8123) / audit conventions.";
-              }
-            ]
-          ) cfg.servers
-        );
+      config = lib.mkIf cfg.enable (
+        lib.mkMerge (
+          [
+            {
+              assertions = lib.concatLists (
+                lib.mapAttrsToList (
+                  name: s:
+                  [
+                    {
+                      assertion = s.port != s.backendPort;
+                      message = "llama-vlm ${name}: port and backendPort must differ (proxy hop).";
+                    }
+                  ]
+                ) cfg.servers
+              );
 
-        systemd.packages = [ cfg.package ];
-
-        warnings = lib.optional (cfg.servers != { }) ''
-          llama-vlm: after deploy, SOAK-TEST under the real units (health + one
-          vision request + 10 min idle) before decommissioning any manual
-          llama-server process — see the llama-rag freeze-#5 lesson in the
-          module header.
-        '';
-      } // (
-        # Flatten per-instance defs (each instance returns an attrset of
-        # systemd.* fragments); merge them all.
-        lib.mkMerge all
+              warnings = lib.optional (cfg.servers != { }) ''
+                llama-vlm: after deploy, SOAK-TEST under the real units (health + one
+                vision request + 10 min idle stability) before decommissioning any
+                manual llama-server process — see the llama-rag freeze-#5 lesson in
+                the module header.
+              '';
+            }
+          ]
+          ++ instances
+        )
       );
     };
 }
