@@ -3780,11 +3780,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789763014,
-        "narHash": "sha256-9TXAWU9b+MdB966pfIMQj3LgMpDusnBobOHcHpaSVj0=",
+        "lastModified": 1789794336,
+        "narHash": "sha256-9kznkUuj+5eqt4+gL1acA9b/D2MkBV2Di6fkpP8WHxk=",
         "owner": "LarsArtmann",
         "repo": "go-humanize-linter",
-        "rev": "30750643a050f9b286fe2aa21b6971c0a8604911",
+        "rev": "be3d4a20f4e60e834d9ab9dc0468fe6cc6b955f2",
         "type": "github"
       },
       "original": {
