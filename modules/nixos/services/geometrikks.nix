@@ -32,7 +32,8 @@ _: {
       # Derived from config.services.caddy.virtualHosts at eval time, so new
       # services are tracked automatically.
       logPaths = builtins.toJSON (
-        map
+        [ "/var/log/access/access.log" ]
+        ++ map
           (
             host:
             "/var/log/access/access-${
@@ -48,12 +49,7 @@ _: {
                 host
             }.log"
           )
-          (
-            [
-              "access.log"
-            ]
-            ++ builtins.attrNames config.services.caddy.virtualHosts
-          )
+          (builtins.attrNames config.services.caddy.virtualHosts)
       );
 
       composeFile = pkgs.writeText "geometrikks-docker-compose.yml" (
