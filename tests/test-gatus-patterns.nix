@@ -102,6 +102,22 @@ let
     # HELP system_niri_metrics_fresh 1 if the niri-health-metrics textfile was rewritten within 300s (collector ALIVE), 0 if frozen/stale
     # TYPE system_niri_metrics_fresh gauge
     system_niri_metrics_fresh 1
+    # papdashboard services.json drift guard (papdashboard.nix collector —
+    # emitted into papdashboard_services.prom, same body node_exporter
+    # serves). HELP comment deliberately carries the trap text
+    # "papdashboard_services_json_ok 0 if ..." so a bare (unanchored)
+    # pat(*papdashboard_services_json_ok 0*) would phantom-green on the
+    # comment — the production anchored forms must match ONLY the real
+    # value line.
+    # HELP papdashboard_services_json_ok 0 if the rendered services.json is missing, unparsable, or empty; 1 if healthy
+    # TYPE papdashboard_services_json_ok gauge
+    papdashboard_services_json_ok 1
+    # HELP papdashboard_services_json_groups Tile groups in the rendered services.json
+    # TYPE papdashboard_services_json_groups gauge
+    papdashboard_services_json_groups 8
+    # HELP papdashboard_services_json_tiles Dashboard tiles in the rendered services.json
+    # TYPE papdashboard_services_json_tiles gauge
+    papdashboard_services_json_tiles 37
   '';
 
   mockMetricsServer = pkgs.writeShellApplication {
@@ -338,6 +354,33 @@ in
             conditions = [
               "[STATUS] == 200"
               "[BODY] == pat(*\nsystem_niri_metrics_fresh 0*)"
+            ];
+          }
+          {
+            # "PapDashboard Services JSON" (papdashboard.nix registry check)
+            # production conditions verbatim against the HEALTHY mock: the
+            # drift guard must be present and non-zero, with the reject-half
+            # line-anchored so the HELP trap text cannot satisfy it.
+            name = "[TEST] PapDashboard services.json drift (healthy = 1)";
+            url = "http://127.0.0.1:9100/metrics";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] != pat(*papdashboard_services_json_ok 0\n*)"
+              "[BODY] == pat(*\npapdashboard_services_json_ok *)"
+            ];
+          }
+          {
+            # INVERSE (expected RED, see testScript): a real drifted
+            # emission (ok 0) must actually MATCH the line-anchored glob —
+            # proving the production reject-half (!= pat(*...0\n*)) trips on
+            # a genuine drift instead of being vacuous.
+            name = "[TEST-RED] PapDashboard drift reject-half non-vacuous";
+            url = "http://127.0.0.1:9100/metrics";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] == pat(*\npapdashboard_services_json_ok 0\n*)"
             ];
           }
         ];
