@@ -32,7 +32,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     # sourceRoot. Point it directly at webui/ inside the source archive.
     src = "${finalAttrs.src}/webui";
     fetcherVersion = 4;
-    hash = "sha256-zZQ2/PqdeK1F/KV+NiKieCbmmzi9x4zpOteQuQTCCxU=";
+    hash = "sha256-MkUfxSvFwesc65UIp2wNg2WQhgvZbNwvVY8G4xP3Mtg=";
   };
 
   # pnpmConfigHook (in nativeBuildInputs) runs in postConfigure and handles
