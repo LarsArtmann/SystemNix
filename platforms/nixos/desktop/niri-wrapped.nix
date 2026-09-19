@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  config,
   wallpapers,
   colorScheme,
   dankMaterialShell,
@@ -142,10 +143,53 @@ let
   };
 
   dms-lock = pkgs.callPackage ../../../pkgs/dms-lock.nix { inherit colors; };
+
+  # niri-flake's typed settings (programs.niri.settings) have NO options for
+  # niri 26.04's `background-effect` nodes yet (verified against upstream
+  # niri-flake main), so blur is appended to the RENDERED KDL as a raw
+  # window-rule and re-validated with `niri validate` — the same gate
+  # niri-flake itself applies. The rendered config arrives via
+  # programs.niri.finalConfig (readonly reflection of the typed settings).
+  # xray defaults ON whenever blur is active: niri blurs the wallpaper once
+  # per output and reuses it for every window, so this is the cheap path and
+  # the experimental non-xray caveats (no blur during open/close animations)
+  # do not apply. A rule with no match list matches every window; its unset
+  # fields inherit from earlier rules, so the existing opacity/corner-radius
+  # rules are untouched.
+  niriConfigWithBlur =
+    let
+      kdlWithBlur =
+        config.programs.niri.finalConfig
+        + ''
+
+          // Blur behind semitransparent windows (terminals 0.88, floating
+          // panels 0.9, tiled 0.95) — the readability half of transparency.
+          // Global blur parameters (passes/offset/noise/saturation) keep
+          // niri's defaults; tune them in a top-level `blur {}` node here if
+          // the look needs adjusting.
+          window-rule {
+              background-effect {
+                  blur true
+              }
+          }
+        '';
+    in
+    pkgs.runCommand "niri-config.kdl" {
+      config = kdlWithBlur;
+      passAsFile = [ "config" ];
+      buildInputs = [ config.programs.niri.package ];
+    } ''
+      niri validate -c "$configPath"
+      cp "$configPath" "$out"
+    '';
 in
 {
   config = {
     home.file.".local/share/wallpapers".source = wallpapers;
+
+    # Replace niri-flake's installed config (source = its own
+    # validate-derivation) with the blur-appended, re-validated text.
+    xdg.configFile.niri-config.source = lib.mkForce niriConfigWithBlur;
 
     programs.niri.settings = {
       prefer-no-csd = true;
