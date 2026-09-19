@@ -49,4 +49,20 @@ in
     digest = "sha256:2875e3c1f31f2244ee99d6067b53852b30666b3e2fb293d179bc8be94b1da5eb";
     ref = mkRef { inherit image tag digest; };
   };
+  geometrikks = rec {
+    image = "ghcr.io/gilbn/geometrikks";
+    # GHCR tags are unprefixed (0.16.0, NOT v0.16.0 — the release tag has the
+    # v, the image tag does not; v0.16.0 answers "manifest unknown").
+    tag = "0.16.0";
+    digest = "sha256:59b80fda288827f29d13b94b7ad92b7d5bfb3f14706fd6607dd44644f0c67735";
+    ref = mkRef { inherit image tag digest; };
+  };
+  geometrikks-timescale = rec {
+    image = "timescale/timescaledb-ha";
+    # pg18 is a floating tag; the digest pin makes it reproducible (digest
+    # drift is validated daily by scripts/check-image-updates.sh).
+    tag = "pg18";
+    digest = "sha256:b86177c63f0cc650f77e1ec5819dad2beaedc9f75156adbb8876476b312dd1e4";
+    ref = mkRef { inherit image tag digest; };
+  };
 }

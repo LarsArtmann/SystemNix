@@ -31,5 +31,6 @@
     "tq"
     "rss"
     "mr-sync"
+    "geo"
   ];
 }

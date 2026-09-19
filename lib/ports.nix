@@ -131,5 +131,9 @@
     # mr-sync.home.lan to it. 7331 is the tool's own default port
     # (mr-sync dashboard).
     mr-sync = 7331;
+
+    # GeoMetrikks — reverse-proxy access-log geo analytics (services.geometrikks),
+    # loopback-only; Caddy proxies geo.home.lan to it.
+    geometrikks = 8102;
   };
 }
