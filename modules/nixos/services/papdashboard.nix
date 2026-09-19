@@ -81,7 +81,8 @@
           inherit (t) name;
         }
         // lib.optionalAttrs (t.href != null) { inherit (t) href; }
-        // lib.optionalAttrs (t.description != null) { inherit (t) description; };
+        // lib.optionalAttrs (t.description != null) { inherit (t) description; }
+        // lib.optionalAttrs (t.checkUrl != null) { inherit (t) checkUrl; };
 
       # Registry fan-out fold: a tile lands in the group whose name matches,
       # or opens a new group at the end. Mirrors homepage.nix's addTile so
@@ -296,6 +297,14 @@
                     renders monogram tiles.
                   '';
                 };
+                checkUrl = lib.mkOption {
+                  type = lib.types.nullOr lib.types.str;
+                  default = null;
+                  description = ''
+                    Override probe URL for metrics-only registry tiles (the
+                    built-in groups' tile type has the same field).
+                  '';
+                };
               };
             }
           );
@@ -417,6 +426,7 @@
                   {
                     name = "Caddy";
                     description = "Reverse Proxy";
+                    checkUrl = "http://127.0.0.1:${toString ports.caddy-metrics}/metrics";
                   }
                   # PostgreSQL and Redis are decorative tiles: neither exposes
                   # a public HTTP health endpoint (pg_isready is TCP-only;
@@ -482,10 +492,12 @@
                   {
                     name = "Node Exporter";
                     description = "System Metrics (CPU, RAM, Disk, Network)";
+                    checkUrl = "http://127.0.0.1:${toString nodeExporterPort}/metrics";
                   }
                   {
                     name = "dnsblockd";
                     description = "Block-page HTTP server (localhost-only)";
+                    checkUrl = "http://127.0.0.1:${toString ports.dns-blocker-stats}/";
                   }
                   {
                     name = "EMEET PIXY";

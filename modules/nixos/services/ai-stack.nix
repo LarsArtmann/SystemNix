@@ -233,6 +233,10 @@ _: {
               group = "AI";
               description = "Local AI Inference";
               icon = "ollama.png";
+              # Dot source for the decorative tile: the same loopback
+              # endpoint the Gatus check above already owns (PapDashboard
+              # adds a dashboard-visible liveness probe; no vHost exists).
+              checkUrl = "http://localhost:${toString config.services.ollama.port}/api/tags";
             };
           };
         };

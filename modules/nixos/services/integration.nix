@@ -102,6 +102,7 @@ _: {
           else
             null;
         inherit (e.homepage) description icon;
+        inherit (e.homepage) checkUrl;
       };
 
       backupEntries = lib.filterAttrs (_: e: e.backup != null) enabledEntries;
@@ -260,6 +261,14 @@ _: {
                         type = lib.types.nullOr lib.types.str;
                         default = null;
                         description = "Icon name (accepted for registry compatibility; PapDashboard renders monograms)";
+                      };
+                      checkUrl = lib.mkOption {
+                        type = lib.types.nullOr lib.types.str;
+                        default = null;
+                        description = ''
+                          Probe URL for metrics-only tiles without a probeable
+                          href (e.g. a loopback /metrics or /api/tags endpoint).
+                        '';
                       };
                     };
                   }
