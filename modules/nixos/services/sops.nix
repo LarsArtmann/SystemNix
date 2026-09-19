@@ -348,8 +348,7 @@ in
                   };
                 }
             //
-              lib.optionalAttrs
-                (svcEnabled "discordsync" && (config.services.discordsync.immich.enable or false))
+              lib.optionalAttrs (svcEnabled "discordsync" && (config.services.discordsync.immich.enable or false))
                 {
                   # Own encrypted file (split-file precedent:
                   # papdashboard-discord.yaml) — agent sessions can encrypt a
@@ -661,11 +660,12 @@ in
               mode = "0400";
               # Verify unit is conditional (immich.enable): restartUnits must
               # never name a unit that does not exist in the generation.
-              restartUnits =
-                [ "discordsync.service" ]
-                ++ lib.optionals (config.services.discordsync.immich.enable or false) [
-                  "discordsync-immich-verify.service"
-                ];
+              restartUnits = [
+                "discordsync.service"
+              ]
+              ++ lib.optionals (config.services.discordsync.immich.enable or false) [
+                "discordsync-immich-verify.service"
+              ];
               content = lib.generators.toKeyValue { } (
                 {
                   DISCORD_TOKEN = config.sops.placeholder.discordsync_discord_token;

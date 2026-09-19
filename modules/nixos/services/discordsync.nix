@@ -331,9 +331,9 @@
         # (github-auto-assign pattern). The options?-guard mirrors the
         # integration-registry convention for hosts that enable this module
         # without system-health.
-        services.system-health.extraMonitoredServices = lib.mkIf
-          (cfg.immich.enable && options ? services.system-health)
-          (lib.mkAfter [ "discordsync-immich-verify" ]);
+        services.system-health.extraMonitoredServices = lib.mkIf (
+          cfg.immich.enable && options ? services.system-health
+        ) (lib.mkAfter [ "discordsync-immich-verify" ]);
 
         systemd.services.discordsync = {
           # SystemNix DNS-gate: dnsblockd must resolve before Discord connect.
