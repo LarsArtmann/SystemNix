@@ -1,0 +1,134 @@
+name: llama-rag pin expiry
+
+# Monthly review prompt for the `nixpkgs-llama-rag` rev pin (flake.nix).
+# The pin exists because the root nixpkgs llama.cpp build wedged mid-load
+# on gfx1150 (2026-09-14, 3/3 repros; the 2026-09-18 re-enable proved the
+# spin is NOT llama.cpp-version-specific, so the ROCm/kernel/GPU-state
+# environment is the suspect — but the pin must still be re-reviewed
+# whenever nixpkgs moves, and dropped once the regression is fixed
+# upstream and a soak pass proves the fresh build).
+#
+# Loop semantics: a standing issue (label `llama-rag-pin`) is created when
+# the pinned and nixos-unstable llama.cpp versions diverge, and REFRESHED
+# with a comment on each subsequent diverged run. Closing the issue = the
+# month's review happened; the next diverged run reopens the loop. When
+# the versions converge, any open issue is closed with drop-the-pin
+# guidance and no new issue is created.
+
+on:
+  schedule:
+    # Monthly on the 1st at 08:00 UTC (staggered away from the daily jobs)
+    - cron: "0 8 1 * *"
+  workflow_dispatch:
+
+jobs:
+  pin-expiry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: DeterminateSystems/nix-installer-action@e50d5f73bfe71c2dd0aa4218de8f4afa59f8f81d # v16
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes pipe-operators
+            # NIX_GITHUB_RO_TOKEN: see nix-check.yml — GITHUB_TOKEN cannot read
+            # the owner's other private repos; github:-type lock nodes need it.
+            access-tokens = github.com=${{ secrets.NIX_GITHUB_RO_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Compare pinned vs nixos-unstable llama.cpp
+        id: compare
+        run: |
+          pinned_rev="$(jq -r '.nodes["nixpkgs-llama-rag"].locked.rev' flake.lock)"
+          if [ -z "$pinned_rev" ] || [ "$pinned_rev" = "null" ]; then
+            echo "::error::flake.lock has no nixpkgs-llama-rag node — the pin was removed; delete this workflow"
+            exit 1
+          fi
+          pinned="$(nix eval --raw "github:NixOS/nixpkgs/${pinned_rev}#llama-cpp.version")"
+          current="$(nix eval --raw github:NixOS/nixpkgs/nixos-unstable#llama-cpp.version)"
+          echo "pinned_rev=$pinned_rev" >> "$GITHUB_OUTPUT"
+          echo "pinned=$pinned" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          if [ "$pinned" = "$current" ]; then
+            echo "diverged=false" >> "$GITHUB_OUTPUT"
+            echo "llama.cpp versions converged: $pinned — the pin no longer selects anything different"
+          else
+            echo "diverged=true" >> "$GITHUB_OUTPUT"
+            echo "llama.cpp diverged: pinned=$pinned ($pinned_rev) vs nixos-unstable=$current"
+          fi
+
+      - name: Close standing issue when versions converged
+        if: steps.compare.outputs.diverged == 'false'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const version = '${{ steps.compare.outputs.pinned }}';
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'llama-rag-pin',
+              state: 'open'
+            });
+            for (const issue of existing.data) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `llama.cpp versions converged on ${version} — the pin no longer selects anything different from nixos-unstable. Next step: run the soak harness (scripts/llama-rag-soak.sh) once against the fresh build, then drop the nixpkgs-llama-rag pin. Closing; a future divergence reopens the loop.`
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed',
+                state_reason: 'completed'
+              });
+            }
+
+      - name: Create or refresh standing issue
+        if: steps.compare.outputs.diverged == 'true'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const pinned = '${{ steps.compare.outputs.pinned }}';
+            const current = '${{ steps.compare.outputs.current }}';
+            const rev = '${{ steps.compare.outputs.pinned_rev }}';
+            const date = new Date().toISOString().split('T')[0];
+            const body = [
+              `The \`nixpkgs-llama-rag\` pin (flake.nix) still selects llama.cpp **${pinned}** while nixos-unstable now ships **${current}** (pin rev \`${rev}\`).`,
+              '',
+              'The pin exists because the root-nixpkgs llama.cpp build wedged both RAG servers mid-load on gfx1150 (2026-09-14, 3/3 repros; ~94% single-thread CPU spin right after "model vocab missing newline token", GPU idle, /health 503 forever).',
+              '**The 2026-09-18 re-enable proved the spin is NOT llama.cpp-version-specific** — the pinned build spun identically under the real units — so the suspect set is the ROCm runtime / kernel / GPU-state environment. Any new candidate must clear the soak gate BEFORE llama-rag re-enables.',
+              '',
+              '**Monthly review actions:**',
+              '1. Check upstream (llama.cpp + SigNoz-era ROCm stack) for gfx1150/RDNA3.5 spin fixes since the last review.',
+              '2. Build the fresh nixos-unstable llama-cpp with rocmSupport.',
+              '3. Soak it under the REAL unit shape: `sudo ./scripts/llama-rag-soak.sh --server <llama-server> --model /data/ai/models/gguf/bge-m3.gguf --minutes 10` (root, quiet-IO window, llama-rag disabled). A bare-shell direct-run is NOT evidence (freeze #5).',
+              '4. On a PASS verdict: bump the pin (drop `nixpkgs-llama-rag` + its import in modules/nixos/services/llama-rag.nix), flip `llama-rag.enable`, and watch the first boot.',
+              '',
+              'Closing this issue = the month\'s review happened. The next diverged run reopens the loop.',
+              '',
+              `[Workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`
+            ].join('\n');
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'llama-rag-pin',
+              state: 'open'
+            });
+            if (existing.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.data[0].number,
+                body: `**${date} refresh:** pinned=${pinned}, nixos-unstable=${current}. Re-run the monthly review checklist above.\n\n${body}`
+              });
+              console.log('Refreshed existing standing issue #' + existing.data[0].number);
+              return;
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `llama-rag pin review: pinned llama.cpp ${pinned} diverged from nixos-unstable ${current} (${date})`,
+              body: body,
+              labels: ['llama-rag-pin']
+            });

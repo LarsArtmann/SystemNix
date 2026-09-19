@@ -352,209 +352,209 @@ _: {
 
       config = lib.mkMerge [
         (lib.mkIf cfg.enable {
-        assertions = [
-          {
-            assertion = cfg.embeddingsPort != cfg.rerankerPort;
-            message = "services.llama-rag.embeddingsPort and rerankerPort must differ (two separate instances).";
-          }
-          {
-            assertion = cfg.host == "127.0.0.1" || cfg.host == "::1";
-            message = "services.llama-rag.host must be loopback. Expose via reverse proxy if you need remote access.";
-          }
-        ];
-
-        systemd.services.llama-rag-model-fetch = {
-          description = "Fetch llama.cpp RAG GGUF models (bge-m3 + bge-reranker-v2-m3)";
-          wantedBy = [ "multi-user.target" ];
-          after = [ "network-online.target" ];
-          wants = [ "network-online.target" ];
-          before = [
-            "llama-embeddings.service"
-            "llama-reranker.service"
-          ];
-          path = [
-            pkgs.curl
-            pkgs.coreutils
-          ];
-          unitConfig.ConditionPathIsDirectory = cfg.modelDir;
-          serviceConfig = {
-            Type = "oneshot";
-            User = cfg.user;
-            Group = cfg.group;
-            ExecStart = "${fetchScript}";
-            # Two ~1.2 GB downloads from HuggingFace; slow links need headroom
-            # (the global 3min default cannot cover a cold first fetch).
-            TimeoutStartSec = "20min";
-            # Stay active after success: the servers' Requires= pulls must be
-            # no-ops — re-running this fetch per server restart piled up starts
-            # past the burst limit and exit-4'd activations (2026-09-18).
-            RemainAfterExit = true;
-          };
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
-        };
-
-        systemd.services.llama-embeddings = {
-          description = "llama.cpp embeddings server (bge-m3, ROCm GPU)";
-          after = [
-            "network-online.target"
-            "llama-rag-model-fetch.service"
-          ];
-          wants = [ "network-online.target" ];
-          wantedBy = [ "multi-user.target" ];
-          requires = [ "llama-rag-model-fetch.service" ];
-
-          environment = rocm.env // {
-            LD_LIBRARY_PATH = ldLibPath;
-          };
-
-          serviceConfig = lib.mkMerge [
-            commonServiceConfig
+          assertions = [
             {
-              ExecStart = embeddingsExecStart;
-              ExecStartPre = "+${portGuardScript} ${toString cfg.embeddingsPort}";
+              assertion = cfg.embeddingsPort != cfg.rerankerPort;
+              message = "services.llama-rag.embeddingsPort and rerankerPort must differ (two separate instances).";
             }
-            rocm.deviceCgroup
-            (harden { })
-            ioTier.background
-          ];
-
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
-        };
-
-        systemd.services.llama-reranker = {
-          description = "llama.cpp reranking server (bge-reranker-v2-m3, ROCm GPU)";
-          after = [
-            "network-online.target"
-            "llama-rag-model-fetch.service"
-          ];
-          wants = [ "network-online.target" ];
-          wantedBy = [ "multi-user.target" ];
-          requires = [ "llama-rag-model-fetch.service" ];
-
-          environment = rocm.env // {
-            LD_LIBRARY_PATH = ldLibPath;
-          };
-
-          serviceConfig = lib.mkMerge [
-            commonServiceConfig
             {
-              ExecStart = rerankerExecStart;
-              ExecStartPre = "+${portGuardScript} ${toString cfg.rerankerPort}";
+              assertion = cfg.host == "127.0.0.1" || cfg.host == "::1";
+              message = "services.llama-rag.host must be loopback. Expose via reverse proxy if you need remote access.";
             }
-            rocm.deviceCgroup
-            (harden { })
-            ioTier.background
           ];
 
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
-        };
-
-        # Leak monitor: 5-min textfile collector counting llama-server
-        # processes that hold no :8848/:8849 listener (wedged pre-bind or
-        # orphaned - the 2026-09-02 D-state leak class). Root + CAP_FOWNER
-        # per the sticky-textfile-dir doctrine (unique mktemp, rename-over-
-        # foreign fails without it).
-        systemd.services.llama-rag-leak-metrics = {
-          description = "llama-rag leaked llama-server instance metrics";
-          after = [
-            "llama-embeddings.service"
-            "llama-reranker.service"
-          ];
-          serviceConfig = lib.mkMerge [
-            (harden { })
-            {
-              Type = "oneshot";
-              ExecStart = leakMetricsScript;
-              CapabilityBoundingSet = "CAP_FOWNER CAP_DAC_OVERRIDE";
-              TimeoutStartSec = "1min";
-            }
-            ioTier.background
-          ];
-          startLimitBurst = 3;
-          startLimitIntervalSec = 300;
-        };
-
-        systemd.timers.llama-rag-leak-metrics = {
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnCalendar = "*:0/5";
-            Persistent = true;
-          };
-        };
-
-        # Service-integration registry entry: loopback-only servers (no
-        # vHost - a direct probe policy and port registry forbid external
-        # exposure), the two Gatus health checks, and the decorative
-        # homepage tile. The embeddings/reranker units self-register with
-        # system-health (moved out of monitoredServices' default list).
-        # Replaces rows in gatus-config.nix / homepage.nix.
-        services.integration = lib.optionalAttrs (options ? services.integration) {
-          llama-rag = {
-            inherit (cfg) enable;
-            vHost.layer = "none";
-            checks = [
-              {
-                name = "llama.cpp Embeddings";
-                group = "AI";
-                url = "http://localhost:${toString cfg.embeddingsPort}/health";
-                interval = "60s";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[RESPONSE_TIME] < 1000"
-                ];
-                alert = "llama.cpp embeddings server down - RAG indexing and semantic search unavailable";
-              }
-              {
-                name = "llama.cpp Reranker";
-                group = "AI";
-                url = "http://localhost:${toString cfg.rerankerPort}/health";
-                interval = "60s";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[RESPONSE_TIME] < 1000"
-                ];
-                alert = "llama.cpp reranker down - RAG reranking unavailable, search quality degraded";
-              }
-              {
-                # Metric-based (node-exporter textfile): leaked llama-server
-                # processes holding no port listener - the restart-under-QLC-
-                # saturation D-state leak class. Fail-closed: a dead or
-                # wedged collector omits the gauges and fails the pats.
-                name = "llama.cpp Leaked Instances";
-                group = "AI";
-                url = "http://localhost:${toString ports.signoz-node-exporter}/metrics";
-                interval = "5m";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[BODY] == pat(*\nllama_rag_leaks_present 0*)"
-                  "[BODY] != pat(*\nllama_rag_scrape_errors 1*)"
-                ];
-                alert = "llama.cpp leaked server instances detected (llama-server procs holding no :${toString cfg.embeddingsPort}/:${toString cfg.rerankerPort} listener) - the restart-under-IO-saturation D-state leak class. Check: pgrep -ax llama-server, journalctl -u llama-embeddings -u llama-reranker -n 50; a clean reboot unwinds D-state corpses";
-              }
+          systemd.services.llama-rag-model-fetch = {
+            description = "Fetch llama.cpp RAG GGUF models (bge-m3 + bge-reranker-v2-m3)";
+            wantedBy = [ "multi-user.target" ];
+            after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
+            before = [
+              "llama-embeddings.service"
+              "llama-reranker.service"
             ];
-            # Decorative tile: loopback-only embeddings + reranking on GPU.
-            # Gatus alerts on /health endpoints; no vHost.
-            homepage = {
-              name = "llama.cpp RAG";
-              group = "AI";
-              description = "Embeddings + Reranking (bge-m3, bge-reranker-v2-m3)";
-              icon = "ollama.png";
+            path = [
+              pkgs.curl
+              pkgs.coreutils
+            ];
+            unitConfig.ConditionPathIsDirectory = cfg.modelDir;
+            serviceConfig = {
+              Type = "oneshot";
+              User = cfg.user;
+              Group = cfg.group;
+              ExecStart = "${fetchScript}";
+              # Two ~1.2 GB downloads from HuggingFace; slow links need headroom
+              # (the global 3min default cannot cover a cold first fetch).
+              TimeoutStartSec = "20min";
+              # Stay active after success: the servers' Requires= pulls must be
+              # no-ops — re-running this fetch per server restart piled up starts
+              # past the burst limit and exit-4'd activations (2026-09-18).
+              RemainAfterExit = true;
+            };
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+          };
+
+          systemd.services.llama-embeddings = {
+            description = "llama.cpp embeddings server (bge-m3, ROCm GPU)";
+            after = [
+              "network-online.target"
+              "llama-rag-model-fetch.service"
+            ];
+            wants = [ "network-online.target" ];
+            wantedBy = [ "multi-user.target" ];
+            requires = [ "llama-rag-model-fetch.service" ];
+
+            environment = rocm.env // {
+              LD_LIBRARY_PATH = ldLibPath;
+            };
+
+            serviceConfig = lib.mkMerge [
+              commonServiceConfig
+              {
+                ExecStart = embeddingsExecStart;
+                ExecStartPre = "+${portGuardScript} ${toString cfg.embeddingsPort}";
+              }
+              rocm.deviceCgroup
+              (harden { })
+              ioTier.background
+            ];
+
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+          };
+
+          systemd.services.llama-reranker = {
+            description = "llama.cpp reranking server (bge-reranker-v2-m3, ROCm GPU)";
+            after = [
+              "network-online.target"
+              "llama-rag-model-fetch.service"
+            ];
+            wants = [ "network-online.target" ];
+            wantedBy = [ "multi-user.target" ];
+            requires = [ "llama-rag-model-fetch.service" ];
+
+            environment = rocm.env // {
+              LD_LIBRARY_PATH = ldLibPath;
+            };
+
+            serviceConfig = lib.mkMerge [
+              commonServiceConfig
+              {
+                ExecStart = rerankerExecStart;
+                ExecStartPre = "+${portGuardScript} ${toString cfg.rerankerPort}";
+              }
+              rocm.deviceCgroup
+              (harden { })
+              ioTier.background
+            ];
+
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+          };
+
+          # Leak monitor: 5-min textfile collector counting llama-server
+          # processes that hold no :8848/:8849 listener (wedged pre-bind or
+          # orphaned - the 2026-09-02 D-state leak class). Root + CAP_FOWNER
+          # per the sticky-textfile-dir doctrine (unique mktemp, rename-over-
+          # foreign fails without it).
+          systemd.services.llama-rag-leak-metrics = {
+            description = "llama-rag leaked llama-server instance metrics";
+            after = [
+              "llama-embeddings.service"
+              "llama-reranker.service"
+            ];
+            serviceConfig = lib.mkMerge [
+              (harden { })
+              {
+                Type = "oneshot";
+                ExecStart = leakMetricsScript;
+                CapabilityBoundingSet = "CAP_FOWNER CAP_DAC_OVERRIDE";
+                TimeoutStartSec = "1min";
+              }
+              ioTier.background
+            ];
+            startLimitBurst = 3;
+            startLimitIntervalSec = 300;
+          };
+
+          systemd.timers.llama-rag-leak-metrics = {
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = "*:0/5";
+              Persistent = true;
             };
           };
-          llama-embeddings = {
-            inherit (cfg) enable;
-            vHost.layer = "none";
-            monitored = true;
+
+          # Service-integration registry entry: loopback-only servers (no
+          # vHost - a direct probe policy and port registry forbid external
+          # exposure), the two Gatus health checks, and the decorative
+          # homepage tile. The embeddings/reranker units self-register with
+          # system-health (moved out of monitoredServices' default list).
+          # Replaces rows in gatus-config.nix / homepage.nix.
+          services.integration = lib.optionalAttrs (options ? services.integration) {
+            llama-rag = {
+              inherit (cfg) enable;
+              vHost.layer = "none";
+              checks = [
+                {
+                  name = "llama.cpp Embeddings";
+                  group = "AI";
+                  url = "http://localhost:${toString cfg.embeddingsPort}/health";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 1000"
+                  ];
+                  alert = "llama.cpp embeddings server down - RAG indexing and semantic search unavailable";
+                }
+                {
+                  name = "llama.cpp Reranker";
+                  group = "AI";
+                  url = "http://localhost:${toString cfg.rerankerPort}/health";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 1000"
+                  ];
+                  alert = "llama.cpp reranker down - RAG reranking unavailable, search quality degraded";
+                }
+                {
+                  # Metric-based (node-exporter textfile): leaked llama-server
+                  # processes holding no port listener - the restart-under-QLC-
+                  # saturation D-state leak class. Fail-closed: a dead or
+                  # wedged collector omits the gauges and fails the pats.
+                  name = "llama.cpp Leaked Instances";
+                  group = "AI";
+                  url = "http://localhost:${toString ports.signoz-node-exporter}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nllama_rag_leaks_present 0*)"
+                    "[BODY] != pat(*\nllama_rag_scrape_errors 1*)"
+                  ];
+                  alert = "llama.cpp leaked server instances detected (llama-server procs holding no :${toString cfg.embeddingsPort}/:${toString cfg.rerankerPort} listener) - the restart-under-IO-saturation D-state leak class. Check: pgrep -ax llama-server, journalctl -u llama-embeddings -u llama-reranker -n 50; a clean reboot unwinds D-state corpses";
+                }
+              ];
+              # Decorative tile: loopback-only embeddings + reranking on GPU.
+              # Gatus alerts on /health endpoints; no vHost.
+              homepage = {
+                name = "llama.cpp RAG";
+                group = "AI";
+                description = "Embeddings + Reranking (bge-m3, bge-reranker-v2-m3)";
+                icon = "ollama.png";
+              };
+            };
+            llama-embeddings = {
+              inherit (cfg) enable;
+              vHost.layer = "none";
+              monitored = true;
+            };
+            llama-reranker = {
+              inherit (cfg) enable;
+              vHost.layer = "none";
+              monitored = true;
+            };
           };
-          llama-reranker = {
-            inherit (cfg) enable;
-            vHost.layer = "none";
-            monitored = true;
-          };
-        };
         })
 
         # Module DISABLED: the ports have no legitimate owner, so watch
@@ -607,7 +607,8 @@ _: {
                   ];
                   alert = "Rogue llama-server listener(s) on :${toString cfg.embeddingsPort}/:${toString cfg.rerankerPort} while llama-rag is DISABLED - the hermes-cron orphan class (2026-09-18/19, 3 recurrences; intermittent-spin, 2h+ CPU burned). Consumers may be pinned to the stale wedged 0.4.0 build. Fix: verify identity (ps -o user:16 -p <pid>; cat /proc/<pid>/cgroup), kill the orphan, then trace WHY it spawned (hermes cron definitions).";
                 }
-              ] ++ lib.optionals paperlessWantsRag [
+              ]
+              ++ lib.optionals paperlessWantsRag [
                 {
                   # Standing capability-loss signal (Turso precedent):
                   # red BY DESIGN while llama-rag is disabled with

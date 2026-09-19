@@ -16,8 +16,7 @@
 
 let
   idleExec =
-    self.nixosConfigurations.evo-x2.config.systemd.services.fastflowlm-idle
-      .serviceConfig.ExecStart;
+    self.nixosConfigurations.evo-x2.config.systemd.services.fastflowlm-idle.serviceConfig.ExecStart;
 in
 pkgs.runCommand "test-fastflowlm-idle-check"
   {
