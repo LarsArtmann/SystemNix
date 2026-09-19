@@ -85,9 +85,9 @@ _: {
             description = "Cgroup MemoryMax ceiling (model + KV + runtime).";
           };
           user = lib.mkOption {
-            type = lib.types.str;
-            default = primaryUser;
-            description = "Service user.";
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            description = "Service user (null = primary user).";
           };
         };
       };
@@ -201,7 +201,7 @@ _: {
             serviceConfig = lib.mkMerge [
               {
                 Type = "exec";
-                User = s.user;
+                User = if s.user != null then s.user else primaryUser;
                 Group = "users";
                 ExecStart = execStart;
                 # Backoff after OOM kills: a fast restart of a multi-GB cold
