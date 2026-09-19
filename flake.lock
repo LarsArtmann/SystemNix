@@ -913,11 +913,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1789807538,
-        "narHash": "sha256-p3iurSfaoft81bihfgbEb//fRJ9J9tbvSKjPlOeIrDQ=",
+        "lastModified": 1789839304,
+        "narHash": "sha256-MiSh9A8jlA7oG+QgUVHZqRiIQ2gPHOqrMiODvEiMXEk=",
         "owner": "LarsArtmann",
         "repo": "dnsblockd",
-        "rev": "13f0aa22c2e2716f33d2c0ace28925348d7c06be",
+        "rev": "47708024af4a85a7169608ee1dc32aeab1e83871",
         "type": "github"
       },
       "original": {
