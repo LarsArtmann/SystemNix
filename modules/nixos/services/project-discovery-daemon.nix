@@ -33,6 +33,7 @@ _: {
         ;
       inherit (import ../../../lib/default.nix lib)
         harden
+        ioTier
         serviceDefaults
         onFailure
         ;
@@ -150,6 +151,15 @@ _: {
             # Discovery READS the repos and mrconfig under /home — never writes.
             ProtectHome = "read-only";
           })
+          # BE/6 background tier (2026-09-19 IO audit): this daemon is the
+          # top sustained root-NVMe reader (40 GB reads + 17 GB zram writes
+          # attributed via cgroup io.stat over one boot, 10.2 GiB/30 min
+          # spike in the audit window) — discovery latency is invisible to
+          # consumers (5m TTL cache), but its bursts starve the desktop and
+          # stack with builds on the saturated QLC root. BFQ is active on
+          # all disks, so the tier is effective; scheduler-level, immune to
+          # the nvme0/nvme1 name swaps.
+          // (ioTier.background)
           // serviceDefaults { };
         };
       };

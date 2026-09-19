@@ -104,7 +104,6 @@ _: {
           in
           lib.nameValuePair "hot-user-caches-${name}-bootstrap" {
             description = "Idempotently create the ${name} cache subvolume on the hot disk";
-            automountUnit = "${utils.escapeSystemdPath cache.mountPoint}.automount";
             # The automount unit pulls this in at boot and waits (before):
             # the autofs trigger must never answer a lookup before the
             # subvol exists.
