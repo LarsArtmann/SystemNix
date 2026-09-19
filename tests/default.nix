@@ -73,5 +73,6 @@ in
   crush-hot-db = makeTest (import ./test-crush-hot-db.nix { inherit pkgs; });
   crush-config = import ./test-crush-config.nix { inherit pkgs inputs; };
   nix-email-contract = import ./test-nix-email.nix { inherit pkgs inputs system; };
+  fastflowlm-idle-check = import ./test-fastflowlm-idle.nix { inherit pkgs self; };
 }
 // (import ./test-scripts.nix { inherit pkgs self; })
