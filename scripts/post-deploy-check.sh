@@ -1316,16 +1316,28 @@ else
   report_skip "Registry - cannot determine nixpkgs registry state"
 fi
 
-# Shell: fish startup time (threshold 200ms - includes bash subprocess overhead)
+# Shell: fish startup time (threshold 200ms when calm). Under deploy IO the
+# same cold start measures 200ms-3.7s from page-cache/IO contention alone
+# (measured decay series 460→366→250→218ms tracked one storm's decay;
+# 60-70ms when calm), so a slow reading is attributed to IO pressure
+# instead of being reported as an unexplained shell regression.
 if command -v fish >/dev/null 2>&1; then
+  # Same parser as deploy.sh's pressure gate (io PSI some avg10, decimal).
+  _fish_io_psi=$(awk '/^some/ {split($2, a, "="); print a[2]}' /proc/pressure/io 2>/dev/null || echo 0)
+  _fish_io_psi="${_fish_io_psi:-0}"
+  # >=5% = the pressure-report.sh "elevated" floor; below it a slow start
+  # is a REAL calm-baseline regression.
+  _fish_under_pressure=$(awk -v p="$_fish_io_psi" 'BEGIN { print (p >= 5) ? 1 : 0 }')
   _fish_start=$(date +%s%N)
   fish -i -c exit >/dev/null 2>&1 || true
   _fish_end=$(date +%s%N)
   _fish_ms=$(((_fish_end - _fish_start) / 1000000))
   if [ "$_fish_ms" -lt 200 ]; then
-    report_pass "Shell - fish startup ${_fish_ms}ms"
+    report_pass "Shell - fish startup ${_fish_ms}ms (io PSI avg10 ${_fish_io_psi}%)"
+  elif [ "$_fish_under_pressure" -eq 1 ]; then
+    report_warn "Shell - fish startup ${_fish_ms}ms UNDER IO PRESSURE (io PSI avg10 ${_fish_io_psi}% >= 5) — pressure-attributed, calm baseline is 60-70ms"
   else
-    report_warn "Shell - fish startup ${_fish_ms}ms (threshold 200ms)"
+    report_warn "Shell - fish startup ${_fish_ms}ms at io PSI avg10 ${_fish_io_psi}% (threshold 200ms, calm) — real regression, profile it"
   fi
 else
   report_skip "Shell - fish not on PATH"
