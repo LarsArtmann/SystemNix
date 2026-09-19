@@ -16,7 +16,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     owner = "icholy";
     repo = "systemd-graph";
     rev = "601521bda0303f44fd53637ed74f50161ff23d99";
-    hash = "sha256-MkUfxSvFwesc65UIp2wNg2WQhgvZbNwvVY8G4xP3Mtg=";
+    hash = "sha256-yb3w6/5UTI1ghY1/jl1PTma9wi9aEumNAG04FeHg8fY=";
   };
   sourceRoot = "source/webui";
 
