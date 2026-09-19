@@ -16,7 +16,7 @@ Everything code-side is BUILT, evaluated, shellcheck-clean, logic-fixture-tested
 | deploy.sh | `boot-mirror-sync` added to provisioner restart loop (+ rationale comment) |
 | AGENTS.md | Build & Deploy section carries the full boot-mirror runbook + rollback |
 | Static gates | `nix flake check --no-build` PASS; evo-x2 eval PASS (re-run after every fix); ExecStart/mount/Condition eval-probed |
-| Deploy | NOT RUN — queued. Background job (`/tmp/boot-mirror-poll-deploy2.sh`, shell 038) polls IO PSI avg10, fires `nix run .#deploy` on 2 consecutive <20% readings, retries on gate exit-12, deadline 22:55 (before the 23:00 btrbk window) |
+| Deploy | NOT RUN — queued. Background job (`/tmp/boot-mirror-poll-deploy2.sh`, shell 038) polls IO PSI avg10, fires `nix run .#deploy` on 2 consecutive <20% readings, retries on gate exit-12, deadline 22:55 (before the 23:00 btrbk window). **(SUPERSEDED 2026-09-19: the tmp-cleaner ate both /tmp files overnight — the >4h-staleness rule; queue re-established INLINE with persistent log `~/.local/state/boot-mirror-deploy.log`, see `docs/status/2026-09-19_09-48_samsung-boot-mirror-queue-recovery-llama-vlm-fix-parallel-deploy.md`)** |
 | IO storm (blocker) | avg10 21-54% oscillating, avg60 ~55%. **Driver identified: `sdb` (buildcache USB SSD) 100% busy; BOTH NVMe idle (QLC 4%, Samsung 0%)**. Producers: 8× golangci-lint (~1h old), rustc ×5, qemu-aarch64 ×2, cc1 — parallel sessions' builds, not this session |
 | Memory dimensions | clear: zram ~0%, MemAvailable 81G |
 | Git tree | clean — daemon batch-committed everything (HEAD `260f86ef`) |
@@ -75,7 +75,7 @@ Everything code-side is BUILT, evaluated, shellcheck-clean, logic-fixture-tested
 13. Consider post-deploy-check §15 (mirror freshness assert) — optional, sync unit already fail-loud
 14. Consider system-health mirror-age metric (only if skipped-sync class ever observed)
 15. Structural follow-up (separate task): migrate root `@` off QLC → Samsung becomes a COMPLETE boot disk surviving QLC death; until then "2nd boot disk" = boot-chain redundancy, not QLC-death survival
-16. If storm never drains tonight: rerun `/tmp/boot-mirror-poll-deploy2.sh` (or reschedule after the 23:00 btrbk window)
+16. If storm never drains tonight: rerun `/tmp/boot-mirror-poll-deploy2.sh` (or reschedule after the 23:00 btrbk window) — **DEAD 2026-09-19: tmp-cleaner ate that script; the inline queue v3 pattern (retry rc=12/13, gate-aware, `~/.local/state/boot-mirror-deploy.log`) replaced it**
 
 ## Questions I could NOT figure out myself (up to 3)
 
