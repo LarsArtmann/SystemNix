@@ -466,6 +466,16 @@ if nix run .#pre-deploy-check; then
     sudo systemctl start --no-block discordsync-db-heal.service 2>/dev/null || true
   fi
 
+  # discordsync-immich-verify: timer-driven oneshot with no [Install] (the
+  # daily timer owns scheduling; the sops secret's restartUnits own rotation),
+  # so the provisioner loop skips it. If a rejected API key failed it, a fix
+  # converges here instead of waiting for the next daily tick.
+  if systemctl is-failed --quiet discordsync-immich-verify.service 2>/dev/null; then
+    echo "Restarting failed oneshot: discordsync-immich-verify.service (no-block)"
+    sudo systemctl reset-failed discordsync-immich-verify.service 2>/dev/null || true
+    sudo systemctl start --no-block discordsync-immich-verify.service 2>/dev/null || true
+  fi
+
   # Restart dnsblockd AFTER dnsblockd-oidc-secret so a rotated Pocket ID client
   # secret takes effect. The bridge oneshot is RemainAfterExit=true and only
   # wantedBy=dnsblockd.service (is-enabled returns rc=1 for indirect units —

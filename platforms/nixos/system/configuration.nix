@@ -482,6 +482,14 @@ in
         # Aug 12 "vendorHash mismatch" was a stale FOD cache entry, since evicted.
         enable = true;
         gcsBucket = "discordsync-backup";
+        # Immich cross-archive comparison on the /lookup page (ADR-062): the
+        # server proxies hex SHA-1 hashes to Immich's bulk-upload-check.
+        # Ships with a PLACEHOLDER key — create the real key in Immich scoped
+        # to asset.read + asset.upload ONLY, then sops --set it into
+        # platforms/nixos/secrets/discordsync-immich.yaml (runbook:
+        # docs/services/discordsync.md). discordsync-immich-verify pages when
+        # a non-placeholder key is rejected.
+        immich.enable = true;
       };
 
       browser-history = {

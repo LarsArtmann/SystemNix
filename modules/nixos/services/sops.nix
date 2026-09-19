@@ -659,10 +659,13 @@ in
               owner = "discordsync";
               group = "discordsync";
               mode = "0400";
-              restartUnits = [
-                "discordsync.service"
-                "discordsync-immich-verify.service"
-              ];
+              # Verify unit is conditional (immich.enable): restartUnits must
+              # never name a unit that does not exist in the generation.
+              restartUnits =
+                [ "discordsync.service" ]
+                ++ lib.optionals (config.services.discordsync.immich.enable or false) [
+                  "discordsync-immich-verify.service"
+                ];
               content = lib.generators.toKeyValue { } (
                 {
                   DISCORD_TOKEN = config.sops.placeholder.discordsync_discord_token;
