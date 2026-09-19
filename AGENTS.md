@@ -33,6 +33,12 @@ scripts/               # Shell + Python operational scripts
 
 ---
 
+## TODO System (split 2026-09-19)
+
+`TODO_LIST.md` = **dispatch QUEUE** (agent-actionable `[ready]` one-liners only; the tq pool harvests only it — blocked/user-gated/push-gated work is deliberately NOT harvested). `docs/todo/{storage,stability,monitoring,ai-stack,services,upstream,security,pipeline,desktop,pixel6}.md` = **domain libraries** holding every open item with a lifecycle tag: `[ready]` `[blocked:user]` `[blocked:push]` `[blocked:deploy]` `[watch]` `[decision]`.
+
+Rules: file under the domain that owns the FIX (not the symptom it names); service-specific checks live in `services.md`, cross-service observability in `monitoring.md`; harvests route items into domain files at append time — NEVER as dated sections (that pattern grew the old 673-line monolith); item = one ask + `**Source:**` pointer, verification narratives go to the status report; `[x]` rows are pruned to CHANGELOG every pass; NO system-state narratives in the todo files (AGENTS.md + `docs/services/*` own state); vague/long-term → ROADMAP. Queue one-liners and their library entries must not drift — edit both.
+
 ## Key Procedures
 
 ### CV Server (`cv.home.lan`, services.cv-server)

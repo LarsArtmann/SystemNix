@@ -374,7 +374,7 @@ _: {
                           # makes the window observable instead: 1 = the running
                           # manager predates the deployed config. Revisit (add the
                           # restart trigger) once the upstream restore-once gate
-                          # lands (TODO_LIST: niri-session-manager upstream).
+                          # lands (docs/todo/upstream.md: niri-session-manager upstream).
                           mgr_config_stale=0
                           nsm_config="/home/${config.users.primaryUser}/.config/niri-session-manager/config.toml"
                           # `|| true` is LOAD-BEARING: pgrep exits 1 when the

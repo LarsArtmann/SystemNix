@@ -23,6 +23,7 @@ LIVING_DOCS=(
   docs/CONTRIBUTING.md
   docs/gotchas-archive.md
   docs/services/*.md
+  docs/todo/*.md
 )
 
 broken=0

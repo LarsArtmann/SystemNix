@@ -103,7 +103,7 @@ in
     # pattern as /data, and no subvolume must be pre-created before the
     # first deploy). Carries the per-project crush session DBs relocated by
     # services.crush-hot-db (crush-hot-db-migrate) off the QLC `@` root —
-    # the 2026-09-14 IO-storm fix (TODO_LIST P1). nofail: a missing/failed
+    # the 2026-09-14 IO-storm fix (docs/todo/storage.md). nofail: a missing/failed
     # mount degrades to "symlink target missing" (crush recreates fresh
     # .crush dirs on the QLC root; the next migrate run re-converges once
     # the disk is back), never a dead boot.

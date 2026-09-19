@@ -78,7 +78,7 @@ _: {
           cfg="''${RCLONE_CONFIG_PATH:?RCLONE_CONFIG_PATH not set}"
           if grep -q REPLACE_WITH "$cfg"; then
             echo "google-sync: $cfg still contains OAuth placeholders." >&2
-            echo "Complete the go-live checklist (TODO_LIST.md P0): create the OAuth" >&2
+            echo "Complete the go-live checklist (docs/todo/services.md): create the OAuth" >&2
             echo "client (publishing status 'In production'), rclone authorize EVERY" >&2
             echo "account, fill the sops token, then redeploy." >&2
             exit 1

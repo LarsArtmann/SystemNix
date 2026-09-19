@@ -262,7 +262,8 @@ When you learn something non-obvious, update the relevant doc immediately:
 - `AGENTS.md` — AI assistant guide, conventions, gotchas
 - `FEATURES.md` — Feature inventory and status
 - `ROADMAP.md` — Long-term direction
-- `TODO_LIST.md` — Actionable short/mid-term work
+- `TODO_LIST.md` — Dispatch queue: agent-actionable open work (one-liners linking into the domain libraries)
+- `docs/todo/*.md` — Domain libraries: every open item (incl. blocked/watch/decision), tagged by lifecycle — see AGENTS.md → "TODO System"
 - `docs/adr/` or `docs/architecture/` — Architecture decisions
 
 See `AGENTS.md` → "Project Documentation Files" for the full ownership table.

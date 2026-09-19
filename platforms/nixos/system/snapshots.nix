@@ -140,7 +140,7 @@ let
     '';
   };
 
-  # btrbk-data EIO repair gate (2026-09-11, TODO_LIST P0 marker-gate row).
+  # btrbk-data EIO repair gate (2026-09-11, docs/todo/storage.md /data repair item).
   # The /data -> pool send has been structurally dead since 2026-07 (EIO csum
   # errors from the unsafe-partition-shrink corruption), yet every nightly
   # run still READ the full ~258G tree for ~3h12m before dying (18G
@@ -171,7 +171,7 @@ let
       if ! btrbk -c /etc/btrbk/data.conf prune; then
         echo "btrbk-data: retention prune failed — snapshots may accumulate while the gate is active" >&2
       fi
-      echo "btrbk-data: nightly pool send deliberately SKIPPED (known /data EIO, TODO_LIST P0). This failure is the tripwire and is EXPECTED while the marker is absent; remove the gate after the T04-T08 repair." >&2
+      echo "btrbk-data: nightly pool send deliberately SKIPPED (known /data EIO, docs/todo/storage.md P0). This failure is the tripwire and is EXPECTED while the marker is absent; remove the gate after the T04-T08 repair." >&2
       exit 1
     '';
   };
@@ -717,7 +717,7 @@ in
             check_freshness /mnt/pool/backups/root "@home-hermes" yes
           fi
           # /data stays WARN-only while the /data EIO corruption stance holds
-          # (TODO_LIST P0): btrbk-data has not completed a receive since
+          # (docs/todo/storage.md): btrbk-data has not completed a receive since
           # 2026-08-20, so a hard FAIL here exit-4'd EVERY activation that
           # touched this unit file (2026-09-08/09: two un-anchored
           # generations, reboot-revert hazard). The gap stays visible via

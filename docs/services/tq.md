@@ -11,7 +11,11 @@ The pool harvests open items from `TODO_LIST.md` in `CV`, `SystemNix`,
 `go-taskqueue` (poolSettings `repos`) every 5m and runs headless crush
 agents against them (budget 30 enqueues/day, max 3/tick, 2 concurrent,
 project-exclusive, review on — calibrated from the live round-9 dogfood
-window). The model is pinned per-repo by the `.crushrc` managed block the
+window). **Since the 2026-09-19 TODO split, SystemNix's `TODO_LIST.md` is
+the DISPATCH QUEUE only** (agent-actionable `[ready]` one-liners; the full
+entries + blocked/watch/decision items live in `docs/todo/*.md` libraries —
+see AGENTS.md → "TODO System"). Blocked items are deliberately outside the
+harvest so agents stop being dispatched at sudo/push/browser-gated work. The model is pinned per-repo by the `.crushrc` managed block the
 `tq-bootstrap` oneshot ensures at every deploy (`zai/glm-5.3-flash`,
 reasoning xhigh) and commits locally (never pushes). SystemNix carries an
 explicit verify gate (`--verify SystemNix=nix flake check --no-build`);
@@ -66,7 +70,9 @@ replays).
   **Cancel instead:** `tq cancel <TASK_ID> --force` (cooperative cancel of
   a running task).
 - **Dedup zombie:** a cancelled task HOLDS its dedup key; to make harvest
-  re-arm an item, edit the item text in the repo's TODO_LIST.md.
+  re-arm an item, edit the item text in the repo's TODO_LIST.md (queue
+  one-liners link into `docs/todo/*.md` — edit the library entry too so
+  they cannot drift apart).
 - **Repo refuses agents ("dirty tree"):** deliberate fail-safe
   (`allow-dirty=false`) — the PMA auto-commit daemon converges trees within
   minutes; no action needed.

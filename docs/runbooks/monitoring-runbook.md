@@ -107,7 +107,7 @@ When an alert fires, find the service name below and follow the steps.
 ### Hermes down — AI gateway unavailable
 
 - **Fix:** `sudo systemctl restart hermes`
-- **Manual steps:** May need SSH deploy key installed or fallback model set (see TODO_LIST.md)
+- **Manual steps:** May need SSH deploy key installed or fallback model set (see docs/todo/services.md)
 
 ---
 

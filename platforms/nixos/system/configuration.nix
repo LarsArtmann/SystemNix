@@ -1058,8 +1058,8 @@ in
       #   3. Error — getAuthorSignature fails loud instead of silent fallback
       # See modules/nixos/services/projects-management-automation.nix for the
       # env wiring; see go-commit pkg/commit/git/gogit.go for the resolver.
-      # Resumes the auto-commit daemon (disabled 2026-08-12, tracked by
-      # TODO_LIST.md:148 — "PMA daemon: stop committing broken flake.lock").
+      # Resumes the auto-commit daemon (disabled 2026-08-12, tracked in
+      # docs/todo/upstream.md — "PMA daemon: stop committing broken flake.lock").
       # The 4-layer tarball regression defense is deployed
       # (CHANGELOG.md:2026-08-12 — registry override + tarball guard +
       # nix flake lock hygiene + scoped `nix flake update`); the

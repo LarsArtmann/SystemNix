@@ -55,4 +55,4 @@ These had advanced past the broken locked rev to a rev whose FODs build:
 2. Flip each URL in `flake.nix` back to the upstream form above.
 3. `nix flake lock` (full, so stale orphan nodes are dropped).
 4. `nix flake check --no-build` + full toplevel build.
-5. Delete this file and remove the TODO_LIST entry.
+5. Delete this file and remove the docs/todo/upstream.md entry.

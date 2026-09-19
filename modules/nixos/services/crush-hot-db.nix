@@ -1,6 +1,6 @@
 # crush-hot-db — relocate per-project crush session DBs off the QLC root.
 #
-# The 2026-09-14 boot IO storm (TODO_LIST P1): `~/projects/**/.crush/crush.db`
+# The 2026-09-14 boot IO storm (docs/todo/storage.md): `~/projects/**/.crush/crush.db`
 # (2-5 GB each + WALs, 5+ concurrent sessions) churns seeky SQLite on the QLC
 # `@` subvolume, pinning io PSI some avg60 at 40-60% for hours while memory
 # stays pristine — the exact memory-emergency-guard Zone 6 signature, which

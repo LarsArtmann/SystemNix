@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# IO-PSI forensics bundle — attribution capture at trap time (TODO_LIST T1).
+# IO-PSI forensics bundle — attribution capture at trap time (docs/todo/stability.md).
 #
 # A guard Zone 6 trip (or the deploy pressure gate) proves "I/O is stalled";
 # it does NOT name the culprit. This script snapshots the evidence the moment

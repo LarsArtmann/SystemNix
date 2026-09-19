@@ -10,6 +10,9 @@ For short-term actionable work, see [TODO_LIST.md](./TODO_LIST.md). For current 
 
 ## Theme 1: Reliability & Resilience
 
+- **Proper `@home` subvolume layout** (graduated from TODO P7 2026-09-19) — one day; migration window + hardware-configuration + btrbk together
+- **NVMe drive replacement evaluation** (graduated from TODO P7 2026-09-19) — 58+ unsafe shutdowns; TLC replacement / RAID1 `/data` / UPS
+
 The system has been hardened through multiple crash cycles. The root cause chain is now well-understood: QLC NAND SLC cache exhaustion → I/O queue → kernel freeze → WDT reset, compounded by systemd-oomd killing critical services (nix-daemon, PMA) during memory pressure bursts. Mitigations deployed: daily fstrim, `commit=300`, BFQ I/O priority tiers, `ManagedOOMPreference=omit` on critical services, memory.events monitoring. Remaining work:
 
 - **Off-site backup** — **pool safety net is LIVE (2026-08-17):** btrbk root+data sends + every application backup (forgejo, pocket-id, immich, twenty, manifest, paperless) land on the 2×16 TB BTRFS mirror — the single-NVMe risk is closed. The 3rd, OFF-SITE copy is **DECIDED (2026-09-11): Hetzner StorageBox BX11 + BorgBackup** (repokey-blake2, port 23; rejected: Google Photos/Drive — `google-sync` DORMANT + mirrors live data not snapshots — and sdf vault rotation — drive FROZEN, unbounded RPO). Rationale + blueprint: `docs/research/hetzner-storagebox-borgbackup.md`. NOT yet deployed — implementation tracked in TODO_LIST
@@ -32,6 +35,8 @@ The system has been hardened through multiple crash cycles. The root cause chain
 ---
 
 ## Theme 2: Security Hardening
+
+- **AppArmor enablement** (graduated from TODO P7 2026-09-19) — commented out in security-hardening.nix; was rejected for 2026-09-10 kernel-hardening adoption (breaks latest-kernel requirement context) — revisit only with a targeted profile set
 
 - **Firewall deny-by-default** — NixOS currently allows all inbound. Docker punches its own holes. Transition to explicit allowlist
 - **Bind Immich to localhost** — currently on `0.0.0.0` with `openFirewall`. Caddy already reverse-proxies
@@ -58,6 +63,10 @@ The system has been hardened through multiple crash cycles. The root cause chain
 
 ## Theme 4: Architecture & Code Quality
 
+- **Darwin HM parity** (graduated from TODO P7 2026-09-19) — disk constrained (256GB SSD 90-95% full); minimal HM config by design
+
+- **Disabled service triage** (graduated from TODO P7 2026-09-19) — voice-agents + monitor365 remain (minecraft decided KEEP 2026-09-15; monitor365's own decision item lives in docs/todo/services.md)
+
 - **Split large modules** — signoz.nix split (943→511L), forgejo.nix split (725→353L). Monitor365 restructured (716L→151L). Remaining candidates: `configuration.nix` is the largest unsplit file
 - **Extract dnsblockd** — ~930 lines of production Go embedded in the Nix config. Candidate for standalone repo (see `docs/planning/2026-05-03_02-52_extract-dnsblockd-from-systemnix.md`)
 - **Typed NixOS module options** — many modules use `mkEnableOption` only. Add typed options for ports, paths, timeouts → enables validation and testing
@@ -79,7 +88,7 @@ Items that benefit the broader Nix ecosystem:
 - **Third-party**: `jscpd` lockfile publishing, XRT boost 1.87+ compat for `nix-amd-npu`, direnv caching pattern (fish-native mtime gate, GC root optimization), wf-recorder FFmpeg 7 compat, hermes-agent `py-modules` fix
 - **LarsArtmann apps**: dnsblockd OTEL cardinality leak, Monitor365 DuckDB pool deadlock root cause, DiscordSync chattr ExecStartPre, PMA daemon broken flake.lock commits, Hermes directory auto-creation, browser-history `CheckpointStore` + `expires_at` reaper + registration-lock release, cqrs-htmx import-path gating, BuildFlow pre-commit devShell binaries, picoclaw modernc bump, golangci-lint-auto-configure vendoring
 
-See [TODO_LIST.md](./TODO_LIST.md) Priority 6 for detailed task breakdowns.
+Detailed tasks live in [docs/todo/upstream.md](./docs/todo/upstream.md); the dispatch queue is [TODO_LIST.md](./TODO_LIST.md).
 
 ---
 
