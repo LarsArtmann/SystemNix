@@ -1,0 +1,31 @@
+# TODO — Ai-stack
+
+FastFlowLM (NPU), llama-rag/llama.cpp (incl. the upstream bisect), ollama, GPU/ROCm runtime, embeddings/RAG consumers, whisper batches.
+
+Domain LIBRARY of the [TODO system](../../TODO_LIST.md) — every open item for this domain, any lifecycle. The dispatch QUEUE of agent-actionable (`[ready]`) items is `TODO_LIST.md`; the tq pool harvests only the queue.
+
+House rules (enforced by convention, see AGENTS.md → "TODO System"): file an item under the domain that owns the FIX, not the symptom it mentions; one item = one ask + `**Source:**` pointer — verification narratives go to the status report, never the item; `[x]` rows are pruned to `CHANGELOG.md` at every pass; NO system-state narratives here (AGENTS.md and `docs/services/*` runbooks own state).
+
+Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/external console/owner hands · `[blocked:push]` needs an upstream push/tag (agents implement, never push) · `[blocked:deploy]` waits on a deploy · `[watch]` time-gated verification · `[decision]` owner question.
+
+## Prioritized
+
+- [ ] [decision] **MiniMax quota decision (carried ×5)** — upgrade / PAYG / wait for reset
+- [ ] [ready] **FastFlowLM smoke: assert model NAME in `/v1/models` + idle-check unit test**. **Source:** 08-18 19-56 §e.3/§f.21-22
+- [ ] [watch] **flm upstream release watch (T3.4)** — v1.0.2 SIGABRT heap bug recurrence watch (20:17 coredump 08-31); v1.0.3 retry gated on the 7.2.2 reboot. **Source:** stability plan T3.4
+
+## Backlog (untriaged harvest)
+
+- [ ] [ready] **Check Jan's model registry for dangling references to the trashed gemma GGUF** — "never imported" is inferred from the path-guard bullet, not verified. **Source:** archived 2026-09-12_03-54 §1
+- [ ] [ready] **Gate the flm smoke probe on the corpse signature** — recent `bind: Address already in use` in the fastflowlm journal → fail fast instead of a 480s stall + 21.6 GB cold-load per smoke; cold-load-aware skip/long-timeout when the socket is idle. **Source:** docs/status/archived/2026-09-12_00-59 §f.16-17
+- [ ] [ready] **flm-dark aggregate monitoring check** — verify whether Gatus/Discord alerted at ANY point during the 7 flm-dark days; if silent, add an "flm consumers dark" aggregate check; recalibrate PMA "Commit Health" thresholds against a week of 100% heuristic fallbacks (did `fallbacks_over_threshold` trip? if not, recalibrate). **Source:** `2026-09-14_09-31` §f.22-23
+- [ ] [watch] **llama-rag monitoring depth** — Gatus FUNCTIONAL probes (`/v1/embeddings` 1024-dim + `/v1/rerank` ranking — liveness-only today) + a GPU-utilization/VRAM metric with a SigNoz >90% alert (post RAG-ungrey; the 20260911 regression row owns the outage itself). **Source:** `archived/2026-08-20_05-19_*` §f.19/23-27
+- [ ] [ready] Source-check crush for a native state-dir/XDG_STATE override; if present, migrate to it and retire the symlink layer (symlinks stay as compat). **Source:** same report §f14
+- [ ] [ready] Re-scope or close TODO 434 (deploy.sh llama containment stop-list) — the pin-back to llama.cpp 0.3.0 fixed the root cause (re-armed units serve instead of wedging), making the stop-list largely MOOT; decide at next review, do not build dead defense. **Source:** docs/status/2026-09-18_02-45_task-000001a0b1d43f78d4325627260af417c7ed.md §c
+- [ ] [watch] Post-deploy llama-rag verification chain: `/health` 200 on :8848/:8849, `/v1/embeddings` 1024-dim, `/v1/rerank` correct ranking, first PRODUCTION run of `llama-rag-leak-metrics` as root (`leaked_instances 0`; agent-run as lars miscounts), Gatus "llama.cpp Leaked Instances" green. **Source:** docs/status/2026-09-18_02-45_task-000001a0b1d43f78d4325627260af417c7ed.md §b
+- [ ] [ready] `nixpkgs-llama-rag` pin expiry review — schedule a recurring probe (monthly or per-lock-bump `nix build` of upstream llama.cpp 0.4.x); drop the input once 0.4.0+ is fixed upstream AND re-verified live; a pinned second nixpkgs input silently rots otherwise. **Source:** docs/status/2026-09-18_02-45_task-000001a0b1d43f78d4325627260af417c7ed.md §e.4
+- [ ] [decision] Paperless semantic reranking direction — drop the `:8849` reranker side of llama-rag (and its Gatus/smoke checks) at re-enable, or file/track a paperless-ngx feature request first — BLOCKED: does the owner actually want reranking in paperless semantic search? (paperless 3.1.3 has zero reranker support, source-verified; a proxy sidecar is NOT semantically valid — reranking is query-time)
+- [ ] [ready] **Bisect the llama.cpp 0.3.0 mid-load CPU-spin upstream (ROCm runtime / kernel / GPU-state — upstream of llama.cpp) — THE gate for re-enabling llama-rag and unblocking the paperless RAG item** — the pinned "proven" 0.3.0 build spun ~94% CPU ×2 under the REAL gen-784 units (2h33min CPU over 2h43min wall, 8.6G written per lifecycle) and caused freeze #5, so `llama-rag.enable = false` again; NO tracked TODO carries the bisect (AGENTS documents the doctrine only). Acceptance before ANY re-enable: candidate builds soak ≥10 min under the REAL unit sandbox (`systemd-run` with the exact unit env + rocm deviceCgroup) — a shell direct-run green is not evidence (the exact freeze-5 lesson). **Source:** docs/status/2026-09-19_00-19_task-000001a0b68a0a38da1c4a597637e0401f85.md §c.1/§f.1-2
+- [ ] [ready] **Paperless RAG degradation visibility: a metric/Gatus signal for "paperless expects embeddings but :8848 is dark"** — with llama-rag config-disabled, paperless-ai degrades gracefully = the worst kind of green; nothing outside paperless's own logs surfaces the capability loss (env wiring verified live on the deployed unit 2026-09-19). **Source:** docs/status/2026-09-19_00-19_task-000001a0b68a0a38da1c4a597637e0401f85.md §d.2/§f.8
+- [ ] [ready] **Rogue-listener defense for :8848/:8849 while llama-rag is disabled** — the portGuardScript only runs on the (absent) units' start; the 2026-09-18 orphan class (hermes-cron-spawned llama-server holding :8849 for 29h) can phantom-pass future embedding smokes against a dead module. **Source:** docs/status/2026-09-19_00-19_task-000001a0b68a0a38da1c4a597637e0401f85.md §f.11
+
