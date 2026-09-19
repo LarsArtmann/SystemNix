@@ -35,7 +35,6 @@ set -euo pipefail
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
 NC='\033[0m'
 
 SERVER=""
@@ -195,7 +194,6 @@ SPIN_STRIKES_TO_TRIP=3
 prev="$(cpu_ticks "$PID")"
 samples=0
 end_epoch=$(( start_epoch + WARMUP_MAX + MINUTES * 60 ))
-spin=0
 
 while [ "$(date +%s)" -lt "$end_epoch" ]; do
   sleep "$SAMPLE_INTERVAL"
