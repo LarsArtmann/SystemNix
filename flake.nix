@@ -1693,6 +1693,11 @@
                           line = lines[lnIdx]
                           if (line ~ /# dead-guard-ok/) continue
                           if (match(line, /^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*=[[:space:]]*\$\(/)) {
+                            # `$((` opens ARITHMETIC expansion, not a command
+                            # substitution — `n=$((n + 1))` cannot fail the
+                            # capture the way `n=$(cmd)` can (llama-rag
+                            # leaked-instance counter, 2026-09-19 FP).
+                            if (substr(line, RSTART + RLENGTH, 1) == "(") continue
                             varName = line
                             sub(/^[[:space:]]*/, "", varName)
                             sub(/=[[:space:]]*\$\(.*/, "", varName)

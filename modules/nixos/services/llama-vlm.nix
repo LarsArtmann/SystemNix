@@ -294,7 +294,7 @@ _: {
           ) cfg.servers;
 
         systemd.timers = lib.mapAttrs' (
-          name: s:
+          name: _:
           lib.nameValuePair "llama-vlm-${name}-idle" {
             description = "Probe llama-vlm ${name} idle state every 5 minutes";
             wantedBy = [ "timers.target" ];
