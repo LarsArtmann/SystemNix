@@ -242,27 +242,28 @@ _: {
             local svc="''${1?}"
             local active_val=0
             local failed_val=0
-            local nrestarts=0
             local limit_hit=0
 
-            if systemctl is-active --quiet "$svc" 2>/dev/null; then
-              active_val=1
-            fi
-
-            # Failed state (crashed / dead-with-error) — distinct from
-            # start-limit-hit below. Inactive (idle/stopped) is NOT failed.
-            if systemctl is-failed --quiet "$svc" 2>/dev/null; then
-              failed_val=1
-            fi
-
-            nrestarts=$(systemctl_value "$svc" -p NRestarts)
+            # ONE systemctl read per service (was 4: is-active, is-failed,
+            # NRestarts, Result — ~25 monitored services × 4 forks = ~100
+            # execs per run, a real fork-storm contribution under IO
+            # pressure). ActiveState "failed" ≡ is-failed; Result
+            # "start-limit-hit" covers the limit. NRestarts comes from the
+            # merged CPU+restart state single-read (written before this
+            # block runs — one read per service per run, not two).
+            local state="" result=""
+            {
+              read -r state
+              read -r result
+            } < <(systemctl show "$svc" -p ActiveState -p Result --value 2>/dev/null)
+            state="''${state:-}"
+            result="''${result:-}"
+            [ "$state" = "active" ] && active_val=1
+            [ "$state" = "failed" ] && failed_val=1
+            [ "$result" = "start-limit-hit" ] && limit_hit=1
+            local nrestarts
+            nrestarts=$(grep "^$svc " "$RESTART_STATE" 2>/dev/null | awk '{print $2}') || nrestarts=0
             nrestarts="''${nrestarts:-0}"
-
-            local result
-            result=$(systemctl show "$svc" -p Result --value 2>/dev/null) || result=""
-            if [ "$result" = "start-limit-hit" ]; then
-              limit_hit=1
-            fi
 
             echo "system_service_active{service=\"''${svc}\"} ''${active_val}"
             echo "system_service_state_failed{service=\"''${svc}\"} ''${failed_val}"
