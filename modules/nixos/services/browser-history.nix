@@ -122,6 +122,56 @@
         '';
       };
 
+      # One-time probe-registration purge (see probeRegistrationCleanup above).
+      # Email-scoped on BOTH surfaces — never a blanket UserRegistered delete:
+      # the events table is the sole journal and lars@ is NOT a journal row
+      # (provisioned user), but future registrations must never be caught.
+      probeRegistrationPurge = pkgs.writeShellApplication {
+        name = "browser-history-probe-registration-purge";
+        runtimeInputs = [
+          pkgs.sqlite
+          pkgs.coreutils
+        ];
+        text = ''
+          email="${cfg.probeRegistrationCleanup.email}"
+          state_dir="''${STATE_DIRECTORY:-/var/lib/browser-history}"
+          db="''${state_dir}/data.db"
+          marker="''${state_dir}/.probe-registration-purged-$(printf '%s' "$email" | sha256sum | cut -c1-12)"
+
+          if [ -f "$marker" ]; then
+            exit 0
+          fi
+          if [ ! -f "$db" ]; then
+            echo "browser-history-probe-registration-purge: no data.db yet, nothing to purge"
+            exit 0
+          fi
+          case "$email" in
+            *"'"*)
+              echo "browser-history-probe-registration-purge: email contains a single quote, refusing" >&2
+              exit 1
+              ;;
+          esac
+
+          result="$(sqlite3 "$db" "
+            PRAGMA busy_timeout = 5000;
+            BEGIN IMMEDIATE;
+            DELETE FROM events
+              WHERE event_type = 'UserRegistered'
+                AND json_extract(CAST(payload AS TEXT), '\$.email') = '$email';
+            SELECT 'events_deleted=' || changes();
+            DELETE FROM users_view WHERE email = '$email';
+            SELECT 'users_view_deleted=' || changes();
+            COMMIT;
+          ")" || {
+            echo "browser-history-probe-registration-purge: sqlite purge failed (retries next start)" >&2
+            exit 1
+          }
+          printf '%s\n' "$result"
+          touch "$marker"
+          echo "browser-history-probe-registration-purge: purged probe registration for $email"
+        '';
+      };
+
       domain = config.networking.domain;
       fqdn = "history.${domain}";
       pocketIdEnabled = config.services.pocket-id-config.enable;
@@ -171,6 +221,29 @@
           type = lib.types.str;
           default = "5min";
           description = "Collection interval (OnUnitActiveSec).";
+        };
+      };
+
+      options.services.browser-history.probeRegistrationCleanup = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = ''
+            One-time purge of a probe registration's residue (2026-09-18: the
+            registration-gate verification created probe-gate@example.com on
+            prod; the freeze reboots already dropped its users_view row, so
+            only the UserRegistered journal event remains). Runs as a
+            marker-guarded server ExecStartPre — the DynamicUser service owns
+            the StateDirectory, so the service performs the delete itself:
+            no root path, no concurrent-writer window (the server process is
+            not running yet). Failure is non-fatal ("-"-prefixed): the server
+            starts anyway and the purge retries on the next start.
+          '';
+        };
+
+        email = lib.mkOption {
+          type = lib.types.str;
+          description = "Email of the probe registration to purge.";
         };
       };
 
@@ -320,6 +393,19 @@
             systemd.services.browser-history-oidc-setup = oidcSetupService;
           }
         ))
+
+        # ── One-time probe-registration purge (see probeRegistrationCleanup) ─────
+        # Appended AFTER the OIDC gate's ExecStartPre (list concatenation across
+        # mkMerge branches, same mechanism as the EnvironmentFile pair above).
+        (lib.mkIf (cfg.enable && cfg.probeRegistrationCleanup.enable) {
+          systemd.services.browser-history.serviceConfig = lib.mkMerge [
+            {
+              ExecStartPre = [
+                "-${lib.getExe probeRegistrationPurge}"
+              ];
+            }
+          ];
+        })
 
         # ── Agent: SystemNix defaults for machines that enable it ──────────────────
         # The agent extracts browser history from local profiles and pushes it

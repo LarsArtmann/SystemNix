@@ -486,6 +486,20 @@ in
 
       browser-history = {
         enable = true; # Browser history intelligence server
+        # One-time cleanup for the 2026-09-18 registration-gate probe user:
+        # the freeze reboots already dropped its users_view row (live
+        # browser_history_user_count 0 = pre-probe value), so only the
+        # UserRegistered journal event remains in the DB. Purged by a
+        # marker-guarded ExecStartPre at the next server start (no root
+        # needed — the service user owns the StateDirectory). Remove this
+        # block once the marker file is observed in /var/lib/browser-history.
+        # NOTE: do NOT fire a fresh registration probe before the count-gap
+        # fix (TODO gate-count item) — with count 0 the probe 201s and
+        # manufactures new debris.
+        probeRegistrationCleanup = {
+          enable = true;
+          email = "probe-gate@example.com";
+        };
       };
 
       # CV — resume generator + career pipeline server (cv.home.lan).
