@@ -101,22 +101,28 @@ _: {
         };
       };
 
+      # NOTE: systemd.serviceConfig.ExecStart takes ONE command LINE per entry —
+      # a Nix list renders as MULTIPLE ExecStart lines (systemd rejects the unit
+      # at load: the argv tokens are not absolute executable paths). Join to a
+      # single string (caught by pre-deploy-check §12, 2026-09-19).
       execStart =
         s:
-        [
-          (lib.getExe' cfg.package "llama-server")
-          "-m"
-          "${s.modelPath}"
-          "--port"
-          (toString s.backendPort)
-          "-c"
-          (toString s.context)
-        ]
-        ++ lib.optionals (s.mmprojPath != null) [
-          "--mmproj"
-          "${s.mmprojPath}"
-        ]
-        ++ s.extraArgs;
+        lib.concatStringsSep " " (
+          [
+            (lib.getExe' cfg.package "llama-server")
+            "-m"
+            "${s.modelPath}"
+            "--port"
+            (toString s.backendPort)
+            "-c"
+            (toString s.context)
+          ]
+          ++ lib.optionals (s.mmprojPath != null) [
+            "--mmproj"
+            "${s.mmprojPath}"
+          ]
+          ++ s.extraArgs
+        );
 
       bridgeConn =
         name: s:
