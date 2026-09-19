@@ -377,6 +377,14 @@ in
       # runs from a daily timer + deploy.sh provisioner loop, skips live
       # sessions. See modules/nixos/services/crush-hot-db.nix.
       crush-hot-db.enable = true;
+      # User cache subvolumes → Samsung TLC (2026-09-18/19 IO-audit
+      # relocation): the nix fetch cache (~8.7 G gitv3+tarballs) leaves the
+      # saturated QLC root / @cache-home for users/lars/cache/nix on tlc.
+      # Before the FIRST switch: `mv ~/.cache/nix ~/.cache/nix.pre-tlc &&
+      # mkdir ~/.cache/nix` (the mount would shadow the old dir); copy the
+      # old content back afterwards, then trash it. See
+      # modules/nixos/services/hot-user-caches.nix.
+      hot-user-caches.enable = true;
       attic-config = {
         enable = true;
         cachePublicKey = "monitor365:/vu56vS4pTdjoltqqqj80dJ6freEdzEEf4ugdZUPpY8=";

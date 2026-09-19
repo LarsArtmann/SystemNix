@@ -104,6 +104,32 @@ if ! todosys_out=$(scripts/check-todo-system.sh 2>&1); then
     exit 1
 fi
 
+# Fast guard: hooks and scripts must never gain unbounded scans of the
+# AI-model blob trees. Incident class (2026-09-19 12:23–13:41): a recursive
+# content sweep over 60 GB-class model blobs ran 1h07 under chronic IO
+# pressure (root NVMe 100% busy, PSI some avg10 = 55%) — the spawner was
+# never identified in-tree, so this makes the class structurally impossible
+# from the commit path. Content-based predicate on ADDED, non-comment lines;
+# data-corruption-repair.sh is allowlisted (manual ops tool, gated behind
+# io_window_clear). Milliseconds of runtime.
+blob_scan_hits=""
+while IFS= read -r -d '' f; do
+    case "$f" in
+        .githooks/pre-commit | scripts/data-corruption-repair.sh) continue ;;
+    esac
+    if git diff --cached -U0 -- "$f" 2>/dev/null \
+        | grep -E '^\+[^+]' | grep -vE '^\+[[:space:]]*(#|//)' \
+        | grep -qE '(grep|rg|fd|find)([[:space:]]|-)[^#|;&]*[[:space:]]/data/(ai|models)'; then
+        blob_scan_hits="${blob_scan_hits}  ${f}\n"
+    fi
+done < <(git diff --cached --name-only --diff-filter=ACM -z -- '.githooks/*' 'scripts/*')
+if [ -n "$blob_scan_hits" ]; then
+    log_error "Staged hook/script changes add a scan over AI-model blob trees:"
+    echo -e "$blob_scan_hits"
+    log_error "Recursive scans of 60 GB-class model blobs livelock the box under IO pressure (2026-09-19). Scan a manifest or a single dir instead."
+    exit 1
+fi
+
 # Fast guard: moved/deleted markdown files must not leave dangling references.
 # The archive-move class (2026-08-18): `git mv docs/status/X.md
 # docs/status/archived/` left stale `docs/status/X.md` links in TODO_LIST and
