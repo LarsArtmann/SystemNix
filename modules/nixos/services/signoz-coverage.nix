@@ -389,14 +389,37 @@
           in
           {
             # ── Enforced, emitting today ──
+            # Onboarding checklist for NEW entries (the "4 remaining trace-gap
+            # flips" TODO, closed 2026-09-19): to land a service on the SigNoz
+            # Services page it needs (1) real span sites in the binary, (2) the
+            # OTLP wiring (env or service-native config), (3) a registry entry
+            # here with the right wiring — the reverse assertion refuses silent
+            # noops. `signoz_traces_expected` is the onboarding checklist: at 0
+            # upstream gaps the gap-budget check below stays alive at 0 as the
+            # permanent silent-noop tripwire.
             cv-server = env "cv-application" 26; # upstream hardcodes the service name
             browser-history = env "browser-history" 26;
             discordsync = env "discordsync" 26;
             crush-daily = env "crush-daily" 26;
-            file-and-image-renamer = env "file-and-image-renamer" 720; # spans only when files are renamed
+            # Reclassified to wiring "event" 2026-09-19 (the missing-3 TODO,
+            # docs/todo/monitoring.md): the renamer is env-wired and HAS
+            # emitted spans (pre-2026-09 rename work), but zero renames in
+            # 40+ days left it silently over even the generous 720h budget —
+            # the gotenberg 2026-09-17 class: work-driven cadence, any finite
+            # budget is a standing false page. Liveness/availability stays
+            # owned by the service's own Gatus checks.
+            file-and-image-renamer = {
+              serviceName = "file-and-image-renamer";
+              wiring = "event";
+              maxAgeHours = 720;
+            };
             # Same binary (health subcommand), same serviceName — spans of both
             # units are attributed to "file-and-image-renamer".
-            file-and-image-renamer-health = env "file-and-image-renamer" 720;
+            file-and-image-renamer-health = {
+              serviceName = "file-and-image-renamer";
+              wiring = "event";
+              maxAgeHours = 720;
+            };
             # Reclassified to "event" 2026-09-17: 0 spans ALL-TIME in the
             # retention window (ClickHouse distributed_signoz_index_v3) while
             # the exporter wiring is proven (it emitted spans pre-2026-09
@@ -423,11 +446,24 @@
             dnsblockd = {
               serviceName = "dnsblockd";
               wiring = "config";
+              # Dense always-on emitter (spans every few seconds) — 6h budget
+              # catches the :9090-wedge class (a wedged daemon stops emitting
+              # while the process stays alive) 4x faster than the 26h default
+              # (2026-09-13 freshness-budget TODO). Request-driven services
+              # (cv, browser-history, crush-daily) KEEP 26h: an overnight or
+              # weekend without requests is healthy, not dark.
+              maxAgeHours = 6;
             };
             # FLIPPED to enforced 2026-08-31: upstream 901978e (pushed) added
             # OTLP/HTTP trace export (DiscordSync pattern); flake input bumped
-            # same day. Spans must now flow within the 26h budget.
-            bank-sync = env "bank-sync" 26;
+            # same day. Spans must now flow within the 6h budget — the sync
+            # timer fires every 5 min, so 6h means ~70 missed syncs (dense
+            # always-on budget, same rationale as dnsblockd above).
+            bank-sync = {
+              serviceName = "bank-sync";
+              wiring = "env";
+              maxAgeHours = 6;
+            };
 
             # ── Known upstream gaps (binary cannot emit yet) ──
             overview = {
