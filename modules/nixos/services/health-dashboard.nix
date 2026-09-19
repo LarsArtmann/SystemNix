@@ -155,7 +155,7 @@
               name = "health";
               group = "Monitoring";
               description = "Federated go-health hub";
-              icon = "healthchecks.png";
+              icon = "mdi-heart-pulse";
             };
             monitored = true;
           };
