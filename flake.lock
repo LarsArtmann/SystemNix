@@ -954,11 +954,10 @@
     "erraudit": {
       "flake": false,
       "locked": {
-        "lastModified": 1786902866,
-        "narHash": "sha256-PcCb7Ono0zGnjeYJCOpi33cgAoifenMKSGIyNmGamhc=",
+        "lastModified": 1789762678,
+        "narHash": "sha256-fBO9fxYFwiDgDNSqXoFoeIZkcWaADLTE+64s8HF3m0o=",
         "ref": "refs/tags/v0.3.1",
-        "rev": "1279859cd27cdb36c9157bf76376193f96560ee3",
-        "revCount": 1359,
+        "rev": "a295da6adedb786ef79f00d18ad7c2135fbeef2e",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/erraudit"
       },
