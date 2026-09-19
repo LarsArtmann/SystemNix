@@ -846,6 +846,7 @@
           pkgs,
           system,
           lib,
+          self,
           ...
         }:
         {
@@ -1285,6 +1286,97 @@
                       || { echo "FAIL census: per_owner grouping"; printf '%s\n' "$capt"; exit 1; }
 
                     echo "PASS: all forgejo staged-primary script fixtures" > "$out"
+                  '';
+
+              # Behavioral fixture for the browser-history probe-registration
+              # purge (2026-09-18 gate-verification residue). Runs the REAL
+              # built script (its runtimeInputs supply the real sqlite3) —
+              # no stubs — against a scratch DB seeded with the true schemas:
+              # events (go-cqrs-lite sqlite dialect) + users_view (cqrs-htmx
+              # usermgmt AutoMapperWithTombstone). Covers: email-scoped delete
+              # incl. BLOB payloads (the CAST path), decoy survival, marker
+              # lifecycle (created on success only), idempotent re-run, and
+              # the missing-db clean-skip. The Nix asserts additionally pin
+              # the unit wiring: the purge rides ExecStartPre as a "-"
+              # (non-fatal) entry WITHOUT clobbering the OIDC gate's entry.
+              browser-history-probe-purge-fixture =
+                let
+                  execPres =
+                    self.nixosConfigurations.evo-x2.config.systemd.services.browser-history.serviceConfig.ExecStartPre;
+                  purgeEntries = lib.filter (
+                    lib.hasSuffix "browser-history-probe-registration-purge"
+                  ) execPres;
+                  purgeEntry = builtins.head purgeEntries;
+                in
+                assert lib.length purgeEntries == 1;
+                assert lib.hasPrefix "-" purgeEntry;
+                assert lib.any (lib.hasInfix "browser-history-wait-oidc") execPres;
+                pkgs.runCommand "browser-history-probe-purge-fixture"
+                  {
+                    nativeBuildInputs = with pkgs; [
+                      sqlite
+                      coreutils
+                      gnugrep
+                    ];
+                    purgeBin = lib.removePrefix "-" purgeEntry;
+                  }
+                  ''
+                    set -euo pipefail
+                    FIX=$(mktemp -d)
+                    STATE="$FIX/state"; mkdir -p "$STATE"
+                    DB="$STATE/data.db"
+
+                    sqlite3 "$DB" "
+                    CREATE TABLE IF NOT EXISTS events (
+                      id TEXT PRIMARY KEY, event_type TEXT NOT NULL, aggregate_type TEXT NOT NULL,
+                      aggregate_id TEXT NOT NULL, version INTEGER NOT NULL,
+                      schema_version INTEGER NOT NULL DEFAULT 1, payload BLOB,
+                      payload_encoding TEXT NOT NULL DEFAULT 'json', metadata TEXT,
+                      occurred_at TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                      UNIQUE(aggregate_type, aggregate_id, version));
+                    CREATE TABLE IF NOT EXISTS users_view (
+                      key TEXT PRIMARY KEY, email TEXT, display_name TEXT, email_verified INTEGER,
+                      totp_enabled INTEGER, created_at TEXT, updated_at TEXT, data TEXT, tombstoned INTEGER);
+                    "
+                    sqlite3 "$DB" "
+                    INSERT INTO events (id,event_type,aggregate_type,aggregate_id,version,payload,occurred_at) VALUES
+                     ('evt-probe','UserRegistered','User','u-probe',1,'{\"schema_version\":1,\"email\":\"probe-gate@example.com\",\"roles\":[]}','2026-09-18T03:00:00Z'),
+                     ('evt-probe-blob','UserRegistered','User','u-probe2',1,CAST('{\"email\":\"probe-gate@example.com\"}' AS BLOB),'2026-09-18T03:00:00Z'),
+                     ('evt-decoy','UserRegistered','User','u-decoy',1,'{\"email\":\"other@example.com\"}','2026-09-18T03:00:00Z'),
+                     ('evt-other','VisitSaved','Visit','v1',1,'{}','2026-09-18T03:00:00Z');
+                    INSERT INTO users_view (key,email,display_name,tombstoned) VALUES
+                     ('u-probe','probe-gate@example.com','Probe',0),
+                     ('u-decoy','other@example.com','Other',0);
+                    "
+
+                    run() { STATE_DIRECTORY="$1" "$purgeBin" >"$FIX/out" 2>&1; }
+
+                    run "$STATE"
+                    grep -q 'events_deleted=2' "$FIX/out" || { echo 'FAIL: events_deleted != 2'; cat "$FIX/out"; exit 1; }
+                    grep -q 'users_view_deleted=1' "$FIX/out" || { echo 'FAIL: users_view_deleted != 1'; cat "$FIX/out"; exit 1; }
+                    c=$(sqlite3 "$DB" "SELECT count(*) FROM events WHERE event_type='UserRegistered';")
+                    [ "$c" = "1" ] || { echo "FAIL: decoy UserRegistered must survive, got $c"; exit 1; }
+                    c=$(sqlite3 "$DB" "SELECT count(*) FROM events WHERE event_type='UserRegistered' AND CAST(payload AS TEXT) LIKE '%probe-gate%';")
+                    [ "$c" = "0" ] || { echo 'FAIL: probe events remain'; exit 1; }
+                    c=$(sqlite3 "$DB" "SELECT count(*) FROM users_view;")
+                    [ "$c" = "1" ] || { echo 'FAIL: users_view decoy must survive'; exit 1; }
+                    c=$(sqlite3 "$DB" "SELECT count(*) FROM events;")
+                    [ "$c" = "2" ] || { echo 'FAIL: non-registration events must survive'; exit 1; }
+                    ls "$STATE"/.probe-registration-purged-* >/dev/null || { echo 'FAIL: marker missing'; exit 1; }
+
+                    run "$STATE"
+                    c=$(sqlite3 "$DB" "SELECT count(*) FROM events;")
+                    [ "$c" = "2" ] || { echo 'FAIL: second run mutated state'; exit 1; }
+
+                    STATE3="$FIX/state3"; mkdir -p "$STATE3"
+                    run "$STATE3"
+                    ls "$STATE3"/.probe-registration-purged-* >/dev/null 2>&1 && { echo 'FAIL: marker without db'; exit 1; }
+
+                    STATE2="$FIX/state2"; mkdir -p "$STATE2"; echo notadb > "$STATE2/data.db"
+                    if run "$STATE2"; then echo 'FAIL: corrupt db must fail'; exit 1; fi
+                    ls "$STATE2"/.probe-registration-purged-* >/dev/null 2>&1 && { echo 'FAIL: marker on failure'; exit 1; }
+
+                    echo 'PASS: browser-history probe-purge fixture' > "$out"
                   '';
 
               # Fixture test for scripts/migrate-forgejo-subvol.sh guard
