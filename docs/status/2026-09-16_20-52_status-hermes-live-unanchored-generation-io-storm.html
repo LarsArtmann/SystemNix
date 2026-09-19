@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Status Report — Hermes Live, Generation Un-anchored — 2026-09-16 20:52</title>
+    <title>
+      Status Report — Hermes Live, Generation Un-anchored — 2026-09-16 20:52
+    </title>
     <style>
       /* =========================================================================
          BAUHAUS DARK — Dashboard template
@@ -855,11 +857,15 @@
             <div class="tri"></div>
           </div>
           <div class="hero-badge">Status Report</div>
-          <h1>Hermes Live on @home-hermes — Generation Still UN-ANCHORED, IO Storm Active</h1>
+          <h1>
+            Hermes Live on @home-hermes — Generation Still UN-ANCHORED, IO Storm
+            Active
+          </h1>
           <p class="hero-subtitle">
-            Snapshot at 2026-09-16 20:52 CEST. Migration functionally complete and serving; the
-            reboot-revert landmine persists 26h after the first exit-4; ~110-commit push landed at
-            20:16 (GH013 resolved); machine under a real IO storm with journal reads hanging.
+            Snapshot at 2026-09-16 20:52 CEST. Migration functionally complete
+            and serving; the reboot-revert landmine persists 26h after the first
+            exit-4; ~110-commit push landed at 20:16 (GH013 resolved); machine
+            under a real IO storm with journal reads hanging.
           </p>
         </div>
 
@@ -867,48 +873,140 @@
         <div class="stat-grid">
           <div class="stat-card stat-bad">
             <div class="stat-value">ARMED</div>
-            <div class="stat-label">Un-anchored generation (reboot = revert + brainless hermes)</div>
+            <div class="stat-label">
+              Un-anchored generation (reboot = revert + brainless hermes)
+            </div>
           </div>
           <div class="stat-card stat-bad">
             <div class="stat-value">62.6%</div>
-            <div class="stat-label">IO PSI some avg60 (disk 100% busy, load 49–72)</div>
+            <div class="stat-label">
+              IO PSI some avg60 (disk 100% busy, load 49–72)
+            </div>
           </div>
           <div class="stat-card stat-good">
             <div class="stat-value">LIVE</div>
-            <div class="stat-label">Hermes on @home-hermes (mount + gateway + mnemosyne verified)</div>
+            <div class="stat-label">
+              Hermes on @home-hermes (mount + gateway + mnemosyne verified)
+            </div>
           </div>
           <div class="stat-card stat-good">
             <div class="stat-value">20:16</div>
-            <div class="stat-label">Push landed (origin = c9f52789; 2 auto-commits ahead)</div>
+            <div class="stat-label">
+              Push landed (origin = c9f52789; 2 auto-commits ahead)
+            </div>
           </div>
         </div>
 
         <div class="card card-problem">
           <h4>Read this first</h4>
           <p>
-            <strong>Anchor before anything reboots this machine.</strong> <code>readlink /run/current-system</code> =
-            <code>…ef34387 (26.11.20260913)</code> but <code>/nix/var/nix/profiles/system</code> → system-779 =
-            <code>…eaad089 (26.11.20260911, PRE-migration)</code>. A crash, WDT reset, or manual reboot boots
-            eaad089: no home-hermes fstab entry → empty placeholder dir mounts over nothing → hermes starts
-            brainless → full config revert. Two un-anchored systems deep (08:25's and 17:48's exit-4s).
+            <strong>Anchor before anything reboots this machine.</strong>
+            <code>readlink /run/current-system</code> =
+            <code>…ef34387 (26.11.20260913)</code> but
+            <code>/nix/var/nix/profiles/system</code> → system-779 =
+            <code>…eaad089 (26.11.20260911, PRE-migration)</code>. A crash, WDT
+            reset, or manual reboot boots eaad089: no home-hermes fstab entry →
+            empty placeholder dir mounts over nothing → hermes starts brainless
+            → full config revert. Two un-anchored systems deep (08:25's and
+            17:48's exit-4s).
           </p>
           <pre><code>sudo nix-env --profile /nix/var/nix/profiles/system --set /run/current-system
 sudo /run/current-system/bin/switch-to-configuration boot</code></pre>
-          <p>Alternative: one clean <code>nix run .#deploy</code> (a clean activation bumps the profile) — currently blocked by the IO-storm pressure gate (PSI ≥ 20%).</p>
+          <p>
+            Alternative: one clean <code>nix run .#deploy</code> (a clean
+            activation bumps the profile) — currently blocked by the IO-storm
+            pressure gate (PSI ≥ 20%).
+          </p>
         </div>
 
         <h2 id="a"><span class="num">01</span>a) FULLY DONE</h2>
         <table>
-          <thead><tr><th>Item</th><th>Evidence</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Evidence</th>
+            </tr>
+          </thead>
           <tbody>
-            <tr><td><strong>Hermes @home-hermes migration LIVE</strong> — subvol mounted at /home/hermes, hermes serving from it (gateway PID 3947796, mnemosyne, mcp_death_supervisor)</td><td>findmnt: <code>btrfs nvme0n1p6[/@home-hermes]</code>; pgrep 20:51; parity-verified 92.3 GB / 948,341 files</td></tr>
-            <tr><td><strong>7h hermes outage recovered</strong> (08:25→15:44) without a deploy — mount start + reset-failed + start</td><td>timeline in docs/status/2026-09-16_17-55 report</td></tr>
-            <tr><td><strong>sops-recipient-audit fixed</strong> — list-literal + key_groups false-positive bugs; assertions <code>[]</code>, flake check green</td><td>fixes in HEAD; carried by daemon commits 1a03314d/07f87403; pushed</td></tr>
-            <tr><td><strong>deploy.sh stc-wedge detector fixed</strong> — holds_stc_lock() /proc/fd verification (pbx ssh false positive class)</td><td>commit d5501bdf; pushed</td></tr>
-            <tr><td><strong>Migration script storm-hardened</strong> — PSI preflight, ionice both passes, partial-staging wipe, mock-tested guard flow</td><td>commits 37c6fae6 / ff366633 / daemon 38fc8c8d; pushed</td></tr>
-            <tr><td><strong>~110-commit PUSH LANDED 20:16</strong> — GH013 push block resolved (unblock path; 5 sgp_ literals still in the audit script — see f/#24)</td><td>origin/master = c9f52789 @ 2026-09-16 20:16 +02:00; <code>rev-list --count origin/master..HEAD</code> = 2</td></tr>
-            <tr><td><strong>tq double-pool warning explained + root-caused</strong> — false positive in substance: PID 229432 is a parallel session's redesign dashboard on a mktemp scratch DB (<code>TQ_DB=/tmp/tmp.1iY9io55LR/scratch.db</code>), serve-only, zero shared state with the pool journal (/mnt/pool/services/tq/tq.db)</td><td>/proc/229432/environ + fd list + guard source deploy.sh:206-218; process still up at 20:51</td></tr>
-            <tr><td><strong>17:55 status report</strong> — the 30-task backlog snapshot</td><td>docs/status/2026-09-16_17-55_hermes-migration-execution-day-storm-deploy-unblocking.md</td></tr>
+            <tr>
+              <td>
+                <strong>Hermes @home-hermes migration LIVE</strong> — subvol
+                mounted at /home/hermes, hermes serving from it (gateway PID
+                3947796, mnemosyne, mcp_death_supervisor)
+              </td>
+              <td>
+                findmnt: <code>btrfs nvme0n1p6[/@home-hermes]</code>; pgrep
+                20:51; parity-verified 92.3 GB / 948,341 files
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>7h hermes outage recovered</strong> (08:25→15:44)
+                without a deploy — mount start + reset-failed + start
+              </td>
+              <td>timeline in docs/status/2026-09-16_17-55 report</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>sops-recipient-audit fixed</strong> — list-literal +
+                key_groups false-positive bugs; assertions <code>[]</code>,
+                flake check green
+              </td>
+              <td>
+                fixes in HEAD; carried by daemon commits 1a03314d/07f87403;
+                pushed
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>deploy.sh stc-wedge detector fixed</strong> —
+                holds_stc_lock() /proc/fd verification (pbx ssh false positive
+                class)
+              </td>
+              <td>commit d5501bdf; pushed</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Migration script storm-hardened</strong> — PSI
+                preflight, ionice both passes, partial-staging wipe, mock-tested
+                guard flow
+              </td>
+              <td>commits 37c6fae6 / ff366633 / daemon 38fc8c8d; pushed</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>~110-commit PUSH LANDED 20:16</strong> — GH013 push
+                block resolved (unblock path; 5 sgp_ literals still in the audit
+                script — see f/#24)
+              </td>
+              <td>
+                origin/master = c9f52789 @ 2026-09-16 20:16 +02:00;
+                <code>rev-list --count origin/master..HEAD</code> = 2
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>tq double-pool warning explained + root-caused</strong>
+                — false positive in substance: PID 229432 is a parallel
+                session's redesign dashboard on a mktemp scratch DB
+                (<code>TQ_DB=/tmp/tmp.1iY9io55LR/scratch.db</code>), serve-only,
+                zero shared state with the pool journal
+                (/mnt/pool/services/tq/tq.db)
+              </td>
+              <td>
+                /proc/229432/environ + fd list + guard source deploy.sh:206-218;
+                process still up at 20:51
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>17:55 status report</strong> — the 30-task backlog
+                snapshot
+              </td>
+              <td>
+                docs/status/2026-09-16_17-55_hermes-migration-execution-day-storm-deploy-unblocking.md
+              </td>
+            </tr>
           </tbody>
         </table>
 
@@ -916,32 +1014,92 @@ sudo /run/current-system/bin/switch-to-configuration boot</code></pre>
         <div class="issue issue-important">
           <span class="severity severity-important">Blocked on storm</span>
           <h3>Deploy chain: newest config RUNNING but not anchored</h3>
-          <div class="where">exit-4 class — activation advanced, profile skipped</div>
-          <p>Works: ef34387 config is live (hermes units, fstab, btrbk entry all from it). Missing: profile/boot-entry anchor — hence section d. Blocker: clean re-deploy blocked by pressure gate during the current storm. Effort: S (2 commands, user).</p>
+          <div class="where">
+            exit-4 class — activation advanced, profile skipped
+          </div>
+          <p>
+            Works: ef34387 config is live (hermes units, fstab, btrbk entry all
+            from it). Missing: profile/boot-entry anchor — hence section d.
+            Blocker: clean re-deploy blocked by pressure gate during the current
+            storm. Effort: S (2 commands, user).
+          </p>
         </div>
         <div class="issue issue-important">
           <span class="severity severity-important">Waiting on tonight</span>
           <h3>Migration finalize prerequisites</h3>
           <div class="where">btrbk + settling</div>
-          <p>Open: first <code>@home-hermes</code> btrbk snapshot + ~92 GB pool send runs TONIGHT 23:00 (0 home-hermes snapshots exist yet; latest root snap = @.20260915T2300). <code>/home/hermes.old</code> still on disk (92 GB, hermes-owned, unreadable to lars). Effort: S to verify tomorrow; finalize = M after settling days.</p>
+          <p>
+            Open: first <code>@home-hermes</code> btrbk snapshot + ~92 GB pool
+            send runs TONIGHT 23:00 (0 home-hermes snapshots exist yet; latest
+            root snap = @.20260915T2300). <code>/home/hermes.old</code> still on
+            disk (92 GB, hermes-owned, unreadable to lars). Effort: S to verify
+            tomorrow; finalize = M after settling days.
+          </p>
         </div>
         <div class="issue issue-important">
           <span class="severity severity-important">Degraded right now</span>
           <h3>Observability under IO storm</h3>
-          <div class="where">journalctl reads hang (D-state journal + 100% busy QLC)</div>
-          <p>Works: /proc, findmnt, ps, git. Broken tonight: journal queries timeout — failed-units list, memory-guard restore state, signoz-provision state are UNVERIFIED as of 20:52 (marked, not guessed). Textfile metrics dir not found at either probed path — needs the correct path re-check post-storm. Effort: S to re-verify.</p>
+          <div class="where">
+            journalctl reads hang (D-state journal + 100% busy QLC)
+          </div>
+          <p>
+            Works: /proc, findmnt, ps, git. Broken tonight: journal queries
+            timeout — failed-units list, memory-guard restore state,
+            signoz-provision state are UNVERIFIED as of 20:52 (marked, not
+            guessed). Textfile metrics dir not found at either probed path —
+            needs the correct path re-check post-storm. Effort: S to re-verify.
+          </p>
         </div>
 
         <h2 id="c"><span class="num">03</span>c) NOT STARTED</h2>
         <table>
-          <thead><tr><th>Item</th><th>Why not started</th><th>Still wanted?</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Why not started</th>
+              <th>Still wanted?</th>
+            </tr>
+          </thead>
           <tbody>
-            <tr><td>tq guard semantic refinement (agent-pool + TQ_DB check)</td><td>explained-only this session; refinement offered, not implemented</td><td>Yes — S effort</td></tr>
-            <tr><td>tests/test-hermes.nix execution (assertion 2b never ran)</td><td>needs quiet IO window (nix build of VM test)</td><td>Yes — after reboot</td></tr>
-            <tr><td>TODO_LIST harvest of the 17:55 report's 30 tasks</td><td>session interruptions; user hasn't sanctioned the doc edit</td><td>Yes — recommended next doc action</td></tr>
-            <tr><td>sops-recipient-audit test fixtures vs real key_groups shape</td><td>module fixed, fixtures still pending</td><td>Yes</td></tr>
-            <tr><td>WAL retired-capture forensics (state.db.retired-wal-20260916-020432)</td><td>deprioritized behind stability</td><td>Yes, low priority</td></tr>
-            <tr><td>Storm governance (crush-session caps)</td><td>known gap since freeze #4; never scheduled</td><td>YES — tonight is exhibit A</td></tr>
+            <tr>
+              <td>tq guard semantic refinement (agent-pool + TQ_DB check)</td>
+              <td>
+                explained-only this session; refinement offered, not implemented
+              </td>
+              <td>Yes — S effort</td>
+            </tr>
+            <tr>
+              <td>tests/test-hermes.nix execution (assertion 2b never ran)</td>
+              <td>needs quiet IO window (nix build of VM test)</td>
+              <td>Yes — after reboot</td>
+            </tr>
+            <tr>
+              <td>TODO_LIST harvest of the 17:55 report's 30 tasks</td>
+              <td>
+                session interruptions; user hasn't sanctioned the doc edit
+              </td>
+              <td>Yes — recommended next doc action</td>
+            </tr>
+            <tr>
+              <td>
+                sops-recipient-audit test fixtures vs real key_groups shape
+              </td>
+              <td>module fixed, fixtures still pending</td>
+              <td>Yes</td>
+            </tr>
+            <tr>
+              <td>
+                WAL retired-capture forensics
+                (state.db.retired-wal-20260916-020432)
+              </td>
+              <td>deprioritized behind stability</td>
+              <td>Yes, low priority</td>
+            </tr>
+            <tr>
+              <td>Storm governance (crush-session caps)</td>
+              <td>known gap since freeze #4; never scheduled</td>
+              <td>YES — tonight is exhibit A</td>
+            </tr>
           </tbody>
         </table>
 
@@ -949,49 +1107,65 @@ sudo /run/current-system/bin/switch-to-configuration boot</code></pre>
 
         <div class="issue issue-critical">
           <span class="severity severity-critical">P0 — armed 26h</span>
-          <h3>Un-anchored generation: ANY reboot reverts the machine and bricks hermes' brain</h3>
-          <div class="where">/run/current-system (ef34387) ≠ profile system-779 (eaad089)</div>
+          <h3>
+            Un-anchored generation: ANY reboot reverts the machine and bricks
+            hermes' brain
+          </h3>
+          <div class="where">
+            /run/current-system (ef34387) ≠ profile system-779 (eaad089)
+          </div>
           <p>
-            Root cause: two exit-4 activations (08:25 hermes/mount failure; 17:48 browser-history
-            failure during switch) — nh advances current-system but skips the profile bump. Severity:
-            reboot-class data-integrity risk for hermes (brainless agent against empty state dir) +
-            full config revert. Mitigation: the 2-command anchor above, or a clean deploy once the
-            storm passes. Nothing else on this box matters more.
+            Root cause: two exit-4 activations (08:25 hermes/mount failure;
+            17:48 browser-history failure during switch) — nh advances
+            current-system but skips the profile bump. Severity: reboot-class
+            data-integrity risk for hermes (brainless agent against empty state
+            dir) + full config revert. Mitigation: the 2-command anchor above,
+            or a clean deploy once the storm passes. Nothing else on this box
+            matters more.
           </p>
         </div>
 
         <div class="issue issue-critical">
           <span class="severity severity-critical">Live now</span>
           <h3>Real IO storm — deploy gate closed, forensics blinded</h3>
-          <div class="where">io PSI some 53% avg10 / 63% avg60; QLC 100% busy; load 49/72/50; journalctl, nix, cp, dprint in D-state</div>
+          <div class="where">
+            io PSI some 53% avg10 / 63% avg60; QLC 100% busy; load 49/72/50;
+            journalctl, nix, cp, dprint in D-state
+          </div>
           <p>
-            Driver mix: 24 crush sessions (was 46), parallel builds/VM tests, repo scanners — on top
-            of the D-state corpse pile (llama-rag/DRM, owed reboot since 2026-09-05). Consequence:
-            no deploy possible (pressure gate ≥20%), journal reads hang, monitoring textfiles
-            unreadable from this session. Mitigation: wait out or shed load; the corpse half only
-            dies at reboot.
+            Driver mix: 24 crush sessions (was 46), parallel builds/VM tests,
+            repo scanners — on top of the D-state corpse pile (llama-rag/DRM,
+            owed reboot since 2026-09-05). Consequence: no deploy possible
+            (pressure gate ≥20%), journal reads hang, monitoring textfiles
+            unreadable from this session. Mitigation: wait out or shed load; the
+            corpse half only dies at reboot.
           </p>
         </div>
 
         <div class="issue issue-critical">
           <span class="severity severity-critical">Down since ~15:0x</span>
           <h3>FastFlowLM :52625 has NO listener — NPU LLM dark</h3>
-          <div class="where">/proc/net/tcp: no 52625 bind (only 18472 = tq redesign)</div>
+          <div class="where">
+            /proc/net/tcp: no 52625 bind (only 18472 = tq redesign)
+          </div>
           <p>
-            Memory-guard sacrificed the socket during the storm; restore state UNVERIFIED tonight
-            (journal hangs; may be restore-capped — budget 3/day). Consumers degraded: PapDashboard
-            enricher, PMA go-commit LLM path (heuristic fallback active), paperless-ai. Mitigation:
-            <code>sudo systemctl start fastflowlm.socket</code> in a quiet window — after anchoring.
+            Memory-guard sacrificed the socket during the storm; restore state
+            UNVERIFIED tonight (journal hangs; may be restore-capped — budget
+            3/day). Consumers degraded: PapDashboard enricher, PMA go-commit LLM
+            path (heuristic fallback active), paperless-ai. Mitigation:
+            <code>sudo systemctl start fastflowlm.socket</code> in a quiet
+            window — after anchoring.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>Carried over (documented, not re-litigated)</h4>
           <p>
-            Post-deploy triage backlog from the 17:55 report — CV pipeline-store /health check
-            missing, Bank-Sync sync_errors_total, crush-rc-test.sh phantom smoke fail (parallel
-            session's edit), signoz-provision 1.26s exit failure, InboxClean main-account
-            auth_expired (user OAuth runbook). All still open; all unverifiable tonight via journal.
+            Post-deploy triage backlog from the 17:55 report — CV pipeline-store
+            /health check missing, Bank-Sync sync_errors_total, crush-rc-test.sh
+            phantom smoke fail (parallel session's edit), signoz-provision 1.26s
+            exit failure, InboxClean main-account auth_expired (user OAuth
+            runbook). All still open; all unverifiable tonight via journal.
           </p>
         </div>
 
@@ -999,64 +1173,303 @@ sudo /run/current-system/bin/switch-to-configuration boot</code></pre>
         <div class="card card-warning">
           <h4>Patterns, not bugs</h4>
           <ol>
-            <li><strong>Un-anchored state must gate deploys</strong>, not decorate logs — marker file + pre-deploy hard-fail (26h of standing landmine is the evidence).</li>
-            <li><strong>Semantic guards over pattern guards</strong> — /tmp/tq prefix matching trains operators to ignore the real double-run day.</li>
-            <li><strong>Storm admission control</strong> — cap concurrent crush sessions during PSI ≥20%; the box froze 4 times in this regime and we still ran 46 sessions today.</li>
-            <li><strong>Measure-first sizing</strong> — the 92× hermes size error compounded through plan, script, and outage timelines.</li>
-            <li><strong>Journal-independent forensics</strong> — the /proc-based probes that WORKED tonight should be the documented storm playbook (journalctl-first diagnosis dies exactly when it's needed).</li>
+            <li>
+              <strong>Un-anchored state must gate deploys</strong>, not decorate
+              logs — marker file + pre-deploy hard-fail (26h of standing
+              landmine is the evidence).
+            </li>
+            <li>
+              <strong>Semantic guards over pattern guards</strong> — /tmp/tq
+              prefix matching trains operators to ignore the real double-run
+              day.
+            </li>
+            <li>
+              <strong>Storm admission control</strong> — cap concurrent crush
+              sessions during PSI ≥20%; the box froze 4 times in this regime and
+              we still ran 46 sessions today.
+            </li>
+            <li>
+              <strong>Measure-first sizing</strong> — the 92× hermes size error
+              compounded through plan, script, and outage timelines.
+            </li>
+            <li>
+              <strong>Journal-independent forensics</strong> — the /proc-based
+              probes that WORKED tonight should be the documented storm playbook
+              (journalctl-first diagnosis dies exactly when it's needed).
+            </li>
           </ol>
         </div>
 
         <h2 id="f"><span class="num">06</span>f) Top 25 next tasks</h2>
         <table>
-          <thead><tr><th>#</th><th>Task</th><th>Impact</th><th>Effort</th><th>Cat</th></tr></thead>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Task</th>
+              <th>Impact</th>
+              <th>Effort</th>
+              <th>Cat</th>
+            </tr>
+          </thead>
           <tbody>
-            <tr><td>1</td><td><strong>USER: anchor generation</strong> (2 commands above)</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>Ops</td></tr>
-            <tr><td>2</td><td><strong>USER: decide reboot window</strong> → pre-reboot-check → reboot (kills 24 crush sessions + pbx ssh; clears corpse pile; owed since 09-05)</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>Ops</td></tr>
-            <tr><td>3</td><td>Post-reboot: verify anchor parity, hermes from subvol, D-state gone, PSI truthful → clean <code>nix run .#deploy</code></td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>Ops</td></tr>
-            <tr><td>4</td><td>USER: pool retention decision — Option A bounded 7d / 14d 4w (deployed) vs B forever (92.3 GB per full send)</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Decision</td></tr>
-            <tr><td>5</td><td>Watch tonight 23:00: first @home-hermes snapshot + ~92 GB pool send; verify tomorrow + <code>migrate-hermes-subvol.sh status</code></td><td><span class="badge badge-high">High</span></td><td>S</td><td>Verify</td></tr>
-            <tr><td>6</td><td>Restore flm socket in quiet window; verify guard restore-cap state</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Ops</td></tr>
-            <tr><td>7</td><td>Verify pushed rewritten history (push landed 20:16 WITHOUT the offered review): fsck + reachability + author sanity</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Verify</td></tr>
-            <tr><td>8</td><td>Un-anchored marker as pre-deploy hard gate in deploy.sh/pre-deploy-check</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Quality</td></tr>
-            <tr><td>9</td><td>tq guard semantic refinement + mock-harness tests</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Quality</td></tr>
-            <tr><td>10</td><td>TODO_LIST harvest from the 17:55 report (30 items) + this report</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Docs</td></tr>
-            <tr><td>11</td><td>Build + run test-hermes (assertion 2b never executed)</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td>Test</td></tr>
-            <tr><td>12</td><td>CV pipeline-store /health Gatus check (missing)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Bug</td></tr>
-            <tr><td>13</td><td>Bank-Sync sync_errors_total triage</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td>Bug</td></tr>
-            <tr><td>14</td><td>crush-rc-test.sh missing from post-deploy-check derivation (phantom smoke fail)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Bug</td></tr>
-            <tr><td>15</td><td>signoz-provision 1.26s exit-code failure (re-verify post-storm)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Bug</td></tr>
-            <tr><td>16</td><td>InboxClean main auth_expired → user OAuth re-consent runbook</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Ops</td></tr>
-            <tr><td>17</td><td>Storm governance: crush-session cap during PSI ≥20%</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Feature</td></tr>
-            <tr><td>18</td><td>hermes.old: dated TTL + removal after first pool-verified snapshot (92 GB pinned)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Cleanup</td></tr>
-            <tr><td>19</td><td>sops-recipient-audit fixtures vs real key_groups shape</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Test</td></tr>
-            <tr><td>20</td><td>Post-storm: re-verify failed-units list + guard metrics via correct textfile path (both probed paths empty tonight)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Verify</td></tr>
-            <tr><td>21</td><td>Replace GH013 push-protection literals in audit-push-protection-literals.sh with runtime-derived fixtures (5 sgp_ refs remain → future blocks)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Quality</td></tr>
-            <tr><td>22</td><td>Finalize migration (delete hermes.old, empty @home cleanup) after settling days</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>Cleanup</td></tr>
-            <tr><td>23</td><td>WAL retired-capture forensics</td><td><span class="badge badge-low">Low</span></td><td>M</td><td>Verify</td></tr>
-            <tr><td>24</td><td>Journal-independent storm forensics runbook (the /proc probes that worked tonight)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Docs</td></tr>
-            <tr><td>25</td><td>Empty @home subvol cleanup + migrate script self-neutralization check</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>Cleanup</td></tr>
+            <tr>
+              <td>1</td>
+              <td>
+                <strong>USER: anchor generation</strong> (2 commands above)
+              </td>
+              <td><span class="badge badge-critical">Critical</span></td>
+              <td>S</td>
+              <td>Ops</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>
+                <strong>USER: decide reboot window</strong> → pre-reboot-check →
+                reboot (kills 24 crush sessions + pbx ssh; clears corpse pile;
+                owed since 09-05)
+              </td>
+              <td><span class="badge badge-critical">Critical</span></td>
+              <td>S</td>
+              <td>Ops</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>
+                Post-reboot: verify anchor parity, hermes from subvol, D-state
+                gone, PSI truthful → clean <code>nix run .#deploy</code>
+              </td>
+              <td><span class="badge badge-critical">Critical</span></td>
+              <td>S</td>
+              <td>Ops</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>
+                USER: pool retention decision — Option A bounded 7d / 14d 4w
+                (deployed) vs B forever (92.3 GB per full send)
+              </td>
+              <td><span class="badge badge-high">High</span></td>
+              <td>S</td>
+              <td>Decision</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>
+                Watch tonight 23:00: first @home-hermes snapshot + ~92 GB pool
+                send; verify tomorrow +
+                <code>migrate-hermes-subvol.sh status</code>
+              </td>
+              <td><span class="badge badge-high">High</span></td>
+              <td>S</td>
+              <td>Verify</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>
+                Restore flm socket in quiet window; verify guard restore-cap
+                state
+              </td>
+              <td><span class="badge badge-high">High</span></td>
+              <td>S</td>
+              <td>Ops</td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>
+                Verify pushed rewritten history (push landed 20:16 WITHOUT the
+                offered review): fsck + reachability + author sanity
+              </td>
+              <td><span class="badge badge-high">High</span></td>
+              <td>M</td>
+              <td>Verify</td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td>
+                Un-anchored marker as pre-deploy hard gate in
+                deploy.sh/pre-deploy-check
+              </td>
+              <td><span class="badge badge-high">High</span></td>
+              <td>S</td>
+              <td>Quality</td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td>tq guard semantic refinement + mock-harness tests</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>S</td>
+              <td>Quality</td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td>
+                TODO_LIST harvest from the 17:55 report (30 items) + this report
+              </td>
+              <td><span class="badge badge-high">High</span></td>
+              <td>M</td>
+              <td>Docs</td>
+            </tr>
+            <tr>
+              <td>11</td>
+              <td>Build + run test-hermes (assertion 2b never executed)</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>M</td>
+              <td>Test</td>
+            </tr>
+            <tr>
+              <td>12</td>
+              <td>CV pipeline-store /health Gatus check (missing)</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>S</td>
+              <td>Bug</td>
+            </tr>
+            <tr>
+              <td>13</td>
+              <td>Bank-Sync sync_errors_total triage</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>M</td>
+              <td>Bug</td>
+            </tr>
+            <tr>
+              <td>14</td>
+              <td>
+                crush-rc-test.sh missing from post-deploy-check derivation
+                (phantom smoke fail)
+              </td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>S</td>
+              <td>Bug</td>
+            </tr>
+            <tr>
+              <td>15</td>
+              <td>
+                signoz-provision 1.26s exit-code failure (re-verify post-storm)
+              </td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>S</td>
+              <td>Bug</td>
+            </tr>
+            <tr>
+              <td>16</td>
+              <td>
+                InboxClean main auth_expired → user OAuth re-consent runbook
+              </td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>S</td>
+              <td>Ops</td>
+            </tr>
+            <tr>
+              <td>17</td>
+              <td>Storm governance: crush-session cap during PSI ≥20%</td>
+              <td><span class="badge badge-high">High</span></td>
+              <td>M</td>
+              <td>Feature</td>
+            </tr>
+            <tr>
+              <td>18</td>
+              <td>
+                hermes.old: dated TTL + removal after first pool-verified
+                snapshot (92 GB pinned)
+              </td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>S</td>
+              <td>Cleanup</td>
+            </tr>
+            <tr>
+              <td>19</td>
+              <td>sops-recipient-audit fixtures vs real key_groups shape</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>S</td>
+              <td>Test</td>
+            </tr>
+            <tr>
+              <td>20</td>
+              <td>
+                Post-storm: re-verify failed-units list + guard metrics via
+                correct textfile path (both probed paths empty tonight)
+              </td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>S</td>
+              <td>Verify</td>
+            </tr>
+            <tr>
+              <td>21</td>
+              <td>
+                Replace GH013 push-protection literals in
+                audit-push-protection-literals.sh with runtime-derived fixtures
+                (5 sgp_ refs remain → future blocks)
+              </td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>S</td>
+              <td>Quality</td>
+            </tr>
+            <tr>
+              <td>22</td>
+              <td>
+                Finalize migration (delete hermes.old, empty @home cleanup)
+                after settling days
+              </td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>S</td>
+              <td>Cleanup</td>
+            </tr>
+            <tr>
+              <td>23</td>
+              <td>WAL retired-capture forensics</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>M</td>
+              <td>Verify</td>
+            </tr>
+            <tr>
+              <td>24</td>
+              <td>
+                Journal-independent storm forensics runbook (the /proc probes
+                that worked tonight)
+              </td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>S</td>
+              <td>Docs</td>
+            </tr>
+            <tr>
+              <td>25</td>
+              <td>
+                Empty @home subvol cleanup + migrate script self-neutralization
+                check
+              </td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>S</td>
+              <td>Cleanup</td>
+            </tr>
           </tbody>
         </table>
 
-        <h2 id="g"><span class="num">07</span>g) Top question I cannot answer myself</h2>
+        <h2 id="g">
+          <span class="num">07</span>g) Top question I cannot answer myself
+        </h2>
         <div class="card card-problem">
-          <h4>When is the reboot window — tonight after 23:00 btrbk, or later?</h4>
+          <h4>
+            When is the reboot window — tonight after 23:00 btrbk, or later?
+          </h4>
           <p>
-            Everything P0 chains behind it (anchor → pre-reboot-check → reboot → clean deploy →
-            verify → corpse pile gone → PSI truthful). I cannot schedule it because it kills 24
-            live crush sessions (parallel agents mid-work) and the pbx ssh deploy session — only you
-            know what those sessions are worth right now. Folded into it: pool retention Option A
-            (bounded, deployed) vs B (forever) — the first 92.3 GB send fires at 23:00 tonight under
-            the DEFAULT (Option A); say nothing and A stands.
+            Everything P0 chains behind it (anchor → pre-reboot-check → reboot →
+            clean deploy → verify → corpse pile gone → PSI truthful). I cannot
+            schedule it because it kills 24 live crush sessions (parallel agents
+            mid-work) and the pbx ssh deploy session — only you know what those
+            sessions are worth right now. Folded into it: pool retention Option
+            A (bounded, deployed) vs B (forever) — the first 92.3 GB send fires
+            at 23:00 tonight under the DEFAULT (Option A); say nothing and A
+            stands.
           </p>
         </div>
 
         <footer class="footer">
-          Generated 2026-09-16 20:52 CEST &middot; live probes: date/git/readlink/findmnt/ps/proc/net/tcp/diskstats/pressure &middot; journal-dependent items marked UNVERIFIED (journalctl hung under IO storm) &middot; companion: docs/reviews/2026-09-16_20-52_brutal-self-review.html
+          Generated 2026-09-16 20:52 CEST &middot; live probes:
+          date/git/readlink/findmnt/ps/proc/net/tcp/diskstats/pressure &middot;
+          journal-dependent items marked UNVERIFIED (journalctl hung under IO
+          storm) &middot; companion:
+          docs/reviews/2026-09-16_20-52_brutal-self-review.html
         </footer>
       </main>
-    </div>
     </div>
 
     <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->

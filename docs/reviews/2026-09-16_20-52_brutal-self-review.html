@@ -862,8 +862,9 @@
           <div class="hero-badge">Brutal Self-Review</div>
           <h1>What I Got Wrong — and What Is Still Armed</h1>
           <p class="hero-subtitle">
-            Honest critique of the resumed session (tq double-pool guard explanation) and the
-            carried-over hermes @home-hermes execution day. Every claim re-probed live at 20:50–20:52.
+            Honest critique of the resumed session (tq double-pool guard
+            explanation) and the carried-over hermes @home-hermes execution day.
+            Every claim re-probed live at 20:50–20:52.
           </p>
         </div>
 
@@ -871,11 +872,15 @@
         <div class="stat-grid">
           <div class="stat-card stat-bad">
             <div class="stat-value">1</div>
-            <div class="stat-label">P0 landmine still armed (un-anchored generation)</div>
+            <div class="stat-label">
+              P0 landmine still armed (un-anchored generation)
+            </div>
           </div>
           <div class="stat-card stat-warn">
             <div class="stat-value">1</div>
-            <div class="stat-label">Unverified reasoning link (redesign serve semantics)</div>
+            <div class="stat-label">
+              Unverified reasoning link (redesign serve semantics)
+            </div>
           </div>
           <div class="stat-card stat-warn">
             <div class="stat-value">2</div>
@@ -890,12 +895,15 @@
         <div class="card card-problem">
           <h4>The headline failure is not a code bug</h4>
           <p>
-            The session resumed at ~20:30 with a P0 standing instruction ("anchor the generation —
-            asked 3×, NEVER RUN") and I answered a tq-guard question instead, without re-raising the
-            landmine once. Three hours later it is STILL armed: <code>/run/current-system</code> =
-            ef34387 (26.11.20260913) vs profile <code>system-779</code> = eaad089 (26.11.20260911,
-            pre-migration). Any reboot right now reverts the whole machine and boots a brainless
-            hermes against an empty <code>/home/hermes</code> placeholder. Verified live 20:51.
+            The session resumed at ~20:30 with a P0 standing instruction
+            ("anchor the generation — asked 3×, NEVER RUN") and I answered a
+            tq-guard question instead, without re-raising the landmine once.
+            Three hours later it is STILL armed:
+            <code>/run/current-system</code> = ef34387 (26.11.20260913) vs
+            profile <code>system-779</code> = eaad089 (26.11.20260911,
+            pre-migration). Any reboot right now reverts the whole machine and
+            boots a brainless hermes against an empty
+            <code>/home/hermes</code> placeholder. Verified live 20:51.
           </p>
         </div>
 
@@ -906,29 +914,36 @@
           <h3>The P0 anchor never led a reply</h3>
           <div class="where">session discipline, not code</div>
           <p>
-            The handoff summary's "Exact Next Steps #2" said the moment the user appears, the anchor
-            chain leads. My first reply (tq explanation) was correct as an answer but silent on the
-            landmine. A correct answer to a small question while the biggest risk on the box sits
-            un-mentioned is a prioritization failure.
+            The handoff summary's "Exact Next Steps #2" said the moment the user
+            appears, the anchor chain leads. My first reply (tq explanation) was
+            correct as an answer but silent on the landmine. A correct answer to
+            a small question while the biggest risk on the box sits un-mentioned
+            is a prioritization failure.
           </p>
           <div class="callout callout-solution">
             <strong>Fix</strong>
-            Every reply in this session now opens with the landmine state until it is anchored.
+            Every reply in this session now opens with the landmine state until
+            it is anchored.
           </div>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">Important</span>
-          <h3>"serve alone runs no agents" — reasoned from v0.3.0 docs about a redesign binary</h3>
+          <h3>
+            "serve alone runs no agents" — reasoned from v0.3.0 docs about a
+            redesign binary
+          </h3>
           <div class="where">tq guard explanation, 2026-09-16 ~20:40</div>
           <p>
-            I asserted the redesign <code>serve</code> cannot double-run partly because "serve is a
-            dashboard, not a harvester". That is documented for tq v0.3.0. The process at PID 229432
-            is a <strong>redesign build</strong> whose semantics I never verified. The conclusion
-            still holds — but through the evidence I DID verify (TQ_DB points at a mktemp scratch
-            DB; its only open files are scratch.db + serve.log), not through the serve-semantics
-            argument. An unverified link in a safety-relevant chain is a defect even when the
-            conclusion survives without it.
+            I asserted the redesign <code>serve</code> cannot double-run partly
+            because "serve is a dashboard, not a harvester". That is documented
+            for tq v0.3.0. The process at PID 229432 is a
+            <strong>redesign build</strong> whose semantics I never verified.
+            The conclusion still holds — but through the evidence I DID verify
+            (TQ_DB points at a mktemp scratch DB; its only open files are
+            scratch.db + serve.log), not through the serve-semantics argument.
+            An unverified link in a safety-relevant chain is a defect even when
+            the conclusion survives without it.
           </p>
         </div>
 
@@ -937,84 +952,156 @@
           <h3>Guard text overclaim went unchallenged</h3>
           <div class="where">scripts/deploy.sh:213</div>
           <p>
-            The guard prints "the systemd pool <em>would</em> double-run" — a certainty claim a
-            pattern match cannot support ("might" is the honest verb). I explained the mechanism but
-            did not flag the lying-message class until this review.
+            The guard prints "the systemd pool <em>would</em> double-run" — a
+            certainty claim a pattern match cannot support ("might" is the
+            honest verb). I explained the mechanism but did not flag the
+            lying-message class until this review.
           </p>
         </div>
 
-        <h2 id="stupid"><span class="num">02</span>What is stupid that we do anyway?</h2>
+        <h2 id="stupid">
+          <span class="num">02</span>What is stupid that we do anyway?
+        </h2>
 
         <div class="card card-problem">
           <h4>A safety guard that cries wolf by design</h4>
           <p>
-            The double-pool guard pattern-matches the path prefix <code>/tmp/tq</code>. Any dev
-            build a parallel session drops at <code>/tmp/tq-redesign</code>, <code>/tmp/tq2</code>,
-            … re-fires the WARN on every deploy. Operators habituate to it, and the day a REAL
-            second harvester runs, the warning drowns in the noise it trained everyone to ignore.
-            Pattern-matched safety checks degrade into decorations.
+            The double-pool guard pattern-matches the path prefix
+            <code>/tmp/tq</code>. Any dev build a parallel session drops at
+            <code>/tmp/tq-redesign</code>, <code>/tmp/tq2</code>, … re-fires the
+            WARN on every deploy. Operators habituate to it, and the day a REAL
+            second harvester runs, the warning drowns in the noise it trained
+            everyone to ignore. Pattern-matched safety checks degrade into
+            decorations.
           </p>
         </div>
 
         <div class="card card-problem">
           <h4>The un-anchored generation is gated on passive console noise</h4>
           <p>
-            deploy.sh HAS an anchoring warning and it fired on the 17:48 forced deploy. Warnings
-            that fire and demand human action — for a state that a script can detect exactly
-            (<code>readlink</code> comparison) — are the weakest possible control for a
-            reboot-reverts-everything class of risk. 26 hours after the first exit-4 (08:25 → now),
-            the machine is still two un-anchored systems deep.
+            deploy.sh HAS an anchoring warning and it fired on the 17:48 forced
+            deploy. Warnings that fire and demand human action — for a state
+            that a script can detect exactly (<code>readlink</code> comparison)
+            — are the weakest possible control for a reboot-reverts-everything
+            class of risk. 26 hours after the first exit-4 (08:25 → now), the
+            machine is still two un-anchored systems deep.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>We keep feeding the QLC storm</h4>
           <p>
-            24 (earlier 46) concurrent crush sessions + parallel VM builds + repo scanners against
-            the QLC root with a known D-state corpse pile (llama-rag, owed reboot since 2026-09-05).
-            Right now: io PSI some 53% avg10 / 63% avg60, disk 100% busy, load 49–72, and even
-            <code>journalctl</code> reads hang. Every session pays this tax; none is gated. The
-            storm-governance item exists in TODOs and stays unimplemented.
+            24 (earlier 46) concurrent crush sessions + parallel VM builds +
+            repo scanners against the QLC root with a known D-state corpse pile
+            (llama-rag, owed reboot since 2026-09-05). Right now: io PSI some
+            53% avg10 / 63% avg60, disk 100% busy, load 49–72, and even
+            <code>journalctl</code> reads hang. Every session pays this tax;
+            none is gated. The storm-governance item exists in TODOs and stays
+            unimplemented.
           </p>
         </div>
 
-        <h2 id="better"><span class="num">03</span>What could I have done better?</h2>
+        <h2 id="better">
+          <span class="num">03</span>What could I have done better?
+        </h2>
         <table>
-          <thead><tr><th>Miss</th><th>What better looks like</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Miss</th>
+              <th>What better looks like</th>
+            </tr>
+          </thead>
           <tbody>
             <tr>
               <td>Offered guard refinement verbally, no diff</td>
-              <td>Ship the 5-line patch inline as a proposal — exploration mode still permits delivering the artifact for review</td>
+              <td>
+                Ship the 5-line patch inline as a proposal — exploration mode
+                still permits delivering the artifact for review
+              </td>
             </tr>
             <tr>
-              <td>Anchor commands delivered 3× as prose (prior session), still not run</td>
-              <td>One copy-paste block at the TOP of every reply, plus offer to verify immediately after; treat like a blocked deploy, not a footnote</td>
+              <td>
+                Anchor commands delivered 3× as prose (prior session), still not
+                run
+              </td>
+              <td>
+                One copy-paste block at the TOP of every reply, plus offer to
+                verify immediately after; treat like a blocked deploy, not a
+                footnote
+              </td>
             </tr>
             <tr>
-              <td>92× size mis-estimate ("~1 GB" vs measured 92.3 GB / 948k files)</td>
-              <td><code>du</code> BEFORE any size claim enters a plan doc; sizes are measurements, not adjectives</td>
+              <td>
+                92× size mis-estimate ("~1 GB" vs measured 92.3 GB / 948k files)
+              </td>
+              <td>
+                <code>du</code> BEFORE any size claim enters a plan doc; sizes
+                are measurements, not adjectives
+              </td>
             </tr>
             <tr>
-              <td>rsync <code>--reflink=always</code> re-landmine (documented in the SAME AGENTS.md)</td>
-              <td>grep AGENTS.md for the tool name before writing any script that uses it — the @nix bullet was 40 lines above my own work</td>
+              <td>
+                rsync <code>--reflink=always</code> re-landmine (documented in
+                the SAME AGENTS.md)
+              </td>
+              <td>
+                grep AGENTS.md for the tool name before writing any script that
+                uses it — the @nix bullet was 40 lines above my own work
+              </td>
             </tr>
             <tr>
               <td>Wrong Ctrl-C call mid-copy (prior session)</td>
-              <td>When interrupting anything IO-bound: state the failure hypothesis FIRST, then act; the hardening it motivated was still correct and stays</td>
+              <td>
+                When interrupting anything IO-bound: state the failure
+                hypothesis FIRST, then act; the hardening it motivated was still
+                correct and stays
+              </td>
             </tr>
           </tbody>
         </table>
 
-        <h2 id="improve"><span class="num">04</span>What could I still improve?</h2>
+        <h2 id="improve">
+          <span class="num">04</span>What could I still improve?
+        </h2>
         <div class="card card-solution">
           <h4>Six concrete items, all scoped</h4>
           <ol>
-            <li><strong>Guard semantics</strong>: warn only when cmdline contains <code>agent-pool</code> OR the process's <code>TQ_DB</code> targets the pool journal / a repo <code>tasks.db</code>; read <code>/proc/&lt;pid&gt;/environ</code> (same-user). Scratch-DB dashboards go silent.</li>
-            <li><strong>Honest guard text</strong>: "might double-run — verify TQ_DB" instead of "would".</li>
-            <li><strong>Un-anchored = gate, not log</strong>: after any exit-4, deploy.sh writes a marker; the next pre-deploy-check hard-fails until the profile matches current-system (escape hatch documented). A reboot-reverting state should block work, not decorate output.</li>
-            <li><strong>Storm governance</strong>: cap concurrent crush sessions (the <code>system_crush_sessions</code> metric already exists) — warn in-session at N, refuse new agent trees at N+M during io PSI ≥ 20%.</li>
-            <li><strong>Journal-read resilience</strong>: journalctl hangs under storm blinded tonight's probes (failed-units list, guard state, signoz-provision state UNVERIFIED) — collectors and forensics need the timeout+fail-closed pattern everywhere.</li>
-            <li><strong>hermes.old TTL</strong>: it is a 92 GB space-pinning ghost with no removal date — give it one (e.g. trash after 7 settled days + first pool-verified snapshot).</li>
+            <li>
+              <strong>Guard semantics</strong>: warn only when cmdline contains
+              <code>agent-pool</code> OR the process's
+              <code>TQ_DB</code> targets the pool journal / a repo
+              <code>tasks.db</code>; read
+              <code>/proc/&lt;pid&gt;/environ</code> (same-user). Scratch-DB
+              dashboards go silent.
+            </li>
+            <li>
+              <strong>Honest guard text</strong>: "might double-run — verify
+              TQ_DB" instead of "would".
+            </li>
+            <li>
+              <strong>Un-anchored = gate, not log</strong>: after any exit-4,
+              deploy.sh writes a marker; the next pre-deploy-check hard-fails
+              until the profile matches current-system (escape hatch
+              documented). A reboot-reverting state should block work, not
+              decorate output.
+            </li>
+            <li>
+              <strong>Storm governance</strong>: cap concurrent crush sessions
+              (the <code>system_crush_sessions</code> metric already exists) —
+              warn in-session at N, refuse new agent trees at N+M during io PSI
+              ≥ 20%.
+            </li>
+            <li>
+              <strong>Journal-read resilience</strong>: journalctl hangs under
+              storm blinded tonight's probes (failed-units list, guard state,
+              signoz-provision state UNVERIFIED) — collectors and forensics need
+              the timeout+fail-closed pattern everywhere.
+            </li>
+            <li>
+              <strong>hermes.old TTL</strong>: it is a 92 GB space-pinning ghost
+              with no removal date — give it one (e.g. trash after 7 settled
+              days + first pool-verified snapshot).
+            </li>
           </ol>
         </div>
 
@@ -1022,103 +1109,240 @@
         <div class="card card-solution">
           <h4>No — with one flagged weakness</h4>
           <p>
-            Every claim in the tq explanation was verified against source or /proc this session
-            (guard code at deploy.sh:206–218; scratch DB via environ + fd list; both pool processes
-            via ps). The one soft spot is the redesign-serve-semantics argument (see 01) — a
-            conclusion I stated more confidently than its weakest link deserved. No fabricated
-            metrics, no trophy-casing: where I could not verify tonight (journal reads hung), this
-            review and the companion status report say UNVERIFIED instead of guessing.
+            Every claim in the tq explanation was verified against source or
+            /proc this session (guard code at deploy.sh:206–218; scratch DB via
+            environ + fd list; both pool processes via ps). The one soft spot is
+            the redesign-serve-semantics argument (see 01) — a conclusion I
+            stated more confidently than its weakest link deserved. No
+            fabricated metrics, no trophy-casing: where I could not verify
+            tonight (journal reads hung), this review and the companion status
+            report say UNVERIFIED instead of guessing.
           </p>
         </div>
 
-        <h2 id="less-stupid"><span class="num">06</span>How can we be less stupid?</h2>
+        <h2 id="less-stupid">
+          <span class="num">06</span>How can we be less stupid?
+        </h2>
         <div class="strengths">
-          <div class="strength"><div class="check">+</div><div class="text"><strong>Semantics over patterns</strong><span>Identity checks (TQ_DB, unit names, journal paths) instead of path-prefix matches for anything safety-relevant.</span></div></div>
-          <div class="strength"><div class="check">+</div><div class="text"><strong>Gates over warnings for landmines</strong><span>If a state reverts the machine on reboot, detecting it must block the next deploy, not print a line nobody reads at 02:00.</span></div></div>
-          <div class="strength"><div class="check">+</div><div class="text"><strong>Measure before claiming</strong><span>Sizes, durations, counts: probe first. The 92× error was pure assumption tax.</span></div></div>
-          <div class="strength"><div class="check">+</div><div class="text"><strong>Landmine-grep before scripting</strong><span>This repo documents its own traps in AGENTS.md; searching it is cheaper than re-stepping any of them.</span></div></div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Semantics over patterns</strong
+              ><span
+                >Identity checks (TQ_DB, unit names, journal paths) instead of
+                path-prefix matches for anything safety-relevant.</span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Gates over warnings for landmines</strong
+              ><span
+                >If a state reverts the machine on reboot, detecting it must
+                block the next deploy, not print a line nobody reads at
+                02:00.</span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Measure before claiming</strong
+              ><span
+                >Sizes, durations, counts: probe first. The 92× error was pure
+                assumption tax.</span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Landmine-grep before scripting</strong
+              ><span
+                >This repo documents its own traps in AGENTS.md; searching it is
+                cheaper than re-stepping any of them.</span
+              >
+            </div>
+          </div>
         </div>
 
         <h2 id="ghosts"><span class="num">07</span>Ghost systems?</h2>
         <div class="issue issue-important">
           <span class="severity severity-important">Integrate</span>
-          <h3>The double-pool guard's round-9 mental model is a partial ghost</h3>
-          <div class="where">scripts/deploy.sh:206-218 + docs/services/tq.md cutover section</div>
+          <h3>
+            The double-pool guard's round-9 mental model is a partial ghost
+          </h3>
+          <div class="where">
+            scripts/deploy.sh:206-218 + docs/services/tq.md cutover section
+          </div>
           <p>
-            Written for a world where "/tmp/tq processes" meant "the round-9 manual pool". That
-            world ended; /tmp/tq* now means "any parallel dev build". The guard keeps firing with a
-            message about a system that no longer exists. Value: real (a second harvester WOULD be
-            bad) — so integrate, don't delete: refine to semantic detection per improvement #1.
+            Written for a world where "/tmp/tq processes" meant "the round-9
+            manual pool". That world ended; /tmp/tq* now means "any parallel dev
+            build". The guard keeps firing with a message about a system that no
+            longer exists. Value: real (a second harvester WOULD be bad) — so
+            integrate, don't delete: refine to semantic detection per
+            improvement #1.
           </p>
         </div>
         <div class="card card-warning">
           <h4>hermes.old — deliberate ghost, undated</h4>
-          <p>Kept on purpose until the migration settles, but nothing owns its end date. Give it a TTL and a verify step (first pool-verified @home-hermes snapshot), else it becomes permanent 92 GB pinning.</p>
+          <p>
+            Kept on purpose until the migration settles, but nothing owns its
+            end date. Give it a TTL and a verify step (first pool-verified
+            @home-hermes snapshot), else it becomes permanent 92 GB pinning.
+          </p>
         </div>
 
         <h2 id="scope"><span class="num">08</span>Scope creep?</h2>
         <p>
-          This session: none — the tq question got exactly an explanation, the reports are the ask.
-          The prior session's migration-script hardening grew mid-storm, but each addition traced
-          to a live failure it prevented (PSI preflight, ionice, partial-staging wipe). Acceptable.
+          This session: none — the tq question got exactly an explanation, the
+          reports are the ask. The prior session's migration-script hardening
+          grew mid-storm, but each addition traced to a live failure it
+          prevented (PSI preflight, ionice, partial-staging wipe). Acceptable.
         </p>
 
-        <h2 id="removed"><span class="num">09</span>Did we remove something useful?</h2>
-        <p>No. Nothing was deleted this session; hermes.old is retained pending settle; the round-9 cutover docs stay as history, correctly.</p>
+        <h2 id="removed">
+          <span class="num">09</span>Did we remove something useful?
+        </h2>
+        <p>
+          No. Nothing was deleted this session; hermes.old is retained pending
+          settle; the round-9 cutover docs stay as history, correctly.
+        </p>
 
         <h2 id="splitbrains"><span class="num">10</span>Split brains?</h2>
         <div class="card card-problem">
           <h4>1. The literal one: deployed system vs anchored system</h4>
-          <p><code>/run/current-system</code> (ef34387, 20260913) ≠ <code>/nix/var/nix/profiles/system</code> (system-779 → eaad089, 20260911). Two generations deep: the machine runs config its own profile denies, and a reboot resolves the disagreement in the WORST direction. This is the anchor P0.</p>
+          <p>
+            <code>/run/current-system</code> (ef34387, 20260913) ≠
+            <code>/nix/var/nix/profiles/system</code> (system-779 → eaad089,
+            20260911). Two generations deep: the machine runs config its own
+            profile denies, and a reboot resolves the disagreement in the WORST
+            direction. This is the anchor P0.
+          </p>
         </div>
         <div class="card card-warning">
           <h4>2. Guard message vs guard knowledge</h4>
-          <p>The guard says "would double-run" (certainty) while knowing only "a /tmp/tq* binary exists" (weak signal). Message and epistemic state disagree — the lying-name class in miniature.</p>
+          <p>
+            The guard says "would double-run" (certainty) while knowing only "a
+            /tmp/tq* binary exists" (weak signal). Message and epistemic state
+            disagree — the lying-name class in miniature.
+          </p>
         </div>
         <div class="card card-solution">
           <h4>Cleared: no new doc/code split brains found</h4>
-          <p>The 17:55 report's doc corrections landed; sops-recipient-audit module and its (pending) fixtures are a known gap, not a divergence — tracked in the companion status report.</p>
+          <p>
+            The 17:55 report's doc corrections landed; sops-recipient-audit
+            module and its (pending) fixtures are a known gap, not a divergence
+            — tracked in the companion status report.
+          </p>
         </div>
 
         <h2 id="tests"><span class="num">11</span>Tests — how are we doing?</h2>
         <table>
-          <thead><tr><th>Surface</th><th>State</th><th>What to do</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Surface</th>
+              <th>State</th>
+              <th>What to do</th>
+            </tr>
+          </thead>
           <tbody>
             <tr>
               <td>tq double-pool guard (deploy.sh)</td>
               <td><span class="badge badge-critical">Zero tests</span></td>
-              <td>Refinement ships with a mock-harness test (fake pgrep/environ fixtures), same pattern migrate-hermes-subvol.sh got</td>
+              <td>
+                Refinement ships with a mock-harness test (fake pgrep/environ
+                fixtures), same pattern migrate-hermes-subvol.sh got
+              </td>
             </tr>
             <tr>
               <td>tests/test-hermes.nix</td>
               <td><span class="badge badge-high">Never executed</span></td>
-              <td><code>nix build .#checks.x86_64-linux.test-hermes</code> — assertion 2b has never run; do it in a quiet window</td>
+              <td>
+                <code>nix build .#checks.x86_64-linux.test-hermes</code> —
+                assertion 2b has never run; do it in a quiet window
+              </td>
             </tr>
             <tr>
               <td>sops-recipient-audit</td>
               <td><span class="badge badge-high">No fixtures</span></td>
-              <td>Test fixtures vs real .sops.yaml key_groups shape (the 28-false-positive class)</td>
+              <td>
+                Test fixtures vs real .sops.yaml key_groups shape (the
+                28-false-positive class)
+              </td>
             </tr>
             <tr>
               <td>migrate-hermes-subvol.sh</td>
               <td><span class="badge badge-fixed">Mock-tested</span></td>
-              <td>Keep the pattern — it caught the PSI-gate regressions before deploy</td>
+              <td>
+                Keep the pattern — it caught the PSI-gate regressions before
+                deploy
+              </td>
             </tr>
           </tbody>
         </table>
 
-        <h2 id="plan"><span class="num">12</span>Action plan (impact-ordered)</h2>
-        <div class="migration-step"><div class="migration-num">1</div><div class="migration-content"><h4>User: anchor + decide reboot window</h4><p>The two-command anchor, then pre-reboot-check → reboot. Everything else queues behind it.</p></div></div>
-        <div class="migration-step"><div class="migration-num">2</div><div class="migration-content"><h4>Un-anchored marker as pre-deploy gate</h4><p>deploy.sh writes marker on exit-4; pre-deploy-check hard-fails while it exists. S effort, closes the 26-hour class.</p></div></div>
-        <div class="migration-step"><div class="migration-num">3</div><div class="migration-content"><h4>Guard semantic refinement + tests</h4><p>agent-pool/TQ_DB detection, honest message, mock harness. S effort.</p></div></div>
-        <div class="migration-step"><div class="migration-num">4</div><div class="migration-content"><h4>Verify pushed history (now unblocked)</h4><p>The 20:16 push published the rewritten history without the offered review — run fsck + reachability checks post-storm.</p></div></div>
-        <div class="migration-step"><div class="migration-num">5</div><div class="migration-content"><h4>Storm governance + hermes.old TTL</h4><p>Crush-session caps during PSI ≥ 20%; dated removal for the 92 GB ghost.</p></div></div>
+        <h2 id="plan">
+          <span class="num">12</span>Action plan (impact-ordered)
+        </h2>
+        <div class="migration-step">
+          <div class="migration-num">1</div>
+          <div class="migration-content">
+            <h4>User: anchor + decide reboot window</h4>
+            <p>
+              The two-command anchor, then pre-reboot-check → reboot. Everything
+              else queues behind it.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">2</div>
+          <div class="migration-content">
+            <h4>Un-anchored marker as pre-deploy gate</h4>
+            <p>
+              deploy.sh writes marker on exit-4; pre-deploy-check hard-fails
+              while it exists. S effort, closes the 26-hour class.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">3</div>
+          <div class="migration-content">
+            <h4>Guard semantic refinement + tests</h4>
+            <p>
+              agent-pool/TQ_DB detection, honest message, mock harness. S
+              effort.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">4</div>
+          <div class="migration-content">
+            <h4>Verify pushed history (now unblocked)</h4>
+            <p>
+              The 20:16 push published the rewritten history without the offered
+              review — run fsck + reachability checks post-storm.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">5</div>
+          <div class="migration-content">
+            <h4>Storm governance + hermes.old TTL</h4>
+            <p>
+              Crush-session caps during PSI ≥ 20%; dated removal for the 92 GB
+              ghost.
+            </p>
+          </div>
+        </div>
 
         <footer class="footer">
-          Generated 2026-09-16 20:52 CEST &middot; all live claims probed via /proc, findmnt, git at 20:50–20:52 &middot; journal-based claims marked UNVERIFIED (journalctl hung under IO storm)
+          Generated 2026-09-16 20:52 CEST &middot; all live claims probed via
+          /proc, findmnt, git at 20:50–20:52 &middot; journal-based claims
+          marked UNVERIFIED (journalctl hung under IO storm)
         </footer>
       </main>
-    </div>
     </div>
 
     <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
