@@ -530,6 +530,18 @@ git gc --prune=now                                                   # evict old
 
 After push: macOS clone needs the same resync; ask GitHub support to GC cached commits (old SHAs stay fetchable until then); resolve the secret-scanning alerts (scanning + push protection ENABLED 2026-08-18) once keys are rotated. Rotation is the real fix regardless of purge — the old commit survives in forks/caches.
 
+### GeoMetrikks (access-log geo analytics, 2026-09-19)
+
+**Module:** `modules/nixos/services/geometrikks.nix` (`services.geometrikks`) — Docker-only upstream (github:GilbN/geometrikks, `mkDockerService` pattern) tailing every Caddy per-vhost JSON access log, geolocating requests via MaxMind GeoLite2, storing geo-events in a `timescaledb-ha:pg18` sidecar. UI at `geo.home.lan` (Layer 2 `protectedVHost` + the app's OWN single-admin login on top), port 8102, DNS `geo`. Runbook: `docs/services/geometrikks.md`.
+
+- **Log tailing is eval-derived**: `LOGPARSER_LOG_PATHS` is a JSON list built from `config.services.caddy.virtualHosts` (+ global `access.log`), filenames replicating the nixpkgs caddy module's rule (`/` and ` ` → `_`). Caddy's per-vhost file sinks are JSON by default (file output ⇒ Caddy's default encoder is json — caddy docs), so NO caddy.nix changes were needed; the global `access.log` is near-idle (only un-matched traffic — vhosts log ONLY to their own per-vhost file).
+- **Container runs as root (`PUID=0`)**: Caddy writes logs `caddy:caddy 0600`; only host root reads them. Bind-mounted `:ro` — blast radius contained, same trust level as every other root container here. Do NOT "fix" this to PUID=1000 (breaks log reads) or caddy-uid (breaks the geoip named volume).
+- **GHCR tags are unprefixed**: image tag `0.16.0`, NOT `v0.16.0` (the release tag carries the v; the image tag does not — `v0.16.0` answers "manifest unknown").
+- **`TimeoutStartSec = 15min`** on the unit (first cold start pulls the ~2.5 GB timescaledb-ha image; global 3min default would kill it). Both images pre-pulled at setup. Upstream's tuned worker pool (`max_background_workers=40`, `max_worker_processes=51`) is load-bearing — the default pool starves under the ~32 TimescaleDB background jobs.
+- **`frontend` network pinned to `172.32.0.0/24`** + `APP_TRUSTED_PROXIES=172.32.0.0/24` (userland-proxy off ⇒ DNAT preserves Caddy's source = bridge gateway) so login logging sees real client IPs.
+- **App refuses to start without `APP_ADMIN_PASSWORD`** (upstream design) — the sops key in `platforms/nixos/secrets/geometrikks.yaml` must never be empty. MaxMind/CARTO keys ship EMPTY (geo-degraded mode = banner, no crash loop); go-live paste is user-gated (docs/todo/services.md).
+- Backup: nightly 05:15 pg_dump → `/mnt/pool/backups/geometrikks` (manifest `backup.dir` pattern); restore needs a timescaledb-enabled cluster. Rotated `*.log.gz` Caddy logs are NOT backfilled (live tail only; upstream has `litestar import-logs` if ever needed).
+
 ### Hermes
 
 **v0.21.0 DEPLOYED LIVE 2026-09-05** (`hermes --version` confirms, no update nag; the deploy rode the 2026-09-05 ecosystem-repair wave — see the Private Go Repos section). The 2026-09-04 deploy blocker (sops `browser_history_agent_db_token` declared but absent) was resolved by the parallel session's oneshot route (db_token declaration REMOVED from sops.nix; agent provisioning via the provision oneshot) + the `sops-key-audit.nix` eval-time guard now catching the class at flake-check time.

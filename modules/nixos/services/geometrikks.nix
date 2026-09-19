@@ -33,23 +33,21 @@ _: {
       # services are tracked automatically.
       logPaths = builtins.toJSON (
         [ "/var/log/access/access.log" ]
-        ++ map
-          (
-            host:
-            "/var/log/access/access-${
-              lib.replaceStrings
-                [
-                  "/"
-                  " "
-                ]
-                [
-                  "_"
-                  "_"
-                ]
-                host
-            }.log"
-          )
-          (builtins.attrNames config.services.caddy.virtualHosts)
+        ++ map (
+          host:
+          "/var/log/access/access-${
+            lib.replaceStrings
+              [
+                "/"
+                " "
+              ]
+              [
+                "_"
+                "_"
+              ]
+              host
+          }.log"
+        ) (builtins.attrNames config.services.caddy.virtualHosts)
       );
 
       composeFile = pkgs.writeText "geometrikks-docker-compose.yml" (
