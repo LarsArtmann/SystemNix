@@ -846,7 +846,6 @@
           pkgs,
           system,
           lib,
-          self',
           ...
         }:
         {
@@ -1295,22 +1294,12 @@
               # events (go-cqrs-lite sqlite dialect) + users_view (cqrs-htmx
               # usermgmt AutoMapperWithTombstone). Covers: email-scoped delete
               # incl. BLOB payloads (the CAST path), decoy survival, marker
-              # lifecycle (created on success only), idempotent re-run, and
-              # the missing-db clean-skip. The Nix asserts additionally pin
-              # the unit wiring: the purge rides ExecStartPre as a "-"
-              # (non-fatal) entry WITHOUT clobbering the OIDC gate's entry.
+              # lifecycle (created on success only), idempotent re-run, the
+              # missing-db clean-skip, and argv guards (empty email).
+              # The unit WIRING (ExecStartPre entry + non-fatal "-" prefix,
+              # without clobbering the OIDC gate's entry) is pinned by the
+              # self-assertion inside browser-history.nix's purge block.
               browser-history-probe-purge-fixture =
-                let
-                  execPres =
-                    self'.nixosConfigurations.evo-x2.config.systemd.services.browser-history.serviceConfig.ExecStartPre;
-                  purgeEntries = lib.filter (
-                    lib.hasSuffix "browser-history-probe-registration-purge"
-                  ) execPres;
-                  purgeEntry = builtins.head purgeEntries;
-                in
-                assert lib.length purgeEntries == 1;
-                assert lib.hasPrefix "-" purgeEntry;
-                assert lib.any (lib.hasInfix "browser-history-wait-oidc") execPres;
                 pkgs.runCommand "browser-history-probe-purge-fixture"
                   {
                     nativeBuildInputs = with pkgs; [
@@ -1318,13 +1307,16 @@
                       coreutils
                       gnugrep
                     ];
-                    purgeBin = lib.removePrefix "-" purgeEntry;
+                    purgeBin = lib.getExe (
+                      import ./modules/nixos/services/_browser-history-scripts.nix { inherit pkgs; }
+                    ).probeRegistrationPurge;
                   }
                   ''
                     set -euo pipefail
                     FIX=$(mktemp -d)
                     STATE="$FIX/state"; mkdir -p "$STATE"
                     DB="$STATE/data.db"
+                    PROBE='probe-gate@example.com'
 
                     sqlite3 "$DB" "
                     CREATE TABLE IF NOT EXISTS events (
@@ -1349,7 +1341,11 @@
                      ('u-decoy','other@example.com','Other',0);
                     "
 
-                    run() { STATE_DIRECTORY="$1" "$purgeBin" >"$FIX/out" 2>&1; }
+                    run() { STATE_DIRECTORY="$1" "$purgeBin" "$PROBE" >"$FIX/out" 2>&1; }
+
+                    if STATE_DIRECTORY="$STATE" "$purgeBin" >/dev/null 2>&1; then
+                      echo 'FAIL: empty argv must be refused'; exit 1
+                    fi
 
                     run "$STATE"
                     grep -q 'events_deleted=2' "$FIX/out" || { echo 'FAIL: events_deleted != 2'; cat "$FIX/out"; exit 1; }

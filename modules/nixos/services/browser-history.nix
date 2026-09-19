@@ -122,55 +122,9 @@
         '';
       };
 
-      # One-time probe-registration purge (see probeRegistrationCleanup above).
-      # Email-scoped on BOTH surfaces — never a blanket UserRegistered delete:
-      # the events table is the sole journal and lars@ is NOT a journal row
-      # (provisioned user), but future registrations must never be caught.
-      probeRegistrationPurge = pkgs.writeShellApplication {
-        name = "browser-history-probe-registration-purge";
-        runtimeInputs = [
-          pkgs.sqlite
-          pkgs.coreutils
-        ];
-        text = ''
-          email="${cfg.probeRegistrationCleanup.email}"
-          state_dir="''${STATE_DIRECTORY:-/var/lib/browser-history}"
-          db="''${state_dir}/data.db"
-          marker="''${state_dir}/.probe-registration-purged-$(printf '%s' "$email" | sha256sum | cut -c1-12)"
-
-          if [ -f "$marker" ]; then
-            exit 0
-          fi
-          if [ ! -f "$db" ]; then
-            echo "browser-history-probe-registration-purge: no data.db yet, nothing to purge"
-            exit 0
-          fi
-          case "$email" in
-            *"'"*)
-              echo "browser-history-probe-registration-purge: email contains a single quote, refusing" >&2
-              exit 1
-              ;;
-          esac
-
-          result="$(sqlite3 "$db" "
-            PRAGMA busy_timeout = 5000;
-            BEGIN IMMEDIATE;
-            DELETE FROM events
-              WHERE event_type = 'UserRegistered'
-                AND json_extract(CAST(payload AS TEXT), '\$.email') = '$email';
-            SELECT 'events_deleted=' || changes();
-            DELETE FROM users_view WHERE email = '$email';
-            SELECT 'users_view_deleted=' || changes();
-            COMMIT;
-          ")" || {
-            echo "browser-history-probe-registration-purge: sqlite purge failed (retries next start)" >&2
-            exit 1
-          }
-          printf '%s\n' "$result"
-          touch "$marker"
-          echo "browser-history-probe-registration-purge: purged probe registration for $email"
-        '';
-      };
+      # One-time probe-registration purge script lives in
+      # _browser-history-scripts.nix so flake checks can exercise it directly.
+      browserHistoryScripts = import ./_browser-history-scripts.nix { inherit pkgs; };
 
       domain = config.networking.domain;
       fqdn = "history.${domain}";
@@ -398,10 +352,22 @@
         # Appended AFTER the OIDC gate's ExecStartPre (list concatenation across
         # mkMerge branches, same mechanism as the EnvironmentFile pair above).
         (lib.mkIf (cfg.enable && cfg.probeRegistrationCleanup.enable) {
+          # Guard against the split-brain failure mode: option on but the
+          # ExecStartPre entry lost to a future refactor = a purge that never
+          # runs (phantom no-op). Reads the FINAL merged unit config.
+          assertions = [
+            {
+              assertion = lib.any (lib.hasInfix "browser-history-probe-registration-purge") (
+                config.systemd.services.browser-history.serviceConfig.ExecStartPre or [ ]
+              );
+              message = "browser-history probeRegistrationCleanup is enabled but the purge script is absent from ExecStartPre";
+            }
+          ];
+
           systemd.services.browser-history.serviceConfig = lib.mkMerge [
             {
               ExecStartPre = [
-                "-${lib.getExe probeRegistrationPurge}"
+                "-${lib.getExe browserHistoryScripts.probeRegistrationPurge} ${cfg.probeRegistrationCleanup.email}"
               ];
             }
           ];
