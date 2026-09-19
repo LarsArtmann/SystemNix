@@ -932,21 +932,37 @@ _: {
             if [ "''${PMA_WALKS_LAUNCHED:-0}" = 1 ]; then
               pma_fail_status=2
               pma_fb_status=2
+              pma_commits_status=2
               PMA_COMMIT_FAILURES_1H=""
               PMA_HEURISTIC_FALLBACKS_24H=""
+              PMA_COMMITS_24H=""
               read -r pma_fail_status PMA_COMMIT_FAILURES_1H < "$WALK_DIR/pma-fail" 2>/dev/null || { pma_fail_status=2; PMA_COMMIT_FAILURES_1H=""; }
               read -r pma_fb_status PMA_HEURISTIC_FALLBACKS_24H < "$WALK_DIR/pma-fb" 2>/dev/null || { pma_fb_status=2; PMA_HEURISTIC_FALLBACKS_24H=""; }
-              if [ "''${pma_fail_status:-2}" -le 1 ] && [ "''${pma_fb_status:-2}" -le 1 ]; then
+              read -r pma_commits_status PMA_COMMITS_24H < "$WALK_DIR/pma-commits" 2>/dev/null || { pma_commits_status=2; PMA_COMMITS_24H=""; }
+              if [ "''${pma_fail_status:-2}" -le 1 ] && [ "''${pma_fb_status:-2}" -le 1 ] && [ "''${pma_commits_status:-2}" -le 1 ]; then
                 PMA_COMMIT_FAILURES_1H="''${PMA_COMMIT_FAILURES_1H:-0}"
                 PMA_HEURISTIC_FALLBACKS_24H="''${PMA_HEURISTIC_FALLBACKS_24H:-0}"
+                PMA_COMMITS_24H="''${PMA_COMMITS_24H:-0}"
                 PMA_COMMIT_FAILURES_OVER=0
                 [ "$PMA_COMMIT_FAILURES_1H" -ge ${toString pmaCommitFailureThreshold} ] 2>/dev/null && PMA_COMMIT_FAILURES_OVER=1
                 PMA_HEURISTIC_FALLBACKS_OVER=0
                 [ "$PMA_HEURISTIC_FALLBACKS_24H" -ge ${toString pmaHeuristicFallbackThreshold} ] 2>/dev/null && PMA_HEURISTIC_FALLBACKS_OVER=1
+                # Volume-independent degraded-direction signal: once a small
+                # sample exists, a >=90% heuristic share means the LLM path
+                # is dead even on a quiet week (2/2 fallbacks = 100% dead but
+                # 2 < 20 never trips the count threshold). Below the sample
+                # floor the ratio stays 0 — too few commits to judge.
+                PMA_COMMIT_RATIO_OVER=0
+                PMA_COMMIT_RATIO_PCT=""
+                if [ "$PMA_COMMITS_24H" -ge ${toString pmaCommitRatioMinCommits} ] 2>/dev/null; then
+                  PMA_COMMIT_RATIO_PCT=$(( PMA_HEURISTIC_FALLBACKS_24H * 100 / PMA_COMMITS_24H ))
+                  [ "$PMA_COMMIT_RATIO_PCT" -ge ${toString pmaCommitRatioPercentThreshold} ] 2>/dev/null && PMA_COMMIT_RATIO_OVER=1
+                fi
               else
-                echo "system-health: pma commit journal scan failed (fail=''${pma_fail_status:-?} fallback=''${pma_fb_status:-?})" >&2
+                echo "system-health: pma commit journal scan failed (fail=''${pma_fail_status:-?} fallback=''${pma_fb_status:-?} commits=''${pma_commits_status:-?})" >&2
                 PMA_COMMIT_FAILURES_1H=""
                 PMA_HEURISTIC_FALLBACKS_24H=""
+                PMA_COMMITS_24H=""
                 PMA_COMMIT_SCRAPE_ERRORS=1
               fi
             fi
@@ -1218,6 +1234,17 @@ _: {
               echo "# HELP system_pma_commit_fallbacks_over_threshold 1 when the 24h heuristic-fallback count means the LLM path is dead (${toString pmaHeuristicFallbackThreshold}+), 0 otherwise"
               echo "# TYPE system_pma_commit_fallbacks_over_threshold gauge"
               echo "system_pma_commit_fallbacks_over_threshold ''${PMA_HEURISTIC_FALLBACKS_OVER}"
+
+              # Emitted on EVERY successful scan (0 below the sample floor):
+              # absence must mean scrape failure, never a quiet week.
+              echo "# HELP system_pma_commit_fallback_ratio_over_threshold 1 when >=${toString pmaCommitRatioPercentThreshold}% of the last ${toString pmaCommitRatioMinCommits}+ commits rode heuristic fallbacks (LLM path dead at LOW commit volume — the count threshold cannot see quiet weeks), 0 otherwise"
+              echo "# TYPE system_pma_commit_fallback_ratio_over_threshold gauge"
+              echo "system_pma_commit_fallback_ratio_over_threshold ''${PMA_COMMIT_RATIO_OVER}"
+              if [ -n "$PMA_COMMIT_RATIO_PCT" ]; then
+                echo "# HELP system_pma_commit_fallback_ratio_percent heuristic-fallback share of the last 24h commits (emitted once the ${toString pmaCommitRatioMinCommits}-commit sample floor is met)"
+                echo "# TYPE system_pma_commit_fallback_ratio_percent gauge"
+                echo "system_pma_commit_fallback_ratio_percent ''${PMA_COMMIT_RATIO_PCT}"
+              fi
             fi
 
             if [ "$collect_pocket_id_busy" = "true" ]; then
@@ -1975,8 +2002,9 @@ _: {
                   "[BODY] == pat(*\nsystem_pma_commit_scrape_errors 0\n*)"
                   "[BODY] == pat(*\nsystem_pma_commit_failures_over_threshold 0\n*)"
                   "[BODY] == pat(*\nsystem_pma_commit_fallbacks_over_threshold 0\n*)"
+                  "[BODY] == pat(*\nsystem_pma_commit_fallback_ratio_over_threshold 0\n*)"
                 ];
-                alert = "PMA commits are failing or riding heuristic fallbacks — the auto-commit pipeline is degraded (2026-08-22..09-02: 11 days, ~3,800 failed commits on a dead AI provider, invisible to liveness). Failures: journalctl -u projects-management-automation --since -1h --grep 'commit failed'. Fallbacks: same with 'heuristic fallback'. Check the provider chain (FastFlowLM :52625 socket, minimax/zai keys) before it becomes a backlog.";
+                alert = "PMA commits are failing or riding heuristic fallbacks — the auto-commit pipeline is degraded (2026-08-22..09-02: 11 days, ~3,800 failed commits on a dead AI provider, invisible to liveness). Failures: journalctl -u projects-management-automation --since -1h --grep 'commit failed'. Fallbacks: same with 'heuristic fallback'. The ratio flag fires at >=90% fallback share once 3+ commits/24h exist — the low-volume dead-LLM class the count thresholds miss. Check the provider chain (FastFlowLM :52625 socket, minimax/zai keys) before it becomes a backlog.";
               }
               {
                 name = "Enabled-but-Inactive Units";

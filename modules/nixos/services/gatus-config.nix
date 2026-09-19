@@ -935,6 +935,23 @@ _: {
                   ];
                   alerts = discordAlert "node_exporter textfile collector has parse errors — ALL textfile metrics (system_health, psi, nvme, btrfs, niri) are being silently dropped. Check each .prom file in /var/lib/prometheus-node-exporter/textfile_collectors/ for invalid syntax (e.g. [not set] poison values, bare lines). This is a meta-check: when it fires, 14+ Gatus checks go permanently RED because their underlying metrics vanish.";
                 })
+                (mkHttpCheck {
+                  name = "Storage Collector Health";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "1m";
+                  # Line-anchored VALUE form: fails when the health gauge
+                  # degrades past 0 (warn/fail/unknown) OR when the line is
+                  # absent entirely (daemon dead, textfile stale/vanished —
+                  # node_exporter serves the last scrape forever, so absence
+                  # needs its own canary; the 2026-09-18/19 IO audit runs on
+                  # this record).
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nstorage_collector_health 0\n*)"
+                  ];
+                  alerts = discordAlert "storage-collector unhealthy (health gauge != 0) or its textfile vanished — filesystem capacity + IO gauge observability is DOWN and the verify timer just lost its subject. Check: systemctl status storage-collector storage-collector-verify.timer; journalctl -u storage-collector -n 30; ls -la /var/lib/prometheus-node-exporter/textfile_collectors/storage-collector.prom";
+                })
               ]
               ++ map mkWebsiteCheck ossWebsites
               # Registry fan-out (services.integration.<name>.checks) — inside

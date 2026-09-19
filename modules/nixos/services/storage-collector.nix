@@ -15,17 +15,33 @@
 #   - Removal debounce: a mount must be missing 3 consecutive cycles
 #     before it is reported removed (absorbs statvfs flaps and USB DAS
 #     re-enumeration windows).
+#   - IO-domain gauges (PSI bp, disk in-flight, btrfs metadata fill,
+#     zram fill) into the node_exporter textfile dir — the 2026-09-18/19
+#     IO-audit observability surface.
 #
 # The service module (options: intervalSecs, warnPercent, clearPercent,
 # removalCycles, textfile, skipFsTypes, trackFsTypes, maxFileMb,
 # keepFiles, dataDir) lives in the storage-collector flake.
-{ inputs, ... }: {
+{
+  inputs,
+  ...
+}:
+{
   flake.nixosModules.storage-collector =
     {
       config,
       lib,
       ...
     }:
+    let
+      cfg = config.services.storage-collector;
+      textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
+      inherit (import ../../../lib/default.nix lib)
+        harden
+        onFailure
+        serviceOneshotDefaults
+        ;
+    in
     {
       imports = [ inputs.storage-collector.nixosModules.default ];
 
@@ -36,6 +52,55 @@
           # ~60 MiB regardless.
           intervalSecs = lib.mkDefault 60;
           dataDir = lib.mkDefault "/var/lib/storage-collector";
+          # Gauge surface for Gatus/node_exporter (PSI bp, in-flight,
+          # btrfs metadata fill, zram fill, health) — see the I/O Stall
+          # Rate + Storage Collector Health checks in gatus-config.nix.
+          textfile = lib.mkDefault "${textfileDir}/storage-collector.prom";
+        };
+
+        systemd.services.storage-collector.serviceConfig = {
+          # Sticky-1777 textfile doctrine (mail-relay 2026-09-02..06 class:
+          # 845+ failed runs, Gatus red 4 days): after a DynamicUser
+          # restart the daemon's final rename lands on a foreign-owned
+          # .prom — CAP_FOWNER is the house fix. The crate writes a
+          # pid-unique tmp so the tmp itself never collides.
+          AmbientCapabilities = [ "CAP_FOWNER" ];
+          CapabilityBoundingSet = [ "CAP_FOWNER" ];
+          # ProtectSystem=strict upstream: the textfile dir must be
+          # writable next to the StateDirectory.
+          ReadWritePaths = [ textfileDir ];
+        };
+
+        # Record integrity probe: verify parses the whole JSONL record and
+        # exits non-zero on findings — the exit code IS the cron-facing
+        # alerting primitive (same contract as `--once`), so a failed unit
+        # routes through notify-failure@. Runs as root because the daemon's
+        # DynamicUser is per-service and the StateDirectory files are 0600;
+        # CAP_DAC_READ_SEARCH is the read-only door (no DAC_OVERRIDE).
+        systemd.services.storage-collector-verify = {
+          description = "storage-collector: verify the JSONL record (parse + integrity)";
+          inherit onFailure;
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              ExecStart = "${lib.getExe cfg.package} verify --data-dir ${cfg.dataDir}";
+              User = "root";
+            }
+            (harden {
+              CapabilityBoundingSet = [ "CAP_DAC_READ_SEARCH" ];
+            })
+            (serviceOneshotDefaults { })
+          ];
+        };
+
+        systemd.timers.storage-collector-verify = {
+          description = "Hourly storage-collector record verification";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "hourly";
+            Persistent = true;
+            RandomizedDelaySec = "5m";
+          };
         };
       };
     };

@@ -221,6 +221,55 @@ _: {
         mv -f "$TMP" "$OUT"
         trap - EXIT
       '';
+
+      paperlessWantsRag = (config.services.paperless or { }).enable or false;
+
+      # Dark guard (module DISABLED): once this module is off, the llama-rag
+      # ports have NO legitimate owner - any listener is a foreign orphan.
+      # The 2026-09-18/19 hermes-cron orphan class recurred 3x (rogue
+      # llama-servers holding :8848/:8849 for 8h+ on the WEDGED 0.4.0
+      # build while the module ran the pinned 0.3.0 one; intermittent-spin,
+      # 2h+ CPU burned) with zero detection. This collector is its
+      # tripwire. When paperless is enabled it also keeps the RAG
+      # capability loss visible: the embedding endpoint is dark, so
+      # paperless semantic search silently degrades - a standing signal
+      # (Turso precedent), emitted BY CONFIG so a rogue listener can never
+      # turn it green. Fail-closed: on scrape failure the rogue gauge is
+      # omitted (absence fails the Gatus pat) and
+      # llama_rag_dark_scrape_errors goes to 1.
+      darkGuardScript = pkgs.writeShellScript "llama-rag-dark-guard.sh" ''
+        set -euo pipefail
+        OUT="${textfileDir}/llama-rag-dark.prom"
+        mkdir -p "${textfileDir}"
+        TMP="$(mktemp "${textfileDir}/llama-rag-dark.prom.XXXXXX")"
+        chmod 644 "$TMP"
+        trap 'rm -f "$TMP"' EXIT
+
+        rogues=""
+        scrape_errors=1
+        if ss_out="$(timeout 10 ${pkgs.iproute2}/bin/ss -tln 2>/dev/null)"; then
+          scrape_errors=0
+          rogues="$(grep -cE ":(${toString cfg.embeddingsPort}|${toString cfg.rerankerPort})[^0-9]" <<<"$ss_out")" || rogues=0
+        fi
+
+        {
+          if [ -n "$rogues" ]; then
+            echo "# HELP llama_rag_ports_rogue_listeners Listeners on the llama-rag ports while the module is disabled - foreign orphans by construction (hermes-cron orphan class, intermittent-spin)"
+            echo "# TYPE llama_rag_ports_rogue_listeners gauge"
+            echo "llama_rag_ports_rogue_listeners $rogues"
+          fi
+          echo "# HELP llama_rag_dark_scrape_errors Scrape status of the dark-guard collector: 0 = OK, 1 = failed (fail-closed)"
+          echo "# TYPE llama_rag_dark_scrape_errors gauge"
+          echo "llama_rag_dark_scrape_errors $scrape_errors"
+          ${lib.optionalString paperlessWantsRag ''
+            echo "# HELP paperless_rag_embeddings_dark 1 while llama-rag is disabled and paperless consumes the embedding endpoint - standing capability-loss signal (RAG semantic search degraded), not an actionable outage. Config-emitted: a rogue listener must never turn this green."
+            echo "# TYPE paperless_rag_embeddings_dark gauge"
+            echo "paperless_rag_embeddings_dark 1"
+          ''}
+        } > "$TMP"
+        mv -f "$TMP" "$OUT"
+        trap - EXIT
+      '';
     in
     {
       options.services.llama-rag = {
@@ -301,7 +350,8 @@ _: {
         };
       };
 
-      config = lib.mkIf cfg.enable {
+      config = lib.mkMerge [
+        (lib.mkIf cfg.enable {
         assertions = [
           {
             assertion = cfg.embeddingsPort != cfg.rerankerPort;
@@ -505,6 +555,81 @@ _: {
             monitored = true;
           };
         };
-      };
+        })
+
+        # Module DISABLED: the ports have no legitimate owner, so watch
+        # them for foreign orphans and keep paperless' RAG loss visible.
+        (lib.mkIf (!cfg.enable) {
+          systemd.services.llama-rag-dark-guard = {
+            description = "llama-rag dark-guard metrics (rogue port listeners + paperless RAG loss)";
+            serviceConfig = lib.mkMerge [
+              (harden { })
+              {
+                Type = "oneshot";
+                ExecStart = darkGuardScript;
+                CapabilityBoundingSet = "CAP_FOWNER CAP_DAC_OVERRIDE";
+                TimeoutStartSec = "1min";
+              }
+              ioTier.background
+            ];
+            startLimitBurst = 3;
+            startLimitIntervalSec = 300;
+          };
+
+          systemd.timers.llama-rag-dark-guard = {
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = "*:0/5";
+              Persistent = true;
+            };
+          };
+
+          services.integration = lib.optionalAttrs (options ? services.integration) {
+            llama-rag-dark = {
+              enable = true;
+              vHost.layer = "none";
+              checks = [
+                {
+                  # Rogue-orphan tripwire (node-exporter textfile): ANY
+                  # listener on the llama-rag ports while the module is
+                  # disabled is foreign by construction - this module's own
+                  # units cannot run when disabled. First post-ship cycle
+                  # is expected RED: the live rogues are exactly the alert
+                  # working as designed.
+                  name = "llama.cpp Port Rogues (dark)";
+                  group = "AI";
+                  url = "http://localhost:${toString ports.signoz-node-exporter}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nllama_rag_ports_rogue_listeners 0\n*)"
+                    "[BODY] != pat(*\nllama_rag_dark_scrape_errors 1*)"
+                  ];
+                  alert = "Rogue llama-server listener(s) on :${toString cfg.embeddingsPort}/:${toString cfg.rerankerPort} while llama-rag is DISABLED - the hermes-cron orphan class (2026-09-18/19, 3 recurrences; intermittent-spin, 2h+ CPU burned). Consumers may be pinned to the stale wedged 0.4.0 build. Fix: verify identity (ps -o user:16 -p <pid>; cat /proc/<pid>/cgroup), kill the orphan, then trace WHY it spawned (hermes cron definitions).";
+                }
+              ] ++ lib.optionals paperlessWantsRag [
+                {
+                  # Standing capability-loss signal (Turso precedent):
+                  # red BY DESIGN while llama-rag is disabled with
+                  # paperless enabled - one persistent alert + standing
+                  # dashboard red instead of a silent degradation. The
+                  # metric is config-emitted (never listener-probed), so a
+                  # rogue cannot turn it green. Disappears on re-enable,
+                  # when the enabled entry's /health checks take over.
+                  name = "Paperless RAG Embeddings Dark";
+                  group = "AI";
+                  url = "http://localhost:${toString ports.signoz-node-exporter}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\npaperless_rag_embeddings_dark 0\n*)"
+                  ];
+                  alert = "Paperless RAG semantic search is degraded: llama-rag is disabled (2026-09-18 mid-load CPU-spin escape condition) so the embedding endpoint :${toString cfg.embeddingsPort} is dark. Stays red until llama-rag re-enables behind the upstream soak gate - standing signal, not an actionable outage.";
+                }
+              ];
+            };
+          };
+        })
+      ];
     };
 }
