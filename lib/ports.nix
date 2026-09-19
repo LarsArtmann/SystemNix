@@ -135,5 +135,10 @@
     # GeoMetrikks — reverse-proxy access-log geo analytics (services.geometrikks),
     # loopback-only; Caddy proxies geo.home.lan to it.
     geometrikks = 8102;
+
+    # health-dashboard — federated go-health hub (services.health-dashboard),
+    # loopback-only; Caddy proxies health.home.lan to it. Serves the merged
+    # dashboard + kubelet probes; its readiness merges every federated remote.
+    health-dashboard = 8103;
   };
 }

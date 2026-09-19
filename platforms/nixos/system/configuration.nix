@@ -833,6 +833,28 @@ in
         enable = true;
       };
 
+      # Federated go-health hub — health.home.lan. health-hub merges every
+      # service's existing go-health endpoint into one dashboard (one card
+      # per remote, name/check keys, name/reachable FAIL row when a remote
+      # is dark). CV is the first remote: its /health is the go-health rich
+      # document (port from lib/ports.nix). Runbook: docs/services/
+      # health-dashboard.md.
+      health-dashboard = {
+        enable = true;
+        remotes = [
+          "cv=http://127.0.0.1:${toString ports.cv}/health"
+        ];
+      };
+
+      # GeoMetrikks — reverse-proxy access-log geo analytics at geo.<domain>
+      # (tails every Caddy per-vhost JSON access log, geolocates requests via
+      # MaxMind GeoLite2, live world map + searchable log DB on TimescaleDB).
+      # MaxMind/CARTO keys ship EMPTY (geo-degraded + keyless tiles) until a
+      # free MaxMind account exists — runbook: docs/services/geometrikks.md.
+      geometrikks = {
+        enable = true;
+      };
+
       # Overview — local project dashboard (discovers git repos, shows stats/activity)
       overview = {
         enable = true;

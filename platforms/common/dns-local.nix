@@ -32,5 +32,6 @@
     "rss"
     "mr-sync"
     "geo"
+    "health"
   ];
 }

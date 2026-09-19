@@ -416,6 +416,19 @@
       };
     };
 
+    # go-health-dashboard — federated go-health hub (health.home.lan).
+    # Consumed for its packages.health-hub buildGoModule output (the flake
+    # owns the go_1_27 + GOEXPERIMENT=jsonv2 toolchain wiring).
+    go-health-dashboard = {
+      url = "github:LarsArtmann/go-health-dashboard?ref=master";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+        systems.follows = "systems";
+      };
+    };
+
     # erraudit — Error handling pattern analyzer for Go projects
     # (GitHub renamed the repo from hierarchical-errors; the input name and
     # the mkLarsPackages attr follow the new name. 2026-09-17.)

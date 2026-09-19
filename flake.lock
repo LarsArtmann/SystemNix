@@ -3627,6 +3627,36 @@
       }
     },
     "go-health-dashboard_3": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "systems": [
+          "systems"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1789759178,
+        "narHash": "sha256-FnzWoUeBuXn/lduFxfkT2vvSsj3P3DTnoQp4JunX2Aw=",
+        "owner": "LarsArtmann",
+        "repo": "go-health-dashboard",
+        "rev": "ededbf1bef8c24d3c75be874e6166d13fba440c1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "master",
+        "repo": "go-health-dashboard",
+        "type": "github"
+      }
+    },
+    "go-health-dashboard_4": {
       "flake": false,
       "locked": {
         "lastModified": 1789661293,
@@ -5435,7 +5465,7 @@
         "go-etag": "go-etag_4",
         "go-finding": "go-finding_12",
         "go-health": "go-health_3",
-        "go-health-dashboard": "go-health-dashboard_3",
+        "go-health-dashboard": "go-health-dashboard_4",
         "go-ndjson": "go-ndjson_6",
         "go-nix-helpers": [
           "go-nix-helpers"
@@ -6540,6 +6570,7 @@
         "go-error-family": "go-error-family_10",
         "go-filewatcher": "go-filewatcher_2",
         "go-finding": "go-finding_8",
+        "go-health-dashboard": "go-health-dashboard_3",
         "go-humanize-linter": "go-humanize-linter_2",
         "go-nix-helpers": "go-nix-helpers_4",
         "go-output": "go-output_7",
