@@ -118,6 +118,8 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Gatus check on `browser_history_user_count`: alert on DECREASE or exceed of its pre-probe baseline** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **browser-history registration-surface audit: verify `/auth/import` is unreachable unauthenticated on the deployed vHost path + sweep cqrs-htmx for OTHER user-creation paths bypassing `registrationMu`** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **DiscordSync Immich cross-archive wiring: deploy + go-live chain (FOD wave → deploy → user API key → post-deploy verify)** → [docs/todo/services.md](docs/todo/services.md)
+- [ ] **Health Hub: expose fetch-timeout/push-cadence as module options** → [docs/todo/services.md](docs/todo/services.md)
+- [ ] **Health Hub: add post-deploy smoke section to post-deploy-check.sh** → [docs/todo/services.md](docs/todo/services.md)
 
 ### upstream
 
@@ -176,6 +178,10 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Flake-check guard: HTML `pat()` needles must start with `<`** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Derive AUTH_VHOSTS from caddy.nix (or eval-time assert)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Centralize curl in `scripts/lib.sh` `fetch()` helper** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] **Prune the stale `flake: false` `go-health-dashboard` lock node (input resolving as `_4`)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] **Investigate + gate the unformatted-commit path (geometrikks.nix + 3 scripts landed pre-`nix fmt`)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] **File the daemon-beat-precommit-hook incident into the fleet lessons** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] **deploy wrapper: refuse early with a clear message in agent sandboxes (no sudo)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Identify residual post-deploy WARNs** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **post-deploy-check: poll browser-history /health + drop deploy.sh explicit restart** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Extend mkOidcGate with optional diagnostic output** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
