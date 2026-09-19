@@ -141,6 +141,64 @@
           }) cfg.dashboard.bookmarks;
         }
       );
+
+      # Drift guard for the rendered services.json. PapDashboard reads the
+      # file ONCE at startup — later drift (empty render, partial write,
+      # format regression) leaves the Services tab silently empty until the
+      # next restart. This collector folds the file's health into
+      # node_exporter textfile metrics so the Gatus check fails closed
+      # (metric line absent = red) even when the collector itself dies.
+      servicesJsonCheck = pkgs.writeShellApplication {
+        name = "papdashboard-services-json-check";
+        runtimeInputs = [
+          pkgs.jq
+          pkgs.coreutils
+        ];
+        text = ''
+          OUT="/var/lib/prometheus-node-exporter/textfile_collectors/papdashboard_services.prom"
+          CFG="/etc/papdashboard/services.json"
+          # Unique tmp per run (mktemp): a fixed .tmp name collides with
+          # stale foreign-owned leftovers in the sticky 1777 textfile dir.
+          mkdir -p "/var/lib/prometheus-node-exporter/textfile_collectors"
+          TMP="$(mktemp "/var/lib/prometheus-node-exporter/textfile_collectors/papdashboard_services.prom.XXXXXX")"
+          chmod 644 "$TMP"
+          trap 'rm -f "$TMP"' EXIT
+
+          ok=0
+          groups=0
+          tiles=0
+          # Single parse gate: jq -e exits non-zero on invalid JSON or a
+          # false expression, so the counting jq below only runs on a
+          # verified-parsable file (set -e would abort the unit on an
+          # unguarded failing assignment otherwise).
+          if [ -r "$CFG" ] && jq -e '(.groups | type == "array") and (.groups | length > 0)' "$CFG" >/dev/null 2>&1; then
+            groups="$(jq -r '.groups | length' "$CFG" 2>/dev/null || echo 0)"
+            tiles="$(jq -r '[.groups[]? | (.tiles // []) | length] | add // 0' "$CFG" 2>/dev/null || echo 0)"
+            if [ "$groups" -gt 0 ] && [ "$tiles" -gt 0 ]; then
+              ok=1
+            fi
+          fi
+
+          {
+            echo "# HELP papdashboard_services_json_ok Rendered services.json readable, valid JSON, and non-empty (1 = healthy)"
+            echo "# TYPE papdashboard_services_json_ok gauge"
+            echo "papdashboard_services_json_ok $ok"
+            echo "# HELP papdashboard_services_json_groups Tile groups in the rendered services.json"
+            echo "# TYPE papdashboard_services_json_groups gauge"
+            echo "papdashboard_services_json_groups $groups"
+            echo "# HELP papdashboard_services_json_tiles Dashboard tiles in the rendered services.json"
+            echo "# TYPE papdashboard_services_json_tiles gauge"
+            echo "papdashboard_services_json_tiles $tiles"
+          } >"$TMP"
+
+          mv "$TMP" "$OUT"
+        '';
+      };
+
+      # The drift check probes the host's node_exporter /metrics (same
+      # surface as every other textfile-metric check); fall back to the
+      # registered port for hosts without the signoz exporter module.
+      nodeExporterPort = config.services.prometheus.exporters.node.port or ports.signoz-node-exporter;
     in
     {
       options.services.papdashboard = {
@@ -635,6 +693,26 @@
           ];
         };
 
+        # Drift-guard collector: folds the rendered services.json health
+        # into node_exporter textfile metrics (see servicesJsonCheck).
+        systemd.services.papdashboard-services-json-check = {
+          description = "PapDashboard services.json drift check for node_exporter textfile";
+          inherit onFailure;
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = lib.getExe servicesJsonCheck;
+          };
+        };
+
+        systemd.timers.papdashboard-services-json-check = {
+          description = "Check PapDashboard services.json every 60s";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "30s";
+            OnUnitActiveSec = "60s";
+          };
+        };
+
         # Services dashboard config consumed by the unit (PAP_SERVICES_CONFIG
         # above). Store-path symlink: world-readable by construction, no
         # secrets in the file.
@@ -661,6 +739,23 @@
                   "[RESPONSE_TIME] < 500"
                 ];
                 alert = "PapDashboard alert hub down — alert lifecycle UI and NPU insights unavailable (raw Discord alerts still flow)";
+              }
+              {
+                name = "PapDashboard Services JSON";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodeExporterPort}/metrics";
+                interval = "5m";
+                # Asserted-1 anchored pair (AGENTS.md pat() rules): the
+                # != 0 arm is line-anchored on the trailing newline so a
+                # HELP comment can never phantom-green it, and the == arm
+                # proves the metric line exists at all — a dead collector
+                # fails closed instead of freezing at its last values.
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] != pat(*papdashboard_services_json_ok 0\n*)"
+                  "[BODY] == pat(*\npapdashboard_services_json_ok *)"
+                ];
+                alert = "PapDashboard services.json drift — rendered config missing, unparsable, or empty, so the Services tab serves no tiles until the unit restarts. Check: systemctl status papdashboard-services-json-check; ls -la /etc/papdashboard/services.json";
               }
             ];
           };

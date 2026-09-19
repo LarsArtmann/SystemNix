@@ -25,36 +25,20 @@ _: {
           # Provides low-latency audio processing and audio app interconnection
           jack.enable = true;
 
-          wireplumber.extraConfig."51-hdmi-monitor-priority" = {
-            # Disable profile state restoration so the priority rules below
-            # always take effect instead of whatever was last selected at runtime
-            "wireplumber.settings" = {
-              "device.restore-profile" = false;
-            };
-
-            # The Radeon audio controller (pci-0000:c5:00.1) exposes multiple
-            # HDMI/DisplayPort outputs. Two monitors are connected:
-            #   HDMI 2 (eld#0.1) = "LG HDR 4K" (the main monitor, stereo speakers)
-            #   HDMI 3 (eld#0.2) = "LG TV SSCR2" (a TV, full surround)
-            # HDMI 3 (the TV) is the preferred audio output.
-            "device.profile.priority.rules" = [
-              {
-                matches = [
-                  {
-                    "device.name" = "alsa_card.pci-0000_c5_00.1";
-                  }
-                ];
-                actions = {
-                  update-props = {
-                    priorities = [
-                      "output:hdmi-stereo-extra2"
-                      "output:hdmi-stereo-extra1"
-                    ];
-                  };
-                };
-              }
-            ];
-          };
+          # NO static WirePlumber profile-priority rules here (the old
+          # "51-hdmi-monitor-priority" block was removed 2026-09-19): it was
+          # doubly dead/fighting — (1) its `device.name` match pinned the
+          # pre-crash PCI address `alsa_card.pci-0000_c5_00.1`, which became
+          # `c6` in the 2026-08-31 post-crash renumber, so the rule matched
+          # NOTHING since then; (2) with `device.restore-profile = false`, any
+          # future match would re-apply the priorities on every device event
+          # and fight smart-audio's focus-driven profile switches. smart-audio
+          # (services.smart-audio) is the SOLE HDMI profile router: it
+          # resolves the card by NAME at runtime and switches profiles on
+          # workspace focus. Profile state restoration stays at the
+          # WirePlumber default (restore-profile on), which re-applies
+          # smart-audio's last choice on device events instead of a static
+          # priority.
         };
 
         # Pulseaudio disabled (conflicts with pipewire)

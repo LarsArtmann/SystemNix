@@ -448,8 +448,8 @@ else
     elif [ -n "$MIRROR_PARTUUID" ]; then
       echo "  ℹ mirror is not first in BootOrder — the QLC chain boots; activate with nix run .#boot-mirror-activate"
     fi
-    if [ -n "$MIRROR_PARTUUID" ] \
-      && efibootmgr -v 2>/dev/null | grep -iF "$MIRROR_PARTUUID" | grep -qiF 'systemd-bootx64.efi'; then
+    if [ -n "$MIRROR_PARTUUID" ] &&
+      efibootmgr -v 2>/dev/null | grep -iF "$MIRROR_PARTUUID" | grep -qiF 'systemd-bootx64.efi'; then
       pass "mirror EFI boot entry present (systemd-boot loader on the mirror partition)"
     else
       mirror_issue "no EFI boot entry points at the mirror's systemd-boot — firmware cannot pick it (run nix run .#boot-mirror-activate)"

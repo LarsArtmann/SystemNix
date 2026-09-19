@@ -1039,9 +1039,13 @@
                 let
                   forgejoScripts = import ./modules/nixos/services/_forgejo-scripts.nix {
                     inherit pkgs lib;
-                    config = { services = { }; };
+                    config = {
+                      services = { };
+                    };
                     primaryUser = "lars";
-                    cfg = { sshKeys = { }; };
+                    cfg = {
+                      sshKeys = { };
+                    };
                     forgejoPkg = pkgs.hello;
                     forgejoUrl = "http://localhost:3000";
                     stateDir = "/var/lib/forgejo";
@@ -1307,9 +1311,10 @@
                       coreutils
                       gnugrep
                     ];
-                    purgeBin = lib.getExe (
-                      import ./modules/nixos/services/_browser-history-scripts.nix { inherit pkgs; }
-                    ).probeRegistrationPurge;
+                    purgeBin =
+                      lib.getExe
+                        (import ./modules/nixos/services/_browser-history-scripts.nix { inherit pkgs; })
+                        .probeRegistrationPurge;
                   }
                   ''
                     set -euo pipefail

@@ -190,15 +190,12 @@ _: {
 
       config = lib.mkIf cfg.enable {
         assertions = lib.concatLists (
-          lib.mapAttrsToList (
-            name: s:
-            [
-              {
-                assertion = s.port != s.backendPort;
-                message = "llama-vlm ${name}: port and backendPort must differ (proxy hop).";
-              }
-            ]
-          ) cfg.servers
+          lib.mapAttrsToList (name: s: [
+            {
+              assertion = s.port != s.backendPort;
+              message = "llama-vlm ${name}: port and backendPort must differ (proxy hop).";
+            }
+          ]) cfg.servers
         );
 
         warnings = lib.optional (cfg.servers != { }) ''
@@ -208,91 +205,106 @@ _: {
           the module header.
         '';
 
-        systemd.sockets = lib.mapAttrs' (name: s: lib.nameValuePair "llama-vlm-${name}" {
-          description = "llama.cpp VLM server '${name}' (public socket)";
-          wantedBy = [ "sockets.target" ];
-          listenStreams = [ "127.0.0.1:${toString s.port}" ];
-          socketConfig = {
-            Accept = true;
-            # llama-server default n_slots=4; cap concurrent bridges below it.
-            MaxConnections = 4;
-          };
-        }) cfg.servers;
+        systemd.sockets = lib.mapAttrs' (
+          name: s:
+          lib.nameValuePair "llama-vlm-${name}" {
+            description = "llama.cpp VLM server '${name}' (public socket)";
+            wantedBy = [ "sockets.target" ];
+            listenStreams = [ "127.0.0.1:${toString s.port}" ];
+            socketConfig = {
+              Accept = true;
+              # llama-server default n_slots=4; cap concurrent bridges below it.
+              MaxConnections = 4;
+            };
+          }
+        ) cfg.servers;
         systemd.services =
           # Per-connection bridges — template name MUST match the socket
           # name (systemd 261 naming rule, see module header). The three
           # families never collide: "<name>@", "<name>", "<name>-idle".
-          lib.mapAttrs' (name: s: lib.nameValuePair "llama-vlm-${name}@" {
-            description = "llama-vlm ${name} per-connection proxy: client fd ↔ backend TCP";
-            after = [ "llama-vlm-${name}.service" ];
-            wants = [ "llama-vlm-${name}.service" ];
-            serviceConfig = lib.mkMerge [
-              {
-                Type = "exec";
-                ExecStart = lib.getExe (bridgeConn name s);
-                StandardInput = "socket";
-                StandardOutput = "socket";
-              }
-              (harden { MemoryMax = "64M"; })
-            ];
-            startLimitBurst = 5;
-            startLimitIntervalSec = 300;
-          }) cfg.servers
-          // lib.mapAttrs' (name: s: lib.nameValuePair "llama-vlm-${name}" {
-            description = "llama.cpp VLM server '${name}' (backend, model resident)";
-            # Deliberately NOT wantedBy multi-user.target — socket activation
-            # keeps RAM free until first request; the socket re-arms after
-            # idle-stop.
-            after = [ "network-online.target" ];
-            wants = [ "network-online.target" ];
-            serviceConfig = lib.mkMerge [
-              {
-                Type = "exec";
-                User = if s.user != null then s.user else primaryUser;
-                Group = "users";
-                ExecStart = execStart s;
-                # Backoff after OOM kills: a fast restart of a multi-GB cold
-                # load pile-drives an exhausted machine (fastflowlm lesson,
-                # 2026-08-18). Exponential: 60→120→240→480→900 s.
-                Restart = "on-failure";
-                RestartSec = "60";
-                RestartSteps = 5;
-                RestartMaxDelaySec = "15min";
-                # Preferred global-OOM victim: stateless, socket-activated,
-                # self-heals on the next connection.
-                OOMScoreAdjust = 300;
-                MemoryMax = s.memoryMax;
-                MemoryHigh = s.memoryMax;
-                TimeoutStartSec = "3min";
-              }
-              (harden { })
-              ioTier.background
-            ];
-            startLimitBurst = 5;
-            startLimitIntervalSec = 300;
-          }) cfg.servers
-          // lib.mapAttrs' (name: s: lib.nameValuePair "llama-vlm-${name}-idle" {
-            description = "Stop llama-vlm ${name} backend after idle TTL expires";
-            serviceConfig = lib.mkMerge [
-              {
-                Type = "oneshot";
-                ExecStart = lib.getExe (idleCheck name s);
-              }
-              (harden { })
-            ];
-            startLimitBurst = 5;
-            startLimitIntervalSec = 300;
-          }) cfg.servers;
+          lib.mapAttrs' (
+            name: s:
+            lib.nameValuePair "llama-vlm-${name}@" {
+              description = "llama-vlm ${name} per-connection proxy: client fd ↔ backend TCP";
+              after = [ "llama-vlm-${name}.service" ];
+              wants = [ "llama-vlm-${name}.service" ];
+              serviceConfig = lib.mkMerge [
+                {
+                  Type = "exec";
+                  ExecStart = lib.getExe (bridgeConn name s);
+                  StandardInput = "socket";
+                  StandardOutput = "socket";
+                }
+                (harden { MemoryMax = "64M"; })
+              ];
+              startLimitBurst = 5;
+              startLimitIntervalSec = 300;
+            }
+          ) cfg.servers
+          // lib.mapAttrs' (
+            name: s:
+            lib.nameValuePair "llama-vlm-${name}" {
+              description = "llama.cpp VLM server '${name}' (backend, model resident)";
+              # Deliberately NOT wantedBy multi-user.target — socket activation
+              # keeps RAM free until first request; the socket re-arms after
+              # idle-stop.
+              after = [ "network-online.target" ];
+              wants = [ "network-online.target" ];
+              serviceConfig = lib.mkMerge [
+                {
+                  Type = "exec";
+                  User = if s.user != null then s.user else primaryUser;
+                  Group = "users";
+                  ExecStart = execStart s;
+                  # Backoff after OOM kills: a fast restart of a multi-GB cold
+                  # load pile-drives an exhausted machine (fastflowlm lesson,
+                  # 2026-08-18). Exponential: 60→120→240→480→900 s.
+                  Restart = "on-failure";
+                  RestartSec = "60";
+                  RestartSteps = 5;
+                  RestartMaxDelaySec = "15min";
+                  # Preferred global-OOM victim: stateless, socket-activated,
+                  # self-heals on the next connection.
+                  OOMScoreAdjust = 300;
+                  MemoryMax = s.memoryMax;
+                  MemoryHigh = s.memoryMax;
+                  TimeoutStartSec = "3min";
+                }
+                (harden { })
+                ioTier.background
+              ];
+              startLimitBurst = 5;
+              startLimitIntervalSec = 300;
+            }
+          ) cfg.servers
+          // lib.mapAttrs' (
+            name: s:
+            lib.nameValuePair "llama-vlm-${name}-idle" {
+              description = "Stop llama-vlm ${name} backend after idle TTL expires";
+              serviceConfig = lib.mkMerge [
+                {
+                  Type = "oneshot";
+                  ExecStart = lib.getExe (idleCheck name s);
+                }
+                (harden { })
+              ];
+              startLimitBurst = 5;
+              startLimitIntervalSec = 300;
+            }
+          ) cfg.servers;
 
-        systemd.timers = lib.mapAttrs' (name: s: lib.nameValuePair "llama-vlm-${name}-idle" {
-          description = "Probe llama-vlm ${name} idle state every 5 minutes";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnBootSec = "5min";
-            OnUnitActiveSec = "5min";
-            AccuracySec = "1min";
-          };
-        }) cfg.servers;
+        systemd.timers = lib.mapAttrs' (
+          name: s:
+          lib.nameValuePair "llama-vlm-${name}-idle" {
+            description = "Probe llama-vlm ${name} idle state every 5 minutes";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnBootSec = "5min";
+              OnUnitActiveSec = "5min";
+              AccuracySec = "1min";
+            };
+          }
+        ) cfg.servers;
 
         services.gatus-coverage-audit.allowPorts = lib.concatMap (s: [
           s.port

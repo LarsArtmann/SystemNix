@@ -158,30 +158,30 @@ let
   # rules are untouched.
   niriConfigWithBlur =
     let
-      kdlWithBlur =
-        config.programs.niri.finalConfig
-        + ''
+      kdlWithBlur = config.programs.niri.finalConfig + ''
 
-          // Blur behind semitransparent windows (terminals 0.88, floating
-          // panels 0.9, tiled 0.95) — the readability half of transparency.
-          // Global blur parameters (passes/offset/noise/saturation) keep
-          // niri's defaults; tune them in a top-level `blur {}` node here if
-          // the look needs adjusting.
-          window-rule {
-              background-effect {
-                  blur true
-              }
-          }
-        '';
+        // Blur behind semitransparent windows (terminals 0.88, floating
+        // panels 0.9, tiled 0.95) — the readability half of transparency.
+        // Global blur parameters (passes/offset/noise/saturation) keep
+        // niri's defaults; tune them in a top-level `blur {}` node here if
+        // the look needs adjusting.
+        window-rule {
+            background-effect {
+                blur true
+            }
+        }
+      '';
     in
-    pkgs.runCommand "niri-config.kdl" {
-      config = kdlWithBlur;
-      passAsFile = [ "config" ];
-      buildInputs = [ config.programs.niri.package ];
-    } ''
-      niri validate -c "$configPath"
-      cp "$configPath" "$out"
-    '';
+    pkgs.runCommand "niri-config.kdl"
+      {
+        config = kdlWithBlur;
+        passAsFile = [ "config" ];
+        buildInputs = [ config.programs.niri.package ];
+      }
+      ''
+        niri validate -c "$configPath"
+        cp "$configPath" "$out"
+      '';
 in
 {
   config = {

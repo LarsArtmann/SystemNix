@@ -47,10 +47,10 @@ echo "mirror ESP: $SRC (PARTUUID $PARTUUID)"
 #    loader path, so re-runs never mint duplicates (nvme0/nvme1 flip across
 #    boots — always derive disk/partition from the mounted device).
 find_mirror_entry() {
-  efibootmgr -v 2>/dev/null \
-    | grep -iF "$PARTUUID" \
-    | grep -iF 'systemd-bootx64.efi' \
-    | head -1
+  efibootmgr -v 2>/dev/null |
+    grep -iF "$PARTUUID" |
+    grep -iF 'systemd-bootx64.efi' |
+    head -1
 }
 ENTRY_LINE="$(find_mirror_entry || true)"
 if [ -n "$ENTRY_LINE" ]; then
@@ -62,7 +62,10 @@ else
   echo "creating EFI entry on $DISK part $PART: $ENTRY_LABEL $LOADER_EFI"
   efibootmgr --create --disk "$DISK" --part "$PART" --label "$ENTRY_LABEL" --loader "$LOADER_EFI" >/dev/null
   ENTRY_LINE="$(find_mirror_entry || true)"
-  [ -n "$ENTRY_LINE" ] || { echo "✗ created entry not found afterwards — inspect efibootmgr -v"; exit 1; }
+  [ -n "$ENTRY_LINE" ] || {
+    echo "✗ created entry not found afterwards — inspect efibootmgr -v"
+    exit 1
+  }
   ENTRY_ID="$(echo "$ENTRY_LINE" | awk '{print $1}' | tr -d '*' | sed 's/^Boot//')"
 fi
 

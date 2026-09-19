@@ -79,11 +79,14 @@ FAMILY_UNITS=(
   forgejo-ssh-keys.service
 )
 
-die() { echo "ERROR: $*" >&2; exit 1; }
+die() {
+  echo "ERROR: $*" >&2
+  exit 1
+}
 
 mount_check() {
-  "$SYSTEMCTL" is-active --quiet mnt-hot.mount \
-    || die "/mnt/hot is not mounted — forgejo-subvol-bootstrap needs it (Samsung present?)"
+  "$SYSTEMCTL" is-active --quiet mnt-hot.mount ||
+    die "/mnt/hot is not mounted — forgejo-subvol-bootstrap needs it (Samsung present?)"
 }
 
 ensure_subvol() {
@@ -101,65 +104,65 @@ ensure_subvol() {
 
 cmd="${1:-}"
 case "$cmd" in
-  prepare)
-    ensure_subvol
-    echo "==> live pre-rsync (forgejo keeps running; no --delete)"
-    # -H: hardlinks (git object store), -A/-X: ACLs/xattrs, --partial: resumable
-    "$RSYNC" -aHAX --partial --info=stats1 "$STATE_DIR/" "$SUBVOL/"
-    echo "==> prepare done. Next: build the toplevel, then: sudo $0 finalize"
-    ;;
+prepare)
+  ensure_subvol
+  echo "==> live pre-rsync (forgejo keeps running; no --delete)"
+  # -H: hardlinks (git object store), -A/-X: ACLs/xattrs, --partial: resumable
+  "$RSYNC" -aHAX --partial --info=stats1 "$STATE_DIR/" "$SUBVOL/"
+  echo "==> prepare done. Next: build the toplevel, then: sudo $0 finalize"
+  ;;
 
-  finalize)
-    dry_run="${2:-}"
-    mount_check
-    "$BTRFS" subvolume show "$SUBVOL" >/dev/null 2>&1 \
-      || die "subvol $SUBVOL missing — run '$0 prepare' first"
-    entries=$("$FIND" "$SUBVOL" -mindepth 1 | "$WC" -l)
-    [ "$entries" -gt 5 ] || die "subvol has only $entries entries — run '$0 prepare' first"
+finalize)
+  dry_run="${2:-}"
+  mount_check
+  "$BTRFS" subvolume show "$SUBVOL" >/dev/null 2>&1 ||
+    die "subvol $SUBVOL missing — run '$0 prepare' first"
+  entries=$("$FIND" "$SUBVOL" -mindepth 1 | "$WC" -l)
+  [ "$entries" -gt 5 ] || die "subvol has only $entries entries — run '$0 prepare' first"
 
-    for u in "${FAMILY_UNITS[@]}"; do
-      "$SYSTEMCTL" is-active --quiet "$u" && die "$u is still active — stop the family first (or re-run without units running)"
-    done
+  for u in "${FAMILY_UNITS[@]}"; do
+    "$SYSTEMCTL" is-active --quiet "$u" && die "$u is still active — stop the family first (or re-run without units running)"
+  done
 
-    if [ "$dry_run" = "--dry-run" ]; then
-      echo "DRY RUN: would stop family, delta-rsync $STATE_DIR → $SUBVOL (--delete), verify, then:"
-      echo "  mv $STATE_DIR $SAFETY && mkdir $STATE_DIR"
-      exit 0
-    fi
+  if [ "$dry_run" = "--dry-run" ]; then
+    echo "DRY RUN: would stop family, delta-rsync $STATE_DIR → $SUBVOL (--delete), verify, then:"
+    echo "  mv $STATE_DIR $SAFETY && mkdir $STATE_DIR"
+    exit 0
+  fi
 
-    for u in "${FAMILY_UNITS[@]}"; do
-      "$SYSTEMCTL" stop "$u" 2>/dev/null || true
-    done
+  for u in "${FAMILY_UNITS[@]}"; do
+    "$SYSTEMCTL" stop "$u" 2>/dev/null || true
+  done
 
-    echo "==> delta rsync (family stopped)"
-    "$RSYNC" -aHAX --delete --info=stats1 "$STATE_DIR/" "$SUBVOL/"
+  echo "==> delta rsync (family stopped)"
+  "$RSYNC" -aHAX --delete --info=stats1 "$STATE_DIR/" "$SUBVOL/"
 
-    echo "==> verifying"
-    src_n=$("$FIND" "$STATE_DIR" | "$WC" -l)
-    dst_n=$("$FIND" "$SUBVOL" | "$WC" -l)
-    [ "$src_n" -eq "$dst_n" ] || die "entry count mismatch: src=$src_n dst=$dst_n — NOT swapping"
-    src_sz=$("$DU" -s --apparent-size "$STATE_DIR" | cut -f1)
-    dst_sz=$("$DU" -s --apparent-size "$SUBVOL" | cut -f1)
-    [ "$src_sz" -eq "$dst_sz" ] || die "apparent-size mismatch: src=$src_sz dst=$dst_sz — NOT swapping"
+  echo "==> verifying"
+  src_n=$("$FIND" "$STATE_DIR" | "$WC" -l)
+  dst_n=$("$FIND" "$SUBVOL" | "$WC" -l)
+  [ "$src_n" -eq "$dst_n" ] || die "entry count mismatch: src=$src_n dst=$dst_n — NOT swapping"
+  src_sz=$("$DU" -s --apparent-size "$STATE_DIR" | cut -f1)
+  dst_sz=$("$DU" -s --apparent-size "$SUBVOL" | cut -f1)
+  [ "$src_sz" -eq "$dst_sz" ] || die "apparent-size mismatch: src=$src_sz dst=$dst_sz — NOT swapping"
 
-    # Deterministic sampled checksums: first 10 + every 1000th file.
-    mapfile -t sample < <("$FIND" "$STATE_DIR" -type f -print0 | "$SORT" -z \
-      | awk 'BEGIN{RS="\0"} NR<=10 || NR%1000==0 {print}')
-    for f in "${sample[@]}"; do
-      rel="${f#"$STATE_DIR"}"
-      a=$("$SHA256SUM" "$STATE_DIR$rel" | cut -d' ' -f1)
-      b=$("$SHA256SUM" "$SUBVOL$rel" | cut -d' ' -f1)
-      [ "$a" = "$b" ] || die "checksum mismatch on $rel — NOT swapping"
-    done
-    echo "    $src_n entries, ${#sample[@]} sampled checksums: OK"
+  # Deterministic sampled checksums: first 10 + every 1000th file.
+  mapfile -t sample < <("$FIND" "$STATE_DIR" -type f -print0 | "$SORT" -z |
+    awk 'BEGIN{RS="\0"} NR<=10 || NR%1000==0 {print}')
+  for f in "${sample[@]}"; do
+    rel="${f#"$STATE_DIR"}"
+    a=$("$SHA256SUM" "$STATE_DIR$rel" | cut -d' ' -f1)
+    b=$("$SHA256SUM" "$SUBVOL$rel" | cut -d' ' -f1)
+    [ "$a" = "$b" ] || die "checksum mismatch on $rel — NOT swapping"
+  done
+  echo "    $src_n entries, ${#sample[@]} sampled checksums: OK"
 
-    echo "==> swapping source aside (rename-only, nothing deleted)"
-    mv "$STATE_DIR" "$SAFETY"
-    mkdir "$STATE_DIR"
-    chown forgejo:forgejo "$STATE_DIR"
-    chmod 0750 "$STATE_DIR"
+  echo "==> swapping source aside (rename-only, nothing deleted)"
+  mv "$STATE_DIR" "$SAFETY"
+  mkdir "$STATE_DIR"
+  chown forgejo:forgejo "$STATE_DIR"
+  chmod 0750 "$STATE_DIR"
 
-    cat <<'NEXT'
+  cat <<'NEXT'
 ==> finalize DONE. Forgejo is DOWN by design. The ONLY sanctioned next action:
 
   1. Edit configuration.nix: services.forgejo.dedicatedSubvolume = true;
@@ -171,13 +174,13 @@ case "$cmd" in
 
 ABORT (before activation): see header of this script.
 NEXT
-    ;;
+  ;;
 
-  *)
-    cat >&2 <<EOF
+*)
+  cat >&2 <<EOF
 Usage: sudo $0 prepare | finalize [--dry-run]
 Plan: docs/planning/2026-09-18_16-44_FORGEJO-PRIMARY-STAGED-FOUNDATION.md
 EOF
-    exit 1
-    ;;
+  exit 1
+  ;;
 esac
