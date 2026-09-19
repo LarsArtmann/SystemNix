@@ -10,9 +10,9 @@ jobs:
   nix-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: DeterminateSystems/nix-installer-action@e50d5f73bfe71c2dd0aa4218de8f4afa59f8f81d # v16
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
@@ -190,7 +190,7 @@ jobs:
           - lib-helpers
           - sed-delimiter
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Same auth as the nix-check job: VM-test BUILDS force the source of
       # every private input (branching-flow went private 2026-08 and its
@@ -220,7 +220,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - uses: DeterminateSystems/nix-installer-action@e50d5f73bfe71c2dd0aa4218de8f4afa59f8f81d # v16
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
@@ -232,8 +232,8 @@ jobs:
   shellcheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: DeterminateSystems/nix-installer-action@e50d5f73bfe71c2dd0aa4218de8f4afa59f8f81d # v16
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
