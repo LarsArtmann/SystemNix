@@ -116,6 +116,8 @@
             disks = cfg.dashboard.system.disks;
             tempMin = cfg.dashboard.system.tempMin;
             tempMax = cfg.dashboard.system.tempMax;
+            warnFrac = cfg.dashboard.system.warnFrac;
+            critFrac = cfg.dashboard.system.critFrac;
           };
           groups = map (g: {
             inherit (g) name;
@@ -371,6 +373,22 @@
               type = lib.types.number;
               default = 95;
               description = "Temperature gauge upper bound (°C).";
+            };
+            warnFrac = lib.mkOption {
+              type = lib.types.float;
+              default = 0.8;
+              description = ''
+                Disk bar amber threshold as a fraction of total bytes
+                (PapDashboard default 0.8 when unset).
+              '';
+            };
+            critFrac = lib.mkOption {
+              type = lib.types.float;
+              default = 0.9;
+              description = ''
+                Disk bar red threshold as a fraction of total bytes; must be
+                >= warnFrac (PapDashboard validates the pair at startup).
+              '';
             };
           };
 
