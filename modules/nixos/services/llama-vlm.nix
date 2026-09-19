@@ -53,11 +53,15 @@ _: {
       serverType = lib.types.submodule {
         options = {
           modelPath = lib.mkOption {
-            type = lib.types.path;
+            # str, not path: these are multi-GB runtime files on /data —
+            # types.path would copy them into the nix store (and forbids
+            # absolute paths in pure eval). Only ever interpolated into
+            # ExecStart args, so a string is the honest type.
+            type = lib.types.str;
             description = "Main GGUF model file.";
           };
           mmprojPath = lib.mkOption {
-            type = lib.types.nullOr lib.types.path;
+            type = lib.types.nullOr lib.types.str;
             default = null;
             description = "Multimodal projector GGUF (required for vision models).";
           };

@@ -630,8 +630,8 @@ in
           e4b = {
             port = ports.llama-vlm-e4b;
             backendPort = ports.llama-vlm-e4b-backend;
-            modelPath = /data/ai/models/jan/llamacpp/models/Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q8_K_P/model.gguf;
-            mmprojPath = /data/ai/models/jan/llamacpp/models/Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q8_K_P/mmproj.gguf;
+            modelPath = "/data/ai/models/jan/llamacpp/models/Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q8_K_P/model.gguf";
+            mmprojPath = "/data/ai/models/jan/llamacpp/models/Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q8_K_P/mmproj.gguf";
             keepAlive = "1h";
             memoryMax = "16G";
           };
@@ -640,8 +640,8 @@ in
             backendPort = ports.llama-vlm-cap-backend;
             # Snapshot-hash path from the llama-server -hf download
             # (2026-09-18). Update after any re-download.
-            modelPath = /data/ai/cache/huggingface/hub/models--GitMylo--nsfwcaption-qwen3-vl-8b-v3-gguf/snapshots/eb52b76411f34ea197558ec03eb15b2814d1b0c2/NSFWCaption-v3-Qwen3-VL-8B-Q8_0.gguf;
-            mmprojPath = /data/ai/cache/huggingface/hub/models--GitMylo--nsfwcaption-qwen3-vl-8b-v3-gguf/snapshots/eb52b76411f34ea197558ec03eb15b2814d1b0c2/mmproj-NSFWCaption-v3.gguf;
+            modelPath = "/data/ai/cache/huggingface/hub/models--GitMylo--nsfwcaption-qwen3-vl-8b-v3-gguf/snapshots/eb52b76411f34ea197558ec03eb15b2814d1b0c2/NSFWCaption-v3-Qwen3-VL-8B-Q8_0.gguf";
+            mmprojPath = "/data/ai/cache/huggingface/hub/models--GitMylo--nsfwcaption-qwen3-vl-8b-v3-gguf/snapshots/eb52b76411f34ea197558ec03eb15b2814d1b0c2/mmproj-NSFWCaption-v3.gguf";
             keepAlive = "2h";
             memoryMax = "16G";
           };
