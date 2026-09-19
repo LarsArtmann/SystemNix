@@ -767,6 +767,12 @@ A boot death at 09:32:40 (mid PMA-daemon commit) left 10 loose objects as **0-by
 6. fsck validates reflog OLD-shas too — after recovery, `git reflog delete <ref>@{0}` any entry referencing a permanently-lost object, or fsck errors forever.
 7. Prevention now in `platforms/common/programs/git.nix`: `core.fsync = "loose-object,index"` (git does NOT fsync loose objects by default; on this box's crash history that is an unacceptable gamble).
 
+### Multi-agent write discipline (2026-09-19)
+
+- **Content-pin BEFORE every write**: `git rev-parse HEAD` + `git status --short` + `git log --stat` since your last known rev — parallel agent sessions commit continuously and may have touched YOUR target files in "heuristic" daemon commits. Diff-review anything new before editing.
+- **When the daemon commits your in-flight work** (heuristic message, ~every 10 min): verify its contents with `git show --stat`, then `git commit --amend` the unpushed HEAD into a properly-messaged commit. Never `git reset`; amend-forward preserves the tree.
+- **Lint-scanner FPs get fixed in the SCANNER, not suppressed at the call site** (2026-09-19 dead-guard-lint): the `$((` arithmetic form false-positived as a shell capture — fix = 1-char lookahead in the flake.nix awk scanner (`substr(line, RSTART + RLENGTH, 1) == "("` → skip), NOT `# dead-guard-ok` on the foreign line that tripped it (llama-rag.nix `leaks=$((leaks + 1))` was never touched).
+
 ### Nix & Nixpkgs
 
 - **`mkMerge` on flake-parts top-level `config`** — Does NOT work; use inline config or imports. `mkMerge` on `serviceConfig` inside `systemd.services.<name>` IS safe.
