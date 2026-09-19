@@ -150,6 +150,17 @@ _: {
       # every commit message is degraded.
       pmaHeuristicFallbackThreshold = 20;
 
+      # PMA fallback-RATIO floor + percent: the 24h COUNT threshold above is
+      # volume-blind — a quiet week landing 2 heuristic commits of 2 total
+      # (100% LLM-dead) trips nothing (2 < 20). Live 2026-09-19: the count
+      # threshold works at high volume (1337 fallbacks/24h tripped), so the
+      # ratio closes only the low-volume gap. Ratio computes once the 24h
+      # commit sample reaches the floor (3) and trips at >=90% heuristic
+      # share — near-always-degraded at a sample size where noise cannot
+      # reach 90%.
+      pmaCommitRatioMinCommits = 3;
+      pmaCommitRatioPercentThreshold = 90;
+
       # Pocket ID SQLITE_BUSY event threshold per 24h window. Pocket ID is
       # the ONLY login path for paperless (SSO-only since 2026-09-02), forgejo,
       # gatus, immich and every oauth2-proxy vHost — a degraded (locked) DB is
@@ -606,6 +617,9 @@ _: {
           PMA_COMMIT_FAILURES_OVER=""
           PMA_HEURISTIC_FALLBACKS_24H=""
           PMA_HEURISTIC_FALLBACKS_OVER=""
+          PMA_COMMITS_24H=""
+          PMA_COMMIT_RATIO_OVER=""
+          PMA_COMMIT_RATIO_PCT=""
           PMA_COMMIT_SCRAPE_ERRORS=1
           if [ "$collect_pma_commits" = "true" ]; then
             PMA_COMMIT_SCRAPE_ERRORS=0
@@ -614,6 +628,12 @@ _: {
             PMA_WALKS_LAUNCHED=1
             walk_journal "$WALK_DIR/pma-fail" projects-management-automation.service "-1h" "commit failed" 60 &
             walk_journal "$WALK_DIR/pma-fb" projects-management-automation.service "-24h" "committed via heuristic fallback" 60 &
+            # Success line for the ratio denominator. The negative lookahead
+            # keeps fallback lines out of the count EVEN IF the fallback
+            # journal text also contains "committed changes" — the exact
+            # line format is root-gated (unverifiable as a user), so the
+            # pattern is written to be correct under BOTH line shapes.
+            walk_journal "$WALK_DIR/pma-commits" projects-management-automation.service "-24h" "^(?!.*heuristic).*committed changes" 60 &
           fi
 
           # === Pocket ID SQLITE_BUSY (auth SPOF) ===
