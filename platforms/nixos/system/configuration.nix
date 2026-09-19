@@ -721,6 +721,12 @@ in
 
       system-health = {
         enable = true;
+        # searxng-secret-key is a one-shot secret generator whose unit uses
+        # the default Type=simple (not oneshot), so the enabled-but-inactive
+        # detector cannot exclude it structurally — it is legitimately
+        # inactive after seeding the secret. Fixing the Type belongs to the
+        # searxng module (services todo).
+        enabledInactiveAllowlist = [ "searxng-secret-key.service" ];
       };
 
       # 2026-08-22 kernel-freeze prevention: stops the FastFlowLM backend

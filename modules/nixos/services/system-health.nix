@@ -225,6 +225,8 @@ _: {
           INACTIVE_COUNT=0
           INACTIVE_SCRAPE_ERRORS=0
           collect_inactive_enabled=${lib.boolToString cfg.collectEnabledInactive}
+          # shellcheck disable=SC2086  # word split intentional: config-set unit identifiers
+          INACTIVE_ALLOW="${lib.concatStringsSep " " cfg.enabledInactiveAllowlist}"
           scan_inactive_units() { # $1 = label; remaining args = systemctl prefix ("--machine=u@.host --user" or none)
             local label="$1"
             shift
@@ -237,6 +239,12 @@ _: {
             while read -r unit _rest; do
               [ -n "$unit" ] || continue
               case "$unit" in *@*) continue ;; esac
+              # Allowlist: known-benign permanently-inactive units
+              skip=0
+              for allowed in $INACTIVE_ALLOW; do
+                [ "$unit" = "$allowed" ] && { skip=1; break; }
+              done
+              [ "$skip" = 1 ] && continue
               # shellcheck disable=SC2086
               if systemctl "$@" is-active --quiet "$unit" 2>/dev/null; then
                 continue
@@ -1622,6 +1630,27 @@ _: {
           type = lib.types.bool;
           default = true;
           description = "Collect systemd-oomd kill events from journal";
+        };
+
+        enabledInactiveAllowlist = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [
+            # Known-benign permanently-inactive aux units (nixpkgs-standard):
+            # mandb is a timer-driven helper that exits after each run (its
+            # Type=simple defeats the oneshot exclusion), ModemManager and
+            # NetworkManager-dispatcher are dbus-activated and legitimately
+            # sit inactive until their bus event arrives. Host-specific aux
+            # units belong in configuration.nix, not here.
+            "mandb.service"
+            "ModemManager.service"
+            "NetworkManager-dispatcher.service"
+          ];
+          description = ''
+            Units excluded from the enabled-but-inactive detection (known
+            benign: dbus-activated, timer-driven helpers with Type=simple,
+            etc.). Every exclusion here is alert-noise prevention — add a
+            unit only with a reason in mind.
+          '';
         };
 
         collectEnabledInactive = lib.mkOption {
