@@ -106,7 +106,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **dns-blocker: link the OIDC recovery runbook from the docs index** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **HaGeZi blocklist refresh workflow** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **postfix `status=bounced` journal-rate textfile metric + Gatus check** → [docs/todo/services.md](docs/todo/services.md)
-- [ ] **Self-document the deliberately-red Turso Gatus check + create `docs/services/discordsync.md`** → [docs/todo/services.md](docs/todo/services.md)
+- [ ] **Self-document the deliberately-red Turso Gatus check (runbook half done 2026-09-19)** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Root-cause the InboxClean→Paperless `gmail` tag demote PATCH rejection** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Miniflux runbook gate-proof block** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Miniflux VM test extension** → [docs/todo/services.md](docs/todo/services.md)
@@ -158,7 +158,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Fix the website repo's `builtAt` stamping (larsartmann.com serves the 1980-01-01 placeholder sent…** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Repo-generic CI do-analyzer across all LarsArtmann Go repos** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **go-taskqueue: queue-level work-claiming/dedup** → [docs/todo/upstream.md](docs/todo/upstream.md)
-- [ ] **COST MEASURED 2026-09-16 (verification session, read-only probe of the same primitive the check uses — `git merge-base --is-ancestor` per deduped SHA-like token):** → [docs/todo/upstream.md](docs/todo/upstream.md)
+- [ ] **go-taskqueue: visibility surface for the citation check (journal fact or harvest counter)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Queue intake freshness rule: items asserting live system state ("X is re-enabled and ACTIVE") get a mandatory reconcile-against-the-relevant-AGENTS.md-section step before execution** → [docs/todo/upstream.md](docs/todo/upstream.md)
 
 ### security

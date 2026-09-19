@@ -95,6 +95,15 @@ if ! pushprot_out=$(scripts/audit-push-protection-literals.sh 2>&1); then
     exit 1
 fi
 
+# Fast guard: TODO queue/library structural integrity (2026-09-19 split).
+# Rejects title-less queue rows (the lost-harvest `**Source:**` class —
+# 63 purged that day) and queue links to nonexistent library files.
+if ! todosys_out=$(scripts/check-todo-system.sh 2>&1); then
+    echo "$todosys_out" >&2
+    log_error "TODO system gate failed — queue rows need a title and a real docs/todo/<lib>.md target."
+    exit 1
+fi
+
 # Fast guard: moved/deleted markdown files must not leave dangling references.
 # The archive-move class (2026-08-18): `git mv docs/status/X.md
 # docs/status/archived/` left stale `docs/status/X.md` links in TODO_LIST and

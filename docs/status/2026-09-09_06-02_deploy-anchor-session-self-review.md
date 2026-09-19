@@ -1,6 +1,6 @@
 # 2026-09-09 06:02 — Deploy-Anchor Session: Self-Review + Full Status
 
-Session window: ~04:50–06:00 CEST. Scope of this report: THIS session only (the deploy-unblock → exit-4 root-cause → system-762 anchor arc). Predecessor handoff: `docs/status/2026-09-09_04-35_sync-more-things-rollback-ladder-forensics.md` + the 04:28 self-review.
+Session window: ~04:50–06:00 CEST. Scope of this report: THIS session only (the deploy-unblock → exit-4 root-cause → system-762 anchor arc). Predecessor handoff: `docs/status/archived/2026-09-09_04-35_sync-more-things-rollback-ladder-forensics.md` + the 04:28 self-review.
 
 ---
 

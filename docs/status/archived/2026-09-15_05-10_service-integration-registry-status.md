@@ -3,7 +3,7 @@
 > **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** registry shipped with its 24-check regression test; the Pocket ID keep-in-tree verdict stands. Migration completed by the 09-50 batch-3 report (deployed 09-16).
 
 
-_Date: 2026-09-15 05:10 CEST — session-scoped report (analysis + implementation run only, no repo-wide re-audit)_
+_Date: 2026-09-15 05:10 CEST — session-scoped report (analysis + implementation run only, no repo-wide re-audit). ~~pilot only~~ full P2 migration completed 2026-09-15 09:50, deployed 2026-09-16._
 
 ---
 

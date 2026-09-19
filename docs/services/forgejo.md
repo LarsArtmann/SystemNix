@@ -3,7 +3,7 @@
 Self-hosted Forgejo (`https://forgejo.home.lan`, internal `http://localhost:3000`) mirrors every
 GitHub repo owned by `LarsArtmann` as **pull mirrors** — a read-only backup with GitHub-outage
 immunity for flake inputs. This runbook covers the sync model, reconcile semantics, monitoring,
-and break-glass operations. Full audit narrative: `docs/status/2026-09-18_07-43_forgejo-mirror-sync-audit-and-fixes.md`.
+and break-glass operations. Full audit narrative: `docs/status/archived/2026-09-18_07-43_forgejo-mirror-sync-audit-and-fixes.md`.
 
 ## Sync model (who creates what)
 

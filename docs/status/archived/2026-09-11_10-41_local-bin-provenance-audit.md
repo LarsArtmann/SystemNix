@@ -5,7 +5,7 @@
 
 **Date:** 2026-09-11 10:41 CEST
 **Scope:** This session ONLY (per user instruction — no codebase-wide research).
-**Session task:** Answer "What of these are from NixOS?" for `/home/lars/.local/bin`.
+**Session task:** Answer "What of these are from NixOS?" for `/home/lars/.local/bin`. (Answered; ~~obsolete hand-installs flagged for deletion~~ deletion remains user-gated — flm held at v1.0.2 per AGENTS.md FastFlowLM section.)
 
 ---
 

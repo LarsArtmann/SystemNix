@@ -1,7 +1,7 @@
 # Status: Go 1.27.1 Wave Completion — tq Deployed (gen 784)
 
 **Session window:** resumed ~19:56 2026-09-17 (handoff), executed through ~15:02 2026-09-18 CEST.
-**Context:** continuation of `docs/status/2026-09-17_19-56_go-taskqueue-bump-and-go1.27.1-ecosystem-wave.md` (Tier-0 steps 1-7 from the handoff).
+**Context:** continuation of `docs/status/archived/2026-09-17_19-56_go-taskqueue-bump-and-go1.27.1-ecosystem-wave.md` (Tier-0 steps 1-7 from the handoff).
 **End state:** evo-x2 deployed generation 784, anchored (`/run/current-system` == `system-784-link`), `tq 0.3.0, go1.27.1` live on PATH. Toplevel builds clean. Post-deploy smoke: 0 new regressions, 7 baseline-advisory reds. Working tree clean, docs committed.
 
 ---

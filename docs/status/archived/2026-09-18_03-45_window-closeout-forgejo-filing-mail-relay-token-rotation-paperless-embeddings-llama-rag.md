@@ -5,7 +5,7 @@
 
 **Date:** 2026-09-18 03:45 CEST · **Closer:** docs-health HARVEST/ANNOTATE pass over the 2026-09-18 00:00–03:30 agent window · **Repo:** LarsArtmann/SystemNix @ `9e3becb7` (clean at open)
 
-**Window tasks (all with closeout reports read first):**
+**Window tasks (all with closeout reports read first):** ~~open verdicts pending owner action~~ llama-rag leg DONE; the user/root-gated legs are tracked in docs/todo/ (services.md, security.md).
 
 | Task                    | Item                                                       | Verdict                                                                   |
 | ----------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------- |

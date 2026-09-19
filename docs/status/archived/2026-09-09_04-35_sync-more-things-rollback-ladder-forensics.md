@@ -9,7 +9,7 @@ pre-reboot-check flagged (14 of 16 entries pointed at QLC-only store paths)._
 
 ## TL;DR
 
-The requested sync was **impossible — the data was already gone**. 11 of the 14 old
+The requested sync was **impossible — the data was already gone**. ~~Follow-ups open~~ none — recommendations executed (re-anchor system-762 at 05:30, `docs/status/2026-09-09_05-30_deploy-unblocked-exit4-rootcause-anchored.md`; pre-reboot-check §10 gcroots-resolution shipped 2026-09-10). 11 of the 14 old
 generation closures had been GC-deleted on the QLC store before the flip ever happened,
 and the remaining 3 existed only as half-deleted orphan files absent from the store DB.
 Root cause found and fixed instead: `/nix/var/nix/gcroots/profiles` has been a **dead

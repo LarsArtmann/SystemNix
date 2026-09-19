@@ -6,7 +6,7 @@
 **Date:** 2026-09-11 09:41 CEST
 **Scope:** the five-task window dispatched to this repo — T14 emergency-reserve pinning (…d84088), Google Sync DORMANT (…b020c), off-site backup decision (…f1cb), 🔑 key-rotation nag (…30976), Turso plan decision (…f057)
 **Window commits:** `a84f8701`, `9bcf79d9`, `84c70af5` + `09d481b0` (+ verification dispatches `91e387fd`, `e500d65b`), `4a2d5fd2`, `cee81cbe` (+ idempotent re-verification `6278f909`); supporting research `docs/research/hetzner-storagebox-borgbackup.md`
-**Character of the window:** every task was a decision record, an annotation, or a triage. Zero `.nix`, zero code, zero config changes. All verification was docs/repo/live-read-only.
+**Character of the window:** every task was a decision record, an annotation, or a triage. ~~Five decision tasks open~~ all five closed (commits a84f8701…cee81cbe); spawned follow-ups tracked in docs/todo/storage.md + services.md. Zero `.nix`, zero code, zero config changes. All verification was docs/repo/live-read-only.
 **Report format:** Markdown per the dispatch (the status-report skill's HTML default overridden by explicit instruction — flagged per skill contract, consistent with all five per-task reports).
 
 ---

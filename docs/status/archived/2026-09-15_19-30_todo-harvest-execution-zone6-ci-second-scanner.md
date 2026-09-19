@@ -3,7 +3,7 @@
 > **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** interim companion superseded by the fuller 19:27 closeout + self-review of the same sweep (docs/status/2026-09-15_19-27_*).
 
 
-**Session type:** verification + fix execution over the 2026-09-15 TODO_LIST harvest (five window-closeout sections).
+**Session type:** verification + fix execution over the 2026-09-15 TODO_LIST harvest (five window-closeout sections). ~~interim OPEN carrier~~ superseded by the fuller 19:27 closeout (docs/status/2026-09-15_19-27_*).
 **Tree state at start:** clean at `20695f8a`; parallel session ACTIVE throughout (paperless/nix-email/sops WIP — 833 insertions, full-config evals poisoned by their mid-flight "Saved views" error; all shared-surface evals deferred or targeted).
 
 ## a. Zone 6 / memory-emergency-guard closeout (14 rows)

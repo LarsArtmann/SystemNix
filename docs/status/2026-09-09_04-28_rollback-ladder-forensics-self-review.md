@@ -33,7 +33,7 @@ covers ONLY this session's run and what I noticed in passing._
 8. **New finding surfaced**: a 2026-09-08 04:25 activation exit-4'd — running system
    `8zzq0b1i` ≠ profile `system-761`→`zkaacn2a`; un-anchored reboot boots the Sep-7 build.
 9. **Docs**: AGENTS.md gotcha (calamares gcroot + ladder doctrine), TODO_LIST Phase-1
-   update, `docs/status/2026-09-09_04-35_sync-more-things-rollback-ladder-forensics.md`.
+   update, `docs/status/archived/2026-09-09_04-35_sync-more-things-rollback-ladder-forensics.md`.
 10. **Space/health checks**: Samsung 858G free; nightly GC completing (43.3 GiB freed
     last night, 8909 paths); no btrfs MISSING devices (via the user's earlier check).
 

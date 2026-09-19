@@ -1,7 +1,7 @@
 # Session Report: GitHub Auto-Assign Deploy + Lock-War Resolution — DONE
 
 - **Date:** 2026-09-18 05:58 CEST (session work ran 2026-09-17 ~21:00–22:40; overnight verification folded in)
-- **Session:** continuation of the 19:39 handoff (`docs/status/2026-09-17_19-39_github-auto-assign-deploy-lock-war-status.md`)
+- **Session:** continuation of the 19:39 handoff (`docs/status/archived/2026-09-17_19-39_github-auto-assign-deploy-lock-war-status.md`)
 - **End state:** `github-auto-assign` **DEPLOYED LIVE** in generation **system-782**, profile **anchored** (reboot-safe), **timer first-fire proven at 00:00:38** (ran 3.4 s under systemd, `assigned=0 failed=0 skipped-forks=0`, clean exit — gh auth works under the ProtectHome context).
 - **Deploy blocker resolution:** the 19:39 "only remaining blocker (signoz)" was a stale-era artifact; the real blockers were 4 OTHER inputs (cv, discordsync, papdashboard, browser-history) — all fixed, toplevel green, smoke 98 PASS / 1 baseline-known FAIL (fastflowlm corpse, documented standing condition).
 
