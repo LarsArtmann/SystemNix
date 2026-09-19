@@ -2,7 +2,7 @@
 
 _Long-term direction and raw ideas not yet refined into actionable tasks._
 
-**Updated:** 2026-09-14 18:30 (docs-health AUDIT pass: added the IO-telemetry + agent-session IO ideas from the freeze-4 window; Zone 7 episodic-IO guard idea; offsite Borg leg decided — moved to TODO implementation)
+**Updated:** 2026-09-19 13:40 (docs-health pass: AppArmor + disabled-service duplicate bullets merged — AppArmor rejection reason corrected to the paepckehh profile-fit verdict; stale VM-test counts 11→43) (previous: 2026-09-14 18:30 docs-health AUDIT pass: added the IO-telemetry + agent-session IO ideas from the freeze-4 window; Zone 7 episodic-IO guard idea; offsite Borg leg decided — moved to TODO implementation)
 
 For short-term actionable work, see [TODO_LIST.md](./TODO_LIST.md). For current feature status, see [FEATURES.md](./FEATURES.md).
 
