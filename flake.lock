@@ -1005,11 +1005,11 @@
         "samber-do-auditlog": "samber-do-auditlog_3"
       },
       "locked": {
-        "lastModified": 1789762678,
-        "narHash": "sha256-fBO9fxYFwiDgDNSqXoFoeIZkcWaADLTE+64s8HF3m0o=",
+        "lastModified": 1789763407,
+        "narHash": "sha256-ERSMs1SUBeE2eCqi/IepgHiit7gVqr7ebp7rA29GblA=",
         "owner": "LarsArtmann",
         "repo": "erraudit",
-        "rev": "a295da6adedb786ef79f00d18ad7c2135fbeef2e",
+        "rev": "a94e0a03625dfdceb6692a4abeb2c61894562357",
         "type": "github"
       },
       "original": {
@@ -7781,13 +7781,6 @@
         "owner": "Supreeeme",
         "repo": "xwayland-satellite",
         "type": "github"
-      }
-    },
-    "null": {
-      "locked": {
-        "rev": "665902b3e67d736c5a7ddcc146b49093c401feba",
-        "narHash": "sha256-mMZKri/kAaPQO83z+U7m8SAkOV2sxJo7T0GuuoqFMr8=",
-        "lastModified": 1789761280
       }
     }
   },
