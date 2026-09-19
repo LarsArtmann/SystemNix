@@ -625,7 +625,7 @@ in
       # for the ROCm wedge history and the soak-test rule before killing any
       # manual server.
       llama-vlm = {
-        enable = false;
+        enable = true;
         servers = {
           e4b = {
             port = ports.llama-vlm-e4b;
