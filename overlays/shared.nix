@@ -119,4 +119,22 @@
       };
     }
   )
+
+  (
+    _final: prev:
+    prev.lib.optionalAttrs prev.stdenv.hostPlatform.isLinux {
+      # nodejs 26.9.0's test-fs-cp-async-file-modes chmods a file to 0o4755
+      # and fails EPERM in sandboxed builds (nixpkgs issue #564449 — Hydra
+      # reproduces; every other test passes). nixpkgs disabled the test in
+      # commit 089b82f9 "nodejs_26: disable failing test" (non-Darwin only,
+      # which isLinux matches); drop this shim once the lock carries it.
+      # nodejs_26/nodejs_latest/npm-12/hermes/llama-cpp all derive from
+      # nodejs-slim_26, so this single override covers the chain.
+      nodejs-slim_26 = prev.nodejs-slim_26.overrideAttrs (old: {
+        postPatch = (old.postPatch or "") + ''
+          rm -f test/parallel/test-fs-cp-async-file-modes.mjs
+        '';
+      });
+    }
+  )
 ]
