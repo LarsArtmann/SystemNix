@@ -710,11 +710,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1789812309,
-        "narHash": "sha256-in/a+H+o4/FYxc7AqMlyHw35tmjob56ai+8sgSSufiA=",
+        "lastModified": 1789812935,
+        "narHash": "sha256-TtGz3+7hqxqssbJp6OVSR5HWpONbQLxusJ0s/R3Nbo4=",
         "owner": "LarsArtmann",
         "repo": "crush-config",
-        "rev": "e01ff4fb93ea659219d16764ced487d504cff4ed",
+        "rev": "e1d2c0a643f1a0bad4311d50133fd7b460536749",
         "type": "github"
       },
       "original": {
