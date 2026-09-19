@@ -198,7 +198,7 @@ _: {
           the module header.
         '';
 
-        systemd.sockets = lib.mapAttrs (name: s: {
+        systemd.sockets = lib.mapAttrs' (name: s: lib.nameValuePair "llama-vlm-${name}" {
           description = "llama.cpp VLM server '${name}' (public socket)";
           wantedBy = [ "sockets.target" ];
           listenStreams = [ "127.0.0.1:${toString s.port}" ];
@@ -212,7 +212,7 @@ _: {
           # Per-connection bridges — template name MUST match the socket
           # name (systemd 261 naming rule, see module header). The three
           # families never collide: "<name>@", "<name>", "<name>-idle".
-          lib.mapAttrs (name: s: {
+          lib.mapAttrs' (name: s: lib.nameValuePair "llama-vlm-${name}@" {
             description = "llama-vlm ${name} per-connection proxy: client fd ↔ backend TCP";
             after = [ "llama-vlm-${name}.service" ];
             wants = [ "llama-vlm-${name}.service" ];
@@ -228,7 +228,7 @@ _: {
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
           }) cfg.servers
-          // lib.mapAttrs (name: s: {
+          // lib.mapAttrs' (name: s: lib.nameValuePair "llama-vlm-${name}" {
             description = "llama.cpp VLM server '${name}' (backend, model resident)";
             # Deliberately NOT wantedBy multi-user.target — socket activation
             # keeps RAM free until first request; the socket re-arms after
@@ -261,7 +261,7 @@ _: {
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
           }) cfg.servers
-          // lib.mapAttrs (name: s: {
+          // lib.mapAttrs' (name: s: lib.nameValuePair "llama-vlm-${name}-idle" {
             description = "Stop llama-vlm ${name} backend after idle TTL expires";
             serviceConfig = lib.mkMerge [
               {
@@ -274,7 +274,7 @@ _: {
             startLimitIntervalSec = 300;
           }) cfg.servers;
 
-        systemd.timers = lib.mapAttrs (name: s: {
+        systemd.timers = lib.mapAttrs' (name: s: lib.nameValuePair "llama-vlm-${name}-idle" {
           description = "Probe llama-vlm ${name} idle state every 5 minutes";
           wantedBy = [ "timers.target" ];
           timerConfig = {
