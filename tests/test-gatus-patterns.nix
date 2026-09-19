@@ -53,6 +53,26 @@ let
     node_amdgpu_gpu_busy_percent 15
     niri_running 1
     niri_graphical_session 1
+    # The four sibling niri checks, WITH adversarial HELP comments: the
+    # comments deliberately contain the bare-form match text
+    # "<metric> 0 if ..." so the production line-anchored VALUE-0 patterns
+    # are the only form that can match the real value lines below. With a
+    # bare pat(*niri_desktop_died 0*) body, the HELP line alone would keep
+    # the check green even if every real line said 1 (2026-08-22
+    # phantom-green class; niri.prom is one collector rewrite from HELP
+    # comments existing).
+    # HELP niri_desktop_died 0 if the compositor is healthy while a graphical session is active, 1 if it died
+    # TYPE niri_desktop_died gauge
+    niri_desktop_died 0
+    # HELP niri_crash_loop 0 if niri did not restart 3+ times in 10 min, 1 if crash-looping
+    # TYPE niri_crash_loop gauge
+    niri_crash_loop 0
+    # HELP niri_zombie 0 if niri is not running headless, 1 if a zombie session exists
+    # TYPE niri_zombie gauge
+    niri_zombie 0
+    # HELP niri_aw_watcher_late 0 if the AW watcher attached, 1 if late into an active session
+    # TYPE niri_aw_watcher_late gauge
+    niri_aw_watcher_late 0
     attic_storage_over_threshold 0
     system_gatus_endpoints_in_error_long 0
     # bank-sync sync-health surface (mirrors the "Bank-Sync Sync Health"

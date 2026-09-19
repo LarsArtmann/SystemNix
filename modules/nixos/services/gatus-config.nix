@@ -804,11 +804,19 @@ _: {
                 (mkHttpCheck {
                   name = "Niri Desktop Died";
                   group = "Monitoring";
+                  # VALUE-0 checks are LINE-ANCHORED like the asserted-1 pair
+                  # above: pat(*\nniri_desktop_died 0\n*) matches only a real
+                  # value line. A future HELP/TYPE comment in niri.prom would
+                  # contain "niri_desktop_died 0 if ..." — the bare form
+                  # pat(*niri_desktop_died 0*) phantom-greens on it and stays
+                  # green even when the real value flips to 1 (2026-08-22
+                  # class; niri.prom is one collector rewrite away from HELP
+                  # comments).
                   url = "http://localhost:${toString nodePort}/metrics";
                   interval = "60s";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*niri_desktop_died 0*)"
+                    "[BODY] == pat(*\nniri_desktop_died 0\n*)"
                   ];
                   alerts = discordAlert "Niri compositor crashed while a graphical session is active — desktop is unresponsive. Check: systemctl --user status niri.service";
                 })
@@ -819,7 +827,7 @@ _: {
                   interval = "60s";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*niri_crash_loop 0*)"
+                    "[BODY] == pat(*\nniri_crash_loop 0\n*)"
                   ];
                   alerts = discordAlert "Niri compositor is crash-looping (3+ restarts in 10 min). Check niri journal: journalctl --user -u niri.service -n 50";
                 })
@@ -830,7 +838,7 @@ _: {
                   interval = "60s";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*niri_zombie 0*)"
+                    "[BODY] == pat(*\nniri_zombie 0\n*)"
                   ];
                   alerts = discordAlert "Niri is running with NO graphical session (headless zombie) — it will block the next SDDM login with 'A niri session is already running' (2026-08-18 black-screen class). Recover: reboot, or as the user: systemctl --user stop niri.service niri-session-manager.service. Root cause: something pulled graphical-session.target into the user-manager boot transaction — the session-boot-audit eval guard should have caught it at eval time.";
                 })
@@ -841,7 +849,7 @@ _: {
                   interval = "60s";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*niri_aw_watcher_late 0*)"
+                    "[BODY] == pat(*\nniri_aw_watcher_late 0\n*)"
                   ];
                   alerts = discordAlert "aw-watcher-window-wayland has NOT attached 10+ min into an active graphical session — window activity tracking is silently dead (2026-09-02 live case: panicked exit 101 ×3 into start-limit-hit with zero alerting). Check: journalctl --user -u activitywatch-watcher-aw-watcher-window-wayland -n 30; recover: systemctl --user reset-failed activitywatch-watcher-aw-watcher-window-wayland && systemctl --user start activitywatch-watcher-aw-watcher-window-wayland";
                 })
