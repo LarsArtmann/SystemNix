@@ -31,30 +31,30 @@ _: {
       # replicate vhost-options.nix's own derivation: "/" and " " -> "_".
       # Derived from config.services.caddy.virtualHosts at eval time, so new
       # services are tracked automatically.
-      logPaths =
-        builtins.toJSON
-          (map
-            (
-              host:
-              "/var/log/access/access-${
-                lib.replaceStrings
-                  [
-                    "/"
-                    " "
-                  ]
-                  [
-                    "_"
-                    "_"
-                  ]
-                  host
-              }.log"
-            )
-            (
-              [
-                "access.log"
-              ]
-              ++ builtins.attrNames config.services.caddy.virtualHosts
-            ));
+      logPaths = builtins.toJSON (
+        map
+          (
+            host:
+            "/var/log/access/access-${
+              lib.replaceStrings
+                [
+                  "/"
+                  " "
+                ]
+                [
+                  "_"
+                  "_"
+                ]
+                host
+            }.log"
+          )
+          (
+            [
+              "access.log"
+            ]
+            ++ builtins.attrNames config.services.caddy.virtualHosts
+          )
+      );
 
       composeFile = pkgs.writeText "geometrikks-docker-compose.yml" (
         builtins.toJSON {
@@ -234,20 +234,21 @@ _: {
         ];
 
         sops = {
-          secrets = lib.genAttrs
-            [
-              "geometrikks_admin_password"
-              "geometrikks_db_password"
-              "geometrikks_maxmind_user_id"
-              "geometrikks_maxmind_license_key"
-              "geometrikks_carto_api_key"
-            ]
-            (_: {
-              sopsFile = lib.path.append secretsDir "geometrikks.yaml";
-              owner = "root";
-              group = "root";
-              restartUnits = [ "geometrikks.service" ];
-            });
+          secrets =
+            lib.genAttrs
+              [
+                "geometrikks_admin_password"
+                "geometrikks_db_password"
+                "geometrikks_maxmind_user_id"
+                "geometrikks_maxmind_license_key"
+                "geometrikks_carto_api_key"
+              ]
+              (_: {
+                sopsFile = lib.path.append secretsDir "geometrikks.yaml";
+                owner = "root";
+                group = "root";
+                restartUnits = [ "geometrikks.service" ];
+              });
           templates."geometrikks-env" = {
             owner = "root";
             group = "root";

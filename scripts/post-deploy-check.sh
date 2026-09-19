@@ -290,8 +290,8 @@ if $flm_enabled; then
   # that context - rc=124, zero output). Max staleness is the collector's
   # cadence (~2min); a corpse persists for hours, so that is fine.
   flm_prom=/var/lib/prometheus-node-exporter/textfile_collectors/system_health.prom
-  if grep -q 'system_service_start_limit_hit{service="fastflowlm"} 1' "$flm_prom" 2>/dev/null \
-    || grep -q 'system_service_state_failed{service="fastflowlm"} 1' "$flm_prom" 2>/dev/null; then
+  if grep -q 'system_service_start_limit_hit{service="fastflowlm"} 1' "$flm_prom" 2>/dev/null ||
+    grep -q 'system_service_state_failed{service="fastflowlm"} 1' "$flm_prom" 2>/dev/null; then
     report_fail "FastFlowLM - unit failed/start-limit-hit per system_health.prom (corpse class: connecting would re-pay a 21.6 GB cold load into a doomed start) - reboot is the only clean recovery; :52625 probe skipped"
   elif curl -s --compressed --max-time 480 -o /tmp/.smoke-flm "http://127.0.0.1:52625/v1/models" 2>/dev/null; then
     # Assert the BOUND model id, not just a JSON envelope: a stale/wrong model

@@ -52,37 +52,37 @@ usage() {
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --server)
-      SERVER="${2:-}"
-      shift 2
-      ;;
-    --model)
-      MODEL="${2:-}"
-      shift 2
-      ;;
-    --minutes)
-      MINUTES="${2:-10}"
-      shift 2
-      ;;
-    --port)
-      PORT="${2:-18848}"
-      shift 2
-      ;;
-    --alias)
-      ALIAS="${2:-soak-candidate}"
-      shift 2
-      ;;
-    --force)
-      FORCE=1
-      shift
-      ;;
-    -h | --help)
-      usage
-      ;;
-    *)
-      echo "unknown argument: $1" >&2
-      usage
-      ;;
+  --server)
+    SERVER="${2:-}"
+    shift 2
+    ;;
+  --model)
+    MODEL="${2:-}"
+    shift 2
+    ;;
+  --minutes)
+    MINUTES="${2:-10}"
+    shift 2
+    ;;
+  --port)
+    PORT="${2:-18848}"
+    shift 2
+    ;;
+  --alias)
+    ALIAS="${2:-soak-candidate}"
+    shift 2
+    ;;
+  --force)
+    FORCE=1
+    shift
+    ;;
+  -h | --help)
+    usage
+    ;;
+  *)
+    echo "unknown argument: $1" >&2
+    usage
+    ;;
   esac
 done
 
@@ -178,7 +178,7 @@ echo "soak: pid=$PID"
 WARMUP_MAX=180
 HEALTH_OK=""
 start_epoch="$(date +%s)"
-while [ "$(( $(date +%s) - start_epoch ))" -lt "$WARMUP_MAX" ]; do
+while [ "$(($(date +%s) - start_epoch))" -lt "$WARMUP_MAX" ]; do
   code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:$PORT/health" 2>/dev/null || true)"
   if [ "$code" = "200" ]; then
     HEALTH_OK=1
@@ -193,7 +193,7 @@ SPIN_STRIKES=0
 SPIN_STRIKES_TO_TRIP=3
 prev="$(cpu_ticks "$PID")"
 samples=0
-end_epoch=$(( start_epoch + WARMUP_MAX + MINUTES * 60 ))
+end_epoch=$((start_epoch + WARMUP_MAX + MINUTES * 60))
 
 while [ "$(date +%s)" -lt "$end_epoch" ]; do
   sleep "$SAMPLE_INTERVAL"
@@ -202,9 +202,9 @@ while [ "$(date +%s)" -lt "$end_epoch" ]; do
     echo -e "${RED}DEAD:${NC} server process vanished mid-soak"
     exit 1
   fi
-  delta=$(( cur - prev ))
+  delta=$((cur - prev))
   prev="$cur"
-  samples=$(( samples + 1 ))
+  samples=$((samples + 1))
   code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:$PORT/health" 2>/dev/null || true)"
   [ "$code" = "200" ] && HEALTH_OK=1
   echo "soak: sample=$samples cpu_delta=${delta}ticks health=$code"
@@ -213,7 +213,7 @@ while [ "$(date +%s)" -lt "$end_epoch" ]; do
   # once loaded; transient load spikes without health recovery still count
   # as spin because health staying dark is the disqualifier.
   if [ -z "$HEALTH_OK" ] && [ "$delta" -ge "$SPIN_FLOOR" ]; then
-    SPIN_STRIKES=$(( SPIN_STRIKES + 1 ))
+    SPIN_STRIKES=$((SPIN_STRIKES + 1))
     if [ "$SPIN_STRIKES" -ge "$SPIN_STRIKES_TO_TRIP" ]; then
       echo -e "${RED}SPIN VERDICT:${NC} sustained CPU-time growth ($SPIN_STRIKES consecutive samples) with /health never 200 — the mid-load spin class. Do NOT re-enable llama-rag on this build."
       exit 1

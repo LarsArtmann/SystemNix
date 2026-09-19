@@ -39,8 +39,8 @@ selftest() {
   local tmp
   tmp=$(mktemp)
   cp "$TODO" "$tmp"
-  printf -- '- [ ] **Source:** → [docs/todo/storage.md](docs/todo/storage.md)\n' >> "$tmp"
-  printf -- '- [ ] **Broken link** → [docs/todo/nonexistent-lib.md](docs/todo/nonexistent-lib.md)\n' >> "$tmp"
+  printf -- '- [ ] **Source:** → [docs/todo/storage.md](docs/todo/storage.md)\n' >>"$tmp"
+  printf -- '- [ ] **Broken link** → [docs/todo/nonexistent-lib.md](docs/todo/nonexistent-lib.md)\n' >>"$tmp"
   local out rc
   out=$(TODO_FILE="$tmp" "$0" --scan-file "$tmp" 2>&1) && rc=0 || rc=$?
   rm -f "$tmp"
@@ -60,20 +60,23 @@ scan_file() {
   # verify every referenced library file exists
   local lib
   while IFS= read -r lib; do
-    [ -f "$REPO_ROOT/$lib" ] || { echo "FAIL: queue links to missing library: $lib"; fail=1; }
+    [ -f "$REPO_ROOT/$lib" ] || {
+      echo "FAIL: queue links to missing library: $lib"
+      fail=1
+    }
   done < <(grep -oE 'docs/todo/[a-z0-9-]+\.md' "$f" | sort -u)
   return $fail
 }
 
 case "${1:-}" in
-  --selftest) selftest ;;
-  --scan-file) scan_file "$2" ;;
-  *)
-    scan_file "$TODO"
-    if [ "$fail" -ne 0 ]; then
-      echo "TODO system gate FAILED — fix TODO_LIST.md (queue rows must carry a title and link to an existing docs/todo/<lib>.md)"
-      exit 1
-    fi
-    echo "OK: TODO queue/library structure clean"
-    ;;
+--selftest) selftest ;;
+--scan-file) scan_file "$2" ;;
+*)
+  scan_file "$TODO"
+  if [ "$fail" -ne 0 ]; then
+    echo "TODO system gate FAILED — fix TODO_LIST.md (queue rows must carry a title and link to an existing docs/todo/<lib>.md)"
+    exit 1
+  fi
+  echo "OK: TODO queue/library structure clean"
+  ;;
 esac

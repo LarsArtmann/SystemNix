@@ -160,7 +160,8 @@ _: {
               chmod 0700 "$subvol"
             '';
           }
-        ) cfg.caches;        assertions = [
+        ) cfg.caches;
+        assertions = [
           {
             assertion = config.fileSystems ? ${cfg.hotMount};
             message = "services.hot-user-caches requires the ${cfg.hotMount} Samsung-toplevel mount (hardware-configuration.nix) — the bootstrap creates subvolumes through it.";
