@@ -7,16 +7,16 @@ recommended sync actions, live SSE updates. Module:
 
 ## Architecture
 
-| Piece      | Value                                                                                     |
-| ---------- | ----------------------------------------------------------------------------------------- |
-| UI/API     | `https://mr-sync.home.lan` — Layer 2 `protectedVHost` (oauth2-proxy for external, LAN bypass) |
-| Listen     | `127.0.0.1:7331` (`lib/ports.nix` `mr-sync` — the tool's own default port)                 |
-| Runs as    | `lars` (primaryUser), `ProtectHome = read-only` — the dashboard is read-only by design      |
-| Config     | The user's LIVE `~/.config/mr-sync/config.json` (mrconfig_path, scan_dirs, exclude_repos)  |
-| Data       | `~/.mrconfig` + full `computeDirSize` walk of `~/projects` + `~/forks`, cached 60s (5s on fetch errors, single-flight) |
-| GitHub     | `GITHUB_TOKEN` from sops (`mr_sync_github_token`, env-file format `GITHUB_TOKEN=…`)         |
+| Piece      | Value                                                                                                                                           |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| UI/API     | `https://mr-sync.home.lan` — Layer 2 `protectedVHost` (oauth2-proxy for external, LAN bypass)                                                   |
+| Listen     | `127.0.0.1:7331` (`lib/ports.nix` `mr-sync` — the tool's own default port)                                                                      |
+| Runs as    | `lars` (primaryUser), `ProtectHome = read-only` — the dashboard is read-only by design                                                          |
+| Config     | The user's LIVE `~/.config/mr-sync/config.json` (mrconfig_path, scan_dirs, exclude_repos)                                                       |
+| Data       | `~/.mrconfig` + full `computeDirSize` walk of `~/projects` + `~/forks`, cached 60s (5s on fetch errors, single-flight)                          |
+| GitHub     | `GITHUB_TOKEN` from sops (`mr_sync_github_token`, env-file format `GITHUB_TOKEN=…`)                                                             |
 | Monitoring | Gatus "mr-sync Dashboard" (`/` renders HTML, 5m interval — rides the data cache); `mr-sync-dashboard` in system-health `extraMonitoredServices` |
-| Backup     | none — read-only, no state                                                                 |
+| Backup     | none — read-only, no state                                                                                                                      |
 
 ## WHY it runs as the primary user
 

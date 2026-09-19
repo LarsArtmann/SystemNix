@@ -18,12 +18,12 @@
 
 ### Destructive footguns neutralized (Batch A — complete)
 
-| File | Was | Now |
-|---|---|---|
+| File                        | Was                                                            | Now                                                                                         |
+| --------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | `scripts/disk-create-p9.sh` | Would `sgdisk -d 9` + mkfs.ext4 the **live XFS ClickHouse p9** | Hard-refusing RETIRED tombstone (exit 1, explains why, points at migrate-clickhouse-xfs.sh) |
-| `scripts/disk-fix.sh` | PHASE 1 deletes p9 = live ClickHouse data | Tombstone (executed 2026-06-26 emergency, superseded) |
-| `scripts/disk-diagnose.sh` | Recommended running disk-fix.sh **even in the SAFE state** | Tombstone |
-| `scripts/disk-common.sh` | Hardcoded `/dev/nvme0n1` constants for the above | Tombstone (fails loudly if sourced) |
+| `scripts/disk-fix.sh`       | PHASE 1 deletes p9 = live ClickHouse data                      | Tombstone (executed 2026-06-26 emergency, superseded)                                       |
+| `scripts/disk-diagnose.sh`  | Recommended running disk-fix.sh **even in the SAFE state**     | Tombstone                                                                                   |
+| `scripts/disk-common.sh`    | Hardcoded `/dev/nvme0n1` constants for the above               | Tombstone (fails loudly if sourced)                                                         |
 
 All four verified: syntax ok + execution exits 1 with the explanation. This closes TODO_LIST "Pool + disk-domain quality" item (3) — tick still pending.
 
@@ -72,6 +72,7 @@ All four verified: syntax ok + execution exits 1 with the explanation. This clos
 ## c) NOT STARTED (triaged backlog from the review — priority order)
 
 **Batch C (diagnostics):**
+
 1. `health-check.sh` — HIGH: `grep -c "failed" || echo "0"` double-output makes EVERY clean run false-fail (`0\n0` arithmetic error); MEDIUM: `readlink` (not `-f`) → permanent "HM generation is 20706d old" WARN; hardcoded evo-x2 vs "cross-platform" claim; SIGPIPE `systemctl | head -5 | while` under set -e.
 2. `internet-diagnostic.sh` — HIGH ×2: `GATEWAY` var never set (captured as `GW`) → always pings hardcoded 192.168.1.1 (wrong on hotspot failover, this box's actual failure mode); retired units (`route-health-monitor`, `mptcp-endpoint-manager`, `unbound`) fail() every run → script permanently red on a healthy machine.
 3. `nixos-diagnostic.sh` — HIGH: `nixos-rebuild check` is not a subcommand → ❌+exit 1 on healthy systems; `nix flake check --quiet` (not a flag) → `--no-build`.

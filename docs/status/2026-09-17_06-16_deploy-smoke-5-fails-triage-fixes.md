@@ -8,15 +8,15 @@
 
 ## Session Timeline (what actually happened)
 
-| Time (approx) | Event |
-| --- | --- |
-| 05:2x | Initial probes: io PSI some avg10 72% / avg60 77% (storm); /tmp at 90% (44G, 35G in `/tmp/.Trash-1000`) |
-| 05:2x | `signoz-provision` journal: dashboard `systemnix-overview` rejected HTTP 400 `spec.layouts[0].spec.items[12] and items[13] overlap` → unit failed; convergence verifier still printed "OK 7 dashboards" |
-| 05:2x | CV `/health` probe: shape migrated to go-health rich format (40 typed checks); pipeline-store = `eventstore.PipelineStore: pass`; overall `warn` (groq enabled, api_key empty) |
-| 05:2x | Per-cgroup PSI walk: storm lives in `user.slice/user-1000.slice` → 4 ghostty terminal scopes at 80–100%; disks only ~10% busy in samples; `crush-hot-db` first migration NOT run (pgrep guard: live crush sessions) |
-| 05:3x–05:5x | Fixes (details in a/b/d below), live dashboard convergence via direct API PUT, `/tmp` trash emptied, coverage registry reclassification |
-| 05:5x | Full smoke re-run from the fixed tree: **PASS 98 → 100, FAIL 5 → 2, comm warnings gone** |
-| 06:0x | AGENTS.md updated with 5 durable lessons; auto-daemon committed all work in 6 batch commits (final `c24e5e6d`); tree clean |
+| Time (approx) | Event                                                                                                                                                                                                               |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 05:2x         | Initial probes: io PSI some avg10 72% / avg60 77% (storm); /tmp at 90% (44G, 35G in `/tmp/.Trash-1000`)                                                                                                             |
+| 05:2x         | `signoz-provision` journal: dashboard `systemnix-overview` rejected HTTP 400 `spec.layouts[0].spec.items[12] and items[13] overlap` → unit failed; convergence verifier still printed "OK 7 dashboards"             |
+| 05:2x         | CV `/health` probe: shape migrated to go-health rich format (40 typed checks); pipeline-store = `eventstore.PipelineStore: pass`; overall `warn` (groq enabled, api_key empty)                                      |
+| 05:2x         | Per-cgroup PSI walk: storm lives in `user.slice/user-1000.slice` → 4 ghostty terminal scopes at 80–100%; disks only ~10% busy in samples; `crush-hot-db` first migration NOT run (pgrep guard: live crush sessions) |
+| 05:3x–05:5x   | Fixes (details in a/b/d below), live dashboard convergence via direct API PUT, `/tmp` trash emptied, coverage registry reclassification                                                                             |
+| 05:5x         | Full smoke re-run from the fixed tree: **PASS 98 → 100, FAIL 5 → 2, comm warnings gone**                                                                                                                            |
+| 06:0x         | AGENTS.md updated with 5 durable lessons; auto-daemon committed all work in 6 batch commits (final `c24e5e6d`); tree clean                                                                                          |
 
 ---
 
@@ -111,6 +111,7 @@
 Tags: [deploy-gated] needs `nix run .#deploy` · [owner] needs your decision · [code] repo work · [ops] live operations · [upstream] other repo · [docs] documentation. Impact / Effort (S <30min, M 30min–2h, L >2h) / Category per the harvest guide.
 
 **Deploy-gated cluster — one deploy unlocks six verifications:**
+
 1. Run `nix run .#deploy` when the pressure gate opens (lands cv.nix pattern, coverage collector, packaged smoke, provisioner/dashboard fixes). — Critical / S / Ops
 2. Post-deploy: verify "CV Pipeline Store Health" gatus check green (red since 09-16). — Critical / S / Ops
 3. Post-deploy: verify `signoz_traces_missing 0` and the "SigNoz Trace Coverage Missing" alert resolves. — High / S / Ops
@@ -182,6 +183,6 @@ Tags: [deploy-gated] needs `nix run .#deploy` · [owner] needs your decision · 
 
 ---
 
-*Session evidence anchors: smoke verification run (PASS 100 / FAIL 2), live PUT 200 + spec byte-compare, overlap checker 7/7 NONE, negative-test-lints 6/6, toplevel eval green, `/tmp` 44G→8.5G, AGENTS.md lessons at the CV / SigNoz / Shell / tmp-cleanup sections. All repo changes landed via the auto-commit daemon (`120d49d1`..`c24e5e6d`); nothing pushed.*
+_Session evidence anchors: smoke verification run (PASS 100 / FAIL 2), live PUT 200 + spec byte-compare, overlap checker 7/7 NONE, negative-test-lints 6/6, toplevel eval green, `/tmp` 44G→8.5G, AGENTS.md lessons at the CV / SigNoz / Shell / tmp-cleanup sections. All repo changes landed via the auto-commit daemon (`120d49d1`..`c24e5e6d`); nothing pushed._
 
 **WAITING FOR INSTRUCTIONS.**

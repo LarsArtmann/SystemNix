@@ -6,13 +6,13 @@
 
 ## The window's five tasks
 
-| Task | What it was | Commit(s) | Closeout report |
-| --- | --- | --- | --- |
-| 000001a0a1f149e8… | crush-hot-db: move crush session DBs off the QLC root (original build) | `cf56690e` (footer remap; code `ca772609` daemon-swept) | `docs/status/2026-09-15_04-50_task-…2d73d.md` |
-| 000001a0a715dc51… | review fix: static unit (no `wantedBy`) — deploy.sh provisioner loop silently skipped it | `d1e84088` (code `e9beae89`/`6c85ee1b`) | `docs/status/2026-09-16_02-34_task-…534cc.md` |
-| 000001a0a715d3e8… | niri gatus false-negative verification (2026-08-24 sddm incident) | `7f4836b9` (fix code `65e7489b`+`524bc069` by a parallel session; this task verified + closed TODO `f1771227`) | `docs/status/2026-09-16_02-56_task-…30236.md` |
-| 000001a0a715d9e9… | review fix: `ReadWritePaths` 226/NAMESPACE (unit's own mkdir ran after namespace setup) | `47307f9a` (code `7f8b2907`) | `docs/status/2026-09-16_03-17_task-…5a05b75.md` |
-| 000001a0a715de59… | review fix: nested `.crush` discovery (35 dirs missed) + verification pass | `042acb6d` (prior incarnation) + verification session `1d9f1816` (VM test built green, claims re-pointed) | `docs/status/2026-09-16_05-44_task-…860121.md` |
+| Task              | What it was                                                                              | Commit(s)                                                                                                      | Closeout report                                 |
+| ----------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| 000001a0a1f149e8… | crush-hot-db: move crush session DBs off the QLC root (original build)                   | `cf56690e` (footer remap; code `ca772609` daemon-swept)                                                        | `docs/status/2026-09-15_04-50_task-…2d73d.md`   |
+| 000001a0a715dc51… | review fix: static unit (no `wantedBy`) — deploy.sh provisioner loop silently skipped it | `d1e84088` (code `e9beae89`/`6c85ee1b`)                                                                        | `docs/status/2026-09-16_02-34_task-…534cc.md`   |
+| 000001a0a715d3e8… | niri gatus false-negative verification (2026-08-24 sddm incident)                        | `7f4836b9` (fix code `65e7489b`+`524bc069` by a parallel session; this task verified + closed TODO `f1771227`) | `docs/status/2026-09-16_02-56_task-…30236.md`   |
+| 000001a0a715d9e9… | review fix: `ReadWritePaths` 226/NAMESPACE (unit's own mkdir ran after namespace setup)  | `47307f9a` (code `7f8b2907`)                                                                                   | `docs/status/2026-09-16_03-17_task-…5a05b75.md` |
+| 000001a0a715de59… | review fix: nested `.crush` discovery (35 dirs missed) + verification pass               | `042acb6d` (prior incarnation) + verification session `1d9f1816` (VM test built green, claims re-pointed)      | `docs/status/2026-09-16_05-44_task-…860121.md`  |
 
 ## a) FULLY DONE (verified, not just claimed)
 
@@ -113,4 +113,4 @@ The tq journal (`/mnt/pool/services/tq/tq.db`, facts + facts_archive, full histo
 
 ---
 
-*Point-in-time snapshot. Harvest input for TODO_LIST: §f items. Supersedes nothing; complements the five per-task closeout reports listed above.*
+_Point-in-time snapshot. Harvest input for TODO_LIST: §f items. Supersedes nothing; complements the five per-task closeout reports listed above._

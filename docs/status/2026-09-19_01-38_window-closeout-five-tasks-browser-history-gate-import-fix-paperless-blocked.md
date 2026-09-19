@@ -53,6 +53,7 @@
 ## f) UP TO 50 NEXT THINGS (most valuable first; 10 + 3 questions appended to TODO_LIST, the rest are ROADMAP/queue fuel)
 
 **Appended to TODO_LIST this closeout (dedup-checked against all 445 open rows):**
+
 1. Bisect the llama.cpp 0.3.0 spin upstream + the ≥10-min REAL-unit soak acceptance gate — THE llama-rag re-enable gate (unblocks paperless RAG; freeze-5's root driver).
 2. Post-deploy smoke for the registration gate using the CSRF double-submit dance (403-closed vs csrf-wall distinguishable).
 3. Gatus check: `browser_history_user_count` decrease/exceed-baseline alert (count-gap exploitation detector).
@@ -63,7 +64,7 @@
 8. Rogue-listener defense for :8848/:8849 while llama-rag is disabled (the 2026-09-18 orphan class can phantom-pass smokes).
 9. Registration-surface audit: `/auth/import` unauthenticated-unreachable on the deployed path + sibling user-creation-path sweep in cqrs-htmx (close the unknown-third-bypass-class question).
 10. Queue intake freshness rule: live-state claims reconcile against the relevant AGENTS.md section before execution.
-11–13. (Blocked questions, also appended): Caddy fence on `/auth/register` as interim mitigation? Gate acceptance re-run timing (post-fix vs post-cleanup reprobe)? Hermes global `-v` permanent posture vs upstream adapter-scoped/env-var ask?
+    11–13. (Blocked questions, also appended): Caddy fence on `/auth/register` as interim mitigation? Gate acceptance re-run timing (post-fix vs post-cleanup reprobe)? Hermes global `-v` permanent posture vs upstream adapter-scoped/env-var ask?
 
 **Queue-ready items from the window's own reports, already tracked (do NOT re-dispatch, pointers only):** push+tag+bump the `68a2cd68` chain (line 44); count-gap fix (43); probe-user deletion (42); OAuth2 live passkey ceremony (73, P2); CSRF-recipe documentation (03-56 §f.7); post-deploy llama-rag verification chain (650); reranker side drop-or-track decision (653); `nixpkgs-llama-rag` pin expiry probe (652).
 
@@ -118,6 +119,6 @@
 - **Archives** — none moved: every window report still carries open items (deploy-pending hermes, queued security chain, blocked paperless), and the older candidates remain referenced by open TODO rows. The standing archive-sweep TODO row continues to own the older backlog.
 - **Out-of-scope sightings reported, not touched:** `docs/services/hermes.md` monitoring-table parity line (item 35); `docs/CONTRIBUTING.md` convention (item 7); no code, config, tests, locks, or scripts were modified by this closeout.
 
-*Point-in-time snapshot, 2026-09-19 01:38 CEST. Task-Queue-ID cross-reference: this report's commit.*
+_Point-in-time snapshot, 2026-09-19 01:38 CEST. Task-Queue-ID cross-reference: this report's commit._
 
 **COMMIT MAPPING (daemon race, the 2026-09-17 closeout precedent):** the auto-commit daemon swept this closeout's doc edits before the footer-carrying commit could land — FEATURES/CHANGELOG/AGENTS = `5881225a`, TODO_LIST (tick + appends) + the 03-56 §a.4 annotation = `94e9d713` (both verified by `git show --stat` to contain EXACTLY this closeout's files, no foreign sweep); the footer-carrying commit carries this report + the final TODO_LIST report-pointer fix.

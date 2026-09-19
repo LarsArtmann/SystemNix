@@ -12,6 +12,7 @@
 An automated full `nix flake update` (`f8f2965e`, 188 lock nodes moved, nixpkgs `c043004d`→`eaad089`) snapped every moving-ref input to upstream HEAD. Private LarsArtmann repos have had **no CI since ~2026-09-10** (Actions hosted-minutes exhausted), so roughly a dozen upstream HEADs shipped stale `vendorHash`/lockfile state with nothing to catch it. The prior session diagnosed 6 failure classes; a full `--keep-going` enumeration this session surfaced **12 more** FOD failures across ~11 inputs, several third-party.
 
 The repair:
+
 - Fixed the one **genuine code bug** — `go-nix-helpers` `mkPreparedSource` normalized every dep pseudo-version to the literal `v0.0.0`, which Go rejects for major-versioned (`/vN`) module paths.
 - Refreshed/fixed the upstream-owned vendor hashes where a local fix was viable.
 - Pinned the remaining broken inputs to known-good revisions (13 pins, 5 local `git+file`, 8 `github:<rev>`).
@@ -42,6 +43,7 @@ The `go-nix-helpers` `/vN` bug is the highest-value find: it was latent, and the
 ## 3. Method (what worked, what wasted time)
 
 **Worked**
+
 - `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going` — one pass enumerated **all** remaining FOD failures after each fix wave. This is the single most valuable tool in this repair.
 - `nix build .#<pkg> --no-link` per-package probes fail in 5–10 s (hash mismatches are FOD, so they fail fast).
 - Lock-free probes (`nix build --impure --no-link --expr 'let f = builtins.getFlake "…?rev=<sha>"; in f.packages.…goModules'`) proved an origin rev builds **before** touching the lock.
@@ -49,6 +51,7 @@ The `go-nix-helpers` `/vN` bug is the highest-value find: it was latent, and the
 - Reading the generated `go.mod` parse error verbatim pinpointed the `/vN` bug in minutes.
 
 **Wasted / could be better**
+
 - The prior session's 6-class taxonomy was treated as complete at first; the real list was ~2× larger. Enumerate first, classify second.
 - Timing: I ran the first deploy without warning that it would restart `niri.service` and kill the user's session. This is the single worst outcome of the session — a preventable mid-movie session kill.
 
@@ -127,6 +130,7 @@ The `go-nix-helpers` `/vN` bug is the highest-value find: it was latent, and the
 ## 9. f) UP TO 50 THINGS TO GET DONE NEXT
 
 **Immediate (blocked on user)**
+
 1. Push the 5 upstream fixes (`go-nix-helpers`, `file-and-image-renamer`, `go-cqrs-lite`, `branching-flow`, `art-dupl`).
 2. Flip the 5 `git+file` pins → upstream URLs; full `nix flake lock`; verify.
 3. Refresh upstream vendorHashes for `library-policy`, `go-auto-upgrade`, `projects-management-automation`, `overview`, `md-go-validator`; then unpin.
@@ -190,7 +194,7 @@ The `go-nix-helpers` `/vN` bug is the highest-value find: it was latent, and the
 49. Verify no orphaned `nix` daemon caches from the /vN-fix builds.
 50. Re-baseline the smoke-fail baseline after the reboot.
 
-*(49 items; 50 intended — add: 50. Verify the auto-commit daemon did not sweep unrelated staged files into this session's commits.)*
+_(49 items; 50 intended — add: 50. Verify the auto-commit daemon did not sweep unrelated staged files into this session's commits.)_
 
 ---
 
@@ -217,6 +221,7 @@ pins:    13 INTERIM (5 local git+file, 8 github:<rev>)
 ```
 
 **Key reference commits/artifacts**
+
 - `go-nix-helpers` fix: worktree commit `8c87f2654f546bcf22a302833cf0f5d2dfe30ea2`
 - `file-and-image-renamer` hash: `494c9b7a0a80bdda3a2cb31a4b8c8f2ee315f8f3`
 - `go-cqrs-lite` fix: worktree commit `d84e4d6a42b2ed368a7d7110b716448d0c4093f9`
@@ -231,7 +236,7 @@ pins:    13 INTERIM (5 local git+file, 8 github:<rev>)
 
 **What I forgot:** to warn the user that deploying would restart their compositor and kill their session; to verify the SDDM greeter existed before telling them to log in; to record the new hazards in AGENTS.md; to check for a `go-nix-helpers` test suite; to triage the two new-looking smoke signals.
 
-**What I could have done better:** enumerate *all* failures with `--keep-going` before touching anything (I eventually did, but after inheriting the prior session's incomplete taxonomy); not run a disruptive activation mid-movie; verify the profile commit as part of "deploy done" instead of discovering it late; choose upstream hash fixes over pins for the actively-developed repos.
+**What I could have done better:** enumerate _all_ failures with `--keep-going` before touching anything (I eventually did, but after inheriting the prior session's incomplete taxonomy); not run a disruptive activation mid-movie; verify the profile commit as part of "deploy done" instead of discovering it late; choose upstream hash fixes over pins for the actively-developed repos.
 
 **What I can still improve:** add the deploy restart-warning guard, write the regression test, update AGENTS.md, push the fixes and remove the pins, and get the owed reboot done to clear the flm/llama wedge.
 

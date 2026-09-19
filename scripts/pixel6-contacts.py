@@ -24,14 +24,12 @@ Typical flow (after the on-phone VCF export):
 
 import argparse
 import base64
-import binascii
 import csv
 import json
 import os
 import quopri
 import re
 import sys
-import time
 from html import escape
 
 ROOT_DEFAULT = "/mnt/pool/backups/pixel6/2026-08-20"
@@ -87,9 +85,20 @@ def ucr_evidence(root):
             else:
                 key = ("name", name_or_number.casefold())
                 disp = name_or_number
-            e = out.setdefault(key, {"display": disp, "names": set(), "numbers": set(),
-                                     "ucr_calls": 0, "ucr_first": ts, "ucr_last": ts,
-                                     "cube_calls": 0, "cube_first": "", "cube_last": ""})
+            e = out.setdefault(
+                key,
+                {
+                    "display": disp,
+                    "names": set(),
+                    "numbers": set(),
+                    "ucr_calls": 0,
+                    "ucr_first": ts,
+                    "ucr_last": ts,
+                    "cube_calls": 0,
+                    "cube_first": "",
+                    "cube_last": "",
+                },
+            )
             e["ucr_calls"] += 1
             e["ucr_first"] = min(e["ucr_first"], ts)
             e["ucr_last"] = max(e["ucr_last"], ts)
@@ -107,9 +116,20 @@ def cube_evidence(root):
         return out
 
     def entry(key, disp):
-        return out.setdefault(key, {"display": disp, "names": set(), "numbers": set(),
-                                    "ucr_calls": 0, "ucr_first": "", "ucr_last": "",
-                                    "cube_calls": 0, "cube_first": "", "cube_last": ""})
+        return out.setdefault(
+            key,
+            {
+                "display": disp,
+                "names": set(),
+                "numbers": set(),
+                "ucr_calls": 0,
+                "ucr_first": "",
+                "ucr_last": "",
+                "cube_calls": 0,
+                "cube_first": "",
+                "cube_last": "",
+            },
+        )
 
     for fn in os.listdir(props):
         if not fn.endswith(".json"):
@@ -126,10 +146,20 @@ def cube_evidence(root):
             stem_name = clean_name(m.group(3))
         callee = clean_name((meta.get("callee") or "").strip())
 
-        num_part = callee if callee and looks_like_number(callee) else \
-            (stem_name if stem_name and looks_like_number(stem_name) else "")
-        name_part = callee if callee and not looks_like_number(callee) else \
-            (stem_name if stem_name and not looks_like_number(stem_name) and stem_name not in ("Call ended", "Unknown") else "")
+        num_part = (
+            callee
+            if callee and looks_like_number(callee)
+            else (stem_name if stem_name and looks_like_number(stem_name) else "")
+        )
+        name_part = (
+            callee
+            if callee and not looks_like_number(callee)
+            else (
+                stem_name
+                if stem_name and not looks_like_number(stem_name) and stem_name not in ("Call ended", "Unknown")
+                else ""
+            )
+        )
         if not num_part and not name_part:
             continue
 
@@ -167,17 +197,30 @@ def derive(root):
             m["cube_calls"] += e["cube_calls"]
             for f in ("ucr_first", "ucr_last", "cube_first", "cube_last"):
                 if e[f]:
-                    m[f] = min((x for x in (m[f], e[f]) if x), default=e[f]) if f.endswith("first") \
+                    m[f] = (
+                        min((x for x in (m[f], e[f]) if x), default=e[f])
+                        if f.endswith("first")
                         else max((x for x in (m[f], e[f]) if x), default=e[f])
+                    )
             if not looks_like_number(m["display"]) or (e["names"] and looks_like_number(m["display"])):
                 named = sorted(e["names"])[0] if e["names"] else m["display"]
                 m["display"] = named
 
     contacts = sorted(merged.values(), key=lambda e: (-(e["ucr_calls"] + e["cube_calls"]), e["display"]))
-    payload = [{"display": e["display"], "names": sorted(e["names"]), "numbers": sorted(e["numbers"]),
-                "ucr_calls": e["ucr_calls"], "ucr_first": e["ucr_first"], "ucr_last": e["ucr_last"],
-                "cube_calls": e["cube_calls"], "cube_first": e["cube_first"], "cube_last": e["cube_last"]}
-               for e in contacts]
+    payload = [
+        {
+            "display": e["display"],
+            "names": sorted(e["names"]),
+            "numbers": sorted(e["numbers"]),
+            "ucr_calls": e["ucr_calls"],
+            "ucr_first": e["ucr_first"],
+            "ucr_last": e["ucr_last"],
+            "cube_calls": e["cube_calls"],
+            "cube_first": e["cube_first"],
+            "cube_last": e["cube_last"],
+        }
+        for e in contacts
+    ]
     path = os.path.join(out_dir, "contacts-evidence.json")
     with open(path, "w") as fh:
         json.dump(payload, fh, ensure_ascii=False, indent=2)
@@ -245,8 +288,7 @@ def parse_vcard(text):
 
 def extract_card(card):
     def values(prop):
-        return [(params, decode_value(params, value)) for p, params, value in card["props"]
-                if p == prop and value]
+        return [(params, decode_value(params, value)) for p, params, value in card["props"] if p == prop and value]
 
     def types(params):
         t = []
@@ -273,8 +315,18 @@ def extract_card(card):
     bday = next((v for _, v in values("BDAY")), "")
     uid = next((v for _, v in values("UID")), "")
     photo = next((v for _, v in values("PHOTO")), None)
-    return {"fn": clean_name(fn) or clean_name(title), "n": n_parts, "tels": tels, "emails": emails,
-            "org": org, "title": title, "note": note, "bday": bday, "uid": uid, "photo": photo}
+    return {
+        "fn": clean_name(fn) or clean_name(title),
+        "n": n_parts,
+        "tels": tels,
+        "emails": emails,
+        "org": org,
+        "title": title,
+        "note": note,
+        "bday": bday,
+        "uid": uid,
+        "photo": photo,
+    }
 
 
 def safe_filename(name, idx):
@@ -291,26 +343,26 @@ def merge_evidence(card, evidence):
     for key, e in evidence.items():
         hit = False
         if key[0] == "num" and key[1]:
-            hit = any(n == key[1] or (len(n) >= 9 and n.endswith(key[1][-9:]))
-                      for n in my_nums)
+            hit = any(n == key[1] or (len(n) >= 9 and n.endswith(key[1][-9:])) for n in my_nums)
         elif key[0] == "name" and my_name:
             hit = key[1] == my_name
         if not hit:
             continue
-        cross = any(any(n == x or (len(n) >= 9 and n.endswith(x[-9:]))
-                        for n in my_nums) for x in e.get("numbers", ()))
+        cross = any(any(n == x or (len(n) >= 9 and n.endswith(x[-9:])) for n in my_nums) for x in e.get("numbers", ()))
         if key[0] == "num" or cross or key[1] == my_name:
             matches.append(e)
     if not matches:
         return None
     firsts = [e["ucr_first"] for e in matches if e["ucr_first"]]
     lasts = [e["ucr_last"] for e in matches if e["ucr_last"]]
-    return {"archive_calls": sum(e["ucr_calls"] + e["cube_calls"] for e in matches),
-            "ucr_calls": sum(e["ucr_calls"] for e in matches),
-            "cube_calls": sum(e["cube_calls"] for e in matches),
-            "ucr_first": min(firsts) if firsts else "",
-            "ucr_last": max(lasts) if lasts else "",
-            "evidence_names": sorted({n for e in matches for n in e.get("names", ())})}
+    return {
+        "archive_calls": sum(e["ucr_calls"] + e["cube_calls"] for e in matches),
+        "ucr_calls": sum(e["ucr_calls"] for e in matches),
+        "cube_calls": sum(e["cube_calls"] for e in matches),
+        "ucr_first": min(firsts) if firsts else "",
+        "ucr_last": max(lasts) if lasts else "",
+        "evidence_names": sorted({n for e in matches for n in e.get("names", ())}),
+    }
 
 
 def write_card_vcf(card, path):
@@ -336,26 +388,36 @@ def write_card_vcf(card, path):
 
 def cards_html(cards, out_path):
     def card_html(i, c):
-        tels = "".join(
-            f"<div><code>{escape(t['number'])}</code>"
-            + (f" <span class='ty'>{escape(t['type'])}</span>" if t["type"] else "")
-            + (f" <span class='arch'>{'★' * min(c['match']['archive_calls'], 5)} {c['match']['archive_calls']} calls</span>"
-               if c.get("match") else "")
-            + "</div>" for t in c["tels"]) or "<div class='none'>no phone</div>"
-        emails = "".join(f"<div><a href='mailto:{escape(m['address'])}'>{escape(m['address'])}</a></div>"
-                         for m in c["emails"])
+        tels = (
+            "".join(
+                f"<div><code>{escape(t['number'])}</code>"
+                + (f" <span class='ty'>{escape(t['type'])}</span>" if t["type"] else "")
+                + (
+                    f" <span class='arch'>{'★' * min(c['match']['archive_calls'], 5)} {c['match']['archive_calls']} calls</span>"
+                    if c.get("match")
+                    else ""
+                )
+                + "</div>"
+                for t in c["tels"]
+            )
+            or "<div class='none'>no phone</div>"
+        )
+        emails = "".join(
+            f"<div><a href='mailto:{escape(m['address'])}'>{escape(m['address'])}</a></div>" for m in c["emails"]
+        )
         org = escape(c["org"] + (" · " + c["title"] if c["title"] else "")) if c["org"] or c["title"] else ""
         note = f"<p class='note'>{escape(c['note'][:400])}</p>" if c["note"] else ""
         match = ""
         if c.get("match"):
             m = c["match"]
             span = " → ".join(x[:10] for x in (m["ucr_first"], m["ucr_last"]) if x)
-            match = (f"<p class='match'>Call archive: {m['ucr_calls']} UCR ({escape(span)})"
-                     f" + {m['cube_calls']} Cube</p>")
+            match = f"<p class='match'>Call archive: {m['ucr_calls']} UCR ({escape(span)}) + {m['cube_calls']} Cube</p>"
         photo = f"<img src='photos/{escape(os.path.basename(c['photo_file']))}' alt=''>" if c.get("photo_file") else ""
-        return (f"<div class='card' data-search='{escape((c['fn'] + ' ' + ' '.join(t['number'] for t in c['tels']) + ' ' + c['org']).lower())}'>"
-                f"<div class='avatar'>{photo}{escape((c['fn'] or '?')[:1].upper())}</div>"
-                f"<h2>{escape(c['fn'] or '(unnamed)')}</h2>{org}{tels}{emails}{note}{match}</div>")
+        return (
+            f"<div class='card' data-search='{escape((c['fn'] + ' ' + ' '.join(t['number'] for t in c['tels']) + ' ' + c['org']).lower())}'>"
+            f"<div class='avatar'>{photo}{escape((c['fn'] or '?')[:1].upper())}</div>"
+            f"<h2>{escape(c['fn'] or '(unnamed)')}</h2>{org}{tels}{emails}{note}{match}</div>"
+        )
 
     html = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"><title>Contacts</title>
@@ -379,7 +441,7 @@ code {{ color:#9fb6ff; }}
 .hidden {{ display:none; }}
 </style></head><body>
 <header><h1>Contacts — {len(cards)}</h1><input id="q" type="search" placeholder="Search name or number"></header>
-<div id="grid">{''.join(card_html(i, c) for i, c in enumerate(cards))}</div>
+<div id="grid">{"".join(card_html(i, c) for i, c in enumerate(cards))}</div>
 <script>
 q.oninput = () => {{ const n = q.value.toLowerCase();
   document.querySelectorAll('.card').forEach(c => c.classList.toggle('hidden', n && !c.dataset.search.includes(n))); }};
@@ -424,7 +486,9 @@ def decode_vcf(root, vcf_files):
     for i, card in enumerate(cards, 1):
         card["match"] = merge_evidence(card, evidence)
         if card["photo"]:
-            ext = "jpg" if card["photo"][:3] == b"\xff\xd8\xff" else ("png" if card["photo"][:4] == b"\x89PNG" else "bin")
+            ext = (
+                "jpg" if card["photo"][:3] == b"\xff\xd8\xff" else ("png" if card["photo"][:4] == b"\x89PNG" else "bin")
+            )
             pf = os.path.join(photos_dir, f"{safe_filename(card['fn'], i)}.{ext}")
             with open(pf, "wb") as fh:
                 fh.write(card["photo"])
@@ -443,8 +507,7 @@ def decode_vcf(root, vcf_files):
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__,
-                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("subcommand", choices=["derive", "decode-vcf"])
     ap.add_argument("--root", default=os.environ.get("UCR_ROOT", ROOT_DEFAULT))
     ap.add_argument("files", nargs="*", help="VCF files (decode-vcf; default: contacts/incoming/*)")
@@ -457,13 +520,14 @@ def main():
     if not files:
         incoming = os.path.join(args.root, "contacts", "incoming")
         if os.path.isdir(incoming):
-            files = sorted(os.path.join(incoming, f) for f in os.listdir(incoming)
-                           if f.lower().endswith(".vcf"))
+            files = sorted(os.path.join(incoming, f) for f in os.listdir(incoming) if f.lower().endswith(".vcf"))
         if not files:
             inc = os.path.join(args.root, "contacts", "incoming")
-            sys.exit(f"No VCF given and none found in {inc}\n"
-                     f"On the phone: Contacts app → export/share → save the .vcf, pull it, "
-                     f"copy it into {inc}, then re-run.")
+            sys.exit(
+                f"No VCF given and none found in {inc}\n"
+                f"On the phone: Contacts app → export/share → save the .vcf, pull it, "
+                f"copy it into {inc}, then re-run."
+            )
     decode_vcf(args.root, files)
 
 

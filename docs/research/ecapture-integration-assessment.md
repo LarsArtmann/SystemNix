@@ -14,32 +14,32 @@ eCapture captures SSL/TLS plaintext traffic without CA certificates using eBPF u
 
 ## What is eCapture?
 
-| Aspect | Detail |
-|--------|--------|
-| **Purpose** | Capture SSL/TLS plaintext without CA certificates |
-| **Method** | eBPF uprobes on TLS library functions (SSL_read, SSL_write, SSL_do_handshake) |
-| **Language** | C (89.7% — kernel probes), Go (7.4% — userspace CLI) |
-| **License** | Apache 2.0 |
-| **Maturity** | 15.1k stars, 1.6k forks, 90+ releases (latest: v2.2.0, March 2026) |
-| **Platforms** | Linux & Android only (x86_64, aarch64) |
+| Aspect        | Detail                                                                        |
+| ------------- | ----------------------------------------------------------------------------- |
+| **Purpose**   | Capture SSL/TLS plaintext without CA certificates                             |
+| **Method**    | eBPF uprobes on TLS library functions (SSL_read, SSL_write, SSL_do_handshake) |
+| **Language**  | C (89.7% — kernel probes), Go (7.4% — userspace CLI)                          |
+| **License**   | Apache 2.0                                                                    |
+| **Maturity**  | 15.1k stars, 1.6k forks, 90+ releases (latest: v2.2.0, March 2026)            |
+| **Platforms** | Linux & Android only (x86_64, aarch64)                                        |
 
 ### Supported Capture Targets
 
-| Module | Libraries/Versions |
-|--------|-------------------|
-| **TLS** | OpenSSL 1.0.x, 1.1.x, 3.0.x+, LibreSSL, BoringSSL |
-| **GnuTLS** | GnuTLS library |
-| **GoTLS** | Go `crypto/tls` package |
-| **Bash/Zsh** | Command auditing |
-| **MySQL** | mysqld 5.6, 5.7, 8.0, MariaDB |
-| **PostgreSQL** | PostgreSQL 10+ |
+| Module         | Libraries/Versions                                |
+| -------------- | ------------------------------------------------- |
+| **TLS**        | OpenSSL 1.0.x, 1.1.x, 3.0.x+, LibreSSL, BoringSSL |
+| **GnuTLS**     | GnuTLS library                                    |
+| **GoTLS**      | Go `crypto/tls` package                           |
+| **Bash/Zsh**   | Command auditing                                  |
+| **MySQL**      | mysqld 5.6, 5.7, 8.0, MariaDB                     |
+| **PostgreSQL** | PostgreSQL 10+                                    |
 
 ### Output Modes
 
-| Mode | Description | Use Case |
-|------|-------------|----------|
-| `text` | Plaintext to stdout/file | Quick inspection |
-| `pcapng` | Wireshark-compatible capture | Deep protocol analysis |
+| Mode     | Description                        | Use Case                        |
+| -------- | ---------------------------------- | ------------------------------- |
+| `text`   | Plaintext to stdout/file           | Quick inspection                |
+| `pcapng` | Wireshark-compatible capture       | Deep protocol analysis          |
 | `keylog` | TLS Master Secrets (SSLKEYLOGFILE) | Offline decryption in Wireshark |
 
 ---
@@ -83,12 +83,12 @@ Trivial to add to `security-hardening.nix` alongside existing security tools.
 
 ### 4. Kernel Compatibility Verified
 
-| Requirement | SystemNix Value | Status |
-|-------------|-----------------|--------|
-| Kernel ≥ 4.18 (x86_64) | 6.19.4 (linuxPackages_latest) | ✅ Exceeds |
-| Kernel ≥ 5.8 (for CAP_BPF) | 6.19.4 | ✅ Exceeds |
-| BTF support | Likely enabled in default config | ✅ Needs verification |
-| x86_64-linux | evo-x2 is x86_64-linux | ✅ Match |
+| Requirement                | SystemNix Value                  | Status                |
+| -------------------------- | -------------------------------- | --------------------- |
+| Kernel ≥ 4.18 (x86_64)     | 6.19.4 (linuxPackages_latest)    | ✅ Exceeds            |
+| Kernel ≥ 5.8 (for CAP_BPF) | 6.19.4                           | ✅ Exceeds            |
+| BTF support                | Likely enabled in default config | ✅ Needs verification |
+| x86_64-linux               | evo-x2 is x86_64-linux           | ✅ Match              |
 
 ### 5. Bash/Zsh Command Auditing
 
@@ -115,10 +115,10 @@ eCapture fits this profile — it's a security professional's tool, not a produc
 
 ### 1. ❌ nixpkgs Version Severely Outdated (CRITICAL)
 
-| | Version | Date |
-|---|---------|------|
-| **nixpkgs** | v1.5.2 | ~2024 |
-| **Upstream** | v2.2.0 | March 2026 |
+|              | Version | Date       |
+| ------------ | ------- | ---------- |
+| **nixpkgs**  | v1.5.2  | ~2024      |
+| **Upstream** | v2.2.0  | March 2026 |
 
 This is not a minor version lag — **v2.x is a complete architecture rewrite**:
 
@@ -148,12 +148,12 @@ SystemNix has `security.apparmor.enable = true` in `security-hardening.nix`. App
 
 ### 3. ❌ Elevated Privilege Requirements
 
-| Capability | What It Grants | Risk |
-|------------|---------------|------|
-| `CAP_BPF` | Load arbitrary eBPF programs into kernel | Can intercept all syscalls, access kernel memory |
-| `CAP_PERFMON` | Create perf events, read perf buffers | Trace execution of any process |
-| `CAP_SYS_PTRACE` | Read memory of any process | Inspect secrets in privileged processes |
-| `CAP_NET_ADMIN` | Modify network stack (pcapng mode) | Packet redirection, filtering |
+| Capability       | What It Grants                           | Risk                                             |
+| ---------------- | ---------------------------------------- | ------------------------------------------------ |
+| `CAP_BPF`        | Load arbitrary eBPF programs into kernel | Can intercept all syscalls, access kernel memory |
+| `CAP_PERFMON`    | Create perf events, read perf buffers    | Trace execution of any process                   |
+| `CAP_SYS_PTRACE` | Read memory of any process               | Inspect secrets in privileged processes          |
+| `CAP_NET_ADMIN`  | Modify network stack (pcapng mode)       | Packet redirection, filtering                    |
 
 Granting these permanently to a system package expands the attack surface. If ecapture's binary has a vulnerability, an attacker gains near-root capabilities.
 
@@ -162,6 +162,7 @@ Granting these permanently to a system package expands the attack surface. If ec
 eCapture captures TLS traffic **without any detection by the application or user**. Unlike MITM proxies (which cause certificate warnings), eBPF uprobes are invisible.
 
 This makes it:
+
 - A powerful debugging tool ✅
 - A powerful credential theft tool ❌
 
@@ -205,30 +206,30 @@ One maintainer. Version gap suggests limited maintenance velocity. Risk of packa
 
 ## Technical Compatibility Matrix
 
-| Factor | Status | Detail |
-|--------|--------|--------|
-| Kernel version | ✅ 6.19.4 >> 4.18 minimum | Well above requirement |
-| BTF (CONFIG_DEBUG_INFO_BTF) | ⚠️ Unknown | Likely enabled, needs verification on evo-x2 |
-| Architecture (x86_64) | ✅ | Supported |
-| AppArmor | ❌ Risk | Known to conflict with LSM-dependent tools |
-| Required capabilities | ⚠️ Available | CAP_BPF, CAP_PERFMON, CAP_SYS_PTRACE on kernel ≥ 5.8 |
-| Go version compatibility | ⚠️ Check needed | ecapture needs Go 1.21+, SystemNix pins Go 1.26.1 |
-| nixpkgs version | ❌ Outdated | 1.5.2 vs upstream 2.2.0 |
-| Cross-platform | ❌ Linux only | No Darwin support |
+| Factor                      | Status                    | Detail                                               |
+| --------------------------- | ------------------------- | ---------------------------------------------------- |
+| Kernel version              | ✅ 6.19.4 >> 4.18 minimum | Well above requirement                               |
+| BTF (CONFIG_DEBUG_INFO_BTF) | ⚠️ Unknown                 | Likely enabled, needs verification on evo-x2         |
+| Architecture (x86_64)       | ✅                        | Supported                                            |
+| AppArmor                    | ❌ Risk                   | Known to conflict with LSM-dependent tools           |
+| Required capabilities       | ⚠️ Available               | CAP_BPF, CAP_PERFMON, CAP_SYS_PTRACE on kernel ≥ 5.8 |
+| Go version compatibility    | ⚠️ Check needed            | ecapture needs Go 1.21+, SystemNix pins Go 1.26.1    |
+| nixpkgs version             | ❌ Outdated               | 1.5.2 vs upstream 2.2.0                              |
+| Cross-platform              | ❌ Linux only             | No Darwin support                                    |
 
 ---
 
 ## Alternatives Comparison
 
-| Tool | TLS Capture | NixOS Package | Complexity | Use Case |
-|------|-------------|---------------|------------|----------|
-| **eCapture** | ⭐⭐⭐⭐⭐ | ✅ (outdated) | Low | Dedicated TLS capture |
-| **bpftrace** | ⭐⭐ (manual scripts) | ✅ Current | High | Custom eBPF tracing |
-| **mitmproxy** | ⭐⭐⭐⭐ (MITM) | ✅ Current | Medium | HTTP(S) proxy debugging |
-| **Wireshark + keylog** | ⭐⭐⭐ (needs keys) | ✅ Already installed | Low | Protocol analysis |
-| **strace/ltrace** | ⭐ (syscall only) | ✅ Already installed | Medium | Syscall tracing |
-| **Tetragon** | ⭐ (no TLS) | ⚠️ Manual | High | Runtime security |
-| **Tracee** | ⭐ (no TLS) | ⚠️ Manual | High | Security forensics |
+| Tool                   | TLS Capture           | NixOS Package        | Complexity | Use Case                |
+| ---------------------- | --------------------- | -------------------- | ---------- | ----------------------- |
+| **eCapture**           | ⭐⭐⭐⭐⭐            | ✅ (outdated)        | Low        | Dedicated TLS capture   |
+| **bpftrace**           | ⭐⭐ (manual scripts) | ✅ Current           | High       | Custom eBPF tracing     |
+| **mitmproxy**          | ⭐⭐⭐⭐ (MITM)       | ✅ Current           | Medium     | HTTP(S) proxy debugging |
+| **Wireshark + keylog** | ⭐⭐⭐ (needs keys)   | ✅ Already installed | Low        | Protocol analysis       |
+| **strace/ltrace**      | ⭐ (syscall only)     | ✅ Already installed | Medium     | Syscall tracing         |
+| **Tetragon**           | ⭐ (no TLS)           | ⚠️ Manual             | High       | Runtime security        |
+| **Tracee**             | ⭐ (no TLS)           | ⚠️ Manual             | High       | Security forensics      |
 
 **Best alternative for TLS debugging**: `mitmproxy` — already in nixpkgs, well-maintained, doesn't need kernel privileges, integrates with Wireshark (already installed).
 
@@ -296,17 +297,17 @@ If the decision is to proceed despite the risks:
 
 ## Decision Matrix
 
-| Criterion | Weight | PRO Score | CONTRA Score | Net |
-|-----------|--------|-----------|-------------|-----|
-| Unique TLS capture capability | High | +3 | 0 | +3 |
-| nixpkgs version outdated | High | 0 | -3 | -3 |
-| AppArmor conflict risk | High | 0 | -3 | -3 |
-| Privilege escalation surface | Medium | 0 | -2 | -2 |
-| Episodic vs permanent value | Medium | +1 | -2 | -1 |
-| Fits security toolkit profile | Low | +1 | 0 | +1 |
-| Linux-only (no Darwin) | Low | 0 | -1 | -1 |
-| Integration with observability | Low | 0 | -1 | -1 |
-| **TOTAL** | | **+5** | **-12** | **-7** |
+| Criterion                      | Weight | PRO Score | CONTRA Score | Net    |
+| ------------------------------ | ------ | --------- | ------------ | ------ |
+| Unique TLS capture capability  | High   | +3        | 0            | +3     |
+| nixpkgs version outdated       | High   | 0         | -3           | -3     |
+| AppArmor conflict risk         | High   | 0         | -3           | -3     |
+| Privilege escalation surface   | Medium | 0         | -2           | -2     |
+| Episodic vs permanent value    | Medium | +1        | -2           | -1     |
+| Fits security toolkit profile  | Low    | +1        | 0            | +1     |
+| Linux-only (no Darwin)         | Low    | 0         | -1           | -1     |
+| Integration with observability | Low    | 0         | -1           | -1     |
+| **TOTAL**                      |        | **+5**    | **-12**      | **-7** |
 
 ---
 

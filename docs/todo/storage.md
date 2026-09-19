@@ -75,4 +75,3 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] Sweep other cache-minting tools (pnpm, cargo, sccache, pip) for dead-mount fallback names and confirm each is symlink- or mount-converged. **Source:** docs/status/2026-09-17_02-54_* §f.7
 - [ ] [watch] Post-EIO-repair first send: check `btrbk-data` cgroup `memory.peak` ≤ ~4G to prove the oom containment under a real full send. **Source:** docs/status/2026-09-17_01-05_* §e.2
 - [ ] [decision] Ratify or revert the QUARANTINE decision for the BuildFlow fallback caches (~6.6 GB Go cache reaped at next deploy) — BLOCKED: was the "keep vs quarantine" USER decision actually quarantine, or should the reap-list extension be reverted?
-

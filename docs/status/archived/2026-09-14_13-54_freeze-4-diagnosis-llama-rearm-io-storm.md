@@ -80,6 +80,7 @@ Delivered remediation advice to the user at end of diagnosis: `sudo systemctl st
 ## f) Up to 50 things to get done next (impact-sorted, scoped to what this session surfaced)
 
 **P0 — right now / today**
+
 1. `sudo systemctl stop llama-embeddings.service llama-reranker.service` — then **`systemctl mask`** both until the llama.cpp pin lands (stop alone just died twice today).
 2. Better than mask: declarative `services.llama-rag.enable = false` in configuration.nix (keep RAG-dark tradeoff visible in docs) — owner decision, see question 2.
 3. Verify whether the current-boot llama servers actually wedged (curl `:8848/health`, `:8849/health`; thread/CPU state) — closes this session's unverified assumption either way.
@@ -128,4 +129,4 @@ Delivered remediation advice to the user at end of diagnosis: `sudo systemctl st
 
 ---
 
-*Point-in-time snapshot. Written 2026-09-14 13:54. Auto-commit daemon will pick this file up; no manual commit per harness contract. Wait for instructions.*
+_Point-in-time snapshot. Written 2026-09-14 13:54. Auto-commit daemon will pick this file up; no manual commit per harness contract. Wait for instructions._

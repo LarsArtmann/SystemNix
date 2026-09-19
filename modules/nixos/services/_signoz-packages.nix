@@ -31,7 +31,7 @@ let
   };
   srcPatched = pkgs.applyPatches {
     name = "signoz-${version}-patched";
-    src = src;
+    inherit src;
     patches = [ ./patches/signoz-sonic-go126.patch ];
   };
 

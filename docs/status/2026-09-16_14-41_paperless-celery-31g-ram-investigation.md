@@ -13,7 +13,7 @@
 
 ## 1. Evidence gathered (all verified live this session)
 
-### 1.1 The pasted PID is celery *beat* — and it never touched 31G
+### 1.1 The pasted PID is celery _beat_ — and it never touched 31G
 
 - PID 2144300 = `[celery beat] --app paperless beat` (the **scheduler**, not a worker).
 - Started **08:28 today** (restarted with the whole paperless stack at 08:25); PID has only existed since then.
@@ -22,23 +22,23 @@
 
 ### 1.2 Whole process family is tiny
 
-| Process | Role | RSS | VSZ |
-| --- | --- | --- | --- |
-| 2144300 `[celery beat]` | scheduler | 33 MB | 282 MB |
-| 2144304 `[celeryd: celery@evo-x2:MainProcess]` | worker parent | 158 MB | 281 MB |
+| Process                                          | Role          | RSS        | VSZ    |
+| ------------------------------------------------ | ------------- | ---------- | ------ |
+| 2144300 `[celery beat]`                          | scheduler     | 33 MB      | 282 MB |
+| 2144304 `[celeryd: celery@evo-x2:MainProcess]`   | worker parent | 158 MB     | 281 MB |
 | 2065747 / 2149268 `[celeryd: …ForkPoolWorker-N]` | pool children | 142–150 MB | 281 MB |
 
 Pool children spawn **per task** (`max-tasks-per-child=1`, confirmed by journal: every task logs a different `celery[PID]`) and are recycled in seconds. User's row showed **THREADS=20** — no current paperless process has more than 1 thread. Contradiction noted.
 
 ### 1.3 Cgroup accounting (found under `system-paperless.slice`)
 
-| Unit | memory.current | memory.max | memory.peak | oom_kill |
-| --- | --- | --- | --- | --- |
-| paperless-task-queue | 282 MB | **2G** | 558 MB | 0 |
-| paperless-scheduler | 18.8 MB | **512M** | 239 MB | 0 |
-| paperless-consumer | 3.7 MB | **1G** | 151 MB | 0 |
-| paperless-web | 50 MB | **2G** | 208 MB | 0 |
-| slice total | **365 MB** | — | — | — |
+| Unit                 | memory.current | memory.max | memory.peak | oom_kill |
+| -------------------- | -------------- | ---------- | ----------- | -------- |
+| paperless-task-queue | 282 MB         | **2G**     | 558 MB      | 0        |
+| paperless-scheduler  | 18.8 MB        | **512M**   | 239 MB      | 0        |
+| paperless-consumer   | 3.7 MB         | **1G**     | 151 MB      | 0        |
+| paperless-web        | 50 MB          | **2G**     | 208 MB      | 0        |
+| slice total          | **365 MB**     | —          | —           | —        |
 
 Since the caps are deployed, >2G RSS is **structurally impossible** (kernel would OOM-kill; counter is 0).
 
@@ -75,6 +75,7 @@ PID | Program | exe (nix store path) | THREADS | USER | MEM | cpu-graph | CPU%
 ## 2. Status by category
 
 ### a) FULLY DONE
+
 1. Live triage of the pasted PID (beat) — RSS/VSZ/peaks/threads measured; 31G excluded for this process, definitively.
 2. Full paperless cgroup memory audit (all 4 units + slice; caps + peaks + oom counters).
 3. 30-day OOM-kill sweep for paperless/celery — clean.
@@ -84,11 +85,13 @@ PID | Program | exe (nix store path) | THREADS | USER | MEM | cpu-graph | CPU%
 7. Confirmed existing guardrails: MemoryMax per unit (1G–2G), OMP_NUM_THREADS=1, max-tasks-per-child=1 (upstream).
 
 ### b) PARTIALLY DONE
+
 1. **Root cause of the 31G reading** — hypotheses narrowed to three (see §3) but not confirmed.
 2. 45-day numeric memory-peak sweep — **attempt failed silently** (pipeline: grep pattern mismatched both journal formats + `bc` unavailable → empty output). The 30-day non-numeric sweep did return values (all ≤ ~254M in its tail) but the sort was string-based; the two directly-read runs (533.5M/635.7M) prove the sweep under-reports. Needs a clean awk-based redo.
 3. MemoryMax introduction timeline — commits identified (`ca6dd474`), dates not extracted; the pre-cap era is therefore unbounded.
 
 ### c) NOT STARTED
+
 1. SigNoz / system-health census-metrics history query (`system_cgroup_mem_bytes{cgroup=~".*paperless.*"}` over 30–60d) — the single fastest definitive answer to "did paperless EVER hold ~31G".
 2. Historical thread-count check (what paperless-user process ever had 20 threads — e.g. a granian/web or OCR-era process).
 3. btop narrow-pane column-shift test (does btop drop/repack columns in a narrow pane such that "20/31G" could belong to a neighboring row?).
@@ -96,11 +99,13 @@ PID | Program | exe (nix store path) | THREADS | USER | MEM | cpu-graph | CPU%
 5. Any fix work — **deliberately withheld**: nothing broken is proven, and the box's freeze history demands evidence before churn.
 
 ### d) TOTALLY FUCKED UP
+
 1. The 45-day sweep pipeline returned **empty and I initially moved on without flagging it** — exactly the "phantom-green / pipeline masking" class this repo documents (AGENTS: verify raw summaries, not filtered tails). Caught on self-review; must redo.
 2. First cgroup read: assumed `/sys/fs/cgroup/system.slice/<unit>` and got nothing — units live under `system-paperless.slice`. Wasted a roundtrip that an initial `ls` would have prevented.
 3. `systemctl` is blocked in my sandbox — worked around via /proc, /sys, journalctl, and reading the deployed unit file from its store path; but this surfaced only after a failed call (should be assumed known for this environment).
 
 ### e) WHAT WE SHOULD IMPROVE (from this session)
+
 1. **Decode the user's monitoring artifact FIRST.** Half the investigation re-derived what one pty-reproduction of btop answered in one step. Tool semantics > process forensics.
 2. **Journal-format-dependent greps are fragile** — systemd's Consumed line format varies ("635.7M memory peak" vs comma variants); parse with awk field logic, not fixed-string grep.
 3. **No `bc` on PATH** — use awk arithmetic for unit math.
@@ -112,7 +117,7 @@ PID | Program | exe (nix store path) | THREADS | USER | MEM | cpu-graph | CPU%
 
 ## 3. Open hypotheses (ranked)
 
-1. **Stale view / scrollback (most likely):** The user's btop pane showed a row from an earlier refresh or terminal scrollback (terminal left open across the 08:25 restart; PID 2144300 existed before 08:28 as a *different* process). A pre-08:25 process with PID 2144300, 20 threads, and a big RSS could have been a transient nix-build / agent-session process misattributed. Explains every contradiction.
+1. **Stale view / scrollback (most likely):** The user's btop pane showed a row from an earlier refresh or terminal scrollback (terminal left open across the 08:25 restart; PID 2144300 existed before 08:28 as a _different_ process). A pre-08:25 process with PID 2144300, 20 threads, and a big RSS could have been a transient nix-build / agent-session process misattributed. Explains every contradiction.
 2. **Pre-cap-era real balloon ("again" = historical memory):** If `ca6dd474`'s caps are recent (days/weeks), an earlier paperless run could legitimately have ballooned (OCR/sklearn era). The 30d journal sweep saw no such peak — but the sweep is unreliable (see d.1). SigNoz history would settle it.
 3. **btop display artifact:** column truncation/shift in a narrow pane, or a tree/aggregation quirk, associating 31G (e.g. clickhouse VIRT ≈ 31.9 GB decimal) with the paperless row. The "20 threads" field matching nothing real supports a repacking/misalignment explanation.
 
@@ -131,7 +136,7 @@ PID | Program | exe (nix store path) | THREADS | USER | MEM | cpu-graph | CPU%
 ## 5. Questions for the user (cannot be determined from the machine)
 
 1. **When exactly did you see the 31G row** — live just before you messaged me (~14:1x today), or could the btop pane have been showing older content (scrollback / pane open since before 08:25)? A rough timestamp collapses the remaining hypotheses.
-2. **When you've seen this "again" before** — do you remember it correlating with anything (a deploy, document consumption, nix builds), and did the machine's *actual* free RAM drop by ~31G at the same time, or did the box feel fine?
+2. **When you've seen this "again" before** — do you remember it correlating with anything (a deploy, document consumption, nix builds), and did the machine's _actual_ free RAM drop by ~31G at the same time, or did the box feel fine?
 3. **How wide was the btop pane** (narrow side-pane vs full terminal)? And if you re-open btop now, does any celery/paperless row still show 31G?
 
 ---
@@ -139,23 +144,27 @@ PID | Program | exe (nix store path) | THREADS | USER | MEM | cpu-graph | CPU%
 ## 6. RESOLUTION (14:50 — user re-pasted the row live)
 
 The user pasted the **byte-identical row again 20+ minutes later** (same `20 paperless 31G ⣀⣀⣀⣀⣀ 0.0`, including the CPU dot-graph) while:
+
 - the kernel reports that PID's lifetime high-water mark as **VmHWM 196MB** (a process cannot have shown 31G RSS at any moment, ever),
 - celery pool children churn every 10 min, so a live memory-sorted list cannot stay byte-identical for 20 min,
 - a **fresh btop instance** (pty reproduction, user's own config) shows no such row anywhere.
 
 New evidence that closed the case:
+
 - **MemoryMax caps landed 2026-08-16/18** (`8ffb2762`, `ca6dd474`) — paperless v3 bring-up; units have been hard-capped (1G–2G) since their first real day.
 - **60-day numeric sweep (fixed awk pipeline), 174 unit-runs across all 4 paperless units: max memory peak = 0.82G.** Zero kernel OOM kills mentioning paperless/celery in 30d.
 
 ### Verdict
+
 1. **Paperless is exonerated.** Real usage: 365MB slice total right now; 60-day worst unit-run peak 820MB; hard caps; zero OOMs. It never used 31G — not today, not in 60 days.
-2. ~~The user's btop (1.4.7) process pane is frozen/stale~~ **CORRECTED (user pushback, 15:0x):** the pane updates every second — what was stale was **that one row's stats**. Mechanism: **btop per-PID cache poisoning via PID reuse** — this box is a PID-reuse machine (celery forks a fresh pool child every 10 min via `max-tasks-per-child`, nix builds fork thousands, pid_max 4.2M wraps in weeks); the previous owner of PID 2144300 (20 threads, ~31G) died, the PID was reused by celery beat at 08:28, and btop refreshed the row's *identity* fields (name/user/exe) while keeping the *previous owner's* stats (MEM/threads/CPU-graph — explaining the byte-identical graphs). **Proof: the user started a second btop instance → fresh cache → the bogus celery row vanished while everything else matched.** Journald `_PID=2144300` archaeology: only the current owner ever logged — the previous owner is unidentifiable from kernel records (only btop's dead cache knew it).
+2. ~~The user's btop (1.4.7) process pane is frozen/stale~~ **CORRECTED (user pushback, 15:0x):** the pane updates every second — what was stale was **that one row's stats**. Mechanism: **btop per-PID cache poisoning via PID reuse** — this box is a PID-reuse machine (celery forks a fresh pool child every 10 min via `max-tasks-per-child`, nix builds fork thousands, pid_max 4.2M wraps in weeks); the previous owner of PID 2144300 (20 threads, ~31G) died, the PID was reused by celery beat at 08:28, and btop refreshed the row's _identity_ fields (name/user/exe) while keeping the _previous owner's_ stats (MEM/threads/CPU-graph — explaining the byte-identical graphs). **Proof: the user started a second btop instance → fresh cache → the bogus celery row vanished while everything else matched.** Journald `_PID=2144300` archaeology: only the current owner ever logged — the previous owner is unidentifiable from kernel records (only btop's dead cache knew it).
 
 ### Recommended actions
+
 - User: restart btop (or resize the pane / press a key forcing a redraw) — the row will vanish. If it recurs, capture `btop --version` + steps and consider reporting upstream.
 - Repo: gotcha documented in AGENTS.md (Shell & DevTools): cross-check `/proc/<pid>/status` before believing per-process memory alarms from long-running monitors; `ps` truncates user names to 8 chars (`paperless` → `paperles`) — use `ps -o user:16`.
 - No config/deploy change warranted. Paperless memory alerting already exists via system-health `system_service_memory_over_threshold` (6 paperless units monitored).
 
 ---
 
-*Session artifacts: `/tmp/btop-raw.bin` (pty btop capture), `/tmp/btop-capture.txt` (failed first capture). No repo files were modified in this session.*
+_Session artifacts: `/tmp/btop-raw.bin` (pty btop capture), `/tmp/btop-capture.txt` (failed first capture). No repo files were modified in this session._

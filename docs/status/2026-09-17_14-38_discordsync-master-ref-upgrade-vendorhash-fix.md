@@ -45,27 +45,27 @@
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | Branch-ref conversion of the `discordsync` input | `flake.nix` `github:LarsArtmann/DiscordSync?ref=master`; lock `original.ref` = `master` via python sorted-keys round-trip (1-line diff, `locked` byte-identical) |
-| 2 | Upstream vendorHash staleness FIXED | DiscordSync `df1a2bf0`: `vendorHash.nix` → `sha256-Zu9kdtqb6Af4OjWGNrYySHOgr69PqKEzGLmAnnSv7aw=`; `flake.nix` cqrs-lint hash → `sha256-02HmHaC+cYkdn2xPtX6v9YDgu7XQejslulnmFyNS8HY=`; pushed `c3494bd6..df1a2bf0` |
-| 3 | SystemNix lock lifted to real master HEAD | `nix flake lock --update-input discordsync --refresh` → `df1a2bf070f0148a1d7892932aa247cf9446b491` |
-| 4 | Upstream probe green at HEAD | `nix build github:LarsArtmann/DiscordSync/master#default.goModules --refresh` → store path at `discordsync-df1a2bf` |
-| 5 | Package builds from OUR lock | `f.inputs.discordsync.packages.x86_64-linux.default` → `/nix/store/xbd8n0r2…-discordsync-df1a2bf` |
-| 6 | `nix flake check --no-build` | "all checks passed" (evo-x2 eval accepts the +131-commit upstream module) |
-| 7 | Upstream delta screen (interface level) | `nixos-module.nix` diff is purely ADDITIVE: new `tursoSyncMonthlyBudgetBytes` option (int, default 2500000000 = 2.5 GB/month Turso sync breaker) + one env mapping |
-| 8 | Doctrine updates | `flake.nix` comment rewritten to post-fix doctrine; AGENTS.md pin-policy bullet flipped to FIXED+LIFTED; NAR-hash/daemon-cache bullet amended with the **`--refresh` no-sudo bypass** (live-verified) |
-| 9 | Tree state | Clean; all session artifacts daemon-committed (HEAD era `517c48b0`) |
+| # | Item                                             | Evidence                                                                                                                                                                                                          |
+| - | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | Branch-ref conversion of the `discordsync` input | `flake.nix` `github:LarsArtmann/DiscordSync?ref=master`; lock `original.ref` = `master` via python sorted-keys round-trip (1-line diff, `locked` byte-identical)                                                  |
+| 2 | Upstream vendorHash staleness FIXED              | DiscordSync `df1a2bf0`: `vendorHash.nix` → `sha256-Zu9kdtqb6Af4OjWGNrYySHOgr69PqKEzGLmAnnSv7aw=`; `flake.nix` cqrs-lint hash → `sha256-02HmHaC+cYkdn2xPtX6v9YDgu7XQejslulnmFyNS8HY=`; pushed `c3494bd6..df1a2bf0` |
+| 3 | SystemNix lock lifted to real master HEAD        | `nix flake lock --update-input discordsync --refresh` → `df1a2bf070f0148a1d7892932aa247cf9446b491`                                                                                                                |
+| 4 | Upstream probe green at HEAD                     | `nix build github:LarsArtmann/DiscordSync/master#default.goModules --refresh` → store path at `discordsync-df1a2bf`                                                                                               |
+| 5 | Package builds from OUR lock                     | `f.inputs.discordsync.packages.x86_64-linux.default` → `/nix/store/xbd8n0r2…-discordsync-df1a2bf`                                                                                                                 |
+| 6 | `nix flake check --no-build`                     | "all checks passed" (evo-x2 eval accepts the +131-commit upstream module)                                                                                                                                         |
+| 7 | Upstream delta screen (interface level)          | `nixos-module.nix` diff is purely ADDITIVE: new `tursoSyncMonthlyBudgetBytes` option (int, default 2500000000 = 2.5 GB/month Turso sync breaker) + one env mapping                                                |
+| 8 | Doctrine updates                                 | `flake.nix` comment rewritten to post-fix doctrine; AGENTS.md pin-policy bullet flipped to FIXED+LIFTED; NAR-hash/daemon-cache bullet amended with the **`--refresh` no-sudo bypass** (live-verified)             |
+| 9 | Tree state                                       | Clean; all session artifacts daemon-committed (HEAD era `517c48b0`)                                                                                                                                               |
 
 ## b) PARTIALLY DONE
 
-| # | Item | State |
-|---|------|-------|
-| 1 | **THE DEPLOY** | Pre-deploy: 62 passed / 19 warnings / 0 failed — blocked ONLY by the memory-pressure gate (IO PSI some avg10 60% + disk busy 102%, real storm from parallel sessions building `.#installer-standin-initrd` + linkers + golangci-lint + 10-core zstd). My PSI-wait retry chain had a field-parsing bug (gated avg60, not avg10) and was KILLED before misfiring; no deploy fired (profile still `781-link`, zero switch processes). **Deployed discordsync binary is still c0604e4-era.** |
-| 2 | `packages.cqrs-lint` upstream | FOD hash fixed (green), but the package build still fails AFTER the FOD: `updates to go.mod needed` — go-cqrs-lite `cmd/cqrs-lint` module inconsistency with DiscordSync's locked input pins. Diagnosed, NOT fixed (needs tidy/tag upstream or a package drop — owner decision). SystemNix does not consume it. |
-| 3 | Post-deploy verification | Not run (blocked on deploy): post-deploy-check, deployed-rev probe, Gatus checks, `TURSO_SYNC_MONTHLY_BUDGET_BYTES` in the rendered unit, `/run/current-system` anchoring. |
-| 4 | Content review of the +131 commits | Stat-level only (206 files, +10,057/−2,686; turso-sync views, monitoring/alerts.yml +43, web churn). Not reviewed line-by-line. |
-| 5 | The 2026-09-16 pin-portfolio | The now-proven probe→fix→lift protocol applies to the 6 remaining "pins KEPT" repos (signoz-src, signoz-collector-src, library-policy, go-auto-upgrade, overview, projects-management-automation) — none touched this session. |
+| # | Item                               | State                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| - | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **THE DEPLOY**                     | Pre-deploy: 62 passed / 19 warnings / 0 failed — blocked ONLY by the memory-pressure gate (IO PSI some avg10 60% + disk busy 102%, real storm from parallel sessions building `.#installer-standin-initrd` + linkers + golangci-lint + 10-core zstd). My PSI-wait retry chain had a field-parsing bug (gated avg60, not avg10) and was KILLED before misfiring; no deploy fired (profile still `781-link`, zero switch processes). **Deployed discordsync binary is still c0604e4-era.** |
+| 2 | `packages.cqrs-lint` upstream      | FOD hash fixed (green), but the package build still fails AFTER the FOD: `updates to go.mod needed` — go-cqrs-lite `cmd/cqrs-lint` module inconsistency with DiscordSync's locked input pins. Diagnosed, NOT fixed (needs tidy/tag upstream or a package drop — owner decision). SystemNix does not consume it.                                                                                                                                                                          |
+| 3 | Post-deploy verification           | Not run (blocked on deploy): post-deploy-check, deployed-rev probe, Gatus checks, `TURSO_SYNC_MONTHLY_BUDGET_BYTES` in the rendered unit, `/run/current-system` anchoring.                                                                                                                                                                                                                                                                                                               |
+| 4 | Content review of the +131 commits | Stat-level only (206 files, +10,057/−2,686; turso-sync views, monitoring/alerts.yml +43, web churn). Not reviewed line-by-line.                                                                                                                                                                                                                                                                                                                                                          |
+| 5 | The 2026-09-16 pin-portfolio       | The now-proven probe→fix→lift protocol applies to the 6 remaining "pins KEPT" repos (signoz-src, signoz-collector-src, library-policy, go-auto-upgrade, overview, projects-management-automation) — none touched this session.                                                                                                                                                                                                                                                           |
 
 ## c) NOT STARTED
 
@@ -95,6 +95,7 @@ Honest assessment: **nothing is irreversibly broken.** The lock state, upstream 
 ## f) NEXT (ordered, session-grounded)
 
 **Deploy completion**
+
 1. Retry `nix run .#deploy` in a genuinely quiet window (PSI some avg10 < 20% — verify by reading `/proc/pressure/io` directly; today's storm was driven by parallel sessions' `installer-standin-initrd` builds; two sibling status files from 14:16/14:24 show they were deploy-blocked too).
 2. `nix run .#post-deploy-check` after the switch.
 3. Verify the deployed binary is `discordsync-df1a2bf` (unit ExecStart store path / `go version -m`).
@@ -129,7 +130,7 @@ Honest assessment: **nothing is irreversibly broken.** The lock state, upstream 
 24. Parallel-session build storms keep blocking deploys fleet-wide (3 status files today) — consider routing their builds through `heavy-job` (workload-admission) per doctrine.
 25. Consider a lightweight scheduled upstream-probe check here (staleness discovered at bump time is the recurring pain).
 
-*(Stopped at 25 — the remaining items would be padding; the above is the complete set this session actually surfaced.)*
+_(Stopped at 25 — the remaining items would be padding; the above is the complete set this session actually surfaced.)_
 
 ## g) Questions I cannot figure out myself
 
@@ -141,11 +142,11 @@ Honest assessment: **nothing is irreversibly broken.** The lock state, upstream 
 
 ## Appendix: session artifact map
 
-| Artifact | Location |
-|---|---|
-| Input URL (branch-ref governed) | `flake.nix` `discordsync` block (comment carries the full post-fix doctrine) |
-| Lock node | `flake.lock` `nodes.discordsync`: `original.ref=master`, `locked.rev=df1a2bf0…` |
-| Upstream fix commit | LarsArtmann/DiscordSync `df1a2bf0` (pushed `c3494bd6..df1a2bf0`, 2026-09-17 ~13:1x) |
-| AGENTS.md updates | Pin-policy bullet (DiscordSync parenthetical) + NAR-hash/daemon-cache bullet (`--refresh` bypass) |
-| Killed retry chain | Background shell 028 (PSI-wait loop with the avg60-parsing bug) — terminated 14:0x, deploy never fired |
-| Pre-deploy evidence | 62 passed / 19 warnings / 0 failed; blocked at memory-pressure gate |
+| Artifact                        | Location                                                                                               |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Input URL (branch-ref governed) | `flake.nix` `discordsync` block (comment carries the full post-fix doctrine)                           |
+| Lock node                       | `flake.lock` `nodes.discordsync`: `original.ref=master`, `locked.rev=df1a2bf0…`                        |
+| Upstream fix commit             | LarsArtmann/DiscordSync `df1a2bf0` (pushed `c3494bd6..df1a2bf0`, 2026-09-17 ~13:1x)                    |
+| AGENTS.md updates               | Pin-policy bullet (DiscordSync parenthetical) + NAR-hash/daemon-cache bullet (`--refresh` bypass)      |
+| Killed retry chain              | Background shell 028 (PSI-wait loop with the avg60-parsing bug) — terminated 14:0x, deploy never fired |
+| Pre-deploy evidence             | 62 passed / 19 warnings / 0 failed; blocked at memory-pressure gate                                    |

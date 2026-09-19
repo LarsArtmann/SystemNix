@@ -50,14 +50,14 @@ STUCK_DSTATE=$(
 
 ## Verification stack (all green)
 
-| Layer | Result |
-| --- | --- |
-| `nix fmt --no-update-lock-file -- --ci` (my 2 files, scoped) | 0 changes needed |
-| `nix flake check --no-build` | all checks passed |
-| `tests/test-scripts.nix` → new `awk-vanished-input` VM test | **PASS** in 21.1s — 4 assertions |
-| `nix build .#nixosConfigurations.evo-x2…toplevel` | built (k880v3gj…), user's deploy will be cache-hits |
-| Rendered ExecStart script | cat-pipe form present, `bash -n` OK |
-| Sibling-pattern sweep (glob→awk fatal class repo-wide) | zero other occurrences |
+| Layer                                                        | Result                                              |
+| ------------------------------------------------------------ | --------------------------------------------------- |
+| `nix fmt --no-update-lock-file -- --ci` (my 2 files, scoped) | 0 changes needed                                    |
+| `nix flake check --no-build`                                 | all checks passed                                   |
+| `tests/test-scripts.nix` → new `awk-vanished-input` VM test  | **PASS** in 21.1s — 4 assertions                    |
+| `nix build .#nixosConfigurations.evo-x2…toplevel`            | built (k880v3gj…), user's deploy will be cache-hits |
+| Rendered ExecStart script                                    | cat-pipe form present, `bash -n` OK                 |
+| Sibling-pattern sweep (glob→awk fatal class repo-wide)       | zero other occurrences                              |
 
 VM test assertions: (1) bug form emits NOTHING on a vanished entry (deterministic repro via dangling symlink `ln -s /nonexistent`), (2) fixed form survives AND still counts the D-state process (`= 1`), (3) the exact live `/proc` pipeline emits an integer, (4) static tripwire: module source must keep the cat-pipe form and must never hand the glob directly to awk again.
 
@@ -109,6 +109,7 @@ VM test assertions: (1) bug form emits NOTHING on a vanished entry (deterministi
 # f) Things to get done next (session-derived; most are noticed-state, not new research)
 
 **Blocking / immediate:**
+
 1. Run `nix run .#deploy && nix run .#pre-reboot-check` (user; toplevel is cached).
 2. Post-deploy: confirm §10 green across ≥3 collector cycles AND `system_stuck_dstate_processes 0` present.
 3. The owed reboot — clears the flm EADDRINUSE corpse (:52626 pinned by Z+X thread pair), historical D-state corpses, and re-arms clean socket activation. Run pre-reboot-check first (it exists for exactly this).
@@ -158,4 +159,4 @@ VM test assertions: (1) bug form emits NOTHING on a vanished entry (deterministi
 
 **Bottom line:** the deploy blocker is genuinely fixed at root cause with a deterministic regression test; the fix is built and one command away from live. The honest gaps: I couldn't execute the deploy (sandbox), and I under-reported two adjacent live degradations (collector journal-scan timeouts + tmp leaks, root chunk-unalloc criticality) that deserve owners.
 
-*Generated 2026-09-11 06:15 CEST by the phantom-metric fix session.*
+_Generated 2026-09-11 06:15 CEST by the phantom-metric fix session._

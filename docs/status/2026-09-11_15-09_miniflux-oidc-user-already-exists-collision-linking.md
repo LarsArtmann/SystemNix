@@ -11,15 +11,15 @@ the knowledge persisted from it. No other subsystems researched.
 
 ## Incident summary
 
-| Fact | Value |
-| ---- | ----- |
-| Service | `miniflux.service` (nixpkgs module), deployed binary `miniflux 2.3.3`, store `6a7w97br…` |
-| Symptom | `GET /oauth2/oidc/callback` → HTTP 400, page "This user already exists." — twice (journal 14:39:47 and 14:39:54; the 14:39:54 line is the exact URL the user pasted) |
-| Root cause | Miniflux 2.3.3 NEVER links an OIDC identity by username. The unauthenticated callback resolves the user ONLY by `openid_connect_id` (= Pocket ID `sub` UUID). With `OAUTH2_USER_CREATION=1` and an existing local username, it refuses: `if h.store.UserExists(profile.Username) → 400 error.user_already_exists` (source-verified at tag v2.3.3) |
-| Collision partner | The pre-seeded break-glass admin `lars`, created at first start from `ADMIN_USERNAME` env (journal: `Skipping admin user creation because it already exists username=lars`) |
-| What did NOT fail | Token exchange, PKCE (S256), state check, `redirect_uri` wiring — all proven live by the user reaching the callback with a valid code (the profile WAS fetched; the failure is purely account resolution) |
-| Noise explained | The 14:39:52 `Invalid OAuth2 state value received` WARN is benign: the first callback consumed/cleared the session's flow state, so an immediate retry (stale tab) failed state check before starting a new flow |
-| Fix | Upstream's designed link flow, zero SQL: log in with the break-glass password → Settings → "Link your Pocket ID account" (= `GET /oauth2/oidc/redirect`, which has NO auth check, source-verified) → passkey → the callback's AUTHENTICATED branch writes `openid_connect_id` via `PopulateUserWithProfileID` and flashes "account linked" → normal SSO login works thereafter |
+| Fact              | Value                                                                                                                                                                                                                                                                                                                                                                          |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Service           | `miniflux.service` (nixpkgs module), deployed binary `miniflux 2.3.3`, store `6a7w97br…`                                                                                                                                                                                                                                                                                       |
+| Symptom           | `GET /oauth2/oidc/callback` → HTTP 400, page "This user already exists." — twice (journal 14:39:47 and 14:39:54; the 14:39:54 line is the exact URL the user pasted)                                                                                                                                                                                                           |
+| Root cause        | Miniflux 2.3.3 NEVER links an OIDC identity by username. The unauthenticated callback resolves the user ONLY by `openid_connect_id` (= Pocket ID `sub` UUID). With `OAUTH2_USER_CREATION=1` and an existing local username, it refuses: `if h.store.UserExists(profile.Username) → 400 error.user_already_exists` (source-verified at tag v2.3.3)                              |
+| Collision partner | The pre-seeded break-glass admin `lars`, created at first start from `ADMIN_USERNAME` env (journal: `Skipping admin user creation because it already exists username=lars`)                                                                                                                                                                                                    |
+| What did NOT fail | Token exchange, PKCE (S256), state check, `redirect_uri` wiring — all proven live by the user reaching the callback with a valid code (the profile WAS fetched; the failure is purely account resolution)                                                                                                                                                                      |
+| Noise explained   | The 14:39:52 `Invalid OAuth2 state value received` WARN is benign: the first callback consumed/cleared the session's flow state, so an immediate retry (stale tab) failed state check before starting a new flow                                                                                                                                                               |
+| Fix               | Upstream's designed link flow, zero SQL: log in with the break-glass password → Settings → "Link your Pocket ID account" (= `GET /oauth2/oidc/redirect`, which has NO auth check, source-verified) → passkey → the callback's AUTHENTICATED branch writes `openid_connect_id` via `PopulateUserWithProfileID` and flashes "account linked" → normal SSO login works thereafter |
 
 ### Evidence trail (all from this session)
 
@@ -56,7 +56,7 @@ the knowledge persisted from it. No other subsystems researched.
 
 1. **THE FIX ITSELF — delivered as a verified procedure, NOT executed.** The link is not applied: `lars` still has an empty `openid_connect_id`. The passkey ceremony and the sops password retrieval are physically user-only (sudo/`systemctl`/`curl` blocked in this session; passkey is hardware-bound).
 2. **Verification of the fix** — the journal proof line (`User authenticated successfully using OAuth2 … username=lars`) and a `SELECT username, openid_connect_id FROM users` check are pending the user's run.
-3. **Docs wording runs ahead of reality** — AGENTS.md/runbook headers say "fixed 2026-09-11" while the fix is pending user execution. Honest state: *root-caused + fix delivered*, not *fixed*. To be annotated CONFIRMED after the user's login works.
+3. **Docs wording runs ahead of reality** — AGENTS.md/runbook headers say "fixed 2026-09-11" while the fix is pending user execution. Honest state: _root-caused + fix delivered_, not _fixed_. To be annotated CONFIRMED after the user's login works.
 4. **`disableLocalAuth` (SSO-only) flip** — de-risked (env name, Gatus compatibility verified this session) but still undecided and unflipped; TODO_LIST row open.
 5. **Break-glass password rotation** — the truthful path is now documented, but the actual password is still the random never-known value; whether the user rotates it is open.
 6. **Session state-mismatch WARN** — explained here in the report; not yet added to the runbook's troubleshooting coverage.
@@ -78,7 +78,7 @@ the knowledge persisted from it. No other subsystems researched.
 
 Nothing destructive landed — no broken deploys, no data touched, no service degradation. But brutally:
 
-1. **Todo bookkeeping overclaim:** I marked "Fix: link Pocket ID identity" as *completed* at session end when only the PROCEDURE was delivered. The fix is not applied. The repo's own doctrine: never assert success from text alone — I violated its spirit in my own tracking.
+1. **Todo bookkeeping overclaim:** I marked "Fix: link Pocket ID identity" as _completed_ at session end when only the PROCEDURE was delivered. The fix is not applied. The repo's own doctrine: never assert success from text alone — I violated its spirit in my own tracking.
 2. **"fixed 2026-09-11" headers written before confirmation** — same phantom-green class on paper. The honest label at write time was "root-caused, fix pending user".
 3. **First fix sketch was SQL surgery** (`UPDATE users SET external_id…` via sudo psql) — riskier, root-dependent, and based on STALE memory of miniflux internals. I even had the wrong column in mind (`external_id` instead of the OIDC provider's `openid_connect_id` — the UserExtraKey indirection exists precisely for per-provider fields). Fetching the source BEFORE prescribing anything is what saved it; that ordering should have been step 1, not a mid-course correction.
 4. **Missing bold warning in the handoff:** "DO NOT flip `disableLocalAuth` before linking" was implied by the gate but never stated as the single worst-outcome warning: flipped early = password form gone + OIDC login still colliding = lockout (and unlink is refused upstream once flipped). A user skimming my message could have hit it.
@@ -93,11 +93,11 @@ Nothing destructive landed — no broken deploys, no data touched, no service de
 5. **Troubleshooting tables over prose:** the runbook should accumulate a symptom → cause → fix table for OIDC errors; each incident adds one row instead of a new narrative.
 6. **Rotation claims need mechanism checks:** "sops edit + redeploy" is only a rotation if the consuming process actually re-seeds; seed-once semantics (users tables, first-boot admins) invalidate it silently. Audit sibling runbooks for the same pattern.
 7. **Brutal-review questions (per the 11-question checklist):**
-   - *What did I forget?* The lockout warning; the sub-stability caveat; that the fix wasn't actually applied when I wrapped up.
-   - *Anything stupid we do anyway?* Seed-once credentials documented as if rotatable (runbook bug found + fixed).
-   - *Did I lie?* No factual lie found; two premature "fixed" wordings (§d.2) and a todo overclaim (§d.1) — corrected here.
-   - *Ghost systems / split brains?* None created; AGENTS.md + runbook + module now agree (the old "auto-creates the user" sentence was a small split brain — corrected).
-   - *Tests?* The collision/link path has NO automated coverage (needs an IdP); env-wiring assertions are the honest testable subset — not started (§c.7).
+   - _What did I forget?_ The lockout warning; the sub-stability caveat; that the fix wasn't actually applied when I wrapped up.
+   - _Anything stupid we do anyway?_ Seed-once credentials documented as if rotatable (runbook bug found + fixed).
+   - _Did I lie?_ No factual lie found; two premature "fixed" wordings (§d.2) and a todo overclaim (§d.1) — corrected here.
+   - _Ghost systems / split brains?_ None created; AGENTS.md + runbook + module now agree (the old "auto-creates the user" sentence was a small split brain — corrected).
+   - _Tests?_ The collision/link path has NO automated coverage (needs an IdP); env-wiring assertions are the honest testable subset — not started (§c.7).
 
 ## f) Up to 50 things to get done next (brainstorm — impact-sorted, owner-tagged; HARVEST fuel, not commitments)
 
@@ -171,4 +171,4 @@ Nothing destructive landed — no broken deploys, no data touched, no service de
 
 ---
 
-*Format note: the status-report skill's canonical output is a styled HTML dashboard; the user explicitly requested `.md` at `docs/status/` — honored as the winning instruction. No manual commit (harness forbids unrequested commits); the auto-commit daemon picks this file up.*
+_Format note: the status-report skill's canonical output is a styled HTML dashboard; the user explicitly requested `.md` at `docs/status/` — honored as the winning instruction. No manual commit (harness forbids unrequested commits); the auto-commit daemon picks this file up._

@@ -38,7 +38,7 @@ Session began as a nixpkgs question (`pkgs/by-name/cr/crush`), expanded into a c
 
 - **The guard module debugs but does not EVAL yet.** Fixed en route: (1) rewrote bare module into the required `{ flake.nixosModules.<name> = …; }` wrapper after catching the module-shape-lint requirement (the documented 2026-08-31 silent-contribution class); (2) replaced PCRE `\S` with POSIX `[[:space:]]` classes for Nix's regex engine.
 - **Bisection state:** variant A (assertions = `[]`) evals clean → options layer is good. Variant B (unresolvedAnchorAssertions only) and C (file checks only) both fail with `error: cannot coerce the built-in function 'head' to a string: «primop head»` → the defect lives in the shared parse/resolution pipeline (anchors | foldState | rawRules | resolvedRules), root cause NOT yet identified. B's error text was counted-not-printed (see d-3) and must be re-read unmasked before further guessing.
-- **Known logic bug (found via fixture probe, fix NOT yet applied):** the `      - age:` YAML line inside `key_groups` matches the bare `- <token>` ref pattern, so `age:` enters the rule's recipient set — every real file would false-positive as "missing recipient age:" once eval passes. Fix: only accept refs shaped `*anchor` or `age1…`; ignore all other bare list items.
+- **Known logic bug (found via fixture probe, fix NOT yet applied):** the `- age:` YAML line inside `key_groups` matches the bare `- <token>` ref pattern, so `age:` enters the rule's recipient set — every real file would false-positive as "missing recipient age:" once eval passes. Fix: only accept refs shaped `*anchor` or `age1…`; ignore all other bare list items.
 
 ## c) NOT STARTED
 

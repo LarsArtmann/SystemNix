@@ -15,12 +15,12 @@
 2. **Measurement:** AGENTS.md = 386,632 bytes / 1019 lines. Section map: Architecture 29 lines, **Key Procedures 617 lines** (the monster), Critical Rules 18, Non-Obvious Gotchas 325, Build & Deploy 17, Platform Constraints ~26. vs the 30 KB budget: **12.9× over**; rubric: >100 KB = "no longer AGENTS.md, it is an archive".
 3. **Reference integrity sweep:** extracted 168 unique repo paths from AGENTS.md and existence-checked all: 21/21 scripts, 18/18 test files, all `docs/services/` runbooks, TODO_LIST cross-refs (Phase 1, clickhouse-backup entries), `docs/planning/` + `docs/research/` links — all resolve. Every flagged "MISSING" was triaged to a benign artifact (regex-mangled `/var/lib` runtime paths, git-history blob refs, unicode-ellipsis truncations, prose fragments).
 4. **4 verified factual defects found AND fixed** (each verified against live system or repo before editing, re-verified after):
-   | Sev | Defect | Fix |
-   |---|---|---|
-   | Critical | `/rust-cache` bullet still instructed `sudo sgdisk -d 9` against p9 — which since 2026-08-22 is the **live XFS ClickHouse store**. A data-destruction runbook one sudo away from executing. | Rewrote as SUPERSEDED + explicit NEVER-run warning; kept the remaining valid cleanup cmds as "if not already done" (AGENTS.md:649) |
-   | Medium | Mount topology wrong in prose: `/nix` claimed `nvme1n1p2` (live findmnt: `nvme0n1p2`), ClickHouse claimed `nvme0n1p9` (live: `nvme1n1p9`). Kernel enumeration flipped again — the file violated its own "never pin kernel names" doctrine. | AGENTS.md now says by-label + "kernel nvme0/nvme1 enumeration FLIPS across boots — live 2026-09-14: …"; same fix applied to the two stale comments in `platforms/nixos/hardware/hardware-configuration.nix` (config itself was already by-label — only comments lied) |
-   | Medium | SigNoz exemplar evidence ref read as a SystemNix ghost path (`docs/research/2026-09-14_signoz-exemplar-chain-verification.md` exists only in the **dnsblockd repo**) | Disambiguated: "the dnsblockd REPO's … (~/projects/dnsblockd — NOT this repo)" |
-   | Low | `flake.nix (~950 lines)` — actual 1535 | Stale count removed (temporal-pollution class) |
+   | Sev      | Defect                                                                                                                                                                                                                                     | Fix                                                                                                                                                                                                                                                                   |
+   | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | Critical | `/rust-cache` bullet still instructed `sudo sgdisk -d 9` against p9 — which since 2026-08-22 is the **live XFS ClickHouse store**. A data-destruction runbook one sudo away from executing.                                                | Rewrote as SUPERSEDED + explicit NEVER-run warning; kept the remaining valid cleanup cmds as "if not already done" (AGENTS.md:649)                                                                                                                                    |
+   | Medium   | Mount topology wrong in prose: `/nix` claimed `nvme1n1p2` (live findmnt: `nvme0n1p2`), ClickHouse claimed `nvme0n1p9` (live: `nvme1n1p9`). Kernel enumeration flipped again — the file violated its own "never pin kernel names" doctrine. | AGENTS.md now says by-label + "kernel nvme0/nvme1 enumeration FLIPS across boots — live 2026-09-14: …"; same fix applied to the two stale comments in `platforms/nixos/hardware/hardware-configuration.nix` (config itself was already by-label — only comments lied) |
+   | Medium   | SigNoz exemplar evidence ref read as a SystemNix ghost path (`docs/research/2026-09-14_signoz-exemplar-chain-verification.md` exists only in the **dnsblockd repo**)                                                                       | Disambiguated: "the dnsblockd REPO's … (~/projects/dnsblockd — NOT this repo)"                                                                                                                                                                                        |
+   | Low      | `flake.nix (~950 lines)` — actual 1535                                                                                                                                                                                                     | Stale count removed (temporal-pollution class)                                                                                                                                                                                                                        |
 5. **Zone 6 claim verified real** (memory-emergency-guard.nix carries zone6/io_psi_some_avg60) — a suspicious-sounding same-day claim in AGENTS.md checked out; no fix needed.
 6. **Duplication metrics computed:** 126 dated bullets, 419 bare date strings, 78 unique commit hashes, 23 "live-verified" markers, "226" class ×7, sudo-sops lesson ×3.
 7. **One suspected finding honestly RETRACTED during execution:** the sudo-sops ×3 "duplication" is intentional point-of-use guarding (each carries distinct context: CWD-based `.sops.yaml` discovery, etc.) — not harmful cloning. Announced in the audit report as retracted.
@@ -34,11 +34,11 @@
 
 ## c) NOT STARTED
 
-1. **Prune Phase ①** — move per-service deep-dive narratives (~450 lines: CV, FastFlowLM, InboxClean, Paperless, Hermes, Mail relay, Miniflux, Google Sync, tq, PapDashboard, Crush keys, llama-rag, Secret Leak Incident) into the *already existing* `docs/services/*.md` runbooks, leaving 5-line pointers. Est. −200 KB.
+1. **Prune Phase ①** — move per-service deep-dive narratives (~450 lines: CV, FastFlowLM, InboxClean, Paperless, Hermes, Mail relay, Miniflux, Google Sync, tq, PapDashboard, Crush keys, llama-rag, Secret Leak Incident) into the _already existing_ `docs/services/*.md` runbooks, leaving 5-line pointers. Est. −200 KB.
 2. **Prune Phase ②** — distill Non-Obvious Gotchas narratives to one-line enduring rules; push stories to `docs/gotchas-archive.md` (itself 418 KB). Est. −80 KB.
 3. **Prune Phase ③** — strip commit hashes/"was-X-now-Y" where current truth suffices; target ≤30 KB.
 4. **Archive split-brain merge** — `docs/status/archive` (571) vs `docs/status/archived` (463) vs `docs/archive` (2) vs `docs/archives` (4): 1,040 files across four dirs; AGENTS.md references both spellings.
-5. **docs/ top-level graveyard** — ~40 dated point-in-time reports sitting at docs/ root (crash-analysis-*, GITHUB-ISSUES-*, COMPREHENSIVE-*, …) instead of docs/status/.
+5. **docs/ top-level graveyard** — ~40 dated point-in-time reports sitting at docs/ root (crash-analysis-_, GITHUB-ISSUES-_, COMPREHENSIVE-*, …) instead of docs/status/.
 6. **Sibling-doc audits:** TODO_LIST.md 144 KB (Phase-1 entry alone is a ~1,000-word narrative essay), FEATURES.md 196 KB, gotchas-archive.md 418 KB. Ecosystem total: **1.15 MB of "living" docs**.
 7. **Sweep for other stale kernel-enumeration/PCI/sd-letter claims** across AGENTS.md + docs/ (I fixed the 4 I found; the class is documented as recurring — the sweep itself was not run).
 8. **CI size gate** for AGENTS.md (prevention of regrowth).
@@ -67,6 +67,7 @@
 ## f) Up to 50 things to get done next
 
 **AGENTS.md prune (owner-gated by Q1/Q2 — sequenced, each step verifiable):**
+
 1. Phase ① CV section → `docs/services/cv.md` (exists) + 5-line pointer
 2. Phase ① FastFlowLM → new `docs/services/fastflowlm.md` + pointer
 3. Phase ① llama-rag → new `docs/services/llama-rag.md` + pointer
@@ -116,7 +117,7 @@
 39. flm v1.0.3 revert: upstream issue now ELIGIBLE per the staged-bump gate — optional filing
 40. QLC root post-ENOSPC recovery: watch chunk-unalloc (68.5 GiB) doesn't re-collapse
 
-*(40 items — items 1-19 sequenced, 20+ independent; 36-40 are notice-only, each needs its own verification pass before execution.)*
+_(40 items — items 1-19 sequenced, 20+ independent; 36-40 are notice-only, each needs its own verification pass before execution.)_
 
 ## g) Questions I can NOT figure out myself
 

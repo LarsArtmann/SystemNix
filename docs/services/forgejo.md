@@ -7,13 +7,13 @@ and break-glass operations. Full audit narrative: `docs/status/2026-09-18_07-43_
 
 ## Sync model (who creates what)
 
-| Surface | Cadence | What it does |
-| --- | --- | --- |
-| `forgejo-github-sync.timer` → `forgejo-mirror-github` | 6h + boot 5m + every deploy (`deploy.sh` starts it `--no-block`) | Lists `GET /user/repos?visibility=all&affiliation=owner` (owned, public+private+forks; **not** org/collaborator repos) and creates any MISSING mirror via `POST /repos/migrate`. Never touches existing mirrors. Fails LOUD if GitHub answers a non-array (rate limit/auth). |
-| `forgejo-reconcile-mirrors` (2nd ExecStart, same unit) | same | Heals renames, classifies transfers/deletions (below). Publishes `forgejo_mirror_*` metrics. |
-| `forgejo-ensure-repos.timer` → `forgejo-ensure-repos` | daily | Declarative 2-repo list (dnsblockd, BuildFlow) — **redundant** with the general listing since 2026-09-18; collapse pending owner decision. |
-| `forgejo-mirror-starred` | manual only | Starred repos into the `starred` org — OUT of reconcile scope (name→upstream mapping ambiguous through dashes). |
-| Forgejo internal pull loop | `mirror.DEFAULT_INTERVAL` 8h via 30m `cron.update_mirrors` (PULL_LIMIT 50, oldest-`updated_unix` rotation) | The actual `git fetch` per mirror. |
+| Surface                                                | Cadence                                                                                                    | What it does                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `forgejo-github-sync.timer` → `forgejo-mirror-github`  | 6h + boot 5m + every deploy (`deploy.sh` starts it `--no-block`)                                           | Lists `GET /user/repos?visibility=all&affiliation=owner` (owned, public+private+forks; **not** org/collaborator repos) and creates any MISSING mirror via `POST /repos/migrate`. Never touches existing mirrors. Fails LOUD if GitHub answers a non-array (rate limit/auth). |
+| `forgejo-reconcile-mirrors` (2nd ExecStart, same unit) | same                                                                                                       | Heals renames, classifies transfers/deletions (below). Publishes `forgejo_mirror_*` metrics.                                                                                                                                                                                 |
+| `forgejo-ensure-repos.timer` → `forgejo-ensure-repos`  | daily                                                                                                      | Declarative 2-repo list (dnsblockd, BuildFlow) — **redundant** with the general listing since 2026-09-18; collapse pending owner decision.                                                                                                                                   |
+| `forgejo-mirror-starred`                               | manual only                                                                                                | Starred repos into the `starred` org — OUT of reconcile scope (name→upstream mapping ambiguous through dashes).                                                                                                                                                              |
+| Forgejo internal pull loop                             | `mirror.DEFAULT_INTERVAL` 8h via 30m `cron.update_mirrors` (PULL_LIMIT 50, oldest-`updated_unix` rotation) | The actual `git fetch` per mirror.                                                                                                                                                                                                                                           |
 
 Auth: `forgejo-sync.env` (sops template; `FORGEJO_TOKEN` from `forgejo-generate-token.service`,
 `GITHUB_TOKEN`, `GITHUB_USER`). The unit runs as `lars` with `ProtectHome=false` (gh CLI fallback auth).
@@ -139,6 +139,7 @@ per owner (the flip-rollout tracking numbers; census results land here at gate G
 
 `services.forgejo.dedicatedSubvolume` (default false) mounts the Samsung-TLC subvol
 `hot/forgejo` AT `/var/lib/forgejo` (Set-B: own 8h btrbk leg to `/mnt/pool/backups/forgejo-subvol`
-+ weekly restore drill + freshness Gatus). Migration runbook:
-`scripts/migrate-forgejo-subvol.sh` header (prepare → build → finalize → flip option → deploy;
-abort path included). Until G1 runs, storage stays as below (root fs).
+
+- weekly restore drill + freshness Gatus). Migration runbook:
+  `scripts/migrate-forgejo-subvol.sh` header (prepare → build → finalize → flip option → deploy;
+  abort path included). Until G1 runs, storage stays as below (root fs).

@@ -38,7 +38,7 @@ doctrine checked, manual vendorHash dance per AGENTS.md applies).
    locks moved to HEAD revs, hashes harvested in ONE `--keep-going` pass via `lib.fakeHash`,
    real hashes pasted, all four packages (`signoz`, `signoz-otel-collector`,
    `signoz-schema-migrator`, `signoz-frontend`) build green. Binary smoke: `signoz --help`
-   + collector binary execute.
+   - collector binary execute.
 5. **cv interlude**: first full toplevel build FAILED on `cv-1002288-go-modules` (go-codec
    go.sum desync — daemon dep-wave class). Provenance verified BEFORE touching anything
    (my uncommitted lock diff: ZERO cv-node changes). Fixed forward per protocol: CV
@@ -48,14 +48,14 @@ doctrine checked, manual vendorHash dance per AGENTS.md applies).
    NO rev → future `--update-input cv` stays usable (rev-pin trap did NOT materialize).
 6. **Final verification matrix**:
 
-| Gate | Result |
-|---|---|
-| `nix build` × 4 signoz packages | green (store paths at 67895d3/a1d8ac3) |
-| `nix build .#checks…nix-email-contract` | green |
-| `nix flake check --no-build` (×2, before + after cv move) | all checks passed |
-| `nix eval …evo-x2…toplevel.drvPath` | green |
-| Full `nix build …evo-x2…toplevel` | **GREEN, RC=0** |
-| Working tree | clean (auto-commit daemon committed everything incl. docs) |
+| Gate                                                      | Result                                                     |
+| --------------------------------------------------------- | ---------------------------------------------------------- |
+| `nix build` × 4 signoz packages                           | green (store paths at 67895d3/a1d8ac3)                     |
+| `nix build .#checks…nix-email-contract`                   | green                                                      |
+| `nix flake check --no-build` (×2, before + after cv move) | all checks passed                                          |
+| `nix eval …evo-x2…toplevel.drvPath`                       | green                                                      |
+| Full `nix build …evo-x2…toplevel`                         | **GREEN, RC=0**                                            |
+| Working tree                                              | clean (auto-commit daemon committed everything incl. docs) |
 
 7. **Docs**: flake.nix comments rewritten (INTERIM removed; migration-review obligation +
    sonic drop-condition recorded), `docs/INTERIM-INPUT-PINS.md` §B marked RESOLVED
@@ -160,6 +160,7 @@ repo lessons (embarrassing because they were KNOWN):
 ## f) NEXT (up to 50, grouped, all session-derived — highest impact first)
 
 **Signoz: deploy + live verify (P0, blocked only on Q1)**
+
 1. Run `nix run .#deploy` in a quiet window (pressure gates will enforce timing).
 2. Post-deploy: verify SigNoz login/impersonation (tokenizer jwt→opaque is the one
    behavioral change).
@@ -179,42 +180,42 @@ repo lessons (embarrassing because they were KNOWN):
 
 **Signoz: standing obligations opened/confirmed by this bump**
 11. Watch upstream sonic ≥ 1.15 → THEN drop both Go-1.26 patches (recorded drop condition
-    in flake.nix).
+in flake.nix).
 12. Regenerate the collector sonic patch context-exact against the locked tree (kill the
-    fuzz-2 dependency before some future context line moves again).
+fuzz-2 dependency before some future context line moves again).
 13. Confirm upstream ClickHouse-version floor vs our nixpkgs ClickHouse (dep bumps in the
-    collector delta; likely fine, never checked).
+collector delta; likely fine, never checked).
 14. Sanity-check one PromQL dashboard panel + one rule query on the new backend after
-    deploy (prometheus-v1-provider removal is query-path-adjacent).
+deploy (prometheus-v1-provider removal is query-path-adjacent).
 15. Consider a `tests/test-signoz.nix` VM test (packages + config validation + migrator
-    no-op on empty CH) — none exists today; every bump currently gates on prod.
+no-op on empty CH) — none exists today; every bump currently gates on prod.
 16. Create `docs/services/signoz.md` runbook (none exists) — bump protocol INCLUDING the
-    migration-review checklist that TODO item 13 made famous.
+migration-review checklist that TODO item 13 made famous.
 
 **nix-email follow-through**
 17. Diff upstream module options v0.2.0→master; wire wrapper-worthy new options (relay
-    evolution? E2E-verified features) or record "nothing to wire" explicitly.
+evolution? E2E-verified features) or record "nothing to wire" explicitly.
 18. Decide `flake-parts.follows` for nix-email (input hygiene vs upstream autonomy).
 19. Keep the contract test as the compat gate — consider extending it to assert the
-    option SET (name list) so upstream renames fail loudly at eval, not at use.
+option SET (name list) so upstream renames fail loudly at eval, not at use.
 20. D1 gate (pre-existing): rua mailbox + real `dmarc-imap-password` → enable
-    dmarc-monitor on evo-x2.
+dmarc-monitor on evo-x2.
 21. Future VPS: mail-server go-live consumes the wrapper (pre-existing D1/D2 gate).
 
 **cv coordination**
 22. Confirm with the parallel CV session that `93cf5bc0f` was ready-for-consumption (§g Q2)
-    — my re-lock may have raced their flow.
+— my re-lock may have raced their flow.
 23. Note CV's own flake gained an `art-dupl` input (rev-pinned dd56d6a) — upstream's
-    business, but flag if their daemon dep-wave keeps desyncing go.sum (the class that
-    broke 1002288 may recur on their next sweep).
+business, but flag if their daemon dep-wave keeps desyncing go.sum (the class that
+broke 1002288 may recur on their next sweep).
 
 **Process hygiene from this session**
 24. CHANGELOG entry for the wave.
 25. Annotate the 2026-09-18_05-45 flip-wave doc item 13 as done.
 26. `nix fmt --no-update-lock-file -- --ci` over the session's edited nix files
-    (flake.nix, _signoz-packages.nix) — style unverified by formatter.
+(flake.nix, _signoz-packages.nix) — style unverified by formatter.
 27. Audit the remaining daemon batch commits (f5de3c92, f937a656, 09ca6611) per the
-    footer-commit lesson.
+footer-commit lesson.
 28. Personal rule going forward: capture build output raw + rc; filter only for display.
 
 **Adjacent interim-pin backlog touched by this wave (observed, not worked)**
@@ -226,16 +227,16 @@ repo lessons (embarrassing because they were KNOWN):
 34. DiscordSync `packages.cqrs-lint` upstream gap (documented known-broken, unconsumed).
 35. qmd: v2.8.3 tag pin vs 2026-09-16 branch-ref policy — decide.
 36. signoz-coverage upstream gaps (overview/PMA/papdashboard/hermes instrumentation) —
-    pre-existing, unchanged, listed so the bump wave doesn't orphan them.
+pre-existing, unchanged, listed so the bump wave doesn't orphan them.
 
 **Optional hardening surfaced by this session**
 37. Extend `nix flake lock` post-run check: assert no `original.url` gained `rev=` (mechan-
-    ical guard for the silent-no-op trap class; caught manually today).
+ical guard for the silent-no-op trap class; caught manually today).
 38. Add default-branch assertion helper for new pins (see e.1).
 39. Consider recording the signoz bump-protocol (probe got-hash → migration diff →
-    config-surface diff → fake-hash harvest → --keep-going) as a reusable checklist doc.
+config-surface diff → fake-hash harvest → --keep-going) as a reusable checklist doc.
 40. Evaluate adding the `nix-email` + signoz package builds to a periodic CI job so
-    third-party HEAD drift is caught before a human asks "time for an update?"
+third-party HEAD drift is caught before a human asks "time for an update?"
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
@@ -252,5 +253,5 @@ repo lessons (embarrassing because they were KNOWN):
 
 ---
 
-*Awaiting instructions. Nothing is deployed; working tree committed by the daemon; every
-claim above is machine-verified except those explicitly marked assumption/inferred.*
+_Awaiting instructions. Nothing is deployed; working tree committed by the daemon; every
+claim above is machine-verified except those explicitly marked assumption/inferred._

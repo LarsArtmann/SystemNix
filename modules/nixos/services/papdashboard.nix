@@ -78,10 +78,10 @@
       tileJson =
         t:
         {
-          name = t.name;
+          inherit (t) name;
         }
-        // lib.optionalAttrs (t.href != null) { href = t.href; }
-        // lib.optionalAttrs (t.description != null) { description = t.description; };
+        // lib.optionalAttrs (t.href != null) { inherit (t) href; }
+        // lib.optionalAttrs (t.description != null) { inherit (t) description; };
 
       # Registry fan-out fold: a tile lands in the group whose name matches,
       # or opens a new group at the end. Mirrors homepage.nix's addTile so
@@ -117,7 +117,7 @@
             tempMax = cfg.dashboard.system.tempMax;
           };
           groups = map (g: {
-            name = g.name;
+            inherit (g) name;
             tiles = map tileJson g.tiles;
           }) allGroups;
         }
@@ -128,15 +128,15 @@
         }
         // lib.optionalAttrs (cfg.dashboard.bookmarks != [ ]) {
           bookmarks = map (b: {
-            name = b.name;
+            inherit (b) name;
             links = map (
               l:
               {
-                name = l.name;
-                href = l.href;
+                inherit (l) name;
+                inherit (l) href;
               }
-              // lib.optionalAttrs (l.abbr != null) { abbr = l.abbr; }
-              // lib.optionalAttrs (l.description != null) { description = l.description; }
+              // lib.optionalAttrs (l.abbr != null) { inherit (l) abbr; }
+              // lib.optionalAttrs (l.description != null) { inherit (l) description; }
             ) b.links;
           }) cfg.dashboard.bookmarks;
         }

@@ -40,7 +40,7 @@ default = system-764 `50z91iw1` — anchor unchanged and re-verified post-midnig
    - `default @saved` → explicit warn + strict mode (EFI-var state, statically
      unreadable — previously mis-failed as "file missing");
    - `default` with GLOB chars → expanded via `compgen -G`; 1 match = adopt,
-     >1 = warn + strict, 0 = fail (previously any non-plain-file died);
+     > 1 = warn + strict, 0 = fail (previously any non-plain-file died);
    - no-default mode no longer silently skips §2 — §3 now audits EVERY entry's
      kernel+initrd/initrd/init strictly, making the existing "auditing ALL
      entries strictly" warning TRUE for the first time.

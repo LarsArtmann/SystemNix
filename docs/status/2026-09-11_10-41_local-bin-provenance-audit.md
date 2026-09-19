@@ -16,12 +16,12 @@ shebang/grep inspection for `/nix/store/` references, wrapper-script reads.
 
 **NixOS/Nix-built (4 of 33 entries):**
 
-| Entry | Provenance evidence |
-| --- | --- |
-| `golangci-lint-lsp-wrapper` | Symlink into `/nix/store/...-home-manager-files` (Home Manager, matches the documented HM LSP wiring) |
-| `buildflow` | Nix-built Go binary (glibc 2.42-84 ELF interpreter baked in; mtime TODAY 10:19) |
-| `shfmt` | Nix-built Go binary (`tzdata-2026c` store path baked in) |
-| `flm` | Wrapper script with nix store paths (glibc, curl, gcc, util-linux) — but targets the HAND-installed `$HOME/.local/share/fastflowlm` |
+| Entry                       | Provenance evidence                                                                                                                 |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `golangci-lint-lsp-wrapper` | Symlink into `/nix/store/...-home-manager-files` (Home Manager, matches the documented HM LSP wiring)                               |
+| `buildflow`                 | Nix-built Go binary (glibc 2.42-84 ELF interpreter baked in; mtime TODAY 10:19)                                                     |
+| `shfmt`                     | Nix-built Go binary (`tzdata-2026c` store path baked in)                                                                            |
+| `flm`                       | Wrapper script with nix store paths (glibc, curl, gcc, util-linux) — but targets the HAND-installed `$HOME/.local/share/fastflowlm` |
 
 **Non-Nix (the rest):** `uv`/`uvx` (downloaded static binaries), `hf`/`huggingface-cli`/`tiny-agents` (symlinks into `~/.local/share/uv/tools`), `himalaya*` (downloaded binary + 18 completion/man/desktop files), `env`/`env.fish` (uv-generated PATH helpers), `node` (2-line shim: `exec bun`), `llamacpp-server` + `print-safe` (hand-written bash scripts).
 
@@ -57,7 +57,7 @@ shebang/grep inspection for `/nix/store/` references, wrapper-script reads.
 
 ## f) Up to 50 things we should get done next
 
-*(Brainstorm seeded by this audit — most items are ROADMAP fuel, not commitments. Ordered roughly by impact.)*
+_(Brainstorm seeded by this audit — most items are ROADMAP fuel, not commitments. Ordered roughly by impact.)_
 
 1. Delete the obsolete fastflowlm hand-install: `~/.local/bin/flm`, `~/.local/share/fastflowlm/`, and the LD_LIBRARY_PATH exports in `~/.bashrc` (per AGENTS.md).
 2. Trace where `buildflow` is declared (flake input / mkLarsPackages / HM) and document it; if undeclared, install it declaratively.
@@ -90,7 +90,7 @@ shebang/grep inspection for `/nix/store/` references, wrapper-script reads.
 29. If `print-safe` (Canon MG2500 ink-flood workaround) is operationally valuable, it deserves repo status + docs — it's currently invisible to git.
 30. Same for `llamacpp-server` wrapper — conflicts with the llama-rag/GPU doctrine in AGENTS.md? Verify which llama-server it launches and whether it's stale.
 
-*(30 grounded items — the audit surface was one directory; padding to 50 would invent work beyond what this session observed. Items 31-50 belong to a full system-wide provenance sweep, which is a different task.)*
+_(30 grounded items — the audit surface was one directory; padding to 50 would invent work beyond what this session observed. Items 31-50 belong to a full system-wide provenance sweep, which is a different task.)_
 
 ## g) Questions I can NOT figure out myself
 

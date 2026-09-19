@@ -9,18 +9,21 @@
 ## a) FULLY DONE
 
 ### Task 1 tooling — integrity sweep script (`scripts/ucr-ffprobe-sweep.sh`)
+
 - Written + fixture-validated end to end BEFORE touching the 54 GB real set (3-file fixture incl. a deliberately truncated WAV and a deliberately wrong sha256 line — both detection paths proven: `TRUNCATED` verdict fired, `SHA_MISMATCH` logic wired, exit code 2 on problems / 0 on clean).
 - Phases: (1) `sha256sum -c` vs the 2026-08-20 manifest (bitrot since extraction), (2) RIFF header parse — declared data-chunk size vs actual bytes available (header-lies truncation detection, no ffmpeg-version variance), (3) ffprobe metadata (codec/rate/channels/real duration), (4) ffmpeg full decode to null (mid-stream corruption headers miss), (5) reconcile vs index.csv + manifest-vs-disk diff, write `encode-manifest.tsv` for the encoder + human `summary.txt`.
 - IO discipline per AGENTS doctrine: every probe/decode subprocess wrapped `ionice -c3 nice -n19`, parallel=2 default, entry point intended under `heavy-job` (which is how the real run was launched).
 - **The real sweep is RUNNING** (background job, launched 05:21) — see b).
 
 ### Task 3 tooling — contacts (`scripts/pixel6-contacts.py`)
+
 - `derive`: evidence registry from Cube ACR `.props/*.json` (1047 files: callee numbers, direction, filename contact names) + UCR filenames/index.csv → `derived/contacts/contacts-evidence.json`. **RAN against the real archive: 284 contacts (49 named, 235 number-only), wife correctly top with 380 Cube calls** (e.g. `Kanyu Artmann (Wife 💍)`), Michele Vinciguerra correctly merged across UCR (5) + Cube (6) by casefolded name.
 - `decode-vcf`: real vCard 2.1/3.0/4.0 parser (line unfolding, QUOTED-PRINTABLE incl. soft breaks + charset, BASE64 photos → `photos/`, item1.TEL grouping, bare v2.1 type params) → clean per-contact v3.0 cards in `derived/contacts/vcf/`, `contacts.json`, browsable `index.html` (dark card grid, search, call-archive badges). Fixture-validated (QP fold + base64 JPEG + TEL/EMAIL/ORG/NOTE round-trip).
 - Evidence merge: card numbers matched against registry (full or last-9-digits) or name casefold; **unions ALL matching entries** (the same human reachable under two names/numbers sums their call counts).
 - Verified data reality: **no VCF exists anywhere in the archive** (find over the whole tree), WhatsApp `msgstore.db.crypt14` is encrypted (dead end without the key), `com.android.providers.telephony` is an empty `.done` dir, and **no phone is attached** (`adb devices` empty). So "export VCF" remains a USER phone-side step; the tooling + landing path is what could be built today, and the evidence registry already delivers per-contact call counts from the archive itself.
 
 ### Task 4 tooling — RAG CLI (`scripts/ucr-rag.py`)
+
 - Written + fixture-validated end to end: `init` → `import` → `ask "Eiffel Tower"` returns the **earliest** mention correctly ordered (call ts first, then segment offset), with date/contact/[mm:ss]/audio-path/highlighted snippet; `stats`; `--semantic` flag present.
 - Ingests whisper json (openai + whisper.cpp `transcription[].offsets` ms shapes), SRT, VTT, plain txt; stem matching handles `<stem>.de.json` and `<stem>.wav.json` variants.
 - Storage = sqlite FTS5 (stdlib only, no deps); optional per-call bge-m3 embeddings via `:8848` with **graceful degradation** — live-proven: the llama-rag endpoints are currently 503 (known llama.cpp regression) and `ask --semantic` printed the warning and answered lexically.
@@ -29,6 +32,7 @@
 - **Real-data smoke PASSED**: whisper.cpp (nixpkgs `whisper-cpp` 1.9.2, model via the package's official `whisper-cpp-download-ggml-model base`) transcribed a real 77 s German call (`1_Finn Artmann_1649099334928.wav`) → 32 segments, language auto-detected `de`, real dialogue text. The transcription path is proven end to end with the exact formats the importer accepts.
 
 ### Investigation deliverables (side facts established)
+
 - The "600 vs 591 WAVs" discrepancy: 9 extra `.wav` live in `_transfer-artifacts/stale-partial-android-data*/` (aborted first-transfer copies) whose path CONTAINS the same `com.sparklingapps.callrecorder.full/files/` substring, so naive `find | grep -v` lies. Real set = exactly 591, `ls`/`find`-in-dir agree.
 - Contact coverage: only **68/591** calls carry a contact (49 numbers + 19 names) in index/filenames; 523 are anonymous `0_/3_/5_` prefixed (the known call-log-XML gap).
 - ffmpeg on the system has native `flac` + `libopus` encoders (no nix-shell needed); python3 has FTS5; 32 cores; 54 GB RAM available.
@@ -79,6 +83,7 @@ Nothing catastrophic — no data touched (all writes were new `derived/` paths +
 ## f) NEXT (prioritized, ≤50)
 
 **Immediate (sweep-dependent chain, this session if instructed):**
+
 1. Wait for sweep phase 1 completion; confirm 591/591 sha OK.
 2. Let phases 2-4 finish; read `summary.txt` verdict + investigate ANY TRUNCATED/DECODE_ERROR/SHA_MISMATCH file individually.
 3. Reconcile index.csv duration drift list (expected: size-quantized durations drift a few seconds).

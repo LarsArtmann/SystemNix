@@ -12,7 +12,6 @@ Layout:
 """
 
 import argparse
-import html
 import json
 import os
 import re
@@ -36,14 +35,16 @@ def collect(opus_root):
             contact = rel.split(os.sep)[0]
             year = rel.split(os.sep)[1] if len(rel.split(os.sep)) > 1 else ""
             size = os.path.getsize(os.path.join(dirpath, fn))
-            calls.append({
-                "prefix": prefix,
-                "ts": epoch_ms,
-                "contact": contact,
-                "year": year,
-                "size": size,
-                "src": "../opus/" + rel.replace(os.sep, "/"),
-            })
+            calls.append(
+                {
+                    "prefix": prefix,
+                    "ts": epoch_ms,
+                    "contact": contact,
+                    "year": year,
+                    "size": size,
+                    "src": "../opus/" + rel.replace(os.sep, "/"),
+                }
+            )
     calls.sort(key=lambda c: (c["ts"], c["src"]))
     return calls
 
@@ -190,11 +191,11 @@ def main():
 
     calls = collect(opus_root)
 
-    sweep_tsv = os.path.join(args.root, "universal-call-recorder",
-                             "integrity-sweep", "encode-manifest.tsv")
+    sweep_tsv = os.path.join(args.root, "universal-call-recorder", "integrity-sweep", "encode-manifest.tsv")
     durs = {}
     if os.path.exists(sweep_tsv):
         import csv
+
         with open(sweep_tsv, newline="") as fh:
             for row in csv.DictReader(fh, delimiter="\t"):
                 try:
@@ -217,7 +218,7 @@ def main():
     with open(os.path.join(out, "README.md"), "w") as fh:
         fh.write(f"""# UCR Call Archive — browsable web player
 
-Generated {time.strftime('%Y-%m-%d %H:%M')} by `scripts/ucr-web-archive.py`.
+Generated {time.strftime("%Y-%m-%d %H:%M")} by `scripts/ucr-web-archive.py`.
 
 - Open `index.html` in any browser (works from `file://`, no server needed).
 - Audio streams the opus leg one level up (`../opus/...`) — regenerate that first.

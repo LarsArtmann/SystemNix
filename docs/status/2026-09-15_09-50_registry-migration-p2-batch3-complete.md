@@ -9,26 +9,28 @@ migrated surface against a true pre-migration baseline.
 ## a) FULLY DONE
 
 ### Batch-3 registry entries (13 entries in 12 files)
-| Module | Entry | Surfaces carried |
-|---|---|---|
-| `twenty.nix` | `twenty` | vHost crm (protected), Gatus check, tile, backup (31h) |
-| `manifest.nix` | `manifest` | vHost manifest (protected), Gatus check, tile, backup (31h) |
-| `google-sync.nix` | `google-sync` | tile only (no href; module-level backup row kept — no dup) |
-| `wifi-failover.nix` | `wifi-failover` | monitored only |
-| `forgejo.nix` | `forgejo` | vHost (plain), 2 Gatus checks (Forgejo + Mirror Sync), backup (*.zip, 25h), monitored, OIDC client |
-| `dns-blocker.nix` | `dnsblockd` | monitored + OIDC client (vHosts stay hand-written redirect pair) |
-| `overview.nix` | `overview` | vHost (protected), Gatus check, tile |
-| `crush-daily.nix` | `crush-daily` | vHost daily (protected), Gatus check, tile |
-| `fastflowlm.nix` | `fastflowlm` | tile + monitored (no href — API-only endpoint) |
-| `hermes.nix` | `hermes` | tile (Infrastructure) + monitored |
-| `paperless.nix` | `paperless` + 6 unit entries | backup (25h), OIDC client (pkce, allauth callback); paperless-{consumer,scheduler,task-queue,web,tika,gotenberg} monitored-only |
-| `gatus-config.nix` | `gatus` | vHost status (plain), monitored, OIDC client, tile; self-check stays in core |
-| `homepage.nix` / `networking.nix` / `system-health.nix` / `caddy.nix` | `homepage-dashboard`, `nix-daemon`, `lan-nic-watchdog`, `caddy` | monitored-only self-registrations |
+
+| Module                                                                | Entry                                                           | Surfaces carried                                                                                                                |
+| --------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `twenty.nix`                                                          | `twenty`                                                        | vHost crm (protected), Gatus check, tile, backup (31h)                                                                          |
+| `manifest.nix`                                                        | `manifest`                                                      | vHost manifest (protected), Gatus check, tile, backup (31h)                                                                     |
+| `google-sync.nix`                                                     | `google-sync`                                                   | tile only (no href; module-level backup row kept — no dup)                                                                      |
+| `wifi-failover.nix`                                                   | `wifi-failover`                                                 | monitored only                                                                                                                  |
+| `forgejo.nix`                                                         | `forgejo`                                                       | vHost (plain), 2 Gatus checks (Forgejo + Mirror Sync), backup (*.zip, 25h), monitored, OIDC client                              |
+| `dns-blocker.nix`                                                     | `dnsblockd`                                                     | monitored + OIDC client (vHosts stay hand-written redirect pair)                                                                |
+| `overview.nix`                                                        | `overview`                                                      | vHost (protected), Gatus check, tile                                                                                            |
+| `crush-daily.nix`                                                     | `crush-daily`                                                   | vHost daily (protected), Gatus check, tile                                                                                      |
+| `fastflowlm.nix`                                                      | `fastflowlm`                                                    | tile + monitored (no href — API-only endpoint)                                                                                  |
+| `hermes.nix`                                                          | `hermes`                                                        | tile (Infrastructure) + monitored                                                                                               |
+| `paperless.nix`                                                       | `paperless` + 6 unit entries                                    | backup (25h), OIDC client (pkce, allauth callback); paperless-{consumer,scheduler,task-queue,web,tika,gotenberg} monitored-only |
+| `gatus-config.nix`                                                    | `gatus`                                                         | vHost status (plain), monitored, OIDC client, tile; self-check stays in core                                                    |
+| `homepage.nix` / `networking.nix` / `system-health.nix` / `caddy.nix` | `homepage-dashboard`, `nix-daemon`, `lan-nic-watchdog`, `caddy` | monitored-only self-registrations                                                                                               |
 
 Also: `dozzle.nix` entry extended with its Gatus check; `monitor365.nix` monitor365-server entry
 extended with the OIDC client field.
 
 ### God-file removals (all verified)
+
 - **pocket-id.nix default OIDC list → `[oauth2-proxy]` only** (cv+immich removed first as dupes, then forgejo/gatus/monitor365/dnsblockd/paperless as their entries landed).
 - **configuration.nix `backup-coordination.backups` → empty** (all 9 rows module-owned).
 - **system-health default `monitoredServices` → `[monitor365, monitor365-server]`** (31-unit union unchanged, from entries).
@@ -37,6 +39,7 @@ extended with the OIDC client field.
 - **gatus-config.nix → 7 service checks removed from core** (Twenty CRM, Manifest, Forgejo, Forgejo Mirror Sync, Crush Daily, Dozzle, Overview).
 
 ### Verification (against a PRE-MIGRATION GIT WORKTREE baseline, `a6b4b2ff`)
+
 - **Caddy vHosts: BYTE-IDENTICAL** (31 vHosts, zero content diffs) — after catching a regression, see (d).
 - **Gatus settings non-endpoints: IDENTICAL; endpoints set-equal** — the 162→165 drift is exclusively
   the parallel session's committed niri/BTRFS-scrub-split/Memory-Guard-Fresh/CV-Auto-Apply check changes,
@@ -58,16 +61,19 @@ extended with the OIDC client field.
   guard skips the OIDC fan-out (the midflight report's known-issue #2 is moot).
 
 ### Docs
+
 - `TODO_LIST.md` P2 checklist: all 5 items stamped DONE with evidence + the two new coupling rules.
 - `AGENTS.md`: step 9 rewritten to registry-owned checks (pat() doctrine preserved verbatim); 3 new
   gotchas added (vHost override trap, monitored-duplicate trap, worktree-baseline method).
 
 ## b) PARTIALLY DONE
+
 - **Nothing in the P2 scope.** The only partial: repo-wide `nix flake check` cannot run green until the
   parallel session fixes `tests/test-hot-db.nix` (`nodes.machine.entryPath` breakage at HEAD) — all
   verification therefore used per-check evals, which is adequate but not the full gate.
 
 ## c) NOT STARTED
+
 - Deploy (`nix run .#deploy`) — this session's work is tree-only; the machine still runs the pre-migration
   generation. Post-deploy the provisioner converges OIDC clients; no service restarts are required by
   this migration (rendered surfaces are identical).
@@ -75,6 +81,7 @@ extended with the OIDC client field.
   list — deliberately left (infra/meta classification per plan), noted here so the choice is visible.
 
 ## d) TOTALLY FUCKED UP (caught + fixed, recorded for the lesson)
+
 1. **Registry vHost override deleted paperless's `/admin/*` 403 hard-block** — my paperless entry used
    `vHost.layer = "plain"`, so the registry rendered a `paperless.home.lan` vHost that silently REPLACED
    the hand-written one (attrset merge order), deleting the admin hard-block AND the handle structure.
@@ -92,6 +99,7 @@ extended with the OIDC client field.
    string) — first eval after caught it (`syntax error, unexpected invalid token`); fixed by re-edit.
 
 ## e) WHAT WE SHOULD IMPROVE
+
 - **The registry fan-out has no eval-time collision guard for hand-written vHosts**: caddy should
   ASSERT that a registry vHost subdomain does not collide with a hand-written `virtualHosts` key
   (the paperless trap was pure luck to catch). Candidate: extend caddy-config with a
@@ -110,6 +118,7 @@ extended with the OIDC client field.
   on the monitor365 section — TODO f.10).
 
 ## f) NEXT (up to 50, highest-impact first)
+
 1. **Deploy** the migration (`nix run .#deploy`) — rendered surfaces identical, so it should be a
    no-op generation; run pre-deploy gate as usual.
 2. **Fix `tests/test-hot-db.nix`** (parallel session owns it — coordinate) to unblock repo-wide
@@ -166,6 +175,7 @@ extended with the OIDC client field.
 50. After the owed reboot + crush-hot-db deploy, re-run the full check battery as the final P2 sign-off and archive the transcript.
 
 ## g) QUESTIONS FOR THE OWNER (not answerable from the repo)
+
 1. **Monitor365 orphan OIDC client**: acceptable to leave the client provisioned-but-unreferenced in
    Pocket ID while monitor365 is disabled (current behavior, auto-resumes on re-enable), or do you want
    a `disabledClientAllowlist`/prune so Pocket ID's client list mirrors the desired set exactly?
@@ -179,7 +189,7 @@ extended with the OIDC client field.
 
 ---
 
-*Verification transcript: all evals this session ran against `git+file:///home/lars/projects/SystemNix`
+_Verification transcript: all evals this session ran against `git+file:///home/lars/projects/SystemNix`
 (current tree) and `git+file:///tmp/pre-mig` (worktree at `a6b4b2ff`, the commit before integration.nix
 landed). Baseline JSONs: `/tmp/base-*.json`; current dumps: `/tmp/now-*.json`. 19/19 check evals OK;
-fmt 0-changed. Uncommitted at write time — per-pathspec commits follow this report.*
+fmt 0-changed. Uncommitted at write time — per-pathspec commits follow this report._

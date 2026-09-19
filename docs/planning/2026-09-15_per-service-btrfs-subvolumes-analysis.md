@@ -10,12 +10,12 @@
 
 Today most service state lives as plain directories under snapshotted trees:
 
-| Tree | Snapshot regime | Service state living there |
-| --- | --- | --- |
+| Tree                         | Snapshot regime                                       | Service state living there                                               |
+| ---------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------ |
 | `@` (QLC root, `/var/lib/*`) | btrbk daily 23:00, 3d+1w local, **FOREVER pool-side** | CV, gatus, pocket-id, discordsync, browser-history, crush session DBs, … |
-| `/data` (QLC toplevel) | daily 23:30, 14d+4w + pool | docker data-root, AI models, Steam |
-| Samsung `tlc` (`/n`) | none (rebuildable) | nix store |
-| HDD pool `services/*` | btrbk-pool 23:45 per subvol | immich, paperless, atticd, monitor365, … |
+| `/data` (QLC toplevel)       | daily 23:30, 14d+4w + pool                            | docker data-root, AI models, Steam                                       |
+| Samsung `tlc` (`/n`)         | none (rebuildable)                                    | nix store                                                                |
+| HDD pool `services/*`        | btrbk-pool 23:45 per subvol                           | immich, paperless, atticd, monitor365, …                                 |
 
 The pool already runs the per-service-subvolume model successfully. The question is whether to generalize it — in particular onto the QLC root, where state currently rides `@` snapshots implicitly.
 
@@ -23,26 +23,26 @@ The pool already runs the per-service-subvolume model successfully. The question
 
 Six facts of BTRFS carry the whole analysis. Everything else is consequences.
 
-1. **Snapshots can only be taken of subvolumes.** A plain directory cannot be snapshotted. Want *any* per-service snapshot? The state must be a subvol first.
+1. **Snapshots can only be taken of subvolumes.** A plain directory cannot be snapshotted. Want _any_ per-service snapshot? The state must be a subvol first.
 2. **Nested subvols are EXCLUDED from parent snapshots.** This is dual-use: it is the silent-coverage-loss trap (a service dropped from `@` backups with zero error) AND the only mechanism to deliberately exclude a path from `@` (see fact 4).
 3. **Nested subvols need no fstab entry.** They are visible through the parent mount at their path. Separate `fileSystems` entries are only needed for distinct VFS options (noatime etc.) — the mount/226 incident surface applies only to the separately-mounted flavor, not the nested one.
-4. **`nodatacow` is defeated by snapshots.** A reflink (snapshot) forces CoW on writes to `+C` files to preserve the snapshot. A `chattr +C` DB under the daily-snapshotted `@` silently reverts to CoW after the first snapshot. `+C` only *sticks* in a subvol that is never snapshotted.
+4. **`nodatacow` is defeated by snapshots.** A reflink (snapshot) forces CoW on writes to `+C` files to preserve the snapshot. A `chattr +C` DB under the daily-snapshotted `@` silently reverts to CoW after the first snapshot. `+C` only _sticks_ in a subvol that is never snapshotted.
 5. **Compression is filesystem-wide; subvols are not mount options and not boundaries.** No per-service `compress=zstd` tuning, no security/DAC isolation (systemd namespaces own that), no space enforcement (qgroups deliberately disabled on QLC — observation via `compsite`/`btrfs fi du` still works, enforcement does not).
 6. **One snapshot = one atomic instant for everything under it.** A single `@` snapshot captures all service state at one moment. Independent per-subvol snapshots are staggered instants — cross-service consistency is lost (rarely matters; see §5 shared-infra boundary).
 
 ## 3. PRO
 
-- **Retention independence**: 14d of CV pipeline history but 3d of volatile caches, instead of one root policy. *(Counterpoint in §6: the common retention motive is already servable at the dump layer.)*
+- **Retention independence**: 14d of CV pipeline history but 3d of volatile caches, instead of one root policy. _(Counterpoint in §6: the common retention motive is already servable at the dump layer.)_
 - **Atomic whole-service rollback**: restore one service's entire state to an instant — paired with a nix generation rollback ("restore CV's state to what its deployed config expects"). Today that requires rolling ALL services back via `@`.
 - **nodatacow actually works** (fact 4): an unsnapshotted nested subvol is the only place `+C` is effective — a direct write-amplification lever for hot SQLite on QLC that root snapshots currently block. **This is the ratified Samsung Phase-2 design** (`hot` subvol, `chattr +C`).
 - **Native migration unit**: `btrfs send | receive` a service's data + atomic swap. The repo's own track record is the evidence — five per-service relocations to date, each rsync + self-neutralizing migration-unit surgery:
-  | Relocation | Year | Mechanism used |
-  | --- | --- | --- |
-  | `/nix` → Samsung `tlc` | 2026-08/09 | reflink rsync + `migrate-nix-subvol.sh` |
-  | ClickHouse → XFS p9 | 2026-08-22 | quiesce-rsync script + shadow cleanup |
-  | docker data-root → `/data` | pre-2026-08 | manual |
-  | activitywatch → pool | 2026-08-18 | `activitywatch-data-to-pool` migration unit |
-  | crush session DBs → `/mnt/hot` | 2026-09-15 | `crush-hot-db-migrate` (interim, symlink) |
+  | Relocation                     | Year        | Mechanism used                              |
+  | ------------------------------ | ----------- | ------------------------------------------- |
+  | `/nix` → Samsung `tlc`         | 2026-08/09  | reflink rsync + `migrate-nix-subvol.sh`     |
+  | ClickHouse → XFS p9            | 2026-08-22  | quiesce-rsync script + shadow cleanup       |
+  | docker data-root → `/data`     | pre-2026-08 | manual                                      |
+  | activitywatch → pool           | 2026-08-18  | `activitywatch-data-to-pool` migration unit |
+  | crush session DBs → `/mnt/hot` | 2026-09-15  | `crush-hot-db-migrate` (interim, symlink)   |
 - **Flexible sizing**: subvols have no size at all. The XFS p9 partition is fixed forever ("XFS cannot shrink") — a trap the subvol approach structurally avoids.
 - **Pool retention economics**: root receives are kept FOREVER pool-side (`target_preserve_min = "all"`), pinning every extent ever written to `@`. Per-service sends would let volatile services expire instead of pinning indefinitely.
 - **Targeted surgery**: delete/recreate one wedged service's state (discordsync resync class) without entangling other services' snapshots; defrag/scrub-adjacent maintenance scoped per service.
@@ -56,22 +56,22 @@ Six facts of BTRFS carry the whole analysis. Everything else is consequences.
 - **No enforcement**: qgroups stay disabled (deliberate, QLC IO tax) — subvols observe but cannot bound a runaway service.
 - **Dumps already exist and are transaction-consistent**: `sqlite3 .backup`, `pg_dump`, `forgejo dump` are cleaner restores than crash-consistent snapshots of live DBs (SQLite WAL replay from a crash-consistent copy is safe in practice, but dumps remain the primary path).
 - **Separately-mounted flavor multiplies the 226/mount-gating surface**: every fstab entry adds `nofail` + `RequiresMountsFor`/`ConditionPathIsMountPoint` + ReadWritePaths wiring (google-sync-dirs, cv-backup-dir, atticd-storage-dir were all this class). Nested flavor avoids this entirely — but then inherits parent mount options.
-- **It polishes the wrong layer on the QLC root**: the actual pain is *placement* (hot DBs on TLC, bulk state on pool). Partitioning `@` into subvols does not move a single IO off the QLC die.
+- **It polishes the wrong layer on the QLC root**: the actual pain is _placement_ (hot DBs on TLC, bulk state on pool). Partitioning `@` into subvols does not move a single IO off the QLC die.
 
 ## 5. Boundary constraints
 
 - **Shared infrastructure cannot be split per-service.** One PostgreSQL cluster serves immich, paperless, miniflux, twenty, manifest — per-service subvols cannot give each app its own DB instance; the cluster moves (or stays) as a unit.
-- **Cross-service atomicity** (fact 6): only matters where state must be consistent *across* services at one instant; nothing in the current inventory demands it, but the property is lost silently if state is split into staggered snapshot sets.
+- **Cross-service atomicity** (fact 6): only matters where state must be consistent _across_ services at one instant; nothing in the current inventory demands it, but the property is lost silently if state is split into staggered snapshot sets.
 
 ## 6. The reframe: three snapshot sets, chosen per service
 
 The decision is not "subvol per service: yes/no" — it is **which snapshot set each service's state belongs to**:
 
-| Set | Shape | Snapshot regime | Backup | For |
-| --- | --- | --- | --- | --- |
-| **A — stay in `@`** | plain dir under snapshotted parent | rides `@` daily snapshots (crash-consistent) | dumps as today | DEFAULT: small, cold, crash-tolerant state (gatus config-ish, small state dirs) |
-| **B — own subvol + own btrbk entry** | nested or separately-mounted subvol | own btrbk snapshot/send config, own retention | dumps stay | Long-retention state (CV pipeline), known migration ahead, services wanting atomic whole-state rollback |
-| **C — own subvol, NO snapshots, `+C`, dump-only** | nested subvol, `chattr +C`, mounted at dataDir (Phase-2 Rev-3 shape) | none — that is the point (`+C` sticks) | dumps via backup-coordination become the ONLY path — freshness alerting is then load-bearing | Hot SQLite on QLC/TLC boundary: crush DBs, pocket-id, gatus DB, discordsync |
+| Set                                               | Shape                                                                | Snapshot regime                               | Backup                                                                                       | For                                                                                                     |
+| ------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **A — stay in `@`**                               | plain dir under snapshotted parent                                   | rides `@` daily snapshots (crash-consistent)  | dumps as today                                                                               | DEFAULT: small, cold, crash-tolerant state (gatus config-ish, small state dirs)                         |
+| **B — own subvol + own btrbk entry**              | nested or separately-mounted subvol                                  | own btrbk snapshot/send config, own retention | dumps stay                                                                                   | Long-retention state (CV pipeline), known migration ahead, services wanting atomic whole-state rollback |
+| **C — own subvol, NO snapshots, `+C`, dump-only** | nested subvol, `chattr +C`, mounted at dataDir (Phase-2 Rev-3 shape) | none — that is the point (`+C` sticks)        | dumps via backup-coordination become the ONLY path — freshness alerting is then load-bearing | Hot SQLite on QLC/TLC boundary: crush DBs, pocket-id, gatus DB, discordsync                             |
 
 Rules that fall out:
 
@@ -81,14 +81,14 @@ Rules that fall out:
 
 ## 7. Decision triggers (when to leave set A)
 
-| Trigger | Move to | Rationale |
-| --- | --- | --- |
-| Sustained fsync-bound writes on QLC root (crush-class IO storm evidence) | **C** on Samsung `hot` | the ratified Phase-2 criterion |
-| Retention need > root's 3d+1w AND dump size/cost makes dumps alone too slow | **B** | retention independence |
-| Migration planned within N weeks (disk reshuffles keep happening) | **B** | `btrfs send \| receive` beats rsync surgery |
-| State is a hot DB but must stay on QLC (no TLC budget) | **C in place** (unsnapshotted nested subvol + `+C`) | fact 4 — `+C` finally sticks; accept QLC endurance cost |
-| Service wants deploy-paired state rollback | **B** | atomic whole-service rollback |
-| Everything else | **A** | zero new surface |
+| Trigger                                                                     | Move to                                             | Rationale                                               |
+| --------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------- |
+| Sustained fsync-bound writes on QLC root (crush-class IO storm evidence)    | **C** on Samsung `hot`                              | the ratified Phase-2 criterion                          |
+| Retention need > root's 3d+1w AND dump size/cost makes dumps alone too slow | **B**                                               | retention independence                                  |
+| Migration planned within N weeks (disk reshuffles keep happening)           | **B**                                               | `btrfs send \| receive` beats rsync surgery             |
+| State is a hot DB but must stay on QLC (no TLC budget)                      | **C in place** (unsnapshotted nested subvol + `+C`) | fact 4 — `+C` finally sticks; accept QLC endurance cost |
+| Service wants deploy-paired state rollback                                  | **B**                                               | atomic whole-service rollback                           |
+| Everything else                                                             | **A**                                               | zero new surface                                        |
 
 ## 8. Verdict
 

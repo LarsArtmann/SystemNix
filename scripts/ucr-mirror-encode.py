@@ -39,8 +39,7 @@ def log(msg):
 
 
 def run(cmd, log_err=None):
-    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                          stdin=subprocess.DEVNULL)
+    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
     if proc.returncode != 0 and log_err:
         with open(log_err, "ab") as fh:
             fh.write(proc.stderr)
@@ -98,20 +97,22 @@ def build_plan(rows, flac_root):
         except (ValueError, TypeError):
             dur = 0
         rel = os.path.join(cdir, year, stem)
-        plan.append({
-            "wav": fname,
-            "stem": stem,
-            "contact": contact,
-            "year": year,
-            "flac_rel": rel + ".flac",
-            "opus_rel": rel + ".opus",
-            "title": f"{title_date} ({dur}s)",
-            "album": album,
-            "date": date_utc[:10],
-            "track": per_album_seq[key],
-            "prefix": prefix,
-            "duration_s": r["duration_s"],
-        })
+        plan.append(
+            {
+                "wav": fname,
+                "stem": stem,
+                "contact": contact,
+                "year": year,
+                "flac_rel": rel + ".flac",
+                "opus_rel": rel + ".opus",
+                "title": f"{title_date} ({dur}s)",
+                "album": album,
+                "date": date_utc[:10],
+                "track": per_album_seq[key],
+                "prefix": prefix,
+                "duration_s": r["duration_s"],
+            }
+        )
     return plan
 
 
@@ -121,21 +122,52 @@ def encode_flac(item, wav_dir, flac_root, force, err_log):
         return item["stem"], None
     os.makedirs(os.path.dirname(out), exist_ok=True)
     tmp = out + ".part"
-    proc = run(IDLE + ["ffmpeg", "-nostdin", "-hide_banner", "-v", "error", "-y",
-                       "-i", os.path.join(wav_dir, item["wav"]),
-                       "-map", "0:a:0", "-map_metadata", "-1", "-vn",
-                       "-c:a", "flac", "-compression_level", "8", "-f", "flac",
-                       "-metadata", f"title={item['title']}",
-                       "-metadata", f"artist={item['contact']}",
-                       "-metadata", f"albumartist={item['contact']}",
-                       "-metadata", f"album={item['album']}",
-                       "-metadata", f"date={item['date']}",
-                       "-metadata", f"originaldate={item['date']}",
-                       "-metadata", f"tracknumber={item['track']:03d}",
-                       "-metadata", "genre=Call Recording",
-                       "-metadata", f"comment={item['wav']}",
-                       "-metadata", f"UCR_PREFIX={item['prefix']}",
-                       tmp], err_log)
+    proc = run(
+        IDLE
+        + [
+            "ffmpeg",
+            "-nostdin",
+            "-hide_banner",
+            "-v",
+            "error",
+            "-y",
+            "-i",
+            os.path.join(wav_dir, item["wav"]),
+            "-map",
+            "0:a:0",
+            "-map_metadata",
+            "-1",
+            "-vn",
+            "-c:a",
+            "flac",
+            "-compression_level",
+            "8",
+            "-f",
+            "flac",
+            "-metadata",
+            f"title={item['title']}",
+            "-metadata",
+            f"artist={item['contact']}",
+            "-metadata",
+            f"albumartist={item['contact']}",
+            "-metadata",
+            f"album={item['album']}",
+            "-metadata",
+            f"date={item['date']}",
+            "-metadata",
+            f"originaldate={item['date']}",
+            "-metadata",
+            f"tracknumber={item['track']:03d}",
+            "-metadata",
+            "genre=Call Recording",
+            "-metadata",
+            f"comment={item['wav']}",
+            "-metadata",
+            f"UCR_PREFIX={item['prefix']}",
+            tmp,
+        ],
+        err_log,
+    )
     if proc.returncode != 0:
         return item["stem"], "flac encode failed"
     os.replace(tmp, out)
@@ -151,9 +183,33 @@ def encode_opus(item, flac_root, opus_root, force, err_log):
         return item["stem"], "opus skipped: flac missing"
     os.makedirs(os.path.dirname(out), exist_ok=True)
     tmp = out + ".part"
-    proc = run(IDLE + ["ffmpeg", "-nostdin", "-hide_banner", "-v", "error", "-y",
-                       "-i", src, "-map", "0:a:0", "-c:a", "libopus",
-                       "-b:a", "32k", "-application", "voip", "-vbr", "on", "-f", "opus", tmp], err_log)
+    proc = run(
+        IDLE
+        + [
+            "ffmpeg",
+            "-nostdin",
+            "-hide_banner",
+            "-v",
+            "error",
+            "-y",
+            "-i",
+            src,
+            "-map",
+            "0:a:0",
+            "-c:a",
+            "libopus",
+            "-b:a",
+            "32k",
+            "-application",
+            "voip",
+            "-vbr",
+            "on",
+            "-f",
+            "opus",
+            tmp,
+        ],
+        err_log,
+    )
     if proc.returncode != 0:
         return item["stem"], "opus encode failed"
     os.replace(tmp, out)
@@ -162,8 +218,10 @@ def encode_opus(item, flac_root, opus_root, force, err_log):
 
 def verify_flac(item, flac_root, err_log):
     src = os.path.join(flac_root, item["flac_rel"])
-    proc = run(IDLE + ["ffmpeg", "-nostdin", "-hide_banner", "-v", "error",
-                       "-i", src, "-map", "0:a:0", "-f", "null", "-"], err_log)
+    proc = run(
+        IDLE + ["ffmpeg", "-nostdin", "-hide_banner", "-v", "error", "-i", src, "-map", "0:a:0", "-f", "null", "-"],
+        err_log,
+    )
     return item["stem"], None if proc.returncode == 0 else "flac MD5/decode verification failed"
 
 
@@ -177,8 +235,7 @@ def main():
     args = ap.parse_args()
 
     ucr_dir = os.path.join(args.root, "universal-call-recorder")
-    wav_dir = os.path.join(args.root, "sdcard", "Android", "data",
-                           "com.sparklingapps.callrecorder.full", "files")
+    wav_dir = os.path.join(args.root, "sdcard", "Android", "data", "com.sparklingapps.callrecorder.full", "files")
     manifest = os.path.join(ucr_dir, "integrity-sweep", "encode-manifest.tsv")
     flac_root = os.path.join(args.root, "derived", "flac")
     opus_root = os.path.join(args.root, "derived", "opus")
@@ -223,8 +280,12 @@ def main():
     if args.phase in ("all", "verify"):
         run_phase("verify", lambda it: verify_flac(it, flac_root, err_log), plan)
 
-    report = {"total": len(plan), "failures": failures,
-              "finished": time.strftime("%Y-%m-%dT%H:%M:%S"), "force": args.force}
+    report = {
+        "total": len(plan),
+        "failures": failures,
+        "finished": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "force": args.force,
+    }
     with open(os.path.join(args.root, "derived", "encode-report.json"), "w") as fh:
         json.dump(report, fh, indent=2)
 

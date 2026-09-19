@@ -25,28 +25,28 @@
 
 ## a) FULLY DONE (verifiable evidence)
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | **sops-key-audit fix**: `cv_evaluation_citizenships` seeded into `platforms/nixos/secrets/cv.yaml` | User ran the one-liner with `"DE"`; verified key present (plaintext name count = 1) + single-value blob diff; semantics verified against CV source (`citizenshipsFromEnv`: comma-split, trimmed, case-normalized; empty = inert default) |
-| 2 | **CV upstream packaging fix**: `go-graph-rag` registered in `publicDeps` + vendorHash refresh | CV `ed8b92f` pushed to origin (commit `cb763eed`/`16fc16c7` daemon-swept both edits, verified present at HEAD); `nix build .#packages.x86_64-linux.cv` SUCCEEDS at that tip (full package incl. templ-generate + cmd/cv compile) |
-| 3 | **SystemNix cv input re-lock** to the fixed CV rev | `flake.lock` cv node = `ed8b92f255…` (confirmed in lock at report time) |
-| 4 | **monitor365 removed from the flake `packages` surface** (permanently unbuildable: private wireguard-collector crate; only ever passed via stale store-cache) | `grep -c "monitor365 REMOVED" flake.nix` = 1; committed by daemon (`83c1d4d4` era); no consumers found (grep) |
-| 5 | **pre-deploy-check §1 rewritten to block-level benign classification** (bare `error:` headline attributed to its error block; narinfo + drv-not-valid classes WARN, real failures still FAIL) | Fixture-tested 4 error classes (multi-line benign → dropped, single-line benign → dropped, Failed-assertions block → fails, attribute error → fails); committed |
-| 6 | **pre-deploy-check §10 port-enumeration fixed** (scans `modules/nixos/{services,desktop}/`, `|| true` guard against the `set -euo pipefail` silent-death) | `bash -n` OK; §10-only run: 41 passed / 0 failed; full gate: **57 passed, 34 warnings, 0 failed** |
-| 7 | **`nix flake check` fully green** after the fixes | `all checks passed!` (first time since the 09-15 mass input bump) |
-| 8 | **AGENTS.md updated** with the deploy-blocker write-up (sops guard live-fire, monitor365 removal, §1/§10 gate bugs + doctrine, CV publicDeps-vs-input rule, CI-dead probe discipline) | In tree, daemon-committed |
-| 9 | **Parallel-session coordination held**: CV httpx/middleware WIP left untouched; pathspec/`--no-verify` used per precedent (`73145250`); daemon sweeps attributed | CV tree WIP files (6 modified) still uncommitted by their owner; my commit touched only `nix/packages.nix` |
+| # | Item                                                                                                                                                                                          | Evidence                                                                                                                                                                                                                                 |
+| - | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **sops-key-audit fix**: `cv_evaluation_citizenships` seeded into `platforms/nixos/secrets/cv.yaml`                                                                                            | User ran the one-liner with `"DE"`; verified key present (plaintext name count = 1) + single-value blob diff; semantics verified against CV source (`citizenshipsFromEnv`: comma-split, trimmed, case-normalized; empty = inert default) |
+| 2 | **CV upstream packaging fix**: `go-graph-rag` registered in `publicDeps` + vendorHash refresh                                                                                                 | CV `ed8b92f` pushed to origin (commit `cb763eed`/`16fc16c7` daemon-swept both edits, verified present at HEAD); `nix build .#packages.x86_64-linux.cv` SUCCEEDS at that tip (full package incl. templ-generate + cmd/cv compile)         |
+| 3 | **SystemNix cv input re-lock** to the fixed CV rev                                                                                                                                            | `flake.lock` cv node = `ed8b92f255…` (confirmed in lock at report time)                                                                                                                                                                  |
+| 4 | **monitor365 removed from the flake `packages` surface** (permanently unbuildable: private wireguard-collector crate; only ever passed via stale store-cache)                                 | `grep -c "monitor365 REMOVED" flake.nix` = 1; committed by daemon (`83c1d4d4` era); no consumers found (grep)                                                                                                                            |
+| 5 | **pre-deploy-check §1 rewritten to block-level benign classification** (bare `error:` headline attributed to its error block; narinfo + drv-not-valid classes WARN, real failures still FAIL) | Fixture-tested 4 error classes (multi-line benign → dropped, single-line benign → dropped, Failed-assertions block → fails, attribute error → fails); committed                                                                          |
+| 6 | **pre-deploy-check §10 port-enumeration fixed** (scans `modules/nixos/{services,desktop}/`, `                                                                                                 |                                                                                                                                                                                                                                          |
+| 7 | **`nix flake check` fully green** after the fixes                                                                                                                                             | `all checks passed!` (first time since the 09-15 mass input bump)                                                                                                                                                                        |
+| 8 | **AGENTS.md updated** with the deploy-blocker write-up (sops guard live-fire, monitor365 removal, §1/§10 gate bugs + doctrine, CV publicDeps-vs-input rule, CI-dead probe discipline)         | In tree, daemon-committed                                                                                                                                                                                                                |
+| 9 | **Parallel-session coordination held**: CV httpx/middleware WIP left untouched; pathspec/`--no-verify` used per precedent (`73145250`); daemon sweeps attributed                              | CV tree WIP files (6 modified) still uncommitted by their owner; my commit touched only `nix/packages.nix`                                                                                                                               |
 
 ## b) PARTIALLY DONE
 
-| Item | Works | Missing | Blocker | Effort |
-|------|-------|---------|---------|--------|
-| **The deploy itself** | Every gate green; CV upstream fixed and pushed; lock moved | The switch has not happened — pressure gate exit 12 at ~19:56; overnight chain never fired (no stc journal entries after 20:00; current-system still `eaad089`) | Parallel-session IO storm (VM-test builds, duckdb-sys, buildflow, govulncheck) — sustained avg300 ≈ 42–57% for hours | S (re-run when quiet) |
-| **Gate regression coverage** | Ad-hoc `/tmp` fixture validated the §1 awk logic (4 classes) + §10 smoke run | **No persisted selftest** in the repo — fixtures were eaten by the tmp-cleanup along with the evidence | Not yet written; should be a flake check (repo has the selftest pattern: `test-pre-deploy-metrics.sh`, `negative-test-lints.sh`) | M |
-| **Post-deploy verification** | Not applicable yet | Everything: smoke script, cv env check, gatus checks, service convergence | Deploy hasn't landed | S after deploy |
-| **llama-servers spin containment** | Discovered units running again (~17h × 92% CPU each, started at boot 09:37 — containment from 09-14 did not hold) | Not stopped (systemctl blocked in my shell; owner decision); AGENTS.md claim stale | Owner action / deploy decision | S |
-| **Overnight auto-deploy chain** | Correctly implemented the retry loop; correctly refused to force | Never fired (storm persisted); outcome unverifiable (logs in `/tmp`, cleaned) | Storm duration; evidence hygiene (see d-6) | S |
-| **Storm triage** | Identified drivers: `nix build .#checks.*stalwart-e2e/test` (VM tests), monitor365 `libduckdb-sys` build, PMA `buildflow --fix` (~40 GB written), `govulncheck` session, 3 crush sessions | Drivers belong to other sessions — not stopped, not attributed to owners | Concurrent-session ownership rules | M |
+| Item                               | Works                                                                                                                                                                                     | Missing                                                                                                                                                         | Blocker                                                                                                                          | Effort                |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| **The deploy itself**              | Every gate green; CV upstream fixed and pushed; lock moved                                                                                                                                | The switch has not happened — pressure gate exit 12 at ~19:56; overnight chain never fired (no stc journal entries after 20:00; current-system still `eaad089`) | Parallel-session IO storm (VM-test builds, duckdb-sys, buildflow, govulncheck) — sustained avg300 ≈ 42–57% for hours             | S (re-run when quiet) |
+| **Gate regression coverage**       | Ad-hoc `/tmp` fixture validated the §1 awk logic (4 classes) + §10 smoke run                                                                                                              | **No persisted selftest** in the repo — fixtures were eaten by the tmp-cleanup along with the evidence                                                          | Not yet written; should be a flake check (repo has the selftest pattern: `test-pre-deploy-metrics.sh`, `negative-test-lints.sh`) | M                     |
+| **Post-deploy verification**       | Not applicable yet                                                                                                                                                                        | Everything: smoke script, cv env check, gatus checks, service convergence                                                                                       | Deploy hasn't landed                                                                                                             | S after deploy        |
+| **llama-servers spin containment** | Discovered units running again (~17h × 92% CPU each, started at boot 09:37 — containment from 09-14 did not hold)                                                                         | Not stopped (systemctl blocked in my shell; owner decision); AGENTS.md claim stale                                                                              | Owner action / deploy decision                                                                                                   | S                     |
+| **Overnight auto-deploy chain**    | Correctly implemented the retry loop; correctly refused to force                                                                                                                          | Never fired (storm persisted); outcome unverifiable (logs in `/tmp`, cleaned)                                                                                   | Storm duration; evidence hygiene (see d-6)                                                                                       | S                     |
+| **Storm triage**                   | Identified drivers: `nix build .#checks.*stalwart-e2e/test` (VM tests), monitor365 `libduckdb-sys` build, PMA `buildflow --fix` (~40 GB written), `govulncheck` session, 3 crush sessions | Drivers belong to other sessions — not stopped, not attributed to owners                                                                                        | Concurrent-session ownership rules                                                                                               | M                     |
 
 ## c) NOT STARTED
 
@@ -81,60 +81,60 @@
 
 ## f) Top 50 things to get done next
 
-*Brainstorm list, impact-ranked; feeds `docs-health` HARVEST (items below the fold are ROADMAP fuel).*
+_Brainstorm list, impact-ranked; feeds `docs-health` HARVEST (items below the fold are ROADMAP fuel)._
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Land the deploy (`nix run .#deploy`) in a quiet window — all gates verified green | Critical | S | Ops |
-| 2 | Run full `post-deploy-check.sh` smoke after the switch | Critical | S | Quality |
-| 3 | Verify cv-server env carries `CV_EVALUATION_CITIZENSHIPS=DE` (unit env + one journal evidence line) | Critical | S | Quality |
-| 4 | Re-stop llama-embeddings + llama-reranker (spin regression, ~2 cores for ~17h) and make the stop survive (config-disable or pin) | Critical | M | Bug |
-| 5 | Sweep remaining same-day bumped inputs' goModules FODs (bank-sync, dnsblockd, go-taskqueue, crush-daily, inboxclean) before/with `--keep-going` | High | M | Ops |
-| 6 | Persisted selftest for §1 block-level benign classification (4-class fixture) | High | M | Quality |
-| 7 | Persisted fixture for §10 port enumeration (zero-match must warn, multi-file scan) | High | M | Quality |
-| 8 | Gate verdict contract: pre-deploy-check prints Summary on every exit path; deploy.sh names summary-less exits | High | S | Quality |
-| 9 | Triage inboxclean-sync OnFailure (still failing 01:46 tonight — invalid_grant vs transient) | High | S | Bug |
-| 10 | Triage the 2 systemd-coredump units (PIDs 2527885/2669309) | High | S | Bug |
-| 11 | Verify gatus CV funnel checks green post-deploy (funnelStale, pipeline-store health) | High | S | Quality |
-| 12 | AGENTS.md: correct the llama-rag containment claim (did not hold) | High | S | Documentation |
-| 13 | Containment tripwire metric for "stopped as containment" units (llama, flm socket) | High | M | Feature |
-| 14 | Verify zram/sev1 guard zones are armed and tripping correctly during storms (zram hit 88%) | High | S | Quality |
-| 15 | Audit what PMA `buildflow --fix --semantic` wrote (~40 GB across projects) | High | M | Quality |
-| 16 | Ratify monitor365 packages-surface removal (owner decision; rationale in flake.nix) | Medium | S | Decision |
-| 17 | heavy-job wrapper adoption for VM-test builds (stalwart-e2e ran bare in the storm) | High | M | Quality |
-| 18 | The owed reboot (flm corpse, D-state corpses, llama spin) — `pre-reboot-check` first | High | M | Ops |
-| 19 | dnsblockd post-bump: verify OTLP spans flowing (`signoz_traces_reporting{service="dnsblockd"} 1`) | Medium | S | Quality |
-| 20 | bank-sync post-bump: statement_coverage RFC3339 writer watch post-SCA | Medium | S | Bug |
-| 21 | go-taskqueue lock node: confirm github-flip (no `dirtyRev` interim left) | Medium | S | Quality |
-| 22 | inboxclean post-bump: sync + paperless archive auth checks green | Medium | S | Quality |
-| 23 | wallpapers-src bump (12b453d): verify dms-wallpaper-init no dangling path (53fe554 class) | Medium | S | Bug |
-| 24 | crush-daily post-bump: golden-file drift check (UPDATE_GOLDENS class) | Medium | S | Quality |
-| 25 | cv-scan timer + cv-backup oneshot green post-deploy | Medium | S | Quality |
-| 26 | Session artifact doctrine: /var/log/sessionnix/ for deploy/chain logs (never bare /tmp) | Medium | S | Cleanup |
-| 27 | `nix run .#probe-bumped-inputs` command (goModules probe per changed lock node) | Medium | M | Feature |
-| 28 | deploy.sh pressure-gate message: print top-3 IO offenders | Medium | S | Feature |
-| 29 | Cross-session BLOCKERS surface (shared file every session reads at start) | Medium | S | Process |
-| 30 | metrics-gate.sh endpoint-down WARN branches: re-verify against post-refactor §10 env flow | Medium | S | Quality |
-| 31 | Signoz trace-coverage ratchet intact post-bump (dnsblockd wiring "config") | Medium | S | Quality |
-| 32 | flm :52626 corpse state check post-storm (EADDRINUSE class) | Medium | S | Bug |
-| 33 | CV repo AGENTS.md: document publicDeps-vs-rev-pinned-input rule (proxy-served ⇒ publicDeps) | Medium | S | Documentation |
-| 34 | CV: land the internal/httpx security-headers refactor cleanly (parallel session WIP: 6 modified files) | Medium | M | Feature |
-| 35 | CV CI doctrine decision: dead Actions minutes — probe-before-lock forever vs restore minutes | Medium | S | Decision |
-| 36 | crush-hot-db deploy — still gated on /nix soak (~09-17) | Medium | M | Feature |
-| 37 | node-exporter textfile freshness post-storm (my state greps returned empty — verify `*_scrape_errors` = 0) | Medium | S | Quality |
-| 38 | Mirror §1/§10 gate fixes into docs/CONTRIBUTING.md "Eval-Time Guards" inventory | Low | S | Documentation |
-| 39 | Clean `/tmp/cv-verify` worktree from the CV repo | Low | S | Cleanup |
-| 40 | Move the PSI-drain-then-deploy chain into a documented app (`.#deploy-wait`) instead of ad-hoc scripts | Low | M | Feature |
-| 41 | shellcheck/bash -n pre-commit coverage for scripts/pre-deploy-check.sh (verify it exists) | Low | S | Quality |
-| 42 | Attribute the foreign 1-line AGENTS.md edit that was pending at session start | Low | S | Process |
-| 43 | Confirm cv.yaml committed correctly despite secrets/ gitignore pattern (tracked-file status) | Low | S | Quality |
-| 44 | Session census (31 "users" logged in — crush agents; confirm nothing foreign) | Low | S | Security |
-| 45 | gatus-pattern-lint + port-registry-audit coverage over service-module-authored conditions (ran green — confirm no exemptions needed) | Low | S | Quality |
-| 46 | History purge runbook: still HELD at push-time re-filter (periodic nag) | Low | S | Ops |
-| 47 | Overnight daemon-commit attribution sweep (12+ auto-commits 09-15 evening → 09-16) | Low | S | Process |
-| 48 | Consider CI job: daily goModules probe of all changed lock nodes (replaces manual pre-flight) | Low | L | Feature |
-| 49 | how-to-golang skill: mirror the "proxy-served ⇒ publicDeps" rule for new LarsArtmann deps | Low | S | Documentation |
-| 50 | TODO_LIST HARVEST of this report's section (f) within 24h | Low | S | Process |
+| #  | Task                                                                                                                                            | Impact   | Effort | Category      |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
+| 1  | Land the deploy (`nix run .#deploy`) in a quiet window — all gates verified green                                                               | Critical | S      | Ops           |
+| 2  | Run full `post-deploy-check.sh` smoke after the switch                                                                                          | Critical | S      | Quality       |
+| 3  | Verify cv-server env carries `CV_EVALUATION_CITIZENSHIPS=DE` (unit env + one journal evidence line)                                             | Critical | S      | Quality       |
+| 4  | Re-stop llama-embeddings + llama-reranker (spin regression, ~2 cores for ~17h) and make the stop survive (config-disable or pin)                | Critical | M      | Bug           |
+| 5  | Sweep remaining same-day bumped inputs' goModules FODs (bank-sync, dnsblockd, go-taskqueue, crush-daily, inboxclean) before/with `--keep-going` | High     | M      | Ops           |
+| 6  | Persisted selftest for §1 block-level benign classification (4-class fixture)                                                                   | High     | M      | Quality       |
+| 7  | Persisted fixture for §10 port enumeration (zero-match must warn, multi-file scan)                                                              | High     | M      | Quality       |
+| 8  | Gate verdict contract: pre-deploy-check prints Summary on every exit path; deploy.sh names summary-less exits                                   | High     | S      | Quality       |
+| 9  | Triage inboxclean-sync OnFailure (still failing 01:46 tonight — invalid_grant vs transient)                                                     | High     | S      | Bug           |
+| 10 | Triage the 2 systemd-coredump units (PIDs 2527885/2669309)                                                                                      | High     | S      | Bug           |
+| 11 | Verify gatus CV funnel checks green post-deploy (funnelStale, pipeline-store health)                                                            | High     | S      | Quality       |
+| 12 | AGENTS.md: correct the llama-rag containment claim (did not hold)                                                                               | High     | S      | Documentation |
+| 13 | Containment tripwire metric for "stopped as containment" units (llama, flm socket)                                                              | High     | M      | Feature       |
+| 14 | Verify zram/sev1 guard zones are armed and tripping correctly during storms (zram hit 88%)                                                      | High     | S      | Quality       |
+| 15 | Audit what PMA `buildflow --fix --semantic` wrote (~40 GB across projects)                                                                      | High     | M      | Quality       |
+| 16 | Ratify monitor365 packages-surface removal (owner decision; rationale in flake.nix)                                                             | Medium   | S      | Decision      |
+| 17 | heavy-job wrapper adoption for VM-test builds (stalwart-e2e ran bare in the storm)                                                              | High     | M      | Quality       |
+| 18 | The owed reboot (flm corpse, D-state corpses, llama spin) — `pre-reboot-check` first                                                            | High     | M      | Ops           |
+| 19 | dnsblockd post-bump: verify OTLP spans flowing (`signoz_traces_reporting{service="dnsblockd"} 1`)                                               | Medium   | S      | Quality       |
+| 20 | bank-sync post-bump: statement_coverage RFC3339 writer watch post-SCA                                                                           | Medium   | S      | Bug           |
+| 21 | go-taskqueue lock node: confirm github-flip (no `dirtyRev` interim left)                                                                        | Medium   | S      | Quality       |
+| 22 | inboxclean post-bump: sync + paperless archive auth checks green                                                                                | Medium   | S      | Quality       |
+| 23 | wallpapers-src bump (12b453d): verify dms-wallpaper-init no dangling path (53fe554 class)                                                       | Medium   | S      | Bug           |
+| 24 | crush-daily post-bump: golden-file drift check (UPDATE_GOLDENS class)                                                                           | Medium   | S      | Quality       |
+| 25 | cv-scan timer + cv-backup oneshot green post-deploy                                                                                             | Medium   | S      | Quality       |
+| 26 | Session artifact doctrine: /var/log/sessionnix/ for deploy/chain logs (never bare /tmp)                                                         | Medium   | S      | Cleanup       |
+| 27 | `nix run .#probe-bumped-inputs` command (goModules probe per changed lock node)                                                                 | Medium   | M      | Feature       |
+| 28 | deploy.sh pressure-gate message: print top-3 IO offenders                                                                                       | Medium   | S      | Feature       |
+| 29 | Cross-session BLOCKERS surface (shared file every session reads at start)                                                                       | Medium   | S      | Process       |
+| 30 | metrics-gate.sh endpoint-down WARN branches: re-verify against post-refactor §10 env flow                                                       | Medium   | S      | Quality       |
+| 31 | Signoz trace-coverage ratchet intact post-bump (dnsblockd wiring "config")                                                                      | Medium   | S      | Quality       |
+| 32 | flm :52626 corpse state check post-storm (EADDRINUSE class)                                                                                     | Medium   | S      | Bug           |
+| 33 | CV repo AGENTS.md: document publicDeps-vs-rev-pinned-input rule (proxy-served ⇒ publicDeps)                                                     | Medium   | S      | Documentation |
+| 34 | CV: land the internal/httpx security-headers refactor cleanly (parallel session WIP: 6 modified files)                                          | Medium   | M      | Feature       |
+| 35 | CV CI doctrine decision: dead Actions minutes — probe-before-lock forever vs restore minutes                                                    | Medium   | S      | Decision      |
+| 36 | crush-hot-db deploy — still gated on /nix soak (~09-17)                                                                                         | Medium   | M      | Feature       |
+| 37 | node-exporter textfile freshness post-storm (my state greps returned empty — verify `*_scrape_errors` = 0)                                      | Medium   | S      | Quality       |
+| 38 | Mirror §1/§10 gate fixes into docs/CONTRIBUTING.md "Eval-Time Guards" inventory                                                                 | Low      | S      | Documentation |
+| 39 | Clean `/tmp/cv-verify` worktree from the CV repo                                                                                                | Low      | S      | Cleanup       |
+| 40 | Move the PSI-drain-then-deploy chain into a documented app (`.#deploy-wait`) instead of ad-hoc scripts                                          | Low      | M      | Feature       |
+| 41 | shellcheck/bash -n pre-commit coverage for scripts/pre-deploy-check.sh (verify it exists)                                                       | Low      | S      | Quality       |
+| 42 | Attribute the foreign 1-line AGENTS.md edit that was pending at session start                                                                   | Low      | S      | Process       |
+| 43 | Confirm cv.yaml committed correctly despite secrets/ gitignore pattern (tracked-file status)                                                    | Low      | S      | Quality       |
+| 44 | Session census (31 "users" logged in — crush agents; confirm nothing foreign)                                                                   | Low      | S      | Security      |
+| 45 | gatus-pattern-lint + port-registry-audit coverage over service-module-authored conditions (ran green — confirm no exemptions needed)            | Low      | S      | Quality       |
+| 46 | History purge runbook: still HELD at push-time re-filter (periodic nag)                                                                         | Low      | S      | Ops           |
+| 47 | Overnight daemon-commit attribution sweep (12+ auto-commits 09-15 evening → 09-16)                                                              | Low      | S      | Process       |
+| 48 | Consider CI job: daily goModules probe of all changed lock nodes (replaces manual pre-flight)                                                   | Low      | L      | Feature       |
+| 49 | how-to-golang skill: mirror the "proxy-served ⇒ publicDeps" rule for new LarsArtmann deps                                                       | Low      | S      | Documentation |
+| 50 | TODO_LIST HARVEST of this report's section (f) within 24h                                                                                       | Low      | S      | Process       |
 
 ## g) Questions I cannot answer myself
 
@@ -144,4 +144,4 @@
 
 ---
 
-*Point-in-time snapshot (2026-09-16 02:15 CEST). Section (f) feeds `docs-health` HARVEST → TODO_LIST/ROADMAP.*
+_Point-in-time snapshot (2026-09-16 02:15 CEST). Section (f) feeds `docs-health` HARVEST → TODO_LIST/ROADMAP._

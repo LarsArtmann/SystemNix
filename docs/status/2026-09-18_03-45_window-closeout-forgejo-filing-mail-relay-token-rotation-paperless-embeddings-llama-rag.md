@@ -4,13 +4,13 @@
 
 **Window tasks (all with closeout reports read first):**
 
-| Task | Item | Verdict |
-|---|---|---|
-| `000001a0b1666334580c`… | Forgejo upstream: file the 3 verified mirror-outage issues | BLOCKED (no Codeberg token) |
-| `000001a0b198bd1f0309…` | Mail Relay go-live (user steps) | PARTIAL — 3 of 5 steps proven; Resend now ACCEPTS (250) |
-| `000001a0b1afa0754d96…` | Rotate InboxClean→Paperless API token | BLOCKED (sudo-gated; sandbox) |
-| `000001a0b1bd5c2d1492…` | Verify Paperless AI uses llama-rag embeddings E2E | BLOCKED (llama-rag was disabled; DB read sudo-gated) |
-| `000001a0b1d43f78d432…` | llama-rag restart leak + 0.4.0 spin regression | DONE (landed by a parallel session; this run cross-verified + closed out) |
+| Task                    | Item                                                       | Verdict                                                                   |
+| ----------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `000001a0b1666334580c`… | Forgejo upstream: file the 3 verified mirror-outage issues | BLOCKED (no Codeberg token)                                               |
+| `000001a0b198bd1f0309…` | Mail Relay go-live (user steps)                            | PARTIAL — 3 of 5 steps proven; Resend now ACCEPTS (250)                   |
+| `000001a0b1afa0754d96…` | Rotate InboxClean→Paperless API token                      | BLOCKED (sudo-gated; sandbox)                                             |
+| `000001a0b1bd5c2d1492…` | Verify Paperless AI uses llama-rag embeddings E2E          | BLOCKED (llama-rag was disabled; DB read sudo-gated)                      |
+| `000001a0b1d43f78d432…` | llama-rag restart leak + 0.4.0 spin regression             | DONE (landed by a parallel session; this run cross-verified + closed out) |
 
 ---
 
@@ -75,4 +75,4 @@ New this pass (see TODO_LIST for the appended text): mail-relay non-owner delive
 
 ---
 
-*Point-in-time snapshot (2026-09-18 03:45 CEST). Closeout reports for each task are the authoritative per-task records; this file is the window-level harvest. Nothing pushed.*
+_Point-in-time snapshot (2026-09-18 03:45 CEST). Closeout reports for each task are the authoritative per-task records; this file is the window-level harvest. Nothing pushed._

@@ -15,10 +15,10 @@ not master!?"), executed as one wave:
 
 ### Delta (verified via gh compare, not assumed)
 
-| Input | From → To | Ahead | Notable |
-|---|---|---|---|
-| `signoz-src` | `e0da06f7` → `67895d3` | +53 | `refactor(prometheus)!: remove the v1 provider` (internal), tokenizer default flips, quick-filter fields API, authz for dashboards |
-| `signoz-collector-src` | `b514eb4a` → `a1d8ac3` | +8 | dep bumps (thrift/grpc/otel-trace), clickhouselogsexporter dual-body ingestion + shared `pkg/tagdedup`, gen-AI billing attributes |
+| Input                  | From → To              | Ahead | Notable                                                                                                                            |
+| ---------------------- | ---------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `signoz-src`           | `e0da06f7` → `67895d3` | +53   | `refactor(prometheus)!: remove the v1 provider` (internal), tokenizer default flips, quick-filter fields API, authz for dashboards |
+| `signoz-collector-src` | `b514eb4a` → `a1d8ac3` | +8    | dep bumps (thrift/grpc/otel-trace), clickhouselogsexporter dual-body ingestion + shared `pkg/tagdedup`, gen-AI billing attributes  |
 
 ### Migration review (the reason this was gated)
 
@@ -56,11 +56,11 @@ not master!?"), executed as one wave:
 Fake-hash harvest pass (`lib.fakeHash`, `--keep-going`) then real hashes
 pasted into `_signoz-packages.nix`:
 
-| Derivation | New hash |
-|---|---|
-| signoz go-modules | `sha256-p/XXGwnxOSHBmVT/zMy7GG5HsTDSPSBYGDbrfxi3FI8=` |
+| Derivation                                         | New hash                                              |
+| -------------------------------------------------- | ----------------------------------------------------- |
+| signoz go-modules                                  | `sha256-p/XXGwnxOSHBmVT/zMy7GG5HsTDSPSBYGDbrfxi3FI8=` |
 | collector go-modules (collector + schema-migrator) | `sha256-BYYyzlC8KGo4XqWp7K0xJt2hoPFYPLqHdDwzucIBcKo=` |
-| frontend pnpmDeps | `sha256-3IiQUkVBxP0B2y+XobvahVljysh4JXknHyDa4KPpSLw=` |
+| frontend pnpmDeps                                  | `sha256-3IiQUkVBxP0B2y+XobvahVljysh4JXknHyDa4KPpSLw=` |
 
 All four packages (`signoz`, `signoz-otel-collector`,
 `signoz-schema-migrator`, `signoz-frontend`) build green at HEAD revs;

@@ -8,12 +8,12 @@
 
 ## Session Timeline (what actually happened)
 
-| # | Step | Outcome |
-|---|------|---------|
-| 1 | User: "worth adding?" → README + repo metadata + our flake topology | Verdict: **skip** — 5-reason table |
-| 2 | User: "document it?" | Added AGENTS.md bullet (Nix & Nixpkgs gotchas, next to the `nixos-unstable` bullet) |
-| 3 | User: "file an issue? attic blind spot especially" | Loaded verify-before-filing → cloned source → **premise FALSE** (caches option exists, Attic in own preset) + **issues disabled on repo** → corrected my false claim in AGENTS.md |
-| 4 | User: mantra repeat → full re-audit of MY claims | Second overstatement found (`lockOnly` exists, default-vs-opt-in), crates.io crate **unpublished** (404) → AGENTS.md entry rewritten to fully-audited form; scratch clone trashed |
+| # | Step                                                                | Outcome                                                                                                                                                                           |
+| - | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | User: "worth adding?" → README + repo metadata + our flake topology | Verdict: **skip** — 5-reason table                                                                                                                                                |
+| 2 | User: "document it?"                                                | Added AGENTS.md bullet (Nix & Nixpkgs gotchas, next to the `nixos-unstable` bullet)                                                                                               |
+| 3 | User: "file an issue? attic blind spot especially"                  | Loaded verify-before-filing → cloned source → **premise FALSE** (caches option exists, Attic in own preset) + **issues disabled on repo** → corrected my false claim in AGENTS.md |
+| 4 | User: mantra repeat → full re-audit of MY claims                    | Second overstatement found (`lockOnly` exists, default-vs-opt-in), crates.io crate **unpublished** (404) → AGENTS.md entry rewritten to fully-audited form; scratch clone trashed |
 
 ---
 
@@ -91,4 +91,4 @@
 
 ---
 
-*Report written and awaiting instructions. Not committed — the repo's auto-commit daemon owns commits here.*
+_Report written and awaiting instructions. Not committed — the repo's auto-commit daemon owns commits here._

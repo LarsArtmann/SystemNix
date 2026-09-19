@@ -5,7 +5,6 @@
 # into massive dot-noise; this renders pure black/white and bypasses the
 # broken filter chain via lp -o raw).
 {
-  lib,
   writeShellApplication,
   poppler-utils,
   python3,

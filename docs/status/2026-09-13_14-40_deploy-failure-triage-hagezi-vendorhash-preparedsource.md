@@ -10,14 +10,14 @@ At ~11:53 today a **full `nix flake update` landed** (commit `f8f2965e`, 877+/66
 
 ## 2. Failure Taxonomy (all 6 classes, with evidence)
 
-| # | Failure | Class | Locked rev | Verdict |
-|---|---------|-------|------------|---------|
-| 1 | 21× `HaGeZi-*-raw` hash mismatch | Mutable-source content drift | n/a (main branch) | **FIXED** |
-| 2 | `art-dupl-0.6.1-go-modules` hash mismatch (5s) | vendorHash staleness from **source-only churn** (no go.mod/go.sum changes) | `3533d6f` = local tip | **FIXED upstream** |
-| 3 | `branching-flow-prepared-source-0.2.0` exit 1 | `mkPreparedSource` private-dep validation rejected `github.com/larsartmann/samber-linter` (dep added upstream 09-10 `00fb7cef`, never declared) | `eedf7ee2` = local tip | **FIXED upstream** (not yet build-verified) |
-| 4 | `cqrs-lint-7d4a6d0…-go-modules` hash mismatch | Same source-only-churn class; 29 commits since lock, **zero** go.mod/go.sum/flake.nix changes; upstream unfixed; parallel session owns repo (3 unpushed commits) | `7d4a6d0` (origin@13:02) | **OPEN — decision needed** |
-| 5 | `dnsblockd-ebea648` buildPhase exit 1 (7s) | Generated-artifact staleness: `app.min.css is stale` (the AGENTS "ONE artifact at a time" class — `styles.css` was regenerated upstream in `70951c9`, `app.min.css` was not) | `ebea648` (today 13:02) | **OPEN — fix path known** |
-| 6 | `mr-sync-793b8ad…` exit 1 | Stale lock rev — already healed by the parallel session's 13:43 re-lock | now `91bcb4c` | **RESOLVED (probe exit 0)** |
+| # | Failure                                        | Class                                                                                                                                                                        | Locked rev               | Verdict                                     |
+| - | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------- |
+| 1 | 21× `HaGeZi-*-raw` hash mismatch               | Mutable-source content drift                                                                                                                                                 | n/a (main branch)        | **FIXED**                                   |
+| 2 | `art-dupl-0.6.1-go-modules` hash mismatch (5s) | vendorHash staleness from **source-only churn** (no go.mod/go.sum changes)                                                                                                   | `3533d6f` = local tip    | **FIXED upstream**                          |
+| 3 | `branching-flow-prepared-source-0.2.0` exit 1  | `mkPreparedSource` private-dep validation rejected `github.com/larsartmann/samber-linter` (dep added upstream 09-10 `00fb7cef`, never declared)                              | `eedf7ee2` = local tip   | **FIXED upstream** (not yet build-verified) |
+| 4 | `cqrs-lint-7d4a6d0…-go-modules` hash mismatch  | Same source-only-churn class; 29 commits since lock, **zero** go.mod/go.sum/flake.nix changes; upstream unfixed; parallel session owns repo (3 unpushed commits)             | `7d4a6d0` (origin@13:02) | **OPEN — decision needed**                  |
+| 5 | `dnsblockd-ebea648` buildPhase exit 1 (7s)     | Generated-artifact staleness: `app.min.css is stale` (the AGENTS "ONE artifact at a time" class — `styles.css` was regenerated upstream in `70951c9`, `app.min.css` was not) | `ebea648` (today 13:02)  | **OPEN — fix path known**                   |
+| 6 | `mr-sync-793b8ad…` exit 1                      | Stale lock rev — already healed by the parallel session's 13:43 re-lock                                                                                                      | now `91bcb4c`            | **RESOLVED (probe exit 0)**                 |
 
 Everything else in the 2h24m build **succeeded** (2813 builds): niri 26.4.0 (193 tests green in-build), hermes-agent 0.21.2, herdr 0.9.0, web UI, nixpkgs `eaad089` (09-11) — the update itself was mostly good.
 
@@ -63,7 +63,7 @@ Nothing destroyed; no data loss; no wrong "fixes" shipped (every change is eithe
 1. **Never deploy straight after a lock update.** Probe each moved input's package individually (seconds) or run one `--keep-going` toplevel build first. 40 failures were knowable in ~2 minutes; they cost 2h24m instead.
 2. **HaGeZi drift is a standing 21-hash chore that blocks deploys.** Today's `nix store prefetch-file --json | jq` loop is the fastest known refresh primitive — it should be a flake app (`nix run .#refresh-hagezi`), not session archaeology.
 3. **Pinned-hashes vs deploy-stability tradeoff is unmade:** StevenBlack (pinned to a commit SHA) never breaks; HaGeZi (mutable `main`) breaks monthly-ish. Consider pinning GitLab SHAs with a scheduled refresh workflow.
-4. **Upstream repos have zero CI signal** (private Actions minutes exhausted) — three of four Go failures were *broken upstream master*. Either budget Actions minutes back, add a self-hosted runner, or accept that every lock update needs a local probe pass.
+4. **Upstream repos have zero CI signal** (private Actions minutes exhausted) — three of four Go failures were _broken upstream master_. Either budget Actions minutes back, add a self-hosted runner, or accept that every lock update needs a local probe pass.
 5. **Concurrent-session hygiene worked** (I detected and routed around the active dnsblockd/mr-sync/go-cqrs-lite sessions instead of editing their in-flight trees), but the mr-sync lock move mid-deploy went unattributed — parallel sessions should announce lock churn.
 6. **The `--no-push` rule vs deploy unblocking needs a standing policy:** fixes landed locally can't be consumed by `github:` inputs, forcing interim `git+file?rev=` pins (tq precedent) with CI darkness and cleanup debt. A pre-authorized "hash-fix pushes may proceed" policy would erase the whole pin dance.
 
@@ -74,7 +74,7 @@ Nothing destroyed; no data loss; no wrong "fixes" shipped (every change is eithe
 1. Build-verify branching-flow `4c58b75f` locally (prepared-source FOD must pass validation, then full build).
 2. Verify HaGeZi refresh: build the `dns-blocker-processed` derivation (all 22 fetch+filter).
 3. Decide go-cqrs-lite strategy (rollback pin vs worktree-fix — see §7 questions).
-4. Re-lock `dnsblockd` to origin/master (`nix flake lock --update-input dnsblockd`) and probe the build — watch for the *next* stale artifact (one-at-a-time lesson).
+4. Re-lock `dnsblockd` to origin/master (`nix flake lock --update-input dnsblockd`) and probe the build — watch for the _next_ stale artifact (one-at-a-time lesson).
 5. If origin still fails staleness: decide between waiting for the active session vs `git+file?rev=b2b82e4` pin (ships 2 unpushed parallel commits — flag first).
 6. Pin `art-dupl` input URL to `git+file:///home/lars/projects/art-dupl?rev=9c370324…` (interim, tq precedent).
 7. Pin `branching-flow` input URL to `git+file:///home/lars/projects/branching-flow?rev=4c58b75f…` after step 1 passes.

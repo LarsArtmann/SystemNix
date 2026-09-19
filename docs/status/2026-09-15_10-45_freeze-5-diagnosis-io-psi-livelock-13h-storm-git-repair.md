@@ -18,15 +18,15 @@ This freeze was NOT an ambush: **the machine spent its entire last boot inside a
 
 **Drivers** (cgroup `io.stat`, cumulative over the 13 h boot — the QLC root NVMe absorbed ~**1 TB read + 277 GB written**):
 
-| Cgroup | IO (r+w) | What it is |
-|---|---|---|
-| system.slice total | 1.58 TB | everything below + the rest |
-| user-1000.slice | 511 GB | interactive + agent crush sessions (one `session-257.scope` alone: 238 GB) |
-| nix-daemon.service | 205 GB | builds — 9 parallel `ld.mold` linkers seen D-state in `balance_dirty_pages` at 09:25 |
-| user-975 (hermes) | 170 GB | gateway + cron external-workers cycling every 2–4 min |
-| tq-agent-pool.service | 133 GB | agent pool (daily budget 30/30 exhausted by morning) |
-| llama-embeddings + llama-reranker | 103 GB | **the 09-14 "containment" did not survive the reboot — units re-armed at boot and ran all night** |
-| clickhouse / papdashboard / project-discovery / journald / coredump-slice | ~145 GB | steady service churn |
+| Cgroup                                                                    | IO (r+w) | What it is                                                                                        |
+| ------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------- |
+| system.slice total                                                        | 1.58 TB  | everything below + the rest                                                                       |
+| user-1000.slice                                                           | 511 GB   | interactive + agent crush sessions (one `session-257.scope` alone: 238 GB)                        |
+| nix-daemon.service                                                        | 205 GB   | builds — 9 parallel `ld.mold` linkers seen D-state in `balance_dirty_pages` at 09:25              |
+| user-975 (hermes)                                                         | 170 GB   | gateway + cron external-workers cycling every 2–4 min                                             |
+| tq-agent-pool.service                                                     | 133 GB   | agent pool (daily budget 30/30 exhausted by morning)                                              |
+| llama-embeddings + llama-reranker                                         | 103 GB   | **the 09-14 "containment" did not survive the reboot — units re-armed at boot and ran all night** |
+| clickhouse / papdashboard / project-discovery / journald / coredump-slice | ~145 GB  | steady service churn                                                                              |
 
 Plus the one-USB-link class at death: `usb-storage` kthread stuck in `usb_sg_wait`, a flush kworker stuck in `blk_mq_get_tag` on 8:16 (USB-attached disk queue full), `node-MainThread` in `read_extent_buffer_pages`, sqlite3/grep in `folio_wait_bit_common`.
 

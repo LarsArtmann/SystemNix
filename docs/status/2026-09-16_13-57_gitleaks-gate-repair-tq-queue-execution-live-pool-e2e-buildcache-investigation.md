@@ -6,7 +6,7 @@ _Session: 2026-09-16 ~09:30–13:57 CEST · Repo: SystemNix @ `7707ab77` (+ go-t
 
 ## TL;DR
 
-Executed six items from the sixth-run queue harvest. The headline: the **pre-commit gitleaks gate is repaired for real** — and the interim fix a parallel session shipped at 07:28 was found to be **worse than the bug it replaced** (gitleaks skips allowlisted paths at the directory-walker level, so flake.nix and the audit script had become *entirely invisible* to the scanner; a real pasted token would have sailed through). The correct fix — a rule override by id, no path allowlists — is verified five ways and landed via a real hooked commit (`5c68dd2a`, no `--no-verify`). Additionally: both go-taskqueue gates ran green for the first time (they were previously closed by reasoning only), the four orphaned daemon commits were traced to the filter-branch rewrite with content confirmed on origin, CHANGELOG entries landed upstream (`6e8739a`), the new verify-failure fact format was **E2E-validated on the live pool through the deployed binary** (bounded 512-byte tail + evidence sidecar, full 20 KB output on disk), and the buildcache capacity + swapfile-emergency questions are investigated with owner-ready recommendations. Three rows remain open by design (owner decisions); the actual destructive remediations (swapfile delete, cargo clean) were correctly NOT executed.
+Executed six items from the sixth-run queue harvest. The headline: the **pre-commit gitleaks gate is repaired for real** — and the interim fix a parallel session shipped at 07:28 was found to be **worse than the bug it replaced** (gitleaks skips allowlisted paths at the directory-walker level, so flake.nix and the audit script had become _entirely invisible_ to the scanner; a real pasted token would have sailed through). The correct fix — a rule override by id, no path allowlists — is verified five ways and landed via a real hooked commit (`5c68dd2a`, no `--no-verify`). Additionally: both go-taskqueue gates ran green for the first time (they were previously closed by reasoning only), the four orphaned daemon commits were traced to the filter-branch rewrite with content confirmed on origin, CHANGELOG entries landed upstream (`6e8739a`), the new verify-failure fact format was **E2E-validated on the live pool through the deployed binary** (bounded 512-byte tail + evidence sidecar, full 20 KB output on disk), and the buildcache capacity + swapfile-emergency questions are investigated with owner-ready recommendations. Three rows remain open by design (owner decisions); the actual destructive remediations (swapfile delete, cargo clean) were correctly NOT executed.
 
 ---
 
@@ -19,12 +19,14 @@ Executed six items from the sixth-run queue harvest. The headline: the **pre-com
 **The interim fix was dangerous.** A parallel session scoped path allowlists at 07:28/07:32 (`b2dd0889`, `3cd2dc53`). Empirically proven wrong: gitleaks applies allowlist **paths at the directory-walker level**, so the whole file is skipped before any regex runs — flake.nix scanned **0 bytes**. The allowlist's own comment ("a real sgp_-prefixed token anywhere — including flake.nix — still gets caught") was false: an injected real-shaped `sgp_<40hex>` token into a flake.nix copy was invisible. Same for the audit script. The `regexes` clauses were dead weight.
 
 **The fix (landed: `.gitleaks.toml` + script + fixtures via daemon `15614064`; flake.nix selftest + TODO via hooked `5c68dd2a`):**
+
 - `.gitleaks.toml` now **overrides the rule by id** (`sourcegraph-access-token`, same id replaces the upstream definition — verified live) to `sgp_`-prefixed shapes only: `sgp_(?:[0-9a-f]{16}|local)_[0-9a-f]{40}` and `sgp_[0-9a-f]{40}`. Real Sourcegraph tokens are sgp_-prefixed; that is also what GitHub push protection pattern-matches. The bare-hex false-positive class (git SHAs in keyword-bearing files) dies with it.
 - Both path allowlists **removed** — flake.nix and the audit script are scanned again.
 - `scripts/audit-push-protection-literals.sh`: the two pure-hex selftest components are now **runtime-derived from a fixed seed** (`sha256sum | cut -c1-40`) — zero tracked hex, selftest semantics unchanged (PASS).
 - Fixtures: `positive-hex-with-keyword.txt` → **renamed** `negative-hex-with-keyword.txt` (the keyword-armed bare-hex positive inverted to a negative under the override); new `positive-sourcegraph-local.txt` covers the override's `sgp_local_` alternative. Fixtures carry **no path allowlist** — they stay clean under the repo config on their own, and a real secret pasted into a fixture would still be caught.
 
 **Verification (all green):**
+
 1. Hook-exact staged-tree scan (`git checkout-index -a` + repo config): **no leaks**, 34.8 MB scanned.
 2. Injection tests: real-shaped `sgp_<40hex>` appended to flake.nix copy → **DETECTED**; same into the audit script copy → **DETECTED**.
 3. `nix build .#checks.x86_64-linux.gitleaks-coverage-selftest` → green (3 positives detected, 3 negatives clean).
@@ -53,6 +55,7 @@ Written under `[Unreleased]/Added` in go-taskqueue's CHANGELOG.md: (1) verify-ev
 **Method:** three scratch-repo tasks (project `tq-e2e`, repo `/tmp/tq-e2e-scratch` with the pool's bootstrap `.crushrc` block, deterministic failing `verify` in the payload) enqueued into the live DB (`$TQ_DB`), processed by the **pool's own worker** with the **deployed binary** (`go-taskqueue-0.3.0` at the pool process started 08:25, flake pin `1a4eb48`).
 
 **Results:**
+
 - The pre-deploy CV facts (seq 3835/3840/3842, old binary, 03:27–03:41) carry ~28 KB raw error dumps — the old format, as expected for their era.
 - The new facts: e2e-1 (seq 3903) error len **58**, detail `{"stage": "verify", "exit_code": 1, "tail": "(no output)"}`; e2e-3 (seq 3911) error len **722**, structured detail, **`(full verify output: <path>)` pointer present**.
 - **Evidence file:** e2e-3's forced 20,000-byte verify output landed complete at `~/.local/state/tq/logs/000001a0a9f5….verify-failure.log` (0600, inside the 168h sidecar retention sweeps) while the journal fact kept only the bounded excerpt. The pool.conf `log-dir` → `TQ_LOG_DIR` wiring works end-to-end.
@@ -72,9 +75,9 @@ Read-only probe of the same primitive the check uses (`git merge-base --is-ances
 
 ## b) PARTIALLY DONE
 
-- **b.1 — E2E "one real SystemNix task → verify-gate passes" (sixth-run item §8, first leg) — NOT executed.** No SystemNix `agent`-type task ran organically in the 30 h window (only `review` tasks at 06:30–06:36), and I did not enqueue one. I validated the *failure*-format leg fully (scratch repo force-fail); the *passing*-verify leg on a real SystemNix item remains open. Re-scoped into f.14.
+- **b.1 — E2E "one real SystemNix task → verify-gate passes" (sixth-run item §8, first leg) — NOT executed.** No SystemNix `agent`-type task ran organically in the 30 h window (only `review` tasks at 06:30–06:36), and I did not enqueue one. I validated the _failure_-format leg fully (scratch repo force-fail); the _passing_-verify leg on a real SystemNix item remains open. Re-scoped into f.14.
 - **b.2 — Row 565 (citation visibility surface):** cost half measured (a.7); the surface decision (journal fact vs harvest counter) + implementation untouched.
-- **b.3 — Rows 560/561 (buildcache/swapfile):** investigated + recommended, remediation owner-gated — intentionally not executed, but nothing is *fixed* yet.
+- **b.3 — Rows 560/561 (buildcache/swapfile):** investigated + recommended, remediation owner-gated — intentionally not executed, but nothing is _fixed_ yet.
 - **b.4 — Commit-message quality of the core fix:** `.gitleaks.toml` + audit script + fixtures carry full explanations as in-file comments, but the commit that carries them is the daemon's `15614064` "chore: auto-commit 5 changed file(s) (heuristic)" — future readers get the story only via `5c68dd2a`'s message + this report, not from the commit holding most of the diff.
 - **b.5 — Status report:** this document — written and committed, but the "wait for instructions" boundary means follow-ups (f-list) are unstarted by definition.
 
@@ -90,7 +93,7 @@ Read-only probe of the same primitive the check uses (`git merge-base --is-ances
 
 ## d) TOTALLY FUCKED UP
 
-1. **Burned two iterations on a fundamentally wrong fix design before pivoting.** After finding the walker-skip, I tried rescuing the allowlist approach with `condition = "AND"` — and generated a **malformed TOML** (my python insertion put `condition` lines into the wrong tables), got a misleading 16-leak result, and briefly misread it as "AND doesn't work". Worse, the AND design was wrong *on the merits*: the sourcegraph rule's secret group captures the bare hex even for real `sgp_` tokens, so an AND-allowlist on `^[0-9a-f]{40}$` would ALSO have hidden real tokens in flake.nix. The rule override (which I should have tested first, right after extracting the default rule from the binary) is the only correct shape. ~3 tool cycles wasted on the wrong branch.
+1. **Burned two iterations on a fundamentally wrong fix design before pivoting.** After finding the walker-skip, I tried rescuing the allowlist approach with `condition = "AND"` — and generated a **malformed TOML** (my python insertion put `condition` lines into the wrong tables), got a misleading 16-leak result, and briefly misread it as "AND doesn't work". Worse, the AND design was wrong _on the merits_: the sourcegraph rule's secret group captures the bare hex even for real `sgp_` tokens, so an AND-allowlist on `^[0-9a-f]{40}$` would ALSO have hidden real tokens in flake.nix. The rule override (which I should have tested first, right after extracting the default rule from the binary) is the only correct shape. ~3 tool cycles wasted on the wrong branch.
 2. **My first gitleaks injection test was itself a phantom** — 0 bytes scanned, which I initially treated as "my test setup is broken" and spent several debug rounds on (single-file scan? filename skip? config proven?). The break in the case: it was a REAL finding (the walker-skip) wearing a "broken test" costume. Cost: ~4 extra commands; value: the discovery. Net: acceptable, but the "verify the test measured anything" instinct (the gosec Files:0 lesson) should have fired in ONE step.
 3. **Invalid exit-code check on the swapfile reference sweep** — `grep … | head -3; echo "nix refs: $?"` captured `head`'s exit (always 0), nearly concluding "no references" from an invalid read. Caught it myself and redid the search properly (0 hits, confirmed via nix + fstab + /proc/swaps), but this is the exact `set -o pipefail` trap class this repo has names for.
 4. **Lost every worker-claim race in the E2E.** My ad-hoc `tq worker` processes never claimed a single task — the pool's 5-min tick won all three (tool-call latency between enqueue and worker-start exceeded the pool's claim window... or the pool claims continuously). Consequence: the "my worker with TQ_LOG_DIR" leg of the plan never actually executed. Silver lining: the pool claiming everything made the validation STRONGER (real service path, deployed binary), but the experiment didn't run as designed.
@@ -117,6 +120,7 @@ Read-only probe of the same primitive the check uses (`git merge-base --is-ances
 ## f) NEXT (prioritized, ~50)
 
 **Owner decisions (blocked on you, everything else can follow):**
+
 1. Delete `/mnt/buildcache/swapfile-emergency` (16 GiB, zero refs) — recommended yes.
 2. `cargo clean` on `/mnt/buildcache/rust/monitor365` in a quiet window (~100G reclaim, sccache-warmed rebuild) — recommended yes; needs a "builds are quiet" call only you can make.
 3. Row 566 verdict: shrink `FailureEvidence.Tail` to the 512-byte excerpt + evidence path (recommend yes) — then implement.

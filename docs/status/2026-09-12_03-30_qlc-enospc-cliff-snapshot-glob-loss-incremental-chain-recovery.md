@@ -22,9 +22,9 @@ The QLC root filesystem hit the ENOSPC cliff overnight (99.76% data chunks full,
 6. **Deep research verdict on restoring incremental send** (sources: digint/btrbk `doc/btrbk.conf.5.asciidoc`, `doc/FAQ.md`, `ChangeLog`, main source; kdave/btrfs-progs `Documentation/btrfs-receive.rst`, `cmds/send.c` — all read 2026-09-12):
    - Send parents are **source-side only** (candidate lists `sro/srn/sao/san/aro/arn` resolve on the sending fs; `btrfs send -p` resolves root-ids on the send mount).
    - Source↔target matching is **uuid-based** (`target.received_uuid == source.uuid`); a received-back copy gets a fresh uuid → cannot re-match.
-   - btrbk tolerates broken chains by design (last-resort name-scheme candidates, ChangeLog 0.23/0.25/0.32.6) — but only if *some* local snapshot exists. Zero locals ⇒ **exactly one full send is unavoidable and is the designed self-heal**.
+   - btrbk tolerates broken chains by design (last-resort name-scheme candidates, ChangeLog 0.23/0.25/0.32.6) — but only if _some_ local snapshot exists. Zero locals ⇒ **exactly one full send is unavoidable and is the designed self-heal**.
    - Receive-back additionally space-infeasible (pool snapshot holds pre-cleanup `@` ≈ 440G vs 296G free).
-   - `incremental strict` explicitly rejected (turns self-healing full send into *no backup at all*).
+   - `incremental strict` explicitly rejected (turns self-healing full send into _no backup at all_).
 7. **Live state tracking through recovery**: morning 710G/1MiB-unalloc → post-snapshot-delete 607G/97G free → post-user-cleanups+balance 403G used, 297G free, **68.5 GiB unallocated, health green, GC unblocked** (03:32).
 
 ## b) PARTIALLY DONE
@@ -55,20 +55,20 @@ The QLC root filesystem hit the ENOSPC cliff overnight (99.76% data chunks full,
 
 ## Self-Review (the literal questions)
 
-- **What did you forget?** The memory-maintenance duty (AGENTS.md/TODO_LIST), the attic precondition check, harvesting background jobs, verifying the post-cleanup health metric immediately (only caught at 03:32 by accident), and warning about glob-shaped destructive commands *before* they fired.
+- **What did you forget?** The memory-maintenance duty (AGENTS.md/TODO_LIST), the attic precondition check, harvesting background jobs, verifying the post-cleanup health metric immediately (only caught at 03:32 by accident), and warning about glob-shaped destructive commands _before_ they fired.
 - **What could you have done better?** Verification-first claims (source before statement — the uuid claim); explicit safety preambles on every destructive command I hand a user who is in copy-paste mode; closing the loop on every recommendation ("did it run? what state is the system in now?"); building the protection module when intent was obvious instead of ending two messages with "say the word."
 - **What could you still improve?** All of the above, encoded as process; plus the systemic gaps listed in (e).
 - **Did you lie?** No. Two claims were asserted without primary sources until challenged (uuid matching — then verified; clock skew — a hypothesis presented too strongly, then retracted). All numbers in this report are measured or journal-proven; estimates are labeled as such (~98G pinned was inferred from df delta; ~440G pool-snapshot size is arithmetic from measured deltas).
-- **Ghost systems / split brains?** None created. One ghost *recommendation* (the unbuilt rescue stack). Found two pre-existing doc drifts (listed in d.6) — fixed nowhere yet.
+- **Ghost systems / split brains?** None created. One ghost _recommendation_ (the unbuilt rescue stack). Found two pre-existing doc drifts (listed in d.6) — fixed nowhere yet.
 
 ## e) WHAT WE SHOULD IMPROVE
 
 1. **Claim discipline**: any sentence about external tool behavior gets a source or a hedge (the `verify-external-claims` gate exists — apply it at chat time, not on demand).
-2. **Destructive-command hygiene**: when handing users commands, add glob/negative warnings *proactively*; consider making the safe-delete wrapper the default interface before the next incident, not after.
+2. **Destructive-command hygiene**: when handing users commands, add glob/negative warnings _proactively_; consider making the safe-delete wrapper the default interface before the next incident, not after.
 3. **State tracking over recommendations**: every "run this" must be followed by "verify it ran" — the `.rescue/` confusion was a state-tracking failure, not a knowledge failure.
 4. **Alert-fatigue / phantom-alert audit**: AGENTS.md claims "Gatus alerts if the reserve goes missing" — the reserve has been absent for ~4 days. **Nobody noticed.** Either the check doesn't exist (doc lie / phantom green) or alerts are being ignored. Must be verified and fixed.
 5. **Threshold semantics**: `btrfs-health` criticality uses %-unalloc while gc-guard uses an absolute GiB floor — at 5GiB/722GiB (0.69%) the two disagree. Align (absolute floor won during small-unalloc regimes).
-6. **Memory protocol adherence**: findings this durable (gen semantics, uuid-chain doctrine, glob class) belong in AGENTS.md *during* the session, not "later."
+6. **Memory protocol adherence**: findings this durable (gen semantics, uuid-chain doctrine, glob class) belong in AGENTS.md _during_ the session, not "later."
 
 ## f) Next actions (session-derived, impact-sorted)
 
@@ -94,7 +94,7 @@ The QLC root filesystem hit the ENOSPC cliff overnight (99.76% data chunks full,
 20. Re-run the `/home/lars` du (abandoned job) for the space-composition record.
 21. Record the "chain break costs exactly one full send, never data" doctrine next to the btrbk config in AGENTS.md.
 22. Optional: revisit TODO_LIST line 107 (3d→7d local widening) now informed by this incident — pool depth argument got stronger.
-23. Standing items *noticed* this session (not caused): /data EIO repair (P0), btrbk-data marker-gate, flm :52626 corpse reboot, nix-daemon substituter-timeout abort exposure.
+23. Standing items _noticed_ this session (not caused): /data EIO repair (P0), btrbk-data marker-gate, flm :52626 corpse reboot, nix-daemon substituter-timeout abort exposure.
 
 (23 high-quality items — padding to 50 would be brainstorm filler; the rest belongs to ROADMAP via docs-health HARVEST.)
 
@@ -106,4 +106,4 @@ The QLC root filesystem hit the ENOSPC cliff overnight (99.76% data chunks full,
 
 ---
 
-*Point-in-time snapshot. Written by the session agent 2026-09-12 03:32 CEST. Auto-commit daemon will pick up this file.*
+_Point-in-time snapshot. Written by the session agent 2026-09-12 03:32 CEST. Auto-commit daemon will pick up this file._

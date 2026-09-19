@@ -15,13 +15,13 @@ lands.
 
 ## A. Local `git+file` pins (fix exists only as an unpushed local commit)
 
-| Input | Rev | Upstream URL to restore | Fix |
-|-------|-----|-------------------------|-----|
-| `go-nix-helpers` | `8c87f2654f546bcf22a302833cf0f5d2dfe30ea2` (worktree) | `github:LarsArtmann/go-nix-helpers?ref=master` | `/vN` pseudo-version normalization (`v0.0.0`→`vN.0.0`) |
-| `file-and-image-renamer` | `494c9b7a0a80bdda3a2cb31a4b8c8f2ee315f8f3` | `github:LarsArtmann/file-and-image-renamer?ref=master` | vendorHash refresh forced by the `/vN` fix |
-| `go-cqrs-lite` | `d84e4d6a42b2ed368a7d7110b716448d0c4093f9` (worktree) | `git+ssh://git@github.com/LarsArtmann/go-cqrs-lite?ref=master` | `cqrs-lint` vendorHash refresh |
-| `branching-flow` | `46000f38ab44a35692bcdb39d0d061501750dd74` | `github:LarsArtmann/branching-flow?ref=master` | `samber-linter` publicDep + vendorHash |
-| `art-dupl` | `9c370324dfcfaef23fa60079af0d9ebfcf84a489` | `github:LarsArtmann/art-dupl?ref=fork` | vendorHash refresh |
+| Input                    | Rev                                                   | Upstream URL to restore                                        | Fix                                                    |
+| ------------------------ | ----------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------ |
+| `go-nix-helpers`         | `8c87f2654f546bcf22a302833cf0f5d2dfe30ea2` (worktree) | `github:LarsArtmann/go-nix-helpers?ref=master`                 | `/vN` pseudo-version normalization (`v0.0.0`→`vN.0.0`) |
+| `file-and-image-renamer` | `494c9b7a0a80bdda3a2cb31a4b8c8f2ee315f8f3`            | `github:LarsArtmann/file-and-image-renamer?ref=master`         | vendorHash refresh forced by the `/vN` fix             |
+| `go-cqrs-lite`           | `d84e4d6a42b2ed368a7d7110b716448d0c4093f9` (worktree) | `git+ssh://git@github.com/LarsArtmann/go-cqrs-lite?ref=master` | `cqrs-lint` vendorHash refresh                         |
+| `branching-flow`         | `46000f38ab44a35692bcdb39d0d061501750dd74`            | `github:LarsArtmann/branching-flow?ref=master`                 | `samber-linter` publicDep + vendorHash                 |
+| `art-dupl`               | `9c370324dfcfaef23fa60079af0d9ebfcf84a489`            | `github:LarsArtmann/art-dupl?ref=fork`                         | vendorHash refresh                                     |
 
 Worktrees: `/home/lars/worktrees/go-nix-helpers-vnfix`,
 `/home/lars/worktrees/go-cqrs-lite-hashfix` (throwaway branches; the commits

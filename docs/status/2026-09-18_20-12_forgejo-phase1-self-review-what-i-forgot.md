@@ -16,12 +16,12 @@
 
 ## b) PARTIALLY DONE
 
-| Item | What remains | Why it stopped |
-| --- | --- | --- |
-| Reconcile `known-stale.txt` persistence | **NO fixture asserts the new persistence block** (sort-into-state-file + atomic mv) — the only code I added this session without a committed test | Scoped it out citing the parallel session's live validation of reconcile generally; that argument covers the OLD logic, not my NEW lines. 10-minute job, not done |
-| Flip unit full-config eval | I eval-verified ExecStart/%i and the sync-unit gating, never the flip/flip-check units' complete serviceConfig (EnvironmentFile resolution, harden merge) | Checked the interesting parts only; flake check covers module EVAL but I never eyeballed the rendered flip unit end-to-end |
-| Fixture mutation-negative | Both fixtures caught my own authoring bugs (they CAN fail), but no deliberate break-a-branch negative pass (repo discipline for lints; behavior checks are adjacent) | Time; noted as next-action |
-| Dead-mirror check vs pre-deploy §10 | The new metrics should be auto-loaned by the rendered-gatus diff; I reasoned it, never ran `pre-deploy-check.sh` §10 dry | No deploy was in scope; first real deploy confirms |
+| Item                                    | What remains                                                                                                                                                         | Why it stopped                                                                                                                                                    |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reconcile `known-stale.txt` persistence | **NO fixture asserts the new persistence block** (sort-into-state-file + atomic mv) — the only code I added this session without a committed test                    | Scoped it out citing the parallel session's live validation of reconcile generally; that argument covers the OLD logic, not my NEW lines. 10-minute job, not done |
+| Flip unit full-config eval              | I eval-verified ExecStart/%i and the sync-unit gating, never the flip/flip-check units' complete serviceConfig (EnvironmentFile resolution, harden merge)            | Checked the interesting parts only; flake check covers module EVAL but I never eyeballed the rendered flip unit end-to-end                                        |
+| Fixture mutation-negative               | Both fixtures caught my own authoring bugs (they CAN fail), but no deliberate break-a-branch negative pass (repo discipline for lints; behavior checks are adjacent) | Time; noted as next-action                                                                                                                                        |
+| Dead-mirror check vs pre-deploy §10     | The new metrics should be auto-loaned by the rendered-gatus diff; I reasoned it, never ran `pre-deploy-check.sh` §10 dry                                             | No deploy was in scope; first real deploy confirms                                                                                                                |
 
 ## c) NOT STARTED (owner-gated or later phases, by design)
 
@@ -32,14 +32,14 @@
 
 ## d) TOTALLY FUCKED UP (all caught in-session, all fixed before anything shipped)
 
-| What | Cost | Lesson |
-| --- | --- | --- |
-| Nearly built M07 on the plan's falsified heuristic | 30-second live-data check saved a permanently-blind monitoring layer | A detector's signal must be shown to SEPARATE healthy from broken on real data before implementation; "TouchMirror-proof" was a label, not a verification |
-| Capture var `out` shadowed nix's `$out` in BOTH fixture checks | ~40 min of misdirected sandbox-log archaeology (blamed line numbers, heredocs, stubs) | `out` is reserved in build scripts; and when a sandbox build fails inexplicably, EXTRACT the script (`nix derivation show` → `.derivations[].env.buildCommand`) and run it locally — I found that move 5 rounds too late |
-| sed PATH-injection dropped the opening quote | 1 build round + local repro | Quote-bearing sed matches need quote-bearing replacements; `bash -n` the injected copy immediately |
-| Two sloppy edit payloads (one garbage new_string, two stale old_strings after daemon mid-edit commits) | 2 wasted rounds | Re-read after EVERY daemon commit that races you; the file-changed guard exists for a reason |
-| `printf ''`, `/usr/bin/env` shebangs, btrfs stub arg-index — three fixture-infra bugs | 3 build rounds | Stub bugs look like script bugs; check the stub's view of the call shape first |
-| Corrupt-scenario tamper would have been healed by the delta rsync | Caught at design time | Reaching a verification branch requires defeating the thing that normally makes verification trivially true (size+mtime-preserving tamper) |
+| What                                                                                                   | Cost                                                                                  | Lesson                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Nearly built M07 on the plan's falsified heuristic                                                     | 30-second live-data check saved a permanently-blind monitoring layer                  | A detector's signal must be shown to SEPARATE healthy from broken on real data before implementation; "TouchMirror-proof" was a label, not a verification                                                                |
+| Capture var `out` shadowed nix's `$out` in BOTH fixture checks                                         | ~40 min of misdirected sandbox-log archaeology (blamed line numbers, heredocs, stubs) | `out` is reserved in build scripts; and when a sandbox build fails inexplicably, EXTRACT the script (`nix derivation show` → `.derivations[].env.buildCommand`) and run it locally — I found that move 5 rounds too late |
+| sed PATH-injection dropped the opening quote                                                           | 1 build round + local repro                                                           | Quote-bearing sed matches need quote-bearing replacements; `bash -n` the injected copy immediately                                                                                                                       |
+| Two sloppy edit payloads (one garbage new_string, two stale old_strings after daemon mid-edit commits) | 2 wasted rounds                                                                       | Re-read after EVERY daemon commit that races you; the file-changed guard exists for a reason                                                                                                                             |
+| `printf ''`, `/usr/bin/env` shebangs, btrfs stub arg-index — three fixture-infra bugs                  | 3 build rounds                                                                        | Stub bugs look like script bugs; check the stub's view of the call shape first                                                                                                                                           |
+| Corrupt-scenario tamper would have been healed by the delta rsync                                      | Caught at design time                                                                 | Reaching a verification branch requires defeating the thing that normally makes verification trivially true (size+mtime-preserving tamper)                                                                               |
 
 ## e) WHAT WE SHOULD IMPROVE (durable)
 
@@ -51,6 +51,7 @@
 ## f) Up to 50 next things (priority order; owner-gated marked ★)
 
 **Gates & owner decisions**
+
 1. ★ G1 storage migration window + execution (migrate-forgejo-subvol.sh header, 4 steps)
 2. ★ Answer Q2: GitHub-issues policy post-flip (freeze vs one-way import) — gates M06 usage
 3. ★ Answer Q3: off-LAN stance (re-open or confirm LAN-only)
@@ -90,4 +91,3 @@
 ---
 
 **Evidence trail:** the 20-10 report's evidence section stands (fixture PASS lines, gating evals, falsification jq+source citations, calendar proof). Commit topology: code + docs carried by daemon batches `8a999bcb..566649e0`, my pathspec commit `7044e595`; tree clean of my files at close.
-

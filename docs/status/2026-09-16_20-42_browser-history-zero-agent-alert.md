@@ -10,17 +10,17 @@
 
 "Server up" (the existing `/health` check) is NOT "data flowing". A dead agent timer, a crash-looped agent, or ingest auth rejecting a revoked token previously alerted NOWHERE. This session added:
 
-| Piece | What it does |
-| --- | --- |
+| Piece                                                                                          | What it does                                                                                                                                                                                                                                                                                         |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `browser-history-agent-metrics` unit + timer (in `modules/nixos/services/browser-history.nix`) | Root textfile collector, 5-min timer, reads `agent_tokens.last_used_at` from the server SQLite (`/var/lib/browser-history/data.db`) — the table the server's ingest auth middleware touches on EVERY authenticated `/ingest` batch (upstream `agent_token_store.go`, synchronous single-row UPDATE). |
-| Metrics | `browser_history_agents_active` (1 = any token fresh within the window), `browser_history_agent_tokens_total`, `browser_history_agent_last_ingest_age_seconds` (-1 = never), `browser_history_agent_scrape_errors`. |
-| Fail-closed semantics | On any scrape failure the `agents_active` metric is OMITTED (absence = check RED), plus explicit `scrape_errors 0` condition — a frozen/failed collector cannot phantom-green. |
-| Gatus check | "Browser History Agent Data" via the integration registry `checks` list (owning module, per the 2026-09-15 migration), probing node-exporter :9100/metrics with anchored `\n` pats; alerts on zero fresh agents. |
-| Module options | `services.browser-history.agentActivity.{enable (default true), maxAgeMinutes (default 60), interval (default 5min)}` — gated on the server being enabled. |
-| deploy.sh | Post-switch fresh-run block (pool-smart pattern) so the textfile exists immediately after every deploy. |
-| post-deploy-check.sh | New smoke block: textfile present + `scrape_errors 0` + active metric parseable, else FAIL with diagnosis pointers. |
-| VM test | `tests/test-browser-history.nix` steps 8–10: fresh ingest → `active 1`; 2h-stale ingest → `active 0`; DB removed → `scrape_errors 1` + active metric ABSENT; recovery after restore. |
-| Docs | AGENTS.md Browser History bullet (incl. the env-token blind-spot caveat) + CHANGELOG entry. |
+| Metrics                                                                                        | `browser_history_agents_active` (1 = any token fresh within the window), `browser_history_agent_tokens_total`, `browser_history_agent_last_ingest_age_seconds` (-1 = never), `browser_history_agent_scrape_errors`.                                                                                  |
+| Fail-closed semantics                                                                          | On any scrape failure the `agents_active` metric is OMITTED (absence = check RED), plus explicit `scrape_errors 0` condition — a frozen/failed collector cannot phantom-green.                                                                                                                       |
+| Gatus check                                                                                    | "Browser History Agent Data" via the integration registry `checks` list (owning module, per the 2026-09-15 migration), probing node-exporter :9100/metrics with anchored `\n` pats; alerts on zero fresh agents.                                                                                     |
+| Module options                                                                                 | `services.browser-history.agentActivity.{enable (default true), maxAgeMinutes (default 60), interval (default 5min)}` — gated on the server being enabled.                                                                                                                                           |
+| deploy.sh                                                                                      | Post-switch fresh-run block (pool-smart pattern) so the textfile exists immediately after every deploy.                                                                                                                                                                                              |
+| post-deploy-check.sh                                                                           | New smoke block: textfile present + `scrape_errors 0` + active metric parseable, else FAIL with diagnosis pointers.                                                                                                                                                                                  |
+| VM test                                                                                        | `tests/test-browser-history.nix` steps 8–10: fresh ingest → `active 1`; 2h-stale ingest → `active 0`; DB removed → `scrape_errors 1` + active metric ABSENT; recovery after restore.                                                                                                                 |
+| Docs                                                                                           | AGENTS.md Browser History bullet (incl. the env-token blind-spot caveat) + CHANGELOG entry.                                                                                                                                                                                                          |
 
 Key design decision: `last_used_at` is set by the SERVER (`time.Now()` at token resolution), not the agent — no client-clock skew; and it updates on every authenticated ingest, making it exactly the "an agent sent data" signal. Deliberately NOT `visits.last_visit_time` (that is when the USER browsed — a vacation would false-alarm a healthy agent).
 
@@ -72,6 +72,7 @@ Documented caveat: agents on the legacy sops env-token path NEVER touch `last_us
 ## f) NEXT TASKS (prioritized, session-scoped)
 
 **Deploy & live validation**
+
 1. `nix run .#deploy` when the tree settles (coordinates with the parallel session's dirty files — see Question 1).
 2. Post-deploy: verify `/var/lib/prometheus-node-exporter/textfile_collectors/browser-history-agent.prom` exists with `browser_history_agent_scrape_errors 0`.
 3. Post-deploy: curl node-exporter (`--compressed`!) and confirm `browser_history_agents_active 1` live.
@@ -121,19 +122,19 @@ Documented caveat: agents on the legacy sops env-token path NEVER touch `last_us
 
 ## Verification evidence table
 
-| Claim | Command | Result |
-| --- | --- | --- |
-| Eval + all guards pass | `nix flake check --no-build` (×2) | all checks passed |
-| Pattern lint | `nix build .#checks.x86_64-linux.gatus-pattern-lint` | built green |
-| Collector caps rendered | `nix eval …CapabilityBoundingSet` | `CAP_DAC_READ_SEARCH CAP_FOWNER` |
-| Both checks render | `nix eval --json …gatus.settings.endpoints` | `Browser History` + `Browser History Agent Data` (:9100) |
-| Real newlines in pats | python `chr(10) in condition` | True; literal `\n` False |
-| Alert text renders | same eval | 60min window interpolated |
-| Timer renders | `nix eval …timers.browser-history-agent-metrics.timerConfig` | `OnBootSec 2min`, `OnUnitActiveSec 5min` |
-| Script syntax | rendered script + `bash -n` | SYNTAX OK |
-| VM behavior | `nix build .#checks.x86_64-linux.browser-history` | PASS (fresh→1, stale→0, no-DB→fail-closed) |
-| Shell scripts | `bash -n` deploy.sh / post-deploy-check.sh | OK |
-| Committed state | `git show HEAD:<file> \| grep -c` | module 10, test 4, deploy.sh 3 markers in HEAD |
+| Claim                   | Command                                                      | Result                                                   |
+| ----------------------- | ------------------------------------------------------------ | -------------------------------------------------------- |
+| Eval + all guards pass  | `nix flake check --no-build` (×2)                            | all checks passed                                        |
+| Pattern lint            | `nix build .#checks.x86_64-linux.gatus-pattern-lint`         | built green                                              |
+| Collector caps rendered | `nix eval …CapabilityBoundingSet`                            | `CAP_DAC_READ_SEARCH CAP_FOWNER`                         |
+| Both checks render      | `nix eval --json …gatus.settings.endpoints`                  | `Browser History` + `Browser History Agent Data` (:9100) |
+| Real newlines in pats   | python `chr(10) in condition`                                | True; literal `\n` False                                 |
+| Alert text renders      | same eval                                                    | 60min window interpolated                                |
+| Timer renders           | `nix eval …timers.browser-history-agent-metrics.timerConfig` | `OnBootSec 2min`, `OnUnitActiveSec 5min`                 |
+| Script syntax           | rendered script + `bash -n`                                  | SYNTAX OK                                                |
+| VM behavior             | `nix build .#checks.x86_64-linux.browser-history`            | PASS (fresh→1, stale→0, no-DB→fail-closed)               |
+| Shell scripts           | `bash -n` deploy.sh / post-deploy-check.sh                   | OK                                                       |
+| Committed state         | `git show HEAD:<file> \| grep -c`                            | module 10, test 4, deploy.sh 3 markers in HEAD           |
 
 ## Files touched this session
 

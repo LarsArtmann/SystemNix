@@ -90,4 +90,4 @@
 
 ---
 
-*Companion artifacts this session: `docs/architecture-understanding/2026-09-14_19-56_service-orientation.html` (review), TODO_LIST.md "P2: Service-integration registry migration" (living follow-ups — HARVEST already applied inline), AGENTS.md (procedure + gotcha). Format note: user requested .md explicitly (skill default is HTML).*
+_Companion artifacts this session: `docs/architecture-understanding/2026-09-14_19-56_service-orientation.html` (review), TODO_LIST.md "P2: Service-integration registry migration" (living follow-ups — HARVEST already applied inline), AGENTS.md (procedure + gotcha). Format note: user requested .md explicitly (skill default is HTML)._

@@ -6,16 +6,16 @@ native OIDC via Pocket ID. Wraps the nixpkgs `services.miniflux` module
 
 ## Architecture
 
-| Piece      | Value                                                              |
-| ---------- | ------------------------------------------------------------------ |
-| UI/API     | `https://rss.home.lan` (plain Caddy `reverse_proxy` — NEVER protectedVHost, it has native OIDC) |
-| Listen     | `127.0.0.1:8101` (`lib/ports.nix` `miniflux`)                       |
-| Database   | local PostgreSQL `miniflux` (peer auth, `createDatabaseLocally`)    |
-| Service user | static system user `miniflux` (wrapper overrides upstream's DynamicUser — see below) |
-| Daily auth | Pocket ID OIDC — the `miniflux-oidc-setup` provisioner links the account declaratively |
-| Break-glass| local admin `lars` — password in sops (below)                        |
-| Monitoring | Gatus "Miniflux" (`/healthcheck` = DB round-trip) + "Miniflux Login Renders"; `miniflux` in system-health `monitoredServices` |
-| Backup     | `miniflux-backup.timer` 02:45 → `pg_dump -Fc` → `/mnt/pool/backups/miniflux/` (14d retention, backup-coordination, maxAge 25h) |
+| Piece        | Value                                                                                                                          |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| UI/API       | `https://rss.home.lan` (plain Caddy `reverse_proxy` — NEVER protectedVHost, it has native OIDC)                                |
+| Listen       | `127.0.0.1:8101` (`lib/ports.nix` `miniflux`)                                                                                  |
+| Database     | local PostgreSQL `miniflux` (peer auth, `createDatabaseLocally`)                                                               |
+| Service user | static system user `miniflux` (wrapper overrides upstream's DynamicUser — see below)                                           |
+| Daily auth   | Pocket ID OIDC — the `miniflux-oidc-setup` provisioner links the account declaratively                                         |
+| Break-glass  | local admin `lars` — password in sops (below)                                                                                  |
+| Monitoring   | Gatus "Miniflux" (`/healthcheck` = DB round-trip) + "Miniflux Login Renders"; `miniflux` in system-health `monitoredServices`  |
+| Backup       | `miniflux-backup.timer` 02:45 → `pg_dump -Fc` → `/mnt/pool/backups/miniflux/` (14d retention, backup-coordination, maxAge 25h) |
 
 The client secret travels WITHOUT a bridge oneshot: the Pocket ID provisioner
 writes `/var/lib/pocket-id/client-secrets/miniflux`, the unit binds it via

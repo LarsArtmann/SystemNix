@@ -8,14 +8,14 @@
 
 ## Window inventory
 
-| # | Task (dispatch ID) | Subject | Closing commit | Verdict |
-|---|--------------------|---------|----------------|---------|
-| 1 | `000001a0927c6b70…` | Hermes v0.21.0 cron scheduler ERRORS every few minutes | `9502c138` | Fix verified + queue footer landed; **fix NOT yet live** |
-| 2 | `000001a092aa3219…` | Paperless `PAPERLESS_EMAIL_HOST` missing in smoke — "real config bug" | `8f3a21c7` | **NO-BUG — premise falsified**; stale-harvest phantom closed with evidence |
-| 3 | `000001a092ca3d30…` | Corrupt GGUF (`gemma-4-31b-…Q8_0.gguf`) blocking Jan imports | `28261b3b` | Resolved (trashed 2026-09-12) + AGENTS ghost instruction repaired |
-| 4 | `000001a0935cb937…` | InboxClean `main` OAuth re-consent (Gmail sync dead since 09-04) | `8605c6bd` | Correctly BLOCKED (human-only); new contradiction documented |
-| 5 | `000001a0936f08bb…` | Miniflux SSO-only flip | `cb885959` | Correctly NOT executed — go-live gate unsatisfied; BLOCKED (human-only) |
-| 6 | `000001a093815838…` | Paperless statement decrypt go-live + dupes + retro-repair | `8d7c1ede` (+ daemon `3963d0ae`) | Verification complete; **runbook defect #3 found + fixed**; go-live still user-gated |
+| # | Task (dispatch ID)  | Subject                                                               | Closing commit                   | Verdict                                                                              |
+| - | ------------------- | --------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------ |
+| 1 | `000001a0927c6b70…` | Hermes v0.21.0 cron scheduler ERRORS every few minutes                | `9502c138`                       | Fix verified + queue footer landed; **fix NOT yet live**                             |
+| 2 | `000001a092aa3219…` | Paperless `PAPERLESS_EMAIL_HOST` missing in smoke — "real config bug" | `8f3a21c7`                       | **NO-BUG — premise falsified**; stale-harvest phantom closed with evidence           |
+| 3 | `000001a092ca3d30…` | Corrupt GGUF (`gemma-4-31b-…Q8_0.gguf`) blocking Jan imports          | `28261b3b`                       | Resolved (trashed 2026-09-12) + AGENTS ghost instruction repaired                    |
+| 4 | `000001a0935cb937…` | InboxClean `main` OAuth re-consent (Gmail sync dead since 09-04)      | `8605c6bd`                       | Correctly BLOCKED (human-only); new contradiction documented                         |
+| 5 | `000001a0936f08bb…` | Miniflux SSO-only flip                                                | `cb885959`                       | Correctly NOT executed — go-live gate unsatisfied; BLOCKED (human-only)              |
+| 6 | `000001a093815838…` | Paperless statement decrypt go-live + dupes + retro-repair            | `8d7c1ede` (+ daemon `3963d0ae`) | Verification complete; **runbook defect #3 found + fixed**; go-live still user-gated |
 
 ---
 
@@ -92,4 +92,4 @@ Nothing in this window destroyed work or broke gates — all six runs are docs-o
 - **Archived (`git mv` → `docs/status/archived/`):** four window reports whose work is fully done and which nothing references: `2026-09-12_03-54` (GGUF), `04-13` (InboxClean), `04-37` (Miniflux self-audit), `06-20` (decrypt self-review). `00-42` and `00-59` stay in `docs/status/` — they are cited by live reports (`00-59` ← `2026-09-13_00-19`; `00-42` ← `00-59`).
 - **Living docs reconciled:** CHANGELOG gained entries for the four verifiably-shipped-but-undocumented features found in passing (Miniflux service, Hermes restart-safe cron dispatch, pool SMART metrics + dashboard overhaul, btrfs-rescue tier). FEATURES gained Miniflux / pool-SMART / btrfs-rescue rows, the Hermes cron-fix note, a corrected FastFlowLM entry (the "retry gated on a 7.2.2 reboot" premise was falsified 2026-09-11 — amdxdna is byte-identical v7.2→v7.2.3), and a fresh `Updated:` stamp. AGENTS.md gained the live-correction on the InboxClean `work`-account 7-day-bomb prediction (falsified 2026-09-12: `work` alive 14 days past its recorded grant — unresolved which hypothesis holds). TODO_LIST banner refreshed; 43 items appended.
 
-*Point-in-time snapshot — 2026-09-13 01:45 CEST. Report per repo task-queue convention; nothing pushed.*
+_Point-in-time snapshot — 2026-09-13 01:45 CEST. Report per repo task-queue convention; nothing pushed._

@@ -10,18 +10,18 @@ record where the evidence contradicted it. No deploys, no config changes this se
 
 ## Situation snapshot (verified 19:25–19:45)
 
-| Item | State | Evidence |
-| --- | --- | --- |
-| Anchor triple | current-system = profile = boot default = **system-764** (`50z91iw1…`), kernel 7.2.3 | readlink ×2 + user's pre-reboot-check (14 PASS) |
-| Reboot | NOT done — up 2d5h (boot ≈ Sep 7 14:10), booted = `p0ccbqj5…` still gc-rooted | `uptime`, readlink |
-| Rollback ladder | pins 761 (`zkaacn2a…`) + 760 (`g9ghy625…`) intact; menu 5/5 closure-verified | ls gcroots + paste_2 |
-| `/nix` mount | Samsung p2 (`/dev/nvme1n1p2[/nix]`) — flip holding | findmnt |
-| flm corpse | Z+X pair pid 443303 (`flm-real` defunct), :52626 LISTEN Recv-Q **502**; backend start-limit-hit, NRestarts=3 | ps/ss/journalctl |
-| Public socket :52625 | UP (re-armed by memory guard) → doomed-start churn continues between deploys | ss + journal 18:44:55 |
-| llama :8848/:8849 | processes alive ~1h, ports bound, `/health` **503** — wedged MID-LOAD (flaky-driver class), no D-state | ps/ss/python probe |
-| Failed units (3) | fastflowlm (corpse), inboxclean-sync (user OAuth), service-health-check (reporter) | sudo-wrapper `--failed` |
-| Git tree | clean before and after my 3 doc edits | git status |
-| Load average | 17.36 (parallel agent sessions; cause not investigated this session) | uptime |
+| Item                 | State                                                                                                        | Evidence                                        |
+| -------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| Anchor triple        | current-system = profile = boot default = **system-764** (`50z91iw1…`), kernel 7.2.3                         | readlink ×2 + user's pre-reboot-check (14 PASS) |
+| Reboot               | NOT done — up 2d5h (boot ≈ Sep 7 14:10), booted = `p0ccbqj5…` still gc-rooted                                | `uptime`, readlink                              |
+| Rollback ladder      | pins 761 (`zkaacn2a…`) + 760 (`g9ghy625…`) intact; menu 5/5 closure-verified                                 | ls gcroots + paste_2                            |
+| `/nix` mount         | Samsung p2 (`/dev/nvme1n1p2[/nix]`) — flip holding                                                           | findmnt                                         |
+| flm corpse           | Z+X pair pid 443303 (`flm-real` defunct), :52626 LISTEN Recv-Q **502**; backend start-limit-hit, NRestarts=3 | ps/ss/journalctl                                |
+| Public socket :52625 | UP (re-armed by memory guard) → doomed-start churn continues between deploys                                 | ss + journal 18:44:55                           |
+| llama :8848/:8849    | processes alive ~1h, ports bound, `/health` **503** — wedged MID-LOAD (flaky-driver class), no D-state       | ps/ss/python probe                              |
+| Failed units (3)     | fastflowlm (corpse), inboxclean-sync (user OAuth), service-health-check (reporter)                           | sudo-wrapper `--failed`                         |
+| Git tree             | clean before and after my 3 doc edits                                                                        | git status                                      |
+| Load average         | 17.36 (parallel agent sessions; cause not investigated this session)                                         | uptime                                          |
 
 ---
 
@@ -145,6 +145,7 @@ record where the evidence contradicted it. No deploys, no config changes this se
 ## f) NEXT — up to 50, ordered
 
 **Core, reboot-gated (do first):**
+
 1. Await user reboot (SAFE verdict at gen 764).
 2. Post-boot: verify `readlink /run/current-system` = `50z91iw1…`, `/nix` source =
    Samsung p2, `uname -r` = 7.2.3, booted gcroot flipped off `p0ccbqj5`.
@@ -160,16 +161,16 @@ record where the evidence contradicted it. No deploys, no config changes this se
 
 **Robustness / monitoring (post-soak P1):**
 9. Corpse-aware memory-guard restore (skip on recent EADDRINUSE) — upstream edit in
-   memory-emergency-guard.nix + VM-test negative case.
+memory-emergency-guard.nix + VM-test negative case.
 10. llama mid-load wedge tripwire (503 >15 min) in Gatus or textfile collector.
 11. pre-reboot-check §10: gcroots/profiles resolution; smoke-baseline age-stamp;
-    changed-unit ∩ failed-unit exit-4 predictor. **(DONE 2026-09-10 — see §e5.)**
+changed-unit ∩ failed-unit exit-4 predictor. **(DONE 2026-09-10 — see §e5.)**
 12. `nix diff-closures 8zzq0b1i… pgvbfp20…` — what the Sep-8 unanchored era actually
-    changed (06-02 §f).
+changed (06-02 §f).
 13. Sweep journal for ALL unexplained fastflowlm.socket "Listening on" events
-    (completeness proof for the two-re-armer model).
+(completeness proof for the two-re-armer model).
 14. Verify Gatus/Discord fired for tonight's llama+flm reds (monitoring trust
-    check).
+check).
 15. hermes health + session-drain review after the 18:35 restart.
 
 **Samsung phase-1 tail (from TODO_LIST):**
@@ -182,30 +183,30 @@ record where the evidence contradicted it. No deploys, no config changes this se
 
 **User steps (browser/app only):**
 22. Wise SCA approval (OTT runbook `docs/services/bank-sync-sca.md`) → restart
-    bank-sync → remove token file.
+bank-sync → remove token file.
 23. InboxClean main re-auth (`inboxclean auth` runbook; consent screen is In-
-    production now).
+production now).
 24. Resend: verify `larsartmann.cloud` domain (mail relay go-live pending since
-    2026-09-06; journal `status=bounced` is the signal).
+2026-09-06; journal `status=bounced` is the signal).
 25. tq pool cutover decision (manual `:8090` pool vs systemd pool — double-run
-    guard currently WARNs every deploy).
+guard currently WARNs every deploy).
 26. Git-history purge push decision (rotation done; push held indefinitely — flip?).
 
 **Upstream repos (LarsArtmann, fix at source):**
 27. InboxClean: Paperless "demote auto tag gmail" PATCH rejected
-    (`rejection:paperless.client_error`) — repo fix candidate (noticed in baseline).
+(`rejection:paperless.client_error`) — repo fix candidate (noticed in baseline).
 28. dnsblockd: push the health-cache fix (working tree 2026-09-06, unpushed) +
-    flake bump; wire `scripts/dnsblockd-goroutine-dump.sh` into the wedge runbook.
+flake bump; wire `scripts/dnsblockd-goroutine-dump.sh` into the wedge runbook.
 29. hermes/PMA/overview/papdashboard OTel span gaps → flip `wiring = "upstream"` →
-    enforced as instrumentation lands (signoz_traces_missing 3).
+enforced as instrumentation lands (signoz_traces_missing 3).
 
 **Known long-tail (tracked, not this session's work):**
 30. /data EIO corruption repair (P0 — btrbk-data sends abort nightly; oom-kill'd
-    since 2026-08-20).
+since 2026-08-20).
 31. btrbk-data oom-kill containment (20.6G page-cache peak in cgroup).
 32. monitor365 enable decision (private crate: publish/public/vendor — owner call).
 33. `pipeline.evaluation.min_day_rate` CV setting (owner value decision, CV repo
-    proposed 600).
+proposed 600).
 34. ClickHouse telemetry backup coverage (btrbk excludes XFS by design).
 35. ClickHouse zombie read-only log tables: human DROP decision (~10 GiB).
 36. Paperless old SQLite export recovery decision (`/mnt/pool/.../export`).
@@ -213,11 +214,11 @@ record where the evidence contradicted it. No deploys, no config changes this se
 38. ActivityWatch 13GB pre-decimation backup deletion after settling.
 39. Secret-purge: GitHub support GC request (if push ever happens).
 40. pre-reboot-check: fold "failed units that WILL exit-4" advisory into a hard
-    gate once predictor (item 11) exists. **(Predictor shipped 2026-09-10; hard-gate
-    fold deliberately DECLINED — exit-4 is a deploy concern that deploy.sh
-    reset-failed already recovers from, not a boot-safety one; stays advisory.)**
+gate once predictor (item 11) exists. **(Predictor shipped 2026-09-10; hard-gate
+fold deliberately DECLINED — exit-4 is a deploy concern that deploy.sh
+reset-failed already recovers from, not a boot-safety one; stays advisory.)**
 
-*(40 items — remaining backlog tracked in TODO_LIST + 06-02 self-review §f.)*
+_(40 items — remaining backlog tracked in TODO_LIST + 06-02 self-review §f.)_
 
 ## g) QUESTIONS (cannot figure out myself)
 
@@ -236,4 +237,4 @@ record where the evidence contradicted it. No deploys, no config changes this se
 on the user. Everything I could verify pre-reboot is verified; the record now
 correctly names both socket re-armers; nothing this session made anything worse.
 
-*Point-in-time snapshot — re-verify before acting on it (the reboot rewrites most of it).*
+_Point-in-time snapshot — re-verify before acting on it (the reboot rewrites most of it)._

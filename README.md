@@ -81,44 +81,44 @@ SystemNix/
 
 All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (133 health checks) + SigNoz (31 alert rules, 6 dashboards):
 
-| Service             | Port             | URL                  | Description                                                                                         |
-| ------------------- | ---------------- | -------------------- | --------------------------------------------------------------------------------------------------- |
-| **Caddy**           | 443              | `*.home.lan`         | Reverse proxy with sops-managed TLS certs                                                           |
-| **Immich**          | 2283             | `immich.home.lan`    | Self-hosted Google Photos alternative (PostgreSQL + Redis + ML)                                     |
-| **Forgejo**         | 3000             | `forgejo.home.lan`   | Self-hosted Git forge with GitHub mirror sync & Actions                                             |
-| **SigNoz**          | 4317, 4318, 8080 | `signoz.home.lan`    | Observability: traces, metrics, logs + node_exporter + cAdvisor, 6 dashboards                       |
-| **Pocket ID**       | 1411             | `auth.home.lan`      | Passkey-based SSO/IDP + oauth2-proxy forward auth                                                   |
-| **Hermes**          | —                | —                    | AI agent gateway (Discord bot, cron scheduler, multi-provider LLM)                                  |
-| **Twenty CRM**      | 3200             | `crm.home.lan`       | Self-hosted CRM (Docker Compose: PostgreSQL + Redis)                                                |
-| **Paperless-ngx**   | 2892             | `paperless.home.lan` | Document management + OCR + AI tagging (PG backend, Tika/Gotenberg, NPU LLM)                        |
+| Service             | Port             | URL                  | Description                                                                                                      |
+| ------------------- | ---------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| **Caddy**           | 443              | `*.home.lan`         | Reverse proxy with sops-managed TLS certs                                                                        |
+| **Immich**          | 2283             | `immich.home.lan`    | Self-hosted Google Photos alternative (PostgreSQL + Redis + ML)                                                  |
+| **Forgejo**         | 3000             | `forgejo.home.lan`   | Self-hosted Git forge with GitHub mirror sync & Actions                                                          |
+| **SigNoz**          | 4317, 4318, 8080 | `signoz.home.lan`    | Observability: traces, metrics, logs + node_exporter + cAdvisor, 6 dashboards                                    |
+| **Pocket ID**       | 1411             | `auth.home.lan`      | Passkey-based SSO/IDP + oauth2-proxy forward auth                                                                |
+| **Hermes**          | —                | —                    | AI agent gateway (Discord bot, cron scheduler, multi-provider LLM)                                               |
+| **Twenty CRM**      | 3200             | `crm.home.lan`       | Self-hosted CRM (Docker Compose: PostgreSQL + Redis)                                                             |
+| **Paperless-ngx**   | 2892             | `paperless.home.lan` | Document management + OCR + AI tagging (PG backend, Tika/Gotenberg, NPU LLM)                                     |
 | **PapDashboard**    | 8088             | `dash.home.lan`      | Alert lifecycle hub + NPU insight enricher + services dashboard (ingests Gatus; old `alerts.home.lan` redirects) |
-| **Browser History** | 8087             | `history.home.lan`   | Cross-device browser history (WebAuthn + Pocket ID OIDC)                                            |
-| **InboxClean**      | 8099             | `inbox.home.lan`     | Gmail AI assistant (event-sourced, multi-account, HTMX dashboard)                                   |
-| **CV server**       | 8098             | `cv.home.lan`        | Resume/CV generator (typst PDF, pipeline scanner + LLM evaluation)                                  |
-| **Attic**           | 8200             | `cache.home.lan`     | Nix binary cache (pool-backed)                                                                      |
-| **Voice Agents**    | 7880             | —                    | AI voice agents (Docker: LiveKit + Whisper ASR) — currently disabled                                |
-| **TaskChampion**    | 10222            | `tasks.home.lan`     | Taskwarrior sync server (cross-platform + Android)                                                  |
-| **Manifest**        | 2099             | `manifest.home.lan`  | Smart LLM router for AI agents (cost optimization)                                                  |
-| **Overview**        | 8083             | —                    | Local project dashboard (git repo discovery, stats, activity)                                       |
-| **Dozzle**          | 8084             | `logs.home.lan`      | Real-time Docker container log viewer                                                               |
-| **Mail Relay**      | 25               | —                    | Central outbound SMTP null client (loopback-only, relays via Resend; Paperless/Forgejo/system mail) |
-| **Miniflux**        | 8101             | `rss.home.lan`       | Minimalist RSS reader (Go + local PostgreSQL, native OIDC via Pocket ID)                            |
-| **bank-sync**       | 8097             | `banksync.home.lan`  | Wise bank-sync dashboard (Layer 2 protected; disabled until sops go-live)                           |
-| **File Renamer**    | 8086             | `renamer.home.lan`   | AI file-and-image renamer service                                                                   |
-| **Monitor365**      | 3001             | `monitor.home.lan`   | Device monitoring agent + server dashboard — disabled (private wireguard-collector dep)             |
-| **OpenSEO**         | 3002             | `seo.home.lan`       | Self-hosted SEO suite (rank tracking, keyword research)                                             |
-| **Crush Daily**     | 8081             | `daily.home.lan`     | AI-powered development insights from Crush databases                                                |
-| **PMA**             | —                | —                    | Projects Management Automation (AI commit messages, repo discovery)                                 |
-| **Dual-WAN**        | —                | —                    | MPTCP dual-WAN with route health monitoring                                                         |
-| **Gatus**           | 9110             | `status.home.lan`    | Health check monitoring with Discord alerts                                                         |
-| **DNS Blocker**     | 53, 8050         | —                    | dnsblockd (embedded sdns resolver: DNSSEC, DoT, DoH, caching), 23 blocklists, 2.5M+ domains blocked |
-| **Mullvad VPN**     | —                | —                    | WireGuard VPN — currently disabled (talpid_dns corrupted resolv.conf)                               |
-| **DiscordSync**     | —                | —                    | Continuous Discord channel backup bot                                                               |
-| **SearXNG**         | 8889             | `search.home.lan`    | Privacy metasearch engine (70+ engines, no tracking, POST-only, DuckDuckGo icons)                   |
-| **FastFlowLM**      | 52625            | —                    | NPU LLM server (Qwen3.6 MoE, socket-activated, OpenAI-compatible)                                   |
-| **llama-rag**       | 8848, 8849       | —                    | GPU embeddings (bge-m3) + reranking (bge-reranker-v2-m3) for RAG                                    |
-| **systemd-graph**   | 8847             | `graph.home.lan`     | Live systemd dependency graph (LAN-only)                                                            |
-| **timer-monitor**   | —                | `timers.home.lan`    | Read-only systemd services+timers audit (LAN-only)                                                  |
+| **Browser History** | 8087             | `history.home.lan`   | Cross-device browser history (WebAuthn + Pocket ID OIDC)                                                         |
+| **InboxClean**      | 8099             | `inbox.home.lan`     | Gmail AI assistant (event-sourced, multi-account, HTMX dashboard)                                                |
+| **CV server**       | 8098             | `cv.home.lan`        | Resume/CV generator (typst PDF, pipeline scanner + LLM evaluation)                                               |
+| **Attic**           | 8200             | `cache.home.lan`     | Nix binary cache (pool-backed)                                                                                   |
+| **Voice Agents**    | 7880             | —                    | AI voice agents (Docker: LiveKit + Whisper ASR) — currently disabled                                             |
+| **TaskChampion**    | 10222            | `tasks.home.lan`     | Taskwarrior sync server (cross-platform + Android)                                                               |
+| **Manifest**        | 2099             | `manifest.home.lan`  | Smart LLM router for AI agents (cost optimization)                                                               |
+| **Overview**        | 8083             | —                    | Local project dashboard (git repo discovery, stats, activity)                                                    |
+| **Dozzle**          | 8084             | `logs.home.lan`      | Real-time Docker container log viewer                                                                            |
+| **Mail Relay**      | 25               | —                    | Central outbound SMTP null client (loopback-only, relays via Resend; Paperless/Forgejo/system mail)              |
+| **Miniflux**        | 8101             | `rss.home.lan`       | Minimalist RSS reader (Go + local PostgreSQL, native OIDC via Pocket ID)                                         |
+| **bank-sync**       | 8097             | `banksync.home.lan`  | Wise bank-sync dashboard (Layer 2 protected; disabled until sops go-live)                                        |
+| **File Renamer**    | 8086             | `renamer.home.lan`   | AI file-and-image renamer service                                                                                |
+| **Monitor365**      | 3001             | `monitor.home.lan`   | Device monitoring agent + server dashboard — disabled (private wireguard-collector dep)                          |
+| **OpenSEO**         | 3002             | `seo.home.lan`       | Self-hosted SEO suite (rank tracking, keyword research)                                                          |
+| **Crush Daily**     | 8081             | `daily.home.lan`     | AI-powered development insights from Crush databases                                                             |
+| **PMA**             | —                | —                    | Projects Management Automation (AI commit messages, repo discovery)                                              |
+| **Dual-WAN**        | —                | —                    | MPTCP dual-WAN with route health monitoring                                                                      |
+| **Gatus**           | 9110             | `status.home.lan`    | Health check monitoring with Discord alerts                                                                      |
+| **DNS Blocker**     | 53, 8050         | —                    | dnsblockd (embedded sdns resolver: DNSSEC, DoT, DoH, caching), 23 blocklists, 2.5M+ domains blocked              |
+| **Mullvad VPN**     | —                | —                    | WireGuard VPN — currently disabled (talpid_dns corrupted resolv.conf)                                            |
+| **DiscordSync**     | —                | —                    | Continuous Discord channel backup bot                                                                            |
+| **SearXNG**         | 8889             | `search.home.lan`    | Privacy metasearch engine (70+ engines, no tracking, POST-only, DuckDuckGo icons)                                |
+| **FastFlowLM**      | 52625            | —                    | NPU LLM server (Qwen3.6 MoE, socket-activated, OpenAI-compatible)                                                |
+| **llama-rag**       | 8848, 8849       | —                    | GPU embeddings (bge-m3) + reranking (bge-reranker-v2-m3) for RAG                                                 |
+| **systemd-graph**   | 8847             | `graph.home.lan`     | Live systemd dependency graph (LAN-only)                                                                         |
+| **timer-monitor**   | —                | `timers.home.lan`    | Read-only systemd services+timers audit (LAN-only)                                                               |
 
 ### DNS Blocking
 

@@ -84,7 +84,7 @@ covers ONLY this session's run and what I noticed in passing._
    pointed at closures deleted from BOTH stores, unrecoverable via `nix copy` (QLC db
    calls even flip-era paths invalid; 3 half-deleted orphans = freeze-interrupted GC).
 2. **My first audit script produced garbage and I MESSAGED A WRONG THEORY on it.** It
-   grepped `^init ` (doesn't exist in systemd-boot entries) → every entry "live=MISSING"
+   grepped `^init` (doesn't exist in systemd-boot entries) → every entry "live=MISSING"
    including the default the user's own pasted check had verified OK. I had ground truth
    in hand and didn't diff against it before announcing "either my parsing is broken or
    the store moved". Burned a debug round; mixed a false alarm with a real finding
@@ -121,6 +121,7 @@ covers ONLY this session's run and what I noticed in passing._
 ## f) NEXT THINGS (prioritized, ~39)
 
 **P0 — before the confirming reboot**
+
 1. Re-run `nix run .#deploy` to anchor the Sep-8 exit-4'd activation (or explicitly
    accept rebooting into the Sep-7 build)
 2. `nix diff-closures /run/current-system /nix/store/zkaacn2a…` — enumerate exactly
@@ -149,7 +150,7 @@ covers ONLY this session's run and what I noticed in passing._
 
 **P2 — Samsung migration continuation (↩)**
 21. Soak completion → attic store-rebuild drill → delete QLC `@nix` (carries the 3
-    orphan dirs + broken symlink; deletion heals both)
+orphan dirs + broken symlink; deletion heals both)
 22. Wire Samsung into btrfs-health + smartd (by-id) + Gatus mount/space checks
 23. fio + exec-latency-under-buildstorm acceptance
 24. Phase 2: hot DBs → nodatacow `hot` subvol (one service at a time)
@@ -159,20 +160,20 @@ covers ONLY this session's run and what I noticed in passing._
 
 **P3 — hygiene**
 28. Automate the p1 mirror (post-deploy step or timer) OR stamp it
-    "snapshot 2026-09-09" in docs to kill the stale-insurance phantom
+"snapshot 2026-09-09" in docs to kill the stale-insurance phantom
 29. Write the manual EFISTUB recovery one-liner (kernel + `options` from a mirrored
-    entry conf) into the docs
+entry conf) into the docs
 30. Fact-check `gcroots/auto` contents; amend the 04-35 doc if my theory was wrong
 31. Amend the 04-35 doc marking asserted-not-verified claims (efibootmgr, auto-roots)
 32. Cleanup after soak: `/root/stuckboot-entry-backup/` (2 dirs), `/tmp/run-*.sh` logs
 33. Check the daemon committed today's docs cleanly alongside the parallel session
 34. Sweep for the stale "16 entries all bootable" claim in older docs/handoff material
 35. Consider filing the Calamares profiles-gcroot bug upstream (verify-before-filing
-    first: reproduce on a fresh calamares install)
+first: reproduce on a fresh calamares install)
 36. Review `nix.gc` 3d retention now that profile rooting works (ladder depth = 3d by
-    design — want more?)
+design — want more?)
 37. Ghost-system check: the p1 mirror is currently a half-ghost (nobody can invoke it
-    without a runbook) — integrate it or shrink it to "kernel assets only" labeling
+without a runbook) — integrate it or shrink it to "kernel assets only" labeling
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 

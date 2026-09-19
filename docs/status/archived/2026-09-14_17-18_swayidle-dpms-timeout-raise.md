@@ -8,19 +8,19 @@
 
 ## a) FULLY DONE
 
-| Work | Detail |
-| --- | --- |
-| DPMS timeout raised 20 min → 4 h | `platforms/nixos/desktop/niri-wrapped.nix:725` — swayidle ExecStart `timeout 14400` (was `timeout 1200`). Two-step edit (first to 3600 after initial request, then 14400 on user refinement) |
-| `nix flake check --no-build` passed after each edit | Ran 3× total; all checks passed (pre-existing warning only: `bank-sync-stub` lacks `meta.mainProgram`) |
-| FEATURES.md updated | Line 260: "4h idle → DPMS off (`niri msg action power-off-monitors`, raised from 20min 2026-09-14)" |
-| Mechanism explanation delivered | Answered "why BLACK": DPMS sleep via `niri msg action power-off-monitors` cuts the display signal; monitors enter power-saving (backlight off), any input wakes instantly |
+| Work                                                | Detail                                                                                                                                                                                       |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DPMS timeout raised 20 min → 4 h                    | `platforms/nixos/desktop/niri-wrapped.nix:725` — swayidle ExecStart `timeout 14400` (was `timeout 1200`). Two-step edit (first to 3600 after initial request, then 14400 on user refinement) |
+| `nix flake check --no-build` passed after each edit | Ran 3× total; all checks passed (pre-existing warning only: `bank-sync-stub` lacks `meta.mainProgram`)                                                                                       |
+| FEATURES.md updated                                 | Line 260: "4h idle → DPMS off (`niri msg action power-off-monitors`, raised from 20min 2026-09-14)"                                                                                          |
+| Mechanism explanation delivered                     | Answered "why BLACK": DPMS sleep via `niri msg action power-off-monitors` cuts the display signal; monitors enter power-saving (backlight off), any input wakes instantly                    |
 
 ## b) PARTIALLY DONE
 
-| Work | Gap |
-| --- | --- |
-| The fix itself | Committed to the tree but **NOT deployed** — the running system still carries the old (deployed) timeout. Requires `nix run .#deploy`. Until then the user's complaint is not actually resolved on the desktop |
-| ~~AGENTS.md gotcha bullet ("Idle DPMS via swayidle (2026-08-22): 1200s") | NOT updated — still documents 20 min. Only FEATURES.md was updated. Doc drift created by this session~~ | done (docs-health pass 2026-09-14 18:30 — bullet corrected to the 4h raise + deploy-pending caveat + the unexplained ~5min observation recorded) |
+| Work                                                                     | Gap                                                                                                                                                                                                            |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The fix itself                                                           | Committed to the tree but **NOT deployed** — the running system still carries the old (deployed) timeout. Requires `nix run .#deploy`. Until then the user's complaint is not actually resolved on the desktop |
+| ~~AGENTS.md gotcha bullet ("Idle DPMS via swayidle (2026-08-22): 1200s") | NOT updated — still documents 20 min. Only FEATURES.md was updated. Doc drift created by this session~~                                                                                                        |
 
 ## c) NOT STARTED
 
@@ -45,9 +45,10 @@ Nothing destroyed. But two process failures worth naming:
 
 ## f) Up to 50 things to get done next
 
-*(Brainstorm, not commitment; most items are TODO_LIST/ROADMAP fuel, many already tracked in AGENTS.md/TODO_LIST. Items 1–5 are this session's direct follow-ups.)*
+_(Brainstorm, not commitment; most items are TODO_LIST/ROADMAP fuel, many already tracked in AGENTS.md/TODO_LIST. Items 1–5 are this session's direct follow-ups.)_
 
 **Session follow-ups (this thread):**
+
 1. Deploy (`nix run .#deploy`) — the fix is inert until then.
 2. Post-deploy: verify live user unit ExecStart carries `timeout 14400` (catch the exit-4 / profile-not-bumped class).
 3. Root-cause the "5 minutes" observation — check the DEPLOYED generation's swayidle timeout and DMS lock timer; if the deployed value was 900/300, find which generation regressed and when.

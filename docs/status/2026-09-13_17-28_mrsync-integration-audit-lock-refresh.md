@@ -15,24 +15,24 @@ One honest gap: I verified the old rev was broken and the new rev is green, but 
 
 ## a) FULLY DONE
 
-| # | Work | Evidence |
-|---|------|----------|
-| 1 | **Integration-surface inventory** — mapped how SystemNix consumes mr-sync: flake input `github:LarsArtmann/mr-sync?ref=master` (flake.nix:361-366) → `lib/lars-packages.nix:28-30` (`flakePkg inputs.mr-sync`) → package `.#mr-sync`. No overlay, no service module, no sops, no Gatus — pure CLI tool, source-only flake input (FEATURES.md:437 confirms). | grep sweep, 100+ hits reviewed |
-| 2 | **Three-way rev drift analysis** — local checkout `228a6d3` (1 unpushed auto-commit ahead), origin/master `91bcb4c`, SystemNix lock `793b8ad` (102 commits behind origin, ~v0.5.0-72 vs ~v0.5.0-102). | git rev-parse + flake.lock jq |
-| 3 | **Proved the stale lock was BROKEN, not just old** — `nix build .#mr-sync` at `793b8ad` FAILED: `TestErrorTemplatesMatchDataContracts` (test reads `../../docs/DATA_CONTRACTS.md` via relative path — absent in the build sandbox) + `TestExecuteMigrationMovesSkipsConflict` (error-message expectation drift: test wanted `resolve it manually`, code emitted `resolve the conflict manually, then re-run migrate-paths`). | nix log of the failed drv |
-| 4 | **Confirmed fixes exist upstream** — local `go test ./cmd/mr-sync/` at HEAD passes (5.8s, ok). Both failures were already fixed in the 30 commits between lock and origin (which are otherwise pure auto-commit churn + the v0.5.1 CHANGELOG cut). | go test run |
-| 5 | **Lock refresh** — `nix flake lock --update-input mr-sync`: `793b8ad` → `91bcb4c` (narHash `Rr4Nsxq…`). Auto-committed by the daemon (`bd1712ab` batch). | flake.lock diff |
-| 6 | **Hermetic build green at new rev** — full build incl. go-modules FOD and sandbox tests: `/nix/store/yy97yvm…-mr-sync-91bcb4c…`. | nix build output |
-| 7 | **Binary verification** — `mr-sync version 91bcb4c73cff…, Commit: 91bcb4c, Go: go1.26.7-X:jsonv2` — runs and self-reports the correct rev (the version-embed ldflags path works). | binary --version |
-| 8 | **Repo health gate** — `nix flake check --no-build`: all checks passed (aarch64-darwin omission expected per AGENTS.md). | flake check |
+| # | Work                                                                                                                                                                                                                                                                                                                                                                                                                         | Evidence                       |
+| - | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| 1 | **Integration-surface inventory** — mapped how SystemNix consumes mr-sync: flake input `github:LarsArtmann/mr-sync?ref=master` (flake.nix:361-366) → `lib/lars-packages.nix:28-30` (`flakePkg inputs.mr-sync`) → package `.#mr-sync`. No overlay, no service module, no sops, no Gatus — pure CLI tool, source-only flake input (FEATURES.md:437 confirms).                                                                  | grep sweep, 100+ hits reviewed |
+| 2 | **Three-way rev drift analysis** — local checkout `228a6d3` (1 unpushed auto-commit ahead), origin/master `91bcb4c`, SystemNix lock `793b8ad` (102 commits behind origin, ~v0.5.0-72 vs ~v0.5.0-102).                                                                                                                                                                                                                        | git rev-parse + flake.lock jq  |
+| 3 | **Proved the stale lock was BROKEN, not just old** — `nix build .#mr-sync` at `793b8ad` FAILED: `TestErrorTemplatesMatchDataContracts` (test reads `../../docs/DATA_CONTRACTS.md` via relative path — absent in the build sandbox) + `TestExecuteMigrationMovesSkipsConflict` (error-message expectation drift: test wanted `resolve it manually`, code emitted `resolve the conflict manually, then re-run migrate-paths`). | nix log of the failed drv      |
+| 4 | **Confirmed fixes exist upstream** — local `go test ./cmd/mr-sync/` at HEAD passes (5.8s, ok). Both failures were already fixed in the 30 commits between lock and origin (which are otherwise pure auto-commit churn + the v0.5.1 CHANGELOG cut).                                                                                                                                                                           | go test run                    |
+| 5 | **Lock refresh** — `nix flake lock --update-input mr-sync`: `793b8ad` → `91bcb4c` (narHash `Rr4Nsxq…`). Auto-committed by the daemon (`bd1712ab` batch).                                                                                                                                                                                                                                                                     | flake.lock diff                |
+| 6 | **Hermetic build green at new rev** — full build incl. go-modules FOD and sandbox tests: `/nix/store/yy97yvm…-mr-sync-91bcb4c…`.                                                                                                                                                                                                                                                                                             | nix build output               |
+| 7 | **Binary verification** — `mr-sync version 91bcb4c73cff…, Commit: 91bcb4c, Go: go1.26.7-X:jsonv2` — runs and self-reports the correct rev (the version-embed ldflags path works).                                                                                                                                                                                                                                            | binary --version               |
+| 8 | **Repo health gate** — `nix flake check --no-build`: all checks passed (aarch64-darwin omission expected per AGENTS.md).                                                                                                                                                                                                                                                                                                     | flake check                    |
 
 ## b) PARTIALLY DONE
 
-| # | Work | State |
-|---|------|-------|
-| 1 | **Lock-update commit attribution** — the daemon committed the lock refresh inside a `chore: auto-commit 3 changed file(s)` batch (`bd1712ab`). The change is IN, but not in a self-describing commit. Per AGENTS.md concurrent-session doctrine I did not pathspec-recommit (daemon owns the cadence); acceptable, but the audit trail for "why did the lock move" lives only in this report. | done, weakly attributed |
-| 2 | **Root-cause of the stale drift** — I refreshed the lock but did NOT establish WHY it had drifted 102 commits/1 month (no TODO item, no CI guard, no staleness check exists for this input; earlier sessions' recurring pattern: notice drift → fix → forget). The systemic fix is open. | fixed symptom, cause unaddressed |
-| 3 | **Local checkout hygiene** — mr-sync local master sits 1 unpushed auto-commit ahead of origin (`228a6d3`). Left alone (never push without explicit ask). Flagging here so it doesn't silently grow. | observed, not resolved |
+| # | Work                                                                                                                                                                                                                                                                                                                                                                                          | State                            |
+| - | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| 1 | **Lock-update commit attribution** — the daemon committed the lock refresh inside a `chore: auto-commit 3 changed file(s)` batch (`bd1712ab`). The change is IN, but not in a self-describing commit. Per AGENTS.md concurrent-session doctrine I did not pathspec-recommit (daemon owns the cadence); acceptable, but the audit trail for "why did the lock move" lives only in this report. | done, weakly attributed          |
+| 2 | **Root-cause of the stale drift** — I refreshed the lock but did NOT establish WHY it had drifted 102 commits/1 month (no TODO item, no CI guard, no staleness check exists for this input; earlier sessions' recurring pattern: notice drift → fix → forget). The systemic fix is open.                                                                                                      | fixed symptom, cause unaddressed |
+| 3 | **Local checkout hygiene** — mr-sync local master sits 1 unpushed auto-commit ahead of origin (`228a6d3`). Left alone (never push without explicit ask). Flagging here so it doesn't silently grow.                                                                                                                                                                                           | observed, not resolved           |
 
 ## c) NOT STARTED (noticed, deliberately out of scope this session)
 
@@ -59,6 +59,7 @@ Nothing in this session. Closest misses, for honesty:
 ## f) Up to 50 Things To Do Next (prioritized, mr-sync-adjacent first)
 
 **P0 — direct fallout of this session**
+
 1. Cut `v0.5.1` tag in mr-sync upstream (CHANGELOG already cut) so consumers can pin semver.
 2. Add the lock-staleness CI check for `?ref=master` inputs (SystemNix `nix-check.yml`).
 3. Add a weekly CI job building all `mkLarsPackages` outputs (the 2026-08-12 batch list, automated).
@@ -91,7 +92,7 @@ Nothing in this session. Closest misses, for honesty:
 24. mr-sync `--version` reports full 40-char rev — fine for a tool (AGENTS rule about short versions applies to store-path names; store name is also full rev here — consider `shortRev` for the derivation name per the versioning doctrine).
 25. Ensure the lock-bump rides the next deploy's pre-deploy-check cleanly (§10 metric-presence unaffected — no metrics for this package; nothing to do, just noted).
 
-*(25 concrete items; the remainder of the 50 would be generic SystemNix TODO_LIST items already tracked there — deliberately not duplicated per the "right file" doctrine.)*
+_(25 concrete items; the remainder of the 50 would be generic SystemNix TODO_LIST items already tracked there — deliberately not duplicated per the "right file" doctrine.)_
 
 ## g) Questions Only You Can Answer
 

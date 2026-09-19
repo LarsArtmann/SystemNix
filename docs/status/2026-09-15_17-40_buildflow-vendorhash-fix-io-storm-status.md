@@ -14,39 +14,39 @@ The deploy failed because **BuildFlow rev `56dc3660` shipped a stale `vendorHash
 
 ## a) FULLY DONE (verifiable evidence)
 
-| # | What | Evidence |
-|---|------|----------|
-| 1 | Root-caused the deploy failure: stale `vendorHash` in **BuildFlow's own flake** (SystemNix owns no hash — `lib/lars-packages.nix:19` consumes `inputs.buildflow.packages.default`) | `vendorHash.nix` contained the exact "specified" hash `WOxy…`; repro'd with `nix build .` inside `~/projects/BuildFlow` (byte-identical mismatch) |
-| 2 | Proved hash portability BEFORE fixing: both locks pin identical nixpkgs (`eaad0894`) and `go-nix-helpers` (`16c31842`), so the `got:` hash from SystemNix's failed FOD is valid upstream | jq over both `flake.lock` files |
-| 3 | Loaded the buildflow skill first; it redirected the approach away from hand-pasting (anti-pattern per SKILL.md) and surfaced that the `nix-hash-fix` step is documented-broken | Skill line 89/99; BuildFlow AGENTS.md gotchas #23/#82/#125/#144 |
-| 4 | Attempted the sanctioned skill path anyway (`buildflow -s nix-hash-fix --fix`) → failed exit 69 (58/58 lifetime, 100%, deterministic) — failure re-confirmed rather than assumed | `/tmp/bf-hashfix.log` |
-| 5 | Repaired via BuildFlow's own first-class app: `nix run .#update-vendor-hash` → wrote `sha256-Wm9WRXjL…` (exactly the FOD's `got:` hash) to `vendorHash.nix`, verify-build green | App output: "✅ Build passes with updated hash" |
-| 6 | Committed the fix upstream after the PMA daemon ignored the file 25+ min (skill documents this daemon blind spot): **BuildFlow `9d11c8fee`**, narrow pathspec commit, 1 file / 1 line | `git -C ~/projects/BuildFlow log -1` |
-| 7 | SystemNix switched to the ratified interim pin (go-taskqueue pattern): `git+file:///home/lars/projects/BuildFlow?rev=9d11c8fee…` with flip-back comment; re-locked; **healthy lock node** (`rev` present, no `dirtyRev`) | SystemNix `flake.nix:396-404`, lock node `buildflow` |
-| 8 | Daemon auto-committed the SystemNix edits | `25f557a4` (flake.nix +5/-1, flake.lock) |
-| 9 | End-to-end build verification from SystemNix: `nix build .#buildflow` → green; FOD accepted the new hash; binary self-reports the fix rev | `/nix/store/mi1h9rw…-buildflow-9d11c8f`; `buildflow version 9d11c8f` |
-| 10 | Refused to force-deploy into a storm (twice offered by the data); documented llama-rag re-arm anomaly instead of silently "fixing" it | PSI samples in this report; no `DEPLOY_FORCE_PRESSURE` used |
+| #  | What                                                                                                                                                                                                                     | Evidence                                                                                                                                          |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | Root-caused the deploy failure: stale `vendorHash` in **BuildFlow's own flake** (SystemNix owns no hash — `lib/lars-packages.nix:19` consumes `inputs.buildflow.packages.default`)                                       | `vendorHash.nix` contained the exact "specified" hash `WOxy…`; repro'd with `nix build .` inside `~/projects/BuildFlow` (byte-identical mismatch) |
+| 2  | Proved hash portability BEFORE fixing: both locks pin identical nixpkgs (`eaad0894`) and `go-nix-helpers` (`16c31842`), so the `got:` hash from SystemNix's failed FOD is valid upstream                                 | jq over both `flake.lock` files                                                                                                                   |
+| 3  | Loaded the buildflow skill first; it redirected the approach away from hand-pasting (anti-pattern per SKILL.md) and surfaced that the `nix-hash-fix` step is documented-broken                                           | Skill line 89/99; BuildFlow AGENTS.md gotchas #23/#82/#125/#144                                                                                   |
+| 4  | Attempted the sanctioned skill path anyway (`buildflow -s nix-hash-fix --fix`) → failed exit 69 (58/58 lifetime, 100%, deterministic) — failure re-confirmed rather than assumed                                         | `/tmp/bf-hashfix.log`                                                                                                                             |
+| 5  | Repaired via BuildFlow's own first-class app: `nix run .#update-vendor-hash` → wrote `sha256-Wm9WRXjL…` (exactly the FOD's `got:` hash) to `vendorHash.nix`, verify-build green                                          | App output: "✅ Build passes with updated hash"                                                                                                   |
+| 6  | Committed the fix upstream after the PMA daemon ignored the file 25+ min (skill documents this daemon blind spot): **BuildFlow `9d11c8fee`**, narrow pathspec commit, 1 file / 1 line                                    | `git -C ~/projects/BuildFlow log -1`                                                                                                              |
+| 7  | SystemNix switched to the ratified interim pin (go-taskqueue pattern): `git+file:///home/lars/projects/BuildFlow?rev=9d11c8fee…` with flip-back comment; re-locked; **healthy lock node** (`rev` present, no `dirtyRev`) | SystemNix `flake.nix:396-404`, lock node `buildflow`                                                                                              |
+| 8  | Daemon auto-committed the SystemNix edits                                                                                                                                                                                | `25f557a4` (flake.nix +5/-1, flake.lock)                                                                                                          |
+| 9  | End-to-end build verification from SystemNix: `nix build .#buildflow` → green; FOD accepted the new hash; binary self-reports the fix rev                                                                                | `/nix/store/mi1h9rw…-buildflow-9d11c8f`; `buildflow version 9d11c8f`                                                                              |
+| 10 | Refused to force-deploy into a storm (twice offered by the data); documented llama-rag re-arm anomaly instead of silently "fixing" it                                                                                    | PSI samples in this report; no `DEPLOY_FORCE_PRESSURE` used                                                                                       |
 
 ## b) PARTIALLY DONE
 
-| # | Item | Works | Missing | Blocker | Effort |
-|---|------|-------|---------|---------|--------|
-| 1 | **Deploy of the buildflow update** | Build is green and lock is in place; tree committed | The actual `nh os switch` + post-deploy checks | External IO storm: avg10 25–67% for 45+ min, now avg300=75.64%; pressure gate (≥20% blocks) | S — one command when quiet |
-| 2 | **Session follow-through automation** | Two background waiter loops ran and observed honestly | Deploy never fired — see (d)#1: the waiter was structurally incapable of firing | My bug (broken grep), plus the storm | S |
-| 3 | **llama-rag re-arm** | Detected, identified precisely (embed+rerank units on the known-bad 20260911 `llama-cpp-0.4.0`, up since 09:37, ~94% CPU each, still spinning at 17:40) | Not investigated *why* it re-armed; not stopped (systemctl barred in this harness; "stop is never containment" doctrine) | Scope discipline (user: don't research unrelated) + the real fix is the tracked llama-cpp pin | S investigate / M fix |
+| # | Item                                  | Works                                                                                                                                                   | Missing                                                                                                                  | Blocker                                                                                       | Effort                     |
+| - | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- | -------------------------- |
+| 1 | **Deploy of the buildflow update**    | Build is green and lock is in place; tree committed                                                                                                     | The actual `nh os switch` + post-deploy checks                                                                           | External IO storm: avg10 25–67% for 45+ min, now avg300=75.64%; pressure gate (≥20% blocks)   | S — one command when quiet |
+| 2 | **Session follow-through automation** | Two background waiter loops ran and observed honestly                                                                                                   | Deploy never fired — see (d)#1: the waiter was structurally incapable of firing                                          | My bug (broken grep), plus the storm                                                          | S                          |
+| 3 | **llama-rag re-arm**                  | Detected, identified precisely (embed+rerank units on the known-bad 20260911 `llama-cpp-0.4.0`, up since 09:37, ~94% CPU each, still spinning at 17:40) | Not investigated _why_ it re-armed; not stopped (systemctl barred in this harness; "stop is never containment" doctrine) | Scope discipline (user: don't research unrelated) + the real fix is the tracked llama-cpp pin | S investigate / M fix      |
 
 ## c) NOT STARTED
 
-| # | Item | Why not started | Still wanted? |
-|---|------|-----------------|---------------|
-| 1 | **BuildFlow push** (`9d11c8fee` → origin) | Explicitly barred without user authorization (rule: never push unprompted); go-taskqueue precedent shows pushes can be deliberately held | Yes — it gates the flip-back |
-| 2 | **Flip SystemNix input back to `github:…?ref=master`** | Depends on (c)#1 | Yes — ends the interim pin and its CI breakage |
-| 3 | **Post-deploy verification** (generation anchoring, buildflow on PATH) | Depends on the deploy | Yes |
-| 4 | **Why the IO storm** — proper per-process IO attribution (my one diskstats attempt had broken awk; fell back to PSI trends only) | Out of session scope once deploy was gated; drivers are other sessions' `compile` (166%/135% CPU), 4 crush sessions, earlier Go `link` | Yes — before any forced deploy |
-| 5 | **TODO_LIST harvest** of this report's section (f) | Report first; HARVEST is a follow-up pass (docs-health) | Yes |
-| 6 | **AGENTS.md entry** for: `update-vendor-hash` is the working repair (nix-hash-fix is 58/58 dead) + this interim pin | Deferred to harvest | Yes |
-| 7 | **gotchas-archive entry** for the full incident narrative | Deferred | Yes |
-| 8 | Same repair for **go-auto-upgrade**'s pre-existing INTERIM stale-upstream-vendorHash pin (predates this session) | Not this session's task | Yes — same playbook |
+| # | Item                                                                                                                             | Why not started                                                                                                                          | Still wanted?                                  |
+| - | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| 1 | **BuildFlow push** (`9d11c8fee` → origin)                                                                                        | Explicitly barred without user authorization (rule: never push unprompted); go-taskqueue precedent shows pushes can be deliberately held | Yes — it gates the flip-back                   |
+| 2 | **Flip SystemNix input back to `github:…?ref=master`**                                                                           | Depends on (c)#1                                                                                                                         | Yes — ends the interim pin and its CI breakage |
+| 3 | **Post-deploy verification** (generation anchoring, buildflow on PATH)                                                           | Depends on the deploy                                                                                                                    | Yes                                            |
+| 4 | **Why the IO storm** — proper per-process IO attribution (my one diskstats attempt had broken awk; fell back to PSI trends only) | Out of session scope once deploy was gated; drivers are other sessions' `compile` (166%/135% CPU), 4 crush sessions, earlier Go `link`   | Yes — before any forced deploy                 |
+| 5 | **TODO_LIST harvest** of this report's section (f)                                                                               | Report first; HARVEST is a follow-up pass (docs-health)                                                                                  | Yes                                            |
+| 6 | **AGENTS.md entry** for: `update-vendor-hash` is the working repair (nix-hash-fix is 58/58 dead) + this interim pin              | Deferred to harvest                                                                                                                      | Yes                                            |
+| 7 | **gotchas-archive entry** for the full incident narrative                                                                        | Deferred                                                                                                                                 | Yes                                            |
+| 8 | Same repair for **go-auto-upgrade**'s pre-existing INTERIM stale-upstream-vendorHash pin (predates this session)                 | Not this session's task                                                                                                                  | Yes — same playbook                            |
 
 ## d) TOTALLY FUCKED UP
 
@@ -60,7 +60,7 @@ The deploy failed because **BuildFlow rev `56dc3660` shipped a stale `vendorHash
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Ask decision-questions earlier when the blocker is a policy, not a fact.** "Push BuildFlow now?" at minute ~30 would have deleted the entire interim-pin machinery (flake edit, re-lock, CI breakage, flip-back chore). I automated around a question that was yours to answer. Push authorization is genuinely reserved — but *surfacing* the need for it is not.
+1. **Ask decision-questions earlier when the blocker is a policy, not a fact.** "Push BuildFlow now?" at minute ~30 would have deleted the entire interim-pin machinery (flake edit, re-lock, CI breakage, flip-back chore). I automated around a question that was yours to answer. Push authorization is genuinely reserved — but _surfacing_ the need for it is not.
 2. **Report handoff state after ~15 min of external blocking, not after ~105.** The fix was complete and verified at ~15:45; I sat on it in background loops until 17:35. You were actively waiting.
 3. **Verify your own automation with the same rigor as the artifact.** "Independently verify tool output before mutating anything" is in AGENTS.md for a reason; my waiters got none of that.
 4. **Kill the stale-vendorHash class at the source:** wire `nix run .#update-vendor-hash` into BuildFlow's own pre-push/CI gate so a stale hash can never be pushed to master. Every LarsArtmann-flake consumer stops paying this tax.
@@ -71,58 +71,58 @@ The deploy failed because **BuildFlow rev `56dc3660` shipped a stale `vendorHash
 
 ## f) TOP 50 NEXT TASKS (impact-ranked; tiers: 🔴 now, 🟠 this week, 🟡 roadmap fuel — HARVEST: 🔴/🟠 → TODO_LIST, 🟡 → ROADMAP)
 
-| # | Task | Impact | Effort | Cat |
-|---|------|--------|--------|-----|
-| 1 | 🔴 Run `nix run .#deploy` once IO avg10 <20% — completes the verified buildflow update | Critical | S | Bug |
-| 2 | 🔴 Post-deploy: verify `/run/current-system` == numbered profile + `buildflow --version` = `9d11c8f` on PATH | Critical | S | Quality |
-| 3 | 🔴 Push BuildFlow `9d11c8fee` (needs your authorization — see question 1) | Critical | S | Bug |
-| 4 | 🔴 Flip SystemNix buildflow input back to `github:…?ref=master`, re-lock, remove INTERIM comment | High | S | Cleanup |
-| 5 | 🔴 Re-stop or fix llama-rag spin (2 cores burning since 09:37) — decide via question 3 | High | S | Bug |
-| 6 | 🔴 Attribute the IO storm properly (correct diskstats deltas + per-proc IO) before any pressure-forced action | High | S | Quality |
-| 7 | 🟠 Pin `llama-cpp-rocwmma` back to the 20260905-era build (the tracked spin fix) | High | M | Bug |
-| 8 | 🟠 Add CPU-spin alert for llama-server units (Gatus/SigNoz) so containment failures page | High | S | Feature |
-| 9 | 🟠 Journal-forensics: what restarted llama-rag at 09:37 (deploy? boot? manual?) | Medium | S | Quality |
-| 10 | 🟠 Wire `update-vendor-hash` into BuildFlow pre-push/CI gate — kill the stale-hash class fleet-wide | High | M | Feature |
-| 11 | 🟠 Fix `nix-hash-fix` upstream (58/58 fail) or update skill+docs to route to `update-vendor-hash` | High | M | Bug |
-| 12 | 🟠 Update buildflow skill text: nix-hash-fix is broken; `nix run .#update-vendor-hash` is the repair | Medium | S | Documentation |
-| 13 | 🟠 HARVEST this report into TODO_LIST/ROADMAP (docs-health) | Medium | S | Documentation |
-| 14 | 🟠 SystemNix AGENTS.md: record `update-vendor-hash` lesson + current interim pin | Medium | S | Documentation |
-| 15 | 🟠 gotchas-archive: full incident narrative (upstream vendorHash → interim pin → pressure-gated deploy) | Medium | S | Documentation |
-| 16 | 🟠 Interim-pin tracker in TODO_LIST (go-taskqueue, go-auto-upgrade, buildflow) with flip-back triggers | Medium | S | Cleanup |
-| 17 | 🟠 Same repair for go-auto-upgrade's stale pin (update-vendor-hash upstream → push → flip back) | Medium | M | Bug |
-| 18 | 🟠 Check PMA Commit Health alerting: flm is down → 100% heuristic fallbacks; is the ≥20/24h fallback alert firing or phantom-silent? | Medium | S | Quality |
-| 19 | 🟠 Check memory-emergency-guard Zone-6 trip counters for today's storm (did it trip? did restores churn?) | Medium | S | Quality |
-| 20 | 🟠 Confirm sev1-bridge stayed silent on the storm per the movie-night severity rules (expected: no overlay for IO) | Low | S | Quality |
-| 21 | 🟠 Investigate PMA's BuildFlow skip (25+ min) — scan log; file upstream if blind spot is systematic | Medium | M | Bug |
-| 22 | 🟡 Flake-check lint: reject `git+file:` input URLs WITHOUT `?rev=` (dirtyRev trap) | Medium | S | Feature |
-| 23 | 🟡 Flake-check warn: ANY `git+file:` input present (interim pins should be loud, not quiet) | Medium | S | Feature |
-| 24 | 🟡 Add `scripts/psi-sample.sh` (correct patterns, awk float compare, no `bc`) | Low | S | Quality |
-| 25 | 🟡 Deploy crush-hot-db migration when /nix soak clears (~09-17) — structural fix for the QLC `.crush/` churn feeding storms like today's | High | M | Feature |
-| 26 | 🟡 Post-crush-hot-db: verify io PSI baseline drop vs the 40–60% norm | Medium | S | Quality |
-| 27 | 🟡 The owed reboot (D-state corpses, flm :52626 zombie socket, llama spin) — run `nix run .#pre-reboot-check` first; today's re-arms strengthen the case | High | M | Cleanup |
-| 28 | 🟡 Post-reboot checklist: corpses cleared, :52626 free, flm socket serves, llama state per pin-fix | Medium | M | Quality |
-| 29 | 🟡 Decide flm fate until reboot: start socket in a quiet window (fixes PMA heuristic-fallback commit quality) vs stay down | Medium | S | Decision |
-| 30 | 🟡 Full `nix flake check --no-build` when quiet (pre-deploy insurance for the interim pin) | Low | S | Quality |
-| 31 | 🟡 Verify no other inputs drifted from today's lock churn (`git show 25f557a4 -- flake.lock` review) | Low | S | Quality |
-| 32 | 🟡 Consider tag-pinning LarsArtmann tool inputs instead of `?ref=master` (this incident: master-riding delivered a broken rev instantly) — freshness tradeoff, ROADMAP | Medium | L | Feature |
-| 33 | 🟡 BuildFlow: make `update-vendor-hash` output machine-checkable (exit≠0 on drift) for CI use | Medium | S | Feature |
-| 34 | 🟡 Add "report handoff after ~15 min of external blocking" session rule to AGENTS.md AI-guidance | Low | S | Documentation |
-| 35 | 🟡 Sweep flake.nix for ALL INTERIM/stale-pin comments; set a review date on each | Medium | S | Cleanup |
-| 36 | 🟡 Evaluate a nix-hash fleet dashboard: one place showing each consumed input's vendorHash freshness | Low | M | Feature |
-| 37 | 🟡 Confirm whether SystemNix CI is currently dark anyway (private `github:` nodes) — sizes the real CI cost of the interim pin | Low | S | Quality |
-| 38 | 🟡 Add regression test fixture: FOD hash-mismatch error parsing (the `got:` extraction) — currently tribal knowledge | Low | S | Quality |
-| 39 | 🟡 Standardize interim-pin flake.nix comment format (INTERIM: reason + flip-back condition) so greps find them all | Low | S | Documentation |
-| 40 | 🟡 BuildFlow AGENTS.md: document the 58/58 nix-hash-fix failure as gotcha with root cause | Medium | S | Documentation |
-| 41 | 🟡 After BuildFlow push: verify GitHub Actions green (the fix should make CI build pass — first green in a while?) | Low | S | Quality |
-| 42 | 🟡 Check the two `compile` procs (166%/135%) belong to a legit session and finish — if stuck, they ARE the storm | Medium | S | Quality |
-| 43 | 🟡 zram 28.9/62 GiB (47%) — healthy; no action, just recorded as baseline | Low | S | Quality |
-| 44 | 🟡 Consider `nix run .#deploy` retry wrapper that waits for the pressure gate itself (deploy.sh already gates; a retry loop avoids hand-polling) | Low | S | Feature |
-| 45 | 🟡 Docs: SystemNix "consuming LarsArtmann flakes" section — add the stale-upstream-hash repair playbook (3 steps) | Low | S | Documentation |
-| 46 | 🟡 Review whether `nh os switch` (user's command) vs `nix run .#deploy` divergence matters here (deploy.sh adds restarts/checks) — this session would have missed post-switch steps had the raw switch succeeded | Medium | S | Quality |
-| 47 | 🟡 Track down why my first diskstats delta awk was wrong and archive the correct one-liner in scripts/ | Low | S | Quality |
-| 48 | 🟡 Consider commit-message quality alert: PMA heuristic-fallbacks mean every auto-commit message is "heuristic" — dashboard visibility exists; check it's rendering | Low | S | Quality |
-| 49 | 🟡 Meta: this is the 2nd session-critical tool failure routed around by reading the tool's own AGENTS.md — consider surfacing "check tool AGENTS.md" earlier in failure triage | Low | S | Documentation |
-| 50 | 🟡 Close the loop on questions 1–3 below before scheduling any of #3/#5 | Critical | S | Decision |
+| #  | Task                                                                                                                                                                                                             | Impact   | Effort | Cat           |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
+| 1  | 🔴 Run `nix run .#deploy` once IO avg10 <20% — completes the verified buildflow update                                                                                                                           | Critical | S      | Bug           |
+| 2  | 🔴 Post-deploy: verify `/run/current-system` == numbered profile + `buildflow --version` = `9d11c8f` on PATH                                                                                                     | Critical | S      | Quality       |
+| 3  | 🔴 Push BuildFlow `9d11c8fee` (needs your authorization — see question 1)                                                                                                                                        | Critical | S      | Bug           |
+| 4  | 🔴 Flip SystemNix buildflow input back to `github:…?ref=master`, re-lock, remove INTERIM comment                                                                                                                 | High     | S      | Cleanup       |
+| 5  | 🔴 Re-stop or fix llama-rag spin (2 cores burning since 09:37) — decide via question 3                                                                                                                           | High     | S      | Bug           |
+| 6  | 🔴 Attribute the IO storm properly (correct diskstats deltas + per-proc IO) before any pressure-forced action                                                                                                    | High     | S      | Quality       |
+| 7  | 🟠 Pin `llama-cpp-rocwmma` back to the 20260905-era build (the tracked spin fix)                                                                                                                                 | High     | M      | Bug           |
+| 8  | 🟠 Add CPU-spin alert for llama-server units (Gatus/SigNoz) so containment failures page                                                                                                                         | High     | S      | Feature       |
+| 9  | 🟠 Journal-forensics: what restarted llama-rag at 09:37 (deploy? boot? manual?)                                                                                                                                  | Medium   | S      | Quality       |
+| 10 | 🟠 Wire `update-vendor-hash` into BuildFlow pre-push/CI gate — kill the stale-hash class fleet-wide                                                                                                              | High     | M      | Feature       |
+| 11 | 🟠 Fix `nix-hash-fix` upstream (58/58 fail) or update skill+docs to route to `update-vendor-hash`                                                                                                                | High     | M      | Bug           |
+| 12 | 🟠 Update buildflow skill text: nix-hash-fix is broken; `nix run .#update-vendor-hash` is the repair                                                                                                             | Medium   | S      | Documentation |
+| 13 | 🟠 HARVEST this report into TODO_LIST/ROADMAP (docs-health)                                                                                                                                                      | Medium   | S      | Documentation |
+| 14 | 🟠 SystemNix AGENTS.md: record `update-vendor-hash` lesson + current interim pin                                                                                                                                 | Medium   | S      | Documentation |
+| 15 | 🟠 gotchas-archive: full incident narrative (upstream vendorHash → interim pin → pressure-gated deploy)                                                                                                          | Medium   | S      | Documentation |
+| 16 | 🟠 Interim-pin tracker in TODO_LIST (go-taskqueue, go-auto-upgrade, buildflow) with flip-back triggers                                                                                                           | Medium   | S      | Cleanup       |
+| 17 | 🟠 Same repair for go-auto-upgrade's stale pin (update-vendor-hash upstream → push → flip back)                                                                                                                  | Medium   | M      | Bug           |
+| 18 | 🟠 Check PMA Commit Health alerting: flm is down → 100% heuristic fallbacks; is the ≥20/24h fallback alert firing or phantom-silent?                                                                             | Medium   | S      | Quality       |
+| 19 | 🟠 Check memory-emergency-guard Zone-6 trip counters for today's storm (did it trip? did restores churn?)                                                                                                        | Medium   | S      | Quality       |
+| 20 | 🟠 Confirm sev1-bridge stayed silent on the storm per the movie-night severity rules (expected: no overlay for IO)                                                                                               | Low      | S      | Quality       |
+| 21 | 🟠 Investigate PMA's BuildFlow skip (25+ min) — scan log; file upstream if blind spot is systematic                                                                                                              | Medium   | M      | Bug           |
+| 22 | 🟡 Flake-check lint: reject `git+file:` input URLs WITHOUT `?rev=` (dirtyRev trap)                                                                                                                               | Medium   | S      | Feature       |
+| 23 | 🟡 Flake-check warn: ANY `git+file:` input present (interim pins should be loud, not quiet)                                                                                                                      | Medium   | S      | Feature       |
+| 24 | 🟡 Add `scripts/psi-sample.sh` (correct patterns, awk float compare, no `bc`)                                                                                                                                    | Low      | S      | Quality       |
+| 25 | 🟡 Deploy crush-hot-db migration when /nix soak clears (~09-17) — structural fix for the QLC `.crush/` churn feeding storms like today's                                                                         | High     | M      | Feature       |
+| 26 | 🟡 Post-crush-hot-db: verify io PSI baseline drop vs the 40–60% norm                                                                                                                                             | Medium   | S      | Quality       |
+| 27 | 🟡 The owed reboot (D-state corpses, flm :52626 zombie socket, llama spin) — run `nix run .#pre-reboot-check` first; today's re-arms strengthen the case                                                         | High     | M      | Cleanup       |
+| 28 | 🟡 Post-reboot checklist: corpses cleared, :52626 free, flm socket serves, llama state per pin-fix                                                                                                               | Medium   | M      | Quality       |
+| 29 | 🟡 Decide flm fate until reboot: start socket in a quiet window (fixes PMA heuristic-fallback commit quality) vs stay down                                                                                       | Medium   | S      | Decision      |
+| 30 | 🟡 Full `nix flake check --no-build` when quiet (pre-deploy insurance for the interim pin)                                                                                                                       | Low      | S      | Quality       |
+| 31 | 🟡 Verify no other inputs drifted from today's lock churn (`git show 25f557a4 -- flake.lock` review)                                                                                                             | Low      | S      | Quality       |
+| 32 | 🟡 Consider tag-pinning LarsArtmann tool inputs instead of `?ref=master` (this incident: master-riding delivered a broken rev instantly) — freshness tradeoff, ROADMAP                                           | Medium   | L      | Feature       |
+| 33 | 🟡 BuildFlow: make `update-vendor-hash` output machine-checkable (exit≠0 on drift) for CI use                                                                                                                    | Medium   | S      | Feature       |
+| 34 | 🟡 Add "report handoff after ~15 min of external blocking" session rule to AGENTS.md AI-guidance                                                                                                                 | Low      | S      | Documentation |
+| 35 | 🟡 Sweep flake.nix for ALL INTERIM/stale-pin comments; set a review date on each                                                                                                                                 | Medium   | S      | Cleanup       |
+| 36 | 🟡 Evaluate a nix-hash fleet dashboard: one place showing each consumed input's vendorHash freshness                                                                                                             | Low      | M      | Feature       |
+| 37 | 🟡 Confirm whether SystemNix CI is currently dark anyway (private `github:` nodes) — sizes the real CI cost of the interim pin                                                                                   | Low      | S      | Quality       |
+| 38 | 🟡 Add regression test fixture: FOD hash-mismatch error parsing (the `got:` extraction) — currently tribal knowledge                                                                                             | Low      | S      | Quality       |
+| 39 | 🟡 Standardize interim-pin flake.nix comment format (INTERIM: reason + flip-back condition) so greps find them all                                                                                               | Low      | S      | Documentation |
+| 40 | 🟡 BuildFlow AGENTS.md: document the 58/58 nix-hash-fix failure as gotcha with root cause                                                                                                                        | Medium   | S      | Documentation |
+| 41 | 🟡 After BuildFlow push: verify GitHub Actions green (the fix should make CI build pass — first green in a while?)                                                                                               | Low      | S      | Quality       |
+| 42 | 🟡 Check the two `compile` procs (166%/135%) belong to a legit session and finish — if stuck, they ARE the storm                                                                                                 | Medium   | S      | Quality       |
+| 43 | 🟡 zram 28.9/62 GiB (47%) — healthy; no action, just recorded as baseline                                                                                                                                        | Low      | S      | Quality       |
+| 44 | 🟡 Consider `nix run .#deploy` retry wrapper that waits for the pressure gate itself (deploy.sh already gates; a retry loop avoids hand-polling)                                                                 | Low      | S      | Feature       |
+| 45 | 🟡 Docs: SystemNix "consuming LarsArtmann flakes" section — add the stale-upstream-hash repair playbook (3 steps)                                                                                                | Low      | S      | Documentation |
+| 46 | 🟡 Review whether `nh os switch` (user's command) vs `nix run .#deploy` divergence matters here (deploy.sh adds restarts/checks) — this session would have missed post-switch steps had the raw switch succeeded | Medium   | S      | Quality       |
+| 47 | 🟡 Track down why my first diskstats delta awk was wrong and archive the correct one-liner in scripts/                                                                                                           | Low      | S      | Quality       |
+| 48 | 🟡 Consider commit-message quality alert: PMA heuristic-fallbacks mean every auto-commit message is "heuristic" — dashboard visibility exists; check it's rendering                                              | Low      | S      | Quality       |
+| 49 | 🟡 Meta: this is the 2nd session-critical tool failure routed around by reading the tool's own AGENTS.md — consider surfacing "check tool AGENTS.md" earlier in failure triage                                   | Low      | S      | Documentation |
+| 50 | 🟡 Close the loop on questions 1–3 below before scheduling any of #3/#5                                                                                                                                          | Critical | S      | Decision      |
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF (max 3)
 
@@ -132,6 +132,6 @@ The deploy failed because **BuildFlow rev `56dc3660` shipped a stale `vendorHash
 
 ---
 
-*Format note: user explicitly requested `.md`; the status-report skill's canonical output is a styled HTML dashboard — override honored per skill spec and flagged here. Section (f) items 🔴/🟠 are HARVEST candidates for TODO_LIST; 🟡 → ROADMAP. No manual commit per harness contract (daemon picks the file up).*
+_Format note: user explicitly requested `.md`; the status-report skill's canonical output is a styled HTML dashboard — override honored per skill spec and flagged here. Section (f) items 🔴/🟠 are HARVEST candidates for TODO_LIST; 🟡 → ROADMAP. No manual commit per harness contract (daemon picks the file up)._
 
 **WAITING FOR INSTRUCTIONS.**

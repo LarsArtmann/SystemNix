@@ -51,6 +51,7 @@ Session window: ~04:50–06:00 CEST. Scope of this report: THIS session only (th
 ## f) NEXT THINGS (up to 50; realistic, not padded)
 
 **P0 — reboot arc**
+
 1. User decision: the confirming reboot (safe now — anchored; boots system-762).
 2. Post-boot verify: `findmnt -rn -T /nix` = Samsung p2[/nix]; `readlink /run/current-system` = `pgvbfp20`; failed-unit count (expect flm corpses + llama wedges GONE).
 3. Remove `/boot/loader/loader.conf.bak-stuckboot` after confirming the boot.
@@ -100,4 +101,4 @@ Session window: ~04:50–06:00 CEST. Scope of this report: THIS session only (th
 
 ---
 
-*Arte in Aeternum — waiting for instructions.*
+_Arte in Aeternum — waiting for instructions._

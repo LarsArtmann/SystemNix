@@ -8,16 +8,16 @@
 
 ## 0. What the thing IS (when deployed)
 
-| Piece | Value |
-| --- | --- |
-| Module | `modules/nixos/services/github-auto-assign.nix` → `flake.nixosModules.github-auto-assign` → option `services.github-auto-assign` |
-| Enable | `platforms/nixos/system/configuration.nix` (next to `systemd-timer-monitor`, line ~427) |
-| Service | `github-auto-assign.service` — Type=oneshot, `User = lars` (primaryUser), `ProtectHome = "read-only"` so gh reads the user's existing `~/.config/gh/hosts.yml` (0600, OAuth token with `repo` scope) — NO new sops secret |
-| Timer | `github-auto-assign.timer` — `OnCalendar = *-*-* 00/6:00:00`, `RandomizedDelaySec = 10min`, `Persistent = true` |
-| Script | `writeShellApplication` (`gh` + `coreutils` only): for kind in issue, pr → `gh search <issues|prs> --owner LarsArtmann --state open --no-assignee --archived=false --limit 1000 --json url` → `gh <issue|pr> edit <url> --add-assignee @me` with 0.5s politeness sleep; any assignment failure → non-zero exit |
-| Hardening | `harden { ProtectHome = "read-only"; MemoryMax = "256M"; }` + `serviceOneshotDefaults {}` + `ioTier.background`, `startLimitBurst = 5 / 300s`, `TimeoutStartSec = 45min` (backfill-scale first run) |
-| Failure alerting | `onFailure = [ "notify-failure@%n.service" ]` (Discord) + `services.system-health.extraMonitoredServices += github-auto-assign` (eval-verified in the rendered list) |
-| Deliberate gaps | No Gatus HTTP check (no endpoint — daemon-less-unit doctrine, cv-scan pattern); no sops (reuses user's gh CLI auth); no VM test (gh auth can't exist in a VM) |
+| Piece            | Value                                                                                                                                                                                                                     |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Module           | `modules/nixos/services/github-auto-assign.nix` → `flake.nixosModules.github-auto-assign` → option `services.github-auto-assign`                                                                                          |
+| Enable           | `platforms/nixos/system/configuration.nix` (next to `systemd-timer-monitor`, line ~427)                                                                                                                                   |
+| Service          | `github-auto-assign.service` — Type=oneshot, `User = lars` (primaryUser), `ProtectHome = "read-only"` so gh reads the user's existing `~/.config/gh/hosts.yml` (0600, OAuth token with `repo` scope) — NO new sops secret |
+| Timer            | `github-auto-assign.timer` — `OnCalendar = *-*-* 00/6:00:00`, `RandomizedDelaySec = 10min`, `Persistent = true`                                                                                                           |
+| Script           | `writeShellApplication` (`gh` + `coreutils` only): for kind in issue, pr → `gh search <issues                                                                                                                             |
+| Hardening        | `harden { ProtectHome = "read-only"; MemoryMax = "256M"; }` + `serviceOneshotDefaults {}` + `ioTier.background`, `startLimitBurst = 5 / 300s`, `TimeoutStartSec = 45min` (backfill-scale first run)                       |
+| Failure alerting | `onFailure = [ "notify-failure@%n.service" ]` (Discord) + `services.system-health.extraMonitoredServices += github-auto-assign` (eval-verified in the rendered list)                                                      |
+| Deliberate gaps  | No Gatus HTTP check (no endpoint — daemon-less-unit doctrine, cv-scan pattern); no sops (reuses user's gh CLI auth); no VM test (gh auth can't exist in a VM)                                                             |
 
 Design decisions worth remembering:
 
@@ -83,6 +83,7 @@ Design decisions worth remembering:
 ## f) NEXT — up to 50 things (ordered, P0 first)
 
 **This feature, blocking:**
+
 1. Resolve the deploy: when `01D` expires — force with `DEPLOY_FORCE_PRESSURE=1` + rationale (root NVMe 3% busy, checks green) or keep waiting; then confirm clean activation + profile anchored (the exit-4/unanchored-generation check).
 2. Wait for backfill `00F` to finish; verify final state: 0 unassigned PRs, issues ≤ remaining-cap remainder; capture the script's own `done: assigned=N failed=M` line.
 3. If `failed > 0` in the final line: triage each WARN URL (expected classes: none known — investigate before ignoring).
@@ -113,7 +114,7 @@ Design decisions worth remembering:
 
 ## g) QUESTIONS (cannot answer myself)
 
-1. **Forks: in or out?** The sweep already self-assigned ~100+ items on forked repos (zustand, usehooks-ts, tsup, typespec-*, tailwind-merge, pihole-docs, template-*, standard-bug-tracking-schema, .hermes, …). Keep them (literal "ALL my repos"), or exclude forks (I add an option + mass-cleanup)? This also decides how noisy the 6h timer stays forever.
+1. **Forks: in or out?** The sweep already self-assigned ~100+ items on forked repos (zustand, usehooks-ts, tsup, typespec-_, tailwind-merge, pihole-docs, template-_, standard-bug-tracking-schema, .hermes, …). Keep them (literal "ALL my repos"), or exclude forks (I add an option + mass-cleanup)? This also decides how noisy the 6h timer stays forever.
 2. **Deploy now or drain first?** All 12 pre-deploy checks are green and the toplevel is built; the only blocker is the parallel session's build storm (root NVMe 3% busy, PSI inflated by CPU-bound linkers). Force with `DEPLOY_FORCE_PRESSURE=1` now, or wait out the storm (unknown duration, currently 25+ min)? Freeze history says you care about this tradeoff.
 3. **Paging policy for partial failure?** Any single failed assignment currently exits non-zero → Discord page every 6h until the failing item is fixed/assigned. Acceptable (loud), or threshold it (page only if everything failed or >N% failed, WARN-log the rest)?
 

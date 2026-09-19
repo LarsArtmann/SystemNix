@@ -53,7 +53,7 @@
 ### Batch F — verification (GREEN)
 
 - `bash -n`: **80 tracked .sh files, 0 failures**.
-- shellcheck `-S error`: CI-parity glob (scripts/*.sh + .githooks/*) **PASS**, `scripts/lib/` **PASS**.
+- shellcheck `-S error`: CI-parity glob (scripts/_.sh + .githooks/_) **PASS**, `scripts/lib/` **PASS**.
 - **8/8 fast selftests green** (pre-deploy-metrics, shell-aliases, direnv-smart-lib, post-deploy-pressure, nullglob, textfile-tmp, serviceconfig-merge ×2 phases, templ-committed).
 - `nix flake check --no-build`: **ALL CHECKS PASSED** — but only after the unplanned rescue below.
 
@@ -97,7 +97,7 @@
    - Meta-lesson: the check's test cases were authored by reasoning and NEVER executed (the eval crash prevented any run). Landed via a daemon sweep; blocked every `nix flake check` from `4a4eeb73` until this session.
 2. **My multiedit partial failure on display-watchdog.sh** (box-drawing chars in old_string) — 5 of 6 applied, leaving inconsistent state; caught by grep-verify, re-applied. Same class as the zfs-vm incident in the previous session — box-drawing lines in old_string remain my #1 multiedit failure mode.
 3. **Inverted counter in my first dns-diagnostics edit** — the FAILS increment landed on `ok()` with a stray `;;`; caught on immediate re-read of the edit and fixed before any test ran.
-4. **My own test harness bugs:** python bytes-pattern vs str-string TypeError; a first swap-check regex that couldn't match multi-column lines (previous session); repeated `$?`-after-pipe masking (tail/head/`ls` exit codes read as the script's) — bit me ~4 times before I switched to direct no-pipe exit checks. 
+4. **My own test harness bugs:** python bytes-pattern vs str-string TypeError; a first swap-check regex that couldn't match multi-column lines (previous session); repeated `$?`-after-pipe masking (tail/head/`ls` exit codes read as the script's) — bit me ~4 times before I switched to direct no-pipe exit checks.
 5. **Two throwaway repro .nix files had their own bugs** (out-of-bounds `elemAt`, toString-on-list) — cost debug rounds before I simplified the probes.
 6. **One report finding was WRONG:** the das-link `"-b -1"` quoting bug doesn't actually fire on systemd 261 (both forms select the previous boot identically — proven live). Fix kept as the unambiguous idiom; the original HIGH rating was overstated.
 

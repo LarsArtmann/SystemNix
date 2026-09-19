@@ -16,17 +16,17 @@ broken symlink onto the new store, where it armed the same slow ladder rot.
 
 ## Evidence
 
-| Probe | Result |
-| --- | --- |
-| Corrected entry audit (`options init=` parse — entries have NO `^init` line) | 2 LIVE-OK (default `nixos-efc4051e`→`zkaacn2a`, `nixos-6ecddc08f7`→`g9ghy625`), 3 QLC-files-only, 11 absent everywhere |
-| `nix copy --from file:///mnt/btrfs-root/@nix` (3 file-present targets) | `don't know how to build` / `is not valid` — files exist, DB rows gone (freeze-interrupted GC signature) |
-| QLC db probes (flip gen `p0ccbqj5`, `g9ghy625`, stuck-boot `j95cix9f`, `dfnlzr0n`) | ALL `QLC-DB-INVALID` — the QLC @nix db is not a usable source store for generation recovery |
-| `/nix/var/nix/gcroots/` on BOTH stores | `profiles -> /tmp/calamares-root-m87jaynv/nix/var/nix/profiles` (dead since install) — **profile generations never GC-rooted** |
-| `platforms/common/nix-settings.nix` | `nix.gc` daily `--delete-older-than 3d` |
-| nix-gc journal (last night) | `8909 store paths deleted, 43.3 GiB freed` — GC completes; recent generations survived ONLY via `gcroots/auto` indirect roots (deploy `result` symlinks) |
-| Closure completeness on Samsung | `zkaacn2a` 4420, `8zzq0b1i` 4421, `g9ghy625` 4415, `p0ccbqj5` 4414 paths — all resolve |
-| `/run/current-system` vs profile | running `8zzq0b1i` (activation 2026-09-08 04:25) ≠ profile `system-761`→`zkaacn2a` — **an exit-4'd activation is pending re-anchor**; reboot would boot the Sep-7 build |
-| Failed units (101) | 92 = `fastflowlm@` connection instances (known EADDRINUSE corpse wedge, clears on reboot); 9 chronic/one-offs (inboxclean-sync OAuth, btrbk-data EIO, etc.) |
+| Probe                                                                              | Result                                                                                                                                                                  |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Corrected entry audit (`options init=` parse — entries have NO `^init` line)       | 2 LIVE-OK (default `nixos-efc4051e`→`zkaacn2a`, `nixos-6ecddc08f7`→`g9ghy625`), 3 QLC-files-only, 11 absent everywhere                                                  |
+| `nix copy --from file:///mnt/btrfs-root/@nix` (3 file-present targets)             | `don't know how to build` / `is not valid` — files exist, DB rows gone (freeze-interrupted GC signature)                                                                |
+| QLC db probes (flip gen `p0ccbqj5`, `g9ghy625`, stuck-boot `j95cix9f`, `dfnlzr0n`) | ALL `QLC-DB-INVALID` — the QLC @nix db is not a usable source store for generation recovery                                                                             |
+| `/nix/var/nix/gcroots/` on BOTH stores                                             | `profiles -> /tmp/calamares-root-m87jaynv/nix/var/nix/profiles` (dead since install) — **profile generations never GC-rooted**                                          |
+| `platforms/common/nix-settings.nix`                                                | `nix.gc` daily `--delete-older-than 3d`                                                                                                                                 |
+| nix-gc journal (last night)                                                        | `8909 store paths deleted, 43.3 GiB freed` — GC completes; recent generations survived ONLY via `gcroots/auto` indirect roots (deploy `result` symlinks)                |
+| Closure completeness on Samsung                                                    | `zkaacn2a` 4420, `8zzq0b1i` 4421, `g9ghy625` 4415, `p0ccbqj5` 4414 paths — all resolve                                                                                  |
+| `/run/current-system` vs profile                                                   | running `8zzq0b1i` (activation 2026-09-08 04:25) ≠ profile `system-761`→`zkaacn2a` — **an exit-4'd activation is pending re-anchor**; reboot would boot the Sep-7 build |
+| Failed units (101)                                                                 | 92 = `fastflowlm@` connection instances (known EADDRINUSE corpse wedge, clears on reboot); 9 chronic/one-offs (inboxclean-sync OAuth, btrbk-data EIO, etc.)             |
 
 ## Actions taken (all live-verified)
 

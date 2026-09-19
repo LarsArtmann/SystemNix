@@ -8,16 +8,17 @@
 
 ## Incident Summary
 
-| Field | Value |
-|---|---|
-| Symptom | `The 'redirect_uri' parameter is required when using OpenID Connect 1.0` on `auth.home.lan/interaction/error`, reached from `https://rss.home.lan/` |
-| User-visible impact | **Complete SSO login failure for Miniflux** since bring-up (2026-09-10) — nobody could ever log in via Pocket ID |
-| Root cause | Miniflux does **NOT** derive the OIDC redirect URL from `BASE_URL`. Upstream `OAUTH2_REDIRECT_URL` defaults to an **empty string** (`internal/config/options.go`). The SystemNix module (and its comment in `pocket-id.nix`) claimed auto-derivation — a false premise encoded at bring-up |
-| Failure chain | Login button → `/oauth2/oidc/redirect` → goth built `oauth2.Config` with `RedirectURL: ""` → authorize request to Pocket ID with **no** `redirect_uri` parameter → Pocket ID (correctly) rejects with the OIDC-spec error |
-| Fix | Explicit `OAUTH2_REDIRECT_URL = "https://rss.<domain>/oauth2/oidc/callback"` in `modules/nixos/services/miniflux.nix` (byte-matches the registered Pocket ID callbackURL) |
-| Verification | Eval check → deploy via `nix run .#deploy` → live header probe: `/oauth2/oidc/redirect` → 302 → `/authorize?...redirect_uri=...&code_challenge_method=S256...` → Pocket ID lands on `/interaction` (passkey screen), **not** the error page |
+| Field               | Value                                                                                                                                                                                                                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Symptom             | `The 'redirect_uri' parameter is required when using OpenID Connect 1.0` on `auth.home.lan/interaction/error`, reached from `https://rss.home.lan/`                                                                                                                                        |
+| User-visible impact | **Complete SSO login failure for Miniflux** since bring-up (2026-09-10) — nobody could ever log in via Pocket ID                                                                                                                                                                           |
+| Root cause          | Miniflux does **NOT** derive the OIDC redirect URL from `BASE_URL`. Upstream `OAUTH2_REDIRECT_URL` defaults to an **empty string** (`internal/config/options.go`). The SystemNix module (and its comment in `pocket-id.nix`) claimed auto-derivation — a false premise encoded at bring-up |
+| Failure chain       | Login button → `/oauth2/oidc/redirect` → goth built `oauth2.Config` with `RedirectURL: ""` → authorize request to Pocket ID with **no** `redirect_uri` parameter → Pocket ID (correctly) rejects with the OIDC-spec error                                                                  |
+| Fix                 | Explicit `OAUTH2_REDIRECT_URL = "https://rss.<domain>/oauth2/oidc/callback"` in `modules/nixos/services/miniflux.nix` (byte-matches the registered Pocket ID callbackURL)                                                                                                                  |
+| Verification        | Eval check → deploy via `nix run .#deploy` → live header probe: `/oauth2/oidc/redirect` → 302 → `/authorize?...redirect_uri=...&code_challenge_method=S256...` → Pocket ID lands on `/interaction` (passkey screen), **not** the error page                                                |
 
 **Files changed:**
+
 - `modules/nixos/services/miniflux.nix` — the fix + corrected comment
 - `modules/nixos/services/pocket-id.nix` — corrected the false "derived from BASE_URL" comment
 - `AGENTS.md` — Miniflux section bullet: the trap, the signature, the live-verified post-fix chain
@@ -53,21 +54,22 @@
 
 Nothing in this session is fucked up. Two session-level failures worth naming honestly:
 
-1. **The original bring-up (2026-09-10, other session) shipped a false premise as a comment** — "The redirect URL is derived from BASE_URL upstream" — and the module passed `nix flake check`, eval, VM test, Gatus, and deploy smoke **while SSO was 100% broken**. Five prevention layers, none caught a wrong *assumption in a comment*. The Gatus "Miniflux Login Renders" check is green on the password form alone — it never exercises the OIDC begin-auth redirect. That is the real structural finding: **SSO success was never a verification target anywhere.**
+1. **The original bring-up (2026-09-10, other session) shipped a false premise as a comment** — "The redirect URL is derived from BASE_URL upstream" — and the module passed `nix flake check`, eval, VM test, Gatus, and deploy smoke **while SSO was 100% broken**. Five prevention layers, none caught a wrong _assumption in a comment_. The Gatus "Miniflux Login Renders" check is green on the password form alone — it never exercises the OIDC begin-auth redirect. That is the real structural finding: **SSO success was never a verification target anywhere.**
 2. **My own verification detour** — the `fetch` tool followed redirects and returned SvelteKit app shells twice (the error page and the interaction page render identically as HTML), costing two ambiguous round trips before I switched to a no-follow header probe. Lesson applied: when the response body is a SPA shell, only headers discriminate; go straight to the redirect chain.
 
 ## e) WHAT WE SHOULD IMPROVE
 
 1. **Add an SSO-functional check, not a liveness check.** Every Layer-1 service's monitoring asserts "login page renders HTML" — none asserts "the OIDC begin-auth redirect is well-formed". A cheap generic Gatus check per OIDC service: probe `/oauth2/.../redirect` (or equivalent) and assert the Location header contains `redirect_uri=`. This class of outage (miniflux) would page in 60s instead of living invisibly for a day+.
 2. **Never encode a library-behavior claim in a comment without a source link or a live probe.** The false comment cost the entire outage; a `# verified: <url>` convention (like the AGENTS.md "verified live" discipline) would force the check at write time.
-3. **Byte-match invariant between `OAUTH2_REDIRECT_URL` and `pocket-id.nix callbackURLs` should be machine-checked** — both derive from the same `domain`, but a future path edit on one side only desyncs them into a redirect_uri-mismatch error (a *different* Pocket ID failure than today's).
+3. **Byte-match invariant between `OAUTH2_REDIRECT_URL` and `pocket-id.nix callbackURLs` should be machine-checked** — both derive from the same `domain`, but a future path edit on one side only desyncs them into a redirect_uri-mismatch error (a _different_ Pocket ID failure than today's).
 4. **Discriminate SPA-shell responses in verification tooling** — body-based fetch verification is useless against SvelteKit/React frontends; header-level probes should be the default reflex (this is now the second repo lesson about probe fidelity: the python-urllib-follows-redirects trap, now the SPA-shell trap).
 
 ## f) UP TO 50 THINGS TO GET DONE NEXT
 
-*Session-derived first; then repo-known items observed/noticed this session. Items 1–8 are direct descendants of this session; 9+ are harvest candidates. Most of 9+ are ROADMAP fuel, not commitments.*
+_Session-derived first; then repo-known items observed/noticed this session. Items 1–8 are direct descendants of this session; 9+ are harvest candidates. Most of 9+ are ROADMAP fuel, not commitments._
 
 **Direct from this session (P0/P1):**
+
 1. User performs the live passkey SSO login at `https://rss.home.lan/` → proves the fix end-to-end (the ~10% gap).
 2. Verify `OAUTH2_USER_CREATION` auto-provisioned the `lars` account (admin UI or DB) after first login.
 3. Add eval-time assertion: `OAUTH2_PROVIDER = "oidc"` ⇒ `OAUTH2_REDIRECT_URL != ""` in `miniflux.nix` (negative-tested per repo doctrine).

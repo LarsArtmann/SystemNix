@@ -8,14 +8,14 @@
 
 ## 0. TL;DR
 
-| Deploy-time symptom | Root cause found | Status |
-| --- | --- | --- |
+| Deploy-time symptom                                                                        | Root cause found                                                                                                                                                                                | Status                                                                              |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | `llama-embeddings`/`llama-reranker` failed units + `llama-rag-model-fetch` start-limit-hit | Rogue 0.4.0 llama-server (hermes cron orphan, PID 954946, 29h old) held :8849; second orphan briefly held :8848 → every module start bind-failed → restart cascade start-limited the fetch unit | **Port guard shipped + fired live; NEW: 0.3.0 spin regression REAPPEARED (see §4)** |
-| `buildcache-usb-recovery` failed (`rm: Permission denied` on `/tmp/bc-fallback/*`) | Unit carried bare `CAP_SYS_ADMIN`; sticky-bit /tmp requires CAP_FOWNER to delete lars-owned dirs even as root (memory-emergency-guard 2026-08-22 class) | **FIXED + verified live (bc-fallback swept)** |
-| Homepage (localhost:8082) FAIL | homepage-dashboard was retired in today's merge into PapDashboard; the smoke's loopback probe was stale | **FIXED (check removed, rule documented)** |
-| FastFlowLM :52625 FAIL | memory-emergency-guard restore capped (3/3 restores today spent, trip #444 zone 6 at 11:19 stopped the socket again) | **BY DESIGN — user action needed** (§6) |
-| CV browser render smoke FAIL (`/admin` `net::ERR_ABORTED`) | Transient Chromium abort under the deploy-time IO storm; re-run passes clean (rc=0) | **NOT A REGRESSION** |
-| `/run/current-system` NOT anchored to system-782 (reboot would revert) | The exit-4 activation advanced current-system without the profile bump (2026-09-06 mechanism) | **FIXED — re-deploy anchored system-783** |
+| `buildcache-usb-recovery` failed (`rm: Permission denied` on `/tmp/bc-fallback/*`)         | Unit carried bare `CAP_SYS_ADMIN`; sticky-bit /tmp requires CAP_FOWNER to delete lars-owned dirs even as root (memory-emergency-guard 2026-08-22 class)                                         | **FIXED + verified live (bc-fallback swept)**                                       |
+| Homepage (localhost:8082) FAIL                                                             | homepage-dashboard was retired in today's merge into PapDashboard; the smoke's loopback probe was stale                                                                                         | **FIXED (check removed, rule documented)**                                          |
+| FastFlowLM :52625 FAIL                                                                     | memory-emergency-guard restore capped (3/3 restores today spent, trip #444 zone 6 at 11:19 stopped the socket again)                                                                            | **BY DESIGN — user action needed** (§6)                                             |
+| CV browser render smoke FAIL (`/admin` `net::ERR_ABORTED`)                                 | Transient Chromium abort under the deploy-time IO storm; re-run passes clean (rc=0)                                                                                                             | **NOT A REGRESSION**                                                                |
+| `/run/current-system` NOT anchored to system-782 (reboot would revert)                     | The exit-4 activation advanced current-system without the profile bump (2026-09-06 mechanism)                                                                                                   | **FIXED — re-deploy anchored system-783**                                           |
 
 **The big open problem:** the pinned llama.cpp 0.3.0 build (`sj4rpa8y`, byte-identical to the proven 2026-09-05 deployment) **now exhibits the exact 0.4.0 spin signature**: both servers at 93.9% single-thread CPU for 2.5h+, stuck immediately after `model vocab missing newline token, using special_pad_id instead`, `/health` 503 forever. The AGENTS escape condition ("if the spin signature EVER reappears on the pinned build, re-disable and bisect upstream") is TRIGGERED. llama-rag is effectively DARK again (units own the ports, guard is happy, leak-metrics sees listeners — every signal green — while nothing serves).
 
@@ -107,6 +107,7 @@
 ## 8. f) Up to 50 things to get done next
 
 **P0 — live fallout from this session**
+
 1. Reboot evo-x2 (clears flm :52626 corpse, corpse-pile D-state, kfd/driver state; cheapest 0.3.0-spin test).
 2. After reboot: verify llama-rag serves (`/v1/embeddings` 1024-dim, `/v1/rerank` correct ranking) — if the spin persists on 0.3.0 post-reboot, escape condition stands.
 3. Re-disable llama-rag (`services.llama-rag.enable = false`) if the spin survives the reboot; bisect upstream (0.3.0 vs 0.4.0 boundary; kfd_wait_on_events threads).
@@ -172,4 +173,4 @@
 
 ---
 
-*Prepared 2026-09-18 14:01 by the deploy-fallout triage session. All evidence cited is from this session's journal reads, evals, and live probes on evo-x2; no values are quoted from sops or auth stores.*
+_Prepared 2026-09-18 14:01 by the deploy-fallout triage session. All evidence cited is from this session's journal reads, evals, and live probes on evo-x2; no values are quoted from sops or auth stores._

@@ -67,22 +67,26 @@ it fetches, and gets told "noupdate" forever.
 ## Pareto Breakdown
 
 ### The 1% that delivers 51% of the result
+
 - **Change `update_url` to the Helium proxy in `browser-policies.nix`** —
   one line, unblocks the entire extension pipeline (all 20+ existing
   extensions AND everything we add later).
 
 ### The 4% that delivers 64%
+
 - The update_url change (above), plus
 - **Add KeePassXC-Browser ID to the extension list** — completes the secrets
   manager integration that motivated this session.
 
 ### The 20% that delivers 80%
+
 - The two changes above, plus
 - **Probe-profile verification** (headless Helium with consented-services
   prefs, assert `Extensions/` dir appears) — proves the mechanism before the
   user ever restarts their browser.
 
 ### The remaining 20% to 100%
+
 - Deploy via `nix run .#deploy`.
 - Post-deploy verification (probe + policy file content check).
 - Fix the stale module comment (`browser-policies.nix` claims the current
@@ -96,34 +100,34 @@ it fetches, and gets told "noupdate" forever.
 
 ### Coarse tasks (30–100 min each)
 
-| # | Task | Impact | Effort | Value |
-|---|------|--------|--------|-------|
-| 1 | Research + root-cause (Helium patches, proxy, policy dir, empirical probes) | Critical | DONE (60 min) | Entire fix depends on it |
-| 2 | Fix `update_url` in `browser-policies.nix` (+ stale comment) | Critical | 30 min | Unblocks all extensions |
-| 3 | Add KeePassXC-Browser to `configuration.nix` extension list | High | 30 min | The actual user ask |
-| 4 | Eval + flake check verification | High | 30 min | Prevents broken deploy |
-| 5 | Deploy + probe-profile verification | High | 60 min | Proves extensions install |
-| 6 | Commit + push with full diagnosis | Medium | 30 min | Durable record |
+| # | Task                                                                        | Impact   | Effort        | Value                     |
+| - | --------------------------------------------------------------------------- | -------- | ------------- | ------------------------- |
+| 1 | Research + root-cause (Helium patches, proxy, policy dir, empirical probes) | Critical | DONE (60 min) | Entire fix depends on it  |
+| 2 | Fix `update_url` in `browser-policies.nix` (+ stale comment)                | Critical | 30 min        | Unblocks all extensions   |
+| 3 | Add KeePassXC-Browser to `configuration.nix` extension list                 | High     | 30 min        | The actual user ask       |
+| 4 | Eval + flake check verification                                             | High     | 30 min        | Prevents broken deploy    |
+| 5 | Deploy + probe-profile verification                                         | High     | 60 min        | Proves extensions install |
+| 6 | Commit + push with full diagnosis                                           | Medium   | 30 min        | Durable record            |
 
 ### Fine tasks (max 12 min each)
 
-| # | Task | Parent |
-|---|------|--------|
-| 1.1 | Grep helium binary for policy/store paths | 1 |
-| 1.2 | Read `proxy-extension-downloads.patch` fully | 1 |
-| 1.3 | Verify policy file is read (v=1 logging probe) | 1 |
-| 1.4 | Verify `prod=chromecrx` → noupdate vs `prod=chrome` → CRX | 1 |
-| 1.5 | Verify Helium proxy serves Omaha protocol | 1 |
-| 2.1 | Edit `update_url` in `browser-policies.nix` | 2 |
-| 2.2 | Rewrite stale header comment with root cause | 2 |
-| 3.1 | Add KeePassXC-Browser entry to configuration.nix | 3 |
-| 4.1 | `nix flake check --no-build` | 4 |
-| 4.2 | Eval rendered extra.json content | 4 |
-| 5.1 | `nix run .#deploy` | 5 |
-| 5.2 | Headless consent-probe: assert `Extensions/<id>` appears | 5 |
-| 5.3 | Verify KeePassXC ID present in deployed policy | 5 |
-| 6.1 | Pathspec commit with detailed message | 6 |
-| 6.2 | Push | 6 |
+| #   | Task                                                      | Parent |
+| --- | --------------------------------------------------------- | ------ |
+| 1.1 | Grep helium binary for policy/store paths                 | 1      |
+| 1.2 | Read `proxy-extension-downloads.patch` fully              | 1      |
+| 1.3 | Verify policy file is read (v=1 logging probe)            | 1      |
+| 1.4 | Verify `prod=chromecrx` → noupdate vs `prod=chrome` → CRX | 1      |
+| 1.5 | Verify Helium proxy serves Omaha protocol                 | 1      |
+| 2.1 | Edit `update_url` in `browser-policies.nix`               | 2      |
+| 2.2 | Rewrite stale header comment with root cause              | 2      |
+| 3.1 | Add KeePassXC-Browser entry to configuration.nix          | 3      |
+| 4.1 | `nix flake check --no-build`                              | 4      |
+| 4.2 | Eval rendered extra.json content                          | 4      |
+| 5.1 | `nix run .#deploy`                                        | 5      |
+| 5.2 | Headless consent-probe: assert `Extensions/<id>` appears  | 5      |
+| 5.3 | Verify KeePassXC ID present in deployed policy            | 5      |
+| 6.1 | Pathspec commit with detailed message                     | 6      |
+| 6.2 | Push                                                      | 6      |
 
 ---
 

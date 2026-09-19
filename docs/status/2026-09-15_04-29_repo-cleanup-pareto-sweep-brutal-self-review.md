@@ -60,6 +60,7 @@
 ## f) NEXT — up to 50 things (session-derived)
 
 **Quick wins (≤15 min):**
+
 1. Rewrite `docs/status/archived/README.md` for the canonical flat layout + 2026-09-14 consolidation provenance
 2. Read + fix stale layout prose in `docs/README.md`
 3. Read + fix stale layout prose in `FEATURES.md`

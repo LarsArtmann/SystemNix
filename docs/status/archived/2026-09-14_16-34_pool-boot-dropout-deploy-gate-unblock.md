@@ -56,48 +56,48 @@
 
 ## f) NEXT TASKS (ranked, up to 50 — HARVEST fuel for TODO_LIST/ROADMAP)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Run `nix run .#deploy` (gate verified green) | Critical | S | Deploy |
-| 2 | Or, as immediate stopgap before the deploy: `sudo systemctl start bank-sync immich-server paperless-web` | Critical | S | Ops |
-| 3 | Post-deploy: verify bank-sync :8097 answers + `bank_sync_*` metrics present + Gatus Bank-Sync green | Critical | S | Verify |
-| 4 | Post-deploy: verify immich-server + paperless-web active and their UI health checks green | Critical | S | Verify |
-| 5 | Post-deploy: confirm the new deploy.sh block restarted `discordsync-db-heal` (was failed since boot) | High | S | Verify |
-| 6 | Wise SCA approval in the app + OTT into `/var/lib/bank-sync-sca/token.env` per runbook (statements paused on ALL balances) | High | M | Ops-user |
-| 7 | InboxClean main-account re-consent (`inboxclean auth`; pending since 2026-09-04, failing every 30-min tick) | High | M | Ops-user |
-| 8 | Add `enabled-but-inactive pool consumer` textfile metric + Gatus check (detection net beyond event-driven recovery) | High | M | Feature |
-| 9 | Fix `tq-serve`/`tq-agent-pool` startLimit placement (in `[Service]` = silently ignored → infinite-restart risk; move to unitConfig/top-level) | High | S | Bug |
-| 10 | Fix `projects-management-automation` Environment= splitting ("Artmann" bare-token warnings — quoted values with spaces) and audit what PMA env vars are currently ignored | High | S | Bug |
-| 11 | Root-cause the 13:36:13 `mnt-pool.mount` same-second SIGTERM (job-superseded by whom?) | High | M | Bug |
-| 12 | Investigate the 15-minute multi-user.target reach (13:36→13:51) — which unit held the transaction | High | M | Bug |
-| 13 | Investigate boot -1's missing shutdown trail (journal ends mid-startup 13:32:17; `last -x`/wtmp check) | Medium | S | Bug |
-| 14 | Investigate why `systemctl mask --runtime` was ignored by PID1 in the VM (systemd 261 semantics; affects future fixture design) | Medium | M | Bug |
-| 15 | Table-drive the §10 endpoint→metrics WARN map (replace the 4 hand-registered elif branches) | Medium | M | Quality |
-| 16 | Auto-derive endpoint-down WARN branches from gatus-config probe results (retire per-service registration entirely) | Medium | L | Quality |
-| 17 | VM test: simulate the real dropout (cancel mount job before consumer starts, assert recovery converges) | Medium | M | Quality |
-| 18 | Evaluate systemd `Upholds=` as the declarative auto-restart for mount-dependent services (structural alternative to event-driven convergence) | Medium | M | Feature |
-| 19 | Verify `btrfs-compsize` green at its next 6h tick (timed out in the boot storm) | Low | S | Verify |
-| 20 | Confirm `system_booted_is_newest_profile` appears in the textfile post-switch (auto-loaned new metric) | Low | S | Verify |
-| 21 | Clean the `/mnt/pool` root-fs shadow directory (every boot warns "to mount over is not empty"; 226-class hygiene) | Low | S | Cleanup |
-| 22 | Verify bank-sync canary (`bank-sync-canary.timer`, landed 09-12) produced sane `canary-last.json` this boot | Low | S | Verify |
-| 23 | Decide whether bank-sync-down deserves a sev1 notify tier (currently Discord-only via Gatus; outage ran 3h with only channel alerts) | Medium | S | Decision |
-| 24 | Duplicate the "VM /etc is read-only — disable/mask fixtures impossible" gotcha into the general NixOS-VM-test gotcha list (currently buried in the pool-recovery bullet) | Low | S | Docs |
-| 25 | Add a boot-dropout recovery note to `docs/services/` runbooks (bank-sync/paperless) so the next on-call knows recovery is automatic post-deploy | Low | S | Docs |
-| 26 | Consider `scripts/unit-started-this-boot.sh` helper (journal-based, avoids the busctl GC'd-object trap) | Low | S | Quality |
-| 27 | Audit remaining services for the indirect-unit restart gap: list RemainAfterExit oneshots pulled only via `wants` (is-enabled rc=1) that deploys never re-run | Medium | M | Audit |
-| 28 | Review `pocket-id.service` Type=simple + ExecStartPost + credentials race warning from systemd-analyze | Low | M | Quality |
-| 29 | Modernize `cups.socket` /var/run legacy path (systemd-analyze warning) | Low | S | Cleanup |
-| 30 | Sweep ALL unit files with `systemd-analyze verify` and file the remaining warnings as tasks (this session only sampled) | Medium | S | Audit |
-| 31 | After the owed reboot: verify the boot-dropout class is gone at boot (recovery converges during coldplug) and boot time is sane again | Medium | M | Verify |
-| 32 | Confirm immich-machine-learning + redis-immich came up with the converge (server alone is not the full stack) | Medium | S | Verify |
-| 33 | Make deploy.sh's pool-usb-recovery post-switch run print its convergence lines into the deploy log (visibility) | Low | S | Quality |
-| 34 | Verify no OTHER enabled services besides the three are sitting inactive since 13:35 (full `is-enabled && !is-active` sweep across system + user managers) | High | S | Audit |
-| 35 | Coordinate with the owning session on `scripts/io-psi-forensics.sh` (foreign +5-line edit rode the daemon commits; completeness unverified by me) | Low | S | Coordination |
-| ~~36~~ | ~~Harvest this report's items into TODO_LIST.md/ROADMAP.md (docs-health HARVEST)~~ done — harvested to TODO_LIST 2026-09-14 18:30 (docs-health pass) | ~~Medium~~ | ~~S~~ | ~~Docs~~ |
-| 37 | Add the pool-recovery healthy-path metrics-start removal to the CHANGELOG (behavior change: 5-min timer owns freshness now) | Low | S | Docs |
-| 38 | Consider a pre-deploy §6 auto-classifier for tolerated known-red units (inboxclean-sync noise) | Low | M | Quality |
-| 39 | Re-verify Gatus "Pool Mounted"/"Pool RAID1 Membership" stayed truthful through the incident (textfile showed mounted=1 throughout — confirm no alert gaps) | Low | S | Verify |
-| 40 | Long-term: document the "job-failure-with-dependency ≠ failed service" doctrine (restart=never engages, recovery layers must cover inactive) next to the Docker compose `Requires=` lesson in AGENTS.md | Low | S | Docs |
+| #      | Task                                                                                                                                                                                                    | Impact     | Effort | Category     |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------ | ------------ |
+| 1      | Run `nix run .#deploy` (gate verified green)                                                                                                                                                            | Critical   | S      | Deploy       |
+| 2      | Or, as immediate stopgap before the deploy: `sudo systemctl start bank-sync immich-server paperless-web`                                                                                                | Critical   | S      | Ops          |
+| 3      | Post-deploy: verify bank-sync :8097 answers + `bank_sync_*` metrics present + Gatus Bank-Sync green                                                                                                     | Critical   | S      | Verify       |
+| 4      | Post-deploy: verify immich-server + paperless-web active and their UI health checks green                                                                                                               | Critical   | S      | Verify       |
+| 5      | Post-deploy: confirm the new deploy.sh block restarted `discordsync-db-heal` (was failed since boot)                                                                                                    | High       | S      | Verify       |
+| 6      | Wise SCA approval in the app + OTT into `/var/lib/bank-sync-sca/token.env` per runbook (statements paused on ALL balances)                                                                              | High       | M      | Ops-user     |
+| 7      | InboxClean main-account re-consent (`inboxclean auth`; pending since 2026-09-04, failing every 30-min tick)                                                                                             | High       | M      | Ops-user     |
+| 8      | Add `enabled-but-inactive pool consumer` textfile metric + Gatus check (detection net beyond event-driven recovery)                                                                                     | High       | M      | Feature      |
+| 9      | Fix `tq-serve`/`tq-agent-pool` startLimit placement (in `[Service]` = silently ignored → infinite-restart risk; move to unitConfig/top-level)                                                           | High       | S      | Bug          |
+| 10     | Fix `projects-management-automation` Environment= splitting ("Artmann" bare-token warnings — quoted values with spaces) and audit what PMA env vars are currently ignored                               | High       | S      | Bug          |
+| 11     | Root-cause the 13:36:13 `mnt-pool.mount` same-second SIGTERM (job-superseded by whom?)                                                                                                                  | High       | M      | Bug          |
+| 12     | Investigate the 15-minute multi-user.target reach (13:36→13:51) — which unit held the transaction                                                                                                       | High       | M      | Bug          |
+| 13     | Investigate boot -1's missing shutdown trail (journal ends mid-startup 13:32:17; `last -x`/wtmp check)                                                                                                  | Medium     | S      | Bug          |
+| 14     | Investigate why `systemctl mask --runtime` was ignored by PID1 in the VM (systemd 261 semantics; affects future fixture design)                                                                         | Medium     | M      | Bug          |
+| 15     | Table-drive the §10 endpoint→metrics WARN map (replace the 4 hand-registered elif branches)                                                                                                             | Medium     | M      | Quality      |
+| 16     | Auto-derive endpoint-down WARN branches from gatus-config probe results (retire per-service registration entirely)                                                                                      | Medium     | L      | Quality      |
+| 17     | VM test: simulate the real dropout (cancel mount job before consumer starts, assert recovery converges)                                                                                                 | Medium     | M      | Quality      |
+| 18     | Evaluate systemd `Upholds=` as the declarative auto-restart for mount-dependent services (structural alternative to event-driven convergence)                                                           | Medium     | M      | Feature      |
+| 19     | Verify `btrfs-compsize` green at its next 6h tick (timed out in the boot storm)                                                                                                                         | Low        | S      | Verify       |
+| 20     | Confirm `system_booted_is_newest_profile` appears in the textfile post-switch (auto-loaned new metric)                                                                                                  | Low        | S      | Verify       |
+| 21     | Clean the `/mnt/pool` root-fs shadow directory (every boot warns "to mount over is not empty"; 226-class hygiene)                                                                                       | Low        | S      | Cleanup      |
+| 22     | Verify bank-sync canary (`bank-sync-canary.timer`, landed 09-12) produced sane `canary-last.json` this boot                                                                                             | Low        | S      | Verify       |
+| 23     | Decide whether bank-sync-down deserves a sev1 notify tier (currently Discord-only via Gatus; outage ran 3h with only channel alerts)                                                                    | Medium     | S      | Decision     |
+| 24     | Duplicate the "VM /etc is read-only — disable/mask fixtures impossible" gotcha into the general NixOS-VM-test gotcha list (currently buried in the pool-recovery bullet)                                | Low        | S      | Docs         |
+| 25     | Add a boot-dropout recovery note to `docs/services/` runbooks (bank-sync/paperless) so the next on-call knows recovery is automatic post-deploy                                                         | Low        | S      | Docs         |
+| 26     | Consider `scripts/unit-started-this-boot.sh` helper (journal-based, avoids the busctl GC'd-object trap)                                                                                                 | Low        | S      | Quality      |
+| 27     | Audit remaining services for the indirect-unit restart gap: list RemainAfterExit oneshots pulled only via `wants` (is-enabled rc=1) that deploys never re-run                                           | Medium     | M      | Audit        |
+| 28     | Review `pocket-id.service` Type=simple + ExecStartPost + credentials race warning from systemd-analyze                                                                                                  | Low        | M      | Quality      |
+| 29     | Modernize `cups.socket` /var/run legacy path (systemd-analyze warning)                                                                                                                                  | Low        | S      | Cleanup      |
+| 30     | Sweep ALL unit files with `systemd-analyze verify` and file the remaining warnings as tasks (this session only sampled)                                                                                 | Medium     | S      | Audit        |
+| 31     | After the owed reboot: verify the boot-dropout class is gone at boot (recovery converges during coldplug) and boot time is sane again                                                                   | Medium     | M      | Verify       |
+| 32     | Confirm immich-machine-learning + redis-immich came up with the converge (server alone is not the full stack)                                                                                           | Medium     | S      | Verify       |
+| 33     | Make deploy.sh's pool-usb-recovery post-switch run print its convergence lines into the deploy log (visibility)                                                                                         | Low        | S      | Quality      |
+| 34     | Verify no OTHER enabled services besides the three are sitting inactive since 13:35 (full `is-enabled && !is-active` sweep across system + user managers)                                               | High       | S      | Audit        |
+| 35     | Coordinate with the owning session on `scripts/io-psi-forensics.sh` (foreign +5-line edit rode the daemon commits; completeness unverified by me)                                                       | Low        | S      | Coordination |
+| ~~36~~ | ~~Harvest this report's items into TODO_LIST.md/ROADMAP.md (docs-health HARVEST)~~ done — harvested to TODO_LIST 2026-09-14 18:30 (docs-health pass)                                                    | ~~Medium~~ | ~~S~~  | ~~Docs~~     |
+| 37     | Add the pool-recovery healthy-path metrics-start removal to the CHANGELOG (behavior change: 5-min timer owns freshness now)                                                                             | Low        | S      | Docs         |
+| 38     | Consider a pre-deploy §6 auto-classifier for tolerated known-red units (inboxclean-sync noise)                                                                                                          | Low        | M      | Quality      |
+| 39     | Re-verify Gatus "Pool Mounted"/"Pool RAID1 Membership" stayed truthful through the incident (textfile showed mounted=1 throughout — confirm no alert gaps)                                              | Low        | S      | Verify       |
+| 40     | Long-term: document the "job-failure-with-dependency ≠ failed service" doctrine (restart=never engages, recovery layers must cover inactive) next to the Docker compose `Requires=` lesson in AGENTS.md | Low        | S      | Docs         |
 
 ## g) QUESTIONS (only you can answer)
 
@@ -107,4 +107,4 @@
 
 ---
 
-*Point-in-time snapshot. Section (f) is HARVEST input for `TODO_LIST.md`/`ROADMAP.md` — do not let it die in this file. (Format note: skill default is styled HTML; user explicitly requested `.md`, honored per the skill's override rule.)*
+_Point-in-time snapshot. Section (f) is HARVEST input for `TODO_LIST.md`/`ROADMAP.md` — do not let it die in this file. (Format note: skill default is styled HTML; user explicitly requested `.md`, honored per the skill's override rule.)_

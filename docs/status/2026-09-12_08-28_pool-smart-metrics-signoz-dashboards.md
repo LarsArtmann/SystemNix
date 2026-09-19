@@ -54,6 +54,7 @@
 ## f) NEXT (up to 50, session-derived)
 
 **Immediate (blocks completion):**
+
 1. USER: `nix run .#deploy` (build is warm).
 2. Post-deploy verify: `pool_smart_*` in node exporter /metrics; flags = healthy values.
 3. Verify the 3 Gatus checks green (Filesystem group).
@@ -119,4 +120,4 @@
 
 ---
 
-*Report written after self-review; deploy is the single blocking step.*
+_Report written after self-review; deploy is the single blocking step._

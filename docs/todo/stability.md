@@ -43,4 +43,3 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] Document the "re-arm races a manual stop" caveat (a human `systemctl stop btrbk-root` during a churn window gets undone by the next drain tick) in `docs/services/memory-emergency-guard.md`. **Source:** docs/status/2026-09-17_01-52_* §f.12
 - [ ] [watch] Refresh `docs/services/memory-emergency-guard.md` calibration notes ("first 99 real trips" era → current counts) after the re-arm's first live exercise. **Source:** docs/status/2026-09-17_01-52_* §f.23
 - [ ] [decision] Zone 6 vs the nightly backup window — pick the RPO posture: quiet-window deploy tonight before 23:00? second 04:00 retry window? alerting on `churn_rearms_total` (forensics-only vs notify-tier ≥3/day)? — BLOCKED: owner RPO/appetite decision per docs/status/2026-09-17_03-23_* §g.2
-

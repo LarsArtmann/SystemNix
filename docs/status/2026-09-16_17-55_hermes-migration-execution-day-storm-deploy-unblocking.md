@@ -8,17 +8,17 @@
 
 ## What happened this session (timeline)
 
-| Time | Event |
-|---|---|
-| 14:15 | User ran `prepare` v1 → died instantly on `rsync --reflink=always` (MY bug — the documented 2026-08-17 @nix class, repeated). Empty subvol left behind. |
-| 14:40–15:22 | User re-ran (fixed script) **into an active IO storm** (declined my Ctrl-C advice) — 92.3 GB / 948,341 files / 42 min, pass-2 delta **zero**, parity gate clean, mv-aside swap done. QLC at 100% busy for the duration; guard Zone 6 cycled; flm socket sacrificed (still down at report time). |
-| ~15:23 | `line 228 syntax error` after "prepare DONE" — parallel session editing the script mid-run; harmless (functions already parsed). |
-| 15:25 | Restored hermes via 3 systemctl commands (mount + reset-failed + start) — verified live on the subvol. |
-| ~15:45 | Discovered hermes had been **down 7h**: a parallel session's 08:25 deploy (manual `stc test`, nixpkgs bump) shipped the migration config and hit the deploy-before-prepare hazard exactly as the prior session's status report predicted ("fucked up #1"). |
-| 15:57 | User's `nh os switch` died at eval: `cannot coerce the built-in function 'head'` — brand-new `sops-recipient-audit` module (parallel session, 15:39) had never evaluated once; it broke every deploy + pre-commit on the box. |
-| 16:0x–16:2x | Fixed 3 bugs in the module (see below). Tree buildable again; assertions evaluate truthfully green; flake check passed. |
+| Time        | Event                                                                                                                                                                                                                                                                                                                                                         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 14:15       | User ran `prepare` v1 → died instantly on `rsync --reflink=always` (MY bug — the documented 2026-08-17 @nix class, repeated). Empty subvol left behind.                                                                                                                                                                                                       |
+| 14:40–15:22 | User re-ran (fixed script) **into an active IO storm** (declined my Ctrl-C advice) — 92.3 GB / 948,341 files / 42 min, pass-2 delta **zero**, parity gate clean, mv-aside swap done. QLC at 100% busy for the duration; guard Zone 6 cycled; flm socket sacrificed (still down at report time).                                                               |
+| ~15:23      | `line 228 syntax error` after "prepare DONE" — parallel session editing the script mid-run; harmless (functions already parsed).                                                                                                                                                                                                                              |
+| 15:25       | Restored hermes via 3 systemctl commands (mount + reset-failed + start) — verified live on the subvol.                                                                                                                                                                                                                                                        |
+| ~15:45      | Discovered hermes had been **down 7h**: a parallel session's 08:25 deploy (manual `stc test`, nixpkgs bump) shipped the migration config and hit the deploy-before-prepare hazard exactly as the prior session's status report predicted ("fucked up #1").                                                                                                    |
+| 15:57       | User's `nh os switch` died at eval: `cannot coerce the built-in function 'head'` — brand-new `sops-recipient-audit` module (parallel session, 15:39) had never evaluated once; it broke every deploy + pre-commit on the box.                                                                                                                                 |
+| 16:0x–16:2x | Fixed 3 bugs in the module (see below). Tree buildable again; assertions evaluate truthfully green; flake check passed.                                                                                                                                                                                                                                       |
 | 16:2x–16:4x | User's 2 deploys aborted at the **wedge detector — false positive**: `pgrep -f 'switch-to-configuration'` matched a parallel session's **remote pbx deploy ssh client** (hung 2h+). The printed kill advice would have killed the remote deploy mid-flight. Fixed the detector (real lock-ownership verification via `/proc/<pid>/fd`), committed `d5501bdf`. |
-| 17:4x | User ran `DEPLOY_FORCE_PRESSURE=1 nix run .#deploy` (gate first read corpse-signature idle disks 0.7%, then real storm 95.5% — the storm oscillates). Build fine (35 drvs, 42s); **activation exit-4** on browser-history.service (recovered by deploy.sh post-switch restarts); config activated; **profile bump skipped again**; 6 smoke failures (below). |
+| 17:4x       | User ran `DEPLOY_FORCE_PRESSURE=1 nix run .#deploy` (gate first read corpse-signature idle disks 0.7%, then real storm 95.5% — the storm oscillates). Build fine (35 drvs, 42s); **activation exit-4** on browser-history.service (recovered by deploy.sh post-switch restarts); config activated; **profile bump skipped again**; 6 smoke failures (below).  |
 
 ---
 
@@ -72,6 +72,7 @@
 ## f) NEXT — up to 50, priority order
 
 **P0 (reboot-safety chain):**
+
 1. ANCHOR: `sudo nix-env --profile /nix/var/nix/profiles/system --set /run/current-system && sudo /run/current-system/bin/switch-to-configuration boot` (or one clean deploy)
 2. `nix run .#pre-reboot-check`
 3. REBOOT (owed since 2026-09-05): clears D-state corpse pile (PSI becomes truthful), guarantees flm :52626 clean
@@ -115,4 +116,4 @@
 
 ---
 
-*Report written 17:55; machine state snapshot: current-system `jc7jvkv…ef34387` (un-anchored), profile `system-779`/eaad089, hermes mount LIVE, 46 crush sessions, signoz-provision failing, tree clean at `2ec61542`.*
+_Report written 17:55; machine state snapshot: current-system `jc7jvkv…ef34387` (un-anchored), profile `system-779`/eaad089, hermes mount LIVE, 46 crush sessions, signoz-provision failing, tree clean at `2ec61542`._

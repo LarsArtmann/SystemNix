@@ -8,21 +8,21 @@
 
 ## Incident chain (evidence-backed)
 
-| Step | Fact |
-| --- | --- |
-| Block | `git push` → GH013, "Sourcegraph Access Token", 4 locations: `scripts/negative-test-lints.sh` (commits `38e61f2`, `2f14a6c`, `50cd094f`) + `tests/fixtures/gitleaks/positive-sourcegraph.txt:1` (commit `6a8cdee6`, 2026-09-15 05:48, auto-commit daemon) |
-| Provenance | Synthetic: fixture created by the gitleaks-coverage-selftest session; sibling Square fixture token is a literal alphabet walk (`aB3d…dE7f`); the same hex is reused bare in `negative-hex-no-keyword.txt`. GitHub flagged ONLY the `sgp_`-prefixed form — their pattern needs the prefix, gitleaks' rule also has the keyword-gated bare-hex alternative |
-| Root cause | `.gitleaks.toml` allowlists `tests/fixtures/gitleaks/` (comment even says "deliberate rule-shape strings, not credentials") — but that allowlist reaches ONLY gitleaks. GitHub push protection pattern-matches raw blobs in the push range and never consults repo config |
-| Backlog at block | ~20 unpushed daemon commits; **32 by 09:02** (daemon kept committing through the session) |
+| Step             | Fact                                                                                                                                                                                                                                                                                                                                                     |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Block            | `git push` → GH013, "Sourcegraph Access Token", 4 locations: `scripts/negative-test-lints.sh` (commits `38e61f2`, `2f14a6c`, `50cd094f`) + `tests/fixtures/gitleaks/positive-sourcegraph.txt:1` (commit `6a8cdee6`, 2026-09-15 05:48, auto-commit daemon)                                                                                                |
+| Provenance       | Synthetic: fixture created by the gitleaks-coverage-selftest session; sibling Square fixture token is a literal alphabet walk (`aB3d…dE7f`); the same hex is reused bare in `negative-hex-no-keyword.txt`. GitHub flagged ONLY the `sgp_`-prefixed form — their pattern needs the prefix, gitleaks' rule also has the keyword-gated bare-hex alternative |
+| Root cause       | `.gitleaks.toml` allowlists `tests/fixtures/gitleaks/` (comment even says "deliberate rule-shape strings, not credentials") — but that allowlist reaches ONLY gitleaks. GitHub push protection pattern-matches raw blobs in the push range and never consults repo config                                                                                |
+| Backlog at block | ~20 unpushed daemon commits; **32 by 09:02** (daemon kept committing through the session)                                                                                                                                                                                                                                                                |
 
 ## What was changed (this session)
 
-| File | Change | Committed by daemon |
-| --- | --- | --- |
-| `tests/fixtures/gitleaks/positive-sourcegraph.txt` | literal token → `sgp_@HEX40@` template | `6da903c2` (07:08) |
-| `flake.nix` (`gitleaks-coverage-selftest`) | `expect_detect` substitutes `@HEX40@` with `sha256("systemnix-gitleaks-coverage-fixture")[0:40]` at scan time (deterministic, entropy-realistic); comment block documents the push-protection gap | this window |
-| `scripts/negative-test-lints.sh:205` | drift mutation now `s\|sgp_@HEX40@\|sgpX_aaa…\|` (prefix break + entropy collapse — soundness kept, since `sgpX_` still contains the `sgp` keyword substring) | `d1f8126c` (07:28) |
-| `AGENTS.md` (Critical Rules) | new bullet: "GitHub push protection IGNORES .gitleaks.toml allowlists", templating doctrine, entropy-collapse mutation rule, unblock-URL escape hatch | this window |
+| File                                               | Change                                                                                                                                                                                            | Committed by daemon |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| `tests/fixtures/gitleaks/positive-sourcegraph.txt` | literal token → `sgp_@HEX40@` template                                                                                                                                                            | `6da903c2` (07:08)  |
+| `flake.nix` (`gitleaks-coverage-selftest`)         | `expect_detect` substitutes `@HEX40@` with `sha256("systemnix-gitleaks-coverage-fixture")[0:40]` at scan time (deterministic, entropy-realistic); comment block documents the push-protection gap | this window         |
+| `scripts/negative-test-lints.sh:205`               | drift mutation now `s\|sgp_@HEX40@\|sgpX_aaa…\|` (prefix break + entropy collapse — soundness kept, since `sgpX_` still contains the `sgp` keyword substring)                                     | `d1f8126c` (07:28)  |
+| `AGENTS.md` (Critical Rules)                       | new bullet: "GitHub push protection IGNORES .gitleaks.toml allowlists", templating doctrine, entropy-collapse mutation rule, unblock-URL escape hatch                                             | this window         |
 
 ## a) FULLY DONE
 
@@ -65,6 +65,7 @@
 ## f) THINGS TO GET DONE NEXT (30, impact-sorted; brainstorm per skill — harvest with routing rigor)
 
 **P0 — unblock the artery**
+
 1. Attempt programmatic unblock via `gh api` (push-protection-bypasses; reason "used in tests") — fall back to the manual URL click.
 2. Run `scripts/scan-history-secrets.sh` over the unpushed range (or full repo) BEFORE re-push — no second GH013 surprise.
 3. Owner decision on push scope: the 32 commits carry parallel sessions' mid-flight work (hot-db Phase-2, pocket-id, system-health, pre-deploy-check) — push all, or wait for those sessions to settle.
@@ -125,4 +126,4 @@
 
 ---
 
-*Format note: user explicitly requested `.md`; the status-report skill's HTML default is overridden for this report (flagged, not propagated into the skill). Commit skipped per harness contract (no explicit commit authorization) — the auto-commit daemon picks this file up.*
+_Format note: user explicitly requested `.md`; the status-report skill's HTML default is overridden for this report (flagged, not propagated into the skill). Commit skipped per harness contract (no explicit commit authorization) — the auto-commit daemon picks this file up._

@@ -38,43 +38,43 @@
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | Deploy blocker root-caused (version-skew, not phantom) | Same-collector `btrfs_scrub_error_free` ✓ vs trio ✗ in user's §10 output; canary block committed in tree |
-| 2 | §10 loan-list fix shipped | `scripts/pre-deploy-check.sh` KNOWN_NEW_METRICS + dated comment; committed `d5f099d9` (daemon), pushed |
-| 3 | Classifier fixture suite green | `test-pre-deploy-metrics.sh` → SELFTEST OK (run twice: after add, after retirement) |
-| 4 | Gate re-run: 0 failures | 117 passed / 31 warnings / 0 failed → deploy proceeded |
-| 5 | Deploy landed, anchored | system-769 → `g6i5hmjg…` == `/run/current-system` (no exit-4 skip) |
-| 6 | go-taskqueue bump live | lock `0feb937d`; tq units on `go-taskqueue-0.2.0` binary |
-| 7 | Btrfs canary metrics live | `btrfs.prom`: root_snapshots 1 / rescue_snapshots 1 / append_only 1 (self-test passed) |
-| 8 | pool-smart metrics live | `pool-smart.prom`: all_healthy 1, scrape_errors 0, media_flag 0, temp_over 0 |
-| 9 | pre-reboot-check: SAFE TO REBOOT | 19 passed / 0 failed; GC rooting + rollback ladder + closure verified |
-| 10 | flm failed-unit pile cleared | 313 failed units (user run) → `✓ no failed units` (deploy guards stopped socket+service, reset state) |
-| 11 | Loan list fully retired same day | All 7 entries confirmed live then removed; `KNOWN_NEW_METRICS=""` |
+| #  | Item                                                   | Evidence                                                                                                 |
+| -- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| 1  | Deploy blocker root-caused (version-skew, not phantom) | Same-collector `btrfs_scrub_error_free` ✓ vs trio ✗ in user's §10 output; canary block committed in tree |
+| 2  | §10 loan-list fix shipped                              | `scripts/pre-deploy-check.sh` KNOWN_NEW_METRICS + dated comment; committed `d5f099d9` (daemon), pushed   |
+| 3  | Classifier fixture suite green                         | `test-pre-deploy-metrics.sh` → SELFTEST OK (run twice: after add, after retirement)                      |
+| 4  | Gate re-run: 0 failures                                | 117 passed / 31 warnings / 0 failed → deploy proceeded                                                   |
+| 5  | Deploy landed, anchored                                | system-769 → `g6i5hmjg…` == `/run/current-system` (no exit-4 skip)                                       |
+| 6  | go-taskqueue bump live                                 | lock `0feb937d`; tq units on `go-taskqueue-0.2.0` binary                                                 |
+| 7  | Btrfs canary metrics live                              | `btrfs.prom`: root_snapshots 1 / rescue_snapshots 1 / append_only 1 (self-test passed)                   |
+| 8  | pool-smart metrics live                                | `pool-smart.prom`: all_healthy 1, scrape_errors 0, media_flag 0, temp_over 0                             |
+| 9  | pre-reboot-check: SAFE TO REBOOT                       | 19 passed / 0 failed; GC rooting + rollback ladder + closure verified                                    |
+| 10 | flm failed-unit pile cleared                           | 313 failed units (user run) → `✓ no failed units` (deploy guards stopped socket+service, reset state)    |
+| 11 | Loan list fully retired same day                       | All 7 entries confirmed live then removed; `KNOWN_NEW_METRICS=""`                                        |
 
 ## b) PARTIALLY DONE
 
-| Item | Works now | Open | Blocker | Effort |
-|------|-----------|------|---------|--------|
-| The reboot itself (owed since 2026-09-07) | Boot chain audited SAFE (19/0) | Reboot not executed — clears flm `:52626` corpse (EADDRINUSE-forever class) and the amdxdna D-state corpse pile | User timing (movie-night / scheduling) | S |
-| Gatus green-state confirmation for the two new checks | Metric source live (checks read :9100) | Check results never read back from Gatus sqlite/API | None — 5-min probe | S |
-| flm v1.0.3 go-live chain | v1.0.3 staged + build-verified; kernel premise falsified; wrapper LD fix agent-added, unvalidated | Live `flm serve` validation, one-time Q4_K weight re-pull, go/revert decision | Requires the reboot first | M–L |
-| tq functional verification post-bump | Units deployed on `0feb937d` binary | Pool/serve/dashboard not probed this session | None | S |
-| Report HARVEST | This report's §f is harvest-ready | TODO_LIST/ROADMAP not yet updated from it | Awaiting user instruction (per "THEN WAIT") | S |
+| Item                                                  | Works now                                                                                         | Open                                                                                                            | Blocker                                     | Effort |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------ |
+| The reboot itself (owed since 2026-09-07)             | Boot chain audited SAFE (19/0)                                                                    | Reboot not executed — clears flm `:52626` corpse (EADDRINUSE-forever class) and the amdxdna D-state corpse pile | User timing (movie-night / scheduling)      | S      |
+| Gatus green-state confirmation for the two new checks | Metric source live (checks read :9100)                                                            | Check results never read back from Gatus sqlite/API                                                             | None — 5-min probe                          | S      |
+| flm v1.0.3 go-live chain                              | v1.0.3 staged + build-verified; kernel premise falsified; wrapper LD fix agent-added, unvalidated | Live `flm serve` validation, one-time Q4_K weight re-pull, go/revert decision                                   | Requires the reboot first                   | M–L    |
+| tq functional verification post-bump                  | Units deployed on `0feb937d` binary                                                               | Pool/serve/dashboard not probed this session                                                                    | None                                        | S      |
+| Report HARVEST                                        | This report's §f is harvest-ready                                                                 | TODO_LIST/ROADMAP not yet updated from it                                                                       | Awaiting user instruction (per "THEN WAIT") | S      |
 
 ## c) NOT STARTED
 
-| Item | Planned | Why not started | Still wanted? |
-|------|---------|-----------------|---------------|
-| Durable §10 new-in-deploy auto-detection (drv-diff of emitting unit scripts vs deployed generation) | Kill the manual loan-list class permanently | Design only; needs a session to implement + fixture-test | Yes — High |
-| Same-commit checklist rule/guard: new gatus-checked metric ⇒ loan-list entry or manifest | Prevents the blocker class at ship time | Not designed | Yes — Medium |
-| llama-embeddings/reranker `/v1` unreachability investigation | Post-deploy smoke FAIL (baseline-matched, so pre-existing); paperless RAG likely dark | Out of session scope; user asked not to research unrelated items | Yes — High |
-| mail relay go-live user step | Verify `larsartmann.cloud` in Resend (SPF/DKIM), then test send | Owner action (console), not agent-actionable | Yes |
-| Offsite Hetzner StorageBox + BorgBackup leg | Blueprint exists (`docs/research/hetzner-storagebox-borgbackup.md`) | Not yet implemented (tracked in TODO_LIST) | Yes — High |
-| QLC-era `@nix` subvol deletion, ClickHouse backup coverage, guard corpse-aware restore skip (P1) | Existing TODO_LIST items | Not touched this session | Yes |
-| dnsblockd upstream health-cache fix push + tag + flake bump; bank-sync tolerant-read fix push (`a9b0b8e..60015cc`) | Both sit unpushed in upstream working trees | Upstream push is owner-gated | Yes |
-| Paperless retro-decrypt backfill | Needs upstream push + flake bump first | Same | Yes |
-| monitor365 re-enable | Blocked on owner decision (crate publish / repo public / vendor) | Owner decision | ? |
+| Item                                                                                                               | Planned                                                                               | Why not started                                                  | Still wanted? |
+| ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------- |
+| Durable §10 new-in-deploy auto-detection (drv-diff of emitting unit scripts vs deployed generation)                | Kill the manual loan-list class permanently                                           | Design only; needs a session to implement + fixture-test         | Yes — High    |
+| Same-commit checklist rule/guard: new gatus-checked metric ⇒ loan-list entry or manifest                           | Prevents the blocker class at ship time                                               | Not designed                                                     | Yes — Medium  |
+| llama-embeddings/reranker `/v1` unreachability investigation                                                       | Post-deploy smoke FAIL (baseline-matched, so pre-existing); paperless RAG likely dark | Out of session scope; user asked not to research unrelated items | Yes — High    |
+| mail relay go-live user step                                                                                       | Verify `larsartmann.cloud` in Resend (SPF/DKIM), then test send                       | Owner action (console), not agent-actionable                     | Yes           |
+| Offsite Hetzner StorageBox + BorgBackup leg                                                                        | Blueprint exists (`docs/research/hetzner-storagebox-borgbackup.md`)                   | Not yet implemented (tracked in TODO_LIST)                       | Yes — High    |
+| QLC-era `@nix` subvol deletion, ClickHouse backup coverage, guard corpse-aware restore skip (P1)                   | Existing TODO_LIST items                                                              | Not touched this session                                         | Yes           |
+| dnsblockd upstream health-cache fix push + tag + flake bump; bank-sync tolerant-read fix push (`a9b0b8e..60015cc`) | Both sit unpushed in upstream working trees                                           | Upstream push is owner-gated                                     | Yes           |
+| Paperless retro-decrypt backfill                                                                                   | Needs upstream push + flake bump first                                                | Same                                                             | Yes           |
+| monitor365 re-enable                                                                                               | Blocked on owner decision (crate publish / repo public / vendor)                      | Owner decision                                                   | ?             |
 
 ## d) TOTALLY FUCKED UP
 
@@ -98,9 +98,10 @@
 
 ## f) Top 50 things we should get done next
 
-> Brainstorm, ranked roughly by impact within groups. Items marked *(context)* are carried known-state, not session-discovered. HARVEST should route Critical/High into TODO_LIST, the rest into ROADMAP as appropriate.
+> Brainstorm, ranked roughly by impact within groups. Items marked _(context)_ are carried known-state, not session-discovered. HARVEST should route Critical/High into TODO_LIST, the rest into ROADMAP as appropriate.
 
 **Immediate ops (this box, this week)**
+
 1. Reboot evo-x2 — boot chain audited SAFE (19/0). Critical, S, Ops.
 2. Post-reboot: verify flm backend starts clean (no `bind: Address already in use`), `:52625` serves, failed-unit count stays 0. Critical, S, Ops.
 3. Post-reboot: confirm `system_stuck_dstate_processes` → 0 (amdxdna corpse pile reclaimed). High, S, Ops.
@@ -114,7 +115,7 @@
 11. Verify GitHub Actions green for the pushed lock bump (`ed20df61` + daemon commits). High, S, Quality.
 12. Post-reboot re-run `nix run .#post-deploy-check`; refresh the smoke-fail baseline (reboot-clearable classes should drop). Medium, S, Quality.
 13. Watch memory PSI avg10 (was 18.93%) post-reboot; escalate only if persistent above ~20%. Low, S, Ops.
-14. *(context)* After reboot proves flm stable: delete obsolete hand-install (`~/.local/share/fastflowlm/`, `~/.local/bin/flm`, bashrc exports). Low, S, Cleanup.
+14. _(context)_ After reboot proves flm stable: delete obsolete hand-install (`~/.local/share/fastflowlm/`, `~/.local/bin/flm`, bashrc exports). Low, S, Cleanup.
 
 **Deploy-gate / tooling hardening (this repo)**
 15. Implement §10 durable new-in-deploy auto-detection (drv-diff vs deployed generation). High, M, Quality.
@@ -126,25 +127,25 @@
 21. Consider moving the loan-list narrative into a short `docs/` runbook so the "one-deploy loan" rule survives comment churn. Low, S, Docs.
 
 **Upstream pushes pending (owner-gated)**
-22. *(context)* Push dnsblockd health-cache fix + tag + SystemNix flake bump (kills the :9090 wedge class). High, M, Bug.
-23. *(context)* Push bank-sync tolerant-read + V10 canonicalization (`a9b0b8e..60015cc`) + flake bump + deploy. High, M, Bug.
-24. *(context)* Push InboxClean retro-decrypt repair + flake bump; then run the manual `--backfill --decrypt-repair` per runbook. Medium, L, Feature.
-25. *(context)* go-output: cut v0.37.1 (never re-tag doctrine) to retire the locked-tree comment workaround. Medium, S, Cleanup.
-26. *(context)* flm: file upstream issue ONLY if v1.0.3 still fails post-LD-fix (verify-before-filing gate). Low, S, Docs.
+22. _(context)_ Push dnsblockd health-cache fix + tag + SystemNix flake bump (kills the :9090 wedge class). High, M, Bug.
+23. _(context)_ Push bank-sync tolerant-read + V10 canonicalization (`a9b0b8e..60015cc`) + flake bump + deploy. High, M, Bug.
+24. _(context)_ Push InboxClean retro-decrypt repair + flake bump; then run the manual `--backfill --decrypt-repair` per runbook. Medium, L, Feature.
+25. _(context)_ go-output: cut v0.37.1 (never re-tag doctrine) to retire the locked-tree comment workaround. Medium, S, Cleanup.
+26. _(context)_ flm: file upstream issue ONLY if v1.0.3 still fails post-LD-fix (verify-before-filing gate). Low, S, Docs.
 
 **Backup / resilience**
-27. *(context)* Implement Hetzner StorageBox + BorgBackup offsite leg per blueprint. High, L, Feature.
-28. *(context)* ClickHouse telemetry backup coverage (btrbk excludes XFS). High, M, Feature.
-29. *(context)* memory-emergency-guard corpse-aware restore skip (P1: guard re-arms a doomed socket between deploys). Medium, M, Bug.
-30. *(context)* Delete dead QLC `@nix` subvol + `/mnt/btrfs-root` leftovers (TODO_LIST Phase 1). Medium, S, Cleanup.
+27. _(context)_ Implement Hetzner StorageBox + BorgBackup offsite leg per blueprint. High, L, Feature.
+28. _(context)_ ClickHouse telemetry backup coverage (btrbk excludes XFS). High, M, Feature.
+29. _(context)_ memory-emergency-guard corpse-aware restore skip (P1: guard re-arms a doomed socket between deploys). Medium, M, Bug.
+30. _(context)_ Delete dead QLC `@nix` subvol + `/mnt/btrfs-root` leftovers (TODO_LIST Phase 1). Medium, S, Cleanup.
 31. Verify btrbk local root snapshots rebuilt to steady retention post glob-delete (canary went 0→1; expect the normal cadence to repopulate). Medium, S, Ops.
 
 **Mail / SSO / services**
-32. *(context)* User: verify `larsartmann.cloud` in Resend (Domains → SPF/DKIM), then re-run the relay test send. High, S, Ops (user).
-33. *(context)* After #32: sudo-check whether Pocket ID SMTP key byte-equals the relay key; re-paste if the test send still fails. Medium, S, Ops.
-34. *(context)* Miniflux: complete one proven SSO login, then flip `disableLocalAuth` go-live gate. Medium, S, Ops (user).
-35. *(context)* Google-sync go-live checklist (OAuth "In production" + `rclone authorize` ×3 + sops fill + enable) — still dormant. Low, L, Feature (user).
-36. *(context)* monitor365 re-enable owner decision (publish crate / public repo / vendor). Low, S, Decision (user).
+32. _(context)_ User: verify `larsartmann.cloud` in Resend (Domains → SPF/DKIM), then re-run the relay test send. High, S, Ops (user).
+33. _(context)_ After #32: sudo-check whether Pocket ID SMTP key byte-equals the relay key; re-paste if the test send still fails. Medium, S, Ops.
+34. _(context)_ Miniflux: complete one proven SSO login, then flip `disableLocalAuth` go-live gate. Medium, S, Ops (user).
+35. _(context)_ Google-sync go-live checklist (OAuth "In production" + `rclone authorize` ×3 + sops fill + enable) — still dormant. Low, L, Feature (user).
+36. _(context)_ monitor365 re-enable owner decision (publish crate / public repo / vendor). Low, S, Decision (user).
 
 **Quality / documentation**
 37. Harvest this report's §f into TODO_LIST/ROADMAP (docs-health HARVEST) once instructed. Medium, S, Docs.
@@ -174,4 +175,4 @@
 
 ---
 
-*Point-in-time snapshot. State verified 2026-09-13 03:28 CEST: master `13616c29` == origin, working tree clean, deploy anchored at system-769 (`g6i5hmjg`), loan list empty, SAFE TO REBOOT.*
+_Point-in-time snapshot. State verified 2026-09-13 03:28 CEST: master `13616c29` == origin, working tree clean, deploy anchored at system-769 (`g6i5hmjg`), loan list empty, SAFE TO REBOOT._

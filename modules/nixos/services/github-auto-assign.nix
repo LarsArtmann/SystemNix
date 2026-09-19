@@ -22,11 +22,10 @@
 #   - No HTTP endpoint, so no Gatus check: failure alerting rides OnFailure
 #     (Discord) + the system-health monitoredServices metric, per the
 #     daemon-less-unit doctrine (cv-scan / backup-timer pattern).
-{ ... }: {
+_: {
   flake.nixosModules.github-auto-assign =
     {
       config,
-      options,
       pkgs,
       lib,
       ...

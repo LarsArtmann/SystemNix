@@ -20,7 +20,6 @@
 # orders the Samsung first, leaving every QLC entry as fallback. Reboots on
 # this box are deliberate events; NVRAM order must not fight the operator.
 {
-  config,
   lib,
   pkgs,
   ...
@@ -122,7 +121,7 @@ in
         TimeoutStartSec = "5min";
       }
     ];
-    onFailure = onFailure;
+    inherit onFailure;
   };
 
   # Mirror staleness must be visible: a failed sync unit pages via the

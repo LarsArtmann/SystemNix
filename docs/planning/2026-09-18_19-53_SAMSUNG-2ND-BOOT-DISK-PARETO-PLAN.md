@@ -4,25 +4,25 @@ User ask: **"Make the Samsung a 2nd boot disk and switch ASAP."**
 
 ## Situation (researched, live-verified 2026-09-18)
 
-| Piece | State |
-| --- | --- |
-| `/boot` (NixOS ESP, systemd-boot 261.2) | QLC Lexar p7, 4G, by-uuid `80A3-73A9`, 248M used |
-| Samsung p1 `SAMSUNG-EFI` | 4G vfat, PARTUUID `023f66c0-…`, UUID `4F53-C156`, UNMOUNTED — holds a stale partial asset copy from 2026-09-09 (kernels/entries, **no bootloader binaries**) |
-| `/nix` store | ALREADY on Samsung (`tlc` subvol `nix`, neededForBoot) |
-| Firmware entries | `Linux Boot Manager` 0x0001 on QLC ESP (current boot path); auto `UEFI OS` 0x000B points at Samsung p1 `\EFI\BOOT\BOOTX64.EFI` which does NOT exist yet |
-| nixpkgs support | `boot.loader.efi.mirroredBoots` is **grub/extlinux-only** in the locked nixpkgs — no declarative sd-boot mirror ⇒ SystemNix-native mirror unit |
+| Piece                                   | State                                                                                                                                                        |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/boot` (NixOS ESP, systemd-boot 261.2) | QLC Lexar p7, 4G, by-uuid `80A3-73A9`, 248M used                                                                                                             |
+| Samsung p1 `SAMSUNG-EFI`                | 4G vfat, PARTUUID `023f66c0-…`, UUID `4F53-C156`, UNMOUNTED — holds a stale partial asset copy from 2026-09-09 (kernels/entries, **no bootloader binaries**) |
+| `/nix` store                            | ALREADY on Samsung (`tlc` subvol `nix`, neededForBoot)                                                                                                       |
+| Firmware entries                        | `Linux Boot Manager` 0x0001 on QLC ESP (current boot path); auto `UEFI OS` 0x000B points at Samsung p1 `\EFI\BOOT\BOOTX64.EFI` which does NOT exist yet      |
+| nixpkgs support                         | `boot.loader.efi.mirroredBoots` is **grub/extlinux-only** in the locked nixpkgs — no declarative sd-boot mirror ⇒ SystemNix-native mirror unit               |
 
 After the switch the Samsung carries: ESP (loader + kernels + initrds) + `/nix` (init + store).
 The only QLC dependency left in the boot chain is the root `@` subvolume (out of scope today).
 
 ## Pareto tiers
 
-| Tier | Deliverable | Impact |
-| --- | --- | --- |
-| **1% → 51%** | `fileSystems."/boot-mirror"` + `boot-mirror-sync.service` (bootctl install `--variables=no` + rsync `--delete` + `diff -r` verify gate) | Samsung ESP becomes byte-bootable and stays current |
-| **4% → 64%** | deploy.sh provisioner restart + `nix run .#boot-mirror-activate` (idempotent EFI entry + BootOrder Samsung-first) | One command performs the switch, safely |
-| **20% → 80%** | `pre-reboot-check` §11 mirror audit (FAIL-grade once the mirror is first in BootOrder) + reboot + post-boot verification | Proves the new chain live; QLC stays fallback |
-| Rest | AGENTS.md + monitoring (`system-health`), docs | Durability |
+| Tier          | Deliverable                                                                                                                             | Impact                                              |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| **1% → 51%**  | `fileSystems."/boot-mirror"` + `boot-mirror-sync.service` (bootctl install `--variables=no` + rsync `--delete` + `diff -r` verify gate) | Samsung ESP becomes byte-bootable and stays current |
+| **4% → 64%**  | deploy.sh provisioner restart + `nix run .#boot-mirror-activate` (idempotent EFI entry + BootOrder Samsung-first)                       | One command performs the switch, safely             |
+| **20% → 80%** | `pre-reboot-check` §11 mirror audit (FAIL-grade once the mirror is first in BootOrder) + reboot + post-boot verification                | Proves the new chain live; QLC stays fallback       |
+| Rest          | AGENTS.md + monitoring (`system-health`), docs                                                                                          | Durability                                          |
 
 ## Execution checklist
 

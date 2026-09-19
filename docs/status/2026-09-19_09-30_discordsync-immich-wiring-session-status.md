@@ -10,41 +10,41 @@
 
 ## a) FULLY DONE (verified, evidence attached)
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | Upstream feature research: `IMMICH_URL`+`IMMICH_API_KEY` are COLD config, both-or-neither (`ErrImmichConfigIncomplete`), key scoped `asset.read`+`asset.upload` only; client proxies hex SHA-1 → `POST /api/assets/bulk-upload-check`; **feature present in the LOCKED rev `06a06b00`** — no flake bump needed | `git show 06a06b00:internal/config/config_load.go`, `internal/immichclient/` at that rev; upstream README/CHANGELOG/ADR-062 |
-| 2 | New options `services.discordsync.immich.enable` + `.url` (loopback default `http://127.0.0.1:${ports.immich}` — no Caddy/DNS/TLS on the lookup path) | `modules/nixos/services/discordsync.nix` |
-| 3 | `IMMICH_URL`/`IMMICH_API_KEY` ride the existing `discordsync-env` sops template, rendered **only when the option is on**; `restartUnits` on the template made conditional (must never name an absent unit) | `modules/nixos/services/sops.nix` |
-| 4 | Encrypted secret in its OWN file `platforms/nixos/secrets/discordsync-immich.yaml` (PLACEHOLDER-inert), committed (`git add -f` for the gitignored secrets dir) | commit `522f4951` |
-| 5 | Gated sops declaration following the `gcs_credentials` precedent (own `sopsFile`) | `modules/nixos/services/sops.nix` |
-| 6 | `discordsync-immich-verify` oneshot + daily timer, User/Group=discordsync (reads the 0400 template), `harden{}`+`serviceOneshotDefaults`, `TimeoutStartSec=2min`, OnFailure routed | built unit inspected: ExecStart/User/Group/Timeout all correct |
-| 7 | Verify-script exit semantics: not-rendered→0, PLACEHOLDER→0, **Immich unreachable→WARN skip 0** (availability is Gatus Immich check's job — no double-paging), **401/403 from reachable Immich→exit 1** (wrong key/scope → OnFailure) | logic fixture-tested (3 branches); script built through `writeShellApplication` (shellcheck/shfmt passed) |
-| 8 | `extraMonitoredServices` registration (github-auto-assign pattern) with `options ?` guard | `discordsync.nix` |
-| 9 | deploy.sh failed-gated convergence block for the indirect verify unit (mirrors `discordsync-db-heal`) | `scripts/deploy.sh`; `bash -n` clean |
-| 10 | `immich.enable = true` in configuration.nix with go-live pointer comment | `platforms/nixos/system/configuration.nix` |
-| 11 | New runbook `docs/services/discordsync.md` (units, secrets, Immich go-live, exit-semantics table, monitoring map, known traps) + AGENTS.md bullet (memory-maintenance protocol) | commit `91d2353d` |
-| 12 | Verification battery: `nix flake check --no-build` **all checks passed** (sops-key-audit, shape/deploy/port audits); positive eval probes (template content, ExecStart, timer, EnvironmentFile); **negative probe** via `extendModules`+`mkForce false` → template has NO immich keys, unit/timer/secret all absent; all 3 unit derivations build | command outputs in session log |
+| #  | Item                                                                                                                                                                                                                                                                                                                                              | Evidence                                                                                                                    |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 1  | Upstream feature research: `IMMICH_URL`+`IMMICH_API_KEY` are COLD config, both-or-neither (`ErrImmichConfigIncomplete`), key scoped `asset.read`+`asset.upload` only; client proxies hex SHA-1 → `POST /api/assets/bulk-upload-check`; **feature present in the LOCKED rev `06a06b00`** — no flake bump needed                                    | `git show 06a06b00:internal/config/config_load.go`, `internal/immichclient/` at that rev; upstream README/CHANGELOG/ADR-062 |
+| 2  | New options `services.discordsync.immich.enable` + `.url` (loopback default `http://127.0.0.1:${ports.immich}` — no Caddy/DNS/TLS on the lookup path)                                                                                                                                                                                             | `modules/nixos/services/discordsync.nix`                                                                                    |
+| 3  | `IMMICH_URL`/`IMMICH_API_KEY` ride the existing `discordsync-env` sops template, rendered **only when the option is on**; `restartUnits` on the template made conditional (must never name an absent unit)                                                                                                                                        | `modules/nixos/services/sops.nix`                                                                                           |
+| 4  | Encrypted secret in its OWN file `platforms/nixos/secrets/discordsync-immich.yaml` (PLACEHOLDER-inert), committed (`git add -f` for the gitignored secrets dir)                                                                                                                                                                                   | commit `522f4951`                                                                                                           |
+| 5  | Gated sops declaration following the `gcs_credentials` precedent (own `sopsFile`)                                                                                                                                                                                                                                                                 | `modules/nixos/services/sops.nix`                                                                                           |
+| 6  | `discordsync-immich-verify` oneshot + daily timer, User/Group=discordsync (reads the 0400 template), `harden{}`+`serviceOneshotDefaults`, `TimeoutStartSec=2min`, OnFailure routed                                                                                                                                                                | built unit inspected: ExecStart/User/Group/Timeout all correct                                                              |
+| 7  | Verify-script exit semantics: not-rendered→0, PLACEHOLDER→0, **Immich unreachable→WARN skip 0** (availability is Gatus Immich check's job — no double-paging), **401/403 from reachable Immich→exit 1** (wrong key/scope → OnFailure)                                                                                                             | logic fixture-tested (3 branches); script built through `writeShellApplication` (shellcheck/shfmt passed)                   |
+| 8  | `extraMonitoredServices` registration (github-auto-assign pattern) with `options ?` guard                                                                                                                                                                                                                                                         | `discordsync.nix`                                                                                                           |
+| 9  | deploy.sh failed-gated convergence block for the indirect verify unit (mirrors `discordsync-db-heal`)                                                                                                                                                                                                                                             | `scripts/deploy.sh`; `bash -n` clean                                                                                        |
+| 10 | `immich.enable = true` in configuration.nix with go-live pointer comment                                                                                                                                                                                                                                                                          | `platforms/nixos/system/configuration.nix`                                                                                  |
+| 11 | New runbook `docs/services/discordsync.md` (units, secrets, Immich go-live, exit-semantics table, monitoring map, known traps) + AGENTS.md bullet (memory-maintenance protocol)                                                                                                                                                                   | commit `91d2353d`                                                                                                           |
+| 12 | Verification battery: `nix flake check --no-build` **all checks passed** (sops-key-audit, shape/deploy/port audits); positive eval probes (template content, ExecStart, timer, EnvironmentFile); **negative probe** via `extendModules`+`mkForce false` → template has NO immich keys, unit/timer/secret all absent; all 3 unit derivations build | command outputs in session log                                                                                              |
 
 ## b) PARTIALLY DONE
 
-| # | Item | Gap |
-|---|------|-----|
-| 1 | End-to-end proof of the integration | Verified eval + build + script-logic fixture, but **not** the live round trip (needs deploy + real key) |
-| 2 | Toplevel build | My derivations (units, script, etc.) build clean; the FULL toplevel fails on **pre-existing, unrelated** FOD drift (see c-1) |
-| 3 | Repo formatting hygiene | My two touched files are formatter-clean (`0 changed` on scoped re-check); the tree still carries 4 files unformatted **at HEAD** (pre-existing, see f-15/16) |
+| # | Item                                | Gap                                                                                                                                                           |
+| - | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | End-to-end proof of the integration | Verified eval + build + script-logic fixture, but **not** the live round trip (needs deploy + real key)                                                       |
+| 2 | Toplevel build                      | My derivations (units, script, etc.) build clean; the FULL toplevel fails on **pre-existing, unrelated** FOD drift (see c-1)                                  |
+| 3 | Repo formatting hygiene             | My two touched files are formatter-clean (`0 changed` on scoped re-check); the tree still carries 4 files unformatted **at HEAD** (pre-existing, see f-15/16) |
 
 ## c) NOT STARTED
 
-| # | Item | Why |
-|---|------|-----|
+| # | Item                                                                                                                                                                           | Why                                                                                                                  |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
 | 1 | Repair the FOD hash drift that blocks deploy: `jscpd`/`openseo`/`systemd-graph-webui` pnpm-deps FODs (+ `emeet-pixyd`/`erraudit` go-modules FODs seen failing at the baseline) | Out of task scope; **proven pre-existing** via baseline worktree at `8ddda419` failing with the same hash mismatches |
-| 2 | Deploy evo-x2 | Blocked by c-1; also IO PSI avg10 was 27% (>20% pressure gate) during the session |
-| 3 | Real Immich API key creation + paste (user step) | Requires Immich UI access |
-| 4 | Post-deploy verification (verify unit "verified" journal line, no `ErrImmichConfigIncomplete`, toggle E2E with a known asset, secret perms on disk) | Needs 2+3 |
-| 5 | Persisted regression test (eval-level positive/negative, `tests/`-style) | Deliberately deferred — session relied on hand-run probes; repo culture would want it persisted |
-| 6 | post-deploy-check.sh smoke step asserting the verify unit is not failed post-switch | Not attempted |
-| 7 | TODO_LIST persistent-nag entry for the key paste | Documented in 3 places (docs, AGENTS.md, configuration.nix comment) but not TODO_LIST |
-| 8 | Running the **actual built verify binary** against the **live** rendered template (pre-deploy smoke I missed — see d) | Missed in-session |
+| 2 | Deploy evo-x2                                                                                                                                                                  | Blocked by c-1; also IO PSI avg10 was 27% (>20% pressure gate) during the session                                    |
+| 3 | Real Immich API key creation + paste (user step)                                                                                                                               | Requires Immich UI access                                                                                            |
+| 4 | Post-deploy verification (verify unit "verified" journal line, no `ErrImmichConfigIncomplete`, toggle E2E with a known asset, secret perms on disk)                            | Needs 2+3                                                                                                            |
+| 5 | Persisted regression test (eval-level positive/negative, `tests/`-style)                                                                                                       | Deliberately deferred — session relied on hand-run probes; repo culture would want it persisted                      |
+| 6 | post-deploy-check.sh smoke step asserting the verify unit is not failed post-switch                                                                                            | Not attempted                                                                                                        |
+| 7 | TODO_LIST persistent-nag entry for the key paste                                                                                                                               | Documented in 3 places (docs, AGENTS.md, configuration.nix comment) but not TODO_LIST                                |
+| 8 | Running the **actual built verify binary** against the **live** rendered template (pre-deploy smoke I missed — see d)                                                          | Missed in-session                                                                                                    |
 
 ## d) TOTALLY FUCKED UP (honest fumbles, this session)
 
@@ -69,6 +69,7 @@ Nothing shipped broken. No data loss. No secret exposure (PLACEHOLDER only on co
 ## f) NEXT (up to 50 — brainstorm tiers, impact-first; NOT a commitment list)
 
 **Tier 1 — unblocks deploy (this work ships only after these):**
+
 1. Repair `jscpd` pnpm-deps FOD hash
 2. Repair `openseo` pnpm-deps FOD hash
 3. Repair `systemd-graph-webui` pnpm-deps FOD hash
@@ -136,4 +137,4 @@ Nothing shipped broken. No data loss. No secret exposure (PLACEHOLDER only on co
 
 ---
 
-*Point-in-time snapshot — 2026-09-19 09:30 CEST. Stale the moment the parallel session's edits land or the FOD wave runs. Per status-report skill: Section (f) is docs-health HARVEST input for TODO_LIST.md/ROADMAP.md.*
+_Point-in-time snapshot — 2026-09-19 09:30 CEST. Stale the moment the parallel session's edits land or the FOD wave runs. Per status-report skill: Section (f) is docs-health HARVEST input for TODO_LIST.md/ROADMAP.md._

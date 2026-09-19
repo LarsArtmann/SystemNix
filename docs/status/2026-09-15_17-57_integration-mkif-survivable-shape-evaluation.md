@@ -54,12 +54,12 @@ backup→patch→eval→restore cycle, restore verified byte-identical + clean
 
 ### Probe 1 — bare `evalModules` matrix (8 cells)
 
-| scenario                                    | current shape | proposed shape |
-| ------------------------------------------- | ------------- | -------------- |
-| integration declared + service enabled      | OK, entry lands | OK, entry `enable=true` |
-| integration declared + service disabled     | OK, `{}` | OK, entry `enable=false` (fan-out inert via `enabledEntries`) |
-| integration ABSENT + service enabled        | **ERROR** (the 11:05 class) | **OK** |
-| integration ABSENT + service disabled       | **ERROR** | **OK** |
+| scenario                                | current shape               | proposed shape                                                |
+| --------------------------------------- | --------------------------- | ------------------------------------------------------------- |
+| integration declared + service enabled  | OK, entry lands             | OK, entry `enable=true`                                       |
+| integration declared + service disabled | OK, `{}`                    | OK, entry `enable=false` (fan-out inert via `enabledEntries`) |
+| integration ABSENT + service enabled    | **ERROR** (the 11:05 class) | **OK**                                                        |
+| integration ABSENT + service disabled   | **ERROR**                   | **OK**                                                        |
 
 Note: the current shape errors even with the service DISABLED under a forced
 (`deepSeq`) config evaluation — the AGENTS documents only the enable=true case;

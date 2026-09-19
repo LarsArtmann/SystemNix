@@ -176,18 +176,18 @@ Most documented incident classes are ENFORCED at eval time — `nix flake check`
 fails with a fix-it message instead of letting the bug reach a host. Current
 guards (all in `modules/nixos/services/`, all with negative tests in `tests/`):
 
-| Guard | Catches | Escape hatch |
-| --- | --- | --- |
-| `systemd-shape-audit` | oneshot+invalid Restart; timer+Restart race; PathExists path units; `$HOME` in user-unit Exec lines | `allowTimerRestart` |
-| `port-registry-audit` | port literals in unit Exec*/Environment outside `lib/ports.nix` | `allowPorts` |
-| `mount-gating-audit` | ReadWritePaths under /mnt/ without RequiresMountsFor/ConditionPathIsMountPoint (226/NAMESPACE + shadow-dir contamination) | `allowUnits` |
-| `gatus-coverage-audit` | in-use registered ports never probed by gatus; loopback gatus URLs with unregistered ports | `allowPorts` |
-| `deploy-restart-audit` | converger oneshots (*-storage-dir/-provision/-setup/…) and oneshot+RemainAfterExit+restartTriggers missing from `scripts/deploy.sh` | `allowUnits` (upstream defaults built in) |
-| `gate-timeout-audit` | gate units without the TimeoutStartSec floor | — |
-| `otel-endpoint-audit` | OTLP endpoint contract violations | `expectations` |
-| `sops-key-audit` | sops secrets declared but absent from encrypted files | — |
-| `dynamic-user-audit` | DynamicUser services owning sops secrets directly | — |
-| `timeout-audit` / `start-limit-audit` / `udev-block-letter-audit` / `session-boot-audit` / `chown-vs-bind-audit` / `tmp-cleaner-audit` | see module headers | various |
+| Guard                                                                                                                                  | Catches                                                                                                                             | Escape hatch                              |
+| -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| `systemd-shape-audit`                                                                                                                  | oneshot+invalid Restart; timer+Restart race; PathExists path units; `$HOME` in user-unit Exec lines                                 | `allowTimerRestart`                       |
+| `port-registry-audit`                                                                                                                  | port literals in unit Exec*/Environment outside `lib/ports.nix`                                                                     | `allowPorts`                              |
+| `mount-gating-audit`                                                                                                                   | ReadWritePaths under /mnt/ without RequiresMountsFor/ConditionPathIsMountPoint (226/NAMESPACE + shadow-dir contamination)           | `allowUnits`                              |
+| `gatus-coverage-audit`                                                                                                                 | in-use registered ports never probed by gatus; loopback gatus URLs with unregistered ports                                          | `allowPorts`                              |
+| `deploy-restart-audit`                                                                                                                 | converger oneshots (*-storage-dir/-provision/-setup/…) and oneshot+RemainAfterExit+restartTriggers missing from `scripts/deploy.sh` | `allowUnits` (upstream defaults built in) |
+| `gate-timeout-audit`                                                                                                                   | gate units without the TimeoutStartSec floor                                                                                        | —                                         |
+| `otel-endpoint-audit`                                                                                                                  | OTLP endpoint contract violations                                                                                                   | `expectations`                            |
+| `sops-key-audit`                                                                                                                       | sops secrets declared but absent from encrypted files                                                                               | —                                         |
+| `dynamic-user-audit`                                                                                                                   | DynamicUser services owning sops secrets directly                                                                                   | —                                         |
+| `timeout-audit` / `start-limit-audit` / `udev-block-letter-audit` / `session-boot-audit` / `chown-vs-bind-audit` / `tmp-cleaner-audit` | see module headers                                                                                                                  | various                                   |
 
 Plus the `harden {}` lifecycle-key THROW in `lib/systemd.nix`, and static
 scanners: `scripts/audit-serviceconfig-merge.sh` (pre-commit + CI),

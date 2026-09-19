@@ -10,14 +10,14 @@
 
 A 30-second oneshot (`memory-emergency-guard.timer` → `memory-emergency-guard.service`) evaluates six trip zones. On ANY trip it stops FastFlowLM, its activation socket, and the resumable I/O churn units (btrbk root/data/pool, both balances, all three scrubs). The socket is restored automatically once memory margins recover AND the daily restore budget (default 3) is unspent.
 
-| Zone | Signal | Class |
-| ---- | ------ | ----- |
-| 1 | MemAvailable < 5% | absolute floor |
-| 2 | MemAvailable < 10% AND zram ≥ 92% | shmem-unevictable trap |
-| 3 | PSI mem avg10 ≥ 40% AND zram ≥ 80% | refault-thrash |
-| 4 | PSI mem avg60 ≥ 50% alone | slow-burn stall |
-| 5 | episodic avg10 leaky bucket ≥ 8 | the calibrated 2026-08-31 freeze |
-| 6 | **io PSI some avg60 ≥ 40% AND max per-disk busy ≥ 20%** | **crash #3: stacked full-disk readers livelock the scheduler while memory looks healthy** |
+| Zone | Signal                                                  | Class                                                                                     |
+| ---- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 1    | MemAvailable < 5%                                       | absolute floor                                                                            |
+| 2    | MemAvailable < 10% AND zram ≥ 92%                       | shmem-unevictable trap                                                                    |
+| 3    | PSI mem avg10 ≥ 40% AND zram ≥ 80%                      | refault-thrash                                                                            |
+| 4    | PSI mem avg60 ≥ 50% alone                               | slow-burn stall                                                                           |
+| 5    | episodic avg10 leaky bucket ≥ 8                         | the calibrated 2026-08-31 freeze                                                          |
+| 6    | **io PSI some avg60 ≥ 40% AND max per-disk busy ≥ 20%** | **crash #3: stacked full-disk readers livelock the scheduler while memory looks healthy** |
 
 ## Zone 6 semantics (what stops, what never auto-restarts)
 
@@ -57,11 +57,11 @@ A Zone-6-shaped wedge (guard killed mid-trip with churn units stopped) is theref
 
 Two different mechanisms cover the same IO-storm class — do not conflate them:
 
-| | `scripts/pre-deploy-check.sh` pressure gate | guard Zone 6 |
-| --- | --- | --- |
-| When | deploy time only (`nh os switch` blocked, exit 12) | continuous, every 30 s |
-| Action | REFUSES to deploy under pressure (some avg10 ≥ 20%, zram ≥ 90%, MemAvailable < 10%) | STOPS the churn sources + sacrifices flm |
-| Escape hatch | `DEPLOY_FORCE_PRESSURE=1` | none by design (sacrifice is the mitigation) |
+|              | `scripts/pre-deploy-check.sh` pressure gate                                         | guard Zone 6                                 |
+| ------------ | ----------------------------------------------------------------------------------- | -------------------------------------------- |
+| When         | deploy time only (`nh os switch` blocked, exit 12)                                  | continuous, every 30 s                       |
+| Action       | REFUSES to deploy under pressure (some avg10 ≥ 20%, zram ≥ 90%, MemAvailable < 10%) | STOPS the churn sources + sacrifices flm     |
+| Escape hatch | `DEPLOY_FORCE_PRESSURE=1`                                                           | none by design (sacrifice is the mitigation) |
 
 A deploy blocked by the pressure gate is NOT a guard bug; a Zone 6 trip during a deploy is not a gate bug. The gate protects the ACTIVATION window; the guard protects the KERNEL.
 

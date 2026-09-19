@@ -63,58 +63,58 @@
 
 ## f) 50 things to get done next (brainstorm — HARVEST into TODO_LIST.md; most beyond #15 are ROADMAP fuel)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Run `nix run .#deploy` in a quiet window; run pre-deploy + post-deploy checks | Critical | S | Bug |
-| 2 | FOD-probe discordsync `5fe2af13` from our lock before any deploy (lifted after my last build) | Critical | S | Bug |
-| 3 | Root-cause the daemon-vs-vendorHash war: add automatic `nix build .#default.goModules` (or nix-hash-fix) after Go-source commits in flake repos | Critical | M | Feature |
-| 4 | Diagnose buildflow `nix-hash-fix` "no executable nodes" failure in go-auto-upgrade (`buildflow doctor`, `list providers`); fix or file upstream | High | M | Bug |
-| 5 | Per-repo scheduled CI (or timer) `nix build .#default.goModules` on all LarsArtmann Go flakes so a stale master pages instead of rotting | High | M | Feature |
-| 6 | Seed the `NIX_GITHUB_RO_TOKEN` CI secret — the four flipped private inputs (library-policy, go-auto-upgrade, overview, PMA) keep CI dark without it | High | S | Bug |
-| 7 | Build a `lift-input` helper (probe → got-hash → paste → push → re-lock → from-our-lock verify, refusing to finish red) | High | M | Quality |
-| 8 | Add `nix-instantiate --parse` pre-commit gate for `vendorHash*.nix`-pattern files (would have caught d1 before push) | High | S | Quality |
-| 9 | Delete obsolete `cqrs-lint-vendorhash-fix` branch on go-cqrs-lite | Low | S | Cleanup |
-| 10 | Verify-or-fix the erraudit "go-finding Confidence API" comment claim; if fixed upstream, consider following go-finding | Medium | S | Bug |
-| 11 | Probe go-cqrs-lite `benchstat` + main-lib vendorHash health (flake shape hides them from the CLI) | Medium | M | Bug |
-| 12 | Fix DiscordSync upstream `packages.cqrs-lint` post-FOD failure ("updates to go.mod needed", cmd module drift) | Medium | M | Bug |
-| 13 | signoz-src + signoz-collector-src migration-review bump (schema-migrator runs on service start; +42/+7 ahead) | High | L | Feature |
-| 14 | BuildFlow upstream master `42fd89bf` vendoredHash repair (same playbook), then lift the deliberately-held SystemNix lock | High | M | Bug |
-| 15 | overview devshell: ship go_1_27 so local `go mod tidy`/`go mod graph` stop dying on the go.work 1.27.1 floor | Medium | S | Bug |
-| 16 | Sweep living docs (`docs/services/*`, runbooks) for stale `hierarchical-errors` references | Low | S | Documentation |
-| 17 | Rewrite flake.nix flip comments to cite mechanism + drop-conditions instead of today's revs (they already rotted to 50123793/2aad9ad8) | Low | S | Documentation |
-| 18 | HARVEST this report's section f into TODO_LIST.md (docs-health skill) | Medium | S | Documentation |
-| 19 | Post-deploy functional smokes: PMA daemon socket + Overview render (PMA package rev changed), `cqrs-lint --help`, `erraudit --help`, `library-policy --help` | High | S | Bug |
-| 20 | Post-deploy: profile-anchor check (`readlink /run/current-system` vs numbered profile) per the exit-4 doctrine | Medium | S | Bug |
-| 21 | Check whether library-policy `production` package + go-auto-upgrade `go-auto-upgrade` alias package build (only `default` was verified) | Low | S | Bug |
-| 22 | Confirm drop-conditions for the go_1_27 bumps: add "drop when samber-do-auditlog floor ≤ 1.26" notes where missing (library-policy has one; CV/overview need checking) | Low | S | Documentation |
-| 23 | Decide the gobwas/glob endgame: SDK now speaks v1.0.0 — sweep remaining requirers and retire the 2026-09-05 downgrade doctrine + its AGENTS.md precedence | Medium | M | Cleanup |
-| 24 | Go-auto-upgrade/dep-sweep ignore-rule for glob (or floor constraint) so sweeps stop re-breaking consumers while any old-API consumer exists | Medium | S | Bug |
-| 25 | Verify the parallel session's staged flake.nix no-follows edit (input unidentified in my diff view) — confirm which input changed wiring and that it builds | Medium | S | Bug |
-| 26 | pin-policy audit round 2: enumerate ALL remaining `?rev=`/hard-rev/local-path inputs in flake.nix and classify (art-dupl fork pin, any stragglers) | Medium | M | Quality |
-| 27 | art-dupl: check whether the upstream fix landed on master so the `refs/heads/fork` pin can retire | Medium | S | Cleanup |
-| 28 | Investigate whether other `_local_deps`-materializing repos have go.work floors above the pinned toolchain (the overview `go mod graph` silent-empty find) | Medium | M | Bug |
-| 29 | Fleet docs note: `vendorHash.nix`-pattern files are Nix expressions (quoted hashes only) — add to go-flake template in go-nix-helpers | Low | S | Documentation |
-| 30 | Template-level fix: make the go-flake template read the hash from a QUOTED string or `lib.fileContents`-safe path, eliminating the class | Medium | S | Feature |
-| 31 | Write the wave post-mortem as a class note (8+ repos across two sessions, same root cause) and link it from the pin-policy section | Low | S | Documentation |
-| 32 | Check GitHub Actions liveness on the six touched repos (CV's is dead from hosted-minutes; are the others signing anything?) | Medium | S | Bug |
-| 33 | Decide branch-ref vs deploy-key auth doctrine per private input (github:+RO-token vs git+ssh+deploy key) — currently mixed | Medium | M | Quality |
-| 34 | Add `--refresh` to a wrapper/alias for `nix flake lock --update-input` so the daemon-cache stale-ref trap can't bite the next person | Medium | S | Quality |
-| 35 | Re-verify gatus/pre-deploy §10 after deploy (changed binaries → metric presence sweep: papdashboard, overview, PMA) | Medium | S | Bug |
-| 36 | Verify erraudit's exit/rename didn't break GitHub-side references (badges, CI badges in OTHER repos pointing at the old name) | Low | S | Cleanup |
-| 37 | go-taskqueue: confirm the 2026-09-17 flip (`8d3de30`) still green after today's nixpkgs/helper moves (it takes no helper follows — spot-check) | Low | S | Bug |
-| 38 | Post-deploy: watch one full PMA commit cycle for the FastFlowLM cold-load heuristic fallback (its binary rev changed today) | Medium | S | Bug |
-| 39 | Signoz: confirm the provisioner is green (the systemnix-overview panel overlap fix from the parallel session's notes) post-deploy | Low | S | Bug |
-| 40 | Evaluate a nightly "flake-input drift report" (gh compare for every `?ref=master` input) so ahead-counts are visible without manual gh queries | Low | M | Feature |
-| 41 | Consider git hooks in fleet repos that reject `chore: auto-commit` messages touching `flake.nix`/`vendorHash` (hash changes deserve real messages) | Medium | S | Quality |
-| 42 | AGENTS.md: record the `vendorHash.nix`-is-a-Nix-expression footgun (d1) as a named gotcha, not just a wave lesson | Low | S | Documentation |
-| 43 | Check whether `nix flake show` failing on go-cqrs-lite (eval error on some system) hides broken non-x86_64 outputs — fix or scope the flake's systems | Low | M | Bug |
-| 44 | Erraudit functional smoke on a real repo after deploy (run the analyzer once, confirm output shape unchanged from hierarchical-errors era) | Medium | S | Bug |
-| 45 | Confirm nothing else in SystemNix references `inputs.hierarchical-errors` in comments only (cosmetic sweep, .nix clean already) | Low | S | Cleanup |
-| 46 | Time-box: measure how long the full from-our-lock battery takes when warm, and consider making it a flake check app (`nix run .#verify-inputs`) | Low | M | Quality |
-| 47 | Session tooling: a pre-flight "parallel session?" sniff (recent commits + staged diff + running nix builds) before long builds, to avoid mid-flight lock invalidation | Medium | S | Quality |
-| 48 | Memory-emergency-guard Zone 6 interplay: today's repeated FOD builds rode ~30-50% io PSI avg60 — confirm no churn-unit stops were triggered by this session's builds | Low | S | Bug |
-| 49 | Sweep for OTHER repos where the daemon re-bumped gobwas/glob past consumers' APIs (BuildFlow + project-meta were the 2026-09-05 trio — recheck both) | Medium | S | Bug |
-| 50 | Decide upstream-CV documentation: CV's go_1_27 fix (`100228818`) needs the same drop-condition comment + AGENTS.md note the other repos got | Low | S | Documentation |
+| #  | Task                                                                                                                                                                   | Impact   | Effort | Category      |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
+| 1  | Run `nix run .#deploy` in a quiet window; run pre-deploy + post-deploy checks                                                                                          | Critical | S      | Bug           |
+| 2  | FOD-probe discordsync `5fe2af13` from our lock before any deploy (lifted after my last build)                                                                          | Critical | S      | Bug           |
+| 3  | Root-cause the daemon-vs-vendorHash war: add automatic `nix build .#default.goModules` (or nix-hash-fix) after Go-source commits in flake repos                        | Critical | M      | Feature       |
+| 4  | Diagnose buildflow `nix-hash-fix` "no executable nodes" failure in go-auto-upgrade (`buildflow doctor`, `list providers`); fix or file upstream                        | High     | M      | Bug           |
+| 5  | Per-repo scheduled CI (or timer) `nix build .#default.goModules` on all LarsArtmann Go flakes so a stale master pages instead of rotting                               | High     | M      | Feature       |
+| 6  | Seed the `NIX_GITHUB_RO_TOKEN` CI secret — the four flipped private inputs (library-policy, go-auto-upgrade, overview, PMA) keep CI dark without it                    | High     | S      | Bug           |
+| 7  | Build a `lift-input` helper (probe → got-hash → paste → push → re-lock → from-our-lock verify, refusing to finish red)                                                 | High     | M      | Quality       |
+| 8  | Add `nix-instantiate --parse` pre-commit gate for `vendorHash*.nix`-pattern files (would have caught d1 before push)                                                   | High     | S      | Quality       |
+| 9  | Delete obsolete `cqrs-lint-vendorhash-fix` branch on go-cqrs-lite                                                                                                      | Low      | S      | Cleanup       |
+| 10 | Verify-or-fix the erraudit "go-finding Confidence API" comment claim; if fixed upstream, consider following go-finding                                                 | Medium   | S      | Bug           |
+| 11 | Probe go-cqrs-lite `benchstat` + main-lib vendorHash health (flake shape hides them from the CLI)                                                                      | Medium   | M      | Bug           |
+| 12 | Fix DiscordSync upstream `packages.cqrs-lint` post-FOD failure ("updates to go.mod needed", cmd module drift)                                                          | Medium   | M      | Bug           |
+| 13 | signoz-src + signoz-collector-src migration-review bump (schema-migrator runs on service start; +42/+7 ahead)                                                          | High     | L      | Feature       |
+| 14 | BuildFlow upstream master `42fd89bf` vendoredHash repair (same playbook), then lift the deliberately-held SystemNix lock                                               | High     | M      | Bug           |
+| 15 | overview devshell: ship go_1_27 so local `go mod tidy`/`go mod graph` stop dying on the go.work 1.27.1 floor                                                           | Medium   | S      | Bug           |
+| 16 | Sweep living docs (`docs/services/*`, runbooks) for stale `hierarchical-errors` references                                                                             | Low      | S      | Documentation |
+| 17 | Rewrite flake.nix flip comments to cite mechanism + drop-conditions instead of today's revs (they already rotted to 50123793/2aad9ad8)                                 | Low      | S      | Documentation |
+| 18 | HARVEST this report's section f into TODO_LIST.md (docs-health skill)                                                                                                  | Medium   | S      | Documentation |
+| 19 | Post-deploy functional smokes: PMA daemon socket + Overview render (PMA package rev changed), `cqrs-lint --help`, `erraudit --help`, `library-policy --help`           | High     | S      | Bug           |
+| 20 | Post-deploy: profile-anchor check (`readlink /run/current-system` vs numbered profile) per the exit-4 doctrine                                                         | Medium   | S      | Bug           |
+| 21 | Check whether library-policy `production` package + go-auto-upgrade `go-auto-upgrade` alias package build (only `default` was verified)                                | Low      | S      | Bug           |
+| 22 | Confirm drop-conditions for the go_1_27 bumps: add "drop when samber-do-auditlog floor ≤ 1.26" notes where missing (library-policy has one; CV/overview need checking) | Low      | S      | Documentation |
+| 23 | Decide the gobwas/glob endgame: SDK now speaks v1.0.0 — sweep remaining requirers and retire the 2026-09-05 downgrade doctrine + its AGENTS.md precedence              | Medium   | M      | Cleanup       |
+| 24 | Go-auto-upgrade/dep-sweep ignore-rule for glob (or floor constraint) so sweeps stop re-breaking consumers while any old-API consumer exists                            | Medium   | S      | Bug           |
+| 25 | Verify the parallel session's staged flake.nix no-follows edit (input unidentified in my diff view) — confirm which input changed wiring and that it builds            | Medium   | S      | Bug           |
+| 26 | pin-policy audit round 2: enumerate ALL remaining `?rev=`/hard-rev/local-path inputs in flake.nix and classify (art-dupl fork pin, any stragglers)                     | Medium   | M      | Quality       |
+| 27 | art-dupl: check whether the upstream fix landed on master so the `refs/heads/fork` pin can retire                                                                      | Medium   | S      | Cleanup       |
+| 28 | Investigate whether other `_local_deps`-materializing repos have go.work floors above the pinned toolchain (the overview `go mod graph` silent-empty find)             | Medium   | M      | Bug           |
+| 29 | Fleet docs note: `vendorHash.nix`-pattern files are Nix expressions (quoted hashes only) — add to go-flake template in go-nix-helpers                                  | Low      | S      | Documentation |
+| 30 | Template-level fix: make the go-flake template read the hash from a QUOTED string or `lib.fileContents`-safe path, eliminating the class                               | Medium   | S      | Feature       |
+| 31 | Write the wave post-mortem as a class note (8+ repos across two sessions, same root cause) and link it from the pin-policy section                                     | Low      | S      | Documentation |
+| 32 | Check GitHub Actions liveness on the six touched repos (CV's is dead from hosted-minutes; are the others signing anything?)                                            | Medium   | S      | Bug           |
+| 33 | Decide branch-ref vs deploy-key auth doctrine per private input (github:+RO-token vs git+ssh+deploy key) — currently mixed                                             | Medium   | M      | Quality       |
+| 34 | Add `--refresh` to a wrapper/alias for `nix flake lock --update-input` so the daemon-cache stale-ref trap can't bite the next person                                   | Medium   | S      | Quality       |
+| 35 | Re-verify gatus/pre-deploy §10 after deploy (changed binaries → metric presence sweep: papdashboard, overview, PMA)                                                    | Medium   | S      | Bug           |
+| 36 | Verify erraudit's exit/rename didn't break GitHub-side references (badges, CI badges in OTHER repos pointing at the old name)                                          | Low      | S      | Cleanup       |
+| 37 | go-taskqueue: confirm the 2026-09-17 flip (`8d3de30`) still green after today's nixpkgs/helper moves (it takes no helper follows — spot-check)                         | Low      | S      | Bug           |
+| 38 | Post-deploy: watch one full PMA commit cycle for the FastFlowLM cold-load heuristic fallback (its binary rev changed today)                                            | Medium   | S      | Bug           |
+| 39 | Signoz: confirm the provisioner is green (the systemnix-overview panel overlap fix from the parallel session's notes) post-deploy                                      | Low      | S      | Bug           |
+| 40 | Evaluate a nightly "flake-input drift report" (gh compare for every `?ref=master` input) so ahead-counts are visible without manual gh queries                         | Low      | M      | Feature       |
+| 41 | Consider git hooks in fleet repos that reject `chore: auto-commit` messages touching `flake.nix`/`vendorHash` (hash changes deserve real messages)                     | Medium   | S      | Quality       |
+| 42 | AGENTS.md: record the `vendorHash.nix`-is-a-Nix-expression footgun (d1) as a named gotcha, not just a wave lesson                                                      | Low      | S      | Documentation |
+| 43 | Check whether `nix flake show` failing on go-cqrs-lite (eval error on some system) hides broken non-x86_64 outputs — fix or scope the flake's systems                  | Low      | M      | Bug           |
+| 44 | Erraudit functional smoke on a real repo after deploy (run the analyzer once, confirm output shape unchanged from hierarchical-errors era)                             | Medium   | S      | Bug           |
+| 45 | Confirm nothing else in SystemNix references `inputs.hierarchical-errors` in comments only (cosmetic sweep, .nix clean already)                                        | Low      | S      | Cleanup       |
+| 46 | Time-box: measure how long the full from-our-lock battery takes when warm, and consider making it a flake check app (`nix run .#verify-inputs`)                        | Low      | M      | Quality       |
+| 47 | Session tooling: a pre-flight "parallel session?" sniff (recent commits + staged diff + running nix builds) before long builds, to avoid mid-flight lock invalidation  | Medium   | S      | Quality       |
+| 48 | Memory-emergency-guard Zone 6 interplay: today's repeated FOD builds rode ~30-50% io PSI avg60 — confirm no churn-unit stops were triggered by this session's builds   | Low      | S      | Bug           |
+| 49 | Sweep for OTHER repos where the daemon re-bumped gobwas/glob past consumers' APIs (BuildFlow + project-meta were the 2026-09-05 trio — recheck both)                   | Medium   | S      | Bug           |
+| 50 | Decide upstream-CV documentation: CV's go_1_27 fix (`100228818`) needs the same drop-condition comment + AGENTS.md note the other repos got                            | Low      | S      | Documentation |
 
 ## g) Three questions I cannot answer myself
 
@@ -124,4 +124,4 @@
 
 ---
 
-*Report written 2026-09-18 05:45 CEST. Point-in-time snapshot — the parallel session may have moved the tree since; re-verify lock state before acting on section (f) items 1-2.*
+_Report written 2026-09-18 05:45 CEST. Point-in-time snapshot — the parallel session may have moved the tree since; re-verify lock state before acting on section (f) items 1-2._

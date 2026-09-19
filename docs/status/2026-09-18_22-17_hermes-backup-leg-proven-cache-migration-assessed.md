@@ -15,17 +15,17 @@ The hermes dedicated-subvolume migration (2026-09-15) worked operationally (moun
 
 ## Timeline (all 2026-09-18)
 
-| Time | Event |
-|---|---|
-| ~17:30 | Cache migration feasibility research: `~/.cache` = **37G** (docs say ~16G — stale), QLC root 81% full, `/mnt/hot` 744G free; plan delivered, not executed |
-| ~17:45 | User asked whether the hermes migration worked. Live checks: mount ✓, service ✓, local snapshots Sep 16+17 ✓, **pool receives: 0**, verify gate red since 2026-09-17 fix |
-| 20:42:15 | User-run `sudo ionice -c 3 btrbk -c /etc/btrbk/root.conf run` — appeared "stuck" (btrbk is silent during send/receive) |
-| 20:42–20:50 | First transfer (@.20260915→.16 incremental) completed successfully (8m19s); journal sudo lines were the only progress signal |
-| 21:01:14 | User Ctrl-C mid-second-transfer → **garbled `@.20260917T2300` left in pool** (receive creates the target subvol immediately; interrupt = incomplete data that blocks re-sending forever) |
-| 21:16:17 | User-run `btrbk clean` deleted exactly the garbled subvol (output's `@.*` line is a config section header, not a glob — caused a user alarm, see §d) |
-| 21:24:32 | Re-run completed (**38m6s**): root chain caught up (.17 re-sent, .18 ×3) + **first hermes receives**: `***` full @home-hermes.20260916T2300 + incrementals .17/.2042/.2124 |
-| 22:08:20 | `btrfs-verify-pool-backups` started manually: **OK `@` 0d, OK `@home-hermes` 0d, zero failures** (WARN `data` prefix = known /data EIO leg, decided stance) |
-| 22:10 | AGENTS.md updated (first-receive milestone + btrbk silent-send gotcha) |
+| Time        | Event                                                                                                                                                                                    |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~17:30      | Cache migration feasibility research: `~/.cache` = **37G** (docs say ~16G — stale), QLC root 81% full, `/mnt/hot` 744G free; plan delivered, not executed                                |
+| ~17:45      | User asked whether the hermes migration worked. Live checks: mount ✓, service ✓, local snapshots Sep 16+17 ✓, **pool receives: 0**, verify gate red since 2026-09-17 fix                 |
+| 20:42:15    | User-run `sudo ionice -c 3 btrbk -c /etc/btrbk/root.conf run` — appeared "stuck" (btrbk is silent during send/receive)                                                                   |
+| 20:42–20:50 | First transfer (@.20260915→.16 incremental) completed successfully (8m19s); journal sudo lines were the only progress signal                                                             |
+| 21:01:14    | User Ctrl-C mid-second-transfer → **garbled `@.20260917T2300` left in pool** (receive creates the target subvol immediately; interrupt = incomplete data that blocks re-sending forever) |
+| 21:16:17    | User-run `btrbk clean` deleted exactly the garbled subvol (output's `@.*` line is a config section header, not a glob — caused a user alarm, see §d)                                     |
+| 21:24:32    | Re-run completed (**38m6s**): root chain caught up (.17 re-sent, .18 ×3) + **first hermes receives**: `***` full @home-hermes.20260916T2300 + incrementals .17/.2042/.2124               |
+| 22:08:20    | `btrfs-verify-pool-backups` started manually: **OK `@` 0d, OK `@home-hermes` 0d, zero failures** (WARN `data` prefix = known /data EIO leg, decided stance)                              |
+| 22:10       | AGENTS.md updated (first-receive milestone + btrbk silent-send gotcha)                                                                                                                   |
 
 **Final state:** pool = 33 receives (was 26 incl. garble), 4 hermes. Local: retention pruned @.20260914T2300 (pool copy safe).
 
@@ -76,6 +76,7 @@ The hermes dedicated-subvolume migration (2026-09-15) worked operationally (moun
 ## f) NEXT (up to 50, prioritized; all traceable to this session's observations)
 
 **Cache migration program (the standing ask):**
+
 1. GO/NO-GO + window for the `@cache-home` → Samsung execution (needs a quiet window; ends in a deploy).
 2. Confirm `fio-eval-root.bin` is user-trashable, then trash (4G).
 3. Write `scripts/migrate-cache-subvol.sh` per house pattern BEFORE the window (create `cache-home` subvol on tlc toplevel, copy, verify).
@@ -115,7 +116,7 @@ The hermes dedicated-subvolume migration (2026-09-15) worked operationally (moun
 31. Codify items e1–e6 into my standing practice (progress-命令 pairing, journal-first, output-format pre-explanation).
 32. When prescribing ops the user will run: include expected duration + "silent is normal" + the interrupt-safety note in ONE message.
 
-*(stopped at 32 — the remainder would be filler; the honest list is these.)*
+_(stopped at 32 — the remainder would be filler; the honest list is these.)_
 
 ## g) Questions for the user (only you can answer)
 

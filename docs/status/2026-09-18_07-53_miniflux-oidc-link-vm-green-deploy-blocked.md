@@ -167,6 +167,7 @@ severity:
 ## f) NEXT TASKS (prioritized)
 
 **This feature (in order):**
+
 1. Decide deploy: force now (`DEPLOY_FORCE_PRESSURE=1` — evidence says
    phantom) vs wait for reboot/quiet window.
 2. Deploy → verify `journalctl -u miniflux-oidc-setup` (expect `linked …
@@ -186,50 +187,52 @@ severity:
 
 **VM/infra class (from this session's findings):**
 9. Global AGENTS.md gotcha: "DynamicUser + peer auth only resolves while
-   nsncd lives — use a static user" (currently only in the Miniflux section).
+nsncd lives — use a static user" (currently only in the Miniflux section).
 10. Add the nsncd-activity annotation to `tests/test-helpers.nix` (task e2).
 11. Pressure-gate corpse-pile discriminator (task e1) + fixture test.
 12. Investigate/file the nsncd EROFS boot race upstream (nixpkgs `nscd`
-    module / twosigma/nsncd): Type=notify unit racing its RuntimeDirectory —
-    reproducible ~50% in NixOS VMs.
+module / twosigma/nsncd): Type=notify unit racing its RuntimeDirectory —
+reproducible ~50% in NixOS VMs.
 13. Eval-time audit for DynamicUser+peer-auth combos (task e5).
 14. Verify no OTHER fleet service silently depends on nsncd (samba? systemd
-    DynamicUser units doing name lookups of dynamic peers) — one audit sweep.
+DynamicUser units doing name lookups of dynamic peers) — one audit sweep.
 
 **Standing items I touched or re-confirmed this session (from AGENTS.md, not
 re-researched):**
 15. The OWED REBOOT — clears the D-state corpse pile, the flm corpse pinning
-    :52626, and the PSI phantom that keeps blocking deploys; run
-    `nix run .#pre-reboot-check` first (it exists for exactly the
-    stuck-boot class).
+:52626, and the PSI phantom that keeps blocking deploys; run
+`nix run .#pre-reboot-check` first (it exists for exactly the
+stuck-boot class).
 16. flm staged v1.0.3 go-live (post-reboot candidate fix for the corpse
-    class) — live-serve validation + no re-pull needed (v1.0.3 died
-    pre-model-load; weights intact).
+class) — live-serve validation + no re-pull needed (v1.0.3 died
+pre-model-load; weights intact).
 17. llama-rag mid-load CPU-spin regression (config-disabled 2026-09-16) — pin
-    llama-cpp back or bisect gfx1150 upstream, then re-enable.
+llama-cpp back or bisect gfx1150 upstream, then re-enable.
 18. crush-hot-db first migration never ran (no `/mnt/hot/crush` yet) —
-    verify post-reboot when no crush session holds the pgrep guard.
+verify post-reboot when no crush session holds the pgrep guard.
 19. Mail relay go-live: verify `larsartmann.cloud` in Resend (SPF/DKIM), then
-    re-test send; Pocket ID needs its own new Resend key.
+re-test send; Pocket ID needs its own new Resend key.
 20. Turso decision for DiscordSync (upgrade plan vs permanent local-only;
-    currently encoded local-first with the standing red check).
+currently encoded local-first with the standing red check).
 21. Hetzner StorageBox + BorgBackup offsite leg (decided, not implemented).
 22. Pocket ID groq key decision (ChatService warn on `/health`).
 23. Signoz dashboard overlap lint / provisioner convergence checks are green
-    — keep the "read FAILED lines, not the final count" doctrine in mind for
-    the next dashboard edit.
+— keep the "read FAILED lines, not the final count" doctrine in mind for
+the next dashboard edit.
 24. Gatus "DiscordSync Turso Sync Active" red check is BY DESIGN — do not
-    silence.
+silence.
 25. Monitor365 re-enable needs the private wireguard-collector decision
-    (publish crate / public repo / vendor).
+(publish crate / public repo / vendor).
 26. CV: defense-search portals funnel is live; CI still dead (hosted
-    minutes) — keep probing CV revs locally before lock moves.
+minutes) — keep probing CV revs locally before lock moves.
 27. Per-service BTRFS subvolume doctrine (Phase 2 `services.hot-db` fold-in
-    for crush-hot-db when ratified).
+for crush-hot-db when ratified).
 28. Retire the stale `KNOWN_NEW_METRICS` loan entries flagged by
-    metrics-gate.sh WARNs, if any are active.
+metrics-gate.sh WARNs, if any are active.
 29. sops-nix overlay shim (`buildGo125Module` aliases) — drop when sops-nix
-    > 13616fff lands upstream.
+
+> 13616fff lands upstream.
+
 30. Playwright/d2 overlay shims — drop when nixpkgs repairs playwright
     (re-check on next nixpkgs bump).
 
@@ -256,9 +259,9 @@ re-researched):**
 
 ---
 
-*Verification trail: 5 VM runs (drv logs referenced in-session:
+_Verification trail: 5 VM runs (drv logs referenced in-session:
 `5n37i2vx…` bisect-disabled, debug-instrumented, `4yw5aqy7…` static-user,
 `xs4xcjh0…` -d fix, `yx6302l5…` guarded SQL, final GREEN out
 `7bg3nxb4…-vm-test-run-miniflux`); nsncd-dead-yet-green proof in the final
 run's log (`nscd.service: Failed with result 'start-limit-hit'` present,
-test exit 0).*
+test exit 0)._

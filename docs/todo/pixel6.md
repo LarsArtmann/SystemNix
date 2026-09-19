@@ -35,4 +35,3 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **WAV→FLAC/opus mirror + browsable web archive (player/search) over the UCR call archive** — Navidrome feeds on the FLAC leg
 - [ ] [ready] **Contacts VCF export to the pool + per-contact card decode** (the index.csv enrichment row covers call-log names, not VCF)
 - [ ] [ready] **RAG query CLI over the archive** ("when did we first talk about X") — rides the whisper-transcription row's output
-

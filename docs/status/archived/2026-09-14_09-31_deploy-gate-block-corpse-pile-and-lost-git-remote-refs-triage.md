@@ -90,7 +90,7 @@ until reconciled.
    in my sandbox; tq.db and worktree shell histories unchecked. Three suspects stand
    (agent session / pr139 worktree session / manual).
 2. **PSI attribution**: elevation confirmed and quantified, disks-idle confirmed, but the
-   *actual stalling task* was never identified (see d-1). The "corpse pile inflates PSI"
+   _actual stalling task_ was never identified (see d-1). The "corpse pile inflates PSI"
    label came from AGENTS.md doctrine, not from fresh attribution.
 3. **Reboot path**: recommended (`pre-reboot-check` → reboot → deploy) but not executed;
    `pre-reboot-check` has still never run in this boot's history (the user's `&&` chain
@@ -114,7 +114,7 @@ until reconciled.
 1. **PSI mechanism is actually UNEXPLAINED, and I glossed over it.** A zombie (Z) + X-state
    pair does not itself sit in `io_schedule()` — it cannot generate fresh IO PSI. I labeled
    the elevation "the documented corpse-pile phantom" based on AGENTS.md doctrine without
-   reconciling that the historical corpse-pile PSI came from *live D-state* corpses. Sustained
+   reconciling that the historical corpse-pile PSI came from _live D-state_ corpses. Sustained
    ~30% `some` pressure with idle disks, 0 D-state, and healthy mounts has **no identified
    source**. The operational conclusion (don't activate into it; reboot clears the boot's
    wedged state) survives — but my first reply overstated causal certainty.
@@ -176,6 +176,7 @@ until reconciled.
 ## f) Next — up to 50 things (prioritized; session-scoped)
 
 **Unblock the box (P0):**
+
 1. ~~Run `nix run .#pre-reboot-check` (still never executed this boot).~~ done (re-run against gen 775 post-reboot — the 11-19 report f.7)
 2. ~~REBOOT evo-x2 in the approved window — clears the flm corpse, :52626 pin, failed-unit~~ done (2026-09-14 10:34 boot live — the 11-19 first-reboot report)
    ~~pile, and tests whether the phantom PSI survives (if it survives: it was NEVER the~~
@@ -192,7 +193,7 @@ until reconciled.
 8. Identify the pushing clone (macOS?) — see question 2.
 9. `git fsck --full` for collateral damage from the 00:54 actor.
 10. Forensics on the 00:54 deletion: tq agent journals (tq.db), worktree shell history,
-    user recollection (question 1).
+user recollection (question 1).
 11. Set `logAllRefUpdates` so future ref deletions leave trails.
 12. Clean up or restore `forgejo-hermes-agent` (tracks a deleted remote branch, "gone").
 13. Add the remote-ref canary (e-3).
@@ -209,28 +210,28 @@ until reconciled.
 
 **Monitoring & prevention (P2):**
 22. Check whether Gatus/Discord alerted at ANY point during the 7 flm-dark days; if silent,
-    add an "flm consumers dark" aggregate check.
+add an "flm consumers dark" aggregate check.
 23. Review PMA "Commit Health" thresholds against a week of 100% heuristic fallbacks — did
-    `fallbacks_over_threshold` trip? If not, recalibrate.
+`fallbacks_over_threshold` trip? If not, recalibrate.
 24. PSI-source forensics script (e-1) — `scripts/io-psi-forensics.sh` on gate fire.
 25. Deploy-gate `--diagnose` evidence capture mode (e-2).
 26. Aggregate "deploy blocked N days" alerting (e-8).
 27. Check last night's cmdguard outputs (449ef806 / 97dde0d3): does it gate ref deletion?
-    Wire into tq agent pool if so.
+Wire into tq agent pool if so.
 28. Pre-deploy warning hygiene pass (e-7): enable-gate monitor365/cv probes, resolve the
-    six vendorHash "unable to determine" statuses.
+six vendorHash "unable to determine" statuses.
 29. Post-reboot: revisit the staged flm v1.0.3 go-live (its gates were: corpse reboot,
-    live serve validation, Q4_K re-pull) — the reboot unblocks it.
+live serve validation, Q4_K re-pull) — the reboot unblocks it.
 30. If phantom PSI SURVIVES the reboot: kernel-level attribution (per-cgroup io.stat,
-    ftrace/bpftrace on io_schedule) — escalate before accepting a new steady state.
+ftrace/bpftrace on io_schedule) — escalate before accepting a new steady state.
 31. Verify the memory-emergency-guard restore branch no longer re-arms the flm socket into
-    a doomed backend post-reboot (the 2026-09-09 corpse-aware-restore P1).
+a doomed backend post-reboot (the 2026-09-09 corpse-aware-restore P1).
 32. Document the 00:54 ref-loss incident + fetch-heals runbook in docs/gotchas (this
-    report is the interim record).
+report is the interim record).
 33. `tests/test-cv.nix` fixture fix for the `CV_OIDC_CLIENT_SECRET` gap (known red check
-    that neuters the pre-commit hook's flake-check leg).
+that neuters the pre-commit hook's flake-check leg).
 34. After everything: confirm auto-derived metric loans retired (metrics-gate WARN
-    self-reports stale loans).
+self-reports stale loans).
 
 (34 curated items — padding to 50 would be brainstorm, not work.)
 

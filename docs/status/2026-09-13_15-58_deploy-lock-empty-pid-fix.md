@@ -6,7 +6,7 @@
 
 ## a) FULLY DONE
 
-1. **Root-caused the empty-PID abort message.** `scripts/deploy.sh:44` opened the lock file with `exec 9>"$deploy_lock"` (`>` = O_TRUNC) **before** attempting `flock -n 9`. Every losing deploy therefore wiped the holder's recorded PID to zero bytes, failed the flock, then `cat`'d the now-empty file — printing `holder PID: ` (empty). The lock mechanism itself was never broken (truncation doesn't affect the inode-level flock); only the diagnostics were self-destroying.
+1. **Root-caused the empty-PID abort message.** `scripts/deploy.sh:44` opened the lock file with `exec 9>"$deploy_lock"` (`>` = O_TRUNC) **before** attempting `flock -n 9`. Every losing deploy therefore wiped the holder's recorded PID to zero bytes, failed the flock, then `cat`'d the now-empty file — printing `holder PID:` (empty). The lock mechanism itself was never broken (truncation doesn't affect the inode-level flock); only the diagnostics were self-destroying.
 2. **Fixed it:** `exec 9>>"$deploy_lock"` (append mode, no truncation), with a two-line comment explaining why append mode is load-bearing. `scripts/deploy.sh:43-46`.
 3. **Verified the fix end-to-end:**
    - `bash -n` syntax check passes.
@@ -27,9 +27,9 @@ Nothing within this session's scope.
 
 ## e) WHAT WE SHOULD IMPROVE (self-review — what I forgot / could have done better)
 
-1. **The user could not run their deploy at all** — the session ended the diagnosis+fix but I never answered the user's *actual operational question*: what deploy is/was holding the lock right now, and can they proceed? The lock is released when the holder exits, so by now it's almost certainly free — but I should have checked (`lsof /tmp/.systemnix-deploy.lock` or `fuser`) and told them explicitly whether the blocked deploy from their terminal prompt was a real concurrent deploy or a leftover.
+1. **The user could not run their deploy at all** — the session ended the diagnosis+fix but I never answered the user's _actual operational question_: what deploy is/was holding the lock right now, and can they proceed? The lock is released when the holder exits, so by now it's almost certainly free — but I should have checked (`lsof /tmp/.systemnix-deploy.lock` or `fuser`) and told them explicitly whether the blocked deploy from their terminal prompt was a real concurrent deploy or a leftover.
 2. **No regression test persisted.** SystemNix has `tests/test-scripts.nix` for script-logic fixtures (the awk-vanished-input race lives there). This bug is exactly that class — a lock-contention fixture would cost ~10 lines and would have caught the O_TRUNC regression permanently. I verified manually and moved on; the repo doctrine ("never trust a fix without the test that proves the artifact lands") demanded better.
-3. **The lock file survives the holder's death with a stale PID.** flock releases on exit, but the PID text stays in the file (on /tmp tmpfs, until reboot). The next *winning* deploy overwrites it (line 51, `echo $$ >`), so it's harmless — but if a third diagnostic ever reads the file without holding the lock, it could report a dead PID as "the holder." A comment or a `kill -0` liveness check in the abort message would make the diagnostic unambiguous.
+3. **The lock file survives the holder's death with a stale PID.** flock releases on exit, but the PID text stays in the file (on /tmp tmpfs, until reboot). The next _winning_ deploy overwrites it (line 51, `echo $$ >`), so it's harmless — but if a third diagnostic ever reads the file without holding the lock, it could report a dead PID as "the holder." A comment or a `kill -0` liveness check in the abort message would make the diagnostic unambiguous.
 4. **The abort message could self-serve more.** Now that the PID prints, the message could add: is that PID alive? (`kill -0`), what is it? (`ps -o cmd= -p $PID`), how long has it run? (`ps -o etime=`). Three cheap lines turn "wait for it" into "here's exactly what you're waiting for."
 5. **Minor style:** my first response explained the bug well but led with the mechanism; leading with "your deploy is fine, the lock works, only the message was broken" would have addressed the user's likely worry first (was something actually wedged?).
 
@@ -45,6 +45,6 @@ Nothing within this session's scope.
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 
-1. **Was a second deploy genuinely running when you hit the abort, or did you re-run the command after a stale-looking prompt?** If a real concurrent deploy ran, its log exists under `/var/log/systemnix-deploys/` — but whether *you* started one intentionally (another terminal, another session) is something only you know.
+1. **Was a second deploy genuinely running when you hit the abort, or did you re-run the command after a stale-looking prompt?** If a real concurrent deploy ran, its log exists under `/var/log/systemnix-deploys/` — but whether _you_ started one intentionally (another terminal, another session) is something only you know.
 2. **Do you want the enhanced abort diagnostics (holder liveness/cmd/etime) now, or keep the message minimal?** It's ~5 lines of change; doctrine here leans toward loud, self-explanatory failures, but it's your operator-facing text.
 3. **Should the lock-contention fixture go into `tests/test-scripts.nix`, or is manual verification acceptable for this one?** You've previously demanded tests for incident classes (awk race, tmp-cleaner), so I'd default to yes — but it's your CI-time budget.

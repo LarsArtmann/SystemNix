@@ -78,4 +78,5 @@
 3. **Citation-check semantics:** is annotate-and-enqueue what you wanted for "enforce reachable SHAs at enqueue", or did you intend a hard deny (items citing dangling SHAs never enqueue until a human/agent rewrites the row — accepting the starvation risk)?
 
 ---
-*Point-in-time snapshot. Sixth closeout of the 2026-09-14 window family; see runs 1-5: `2026-09-15_06-10`, `_07-32`, `_08-50`, `_10-45`, `_11-05`.*
+
+_Point-in-time snapshot. Sixth closeout of the 2026-09-14 window family; see runs 1-5: `2026-09-15_06-10`, `_07-32`, `_08-50`, `_10-45`, `_11-05`._

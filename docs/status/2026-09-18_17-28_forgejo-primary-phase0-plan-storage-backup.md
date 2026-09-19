@@ -26,16 +26,16 @@ The session converted "Forgejo becomes my primary" into a gated, staged, committ
 
 ## b) PARTIALLY DONE
 
-| # | Item | What remains |
-| - | ---- | ------------ |
-| 1 | **Gate G1 (Phase-0 activation)** | Owner-run: deploy inert batch → prebuild toplevel → `migrate-forgejo-subvol.sh prepare` + `finalize` (quiet-IO window) → I flip `dedicatedSubvolume = true` → deploy → verify (mount live, 2 consecutive 8h sends, Gatus green, drill OK). Everything is code-complete, nothing is live. |
-| 2 | **Plan F05** | "Enable option in configuration.nix" — deliberately NOT done (enablement is gated on G1 by design); the plan's wording ("ship inert first") was ambiguous and should have been written as "enablement happens AT gate F23". |
-| 3 | **Report-back tables** | Medium table delivered in full; fine table delivered grouped/abbreviated in chat (full text in the plan doc) — acceptable, but the chat version omitted est/dep columns per-row. |
-| 4 | **M08 overlap discovery** | Mid-session I noticed the parallel session already shipped `system_forgejo_mirror_sync_stalled` (fleet-level). My plan's M07 (per-repo dead candidates) remains valuable but the plan doc does NOT acknowledge the overlap — M07 should read "complements the fleet-stall metric with per-repo divergence". |
-| 5 | **Runbook extensions (F10 partial)** | The migration script carries its own runbook-as-header; `docs/services/forgejo.md` not yet extended with the subvol/flip/drill/shim sections (planned M19/F73 — not started this session by design, listed here for honesty because the script header is not a substitute). |
-| 6 | **Pre-deploy §10 awareness** | New metrics (`forgejo_subvol_backup_*`) will be auto-loaned by the auto-derived mechanism (verified reading the AGENTS §10 notes) — but I did not RUN the pre-deploy check against the new config; first real deploy will prove it. |
-| 7 | **The 5 open questions from the goal discussion** | Only the staged-approach question was answered (implicitly). GitHub-issues post-flip policy, off-LAN, public-repo scope, backup shape, both-ways priority → all parked in the plan's owner-decision packet (M18). Not lost, but also not answered. |
-| 8 | **Annotating the 2026-08-31 plan** | The new plan doc says "supersedes" and explains the stale premise; the OLD plan file itself carries no pointer back (that's plan F76, not started — should ideally have landed with the plan commit). |
+| # | Item                                              | What remains                                                                                                                                                                                                                                                                                                |
+| - | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Gate G1 (Phase-0 activation)**                  | Owner-run: deploy inert batch → prebuild toplevel → `migrate-forgejo-subvol.sh prepare` + `finalize` (quiet-IO window) → I flip `dedicatedSubvolume = true` → deploy → verify (mount live, 2 consecutive 8h sends, Gatus green, drill OK). Everything is code-complete, nothing is live.                    |
+| 2 | **Plan F05**                                      | "Enable option in configuration.nix" — deliberately NOT done (enablement is gated on G1 by design); the plan's wording ("ship inert first") was ambiguous and should have been written as "enablement happens AT gate F23".                                                                                 |
+| 3 | **Report-back tables**                            | Medium table delivered in full; fine table delivered grouped/abbreviated in chat (full text in the plan doc) — acceptable, but the chat version omitted est/dep columns per-row.                                                                                                                            |
+| 4 | **M08 overlap discovery**                         | Mid-session I noticed the parallel session already shipped `system_forgejo_mirror_sync_stalled` (fleet-level). My plan's M07 (per-repo dead candidates) remains valuable but the plan doc does NOT acknowledge the overlap — M07 should read "complements the fleet-stall metric with per-repo divergence". |
+| 5 | **Runbook extensions (F10 partial)**              | The migration script carries its own runbook-as-header; `docs/services/forgejo.md` not yet extended with the subvol/flip/drill/shim sections (planned M19/F73 — not started this session by design, listed here for honesty because the script header is not a substitute).                                 |
+| 6 | **Pre-deploy §10 awareness**                      | New metrics (`forgejo_subvol_backup_*`) will be auto-loaned by the auto-derived mechanism (verified reading the AGENTS §10 notes) — but I did not RUN the pre-deploy check against the new config; first real deploy will prove it.                                                                         |
+| 7 | **The 5 open questions from the goal discussion** | Only the staged-approach question was answered (implicitly). GitHub-issues post-flip policy, off-LAN, public-repo scope, backup shape, both-ways priority → all parked in the plan's owner-decision packet (M18). Not lost, but also not answered.                                                          |
+| 8 | **Annotating the 2026-08-31 plan**                | The new plan doc says "supersedes" and explains the stale premise; the OLD plan file itself carries no pointer back (that's plan F76, not started — should ideally have landed with the plan commit).                                                                                                       |
 
 ## c) NOT STARTED (from this session's plan; nothing outside it)
 
@@ -50,16 +50,16 @@ The session converted "Forgejo becomes my primary" into a gated, staged, committ
 
 ## d) TOTALLY FUCKED UP (all self-caught; none reached origin in broken form)
 
-| # | What | Root cause | Lesson |
-| - | ---- | ---------- | ------- |
-| 1 | **Wrong storage recommendation first** (Set C: +C, no snapshots, dump-only) | Calibrated to the DISPOSABLE-mirror posture before asking what the service was FOR; the user's goal statement invalidated it within two turns | For storage doctrine picks, the service's ROLE is the first question, not an assumption — I asked it only after recommending |
-| 2 | **Nix duplicate-path eval failure** (`systemd.services = lib.optionalAttrs …` colliding with the nested block) | Re-opening an already-defined attrset level from a second assignment in the same module — the exact class the file structure already encodes against | Read the file's OWN idiom (all units defined once, nested or flat) before adding a new shape; one failed eval round-trip burned |
-| 3 | **mkEnableOption shape assumed wrong** (`.enable` on a boolean) | Assumed submodule shape without checking; second wasted eval round | mkEnableOption IS the boolean; `extendModules` probes caught both this and #2 immediately — the throwaway-eval pattern is what kept these cheap |
-| 4 | **Dead `emit()` function shipped into an intermediate edit** of the collector script | First-draft sloppiness; caught on self-review before commit | Review your own diff for dead code BEFORE eval, not after |
-| 5 | **Daemon commit races ×3** — my `git commit` lost to the auto-commit daemon three times in a row (17:01, 17:13, 17:17), including one mid-chain `reset --soft` + `commit` split that the daemon landed inside | I re-ran the SAME two-step pattern (stage, then commit) after the first race instead of adapting; the AGENTS rule ("re-check `git status` immediately before `git add`") was followed in letter, not adapted in spirit | With this daemon: prefer SINGLE-command `git add <path> && git commit -m … -- <path>` chains, and when beaten, verify `git show --stat HEAD` then `--amend` — the amend-on-daemon-tip path worked flawlessly all three times; the reset-dance was the avoidable detour |
-| 6 | **Restore drill's dump-zip layout is UNVERIFIED** | I wrote repo-discovery (`find -name objects` + refs check) and DB-rebuild (`*db*.sql`) logic against an ASSUMED forgejo-dump zip layout — never inspected a real dump (pool backups are 0750 forgejo-owned, unreadable from lars) nor the forgejo source for the layout | The drill fails LOUD on a wrong assumption (safe direction), but the first Sunday run could false-FAIL; assumption-based verification logic must be labeled unverified until first live run — I only labeled it in my head |
-| 7 | **Plan doc drifted from implementation** (F19 still says "metric+Gatus"; shipped onFailure+monitoredServices) | Deviated deliberately during M04 but did not circle back to the plan file in the same session | The plan is the durable artifact; deviations update the plan in the same breath as the code, or the next session trusts a stale F19 |
-| 8 | **Migration script has NO fixture test** — `bash -n` syntax check only | Time/context pressure at the end of the M02 batch; the parallel session fixture-tested THEIR forgejo scripts the same day — I did not match the bar the repo just set | `scripts/migrate-forgejo-subvol.sh` guards real data movement; its guard branches (refuse-without-prepare, refuse-while-active, verify-then-swap) are exactly the logic a stubbed rsync/systemctl fixture should prove |
+| # | What                                                                                                                                                                                                          | Root cause                                                                                                                                                                                                                                                              | Lesson                                                                                                                                                                                                                                                                 |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Wrong storage recommendation first** (Set C: +C, no snapshots, dump-only)                                                                                                                                   | Calibrated to the DISPOSABLE-mirror posture before asking what the service was FOR; the user's goal statement invalidated it within two turns                                                                                                                           | For storage doctrine picks, the service's ROLE is the first question, not an assumption — I asked it only after recommending                                                                                                                                           |
+| 2 | **Nix duplicate-path eval failure** (`systemd.services = lib.optionalAttrs …` colliding with the nested block)                                                                                                | Re-opening an already-defined attrset level from a second assignment in the same module — the exact class the file structure already encodes against                                                                                                                    | Read the file's OWN idiom (all units defined once, nested or flat) before adding a new shape; one failed eval round-trip burned                                                                                                                                        |
+| 3 | **mkEnableOption shape assumed wrong** (`.enable` on a boolean)                                                                                                                                               | Assumed submodule shape without checking; second wasted eval round                                                                                                                                                                                                      | mkEnableOption IS the boolean; `extendModules` probes caught both this and #2 immediately — the throwaway-eval pattern is what kept these cheap                                                                                                                        |
+| 4 | **Dead `emit()` function shipped into an intermediate edit** of the collector script                                                                                                                          | First-draft sloppiness; caught on self-review before commit                                                                                                                                                                                                             | Review your own diff for dead code BEFORE eval, not after                                                                                                                                                                                                              |
+| 5 | **Daemon commit races ×3** — my `git commit` lost to the auto-commit daemon three times in a row (17:01, 17:13, 17:17), including one mid-chain `reset --soft` + `commit` split that the daemon landed inside | I re-ran the SAME two-step pattern (stage, then commit) after the first race instead of adapting; the AGENTS rule ("re-check `git status` immediately before `git add`") was followed in letter, not adapted in spirit                                                  | With this daemon: prefer SINGLE-command `git add <path> && git commit -m … -- <path>` chains, and when beaten, verify `git show --stat HEAD` then `--amend` — the amend-on-daemon-tip path worked flawlessly all three times; the reset-dance was the avoidable detour |
+| 6 | **Restore drill's dump-zip layout is UNVERIFIED**                                                                                                                                                             | I wrote repo-discovery (`find -name objects` + refs check) and DB-rebuild (`*db*.sql`) logic against an ASSUMED forgejo-dump zip layout — never inspected a real dump (pool backups are 0750 forgejo-owned, unreadable from lars) nor the forgejo source for the layout | The drill fails LOUD on a wrong assumption (safe direction), but the first Sunday run could false-FAIL; assumption-based verification logic must be labeled unverified until first live run — I only labeled it in my head                                             |
+| 7 | **Plan doc drifted from implementation** (F19 still says "metric+Gatus"; shipped onFailure+monitoredServices)                                                                                                 | Deviated deliberately during M04 but did not circle back to the plan file in the same session                                                                                                                                                                           | The plan is the durable artifact; deviations update the plan in the same breath as the code, or the next session trusts a stale F19                                                                                                                                    |
+| 8 | **Migration script has NO fixture test** — `bash -n` syntax check only                                                                                                                                        | Time/context pressure at the end of the M02 batch; the parallel session fixture-tested THEIR forgejo scripts the same day — I did not match the bar the repo just set                                                                                                   | `scripts/migrate-forgejo-subvol.sh` guards real data movement; its guard branches (refuse-without-prepare, refuse-while-active, verify-then-swap) are exactly the logic a stubbed rsync/systemctl fixture should prove                                                 |
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -75,78 +75,84 @@ The session converted "Forgejo becomes my primary" into a gated, staged, committ
 ## f) Up to 50 things we should get done next
 
 **Gate G1 (owner-coupled — the critical path):**
-| # | Task | Impact | Effort |
-| - | ---- | ------ | ------ |
-| 1 | Owner: `nix run .#deploy` (ship Phase-0 inert batch) | High | S |
-| 2 | Owner: prebuild toplevel in a quiet-IO window (`nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel`) | High | S |
-| 3 | Owner: `sudo ./scripts/migrate-forgejo-subvol.sh prepare` | High | S |
-| 4 | Owner: `sudo ./scripts/migrate-forgejo-subvol.sh finalize --dry-run` then real `finalize` | High | S |
-| 5 | Me: flip `services.forgejo.dedicatedSubvolume = true` on your go | High | S |
-| 6 | Owner: deploy; verify mount + forgejo healthy + mirrors syncing | High | S |
-| 7 | Verify 2 consecutive 8h btrbk receives pool-side + freshness Gatus green | High | S |
-| 8 | First restore-drill run (or `systemctl start forgejo-restore-drill`) — proves/fixes the d6 zip-layout assumption | High | S |
-| 9 | `sudo -u forgejo du -sh /var/lib/forgejo` (M17) + pool growth projection | Med | S |
-| 10 | Burn-in window (≥24h): watch subvol backup + mirror sync + no IO-storm interaction with the 8h sends | High | — |
+
+| #  | Task                                                                                                                  | Impact | Effort |
+| -- | --------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 1  | Owner: `nix run .#deploy` (ship Phase-0 inert batch)                                                                  | High   | S      |
+| 2  | Owner: prebuild toplevel in a quiet-IO window (`nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel`) | High   | S      |
+| 3  | Owner: `sudo ./scripts/migrate-forgejo-subvol.sh prepare`                                                             | High   | S      |
+| 4  | Owner: `sudo ./scripts/migrate-forgejo-subvol.sh finalize --dry-run` then real `finalize`                             | High   | S      |
+| 5  | Me: flip `services.forgejo.dedicatedSubvolume = true` on your go                                                      | High   | S      |
+| 6  | Owner: deploy; verify mount + forgejo healthy + mirrors syncing                                                       | High   | S      |
+| 7  | Verify 2 consecutive 8h btrbk receives pool-side + freshness Gatus green                                              | High   | S      |
+| 8  | First restore-drill run (or `systemctl start forgejo-restore-drill`) — proves/fixes the d6 zip-layout assumption      | High   | S      |
+| 9  | `sudo -u forgejo du -sh /var/lib/forgejo` (M17) + pool growth projection                                              | Med    | S      |
+| 10 | Burn-in window (≥24h): watch subvol backup + mirror sync + no IO-storm interaction with the 8h sends                  | High   | —      |
 
 **Session-quality debts (from d/e — do these before M05):**
-| # | Task | Impact | Effort |
-| - | ---- | ------ | ------ |
-| 11 | Fixture-test `migrate-forgejo-subvol.sh` guard branches (stubbed rsync/systemctl/btrfs) | High | M |
-| 12 | `systemd-analyze calendar '*-*-* 05,13,21:40:00'` — prove the comma-hour parse | Med | S |
-| 13 | Verify forgejo dump zip layout (forgejo source or first drill run) + fix drill discovery if wrong | High | S |
-| 14 | Sync plan doc F19 (+F05 wording, M07 overlap note, F16 dryrun-timing note) | Med | S |
-| 15 | Annotate the 2026-08-31 plan with the supersede pointer (F76) | Low | S |
-| 16 | Extract collector/drill scripts or document the shellcheck gap | Low | S |
+
+| #  | Task                                                                                              | Impact | Effort |
+| -- | ------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 11 | Fixture-test `migrate-forgejo-subvol.sh` guard branches (stubbed rsync/systemctl/btrfs)           | High   | M      |
+| 12 | `systemd-analyze calendar '*-*-* 05,13,21:40:00'` — prove the comma-hour parse                    | Med    | S      |
+| 13 | Verify forgejo dump zip layout (forgejo source or first drill run) + fix drill discovery if wrong | High   | S      |
+| 14 | Sync plan doc F19 (+F05 wording, M07 overlap note, F16 dryrun-timing note)                        | Med    | S      |
+| 15 | Annotate the 2026-08-31 plan with the supersede pointer (F76)                                     | Low    | S      |
+| 16 | Extract collector/drill scripts or document the shellcheck gap                                    | Low    | S      |
 
 **Phase 1 — Capability (after G1):**
-| # | Task | Impact | Effort |
-| - | ---- | ------ | ------ |
-| 17 | M05: `canonicalRepos` option + `forgejo-push-mirror` script (interval "8h", clobber-refuse) | High | M |
-| 18 | M05: fold as phase-3 of `forgejo-github-sync`, fixture-tested | High | M |
-| 19 | M06: `forgejo-flip-repo` — preconditions + dry-run | High | M |
-| 20 | M06: delete-mirror → full re-migrate (issues/PRs/labels/milestones/releases/wiki) → push mirror → verify | High | L |
-| 21 | M06: fixtures incl. mid-flip failure recovery | High | M |
-| 22 | M06: lossiness notes (reactions/reviews/cross-refs) → runbook | Med | S |
-| 23 | M07: per-repo dead-mirror collector (updated_at divergence, complements fleet-stall) + Gatus | High | M |
-| 24 | M08: live-forge census (native/mirror split, runner, workflows, LFS) → runbook | Med | S |
-| 25 | G2: deploy P1 batch + live push-mirror POST 201 proof | High | S |
+
+| #  | Task                                                                                                     | Impact | Effort |
+| -- | -------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 17 | M05: `canonicalRepos` option + `forgejo-push-mirror` script (interval "8h", clobber-refuse)              | High   | M      |
+| 18 | M05: fold as phase-3 of `forgejo-github-sync`, fixture-tested                                            | High   | M      |
+| 19 | M06: `forgejo-flip-repo` — preconditions + dry-run                                                       | High   | M      |
+| 20 | M06: delete-mirror → full re-migrate (issues/PRs/labels/milestones/releases/wiki) → push mirror → verify | High   | L      |
+| 21 | M06: fixtures incl. mid-flip failure recovery                                                            | High   | M      |
+| 22 | M06: lossiness notes (reactions/reviews/cross-refs) → runbook                                            | Med    | S      |
+| 23 | M07: per-repo dead-mirror collector (updated_at divergence, complements fleet-stall) + Gatus             | High   | M      |
+| 24 | M08: live-forge census (native/mirror split, runner, workflows, LFS) → runbook                           | Med    | S      |
+| 25 | G2: deploy P1 batch + live push-mirror POST 201 proof                                                    | High   | S      |
 
 **Phase 2 — Pilot:**
-| # | Task | Impact | Effort |
-| - | ---- | ------ | ------ |
-| 26 | M09: `forgejo-remote-audit.sh` + run on evo-x2 | High | S |
-| 27 | M09: insteadOf shim behind flag (HM, nixos + darwin) — enable ONLY at pilot | High | M |
-| 28 | M09: audit on Lars-MacBook-Air | Med | S |
-| 29 | M10: pilot repo native + push mirror + GitHub receive verified | High | S |
-| 30 | M10: sync_on_commit + force-push probe + nix `github:` input resolution | High | S |
-| 31 | G3: one full 6h/8h cycle burn-in green | High | — |
+
+| #  | Task                                                                        | Impact | Effort |
+| -- | --------------------------------------------------------------------------- | ------ | ------ |
+| 26 | M09: `forgejo-remote-audit.sh` + run on evo-x2                              | High   | S      |
+| 27 | M09: insteadOf shim behind flag (HM, nixos + darwin) — enable ONLY at pilot | High   | M      |
+| 28 | M09: audit on Lars-MacBook-Air                                              | Med    | S      |
+| 29 | M10: pilot repo native + push mirror + GitHub receive verified              | High   | S      |
+| 30 | M10: sync_on_commit + force-push probe + nix `github:` input resolution     | High   | S      |
+| 31 | G3: one full 6h/8h cycle burn-in green                                      | High   | —      |
 
 **Phase 3/4 — Rollout + CI (post-G3):**
-| # | Task | Impact | Effort |
-| - | ---- | ------ | ------ |
-| 32 | M11: batch definitions (private-low-value → private-core → SystemNix/cv → public) | High | S |
-| 33 | M11: per-batch executor runbook with burn-in gates | High | M |
-| 34 | M11: GitHub branch-protection seatbelt design (bypass for sync PAT) | High | M |
-| 35 | M11: apply seatbelts per flipped batch | Med | S |
-| 36 | M12: port `nix-check.yml` → `.forgejo/workflows/` (dual-run) | High | L |
-| 37 | M12: runner secrets strategy (deploy keys on host runner) | High | M |
-| 38 | M13: port remaining 3 workflows; image-updates needs Forgejo-API issue creation | Med | M |
-| 39 | M13: `DEFAULT_ACTIONS_URL` → `data.forgejo.org` + verify the 3 live workflows | Med | S |
-| 40 | M13: `LOG/ARTIFACT_RETENTION_DAYS=30`; `[migrations] ALLOWED_DOMAINS=github.com` | Med | S |
-| 41 | M14: self-hosted Renovate (`platform=forgejo`, sops PAT, native-repo allowlist) | Med | L |
-| 42 | M15: registry maxAge re-check; dump retention decision post-M17; offsite pointer into Hetzner/Borg TODO | Med | S |
+
+| #  | Task                                                                                                    | Impact | Effort |
+| -- | ------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 32 | M11: batch definitions (private-low-value → private-core → SystemNix/cv → public)                       | High   | S      |
+| 33 | M11: per-batch executor runbook with burn-in gates                                                      | High   | M      |
+| 34 | M11: GitHub branch-protection seatbelt design (bypass for sync PAT)                                     | High   | M      |
+| 35 | M11: apply seatbelts per flipped batch                                                                  | Med    | S      |
+| 36 | M12: port `nix-check.yml` → `.forgejo/workflows/` (dual-run)                                            | High   | L      |
+| 37 | M12: runner secrets strategy (deploy keys on host runner)                                               | High   | M      |
+| 38 | M13: port remaining 3 workflows; image-updates needs Forgejo-API issue creation                         | Med    | M      |
+| 39 | M13: `DEFAULT_ACTIONS_URL` → `data.forgejo.org` + verify the 3 live workflows                           | Med    | S      |
+| 40 | M13: `LOG/ARTIFACT_RETENTION_DAYS=30`; `[migrations] ALLOWED_DOMAINS=github.com`                        | Med    | S      |
+| 41 | M14: self-hosted Renovate (`platform=forgejo`, sops PAT, native-repo allowlist)                         | Med    | L      |
+| 42 | M15: registry maxAge re-check; dump retention decision post-M17; offsite pointer into Hetzner/Borg TODO | Med    | S      |
 
 **Phase 5 — End-state + hygiene:**
-| # | Task | Impact | Effort |
-| - | ---- | ------ | ------ |
-| 43 | M16: `tests/test-forgejo.nix` VM test + script fixtures | Med | L |
-| 44 | M18: owner-decision packet (7 decisions, one table) | Med | S |
-| 45 | M19: runbook + AGENTS.md + TODO_LIST harvest from the plan | Med | M |
-| 46 | M20: Codeberg account + file the 3 verified mirror issues (Tier-1 post-flip) | Med | S |
-| 47 | M21: repo-scoped token re-issues; forgejo doctor dry-run; starred-reconcile design; commit-graph.lock cleanup | Low | M |
-| 48 | M22: both-ways R&D — webhook inventory, identity mapping, loop suppression, build/no-build verdict (post-rollout) | Med | L |
-| 49 | M23: v17.0 release-notes read (mirror-redirect impact on 385 mirrors, 2026-10-15) + LTS-jump memo | Med | S |
-| 50 | Re-check: does `git push` from THIS session's commits trip anything in the pending history-purge runbook? (verified clean — gitleaks green ×3 — but the push-time re-filter checklist should be re-read before ANY purge flip; parked as a reminder, not a defect) | Low | S |
+
+| #  | Task                                                                                                                                                                                                                                                               | Impact | Effort |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | ------ |
+| 43 | M16: `tests/test-forgejo.nix` VM test + script fixtures                                                                                                                                                                                                            | Med    | L      |
+| 44 | M18: owner-decision packet (7 decisions, one table)                                                                                                                                                                                                                | Med    | S      |
+| 45 | M19: runbook + AGENTS.md + TODO_LIST harvest from the plan                                                                                                                                                                                                         | Med    | M      |
+| 46 | M20: Codeberg account + file the 3 verified mirror issues (Tier-1 post-flip)                                                                                                                                                                                       | Med    | S      |
+| 47 | M21: repo-scoped token re-issues; forgejo doctor dry-run; starred-reconcile design; commit-graph.lock cleanup                                                                                                                                                      | Low    | M      |
+| 48 | M22: both-ways R&D — webhook inventory, identity mapping, loop suppression, build/no-build verdict (post-rollout)                                                                                                                                                  | Med    | L      |
+| 49 | M23: v17.0 release-notes read (mirror-redirect impact on 385 mirrors, 2026-10-15) + LTS-jump memo                                                                                                                                                                  | Med    | S      |
+| 50 | Re-check: does `git push` from THIS session's commits trip anything in the pending history-purge runbook? (verified clean — gitleaks green ×3 — but the push-time re-filter checklist should be re-read before ANY purge flip; parked as a reminder, not a defect) | Low    | S      |
 
 ## g) Questions I can NOT figure out myself
 

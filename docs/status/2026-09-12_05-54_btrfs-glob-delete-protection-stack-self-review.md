@@ -26,7 +26,7 @@
 7. **Verification stack for everything above** — `nix flake check --no-build` PASS; evo-x2 toplevel EVALS and **BUILDS** (`--keep-going` clean — this also build-proved the collector's shellcheck gate and the fish/gatus renders, which the VM test alone did NOT cover); `nix fmt -- --ci`: 0 changed.
 8. **AGENTS.md** — added the incident + protection-stack + incremental-chain doctrine block (incl. "never `incremental strict`"); FIXED two stale claims found last session: "`/nix` lives INSIDE `@`" (false since the Sep-5/7 Samsung flip) and "retention 3d+1w" (actual: `min 2d` floor + `3d 1w`).
 9. **TODO_LIST** — Phase 1 row updated with the 2026-09-12 ENOSPC cliff + incident + still-pending user-side ops.
-10. **Reserve check phantom-suspicion RESOLVED** — "BTRFS Emergency Reserve" is live and evaluating `success=false` every 10 min (633 journal hits since Sep 8). The check works; the fact that 5 days of red went unnoticed is an alert-*delivery*/fatigue question, not a phantom check.
+10. **Reserve check phantom-suspicion RESOLVED** — "BTRFS Emergency Reserve" is live and evaluating `success=false` every 10 min (633 journal hits since Sep 8). The check works; the fact that 5 days of red went unnoticed is an alert-_delivery_/fatigue question, not a phantom check.
 
 ## b) PARTIALLY DONE
 
@@ -64,6 +64,7 @@
 ## f) NEXT (session-scoped, impact-sorted — not a repo-wide harvest)
 
 **P0 — user actions / tonight:**
+
 1. `nix run .#deploy` (activates the whole stack; rescue tier converges at activation)
 2. Post-deploy verify: `systemctl status btrfs-rescue-snapshot` (active, stamp=1), `ls /mnt/btrfs-root/.rescue/` (≥1), metrics present; open a NEW fish terminal and dry-run the guard
 3. EXPECT exactly one red window: "BTRFS Snapshot Canary" until 23:00 (true state, self-heals)
@@ -100,4 +101,4 @@
 
 **Honesty check:** every "PASSING/DONE" claim above is backed by a command run this session (VM test log inspected line-by-line; toplevel build completed; fmt `0 changed`; guard cases executed). The one claim I initially made WITHOUT full evidence (collector "done" on eval-only) is documented in d.5 and closed. Nothing else is asserted beyond what was observed.
 
-*Session closed — WAITING FOR INSTRUCTIONS.*
+_Session closed — WAITING FOR INSTRUCTIONS._

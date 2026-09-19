@@ -184,5 +184,5 @@ Sourcegraph, and raw.githubusercontent.
 
 ---
 
-*Reported from session run only; no external research performed for this
-report. Waiting for instructions.*
+_Reported from session run only; no external research performed for this
+report. Waiting for instructions._

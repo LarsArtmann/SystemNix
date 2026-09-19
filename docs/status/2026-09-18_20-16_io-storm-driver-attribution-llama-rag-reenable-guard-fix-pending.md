@@ -59,6 +59,7 @@
 ## f) Things to get done next (ranked, not all P0)
 
 **P0 — unblock backups + storm closure:**
+
 1. Owner decision on llama-rag (question g)1): re-disable until the ROCm/kernel root-cause lands, or keep the parallel session's experiment running. Highest-leverage storm control; last night proved the cost of inaction (2nd missed backup).
 2. Guard fix 1/4: staged catch-up re-arm — resume `btrbk-*` churn units on a sustained quiet streak (e.g. io avg60 < 25% for 3 consecutive runs) while balances/scrubs keep the strict <40% full-drain gate; tonight's 23:00 timer is the first live test candidate.
 3. Guard fix 2/4: `memory_emergency_guard_backup_starved` metric (churn window open > 6 h with btrbk units stopped) + Gatus check + sev1 notify consumer — makes the silent +24 h backup slip class page.
@@ -107,4 +108,4 @@
 
 ---
 
-*Report format: Markdown at the user's explicit instruction (overrides the status-report skill's HTML default — flagged). Not committed: the auto-commit daemon owns commits in this repo. WAITING FOR INSTRUCTIONS.*
+_Report format: Markdown at the user's explicit instruction (overrides the status-report skill's HTML default — flagged). Not committed: the auto-commit daemon owns commits in this repo. WAITING FOR INSTRUCTIONS._

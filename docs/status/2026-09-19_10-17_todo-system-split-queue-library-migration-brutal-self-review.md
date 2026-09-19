@@ -53,6 +53,7 @@
 ## f) NEXT — up to 50 things (priority order)
 
 **Repairs for this session's defects:**
+
 1. Fix ROADMAP: delete my duplicate AppArmor bullet (or merge with line 45) and correct the rejection context; delete duplicate "Disabled service triage" (line 68) or merge with line 56.
 2. Fix `systems/rpi3-dns.nix` pointer: mark the old reference stale (no item exists) instead of pointing at a fabricated one.
 3. Write + wire `scripts/check-todo-system.sh` (no `[x]` rows anywhere in queue/libraries; tags ∈ vocabulary; every queue bold-title matches exactly one library entry; no `## Added YYYY-MM-DD` sections in TODO_LIST.md) into pre-commit + CI.

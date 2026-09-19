@@ -6,20 +6,20 @@ _Sequence: continuation of `2026-09-19_09-48_samsung-boot-mirror-queue-recovery-
 
 ## (a) Snapshot
 
-| What | Where | Status |
-| --- | --- | --- |
-| Boot-mirror code | committed `260f86ef` (09-18), byte-intact vs HEAD (re-verified 10:05: boot-mirror.nix/activate script/pre-reboot-check untouched; flake/config/deploy.sh gained only parallel-session lines, our markers grep-verified) | DONE |
-| Deploy | queue v3b (shell 065) FIRED 10:37:01, in pre-deploy validation §1 as of 10:44 | IN FLIGHT |
-| llama-vlm blocker #1 (eval) | `types.path`→`types.str` + quoted literals — fixed 09:26 (`f0cfff20`), eval green | DONE (prior report) |
-| llama-vlm blocker #2 (§12) | ExecStart was a LIST of argv tokens = multiple systemd ExecStart LINES (unit would fail at load). Fixed 10:29: `lib.concatStringsSep " "` + comment. Eval-verified single line | DONE this session |
-| Why nothing shipped all morning | BOTH parallel deploys (09:40 PID 1721988, ~10:03 PID 2008816) died at pre-deploy §12 on llama-vlm's missing `/data` model files — released the lock in ~10 min with NO activation. Profile stuck at system-785 all morning | ROOT-CAUSED |
-| Observer | shell 04B finished 09:50 ("deploy lock released. profile=system current=" — its readlink parse was garbage, but the DIRECT check confirmed profile=785, current=system-785's store path) | DONE |
-| AGENTS.md lessons | ops-artifacts-never-in-/tmp + deploy rc=12/13 surface bullet; `lib.types.path`-on-multi-GB-files bullet | WRITTEN 10:15 |
-| 09-18 report staleness | Deploy row + next-step 16 referenced the tmp-cleaner-eaten `/tmp` script — both annotated SUPERSEDED/DEAD with pointers | WRITTEN 10:15 |
-| CHANGELOG entry | pending deploy outcome (will carry real generation number) | PENDING |
-| Plan-doc checklist 6–9 | 6 deploy / 7 activate / 8 reboot / 9 docs — ticked as each completes | PENDING |
-| Activation (`boot-mirror-activate`) | after deploy verifies + pre-reboot-check §11 WARN-grade green | PENDING (autonomous, reversible NVRAM flip) |
-| Reboot | the ONLY step I will not take autonomously — kills the user's desktop session | USER-GATED |
+| What                                | Where                                                                                                                                                                                                                      | Status                                      |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Boot-mirror code                    | committed `260f86ef` (09-18), byte-intact vs HEAD (re-verified 10:05: boot-mirror.nix/activate script/pre-reboot-check untouched; flake/config/deploy.sh gained only parallel-session lines, our markers grep-verified)    | DONE                                        |
+| Deploy                              | queue v3b (shell 065) FIRED 10:37:01, in pre-deploy validation §1 as of 10:44                                                                                                                                              | IN FLIGHT                                   |
+| llama-vlm blocker #1 (eval)         | `types.path`→`types.str` + quoted literals — fixed 09:26 (`f0cfff20`), eval green                                                                                                                                          | DONE (prior report)                         |
+| llama-vlm blocker #2 (§12)          | ExecStart was a LIST of argv tokens = multiple systemd ExecStart LINES (unit would fail at load). Fixed 10:29: `lib.concatStringsSep " "` + comment. Eval-verified single line                                             | DONE this session                           |
+| Why nothing shipped all morning     | BOTH parallel deploys (09:40 PID 1721988, ~10:03 PID 2008816) died at pre-deploy §12 on llama-vlm's missing `/data` model files — released the lock in ~10 min with NO activation. Profile stuck at system-785 all morning | ROOT-CAUSED                                 |
+| Observer                            | shell 04B finished 09:50 ("deploy lock released. profile=system current=" — its readlink parse was garbage, but the DIRECT check confirmed profile=785, current=system-785's store path)                                   | DONE                                        |
+| AGENTS.md lessons                   | ops-artifacts-never-in-/tmp + deploy rc=12/13 surface bullet; `lib.types.path`-on-multi-GB-files bullet                                                                                                                    | WRITTEN 10:15                               |
+| 09-18 report staleness              | Deploy row + next-step 16 referenced the tmp-cleaner-eaten `/tmp` script — both annotated SUPERSEDED/DEAD with pointers                                                                                                    | WRITTEN 10:15                               |
+| CHANGELOG entry                     | pending deploy outcome (will carry real generation number)                                                                                                                                                                 | PENDING                                     |
+| Plan-doc checklist 6–9              | 6 deploy / 7 activate / 8 reboot / 9 docs — ticked as each completes                                                                                                                                                       | PENDING                                     |
+| Activation (`boot-mirror-activate`) | after deploy verifies + pre-reboot-check §11 WARN-grade green                                                                                                                                                              | PENDING (autonomous, reversible NVRAM flip) |
+| Reboot                              | the ONLY step I will not take autonomously — kills the user's desktop session                                                                                                                                              | USER-GATED                                  |
 
 ## (b) FULLY and COMPLETELY DONE (verified)
 

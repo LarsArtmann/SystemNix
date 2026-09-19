@@ -38,6 +38,7 @@
 ## d) TOTALLY FUCKED UP
 
 Nothing. Honest blemishes, all self-caught within one step:
+
 - First `extendModules` eval failed with a priority collision (`enable` set plainly `false` in configuration.nix vs plainly `true` in my throwaway module) — fixed with `mkForce` on retry; negative-control value: it proved the eval actually forces the option rather than silently passing.
 - Initially read "llama servers not running" as breakage; corrected to deliberate disable after checking `multi-user.target.wants` + configuration.nix.
 - The `fetch` tool call without `format` errored once (tool-contract miss, retried correctly).
@@ -53,6 +54,7 @@ Nothing. Honest blemishes, all self-caught within one step:
 ## f) NEXT THINGS (ordered, most impact first)
 
 **Immediate (today/tomorrow):**
+
 1. Retry SSO login at `https://rss.home.lan` — proves the fix end-to-end.
 2. InboxClean: flip Google OAuth consent screen to "In production" FIRST, then re-consent `main` (runbook in AGENTS.md InboxClean section); verify `/health` shows both accounts `connected`.
 3. When PSI drains: `nix run .#deploy` → lands the fetch hardening (+ whatever else the daemon batched).
@@ -95,4 +97,5 @@ Nothing. Honest blemishes, all self-caught within one step:
 3. **Are the 5+ concurrent `crush -y` sessions intentional (tq-pool workload you want running) or leftovers to close before the queued deploy?** They are the IO-storm driver; the deploy waits on them either way, but if they're unintended, closing them drains PSI faster.
 
 ---
-*Session verification summary: link row = DB truth via provisioner journal (every boot since 2026-09-17); OAUTH2 env = deployed unit file; healthcheck = loopback fetch `OK`; hardening = committed + eval-verified + formatter-clean; anchoring = readlink equality; worktrees = pruned. No deploy executed (storm). No secrets written anywhere; the sub UUID quoted is a Pocket ID internal identifier, already public in AGENTS.md.*
+
+_Session verification summary: link row = DB truth via provisioner journal (every boot since 2026-09-17); OAUTH2 env = deployed unit file; healthcheck = loopback fetch `OK`; hardening = committed + eval-verified + formatter-clean; anchoring = readlink equality; worktrees = pruned. No deploy executed (storm). No secrets written anywhere; the sub UUID quoted is a Pocket ID internal identifier, already public in AGENTS.md._

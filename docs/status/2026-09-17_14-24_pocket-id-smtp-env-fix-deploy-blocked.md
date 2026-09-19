@@ -17,11 +17,11 @@ Pocket ID 2.x moved the application configuration into a **DB-backed singleton a
 
 ## The Fix
 
-| File | Change |
-| --- | --- |
-| `modules/nixos/services/pocket-id.nix` | New `smtp.tls` option (enum `none\|starttls\|tls`, default `tls`); settings gained `SMTP_TLS` + `UI_CONFIG_DISABLED = true` with the why-comment |
-| `platforms/nixos/system/configuration.nix:388` | `smtp.from = "noreply@larsartmann.cloud"` |
-| `AGENTS.md` | Mail Relay section: full root-cause + fix + go-live steps; reconciled the concurrent session's CIMD paragraph (its "do not flip UI_CONFIG_DISABLED" parenthetical is now stale — rewritten; CIMD stays blocked because the env allowlist stays unset) |
+| File                                           | Change                                                                                                                                                                                                                                                |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `modules/nixos/services/pocket-id.nix`         | New `smtp.tls` option (enum `none\|starttls\|tls`, default `tls`); settings gained `SMTP_TLS` + `UI_CONFIG_DISABLED = true` with the why-comment                                                                                                      |
+| `platforms/nixos/system/configuration.nix:388` | `smtp.from = "noreply@larsartmann.cloud"`                                                                                                                                                                                                             |
+| `AGENTS.md`                                    | Mail Relay section: full root-cause + fix + go-live steps; reconciled the concurrent session's CIMD paragraph (its "do not flip UI_CONFIG_DISABLED" parenthetical is now stale — rewritten; CIMD stays blocked because the env allowlist stays unset) |
 
 Secret posture improved: `SMTP_PASSWORD` is exported at start by the nixpkgs wrapper (`systemd-creds cat`), so the Resend key stays in sops + RAM and **never enters the sqlite DB** (or `pocket-id-backup` dumps / pool receives).
 
@@ -45,9 +45,9 @@ Secret posture improved: `SMTP_PASSWORD` is exported at start by the nixpkgs wra
    - Run 1: pre-deploy check "1 failed" (transient; re-run green) — failing check name NOT captured (see d-2).
    - Run 2: memory pressure gate (IO PSI some avg10 46.7%).
    - Run 3 (forced): toplevel build failed on PapDashboard stale vendorHash.
-   What's missing: the actual `nh os switch`. Blocker: external (concurrent session's in-flight upstream wave). Effort to finish once unblocked: S (one deploy + post-deploy checks).
+     What's missing: the actual `nh os switch`. Blocker: external (concurrent session's in-flight upstream wave). Effort to finish once unblocked: S (one deploy + post-deploy checks).
 2. **End-to-end e-mail verification** — config path proven down to the rendered unit env file; delivery path unproven (needs deploy + a live SMTP attempt). Resend domain status for `larsartmann.cloud` unverified (owner-side dashboard step; per AGENTS.md it was still pending as of 2026-09-06+).
-3. **Documentation of the new live posture** — AGENTS.md updated, but it describes the *intended* post-deploy state; live confirmation (journal clean, UI read-only, CIMD well-known still `false`) pending deploy.
+3. **Documentation of the new live posture** — AGENTS.md updated, but it describes the _intended_ post-deploy state; live confirmation (journal clean, UI read-only, CIMD well-known still `false`) pending deploy.
 4. **`docs/services/mail-relay.md` sync** — AGENTS.md was updated but the service runbook may still carry the old "TLS mode lives in its DB, not env" claim; not checked this session.
 
 ## c) NOT STARTED
@@ -80,55 +80,55 @@ Secret posture improved: `SMTP_PASSWORD` is exported at start by the nixpkgs wra
 
 ## f) NEXT TASKS (up to 50, ranked by impact; harvest feed)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Land PapDashboard upstream `vendorHash.nix` fix at the bumped rev (`got:` `sha256-BRdf2HArSsq9E5EocQFQTkL/XupkW8R/+ViZpFz9Ztc=`) — owning session | Critical | S | Bug |
-| 2 | Re-run `nix run .#deploy` once the tree is quiescent; verify activation + profile bump (not just `/run/current-system`) | Critical | S | Feature |
-| 3 | Post-deploy: grep pocket-id journal for `SMTP host is not configured` — must be gone; then admin UI → Send test email | Critical | S | Verification |
-| 4 | Post-deploy: verify `client_id_metadata_document_supported` still `false` (CIMD stays blocked under UI_CONFIG_DISABLED) | High | S | Verification |
-| 5 | Post-deploy: sanity one Layer-1 OIDC login (forgejo/miniflux/paperless) — confirm UI_CONFIG_DISABLED didn't disturb flows | High | S | Verification |
-| 6 | Verify `larsartmann.cloud` SPF/DKIM in Resend dashboard (also unblocks the Mail Relay go-live test send) | High | S | User step |
-| 7 | Confirm sops `pocket_id_smtp_password` is a real (non-PLACEHOLDER) key with sending rights — sudo-only read + optional Resend API probe | High | S | Verification |
-| 8 | Decide permanent posture: `UI_CONFIG_DISABLED=true` (read-only admin UI) vs provisioner-API-seeded SMTP config (UI stays editable) | High | S | Decision |
-| 9 | Add post-deploy guard: assert deployed pocket-id env carries `UI_CONFIG_DISABLED=true` + `SMTP_TLS=tls`; alert on regression to DB-mode | High | S | Feature |
-| 10 | Sync `docs/services/mail-relay.md` with the new env-driven reality (stale "TLS lives in DB" claim) | Medium | S | Documentation |
-| 11 | Add gotchas-archive entry: "Pocket ID 2.x app-config actor ignores SMTP_* env unless UI_CONFIG_DISABLED" (full narrative) | Medium | S | Documentation |
-| 12 | Fix `docs/reviews/2026-09-16_20-52_brutal-self-review.html` closing `div` (line 1122) — unblocks `nix fmt -- --ci` tree-wide | Medium | S | Bug |
-| 13 | Investigate `inboxclean-sync.service` FAILED unit on evo-x2 (pre-existing; likely Gmail-side) | Medium | S | Bug |
-| 14 | Investigate go-modules FODs failing as "hash mismatch" under parallel build storms (partial proxy fetches misreporting as hash mismatch); consider retry/verification knobs | Medium | M | Bug |
-| 15 | Add pre-deploy-check §-guard: for every flake.lock input change in the deploy delta, probe `#goModules` (or `#default`) before allowing the deploy — catches stale vendorHash at gate time | High | M | Quality |
-| 16 | File nixpkgs issue/PR: pocket-id module's `smtp.*` settings are silently inert without `UI_CONFIG_DISABLED=true` (verify-before-filing first) | Medium | M | Quality |
-| 17 | Create `tests/test-pocket-id.nix` VM test: boot with UI_CONFIG_DISABLED, assert config resolution + unit env wiring | Medium | M | Quality |
-| 18 | Make pre-deploy summary name the failing check (evidence-keeping; fixes the "1 failed" ambiguity hit this session) | Medium | S | Quality |
-| 19 | deploy.sh: on idle-disk PSI block, auto-print top D-state processes + diskstats delta (was manual this session) | Low | S | Quality |
-| 20 | Audit why pre-deploy pass/fail counts drift between runs (63/20/1 vs 62/22/0) — eliminate nondeterministic checks | Medium | M | Quality |
-| 21 | Check the `6d4cc764` lock bump for orphan `<input>_2` nodes (the `--update-input` orphan class) | Low | S | Cleanup |
-| 22 | After storm drains: re-baseline IO PSI + confirm no new D-state corpses (node_exporter wedged transiently mid-session) | Low | S | Verification |
-| 23 | Investigate node_exporter D-state wedge (which syscall/path) — it is the detection layer; a long wedge = fleet-blind metrics | Medium | M | Bug |
-| 24 | Verify which file `nix fmt --ci` WROTE during "check" mode this session; clarify treefmt check-vs-write semantics; document | Low | S | Cleanup |
-| 25 | Consider excluding generated `docs/status/*.html` reports from treefmt/prettier (recurring malformed-HTML CI breakers) | Low | S | Cleanup |
-| 26 | Document the DEPLOY_FORCE_PRESSURE justification protocol (what evidence suffices) in AGENTS.md deploy section | Low | S | Documentation |
-| 27 | Post-deploy: confirm pocket-id francis SQLITE_BUSY stays quiet across restarts (clearStaleWal still effective) | Low | S | Verification |
-| 28 | Scripted test-email probe via static API key (sudo-gated) for post-deploy automation; document in a pocket-id runbook | Medium | M | Feature |
-| 29 | Create `docs/services/pocket-id.md` runbook (first one): email config map, UI-disabled consequences, break-glass, CIMD gate | Medium | M | Documentation |
-| 30 | Decide which Pocket ID e-mail notifications to enable now that e-mail can work (login notification, verification, one-time access — all currently false) | Medium | S | Decision |
-| 31 | After delivery works: confirm Resend logs show aligned SPF/DKIM for `noreply@larsartmann.cloud` | Low | S | Verification |
-| 32 | Harvest this report's (f) into TODO_LIST.md / ROADMAP.md | Medium | S | Documentation |
-| 33 | Add flake.lock-bump checklist to CONTRIBUTING: probe FOD at target rev before lock move (generalize the CV protocol) | Medium | S | Documentation |
-| 34 | Check whether AGENTS.md mail-relay pocket-id bullet needs a live-verified annotation after deploy (it's written as "will") | Low | S | Documentation |
-| 35 | Consider GOPROXY retry behavior for FODs (GOPROXY fallback list) if storm-flakes recur — measure before changing | Low | M | Quality |
-| 36 | Verify no wedged stc lock exists after today's aborted nh run (`/run/nixos/switch-to-configuration.lock`) — cheap hygiene | Low | S | Cleanup |
-| 37 | Add pocket-id to post-deploy-check smoke (login page body check exists for some services; pocket-id has none beyond Gatus) | Low | S | Quality |
-| 38 | Review whether other nixpkgs modules consuming `settings` env vars have the same silent-ignore trap (pocket-id pattern audit) | Low | M | Quality |
-| 39 | Consider a `docs-health` VERIFY pass over AGENTS.md pocket-id claims post-deploy (UI read-only behavior, CIMD, SLO note) | Low | S | Documentation |
-| 40 | Rotate/verify Resend key if the test email 535s after deploy (auth failure = key dead; 550 = domain) — decision tree into runbook | Low | S | Documentation |
+| #  | Task                                                                                                                                                                                       | Impact   | Effort | Category      |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------ | ------------- |
+| 1  | Land PapDashboard upstream `vendorHash.nix` fix at the bumped rev (`got:` `sha256-BRdf2HArSsq9E5EocQFQTkL/XupkW8R/+ViZpFz9Ztc=`) — owning session                                          | Critical | S      | Bug           |
+| 2  | Re-run `nix run .#deploy` once the tree is quiescent; verify activation + profile bump (not just `/run/current-system`)                                                                    | Critical | S      | Feature       |
+| 3  | Post-deploy: grep pocket-id journal for `SMTP host is not configured` — must be gone; then admin UI → Send test email                                                                      | Critical | S      | Verification  |
+| 4  | Post-deploy: verify `client_id_metadata_document_supported` still `false` (CIMD stays blocked under UI_CONFIG_DISABLED)                                                                    | High     | S      | Verification  |
+| 5  | Post-deploy: sanity one Layer-1 OIDC login (forgejo/miniflux/paperless) — confirm UI_CONFIG_DISABLED didn't disturb flows                                                                  | High     | S      | Verification  |
+| 6  | Verify `larsartmann.cloud` SPF/DKIM in Resend dashboard (also unblocks the Mail Relay go-live test send)                                                                                   | High     | S      | User step     |
+| 7  | Confirm sops `pocket_id_smtp_password` is a real (non-PLACEHOLDER) key with sending rights — sudo-only read + optional Resend API probe                                                    | High     | S      | Verification  |
+| 8  | Decide permanent posture: `UI_CONFIG_DISABLED=true` (read-only admin UI) vs provisioner-API-seeded SMTP config (UI stays editable)                                                         | High     | S      | Decision      |
+| 9  | Add post-deploy guard: assert deployed pocket-id env carries `UI_CONFIG_DISABLED=true` + `SMTP_TLS=tls`; alert on regression to DB-mode                                                    | High     | S      | Feature       |
+| 10 | Sync `docs/services/mail-relay.md` with the new env-driven reality (stale "TLS lives in DB" claim)                                                                                         | Medium   | S      | Documentation |
+| 11 | Add gotchas-archive entry: "Pocket ID 2.x app-config actor ignores SMTP_* env unless UI_CONFIG_DISABLED" (full narrative)                                                                  | Medium   | S      | Documentation |
+| 12 | Fix `docs/reviews/2026-09-16_20-52_brutal-self-review.html` closing `div` (line 1122) — unblocks `nix fmt -- --ci` tree-wide                                                               | Medium   | S      | Bug           |
+| 13 | Investigate `inboxclean-sync.service` FAILED unit on evo-x2 (pre-existing; likely Gmail-side)                                                                                              | Medium   | S      | Bug           |
+| 14 | Investigate go-modules FODs failing as "hash mismatch" under parallel build storms (partial proxy fetches misreporting as hash mismatch); consider retry/verification knobs                | Medium   | M      | Bug           |
+| 15 | Add pre-deploy-check §-guard: for every flake.lock input change in the deploy delta, probe `#goModules` (or `#default`) before allowing the deploy — catches stale vendorHash at gate time | High     | M      | Quality       |
+| 16 | File nixpkgs issue/PR: pocket-id module's `smtp.*` settings are silently inert without `UI_CONFIG_DISABLED=true` (verify-before-filing first)                                              | Medium   | M      | Quality       |
+| 17 | Create `tests/test-pocket-id.nix` VM test: boot with UI_CONFIG_DISABLED, assert config resolution + unit env wiring                                                                        | Medium   | M      | Quality       |
+| 18 | Make pre-deploy summary name the failing check (evidence-keeping; fixes the "1 failed" ambiguity hit this session)                                                                         | Medium   | S      | Quality       |
+| 19 | deploy.sh: on idle-disk PSI block, auto-print top D-state processes + diskstats delta (was manual this session)                                                                            | Low      | S      | Quality       |
+| 20 | Audit why pre-deploy pass/fail counts drift between runs (63/20/1 vs 62/22/0) — eliminate nondeterministic checks                                                                          | Medium   | M      | Quality       |
+| 21 | Check the `6d4cc764` lock bump for orphan `<input>_2` nodes (the `--update-input` orphan class)                                                                                            | Low      | S      | Cleanup       |
+| 22 | After storm drains: re-baseline IO PSI + confirm no new D-state corpses (node_exporter wedged transiently mid-session)                                                                     | Low      | S      | Verification  |
+| 23 | Investigate node_exporter D-state wedge (which syscall/path) — it is the detection layer; a long wedge = fleet-blind metrics                                                               | Medium   | M      | Bug           |
+| 24 | Verify which file `nix fmt --ci` WROTE during "check" mode this session; clarify treefmt check-vs-write semantics; document                                                                | Low      | S      | Cleanup       |
+| 25 | Consider excluding generated `docs/status/*.html` reports from treefmt/prettier (recurring malformed-HTML CI breakers)                                                                     | Low      | S      | Cleanup       |
+| 26 | Document the DEPLOY_FORCE_PRESSURE justification protocol (what evidence suffices) in AGENTS.md deploy section                                                                             | Low      | S      | Documentation |
+| 27 | Post-deploy: confirm pocket-id francis SQLITE_BUSY stays quiet across restarts (clearStaleWal still effective)                                                                             | Low      | S      | Verification  |
+| 28 | Scripted test-email probe via static API key (sudo-gated) for post-deploy automation; document in a pocket-id runbook                                                                      | Medium   | M      | Feature       |
+| 29 | Create `docs/services/pocket-id.md` runbook (first one): email config map, UI-disabled consequences, break-glass, CIMD gate                                                                | Medium   | M      | Documentation |
+| 30 | Decide which Pocket ID e-mail notifications to enable now that e-mail can work (login notification, verification, one-time access — all currently false)                                   | Medium   | S      | Decision      |
+| 31 | After delivery works: confirm Resend logs show aligned SPF/DKIM for `noreply@larsartmann.cloud`                                                                                            | Low      | S      | Verification  |
+| 32 | Harvest this report's (f) into TODO_LIST.md / ROADMAP.md                                                                                                                                   | Medium   | S      | Documentation |
+| 33 | Add flake.lock-bump checklist to CONTRIBUTING: probe FOD at target rev before lock move (generalize the CV protocol)                                                                       | Medium   | S      | Documentation |
+| 34 | Check whether AGENTS.md mail-relay pocket-id bullet needs a live-verified annotation after deploy (it's written as "will")                                                                 | Low      | S      | Documentation |
+| 35 | Consider GOPROXY retry behavior for FODs (GOPROXY fallback list) if storm-flakes recur — measure before changing                                                                           | Low      | M      | Quality       |
+| 36 | Verify no wedged stc lock exists after today's aborted nh run (`/run/nixos/switch-to-configuration.lock`) — cheap hygiene                                                                  | Low      | S      | Cleanup       |
+| 37 | Add pocket-id to post-deploy-check smoke (login page body check exists for some services; pocket-id has none beyond Gatus)                                                                 | Low      | S      | Quality       |
+| 38 | Review whether other nixpkgs modules consuming `settings` env vars have the same silent-ignore trap (pocket-id pattern audit)                                                              | Low      | M      | Quality       |
+| 39 | Consider a `docs-health` VERIFY pass over AGENTS.md pocket-id claims post-deploy (UI read-only behavior, CIMD, SLO note)                                                                   | Low      | S      | Documentation |
+| 40 | Rotate/verify Resend key if the test email 535s after deploy (auth failure = key dead; 550 = domain) — decision tree into runbook                                                          | Low      | S      | Documentation |
 
 ## g) QUESTIONS (3, not answerable from here)
 
-1. **Is the sops value `pocket_id_smtp_password` a REAL, current Resend API key with sending permission for `larsartmann.cloud`?** I cannot read sops from this session (no sudo), and AGENTS.md history proves only that *a* value was pasted on 2026-09-06. If it is dead/placeholder, the post-deploy test email fails with 535 and we rotate before anything else.
+1. **Is the sops value `pocket_id_smtp_password` a REAL, current Resend API key with sending permission for `larsartmann.cloud`?** I cannot read sops from this session (no sudo), and AGENTS.md history proves only that _a_ value was pasted on 2026-09-06. If it is dead/placeholder, the post-deploy test email fails with 535 and we rotate before anything else.
 2. **Do you want me to intervene in the PapDashboard upstream repo (one-line `vendorHash.nix` fix + push), or wait for the concurrent session to converge on its own?** Waiting is the safe default under the concurrent-session discipline, but it blocks ALL deploys (including the parallel session's own), and I cannot see their ETA or plan.
 3. **Is `UI_CONFIG_DISABLED=true` the permanent posture you want** (Application Configuration UI permanently read-only, everything env-owned, SMTP key never in DB — my recommendation), or do you want the UI editable (I would rework to a provisioner-API approach that seeds the SMTP keys into the DB per deploy, accepting the key lands in sqlite + its backups)?
 
 ---
 
-*Format override note: skill default is a styled HTML dashboard; the user explicitly requested `.md` for this report, so Markdown was used. Commit skipped per harness rule (auto-commit daemon will pick this file up).*
+_Format override note: skill default is a styled HTML dashboard; the user explicitly requested `.md` for this report, so Markdown was used. Commit skipped per harness rule (auto-commit daemon will pick this file up)._

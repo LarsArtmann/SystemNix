@@ -191,32 +191,32 @@ Lesson: prove the verification tool fails before trusting its green.
 
 (21-50 are post-migration hardening candidates:)
 21. Port jdiff into scripts/ with fixture tests (21), 22. extend jdiff for
-    homepage drv-json, 23. eval-time duplicate-oidc-clientId assertion,
-    24. eval-time duplicate gatus endpoint-name assertion, 25. registry
-    `checks` optional raw passthrough for dns-type probes, 26. dns-local
-    entries for voice/whisper OR registry custom-vHost seam, 27. custom
-    extraConfig seam for registry vHosts (unblocks monitor/seo/timers/paperless
-    moves), 28. migrate paperless /admin vHost behind the seam once it
-    exists, 29. migrate monitor vHost behind sso-conditional seam, 30. migrate
-    seo GSC exemption, 31. migrate timers file_server seam, 32. move
-    "Monitor365 Server Crash Loop"/"Buffer Pressure" checks to monitor365
-    entries (fine-grained re-homing), 33. move FastFlowLM/Hermes/PMA
-    unit-state checks to their entries, 34. DNS-check entry shape
-    (dns attrset) for future resolver checks, 35. crush-daily/overview/dozzle
-    unconditional gatus checks move decision, 36. OpenSEO unconditional
-    block decision, 37. gatus core list split into named per-concern lets,
-    38. system-health entry: split per-collector groups, 39. otel fan-out
-    audit vs migrated entries (none used otel — document), 40. signoz-coverage
-    registry parity for moved services, 41. rpi3-dns eval (registry on
-    non-evo hosts), 42. darwin eval guard, 43. VM test template update
-    (integration co-import convention) in docs/CONTRIBUTING.md, 44. negative
-    test: duplicate registry entry name collision, 45. negative test: registry
-    entry without dns-local subdomain, 46. add registry section to
-    docs/CONTRIBUTING.md module template, 47. deploy runbook note: provisioner
-    iterates oidcClients ++ extraOidcClients (order change harmless),
-    48. check pre-deploy §10 metric loans for moved gatus names (none
-    renamed), 49. document backup label rename if kept, 50. post-deploy
-    one-day gatus/homepage/pocket-id review + close P2.
+homepage drv-json, 23. eval-time duplicate-oidc-clientId assertion,
+24. eval-time duplicate gatus endpoint-name assertion, 25. registry
+`checks` optional raw passthrough for dns-type probes, 26. dns-local
+entries for voice/whisper OR registry custom-vHost seam, 27. custom
+extraConfig seam for registry vHosts (unblocks monitor/seo/timers/paperless
+moves), 28. migrate paperless /admin vHost behind the seam once it
+exists, 29. migrate monitor vHost behind sso-conditional seam, 30. migrate
+seo GSC exemption, 31. migrate timers file_server seam, 32. move
+"Monitor365 Server Crash Loop"/"Buffer Pressure" checks to monitor365
+entries (fine-grained re-homing), 33. move FastFlowLM/Hermes/PMA
+unit-state checks to their entries, 34. DNS-check entry shape
+(dns attrset) for future resolver checks, 35. crush-daily/overview/dozzle
+unconditional gatus checks move decision, 36. OpenSEO unconditional
+block decision, 37. gatus core list split into named per-concern lets,
+38. system-health entry: split per-collector groups, 39. otel fan-out
+audit vs migrated entries (none used otel — document), 40. signoz-coverage
+registry parity for moved services, 41. rpi3-dns eval (registry on
+non-evo hosts), 42. darwin eval guard, 43. VM test template update
+(integration co-import convention) in docs/CONTRIBUTING.md, 44. negative
+test: duplicate registry entry name collision, 45. negative test: registry
+entry without dns-local subdomain, 46. add registry section to
+docs/CONTRIBUTING.md module template, 47. deploy runbook note: provisioner
+iterates oidcClients ++ extraOidcClients (order change harmless),
+48. check pre-deploy §10 metric loans for moved gatus names (none
+renamed), 49. document backup label rename if kept, 50. post-deploy
+one-day gatus/homepage/pocket-id review + close P2.
 
 ## g) QUESTIONS FOR THE USER
 

@@ -2,7 +2,7 @@
 
 **Session date:** 2026-09-17, 14:16 CEST
 **Scope:** This session only — the Gatus "User Slice Memory" false alarm, its root-cause fix, verification, and the blocked deploy.
-**Trigger:** Active Gatus error: `user-1000.slice memory exceeds 40G` (MemoryHigh=56G, MemoryMax=64G cited) + user: *"This limit seems way too low!"*
+**Trigger:** Active Gatus error: `user-1000.slice memory exceeds 40G` (MemoryHigh=56G, MemoryMax=64G cited) + user: _"This limit seems way too low!"_
 
 ---
 
@@ -18,13 +18,13 @@ The alert is a **stale-threshold false positive, not a real memory emergency**. 
 
 ## Root Cause Chain
 
-| Layer | Fact | Evidence |
-| --- | --- | --- |
-| Slice limits | `MemoryHigh=80G`, `MemoryMax=90G` — LIVE (`memory.high=85899345920`, `memory.max=96636764160`) | `/sys/fs/cgroup/user.slice/user-1000.slice/*`, boot.nix:477-482 |
-| Alert threshold | `userSliceThreshold = 40 * 1024^3` hardcoded; comment cited "MemoryHigh=56G, MemoryMax=64G" | system-health.nix:38-39 (old) |
-| Alert message | Still claimed "MemoryHigh=56G, MemoryMax=64G" — text stale since the 2026-08-04 raise | system-health.nix:2001 (old) |
-| Live state at diagnosis | slice 53.7G, machine 124.3G total / 67.9G avail, mem PSI some avg60=5.5%, zram 26/62G | `/proc/pressure/memory`, `free -g` |
-| Verdict | 50G desktop session (crush agents + browsers) on a 124G box is NORMAL; 40G threshold false-fires | the 2026-08-04 doc itself already showed this pattern (user slice "at 40GiB" flapping) |
+| Layer                   | Fact                                                                                             | Evidence                                                                               |
+| ----------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| Slice limits            | `MemoryHigh=80G`, `MemoryMax=90G` — LIVE (`memory.high=85899345920`, `memory.max=96636764160`)   | `/sys/fs/cgroup/user.slice/user-1000.slice/*`, boot.nix:477-482                        |
+| Alert threshold         | `userSliceThreshold = 40 * 1024^3` hardcoded; comment cited "MemoryHigh=56G, MemoryMax=64G"      | system-health.nix:38-39 (old)                                                          |
+| Alert message           | Still claimed "MemoryHigh=56G, MemoryMax=64G" — text stale since the 2026-08-04 raise            | system-health.nix:2001 (old)                                                           |
+| Live state at diagnosis | slice 53.7G, machine 124.3G total / 67.9G avail, mem PSI some avg60=5.5%, zram 26/62G            | `/proc/pressure/memory`, `free -g`                                                     |
+| Verdict                 | 50G desktop session (crush agents + browsers) on a 124G box is NORMAL; 40G threshold false-fires | the 2026-08-04 doc itself already showed this pattern (user slice "at 40GiB" flapping) |
 
 The same file already documented the correct doctrine 30 lines below the bug (`serviceMemoryThresholdFallback` comment: "Thresholds must derive from the ceiling they guard") — the user-slice threshold simply predated that lesson and was missed in the raise.
 
@@ -33,6 +33,7 @@ The same file already documented the correct doctrine 30 lines below the bug (`s
 ## The Fix (committed by auto-commit daemon, tree clean)
 
 **`modules/nixos/services/system-health.nix`**
+
 1. `userSliceThreshold` (flat 40G) → derived values:
    - `userSliceMemoryHighRaw` / `userSliceMemoryMaxRaw` read from `config.systemd.slices."user-1000".sliceConfig` at eval (with `or "80G"` / `or "90G"` fallbacks for hosts that don't declare the slice — rpi3-dns, VM fixtures).
    - `parseSystemdSize` — systemd size-string → bytes (binary units, handles K/M/G, null for `infinity`).
@@ -40,7 +41,7 @@ The same file already documented the correct doctrine 30 lines below the bug (`s
    - Rationale: MemoryHigh is where kernel reclaim-throttling begins; MemoryMax (90G) stays the kernel-owned kill line. 72G gives an 8G warning runway before throttle, 18G before kill.
 2. Collector comparison line now uses the derived constant.
 3. `# HELP system_user_slice_memory_over_threshold` line no longer hardcodes "40G".
-4. Gatus alert message now interpolates real values: *"user-1000.slice memory exceeds 72G (90% of its MemoryHigh=80G). Throttling starts at 80G, hard kill at 90G. Desktop + crush-agent sessions legitimately use 40-60G; act only if PSI/zram also degrade (memory-emergency-guard owns real pressure)."*
+4. Gatus alert message now interpolates real values: _"user-1000.slice memory exceeds 72G (90% of its MemoryHigh=80G). Throttling starts at 80G, hard kill at 90G. Desktop + crush-agent sessions legitimately use 40-60G; act only if PSI/zram also degrade (memory-emergency-guard owns real pressure)."_
 5. Drive-by trivial staleness (same file): GPUActive alert text "512 MiB carveout" → "1 GiB carveout" (the BIOS floor fact, AGENTS-documented since 2026-09-05).
 
 **`platforms/nixos/system/boot.nix`** — comment-only: "93G visible RAM / ~3G left" → "~124G visible RAM since the 2026-09-05 GTT flip (~93G when sized) / ~34G left".
@@ -49,12 +50,12 @@ The same file already documented the correct doctrine 30 lines below the bug (`s
 
 ### Verification evidence
 
-| Check | Result |
-| --- | --- |
-| `nix eval` of evo-x2 gatus endpoint | alert renders 72G / 80G / 90G correctly; conditions unchanged (`pat(*system_user_slice_memory_over_threshold 0*)`) |
-| Built collector artifact (`.drv^out` via the documented leaked-drv pattern) | comparison line carries literal `77309411328` = 72 GiB; writeShellApplication bash checks pass |
-| `nix flake check --no-build` | **all checks passed** (aarch64-darwin omission = documented expected warning) — also proves the parallel session's pocket-id change evals clean |
-| Metric name | UNCHANGED → no pre-deploy §10 new-metric loan needed; `tests/test-gatus-patterns.nix` fixture unaffected |
+| Check                                                                       | Result                                                                                                                                          |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `nix eval` of evo-x2 gatus endpoint                                         | alert renders 72G / 80G / 90G correctly; conditions unchanged (`pat(*system_user_slice_memory_over_threshold 0*)`)                              |
+| Built collector artifact (`.drv^out` via the documented leaked-drv pattern) | comparison line carries literal `77309411328` = 72 GiB; writeShellApplication bash checks pass                                                  |
+| `nix flake check --no-build`                                                | **all checks passed** (aarch64-darwin omission = documented expected warning) — also proves the parallel session's pocket-id change evals clean |
+| Metric name                                                                 | UNCHANGED → no pre-deploy §10 new-metric loan needed; `tests/test-gatus-patterns.nix` fixture unaffected                                        |
 
 ---
 
@@ -103,58 +104,58 @@ The same file already documented the correct doctrine 30 lines below the bug (`s
 
 ## f) TOP THINGS TO GET DONE NEXT (≤50 — brainstorm, not commitment; [S]=this session's work, [O]=observed this session, [K]=known carry-over from AGENTS.md)
 
-| # | Item | Tag |
-| --- | --- | --- |
-| 1 | Land the deploy (quiet window or owner-approved `DEPLOY_FORCE_PRESSURE=1`) — alert stays red until then | [S] |
-| 2 | Post-deploy verify: collector emits 72G HELP/threshold, "User Slice Memory" goes green within ~2 cycles | [S] |
-| 3 | Answer Q1/Q2/Q3 below (they gate #1's mode and whether the alert should page at all) | [S] |
-| 4 | CHANGELOG.md entry for the threshold derivation change | [S] |
-| 5 | Automated test for `parseSystemdSize` + 90%-of-MemoryHigh derivation (pure-eval negative test or VM) | [S] |
-| 6 | Sweep live docs (FEATURES.md, AGENTS.md, CONTRIBUTING) for remaining stale "40G" user-slice references | [S] |
-| 7 | Repo-wide stale-numeric sweep: alert texts/HELP strings citing limits that moved (the "56G/64G" + "512 MiB" class) | [S] |
-| 8 | Name the user@1000.service unit driving the sustained 40-50% IO PSI (2026-09-16 open next-step #1; still unnamed, one cgroup scan away) | [O] |
-| 9 | Identify the stuck `journalctl` (PID 2153982, hit D-state during this session) when it recurs — parent, cgroup, which collector/terminal | [O] |
-| 10 | tq double-pool guard warning from pre-deploy: manual `tq-redesign serve --addr 127.0.0.1:18472` (PID 229432) running — cutover per docs/services/tq.md before trusting the systemd pool | [O] |
-| 11 | crush-hot-db FIRST migration still never ran (pgrep guard: live crush sessions) — schedule a crush-free window; it is the structural fix for the QLC `.crush/` churn behind this IO class | [O] |
+| #  | Item                                                                                                                                                                                                                                                              | Tag |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
+| 1  | Land the deploy (quiet window or owner-approved `DEPLOY_FORCE_PRESSURE=1`) — alert stays red until then                                                                                                                                                           | [S] |
+| 2  | Post-deploy verify: collector emits 72G HELP/threshold, "User Slice Memory" goes green within ~2 cycles                                                                                                                                                           | [S] |
+| 3  | Answer Q1/Q2/Q3 below (they gate #1's mode and whether the alert should page at all)                                                                                                                                                                              | [S] |
+| 4  | CHANGELOG.md entry for the threshold derivation change                                                                                                                                                                                                            | [S] |
+| 5  | Automated test for `parseSystemdSize` + 90%-of-MemoryHigh derivation (pure-eval negative test or VM)                                                                                                                                                              | [S] |
+| 6  | Sweep live docs (FEATURES.md, AGENTS.md, CONTRIBUTING) for remaining stale "40G" user-slice references                                                                                                                                                            | [S] |
+| 7  | Repo-wide stale-numeric sweep: alert texts/HELP strings citing limits that moved (the "56G/64G" + "512 MiB" class)                                                                                                                                                | [S] |
+| 8  | Name the user@1000.service unit driving the sustained 40-50% IO PSI (2026-09-16 open next-step #1; still unnamed, one cgroup scan away)                                                                                                                           | [O] |
+| 9  | Identify the stuck `journalctl` (PID 2153982, hit D-state during this session) when it recurs — parent, cgroup, which collector/terminal                                                                                                                          | [O] |
+| 10 | tq double-pool guard warning from pre-deploy: manual `tq-redesign serve --addr 127.0.0.1:18472` (PID 229432) running — cutover per docs/services/tq.md before trusting the systemd pool                                                                           | [O] |
+| 11 | crush-hot-db FIRST migration still never ran (pgrep guard: live crush sessions) — schedule a crush-free window; it is the structural fix for the QLC `.crush/` churn behind this IO class                                                                         | [O] |
 | 12 | Coordinate the parallel session's pocket-id change (SMTP_TLS option + `UI_CONFIG_DISABLED=true`, now committed, undeployed): confirm owner understands UI_CONFIG_DISABLED semantics (SMTP env vars become the single source of truth; email config leaves the DB) | [O] |
-| 13 | Verify the 9 pre-deploy "ExecStart binary not built yet" warnings (cv-profile-probe, cv-server, papdashboard, signoz, signoz-collector, pocket-id-provision, mandb, network-local-commands) resolve at build | [O] |
-| 14 | Investigate `crush-daily.goModules — unable to determine status` pre-deploy warning (could mask a real FOD drift) | [O] |
-| 15 | Tested PSI-parse helper script in scripts/ (kills my awk-bug class permanently) | [S] |
-| 16 | Eval-time lint: alert strings citing sizes must match current config values (would have caught 6 weeks of "56G/64G" text) | [S] |
-| 17 | Reboot owed: flm corpse pins :52626 (EADDRINUSE since 2026-09-07 boot); run `nix run .#pre-reboot-check` first | [K] |
-| 18 | llama-rag config-disabled since 2026-09-16 (llama.cpp mid-load spin): pin/bisect fix, then `enable = true` | [K] |
-| 19 | PapDashboard groq decision: wire a groq key or disable the provider (overall /health sits at `warn`) | [K] |
-| 20 | Resend domain verification for larsartmann.cloud (completes mail-relay + Pocket ID SMTP go-live) | [K] |
-| 21 | btrbk /data EIO inode repair (TODO_LIST P0; /data pool backups fail nightly until then) | [K] |
-| 22 | Hetzner StorageBox + BorgBackup offsite leg (decided 2026-09-11, not implemented) | [K] |
-| 23 | Per-service subvolume doctrine Phase 2 (`services.hot-db` folding crush-hot-db interim module) | [K] |
-| 24 | Context7 key rotation (still LIVE leak; rotation is the real fix, purge is push-time) | [K] |
-| 25 | InboxClean OAuth consent-screen "In production" flip + re-auth of main account (7-day token bomb class) | [K] |
-| 26 | Deploy InboxClean retro-decrypt repair (needs upstream push + flake bump) | [K] |
-| 27 | DiscordSync Turso decision: upgrade plan vs permanent local-only (standing red check is the signal) | [K] |
-| 28 | `NIX_GITHUB_RO_TOKEN` fine-grained PAT as CI secret — 32 private `github:` lock nodes unreadable, CI dark 120+ runs | [K] |
-| 29 | GPUActive 60G threshold sanity revisit for GTT-first/124G era (text was stale; is the NUMBER still right?) | [K] |
-| 30 | memory-emergency-guard corpse-aware restore skip (P1; restore churn burns the daily budget) | [K] |
-| 31 | flm v1.0.3 staged go-live decision (fails post-fix; upstream issue now eligible) | [K] |
-| 32 | Signoz pair bump (signoz-src +42, collector-src +7) — MIGRATION-REVIEW, not a hash chore | [K] |
-| 33 | monitor365 re-enable owner decision (private wireguard-collector crate) | [K] |
-| 34 | sops-nix buildGo125 alias shim — drop when upstream > 13616fff lands | [K] |
-| 35 | playwright overlay shims (django-polymorphic strip + d2 browsers-chromium) — drop when nixpkgs repairs | [K] |
-| 36 | btrbk /data pool receives: zero complete received subvols (oom-kill + EIO) — blocked by #21 | [K] |
-| 37 | Paperless old SQLite export recovery decision (recover vs delete) | [K] |
-| 38 | Old `@nix` subvol deletion at /mnt/btrfs-root (TODO Phase 1 dead weight) | [K] |
-| 39 | `/rust-cache` leftover user-run cleanup (rmdir + `@go/@npm/@cargo` subvol deletes) | [K] |
-| 40 | Zone 4 calibration warning standing (avg60 ≥50 slow-burn variant) — calibrate or retire | [K] |
-| 41 | User-slice cap covers UID 1000 only — document/decide posture for any future second graphical user (uncapped today) | [K] |
-| 42 | Review whether `user-1000.slice` MemoryHigh/Max should scale automatically with MemTotal (they've now been re-sized twice by hand) | [K] |
-| 43 | Docs-health HARVEST of this list into TODO_LIST/ROADMAP | [S] |
-| 44 | Boot.nix "~34G left for kernel+system" claim: sanity-check against current system.slice usage | [S] |
-| 45 | Consider Gatus check for sustained IO PSI (avg10 >40% for >30 min with idle disks) — today only the deploy gate and Zone 6 guard see it | [O] |
-| 46 | CV groq `api_key empty` + citizenship seed verified done — close the loop in docs/services/cv.md if stale | [K] |
-| 47 | `email_state` / fixture-vs-prod monitoring-lies audit: 1-year retro of remaining fixture-derived patterns | [K] |
-| 48 | History purge: still push-HELD by design; revisit only on user flip (rotation-first stance) | [K] |
-| 49 | Commit-per-task discipline when explicit commits are authorized (daemon heuristic messages bury this session's history) | [K] |
-| 50 | Post-reboot follow-up owed after #17: verify flm serves, :52626 released, staged v1.0.3 gate conditions re-evaluated | [K] |
+| 13 | Verify the 9 pre-deploy "ExecStart binary not built yet" warnings (cv-profile-probe, cv-server, papdashboard, signoz, signoz-collector, pocket-id-provision, mandb, network-local-commands) resolve at build                                                      | [O] |
+| 14 | Investigate `crush-daily.goModules — unable to determine status` pre-deploy warning (could mask a real FOD drift)                                                                                                                                                 | [O] |
+| 15 | Tested PSI-parse helper script in scripts/ (kills my awk-bug class permanently)                                                                                                                                                                                   | [S] |
+| 16 | Eval-time lint: alert strings citing sizes must match current config values (would have caught 6 weeks of "56G/64G" text)                                                                                                                                         | [S] |
+| 17 | Reboot owed: flm corpse pins :52626 (EADDRINUSE since 2026-09-07 boot); run `nix run .#pre-reboot-check` first                                                                                                                                                    | [K] |
+| 18 | llama-rag config-disabled since 2026-09-16 (llama.cpp mid-load spin): pin/bisect fix, then `enable = true`                                                                                                                                                        | [K] |
+| 19 | PapDashboard groq decision: wire a groq key or disable the provider (overall /health sits at `warn`)                                                                                                                                                              | [K] |
+| 20 | Resend domain verification for larsartmann.cloud (completes mail-relay + Pocket ID SMTP go-live)                                                                                                                                                                  | [K] |
+| 21 | btrbk /data EIO inode repair (TODO_LIST P0; /data pool backups fail nightly until then)                                                                                                                                                                           | [K] |
+| 22 | Hetzner StorageBox + BorgBackup offsite leg (decided 2026-09-11, not implemented)                                                                                                                                                                                 | [K] |
+| 23 | Per-service subvolume doctrine Phase 2 (`services.hot-db` folding crush-hot-db interim module)                                                                                                                                                                    | [K] |
+| 24 | Context7 key rotation (still LIVE leak; rotation is the real fix, purge is push-time)                                                                                                                                                                             | [K] |
+| 25 | InboxClean OAuth consent-screen "In production" flip + re-auth of main account (7-day token bomb class)                                                                                                                                                           | [K] |
+| 26 | Deploy InboxClean retro-decrypt repair (needs upstream push + flake bump)                                                                                                                                                                                         | [K] |
+| 27 | DiscordSync Turso decision: upgrade plan vs permanent local-only (standing red check is the signal)                                                                                                                                                               | [K] |
+| 28 | `NIX_GITHUB_RO_TOKEN` fine-grained PAT as CI secret — 32 private `github:` lock nodes unreadable, CI dark 120+ runs                                                                                                                                               | [K] |
+| 29 | GPUActive 60G threshold sanity revisit for GTT-first/124G era (text was stale; is the NUMBER still right?)                                                                                                                                                        | [K] |
+| 30 | memory-emergency-guard corpse-aware restore skip (P1; restore churn burns the daily budget)                                                                                                                                                                       | [K] |
+| 31 | flm v1.0.3 staged go-live decision (fails post-fix; upstream issue now eligible)                                                                                                                                                                                  | [K] |
+| 32 | Signoz pair bump (signoz-src +42, collector-src +7) — MIGRATION-REVIEW, not a hash chore                                                                                                                                                                          | [K] |
+| 33 | monitor365 re-enable owner decision (private wireguard-collector crate)                                                                                                                                                                                           | [K] |
+| 34 | sops-nix buildGo125 alias shim — drop when upstream > 13616fff lands                                                                                                                                                                                              | [K] |
+| 35 | playwright overlay shims (django-polymorphic strip + d2 browsers-chromium) — drop when nixpkgs repairs                                                                                                                                                            | [K] |
+| 36 | btrbk /data pool receives: zero complete received subvols (oom-kill + EIO) — blocked by #21                                                                                                                                                                       | [K] |
+| 37 | Paperless old SQLite export recovery decision (recover vs delete)                                                                                                                                                                                                 | [K] |
+| 38 | Old `@nix` subvol deletion at /mnt/btrfs-root (TODO Phase 1 dead weight)                                                                                                                                                                                          | [K] |
+| 39 | `/rust-cache` leftover user-run cleanup (rmdir + `@go/@npm/@cargo` subvol deletes)                                                                                                                                                                                | [K] |
+| 40 | Zone 4 calibration warning standing (avg60 ≥50 slow-burn variant) — calibrate or retire                                                                                                                                                                           | [K] |
+| 41 | User-slice cap covers UID 1000 only — document/decide posture for any future second graphical user (uncapped today)                                                                                                                                               | [K] |
+| 42 | Review whether `user-1000.slice` MemoryHigh/Max should scale automatically with MemTotal (they've now been re-sized twice by hand)                                                                                                                                | [K] |
+| 43 | Docs-health HARVEST of this list into TODO_LIST/ROADMAP                                                                                                                                                                                                           | [S] |
+| 44 | Boot.nix "~34G left for kernel+system" claim: sanity-check against current system.slice usage                                                                                                                                                                     | [S] |
+| 45 | Consider Gatus check for sustained IO PSI (avg10 >40% for >30 min with idle disks) — today only the deploy gate and Zone 6 guard see it                                                                                                                           | [O] |
+| 46 | CV groq `api_key empty` + citizenship seed verified done — close the loop in docs/services/cv.md if stale                                                                                                                                                         | [K] |
+| 47 | `email_state` / fixture-vs-prod monitoring-lies audit: 1-year retro of remaining fixture-derived patterns                                                                                                                                                         | [K] |
+| 48 | History purge: still push-HELD by design; revisit only on user flip (rotation-first stance)                                                                                                                                                                       | [K] |
+| 49 | Commit-per-task discipline when explicit commits are authorized (daemon heuristic messages bury this session's history)                                                                                                                                           | [K] |
+| 50 | Post-reboot follow-up owed after #17: verify flm serves, :52626 released, staged v1.0.3 gate conditions re-evaluated                                                                                                                                              | [K] |
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF (3)
 

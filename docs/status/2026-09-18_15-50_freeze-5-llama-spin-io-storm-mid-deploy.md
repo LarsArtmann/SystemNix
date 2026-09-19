@@ -9,18 +9,18 @@ boot **replayed the same failure inputs** and was caught + contained live
 
 ## Timeline (all 2026-09-18, boot -1 unless noted)
 
-| Time | Event |
-| --- | --- |
-| 23:00 (Sep 17) | btrbk-root incremental send starts (normal) |
-| 23:04:36 | btrbk-root `Failed with result 'signal'` — guard churn-stop killed it mid-receive (known trip class; tonight's run + `btrbk-pool-clean` heals) |
-| 23:30 | btrbk-data `Failed with result 'exit-code'` — nightly pool sends broken |
-| 00:00→ | Zone-6 IO PSI storm runs CONTINUOUSLY from midnight (avg60 62-71%, QLC random IO ~29KB reads, disk busy 62-100%); guard trips every cooldown window (53 action-taken trips 00:00-11:00, #443-465 by 15:26; 337 total for the boot) |
-| 10:34 | flm restore capped (3 restores spent) — flm consumers dark from here |
-| 10:22 | deploy #1 (`bpidr18g`) into the storm |
-| 11:28 | deploy #2 = **gen 784** (`zbq817dd`) — re-enabled `llama-rag` after the 0.3.0 pin-back. Both llama-servers wedge at `model vocab missing newline token` and spin ~94% CPU each. systemd accounting at the 14:12 restart: **2h33min CPU over 2h43min wall, 8.6G written to disk, per unit** |
-| 14:00-14:11 | deploy #3 (`s1klz076` = system-784 final) — restarts llama units, spin resumes immediately |
-| 15:20-15:27 | deploy #4 (`d6wdfydgv`) switch at 15:27:40; signoz provisioning completes 15:27:46 |
-| 15:27:49.975 | journal cut mid-line. Livelock death. No shutdown record |
+| Time           | Event                                                                                                                                                                                                                                                                                      |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 23:00 (Sep 17) | btrbk-root incremental send starts (normal)                                                                                                                                                                                                                                                |
+| 23:04:36       | btrbk-root `Failed with result 'signal'` — guard churn-stop killed it mid-receive (known trip class; tonight's run + `btrbk-pool-clean` heals)                                                                                                                                             |
+| 23:30          | btrbk-data `Failed with result 'exit-code'` — nightly pool sends broken                                                                                                                                                                                                                    |
+| 00:00→         | Zone-6 IO PSI storm runs CONTINUOUSLY from midnight (avg60 62-71%, QLC random IO ~29KB reads, disk busy 62-100%); guard trips every cooldown window (53 action-taken trips 00:00-11:00, #443-465 by 15:26; 337 total for the boot)                                                         |
+| 10:34          | flm restore capped (3 restores spent) — flm consumers dark from here                                                                                                                                                                                                                       |
+| 10:22          | deploy #1 (`bpidr18g`) into the storm                                                                                                                                                                                                                                                      |
+| 11:28          | deploy #2 = **gen 784** (`zbq817dd`) — re-enabled `llama-rag` after the 0.3.0 pin-back. Both llama-servers wedge at `model vocab missing newline token` and spin ~94% CPU each. systemd accounting at the 14:12 restart: **2h33min CPU over 2h43min wall, 8.6G written to disk, per unit** |
+| 14:00-14:11    | deploy #3 (`s1klz076` = system-784 final) — restarts llama units, spin resumes immediately                                                                                                                                                                                                 |
+| 15:20-15:27    | deploy #4 (`d6wdfydgv`) switch at 15:27:40; signoz provisioning completes 15:27:46                                                                                                                                                                                                         |
+| 15:27:49.975   | journal cut mid-line. Livelock death. No shutdown record                                                                                                                                                                                                                                   |
 
 ## Root cause: three stacked contributors
 

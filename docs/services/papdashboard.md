@@ -9,13 +9,13 @@ and the rollback path. Product docs: the PapDashboard repo `README.md` (§Servic
 
 ## Surface map
 
-| Surface | Where | Auth |
-| --- | --- | --- |
-| Dashboard UI (tabs: Services first when enabled) | `GET /` via templ | public (assets public by design) |
-| Tiles + live status JSON | `GET /api/services` | API key (401 without) |
-| Server-rendered tiles fragment | `GET /api/fragments/services` | public (same class as `/dashboard.js`) |
-| Host vitals JSON (CPU/MEM/TEMP/UPTIME/net/disks) | `GET /api/system` | public (`/metrics` exposure class) |
-| Status flips | SSE `service.status` events on `/api/events/stream` | public stream |
+| Surface                                          | Where                                               | Auth                                   |
+| ------------------------------------------------ | --------------------------------------------------- | -------------------------------------- |
+| Dashboard UI (tabs: Services first when enabled) | `GET /` via templ                                   | public (assets public by design)       |
+| Tiles + live status JSON                         | `GET /api/services`                                 | API key (401 without)                  |
+| Server-rendered tiles fragment                   | `GET /api/fragments/services`                       | public (same class as `/dashboard.js`) |
+| Host vitals JSON (CPU/MEM/TEMP/UPTIME/net/disks) | `GET /api/system`                                   | public (`/metrics` exposure class)     |
+| Status flips                                     | SSE `service.status` events on `/api/events/stream` | public stream                          |
 
 ## services.json anatomy (where each field comes from)
 

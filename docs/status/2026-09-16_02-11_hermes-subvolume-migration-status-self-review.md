@@ -12,13 +12,15 @@
 Master now carries `fileSystems."/home/hermes"` (enable-gated) + `RequiresMountsFor=[/home/hermes]` on hermes.service. The `@home-hermes` subvolume **does not exist yet** (created by the user-run `prepare`). Therefore:
 
 **The next `nix run .#deploy` on this machine — by ANY session, and a parallel session is actively working — will:**
+
 1. fail `home-hermes.mount` (subvol absent; `nofail` keeps boot/activation going), then
 2. fail `hermes.service` (RequiresMountsFor dependency), then
-3. **exit-4 the activation** (hermes unit file changed → stc restarts it → fails) → *profile bump skipped* → the documented un-anchored-generation / reboot-revert hazard (2026-09-09 class), plus OnFailure Discord alert spam — on every deploy until `prepare` runs.
+3. **exit-4 the activation** (hermes unit file changed → stc restarts it → fails) → _profile bump skipped_ → the documented un-anchored-generation / reboot-revert hazard (2026-09-09 class), plus OnFailure Discord alert spam — on every deploy until `prepare` runs.
 
 I shipped this deliberately as "deploy-before-prepare is loud but safe" — true for DATA (nothing at risk), but I **under-weighted the exit-4/anchoring interaction** documented two gotchas away in AGENTS.md. Worse: **the repo already had the correct pattern** — ClickHouse uses `ConditionPathIsMountPoint`, gated on the host declaring the mount, which SKIPS the unit (monitoring-visible) instead of failing the activation transaction. I evaluated neither that precedent nor a deploy.sh pre-switch guard when the ordering gap was staring at me from my own runbook ("ORDER MATTERS").
 
 **Resolution paths (P0, pick one):**
+
 - **Fastest:** user runs `sudo bash scripts/migrate-hermes-subvol.sh prepare` BEFORE any next deploy (minutes, reflink copy).
 - **Structural:** ship `ConditionPathIsMountPoint=/home/hermes` on hermes.service gated on the mount being declared (clickhouse pattern) — hermes then skips cleanly pre-prepare (Gatus catches the down unit) and no deploy can exit-4 on this.
 - **Belt:** pre-deploy-check.sh gate: hermes enabled + mount declared + subvol absent → block with prepare instructions.
@@ -27,24 +29,24 @@ I shipped this deliberately as "deploy-before-prepare is loud but safe" — true
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|---|---|
-| 1 | Plan doc: Pareto (1%/4%/20% + other 20%), Phase-1 (30–100 min) + Phase-2 (≤12 min) task tables, mermaid execution graph, verification matrix, rollback, decision record (incl. disko rejection + Option A retention) | `docs/planning/2026-09-15_19-59_HERMES-HOME-SUBVOLUME-MIGRATION.md` |
-| 2 | `fileSystems."/home/hermes"` — subvol=@home-hermes, noatime/compress/nodiscard/commit=300, **nofail**, plain mount (NOT automount), gated on `services.hermes.enable` | eval: `["subvol=@home-hermes","noatime","compress=zstd","nodiscard","commit=300","nofail"]` |
-| 3 | btrbk `subvolume."@home-hermes"`: same pool target as `@`, **bounded** `target_preserve_min=7d` / `target_preserve=14d 4w`; nested-merge done correctly (no `//` shallow-merge drop — verified `attrNames = ["@","@home-hermes"]`) | rendered `/etc/btrbk/root.conf` store artifact inspected line-by-line |
-| 4 | `btrfs-verify-pool-backups` rewritten **per-prefix** (kills the `sort|tail -1` phantom-green where `@home-hermes.*` would mask a dead `@` send chain); `@home-hermes` expected only when the host mounts it | rendered script `bash -n` OK; 4 `check_freshness` references confirmed |
-| 5 | `btrfs-verify-snapshots` extended to check `@home-hermes.*` local snapshots when mounted (+ findutils/util-linux/gnugrep added to path) | rendered script `bash -n` OK |
-| 6 | hermes.service `RequiresMountsFor = [/home/hermes /home/lars/projects]` (was projectsDir-only, mkIf-gated) | eval `["/home/hermes","/home/lars/projects"]` |
-| 7 | `scripts/migrate-hermes-subvol.sh` — prepare (binary preflight, btrbk-window warn, two-phase reflink rsync, quiesce gateway+user@975, dry-run parity gate, mv-aside swap), finalize (mount-live + hermes-active + snapshot-exists gates, trash-never-rm), status | `bash -n` OK; 0644 house convention matched |
-| 8 | VM-test assertion 2b (pins RequiresMountsFor stateDir + projectsDir against silent removal) | `tests/test-hermes.nix` |
-| 9 | Docs: hermes.md subvolume+runbook section; AGENTS.md subvolume-layout line; CHANGELOG entry (incl. disko rejection rationale) | committed |
-| 10 | Verification suite: 4 targeted evals, 2 rendered guard scripts `bash -n`, rendered btrbk conf inspection, `nix fmt --no-update-lock-file -- --ci` (my files 0-changed), **`nix flake check --no-build` all checks passed** | session transcript |
+| #  | Item                                                                                                                                                                                                                                                             | Evidence                                                                                                                        |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | Plan doc: Pareto (1%/4%/20% + other 20%), Phase-1 (30–100 min) + Phase-2 (≤12 min) task tables, mermaid execution graph, verification matrix, rollback, decision record (incl. disko rejection + Option A retention)                                             | `docs/planning/2026-09-15_19-59_HERMES-HOME-SUBVOLUME-MIGRATION.md`                                                             |
+| 2  | `fileSystems."/home/hermes"` — subvol=@home-hermes, noatime/compress/nodiscard/commit=300, **nofail**, plain mount (NOT automount), gated on `services.hermes.enable`                                                                                            | eval: `["subvol=@home-hermes","noatime","compress=zstd","nodiscard","commit=300","nofail"]`                                     |
+| 3  | btrbk `subvolume."@home-hermes"`: same pool target as `@`, **bounded** `target_preserve_min=7d` / `target_preserve=14d 4w`; nested-merge done correctly (no `//` shallow-merge drop — verified `attrNames = ["@","@home-hermes"]`)                               | rendered `/etc/btrbk/root.conf` store artifact inspected line-by-line                                                           |
+| 4  | `btrfs-verify-pool-backups` rewritten **per-prefix** (kills the `sort                                                                                                                                                                                            | tail -1`phantom-green where`@home-hermes.*`would mask a dead`@`send chain);`@home-hermes` expected only when the host mounts it |
+| 5  | `btrfs-verify-snapshots` extended to check `@home-hermes.*` local snapshots when mounted (+ findutils/util-linux/gnugrep added to path)                                                                                                                          | rendered script `bash -n` OK                                                                                                    |
+| 6  | hermes.service `RequiresMountsFor = [/home/hermes /home/lars/projects]` (was projectsDir-only, mkIf-gated)                                                                                                                                                       | eval `["/home/hermes","/home/lars/projects"]`                                                                                   |
+| 7  | `scripts/migrate-hermes-subvol.sh` — prepare (binary preflight, btrbk-window warn, two-phase reflink rsync, quiesce gateway+user@975, dry-run parity gate, mv-aside swap), finalize (mount-live + hermes-active + snapshot-exists gates, trash-never-rm), status | `bash -n` OK; 0644 house convention matched                                                                                     |
+| 8  | VM-test assertion 2b (pins RequiresMountsFor stateDir + projectsDir against silent removal)                                                                                                                                                                      | `tests/test-hermes.nix`                                                                                                         |
+| 9  | Docs: hermes.md subvolume+runbook section; AGENTS.md subvolume-layout line; CHANGELOG entry (incl. disko rejection rationale)                                                                                                                                    | committed                                                                                                                       |
+| 10 | Verification suite: 4 targeted evals, 2 rendered guard scripts `bash -n`, rendered btrbk conf inspection, `nix fmt --no-update-lock-file -- --ci` (my files 0-changed), **`nix flake check --no-build` all checks passed**                                       | session transcript                                                                                                              |
 
 ## b) PARTIALLY DONE
 
 1. **"VERY DETAILED commit message(s)" (instruction #8) — NOT delivered as specified.** The auto-commit daemon batched everything into heuristic commits (`182c772b`, `08c7e8af`, `68da4282`, …) before I committed anything. My own todo said "per-task pathspec commits"; I executed edits → verification → (planned commits) and the daemon won the race. Detailed narrative lives only in CHANGELOG.md. Fixing now would require rewriting daemon batches that absorb the parallel session's files — forbidden. **Lesson applied for next time: commit each task the moment it's verified, not at the end.**
 2. **VM test written but never RUN.** No local `nix build .#checks.x86_64-linux.test-hermes`. I relied on CI — which is currently unreachable because the push is blocked. The new assertion has never executed anywhere.
-3. **Push: attempted, blocked, resolution delivered.** GH013 push-protection block on the *parallel session's* fixture (`63fd5a83`, `scripts/audit-push-protection-literals.sh:48`, synthetic `sgp_`-shaped test token — the exact documented GH013 class). Unblock URL handed to user; fix-forward cannot help (blob rides the 15-commit range); history rewrite forbidden.
+3. **Push: attempted, blocked, resolution delivered.** GH013 push-protection block on the _parallel session's_ fixture (`63fd5a83`, `scripts/audit-push-protection-literals.sh:48`, synthetic `sgp_`-shaped test token — the exact documented GH013 class). Unblock URL handed to user; fix-forward cannot help (blob rides the 15-commit range); history rewrite forbidden.
 4. **Retention Option A (7d / 14d 4w) was assumed** after my "Which way?" got no answer — justified autonomy per the execute directive, recorded in the plan's decision table, but never user-ratified.
 
 ## c) NOT STARTED
@@ -90,33 +92,33 @@ Nothing irreversible, nothing data-threatening, no false greens shipped — but 
 
 ## f) NEXT THINGS (25, priority-ordered; P0 first)
 
-| # | Task | Pri | Effort |
-|---|---|---|---|
-| 1 | USER: `sudo bash scripts/migrate-hermes-subvol.sh prepare` before ANY next deploy (closes the hazard window) | **P0** | 10 min |
-| 2 | USER: click push-protection unblock URL (reason "used in tests") → push the 15-commit range | **P0** | 1 min |
-| 3 | Deploy + `systemctl start btrbk-root` (seed first full send) + `status` verify | **P0** | 20 min |
-| 4 | hermes.service `ConditionPathIsMountPoint` (clickhouse pattern) so the ordering gap can never exit-4 again | P1 | 30 min |
-| 5 | Run `nix build .#checks.x86_64-linux.test-hermes` — first-ever execution of assertion 2b | P1 | ~30 min build |
-| 6 | TODO_LIST row: migration execution + finalize + watch items (harvest from this report) | P1 | 10 min |
-| 7 | post-deploy-check.sh: assert `findmnt /home/hermes` carries `subvol=/@home-hermes` (enable-gated) | P1 | 20 min |
-| 8 | Fixture-test the per-prefix pool/local guard logic | P2 | 1–2 h |
-| 9 | De-duplicate retention numbers across the 4 docs → point at snapshots.nix | P2 | 15 min |
-| 10 | check-doc-links over the new/edited docs | P2 | 5 min |
-| 11 | FEATURES.md hermes entry: add subvolume fact | P2 | 10 min |
-| 12 | Days later: `finalize` (trash `/home/hermes.old`; space frees as 3d/1w snapshots expire) | P2 | 5 min |
-| 13 | Watch: first nightly `@home-hermes` incremental send ≤ minutes (seed makes it incremental) | P2 | observe |
-| 14 | Watch: `btrfs-verify-pool-backups` green reporting BOTH prefixes | P2 | observe |
-| 15 | Watch (~2 weeks): `btrbk-pool-clean` prunes `@home-hermes.*` receives past 14d/4w | P3 | observe |
-| 16 | Watch: hermes cron dispatch healthy post-migration (user@975 + /bin/true probe vs mount ordering) | P2 | observe |
-| 17 | Empty `@home` toplevel leftover: delete (pre-existing TODO, adjacent) | P3 | 5 min |
-| 18 | Pre-push gitleaks-adjacent scan of `origin/master..HEAD` range (recurring hygiene) | P3 | 30 min setup |
-| 19 | Parallel session follow-up: their fixture file should use the documented `@HEX40@` template pattern so GH013 can't recur | P3 | theirs |
-| 20 | hermes.md: fold the "2 soft lies" correction (nothing needed — this report is the record) — instead: link this report from the plan doc | P3 | 5 min |
-| 21 | Consider `docs-health` HARVEST of this report's (f) into TODO_LIST (items 4–12 are real backlog) | P3 | 20 min |
-| 22 | Revisit: hermes workspace clones growth — if the subvol balloons, consider excluding `workspace/` from btrbk via a nested subvol (same trick, one level down) | P3 | later |
-| 23 | Offsite leg (Hetzner Borg, decided-not-deployed): hermes subvol rides whatever path-set it covers — include `/home/hermes` when implemented | P3 | later |
-| 24 | Post-migration: drop the `|| true || true` legacy double-ors in the untouched guard lines I copied around (style debt) | P3 | 5 min |
-| 25 | Update AGENTS "Snapshots:" paragraph — it still says "Snapshot freshness verified daily (alerts if >3 days old)" without mentioning the second prefix (covered in code + hermes.md; AGENTS line now slightly under-describes) | P3 | 5 min |
+| #  | Task                                                                                                                                                                                                                          | Pri    | Effort        |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------------- |
+| 1  | USER: `sudo bash scripts/migrate-hermes-subvol.sh prepare` before ANY next deploy (closes the hazard window)                                                                                                                  | **P0** | 10 min        |
+| 2  | USER: click push-protection unblock URL (reason "used in tests") → push the 15-commit range                                                                                                                                   | **P0** | 1 min         |
+| 3  | Deploy + `systemctl start btrbk-root` (seed first full send) + `status` verify                                                                                                                                                | **P0** | 20 min        |
+| 4  | hermes.service `ConditionPathIsMountPoint` (clickhouse pattern) so the ordering gap can never exit-4 again                                                                                                                    | P1     | 30 min        |
+| 5  | Run `nix build .#checks.x86_64-linux.test-hermes` — first-ever execution of assertion 2b                                                                                                                                      | P1     | ~30 min build |
+| 6  | TODO_LIST row: migration execution + finalize + watch items (harvest from this report)                                                                                                                                        | P1     | 10 min        |
+| 7  | post-deploy-check.sh: assert `findmnt /home/hermes` carries `subvol=/@home-hermes` (enable-gated)                                                                                                                             | P1     | 20 min        |
+| 8  | Fixture-test the per-prefix pool/local guard logic                                                                                                                                                                            | P2     | 1–2 h         |
+| 9  | De-duplicate retention numbers across the 4 docs → point at snapshots.nix                                                                                                                                                     | P2     | 15 min        |
+| 10 | check-doc-links over the new/edited docs                                                                                                                                                                                      | P2     | 5 min         |
+| 11 | FEATURES.md hermes entry: add subvolume fact                                                                                                                                                                                  | P2     | 10 min        |
+| 12 | Days later: `finalize` (trash `/home/hermes.old`; space frees as 3d/1w snapshots expire)                                                                                                                                      | P2     | 5 min         |
+| 13 | Watch: first nightly `@home-hermes` incremental send ≤ minutes (seed makes it incremental)                                                                                                                                    | P2     | observe       |
+| 14 | Watch: `btrfs-verify-pool-backups` green reporting BOTH prefixes                                                                                                                                                              | P2     | observe       |
+| 15 | Watch (~2 weeks): `btrbk-pool-clean` prunes `@home-hermes.*` receives past 14d/4w                                                                                                                                             | P3     | observe       |
+| 16 | Watch: hermes cron dispatch healthy post-migration (user@975 + /bin/true probe vs mount ordering)                                                                                                                             | P2     | observe       |
+| 17 | Empty `@home` toplevel leftover: delete (pre-existing TODO, adjacent)                                                                                                                                                         | P3     | 5 min         |
+| 18 | Pre-push gitleaks-adjacent scan of `origin/master..HEAD` range (recurring hygiene)                                                                                                                                            | P3     | 30 min setup  |
+| 19 | Parallel session follow-up: their fixture file should use the documented `@HEX40@` template pattern so GH013 can't recur                                                                                                      | P3     | theirs        |
+| 20 | hermes.md: fold the "2 soft lies" correction (nothing needed — this report is the record) — instead: link this report from the plan doc                                                                                       | P3     | 5 min         |
+| 21 | Consider `docs-health` HARVEST of this report's (f) into TODO_LIST (items 4–12 are real backlog)                                                                                                                              | P3     | 20 min        |
+| 22 | Revisit: hermes workspace clones growth — if the subvol balloons, consider excluding `workspace/` from btrbk via a nested subvol (same trick, one level down)                                                                 | P3     | later         |
+| 23 | Offsite leg (Hetzner Borg, decided-not-deployed): hermes subvol rides whatever path-set it covers — include `/home/hermes` when implemented                                                                                   | P3     | later         |
+| 24 | Post-migration: drop the `                                                                                                                                                                                                    |        | true          |
+| 25 | Update AGENTS "Snapshots:" paragraph — it still says "Snapshot freshness verified daily (alerts if >3 days old)" without mentioning the second prefix (covered in code + hermes.md; AGENTS line now slightly under-describes) | P3     | 5 min         |
 
 ## g) QUESTIONS (cannot figure out myself)
 
@@ -126,4 +128,4 @@ Nothing irreversible, nothing data-threatening, no false greens shipped — but 
 
 ---
 
-*Point-in-time snapshot. I am now WAITING for instructions.*
+_Point-in-time snapshot. I am now WAITING for instructions._

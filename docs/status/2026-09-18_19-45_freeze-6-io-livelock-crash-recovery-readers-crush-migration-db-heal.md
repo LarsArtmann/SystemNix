@@ -15,20 +15,20 @@ death-adjacent log line names the class verbatim:
 
 ## Timeline (all 2026-09-18, boot `0a1c9584` unless noted)
 
-| Time | Event |
-| --- | --- |
-| 15:32:07 | Boot after freeze-5 hard reset. Cold page cache: everything re-reads from QLC |
-| 15:32:57 | `crush-hot-db-migrate` starts (the structural fix) **and** `discordsync-db-heal` starts — simultaneously |
-| 15:35:39 | First migration lands (`1ATemplate`); interleaved `migrated <repo>` lines from here |
-| 15:37:08 | Guard Zone-6 trip #466 — repeats every cooldown window for the rest of the boot |
-| 15:42:57 | `discordsync-db-heal` start **times out at 10 min** — only 1.1G of the 11G DB read (3.15s CPU over 600s wall = disk saturated) → OnFailure alert |
-| ~16:32 | First migration run ends: `Failed with result 'signal'` after **59m54s, 23.2G read, 4.5G written** (killed mid-copy — consistent with the ~16:44 deploy's unit restart) |
-| ~16:44 | Deploy lands **system-785**; migration restarts, immediately `skip: crush session(s) active (27)` and exits clean — **the migration does NOT run again this boot**; the 27 concurrent crush sessions (nix evals, flake updates, go tests, session-DB churn on QLC) carry the storm alone from here |
-| 17:00→19:28 | Sustained QLC saturation; guard trips #468→#481; PSI avg60 41-79% |
-| 19:25:40 | Guard trip #481 (last action-taken) |
-| 19:27:02→19:28:03 | Rapid-fire `nix-daemon accepted connection` burst from parallel agent sessions (evals/builds) |
-| 19:28:11.892 | Journal cut mid-line. Livelock death. No shutdown record |
-| 19:31:14 | Boot `250f1591` (current) |
+| Time              | Event                                                                                                                                                                                                                                                                                              |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 15:32:07          | Boot after freeze-5 hard reset. Cold page cache: everything re-reads from QLC                                                                                                                                                                                                                      |
+| 15:32:57          | `crush-hot-db-migrate` starts (the structural fix) **and** `discordsync-db-heal` starts — simultaneously                                                                                                                                                                                           |
+| 15:35:39          | First migration lands (`1ATemplate`); interleaved `migrated <repo>` lines from here                                                                                                                                                                                                                |
+| 15:37:08          | Guard Zone-6 trip #466 — repeats every cooldown window for the rest of the boot                                                                                                                                                                                                                    |
+| 15:42:57          | `discordsync-db-heal` start **times out at 10 min** — only 1.1G of the 11G DB read (3.15s CPU over 600s wall = disk saturated) → OnFailure alert                                                                                                                                                   |
+| ~16:32            | First migration run ends: `Failed with result 'signal'` after **59m54s, 23.2G read, 4.5G written** (killed mid-copy — consistent with the ~16:44 deploy's unit restart)                                                                                                                            |
+| ~16:44            | Deploy lands **system-785**; migration restarts, immediately `skip: crush session(s) active (27)` and exits clean — **the migration does NOT run again this boot**; the 27 concurrent crush sessions (nix evals, flake updates, go tests, session-DB churn on QLC) carry the storm alone from here |
+| 17:00→19:28       | Sustained QLC saturation; guard trips #468→#481; PSI avg60 41-79%                                                                                                                                                                                                                                  |
+| 19:25:40          | Guard trip #481 (last action-taken)                                                                                                                                                                                                                                                                |
+| 19:27:02→19:28:03 | Rapid-fire `nix-daemon accepted connection` burst from parallel agent sessions (evals/builds)                                                                                                                                                                                                      |
+| 19:28:11.892      | Journal cut mid-line. Livelock death. No shutdown record                                                                                                                                                                                                                                           |
+| 19:31:14          | Boot `250f1591` (current)                                                                                                                                                                                                                                                                          |
 
 ## Root cause: the crash-recovery window is itself an IO storm
 

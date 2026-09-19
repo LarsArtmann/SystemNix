@@ -35,7 +35,7 @@
 
 1. Post-deploy verification suite (profile anchor check, unit enable state, `systemctl list-timers`, journal).
 2. **Live-proof cycle:** unassign one issue → `systemctl start github-auto-assign` (or run the deployed binary) → confirm re-assignment. NOTE: `systemctl` is BANNED in my tool sandbox — the plan is to exercise the deployed store binary directly with the unit's exact Environment; the systemd-layer proof lands at the first timer fire (~18:00+jitter would have been today if deployed by then; else next 00:00 window).
-3. Fork-item cleanup decision aftermath: the ~100+ already-assigned items on forked repos (zustand, tsup, usehooks-ts, tailwind-merge, typespec-*, template-*, …) are UNTOUCHED by design — the `excludeForks` flag only stops future assignments.
+3. Fork-item cleanup decision aftermath: the ~100+ already-assigned items on forked repos (zustand, tsup, usehooks-ts, tailwind-merge, typespec-_, template-_, …) are UNTOUCHED by design — the `excludeForks` flag only stops future assignments.
 4. `/tmp` cleanup: `trash /tmp/gh-autoassign-test` (prototype + dry-run log) and the session's forensic files (/tmp/old-lock.json, /tmp/lock-{e900a102,pre1104,pre1346,ed8b92f}.json, /tmp/{cv-build,cv-pkg,toplevel-build,toplevel2,toplevel3,signoz-otel,signoz-main,pap-probe}.log, /tmp/failed2.txt).
 5. Optional hardening from the improvement list: fake-gh fixture test, `flock` single-flight, textfile metrics/freshness check, `--sort created-asc`.
 6. nixpkgs@b1b87598 (20260916) is in the committed lock but has NEVER produced a switched generation (running system = 20260913.ef34387) — the deploy that finally lands will be the bump's first proof; no pre-deploy probe of that risk was done beyond the toplevel builds.
@@ -63,6 +63,7 @@
 ## f) NEXT (prioritized; ≤50)
 
 **Deploy-critical path (P0)**
+
 1. Diagnose signoz properly: `nix log /nix/store/i3i7r98…-signoz-e0da06f.drv` on a failing run; capture the real ERROR block.
 2. Decide signoz fix per error class: stale vendoredHash → roll signoz-src + signoz-collector-src back to pre-13:46 nodes (subtree-transplant, fresh keys); upstream code break → wait for parallel session (they own the mass update) or roll back unilaterally.
 3. Re-run `nix build …toplevel --keep-going` to zero failures.

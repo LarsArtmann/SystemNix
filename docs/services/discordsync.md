@@ -4,11 +4,11 @@ Discord backup bot (messages, attachments, reactions) — SystemNix wrapper arou
 
 ## Units
 
-| Unit                     | Shape                                                    | Notes                                                                        |
-| ------------------------ | -------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `discordsync.service`    | long-running daemon, `harden{}` + 2G / GOMEMLIMIT 1536MiB | API + Discord gateway; env from the `discordsync-env` sops template           |
-| `discordsync-db-heal.service` | oneshot + RemainAfterExit, `+`-privileged           | SQLite integrity check → `.recover` → BTRFS snapshot restore cascade (10min) |
-| `discordsync-immich-verify.service` | oneshot, daily timer, User=discordsync         | Verifies the Immich API key (see below); OnFailure pages                     |
+| Unit                                | Shape                                                     | Notes                                                                        |
+| ----------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `discordsync.service`               | long-running daemon, `harden{}` + 2G / GOMEMLIMIT 1536MiB | API + Discord gateway; env from the `discordsync-env` sops template          |
+| `discordsync-db-heal.service`       | oneshot + RemainAfterExit, `+`-privileged                 | SQLite integrity check → `.recover` → BTRFS snapshot restore cascade (10min) |
+| `discordsync-immich-verify.service` | oneshot, daily timer, User=discordsync                    | Verifies the Immich API key (see below); OnFailure pages                     |
 
 ## Secrets
 
@@ -42,10 +42,10 @@ Until step 2 happens, the shipped PLACEHOLDER is inert by design: the verify uni
 
 ### `discordsync-immich-verify` exit semantics
 
-| Exit | Meaning                                                                           | Action                                            |
-| ---- | --------------------------------------------------------------------------------- | ------------------------------------------------- |
-| 0    | key verified / PLACEHOLDER / integration off / **Immich unreachable**             | none (Immich availability is the Gatus Immich check's job) |
-| 1    | Immich reachable but **rejected the key** (HTTP 401/403 — wrong secret or scope)  | OnFailure Discord alert; fix key/scope, redeploy  |
+| Exit | Meaning                                                                          | Action                                                     |
+| ---- | -------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| 0    | key verified / PLACEHOLDER / integration off / **Immich unreachable**            | none (Immich availability is the Gatus Immich check's job) |
+| 1    | Immich reachable but **rejected the key** (HTTP 401/403 — wrong secret or scope) | OnFailure Discord alert; fix key/scope, redeploy           |
 
 Rotation: repeat steps 2–3 (or just restart the verify unit after `sops --set` — the template's `restartUnits` already covers it).
 

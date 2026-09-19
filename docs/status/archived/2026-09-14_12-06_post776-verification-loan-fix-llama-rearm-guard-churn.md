@@ -59,6 +59,7 @@
 ## f) NEXT — session-derived, prioritized
 
 **Immediate (today):**
+
 1. flm E2E once IO calms + guard restores the socket: probe `:52625/v1/models` (expect 200, v1.0.2 weights); retire the FastFlowLM baseline entry if green.
 2. Next deploy: confirm §10 prints NO auto-loan (the fix's end-to-end proof) and mkApp shellcheck passes on the edited script.
 3. Read `journalctl -u service-health-check` — confirm what it is reporting (should be inboxclean-sync).

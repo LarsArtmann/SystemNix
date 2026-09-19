@@ -47,4 +47,3 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] Build a post-23:30 self-verifying receive-freshness probe (textfile metric `root_receive_age_hours` + Gatus check in backup-coordination) so nightly convergence stops depending on midnight agent sessions. **Source:** docs/status/2026-09-17_00-25_* §f.3/39
 - [ ] [ready] Wire `memory_emergency_guard_churn_rearms_total` into a Gatus check or the SigNoz guard dashboard (threshold policy — see the blocked question). **Source:** docs/status/2026-09-17_01-52_* §f.6-7
 - [ ] [ready] Build the generic displaced-cache detector: textfile collector flagging any non-HM-managed `~/.cache/*` real dir >1G (new-fallback-name class — this window's reap list is instance #2 of the gap). **Source:** docs/status/2026-09-17_02-54_* §e.1/f.3
-

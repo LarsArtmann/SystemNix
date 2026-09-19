@@ -3,6 +3,7 @@
 **Date:** 2026-09-18 07:47 CEST
 **Scope:** This session only — the "research everything Forgejo + write the max-out report" run. Not a project-wide status.
 **Artifacts produced:**
+
 - `docs/research/2026-09-18_forgejo-deep-research.html` (86.5 KB, 1879 lines, committed by daemon: `cb096333` → corrected in `ce4df826` 07:16)
 - This report.
 
@@ -26,7 +27,7 @@
 1. **The 3 workflow files were read at heads only** (30–40 lines each). The report's "clean on a spot-check" (v13-removed commands) rests on partial reads — the full sweep (`rg '::set-output|::set-env|::add-path|GITEA_'`) was written into the report as R8 but **not executed**.
 2. **`_forgejo-scripts.nix` never read.** All inventory claims about mirror/token/OIDC/SSH-key scripts derive from `forgejo.nix` usage and comments, not the script sources.
 3. **"3 repos run workflows" is really "3 repos have workflow files."** No call was made to the live forge — whether `wireguard-collector`/`collector-utils`/`monitor365` exist as native repos there, and whether any runs ever executed, is unverified.
-4. **Scorecard denominator is sloppy:** "3 of ~260" mixes PMA's 260+ *local checkouts* with the forge's actual repo population (~134 mirrors + natives). The numerator is verified; the denominator is not a forge-side number.
+4. **Scorecard denominator is sloppy:** "3 of ~260" mixes PMA's 260+ _local checkouts_ with the forge's actual repo population (~134 mirrors + natives). The numerator is verified; the denominator is not a forge-side number.
 5. **Mirror count "~134"** comes from the 2026-08-22-era upstream-issues doc — never re-verified against the live instance.
 6. **v11.0 announcement not fetched** → its table row is intentionally thin and flagged as such in the sources section.
 7. **Visual QA skipped:** the HTML passed structural validation but was never rendered/screenshotted; the scrollspy script is untested beyond writing it.
@@ -61,6 +62,7 @@ That is the only entry. Nothing was destroyed, no config touched, no secrets exp
 ## f) TOP THINGS TO GET DONE NEXT (50, sorted by tier; 1–10 are session follow-ups, 11+ are the report's roadmap made actionable)
 
 **Session hygiene (verify my own work first):**
+
 1. Run the R8 sweep for real: `rg -n '::set-output|::set-env|::add-path|DOCKER_USERNAME|GITEA_'` across all local `.forgejo`/`.gitea` workflow dirs; record the deployed `forgejo-runner --version`.
 2. Live-forge API pass: native-vs-mirror repo split, whether the 3 workflows have actual runs, real mirror count (replace stale "~134").
 3. Read `_forgejo-scripts.nix` in full; confirm the report's inventory claims.

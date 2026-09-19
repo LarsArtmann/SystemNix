@@ -58,4 +58,5 @@
 `tq facts` (3,639 facts through 2026-09-15 11:04) contains **zero `task.reprioritized` facts** — none recorded. Priority movement this window happened only via the queue's own requeue churn (dirty-tree preflight refusals, claims 3629-3639), which is availability, not band drift.
 
 ---
-*Point-in-time snapshot. Fifth closeout of the 2026-09-14 window; see also runs 1-4: `2026-09-15_06-10`, `_07-32`, `_08-50`, `_10-45`.*
+
+_Point-in-time snapshot. Fifth closeout of the 2026-09-14 window; see also runs 1-4: `2026-09-15_06-10`, `_07-32`, `_08-50`, `_10-45`._

@@ -10,11 +10,11 @@
 
 The previous session left all fixes committed but UNDEPLOYED and 3 questions open. This session: assumed safe defaults, closed every session-direct code item (#3, #4, #6, #11, #12, #14, #15, #17), found + fixed a LIVE classification bug the morning code shipped, and got everything DEPLOYED (system-785, anchored) and verified end-to-end. The ~200-private-repo mass migration the deploy was gating on had ALREADY happened at 09:42 under a morning deploy: **349 processed, 225 mirrors created, 0 failed**. Live state now: **385 mirrors, 32 correctly-classified frozen archives, 2 transfers, metrics published, Gatus "Forgejo Mirror Reconcile" green**.
 
-| Question from 07:43 report | Default I proceeded with | Consequence |
-| --- | --- | --- |
-| Mirror ~200 private repos (or scope)? | Full coverage (as implemented) | DONE — 225 created 09:42, reversible via API delete |
-| forgejo→GitHub push capability? | No (dead code stays removed) | Nothing to do |
-| Artmann-Minecraft transfers? | Keep frozen, report-only (reconcile default) | Still owner-decidable, no data risk |
+| Question from 07:43 report            | Default I proceeded with                     | Consequence                                         |
+| ------------------------------------- | -------------------------------------------- | --------------------------------------------------- |
+| Mirror ~200 private repos (or scope)? | Full coverage (as implemented)               | DONE — 225 created 09:42, reversible via API delete |
+| forgejo→GitHub push capability?       | No (dead code stays removed)                 | Nothing to do                                       |
+| Artmann-Minecraft transfers?          | Keep frozen, report-only (reconcile default) | Still owner-decidable, no data risk                 |
 
 ---
 
@@ -36,11 +36,11 @@ The previous session left all fixes committed but UNDEPLOYED and 3 questions ope
 
 ## b) PARTIALLY DONE
 
-| Item | What remains |
-| --- | --- |
-| `/var/lib/forgejo` size measurement (#5) | Blocked: 0700 forgejo-owned + backup dir unreadable from lars. Needs one `sudo -u forgejo du -sh /var/lib/forgejo` — then btrbk root-snapshot growth projection. |
-| Watch the first mass-migration run (#2) | Moot as a live-watch: it ran 09:42–10:09 under the morning deploy, unwatched by any session. Verified post-hoc from the journal (225 created / 0 failed / 27 min wall). |
-| Reconcile stability under natural ticks | One post-deploy run verified clean (16:34). 1–2 natural 6h ticks should be glanced at (garbage-free classification persists, no pending-delete flapping). |
+| Item                                     | What remains                                                                                                                                                            |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/var/lib/forgejo` size measurement (#5) | Blocked: 0700 forgejo-owned + backup dir unreadable from lars. Needs one `sudo -u forgejo du -sh /var/lib/forgejo` — then btrbk root-snapshot growth projection.        |
+| Watch the first mass-migration run (#2)  | Moot as a live-watch: it ran 09:42–10:09 under the morning deploy, unwatched by any session. Verified post-hoc from the journal (225 created / 0 failed / 27 min wall). |
+| Reconcile stability under natural ticks  | One post-deploy run verified clean (16:34). 1–2 natural 6h ticks should be glanced at (garbage-free classification persists, no pending-delete flapping).               |
 
 ## c) NOT STARTED (from the 07:43 backlog; owner decisions or design work)
 
@@ -52,14 +52,14 @@ The previous session left all fixes committed but UNDEPLOYED and 3 questions ope
 
 ## d) TOTALLY FUCKED UP (all caught in-session, all fixed before deploy)
 
-| What | Root cause | Lesson |
-| --- | --- | --- |
-| Invalid `.replace` fragment written into forgejo.nix mid-edit | Sloppy edit-tool payload | Viewed + repaired immediately; always re-view after a suspicious edit result |
-| Introduced the `\\n` double-escape in a gatus pat() condition | Exactly the 2026-08-22 trap class documented in AGENTS | Caught myself on review before flake check; byte-verified with `od -c` after fix. The lint would have caught it — but not shipping it is better |
-| Broken IO-poll probe: "WINDOW OPEN" printed at avg10=58% | awk took field $2 = `avg10=58.59`, then string-arithmetic compared it | A gate probe must be tested once against a known value before it's trusted — same class as the pipeline-mask lesson |
-| False "deploy lock holder EXITED" (kill -0 loop said the 16:26 deploy was dead at 16:30 while it ran until 16:37) | kill -0 liveness assumption | Use `ps -p <pid>` for liveness, never kill -0 heuristics |
-| Fixture stub bugs: gh arg index ($3 vs $2), curl "URL is last arg" (wrong when `-d` follows) | Stubs written from memory of the call shapes | The FIRST wrong-looking fixture result made each obvious — fixture tests only work if you read their failures as stub-bug hypotheses too |
-| Attempted a deploy knowing the IO storm was active | Optimism | The pressure gate correctly blocked it (exit before build); cost was one cheap run |
+| What                                                                                                              | Root cause                                                            | Lesson                                                                                                                                          |
+| ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Invalid `.replace` fragment written into forgejo.nix mid-edit                                                     | Sloppy edit-tool payload                                              | Viewed + repaired immediately; always re-view after a suspicious edit result                                                                    |
+| Introduced the `\\n` double-escape in a gatus pat() condition                                                     | Exactly the 2026-08-22 trap class documented in AGENTS                | Caught myself on review before flake check; byte-verified with `od -c` after fix. The lint would have caught it — but not shipping it is better |
+| Broken IO-poll probe: "WINDOW OPEN" printed at avg10=58%                                                          | awk took field $2 = `avg10=58.59`, then string-arithmetic compared it | A gate probe must be tested once against a known value before it's trusted — same class as the pipeline-mask lesson                             |
+| False "deploy lock holder EXITED" (kill -0 loop said the 16:26 deploy was dead at 16:30 while it ran until 16:37) | kill -0 liveness assumption                                           | Use `ps -p <pid>` for liveness, never kill -0 heuristics                                                                                        |
+| Fixture stub bugs: gh arg index ($3 vs $2), curl "URL is last arg" (wrong when `-d` follows)                      | Stubs written from memory of the call shapes                          | The FIRST wrong-looking fixture result made each obvious — fixture tests only work if you read their failures as stub-bug hypotheses too        |
+| Attempted a deploy knowing the IO storm was active                                                                | Optimism                                                              | The pressure gate correctly blocked it (exit before build); cost was one cheap run                                                              |
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -72,24 +72,24 @@ The previous session left all fixes committed but UNDEPLOYED and 3 questions ope
 
 **Session-direct leftovers (forgejo mirror domain):**
 
-| # | Task | Impact | Effort |
-| --- | --- | --- | --- |
-| 1 | `sudo -u forgejo du -sh /var/lib/forgejo` — measure post-migration size + project btrbk root-snapshot growth (the 07:43 (e)1 lesson: measure BEFORE enabling mass ops; do it now that it's done) | High | S |
-| 2 | Owner decision: Artmann-Minecraft 2 transfers (delete vs org re-mirror) | Medium | S |
-| 3 | Owner decision: 32 frozen archives keep-all (default) or prune | Low | S |
-| 4 | Collapse `forgejo-ensure-repos` declarative list (split brain with the general listing) | Low | S |
-| 5 | Glance at 1–2 natural 6h reconcile ticks (classification stays clean, pending-deletes don't flap) | Medium | S |
-| 6 | Starred-org reconcile design (store full_name in description at create time) + implementation | Medium | M |
-| 7 | Clean the 2 stale `commit-graph.lock` files as forgejo user | Low | S |
-| 8 | Retire the manual `KNOWN_NEW_METRICS`-style loan if pre-deploy §10 warns about `forgejo_mirror_*` after they're live | Low | S |
+| # | Task                                                                                                                                                                                             | Impact | Effort |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | ------ |
+| 1 | `sudo -u forgejo du -sh /var/lib/forgejo` — measure post-migration size + project btrbk root-snapshot growth (the 07:43 (e)1 lesson: measure BEFORE enabling mass ops; do it now that it's done) | High   | S      |
+| 2 | Owner decision: Artmann-Minecraft 2 transfers (delete vs org re-mirror)                                                                                                                          | Medium | S      |
+| 3 | Owner decision: 32 frozen archives keep-all (default) or prune                                                                                                                                   | Low    | S      |
+| 4 | Collapse `forgejo-ensure-repos` declarative list (split brain with the general listing)                                                                                                          | Low    | S      |
+| 5 | Glance at 1–2 natural 6h reconcile ticks (classification stays clean, pending-deletes don't flap)                                                                                                | Medium | S      |
+| 6 | Starred-org reconcile design (store full_name in description at create time) + implementation                                                                                                    | Medium | M      |
+| 7 | Clean the 2 stale `commit-graph.lock` files as forgejo user                                                                                                                                      | Low    | S      |
+| 8 | Retire the manual `KNOWN_NEW_METRICS`-style loan if pre-deploy §10 warns about `forgejo_mirror_*` after they're live                                                                             | Low    | S      |
 
 **Noticed in passing (NOT re-verified, other sessions' domains — pointers only):**
 
-| # | Task | Impact | Effort |
-| --- | --- | --- | --- |
-| 9 | llama-rag pinned-build spin regression is LIVE on :8848/:8849 since 14:12 (other session's 14:01 report documents the triggered escape condition; the two spinners ran all through this session) — the config-disable deploy is the pending containment | High | M |
-| 10 | A ~15:5x–16:30 deploy attempt by another actor produced NO switch (no activation journal, no generation) — if that session believes it deployed, it didn't | Medium | S |
-| 11 | IO storms remain chronic (34–65% avg10 for hours) whenever parallel agent sessions build; the deploy gate correctly blocked mine — the structural fix (crush-DBs-off-QLC migration finishing) is tracked in TODO_LIST | High | L |
+| #  | Task                                                                                                                                                                                                                                                    | Impact | Effort |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 9  | llama-rag pinned-build spin regression is LIVE on :8848/:8849 since 14:12 (other session's 14:01 report documents the triggered escape condition; the two spinners ran all through this session) — the config-disable deploy is the pending containment | High   | M      |
+| 10 | A ~15:5x–16:30 deploy attempt by another actor produced NO switch (no activation journal, no generation) — if that session believes it deployed, it didn't                                                                                              | Medium | S      |
+| 11 | IO storms remain chronic (34–65% avg10 for hours) whenever parallel agent sessions build; the deploy gate correctly blocked mine — the structural fix (crush-DBs-off-QLC migration finishing) is tracked in TODO_LIST                                   | High   | L      |
 
 ## g) Questions I cannot answer myself
 

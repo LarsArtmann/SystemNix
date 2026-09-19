@@ -75,7 +75,6 @@ dedicated success column is the safer shape.
 
 _Drafted with AI assistance (Crush); source claims verified against the `forgejo` branch on 2026-09-18._
 
-
 ---
 
 ## Issue 2 — mirror queue: `ErrAlreadyInQueue` dedup-skip logs at Trace level only, so a wedged queue silently stops ALL mirror syncs
@@ -128,7 +127,6 @@ Any of these would have caught it:
 ---
 
 _Drafted with AI assistance (Crush); source claims verified against the `forgejo` branch on 2026-09-18._
-
 
 ---
 
@@ -188,4 +186,3 @@ temp file is treated as fatal for the sync with no user-visible notice, and (b) 
 ---
 
 _Drafted with AI assistance (Crush); source claims verified against the `forgejo` branch on 2026-09-18._
-

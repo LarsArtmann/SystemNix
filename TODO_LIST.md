@@ -16,6 +16,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 ## Queue
 
 ### storage
+
 - [ ] **`services.hot-db` NixOS module — the declarative mechanism for the Samsung hot-DB tier (Phase 2 of the ratified design)** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Phase 2: hot DBs off the QLC root** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Pool + disk-domain quality (2026-08-28 review)** → [docs/todo/storage.md](docs/todo/storage.md)
@@ -43,6 +44,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Source:** → [docs/todo/storage.md](docs/todo/storage.md)
 
 ### stability
+
 - [ ] **USB flap-counter metric + pre-deploy zombie-mount detector** → [docs/todo/stability.md](docs/todo/stability.md)
 - [ ] **ADR: zram-only swap decision** → [docs/todo/stability.md](docs/todo/stability.md)
 - [ ] **Scoped polkit rule: service restarts without interactive auth** → [docs/todo/stability.md](docs/todo/stability.md)
@@ -63,6 +65,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Source:** → [docs/todo/stability.md](docs/todo/stability.md)
 
 ### monitoring
+
 - [ ] **Textfile-collector fixed-name `.tmp` audit (the niri EACCES class) + stale `btrfs-compression.prom.tmp` check** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **system-health-metrics worst-case section sum (≈500s) exceeds the 180s unit ceiling AND the 120s timer cadence — the collector structurally cannot finish under an IO storm** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **`backup_ever_succeeded` metric + backup-catchup report** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
@@ -97,6 +100,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Source:** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 
 ### ai-stack
+
 - [ ] **FastFlowLM smoke: assert model NAME in `/v1/models` + idle-check unit test** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
 - [ ] **Check Jan's model registry for dangling references to the trashed gemma GGUF** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
 - [ ] **Gate the flm smoke probe on the corpse signature** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
@@ -109,6 +113,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Rogue-listener defense for :8848/:8849 while llama-rag is disabled** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
 
 ### services
+
 - [ ] **Paperless scheduled-task failure monitoring + encrypted-tag consistency alert** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Attic-class follow-ups from the exit-4 fix** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Docker image retention follow-through (post-rework)** → [docs/todo/services.md](docs/todo/services.md)
@@ -149,6 +154,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **browser-history registration-surface audit: verify `/auth/import` is unreachable unauthenticated on the deployed vHost path + sweep cqrs-htmx for OTHER user-creation paths bypassing `registrationMu`** → [docs/todo/services.md](docs/todo/services.md)
 
 ### upstream
+
 - [ ] **browser-history gate-count gap: read-model `Count()` = 0 despite existing users (found live 2026-09-18)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Upstream cqrs-htmx usermgmt: an ES-registered user was LOST across restarts (found live 2026-09-19)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **PMA discovery daemon starvation — upstream root cause** → [docs/todo/upstream.md](docs/todo/upstream.md)
@@ -191,11 +197,13 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Queue intake freshness rule: items asserting live system state ("X is re-enabled and ACTIVE") get a mandatory reconcile-against-the-relevant-AGENTS.md-section step before execution** → [docs/todo/upstream.md](docs/todo/upstream.md)
 
 ### security
+
 - [ ] **Create `docs/security/rotations.md` rotation ledger** → [docs/todo/security.md](docs/todo/security.md)
 - [ ] **ROOT: settle the `/run/secrets/sops-nix-age-key` ghost** → [docs/todo/security.md](docs/todo/security.md)
 - [ ] **Crush key-hygiene leftovers** → [docs/todo/security.md](docs/todo/security.md)
 
 ### pipeline
+
 - [ ] **Pre-deploy batch build of mkLarsPackages + cv + hermes inputs** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Known-outage classification in post-deploy-check** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Eval-time audits for unit-shape contracts (the cv-226 class)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
@@ -288,6 +296,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **docs/CONTRIBUTING.md convention: boot-scoped vs window-scoped journal assertions** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 
 ### pixel6
+
 - [ ] **Udev rule for Google USB vendor 18d1 (adb access)** → [docs/todo/pixel6.md](docs/todo/pixel6.md)
 - [ ] **Enrich `universal-call-recorder/index.csv` with call-log contact names** → [docs/todo/pixel6.md](docs/todo/pixel6.md)
 - [ ] **SHA256SUMS for Signal + WhatsApp + Cube ACR sets** → [docs/todo/pixel6.md](docs/todo/pixel6.md)
@@ -308,17 +317,17 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 
 ## Libraries
 
-| Library | Owns |
-| --- | --- |
-| [docs/todo/storage.md](docs/todo/storage.md) | BTRFS, btrbk + pool backups, /data repair, Samsung hot-DB tier, buildcache, offsite Borg, ClickHouse XFS |
-| [docs/todo/stability.md](docs/todo/stability.md) | freezes, memory-guard + sev1, PSI/IO storms, boot resilience, journald/oomd, USB/NIC hardware |
-| [docs/todo/monitoring.md](docs/todo/monitoring.md) | Gatus, SigNoz, textfile collectors, system-health, alert routing (cross-service) |
-| [docs/todo/ai-stack.md](docs/todo/ai-stack.md) | FastFlowLM, llama-rag/llama.cpp, ollama, GPU/ROCm, RAG consumers, whisper |
-| [docs/todo/services.md](docs/todo/services.md) | per-service debt + go-lives (paperless, hermes, forgejo, miniflux, …) |
-| [docs/todo/upstream.md](docs/todo/upstream.md) | LarsArtmann Go-ecosystem chains, nixpkgs/HM/third-party contributions, go-taskqueue |
-| [docs/todo/security.md](docs/todo/security.md) | key rotation, secrets/sops, gitleaks policy, leak residues |
-| [docs/todo/pipeline.md](docs/todo/pipeline.md) | deploy.sh, pre/post-deploy checks, flake checks + eval audits, CI, repo/docs hygiene, queue conventions |
-| [docs/todo/desktop.md](docs/todo/desktop.md) | niri, DMS/Quickshell, Qt, audio, shell UX, Signal |
-| [docs/todo/pixel6.md](docs/todo/pixel6.md) | Pixel 6 recovery → media-archive project |
+| Library                                            | Owns                                                                                                     |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| [docs/todo/storage.md](docs/todo/storage.md)       | BTRFS, btrbk + pool backups, /data repair, Samsung hot-DB tier, buildcache, offsite Borg, ClickHouse XFS |
+| [docs/todo/stability.md](docs/todo/stability.md)   | freezes, memory-guard + sev1, PSI/IO storms, boot resilience, journald/oomd, USB/NIC hardware            |
+| [docs/todo/monitoring.md](docs/todo/monitoring.md) | Gatus, SigNoz, textfile collectors, system-health, alert routing (cross-service)                         |
+| [docs/todo/ai-stack.md](docs/todo/ai-stack.md)     | FastFlowLM, llama-rag/llama.cpp, ollama, GPU/ROCm, RAG consumers, whisper                                |
+| [docs/todo/services.md](docs/todo/services.md)     | per-service debt + go-lives (paperless, hermes, forgejo, miniflux, …)                                    |
+| [docs/todo/upstream.md](docs/todo/upstream.md)     | LarsArtmann Go-ecosystem chains, nixpkgs/HM/third-party contributions, go-taskqueue                      |
+| [docs/todo/security.md](docs/todo/security.md)     | key rotation, secrets/sops, gitleaks policy, leak residues                                               |
+| [docs/todo/pipeline.md](docs/todo/pipeline.md)     | deploy.sh, pre/post-deploy checks, flake checks + eval audits, CI, repo/docs hygiene, queue conventions  |
+| [docs/todo/desktop.md](docs/todo/desktop.md)       | niri, DMS/Quickshell, Qt, audio, shell UX, Signal                                                        |
+| [docs/todo/pixel6.md](docs/todo/pixel6.md)         | Pixel 6 recovery → media-archive project                                                                 |
 
 _Completed work: [CHANGELOG.md](./CHANGELOG.md). Long-term ideas: [ROADMAP.md](./ROADMAP.md)._

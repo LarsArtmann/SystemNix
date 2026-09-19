@@ -10,15 +10,15 @@
 
 Reticulum is a **cryptography-first networking stack** for building local and wide-area mesh networks over heterogeneous physical media. It provides:
 
-| Feature | Detail |
-|---------|--------|
-| **Encryption** | E2E encrypted by default — X25519 ECDH + Ed25519 signatures, AES-256-CBC, HMAC-SHA256 |
-| **Identity** | Self-sovereign 512-bit Curve25519 keysets — no PKI, no central authority |
-| **Routing** | Self-configuring multi-hop routing across heterogeneous carriers |
-| **Media** | LoRa, packet radio (AX.25/KISS), WiFi, Ethernet, TCP/UDP, serial, custom via pipes |
-| **Latency tolerance** | Designed for links from 150 bps to 500 Mbps — handles extreme delay gracefully |
-| **Link efficiency** | Encrypted link setup in 3 packets / 297 bytes; keepalive ≈ 0.44 bits/sec |
-| **License** | Permissive with ethical restrictions (no weapon systems, no AI/ML training) |
+| Feature               | Detail                                                                                |
+| --------------------- | ------------------------------------------------------------------------------------- |
+| **Encryption**        | E2E encrypted by default — X25519 ECDH + Ed25519 signatures, AES-256-CBC, HMAC-SHA256 |
+| **Identity**          | Self-sovereign 512-bit Curve25519 keysets — no PKI, no central authority              |
+| **Routing**           | Self-configuring multi-hop routing across heterogeneous carriers                      |
+| **Media**             | LoRa, packet radio (AX.25/KISS), WiFi, Ethernet, TCP/UDP, serial, custom via pipes    |
+| **Latency tolerance** | Designed for links from 150 bps to 500 Mbps — handles extreme delay gracefully        |
+| **Link efficiency**   | Encrypted link setup in 3 packets / 297 bytes; keepalive ≈ 0.44 bits/sec              |
+| **License**           | Permissive with ethical restrictions (no weapon systems, no AI/ML training)           |
 
 ### Protocol Stack
 
@@ -41,34 +41,34 @@ Reticulum is **not IP-based**. It runs its own protocol stack beneath the applic
 
 ### Ecosystem Applications
 
-| Application | Description |
-|-------------|-------------|
-| **Nomad Network** | Terminal-based mesh comms — encrypted pages, messaging, file transfer |
-| **Sideband** | GUI LXMF client (Android/Linux/macOS) — messages, files, voice, telemetry |
-| **LXMF** | Delay-tolerant message transfer protocol (like email for mesh) |
-| **LXST** | Real-time audio transport for voice calls |
-| **MeshChat** | Web-based LXMF client — images, voice, files |
-| **RNsh** | Remote shell over Reticulum |
-| **RNS FileSync** | File synchronization over mesh |
-| **RNS Map** | Network topology visualization (2D + 3D) |
-| **Reticulum Telephone** | Voice communication over Reticulum |
+| Application             | Description                                                               |
+| ----------------------- | ------------------------------------------------------------------------- |
+| **Nomad Network**       | Terminal-based mesh comms — encrypted pages, messaging, file transfer     |
+| **Sideband**            | GUI LXMF client (Android/Linux/macOS) — messages, files, voice, telemetry |
+| **LXMF**                | Delay-tolerant message transfer protocol (like email for mesh)            |
+| **LXST**                | Real-time audio transport for voice calls                                 |
+| **MeshChat**            | Web-based LXMF client — images, voice, files                              |
+| **RNsh**                | Remote shell over Reticulum                                               |
+| **RNS FileSync**        | File synchronization over mesh                                            |
+| **RNS Map**             | Network topology visualization (2D + 3D)                                  |
+| **Reticulum Telephone** | Voice communication over Reticulum                                        |
 
 ---
 
 ## 2. Evo-x2 Current Networking Stack
 
-| Layer | Current Setup |
-|-------|---------------|
-| **Physical** | Realtek 2.5G Ethernet (`r8125`), MediaTek WiFi MT7925 (loaded, **not configured**) |
-| **IP** | Static `192.168.1.150/24`, gateway `192.168.1.1`, IPv6 enabled |
-| **DNS** | Unbound local resolver (DNS-over-TLS → Quad9, Cloudflare fallback), custom blocklist (2.5M+ domains), `.home.lan` local records |
-| **Reverse Proxy** | Caddy with TLS (via sops-managed certs) — all services at `*.home.lan` |
-| **Services** | Gitea, Immich, SigNoz, Grafana, Homepage, TaskChampion, Authelia SSO, Photomap |
-| **Remote Access** | SSH (hardened, key-only via nix-ssh-config), wireguard-tools installed |
-| **Secrets** | sops-nix (age-encrypted with SSH host key) |
-| **Firewall** | TCP 22/53/80/443, UDP 53 |
-| **WiFi** | Kernel module loaded (`mt7925e`) but **no AP, mesh, or client config** |
-| **Radio/LoRa** | **None** |
+| Layer             | Current Setup                                                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Physical**      | Realtek 2.5G Ethernet (`r8125`), MediaTek WiFi MT7925 (loaded, **not configured**)                                              |
+| **IP**            | Static `192.168.1.150/24`, gateway `192.168.1.1`, IPv6 enabled                                                                  |
+| **DNS**           | Unbound local resolver (DNS-over-TLS → Quad9, Cloudflare fallback), custom blocklist (2.5M+ domains), `.home.lan` local records |
+| **Reverse Proxy** | Caddy with TLS (via sops-managed certs) — all services at `*.home.lan`                                                          |
+| **Services**      | Gitea, Immich, SigNoz, Grafana, Homepage, TaskChampion, Authelia SSO, Photomap                                                  |
+| **Remote Access** | SSH (hardened, key-only via nix-ssh-config), wireguard-tools installed                                                          |
+| **Secrets**       | sops-nix (age-encrypted with SSH host key)                                                                                      |
+| **Firewall**      | TCP 22/53/80/443, UDP 53                                                                                                        |
+| **WiFi**          | Kernel module loaded (`mt7925e`) but **no AP, mesh, or client config**                                                          |
+| **Radio/LoRa**    | **None**                                                                                                                        |
 
 ---
 
@@ -79,6 +79,7 @@ Reticulum is **not IP-based**. It runs its own protocol stack beneath the applic
 Reticulum's `AutoInterface` uses IPv6 multicast for peer discovery and UDP for transport. It works over any Ethernet/WiFi switching medium without IP infrastructure.
 
 **Requirements:**
+
 - Link-local IPv6 support (enabled by default on NixOS)
 - UDP ports 29716 and 42671 open
 - At least one switching medium (switch, AP, direct cable)
@@ -94,12 +95,14 @@ Reticulum nodes can connect over TCP to form a global backbone. The public RNS t
 ### 3.3 WiFi Mesh
 
 The MT7925 WiFi card supports station mode but has no AP/mesh configuration. Reticulum could theoretically use `AutoInterface` over an ad-hoc WiFi network, but this requires:
+
 - Configuring the WiFi card in IBSS/ad-hoc mode or AP mode
 - Other nodes also on the same WiFi segment
 
 ### 3.4 LoRa Radio
 
 Reticulum's primary designed-for use case. Requires hardware:
+
 - **RNode** LoRa transceiver (~$30-50 USB dongle, or DIY with ESP32 + SX1276/SX1262)
 - Frequencies: 433 MHz (EU), 868/915 MHz (US)
 - Range: 5-15 km line-of-sight, longer with directional antennas
@@ -117,31 +120,31 @@ Reticulum's primary designed-for use case. Requires hardware:
 
 Evo-x2 is a **wired home server/workstation** behind a home router with full internet access. Every capability Reticulum offers is already served by existing infrastructure:
 
-| Reticulum Capability | Already Covered By |
-|---------------------|-------------------|
-| Encrypted messaging | Element, Slack, email |
-| File sync/transfer | Immich, Gitea, Syncthing potential |
-| Remote access | SSH + Caddy TLS reverse proxy |
-| Service discovery | Unbound `.home.lan` DNS records + Homepage dashboard |
-| Encrypted transport | WireGuard, TLS everywhere via Caddy |
-| Voice communication | Discord, Google Meet, etc. |
+| Reticulum Capability | Already Covered By                                   |
+| -------------------- | ---------------------------------------------------- |
+| Encrypted messaging  | Element, Slack, email                                |
+| File sync/transfer   | Immich, Gitea, Syncthing potential                   |
+| Remote access        | SSH + Caddy TLS reverse proxy                        |
+| Service discovery    | Unbound `.home.lan` DNS records + Homepage dashboard |
+| Encrypted transport  | WireGuard, TLS everywhere via Caddy                  |
+| Voice communication  | Discord, Google Meet, etc.                           |
 
 ### Why Not Add It Anyway?
 
-| Concern | Detail |
-|---------|--------|
-| **No radio hardware** | The killer feature (off-grid mesh over LoRa) requires USB dongles you don't own |
-| **IP-only is redundant** | Without radio, Reticulum is a TCP/UDP overlay — your existing stack does this better and faster |
-| **Single node mesh** | A mesh network of one node is pointless. No local peers to discover |
-| **Not in nixpkgs** | No official NixOS package. Community flake exists but adds maintenance burden |
-| **No security audit** | Reticulum hasn't had external security review. Running alongside sops secrets needs careful sandboxing |
-| **WiFi not configured** | Your WiFi card has no AP/mesh config. Enabling it for Reticulum alone is marginal value |
-| **Performance ceiling** | 500 Mbps max — your 2.5G Ethernet already exceeds this |
-| **License concerns** | Ethical restrictions clause is unusual; protocol itself is public domain but implementation isn't standard FOSS |
+| Concern                  | Detail                                                                                                          |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| **No radio hardware**    | The killer feature (off-grid mesh over LoRa) requires USB dongles you don't own                                 |
+| **IP-only is redundant** | Without radio, Reticulum is a TCP/UDP overlay — your existing stack does this better and faster                 |
+| **Single node mesh**     | A mesh network of one node is pointless. No local peers to discover                                             |
+| **Not in nixpkgs**       | No official NixOS package. Community flake exists but adds maintenance burden                                   |
+| **No security audit**    | Reticulum hasn't had external security review. Running alongside sops secrets needs careful sandboxing          |
+| **WiFi not configured**  | Your WiFi card has no AP/mesh config. Enabling it for Reticulum alone is marginal value                         |
+| **Performance ceiling**  | 500 Mbps max — your 2.5G Ethernet already exceeds this                                                          |
+| **License concerns**     | Ethical restrictions clause is unusual; protocol itself is public domain but implementation isn't standard FOSS |
 
 ---
 
-## 5. When Reticulum *Would* Make Sense
+## 5. When Reticulum _Would_ Make Sense
 
 ### Scenario A: LoRa Community Mesh Network
 
@@ -156,6 +159,7 @@ Evo-x2 is a **wired home server/workstation** behind a home router with full int
 ```
 
 **What you'd gain:**
+
 - Off-grid encrypted messaging across your neighborhood
 - Independent communication layer that works without internet
 - Nomad Network "darknet" pages served from Evo-x2
@@ -183,19 +187,20 @@ This would complement the existing monitoring stack (SigNoz, Grafana) with off-g
 
 ## 6. NixOS Packaging Status
 
-| Component | In nixpkgs? | Notes |
-|-----------|-------------|-------|
-| `rns` (Reticulum) | No | Python package, installable via `pip install rns` |
-| `lxmf` | Partially | `python311Packages.lxmf` exists in nixpkgs |
-| `nomadnet` | No | Terminal mesh client |
-| `sideband` | No | GUI LXMF client |
-| `meshchat` | No | Web-based LXMF client |
+| Component         | In nixpkgs? | Notes                                             |
+| ----------------- | ----------- | ------------------------------------------------- |
+| `rns` (Reticulum) | No          | Python package, installable via `pip install rns` |
+| `lxmf`            | Partially   | `python311Packages.lxmf` exists in nixpkgs        |
+| `nomadnet`        | No          | Terminal mesh client                              |
+| `sideband`        | No          | GUI LXMF client                                   |
+| `meshchat`        | No          | Web-based LXMF client                             |
 
 ### Community Flake
 
 A comprehensive community NixOS flake exists: [codeberg.org/adingbatponder/reticulum_nixos_flake](https://codeberg.org/adingbatponder/reticulum_nixos_flake)
 
 It provides:
+
 - Complete Reticulum stack (RNS, LXMF, NomadNet, MeshChat, MeshChat Desktop)
 - NixOS modules for service integration
 - Network monitoring (Suricata IDS, Zeek)
@@ -203,6 +208,7 @@ It provides:
 - flake-parts compatible architecture
 
 **Integration into SystemNix would be:**
+
 1. Add flake input to `flake.nix`
 2. Import the `reticulum-integration` NixOS module
 3. Open firewall ports 29716/42671 UDP
@@ -239,15 +245,15 @@ All packets: AES-256-CBC + HMAC-SHA256 + HKDF key derivation
 
 ### Interface Types
 
-| Interface | Use Case | Bandwidth |
-|-----------|----------|-----------|
-| `AutoInterface` | LAN auto-discovery (WiFi/Ethernet) | Up to 500 Mbps |
-| `TCPClientInterface` | Connect to remote transport node | Medium |
-| `TCPServerInterface` | Serve as transport node | Medium |
-| `RNodeInterface` | LoRa radio via RNode hardware | 150 bps – 50 kbps |
-| `SerialInterface` | Any serial-port device | Variable |
-| `KISSInterface` | AX.25 packet radio TNCs | Variable |
-| `UDPInterface` | Local broadcast | Medium |
+| Interface            | Use Case                           | Bandwidth         |
+| -------------------- | ---------------------------------- | ----------------- |
+| `AutoInterface`      | LAN auto-discovery (WiFi/Ethernet) | Up to 500 Mbps    |
+| `TCPClientInterface` | Connect to remote transport node   | Medium            |
+| `TCPServerInterface` | Serve as transport node            | Medium            |
+| `RNodeInterface`     | LoRa radio via RNode hardware      | 150 bps – 50 kbps |
+| `SerialInterface`    | Any serial-port device             | Variable          |
+| `KISSInterface`      | AX.25 packet radio TNCs            | Variable          |
+| `UDPInterface`       | Local broadcast                    | Medium            |
 
 ### Configuration Example (TCP Backbone + AutoInterface)
 
@@ -316,16 +322,16 @@ Then run `nomadnet` to browse the RNS network and send/receive LXMF messages.
 
 ## 9. References
 
-| Resource | URL |
-|----------|-----|
-| Reticulum Website | https://reticulum.network/ |
-| Reference Implementation | https://github.com/markqvist/Reticulum |
-| Manual | https://markqvist.github.io/Reticulum/manual/ |
-| Interface Types | https://markqvist.github.io/Reticulum/manual/interfaces.html |
-| Cryptographic Stack | https://reticulum.network/crypto.html |
-| Hardware Guide | https://reticulum.network/hardware.html |
-| Community NixOS Flake | https://codeberg.org/adingbatponder/reticulum_nixos_flake |
-| Nomad Network | https://github.com/markqvist/NomadNet |
-| Sideband (GUI Client) | https://unsigned.io/sideband/ |
-| Public Node Directory | https://directory.rns.recipes/ |
-| Network Map | https://rmap.world/ |
+| Resource                 | URL                                                          |
+| ------------------------ | ------------------------------------------------------------ |
+| Reticulum Website        | https://reticulum.network/                                   |
+| Reference Implementation | https://github.com/markqvist/Reticulum                       |
+| Manual                   | https://markqvist.github.io/Reticulum/manual/                |
+| Interface Types          | https://markqvist.github.io/Reticulum/manual/interfaces.html |
+| Cryptographic Stack      | https://reticulum.network/crypto.html                        |
+| Hardware Guide           | https://reticulum.network/hardware.html                      |
+| Community NixOS Flake    | https://codeberg.org/adingbatponder/reticulum_nixos_flake    |
+| Nomad Network            | https://github.com/markqvist/NomadNet                        |
+| Sideband (GUI Client)    | https://unsigned.io/sideband/                                |
+| Public Node Directory    | https://directory.rns.recipes/                               |
+| Network Map              | https://rmap.world/                                          |

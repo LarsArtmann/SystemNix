@@ -25,7 +25,6 @@ import os
 import re
 import sqlite3
 import struct
-import subprocess
 import sys
 import time
 import urllib.error
@@ -82,6 +81,7 @@ def cmd_init(root):
     con = connect(root)
     con.execute("DELETE FROM calls")
     import csv
+
     rows = 0
     with open(path, newline="") as fh:
         for r in csv.DictReader(fh, delimiter=delim):
@@ -90,9 +90,15 @@ def cmd_init(root):
             cdir = "".join(c for c in cdir if c.isprintable() and c not in "\n\r\t/") or "Unknown"
             con.execute(
                 "INSERT OR REPLACE INTO calls VALUES (?,?,?,?,?,?)",
-                (r["filename"], stem, cdir, r["date_time_utc"],
-                 float(r["duration_s"] or 0),
-                 f"../opus/{cdir}/{r['date_time_utc'][:4]}/{stem}.opus"))
+                (
+                    r["filename"],
+                    stem,
+                    cdir,
+                    r["date_time_utc"],
+                    float(r["duration_s"] or 0),
+                    f"../opus/{cdir}/{r['date_time_utc'][:4]}/{stem}.opus",
+                ),
+            )
             rows += 1
     con.commit()
     n = con.execute("SELECT count(*) FROM seg_fts").fetchone()[0]
@@ -109,14 +115,16 @@ def parse_srt(text):
     for line in text.replace("\r\n", "\n").split("\n") + [""]:
         if line.strip() == "":
             if block:
-                times = re.search(r"(\d+):(\d+):(\d+)[,.](\d+)\s*-->\s*(\d+):(\d+):(\d+)[,.](\d+)",
-                                  "\n".join(block))
+                times = re.search(r"(\d+):(\d+):(\d+)[,.](\d+)\s*-->\s*(\d+):(\d+):(\d+)[,.](\d+)", "\n".join(block))
                 if times:
                     g = [int(x) for x in times.groups()]
                     start = g[0] * 3600 + g[1] * 60 + g[2] + g[3] / 1000
                     end = g[4] * 3600 + g[5] * 60 + g[6] + g[7] / 1000
-                    body = " ".join(l.strip() for l in block[1:] if l.strip() and "-->" not in l
-                                    and not re.fullmatch(r"\d+", l.strip()))
+                    body = " ".join(
+                        l.strip()
+                        for l in block[1:]
+                        if l.strip() and "-->" not in l and not re.fullmatch(r"\d+", l.strip())
+                    )
                     if body:
                         cues.append((start, end, body))
                 block = []
@@ -208,8 +216,9 @@ def cmd_import(root, paths, force=False):
             skipped.append(os.path.basename(f))
             continue
         con.execute("DELETE FROM seg_fts WHERE call_id=?", (call_id,))
-        con.executemany("INSERT INTO seg_fts(text, call_id, start_s) VALUES (?,?,?)",
-                        [(t, call_id, s) for s, _e, t in cues])
+        con.executemany(
+            "INSERT INTO seg_fts(text, call_id, start_s) VALUES (?,?,?)", [(t, call_id, s) for s, _e, t in cues]
+        )
         con.execute("DELETE FROM call_vec WHERE stem=?", (stem,))
         imported += 1
     con.commit()
@@ -217,11 +226,9 @@ def cmd_import(root, paths, force=False):
     calls = con.execute("SELECT count(DISTINCT call_id) FROM seg_fts").fetchone()[0]
     print(f"imported {imported} transcripts ({calls} calls, {total} segments)")
     if skipped:
-        print(f"kept existing transcript for {len(skipped)} calls (use --force to replace): "
-              + ", ".join(skipped[:5]))
+        print(f"kept existing transcript for {len(skipped)} calls (use --force to replace): " + ", ".join(skipped[:5]))
     if orphaned:
-        print(f"WARNING: {len(orphaned)} transcripts match no known call (run init first?): "
-              + ", ".join(orphaned[:5]))
+        print(f"WARNING: {len(orphaned)} transcripts match no known call (run init first?): " + ", ".join(orphaned[:5]))
 
 
 # ---------------------------------------------------------------- embed
@@ -231,7 +238,8 @@ def embed_request(texts):
     req = urllib.request.Request(
         f"http://127.0.0.1:{EMBED_PORT}/v1/embeddings",
         data=json.dumps({"model": EMBED_MODEL, "input": texts}).encode(),
-        headers={"Content-Type": "application/json"})
+        headers={"Content-Type": "application/json"},
+    )
     with urllib.request.urlopen(req, timeout=120) as resp:
         data = json.load(resp)
     return [d["embedding"] for d in sorted(data["data"], key=lambda d: d["index"])]
@@ -239,28 +247,44 @@ def embed_request(texts):
 
 def cmd_embed(root, batch=16):
     con = connect(root)
-    todo = [r[0] for r in con.execute(
-        "SELECT c.stem FROM calls c LEFT JOIN call_vec v ON c.stem=v.stem "
-        "WHERE v.stem IS NULL AND EXISTS (SELECT 1 FROM seg_fts f WHERE f.call_id=c.rowid)")]
+    todo = [
+        r[0]
+        for r in con.execute(
+            "SELECT c.stem FROM calls c LEFT JOIN call_vec v ON c.stem=v.stem "
+            "WHERE v.stem IS NULL AND EXISTS (SELECT 1 FROM seg_fts f WHERE f.call_id=c.rowid)"
+        )
+    ]
     if not todo:
         print("nothing to embed (all transcribed calls already embedded, or no transcripts)")
         return
     print(f"embedding {len(todo)} calls via :{EMBED_PORT} ({EMBED_MODEL})")
     done = 0
     for i in range(0, len(todo), batch):
-        chunk = todo[i:i + batch]
-        texts = ["\n".join(r[0] for r in con.execute(
-            "SELECT text FROM seg_fts WHERE call_id=(SELECT rowid FROM calls WHERE stem=?) "
-            "ORDER BY start_s", (stem,)))[:12000] for stem in chunk]
+        chunk = todo[i : i + batch]
+        texts = [
+            "\n".join(
+                r[0]
+                for r in con.execute(
+                    "SELECT text FROM seg_fts WHERE call_id=(SELECT rowid FROM calls WHERE stem=?) ORDER BY start_s",
+                    (stem,),
+                )
+            )[:12000]
+            for stem in chunk
+        ]
         try:
             vecs = embed_request(texts)
         except (urllib.error.URLError, OSError, json.JSONDecodeError) as e:
-            print(f"embeddings unavailable ({e}) — leaving {len(todo) - done} calls unembedded; "
-                  "lexical search still works", file=sys.stderr)
+            print(
+                f"embeddings unavailable ({e}) — leaving {len(todo) - done} calls unembedded; "
+                "lexical search still works",
+                file=sys.stderr,
+            )
             sys.exit(2)
         for stem, vec in zip(chunk, vecs):
-            con.execute("INSERT OR REPLACE INTO call_vec VALUES (?,?,?,?)",
-                        (stem, struct.pack(f"{len(vec)}f", *vec), len(vec), EMBED_MODEL, now()))
+            con.execute(
+                "INSERT OR REPLACE INTO call_vec VALUES (?,?,?,?)",
+                (stem, struct.pack(f"{len(vec)}f", *vec), len(vec), EMBED_MODEL, now()),
+            )
         done += len(chunk)
         if done % 50 == 0 or done == len(todo):
             print(f"   {done}/{len(todo)}")
@@ -292,15 +316,18 @@ def cmd_ask(root, query, n, semantic):
             " seg_fts.start_s, snippet(seg_fts, 0, '»', '«', '…', 14), calls.filename"
             " FROM seg_fts JOIN calls ON calls.rowid = seg_fts.call_id"
             " WHERE seg_fts MATCH ? ORDER BY calls.ts_utc, seg_fts.start_s LIMIT ?",
-            (ftsq, n)).fetchall()
+            (ftsq, n),
+        ).fetchall()
     except sqlite3.OperationalError as e:
         sys.exit(f"FTS query failed ({e}); try simpler terms")
 
     if not rows:
         print(f"no transcript mentions '{query}' (lexical).")
-        print("transcribed coverage: "
-              f"{con.execute('SELECT count(DISTINCT call_id) FROM seg_fts').fetchone()[0]} calls "
-              f"of {con.execute('SELECT count(*) FROM calls').fetchone()[0]} indexed")
+        print(
+            "transcribed coverage: "
+            f"{con.execute('SELECT count(DISTINCT call_id) FROM seg_fts').fetchone()[0]} calls "
+            f"of {con.execute('SELECT count(*) FROM calls').fetchone()[0]} indexed"
+        )
         return
 
     def mmss(s):
@@ -323,15 +350,13 @@ def cmd_ask(root, query, n, semantic):
         print(f"semantic layer unavailable ({e}) — lexical answer stands", file=sys.stderr)
         return
     seen = {r[1] for r in rows}
-    sem = [(cosine(v, qvec, d), stem) for stem, v, d in
-           con.execute("SELECT stem, vec, dim FROM call_vec")]
+    sem = [(cosine(v, qvec, d), stem) for stem, v, d in con.execute("SELECT stem, vec, dim FROM call_vec")]
     sem.sort(reverse=True)
     extra = [(score, stem) for score, stem in sem[:n] if stem not in seen]
     if extra:
         print("\nsemantic call-level matches (no literal term hit):")
         for score, stem in extra[:5]:
-            call = con.execute("SELECT contact, ts_utc, audio_rel FROM calls WHERE stem=?",
-                               (stem,)).fetchone()
+            call = con.execute("SELECT contact, ts_utc, audio_rel FROM calls WHERE stem=?", (stem,)).fetchone()
             print(f"  {score:.3f}  {call[1]}  {call[0]:28.28} {call[2]}")
 
 
@@ -344,13 +369,15 @@ def cmd_stats(root):
     hours = con.execute("SELECT sum(duration_s)/3600.0 FROM calls").fetchone()[0] or 0
     print(f"calls indexed: {calls} ({hours:.1f} h audio)")
     print(f"transcripts:   {transcribed} calls, {segs} segments")
-    print(f"embeddings:    {embedded} calls (semantic layer ready)" if embedded
-          else "embeddings:    none yet (optional `embed` step)")
+    print(
+        f"embeddings:    {embedded} calls (semantic layer ready)"
+        if embedded
+        else "embeddings:    none yet (optional `embed` step)"
+    )
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__,
-                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default=os.environ.get("UCR_ROOT", ROOT_DEFAULT))
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("init")
@@ -369,8 +396,7 @@ def main():
     if args.cmd == "init":
         cmd_init(args.root)
     elif args.cmd == "import":
-        cmd_import(args.root, args.paths or [os.path.join(args.root, "derived", "transcripts")],
-                   args.force)
+        cmd_import(args.root, args.paths or [os.path.join(args.root, "derived", "transcripts")], args.force)
     elif args.cmd == "embed":
         cmd_embed(args.root, args.batch)
     elif args.cmd == "ask":

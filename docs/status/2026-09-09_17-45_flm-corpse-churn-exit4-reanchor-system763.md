@@ -9,12 +9,12 @@ Session 4 of the Samsung-migration deploy-anchor arc. Continues
 The user's paste showed the 16:20 deploy (carrying the parallel session's tq
 pool + cv GCP-portal work) exit-4'd on `fastflowlm.service`:
 
-| Anchor        | Path                                              |
-| ------------- | ------------------------------------------------- |
-| running       | `d20lfcg1…` (tq/cv era, NOT profiled)            |
-| profile       | system-762 `pgvbfp20…`                            |
-| boot default  | `nixos-04e61773…` → 762 (no tq/cv)                |
-| booted-system | `p0ccbqj5…` (Sep-8 flip gen)                      |
+| Anchor        | Path                                  |
+| ------------- | ------------------------------------- |
+| running       | `d20lfcg1…` (tq/cv era, NOT profiled) |
+| profile       | system-762 `pgvbfp20…`                |
+| boot default  | `nixos-04e61773…` → 762 (no tq/cv)    |
+| booted-system | `p0ccbqj5…` (Sep-8 flip gen)          |
 
 A reboot at that point would have silently dropped the tq/cv changes from
 the running system.
