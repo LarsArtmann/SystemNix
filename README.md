@@ -117,6 +117,7 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **SearXNG**         | 8889             | `search.home.lan`    | Privacy metasearch engine (70+ engines, no tracking, POST-only, DuckDuckGo icons)                                |
 | **FastFlowLM**      | 52625            | —                    | NPU LLM server (Qwen3.6 MoE, socket-activated, OpenAI-compatible)                                                |
 | **llama-rag**       | 8848, 8849       | —                    | GPU embeddings (bge-m3) + reranking (bge-reranker-v2-m3) for RAG                                                 |
+| **llama-vlm**       | 8127, 8128       | —                    | CPU socket-activated vision servers (Gemma-4-E4B image reasoning + NSFWCaption-v3 Qwen3-VL-8B captioning, idle-stop) |
 | **systemd-graph**   | 8847             | `graph.home.lan`     | Live systemd dependency graph (LAN-only)                                                                         |
 | **timer-monitor**   | —                | `timers.home.lan`    | Read-only systemd services+timers audit (LAN-only)                                                               |
 

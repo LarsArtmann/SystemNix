@@ -71,9 +71,22 @@ _: {
               };
             });
           description = "Cache directories to relocate onto the hot disk.";
-          default.nix = {
-            subvol = "users/${primaryUser}/cache/nix";
-            mountPoint = "/home/${primaryUser}/.cache/nix";
+          default = {
+            nix = {
+              subvol = "users/${primaryUser}/cache/nix";
+              mountPoint = "/home/${primaryUser}/.cache/nix";
+            };
+            # BuildFlow's env_guard GOCACHE fallback (userCacheDir/go-build)
+            # — the go-build cache the fish guard layering leaves on the QLC
+            # root when /mnt/buildcache dies mid-session (the primary
+            # GOCACHE=/mnt/buildcache/go-build and the fish login-time
+            # fallback /tmp/bc-fallback tmpfs both stay as designed; this
+            # only moves the ~/.cache one). Existing dir is an empty stub —
+            # no pre-tlc move needed.
+            go-build = {
+              subvol = "users/${primaryUser}/cache/go-build";
+              mountPoint = "/home/${primaryUser}/.cache/go-build";
+            };
           };
         };
       };

@@ -784,11 +784,11 @@
         "treefmt-nix": "treefmt-nix_4"
       },
       "locked": {
-        "lastModified": 1789749093,
-        "narHash": "sha256-54Dg/D+rg/mguUBAFHcIFmTs6my6hAZIV2VbyZD3Ybg=",
+        "lastModified": 1789819709,
+        "narHash": "sha256-2kgWZDkQznF1GELNGrCkXXt1MK0vkOm7u+LdgXAF3CM=",
         "ref": "master",
-        "rev": "76d7a017373e1662e46a81e1bac28c1add78ac68",
-        "revCount": 5200,
+        "rev": "a514dff68ab1e2662c04ea87b88090d275533c08",
+        "revCount": 5390,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
@@ -2499,11 +2499,11 @@
     "go-cqrs-lite_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1789748490,
-        "narHash": "sha256-4fd3GcHWkzuhkrMNMyRlw7daV1SD1FxO1DeRnANja6o=",
+        "lastModified": 1789772312,
+        "narHash": "sha256-ypI82nJMr9WizTnwAwgxKgjlqUlpkvM2jaiBy0gyZiw=",
         "ref": "master",
-        "rev": "cb383061e235a073d8feaded85a085cda9d99939",
-        "revCount": 6931,
+        "rev": "36d5fee80b9feb86a50807c78ea7e2ca573dafaa",
+        "revCount": 6969,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       },
@@ -4093,11 +4093,11 @@
         "treefmt-nix": "treefmt-nix_3"
       },
       "locked": {
-        "lastModified": 1789630646,
-        "narHash": "sha256-rCkNGhVw3bEgdoP+SgbRT/I21YNQRDq6X+Y4OQHOjXE=",
+        "lastModified": 1789736255,
+        "narHash": "sha256-O/5AY2LQnxMM/vDbuXZSrAVBFnX4IIXdU4qFR4UKBQE=",
         "ref": "master",
-        "rev": "19fc8e5986d59f57ff8780fcbc5623fb412c345f",
-        "revCount": 158,
+        "rev": "5574810e1580c04c414c92f611fa1ce67a53dae6",
+        "revCount": 161,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-nix-helpers"
       },

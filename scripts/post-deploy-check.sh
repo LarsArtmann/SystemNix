@@ -281,10 +281,19 @@ flm_enabled=false
 systemctl list-unit-files 'fastflowlm*' --no-legend 2>/dev/null | grep -q fastflowlm && flm_enabled=true
 
 if $flm_enabled; then
-  # Deliberate connection: re-arms the whole socket→proxy→backend chain.
-  # max-time 480: v1.0.2 weights are 21.6 GB (was 13.6) - worst-case cold load
-  # through the kernel backlog is now ~5 min.
-  if curl -s --compressed --max-time 480 -o /tmp/.smoke-flm "http://127.0.0.1:52625/v1/models" 2>/dev/null; then
+  # Corpse gate (2026-09-04/07/11 class): a wedged flm leaves an unreapable
+  # corpse holding :52626; every :52625 connection then re-requests a doomed
+  # <1s start (EADDRINUSE -> start-limit-hit) and re-pays a 21.6 GB
+  # cold-load attempt. Probe the machine-readable signal BEFORE connecting:
+  # the system-health textfile publishes unit state computed as root
+  # (post-deploy runs as a user, and journalctl for system units hangs in
+  # that context - rc=124, zero output). Max staleness is the collector's
+  # cadence (~2min); a corpse persists for hours, so that is fine.
+  flm_prom=/var/lib/prometheus-node-exporter/textfile_collectors/system_health.prom
+  if grep -q 'system_service_start_limit_hit{service="fastflowlm"} 1' "$flm_prom" 2>/dev/null \
+    || grep -q 'system_service_state_failed{service="fastflowlm"} 1' "$flm_prom" 2>/dev/null; then
+    report_fail "FastFlowLM - unit failed/start-limit-hit per system_health.prom (corpse class: connecting would re-pay a 21.6 GB cold load into a doomed start) - reboot is the only clean recovery; :52625 probe skipped"
+  elif curl -s --compressed --max-time 480 -o /tmp/.smoke-flm "http://127.0.0.1:52625/v1/models" 2>/dev/null; then
     # Assert the BOUND model id, not just a JSON envelope: a stale/wrong model
     # file (the v1.0.2 re-pull incident: old weights hash-mismatch the new
     # manifest) still answers with a "data" array. Expected id is derived from
