@@ -92,171 +92,164 @@ _: {
         };
       };
 
-      mkInstance =
-        name: s:
-        let
-          socketUnit = "llama-vlm-${name}";
-          bridgeTemplate = "llama-vlm-${name}@";
-          backendUnit = "llama-vlm-${name}";
-          idleUnit = "llama-vlm-${name}-idle";
-
-          bridgeConn = pkgs.writeShellApplication {
-            name = "llama-vlm-${name}-proxy-conn";
-            runtimeInputs = [ pkgs.coreutils ];
-            text = ''
-              host="127.0.0.1"
-              port="${toString s.backendPort}"
-              deadline=$((SECONDS + 300))
-              until (exec 3<>"/dev/tcp/$host/$port") 2>/dev/null; do
-                if [ "$SECONDS" -ge "$deadline" ]; then
-                  echo "llama-vlm-${name}-proxy: backend $host:$port not reachable within 300 s" >&2
-                  exit 1
-                fi
-                sleep 1
-              done
-              exec ${lib.getExe' pkgs.socat "socat"} - "TCP:$host:$port"
-            '';
+      mkSocket =
+        name: s: {
+          description = "llama.cpp VLM server '${"'"}${"name"}' (public socket)";
+          wantedBy = [ "sockets.target" ];
+          listenStreams = [ "127.0.0.1:${"toString s.port"}" ];
+          socketConfig = {
+            Accept = true;
+            # llama-server default n_slots=4; cap concurrent bridges below it.
+            MaxConnections = 4;
           };
-
-          idleCheck = pkgs.writeShellApplication {
-            name = "llama-vlm-${name}-idle-check";
-            runtimeInputs = [
-              pkgs.coreutils
-              pkgs.gnugrep
-              pkgs.systemd
-            ];
-            text = ''
-              if ! systemctl is-active --quiet ${backendUnit}.service; then
-                exit 0
-              fi
-              # Live per-connection bridges = active traffic; also the only
-              # reliable cold-load guard (the backend logs no "processing
-              # task" until the first request is accepted).
-              if systemctl list-units '${bridgeTemplate}*.service' --state=active --no-legend 2>/dev/null | grep -q .; then
-                exit 0
-              fi
-              now_us=$(awk '{printf "%d", $1 * 1000000}' /proc/uptime)
-              active_us=$(systemctl show ${backendUnit}.service -p ActiveEnterTimestampMonotonic --value) || true
-              if [ -z "$active_us" ] || [ $((now_us - active_us)) -lt 600000000 ]; then
-                exit 0
-              fi
-              if ${lib.getExe' pkgs.systemd "journalctl"} -u ${backendUnit}.service --since "${s.keepAlive} ago" --grep "processing task" -n 1 --output cat 2>/dev/null | grep -q .; then
-                exit 0
-              fi
-              systemctl stop '${bridgeTemplate}*.service' ${backendUnit}.service
-            '';
-          };
-
-          execStart = [
-            (lib.getExe' cfg.package "llama-server")
-            "-m"
-            "${s.modelPath}"
-            "--port"
-            (toString s.backendPort)
-            "-c"
-            (toString s.context)
-          ]
-          ++ lib.optionals (s.mmprojPath != null) [
-            "--mmproj"
-            "${s.mmprojPath}"
-          ]
-          ++ s.extraArgs;
-        in
-        {
-          systemd.sockets.${socketUnit} = {
-            description = "llama.cpp VLM server '${name}' (public socket)";
-            wantedBy = [ "sockets.target" ];
-            listenStreams = [ "127.0.0.1:${toString s.port}" ];
-            socketConfig = {
-              Accept = true;
-              # llama-server default n_slots=4; cap concurrent bridges below it.
-              MaxConnections = 4;
-            };
-          };
-
-          systemd.services."${bridgeTemplate}" = {
-            description = "llama-vlm ${name} per-connection proxy: client fd ↔ backend TCP";
-            after = [ "${backendUnit}.service" ];
-            wants = [ "${backendUnit}.service" ];
-            serviceConfig = lib.mkMerge [
-              {
-                Type = "exec";
-                ExecStart = lib.getExe bridgeConn;
-                StandardInput = "socket";
-                StandardOutput = "socket";
-              }
-              (harden { MemoryMax = "64M"; })
-            ];
-            startLimitBurst = 5;
-            startLimitIntervalSec = 300;
-          };
-
-          systemd.services.${backendUnit} = {
-            description = "llama.cpp VLM server '${name}' (backend, model resident)";
-            # Deliberately NOT wantedBy multi-user.target — socket activation
-            # keeps RAM free until first request; the socket re-arms after
-            # idle-stop.
-            after = [ "network-online.target" ];
-            wants = [ "network-online.target" ];
-            serviceConfig = lib.mkMerge [
-              {
-                Type = "exec";
-                User = if s.user != null then s.user else primaryUser;
-                Group = "users";
-                ExecStart = execStart;
-                # Backoff after OOM kills: a fast restart of a multi-GB cold
-                # load pile-drives an exhausted machine (fastflowlm lesson,
-                # 2026-08-18). Exponential: 60→120→240→480→900 s.
-                Restart = "on-failure";
-                RestartSec = "60";
-                RestartSteps = 5;
-                RestartMaxDelaySec = "15min";
-                # Preferred global-OOM victim: stateless, socket-activated,
-                # self-heals on the next connection.
-                OOMScoreAdjust = 300;
-                MemoryMax = s.memoryMax;
-                MemoryHigh = s.memoryMax;
-                TimeoutStartSec = "3min";
-              }
-              (harden { })
-              ioTier.background
-            ];
-            startLimitBurst = 5;
-            startLimitIntervalSec = 300;
-          };
-
-          systemd.services.${idleUnit} = {
-            description = "Stop llama-vlm ${name} backend after idle TTL expires";
-            serviceConfig = lib.mkMerge [
-              {
-                Type = "oneshot";
-                ExecStart = lib.getExe idleCheck;
-              }
-              (harden { })
-            ];
-            startLimitBurst = 5;
-            startLimitIntervalSec = 300;
-          };
-
-          systemd.timers.${idleUnit} = {
-            description = "Probe llama-vlm ${name} idle state every 5 minutes";
-            wantedBy = [ "timers.target" ];
-            timerConfig = {
-              OnBootSec = "5min";
-              OnUnitActiveSec = "5min";
-              AccuracySec = "1min";
-            };
-          };
-
-          services.gatus-coverage-audit.allowPorts = [
-            s.port
-            s.backendPort
-          ];
         };
 
-      instances = lib.mapAttrsToList mkInstance cfg.servers;
-    in
-    {
+      mkBridge =
+        name: s: {
+          description = "llama-vlm ${"$"}{name} per-connection proxy: client fd ↔ backend TCP";
+          after = [ "llama-vlm-${"$"}{name}.service" ];
+          wants = [ "llama-vlm-${"$"}{name}.service" ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "exec";
+              ExecStart = lib.getExe (bridgeConn name s);
+              StandardInput = "socket";
+              StandardOutput = "socket";
+            }
+            (harden { MemoryMax = "64M"; })
+          ];
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+        };
+
+      mkBackend =
+        name: s: {
+          description = "llama.cpp VLM server '${"$"}{name}' (backend, model resident)";
+          # Deliberately NOT wantedBy multi-user.target — socket activation
+          # keeps RAM free until first request; the socket re-arms after
+          # idle-stop.
+          after = [ "network-online.target" ];
+          wants = [ "network-online.target" ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "exec";
+              User = if s.user != null then s.user else primaryUser;
+              Group = "users";
+              ExecStart = execStart s;
+              # Backoff after OOM kills: a fast restart of a multi-GB cold
+              # load pile-drives an exhausted machine (fastflowlm lesson,
+              # 2026-08-18). Exponential: 60→120→240→480→900 s.
+              Restart = "on-failure";
+              RestartSec = "60";
+              RestartSteps = 5;
+              RestartMaxDelaySec = "15min";
+              # Preferred global-OOM victim: stateless, socket-activated,
+              # self-heals on the next connection.
+              OOMScoreAdjust = 300;
+              MemoryMax = s.memoryMax;
+              MemoryHigh = s.memoryMax;
+              TimeoutStartSec = "3min";
+            }
+            (harden { })
+            ioTier.background
+          ];
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+        };
+
+      mkIdleTimer =
+        name: s: {
+          description = "Probe llama-vlm ${"$"}{name} idle state every 5 minutes";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "5min";
+            OnUnitActiveSec = "5min";
+            AccuracySec = "1min";
+          };
+        };
+
+      mkIdleService =
+        name: s: {
+          description = "Stop llama-vlm ${"$"}{name} backend after idle TTL expires";
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              ExecStart = lib.getExe (idleCheck name s);
+            }
+            (harden { })
+          ];
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+        };
+
+      bridgeConn =
+        name: s:
+        pkgs.writeShellApplication {
+          name = "llama-vlm-${"$"}{name}-proxy-conn";
+          runtimeInputs = [ pkgs.coreutils ];
+          text = ''
+            host="127.0.0.1"
+            port="${"$"}{toString s.backendPort}"
+            deadline=$((SECONDS + 300))
+            until (exec 3<>"/dev/tcp/$host/$port") 2>/dev/null; do
+              if [ "$SECONDS" -ge "$deadline" ]; then
+                echo "llama-vlm-${"$"}{name}-proxy: backend $host:$port not reachable within 300 s" >&2
+                exit 1
+              fi
+              sleep 1
+            done
+            exec ${"$"}{lib.getExe' pkgs.socat "socat"} - "TCP:$host:$port"
+          '';
+        };
+
+      idleCheck =
+        name: s:
+        pkgs.writeShellApplication {
+          name = "llama-vlm-${"$"}{name}-idle-check";
+          runtimeInputs = [
+            pkgs.coreutils
+            pkgs.gnugrep
+            pkgs.systemd
+          ];
+          text = ''
+            if ! systemctl is-active --quiet llama-vlm-${"$"}{name}.service; then
+              exit 0
+            fi
+            # Live per-connection bridges = active traffic; also the only
+            # reliable cold-load guard (the backend logs no "processing
+            # task" until the first request is accepted).
+            if systemctl list-units 'llama-vlm-${"$"}{name}@*.service' --state=active --no-legend 2>/dev/null | grep -q .; then
+              exit 0
+            fi
+            now_us=$(awk '{printf "%d", $1 * 1000000}' /proc/uptime)
+            active_us=$(systemctl show llama-vlm-${"$"}{name}.service -p ActiveEnterTimestampMonotonic --value) || true
+            if [ -z "$active_us" ] || [ $((now_us - active_us)) -lt 600000000 ]; then
+              exit 0
+            fi
+            if ${"$"}{lib.getExe' pkgs.systemd "journalctl"} -u llama-vlm-${"$"}{name}.service --since "${"$"}{s.keepAlive} ago" --grep "processing task" -n 1 --output cat 2>/dev/null | grep -q .; then
+              exit 0
+            fi
+            systemctl stop 'llama-vlm-${"$"}{name}@*.service' llama-vlm-${"$"}{name}.service
+          '';
+        };
+
+      execStart =
+        s:
+        [
+          (lib.getExe' cfg.package "llama-server")
+          "-m"
+          "${"$"}{s.modelPath}"
+          "--port"
+          (toString s.backendPort)
+          "-c"
+          (toString s.context)
+        ]
+        ++ lib.optionals (s.mmprojPath != null) [
+          "--mmproj"
+          "${"$"}{s.mmprojPath}"
+        ]
+        ++ s.extraArgs;
+        {
       options.services.llama-vlm = {
         enable = lib.mkEnableOption "llama.cpp vision-language servers (socket-activated)";
 
