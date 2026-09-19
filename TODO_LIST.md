@@ -287,14 +287,6 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Pre-commit: classify `path ... is not valid` eval failures as a loud WARN naming the repair command** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **docs/CONTRIBUTING.md convention: boot-scoped vs window-scoped journal assertions** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 
-### desktop
-- [ ] **fish startup profiling** → [docs/todo/desktop.md](docs/todo/desktop.md)
-- [ ] **Enable niri blur** → [docs/todo/desktop.md](docs/todo/desktop.md)
-- [ ] **Verify `audio.nix` WirePlumber priority rules don't fight smart-audio** → [docs/todo/desktop.md](docs/todo/desktop.md)
-- [ ] **Source:** → [docs/todo/desktop.md](docs/todo/desktop.md)
-- [ ] **Source:** → [docs/todo/desktop.md](docs/todo/desktop.md)
-- [ ] **Source:** → [docs/todo/desktop.md](docs/todo/desktop.md)
-
 ### pixel6
 - [ ] **Udev rule for Google USB vendor 18d1 (adb access)** → [docs/todo/pixel6.md](docs/todo/pixel6.md)
 - [ ] **Enrich `universal-call-recorder/index.csv` with call-log contact names** → [docs/todo/pixel6.md](docs/todo/pixel6.md)
