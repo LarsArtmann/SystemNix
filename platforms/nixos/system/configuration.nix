@@ -295,6 +295,10 @@ in
       # SigNoz stack (sudo's secure PATH hides user-profile tools). Keeping it
       # installed removes the nix-build fallback dependency entirely.
       pkgs.gptfdisk
+      # smartctl for manual SMART short/long tests and health reads. smartd
+      # monitors via its own service package but never exposed the CLI, so
+      # every ad-hoc disk check needed a nix-shell detour.
+      pkgs.smartmontools
     ];
 
     # nix-ld: run dynamically-linked foreign binaries (Jan's self-updating
