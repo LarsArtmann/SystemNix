@@ -150,6 +150,7 @@ _: {
           name = "llama-vlm-${name}-idle-check";
           runtimeInputs = [
             pkgs.coreutils
+            pkgs.gawk
             pkgs.gnugrep
             pkgs.systemd
           ];
