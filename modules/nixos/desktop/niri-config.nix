@@ -234,9 +234,16 @@ _: {
                           }
 
                           running=$(pgrep -x niri >/dev/null 2>&1 && echo 1 || echo 0)
-                          restarts=$(journalctl --grep "Started niri" _SYSTEMD_USER_UNIT=niri.service --since "10 min" --no-pager --output cat 2>/dev/null | wc -l || true)
+                          # timeout N per the 2026-08-31 journal-stall doctrine:
+                          # --since bounds the SCAN, timeout bounds the RUNTIME —
+                          # a wedged journalctl must not stall this 30s collector
+                          # (a stalled run leaves niri.prom stale and flips the
+                          # freshness composite red, blinding every niri check).
+                          # journalctl exits 1 when nothing matches — valid empty
+                          # count, absorbed by the || true + :-0 fallback.
+                          restarts=$(timeout 10 journalctl --grep "Started niri" _SYSTEMD_USER_UNIT=niri.service --since "10 min" --no-pager --output cat 2>/dev/null | wc -l || true)
                           restarts="''${restarts:-0}"
-                          drm_errors=$(journalctl --grep "Permission denied|DeviceMissing" _SYSTEMD_USER_UNIT=niri.service -n 11 --since "30 sec ago" --no-pager --output cat 2>/dev/null | wc -l || true)
+                          drm_errors=$(timeout 10 journalctl --grep "Permission denied|DeviceMissing" _SYSTEMD_USER_UNIT=niri.service -n 11 --since "30 sec ago" --no-pager --output cat 2>/dev/null | wc -l || true)
                           drm_errors="''${drm_errors:-0}"
 
                           # Detect whether a graphical session is expected (user logged in via SDDM).

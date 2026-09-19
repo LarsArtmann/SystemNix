@@ -61,7 +61,7 @@ let
     # the check green even if every real line said 1 (2026-08-22
     # phantom-green class; niri.prom is one collector rewrite from HELP
     # comments existing).
-    # HELP niri_desktop_died 0 if the compositor is healthy while a graphical session is active, 1 if it died
+    # HELP niri_desktop_died 0 if the compositor is healthy while a graphical session is active, niri_desktop_died 1 if the desktop died
     # TYPE niri_desktop_died gauge
     niri_desktop_died 0
     # HELP niri_crash_loop 0 if niri did not restart 3+ times in 10 min, 1 if crash-looping
@@ -214,6 +214,40 @@ in
               "[STATUS] == 200"
               "[BODY] != pat(*btrfs_scrub_error_free 0\n*)"
               "[BODY] == pat(*\nbtrfs_scrub_error_free *)"
+            ];
+          }
+          {
+            # The four sibling niri checks in their EXACT production
+            # line-anchored VALUE-0 form (gatus-config.nix "Niri Desktop
+            # Died"/"Crash Loop"/"Zombie Session"/"AW Watcher Attached").
+            # The mock body carries HELP comments repeating the metric names
+            # with value text — these anchored conditions must still match
+            # the REAL value lines, proving the real newline reaches gatus
+            # and the anchors hold against a HELP-laden textfile.
+            name = "[TEST] Niri sibling anchored value-zero";
+            url = "http://127.0.0.1:9100/metrics";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] == pat(*\nniri_desktop_died 0\n*)"
+              "[BODY] == pat(*\nniri_crash_loop 0\n*)"
+              "[BODY] == pat(*\nniri_zombie 0\n*)"
+              "[BODY] == pat(*\nniri_aw_watcher_late 0\n*)"
+            ];
+          }
+          {
+            # INVERSE (expected RED, see testScript): the anchored VALUE-1
+            # form must NOT match anywhere in the healthy body — the mock
+            # HELP comment deliberately carries the contiguous trap text
+            # "niri_desktop_died 1 if ..." so a bare (unanchored) form would
+            # green-vacuously match the comment and this meta-assertion
+            # would catch the sibling checks regressing to it.
+            name = "[TEST-RED] Niri sibling anchored value-one must not match";
+            url = "http://127.0.0.1:9100/metrics";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] == pat(*\nniri_desktop_died 1\n*)"
             ];
           }
           {
