@@ -5151,11 +5151,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789753873,
-        "narHash": "sha256-lGx0UKlvmxJ2vtLkDA5wymwc8wU+Qa/728nbumCC7t4=",
+        "lastModified": 1789794672,
+        "narHash": "sha256-p2C2ZnUkyMSz57SFvlfmQJOYhuIPPU+q+Q5D372GMBg=",
         "owner": "LarsArtmann",
         "repo": "golangci-lint-auto-configure",
-        "rev": "ec6c16a7147b51662361a9f8be4d784b0fb36112",
+        "rev": "b93383c39f285e1d010571973c3d2d9a43d852e2",
         "type": "github"
       },
       "original": {
