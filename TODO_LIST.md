@@ -176,6 +176,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Structural §10 fix: URL-aware phantom-metric extraction** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **§11 vendorHash freshness: wire real FOD dry-run checks** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Service-completeness manifest audit (eval-time or CI): every enabled service ⇒ Gatus check + dashboard tile (PapDashboard services.json) + backup registration + docs page** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] **Pre-commit nix-eval gate for `*.nix` (daemon broken-intermediate class)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **crush-config phase 2: serve AGENTS.md + references from the module, retire the local `~/.config/crush` dotfiles git repo** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **deploy.sh: lock-wait on activation contention** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Flake-check guard: HTML `pat()` needles must start with `<`** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
