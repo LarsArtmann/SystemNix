@@ -6186,11 +6186,11 @@
         "treefmt-nix": "treefmt-nix_12"
       },
       "locked": {
-        "lastModified": 1789761612,
-        "narHash": "sha256-V/ovMDLPRPQ0YWXgMbFA3k4ATHcrQu+W/eH0JBvlSqI=",
+        "lastModified": 1789761280,
+        "narHash": "sha256-mMZKri/kAaPQO83z+U7m8SAkOV2sxJo7T0GuuoqFMr8=",
         "owner": "LarsArtmann",
         "repo": "PapDashboard",
-        "rev": "cc99a17fa60164e4c8728fb3b90e64f4624ab6fd",
+        "rev": "665902b3e67d736c5a7ddcc146b49093c401feba",
         "type": "github"
       },
       "original": {
@@ -7782,6 +7782,13 @@
         "owner": "Supreeeme",
         "repo": "xwayland-satellite",
         "type": "github"
+      }
+    },
+    "null": {
+      "locked": {
+        "rev": "665902b3e67d736c5a7ddcc146b49093c401feba",
+        "narHash": "sha256-mMZKri/kAaPQO83z+U7m8SAkOV2sxJo7T0GuuoqFMr8=",
+        "lastModified": 1789761280
       }
     }
   },
