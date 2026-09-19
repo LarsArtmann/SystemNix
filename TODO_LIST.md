@@ -78,13 +78,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 
 ### ai-stack
 
-- [ ] **FastFlowLM smoke: assert model NAME in `/v1/models` + idle-check unit test** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
-- [ ] **Check Jan's model registry for dangling references to the trashed gemma GGUF** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
-- [ ] **Gate the flm smoke probe on the corpse signature** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
-- [ ] **flm-dark aggregate monitoring check** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
 - [ ] **Bisect the llama.cpp 0.3.0 mid-load CPU-spin upstream (ROCm runtime / kernel / GPU-state — upstream of llama.cpp) — THE gate for re-enabling llama-rag and unblocking the paperless RAG item** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
-- [ ] **Paperless RAG degradation visibility: a metric/Gatus signal for "paperless expects embeddings but :8848 is dark"** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
-- [ ] **Rogue-listener defense for :8848/:8849 while llama-rag is disabled** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
 
 ### services
 
