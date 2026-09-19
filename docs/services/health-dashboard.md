@@ -29,9 +29,11 @@ negotiation).
 1. Add the pair to `services.health-dashboard.remotes` in
    `platforms/nixos/system/configuration.nix` (loopback URL when the
    service lives on this host, e.g. `cv=http://127.0.0.1:8098/health`).
-2. Names namespace check keys — unique, non-empty, no `/`.
+2. Names namespace check keys — unique, non-empty, no `/`, no whitespace.
 3. Deploy; the hub fails FAST at startup on a malformed pair (eval-time
    assertion also requires a non-empty list).
+4. Pre-flight for manual bind tests: confirm the port is actually free
+   first (`ss -tln | grep 8103`) — never assume from memory.
 
 ## Readiness semantics (why `/readyz` pages)
 
