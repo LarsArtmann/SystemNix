@@ -347,6 +347,24 @@ in
                     restartUnits = [ "discordsync.service" ];
                   };
                 }
+            //
+              lib.optionalAttrs
+                (svcEnabled "discordsync" && (config.services.discordsync.immich.enable or false))
+                {
+                  # Own encrypted file (split-file precedent:
+                  # papdashboard-discord.yaml) — agent sessions can encrypt a
+                  # NEW file with the public key but cannot add a key to the
+                  # existing discordsync.yaml without the host age identity.
+                  discordsync_immich_api_key = {
+                    sopsFile = lib.path.append secretsDir "discordsync-immich.yaml";
+                    owner = "discordsync";
+                    group = "discordsync";
+                    restartUnits = [
+                      "discordsync.service"
+                      "discordsync-immich-verify.service"
+                    ];
+                  };
+                }
             // lib.optionalAttrs (svcEnabled "dns-failover") (
               mkSecrets "dns-failover.yaml" { } [ "vrrp_auth_password" ]
             )
@@ -641,15 +659,28 @@ in
               owner = "discordsync";
               group = "discordsync";
               mode = "0400";
-              restartUnits = [ "discordsync.service" ];
-              content = lib.generators.toKeyValue { } {
-                DISCORD_TOKEN = config.sops.placeholder.discordsync_discord_token;
-                TURSO_URL = config.sops.placeholder.discordsync_turso_url;
-                TURSO_AUTH_TOKEN = config.sops.placeholder.discordsync_turso_auth_token;
-                # Self-alerting: the binary POSTs critical errors to this Discord webhook.
-                # Sourced from the shared signoz.yaml secret (always decrypted alongside).
-                DISCORDSYNC_WEBHOOK_URL = config.sops.placeholder.discord_alert_webhook_url;
-              };
+              restartUnits = [
+                "discordsync.service"
+                "discordsync-immich-verify.service"
+              ];
+              content = lib.generators.toKeyValue { } (
+                {
+                  DISCORD_TOKEN = config.sops.placeholder.discordsync_discord_token;
+                  TURSO_URL = config.sops.placeholder.discordsync_turso_url;
+                  TURSO_AUTH_TOKEN = config.sops.placeholder.discordsync_turso_auth_token;
+                  # Self-alerting: the binary POSTs critical errors to this Discord webhook.
+                  # Sourced from the shared signoz.yaml secret (always decrypted alongside).
+                  DISCORDSYNC_WEBHOOK_URL = config.sops.placeholder.discord_alert_webhook_url;
+                }
+                # Immich cross-archive comparison (ADR-062). Cold config — the
+                # binary validates both-or-neither at startup; rendering the
+                # pair only when the wrapper option is on keeps disabled hosts
+                # free of it entirely.
+                // lib.optionalAttrs (config.services.discordsync.immich.enable or false) {
+                  IMMICH_URL = config.services.discordsync.immich.url;
+                  IMMICH_API_KEY = config.sops.placeholder.discordsync_immich_api_key;
+                }
+              );
             };
           }
           // lib.optionalAttrs (svcEnabled "dns-failover") {

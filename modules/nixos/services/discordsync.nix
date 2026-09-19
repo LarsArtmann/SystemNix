@@ -153,6 +153,60 @@
           echo "discordsync: all recovery attempts exhausted. Corrupt DB preserved at $backup. Starting fresh." >&2
         '';
       };
+
+      # Verify the Immich API key wired for the /lookup page's cross-archive
+      # comparison (ADR-062). Catches a mistyped or wrongly-scoped key at
+      # provisioning time instead of leaving every lookup auth-erroring
+      # silently behind the "Immich unavailable" badge. Exit semantics:
+      #   0 = key verified, PLACEHOLDER-inert, not rendered (integration
+      #       off), or Immich unreachable (availability is the Gatus Immich
+      #       check's job — Immich being down must not page as a DiscordSync
+      #       misconfig)
+      #   1 = Immich reachable but REJECTED the key (wrong secret or missing
+      #       asset.read/asset.upload scope) — OnFailure alerts
+      immichVerify = pkgs.writeShellApplication {
+        name = "discordsync-immich-verify";
+        runtimeInputs = [ pkgs.curl ];
+        text = ''
+          env_file="${sopsEnvPath}"
+          url=""
+          key=""
+          while IFS= read -r line; do
+            case "$line" in
+              IMMICH_URL=*) url="''${line#IMMICH_URL=}" ;;
+              IMMICH_API_KEY=*) key="''${line#IMMICH_API_KEY=}" ;;
+            esac
+          done < "$env_file"
+          if [ -z "$url" ] || [ -z "$key" ]; then
+            echo "discordsync-immich-verify: IMMICH_URL/IMMICH_API_KEY not rendered — integration disabled, nothing to verify"
+            exit 0
+          fi
+          case "$key" in
+            PLACEHOLDER*)
+              echo "discordsync-immich-verify: API key is still a PLACEHOLDER (inert by design) — create a key in Immich scoped to asset.read + asset.upload ONLY, then sops --set it into discordsync-immich.yaml"
+              exit 0
+              ;;
+          esac
+          if ! curl -sf --max-time 10 "$url/api/server/ping" -o /dev/null; then
+            echo "discordsync-immich-verify: WARN Immich unreachable at $url — availability is owned by the Gatus Immich check; skipping key verification"
+            exit 0
+          fi
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 -H "X-Api-Key: $key" "$url/api/users/me" || echo 000)
+          case "$code" in
+            200)
+              echo "discordsync-immich-verify: Immich API key verified against $url"
+              ;;
+            401|403)
+              echo "discordsync-immich-verify: FAIL Immich rejected the API key (HTTP $code) — wrong secret or scope; bulk-upload-check needs asset.read + asset.upload" >&2
+              exit 1
+              ;;
+            *)
+              echo "discordsync-immich-verify: FAIL unexpected response from $url/api/users/me (HTTP $code)" >&2
+              exit 1
+              ;;
+          esac
+        '';
+      };
     in
     {
       imports = [ inputs.discordsync.nixosModules.default ];
@@ -164,6 +218,21 @@
           type = lib.types.nullOr lib.types.str;
           default = null;
           description = "GCS bucket name for cloud attachment backup (requires discordsync_gcs_credentials sops secret)";
+        };
+
+        immich = {
+          enable = lib.mkEnableOption "Immich cross-archive comparison on the /lookup page (ADR-062: the server proxies hex SHA-1 hashes to Immich's bulk-upload-check; IMMICH_URL + IMMICH_API_KEY are cold config validated both-or-neither by the binary at startup)";
+          url = lib.mkOption {
+            type = lib.types.str;
+            default = "http://127.0.0.1:${toString ports.immich}";
+            defaultText = "http://127.0.0.1:<ports.immich>";
+            description = ''
+              Base URL of the Immich server the /lookup page compares against.
+              Loopback by default: the two services are co-located, so skipping
+              Caddy/DNS/TLS removes two boot-order dependencies from the
+              lookup path (the API key never leaves the server either way).
+            '';
+          };
         };
       };
 
@@ -220,6 +289,51 @@
             ioTier.background
           ];
         };
+
+        systemd.services.discordsync-immich-verify = lib.mkIf cfg.immich.enable {
+          description = "DiscordSync Immich API key verification (lookup cross-archive comparison)";
+          # Not ordered after immich.service: an unreachable Immich is a WARN
+          # skip inside the script, not a dependency (availability belongs to
+          # Gatus; the daily timer re-runs this regardless of boot order).
+          after = [ "sops-nix.service" ];
+          wants = [ "sops-nix.service" ];
+          inherit onFailure;
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+
+          serviceConfig = lib.mkMerge [
+            (harden { MemoryMax = "128M"; })
+            (serviceOneshotDefaults { })
+            {
+              Type = "oneshot";
+              # Runs as the service user so it can read the 0400
+              # discordsync:discordsync sops template.
+              User = cfg.user;
+              Group = cfg.group;
+              ExecStart = lib.getExe immichVerify;
+              TimeoutStartSec = "2min";
+            }
+            ioTier.background
+          ];
+        };
+
+        systemd.timers.discordsync-immich-verify = lib.mkIf cfg.immich.enable {
+          description = "Daily DiscordSync Immich API key verification";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "daily";
+            Persistent = true;
+          };
+        };
+
+        # Daemon-less verification: no HTTP endpoint, so monitoring is
+        # OnFailure (Discord) + the system-health state metrics
+        # (github-auto-assign pattern). The options?-guard mirrors the
+        # integration-registry convention for hosts that enable this module
+        # without system-health.
+        services.system-health.extraMonitoredServices = lib.mkIf
+          (cfg.immich.enable && options ? services.system-health)
+          (lib.mkAfter [ "discordsync-immich-verify" ]);
 
         systemd.services.discordsync = {
           # SystemNix DNS-gate: dnsblockd must resolve before Discord connect.
