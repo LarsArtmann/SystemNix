@@ -846,7 +846,7 @@
           pkgs,
           system,
           lib,
-          self,
+          self',
           ...
         }:
         {
@@ -1302,7 +1302,7 @@
               browser-history-probe-purge-fixture =
                 let
                   execPres =
-                    self.nixosConfigurations.evo-x2.config.systemd.services.browser-history.serviceConfig.ExecStartPre;
+                    self'.nixosConfigurations.evo-x2.config.systemd.services.browser-history.serviceConfig.ExecStartPre;
                   purgeEntries = lib.filter (
                     lib.hasSuffix "browser-history-probe-registration-purge"
                   ) execPres;
