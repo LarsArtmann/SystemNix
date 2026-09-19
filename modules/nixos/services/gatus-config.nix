@@ -908,7 +908,7 @@ _: {
                     "[STATUS] == 200"
                     "[BODY] == pat(*node_psi_io_alert 0*)"
                   ];
-                  alerts = discordAlert "I/O pressure CRITICAL — PSI I/O stall high AND disk %util corroborates (crash3 phantom-filtered: idle-disk PSI = D-state corpse pile, covered by the Stuck D-State check, not this one). Check: nvme smart-log, fstrim status, btrfs filesystem usage.";
+                  alerts = discordAlert "I/O pressure CRITICAL — PSI I/O stall high AND disk %util corroborates (crash3 phantom-filtered: idle-disk PSI = D-state corpse pile, covered by the Stuck D-State check, not this one). Check: nvme smart-log, fstrim status, btrfs filesystem usage. REVIEWED 2026-09-19 (permanently-red TODO): the signal is CORRECT by design — sustained some avg300 >10% with real disk corroboration IS an ongoing storm (the freeze-5/6 era red was real pressure, now structurally fixed via the crush-DB migration); a continuously red check means the box is genuinely IO-starved, do not mute it — fix the readers";
                 })
               ]
               # Crush Daily / Dozzle / Overview checks moved to their owning

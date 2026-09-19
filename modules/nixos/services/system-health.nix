@@ -208,6 +208,57 @@ _: {
           DOCKER_STATE="${textfileDir}/.system_health_docker_state"
           NOW_EPOCH=$(date +%s)
 
+          # === Enabled-but-inactive unit detection (2026-09-19) ===
+          # The 2026-09-14 pool-dropout class: an enabled daemon nobody
+          # started runs DARK the whole boot while every event-driven layer
+          # stays green (the mount job's cancellation left the consumers
+          # INACTIVE, not failed — nothing paged, no "Dependency failed"
+          # lines, zero pending jobs). Exclusions keep the signal honest:
+          #   - oneshots: legitimately inactive after a successful exit
+          #   - socket-activated: legitimately inactive until first
+          #     connection (fastflowlm class)
+          #   - template units (@): never instantiated
+          # Scans the SYSTEM manager plus every user manager in
+          # monitoredUserManagers (machined bus proxy, the failed-units
+          # pattern). Fail-closed: a failed listing sets scrape_errors 1.
+          INACTIVE_UNITS=""
+          INACTIVE_COUNT=0
+          INACTIVE_SCRAPE_ERRORS=0
+          scan_inactive_units() { # $1 = label; remaining args = systemctl prefix ("--machine=u@.host --user" or none)
+            local label="$1"
+            shift
+            local out="" unit="" unit_type=""
+            # shellcheck disable=SC2086  # empty prefix must expand to zero words
+            out=$(timeout 45 systemctl "$@" list-unit-files --type=service --state=enabled --legend=no --no-legend --plain 2>/dev/null) || {
+              INACTIVE_SCRAPE_ERRORS=1
+              return 0
+            }
+            while read -r unit _rest; do
+              [ -n "$unit" ] || continue
+              case "$unit" in *@*) continue ;; esac
+              # shellcheck disable=SC2086
+              if systemctl "$@" is-active --quiet "$unit" 2>/dev/null; then
+                continue
+              fi
+              unit_type=$(timeout 5 systemctl "$@" show -p Type --value "$unit" 2>/dev/null) || unit_type=""
+              [ "$unit_type" = "oneshot" ] && continue
+              # Socket-activated: a matching ENABLED .socket owns startup
+              # shellcheck disable=SC2086
+              if systemctl "$@" is-enabled --quiet "''${unit%.service}.socket" 2>/dev/null; then
+                continue
+              fi
+              INACTIVE_UNITS="$INACTIVE_UNITS $label:$unit"
+              INACTIVE_COUNT=$((INACTIVE_COUNT + 1))
+            done <<< "$out"
+          }
+          if [ "$collectEnabledInactive" = "true" ]; then
+            scan_inactive_units system
+            # shellcheck disable=SC2043  # single-user hosts legitimately iterate once
+            for u in ${lib.concatMapStringsSep " " (u: "${u}") cfg.monitoredUserManagers}; do
+              scan_inactive_units "$u" --machine="$u"@.host --user
+            done
+          fi
+
           # systemctl show --value returns literal "[not set]" on stdout
           # (exit 0) for stopped/inactive services. This sanitizes it to 0
           # so node_exporter doesn't reject the entire textfile.
@@ -294,7 +345,6 @@ _: {
           : > "''${CPU_STATE}.tmp"
           : > "''${RESTART_STATE}.tmp"
           for svc in ${lib.concatMapStringsSep " " (s: "'${s}'") allMonitoredServices}; do
-            local_style_guard=1
             {
               read -r cpu_nsec
               read -r cur_r
@@ -507,33 +557,21 @@ _: {
               if [ "$FORGEJO_MIRROR_LAST_SYNC_AGE" -ge ${toString forgejoMirrorStalenessSeconds} ] 2>/dev/null; then
                 FORGEJO_MIRROR_STALLED=1
               fi
-              # BOTH bounds (the 2026-08-31 oomd lesson applies here too —
-              # live the same evening 23:23-23:40: under I/O pressure this
-              # UNBOUNDED journal walk was slow enough that FOUR consecutive
-              # collector runs hit the 3min unit timeout, wrote NO textfile,
-              # and paged SEV1 SYSTEM MONITORING STALE mid-movie on every
-              # flap cycle). `timeout 60` bounds it (raised from 30 on
-              # 2026-09-02: under a 40-80% IO-PSI storm this 30-minute-window
-              # walk exceeded 30s repeatedly, the scan fail-closed, the
-              # omitted system_forgejo_mirror_erroring blocked every deploy
-              # at pre-deploy §10 and paged on collector health instead of
+              # BOTH bounds are load-bearing (the 2026-08-31 oomd lesson):
+              # `--since` bounds the journal walk, `timeout 60` bounds the
+              # wall clock (raised from 30 on 2026-09-02: under a 40-80%
+              # IO-PSI storm this 30-minute-window walk exceeded 30s
+              # repeatedly, the scan fail-closed, the omitted
+              # system_forgejo_mirror_erroring blocked every deploy at
+              # pre-deploy §10 and paged on collector health instead of
               # mirror health — 60s matches the oomd-scan bound); journalctl
               # exit 1 (no matches) is a VALID empty count; exit >= 2 /
               # timeout 124 fails VISIBLE via scrape_errors — never a
-              # phantom 0-error green.
-              forgejo_scan_status=0
-              FORGEJO_MIRROR_ERRORS_30M=$(timeout 60 journalctl -u forgejo.service --since "-30 min" --grep "AddAuthCredentialHelperForRemote Error|failed to update mirror repository|pull mirror failed to meet migration URL requirements|failed to get remote address" --output cat --no-pager 2>/dev/null | wc -l) || forgejo_scan_status=$?
-              if [ "$forgejo_scan_status" -le 1 ]; then
-                FORGEJO_MIRROR_ERRORS_30M="''${FORGEJO_MIRROR_ERRORS_30M:-0}"
-                FORGEJO_MIRROR_ERRORING=0
-                if [ "$FORGEJO_MIRROR_ERRORS_30M" -ge ${toString forgejoMirrorErrorThreshold} ] 2>/dev/null; then
-                  FORGEJO_MIRROR_ERRORING=1
-                fi
-              else
-                echo "system-health: forgejo mirror journal scan failed (status $forgejo_scan_status)" >&2
-                FORGEJO_MIRROR_ERRORS_30M=""
-                FORGEJO_MIRROR_SCRAPE_ERRORS=1
-              fi
+              # phantom 0-error green. The walk itself now runs in PARALLEL
+              # (walk_journal above); FORGEJO_MIRROR_ERRORING is consumed
+              # after the `wait` in the oomd block (the last launcher).
+              FORGEJO_WALK_LAUNCHED=1
+              walk_journal "$WALK_DIR/forgejo" forgejo.service "-30 min" "AddAuthCredentialHelperForRemote Error|failed to update mirror repository|pull mirror failed to meet migration URL requirements|failed to get remote address" 60 &
             fi
           fi
 
@@ -562,23 +600,11 @@ _: {
           PMA_COMMIT_SCRAPE_ERRORS=1
           if [ "$collect_pma_commits" = "true" ]; then
             PMA_COMMIT_SCRAPE_ERRORS=0
-            pma_fail_status=0
-            PMA_COMMIT_FAILURES_1H=$(timeout 60 journalctl -u projects-management-automation.service --since "-1h" --grep "commit failed" --output cat --no-pager 2>/dev/null | wc -l) || pma_fail_status=$?
-            pma_fb_status=0
-            PMA_HEURISTIC_FALLBACKS_24H=$(timeout 60 journalctl -u projects-management-automation.service --since "-24h" --grep "committed via heuristic fallback" --output cat --no-pager 2>/dev/null | wc -l) || pma_fb_status=$?
-            if [ "$pma_fail_status" -le 1 ] && [ "$pma_fb_status" -le 1 ]; then
-              PMA_COMMIT_FAILURES_1H="''${PMA_COMMIT_FAILURES_1H:-0}"
-              PMA_HEURISTIC_FALLBACKS_24H="''${PMA_HEURISTIC_FALLBACKS_24H:-0}"
-              PMA_COMMIT_FAILURES_OVER=0
-              [ "$PMA_COMMIT_FAILURES_1H" -ge ${toString pmaCommitFailureThreshold} ] 2>/dev/null && PMA_COMMIT_FAILURES_OVER=1
-              PMA_HEURISTIC_FALLBACKS_OVER=0
-              [ "$PMA_HEURISTIC_FALLBACKS_24H" -ge ${toString pmaHeuristicFallbackThreshold} ] 2>/dev/null && PMA_HEURISTIC_FALLBACKS_OVER=1
-            else
-              echo "system-health: pma commit journal scan failed (fail=$pma_fail_status fallback=$pma_fb_status)" >&2
-              PMA_COMMIT_FAILURES_1H=""
-              PMA_HEURISTIC_FALLBACKS_24H=""
-              PMA_COMMIT_SCRAPE_ERRORS=1
-            fi
+            # Both walks run in PARALLEL (walk_journal); consumed after the
+            # `wait` in the oomd block.
+            PMA_WALKS_LAUNCHED=1
+            walk_journal "$WALK_DIR/pma-fail" projects-management-automation.service "-1h" "commit failed" 60 &
+            walk_journal "$WALK_DIR/pma-fb" projects-management-automation.service "-24h" "committed via heuristic fallback" 60 &
           fi
 
           # === Pocket ID SQLITE_BUSY (auth SPOF) ===
@@ -597,17 +623,10 @@ _: {
           POCKET_ID_BUSY_SCRAPE_ERRORS=1
           if [ "$collect_pocket_id_busy" = "true" ]; then
             POCKET_ID_BUSY_SCRAPE_ERRORS=0
-            pocket_id_scan_status=0
-            POCKET_ID_BUSY_EVENTS_24H=$(timeout 30 journalctl -u pocket-id.service --since "-24h" --grep "database is locked" --output cat --no-pager 2>/dev/null | wc -l) || pocket_id_scan_status=$?
-            if [ "$pocket_id_scan_status" -le 1 ]; then
-              POCKET_ID_BUSY_EVENTS_24H="''${POCKET_ID_BUSY_EVENTS_24H:-0}"
-              POCKET_ID_BUSY_OVER=0
-              [ "$POCKET_ID_BUSY_EVENTS_24H" -ge ${toString pocketIdBusyEventThreshold} ] 2>/dev/null && POCKET_ID_BUSY_OVER=1
-            else
-              echo "system-health: pocket-id busy journal scan failed (status $pocket_id_scan_status)" >&2
-              POCKET_ID_BUSY_EVENTS_24H=""
-              POCKET_ID_BUSY_SCRAPE_ERRORS=1
-            fi
+            # Parallel walk (walk_journal); consumed after the `wait` in the
+            # oomd block.
+            POCKET_ID_WALK_LAUNCHED=1
+            walk_journal "$WALK_DIR/pocket-id" pocket-id.service "-24h" "database is locked" 30 &
           fi
 
           # === Root disk usage ===
@@ -834,18 +853,88 @@ _: {
             fi
             prev_oomd="''${prev_oomd:-0}"
             OOMD_KILLS_TOTAL=$prev_oomd
-            oomd_status=0
-            oomd_out=$(timeout 60 journalctl -u systemd-oomd --since "-24h" --grep "Marked.*for killing" --output cat --no-pager 2>/dev/null | wc -l) || oomd_status=$?
-            if [ "$oomd_status" -le 1 ]; then
-              OOMD_KILLS_TOTAL="''${oomd_out:-0}"
-              echo "$OOMD_KILLS_TOTAL" > "''${OOMD_STATE}.tmp"
-              mv "''${OOMD_STATE}.tmp" "$OOMD_STATE"
-            else
-              OOMD_SCRAPE_ERRORS=1
+            OOMD_WALK_LAUNCHED=1
+            walk_journal "$WALK_DIR/oomd" systemd-oomd "-24h" "Marked.*for killing" 60 &
+            # The LAST launcher: wait for ALL parallel walks here (forgejo,
+            # pma ×2, pocket-id, oomd) — they ran concurrently with the
+            # sections in between, so the wall-clock cost is the longest
+            # single budget, not the sum (the 2026-09-03 ≈500s worst case
+            # against the 180s ceiling is closed).
+            wait || true
+
+            # ── Consume the parallel walks ─────────────────────────────
+            # Each file holds "<status> <count>". journalctl exit 1 = no
+            # matches = VALID empty count; >=2 / 124 fails VISIBLE via
+            # scrape_errors.
+            if [ "''${OOMD_WALK_LAUNCHED:-0}" = 1 ]; then
+              oomd_status=0
+              oomd_out=0
+              read -r oomd_status oomd_out < "$WALK_DIR/oomd" 2>/dev/null || { oomd_status=2; oomd_out=0; }
+              if [ "''${oomd_status:-2}" -le 1 ]; then
+                OOMD_KILLS_TOTAL="''${oomd_out:-0}"
+                echo "$OOMD_KILLS_TOTAL" > "''${OOMD_STATE}.tmp"
+                mv "''${OOMD_STATE}.tmp" "$OOMD_STATE"
+              else
+                OOMD_SCRAPE_ERRORS=1
+              fi
+              if [ "$OOMD_KILLS_TOTAL" -gt "$prev_oomd" ] 2>/dev/null; then
+                OOMD_KILLS_RECENT=$((OOMD_KILLS_TOTAL - prev_oomd))
+                OOMD_ALERT=1
+              fi
             fi
-            if [ "$OOMD_KILLS_TOTAL" -gt "$prev_oomd" ] 2>/dev/null; then
-              OOMD_KILLS_RECENT=$((OOMD_KILLS_TOTAL - prev_oomd))
-              OOMD_ALERT=1
+
+            if [ "''${FORGEJO_WALK_LAUNCHED:-0}" = 1 ]; then
+              forgejo_scan_status=2
+              FORGEJO_MIRROR_ERRORS_30M=""
+              read -r forgejo_scan_status FORGEJO_MIRROR_ERRORS_30M < "$WALK_DIR/forgejo" 2>/dev/null || { forgejo_scan_status=2; FORGEJO_MIRROR_ERRORS_30M=""; }
+              if [ "''${forgejo_scan_status:-2}" -le 1 ]; then
+                FORGEJO_MIRROR_ERRORS_30M="''${FORGEJO_MIRROR_ERRORS_30M:-0}"
+                FORGEJO_MIRROR_ERRORING=0
+                if [ "$FORGEJO_MIRROR_ERRORS_30M" -ge ${toString forgejoMirrorErrorThreshold} ] 2>/dev/null; then
+                  FORGEJO_MIRROR_ERRORING=1
+                fi
+              else
+                echo "system-health: forgejo mirror journal scan failed (status ''${forgejo_scan_status:-?})" >&2
+                FORGEJO_MIRROR_ERRORS_30M=""
+                FORGEJO_MIRROR_SCRAPE_ERRORS=1
+              fi
+            fi
+
+            if [ "''${PMA_WALKS_LAUNCHED:-0}" = 1 ]; then
+              pma_fail_status=2
+              pma_fb_status=2
+              PMA_COMMIT_FAILURES_1H=""
+              PMA_HEURISTIC_FALLBACKS_24H=""
+              read -r pma_fail_status PMA_COMMIT_FAILURES_1H < "$WALK_DIR/pma-fail" 2>/dev/null || { pma_fail_status=2; PMA_COMMIT_FAILURES_1H=""; }
+              read -r pma_fb_status PMA_HEURISTIC_FALLBACKS_24H < "$WALK_DIR/pma-fb" 2>/dev/null || { pma_fb_status=2; PMA_HEURISTIC_FALLBACKS_24H=""; }
+              if [ "''${pma_fail_status:-2}" -le 1 ] && [ "''${pma_fb_status:-2}" -le 1 ]; then
+                PMA_COMMIT_FAILURES_1H="''${PMA_COMMIT_FAILURES_1H:-0}"
+                PMA_HEURISTIC_FALLBACKS_24H="''${PMA_HEURISTIC_FALLBACKS_24H:-0}"
+                PMA_COMMIT_FAILURES_OVER=0
+                [ "$PMA_COMMIT_FAILURES_1H" -ge ${toString pmaCommitFailureThreshold} ] 2>/dev/null && PMA_COMMIT_FAILURES_OVER=1
+                PMA_HEURISTIC_FALLBACKS_OVER=0
+                [ "$PMA_HEURISTIC_FALLBACKS_24H" -ge ${toString pmaHeuristicFallbackThreshold} ] 2>/dev/null && PMA_HEURISTIC_FALLBACKS_OVER=1
+              else
+                echo "system-health: pma commit journal scan failed (fail=''${pma_fail_status:-?} fallback=''${pma_fb_status:-?})" >&2
+                PMA_COMMIT_FAILURES_1H=""
+                PMA_HEURISTIC_FALLBACKS_24H=""
+                PMA_COMMIT_SCRAPE_ERRORS=1
+              fi
+            fi
+
+            if [ "''${POCKET_ID_WALK_LAUNCHED:-0}" = 1 ]; then
+              pocket_id_scan_status=2
+              POCKET_ID_BUSY_EVENTS_24H=""
+              read -r pocket_id_scan_status POCKET_ID_BUSY_EVENTS_24H < "$WALK_DIR/pocket-id" 2>/dev/null || { pocket_id_scan_status=2; POCKET_ID_BUSY_EVENTS_24H=""; }
+              if [ "''${pocket_id_scan_status:-2}" -le 1 ]; then
+                POCKET_ID_BUSY_EVENTS_24H="''${POCKET_ID_BUSY_EVENTS_24H:-0}"
+                POCKET_ID_BUSY_OVER=0
+                [ "$POCKET_ID_BUSY_EVENTS_24H" -ge ${toString pocketIdBusyEventThreshold} ] 2>/dev/null && POCKET_ID_BUSY_OVER=1
+              else
+                echo "system-health: pocket-id busy journal scan failed (status ''${pocket_id_scan_status:-?})" >&2
+                POCKET_ID_BUSY_EVENTS_24H=""
+                POCKET_ID_BUSY_SCRAPE_ERRORS=1
+              fi
             fi
           fi
 
@@ -1308,6 +1397,21 @@ _: {
               echo "system_user_units_scrape_errors{user=\"$u\"} ''${user_scrape_err}"
             done
 
+            echo "# HELP system_units_enabled_inactive Enabled long-running service units currently NOT active (the 2026-09-14 pool-dropout class: an enabled daemon nobody started), system + user managers"
+            echo "# TYPE system_units_enabled_inactive gauge"
+            echo "system_units_enabled_inactive ''${INACTIVE_COUNT}"
+            echo "# HELP system_units_enabled_inactive_scrape_errors 1 if the enabled/inactive sweep failed (fail-closed), 0 otherwise"
+            echo "# TYPE system_units_enabled_inactive_scrape_errors gauge"
+            echo "system_units_enabled_inactive_scrape_errors ''${INACTIVE_SCRAPE_ERRORS}"
+            # Per-unit detail: manager label + unit name (system | username).
+            # Iterating the word list unquoted is deliberate (shellcheck
+            # SC2086): entries are "label:unit" with no spaces — unit names
+            # and usernames are [a-zA-Z0-9@._-] identifiers.
+            # shellcheck disable=SC2086
+            for iu in ''${INACTIVE_UNITS:-}; do
+              echo "system_unit_enabled_inactive{manager=\"''${iu%%:*}\",unit=\"''${iu#*:}\"} 1"
+            done
+
             echo "# HELP docker_container_restart_count Total restart count per Docker container"
             echo "# TYPE docker_container_restart_count gauge"
 
@@ -1316,11 +1420,24 @@ _: {
 
             # timeout-bounded: a wedged/slow dockerd must never stall the
             # collector into its unit timeout (same class as the 2026-08-31
-            # evening forgejo journal walk).
+            # evening forgejo journal walk). SINGLE inspect for the whole
+            # fleet (2026-09-19 hardening): the old per-container
+            # `timeout 10 docker inspect` summed to 10s × N containers —
+            # ~150s worst case at 15 containers, nearly the whole unit
+            # budget by itself. Now: one `docker ps` (5s) + one `docker
+            # inspect` over ALL names (10s) = 15s worst case, flat.
             if [ "$collect_docker" = "true" ] && timeout 15 docker info >/dev/null 2>&1; then
               : > "''${DOCKER_STATE}.tmp"
-              for cname in $(timeout 15 docker ps --format '{{.Names}}' 2>/dev/null); do
-                cur_rc=$(timeout 10 docker inspect --format '{{.RestartCount}}' "$cname" 2>/dev/null) || cur_rc=0
+              docker_containers=""
+              docker_containers=$(timeout 5 docker ps --format '{{.Names}}' 2>/dev/null) || docker_containers=""
+              docker_inspect_out=""
+              if [ -n "$docker_containers" ]; then
+                # shellcheck disable=SC2086  # deliberate word split: docker ps names contain no spaces
+                docker_inspect_out=$(timeout 10 docker inspect --format '{{.Name}}={{.RestartCount}}' $docker_containers 2>/dev/null) || docker_inspect_out=""
+              fi
+              while IFS='=' read -r cname cur_rc; do
+                cname="''${cname#/}"
+                [ -n "$cname" ] || continue
                 cur_rc="''${cur_rc:-0}"
                 echo "$cname $cur_rc" >> "''${DOCKER_STATE}.tmp"
                 prev_rc="''${prev_docker_restarts[$cname]:-0}"
@@ -1335,7 +1452,7 @@ _: {
                 fi
                 echo "docker_container_restart_count{name=\"$cname\"} ''${cur_rc}"
                 echo "docker_container_restart_alert{name=\"$cname\"} ''${rc_alert}"
-              done
+              done <<< "''${docker_inspect_out:-}"
               mv "''${DOCKER_STATE}.tmp" "$DOCKER_STATE"
             fi
 
@@ -1506,6 +1623,21 @@ _: {
           description = "Collect systemd-oomd kill events from journal";
         };
 
+        collectEnabledInactive = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = ''
+            Detect enabled LONG-RUNNING service units that are INACTIVE — the
+            2026-09-14 pool-dropout class (bank-sync/immich/paperless sat
+            inactive the whole boot after their mount job was cancelled during
+            coldplug churn; every event-driven layer stayed green for 3h).
+            Oneshots (legitimately inactive after exit) and socket-activated
+            services (legitimately inactive until first connection) are
+            excluded; template units never match. Sweeps the system manager
+            plus every user manager in monitoredUserManagers.
+          '';
+        };
+
         monitoredUserManagers = lib.mkOption {
           type = lib.types.listOf lib.types.str;
           default = lib.optional (config.users ? primaryUser) config.users.primaryUser;
@@ -1636,7 +1768,11 @@ _: {
             inherit onFailure;
             serviceConfig = lib.mkMerge [
               (harden {
-                MemoryMax = "128M";
+                # 256M (raised 2026-09-19 from 128M): the 2026-08-31 stall saw
+                # one run walk the journal with page cache charged to the
+                # cgroup; 128M left no headroom for the widened census
+                # sections (user-manager sweeps + enabled-inactive scan).
+                MemoryMax = "256M";
                 # CAP_DAC_READ_SEARCH: the collector runs as root but harden{}
                 # strips all caps — without this it cannot traverse forgejo's
                 # 0700 stateDir to read the mirror-sync sqlite (the -r gate
@@ -1652,13 +1788,17 @@ _: {
                 ExecStart = lib.getExe systemHealthMetrics;
                 ReadWritePaths = [ textfileDir ];
                 # Explicit ceiling (2026-08-31): the unbounded oomd journal
-                # scan once wedged this collector for 11-28 min. The global
-                # DefaultTimeoutStartSec=3min DOES apply (rendered into
-                # /etc/systemd/system.conf by timeout-audit.nix — verified
-                # live via `systemctl show -p DefaultTimeoutStartUSec`), but
-                # a collection that cannot finish in 3min is wedged: fail it
-                # into onFailure alerting instead of sitting in activating.
-                TimeoutStartSec = "3min";
+                # scan once wedged this collector for 11-28 min. Raised to
+                # 5min on 2026-09-19 as the interim of the worst-case
+                # section-sum fix (docs/todo/monitoring.md): the five journal
+                # walks are now parallel and the per-service/docker loops are
+                # single-read (worst case ≈ max(60s) + docker 15s + loops),
+                # but a full fork+exec storm on the QLC root can still push a
+                # legitimate run past the old 3min ceiling — a killed run
+                # wrote NO textfile (stale metrics + sev1 paging) while a
+                # finished-but-slow run is strictly better. The collector
+                # reaps its own SIGKILL corpses since this change.
+                TimeoutStartSec = "5min";
               }
             ];
           };
@@ -1787,6 +1927,25 @@ _: {
                   "[BODY] == pat(*\nsystem_pma_commit_fallbacks_over_threshold 0\n*)"
                 ];
                 alert = "PMA commits are failing or riding heuristic fallbacks — the auto-commit pipeline is degraded (2026-08-22..09-02: 11 days, ~3,800 failed commits on a dead AI provider, invisible to liveness). Failures: journalctl -u projects-management-automation --since -1h --grep 'commit failed'. Fallbacks: same with 'heuristic fallback'. Check the provider chain (FastFlowLM :52625 socket, minimax/zai keys) before it becomes a backlog.";
+              }
+              {
+                name = "Enabled-but-Inactive Units";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "5m";
+                # The 2026-09-14 pool-dropout class: enabled daemons (bank-sync,
+                # immich, paperless) sat INACTIVE the whole boot — INACTIVE is
+                # not FAILED, so no existing check fired and the pool-dropout
+                # ran 3h dark with every event-driven layer green. Anchored
+                # forms: absence of the aggregate or a scrape error fails
+                # closed; any nonzero count fires.
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\nsystem_units_enabled_inactive *)"
+                  "[BODY] != pat(*\nsystem_units_enabled_inactive [1-9]*)"
+                  "[BODY] == pat(*\nsystem_units_enabled_inactive_scrape_errors 0\n*)"
+                ];
+                alert = "Enabled long-running unit(s) are INACTIVE — the pool-dropout class (an enabled daemon nobody started). Read system_unit_enabled_inactive{manager,unit} labels in :9100/metrics, then systemctl start <unit> (and find why the boot transaction skipped it — cancelled mount job, failed Requires, etc.)";
               }
               {
                 name = "FastFlowLM NPU LLM";
