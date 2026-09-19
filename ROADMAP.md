@@ -36,13 +36,12 @@ The system has been hardened through multiple crash cycles. The root cause chain
 
 ## Theme 2: Security Hardening
 
-- **AppArmor enablement** (graduated from TODO P7 2026-09-19) — commented out in security-hardening.nix; was rejected for 2026-09-10 kernel-hardening adoption (breaks latest-kernel requirement context) — revisit only with a targeted profile set
+- **AppArmor enablement** (graduated from TODO P7 2026-09-19) — commented out in security-hardening.nix (`mkDefault false`); rejected in the 2026-09-10 paepckehh hardening adoption as wrong for this box's state-heavy, debug-heavy profile (confining unconfined processes fights the debug/forensics workflow) — revisit only with a targeted profile set
 
 - **Firewall deny-by-default** — NixOS currently allows all inbound. Docker punches its own holes. Transition to explicit allowlist
 - **Bind Immich to localhost** — currently on `0.0.0.0` with `openFirewall`. Caddy already reverse-proxies
 - **Remove legacy ssh-rsa** from accepted algorithm (kept for macOS client compat — evaluate dropping)
 - **Monitor365 agent→server auth** — no authentication, anyone on LAN can POST data
-- **AppArmor enablement** — currently `mkDefault false` in security-hardening.nix
 
 ---
 
@@ -53,11 +52,7 @@ The system has been hardened through multiple crash cycles. The root cause chain
 - **ZFS era CLOSED (2026-08-16)** — the 2×16 TB external ZFS mirror (`datapool`) was forensically extracted (373,491/373,491 files verified, zero user media), DESTROYED, and rebuilt as the BTRFS RAID1 backup pool (`/mnt/pool`). Native-ZFS-on-host experiment is moot. Remaining: retire the stale ZFS-VM scripts/workflow remnants (TODO_LIST)
 - **SearXNG streaming results** — User wants progressive rendering (stream results as engines respond), not the current "wait for all engines" model. Options: SearXNG fork with SSE endpoint, Go/Rust streaming proxy, or Caddy `flush_buffers -1`
 - **Darwin Home Manager parity** — macOS HM config is minimal (no terminal, editor, theme parity). Blocked by 256GB disk constraint
-- **Disabled service triage** (decided 2026-06-25):
-  - **voice-agents**: KEEP disabled — LiveKit + Whisper needs GPU resource planning
-  - **minecraft**: KEEP server disabled, client settings (Prism Launcher) stay enabled — server is seasonal
-  - **photomap**: REMOVED (2026-07-04) — module, port, Docker image all cleaned up
-  - **DiscordSync**: ✅ Reactivated — upstream migrated to go-cqrs-lite v3. GCS attachment backup available via opt-in `gcsBucket`
+- **Disabled service triage** (graduated from TODO P7 2026-09-19; per-service dispositions): voice-agents KEEP disabled (LiveKit + Whisper needs GPU resource planning); monitor365 KEEP disabled (private wireguard-collector crate unbuildable — re-enable needs an owner decision, item in docs/todo/services.md); minecraft decided KEEP 2026-09-15 (server seasonal, Prism client stays); photomap REMOVED 2026-07-04 (module, port, image all cleaned); DiscordSync reactivated (go-cqrs-lite v3; GCS attachment backup via opt-in `gcsBucket`)
 
 ---
 
@@ -65,14 +60,12 @@ The system has been hardened through multiple crash cycles. The root cause chain
 
 - **Darwin HM parity** (graduated from TODO P7 2026-09-19) — disk constrained (256GB SSD 90-95% full); minimal HM config by design
 
-- **Disabled service triage** (graduated from TODO P7 2026-09-19) — voice-agents + monitor365 remain (minecraft decided KEEP 2026-09-15; monitor365's own decision item lives in docs/todo/services.md)
-
 - **Split large modules** — signoz.nix split (943→511L), forgejo.nix split (725→353L). Monitor365 restructured (716L→151L). Remaining candidates: `configuration.nix` is the largest unsplit file
 - **Extract dnsblockd** — ~930 lines of production Go embedded in the Nix config. Candidate for standalone repo (see `docs/planning/2026-05-03_02-52_extract-dnsblockd-from-systemnix.md`)
 - **Typed NixOS module options** — many modules use `mkEnableOption` only. Add typed options for ports, paths, timeouts → enables validation and testing
 - **dnsblockd category enum** — categories are stringly-typed (10 hardcoded strings). Define Go enum type
 - **Deploy pipeline reliability** — PMA auto-commit daemon runs unscoped `nix flake update` which triggers the recurring nixpkgs tarball regression. 4-layer defense deployed. Registry override needs reboot to activate
-- **Regression test coverage** — VM test infrastructure exists (`tests/`). Expand beyond current 11 tests to cover: DynamicUser + sops mismatch, deploy.sh start-limit reset, `writeShellApplication` pipefail patterns, StartLimitBurst placement audit
+- **Regression test coverage** — VM test infrastructure exists (`tests/`, 43 tests). Expand to cover: DynamicUser + sops mismatch, deploy.sh start-limit reset, `writeShellApplication` pipefail patterns, StartLimitBurst placement audit
 - **Unified readiness gates** — `mkOidcGate`/`mkDnsGate` cover OIDC + DNS probing; a generalized `mkReadinessGate { type = "http"|"dns"|"tcp" }` would also cover DiscordSync's external-HTTP probe and service-to-service health probes
 - **Observability backend migration (SigNoz → VM ecosystem)** — Researched 2026-08-18, NOT scheduled. Verdict: keep SigNoz today (pain already paid, 2.5 GiB of 94 GiB). Target stack when triggered: VictoriaMetrics + VictoriaLogs + Tempo + Grafana (all stock nixpkgs modules, <1 GiB total) — or VictoriaTraces replacing Tempo+Grafana if it hits v1.0 stable first. **Revisit triggers:** VictoriaTraces v1.0, a NEW SigNoz/ClickHouse incident class, ClickHouse resource pressure, or wanting Grafana for other reasons. Full analysis + migration sketch: `docs/research/observability-signoz-to-victoriametrics.md`
 - **Real OTel instrumentation for own Go services** — overview and PMA carry `OTEL_EXPORTER_OTLP_ENDPOINT` but ship ZERO spans (never instrumented upstream; the env var is a documented noop). Either add otel SDK spans upstream or drop the pretense + audit the expectations registry — and add phantom-telemetry detection (alert when a registered exporter goes span-silent). Applies to every future own-service integration: wired ≠ instrumented (`docs/status/2026-08-18_02-38_otel-coverage-audit-buildflow-overview-pma.md`)
@@ -107,7 +100,7 @@ Detailed tasks live in [docs/todo/upstream.md](./docs/todo/upstream.md); the dis
 
 - **Attic cache production hardening** — Attic module deployed but cache not yet created. After creating cache + CI token, expand to all LarsArtmann Go repos
 - **Forgejo Actions CI expansion** — Monitor365 CI workflow is the first consumer. Expand to other LarsArtmann repos
-- **VM test CI integration** — 11 VM tests exist. Wire into `.github/workflows/nix-check.yml` `vm-tests` job
+- **VM test CI integration** — 43 VM tests exist. Wire into `.github/workflows/nix-check.yml` `vm-tests` job
 
 ---
 

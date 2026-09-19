@@ -53,7 +53,8 @@ nixpkgs.lib.nixosSystem {
     # auto-discovery like evo-x2), and until 2026-09-16 evaluated its sops
     # config WITHOUT them — exactly the host where recipient coverage is
     # actually broken (dns-failover.yaml carries only evo-x2 while this
-    # host consumes it; see the dns-failover item in docs/todo/services.md).
+    # host consumes it; no TODO item tracks the rpi3 recipient gap yet —
+    # the sops-recipient-audit guard IS the tracker until one is filed).
     inputs.self.nixosModules.sops-key-audit
     inputs.self.nixosModules.sops-recipient-audit
     nixos-hardware.nixosModules.raspberry-pi-3

@@ -32,6 +32,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Codify the single-victim /data repair recipe** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Build the /data damage-set inventory** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Crush-DB migration: baseline + follow-through** → [docs/todo/storage.md](docs/todo/storage.md)
+- [ ] **Samsung 2nd boot disk (boot-mirror): activation + reboot pending (deploy landed 2026-09-19)** → [docs/todo/storage.md](docs/todo/storage.md)
 
 ### stability
 
@@ -122,6 +123,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Post-deploy smoke for the browser-history registration gate using the CSRF double-submit dance** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Gatus check on `browser_history_user_count`: alert on DECREASE or exceed of its pre-probe baseline** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **browser-history registration-surface audit: verify `/auth/import` is unreachable unauthenticated on the deployed vHost path + sweep cqrs-htmx for OTHER user-creation paths bypassing `registrationMu`** → [docs/todo/services.md](docs/todo/services.md)
+- [ ] **DiscordSync Immich cross-archive wiring: deploy + go-live chain (FOD wave → deploy → user API key → post-deploy verify)** → [docs/todo/services.md](docs/todo/services.md)
 
 ### upstream
 
