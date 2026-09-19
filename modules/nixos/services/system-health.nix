@@ -192,9 +192,16 @@ _: {
           # and rename-over-foreign needs CAP_FOWNER (mail-relay
           # 2026-09-02..06 outage class).
           mkdir -p "${textfileDir}"
+          # Reap SIGKILL corpses (2026-09-19 audit): a run killed by the
+          # unit timeout's final SIGKILL dies BEFORE the EXIT trap fires and
+          # leaves a 0-byte mktemp leftover — 21 accumulated 2026-09-06..19,
+          # one per storm-killed run. Older than 2h = no live run can own it
+          # (run ceiling is 5min). Root has CAP_FOWNER; harmless as user.
+          ${pkgs.findutils}/bin/find "${textfileDir}" -maxdepth 1 -type f -name 'system_health.prom.??????' -mmin +120 -delete 2>/dev/null || true
           TMP="$(mktemp "${textfileDir}/system_health.prom.XXXXXX")"
           chmod 644 "$TMP"
-          trap 'rm -f "$TMP"' EXIT
+          WALK_DIR="$(mktemp -d)"
+          trap 'rm -f "$TMP"; rm -rf "$WALK_DIR"' EXIT
           CPU_STATE="${textfileDir}/.system_health_cpu_state"
           RESTART_STATE="${textfileDir}/.system_health_restart_state"
           OOMD_STATE="${textfileDir}/.system_health_oomd_state"
@@ -211,6 +218,24 @@ _: {
               val=0
             fi
             printf '%s' "$val"
+          }
+
+          # ── Parallel journal walks (2026-09-19 worst-case fix) ─────────
+          # The five timeout-bounded journal walks (forgejo, pma ×2,
+          # pocket-id, oomd) used to run SERIALLY: 4×60s + 30s ≈ 270s of
+          # budget on top of the per-service loops summed to ≈500s against
+          # a 180s unit ceiling — EVERY run under an IO storm died at the
+          # timeout (2026-09-03: 30+ min of straight 3min-timeouts, whole
+          # textfile stale, sev1 paging every 30min). Each walk now runs in
+          # a background job writing "<status> <count>" to its WALK_DIR
+          # file while the rest of the collector proceeds; results are
+          # consumed after `wait` (the oomd block, the LAST launcher).
+          # Worst case = the longest single budget (60s), not the sum.
+          walk_journal() {
+            local outfile="$1" unit="$2" since="$3" pattern="$4" budget="$5"
+            local count="" status=0
+            count=$(timeout "$budget" journalctl -u "$unit" --since "$since" --grep "$pattern" --output cat --no-pager 2>/dev/null | wc -l) || status=$?
+            printf '%s %s\n' "$status" "''${count:-0}" > "$outfile"
           }
 
           emit_service() {
@@ -245,36 +270,39 @@ _: {
             echo "system_service_start_limit_hit{service=\"''${svc}\"} ''${limit_hit}"
           }
 
+          # === CPU + restart tracking (single read per service) ===
           # CPU tracking: read previous CPUUsageNSec per service from state file,
           # compute delta / elapsed to get average CPU% since last collection.
-          declare -A prev_cpu_nsec prev_cpu_ts
+          # The two per-service reads (CPUUsageNSec + NRestarts) used to live in
+          # TWO separate loops, each with its own systemctl call — merged 2026
+          # -09-19: ONE `systemctl show -p CPUUsageNSec -p NRestarts --value`
+          # per service (properties print one per line in the order given).
+          declare -A prev_cpu_nsec prev_cpu_ts prev_restarts
           if [ -f "$CPU_STATE" ]; then
             while IFS=' ' read -r s n t; do
               [ -n "$s" ] && prev_cpu_nsec["$s"]="$n" && prev_cpu_ts["$s"]="$t"
             done < "$CPU_STATE"
           fi
-
-          # Write new state for next run
-          : > "''${CPU_STATE}.tmp"
-          for svc in ${lib.concatMapStringsSep " " (s: "'${s}'") allMonitoredServices}; do
-            cpu_nsec=$(systemctl_value "$svc" -p CPUUsageNSec)
-            cpu_nsec="''${cpu_nsec:-0}"
-            echo "$svc $cpu_nsec $NOW_EPOCH" >> "''${CPU_STATE}.tmp"
-          done
-          mv "''${CPU_STATE}.tmp" "$CPU_STATE"
-
-          # === Crash-loop detection: track restart count deltas per service ===
-          declare -A prev_restarts
           if [ -f "$RESTART_STATE" ]; then
             while IFS=' ' read -r s n; do
               [ -n "$s" ] && prev_restarts["$s"]="$n"
             done < "$RESTART_STATE"
           fi
+
+          # Write new state for next run
+          : > "''${CPU_STATE}.tmp"
           : > "''${RESTART_STATE}.tmp"
           for svc in ${lib.concatMapStringsSep " " (s: "'${s}'") allMonitoredServices}; do
-            cur_r=$(systemctl_value "$svc" -p NRestarts)
+            local_style_guard=1
+            {
+              read -r cpu_nsec
+              read -r cur_r
+            } < <(systemctl show "$svc" -p CPUUsageNSec -p NRestarts --value 2>/dev/null)
+            cpu_nsec="''${cpu_nsec:-0}"
+            echo "$svc $cpu_nsec $NOW_EPOCH" >> "''${CPU_STATE}.tmp"
             echo "$svc ''${cur_r:-0}" >> "''${RESTART_STATE}.tmp"
           done
+          mv "''${CPU_STATE}.tmp" "$CPU_STATE"
           mv "''${RESTART_STATE}.tmp" "$RESTART_STATE"
 
           # === User-1000.slice memory (desktop-only) ===
