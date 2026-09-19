@@ -1358,7 +1358,12 @@
                     [ "$c" = "1" ] || { echo 'FAIL: users_view decoy must survive'; exit 1; }
                     c=$(sqlite3 "$DB" "SELECT count(*) FROM events;")
                     [ "$c" = "2" ] || { echo 'FAIL: non-registration events must survive'; exit 1; }
-                    ls "$STATE"/.probe-registration-purged-* >/dev/null || { echo 'FAIL: marker missing'; exit 1; }
+                    has_marker() { find "$1" -maxdepth 1 -name '.probe-registration-purged-*' -print -quit | grep -q .; }
+                    # NOTE: find, not a bare ls-glob — stdenv runs check
+                    # scripts with nullglob, so a non-matching marker glob
+                    # silently expands to nothing and `ls` lists the CWD
+                    # (the 2026-08-27 nullglob phantom-verdict class).
+                    has_marker "$STATE" || { echo 'FAIL: marker missing'; exit 1; }
 
                     run "$STATE"
                     c=$(sqlite3 "$DB" "SELECT count(*) FROM events;")
@@ -1366,11 +1371,11 @@
 
                     STATE3="$FIX/state3"; mkdir -p "$STATE3"
                     run "$STATE3"
-                    ls "$STATE3"/.probe-registration-purged-* >/dev/null 2>&1 && { echo 'FAIL: marker without db'; exit 1; }
+                    has_marker "$STATE3" && { echo 'FAIL: marker without db'; exit 1; }
 
                     STATE2="$FIX/state2"; mkdir -p "$STATE2"; echo notadb > "$STATE2/data.db"
                     if run "$STATE2"; then echo 'FAIL: corrupt db must fail'; exit 1; fi
-                    ls "$STATE2"/.probe-registration-purged-* >/dev/null 2>&1 && { echo 'FAIL: marker on failure'; exit 1; }
+                    has_marker "$STATE2" && { echo 'FAIL: marker on failure'; exit 1; }
 
                     echo 'PASS: browser-history probe-purge fixture' > "$out"
                   '';
