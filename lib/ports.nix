@@ -103,6 +103,16 @@
     llama-embeddings = 8848;
     llama-reranker = 8849;
 
+    # llama.cpp vision-language servers (CPU, socket-activated) — NSFW-audit
+    # captioning/verdict stack (services.llama-vlm). Public socket on 812x,
+    # internal backend on 813x (the socat bridge forwards only when the
+    # backend binds). NOTE: 8123 is signoz-clickhouse-http — never use 812x
+    # for anything ClickHouse-adjacent.
+    llama-vlm-e4b = 8127;
+    llama-vlm-e4b-backend = 8137;
+    llama-vlm-cap = 8128;
+    llama-vlm-cap-backend = 8138;
+
     # CV — resume generator + career pipeline server (services.cv-server)
     cv = 8098;
 
