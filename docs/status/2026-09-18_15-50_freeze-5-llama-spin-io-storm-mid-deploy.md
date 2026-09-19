@@ -1,5 +1,8 @@
 # Freeze #5 — 2026-09-18 15:27 — llama-rag spin (pinned build!) on top of an all-day QLC IO storm, death mid-deploy
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** containment complete (SIGSTOP + config-disable); successor analysis: freeze-6 report + AGENTS.md Hardware Instability; llama-rag bisect gated in docs/todo/ai-stack.md.
+
+
 Boot -1 (`c861ed3b`, up since 2026-09-15 09:36, kernel 7.2.6) froze at
 **15:27:49** — journal cut mid-entry during normal activity, no panic, no
 kdump (`/var/crash` empty), WDT silent: the scheduler-livelock class
@@ -17,7 +20,7 @@ boot **replayed the same failure inputs** and was caught + contained live
 | 00:00→         | Zone-6 IO PSI storm runs CONTINUOUSLY from midnight (avg60 62-71%, QLC random IO ~29KB reads, disk busy 62-100%); guard trips every cooldown window (53 action-taken trips 00:00-11:00, #443-465 by 15:26; 337 total for the boot)                                                         |
 | 10:34          | flm restore capped (3 restores spent) — flm consumers dark from here                                                                                                                                                                                                                       |
 | 10:22          | deploy #1 (`bpidr18g`) into the storm                                                                                                                                                                                                                                                      |
-| 11:28          | deploy #2 = **gen 784** (`zbq817dd`) — re-enabled `llama-rag` after the 0.3.0 pin-back. Both llama-servers wedge at `model vocab missing newline token` and spin ~94% CPU each. systemd accounting at the 14:12 restart: **2h33min CPU over 2h43min wall, 8.6G written to disk, per unit** |
+| 11:28          | deploy #2 = **gen 784** (`zbq817dd`) — re-enabled `llama-rag` after the 0.3.0 pin-back. Both llama-servers wedge at `model vocab missing newline token` and spin ~94% CPU each. (~~deploy #2 standing~~ superseded same day: `llama-rag.enable = false` — docs/status/2026-09-18_15-50_* §f; bisect gated in docs/todo/ai-stack.md.) systemd accounting at the 14:12 restart: **2h33min CPU over 2h43min wall, 8.6G written to disk, per unit** |
 | 14:00-14:11    | deploy #3 (`s1klz076` = system-784 final) — restarts llama units, spin resumes immediately                                                                                                                                                                                                 |
 | 15:20-15:27    | deploy #4 (`d6wdfydgv`) switch at 15:27:40; signoz provisioning completes 15:27:46                                                                                                                                                                                                         |
 | 15:27:49.975   | journal cut mid-line. Livelock death. No shutdown record                                                                                                                                                                                                                                   |

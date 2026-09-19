@@ -1,5 +1,8 @@
 # Status Report — P3 Cleanup Decision Items D1–D6 Execution
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** D1–D6 all executed and verified (visionreviewd removed, hooks consolidated on .githooks, purge history-diet extended ~153 MB, minecraft KEEP, flake-update gate verified).
+
+
 **Date:** 2026-09-15 05:27 CEST
 **Session scope:** Execution of the six P3 owner-decision items from the 2026-09-14 repo-cleanup sweep (`docs/planning/2026-09-14_20-09_REPO-CLEANUP-PARETO-PLAN.md`). This report covers ONLY this session's work and what it directly observed. Concurrent-session activity is flagged where it intersected this work, never claimed.
 **Gates at close:** `nix flake check --no-build` → **all checks passed** (aarch64-darwin omission expected). `scripts/check-doc-links.sh` → **OK**. Zero residual `.nix` references to removed items.

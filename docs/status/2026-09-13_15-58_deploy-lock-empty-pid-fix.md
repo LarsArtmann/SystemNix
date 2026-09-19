@@ -1,6 +1,9 @@
 # 2026-09-13 15:58 — Deploy Lock Empty-PID Bug Fix + Self-Review
 
-**Session scope:** single-bug session — diagnose "holder PID: (empty)" in the deploy lock abort message, fix it, self-review. Nothing else touched.
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** fix landed in scripts/deploy.sh and in active use on every deploy since; the lock mechanism itself was never broken.
+
+
+**Session scope:** single-bug session — ~~diagnose "holder PID: (empty)" in the deploy lock abort message, fix it~~ DONE (append-mode open under flock; real-bash contention test verified). Nothing else touched.
 
 ---
 

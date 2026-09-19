@@ -1,5 +1,8 @@
 # Paperless Celery "31G RAM" Investigation — Interim Status
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** resolved by the 15:21 final report: btop PID-reuse stale stats, paperless exonerated (VmHWM 196 MB); AGENTS.md gotcha added.
+
+
 **Date:** 2026-09-16 14:41
 **Trigger:** User pasted a monitor row and asked why paperless is "using a LOT of RAM **AGAIN**":
 

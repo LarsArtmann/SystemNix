@@ -1,5 +1,8 @@
 # Status Report: ~/.local/bin Provenance Audit (Mini-Session)
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** read-only audit, complete; the flagged obsolete flm hand-install deletion remains user-gated (flm held at v1.0.2 — AGENTS.md FastFlowLM section).
+
+
 **Date:** 2026-09-11 10:41 CEST
 **Scope:** This session ONLY (per user instruction — no codebase-wide research).
 **Session task:** Answer "What of these are from NixOS?" for `/home/lars/.local/bin`.

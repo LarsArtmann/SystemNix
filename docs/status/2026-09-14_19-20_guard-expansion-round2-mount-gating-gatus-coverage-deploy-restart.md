@@ -1,5 +1,8 @@
 # Guard Expansion Round 2 — Mount-Gating, Gatus Coverage, Deploy-Restart Audits
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** all three guards landed + deployed 2026-09-16 20:57 (gen bbb931a8); the 5 live bugs fixed in-tree; cv VM fixture green (first full flake-check green since 09-13).
+
+
 **Session:** 2026-09-14, ~17:55–19:20 CEST (continuation of `2026-09-14_17-49` brutal-self-review backlog)
 **Prompt:** "READ, UNDERSTAND, RESEARCH, REFLECT. Break this down into multiple actionable steps. Execute and Verify them one step at a time. Repeat until done."
 **Outcome:** 3 NEW eval-time guards landed (mount-gating, gatus-coverage, deploy-restart) with 22 negative-test cases; the cv known-red FIXED (pre-commit full-check leg re-armed); **5 live bugs found and fixed** by the new guards; FULL build-mode `nix flake check` EXIT 0 for the first time since 2026-09-13. **Deploy NOT completed — blocked twice (details in d/e).**

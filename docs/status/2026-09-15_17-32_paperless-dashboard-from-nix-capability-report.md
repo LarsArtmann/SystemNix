@@ -1,8 +1,11 @@
 # Paperless Dashboard from Nix — Capability Research + Implementation Readiness
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** research superseded by the implementation shipped the same day (19:15 report) — provisioner deployed + smoke-verified 2026-09-16/17.
+
+
 **Date:** 2026-09-15 17:32 CEST
 **Session scope:** Set up https://paperless.home.lan/dashboard declaratively from Nix — check EVERYTHING configurable, then implement per house patterns.
-**Status:** Research + design COMPLETE (~90% of the hard thinking). Implementation NOT started (0 lines written). No repo files modified this session.
+**Status:** Research + design COMPLETE (~90% of the hard thinking). ~~Implementation NOT started (0 lines written)~~ implemented 2026-09-15 19:15 (docs/status/2026-09-15_19-15_*), deployed + verified 09-16/17.
 
 ---
 

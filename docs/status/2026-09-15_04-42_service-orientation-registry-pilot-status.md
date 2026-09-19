@@ -1,7 +1,10 @@
 # Service-Orientation Registry Execution — Status Report
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** pilot superseded by the full P2 migration (24 services, batch 3 completed 09:50) — deployed 2026-09-16 20:57.
+
+
 **Date:** 2026-09-15 04:42 CEST
-**Session scope:** forgejo file inventory → architecture review (service orientation) → roadmap execution in a live 3-session tree. This report covers THIS session only.
+**Session scope:** forgejo file inventory → architecture review (service orientation) → roadmap execution. ~~This report covers THIS session only~~ pilot only — the full P2 migration completed 2026-09-15 09:50 and deployed 2026-09-16 (docs/status/2026-09-15_09-50_*).
 **Environment notes:** ran under a documented corpse-pile IO-PSI storm (io some avg10 99% with all disks idle — phantom class), load ~738 from a parallel linker storm, and **three concurrent agent sessions** sharing the tree (repo-cleanup session, integration-registry session, miniflux session, + this one).
 
 ---

@@ -1,5 +1,8 @@
 # Docs-Health AUDIT — Full Session Report & Brutal Self-Review — 2026-09-14 19:21 CEST
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** that sweep's work is complete; its deferred items live in docs/todo/ — superseded as the latest docs-health pass by the 2026-09-19 sweep (this archive move).
+
+
 **Prompt:** "View ALL \*\*/2026-0\* files! Execute the docs-health SKILL! … TODO_LIST/CHANGELOG/AGENTS/README/ROADMAP/FEATURES must be SUPERB! … Archive FULLY done and UPDATED (inline strikethrough) .md files!"
 **Mode:** docs-health AUDIT (BUILD + HARVEST + VERIFY + ANNOTATE/ARCHIVE)
 **Outcome (one line):** 49 status reports annotated + archived (208 → 161 active), all 6 living docs updated to current, ~35 harvested TODO items, 14 CHANGELOG entries, `nix flake check --no-build` green, 0 broken links — with one self-inflicted archive-loop bug, one numbering-collateral class I created, and three deliberate deferrals that stay tracked.

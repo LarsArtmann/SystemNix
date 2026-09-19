@@ -1,5 +1,8 @@
 # Status Report — Task-Queue Window Closeout: Five Decision/Documentation Tasks (000001a08e…f057)
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** all five decision tasks closed with commits (a84f8701…cee81cbe); the spawned follow-ups (Borg implementation, Turso/Google-Sync user decisions) live in docs/todo/storage.md + services.md.
+
+
 **Date:** 2026-09-11 09:41 CEST
 **Scope:** the five-task window dispatched to this repo — T14 emergency-reserve pinning (…d84088), Google Sync DORMANT (…b020c), off-site backup decision (…f1cb), 🔑 key-rotation nag (…30976), Turso plan decision (…f057)
 **Window commits:** `a84f8701`, `9bcf79d9`, `84c70af5` + `09d481b0` (+ verification dispatches `91e387fd`, `e500d65b`), `4a2d5fd2`, `cee81cbe` (+ idempotent re-verification `6278f909`); supporting research `docs/research/hetzner-storagebox-borgbackup.md`

@@ -1,8 +1,11 @@
 # Session Report: go-taskqueue bump + the Go 1.27.1 ecosystem wave
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** wave completed 2026-09-18: overview eval fix + hashes pasted, tq 0.3.0/go1.27.1 deployed gen 784 (docs/status/2026-09-18_15-02_*).
+
+
 **Date:** 2026-09-17 19:56
 **Session goal (user):** "Is go-taskqueue using the latest version!? Deployed?" → "fucking fix it!"
-**Deploy status at end of session:** ❌ **NOT DEPLOYED** — deployed system still runs the OLD tq (`1a4eb480`-era) and the old signoz/collector (go1.25.14-built) binaries.
+**Deploy status at end of session:** ~~❌ **NOT DEPLOYED** — deployed system still runs the OLD tq (`1a4eb480`-era) and the old signoz/collector (go1.25.14-built) binaries.~~ RESOLVED 2026-09-18: tq 0.3.0/go1.27.1 deployed gen 784 (docs/status/2026-09-18_15-02_*).
 **Current hard blocker:** `overview` flake input `a0cfbc24` has a BROKEN upstream `vendorHash.nix` (bare unquoted hash string → Nix syntax error at import) — every evo-x2 toplevel **eval** dies before any build. Found at 19:56, NOT yet fixed.
 
 ---

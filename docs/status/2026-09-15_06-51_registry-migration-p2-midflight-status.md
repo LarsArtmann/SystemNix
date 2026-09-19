@@ -1,4 +1,7 @@
-# P2 Service-Integration Registry Migration — Mid-Flight Status (2026-09-15 06:51)
+# P2 Service-Integration Registry Migration — ~~Mid-Flight~~ COMPLETE Status (2026-09-15 06:51) — batch 3 finished 09:50, deployed 2026-09-16
+
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** mid-flight snapshot — batches 1+2 done, batch 3 completed at 09:50 (docs/status/2026-09-15_09-50_*); deployed 2026-09-16.
+
 
 Session context: executing the P2 checklist (registry migration per
 `docs/architecture-understanding/2026-09-14_19-56_service-orientation.html`,

@@ -1,5 +1,8 @@
 # Window Closeout — 5-Task Round: Forgejo Issue Filing, Mail-Relay Go-Live, Token Rotation, Paperless-Embeddings Verify, llama-rag Leak
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** window closed: llama-rag leg DONE; forgejo-filing/mail-relay/token/paperless legs remain user/root-gated and are tracked in docs/todo/ (services.md, security.md).
+
+
 **Date:** 2026-09-18 03:45 CEST · **Closer:** docs-health HARVEST/ANNOTATE pass over the 2026-09-18 00:00–03:30 agent window · **Repo:** LarsArtmann/SystemNix @ `9e3becb7` (clean at open)
 
 **Window tasks (all with closeout reports read first):**

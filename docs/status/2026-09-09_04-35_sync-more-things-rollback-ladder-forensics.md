@@ -1,5 +1,8 @@
 # Sync-More-Things → Rollback-Ladder Forensics (2026-09-09 04:30)
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** forensics point-in-time; recommendations executed: re-anchor system-762 (05-30 report) and pre-reboot-check §10 gcroots-resolution check shipped 2026-09-10.
+
+
 _Continuation of the 2026-09-07 Samsung-flip arc. User ask: "sync more things to Samsung
 before we do anything else" — specifically the 14 unbootable rollback menu entries the
 pre-reboot-check flagged (14 of 16 entries pointed at QLC-only store paths)._

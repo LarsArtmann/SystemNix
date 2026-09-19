@@ -1,5 +1,8 @@
 # Task-Window Closeout — Five Queue Runs (attic falsification + review fixes + SigNoz flip) — 2026-09-13 04:00
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** all five runs closed, commits verified pushed; dnsblockd /health fix confirmed shipped + deployed (lock-ancestry proven 2026-09-17).
+
+
 **Date:** 2026-09-13 ~04:00 CEST
 **Scope:** the five task-queue items listed in this window's dispatch, their closing commits, and what this docs-health pass noticed in passing. Every claim re-verified this pass against `git show`, the window's own reports, flake state, and the upstream checkouts — nothing taken from dispatch text alone.
 **Method:** `git show` on each closing commit; full reads of the five window reports; `git log origin/master..master` (SystemNix AND dnsblockd); merge-base ancestry check of the dnsblockd health fix against the deployed lock rev; grep sweeps for stale-claim carriers and report cross-references.

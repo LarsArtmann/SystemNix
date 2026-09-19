@@ -6185,11 +6185,11 @@
         "treefmt-nix": "treefmt-nix_12"
       },
       "locked": {
-        "lastModified": 1789761280,
-        "narHash": "sha256-mMZKri/kAaPQO83z+U7m8SAkOV2sxJo7T0GuuoqFMr8=",
+        "lastModified": 1789815458,
+        "narHash": "sha256-pCuhKs+V2I6AC+Pkb2/zbV0UqEwAv2YzVzxNBEnnPxY=",
         "owner": "LarsArtmann",
         "repo": "PapDashboard",
-        "rev": "665902b3e67d736c5a7ddcc146b49093c401feba",
+        "rev": "1f5d2589f9c845045c32b5b87f610ac4c5fe242b",
         "type": "github"
       },
       "original": {

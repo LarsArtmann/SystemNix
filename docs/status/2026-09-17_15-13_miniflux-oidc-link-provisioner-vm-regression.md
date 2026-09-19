@@ -1,8 +1,11 @@
 # Miniflux OIDC Account Link — Provisioner Build & VM-Test Regression Hunt
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** superseded by the 2026-09-18 07:53 report: regression root-caused (DynamicUser+nsncd NSS class), static-user + 4 provisioner bugs fixed, VM green; SSO live-verified 2026-09-18 20:06.
+
+
 **Session:** 2026-09-17 ~11:40–15:13 CEST
 **Task:** "This user already exists." on rss.home.lan (Pocket ID → Miniflux SSO) — make it work.
-**State at report time:** Diagnosis complete and source-verified; declarative provisioner fully implemented and eval-clean; **VM test red from a regression my own diff introduces (mechanism UNRESOLVED — bisect running)**; nothing deployed; production miniflux untouched and healthy; the user-facing 400 is still unfixed until either the manual paste or the provisioner ships.
+**State at report time:** Diagnosis complete and source-verified; declarative provisioner fully implemented and eval-clean; ~~VM test red from a regression my own diff introduces (mechanism UNRESOLVED)~~ RESOLVED 2026-09-18: nsncd/NSS boot race, static miniflux user fix shipped (docs/status/2026-09-18_07-53_*); SSO live-verified 2026-09-18 20:06. — bisect running)**; nothing deployed; production miniflux untouched and healthy; the user-facing 400 is still unfixed until either the manual paste or the provisioner ships.
 
 ---
 

@@ -1,5 +1,8 @@
 # Crash Forensics — 2026-08-31 16:34 Freeze (Incident #3)
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** point-in-time forensics; all session fixes shipped and live (guard Zone 4/5, scrub deferral guard, sev1 desktop page, flm v1.0.3). Successor freezes: #4 (2026-09-14), #5/#6 (2026-09-18) in AGENTS.md Hardware Instability.
+
+
 **Host:** evo-x2 · **Boot:** `-1` (14:30:33 → 16:34:42, journal cut mid-activity) · **Reset:** ~16:36:56 (hard, 2m14s gap — user at machine) · **Kernel:** 7.2.0 (FIRST boot on this kernel, gen 738 deployed Aug 30 22:32; the Aug 24–30 boot ran 7.1.8 userspace-switched)
 
 ---

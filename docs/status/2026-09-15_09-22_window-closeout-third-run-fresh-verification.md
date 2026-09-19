@@ -1,5 +1,8 @@
 # Window closeout — third run: fresh re-verification of the IO-PSI/Zone 6/InvokeNamed/gitleaks window
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** delta (the GH013 unblock) resolved by the 10:45 fourth run — push landed, playbook in AGENTS.md; archived as the third verification pass.
+
+
 **Date:** 2026-09-15 09:22 CEST
 **Queue task:** 000001a0a1f149f8469390a3b300fddf0914 closeout — this is the **THIRD run** of the same closeout (first: `docs/status/2026-09-15_06-10_window-closeout-io-psi-guard-invokenamed-sweep.md`, delivered only via daemon commit `47b0585e`; second: `docs/status/2026-09-15_07-32_window-closeout-rerun-gitleaks-rewrite-regression.md`, committed as `7ebb0863`). Between the second run and now, three more sessions touched the tree (an execution session closing the first closeout's harvest, a GH013 push-protection incident session, and a parallel service-integration-registry migration), so every claim below was **re-verified against the current tree at 09:22**, not copied forward.
 **Window:** 2026-09-14 00:37:44 → 03:11:44 (tq facts 2981–3110, worker-63716; all five tasks `task.completed` — re-read from the journal this run).
@@ -37,7 +40,7 @@ All five cited SHAs remain **unreachable** from HEAD (re-checked this run: `git 
 1. **Repo-generic CI do-analyzer** (provide/invoke type-parameter pairing lint across all Go repos) — the sweep's named future hardening; TODO item exists, untouched.
 2. **Zone 6 threshold recalibration** against first-trip telemetry (40% avg60 / 20% disk-busy are first values), the `zone6_churn_units_stopped` forensics metric, SigNoz dashboard surfaces, Zone 6 runbook entry — all harvested 06:10, none started.
 3. **The still-owed evo-x2 reboot** (flm :52626 corpse) — untouched, correctly; no queue item owns it.
-4. **GH013 push unblock** — noticed in passing (see §d.4): the push-protection block on the synthetic gitleaks fixtures is resolved in-tree (tokens templated) but the ~39-commit backlog is still unpushed; the 09:05 incident report's §f list was never harvested to TODO_LIST (this run appends the missing items).
+4. **GH013 push unblock** — noticed in passing (see §d.4): ~~the push-protection block on the synthetic gitleaks fixtures is resolved in-tree (tokens templated) but the ~39-commit backlog is still unpushed~~ RESOLVED by the 10:45 fourth run: push landed, playbook in AGENTS.md; the 09:05 incident report's §f list was never harvested to TODO_LIST (this run appends the missing items).
 
 ## d) TOTALLY FUCKED UP
 

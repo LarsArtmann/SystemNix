@@ -1,7 +1,10 @@
 # Status Report: Forgejo GitHub Mirror Sync — Audit, Findings, Fixes
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** superseded by the 16:45 continuation: deployed system-785 and verified end-to-end — 385 mirrors incl. the ~200 private-repo backfill (docs/status/2026-09-18_16-45_*).
+
+
 **Date:** 2026-09-18 07:43 CEST
-**Session scope:** Answer "How is my org's repos sync for GitHub and Forgejo, and how do we deal with renamed and transferred repos?" → full audit → fixes implemented + fixture-tested.
+**Session scope:** Answer "How is my org's repos sync for GitHub and Forgejo, and how do we deal with renamed and transferred repos?" → full audit → fixes implemented + fixture-tested → ~~undeployed~~ deployed system-785 2026-09-18, verified (docs/status/2026-09-18_16-45_*).
 **Format note:** Status-report skill defaults to HTML; user explicitly requested `.md` — override honored.
 
 ---

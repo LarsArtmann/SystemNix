@@ -1,8 +1,11 @@
 # GitHub Auto-Assign: Backfill DONE + Deploy Entangled in Parallel-Session Lock War — STATUS 19:39
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** superseded by the 2026-09-18 05:58 resolution: deployed gen 782, anchored, timer first-fire proven; feature live (AGENTS.md GitHub Auto-Assign section).
+
+
 **Session date:** 2026-09-17, report written 19:39 CEST
 **Task:** 6h systemd timer assigning all open unassigned GitHub issues/PRs across `LarsArtmann` repos to `@me`.
-**One-line status:** The FEATURE is complete, verified, and committed (module + docs + live-tested script logic); the real-world GitHub backlog is FULLY drained (1491 items, 0 failures); **the DEPLOY is still not switched** — the toplevel build now fails ONLY on the signoz pair, a casualty of a parallel session's mass flake-lock refresh (13:46) that I spent ~4 hours untangling in an active edit war.
+**One-line status:** The FEATURE is complete, verified, and committed (module + docs + live-tested script logic); the real-world GitHub backlog is FULLY drained (1491 items, 0 failures); ~~**the DEPLOY is still not switched** — the toplevel build now fails ONLY on the signoz pair, a casualty of a parallel session's mass flake-lock refresh (13:46) that I spent ~4 hours untangling in an active edit war.~~ RESOLVED 2026-09-18 05:58: lock war ended, deployed gen 782, timer first-fire proven (docs/status/2026-09-18_05-58_*).
 
 ---
 

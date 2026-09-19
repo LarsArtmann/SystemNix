@@ -1,6 +1,9 @@
 # Deploy-Failure Triage: HaGeZi Drift + vendorHash Staleness + preparedSource Validation (2026-09-13 14:40)
 
-**Session scope:** Root-cause and repair the failed `nix run .#deploy` (exit after 2h24m, 40 build failures at 14:09:30, `nixos-system-evo-x2-26.11.20260911.eaad089`).
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** superseded the SAME DAY by the 17:26 full repair (system-774 deployed + anchored) — kept as the interim forensics record.
+
+
+**Session scope:** Root-cause and repair the failed `nix run .#deploy` (exit after 2h24m, 40 build failures at 14:09:30) — superseded same day by the 17:26 full repair, system-774 deployed + anchored (docs/status/2026-09-13_17-26_*).
 
 ---
 

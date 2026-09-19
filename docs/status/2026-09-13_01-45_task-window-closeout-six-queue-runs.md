@@ -1,5 +1,8 @@
 # Task-Window Closeout — Six Queue Runs (2026-09-12) — Status Report
 
+> **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** all six 09-12 window tasks closed with verified commits; harvested rows now live in the docs/todo/ library system (2026-09-19 split).
+
+
 **Date:** 2026-09-13 01:45 CEST
 **Scope:** the six task-queue items completed in the 2026-09-12 window, their closing commits, and what this docs-health pass noticed in passing. Every claim below was re-verified this pass against `git show`, the window's own reports, and the live docs — nothing is taken from the dispatch text alone.
 **Method:** `git show` on each closing commit; full reads of the window's status reports; reference-checks for archiving; file-existence and file:line checks for every CHANGELOG/FEATURES claim added.
