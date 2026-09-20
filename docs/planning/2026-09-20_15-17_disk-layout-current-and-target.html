@@ -192,11 +192,13 @@
         letter-spacing: 0.1em;
       }
       .mermaid {
-        display: flex;
+        display: block;
         justify-content: center;
         font-family: var(--font-mono);
+        overflow-x: auto;
       }
-      .mermaid svg { max-width: 100%; height: auto; }
+      .mermaid svg { max-width: none; height: auto; }
+      .diagram .cap::after { content: "  ⟷  full-size · scroll sideways"; color: var(--text-faint); }
 
       /* ---- legend chips --------------------------------------------------- */
       .legend {
@@ -550,31 +552,27 @@ flowchart TB
     classDef sub fill:#e8e8e2,stroke:#111111,color:#111111
     classDef note fill:#ffffff,stroke:#111111,color:#111111
 
-    subgraph TQ["QLC p6 toplevel (subvolid=5) · mount /mnt/btrfs-root"]
-      SVAT["@ → / · btrbk 23:00 · local 3d 1w · pool FOREVER"]
-      SVC["@cache-home → ~/.cache · automount · deliberately snapshot-excluded"]
-      SVH["@home-hermes → /home/hermes · pool 14d 4w"]
-      SVN["@nix · pre-flip store · dead weight · deletion pending after soak"]
-      SVOLD["@home · legacy leftover · not mounted"]
-      SBK["btrbk-rescue: .rescue/@.rescue-* ×2 · chattr +a append-only"]
-    end
+    TQ0["QLC p6 · toplevel subvolid=5 · mount /mnt/btrfs-root"]
+    TS0["Samsung tlc · toplevel subvolid=5 · mount /mnt/hot · nofail"]
 
-    subgraph TS["Samsung tlc toplevel (subvolid=5) · mount /mnt/hot · nofail"]
-      TNIX["nix → /nix · neededForBoot · 115G · LIVE since 2026-09-07"]
-      TUCN["users/lars/cache/nix → ~/.cache/nix · LIVE automount"]
-      TUCG["users/lars/cache/go-build · created · INERT — mount parked (HM symlink canonicalization trap)"]
-      TCR["crush/ · plain dirs (not subvols) · 248 projects · 45G · LIVE 2026-09-18"]
-      TFG["hot/forgejo · PLANNED Set B — gated by services.forgejo.dedicatedSubvolume"]
-      THOT["hot/(name) · PLANNED Set C — services.hot-db module in-tree DORMANT (enable=false)"]
-    end
+    TQ0 -->|"→ / · btrbk 23:00"| SVAT["@ · /home/lars (268G) lives INSIDE @ · local 3d 1w · pool FOREVER · every /var/lib state rides these snapshots"]
+    TQ0 -->|"automount · excluded"| SVC["@cache-home → ~/.cache · ~16G app caches · deliberate snapshot exclusion"]
+    TQ0 -->|"own leg · 14d 4w"| SVH["@home-hermes → /home/hermes · pool 7d min / 14d 4w"]
+    TQ0 --> SVN["@nix · pre-flip store · DEAD · deleting after soak frees ~129G"]
+    TQ0 --> SVOLD["@home · legacy leftover · not mounted"]
+    TQ0 --> SBK[".rescue/@.rescue-* ×2 · read-only · chattr +a append-only canary"]
 
-    SVAT --- SVC
-    SVAT --- SVH
-    TQ -.->|"nested subvols excluded from @ snapshots"| SVC
+    TS0 -->|"neededForBoot"| TNIX["nix → /nix · 115G store · LIVE 2026-09-07"]
+    TS0 -->|"automount"| TUCN["users/lars/cache/nix → ~/.cache/nix · LIVE"]
+    TS0 -->|"parked"| TUCG["users/lars/cache/go-build · created · HM symlink canonicalization trap"]
+    TS0 -->|"plain dirs · 45G"| TCR["crush/ · 248 project session DBs · LIVE 2026-09-18 · interim module"]
+    TS0 -->|"Set B · gate G1"| TFG["hot/forgejo · 8h btrbk leg to pool"]
+    TS0 -->|"Set C · dormant"| THOT["hot/(name) · nodatacow + chattr +C · dump-only RPO · module dormant · candidates: pocket-id · postgres cluster · forgejo · dnsblockd · papdashboard · docker data-root"]
+
     class SVAT,SVC,SVH,TNIX,TUCN,TCR live
     class SVN,SVOLD dead
     class TFG,THOT,TUCG plan
-    class SBK sub
+    class TQ0,TS0,SBK sub
 </pre>
         </div>
 
@@ -629,6 +627,42 @@ flowchart TB
           btrbk config ever references the hot tier, <code>nix flake check</code> fails — one
           scheduled snapshot would silently revert nodatacow extents to CoW.
         </div>
+      </section>
+
+      <!-- ================= 5. PLACEMENT ================= -->
+      <section id="placement">
+        <div class="sec-head"><span class="idx">05</span><h2>Service → storage placement map</h2></div>
+        <p class="sec-lede">
+          The operational question this whole layout answers: <strong>where does each
+          service's state live, which snapshot set protects it, and what is its recovery
+          path?</strong> Set A = rides parent <code>@</code> snapshots · Set B = own subvol
+          + own btrbk leg · Set C = own subvol, never snapshotted, dump-only.
+        </p>
+        <table>
+          <thead><tr><th>State</th><th>Location</th><th>Set</th><th>Recovery path</th></tr></thead>
+          <tbody>
+            <tr><td>nix store</td><td class="mono">Samsung tlc · /nix</td><td><span class="tag plain">none</span></td><td>rebuildable: flake.lock + attic cache + upstreams</td></tr>
+            <tr><td>crush session DBs (248)</td><td class="mono">Samsung hot · /mnt/hot/crush</td><td><span class="tag plan">→ C on fold</span></td><td>none yet — alerting is a tracked TODO</td></tr>
+            <tr><td>user nix cache</td><td class="mono">Samsung hot · ~/.cache/nix</td><td><span class="tag plain">none</span></td><td>regenerable</td></tr>
+            <tr><td>/home/lars (268G)</td><td class="mono">QLC @ · inside @</td><td><span class="tag live">A</span></td><td>@ snapshots → pool root leg (FOREVER)</td></tr>
+            <tr><td>pocket-id (SSO IdP)</td><td class="mono">QLC @ · /var/lib/pocket-id</td><td><span class="tag live">A</span></td><td>sqlite .backup 04:00 → pool · 14d</td></tr>
+            <tr><td>PostgreSQL cluster (immich · paperless · miniflux DBs)</td><td class="mono">QLC @ · /var/lib/postgresql</td><td><span class="tag live">A</span></td><td>per-service dumps → pool (immich-db · paperless exporter · miniflux 02:45)</td></tr>
+            <tr><td>CV server</td><td class="mono">QLC @ · /var/lib/cv</td><td><span class="tag live">A</span></td><td>nightly sqlite .backup → pool/backups/cv</td></tr>
+            <tr><td>forgejo (git mirror)</td><td class="mono">QLC @ · /var/lib/forgejo</td><td><span class="tag plan">A → B</span></td><td>forgejo dump 03:30 zip · 7d → pool · hot/forgejo leg planned</td></tr>
+            <tr><td>gatus (monitoring)</td><td class="mono">QLC @ · /var/lib/private/gatus</td><td><span class="tag live">A</span></td><td>@ snapshots; health read from its sqlite</td></tr>
+            <tr><td>discordsync</td><td class="mono">QLC @ · /var/lib/discordsync</td><td><span class="tag plan">A → pool</span></td><td>Turso cloud mirror (local-only stance) · pool subvol reserved</td></tr>
+            <tr><td>browser-history</td><td class="mono">QLC @ · /var/lib/browser-history</td><td><span class="tag plan">A → pool</span></td><td>pool subvol reserved · dump folds into migration</td></tr>
+            <tr><td>immich media library</td><td class="mono">pool · services/immich</td><td><span class="tag live">B</span></td><td>btrbk-pool 23:45 snapshots + host-PG dump</td></tr>
+            <tr><td>paperless documents</td><td class="mono">pool · services/paperless</td><td><span class="tag live">B</span></td><td>btrbk-pool + exporter → pool</td></tr>
+            <tr><td>atticd binary cache</td><td class="mono">pool · services/atticd</td><td><span class="tag live">B</span></td><td>btrbk-pool (largely rebuildable)</td></tr>
+            <tr><td>bank-sync</td><td class="mono">pool · services/bank-sync</td><td><span class="tag live">B</span></td><td>btrbk-pool + backup-coordination</td></tr>
+            <tr><td>activitywatch · tq journal</td><td class="mono">pool · services/*</td><td><span class="tag live">B</span></td><td>btrbk-pool snapshots</td></tr>
+            <tr><td>monitor365</td><td class="mono">pool · services/monitor365</td><td><span class="tag plain">B · svc off</span></td><td>populated 2026-08-18 · service disabled</td></tr>
+            <tr><td>Docker data-root (twenty · manifest · dozzle · geometrikks…)</td><td class="mono">/data · /data/docker</td><td><span class="tag dead">data leg</span></td><td>btrbk-data (EIO-gated!) · twenty+manifest pg_dumps → pool</td></tr>
+            <tr><td>AI models · Steam</td><td class="mono">/data</td><td><span class="tag dead">data leg</span></td><td>rebuildable · deliberately excluded from offsite</td></tr>
+            <tr><td>ClickHouse telemetry</td><td class="mono">QLC p9 · XFS</td><td><span class="tag plain">none</span></td><td>open decision (derived vs clickhouse-backup)</td></tr>
+          </tbody>
+        </table>
       </section>
 
       <!-- ================= 4. MOUNT TABLE ================= -->
@@ -711,8 +745,8 @@ flowchart LR
     THERMES -.-> OFF
 
     class RAT,RHERMES,RDATA,RSVC,SAT,SH,SP,TROOT,THERMES live
-    class SD,TDATA,RFG,SF dead
-    class OFF,TFG plan
+    class SD,TDATA dead
+    class RFG,SF,OFF,TFG plan
 </pre>
         </div>
         <table>
@@ -783,8 +817,9 @@ flowchart TB
     GSSD2["SanDisk sdc1 ssd-btrfs · tenant decision pending (gocache module candidate)"]
     GINTERIM["crush-hot-db interim module FOLDS into services.hot-db Phase-2 (delete interim in same change)"]
 
-    GHOT --- GHOSTCAND
-    GOFF -.->|"3-2-1 completed"| GPOOL
+    GHOSTCAND -.->|"candidates ride"| GHOT
+    GINTERIM -.->|"folds into"| GHOT
+    PROOTT -.->|"planned Borg leg · excludes rebuildable ~700G"| GOFF
     class GESP,GNIX,GUC,GROOT,GDATA,GCH,GPSVC,PROOTT live
     class GDEAD dead
     class GHOT,GHOSTCAND,GHOME,GCACHE,GFG,GOFF,GSSD2,GINTERIM,GFGT plan
@@ -813,6 +848,46 @@ flowchart TB
             inheritance does not carry the flag). Qgroups stay off on QLC; the TLC pool MAY
             enable them later for per-service accounting.
           </div>
+        </div>
+      </section>
+
+      <!-- ================= 9. BOOT CHAIN ================= -->
+      <section id="bootchain">
+        <div class="sec-head"><span class="idx">09</span><h2>Boot chain — current vs target</h2></div>
+        <p class="sec-lede">
+          The chain already depends on the Samsung for <code>/nix</code> (stage-2 init
+          lives in the store). The mirror ESP completes the story: once the firmware boots
+          the Samsung first, only root <code>@</code> remains on the QLC. The seconds-wide
+          window between a switch and the post-switch mirror sync can boot the PREVIOUS
+          generation — safe, its store paths live ≥3 days.
+        </p>
+        <div class="diagram">
+          <div class="cap">Graph F · firmware → ESP → kernel → store → root</div>
+<pre class="mermaid">
+flowchart LR
+    classDef live fill:#1d3557,stroke:#111111,color:#ffffff
+    classDef plan fill:#f4d35e,stroke:#111111,color:#111111
+    classDef note fill:#e8e8e2,stroke:#111111,color:#111111
+
+    subgraph NOWC["CURRENT — firmware boots the QLC ESP (loader only; store already Samsung)"]
+      F1["firmware BootOrder · Linux Boot Manager (QLC)"] --> E1["/boot · QLC p7 · systemd-boot entries"]
+      E1 --> K1["kernel + initrd from /boot"]
+      K1 --> S1["stage-2 init + closure from /nix · SAMSUNG tlc (neededForBoot)"]
+      S1 --> R1["root @ · QLC p6"]
+    end
+
+    subgraph TGTC["TARGET — boot-mirror-activate puts Samsung FIRST (activation pending)"]
+      F2["firmware BootOrder · Linux Boot Manager (Samsung) first"] --> E2["/boot-mirror · Samsung p1 · verified byte-mirror + drift gate"]
+      E2 --> K2["kernel + initrd (mirrored)"]
+      K2 --> S2["/nix · same Samsung filesystem"]
+      S2 --> R2["root @ · QLC p6 — the only QLC dependency left"]
+      FB["QLC ESP stays as FALLBACK entry — F8/F11 menu or efibootmgr re-order"]
+      FB -.-> F2
+    end
+
+    class F1,E1,K1,S1,R1 live
+    class F2,E2,K2,S2,R2,FB plan
+</pre>
         </div>
       </section>
 
@@ -851,6 +926,7 @@ flowchart TB
 
       <footer>
         <div>Snapshot artifact — point-in-time visualization, 2026-09-20. Mermaid.js v11.17.2 inlined (MIT); no network needed.</div>
+        <div>Refresh with: <code>lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,MOUNTPOINT,MODEL</code> · <code>findmnt -t btrfs,xfs,ext4,vfat</code> · <code>df -h</code> — then update sections 01, 02 and 05.</div>
         <ul>
           <li>Live state: <code>lsblk</code>, <code>findmnt</code>, <code>df -h</code>, directory listings of /mnt/hot · /mnt/pool · /mnt/btrfs-root · /data</li>
           <li>Config: platforms/nixos/hardware/hardware-configuration.nix · platforms/nixos/system/snapshots.nix · boot-mirror.nix · modules/nixos/services/{hot-db,hot-user-caches,crush-hot-db}.nix</li>
@@ -4514,7 +4590,7 @@ globalThis["mermaid"] = globalThis.__esbuild_esm_mermaid_nm["mermaid"].default;
           fontSize: "14px",
           fontFamily: "ui-monospace, Menlo, Consolas, monospace"
         },
-        flowchart: { curve: "linear", nodeSpacing: 36, rankSpacing: 46, padding: 10, useMaxWidth: true }
+        flowchart: { curve: "linear", nodeSpacing: 36, rankSpacing: 46, padding: 10, useMaxWidth: false }
       });
     </script>
   </body>

@@ -144,8 +144,25 @@
             chmod g-s "$ssh_dir" 2>/dev/null || true
           }
 
-          if [ "$(stat -c '%U:%G' ${cfg.stateDir} 2>/dev/null)" = "${cfg.user}:${cfg.group}" ] \
-             && [ "$(stat -c '%a' ${cfg.stateDir} 2>/dev/null)" = "2770" ]; then
+          # Fast path must flag exactly what the heal's chown walk repairs —
+          # ownership drift on ANY entry under stateDir, not just the root
+          # (cv-state-perms lesson 2026-09-20: a root-only probe goes
+          # phantom-green against child drift the heal exists to fix). The
+          # walk mirrors the heal's chown branch (same -xdev, same
+          # workspace/projects prune — .ssh is deliberately INCLUDED: the
+          # chown walk covers it too). Mode drift on files is NOT probed:
+          # the heal's exec-preserving X semantics cannot be expressed as a
+          # find predicate; ownership is the axis that breaks the service
+          # user. Cost: one metadata walk per start (the heal branch already
+          # pays three on drift).
+          tree_converged() {
+            stray=$(find ${cfg.stateDir} -xdev -path '${cfg.stateDir}/workspace/projects' -prune -o \( ! -user ${cfg.user} -o ! -group ${cfg.group} \) -print -quit 2>/dev/null)
+            [ -z "$stray" ] \
+              && [ "$(stat -c '%U:%G' ${cfg.stateDir} 2>/dev/null)" = "${cfg.user}:${cfg.group}" ] \
+              && [ "$(stat -c '%a' ${cfg.stateDir} 2>/dev/null)" = "2770" ]
+          }
+
+          if tree_converged; then
             converge_ssh
             exit 0
           fi

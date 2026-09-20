@@ -501,6 +501,14 @@
             fi
 
             echo "cv-state-perms: foreign-owned entries under $state — healing for ${cfg.user}:${cfg.group}"
+            # Heal summary: what + how much + sample, so a RECURRING writer
+            # (the upstream sync's store-mode copies re-materialize read-only
+            # trees on every start until the upstream post-copy chmod reaches
+            # the lock) is visible in the journal instead of an anonymous
+            # green fast-path.
+            drift_count=$(find "$state" -xdev \( ! -user ${cfg.user} -o ! -group ${cfg.group} -o ! -perm -u+w \) -print 2>/dev/null | wc -l)
+            drift_sample=$(find "$state" -xdev \( ! -user ${cfg.user} -o ! -group ${cfg.group} -o ! -perm -u+w \) -print 2>/dev/null | head -3 | tr '\n' ' ')
+            echo "cv-state-perms: healing $drift_count drifted entries (sample: ''${drift_sample:-none})"
             chown ${cfg.user}:${cfg.group} "$state" 2>/dev/null || true
             find "$state" -xdev -exec chown ${cfg.user}:${cfg.group} {} + 2>/dev/null || true
             # Write permission, not just ownership: the sync's rm -rf
@@ -510,6 +518,15 @@
             # through to its read-only store target.
             find "$state" -xdev -type d -exec chmod u+w {} + 2>/dev/null || true
             find "$state" -xdev -type f -exec chmod u+w {} + 2>/dev/null || true
+            # Convergence check: a non-empty leftover names an unhealable
+            # residue (e.g. a mount the caps cannot touch) — warn loudly,
+            # never fail the boot.
+            leftover=$(find "$state" -xdev \( ! -user ${cfg.user} -o ! -group ${cfg.group} -o ! -perm -u+w \) -print -quit 2>/dev/null)
+            if [ -n "$leftover" ]; then
+              echo "cv-state-perms: WARNING — unhealable residue remains: $leftover" >&2
+            else
+              echo "cv-state-perms: converged ($drift_count entries healed)"
+            fi
           '';
         };
 
