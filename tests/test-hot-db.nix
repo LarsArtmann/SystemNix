@@ -123,6 +123,7 @@ in
 
     # 1+2: subvolume exists and is mounted AT the dataDir, nodatacow live.
     machine.succeed("btrfs subvolume show /var/lib/hotdb-test")
+    print("DEBUG proc-mounts:", machine.execute("grep tlc /proc/mounts || true")[1])
     machine.succeed("grep -q nodatacow /proc/mounts")
     machine.succeed("btrfs subvolume list /mnt/hot | grep -q 'hot/testdb'")
 
