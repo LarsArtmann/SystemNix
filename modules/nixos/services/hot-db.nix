@@ -32,8 +32,10 @@
   flake.nixosModules.hot-db =
     {
       config,
+      options,
       pkgs,
       lib,
+      utils,
       ...
     }:
     let
@@ -92,12 +94,13 @@
 
       hotParent = "hot";
       subvolPath = name: "${hotParent}/${name}";
-      # systemd-escape --path semantics: the LEADING slash is dropped
-      # (/var/lib/mydb → var-lib-mydb.mount), not turned into a dash — a
-      # leading dash names a nonexistent unit and silently voids the
-      # ordering dependency.
-      mountUnitName =
-        path: lib.removePrefix "-" (builtins.replaceStrings [ "/" ] [ "-" ] path) + ".mount";
+      # systemd-escape --path semantics: '/' → '-', BUT a literal '-' in
+      # the path is escaped to \x2d (fstab-generator names the unit
+      # var-lib-hotdb\x2dtest.mount, NOT var-lib-hotdb-test.mount — a
+      # hand-rolled replaceStrings '/'→'-' name references a NONEXISTENT
+      # unit, silently voiding the bootstrap's WantedBy/Before ordering;
+      # leading-slash drop included via escape's own semantics).
+      mountUnitName = path: "${utils.escapeSystemdPath path}.mount";
 
       # Every btrbk settings string, recursively — the landmine scan needs
       # no structure knowledge: if any config text mentions an entry path
@@ -274,7 +277,13 @@
                 })
                 (serviceOneshotDefaults { })
               ];
-              path = [ pkgs.btrfs-progs ];
+              path = [
+                pkgs.btrfs-progs
+                # chattr (nodatacow +C on the fresh subvolume root) lives in
+                # e2fsprogs, not btrfs-progs — missing from the unit PATH it
+                # exit-127s the bootstrap AFTER the create (VM-test caught).
+                pkgs.e2fsprogs
+              ];
               script = ''
                 pool=${cfg.toplevelMount}
                 mkdir -p "$pool/${hotParent}"
@@ -303,8 +312,13 @@
             lib.flatten (
               map (
                 e:
+                # systemd.services.<name> takes the unit name WITHOUT the
+                # .service suffix — keying by the full unit name wires a
+                # phantom unit and the real consumer never gets its
+                # anti-shadow RequiresMountsFor (VM-test caught: the
+                # consumer wrote into the unmounted dataDir).
                 map (u: {
-                  name = u;
+                  name = lib.removeSuffix ".service" u;
                   value = {
                     unitConfig = {
                       RequiresMountsFor = [ e.path ];

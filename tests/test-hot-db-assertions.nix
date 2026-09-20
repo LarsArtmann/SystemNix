@@ -145,8 +145,8 @@ let
           ];
         in
         hotDbFailures [ ] == [ ]
-        && cfg.systemd.services."mydb.service".unitConfig.RequiresMountsFor == [ "/var/lib/mydb" ]
-        && cfg.systemd.services."mydb.service".unitConfig.ConditionPathIsMountPoint == "/var/lib/mydb"
+        && cfg.systemd.services."mydb".unitConfig.RequiresMountsFor == [ "/var/lib/mydb" ]
+        && cfg.systemd.services."mydb".unitConfig.ConditionPathIsMountPoint == "/var/lib/mydb"
         && cfg.fileSystems ? "/var/lib/mydb"
         && cfg.fileSystems."/var/lib/mydb".options != [ ]
         && cfg.systemd.services.hot-db-bootstrap != { }
