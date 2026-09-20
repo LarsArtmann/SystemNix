@@ -17,7 +17,6 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 
 ### storage
 
-- [ ] **`services.hot-db` NixOS module — the declarative mechanism for the Samsung hot-DB tier (Phase 2 of the ratified design)** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Phase 2: hot DBs off the QLC root** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Pool + disk-domain quality (2026-08-28 review)** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **restic repo on pool for app dumps (dedup)** → [docs/todo/storage.md](docs/todo/storage.md)

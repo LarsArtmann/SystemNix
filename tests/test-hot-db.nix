@@ -123,7 +123,6 @@ in
 
     # 1+2: subvolume exists and is mounted AT the dataDir, nodatacow live.
     machine.succeed("btrfs subvolume show /var/lib/hotdb-test")
-    print("DEBUG proc-mounts:", machine.execute("grep btrfs /proc/mounts || true")[1])
     # nodatacow EFFECT check: files created inside the subvol inherit the
     # +C flag. Do NOT grep /proc/mounts for the option — btrfs ≥6.x omits
     # nodatacow from displayed mount options (applies but never shows).
@@ -148,12 +147,19 @@ in
 
     # 4: anti-shadow — unmount (detached-Samsung shape). The mount is
     # nofail so nothing else fails; the consumer must condition-SKIP
-    # rather than write into the plain dir left behind. Assert on
-    # observables, not the ConditionResult enum vocabulary: the skip
-    # contract is "conditions failed → unit did not execute → no write".
+    # rather than write into the plain dir left behind. The consumer's
+    # RequiresMountsFor would re-pull (re-MOUNT) the unit on a normal
+    # start, so the mount is stopped first and the consumer is started
+    # dependency-free — this isolates exactly the CONDITION layer that
+    # protects against a shadow dir. Assert on observables, not the
+    # ConditionResult enum vocabulary: the skip contract is "conditions
+    # failed → unit did not execute → no write".
     machine.succeed("umount /var/lib/hotdb-test")
+    machine.succeed("systemctl stop 'var-lib-hotdb\\x2dtest.mount' || true")
     machine.succeed("systemctl stop hotdb-consumer.service")
-    machine.succeed("systemctl start hotdb-consumer.service")
+    machine.succeed(
+        "systemctl start --job-mode=ignore-dependencies hotdb-consumer.service || true"
+    )
     cond = machine.succeed("systemctl show -p ConditionResult -o cat hotdb-consumer.service").strip()
     assert cond != "yes", f"consumer conditions unexpectedly passed (ConditionResult={cond})"
     state = machine.succeed("systemctl is-active hotdb-consumer.service || true").strip()
