@@ -375,6 +375,11 @@
         systemd.services.cv-server = {
           after = [
             "sops-nix.service"
+            # State-dir ownership heal MUST complete before the upstream
+            # content sync runs (its assets rm -rf dies on foreign-owned
+            # entries). Explicit here beside the heal unit's own before /
+            # wantedBy wiring — the same belt-and-braces as cv-oidc-env.
+            "cv-state-perms.service"
           ]
           ++
             lib.optionals
@@ -387,6 +392,7 @@
               ];
           wants = [
             "sops-nix.service"
+            "cv-state-perms.service"
           ]
           ++
             lib.optionals
@@ -430,6 +436,73 @@
               }
             )
           ];
+        };
+
+        # Heals foreign-owned entries in the state dir BEFORE the upstream
+        # content sync runs as the service user. The sync's assets mirror
+        # (rm -rf "$state/assets" under set -e) cannot unlink entries the cv
+        # user does not own — operator root intervention leaves such entries
+        # behind — and one unlink EPERM took the whole service boot down
+        # (2026-09-20: assets/fonts owned by root). Root oneshot carrying
+        # just the three caps the chown/chmod walk needs; the cv-server
+        # daemon itself keeps CapabilityBoundingSet="". Re-runs on EVERY
+        # cv-server start (no RemainAfterExit). Tolerance mirrors
+        # hermes-perms: a single unhealable entry is tolerated, never fatal —
+        # foreign-owned files must never take the boot down.
+        systemd.services.cv-state-perms = {
+          description = "CV — heal state-dir ownership before the content sync";
+          # The heal walks /var/lib/cv WITHOUT owning its StateDirectory
+          # entry (the main unit's), so order it after the state filesystems
+          # explicitly — a not-yet-mounted /var would read as "missing dir"
+          # and silently skip the heal for this start.
+          after = [ "local-fs.target" ];
+          before = [ "cv-server.service" ];
+          wantedBy = [ "cv-server.service" ];
+
+          serviceConfig = lib.mkMerge [
+            { Type = "oneshot"; }
+            (harden {
+              # CAP_CHOWN: the ownership walk. CAP_FOWNER: chmod on entries
+              # owned by another uid. CAP_DAC_OVERRIDE: traverse foreign
+              # dirs whose mode (e.g. root-owned 0700) denies the walk.
+              CapabilityBoundingSet = [
+                "CAP_CHOWN"
+                "CAP_DAC_OVERRIDE"
+                "CAP_FOWNER"
+              ];
+            })
+            (serviceOneshotDefaults { })
+          ];
+
+          path = [
+            pkgs.coreutils
+            pkgs.findutils
+          ];
+
+          script = ''
+            state="${cfg.stateDir}"
+            [ -d "$state" ] || exit 0
+
+            # Fast path: every entry already service-owned AND fully
+            # traversable — find exits nonzero when it cannot descend a
+            # foreign 0700 dir, which is drift too (then-branch skipped).
+            if stray=$(find "$state" -xdev \( ! -user ${cfg.user} -o ! -group ${cfg.group} \) -print -quit 2>/dev/null); then
+              if [ -z "$stray" ]; then
+                exit 0
+              fi
+            fi
+
+            echo "cv-state-perms: foreign-owned entries under $state — healing for ${cfg.user}:${cfg.group}"
+            chown ${cfg.user}:${cfg.group} "$state" 2>/dev/null || true
+            find "$state" -xdev -exec chown ${cfg.user}:${cfg.group} {} + 2>/dev/null || true
+            # Write permission, not just ownership: the sync's rm -rf
+            # unlinks via DIR-write and its cp overwrites files in place —
+            # a root-owned 0555 tree stays unwritable after chown alone.
+            # Split by type so the config.yaml symlink is never chmod'd
+            # through to its read-only store target.
+            find "$state" -xdev -type d -exec chmod u+w {} + 2>/dev/null || true
+            find "$state" -xdev -type f -exec chmod u+w {} + 2>/dev/null || true
+          '';
         };
 
         # Mount-gated creator for the pool-side backup dir (atticd-storage-dir
