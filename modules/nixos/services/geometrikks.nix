@@ -189,7 +189,17 @@ _: {
                 };
               };
               read_only = true;
-              tmpfs = [ "/tmp:size=64m" ];
+              # /etc tmpfs: the image's PUID/PGID init runs usermod/groupmod
+              # at startup and needs a WRITABLE /etc (lock files + group
+              # edits); on the read-only rootfs it died
+              # "groupmod: cannot lock /etc/group" in a restart loop (the
+              # second stacked bring-up blocker, 2026-09-20 — hidden behind
+              # the missing-DB one). Ephemeral by design: ids re-applied
+              # each start.
+              tmpfs = [
+                "/tmp:size=64m"
+                "/etc:size=16m"
+              ];
               security_opt = [ "no-new-privileges:true" ];
               mem_limit = "1g";
               memswap_limit = "1g";
