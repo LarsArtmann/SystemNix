@@ -180,5 +180,77 @@ delta is `-perm -u+w`.
 
 ---
 
-*Report written 15:02. System state at writing: system-786 anchored, cv-server serving, tree
-clean at `34db241a`. No secrets included (public-repo rule).*
+## Addendum (15:50) — questions answered from the docs + source, corrections, follow-on work
+
+Per the directive to read all `docs/status/2026-09-1*` + `2026-09-2*` (~105 reports; the 09-20
+set in full, the 09-1x set via full-title index + targeted reads) and answer my own questions:
+
+### Q1 — the assets drift was BOTH one-off AND structural (source-answered, not inferred)
+
+The upstream CV repo's own fix comment (`nix/nixos-module.nix` @ master) states it: **"chmod
+after copy: store trees are 0555, and a read-only synced dir would break the next start's
+overwrite"** — nix store trees are read-only, plain `cp -r` propagates those modes, so the OLD
+sync re-materialized unwritable dirs under `$state/assets` at EVERY start. On top of that
+one-off-class driver, the montserrat font dirs were root-owned ("operator root intervention",
+the 12:26 session's wording — origin never pinned in any doc). The upstream fix is ALREADY on
+master: best-effort `rm -rf … || true` + best-effort `cp -r` + **`chmod -R u+w` post-copy** —
+it reaches SystemNix with the next cv lock move (see below). SystemNix's heal now covers both
+classes regardless.
+
+**Lock-hold escape condition is MET upstream, one hash short:** probing
+`nix build github:LarsArtmann/CV/master#default.goModules` at `048b10733` got PAST the go
+floor (no `go.mod requires go >= 1.27.1` — upstream's `goPkg = pkgs.go_1_27` works) and failed
+only on a stale vendorHash (`specified sha256-jOruYeEK… got sha256-HRIrd53B…`). A parallel
+session is ACTIVELY working the CV repo (HEAD moved 048b10733 → e16a235b4 mid-session, go.mod
+churn at 15:41-15:47, hash not yet refreshed) — hands OFF per multi-agent discipline; the
+recorded got-hash is scoped to `048b10733` and will need a re-probe at the session's final rev.
+
+### Q2 — go-build bootstrap is MOOT (report correction); cv-scan self-heals at 18:23
+
+My claim that `hot-user-caches-go-build-bootstrap` "runs at next boot" was STALE: the 13:58
+session REMOVED the go-build cache entry entirely (HM `mkOutOfStoreSymlink` canonicalization
+made its automount unloadable — `hot-user-caches.nix:79-92`, `deploy.sh:455`); the orphaned
+0755 subvol at `/mnt/hot/users/lars/cache/go-build` is deliberately inert. **Nothing to
+start.** `cv-scan` needs no manual start either: its 12:23 failure was the pre-fix dead
+server; the timer's next 6h tick (`:23` → 18:23) is the verification point.
+
+### Q3 — the ~30% was a live Zone-6 storm tail; my deploy raced it (confirmed breach)
+
+Guard journal: Zone-6 trips **#650 13:58, #651 14:12, #652 15:06, #653 15:17** bracket my
+14:08 deploy — the freeze-#5 doctrine ("when Zone 6 tripped within the last hour, queue the
+deploy instead of racing dips") was breached and I got lucky. Drivers per the 09-19/09-20
+docs: geometrikks-era build churn + qemu-aarch64 emulation + **rogue hermes llama-servers
+(PID 805159/805161, 8h+, holding 8848/8849/8127/8128 — user kill-decision pending, dark-guard
+check RED = working)** + crush-session QLC churn. As of 15:45: io PSI avg10=10.2/avg60=11.8
+(DRAINED below the 20 gate), mem PSI 2%, MemAvailable 57% — no investigation owed now; the
+rogue llamas are the standing known driver awaiting the user's kill decision.
+
+### Other corrections to the 15:02 text
+
+- My predicate fix rode daemon commit **`fc49dbe5`** (not `34db241a` — that was an earlier
+  batch).
+- The 13:58 session PREDICTED this exact fast-path blindspot (their §e.1) — my fix confirmed
+  their hypothesis; credit shared.
+- Fleet state moved on: **system-787 anchored 15:06** (parallel inboxclean work; three-way
+  anchor verified profile == current-system == default boot entry, `czwfy8qf…` re-verified
+  15:48), boot mirror ARMED (Samsung FIRST in BootOrder), `pre-reboot-check` 23/0 "SAFE TO
+  REBOOT" — the ONLY remaining action is the USER REBOOT (their 15:30 report).
+
+### Follow-on work executed in this continuation (15:15→15:50)
+
+1. `cv.nix`: heal now journals a summary — drift count + 3-entry sample BEFORE the walks +
+   convergence check after (`converged (N entries healed)` / `WARNING — unhealable residue`).
+   Makes a recurring writer visible instead of an anonymous green. (Hit and fixed the
+   `''${var:-default}` Nix-escape trap; flake check green.)
+2. `hermes.nix`: the sibling blindspot closed — the perms fast path now walks child
+   ownership (mirroring the chown walk's prune set) instead of probing only the stateDir
+   root; mode drift deliberately unprobed (exec-preserving `X` semantics have no find
+   predicate). VM test `.#checks.x86_64-linux.hermes` running as the behavior gate.
+3. `AGENTS.md`: doctrine bullet added (fast-path/heal predicate symmetry + symlink-safe
+   `-perm` + heal-summary journaling + CAP_FOWNER cross-ref), next to the chown-vs-bind rule.
+4. Read-only CV-repo forensics for the owning session (no edits).
+
+---
+
+*Report written 15:02, addendum 15:50. System state: system-787 anchored (`czwfy8qf…`),
+cv-server serving, mirror armed, reboot pending (user). No secrets (public-repo rule).*
