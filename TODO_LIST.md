@@ -32,6 +32,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Codify the single-victim /data repair recipe** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Build the /data damage-set inventory** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Crush-DB migration: baseline + follow-through** → [docs/todo/storage.md](docs/todo/storage.md)
+- [ ] **Rebuild `hot-db` + `crush-hot-db` VM tests green on the current tree (quiet-IO window)** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Samsung 2nd boot disk (boot-mirror): activation + reboot pending (deploy landed 2026-09-19)** → [docs/todo/storage.md](docs/todo/storage.md)
 
 ### stability

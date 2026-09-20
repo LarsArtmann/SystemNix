@@ -121,3 +121,39 @@ This report is the pending window runbook (referenced from storage.md), so the �
 - The "verify exact oneshot names at window time" caveat is resolved — all snippet unit names now verified in-tree; the owner window needs no module spelunking.
 - Main service unit names confirmed: `pocket-id.service`, `postgresql.service`, `discordsync.service` (the nixpkgs postgres module exposes the daemon as `postgresql.service`).
 
+
+## j. Addendum 2 — re-dispatch verification round (same task-ID, 2026-09-21 ~01:30)
+
+The queue re-dispatched the item because THIS report's owning session never landed its footer commit
+(the auto-commit daemon swept the work into heuristic commits; no commit in history carries the
+Task-Queue-ID — the storage.md queue-ID-remap precedent). This round verified the landed state and
+re-establishes the cross-reference; no code changed.
+
+**Verification (all green at HEAD `1ea616e9`):**
+
+- `nix flake check --no-build` → rc 0 (all checks passed; aarch64-darwin omission expected).
+- `nix build .#checks.x86_64-linux.hot-db-assertions` → realized (`blwp7jjm…`) — all 9 landmine/
+  validation cases pass, incl. the per-entry coexistence case against the forgejo Set-B shape.
+- `bash -n` clean on `scripts/fsync-bench.sh` + `scripts/migrate-hot-db.sh`.
+- Per-entry landmine guard confirmed in-tree (`hot-db.nix`: per-ENTRY `hasInfix` scan, not blanket `hot/`).
+
+**Condition at dispatch:** the IO storm documented in §g was still active (io PSI some avg60 = 74%,
+memory pristine) — so NO VM-test builds, NO entries enabled, NO deploy (all consistent with the
+BLOCKED state; the deploy pressure gate would refuse anyway).
+
+**Verification gap found + queued:** BOTH VM tests (`hot-db`, `crush-hot-db`) are unrealized for the
+current tree's derivations (`nix path-info` on the drv outputs: absent from the store) — the
+2026-09-16 green predates lock churn, and the crush-hot-db rewrite session's storm blocked its
+builds. Queued as a `[ready]` item (heavy-job, quiet window) in storage.md + TODO_LIST.
+
+**Monitoring gap found (T14 filesystem half) + folded into the queue:** `/mnt/hot` has NO scrub
+coverage — `btrfs.autoScrub.fileSystems` lists `/ /data /mnt/pool` only (snapshots.nix:347), the
+btrfs-health scrub-metrics loop scans `/ /data` only (btrfs-health.nix:264), while the tier has
+hosted 45 GiB of live crush session DBs since 2026-09-18 and will host the Phase-2 dataDirs.
+smartd already covers the Samsung by-id (configuration.nix:1013), so only the scrub family is
+missing. Folded into the "Pool + disk-domain quality" item (1) — same mount-gated treatment as
+`/mnt/pool`, no parallel item.
+
+**Remaining work unchanged from §g:** pocket-id / postgres / discordsync waves + docker data-root
+are owner sudo windows; the paperless-PG-dump pre-decision rides its own queued item. Nothing else
+agent-side is open for this item.
