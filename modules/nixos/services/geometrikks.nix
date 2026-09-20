@@ -188,18 +188,16 @@ _: {
                   max-file = "5";
                 };
               };
-              read_only = true;
-              # /etc tmpfs: the image's PUID/PGID init runs usermod/groupmod
-              # at startup and needs a WRITABLE /etc (lock files + group
-              # edits); on the read-only rootfs it died
-              # "groupmod: cannot lock /etc/group" in a restart loop (the
-              # second stacked bring-up blocker, 2026-09-20 — hidden behind
-              # the missing-DB one). Ephemeral by design: ids re-applied
-              # each start.
-              tmpfs = [
-                "/tmp:size=64m"
-                "/etc:size=16m"
-              ];
+              # read_only is IMPOSSIBLE for this image (source-verified
+              # entrypoint 2026-09-20): it chowns /app under `set -e` at
+              # startup (EROFS → restart-loop exit 1) and the app rewrites
+              # /app/.litestar.json via mkstemp+rename at runtime. The
+              # entrypoint ALWAYS drops to the `geometrikks` user via gosu
+              # (PUID=0 → uid-0 user, preserving the caddy-log reads);
+              # blast-radius stays bounded by no-new-privileges, mem limits,
+              # and the internal/frontend network split.
+              read_only = false;
+              tmpfs = [ "/tmp:size=64m" ];
               security_opt = [ "no-new-privileges:true" ];
               mem_limit = "1g";
               memswap_limit = "1g";
