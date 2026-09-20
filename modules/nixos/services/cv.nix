@@ -483,10 +483,18 @@
             state="${cfg.stateDir}"
             [ -d "$state" ] || exit 0
 
-            # Fast path: every entry already service-owned AND fully
-            # traversable — find exits nonzero when it cannot descend a
-            # foreign 0700 dir, which is drift too (then-branch skipped).
-            if stray=$(find "$state" -xdev \( ! -user ${cfg.user} -o ! -group ${cfg.group} \) -print -quit 2>/dev/null); then
+            # Fast path: every entry already service-owned, owner-writable,
+            # AND fully traversable — find exits nonzero when it cannot
+            # descend a foreign 0700 dir, which is drift too (then-branch
+            # skipped). The -perm clause is load-bearing (2026-09-20 13:50):
+            # cv-OWNED entries can still carry read-only modes (store-mode
+            # copies / operator chmod) — ownership alone passes this check
+            # while the sync's rm -rf EPERMs on the write-less parents, so
+            # the fast path must flag missing owner-write bits exactly as
+            # broadly as the heal below repairs them. Symlinks are safe:
+            # find's -perm/-user test the LINK itself (mode 0777), never
+            # the read-only store target.
+            if stray=$(find "$state" -xdev \( ! -user ${cfg.user} -o ! -group ${cfg.group} -o ! -perm -u+w \) -print -quit 2>/dev/null); then
               if [ -z "$stray" ]; then
                 exit 0
               fi
