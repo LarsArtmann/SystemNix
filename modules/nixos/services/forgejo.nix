@@ -767,8 +767,12 @@ _: {
             (serviceOneshotDefaults { })
             (harden {
               # btrfs subvolume create is a privileged ioctl; chown for the
-              # forgejo user (harden{}'s empty bounding set would EPERM both).
-              CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_CHOWN CAP_DAC_OVERRIDE";
+              # forgejo user; CAP_FOWNER for the chmod on the freshly chown'd
+              # subvol — chmod is FOWNER-gated for non-owners and
+              # CAP_DAC_OVERRIDE does NOT cover it (the sibling
+              # hot-user-caches bootstrap failed live on exactly this,
+              # 2026-09-20). harden{}'s empty bounding set would EPERM all.
+              CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER";
               # The MOUNT ROOT — never a subdir inside it (226 class):
               # RequiresMountsFor above guarantees the root exists before
               # the namespace is built.

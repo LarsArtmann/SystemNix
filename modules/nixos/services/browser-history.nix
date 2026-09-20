@@ -106,19 +106,36 @@
       # Go binds the port, agent Type=oneshot fails after 4 retries = exit 1).
       waitServerReady = pkgs.writeShellApplication {
         name = "browser-history-agent-wait-server";
-        runtimeInputs = [ pkgs.curl ];
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.curl
+        ];
         text = ''
           SERVER_URL="http://127.0.0.1:${toString ports.browser-history}/health"
           echo "browser-history-agent: waiting for server at $SERVER_URL ..."
-          # The server's projection drain after a restart takes up to ~5 min
-          # (no persistent checkpoint store upstream; replays ALL events).
-          # A 60s gate aborted during every deploy window, and with the
-          # deliberate startLimitBurst=2 that bricked the agent until a manual
-          # reset-failed. 7 min covers the observed worst case (4m50s) + margin.
-          curl -sf --max-time 5 --retry 60 --retry-delay 7 --retry-all-errors \
-            -o /dev/null "$SERVER_URL" \
-            || { echo "browser-history-agent: server not ready after 7min, aborting" >&2; exit 1; }
-          echo "browser-history-agent: server ready"
+          # The gate's job is to wait out the server's BIND / projection-drain
+          # race — NOT to demand a fully-healthy 200. Since upstream's
+          # agent-freshness health check (AGENT_FRESHNESS, lock 10fe5d8a+) a
+          # restarted server answers 503 "degraded" until the FIRST agent
+          # ingest lands; demanding 200 here deadlocks the pair — the agent
+          # can never run (gate never passes), so the server never recovers
+          # (live 2026-09-20: wedged 90+ min until the gate was fixed). Any
+          # answered HTTP status (incl. 503) = server accepting connections =
+          # ready for the agent to push the ingest that HEALS the server.
+          # Budget: 7 min covers the projection-drain worst case (4m50s,
+          # no persistent checkpoint store upstream) + margin.
+          for _i in $(seq 1 60); do
+            code="$(curl -s --max-time 5 -o /dev/null -w '%{http_code}' "$SERVER_URL" 2>/dev/null || true)"
+            case "$code" in
+              [1-9][0-9][0-9])
+                echo "browser-history-agent: server answering (HTTP $code) — proceeding"
+                exit 0
+                ;;
+            esac
+            sleep 7
+          done
+          echo "browser-history-agent: server not answering after 7min, aborting" >&2
+          exit 1
         '';
       };
 

@@ -284,7 +284,12 @@
               Type = "oneshot";
               RemainAfterExit = true;
               ExecStart = "+${lib.getExe dbHeal}";
-              TimeoutStartSec = "10min";
+              # The ~11 GB integrity check is IO-bound: under deploy/boot
+              # churn it read 9.4G across its whole 10-min budget and was
+              # SIGTERM'd mid-check (2026-09-20 11:41 activation, exit-4
+              # contributor; the 04:17 boot hit the same class). 20min
+              # absorbs churn; idle runs stay in the 2-5 min range.
+              TimeoutStartSec = "20min";
             }
             ioTier.background
           ];

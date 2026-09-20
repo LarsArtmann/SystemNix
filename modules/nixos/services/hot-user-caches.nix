@@ -76,17 +76,20 @@ _: {
               subvol = "users/${primaryUser}/cache/nix";
               mountPoint = "/home/${primaryUser}/.cache/nix";
             };
-            # BuildFlow's env_guard GOCACHE fallback (userCacheDir/go-build)
-            # — the go-build cache the fish guard layering leaves on the QLC
-            # root when /mnt/buildcache dies mid-session (the primary
-            # GOCACHE=/mnt/buildcache/go-build and the fish login-time
-            # fallback /tmp/bc-fallback tmpfs both stay as designed; this
-            # only moves the ~/.cache one). Existing dir is an empty stub —
-            # no pre-tlc move needed.
-            go-build = {
-              subvol = "users/${primaryUser}/cache/go-build";
-              mountPoint = "/home/${primaryUser}/.cache/go-build";
-            };
+            # go-build is DELIBERATELY ABSENT (2026-09-20, first live run):
+            # ~/.cache/go-build is an HM mkOutOfStoreSymlink →
+            # /mnt/buildcache/go-build (home.nix env-less-processes
+            # doctrine), and systemd CANONICALIZES mount units through
+            # symlinks — the go-build entry materialized as
+            # mnt-buildcache-go\x2dbuild.automount, an autofs NESTED INSIDE
+            # the /mnt/buildcache autofs, failing at unit load (exit-4 on
+            # every activation, live 2026-09-20 11:41). A proper integration
+            # needs the HM symlink gated off AND a boot ordering that never
+            # loads the automount while the symlink exists (HM activates
+            # AFTER early-boot automounts). The BuildFlow env_guard
+            # fallback-cache relocation stays PARKED until that design
+            # exists; the Samsung subvol created 2026-09-20
+            # (users/<user>/cache/go-build) is inert and harmless.
           };
         };
       };
@@ -124,7 +127,18 @@ _: {
             before = [ automountUnit ];
             after = [ "mnt-hot.mount" ];
             wants = [ "mnt-hot.mount" ];
-            unitConfig.RequiresMountsFor = [ cfg.hotMount ];
+            # DefaultDependencies=false: default service deps add
+            # After=sysinit.target, but sysinit is After=local-fs.target and
+            # the automount this unit must PRECEDE sits in the local-fs
+            # transaction → local-fs → automount → bootstrap → sysinit →
+            # local-fs ordering CYCLE (live 2026-09-20 11:41 "Transaction
+            # order is cyclic"; at boot this class can wedge local-fs
+            # outright). The REAL dependency is mnt-hot.mount below — the
+            # default chain contributes nothing but the cycle.
+            unitConfig = {
+              RequiresMountsFor = [ cfg.hotMount ];
+              DefaultDependencies = false;
+            };
             path = [
               pkgs.btrfs-progs
               pkgs.coreutils
@@ -138,8 +152,13 @@ _: {
               (serviceOneshotDefaults { })
               (harden {
                 # btrfs subvolume create is a privileged ioctl; chown for the
-                # cache owner (harden{}'s empty bounding set would EPERM both).
-                CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_CHOWN CAP_DAC_OVERRIDE";
+                # cache owner; CAP_FOWNER for the chmod 0700 on the freshly
+                # chown'd (no-longer-root-owned) subvol — chmod is
+                # FOWNER-gated for non-owners and CAP_DAC_OVERRIDE does NOT
+                # cover it (live 2026-09-20 11:41: chown ok, chmod EPERM →
+                # unit failed → exit-4 on every activation; harden{}'s empty
+                # bounding set would EPERM all of these).
+                CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER";
                 # The MOUNT ROOT — never a subdir inside it (226 class):
                 # RequiresMountsFor above guarantees the root exists before
                 # the namespace is built.
