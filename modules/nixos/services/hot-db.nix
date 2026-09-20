@@ -185,6 +185,14 @@
             }
           ];
         }
+        # hot-db-bootstrap matches the deploy-restart-audit `-bootstrap`
+        # converger pattern but is converged by its OWN mount units: each
+        # generated entry mount Wants + Before's it, so any changed mount
+        # re-pulls it (indirect unit — the deploy.sh is-enabled loop skips
+        # it by construction, which is exactly why it is allowlisted).
+        (lib.optionalAttrs (options ? services.deploy-restart-audit) {
+          services.deploy-restart-audit.allowUnits = [ "hot-db-bootstrap" ];
+        })
         (lib.mkIf cfg.enable {
           assertions = [
             {
