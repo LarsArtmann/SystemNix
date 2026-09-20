@@ -14,15 +14,21 @@
 # is-enabled-gated provisioner loop, the dnsblockd-bridge trap class) and
 # runs at boot, from a daily timer, AND from deploy.sh's provisioner loop
 # (deploy-restart-audit enforces the latter).
-# A project is skipped while a crush session is live (relocating the
-# directory under a running writer would strand it on an unlinked inode)
-# or while its DB was written in the last 10 minutes; the next run
-# converges it.
+# A project is skipped while a crush session is LIVE ON THAT PROJECT
+# (a comm=crush process holding an fd/cwd under its `.crush` — relocating
+# the directory under a running writer would strand it on an unlinked
+# inode) or while its DB was written in the last 10 minutes; the next run
+# converges it. The guard is per-PROJECT (2026-09-21): the old blanket
+# `pgrep -x crush` skip starved convergence on this box — 16-21 sessions
+# are always live, so legal-cases/.crush sat unmigrated for 13 days after
+# the freeze-interrupted first run. Failures exit non-zero (OnFailure +
+# system-health see them); `CRUSH_HOT_DB_DRY_RUN=1` rehearses a run.
 {
   flake.nixosModules.crush-hot-db =
     {
       config,
       lib,
+      options,
       pkgs,
       ...
     }:
@@ -31,6 +37,7 @@
         harden
         serviceOneshotDefaults
         ioTier
+        onFailure
         ;
       cfg = config.services.crush-hot-db;
       primaryUser = config.users.primaryUser or "lars";
@@ -51,7 +58,8 @@
         };
       };
 
-      config = lib.mkIf cfg.enable {
+      config = lib.mkMerge [
+        (lib.mkIf cfg.enable {
         systemd.services.crush-hot-db-migrate = {
           description = "Relocate per-project crush session DBs to the hot-DB disk";
           # Enabled, not static: deploy.sh's provisioner loop gates on
@@ -61,13 +69,14 @@
           unitConfig.RequiresMountsFor = [ cfg.mountPoint ];
           # List EVERY binary the script execs: the default unit PATH
           # (coreutils/findutils/gnugrep/gnused/systemd) has NO flock
-          # (util-linux) and NO pgrep (procps) — the awk phantom-binary
-          # class (btrfs-verify-pool-backups 2026-08-18 lesson).
+          # (util-linux) — the awk phantom-binary class
+          # (btrfs-verify-pool-backups 2026-08-18 lesson). pgrep is GONE:
+          # the liveness guard reads /proc comm + fd links directly
+          # (procps no longer needed).
           path = [
             pkgs.coreutils
             pkgs.findutils
             pkgs.util-linux
-            pkgs.procps
           ];
           serviceConfig = lib.mkMerge [
             {
@@ -106,6 +115,8 @@
             ioTier.background
             (serviceOneshotDefaults { })
           ];
+          # Row 58: a per-dir migration failure must PAGE, not log-and-exit-0.
+          inherit onFailure;
           script = ''
             projects=${cfg.projectsDir}
             dest=${cfg.mountPoint}/crush
