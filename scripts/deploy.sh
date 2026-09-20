@@ -307,6 +307,30 @@ if nix run .#pre-deploy-check; then
   fi
 
   echo ""
+  echo "=== Guard trip-recency gate (freeze #5 doctrine, 2026-09-20) ==="
+  # The pressure gate above samples PSI at deploy ENTRY only. Freeze #5
+  # taught that episodic storms oscillate: a deploy entering during a PSI dip
+  # still died 9s into activation (2026-09-20 14:08: Zone-6 trips #650-653
+  # bracketed a deploy that passed the point-in-time gate). Guard trips in
+  # the last hour mean the current reading is NOT evidence of calm. Fails
+  # open when the journal is unreadable (the pressure gate still applies).
+  # grep -c prints 0 and exits 1 on no matches — `|| true` keeps that a pass;
+  # journal discipline: bounded window + timeout 15.
+  zone6_recent=$(timeout 15 journalctl -u memory-emergency-guard --since "-60 min" --no-pager 2>/dev/null | grep -c 'MEMORY EMERGENCY action taken' || true)
+  if [ "${zone6_recent:-0}" -ge 1 ]; then
+    echo "✗ memory-emergency-guard tripped ${zone6_recent}× in the last 60 min — episodic IO-storm window (freeze #5 class)"
+    echo "  Current PSI may be a dip between trips; deploying now races the storm."
+    echo "  Wait for ≥60 min without a trip, or override:"
+    echo "    DEPLOY_FORCE_PRESSURE=1 nix run .#deploy"
+    if [ "${DEPLOY_FORCE_PRESSURE:-0}" != "1" ]; then
+      exit 12
+    fi
+    echo "  DEPLOY_FORCE_PRESSURE=1 set — proceeding anyway"
+  else
+    echo "  OK (no guard trips in the last 60 min)"
+  fi
+
+  echo ""
   echo "=== FastFlowLM wedged-backend guard (EADDRINUSE corpse class, 2026-09-09) ==="
   # A dead flm thread group (Z+X pair) pins the backend port :52626 until the
   # next REBOOT; every backend start then dies "bind: Address already in use"
@@ -363,6 +387,11 @@ if nix run .#pre-deploy-check; then
       echo ""
       echo "⚠ nh os switch: activation completed with failed units (exit code 4)"
       echo "  (some services failed during activation, but config IS activated)"
+      # Dump the failed set BEFORE reset-failed clears it — the 2026-09-20
+      # un-anchoring chain cost an hour because the failing-unit list had to
+      # be re-derived from the journal after the fact.
+      echo "  Failed units (before reset):"
+      systemctl --failed --no-legend --no-pager 2>/dev/null || true
       echo "  Resetting start-limit-hit and retrying failed units..."
       sudo systemctl reset-failed 2>/dev/null || true
       systemctl --user reset-failed 2>/dev/null || true
@@ -683,6 +712,19 @@ if nix run .#pre-deploy-check; then
       echo "❌ NEW smoke failures vs the previous run's baseline — deploy exits 3 (regression signal)"
     fi
   fi
+
+  # Anchor assertion LAST (2026-09-20): an unanchored generation is more
+  # dangerous than any smoke regression — a reboot REVERTS the system. The
+  # 2026-09-20 12:15 incident showed rc=3 shadowing the anchor warning
+  # (readers stopped at the smoke verdict and missed it), so this is a
+  # distinct exit code checked after every recovery step has run:
+  # 3 = smoke regression (anchored), 14 = reboot-revertible state.
+  anchor_gen=$(latest_system_generation)
+  if [ -n "$anchor_gen" ] && [ "$(readlink /run/current-system 2>/dev/null)" != "$(readlink "/nix/var/nix/profiles/system-${anchor_gen}-link" 2>/dev/null)" ]; then
+    echo "❌ UNANCHORED: /run/current-system != system-${anchor_gen} profile — a REBOOT WILL REVERT. Re-run: nix run .#deploy"
+    exit 14
+  fi
+
   if [ "$smoke_rc" -eq 3 ]; then
     exit 3
   fi
