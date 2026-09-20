@@ -431,7 +431,7 @@ mirror_issue() {
   fi
 }
 if ! findmnt -n "$MIRROR_DIR" >/dev/null 2>&1; then
-  if grep -qs "[[:space:]]$MIRROR_DIR[[:space:]]" /etc/fstab; then
+  if grep -qs "[[:space:]]${MIRROR_DIR}[[:space:]]" /etc/fstab; then
     warn "$MIRROR_DIR declared in fstab but not mounted — Samsung absent? (reboot falls back to the QLC chain)"
   else
     echo "  ℹ no boot mirror declared — skipping"
