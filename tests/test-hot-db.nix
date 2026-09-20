@@ -123,8 +123,11 @@ in
 
     # 1+2: subvolume exists and is mounted AT the dataDir, nodatacow live.
     machine.succeed("btrfs subvolume show /var/lib/hotdb-test")
-    print("DEBUG proc-mounts:", machine.execute("grep tlc /proc/mounts || true")[1])
-    machine.succeed("grep -q nodatacow /proc/mounts")
+    print("DEBUG proc-mounts:", machine.execute("grep btrfs /proc/mounts || true")[1])
+    # nodatacow EFFECT check: files created inside the subvol inherit the
+    # +C flag. Do NOT grep /proc/mounts for the option — btrfs ≥6.x omits
+    # nodatacow from displayed mount options (applies but never shows).
+    machine.succeed("lsattr /var/lib/hotdb-test/probe.txt | grep -q C")
     machine.succeed("btrfs subvolume list /mnt/hot | grep -q 'hot/testdb'")
 
     # chattr +C landed on the fresh subvolume root (fresh-subvol
