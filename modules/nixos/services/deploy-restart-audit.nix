@@ -17,7 +17,10 @@
 #     (inert by construction — the exact trap)
 #
 # Upstream nixpkgs plumbing that matches a pattern but is converged by its
-# own module/timer lives in the default allowUnits (justified below).
+# own module/timer lives in the config-layer baseline below (NOT the option
+# default — a default is REPLACED wholesale by any consumer assignment:
+# 2026-09-20 hot-db.nix's plain `allowUnits = [ "hot-db-bootstrap" ]` silently
+# dropped these four and broke every evo-x2 eval at deploy-restart-audit).
 # Assertions are forced by `nix flake check` (pre-commit + CI).
 {
   flake.nixosModules.deploy-restart-audit =
@@ -68,29 +71,33 @@
       options.services.deploy-restart-audit = {
         allowUnits = lib.mkOption {
           type = lib.types.listOf lib.types.str;
-          # Upstream nixpkgs plumbing that matches a converger pattern but
-          # is converged by its own module mechanics (activation scripts,
-          # service restarts, timers) and must never be deploy-restarted:
-          # - postfix-setup:   rendered maps regenerate via the postfix module
-          # - postgresql-setup: instance bootstrap owned by the pg module
-          # - systemd-tmpfiles-resetup: pulled by tmpfiles lifecycle itself
-          # - resolvconf: default-enabled upstream oneshot whose
-          #   restartTriggers inertia is an nixpkgs quirk, not ours (its
-          #   config regenerates via its own activation path; evo-x2 uses a
-          #   static resolv.conf and never even has the unit)
-          default = [
-            "postfix-setup"
-            "postgresql-setup"
-            "systemd-tmpfiles-resetup"
-            "resolvconf"
-          ];
+          default = [ ];
           description = ''
-            Units exempt from the deploy-restart requirement. Entries beyond
-            the upstream defaults MUST carry a justification comment where
-            they are set.
+            Units exempt from the deploy-restart requirement. The upstream
+            plumbing baseline is merged in at config layer below so consumer
+            assignments CONCATENATE with it (listOf merge) instead of
+            replacing it. Entries beyond the baseline MUST carry a
+            justification comment where they are set.
           '';
         };
       };
+
+      # Upstream nixpkgs plumbing that matches a converger pattern but
+      # is converged by its own module mechanics (activation scripts,
+      # service restarts, timers) and must never be deploy-restarted:
+      # - postfix-setup:   rendered maps regenerate via the postfix module
+      # - postgresql-setup: instance bootstrap owned by the pg module
+      # - systemd-tmpfiles-resetup: pulled by tmpfiles lifecycle itself
+      # - resolvconf: default-enabled upstream oneshot whose
+      #   restartTriggers inertia is an nixpkgs quirk, not ours (its
+      #   config regenerates via its own activation path; evo-x2 uses a
+      #   static resolv.conf and never even has the unit)
+      config.services.deploy-restart-audit.allowUnits = [
+        "postfix-setup"
+        "postgresql-setup"
+        "systemd-tmpfiles-resetup"
+        "resolvconf"
+      ];
 
       config.assertions = [
         {
