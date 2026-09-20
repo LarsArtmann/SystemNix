@@ -50,8 +50,14 @@ command -v python3 >/dev/null || { echo "FAIL: python3 required" >&2; exit 1; }
 
 SCRATCH="$(mktemp "$DIR/.fsync-bench-XXXXXX")"
 LOADFILE=""
+LOAD_PID=""
 cleanup() {
-  [ -n "$LOADFILE" ] && rm -f "$LOADFILE"
+  if [ -n "$LOAD_PID" ]; then
+    kill "$LOAD_PID" 2>/dev/null || true
+  fi
+  if [ -n "$LOADFILE" ]; then
+    rm -f "$LOADFILE"
+  fi
   rm -f "$SCRATCH"
 }
 trap cleanup EXIT
@@ -75,7 +81,6 @@ if [ "$LOAD" = "1" ]; then
     --iodepth=8 --direct=1 --time_based --runtime="$LOAD_RUNTIME" \
     --size=256M --output=/dev/null --minimal &
   LOAD_PID=$!
-  trap 'kill '"$LOAD_PID"' 2>/dev/null; cleanup' EXIT
   sleep 3 # let the load spin up before sampling
 fi
 
