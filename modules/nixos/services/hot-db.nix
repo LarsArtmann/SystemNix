@@ -124,10 +124,16 @@
           map (inst: go (inst.settings or { })) (lib.attrValues (config.services.btrbk.instances or { }))
         );
 
+      # Per-ENTRY landmine scan: a btrbk reference to an entry's subvolume
+      # (`hot/<name>`) or its mountpoint is the snapshot landmine. Deliberately
+      # NOT a blanket `hot/`-parent match: `hot/` hosts OTHER sanctioned
+      # subvolumes — forgejo's Set-B leg (services.forgejo.dedicatedSubvolume)
+      # is a COW subvol with its OWN btrbk send leg (snapshots.nix), which a
+      # cow subvol may have and a nodatacow entry must not; a blanket match
+      # would fail every eval the moment both designs coexist (any Phase-2
+      # entry enablement was unimplementable with the blanket form).
       landmineHits = lib.filter (
-        s:
-        (builtins.match "(|.*[\" ])${hotParent}/.*" s) != null
-        || builtins.any (e: lib.hasInfix e.path s) entryList
+        s: builtins.any (e: lib.hasInfix e.path s || lib.hasInfix "${hotParent}/${e.name}" s) entryList
       ) btrbkStrings;
 
       # Entry validation as a failure list, consumed by an ALWAYS-ON config

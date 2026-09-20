@@ -17,11 +17,12 @@
 #                                                # first (simulates the hot-tier
 #                                                # subvol shape; works unprivileged
 #                                                # on a user-owned empty file)
-#   scripts/fsync-bench.sh <dir> --load          # run a bounded fio 4K randwrite
-#                                                # load on the SAME filesystem
-#                                                # during the measurement
-#   LOAD_RUNTIME=90 ...                          # load duration (default: bench
-#                                                # duration + 10s headroom)
+#   scripts/fsync-bench.sh <dir> --load          # two bounded dd direct-write
+#                                                # streams churn the SAME
+#                                                # filesystem during the
+#                                                # measurement (killed when the
+#                                                # bench ends; LOAD_CEIL caps)
+#   LOAD_CEIL=900 ...                            # load hard ceiling (default 900s)
 #
 # Unprivileged by design (agent sessions have no sudo): the scratch file is
 # created in <dir> as the invoking user — point it at any user-writable dir on
@@ -50,13 +51,13 @@ command -v python3 >/dev/null || { echo "FAIL: python3 required" >&2; exit 1; }
 
 SCRATCH="$(mktemp "$DIR/.fsync-bench-XXXXXX")"
 LOADFILE=""
-LOAD_PID=""
+LOAD_PIDS=""
 cleanup() {
-  if [ -n "$LOAD_PID" ]; then
-    kill "$LOAD_PID" 2>/dev/null || true
+  if [ -n "$LOAD_PIDS" ]; then
+    kill $LOAD_PIDS 2>/dev/null || true
   fi
   if [ -n "$LOADFILE" ]; then
-    rm -f "$LOADFILE"
+    rm -f "$LOADFILE" "$LOADFILE".a "$LOADFILE".b
   fi
   rm -f "$SCRATCH"
 }
@@ -72,15 +73,16 @@ fi
 psi() { awk 'NR==1 {for (i=1; i<=NF; i++) if ($i ~ /^avg10=/) { sub(/^avg10=/, "", $i); print $i } }' /proc/pressure/io; }
 
 if [ "$LOAD" = "1" ]; then
-  FIO="$(command -v fio || true)"
-  [ -n "$FIO" ] || FIO="/nix/store/gpvq80c0ai5df2b8gaqbb4bfmbq8n4nk-fio-3.42/bin/fio"
-  [ -x "$FIO" ] || { echo "FAIL: fio not found for --load" >&2; exit 1; }
-  [ "$LOAD_RUNTIME" -gt 0 ] 2>/dev/null || LOAD_RUNTIME=$((ITERS + 10))
+  # Sustained direct-write churn on the SAME filesystem — the snapshot-send /
+  # build-storm class that drives the QLC fsync cliff. Two bounded dd streams
+  # (timeout = hard ceiling; the EXIT trap kills them when the bench ends).
+  LOAD_CEIL="${LOAD_CEIL:-900}"
   LOADFILE="$(mktemp "$DIR/.fsync-bench-load-XXXXXX")"
-  "$FIO" --name=fsyncbench-load --filename="$LOADFILE" --rw=randwrite --bs=4k \
-    --iodepth=8 --direct=1 --time_based --runtime="$LOAD_RUNTIME" \
-    --size=256M --output=/dev/null --minimal &
-  LOAD_PID=$!
+  for sfx in a b; do
+    timeout "$LOAD_CEIL" dd if=/dev/zero of="${LOADFILE}.${sfx}" bs=1M \
+      count=1000000 conv=notrunc 2>/dev/null &
+  done
+  LOAD_PIDS="$(jobs -p)"
   sleep 3 # let the load spin up before sampling
 fi
 

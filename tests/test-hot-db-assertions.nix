@@ -5,12 +5,16 @@
 # live in config.assertions (enforced by `nix flake check` and every
 # toplevel build), asserted here via the same forced `.assertions` list:
 #
-#   1. btrbk referencing an entry path FAILS (the snapshot landmine).
-#   2. btrbk referencing the `hot/` subvol parent FAILS (same class).
-#   3. A clean btrbk config + wired consumer PASSES (no false positive).
-#   4. entries declared with enable=false FAIL.
-#   5. Duplicate entry paths FAIL.
-#   6. An entry with no consumer unit emits the unmanaged WARNING.
+#   1. btrbk referencing an entry subvolume (`hot/<name>`) FAILS (the snapshot
+#      landmine).
+#   2. btrbk referencing an entry mountpoint FAILS (same class).
+#   3. A non-entry `hot/` subvol (the forgejo Set-B leg shape: COW subvol with
+#      its OWN btrbk send, snapshots.nix `subvolume."hot/forgejo"`) PASSES —
+#      the scan is per-entry, never a blanket `hot/`-parent match.
+#   4. A clean btrbk config + wired consumer PASSES (no false positive).
+#   5. entries declared with enable=false FAIL.
+#   6. Duplicate entry paths FAIL.
+#   7. An entry with no consumer unit emits the unmanaged WARNING.
 #
 # The no-false-positives half against the REAL config is trivial here — the
 # module ships with zero entries on evo-x2 until the soak gate lifts — but
@@ -71,7 +75,7 @@ let
 
   cases = [
     {
-      name = "btrbk-entry-path-landmine-not-caught";
+      name = "btrbk-entry-subvolume-landmine-not-caught";
       pass =
         hotDbFailures (btrbkInstance {
           snapshot_preserve = "3d 1w";
@@ -80,6 +84,16 @@ let
             subvolume."hot/mydb" = { };
           };
         }) != [ ];
+    }
+    {
+      name = "btrbk-non-entry-hot-subvol-passes";
+      pass =
+        hotDbFailures (btrbkInstance {
+          # The exact forgejo Set-B shape (snapshots.nix): a COW subvol with
+          # its own send leg sharing the hot/ parent — sanctioned, must NOT
+          # trip the per-entry landmine scan.
+          volume."/mnt/hot".subvolume."hot/forgejo" = { };
+        }) == [ ];
     }
     {
       name = "btrbk-entry-path-reference-not-caught";
