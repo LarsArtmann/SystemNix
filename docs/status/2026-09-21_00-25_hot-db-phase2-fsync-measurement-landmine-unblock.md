@@ -47,7 +47,7 @@ Storm-sensitivity datapoint: during the window's heavier phase (PSI 66-69%) a sh
 
 Each wave: declare the entry below (module validation REQUIRES `enable = true` — never commit entries without the window; an un-migrated deploy mounts an EMPTY subvol over the live dataDir) → `sudo nix run .#migrate-hot-db -- prepare <name> <unit> <dataDir>` → deploy (entry mounts) → `sudo nix run .#migrate-hot-db -- finalize <name> <unit> <dataDir>` → Gatus + functional probe → clean the shadowed original (reclaims as `@` snapshots expire).
 
-Wave 1 — pocket-id (smallest, hottest auth path; ~30 min window):
+Wave 1 — pocket-id (smallest, hottest auth path; ~30 min window; unit lists VERIFIED in-tree 2026-09-21, addendum §i):
 
 ```nix
 services.hot-db = {
@@ -56,12 +56,17 @@ services.hot-db = {
     path = "/var/lib/pocket-id";
     cow = true;
     unit = "pocket-id.service";
-    extraUnits = [ "pocket-id-backup.service" ]; # verify exact oneshot names in pocket-id.nix at window time
+    # pocket-id-backup reads the sqlite file directly (pocket-id.nix:628);
+    # pocket-id-provision WRITES client-secrets/ under the dataDir
+    # (pocket-id.nix:28) — without the anti-shadow wiring a detached
+    # Samsung would let it shadow-write onto the root fs (the exact class
+    # the wiring exists for).
+    extraUnits = [ "pocket-id-backup.service" "pocket-id-provision.service" ];
   };
 };
 ```
 
-Wave 2 — postgres (pre-req: decide the paperless PG-dump gap below; pre-dump immich+miniflux already exist):
+Wave 2 — postgres (pre-req: decide the paperless PG-dump gap below; pre-dump immich+miniflux already exist; unit names verified, both backups exec pg_dump over the unix socket — their wiring is the protective condition-skip, not file access):
 
 ```nix
 entries.postgres = {
@@ -72,13 +77,19 @@ entries.postgres = {
 };
 ```
 
-Wave 3 — discordsync (with the existing local-first turso posture; GCS backup covers RPO):
+Wave 3 — discordsync (with the existing local-first turso posture; GCS backup covers RPO; db-heal verified as a dataDir consumer via `ReadWritePaths`):
 
 ```nix
 entries.discordsync = {
   path = "/var/lib/discordsync";
   cow = true;
   unit = "discordsync.service";
+  # discordsync-db-heal integrity-checks the DB under ReadWritePaths
+  # (discordsync.nix:280) — anti-shadow wiring gives it a clean
+  # condition-skip on a detached Samsung instead of a 226 failure.
+  # discordsync-immich-verify deliberately EXCLUDED: it reads the sops
+  # template + curls Immich, never the dataDir.
+  extraUnits = [ "discordsync-db-heal.service" ];
 };
 ```
 
@@ -99,3 +110,14 @@ User windows only (queue line left BLOCKED): wave 1-3 executions (+ docker data-
 - `tests/test-hot-db-assertions.nix` (coexistence + renamed cases; header updated)
 - `docs/todo/storage.md`, `TODO_LIST.md` (verdicts + BLOCKED state + one new follow-up)
 - this report
+
+## i. Addendum — window-snippet unit lists verified + two gaps closed (same task-ID re-run, 2026-09-21)
+
+This report is the pending window runbook (referenced from storage.md), so the §e snippets were verified in-tree and corrected in place:
+
+- **Wave 1 gap CLOSED: `pocket-id-provision` was missing from `extraUnits`.** It writes `client-secrets/` under the dataDir (pocket-id.nix:28, unit at :561) — without the anti-shadow wiring, a detached Samsung (nofail mount) would let it shadow-write OIDC client secrets onto the root fs; after a remount the provisioned secrets diverge from the running IdP state (the 2026-08-22 pocket-id secret-desync class, now self-inflicted by the tier itself). `pocket-id-backup.service` name verified (pocket-id.nix:628, direct sqlite3 file read — genuine dataDir consumer).
+- **Wave 3 gap CLOSED: `discordsync-db-heal` was missing.** It integrity-checks the DB under `ReadWritePaths = [ dataDir ]` (discordsync.nix:280) — wiring gives it a clean `ConditionPathIsMountPoint` skip on a detached Samsung instead of a 226/NAMESPACE failure + OnFailure noise. `discordsync-immich-verify` verified NOT a dataDir consumer (reads the sops template + curls Immich) — deliberately excluded.
+- **Wave 2 verified as proposed**: `postgresql.service`, `immich-db-backup.service` (immich.nix:128), `miniflux-backup.service` (miniflux.nix:381); both backups exec pg_dump over the unix socket, so their wiring is the protective condition-skip, not file access.
+- The "verify exact oneshot names at window time" caveat is resolved — all snippet unit names now verified in-tree; the owner window needs no module spelunking.
+- Main service unit names confirmed: `pocket-id.service`, `postgresql.service`, `discordsync.service` (the nixpkgs postgres module exposes the daemon as `postgresql.service`).
+
