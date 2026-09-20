@@ -49752,20 +49752,18 @@ Please report this to https://github.com/markedjs/marked.`),
           t !== Vc(t) &&
             ((t = Vc(t)),
             (t = t.replaceAll("<", "&lt;").replaceAll(">", "&gt;")));
-          let u = l
-            .node()
-            .appendChild(
-              await li(
-                l,
-                t,
-                {
-                  width: Qa(t, r) + 100,
-                  style: o,
-                  useHtmlLabels: r.htmlLabels,
-                },
-                r,
-              ),
-            );
+          let u = l.node().appendChild(
+            await li(
+              l,
+              t,
+              {
+                width: Qa(t, r) + 100,
+                style: o,
+                useHtmlLabels: r.htmlLabels,
+              },
+              r,
+            ),
+          );
           if (t.includes("&lt;") || t.includes("&gt;")) {
             let d = u.children[0];
             for (
@@ -56440,15 +56438,13 @@ You have to call mermaid.initialize.`);
                 t.width = h;
                 let m;
                 if (t.look === "handDrawn") {
-                  let v = ot
-                    .svg(o)
-                    .rectangle(f, p, h, d, {
-                      fill: "lightgrey",
-                      roughness: 0.5,
-                      strokeLineDash: [5],
-                      stroke: a,
-                      seed: i,
-                    });
+                  let v = ot.svg(o).rectangle(f, p, h, d, {
+                    fill: "lightgrey",
+                    roughness: 0.5,
+                    strokeLineDash: [5],
+                    stroke: a,
+                    seed: i,
+                  });
                   m = o.insert(() => v, ":first-child");
                 } else {
                   m = l.insert("rect", ":first-child");
@@ -191167,13 +191163,11 @@ Expecting ` +
                               q.forEach(function (j, U) {
                                 j.forEach(function (Y) {
                                   (ie.get(U).push(Y),
-                                    ie
-                                      .get(Y.id)
-                                      .push({
-                                        id: U,
-                                        gap: Y.gap,
-                                        direction: Y.direction,
-                                      }));
+                                    ie.get(Y.id).push({
+                                      id: U,
+                                      gap: Y.gap,
+                                      direction: Y.direction,
+                                    }));
                                 });
                               }),
                               ie
