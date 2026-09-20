@@ -17,15 +17,19 @@
 #   2. depth cap: `<group>/<group>/<repo>/.crush` (depth 4) stays put
 #   3. fresh-write skip: a crush.db written <10 min ago is left for the
 #      next run (touch-backdated fixtures are what make case 1 migratable)
-#   4. active-session skip: a live process named `crush` gates the WHOLE
-#      run (pgrep -x crush) — proven with a positive control (a new
-#      migratable project created while the guard is up stays put, then
-#      converges once the guard is gone)
-#   5. idempotent re-run: "0 project(s) relocated", already-migrated
+#   4. per-project live-writer guard (2026-09-21): a comm=crush process
+#      holding an fd on one project's crush.db skips ONLY that project —
+#      the old blanket pgrep skip starved convergence on a box where
+#      16-21 sessions are always live (legal-cases sat unmigrated 13 days
+#      after the freeze-interrupted first run)
+#   5. depth-4 tripwire WARN + CRUSH_HOT_DB_DRY_RUN rehearsal (reports,
+#      never moves; per-dir mv failures exit non-zero — functionally
+#      proven in the user-space harness, see docs/services/crush.md)
+#   6. idempotent re-run: "0 project(s) relocated", already-migrated
 #      symlinks skipped (find -type d does not match them)
-#   6. the is-enabled regression (deploy.sh's provisioner loop silently
+#   7. the is-enabled regression (deploy.sh's provisioner loop silently
 #      skipped static units) and the unit-shape regressions: RequiresMountsFor
-#      present (226 class) and the declared unit path carrying flock/pgrep
+#      present (226 class) and the declared unit path carrying flock
 #      (exit-127 phantom-binary class)
 #
 # /mnt/hot is a tmpfs stand-in (virtualisation.fileSystems — plain
@@ -86,16 +90,17 @@ let
         "$projects/deep/group/repo/.crush/crush.db"
     '';
   };
-  # A real binary whose PROCESS NAME (comm) is `crush`: pgrep -x matches
-  # comm, which the kernel seeds from the BASENAME of the executed path —
-  # a store path's basename is `<hash>-crush`, never `crush` — so the
-  # binary sets its own name via prctl(PR_SET_NAME). coreutils' sleep
-  # cannot be copied under another name either: nixpkgs builds it as a
-  # multi-call dispatcher that fails "unknown program" exit 1 when
-  # executed as `crush` (this emptied the first two committed runs'
-  # guard windows).
+  # A real binary whose PROCESS NAME (comm) is `crush`: the liveness
+  # guard matches comm, which the kernel seeds from the BASENAME of the
+  # executed path — a store path's basename is `<hash>-crush`, never
+  # `crush` — so the binary sets its own name via prctl(PR_SET_NAME), and
+  # OPENS argv[1] (a fixture crush.db) so it demonstrably holds an fd
+  # under a live project. coreutils' sleep cannot be copied under another
+  # name either: nixpkgs builds it as a multi-call dispatcher that fails
+  # "unknown program" exit 1 when executed as `crush` (this emptied the
+  # first two committed runs' guard windows).
   crushFakeBin = pkgs.runCommand "crush" { nativeBuildInputs = [ pkgs.stdenv.cc ]; } ''
-    printf '#include <unistd.h>\n#include <sys/prctl.h>\nint main(void){prctl(PR_SET_NAME, "crush", 0, 0, 0);for(;;)pause();}\n' > main.c
+    printf '#include <unistd.h>\n#include <sys/prctl.h>\n#include <fcntl.h>\nint main(int argc,char**argv){prctl(PR_SET_NAME,"crush",0,0,0);if(argc>1){int fd=open(argv[1],O_RDONLY);(void)fd;}for(;;)pause();}\n' > main.c
     cc -O0 -o $out main.c
   '';
 in
@@ -144,13 +149,13 @@ in
 
       services.crush-hot-db.enable = true;
 
-      # A process NAMED `crush` as a real systemd service: pgrep -x must find
-      # it for the whole guard window, and systemd owns its lifetime.
+      # A process NAMED `crush` holding a fixture crush.db open: the
+      # per-project guard must skip that project and ONLY that project.
       systemd.services.crush-fake-session = {
-        description = "Fake crush session process (test-only pgrep guard)";
+        description = "Fake crush session (test-only live-writer guard)";
         serviceConfig = {
           Type = "exec";
-          ExecStart = crushFakeBin;
+          ExecStart = "${crushFakeBin} /home/lars/projects/late/.crush/crush.db";
         };
       };
     };
@@ -171,7 +176,6 @@ in
     # ---- Regression 2: unit shape (226 + phantom-binary classes) ----
     unit = machine.succeed("systemctl cat crush-hot-db-migrate.service")
     assert "RequiresMountsFor" in unit, "RequiresMountsFor missing from unit"
-    assert "procps" in unit, "unit path missing pgrep (procps)"
     assert "util-linux" in unit, "unit path missing flock (util-linux)"
     assert (
         "ProtectHome=read-only" in unit
@@ -182,6 +186,10 @@ in
         "journalctl -b -u crush-hot-db-migrate.service --output cat"
     )
     assert "4 project(s) relocated" in boot_log, boot_log
+
+    # ---- Depth-4 tripwire: the deep fixture surfaces a WARN ----
+    assert "deeper than discovery depth 3" in boot_log, boot_log
+    assert "deep/group/repo/.crush" in boot_log, boot_log
 
     # ---- Migration + symlink + data preserved ----
     # The module moves the PROJECT'S `.crush` dir and symlinks it back:
@@ -214,30 +222,56 @@ in
     machine.fail("test -L /home/lars/projects/recent/.crush")
     machine.succeed("test -f /home/lars/projects/recent/.crush/crush.db")
 
-    # ---- Active-session skip, with a positive control ----
-    # A new, fully migratable project appears while a process named `crush`
-    # is live: the run must skip EVERYTHING (relocating under a live writer
-    # strands the directory on an unlinked inode).
+    # ---- Per-project live-writer guard, with BOTH controls ----
+    # `late` is held open by a comm=crush process; `late2` is identical
+    # but unheld. The run must migrate late2 while skipping exactly
+    # `late` — the old blanket pgrep skip would have left BOTH on the QLC
+    # root (relocating under a live writer strands the directory on an
+    # unlinked inode, but ONE live session must not starve the rest).
     machine.succeed(
-        "mkdir -p /home/lars/projects/late/.crush"
+        "mkdir -p /home/lars/projects/late/.crush /home/lars/projects/late2/.crush"
         " && echo payload-late > /home/lars/projects/late/.crush/crush.db"
+        " && echo payload-late2 > /home/lars/projects/late2/.crush/crush.db"
         " && touch -d '@1000000000' /home/lars/projects/late/.crush/crush.db"
+        " /home/lars/projects/late2/.crush/crush.db"
     )
     machine.succeed("systemctl start crush-fake-session.service")
     machine.succeed("pgrep -x crush")  # guard must be live BEFORE the restart
     machine.succeed("systemctl restart crush-hot-db-migrate.service")
     guard_log = machine.succeed(
-        "journalctl -b -u crush-hot-db-migrate.service --output cat | tail -n 3"
+        "journalctl -b -u crush-hot-db-migrate.service --output cat"
     )
-    assert "skip: crush session(s) active" in guard_log, guard_log
+    assert "skip late: live crush session holds it open" in guard_log, guard_log
     machine.fail("test -L /home/lars/projects/late/.crush")
     machine.succeed("test -f /home/lars/projects/late/.crush/crush.db")
+    machine.succeed("test -L /home/lars/projects/late2/.crush")
+    machine.succeed("grep -q payload-late2 /mnt/hot/crush/late2/crush.db")
 
-    # Guard gone → the next run converges the pending project.
+    # ---- Dry-run rehearsal: reports the migration, never performs it ----
+    machine.succeed(
+        "mkdir -p /home/lars/projects/dryproj/.crush"
+        " && echo payload-dry > /home/lars/projects/dryproj/.crush/crush.db"
+        " && touch -d '@1000000000' /home/lars/projects/dryproj/.crush/crush.db"
+    )
+    machine.succeed(
+        "systemctl set-environment CRUSH_HOT_DB_DRY_RUN=1"
+        " && systemctl restart crush-hot-db-migrate.service"
+    )
+    dry_log = machine.succeed(
+        "journalctl -b -u crush-hot-db-migrate.service --output cat"
+    )
+    assert "dry-run: would migrate dryproj" in dry_log, dry_log
+    assert "would relocate 1 project(s)" in dry_log, dry_log
+    machine.fail("test -L /home/lars/projects/dryproj/.crush")
+    machine.succeed("systemctl unset-environment CRUSH_HOT_DB_DRY_RUN")
+
+    # Guard gone → the next run converges the pending projects.
     machine.succeed("systemctl stop crush-fake-session.service")
     machine.succeed("systemctl restart crush-hot-db-migrate.service")
     machine.succeed("test -L /home/lars/projects/late/.crush")
     machine.succeed("grep -q payload-late /mnt/hot/crush/late/crush.db")
+    machine.succeed("test -L /home/lars/projects/dryproj/.crush")
+    machine.succeed("grep -q payload-dry /mnt/hot/crush/dryproj/crush.db")
 
     # ---- Idempotent re-run: symlinks skipped, 0 relocated ----
     machine.succeed("systemctl restart crush-hot-db-migrate.service")

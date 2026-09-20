@@ -120,6 +120,7 @@
           script = ''
             projects=${cfg.projectsDir}
             dest=${cfg.mountPoint}/crush
+            dryRun=''${CRUSH_HOT_DB_DRY_RUN:-}
 
             # Single-flight: the daily timer and a deploy can overlap.
             if ! exec 9>/run/crush-hot-db-migrate.lock; then
@@ -131,15 +132,10 @@
               exit 0
             fi
 
-            # Never relocate a directory out from under a live session:
-            # the writer would keep writing to the moved-away inode.
-            if pgrep -x crush >/dev/null; then
-              echo "skip: crush session(s) active ($(pgrep -xc crush)) — next run converges"
-              exit 0
+            if [ -z "$dryRun" ]; then
+              mkdir -p "$dest"
+              chown ${primaryUser}:users "$dest"
             fi
-
-            mkdir -p "$dest"
-            chown ${primaryUser}:users "$dest"
 
             # Bounded-depth find covers NESTED checkouts too
             # ($projects/<group>/<repo>/.crush — archived/*, games/* — 35
@@ -152,7 +148,42 @@
               find "$projects" -mindepth 1 -maxdepth 3 -type d -name .crush -prune -print0 | sort -z
             )
 
+            # Depth tripwire (row 59): a `.crush` one level below the
+            # discovery cap would silently stay on the QLC root forever.
+            # Bounded to exactly depth 4 (the "one level down" silent-miss
+            # class) so the walk stays a metadata-cheap extension of the
+            # main find.
+            deep="$(find "$projects" -mindepth 4 -maxdepth 4 -name .crush -print -quit 2>/dev/null || true)"
+            if [ -n "$deep" ]; then
+              echo "WARN: .crush deeper than discovery depth 3 (stays on the QLC root): $deep" >&2
+            fi
+
+            # Never relocate a directory out from under a LIVE WRITER: the
+            # writer would keep writing to the moved-away inode. Per-project
+            # liveness (2026-09-21): the old blanket `pgrep -x crush` skip
+            # starved convergence — 16-21 sessions are ALWAYS live on this
+            # box, so one idle session blocked all ~280 dirs (legal-cases
+            # sat unmigrated for 13 days after the freeze-interrupted first
+            # run). A session is live on a project iff a comm=crush process
+            # holds an fd or its cwd under that project's `.crush`;
+            # post-migration sessions hold fds on /mnt/hot targets and
+            # correctly never match (their dirs are already symlinks).
+            # Sweep AFTER the find to keep the start-to-mv race minimal.
+            declare -A liveCrushDirs=()
+            for pidDir in /proc/[0-9]*; do
+              [ "$(cat "$pidDir/comm" 2>/dev/null)" = "crush" ] || continue
+              for link in "$pidDir"/fd/* "$pidDir"/cwd; do
+                openPath="$(readlink "$link" 2>/dev/null)" || continue
+                case "$openPath" in
+                  "$projects"/.crush|"$projects"/.crush/*|"$projects"/*/.crush|"$projects"/*/.crush/*)
+                    liveCrushDirs["''${openPath%%/.crush*}/.crush"]=1
+                    ;;
+                esac
+              done
+            done
+
             migrated=0
+            failed=0
             for d in "''${crushDirs[@]}"; do
               # -d follows symlinks: an already-migrated project matches and is
               # skipped; the -L guard is belt-and-suspenders for a race between
@@ -167,6 +198,10 @@
               fi
               target="$dest/$name"
 
+              if [ -n "''${liveCrushDirs["$d"]:-}" ]; then
+                echo "skip $name: live crush session holds it open"
+                continue
+              fi
               # Fresh writes = a session may have JUST ended (or about to
               # checkpoint) — leave it one more cycle.
               if [ -n "$(find "$d" -maxdepth 1 -name 'crush.db*' -mmin -10 -print -quit)" ]; then
@@ -175,6 +210,11 @@
               fi
               if [ -e "$target" ]; then
                 echo "skip $name: target $target already exists (manual merge needed)"
+                continue
+              fi
+              if [ -n "$dryRun" ]; then
+                echo "dry-run: would migrate $name → $target"
+                migrated=$((migrated + 1))
                 continue
               fi
               # Nested names carry slashes (group/repo): the parent hierarchy
@@ -189,9 +229,20 @@
                 migrated=$((migrated + 1))
               else
                 echo "FAILED to migrate $name" >&2
+                failed=$((failed + 1))
               fi
             done
-            echo "crush-hot-db: $migrated project(s) relocated"
+            if [ -n "$dryRun" ]; then
+              echo "crush-hot-db dry-run: would relocate $migrated project(s)"
+            else
+              echo "crush-hot-db: $migrated project(s) relocated"
+            fi
+            # Row 58: per-dir mv failures must be VISIBLE — the old
+            # log-and-exit-0 shape kept the unit green forever.
+            if [ "$failed" -gt 0 ]; then
+              echo "crush-hot-db: $failed migration failure(s)" >&2
+              exit 1
+            fi
           '';
         };
 
@@ -204,6 +255,19 @@
             Persistent = true;
           };
         };
-      };
+        })
+
+        # Monitoring wiring (row 58): OnFailure (Discord, wired on the unit
+        # above) + the system-health state metrics. Guarded — this module is
+        # imported STANDALONE in tests/test-crush-hot-db.nix (no system-health
+        # module): optionalAttrs keeps the `services.system-health` attrpath
+        # absent there, so the undeclared-option error can never fire (the
+        # mkIf-wrapped-empty-def trap only bites when the KEY is present).
+        (lib.mkIf cfg.enable (lib.optionalAttrs (options ? services.system-health) {
+          services.system-health.extraMonitoredServices = lib.mkAfter [
+            "crush-hot-db-migrate"
+          ];
+        }))
+      ];
     };
 }
