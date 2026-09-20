@@ -505,6 +505,15 @@
           '';
         };
 
+        # cv-state-perms matches no deploy-restart-audit converger pattern
+        # and has no RemainAfterExit (it MUST re-run on every cv-server
+        # start, not converge once): it is converged by cv-server's own
+        # start via wantedBy/wants — a deploy re-runs it when cv-server
+        # restarts, so a deploy-restart of the unit itself is meaningless.
+        services.deploy-restart-audit.allowUnits = lib.mkIf (options ? services.deploy-restart-audit) [
+          "cv-state-perms"
+        ];
+
         # Mount-gated creator for the pool-side backup dir (atticd-storage-dir
         # pattern). cv-backup's ReadWritePaths requires the path to EXIST
         # before namespace setup: during the 9-day DAS outage a root-fs shadow
