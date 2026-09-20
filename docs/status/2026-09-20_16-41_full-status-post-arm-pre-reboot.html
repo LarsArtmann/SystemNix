@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SystemNix Status — 2026-09-20 16:41 — Post-Arm, Pre-Reboot</title>
+<style>
+:root {
+  --color-graphite: #0e0e10; --color-graphite-2: #18181d; --color-graphite-3: #16161a;
+  --color-bone: #f4f4f0; --color-red: #ff6b6b; --color-blue: #6eb5ff;
+  --color-yellow: #f4d35e; --color-amber: #ffb347;
+  --surface: var(--color-graphite); --surface-raised: var(--color-graphite-2);
+  --surface-sunken: var(--color-graphite-3); --text: var(--color-bone);
+  --text-muted: #a8a8a2; --text-faint: #71716c; --border: #2a2a30; --border-strong: #3d3d45;
+  --accent: var(--color-amber); --problem: var(--color-red); --solution: var(--color-blue);
+  --warning: var(--color-yellow); --radius: 0px;
+  --font-heading: 800 1rem/1.2 ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --font-body: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--surface); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+.top-bar { display: flex; justify-content: space-between; gap: 1rem; padding: 0.55rem 1.2rem;
+  background: var(--color-red); color: #111; font-weight: 800; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; }
+.layout { display: flex; min-height: calc(100vh - 2.2rem); }
+.sidebar { display: none; width: 220px; flex-shrink: 0; border-right: 1px solid var(--border); padding: 1.5rem 1rem; position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; }
+.sidebar .label { color: var(--text-faint); font-size: 0.65rem; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 0.6rem; }
+.sidebar nav a { display: block; color: var(--text-muted); text-decoration: none; font-size: 0.82rem; padding: 0.28rem 0.5rem; border-left: 2px solid transparent; }
+.sidebar nav a:hover, .sidebar nav a.active { color: var(--text); border-left-color: var(--accent); }
+.main { flex: 1; max-width: 1060px; margin: 0 auto; padding: 2rem 1.5rem 4rem; min-width: 0; }
+.hero { border-bottom: 3px solid var(--accent); padding-bottom: 1.4rem; margin-bottom: 2rem; position: relative; }
+.hero-badge { display: inline-block; background: var(--accent); color: #111; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.25rem 0.6rem; margin-bottom: 0.8rem; }
+.hero h1 { font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 900; letter-spacing: -0.02em; text-transform: uppercase; line-height: 1.05; }
+.hero-subtitle { color: var(--text-muted); margin-top: 0.7rem; max-width: 60ch; }
+.hero-shapes { position: absolute; right: 0; top: 0; display: flex; gap: 0.5rem; align-items: center; }
+.hero-shapes .circle { width: 26px; height: 26px; border-radius: 50%; background: var(--color-blue); }
+.hero-shapes .square { width: 22px; height: 22px; background: var(--color-yellow); }
+.hero-shapes .tri { width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-bottom: 21px solid var(--color-red); }
+h2 { font-size: 1.15rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; margin: 2.4rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border-strong); }
+h2 .num { color: var(--accent); margin-right: 0.5rem; }
+h3 { font-size: 0.98rem; font-weight: 800; margin-bottom: 0.4rem; }
+h4 { font-size: 0.9rem; font-weight: 800; margin-bottom: 0.3rem; }
+p { margin-bottom: 0.7rem; color: var(--text); }
+code { font-family: var(--font-mono); font-size: 0.84em; background: var(--surface-sunken); padding: 0.1em 0.35em; border: 1px solid var(--border); }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.7rem; margin: 1rem 0 1.6rem; }
+.stat-card { background: var(--surface-raised); border: 1px solid var(--border-strong); border-top: 3px solid var(--border-strong); padding: 0.9rem 0.8rem; }
+.stat-card .stat-value { font-size: 1.9rem; font-weight: 900; line-height: 1; }
+.stat-card .stat-label { color: var(--text-faint); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.4rem; }
+.stat-card.stat-good { border-top-color: var(--solution); } .stat-card.stat-good .stat-value { color: var(--solution); }
+.stat-card.stat-bad { border-top-color: var(--problem); } .stat-card.stat-bad .stat-value { color: var(--problem); }
+.stat-card.stat-warn { border-top-color: var(--warning); } .stat-card.stat-warn .stat-value { color: var(--warning); }
+.card { background: var(--surface-raised); border: 1px solid var(--border-strong); border-left: 4px solid var(--border-strong); padding: 1rem 1.1rem; margin-bottom: 0.8rem; }
+.card-problem { border-left-color: var(--problem); }
+.card-solution { border-left-color: var(--solution); }
+.card-warning { border-left-color: var(--warning); }
+.card p:last-child { margin-bottom: 0; }
+.issue { background: var(--surface-raised); border: 1px solid var(--border); padding: 1rem 1.1rem; margin-bottom: 0.9rem; }
+.issue-critical { border-left: 4px solid var(--problem); }
+.issue-important { border-left: 4px solid var(--warning); }
+.issue-nice { border-left: 4px solid var(--solution); }
+.issue .where { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-faint); margin: 0.2rem 0 0.6rem; }
+.severity { display: inline-block; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.18rem 0.5rem; margin-bottom: 0.5rem; }
+.severity-critical { background: var(--problem); color: #111; }
+.severity-important { background: var(--warning); color: #111; }
+.severity-nice { background: var(--solution); color: #111; }
+.callout { padding: 0.6rem 0.8rem; font-size: 0.86rem; margin-top: 0.6rem; border: 1px dashed var(--border-strong); }
+.callout-solution { border-color: var(--solution); }
+.callout-amber { border-color: var(--warning); }
+table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.6rem; font-size: 0.84rem; }
+th { text-align: left; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); border-bottom: 2px solid var(--border-strong); padding: 0.45rem 0.5rem; }
+td { border-bottom: 1px solid var(--border); padding: 0.45rem 0.5rem; vertical-align: top; }
+.badge { display: inline-block; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.14rem 0.45rem; white-space: nowrap; }
+.badge-critical { background: var(--problem); color: #111; }
+.badge-high { background: var(--warning); color: #111; }
+.badge-low { background: transparent; color: var(--text-muted); border: 1px solid var(--border-strong); }
+.badge-fixed { background: var(--solution); color: #111; }
+.badge-gate { background: var(--accent); color: #111; }
+ul.tight { list-style: none; margin: 0.4rem 0 0.8rem; }
+ul.tight li { padding: 0.22rem 0 0.22rem 1.1rem; position: relative; color: var(--text); }
+ul.tight li::before { content: "▸"; position: absolute; left: 0; color: var(--accent); }
+.mono { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); }
+.footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border-strong); color: var(--text-faint); font-size: 0.75rem; }
+@media (min-width: 1024px) { .sidebar { display: block; } }
+@media (max-width: 768px) { .layout { padding: 0; } .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<div class="top-bar"><span>Status Report</span><span>2026-09-20 16:41 CEST</span><span>SystemNix / evo-x2</span></div>
+<div class="layout">
+<aside class="sidebar" data-nav>
+<nav>
+<div class="label">Contents</div>
+<a href="#summary">Summary</a>
+<a href="#done">a) Fully Done</a>
+<a href="#partial">b) Partially Done</a>
+<a href="#notstarted">c) Not Started</a>
+<a href="#fucked">d) Fucked Up</a>
+<a href="#improve">e) Improve</a>
+<a href="#next">f) Top 25 Next</a>
+<a href="#question">g) Top Question</a>
+</nav>
+</aside>
+<main class="main">
+<div class="hero">
+<div class="hero-shapes"><div class="circle"></div><div class="square"></div><div class="tri"></div></div>
+<div class="hero-badge">Point-in-time snapshot</div>
+<h1>Post-Arm, Pre-Reboot</h1>
+<p class="hero-subtitle">Full system status 44 minutes after the boot-mirror closeout report. The Samsung mirror is armed and audited; the box has NOT rebooted (boot 04:16, loader PARTUUID <span class="mono">846277c0…</span> = QLC). Parallel sessions landed a fix wave (undeployed), deleted the QLC <code>@nix</code> subvol, and finished the crush-hot-db migration. One NEW user-facing outage found this session: geometrikks.</p>
+</div>
+
+<h2 id="summary"><span class="num">00</span>Summary</h2>
+<div class="stat-grid">
+<div class="stat-card stat-good"><div class="stat-value">11/12</div><div class="stat-label">Boot-mirror M-items done (M7 = user reboot)</div></div>
+<div class="stat-card stat-bad"><div class="stat-value">42%</div><div class="stat-label">IO PSI avg10 — deploy gate SHUT (Zone-6 storm)</div></div>
+<div class="stat-card stat-bad"><div class="stat-value">1</div><div class="stat-label">New outage: geometrikks app container gone</div></div>
+<div class="stat-card stat-warn"><div class="stat-value">6</div><div class="stat-label">Unpushed commits (all reviewed, safe)</div></div>
+<div class="stat-card stat-warn"><div class="stat-value">2</div><div class="stat-label">Rogue llamas — idle, cron-spawned, 4.2G RAM</div></div>
+<div class="stat-card stat-good"><div class="stat-value">45G</div><div class="stat-label">crush-hot-db migration CONVERGED</div></div>
+</div>
+<div class="card card-solution">
+<h4>Headline</h4>
+<p>The boot-mirror chain is complete and the only remaining critical-path item is the user reboot (safe anytime — strict audit 23 PASS / 0 FAIL at 15:5x, three-way anchor verified, <code>Boot000C</code> Samsung first). This session additionally: identified the rogue-llama spawner (hermes cron <code>ed3fc8b089d7</code>, daily 05:40, journal-proven), confirmed the llamas are idle, confirmed 8127/8128 are the legit llama-vlm module (NOT rogues), verified the crush-hot-db migration converged, verified cv-backup green and the flm corpse gone, and discovered geometrikks down since ~14:39.</p>
+</div>
+
+<h2 id="done"><span class="num">01</span>a) Fully Done</h2>
+<table>
+<thead><tr><th>#</th><th>Item</th><th>Evidence</th><th>Scope</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Samsung boot-mirror ARMED, first in BootOrder, strict §11 audit passed</td><td><span class="badge badge-fixed">commit 541fab97</span> pre-reboot-check 23/0, "SAFE TO REBOOT"; mirror 312M/4.0G</td><td>scripts/boot-mirror-activate.sh, boot-mirror.nix</td></tr>
+<tr><td>2</td><td>Both first-run flake-app bugs fixed (SC1087 unbraced var; <code>PARTNUM</code>→<code>PARTN</code>)</td><td><span class="badge badge-fixed">541fab97</span> hooks green, pushed</td><td>pre-reboot-check.sh:434, boot-mirror-activate.sh:61</td></tr>
+<tr><td>3</td><td>Session self-review closeout (12 done / 4 partial / 6 fuck-ups / 44 next)</td><td><span class="badge badge-fixed">924509c6</span> pushed</td><td>docs/status/2026-09-20_15-57_*</td></tr>
+<tr><td>4</td><td>browser-history upstream issue #26 filed (empty-batch heartbeat blindness)</td><td><span class="badge badge-fixed">GH LarsArtmann/browser-history#26</span> voice-checked, 0 FAIL/0 WARN</td><td>upstream repo</td></tr>
+<tr><td>5</td><td><em>[parallel session]</em> cv-server exit-4 root cause FIXED; system-787 anchored 15:06; cv serving, /health 200</td><td><span class="badge badge-fixed">fc49dbe5</span> cv-state-perms <code>-o ! -perm -u+w</code>; readlink trio match</td><td>modules/nixos/services/cv.nix</td></tr>
+<tr><td>6</td><td><em>[parallel session]</em> textfile-poison root cause + fixes committed (nrestarts guards write+emit; storage-collector <code>UMask=0022</code>; rofi <code>settings</code> rename)</td><td><span class="badge badge-fixed">514dba99</span> eval green, fixture-tested standalone</td><td>system-health.nix, storage-collector.nix, rofi.nix</td></tr>
+<tr><td>7</td><td><em>[parallel session]</em> QLC <code>@nix</code> dead subvol DELETED (~129G freed; boot-closure pre-flight verified)</td><td><span class="badge badge-fixed">1e727445</span> comment updated in hardware-configuration.nix</td><td>QLC btrfs toplevel</td></tr>
+<tr><td>8</td><td>crush-hot-db migration CONVERGED — the freeze-6 crash-recovery storm driver is closed</td><td>verified live: <code>/mnt/hot/crush</code> = 45G; unit journal 16:35 "skip: crush session(s) active (24)"</td><td>crush-hot-db.nix runtime</td></tr>
+<tr><td>9</td><td>cv-backup green last night</td><td>journal 03:18 wrote <code>pipeline-20260920T031835.sqlite</code>, 88s wall, clean exit</td><td>runtime</td></tr>
+<tr><td>10</td><td>flm <code>:52626</code> EADDRINUSE corpse GONE — backend loads the model fully; socket down only via guard restore-cap (3/3, by design)</td><td>parallel session journal proof; ports 52625/52626 not listening now</td><td>runtime</td></tr>
+<tr><td>11</td><td>Rogue-llama spawner IDENTIFIED + rogues proven idle; 8127/8128 proven legit (llama-vlm module)</td><td>journal: cron job <code>ed3fc8b089d7</code> handed to worker 05:40:22 = exact llama start; fired daily (Sep 19+20); <code>/slots</code> → 0 busy on both; dark-guard counts only 2 rogue listeners</td><td>this session</td></tr>
+</tbody>
+</table>
+
+<h2 id="partial"><span class="num">02</span>b) Partially Done</h2>
+<div class="issue issue-important">
+<span class="severity severity-important">Blocked on gate</span>
+<h3>Fix wave committed but NOT DEPLOYED</h3>
+<div class="where">514dba99 → running system still system-787 (built 15:06, pre-dates the fixes)</div>
+<p>Symptom currently self-cleared (<code>node_textfile_scrape_error 0</code> observed live at 16:38) but the guard-bypass CAUSE is live in the running collector and can re-poison any tick; <code>storage_collector_health 0</code> persists. Deploy is blocked by the pressure gate: IO PSI some avg10 = 41.9% (gate threshold 20%), Zone-6 active (trips_total 558, disk busy 100%). Doctrine: don't race dips while Zone 6 is hot.</p>
+<div class="callout callout-amber"><strong>Remaining</strong> — wait for avg10 &lt; 20% and a calm window, deploy, then verify scrape_error stays 0 across ≥2 collector ticks + metrics present + smoke baseline refresh. Effort: S.</div>
+</div>
+<div class="issue issue-important">
+<span class="severity severity-important">Push pending</span>
+<h3>6 unpushed commits on master</h3>
+<div class="where">origin/master..HEAD = 514dba99, 44128cf0, a667e7a9, 1e727445, 39bd243c, c5b38227</div>
+<p>All reviewed this session: inboxclean.nix diff = <strong>formatting-only</strong> (map-lambda reformat); hardware-configuration.nix = <strong>comment-only</strong> (@nix deletion doc); rest = the fix wave + docs/planning HTML + two status reports. Working tree clean. Push is authorized and pending.</p>
+</div>
+<div class="issue issue-important">
+<span class="severity severity-important">User-gated</span>
+<h3>M7 reboot + post-reboot proofs (F18–F20)</h3>
+<div class="where">BootCurrent still 0001 (QLC); current loader PARTUUID 846277c0…</div>
+<p>Armed and audited; the user's reboot is the single remaining critical-path action. F18 = <code>bootctl status</code> PARTUUID flips to <code>023f66c0…</code>; F19 = pre-reboot-check exit 0 from booted state; F20 = QLC entry second (optional firmware-menu fallback boot). M8/F21 drift watch tonight — boot-mirror-sync has NO timer by design (boot + deploy only); last sync 15:2x green.</p>
+</div>
+<div class="issue issue-nice">
+<span class="severity severity-nice">Scheduled</span>
+<h3>cv-scan post-heal proof at 18:23</h3>
+<div class="where">12:23 tick FAILED (79ms — connection refused during the pre-fix cv-server outage window; expected)</div>
+<p>The 18:23 tick proves the healed CV stack end-to-end (scan → evaluate → auto-apply). OnFailure already fired for the 12:23 miss.</p>
+</div>
+
+<h2 id="notstarted"><span class="num">03</span>c) Not Started</h2>
+<ul class="tight">
+<li><strong>lsblk PARTNUM→PARTN regression fixture</strong> in scripts/test-scripts.nix + build-flake-app-before-green convention (this session, after report)</li>
+<li><strong>Parked-item routing</strong> — 9 items from the 15:57 report into docs/todo/{storage,stability,services,monitoring}.md (NOT TODO_LIST.md — prohibited)</li>
+<li><strong>Geometrikks root-cause + fix</strong> — triage started this session (see d/1); compose unit journal name unresolved, app container recreation pending</li>
+<li><strong>CV repo content-sync copy-flags check</strong> — does the perms drift re-materialize every sync (upstream open b.2)</li>
+<li><strong>Attribution archaeology</strong> — 11:06 root nixpkgs lock-bump provenance; 04:17 reboot ownership (git-log research, this session if time)</li>
+<li><strong>llama-rag re-enable investigation</strong> (ROCm/runtime suspicion — soak under real units first)</li>
+<li><strong>flm staged go-live decision</strong> — we hold v1.0.2, upstream now at v1.0.6</li>
+<li><strong>M9–M12 pool</strong> — llama-vlm model downloads, ExecStart list-shape audit, mirror-freshness hardening, root-<code>@</code>-off-QLC investigation (owner-gated)</li>
+<li><strong>node_textfile_scrape_error Gatus check</strong> (monitor-of-monitor; currently only pre-deploy §10 consumes it)</li>
+</ul>
+
+<h2 id="fucked"><span class="num">04</span>d) Totally Fucked Up</h2>
+<div class="issue issue-critical">
+<span class="severity severity-critical">User-facing outage</span>
+<h3>Geometrikks DOWN — app container ABSENT, sidecar FATALing every 5s</h3>
+<div class="where">:8102 connection refused · FATAL "database geometrikks does not exist" ×1441 since 14:39 · docker ps -a shows ONLY geometrikks-timescale_db-1 (Up 5h)</div>
+<p>The app container does not exist at all (not even stopped — <code>docker ps -a</code> lists only the sidecar), so geo.home.lan is dead. The sidecar's env (<code>POSTGRES_DB=geometrikks</code>) and volume mount (<code>geometrikks_timescale_data</code> on /data) are CORRECT — yet connections say the database does not exist, which points at a recreated/partial PGDATA where initdb was skipped (init scripts only run on an empty data dir). Sidecar Up 5h ≈ restarted in the 11:41 deploy era; FATALs start 14:39 (the connector, likely a 5s healthcheck/app retry loop). Data-loss risk unknown until the volume is inspected.</p>
+<div class="callout callout-solution"><strong>Fix path</strong> — recreate the app container via the compose unit; if the DB is genuinely missing, create it in the sidecar (<code>CREATE DATABASE geometrikks</code> as POSTGRES_USER) or reset the volume per the runbook; then re-verify the registry Gatus checks page. Investigation continues this session.</div>
+</div>
+<div class="issue issue-critical">
+<span class="severity severity-critical">Active</span>
+<h3>IO storm — deploy gate shut, guard Zone-6 cycling</h3>
+<div class="where">io PSI some avg10 41.9 / avg60 40.8 · disk busy 100% · zone6_trips_total 558 · 24 concurrent crush sessions</div>
+<p>Sustained QLC IO pressure all afternoon. The historical drivers are closed (migration converged; @nix deleted) — the residual driver is the crush-session load itself plus deploy-window churn. flm socket stays down (restore-capped, by design — do NOT force). Memory is healthy (zram 29.6%, mem PSI 6%), so this is pure IO.</p>
+</div>
+<div class="issue issue-important">
+<span class="severity severity-important">User-gated</span>
+<h3>InboxClean main token dead 16 days</h3>
+<div class="where">invalid_grant since Sep 05 · ~2 failures/hour · cursor frozen at 5152620</div>
+<p>Google testing-mode 7-day expiry class. Fix order matters: flip the OAuth client to "In production" FIRST, then re-run <code>inboxclean auth</code> for both accounts. Browser + Google Console = user-only.</p>
+</div>
+<div class="issue issue-important">
+<span class="severity severity-important">User-gated</span>
+<h3>bank-sync Wise SCA challenge active</h3>
+<div class="where">statements paused pending SCA approval · degraded transfers-only fallback · smoke FAIL flap</div>
+<p>~90-day renewal class. Dashboard approval flow or <code>bank-sync sca approve</code>. Until then the sync-errors counter check keeps flapping deploys' smoke exit codes (known, not a regression).</p>
+</div>
+<div class="issue issue-important">
+<span class="severity severity-important">Decision ready</span>
+<h3>Rogue hermes llamas (PIDs 805159/805161)</h3>
+<div class="where">since 05:40 · 4.2G RSS combined · 98min CPU on the embeddings one · hold 8848/8849 · IDLE (0 busy slots)</div>
+<p>Spawned by hermes cron job <code>ed3fc8b089d7</code> (daily 05:40, journal-proven); they outlived their worker scope — the documented "agent-spawned duplicate outlives config-disable" class. llama-rag is config-disabled, so no unit conflict, but they block nothing except a future llama-rag re-enable (portGuard would reap them) and burn RAM. Kill evidence is complete: idle now, job spawns fresh ones tomorrow 05:40 regardless. Kill still user-authorized-only (foreign-user processes; standing prohibition).</p>
+</div>
+<div class="issue issue-nice">
+<span class="severity severity-nice">Degraded</span>
+<h3>storage_collector_health 0 + python3 path collision</h3>
+<div class="where">storage-collector.prom unreadable-writer class (fix committed, undeployed) · python3 3.13.15 vs 3.14.7 both on system path (flagged, no why-depends yet)</div>
+<p>Both land with the next deploy / investigation; listed here so they don't rot as invisible WARNs.</p>
+</div>
+
+<h2 id="improve"><span class="num">05</span>e) What We Should Improve</h2>
+<ul class="tight">
+<li><strong>Build flake apps end-to-end before calling them green</strong> — <code>--no-build</code> checks passed while the SC1087 shellcheck error killed the actual derivation; convention: build the app, then run it (fixture next).</li>
+<li><strong>Runtime-state invariants need runtime checks</strong> — the textfile poison survived days of green evals because the bug lived in persisted state; a python exposition validator belongs as a flake check or smoke step (parallel session already suggested; endorse).</li>
+<li><strong>Guards at data boundaries, not call sites</strong> — recorded in AGENTS.md by the parallel session; a repo lint for unguarded <code>systemctl show --value</code> writes would mechanize it.</li>
+<li><strong>Smoke-baseline staleness stamps</strong> — the "4 known FAILs" are wallpaper; per-FAIL expected-clearance annotations would surface rot (CV-era fails should already have dropped post-14:08-heal).</li>
+<li><strong>Guard↔stc socket interlock</strong> — two 24G cold loads were paid today to the restore-cap/re-arm fight; the corpse-aware restore skip (P1) deserves promotion.</li>
+<li><strong><code>nix fmt --ci</code is not read-only</strong> (applies formatting before failing) — needs an AGENTS.md gotcha entry if not yet recorded by the parallel session.</li>
+<li><strong>Ops artifacts out of /tmp</strong> — CV render smoke log at <code>/tmp/.smoke-cv-render.log</code>; doctrine says <code>~/.local/state/</code>.</li>
+<li><strong>PMA daemon pathspec-per-session commits</strong> — 514dba99 mixed two sessions' files; attribution and revert honesty suffer.</li>
+</ul>
+
+<h2 id="next"><span class="num">06</span>f) Top 25 Next (ranked)</h2>
+<table>
+<thead><tr><th>#</th><th>Task</th><th>Impact</th><th>Effort</th><th>Kind</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>USER: reboot (M7) → F18–F20 proofs</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>Gate</td></tr>
+<tr><td>2</td><td>Fix geometrikks (recreate app container, DB init investigation, verify geo.home.lan)</td><td><span class="badge badge-critical">Critical</span></td><td>M</td><td>Bug</td></tr>
+<tr><td>3</td><td>Deploy fix wave when pressure gate opens; verify scrape_error 0 ×2 ticks + metrics + smoke baseline refresh</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>Bug</td></tr>
+<tr><td>4</td><td>Push 6 reviewed commits (origin parity)</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Cleanup</td></tr>
+<tr><td>5</td><td>USER: InboxClean OAuth — production-flip FIRST, then re-consent both accounts</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Gate</td></tr>
+<tr><td>6</td><td>USER: bank-sync SCA approve</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Gate</td></tr>
+<tr><td>7</td><td>USER: llama kill decision — evidence complete (idle, cron respawns 05:40 daily)</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Gate</td></tr>
+<tr><td>8</td><td>Route 9 parked items → docs/todo domain libraries</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Documentation</td></tr>
+<tr><td>9</td><td>lsblk PARTN regression fixture + build-app-before-green convention</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Quality</td></tr>
+<tr><td>10</td><td>Verify cv-scan 18:23 tick end-to-end (post-heal proof)</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Verify</td></tr>
+<tr><td>11</td><td>M8/F21 mirror drift watch tonight (sync re-run at next boot/deploy, df stable, no drift alert)</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Verify</td></tr>
+<tr><td>12</td><td>Post-reboot residuals: hot-user-caches bootstrap, smoke baseline enumeration, F18–F20</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Verify</td></tr>
+<tr><td>13</td><td>CV repo content-sync copy-flags check (perms-drift re-materialization)</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Research</td></tr>
+<tr><td>14</td><td>Attribution archaeology: 11:06 nixpkgs bump provenance, 04:17 reboot ownership</td><td><span class="badge badge-low">Medium</span></td><td>S</td><td>Research</td></tr>
+<tr><td>15</td><td>storage-collector upstream UMask fix (crate-level chmod 644)</td><td><span class="badge badge-low">Medium</span></td><td>S</td><td>Bug</td></tr>
+<tr><td>16</td><td>Gatus check for node_textfile_scrape_error (monitor-of-monitor)</td><td><span class="badge badge-low">Medium</span></td><td>S</td><td>Feature</td></tr>
+<tr><td>17</td><td>Repo regression test for the nrestarts guard (tests/ fixture)</td><td><span class="badge badge-low">Medium</span></td><td>S</td><td>Quality</td></tr>
+<tr><td>18</td><td>Guard↔stc interlock / corpse-aware restore skip (stop paying 24G cold loads)</td><td><span class="badge badge-low">Medium</span></td><td>M</td><td>Feature</td></tr>
+<tr><td>19</td><td>python3 3.13/3.14 system-path why-depends investigation</td><td><span class="badge badge-low">Medium</span></td><td>S</td><td>Research</td></tr>
+<tr><td>20</td><td>geometrikks: confirm Gatus paged for the outage (registry checks exist — verify alert path fired)</td><td><span class="badge badge-low">Medium</span></td><td>S</td><td>Verify</td></tr>
+<tr><td>21</td><td>/tmp ops-artifact sweep (CV smoke log → ~/.local/state)</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>Cleanup</td></tr>
+<tr><td>22</td><td>llama-rag re-enable investigation (soak under real systemd units, ≥10 min)</td><td><span class="badge badge-low">Low</span></td><td>M</td><td>Research</td></tr>
+<tr><td>23</td><td>flm v1.0.6 staged go-live decision (held at v1.0.2; corpse obstacle now gone)</td><td><span class="badge badge-low">Low</span></td><td>M</td><td>Decision</td></tr>
+<tr><td>24</td><td>llama-vlm soak test (eval warning demands it)</td><td><span class="badge badge-low">Low</span></td><td>M</td><td>Quality</td></tr>
+<tr><td>25</td><td>M9–M12 pool routing (llama-vlm model downloads, ExecStart audit, mirror hardening, root-@ off QLC)</td><td><span class="badge badge-low">Low</span></td><td>M</td><td>Owner</td></tr>
+</tbody>
+</table>
+
+<h2 id="question"><span class="num">07</span>g) Top Question</h2>
+<div class="card card-warning">
+<h4>One reboot serves everything — when?</h4>
+<p><strong>Tried myself:</strong> the reboot is physically yours (sudo/systemctl banned in my sandbox; it is also designated THE user action). Everything upstream of it is green: mirror armed <code>Boot000C</code> first, strict audit 23/0, three-way anchor, QLC fallback preserved.</p>
+<p><strong>Recommended ordering:</strong> let this session fix geometrikks + land the deploy once the IO gate opens + push — <em>then</em> you reboot once, covering M7, the deployed fix wave activation, the flm corpse-class cleanup, and the smoke-baseline refresh in a single boot. Alternatively reboot now; the deploy can follow after (the mirror bootstraps independently).</p>
+<p><strong>Smaller decisions riding along:</strong> kill the two idle rogue llamas (<code>sudo kill 805159 805161</code> — they respawn daily 05:40 via hermes cron <code>ed3fc8b089d7</code>, so killing is safe and non-destructive)? InboxClean OAuth production-flip + re-consent? bank-sync SCA approve?</p>
+</div>
+
+<footer class="footer">Generated 2026-09-20 16:41 CEST · All live claims verified this session against journals, metrics (:9100), docker ps/inspect, bootctl, and git · Parallel-session work credited inline · Point-in-time snapshot — annotate, never rewrite</footer>
+</main>
+</div>
+<script>
+(function () {
+  if (!("IntersectionObserver" in window)) return;
+  var nav = document.querySelector("[data-nav]");
+  if (!nav) return;
+  var links = nav.querySelectorAll('a[href^="#"]');
+  var ids = Array.from(links).map(function (l) { return l.getAttribute("href").slice(1); });
+  var sections = ids.map(function (id) { return document.getElementById(id); }).filter(Boolean);
+  if (!sections.length) return;
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        links.forEach(function (link) {
+          link.classList.toggle("active", link.getAttribute("href") === "#" + entry.target.id);
+        });
+      }
+    });
+  }, { rootMargin: "-80px 0px -60% 0px", threshold: 0 });
+  sections.forEach(function (s) { observer.observe(s); });
+})();
+</script>
+</body>
+</html>
