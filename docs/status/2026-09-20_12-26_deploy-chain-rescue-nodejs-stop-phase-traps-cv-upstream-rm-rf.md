@@ -1,0 +1,121 @@
+# Deploy Chain Rescue: nodejs test-suite break, hermes/discordsync stop-phase exit-4 traps, and the cv upstream `rm -rf assets` finding
+
+**Date:** 2026-09-20 12:26 CEST · **Session scope:** unblock the user's `nh os switch` (failed 09:28 on the deploy-restart-audit exemption regression), verify the fix chain, deploy, and repair the new failure classes the day's nixpkgs bump exposed along the way. · **Branch:** master (my two fixes UNCOMMITTED at report time)
+
+---
+
+## 0. The one-line answer to "WTF why was there a rm -rf in CV nix?!"
+
+**It is NOT in SystemNix's cv.nix.** `grep` confirms our `modules/nixos/services/cv.nix` contains no `rm -rf` (its only `rm` is the deliberate `rm -f` of the OIDC env file in `cv-oidc-env`, 2026-08-18 doctrine: missing secret ⇒ OIDC off, never blocking).
+
+The `rm -rf` is in the **UPSTREAM** `cv-server-content-sync` script that the CV flake's `nixosModules.default` generates (deployed unit `/etc/systemd/system/cv-server.service` → `/nix/store/qhby6ax90qzrdvhda7wl8mmnrkar3jj2-cv-server-content-sync/bin/cv-server-content-sync`). We consume that module per the "always consume the upstream module" doctrine. The absurd part: **the upstream script's own comments prove its author knows this exact failure class** — every `data/` subdirectory got the hardened treatment ("foreign-owned files (operator root intervention) must never take the service boot down — the old rm -rf deleted any file via dir-write permission, this shape keeps that robustness", followed by best-effort chmod + warn-not-fail cp) — but `assets/` was left with a bare `rm -rf "$state/assets"` at the top of the script. The montserrat font dirs under `/var/lib/cv/assets/` are foreign-owned (root intervention at some point), the service runs as `cv:cv` under `harden{}` (no DAC caps), the unlink EPERMs, and cv-server crash-loops to start-limit-hit (11:41–11:52, 5 restarts in 5s cadence). Because the cv input is **branch-ref governed HELD** (go-floor, CI dead — AGENTS.md 2026-09-17 hold), an upstream fix cannot reach us without a lock move; the SystemNix-side fix is the planned ownership-heal (§ b.1).
+
+---
+
+## a) FULLY DONE
+
+1. **Root-caused the user's 09:28 deploy failure** (`deploy-restart-audit: postfix-setup, postgresql-setup, systemd-tmpfiles-resetup missing from scripts/deploy.sh`): it was the `hot-db.nix` plain-`allowUnits`-assignment-replaces-defaults defect, already fixed at the config layer by a parallel session in `82d4fa4a` (09:40, twelve minutes AFTER the failed deploy attempt). Option default is now `[]`, the four upstream exemptions live at config layer (deploy-restart-audit.nix:95-100), and consumer assignments concatenate.
+2. **Independently verified the fix** (the close-out doc's own open item §f.30): `nix flake check --no-build` → exit 0, "all checks passed"; `nix build .#checks.x86_64-linux.deploy-restart-audit .#checks.x86_64-linux.hot-db-assertions` → both PASS-variant derivations built (`test-deploy-restart-audit-pass.drv`).
+3. **Root-caused why EVERY deploy since the nixpkgs `e554fab` bump then died at BUILD** (the user's 10:24 nh retry, my 10:17-era deploy.sh, and presumably last night's geometrikks build #2): `nodejs-slim-26.9.0`'s test `parallel/test-fs-cp-async-file-modes` fails `EPERM: chmod suid` in the build sandbox (not flaky IO — deterministic); cascade: nodejs → npm-12.0.2 → nodejs-26-npm-12 → nodejs-install-executables → npm-install-hook → hermes-tui → web-0.0.0 → system-units → etc → activate → toplevel. `--keep-going` enumeration confirmed this was the ONLY root failure (28 error lines, one "builder failed with exit code 2", the rest dependency cascade).
+4. **Verified the parallel session's nodejs fix is correct and complete**: Sourcegraph confirmed nixpkgs master disables exactly this test (`CI_SKIP_TESTS`, nixpkgs#564449, guard `majorVersion == "26" && !buildPlatform.isDarwin`); commit `1bfe5ae2` documents their path (their first overlay shim `8740c661` was correct-shaped but inert — the hermes-agent flake builds nodejs against the followed root nixpkgs WITHOUT SystemNix overlays — so they bumped root nixpkgs to `20b1ddd` carrying upstream fix `089b82f9`, dropped the now-harmful shim, and dry-run-verified 0 nodejs builds remain in the toplevel graph, build set 50→31).
+5. **Root-caused the 11:30 test-activation abort that left the profile unanchored and two services down**: `switch-to-configuration test` (11:30:11) stopped hermes → upstream 0.21.3 exits **1** on a SIGTERM-initiated shutdown by design ("so the service manager can revive the gateway") → unit marked failed → and stopped discordsync → its event-loop drain exceeded the 90s default `TimeoutStopSec` → SIGKILL → `result 'timeout'`. stc reported failed units → exit 4 → nh aborted before the real switch → `/run/current-system` advanced but `/nix/var/nix/profiles/system` did not (the documented 2026-09-06 unanchored-generation class). First-ever occurrence of the hermes exit-1-on-stop (0.21.3 is new in this bump; no clean stop of the new binary had happened before).
+6. **Landed the two stop-phase fixes (UNCOMMITTED, 11:43:59)**:
+   - `modules/nixos/services/hermes.nix`: `SuccessExitStatus = 1` with a full comment — revival semantics preserved (exit 75 stays the explicit restart request via `RestartForceExitStatus`, everything else covered by serviceDefaults' `Restart=always`); exit-1 crash visibility explicitly moves to the restart-churn metric + journal.
+   - `modules/nixos/services/discordsync.nix`: `TimeoutStopSec = "5min"` — the 90s default SIGKILLed its stop drain 4× today alone (02:24, 03:34, 03:51, 11:31).
+7. **Diagnosed the remaining 11:40–11:52 activation cascade** to root cause each: hot-user-caches-nix-bootstrap (`chmod EPERM` on `/mnt/hot/users/lars/cache/nix`; the CURRENT tree already carries the caps fix `CAP_SYS_ADMIN CAP_CHOWN CAP_DAC_OVERRIDE` — parallel session, hot-user-caches.nix:139-142), downstream `/mnt/buildcache/go-build` automount start-limit-hit (bootstrap-dependent), cv-server (the upstream `rm -rf assets`, §0), browser-history-agent (agent gate honestly aborting after 7min because the SERVER serves `/health` 503 — see §b.3).
+8. **Restored both stopped services** (indirectly — the parallel deploy's 11:41 activation started them): discordsync Started 11:41:46, hermes (0.21.3) Started 11:46:55 after a 5m09s start inside its 6min budget. Both confirmed live via journal + pgrep.
+9. **Protected the deploy discipline throughout**: three of my own `nix run .#deploy` attempts hit exit 13 lock-contention and I never fought the lock; all watching was passive (kill -0/profile polls), no foreign processes killed, no manual activations, no commits (user hasn't authorized one).
+
+## b) PARTIALLY DONE
+
+1. **cv-server repair** — root-caused, fix DESIGNED, not implemented: plan is a SystemNix-side ownership-heal ExecStartPre on `cv-server` (`lib.mkBefore [ "+${lib.getExe cvOwnershipHeal}" ]` — mkBefore is load-bearing because plain list-merge would append AFTER the upstream sync that dies first), script = `find /var/lib/cv ! -user cv -print -quit`-gated `chown -R cv:cv /var/lib/cv`, the exact `clickhouse-xfs-ownership-heal` pattern, `+` prefix per the escape-hatch doctrine. cv.nix's cv-server serviceConfig block (375-445) is read and ready for the edit. cv-server sits at start-limit-hit since 11:52:18 — it will start cleanly once the heal lands and the unit restarts.
+2. **The deploy itself** — the eval blocker is fixed (§a.1) and the build blocker is fixed (§a.4), my stop-phase fixes are in-tree, but NO clean profile-anchoring activation has happened yet: profile is still `system-785-link` while `/run/current-system` is the `20b1ddd` toplevel (UNANCHORED — a reboot right now reverts to 785). A parallel session's 12:15 status doc (`boot-mirror-deploy-live-unanchored-smoke-regression-rc3.md`, their file — left untouched) shows they are on the same unanchored state. My deploy must go AFTER theirs (lock) and carries: my hermes/discordsync unit changes (which on the NEXT activation trigger a restart of both now-RUNNING services — exactly the path the two fixes cure).
+3. **browser-history unhealthy (`/health` 503 since ~11:34, agent paging every 5-min tick)** — root-caused to one journal line: `unable to create schema link for type visit.Visit : reflect: embedded type with methods not implemented if type is not first field`. Same code (input still at the rolled-back `0971fe9c`) was healthy through gen 785; the day's root-nixpkgs bump rebuilt it against a new Go toolchain, and this go-cqrs-lite reflection path is toolchain-sensitive. This is UPSTREAM-fix territory per doctrine ("fix application bugs upstream, not in SystemNix") — the fix belongs in go-cqrs-lite/browser-history, not in a Nix shim. Neither unit restarts during MY activation (unit files unchanged vs current-system), so it does not block the deploy, but the agent pages via OnFailure every tick.
+4. **inboxclean-sync chronic failure** (10:26, 10:56, 11:26, 11:56 — every 30-min tick) — the KNOWN main-account `invalid_grant` (testing-mode 7-day expiry, dead since Sep 4); user-gated re-consent; documented; not deploy-blocking (unit file stable, never restarted by stc). It keeps `service-health-check` red, which is the checker correctly reporting the list, not a new fault.
+
+## c) NOT STARTED
+
+1. The cv ownership-heal edit (designed, §b.1).
+2. Committing my two stop-phase fixes (not authorized; also the daemon may batch them — a PATHSPEC commit is the recommended shape when authorized).
+3. Post-fix deploy + anchoring verification (`readlink /run/current-system` == a numbered profile; per pre-reboot-check §"profile anchoring" the current unanchored state must be closed BEFORE any reboot).
+4. Any verification that the hot-user-caches caps fix actually heals the bootstrap (next deploy restarts it — it is in the deploy.sh provisioner loop, so the next activation is the test; if it still fails it exit-4s that activation too).
+5. Any fix for the `go-build` automount start-limit residue (expected to self-heal once the bootstrap succeeds; not re-verified).
+6. Anything about the gkr-pam keyring noise (dozens of `systemd-stdio-bridge ... couldn't unlock the login keyring` per second around 11:34) — noticed in passing, deliberately not researched per session scope.
+7. A post-anchoring run of post-deploy-check (geometrikks + health-dashboard activate for the first time in this deploy generation — their first-start behavior is unobserved).
+
+## d) TOTALLY FUCKED UP (honest list)
+
+1. **My first "stale lock via PID reuse" diagnosis was WRONG.** After the exit-13 on PID 1027732 I wrote "stale lock via PID reuse (this box wraps PIDs)" — the truth was mundane: deploy.sh 1027732 was a NEW parallel deploy started ~11:25, AFTER my earlier watcher had checked a world where that PID didn't exist (my watcher's "DEPLOY_SH_EXITED" verdict was true for that instant and false two minutes later). I corrected on the very next `ps` (21min elapsed), but the initial framing was a guess presented as a finding — the exact "assert WHICH question your evidence answers" trap.
+2. **I started my first deploy without checking for in-flight deploy activity.** `pgrep -af 'nh os switch|deploy'` before `nix run .#deploy` is 2 seconds and would have shown the user's 10:24 nh building. Instead I burned an exit-13 round trip (twice, counting the second one — by then a second parallel deploy.sh had also appeared).
+3. **My watcher methodology was point-in-time on a moving system** — the exact sin the geometrikks session confessed at 00:00 ("my load will decay model keeps being wrong in BOTH directions"). Three separate wait-loops, each concluding something true only for its 30s window (holder exited / nh exited / settled). The final state was only established by re-reading ground truth (profile symlink, pgrep, journal) after each wait — that part I did consistently right.
+4. **A grep bug produced an empty "cv-server last error" section I briefly reported as no-error**: `grep -vE "^--|"` — the trailing `|` makes an EMPTY alternation branch that matches every line, filtering the ENTIRE output. Caught on the next query, re-run with `-o cat`, and the real EPERM lines surfaced. Same class as the repo's documented pipeline-masking lessons: a filter that lies is worse than no filter.
+5. **I planned an overlay fix that a parallel session had already built, iterated, discovered to be inert, and superseded** — I was minutes from writing a `CI_SKIP_TESTS` overrideAttrs shim into overlays/shared.nix when the mandatory content-pin check (git rev-parse + git log since my last known rev) surfaced `1bfe5ae2`. The content-pin discipline worked exactly as designed, but I had planned the edit WITHOUT checking the tree first on that round — the check should have preceded the plan, not interrupted it.
+6. **I never ran the cheap eval gate after my own 11:43 edits** (hermes/discordsync). The doctrine is "run `nix flake check --no-build` or the eval after changes"; I went straight to `nix run .#deploy` on the theory that its pre-deploy battery covers eval — true, but both attempts were then lost to lock contention, so as of report time MY EDITS HAVE NEVER PASSED ANY GATE. Formatting is also unverified (`nix fmt --no-update-lock-file -- --ci` not run).
+7. **Three deploy attempts by me + two parallel deploys + one raw nh ran concurrently today** — I contributed to the churn I was diagnosing. The deploy lock prevented damage (every contention exited cleanly), but the aggregate was ~4 wasted 20-minute build/eval windows on a box with this freeze history.
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Pre-flight deploy check**: `nix run .#deploy` sessions (human or agent) should check `/tmp/.systemnix-deploy.lock` + `pgrep -af 'nh os switch|bin/deploy'` FIRST, and adopt the 2026-09-19 rc-13 doctrine explicitly (WAIT — a parallel deploy may carry your work; re-check profile advancement before re-firing). I followed the doctrine after hitting 13; it should be step zero.
+2. **A unit-failure triage runbook entry for exit-4 activations**: the sequence that worked today was journal → `systemd[1]` lines since the test-activation timestamp → classify each failed unit as (stop-phase result / start-limit / chronic checker) → decide fix-in-module vs upstream vs benign. Worth persisting into AGENTS.md's systemd section alongside the existing exit-4 entries.
+3. **Stop-phase failure class deserves its own AGENTS.md bullet**: apps that exit non-zero on SIGTERM as a "revive me" signal (hermes 0.21.x) make every clean stop a failed unit and every unit-touching deploy an exit-4. The fix shape (`SuccessExitStatus` + document where crash visibility moves) and the diagnosis signature (`State 'stop-sigterm' timed out` / `Exiting with code 1 (signal-initiated shutdown...)` in the journal) should be recorded — discordsync's variant (drain > 90s default) already has a fix landed.
+4. **The upstream-module sync-script class**: cv's `assets/` bare `rm -rf` shows upstream scripts evolve unevenly (data/ dirs hardened, assets/ not). When SystemNix consumes an upstream ExecStartPre that mutates state dirs, a one-time read of the generated store script (the path is in the deployed unit file — `/etc/systemd/system/<unit>.service`) should be part of bring-up verification for modules we don't own. I only read it after the EPERM; the script was visible from minute one of the cv diagnosis.
+5. **Report hygiene I did right and should keep**: content-pin (`git rev-parse` + `git log` since last known rev) before every edit round on the shared tree — it caught the superseded-overlay situation; PATHSPEC-commit awareness; never touching the foreign status doc; no manual activations despite three failed deploys tempting a shortcut.
+6. **The hermes start budget is now load-bearing**: 5m09s actual vs 6min `TimeoutStartSec` under today's IO. The next natural regression (bigger state dir, worse storm) eats the margin. If a future activation fails on hermes start-timeout, the budget is the knob — but note a start-timeout there ALSO exit-4s the activation.
+7. **Watch out for the nodejs precedent**: the hermes-agent flake builds nodejs against the FOLLOWED root nixpkgs with NO SystemNix overlays — any future "fix nodejs locally via overlay" idea is dead on arrival for the hermes chain (only root-nixpkgs bumps or upstream fixes reach it). The parallel session's `1bfe5ae2` commit message documents this definitively; do not re-derive it.
+
+## f) Up to 50 things to get done next (scoped to this session's domain)
+
+**Immediate (this deploy chain):**
+1. Implement the cv ownership-heal ExecStartPre (design in §b.1) — unblocks cv-server's start-limit-hit.
+2. Run `nix fmt --no-update-lock-file -- --ci` + `nix flake check --no-build` over my two uncommitted fixes (§d.6 — they have never passed a gate).
+3. Deploy (after the parallel session's deploy releases the lock) and verify: profile anchored (current-system == a numbered profile), hermes restart lands on `SuccessExitStatus` (stop → clean), discordsync stop drains ≤5min, cv-server starts, hot-user-caches-nix-bootstrap passes with the caps fix, go-build automount recovers.
+4. Commit my two fixes as a PATHSPEC commit when authorized (`git commit -m … -- modules/nixos/services/hermes.nix modules/nixos/services/discordsync.nix`) — the daemon-race rule applies.
+5. Close the unanchored-generation window: the reboot-revert hazard (current-system ahead of profile) stands until a clean activation; coordinate with the parallel session's 12:15 doc owner.
+6. Verify geometrikks + health-dashboard first-start on the next successful activation (first deploy carrying them — TimeoutStartSec 15min on the image pull, Gatus checks red-until-first-run is expected for the dead-mirror-class checks).
+7. Post-deploy: run `nix run .#post-deploy-check` (per §c.7).
+8. Confirm hot-user-caches-go-build-bootstrap also converged (its sibling; the mount failures were downstream of the nix one).
+
+**cv-server / upstream CV:**
+9. Land the ownership heal, then file/verify the upstream CV fix for the bare `rm -rf assets` (make it match the data/-dir best-effort pattern) — upstream can't reach us while the lock is held, but the fix should exist for when the floor clears.
+10. When the cv go-floor hold lifts (upstream adopts go_1_27 or drops the floor), re-evaluate whether the heal should be retired (it is harmless idempotent — probably keep it anyway as foreign-file insurance).
+11. Probe `nix build github:LarsArtmann/CV/master#default.goModules` opportunistically — the 2026-09-17 hold says nixpkgs DOES ship go_1_27; if upstream's one-line `goPkgAttr` fix landed, the lock can move and the heal's upstream twin comes with it.
+
+**browser-history:**
+12. File the go-cqrs-lite/browser-history issue for `unable to create schema link for type visit.Visit` (embedded-type-with-methods reflection break, toolchain-correlated: healthy on the pre-bump Go, 503 after) — verify-before-filing first: reproduce against both toolchains.
+13. Decide the interim stance for bh-server 503 (it pages via the agent's OnFailure every 5 min until fixed): accept the noise, or silence the agent unit until upstream lands (config-disable is NOT neutral here — it stops a working ingest path for a health-check regression).
+14. Check whether the bh Gatus checks are red and whether the 503 is the schema link or a second cause (only one warning line was inspected).
+
+**hermes / discordsync:**
+15. Confirm hermes's next natural restart (deploy or crash) exits 0 on stop with `SuccessExitStatus` live — the fix is untested against a real restart until then.
+16. Same for discordsync's stop drain: the 5min budget is sized off 90s-evidence, not a measured drain ceiling; if a stop ever hits 5min, size it from the journal delta instead of guessing again.
+17. Watch hermes start duration trend (5m09s vs 6min budget, §e.6).
+18. Sweep OTHER units for the exit-1-on-stop pattern (apps that treat SIGTERM-shutdown as "exit nonzero for revival") before the next bump restarts them mid-activation: candidates = anything with `RestartForceExitStatus`/on-failure + custom shutdown handlers.
+19. Sweep for units with NO explicit `TimeoutStopSec` whose stop drains (discordsync was found by 4 SIGKILLs; the journal class `State 'stop-sigterm' timed out` across 7 days would name any siblings).
+
+**hot-user-caches (parallel session's module, deploy-blocking until proven):**
+20. Verify the caps fix heals the bootstrap on the next activation; if `chmod 0700` still EPERMs, check whether the dir is on a nodatacow/subvol with different ownership semantics before touching the module (it's theirs — coordinate, don't race).
+21. Confirm `/mnt/buildcache/go-build` automount recovers (mount → start-limit-hit residue) and that nix builds' GOCACHE path is healthy again.
+22. If the bootstrap keeps failing, it exit-4s EVERY deploy (provisioner-list member) — that would need an allowUnits/caps/script decision with the owning session.
+
+**Process / hygiene:**
+23. Persist the exit-4 triage runbook (§e.2) and the stop-phase class bullet (§e.3) into AGENTS.md.
+24. Add the pre-flight lock/process check to the deploy workflow docs (§e.1).
+25. Consider a gitleaks-safe note that `SuccessExitStatus` trades systemd-level crash visibility for clean stops (the restart-churn metric is the compensating control) — future audits will ask.
+26. After anchoring: run pre-reboot-check before ANY planned reboot (the unanchored window makes reboots generation-reverting until closed).
+27. Sweep the day's other chronic reds into their owners' queues: inboxclean re-consent (user), service-health-check (goes green when its list does).
+28. When commit authorization arrives: PATHSPEC-commit the two fixes, verify the daemon didn't batch foreign files (git show --stat first, the 2026-09-14 amend rule).
+29. The parallel session's status doc (12:15, untracked) — coordinate so the boot-mirror deploy sequencing question (their f.33) and my deploy don't interleave activations.
+30. Re-run the full check battery at a quiescent moment post-deploy (moving-tree rule — three sessions committed during this one).
+
+**Noticed in passing (not researched, per scope):**
+31. gkr-pam keyring spam via systemd-stdio-bridge (~11:34, dozens/sec) — likely a sev1-bridge notify-path loop or a session spawning D-Bus calls in a tight loop; worth one journal look by whoever owns that path.
+32. The 11:30 spurious hermes OnFailure page (the exit-1-on-stop fired the alert path once) — with SuccessExitStatus landed it stops; no action.
+33. cv-backup will fail while cv-server is start-limit-hit (its data/ gating) — self-heals with the heal.
+34. The orphan pre-bump `nix build` (PID 617590, started 11:11) was doomed by its eval snapshot (pre-20b1ddd tree → broken nodejs); it died with the settle window — no action, but it wasted ~40 min of IO.
+35. InboxClean `invalid_grant` fix is one interactive Google consent away (runbook in AGENTS.md) — user-gated, unchanged since Sep 4.
+
+## g) Questions I cannot answer myself
+
+1. **CV fix routing:** for the `rm -rf assets` EPERM — do you want the SystemNix-side ownership-heal ExecStartPre now (my recommendation; the lock hold means an upstream fix can't reach us), or would you rather hold SystemNix hands-off and fix it in the CV repo first even though the input can't move?
+2. **browser-history stance:** the server is degraded (503) but up, the agent pages every 5 min, and the fix is upstream Go-reflection work. Accept the paging until upstream lands, or do you want a temporary mitigation (e.g. leave the server running but disable the agent unit until the upstream fix) — and if upstream: file in go-cqrs-lite, browser-history, or both?
+3. **Deploy serialization:** today had THREE concurrent deploy attempts (mine ×3 lock-blocked, plus a parallel deploy.sh pair and your raw `nh os switch`). Should agent sessions treat ANY existing deploy.sh/nh process as a hard wait-forever (not retry-after), or do you want a small queue-helper (`nix run .#deploy` already locks — is the gap just that raw `nh` bypasses the lock, and should raw nh use be discontinued)? Related: were the 11:25/11:29 deploys yours, and is the 12:15 unanchored-state doc owner coordinating their next activation with this session's pending fixes?

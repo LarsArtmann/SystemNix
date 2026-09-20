@@ -400,6 +400,13 @@
                 "+${lib.getExe waitDnsReady}"
               ];
               TimeoutStartSec = "6min";
+              # Stop drains (event loop + SQLite flush) exceed the 90s
+              # default under IO pressure — 4 stop-timeout SIGKILLs on
+              # 2026-09-20 alone (02:24, 03:34, 03:51, 11:31); the SIGKILL
+              # marks the unit failed and exit-4s any activation that
+              # restarts it. 5min absorbs the drain without wedging
+              # activation.
+              TimeoutStopSec = "5min";
             }
             (harden {
               # Backfill bursts + turso-sync need more than upstream's 512M.

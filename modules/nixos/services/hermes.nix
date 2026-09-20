@@ -654,6 +654,17 @@
               ];
               EnvironmentFile = [ sopsEnvPath ];
               RestartForceExitStatus = 75;
+              # Upstream 0.21.x gateway exits 1 on a SIGTERM-initiated
+              # shutdown ("so the service manager can revive the gateway"),
+              # which marks every clean stop failed and exit-4s any
+              # activation restarting the unit (2026-09-20: stc
+              # test-activation aborted on hermes, profile bump skipped,
+              # gateway left down). Revival paths are unaffected: exit 75
+              # stays the explicit restart request (RestartForceExitStatus)
+              # and serviceDefaults' Restart=always covers every other
+              # exit; exit-1 crash visibility moves to the restart-churn
+              # metric + journal.
+              SuccessExitStatus = 1;
               KillMode = "mixed";
               KillSignal = "SIGTERM";
               TimeoutStopSec = cfg.timeoutStopSec;
