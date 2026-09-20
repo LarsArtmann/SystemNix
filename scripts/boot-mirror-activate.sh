@@ -58,7 +58,7 @@ if [ -n "$ENTRY_LINE" ]; then
   echo "EFI entry exists: $ENTRY_LINE"
 else
   DISK="/dev/$(lsblk -no PKNAME "$SRC")"
-  PART="$(lsblk -no PARTNUM "$SRC")"
+  PART="$(lsblk -no PARTN "$SRC")"
   echo "creating EFI entry on $DISK part $PART: $ENTRY_LABEL $LOADER_EFI"
   efibootmgr --create --disk "$DISK" --part "$PART" --label "$ENTRY_LABEL" --loader "$LOADER_EFI" >/dev/null
   ENTRY_LINE="$(find_mirror_entry || true)"

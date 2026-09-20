@@ -31,10 +31,10 @@ The only QLC dependency left in the boot chain is the root `@` subvolume (out of
 3. [x] configuration.nix import, deploy.sh restart list, flake app
 4. [x] `scripts/boot-mirror-activate.sh` + `pre-reboot-check.sh` §11
 5. [x] `nix flake check --no-build` + evo-x2 eval (both green)
-6. [ ] Deploy → verify mirror (journal, `bootctl is-installed`, `diff`, df)
-7. [ ] Activate (Samsung first in BootOrder) → `nix run .#pre-reboot-check` green
+6. [x] Deploy → verify mirror (journal, `bootctl is-installed`, `diff`, df) — 2026-09-20: system-787 anchored, sync green "OK — 8 entries, 312M mirrored", diff gate PASS, pre-reboot-check §11 confirms install+identity
+7. [x] Activate (Samsung first in BootOrder) → `nix run .#pre-reboot-check` green — 2026-09-20 15:2x: `Boot000C*` first / QLC `0001` second; re-check 23-pass/0-fail at the strict §11 grade
 8. [ ] Reboot → verify `BootCurrent` = Samsung entry, chain green
-9. [ ] Docs + AGENTS.md
+9. [x] Docs + AGENTS.md — CHANGELOG (Added boot-mirror-armed + Fixed activation-batch), AGENTS.md doctrines harvested 2026-09-20 (anchor-check-first, FOWNER-chmod, DefaultDependencies-vs-automount, symlink-canonicalized mounts), session reports 13-58/15-02/15-30
 
 ## Design decisions
 
