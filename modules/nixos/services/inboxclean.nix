@@ -397,16 +397,18 @@
             # account stays quiet while a total die-off pages. Gatus
             # JSON-path conditions AND together: every listed account must
             # be NOT connected for the alert.
-            {
-              name = "InboxClean All Gmail Dead";
-              group = "Productivity";
-              url = "http://localhost:${toString ports.inboxclean}/health";
-              interval = "5m";
-              conditions = map (
-                slug: "[BODY].services.gmail.${slug} != \"connected\""
-              ) ([ "main" ] ++ map (account: account.name) cfg.extraAccounts);
-              alert = "ALL InboxClean Gmail accounts are dead (none connected) — mailbox is silently uncleaned. Check: journalctl -u inboxclean-web, re-run inboxclean auth, inspect /health services.gmail.";
-            }
+            ++ [
+              {
+                name = "InboxClean All Gmail Dead";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.inboxclean}/health";
+                interval = "5m";
+                conditions = map (
+                  slug: "[BODY].services.gmail.${slug} != \"connected\""
+                ) ([ "main" ] ++ map (account: account.name) cfg.extraAccounts);
+                alert = "ALL InboxClean Gmail accounts are dead (none connected) — mailbox is silently uncleaned. Check: journalctl -u inboxclean-web, re-run inboxclean auth, inspect /health services.gmail.";
+              }
+            ]
             # Authenticated probe of the Paperless REST API with the SAME
             # token inboxclean-sync uploads attachments with — the
             # unauthenticated Paperless login-page check cannot see token
