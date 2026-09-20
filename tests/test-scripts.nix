@@ -339,4 +339,35 @@
         print("PASS: guard-scripts artifacts (12 scenarios)")
       '';
     };
+
+  # 2026-09-20 first-run flake-app bug class: scripts/boot-mirror-activate.sh
+  # called `lsblk -no PARTNUM` — a column that does not exist (the correct
+  # name is PARTN). No static check catches a runtime column name; the first
+  # activation aborted before any firmware mutation only by ordering luck.
+  # Pins BOTH the correct column (behavior) and the broken one (negative
+  # control — if util-linux ever renames columns again, this catches it
+  # before an activation does) plus a repo-wide tripwire.
+  lsblk-column-names = pkgs.testers.runNixOSTest {
+    name = "lsblk-column-names";
+
+    nodes.machine = { pkgs, ... }: {
+      environment.systemPackages = [ pkgs.util-linux ];
+    };
+
+    testScript = ''
+      machine.start()
+      machine.wait_for_unit("multi-user.target")
+
+      # 1. PARTN is a valid column (exit 0 even on an unpartitioned disk)
+      machine.succeed("lsblk -no PARTN >/dev/null")
+
+      # 2. PARTNUM does NOT exist — lsblk exits non-zero
+      machine.fail("lsblk -no PARTNUM >/dev/null 2>&1")
+
+      # 3. Repo tripwire: no script may reference the broken column
+      machine.succeed("! grep -rn -- '-no PARTNUM' ${../scripts}/")
+
+      print("PASS: lsblk PARTN column contract held")
+    '';
+  };
 }
