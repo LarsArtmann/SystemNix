@@ -63,6 +63,19 @@
 
       .wrap { max-width: 1240px; margin: 0 auto; padding: 0 28px 80px; }
 
+      /* ---- toc nav -------------------------------------------------------- */
+      nav.toc {
+        position: sticky; top: 0; z-index: 40;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border-strong);
+        margin: 0 -28px 40px; padding: 10px 28px;
+        display: flex; flex-wrap: wrap; gap: 6px 18px;
+        font-family: var(--font-mono); font-size: 12px;
+      }
+      nav.toc a { color: var(--text-muted); text-decoration: none; letter-spacing: 0.04em; }
+      nav.toc a:hover { color: var(--accent); }
+      nav.toc .n { color: var(--accent); font-weight: 700; margin-right: 4px; }
+
       /* ---- hero ---------------------------------------------------------- */
       .hero {
         border-bottom: 3px solid var(--color-ink);
@@ -341,12 +354,26 @@
         </div>
       </header>
 
+      <nav class="toc">
+        <a href="#capacity"><span class="n">01</span>Capacity</a>
+        <a href="#inventory"><span class="n">02</span>Drives &amp; partitions</a>
+        <a href="#physical"><span class="n">03</span>Physical topology</a>
+        <a href="#subvols"><span class="n">04</span>Subvolume trees</a>
+        <a href="#placement"><span class="n">05</span>Service placement</a>
+        <a href="#mounts"><span class="n">06</span>Mount table</a>
+        <a href="#backups"><span class="n">07</span>Backup flows</a>
+        <a href="#target"><span class="n">08</span>Target layout</a>
+        <a href="#bootchain"><span class="n">09</span>Boot chain</a>
+        <a href="#roadmap"><span class="n">10</span>Roadmap</a>
+        <a href="#gotchas"><span class="n">11</span>Gotchas</a>
+      </nav>
+
       <!-- ================= STATS ================= -->
       <div class="stat-grid">
-        <div class="stat"><div class="n">≈ 35.6 TB</div><div class="l">raw capacity (6 disks + zram)</div></div>
-        <div class="stat"><div class="n">5</div><div class="l">live BTRFS filesystems</div></div>
-        <div class="stat"><div class="n">20+</div><div class="l">BTRFS subvolumes</div></div>
-        <div class="stat good"><div class="n">3-2-½</div><div class="l">backup copies (offsite pending)</div></div>
+        <div class="stat"><div class="n">35.5 TB</div><div class="l">raw · 6 attached disks (32.4 TiB)</div></div>
+        <div class="stat"><div class="n">5</div><div class="l">BTRFS filesystems + 1 XFS + 1 ext4</div></div>
+        <div class="stat"><div class="n">19</div><div class="l">BTRFS subvols · 17 steady-state + 2 rescue</div></div>
+        <div class="stat good"><div class="n">2 / 3</div><div class="l">backup copies on-site · offsite pending</div></div>
         <div class="stat alert"><div class="n">1</div><div class="l">P0: /data EIO — no pool backup leg</div></div>
       </div>
 
@@ -369,9 +396,50 @@
         </div>
       </section>
 
-      <!-- ================= 2. PHYSICAL ================= -->
+      <!-- ================= 2. INVENTORY ================= -->
+      <section id="inventory">
+        <div class="sec-head"><span class="idx">02</span><h2>Drive &amp; partition inventory</h2></div>
+        <p class="sec-lede">
+          The by-id serials below are not decoration — they ARE the configuration:
+          every mount, smartd probe and udev rule pins devices by these identifiers,
+          because kernel enumeration (<code>nvme0</code>/<code>nvme1</code>,
+          <code>sda…sdd</code>) reshuffles on every boot and replug.
+        </p>
+        <table>
+          <thead><tr><th>Drive</th><th>by-id serial</th><th>Tech · link</th><th>Size</th><th>Role</th><th>Watch</th></tr></thead>
+          <tbody>
+            <tr><td>Lexar NQ790 2TB</td><td class="mono">QBC838R010854P220C</td><td>QLC NVMe · PCIe 4.0 x4</td><td class="mono">1.82 TiB</td><td>system + streaming disk (root @, /data, ESP, XFS)</td><td>SLC-cliff history · 15% used · smartd by-id</td></tr>
+            <tr><td>Samsung 970 EVO Plus 1TB</td><td class="mono">S4EWNX0RA01856V</td><td>TLC NVMe · PCIe 3.0 x4</td><td class="mono">931.5 GiB</td><td>synchronous disk (/nix, hot tier, 2nd ESP)</td><td>600 TBW · ~6–16 y projected · smartd by-id</td></tr>
+            <tr><td>Toshiba MG08ACA16TE</td><td class="mono">72U0A005FWTG (sda)</td><td>CMR HDD · USB</td><td class="mono">14.6 TiB</td><td>pool RAID1 member 1</td><td>~912 PoH · G-Sense 2 lifetime · smartd -d sat</td></tr>
+            <tr><td>Toshiba MG08ACA16TE</td><td class="mono">72U0A0ZUFWTG (sdd)</td><td>CMR HDD · USB</td><td class="mono">14.6 TiB</td><td>pool RAID1 member 2</td><td>~1319 PoH · G-Sense 4 lifetime · smartd -d sat</td></tr>
+            <tr><td>SanDisk SDSSDA240G</td><td class="mono">174444471311 (sdb)</td><td>DRAM-less SSD · USB 3.0</td><td class="mono">223.6 GiB</td><td>buildcache (ext4, writeback, corruption-tolerant)</td><td>no TRIM through bridge · reformat on degrade</td></tr>
+            <tr><td>SanDisk SDSSDA240G</td><td class="mono">174244451713 (sdc)</td><td>DRAM-less SSD · USB</td><td class="mono">223.6 GiB</td><td>spare · ssd-btrfs, unmounted · tenant decision open</td><td>frozen-adjacent: no consumer</td></tr>
+            <tr><td>WOOACME W3A894</td><td class="mono">— (sdf when attached)</td><td>low-endurance SSD · own ctrl c7:00.3</td><td class="mono">512 GB</td><td>DETACHED · frozen by owner decision</td><td>offsite-rotation use evaluated &amp; REJECTED</td></tr>
+            <tr><td>zram0</td><td class="mono">—</td><td>RAM (zstd, ~3.2x live)</td><td class="mono">62.2 GiB</td><td>sole swap (50% of 124.3 GiB visible RAM)</td><td>fill ≥90% alerts; sized generously by doctrine</td></tr>
+          </tbody>
+        </table>
+
+        <table>
+          <thead><tr><th colspan="4">Lexar NQ790 — partition map (numbering keeps historical gaps: p1–p5 were deleted; p6–p9 fill the disk, no unallocated space)</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">p6 · 722.5G</td><td>btrfs (uuid 0b629b65…)</td><td>root pool: @ · @cache-home · @home-hermes · @nix (dead) · @home (legacy)</td><td class="mono">604G used · 85%</td></tr>
+            <tr><td class="mono">p7 · 4G</td><td>vfat (80A3-73A9)</td><td>NixOS-managed ESP — systemd-boot writes here</td><td class="mono">312M used</td></tr>
+            <tr><td class="mono">p8 · 1T</td><td>btrfs label data</td><td>toplevel: ai · models · llamacpp-models · SteamLibrary · docker</td><td class="mono">772G used · 76%</td></tr>
+            <tr><td class="mono">p9 · 100G</td><td>xfs label clickhouse</td><td>dedicated telemetry store (merge-heavy, no CoW)</td><td class="mono">33G used · 33%</td></tr>
+          </tbody>
+        </table>
+        <table>
+          <thead><tr><th colspan="4">Samsung 970 EVO Plus — partition map (carved 2026-09-05 per the ratified Rev-2 geometry: partition starts never move)</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">p1 · 4G</td><td>vfat label SAMSUNG-EFI (4F53-C156)</td><td>2nd boot disk ESP — verified byte-mirror of /boot</td><td class="mono">312M mirrored</td></tr>
+            <tr><td class="mono">p2 · 927.5G</td><td>btrfs label tlc</td><td>nix · users/lars/cache/* · crush/ · planned hot/* (single pool; any future XFS is carved fresh from the tail)</td><td class="mono">115G used · 13%</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ================= 3. PHYSICAL ================= -->
       <section id="physical">
-        <div class="sec-head"><span class="idx">02</span><h2>Physical topology — CURRENT (live)</h2></div>
+        <div class="sec-head"><span class="idx">03</span><h2>Physical topology — CURRENT (live)</h2></div>
         <p class="sec-lede">
           Block devices → partitions → filesystems → mountpoints, exactly as
           <code>lsblk</code> / <code>findmnt</code> report them today. All four USB disks
@@ -463,7 +531,7 @@ flowchart LR
 
       <!-- ================= 3. SUBVOL TREES ================= -->
       <section id="subvols">
-        <div class="sec-head"><span class="idx">03</span><h2>BTRFS subvolume trees — CURRENT</h2></div>
+        <div class="sec-head"><span class="idx">04</span><h2>BTRFS subvolume trees — CURRENT</h2></div>
         <p class="sec-lede">
           Nested subvolumes are excluded from parent snapshots — the mechanism is dual-use:
           deliberate exclusion (<code>@cache-home</code>) or silent coverage loss
@@ -565,7 +633,7 @@ flowchart TB
 
       <!-- ================= 4. MOUNT TABLE ================= -->
       <section id="mounts">
-        <div class="sec-head"><span class="idx">04</span><h2>Mount table (fstab truth)</h2></div>
+        <div class="sec-head"><span class="idx">06</span><h2>Mount table (fstab truth)</h2></div>
         <p class="sec-lede">Every entry as declared in <code>hardware-configuration.nix</code> + module-generated mounts. <code>commit=300</code> + <code>nodiscard</code> are QLC doctrine; the Samsung keeps the default 30 s commit (TLC has no SLC-cliff problem).</p>
         <table>
           <thead><tr><th>Mount</th><th>Source</th><th>Type</th><th>Key options</th><th>Notes</th></tr></thead>
@@ -589,7 +657,7 @@ flowchart TB
 
       <!-- ================= 5. BACKUP FLOWS ================= -->
       <section id="backups">
-        <div class="sec-head"><span class="idx">05</span><h2>Snapshot &amp; backup dataflow — CURRENT</h2></div>
+        <div class="sec-head"><span class="idx">07</span><h2>Snapshot &amp; backup dataflow — CURRENT</h2></div>
         <p class="sec-lede">
           btrbk owns the snapshot → incremental-send pipeline; dump-style backups
           (<code>sqlite3 .backup</code>, <code>pg_dump</code>, <code>forgejo dump</code>)
@@ -669,7 +737,7 @@ flowchart LR
 
       <!-- ================= 6. TARGET ================= -->
       <section id="target">
-        <div class="sec-head"><span class="idx">06</span><h2>TARGET layout — ratified end-state</h2></div>
+        <div class="sec-head"><span class="idx">08</span><h2>TARGET layout — ratified end-state</h2></div>
         <p class="sec-lede">
           The destination per <code>2026-08-31_samsung-role-assignment</code> (Rev 2, review-ratified),
           the Phase-2 hot-DB Pareto plan, the per-service subvolume analysis (Set A/B/C),
@@ -750,7 +818,7 @@ flowchart TB
 
       <!-- ================= 7. ROADMAP ================= -->
       <section id="roadmap">
-        <div class="sec-head"><span class="idx">07</span><h2>Phase roadmap — where each piece stands</h2></div>
+        <div class="sec-head"><span class="idx">10</span><h2>Phase roadmap — where each piece stands</h2></div>
         <table>
           <thead><tr><th>Phase</th><th>Scope</th><th>Status</th><th>Detail</th></tr></thead>
           <tbody>
@@ -772,7 +840,7 @@ flowchart TB
 
       <!-- ================= 8. GOTCHAS ================= -->
       <section id="gotchas">
-        <div class="sec-head"><span class="idx">08</span><h2>Enduring gotchas encoded in this layout</h2></div>
+        <div class="sec-head"><span class="idx">11</span><h2>Enduring gotchas encoded in this layout</h2></div>
         <div class="callout"><b class="t">enumeration flip</b>nvme0n1/nvme1n1 swap across boots (and nvme0n1p9 ↔ nvme1n1p9 confusion is real: ClickHouse was once briefly nvme1n1p9 by kernel enumeration). Everything pins by-label / by-uuid / by-id — never kernel names. Same doctrine killed the sd-letter udev rule class.</div>
         <div class="callout"><b class="t">nodatacow landmine</b><code>+C</code> only sticks in never-snapshotted subvols — one scheduled snapshot silently reverts touched extents to CoW. Hence: hot tier never in btrbk, enforced by an eval-time assertion keyed on the <code>hot/</code> prefix.</div>
         <div class="callout"><b class="t">forever retention is deliberate</b><code>target_preserve_min = "all"</code> on the root leg: CoW extent sharing makes snapshot count ~free, and every deleted NVMe byte stays pinned pool-side. Revisit only above ~50% pool usage.</div>
