@@ -60,6 +60,11 @@ in
         cvNixosModule
         # co-import: the module declares a services.integration entry (mkIf-wrapped options?-guard caveat, 2026-09-15)
         (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration
+        # co-import: cv.nix exempts cv-state-perms via
+        # services.deploy-restart-audit.allowUnits — the same options?-guard
+        # caveat (an mkIf def at an undeclared path errors the merge before
+        # its guard runs; flake-check-proven 2026-09-20).
+        (import ../modules/nixos/services/deploy-restart-audit.nix).flake.nixosModules.deploy-restart-audit
         ./mock-sops.nix
         ./test-helpers.nix
       ];
