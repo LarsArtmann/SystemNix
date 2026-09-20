@@ -70,7 +70,9 @@ in
     # boot; never pin kernel names). The exec-path disk: every store cache-miss
     # refills at 2.4GB/s / 27us instead of queueing on the QLC. Synced by
     # scripts/samsung-nix-sync.sh (delta re-runnable; --final verifies the boot
-    # closure). The old @nix subvol on the QLC stays until the 3-day soak passes.
+    # closure). The old @nix subvol on the QLC was DELETED 2026-09-20 (~129G freed;
+    # pre-flight: all boot entries' init paths on the live Samsung store, ESP initrds
+    # present, rollback ladder closure-verified).
     # commit stays DEFAULT (30s): commit=300 is a QLC/SLC-preservation measure,
     # not needed on TLC (docs/planning/2026-08-31_samsung-role-assignment-*.md).
     "/nix" = mkFilesystem {
