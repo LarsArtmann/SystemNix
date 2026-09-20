@@ -118,3 +118,30 @@
 **Bottom line:** deliverable shipped and re-verified end-to-end (twice upgraded after a fair challenge); `@nix` safely deleted with ~60G freed and every dependent doc updated; five real mistakes made and fixed, all five with lessons recorded; one unexplained environmental incident (formatter) diagnosed-and-contained but not attributed.
 
 **Waiting for instructions.**
+
+---
+
+## h) FOLLOW-UP SESSION 2026-09-21 ~00:30-01:30 — questions answered, follow-ups executed
+
+### §g answers (researched, not guessed)
+
+1. **Formatter ATTRIBUTED (high confidence): prettier-family tooling from a PARALLEL AGENT SESSION.** Git forensics: the inflated 7.9 MB blob first landed in `514dba99` (16:04:48) riding EIGHT files — seven of them the parallel session's own edits (`modules/nixos/services/system-health.nix`, `storage-collector.nix`, `inboxclean.nix`, `rofi.nix`, `AGENTS.md`, `docs/todo/desktop.md`, `CHANGELOG.md`) — and again in `44128cf0` (16:08:29; the 16:15 timestamp in §e.2 was wrong). Diff style is prettier's (member-chain breaking, trailing commas, ~80-col). Ruled out: user shell (zero `disk-layout`/prettier invocations in fish_history), PATH formatters (none installed), nvim auto-format (no prettier in its config). The first pass predates the 16:07 detection (parent blob already ≥49k lines). Residual uncertainty: WHICH command the parallel session ran — unknowable without its session logs. Prevention shipped: `scripts/verify-html-diagrams.sh` + the AGENTS.md never-format-these-files policy.
+2. **House pattern DECIDED: self-contained, inline the JS.** The html-report-kit skill's own doctrine is "single file, zero dependencies, no CDN"; mermaid-class artifacts extend it by inlining (~3.6 MB). Codified in AGENTS.md → "Big self-contained HTML reports" (inline-never-CDN, one-per-topic supersede-don't-accumulate, never-format + always verify via the new script). Canonical bundle preserved OUT of /tmp at `~/.local/state/systemnix/mermaid-v11.17.2.min.js` (the /tmp copy was already eaten by the tmp cleaner).
+3. **Old visualization marked SUPERSEDED** — in-file banner added (`2026-08-31_samsung-disk-layout-visualization.html`, links the successor); verify script PASSes on both files (6/6 and 0-declared).
+
+### §f follow-ups executed this round
+
+- **#45 formatter** — answered above.
+- **#46 `scripts/verify-html-diagrams.sh`** — WRITTEN + tested: PASS on both artifacts (new 6/6 SVGs/0 bombs/anchors OK), negative-probe FAILs correctly (unrendered diagram + broken anchor), and it self-caught the zero-match-grep-under-pipefail silent-death class in its own first draft (fixed with `|| true` guards).
+- **#47 big-HTML policy** — codified in AGENTS.md (see answer 2).
+- **#48 df re-check** — `/` = 570G (81%) at 2026-09-21 00:35, NOT 545G: +25G churn in ~32h (storm-era parallel-session builds/VM tests; still net -35G vs the 605G pre-deletion). No snapshot pin suspected — @nix extents are gone; treat as normal churn and re-check after the storm.
+- **#49 superseded banner** — done (answer 3).
+
+### Live-state corrections (docs updated)
+
+- **crush-hot-db FIRST MIGRATION HAS RUN** (2026-09-18 15:41, freeze-#6 recovery window; converged across reboots): 279 symlinks, `/mnt/hot/crush` = 45 GiB, `PRAGMA integrity_check` OK. The "not run yet" claims in AGENTS.md/storage.md were stale (the session's own §Files-changes disk-truth listing contradicted them).
+- **btrfs-emergency-reserve IS PRESENT** (re-provisioned 2026-09-13 15:37; metric `present 1`) — §c.1/§f.1 above were stale-check artifacts.
+- **NEW FINDING — btrbk-root pool gap**: newest pool receive `@.20260918T2300`; Sep 19 AND Sep 20 sends churn-stopped by guard Zone 6 (Sep 20: SIGTERM 35s in; 102 trips since Sep 19 22:00; io PSI some avg60 ~77% during the active 2026-09-20/21 IO storm). Verify-runway: fails at the 2026-09-22 00:28 run unless a send lands in a storm lull. Tracked in docs/todo/storage.md.
+- **crush-hot-db module upgraded** (deploy deliberately NOT run during the storm): per-project live-writer guard (fixes the `legal-cases/.crush` 13-day starvation the blanket pgrep skip caused), exit-non-zero on per-dir failures + OnFailure + system-health monitoring, depth-4 WARN tripwire, `CRUSH_HOT_DB_DRY_RUN=1`. Verified: user-space functional harness (fake prctl-named crush process holding an fd), `nix eval` evo-x2 toplevel + `nix flake check --no-build` ALL GREEN; VM test rewritten with both controls (run deferred — qemu under an IO storm is storm-amplification).
+
+**Not done (owner-gated or storm-gated):** the deploy that activates the crush-hot-db upgrades (next quiet window; expect one green render + the new journal lines per docs/services/crush.md), boot-mirror activation, /data EIO repair, PSI 24h-vs-baseline (meaningless mid-storm).

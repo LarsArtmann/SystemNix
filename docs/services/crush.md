@@ -98,7 +98,7 @@ makes old plaintext residue in session DBs inert.
 - `crush_key` skips absent secrets AND `PLACEHOLDER*` values — a provider
   with a placeholder ships inert, not broken
 
-## Session DBs live on the Samsung hot disk (2026-09-15)
+## Session DBs live on the Samsung hot disk (2026-09-15; first migration ran 2026-09-18)
 
 `services.crush-hot-db` relocates each `~/projects/**/.crush/` dir to `/mnt/hot/crush/<relative path>`
 (Samsung TLC) and leaves a symlink. NESTED checkouts are covered too (`archived/<repo>`,
@@ -106,10 +106,40 @@ makes old plaintext residue in session DBs inert.
 the 2026-09-16 review fix for the 35 nested dirs the original top-level-only glob missed).
 The `crush-hot-db-migrate` unit is enabled via
 `multi-user.target` — a static unit would silently skip deploy.sh's is-enabled-gated provisioner
-loop — and runs at boot + daily 04:10 + every deploy. It
-skips live crush sessions and DBs written in the last 10 minutes — a fresh project's `.crush`
-recreated on the QLC root is converged by the next run. Verify after deploy:
-`find ~/projects -mindepth 1 -maxdepth 3 -type d -name .crush | wc -l` (expect 0 real dirs; symlinks
-are `-type l` and don't match) and io PSI avg60 vs the pre-move baseline.
+loop — and runs at boot + daily 04:10 + every deploy.
+
+**First migration: RAN 2026-09-18** (started 15:41 inside the freeze-#6 recovery window,
+interrupted ~2/3 by the crash, converged across reboots — `~/projects/.crush →
+/mnt/hot/crush/projects-root` exists since 16:09 that day). Live state 2026-09-21:
+279 symlinks, `/mnt/hot/crush` = 45 GiB, `PRAGMA integrity_check` OK on a migrated DB.
+One straggler (`legal-cases/.crush`, untouched since Sep 8) sat unmigrated for 13 days —
+root cause: the old blanket `pgrep -x crush` skip made EVERY run self-skip while any session
+was live (16-21 always are on this box). Fixed by the per-project guard below.
+
+**Guard semantics (module ≥ 2026-09-21, deploy-pending until the next `nix run .#deploy`):**
+a project is skipped iff a `comm=crush` process holds an fd or its cwd under THAT project's
+`.crush` (post-migration sessions hold fds on `/mnt/hot` targets and never match — their dirs
+are already symlinks); DBs written <10 min are left one more cycle; per-dir `mv` failures
+exit non-zero → OnFailure (Discord) + system-health `extraMonitoredServices` paging; a
+depth-4 `.crush` (below the discovery cap) logs a WARN; `CRUSH_HOT_DB_DRY_RUN=1` rehearses
+a run without moving anything (e.g. `systemctl set-environment CRUSH_HOT_DB_DRY_RUN=1`).
+
+**Expected journal lines while sessions are live (all benign — the run still converges
+everything not held open):**
+
+```text
+skip <project>: live crush session holds it open
+skip <project>: crush.db written in the last 10 minutes
+crush-hot-db: N project(s) relocated
+WARN: .crush deeper than discovery depth 3 (stays on the QLC root): <path>
+```
+
+The legacy whole-run line `skip: crush session(s) active (N) — next run converges` belongs
+to the pre-2026-09-21 blanket guard and should no longer appear after the next deploy.
+
+Verify after deploy:
+`find ~/projects -mindepth 1 -maxdepth 3 -type d -name .crush | wc -l` (expect 0 real dirs;
+a fresh project's QLC-root `.crush` is converged by the next run) and io PSI avg60 vs the
+pre-move baseline.
 Runbook/source: `modules/nixos/services/crush-hot-db.nix`; see the `services.hot-db` Phase-2 plan
 (`docs/planning/2026-09-14_13-27_SAMSUNG-PHASE2-HOT-DB-NATIVE-PARETO-PLAN.md`) for the long-term home.
