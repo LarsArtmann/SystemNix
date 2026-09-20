@@ -191,7 +191,7 @@ in
       }
     '';
 
-    extraConfig = {
+    settings = {
       modi = "drun,run,window";
       show-icons = true;
       icon-theme = "Papirus";

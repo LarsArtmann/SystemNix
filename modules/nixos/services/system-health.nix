@@ -335,6 +335,7 @@ _: {
             local nrestarts
             nrestarts=$(grep "^$svc " "$RESTART_STATE" 2>/dev/null | awk '{print $2}') || nrestarts=0
             nrestarts="''${nrestarts:-0}"
+            case "$nrestarts" in *[!0-9]*) nrestarts=0 ;; esac
 
             echo "system_service_active{service=\"''${svc}\"} ''${active_val}"
             echo "system_service_state_failed{service=\"''${svc}\"} ''${failed_val}"
@@ -369,9 +370,15 @@ _: {
               read -r cpu_nsec
               read -r cur_r
             } < <(systemctl show "$svc" -p CPUUsageNSec -p NRestarts --value 2>/dev/null)
+            # systemctl --value returns literal "[not set]" for stopped units. An
+            # unguarded write poisons the state file and node_exporter then rejects
+            # the whole system_health.prom (2026-09-20 nrestarts="[not" incident)
             cpu_nsec="''${cpu_nsec:-0}"
+            cur_r="''${cur_r:-0}"
+            case "$cpu_nsec" in *[!0-9]*) cpu_nsec=0 ;; esac
+            case "$cur_r" in *[!0-9]*) cur_r=0 ;; esac
             echo "$svc $cpu_nsec $NOW_EPOCH" >> "''${CPU_STATE}.tmp"
-            echo "$svc ''${cur_r:-0}" >> "''${RESTART_STATE}.tmp"
+            echo "$svc $cur_r" >> "''${RESTART_STATE}.tmp"
           done
           mv "''${CPU_STATE}.tmp" "$CPU_STATE"
           mv "''${RESTART_STATE}.tmp" "$RESTART_STATE"

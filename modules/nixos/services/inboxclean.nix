@@ -403,9 +403,9 @@
                 group = "Productivity";
                 url = "http://localhost:${toString ports.inboxclean}/health";
                 interval = "5m";
-                conditions = map (
-                  slug: "[BODY].services.gmail.${slug} != \"connected\""
-                ) ([ "main" ] ++ map (account: account.name) cfg.extraAccounts);
+                conditions = map (slug: "[BODY].services.gmail.${slug} != \"connected\"") (
+                  [ "main" ] ++ map (account: account.name) cfg.extraAccounts
+                );
                 alert = "ALL InboxClean Gmail accounts are dead (none connected) — mailbox is silently uncleaned. Check: journalctl -u inboxclean-web, re-run inboxclean auth, inspect /health services.gmail.";
               }
             ]

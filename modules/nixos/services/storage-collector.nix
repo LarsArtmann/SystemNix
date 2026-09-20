@@ -69,6 +69,12 @@
           # ProtectSystem=strict upstream: the textfile dir must be
           # writable next to the StateDirectory.
           ReadWritePaths = [ textfileDir ];
+          # Upstream pins UMask=0077 (DynamicUser), so the crate's tmp+rename
+          # lands a 0600 .prom that node_exporter cannot read
+          # (node_textfile_scrape_error=1, storage metrics absent, 2026-09-20).
+          # 0022 yields 0644 and self-heals on the next write cycle. The
+          # durable fix is upstream (chmod the .prom, keep 0077 for dataDir).
+          UMask = lib.mkForce "0022";
         };
 
         # Record integrity probe: verify parses the whole JSONL record and
