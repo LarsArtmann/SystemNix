@@ -388,6 +388,25 @@
               ];
               alert = "InboxClean ${account.name} inbox tab not rendering — check inboxclean-web logs and the account OAuth runbook";
             }) cfg.extraAccounts
+            # All-Gmail-dead paging (N4, 2026-09-20): the dashboard and
+            # per-account tabs stay 200 even when every OAuth grant is
+            # dead (auth_expired since 2026-09-12 proved silence is the
+            # failure mode). This check fires only when NO account is
+            # connected — slugs are evaluated at deploy time from
+            # extraAccounts plus the implicit main, so a single dead
+            # account stays quiet while a total die-off pages. Gatus
+            # JSON-path conditions AND together: every listed account must
+            # be NOT connected for the alert.
+            {
+              name = "InboxClean All Gmail Dead";
+              group = "Productivity";
+              url = "http://localhost:${toString ports.inboxclean}/health";
+              interval = "5m";
+              conditions = map (
+                slug: "[BODY].services.gmail.${slug} != \"connected\""
+              ) ([ "main" ] ++ map (account: account.name) cfg.extraAccounts);
+              alert = "ALL InboxClean Gmail accounts are dead (none connected) — mailbox is silently uncleaned. Check: journalctl -u inboxclean-web, re-run inboxclean auth, inspect /health services.gmail.";
+            }
             # Authenticated probe of the Paperless REST API with the SAME
             # token inboxclean-sync uploads attachments with — the
             # unauthenticated Paperless login-page check cannot see token
