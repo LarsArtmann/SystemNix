@@ -120,7 +120,7 @@ _: {
               entrypoint = [
                 "/bin/sh"
                 "-c"
-                "until pg_isready -h timescale_db -U geouser -d postgres >/dev/null 2>&1; do sleep 1; done; psql -tAc \"SELECT 1 FROM pg_database WHERE datname='geometrikks'\" | grep -q 1 || psql -c 'CREATE DATABASE geometrikks OWNER geouser'"
+                "until pg_isready -h timescale_db -U geouser -d postgres >/dev/null 2>&1; do sleep 1; done; psql -d postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='geometrikks'\" | grep -q 1 || psql -d postgres -c 'CREATE DATABASE geometrikks OWNER geouser'"
               ];
               environment = {
                 PGHOST = "timescale_db";
