@@ -78,10 +78,17 @@ _: {
                 POSTGRES_DB = "geometrikks";
               };
               volumes = [ "timescale_data:/home/postgres/pgdata/data" ];
+              # -d postgres, NOT -d geometrikks: pg_isready succeeds on a
+              # nonexistent-db FATAL (it only checks that the server accepts
+              # connections), so a -d geometrikks healthcheck reports healthy
+              # while the app's target DB is missing — the 2026-09-20 outage
+              # class (app crash-looped since bring-up; the 5s FATAL noise in
+              # the journal was this healthcheck itself). init_db below owns
+              # DB existence; this check owns server liveness only.
               healthcheck = {
                 test = [
                   "CMD-SHELL"
-                  "pg_isready -U geouser -d geometrikks"
+                  "pg_isready -U geouser -d postgres"
                 ];
                 interval = "5s";
                 timeout = "5s";
@@ -97,6 +104,29 @@ _: {
               mem_limit = "2g";
               memswap_limit = "2g";
               security_opt = [ "no-new-privileges:true" ];
+              networks = [ "internal" ];
+            };
+            # Idempotent DB bootstrap: the timescaledb-ha image does NOT
+            # honor POSTGRES_DB when its data dir is non-empty (init scripts
+            # only run on a fresh volume), so the app's database must be
+            # created explicitly. Runs once per `compose up`, exits 0 when
+            # the DB exists (created or pre-existing). The app gates on
+            # service_completed_successfully — a failed bootstrap leaves the
+            # app DOWN and the unit fails loudly (OnFailure) instead of
+            # crash-looping the app against a missing DB.
+            init_db = {
+              image = images.geometrikks-timescale.ref;
+              restart = "no";
+              entrypoint = [
+                "/bin/sh"
+                "-c"
+                "until pg_isready -h timescale_db -U geouser -d postgres >/dev/null 2>&1; do sleep 1; done; psql -tAc \"SELECT 1 FROM pg_database WHERE datname='geometrikks'\" | grep -q 1 || psql -c 'CREATE DATABASE geometrikks OWNER geouser'"
+              ];
+              environment = {
+                PGHOST = "timescale_db";
+                PGUSER = "geouser";
+                PGPASSWORD = "\${DB_PASSWORD}";
+              };
               networks = [ "internal" ];
             };
             app = {
@@ -133,7 +163,10 @@ _: {
                 # mkDockerService container on this host.
                 "/var/log/caddy:/var/log/access:ro"
               ];
-              depends_on.timescale_db.condition = "service_healthy";
+              depends_on = {
+                timescale_db.condition = "service_healthy";
+                init_db.condition = "service_completed_successfully";
+              };
               # Granian starts with --workers-kill-timeout 15; the default
               # 10s stop timeout SIGKILLs mid-teardown and drops the
               # in-flight ingestion batch (upstream compose).
