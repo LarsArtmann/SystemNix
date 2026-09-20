@@ -27,8 +27,9 @@ pre-pulled, so the switch will be short once pressure drains.
 3. **Port 8102** registered in `lib/ports.nix`; **DNS `geo`** added to
    `platforms/common/dns-local.nix`.
 4. **Sops secrets** `platforms/nixos/secrets/geometrikks.yaml` created and
-   encrypted (public-key only, no sudo): random admin password, random DB
-   password, MaxMind/CARTO keys EMPTY (geo-degraded = documented off state).
+   encrypted (public-key only, no sudo): a random admin password and a random
+   DB password were generated, while the MaxMind/CARTO API keys are empty
+   (geo-degraded = documented off state).
    Staged with `git add -f`.
 5. **Module** `modules/nixos/services/geometrikks.nix` (manifest.nix
    pattern): compose (app + timescale_db with upstream's LOAD-BEARING worker
