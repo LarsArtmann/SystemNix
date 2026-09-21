@@ -158,6 +158,7 @@ let
       # System monitoring
       btop
       bottom
+      fastfetch
 
       # Archive tools
       unzip
