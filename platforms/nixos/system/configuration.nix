@@ -1063,6 +1063,11 @@ in
         # cv, inboxclean.
       };
 
+      # Restic dedup repo on the pool for the app-dump backups (T17):
+      # mirrors the per-service dump dirs into one chunk-dedup repo with
+      # bounded retention (forgejo zips share ~0 extents across nights).
+      restic-app-dumps.enable = true;
+
       # SSH server with hardening (from nix-ssh-config)
       ssh-server = {
         enable = true;
