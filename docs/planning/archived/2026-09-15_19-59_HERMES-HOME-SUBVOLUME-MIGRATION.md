@@ -1,7 +1,9 @@
 # Hermes Home Subvolume Migration (@home-hermes)
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — every T-row in both tables landed (struck with evidence); the user sudo runbook EXECUTED 2026-09-16 and the pool send/receive leg was proven 2026-09-18 (`docs/status/archived/2026-09-18_22-17_hermes-backup-leg-proven-cache-migration-assessed.md`). §8 watch items are observations, not tasks.
+
 **Date:** 2026-09-15 19:59
-**Status:** Implemented (config + script + docs); migration itself is a user-run runbook (sudo)
+~~**Status:** Implemented (config + script + docs); migration itself is a user-run runbook (sudo)~~ **Status:** FULLY EXECUTED — migration ran 2026-09-16 (mount live 15:40, 92.3 GB parity-verified, `docs/status/archived/2026-09-16_17-55_hermes-migration-execution-day-storm-deploy-unblocking.md`); pool backup leg proven 2026-09-18 (first receives + verify OK) — archived 2026-09-21 [docs-health]
 **Host:** evo-x2
 
 ---
@@ -74,37 +76,37 @@ Sorted by importance → impact → effort → customer-value.
 
 | #  | Task                                                                                            | Importance | Impact | Effort | Value                           |
 | -- | ----------------------------------------------------------------------------------------------- | ---------- | ------ | ------ | ------------------------------- |
-| T1 | `snapshots.nix`: mount entry + btrbk `@home-hermes` (bounded pool retention)                    | Critical   | High   | M      | Core feature                    |
-| T2 | `snapshots.nix`: per-prefix freshness in `btrfs-verify-pool-backups` + `btrfs-verify-snapshots` | Critical   | High   | M      | Prevents phantom-green backups  |
-| T3 | `hermes.nix`: `RequiresMountsFor = [ stateDir ]` on gateway unit                                | High       | Medium | S      | Fails loudly, never shadow-runs |
-| T4 | `scripts/migrate-hermes-subvol.sh` prepare/finalize                                             | Critical   | High   | L      | The migration itself            |
-| T5 | Docs: hermes.md + AGENTS.md + CHANGELOG.md                                                      | Medium     | Medium | M      | Future-session context          |
-| T6 | VM-test assertion (`tests/test-hermes.nix`)                                                     | Medium     | Medium | S      | Regression guard                |
-| T7 | Verification: `nix flake check --no-build`, targeted evals, `bash -n`                           | Critical   | —      | M      | Proof it works                  |
-| T8 | Per-task pathspec commits + push                                                                | High       | —      | S      | History + delivery              |
+| ~~T1~~ | ~~`snapshots.nix`: mount entry + btrbk `@home-hermes` (bounded pool retention)~~ done — landed — snapshots.nix:47-64 mount + :246 btrbk entry | ~~Critical~~ | ~~High~~ | ~~M~~ | ~~Core feature~~ |
+| ~~T2~~ | ~~`snapshots.nix`: per-prefix freshness in `btrfs-verify-pool-backups` + `btrfs-verify-snapshots`~~ done — landed — per-prefix guards at snapshots.nix:689-745 and :815-838 | ~~Critical~~ | ~~High~~ | ~~M~~ | ~~Prevents phantom-green backups~~ |
+| ~~T3~~ | ~~`hermes.nix`: `RequiresMountsFor = [ stateDir ]` on gateway unit~~ done — landed — hermes.nix:597 RequiresMountsFor | ~~High~~ | ~~Medium~~ | ~~S~~ | ~~Fails loudly, never shadow-runs~~ |
+| ~~T4~~ | ~~`scripts/migrate-hermes-subvol.sh` prepare/finalize~~ done — landed — scripts/migrate-hermes-subvol.sh (+ 09-16 storm hardening) | ~~Critical~~ | ~~High~~ | ~~L~~ | ~~The migration itself~~ |
+| ~~T5~~ | ~~Docs: hermes.md + AGENTS.md + CHANGELOG.md~~ done — landed — hermes.md + AGENTS subvolume section + CHANGELOG 09-15 entry | ~~Medium~~ | ~~Medium~~ | ~~M~~ | ~~Future-session context~~ |
+| ~~T6~~ | ~~VM-test assertion (`tests/test-hermes.nix`)~~ done — landed — tests/test-hermes.nix:148 | ~~Medium~~ | ~~Medium~~ | ~~S~~ | ~~Regression guard~~ |
+| ~~T7~~ | ~~Verification: `nix flake check --no-build`, targeted evals, `bash -n`~~ done — green at write time; re-verified across later deploys | ~~Critical~~ | ~~—~~ | ~~M~~ | ~~Proof it works~~ |
+| ~~T8~~ | ~~Per-task pathspec commits + push~~ done — pushed | ~~High~~ | ~~—~~ | ~~S~~ | ~~History + delivery~~ |
 
 ## 4. Phase-2 Plan (tasks ≤ 12 min each)
 
 | #   | Task                                                                                              | Parent |
 | --- | ------------------------------------------------------------------------------------------------- | ------ |
-| T1a | Add `fileSystems."/home/hermes"` entry (subvol, noatime, nodiscard, commit=300, compress, nofail) | T1     |
-| T1b | Add `subvolume."@home-hermes"` to btrbk root instance (target + 7d/14d-4w)                        | T1     |
-| T2a | Rewrite pool-guard freshness loop per-prefix (expect `@` always; `@home-hermes` when mounted)     | T2     |
-| T2b | Extend `btrfs-verify-snapshots` to check `@home-hermes.*` when mounted                            | T2     |
-| T3a | hermes.nix unitConfig: unconditional `RequiresMountsFor` (stateDir + projectsDir)                 | T3     |
-| T4a | Script skeleton, root check, PATH export, binary preflight                                        | T4     |
-| T4b | `prepare`: preflight + subvol create + live seed pass                                             | T4     |
-| T4c | `prepare`: quiesce + delta pass + checksum verify + swap                                          | T4     |
-| T4d | `finalize`: liveness gates (mount live, hermes active, first receive exists) + trash `.old`       | T4     |
-| T5a | hermes.md: subvolume + runbook section                                                            | T5     |
-| T5b | AGENTS.md: subvolume layout paragraph update                                                      | T5     |
-| T5c | CHANGELOG.md entry                                                                                | T5     |
-| T6a | test-hermes.nix: assert unit carries `RequiresMountsFor=/home/hermes`                             | T6     |
-| T7a | `git add` new files early (tracked-files trap), `nix flake check --no-build`                      | T7     |
-| T7b | Targeted evals: fileSystems entry, btrbk settings, hermes unitConfig, guard scripts `bash -n`     | T7     |
-| T7c | Eval-cache trap check: hand-probe new assertions once                                             | T7     |
-| T8a | Pathspec commits per task (detailed messages)                                                     | T8     |
-| T8b | `git push`                                                                                        | T8     |
+| ~~T1a~~ | ~~Add `fileSystems."/home/hermes"` entry (subvol, noatime, nodiscard, commit=300, compress, nofail)~~ done — landed | ~~T1~~ |
+| ~~T1b~~ | ~~Add `subvolume."@home-hermes"` to btrbk root instance (target + 7d/14d-4w)~~ done — landed (bounded 7d/14d-4w) | ~~T1~~ |
+| ~~T2a~~ | ~~Rewrite pool-guard freshness loop per-prefix (expect `@` always; `@home-hermes` when mounted)~~ done — landed | ~~T2~~ |
+| ~~T2b~~ | ~~Extend `btrfs-verify-snapshots` to check `@home-hermes.*` when mounted~~ done — landed | ~~T2~~ |
+| ~~T3a~~ | ~~hermes.nix unitConfig: unconditional `RequiresMountsFor` (stateDir + projectsDir)~~ done — landed | ~~T3~~ |
+| ~~T4a~~ | ~~Script skeleton, root check, PATH export, binary preflight~~ done — landed | ~~T4~~ |
+| ~~T4b~~ | ~~`prepare`: preflight + subvol create + live seed pass~~ done — landed | ~~T4~~ |
+| ~~T4c~~ | ~~`prepare`: quiesce + delta pass + checksum verify + swap~~ done — landed | ~~T4~~ |
+| ~~T4d~~ | ~~`finalize`: liveness gates (mount live, hermes active, first receive exists) + trash `.old`~~ done — landed | ~~T4~~ |
+| ~~T5a~~ | ~~hermes.md: subvolume + runbook section~~ done — landed | ~~T5~~ |
+| ~~T5b~~ | ~~AGENTS.md: subvolume layout paragraph update~~ done — landed | ~~T5~~ |
+| ~~T5c~~ | ~~CHANGELOG.md entry~~ done — landed | ~~T5~~ |
+| ~~T6a~~ | ~~test-hermes.nix: assert unit carries `RequiresMountsFor=/home/hermes`~~ done — landed | ~~T6~~ |
+| ~~T7a~~ | ~~`git add` new files early (tracked-files trap), `nix flake check --no-build`~~ done | ~~T7~~ |
+| ~~T7b~~ | ~~Targeted evals: fileSystems entry, btrbk settings, hermes unitConfig, guard scripts `bash -n`~~ done | ~~T7~~ |
+| ~~T7c~~ | ~~Eval-cache trap check: hand-probe new assertions once~~ done | ~~T7~~ |
+| ~~T8a~~ | ~~Pathspec commits per task (detailed messages)~~ done | ~~T8~~ |
+| ~~T8b~~ | ~~`git push`~~ done | ~~T8~~ |
 
 ---
 

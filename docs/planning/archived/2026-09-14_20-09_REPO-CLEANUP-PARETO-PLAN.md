@@ -1,5 +1,8 @@
 # Repo Cleanup & Tidying — Pareto Plan (EXECUTED)
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — every task in both tables is done: C1–C9/F1–F27 executed + verified same session (their own ✅ markers), C10/F28 (D1–D6) decided + executed 2026-09-15 (CHANGELOG "P3 cleanup decision items D1-D6 decided + executed"). Independent re-verification 2026-09-21: archives consolidated under `docs/status/archived/`, `flake.lock.feat`/`.orig` absent, root clean.
+
+
 **Date:** 2026-09-14 20:09
 **Status:** Tiers 1-3 executed and verified same session; Tier 4 decision items (D1-D6) DECIDED + EXECUTED 2026-09-15 — per-item evidence in `TODO_LIST.md` P3.
 **Trigger:** "If you needed to clean/tidy up this repo a bit, what would you do? Deep research!"
@@ -117,7 +120,7 @@ graph TD
 | C7  | test-mkFilesystem registration refactor                                                                 | Med    | 30m    | ✅ done  |
 | C8  | Gates: link-check + flake check --no-build                                                              | High   | 30m    | ✅ done  |
 | C9  | Plan doc + TODO_LIST decision items + CHANGELOG                                                         | Med    | 30m    | ✅ done  |
-| C10 | Owner decisions D1-D6 (minecraft, visionreviewd, hooks, history diet, DB relocation, flake-update gate) | Med    | 100m   | ⏳ owner |
+| C10 | Owner decisions D1-D6 (minecraft, visionreviewd, hooks, history diet, DB relocation, flake-update gate) | Med    | 100m   | ~~⏳ owner~~ ✅ DECIDED + EXECUTED 2026-09-15 (CHANGELOG P3 entry; evidence in TODO_LIST P3 at the time) |
 
 ## Fine Task Table (≤12 min granularity — ALL tasks)
 
@@ -150,7 +153,7 @@ graph TD
 | F25 | TODO_LIST: add decision items + link corruption scripts   | ✅     |
 | F26 | CHANGELOG entry                                           | ✅     |
 | F27 | Pathspec commits + git gc + push                          | ✅     |
-| F28 | D1-D6: owner review session                               | ⏳     |
+| F28 | D1-D6: owner review session                               | ~~⏳~~ ✅ executed 2026-09-15 |
 
 ## Numbers
 
