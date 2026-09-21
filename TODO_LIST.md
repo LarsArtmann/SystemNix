@@ -109,6 +109,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Miniflux VM test extension** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Add the mail-wiring PASS-since-2026-09-05 status to the paperless runbook monitoring map** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Paperless VM-test regression: assert the relay-gated email settings render into the unit file** → [docs/todo/services.md](docs/todo/services.md)
+- [ ] **Paperless VM-test regression: assert paperless-db-backup timer/service + the backup-coordination paperless-db entry** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **atticd-storage-dir: derive `ReadWritePaths` from `cfg.storagePath`** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **tq-serve/tq-agent-pool `startLimit*` placement bug** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **`projects-management-automation` Environment= splitting** → [docs/todo/services.md](docs/todo/services.md)
