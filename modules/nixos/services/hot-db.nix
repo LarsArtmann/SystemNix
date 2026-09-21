@@ -314,25 +314,35 @@
               '';
             };
           }
-          // lib.listToAttrs (
-            lib.flatten (
-              map (
-                e:
-                # systemd.services.<name> takes the unit name WITHOUT the
-                # .service suffix — keying by the full unit name wires a
-                # phantom unit and the real consumer never gets its
-                # anti-shadow RequiresMountsFor (VM-test caught: the
-                # consumer wrote into the unmounted dataDir).
-                map (u: {
-                  name = lib.removeSuffix ".service" u;
-                  value = {
-                    unitConfig = {
-                      RequiresMountsFor = [ e.path ];
-                      ConditionPathIsMountPoint = lib.mkAfter e.path;
-                    };
-                  };
-                }) (lib.remove null ([ e.unit ] ++ e.extraUnits))
-              ) entryList
+          # Anti-shadow wiring, grouped PER CONSUMER UNIT: two entries may
+          # share one unit (one service owning two hot dataDirs), and a
+          # name/value pair list here silently keeps only the LAST entry's
+          # paths (listToAttrs) — the shared unit would then start
+          # dependency-free against the un-wired path's shadow dir, the
+          # exact failure class this wiring exists to prevent.
+          # zipAttrsWith folds the per-entry {unit = [path];} fragments
+          # into unit → [all paths] so EVERY path of the unit is wired.
+          // (lib.mapAttrs
+            (_: paths: {
+              unitConfig = {
+                RequiresMountsFor = paths;
+                ConditionPathIsMountPoint = lib.mkAfter paths;
+              };
+            })
+            # systemd.services.<name> takes the unit name WITHOUT the
+            # .service suffix — keying by the full unit name wires a
+            # phantom unit and the real consumer never gets its
+            # anti-shadow RequiresMountsFor (VM-test caught: the
+            # consumer wrote into the unmounted dataDir).
+            (
+              lib.zipAttrsWith (_: lib.concatLists) (
+                lib.concatMap (
+                  e:
+                  map (u: { ${lib.removeSuffix ".service" u} = [ e.path ]; }) (
+                    lib.remove null ([ e.unit ] ++ e.extraUnits)
+                  )
+                ) entryList
+              )
             )
           );
         })

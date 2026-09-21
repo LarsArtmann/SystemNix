@@ -160,11 +160,36 @@ let
         in
         hotDbFailures [ ] == [ ]
         && cfg.systemd.services."mydb".unitConfig.RequiresMountsFor == [ "/var/lib/mydb" ]
-        && cfg.systemd.services."mydb".unitConfig.ConditionPathIsMountPoint == "/var/lib/mydb"
+        && cfg.systemd.services."mydb".unitConfig.ConditionPathIsMountPoint == [ "/var/lib/mydb" ]
         && cfg.fileSystems ? "/var/lib/mydb"
         && cfg.fileSystems."/var/lib/mydb".options != [ ]
         && cfg.systemd.services.hot-db-bootstrap != { }
         && !(builtins.elem "nodatacow" cfg.fileSystems."/var/lib/mydb".options);
+    }
+    {
+      name = "shared-unit-entries-wire-all-paths";
+      pass =
+        let
+          # Two entries, ONE consumer unit (one service owning two hot
+          # dataDirs): the unit must carry BOTH paths' anti-shadow wiring —
+          # a keep-last name/value merge silently wires only one and the
+          # un-wired path's shadow dir goes unprotected.
+          cfg = evalConfig [
+            {
+              services.hot-db.entries.mydb2 = {
+                path = "/var/lib/other";
+                unit = "mydb.service";
+              };
+            }
+          ];
+          wiring = cfg.systemd.services."mydb".unitConfig;
+          paths = [
+            "/var/lib/mydb"
+            "/var/lib/other"
+          ];
+        in
+        lib.sort (a: b: a < b) wiring.RequiresMountsFor == paths
+        && lib.sort (a: b: a < b) wiring.ConditionPathIsMountPoint == paths;
     }
     {
       name = "cow-false-emits-nodatacow";
