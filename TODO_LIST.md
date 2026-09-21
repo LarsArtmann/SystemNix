@@ -243,6 +243,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **docs/CONTRIBUTING.md convention: boot-scoped vs window-scoped journal assertions** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Nix `--json` deprecation sweep over scripts/ + docs call sites** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Encode the repeat-dispatch report policy for verification-only queue repeats (annotate-only vs full report) — BLOCKED: which convention should be encoded — full report per dispatch, or TODO/library annotation only with reports reserved for state changes?** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] **Formatter-exclusion regression guard (flake check asserting `docs/**/*.html` in the effective treefmt excludes)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 
 ### pixel6
 
