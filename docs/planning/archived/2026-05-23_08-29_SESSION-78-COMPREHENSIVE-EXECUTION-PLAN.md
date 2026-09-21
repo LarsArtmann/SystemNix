@@ -1,7 +1,9 @@
 # Session 78 — Comprehensive Execution Plan
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — executed then superseded: lib/ports.nix + the swap/GPU/DNS/docker dashboards exist; outstanding image-digest work was re-tracked in the 2026-08-31 PARETO plan and docs/todo/services.md — this plan no longer owns anything.
+
 **Date:** 2026-05-23 08:29 CEST
-**Status:** PLANNING — awaiting approval before execution
+~~**Status:** PLANNING — awaiting approval before execution~~ done — executed + superseded; residual image-digest work lives in docs/todo/services.md
 
 ---
 

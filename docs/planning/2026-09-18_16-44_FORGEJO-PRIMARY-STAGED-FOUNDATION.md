@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-18 16:44 CEST
 **Status:** PLAN — awaiting owner review; execution begins with Phase 0
-**Supersedes:** `docs/planning/2026-08-31_21-15_forgejo-primary-migration.md` (its "push mirrors already exist" premise was falsified by the 2026-09-18 audit — they never worked and the code was removed; all other decisions carry forward, see §2)
+**Supersedes:** `docs/planning/archived/2026-08-31_21-15_forgejo-primary-migration.md` (its "push mirrors already exist" premise was falsified by the 2026-09-18 audit — they never worked and the code was removed; all other decisions carry forward, see §2)
 **Method:** pareto-planning skill, `.md` format per explicit user instruction (skill's HTML default overridden, divergence flagged)
 
 ---
@@ -289,7 +289,7 @@ flowchart TD
 
 ## 9. Sources
 
-- `docs/planning/2026-08-31_21-15_forgejo-primary-migration.md` (decisions D1-D4, insteadOf mechanics, P1-P4)
+- `docs/planning/archived/2026-08-31_21-15_forgejo-primary-migration.md` (decisions D1-D4, insteadOf mechanics, P1-P4)
 - `docs/status/2026-09-18_16-45_forgejo-mirror-continuation-hardening-metrics-live-bugfix-deployed.md` (done-baseline, leftovers)
 - `docs/brainstorming/2026-07-22_forgejo-runners-github-sync.md` (sync layers, why issues don't sync, no-daemon verdict)
 - `docs/research/2026-09-18_forgejo-deep-research.html` + `docs/status/2026-09-18_07-47_*` (roadmap R1-R19, 50-item list)

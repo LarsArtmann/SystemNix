@@ -1,7 +1,9 @@
 # Monitor365 Integrity Hash Root Cause Fix — Comprehensive Plan
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — executed: the canonicalization fix landed upstream and the corrected root-cause rows live in AGENTS.md. Same disable-since-2026-08-12 caveat as its sibling plan.
+
 **Date:** 2026-07-18
-**Status:** Planning → Execution
+~~**Status:** Planning → Execution~~ done — root cause fixed upstream (successor-verified); AGENTS.md carries the corrected rows
 **Predecessor:** `2026-07-18_08-00_monitor365-resilience-and-self-healing.md`
 
 ---

@@ -1,5 +1,7 @@
 # Less Code, More System: Abstraction Opportunities
 
+> **[docs-health 2026-09-21]** PARTIALLY executed and triaged: `mkDockerService` landed (`lib/docker.nix`); the 4 surviving abstraction ideas are routed to `docs/todo/pipeline.md` (this is the only OPEN doc of the 2026-09-21 planning triage — kept in place deliberately).
+
 **Date:** 2026-05-16
 **Context:** Session 23 — post display-watchdog analysis
 

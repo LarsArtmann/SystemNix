@@ -1,8 +1,10 @@
 # Monitor365 Resilience & Self-Healing Plan
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — executed upstream + flake-updated at the time; now moot in this tree because monitor365 is DISABLED since 2026-08-12 (private wireguard-collector crate; re-enable tracked as an owner decision).
+
 **Date:** 2026-07-18 08:00
 **Author:** Crush (assisted)
-**Status:** EXECUTING
+~~**Status:** EXECUTING~~ done — fixes landed upstream; service disabled 2026-08-12 (owner decision pending for re-enable)
 **Question:** How can we make Monitor365 more resilient and more self-healing?
 
 ---

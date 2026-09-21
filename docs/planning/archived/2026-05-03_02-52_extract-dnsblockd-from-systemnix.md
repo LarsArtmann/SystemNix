@@ -1,5 +1,7 @@
 # Plan: Extract dnsblockd from SystemNix
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — fully executed: the dnsblockd flake input exists (`flake.nix` ~:160), no `pkgs/dnsblockd*` remains, and the consumer module is `modules/nixos/services/dns-blocker.nix` per the plan's Option A.
+
 > Date: 2026-05-03 02:52
 > Goal: Remove all embedded dnsblockd source code from SystemNix, replace with external flake input
 
@@ -7,7 +9,7 @@
 
 ### 1% → 51% result
 
-- Add dnsblockd as flake input + update overlay → external binary works
+~~- Add dnsblockd as flake input + update overlay → external binary works~~ done — extracted per Option A (upstream flake input + thin consumer module)
 
 ### 4% → 64% result
 

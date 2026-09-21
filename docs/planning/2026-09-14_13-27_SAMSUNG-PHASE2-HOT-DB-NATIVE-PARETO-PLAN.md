@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-14 13:27 · **Status:** PROPOSED — awaiting user approval; execution additionally gated (see Gates)
 **Scope:** Move latency-critical databases onto the Samsung 970 EVO Plus TLC pool as fully declared NixOS state; adopt disko the safe way; kill the IO-storm class that is cycling guard Zone 6 and force-gating deploys.
-**Sources:** `docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` (Rev 2, ratified) · TODO_LIST P1 "crush session DBs off the QLC root" (2026-09-14) · `docs/status/2026-09-14_12-06_post776-verification-loan-fix-llama-rearm-guard-churn.md` §f · live guard journal 2026-09-14 (Zone 6 trips #71–75)
+**Sources:** `docs/planning/archived/2026-08-31_samsung-role-assignment-first-principles.md` (Rev 2, ratified) · TODO_LIST P1 "crush session DBs off the QLC root" (2026-09-14) · `docs/status/2026-09-14_12-06_post776-verification-loan-fix-llama-rearm-guard-churn.md` §f · live guard journal 2026-09-14 (Zone 6 trips #71–75)
 
 ---
 

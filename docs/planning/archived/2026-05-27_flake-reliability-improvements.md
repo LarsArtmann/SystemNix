@@ -1,5 +1,7 @@
 # SystemNix Flake Reliability Improvements
 
+~~> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — P0/P1 executed: CI workflows, test-port-uniqueness.nix, no vendorHash overrides left in overlays/, pre-deploy gates. The auto-discover item was superseded by the eval-audit lints; darwin isolation P3 dropped.~~ done/superseded — module auto-discovery documented in AGENTS.md; the guard class is covered by eval-time audits
+
 **Created:** 2026-05-27 | **Context:** Session 98 — `todo-list-ai` hash mismatch cascaded into full NixOS build failure during `just switch`
 
 ---

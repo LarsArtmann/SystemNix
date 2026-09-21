@@ -1,7 +1,9 @@
 # Nix Flake Standardization Plan
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — SystemNix-side wiring fully executed: BuildFlow, branching-flow, go-structure-linter, go-auto-upgrade, art-dupl are flake inputs; `templates/go-flake-parts/` exists. Remaining phases live in the external repos, out of this tree.
+
 **Date:** 2026-05-11
-**Status:** Planning
+~~**Status:** Planning~~ done — SystemNix-side wiring landed (see flake.nix inputs); external-repo phases out of scope here
 **Scope:** Standardize Nix flakes across all 9 LarsArtmann Go tooling projects
 
 ---

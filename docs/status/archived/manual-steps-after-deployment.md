@@ -1,7 +1,9 @@
 # Manual Steps Required After Nix Deployment
 
-## Overview
+> **[docs-health 2026-09-21] OBSOLETE + ARCHIVED** — no dated steps here remain valid: the security casks it lists (blockblock/oversight/knockknock/dnd) are no longer in `platforms/darwin/default.nix`, `scripts/activitywatch-config.sh` does not exist, and the `dotfiles/nix` path is gone. Kept only as a historical checklist shape.
 
+## Overview
+~~~~ obsolete — see banner (all referenced artifacts removed).
 While Nix manages most configuration declaratively, some steps require manual user interaction for security and system integrity reasons.
 
 ## ⚠️ CRITICAL STEPS

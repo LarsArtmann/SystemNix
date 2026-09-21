@@ -61,7 +61,7 @@ The system has been hardened through multiple crash cycles. The root cause chain
 - **Darwin HM parity** (graduated from TODO P7 2026-09-19) — disk constrained (256GB SSD 90-95% full); minimal HM config by design
 
 - **Split large modules** — signoz.nix split (943→511L), forgejo.nix split (725→353L). Monitor365 restructured (716L→151L). Remaining candidates: `configuration.nix` is the largest unsplit file
-- **Extract dnsblockd** — ~930 lines of production Go embedded in the Nix config. Candidate for standalone repo (see `docs/planning/2026-05-03_02-52_extract-dnsblockd-from-systemnix.md`)
+- **Extract dnsblockd** — ~930 lines of production Go embedded in the Nix config. Candidate for standalone repo (see `docs/planning/archived/2026-05-03_02-52_extract-dnsblockd-from-systemnix.md`)
 - **Typed NixOS module options** — many modules use `mkEnableOption` only. Add typed options for ports, paths, timeouts → enables validation and testing
 - **dnsblockd category enum** — categories are stringly-typed (10 hardcoded strings). Define Go enum type
 - **Deploy pipeline reliability** — PMA auto-commit daemon runs unscoped `nix flake update` which triggers the recurring nixpkgs tarball regression. 4-layer defense deployed. Registry override needs reboot to activate

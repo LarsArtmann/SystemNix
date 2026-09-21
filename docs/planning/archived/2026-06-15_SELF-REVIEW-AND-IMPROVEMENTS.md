@@ -1,12 +1,14 @@
 # Self-Review & Improvement Plan — 2026-06-15
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — same-day micro-fix list whose targets moved on (gitea→forgejo, hermes reworked); one residual template anti-pattern is mitigated by scripts/fix-versions.py.
+
 ## Brutal Self-Review
 
 ### What I Forgot / Did Wrong
 
 1. **Left an empty `programs = {};` block** — After extracting Zed config from nixos home.nix, the remaining programs block (ghostty, tmux, kitty, etc.) is fine, but I should have verified this didn't break the structure.
 
-2. **P3-18 was incomplete** — I hardened `signoz-provision` but **completely forgot to harden `gitea-runner`** which was explicitly in the plan.
+~~2. **P3-18 was incomplete** — I hardened `signoz-provision` but **completely forgot to harden `gitea-runner`** which was explicitly in the plan.~~ done — superseded by the forgejo migration + hermes rework
 
 3. **Introduced a potential split brain** — The `dns-failover.yaml` sops file is encrypted only with evo-x2's age key. rpi3 can't decrypt it. I mentioned this as a "note" but didn't add rpi3 to `.sops.yaml`.
 

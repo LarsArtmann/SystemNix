@@ -1,5 +1,7 @@
 # DMS Migration + SystemNix Backlog — Comprehensive Execution Plan
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — executed + absorbed: the DMS migration long landed; the plugin template exists (`pkgs/dms-plugins/_template/`); the archiving rows are done; residual nice-to-haves live in docs/todo/desktop.md.
+
 **Generated:** 2026-06-25
 **Scope:** ALL open TODOs across DMS migration status, TODO_LIST.md, ROADMAP.md, FEATURES.md gaps
 **Constraint:** Every task ≤ 12 min. Sorted by impact / effort / customer-value.
@@ -54,7 +56,7 @@
 | ----- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --- | ------ | ------ | ------- |
 | P2.1  | **DECISION: matugen vs Catppuccin**             | Read both systems, decide: dynamic Material You OR static Catppuccin Mocha                                                        | 10m | 9      | S      | P0.6    |
 | P2.2  | Implement theme decision                        | If static: set `enableDynamicTheming=false` + `DMS_DISABLE_MATUGEN=1`. If dynamic: remove static colorScheme from DMS-themed apps | 12m | 8      | M      | P2.1    |
-| P2.3  | FEATURES.md — remove retired desktop components | Delete Waybar/Swaylock/Wlogout/Dunst/Awww rows (§4 Desktop Components)                                                            | 8m  | 7      | XS     | —       |
+~~| P2.3  | FEATURES.md — remove retired desktop components | Delete Waybar/Swaylock/Wlogout/Dunst/Awww rows (§4 Desktop Components)                                                            | 8m  | 7      | XS     | —       |~~ done — retired desktop rows removed; DMS is the sole shell
 | P2.4  | FEATURES.md — add DMS section                   | New subsection: DMS shell, 13 plugins, wallpaper, lock, OSD, clipboard                                                            | 12m | 7      | XS     | —       |
 | P2.5  | FEATURES.md — fix OOM/health refs               | `waybar` → `dms` in OOM protection + other references                                                                             | 5m  | 5      | XS     | —       |
 | P2.6  | FEATURES.md — update ADR-004                    | Mark ADR-004 (PartOf vs BindsTo wallpaper) as historical (awww retired)                                                           | 3m  | 4      | XS     | —       |

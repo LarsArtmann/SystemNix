@@ -1,5 +1,7 @@
 # Full Codebase Review — 2026-06-14
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — point-in-time audit whose findings were each superseded: the monitor365 port collision is guarded by tests/test-port-uniqueness.nix, the doc-bloat finding became the recurring docs-health sweep practice, and the later brutal self-reviews (docs/reviews/) supersede this snapshot.
+
 ## Executive Summary
 
 **Scope:** 121 `.nix` files (16,924 lines), 30+ shell scripts, 5 custom packages, 3 NixOS hosts, 1 Darwin host, 2 CI workflows, 922 tracked markdown files (15MB docs/).
@@ -89,7 +91,7 @@ The entire `zed-editor.userSettings` block is duplicated. Should be extracted to
 
 Darwin should only import from `common/`. These modules already have cross-platform logic (`stdenv.isDarwin` checks) so they belong in `common/programs/`.
 
-### H5: `monitor365.nix` port collision — reuses SigNoz cAdvisor port
+~~### H5: `monitor365.nix` port collision — reuses SigNoz cAdvisor port~~ done — guarded by tests/test-port-uniqueness.nix
 
 **File:** `modules/nixos/services/monitor365.nix:472`
 

@@ -1,8 +1,10 @@
 # OpenSEO — Docker to NixOS Native Module Migration Plan
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — fully executed: `pkgs/openseo.nix` exists and the archived successor status report confirms the module rewrite (no Docker, no mkDockerService).
+
 **Date:** 2026-07-11
 **Scope:** Migrate OpenSEO from Docker container (`ghcr.io/every-app/open-seo`) to a NixOS-native systemd service built from source
-**Current State:** Docker compose module at `modules/nixos/services/openseo.nix` (port 3002, Layer 2 SSO via oauth2-proxy)
+~~**Current State:** Docker compose module at `modules/nixos/services/openseo.nix` (port 3002, Layer 2 SSO via oauth2-proxy)~~ done — native module shipped (`pkgs/openseo.nix`; verified in the archived 2026-07-11_14-51 status report)
 
 ---
 

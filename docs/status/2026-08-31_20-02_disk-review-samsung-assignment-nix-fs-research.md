@@ -44,7 +44,7 @@ _2026-08-31, started ~14:30, reported 20:02. All times same-day. Live session on
 
 - Web research (discourse topics 3566/28486/75795/61199 + Nix PR #4094 + wiki): no official fs recommendation; btrfs+zstd is the community standard for /nix; nix disabled preallocate-contents FOR btrfs compression; ZFS excluded (5s sqlite txg stalls); f2fs excluded (power loss); XFS has NO compression (verified empirically + VDO explanation)
 - **/nix filesystem DECIDED: BTRFS `noatime,compress=zstd`** — rationale + full table in design doc
-- Design doc written: `docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` — three-tier model (RAM/Samsung/QLC+pool), allocation table, mount-options doctrine (Samsung gets default commit interval, not 300), 4 migration phases with gates, risks
+- Design doc written: `docs/planning/archived/2026-08-31_samsung-role-assignment-first-principles.md` — three-tier model (RAM/Samsung/QLC+pool), allocation table, mount-options doctrine (Samsung gets default commit interval, not 300), 4 migration phases with gates, risks
 - /data composition corrected by measurement: **589G AI models** + 106G Steam; `/data/docker` EMPTY (docker actually in /var/lib/docker on root)
 - QLC-as-HDD-cache question: answered no (tiering not caching) with reasons
 
@@ -159,7 +159,7 @@ _2026-08-31, started ~14:30, reported 20:02. All times same-day. Live session on
 - `platforms/nixos/system/btrfs-health.nix` — balance runtimeInputs fix (2 scripts)
 - `platforms/nixos/system/configuration.nix` — smartd by-id × 2 NVMe + nvme-health-monitor by-id
 - `AGENTS.md` — DAS outcome, balance recurrence, enumeration gotcha, Samsung section + fs decision, rsync gotcha
-- `docs/planning/2026-08-31_samsung-role-assignment-first-principles.md` — design doc + benchmark tables + verdict
+- `docs/planning/archived/2026-08-31_samsung-role-assignment-first-principles.md` — design doc + benchmark tables + verdict
 - `scripts/bench-disk.sh`, `scripts/bench-nix-fs.sh` — reusable benchmark harnesses (guards included)
 - This report
 - Parallel-session files NOT mine (flagged, untouched): flake.lock, niri-wrapped.nix, home.nix, btrfs-snapshot-bloat-fix.html, samsung-disk-layout-visualization.html

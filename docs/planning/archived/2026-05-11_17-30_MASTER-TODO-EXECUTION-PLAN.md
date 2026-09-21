@@ -1,5 +1,7 @@
 # SystemNix Master TODO — Prioritized Execution Plan
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — ~75% self-marked and the remainder verified done or obsolete (overlays/, ADR-005/006, archived/ consolidation, rpi3 config landed; justfile recipes obsolete — the justfile is retired by house doctrine).
+
 **Created:** 2026-05-11
 **Updated:** 2026-05-11 (session 74)
 **Source:** Sessions 67–70 status reports + improvement plan + nix standardization plan
@@ -89,7 +91,7 @@
 | 39 | Add `set -euo pipefail` to `niri-health.sh`                              | 🟢     | 3   | —     | scripts/niri-health.sh          | ✅ via writeShellApplication |
 | 40 | Parameterize PCI address in `gpu-recovery.sh` (auto-detect)              | 🟢     | 8   | 37    | scripts/gpu-recovery.sh         | ✅                           |
 | 41 | Parameterize hostname in `nixos-diagnostic.sh` (remove hardcoded evo-x2) | 🟢     | 5   | —     | scripts/nixos-diagnostic.sh     | ✅                           |
-| 42 | Add `just validate-scripts` recipe (shellcheck all scripts)              | 🟢     | 8   | 37-41 | justfile                        | ✅                           |
+~~| 42 | Add `just validate-scripts` recipe (shellcheck all scripts)              | 🟢     | 8   | 37-41 | justfile                        | ✅                           |~~ done/obsolete — justfile retired; shellcheck gates live in .githooks/pre-commit + CI
 
 ---
 

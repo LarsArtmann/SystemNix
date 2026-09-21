@@ -204,7 +204,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Annotate appendix-only ARCHIVED reports** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **AGENTS.md compression session** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Second-pass annotation of the PARTIALLY-annotated August reports (~30 files in docs/status/ still carrying unstruck items)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
-- [ ] **Triage `docs/planning/` remaining files** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] **Triage `docs/planning/` remaining UNDATED files (3; the dated 2026-05→09 sweep completed 2026-09-21: 21 archived, 1 OPEN kept, 7 REFERENCE kept)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **gotchas-archive narratives missing** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Verify docs/CONTRIBUTING + docs/DOMAIN_LANGUAGE freshness** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Deploy.sh backup retention** → [docs/todo/pipeline.md](docs/todo/pipeline.md)

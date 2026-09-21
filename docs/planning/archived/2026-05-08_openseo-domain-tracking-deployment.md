@@ -1,5 +1,7 @@
 # OpenSEO — Domain Tracking & SEO Suite Deployment Plan
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — executed and twice superseded: OpenSEO landed, then the compose mechanics of this plan were replaced by the native NixOS module (2026-07-11 plan, `pkgs/openseo.nix`, port 3002).
+
 **Date:** 2026-05-08
 **Scope:** Deploy OpenSEO (self-hosted Ahrefs/Semrush alternative) on NixOS (evo-x2) for tracking all owned domains
 **Source Research:** `~/projects/reports/docs/research/2026-05-08_open-source-seo-tools-competitive-analysis.md`
@@ -8,7 +10,7 @@
 
 ## Why OpenSEO
 
-- Most feature-complete open-source SEO suite (keyword research, rank tracking, backlinks, domain insights, site audits)
+~~- Most feature-complete open-source SEO suite (keyword research, rank tracking, backlinks, domain insights, site audits)~~ done — superseded by the native-module migration (archived 2026-07-11 plan)
 - Self-hosted, pay-as-you-go via DataForSEO ($2–20/mo vs $99–130/mo for Ahrefs/Semrush)
 - First-class Docker support with pre-built GHCR images
 - Active development with GEO/AI visibility on roadmap

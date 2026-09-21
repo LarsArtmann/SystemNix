@@ -1,7 +1,9 @@
 # Data Corruption Recovery & Pool Backup Completion — Master Plan
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — incident arc closed: the pool was built and driven green (CHANGELOG 2026-08-16/17) and the tooling persists (scripts/find-corrupted-files.sh, data-corruption-repair.sh); the /data repair residue that outlived this plan is tracked in docs/todo/storage.md.
+
 **Date:** 2026-08-17 14:41
-**Scope:** Resolve the /data csum corruption, repair the broken pool receive, deploy the stranded fix batch, and drive all three backup tiers to verified green.
+~~**Scope:** Resolve the /data csum corruption, repair the broken pool receive, deploy the stranded fix batch, and drive all three backup tiers to verified green.~~ done/superseded — pool green since 2026-08-17; the still-open /data EIO repair lives in docs/todo/storage.md
 **Standing state at planning time:** Pool healthy (468G, RAID1, first scrub clean, all app backup timers green). /data has 1,351,271 uncorrectable csum errors (~1.3MB, 22 extents, 3 physical windows ~595G and ~627–639G). Pool holds a broken @.20260814 receive (403,251 `o*` staging dirs, `Received UUID: -`) from the 6h-timeout kill. Root 95% (39G free, CoW-pinned by snapshots; reclaims at expiry). Fix batch (24h btrbk timeouts, byte disk-gate, disk-growth preStart, pool metrics, monitor365 backup gating) committed in tree, **undeployed**.
 
 ---

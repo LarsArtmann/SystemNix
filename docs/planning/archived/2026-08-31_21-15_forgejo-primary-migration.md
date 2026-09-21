@@ -1,7 +1,9 @@
 # Forgejo-Primary Migration Plan (GitHub → Mirror-Only)
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — explicitly SUPERSEDED 2026-09-18 by `docs/planning/2026-09-18_16-44_FORGEJO-PRIMARY-STAGED-FOUNDATION.md` (core push-mirror premise falsified; decisions carried forward as D1-D4). Its own Status line already records the supersession.
+
 **Date:** 2026-08-31
-**Status:** SUPERSEDED 2026-09-18 by `docs/planning/2026-09-18_16-44_FORGEJO-PRIMARY-STAGED-FOUNDATION.md` — this plan's core premise ("push mirrors already exist") was falsified by the 2026-09-18 audit (all 18 push-mirror POSTs ever attempted 400'd on the missing `interval` field; the code was removed and is being rebuilt correctly as plan task M05). Decisions #1-#5 below still stand (carried forward as D1-D4 in the new plan); the mechanics sections are historical.
+~~**Status:** SUPERSEDED 2026-09-18 by `docs/planning/2026-09-18_16-44_FORGEJO-PRIMARY-STAGED-FOUNDATION.md` — this plan's core premise ("push mirrors already exist") was falsified by the 2026-09-18 audit (all 18 push-mirror POSTs ever attempted 400'd on the missing `interval` field; the code was removed and is being rebuilt correctly as plan task M05). Decisions #1-#5 below still stand (carried forward as D1-D4 in the new plan); the mechanics sections are historical.~~ (moved to docs/planning/archived/ 2026-09-21)
 **Instance:** `forgejo.home.lan` (evo-x2, `modules/nixos/services/forgejo.nix`)
 
 ---

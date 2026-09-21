@@ -1,7 +1,9 @@
 # Session 118+ Execution Plan
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — superseded/done-differently: dozzle became `modules/nixos/services/dozzle.nix` (not inline-ified); photomap deleted; voice-agents/minecraft deliberately kept; CI landed. Four months of later re-plans supersede the pending rows.
+
 **Created:** 2026-06-03
-**Status:** In Progress
+~~**Status:** In Progress~~ done — superseded (dozzle module landed; deletions re-decided; CI shipped)
 
 ## Scope
 

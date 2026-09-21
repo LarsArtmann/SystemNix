@@ -1,5 +1,7 @@
 # SystemNix: Do More With Less — Deduplication & Simplification Plan
 
+~~> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — superseded dead roadmap: T2.2-class fixes absorbed (hardenUser exported) and roughly half the target files no longer exist (gitea→forgejo, comfyui deleted); surviving ideas live in docs/todo/.~~ done/superseded — gitea is forgejo now; dedup survivors tracked in docs/todo/
+
 **Date:** 2026-05-17
 **Scope:** Eliminate dead code, fix bugs, consolidate duplications, reduce flake.nix from 620→~500 lines
 **Principle:** Every abstraction in this project exists (`lib/`, `overlays/`, `platforms/common/`) — we just aren't using them consistently.

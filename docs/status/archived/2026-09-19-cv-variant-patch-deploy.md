@@ -1,6 +1,8 @@
 # CV Deploy — variant-patch hybrid-sync fix (2026-09-19)
 
-**Purpose:** ship the 2026-09-18 hybrid content-sync fix so restarts stop
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — one-shot deploy runbook, executed: the variant-patch hybrid-sync fix shipped and the cv lock has since advanced past the staged rev (`a514dff68` → `f137db7730`); the deploy-gate flag raised here (hot-user-caches units missing from deploy.sh) was resolved in the 2026-09-20 six-unit batch.
+
+~~**Purpose:** ship the 2026-09-18 hybrid content-sync fix so restarts stop~~ done — shipped; superseded by later cv lock bumps.
 destroying runtime-written auto-apply variant patches in `data/cv` (the
 app-1449 burn: 15 approvals pointed at dead "View tailored CV" links).
 

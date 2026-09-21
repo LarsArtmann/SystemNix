@@ -1,5 +1,7 @@
 # Samsung 970 EVO Plus — Role Assignment from First Principles
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — layout RATIFIED and since executed: Samsung btrfs/zstd /nix live (2026-09-16/17 migration sessions), the hot-DB nodatacow tier live (crush-hot-db.nix + the dormant services.hot-db module), and the Samsung boot mirror armed first-in-BootOrder 2026-09-20. The Rev-3 per-service amendment was superseded by the 2026-09-21 fsync verdicts in docs/todo/storage.md.
+
 _2026-08-31 · decision doc · Rev 2 · status: partition layout + hot-DB subvol RATIFIED in review; remaining open items listed at the bottom (reboot window, phase-ordering confirmation)_
 
 ## The question
@@ -202,7 +204,7 @@ QLC pressure immediately.
 **Phase 2 — hot DBs → `hot` subvol, nodatacow (Rev 2: replaces the XFS p1 plan)** (per
 service, one at a time): a mount-gated oneshot creates `hot` plus nested per-service
 subvol boundaries (pocket-id, postgres, forgejo) and sets `chattr +C` per subvol root;
-mount `/var/lib/hot` with `-o nodatacow`. Then per service: stop, rsync dataDir,
+~~mount `/var/lib/hot` with `-o nodatacow`. Then per service: stop, rsync dataDir,~~ done/superseded — realized as per-service hot/<name> subvols; fsync verdicts revised the per-service text
 re-point, restart, gatus green; dump-style backups (already location-agnostic —
 pocket-id-backup, forgejo dump, pg dumps) land on pool as before. **No btrbk/backup
 topology change.** Checkpoints are ONE-SHOT btrfs snapshots, deleted after the

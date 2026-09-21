@@ -74,7 +74,7 @@ in
     # pre-flight: all boot entries' init paths on the live Samsung store, ESP initrds
     # present, rollback ladder closure-verified).
     # commit stays DEFAULT (30s): commit=300 is a QLC/SLC-preservation measure,
-    # not needed on TLC (docs/planning/2026-08-31_samsung-role-assignment-*.md).
+    # not needed on TLC (docs/planning/archived/2026-08-31_samsung-role-assignment-first-principles.md).
     "/nix" = mkFilesystem {
       device = "/dev/disk/by-label/tlc";
       fsType = "btrfs";
