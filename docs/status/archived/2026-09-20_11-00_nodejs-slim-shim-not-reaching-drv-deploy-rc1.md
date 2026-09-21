@@ -1,5 +1,7 @@
 # Boot-Mirror Deploy: rc=1 Root-Caused — nodejs-slim Test Failure, Shim Present but NOT Reaching the Derivation
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — the blocked deploy landed the same day (system-786 anchored 14:08 `fc49dbe5`, then 787/791); the shim-vs-bump question was decided by the root-nixpkgs bump carrying upstream fix `089b82f9` (`8253c632`), the harmful shim removed (`1bfe5ae2`), and the overlay-reach doctrine harvested into AGENTS.md ("SystemNix overlays can NEVER reach packages built inside followed input flakes"). Every open item below is struck inline with its evidence.
+
 **Session:** 2026-09-20 10:56 → 11:00 (short diagnosis session, resumed from the 10:38 handoff report)
 **Task:** Samsung boot-mirror deploy verification chain (F05–F17), queue-driven, full autonomy
 **State at session end:** deploy BLOCKED again — root cause identified, fix path defined, NOT yet applied. Profile still `system-785`. Queue unit exited (stopped for diagnosis as designed).
@@ -33,19 +35,19 @@ Also observed: 6 consecutive `rc=13` (deploy-lock contention) queue attempts 09:
 
 ## b) PARTIALLY DONE
 
-1. **Root-cause chain: ~90%.** WHAT fails and THAT the shim misses it is proven. **WHY** the shim misses it is not yet verified — candidate mechanisms (unverified): (a) hermes/llama-cpp resolve nodejs from their own flake-input nixpkgs subtree (unfollowed lock), not the root overlaid instance; (b) the consumer uses a different attr name (`nodejs_26` / dash-form) than the shimmed `nodejs-slim_26`; (c) the overlay's `optionalAttrs isLinux` gating mis-fires somewhere in the path. The 10-minute verification: eval the nodejs-slim drv **from the toplevel's perspective** (`nix eval .#nixosConfigurations.evo-x2.config...` or `nix path-info` on the rebuilt input) and compare against `njhj371…`
-2. **F05 (deploy lands)**: validation green, eval fixes in tree, but the build leg failed — blocked, not abandoned
+1. ~~**Root-cause chain: ~90%.** WHAT fails and THAT the shim misses it is proven. **WHY** the shim misses it is not yet verified — candidate mechanisms (unverified): (a) hermes/llama-cpp resolve nodejs from their own flake-input nixpkgs subtree (unfollowed lock), not the root overlaid instance; (b) the consumer uses a different attr name (`nodejs_26` / dash-form) than the shimmed `nodejs-slim_26`; (c) the overlay's `optionalAttrs isLinux` gating mis-fires somewhere in the path. The 10-minute verification: eval the nodejs-slim drv **from the toplevel's perspective** (`nix eval .#nixosConfigurations.evo-x2.config...` or `nix path-info` on the rebuilt input) and compare against `njhj371…`~~ done (mechanism proven via nix why-depends — hermes evaluates overlay-less against the followed nixpkgs; doctrine in the AGENTS.md nodejs-slim saga bullet)
+2. ~~**F05 (deploy lands)**: validation green, eval fixes in tree, but the build leg failed — blocked, not abandoned~~ done (deploy landed — system-786 anchored 14:08 (fc49dbe5), 787, then 791)
 
 ## c) NOT STARTED (all gated on the deploy)
 
-1. F06–F09: mirror live verify (findmnt /boot-mirror, contents, df)
-2. F10: pre-reboot-check §11 WARN-grade
-3. F11–F12: `nix run .#boot-mirror-activate` (Samsung first in BootOrder)
-4. F13: pre-reboot-check §11 FAIL-grade
-5. F14–F15: CHANGELOG entry + plan-doc checklist ticks 6/7/9 (`docs/planning/2026-09-18_19-53_SAMSUNG-2ND-BOOT-DISK-PARETO-PLAN.md`)
-6. F16: pathspec commits + push (authorized)
-7. F17: final report with M1–M12/F01–F27 tables + reboot handoff
-8. The shim-reach fix itself (and deciding shim-vs-nixpkgs-bump)
+1. ~~F06–F09: mirror live verify (findmnt /boot-mirror, contents, df)~~ done (F06–F09 done per 2026-09-20_15-30 (mirror verified, 312M/4.0G))
+2. ~~F10: pre-reboot-check §11 WARN-grade~~ done (pre-reboot-check §11 WARN grade done per 15-30)
+3. ~~F11–F12: `nix run .#boot-mirror-activate` (Samsung first in BootOrder)~~ done (boot-mirror-activate ran — Boot000C Samsung-first per 15-30)
+4. ~~F13: pre-reboot-check §11 FAIL-grade~~ done (F13 23-pass/0-fail strict grade per 15-30)
+5. ~~F14–F15: CHANGELOG entry + plan-doc checklist ticks 6/7/9 (`docs/planning/2026-09-18_19-53_SAMSUNG-2ND-BOOT-DISK-PARETO-PLAN.md`)~~ done (CHANGELOG boot-mirror entry + plan ticks 6/7/9 per 15-57 §a.8)
+6. ~~F16: pathspec commits + push (authorized)~~ done (pushed 541fab97 (15-57 §a.9))
+7. ~~F17: final report with M1–M12/F01–F27 tables + reboot handoff~~ done (artifact = docs/status/2026-09-20_15-30_boot-mirror-armed-samsung-first-bootorder.md)
+8. ~~The shim-reach fix itself (and deciding shim-vs-nixpkgs-bump)~~ **Won't implement — superseded — root nixpkgs bumped carrying upstream fix (8253c632); harmful shim removed 1bfe5ae2.**
 
 ## d) TOTALLY FUCKED UP
 
@@ -66,27 +68,27 @@ Nothing destructive this session (no edits, no commits, no state changes beyond 
 
 ## f) NEXT WORK (priority order, not all 50)
 
-1. **Verify shim non-reach mechanism**: eval nodejs-slim drv from evo-x2's package set; compare to `njhj371…` (10 min)
-2. **Fix the reach**: either extend the shim to the actual consumer path (hermes.nix / llama-cpp pin) or bump the specific input whose subtree owns the nodejs drv
-3. Confirm the fix by drv-path change + `nix build` of just that drv (`^*` with `-L`), NOT a full deploy
-4. Relaunch queue v6 (`systemd-run --user --unit=boot-mirror-deploy-v6 --collect $HOME/.local/state/boot-mirror-queue.sh`) — expect ~30–40 min build now that everything else is warm
-5. If rc=0 + profile advanced → F05 done; run the F06–F17 chain as scripted in the 10:38 handoff
-6. If rc=13 again: wait 180 s, check whether the parallel carrier shipped our tree (profile ≠ system-785 AND /boot-mirror mounted = success path)
-7. Sweep the rc=13 lock-holder mystery (09:46–10:09): identify what held the deploy lock 25 min without advancing the profile
-8. Investigate why `nix log` on the failed drv returned empty (GC'd log? need `-L` rebuild?) — low priority, `-L` rebuild in step 3 supersedes
-9. Check whether cache.home.lan (attic) can/should serve the e554fab-era nodejs chain (recurring gap: second from-source nodejs build this week)
-10. After F16: harvest the "drv-path diff" rule into AGENTS.md Nix & Nixpkgs gotchas + the shim comment (once the real mechanism is known)
-11. After deploy lands: mirror verify (F06–F09), pre-reboot-check WARN (F10), activate (F11–F12), pre-reboot-check FAIL (F13)
-12. CHANGELOG + plan-doc ticks 6/7/9 (F14–F15), pathspec commits + push (F16)
-13. Final report with M1–M12 + F01–F27 tables, reboot handoff (F17)
-14. Post-activation backlog (from prior reports): 04:17 reboot forensics if not user-initiated; crush-session load policy; llama-vlm model downloads; hot-db Phase-2 module fold-in (parallel session's close-out)
-15. Queue script hygiene: fix the "queue v4:" prefix in v5+ logs; add drv-path logging
+1. ~~**Verify shim non-reach mechanism**: eval nodejs-slim drv from evo-x2's package set; compare to `njhj371…` (10 min)~~ done (mechanism proven via nix why-depends; rule harvested to AGENTS.md)
+2. ~~**Fix the reach**: either extend the shim to the actual consumer path (hermes.nix / llama-cpp pin) or bump the specific input whose subtree owns the nodejs drv~~ **Won't implement — superseded — lock bump picked up the upstream fix (see c.8).**
+3. ~~Confirm the fix by drv-path change + `nix build` of just that drv (`^*` with `-L`), NOT a full deploy~~ done (drv rebuilt clean post-bump; deploys system-786→791 landed)
+4. ~~Relaunch queue v6 (`systemd-run --user --unit=boot-mirror-deploy-v6 --collect $HOME/.local/state/boot-mirror-queue.sh`) — expect ~30–40 min build now that everything else is warm~~ done (queue v6/v7 ran to success)
+5. ~~If rc=0 + profile advanced → F05 done; run the F06–F17 chain as scripted in the 10:38 handoff~~ **Won't implement — moot — rc=0 path taken.**
+6. ~~If rc=13 again: wait 180 s, check whether the parallel carrier shipped our tree (profile ≠ system-785 AND /boot-mirror mounted = success path)~~ **Won't implement — moot — rc=0 path taken.**
+7. ~~Sweep the rc=13 lock-holder mystery (09:46–10:09): identify what held the deploy lock 25 min without advancing the profile~~ done (holders identified as the parallel deploy.sh/nh pair (12-26 §d.1))
+8. ~~Investigate why `nix log` on the failed drv returned empty (GC'd log? need `-L` rebuild?) — low priority, `-L` rebuild in step 3 supersedes~~ **Won't implement — superseded by the -L rebuild.**
+9. ~~Check whether cache.home.lan (attic) can/should serve the e554fab-era nodejs chain (recurring gap: second from-source nodejs build this week)~~ **Won't implement — moot — zero nodejs drvs post-bump.**
+10. ~~After F16: harvest the "drv-path diff" rule into AGENTS.md Nix & Nixpkgs gotchas + the shim comment (once the real mechanism is known)~~ done (landed in the AGENTS.md nodejs-slim saga bullet)
+11. ~~After deploy lands: mirror verify (F06–F09), pre-reboot-check WARN (F10), activate (F11–F12), pre-reboot-check FAIL (F13)~~ done (F06–F13 done per the 15-30 report)
+12. ~~CHANGELOG + plan-doc ticks 6/7/9 (F14–F15), pathspec commits + push (F16)~~ done (CHANGELOG entry + ticks + push 541fab97)
+13. ~~Final report with M1–M12 + F01–F27 tables, reboot handoff (F17)~~ done (final reports = 2026-09-20_15-30 + 15-57)
+14. ~~Post-activation backlog (from prior reports): 04:17 reboot forensics if not user-initiated; crush-session load policy; llama-vlm model downloads; hot-db Phase-2 module fold-in (parallel session's close-out)~~ done (04:17 attributed (19-47 §a.9); hot-db Phase-2 module landed dormant; llama-vlm routed to docs/todo/ai-stack.md)
+15. ~~Queue script hygiene: fix the "queue v4:" prefix in v5+ logs; add drv-path logging~~ **Won't implement — moot — queue v6/v7 retired after success.**
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 
-1. **The 04:17 reboot — was it you?** (Unanswered since the prior report.) If not user-initiated, it needs crash forensics (it killed a 2h45m build; journal cut mid-build would confirm crash vs clean shutdown) — and it would be freeze/crash #7 territory
-2. **Is the parallel session that authored the nodejs shim (commits around `8740c661`, 09-19 19:31) still active and owning the nodejs/hermes chain?** I can see its commits (hot-db close-out landed during this diagnosis) but not its intent — if it is mid-diagnosis of the same non-reach problem we will collide on the fix
-3. **Shim-fix vs nixpkgs lock bump:** nixpkgs upstream already disabled this test (`089b82f9`). Fixing the shim's reach keeps the lock stable but adds a local override to maintain; bumping nixpkgs picks up the upstream fix but forces a full system rebuild on a multi-session tree mid-deploy-queue. Which do you prefer (or: bump only if the rebuild cost is acceptable)?
+1. ~~**The 04:17 reboot — was it you?** (Unanswered since the prior report.) If not user-initiated, it needs crash forensics (it killed a 2h45m build; journal cut mid-build would confirm crash vs clean shutdown) — and it would be freeze/crash #7 territory~~ done (answered — 04:17 reboot attributed to the parallel deploy session (19-47 §a.9))
+2. ~~**Is the parallel session that authored the nodejs shim (commits around `8740c661`, 09-19 19:31) still active and owning the nodejs/hermes chain?** I can see its commits (hot-db close-out landed during this diagnosis) but not its intent — if it is mid-diagnosis of the same non-reach problem we will collide on the fix~~ **Won't implement — moot — shim removed, no owner active on it.**
+3. ~~**Shim-fix vs nixpkgs lock bump:** nixpkgs upstream already disabled this test (`089b82f9`). Fixing the shim's reach keeps the lock stable but adds a local override to maintain; bumping nixpkgs picks up the upstream fix but forces a full system rebuild on a multi-session tree mid-deploy-queue. Which do you prefer (or: bump only if the rebuild cost is acceptable)?~~ **Won't implement — decided — lock bump over shim (8253c632; shim removal 1bfe5ae2).**
 
 ---
 

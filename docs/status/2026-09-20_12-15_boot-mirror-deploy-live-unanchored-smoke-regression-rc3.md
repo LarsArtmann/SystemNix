@@ -34,19 +34,19 @@ _Sequence: continuation of `2026-09-20_11-00_nodejs-slim-shim-not-reaching-drv-d
 
 ## b) PARTIALLY DONE
 
-1. **M1/F05 deploy**: system live but **UN-ANCHORED** — profile `system-785` ≠ current-system 20b1ddd; a reboot reverts. Recovery is known: fix the smoke regression → re-run deploy → clean activation bumps the profile
-2. **Mirror verification (F06–F09)**: mount + UUID done; contents/df/sync-unit state NOT yet verified (need root via pre-reboot-check §11 — the vfat mount is dmask=0077 root-only, plain `ls` as user is Permission denied, NOT an empty mirror)
-3. **rc=3 regression captured but NOT diagnosed**: Browser History `/health` 503 (server down/degraded — agent timer/token/collector checks all PASS, so it's the server unit specifically) + one Pocket ID entry (exact line not yet extracted)
+1. ~~**M1/F05 deploy**: system live but **UN-ANCHORED** — profile `system-785` ≠ current-system 20b1ddd; a reboot reverts. Recovery is known: fix the smoke regression → re-run deploy → clean activation bumps the profile~~ done (closed — system-786 anchored 14:08 (fc49dbe5), three-way verified per 15-30)
+2. ~~**Mirror verification (F06–F09)**: mount + UUID done; contents/df/sync-unit state NOT yet verified (need root via pre-reboot-check §11 — the vfat mount is dmask=0077 root-only, plain `ls` as user is Permission denied, NOT an empty mirror)~~ done (F06–F09 done per 15-57 §a.3 (sync diff-gate PASS, df 312M/4.0G))
+3. ~~**rc=3 regression captured but NOT diagnosed**: Browser History `/health` 503 (server down/degraded — agent timer/token/collector checks all PASS, so it's the server unit specifically) + one Pocket ID entry (exact line not yet extracted)~~ done (root-caused in 13-58 (AGENT_FRESHNESS gate deadlock, fixed live 13:54:51; Pocket ID = transient SQLITE_BUSY); quiet-day 503 by-design filed upstream (#26))
 
 ## c) NOT STARTED (all gated on a clean rc=0 deploy)
 
-1. F10 pre-reboot-check §11 WARN-grade
-2. F11–F12 `boot-mirror-activate` (Samsung first in BootOrder)
-3. F13 pre-reboot-check §11 FAIL-grade
-4. F14–F15 CHANGELOG entry + Samsung plan-doc ticks 6/7/9
-5. F16 pathspec commits + push (authorized)
-6. F17 reboot handoff to user
-7. AGENTS.md doctrine harvest (see e)
+1. ~~F10 pre-reboot-check §11 WARN-grade~~ done (F10 done per 15-30 (§11 WARN grade green))
+2. ~~F11–F12 `boot-mirror-activate` (Samsung first in BootOrder)~~ done (F11–F12 done per 15-30 (Boot000C Samsung-first))
+3. ~~F13 pre-reboot-check §11 FAIL-grade~~ done (F13 done per 15-30 (23-pass/0-fail strict grade))
+4. ~~F14–F15 CHANGELOG entry + Samsung plan-doc ticks 6/7/9~~ done (F14–F15 done (CHANGELOG boot-mirror entry + ticks 6/7/9 per 15-57 §a.8))
+5. ~~F16 pathspec commits + push (authorized)~~ done (F16 done — pushed 541fab97 (15-57 §a.9))
+6. ~~F17 reboot handoff to user~~ done (F17 reboot handoff = the 15-30/15-57 reports (user reboot still pending))
+7. ~~AGENTS.md doctrine harvest (see e)~~ done (harvest landed — AGENTS.md anchor-check-first + nodejs-slim saga bullets)
 
 ## d) TOTALLY FUCKED UP (honest ledger)
 
@@ -67,35 +67,35 @@ _Sequence: continuation of `2026-09-20_11-00_nodejs-slim-shim-not-reaching-drv-d
 
 ## f) NEXT (ordered, up to 50)
 
-1. Diagnose Browser History 503: unit state + journal (`journalctl -u browser-history -n 50`), classify against the known SQLITE_READONLY upstream-hold class vs deploy-restart timing vs nixpkgs-delta effect
-2. Extract the exact Pocket ID NEW-failure line from the deploy log (full context)
-3. Review the other 5 failed-but-not-NEW checks (CV pipeline-store FAIL, CV render FAIL, …) — confirm they are the known baseline holds, not fresh decay
-4. Fix whatever 1–2 surface; re-run `nix run .#deploy` → expect rc=0 + profile advances past system-785 (F05 COMPLETE)
-5. Verify anchor: `readlink /nix/var/nix/profiles/system` == `/run/current-system` ≠ system-785
-6. F06–F09 finish: §11 output covers mirror contents (root), sync unit ran clean, df
-7. F10 `nix run .#pre-reboot-check` → exit 0, §11 WARN-grade
-8. F11–F12 `nix run .#boot-mirror-activate` → Samsung first in BootOrder, QLC 0x0001 second
-9. F13 re-run pre-reboot-check → exit 0, §11 FAIL-grade
-10. F14 CHANGELOG entry (boot-mirror shipped + nodejs saga + rc=3 lesson)
-11. F15 tick Samsung plan-doc items 6/7/9 (leave 8 = reboot)
-12. F16 pathspec commits + push (authorized)
-13. F17 reboot handoff (the ONLY user-owned step)
-14. AGENTS.md harvest: overlay-non-reach, drv-path-diff, un-anchored-rc3, harmful-shim-lifecycle
-15. nvme enumeration drift: mirror sits on `nvme1n1p1` NOW (handoff said Samsung = nvme0 post-04:17) — confirm by-id/UUID discipline holds (fstab mounts by UUID/label, so cosmetic, but the disk-truth note needs updating)
-16. Identify the 11:06 lock bumper (if not the user: parallel-session journal/git forensics)
-17. Carried side sweep: identify the 09:46–10:09 deploy-lock holder (~25 min of rc=13 cycling)
-18. Carried side sweep: empty `nix log` on the old failing drv (GC'd log)
-19. Carried side sweep: attic/cache.home.lan coverage for nixpkgs-era nodejs
-20. Confirm the REMOVED-path entries this deploy shipped are expected: `51-hdmi-monitor-priority.conf` (smart-audio resolution, yes), `bank-sync-*-fish-completions` (parallel session's change? bank-sync smokes PASS — verify nothing else moved)
-21. M8 first-nightly drift watch (post-reboot): sync re-ran, no drift, df stable
-22. M9 llama-vlm coordination (models still dark, owner decision)
-23. M10 ExecStart list-shape audit (systemd-shape-audit candidate, unchanged)
+1. ~~Diagnose Browser History 503: unit state + journal (`journalctl -u browser-history -n 50`), classify against the known SQLITE_READONLY upstream-hold class vs deploy-restart timing vs nixpkgs-delta effect~~ done (root-caused in 13-58 — AGENT_FRESHNESS health-gate deadlock; gate now accepts any answered HTTP status)
+2. ~~Extract the exact Pocket ID NEW-failure line from the deploy log (full context)~~ done (extracted in 13-58 — Pocket ID entry = transient SQLITE_BUSY)
+3. ~~Review the other 5 failed-but-not-NEW checks (CV pipeline-store FAIL, CV render FAIL, …) — confirm they are the known baseline holds, not fresh decay~~ done (confirmed known baseline holds in 13-58)
+4. ~~Fix whatever 1–2 surface; re-run `nix run .#deploy` → expect rc=0 + profile advances past system-785 (F05 COMPLETE)~~ done (system-786 anchored 14:08 (fc49dbe5); 787/791 followed)
+5. ~~Verify anchor: `readlink /nix/var/nix/profiles/system` == `/run/current-system` ≠ system-785~~ done (three-way anchor verified per 15-30)
+6. ~~F06–F09 finish: §11 output covers mirror contents (root), sync unit ran clean, df~~ done (done per 15-57 §a.3)
+7. ~~F10 `nix run .#pre-reboot-check` → exit 0, §11 WARN-grade~~ done (15-30 §11 WARN grade green)
+8. ~~F11–F12 `nix run .#boot-mirror-activate` → Samsung first in BootOrder, QLC 0x0001 second~~ done (15-30 — Boot000C Samsung first, QLC second)
+9. ~~F13 re-run pre-reboot-check → exit 0, §11 FAIL-grade~~ done (15-30 — 23-pass/0-fail strict grade)
+10. ~~F14 CHANGELOG entry (boot-mirror shipped + nodejs saga + rc=3 lesson)~~ done (CHANGELOG boot-mirror entry landed)
+11. ~~F15 tick Samsung plan-doc items 6/7/9 (leave 8 = reboot)~~ done (ticks 6/7/9 per 15-57 §a.8)
+12. ~~F16 pathspec commits + push (authorized)~~ done (pushed 541fab97)
+13. ~~F17 reboot handoff (the ONLY user-owned step)~~ done (handoff delivered in 15-30/15-57)
+14. ~~AGENTS.md harvest: overlay-non-reach, drv-path-diff, un-anchored-rc3, harmful-shim-lifecycle~~ done (landed in AGENTS.md (anchor-check-first, drv-path-diff, overlay-non-reach, harmful-shim-lifecycle))
+15. ~~nvme enumeration drift: mirror sits on `nvme1n1p1` NOW (handoff said Samsung = nvme0 post-04:17) — confirm by-id/UUID discipline holds (fstab mounts by UUID/label, so cosmetic, but the disk-truth note needs updating)~~ done (closed — fstab/by-UUID discipline held (13-58 f.38); cosmetic only)
+16. ~~Identify the 11:06 lock bumper (if not the user: parallel-session journal/git forensics)~~ done (identified — parallel deploy session (19-47 §a.9; daemon commit 8253c632))
+17. ~~Carried side sweep: identify the 09:46–10:09 deploy-lock holder (~25 min of rc=13 cycling)~~ done (moot — holders were the parallel deploy.sh/nh pair (12-26 §d.1))
+18. ~~Carried side sweep: empty `nix log` on the old failing drv (GC'd log)~~ **Won't implement — superseded by the -L rebuild.**
+19. ~~Carried side sweep: attic/cache.home.lan coverage for nixpkgs-era nodejs~~ **Won't implement — moot — zero nodejs builds post-bump.**
+20. ~~Confirm the REMOVED-path entries this deploy shipped are expected: `51-hdmi-monitor-priority.conf` (smart-audio resolution, yes), `bank-sync-*-fish-completions` (parallel session's change? bank-sync smokes PASS — verify nothing else moved)~~ done (confirmed expected (13-58 §a.11))
+21. ~~M8 first-nightly drift watch (post-reboot): sync re-ran, no drift, df stable~~ done (sync green through system-791 (19-47 §b))
+22. ~~M9 llama-vlm coordination (models still dark, owner decision)~~ done (routed into docs/todo/ai-stack.md (19-47 §a.11))
+23. ~~M10 ExecStart list-shape audit (systemd-shape-audit candidate, unchanged)~~ done (routed to the systemd-shape-audit extension row (19-47 §a.11))
 
 ## g) QUESTIONS (cannot figure out myself)
 
-1. **Was the 11:06 root nixpkgs bump (`e554fab` → `20b1ddd`, daemon commit `8253c632`) yours or your parallel session's deliberate act?** It is exactly what your "cached version" directive wanted (carries upstream nodejs fix `089b82f9`), so I built on it — but if it was an accident (fmt re-lock class), say so and I will review the rest of its 1-day delta consciously
-2. **Was the 04:17 reboot yours?** (Carried from the 11:00 report — if not, it is freeze #7 candidate and needs crash forensics; kdump should hold a vmcore if it panicked)
-3. **When do you intend to reboot?** The running system is UN-ANCHORED until the next clean deploy lands — any reboot before that reverts to system-785. Knowing your reboot intent calibrates how hard to push the Browser-History fix + re-deploy (minutes vs careful hours)
+1. ~~**Was the 11:06 root nixpkgs bump (`e554fab` → `20b1ddd`, daemon commit `8253c632`) yours or your parallel session's deliberate act?** It is exactly what your "cached version" directive wanted (carries upstream nodejs fix `089b82f9`), so I built on it — but if it was an accident (fmt re-lock class), say so and I will review the rest of its 1-day delta consciously~~ done (answered — deliberate parallel-deploy-session bump (19-47 §a.9))
+2. ~~**Was the 04:17 reboot yours?** (Carried from the 11:00 report — if not, it is freeze #7 candidate and needs crash forensics; kdump should hold a vmcore if it panicked)~~ done (answered — 04:17 attributed to the parallel deploy session (19-47 §a.9))
+3. ~~**When do you intend to reboot?** The running system is UN-ANCHORED until the next clean deploy lands — any reboot before that reverts to system-785. Knowing your reboot intent calibrates how hard to push the Browser-History fix + re-deploy (minutes vs careful hours)~~ done (superseded — system re-anchored 14:08; user reboot carried by the 15-30/15-57 handoffs)
 
 ## Ops state right now (12:15)
 
