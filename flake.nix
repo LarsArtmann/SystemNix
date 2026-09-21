@@ -900,7 +900,7 @@
                   (lib.splitString "\n" (builtins.readFile "${upstream}/bin/treefmt"));
               upstreamConfig = builtins.head (builtins.match ".*--config-file=([^[:space:]]+).*" configLine);
               patchedConfig = pkgs.runCommand "treefmt-systemnix-excludes.toml" { } ''
-                          substitute ${/. + upstreamConfig} $out \
+                          substitute "${/. + upstreamConfig}" "$out" \
                             --replace 'excludes = ["*.lock"' 'excludes = [
                 "docs/**/*.html",
                 "*.lock"'

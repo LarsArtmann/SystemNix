@@ -102,3 +102,23 @@
 **Bottom line:** all three open questions closed with evidence (one attributed, one decided+codified, one shipped); the crush-hot-db starvation bug found live and fixed at the root; 14 stale rows closed; two new incidents surfaced (pool-receive gap, never-ending storm); three real mistakes made and fixed, all five lessons recorded; ONE thing is load-bearing and inert — the deploy. Everything else waits on the storm or on you.
 
 **Waiting for instructions.**
+
+---
+
+## h) SECOND ROUND (2026-09-21 11:20–14:30) — questions answered, rows 73/74 landed, calm-window watch armed
+
+**The three §g questions — answered by the owner (~11:30–11:40):**
+1. **House pattern RATIFIED** as written (AGENTS.md section header now says "decided + owner-ratified"). No CDN-fallback variant.
+2. **Deploy authority = USER.** The owner runs `nix run .#deploy` when they judge the box calm; agents leave the tree ready. Tree readiness re-proven this round: evo-x2 eval gate green + `nix flake check --no-build` green + scoped formatter clean (with this round's additions aboard).
+3. **btrbk-root gap = ACCEPT the 23:00 self-heal window** (recorded in storage.md row 75). Review evidence behind the answer: storm was UP at decision time (io avg60 ~55%, 9 guard events in 2h — a hand-start would be guard food exactly like Sep 19/20), local `@.20260919/20T2300` snapshots intact so tonight's catch-up incrementals are well-formed, gap covers both `@` and `@home-hermes` prefixes, and the row-79 "04:00 retry window" idea stays rejected-for-now.
+
+**New work landed this round (all daemon-committed, deploy-pending):**
+- **storage.md row 73 DONE:** `btrbk-root` + `btrbk-pool` now carry `MemoryHigh = "4G"; OOMScoreAdjust = -250;` (snapshots.nix, same treatment as the btrbk-data/forgejo legs; eval-verified from evo-x2: both units report the attrs).
+- **storage.md row 74 DONE:** `btrfs-verify-pool-backups` gained a 2-day early-warning WARN boundary (`WARN_AGE_DAYS=2`). Functionally verified with the extracted script + fixtures: age 1 → OK, age 2 → WARN boundary, age 6 → FAIL exit 1 (unchanged ≥3d FAIL semantics), and against LIVE pool data it correctly WARNs at the REAL current gap (`@.20260918T2300`, age 3) — the storm-eaten-send class now surfaces a day before the gate can FAIL.
+- `scripts/verify-html-diagrams.sh` finally `chmod +x` (the forgotten one-liner from last round).
+
+**Verification facts established this round:**
+- The summary's VM-test command was WRONG: the check attr is `checks.x86_64-linux.crush-hot-db`, NOT `…test-crush-hot-db` (the flake exposes no such name). Dry-run probe: NOT built locally — the never-run-test landmine is real. CI gives no signal (nix-check.yml red on every recent push at ~1 min — the known NIX_GITHUB_RO_TOKEN dark-CI class, not test results). A bounded calm-window poller (2h, 5-min interval, inline heartbeat per the deploy-queue lesson) fires `heavy-job nix build .#checks.x86_64-linux.crush-hot-db` the moment io avg60 < 20% + zero guard events for 10 min; if no calm window arrives it prints a gave-up breadcrumb and leaves the run to the deploy-window batch.
+- Parallel sessions remain ACTIVE (commits at 13:46/13:48/13:53 touched flake.nix treefmt-excludes, base.nix, AGENTS.md; storage.md + TODO_LIST edited intermittently — 4 mtime-guard retries this round, all content-verified intact). Multi-agent discipline held: pathspec-scoped nothing, no reverting foreign diffs.
+
+**Handoff to the user's deploy window:** deploy carries (at minimum) crush-hot-db upgrade + boot-mirror chain + MemoryHigh ceilings + 2-day WARN boundary; first per-project-guard migrate converges `legal-cases/.crush` → Samsung; post-deploy verification per `docs/services/crush.md` (journal `skip <project>: live crush session holds it open` lines, `crush-hot-db-migrate` in system-health). If possible run the `crush-hot-db` VM test build in the same calm window — it is the rewritten test's first execution and a failure there is the previous session's bug, not a regression.
