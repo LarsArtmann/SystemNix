@@ -8,6 +8,9 @@ _: {
     l = "ls -laSh";
     t = "tree -h -L 2 -C --dirsfirst";
 
+    # Terminal file managers
+    spf = "superfile"; # superfile (nixpkgs names the binary `superfile`, upstream docs use `spf`)
+
     # Password manager shortcuts
     kop = "keepassxc &";
 
