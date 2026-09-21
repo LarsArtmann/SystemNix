@@ -1055,11 +1055,11 @@
         "vision-review-agent-src": "vision-review-agent-src"
       },
       "locked": {
-        "lastModified": 1789910043,
-        "narHash": "sha256-YJOkhnHp159pZ0WWqBL5AAa1o46qFDIgsWefHQ4ukZE=",
+        "lastModified": 1790029639,
+        "narHash": "sha256-abRglNC5yZGQHH3C9ZJQo9TgUDvOf5ZJcUqpb4+72Xw=",
         "ref": "refs/heads/master",
-        "rev": "538255e5bbebd883e268b0ca08e128c5dbbd18fd",
-        "revCount": 1431,
+        "rev": "e4f29a600b14044c866a2781c0b2bfe7688e95b8",
+        "revCount": 1432,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/file-and-image-renamer"
       },
@@ -1943,11 +1943,11 @@
         "samber-do-auditlog": "samber-do-auditlog_4"
       },
       "locked": {
-        "lastModified": 1789999685,
-        "narHash": "sha256-nVi8Qu/fSonD+hXgWw9esm+1kqedAyeTivpfaADqheI=",
+        "lastModified": 1790029137,
+        "narHash": "sha256-ym8ELOiUM5tg+XBVF9QWmyNok8u2EqybzCyeoi3Fghk=",
         "owner": "LarsArtmann",
         "repo": "go-auto-upgrade",
-        "rev": "a6c09060b2d71afaf2a84acd381a7cc2f21b5a94",
+        "rev": "c8274c1df868e0fa46258726bb4fcef4ea4488ea",
         "type": "github"
       },
       "original": {
@@ -3917,11 +3917,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789818128,
-        "narHash": "sha256-9C7HymID4zpfGUMN1UFD+8H2NEMwq9H5m1OWA4jqtPU=",
+        "lastModified": 1790029137,
+        "narHash": "sha256-ST7lCT/8IkiFZpkyvaOl+UZGJlprqpiYmC4rF3GCKjk=",
         "owner": "LarsArtmann",
         "repo": "go-humanize-linter",
-        "rev": "b7f00c223275e58d04423be7e9bce71b11233bc6",
+        "rev": "71c3c6e2e7caee2746b1821f4d0db2aa49e654da",
         "type": "github"
       },
       "original": {
@@ -5288,11 +5288,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789801956,
-        "narHash": "sha256-yItucBRNR03TOuHHVkYdAdf2WPobqCILVSi+//Z2K2U=",
+        "lastModified": 1790029187,
+        "narHash": "sha256-ccQb8fPUcU9NTLhurujp6qvhhfStCRoZe+xnR0C3eHU=",
         "owner": "LarsArtmann",
         "repo": "golangci-lint-auto-configure",
-        "rev": "3c617bbde9d3f466631ed68c61310e196b7b26cc",
+        "rev": "5293a345de0a8cb9c365cce61b46dbfd5d14dad1",
         "type": "github"
       },
       "original": {
@@ -5570,11 +5570,11 @@
         "treefmt-nix": "treefmt-nix_10"
       },
       "locked": {
-        "lastModified": 1789911774,
-        "narHash": "sha256-u0rzJcCMFLPWO7wLgURTEAteVzd278gur2FTr3pkda8=",
+        "lastModified": 1790029701,
+        "narHash": "sha256-m96uB1VptnjaR/YC6HpsS68LgvL5AX5Yi1UYYpAph/s=",
         "owner": "LarsArtmann",
         "repo": "InboxClean",
-        "rev": "8621e21f7db568d3a5dece55a6a080db4f9ae4fc",
+        "rev": "ce69f07fafd7ff74f649335220c7c74ab4f5160a",
         "type": "github"
       },
       "original": {
@@ -6348,11 +6348,11 @@
         "treefmt-nix": "treefmt-nix_12"
       },
       "locked": {
-        "lastModified": 1789916004,
-        "narHash": "sha256-JiXYxaPc1wQkD0zYtclYlm/hPDEDHbASq8aquOr4eSY=",
+        "lastModified": 1790029487,
+        "narHash": "sha256-FIvU1E0C32UJLbFvAXUGMkRyyqN9yR9GX/cdmP77qtI=",
         "owner": "LarsArtmann",
         "repo": "PapDashboard",
-        "rev": "0f22f8de22045af9eb3834c0fcc41650b864ee30",
+        "rev": "f0b75058641162dbe7a0b50c49d10d41ad666b49",
         "type": "github"
       },
       "original": {
