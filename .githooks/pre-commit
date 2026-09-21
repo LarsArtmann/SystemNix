@@ -183,7 +183,13 @@ if [ -n "$STAGED_NIX" ]; then
 # default splitting break staged filenames containing whitespace.
   gotoolchain_violation=false
   while IFS= read -r -d '' f; do
-    if [ -f "$f" ] && grep -E 'GOTOOLCHAIN.*auto' "$f" 2>/dev/null | grep -qvE 'GOTOOLCHAIN.*off'; then
+    # Predicate matches only NIX-VALUE assignments (GOTOOLCHAIN = "auto" /
+    # GOTOOLCHAIN=auto) — the 2026-09-22 FP: home.nix's INTERACTIVE fish
+    # override (`set -gx GOTOOLCHAIN auto`, a deliberate session-only escape
+    # for go.work floors) matched the old bare .*auto line grep and blocked
+    # every commit staging the file. Shell/runtime lines are not sandbox
+    # config; only nix-level env assignments break build purity.
+    if [ -f "$f" ] && grep -E 'GOTOOLCHAIN[[:space:]]*=[[:space:]]*"auto"|GOTOOLCHAIN=auto' "$f" 2>/dev/null | grep -qvE 'GOTOOLCHAIN.*off'; then
       log_error "GOTOOLCHAIN=auto found in: $f"
       gotoolchain_violation=true
     fi
