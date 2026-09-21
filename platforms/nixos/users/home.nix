@@ -6,8 +6,7 @@
   crush-config,
   colorScheme,
   ...
-}:
-let
+}: let
   theme = import ../../common/theme.nix;
   colors = colorScheme.palette;
   inherit (import ../../../lib/default.nix lib) wrapWithMemoryLimit;
@@ -24,31 +23,29 @@ let
   niriSessionManagerShellNames = nsmApps.shellNames;
   niriSessionManagerAppMappings = nsmApps.appMappings;
 
-  niriSessionManagerConfigToml =
-    let
-      tomlQuote = s: "\"" + lib.escape [ "\"" ] s + "\"";
-      tomlArray = indent: xs: "[\n" + lib.concatMapStrings (x: indent + tomlQuote x + ",\n") xs + "  ]";
-      tomlInlineArray = xs: "[" + lib.concatStringsSep ", " (map tomlQuote xs) + "]";
-    in
-    ''
-      [single_instance_apps]
-      apps = ${tomlArray "    " niriSessionManagerSingleInstanceApps}
+  niriSessionManagerConfigToml = let
+    tomlQuote = s: "\"" + lib.escape ["\""] s + "\"";
+    tomlArray = indent: xs: "[\n" + lib.concatMapStrings (x: indent + tomlQuote x + ",\n") xs + "  ]";
+    tomlInlineArray = xs: "[" + lib.concatStringsSep ", " (map tomlQuote xs) + "]";
+  in ''
+    [single_instance_apps]
+    apps = ${tomlArray "    " niriSessionManagerSingleInstanceApps}
 
-      [skip_apps]
-      apps = ${tomlArray "    " niriSessionManagerSkipApps}
+    [skip_apps]
+    apps = ${tomlArray "    " niriSessionManagerSkipApps}
 
-      [app_mappings]
-      ${lib.concatStringsSep "\n" (
-        lib.mapAttrsToList (k: v: "${tomlQuote k} = ${tomlInlineArray v}") niriSessionManagerAppMappings
-      )}
+    [app_mappings]
+    ${lib.concatStringsSep "\n" (
+      lib.mapAttrsToList (k: v: "${tomlQuote k} = ${tomlInlineArray v}") niriSessionManagerAppMappings
+    )}
 
-      [terminal_state]
-      enabled = true
-      terminal_app_ids = ${tomlInlineArray niriSessionManagerTerminalAppIds}
-      shell_names = ${tomlInlineArray niriSessionManagerShellNames}
-      helper_names = ${tomlInlineArray [ "kitten" ]}
-      max_walk_depth = 20
-    '';
+    [terminal_state]
+    enabled = true
+    terminal_app_ids = ${tomlInlineArray niriSessionManagerTerminalAppIds}
+    shell_names = ${tomlInlineArray niriSessionManagerShellNames}
+    helper_names = ${tomlInlineArray ["kitten"]}
+    max_walk_depth = 20
+  '';
 
   # `open` — macOS-style file/URL opener that works from ANY context,
   # including SSH sessions that lack the graphical environment.
@@ -138,8 +135,7 @@ let
       setsid --fork xdg-open "''${args[@]}" </dev/null >/dev/null 2>&1
     '';
   };
-in
-{
+in {
   imports = [
     ../../common/home-base.nix
     ../programs/shells.nix # NixOS shell configuration
@@ -181,7 +177,7 @@ in
     golangciLintLspCommand = "$HOME/.local/bin/golangci-lint-lsp-wrapper";
     mcps.qmd = {
       command = "qmd";
-      args = [ "mcp" ];
+      args = ["mcp"];
     };
   };
 
@@ -218,10 +214,12 @@ in
     kitty = {
       enable = true;
       package = pkgs.kitty.overrideAttrs (old: {
-        postInstall = (old.postInstall or "") + ''
-          substituteInPlace $out/lib/kitty/kitty/constants.py \
-            --replace "kitty_run_data.get('bundle_exe_dir')" "None  # Nix: use PATH lookup for GC resilience"
-        '';
+        postInstall =
+          (old.postInstall or "")
+          + ''
+            substituteInPlace $out/lib/kitty/kitty/constants.py \
+              --replace "kitty_run_data.get('bundle_exe_dir')" "None  # Nix: use PATH lookup for GC resilience"
+          '';
       });
       font = {
         name = theme.font.mono;
@@ -450,7 +448,7 @@ in
     # data folder onto /data and removes the stray manually-copied
     # ~/.local/bin/jan (AppImage binary; fails on NixOS stub-ld) so the
     # nixpkgs FHS-wrapped jan wins on PATH.
-    activation.jan-data-link = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    activation.jan-data-link = lib.hm.dag.entryAfter ["writeBoundary"] ''
       JAN_DATA="$HOME/.local/share/Jan/data"
       JAN_TARGET="/data/ai/models/jan"
       JAN_LEGACY="$HOME/.config/Jan/data"
@@ -487,7 +485,7 @@ in
     # per-conversation `conversationColor` rows into the encrypted
     # conversations store — set it once in the UI (green presets: forest,
     # wintergreen, basil, sea, lagoon).
-    activation.signal-theme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    activation.signal-theme = lib.hm.dag.entryAfter ["writeBoundary"] ''
       SIGNAL_THEME="dark"
       SIGNAL_EPHEMERAL="$HOME/.config/Signal/ephemeral.json"
       if [ -d "$HOME/.config/Signal" ]; then
@@ -512,7 +510,7 @@ in
     # ~/.local/bin on PATH — replaces the uv-installer boilerplate
     # (~/.local/bin/env + env.fish + fish conf.d/uv.env.fish, removed
     # 2026-09-16). Prepend semantics preserved: local overrides system.
-    sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];
+    sessionPath = ["${config.home.homeDirectory}/.local/bin"];
     sessionVariables = {
       # Build caches on the USB SSD — run nix run .#migrate-buildcache BEFORE
       # the first deploy so the target dirs exist and the symlinked sources
@@ -620,31 +618,31 @@ in
         name = "go-test";
         maxMemory = "4G";
         command = lib.getExe pkgs.go_1_27;
-        extraArgs = [ "test" ];
+        extraArgs = ["test"];
       })
       (wrapWithMemoryLimit pkgs {
         name = "go-build";
         maxMemory = "4G";
         command = lib.getExe pkgs.go_1_27;
-        extraArgs = [ "build" ];
+        extraArgs = ["build"];
       })
       (wrapWithMemoryLimit pkgs {
         name = "cargo-test";
         maxMemory = "8G";
         command = lib.getExe pkgs.cargo;
-        extraArgs = [ "test" ];
+        extraArgs = ["test"];
       })
       (wrapWithMemoryLimit pkgs {
         name = "cargo-build";
         maxMemory = "8G";
         command = lib.getExe pkgs.cargo;
-        extraArgs = [ "build" ];
+        extraArgs = ["build"];
       })
       (wrapWithMemoryLimit pkgs {
         name = "pnpm-test";
         maxMemory = "4G";
         command = lib.getExe pkgs.pnpm;
-        extraArgs = [ "test" ];
+        extraArgs = ["test"];
       })
 
       # Cursor themes
@@ -676,6 +674,47 @@ in
       # (defined in the let block above)
       openCommand
     ];
+  };
+
+  # Nightly go-cqrs-lite benchmark gate (2026-09-21, T18b follow-up):
+  # verifies the committed benchmark baseline inside a quiet window. The
+  # wrapped gate refuses loud machines (load + noise gates) and never
+  # re-pins on its own; logs land in /var/tmp/cqrs-nightly/<UTC-date>.log.
+  # go_1_27 rides the unit PATH because the repo's go.work floor is 1.27.1
+  # and systemd user units do not inherit the dev shell's toolchain.
+  systemd.user.services.go-cqrs-nightly-bench = {
+    Unit = {
+      Description = "go-cqrs-lite nightly benchmark gate (verification vs committed baseline)";
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = let
+        nightlyBench = pkgs.writeShellApplication {
+          name = "go-cqrs-nightly-bench";
+          runtimeInputs = [
+            pkgs.go_1_27
+            pkgs.git
+            pkgs.coreutils
+          ];
+          text = ''
+            exec "$HOME/projects/go-cqrs-lite/scripts/nightly-bench.sh"
+          '';
+        };
+      in "${nightlyBench}/bin/go-cqrs-nightly-bench";
+    };
+  };
+  systemd.user.timers.go-cqrs-nightly-bench = {
+    Unit = {
+      Description = "Nightly go-cqrs-lite benchmark gate";
+    };
+    Timer = {
+      OnCalendar = "03:00";
+      Persistent = true;
+      RandomizedDelaySec = "30m";
+    };
+    Install = {
+      WantedBy = ["timers.target"];
+    };
   };
 
   xdg.desktopEntries.helium = {
@@ -746,58 +785,58 @@ in
       enable = true;
       defaultApplications = {
         # Web browsing
-        "text/html" = [ "helium.desktop" ];
-        "application/xhtml+xml" = [ "helium.desktop" ];
-        "x-scheme-handler/http" = [ "helium.desktop" ];
-        "x-scheme-handler/https" = [ "helium.desktop" ];
+        "text/html" = ["helium.desktop"];
+        "application/xhtml+xml" = ["helium.desktop"];
+        "x-scheme-handler/http" = ["helium.desktop"];
+        "x-scheme-handler/https" = ["helium.desktop"];
 
         # Terminal
-        "x-scheme-handler/terminal" = [ "com.mitchellh.ghostty.desktop" ];
-        "application/x-terminal-emulator" = [ "com.mitchellh.ghostty.desktop" ];
+        "x-scheme-handler/terminal" = ["com.mitchellh.ghostty.desktop"];
+        "application/x-terminal-emulator" = ["com.mitchellh.ghostty.desktop"];
 
         # File manager
-        "inode/directory" = [ "org.gnome.Nautilus.desktop" ];
+        "inode/directory" = ["org.gnome.Nautilus.desktop"];
 
         # Text / code files
-        "text/plain" = [ "zed.desktop" ];
-        "text/markdown" = [ "zed.desktop" ];
-        "text/x-yaml" = [ "zed.desktop" ];
-        "application/json" = [ "zed.desktop" ];
-        "application/x-yaml" = [ "zed.desktop" ];
+        "text/plain" = ["zed.desktop"];
+        "text/markdown" = ["zed.desktop"];
+        "text/x-yaml" = ["zed.desktop"];
+        "application/json" = ["zed.desktop"];
+        "application/x-yaml" = ["zed.desktop"];
 
         # Images
-        "image/avif" = [ "helium.desktop" ];
-        "image/bmp" = [ "helium.desktop" ];
-        "image/gif" = [ "helium.desktop" ];
-        "image/heif" = [ "helium.desktop" ];
-        "image/jpeg" = [ "helium.desktop" ];
-        "image/png" = [ "helium.desktop" ];
-        "image/svg+xml" = [ "helium.desktop" ];
-        "image/tiff" = [ "helium.desktop" ];
-        "image/webp" = [ "helium.desktop" ];
-        "image/x-icon" = [ "helium.desktop" ];
+        "image/avif" = ["helium.desktop"];
+        "image/bmp" = ["helium.desktop"];
+        "image/gif" = ["helium.desktop"];
+        "image/heif" = ["helium.desktop"];
+        "image/jpeg" = ["helium.desktop"];
+        "image/png" = ["helium.desktop"];
+        "image/svg+xml" = ["helium.desktop"];
+        "image/tiff" = ["helium.desktop"];
+        "image/webp" = ["helium.desktop"];
+        "image/x-icon" = ["helium.desktop"];
 
         # Audio — mpv (browsers handle audio files poorly; mpv works via `open`
         # from SSH too)
-        "audio/aac" = [ "mpv.desktop" ];
-        "audio/flac" = [ "mpv.desktop" ];
-        "audio/mpeg" = [ "mpv.desktop" ];
-        "audio/mp4" = [ "mpv.desktop" ];
-        "audio/ogg" = [ "mpv.desktop" ];
-        "audio/opus" = [ "mpv.desktop" ];
-        "audio/wav" = [ "mpv.desktop" ];
-        "audio/webm" = [ "mpv.desktop" ];
-        "audio/x-flac" = [ "mpv.desktop" ];
-        "audio/x-matroska" = [ "mpv.desktop" ];
-        "audio/x-wav" = [ "mpv.desktop" ];
+        "audio/aac" = ["mpv.desktop"];
+        "audio/flac" = ["mpv.desktop"];
+        "audio/mpeg" = ["mpv.desktop"];
+        "audio/mp4" = ["mpv.desktop"];
+        "audio/ogg" = ["mpv.desktop"];
+        "audio/opus" = ["mpv.desktop"];
+        "audio/wav" = ["mpv.desktop"];
+        "audio/webm" = ["mpv.desktop"];
+        "audio/x-flac" = ["mpv.desktop"];
+        "audio/x-matroska" = ["mpv.desktop"];
+        "audio/x-wav" = ["mpv.desktop"];
 
         # Videos
-        "video/mp4" = [ "helium.desktop" ];
-        "video/ogg" = [ "helium.desktop" ];
-        "video/quicktime" = [ "helium.desktop" ];
-        "video/webm" = [ "helium.desktop" ];
-        "video/x-matroska" = [ "helium.desktop" ];
-        "video/x-msvideo" = [ "helium.desktop" ];
+        "video/mp4" = ["helium.desktop"];
+        "video/ogg" = ["helium.desktop"];
+        "video/quicktime" = ["helium.desktop"];
+        "video/webm" = ["helium.desktop"];
+        "video/x-matroska" = ["helium.desktop"];
+        "video/x-msvideo" = ["helium.desktop"];
       };
     };
   };
@@ -812,7 +851,7 @@ in
     theme = {
       name = theme.gtkThemeName;
       package = pkgs.catppuccin-gtk.override {
-        accents = [ theme.accent ];
+        accents = [theme.accent];
         size = lib.strings.toLower theme.density;
         inherit (theme) variant;
       };
