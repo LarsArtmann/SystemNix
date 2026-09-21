@@ -743,6 +743,7 @@
       nixpkgs,
       nix-ssh-config,
       crush-config,
+      superfile,
       treefmt-full-flake,
       ...
     }:
