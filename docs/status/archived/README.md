@@ -1,46 +1,38 @@
-# Archived Status Reports
+# Archived Reports
 
-This directory contains historical status reports that have been archived for reduced documentation bloat.
+Flat, append-only archive of resolved point-in-time documents. Nothing here is
+"current" — every file carries a resolution banner and inline strikethrough
+annotations (the `[docs-health <date>] RESOLVED + ARCHIVED` convention) or was
+superseded by a named successor.
 
-## Archive Structure
+**Counts (2026-09-21 docs-health sweep):** 1,352 files here (status reports +
+operations runbooks), 42 in [`docs/planning/archived/`](../../planning/archived/)
+(executed/superseded plans). 236 dated reports/plans remain unarchived by
+design — they still carry open work.
 
-Status reports are organized by year and month in reverse chronological order (newest first).
+## What gets archived
 
-## What's Archived
+- **Status reports** whose every item is verifiably resolved (done, superseded,
+  or pure point-in-time forensics) — classified by the docs-health skill's
+  ARCHIVE/ANNOTATE/OPEN-CARRIER pass, most recently 2026-09-19 (34 files) and
+  2026-09-21 (status: nodejs-slim shim, boot-mirror rc3, signoz pair bump;
+  planning: 20 plans + 2 operations docs).
+- **Planning docs** that are fully executed or explicitly superseded — the
+  `docs/planning/archived/` sibling.
+- **Operations runbooks** for one-shot, already-executed procedures.
 
-- **December 2025**: 30 status reports (archived 2026-01-13)
-  - Home Manager integration and deployment
-  - Nix version fixes and build failures
-  - Shell path resolution issues
-  - System diagnostics and fix plans
+## Conventions
 
-- **Keep in Active**: January 2026 reports (11 files)
-  - Architecture refactoring
-  - GOPATH implementation
-  - Wrapper system removal
-  - Deep research analysis
+- Moves are `git mv` (history preserved); living-doc references are repointed
+  in the same change — dangling pointers to this directory are a bug.
+- Historical narrative is never rewritten: resolutions are added as banners +
+  `~~inline strikethrough~~ done at <hash/evidence>` markers.
+- `CHANGELOG.md` is append-only and deliberately NOT repointed when files move
+  here (frozen-historical path references).
 
-## Why Archive?
+## Finding things
 
-- Reduce documentation size: 26MB → 2MB (target)
-- Improve navigation: Keep only recent/relevant reports in active folder
-- Historical reference: Archived reports still available via git history
-- Cleaner structure: Active folder contains only current/relevant status
-
-## Accessing Archived Reports
-
-Archived reports can be accessed in three ways:
-
-1. **Direct Access**: Browse this directory
-2. **Git History**: Use `git log` to view historical commits
-3. **Search**: Use `grep` to find specific topics
-
-## Archive Date
-
-Archived on: 2026-01-13
-Reason: Documentation cleanup and bloat reduction
-Report: See `docs/status/2026-01-13_17-40_DEEP-RESEARCH-COMPREHENSIVE-ANALYSIS.md`
-
----
-
-**Note**: This archive is maintained as part of Setup-Mac project documentation cleanup initiative.
+1. `grep -l <topic> docs/status/archived/` — full-text search is the primary tool.
+2. `git log --follow docs/status/archived/<file>` — pre-archive history.
+3. Open work never lives here: check [`../../todo/`](../../todo/) libraries and
+   [`TODO_LIST.md`](../../../TODO_LIST.md) first.
