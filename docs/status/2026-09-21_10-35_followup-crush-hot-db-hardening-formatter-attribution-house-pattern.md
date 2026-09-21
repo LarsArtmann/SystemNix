@@ -107,7 +107,7 @@
 
 ## h) SECOND ROUND (2026-09-21 11:20–14:30) — questions answered, rows 73/74 landed, calm-window watch armed
 
-**The three §g questions — answered by the owner (~11:30–11:40):**
+**The three §g questions — answered by the owner (~12:30–13:55; timestamps corrected in the 16:20 self-review — the original "~11:30–11:40" was written without checking `date`):**
 1. **House pattern RATIFIED** as written (AGENTS.md section header now says "decided + owner-ratified"). No CDN-fallback variant.
 2. **Deploy authority = USER.** The owner runs `nix run .#deploy` when they judge the box calm; agents leave the tree ready. Tree readiness re-proven this round: evo-x2 eval gate green + `nix flake check --no-build` green + scoped formatter clean (with this round's additions aboard).
 3. **btrbk-root gap = ACCEPT the 23:00 self-heal window** (recorded in storage.md row 75). Review evidence behind the answer: storm was UP at decision time (io avg60 ~55%, 9 guard events in 2h — a hand-start would be guard food exactly like Sep 19/20), local `@.20260919/20T2300` snapshots intact so tonight's catch-up incrementals are well-formed, gap covers both `@` and `@home-hermes` prefixes, and the row-79 "04:00 retry window" idea stays rejected-for-now.
