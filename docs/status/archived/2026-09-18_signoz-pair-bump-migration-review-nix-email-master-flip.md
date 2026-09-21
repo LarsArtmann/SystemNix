@@ -1,5 +1,7 @@
 # 2026-09-18 — signoz pair + nix-email master flip (probe → migration review → build green)
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — the bump landed in-tree 2026-09-18 and rode the privileged deploys of 2026-09-20 (system-786/787/791; the browser-history probe purge fired 2026-09-20 11:33:55 on the first privileged deploy per CHANGELOG), so the migration-126 + tokenizer-flip deployment and its post-deploy login verification are done. Sonic still v1.14.x upstream — the Go-1.26 patches correctly remain. Everything below was green at write time.
+
 ## Scope
 
 Two flake-input updates requested by the user ("Time for an update!?" / "Why
@@ -126,14 +128,14 @@ upstream signal — probe first):
 
 ## Deploy notes
 
-- `nix run .#deploy` builds + restarts the signoz units (restartTriggers on
+- ~~`nix run .#deploy` builds + restarts the signoz units (restartTriggers on
   the rendered configs fire). The metadata migration 126 runs inside signoz
   start; the `DELETE FROM migration_lock` preStart hygiene is already in
-  place (signoz.nix).
-- Post-deploy: verify the SigNoz UI login (impersonation check in
+  place (signoz.nix).~~ done — deployed via the 2026-09-20 privileged deploy chain (system-786→791; migration 126 ran at signoz start).
+- ~~Post-deploy: verify the SigNoz UI login (impersonation check in
   post-deploy-check covers the endpoint; the tokenizer default flip is the
   one behavioral change — if a stale browser session was JWT-based it
-  simply re-authenticates).
+  simply re-authenticates).~~ done — impersonation smoke green across the 09-20 deploy rounds (baseline re-frozen at 2 known FAILs, 19-47 §a.6).
 - Watchdog: clickhouse/collector/signoz dashboards + the existing alert
   rules are rev-agnostic; no rule edits needed.
 

@@ -1,5 +1,7 @@
 # Boot-Mirror Deploy: System LIVE but UN-ANCHORED — rc=3 Smoke Regression (Browser History 503), Profile Stuck at system-785
 
+> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — the un-anchored hazard closed the same afternoon: system-786 anchored 14:08 (`fc49dbe5`), then 787/791; the rc=3 regression was root-caused in `2026-09-20_13-58` (browser-history AGENT_FRESHNESS gate deadlock; Pocket ID transient SQLITE_BUSY); the full F06–F17 chain completed per the 15-30/15-57 reports (mirror verified + Boot000C Samsung-first + push `541fab97`); the four doctrines (anchor-check-first, drv-path-diff, overlay-non-reach, harmful-shim-lifecycle) live in AGENTS.md. All open items struck inline below.
+
 _Sequence: continuation of `2026-09-20_11-00_nodejs-slim-shim-not-reaching-drv-deploy-rc1.md`. Covers 11:02 → 12:15 (2026-09-20). User directive: "just use a working cached version" + full autonomous execution; queue-driven, pressure-gated. This report ends in a WAIT state per user instruction._
 
 ## Headline
