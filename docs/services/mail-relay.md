@@ -60,13 +60,17 @@ admin-UI-only: _Administration → Settings → Notification settings_, point th
    `status=bounced` line in the postfix journal is the real signal.
    **Status 2026-09-18:** steps 1+3 are DONE (real key deployed,
    `mail_relay_credential_placeholder 0`) and the runbook test send is ACCEPTED
-   (`status=sent (250 ...)`, live 2026-09-18) — but the SPF TXT at the
-   registrar is still the lockdown `v=spf1 -all` while the DKIM
-   `resend._domainkey` record exists. The 250 is Resend's account-owner
-   allowance (`lars@larsartmann.cloud`), not full verification: REPLACE the
-   SPF record with Resend's shown include (do not keep `-all` alongside it),
-   wait for "Verified" in the dashboard, then re-test and confirm a paperless
-   share-link / forgejo notification reaches a non-owner inbox.
+   (`status=sent (250 ...)`, live 2026-09-18). SPF CORRECTION 2026-09-21
+   (live dig + domains repo): the SPF records are DONE — the apex lockdown
+   `v=spf1 -all` DELIBERATELY STAYS (non-sending-domain hardening; Resend
+   never sends with an apex envelope-from), and Resend's SPF verification
+   rides the LIVE routing-subdomain CNAMEs `send.larsartmann.cloud` →
+   `send.forge.rmta.net` + `rsend.larsartmann.cloud` →
+   `rsend-euw1.forge.rmta.net` (domains repo `318affa`; NEVER add
+   `include:amazonses.com` to the apex). The 250 may still be the
+   owner-address allowance (`lars@larsartmann.cloud`): confirm "Verified" in
+   the dashboard, then confirm a paperless share-link / forgejo notification
+   reaches a non-owner inbox.
 3. **Set the credential** (interactive editor, never on a command line — the
    fish_history leak class):
    ```
