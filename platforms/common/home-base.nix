@@ -25,6 +25,7 @@ in
     ./programs/git.nix
     ./programs/jujutsu.nix
     ./programs/fzf.nix
+    ./programs/superfile.nix
     ./programs/direnv.nix
     ./programs/pre-commit.nix
     ./programs/keepassxc.nix
