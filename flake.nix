@@ -882,8 +882,35 @@
               ++ lib.optionals (lib.hasSuffix "-linux" system) linuxOnlyOverlays;
           };
 
-          # Use treefmt-full-flake's formatter which includes alejandra in PATH
-          formatter = treefmt-full-flake.formatter.${system};
+          # Formatter: treefmt-full-flake's treefmt with ONE local patch —
+          # generated HTML report bundles under docs/ are NEVER formatted
+          # (AGENTS.md "Big self-contained HTML reports": the inline mermaid
+          # JS is generated content; prettier expands the 3.6 MB bundle to
+          # 7.8 MB and that churn has oscillated the blob in git history
+          # repeatedly — 2026-09-20 and 2026-09-21). The upstream wrapper
+          # bakes its --config-file store path, so the config text is
+          # extracted from the wrapper and regenerated with the excludes
+          # added; the formatter programs and their versions stay untouched.
+          formatter =
+            let
+              upstream = treefmt-full-flake.formatter.${system};
+              configLine =
+                lib.findFirst
+                  (line: lib.hasInfix "--config-file=" line)
+                  (throw "treefmt-full-flake wrapper no longer carries --config-file; rework the formatter override in flake.nix")
+                  (lib.splitString "\n" (builtins.readFile "${upstream}/bin/treefmt"));
+              upstreamConfig = builtins.head (
+                builtins.match ".*--config-file=([^[:space:]]+).*" configLine
+              );
+              patchedConfig = pkgs.runCommand "treefmt-systemnix-excludes.toml" { } ''
+                substitute ${upstreamConfig} $out \
+                  --replace 'excludes = [' 'excludes = [
+      "docs/**/*.html",'
+              '';
+            in
+            pkgs.writeShellScriptBin "treefmt" ''
+              exec ${upstream}/bin/treefmt --config-file=${patchedConfig} --tree-root-file=flake.nix "$@"
+            '';
 
           packages =
             (mkLarsPackages system)
