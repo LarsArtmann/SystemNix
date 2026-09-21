@@ -396,7 +396,18 @@ in
           "/mnt/pool"
           "/mnt/btrfs-root"
         ];
-        serviceConfig.TimeoutStartSec = "24h";
+        serviceConfig = {
+          TimeoutStartSec = "24h";
+          # btrbk-data oom lesson (2026-08-21): a full-tree send charges its
+          # page cache to this unit's cgroup — root re-sends are live since
+          # the 2026-09-12 snapshot-loss scenario, so the same 20.6G class
+          # applies. MemoryHigh throttles reclaim instead of letting oomd
+          # kill a send that was making progress; OOMScoreAdjust = -250
+          # keeps the restart-expensive nightly send out of oomd's preferred
+          # victims (flm at +300 stays the designated sacrifice).
+          MemoryHigh = "4G";
+          OOMScoreAdjust = -250;
+        };
         inherit onFailure;
       };
       btrbk-data = {
@@ -431,7 +442,15 @@ in
       };
       btrbk-pool = {
         unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
-        serviceConfig.TimeoutStartSec = "1h";
+        serviceConfig = {
+          TimeoutStartSec = "1h";
+          # Same treatment as btrbk-data (the nightly walk over services/*
+          # charges page cache to this cgroup): throttle early, never become
+          # the oomd victim. A snapshot-only run never approaches 4G — the
+          # ceiling is pure insurance.
+          MemoryHigh = "4G";
+          OOMScoreAdjust = -250;
+        };
         inherit onFailure;
       };
       btrbk-forgejo = lib.mkIf forgejoDedicated {
@@ -652,6 +671,11 @@ in
         script = ''
           set -euo pipefail
           MAX_AGE_DAYS=3
+          # 2-day early-warning boundary: one storm-eaten nightly send must
+          # surface a full day BEFORE the 3-day gate can FAIL (2026-09-17 §f.5:
+          # the single FAIL tier was too late to act on; 2026-09-19/20 both
+          # root sends were guard-stopped mid-send while the gate stayed green).
+          WARN_AGE_DAYS=2
 
           findmnt -n /mnt/pool >/dev/null || { echo "FAIL: /mnt/pool is not mounted"; exit 1; }
 
@@ -695,6 +719,10 @@ in
                 exit 1
               fi
               echo "WARN: prefix '$prefix' in $dir: newest backup is $age_days days old"
+              return
+            fi
+            if [ "$age_days" -ge "$WARN_AGE_DAYS" ]; then
+              echo "WARN: prefix '$prefix' in $dir: newest backup is $age_days day(s) old (past the ''${WARN_AGE_DAYS}d early-warning boundary; the ''${MAX_AGE_DAYS}d gate FAILs if tonight's send does not land)"
               return
             fi
             echo "OK: $dir prefix '$prefix' newest backup is $age_days day(s) old"
