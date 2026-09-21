@@ -508,7 +508,7 @@ in
         enable = true; # Browser history intelligence server
         # One-time cleanup for the 2026-09-18 registration-gate probe user:
         # the freeze reboots already dropped its users_view row (live
-        # browser_history_user_count 0 = pre-probe value), so only the
+        # browser_history_users 0 = pre-probe value), so only the
         # UserRegistered journal event remains in the DB. Purged by a
         # marker-guarded ExecStartPre at the next server start (no root
         # needed — the service user owns the StateDirectory). Remove this

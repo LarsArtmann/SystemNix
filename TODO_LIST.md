@@ -119,7 +119,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Forgejo mirror monitoring depth** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Pocket ID regenerateSecretsFor guard** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Post-deploy smoke for the browser-history registration gate using the CSRF double-submit dance** → [docs/todo/services.md](docs/todo/services.md)
-- [ ] **Gatus check on `browser_history_user_count`: alert on DECREASE or exceed of its pre-probe baseline** → [docs/todo/services.md](docs/todo/services.md)
+- [ ] **Gatus check on `browser_history_users`: alert on DECREASE or exceed of its pre-probe baseline** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **browser-history registration-surface audit: verify `/auth/import` is unreachable unauthenticated on the deployed vHost path + sweep cqrs-htmx for OTHER user-creation paths bypassing `registrationMu`** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **DiscordSync Immich cross-archive wiring: deploy + go-live chain (FOD wave → deploy → user API key → post-deploy verify)** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Health Hub: expose fetch-timeout/push-cadence as module options** → [docs/todo/services.md](docs/todo/services.md)

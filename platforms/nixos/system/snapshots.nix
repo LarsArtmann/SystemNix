@@ -17,8 +17,9 @@ let
   # (@go, @npm, @cargo) were removed 2026-08-17: their contents moved to
   # /mnt/buildcache (GOMODCACHE, npm_config_cache) or were stale, and plain
   # ~/go / ~/.npm dirs inside @ hold nothing churning. @cache-home stays
-  # because it still carries ~16 GB of LIVE app caches that have no
-  # buildcache home (nix flake eval cache 6G, browser caches, gopls…) —
+  # because it still carries ~37 GB of LIVE app caches (measured 2026-09-18
+  # during the Samsung cache-tier assessment) that have no
+  # buildcache home (nix flake eval cache, browser caches, gopls…) —
   # its snapshot-exclusion from btrbk's @ snapshots is exactly its job.
   # Deleting it would push all that churn into daily @ snapshots + pool
   # sends. Revisit only if those caches get their own off-NVMe home.
