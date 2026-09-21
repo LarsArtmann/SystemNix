@@ -19,7 +19,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 
 - [ ] **Phase 2: hot DBs off the QLC root** → [docs/todo/storage.md](docs/todo/storage.md) — BLOCKED: remaining work (pocket-id/postgres/discordsync migration waves + docker data-root) is owner sudo windows; fsync measurement, verdicts, entry snippets and runbook landed (storage.md + status report)
 - [ ] **Pool + disk-domain quality (2026-08-28 review)** → [docs/todo/storage.md](docs/todo/storage.md) — RUN 2026-09-22 (task queue `000001a0c5fdb2dd3166a37c82d89dc5be6c`): cache-fallback sweep executed + converged (storage.md row marked done; HM symlinks for pnpm cache/state + cargo registry, deploy-gated). NOT finished: remaining [ready] library items — the VM-test rebuild is PSI-gated (io avg10 ~68% at session time, gate <20%) and the mountPoint-vs-HM-symlink eval guard is a later run — BLOCKED: PSI-gated item cannot run mid-storm; guard item left for queue pacing
-- [ ] **restic repo on pool for app dumps (dedup)** → [docs/todo/storage.md](docs/todo/storage.md)
+- [x] **restic repo on pool for app dumps (dedup)** → [docs/todo/storage.md](docs/todo/storage.md) — RUN 2026-09-22: `restic-app-dumps` module landed (repo + nightly 05:45 backup/prune, enable in configuration.nix); first run + live verification deploy-gated
 - [ ] **Own-tools NVMe→pool migrations: discordsync + browser-history remain** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Browser-history DB backup** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Implement offsite Borg leg to Hetzner StorageBox** → [docs/todo/storage.md](docs/todo/storage.md)
@@ -281,3 +281,4 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 | [docs/todo/pixel6.md](docs/todo/pixel6.md)         | Pixel 6 recovery → media-archive project                                                                 |
 
 _Completed work: [CHANGELOG.md](./CHANGELOG.md). Long-term ideas: [ROADMAP.md](./ROADMAP.md)._
+- [ ] **VM test for the restic-app-dumps module** → [docs/todo/storage.md](docs/todo/storage.md)
