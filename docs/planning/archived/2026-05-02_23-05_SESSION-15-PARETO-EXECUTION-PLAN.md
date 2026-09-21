@@ -1,5 +1,7 @@
 # SystemNix — Session 15 Execution Plan
 
+~~> **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — every task is done or moot (ComfyUI row moot — `comfyui.nix` deleted in session 73; dnsblockd extracted; mr-sync now an external flake input + `modules/nixos/services/mr-sync.nix`; the harden/serviceDefaults patterns all landed). No live task survives verification.~~ done (moot — comfyui.nix removed in session 73; FEATURES.md carries the retirement)
+
 **Date:** 2026-05-02 23:05
 **Author:** Crush AI
 **Approach:** Pareto-optimized — 1% → 4% → 20% → remaining
