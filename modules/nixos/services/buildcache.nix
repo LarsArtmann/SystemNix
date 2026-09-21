@@ -335,7 +335,10 @@
             # (gobuild gocache gomod - set by BuildFlow sessions as dead-mount
             # fallbacks) - the original 3-name list evaded them forever, leaving
             # unowned NVMe churn after every dead-mount episode.
-            for d in goimports go go-build gobuild gocache gomod; do
+            # 2026-09-22 sweep: pnpm (dlx/metadata cache, ~/.cache/pnpm — the
+            # store symlink covers only the store; env-less pnpm recreates the
+            # cache dir as a real dir on the NVMe during dead-mount windows).
+            for d in goimports go go-build gobuild gocache gomod pnpm; do
               if [ -e "${homeDir}/.cache/$d" ] && [ ! -L "${homeDir}/.cache/$d" ]; then
                 rm -rf -- "${homeDir}/.cache/$d"
                 echo "reaped real dir at ${homeDir}/.cache/$d (HM symlink will replace it)"

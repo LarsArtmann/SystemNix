@@ -404,6 +404,18 @@ in {
       # store is redirected via symlink at its default location instead —
       # mechanism-independent, survives pnpm config-scheme changes.
       ".local/share/pnpm/store".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/pnpm-store";
+      # 2026-09-22 cache-fallback sweep (task queue, storage domain): env-less
+      # processes fall back to the DEFAULT cache locations on the QLC NVMe —
+      # same class as the go-build symlink above. pnpm's dlx/metadata cache
+      # (~/.cache/pnpm — pnpm ignores npm_config_cache for everything except
+      # the store), its state file (~/.local/state/pnpm), and cargo's registry
+      # (~/.cargo/registry — used when CARGO_HOME is absent; converges onto
+      # the SAME registry the env'd cargo already populates) are symlinked.
+      # Real-dir occupants are removed by the activation block below
+      # (rebuildable cache data only).
+      ".cache/pnpm".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/pnpm-cache";
+      ".local/state/pnpm".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/pnpm-state";
+      ".cargo/registry".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/cargo/registry";
 
       # golangci-lint-lsp wrapper — pins the lint cache to /mnt/buildcache but
       # falls back to ~/tmp/go-lint when the mount is dead (the fish
@@ -448,6 +460,26 @@ in {
     # data folder onto /data and removes the stray manually-copied
     # ~/.local/bin/jan (AppImage binary; fails on NixOS stub-ld) so the
     # nixpkgs FHS-wrapped jan wins on PATH.
+    # Cache-fallback convergence (2026-09-22 sweep, storage domain): reap the
+    # real dirs occupying the pnpm/cargo default cache paths BEFORE HM's
+    # checkLinkTargets would abort on "Existing file ... in the way"
+    # (buildcache-usb-recovery reap discipline: rebuildable cache data only,
+    # rm not trash — trash would write them to the NVMe .Trash). Targets on
+    # the mount are pre-created so the symlinks never dangle. Skipped cleanly
+    # when the buildcache SSD is absent (next successful activation converges).
+    activation.migrate-buildcache-fallback-caches =
+      lib.hm.dag.entryBefore ["checkLinkTargets"] ''
+        if mountpoint -q /mnt/buildcache; then
+          mkdir -p /mnt/buildcache/pnpm-cache /mnt/buildcache/pnpm-state /mnt/buildcache/cargo/registry
+          for d in .cache/pnpm .local/state/pnpm .cargo/registry; do
+            if [ -e "$HOME/$d" ] && [ ! -L "$HOME/$d" ]; then
+              rm -rf -- "$HOME/$d"
+              echo "migrated buildcache fallback: removed real dir $HOME/$d (HM symlink replaces it)"
+            fi
+          done
+        fi
+      '';
+
     activation.jan-data-link = lib.hm.dag.entryAfter ["writeBoundary"] ''
       JAN_DATA="$HOME/.local/share/Jan/data"
       JAN_TARGET="/data/ai/models/jan"
