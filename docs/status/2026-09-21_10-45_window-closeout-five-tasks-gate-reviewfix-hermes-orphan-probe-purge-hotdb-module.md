@@ -12,7 +12,7 @@
 | `000001a0b7c158b0…7453` | Same item, second queue ID (dispatches 4–6) | Same — verification-only repeats |
 | `000001a0bbb066…26a74a` | `services.hot-db` NixOS module (Phase 2 mechanism) | **LANDED + verified**, ships DORMANT; closeout report `067cbe97` |
 
-Closeout reports read first, as instructed: `docs/status/archived/2026-09-19_00-59_task-…78bd6.md`, `2026-09-19_03-17_task-…9f8a09f.md`, `2026-09-19_05-28_task-…86a1.md`, `2026-09-19_06-28_task-…7453.md`, `2026-09-20_09-46_task-…26a74a.md`. Every claim below was re-verified against the live tree/host this pass unless cited otherwise.
+Closeout reports read first, as instructed: `docs/status/archived/2026-09-19_00-59_task-…78bd6.md`, `docs/status/archived/2026-09-19_03-17_task-…9f8a09f.md`, `docs/status/archived/2026-09-19_05-28_task-…86a1.md`, `docs/status/archived/2026-09-19_06-28_task-…7453.md`, `docs/status/2026-09-20_09-46_task-…26a74a.md`. Every claim below was re-verified against the live tree/host this pass unless cited otherwise.
 
 ---
 

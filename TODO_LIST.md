@@ -34,6 +34,9 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Crush-DB migration: baseline + follow-through** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Rebuild `hot-db` + `crush-hot-db` VM tests green on the current tree (quiet-IO window)** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Samsung 2nd boot disk (boot-mirror): activation + reboot pending (deploy landed 2026-09-19)** → [docs/todo/storage.md](docs/todo/storage.md)
+- [ ] **T14 hot-db tier monitoring: mount-presence textfile metric (fail-closed) + Gatus checks for `/mnt/hot` + per-entry mounts** → [docs/todo/storage.md](docs/todo/storage.md)
+- [ ] **`migrate-hot-db.sh` stub-fixture test BEFORE its first user migration window** → [docs/todo/storage.md](docs/todo/storage.md)
+- [ ] **Update the Phase-2 plan doc's T-task table with completion status (T3/T4/T6/T7/T8 done; T5/T9-T15 pending)** → [docs/todo/storage.md](docs/todo/storage.md)
 
 ### stability
 
@@ -121,6 +124,8 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **DiscordSync Immich cross-archive wiring: deploy + go-live chain (FOD wave → deploy → user API key → post-deploy verify)** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Health Hub: expose fetch-timeout/push-cadence as module options** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Health Hub: add post-deploy smoke section to post-deploy-check.sh** → [docs/todo/services.md](docs/todo/services.md)
+- [ ] **Remove the self-neutralized `probeRegistrationCleanup` block (purge EXECUTED 2026-09-20 11:33:55, journal-verified) — BLOCKED: keep or rip the generic mechanism (option + script + fixture check) after the executed purge — reusable probe-cleanup pattern or YAGNI rip?** → [docs/todo/services.md](docs/todo/services.md)
+- [ ] **Browser-history quiet-day 503 (agent freshness lapses when there is nothing to ingest): local Gatus-condition mitigation + upstream empty-batch heartbeat** → [docs/todo/services.md](docs/todo/services.md)
 
 ### upstream
 
@@ -157,6 +162,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **go-taskqueue: queue-level work-claiming/dedup** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **go-taskqueue: visibility surface for the citation check (journal fact or harvest counter)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Queue intake freshness rule: items asserting live system state ("X is re-enabled and ACTIVE") get a mandatory reconcile-against-the-relevant-AGENTS.md-section step before execution** → [docs/todo/upstream.md](docs/todo/upstream.md)
+- [ ] **Queue done-signal semantics — BLOCKED: what does the queue actually consume to mark a task done, and is the re-dispatch loop intended to terminate on something agents cannot see from inside the repo? (8 repeat dispatches past closure/blocking in the 2026-09-19 window)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 
 ### security
 
@@ -235,6 +241,8 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Closeout/task runs verify the footer commit landed before emitting TQ_RESULT** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Pre-commit: classify `path ... is not valid` eval failures as a loud WARN naming the repair command** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **docs/CONTRIBUTING.md convention: boot-scoped vs window-scoped journal assertions** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] **Nix `--json` deprecation sweep over scripts/ + docs call sites** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] **Encode the repeat-dispatch report policy for verification-only queue repeats (annotate-only vs full report) — BLOCKED: which convention should be encoded — full report per dispatch, or TODO/library annotation only with reports reserved for state changes?** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 
 ### pixel6
 
