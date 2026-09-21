@@ -44,19 +44,10 @@ ITERS="${ITERS:-300}"
 BYTES="${BYTES:-4096}"
 LOAD_RUNTIME="${LOAD_RUNTIME:-0}"
 
-[ -d "$DIR" ] || {
-  echo "FAIL: $DIR is not a directory" >&2
-  exit 1
-}
-[ -w "$DIR" ] || {
-  echo "FAIL: $DIR not writable by $(id -un)" >&2
-  exit 1
-}
+[ -d "$DIR" ] || { echo "FAIL: $DIR is not a directory" >&2; exit 1; }
+[ -w "$DIR" ] || { echo "FAIL: $DIR not writable by $(id -un)" >&2; exit 1; }
 
-command -v python3 >/dev/null || {
-  echo "FAIL: python3 required" >&2
-  exit 1
-}
+command -v python3 >/dev/null || { echo "FAIL: python3 required" >&2; exit 1; }
 
 SCRATCH="$(mktemp "$DIR/.fsync-bench-XXXXXX")"
 LOADFILE=""
