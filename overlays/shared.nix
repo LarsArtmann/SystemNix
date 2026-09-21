@@ -91,32 +91,4 @@
       fastflowlm = prev.callPackage ../pkgs/fastflowlm.nix { };
     }
   )
-
-  (
-    _final: prev:
-    prev.lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
-      d2 = prev.callPackage (prev.path + "/pkgs/by-name/d2/d2/package.nix") {
-        libgbm = prev.runCommand "libgbm-stub" { } "mkdir $out";
-        playwright-driver = {
-          browsers = prev.runCommand "playwright-stub" { } "mkdir $out";
-        };
-      };
-    }
-  )
-
-  (
-    _final: prev:
-    prev.lib.optionalAttrs prev.stdenv.hostPlatform.isLinux {
-      # nixpkgs 26.11.20260916's playwright-webkit is cold-build-broken
-      # (auto-patchelf: libmanette-0.2.so.0 missing from webkit-linux
-      # buildInputs). d2 only needs ONE browser for PNG export — serve it
-      # the chromium-only preset until nixpkgs repairs the webkit bundle.
-      # Drop when nixpkgs' playwright-webkit builds from source again.
-      d2 = prev.d2.override {
-        playwright-driver = prev.playwright-driver // {
-          browsers = prev.playwright-driver.browsers-chromium;
-        };
-      };
-    }
-  )
 ]
