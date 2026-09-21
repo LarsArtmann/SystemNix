@@ -41,6 +41,7 @@ _: {
 
       cfg = config.services.paperless;
       inherit (cfg) dataDir;
+      pgBackupDir = "/mnt/pool/backups/paperless";
       llmEndpoint = "http://127.0.0.1:${toString ports.fastflowlm}/v1";
       embeddingEndpoint = "http://127.0.0.1:${toString ports.llama-embeddings}/v1";
 
@@ -996,7 +997,90 @@ _: {
                   echo "paperless-dashboard-provision: done - owner=$OWNER created=$CREATED skipped_existing=$SKIPPED_EXISTING skipped_no_rules=$SKIPPED_NO_RULES dropped_rules=$DROPPED_RULES dashboard_assertions=$(printf '%s' "$CREATED_DASH_IDS" | wc -w)"
                 '';
               };
+            }
+            // {
+              # Nightly PG-level dump of the paperless database (pg_dump custom
+              # format, peer auth as the postgres superuser). The document
+              # exporter alone is NOT a PG DR path: after the postgres cluster
+              # leaves `@` snapshot coverage (postgres hot-db wave), the
+              # manifest-based exporter becomes importer-only — the DB dump is
+              # the fast restore path. miniflux-backup pattern; pool leaf via
+              # the cv-backup dir-oneshot shape.
+              paperless-db-backup-dir = {
+                description = "Create Paperless PG backup directory on the HDD pool";
+                wantedBy = [ "multi-user.target" ];
+                unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
+                serviceConfig = lib.mkMerge [
+                  {
+                    Type = "oneshot";
+                    User = "root";
+                    RemainAfterExit = true;
+                  }
+                  (harden {
+                    MemoryMax = "128M";
+                    ReadWritePaths = [ "/mnt/pool" ];
+                    CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
+                  })
+                  (serviceOneshotDefaults { })
+                ];
+                script = ''
+                  mkdir -p ${pgBackupDir}
+                  chown postgres:postgres ${pgBackupDir}
+                  chmod 0755 ${pgBackupDir}
+                '';
+              };
+
+              paperless-db-backup = {
+                description = "Paperless PostgreSQL backup (pg_dump custom format)";
+                after = [
+                  "postgresql.target"
+                  "paperless-db-backup-dir.service"
+                ];
+                wants = [
+                  "paperless-db-backup-dir.service"
+                  "postgresql.target"
+                ];
+                # Detached DAS fails the run as a clean dependency error,
+                # never 226/NAMESPACE (btrbk doctrine).
+                unitConfig.RequiresMountsFor = [ pgBackupDir ];
+                inherit onFailure;
+                startLimitBurst = 5;
+                startLimitIntervalSec = 300;
+                serviceConfig = lib.mkMerge [
+                  {
+                    Type = "oneshot";
+                    User = "postgres";
+                    Group = "postgres";
+                    ExecStart = pkgs.writeShellScript "paperless-db-backup" ''
+                      set -euo pipefail
+                      dst="${pgBackupDir}/paperless-db-$(date +%Y-%m-%d).dump"
+                      ${config.services.postgresql.package}/bin/pg_dump \
+                        --format=custom --file="$dst" ${cfg.settings.PAPERLESS_DBNAME or "paperless"}
+                      chmod 0644 "$dst"
+                      # 14-day retention (cv/miniflux pattern): full dump nightly.
+                      find ${pgBackupDir} -name "paperless-db-*.dump" -mtime +14 -delete
+                      echo "paperless-db-backup: wrote $dst"
+                    '';
+                    ReadWritePaths = [ pgBackupDir ];
+                  }
+                  (serviceOneshotDefaults { })
+                  ioTier.background
+                ];
+              };
             };
+
+          systemd.timers.paperless-db-backup = {
+            description = "Nightly Paperless PostgreSQL backup";
+            wantedBy = [ "timers.target" ];
+            after = [ "mnt-pool.mount" ];
+            timerConfig = {
+              # 02:00 — staggered away from the exporter (01:30), miniflux
+              # (02:45), cv (03:17), forgejo (03:30).
+              OnCalendar = "*-*-* 02:00:00";
+              RandomizedDelaySec = "10min";
+              Persistent = true;
+            };
+          };
 
           # Service-integration registry entries: the document-exporter backup
           # freshness + the Pocket ID OIDC client (django-allauth;
@@ -1031,6 +1115,18 @@ _: {
                   "https://paperless.${config.networking.domain}/accounts/oidc/pocket-id/login/callback/"
                 ];
                 pkceEnabled = true;
+              };
+            };
+            # PG-level dump freshness (paperless-db-backup.timer, 02:00) —
+            # separate entry so the exporter manifest and the DB dump are
+            # watched independently by backup-coordination.
+            paperless-db = {
+              inherit (cfg) enable;
+              vHost.layer = "none";
+              backup = {
+                directory = pgBackupDir;
+                filePattern = "paperless-db-*.dump";
+                maxAgeHours = 25;
               };
             };
             paperless-consumer = {
