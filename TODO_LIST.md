@@ -18,7 +18,6 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 ### storage
 
 - [ ] **Phase 2: hot DBs off the QLC root** → [docs/todo/storage.md](docs/todo/storage.md) — BLOCKED: remaining work (pocket-id/postgres/discordsync migration waves + docker data-root) is owner sudo windows; fsync measurement, verdicts, entry snippets and runbook landed (storage.md + status report)
-- [ ] **Paperless PG-level dump (or ratify exporter-only RPO) before the postgres hot-db wave** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Pool + disk-domain quality (2026-08-28 review)** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **restic repo on pool for app dumps (dedup)** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Own-tools NVMe→pool migrations: discordsync + browser-history remain** → [docs/todo/storage.md](docs/todo/storage.md)
