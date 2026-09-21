@@ -8,8 +8,11 @@ _: {
     l = "ls -laSh";
     t = "tree -h -L 2 -C --dirsfirst";
 
-    # Terminal file managers
-    spf = "superfile"; # superfile (nixpkgs names the binary `superfile`, upstream docs use `spf`)
+    # NOTE: superfile (`spf`) deliberately has NO alias here — the nixpkgs/upstream
+    # flake binary is named `superfile`, and cd-on-quit needs a shell FUNCTION
+    # (defined in fish.nix / zsh.nix / bash.nix). An alias of the same name
+    # would shadow the function (fish resolves config-defined functions before
+    # autoload files; zsh/bash expand aliases before function lookup).
 
     # Password manager shortcuts
     kop = "keepassxc &";

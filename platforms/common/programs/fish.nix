@@ -250,5 +250,25 @@ in
           fish_add_path --prepend --global $GOPATH/bin
         end
       '';
+
+    # superfile wrapper (cd-on-quit): after quitting, source superfile's
+    # lastdir file so the shell lands in the browsed directory. Calls
+    # `command superfile` — the upstream flake binary is named `superfile`,
+    # not `spf`. Function, NOT an alias: an alias would shadow this function.
+    functions.spf = {
+      description = "superfile terminal file manager with cd-on-quit";
+      body = ''
+        if test "$(uname -s)" = Darwin
+            set -f spf_last_dir "$HOME/Library/Application Support/superfile/lastdir"
+        else
+            set -f spf_last_dir "$HOME/.local/state/superfile/lastdir"
+        end
+        command superfile $argv
+        if test -f "$spf_last_dir"
+            source "$spf_last_dir"
+            rm -f -- "$spf_last_dir" >/dev/null
+        end
+      '';
+    };
   };
 }

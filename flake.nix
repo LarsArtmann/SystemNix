@@ -93,6 +93,14 @@
       inputs.flake-utils.follows = "flake-utils";
     };
 
+    # Superfile terminal file manager (upstream flake — nixpkgs stuck at 1.3.3,
+    # upstream v1.6.0 ships bubbletea-v2 preview reliability + sidebar config)
+    superfile = {
+      url = "github:yorukot/superfile";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
+    };
+
     # AMD NPU (XDNA) driver for Ryzen AI Max+ Strix Halo
     nix-amd-npu = {
       url = "github:robcohen/nix-amd-npu";
@@ -785,7 +793,7 @@
 
       # Shared extraSpecialArgs for Home Manager — available in all platform home.nix files
       sharedHomeManagerSpecialArgs = {
-        inherit nix-ssh-config crush-config;
+        inherit nix-ssh-config crush-config superfile;
         inherit (theme) colorScheme;
       };
 
