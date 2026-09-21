@@ -895,17 +895,15 @@
             let
               upstream = treefmt-full-flake.formatter.${system};
               configLine =
-                lib.findFirst
-                  (line: lib.hasInfix "--config-file=" line)
+                lib.findFirst (line: lib.hasInfix "--config-file=" line)
                   (throw "treefmt-full-flake wrapper no longer carries --config-file; rework the formatter override in flake.nix")
                   (lib.splitString "\n" (builtins.readFile "${upstream}/bin/treefmt"));
-              upstreamConfig = builtins.head (
-                builtins.match ".*--config-file=([^[:space:]]+).*" configLine
-              );
+              upstreamConfig = builtins.head (builtins.match ".*--config-file=([^[:space:]]+).*" configLine);
               patchedConfig = pkgs.runCommand "treefmt-systemnix-excludes.toml" { } ''
-                substitute ${upstreamConfig} $out \
-                  --replace 'excludes = [' 'excludes = [
-      "docs/**/*.html",'
+                          substitute ${/. + upstreamConfig} $out \
+                            --replace 'excludes = ["*.lock"' 'excludes = [
+                "docs/**/*.html",
+                "*.lock"'
               '';
             in
             pkgs.writeShellScriptBin "treefmt" ''
