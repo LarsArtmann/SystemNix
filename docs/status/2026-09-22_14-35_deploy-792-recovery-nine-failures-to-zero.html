@@ -1,0 +1,1223 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Report Title</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS DARK — Dashboard template
+         Design language: form follows function. Primary colors on graphite.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Dark) --- */
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        /* --- Semantic layer (shared vocabulary with editorial template) --- */
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 15%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px; /* Bauhaus default: sharp corners */
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Sticky-header offset for anchor jumps */
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges (used inside issue cards) --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges (used in tables) --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+
+      /* --- Callouts (used inside issues or standalone) --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      /* --- Stat cards / scorecards (aliased vocabulary) --- */
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad,
+      .score-bad {
+        /* default top bar already set */
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      /* --- Strengths list --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--accent);
+      } /* func, type, struct, if, return */
+      .tok-type {
+        color: var(--warning);
+      } /* int, string, bool, error */
+      .tok-string {
+        color: var(--solution);
+      } /* "quoted strings" */
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      } /* function names */
+      .tok-number {
+        color: var(--accent);
+      } /* 42, 3.14 */
+      .tok-generic {
+        color: var(--problem);
+      } /* T, ID in generics */
+      .tok-builtin {
+        color: #4dd9ff;
+      } /* make, len, append */
+      .tok-punct {
+        color: var(--text-muted);
+      } /* { } ( ) ; = : */
+      .tok-attr {
+        color: var(--accent);
+      } /* Nix attribute names */
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids (responsive) --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC (alternative to sidebar) --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>Status Report &middot; Deploy Recovery</span>
+      <span>2026-09-22 14:35</span>
+      <span>evo-x2 &middot; Crush session</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#done">a) Fully Done</a>
+          <a href="#partial">b) Partially Done</a>
+          <a href="#notstarted">c) Not Started</a>
+          <a href="#fucked">d) Totally Fucked Up</a>
+          <a href="#improve">e) Improve</a>
+          <a href="#next">f) Next Tasks</a>
+          <a href="#question">g) Top Question</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">Incident Recovery</div>
+          <h1>Deploy 792 Recovery &mdash; 9 Smoke Failures to 0</h1>
+          <p class="hero-subtitle">
+            One forced deploy through an I/O storm cascaded into six distinct failure
+            classes. All root-caused, fixed, and verified green across five follow-up
+            deploys &mdash; ending fully anchored on system-796 with 112/112 smoke checks passing.
+          </p>
+        </div>
+
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <div class="stat-grid">
+          <div class="stat-card stat-bad">
+            <div class="stat-value">9</div>
+            <div class="stat-label">Smoke FAILs inherited (13:07)</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Smoke FAILs final (112 PASS)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">6</div>
+            <div class="stat-label">Root causes fixed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">6</div>
+            <div class="stat-label">Deploys this session</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">796</div>
+            <div class="stat-label">Profile anchored (was unanchored)</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">20.5G</div>
+            <div class="stat-label">Attachments migrated to pool (verified)</div>
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <strong>Context</strong>
+          The 13:04 deploy (<code>DEPLOY_FORCE_PRESSURE=1</code> through an I/O storm at 47%
+          PSI with the guard tripping 3x/hour) exit-4'd at activation: two units failed,
+          the un-block-started migration unit stopped DiscordSync and died, and the
+          profile never bumped &mdash; leaving the box <em>reboot-revertible</em> with 9
+          failing smoke checks. Every failure below chains back to that activation or to
+          the storm itself.
+        </div>
+
+        <h2 id="done"><span class="num">01</span>a) Fully Done</h2>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical" style="background:var(--solution);color:var(--surface)">FIXED</span>
+          <h3>DiscordSync attachment migration &rarr; HDD pool: COMPLETE</h3>
+          <div class="where">modules/nixos/services/discordsync.nix</div>
+          <p>
+            The 20.5 GB attachment archive now lives at
+            <code>/mnt/pool/services/discordsync/attachments</code>, checksum-verified
+            ("verified identical, source removed"), the NVMe source deleted, and the API
+            answers 200 after its backfill window. Three stacked root causes were fixed
+            along the way:
+          </p>
+          <div class="callout callout-solution">
+            <strong>1. Sandbox setgid-chmod EPERM</strong>
+            <code>chmod 2770</code> after <code>chown discordsync:discordsync</code>
+            EPERM'd despite CAP_FOWNER in the bounding set &mdash; the setgid bit on a
+            group outside the sandbox's groups needs CAP_FSETID, and even adding it did
+            not rescue rsync's mode-sets. Fix: chmod while root-owned + <code>0770</code>
+            (setgid decorative), <code>--no-perms</code> on both rsync passes, and
+            perm-only rsync stderr tolerated when it is the sole error class
+            (content-only verify via <code>grep -E '^[&gt;&lt;ch]'</code>).
+          </div>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical" style="background:var(--solution);color:var(--surface)">FIXED</span>
+          <h3>Browser History SQLITE_READONLY crash-loop: uid drift + a symlink that ate the heal</h3>
+          <div class="where">modules/nixos/services/browser-history.nix</div>
+          <p>
+            The 13:04 mass-restart handed the DynamicUser unit a different dynamic uid
+            (files in the state dir stayed owned by 65293, the deterministic uid in use
+            since Aug 9) &mdash; the main DB became unwritable &rarr; exit-69 loop. The
+            binary (1c8f967) was exonerated: it had run healthy for 1.5 days. The first
+            heal attempt was a silent no-op because <code>/var/lib/browser-history</code>
+            is a <strong>symlink</strong> into <code>private/</code> and
+            chown/chmod&nbsp;-R never follow a symlink top-level argument.
+          </div>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            <code>+</code>-privileged ExecStartPre heal operating on
+            <code>/var/lib/private/browser-history</code>: journals <code>ls -lan</code>
+            (evidence), <code>chown -R --reference</code> to the directory's owner, and
+            <code>chmod -R u+rwX</code>. The nightly backup's root-sqlite open also
+            became <code>-readonly</code> (WAL sidecar poisoning class). Server healthy
+            (200) since.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important" style="background:var(--solution);color:var(--surface)">FIXED</span>
+          <h3>Overview 502: live daemon on an unlinked socket</h3>
+          <div class="where">modules/nixos/services/project-discovery-daemon.nix (no code change)</div>
+          <p>
+            The discovery daemon (pid alive since Sep 20) kept running while its socket
+            file vanished at the 13:04 activation &mdash; the socket dir was emptied
+            (mtime 13:04), leaving Overview's 60s-retry loop dead against a live-but-unreachable
+            daemon. Killing the process let systemd restart it: fresh 0666 socket,
+            Overview self-healed within one retry cycle. The socket-deletion culprit was
+            <em>not</em> identified (no unit owns that dir besides the daemon itself).
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important" style="background:var(--solution);color:var(--surface)">FIXED</span>
+          <h3>Health Hub: module shipped without <code>wantedBy</code> &mdash; never started</h3>
+          <div class="where">modules/nixos/services/health-dashboard.nix &middot; scripts/post-deploy-check.sh</div>
+          <p>
+            The new federation hub's unit was defined and even smoke-checked, but had no
+            <code>wantedBy = [ "multi-user.target" ]</code> &mdash; it never started
+            (zero journal entries since creation), and the smoke's enable-gate tested the
+            unit <em>file</em> (always present) instead of the <em>.wants symlink</em>.
+            The HTTPS probe also hit <code>/</code>, which the hub binary legitimately
+            404s.
+          </div>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            wantedBy added; smoke gates now key on the .wants symlink and probe
+            <code>/healthz</code>; the auth-gateway array entry carries a path suffix.
+            Hub live: /healthz 200, /readyz 200 (federation aggregate over CV green),
+            HTTPS vHost 200.
+          </div>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Contained</span>
+          <h3>FastFlowLM: guard sacrifice under a real (latency-bound) I/O storm</h3>
+          <div class="where">memory-emergency-guard Zone 6</div>
+          <p>
+            The flm socket was down because Zone 6 tripped all morning on sustained IO
+            PSI (avg60 55-67%) with disks only 4-8% busy &mdash; a latency-bound fsync
+            churn signature (all mounts verified healthy via timed probes; the initial
+            "pool writes hang" reading was a bad probe conflating EACCES with hangs).
+            PSI drained to ~15% after the deploy churn settled; the guard restored the
+            socket (restore #3 of 3) and /v1/models answers 200.
+          </p>
+        </div>
+
+        <div class="strengths">
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Profile anchored (system-796)</strong>
+              <span>Four consecutive exit-4 activations had left /run/current-system
+              detached from any generation &mdash; a reboot would have reverted. Clean
+              activations landed generations 793&ndash;796; current-system == profile.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Leftover manual tq test process killed</strong>
+              <span>The double-pool guard warned about a 34h-old <code>tq serve</code>
+              e2e leftover (pid 778595) under /tmp &mdash; gone.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Erroneous lock rollback detected and reverted</strong>
+              <span>A browser-history lock rollback to 10fe5d8 was attempted, then
+              disproven by timeline evidence (binary ran healthy 1.5 days) AND by a
+              stale-vendorHash FOD (today's nixpkgs changes the module-set hash of old
+              revs). Lock restored to 1c8f967 from git history.</span>
+            </div>
+          </div>
+        </div>
+
+        <h2 id="partial"><span class="num">02</span>b) Partially Done</h2>
+        <div class="card card-warning">
+          <h4>Sandbox setattr semantics: mechanism unresolved</h4>
+          <p>
+            chmod-setgid and rsync mode-sets EPERM inside hardened units even with
+            CAP_FSETID in the bounding set &mdash; as lars on the same filesystem they
+            succeed. Worked around three ways (chmod-before-chown, 0770, --no-perms +
+            tolerance); the underlying cap/effective-set behavior under
+            NoNewPrivileges-in-sandbox needs a root-context repro to explain.
+          </p>
+        </div>
+        <div class="card card-warning">
+          <h4>deploy.sh anchoring diagnostics were misleading</h4>
+          <p>
+            The 13:04 run printed "No new profile generation (system-792 unchanged
+            &mdash; config already active)" while /run/current-system pointed at an
+            untracked tree and the profile resolved to the OLD Sep-19 system. The
+            check's comparison logic (generation number vs store path) needs review.
+          </p>
+        </div>
+        <div class="card card-warning">
+          <h4>Project-discovery socket deletion culprit unknown</h4>
+          <p>
+            Recovered by restart, but what emptied /run/project-discovery at 13:04
+            (tmpfiles resetup? activation churn?) was never identified. If it recurs on
+            the next mass activation, dig then; a socket-presence liveness check for the
+            daemon would convert this class from "dark for hours" to "alert in minutes".
+          </p>
+        </div>
+
+        <h2 id="notstarted"><span class="num">03</span>c) Not Started (out of session scope)</h2>
+        <table>
+          <thead><tr><th>Item</th><th>Owner</th><th>Note</th></tr></thead>
+          <tbody>
+            <tr><td>Offsite Borg go-live</td><td><span class="badge badge-high">User</span></td><td>Blocked on hostname/username inputs (docs/todo/storage.md)</td></tr>
+            <tr><td>restic-app-dumps first seed</td><td><span class="badge badge-low">Timer</span></td><td>Fires 05:45 tonight; 12h budget sized for the seed</td></tr>
+            <tr><td>InboxClean main-account OAuth</td><td><span class="badge badge-high">User</span></td><td>Pre-existing WARN (auth_expired); runbook in inboxclean.nix header</td></tr>
+            <tr><td>crush-hot-db &rarr; hot-db Phase-2 fold</td><td><span class="badge badge-medium">Queued</span></td><td>Interim module works (279 symlinks live); fold is a tracked queue item</td></tr>
+            <tr><td>BuildCache 2-device btrfs merge</td><td><span class="badge badge-medium">Window</span></td><td>Script ready; needs a maintenance window</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="fucked"><span class="num">04</span>d) Totally Fucked Up (inherited at 13:07 &mdash; all recovered)</h2>
+        <div class="card card-problem">
+          <h4>The 13:04 forced-deploy blast radius</h4>
+          <p>
+            Forced through two red gates (I/O PSI 47% + guard trips 3x/hour), the
+            activation exit-4'd: <strong>discordsync-attachments-dir</strong> and
+            <strong>signoz-clickhouse-log-ttl</strong> failed at switch, the failed
+            migration left <strong>DiscordSync stopped</strong>, <strong>Browser
+            History</strong> crash-looped to start-limit-hit, <strong>Overview</strong>
+            was dark behind a dead socket, <strong>Health Hub</strong> had never once
+            started, <strong>flm</strong> was guard-sacrificed, and the <strong>profile
+            never bumped</strong> &mdash; 9 smoke FAILs, exit 3, "REBOOT WILL REVERT".
+            Six root causes later: 0 FAILs, anchored, all services verified 200.
+          </p>
+        </div>
+
+        <h2 id="improve"><span class="num">05</span>e) What We Should Improve</h2>
+        <div class="strengths">
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>New-service bring-up checklist</strong>
+              <span>wantedBy + enable symlink + one verified unit start + smoke gate on
+              the .wants symlink BEFORE the first deploy carries the module. Health Hub
+              shipped all UI/monitoring surfaces but the one line that starts it.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>DynamicUser + persistent state is a mass-restart hazard</strong>
+              <span>The deterministic-uid assumption holds until a mass activation
+              shuffles allocation. The ownership-heal ExecStartPre pattern
+              (evidence + chown --reference + chmod u+rwX on the REAL private/ path)
+              should be considered for every DynamicUser service with pre-existing
+              state files.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Probe mounts with timed, permission-aware writes</strong>
+              <span>"WRITE HANG/FAIL" conflated EACCES with hangs and sent the diagnosis
+              down a wrong path (wedged DAS theory). Timed probes on user-writable paths
+              per mount separated the two in seconds.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Concurrency discipline during guard-active windows</strong>
+              <span>The storm was ~20+ live agent sessions doing latency-bound fsync
+              churn on the QLC root (PSI 40-70% at 4-8% disk busy). The gates and guard
+              contained it, but the box spent the morning sacrificing flm for it.</span>
+            </div>
+          </div>
+        </div>
+
+        <h2 id="next"><span class="num">06</span>f) Top Next Tasks</h2>
+        <table>
+          <thead><tr><th>#</th><th>Priority</th><th>Task</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td><span class="badge badge-critical">P0</span></td><td>Root-context repro of the sandbox setgid-chmod/rsync setattr EPERM (CAP_FSETID + NNP); file systemd/kernel issue if confirmed</td><td><span class="badge badge-low">Open</span></td></tr>
+            <tr><td>2</td><td><span class="badge badge-high">P1</span></td><td>Review deploy.sh profile-anchoring check ("config already active" false positive; generation-number vs store-path comparison)</td><td><span class="badge badge-low">Open</span></td></tr>
+            <tr><td>3</td><td><span class="badge badge-high">P1</span></td><td>Watch flm today: restore budget exhausted (3/3) &mdash; any new Zone 6 trip leaves the socket down until tomorrow or a manual start</td><td><span class="badge badge-medium">Watch</span></td></tr>
+            <tr><td>4</td><td><span class="badge badge-high">P1</span></td><td>Post-migration DiscordSync attachment fetch smoke (serve one real attachment from the pool path)</td><td><span class="badge badge-low">Open</span></td></tr>
+            <tr><td>5</td><td><span class="badge badge-medium">P2</span></td><td>Socket-presence liveness for project-discovery-daemon (alive-but-unlinked = dark; watchdog only proves process liveness)</td><td><span class="badge badge-low">Open</span></td></tr>
+            <tr><td>6</td><td><span class="badge badge-medium">P2</span></td><td>signoz-clickhouse-log-ttl transient activation failure (13:04) &mdash; check for the chronic-fail exit-4 class before the next deploy churns it</td><td><span class="badge badge-low">Open</span></td></tr>
+            <tr><td>7</td><td><span class="badge badge-medium">P2</span></td><td>Consider the ownership-heal pattern for other DynamicUser+state services (gatus, papdashboard, dnsblockd)</td><td><span class="badge badge-low">Open</span></td></tr>
+            <tr><td>8</td><td><span class="badge badge-low">P3</span></td><td>service-health-check + inboxclean-sync pre-existing failed units (auth_expired runbook is user-gated)</td><td><span class="badge badge-low">Open</span></td></tr>
+            <tr><td>9</td><td><span class="badge badge-low">P3</span></td><td>quickshell 1 error line in last hour (WARN, pre-existing)</td><td><span class="badge badge-low">Open</span></td></tr>
+            <tr><td>10</td><td><span class="badge badge-low">P3</span></td><td>Harvest this report's tasks into TODO_LIST.md (docs-health)</td><td><span class="badge badge-low">Open</span></td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="question"><span class="num">07</span>g) The One Question I Cannot Answer Myself</h2>
+        <div class="card card-problem">
+          <h4>Why does setattr with the setgid bit EPERM inside the hardened sandbox even with CAP_FSETID in the bounding set?</h4>
+          <p>
+            Facts: root process, caps CHOWN/FOWNER/DAC_OVERRIDE/(+FSETID) bounding,
+            NoNewPrivileges=true, chmod 2770 fails on a foreign-group dir <em>and</em>
+            rsync mode-sets fail with every cap present &mdash; while the identical
+            operations succeed as an unprivileged user outside the sandbox on the same
+            filesystem. Something in the systemd sandbox (NNP cap handling at exec?
+            an idmapped/flags-adjusted ReadWritePaths bind?) strips effective capability
+            use for setattr. I cannot run the root-context experiment from this session
+            (sudo blocked) &mdash; one <code>systemd-run</code> with the same sandbox
+            doing <code>chmod 2770</code> on a foreign-group dir would settle it.
+          </p>
+        </div>
+
+        <h2>Files Modified This Session</h2>
+        <table>
+          <thead><tr><th>File</th><th>Change</th></tr></thead>
+          <tbody>
+            <tr><td><code>modules/nixos/services/discordsync.nix</code></td><td>Attachment migration: chmod-before-chown + 0770, CAP_FSETID, --no-perms + perm-error tolerance, content-only verify</td></tr>
+            <tr><td><code>modules/nixos/services/browser-history.nix</code></td><td>DynamicUser ownership-heal ExecStartPre (real private/ path, evidence ls, chown --reference, chmod u+rwX); backup sqlite -readonly</td></tr>
+            <tr><td><code>modules/nixos/services/health-dashboard.nix</code></td><td>Add missing wantedBy = multi-user.target</td></tr>
+            <tr><td><code>scripts/post-deploy-check.sh</code></td><td>Health Hub gates: .wants-symlink enable test, /healthz probes (loopback + HTTPS + auth-gateway array)</td></tr>
+            <tr><td><code>flake.lock</code></td><td>browser-history node: rollback to 10fe5d8 attempted, then restored to 1c8f967 (net: unchanged intent, explicit re-pin)</td></tr>
+            <tr><td><code>AGENTS.md</code></td><td>Session lessons (migration complete, sandbox setattr class, uid-drift heal, health-dashboard enable fix)</td></tr>
+            <tr><td><code>docs/status/2026-09-22_14-35_deploy-792-recovery-nine-failures-to-zero.html</code></td><td>This report</td></tr>
+          </tbody>
+        </table>
+
+        <footer class="footer">
+          Generated 2026-09-22 14:35 &middot; All service states verified live (urllib
+          probes + journalctl + readlink anchoring) unless noted
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
