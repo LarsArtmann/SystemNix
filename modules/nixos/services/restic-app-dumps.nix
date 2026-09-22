@@ -104,6 +104,7 @@ _: {
               Type = "oneshot";
               RemainAfterExit = true;
               StateDirectory = "restic-app-dumps";
+              UMask = "0077";
               ExecStart = lib.getExe passwordSetup;
             }
           ];
