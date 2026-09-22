@@ -17,7 +17,30 @@ set -euo pipefail
 
 PROJECT_DIR="/home/lars/projects/SystemNix"
 NIX="/run/current-system/sw/bin/nix"
-export USB_CONTROLLER="0000:c7:00.4"
+USB_CONTROLLER=""
+resolve_das_controller() {
+  local dev bridge_path pci_path
+  for dev in /sys/bus/usb/devices/*/idVendor; do
+    [ -f "$dev" ] || continue
+    if [ "$(cat "$dev")" = "152d" ] && [ "$(cat "${dev%idVendor}idProduct")" = "0567" ]; then
+      bridge_path="$(dirname "$dev")"
+      break
+    fi
+  done
+  if [ -z "${bridge_path:-}" ]; then
+    echo "ERROR: JMS567 DAS bridge (152d:0567) not found — is the DAS enclosure connected?" >&2
+    return 1
+  fi
+  pci_path="$(udevadm info -q path "$bridge_path" 2>/dev/null || true)"
+  USB_CONTROLLER="$(printf '%s\n' "$pci_path" | grep -oE '0000:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9a-f]+' | tail -n1 || true)"
+  if [ -z "$USB_CONTROLLER" ]; then
+    echo "ERROR: no PCI controller ancestor for ${bridge_path}" >&2
+    return 1
+  fi
+  echo "DAS USB controller: $USB_CONTROLLER (via ${bridge_path##*/})"
+}
+resolve_das_controller
+export USB_CONTROLLER
 export SSH_PORT=2222
 export SSHPASS_BIN="/home/lars/.nix-profile/bin/sshpass"
 export BACKUP_DIR="/data/backup-2026-08-11-private-cloud"

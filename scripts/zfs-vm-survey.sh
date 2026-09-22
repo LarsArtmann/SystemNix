@@ -11,7 +11,29 @@
 set -euo pipefail
 
 VM_PATH="/nix/store/036pkvfsp6q1x0i9cwc34md5q7lmjddz-nixos-vm"
-USB_CONTROLLER="0000:c7:00.4"
+USB_CONTROLLER=""
+resolve_das_controller() {
+  local dev bridge_path pci_path
+  for dev in /sys/bus/usb/devices/*/idVendor; do
+    [ -f "$dev" ] || continue
+    if [ "$(cat "$dev")" = "152d" ] && [ "$(cat "${dev%idVendor}idProduct")" = "0567" ]; then
+      bridge_path="$(dirname "$dev")"
+      break
+    fi
+  done
+  if [ -z "${bridge_path:-}" ]; then
+    echo "ERROR: JMS567 DAS bridge (152d:0567) not found — is the DAS enclosure connected?" >&2
+    return 1
+  fi
+  pci_path="$(udevadm info -q path "$bridge_path" 2>/dev/null || true)"
+  USB_CONTROLLER="$(printf '%s\n' "$pci_path" | grep -oE '0000:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9a-f]+' | tail -n1 || true)"
+  if [ -z "$USB_CONTROLLER" ]; then
+    echo "ERROR: no PCI controller ancestor for ${bridge_path}" >&2
+    return 1
+  fi
+  echo "DAS USB controller: $USB_CONTROLLER (via ${bridge_path##*/})"
+}
+resolve_das_controller
 SSH_PORT=2222
 VM_PIDFILE="/tmp/zfs-survey-vm.pid"
 VM_LOG="/tmp/zfs-survey-vm.log"
