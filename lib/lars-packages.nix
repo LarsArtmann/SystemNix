@@ -16,7 +16,17 @@ in
 lib.filterAttrs (_: v: v != null) {
   art-dupl = flakePkg inputs.art-dupl;
   branching-flow = flakePkg inputs.branching-flow;
-  buildflow = flakePkg inputs.buildflow;
+  # TEMPORARY vendorHash shim (2026-09-22): lock holds 7e1fbfe (last
+  # deploy-proven rev, gen 797), but the root nixpkgs moved (44a9189 ->
+  # 6774f7bc) and the prepared-source graph re-resolved, so the upstream
+  # FOD no longer reproduces (ultraviolet@2026-09-22 absent from the
+  # cached vendor tree — the browser-history 2026-09-22 rollback class).
+  # Upstream master (bc999b4) is worse: package COMPILE fails (gvafix.*
+  # undefined; fixes unpushed in ~/projects/BuildFlow). Drop this shim
+  # when the lock moves past an upstream-fixed rev.
+  buildflow = (flakePkg inputs.buildflow).overrideAttrs {
+    vendorHash = "sha256-fT34kjPX6hH6fe/vwVbkDZQNL4Qy7bw0x1KFUCAkS0U=";
+  };
   cqrs-lint = inputs.go-cqrs-lite.packages.${system}.cqrs-lint or null;
   erraudit = flakePkg inputs.erraudit;
   go-auto-upgrade = flakePkg inputs.go-auto-upgrade;
