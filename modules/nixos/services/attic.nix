@@ -161,7 +161,11 @@ _: {
             }
             (harden {
               MemoryMax = "128M";
-              ReadWritePaths = [ "/mnt/pool/services/atticd" ];
+              # Derived, not hardcoded: the old literal (/mnt/pool/services/atticd)
+              # drifted one level from the actual option default and pinned any
+              # pool-less env (VM test) to a path that never exists there.
+              # RequiresMountsFor above still fails loudly on a detached pool.
+              ReadWritePaths = [ (toString cfg.storagePath) ];
             })
             (serviceOneshotDefaults { })
           ];
