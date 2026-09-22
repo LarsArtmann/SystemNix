@@ -18,6 +18,13 @@
 #      token-authed REST API once tags resolve, lands them ON the dashboard
 #      (v9 additive UiSettings visibility), and is create-only idempotent
 #      with no token residue in the state dir
+#   8. Relay-gated email settings render into the unit ENVIRONMENT (the
+#      phantom-RED class: the pre-2026-09-05 smoke grepped
+#      /var/lib/paperless/paperless.conf, a file NOTHING generates — the
+#      nixpkgs module renders settings as Environment= directives)
+#   9. PG-dump DR wiring: paperless-db-backup timer/service + the mount-gated
+#      dir creator + the backup-coordination `paperless-db` registry fan-out
+#      into the collector script and its rendered metrics
 #
 # Tika/Gotenberg are NOT enabled in this test (configureTika = false) —
 # their closure (chromium + libreoffice) is multi-GB; the nixpkgs modules
@@ -68,6 +75,26 @@ let
         };
       };
     };
+
+  # Option-only mock for the relay gate (pocketIdEnableMock pattern): the
+  # paperless module reads services.mail-relay.enable (or-false idiom) and
+  # services.mail-relay.fromAddress (unguarded). Declaring the options +
+  # flipping enable renders the PAPERLESS_EMAIL_* env block WITHOUT pulling
+  # postfix into this VM's closure (test-mail-relay.nix owns the real relay).
+  mailRelayEnableMock =
+    { lib, ... }:
+    {
+      options.services.mail-relay = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+        };
+        fromAddress = lib.mkOption {
+          type = lib.types.str;
+          default = "noreply@larsartmann.cloud";
+        };
+      };
+    };
 in
 {
   name = "paperless";
@@ -81,8 +108,13 @@ in
         llamaRagNixosModule
         # co-import: the module declares a services.integration entry (mkIf-wrapped options?-guard caveat, 2026-09-15)
         (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration
+        # co-import: the paperless-db registry entry fans into
+        # services.backup-coordination.backups (options?-guard needs the
+        # option to exist for the fan-out to land — asserted in step 9).
+        (import ../modules/nixos/services/backup-coordination.nix { }).flake.nixosModules.backup-coordination
         gatusCoverageAuditModule
         pocketIdEnableMock
+        mailRelayEnableMock
         ./mock-sops.nix
         ./test-helpers.nix
       ];
@@ -125,6 +157,13 @@ in
       # the post-seed run creates one + skips the other, and the third run
       # proves create-only idempotency.
       services.paperless-dashboard.enable = true;
+
+      # Relay gate ON via the option-only mock (step 8) — renders the
+      # PAPERLESS_EMAIL_* block without postfix.
+      services.mail-relay.enable = true;
+
+      # Collector half of the paperless-db fan-out assertion (step 9).
+      services.backup-coordination.enable = true;
     };
 
   testScript = ''
@@ -156,6 +195,15 @@ in
     # Duplicate rejection (2026-09-03 incident: per-account papersync uploads
     # stored byte-identical copies because the paperless default only warns).
     assert "PAPERLESS_CONSUMER_DELETE_DUPLICATES=true" in env, "duplicate rejection missing from unit env"
+
+    # 8. Relay-gated email settings render as Environment= directives — the
+    #    settings surface the config ACTUALLY lands on (the old smoke's
+    #    /var/lib/paperless/paperless.conf grep was a permanent phantom-RED:
+    #    nothing generates that file).
+    assert "PAPERLESS_EMAIL_HOST=127.0.0.1" in env, "relay host missing from unit env"
+    assert "PAPERLESS_EMAIL_PORT=25" in env, "relay port missing from unit env"
+    assert "PAPERLESS_EMAIL_FROM=noreply@larsartmann.cloud" in env, "relay from-address missing from unit env"
+    assert "PAPERLESS_EMAIL_USE_TLS=false" in env, "relay TLS flag missing from unit env"
 
     # 4. Trash dir provisioned; exporter unit + timer wired
     machine.succeed("test -d /var/lib/paperless/trash")
@@ -264,6 +312,23 @@ in
     assert count == "1", f"expected exactly 1 saved view, got {count}"
     machine.succeed("test -z \"$(ls -A /var/lib/paperless-dashboard)\" ")
 
-    print("Paperless v3 wiring verified — units up, PG backend, AI env, trash, exporter, Pocket ID OIDC bridge, SSO-only + auto-break-glass, declarative dashboards (create-only + v9 visibility + idempotent)")
+    # 13. PG-dump DR wiring (2026-09-21): nightly timer + peer-auth service
+    #     + mount-gated dir creator + the backup-coordination paperless-db
+    #     registry row reaching the collector END-TO-END (script + rendered
+    #     metrics — a future rename cannot silently break the deploy.sh
+    #     provisioner wiring or the DR freshness watch).
+    machine.succeed("systemctl is-enabled paperless-db-backup.timer")
+    machine.succeed("systemctl cat paperless-db-backup.timer | grep -q '02:00:00'")
+    machine.succeed("systemctl cat paperless-db-backup.timer | grep -q 'Persistent=yes'")
+    machine.succeed("systemctl cat paperless-db-backup.service | grep -q 'User=postgres'")
+    machine.succeed("systemctl cat paperless-db-backup.service | grep -q 'pg_dump'")
+    machine.succeed("systemctl list-unit-files | grep -q '^paperless-db-backup-dir.service'")
+    machine.succeed("systemctl start backup-health-metrics.service")
+    machine.wait_for_file("/var/lib/prometheus-node-exporter/textfile_collectors/backups.prom")
+    machine.succeed(
+      "grep -q 'backup_healthy{backup=\"paperless-db\"}' /var/lib/prometheus-node-exporter/textfile_collectors/backups.prom"
+    )
+
+    print("Paperless v3 wiring verified — units up, PG backend, AI env, relay-gated email env, trash, exporter, Pocket ID OIDC bridge, SSO-only + auto-break-glass, declarative dashboards (create-only + v9 visibility + idempotent), PG-dump DR wiring + backup-coordination fan-out")
   '';
 }

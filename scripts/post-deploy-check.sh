@@ -891,6 +891,36 @@ else
   report_skip "SigNoz Coverage - module disabled (unit absent)"
 fi
 
+# Health Hub (health-dashboard.nix): the federated go-health hub at
+# health.$DOMAIN. Liveness = /healthz; readiness = /readyz is the AGGREGATE
+# across remotes (warn from any remote must NOT trip it — only fail verdicts
+# or a dark remote do, mirroring the Gatus "Health Hub Federation" check).
+# /readyz gets a generous timeout: merge-on-read fetches every remote
+# synchronously (the Gatus check budgets 8s; give curl 15s). The bind address
+# is derived from the deployed unit's Environment (flm model-derive pattern)
+# with the lib/ports.nix value (health-dashboard = 8103) as fallback.
+healthhub_enabled=false
+test -e /etc/systemd/system/health-dashboard.service && healthhub_enabled=true
+
+if $healthhub_enabled; then
+  healthhub_addr=$(systemctl show health-dashboard --property=Environment 2>/dev/null | grep -o 'HEALTH_HUB_ADDR=[^ "]*' | cut -d= -f2 | head -1)
+  healthhub_addr="${healthhub_addr:-127.0.0.1:8103}"
+  healthhub_live=$(curl -s --compressed -o /tmp/.smoke-healthhub -w "%{http_code}" --max-time 10 "http://$healthhub_addr/healthz" 2>/dev/null || true)
+  if [ "$healthhub_live" = "200" ]; then
+    report_pass "Health Hub - /healthz 200 (hub process serving on $healthhub_addr)"
+  else
+    report_fail "Health Hub - /healthz status '${healthhub_live:-none}' on $healthhub_addr - hub down or bound elsewhere (systemctl status health-dashboard, journalctl -u health-dashboard -n 50)"
+  fi
+  healthhub_ready=$(curl -s --compressed -o /tmp/.smoke-healthhub-ready -w "%{http_code}" --max-time 15 "http://$healthhub_addr/readyz" 2>/dev/null || true)
+  if [ "$healthhub_ready" = "200" ]; then
+    report_pass "Health Hub - /readyz 200 (federation aggregate: no remote dark or failing; warn tolerated by design)"
+  else
+    report_fail "Health Hub - /readyz status '${healthhub_ready:-none}' - a remote is dark or reporting fail (check HEALTH_HUB_REMOTES in the unit + the remote's own /health)"
+  fi
+else
+  report_skip "Health Hub - module disabled (unit absent)"
+fi
+
 # --- Functional checks (not just liveness) ---
 echo ""
 echo "=== Functional Checks ==="
@@ -1254,6 +1284,9 @@ check "Overview (HTTPS)" "https://overview.$DOMAIN/" "200" "<html" 2>/dev/null |
 # Enable-gated review tools (LAN-only, no auth)
 test -e /etc/systemd/system/systemd-graph.service && check "systemd-graph (HTTPS)" "https://graph.$DOMAIN/" "200" "" 2>/dev/null || true
 test -e /etc/systemd/system/systemd-timer-monitor-audit.service && check "systemd-timer-monitor (HTTPS)" "https://timers.$DOMAIN/" "200" "<html" 2>/dev/null || true
+# Health Hub is a Layer 2 protectedVHost: LAN bypass serves the hub directly
+# (200); the auth-gateway array below covers its oauth2-proxy external leg.
+test -e /etc/systemd/system/health-dashboard.service && check "Health Hub (HTTPS)" "https://health.$DOMAIN/" "200" "" 2>/dev/null || true
 
 # --- Auth gateway health (oauth2-proxy / forward-auth) ---
 # Catches P9: oauth2-proxy returning 500 on protected vHosts.
@@ -1275,6 +1308,10 @@ AUTH_VHOSTS=(
 # monitor365 is enable-gated (disabled since 2026-08-12) - probe its vHost only
 # when the server unit is deployed, else it 000-SKIPs on every run forever.
 test -e /etc/systemd/system/monitor365-server.service && AUTH_VHOSTS+=("monitor.$DOMAIN")
+# Health Hub external leg is forward-auth gated (Layer 2) - include it so a
+# broken oauth2-proxy 500/502 on health.$DOMAIN pages like every other
+# protected vHost instead of passing silently.
+test -e /etc/systemd/system/health-dashboard.service && AUTH_VHOSTS+=("health.$DOMAIN")
 for vhost in "${AUTH_VHOSTS[@]}"; do
   status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://$vhost/" 2>/dev/null || true)
   case "$status" in
