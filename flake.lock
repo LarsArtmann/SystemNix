@@ -282,7 +282,6 @@
           "go-nix-helpers"
         ],
         "go-output": "go-output_2",
-        "go-sqlitestore": "go-sqlitestore",
         "go-structure-linter": "go-structure-linter",
         "go-version-auto-configure": "go-version-auto-configure",
         "go-workflow-auditlog": "go-workflow-auditlog",
@@ -299,11 +298,11 @@
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1790110496,
-        "narHash": "sha256-/5/sIE8n6DRxLSBqqTE2r9OEOWg0X5e3dMNNm/aoQdc=",
+        "lastModified": 1790023824,
+        "narHash": "sha256-wpHS+Lna2d+qWN2e9Q9clRXlirAzPUjXDqO/2tUjnGE=",
         "ref": "refs/heads/master",
-        "rev": "bc999b42f348279cfbf510161622cc2a32ab136a",
-        "revCount": 6390,
+        "rev": "7e1fbfe835fe67d49a8927d038089113684e394a",
+        "revCount": 6264,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
