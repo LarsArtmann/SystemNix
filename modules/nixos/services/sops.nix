@@ -484,17 +484,18 @@ in
               # on any host key until go-live pins it). All root-owned: the
               # borg job runs as root. Rotation restarts the job unit; the
               # borg-env template carries the BORG_REPO target.
-              mkSecrets "borg.yaml" {
-                owner = "root";
-                group = "root";
-                mode = "0400";
-                restartUnits = [ "borgbackup-job-hetzner.service" ];
-              }
-              [
-                "borg_password"
-                "borg_ssh_key"
-                "borg_known_hosts"
-              ]
+              mkSecrets "borg.yaml"
+                {
+                  owner = "root";
+                  group = "root";
+                  mode = "0400";
+                  restartUnits = [ "borgbackup-job-hetzner.service" ];
+                }
+                [
+                  "borg_password"
+                  "borg_ssh_key"
+                  "borg_known_hosts"
+                ]
             );
 
           templates = {
