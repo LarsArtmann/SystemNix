@@ -475,6 +475,26 @@ in
                 group = "root";
                 restartUnits = [ "postfix.service" ];
               } [ "mail_relay_password" ]
+            )
+            // lib.optionalAttrs (svcEnabled "offsite-borg") (
+              # Offsite Borg leg (platforms/nixos/system/backup.nix): the
+              # passphrase (repokey-blake2 recovery secret), the dedicated
+              # StorageBox SSH key (pubkey in docs/services/offsite-borg.md),
+              # and the pinned StorageBox host key (placeholder = fail-closed
+              # on any host key until go-live pins it). All root-owned: the
+              # borg job runs as root. Rotation restarts the job unit; the
+              # borg-env template carries the BORG_REPO target.
+              mkSecrets "borg.yaml" {
+                owner = "root";
+                group = "root";
+                mode = "0400";
+                restartUnits = [ "borgbackup-job-hetzner.service" ];
+              }
+              [
+                "borg_password"
+                "borg_ssh_key"
+                "borg_known_hosts"
+              ]
             );
 
           templates = {
@@ -797,6 +817,21 @@ in
             # Retired 2026-08-21: the Bearer token (DNSBLOCKD_AUTH_TOKEN) was
             # dropped in favor of OIDC SSO as the only dashboard credential.
             # When Pocket ID grows machine credentials, provision them here.
+          }
+          // lib.optionalAttrs (svcEnabled "offsite-borg") {
+            # Offsite Borg repo target (user@<storagebox-host>:backups/evo-x2).
+            # Root-owned: systemd injects it as EnvironmentFile into the borg
+            # job unit, where it overrides the unit's placeholder BORG_REPO.
+            # The go-live tripwire greps this rendered file for PLACEHOLDER.
+            "borg-env" = {
+              owner = "root";
+              group = "root";
+              mode = "0400";
+              restartUnits = [ "borgbackup-job-hetzner.service" ];
+              content = lib.generators.toKeyValue { } {
+                BORG_REPO = config.sops.placeholder.borg_repo;
+              };
+            };
           };
         };
       };
