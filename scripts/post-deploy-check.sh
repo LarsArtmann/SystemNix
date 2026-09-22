@@ -1288,8 +1288,9 @@ check "Overview (HTTPS)" "https://overview.$DOMAIN/" "200" "<html" 2>/dev/null |
 test -e /etc/systemd/system/systemd-graph.service && check "systemd-graph (HTTPS)" "https://graph.$DOMAIN/" "200" "" 2>/dev/null || true
 test -e /etc/systemd/system/systemd-timer-monitor-audit.service && check "systemd-timer-monitor (HTTPS)" "https://timers.$DOMAIN/" "200" "<html" 2>/dev/null || true
 # Health Hub is a Layer 2 protectedVHost: LAN bypass serves the hub directly
-# (200); the auth-gateway array below covers its oauth2-proxy external leg.
-test -e /etc/systemd/system/health-dashboard.service && check "Health Hub (HTTPS)" "https://health.$DOMAIN/" "200" "" 2>/dev/null || true
+# (200). Probe /healthz — the hub binary has no route at / (404 by design).
+# Enable-gate on the .wants symlink (same as the liveness block above).
+test -e /etc/systemd/system/multi-user.target.wants/health-dashboard.service && check "Health Hub (HTTPS)" "https://health.$DOMAIN/healthz" "200" "" 2>/dev/null || true
 
 # --- Auth gateway health (oauth2-proxy / forward-auth) ---
 # Catches P9: oauth2-proxy returning 500 on protected vHosts.

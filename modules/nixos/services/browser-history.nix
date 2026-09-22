@@ -420,7 +420,13 @@
           systemd.services.browser-history.serviceConfig = {
             ExecStartPre = [
               "+${pkgs.writeShellScript "browser-history-ownership-heal" ''
-                exec ${pkgs.coreutils}/bin/chown -R --reference=/var/lib/browser-history /var/lib/browser-history
+                # Evidence first (ownership/mode of the state dir in the journal),
+                # then converge: chown everything to the dir's (current
+                # dynamic-uid) owner and re-assert owner read+write — mode
+                # stripping is the same SQLITE_READONLY(8) class as uid drift.
+                ${pkgs.coreutils}/bin/ls -lan /var/lib/browser-history || true
+                ${pkgs.coreutils}/bin/chown -R --reference=/var/lib/browser-history /var/lib/browser-history
+                ${pkgs.coreutils}/bin/chmod -R u+rwX /var/lib/browser-history
               ''}"
             ];
           };
