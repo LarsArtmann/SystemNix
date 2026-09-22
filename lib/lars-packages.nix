@@ -14,7 +14,15 @@ let
   flakePkg = input: (input.packages.${system} or { }).default or null;
 in
 lib.filterAttrs (_: v: v != null) {
-  art-dupl = flakePkg inputs.art-dupl;
+  # TEMPORARY vendorHash shim (2026-09-23): the root nixpkgs move (44a9189 →
+  # 6774f7bc) re-resolved the go-modules FOD graph, so the upstream
+  # vendorHash no longer reproduces (got fmLiSd6d… vs specified a/Fx2E5Z…).
+  # The fix IS committed upstream on fork (eabf846c) but UNPUSHED (origin/fork
+  # 440b8df5 still carries the stale hash). Drop when the lock moves past a
+  # pushed upstream-fixed rev. Same class + shape as the buildflow shim.
+  art-dupl = (flakePkg inputs.art-dupl).overrideAttrs {
+    vendorHash = "sha256-fmLiSd6dN0Z85m+vDks3tQUD7yb76ZeytiE5j3FEp4E=";
+  };
   branching-flow = flakePkg inputs.branching-flow;
   # TEMPORARY vendorHash shim (2026-09-22): lock holds 7e1fbfe (last
   # deploy-proven rev, gen 797), but the root nixpkgs moved (44a9189 ->
