@@ -1314,10 +1314,11 @@ AUTH_VHOSTS=(
 test -e /etc/systemd/system/monitor365-server.service && AUTH_VHOSTS+=("monitor.$DOMAIN")
 # Health Hub external leg is forward-auth gated (Layer 2) - include it so a
 # broken oauth2-proxy 500/502 on health.$DOMAIN pages like every other
-# protected vHost instead of passing silently.
-test -e /etc/systemd/system/health-dashboard.service && AUTH_VHOSTS+=("health.$DOMAIN")
+# protected vHost instead of passing silently. Entries carry an optional
+# path suffix (health.$DOMAIN/healthz — the hub binary has no / route).
+test -e /etc/systemd/system/health-dashboard.service && AUTH_VHOSTS+=("health.$DOMAIN/healthz")
 for vhost in "${AUTH_VHOSTS[@]}"; do
-  status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://$vhost/" 2>/dev/null || true)
+  status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://$vhost" 2>/dev/null || true)
   case "$status" in
   200 | 301 | 302 | 303)
     echo -e "${GREEN}PASS${NC} $vhost → $status (auth gateway healthy)"

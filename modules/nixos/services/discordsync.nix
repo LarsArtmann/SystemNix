@@ -579,12 +579,17 @@
             chown root:root "$dest"
             chmod 0770 "$dest"
             chown ${cfg.user}:${cfg.group} "$dest"
-            if ! rsync -aHAX --info=stats1 "$src"/ "$dest"/; then
+            # --no-perms (BOTH passes): rsync mode-preservation EPERMs on
+            # foreign-group dirs even with CAP_FSETID in the bounding set
+            # (sandbox setattr semantics, 2026-09-22, mechanism unresolved —
+            # ownership via chown works; the service only needs owner rwx,
+            # which the umask-default modes provide).
+            if ! rsync -aHAX --no-perms --info=stats1 "$src"/ "$dest"/; then
               echo "discordsync-attachments-migrate: COPY FAILED (source kept)"
               failures=1
             else
               diff=""
-              if ! diff=$(rsync -aHAXn -c -i "$src"/ "$dest"/) || [ -n "$diff" ]; then
+              if ! diff=$(rsync -aHAXn --no-perms -c -i "$src"/ "$dest"/) || [ -n "$diff" ]; then
                 echo "discordsync-attachments-migrate: VERIFY FAILED — differences remain (source kept):"
                 printf '%s\n' "$diff" | head -20
                 failures=1
