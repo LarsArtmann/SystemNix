@@ -72,6 +72,7 @@ in
   hot-db-assertions = import ./test-hot-db-assertions.nix { inherit pkgs inputs system; };
   crush-hot-db = makeTest (import ./test-crush-hot-db.nix { inherit pkgs; });
   crush-config = import ./test-crush-config.nix { inherit pkgs inputs; };
+  restic-app-dumps = makeTest (import ./test-restic-app-dumps.nix { inherit pkgs; });
   nix-email-contract = import ./test-nix-email.nix { inherit pkgs inputs system; };
   fastflowlm-idle-check = import ./test-fastflowlm-idle.nix { inherit pkgs self; };
 }
