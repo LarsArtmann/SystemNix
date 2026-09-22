@@ -143,6 +143,13 @@ jobs:
           scripts/audit-serviceconfig-merge.sh --selftest
           scripts/audit-serviceconfig-merge.sh
 
+      # The pre-commit GOTOOLCHAIN guard's narrowed predicate silently
+      # dropped the unquoted/spaced nix shape once already (2026-09-22
+      # review); the selftest extracts the live predicate from the hook and
+      # pins the catch/pass boundary.
+      - name: GOTOOLCHAIN guard selftest
+        run: scripts/test-gotoolchain-guard.sh
+
       - name: Flake input hygiene (ref=master + GOTOOLCHAIN)
         run: |
           # Fail on GOTOOLCHAIN=auto (sandbox purity violation)
