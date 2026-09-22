@@ -6749,6 +6749,7 @@
         "todo-list-ai": "todo-list-ai",
         "treefmt-full-flake": "treefmt-full-flake",
         "treefmt-nix": "treefmt-nix_15",
+        "vision-review-agent": "vision-review-agent",
         "wallpapers-src": "wallpapers-src"
       }
     },
@@ -7868,6 +7869,36 @@
       "original": {
         "owner": "pyproject-nix",
         "repo": "uv2nix",
+        "type": "github"
+      }
+    },
+    "vision-review-agent": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "systems": [
+          "systems"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1789860349,
+        "narHash": "sha256-IBVtCCX4MtQXHYVPhTjPkxBoAid1IlS3e/PsGO9ZRm0=",
+        "owner": "LarsArtmann",
+        "repo": "vision-review-agent",
+        "rev": "c8ca4b555b0c1af6fca823284b377008cb4c86fb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "master",
+        "repo": "vision-review-agent",
         "type": "github"
       }
     },

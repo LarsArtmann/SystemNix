@@ -9,6 +9,32 @@
 let
   inherit (import ../../../lib/default.nix lib) ports;
   theme = import ../../common/theme.nix;
+
+  # Website-fleet sites reviewed by visionreviewd: site name → live URL.
+  # Mirrors the vision-review-agent repo's docs/activation/
+  # visionreviewd-websites-17.json (sourceURLs + per-site screenshot globs
+  # are both derived from this one list). Screenshots land under
+  # ~/.local/share/vision-review-agent/screenshots/<site>/ via
+  # scripts/shoot-sites.sh.
+  visionreviewdSites = {
+    art-dupl = "https://art-dupl.lars.software";
+    cleanwizard = "https://cleanwizard.lars.software";
+    cmdguard = "https://cmdguard.web.app";
+    dynamicmarkdown = "https://dynamicmarkdown.lars.software";
+    emeet-pixyd = "https://emeet-pixyd.lars.software";
+    atomicwrite = "https://atomicwrite.lars.software";
+    branded-id = "https://branded-id.lars.software";
+    errorfamily = "https://errorfamily.lars.software";
+    filewatcher = "https://filewatcher.lars.software";
+    go-output = "https://go-output.lars.software";
+    go-workflow-auditlog = "https://go-workflow-auditlog.lars.software";
+    gogenfilter = "https://gogenfilter.lars.software";
+    md-go-validator = "https://md-go-validator.lars.software";
+    do-auditlog = "https://do-auditlog.lars.software";
+    typespec-asyncapi = "https://typespec-asyncapi.web.app";
+    templcomponents = "https://templcomponents.lars.software";
+    learnings = "https://lars-learnings.web.app";
+  };
 in
 {
   imports = [
@@ -337,6 +363,22 @@ in
 
     # System state version
     system.stateVersion = "25.11";
+
+    # visionreviewd daemon config — generated from visionreviewdSites (above).
+    # No secrets inside (loopback llama-vlm captioner, keyless), so
+    # environment.etc is the honest home; revisit if an API key ever appears.
+    environment.etc."visionreviewd/config.json".text = builtins.toJSON {
+      model = "nsfwcaption-qwen3-vl-8b-v3";
+      baseUrl = "http://127.0.0.1:${toString ports.llama-vlm-cap}/v1";
+      dataDir = "/var/lib/visionreviewd/data";
+      reviewsDir = "/var/lib/visionreviewd/reviews";
+      interval = "10m";
+      timeout = "12m";
+      sourceURLs = visionreviewdSites;
+      projects = builtins.mapAttrs (site: _: [
+        "/home/${config.users.primaryUser}/.local/share/vision-review-agent/screenshots/${site}/*.png"
+      ]) visionreviewdSites;
+    };
 
     services = {
       udisks2.enable = true;
@@ -671,7 +713,10 @@ in
             # (verified live 2026-09-22), which visionreviewd's config and
             # doctor model check would otherwise have to embed verbatim.
             # Alias-only: chat consumers ignore the model name anyway.
-            extraArgs = [ "--alias" "nsfwcaption-qwen3-vl-8b-v3" ];
+            extraArgs = [
+              "--alias"
+              "nsfwcaption-qwen3-vl-8b-v3"
+            ];
             keepAlive = "2h";
             memoryMax = "16G";
           };
@@ -697,18 +742,6 @@ in
       # is the honest home for it; revisit if an API key ever appears.
       vision-review-agent.enable = true;
       vision-review-agent.configFile = "/etc/visionreviewd/config.json";
-      environment.etc."visionreviewd/config.json".text = builtins.toJSON {
-        model = "nsfwcaption-qwen3-vl-8b-v3";
-        baseUrl = "http://127.0.0.1:${toString ports.llama-vlm-cap}/v1";
-        dataDir = "/var/lib/visionreviewd/data";
-        reviewsDir = "/var/lib/visionreviewd/reviews";
-        interval = "10m";
-        timeout = "12m";
-        sourceURLs = visionreviewdSites;
-        projects = builtins.mapAttrs (site: _: [
-          "/home/${config.users.primaryUser}/.local/share/vision-review-agent/screenshots/${site}/*.png"
-        ]) visionreviewdSites;
-      };
 
       # llama.cpp RAG stack — embeddings (bge-m3) + reranking (bge-reranker-v2-m3)
       # on the GPU (ROCm). Two lightweight llama-server instances, always-on.
