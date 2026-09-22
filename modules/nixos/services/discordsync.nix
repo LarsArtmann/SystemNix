@@ -439,8 +439,13 @@
             (harden {
               # Backfill bursts + turso-sync need more than upstream's 512M.
               MemoryMax = lib.mkForce "2G";
-              ReadWritePaths = [ cfg.dataDir ] ++ lib.optionals (cfg.attachmentsDir != null) [ cfg.attachmentsDir ];
             })
+            # Upstream declares ReadWritePaths = [ dataDir ] at plain
+            # priority, which beats harden{}'s mkDefault — the pool leaf is
+            # added via mkForce (dataDir kept; nothing else defines the list).
+            {
+              ReadWritePaths = lib.mkForce ([ cfg.dataDir ] ++ lib.optionals (cfg.attachmentsDir != null) [ cfg.attachmentsDir ]);
+            }
             ioTier.background
             {
               Environment = [ "GOMEMLIMIT=1536MiB" ];
