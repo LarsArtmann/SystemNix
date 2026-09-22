@@ -550,8 +550,12 @@
               # — root cannot even stat through it without it (cv-backup
               # silent-no-op precedent). CHOWN/FOWNER/DAC_OVERRIDE: rsync -aHAX
               # ownership preservation + the final rm -rf of foreign-owned
-              # files.
-              CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE CAP_DAC_READ_SEARCH";
+              # files. FSETID: rsync -a preserves the source dirs' setgid
+              # bits on discordsync-group dirs — setting sgid on a group
+              # outside the sandbox's groups EPERMs without it (the
+              # 2026-09-22 chmod-2770 class, caught live on the first
+              # migration run).
+              CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE CAP_DAC_READ_SEARCH CAP_FSETID";
             })
             (serviceOneshotDefaults { })
             ioTier.background

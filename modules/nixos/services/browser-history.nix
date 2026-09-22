@@ -420,13 +420,18 @@
           systemd.services.browser-history.serviceConfig = {
             ExecStartPre = [
               "+${pkgs.writeShellScript "browser-history-ownership-heal" ''
-                # Evidence first (ownership/mode of the state dir in the journal),
-                # then converge: chown everything to the dir's (current
-                # dynamic-uid) owner and re-assert owner read+write — mode
-                # stripping is the same SQLITE_READONLY(8) class as uid drift.
-                ${pkgs.coreutils}/bin/ls -lan /var/lib/browser-history || true
-                ${pkgs.coreutils}/bin/chown -R --reference=/var/lib/browser-history /var/lib/browser-history
-                ${pkgs.coreutils}/bin/chmod -R u+rwX /var/lib/browser-history
+                # Operate on the REAL path: /var/lib/browser-history is a
+                # symlink into private/ (DynamicUser layout) and chown/chmod
+                # -R never follow a symlink top-level arg — healing through
+                # the link is a silent no-op (2026-09-22). The drift itself:
+                # systemd chowns only the state DIRECTORY, never files
+                # within; the dynamic uid is normally deterministic per unit
+                # name (65293 since Aug 9) but a mass-restart shuffle can
+                # allocate a different one → pre-existing DB files stay
+                # foreign-owned → SQLITE_READONLY(8) at the first write.
+                ${pkgs.coreutils}/bin/ls -lan /var/lib/private/browser-history || true
+                ${pkgs.coreutils}/bin/chown -R --reference=/var/lib/private/browser-history /var/lib/private/browser-history
+                ${pkgs.coreutils}/bin/chmod -R u+rwX /var/lib/private/browser-history
               ''}"
             ];
           };
