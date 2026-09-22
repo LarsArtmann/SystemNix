@@ -28,6 +28,7 @@ in
     ./snapshots.nix # BTRFS snapshots with btrbk
     ./btrfs-health.nix # BTRFS chunk allocation health monitor + GC guard (prevents 2026-06-26 crash)
     ./btrfs-rescue.nix # Rescue snapshot tier outside btrbk retention (glob-delete survivor, 2026-09-12 incident)
+    ./backup.nix # Offsite Borg leg to the Hetzner StorageBox (dormant until go-live — docs/services/offsite-borg.md)
     ./scheduled-tasks.nix # Daily scheduled tasks (crush update-providers, etc.)
     ./sudo.nix # Passwordless sudo for wheel group
     ../hardware/amd-gpu.nix
@@ -1079,6 +1080,13 @@ in
       # mirrors the per-service dump dirs into one chunk-dedup repo with
       # bounded retention (forgejo zips share ~0 extents across nights).
       restic-app-dumps.enable = true;
+
+      # Offsite Borg leg to the Hetzner StorageBox (3rd copy for 3-2-1).
+      # Dormant: go-live needs the owner's StorageBox hostname/username + the
+      # borg pubkey pasted into the Hetzner console (checklist:
+      # docs/services/offsite-borg.md; user-input gate tracked as the
+      # "Offsite Borg go-live inputs" row in docs/todo/storage.md).
+      offsite-borg.enable = false;
 
       # SSH server with hardening (from nix-ssh-config)
       ssh-server = {
