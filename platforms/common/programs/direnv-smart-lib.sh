@@ -63,3 +63,70 @@ use_go_env() {
     export GOPRIVATE="github.com/larsartmann/*,github.com/LarsArtmann/*"
   fi
 }
+
+# ─── Dead Automount Guard (/mnt/buildcache) ──────────────────────────────────
+# The session env (home.nix) points GOCACHE/GOMODCACHE/GOLANGCI_LINT_CACHE/
+# npm_config_cache at the /mnt/buildcache USB automount. When the device is
+# absent, EVERY go/golangci/npm spawn stalls ~25s in an uninterruptible stat
+# (BuildFlow gotcha #129). BuildFlow's EnvGuard covers pipeline runs; this
+# guard covers the interactive shell itself, at direnv-eval time.
+#
+# Zero cost when no cache var points at the automount (string check first).
+# The probe runs in the background and is POLLED, never waited on: a D-state
+# stat cannot be interrupted, only outlived — `wait` would inherit the 25s
+# stall we are defending against. Healthy mount: probe answers in ~1ms and
+# the guard costs one 0.1s poll tick. Dead mount: 0.5s bound, then the vars
+# are rewritten to the known-healthy local fallbacks and the guard disarms
+# itself (subsequent evals see healthy values and skip the probe entirely).
+BF_DEAD_MOUNT_PATH="${BF_DEAD_MOUNT_PATH:-/mnt/buildcache}"
+BF_DEAD_MOUNT_POLLS="${BF_DEAD_MOUNT_POLLS:-5}"
+
+_bf_dead_mount_probe() {
+  stat -c %i "$BF_DEAD_MOUNT_PATH" >/dev/null 2>&1
+}
+
+_bf_dead_mount_guard() {
+  local var needs_probe=0
+  for var in GOCACHE GOMODCACHE GOLANGCI_LINT_CACHE npm_config_cache; do
+    if [[ ${!var:-} == "$BF_DEAD_MOUNT_PATH"/* ]]; then
+      needs_probe=1
+    fi
+  done
+  if [[ $needs_probe == 0 ]]; then
+    return 0
+  fi
+
+  _bf_dead_mount_probe &
+  local probe=$!
+  local alive=0
+  local _
+  for _ in $(seq 1 "$BF_DEAD_MOUNT_POLLS"); do
+    if ! kill -0 "$probe" 2>/dev/null; then
+      alive=1
+      break
+    fi
+    sleep 0.1
+  done
+  # Never wait: on a dead mount the probe lingers ~25s in D-state. It is
+  # orphaned here and exits on its own; leaving it costs nothing.
+  kill "$probe" 2>/dev/null || true
+  if [[ $alive == 1 ]]; then
+    return 0
+  fi
+
+  log_status "zz-smart-nix.sh: $BF_DEAD_MOUNT_PATH automount is dead — rewriting cache env vars to local fallbacks (spawns would otherwise stall ~25s each)"
+  if [[ ${GOCACHE:-} == "$BF_DEAD_MOUNT_PATH"/* ]]; then
+    export GOCACHE="$HOME/.cache/gocache"
+  fi
+  if [[ ${GOMODCACHE:-} == "$BF_DEAD_MOUNT_PATH"/* ]]; then
+    export GOMODCACHE="$HOME/go/pkg/mod"
+  fi
+  if [[ ${GOLANGCI_LINT_CACHE:-} == "$BF_DEAD_MOUNT_PATH"/* ]]; then
+    export GOLANGCI_LINT_CACHE="$HOME/.cache/golangci-lint"
+  fi
+  if [[ ${npm_config_cache:-} == "$BF_DEAD_MOUNT_PATH"/* ]]; then
+    export npm_config_cache="/tmp/npm-cache-home"
+  fi
+}
+
+_bf_dead_mount_guard

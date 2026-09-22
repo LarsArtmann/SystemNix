@@ -238,6 +238,80 @@ else
 fi
 rm -rf "$tmpdir"
 
+# ─── Dead Automount Guard ────────────────────────────────────────────────────
+echo ""
+echo "=== Dead Mount Guard ==="
+
+# Test: no cache vars pointing at the mount -> fast path, values untouched.
+(
+  export GOCACHE="/some/other/place"
+  _bf_dead_mount_guard
+  if [[ $GOCACHE == "/some/other/place" ]]; then
+    pass "guard: no automount vars -> untouched"
+  else
+    fail "guard: rewrote an unrelated GOCACHE ($GOCACHE)"
+  fi
+)
+
+# Test: probe answers instantly (healthy mount or fast ENOENT) -> no rewrite.
+(
+  export BF_DEAD_MOUNT_PATH="/tmp/bf-healthy-probe-$$"
+  export GOCACHE="/tmp/bf-healthy-probe-$$/gocache"
+  _bf_dead_mount_guard
+  if [[ $GOCACHE == "/tmp/bf-healthy-probe-$$/gocache" ]]; then
+    pass "guard: fast probe -> no rewrite"
+  else
+    fail "guard: rewrote on an instantly-answering path ($GOCACHE)"
+  fi
+)
+
+# Test: stalled probe (simulated D-state) -> rewrites all four vars to the
+# local fallbacks within the poll bound.
+(
+  export BF_DEAD_MOUNT_PATH="/mnt/buildcache"
+  export BF_DEAD_MOUNT_POLLS=2
+  export GOCACHE="/mnt/buildcache/go-build"
+  export GOMODCACHE="/mnt/buildcache/go-mod"
+  export GOLANGCI_LINT_CACHE="/mnt/buildcache/golangci"
+  export npm_config_cache="/mnt/buildcache/npm"
+  _bf_dead_mount_probe() { sleep 3; } # simulate a D-state stall
+  _bf_dead_mount_guard
+  local_ok=1
+  [[ $GOCACHE == "$HOME/.cache/gocache" ]] || local_ok=0
+  [[ $GOMODCACHE == "$HOME/go/pkg/mod" ]] || local_ok=0
+  [[ $GOLANGCI_LINT_CACHE == "$HOME/.cache/golangci-lint" ]] || local_ok=0
+  [[ $npm_config_cache == "/tmp/npm-cache-home" ]] || local_ok=0
+  if [[ $local_ok == 1 ]]; then
+    pass "guard: stalled probe -> all four vars rewritten to fallbacks"
+  else
+    fail "guard: rewrite incomplete: GOCACHE=$GOCACHE GOMODCACHE=$GOMODCACHE GOLANGCI=$GOLANGCI_LINT_CACHE npm=$npm_config_cache"
+  fi
+
+  # Test: the rewrite disarms the guard (second run is a no-op fast path).
+  _bf_dead_mount_probe() { sleep 3; }
+  _bf_dead_mount_guard
+  if [[ $GOCACHE == "$HOME/.cache/gocache" ]]; then
+    pass "guard: rewrite disarms the guard on re-run"
+  else
+    fail "guard: re-run touched the already-rewritten value ($GOCACHE)"
+  fi
+)
+
+# Test: the guard never fires for a var pointing elsewhere while others stall.
+(
+  export BF_DEAD_MOUNT_PATH="/mnt/buildcache"
+  export BF_DEAD_MOUNT_POLLS=2
+  export GOCACHE="/custom/gocache"
+  export GOMODCACHE="/mnt/buildcache/go-mod"
+  _bf_dead_mount_probe() { sleep 3; }
+  _bf_dead_mount_guard
+  if [[ $GOCACHE == "/custom/gocache" && $GOMODCACHE == "$HOME/go/pkg/mod" ]]; then
+    pass "guard: rewrites only the automount-pointing vars"
+  else
+    fail "guard: wrong selectivity: GOCACHE=$GOCACHE GOMODCACHE=$GOMODCACHE"
+  fi
+)
+
 echo ""
 echo "=== Summary ==="
 echo "Passed: $PASS"
