@@ -407,6 +407,25 @@
           ];
         })
 
+        # ── DynamicUser uid-drift ownership heal ───────────────────────────
+        # systemd re-resolves the dynamic uid on every unit stop/start; a mass
+        # restart (deploy activation) can hand the unit a DIFFERENT uid while
+        # pre-existing DB/WAL files keep the old one → SQLITE_READONLY(8) at
+        # the first write (2026-09-22: crash-loop after the 13:04 activation
+        # although the binary had run healthy for 1.5 days — systemd chowns
+        # only the state DIRECTORY, never files within). `+` runs as root
+        # (chown needs it); --reference copies the directory's (already
+        # correct) owner onto everything inside. No-op when consistent.
+        (lib.mkIf cfg.enable {
+          systemd.services.browser-history.serviceConfig = {
+            ExecStartPre = [
+              "+${pkgs.writeShellScript "browser-history-ownership-heal" ''
+                exec ${pkgs.coreutils}/bin/chown -R --reference=/var/lib/browser-history /var/lib/browser-history
+              ''}"
+            ];
+          };
+        })
+
         # ── Agent: SystemNix defaults for machines that enable it ──────────────────
         # The agent extracts browser history from local profiles and pushes it
         # to the server. It must run as the desktop user to read browser data.
@@ -691,7 +710,12 @@
                     exit 0
                   fi
                   dst="${backupDir}/browser-history-db-$(date +%Y-%m-%d).sqlite"
-                  ${lib.getExe pkgs.sqlite} "$db" ".backup '$dst'"
+                  # -readonly: a read-write root open of the live WAL database
+                  # can create/replace the -shm/-wal sidecars ROOT-owned while
+                  # the server is down, poisoning the next server start with
+                  # SQLITE_READONLY (the 2026-09-22 uid-drift class; the
+                  # ownership-heal ExecStartPre covers any residue anyway).
+                  ${lib.getExe pkgs.sqlite} -readonly "$db" ".backup '$dst'"
                   # 14-day retention (cv/miniflux pattern): the online .backup
                   # rewrites every page, so nothing is shared between nights.
                   find ${backupDir} -name "browser-history-db-*.sqlite" -mtime +14 -delete
