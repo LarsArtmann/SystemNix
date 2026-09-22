@@ -1,0 +1,10 @@
+# BuildFlow Configuration
+# See: https://github.com/LarsArtmann/SystemNix
+
+# Render-level per-tool warning ceilings (summary collapse; never gates).
+# Set 2026-09-22 from 14d telemetry: max findings/run + ~20% headroom.
+# The [OVER budget] marker doubles as a noise-drift tripwire.
+warnings_budget:
+  markdown-lint: 137000
+  nix-flake-check: 1400
+  bandit-check: 430
