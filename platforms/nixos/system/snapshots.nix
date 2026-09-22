@@ -301,7 +301,6 @@ in
           subvolume."services/atticd" = { };
           subvolume."services/monitor365" = { };
           subvolume."services/discordsync" = { };
-          subvolume."services/browser-history" = { };
           subvolume."services/bank-sync" = { };
           subvolume."services/activitywatch" = { };
           # go-taskqueue journal (services.tq-agent-pool) — task history +

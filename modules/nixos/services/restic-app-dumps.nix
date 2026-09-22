@@ -47,6 +47,7 @@ _: {
           type = lib.types.listOf lib.types.str;
           description = "App-dump directories (under /mnt/pool/backups) to mirror into the restic repo.";
           default = [
+            "/mnt/pool/backups/browser-history"
             "/mnt/pool/backups/cv"
             "/mnt/pool/backups/forgejo"
             "/mnt/pool/backups/geometrikks"
