@@ -494,6 +494,13 @@ in
         # Aug 12 "vendorHash mismatch" was a stale FOD cache entry, since evicted.
         enable = true;
         gcsBucket = "discordsync-backup";
+        # Attachment archive (BLOBs) on the mirrored pool — the 2026-09-21
+        # re-scope of the Own-tools NVMe→pool leg (the DB stays on NVMe; the
+        # Phase-2 hot-db wave owns it). Wires the mount-gated pool leaf, the
+        # service's pool gating, and the one-time attachments migrate oneshot
+        # (runs at the next deploy: stops the service, rsyncs ~40 GB,
+        # checksum-verifies, removes the source).
+        attachmentsDir = "/mnt/pool/services/discordsync/attachments";
         # Immich cross-archive comparison on the /lookup page (ADR-062): the
         # server proxies hex SHA-1 hashes to Immich's bulk-upload-check.
         # Ships with a PLACEHOLDER key — create the real key in Immich scoped
@@ -506,6 +513,11 @@ in
 
       browser-history = {
         enable = true; # Browser history intelligence server
+        # Nightly sqlite .backup of the server DB onto the pool
+        # (browser-history-backup.timer 02:15, cv-backup pattern) — the
+        # backup leg of the re-scoped NVMe→pool item (the DB itself stays on
+        # NVMe; the Phase-2 hot-db wave owns its placement).
+        dbBackup.enable = true;
         # One-time cleanup for the 2026-09-18 registration-gate probe user:
         # the freeze reboots already dropped its users_view row (live
         # browser_history_users 0 = pre-probe value), so only the

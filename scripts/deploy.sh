@@ -464,7 +464,7 @@ if nix run .#pre-deploy-check; then
   # forgejo-hermes-token: RemainAfterExit oneshot — re-runs re-install the
   # staged token as /run/hermes-forgejo-token after deploys that change the
   # hermes user/group or the token scripts.
-  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup browser-history-agent-token-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs cv-backup-dir inboxclean-backup-dir miniflux-backup-dir paperless-db-backup-dir miniflux-oidc-setup llama-rag-model-fetch hermes-github-verify tq-storage-dir tq-bootstrap crush-hot-db-migrate boot-mirror-sync hot-user-caches-nix-bootstrap restic-app-dumps-setup; do
+  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup browser-history-agent-token-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs cv-backup-dir inboxclean-backup-dir miniflux-backup-dir paperless-db-backup-dir browser-history-backup-dir miniflux-oidc-setup llama-rag-model-fetch hermes-github-verify tq-storage-dir tq-bootstrap crush-hot-db-migrate boot-mirror-sync hot-user-caches-nix-bootstrap restic-app-dumps-setup discordsync-attachments-dir; do
     # restic-app-dumps-setup: idempotent repo-password bootstrap (creates
     # /var/lib/restic-app-dumps/password once; re-run converges).
     # miniflux-oidc-setup: converges miniflux users.openid_connect_id to the
@@ -485,6 +485,11 @@ if nix run .#pre-deploy-check; then
     # changes; cost when already converged is one `btrfs subvolume show`.
     # (The go-build sibling was removed with its cache entry 2026-09-20 —
     # the HM-symlink canonicalization trap; see hot-user-caches.nix.)
+    # discordsync-attachments-dir: mount-gated pool leaf creator for the
+    # attachment archive — must exist before discordsync's namespace setup
+    # reads its ReadWritePaths.
+    # browser-history-backup-dir: mount-gated pool leaf creator for the
+    # nightly DB dump dir (cv-backup-dir pattern).
     if systemctl is-enabled --quiet "$provisioner.service" 2>/dev/null; then
       echo "Restarting provisioner: $provisioner.service"
       sudo systemctl restart "$provisioner.service" 2>/dev/null || true
@@ -692,6 +697,16 @@ if nix run .#pre-deploy-check; then
   if systemctl cat activitywatch-data-to-pool.service >/dev/null 2>&1; then
     echo "Starting activitywatch-data-to-pool.service (no-block, copy + verify + symlink cutover)"
     sudo systemctl start --no-block activitywatch-data-to-pool.service 2>/dev/null || true
+  fi
+
+  # One-time DiscordSync attachments → pool migration (static unit, so the
+  # provisioner loop's is-enabled gate would skip it). --no-block: the ~40 GB
+  # copy + verify must not stall the switch flow on the shared USB HDD link;
+  # the unit stops/restarts discordsync.service itself around the move.
+  # ConditionPathIsDirectory-gated: skips instantly once the source is gone.
+  if systemctl cat discordsync-attachments-migrate.service >/dev/null 2>&1; then
+    echo "Starting discordsync-attachments-migrate.service (no-block, stop service + copy + verify + source cleanup)"
+    sudo systemctl start --no-block discordsync-attachments-migrate.service 2>/dev/null || true
   fi
 
   echo ""

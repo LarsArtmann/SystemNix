@@ -280,10 +280,14 @@ in
     # (23:45, after the NVMe instances, before nix-gc at 00:00). Protects
     # against app-level corruption / accidental deletion on the pool:
     # immich media, paperless documents, atticd NAR storage, monitor365
-    # buffer. monitor365 + atticd were populated by the 2026-08-18
-    # data-to-pool-migration; discordsync + browser-history remain laid out
-    # empty for their planned NVMe->pool migrations and snapshot as no-ops
-    # until then.
+    # buffer, discordsync attachments (pool-native since the 2026-09-22
+    # BLOB re-scope of the Own-tools NVMe→pool leg — the discordsync DB
+    # stays on NVMe for the Phase-2 hot-db wave). browser-history has NO
+    # pool leg: the 2026-09-21 Phase-2 verdicts put its DB on the Samsung
+    # hot tier, and its only other state is the DB-dump dir
+    # (/mnt/pool/backups/browser-history, covered by the dump + retention).
+    # The empty services/browser-history subvol remains on the pool disk
+    # from the 2026-08-16 layout (removal needs root; nothing references it).
     btrbk.instances."pool" = {
       onCalendar = "23:45";
       snapshotOnly = true;

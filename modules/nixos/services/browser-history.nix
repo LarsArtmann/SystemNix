@@ -56,6 +56,9 @@
       agentTokenDir = "/var/lib/browser-history-agent-token";
       agentEnvFile = "${agentTokenDir}/agent.env";
 
+      # Pool-side DB backup target (dbBackup.enable opts the host in).
+      backupDir = "/mnt/pool/backups/browser-history";
+
       textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
 
       agentTokenProvisionScript = pkgs.writeShellApplication {
@@ -192,6 +195,20 @@
           type = lib.types.str;
           default = "5min";
           description = "Collection interval (OnUnitActiveSec).";
+        };
+      };
+
+      options.services.browser-history.dbBackup = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = ''
+            Nightly online `sqlite3 .backup` of the server DB onto the HDD
+            pool (/mnt/pool/backups/browser-history), 14d retention, watched
+            via backup-coordination. Default OFF: the units hard-depend on
+            the pool mount (RequiresMountsFor), so only hosts with the pool
+            opt in (evo-x2 via configuration.nix).
+          '';
         };
       };
 
@@ -611,6 +628,103 @@
           };
         })
 
+        # ── Nightly DB backup onto the HDD pool ────────────────────────────────
+        # Online `sqlite3 .backup` (safe against the live WAL writer) of
+        # /var/lib/browser-history/data.db onto /mnt/pool/backups, 14d
+        # retention (cv-backup pattern). Pool-leaf creation is mount-gated
+        # (cv-backup-dir pattern — no tmpfiles rule under /mnt/pool, the
+        # root-fs shadow-dir class). Default OFF: the units hard-depend on
+        # the pool (RequiresMountsFor), which is host-shaped — evo-x2 opts
+        # in via configuration.nix (profileProbe precedent).
+        (lib.mkIf (cfg.enable && cfg.dbBackup.enable) {
+          systemd.services.browser-history-backup-dir = {
+            description = "Create Browser History DB backup directory on the HDD pool";
+            wantedBy = [ "multi-user.target" ];
+            unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = "root";
+                RemainAfterExit = true;
+              }
+              # ReadWritePaths targets the MOUNT ROOT (cv-backup-dir pattern):
+              # a fresh pool has no backups/ leaf yet, and a ReadWritePaths
+              # entry under the mountpoint would abort with 226/NAMESPACE
+              # before the script can mkdir.
+              (harden {
+                MemoryMax = "128M";
+                ReadWritePaths = [ "/mnt/pool" ];
+                CapabilityBoundingSet = "CAP_FOWNER CAP_DAC_OVERRIDE";
+              })
+              (serviceOneshotDefaults { })
+            ];
+            script = ''
+              mkdir -p ${backupDir}
+              chmod 0755 ${backupDir}
+            '';
+          };
+
+          systemd.services.browser-history-backup = {
+            description = "Browser History DB backup (online sqlite .backup)";
+            after = [
+              "browser-history.service"
+              "browser-history-backup-dir.service"
+            ];
+            wants = [
+              "browser-history.service"
+              "browser-history-backup-dir.service"
+            ];
+            # Detached DAS fails the run as a clean dependency error, never
+            # 226/NAMESPACE (btrbk doctrine).
+            unitConfig.RequiresMountsFor = [ backupDir ];
+            inherit onFailure;
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                ExecStart = pkgs.writeShellScript "browser-history-backup" ''
+                  set -euo pipefail
+                  db="/var/lib/browser-history/data.db"
+                  if [ ! -f "$db" ]; then
+                    echo "browser-history-backup: no data.db yet — nothing to back up"
+                    exit 0
+                  fi
+                  dst="${backupDir}/browser-history-db-$(date +%Y-%m-%d).sqlite"
+                  ${lib.getExe pkgs.sqlite} "$db" ".backup '$dst'"
+                  # 14-day retention (cv/miniflux pattern): the online .backup
+                  # rewrites every page, so nothing is shared between nights.
+                  find ${backupDir} -name "browser-history-db-*.sqlite" -mtime +14 -delete
+                  echo "browser-history-backup: wrote $dst"
+                '';
+                ReadWritePaths = [ backupDir ];
+              }
+              # The server's DynamicUser StateDirectory is 0700 owned by a
+              # random uid — root cannot traverse it without CAP_DAC_READ_SEARCH
+              # (cv-backup silent-no-op precedent: DAC-obeying root saw no DB
+              # and exited 0 "nothing to back up" forever).
+              (harden {
+                MemoryMax = "512M";
+                CapabilityBoundingSet = "CAP_DAC_READ_SEARCH";
+              })
+              (serviceOneshotDefaults { })
+              ioTier.background
+            ];
+          };
+
+          systemd.timers.browser-history-backup = {
+            description = "Nightly Browser History DB backup";
+            wantedBy = [ "timers.target" ];
+            after = [ "mnt-pool.mount" ];
+            timerConfig = {
+              # 02:15 — staggered off paperless-db (02:00 + 10m jitter) and
+              # miniflux (02:45).
+              OnCalendar = "*-*-* 02:15:00";
+              Persistent = true;
+            };
+          };
+        })
+
         # Service-integration registry entries (modules/nixos/services/
         # integration.nix). enable-gated via the registry's own switch so
         # hosts without the integration module (VM tests) still evaluate.
@@ -661,6 +775,13 @@
                 name = "Browser History";
                 group = "Sync & Backup";
                 description = "Browsing Analytics & Productivity Insights";
+              };
+              # DB dump freshness (browser-history-backup.timer, 02:15) —
+              # gated so pool-less hosts register no phantom backup row.
+              backup = lib.mkIf cfg.dbBackup.enable {
+                directory = backupDir;
+                filePattern = "browser-history-db-*.sqlite";
+                maxAgeHours = 25;
               };
               oidc = {
                 name = "Browser History";
