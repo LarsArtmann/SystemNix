@@ -669,7 +669,14 @@
     # its own CI + stalwart/relay/parsedmarc E2E suites since v0.3.0.
     nix-email = {
       url = "github:LarsArtmann/nix-email?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        # Dedupe (2026-09-22, per the nix-email CHANGELOG hint): collapse
+        # upstream's flake-parts into OUR flake-parts node - without this
+        # the lock carries a second flake-parts (flake-parts_17) that only
+        # nix-email consumes.
+        flake-parts.follows = "flake-parts";
+      };
     };
 
     # md-go-validator — Validate code blocks embedded in Markdown/MDX docs

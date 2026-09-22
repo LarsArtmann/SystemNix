@@ -1354,7 +1354,7 @@
     "flake-parts_17": {
       "inputs": {
         "nixpkgs-lib": [
-          "nix-email",
+          "papdashboard",
           "nixpkgs"
         ]
       },
@@ -1375,7 +1375,8 @@
     "flake-parts_18": {
       "inputs": {
         "nixpkgs-lib": [
-          "papdashboard",
+          "projects-management-automation",
+          "go-nix-helpers",
           "nixpkgs"
         ]
       },
@@ -1395,11 +1396,7 @@
     },
     "flake-parts_19": {
       "inputs": {
-        "nixpkgs-lib": [
-          "projects-management-automation",
-          "go-nix-helpers",
-          "nixpkgs"
-        ]
+        "nixpkgs-lib": "nixpkgs-lib"
       },
       "locked": {
         "lastModified": 1788450739,
@@ -1437,24 +1434,6 @@
       }
     },
     "flake-parts_20": {
-      "inputs": {
-        "nixpkgs-lib": "nixpkgs-lib"
-      },
-      "locked": {
-        "lastModified": 1788450739,
-        "narHash": "sha256-glZLQlzIn1fXH6PazR2iUmTo7kzzyYSshrWhLS9TqCU=",
-        "owner": "hercules-ci",
-        "repo": "flake-parts",
-        "rev": "31729ca8cbdb4fa927b34e5f4353e6a83f39e993",
-        "type": "github"
-      },
-      "original": {
-        "owner": "hercules-ci",
-        "repo": "flake-parts",
-        "type": "github"
-      }
-    },
-    "flake-parts_21": {
       "inputs": {
         "nixpkgs-lib": [
           "todo-list-ai",
@@ -4329,7 +4308,7 @@
     },
     "go-nix-helpers_7": {
       "inputs": {
-        "flake-parts": "flake-parts_19",
+        "flake-parts": "flake-parts_18",
         "nixpkgs": [
           "projects-management-automation",
           "nixpkgs"
@@ -5948,17 +5927,19 @@
     },
     "nix-email": {
       "inputs": {
-        "flake-parts": "flake-parts_17",
+        "flake-parts": [
+          "flake-parts"
+        ],
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1789672416,
-        "narHash": "sha256-gn3fYDZKjPlMsvYlvxUn10Py/9Oxsgm4pbEwdoAJNhc=",
+        "lastModified": 1790098443,
+        "narHash": "sha256-77xDO5zNs02u9RHrClae2hm8jcGjelUKd44739r9K/g=",
         "owner": "LarsArtmann",
         "repo": "nix-email",
-        "rev": "b54f5c33985b514dd1dba138d4d6065538593034",
+        "rev": "2659abbfa95940ceb926d7e14f681aa28b4ed4e3",
         "type": "github"
       },
       "original": {
@@ -6358,7 +6339,7 @@
     },
     "papdashboard": {
       "inputs": {
-        "flake-parts": "flake-parts_18",
+        "flake-parts": "flake-parts_17",
         "go-cqrs-lite": "go-cqrs-lite_7",
         "go-nix-helpers": "go-nix-helpers_6",
         "nixpkgs": "nixpkgs_5",
@@ -7061,7 +7042,7 @@
       "inputs": {
         "collector-utils": "collector-utils_2",
         "crane": "crane_2",
-        "flake-parts": "flake-parts_20",
+        "flake-parts": "flake-parts_19",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -7499,7 +7480,7 @@
     },
     "todo-list-ai": {
       "inputs": {
-        "flake-parts": "flake-parts_21",
+        "flake-parts": "flake-parts_20",
         "nixpkgs": [
           "nixpkgs"
         ],
