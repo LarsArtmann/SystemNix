@@ -495,9 +495,14 @@
             (serviceOneshotDefaults { })
           ];
           script = ''
+            # chmod while the dir is still root-owned (no CAP_FOWNER needed),
+            # then hand over to the service user. chmod AFTER the chown flip
+            # EPERM'd live on 2026-09-22 despite CAP_FOWNER in the bounding
+            # set — this order is idempotent and cap-independent.
             mkdir -p ${cfg.attachmentsDir}
-            chown ${cfg.user}:${cfg.group} ${cfg.attachmentsDir}
+            chown root:root ${cfg.attachmentsDir}
             chmod 2770 ${cfg.attachmentsDir}
+            chown ${cfg.user}:${cfg.group} ${cfg.attachmentsDir}
           '';
         };
 
@@ -564,8 +569,9 @@
 
             echo "discordsync-attachments-migrate: copying $src → $dest"
             mkdir -p "$dest"
-            chown ${cfg.user}:${cfg.group} "$dest"
+            chown root:root "$dest"
             chmod 2770 "$dest"
+            chown ${cfg.user}:${cfg.group} "$dest"
             if ! rsync -aHAX --info=stats1 "$src"/ "$dest"/; then
               echo "discordsync-attachments-migrate: COPY FAILED (source kept)"
               failures=1

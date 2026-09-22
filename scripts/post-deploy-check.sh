@@ -900,7 +900,10 @@ fi
 # is derived from the deployed unit's Environment (flm model-derive pattern)
 # with the lib/ports.nix value (health-dashboard = 8103) as fallback.
 healthhub_enabled=false
-test -e /etc/systemd/system/health-dashboard.service && healthhub_enabled=true
+# The .wants symlink is the enable signal — the bare unit file exists whenever
+# the module is evaluated, enabled or not (2026-09-22: unit file present +
+# wantedBy missing = a service that never starts + a permanently-FAILing smoke).
+test -e /etc/systemd/system/multi-user.target.wants/health-dashboard.service && healthhub_enabled=true
 
 if $healthhub_enabled; then
   healthhub_addr=$(systemctl show health-dashboard --property=Environment 2>/dev/null | grep -o 'HEALTH_HUB_ADDR=[^ "]*' | cut -d= -f2 | head -1)

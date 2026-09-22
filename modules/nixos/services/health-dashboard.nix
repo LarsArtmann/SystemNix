@@ -82,6 +82,7 @@
 
         systemd.services.health-dashboard = {
           description = "Federated go-health hub (health.home.lan)";
+          wantedBy = [ "multi-user.target" ];
           inherit onFailure;
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
