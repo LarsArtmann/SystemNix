@@ -679,6 +679,19 @@
       };
     };
 
+    # vision-review-agent — visionreviewd, the event-sourced UI review daemon
+    # (returned 2026-09-22 after the 2026-09-15 dormant-integration removal;
+    # this time enabled on evo-x2, pointed at llama-vlm's captioner endpoint)
+    vision-review-agent = {
+      url = "github:LarsArtmann/vision-review-agent?ref=master";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+        systems.follows = "systems";
+        treefmt-nix.follows = "treefmt-nix";
+      };
+    };
+
     # md-go-validator — Validate code blocks embedded in Markdown/MDX docs
     # Was INTERIM-pinned to 5b72f894 (2026-09-13 vendorHash wave); master
     # verified BUILDABLE at HEAD 2026-09-16 (goModules FOD probe passed) —

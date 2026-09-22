@@ -667,10 +667,47 @@ in
             # (2026-09-18). Update after any re-download.
             modelPath = "/data/ai/cache/huggingface/hub/models--GitMylo--nsfwcaption-qwen3-vl-8b-v3-gguf/snapshots/eb52b76411f34ea197558ec03eb15b2814d1b0c2/NSFWCaption-v3-Qwen3-VL-8B-Q8_0.gguf";
             mmprojPath = "/data/ai/cache/huggingface/hub/models--GitMylo--nsfwcaption-qwen3-vl-8b-v3-gguf/snapshots/eb52b76411f34ea197558ec03eb15b2814d1b0c2/mmproj-NSFWCaption-v3.gguf";
+            # Stable /v1/models id — the default is the raw snapshot path
+            # (verified live 2026-09-22), which visionreviewd's config and
+            # doctor model check would otherwise have to embed verbatim.
+            # Alias-only: chat consumers ignore the model name anyway.
+            extraArgs = [ "--alias" "nsfwcaption-qwen3-vl-8b-v3" ];
             keepAlive = "2h";
             memoryMax = "16G";
           };
         };
+      };
+
+      # visionreviewd — event-sourced UI review daemon (vision-review-agent).
+      # Reviews the website-fleet screenshots with llama-vlm's caption model:
+      # baseUrl points at the socket-activated captioner (ports.llama-vlm-cap,
+      # CPU-only). llamaServer.enable stays FALSE — the upstream llama unit
+      # would re-introduce an always-on ~10 GB model server this host already
+      # solved with llama-vlm's idle-unload sockets (and the ROCm llama.cpp
+      # path has a wedge history here; see llama-vlm.nix header).
+      #
+      # Screenshots come from the website-fleet pipeline (scripts/shoot-sites.sh
+      # in the vision-review-agent repo writes under
+      # ~/.local/share/vision-review-agent/screenshots/<site>/); the daemon
+      # reads them through its ProtectHome=read-only sandbox. The journal and
+      # reviews live in the service StateDirectory (/var/lib/visionreviewd) —
+      # a fresh event history, deliberately separate from the 2026-09-19
+      # user-space journal that the manual monthly passes still own. No
+      # secrets in this config (loopback llama, keyless), so environment.etc
+      # is the honest home for it; revisit if an API key ever appears.
+      vision-review-agent.enable = true;
+      vision-review-agent.configFile = "/etc/visionreviewd/config.json";
+      environment.etc."visionreviewd/config.json".text = builtins.toJSON {
+        model = "nsfwcaption-qwen3-vl-8b-v3";
+        baseUrl = "http://127.0.0.1:${toString ports.llama-vlm-cap}/v1";
+        dataDir = "/var/lib/visionreviewd/data";
+        reviewsDir = "/var/lib/visionreviewd/reviews";
+        interval = "10m";
+        timeout = "12m";
+        sourceURLs = visionreviewdSites;
+        projects = builtins.mapAttrs (site: _: [
+          "/home/${config.users.primaryUser}/.local/share/vision-review-agent/screenshots/${site}/*.png"
+        ]) visionreviewdSites;
       };
 
       # llama.cpp RAG stack — embeddings (bge-m3) + reranking (bge-reranker-v2-m3)

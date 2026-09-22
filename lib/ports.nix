@@ -74,6 +74,12 @@
 
     discordsync-api = 8085;
 
+    # Reserved for the upstream llamaServer unit (services.vision-review-agent).
+    # evo-x2 does NOT enable it — the daemon reviews via llama-vlm's captioner
+    # endpoint — but the wrapper module still defaults the option to the
+    # registered port so a future llamaServer.enable stays registry-correct.
+    visionreviewd-llama = 8390;
+
     file-and-image-renamer-health = 8086;
 
     browser-history = 8087;
