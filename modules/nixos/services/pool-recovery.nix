@@ -110,6 +110,10 @@
             "paperless-task-queue.service"
             "paperless-scheduler.service"
             "bank-sync.service"
+            # discordsync became a pool consumer with its attachmentsDir move
+            # (2026-09-22): RequiresMountsFor gates the service on the pool,
+            # so a dropout leaves it failed/inactive and needs the converge.
+            "discordsync.service"
           ];
           description = ''
             Pool consumers to converge once the pool mount is healthy: FAILED

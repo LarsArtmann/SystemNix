@@ -220,6 +220,23 @@
           description = "GCS bucket name for cloud attachment backup (requires discordsync_gcs_credentials sops secret)";
         };
 
+        # Attachments (BLOBs) directory. null keeps the legacy in-state layout
+        # (${dataDir}/attachments, tmpfiles-created). Set it to a pool path to
+        # move the ~40 GB attachment archive off the NVMe (2026-09-22
+        # re-scope of the Own-tools NVMe→pool leg: the DB stays put — the
+        # Phase-2 hot-db wave owns it — only BLOBs belong on the HDD pool).
+        # Setting it wires the mount-gated leaf creator, the service's
+        # RequiresMountsFor/ReadWritePaths gating, and the one-time migrate
+        # oneshot (rsync → verify → rm source, activitywatch-data-to-pool
+        # pattern). A detached DAS then fails the service as a clean
+        # dependency (bank-sync pool-native precedent); pool-recovery
+        # converges it after remount.
+        attachmentsDir = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "Pool directory for the attachment archive (null = legacy in-state <dataDir>/attachments layout)";
+        };
+
         immich = {
           enable = lib.mkEnableOption "Immich cross-archive comparison on the /lookup page (ADR-062: the server proxies hex SHA-1 hashes to Immich's bulk-upload-check; IMMICH_URL + IMMICH_API_KEY are cold config validated both-or-neither by the binary at startup)";
           url = lib.mkOption {
@@ -347,18 +364,24 @@
             "sops-nix.service"
             "dnsblockd.service"
             "discordsync-db-heal.service"
+          ] ++ lib.optionals (cfg.attachmentsDir != null) [
+            "discordsync-attachments-dir.service"
           ];
           wants = [
             "sops-nix.service"
             "dnsblockd.service"
             "discordsync-db-heal.service"
+          ] ++ lib.optionals (cfg.attachmentsDir != null) [
+            "discordsync-attachments-dir.service"
           ];
           inherit onFailure;
           startLimitBurst = lib.mkForce 10; # SystemNix uses 10 (upstream is 5)
 
           environment = {
-            # Preserve subdir layout (upstream uses dataDir root).
-            ATTACHMENT_STORAGE_PATH = lib.mkForce "${cfg.dataDir}/attachments";
+            # Pool-native attachment archive when attachmentsDir is set
+            # (2026-09-22 BLOB re-scope); legacy in-state subdir otherwise
+            # (upstream uses dataDir root).
+            ATTACHMENT_STORAGE_PATH = lib.mkForce (if cfg.attachmentsDir != null then cfg.attachmentsDir else "${cfg.dataDir}/attachments");
             # OTel traces → local SigNoz OTLP/HTTP collector. The binary
             # installs a noop tracer when this is unset. otlptracehttp.WithEndpoint
             # expects host:port WITHOUT scheme — the SDK constructs the full URL
@@ -416,19 +439,159 @@
             (harden {
               # Backfill bursts + turso-sync need more than upstream's 512M.
               MemoryMax = lib.mkForce "2G";
-              ReadWritePaths = [ cfg.dataDir ];
+              ReadWritePaths = [ cfg.dataDir ] ++ lib.optionals (cfg.attachmentsDir != null) [ cfg.attachmentsDir ];
             })
             ioTier.background
             {
               Environment = [ "GOMEMLIMIT=1536MiB" ];
             }
           ];
+
+          # The attachment archive is pool-native when attachmentsDir is set:
+          # a detached DAS must fail the service as a clean dependency, never
+          # let attachment writes land in a root-fs shadow dir under the
+          # mountpoint (226/mount-gating doctrine). The audit's
+          # RequiresMountsFor gate is satisfied by the exact-path form.
+          unitConfig = lib.optionalAttrs (cfg.attachmentsDir != null) {
+            RequiresMountsFor = [ cfg.attachmentsDir ];
+          };
         };
 
-        # Pre-create the attachments subdir with correct ownership.
-        # (Upstream creates dataDir only — the subdir is a SystemNix convention.)
+        # Pool attachment archive wiring (attachmentsDir != null only).
+        systemd.services.discordsync-attachments-dir = lib.mkIf (cfg.attachmentsDir != null) {
+          description = "Create DiscordSync attachment directory on the HDD pool";
+          wantedBy = [ "multi-user.target" ];
+          unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "root";
+              RemainAfterExit = true;
+            }
+            # ReadWritePaths targets the MOUNT ROOT (cv-backup-dir pattern):
+            # on a fresh pool nothing pre-exists under the mountpoint, and a
+            # ReadWritePaths leaf entry would abort with 226/NAMESPACE before
+            # the script can mkdir. RequiresMountsFor guarantees /mnt/pool is
+            # mounted, so the root scope always resolves.
+            (harden {
+              MemoryMax = "128M";
+              ReadWritePaths = [ "/mnt/pool" ];
+              # chown to the service user flips the path non-root-owned; the
+              # follow-up chmod then needs CAP_FOWNER (2026-09-20 lesson —
+              # CAP_DAC_OVERRIDE does NOT cover chmod on foreign-owned paths).
+              CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
+            })
+            (serviceOneshotDefaults { })
+          ];
+          script = ''
+            mkdir -p ${cfg.attachmentsDir}
+            chown ${cfg.user}:${cfg.group} ${cfg.attachmentsDir}
+            chmod 2770 ${cfg.attachmentsDir}
+          '';
+        };
+
+        # One-time move of the in-state attachment archive onto the pool
+        # (activitywatch-data-to-pool pattern): runs only while the legacy
+        # dir still exists, stops the service for a consistent copy, rsyncs,
+        # checksum-verifies, then removes the source (rm, not trash — ~40 GB
+        # would write back onto the NVMe this migration frees; the pool copy
+        # is checksum-verified + btrbk-pool snapshotted). Static unit, started
+        # by deploy.sh's dedicated no-block block (the copy must not block the
+        # switch flow on the shared USB HDD link); ConditionPathIsDirectory
+        # makes every later boot/deploy a clean instant skip.
+        systemd.services.discordsync-attachments-migrate = lib.mkIf (cfg.attachmentsDir != null) {
+          description = "One-time migration: discordsync attachments → HDD pool";
+          unitConfig = {
+            ConditionPathIsDirectory = "${cfg.dataDir}/attachments";
+            RequiresMountsFor = [ "/mnt/pool" ];
+          };
+          inherit onFailure;
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+          path = with pkgs; [
+            rsync
+            coreutils
+            systemd
+          ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "root";
+              # ~40 GB copy + full checksum verify on the shared USB HDD link
+              # under contention; generously above the real cost.
+              TimeoutStartSec = "6h";
+            }
+            (harden {
+              MemoryMax = "512M";
+              ReadWritePaths = [
+                cfg.dataDir
+                "/mnt/pool"
+              ];
+              # DAC_READ_SEARCH: the state dir is 0700 discordsync:discordsync
+              # — root cannot even stat through it without it (cv-backup
+              # silent-no-op precedent). CHOWN/FOWNER/DAC_OVERRIDE: rsync -aHAX
+              # ownership preservation + the final rm -rf of foreign-owned
+              # files.
+              CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE CAP_DAC_READ_SEARCH";
+            })
+            (serviceOneshotDefaults { })
+            ioTier.background
+          ];
+          script = ''
+            set -u
+            src="${cfg.dataDir}/attachments"
+            dest="${cfg.attachmentsDir}"
+            failures=0
+
+            # Quiesce the writer: a live rsync of files under capture is not a
+            # consistent copy. Stop is a no-op when the service is down; if
+            # the stop itself fails, refuse to move (house pattern).
+            if ! systemctl stop discordsync.service; then
+              echo "discordsync-attachments-migrate: STOP FAILED — cannot take a consistent copy (source kept)"
+              exit 1
+            fi
+
+            echo "discordsync-attachments-migrate: copying $src → $dest"
+            mkdir -p "$dest"
+            chown ${cfg.user}:${cfg.group} "$dest"
+            chmod 2770 "$dest"
+            if ! rsync -aHAX --info=stats1 "$src"/ "$dest"/; then
+              echo "discordsync-attachments-migrate: COPY FAILED (source kept)"
+              failures=1
+            else
+              diff=""
+              if ! diff=$(rsync -aHAXn -c -i "$src"/ "$dest"/) || [ -n "$diff" ]; then
+                echo "discordsync-attachments-migrate: VERIFY FAILED — differences remain (source kept):"
+                printf '%s\n' "$diff" | head -20
+                failures=1
+              elif ! rm -rf -- "$src"; then
+                echo "discordsync-attachments-migrate: SOURCE REMOVAL FAILED (data is safe on the pool)"
+                failures=1
+              else
+                echo "discordsync-attachments-migrate: verified identical, source removed — service reads ${cfg.attachmentsDir}"
+              fi
+            fi
+
+            if ! systemctl start discordsync.service; then
+              echo "discordsync-attachments-migrate: RESTART FAILED — start discordsync.service manually"
+              failures=1
+            fi
+
+            if [ "$failures" -ne 0 ]; then
+              echo "discordsync-attachments-migrate: FAILED — migration incomplete; source kept where verified"
+              exit 1
+            fi
+            echo "discordsync-attachments-migrate: complete"
+          '';
+        };
+
+        # Pre-create the in-state attachments subdir with correct ownership
+        # (legacy layout only — the pool leaf has its own mount-gated creator;
+        # a tmpfiles rule under /mnt/pool would land on the root fs during a
+        # DAS outage and shadow the pool copy).
         systemd.tmpfiles.rules = [
           (mkStateDir cfg.dataDir "2770" cfg.user cfg.group)
+        ] ++ lib.optionals (cfg.attachmentsDir == null) [
           (mkStateDir "${cfg.dataDir}/attachments" "2770" cfg.user cfg.group)
         ];
 
