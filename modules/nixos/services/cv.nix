@@ -298,6 +298,22 @@
                 inbox_id = "";
               };
             };
+            # Ledger CRM sync (Twenty-compatible REST subset — the pipeline
+            # mirrors applications into the Ledger CRM as deals; runbook:
+            # ledger repo docs/ops/CV-SYNC.md). base_url is the ledger
+            # crm-server's -addr (loopback, behind its -api-token bearer
+            # gate). Same env-secret pattern as agentmail: api_key stays
+            # empty here and CV_CRM_API_KEY (sops cv-env template) overrides
+            # it at load time. NOTE: applyEnvOverrides is a PULL over keys
+            # that exist in the loaded yaml — with no crm block at all the
+            # syncer boots "disabled (no crm.enabled or crm.api_key)" even
+            # with the env var set, so both keys must be present here.
+            crm = {
+              enabled = true;
+              base_url = "http://127.0.0.1:8091";
+              api_key = "";
+              timeout = "30s";
+            };
             # journald/SigNoz ingestion friendliness: structured JSON lines
             # instead of the text default (internal/config LogFormatJSON).
             logging.format = "json";
