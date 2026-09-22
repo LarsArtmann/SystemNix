@@ -38,7 +38,8 @@ in
         # co-import: the module declares a services.integration entry
         # (mkIf-wrapped options?-guard caveat, 2026-09-15)
         (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration
-        (import ../modules/nixos/services/backup-coordination.nix { }).flake.nixosModules.backup-coordination
+        (import ../modules/nixos/services/backup-coordination.nix { })
+        .flake.nixosModules.backup-coordination
         ./mock-sops.nix
         ./test-helpers.nix
       ];

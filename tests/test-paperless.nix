@@ -111,7 +111,8 @@ in
         # co-import: the paperless-db registry entry fans into
         # services.backup-coordination.backups (options?-guard needs the
         # option to exist for the fan-out to land — asserted in step 9).
-        (import ../modules/nixos/services/backup-coordination.nix { }).flake.nixosModules.backup-coordination
+        (import ../modules/nixos/services/backup-coordination.nix { })
+        .flake.nixosModules.backup-coordination
         gatusCoverageAuditModule
         pocketIdEnableMock
         mailRelayEnableMock

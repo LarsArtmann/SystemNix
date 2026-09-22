@@ -364,14 +364,16 @@
             "sops-nix.service"
             "dnsblockd.service"
             "discordsync-db-heal.service"
-          ] ++ lib.optionals (cfg.attachmentsDir != null) [
+          ]
+          ++ lib.optionals (cfg.attachmentsDir != null) [
             "discordsync-attachments-dir.service"
           ];
           wants = [
             "sops-nix.service"
             "dnsblockd.service"
             "discordsync-db-heal.service"
-          ] ++ lib.optionals (cfg.attachmentsDir != null) [
+          ]
+          ++ lib.optionals (cfg.attachmentsDir != null) [
             "discordsync-attachments-dir.service"
           ];
           inherit onFailure;
@@ -381,7 +383,9 @@
             # Pool-native attachment archive when attachmentsDir is set
             # (2026-09-22 BLOB re-scope); legacy in-state subdir otherwise
             # (upstream uses dataDir root).
-            ATTACHMENT_STORAGE_PATH = lib.mkForce (if cfg.attachmentsDir != null then cfg.attachmentsDir else "${cfg.dataDir}/attachments");
+            ATTACHMENT_STORAGE_PATH = lib.mkForce (
+              if cfg.attachmentsDir != null then cfg.attachmentsDir else "${cfg.dataDir}/attachments"
+            );
             # OTel traces → local SigNoz OTLP/HTTP collector. The binary
             # installs a noop tracer when this is unset. otlptracehttp.WithEndpoint
             # expects host:port WITHOUT scheme — the SDK constructs the full URL
@@ -444,7 +448,9 @@
             # priority, which beats harden{}'s mkDefault — the pool leaf is
             # added via mkForce (dataDir kept; nothing else defines the list).
             {
-              ReadWritePaths = lib.mkForce ([ cfg.dataDir ] ++ lib.optionals (cfg.attachmentsDir != null) [ cfg.attachmentsDir ]);
+              ReadWritePaths = lib.mkForce (
+                [ cfg.dataDir ] ++ lib.optionals (cfg.attachmentsDir != null) [ cfg.attachmentsDir ]
+              );
             }
             ioTier.background
             {
@@ -596,7 +602,8 @@
         # DAS outage and shadow the pool copy).
         systemd.tmpfiles.rules = [
           (mkStateDir cfg.dataDir "2770" cfg.user cfg.group)
-        ] ++ lib.optionals (cfg.attachmentsDir == null) [
+        ]
+        ++ lib.optionals (cfg.attachmentsDir == null) [
           (mkStateDir "${cfg.dataDir}/attachments" "2770" cfg.user cfg.group)
         ];
 
