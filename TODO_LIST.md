@@ -108,9 +108,9 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Miniflux runbook gate-proof block** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Miniflux VM test extension** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Add the mail-wiring PASS-since-2026-09-05 status to the paperless runbook monitoring map** → [docs/todo/services.md](docs/todo/services.md)
-- [ ] **Paperless VM-test regression: assert the relay-gated email settings render into the unit file** → [docs/todo/services.md](docs/todo/services.md)
-- [ ] **Paperless VM-test regression: assert paperless-db-backup timer/service + the backup-coordination paperless-db entry** → [docs/todo/services.md](docs/todo/services.md)
-- [ ] **atticd-storage-dir: derive `ReadWritePaths` from `cfg.storagePath`** → [docs/todo/services.md](docs/todo/services.md)
+- [ ] **Paperless VM-test regression: assert the relay-gated email settings render into the unit file** → [docs/todo/services.md](docs/todo/services.md) — assertions landed 2026-09-22 (eval-verified); first green VM run PSI-gated
+- [ ] **Paperless VM-test regression: assert paperless-db-backup timer/service + the backup-coordination paperless-db entry** → [docs/todo/services.md](docs/todo/services.md) — assertions landed 2026-09-22 (eval-verified); first green VM run PSI-gated
+- [ ] **VM test for the restic-app-dumps module** → [docs/todo/storage.md](docs/todo/storage.md) — written + eval-verified 2026-09-22; first green VM run PSI-gated
 - [ ] **`projects-management-automation` Environment= splitting** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **project-discovery-daemon IO taming** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Hermes deferred-cleanups cluster (partly PAST DUE)** → [docs/todo/services.md](docs/todo/services.md)
@@ -122,7 +122,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **browser-history registration-surface audit: verify `/auth/import` is unreachable unauthenticated on the deployed vHost path + sweep cqrs-htmx for OTHER user-creation paths bypassing `registrationMu`** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **DiscordSync Immich cross-archive wiring: deploy + go-live chain (FOD wave → deploy → user API key → post-deploy verify)** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Health Hub: expose fetch-timeout/push-cadence as module options** → [docs/todo/services.md](docs/todo/services.md)
-- [ ] **Health Hub: add post-deploy smoke section to post-deploy-check.sh** → [docs/todo/services.md](docs/todo/services.md)
+- [ ] **Health Hub: add post-deploy smoke section to post-deploy-check.sh** → [docs/todo/services.md](docs/todo/services.md) — landed 2026-09-22 (enable-gated /healthz + /readyz + HTTPS vHost + AUTH_VHOSTS leg, shellcheck-green); goes live with the module's first deploy
 - [ ] **Remove the self-neutralized `probeRegistrationCleanup` block (purge EXECUTED 2026-09-20 11:33:55, journal-verified) — BLOCKED: keep or rip the generic mechanism (option + script + fixture check) after the executed purge — reusable probe-cleanup pattern or YAGNI rip?** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Browser-history quiet-day 503 (agent freshness lapses when there is nothing to ingest): local Gatus-condition mitigation + upstream empty-batch heartbeat** → [docs/todo/services.md](docs/todo/services.md)
 
