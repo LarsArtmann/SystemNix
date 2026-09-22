@@ -219,6 +219,9 @@ let
       gup
       templ
 
+      # Document rendering
+      typst # Document typesetting compiler (CV PDF rendering; moved from imperative nix profile 2026-09-22)
+
       # CGO build tools for Go
       gcc
       gnumake
