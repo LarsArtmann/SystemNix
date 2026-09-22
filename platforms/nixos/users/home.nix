@@ -593,8 +593,10 @@ in
       # excluded via automount). With the subvolume retired, the registry/git
       # churn moves here — same off-NVMe doctrine as GOCACHE/GOMODCACHE.
       # Seeded at migration from ~/.cargo (registry, git, advisory dbs, bin,
-      # credentials.toml). ~/.cargo remains as a plain dir only for tools
-      # that hardcode it; cargo itself no longer touches it.
+      # credentials.toml). Env'd cargo (session vars present) writes to
+      # CARGO_HOME here; env-less cargo (CARGO_HOME absent) falls back to
+      # ~/.cargo/registry, which the 2026-09-22 HM symlink sweep redirects
+      # onto this same registry on the mount.
       CARGO_HOME = "/mnt/buildcache/cargo";
 
       # Wayland specific
