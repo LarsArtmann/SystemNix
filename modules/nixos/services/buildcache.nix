@@ -344,6 +344,15 @@
                 echo "reaped real dir at ${homeDir}/.cache/$d (HM symlink will replace it)"
               fi
             done
+            # 2026-09-22 (review fix): the non-.cache fallback paths from
+            # home.nix — env-less pnpm/cargo recreate them as real dirs during
+            # dead-mount windows, same checkLinkTargets abort class.
+            for d in ".local/state/pnpm" ".cargo/registry"; do
+              if [ -e "${homeDir}/$d" ] && [ ! -L "${homeDir}/$d" ]; then
+                rm -rf -- "${homeDir}/$d"
+                echo "reaped real dir at ${homeDir}/$d (HM symlink will replace it)"
+              fi
+            done
 
             # 3. Drive absent: done - zombie (if any) is reaped, automount is
             #    armed, and the udev SYSTEMD_WANTS rule heals on replug. Do NOT

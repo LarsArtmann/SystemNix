@@ -172,10 +172,21 @@ if nix run .#pre-deploy-check; then
   # onto the NVMe this whole setup exists to protect. Mirrors the reap loop in
   # buildcache-usb-recovery.service. 2026-09-17: gobuild/gocache/gomod added —
   # BuildFlow's cross-repo fallback names the original list evaded forever.
-  for d in goimports go go-build gobuild gocache gomod; do
+  for d in goimports go go-build gobuild gocache gomod pnpm; do
     if [ -e "$HOME/.cache/$d" ] && [ ! -L "$HOME/.cache/$d" ]; then
       sudo rm -rf -- "$HOME/.cache/$d"
       echo "  Reaped ~/.cache/$d (real dir had displaced the HM symlink)"
+    fi
+  done
+  # 2026-09-22: pnpm state + cargo registry — the other HM-managed buildcache
+  # fallback paths (home.nix mkOutOfStoreSymlinks). Same unconditional-of-mount-
+  # state discipline: reaped BEFORE nh os switch even when the SSD is absent
+  # (the in-config activation reap is mount-gated and would skip, and HM's
+  # checkLinkTargets would then abort on "Existing file ... in the way").
+  for d in ".local/state/pnpm" ".cargo/registry"; do
+    if [ -e "$HOME/$d" ] && [ ! -L "$HOME/$d" ]; then
+      sudo rm -rf -- "$HOME/$d"
+      echo "  Reaped ~/$d (real dir had displaced the HM symlink)"
     fi
   done
   # 2026-08-16 incident debris: root-owned cache trees created by an env-less
