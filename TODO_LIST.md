@@ -37,6 +37,16 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **`migrate-hot-db.sh` stub-fixture test BEFORE its first user migration window** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Update the Phase-2 plan doc's T-task table with completion status (T3/T4/T6/T7/T8 done; T5/T9-T15 pending)** → [docs/todo/storage.md](docs/todo/storage.md)
 
+- [ ] **Fire the pending batch deploy in the first calm-IO window (io avg10 <20%, no Zone-6 trip in 60 min)** → [docs/todo/storage.md](docs/todo/storage.md) — carries restic-app-dumps + paperless-db-backup + discordsync attachments leg + browser-history dbBackup + the 3 cache-fallback symlinks + hot-db shared-unit fix + scrub-mechanism fix + vendorHash wave + boot-mirror sync; expect the known exit-4 classes (cv-perms, db-heal, hot-user-caches), fix-forward (Source: docs/status/2026-09-22_05-55 window closeout §f.1)
+- [ ] **buildcache-init must provision the new fallback targets (pnpm-cache, pnpm-state, cargo/registry)** → [docs/todo/storage.md](docs/todo/storage.md) — today only the mount-gated HM activation creates them; after a mount recovers via buildcache-usb-recovery the HM symlinks dangle ENOENT until the next deploy (Source: 2026-09-22 buildcache reap review-fix §c.4)
+- [ ] **Single-source the env-less cache reap inventories (deploy.sh .cache loop + non-.cache loop + buildcache-usb-recovery step 2.5 + home.nix activation)** → [docs/todo/storage.md](docs/todo/storage.md) — 4 hand-kept name lists, no parity enforcement; the reviewer finding rode exactly this drift (Source: same report §c.3)
+- [ ] **Restic repo post-deploy proof chain: first run + `restic check` + one-file restore smoke + dedup-ratio measurement + a post-deploy smoke block** → [docs/todo/storage.md](docs/todo/storage.md) — eval-green is the weakest signal for a backup pipeline; nothing has backed up yet (Source: 2026-09-22 restic task reports)
+- [ ] **Paperless DR completion: pg_restore drill into a scratch cluster + dump-integrity gate (`pg_restore --list`) + dump-size/pool-growth note after the first 02:00 run** → [docs/todo/storage.md](docs/todo/storage.md) (Source: paperless PG-dump re-dispatch report §f)
+- [ ] **Stub/fixture test for the destructive `discordsync-attachments-migrate` oneshot BEFORE the deploy that triggers it** → [docs/todo/storage.md](docs/todo/storage.md) — stop → rsync → checksum verify → rm -rf ~40 GB source → restart currently has zero automated coverage (Source: 2026-09-22 04-30 own-tools report; storage.md row 87)
+- [ ] **Converge `~/.npm` (103M stale fallback) onto the buildcache + give `~/tmp/go-lint` (1.8G, live) a reclamation path** → [docs/todo/storage.md](docs/todo/storage.md) (Source: 2026-09-22 cache-sweep report §b/§f.3-4)
+- [ ] **Deploy authority: queue-fired vs user-manual `nix run .#deploy`** → [docs/todo/storage.md](docs/todo/storage.md) — BLOCKED: every task since 2026-09-21 is runtime-zero behind this decision; asked unanswered by 3+ closeouts (restic, paperless re-dispatch, pool-quality runs)
+- [ ] **Restic repo's offsite role: local dedup layer only vs THE offsite leg (replicated to Hetzner)** → [docs/todo/storage.md](docs/todo/storage.md) — BLOCKED: decides whether forgejo-subvol/github-voice-corpus/pixel6 join `paths` and how the Borg leg (2026-09-11 decision) interacts; owner owns the DR architecture
+
 ### stability
 
 - [ ] **USB flap-counter metric + pre-deploy zombie-mount detector** → [docs/todo/stability.md](docs/todo/stability.md)
@@ -110,7 +120,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Add the mail-wiring PASS-since-2026-09-05 status to the paperless runbook monitoring map** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Paperless VM-test regression: assert the relay-gated email settings render into the unit file** → [docs/todo/services.md](docs/todo/services.md) — assertions landed 2026-09-22 (eval-verified); first green VM run PSI-gated
 - [ ] **Paperless VM-test regression: assert paperless-db-backup timer/service + the backup-coordination paperless-db entry** → [docs/todo/services.md](docs/todo/services.md) — assertions landed 2026-09-22 (eval-verified); first green VM run PSI-gated
-- [ ] **VM test for the restic-app-dumps module** → [docs/todo/storage.md](docs/todo/storage.md) — written + eval-verified 2026-09-22; first green VM run PSI-gated
+- [x] **VM test for the restic-app-dumps module** → [docs/todo/storage.md](docs/todo/storage.md) — written + eval-verified 2026-09-22; first green VM run PSI-gated
 - [ ] **`projects-management-automation` Environment= splitting** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **project-discovery-daemon IO taming** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Hermes deferred-cleanups cluster (partly PAST DUE)** → [docs/todo/services.md](docs/todo/services.md)
@@ -243,6 +253,11 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Nix `--json` deprecation sweep over scripts/ + docs call sites** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Encode the repeat-dispatch report policy for verification-only queue repeats (annotate-only vs full report) — BLOCKED: which convention should be encoded — full report per dispatch, or TODO/library annotation only with reports reserved for state changes?** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Formatter-exclusion regression guard (flake check asserting `docs/**/*.html` in the effective treefmt excludes)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+
+- [ ] **Negative-test the pre-commit GOTOOLCHAIN guard (pin the interactive-fish FP + both violation shapes)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) — second FP incident on this hook, both fixed in-scanner with no pinned regression test; house doctrine: hook guards get negative-tested like flake checks (Source: 2026-09-22 cache-sweep run + 05-55 closeout §d.6)
+- [ ] **`scripts/verify-status-citations.sh`: verify every bare SHA cited in docs/status/*.md against its actual diff (+ CI WARN); add the post-edit verification gate (`git log -1 -- <file>`) to the docs-health contract** → [docs/todo/pipeline.md](docs/todo/pipeline.md) — two false docs claims in 24h (the corpus-sweep "fixed" claim + the 05-07 closeout's AGENTS-buildcache claim that never landed) (Source: review-fix task 000001a0c10023cd §f.3 + 05-55 closeout §d.1)
+- [ ] **Re-splice the formatter-inflated disk-layout HTML (`docs/planning/2026-09-20_15-17_disk-layout-current-and-target.html` measures 7.9 MB vs the ~3.6 MB compact bundle) and verify with `bash scripts/verify-html-diagrams.sh`** → [docs/todo/pipeline.md](docs/todo/pipeline.md) — third occurrence of the 2026-09-20 class, re-landed in daemon commit 9cce5bfd and still live on the tree (Source: 05-55 closeout §d.5)
+- [ ] **Queue dedup preflight so closeout/review-fix dispatches stop re-firing on already-closed work (3+ same-day duplicates on 09-21/22 incl. a second five-task closeout)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) — BLOCKED: should the harvester preflight items against storage.md [x] rows / existing closeout filenames before dispatch, and was the duplicate closeout intentional? (owner owns the queue config)
 
 ### pixel6
 
