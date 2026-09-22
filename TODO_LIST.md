@@ -22,7 +22,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [x] **VM test for the restic-app-dumps module** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Own-tools NVMe→pool migrations: discordsync + browser-history remain** → [docs/todo/storage.md](docs/todo/storage.md) — BLOCKED: config landed (discordsync attachmentsDir pool leg + browser-history dbBackup leg, eval-green 2026-09-22); the ~40 GB migration run needs one `nix run .#deploy` (2026-09-22 io storm refused the pressure gate)
 - [x] ~~**Browser-history DB backup**~~ DONE (code) 2026-09-22 → [docs/todo/storage.md](docs/todo/storage.md) — `dbBackup.enable` leg landed (02:15 sqlite .backup, CAP_DAC_READ_SEARCH, 14d retention, registry row); first run deploy-gates with the migration item above
-- [ ] **Implement offsite Borg leg to Hetzner StorageBox** → [docs/todo/storage.md](docs/todo/storage.md)
+- [x] **Implement offsite Borg leg to Hetzner StorageBox** → [docs/todo/storage.md](docs/todo/storage.md) — DONE 2026-09-22 (implemented + eval-verified; dormant until the owner go-live inputs — runbook: docs/services/offsite-borg.md)
 - [ ] **ClickHouse backup before the next SigNoz upgrade** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **disko config for the already-deferred reinstall** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Implement offsite Borg leg restore path: runbook + first timed restore drill** → [docs/todo/storage.md](docs/todo/storage.md)
