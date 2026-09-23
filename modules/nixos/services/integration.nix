@@ -389,7 +389,11 @@ _: {
           assertions =
             let
               dnsMissing = e: e.enable && e.subdomain != null && !builtins.elem e.subdomain dnsLocalSubdomains;
-              vhostIncomplete = e: e.enable && e.vHost.layer != "none" && (e.subdomain == null || (e.port == null && e.vHost.root == null));
+              vhostIncomplete =
+                e:
+                e.enable
+                && e.vHost.layer != "none"
+                && (e.subdomain == null || (e.port == null && e.vHost.root == null));
               checkWithoutPort = e: e.enable && builtins.any (c: c.url == null) e.checks && e.port == null;
             in
             [

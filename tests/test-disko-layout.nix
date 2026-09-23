@@ -9,7 +9,11 @@
 # The real config pins the Samsung by-id (kernel enumeration flips); the
 # test wraps it with a device override pointing at the empty vdisk — same
 # spec, different device.
-{ pkgs, lib ? pkgs.lib, inputs }:
+{
+  pkgs,
+  lib ? pkgs.lib,
+  inputs,
+}:
 let
   # Device-override wrapper: the spec file pins by-id, the rehearsal
   # targets the blank vdisk (emptyDiskImages attach at /dev/vdb). Built by
@@ -17,16 +21,12 @@ let
   # `device` breaks disko's deviceType dispatch (content resolves to null,
   # dry-run-proven).
   spec = import ../disko/samsung-tlc.nix;
-  overridden =
-    spec
-    // {
-      disko.devices.disk.samsung-tlc = spec.disko.devices.disk.samsung-tlc // {
-        device = "/dev/vdb";
-      };
+  overridden = spec // {
+    disko.devices.disk.samsung-tlc = spec.disko.devices.disk.samsung-tlc // {
+      device = "/dev/vdb";
     };
-  testConfig = pkgs.writeText "disko-samsung-tlc-vm.nix" (
-    lib.generators.toPretty { } overridden
-  );
+  };
+  testConfig = pkgs.writeText "disko-samsung-tlc-vm.nix" (lib.generators.toPretty { } overridden);
   # The disko SCRIPT is evaluated HOST-SIDE with our locked nixpkgs — the
   # CLI inside the VM would re-evaluate against a fresh <nixpkgs> and try
   # to build a whole stdenv offline (no network in the guest).
