@@ -1628,6 +1628,42 @@ else
   report_skip "Crush - no crushrc deployed (programs.crush-config not enabled)"
 fi
 
+# --- §15 Architecture Catalog (catalog.<domain>) ---
+# Enable-gated on the sync unit file. Until the owner completes the Forgejo
+# setup (scripts/setup-forgejo.sh in the hub repo + sops token paste) there
+# is NO dist generation: WARN, never FAIL (pre-go-live by design — the Gatus
+# checks carry the standing red signal). Once current/ exists: prove the full
+# serving path (dnsblockd TLS + caddy + static root + LAN bypass) and the
+# freshness stamp.
+echo ""
+echo "=== Architecture Catalog ==="
+if systemctl cat architecture-catalog-sync.service >/dev/null 2>&1; then
+  _cat_root=/var/lib/architecture-catalog/current
+  if [ -f "$_cat_root/index.html" ]; then
+    check "Architecture Catalog (HTTPS)" "https://catalog.$DOMAIN/" "200" "" 2>/dev/null || true
+    if grep -q '<title>EventCatalog' "$_cat_root/index.html"; then
+      report_pass "Architecture Catalog - served index carries the EventCatalog title marker"
+    else
+      report_fail "Architecture Catalog - served index.html lacks the EventCatalog title marker (dist branch content drift — probe which entity served it: curl -sk https://catalog.$DOMAIN/ | head -20)"
+    fi
+    _acm_prom=/var/lib/prometheus-node-exporter/textfile_collectors/architecture-catalog.prom
+    if [ -f "$_acm_prom" ]; then
+      if grep -q '^architecture_catalog_scrape_errors 0$' "$_acm_prom" &&
+        grep -q '^architecture_catalog_fresh 1$' "$_acm_prom"; then
+        report_pass "Architecture Catalog - freshness collector healthy (fresh=1, no scrape errors)"
+      else
+        report_warn "Architecture Catalog - freshness flags degraded in $_acm_prom: $(grep -E '^architecture_catalog_(fresh|stamp_age|scrape_errors)' "$_acm_prom" | tr '\n' ' ') - hub CI or dist sync stale; check journalctl -u architecture-catalog-sync"
+      fi
+    else
+      report_warn "Architecture Catalog - collector textfile missing (first run pending; timer fires within 5 min)"
+    fi
+  else
+    report_warn "Architecture Catalog - no dist generation yet (pre-go-live: run scripts/setup-forgejo.sh in the eventcatalog-hub repo + paste the sync token; the Gatus checks stay red until then by design)"
+  fi
+else
+  report_skip "Architecture Catalog - not deployed (enable services.architecture-catalog)"
+fi
+
 # --- Summary ---
 echo ""
 echo "=== Summary ==="
