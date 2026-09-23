@@ -96,9 +96,14 @@ the exclude list — that is the sizing doctrine, not an accident.
 2. **Restore the sops identity first**: `/etc/ssh/ssh_host_ed25519_key` from
    the archive IS the sops age key source (ssh-to-age). Extract it into the
    new host's `/etc/ssh/` (permissions 0600) so `/run/secrets` decrypts
-   again after the first rebuild. The host-key pin (`borg_known_hosts`) also
-   rides in the archive's `etc/` — everything needed for step 3's borg
-   access is in the backup itself once this file is back.
+   again after the first rebuild. The borg secrets (`borg_password`,
+   `borg_ssh_key`, `borg_known_hosts`) do NOT ride in the archive — they are
+   sops values rendered to tmpfs `/run/secrets`, never on disk. They come
+   back from the sops chain instead: the git-tracked
+   `platforms/nixos/secrets/borg.yaml` (cloned in step 1) + the restored
+   host key re-render all three at the first rebuild, which is what makes
+   step 3's borg access work — verify `/run/secrets/borg_known_hosts`
+   exists before trusting the pin.
 3. **Extract the data trees** (target needs free space ≈ the irreplaceable
    set — check `borg info` first):
 
