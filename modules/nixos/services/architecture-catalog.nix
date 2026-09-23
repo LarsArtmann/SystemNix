@@ -105,8 +105,10 @@ _: {
           ln -s "generations/$stamp" "$STATE/.current.tmp.$$"
           mv -T "$STATE/.current.tmp.$$" "$STATE/current"
 
-          # Keep only the newest generations.
-          ls -1d "$GENS"/* 2>/dev/null | sort | head -n -${toString cfg.maxGenerations} | while read -r old; do
+          # Keep only the newest generations. (find, not ls: writeShellApplication
+          # shellcheck rejects `ls | sort` — SC2012 — and find exits 0 on an
+          # empty dir instead of dying under pipefail.)
+          find "$GENS" -mindepth 1 -maxdepth 1 | sort | head -n -${toString cfg.maxGenerations} | while read -r old; do
             rm -rf "$old"
           done
 
