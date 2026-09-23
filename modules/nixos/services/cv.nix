@@ -38,16 +38,17 @@
         inputs.cv.nixosModules.default
         # Platform-truth catalog entry (ADR-008): unconditional — the CV site
         # exists platform-wide even where this host has it disabled.
-        {
-          services.catalog = lib.optionalAttrs (options ? services.catalog) {
-            cv = {
-              subdomain = "cv";
-              port = ports.cv;
-              description = "CV site and PDF export";
-              healthPath = "/health/live";
-            };
+        # optionalAttrs wraps the WHOLE module: defining services.catalog = {}
+        # on a host without the catalog option is itself a definition (the
+        # leaf-level guard-shape trap).
+        (lib.optionalAttrs (options ? services.catalog) {
+          services.catalog.cv = {
+            subdomain = "cv";
+            port = ports.cv;
+            description = "CV site and PDF export";
+            healthPath = "/health/live";
           };
-        }
+        })
       ];
 
       options.services.cv-server.profileProbe = {

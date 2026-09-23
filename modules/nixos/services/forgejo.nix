@@ -171,16 +171,16 @@ _: {
     {
       # Platform-truth catalog entry (ADR-008): unconditional — Forgejo
       # exists platform-wide even where this host has it disabled.
+      # optionalAttrs wraps the WHOLE module (leaf-level guard-shape trap:
+      # an empty services.catalog attrset is still a definition).
       imports = [
-        {
-          services.catalog = lib.optionalAttrs (options ? services.catalog) {
-            forgejo = {
-              subdomain = "forgejo";
-              port = ports.forgejo;
-              description = "Git forge (repos, CI hooks, dist sync)";
-            };
+        (lib.optionalAttrs (options ? services.catalog) {
+          services.catalog.forgejo = {
+            subdomain = "forgejo";
+            port = ports.forgejo;
+            description = "Git forge (repos, CI hooks, dist sync)";
           };
-        }
+        })
       ];
 
       options = {

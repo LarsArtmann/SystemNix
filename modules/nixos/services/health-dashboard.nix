@@ -39,17 +39,17 @@
     {
       # Platform-truth catalog entry (ADR-008): unconditional — the health
       # hub exists platform-wide even where this host has it disabled.
+      # optionalAttrs wraps the WHOLE module (leaf-level guard-shape trap:
+      # an empty services.catalog attrset is still a definition).
       imports = [
-        {
-          services.catalog = lib.optionalAttrs (options ? services.catalog) {
-            health-dashboard = {
-              subdomain = "health";
-              port = ports.health-dashboard;
-              description = "Federated go-health hub dashboard";
-              healthPath = "/healthz";
-            };
+        (lib.optionalAttrs (options ? services.catalog) {
+          services.catalog.health-dashboard = {
+            subdomain = "health";
+            port = ports.health-dashboard;
+            description = "Federated go-health hub dashboard";
+            healthPath = "/healthz";
           };
-        }
+        })
       ];
 
       options.services.health-dashboard = {

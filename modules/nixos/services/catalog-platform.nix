@@ -12,6 +12,9 @@ _: {
       inherit (import ../../../lib/default.nix lib) ports;
     in
     {
+      # optionalAttrs wraps the WHOLE config module (leaf-level guard-shape
+      # trap: an empty services.catalog attrset is still a definition and
+      # fails "option does not exist" on hosts without catalog.nix).
       services.catalog = lib.optionalAttrs (options ? services.catalog) {
         auth = {
           subdomain = "auth";

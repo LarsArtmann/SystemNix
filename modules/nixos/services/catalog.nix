@@ -23,10 +23,14 @@
 # never-run services, and the hand-wired caddy vHosts awaiting T15-T19);
 # an integration entry with a subdomain WITHOUT a catalog entry is the
 # drift direction the cross-check warning/assertion hunts.
-{ lib, ... }:
-{
+_: {
   flake.nixosModules.catalog =
-    { config, lib, options, ... }:
+    {
+      config,
+      lib,
+      options,
+      ...
+    }:
     {
       options.services.catalog = lib.mkOption {
         description = ''

@@ -172,17 +172,17 @@ _: {
     {
       # Platform-truth catalog entry (ADR-008): unconditional — Miniflux
       # exists platform-wide even where this host has it disabled.
+      # optionalAttrs wraps the WHOLE module (leaf-level guard-shape trap:
+      # an empty services.catalog attrset is still a definition).
       imports = [
-        {
-          services.catalog = lib.optionalAttrs (options ? services.catalog) {
-            miniflux = {
-              subdomain = "rss";
-              port = ports.miniflux;
-              description = "Miniflux RSS reader (Pocket ID SSO)";
-              healthPath = "/healthcheck";
-            };
+        (lib.optionalAttrs (options ? services.catalog) {
+          services.catalog.miniflux = {
+            subdomain = "rss";
+            port = ports.miniflux;
+            description = "Miniflux RSS reader (Pocket ID SSO)";
+            healthPath = "/healthcheck";
           };
-        }
+        })
       ];
 
       options.services.miniflux.disableLocalAuth = lib.mkOption {

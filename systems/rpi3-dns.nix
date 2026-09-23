@@ -46,6 +46,12 @@ nixpkgs.lib.nixosSystem {
     # integration.nix guards its own fan-out per consumer (optionalAttrs on
     # options ?), so importing it on a host without caddy/gatus/pocket-id is inert.
     inputs.self.nixosModules.integration
+    # Platform service catalog (ADR-008): rpi3 serves the SAME home.lan
+    # records as evo-x2, so it needs the catalog option + the platform
+    # entries now; the full service-module sweep lands with the DNS
+    # derivation (plan T05).
+    inputs.self.nixosModules.catalog
+    inputs.self.nixosModules.catalog-platform
     inputs.self.nixosModules.dns-failover
     inputs.sops-nix.nixosModules.sops
     inputs.self.nixosModules.sops
