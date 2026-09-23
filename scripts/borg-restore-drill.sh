@@ -50,7 +50,7 @@ die() {
 }
 
 usage() {
-  grep '^#' "$0" | sed -n '2,30p' | sed 's/^# \{0,1\}//'
+  awk 'NR == 1 { next } !/^#/ { exit } { sub(/^# ?/, ""); print }' "$0"
   exit 2
 }
 
