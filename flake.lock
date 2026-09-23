@@ -135,11 +135,11 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1790177142,
-        "narHash": "sha256-Ce/Yps/25nRefNQeN0KVNmsneIl5/r4oxaVbh1knXAY=",
+        "lastModified": 1790194003,
+        "narHash": "sha256-Wu97+ZlAo/Qy5s9eGave/JgaBBFsMArVP/REKXYppgQ=",
         "owner": "LarsArtmann",
         "repo": "bank-sync",
-        "rev": "25e4bbdff84f34064b907330aec669b6911fb8b2",
+        "rev": "2a286f47ef1d9a49b966a086c613caa5fe2885e0",
         "type": "github"
       },
       "original": {
@@ -173,11 +173,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790178482,
-        "narHash": "sha256-ojkKyz9T9VrI6lLnAOzfixIlK4aiKymPpZZrRpfyfuI=",
+        "lastModified": 1790193996,
+        "narHash": "sha256-5euXrG8HtCj6gnVV43b2QsTlS4IKlzWYNsppfskDByI=",
         "ref": "refs/heads/master",
-        "rev": "8a8890e2c1d5a6a51ebee6128cdae0be1b068175",
-        "revCount": 2533,
+        "rev": "2fec285c3eca763ad7cff8fd9d2fd4d4ca037b09",
+        "revCount": 2535,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
@@ -3338,11 +3338,11 @@
     "go-finding_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1790177784,
-        "narHash": "sha256-ZmDgUkhu6/V2OJNk71X3DJJY/J7kKyq7g80vzYXRwy4=",
+        "lastModified": 1790180127,
+        "narHash": "sha256-JoOtk+zmePanfg/rDA9urGqMr+5SfEORaMbq1eW4BiY=",
         "ref": "master",
-        "rev": "a429e382ccc56ca888236aea80d0a54781ae2776",
-        "revCount": 1421,
+        "rev": "c1bb7bee7a086f7cea4abae30be00302dfdd59d5",
+        "revCount": 1434,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-finding"
       },
@@ -4811,11 +4811,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790172595,
-        "narHash": "sha256-R3fJsX8uiPqbsfkW6LOrcWlcG2j0wQuLQ1A3kg4livU=",
+        "lastModified": 1790194012,
+        "narHash": "sha256-3jJC58fLp/9jXq8k6x9ij0bimMA8RPTUvApfMMxCRkg=",
         "owner": "LarsArtmann",
         "repo": "go-taskqueue",
-        "rev": "1df7017e2780675124b51dbc69292421a0a677fd",
+        "rev": "e5c386e105bf985750e382a8ce1fa92f1264c6a2",
         "type": "github"
       },
       "original": {
@@ -5677,11 +5677,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790176389,
-        "narHash": "sha256-nlx5ozJ/wDNuuVaPW4q1ChZ+kdOGXpadwlYmrM8H4Zw=",
+        "lastModified": 1790193992,
+        "narHash": "sha256-wy9EasY2lJR+nXGZyTIwgr0iaf94rLxbiPi6OmuyMkY=",
         "owner": "LarsArtmann",
         "repo": "mr-sync",
-        "rev": "3f1b097ffdf263cb80fca3d693b117fbd9d37201",
+        "rev": "26174a1ea37a4f548557f29f240723798b4bde6d",
         "type": "github"
       },
       "original": {
