@@ -56,22 +56,6 @@ let
   drillEnvLiteral = ''BORG_ENV_FILE="''${BORG_ENV_FILE:-${borgEnvRenderPath}}"'';
 in
 {
-  # Forced by `nix flake check` (pre-commit + CI) on every NixOS host —
-  # scheduled-tasks.nix self-assertion pattern.
-  config.assertions = [
-    {
-      assertion = lib.hasInfix drillEnvLiteral drillScript;
-      message = ''
-        borg-restore-drill env-path pin: scripts/borg-restore-drill.sh no
-        longer defaults BORG_ENV_FILE to the rendered sops template path
-        (${borgEnvRenderPath}). A plain repo script cannot interpolate
-        config.sops.templates."borg-env".path, so the literal is pinned by
-        this assertion — update the drill's BORG_ENV_FILE default to
-        BORG_ENV_FILE="''${BORG_ENV_FILE:-${borgEnvRenderPath}}" (or flake-wrap the
-        drill to interpolate at build time; see docs/todo/storage.md).
-      '';
-    }
-  ];
   options.services.offsite-borg = {
     enable = lib.mkEnableOption "offsite Borg backup to the Hetzner StorageBox";
 
@@ -172,8 +156,29 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable (
-    let
+  config = lib.mkMerge [
+    # Forced by `nix flake check` (pre-commit + CI) — scheduled-tasks.nix
+    # self-assertion pattern. UNCONDITIONAL branch: the guard must fire in
+    # the default gate while the module is still dormant (an in-mkIf
+    # placement passed flake check on a drifted script).
+    {
+      assertions = [
+        {
+          assertion = lib.hasInfix drillEnvLiteral drillScript;
+          message = ''
+            borg-restore-drill env-path pin: scripts/borg-restore-drill.sh no
+            longer defaults BORG_ENV_FILE to the rendered sops template path
+            (${borgEnvRenderPath}). A plain repo script cannot interpolate
+            config.sops.templates."borg-env".path, so the literal is pinned by
+            this assertion — update the drill's BORG_ENV_FILE default to
+            BORG_ENV_FILE="''${BORG_ENV_FILE:-${borgEnvRenderPath}}" (or flake-wrap the
+            drill to interpolate at build time; see docs/todo/storage.md).
+          '';
+        }
+      ];
+    }
+    (lib.mkIf cfg.enable (
+      let
       # Rendered sops template (root-owned 0400): BORG_REPO=<user>@<host>:…
       # EnvironmentFile entries override the unit's static Environment=, so
       # the rendered value wins over the placeholder `repo` below at
@@ -316,5 +321,6 @@ in
         };
       };
     }
-  );
+  )
+  ];
 }
