@@ -256,7 +256,7 @@
       # older marker → deliberate upgrade (agent edits to the OLD version
       # are replaced); same/newer marker or agent-rewritten header → leave
       # untouched, so agent edits survive deploys within a version.
-      workspaceDocVersion = "2";
+      workspaceDocVersion = "3";
       # Byte-exact copy of the PRE-marker doc (delivered 2026-08-20 by the
       # old once-only installer). A marker-less workspace AGENTS.md that
       # still equals this is OUR unmodified v1 — upgrade it to the current
@@ -300,10 +300,17 @@
           (HERMES_WRITE_SAFE_ROOT) — including /tmp for the write_file/patch
           tools. Use a scratch dir INSIDE the workspace (e.g. `./scratch/`)
           for throwaway files; do not probe /tmp paths.
-        - Cloning PRIVATE LarsArtmann repos over HTTPS works — a read-only
-          token is wired via the git credential helper. Never paste or store
-          tokens yourself. You can never push: the token is read-only by
-          permanent policy.
+        - Cloning PRIVATE LarsArtmann GitHub repos over HTTPS works — a
+          READ-ONLY token is wired via the git credential helper. Never
+          paste or store tokens yourself. github.com stays read-only by
+          permanent policy: you can never push there.
+        - Forgejo WRITE access (owner decision 2026-09-23): to publish
+          work, add a remote and push —
+          `git remote add forgejo https://${forgejoHost}/lars/<repo>.git`
+          then `git push forgejo <branch>`. Auth is automatic (credential
+          helper, account hermes-agent). NEVER delete branches or tags,
+          force-push, or rewrite pushed history. Repo deletion/transfer is
+          impossible for your account; mirror repos reject pushes by design.
         - Private (0700) directories inside ./projects stay unreadable to
           you — intentional, do not report it as a bug.
         - Disk is finite: remove clones you no longer need.
@@ -339,16 +346,29 @@
         '';
       };
 
+      # Forgejo host for credential + workspace-doc wiring. Only wired into
+      # the gitconfig when forgejo is enabled on the host (standalone hermes
+      # consumers / the VM test have no forgejo and stay GitHub-only).
+      forgejoEnabled = config.services.forgejo.enable or false;
+      forgejoHost = "forgejo." + toString (config.networking.domain or "invalid");
+
       # git credential helper (T14): answers GitHub HTTPS auth from the
-      # HERMES_GITHUB_READ_TOKEN unit env var (sops-rendered). Read-only by
-      # construction (fine-grained PAT, Contents: Read-only). Emits NO
-      # credential until the token is real, so the placeholder value that
-      # ships until the user pastes one is completely inert — public-repo
-      # clones keep working anonymously. store/erase are no-ops: the token
-      # is never persisted anywhere git could leak it back out.
+      # HERMES_GITHUB_READ_TOKEN unit env var (sops-rendered, READ-ONLY —
+      # permanent policy, user decision 2026-08-20). Since 2026-09-23 it
+      # ALSO answers the forgejo host with the hermes-agent WRITE token
+      # (owner decision 2026-09-23) that forgejo-hermes-token delivers to
+      # /run/hermes-forgejo-token (0400 hermes:hermes) — a missing file or
+      # malformed token = exit 1 = no credential (git falls back to
+      # anonymous; public-repo clones keep working). Emits NO credential
+      # until the token is real, so placeholder values are completely
+      # inert. store/erase are no-ops: tokens are never persisted anywhere
+      # git could leak them back out.
       hermesGitCredential = pkgs.writeShellApplication {
         name = "hermes-git-credential";
-        runtimeInputs = [ pkgs.coreutils ];
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.gnugrep
+        ];
         text = ''
           op="''${1:-}"
           [ "$op" = "get" ] || exit 0
@@ -356,17 +376,28 @@
           while IFS= read -r line; do
             [ -z "$line" ] && break
             case "$line" in
-              host=github.com) host=github.com ;;
+              host=*) host="''${line#host=}" ;;
             esac
           done
-          [ "$host" = "github.com" ] || exit 1
-          token="''${HERMES_GITHUB_READ_TOKEN:-}"
-          case "$token" in
-            github_pat_*|ghp_*|gho_*) ;;
+          case "$host" in
+            github.com)
+              token="''${HERMES_GITHUB_READ_TOKEN:-}"
+              case "$token" in
+                github_pat_*|ghp_*|gho_*) ;;
+                *) exit 1 ;;
+              esac
+              echo "username=hermes-read-token"
+              echo "password=$token"
+              ;;
+            ${forgejoHost})
+              [ -r /run/hermes-forgejo-token ] || exit 1
+              ftoken=$(cat /run/hermes-forgejo-token)
+              printf '%s' "$ftoken" | grep -qE '^[0-9a-f]{40}$' || exit 1
+              echo "username=hermes-agent"
+              echo "password=$ftoken"
+              ;;
             *) exit 1 ;;
           esac
-          echo "username=hermes-read-token"
-          echo "password=$token"
         '';
       };
 
@@ -381,13 +412,19 @@
       # for commits in clones must be set repo-locally (documented in the
       # workspace AGENTS.md). The credential section wires private-repo
       # clones (T14) — inert while the token is a placeholder.
-      hermesGitConfig = pkgs.writeText "hermes-gitconfig" ''
-        [safe]
-        	directory = ${cfg.stateDir}/workspace/projects
-        	directory = ${cfg.stateDir}/workspace/projects/*
-        [credential "https://github.com"]
-        	helper = ${lib.getExe hermesGitCredential}
-      '';
+      hermesGitConfig = pkgs.writeText "hermes-gitconfig" (
+        ''
+          [safe]
+          	directory = ${cfg.stateDir}/workspace/projects
+          	directory = ${cfg.stateDir}/workspace/projects/*
+          [credential "https://github.com"]
+          	helper = ${lib.getExe hermesGitCredential}
+        ''
+        + lib.optionalString forgejoEnabled ''
+          [credential "https://${forgejoHost}"]
+          	helper = ${lib.getExe hermesGitCredential}
+        ''
+      );
 
       # Auth canary (T14.4): proves the read-only token can actually read
       # a private repo (git ls-remote = one authenticated GET, no clone).
@@ -512,7 +549,9 @@
             read-only GitHub token (HERMES_GITHUB_READ_TOKEN, sops-rendered)
             can actually read private repos. Must be a repo the token is
             scoped to. Read-only by permanent policy (user decision
-            2026-08-20): hermes never gets push credentials.
+            2026-08-20): hermes never gets GitHub push credentials.
+            GitHub-scoped only — forgejo push access was granted separately
+            (owner decision 2026-09-23, see hermes-git-credential).
           '';
         };
       };
