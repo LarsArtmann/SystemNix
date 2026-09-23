@@ -29,13 +29,24 @@
 #   --subset "p1 p2"   archive-relative paths to extract
 #                      (default: "etc/hostname etc/machine-id" — tiny, always
 #                      present, and byte-comparable against the live files)
+#   --verify-data      add a deep-integrity phase: `borg extract -n
+#                      --verify-data` over the WHOLE archive (every chunk
+#                      read + checked, nothing written) — much slower than
+#                      the subset drill, distinct from it
 #   --keep             keep the extraction scratch dir instead of removing it
 #
 # Phases (each timed): connect+resolve (auth + newest-archive listing),
-# extract, verify (existence + non-empty + cmp vs live file when one exists).
+# extract, verify (existence + non-empty + cmp vs live file when one exists),
+# and — with --verify-data — deep-integrity.
+#
+# The borg binary is ALWAYS resolved from THIS flake's locked nixpkgs, so the
+# drill client is the same borg the backup job (and a real restore) runs — no
+# version skew in the timings or the on-disk format handling.
 #
 # Exit codes: 0 = PASS, 1 = FAIL (any phase). A per-run record (full output +
-# timings) is written under ${XDG_STATE_HOME:-~/.local/state}/borg-restore-drill/.
+# timings, including early failures — record setup happens BEFORE any env
+# check) is written under ${XDG_STATE_HOME:-~/.local/state}/borg-restore-drill/;
+# records are tiny text logs, pruned to the newest 100 on every run.
 set -uo pipefail
 
 SUBSET="etc/hostname etc/machine-id"
@@ -43,9 +54,17 @@ ARCHIVE_PIN=""
 LOCAL_REPO=""
 KEEP=0
 SELFTEST=0
+VERIFY_DATA=0
 
 die() {
   echo "FAIL: $*" >&2
+  # The outcome lines are appended DIRECTLY to the record (not via stdout) so
+  # a fast early death cannot race the tee process substitution.
+  if [ -n "${record:-}" ] && [ -f "$record" ]; then
+    printf '  result           : FAIL\n  record           : %s\n' "$record" >>"$record"
+    echo "  result           : FAIL"
+    echo "  record           : $record"
+  fi
   exit 1
 }
 
@@ -75,6 +94,10 @@ while [ $# -gt 0 ]; do
     KEEP=1
     shift
     ;;
+  --verify-data)
+    VERIFY_DATA=1
+    shift
+    ;;
   --selftest)
     SELFTEST=1
     shift
@@ -88,23 +111,40 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+# Record setup happens BEFORE any env/mode check, so the likeliest real-world
+# early failures (root gate, still-PLACEHOLDER repo at pre-go-live attempts,
+# detached Samsung tier) leave a record too — the header promises one.
+record_dir="${XDG_STATE_HOME:-$HOME/.local/state}/borg-restore-drill"
+mkdir -p "$record_dir" || die "cannot create record dir: $record_dir"
+record="$record_dir/drill-$(date +%Y%m%d-%H%M%S).log"
+# Full output goes to stdout AND the record file (tee dies with the drill).
+exec > >(tee "$record") 2>&1
+# Retention housekeeping: records are tiny text logs; keep the newest 100.
+# (ls -1t newest-first; tail -n +101 = everything past the first 100.)
+ls -1t "$record_dir"/drill-*.log 2>/dev/null | tail -n +101 | while IFS= read -r old; do
+  rm -f -- "$old"
+done
+
 # borg ships in the borgbackup job unit's PATH, not necessarily the interactive
-# system PATH — materialize it via nix when missing (store-cached after first hit).
-if ! command -v borg >/dev/null 2>&1; then
-  echo "[drill] borg not on PATH — materializing nixpkgs#borgbackup"
-  borg_out="$(nix build --no-link --print-out-paths nixpkgs#borgbackup 2>/dev/null)" ||
-    die "borg not on PATH and 'nix build nixpkgs#borgbackup' failed — install borgbackup or fix nix"
-  # Multi-output flake: --print-out-paths prints every output — pick the one
-  # that actually ships bin/borg.
-  while IFS= read -r d; do
-    if [ -x "$d/bin/borg" ]; then
-      export PATH="$d/bin:$PATH"
-      break
-    fi
-  done <<<"$borg_out"
-  command -v borg >/dev/null 2>&1 ||
-    die "no bin/borg among nix outputs: $borg_out"
-fi
+# system PATH — and a PATH borg may be a DIFFERENT version than the job's.
+# Resolve from THIS flake's locked nixpkgs so the drill client is byte-for-byte
+# the binary the job (and a real restore) runs (store-cached after first hit).
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+echo "[drill] resolving borg from this flake's locked nixpkgs ($repo_root)"
+borg_expr='let f = builtins.getFlake (toString '"$repo_root"'); in f.inputs.nixpkgs.legacyPackages.${builtins.currentSystem}.borgbackup'
+borg_out="$(nix build --no-link --print-out-paths --impure --expr "$borg_expr" 2>/dev/null)" ||
+  die "flake-locked borgbackup eval failed — 'nix build --impure --expr \"$borg_expr\"' must work from the repo (is nix available + the flake parseable?)"
+# Multi-output flake: --print-out-paths prints every output — pick the one
+# that actually ships bin/borg.
+while IFS= read -r d; do
+  if [ -x "$d/bin/borg" ]; then
+    export PATH="$d/bin:$PATH"
+    break
+  fi
+done <<<"$borg_out"
+command -v borg >/dev/null 2>&1 ||
+  die "no bin/borg among flake outputs: $borg_out"
+echo "[drill] borg: $(borg --version)"
 
 MODE="real"
 if [ "$SELFTEST" -eq 1 ]; then
@@ -135,6 +175,13 @@ if [ "$MODE" = "real" ]; then
   [ -e /run/secrets/borg_password ] || die "/run/secrets/borg_password missing"
   [ -e /run/secrets/borg_ssh_key ] || die "/run/secrets/borg_ssh_key missing"
   [ -e /run/secrets/borg_known_hosts ] || die "/run/secrets/borg_known_hosts missing"
+  # The job unit is mount-gated (RequiresMountsFor); the manual drill is not.
+  # With /mnt/hot UNMOUNTED, borg happily mkdirs its cache under the bare
+  # mountpoint — landing every cache byte on the ROOT fs (the shadow-dir class
+  # this repo documents). Gate loudly; an override means editing the script.
+  if ! mountpoint -q /mnt/hot; then
+    die "/mnt/hot is not a mountpoint (Samsung tier detached?) — borg would write its cache onto the ROOT fs under the bare mountpoint. Mount /mnt/hot first (this gate mirrors the job unit's RequiresMountsFor)"
+  fi
   export BORG_REPO="$repo_line"
   export BORG_PASSCOMMAND="cat /run/secrets/borg_password"
   # Same RSH + cache wiring as the job unit (backup.nix): reuse the warm
@@ -174,12 +221,6 @@ fi
 
 read -r -a SUBSET_PATHS <<<"$SUBSET"
 [ "${#SUBSET_PATHS[@]}" -gt 0 ] || die "empty subset"
-
-record_dir="${XDG_STATE_HOME:-$HOME/.local/state}/borg-restore-drill"
-mkdir -p "$record_dir"
-record="$record_dir/drill-$(date +%Y%m%d-%H%M%S).log"
-# Full output goes to stdout AND the record file (tee dies with the drill).
-exec > >(tee "$record") 2>&1
 
 scratch="$(mktemp -d "${TMPDIR:-/tmp}/borg-restore-drill.XXXXXX")"
 cleanup() {
@@ -243,10 +284,25 @@ done
 t_verify_end="$(date +%s%3N)"
 [ "$verify_failed" -eq 0 ] || exit 1
 
+deep_ms=0
+if [ "$VERIFY_DATA" -eq 1 ]; then
+  t_deep_start="$(date +%s%3N)"
+  echo "[drill] deep-integrity: borg extract -n --verify-data over the WHOLE archive (every chunk read + checked, nothing written)"
+  # Dry-run extract = resolve paths + read/check every chunk, write nothing.
+  # stdout stays quiet; stderr carries any integrity failure.
+  if ! (cd "$scratch" && borg extract --dry-run --verify-data ::"$archive_name" >/dev/null); then
+    echo "FAIL: deep-integrity verify-data pass failed (chunk corruption?)" >&2
+    exit 1
+  fi
+  t_deep_end="$(date +%s%3N)"
+  deep_ms=$((t_deep_end - t_deep_start))
+  echo "[drill] deep-integrity: OK"
+fi
+
 resolve_ms=$((t_resolve_end - t_resolve_start))
 extract_ms=$((t_extract_end - t_extract_start))
 verify_ms=$((t_verify_end - t_verify_start))
-total_ms=$((resolve_ms + extract_ms + verify_ms))
+total_ms=$((resolve_ms + extract_ms + verify_ms + deep_ms))
 
 echo
 echo "Restore drill summary"
@@ -257,6 +313,9 @@ echo "  subset           : $SUBSET"
 printf '  connect+resolve  : %s ms\n' "$resolve_ms"
 printf '  extract          : %s ms\n' "$extract_ms"
 printf '  verify           : %s ms\n' "$verify_ms"
+if [ "$VERIFY_DATA" -eq 1 ]; then
+  printf '  deep-integrity   : %s ms\n' "$deep_ms"
+fi
 printf '  TOTAL            : %s ms\n' "$total_ms"
 echo "  result           : PASS"
 echo "  record           : $record"
