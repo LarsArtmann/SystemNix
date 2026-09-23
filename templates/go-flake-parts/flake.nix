@@ -47,7 +47,7 @@
           ...
         }:
         let
-          goPkg = pkgs.go_1_26;
+          goPkg = pkgs.go_1_27;
 
           version = self.rev or self.dirtyRev or "dev";
           commit = self.rev or "dirty";
