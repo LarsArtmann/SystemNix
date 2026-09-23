@@ -37,18 +37,18 @@
       imports = [
         inputs.cv.nixosModules.default
         # Platform-truth catalog entry (ADR-008): unconditional — the CV site
-        # exists platform-wide even where this host has it disabled.
-        # optionalAttrs wraps the WHOLE module: defining services.catalog = {}
-        # on a host without the catalog option is itself a definition (the
-        # leaf-level guard-shape trap).
-        (lib.optionalAttrs (options ? services.catalog) {
+        # exists platform-wide even where this host has it disabled. The
+        # catalog OPTION comes from nixosModules.catalog, which every host
+        # (and VM test) importing cv.nix must also import — a missing import
+        # fails LOUDLY at eval, which is the point (no silent absence).
+        {
           services.catalog.cv = {
             subdomain = "cv";
             port = ports.cv;
             description = "CV site and PDF export";
             healthPath = "/health/live";
           };
-        })
+        }
       ];
 
       options.services.cv-server.profileProbe = {

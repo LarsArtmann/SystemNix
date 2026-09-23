@@ -60,6 +60,10 @@ in
         cvNixosModule
         # co-import: the module declares a services.integration entry (mkIf-wrapped options?-guard caveat, 2026-09-15)
         (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration
+        # co-import: cv.nix declares an unconditional services.catalog entry
+        # (ADR-008) — the catalog option lives in catalog.nix, which is NOT
+        # auto-discovered inside this VM.
+        (import ../modules/nixos/services/catalog.nix { }).flake.nixosModules.catalog
         # co-import: cv.nix exempts cv-state-perms via
         # services.deploy-restart-audit.allowUnits — the same options?-guard
         # caveat (an mkIf def at an undeclared path errors the merge before

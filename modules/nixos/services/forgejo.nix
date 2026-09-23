@@ -170,17 +170,17 @@ _: {
     in
     {
       # Platform-truth catalog entry (ADR-008): unconditional — Forgejo
-      # exists platform-wide even where this host has it disabled.
-      # optionalAttrs wraps the WHOLE module (leaf-level guard-shape trap:
-      # an empty services.catalog attrset is still a definition).
+      # exists platform-wide even where this host has it disabled. Requires
+      # nixosModules.catalog (auto-discovered on evo-x2, imported on rpi3);
+      # a missing import fails loudly at eval, which is the point.
       imports = [
-        (lib.optionalAttrs (options ? services.catalog) {
+        {
           services.catalog.forgejo = {
             subdomain = "forgejo";
             port = ports.forgejo;
             description = "Git forge (repos, CI hooks, dist sync)";
           };
-        })
+        }
       ];
 
       options = {

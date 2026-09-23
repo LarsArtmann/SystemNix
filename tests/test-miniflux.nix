@@ -66,6 +66,9 @@ in
         # result and an mkIf-wrapped definition at an undeclared path is
         # still collected (flake-check failure 2026-09-15).
         (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration
+        # co-import: miniflux.nix declares an unconditional services.catalog
+        # entry (ADR-008) — the catalog option lives in catalog.nix.
+        (import ../modules/nixos/services/catalog.nix { }).flake.nixosModules.catalog
         pocketIdConfigMock
         ./mock-sops.nix
         ./test-helpers.nix
