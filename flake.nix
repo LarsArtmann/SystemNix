@@ -1137,7 +1137,7 @@
                 let
                   inherit (inputs.self.diskoConfigurations.samsung-tlc.disko.devices.disk.samsung-tlc) content device;
                   inherit (content.partitions) esp main;
-                  evoConfigOptions = inputs.self.nixosConfigurations.evo-x2.config.options;
+                  evoConfigOptions = inputs.self.nixosConfigurations.evo-x2.options;
                   geometryGuards =
                     assert device == "/dev/disk/by-id/nvme-Samsung_SSD_970_EVO_Plus_1TB_S4EWNX0RA01856V";
                     assert content.type == "gpt";
