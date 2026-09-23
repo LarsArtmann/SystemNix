@@ -101,9 +101,15 @@ the exclude list — that is the sizing doctrine, not an accident.
    sops values rendered to tmpfs `/run/secrets`, never on disk. They come
    back from the sops chain instead: the git-tracked
    `platforms/nixos/secrets/borg.yaml` (cloned in step 1) + the restored
-   host key re-render all three at the first rebuild, which is what makes
-   step 3's borg access work — verify `/run/secrets/borg_known_hosts`
-   exists before trusting the pin.
+   host key. NOTE: the declarations are gated behind
+   `services.offsite-borg.enable = true`, so a first rebuild renders
+   NOTHING until the leg is re-enabled — run the go-live checklist on the
+   new host (StorageBox hostname/username + a fresh `ssh-keyscan` host-key
+   pin re-supplied into `borg.yaml`) and rebuild again; the sops-rendered
+   secrets then come back for the steady state (the `borgbackup-job-hetzner`
+   unit and the `/run/secrets`-based drill block). Step 3 below does NOT
+   depend on them — it rides out-of-band credentials instead: the owner's
+   recovery-copy passphrase and a manually provided SSH key.
 3. **Extract the data trees** (target needs free space ≈ the irreplaceable
    set — check `borg info` first):
 
