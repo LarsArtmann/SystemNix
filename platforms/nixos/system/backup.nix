@@ -313,6 +313,27 @@ in
         services.integration = lib.optionalAttrs (options ? services.integration) {
           offsite-borg = {
             vHost.layer = "none";
+            # Fan the job unit into system-health's state metrics so a FAILED
+            # job reaches Gatus → Discord within one 2m check cycle — the
+            # notify-failure@ OnFailure template only covers the DESKTOP;
+            # this entry is the Discord leg (borgbackup-job-hetzner is the
+            # real unit name, not the entry name).
+            unit = jobUnit;
+            monitored = true;
+            checks = [
+              {
+                name = "Offsite Borg Job Service";
+                group = "Filesystem";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "2m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_service_state_failed{service=\"borgbackup-job-hetzner\"} 0*)"
+                  "[BODY] == pat(*system_service_start_limit_hit{service=\"borgbackup-job-hetzner\"} 0*)"
+                ];
+                alert = "Offsite Borg job unit failed or start-limit hit — the third 3-2-1 copy is NOT landing. Check: journalctl -u borgbackup-job-hetzner -n 100 (go-live tripwire, StorageBox reachability, stale repo lock → borg break-lock, docs/services/offsite-borg.md).";
+              }
+            ];
             backup = {
               directory = "/var/lib/borg-offsite";
               filePattern = ".last_success";

@@ -74,12 +74,57 @@ Archive paths are stored WITHOUT the leading slash (`/etc` → `etc/`,
 extract with absolute intent from `/`: borg extract overwrites existing files
 without asking** — always extract into a scratch dir and move what you need.
 
-Browse without extracting (FUSE; needs `allow_other`-capable environment for
-non-root readers):
+Browse without extracting (FUSE):
 
 ```bash
-borg mount ::evo-x2-<timestamp> /mnt/restore-browse   # Ctrl-C / fusermount -u to unmount
+sudo bash -c '<same-host env block above>
+  mkdir -p /mnt/restore-browse && borg mount ::evo-x2-<timestamp> /mnt/restore-browse
+  ls /mnt/restore-browse/home/lars        # browse, copy what you need
+'
+fusermount3 -u /mnt/restore-browse       # or Ctrl-C / borg umount
 ```
+
+FUSE facts (verified 2026-09-24, static + sandbox probe):
+
+- `fusermount3` IS setuid-wrapped on this host (`/run/wrappers/bin/fusermount3`,
+  `r-s--x--x`), so unprivileged `borg mount` works in a normal user session.
+- `user_allow_other` in `/etc/fuse.conf` is COMMENTED OUT — the hedge is
+  CONFIRMED, not dropped: a ROOT borg mount (the runbook's sudo block) is
+  readable ONLY by root unless you first enable `user_allow_other` in
+  `/etc/fuse.conf` AND pass `-o allow_other` to `borg mount`. For single-user
+  recovery just mount as the user that reads; enable `allow_other` only when
+  a root mount must serve non-root readers.
+- The mount holds the repo lock for its lifetime — see the stale-lock
+  section below before killing it.
+
+## Stale lock (WAN drop / killed run)
+
+A borg run that dies mid-operation (WAN drop, Ctrl-C, OOM, host crash) leaves
+`lock.exclusive` in the REMOTE repo directory on the StorageBox. Every later
+borg command fails `Failed to create/acquire the lock .../lock.exclusive`.
+
+Recovery, in order:
+
+1. Confirm NO borg client is still running against the repo — locally:
+   `pgrep -af borg`. The lock lives remote (the StorageBox runs no borg
+   server process), so the local process check IS the safety check; a live
+   client (an active `borg mount`, a running job) holds the lock
+   legitimately.
+2. Only then break it:
+
+   ```bash
+   sudo bash -c '<same-host env block above>; borg break-lock'
+   ```
+
+   (`borg break-lock` with `BORG_REPO` from the env; dead-host clients use
+   their own env block. Never break-lock from two machines at once.)
+3. Resume: `sudo systemctl start borgbackup-job-hetzner` (or re-run the
+   restore command). Borg resumes by re-transferring; a killed `borg create`
+   leaves the partial segment to be compacted/pruned — no manual repair
+   needed for routine drops.
+
+For the backup-side job the same recipe applies; the job unit's Gatus check
+alert text points here.
 
 ## Full restore (dead host / bare metal)
 
@@ -176,6 +221,20 @@ cannot measure the StorageBox SSH/WAN leg — after go-live, run
 `sudo bash scripts/borg-restore-drill.sh` and add the real-repo row to this
 table (expect connect+resolve to dominate: TLS-less SSH handshake to the
 StorageBox + key decryption + repo index read over WAN).
+
+## Env-block sweep checklist (verified 2026-09-24)
+
+Every env block in BOTH borg runbooks checked line-by-line against the
+declarations (`modules/nixos/services/sops.nix`,
+`platforms/nixos/system/backup.nix`) — block-level, not "coherent":
+
+| Block | Claims | Verified against | Verdict |
+| ----- | ------ | ---------------- | ------- |
+| restore runbook, same-host single-file restore + drill real mode | `source /run/secrets/rendered/borg-env`; `BORG_PASSCOMMAND=cat /run/secrets/borg_password`; `BORG_RSH` (p23 + key + StrictHostKeyChecking + known-hosts); `BORG_CACHE_DIR/CONFIG_DIR=/mnt/hot/borg/*` | sops.nix secrets `borg_password`/`borg_ssh_key`/`borg_known_hosts` (0400 root) + template `borg-env` (root 0400, sops-nix renders to `/run/secrets/rendered/`); RSH byte-identical to `backup.nix` `BORG_RSH`; cache dirs = `backup.nix` environment | MATCH |
+| restore runbook, dead-host blocks (recovery-client + full restore step 3) | `BORG_REPO` scp-form; `BORG_PASSPHRASE` (recovery copy); `BORG_RSH -p 23 -i ./restore-key` (out-of-band creds, NO `/run/secrets` deps — those die with the host) | port-23 doctrine + scp-form-carries-no-port note in `backup.nix` comments | MATCH (deliberate divergence) |
+| backup runbook, ops ad-hoc block | `BORG_REPO` grepped from `/run/secrets/rendered/borg-env`; same PASSCOMMAND/RSH; `sudo -E` | same sources as row 1 | MATCH |
+| drill script | `BORG_ENV_FILE` default | eval-time assertion in `backup.nix` pins the literal to `config.sops.templates."borg-env".path` — drift fails `nix flake check` | ENFORCED |
+| secret NAMES | `borg_password`, `borg_ssh_key`, `borg_known_hosts` (secrets) + `borg_repo` (template only) | sops.nix `mkSecrets "borg.yaml"` + `templates."borg-env"` | MATCH |
 
 ## Gotchas
 

@@ -18,7 +18,7 @@ secret yet (tracked as "Offsite Borg go-live inputs" in `docs/todo/storage.md`).
 | Secrets | `platforms/nixos/secrets/borg.yaml`: `borg_password` (REAL random value, generated at implementation), `borg_ssh_key` (dedicated ed25519), `borg_known_hosts` (PLACEHOLDER), `borg_repo` (PLACEHOLDER) |
 | Job | `services.borgbackup.jobs.hetzner` → `borgbackup-job-hetzner.service` + timer (06:30 daily, `Persistent`) |
 | Cache | `/mnt/hot/borg/{cache,config}` (Samsung hot tier — multi-GB caches on `@` would be pinned pool-side by btrbk snapshots forever) |
-| Monitoring | `backup_healthy{backup="offsite-borg"}` marker in `/var/lib/borg-offsite/.last_success` → backup-coordination + the aggregate "All Backups Healthy" Gatus check; the shared loop also emits `backup_ever_succeeded{backup="offsite-borg"}` (MTIME≠0 gate — never-worked vs stale); job unit rides `ioTier.background` (BE/6 — nixpkgs' `idle` IO class starves on this box); enable-gated smoke: pre-deploy §13 + post-deploy §16; OnFailure → Discord |
+| Monitoring | `backup_healthy{backup="offsite-borg"}` marker in `/var/lib/borg-offsite/.last_success` → backup-coordination + the aggregate "All Backups Healthy" Gatus check; the shared loop also emits `backup_ever_succeeded{backup="offsite-borg"}` (MTIME≠0 gate — never-worked vs stale); job unit rides `ioTier.background` (BE/6 — nixpkgs' `idle` IO class starves on this box); enable-gated smoke: pre-deploy §13 + post-deploy §16; OnFailure → `notify-failure@` (DESKTOP leg) + registry `monitored` entry → `system_service_state_failed` metric → Gatus "Offsite Borg Job Service" → Discord (the Discord leg — corrected 2026-09-24: notify-failure@ alone never pages Discord) |
 | Excludes | Rebuildable trees per the blueprint sizing list — `/data/{ai/models,ai/cache,ai/venv-anime-comic,models,SteamLibrary,cache,docker,tmp-*}`, `~/{projects,forks,worktrees,go,.cache,immich-temp}`, pool btrfs receive mirrors (`backups/{root,data}`), the restic repo, forgejo-subvol, paperless `export/index/llm_index/trash/consume`, immich `thumbs/encoded-video` |
 
 The passphrase in `borg.yaml` is a real random value. Copy a recovery copy of
@@ -80,6 +80,25 @@ export BORG_PASSCOMMAND="cat /run/secrets/borg_password"
 export BORG_RSH="ssh -p 23 -i /run/secrets/borg_ssh_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/run/secrets/borg_known_hosts"
 sudo -E borg list
 sudo -E borg info
+
+# Failure-alert delivery proof (executable only once the leg is enabled —
+# the units do not exist while dormant). Two legs:
+#   1. Desktop leg: the OnFailure template instance fires its critical
+#      notify-send (or journal logger headless).
+#   2. Discord leg: the job unit's state metric + the "Offsite Borg Job
+#      Service" / "All Backups Healthy" Gatus checks.
+systemctl cat borgbackup-job-hetzner | grep -i onFailure
+#   → OnFailure=notify-failure@borgbackup-job-hetzner.service
+sudo systemctl start notify-failure@borgbackup-job-hetzner.service
+sudo journalctl -u notify-failure@borgbackup-job-hetzner -n 5   # desktop leg delivered
+grep -H 'backup_healthy{backup="offsite-borg"}' /var/lib/node_exporter/textfile_collector/*.prom
+grep -c 'Offsite Borg Job Service' /etc/gatus-config.yaml 2>/dev/null || \
+  journalctl -u gatus -n 200 | grep -m1 'Offsite Borg Job Service'   # Discord leg wired
+
+# Stale repo lock after a WAN drop / killed run (full recipe:
+# docs/services/offsite-borg-restore.md "Stale lock"):
+pgrep -af borg    # MUST be empty (or only unrelated borg) before break-lock
+sudo -E borg break-lock   # with the env block above sourced
 
 # Single-file restore (full restore runbook: docs/services/offsite-borg-restore.md)
 sudo -E borg extract ::evo-x2-<timestamp> home/lars/path/to/file
