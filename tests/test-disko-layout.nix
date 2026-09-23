@@ -9,7 +9,7 @@
 # The real config pins the Samsung by-id (kernel enumeration flips); the
 # test wraps it with a device override pointing at the empty vdisk — same
 # spec, different device.
-{ pkgs, lib ? pkgs.lib }:
+{ pkgs, lib ? pkgs.lib, inputs }:
 let
   # Device-override wrapper: the spec file pins by-id, the rehearsal
   # targets the blank vdisk (emptyDiskImages attach at /dev/vdb). Built by
@@ -27,8 +27,14 @@ let
   testConfig = pkgs.writeText "disko-samsung-tlc-vm.nix" (
     lib.generators.toPretty { } overridden
   );
-
-  diskoCli = "${pkgs.disko}/bin/disko";
+  # The disko SCRIPT is evaluated HOST-SIDE with our locked nixpkgs — the
+  # CLI inside the VM would re-evaluate against a fresh <nixpkgs> and try
+  # to build a whole stdenv offline (no network in the guest).
+  diskoScript = import "${inputs.disko}/share/disko/cli.nix" {
+    inherit pkgs lib;
+    mode = "destroy,format,mount";
+    diskoFile = testConfig;
+  };
 in
 {
   name = "disko-layout";
@@ -40,8 +46,7 @@ in
       virtualisation.diskSize = 8192;
       boot.supportedFilesystems = [ "btrfs" ];
       environment.systemPackages = [
-        pkgs.disko
-        pkgs.btrfs-progs
+        diskoScript
       ];
       system.stateVersion = "25.11";
     };
@@ -51,9 +56,7 @@ in
     machine.wait_for_unit("multi-user.target")
 
     # Apply the FULL destructive chain to the blank vdisk — the rescue path.
-    machine.succeed(
-        "NIX_PATH=nixpkgs=${pkgs.path} ${diskoCli} --mode destroy,format,mount --yes-wipe-all-disks ${testConfig}"
-    )
+    machine.succeed("disko-destroy-format-mount --yes-wipe-all-disks")
 
     # Partition geometry: p1 = 4G vfat SAMSUNG-EFI, p2 = btrfs tlc
     machine.succeed("blkid /dev/vdb1 | grep 'LABEL=\"SAMSUNG-EFI\"'")
@@ -63,8 +66,7 @@ in
 
     # Subvolumes through the toplevel (subvolid=5) at /mnt/hot — never a
     # named subvolume itself (hot-db bootstrap creates hot/<name> through it)
-    out = machine.succeed("btrfs subvolume list /mnt/hot")
-    assert "nix" in out, f"missing /nix subvolume: {out}"
+    out = machine.succeed("btrfs subvolume list /mnt/hot")    assert "nix" in out, f"missing /nix subvolume: {out}"
     assert "users/lars/cache/nix" in out, f"missing cache-nix subvolume: {out}"
 
     # Mountpoints per the spec
