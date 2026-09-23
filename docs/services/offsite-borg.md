@@ -75,7 +75,7 @@ sudo systemctl start borgbackup-job-hetzner
 
 # Ad-hoc borg against the repo (env comes from the rendered template)
 set -x
-export BORG_REPO=$(sudo cat /run/secrets-rendered/borg-env | grep -oP '(?<=BORG_REPO=).*')
+export BORG_REPO=$(sudo cat /run/secrets/rendered/borg-env | grep -oP '(?<=BORG_REPO=).*')
 export BORG_PASSCOMMAND="cat /run/secrets/borg_password"
 export BORG_RSH="ssh -p 23 -i /run/secrets/borg_ssh_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/run/secrets/borg_known_hosts"
 sudo -E borg list

@@ -213,6 +213,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **File the daemon-beat-precommit-hook incident into the fleet lessons** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **deploy wrapper: refuse early with a clear message in agent sandboxes (no sudo)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Identify residual post-deploy WARNs** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] **Extend audit-textfile-tmp class B to .sh + .md surfaces (borg drill escaped the scan)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **post-deploy-check: poll browser-history /health + drop deploy.sh explicit restart** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Extend mkOidcGate with optional diagnostic output** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Post-deploy-check failure semantics + escalation** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
