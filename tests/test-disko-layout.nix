@@ -44,7 +44,7 @@ in
 
     # Apply the FULL destructive chain to the blank vdisk — the rescue path.
     machine.succeed(
-        "${diskoCli} --mode destroy,format,mount --yes-wipe-all-disks ${testConfig}"
+        "NIX_PATH=nixpkgs=${pkgs.path} ${diskoCli} --mode destroy,format,mount --yes-wipe-all-disks ${testConfig}"
     )
 
     # Partition geometry: p1 = 4G vfat SAMSUNG-EFI, p2 = btrfs tlc
