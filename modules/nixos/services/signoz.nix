@@ -729,7 +729,6 @@ in
                   Persistent = true;
                 };
               };
-            };
 
               # ── Dedicated XFS data mount monitoring (buildcache pattern) ──────
               # The XFS filesystem at /var/lib/clickhouse is invisible to
