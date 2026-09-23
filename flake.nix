@@ -1127,6 +1127,40 @@
                     deadnix --fail --no-lambda-pattern-names . 2>&1 | tee $out
                   '';
 
+              # disko geometry spec guard (Phase-2 plan T16.2/T16.3):
+              # eval-checks diskoConfigurations.samsung-tlc against the LIVE
+              # geometry and asserts the flake-discovery trap stays closed —
+              # the disko config must never be reachable from
+              # nixosConfigurations (an imported disko module would make
+              # `disko --flake .#evo-x2` apply destructive modes).
+              disko-samsung-tlc =
+                let
+                  inherit (inputs.self.diskoConfigurations.samsung-tlc.disko.devices.disk.samsung-tlc) content device;
+                  inherit (content.partitions) esp main;
+                  evoConfigOptions = inputs.self.nixosConfigurations.evo-x2.config.options;
+                  geometryGuards =
+                    assert device == "/dev/disk/by-id/nvme-Samsung_SSD_970_EVO_Plus_1TB_S4EWNX0RA01856V";
+                    assert content.type == "gpt";
+                    assert esp.type == "EF00" && esp.size == "4G";
+                    assert esp.content.format == "vfat";
+                    assert esp.content.mountpoint == null;
+                    assert lib.elem "-n" esp.content.extraArgs && lib.elem "SAMSUNG-EFI" esp.content.extraArgs;
+                    assert main.content.type == "btrfs";
+                    assert lib.elem "-L" main.content.extraArgs && lib.elem "tlc" main.content.extraArgs;
+                    # toplevel (subvolid=5) at /mnt/hot — hot/<name> service
+                    # subvols are created THROUGH it, never a named subvol
+                    assert main.content.mountpoint == "/mnt/hot";
+                    assert main.content.subvolumes ? "/nix";
+                    assert main.content.subvolumes ? "/users/lars/cache/nix";
+                    assert !(evoConfigOptions ? disko);
+                    true;
+                in
+                builtins.deepSeq geometryGuards (
+                  pkgs.runCommand "disko-samsung-tlc-check" { } ''
+                    echo "samsung-tlc disko geometry + discovery-trap guard OK" > $out
+                  ''
+                );
+
               # Behavioral fixture tests for the forgejo staged-primary
               # scripts (plan M05/M06/M07): push-mirror attach, repo flip,
               # dead-mirror notice parsing. The scripts are

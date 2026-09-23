@@ -890,6 +890,26 @@
         "type": "github"
       }
     },
+    "disko": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1789770686,
+        "narHash": "sha256-uZkBR7yHdIKUFB5SZdfgh1qkGfI3XmYmI/lTiquxbck=",
+        "owner": "nix-community",
+        "repo": "disko",
+        "rev": "725ea35e410ad83be4931d1bff7e090eacaf3563",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "disko",
+        "type": "github"
+      }
+    },
     "dnsblockd": {
       "inputs": {
         "art-dupl-src": "art-dupl-src_2",
@@ -4671,23 +4691,6 @@
         "url": "ssh://git@github.com/larsartmann/go-retry"
       }
     },
-    "go-sqlitestore": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1790101821,
-        "narHash": "sha256-lOIL3GoQ6DPe/M/vG4WBjVNWvGl7l4JdD/Ax1JmqAnw=",
-        "owner": "LarsArtmann",
-        "repo": "go-sqlitestore",
-        "rev": "322baf812fbf4f0eff921469f6f022c418171a42",
-        "type": "github"
-      },
-      "original": {
-        "owner": "LarsArtmann",
-        "ref": "refs/tags/v0.1.0",
-        "repo": "go-sqlitestore",
-        "type": "github"
-      }
-    },
     "go-sse": {
       "flake": false,
       "locked": {
@@ -6706,6 +6709,7 @@
         "cv": "cv",
         "dankMaterialShell": "dankMaterialShell",
         "discordsync": "discordsync",
+        "disko": "disko",
         "dnsblockd": "dnsblockd",
         "emeet-pixyd": "emeet-pixyd",
         "erraudit": "erraudit_3",
