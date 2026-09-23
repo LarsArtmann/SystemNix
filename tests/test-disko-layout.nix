@@ -30,7 +30,7 @@ let
   # The disko SCRIPT is evaluated HOST-SIDE with our locked nixpkgs — the
   # CLI inside the VM would re-evaluate against a fresh <nixpkgs> and try
   # to build a whole stdenv offline (no network in the guest).
-  diskoScript = import "${inputs.disko}/share/disko/cli.nix" {
+  diskoScript = import "${inputs.disko}/cli.nix" {
     inherit pkgs lib;
     mode = "destroy,format,mount";
     diskoFile = testConfig;
