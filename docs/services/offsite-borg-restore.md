@@ -135,19 +135,27 @@ the exclude list — that is the sizing doctrine, not an accident.
 restore is Schrödinger's backup). It connects, resolves the newest archive,
 extracts a tiny deterministic subset (`etc/hostname` + `etc/machine-id`),
 verifies the extracted bytes (existence, non-empty, `cmp` against the live
-files in real mode), and times each phase. Per-run records land in
-`${XDG_STATE_HOME:-~/.local/state}/borg-restore-drill/`.
+files in real mode), and times each phase. The borg binary is ALWAYS resolved
+from this flake's locked nixpkgs (drill client == job binary — no version
+skew in the timings). Per-run records (including EARLY failures — record
+setup precedes every env check; each record ends in a `result :` line) land
+in `${XDG_STATE_HOME:-~/.local/state}/borg-restore-drill/`, pruned to the
+newest 100.
 
 ```bash
 sudo bash scripts/borg-restore-drill.sh                # real repo (needs root: secrets are 0400 root)
 bash scripts/borg-restore-drill.sh --local /path/repo  # stand-in drill, no root
 bash scripts/borg-restore-drill.sh --selftest          # throwaway repo, proves the path unprivileged
+sudo bash scripts/borg-restore-drill.sh --verify-data  # + deep-integrity phase
 ```
 
 Pass criteria: resolve → extract → verify all succeed; any missing/empty
 extracted file fails the drill. A `warn` (not failure) is printed when an
 extracted file differs from its live counterpart — that is backup drift, not
-a broken restore path.
+a broken restore path. `--verify-data` adds a timed deep-integrity phase:
+a dry-run `borg extract -n` over the WHOLE archive — every chunk read,
+hash/HMAC-checked and decompressed, nothing written (borg 1.x's `--dry-run`
+already does this; borg2's `--verify-data` is used when the binary grows it).
 
 ### First timed drill — 2026-09-23 (local stand-in, borg 1.4.5)
 
@@ -182,13 +190,11 @@ StorageBox + key decryption + repo index read over WAN).
   a backup channel; re-pin deliberately, never blanket-accept.
 - **Cache on /mnt/hot** (`BORG_CACHE_DIR=/mnt/hot/borg/cache`): the drill
   reuses the job's warm cache for realistic timings. If the Samsung tier is
-  detached, an unmounted `/mnt/hot` does NOT stop borg: it happily `mkdir`s
-  its cache under the mountpoint, landing every cache byte on the ROOT fs
-  (the shadow-dir class this repo documents elsewhere). The borgbackup job
-  unit is mount-gated (`RequiresMountsFor`); the manual drill is not — until
-  the drill grows a `mountpoint -q /mnt/hot` gate (queued in
-  `docs/todo/storage.md`), check the mount before a real-mode drill and note
-  the cache location in the drill record.
+  detached, an unmounted `/mnt/hot` would let borg happily `mkdir` its cache
+  under the bare mountpoint, landing every cache byte on the ROOT fs (the
+  shadow-dir class this repo documents elsewhere). The drill's real mode now
+  GATES on `mountpoint -q /mnt/hot` with a loud die (mirroring the job
+  unit's `RequiresMountsFor`) — mount the tier before a real-mode drill.
 - **Borg 1.x extract has `--dry-run` (`-n`)** — it resolves paths, reads
   and checks every chunk, and writes nothing; use it (or
   `borg list ::archive <path>`) to preview a subset before extracting.

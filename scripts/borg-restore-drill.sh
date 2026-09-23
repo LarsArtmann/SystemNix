@@ -29,10 +29,11 @@
 #   --subset "p1 p2"   archive-relative paths to extract
 #                      (default: "etc/hostname etc/machine-id" — tiny, always
 #                      present, and byte-comparable against the live files)
-#   --verify-data      add a deep-integrity phase: `borg extract -n
-#                      --verify-data` over the WHOLE archive (every chunk
-#                      read + checked, nothing written) — much slower than
-#                      the subset drill, distinct from it
+#   --verify-data      add a deep-integrity phase: dry-run `borg extract -n`
+#                      over the WHOLE archive (every chunk read + hash/HMAC
+#                      checked + decompressed, nothing written) — much
+#                      slower than the subset drill, distinct from it; uses
+#                      borg2's --verify-data when the binary supports it
 #   --keep             keep the extraction scratch dir instead of removing it
 #
 # Phases (each timed): connect+resolve (auth + newest-archive listing),
@@ -287,11 +288,18 @@ t_verify_end="$(date +%s%3N)"
 deep_ms=0
 if [ "$VERIFY_DATA" -eq 1 ]; then
   t_deep_start="$(date +%s%3N)"
-  echo "[drill] deep-integrity: borg extract -n --verify-data over the WHOLE archive (every chunk read + checked, nothing written)"
-  # Dry-run extract = resolve paths + read/check every chunk, write nothing.
-  # stdout stays quiet; stderr carries any integrity failure.
-  if ! (cd "$scratch" && borg extract --dry-run --verify-data ::"$archive_name" >/dev/null); then
-    echo "FAIL: deep-integrity verify-data pass failed (chunk corruption?)" >&2
+  echo "[drill] deep-integrity: dry-run extract over the WHOLE archive (every chunk read + checked, nothing written)"
+  # borg 1.x extract has NO --verify-data flag — its --dry-run already reads
+  # and checks every chunk (hash/HMAC, decrypt, decompress) per `borg extract
+  # --help`. borg2 adds --verify-data (fuller integrity re-verification); use
+  # it when the binary grows it, never pass it blindly at 1.x.
+  if borg extract --help 2>&1 | grep -q -- --verify-data; then
+    deep_args=(--dry-run --verify-data)
+  else
+    deep_args=(--dry-run)
+  fi
+  if ! (cd "$scratch" && borg extract "${deep_args[@]}" ::"$archive_name" >/dev/null); then
+    echo "FAIL: deep-integrity dry-run verify pass failed (chunk corruption?)" >&2
     exit 1
   fi
   t_deep_end="$(date +%s%3N)"
