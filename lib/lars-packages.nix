@@ -24,17 +24,14 @@ lib.filterAttrs (_: v: v != null) {
     vendorHash = "sha256-fmLiSd6dN0Z85m+vDks3tQUD7yb76ZeytiE5j3FEp4E=";
   };
   branching-flow = flakePkg inputs.branching-flow;
-  # TEMPORARY vendorHash shim (2026-09-22): lock holds 7e1fbfe (last
-  # deploy-proven rev, gen 797), but the root nixpkgs moved (44a9189 ->
-  # 6774f7bc) and the prepared-source graph re-resolved, so the upstream
-  # FOD no longer reproduces (ultraviolet@2026-09-22 absent from the
-  # cached vendor tree — the browser-history 2026-09-22 rollback class).
-  # Upstream master (bc999b4) is worse: package COMPILE fails (gvafix.*
-  # undefined; fixes unpushed in ~/projects/BuildFlow). Drop this shim
-  # when the lock moves past an upstream-fixed rev.
-  buildflow = (flakePkg inputs.buildflow).overrideAttrs {
-    vendorHash = "sha256-fT34kjPX6hH6fe/vwVbkDZQNL4Qy7bw0x1KFUCAkS0U=";
-  };
+  # buildflow shim DROPPED (2026-09-23): its drop condition ("lock moves
+  # past an upstream-fixed rev") is met — the lock holds 5b3483a, where the
+  # vendorHash fix IS pushed (upstream vendorHash.nix = sha256-WIFsGVLBMsCK…,
+  # the same "got" hash the old shim overrode with the stale fT34kjPX6…
+  # value, re-breaking the FOD it existed to fix) and the package builds
+  # clean (nix build .#buildflow verified in ~/projects/BuildFlow).
+  # Re-add ONLY via nix-hash-fix evidence, never by hand.
+  buildflow = flakePkg inputs.buildflow;
   cqrs-lint = inputs.go-cqrs-lite.packages.${system}.cqrs-lint or null;
   # TEMPORARY vendorHash shim (2026-09-23): the lock wave re-locked erraudit
   # to f3929290 whose FOD content re-resolved under nixpkgs 6774f7bc, so the

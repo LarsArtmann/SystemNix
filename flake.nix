@@ -461,27 +461,19 @@
 
     # BuildFlow — Zero-configuration build automation for Go projects
     buildflow = {
-      # Branch-ref governed (pin policy 2026-09-16). LOCK HOLD (updated
-      # 2026-09-22): the lock holds 7e1fbfe (last deploy-proven rev, gen
-      # 797 / 2026-09-22 15:36). Upstream master bc999b4 FAILS the package
-      # COMPILE (gvafix.* undefined — mid-refactor; fix commits sat
-      # unpushed in ~/projects/BuildFlow at rollback time), so the lock
-      # walks that chased master (7e1fbfe -> df180ada -> bc999b4) were
-      # rolled back. Because the root nixpkgs moved (44a9189 -> 6774f7bc)
-      # the same day, the rollback needed a downstream vendorHash shim —
-      # see lib/lars-packages.nix (a source-rev rollback does NOT
-      # reproduce the historical FOD; browser-history 2026-09-22 class).
-      # Do NOT `nix flake lock --update-input buildflow` until upstream
-      # master builds clean (probe `nix build .#buildflow` after the
-      # update), then drop the shim in the same change.
-      # INTERIM-ROLLBACK (2026-09-23): tonight's lock wave re-locked buildflow
-      # 7e1fbfe -> 48d59fc, which fails BOTH the go-modules FOD (vendorHash
-      # stale under nixpkgs 6774f7bc) and the package COMPILE (gvafix.*
-      # undefined — the exact break this hold predicted). The lock node was
-      # rolled back to 7e1fbfe directly (inputUrlRevGuard bans ?rev= URLs);
-      # do NOT `nix flake lock --update-input buildflow` until upstream
-      # master builds clean (probe `nix build .#buildflow`), then drop the
-      # shim the same change.
+      # Branch-ref governed (pin policy 2026-09-16). LOCK HOLD LIFTED
+      # (2026-09-23): the lock holds 5b3483a, where BOTH prior breakers are
+      # fixed and PUSHED — the vendorHash (upstream vendorHash.nix = the
+      # WIFsGV… "got" hash; `nix build .#buildflow` verified clean in
+      # ~/projects/BuildFlow) and the gvafix.* compile break (fixed in the
+      # commits after bc999b4). The lars-packages.nix vendorHash shim was
+      # dropped in the same change per the hold's own instruction. History:
+      # hold began 2026-09-22 at 7e1fbfe (bc999b4 mid-refactor broke COMPILE;
+      # root-nixpkgs move re-resolved the FOD graph), interim rollback
+      # 2026-09-23 after a lock wave jumped to 48d59fc. Standing discipline:
+      # after any `nix flake lock --update-input buildflow`, probe
+      # `nix build .#buildflow` before switching, and re-shim ONLY via
+      # nix-hash-fix evidence, never by hand.
       url = "git+ssh://git@github.com/LarsArtmann/BuildFlow?ref=refs/heads/master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
