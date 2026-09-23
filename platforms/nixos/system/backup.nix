@@ -35,8 +35,43 @@ let
     ;
   cfg = config.services.offsite-borg;
   jobUnit = "borgbackup-job-hetzner";
+
+  # Restore-drill env-path pin: the drill's real mode hand-writes the
+  # rendered env path (a plain repo script cannot interpolate the
+  # template), so its exact BORG_ENV_FILE default is pinned to the sops
+  # template path by the assertion below — if the literal drifts,
+  # `nix flake check` fails naming the expected literal instead of the
+  # drill silently sourcing a stale path mid-incident. Deliberately
+  # TOP-LEVEL (not inside the mkIf below): when the template is declared
+  # it pins the template's exact .path (catches overrides); while the
+  # module is dormant it pins the sops-nix default shape so the guard
+  # still fires in the default gate (proven: an in-mkIf placement passed
+  # flake check on a drifted script).
+  drillScript = builtins.readFile ../../../scripts/borg-restore-drill.sh;
+  borgEnvRenderPath =
+    if options ? sops.templates && config.sops.templates ? "borg-env" then
+      config.sops.templates."borg-env".path
+    else
+      "/run/secrets/rendered/borg-env";
+  drillEnvLiteral = ''BORG_ENV_FILE="''${BORG_ENV_FILE:-${borgEnvRenderPath}}"'';
 in
 {
+  # Forced by `nix flake check` (pre-commit + CI) on every NixOS host —
+  # scheduled-tasks.nix self-assertion pattern.
+  config.assertions = [
+    {
+      assertion = lib.hasInfix drillEnvLiteral drillScript;
+      message = ''
+        borg-restore-drill env-path pin: scripts/borg-restore-drill.sh no
+        longer defaults BORG_ENV_FILE to the rendered sops template path
+        (${borgEnvRenderPath}). A plain repo script cannot interpolate
+        config.sops.templates."borg-env".path, so the literal is pinned by
+        this assertion — update the drill's BORG_ENV_FILE default to
+        BORG_ENV_FILE="''${BORG_ENV_FILE:-${borgEnvRenderPath}}" (or flake-wrap the
+        drill to interpolate at build time; see docs/todo/storage.md).
+      '';
+    }
+  ];
   options.services.offsite-borg = {
     enable = lib.mkEnableOption "offsite Borg backup to the Hetzner StorageBox";
 
@@ -146,15 +181,6 @@ in
       # /run/secrets-rendered path (audit-textfile-tmp rule).
       envPath = config.sops.templates."borg-env".path;
 
-      # Restore-drill env-path pin: the drill's real mode hand-writes the
-      # rendered env path (a plain repo script cannot interpolate the
-      # template), so its exact BORG_ENV_FILE default is pinned to envPath
-      # by the assertion below — if the render dir or the template ever
-      # moves, `nix flake check` fails naming the expected literal instead
-      # of the drill silently sourcing a stale path mid-incident.
-      drillScript = builtins.readFile ../../../scripts/borg-restore-drill.sh;
-      drillEnvLiteral = ''BORG_ENV_FILE="''${BORG_ENV_FILE:-${envPath}}"'';
-
       # Fail fast with the go-live pointer while the repo target is still
       # the placeholder (google-sync-config-check pattern) — without this,
       # a go-live deploy with an unfilled secret degrades into an opaque
@@ -170,23 +196,6 @@ in
       '';
     in
     {
-      # Forced by `nix flake check` (pre-commit + CI) — scheduled-tasks.nix
-      # self-assertion pattern.
-      assertions = [
-        {
-          assertion = lib.hasInfix drillEnvLiteral drillScript;
-          message = ''
-            borg-restore-drill env-path pin: scripts/borg-restore-drill.sh no
-            longer defaults BORG_ENV_FILE to the rendered sops template path
-            (${envPath}). A plain repo script cannot interpolate
-            config.sops.templates."borg-env".path, so the literal is pinned by
-            this assertion — update the drill's BORG_ENV_FILE default to
-            BORG_ENV_FILE="''${BORG_ENV_FILE:-${envPath}}" (or flake-wrap the
-            drill to interpolate at build time; see docs/todo/storage.md).
-          '';
-        }
-      ];
-
       # nixpkgs borgbackup module owns the job unit + timer (init-on-first-run,
       # create + prune + compact, idle IO/CPU scheduling, ssh in unit PATH).
       services.borgbackup.jobs.hetzner = {
