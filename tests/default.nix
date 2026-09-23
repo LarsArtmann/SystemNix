@@ -43,6 +43,7 @@ in
   sev1-escalation = makeTest (import ./test-sev1-escalation.nix { inherit pkgs; });
   pool-recovery = makeTest (import ./test-pool-recovery.nix { inherit pkgs; });
   btrbk-rescue = makeTest (import ./test-btrbk-rescue.nix { inherit pkgs; });
+  disko-layout = makeTest (import ./test-disko-layout.nix { inherit pkgs; });
   session-boot-audit = import ./test-session-boot-audit.nix { inherit pkgs inputs system; };
   niri-session-config = import ./test-niri-session-config.nix { inherit pkgs; };
   niri-session = makeTest (import ./test-niri-session.nix { inherit pkgs; });
