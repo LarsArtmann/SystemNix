@@ -61,7 +61,7 @@ load-bearing, and the `ssh-keyscan -p 23` known_hosts pin is
 sudo bash -c '
   set -a; source /run/secrets-rendered/borg-env; set +a
   export BORG_PASSCOMMAND="cat /run/secrets/borg_password"
-  export BORG_RSH="ssh -i /run/secrets/borg_ssh_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/run/secrets/borg_known_hosts"
+  export BORG_RSH="ssh -p 23 -i /run/secrets/borg_ssh_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/run/secrets/borg_known_hosts"
   export BORG_CACHE_DIR=/mnt/hot/borg/cache BORG_CONFIG_DIR=/mnt/hot/borg/config
   borg list                                   # pick the archive
   mkdir /tmp/restore && cd /tmp/restore
