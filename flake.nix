@@ -467,10 +467,12 @@
       # INTERIM-ROLLBACK (2026-09-23): tonight's lock wave re-locked buildflow
       # 7e1fbfe -> 48d59fc, which fails BOTH the go-modules FOD (vendorHash
       # stale under nixpkgs 6774f7bc) and the package COMPILE (gvafix.*
-      # undefined — the exact break this hold predicted). ?rev= restores the
-      # deploy-proven hold; drop the rev once upstream master builds clean
-      # (probe `nix build .#buildflow`), then drop the shim the same change.
-      url = "git+ssh://git@github.com/LarsArtmann/BuildFlow?ref=refs/heads/master&rev=7e1fbfe835fe67d49a8927d038089113684e394a";
+      # undefined — the exact break this hold predicted). The lock node was
+      # rolled back to 7e1fbfe directly (inputUrlRevGuard bans ?rev= URLs);
+      # do NOT `nix flake lock --update-input buildflow` until upstream
+      # master builds clean (probe `nix build .#buildflow`), then drop the
+      # shim the same change.
+      url = "git+ssh://git@github.com/LarsArtmann/BuildFlow?ref=refs/heads/master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
@@ -493,10 +495,10 @@
     go-structure-linter = {
       # INTERIM-ROLLBACK (2026-09-23): the wave re-locked to 721c62a0, whose
       # go.mod floor (1.27.1) exceeds the followed nixpkgs go (1.26.7) — the
-      # go-modules FOD dies under GOTOOLCHAIN=local. ?rev= restores
-      # 96b6a01f (gen-797-proven). Drop the rev when upstream wires go_1_27
-      # (the library-policy three-wiring-points pattern) and probes green.
-      url = "github:LarsArtmann/go-structure-linter?ref=master&rev=96b6a01f7f3ca38707b8245d38e0e83eda8028e0";
+      # go-modules FOD dies under GOTOOLCHAIN=local. The lock node was rolled
+      # back to 96b6a01f (gen-797-proven). Do NOT update-input until upstream
+      # wires go_1_27 (the library-policy three-wiring-points pattern).
+      url = "github:LarsArtmann/go-structure-linter?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
@@ -651,11 +653,11 @@
       # INTERIM-ROLLBACK (2026-09-23): the wave re-locked discordsync to
       # 605efc28, whose prepared source fails mkPreparedSource's private-dep
       # validation (go-sqlitestore in go.mod without a flake deps wiring) —
-      # unfixable SystemNix-side. ?rev= restores b3077aa2, the gen-797-proven
-      # rev currently deployed (upstream nixpkgs NOT followed, so the FOD is
-      # a cache hit). Drop the rev when upstream wires go-sqlitestore and the
-      # FOD + package probe green from our lock.
-      url = "github:LarsArtmann/DiscordSync?ref=master&rev=b3077aa23ceda43c4e44a07fdd79b8b7334e8617";
+      # unfixable SystemNix-side. The lock node was rolled back to b3077aa2,
+      # the gen-797-proven rev currently deployed (upstream nixpkgs NOT
+      # followed, so the FOD is a cache hit). Do NOT update-input until
+      # upstream wires go-sqlitestore and the FOD + package probe green.
+      url = "github:LarsArtmann/DiscordSync?ref=master";
       inputs = {
         # go-nix-helpers AND nixpkgs deliberately NOT followed (bank-sync +
         # qmd precedents): upstream's vendorHash was validated against ITS

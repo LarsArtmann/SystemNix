@@ -282,7 +282,6 @@
           "go-nix-helpers"
         ],
         "go-output": "go-output_2",
-        "go-sqlitestore": "go-sqlitestore",
         "go-structure-linter": "go-structure-linter",
         "go-version-auto-configure": "go-version-auto-configure",
         "go-workflow-auditlog": "go-workflow-auditlog",
@@ -299,11 +298,11 @@
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1790114248,
-        "narHash": "sha256-heaNBzyHjvQrcwUtZ186rVJ6Xt49NX0RYDHV3SG3BOU=",
+        "lastModified": 1790023824,
+        "narHash": "sha256-wpHS+Lna2d+qWN2e9Q9clRXlirAzPUjXDqO/2tUjnGE=",
         "ref": "refs/heads/master",
-        "rev": "48d59fc8e311c8d6ddf7c113b06472532fb6bcfd",
-        "revCount": 6398,
+        "rev": "7e1fbfe835fe67d49a8927d038089113684e394a",
+        "revCount": 6264,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -877,11 +876,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790110869,
-        "narHash": "sha256-1QIuQjFLxAbYW7UpBui8Chc7IgCloE+PKsUQ1LCLjJ8=",
+        "lastModified": 1789915978,
+        "narHash": "sha256-s8vRDVLBBBI3oR+sYcvuXnRHobLAr0ozfDFjtB4aXB4=",
         "owner": "LarsArtmann",
         "repo": "DiscordSync",
-        "rev": "605efc285054cc690ae584b8d815f66216c9bd73",
+        "rev": "b3077aa23ceda43c4e44a07fdd79b8b7334e8617",
         "type": "github"
       },
       "original": {
@@ -4896,11 +4895,11 @@
         "treefmt-nix": "treefmt-nix_7"
       },
       "locked": {
-        "lastModified": 1790094568,
-        "narHash": "sha256-fzUlh+2CDqMJtnTmyHTTJ5ic3bjoQAY34U2fcRir5mA=",
+        "lastModified": 1789801586,
+        "narHash": "sha256-oAg25C5wZ0MjGPFXR4hwcIlKAw0WDYLMFU4nOQUO2Hs=",
         "owner": "LarsArtmann",
         "repo": "go-structure-linter",
-        "rev": "721c62a095759ea17b07d954e6e1e8f1dc5b3248",
+        "rev": "96b6a01f7f3ca38707b8245d38e0e83eda8028e0",
         "type": "github"
       },
       "original": {
