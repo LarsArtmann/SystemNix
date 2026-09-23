@@ -9,16 +9,24 @@
 # The real config pins the Samsung by-id (kernel enumeration flips); the
 # test wraps it with a device override pointing at the empty vdisk — same
 # spec, different device.
-{ pkgs }:
+{ pkgs, lib ? pkgs.lib }:
 let
   # Device-override wrapper: the spec file pins by-id, the rehearsal
-  # targets the blank vdisk (emptyDiskImages attach at /dev/vdb).
-  testConfig = pkgs.writeText "disko-samsung-tlc-vm.nix" ''
-    { lib, ... }: {
-      imports = [ ${../disko/samsung-tlc.nix} ];
-      disko.devices.disk.samsung-tlc.device = lib.mkForce "/dev/vdb";
-    }
-  '';
+  # targets the blank vdisk (emptyDiskImages attach at /dev/vdb). Built by
+  # PLAIN attrset override + serialization — a second module overriding
+  # `device` breaks disko's deviceType dispatch (content resolves to null,
+  # dry-run-proven).
+  spec = import ../disko/samsung-tlc.nix;
+  overridden =
+    spec
+    // {
+      disko.devices.disk.samsung-tlc = spec.disko.devices.disk.samsung-tlc // {
+        device = "/dev/vdb";
+      };
+    };
+  testConfig = pkgs.writeText "disko-samsung-tlc-vm.nix" (
+    lib.generators.toPretty { } overridden
+  );
 
   diskoCli = "${pkgs.disko}/bin/disko";
 in
