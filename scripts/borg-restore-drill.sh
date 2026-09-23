@@ -119,6 +119,9 @@ fi
 if [ "$MODE" = "real" ]; then
   [ "$(id -u)" -eq 0 ] ||
     die "real-repo mode needs root (sops secrets render 0400 root) — run: sudo bash $0 (or use --local/--selftest)"
+  # The default literal is eval-time-pinned to the sops template path by
+  # platforms/nixos/system/backup.nix — change BOTH together (nix flake
+  # check fails on drift).
   BORG_ENV_FILE="${BORG_ENV_FILE:-/run/secrets/rendered/borg-env}"
   [ -r "$BORG_ENV_FILE" ] || die "rendered borg env not readable: $BORG_ENV_FILE (is services.offsite-borg enabled + deployed?)"
   repo_line="$(grep -E '^BORG_REPO=' "$BORG_ENV_FILE" | head -1 | cut -d= -f2-)" ||
