@@ -39,6 +39,38 @@ _: {
         "theme-catppuccin-mocha.css" = ./_forgejo-themes/theme-catppuccin-mocha.css;
         "theme-catppuccin-latte.css" = ./_forgejo-themes/theme-catppuccin-latte.css;
       };
+
+      # ui.THEMES audit: every listed entry must resolve to a served
+      # theme-<name>.css or the picker 404s (the dead arc-green entry,
+      # fixed 2026-09-23). Custom files come from forgejoThemes; upstream
+      # files ship in the package data output (re-verify on package bumps).
+      upstreamThemeNames = [
+        "forgejo-auto"
+        "forgejo-auto-deuteranopia-protanopia"
+        "forgejo-auto-tritanopia"
+        "forgejo-dark"
+        "forgejo-dark-deuteranopia-protanopia"
+        "forgejo-dark-tritanopia"
+        "forgejo-light"
+        "forgejo-light-deuteranopia-protanopia"
+        "forgejo-light-tritanopia"
+        "gitea-auto"
+        "gitea-dark"
+        "gitea-light"
+      ];
+      customThemeNames = map (file: builtins.head (builtins.match "theme-(.*)[.]css" file)) (
+        builtins.attrNames forgejoThemes
+      );
+      listedThemes = lib.remove "" (lib.splitString "," (cfg.settings.ui.THEMES or ""));
+      unbackedThemes = lib.subtractLists (upstreamThemeNames ++ customThemeNames) listedThemes;
+      defaultTheme = cfg.settings.ui.DEFAULT_THEME or "";
+      themeAuditErrors =
+        lib.optionals (unbackedThemes != [ ]) [
+          "ui.THEMES entries with no backing theme-<name>.css: ${lib.concatStringsSep ", " unbackedThemes} (custom files: forgejoThemes attrset; upstream set: ${forgejoPkg.name})"
+        ]
+        ++ lib.optionals (defaultTheme != "" && !builtins.elem defaultTheme listedThemes) [
+          "ui.DEFAULT_THEME '${defaultTheme}' is not listed in ui.THEMES"
+        ];
       # Dedicated Samsung-TLC subvolume storage (Set-B, 2026-09-18 staged-
       # primary plan docs/planning/2026-09-18_16-44_*). Inert until enabled.
       dedicated = config.services.forgejo.dedicatedSubvolume;
@@ -238,10 +270,10 @@ _: {
               THEMES = "catppuccin-auto,catppuccin-mocha,catppuccin-latte,forgejo-auto,forgejo-light,forgejo-dark";
             };
 
-            # settings is 2-level (section.key atoms) — nested subsections
+            # settings is 2-level (section.key atoms): nested subsections
             # like ui.meta.DESCRIPTION must use a quoted flat section key.
             "ui.meta" = {
-              DESCRIPTION = "Self-hosted git forge — code, mirrors, CI, and packages on the home lab.";
+              DESCRIPTION = "Self-hosted git forge: code, mirrors, CI, and packages on the home lab.";
               KEYWORDS = "git,forge,forgejo,ci,home-lab";
             };
 
@@ -1056,13 +1088,16 @@ _: {
         };
 
         # Fix ownership after Gitea→Forgejo data migration (recursively)
-        systemd.tmpfiles.rules = [
-          "Z ${stateDir} 0750 forgejo forgejo - -"
-          "d ${forgejoBackupDir} 0750 forgejo forgejo -"
-        ]
-        ++ lib.mapAttrsToList (
-          name: path: "L+ /var/lib/forgejo/custom/public/assets/css/${name} - - - - ${path}"
-        ) forgejoThemes;
+        systemd.tmpfiles.rules =
+          lib.throwIf (themeAuditErrors != [ ])
+            "forgejo theme audit: ${lib.concatStringsSep "; " themeAuditErrors}"
+            [
+              "Z ${stateDir} 0750 forgejo forgejo - -"
+              "d ${forgejoBackupDir} 0750 forgejo forgejo -"
+            ]
+          ++ lib.mapAttrsToList (
+            name: path: "L+ /var/lib/forgejo/custom/public/assets/css/${name} - - - - ${path}"
+          ) forgejoThemes;
 
         environment.systemPackages = [
           mirrorGithubScript

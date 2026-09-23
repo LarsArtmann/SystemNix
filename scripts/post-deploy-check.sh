@@ -1273,6 +1273,14 @@ echo "=== External vHost Checks ==="
 
 check "PapDashboard dash vHost (HTTPS)" "https://dash.$DOMAIN/" "200" "<html" 2>/dev/null || true
 check "Forgejo (HTTPS)" "https://forgejo.$DOMAIN/api/v1/version" "200" "" 2>/dev/null || true
+# Forgejo Catppuccin theme contract (2026-09-23): custom asset served,
+# DEFAULT_THEME rendered into the anonymous landing head, title slogan
+# (APP_SLOGAN) and ui.meta description live. Update these when the theme
+# settings change.
+check "Forgejo Catppuccin theme asset" "https://forgejo.$DOMAIN/assets/css/theme-catppuccin-auto.css" "200" "@import" 2>/dev/null || true
+check "Forgejo default theme (landing)" "https://forgejo.$DOMAIN/" "200" "data-theme=.catppuccin-auto." 2>/dev/null || true
+check "Forgejo slogan (title)" "https://forgejo.$DOMAIN/" "200" "Beyond coding. We forge." 2>/dev/null || true
+check "Forgejo meta description" "https://forgejo.$DOMAIN/" "200" "Self-hosted git forge: code, mirrors, CI" 2>/dev/null || true
 check "Status (HTTPS)" "https://status.$DOMAIN/" "200" "<html" 2>/dev/null || true
 check "Immich (HTTPS)" "https://immich.$DOMAIN/api/server/ping" "200" "" 2>/dev/null || true
 # Enable-gated via banksync_enabled (computed in the service-level section

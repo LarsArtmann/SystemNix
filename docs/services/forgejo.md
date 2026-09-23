@@ -143,3 +143,40 @@ per owner (the flip-rollout tracking numbers; census results land here at gate G
 - weekly restore drill + freshness Gatus). Migration runbook:
   `scripts/migrate-forgejo-subvol.sh` header (prepare → build → finalize → flip option → deploy;
   abort path included). Until G1 runs, storage stays as below (root fs).
+
+## Themes / UI (Catppuccin, 2026-09-23)
+
+**Architecture:** delta themes in `modules/nixos/services/_forgejo-themes/` — each file
+`@import`s the upstream `theme-forgejo-{dark,light,auto}.css` (STABLE unhashed filenames in the
+package data output; verified v15.0.9) and overrides CSS variables only. `forgejoThemes`
+(forgejo.nix) maps filename → source file; tmpfiles `L+` symlinks install into
+`/var/lib/forgejo/custom/public/assets/css/` on every activation (forgejo serves custom assets
+over built-ins). `ui.DEFAULT_THEME = "catppuccin-auto"`; picker offers catppuccin trio + forgejo
+trio (arc-green removed: never shipped in v15, 404'd in the picker).
+
+**Eval-time audit:** every `ui.THEMES` entry must resolve to a backing `theme-<name>.css`
+(custom: `forgejoThemes` keys; upstream: the declared `upstreamThemeNames` list) or the
+tmpfiles-rules eval throws naming the dead entry; `ui.DEFAULT_THEME` must be listed. Negative
+probe (throwaway expr, no tree mutation):
+
+```bash
+nix eval --impure --expr 'let f = builtins.getFlake (toString /home/lars/projects/SystemNix);
+  lib = f.inputs.nixpkgs.legacyPackages.x86_64-linux.lib;
+  sys = f.nixosConfigurations.evo-x2.extendModules { modules = [ {
+    services.forgejo.settings.ui.THEMES = lib.mkForce "catppuccin-auto,arc-green"; } ]; };
+  in builtins.length sys.config.systemd.tmpfiles.rules'
+# → error: forgejo theme audit: ui.THEMES entries with no backing theme-<name>.css: arc-green ...
+```
+
+**Adding a theme:** drop a delta css in `_forgejo-themes/`, add it to `forgejoThemes`, add the
+name to the `ui.THEMES` CSV, deploy. **Package-bump checklist:** re-verify `upstreamThemeNames`
+against the new package's `data/public/assets/css/` (upstream renamed theme files → themes
+degrade to base + overrides, visible not fatal). Post-deploy smoke (post-deploy-check.sh) pins:
+theme asset 200 + `@import`, `data-theme="catppuccin-auto"`, title slogan (`APP_SLOGAN` renders
+in every page title), meta description (`"ui.meta"` quoted flat section key: `settings` is
+2-level, a 3-level `ui.meta.DESCRIPTION` fails eval). Settings changes restart forgejo via the
+unit's preStart interpolation of the generated app.ini (no restartTriggers needed). Users who
+saved a personal theme keep it (account preference beats DEFAULT_THEME).
+
+**Phase 2 (owner-gated):** custom logo/favicon via `custom/public/assets/img/logo.svg` +
+`favicon.svg` through the same tmpfiles pattern.
