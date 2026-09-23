@@ -38,6 +38,7 @@ _: {
       cfg = config.services.architecture-catalog;
       domain = config.networking.domain;
       stateDir = "/var/lib/architecture-catalog";
+      textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
       inherit (import ../../../lib/default.nix lib)
         harden
         serviceOneshotDefaults
@@ -146,6 +147,16 @@ _: {
           default = 3;
           description = "Served generations to keep on disk (current + rollback margin)";
         };
+
+        freshMaxAgeHours = lib.mkOption {
+          type = lib.types.int;
+          default = 36;
+          description = ''
+            CI-build age budget for architecture_catalog_fresh. The hub CI
+            runs nightly (03:23) + on every push, so a healthy build is
+            always <24h old; 36h absorbs one missed nightly before paging.
+          '';
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -194,6 +205,110 @@ _: {
           };
         };
 
+        # Freshness collector (pool-smart-metrics pattern): turns the CI's
+        # build-stamp.json into Prometheus gauges. Fail-closed — on a scrape
+        # error ONLY scrape_errors is emitted so the anchored Gatus pats go
+        # red instead of phantom-greening on a frozen textfile. Pre-go-live
+        # (PLACEHOLDER token, no dist ever synced) is NOT a scrape error:
+        # dist_present/fresh honestly report zero and the Gatus checks stay
+        # red as the standing not-live-yet signal.
+        systemd.services.architecture-catalog-metrics = {
+          description = "Architecture Catalog freshness metrics (textfile)";
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+          inherit onFailure;
+          path = [
+            pkgs.jq
+            pkgs.coreutils
+            pkgs.gnugrep
+          ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "root";
+            }
+            (harden {
+              ReadWritePaths = [ textfileDir ];
+              # CAP_FOWNER: rename over a foreign-owned prom in the sticky
+              # 1777 textfile dir (mail-relay 2026-09-02..06 class).
+              CapabilityBoundingSet = "CAP_FOWNER";
+              MemoryMax = "128M";
+            })
+            (serviceOneshotDefaults { })
+          ];
+          script = ''
+            set -eu
+            OUT="${textfileDir}/architecture-catalog.prom"
+            mkdir -p "${textfileDir}"
+            TMP="$(mktemp "${textfileDir}/architecture-catalog.prom.XXXXXX")"
+            chmod 644 "$TMP"
+            trap 'rm -f "$TMP"' EXIT
+
+            fresh_budget_seconds=$(( ${toString cfg.freshMaxAgeHours} * 3600 ))
+            stamp="${stateDir}/current/build-stamp.json"
+            dist_index="${stateDir}/current/index.html"
+
+            emit() {
+              {
+                echo "# HELP architecture_catalog_dist_present Whether a served dist generation exists under the serving root"
+                echo "# TYPE architecture_catalog_dist_present gauge"
+                echo "architecture_catalog_dist_present $1"
+                echo "# HELP architecture_catalog_fresh Whether the served CI build is inside the freshness budget"
+                echo "# TYPE architecture_catalog_fresh gauge"
+                echo "architecture_catalog_fresh $2"
+                echo "# HELP architecture_catalog_stamp_age_seconds Age of the served CI build in seconds, negative when no stamp is readable"
+                echo "# TYPE architecture_catalog_stamp_age_seconds gauge"
+                echo "architecture_catalog_stamp_age_seconds $3"
+                echo "# HELP architecture_catalog_scrape_errors Nonzero when the collector itself failed; the value metrics above are omitted in that case"
+                echo "# TYPE architecture_catalog_scrape_errors gauge"
+                echo "architecture_catalog_scrape_errors 0"
+              } > "$TMP"
+              mv "$TMP" "$OUT"
+            }
+
+            if [ ! -f "$dist_index" ]; then; then
+              # Honest absence (never synced / pre-go-live) — not a scrape error.
+              emit 0 0 -1
+              exit 0
+            fi
+
+            built_at="$(jq -r '.builtAt // empty' "$stamp" 2>/dev/null || true)"
+            if [ -z "$built_at" ]; then
+              # dist exists but the stamp is unreadable/missing — the sync
+              # landed something unexpected; surface as scrape error.
+              {
+                echo "# HELP architecture_catalog_scrape_errors Nonzero when the collector itself failed; the value metrics above are omitted in that case"
+                echo "# TYPE architecture_catalog_scrape_errors gauge"
+                echo "architecture_catalog_scrape_errors 1"
+              } > "$TMP"
+              mv "$TMP" "$OUT"
+              exit 0
+            fi
+
+            built_epoch="$(date -d "$built_at" +%s 2>/dev/null || true)"
+            if [ -z "$built_epoch" ]; then
+              echo "architecture-catalog-metrics: unparseable builtAt '$built_at'" >&2
+              exit 1
+            fi
+            age=$(( $(date +%s) - built_epoch ))
+            if [ "$age" -le "$fresh_budget_seconds" ]; then
+              emit 1 1 "$age"
+            else
+              emit 1 0 "$age"
+            fi
+          '';
+        };
+
+        systemd.timers.architecture-catalog-metrics = {
+          description = "Collect Architecture Catalog freshness metrics every 5 minutes";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "2min";
+            OnUnitActiveSec = "5min";
+            Persistent = true;
+          };
+        };
+
         # Service-integration registry entry: ONE declaration fans out to
         # the Caddy vHost (Layer 2 protected, STATIC root — no port, no
         # daemon), the Gatus checks, the dashboard tile, and system-health
@@ -233,6 +348,22 @@ _: {
                   "[BODY] == pat(*EventCatalog*)"
                 ];
                 alert = ""; # secondary surface — the main check owns paging
+              }
+              {
+                # Freshness = the CI kept building AND the sync kept pulling.
+                # Anchored pats (HELP lines embed metric names — the \n anchor
+                # keeps this from matching the collector's own comments).
+                name = "Architecture Catalog Freshness";
+                group = "Development";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "15m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] != pat(*architecture_catalog_scrape_errors 1\n*)"
+                  "[BODY] == pat(*\narchitecture_catalog_scrape_errors *)"
+                  "[BODY] == pat(*\narchitecture_catalog_fresh 1*)"
+                ];
+                alert = "Architecture Catalog stale — the served EventCatalog build exceeds the freshness budget (hub CI dead, or the dist sync is failing while the last-good generation keeps serving). Check: journalctl -u architecture-catalog-sync; hub CI runs at https://forgejo.home.lan/lars/eventcatalog-hub/actions (nightly 03:23 + push-triggered).";
               }
             ];
             homepage = {
