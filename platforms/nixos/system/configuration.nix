@@ -938,6 +938,19 @@ in
         enable = true;
       };
 
+      # Architecture Catalog — federated EventCatalog hub at
+      # catalog.<domain> (static Layer 2 vHost over /var/lib/
+      # architecture-catalog/current). The eventcatalog-hub CI (Forgejo
+      # native:host runner) builds the union-merged catalog from every
+      # source repo's mirror and publishes to its `dist` branch; this unit
+      # pulls it hourly (atomic generation swap). Sync token ships
+      # PLACEHOLDER until scripts/setup-forgejo.sh ran in the hub repo —
+      # the Gatus checks stay red as the standing not-live-yet signal.
+      # Runbook: docs/services/architecture-catalog.md.
+      architecture-catalog = {
+        enable = true;
+      };
+
       # Overview — local project dashboard (discovers git repos, shows stats/activity)
       overview = {
         enable = true;
