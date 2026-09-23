@@ -170,6 +170,21 @@ _: {
       '';
     in
     {
+      # Platform-truth catalog entry (ADR-008): unconditional — Miniflux
+      # exists platform-wide even where this host has it disabled.
+      imports = [
+        {
+          services.catalog = lib.optionalAttrs (options ? services.catalog) {
+            miniflux = {
+              subdomain = "rss";
+              port = ports.miniflux;
+              description = "Miniflux RSS reader (Pocket ID SSO)";
+              healthPath = "/healthcheck";
+            };
+          };
+        }
+      ];
+
       options.services.miniflux.disableLocalAuth = lib.mkOption {
         type = lib.types.bool;
         default = false;

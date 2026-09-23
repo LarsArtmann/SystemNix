@@ -169,6 +169,20 @@ _: {
       mailRelayEnabled = config.services.mail-relay.enable or false;
     in
     {
+      # Platform-truth catalog entry (ADR-008): unconditional — Forgejo
+      # exists platform-wide even where this host has it disabled.
+      imports = [
+        {
+          services.catalog = lib.optionalAttrs (options ? services.catalog) {
+            forgejo = {
+              subdomain = "forgejo";
+              port = ports.forgejo;
+              description = "Git forge (repos, CI hooks, dist sync)";
+            };
+          };
+        }
+      ];
+
       options = {
         services.forgejo.sshKeys = lib.mkOption {
           type = lib.types.attrsOf (lib.types.listOf lib.types.str);

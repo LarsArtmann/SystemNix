@@ -37,6 +37,21 @@
         ;
     in
     {
+      # Platform-truth catalog entry (ADR-008): unconditional — the health
+      # hub exists platform-wide even where this host has it disabled.
+      imports = [
+        {
+          services.catalog = lib.optionalAttrs (options ? services.catalog) {
+            health-dashboard = {
+              subdomain = "health";
+              port = ports.health-dashboard;
+              description = "Federated go-health hub dashboard";
+              healthPath = "/healthz";
+            };
+          };
+        }
+      ];
+
       options.services.health-dashboard = {
         enable = lib.mkEnableOption "federated go-health hub dashboard";
 

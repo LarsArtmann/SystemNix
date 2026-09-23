@@ -34,7 +34,21 @@
       oidcEnvFile = "/var/lib/cv-oidc/client-secret.env";
     in
     {
-      imports = [ inputs.cv.nixosModules.default ];
+      imports = [
+        inputs.cv.nixosModules.default
+        # Platform-truth catalog entry (ADR-008): unconditional — the CV site
+        # exists platform-wide even where this host has it disabled.
+        {
+          services.catalog = lib.optionalAttrs (options ? services.catalog) {
+            cv = {
+              subdomain = "cv";
+              port = ports.cv;
+              description = "CV site and PDF export";
+              healthPath = "/health/live";
+            };
+          };
+        }
+      ];
 
       options.services.cv-server.profileProbe = {
         enable = lib.mkEnableOption ''
