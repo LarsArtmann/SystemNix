@@ -266,7 +266,7 @@ _: {
               mv "$TMP" "$OUT"
             }
 
-            if [ ! -f "$dist_index" ]; then; then
+            if [ ! -f "$dist_index" ]; then
               # Honest absence (never synced / pre-go-live) — not a scrape error.
               emit 0 0 -1
               exit 0

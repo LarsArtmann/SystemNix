@@ -40,8 +40,11 @@
       hermesPkg =
         let
           # Upstream packaging needs no hash patching (true since v2026.7.20
-          # through v0.21.0 / d3630f85 — the uv2nix machinery now lives in
-          # nix/python.nix, fetcherVersion is gone, extras set unchanged).
+          # through v0.21.4 / 33a30fdd — the uv2nix machinery now lives in
+          # nix/python.nix, fetcherVersion is gone). The `hindsight` extra was
+          # dropped upstream (73c598e319): hindsight-client is now resolved by
+          # the catalog plugin installer via its plugin.yaml, and consumers
+          # that pre-installed the extra must stop naming it.
           baseOverlay = inputs.hermes-agent.overlays.default;
           # registration_lifecycle ships upstream: v0.20.x carried it in a
           # static [tool.setuptools] py-modules list; since v0.21.0 setup.py's
@@ -68,7 +71,6 @@
                   "fal"
                   "feishu"
                   "firecrawl"
-                  "hindsight"
                   "honcho"
                   "messaging"
                   "matrix"

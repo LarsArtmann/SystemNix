@@ -185,6 +185,29 @@ graph TD
 
 ## 9. Verification checklist (definition of done per phase)
 
+> **VERIFICATION RECORD (2026-09-23, sessions 1–4 — see
+> `docs/status/2026-09-23_13-26_eventcatalog-hub-session3-t5-t13-executed.md`):**
+> - **P0: DONE** (sessions 1–2). Two-tree scratch build resolved cross-source
+>   relationships; hub CI code + E2E validated locally; first CI dispatch is
+>   owner-gated (`setup-forgejo.sh`).
+> - **P1: DONE code-side** (session 3). DNS/vHost/registry/sync/sops/smoke all
+>   in-tree, `nix flake check --no-build` green, sync swap/prune/refusal +
+>   collector paths fixture-verified (incl. a pre-deploy syntax-bug catch);
+>   the LIVE `catalog.home.lan` 200 + Gatus-green legs are the owner-gated
+>   go-live sequence (runbook § "Go-live checklist").
+> - **P2: DONE at plan-corrected scope.** 2 sources (not ≥3 — onboarding more
+>   is per-source adoption, routed); `eventcatalog lint` does NOT exist in the
+>   free CLI — replaced by strict `linkValidation` + `@eventcatalog/linter` in
+>   CI (rc=0, two rules at `warn` pending exporter upgrades); owners visible
+>   on both sources; `/llms.txt` verified; MCP found Scale-license gated —
+>   deliberately not wired.
+> - **P3: DONE** (session 4). Federation NO-GO documented in the hub README
+>   (all §7 triggers un-fired); `catalog.index.json` NOT emitted — routed to
+>   go-cqrs-lite TODO_LIST (T13) with the free breaking-change gate recipe
+>   shipping instead (hub `scripts/check-architecture-changes.sh`); runbook +
+>   SystemNix AGENTS section merged. **Remaining owner-gated:** the §f/§g
+>   go-live steps of the 13-26 report.
+
 - **P0:** bank-sync tree serves via `npm run dev`; two-tree scratch catalog builds with resolved relationships (T0 memo); hub CI publishes `dist/` green.
 - **P1:** `catalog.home.lan` 200 + Gatus green + tile; sync timer swaps atomically; stamp-age check live; cqrs-htmx source renders WITH cross-source links.
 - **P2:** ≥3 sources; lint gate green in CI; owners visible; `/llms.txt` + Crush MCP query works.
