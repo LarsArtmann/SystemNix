@@ -929,15 +929,23 @@ in
       pkgs.gnugrep
       pkgs.gawk
       pkgs.curl
+      pkgs.jq
     ];
     text = ''
       # Idempotent: create hermes-agent user (unprivileged, no UI login needed),
-      # mint a read:repository-scoped token, stage it for hermes delivery.
+      # mint a write:repository-scoped token, grant write on every repo owned
+      # by the primary user, stage the token for hermes delivery.
       #
+      # Owner decision 2026-09-23: hermes-agent gets READ+WRITE on all
+      # lars-owned forgejo repos (supersedes the 2026-08-19 read-only
+      # bring-up). Repo-level deletion stays structurally impossible:
+      # DELETE /repos/{owner}/{repo} requires OWNER/ADMIN on the repo, and a
+      # write-role collaborator never has it. Within a repo, write DOES allow
+      # branch/tag/file deletion and force-push — if that ever needs limiting,
+      # per-repo branch protection rules are the lever.
       # NOT --restricted: restricted users cannot see other users' PUBLIC repos,
       # which would defeat the purpose. Least privilege here = normal user that
-      # owns nothing + token scoped to read:repository (sees exactly what an
-      # anonymous visitor sees, plus any private repo explicitly granted later).
+      # owns nothing + write:repository token + per-repo collaborator grants.
       set -euo pipefail
 
       FORGEJO=${lib.getExe forgejoPkg}
@@ -1008,48 +1016,129 @@ in
         echo "User $FORGEJO_USER_NAME already exists"
       fi
 
-      # 2. token — reuse if still valid, else mint a new one.
+      # 2. token — reuse only when BOTH valid AND write-scoped; else mint.
+      #    Scope is fixed at forgejo-token creation, so the 2026-09-23
+      #    read->write upgrade is detected via a marker file next to the
+      #    staged token: a missing/mismatched marker forces regeneration even
+      #    though the old read-only token is still cryptographically valid.
       #    The validity probe MUST stay in the repository scope category:
       #    GET /api/v1/user requires the "user" scope (403 for a
-      #    read:repository-only token), and GET /api/v1/user/repos requires
+      #    repository-only token), and GET /api/v1/user/repos requires
       #    BOTH user and repository categories (group middleware composes
       #    AND-style; verified against forgejo 15.0.6 routers/api/v1/api.go +
       #    modules/web/route.go). GET /api/v1/repos/search sits in the
       #    repository-scoped group only: 200 for this token, 401 once revoked
       #    (invalid tokens are rejected by the auth middleware before routing).
-      TOKEN=""
-      if [ -s "$STAGED_TOKEN_FILE" ]; then
-        TOKEN=$(cat "$STAGED_TOKEN_FILE")
-        if curl -sf --connect-timeout 3 --max-time 10 \
-          -H "Authorization: token $TOKEN" \
-          "${forgejoUrl}/api/v1/repos/search?limit=1" >/dev/null 2>&1; then
-          echo "Existing hermes-agent token still valid"
-          exit 0
-        fi
-        echo "Existing token invalid; regenerating"
+      #    NO early exit on the valid path: the collaborator sweep below must
+      #    run on EVERY run so newly created repos converge.
+      WANT_SCOPE=write:repository
+      SCOPE_MARKER=${stateDir}/hermes-agent.token.scope
+      MARKER_SCOPE=""
+      if [ -f "$SCOPE_MARKER" ]; then
+        MARKER_SCOPE=$(cat "$SCOPE_MARKER")
       fi
 
-      TOKEN=$("$FORGEJO" admin user generate-access-token \
-        --username "$FORGEJO_USER_NAME" \
-        --token-name "hermes-agent-$(date +%s)" \
-        --scopes read:repository \
-        --raw) || TOKEN=""
+      NEED_MINT=1
+      if [ -s "$STAGED_TOKEN_FILE" ]; then
+        CANDIDATE=$(cat "$STAGED_TOKEN_FILE")
+        if [ "$MARKER_SCOPE" != "$WANT_SCOPE" ]; then
+          echo "Existing token scope is '${MARKER_SCOPE:-<none>}', want '$WANT_SCOPE'; regenerating (owner decision 2026-09-23)"
+        elif curl -sf --connect-timeout 3 --max-time 10 \
+          -H "Authorization: token $CANDIDATE" \
+          "${forgejoUrl}/api/v1/repos/search?limit=1" >/dev/null 2>&1; then
+          echo "Existing hermes-agent token still valid ($WANT_SCOPE)"
+          NEED_MINT=0
+        else
+          echo "Existing token invalid; regenerating"
+        fi
+      fi
 
-      if ! echo "$TOKEN" | grep -qE '^[0-9a-f]{40}$'; then
-        echo "ERROR: token generation failed for hermes-agent" >&2
+      if [ "$NEED_MINT" -eq 1 ]; then
+        TOKEN=$("$FORGEJO" admin user generate-access-token \
+          --username "$FORGEJO_USER_NAME" \
+          --token-name "hermes-agent-$(date +%s)" \
+          --scopes "$WANT_SCOPE" \
+          --raw) || TOKEN=""
+
+        if ! echo "$TOKEN" | grep -qE '^[0-9a-f]{40}$'; then
+          echo "ERROR: token generation failed for hermes-agent" >&2
+          exit 1
+        fi
+
+        # 3. stage forgejo-only; ExecStartPost installs the hermes copy at
+        #    /run/hermes-forgejo-token (0400 hermes:hermes, tmpfs)
+        #    Atomic install: the existing 0400 file is read-only even for the
+        #    forgejo owner, so a bare redirect would EACCES on regeneration.
+        #    The scope marker rides the same mktemp (NOT a secret — readable).
+        TMP_TOKEN_FILE=$(mktemp "$STAGED_TOKEN_FILE.XXXXXX")
+        trap 'rm -f "$TMP_TOKEN_FILE"' EXIT
+        printf '%s' "$TOKEN" > "$TMP_TOKEN_FILE"
+        install -m 0400 "$TMP_TOKEN_FILE" "$STAGED_TOKEN_FILE"
+        printf '%s' "$WANT_SCOPE" > "$TMP_TOKEN_FILE"
+        install -m 0444 "$TMP_TOKEN_FILE" "$SCOPE_MARKER"
+        rm -f "$TMP_TOKEN_FILE"
+        trap - EXIT
+        echo "hermes-agent token staged at $STAGED_TOKEN_FILE (scope: $WANT_SCOPE)"
+      fi
+
+      # 4. grant write on every repo owned by the primary user (converger:
+      #    this unit re-runs on boot + every deploy, so NEW repos pick up
+      #    the grant automatically). Personal repos cannot be bulk-shared
+      #    in forgejo — the per-repo collaborator PUT is the only mechanism
+      #    (org teams would need a repo migration; org-owned repos are
+      #    deliberately out of scope). Uses the primary user's provisioning
+      #    token (forgejo-generate-token, --scopes all); the unit already
+      #    orders after that service. PUT /repos/{owner}/{repo}/collaborators/
+      #    hermes-agent is idempotent (200/204). Mirror repos reject pushes
+      #    at the forgejo level, so the grant is inert there. Listing
+      #    failure is SYSTEMIC -> exit 1 (OnFailure pages). Per-repo failures
+      #    WARN (github-auto-assign threshold doctrine): only a 100%-failure
+      #    sweep counts as systemic.
+      ADMIN_TOKEN_FILE=${stateDir}/.admin-token.env
+      LARS_TOKEN=""
+      if [ -f "$ADMIN_TOKEN_FILE" ]; then
+        LARS_TOKEN=$(grep -E '^FORGEJO_TOKEN=[0-9a-f]{40}$' "$ADMIN_TOKEN_FILE" | cut -d= -f2) || LARS_TOKEN=""
+      fi
+      if [ -z "$LARS_TOKEN" ]; then
+        echo "ERROR: primary-user API token missing/invalid at $ADMIN_TOKEN_FILE — forgejo-generate-token must have run first" >&2
         exit 1
       fi
 
-      # 3. stage forgejo-only; ExecStartPost installs the hermes copy at
-      #    /run/hermes-forgejo-token (0400 hermes:hermes, tmpfs)
-      #    Atomic install: the existing 0400 file is read-only even for the
-      #    forgejo owner, so a bare redirect would EACCES on regeneration.
-      TMP_TOKEN_FILE=$(mktemp "$STAGED_TOKEN_FILE.XXXXXX")
-      trap 'rm -f "$TMP_TOKEN_FILE"' EXIT
-      printf '%s' "$TOKEN" > "$TMP_TOKEN_FILE"
-      install -m 0400 "$TMP_TOKEN_FILE" "$STAGED_TOKEN_FILE"
-      rm -f "$TMP_TOKEN_FILE"
-      echo "hermes-agent token staged at $STAGED_TOKEN_FILE"
+      GRANTED=0
+      FAILED=0
+      page=1
+      while :; do
+        REPOS_JSON=$(curl -sf --connect-timeout 3 --max-time 20 \
+          -H "Authorization: token $LARS_TOKEN" \
+          "${forgejoUrl}/api/v1/user/repos?type=owner&limit=50&page=$page") || {
+          echo "ERROR: repo listing failed (page $page) — API token lacks scope or forgejo is degraded" >&2
+          exit 1
+        }
+        COUNT=$(printf '%s' "$REPOS_JSON" | jq 'length')
+        if [ "$COUNT" -eq 0 ]; then break; fi
+        mapfile -t REPO_NAMES < <(printf '%s' "$REPOS_JSON" | jq -r '.[].full_name')
+        for fn in "''${REPO_NAMES[@]}"; do
+          code=$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 3 --max-time 20 \
+            -X PUT \
+            -H "Authorization: token $LARS_TOKEN" \
+            -H 'Content-Type: application/json' \
+            -d '{"permission":"write"}' \
+            "${forgejoUrl}/api/v1/repos/$fn/collaborators/hermes-agent") || code="000"
+          case "$code" in
+            200|204) GRANTED=$((GRANTED + 1)) ;;
+            *)
+              FAILED=$((FAILED + 1))
+              echo "WARN: collaborator grant failed for $fn (HTTP $code)" >&2
+              ;;
+          esac
+        done
+        page=$((page + 1))
+      done
+      echo "Collaborator sweep: $GRANTED repo(s) granted/confirmed, $FAILED failure(s)"
+      if [ "$GRANTED" -eq 0 ] && [ "$FAILED" -gt 0 ]; then
+        echo "ERROR: every collaborator grant failed — systemic misconfiguration (token scope? API downgrade?)" >&2
+        exit 1
+      fi
     '';
   };
 

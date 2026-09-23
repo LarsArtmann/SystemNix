@@ -623,13 +623,16 @@ _: {
           ];
         };
 
-        # --- Hermes Agent read-only access (added 2026-08-19, PR: forgejo-hermes-agent) ---
+        # --- Hermes Agent forgejo access (added 2026-08-19 read-only; owner
+        # decision 2026-09-23: write:repository token + write-collaborator on
+        # every lars-owned repo — converger sweep; repo-level deletion stays
+        # structurally impossible via the collaborator role) ---
         # mkIf hermes: the token is chown'd to the hermes user in ExecStartPost,
         # which only exists when the hermes service is enabled.
         # hermesCfg (from _forgejo-scripts.nix) uses 'or {}' so a standalone
         # nixosModules.forgejo consumer without nixosModules.hermes evaluates cleanly.
         systemd.services.forgejo-hermes-token = lib.mkIf (hermesCfg.enable or false) {
-          description = "Provision hermes-agent Forgejo user + read-only token";
+          description = "Provision hermes-agent Forgejo user + write token + repo grants";
           after = [
             "forgejo.service"
             "forgejo-generate-token.service"
@@ -653,8 +656,10 @@ _: {
               # the delivery below.
               User = "forgejo";
               Group = "forgejo";
-              # 30 readiness tries × (curl --max-time 5 + sleep 1) + CLI ops ≈ 3min budget
-              TimeoutStartSec = "4min";
+              # 30 readiness tries × (curl --max-time 5 + sleep 1) + CLI ops + the
+              # per-repo collaborator sweep (~50-200ms per PUT on loopback across
+              # ~200 repos) ≈ 6min budget
+              TimeoutStartSec = "6min";
               RemainAfterExit = true;
               # "+" = full-privilege escape hatch (gitea-runner's
               # +forgejo-gen-runner-token idiom): installs the staged token as
