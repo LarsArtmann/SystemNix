@@ -30,6 +30,8 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Harden the offsite-borg restore drill: real-mode `/mnt/hot` mountpoint gate, FAIL records from the top, flake-pinned borg, deep-integrity mode** → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-09-23_07-20_task-000001a0cc8af769f497a7204704871623f0.md §e.2-4/§f.2-5/16/18)
 - [ ] **Restore-runbook accuracy pass: stale-lock (`borg break-lock`) section, OnFailure Discord proof command, block-by-block env sweep, `borg mount` FUSE verify** → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.8/13/17/29)
 - [ ] **Flake fixture test for `scripts/borg-restore-drill.sh` (PATH-stub borg)** → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.6)
+- [ ] **Persist a fixture test for the offsite-borg pre/post-deploy smoke blocks (§13/§16, pass/fail/skip branches)** → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-09-23_09-01_task-000001a0ccdd5cd962579627f522f4c4082d.md §b1)
+- [ ] **Fix pre-deploy §13 silent-skip: distinguish offsite-borg disabled from a transient eval error — fail loud on the latter** → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §d3)
 - [ ] **Prove shellcheck covers `scripts/*.sh` in pre-commit** → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §b.2/§f.7)
 - [ ] **Snapshot-pinning doctrine sweep** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Codify the single-victim /data repair recipe** → [docs/todo/storage.md](docs/todo/storage.md)
