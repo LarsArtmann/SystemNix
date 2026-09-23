@@ -163,7 +163,7 @@ in
       # nixpkgs borgbackup module owns the job unit + timer (init-on-first-run,
       # create + prune + compact, idle IO/CPU scheduling, ssh in unit PATH).
       services.borgbackup.jobs.hetzner = {
-        inherit (cfg) paths exclude;
+        inherit (cfg) paths exclude startAt;
         # Remote-shaped placeholder so the unit gets remote handling (no
         # local-path mount wiring); overridden at runtime by the borg-env
         # EnvironmentFile.
@@ -171,8 +171,13 @@ in
         environment = {
           # Dedicated deploy-style key from sops; fail closed on unknown host
           # keys (github knownHosts pin doctrine) until the StorageBox host
-          # key is pinned into borg_known_hosts at go-live.
-          BORG_RSH = "ssh -i /run/secrets/borg_ssh_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/run/secrets/borg_known_hosts";
+          # key is pinned into borg_known_hosts at go-live. -p 23 is
+          # LOAD-BEARING: the repo string is scp-form (no port), so the port
+          # can only come from here — StorageBox serves Borg on 23 ONLY
+          # (port 22 is SCP/SFTP; blueprint protocol table), and the
+          # ssh-keyscan -p 23 known_hosts pin is [host]:23-shaped, so a
+          # default-port connect would refuse on the host-key lookup anyway.
+          BORG_RSH = "ssh -p 23 -i /run/secrets/borg_ssh_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/run/secrets/borg_known_hosts";
           # Borg's chunk cache/config live on the Samsung hot tier — multi-GB
           # caches on @ would be pinned pool-side by btrbk snapshots forever
           # (emergency-reserve pinning doctrine). Cache loss is harmless
@@ -186,7 +191,6 @@ in
         # zstd-compressed btrfs data (blueprint's zstd,9, with auto in front).
         compression = "auto,zstd,9";
         archiveBaseName = "evo-x2";
-        startAt = cfg.startAt;
         persistentTimer = true;
         # The cache/config dir must exist before the unit's mount namespace
         # is built (226/NAMESPACE class) — created by borg-offsite-dir below.

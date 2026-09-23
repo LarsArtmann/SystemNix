@@ -62,8 +62,9 @@ recovery-copy policy is still an open owner decision (`docs/todo/storage.md`).
    that (plus `borg info`) is the irreplaceable-set measurement. If it
    approaches ~800 G, upgrade BX11 → BX21 (instant, same credentials) —
    tracked in `docs/todo/storage.md`.
-9. **Restore drill**: follow `docs/todo/storage.md` "restore path" row
-   (runbook + timed drill are a separate queue item).
+9. **Restore drill**: run the timed restore drill against the real repo —
+   `sudo bash scripts/borg-restore-drill.sh` — and record the timings in
+   `docs/services/offsite-borg-restore.md` (full restore runbook).
 
 ## Operations
 
@@ -75,11 +76,11 @@ sudo systemctl start borgbackup-job-hetzner
 set -x
 export BORG_REPO=$(sudo cat /run/secrets-rendered/borg-env | grep -oP '(?<=BORG_REPO=).*')
 export BORG_PASSCOMMAND="cat /run/secrets/borg_password"
-export BORG_RSH="ssh -i /run/secrets/borg_ssh_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/run/secrets/borg_known_hosts"
+export BORG_RSH="ssh -p 23 -i /run/secrets/borg_ssh_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/run/secrets/borg_known_hosts"
 sudo -E borg list
 sudo -E borg info
 
-# Single-file restore (see also the restore drill TODO)
+# Single-file restore (full restore runbook: docs/services/offsite-borg-restore.md)
 sudo -E borg extract ::evo-x2-<timestamp> home/lars/path/to/file
 ```
 
