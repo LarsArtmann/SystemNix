@@ -179,148 +179,148 @@ in
     }
     (lib.mkIf cfg.enable (
       let
-      # Rendered sops template (root-owned 0400): BORG_REPO=<user>@<host>:…
-      # EnvironmentFile entries override the unit's static Environment=, so
-      # the rendered value wins over the placeholder `repo` below at
-      # runtime. Interpolated via the template's .path — never the literal
-      # /run/secrets-rendered path (audit-textfile-tmp rule).
-      envPath = config.sops.templates."borg-env".path;
+        # Rendered sops template (root-owned 0400): BORG_REPO=<user>@<host>:…
+        # EnvironmentFile entries override the unit's static Environment=, so
+        # the rendered value wins over the placeholder `repo` below at
+        # runtime. Interpolated via the template's .path — never the literal
+        # /run/secrets-rendered path (audit-textfile-tmp rule).
+        envPath = config.sops.templates."borg-env".path;
 
-      # Fail fast with the go-live pointer while the repo target is still
-      # the placeholder (google-sync-config-check pattern) — without this,
-      # a go-live deploy with an unfilled secret degrades into an opaque
-      # ssh "Could not resolve hostname" failure instead of instructions.
-      goliveCheck = pkgs.writeShellScript "borg-offsite-golive-check" ''
-        if grep -q "PLACEHOLDER" "${envPath}"; then
-          echo "offsite-borg: BORG_REPO is still the go-live placeholder."
-          echo "Go-live checklist: docs/services/offsite-borg.md"
-          echo "  sops platforms/nixos/secrets/borg.yaml   (borg_repo, borg_known_hosts)"
-          echo "  services.offsite-borg.enable = true + nix run .#deploy"
-          exit 1
-        fi
-      '';
-    in
-    {
-      # nixpkgs borgbackup module owns the job unit + timer (init-on-first-run,
-      # create + prune + compact, idle IO/CPU scheduling, ssh in unit PATH).
-      services.borgbackup.jobs.hetzner = {
-        inherit (cfg) paths exclude startAt;
-        # Remote-shaped placeholder so the unit gets remote handling (no
-        # local-path mount wiring); overridden at runtime by the borg-env
-        # EnvironmentFile.
-        repo = "PLACEHOLDER@go-live.invalid:backups/evo-x2";
-        environment = {
-          # Dedicated deploy-style key from sops; fail closed on unknown host
-          # keys (github knownHosts pin doctrine) until the StorageBox host
-          # key is pinned into borg_known_hosts at go-live. -p 23 is
-          # LOAD-BEARING: the repo string is scp-form (no port), so the port
-          # can only come from here — StorageBox serves Borg on 23 ONLY
-          # (port 22 is SCP/SFTP; blueprint protocol table), and the
-          # ssh-keyscan -p 23 known_hosts pin is [host]:23-shaped, so a
-          # default-port connect would refuse on the host-key lookup anyway.
-          BORG_RSH = "ssh -p 23 -i /run/secrets/borg_ssh_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/run/secrets/borg_known_hosts";
-          # Borg's chunk cache/config live on the Samsung hot tier — multi-GB
-          # caches on @ would be pinned pool-side by btrbk snapshots forever
-          # (emergency-reserve pinning doctrine). Cache loss is harmless
-          # (rebuilt on the next run, at WAN-upload cost).
-          BORG_CACHE_DIR = "/mnt/hot/borg/cache";
-          BORG_CONFIG_DIR = "/mnt/hot/borg/config";
-        };
-        encryption.mode = "repokey-blake2";
-        encryption.passCommand = "cat /run/secrets/borg_password";
-        # auto: skip incompressible chunks — the sources are already
-        # zstd-compressed btrfs data (blueprint's zstd,9, with auto in front).
-        compression = "auto,zstd,9";
-        archiveBaseName = "evo-x2";
-        persistentTimer = true;
-        # The cache/config dir must exist before the unit's mount namespace
-        # is built (226/NAMESPACE class) — created by borg-offsite-dir below.
-        readWritePaths = [
-          "/mnt/hot/borg"
-          "/var/lib/borg-offsite"
-        ];
-        prune.keep = cfg.pruneKeep;
-      };
-
-      # Mount-gated cache-dir bootstrap (miniflux-backup-dir pattern): the
-      # nofail hot mount must be up, and the leaf dir must exist before the
-      # job unit starts. Restarted by deploy.sh's provisioner loop.
-      systemd.services.borg-offsite-dir = {
-        description = "Create borg cache dir on the Samsung hot tier";
-        wantedBy = [ "multi-user.target" ];
-        unitConfig.RequiresMountsFor = [ "/mnt/hot" ];
-        serviceConfig = lib.mkMerge [
-          {
-            Type = "oneshot";
-            User = "root";
-            RemainAfterExit = true;
-          }
-          (harden {
-            MemoryMax = "128M";
-            ReadWritePaths = [ "/mnt/hot" ];
-          })
-          (serviceOneshotDefaults { })
-        ];
-        script = ''
-          mkdir -p /mnt/hot/borg/cache /mnt/hot/borg/config
+        # Fail fast with the go-live pointer while the repo target is still
+        # the placeholder (google-sync-config-check pattern) — without this,
+        # a go-live deploy with an unfilled secret degrades into an opaque
+        # ssh "Could not resolve hostname" failure instead of instructions.
+        goliveCheck = pkgs.writeShellScript "borg-offsite-golive-check" ''
+          if grep -q "PLACEHOLDER" "${envPath}"; then
+            echo "offsite-borg: BORG_REPO is still the go-live placeholder."
+            echo "Go-live checklist: docs/services/offsite-borg.md"
+            echo "  sops platforms/nixos/secrets/borg.yaml   (borg_repo, borg_known_hosts)"
+            echo "  services.offsite-borg.enable = true + nix run .#deploy"
+            exit 1
+          fi
         '';
-      };
+      in
+      {
+        # nixpkgs borgbackup module owns the job unit + timer (init-on-first-run,
+        # create + prune + compact, idle IO/CPU scheduling, ssh in unit PATH).
+        services.borgbackup.jobs.hetzner = {
+          inherit (cfg) paths exclude startAt;
+          # Remote-shaped placeholder so the unit gets remote handling (no
+          # local-path mount wiring); overridden at runtime by the borg-env
+          # EnvironmentFile.
+          repo = "PLACEHOLDER@go-live.invalid:backups/evo-x2";
+          environment = {
+            # Dedicated deploy-style key from sops; fail closed on unknown host
+            # keys (github knownHosts pin doctrine) until the StorageBox host
+            # key is pinned into borg_known_hosts at go-live. -p 23 is
+            # LOAD-BEARING: the repo string is scp-form (no port), so the port
+            # can only come from here — StorageBox serves Borg on 23 ONLY
+            # (port 22 is SCP/SFTP; blueprint protocol table), and the
+            # ssh-keyscan -p 23 known_hosts pin is [host]:23-shaped, so a
+            # default-port connect would refuse on the host-key lookup anyway.
+            BORG_RSH = "ssh -p 23 -i /run/secrets/borg_ssh_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/run/secrets/borg_known_hosts";
+            # Borg's chunk cache/config live on the Samsung hot tier — multi-GB
+            # caches on @ would be pinned pool-side by btrbk snapshots forever
+            # (emergency-reserve pinning doctrine). Cache loss is harmless
+            # (rebuilt on the next run, at WAN-upload cost).
+            BORG_CACHE_DIR = "/mnt/hot/borg/cache";
+            BORG_CONFIG_DIR = "/mnt/hot/borg/config";
+          };
+          encryption.mode = "repokey-blake2";
+          encryption.passCommand = "cat /run/secrets/borg_password";
+          # auto: skip incompressible chunks — the sources are already
+          # zstd-compressed btrfs data (blueprint's zstd,9, with auto in front).
+          compression = "auto,zstd,9";
+          archiveBaseName = "evo-x2";
+          persistentTimer = true;
+          # The cache/config dir must exist before the unit's mount namespace
+          # is built (226/NAMESPACE class) — created by borg-offsite-dir below.
+          readWritePaths = [
+            "/mnt/hot/borg"
+            "/var/lib/borg-offsite"
+          ];
+          prune.keep = cfg.pruneKeep;
+        };
 
-      # SystemNix layer over the nixpkgs-rendered job unit.
-      systemd.services.${jobUnit} = {
-        inherit onFailure;
-        after = [ "borg-offsite-dir.service" ];
-        wants = [ "borg-offsite-dir.service" ];
-        # Clean dependency failure when the hot tier or pool is detached —
-        # never a mid-read failure and never a root-fs shadow dir.
-        unitConfig.RequiresMountsFor = [
-          "/mnt/hot"
-          "/mnt/pool"
-        ];
-        startLimitBurst = 5;
-        startLimitIntervalSec = 300;
-        serviceConfig = lib.mkMerge [
-          {
-            EnvironmentFile = envPath;
-            StateDirectory = "borg-offsite";
-            # First run seeds the whole irreplaceable set over WAN.
-            TimeoutStartSec = "2d";
-            MemoryMax = "4G";
-            ExecStartPre = lib.getExe' goliveCheck "borg-offsite-golive-check";
-            # Freshness marker for backup-coordination — only after create +
-            # prune + compact all succeeded.
-            ExecStartPost = "${pkgs.coreutils}/bin/touch /var/lib/borg-offsite/.last_success";
-          }
-          # Background IO tier (BFQ BE/6): chunking reads are local NVMe
-          # work. nixpkgs renders IOSchedulingClass = "idle", which on this
-          # box STARVES — an idle-class job only gets IO when nothing else
-          # needs it, so a busy machine would keep the nightly job unread
-          # for days and backup-coordination would page stale with no path
-          # to green. BE/6 guarantees progress below every interactive tier
-          # (lib/default.nix ioTier doctrine). mkForce required: plain
-          # values collide with nixpkgs' idle.
-          {
-            IOSchedulingClass = lib.mkForce ioTier.background.IOSchedulingClass;
-            IOSchedulingPriority = ioTier.background.IOSchedulingPriority;
-          }
-        ];
-      };
+        # Mount-gated cache-dir bootstrap (miniflux-backup-dir pattern): the
+        # nofail hot mount must be up, and the leaf dir must exist before the
+        # job unit starts. Restarted by deploy.sh's provisioner loop.
+        systemd.services.borg-offsite-dir = {
+          description = "Create borg cache dir on the Samsung hot tier";
+          wantedBy = [ "multi-user.target" ];
+          unitConfig.RequiresMountsFor = [ "/mnt/hot" ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "root";
+              RemainAfterExit = true;
+            }
+            (harden {
+              MemoryMax = "128M";
+              ReadWritePaths = [ "/mnt/hot" ];
+            })
+            (serviceOneshotDefaults { })
+          ];
+          script = ''
+            mkdir -p /mnt/hot/borg/cache /mnt/hot/borg/config
+          '';
+        };
 
-      # Registry fan-out: freshness row feeds backup_healthy{backup="offsite-borg"}
-      # + the aggregate "All Backups Healthy" Gatus check (the Gatus
-      # registration for a daemon-less backup unit). No vHost/port — layer
-      # "none" (restic-app-dumps shape).
-      services.integration = lib.optionalAttrs (options ? services.integration) {
-        offsite-borg = {
-          vHost.layer = "none";
-          backup = {
-            directory = "/var/lib/borg-offsite";
-            filePattern = ".last_success";
-            maxAgeHours = 25;
+        # SystemNix layer over the nixpkgs-rendered job unit.
+        systemd.services.${jobUnit} = {
+          inherit onFailure;
+          after = [ "borg-offsite-dir.service" ];
+          wants = [ "borg-offsite-dir.service" ];
+          # Clean dependency failure when the hot tier or pool is detached —
+          # never a mid-read failure and never a root-fs shadow dir.
+          unitConfig.RequiresMountsFor = [
+            "/mnt/hot"
+            "/mnt/pool"
+          ];
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+          serviceConfig = lib.mkMerge [
+            {
+              EnvironmentFile = envPath;
+              StateDirectory = "borg-offsite";
+              # First run seeds the whole irreplaceable set over WAN.
+              TimeoutStartSec = "2d";
+              MemoryMax = "4G";
+              ExecStartPre = lib.getExe' goliveCheck "borg-offsite-golive-check";
+              # Freshness marker for backup-coordination — only after create +
+              # prune + compact all succeeded.
+              ExecStartPost = "${pkgs.coreutils}/bin/touch /var/lib/borg-offsite/.last_success";
+            }
+            # Background IO tier (BFQ BE/6): chunking reads are local NVMe
+            # work. nixpkgs renders IOSchedulingClass = "idle", which on this
+            # box STARVES — an idle-class job only gets IO when nothing else
+            # needs it, so a busy machine would keep the nightly job unread
+            # for days and backup-coordination would page stale with no path
+            # to green. BE/6 guarantees progress below every interactive tier
+            # (lib/default.nix ioTier doctrine). mkForce required: plain
+            # values collide with nixpkgs' idle.
+            {
+              IOSchedulingClass = lib.mkForce ioTier.background.IOSchedulingClass;
+              IOSchedulingPriority = ioTier.background.IOSchedulingPriority;
+            }
+          ];
+        };
+
+        # Registry fan-out: freshness row feeds backup_healthy{backup="offsite-borg"}
+        # + the aggregate "All Backups Healthy" Gatus check (the Gatus
+        # registration for a daemon-less backup unit). No vHost/port — layer
+        # "none" (restic-app-dumps shape).
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          offsite-borg = {
+            vHost.layer = "none";
+            backup = {
+              directory = "/var/lib/borg-offsite";
+              filePattern = ".last_success";
+              maxAgeHours = 25;
+            };
           };
         };
-      };
-    }
-  ))
+      }
+    ))
   ];
 }
