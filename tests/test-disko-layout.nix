@@ -66,7 +66,8 @@ in
 
     # Subvolumes through the toplevel (subvolid=5) at /mnt/hot — never a
     # named subvolume itself (hot-db bootstrap creates hot/<name> through it)
-    out = machine.succeed("btrfs subvolume list /mnt/hot")    assert "nix" in out, f"missing /nix subvolume: {out}"
+    out = machine.succeed("btrfs subvolume list /mnt/hot")
+    assert "nix" in out, f"missing /nix subvolume: {out}"
     assert "users/lars/cache/nix" in out, f"missing cache-nix subvolume: {out}"
 
     # Mountpoints per the spec
