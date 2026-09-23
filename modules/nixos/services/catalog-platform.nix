@@ -7,7 +7,12 @@
 # old bookmarks resolve; the wildcard catch-all redirects it to dash.
 _: {
   flake.nixosModules.catalog-platform =
-    { config, lib, options, ... }:
+    {
+      config,
+      lib,
+      options,
+      ...
+    }:
     let
       inherit (import ../../../lib/default.nix lib) ports;
     in

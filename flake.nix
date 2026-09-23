@@ -1416,6 +1416,151 @@
                     echo "PASS: all forgejo staged-primary script fixtures" > "$out"
                   '';
 
+              # Behavioral fixture for scripts/borg-restore-drill.sh
+              # (2026-09-24 storage TODO; docs/status report §f.6). The
+              # drill is a PLAIN bash script (no writeShellApplication
+              # wrapper), so direct PATH stubs work — but it resolves borg
+              # via `nix build --print-out-paths --impure --expr`, so the
+              # `nix` binary must be stubbed TOO (it prints the stub tree
+              # carrying bin/borg). Covers: root-gate die, bogus `--local`
+              # die, repo-without-config die, PLACEHOLDER-repo tripwire
+              # (fixture BORG_ENV_FILE + id-stub root) + its secrets-missing
+              # sibling, happy-path PASS (--local with stubbed borg), and
+              # the --verify-data deep-integrity branch (1.x --help probe →
+              # --dry-run fallback). NOT reachable in the sandbox: the
+              # real-mode /mnt/hot mountpoint gate sits BEHIND the
+              # `/run/secrets/*` existence checks and `[ -e ]` is a bash
+              # builtin that cannot be stubbed — the secrets-missing die is
+              # its direct predecessor and is asserted instead.
+              borg-restore-drill-fixture =
+                pkgs.runCommand "borg-restore-drill-fixture"
+                  {
+                    nativeBuildInputs = with pkgs; [
+                      bash
+                      coreutils
+                      gnugrep
+                      gnused
+                    ];
+                  }
+                  ''
+                    set -euo pipefail
+                    FIX=$(mktemp -d)
+                    BIN="$FIX/bin"; mkdir -p "$BIN"
+                    ROOT="$FIX/root"; ROOTBIN="$ROOT/bin"; mkdir -p "$ROOTBIN"
+                    export XDG_STATE_HOME="$FIX/state"; mkdir -p "$XDG_STATE_HOME"
+                    export STUB_NIX_OUT="$ROOT"
+
+                    # ---- nix stub: the drill resolves borg through
+                    # `nix build --no-link --print-out-paths --impure`; the
+                    # stub prints the stub tree (bin/borg lives there).
+                    cat > "$BIN/nix" <<'STUBEOF'
+                    #!${pkgs.bash}/bin/bash
+                    echo "''${STUB_NIX_OUT:?STUB_NIX_OUT unset}"
+                    STUBEOF
+
+                    # ---- id stub: real mode's `[ "$(id -u)" -eq 0 ]` gate.
+                    # STUB_ROOT=1 fakes root for the env-file die cases;
+                    # unset → uid 1000 → the root-gate die (same observable
+                    # outcome as the sandbox's real non-root builder).
+                    cat > "$BIN/id" <<'STUBEOF'
+                    #!${pkgs.bash}/bin/bash
+                    if [ "''${1:-}" = "-u" ]; then
+                      if [ -n "''${STUB_ROOT:-}" ]; then echo 0; else echo 1000; fi
+                      exit 0
+                    fi
+                    echo "uid=1000(fixture)"; exit 0
+                    STUBEOF
+
+                    # ---- borg stub: version/list/extract covering the
+                    # drill's exact call shapes. extract writes the subset
+                    # files into its CWD (the drill's scratch dir).
+                    cat > "$ROOTBIN/borg" <<'STUBEOF'
+                    #!${pkgs.bash}/bin/bash
+                    cmd="''${1:-}"
+                    case "$cmd" in
+                      --version) echo "borg 1.4.5-fixture-stub"; exit 0 ;;
+                      list)
+                        if [ "''${2:-}" = "--last" ]; then
+                          echo "fixture-archive-$(date -u +%Y%m%d%H%M%S)  $(date -u +%Y-%m-%dT%H:%M:%S)  0000000000000000000000000000000000000000000000000000000000000000"
+                        else
+                          echo "fixture-archive-pinned  $(date -u +%Y-%m-%dT%H:%M:%S)  0000000000000000000000000000000000000000000000000000000000000000"
+                        fi
+                        exit 0 ;;
+                      extract)
+                        shift
+                        dry=0; paths=()
+                        while [ $# -gt 0 ]; do
+                          case "$1" in
+                            --list) shift ;;
+                            --dry-run|--verify-data) [ "$1" = "--dry-run" ] && dry=1; shift ;;
+                            ::*) shift ;;
+                            *) paths+=("''$1"); shift ;;
+                          esac
+                        done
+                        [ "$dry" = 1 ] && exit 0
+                        for p in "''${paths[@]}"; do
+                          mkdir -p "$(dirname "$p")"
+                          printf 'borg-restore-drill-fixture: %s\n' "$p" > "$p"
+                        done
+                        exit 0 ;;
+                      *) echo "borg stub: unhandled subcommand: $cmd" >&2; exit 2 ;;
+                    esac
+                    STUBEOF
+                    chmod +x "$BIN/nix" "$BIN/id" "$ROOTBIN/borg"
+                    export PATH="$ROOT/bin:$BIN:$PATH"
+
+                    DRILL="$FIX/borg-restore-drill.sh"
+                    cp ${./scripts/borg-restore-drill.sh} "$DRILL"
+                    chmod +x "$DRILL"
+
+                    rc=0; capt=""
+                    run() { capt=$(bash "$DRILL" "''$@" 2>&1) && rc=0 || rc=$?; }
+                    need_rc() { [ "$rc" = "$2" ] || { echo "FAIL $1: rc=$rc want $2"; printf '%s\n' "$capt"; exit 1; }; }
+                    need_has() { printf '%s\n' "$capt" | grep -qF -- "$2" || { echo "FAIL $1: missing text: $2"; printf '%s\n' "$capt"; exit 1; }; }
+
+                    # 1) real mode as non-root → root-gate die (record still
+                    #    written: the header promises one from early deaths).
+                    run; need_rc root-gate 1; need_has root-gate "real-repo mode needs root"
+                    R=$(ls -1t "$XDG_STATE_HOME"/borg-restore-drill/drill-*.log | head -1)
+                    grep -qF "result           : FAIL" "$R" || { echo "FAIL root-gate: no FAIL record"; cat "$R"; exit 1; }
+
+                    # 2) bogus --local → die before any repo access
+                    run --local "$FIX/does-not-exist"; need_rc bogus-local 1; need_has bogus-local "--local repo dir not found"
+
+                    # 3) --local repo without a borg 'config' file
+                    mkdir -p "$FIX/empty-repo"
+                    run --local "$FIX/empty-repo"; need_rc no-config 1; need_has no-config "no borg 'config' file"
+
+                    # 4) real mode, faked root, fixture env file with the
+                    #    go-live PLACEHOLDER → tripwire die
+                    ENVF="$FIX/borg-env"; printf 'BORG_REPO=ssh://PLACEHOLDER@example:23/./repo\n' > "$ENVF"
+                    export BORG_ENV_FILE="$ENVF" STUB_ROOT=1
+                    run; need_rc placeholder 1; need_has placeholder "go-live placeholder"
+
+                    # 5) real mode, non-placeholder repo → the
+                    #    /run/secrets/* existence checks fail (mountpoint
+                    #    gate's direct predecessor; see header note)
+                    printf 'BORG_REPO=ssh://user@host.example:23/./repo\n' > "$ENVF"
+                    run; need_rc secrets-missing 1; need_has secrets-missing "/run/secrets/borg_password missing"
+                    unset BORG_ENV_FILE STUB_ROOT
+
+                    # 6) happy path: --local against a stub repo → PASS,
+                    #    subset extracted + byte-verified, record says PASS
+                    REPO="$FIX/repo"; mkdir -p "$REPO"; : > "$REPO/config"
+                    run --local "$REPO"; need_rc happy-local 0; need_has happy-local "result           : PASS"
+                    need_has happy-local "etc/hostname"
+                    R=$(ls -1t "$XDG_STATE_HOME"/borg-restore-drill/drill-*.log | head -1)
+                    grep -qF "result           : PASS" "$R" || { echo "FAIL happy-local: record not PASS"; cat "$R"; exit 1; }
+
+                    # 7) --verify-data deep-integrity branch (stub --help has
+                    #    no borg2 flag → 1.x --dry-run fallback) + --archive pin
+                    run --local "$REPO" --verify-data --archive fixture-archive-pinned
+                    need_rc deep 0; need_has deep "deep-integrity: OK"
+                    need_has deep "result           : PASS"
+
+                    echo "PASS: borg-restore-drill fixture (root-gate, bogus-local, no-config, placeholder, secrets-missing, happy-local, verify-data)" > "$out"
+                  '';
+
               # Behavioral fixture for the browser-history probe-registration
               # purge (2026-09-18 gate-verification residue). Runs the REAL
               # built script (its runtimeInputs supply the real sqlite3) —
