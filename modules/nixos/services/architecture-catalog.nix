@@ -178,7 +178,7 @@ _: {
             (harden {
               ReadWritePaths = [ stateDir ];
             })
-            serviceOneshotDefaults
+            serviceOneshotDefaults { }
             ioTier.background
             dnsGate.serviceConfig
           ];
