@@ -28,6 +28,17 @@ _: {
       forgejoUrl = "http://localhost:${toString forgejoPort}";
       stateDir = config.services.forgejo.stateDir;
       forgejoBackupDir = "/mnt/pool/backups/forgejo";
+
+      # Catppuccin themes (Mocha matches the box-wide theme; Latte for light
+      # pref; auto follows prefers-color-scheme). Each file is a small delta
+      # that @imports the upstream theme (stable unhashed filename) and
+      # overrides variables only. tmpfiles L+ symlinks them into the custom
+      # dir on every activation; forgejo serves custom assets over built-ins.
+      forgejoThemes = {
+        "theme-catppuccin-auto.css" = ./_forgejo-themes/theme-catppuccin-auto.css;
+        "theme-catppuccin-mocha.css" = ./_forgejo-themes/theme-catppuccin-mocha.css;
+        "theme-catppuccin-latte.css" = ./_forgejo-themes/theme-catppuccin-latte.css;
+      };
       # Dedicated Samsung-TLC subvolume storage (Set-B, 2026-09-18 staged-
       # primary plan docs/planning/2026-09-18_16-44_*). Inert until enabled.
       dedicated = config.services.forgejo.dedicatedSubvolume;
@@ -191,7 +202,10 @@ _: {
           stateDir = "/var/lib/forgejo";
 
           settings = {
-            DEFAULT.APP_NAME = "Local Git Forge";
+            DEFAULT = {
+              APP_NAME = "Local Git Forge";
+              APP_SLOGAN = "Beyond coding. We forge.";
+            };
 
             server = {
               HTTP_PORT = ports.forgejo;
@@ -220,8 +234,15 @@ _: {
             };
 
             ui = {
-              DEFAULT_THEME = "forgejo-auto";
-              THEMES = "forgejo-auto,forgejo-light,forgejo-dark,arc-green";
+              DEFAULT_THEME = "catppuccin-auto";
+              THEMES = "catppuccin-auto,catppuccin-mocha,catppuccin-latte,forgejo-auto,forgejo-light,forgejo-dark";
+            };
+
+            # settings is 2-level (section.key atoms) — nested subsections
+            # like ui.meta.DESCRIPTION must use a quoted flat section key.
+            "ui.meta" = {
+              DESCRIPTION = "Self-hosted git forge — code, mirrors, CI, and packages on the home lab.";
+              KEYWORDS = "git,forge,forgejo,ci,home-lab";
             };
 
             service = {
@@ -277,6 +298,14 @@ _: {
             other = {
               SHOW_FOOTER_VERSION = false;
               SHOW_FOOTER_TEMPLATE_LOAD_TIME = false;
+              SHOW_FOOTER_POWERED_BY = false;
+            };
+
+            # Avatars stay local: no external gravatar lookups (privacy +
+            # latency). OIDC-provided avatars (oauth2_client.UPDATE_AVATAR)
+            # are unaffected — they are uploaded copies.
+            picture = {
+              DISABLE_GRAVATAR = true;
             };
 
             federation = {
@@ -1025,7 +1054,10 @@ _: {
         systemd.tmpfiles.rules = [
           "Z ${stateDir} 0750 forgejo forgejo - -"
           "d ${forgejoBackupDir} 0750 forgejo forgejo -"
-        ];
+        ]
+        ++ lib.mapAttrsToList (
+          name: path: "L+ /var/lib/forgejo/custom/public/assets/css/${name} - - - - ${path}"
+        ) forgejoThemes;
 
         environment.systemPackages = [
           mirrorGithubScript
