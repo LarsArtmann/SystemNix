@@ -69,6 +69,12 @@ _: {
                   echo "backup_healthy{backup=\"${name}\"} $HEALTHY"
                   echo "backup_age_hours{backup=\"${name}\"} $AGE_HOURS"
                   echo "backup_last_success_timestamp{backup=\"${name}\"} $MTIME"
+                  # MTIME≠0 gate: distinguishes a backup that NEVER produced a
+                  # marker (0 — broken since birth, cv-backup silent-no-op
+                  # class) from one that succeeded before and went stale
+                  # (1 with backup_healthy 0). Freshness alone cannot tell
+                  # them apart.
+                  echo "backup_ever_succeeded{backup=\"${name}\"} $([ "$MTIME" -ne 0 ] && echo 1 || echo 0)"
                 } >> "$TEMP"
               ''
             ) cfg.backups

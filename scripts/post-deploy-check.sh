@@ -1664,6 +1664,63 @@ else
   report_skip "Architecture Catalog - not deployed (enable services.architecture-catalog)"
 fi
 
+# --- §16 Offsite Borg (dormant until go-live; services.offsite-borg) ---
+# The units only exist once the owner flips enable; gate on the deployed
+# unit file. Verifies the wiring surfaces the monitoring chain rides: the
+# go-live tripwire, the .last_success freshness marker (cv-backup
+# silent-no-op class), and the borg-env sops override - plus the
+# backup-coordination row landing in the textfile (backup_ever_succeeded
+# distinguishes never-worked from stale). The PLACEHOLDER verdict itself is
+# deliberately NOT re-derived here: the rendered borg-env is root-only 0400
+# under the 0700 sops dir (mail-relay lesson - a user-run probe cannot read
+# it), and a user-run tripwire execution would exit 0 on the unreadable
+# grep, phantom-greening the exact check it exists for. The root-run
+# tripwire inside the unit owns that verdict (fails the job with the
+# checklist pointer; OnFailure pages).
+echo ""
+echo "=== Offsite Borg ==="
+if [ -e /etc/systemd/system/borgbackup-job-hetzner.service ]; then
+  _borg_unit=/etc/systemd/system/borgbackup-job-hetzner.service
+  _borg_pre="$(sed -n 's/^ExecStartPre=//p' "$_borg_unit" | head -1)"
+  case "$_borg_pre" in
+  *borg-offsite-golive-check*)
+    if [ -x "$_borg_pre" ]; then
+      report_pass "Offsite Borg - go-live tripwire wired and present ($_borg_pre)"
+    else
+      report_fail "Offsite Borg - tripwire binary not executable/missing ($_borg_pre)"
+    fi
+    ;;
+  *)
+    report_fail "Offsite Borg - go-live tripwire missing from ExecStartPre ('$_borg_pre') - enabling with a PLACEHOLDER repo fails opaquely instead of pointing at docs/services/offsite-borg.md"
+    ;;
+  esac
+
+  if grep -q 'ExecStartPost=.*var/lib/borg-offsite/.last_success' "$_borg_unit"; then
+    report_pass "Offsite Borg - .last_success freshness marker wired (ExecStartPost)"
+  else
+    report_fail "Offsite Borg - .last_success marker wiring missing - backup-coordination pages stale forever with no path to green (cv-backup silent-no-op class)"
+  fi
+
+  if grep -q '^EnvironmentFile=/run/secrets/rendered/borg-env' "$_borg_unit"; then
+    report_pass "Offsite Borg - borg-env sops override wired (EnvironmentFile)"
+  else
+    report_fail "Offsite Borg - borg-env EnvironmentFile missing - BORG_REPO/BORG_RSH stay at the placeholder and the job dials the go-live.invalid dummy"
+  fi
+
+  _borg_prom=/var/lib/prometheus-node-exporter/textfile_collectors/backups.prom
+  if [ -f "$_borg_prom" ]; then
+    if grep -q '^backup_ever_succeeded{backup="offsite-borg"} ' "$_borg_prom"; then
+      report_pass "Offsite Borg - backup-coordination row live (backup_ever_succeeded present)"
+    else
+      report_warn "Offsite Borg - no backup-coordination row yet in backups.prom (5-min tick pending; still absent after a tick = registry row broke)"
+    fi
+  else
+    report_fail "Offsite Borg - backups.prom missing (backup-health-metrics unit failing; ALL backup freshness unmonitored)"
+  fi
+else
+  report_skip "Offsite Borg - not deployed (services.offsite-borg.enable = false)"
+fi
+
 # --- Summary ---
 echo ""
 echo "=== Summary ==="

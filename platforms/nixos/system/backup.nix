@@ -30,6 +30,7 @@ let
   inherit (import ../../../lib/default.nix lib)
     onFailure
     harden
+    ioTier
     serviceOneshotDefaults
     ;
   cfg = config.services.offsite-borg;
@@ -245,10 +246,22 @@ in
             # First run seeds the whole irreplaceable set over WAN.
             TimeoutStartSec = "2d";
             MemoryMax = "4G";
-            ExecStartPre = lib.getExe goliveCheck;
+            ExecStartPre = lib.getExe' goliveCheck "borg-offsite-golive-check";
             # Freshness marker for backup-coordination — only after create +
             # prune + compact all succeeded.
             ExecStartPost = "${pkgs.coreutils}/bin/touch /var/lib/borg-offsite/.last_success";
+          }
+          # Background IO tier (BFQ BE/6): chunking reads are local NVMe
+          # work. nixpkgs renders IOSchedulingClass = "idle", which on this
+          # box STARVES — an idle-class job only gets IO when nothing else
+          # needs it, so a busy machine would keep the nightly job unread
+          # for days and backup-coordination would page stale with no path
+          # to green. BE/6 guarantees progress below every interactive tier
+          # (lib/default.nix ioTier doctrine). mkForce required: plain
+          # values collide with nixpkgs' idle.
+          {
+            IOSchedulingClass = lib.mkForce ioTier.background.IOSchedulingClass;
+            IOSchedulingPriority = ioTier.background.IOSchedulingPriority;
           }
         ];
       };

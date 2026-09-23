@@ -18,7 +18,7 @@ secret yet (tracked as "Offsite Borg go-live inputs" in `docs/todo/storage.md`).
 | Secrets | `platforms/nixos/secrets/borg.yaml`: `borg_password` (REAL random value, generated at implementation), `borg_ssh_key` (dedicated ed25519), `borg_known_hosts` (PLACEHOLDER), `borg_repo` (PLACEHOLDER) |
 | Job | `services.borgbackup.jobs.hetzner` → `borgbackup-job-hetzner.service` + timer (06:30 daily, `Persistent`) |
 | Cache | `/mnt/hot/borg/{cache,config}` (Samsung hot tier — multi-GB caches on `@` would be pinned pool-side by btrbk snapshots forever) |
-| Monitoring | `backup_healthy{backup="offsite-borg"}` marker in `/var/lib/borg-offsite/.last_success` → backup-coordination + the aggregate "All Backups Healthy" Gatus check; OnFailure → Discord |
+| Monitoring | `backup_healthy{backup="offsite-borg"}` marker in `/var/lib/borg-offsite/.last_success` → backup-coordination + the aggregate "All Backups Healthy" Gatus check; the shared loop also emits `backup_ever_succeeded{backup="offsite-borg"}` (MTIME≠0 gate — never-worked vs stale); job unit rides `ioTier.background` (BE/6 — nixpkgs' `idle` IO class starves on this box); enable-gated smoke: pre-deploy §13 + post-deploy §16; OnFailure → Discord |
 | Excludes | Rebuildable trees per the blueprint sizing list — `/data/{ai/models,ai/cache,ai/venv-anime-comic,models,SteamLibrary,cache,docker,tmp-*}`, `~/{projects,forks,worktrees,go,.cache,immich-temp}`, pool btrfs receive mirrors (`backups/{root,data}`), the restic repo, forgejo-subvol, paperless `export/index/llm_index/trash/consume`, immich `thumbs/encoded-video` |
 
 The passphrase in `borg.yaml` is a real random value. Copy a recovery copy of
@@ -57,7 +57,8 @@ recovery-copy policy is still an open owner decision (`docs/todo/storage.md`).
    is 2d. Watch `journalctl -u borgbackup-job-hetzner -f`.
 7. **Verify**: `borg list <repo>` shows `evo-x2-<timestamp>`;
    `/var/lib/borg-offsite/.last_success` exists; `backup_healthy{backup="offsite-borg"} 1`
-   in node_exporter textfiles; "All Backups Healthy" stays green.
+   and `backup_ever_succeeded{backup="offsite-borg"} 1` in node_exporter
+   textfiles; "All Backups Healthy" stays green; post-deploy §16 passes.
 8. **Sizing**: borg prints "This archive: <size>" per run in the journal —
    that (plus `borg info`) is the irreplaceable-set measurement. If it
    approaches ~800 G, upgrade BX11 → BX21 (instant, same credentials) —
