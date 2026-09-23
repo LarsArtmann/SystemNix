@@ -63,6 +63,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Guard VM-test extensions** → [docs/todo/stability.md](docs/todo/stability.md)
 - [ ] **Guard/crash-forensics follow-ups (crash2 + freeze-3 reviews)** → [docs/todo/stability.md](docs/todo/stability.md)
 - [ ] **pool-recovery residual wiring** → [docs/todo/stability.md](docs/todo/stability.md)
+- [ ] **Root-cause idle-disk/no-D-state IO PSI accounting (pressure gate's corpse heuristic is stale)** → [docs/todo/stability.md](docs/todo/stability.md)
 
 ### monitoring
 
@@ -194,6 +195,10 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Flake-check guard: HTML `pat()` needles must start with `<`** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Derive AUTH_VHOSTS from caddy.nix (or eval-time assert)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Centralize curl in `scripts/lib.sh` `fetch()` helper** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] **User-env single-source enforcement: profile-emptiness + `~/go/bin` shadow-detector checks** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] **deploy-queue systemd user unit (queued deploys survive sessions)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] **deploy.sh pressure gate: re-measure immediately pre-switch (rebound race)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] **golines → base.nix, emptying `~/go/bin` entirely** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Prune the stale `flake: false` `go-health-dashboard` lock node (input resolving as `_4`)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Investigate + gate the unformatted-commit path (geometrikks.nix + 3 scripts landed pre-`nix fmt`)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **File the daemon-beat-precommit-hook incident into the fleet lessons** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
