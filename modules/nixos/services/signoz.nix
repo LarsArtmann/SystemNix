@@ -76,6 +76,12 @@ in
       # underneath the mountpoint.
       hasClickhouseDataMount = builtins.hasAttr "/var/lib/clickhouse" config.fileSystems;
 
+      # Pool-side ClickHouse backup target (clickhouse-db-backup.timer).
+      # The XFS telemetry partition is invisible to btrbk by design, so this
+      # is the ONLY backup leg SigNoz has — a recovery point must exist
+      # before any SigNoz upgrade runs its ClickHouse schema migrations.
+      chBackupDir = "/mnt/pool/backups/clickhouse";
+
       # ClickHouse internal self-logs (system db) shipped WITHOUT TTLs on this
       # install — 52 GiB / 9.13B rows (90% of the data dir) measured 2026-08-17.
       # The two self-sampling logs collect at 1 Hz: metric_log via
@@ -464,6 +470,15 @@ in
                   # Also makes the /metrics prometheus endpoint up to 2s stale —
                   # invisible at 15s+ scrape intervals.
                   <asynchronous_metrics_update_period_s>2</asynchronous_metrics_update_period_s>
+                  # Native BACKUP/RESTORE (clickhouse-db-backup.timer, 03:00):
+                  # the 'File' backup destination is refused unless its path is
+                  # listed here (backups.allowed_path, default = NOTHING
+                  # allowed, BAD_ARGUMENTS — live-probed 2026-09-23). This is
+                  # the single legal destination, owned by the backup units
+                  # below; the existing restartTriggers cover this file.
+                  <backups>
+                    <allowed_path>${chBackupDir}</allowed_path>
+                  </backups>
                 ${clickhouseInternalLogXml}
                   <prometheus>
                     <endpoint>/metrics</endpoint>
@@ -533,6 +548,16 @@ in
                     ReadWritePaths = [
                       "/var/lib/clickhouse"
                       "/var/log/clickhouse-server"
+                      # Native BACKUP writes from INSIDE this server process,
+                      # so the pool leaf must be writable here. "-" = systemd
+                      # ignores the entry when the path is absent (pool
+                      # detached) instead of aborting the unit 226/NAMESPACE
+                      # — ClickHouse must start pool-less; a detached DAS
+                      # fails only the backup unit (its own RequiresMountsFor),
+                      # never the server. The mount-gating audit's /mnt/
+                      # prefix deliberately does not match "-"-prefixed
+                      # optional entries.
+                      "-${chBackupDir}"
                     ];
                   })
                   (serviceDefaults { })
@@ -585,6 +610,126 @@ in
                   Unit = "signoz-clickhouse-log-ttl.service";
                 };
               };
+
+              # ── Nightly ClickHouse backup onto the HDD pool ───────────────────
+              # Native server-side BACKUP (consistent, restorable via RESTORE)
+              # of everything EXCEPT the system db. EXCEPT DATABASES — not an
+              # explicit database list — so a FUTURE SigNoz database (signoz_meter
+              # appeared 2026) is captured automatically. Live-measured
+              # 2026-09-23: signoz dbs ≈ 3.7 GiB on disk vs system ≈ 25 GiB of
+              # TTL-rotated internal logs (rebuildable, never worth backing up)
+              # and INFORMATION_SCHEMA (virtual). Directory-mode File()
+              # destination: no archive extension → ClickHouse writes a plain
+              # backup directory; a failed run cleans its partial dir
+              # server-side (backups.remove_backup_files_after_failure).
+              # Pool leaf via the cv/miniflux dir-oneshot shape; the
+              # .last_success sentinel feeds backup-coordination (a dir-style
+              # backup has no single dump file to stat).
+              systemd.services.clickhouse-db-backup-dir = {
+                description = "Create ClickHouse backup directory on the HDD pool";
+                wantedBy = [ "multi-user.target" ];
+                unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
+                serviceConfig = lib.mkMerge [
+                  {
+                    Type = "oneshot";
+                    User = "root";
+                    RemainAfterExit = true;
+                  }
+                  (harden {
+                    MemoryMax = "128M";
+                    # Targets the MOUNT ROOT (cv-backup-dir 226/NAMESPACE
+                    # lesson): on a fresh pool the leaf does not exist yet.
+                    ReadWritePaths = [ "/mnt/pool" ];
+                    # chown to clickhouse so the server-side backup writer
+                    # (running inside clickhouse.service as User=clickhouse)
+                    # can create the run directories; harden{}'s empty
+                    # bounding set would strip CAP_CHOWN.
+                    CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
+                  })
+                  (serviceOneshotDefaults { })
+                ];
+                script = ''
+                  mkdir -p ${chBackupDir}
+                  chown clickhouse:clickhouse ${chBackupDir}
+                  chmod 0755 ${chBackupDir}
+                '';
+              };
+
+              systemd.services.clickhouse-db-backup = {
+                description = "ClickHouse backup (native BACKUP ALL except system db)";
+                after = [
+                  "clickhouse.service"
+                  "clickhouse-db-backup-dir.service"
+                ];
+                wants = [
+                  "clickhouse.service"
+                  "clickhouse-db-backup-dir.service"
+                ];
+                # Detached DAS fails the run as a clean dependency error,
+                # never 226/NAMESPACE (btrbk doctrine).
+                unitConfig.RequiresMountsFor = [ chBackupDir ];
+                inherit onFailure;
+                startLimitBurst = 5;
+                startLimitIntervalSec = 300;
+                serviceConfig = lib.mkMerge [
+                  {
+                    Type = "oneshot";
+                    User = "clickhouse";
+                    Group = "clickhouse";
+                    # ~4 GiB of part files onto the HDD pool plus the
+                    # metadata-consistency loop: the global 3min
+                    # DefaultTimeoutStartSec is too tight.
+                    TimeoutStartSec = "30min";
+                    ExecStart = pkgs.writeShellScript "clickhouse-db-backup" ''
+                      set -euo pipefail
+                      # Type=exec clickhouse is "active" before its listener
+                      # binds; a boot catch-up (Persistent timer) can race the
+                      # first server start — wait for it to answer.
+                      ready=0
+                      for _ in $(seq 1 30); do
+                        if ${config.services.clickhouse.package}/bin/clickhouse-client --query "SELECT 1" >/dev/null 2>&1; then
+                          ready=1
+                          break
+                        fi
+                        sleep 2
+                      done
+                      if [ "$ready" -ne 1 ]; then
+                        echo "clickhouse-db-backup: server did not answer SELECT 1 within 60s" >&2
+                        exit 1
+                      fi
+                      ts="$(date -u +%Y%m%dT%H%M%SZ)"
+                      dst="${chBackupDir}/clickhouse-$ts"
+                      # The BACKUP executes INSIDE the server process; this
+                      # unit only triggers it and owns the exit code.
+                      ${config.services.clickhouse.package}/bin/clickhouse-client --query "BACKUP ALL EXCEPT DATABASES system, INFORMATION_SCHEMA, information_schema TO File('$dst')"
+                      touch ${chBackupDir}/.last_success
+                      # Retention: keep the 3 newest run dirs (UTC-timestamp
+                      # names sort lexicographically; tail reads all input —
+                      # no head-SIGPIPE under pipefail).
+                      find ${chBackupDir} -maxdepth 1 -type d -name 'clickhouse-*' | sort -r | tail -n +4 | xargs -r rm -rf --
+                      echo "clickhouse-db-backup: wrote $dst"
+                    '';
+                    ReadWritePaths = [ chBackupDir ];
+                  }
+                  (serviceOneshotDefaults { })
+                  ioTier.background
+                ];
+              };
+
+              systemd.timers.clickhouse-db-backup = {
+                description = "Nightly ClickHouse backup";
+                wantedBy = [ "timers.target" ];
+                after = [ "mnt-pool.mount" ];
+                timerConfig = {
+                  # 03:00 — inside the 01:00-04:00 dump-backup window, clear of
+                  # paperless-db (02:00), browser-history (02:15), miniflux
+                  # (02:45), cv (03:17), forgejo (03:30).
+                  OnCalendar = "*-*-* 03:00:00";
+                  RandomizedDelaySec = "10min";
+                  Persistent = true;
+                };
+              };
+            };
 
               # ── Dedicated XFS data mount monitoring (buildcache pattern) ──────
               # The XFS filesystem at /var/lib/clickhouse is invisible to
@@ -1143,6 +1288,14 @@ in
               port = cfg.settings.queryService.port;
               vHost.layer = "protected";
               monitored = true;
+              # Native BACKUP freshness (clickhouse-db-backup.timer, 03:00) —
+              # gated so pool-less hosts register no phantom backup row
+              # (browser-history dbBackup precedent).
+              backup = lib.mkIf cfg.components.clickhouse {
+                directory = chBackupDir;
+                filePattern = ".last_success";
+                maxAgeHours = 25;
+              };
               checks = [
                 {
                   name = "ClickHouse Data Mount";
