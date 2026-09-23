@@ -150,8 +150,10 @@ Proven via `--selftest` (throwaway `repokey-blake2` repo, same compression
 | verify           | 8 ms   | 7 ms   |
 | **TOTAL**        | 615 ms | 585 ms |
 
-Result: PASS (both runs; extracted files byte-verified via sha256). The local
-stand-in cannot measure the StorageBox SSH/WAN leg — after go-live, run
+Result: PASS (both runs; extracted files byte-verified via sha256). Reproduced
+2026-09-23 across the verification re-dispatches — 5 full PASS records total
+(469-739 ms) under `~/.local/state/borg-restore-drill/`. The local stand-in
+cannot measure the StorageBox SSH/WAN leg — after go-live, run
 `sudo bash scripts/borg-restore-drill.sh` and add the real-repo row to this
 table (expect connect+resolve to dominate: TLS-less SSH handshake to the
 StorageBox + key decryption + repo index read over WAN).
@@ -169,8 +171,13 @@ StorageBox + key decryption + repo index read over WAN).
   a backup channel; re-pin deliberately, never blanket-accept.
 - **Cache on /mnt/hot** (`BORG_CACHE_DIR=/mnt/hot/borg/cache`): the drill
   reuses the job's warm cache for realistic timings. If the Samsung tier is
-  detached, borg still works but pays a full remote-cache rebuild — expect
-  slow first connect and say so in the drill record.
+  detached, an unmounted `/mnt/hot` does NOT stop borg: it happily `mkdir`s
+  its cache under the mountpoint, landing every cache byte on the ROOT fs
+  (the shadow-dir class this repo documents elsewhere). The borgbackup job
+  unit is mount-gated (`RequiresMountsFor`); the manual drill is not — until
+  the drill grows a `mountpoint -q /mnt/hot` gate (queued in
+  `docs/todo/storage.md`), check the mount before a real-mode drill and note
+  the cache location in the drill record.
 - **Borg 1.x extract has `--dry-run` (`-n`)** — it resolves paths, reads
   and checks every chunk, and writes nothing; use it (or
   `borg list ::archive <path>`) to preview a subset before extracting.
