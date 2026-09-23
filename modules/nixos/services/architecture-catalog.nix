@@ -58,6 +58,7 @@ _: {
         runtimeInputs = [
           pkgs.git
           pkgs.coreutils
+          pkgs.findutils
           pkgs.gnused
         ];
         text = ''
@@ -105,9 +106,9 @@ _: {
           ln -s "generations/$stamp" "$STATE/.current.tmp.$$"
           mv -T "$STATE/.current.tmp.$$" "$STATE/current"
 
-          # Keep only the newest generations. (find, not ls: writeShellApplication
-          # shellcheck rejects `ls | sort` — SC2012 — and find exits 0 on an
-          # empty dir instead of dying under pipefail.)
+          # Keep only the newest generations (find, not ls): the SC2012 lint
+          # rule rejects `ls | sort`, and find exits 0 on an empty dir
+          # instead of dying under pipefail.
           find "$GENS" -mindepth 1 -maxdepth 1 | sort | head -n -${toString cfg.maxGenerations} | while read -r old; do
             rm -rf "$old"
           done
