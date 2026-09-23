@@ -76,6 +76,15 @@ _: {
         }
       '';
 
+      staticVHost = root: {
+        extraConfig = ''
+          ${tlsConfig}
+          ${commonConfig}
+          root * ${root}
+          file_server
+        '';
+      };
+
       protectedVHost = _subdomain: port: {
         extraConfig = ''
           ${tlsConfig}
@@ -99,7 +108,38 @@ _: {
         '';
       };
 
-      renderVHost = v: if v.layer == "protected" then protectedVHost null v.port else plainVHost v.port;
+      renderVHost =
+        v:
+        # Static-root entries (registry vHost.root): serve a directory tree
+        # via file_server instead of proxying. Layer semantics still apply —
+        # "protected" wraps the file_server in the external forward-auth /
+        # LAN-bypass split, "plain" serves TLS-only (timers vHost precedent).
+        if v.root != null then
+          (
+            if v.layer == "protected" then
+              {
+                extraConfig = ''
+                  ${tlsConfig}
+                  ${commonConfig}
+                  @external not remote_ip 127.0.0.1/8 ${lanSubnet}
+                  handle @external {
+                    ${forwardAuth}
+                    root * ${v.root}
+                    file_server
+                  }
+                  handle {
+                    root * ${v.root}
+                    file_server
+                  }
+                '';
+              }
+            else
+              staticVHost v.root
+          )
+        else if v.layer == "protected" then
+          protectedVHost null v.port
+        else
+          plainVHost v.port;
     in
     {
       options.services.caddy-config = {
@@ -112,8 +152,25 @@ _: {
             lib.types.submodule {
               options = {
                 port = lib.mkOption {
-                  type = lib.types.port;
-                  description = "Backend port to proxy to (from lib/ports.nix)";
+                  type = lib.types.nullOr lib.types.port;
+                  default = null;
+                  description = ''
+                    Backend port to proxy to (from lib/ports.nix). Null for
+                    static-root entries (set `root` instead) — at least one of
+                    port/root must be set for a non-"none" layer.
+                  '';
+                };
+                root = lib.mkOption {
+                  type = lib.types.nullOr lib.types.str;
+                  default = null;
+                  description = ''
+                    Static file root served via file_server instead of a
+                    reverse_proxy (Layer 2 still applies: external clients hit
+                    forward-auth, LAN bypasses). Use for prebuilt static sites
+                    whose content is converged by a sync unit (architecture-
+                    catalog precedent). The path must be readable by the caddy
+                    user at request time.
+                  '';
                 };
                 layer = lib.mkOption {
                   type = lib.types.enum [

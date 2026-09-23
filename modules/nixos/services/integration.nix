@@ -50,7 +50,7 @@ _: {
       unitOf = name: e: if e.unit != null then e.unit else name;
 
       vhostEntries = lib.filterAttrs (
-        _: e: e.subdomain != null && e.port != null && e.vHost.layer != "none"
+        _: e: e.subdomain != null && e.vHost.layer != "none" && (e.port != null || e.vHost.root != null)
       ) enabledEntries;
 
       # Relative check URLs resolve against the entry's port; absolute URLs
@@ -165,6 +165,19 @@ _: {
                   auth. "plain" = Layer 0/1 direct reverse_proxy — LAN-only
                   UIs and apps with native OIDC (forward-auth would
                   double-auth). "none" = no vHost (DNS/homepage only).
+                '';
+              };
+
+              vHost.root = lib.mkOption {
+                type = lib.types.nullOr lib.types.str;
+                default = null;
+                description = ''
+                  Serve a STATIC directory (caddy file_server) instead of
+                  reverse_proxying a port — for prebuilt sites converged by
+                  a sync unit (architecture-catalog pattern). Layer semantics
+                  still apply ("protected" = forward-auth for external + LAN
+                  bypass). With root set, `port` may stay null; the check
+                  URLs must then be absolute (https://<sub>.<domain>/…).
                 '';
               };
 
@@ -376,7 +389,7 @@ _: {
           assertions =
             let
               dnsMissing = e: e.enable && e.subdomain != null && !builtins.elem e.subdomain dnsLocalSubdomains;
-              vhostIncomplete = e: e.enable && e.vHost.layer != "none" && (e.subdomain == null || e.port == null);
+              vhostIncomplete = e: e.enable && e.vHost.layer != "none" && (e.subdomain == null || (e.port == null && e.vHost.root == null));
               checkWithoutPort = e: e.enable && builtins.any (c: c.url == null) e.checks && e.port == null;
             in
             [
@@ -390,7 +403,7 @@ _: {
               }
               {
                 assertion = lib.all (e: !vhostIncomplete e) (builtins.attrValues cfg);
-                message = "integration: vHost layer != none requires BOTH subdomain and port: ${
+                message = "integration: vHost layer != none requires BOTH subdomain and (port OR vHost.root): ${
                   lib.concatStringsSep ", " (lib.attrNames (lib.filterAttrs (_: vhostIncomplete) cfg))
                 }";
               }
@@ -416,7 +429,7 @@ _: {
             _: e:
             lib.nameValuePair e.subdomain {
               inherit (e) port;
-              inherit (e.vHost) layer;
+              inherit (e.vHost) layer root;
             }
           ) vhostEntries;
         })

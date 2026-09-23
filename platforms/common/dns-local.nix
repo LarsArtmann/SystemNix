@@ -33,5 +33,6 @@
     "mr-sync"
     "geo"
     "health"
+    "catalog"
   ];
 }
