@@ -39,6 +39,8 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Prove shellcheck covers `scripts/*.sh` in pre-commit** → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §b.2/§f.7)
 - [ ] **Snapshot-pinning doctrine sweep** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Fold the borg env-path-pin negative case into the borg-restore-drill fixture test (drifted `BORG_ENV_FILE` literal → `backup.nix` assertion must fire)** → [docs/todo/storage.md](docs/todo/storage.md) (Source: 2026-09-23 env-path-pin close-out — negative probe hand-run once, ephemeral)
+- [ ] **Fixture-negative for `borg-restore-drill-fixture`: mutate a drill copy (e.g. drop the root gate) and assert the fixture FAILS** — proves the fixture exercises the real script, not a phantom (the repo's negative-test doctrine applied to behavioral script fixtures). → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-09-24_01-27_task-000001a0d08c5ae1231c46d370f5b7d55560.md §f6)
+- [ ] **Fix the pre-existing `checks.disko-layout` eval failure (`disko-samsung-tlc-vm.nix.drv is not valid`) — the pre-commit flake-check gate is dead for ALL agents until this lands** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-24_01-27_task-000001a0d08c5ae1231c46d370f5b7d55560.md §d1)
 - [ ] **Codify the single-victim /data repair recipe** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Build the /data damage-set inventory** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Crush-DB migration: baseline + follow-through** → [docs/todo/storage.md](docs/todo/storage.md)
