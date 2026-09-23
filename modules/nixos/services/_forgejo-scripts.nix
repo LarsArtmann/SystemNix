@@ -1042,7 +1042,7 @@ in
       if [ -s "$STAGED_TOKEN_FILE" ]; then
         CANDIDATE=$(cat "$STAGED_TOKEN_FILE")
         if [ "$MARKER_SCOPE" != "$WANT_SCOPE" ]; then
-          echo "Existing token scope is '${MARKER_SCOPE:-<none>}', want '$WANT_SCOPE'; regenerating (owner decision 2026-09-23)"
+          echo "Existing token scope is ''${MARKER_SCOPE:-UNSET}, want '$WANT_SCOPE'; regenerating (owner decision 2026-09-23)"
         elif curl -sf --connect-timeout 3 --max-time 10 \
           -H "Authorization: token $CANDIDATE" \
           "${forgejoUrl}/api/v1/repos/search?limit=1" >/dev/null 2>&1; then
