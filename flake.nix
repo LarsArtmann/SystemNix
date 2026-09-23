@@ -120,6 +120,16 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Declarative disk partitioning — geometry-spec only for SystemNix:
+    # diskoConfigurations.samsung-tlc is an eval-checked reference of the
+    # live Samsung layout (NOT imported by nixosConfigurations — see
+    # disko/samsung-tlc.nix). No module consumers; input kept for the
+    # disko CLI (dry-run script rendering / rescue use).
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # SigNoz observability platform sources (flake = false, packaged in
     # _signoz-packages.nix). Branch-ref governed per the 2026-09-16 pin
     # policy: 2026-09-18 bump lifted the pre-09-13 INTERIM pins after the
@@ -899,6 +909,10 @@
 
       # Import service modules — registered as flake-parts modules (inputs.self.nixosModules.*)
       imports = discoveredModulePaths;
+
+      # Executable disk-geometry specs (docs, not applied by any host —
+      # see disko/samsung-tlc.nix for the discovery-trap rationale).
+      flake.diskoConfigurations.samsung-tlc = import ./disko/samsung-tlc.nix;
 
       # Per-system configuration (packages, devShells, etc.)
       perSystem =
