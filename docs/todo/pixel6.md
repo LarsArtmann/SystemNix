@@ -32,6 +32,7 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 ## Backlog (untriaged harvest)
 
 - [ ] [ready] **Full ffprobe sweep over all 591 UCR WAVs** (5 spot-checked only) — feeds the WAV→FLAC mirror integrity
+- [ ] [ready] **Dedupe this file's ffprobe-sweep row (same ask sits in the prioritized list AND here)** — merge into ONE row keeping the richer wording (the "feeds the WAV→FLAC mirror integrity" tail); noticed in passing 2026-09-25. **Source:** docs/status/2026-09-25_01-02_task-000001a0d56f35ccee2a991988d7c3a9ebd1.md §d
 - [ ] [ready] **WAV→FLAC/opus mirror + browsable web archive (player/search) over the UCR call archive** — Navidrome feeds on the FLAC leg
 - [ ] [ready] **Contacts VCF export to the pool + per-contact card decode** (the index.csv enrichment row covers call-log names, not VCF)
 - [ ] [ready] **RAG query CLI over the archive** ("when did we first talk about X") — rides the whisper-transcription row's output
