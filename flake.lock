@@ -5677,11 +5677,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790193992,
-        "narHash": "sha256-wy9EasY2lJR+nXGZyTIwgr0iaf94rLxbiPi6OmuyMkY=",
+        "lastModified": 1790201538,
+        "narHash": "sha256-RqxFCBf4GFagBSfQ1irchYmnP2uMBwMSaigxIDbfDhQ=",
         "owner": "LarsArtmann",
         "repo": "mr-sync",
-        "rev": "26174a1ea37a4f548557f29f240723798b4bde6d",
+        "rev": "6c1d3f6d8a8a00f743b3675d5828bd322ab3f3d4",
         "type": "github"
       },
       "original": {
