@@ -77,6 +77,22 @@ for f in "${files[@]}"; do
     fail=1
   done < <(code | grep -nE '(TMP|TEMP|tmp_file|tmp)="?[^"]*\.tmp(\.\$\$)?"' | grep -v mktemp || true)
 
+  # A2. inline redirect to a fixed variable-suffixed ".tmp" — the same
+  # collision/EACCES class as A in assignment-free shape
+  # (: > "${STATE}.tmp"; system-health state files evaded A until
+  # 2026-09-24). Scoped to textfile-collector files so private-dir atomic
+  # writes (e.g. home-manager activation scripts) stay out of scope.
+  if grep -qE 'textfileDir|textfile_collectors' "$f"; then
+    while IFS= read -r line; do
+      case "$A_ALLOW" in
+      *"$(basename "$rel")"*) continue ;;
+      esac
+      echo "FAIL [$rel] A2: inline fixed-.tmp redirect (same sticky-dir collision class as A; use mktemp + mv):"
+      echo "  $line"
+      fail=1
+    done < <(code | grep -nE '(^|[^-])>>?\s*"[^"]*\$\{?[A-Za-z_][A-Za-z0-9_]*\}?[^"]*\.tmp"' | grep -v mktemp || true)
+  fi
+
   # B. phantom rendered-templates path.
   while IFS= read -r line; do
     echo "FAIL [$rel] B: hardcoded /run/secrets-rendered path (real sops-nix renders under /run/secrets/rendered — interpolate config.sops.templates.\"<name>\".path):"

@@ -209,10 +209,21 @@ _: {
           # one per storm-killed run. Older than 2h = no live run can own it
           # (run ceiling is 5min). Root has CAP_FOWNER; harmless as user.
           ${pkgs.findutils}/bin/find "${textfileDir}" -maxdepth 1 -type f -name 'system_health.prom.??????' -mmin +120 -delete 2>/dev/null || true
+          ${pkgs.findutils}/bin/find "${textfileDir}" -maxdepth 1 -type f -name '.system_health_*_state.??????' -mmin +120 -delete 2>/dev/null || true
+          # State-file tmp handles (mktemp, niri doctrine): a fixed
+          # "<state>.tmp" truncate-open in this sticky 1777 dir dies EACCES
+          # on a foreign-owned leftover — harden{} strips CAP_DAC_OVERRIDE
+          # and this unit carries only CAP_FOWNER + CAP_DAC_READ_SEARCH.
+          # mktemp self-heals with zero caps; initialized empty so the EXIT
+          # trap never expands an unset variable (set -u in the wrapper).
+          CPU_STATE_TMP=""
+          RESTART_STATE_TMP=""
+          OOMD_STATE_TMP=""
+          DOCKER_STATE_TMP=""
           TMP="$(mktemp "${textfileDir}/system_health.prom.XXXXXX")"
           chmod 644 "$TMP"
           WALK_DIR="$(mktemp -d)"
-          trap 'rm -f "$TMP"; rm -rf "$WALK_DIR"' EXIT
+          trap 'rm -f "$TMP"; rm -rf "$WALK_DIR"; for f in "$CPU_STATE_TMP" "$RESTART_STATE_TMP" "$OOMD_STATE_TMP" "$DOCKER_STATE_TMP"; do if [ -n "$f" ]; then rm -f "$f"; fi; done' EXIT
           CPU_STATE="${textfileDir}/.system_health_cpu_state"
           RESTART_STATE="${textfileDir}/.system_health_restart_state"
           OOMD_STATE="${textfileDir}/.system_health_oomd_state"
@@ -362,9 +373,10 @@ _: {
             done < "$RESTART_STATE"
           fi
 
-          # Write new state for next run
-          : > "''${CPU_STATE}.tmp"
-          : > "''${RESTART_STATE}.tmp"
+          # Write new state for next run (mktemp per file — sticky-dir
+          # doctrine note at the top of this script).
+          CPU_STATE_TMP="$(mktemp "''${CPU_STATE}.XXXXXX")"
+          RESTART_STATE_TMP="$(mktemp "''${RESTART_STATE}.XXXXXX")"
           for svc in ${lib.concatMapStringsSep " " (s: "'${s}'") allMonitoredServices}; do
             {
               read -r cpu_nsec
@@ -377,11 +389,11 @@ _: {
             cur_r="''${cur_r:-0}"
             case "$cpu_nsec" in *[!0-9]*) cpu_nsec=0 ;; esac
             case "$cur_r" in *[!0-9]*) cur_r=0 ;; esac
-            echo "$svc $cpu_nsec $NOW_EPOCH" >> "''${CPU_STATE}.tmp"
-            echo "$svc $cur_r" >> "''${RESTART_STATE}.tmp"
+            echo "$svc $cpu_nsec $NOW_EPOCH" >> "$CPU_STATE_TMP"
+            echo "$svc $cur_r" >> "$RESTART_STATE_TMP"
           done
-          mv "''${CPU_STATE}.tmp" "$CPU_STATE"
-          mv "''${RESTART_STATE}.tmp" "$RESTART_STATE"
+          mv "$CPU_STATE_TMP" "$CPU_STATE"
+          mv "$RESTART_STATE_TMP" "$RESTART_STATE"
 
           # === User-1000.slice memory (desktop-only) ===
           collect_user_slice=${lib.boolToString cfg.collectUserSlice}
@@ -908,8 +920,9 @@ _: {
               read -r oomd_status oomd_out < "$WALK_DIR/oomd" 2>/dev/null || { oomd_status=2; oomd_out=0; }
               if [ "''${oomd_status:-2}" -le 1 ]; then
                 OOMD_KILLS_TOTAL="''${oomd_out:-0}"
-                echo "$OOMD_KILLS_TOTAL" > "''${OOMD_STATE}.tmp"
-                mv "''${OOMD_STATE}.tmp" "$OOMD_STATE"
+                OOMD_STATE_TMP="$(mktemp "''${OOMD_STATE}.XXXXXX")"
+                echo "$OOMD_KILLS_TOTAL" > "$OOMD_STATE_TMP"
+                mv "$OOMD_STATE_TMP" "$OOMD_STATE"
               else
                 OOMD_SCRAPE_ERRORS=1
               fi
@@ -1490,7 +1503,7 @@ _: {
             # budget by itself. Now: one `docker ps` (5s) + one `docker
             # inspect` over ALL names (10s) = 15s worst case, flat.
             if [ "$collect_docker" = "true" ] && timeout 15 docker info >/dev/null 2>&1; then
-              : > "''${DOCKER_STATE}.tmp"
+              DOCKER_STATE_TMP="$(mktemp "''${DOCKER_STATE}.XXXXXX")"
               docker_containers=""
               docker_containers=$(timeout 5 docker ps --format '{{.Names}}' 2>/dev/null) || docker_containers=""
               docker_inspect_out=""
@@ -1502,7 +1515,7 @@ _: {
                 cname="''${cname#/}"
                 [ -n "$cname" ] || continue
                 cur_rc="''${cur_rc:-0}"
-                echo "$cname $cur_rc" >> "''${DOCKER_STATE}.tmp"
+                echo "$cname $cur_rc" >> "$DOCKER_STATE_TMP"
                 prev_rc="''${prev_docker_restarts[$cname]:-0}"
                 rc_delta=0
                 if [ "$cur_rc" -gt "$prev_rc" ] 2>/dev/null; then
@@ -1516,7 +1529,7 @@ _: {
                 echo "docker_container_restart_count{name=\"$cname\"} ''${cur_rc}"
                 echo "docker_container_restart_alert{name=\"$cname\"} ''${rc_alert}"
               done <<< "''${docker_inspect_out:-}"
-              mv "''${DOCKER_STATE}.tmp" "$DOCKER_STATE"
+              mv "$DOCKER_STATE_TMP" "$DOCKER_STATE"
             fi
 
             echo "# HELP system_any_docker_container_restart_alert 1 if ANY Docker container is rapidly restarting, 0 otherwise"
