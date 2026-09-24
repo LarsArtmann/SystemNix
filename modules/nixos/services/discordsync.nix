@@ -30,6 +30,56 @@
       discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default;
       sopsEnvPath = config.sops.templates."discordsync-env".path;
 
+      textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
+
+      # T17 (sweep-storm plan): expose the discordsync unit's cumulative disk
+      # I/O so a read/write storm is attributable in one command (the
+      # 2026-09-02 integrity-sweep read storm was invisible until it had
+      # saturated the SSD). Uses systemd's cgroup-level IOAccounting (enabled
+      # on the unit below) via `systemctl show` — no /proc/<pid>/io ptrace
+      # games, and the numbers cover EVERY process in the unit's cgroup, not
+      # just MainPID. systemctl-under-harden{} is the proven system-health
+      # pattern.
+      discordsyncIoMetrics = pkgs.writeShellApplication {
+        name = "discordsync-io-metrics";
+        runtimeInputs = [
+          pkgs.systemd
+          pkgs.coreutils
+        ];
+        text = ''
+          OUT="${textfileDir}/discordsync_io.prom"
+          # Unique tmp per run (mktemp): a fixed .tmp name collides with
+          # stale foreign-owned leftovers in the sticky 1777 textfile dir
+          # (mail-relay 2026-09-02..06 outage class).
+          mkdir -p "${textfileDir}"
+          TMP="$(mktemp "${textfileDir}/discordsync_io.prom.XXXXXX")"
+          chmod 644 "$TMP"
+          trap 'rm -f "$TMP"' EXIT
+
+          values=$(systemctl show discordsync.service -p IOReadBytes -p IOWriteBytes --value 2>/dev/null) || true
+          # systemctl --value prints one property per line, in order.
+          read_bytes=$(printf '%s\n' "$values" | head -n 1)
+          write_bytes=$(printf '%s\n' "$values" | tail -n 1)
+
+          # systemctl --value prints "[not set]" (or empty) when IOAccounting
+          # is off or the unit has no cgroup yet — an unguarded write poisons
+          # the textfile and node_exporter rejects the whole file
+          # (system-health nrestarts="[not" incident, 2026-09-20).
+          case "$read_bytes" in '''|*[!0-9]*) read_bytes=0 ;; esac
+          case "$write_bytes" in '''|*[!0-9]*) write_bytes=0 ;; esac
+
+          {
+            echo "# HELP discordsync_unit_io_read_bytes Cumulative disk read bytes of the discordsync unit cgroup (systemd IOAccounting; resets on unit restart)"
+            echo "# TYPE discordsync_unit_io_read_bytes counter"
+            echo "discordsync_unit_io_read_bytes $read_bytes"
+            echo "# HELP discordsync_unit_io_write_bytes Cumulative disk write bytes of the discordsync unit cgroup (systemd IOAccounting; resets on unit restart)"
+            echo "# TYPE discordsync_unit_io_write_bytes counter"
+            echo "discordsync_unit_io_write_bytes $write_bytes"
+          } > "$TMP"
+          mv "$TMP" "$OUT"
+        '';
+      };
+
       waitDnsReady = pkgs.writeShellApplication {
         name = "discordsync-wait-dns";
         runtimeInputs = [ pkgs.curl ];
@@ -283,6 +333,36 @@
           tursoAuthTokenFile = lib.mkDefault sopsEnvPath;
         };
 
+        # T17 io-metrics collector (script defined in the let block): a 30s
+        # oneshot timer writing discordsync_io.prom into the shared textfile
+        # dir. harden{} + CAP_FOWNER (sticky-dir rename class). The sticky
+        # dir's tmpfiles rule is merged into the existing rules list below.
+        systemd.services.discordsync-io-metrics = {
+          description = "DiscordSync unit disk-I/O textfile collector for node_exporter";
+          inherit onFailure;
+          serviceConfig = lib.mkMerge [
+            (harden {
+              MemoryMax = "64M";
+              # Sticky-dir rename over a foreign-owned prom (mail-relay class).
+              CapabilityBoundingSet = "CAP_FOWNER";
+            })
+            (serviceOneshotDefaults { })
+            {
+              Type = "oneshot";
+              ExecStart = lib.getExe discordsyncIoMetrics;
+              ReadWritePaths = [ textfileDir ];
+            }
+          ];
+        };
+
+        systemd.timers.discordsync-io-metrics = {
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "45s";
+            OnUnitActiveSec = "30s";
+          };
+        };
+
         systemd.services.discordsync-db-heal = {
           description = "DiscordSync SQLite DB integrity check and recovery";
           after = [ "sops-nix.service" ];
@@ -439,6 +519,9 @@
               # restarts it. 5min absorbs the drain without wedging
               # activation.
               TimeoutStopSec = "5min";
+              # T17: cgroup-level disk I/O accounting for the io-metrics
+              # textfile collector (negligible BPF cost).
+              IOAccounting = true;
             }
             (harden {
               # Backfill bursts + turso-sync need more than upstream's 512M.
@@ -645,6 +728,9 @@
         # DAS outage and shadow the pool copy).
         systemd.tmpfiles.rules = [
           (mkStateDir cfg.dataDir "2770" cfg.user cfg.group)
+          # T17: the shared node_exporter textfile dir (sticky 1777; also
+          # declared by gpu-active — mkStateDir is idempotent).
+          (mkStateDir textfileDir "1777" "nobody" "nogroup")
         ]
         ++ lib.optionals (cfg.attachmentsDir == null) [
           (mkStateDir "${cfg.dataDir}/attachments" "2770" cfg.user cfg.group)
