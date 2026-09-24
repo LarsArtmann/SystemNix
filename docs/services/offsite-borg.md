@@ -125,3 +125,19 @@ root; run ad-hoc borg under `sudo -E` with the env above.)
 - **Immich path is included but currently empty** (`/mnt/pool/services/immich`
   exists with no library yet); when photos land, they ride this job with zero
   config churn — but re-check the sizing trigger at that point.
+- **Deploy-gate §13/§16 behavior (what SKIP/FAIL means)**: both gates run the
+  shared lib `scripts/lib/offsite-borg-smoke.sh` (fixture:
+  `scripts/test-offsite-borg-smoke.sh`, 21 branches; flake check
+  `offsite-borg-smoke-selftest`). While dormant, both SKIP ("not deployed") —
+  §13 via the eval classifier (`ob_classify_eval_error` SKIPs ONLY the
+  disabled eval shape; any OTHER eval failure FAILs LOUD with raw stderr, so
+  a daemon hiccup or real config error never reads as "disabled" — BY
+  DESIGN). §16 SKIPs on an absent unit file. On the go-live deploy itself,
+  §13 exercises its PASS branch (to-be-deployed config) and §16 its PASS
+  branch (deployed unit: tripwire executable, `.last_success` marker,
+  env-file line, backups.prom row, `IOSchedulingClass=best-effort` /
+  `IOSchedulingPriority=6`). The drill's `/run/secrets`-based block
+  additionally requires `services.offsite-borg.enable = true` first — while
+  dormant the drill runs only on out-of-band credentials (`--local` /
+  recovery copy). Known residual: §16's absent-unit SKIP does not yet
+  consult the enable flag (queued in `docs/todo/storage.md`).
