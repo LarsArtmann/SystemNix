@@ -1885,6 +1885,46 @@
                 touch $out
               '';
 
+              # The pre-commit hook's shellcheck leg is the stricter bar
+              # (warning; CI's shellcheck job is error-level) but only fires
+              # on STAGED files — this fixture proves it end-to-end so
+              # "did shellcheck run when X first staged" (2026-09-23 borg
+              # drill question) never has to be re-asked: positive run
+              # against the REAL hook + a negative mutation (the leg's
+              # fail-closed branch removed MUST fail the fixture's S5
+              # assert). SHELLCHECK_BIN is pinned because `nix shell`
+              # cannot run inside a build sandbox; on the host the test
+              # defaults to the hook's exact invocation.
+              precommit-shellcheck-leg-selftest =
+                pkgs.runCommand "precommit-shellcheck-leg-selftest"
+                  {
+                    nativeBuildInputs = [
+                      pkgs.git
+                      pkgs.shellcheck
+                    ];
+                  }
+                  ''
+                    scratch=$(mktemp -d)
+                    cp ${./scripts/test-precommit-shellcheck.sh} "$scratch/test.sh"
+                    export SHELLCHECK_BIN=${pkgs.shellcheck}/bin/shellcheck
+                    # The script copied to scratch cannot discover the repo,
+                    # so pin the hook for the positive run too.
+                    cp ${./.githooks/pre-commit} "$scratch/real-hook"
+                    PRECOMMIT_HOOK="$scratch/real-hook" bash "$scratch/test.sh"
+                    sed 's/all_passed=false/all_passed=true/' "$scratch/real-hook" > "$scratch/mutated-hook"
+                    if PRECOMMIT_HOOK="$scratch/mutated-hook" bash "$scratch/test.sh" > "$scratch/mut.log" 2>&1; then
+                      echo "FAIL: mutated hook (fail-closed branch removed) passed the fixture"
+                      cat "$scratch/mut.log"
+                      exit 1
+                    fi
+                    grep -q "S5 leg no longer fail-closed" "$scratch/mut.log" || {
+                      echo "FAIL: mutation caught but not by the S5 assert"
+                      cat "$scratch/mut.log"
+                      exit 1
+                    }
+                    touch $out
+                  '';
+
               # The post-deploy pressure verdicts must never call a storm
               # healthy (2026-09-02: PASS at memory PSI avg10 48-77% during
               # the evening storm). Fixture-driven through the SAME

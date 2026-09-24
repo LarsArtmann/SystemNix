@@ -81,7 +81,7 @@ verify_one() {
   fi
 
   # Internal anchors must resolve in the rendered DOM.
-  local broken=0 anchor id
+  local broken=0 anchor
   for anchor in $(grep -o 'href="#[^"]*"' "$dom" | sed 's/^href="#//; s/"$//' | sort -u || true); do
     [ -n "$anchor" ] || continue
     if ! grep -q "id=\"$anchor\"" "$dom"; then

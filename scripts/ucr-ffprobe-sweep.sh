@@ -44,7 +44,6 @@ done
 }
 
 mkdir -p "$OUT" "$OUT/decode-stderr"
-SWEEP_JSONL="$OUT/sweep.jsonl"
 SHA_LOG="$OUT/sha256-verify.log"
 
 PSI=$(awk '/^some avg10/{print int($2)}' /proc/pressure/io)

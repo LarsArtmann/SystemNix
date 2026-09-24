@@ -42,7 +42,10 @@ fail() {
 METRICS_FILE=$(mktemp)
 trap 'rm -f "$METRICS_FILE"' EXIT
 
-# Default environment replicating a healthy pre-deploy run.
+# Default environment replicating a healthy pre-deploy run. The fixture
+# env-vars (reset_env + per-fixture overrides) are read by the sourced
+# metrics-gate.sh — invisible to shellcheck's analysis.
+# shellcheck disable=SC2034
 reset_env() {
   KNOWN_NEW_METRICS=""
   METRICS_GATE_STALE_LOAN_NAMES=""
@@ -97,6 +100,7 @@ expect "fail" "only system_zram_swap_fill_percent_v2 exists → the shorter name
 
 echo "=== Fixture A: node_textfile_scrape_error=1 — absence is an infra signal, never a block ==="
 reset_env
+# shellcheck disable=SC2034
 TEXTFILE_SCRAPE_ERROR=true
 cat >"$METRICS_FILE" <<'EOF'
 node_textfile_scrape_error 1
@@ -107,6 +111,7 @@ expect "warn" "absent metric while textfile collector broken → WARN (deploy th
 
 echo "=== Fixture B: forgejo mirror scan failed — fail-closed absence downgrades ==="
 reset_env
+# shellcheck disable=SC2034
 FORGEJO_SCAN_FAILED=true
 cat >"$METRICS_FILE" <<'EOF'
 node_textfile_scrape_error 0
@@ -149,6 +154,7 @@ expect "pass" "unlisted present metric → pass (self-cleaning only nags listed 
 echo "=== Precedence: known-new wins over scan-failed downgrades (order matters) ==="
 reset_env
 KNOWN_NEW_METRICS="system_pocket_id_busy_over_threshold"
+# shellcheck disable=SC2034
 POCKET_ID_SCAN_FAILED=true
 cat >"$METRICS_FILE" <<'EOF'
 system_pocket_id_busy_scrape_errors 1
@@ -175,6 +181,7 @@ metrics_gate_classify_absence "bank_sync_last_sync_timestamp_seconds"
 expect "warn" "second bank-sync metric absent while :8097 down → WARN"
 
 reset_env
+# shellcheck disable=SC2034
 BANKSYNC_UP=true
 cat >"$METRICS_FILE" <<'EOF'
 node_textfile_scrape_error 0
@@ -207,6 +214,7 @@ fi
 
 reset_env
 WARN_BEFORE=$WARN
+# shellcheck disable=SC2034
 KNOWN_NEW_METRICS="metric_stale_one metric_stale_two metric_stale_three metric_stale_four metric_stale_five"
 for m in metric_stale_one metric_stale_two metric_stale_three metric_stale_four metric_stale_five; do
   metrics_gate_classify_absence "$m"

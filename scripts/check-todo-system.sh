@@ -42,6 +42,8 @@ selftest() {
   printf -- '- [ ] **Source:** → [docs/todo/storage.md](docs/todo/storage.md)\n' >>"$tmp"
   printf -- '- [ ] **Broken link** → [docs/todo/nonexistent-lib.md](docs/todo/nonexistent-lib.md)\n' >>"$tmp"
   local out rc
+  # out is a deliberate stdout+stderr swallow
+  # shellcheck disable=SC2034
   out=$(TODO_FILE="$tmp" "$0" --scan-file "$tmp" 2>&1) && rc=0 || rc=$?
   rm -f "$tmp"
   if [ "$rc" -eq 0 ]; then

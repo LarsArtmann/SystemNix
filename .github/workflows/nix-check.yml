@@ -82,6 +82,7 @@ jobs:
           nix build .#checks.x86_64-linux.post-deploy-pressure-selftest --no-link --print-out-paths
           nix build .#checks.x86_64-linux.gitleaks-coverage-selftest --no-link --print-out-paths
           nix build .#checks.x86_64-linux.dead-guard-lint --no-link --print-out-paths
+          nix build .#checks.x86_64-linux.precommit-shellcheck-leg-selftest --no-link --print-out-paths
 
       - name: Check for unregistered port numbers
         run: |

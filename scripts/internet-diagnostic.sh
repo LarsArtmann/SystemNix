@@ -113,7 +113,6 @@ echo "=========================================="
 # failover, this host's actual failure mode, while §4 had found the real one).
 GATEWAY="$GW"
 
-ROUTE_TYPE=$(ip route show default | head -1)
 if ip route show default | grep -q "dev wlan0"; then
   warn "Default route rides wlan0 (metric-100 fallback) — eno1 is down or evicted; check carrier + wifi-failover journal"
 fi
