@@ -49,7 +49,12 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/metrics-gate.sh"
 # flake check — the go-live deploy BLOCKS on these verdicts).
 # shellcheck source=scripts/lib/offsite-borg-smoke.sh disable=SC1091
 source "$(dirname "${BASH_SOURCE[0]}")/lib/offsite-borg-smoke.sh"
+# Verdict callbacks read indirectly inside the sourced lib (same SC2034
+# reasoning as the metrics-gate producers above); ob_pre_skip is invoked
+# only through "$OB_SKIP" dispatch.
+# shellcheck disable=SC2034
 OB_PASS=pass OB_FAIL=fail OB_SKIP=ob_pre_skip
+# shellcheck disable=SC2329
 ob_pre_skip() { echo "   $1"; }
 
 echo "=== Pre-Deploy Validation ==="

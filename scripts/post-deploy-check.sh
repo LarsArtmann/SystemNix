@@ -163,6 +163,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/pressure-report.sh"
 # flake check — the go-live smoke FAILs the post-deploy verdict on these.
 # shellcheck source=scripts/lib/offsite-borg-smoke.sh disable=SC1091
 source "$(dirname "${BASH_SOURCE[0]}")/lib/offsite-borg-smoke.sh"
+# Read by the sourced lib (sandbox shellcheck cannot follow it).
+# shellcheck disable=SC2034
 OB_PASS=report_pass OB_FAIL=report_fail OB_WARN=report_warn OB_SKIP=report_skip
 
 echo "=== Post-Deploy Smoke Test ==="
