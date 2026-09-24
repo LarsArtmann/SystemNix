@@ -443,6 +443,16 @@
             (harden {
               # Backfill bursts + turso-sync need more than upstream's 512M.
               MemoryMax = lib.mkForce "2G";
+              # CPUQuota decision (2026-09-24, plan T20 remnant): 200%, not
+              # 100%. The integrity-sweep hasher is single-threaded, but the
+              # Go GC runs concurrent background workers and the download
+              # pipeline is goroutine-parallel; 100% would throttle GC +
+              # worker onto one core and reproduce the zombie-gateway shape
+              # (missed heartbeats) under backfill load. 200% covers GC
+              # concurrency plus one busy worker while still capping a
+              # runaway hot loop (decode spin, retry storm) at 2 of 32 cores,
+              # leaving the rest of the host untouched.
+              CPUQuota = "200%";
             })
             # Upstream declares ReadWritePaths = [ dataDir ] at plain
             # priority, which beats harden{}'s mkDefault — the pool leaf is
