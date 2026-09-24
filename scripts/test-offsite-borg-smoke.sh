@@ -41,6 +41,7 @@ ob_pass() { EVENTS+=("PASS"); PASS=$((PASS + 1)); }
 ob_fail() { EVENTS+=("FAIL"); FAIL=$((FAIL + 1)); }
 ob_warn() { EVENTS+=("WARN"); WARN=$((WARN + 1)); }
 ob_skip() { EVENTS+=("SKIP"); SKIP=$((SKIP + 1)); }
+# shellcheck disable=SC2034 # OB_* are read inside the sourced lib via indirection
 OB_PASS=ob_pass OB_FAIL=ob_fail OB_WARN=ob_warn OB_SKIP=ob_skip
 
 TEST_FAILURES=0

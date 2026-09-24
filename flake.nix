@@ -1897,6 +1897,25 @@
                 ${pkgs.bash}/bin/bash "$scratch/scripts/test-post-deploy-pressure.sh"
                 touch $out
               '';
+              # The offsite-borg §13/§16 smoke verdicts BLOCK the go-live
+              # deploy (and FAIL the post-deploy smoke); the blocks only fire
+              # for real once services.offsite-borg.enable flips, so the
+              # fixture is the ONLY pre-go-live exercise they get. Runs the
+              # SAME scripts/lib/offsite-borg-smoke.sh the gates source
+              # (never a drifted copy).
+              offsite-borg-smoke-selftest =
+                pkgs.runCommand "offsite-borg-smoke-selftest"
+                  {
+                    nativeBuildInputs = [ pkgs.jq ];
+                  }
+                  ''
+                    scratch=$(mktemp -d)
+                    mkdir -p "$scratch/scripts/lib"
+                    cp ${./scripts/test-offsite-borg-smoke.sh} "$scratch/scripts/test-offsite-borg-smoke.sh"
+                    cp ${./scripts/lib/offsite-borg-smoke.sh} "$scratch/scripts/lib/offsite-borg-smoke.sh"
+                    ${pkgs.bash}/bin/bash "$scratch/scripts/test-offsite-borg-smoke.sh"
+                    touch $out
+                  '';
 
               # Auto-discovered modules under modules/nixos/{services,desktop}/
               # are flake-parts wrappers: filename -> flake.nixosModules.<filename>.
