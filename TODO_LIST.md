@@ -46,6 +46,8 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Cross-link the flm AGENTS bullet to the snapshot-pinning doctrine table (one-line symmetry with jan.md)** → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-09-25_00-20_task-000001a0d56f35ccee2a991988d7c3a9ebd1.md §f2)
 - [ ] **Refresh the doctrine table's `/data/docker` sizing via `docker system df` (docker group, no sudo)** → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f4)
 - [ ] **Reconcile the root `@` retention anomaly (12-day-old weekly vs `snapshot_preserve 3d 1w`) and restate the doctrine's root window** → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §g1/f7)
+- [ ] **Codify "status reports self-harvest §f at authoring time" in the AGENTS.md TODO-system section (one sentence)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-25_00-39_task-000001a0d56f35ccee2a991988d7c3a9ebd1.md §f2)
+- [ ] **Codify the re-dispatch verification protocol (footers+closure → live spot-check → §f sweep → footer-bearing landing) in docs/CONTRIBUTING.md** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: same report §f3)
 - [ ] **Crush-DB migration: baseline + follow-through** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Rebuild `hot-db` + `crush-hot-db` VM tests green on the current tree (quiet-IO window)** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Samsung 2nd boot disk (boot-mirror): activation + reboot pending (deploy landed 2026-09-19)** → [docs/todo/storage.md](docs/todo/storage.md)
