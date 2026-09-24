@@ -744,10 +744,12 @@ fi
 # services.offsite-borg ships disabled and the units only render when the
 # owner flips enable, so this fires on the GO-LIVE deploy itself: the
 # tripwire + marker + sops-env wiring must land in the SAME change that
-# enables the job. Without the tripwire a PLACEHOLDER repo dies in an opaque
-# ssh error instead of the checklist pointer; without the ExecStartPost
-# marker backup-coordination pages stale forever with no path to green (the
-# cv-backup silent-no-op class).
+# enables the job, as must the ioTier.background IO tier (best-effort/6 —
+# nixpkgs' idle class starves on this box; a starved nightly job pages
+# stale with no path to green). Without the tripwire a PLACEHOLDER repo
+# dies in an opaque ssh error instead of the checklist pointer; without
+# the ExecStartPost marker backup-coordination pages stale forever with
+# no path to green (the cv-backup silent-no-op class).
 echo ""
 echo "13. Offsite Borg go-live wiring"
 # The disabled shape IS an eval error (mkIf cfg.enable hides the job from

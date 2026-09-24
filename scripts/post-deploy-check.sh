@@ -1684,9 +1684,10 @@ fi
 # The units only exist once the owner flips enable; gate on the deployed
 # unit file. Verifies the wiring surfaces the monitoring chain rides: the
 # go-live tripwire, the .last_success freshness marker (cv-backup
-# silent-no-op class), and the borg-env sops override - plus the
-# backup-coordination row landing in the textfile (backup_ever_succeeded
-# distinguishes never-worked from stale). The PLACEHOLDER verdict itself is
+# silent-no-op class), the borg-env sops override, the ioTier.background
+# IO tier (best-effort/6 grep on the deployed unit — nixpkgs' idle class
+# starves on this box), and the backup-coordination row landing in the
+# textfile (backup_ever_succeeded distinguishes never-worked from stale). The PLACEHOLDER verdict itself is
 # deliberately NOT re-derived here: the rendered borg-env is root-only 0400
 # under the 0700 sops dir (mail-relay lesson - a user-run probe cannot read
 # it), and a user-run tripwire execution would exit 0 on the unreadable
