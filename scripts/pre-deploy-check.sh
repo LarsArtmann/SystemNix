@@ -750,8 +750,26 @@ fi
 # cv-backup silent-no-op class).
 echo ""
 echo "13. Offsite Borg go-live wiring"
-BORG_SVC=$(nix eval --json .#nixosConfigurations.evo-x2.config.systemd.services.borgbackup-job-hetzner.serviceConfig 2>/dev/null || echo "")
-ob_pre_deploy "$BORG_SVC"
+# The disabled shape IS an eval error (mkIf cfg.enable hides the job from
+# systemd.services, so nix fails "does not provide attribute ..."), which is
+# why the old `|| echo ""` + empty-check silently skipped ANY eval failure —
+# daemon restarts, store hiccups, real config errors all read as "disabled".
+# Classify the raw stderr instead (the §1 block-level attribution pattern):
+# only the exact borgbackup-job-hetzner attribute-missing shape means
+# disabled → SKIP; anything else FAILS LOUD with the raw error so the gate
+# cannot blind-skip the go-live deploy it exists to gate.
+BORG_EVAL_ERR=$(mktemp)
+BORG_SVC=""
+BORG_SVC=$(nix eval --json .#nixosConfigurations.evo-x2.config.systemd.services.borgbackup-job-hetzner.serviceConfig 2>"$BORG_EVAL_ERR") || true
+if [ -n "$BORG_SVC" ]; then
+  ob_pre_deploy "$BORG_SVC"
+elif [ "$(ob_classify_eval_error "$BORG_EVAL_ERR")" = "disabled" ]; then
+  ob_pre_deploy ""
+else
+  fail "offsite-borg §13 eval failed — NOT the known disabled shape; refusing to blind-skip the go-live gate (raw error follows):"
+  tail -20 "$BORG_EVAL_ERR"
+fi
+rm -f "$BORG_EVAL_ERR"
 
 # Summary
 echo ""

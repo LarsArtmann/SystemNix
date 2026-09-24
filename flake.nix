@@ -2436,6 +2436,10 @@
                       mkdir -p $out/bin/lib
                       cp ${inner}/bin/pre-deploy-check $out/bin/pre-deploy-check
                       cp ${./scripts/lib/metrics-gate.sh} $out/bin/lib/metrics-gate.sh
+                      # §13 sources the offsite-borg smoke lib the same way;
+                      # unstaged = the gate dies at source time on EVERY deploy
+                      # (the 2026-09-02 metrics-gate staging class).
+                      cp ${./scripts/lib/offsite-borg-smoke.sh} $out/bin/lib/offsite-borg-smoke.sh
                       chmod +x $out/bin/pre-deploy-check
                     ''
                   }/bin/pre-deploy-check";
@@ -2472,6 +2476,10 @@
                       mkdir -p $out/bin/lib
                       cp ${inner}/bin/post-deploy-check $out/bin/post-deploy-check
                       cp ${./scripts/lib/pressure-report.sh} $out/bin/lib/pressure-report.sh
+                      # §16 sources the shared offsite-borg smoke lib; stage
+                      # it like pressure-report.sh or the smoke dies at source
+                      # time on every deploy.
+                      cp ${./scripts/lib/offsite-borg-smoke.sh} $out/bin/lib/offsite-borg-smoke.sh
                       # The crush smoke section resolves helpers relative to
                       # BASH_SOURCE (the store bin dir), so stage the
                       # rc-test harness too or the check always fails with

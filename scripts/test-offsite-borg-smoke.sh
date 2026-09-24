@@ -16,6 +16,10 @@
 #   pre  F  tripwire missing from ExecStartPre       → FAIL
 #   pre  F  .last_success marker missing             → FAIL
 #   pre  F  borg-env EnvironmentFile missing         → FAIL
+#   cls D  real disabled-shape eval stderr          → "disabled"
+#   cls A  nix daemon gone stderr                   → "anomaly"
+#   cls A  real config eval error stderr            → "anomaly"
+#   cls A  empty stderr                             → "anomaly"
 #   post S  unit file absent (enable = false)        → SKIP
 #   post P  tripwire exec + marker + env + prom row  → 4× PASS
 #   post F  tripwire pattern missing (wrong script)  → FAIL
@@ -55,6 +59,16 @@ expect() {
   fi
 }
 reset() { EVENTS=(); PASS=0; FAIL=0; WARN=0; SKIP=0; }
+classify_expect() {
+  local want="$1" errfile="$2" desc="$3" got
+  got=$(ob_classify_eval_error "$errfile")
+  if [ "$got" = "$want" ]; then
+    echo "  ok   [$want] $desc"
+  else
+    echo "  FAIL [$want] $desc (got: $got)"
+    TEST_FAILURES=$((TEST_FAILURES + 1))
+  fi
+}
 
 SCRATCH=$(mktemp -d)
 trap 'rm -rf "$SCRATCH"' EXIT
@@ -84,6 +98,32 @@ expect "PASS FAIL PASS" "marker missing → exactly that branch FAILs"
 reset
 ob_pre_deploy '{"ExecStartPre":"/nix/store/xxx-borg-offsite-golive-check/bin/borg-offsite-golive-check","ExecStartPost":"/nix/store/xxx-touch /var/lib/borg-offsite/.last_success","EnvironmentFile":""}'
 expect "PASS PASS FAIL" "env override missing → exactly that branch FAILs"
+
+echo "=== Eval-error classifier (ob_classify_eval_error) ==="
+
+# Real stderr shapes: the disabled case captured live (mkIf cfg.enable hides
+# the job from systemd.services, so nix reports the flake as not providing
+# the attribute), plus the transient/real-error classes that the old
+# `|| echo ""` silent-skip treated as "disabled".
+cat >"$SCRATCH/err-disabled.txt" <<'EOF'
+error: flake 'git+file:///home/lars/projects/SystemNix' does not provide attribute 'packages.x86_64-linux.nixosConfigurations.evo-x2.config.systemd.services.borgbackup-job-hetzner.serviceConfig', 'legacyPackages.x86_64-linux.nixosConfigurations.evo-x2.config.systemd.services.borgbackup-job-hetzner.serviceConfig' or 'nixosConfigurations.evo-x2.config.systemd.services.borgbackup-job-hetzner.serviceConfig'
+EOF
+cat >"$SCRATCH/err-daemon.txt" <<'EOF'
+error: Nix daemon disconnected unexpectedly (maybe it crashed?)
+EOF
+cat >"$SCRATCH/err-config.txt" <<'EOF'
+error: sops key 'borg_password' declared in sopsFiles but missing from encrypted file 'platforms/nixos/secrets/borg.yaml'
+EOF
+cat >"$SCRATCH/err-other-attr.txt" <<'EOF'
+error: flake 'git+file:///home/lars/projects/SystemNix' does not provide attribute 'packages.x86_64-linux.nixosConfigurations.evo-x2.config.systemd.services.bank-sync.serviceConfig', 'legacyPackages.x86_64-linux.nixosConfigurations.evo-x2.config.systemd.services.bank-sync.serviceConfig' or 'nixosConfigurations.evo-x2.config.systemd.services.bank-sync.serviceConfig'
+EOF
+: >"$SCRATCH/err-empty.txt"
+
+classify_expect disabled "$SCRATCH/err-disabled.txt" "borgbackup-job attribute-missing = the legit disabled shape"
+classify_expect anomaly "$SCRATCH/err-daemon.txt" "nix daemon disconnected = transient, must fail loud"
+classify_expect anomaly "$SCRATCH/err-config.txt" "real config eval error = must fail loud"
+classify_expect anomaly "$SCRATCH/err-other-attr.txt" "attribute-missing for a DIFFERENT unit = must fail loud (discriminator is path-specific)"
+classify_expect anomaly "$SCRATCH/err-empty.txt" "eval failed with no message = must fail loud"
 
 echo "=== Post-deploy §16 (ob_post_deploy) ==="
 
@@ -145,4 +185,4 @@ if [ "$TEST_FAILURES" -gt 0 ]; then
   echo "❌ offsite-borg smoke fixtures FAILED: $TEST_FAILURES assertion(s)"
   exit 1
 fi
-echo "✅ offsite-borg smoke fixtures passed (13 branches)"
+echo "✅ offsite-borg smoke fixtures passed (18 branches)"

@@ -10,6 +10,23 @@
 #   post: OB_PASS OB_FAIL OB_WARN OB_SKIP
 # and jq + sed + grep on PATH.
 
+# Classify a §13 eval failure from its raw nix stderr (file argument).
+# Echoes "disabled" ONLY for the known attribute-missing shape of the
+# borgbackup job path — with the module's mkIf cfg.enable wrapping, a
+# disabled services.offsite-borg is simply absent from systemd.services,
+# so the legit disabled case surfaces as an eval error naming this exact
+# attribute. Anything else (nix daemon restart, store hiccup, real config
+# error, substituter noise) is an "anomaly" and the caller must FAIL LOUD
+# instead of blind-skipping the go-live gate (a gate that treats every
+# eval failure as "disabled" skips precisely the deploy it exists to gate).
+ob_classify_eval_error() {
+  if grep -q "does not provide attribute.*borgbackup-job-hetzner\.serviceConfig" "$1"; then
+    echo "disabled"
+  else
+    echo "anomaly"
+  fi
+}
+
 ob_pre_deploy() {
   # $1 = rendered borgbackup-job-hetzner serviceConfig JSON ("" = disabled)
   local svc_json="$1" borg_pre borg_post borg_env
