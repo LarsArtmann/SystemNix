@@ -44,6 +44,14 @@ warn() {
 # per-site disable=SC2034 annotations.
 source "$(dirname "${BASH_SOURCE[0]}")/lib/metrics-gate.sh"
 
+# Shared offsite-borg §13 smoke logic (fixture-tested by
+# scripts/test-offsite-borg-smoke.sh and the offsite-borg-smoke-selftest
+# flake check — the go-live deploy BLOCKS on these verdicts).
+# shellcheck source=scripts/lib/offsite-borg-smoke.sh disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/lib/offsite-borg-smoke.sh"
+OB_PASS=pass OB_FAIL=fail OB_SKIP=ob_pre_skip
+ob_pre_skip() { echo "   $1"; }
+
 echo "=== Pre-Deploy Validation ==="
 echo ""
 
@@ -738,28 +746,7 @@ fi
 echo ""
 echo "13. Offsite Borg go-live wiring"
 BORG_SVC=$(nix eval --json .#nixosConfigurations.evo-x2.config.systemd.services.borgbackup-job-hetzner.serviceConfig 2>/dev/null || echo "")
-if [ -z "$BORG_SVC" ]; then
-  echo "   services.offsite-borg disabled in the to-be-deployed config — units not rendered, skipped"
-else
-  BORG_PRE=$(printf '%s' "$BORG_SVC" | jq -r '.ExecStartPre // ""' 2>/dev/null || echo "")
-  BORG_POST=$(printf '%s' "$BORG_SVC" | jq -r '.ExecStartPost // ""' 2>/dev/null || echo "")
-  BORG_ENV=$(printf '%s' "$BORG_SVC" | jq -r '.EnvironmentFile // ""' 2>/dev/null || echo "")
-  if printf '%s' "$BORG_PRE" | grep -q 'borg-offsite-golive-check'; then
-    pass "go-live tripwire wired (ExecStartPre golive-check)"
-  else
-    fail "borgbackup-job-hetzner has no go-live tripwire on ExecStartPre — enabling with a PLACEHOLDER repo fails opaquely instead of pointing at docs/services/offsite-borg.md"
-  fi
-  if printf '%s' "$BORG_POST" | grep -q '/var/lib/borg-offsite/.last_success'; then
-    pass "freshness marker wired (ExecStartPost touches .last_success)"
-  else
-    fail "borgbackup-job-hetzner has no .last_success marker (ExecStartPost) — backup-coordination pages stale forever with no path to green (cv-backup silent-no-op class)"
-  fi
-  if printf '%s' "$BORG_ENV" | grep -q 'borg-env'; then
-    pass "borg-env sops override wired (EnvironmentFile)"
-  else
-    fail "borgbackup-job-hetzner has no borg-env EnvironmentFile — BORG_REPO/BORG_RSH stay at the placeholder and the job dials the go-live.invalid dummy"
-  fi
-fi
+ob_pre_deploy "$BORG_SVC"
 
 # Summary
 echo ""

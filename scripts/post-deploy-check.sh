@@ -158,6 +158,12 @@ report_warn() {
 # flake check - the WARN/PASS semantics must never call a storm healthy).
 # shellcheck source=scripts/lib/pressure-report.sh disable=SC1091
 source "$(dirname "${BASH_SOURCE[0]}")/lib/pressure-report.sh"
+# Shared offsite-borg §16 smoke logic (fixture-tested by
+# scripts/test-offsite-borg-smoke.sh and the offsite-borg-smoke-selftest
+# flake check — the go-live smoke FAILs the post-deploy verdict on these.
+# shellcheck source=scripts/lib/offsite-borg-smoke.sh disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/lib/offsite-borg-smoke.sh"
+OB_PASS=report_pass OB_FAIL=report_fail OB_WARN=report_warn OB_SKIP=report_skip
 
 echo "=== Post-Deploy Smoke Test ==="
 echo "Domain: $DOMAIN"
@@ -1687,47 +1693,7 @@ fi
 # checklist pointer; OnFailure pages).
 echo ""
 echo "=== Offsite Borg ==="
-if [ -e /etc/systemd/system/borgbackup-job-hetzner.service ]; then
-  _borg_unit=/etc/systemd/system/borgbackup-job-hetzner.service
-  _borg_pre="$(sed -n 's/^ExecStartPre=//p' "$_borg_unit" | head -1)"
-  case "$_borg_pre" in
-  *borg-offsite-golive-check*)
-    if [ -x "$_borg_pre" ]; then
-      report_pass "Offsite Borg - go-live tripwire wired and present ($_borg_pre)"
-    else
-      report_fail "Offsite Borg - tripwire binary not executable/missing ($_borg_pre)"
-    fi
-    ;;
-  *)
-    report_fail "Offsite Borg - go-live tripwire missing from ExecStartPre ('$_borg_pre') - enabling with a PLACEHOLDER repo fails opaquely instead of pointing at docs/services/offsite-borg.md"
-    ;;
-  esac
-
-  if grep -q 'ExecStartPost=.*var/lib/borg-offsite/.last_success' "$_borg_unit"; then
-    report_pass "Offsite Borg - .last_success freshness marker wired (ExecStartPost)"
-  else
-    report_fail "Offsite Borg - .last_success marker wiring missing - backup-coordination pages stale forever with no path to green (cv-backup silent-no-op class)"
-  fi
-
-  if grep -q '^EnvironmentFile=/run/secrets/rendered/borg-env' "$_borg_unit"; then
-    report_pass "Offsite Borg - borg-env sops override wired (EnvironmentFile)"
-  else
-    report_fail "Offsite Borg - borg-env EnvironmentFile missing - BORG_REPO/BORG_RSH stay at the placeholder and the job dials the go-live.invalid dummy"
-  fi
-
-  _borg_prom=/var/lib/prometheus-node-exporter/textfile_collectors/backups.prom
-  if [ -f "$_borg_prom" ]; then
-    if grep -q '^backup_ever_succeeded{backup="offsite-borg"} ' "$_borg_prom"; then
-      report_pass "Offsite Borg - backup-coordination row live (backup_ever_succeeded present)"
-    else
-      report_warn "Offsite Borg - no backup-coordination row yet in backups.prom (5-min tick pending; still absent after a tick = registry row broke)"
-    fi
-  else
-    report_fail "Offsite Borg - backups.prom missing (backup-health-metrics unit failing; ALL backup freshness unmonitored)"
-  fi
-else
-  report_skip "Offsite Borg - not deployed (services.offsite-borg.enable = false)"
-fi
+ob_post_deploy /etc/systemd/system/borgbackup-job-hetzner.service /var/lib/prometheus-node-exporter/textfile_collectors/backups.prom
 
 # --- Summary ---
 echo ""
