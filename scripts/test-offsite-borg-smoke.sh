@@ -12,20 +12,22 @@
 #
 # Fixtures prove each verdict branch:
 #   pre  S  disabled (empty serviceConfig JSON)      → SKIP
-#   pre  P  tripwire + marker + env all wired        → 3× PASS
+#   pre  P  tripwire + marker + env + IO tier wired  → 4× PASS
 #   pre  F  tripwire missing from ExecStartPre       → FAIL
 #   pre  F  .last_success marker missing             → FAIL
 #   pre  F  borg-env EnvironmentFile missing         → FAIL
+#   pre  F  IO tier not best-effort/6                → FAIL
 #   cls D  real disabled-shape eval stderr          → "disabled"
 #   cls A  nix daemon gone stderr                   → "anomaly"
 #   cls A  real config eval error stderr            → "anomaly"
 #   cls A  empty stderr                             → "anomaly"
 #   post S  unit file absent (enable = false)        → SKIP
-#   post P  tripwire exec + marker + env + prom row  → 4× PASS
+#   post P  tripwire exec + marker + env + IO + prom → 5× PASS
 #   post F  tripwire pattern missing (wrong script)  → FAIL
 #   post F  tripwire binary present but not -x       → FAIL
 #   post F  marker wiring missing                    → FAIL
 #   post F  EnvironmentFile missing                  → FAIL
+#   post F  IO tier not best-effort/6 in unit        → FAIL
 #   post W  prom exists, no row yet (tick pending)   → WARN
 #   post F  prom missing (backup-health-metrics)     → FAIL
 # Run: bash scripts/test-offsite-borg-smoke.sh  (also a flake check)
@@ -80,24 +82,32 @@ ob_pre_deploy ""
 expect "SKIP" "disabled config → skip (not a fail — enable-gated by design)"
 
 reset
-ob_pre_deploy '{"ExecStartPre":"/nix/store/xxx-borg-offsite-golive-check/bin/borg-offsite-golive-check","ExecStartPost":"/nix/store/xxx-touch /var/lib/borg-offsite/.last_success","EnvironmentFile":"/run/secrets/rendered/borg-env"}'
-expect "PASS PASS PASS" "fully-wired serviceConfig → all three PASS"
+ob_pre_deploy '{"ExecStartPre":"/nix/store/xxx-borg-offsite-golive-check/bin/borg-offsite-golive-check","ExecStartPost":"/nix/store/xxx-touch /var/lib/borg-offsite/.last_success","EnvironmentFile":"/run/secrets/rendered/borg-env","IOSchedulingClass":"best-effort","IOSchedulingPriority":6}'
+expect "PASS PASS PASS PASS" "fully-wired serviceConfig → all four PASS"
 
 reset
 ob_pre_deploy '{"ExecStartPre":"/bin/false"}'
-expect "FAIL FAIL FAIL" "empty wiring → all three FAIL (the gate that blocks a broken go-live)"
+expect "FAIL FAIL FAIL FAIL" "empty wiring → all four FAIL (the gate that blocks a broken go-live)"
 
 reset
-ob_pre_deploy '{"ExecStartPre":"/bin/false","ExecStartPost":"/nix/store/xxx-touch /var/lib/borg-offsite/.last_success","EnvironmentFile":"/run/secrets/rendered/borg-env"}'
-expect "FAIL PASS PASS" "tripwire missing → exactly that branch FAILs"
+ob_pre_deploy '{"ExecStartPre":"/bin/false","ExecStartPost":"/nix/store/xxx-touch /var/lib/borg-offsite/.last_success","EnvironmentFile":"/run/secrets/rendered/borg-env","IOSchedulingClass":"best-effort","IOSchedulingPriority":6}'
+expect "FAIL PASS PASS PASS" "tripwire missing → exactly that branch FAILs"
 
 reset
-ob_pre_deploy '{"ExecStartPre":"/nix/store/xxx-borg-offsite-golive-check/bin/borg-offsite-golive-check","ExecStartPost":"/bin/true","EnvironmentFile":"/run/secrets/rendered/borg-env"}'
-expect "PASS FAIL PASS" "marker missing → exactly that branch FAILs"
+ob_pre_deploy '{"ExecStartPre":"/nix/store/xxx-borg-offsite-golive-check/bin/borg-offsite-golive-check","ExecStartPost":"/bin/true","EnvironmentFile":"/run/secrets/rendered/borg-env","IOSchedulingClass":"best-effort","IOSchedulingPriority":6}'
+expect "PASS FAIL PASS PASS" "marker missing → exactly that branch FAILs"
 
 reset
-ob_pre_deploy '{"ExecStartPre":"/nix/store/xxx-borg-offsite-golive-check/bin/borg-offsite-golive-check","ExecStartPost":"/nix/store/xxx-touch /var/lib/borg-offsite/.last_success","EnvironmentFile":""}'
-expect "PASS PASS FAIL" "env override missing → exactly that branch FAILs"
+ob_pre_deploy '{"ExecStartPre":"/nix/store/xxx-borg-offsite-golive-check/bin/borg-offsite-golive-check","ExecStartPost":"/nix/store/xxx-touch /var/lib/borg-offsite/.last_success","EnvironmentFile":"","IOSchedulingClass":"best-effort","IOSchedulingPriority":6}'
+expect "PASS PASS FAIL PASS" "env override missing → exactly that branch FAILs"
+
+reset
+ob_pre_deploy '{"ExecStartPre":"/nix/store/xxx-borg-offsite-golive-check/bin/borg-offsite-golive-check","ExecStartPost":"/nix/store/xxx-touch /var/lib/borg-offsite/.last_success","EnvironmentFile":"/run/secrets/rendered/borg-env"}'
+expect "PASS PASS PASS FAIL" "IO tier absent (nixpkgs idle default, mkForce dropped) → that branch FAILs"
+
+reset
+ob_pre_deploy '{"ExecStartPre":"/nix/store/xxx-borg-offsite-golive-check/bin/borg-offsite-golive-check","ExecStartPost":"/nix/store/xxx-touch /var/lib/borg-offsite/.last_success","EnvironmentFile":"/run/secrets/rendered/borg-env","IOSchedulingClass":"idle","IOSchedulingPriority":6}'
+expect "PASS PASS PASS FAIL" "IO tier at nixpkgs' idle class → that branch FAILs"
 
 echo "=== Eval-error classifier (ob_classify_eval_error) ==="
 
@@ -143,46 +153,53 @@ cat >"$UNIT" <<EOF
 ExecStartPre=$TRIPWIRE
 ExecStartPost=/nix/store/xxx-touch /var/lib/borg-offsite/.last_success
 EnvironmentFile=/run/secrets/rendered/borg-env
+IOSchedulingClass=best-effort
+IOSchedulingPriority=6
 EOF
 printf 'backup_ever_succeeded{backup="offsite-borg"} 1\n' >"$PROM"
 
 reset
 ob_post_deploy "$UNIT" "$PROM"
-expect "PASS PASS PASS PASS" "fully-deployed wiring + prom row → 4× PASS"
+expect "PASS PASS PASS PASS PASS" "fully-deployed wiring + prom row → 5× PASS"
 
 reset
 sed 's|ExecStartPre=.*|ExecStartPre=/bin/false|' "$UNIT" >"$SCRATCH/wrong-tripwire.service"
 ob_post_deploy "$SCRATCH/wrong-tripwire.service" "$PROM"
-expect "FAIL PASS PASS PASS" "wrong tripwire script → pattern branch FAILs"
+expect "FAIL PASS PASS PASS PASS" "wrong tripwire script → pattern branch FAILs"
 
 reset
 sed 's|ExecStartPre=.*|ExecStartPre='$SCRATCH'/not-executable|' "$UNIT" >"$SCRATCH/nonexec.service"
 : >"$SCRATCH/not-executable"
 ob_post_deploy "$SCRATCH/nonexec.service" "$PROM"
-expect "FAIL PASS PASS PASS" "present-but-non-executable tripwire → FAIL"
+expect "FAIL PASS PASS PASS PASS" "present-but-non-executable tripwire → FAIL"
 
 reset
 grep -v '^ExecStartPost=' "$UNIT" >"$SCRATCH/no-marker.service"
 ob_post_deploy "$SCRATCH/no-marker.service" "$PROM"
-expect "PASS FAIL PASS PASS" "marker line missing → that branch FAILs"
+expect "PASS FAIL PASS PASS PASS" "marker line missing → that branch FAILs"
 
 reset
 grep -v '^EnvironmentFile=' "$UNIT" >"$SCRATCH/no-env.service"
 ob_post_deploy "$SCRATCH/no-env.service" "$PROM"
-expect "PASS PASS FAIL PASS" "env line missing → that branch FAILs"
+expect "PASS PASS FAIL PASS PASS" "env line missing → that branch FAILs"
+
+reset
+grep -v '^IOScheduling' "$UNIT" >"$SCRATCH/no-io.service"
+ob_post_deploy "$SCRATCH/no-io.service" "$PROM"
+expect "PASS PASS PASS FAIL PASS" "IO tier lines missing (mkForce dropped / unit drifted) → that branch FAILs"
 
 reset
 printf '# other backups only\nbackup_healthy{backup="cv"} 1\n' >"$PROM"
 ob_post_deploy "$UNIT" "$PROM"
-expect "PASS PASS PASS WARN" "prom present without the row → WARN (5-min tick pending)"
+expect "PASS PASS PASS PASS WARN" "prom present without the row → WARN (5-min tick pending)"
 
 reset
 ob_post_deploy "$UNIT" "$SCRATCH/no-such.prom"
-expect "PASS PASS PASS FAIL" "prom missing → FAIL (backup-health-metrics unit failing)"
+expect "PASS PASS PASS PASS FAIL" "prom missing → FAIL (backup-health-metrics unit failing)"
 
 echo ""
 if [ "$TEST_FAILURES" -gt 0 ]; then
   echo "❌ offsite-borg smoke fixtures FAILED: $TEST_FAILURES assertion(s)"
   exit 1
 fi
-echo "✅ offsite-borg smoke fixtures passed (18 branches)"
+echo "✅ offsite-borg smoke fixtures passed (21 branches)"

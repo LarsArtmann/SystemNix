@@ -52,6 +52,13 @@ ob_pre_deploy() {
   else
     "$OB_FAIL" "borgbackup-job-hetzner has no borg-env EnvironmentFile — BORG_REPO/BORG_RSH stay at the placeholder and the job dials the go-live.invalid dummy"
   fi
+  borg_io_class=$(printf '%s' "$svc_json" | jq -r '.IOSchedulingClass // ""' 2>/dev/null || echo "")
+  borg_io_prio=$(printf '%s' "$svc_json" | jq -r '.IOSchedulingPriority // ""' 2>/dev/null || echo "")
+  if [ "$borg_io_class" = "best-effort" ] && [ "$borg_io_prio" = "6" ]; then
+    "$OB_PASS" "IO tier wired (IOSchedulingClass=best-effort, IOSchedulingPriority=6 — ioTier.background)"
+  else
+    "$OB_FAIL" "borgbackup-job-hetzner IO tier is '${borg_io_class:-absent}/${borg_io_prio:-absent}', not best-effort/6 — nixpkgs' idle class STARVES on this box (a starved nightly job pages stale with no path to green; the ioTier.background deliverable, lib/default.nix ioTier doctrine)"
+  fi
 }
 
 ob_post_deploy() {
@@ -85,6 +92,12 @@ ob_post_deploy() {
     "$OB_PASS" "Offsite Borg - borg-env sops override wired (EnvironmentFile)"
   else
     "$OB_FAIL" "Offsite Borg - borg-env EnvironmentFile missing - BORG_REPO/BORG_RSH stay at the placeholder and the job dials the go-live.invalid dummy"
+  fi
+
+  if grep -q '^IOSchedulingClass=best-effort' "$unit_path" && grep -q '^IOSchedulingPriority=6' "$unit_path"; then
+    "$OB_PASS" "Offsite Borg - IO tier wired (best-effort/6 — ioTier.background)"
+  else
+    "$OB_FAIL" "Offsite Borg - IO tier not best-effort/6 in the deployed unit - nixpkgs' idle class starves on this box; a starved nightly job pages stale with no path to green (ioTier.background deliverable)"
   fi
 
   if [ -f "$prom_path" ]; then
