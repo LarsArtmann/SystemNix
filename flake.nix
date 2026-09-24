@@ -1917,6 +1917,52 @@
                     touch $out
                   '';
 
+              # Offsite-borg positive-path render guard (2026-09-24 queue:
+              # persists the 2026-09-23 §a6 hand probe that otherwise had to
+              # be re-run at every dispatch). Renders evo-x2 with
+              # services.offsite-borg.enable = true and asserts the FOUR
+              # go-live deliverables land on the job unit at EVAL time:
+              # BE/6 IO tier (the ioTier.background mkForce intact — both a
+              # dropped force and a re-collide-to-nixpkgs-idle fail), the
+              # go-live tripwire ExecStartPre, the .last_success freshness
+              # marker ExecStartPost, and the borg-env EnvironmentFile
+              # (compared against the sops template's own .path, so drift on
+              # either side fails). Pure eval — fires on every
+              # `nix flake check`, including --no-build (asserts run when
+              # the check attr is forced; deepSeq pattern of
+              # disko-samsung-tlc). The priority-50 override is required:
+              # configuration.nix sets enable = false as a PLAIN value
+              # (status report 2026-09-23_10-05 §a6).
+              offsite-borg-positive-render =
+                let
+                  sys = inputs.self.nixosConfigurations.evo-x2.extendModules {
+                    modules = [
+                      {
+                        services.offsite-borg.enable = lib.mkOverride 50 true;
+                      }
+                    ];
+                  };
+                  svc = sys.config.systemd.services.borgbackup-job-hetzner.serviceConfig;
+                  envTemplate = sys.config.sops.templates."borg-env".path;
+                  # Exec* lines render as a single string today; tolerate a
+                  # list in case nixpkgs' borgbackup module ever merges its
+                  # own Exec entries.
+                  execLines = x: if lib.isList x then lib.concatStringsSep "\n" x else toString x;
+                  renderGuards =
+                    assert svc.IOSchedulingClass == "best-effort";
+                    assert toString svc.IOSchedulingPriority == "6";
+                    assert lib.hasInfix "borg-offsite-golive-check" (execLines svc.ExecStartPre);
+                    assert lib.hasInfix "/var/lib/borg-offsite/.last_success" (execLines svc.ExecStartPost);
+                    assert execLines svc.EnvironmentFile == envTemplate;
+                    assert lib.hasSuffix "borg-env" envTemplate;
+                    true;
+                in
+                builtins.deepSeq renderGuards (
+                  pkgs.runCommand "offsite-borg-positive-render-check" { } ''
+                    echo "offsite-borg positive-path render OK (BE/6 + tripwire + marker + borg-env)" > $out
+                  ''
+                );
+
               # Auto-discovered modules under modules/nixos/{services,desktop}/
               # are flake-parts wrappers: filename -> flake.nixosModules.<filename>.
               # A bare NixOS module evaluates its let-bindings in the WRONG
