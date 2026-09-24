@@ -388,6 +388,21 @@ in
       target = 1;
       interval = "5m";
     };
+    # T17 (sweep-storm plan): discordsync unit read-storm detection. The
+    # integrity sweep is paced at INTEGRITY_SWEEP_MAX_MBPS (default 100 MB/s)
+    # and backfill bursts are download-bound — a unit SUSTAINING more than
+    # 150 MB/s of reads for 10 straight minutes means pacing failed or a
+    # non-sweep read loop is running (the 2026-09-02 class that saturated
+    # the SSD while every other signal stayed green). Metric source: the
+    # discordsync-io-metrics textfile collector (systemd IOAccounting).
+    "signoz/rules/discordsync-read-storm.json".source = mkRule {
+      name = "DiscordSync Read Storm (>150MB/s for 10m)";
+      description = "discordsync unit is reading above 150 MB/s sustained for 10 minutes — integrity-sweep pacing failed or a non-sweep read loop is running (2026-09-02 SSD-saturation class)";
+      query = "rate(discordsync_unit_io_read_bytes[10m])";
+      target = 157286400;
+      interval = "10m";
+      severity = "warning";
+    };
   };
 
   dashboards = {
