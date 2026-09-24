@@ -1432,8 +1432,95 @@
               # `/run/secrets/*` existence checks and `[ -e ]` is a bash
               # builtin that cannot be stubbed — the secrets-missing die is
               # its direct predecessor and is asserted instead.
+              #
+              # Env-path-pin negative case (folded 2026-09-25 per
+              # TODO_LIST/storage.md): the eval-time assertion in
+              # platforms/nixos/system/backup.nix pins the drill's
+              # BORG_ENV_FILE default to the rendered borg-env sops template;
+              # the 2026-09-23 drift probe was hand-run once and ephemeral, so
+              # the folded asserts below are its standing regression
+              # (test-sops-key-audit shape — pass/fail chosen at eval, fires on
+              # every flake check incl. --no-build): control (real module
+              # passes), script drift (a sed-drifted COPY of the drill fed to a
+              # single-anchor copy of backup.nix — the module's lib import
+              # stays lazy while dormant, so the toFile'd copy only needs the
+              # script line rewritten), and template-path override (a forced
+              # sops.templates."borg-env".path must fire the pin too). Both
+              # drift directions run in a MINIMAL nixosSystem co-importing the
+              # integration module: backup.nix defines services.integration
+              # unconditionally and the empty definition at the undeclared path
+              # errors otherwise; evo-x2's full assertions list is NOT forced
+              # here — on the enabled shape it realizes the monitor365
+              # prepared-source context, which cannot build (private crate).
               borg-restore-drill-fixture =
-                pkgs.runCommand "borg-restore-drill-fixture"
+                let
+                  pinMessage = "borg-restore-drill env-path pin";
+                  failingPin =
+                    assertions:
+                    builtins.filter (
+                      a: !a.assertion && lib.hasInfix pinMessage a.message
+                    ) assertions;
+                  pinAssertionsOf =
+                    modules:
+                    (inputs.nixpkgs.lib.nixosSystem {
+                      inherit system;
+                      modules = modules;
+                    }).config.assertions;
+
+                  scriptAnchor = "drillScript = builtins.readFile ../../../scripts/borg-restore-drill.sh;";
+                  backupSrc = builtins.readFile ./platforms/nixos/system/backup.nix;
+                  driftedScriptFile = builtins.toFile "borg-restore-drill-drifted.sh" (
+                    lib.replaceStrings
+                      [ "/run/secrets/rendered/borg-env" ]
+                      [ "/run/secrets/rendered/borg-env-DRIFT" ]
+                      (builtins.readFile ./scripts/borg-restore-drill.sh)
+                  );
+                  driftedBackupSrc = lib.replaceStrings
+                    [ scriptAnchor ]
+                    [ "drillScript = builtins.readFile ${toString driftedScriptFile};" ]
+                    backupSrc;
+                  driftedModule = import (builtins.toFile "backup-drifted.nix" driftedBackupSrc);
+
+                  # enable=true + declared template so the guard consults the
+                  # template's .path (while dormant it pins the sops-nix
+                  # default shape, making a path override inert).
+                  templateOverrideModules = [
+                    inputs.self.nixosModules.integration
+                    inputs.sops-nix.nixosModules.sops
+                    ./platforms/nixos/system/backup.nix
+                    {
+                      services.offsite-borg.enable = true;
+                      sops.templates."borg-env".content = "BORG_REPO=x";
+                      sops.templates."borg-env".path =
+                        lib.mkOverride 50 "/run/secrets/rendered/borg-env-DRIFT";
+                    }
+                  ];
+
+                  controlFailing = failingPin (pinAssertionsOf [
+                    inputs.self.nixosModules.integration
+                    ./platforms/nixos/system/backup.nix
+                  ]);
+                  scriptDriftFailing = failingPin (pinAssertionsOf [
+                    inputs.self.nixosModules.integration
+                    driftedModule
+                  ]);
+                  templateDriftFailing = failingPin (pinAssertionsOf templateOverrideModules);
+
+                  pinGuards =
+                    if driftedBackupSrc == backupSrc then
+                      throw "borg-restore-drill-fixture: env-pin negative-case anchor no longer matches platforms/nixos/system/backup.nix — update scriptAnchor in the fixture"
+                    else
+                      assert controlFailing == [ ];
+                      assert scriptDriftFailing != [ ];
+                      assert lib.hasInfix
+                        ''BORG_ENV_FILE="''${BORG_ENV_FILE:-/run/secrets/rendered/borg-env}"''
+                        (builtins.head scriptDriftFailing).message;
+                      assert templateDriftFailing != [ ];
+                      assert lib.hasInfix "borg-env-DRIFT" (builtins.head templateDriftFailing).message;
+                      true;
+                in
+                builtins.deepSeq pinGuards (
+                  pkgs.runCommand "borg-restore-drill-fixture"
                   {
                     nativeBuildInputs = with pkgs; [
                       bash
@@ -1558,8 +1645,9 @@
                     need_rc deep 0; need_has deep "deep-integrity: OK"
                     need_has deep "result           : PASS"
 
-                    echo "PASS: borg-restore-drill fixture (root-gate, bogus-local, no-config, placeholder, secrets-missing, happy-local, verify-data)" > "$out"
-                  '';
+                    echo "PASS: borg-restore-drill fixture (root-gate, bogus-local, no-config, placeholder, secrets-missing, happy-local, verify-data, env-pin-drift)" > "$out"
+                  ''
+                );
 
               # Behavioral fixture for the browser-history probe-registration
               # purge (2026-09-18 gate-verification residue). Runs the REAL
