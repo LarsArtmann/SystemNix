@@ -52,7 +52,7 @@ let
       inherit (finalAttrs) src sourceRoot pname;
       pnpm = pkgs.pnpm_10;
       fetcherVersion = 3;
-      hash = "sha256-3IiQUkVBxP0B2y+XobvahVljysh4JXknHyDa4KPpSLw=";
+      hash = "sha256-7r+rqIccSazxYI5rTpwpEbTyM/ZXF7m+59xitm5bdR0=";
     };
 
     nativeBuildInputs = [
@@ -93,7 +93,7 @@ let
     };
   });
 
-  collectorVendorHash = "sha256-BYYyzlC8KGo4XqWp7K0xJt2hoPFYPLqHdDwzucIBcKo=";
+  collectorVendorHash = "sha256-pJ9QufxlWHupZA67TpvUNx/4OJmou7DaBa/XNOn/9+g=";
 
   schemaMigrator = buildGoModule {
     pname = "signoz-schema-migrator";

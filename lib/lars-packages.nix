@@ -33,14 +33,10 @@ lib.filterAttrs (_: v: v != null) {
   # Re-add ONLY via nix-hash-fix evidence, never by hand.
   buildflow = flakePkg inputs.buildflow;
   cqrs-lint = inputs.go-cqrs-lite.packages.${system}.cqrs-lint or null;
-  # TEMPORARY vendorHash shim (2026-09-23): the lock wave re-locked erraudit
-  # to f3929290 whose FOD content re-resolved under nixpkgs 6774f7bc, so the
-  # upstream vendorHash no longer reproduces (got dPMFk3hy… vs specified
-  # yfOgUIJr…). The upstream fix is not yet pushed; drop when the lock moves
-  # past a pushed upstream-fixed rev. Same shape as the buildflow shim.
-  erraudit = (flakePkg inputs.erraudit).overrideAttrs {
-    vendorHash = "sha256-dPMFk3hywdHAX2fqgqaf0eJxHEv1vuMbKErg08Oocnk=";
-  };
+  # erraudit shim DROPPED (2026-09-24): lock erraudit_3 = 1c85610 whose
+  # upstream flake bakes the reproducing vendorHash (eGg9GDlf…) — the
+  # shim's own drop condition is met.
+  erraudit = flakePkg inputs.erraudit;
   go-auto-upgrade = flakePkg inputs.go-auto-upgrade;
   go-humanize-linter = flakePkg inputs.go-humanize-linter;
   go-structure-linter = flakePkg inputs.go-structure-linter;
