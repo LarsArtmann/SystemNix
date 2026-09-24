@@ -43,10 +43,22 @@ WARN=0
 SKIP=0
 EVENTS=()
 
-ob_pass() { EVENTS+=("PASS"); PASS=$((PASS + 1)); }
-ob_fail() { EVENTS+=("FAIL"); FAIL=$((FAIL + 1)); }
-ob_warn() { EVENTS+=("WARN"); WARN=$((WARN + 1)); }
-ob_skip() { EVENTS+=("SKIP"); SKIP=$((SKIP + 1)); }
+ob_pass() {
+  EVENTS+=("PASS")
+  PASS=$((PASS + 1))
+}
+ob_fail() {
+  EVENTS+=("FAIL")
+  FAIL=$((FAIL + 1))
+}
+ob_warn() {
+  EVENTS+=("WARN")
+  WARN=$((WARN + 1))
+}
+ob_skip() {
+  EVENTS+=("SKIP")
+  SKIP=$((SKIP + 1))
+}
 # shellcheck disable=SC2034 # OB_* are read inside the sourced lib via indirection
 OB_PASS=ob_pass OB_FAIL=ob_fail OB_WARN=ob_warn OB_SKIP=ob_skip
 
@@ -60,7 +72,13 @@ expect() {
     TEST_FAILURES=$((TEST_FAILURES + 1))
   fi
 }
-reset() { EVENTS=(); PASS=0; FAIL=0; WARN=0; SKIP=0; }
+reset() {
+  EVENTS=()
+  PASS=0
+  FAIL=0
+  WARN=0
+  SKIP=0
+}
 classify_expect() {
   local want="$1" errfile="$2" desc="$3" got
   got=$(ob_classify_eval_error "$errfile")
