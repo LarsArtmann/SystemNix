@@ -103,6 +103,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Guard/crash-forensics follow-ups (crash2 + freeze-3 reviews)** → [docs/todo/stability.md](docs/todo/stability.md)
 - [ ] **pool-recovery residual wiring** → [docs/todo/stability.md](docs/todo/stability.md)
 - [ ] **Root-cause idle-disk/no-D-state IO PSI accounting (pressure gate's corpse heuristic is stale)** → [docs/todo/stability.md](docs/todo/stability.md)
+- [ ] **Break the `hot-user-caches-nix-bootstrap` ↔ `systemd-tmpfiles-setup` boot ordering cycle (systemd deletes tmpfiles-setup from the boot transaction → NO boot tmpfiles rules → `/run/binfmt` missing → EVERY sandbox build fails `getting attributes of path "/run/binfmt"`, the root cause of the pipeline row's 2026-09-25 `treefmt.drv`/`disko-layout` "is not valid" instances) + add a tmpfiles-applied boot tripwire** → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-09-25_02-00_task-000001a0d5af4c01977b1f874e6689edcaae.md §c)
 
 ### monitoring
 
