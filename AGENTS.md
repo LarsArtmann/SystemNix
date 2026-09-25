@@ -663,7 +663,7 @@ Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<do
 | `/data/ai/models/jan` (92G, near-all `llamacpp/`)  | /data ≈ 4-5w        | Jan auto-prune of old engine dirs + model deletes; tree must stay INSIDE the data folder (PATH GUARD, jan.md)    |
 | `/data/ai/models/fastflowlm` (23G)                 | /data ≈ 4-5w        | a version-bump re-pull OVERWRITES `model.q4nx` in place — old AND new weights both resident through the window   |
 | `/data/ai/models/ollama` (15G) + `gguf` (2.2G)     | /data ≈ 4-5w        | ollama model deletes; llama-rag re-fetch overwrites the bge pair                                                |
-| `/data/docker` (root-only tree; ~20G era 2026-08-31)| /data ≈ 4-5w       | `docker-prune` reclaims sit in the same window — post-prune `df` lags by up to a month                          |
+| `/data/docker` (root-only tree; ~15.5G per `docker system df` 2026-09-25: images 9.1G + volumes 4.3G + build cache 2.1G, ~9.9G / 64% reclaimable)| /data ≈ 4-5w       | `docker-prune` reclaims sit in the same window — post-prune `df` lags by up to a month                          |
 | `/btrfs-emergency-reserve` (10G)                   | root ≈ 1-2w         | the T14 caveat (Emergency reserve, below)                                                                       |
 | `~/projects` and the rest of `/home` (lives in `@`)| root ≈ 1-2w         | repo trees / vendored deps; `@home-hermes` same window                                                          |
 
