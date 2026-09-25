@@ -1,10 +1,15 @@
 {
+  config,
   pkgs,
   lib,
   ...
 }:
 let
-  inherit (import ../../../lib/default.nix lib) ioTier;
+  inherit (import ../../../lib/default.nix lib)
+    harden
+    ioTier
+    serviceOneshotDefaults
+    ;
 
   # Ceiling for active GPU buffer object allocations (TTM pages, 4 KiB each).
   # 31457280 pages × 4096 = 120 GiB. GTT-first architecture (2026-09-02): the BIOS
@@ -152,6 +157,36 @@ in
     # entry instead — switch-to-configuration sees the unit disappear and tries
     # to unmount /tmp, which fails (busy) → activation exit code 1.
     tmp.useTmpfs = false;
+  };
+
+  # The binfmt module puts /run/binfmt on nix.settings.extra-sandbox-paths and
+  # creates the dir via a TMPFILES rule — so if systemd-tmpfiles-setup.service
+  # is ever deleted from the boot transaction (the 2026-09-24 22:35
+  # hot-user-caches ordering-cycle class), the rule never runs, the dir is
+  # missing for the whole boot, and the nix daemon's build-sandbox setup stats
+  # it on EVERY build: `getting attributes of path "/run/binfmt": No such file
+  # or directory`. All sandboxed builds die, and eval surfaces it as unrelated
+  # repo-shaped errors (formatter/check/toplevel `is not valid`) — the
+  # pre-commit flake-check gate read as broken code across ~10 --no-verify
+  # commits before the root cause was found in the boot journal. This oneshot
+  # makes the build-sandbox bind source independent of tmpfiles-setup's fate.
+  # NO ordering edges on purpose (the 2026-09-20 lesson: any edge reaching the
+  # sysinit/local-fs transaction risks another cycle); nothing on this host
+  # requests a nix build before multi-user.target. harden{} is safe here —
+  # its ProtectSystem=full leaves /run writable (strict would demand a
+  # ReadWritePaths entry for the very path this unit creates: the 226
+  # chicken-and-egg class). Gated to the same condition binfmt.nix uses to
+  # set the sandbox path, so binfmt-less hosts/VMs get no phantom unit.
+  systemd.services.binfmt-sandbox-dir = lib.mkIf (
+    config.boot.binfmt.addEmulatedSystemsToNixSandbox && config.boot.binfmt.emulatedSystems != [ ]
+  ) {
+    description = "Ensure /run/binfmt exists (nix build sandbox bind source)";
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = lib.mkMerge [
+      (harden { })
+      (serviceOneshotDefaults { })
+      { ExecStart = "${pkgs.coreutils}/bin/mkdir -p /run/binfmt"; }
+    ];
   };
 
   # USB HDD enclosure tuning — JMicron JMS567 (152d:0567) BOT bridge
