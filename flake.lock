@@ -5440,11 +5440,11 @@
         "treefmt-nix": "treefmt-nix_10"
       },
       "locked": {
-        "lastModified": 1790209645,
-        "narHash": "sha256-ANBzq5J/8Nfq/ch4+28ubRC2mM6PvVBiS/W7rJloa2c=",
+        "lastModified": 1790356308,
+        "narHash": "sha256-KoIJoNSWCdvC7cbL/i3Bdk/TSrtGB6xBiObY/8sjRg4=",
         "owner": "LarsArtmann",
         "repo": "InboxClean",
-        "rev": "0b14f67a460e739186b71217a55e997a5d4e8b47",
+        "rev": "6a5f5c4916b3b933ed9101430bd794b0e11da9e7",
         "type": "github"
       },
       "original": {
@@ -6237,11 +6237,11 @@
         "treefmt-nix": "treefmt-nix_12"
       },
       "locked": {
-        "lastModified": 1790241732,
-        "narHash": "sha256-I+qAnSx43qVUW0rzMTcHUfr5j+huEBLq7iXN7BccrFU=",
+        "lastModified": 1790356493,
+        "narHash": "sha256-jHH1x5NQOD/2PApVWxvqQlvEv6mpa60g7vsCBR895QE=",
         "owner": "LarsArtmann",
         "repo": "PapDashboard",
-        "rev": "3013e3ea8b4d83fe8850595291d7837af9324c33",
+        "rev": "bdb050926fcef2bda8a94180b666d9a159d1a6d9",
         "type": "github"
       },
       "original": {
