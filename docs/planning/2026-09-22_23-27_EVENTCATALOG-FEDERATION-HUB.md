@@ -1,7 +1,8 @@
 # EventCatalog Federation Hub — Comprehensive Pareto Plan
 
-> **Status addendum (2026-09-24): HUB PHASE SHIPPED OUT-OF-BAND; SystemNix
-> tiers NOT STARTED.** The hub repo (`eventcatalog-hub`, local Forgejo
+> **Status addendum (2026-09-24; CORRECTED 2026-09-25): HUB PHASE SHIPPED
+> OUT-OF-BAND; SystemNix serving leg LANDED IN-TREE 2026-09-23 (deploy
+> owner-gated, NOT live).** The hub repo (`eventcatalog-hub`, local Forgejo
 > mirror `lars/eventcatalog-hub`) now implements Option B end-to-end:
 > CI-generated source trees from Forgejo mirrors, `merge.py` union-merge
 > with a strict governance gate (owners union, bare→versioned ref
@@ -16,11 +17,17 @@
 > execution evidence: go-cqrs-lite
 > `docs/planning/2026-09-23_22-12_SUPERB-data-mesh-federation-pareto-plan.md`
 > + `docs/status/2026-09-24_13-32_data-mesh-completion-session.md`.
-> **Still open here:** the hub build workflow has NEVER published a `dist`
-> branch (owner: run `scripts/setup-forgejo.sh` on evo-x2 / check the
-> Actions tab), and every SystemNix-side task in this plan (DNS/
-> protectedVHost Layer 2, Gatus check, evo-x2 pull timer) remains not
-> started — the serving chain cannot go live before the dist publish does.
+> **Still open here (owner-gated go-live, runbook
+> `docs/services/architecture-catalog.md`):** the hub build workflow has
+> NEVER published a `dist` branch (owner: run `scripts/setup-forgejo.sh`
+> on evo-x2 / check the Actions tab). The SystemNix serving leg is IN-TREE
+> (see the §9 verification record: `architecture-catalog.nix` module,
+> DNS/protectedVHost Layer 2, Gatus checks, sops scaffold, pull timer —
+> `nix flake check --no-build` green) but ships PLACEHOLDER-inert and is
+> NOT deployed: live probes 2026-09-25 found no
+> `/var/lib/architecture-catalog/` state dir and `catalog.home.lan`
+> unresolvable. Go-live = dist publish → sops token paste → `nix run
+> .#deploy` → first `architecture-catalog-sync` run.
 > Original plan text below, unchanged.
 
 - **Date:** 2026-09-22 23:27 CEST · **REV 3** (2026-09-23, owner decisions landed) · REV 2 (2026-09-23, self-review pass)
