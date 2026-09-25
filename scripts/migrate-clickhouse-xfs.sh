@@ -281,7 +281,7 @@ NEXT STEPS:
       after step 2 is green)
 
 The OLD data stays safely shadowed under the mount until finalize, and is
-additionally pinned by btrbk root snapshots (3d+1w local, forever pool-side).
+additionally pinned by btrbk root snapshots (root pin window = 2w sharp, calendar-anchored; pool-side receives forever).
 EOF
 }
 
@@ -350,7 +350,7 @@ finalize() {
   # ── Pre-deletion snapshot of @ (the zero-risk recovery point) ──────────
   # The nightly btrbk snapshot may be hours stale; this readonly CoW
   # snapshot pins the EXACT pre-deletion bytes. Cost is ~zero: the extents
-  # are already pinned by the 3d+1w retention snapshots until they expire.
+  # are already pinned by the btrbk retention snapshots until they expire (root pin window = 2w sharp).
   # Placed OUTSIDE .snapshots so btrbk retention never touches it.
   mount "$BTRFS_ROOT" 2>/dev/null || true
   findmnt -t btrfs -n "$BTRFS_ROOT" >/dev/null 2>&1 ||
@@ -389,8 +389,8 @@ finalize() {
 
   cat <<EOF
 
-${GREEN}FINALIZE COMPLETE.${NC} Root-fs space frees GRADUALLY as the 3d+1w
-btrbk root snapshots referencing those extents expire (and pool-side
+${GREEN}FINALIZE COMPLETE.${NC} Root-fs space frees GRADUALLY as the root pin
+window (2w sharp, calendar-anchored) drains: snapshots referencing those extents expire (and pool-side
 receives keep their copies forever, per retention policy).
 
 RECOVERY POINT: the exact pre-deletion state of the old data is preserved
