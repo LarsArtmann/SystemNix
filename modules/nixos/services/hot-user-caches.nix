@@ -116,15 +116,34 @@ _: {
         systemd.services = lib.mapAttrs' (
           name: cache:
           let
-            automountUnit = "${utils.escapeSystemdPath cache.mountPoint}.automount";
+            mountUnit = "${utils.escapeSystemdPath cache.mountPoint}.mount";
           in
           lib.nameValuePair "hot-user-caches-${name}-bootstrap" {
             description = "Idempotently create the ${name} cache subvolume on the hot disk";
-            # The automount unit pulls this in at boot and waits (before):
-            # the autofs trigger must never answer a lookup before the
-            # subvol exists.
-            wantedBy = [ automountUnit ];
-            before = [ automountUnit ];
+            # The on-demand .MOUNT pulls this in at first access and waits
+            # (before): the autofs-triggered mount must never run before the
+            # subvol exists. NEVER wire wantedBy=/before= against the
+            # .AUTOMOUNT unit: at boot the fstab automount sits inside the
+            # local-fs/sysinit transaction together with
+            # systemd-tmpfiles-setup.service, and any ordering edge from this
+            # unit onto the automount closes a cycle whose victim is the
+            # TMPFILES start job — systemd deletes it to break the cycle
+            # ("Job systemd-tmpfiles-setup.service/start deleted to break
+            # ordering cycle"), the main tmpfiles pass NEVER RUNS, and
+            # /run/binfmt (nix build sandbox), /run/systemnix/sev1,
+            # /run/lock/* silently never exist for the whole boot (live
+            # 2026-09-24 22:35, the FIRST boot after deploy — every sandboxed
+            # nix build died "getting attributes of path /run/binfmt" and
+            # sev1-bridge 226'd 2900x). DefaultDependencies=false alone does
+            # NOT prevent this: the 2026-09-20 activation-cycle fix removed
+            # only the bootstrap's own sysinit deps; the automount-edge
+            # triangle still cycles at BOOT. Pulling from the .mount instead
+            # keeps this unit OUT of the boot transaction entirely; the
+            # subvol is created just before the first real mount, the only
+            # moment it is needed (tests/test-hot-user-caches.nix pins the
+            # regression).
+            wantedBy = [ mountUnit ];
+            before = [ mountUnit ];
             after = [ "mnt-hot.mount" ];
             wants = [ "mnt-hot.mount" ];
             # DefaultDependencies=false: default service deps add

@@ -413,6 +413,18 @@ if nix run .#pre-deploy-check; then
     fi
   fi
 
+  # Tmpfiles heal: re-run the CREATE pass after every switch. A boot can
+  # silently LOSE systemd-tmpfiles-setup.service — an ordering-cycle break
+  # deletes its start job ("Job systemd-tmpfiles-setup.service/start deleted
+  # to break ordering cycle", live 2026-09-24 22:35 via the hot-user-caches
+  # automount triangle) — leaving /run/binfmt (nix sandbox
+  # extra-sandbox-paths), /run/systemnix/sev1, /run/lock/* nonexistent for
+  # the whole boot: every sandboxed nix build dies "getting attributes of
+  # path /run/binfmt". Idempotent + cheap; NO --boot flag (boot-only rules
+  # like `D! /tmp` must stay boot-only or every deploy would wipe /tmp).
+  echo "Healing /run tmpfiles entries (systemd-tmpfiles --create)..."
+  sudo systemd-tmpfiles --create --remove --exclude-prefix=/dev 2>/dev/null || true
+
   # Generation trail (2026-08-24 crash3 lesson: a stale rollback boot ran
   # for days unnoticed): print the generation this deploy produced and
   # verify the RUNNING system is anchored to it — an unanchored
