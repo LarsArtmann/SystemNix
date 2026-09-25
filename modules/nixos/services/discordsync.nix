@@ -534,8 +534,12 @@
               # (missed heartbeats) under backfill load. 200% covers GC
               # concurrency plus one busy worker while still capping a
               # runaway hot loop (decode spin, retry storm) at 2 of 32 cores,
-              # leaving the rest of the host untouched.
-              CPUQuota = "200%";
+              # leaving the rest of the host untouched. mkForce REQUIRED:
+              # upstream nixos-module.nix declares CPUQuota = "100%" at plain
+              # priority, which beats harden{}'s mkDefault (eval-proven
+              # 2026-09-25: rendered 100% until forced; same class as
+              # MemoryMax above).
+              CPUQuota = lib.mkForce "200%";
             })
             # Upstream declares ReadWritePaths = [ dataDir ] at plain
             # priority, which beats harden{}'s mkDefault — the pool leaf is
