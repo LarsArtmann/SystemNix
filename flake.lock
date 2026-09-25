@@ -6481,11 +6481,11 @@
         "samber-do-auditlog": "samber-do-auditlog_7"
       },
       "locked": {
-        "lastModified": 1790306288,
-        "narHash": "sha256-XS78JN7JXVqX33gQiCzVw2+A1btWtVZRC4Y7I5/jRO4=",
+        "lastModified": 1790356619,
+        "narHash": "sha256-lWuyQSXAEgs7ISRiCGHgSy4I5BQTsDbun/q+ZJk4Flc=",
         "owner": "LarsArtmann",
         "repo": "projects-management-automation",
-        "rev": "de72ca76e09bf6c6d3a1d8fc4eb228ded21fb01e",
+        "rev": "2a8f2cdace0d137570612971aad2e35c1c7ff7bf",
         "type": "github"
       },
       "original": {
