@@ -932,20 +932,32 @@
           # JS is generated content; prettier expands the 3.6 MB bundle to
           # 7.8 MB and that churn has oscillated the blob in git history
           # repeatedly — 2026-09-20 and 2026-09-21). The upstream wrapper
-          # bakes its --config-file store path, so the config text is
-          # extracted from the wrapper and regenerated with the excludes
-          # added; the formatter programs and their versions stay untouched.
+          # bakes its --config-file store path; the config text is
+          # regenerated with the excludes added and the formatter programs
+          # and their versions stay untouched.
           formatter =
             let
               upstream = treefmt-full-flake.formatter.${system};
-              configLine =
-                lib.findFirst (line: lib.hasInfix "--config-file=" line)
-                  (throw "treefmt-full-flake wrapper no longer carries --config-file; rework the formatter override in flake.nix")
-                  (lib.splitString "\n" (builtins.readFile "${upstream}/bin/treefmt"));
-              upstreamConfig = builtins.head (builtins.match ".*--config-file=([^[:space:]]+).*" configLine);
+              # The wrapper's --config-file path is extracted in the BUILDER,
+              # never at eval: reading "${upstream}/bin/treefmt" at eval forces
+              # realization of the treefmt package during EVERY flake check,
+              # and after nixpkgs churn invalidates the drv the eval dies
+              # `path '...treefmt.drv' is not valid` (the niri-class
+              # package-output-coercion gotcha; dead pre-commit gate
+              # 2026-09-24..25). A failed extraction fails the BUILD loudly.
               patchedConfig = pkgs.runCommand "treefmt-systemnix-excludes.toml" { } ''
-                          substitute "${/. + upstreamConfig}" "$out" \
-                            --replace 'excludes = ["*.lock"' 'excludes = [
+                wrapper="${upstream}/bin/treefmt"
+                configLine="$(grep -m1 -- '--config-file=' "$wrapper" || true)"
+                case "$configLine" in
+                  *--config-file=*) ;;
+                  *)
+                    echo "treefmt-full-flake wrapper no longer carries --config-file; rework the formatter override in flake.nix" >&2
+                    exit 1
+                    ;;
+                esac
+                upstreamConfig="$(printf '%s\n' "$configLine" | sed -n 's/.*--config-file=\([^[:space:]]\+\).*/\1/p')"
+                substitute "$upstreamConfig" "$out" \
+                  --replace 'excludes = ["*.lock"' 'excludes = [
                 "docs/**/*.html",
                 "*.lock"'
               '';

@@ -26,15 +26,21 @@ let
       device = "/dev/vdb";
     };
   };
-  testConfig = pkgs.writeText "disko-samsung-tlc-vm.nix" (lib.generators.toPretty { } overridden);
   # The disko SCRIPT is evaluated HOST-SIDE with our locked nixpkgs — the
   # CLI inside the VM would re-evaluate against a fresh <nixpkgs> and try
   # to build a whole stdenv offline (no network in the guest).
-  diskoScript = import "${inputs.disko}/cli.nix" {
-    inherit pkgs lib;
-    mode = "destroy,format,mount";
-    diskoFile = testConfig;
+  # The overridden spec goes to disko's lib DIRECTLY (same dispatch as the
+  # old cli.nix route: `mode = "destroy,format,mount"` with a diskoFile
+  # resolves to `_cliDestroyFormatMount`). cli.nix's diskoFile route imports
+  # a `writeText` OUTPUT, and `import` of a derivation path forces
+  # realization at eval — `path '...vm.nix.drv' is not valid` after any
+  # nixpkgs bump that invalidates the text drv (dead pre-commit gate
+  # 2026-09-24..25). Pure attrset in, pure eval out.
+  diskoLib = import "${inputs.disko}" {
+    inherit lib;
+    rootMountPoint = "/mnt";
   };
+  diskoScript = diskoLib._cliDestroyFormatMount overridden pkgs;
 in
 {
   name = "disko-layout";
