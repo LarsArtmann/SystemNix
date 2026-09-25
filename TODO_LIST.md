@@ -87,6 +87,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **borgbackup-job-hetzner in Zone-6 ioChurnUnits — BLOCKED: include-with-re-arm (nightly read burst stoppable during an IO storm) or document-why-not (06:30 slot + ioTier.background judged sufficient)? A multi-hour read burst can outlast a storm window either way** → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-09-24_03-14_task-000001a0d0d1f8b552f5e3c0ea6cab70a19e.md §d3/§g3)
 - [ ] **Offsite repo append-only posture — BLOCKED: harden the StorageBox borg repo with a restricted authorized_keys command (ransomware resistance), accepting restores then need an unrestricted key held offline? Changes go-live key provisioning + drill prerequisites; cheapest to decide BEFORE the first seed** → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-09-24_05-36_task-000001a0d13bb97f785bd705387c539b4235.md §g2)
 - [ ] **Replacement-host borg_known_hosts re-pin derivation — BLOCKED: ssh-keyscan output directly (TOFU against a brand-new host) or the fingerprint re-derived from the Hetzner console's published host key? The runbook's dead-host column currently says ssh-keyscan** → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-09-23_15-12_task-000001a0cd86bbfaedbf87be3d95691fe9ee.md §g1)
+- [ ] **Cross-link the single-victim /data repair recipe from the AGENTS.md BTRFS /data-damage context (one line near the snapshot-pinning doctrine)** → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-09-25_05-19_task-000001a0d68672297273301d23247ceeae6a.md §b1)
 
 ### stability
 
@@ -178,6 +179,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [x] **Health Hub: add post-deploy smoke section to post-deploy-check.sh** → [docs/todo/services.md](docs/todo/services.md) — landed 2026-09-22 (enable-gated /healthz + /readyz + HTTPS vHost + AUTH_VHOSTS leg, shellcheck-green); goes live with the module's first deploy
 - [ ] **Remove the self-neutralized `probeRegistrationCleanup` block (purge EXECUTED 2026-09-20 11:33:55, journal-verified) — BLOCKED: keep or rip the generic mechanism (option + script + fixture check) after the executed purge — reusable probe-cleanup pattern or YAGNI rip?** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Browser-history quiet-day 503 (agent freshness lapses when there is nothing to ingest): local Gatus-condition mitigation + upstream empty-batch heartbeat** → [docs/todo/services.md](docs/todo/services.md)
+- [ ] **Fix jan.md Architecture-table GPU row: truncated verify command + unclosed backtick (the Verification section carries the full commands)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-09-25_05-19_task-000001a0d68672297273301d23247ceeae6a.md §f3)
 
 ### upstream
 
@@ -318,6 +320,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **GOTOOLCHAIN `off` exclusion: dead relic or supported escape hatch? — BLOCKED: no tree line has used an off marker in months (selftest pins a synthetic shape) — if dead, three greps lose an exclusion; if alive, it needs a sanctioned line shape + live fixture** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Eval-Time Guards doctrine note in docs/CONTRIBUTING.md: inline deepSeq guards (offsite-borg-positive-render, disko-samsung-tlc) are only negative-probeable via replicated asserts; shared-lib guards are directly probe-drivable — guards should document which pattern they use** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-24_05-05_task-000001a0d13bb97f785bd705387c539b4235.md §e4)
 - [ ] **§11 input-hygiene ghost probe: monitor365 was removed from the flake packages surface 2026-09-15 yet the hygiene check still probes `monitor365.goModules` — verify the probe list derives from the live lock, not a stale hand list** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-24_03-14_task-000001a0d0d1f8b552f5e3c0ea6cab70a19e.md §f38)
+- [ ] **Codify the daemon-race policy for task-queue agents (unanswered 2026-09-12 g-2, hit again 2026-09-25): amend the verified-single-file daemon HEAD vs land a separate footer-bearing commit on top — pick one, write it down, and carve out the docs' "ONE commit" rules accordingly** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-25_05-19_task-000001a0d68672297273301d23247ceeae6a.md §d1)
 
 ### pixel6
 
