@@ -48,6 +48,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Reconcile the root `@` retention anomaly (12-day-old weekly vs `snapshot_preserve 3d 1w`) and restate the doctrine's root window** → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §g1/f7)
 - [ ] **Codify "status reports self-harvest §f at authoring time" in the AGENTS.md TODO-system section (one sentence)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-25_00-39_task-000001a0d56f35ccee2a991988d7c3a9ebd1.md §f2)
 - [ ] **Codify the re-dispatch verification protocol (footers+closure → live spot-check → §f sweep → footer-bearing landing) in docs/CONTRIBUTING.md** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: same report §f3)
+- [ ] **Commit-msg hook leg: reject commit subjects >72 chars** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-25_02-20_task-000001a0d5af4c01977b1f874e6689edcaae.md §d1)
 - [ ] **Dedupe the ffprobe-sweep rows in docs/todo/pixel6.md (same ask in the prioritized list AND the backlog)** → [docs/todo/pixel6.md](docs/todo/pixel6.md) (Source: third-dispatch self-review §d)
 - [ ] **Crush-DB migration: baseline + follow-through** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] **Rebuild `hot-db` + `crush-hot-db` VM tests green on the current tree (quiet-IO window)** → [docs/todo/storage.md](docs/todo/storage.md)
