@@ -1427,7 +1427,13 @@
               # (fixture BORG_ENV_FILE + id-stub root) + its secrets-missing
               # sibling, happy-path PASS (--local with stubbed borg), and
               # the --verify-data deep-integrity branch (1.x --help probe →
-              # --dry-run fallback). NOT reachable in the sandbox: the
+              # --dry-run fallback). Plus a MUTATION NEGATIVE (2026-09-25):
+              # a drill COPY with the root gate neutered must FAIL the
+              # root-gate case's assertion — proves the fixture exercises
+              # the real script content rather than passing vacuously
+              # (behavioral twin of scripts/negative-test-lints.sh;
+              # anchor-drift-guarded so a no-op sed fails loudly). NOT
+              # reachable in the sandbox: the
               # real-mode /mnt/hot mountpoint gate sits BEHIND the
               # `/run/secrets/*` existence checks and `[ -e ]` is a bash
               # builtin that cannot be stubbed — the secrets-missing die is
@@ -1645,7 +1651,38 @@
                     need_rc deep 0; need_has deep "deep-integrity: OK"
                     need_has deep "result           : PASS"
 
-                    echo "PASS: borg-restore-drill fixture (root-gate, bogus-local, no-config, placeholder, secrets-missing, happy-local, verify-data, env-pin-drift)" > "$out"
+                    # 8) mutation NEGATIVE (2026-09-25 storage TODO): a drill
+                    #    COPY with the root gate neutered (test → `true`) must
+                    #    FAIL case 1's assertion — proves this fixture
+                    #    exercises the real script content instead of passing
+                    #    vacuously (behavioral twin of negative-test-lints).
+                    #    Anchor-drift-guarded: a sed that no longer matches
+                    #    makes the "mutation" a silent no-op phantom, so the
+                    #    case fails loudly instead.
+                    MUT="$FIX/borg-restore-drill-mutated.sh"
+                    sed 's/^\([[:space:]]*\)\[ "\$(id -u)" -eq 0 \]/\1true/' "$DRILL" > "$MUT"
+                    grep -qF 'true ||' "$MUT" || { echo "FAIL mutation-negative: sed anchor no longer matches the root-gate line — mutation is a no-op"; exit 1; }
+                    if grep -qF '[ "$(id -u)" -eq 0 ]' "$MUT"; then
+                      echo "FAIL mutation-negative: root-gate test still present in mutated copy"
+                      exit 1
+                    fi
+                    DRILL="$MUT"
+                    run
+                    DRILL="$FIX/borg-restore-drill.sh"
+                    # uid-1000 stub + BORG_ENV_FILE unset → the neutered gate
+                    # lets the run proceed one gate FURTHER: rc 1 (a die
+                    # fired) with the env-file message PRESENT and the
+                    # root-gate message ABSENT — the full inversion of
+                    # case 1.
+                    need_rc mutation-negative 1
+                    if printf '%s\n' "$capt" | grep -qF "real-repo mode needs root"; then
+                      echo "FAIL mutation-negative: root-gate die still fired on the mutated copy — fixture insensitive to script content"
+                      printf '%s\n' "$capt"
+                      exit 1
+                    fi
+                    need_has mutation-negative "rendered borg env not readable"
+
+                    echo "PASS: borg-restore-drill fixture (root-gate, bogus-local, no-config, placeholder, secrets-missing, happy-local, verify-data, env-pin-drift, mutation-negative)" > "$out"
                   ''
                 );
 
