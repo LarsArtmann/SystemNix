@@ -1,6 +1,6 @@
 # EventCatalog Federation Hub — Comprehensive Pareto Plan
 
-> **Status addendum (2026-09-24; CORRECTED 2026-09-25): HUB PHASE SHIPPED
+> **Status addendum (2026-09-24; CORRECTED 2026-09-26): HUB PHASE SHIPPED
 > OUT-OF-BAND; SystemNix serving leg LANDED IN-TREE 2026-09-23 (deploy
 > owner-gated, NOT live).** The hub repo (`eventcatalog-hub`, local Forgejo
 > mirror `lars/eventcatalog-hub`) now implements Option B end-to-end:
@@ -24,7 +24,7 @@
 > (see the §9 verification record: `architecture-catalog.nix` module,
 > DNS/protectedVHost Layer 2, Gatus checks, sops scaffold, pull timer —
 > `nix flake check --no-build` green) but ships PLACEHOLDER-inert and is
-> NOT deployed: live probes 2026-09-25 found no
+> NOT deployed: live probes 2026-09-26 found no
 > `/var/lib/architecture-catalog/` state dir and `catalog.home.lan`
 > unresolvable. Go-live = dist publish → sops token paste → `nix run
 > .#deploy` → first `architecture-catalog-sync` run.
