@@ -215,6 +215,14 @@ in
         # 2026-08-21): snapshots pin deleted extents on the space-tight QLC
         # NVMe; local tier only needs rollback + incremental-send-parent duty.
         # The pool (below) is the real history tier.
+        #
+        # Calendar anchors (btrbk 0.32.7 schedule(), source-verified
+        # 2026-09-25): retention buckets are CALENDAR-anchored, days start at
+        # 00:00 and weeks start Sunday (preserve_day_of_week default). "3d"
+        # keeps all snapshots from the last 3 day-buckets; "1w" keeps the
+        # FIRST snapshot of each of the TWO calendar weeks covered, so a
+        # Sunday-dated weekly lives exactly 14 days. The root pin window is
+        # therefore 2w sharp, NOT "3d+1w" (~10d) flat.
         snapshot_preserve_min = "2d";
         snapshot_preserve = "3d 1w";
         # Pool = FOREVER (user decision 2026-08-21): target_preserve_min = "all"
