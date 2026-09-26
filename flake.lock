@@ -6422,11 +6422,11 @@
         "project-discovery-sdk": "project-discovery-sdk_4"
       },
       "locked": {
-        "lastModified": 1789496839,
-        "narHash": "sha256-7/cTbHGcbzNLG4s8Kyu7vNmAv2NsXvqsSIYZfPtYvJA=",
+        "lastModified": 1790458039,
+        "narHash": "sha256-sRQFRqpw4WiTQxVM8NPWVD+FOzLwymgXshSFOlDWBxs=",
         "owner": "LarsArtmann",
         "repo": "project-meta",
-        "rev": "c3916b9b8722cdfe156ac4125a37da88d0f15822",
+        "rev": "84f3522e83f364fb9459dfd946eceb8c79c23306",
         "type": "github"
       },
       "original": {
