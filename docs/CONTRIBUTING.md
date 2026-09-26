@@ -170,6 +170,15 @@ Write "VM-tested" only for step 2, "deployed + verified live" only for step 3. T
 
 **Cite REACHABLE SHAs; annotate dangling ones.** Cite `message + date + short-rev` where possible, and verify reachability before citing: `git merge-base --is-ancestor <sha> HEAD`. If you must cite a dangling SHA (pre-rewrite work), annotate the citation with its reachable counterpart (found via reflog: `git reflog | grep <subject-fragment>`) at first discovery, not at review time. Unpushed work on this box rewrites frequently (auto-commit daemon + rebases) — a bare dangling SHA in a task description forces every verification session to redo the archaeology.
 
+**Re-dispatch verification protocol (2026-09-25, task-queue harvest).** When a dispatched queue item arrives already done (re-fire class — the queue re-fired 4 task IDs 7 times in the 2026-09-23/24 window), do NOT blindly redo and do NOT blindly skip. Execute four steps and record the outcome in the run's report:
+
+1. **Verify footers + queue-surface closure** — the landed work's commits exist under the exact `Task-Queue-ID:` footer (`git log --format=%B`), and BOTH queue surfaces (`TODO_LIST.md` one-liner + the `docs/todo/<domain>.md` library entry) are `[x]` with no drift between them (house rule: the pair moves together).
+2. **Spot-check ONE load-bearing claim of the landed work live** — re-run a command, re-read a file, re-verify a chain, independently of the prior run's report. Bookkeeping checks (footers, `[x]` marks) are not execution; without this step a MISDIAGNOSIS-class verdict ships unverified.
+3. **Sweep the Source report's §f for un-landed follow-ups** — a `[x]` mark covers only the item's own scope, never the Source report's follow-up obligations. The 2026-09-25 00-39 re-fire found 5 un-landed follow-ups behind a closed `[x]`; under the self-harvest convention (AGENTS.md "TODO System" Rules) a clean sweep is the expected state, and a dirty one is itself a finding — harvest it at authoring time, do not just report it.
+4. **Land SOMETHING footer-bearing** — a verification-only dispatch still commits with the `Task-Queue-ID:` footer (a `docs/status/` report, or re-run evidence appended to the touched doc), so the dispatch is attributable in `git log` and the queue's footer-based completion derivation sees it.
+
+Steps 2-3 separate a useful re-fire from dead queue churn. If every step is clean, the original run's verdict STANDS — record "verified, verdict unchanged" instead of re-deriving it. Cross-project variant (the protocol generalizes beyond this repo): crush-config `references/lessons.md`.
+
 ## Eval-Time Guards (audit modules)
 
 Most documented incident classes are ENFORCED at eval time — `nix flake check`
