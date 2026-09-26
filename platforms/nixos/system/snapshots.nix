@@ -217,12 +217,16 @@ in
         # The pool (below) is the real history tier.
         #
         # Calendar anchors (btrbk 0.32.7 schedule(), source-verified
-        # 2026-09-25): retention buckets are CALENDAR-anchored, days start at
-        # 00:00 and weeks start Sunday (preserve_day_of_week default). "3d"
-        # keeps all snapshots from the last 3 day-buckets; "1w" keeps the
-        # FIRST snapshot of each of the TWO calendar weeks covered, so a
-        # Sunday-dated weekly lives exactly 14 days. The root pin window is
-        # therefore 2w sharp, NOT "3d+1w" (~10d) flat.
+        # 2026-09-25 + re-verified in-source 2026-09-26): retention keeps the
+        # FIRST snapshot of each calendar bucket group. "3d" keeps the first
+        # snapshot of each delta_days group <= 3 (day boundaries are
+        # hour-of-day corrected, 00:00 default) — at the nightly 23:00
+        # cadence that is 4 dailies (run day + 3 back), one rotating out per
+        # night. "1w" keeps the FIRST snapshot of each of the TWO calendar
+        # weeks covered (delta_weeks <= 1, weeks start Sunday per
+        # preserve_day_of_week default), so a Sunday-dated weekly lives
+        # exactly 14 days. The root pin window is therefore 2w sharp, NOT
+        # "3d+1w" (~10d) flat.
         snapshot_preserve_min = "2d";
         snapshot_preserve = "3d 1w";
         # Pool = FOREVER (user decision 2026-08-21): target_preserve_min = "all"
