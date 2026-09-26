@@ -1474,29 +1474,25 @@
                 let
                   pinMessage = "borg-restore-drill env-path pin";
                   failingPin =
-                    assertions:
-                    builtins.filter (
-                      a: !a.assertion && lib.hasInfix pinMessage a.message
-                    ) assertions;
+                    assertions: builtins.filter (a: !a.assertion && lib.hasInfix pinMessage a.message) assertions;
                   pinAssertionsOf =
                     modules:
                     (inputs.nixpkgs.lib.nixosSystem {
-                      inherit system;
-                      modules = modules;
+                      inherit system modules;
                     }).config.assertions;
 
                   scriptAnchor = "drillScript = builtins.readFile ../../../scripts/borg-restore-drill.sh;";
                   backupSrc = builtins.readFile ./platforms/nixos/system/backup.nix;
                   driftedScriptFile = builtins.toFile "borg-restore-drill-drifted.sh" (
-                    lib.replaceStrings
-                      [ "/run/secrets/rendered/borg-env" ]
-                      [ "/run/secrets/rendered/borg-env-DRIFT" ]
-                      (builtins.readFile ./scripts/borg-restore-drill.sh)
+                    lib.replaceStrings [ "/run/secrets/rendered/borg-env" ] [ "/run/secrets/rendered/borg-env-DRIFT" ] (
+                      builtins.readFile ./scripts/borg-restore-drill.sh
+                    )
                   );
-                  driftedBackupSrc = lib.replaceStrings
-                    [ scriptAnchor ]
-                    [ "drillScript = builtins.readFile ${toString driftedScriptFile};" ]
-                    backupSrc;
+                  driftedBackupSrc =
+                    lib.replaceStrings
+                      [ scriptAnchor ]
+                      [ "drillScript = builtins.readFile ${toString driftedScriptFile};" ]
+                      backupSrc;
                   driftedModule = import (builtins.toFile "backup-drifted.nix" driftedBackupSrc);
 
                   # enable=true + declared template so the guard consults the
@@ -1509,8 +1505,7 @@
                     {
                       services.offsite-borg.enable = true;
                       sops.templates."borg-env".content = "BORG_REPO=x";
-                      sops.templates."borg-env".path =
-                        lib.mkOverride 50 "/run/secrets/rendered/borg-env-DRIFT";
+                      sops.templates."borg-env".path = lib.mkOverride 50 "/run/secrets/rendered/borg-env-DRIFT";
                     }
                   ];
 
@@ -1530,8 +1525,7 @@
                     else
                       assert controlFailing == [ ];
                       assert scriptDriftFailing != [ ];
-                      assert lib.hasInfix
-                        ''BORG_ENV_FILE="''${BORG_ENV_FILE:-/run/secrets/rendered/borg-env}"''
+                      assert lib.hasInfix ''BORG_ENV_FILE="''${BORG_ENV_FILE:-/run/secrets/rendered/borg-env}"''
                         (builtins.head scriptDriftFailing).message;
                       assert templateDriftFailing != [ ];
                       assert lib.hasInfix "borg-env-DRIFT" (builtins.head templateDriftFailing).message;
@@ -1539,163 +1533,177 @@
                 in
                 builtins.deepSeq pinGuards (
                   pkgs.runCommand "borg-restore-drill-fixture"
-                  {
-                    nativeBuildInputs = with pkgs; [
-                      bash
-                      coreutils
-                      gnugrep
-                      gnused
-                    ];
-                  }
-                  ''
-                    set -euo pipefail
-                    FIX=$(mktemp -d)
-                    BIN="$FIX/bin"; mkdir -p "$BIN"
-                    ROOT="$FIX/root"; ROOTBIN="$ROOT/bin"; mkdir -p "$ROOTBIN"
-                    export XDG_STATE_HOME="$FIX/state"; mkdir -p "$XDG_STATE_HOME"
-                    export STUB_NIX_OUT="$ROOT"
+                    {
+                      nativeBuildInputs = with pkgs; [
+                        bash
+                        coreutils
+                        gnugrep
+                        gnused
+                      ];
+                    }
+                    ''
+                      set -euo pipefail
+                      FIX=$(mktemp -d)
+                      BIN="$FIX/bin"; mkdir -p "$BIN"
+                      ROOT="$FIX/root"; ROOTBIN="$ROOT/bin"; mkdir -p "$ROOTBIN"
+                      export XDG_STATE_HOME="$FIX/state"; mkdir -p "$XDG_STATE_HOME"
+                      export STUB_NIX_OUT="$ROOT"
 
-                    # ---- nix stub: the drill resolves borg through
-                    # `nix build --no-link --print-out-paths --impure`; the
-                    # stub prints the stub tree (bin/borg lives there).
-                    cat > "$BIN/nix" <<'STUBEOF'
-                    #!${pkgs.bash}/bin/bash
-                    echo "''${STUB_NIX_OUT:?STUB_NIX_OUT unset}"
-                    STUBEOF
+                      # ---- nix stub: the drill resolves borg through
+                      # `nix build --no-link --print-out-paths --impure`; the
+                      # stub prints the stub tree (bin/borg lives there).
+                      cat > "$BIN/nix" <<'STUBEOF'
+                      #!${pkgs.bash}/bin/bash
+                      echo "''${STUB_NIX_OUT:?STUB_NIX_OUT unset}"
+                      STUBEOF
 
-                    # ---- id stub: real mode's `[ "$(id -u)" -eq 0 ]` gate.
-                    # STUB_ROOT=1 fakes root for the env-file die cases;
-                    # unset → uid 1000 → the root-gate die (same observable
-                    # outcome as the sandbox's real non-root builder).
-                    cat > "$BIN/id" <<'STUBEOF'
-                    #!${pkgs.bash}/bin/bash
-                    if [ "''${1:-}" = "-u" ]; then
-                      if [ -n "''${STUB_ROOT:-}" ]; then echo 0; else echo 1000; fi
-                      exit 0
-                    fi
-                    echo "uid=1000(fixture)"; exit 0
-                    STUBEOF
+                      # ---- id stub: real mode's `[ "$(id -u)" -eq 0 ]` gate.
+                      # STUB_ROOT=1 fakes root for the env-file die cases;
+                      # unset → uid 1000 → the root-gate die (same observable
+                      # outcome as the sandbox's real non-root builder).
+                      cat > "$BIN/id" <<'STUBEOF'
+                      #!${pkgs.bash}/bin/bash
+                      if [ "''${1:-}" = "-u" ]; then
+                        if [ -n "''${STUB_ROOT:-}" ]; then echo 0; else echo 1000; fi
+                        exit 0
+                      fi
+                      echo "uid=1000(fixture)"; exit 0
+                      STUBEOF
 
-                    # ---- borg stub: version/list/extract covering the
-                    # drill's exact call shapes. extract writes the subset
-                    # files into its CWD (the drill's scratch dir).
-                    cat > "$ROOTBIN/borg" <<'STUBEOF'
-                    #!${pkgs.bash}/bin/bash
-                    cmd="''${1:-}"
-                    case "$cmd" in
-                      --version) echo "borg 1.4.5-fixture-stub"; exit 0 ;;
-                      list)
-                        if [ "''${2:-}" = "--last" ]; then
-                          echo "fixture-archive-$(date -u +%Y%m%d%H%M%S)  $(date -u +%Y-%m-%dT%H:%M:%S)  0000000000000000000000000000000000000000000000000000000000000000"
-                        else
-                          echo "fixture-archive-pinned  $(date -u +%Y-%m-%dT%H:%M:%S)  0000000000000000000000000000000000000000000000000000000000000000"
-                        fi
-                        exit 0 ;;
-                      extract)
-                        shift
-                        dry=0; paths=()
-                        while [ $# -gt 0 ]; do
-                          case "$1" in
-                            --list) shift ;;
-                            --dry-run|--verify-data) [ "$1" = "--dry-run" ] && dry=1; shift ;;
-                            ::*) shift ;;
-                            *) paths+=("''$1"); shift ;;
-                          esac
-                        done
-                        [ "$dry" = 1 ] && exit 0
-                        for p in "''${paths[@]}"; do
-                          mkdir -p "$(dirname "$p")"
-                          printf 'borg-restore-drill-fixture: %s\n' "$p" > "$p"
-                        done
-                        exit 0 ;;
-                      *) echo "borg stub: unhandled subcommand: $cmd" >&2; exit 2 ;;
-                    esac
-                    STUBEOF
-                    chmod +x "$BIN/nix" "$BIN/id" "$ROOTBIN/borg"
-                    export PATH="$ROOT/bin:$BIN:$PATH"
+                      # ---- borg stub: version/list/extract covering the
+                      # drill's exact call shapes. extract writes the subset
+                      # files into its CWD (the drill's scratch dir). Unknown
+                      # FLAGS are dropped (dash-prefixed → shift), never
+                      # collected as paths — the drill's `borg extract --help`
+                      # borg2-capability probe once became a junk `--help` file
+                      # in the invoking cwd, got daemon-committed twice, and
+                      # broke the push-protection hook repo-wide (2026-09-25).
+                      cat > "$ROOTBIN/borg" <<'STUBEOF'
+                      #!${pkgs.bash}/bin/bash
+                      cmd="''${1:-}"
+                      case "$cmd" in
+                        --version) echo "borg 1.4.5-fixture-stub"; exit 0 ;;
+                        list)
+                          if [ "''${2:-}" = "--last" ]; then
+                            echo "fixture-archive-$(date -u +%Y%m%d%H%M%S)  $(date -u +%Y-%m-%dT%H:%M:%S)  0000000000000000000000000000000000000000000000000000000000000000"
+                          else
+                            echo "fixture-archive-pinned  $(date -u +%Y-%m-%dT%H:%M:%S)  0000000000000000000000000000000000000000000000000000000000000000"
+                          fi
+                          exit 0 ;;
+                        extract)
+                          shift
+                          dry=0; paths=()
+                          while [ $# -gt 0 ]; do
+                            case "$1" in
+                              --list) shift ;;
+                              --dry-run|--verify-data) [ "$1" = "--dry-run" ] && dry=1; shift ;;
+                              ::*) shift ;;
+                              # Drop unknown flags (borg2-capability probe);
+                              # only non-dash tokens collect as subset paths.
+                              -*) shift ;;
+                              *) paths+=("''$1"); shift ;;
+                            esac
+                          done
+                          [ "$dry" = 1 ] && exit 0
+                          for p in "''${paths[@]}"; do
+                            mkdir -p "$(dirname "$p")"
+                            printf 'borg-restore-drill-fixture: %s\n' "$p" > "$p"
+                          done
+                          exit 0 ;;
+                        *) echo "borg stub: unhandled subcommand: $cmd" >&2; exit 2 ;;
+                      esac
+                      STUBEOF
+                      chmod +x "$BIN/nix" "$BIN/id" "$ROOTBIN/borg"
+                      export PATH="$ROOT/bin:$BIN:$PATH"
 
-                    DRILL="$FIX/borg-restore-drill.sh"
-                    cp ${./scripts/borg-restore-drill.sh} "$DRILL"
-                    chmod +x "$DRILL"
+                      DRILL="$FIX/borg-restore-drill.sh"
+                      cp ${./scripts/borg-restore-drill.sh} "$DRILL"
+                      chmod +x "$DRILL"
 
-                    rc=0; capt=""
-                    run() { capt=$(bash "$DRILL" "''$@" 2>&1) && rc=0 || rc=$?; }
-                    need_rc() { [ "$rc" = "$2" ] || { echo "FAIL $1: rc=$rc want $2"; printf '%s\n' "$capt"; exit 1; }; }
-                    need_has() { printf '%s\n' "$capt" | grep -qF -- "$2" || { echo "FAIL $1: missing text: $2"; printf '%s\n' "$capt"; exit 1; }; }
+                      rc=0; capt=""
+                      run() { capt=$(bash "$DRILL" "''$@" 2>&1) && rc=0 || rc=$?; }
+                      need_rc() { [ "$rc" = "$2" ] || { echo "FAIL $1: rc=$rc want $2"; printf '%s\n' "$capt"; exit 1; }; }
+                      need_has() { printf '%s\n' "$capt" | grep -qF -- "$2" || { echo "FAIL $1: missing text: $2"; printf '%s\n' "$capt"; exit 1; }; }
 
-                    # 1) real mode as non-root → root-gate die (record still
-                    #    written: the header promises one from early deaths).
-                    run; need_rc root-gate 1; need_has root-gate "real-repo mode needs root"
-                    R=$(ls -1t "$XDG_STATE_HOME"/borg-restore-drill/drill-*.log | head -1)
-                    grep -qF "result           : FAIL" "$R" || { echo "FAIL root-gate: no FAIL record"; cat "$R"; exit 1; }
+                      # 1) real mode as non-root → root-gate die (record still
+                      #    written: the header promises one from early deaths).
+                      run; need_rc root-gate 1; need_has root-gate "real-repo mode needs root"
+                      R=$(ls -1t "$XDG_STATE_HOME"/borg-restore-drill/drill-*.log | head -1)
+                      grep -qF "result           : FAIL" "$R" || { echo "FAIL root-gate: no FAIL record"; cat "$R"; exit 1; }
 
-                    # 2) bogus --local → die before any repo access
-                    run --local "$FIX/does-not-exist"; need_rc bogus-local 1; need_has bogus-local "--local repo dir not found"
+                      # 2) bogus --local → die before any repo access
+                      run --local "$FIX/does-not-exist"; need_rc bogus-local 1; need_has bogus-local "--local repo dir not found"
 
-                    # 3) --local repo without a borg 'config' file
-                    mkdir -p "$FIX/empty-repo"
-                    run --local "$FIX/empty-repo"; need_rc no-config 1; need_has no-config "no borg 'config' file"
+                      # 3) --local repo without a borg 'config' file
+                      mkdir -p "$FIX/empty-repo"
+                      run --local "$FIX/empty-repo"; need_rc no-config 1; need_has no-config "no borg 'config' file"
 
-                    # 4) real mode, faked root, fixture env file with the
-                    #    go-live PLACEHOLDER → tripwire die
-                    ENVF="$FIX/borg-env"; printf 'BORG_REPO=ssh://PLACEHOLDER@example:23/./repo\n' > "$ENVF"
-                    export BORG_ENV_FILE="$ENVF" STUB_ROOT=1
-                    run; need_rc placeholder 1; need_has placeholder "go-live placeholder"
+                      # 4) real mode, faked root, fixture env file with the
+                      #    go-live PLACEHOLDER → tripwire die
+                      ENVF="$FIX/borg-env"; printf 'BORG_REPO=ssh://PLACEHOLDER@example:23/./repo\n' > "$ENVF"
+                      export BORG_ENV_FILE="$ENVF" STUB_ROOT=1
+                      run; need_rc placeholder 1; need_has placeholder "go-live placeholder"
 
-                    # 5) real mode, non-placeholder repo → the
-                    #    /run/secrets/* existence checks fail (mountpoint
-                    #    gate's direct predecessor; see header note)
-                    printf 'BORG_REPO=ssh://user@host.example:23/./repo\n' > "$ENVF"
-                    run; need_rc secrets-missing 1; need_has secrets-missing "/run/secrets/borg_password missing"
-                    unset BORG_ENV_FILE STUB_ROOT
+                      # 5) real mode, non-placeholder repo → the
+                      #    /run/secrets/* existence checks fail (mountpoint
+                      #    gate's direct predecessor; see header note)
+                      printf 'BORG_REPO=ssh://user@host.example:23/./repo\n' > "$ENVF"
+                      run; need_rc secrets-missing 1; need_has secrets-missing "/run/secrets/borg_password missing"
+                      unset BORG_ENV_FILE STUB_ROOT
 
-                    # 6) happy path: --local against a stub repo → PASS,
-                    #    subset extracted + byte-verified, record says PASS
-                    REPO="$FIX/repo"; mkdir -p "$REPO"; : > "$REPO/config"
-                    run --local "$REPO"; need_rc happy-local 0; need_has happy-local "result           : PASS"
-                    need_has happy-local "etc/hostname"
-                    R=$(ls -1t "$XDG_STATE_HOME"/borg-restore-drill/drill-*.log | head -1)
-                    grep -qF "result           : PASS" "$R" || { echo "FAIL happy-local: record not PASS"; cat "$R"; exit 1; }
+                      # 6) happy path: --local against a stub repo → PASS,
+                      #    subset extracted + byte-verified, record says PASS
+                      REPO="$FIX/repo"; mkdir -p "$REPO"; : > "$REPO/config"
+                      run --local "$REPO"; need_rc happy-local 0; need_has happy-local "result           : PASS"
+                      need_has happy-local "etc/hostname"
+                      R=$(ls -1t "$XDG_STATE_HOME"/borg-restore-drill/drill-*.log | head -1)
+                      grep -qF "result           : PASS" "$R" || { echo "FAIL happy-local: record not PASS"; cat "$R"; exit 1; }
 
-                    # 7) --verify-data deep-integrity branch (stub --help has
-                    #    no borg2 flag → 1.x --dry-run fallback) + --archive pin
-                    run --local "$REPO" --verify-data --archive fixture-archive-pinned
-                    need_rc deep 0; need_has deep "deep-integrity: OK"
-                    need_has deep "result           : PASS"
+                      # 7) --verify-data deep-integrity branch (stub --help has
+                      #    no borg2 flag → 1.x --dry-run fallback) + --archive pin
+                      run --local "$REPO" --verify-data --archive fixture-archive-pinned
+                      need_rc deep 0; need_has deep "deep-integrity: OK"
+                      need_has deep "result           : PASS"
+                      # The stub must have DROPPED the --help probe flag: a
+                      # dash-prefixed junk file in this script's invoking cwd
+                      # is exactly the daemon-committed pollution the drop
+                      # exists to prevent (push-protection breakage class).
+                      junk="$(ls -A -- . 2>/dev/null | grep -E '^-' || true)"
+                      [ -z "$junk" ] || { echo "FAIL deep: borg stub wrote flag-shaped junk into the invoking cwd: $junk"; exit 1; }
 
-                    # 8) mutation NEGATIVE (2026-09-25 storage TODO): a drill
-                    #    COPY with the root gate neutered (test → `true`) must
-                    #    FAIL case 1's assertion — proves this fixture
-                    #    exercises the real script content instead of passing
-                    #    vacuously (behavioral twin of negative-test-lints).
-                    #    Anchor-drift-guarded: a sed that no longer matches
-                    #    makes the "mutation" a silent no-op phantom, so the
-                    #    case fails loudly instead.
-                    MUT="$FIX/borg-restore-drill-mutated.sh"
-                    sed 's/^\([[:space:]]*\)\[ "\$(id -u)" -eq 0 \]/\1true/' "$DRILL" > "$MUT"
-                    grep -qF 'true ||' "$MUT" || { echo "FAIL mutation-negative: sed anchor no longer matches the root-gate line — mutation is a no-op"; exit 1; }
-                    if grep -qF '[ "$(id -u)" -eq 0 ]' "$MUT"; then
-                      echo "FAIL mutation-negative: root-gate test still present in mutated copy"
-                      exit 1
-                    fi
-                    DRILL="$MUT"
-                    run
-                    DRILL="$FIX/borg-restore-drill.sh"
-                    # uid-1000 stub + BORG_ENV_FILE unset → the neutered gate
-                    # lets the run proceed one gate FURTHER: rc 1 (a die
-                    # fired) with the env-file message PRESENT and the
-                    # root-gate message ABSENT — the full inversion of
-                    # case 1.
-                    need_rc mutation-negative 1
-                    if printf '%s\n' "$capt" | grep -qF "real-repo mode needs root"; then
-                      echo "FAIL mutation-negative: root-gate die still fired on the mutated copy — fixture insensitive to script content"
-                      printf '%s\n' "$capt"
-                      exit 1
-                    fi
-                    need_has mutation-negative "rendered borg env not readable"
+                      # 8) mutation NEGATIVE (2026-09-25 storage TODO): a drill
+                      #    COPY with the root gate neutered (test → `true`) must
+                      #    FAIL case 1's assertion — proves this fixture
+                      #    exercises the real script content instead of passing
+                      #    vacuously (behavioral twin of negative-test-lints).
+                      #    Anchor-drift-guarded: a sed that no longer matches
+                      #    makes the "mutation" a silent no-op phantom, so the
+                      #    case fails loudly instead.
+                      MUT="$FIX/borg-restore-drill-mutated.sh"
+                      sed 's/^\([[:space:]]*\)\[ "\$(id -u)" -eq 0 \]/\1true/' "$DRILL" > "$MUT"
+                      grep -qF 'true ||' "$MUT" || { echo "FAIL mutation-negative: sed anchor no longer matches the root-gate line — mutation is a no-op"; exit 1; }
+                      if grep -qF '[ "$(id -u)" -eq 0 ]' "$MUT"; then
+                        echo "FAIL mutation-negative: root-gate test still present in mutated copy"
+                        exit 1
+                      fi
+                      DRILL="$MUT"
+                      run
+                      DRILL="$FIX/borg-restore-drill.sh"
+                      # uid-1000 stub + BORG_ENV_FILE unset → the neutered gate
+                      # lets the run proceed one gate FURTHER: rc 1 (a die
+                      # fired) with the env-file message PRESENT and the
+                      # root-gate message ABSENT — the full inversion of
+                      # case 1.
+                      need_rc mutation-negative 1
+                      if printf '%s\n' "$capt" | grep -qF "real-repo mode needs root"; then
+                        echo "FAIL mutation-negative: root-gate die still fired on the mutated copy — fixture insensitive to script content"
+                        printf '%s\n' "$capt"
+                        exit 1
+                      fi
+                      need_has mutation-negative "rendered borg env not readable"
 
-                    echo "PASS: borg-restore-drill fixture (root-gate, bogus-local, no-config, placeholder, secrets-missing, happy-local, verify-data, env-pin-drift, mutation-negative)" > "$out"
-                  ''
+                      echo "PASS: borg-restore-drill fixture (root-gate, bogus-local, no-config, placeholder, secrets-missing, happy-local, verify-data, no-junk-cwd, env-pin-drift, mutation-negative)" > "$out"
+                    ''
                 );
 
               # Behavioral fixture for the browser-history probe-registration

@@ -177,17 +177,18 @@ in
   # ReadWritePaths entry for the very path this unit creates: the 226
   # chicken-and-egg class). Gated to the same condition binfmt.nix uses to
   # set the sandbox path, so binfmt-less hosts/VMs get no phantom unit.
-  systemd.services.binfmt-sandbox-dir = lib.mkIf (
-    config.boot.binfmt.addEmulatedSystemsToNixSandbox && config.boot.binfmt.emulatedSystems != [ ]
-  ) {
-    description = "Ensure /run/binfmt exists (nix build sandbox bind source)";
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig = lib.mkMerge [
-      (harden { })
-      (serviceOneshotDefaults { })
-      { ExecStart = "${pkgs.coreutils}/bin/mkdir -p /run/binfmt"; }
-    ];
-  };
+  systemd.services.binfmt-sandbox-dir =
+    lib.mkIf
+      (config.boot.binfmt.addEmulatedSystemsToNixSandbox && config.boot.binfmt.emulatedSystems != [ ])
+      {
+        description = "Ensure /run/binfmt exists (nix build sandbox bind source)";
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = lib.mkMerge [
+          (harden { })
+          (serviceOneshotDefaults { })
+          { ExecStart = "${pkgs.coreutils}/bin/mkdir -p /run/binfmt"; }
+        ];
+      };
 
   # USB HDD enclosure tuning — JMicron JMS567 (152d:0567) BOT bridge
   # Kernel defaults nr_requests=2 for USB mass storage, starving the block layer.
