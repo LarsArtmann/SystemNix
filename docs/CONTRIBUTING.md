@@ -60,6 +60,7 @@ Installed via `pre-commit install`. All hooks must pass before merge:
 
 | Hook                  | Purpose                                                     |
 | --------------------- | ----------------------------------------------------------- |
+| commit-msg            | Reject commit subjects > 72 chars (house contract)          |
 | gitleaks              | Detect committed secrets                                    |
 | trailing-whitespace   | Clean trailing spaces                                       |
 | deadnix               | Find dead/unused Nix code                                   |

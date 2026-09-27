@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Commit-msg hook — enforce the house commit contract: the subject (first
+# line) is at most 72 characters. Message checks belong in commit-msg, not
+# pre-commit: git runs this hook on the final message file.
+set -euo pipefail
+
+msg_file="${1:?usage: commit-msg <message-file>}"
+
+# git strips '#'-comment lines before finalizing the message; measure the
+# real subject line, not editor scaffolding.
+first_line=$(grep -m1 -v '^#' "$msg_file" || true)
+
+# Git-generated merge subjects routinely exceed 72 — during `git merge`
+# (MERGE_HEAD present) or on any "Merge ..." subject incl. later amendments.
+# The 72-char rule governs authored work.
+if [ -e "$(git rev-parse --git-path MERGE_HEAD)" ]; then
+    exit 0
+fi
+if [[ "$first_line" == "Merge "* ]]; then
+    exit 0
+fi
+
+length=${#first_line}
+if [ "$length" -gt 72 ]; then
+    echo "ERROR: commit subject is $length chars (house limit: 72):"
+    echo "  $first_line"
+    echo "Shorten the first line and move detail into the body; fix with: git commit --amend"
+    exit 1
+fi
