@@ -181,6 +181,8 @@ Steps 2-3 separate a useful re-fire from dead queue churn. If every step is clea
 
 Foreign-repo landings annotate closure narratives as SOURCE-LEVEL delivery (2026-09-27 clause): work landed in a consumed repo (crush-config, library repos) is delivered when committed THERE — the installed copy (read-only nix-store symlinks rendered by HM activation) rides the next input bump + owner deploy. Never write "ships to every host" for a source-only landing: re-fire-2 proved the gap live (lesson source-landed crush-config `8fbc677` while the SystemNix lock still pinned `031c7c48`; the installed `~/.config/crush/references/lessons.md` had zero `re-dispatch` matches).
 
+**Status-report filenames are MEASURED, never guessed (2026-09-27 clause, fire-3 harvest).** Derive the filename timestamp by running `date +%Y-%m-%d_%H-%M` immediately before creating the file — never reconstruct it from context or memory (fire-3 shipped `2026-09-27_09-12_…` while its commit landed 08:56:06, a 16-minute lie in the timestamped audit trail). Before creating ANY `docs/status/` report, list the existing reports for the task ID first (`ls docs/status/ | grep 'task-<ID>'`): the write tool silently overwrites, so a same-name report from a parallel session would be clobbered with zero warning. On a collision, bump the minutes — never overwrite. Convention, not tooling — a guard script was considered and deliberately skipped as overkill.
+
 ## Eval-Time Guards (audit modules)
 
 Most documented incident classes are ENFORCED at eval time — `nix flake check`
