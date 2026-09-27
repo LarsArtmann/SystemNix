@@ -210,6 +210,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **PMA upstream: CI guard against go-commit pin regression (recurred 2026-09-07)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Satellite GOEXPERIMENT sweep (21 repos)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **go-nix-helpers: default `GOEXPERIMENT=jsonv2` in template/devShell** → [docs/todo/upstream.md](docs/todo/upstream.md)
+- [ ] **go-nix-helpers lock bump: dynamic go-toolchain auto-select obsoletes explicit goPkgAttr pins** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Verify go-codec floor vs nixpkgs go (1.26.7)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Hermes upstream: propose `projectsDir` RO-bind pattern for the NixOS module** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Pin go-cqrs-lite benchstat `rev = "master"`** → [docs/todo/upstream.md](docs/todo/upstream.md)
