@@ -811,6 +811,25 @@
                 ];
                 alert = "DiscordSync in Turso local-only mode: cloud mirror paused (quota exhausted or sync gave up). Local archive intact, mirror is stale";
               }
+              {
+                # GCS visibility mirror (C11(8), 2026-09-27). The in-repo
+                # DiscordSyncGCSBytesSpike alert is a RATE alert (24h growth)
+                # which gatus body patterns cannot express — per the standing
+                # policy above it stays Prometheus-only. The gatus-expressible
+                # slice is scrape sanity: the discordsync_gcs_objects gauge
+                # must exist, i.e. the reconcile stats pass is still running.
+                # Its disappearance means the stats pass (or the GCS client)
+                # died and bucket-growth visibility is dark.
+                name = "DiscordSync GCS Stats Present";
+                group = "Infrastructure";
+                url = "http://localhost:${toString ports.discordsync-api}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\ndiscordsync_gcs_objects *)"
+                ];
+                alert = "DiscordSync GCS bucket gauges vanished from /metrics: the reconcile stats pass stopped publishing (stats pass or GCS client down). Bucket-growth visibility is dark";
+              }
             ];
             homepage = {
               name = "DiscordSync";
