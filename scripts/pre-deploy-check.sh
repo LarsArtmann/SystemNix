@@ -153,6 +153,43 @@ if [ "$SECTION10_ONLY" != true ]; then
     pass "not a git worktree (deploying from a copy) — check skipped"
   fi
 
+  # 1c. Recent-commit ownership (T15/B6, 2026-09-27): the 2026-09-04
+  # unpin/revert confusion was a PARALLEL session's commits riding a deploy
+  # unnoticed — `nh os switch` deploys whatever HEAD is, including commits
+  # another session authored seconds ago. Flag the recent commits whose
+  # committer identity is not the configured git user (daemon + local
+  # sessions all commit as the configured user, so a mismatch means a
+  # foreign identity rode in, e.g. via a cherry-pick from elsewhere), and
+  # list the newest commits so the operator can eyeball what is ABOUT to
+  # deploy. DEPLOY_REQUIRE_CLEAN_OWNERSHIP=1 hardens the mismatch into an
+  # abort instead of a warning.
+  if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo ""
+    echo "1c. Recent-commit ownership"
+    self_email=$(git config user.email || true)
+    if [ -z "$self_email" ]; then
+      warn "no git user.email configured — cannot verify commit ownership"
+    else
+      foreign=""
+      while IFS=$'\t' read -r hash email subject; do
+        if [ "$email" != "$self_email" ]; then
+          foreign+="${hash} ${email} ${subject}"$'\n'
+        fi
+      done < <(git log -5 --pretty=format:'%h%x09%ae%x09%s' 2>/dev/null || true)
+
+      echo "      deploying HEAD: $(git log -1 --pretty=format:'%h %ae %s' 2>/dev/null || echo unknown)"
+      if [ -n "$foreign" ]; then
+        warn "recent commits by a NON-configured identity are about to deploy:"
+        while IFS= read -r line; do [ -n "$line" ] && echo "        $line"; done <<<"$foreign"
+        if [ "${DEPLOY_REQUIRE_CLEAN_OWNERSHIP:-0}" = "1" ]; then
+          fail "DEPLOY_REQUIRE_CLEAN_OWNERSHIP=1 and foreign-authored commits present — aborting"
+        fi
+      else
+        pass "last 5 commits all owned by $self_email"
+      fi
+    fi
+  fi
+
   # 2. Eval the system configuration
   echo ""
   echo "2. Configuration evaluation"
