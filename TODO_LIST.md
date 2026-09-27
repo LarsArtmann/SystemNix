@@ -351,6 +351,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Placement doctrine for non-service STATE docs — is `docs/services/data-damage-set.md` acceptable in the services runbook dir, or does the repo grow a `docs/ops/` home once a second state doc appears — BLOCKED: owner call on repo layout** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-25_10-18_task-000001a0d79daeca24808d2e967271007d42.md §g1)
 - [ ] **Codify "spot-verify config claims in queued items at queueing time" (one sentence, AGENTS.md TODO-system section)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-26_04-26_task-000001a0db75dfafa622748a00da7cf19ff9.md §f9/e3)
 - [ ] **Surface re-fire counts in tq verify output (go-taskqueue upstream)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-26_04-26_task-000001a0db75dfafa622748a00da7cf19ff9.md §f10)
+- [ ] **Mirror the status-report filename-hygiene micro-rule cross-project (crush-config references/lessons.md, committed THERE per the foreign-repo rule) — or close as wontfix per the lessons.md inclusion-bar verdict (micro-rules in, or major protocols only?)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-27_10-18_task-000001a0e1d32d1561aa2ef250e6ddbfb805.md §f1/§g2)
 
 ### pixel6
 
