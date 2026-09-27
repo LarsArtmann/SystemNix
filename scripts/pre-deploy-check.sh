@@ -166,27 +166,29 @@ if [ "$SECTION10_ONLY" != true ]; then
   if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     echo ""
     echo "1c. Recent-commit ownership"
-    self_email=$(git config user.email || true)
-    if [ -z "$self_email" ]; then
-      warn "no git user.email configured — cannot verify commit ownership"
-    else
-      foreign=""
-      while IFS=$'\t' read -r hash email subject; do
-        if [ "$email" != "$self_email" ]; then
-          foreign+="${hash} ${email} ${subject}"$'\n'
-        fi
-      done < <(git log -5 --pretty=format:'%h%x09%ae%x09%s' 2>/dev/null || true)
-
-      echo "      deploying HEAD: $(git log -1 --pretty=format:'%h %ae %s' 2>/dev/null || echo unknown)"
-      if [ -n "$foreign" ]; then
-        warn "recent commits by a NON-configured identity are about to deploy:"
-        while IFS= read -r line; do [ -n "$line" ] && echo "        $line"; done <<<"$foreign"
-        if [ "${DEPLOY_REQUIRE_CLEAN_OWNERSHIP:-0}" = "1" ]; then
-          fail "DEPLOY_REQUIRE_CLEAN_OWNERSHIP=1 and foreign-authored commits present — aborting"
-        fi
-      else
-        pass "last 5 commits all owned by $self_email"
+    # The known-identity set is the repo's OWN recent history (last 200
+    # commits): local sessions, the auto-commit daemon (git@lars.software),
+    # and the configured user.email all appear there, so a baseline of
+    # user.email alone false-positives on every daemon commit (observed
+    # first run 2026-09-27). An identity that appears in the last 5 commits
+    # but NOWHERE in the 200-commit history is genuinely foreign.
+    known_emails=$(git log -200 --pretty=format:'%ae' 2>/dev/null | LC_ALL=C sort -u || true)
+    foreign=""
+    while IFS=$'\t' read -r hash email subject; do
+      if ! grep -qxF "$email" <<<"$known_emails"; then
+        foreign+="${hash} ${email} ${subject}"$'\n'
       fi
+    done < <(git log -5 --pretty=format:'%h%x09%ae%x09%s' 2>/dev/null || true)
+
+    echo "      deploying HEAD: $(git log -1 --pretty=format:'%h %ae %s' 2>/dev/null || echo unknown)"
+    if [ -n "$foreign" ]; then
+      warn "recent commits by an identity unknown to this repo's recent history are about to deploy:"
+      while IFS= read -r line; do [ -n "$line" ] && echo "        $line"; done <<<"$foreign"
+      if [ "${DEPLOY_REQUIRE_CLEAN_OWNERSHIP:-0}" = "1" ]; then
+        fail "DEPLOY_REQUIRE_CLEAN_OWNERSHIP=1 and foreign-authored commits present — aborting"
+      fi
+    else
+      pass "last 5 commits all owned by known repo identities"
     fi
   fi
 
