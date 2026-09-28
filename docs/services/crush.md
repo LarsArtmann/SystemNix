@@ -141,5 +141,20 @@ Verify after deploy:
 `find ~/projects -mindepth 1 -maxdepth 3 -type d -name .crush | wc -l` (expect 0 real dirs;
 a fresh project's QLC-root `.crush` is converged by the next run) and io PSI avg60 vs the
 pre-move baseline.
+
+**Measured follow-through (2026-09-29, full evidence + ledger:
+`docs/status/2026-09-29_00-45_crush-db-baseline-followthrough-io-psi-zone6-verdict.md`):**
+the crush attribution is gone — pre-migration storm windows had crush session scopes moving
+~630 MB/min (5 of the top-10 cgroup movers, worst single crush process 50 GB cumulative,
+#3 on the box); post-migration windows show crush sessions at ~9 MB/min (≈70× down, absent
+from the top-10) while the current storm drivers are clickhouse, nix-daemon builds, and the
+guard's btrfs-scrub stop/re-arm churn. Zone 6 still trips 22–130/day and still cycles flm —
+the residual drivers are NOT crush. Two real `.crush` dirs remain: `go-daemon` (legit
+live-session skip, self-converges) and `legal-cases` (blocked by a root-owned EMPTY target
+`/mnt/hot/crush/legal-cases` from the interrupted first run — heal: `sudo rmdir` that empty
+dir, the next run converges it). NOTE: the review-fix batch (per-project guard, depth WARN,
+DRY_RUN, OnFailure) is LIVE on the deployed 2026-09-22 generation — the "deploy-pending"
+sentences above are stale pending the verification item in `docs/todo/storage.md`.
+
 Runbook/source: `modules/nixos/services/crush-hot-db.nix`; see the `services.hot-db` Phase-2 plan
 (`docs/planning/2026-09-14_13-27_SAMSUNG-PHASE2-HOT-DB-NATIVE-PARETO-PLAN.md`) for the long-term home.
