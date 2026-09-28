@@ -648,11 +648,18 @@ _: {
                   # fire at 93% collector-scale (statvfs — reads ~3pp below
                   # df's reserve-inflated Use%; df said 90% while this metric
                   # read 86), well before CV's own 97.3% health-fail cliff.
-                  # Banded glob matches integer values 93-99; 100% belongs to
-                  # the BTRFS Chunk Health / availability checks.
+                  # POLARITY (caught in 22:49 self-review, pre-deploy): gatus
+                  # conditions must hold in the HEALTHY state — the first
+                  # cut matched the alert band (93-99) with == and would have
+                  # been permanently RED at the live 86%. Negative patterns
+                  # (repo precedent: line 343) flip it: green unless the root
+                  # line reads 93-99 or 100. If the metric LINE VANISHES the
+                  # negatives pass vacuously — the Storage Collector Health
+                  # check owns collector death, this one owns the threshold.
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*storage_collector_fs_used_percent{device=\"/dev/nvme1n1p6\",mount_point=\"/\",fstype=\"btrfs\"} 9[3-9]*)"
+                    "[BODY] != pat(*storage_collector_fs_used_percent{device=\"/dev/nvme1n1p6\",mount_point=\"/\",fstype=\"btrfs\"} 9[3-9]*)"
+                    "[BODY] != pat(*storage_collector_fs_used_percent{device=\"/dev/nvme1n1p6\",mount_point=\"/\",fstype=\"btrfs\"} 100*)"
                   ];
                   alerts = discordAlert "Root filesystem >=93% used (collector scale, statvfs) — approaching the 97.3% health-fail cliff. Run the M6 deletion proposal, the coredump vacuum (~958MB), nix-gc (auto-blocked below 5GiB btrfs unalloc), and review btrbk snapshot retention. Live value: storage_collector_fs_used_percent mount_point=\"/\".";
                 })
