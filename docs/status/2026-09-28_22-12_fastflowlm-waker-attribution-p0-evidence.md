@@ -1,7 +1,7 @@
 # FastFlowLM waker attribution + P0 host-health evidence (SUPERB plan M1/M2/M5)
 
 **Date:** 2026-09-28 22:12
-**Status:** Evidence complete (journal forensics + unit verification + coredump triage). Live PID-level sampler armed at `~/.local/share/cv-verify/fastflowlm-waker/` (journal follow + 1s `ss -tnp`) for the next restore window.
+**Status:** Evidence complete (journal forensics + unit verification + coredump triage). Live PID-level sampler armed at `~/.local/share/cv-verify/fastflowlm-waker/` (journal follow + 1s `ss -tnp`) for the next restore window. **Persistent capture (23:15, survives agent sessions):** user unit `fflm-waker-capture.service` runs the 1s `ss` sampler into `~/.local/share/cv-verify/fastflowlm-waker/ss-persistent.log` — on the next FastFlowLM wake, correlate the ESTABLISHED port with the connecting PID (root `ss -tnp` sees foreign-uid owners). Stop with `systemctl --user stop fflm-waker-capture` once the waker is PID-named.
 **Source plan:** CV `docs/planning/2026-09-28_18-18_SUPERB-HOST-HEALTH-RESTORATION.md` (M1, M2, M5.2, M5.3).
 
 ## Verdict (one paragraph)
