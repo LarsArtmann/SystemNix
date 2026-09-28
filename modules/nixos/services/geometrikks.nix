@@ -16,7 +16,6 @@ _: {
     }:
     let
       cfg = config.services.geometrikks;
-      inherit (config.networking) domain;
       libHelpers = import ../../../lib/default.nix lib;
       inherit (libHelpers) serviceTypes images ports;
       inherit (libHelpers.mkDockerServiceFactory { inherit pkgs; }) mkDockerService;

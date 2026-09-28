@@ -96,7 +96,7 @@ _: {
 
       config = lib.mkIf cfg.enable {
         fileSystems = lib.mapAttrs' (
-          name: cache:
+          _name: cache:
           lib.nameValuePair cache.mountPoint (mkFilesystem {
             device = cfg.device;
             fsType = "btrfs";

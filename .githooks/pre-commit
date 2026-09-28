@@ -350,8 +350,12 @@ fi
 # + trap-lint builds run in CI only (.github/workflows/nix-check.yml vm-tests +
 # trap-lint jobs). Eval failures and assertion trips still block here —
 # --no-build only skips derivation realizations.
-log_info "Running Nix flake check (eval-only, no builds)..."
-if nix flake check --no-build > /tmp/nix-check.log 2>&1; then
+# --all-systems (2026-09-28): also eval the aarch64-darwin perSystem side —
+# plain check silently omits it on Linux, which let darwin-only eval breaks
+# (Linux-only runtimeInputs, quickshell devShell) ship while every gate was
+# green. Costs ~1s (pure eval).
+log_info "Running Nix flake check (eval-only, all systems, no builds)..."
+if nix flake check --no-build --all-systems > /tmp/nix-check.log 2>&1; then
     log_success "Nix flake check passed!"
 else
     log_error "Nix flake check failed!"

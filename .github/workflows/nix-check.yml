@@ -62,7 +62,12 @@ jobs:
         run: nix fmt -- --ci
 
       - name: Evaluate flake (no build)
-        run: nix flake check --no-build
+        # --all-systems (2026-09-28): plain `flake check` on an x86_64-linux
+        # runner SILENTLY omits aarch64-darwin — the gap that let 8 apps,
+        # the quickshell devShell, and the borg-restore fixture eval-break on
+        # darwin while CI stayed green. Darwin eval adds ~1s (pure eval, no
+        # extra fetches — everything is already in flake.lock).
+        run: nix flake check --no-build --all-systems
 
       # Trap-lints are pure runCommand checks (no VM, seconds to build).
       # `flake check --no-build` only EVALUATES them — a check whose script
