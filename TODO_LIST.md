@@ -402,6 +402,8 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Reconcile the CONTRIBUTING hooks table with the actual `.githooks/pre-commit` legs (core.hooksPath framing; missing legs; unverified names)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-28_00-29_task-000001a0e4e5a8b345c83b5054b73f8ab9f2.md §c5/§f4)
 - [ ] **Generalize "producer inventory before enforcement" into the CONTRIBUTING guard-writing doctrine (enumerate non-human commit producers before any commit gate)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-28_00-29_task-000001a0e4e5a8b345c83b5054b73f8ab9f2.md §e1/§f7)
 - [ ] **Survey `.githooks/pre-commit` gate legs for fixture/shellcheck coverage gaps (leg → tested-by matrix + minimal fixture plan)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-28_00-29_task-000001a0e4e5a8b345c83b5054b73f8ab9f2.md §f9)
+- [ ] **Persist a regression test for the pre-commit docs-only flake-leg skip guard (2026-09-28): docs-only fixture must SKIP, `.nix`-mixed fixture must RUN, neutered `grep -qvE` guard must fail the harness** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-28_20-03_task-000001a0e928914c50f825a4a2c3513109fa.md §b1)
+- [ ] **E2E-fire the pre-commit docs-only skip once through a real git commit: docs-only `--allow-empty` commit shows the skip log line + green exit; empty-staged control skips** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-28_20-03_task-000001a0e928914c50f825a4a2c3513109fa.md §b2)
 
 ## Libraries
 
