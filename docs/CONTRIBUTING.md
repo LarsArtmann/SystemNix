@@ -184,6 +184,15 @@ Foreign-repo landings annotate closure narratives as SOURCE-LEVEL delivery (2026
 
 **Status-report filenames are MEASURED, never guessed (2026-09-27 clause, fire-3 harvest).** Derive the filename timestamp by running `date +%Y-%m-%d_%H-%M` immediately before creating the file — never reconstruct it from context or memory (fire-3 shipped `2026-09-27_09-12_…` while its commit landed 08:56:06, a 16-minute lie in the timestamped audit trail). Before creating ANY `docs/status/` report, list the existing reports for the task ID first (`ls docs/status/ | grep 'task-<ID>'`): the write tool silently overwrites, so a same-name report from a parallel session would be clobbered with zero warning. On a collision, bump the minutes — never overwrite. Convention, not tooling — a guard script was considered and deliberately skipped as overkill.
 
+**Verify-gate triage runbook (2026-09-28, task-queue harvest).** A verify failure landing across MULTIPLE unrelated tasks is a gate problem, not a task problem — probe in order, and only suspect the dispatched work after every environmental step is clean:
+
+1. **`/run/binfmt` exists** — `ls /run/binfmt`; if missing, every sandboxed nix build dies `getting attributes of path "/run/binfmt"` (the 2026-09-24 boot-cycle class). Heal: `sudo systemd-tmpfiles --create --remove --exclude-prefix=/dev`, and probe whether the DURABLE fix has landed (boot ordering + `boot.binfmt.preferStaticEmulators`) before retrying — a boot-ephemeral heal re-dies at the next reboot.
+2. **Clean-HEAD flake check** — re-run the failing gate at a clean worktree of pre-change HEAD (`git worktree add /tmp/baseline <pre-change-rev>`) to separate PRE-EXISTING (gate-dead, not the task's fault) from INTRODUCED (counts against the task).
+3. **nix-daemon restart** — the daemon's in-memory fetch cache can serve STALE source trees for an already-locked rev (`sudo systemctl restart nix-daemon`; the stale-fetch class).
+4. **IO pressure vs the verify budget** — the queue's verify gate budget is ~30 min (measured 2026-09-25); a cold eval cache under an IO storm exceeds it. Check `node_psi_io_some_avg60` / disk busy and retry from a warm cache when pressure drains. Note gate-slow classification is deadline-killed-with-progress (exit 0, evaluation advancing) — retry, not task failure.
+
+Only if all four probe clean does the failure count as INTRODUCED (the only shape that burns task attempts — see the classification row in `docs/todo/pipeline.md`).
+
 ## Eval-Time Guards (audit modules)
 
 Most documented incident classes are ENFORCED at eval time — `nix flake check`
