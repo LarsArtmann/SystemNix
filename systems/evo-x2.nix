@@ -57,11 +57,16 @@ nixpkgs.lib.nixosSystem {
             # Explicit package pin: SystemNix's nixpkgs carries no bank-sync
             # attr, so the module's mkPackageOption default cannot resolve.
             inputs.bank-sync.homeManagerModules.default
+            # index docs-archive-stats: daily docs-stats --record snapshot
+            # into ~/projects/index/docs-stats-history.tsv (auto-committed).
+            # package defaults to the index flake's built indexer.
+            inputs.index.homeManagerModules.docs-archive-stats
           ];
           programs.bank-sync = {
             enable = true;
             package = inputs.bank-sync.packages.x86_64-linux.default;
           };
+          services.docs-archive-stats.enable = true;
         };
         extraSpecialArgs = sharedHomeManagerSpecialArgs // {
           wallpapers = inputs.wallpapers-src;

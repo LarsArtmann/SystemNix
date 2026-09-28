@@ -339,6 +339,15 @@
       };
     };
 
+    # index — project documentation indexer; the docs-archive-stats
+    # home-manager timer records the dated-docs history TSV (which lives in
+    # the index repo and rides its auto-commit) daily at 06:15.
+    # go-nix-helpers deliberately NOT followed (bank-sync FOD-mismatch trap).
+    index = {
+      url = "github:LarsArtmann/index?ref=master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # go-taskqueue — projects-aware task work queue + agent pool (tq CLI).
     # 2026-09-17: interim git+file FLIPPED to github:?ref=master — the push
     # backlog landed on origin (master = 1c48478, incl. the vendorHash fix
