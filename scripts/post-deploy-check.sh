@@ -403,7 +403,21 @@ fi
 
 # / redirects to the Pocket ID login (302) since OAuth2 is configured -
 # probe /health instead, the same endpoint the agent's ExecStartPre gates on.
-check_local "Browser History" "8087" "/health" "200" 2>/dev/null || true
+# 2026-09-28 verdict contract: /health DELIBERATELY degrades to 503 when
+# agents are expected but silent > AgentFreshness (upstream api/handlers.go:
+# the endpoint "doubles as the alert surface for zero agents sending data").
+# Live 2026-09-27 21:27: agent silent under memory pressure -> honest 503 ->
+# this leg FAILed the deploy (exit 3) while the app served fine. That
+# degradation is a WARN here (the agent timer + agent-activity collector
+# legs below own agent silence); only refused/DB-degraded is a FAIL.
+_bh_code=$(curl -s --compressed -o /tmp/.smoke-bh-health -w "%{http_code}" --max-time 10 "http://localhost:8087/health" 2>/dev/null || true)
+if [ "$_bh_code" = "200" ]; then
+  report_pass "Browser History - /health 200 (server up, agents fresh)"
+elif [ "$_bh_code" = "503" ] && grep -q '"db":"ok"' /tmp/.smoke-bh-health 2>/dev/null; then
+  report_warn "Browser History - /health 503 = agent-freshness decay (by design; DB ok, app serving). Agent silence is covered by the agent legs below"
+else
+  report_fail "Browser History - /health unreachable or DB-degraded (status=${_bh_code:-none}, body: $(head -c 200 /tmp/.smoke-bh-health 2>/dev/null))"
+fi
 
 # Browser History: agent timer must be active for collection
 if systemctl is-active browser-history-agent.timer >/dev/null 2>&1; then
