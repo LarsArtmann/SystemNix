@@ -737,6 +737,15 @@ in
                 # Empty value = carve-out off (every clearance demand
                 # keeps skipping); CV parses it leniently either way.
                 CV_EVALUATION_CITIZENSHIPS = config.sops.placeholder.cv_evaluation_citizenships;
+                # CRM sync activation (2026-09-28): UNCOMMENT the next line
+                # AFTER adding `cv_crm_api_key` to the cv.yaml sops plaintext
+                # (`sudo sops platforms/nixos/secrets/cv.yaml`; the value is
+                # the crm `-api-token`, same file as CV_API_KEY's neighbor
+                # ~/.local/share/crm/api-token). Adding the template line
+                # before the key exists would fail activation — the sops
+                # placeholder must resolve. Runbook: crm repo
+                # docs/ops/CV-SYNC.md "Running it under systemd".
+                # CV_CRM_API_KEY = config.sops.placeholder.cv_crm_api_key;
               };
             };
           }
