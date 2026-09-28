@@ -163,11 +163,11 @@ _: {
           settings = {
             web.port = cfg.port;
             # 2026-09-28: 67 checks × per-execution INFO lines = ~130k journal
-            # lines/day of pure "Monitored ... success=true" noise (measured
-            # 2.7k/30min) drowning real signal. WARN keeps failures + state
-            # transitions; gatus 5.36 logs "Defaulting log level to INFO"
-            # without this key.
-            logging.level = "WARN";
+            # lines/day of "Monitored ... success=true" noise. The log level is
+            # set via the GATUS_LOG_LEVEL ENV VAR below — gatus 5.36 does NOT
+            # read a logging.level yaml key (runtime-proven 23:10: the yaml
+            # key left INFO lines printing AND a BOGUS value changed nothing;
+            # the env var silenced them: 3 INFO lines → 0).
             storage = {
               type = "sqlite";
               path = "/var/lib/gatus/gatus.db";
@@ -661,7 +661,7 @@ _: {
                     "[BODY] != pat(*storage_collector_fs_used_percent{device=\"/dev/nvme1n1p6\",mount_point=\"/\",fstype=\"btrfs\"} 9[3-9]*)"
                     "[BODY] != pat(*storage_collector_fs_used_percent{device=\"/dev/nvme1n1p6\",mount_point=\"/\",fstype=\"btrfs\"} 100*)"
                   ];
-                  alerts = discordAlert "Root filesystem >=93% used (collector scale, statvfs) — approaching the 97.3% health-fail cliff. Run the M6 deletion proposal, the coredump vacuum (~958MB), nix-gc (auto-blocked below 5GiB btrfs unalloc), and review btrbk snapshot retention. Live value: storage_collector_fs_used_percent mount_point=\"/\".";
+                  alerts = discordAlert "Root filesystem >=93% used (collector scale, statvfs) — approaching the 97.3% health-fail cliff. Follow docs/operations/disk-cleanup-proposal-2026-09-28.md (btrfs snapshot/retention audit is the biggest lever), the coredump vacuum (~958MB), nix-gc (auto-blocked below 5GiB btrfs unalloc), and btrbk snapshot retention. Live value: storage_collector_fs_used_percent mount_point=\"/\".";
                 })
                 (mkHttpCheck {
                   name = "BTRFS Chunk Health";
@@ -1029,6 +1029,10 @@ _: {
                 # Must exceed the 300s OIDC gate budget (slow-boot dnsblockd)
                 TimeoutStartSec = "6min";
                 RuntimeDirectory = "gatus";
+                # Quiets the per-check INFO spam (see the settings comment):
+                # WARN keeps failures + state transitions. Env var is the ONLY
+                # runtime-verified mechanism in gatus 5.36.
+                Environment = [ "GATUS_LOG_LEVEL=WARN" ];
                 LoadCredential = lib.optional enableOidc "gatus-oidc-secret:${clientSecretPath}";
                 # Compose the full EnvironmentFile list: the sops template
                 # (DISCORD_WEBHOOK_URL) plus the runtime-generated OIDC secret file
