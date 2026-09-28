@@ -4,13 +4,13 @@ Status: **document-only.** disko is a provisioning-time tool; destructive modes 
 
 ## What exists
 
-| Surface | Where |
-| --- | --- |
-| Geometry spec (executable, eval-checked) | `disko/samsung-tlc.nix` |
-| Flake output | `flake.diskoConfigurations.samsung-tlc` |
-| Eval guard (geometry + discovery-trap) | `checks.x86_64-linux.disko-samsung-tlc` |
-| Blank-vdisk VM rehearsal | `tests/test-disko-layout.nix` → `checks.x86_64-linux.disko-layout` |
-| Live-geometry source of truth | `/etc/fstab` (subvol=nix, hot toplevel) + `platforms/nixos/system/boot-mirror.nix` (SAMSUNG-EFI) |
+| Surface                                  | Where                                                                                            |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Geometry spec (executable, eval-checked) | `disko/samsung-tlc.nix`                                                                          |
+| Flake output                             | `flake.diskoConfigurations.samsung-tlc`                                                          |
+| Eval guard (geometry + discovery-trap)   | `checks.x86_64-linux.disko-samsung-tlc`                                                          |
+| Blank-vdisk VM rehearsal                 | `tests/test-disko-layout.nix` → `checks.x86_64-linux.disko-layout`                               |
+| Live-geometry source of truth            | `/etc/fstab` (subvol=nix, hot toplevel) + `platforms/nixos/system/boot-mirror.nix` (SAMSUNG-EFI) |
 
 The spec covers ONLY the Samsung 970 EVO Plus 1TB (`/dev/disk/by-id/nvme-Samsung_SSD_970_EVO_Plus_1TB_S4EWNX0RA01856V`): p1 = 4G FAT32 `SAMSUNG-EFI` (no mountpoint — the QLC primary's fstab mounts it as the boot mirror), p2 = btrfs `-L tlc` with toplevel at `/mnt/hot` (subvolid=5 — `hot/<name>` service subvols are created THROUGH it by `modules/nixos/services/hot-db.nix`, so it must never become a named subvolume) plus named subvols `/nix` and `/users/lars/cache/nix`. The QLC root disk and `/data` are NOT modeled — they carry live data and are hand-managed (`hardware-configuration.nix`).
 

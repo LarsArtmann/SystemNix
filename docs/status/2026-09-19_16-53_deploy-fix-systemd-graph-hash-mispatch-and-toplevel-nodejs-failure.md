@@ -8,32 +8,35 @@
 
 ## What happened (timeline)
 
-| Time (CEST) | Event |
-| --- | --- |
-| ~14:01 | Parallel session's work daemon-committed as `7af9fbf9`: it flipped `pkgs/systemd-graph/webui.nix` line 19 (source fetch hash) FROM the proven `yb3w6/...` TO `MkUfxSvF...`. |
-| 14:08 | User's deploy failed: `hash mismatch` in `*-source.drv` (webui.nix's `fetchFromGitHub`) — `specified: MkUfxSvF...`, `got: yb3w6/...`. 44s, 8 errors, config NOT activated. |
-| ~15:00 | This session: diagnosed via git history that `7af9fbf9` regressed a hash that had been green since Aug 19 (`995f4f8d`). Reverted line 19 to `yb3w6/...`. |
-| ~15:05 | Built `.#systemd-graph` → SECOND hash mismatch surfaced: the `pnpmDeps` FOD (`zZQ2/...` stale, `got: MkUfxSvF...`). |
-| ~15:07 | **Root cause understood:** the nixpkgs bump (26.11.20260917.e554fab) staled the `fetchPnpmDeps` hash; the parallel session computed the new got-hash `MkUfxSvF...` and **pasted it into the WRONG attr** — the `fetchFromGitHub` source `hash` (line 19) instead of the `pnpmDeps` `hash` (line 35). My line-19 revert + placing `MkUfxSvF...` at line 35 fixed both. |
-| ~15:10 | Full systemd-graph chain builds GREEN (pnpm-deps FOD, vite build, go-modules, final binary `w8ja1d28.../bin/systemd-graph`, 8 MB, correctly renamed from `server`). |
-| ~15:12 | Waited out the parallel session's 21-min toplevel build (PID 3673071) to avoid stacking build IO (IO PSI avg10 was 35-43% all session). |
-| ~15:15 | Ran my own toplevel `--keep-going`: **35 build errors**. Piped through `tail -30` → saw only the cascade tail. |
-| ~15:23 | Re-ran with full log capture → `~/.local/state/deploy-logs/toplevel-151231.log`. Root cause of ALL remaining failures: **`nodejs-slim-26.9.0` — "builder failed with exit code 2"** (a real compile failure, not a hash mismatch). Everything else (nodejs, npm, hermes-tui/web/agent-0.21.3, llama-cpp-0.4.1, llama-server-rocm, llama-vlm units, man-paths, system-path, polkit/dbus-broker units, system-units/user-units/etc/activate/toplevel) is cascade. |
-| 16:53 | Tree state verified clean: my fix daemon-committed (`570a2fa8` + `4137c79c`), both hashes correct in HEAD. A parallel session was building `.#telephony-browser` (PID 81166) during the session. |
+| Time (CEST) | Event                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~14:01      | Parallel session's work daemon-committed as `7af9fbf9`: it flipped `pkgs/systemd-graph/webui.nix` line 19 (source fetch hash) FROM the proven `yb3w6/...` TO `MkUfxSvF...`.                                                                                                                                                                                                                                                                                     |
+| 14:08       | User's deploy failed: `hash mismatch` in `*-source.drv` (webui.nix's `fetchFromGitHub`) — `specified: MkUfxSvF...`, `got: yb3w6/...`. 44s, 8 errors, config NOT activated.                                                                                                                                                                                                                                                                                      |
+| ~15:00      | This session: diagnosed via git history that `7af9fbf9` regressed a hash that had been green since Aug 19 (`995f4f8d`). Reverted line 19 to `yb3w6/...`.                                                                                                                                                                                                                                                                                                        |
+| ~15:05      | Built `.#systemd-graph` → SECOND hash mismatch surfaced: the `pnpmDeps` FOD (`zZQ2/...` stale, `got: MkUfxSvF...`).                                                                                                                                                                                                                                                                                                                                             |
+| ~15:07      | **Root cause understood:** the nixpkgs bump (26.11.20260917.e554fab) staled the `fetchPnpmDeps` hash; the parallel session computed the new got-hash `MkUfxSvF...` and **pasted it into the WRONG attr** — the `fetchFromGitHub` source `hash` (line 19) instead of the `pnpmDeps` `hash` (line 35). My line-19 revert + placing `MkUfxSvF...` at line 35 fixed both.                                                                                           |
+| ~15:10      | Full systemd-graph chain builds GREEN (pnpm-deps FOD, vite build, go-modules, final binary `w8ja1d28.../bin/systemd-graph`, 8 MB, correctly renamed from `server`).                                                                                                                                                                                                                                                                                             |
+| ~15:12      | Waited out the parallel session's 21-min toplevel build (PID 3673071) to avoid stacking build IO (IO PSI avg10 was 35-43% all session).                                                                                                                                                                                                                                                                                                                         |
+| ~15:15      | Ran my own toplevel `--keep-going`: **35 build errors**. Piped through `tail -30` → saw only the cascade tail.                                                                                                                                                                                                                                                                                                                                                  |
+| ~15:23      | Re-ran with full log capture → `~/.local/state/deploy-logs/toplevel-151231.log`. Root cause of ALL remaining failures: **`nodejs-slim-26.9.0` — "builder failed with exit code 2"** (a real compile failure, not a hash mismatch). Everything else (nodejs, npm, hermes-tui/web/agent-0.21.3, llama-cpp-0.4.1, llama-server-rocm, llama-vlm units, man-paths, system-path, polkit/dbus-broker units, system-units/user-units/etc/activate/toplevel) is cascade. |
+| 16:53       | Tree state verified clean: my fix daemon-committed (`570a2fa8` + `4137c79c`), both hashes correct in HEAD. A parallel session was building `.#telephony-browser` (PID 81166) during the session.                                                                                                                                                                                                                                                                |
 
 ## Direct answers to the three questions
 
 **What did you forget?**
+
 - I did not re-check `git status` immediately before each edit to a file a parallel session had touched 20 minutes earlier (multi-agent rule). I got lucky; the file could have been mid-edit.
 - I did not consider that a `got:` hash has THREE possible destinations in one package (source hash / pnpmDeps hash / vendorHash) and asked "which attr is stale?" only implicitly — the parallel session's mispaste proves this ambiguity is a real trap class. I initially assumed the source-hash story was the whole story; only building it revealed the second stale hash.
 - I did not verify my own verification step: the second log run's root-error grep came back EMPTY and I proceeded to report time without interrogating why (answer: the nodejs-slim failure was CACHED, so the re-run printed only "Reason: builder failed..." summaries with no build body, and my `error:` pattern missed `error (ignored):`; I needed `-L` for build logs).
 
 **What could you have done better?**
+
 - NEVER pipe build output through `tail -30` when failure analysis is the goal — capture to a file first, then filter. The AGENTS.md grep-capture lesson exists for exactly this; I repeated it and wasted a full toplevel eval cycle (~8 min) re-running.
 - Check for concurrent `nix build` processes BEFORE starting my own, and read their exit/results — the parallel session's 21-min build had already attempted nodejs-slim; its failure was knowable earlier.
 - Run the failing FOD directly with `-L` (`nix build /nix/store/...-nodejs-slim-26.9.0.drv -L`) to get the actual compiler error instead of stopping at the cascade.
 
 **What could you still improve?**
+
 - Deploy under force-pressure was racing a storm (IO PSI avg10 35→52% during my builds; freeze #5 died 9s into a deploy). I queued my heavy build behind the parallel one but still built into rising pressure.
 - The deploy fix should have been PATHSPEC-committed with a real message immediately (daemon buried it in heuristic commits instead — acceptable but lossy for history).
 - No fencing against the parallel session reverting my fix (it flipped this exact line 20 min earlier). Verified intact at 16:53, but the race window was real.
@@ -88,6 +91,7 @@
 ## f) NEXT (50)
 
 **Finish the deploy:**
+
 1. `nix build /nix/store/njhj371sv6q9b1h2lwxj49gf8yckyb6f-nodejs-slim-26.9.0.drv^* -L` — capture the real build failure.
 2. Diagnose + fix nodejs-slim (OOM vs nixpkgs breakage vs disk; check dmesg/oomd, `/nix` free space, nixpkgs issues).
 3. Re-run toplevel `--keep-going` with output to file until zero root failures.

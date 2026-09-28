@@ -11,15 +11,15 @@ record: `docs/status/2026-09-23_13-26_eventcatalog-hub-session3-t5-t13-executed.
 
 ## Architecture (owner-decided Option B — license-free)
 
-| Piece      | Value                                                                                                                            |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| UI         | `https://catalog.home.lan` — Layer 2 `protected` STATIC vHost (oauth2-proxy for external, LAN bypass, `file_server`; no port, no daemon) |
-| Serving root | `/var/lib/architecture-catalog/current` — RELATIVE symlink into `generations/<timestamp>` (keep 3), all files `a+rX` for Caddy  |
-| Sync       | `architecture-catalog-sync.service` (oneshot) + hourly `Persistent` timer — depth-1 clone of the hub's `dist` branch              |
-| Freshness  | `architecture-catalog-metrics` (5-min textfile collector) → `architecture_catalog_*` gauges                                        |
-| Monitoring | Gatus "Architecture Catalog" (+ llms.txt, silent) + "Architecture Catalog Freshness"; `architecture-catalog-sync` in system-health |
-| Backup     | none — fully rebuildable from the `dist` branch                                                                                   |
-| AI surface | `/llms.txt` + `/schemas.txt` (MCP server is Scale-license gated — deliberately not wired)                                          |
+| Piece        | Value                                                                                                                                    |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| UI           | `https://catalog.home.lan` — Layer 2 `protected` STATIC vHost (oauth2-proxy for external, LAN bypass, `file_server`; no port, no daemon) |
+| Serving root | `/var/lib/architecture-catalog/current` — RELATIVE symlink into `generations/<timestamp>` (keep 3), all files `a+rX` for Caddy           |
+| Sync         | `architecture-catalog-sync.service` (oneshot) + hourly `Persistent` timer — depth-1 clone of the hub's `dist` branch                     |
+| Freshness    | `architecture-catalog-metrics` (5-min textfile collector) → `architecture_catalog_*` gauges                                              |
+| Monitoring   | Gatus "Architecture Catalog" (+ llms.txt, silent) + "Architecture Catalog Freshness"; `architecture-catalog-sync` in system-health       |
+| Backup       | none — fully rebuildable from the `dist` branch                                                                                          |
+| AI surface   | `/llms.txt` + `/schemas.txt` (MCP server is Scale-license gated — deliberately not wired)                                                |
 
 Data flow: each source repo's Go binary exports an EventCatalog tree
 (bank-sync: `bank-sync catalog --format eventcatalog`; cqrs-htmx:

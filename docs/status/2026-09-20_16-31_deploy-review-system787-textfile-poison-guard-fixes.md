@@ -30,27 +30,27 @@
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-|---|---|
-| Deploy review of the full paste (nh switch + deploy + smoke) | §1.1 above; anchoring verified live (`readlink` both paths) |
-| Root cause of `node_textfile_scrape_error=1` (nrestarts poison) | State file read live; emitter code read; both sides identified |
-| Root cause of absent `storage_collector_health` (0600 prom) | Live `ls`/unit file inspection; upstream `UMask=0077` located in the conflict error |
-| Fix: integer guards write+emit in `system-health.nix` | Committed `514dba99`; eval RC=0; rendered script contains the guards; standalone fixture test passes (`[not set]`→0, `5`→5) |
-| Fix: `UMask=mkForce "0022"` in `storage-collector.nix` | Committed; eval green after the mkForce correction |
-| Fix: rofi `extraConfig`→`settings` | Committed; rofi warning count in eval stderr: 0 |
-| Triage all 4 smoke FAILs with evidence | Guard journal (#648–653, restore-capped lines), bank-sync journal (SCA lines), BH agent journal (no visits), CV journal + live 200 fetch |
-| AGENTS.md lesson recorded | Line ~906, state-file round-trip paragraph |
-| Boot-anchoring + tree-state verification | `system-787` profile == `/run/current-system`; my files intact in HEAD after later daemon commits |
+| Item                                                            | Evidence                                                                                                                                 |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Deploy review of the full paste (nh switch + deploy + smoke)    | §1.1 above; anchoring verified live (`readlink` both paths)                                                                              |
+| Root cause of `node_textfile_scrape_error=1` (nrestarts poison) | State file read live; emitter code read; both sides identified                                                                           |
+| Root cause of absent `storage_collector_health` (0600 prom)     | Live `ls`/unit file inspection; upstream `UMask=0077` located in the conflict error                                                      |
+| Fix: integer guards write+emit in `system-health.nix`           | Committed `514dba99`; eval RC=0; rendered script contains the guards; standalone fixture test passes (`[not set]`→0, `5`→5)              |
+| Fix: `UMask=mkForce "0022"` in `storage-collector.nix`          | Committed; eval green after the mkForce correction                                                                                       |
+| Fix: rofi `extraConfig`→`settings`                              | Committed; rofi warning count in eval stderr: 0                                                                                          |
+| Triage all 4 smoke FAILs with evidence                          | Guard journal (#648–653, restore-capped lines), bank-sync journal (SCA lines), BH agent journal (no visits), CV journal + live 200 fetch |
+| AGENTS.md lesson recorded                                       | Line ~906, state-file round-trip paragraph                                                                                               |
+| Boot-anchoring + tree-state verification                        | `system-787` profile == `/run/current-system`; my files intact in HEAD after later daemon commits                                        |
 
 ## b) PARTIALLY DONE
 
-| Item | Done | Missing |
-|---|---|---|
-| Textfile monitoring repair | Code fixed, committed, eval-verified | **Not deployed** — the RUNNING system still has the broken textfile right now; 7 Gatus checks stay dark until `nix run .#deploy` + one collector tick (~2 min) |
-| storage-collector perm fix | SystemNix wrapper workaround (mkForce) | Upstream crate/module fix (chmod 644 in `~/projects/storage-collector` or module-level) NOT done — mkForce is a wrapper-layer patch over an upstream pin |
-| FastFlowLM recovery | Proved corpse is gone; guard state mapped | Socket still down (restore-capped); no restart performed (needs sudo/systemctl, sandbox-blocked for me) |
-| Multi-agent attribution | Flagged the mixed `514dba99` batch | Did not diff-review the co-committed `inboxclean.nix` change (+6/-? lines) from the parallel session |
-| Formatter hygiene | Reverted my side-effect on the parallel session's HTML | Did not re-run a final whole-tree fmt check afterwards (deliberately — their tree, their fmt pass) |
+| Item                       | Done                                                   | Missing                                                                                                                                                        |
+| -------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Textfile monitoring repair | Code fixed, committed, eval-verified                   | **Not deployed** — the RUNNING system still has the broken textfile right now; 7 Gatus checks stay dark until `nix run .#deploy` + one collector tick (~2 min) |
+| storage-collector perm fix | SystemNix wrapper workaround (mkForce)                 | Upstream crate/module fix (chmod 644 in `~/projects/storage-collector` or module-level) NOT done — mkForce is a wrapper-layer patch over an upstream pin       |
+| FastFlowLM recovery        | Proved corpse is gone; guard state mapped              | Socket still down (restore-capped); no restart performed (needs sudo/systemctl, sandbox-blocked for me)                                                        |
+| Multi-agent attribution    | Flagged the mixed `514dba99` batch                     | Did not diff-review the co-committed `inboxclean.nix` change (+6/-? lines) from the parallel session                                                           |
+| Formatter hygiene          | Reverted my side-effect on the parallel session's HTML | Did not re-run a final whole-tree fmt check afterwards (deliberately — their tree, their fmt pass)                                                             |
 
 ## c) NOT STARTED (observed, consciously deferred)
 
@@ -93,6 +93,7 @@
 ## f) NEXT THINGS (prioritized, ~40 — grounded in this session)
 
 **Immediate (this machine, today):**
+
 1. `nix run .#deploy` → land the guard + UMask + rofi fixes; confirm `node_textfile_scrape_error` returns 0 within ~2 min of the switch.
 2. Verify the 7 previously-dark metrics present again (zram fill, stuck-dstate, niri-fresh, signoz-rules, emeet, storage_collector_health, …) and the associated Gatus checks green.
 3. Push the 5 unpushed commits (origin parity for CI/deploys).
@@ -148,4 +149,4 @@
 
 ---
 
-*Report ends. Waiting for instructions.*
+_Report ends. Waiting for instructions._

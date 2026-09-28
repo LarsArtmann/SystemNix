@@ -2,7 +2,6 @@
 
 > **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** delta (the GH013 unblock) resolved by the 10:45 fourth run — push landed, playbook in AGENTS.md; archived as the third verification pass.
 
-
 **Date:** 2026-09-15 09:22 CEST
 **Queue task:** 000001a0a1f149f8469390a3b300fddf0914 closeout — this is the **THIRD run** of the same closeout (first: `docs/status/2026-09-15_06-10_window-closeout-io-psi-guard-invokenamed-sweep.md`, delivered only via daemon commit `47b0585e`; second: `docs/status/2026-09-15_07-32_window-closeout-rerun-gitleaks-rewrite-regression.md`, committed as `7ebb0863`). Between the second run and now, three more sessions touched the tree (an execution session closing the first closeout's harvest, a GH013 push-protection incident session, and a parallel service-integration-registry migration), so every claim below was **re-verified against the current tree at 09:22**, not copied forward.
 **Window:** 2026-09-14 00:37:44 → 03:11:44 (tq facts 2981–3110, worker-63716; all five tasks `task.completed` — re-read from the journal this run).

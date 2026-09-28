@@ -56,6 +56,7 @@
 ## f) UP TO 50 NEXT THINGS (prioritized; owner-gated marked)
 
 **Waves & windows (owner)**
+
 1. `[owner]` Execute Wave 1 (pocket-id) per the 00-25 report §e — snippet + commands ready; ~30 min window.
 2. `[owner-decision first]` Paperless PG-level dump job (or ratify exporter-only RPO) — queued `[ready]`, agent-executable.
 3. `[owner]` Wave 2 (postgres cluster) after 1-2; include `immich-db-backup`/`miniflux-backup` in extraUnits.

@@ -159,7 +159,7 @@ _: {
           # stack with builds on the saturated QLC root. BFQ is active on
           # all disks, so the tier is effective; scheduler-level, immune to
           # the nvme0/nvme1 name swaps.
-          // (ioTier.background)
+          // ioTier.background
           // serviceDefaults { };
         };
       };

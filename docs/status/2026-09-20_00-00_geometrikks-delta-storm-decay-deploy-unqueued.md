@@ -7,19 +7,20 @@
 
 ## Live state at 00:00 (vs 23:47)
 
-| Signal | 23:47 | 00:00 | Direction |
-| --- | --- | --- | --- |
-| io PSI some avg10 / avg60 | 21.6 / 30.9 | **21.1 / 30.2** | Flat-decaying; still a hair over the 20% deploy gate |
-| MemAvailable | **8.1G (6%)** | **11.6G (9%)** | RECOVERING (was the scariest number tonight) |
-| zram fill | ~82% (SwapFree math) | **~65%** (40.3G orig / 62.2G device; swap faulting back) | EASING — see §d.3 for my arithmetic fumble on this |
-| load 1/5/15 | 56.5 / 51.4 / 58.7 | **87.9 / 79.7 / 72.3** | RISING — new parallel workload (below) |
-| Guard crash-#3 lines since 23:47 | — | **none matched** | No new worst-hour samples |
-| Build #2 (job 068) | running | **STILL running (~40 min)** | nixpkgs `e554fab` bump enlarged the rebuild set + qemu contention |
-| git HEAD | `eb8cc186` | **`816d1772`** (2 new commits) | Tree keeps moving; both new commits benign (below) |
+| Signal                           | 23:47                | 00:00                                                    | Direction                                                         |
+| -------------------------------- | -------------------- | -------------------------------------------------------- | ----------------------------------------------------------------- |
+| io PSI some avg10 / avg60        | 21.6 / 30.9          | **21.1 / 30.2**                                          | Flat-decaying; still a hair over the 20% deploy gate              |
+| MemAvailable                     | **8.1G (6%)**        | **11.6G (9%)**                                           | RECOVERING (was the scariest number tonight)                      |
+| zram fill                        | ~82% (SwapFree math) | **~65%** (40.3G orig / 62.2G device; swap faulting back) | EASING — see §d.3 for my arithmetic fumble on this                |
+| load 1/5/15                      | 56.5 / 51.4 / 58.7   | **87.9 / 79.7 / 72.3**                                   | RISING — new parallel workload (below)                            |
+| Guard crash-#3 lines since 23:47 | —                    | **none matched**                                         | No new worst-hour samples                                         |
+| Build #2 (job 068)               | running              | **STILL running (~40 min)**                              | nixpkgs `e554fab` bump enlarged the rebuild set + qemu contention |
+| git HEAD                         | `eb8cc186`           | **`816d1772`** (2 new commits)                           | Tree keeps moving; both new commits benign (below)                |
 
 **New load driver identified (00:00):** the load-88 spike is a parallel session running **`qemu-aarch64`-emulated Go work** (cross-arch test/build — qemu-user is CPU-hungry and slow by nature) plus a **`nix build .#webphone`** (a project that didn't exist on my radar an hour ago). Neither is mine; both are sanctioned-looking concurrent work; both are why the box still reads "busy" while memory recovers.
 
 **Deploy blast-radius delta (commits since last report, `git show --stat`):**
+
 - `f270ca9c` — AGENTS.md (+10 lines) + `modules/nixos/services/health-dashboard.nix` (2-line change). The health-dashboard session touched its own module — this rides my deploy unreviewed-by-me, but it is THEIR one-line fix to THEIR module, plausible.
 - `816d1772` — pure docs (`TODO_LIST.md`, `docs/todo/{monitoring,pipeline,services}.md`). Benign.
 - **My own 23:47 status report is NOT yet committed** (`?? docs/status/2026-09-19_23-47…md`) — the auto-commit daemon hasn't batched it; `ROADMAP.md` is modified (M) by someone else's session. No action from me (daemon owns commits unless told otherwise).
@@ -68,6 +69,7 @@
 ## f) NEXT THINGS (re-prioritized after the delta; ★ = new/changed)
 
 **Critical path (in order):**
+
 1. ★ **Launch the green-gated long-horizon deploy watcher** (§e.1) — the deploy is currently unprotected against a quiet window with nobody watching.
 2. **Read build #2 result** from `~/.local/state/deploy-geometrikks/build2.log` when job 068 exits; enumerate/fix any real failure (suspects: hermes 0.21.3 layout from pre-deploy §12 warning; health-dashboard's input; anything the `e554fab` nixpkgs bump shifted).
 3. **Deploy on green** → confirm `/run/current-system` advanced AND profile anchored (exit-4 unanchored-generation trap; baseline `system-785` / `qg1ijnzj…b1b8759`).

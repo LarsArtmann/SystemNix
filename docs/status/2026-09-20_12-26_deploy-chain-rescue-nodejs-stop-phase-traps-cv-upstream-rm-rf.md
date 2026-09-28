@@ -66,6 +66,7 @@ The `rm -rf` is in the **UPSTREAM** `cv-server-content-sync` script that the CV 
 ## f) Up to 50 things to get done next (scoped to this session's domain)
 
 **Immediate (this deploy chain):**
+
 1. Implement the cv ownership-heal ExecStartPre (design in §b.1) — unblocks cv-server's start-limit-hit.
 2. Run `nix fmt --no-update-lock-file -- --ci` + `nix flake check --no-build` over my two uncommitted fixes (§d.6 — they have never passed a gate).
 3. Deploy (after the parallel session's deploy releases the lock) and verify: profile anchored (current-system == a numbered profile), hermes restart lands on `SuccessExitStatus` (stop → clean), discordsync stop drains ≤5min, cv-server starts, hot-user-caches-nix-bootstrap passes with the caps fix, go-build automount recovers.

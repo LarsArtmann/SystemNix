@@ -52,58 +52,58 @@ Near-misses (no damage): first REV 2 commit failed pre-commit on a stale GC'd `t
 
 All 49 micro tasks from the plan (§5, sorted by phase/impact) + 1 new from this critique. IDs reference the plan doc.
 
-| # | ID | Task | Min | Phase |
-|---|----|------|-----|-------|
-| 1 | 0.1 | Export two fixture trees into one scratch catalog | 12 | P0 |
-| 2 | 0.2 | Scratch build; record relationship/collision findings | 12 | P0 |
-| 3 | 0.3 | Define domain-scoping convention if collisions | 10 | P0 |
-| 4 | 1.1 | `formatEventCatalog` flag in bank-sync catalog cmd | 12 | P0 |
-| 5 | 1.2 | Wire exporter in `renderCatalog` (+resolve output-subdir layout) | 12 | P0 |
-| 6 | 1.3 | Golden/fixture test for new format | 10 | P0 |
-| 7 | 1.4 | Run export; inspect tree | 10 | P0 |
-| 8 | 1.5 | Commit generated tree + gitignore decision | 8 | P0 |
-| 9 | 2.1 | `npm run dev` smoke on bank-sync tree (Node 22 check) | 10 | P0 |
-| 10 | 2.2 | Inventory bootstrap files hub-vs-source | 10 | P0 |
-| 11 | 3.1 | Create hub repo `architecture-catalog` (OWNER GO) | 10 | P0 |
-| 12 | 3.2 | Pin `@eventcatalog/core` v4; document why | 8 | P0 |
-| 13 | 3.3 | Sources layout (`sources/<name>/`) | 12 | P0 |
-| 14 | 3.4 | Hub README: contract, layout, upgrade path | 10 | P0 |
-| 15 | 4.1 | Forgejo Actions: mirrors → copy → build | 12 | P0 |
-| 16 | 4.2 | Publish `dist/` (artifact or branch) | 12 | P0 |
-| 17 | 4.3 | Source-push trigger + nightly fallback | 12 | P0 |
-| 18 | 4.4 | CI cache + cold-build timing (verify runner Node 22) | 10 | P0 |
-| 19 | 5.1 | `catalog` DNS entry | 5 | P1 |
-| 20 | 5.2 | Caddy `file_server` vHost (layer none) | 12 | P1 |
-| 21 | 5.3 | Registry entry `services.integration.catalog` | 12 | P1 |
-| 22 | 5.4 | `architecture-catalog-sync` oneshot, atomic swap | 12 | P1 |
-| 23 | 5.5 | Sync timer (re-time: daily, mirror-dominated) + deploy.sh entry | 10 | P1 |
-| 24 | 5.6 | `nix flake check --no-build` green | 12 | P1 |
-| 25 | 5.7 | Deploy + smoke | 12 | P1 |
-| 26 | 6.1 | Build stamp + Gatus freshness | 10 | P1 |
-| 27 | 6.2 | post-deploy-check section | 10 | P1 |
-| 28 | 7.1 | Export cqrs-htmx demo tree | 12 | P1 |
-| 29 | 7.2 | Add as source #2; rebuild | 8 | P1 |
-| 30 | 7.3 | Verify cross-source graph on live hub | 10 | P1 |
-| 31 | 8.1 | go-cqrs-lite catalog README section | 12 | P2 |
-| 32 | 8.2 | `cmd/catalog-export` example | 12 | P2 |
-| 33 | 8.3 | Versioning guidance | 10 | P2 |
-| 34 | 9.1 | `eventcatalog lint` in hub CI (verify license-free first) | 12 | P2 |
-| 35 | 9.2 | External-catalog lint refs if supported | 10 | P2 |
-| 36 | 10.1 | Teams/users convention | 12 | P2 |
-| 37 | 10.2 | owners frontmatter + rebuild | 10 | P2 |
-| 38 | 11.1 | Enable `/llms.txt` | 8 | P2 |
-| 39 | 11.2 | EventCatalog MCP in crushrc | 12 | P2 |
-| 40 | 12.1 | Federation triggers GO/NO-GO note | 12 | P3 |
-| 41 | 12.2 | If GO: trial license + `federation.sources` migration | 12 | P3 |
-| 42 | 13.1 | Upstream: emit `catalog.index.json` | 12 | P3 |
-| 43 | 13.2 | Upstream: skip-bootstrap option | 12 | P3 |
-| 44 | 13.3 | Route via go-cqrs-lite TODO_LIST | 8 | P3 |
-| 45 | 14.1 | Evaluate architecture-change-detection | 12 | P3 |
-| 46 | 14.2 | PR pipeline-gate recipe | 12 | P3 |
-| 47 | 15.1 | Hub runbook `docs/services/architecture-catalog.md` | 12 | P3 |
-| 48 | 15.2 | SystemNix AGENTS.md hub section | 12 | P3 |
-| 49 | 15.3 | Plan handoff: ANNOTATE phases done | 8 | P3 |
-| 50 | NEW | Render-validate the plan's mermaid graph; fix if broken | 5 | P0 |
+| #  | ID   | Task                                                             | Min | Phase |
+| -- | ---- | ---------------------------------------------------------------- | --- | ----- |
+| 1  | 0.1  | Export two fixture trees into one scratch catalog                | 12  | P0    |
+| 2  | 0.2  | Scratch build; record relationship/collision findings            | 12  | P0    |
+| 3  | 0.3  | Define domain-scoping convention if collisions                   | 10  | P0    |
+| 4  | 1.1  | `formatEventCatalog` flag in bank-sync catalog cmd               | 12  | P0    |
+| 5  | 1.2  | Wire exporter in `renderCatalog` (+resolve output-subdir layout) | 12  | P0    |
+| 6  | 1.3  | Golden/fixture test for new format                               | 10  | P0    |
+| 7  | 1.4  | Run export; inspect tree                                         | 10  | P0    |
+| 8  | 1.5  | Commit generated tree + gitignore decision                       | 8   | P0    |
+| 9  | 2.1  | `npm run dev` smoke on bank-sync tree (Node 22 check)            | 10  | P0    |
+| 10 | 2.2  | Inventory bootstrap files hub-vs-source                          | 10  | P0    |
+| 11 | 3.1  | Create hub repo `architecture-catalog` (OWNER GO)                | 10  | P0    |
+| 12 | 3.2  | Pin `@eventcatalog/core` v4; document why                        | 8   | P0    |
+| 13 | 3.3  | Sources layout (`sources/<name>/`)                               | 12  | P0    |
+| 14 | 3.4  | Hub README: contract, layout, upgrade path                       | 10  | P0    |
+| 15 | 4.1  | Forgejo Actions: mirrors → copy → build                          | 12  | P0    |
+| 16 | 4.2  | Publish `dist/` (artifact or branch)                             | 12  | P0    |
+| 17 | 4.3  | Source-push trigger + nightly fallback                           | 12  | P0    |
+| 18 | 4.4  | CI cache + cold-build timing (verify runner Node 22)             | 10  | P0    |
+| 19 | 5.1  | `catalog` DNS entry                                              | 5   | P1    |
+| 20 | 5.2  | Caddy `file_server` vHost (layer none)                           | 12  | P1    |
+| 21 | 5.3  | Registry entry `services.integration.catalog`                    | 12  | P1    |
+| 22 | 5.4  | `architecture-catalog-sync` oneshot, atomic swap                 | 12  | P1    |
+| 23 | 5.5  | Sync timer (re-time: daily, mirror-dominated) + deploy.sh entry  | 10  | P1    |
+| 24 | 5.6  | `nix flake check --no-build` green                               | 12  | P1    |
+| 25 | 5.7  | Deploy + smoke                                                   | 12  | P1    |
+| 26 | 6.1  | Build stamp + Gatus freshness                                    | 10  | P1    |
+| 27 | 6.2  | post-deploy-check section                                        | 10  | P1    |
+| 28 | 7.1  | Export cqrs-htmx demo tree                                       | 12  | P1    |
+| 29 | 7.2  | Add as source #2; rebuild                                        | 8   | P1    |
+| 30 | 7.3  | Verify cross-source graph on live hub                            | 10  | P1    |
+| 31 | 8.1  | go-cqrs-lite catalog README section                              | 12  | P2    |
+| 32 | 8.2  | `cmd/catalog-export` example                                     | 12  | P2    |
+| 33 | 8.3  | Versioning guidance                                              | 10  | P2    |
+| 34 | 9.1  | `eventcatalog lint` in hub CI (verify license-free first)        | 12  | P2    |
+| 35 | 9.2  | External-catalog lint refs if supported                          | 10  | P2    |
+| 36 | 10.1 | Teams/users convention                                           | 12  | P2    |
+| 37 | 10.2 | owners frontmatter + rebuild                                     | 10  | P2    |
+| 38 | 11.1 | Enable `/llms.txt`                                               | 8   | P2    |
+| 39 | 11.2 | EventCatalog MCP in crushrc                                      | 12  | P2    |
+| 40 | 12.1 | Federation triggers GO/NO-GO note                                | 12  | P3    |
+| 41 | 12.2 | If GO: trial license + `federation.sources` migration            | 12  | P3    |
+| 42 | 13.1 | Upstream: emit `catalog.index.json`                              | 12  | P3    |
+| 43 | 13.2 | Upstream: skip-bootstrap option                                  | 12  | P3    |
+| 44 | 13.3 | Route via go-cqrs-lite TODO_LIST                                 | 8   | P3    |
+| 45 | 14.1 | Evaluate architecture-change-detection                           | 12  | P3    |
+| 46 | 14.2 | PR pipeline-gate recipe                                          | 12  | P3    |
+| 47 | 15.1 | Hub runbook `docs/services/architecture-catalog.md`              | 12  | P3    |
+| 48 | 15.2 | SystemNix AGENTS.md hub section                                  | 12  | P3    |
+| 49 | 15.3 | Plan handoff: ANNOTATE phases done                               | 8   | P3    |
+| 50 | NEW  | Render-validate the plan's mermaid graph; fix if broken          | 5   | P0    |
 
 ## g) Questions I can NOT answer myself
 
@@ -113,4 +113,4 @@ All 49 micro tasks from the plan (§5, sorted by phase/impact) + 1 new from this
 
 ---
 
-*Post-report note: plan tasks are already routed (services.md + plan §10 cross-repo map) — a docs-health HARVEST pass would only duplicate them, so it is deliberately skipped. Report written as `.md` per explicit user instruction (skill default is HTML). Not manually committed — the auto-commit daemon picks it up; no commit was requested for this report.*
+_Post-report note: plan tasks are already routed (services.md + plan §10 cross-repo map) — a docs-health HARVEST pass would only duplicate them, so it is deliberately skipped. Report written as `.md` per explicit user instruction (skill default is HTML). Not manually committed — the auto-commit daemon picks it up; no commit was requested for this report._

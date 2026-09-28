@@ -24,14 +24,14 @@
 { pkgs }:
 let
   # Extract the NixOS module from the flake-parts wrapper.
-  resticFlakeOutput = (import ../modules/nixos/services/restic-app-dumps.nix { });
+  resticFlakeOutput = import ../modules/nixos/services/restic-app-dumps.nix { };
   resticNixosModule = resticFlakeOutput.flake.nixosModules.restic-app-dumps;
 in
 {
   name = "restic-app-dumps";
 
   nodes.machine =
-    { lib, ... }:
+    { ... }:
     {
       imports = [
         resticNixosModule

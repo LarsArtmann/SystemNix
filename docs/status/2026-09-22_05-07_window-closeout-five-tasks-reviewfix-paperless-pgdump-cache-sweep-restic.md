@@ -68,7 +68,7 @@
 14. After ≥3 restic nightly runs: measure the dedup win (`du`/`compsize` repo vs source dirs) — validates or falsifies the forgejo-zip premise, and feeds the ROADMAP single-source-of-truth question.
 15. Sweep the corpus-sweep round-2 claims that involve file edits (spot-verify its other drift fixes the way d.1 was caught) — cheap given the false-positive found.
 
-*(Deliberately stopped at 15: items beyond this are other domains' tracked rows — the queue owns them; padding to 50 would be research, not reporting.)*
+_(Deliberately stopped at 15: items beyond this are other domains' tracked rows — the queue owns them; padding to 50 would be research, not reporting.)_
 
 ## g) QUESTIONS ONLY THE OWNER CAN ANSWER
 
@@ -90,4 +90,4 @@
 
 ---
 
-*Verification anchors: footer commits `ce2f01da`, `ca8ad35a`, `35fafaec`, `b4eda274`, `0c52b922`; implementation commits `36a7160c`, `9546e7a1`, `e9407432`, `eae85c7b`, `f39e144b`, `87be97e5`, `49cfb914`, `36a946d2`, `9cce5bfd`; test files `tests/test-restic-app-dumps.nix`, `tests/test-paperless.nix:320-323`, `tests/test-hot-db-assertions.nix` (shared-unit case); tq journal query `tq facts --type task.reprioritized` → 0 facts. All commits unpushed per contract.*
+_Verification anchors: footer commits `ce2f01da`, `ca8ad35a`, `35fafaec`, `b4eda274`, `0c52b922`; implementation commits `36a7160c`, `9546e7a1`, `e9407432`, `eae85c7b`, `f39e144b`, `87be97e5`, `49cfb914`, `36a946d2`, `9cce5bfd`; test files `tests/test-restic-app-dumps.nix`, `tests/test-paperless.nix:320-323`, `tests/test-hot-db-assertions.nix` (shared-unit case); tq journal query `tq facts --type task.reprioritized` → 0 facts. All commits unpushed per contract._

@@ -68,9 +68,9 @@
 4. **Corpse gate — REVISED (finding 1):** inside the flm smoke block of post-deploy-check.sh, BEFORE the curl: read `system_health.prom` (path verified live: `/var/lib/prometheus-node-exporter/textfile_collectors/system_health.prom`, world-readable); if `system_service_start_limit_hit{service="fastflowlm"} 1` or `system_service_state_failed{service="fastflowlm"} 1` → `report_fail` fast (no curl, no doomed start, no 480s stall). No journal, no timeout stall. Message keeps the reboot-only guidance.
 5. Soak harness (12:31 §f.5) — sampler corrected to CPU-delta windows (finding 2).
 6. Pin-expiry monthly CI probe (12:31 §f.6, unchanged).
-7-11. Owner-gated (unchanged): kill rogues 995413/995415 (re-verify PIDs first; note PID-reuse risk grows with time) + hermes-cron root question; bisect execution; /data EIO triage; root gatus-sqlite history check; pressure-gated deploy of items 1-6.
-12-15. Bookkeeping + verification (12:31 §f.12-15, unchanged).
-16. **NEW small item:** add the "evidence commands carry DIRECT_RC, no pipe-masking" convention to docs/CONTRIBUTING verification patterns (pairs with §e.20).
+   7-11. Owner-gated (unchanged): kill rogues 995413/995415 (re-verify PIDs first; note PID-reuse risk grows with time) + hermes-cron root question; bisect execution; /data EIO triage; root gatus-sqlite history check; pressure-gated deploy of items 1-6.
+   12-15. Bookkeeping + verification (12:31 §f.12-15, unchanged).
+7. **NEW small item:** add the "evidence commands carry DIRECT_RC, no pipe-masking" convention to docs/CONTRIBUTING verification patterns (pairs with §e.20).
 
 ## g) QUESTIONS FOR THE OWNER (unchanged — still unanswered, still not self-answerable)
 
@@ -80,4 +80,4 @@
 
 ---
 
-*Supersedes §a.5 ("journalctl works as lars") and §f.4 (journal-based corpse gate) of `2026-09-19_12-31_ai-stack-todo-execution-session.md`. All other content of that report stands.*
+_Supersedes §a.5 ("journalctl works as lars") and §f.4 (journal-based corpse gate) of `2026-09-19_12-31_ai-stack-todo-execution-session.md`. All other content of that report stands._

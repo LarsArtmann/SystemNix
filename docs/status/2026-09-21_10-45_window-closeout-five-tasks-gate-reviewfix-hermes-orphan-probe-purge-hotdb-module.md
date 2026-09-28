@@ -4,13 +4,13 @@
 
 **The window's five queue tasks (all `completed` in the queue DB, verified via `tq show`):**
 
-| Task | Item | Outcome |
-| ---- | ---- | ------- |
-| `000001a0b68a0aee…78bd6` | Review finding on the browser-history registration-gate close-out | **DONE** — fix `8b07ecc9`, report `a14a4984` (since archived with a RESOLVED banner) |
-| `000001a0b6ca1ef7…9f8a09f` | Re-realize the orphaned `hermes-python-source` store path | **DONE (3 dispatches past closure)** — closure re-verified each time; store path still valid today |
-| `000001a0b7a5db5c…86a1` | Delete browser-history probe user `probe-gate@example.com` | **BLOCKED at every dispatch (deploy-gated); the work itself EXECUTED 2026-09-20** via the shipped purge mechanism |
-| `000001a0b7c158b0…7453` | Same item, second queue ID (dispatches 4–6) | Same — verification-only repeats |
-| `000001a0bbb066…26a74a` | `services.hot-db` NixOS module (Phase 2 mechanism) | **LANDED + verified**, ships DORMANT; closeout report `067cbe97` |
+| Task                       | Item                                                              | Outcome                                                                                                           |
+| -------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `000001a0b68a0aee…78bd6`   | Review finding on the browser-history registration-gate close-out | **DONE** — fix `8b07ecc9`, report `a14a4984` (since archived with a RESOLVED banner)                              |
+| `000001a0b6ca1ef7…9f8a09f` | Re-realize the orphaned `hermes-python-source` store path         | **DONE (3 dispatches past closure)** — closure re-verified each time; store path still valid today                |
+| `000001a0b7a5db5c…86a1`    | Delete browser-history probe user `probe-gate@example.com`        | **BLOCKED at every dispatch (deploy-gated); the work itself EXECUTED 2026-09-20** via the shipped purge mechanism |
+| `000001a0b7c158b0…7453`    | Same item, second queue ID (dispatches 4–6)                       | Same — verification-only repeats                                                                                  |
+| `000001a0bbb066…26a74a`    | `services.hot-db` NixOS module (Phase 2 mechanism)                | **LANDED + verified**, ships DORMANT; closeout report `067cbe97`                                                  |
 
 Closeout reports read first, as instructed: `docs/status/archived/2026-09-19_00-59_task-…78bd6.md`, `docs/status/archived/2026-09-19_03-17_task-…9f8a09f.md`, `docs/status/archived/2026-09-19_05-28_task-…86a1.md`, `docs/status/archived/2026-09-19_06-28_task-…7453.md`, `docs/status/2026-09-20_09-46_task-…26a74a.md`. Every claim below was re-verified against the live tree/host this pass unless cited otherwise.
 
@@ -79,4 +79,4 @@ Closeout reports read first, as instructed: `docs/status/archived/2026-09-19_00-
 
 ---
 
-*Point-in-time snapshot, 2026-09-21 10:45 CEST. Reporter commits carry `Task-Queue-ID: 000001a0c0d6f497e2302edb9b49be5305bb`. Window reports for the probe orbit and the hermes orbit were archived this pass (items fully done, unreferenced externally); this report cites their `archived/` paths.*
+_Point-in-time snapshot, 2026-09-21 10:45 CEST. Reporter commits carry `Task-Queue-ID: 000001a0c0d6f497e2302edb9b49be5305bb`. Window reports for the probe orbit and the hermes orbit were archived this pass (items fully done, unreferenced externally); this report cites their `archived/` paths._

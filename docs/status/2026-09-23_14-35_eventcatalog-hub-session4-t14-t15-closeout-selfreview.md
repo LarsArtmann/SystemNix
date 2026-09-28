@@ -44,30 +44,30 @@ now ALL code-complete; only owner-gated go-live remains.
 
 ## a) FULLY DONE (verified end-to-end)
 
-| Item | Evidence |
-|---|---|
-| T14 evaluation verdict: paid feature Scale-gated | upstream docs pages fetched + quoted |
+| Item                                                                    | Evidence                                                                                                                                                                               |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T14 evaluation verdict: paid feature Scale-gated                        | upstream docs pages fetched + quoted                                                                                                                                                   |
 | Free breaking-change gate `scripts/check-architecture-changes.sh` (hub) | **8 fixture scenarios** all pass: identical→0, message removed→1, whole kind-tree gone→1, schema changed→1, producer removed→1, addition→0, service removed→1, garbage-dir preflight→2 |
-| README gate recipe + honest SKETCH labeling (hub) | runner label corrected to real `native:host` |
-| Hub `TODO_LIST.md` with lifecycle-correct tags | [ready]=workflow_dispatch mode only; rest [blocked:upstream] |
-| T15 runbook `docs/services/architecture-catalog.md` | architecture, go-live checklist, PLACEHOLDER semantics, freshness, ops, gotchas |
-| T15 AGENTS.md section (after Health Hub) | incl. the syntax-bug lesson |
-| T15 plan §9 annotation | per-phase P0–P3 verification record + report link |
-| T15 `docs/todo/services.md` harvest | stale pre-build rows → go-live [blocked:user] + VM-test [ready] + SigNoz tile [watch] |
-| Metrics-collector syntax bug fix + full functional verification | 4/4 paths emit correct gauges |
-| Sync script functional verification | PLACEHOLDER skip, redaction-on-clone-failure wired, refusal gate keeps last-good, atomic relative swap, prune-to-3 |
-| Mermaid §6 render validation | house bundle + `verify-html-diagrams.sh` PASS |
-| Scratch keep decision | recorded in the go-live todo item |
-| SystemNix pushed + synced; hub pushed + synced | `592559ec` / `3e3f879`; flake check + gitleaks + todo-system hooks green |
+| README gate recipe + honest SKETCH labeling (hub)                       | runner label corrected to real `native:host`                                                                                                                                           |
+| Hub `TODO_LIST.md` with lifecycle-correct tags                          | [ready]=workflow_dispatch mode only; rest [blocked:upstream]                                                                                                                           |
+| T15 runbook `docs/services/architecture-catalog.md`                     | architecture, go-live checklist, PLACEHOLDER semantics, freshness, ops, gotchas                                                                                                        |
+| T15 AGENTS.md section (after Health Hub)                                | incl. the syntax-bug lesson                                                                                                                                                            |
+| T15 plan §9 annotation                                                  | per-phase P0–P3 verification record + report link                                                                                                                                      |
+| T15 `docs/todo/services.md` harvest                                     | stale pre-build rows → go-live [blocked:user] + VM-test [ready] + SigNoz tile [watch]                                                                                                  |
+| Metrics-collector syntax bug fix + full functional verification         | 4/4 paths emit correct gauges                                                                                                                                                          |
+| Sync script functional verification                                     | PLACEHOLDER skip, redaction-on-clone-failure wired, refusal gate keeps last-good, atomic relative swap, prune-to-3                                                                     |
+| Mermaid §6 render validation                                            | house bundle + `verify-html-diagrams.sh` PASS                                                                                                                                          |
+| Scratch keep decision                                                   | recorded in the go-live todo item                                                                                                                                                      |
+| SystemNix pushed + synced; hub pushed + synced                          | `592559ec` / `3e3f879`; flake check + gitleaks + todo-system hooks green                                                                                                               |
 
 ## b) PARTIALLY DONE
 
-| Item | Gap |
-|---|---|
+| Item                                    | Gap                                                                                                                                                                                                                  |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Token-redaction path in the sync script | sed wiring exists but was never EXERCISED — git auth failures don't echo the token, and I accepted "can't test" instead of forcing a token-bearing error (an unresolvable host echoes the full URL). Still untested. |
-| README CI wiring snippet | now labeled SKETCH; the gate script is fixture-tested but the workflow YAML itself has never run in a CI job |
-| Gate producer/consumer detection | event-side frontmatter only; service-side `sends:`/`receives:` lists not diffed (redundant when the exporter is consistent, unverified when it isn't) |
-| VM test for the module | routed [ready] in docs/todo/services.md, NOT written this session |
+| README CI wiring snippet                | now labeled SKETCH; the gate script is fixture-tested but the workflow YAML itself has never run in a CI job                                                                                                         |
+| Gate producer/consumer detection        | event-side frontmatter only; service-side `sends:`/`receives:` lists not diffed (redundant when the exporter is consistent, unverified when it isn't)                                                                |
+| VM test for the module                  | routed [ready] in docs/todo/services.md, NOT written this session                                                                                                                                                    |
 
 ## c) NOT STARTED
 
@@ -138,6 +138,7 @@ now ALL code-complete; only owner-gated go-live remains.
 ## f) NEXT — up to 50 (priority order)
 
 **Owner-gated (critical path to LIVE):**
+
 1. Run `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh`.
 2. Watch first hub CI run green + `dist` branch (forgejo actions page).
 3. Sops-paste the minted sync token (runbook step 3).
@@ -148,11 +149,11 @@ now ALL code-complete; only owner-gated go-live remains.
 
 **Gates & hub (code-side):**
 8. Actually exercise the sync script's token-redaction path (unresolvable
-   host forces a token-bearing URL error; assert REDACTED in output).
+host forces a token-bearing URL error; assert REDACTED in output).
 9. Adopt the architecture gate in bank-sync PR CI (bank-sync TODO).
 10. Adopt in cqrs-htmx PR CI (hub TODO).
 11. Test the README CI sketch end-to-end in one real PR before calling it a
-    recipe.
+recipe.
 12. Hub `workflow_dispatch` "rebuild without publish" mode (hub TODO [ready]).
 13. Extend gate: service-side `sends:`/`receives:` shrink detection.
 14. Switch gate to structured `catalog.index.json` diff when upstream ships.
@@ -166,11 +167,11 @@ now ALL code-complete; only owner-gated go-live remains.
 
 **Upstream (go-cqrs-lite, routed in its TODO_LIST):**
 20. Cut catalog/v4.6.0 (WithServiceOwners + 28 unreleased files — owner
-    blessing per session-3 report).
+blessing per session-3 report).
 21. Emit `catalog.index.json` (golden-tested) — unblocks #14 properly.
 22. `skip-bootstrap-files` export option.
 23. Versioned-dirs ref format + message/container owners → re-arm the two
-    `warn` linter rules to `error` (hub TODO).
+`warn` linter rules to `error` (hub TODO).
 24. cqrs-htmx count-gap fix consumption (browser-history backlog chain).
 
 **Sources & scale-out:**

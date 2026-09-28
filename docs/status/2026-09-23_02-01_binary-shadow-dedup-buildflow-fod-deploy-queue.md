@@ -8,7 +8,7 @@
 
 ## Context (the ask)
 
-`whereis buildflow` showed **three divergent binaries**: `~/go/bin/buildflow` (`version dev`, a Sep-20 `go install`), nix profile (`557fe59`), system-path (`7e1fbfe`). User: *"maybe we should get rid of them all?"* — interpreted (and executed) as: dedupe to the single canonical, declaratively-managed copy of every affected tool, not deleting tools outright.
+`whereis buildflow` showed **three divergent binaries**: `~/go/bin/buildflow` (`version dev`, a Sep-20 `go install`), nix profile (`557fe59`), system-path (`7e1fbfe`). User: _"maybe we should get rid of them all?"_ — interpreted (and executed) as: dedupe to the single canonical, declaratively-managed copy of every affected tool, not deleting tools outright.
 
 ---
 
@@ -48,7 +48,7 @@
 ## e) WHAT WE SHOULD IMPROVE (self-review)
 
 - **What did I forget?** (1) The repo's own pre-deploy batch build for FOD enumeration — the exact tool for the situation, seen in flake.nix during research, not used. (2) A `TODO_LIST.md` row for the post-deploy steps — they currently live only in this report + session memory (the TODO-system's "queue must not drift" rule exists for precisely this). (3) Applying the same-day browser-history lesson pre-emptively.
-- **Deviation gone undocumented:** the buildflow skill prescribes `buildflow -s nix-hash-fix --fix` for vendorHash repair; I hand-derived the hash via a fake-hash probe. Defensible (the fix here is a *downstream overrideAttrs shim*, not an upstream vendorHash paste — nix-hash-fix targets upstream flakes) — but the deviation was rationalized only in hindsight, not declared at decision time.
+- **Deviation gone undocumented:** the buildflow skill prescribes `buildflow -s nix-hash-fix --fix` for vendorHash repair; I hand-derived the hash via a fake-hash probe. Defensible (the fix here is a _downstream overrideAttrs shim_, not an upstream vendorHash paste — nix-hash-fix targets upstream flakes) — but the deviation was rationalized only in hindsight, not declared at decision time.
 - **Stupid we do anyway (systemic):** sessions `go install` fleet tools into GOBIN (PATH #2!) creating silent version shadows — the user ran `buildflow version dev` for ~2 days without knowing; nothing machine-enforces the single-source doctrine. Same class: sessions running ad-hoc `nix profile install` batches (the 09-17 quadruple-install).
 - **Split brains:** one temporary, bounded: typst exists in profile AND base.nix until deploy+removal (documented). The vendorHash shim is a deliberate time-boxed split (downstream override vs upstream flake) with its drop-condition in-code — the sanctioned pattern, but it MUST die when the lock moves forward or it becomes the next stale-hash trap.
 - **Ghost systems:** none created.

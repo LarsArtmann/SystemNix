@@ -42,7 +42,7 @@
    **TWO rogue orphan llama-servers are live RIGHT NOW** on the wedged `llama-cpp-0.4.0` build (the module's pinned build is 0.3.0 — anything 0.4.0 on these ports is by definition foreign):
    - PID **995413** — `bge-m3` on **:8848** — uid 975 (hermes), PPid 1, cgroup `user@975.service/app.slice/hermes-worker-cron-ed3fc8b0…scope` — **State S, 37.4% CPU sustained, 1h46m40s CPU over 4h45m elapsed = the mid-load spin class, ACTIVE**.
    - PID **995415** — `bge-reranker-v2-m3` on **:8849** — same orphan shape, 0.9% CPU.
-   This is the 2026-09-18 orphan class RECURRED (third time: 09-18, the 09-19 report, now). Nothing detects it today. I cannot kill uid-975 processes (no sudo in agent sandbox). Full design at §f.3 — the new collector would flag both rogues immediately on first run.
+     This is the 2026-09-18 orphan class RECURRED (third time: 09-18, the 09-19 report, now). Nothing detects it today. I cannot kill uid-975 processes (no sudo in agent sandbox). Full design at §f.3 — the new collector would flag both rogues immediately on first run.
 
 9. **Item "Paperless RAG degradation visibility" — design complete, not implemented.** §f.3 covers it (same collector + second Gatus check).
 

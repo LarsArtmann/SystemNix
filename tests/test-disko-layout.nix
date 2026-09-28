@@ -46,7 +46,7 @@ in
   name = "disko-layout";
 
   nodes.machine =
-    { ... }:
+    _:
     {
       virtualisation.emptyDiskImages = [ 8192 ];
       virtualisation.diskSize = 8192;

@@ -16,19 +16,20 @@
 > `WithSkipBootstrapFiles`, owners on every ownable kind). Driver plan and
 > execution evidence: go-cqrs-lite
 > `docs/planning/2026-09-23_22-12_SUPERB-data-mesh-federation-pareto-plan.md`
-> + `docs/status/2026-09-24_13-32_data-mesh-completion-session.md`.
-> **Still open here (owner-gated go-live, runbook
-> `docs/services/architecture-catalog.md`):** the hub build workflow has
-> NEVER published a `dist` branch (owner: run `scripts/setup-forgejo.sh`
-> on evo-x2 / check the Actions tab). The SystemNix serving leg is IN-TREE
-> (see the §9 verification record: `architecture-catalog.nix` module,
-> DNS/protectedVHost Layer 2, Gatus checks, sops scaffold, pull timer —
-> `nix flake check --no-build` green) but ships PLACEHOLDER-inert and is
-> NOT deployed: live probes 2026-09-26 found no
-> `/var/lib/architecture-catalog/` state dir and `catalog.home.lan`
-> unresolvable. Go-live = dist publish → sops token paste → `nix run
+>
+> - `docs/status/2026-09-24_13-32_data-mesh-completion-session.md`.
+>   **Still open here (owner-gated go-live, runbook
+>   `docs/services/architecture-catalog.md`):** the hub build workflow has
+>   NEVER published a `dist` branch (owner: run `scripts/setup-forgejo.sh`
+>   on evo-x2 / check the Actions tab). The SystemNix serving leg is IN-TREE
+>   (see the §9 verification record: `architecture-catalog.nix` module,
+>   DNS/protectedVHost Layer 2, Gatus checks, sops scaffold, pull timer —
+>   `nix flake check --no-build` green) but ships PLACEHOLDER-inert and is
+>   NOT deployed: live probes 2026-09-26 found no
+>   `/var/lib/architecture-catalog/` state dir and `catalog.home.lan`
+>   unresolvable. Go-live = dist publish → sops token paste → `nix run
 > .#deploy` → first `architecture-catalog-sync` run.
-> Original plan text below, unchanged.
+>   Original plan text below, unchanged.
 
 - **Date:** 2026-09-22 23:27 CEST · **REV 3** (2026-09-23, owner decisions landed) · REV 2 (2026-09-23, self-review pass)
 - **Status:** PLANNED (not started)
@@ -53,26 +54,26 @@
 
 ## 1. Research findings (verified 2026-09-22/23)
 
-| # | Finding | Evidence |
-|---|---------|----------|
-| F1 | Built-in federation (`npx eventcatalog federate`) is an **Enterprise feature** — offline `license.jwt` (free trial: hello@eventcatalog.dev). Node 22+. | eventcatalog.dev/docs/federation/overview |
-| F2 | Federation model: central catalog declares `federation.sources` (`github:owner/repo` + `path` + `ref`, or `file:`), validates cross-catalog ownership/versions, materializes into `federated/`, then `npm run build` renders ONE static site (`dist/`). | /docs/federation/first-federation, how-to/configure-github-sources |
-| F3 | `go-cqrs-lite/catalog/v4/eventcatalog` writes a **complete EventCatalog project** (MDX + frontmatter, JSON schemas, `llms.txt`, own `eventcatalog.config.js`/`package.json` pinning `@eventcatalog/core ^4.6.3`). Producers/consumers auto-derived. | `catalog/eventcatalog/doc.go`, goldens `eventcatalog-config/package.snap` |
-| F4 | Exporter does **NOT** emit `catalog.index.json` (federation builds the index per run — works, weaker source-side validation). | `rg 'catalog.index' catalog/` → none |
-| F5 | **bank-sync is the only real consumer today**; its `bank-sync catalog` command exports AsyncAPI + D2 + Markdown to `docs/catalog` — EventCatalog format not wired yet. | `bank-sync/cmd/bank-sync/catalog.go:10-24,127,145` |
-| F6 | SystemNix is greenfield for EventCatalog. House pattern for static-site services: registry entry + hand-written Caddy `file_server` vHost (systemd-timer-monitor precedent) + Gatus HTML check + DNS subdomain. | `rg eventcatalog` SystemNix → empty; AGENTS.md |
-| F7 | Legacy free fallback: `@eventcatalog/generator-federation` (clone+copy, no validation). | /docs/federation/legacy-federation |
-| F8 | **`docserver` is per-service only.** It serves OpenAPI/AsyncAPI UI + D2 + EventCatalog-style templ views for ONE catalog; `GenerateEventCatalog` is explicitly a startup-time MDX writer ("no meaningful way to serve it as a single HTTP response"). NOT a multi-service hub. | `catalog/docserver/docserver.go:1-25`, `docserver/eventcatalog.go:5-15` |
-| F9 | **No Go round-trip loader exists** for exported EventCatalog trees — a Go hub cannot read other repos' exported trees back; merging in Go requires compile-time imports of every service's registry (world-module coupling) or upstream loader work. | `rg 'func Load|ReadTree' catalog/eventcatalog` → none |
-| F10 | Fleet has its own CI: Forgejo + forgejo-runner, and **every GitHub repo is mirrored to Forgejo** (read mirror) — hub CI can source trees from `git.home.lan`, immune to GitHub outages (house flake-input doctrine). | AGENTS.md Forgejo mirror section |
+| #   | Finding                                                                                                                                                                                                                                                                        | Evidence                                                                  |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| F1  | Built-in federation (`npx eventcatalog federate`) is an **Enterprise feature** — offline `license.jwt` (free trial: hello@eventcatalog.dev). Node 22+.                                                                                                                         | eventcatalog.dev/docs/federation/overview                                 |
+| F2  | Federation model: central catalog declares `federation.sources` (`github:owner/repo` + `path` + `ref`, or `file:`), validates cross-catalog ownership/versions, materializes into `federated/`, then `npm run build` renders ONE static site (`dist/`).                        | /docs/federation/first-federation, how-to/configure-github-sources        |
+| F3  | `go-cqrs-lite/catalog/v4/eventcatalog` writes a **complete EventCatalog project** (MDX + frontmatter, JSON schemas, `llms.txt`, own `eventcatalog.config.js`/`package.json` pinning `@eventcatalog/core ^4.6.3`). Producers/consumers auto-derived.                            | `catalog/eventcatalog/doc.go`, goldens `eventcatalog-config/package.snap` |
+| F4  | Exporter does **NOT** emit `catalog.index.json` (federation builds the index per run — works, weaker source-side validation).                                                                                                                                                  | `rg 'catalog.index' catalog/` → none                                      |
+| F5  | **bank-sync is the only real consumer today**; its `bank-sync catalog` command exports AsyncAPI + D2 + Markdown to `docs/catalog` — EventCatalog format not wired yet.                                                                                                         | `bank-sync/cmd/bank-sync/catalog.go:10-24,127,145`                        |
+| F6  | SystemNix is greenfield for EventCatalog. House pattern for static-site services: registry entry + hand-written Caddy `file_server` vHost (systemd-timer-monitor precedent) + Gatus HTML check + DNS subdomain.                                                                | `rg eventcatalog` SystemNix → empty; AGENTS.md                            |
+| F7  | Legacy free fallback: `@eventcatalog/generator-federation` (clone+copy, no validation).                                                                                                                                                                                        | /docs/federation/legacy-federation                                        |
+| F8  | **`docserver` is per-service only.** It serves OpenAPI/AsyncAPI UI + D2 + EventCatalog-style templ views for ONE catalog; `GenerateEventCatalog` is explicitly a startup-time MDX writer ("no meaningful way to serve it as a single HTTP response"). NOT a multi-service hub. | `catalog/docserver/docserver.go:1-25`, `docserver/eventcatalog.go:5-15`   |
+| F9  | **No Go round-trip loader exists** for exported EventCatalog trees — a Go hub cannot read other repos' exported trees back; merging in Go requires compile-time imports of every service's registry (world-module coupling) or upstream loader work.                           | `rg 'func Load                                                            |
+| F10 | Fleet has its own CI: Forgejo + forgejo-runner, and **every GitHub repo is mirrored to Forgejo** (read mirror) — hub CI can source trees from `git.home.lan`, immune to GitHub outages (house flake-input doctrine).                                                           | AGENTS.md Forgejo mirror section                                          |
 
 ## 2. Architecture decision matrix (NEW — the core of REV 2)
 
-| Option | How | License | Cost | Verdict |
-|--------|-----|---------|------|---------|
-| **A. Go-native hub** | One Go binary imports every service's catalog registry, merges, serves via `docserver` / emits MDX at startup | none | Compile-time coupling to ALL services (F9: no tree loader); docserver UI ≠ EventCatalog web app; Astro build still needed for the real UI | **Rejected** — reevaluate only if upstream adds a tree loader |
-| **B. License-free Node hub** ★ default (REV 3: CI-generated) | Hub CI checks out source repos (Forgejo mirrors), runs each service's catalog export headlessly, copies the generated trees into ONE EventCatalog project → `npm run build` → publish `dist/` (dist branch/artifact the box pulls) | none | No cross-catalog validation/lockfile/provenance; Go builds in hub CI; ID collisions across sources must be managed by convention (domain scoping) | **DECIDED 2026-09-23** — repo `eventcatalog-hub` |
-| **C. Enterprise federation** | Hub runs `eventcatalog federate` over `github:`/`file:` sources | Enterprise (trial free) | Validation rules, lockfile, provenance, GitHub-source fetching | **Upgrade path** — adopt when triggers fire (see §7) |
+| Option                                                       | How                                                                                                                                                                                                                                | License                 | Cost                                                                                                                                              | Verdict                                                       |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| **A. Go-native hub**                                         | One Go binary imports every service's catalog registry, merges, serves via `docserver` / emits MDX at startup                                                                                                                      | none                    | Compile-time coupling to ALL services (F9: no tree loader); docserver UI ≠ EventCatalog web app; Astro build still needed for the real UI         | **Rejected** — reevaluate only if upstream adds a tree loader |
+| **B. License-free Node hub** ★ default (REV 3: CI-generated) | Hub CI checks out source repos (Forgejo mirrors), runs each service's catalog export headlessly, copies the generated trees into ONE EventCatalog project → `npm run build` → publish `dist/` (dist branch/artifact the box pulls) | none                    | No cross-catalog validation/lockfile/provenance; Go builds in hub CI; ID collisions across sources must be managed by convention (domain scoping) | **DECIDED 2026-09-23** — repo `eventcatalog-hub`              |
+| **C. Enterprise federation**                                 | Hub runs `eventcatalog federate` over `github:`/`file:` sources                                                                                                                                                                    | Enterprise (trial free) | Validation rules, lockfile, provenance, GitHub-source fetching                                                                                    | **Upgrade path** — adopt when triggers fire (see §7)          |
 
 **The contract that makes it "just work"** (unchanged): any service importing `go-cqrs-lite/catalog/v4` + one exporter call produces a source tree; the hub picks it up by one config/CI line.
 
@@ -80,87 +81,87 @@
 
 ## 3. Pareto breakdown (REV 2 — re-tiered)
 
-| Tier | Delivers | Contents |
-|------|----------|----------|
-| **1% → 51%** | One live endpoint, license-free | bank-sync emits EventCatalog format (committed tree) + hub repo (option B) + hub CI builds `dist/` + Caddy serves it. **No license, no waiting.** |
-| **4% → 64%** | Fleet citizen + proven generality | DNS/registry/Gatus/tile + box-side pull sync + post-deploy smoke + source #2 (cqrs-htmx demo) proves cross-source merge; **T0 spike resolves the ID-resolution risk**. |
-| **20% → 80%** | Scales to "everything using catalog" | Rollout convention upstream (README + example + versioning), source #3+, `eventcatalog lint` free governance in CI, owners/teams, llms.txt + MCP for Crush. |
-| **→ 100%** | Completeness + upgrades | Federation upgrade evaluation (triggers below) OR legacy-generator if ever needed; upstream `catalog.index.json` + skip-bootstrap options; breaking-change gates; runbook + AGENTS section. |
+| Tier          | Delivers                             | Contents                                                                                                                                                                                    |
+| ------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1% → 51%**  | One live endpoint, license-free      | bank-sync emits EventCatalog format (committed tree) + hub repo (option B) + hub CI builds `dist/` + Caddy serves it. **No license, no waiting.**                                           |
+| **4% → 64%**  | Fleet citizen + proven generality    | DNS/registry/Gatus/tile + box-side pull sync + post-deploy smoke + source #2 (cqrs-htmx demo) proves cross-source merge; **T0 spike resolves the ID-resolution risk**.                      |
+| **20% → 80%** | Scales to "everything using catalog" | Rollout convention upstream (README + example + versioning), source #3+, `eventcatalog lint` free governance in CI, owners/teams, llms.txt + MCP for Crush.                                 |
+| **→ 100%**    | Completeness + upgrades              | Federation upgrade evaluation (triggers below) OR legacy-generator if ever needed; upstream `catalog.index.json` + skip-bootstrap options; breaking-change gates; runbook + AGENTS section. |
 
 ## 4. Comprehensive plan (30–100 min tasks, dependency- and impact-ordered)
 
-| # | Task | Min | Impact | Phase |
-|---|------|-----|--------|-------|
-| T0 | **Spike: merge two generated trees into ONE EventCatalog project → `npm run build`** — do cross-source relationships resolve? ID collisions? domain scoping needed? (option B's only existential risk) | 60 | H | P0 |
-| T1 | Wire EventCatalog export format into `bank-sync catalog`; verify the export runs HEADLESS in CI (no DB, no network) | 60 | H | P0 |
-| T2 | Verify the generated tree is a valid hub source (local copy-in + build smoke; also probes federate behavior later) | 45 | H | P0 |
-| T3 | Scaffold hub repo `LarsArtmann/eventcatalog-hub` (empty catalog, pinned `@eventcatalog/core` v4 line) + source-export layout + README | 45 | H | P0 |
-| T4 | Hub CI (Forgejo runner, sources from Forgejo mirrors per F10): checkout sources → run each service's Go catalog export → merge trees → `npm run build` → publish `dist/` branch | 90 | H | P0 |
-| T5 | NixOS serving leg: DNS `catalog` + Layer 2 protected vHost (REV 3) serving the pulled `dist/` + registry entry + Gatus (behind-auth probe semantics) + tile + pull-sync timer (atomic swap) | 90 | H | P1 |
-| T6 | Freshness monitoring: build-stamp in `dist/` + Gatus age check + post-deploy smoke section | 45 | M | P1 |
-| T7 | Onboard source #2 (cqrs-htmx catalog-demo) + verify cross-source graph end-to-end through the deployed hub | 60 | M | P1 |
-| T8 | Rollout convention upstream: go-cqrs-lite `catalog/README.md` + `cmd/catalog-export` example + versioning guidance | 75 | H | P2 |
-| T9 | Free governance: `eventcatalog lint` in hub CI (missing owners, dead links; supports external-catalog refs) | 45 | M | P2 |
-| T10 | Owners/teams provisioning (frontmatter owners → writeTeam/writeUser convention per source repo) | 60 | M | P2 |
-| T11 | AI access: `llms.txt` + EventCatalog MCP server in crushrc | 60 | M | P2 |
-| T12 | Federation upgrade evaluation vs triggers (§7); if GO: trial license, `federation.sources` migration, validation rules; if NO: document standing decision | 45 | M | P3 |
-| T13 | Upstream go-cqrs-lite exporter: `catalog.index.json` emission + skip-bootstrap-files option | 90 | M | P3 |
-| T14 | Architecture change detection (breaking-change gates on source PRs) | 90 | M | P3 |
-| T15 | Documentation: `docs/services/architecture-catalog.md` runbook + SystemNix AGENTS.md section | 60 | M | P3 |
+| #   | Task                                                                                                                                                                                                   | Min | Impact | Phase |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --- | ------ | ----- |
+| T0  | **Spike: merge two generated trees into ONE EventCatalog project → `npm run build`** — do cross-source relationships resolve? ID collisions? domain scoping needed? (option B's only existential risk) | 60  | H      | P0    |
+| T1  | Wire EventCatalog export format into `bank-sync catalog`; verify the export runs HEADLESS in CI (no DB, no network)                                                                                    | 60  | H      | P0    |
+| T2  | Verify the generated tree is a valid hub source (local copy-in + build smoke; also probes federate behavior later)                                                                                     | 45  | H      | P0    |
+| T3  | Scaffold hub repo `LarsArtmann/eventcatalog-hub` (empty catalog, pinned `@eventcatalog/core` v4 line) + source-export layout + README                                                                  | 45  | H      | P0    |
+| T4  | Hub CI (Forgejo runner, sources from Forgejo mirrors per F10): checkout sources → run each service's Go catalog export → merge trees → `npm run build` → publish `dist/` branch                        | 90  | H      | P0    |
+| T5  | NixOS serving leg: DNS `catalog` + Layer 2 protected vHost (REV 3) serving the pulled `dist/` + registry entry + Gatus (behind-auth probe semantics) + tile + pull-sync timer (atomic swap)            | 90  | H      | P1    |
+| T6  | Freshness monitoring: build-stamp in `dist/` + Gatus age check + post-deploy smoke section                                                                                                             | 45  | M      | P1    |
+| T7  | Onboard source #2 (cqrs-htmx catalog-demo) + verify cross-source graph end-to-end through the deployed hub                                                                                             | 60  | M      | P1    |
+| T8  | Rollout convention upstream: go-cqrs-lite `catalog/README.md` + `cmd/catalog-export` example + versioning guidance                                                                                     | 75  | H      | P2    |
+| T9  | Free governance: `eventcatalog lint` in hub CI (missing owners, dead links; supports external-catalog refs)                                                                                            | 45  | M      | P2    |
+| T10 | Owners/teams provisioning (frontmatter owners → writeTeam/writeUser convention per source repo)                                                                                                        | 60  | M      | P2    |
+| T11 | AI access: `llms.txt` + EventCatalog MCP server in crushrc                                                                                                                                             | 60  | M      | P2    |
+| T12 | Federation upgrade evaluation vs triggers (§7); if GO: trial license, `federation.sources` migration, validation rules; if NO: document standing decision                                              | 45  | M      | P3    |
+| T13 | Upstream go-cqrs-lite exporter: `catalog.index.json` emission + skip-bootstrap-files option                                                                                                            | 90  | M      | P3    |
+| T14 | Architecture change detection (breaking-change gates on source PRs)                                                                                                                                    | 90  | M      | P3    |
+| T15 | Documentation: `docs/services/architecture-catalog.md` runbook + SystemNix AGENTS.md section                                                                                                           | 60  | M      | P3    |
 
 ## 5. Micro plan (≤12 min tasks)
 
-| ID | Task | Min | Parent |
-|----|------|-----|--------|
-| 0.1 | Export demo + bank-sync-shaped fixture trees into one scratch catalog's content dir | 12 | T0 |
-| 0.2 | `npm install && npm run build` scratch; record relationship/collision findings | 12 | T0 |
-| 0.3 | If collisions: define domain-scoping convention (e.g. `bank-sync/*` IDs); note in hub README | 10 | T0 |
-| 1.1 | Add `formatEventCatalog` const + flag help to `bank-sync/catalog.go` | 12 | T1 |
-| 1.2 | Import `catalog/v4/eventcatalog`; `NewExporter(out).Export(cat)` in `renderCatalog` | 12 | T1 |
-| 1.3 | Extend golden/fixture test for the new format | 10 | T1 |
-| 1.4 | Run export; inspect tree (config, package.json, llms.txt, schemas) | 10 | T1 |
-| 1.5 | Verify headless export in a CI-like container (no DB/network); wire export invocation into hub CI source list | 12 | T1 |
-| 2.1 | `npm install` (Node 22 check) + `npm run dev` on bank-sync tree; pages render | 10 | T2 |
-| 2.2 | Confirm which bootstrap files the hub needs vs which each source re-emits | 10 | T2 |
-| 3.1 | Create hub repo `eventcatalog-hub` (`create-eventcatalog --empty`) | 10 | T3 |
-| 3.2 | Pin `@eventcatalog/core` v4 line in hub package.json; document why | 8 | T3 |
-| 3.3 | Define sources layout: per-source export command table (repo → export cmd → output dir) | 12 | T3 |
-| 3.4 | Hub README: contract, layout, upgrade path | 10 | T3 |
-| 4.1 | Forgejo Actions workflow: checkout mirrors → run Go exports → merge trees → npm ci → build | 12 | T4 |
-| 4.2 | Publish `dist/` as a dist branch the box can pull | 12 | T4 |
-| 4.3 | Trigger on source-push (webhook/poll) + nightly fallback cron | 12 | T4 |
-| 4.4 | CI cache node_modules analogue; verify cold-build time | 10 | T4 |
-| 5.1 | `catalog` DNS entry in `dns-local.nix` | 5 | T5 |
-| 5.2 | Layer 2 vHost: registry `vHost.layer = "protected"`; extend helper for static root if needed (OpenSEO precedent for custom blocks) | 12 | T5 |
-| 5.3 | Registry entry `services.integration.catalog` (Gatus, tile, monitored; no backup) | 12 | T5 |
-| 5.4 | `architecture-catalog-sync` oneshot: pull `dist/` → atomic swap into serving root | 12 | T5 |
-| 5.5 | Sync timer (hourly) + ioTier.background + deploy.sh provisioner entry | 10 | T5 |
-| 5.6 | `nix flake check --no-build` + eval audits green | 12 | T5 |
-| 5.7 | Deploy + post-deploy smoke (curl HTML, Gatus green, DNS answers) | 12 | T5 |
-| 6.1 | Build-stamp file in `dist/` + Gatus freshness check | 10 | T6 |
-| 6.2 | `post-deploy-check.sh` section: hub HTML + stamp age | 10 | T6 |
-| 7.1 | Export cqrs-htmx catalog-demo tree; commit to that repo | 12 | T7 |
-| 7.2 | Add as hub source #2; CI rebuild | 8 | T7 |
-| 7.3 | Verify cross-source relationships render on deployed hub | 10 | T7 |
-| 8.1 | go-cqrs-lite `catalog/README.md` federation/feeding section | 12 | T8 |
-| 8.2 | `catalog/cmd/catalog-export` copy-paste example | 12 | T8 |
-| 8.3 | Versioning guidance (when to `versionEvent`, changelogs) | 10 | T8 |
-| 9.1 | Add `eventcatalog lint` step to hub CI; triage first findings | 12 | T9 |
-| 9.2 | Wire external-catalog refs if lint config supports (docs check) | 10 | T9 |
-| 10.1 | Teams/users convention + hub-side writeTeam/writeUser files | 12 | T10 |
-| 10.2 | owners frontmatter on bank-sync + cqrs-htmx resources; rebuild | 10 | T10 |
-| 11.1 | Enable `llmsTxt`; verify `/llms.txt` | 8 | T11 |
-| 11.2 | EventCatalog MCP entry in crushrc; restart-session note | 12 | T11 |
-| 12.1 | Evaluate federation triggers (§7) → GO/NO-GO note in hub README | 12 | T12 |
-| 12.2 | If GO: email trial request + migrate sources to `federation.sources` + rules | 12 | T12 |
-| 13.1 | Upstream: emit `catalog.index.json` (golden-tested) | 12 | T13 |
-| 13.2 | Upstream: skip-bootstrap-files export option | 12 | T13 |
-| 13.3 | Route via go-cqrs-lite TODO_LIST (cross-repo rule) | 8 | T13 |
-| 14.1 | Evaluate `architecture-change-detection` for hub | 12 | T14 |
-| 14.2 | Write PR pipeline-gate recipe | 12 | T14 |
-| 15.1 | Write `docs/services/architecture-catalog.md` runbook | 12 | T15 |
-| 15.2 | SystemNix AGENTS.md hub section | 12 | T15 |
-| 15.3 | Plan handoff: ANNOTATE phases done; TODO recap | 8 | T15 |
+| ID   | Task                                                                                                                               | Min | Parent |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------- | --- | ------ |
+| 0.1  | Export demo + bank-sync-shaped fixture trees into one scratch catalog's content dir                                                | 12  | T0     |
+| 0.2  | `npm install && npm run build` scratch; record relationship/collision findings                                                     | 12  | T0     |
+| 0.3  | If collisions: define domain-scoping convention (e.g. `bank-sync/*` IDs); note in hub README                                       | 10  | T0     |
+| 1.1  | Add `formatEventCatalog` const + flag help to `bank-sync/catalog.go`                                                               | 12  | T1     |
+| 1.2  | Import `catalog/v4/eventcatalog`; `NewExporter(out).Export(cat)` in `renderCatalog`                                                | 12  | T1     |
+| 1.3  | Extend golden/fixture test for the new format                                                                                      | 10  | T1     |
+| 1.4  | Run export; inspect tree (config, package.json, llms.txt, schemas)                                                                 | 10  | T1     |
+| 1.5  | Verify headless export in a CI-like container (no DB/network); wire export invocation into hub CI source list                      | 12  | T1     |
+| 2.1  | `npm install` (Node 22 check) + `npm run dev` on bank-sync tree; pages render                                                      | 10  | T2     |
+| 2.2  | Confirm which bootstrap files the hub needs vs which each source re-emits                                                          | 10  | T2     |
+| 3.1  | Create hub repo `eventcatalog-hub` (`create-eventcatalog --empty`)                                                                 | 10  | T3     |
+| 3.2  | Pin `@eventcatalog/core` v4 line in hub package.json; document why                                                                 | 8   | T3     |
+| 3.3  | Define sources layout: per-source export command table (repo → export cmd → output dir)                                            | 12  | T3     |
+| 3.4  | Hub README: contract, layout, upgrade path                                                                                         | 10  | T3     |
+| 4.1  | Forgejo Actions workflow: checkout mirrors → run Go exports → merge trees → npm ci → build                                         | 12  | T4     |
+| 4.2  | Publish `dist/` as a dist branch the box can pull                                                                                  | 12  | T4     |
+| 4.3  | Trigger on source-push (webhook/poll) + nightly fallback cron                                                                      | 12  | T4     |
+| 4.4  | CI cache node_modules analogue; verify cold-build time                                                                             | 10  | T4     |
+| 5.1  | `catalog` DNS entry in `dns-local.nix`                                                                                             | 5   | T5     |
+| 5.2  | Layer 2 vHost: registry `vHost.layer = "protected"`; extend helper for static root if needed (OpenSEO precedent for custom blocks) | 12  | T5     |
+| 5.3  | Registry entry `services.integration.catalog` (Gatus, tile, monitored; no backup)                                                  | 12  | T5     |
+| 5.4  | `architecture-catalog-sync` oneshot: pull `dist/` → atomic swap into serving root                                                  | 12  | T5     |
+| 5.5  | Sync timer (hourly) + ioTier.background + deploy.sh provisioner entry                                                              | 10  | T5     |
+| 5.6  | `nix flake check --no-build` + eval audits green                                                                                   | 12  | T5     |
+| 5.7  | Deploy + post-deploy smoke (curl HTML, Gatus green, DNS answers)                                                                   | 12  | T5     |
+| 6.1  | Build-stamp file in `dist/` + Gatus freshness check                                                                                | 10  | T6     |
+| 6.2  | `post-deploy-check.sh` section: hub HTML + stamp age                                                                               | 10  | T6     |
+| 7.1  | Export cqrs-htmx catalog-demo tree; commit to that repo                                                                            | 12  | T7     |
+| 7.2  | Add as hub source #2; CI rebuild                                                                                                   | 8   | T7     |
+| 7.3  | Verify cross-source relationships render on deployed hub                                                                           | 10  | T7     |
+| 8.1  | go-cqrs-lite `catalog/README.md` federation/feeding section                                                                        | 12  | T8     |
+| 8.2  | `catalog/cmd/catalog-export` copy-paste example                                                                                    | 12  | T8     |
+| 8.3  | Versioning guidance (when to `versionEvent`, changelogs)                                                                           | 10  | T8     |
+| 9.1  | Add `eventcatalog lint` step to hub CI; triage first findings                                                                      | 12  | T9     |
+| 9.2  | Wire external-catalog refs if lint config supports (docs check)                                                                    | 10  | T9     |
+| 10.1 | Teams/users convention + hub-side writeTeam/writeUser files                                                                        | 12  | T10    |
+| 10.2 | owners frontmatter on bank-sync + cqrs-htmx resources; rebuild                                                                     | 10  | T10    |
+| 11.1 | Enable `llmsTxt`; verify `/llms.txt`                                                                                               | 8   | T11    |
+| 11.2 | EventCatalog MCP entry in crushrc; restart-session note                                                                            | 12  | T11    |
+| 12.1 | Evaluate federation triggers (§7) → GO/NO-GO note in hub README                                                                    | 12  | T12    |
+| 12.2 | If GO: email trial request + migrate sources to `federation.sources` + rules                                                       | 12  | T12    |
+| 13.1 | Upstream: emit `catalog.index.json` (golden-tested)                                                                                | 12  | T13    |
+| 13.2 | Upstream: skip-bootstrap-files export option                                                                                       | 12  | T13    |
+| 13.3 | Route via go-cqrs-lite TODO_LIST (cross-repo rule)                                                                                 | 8   | T13    |
+| 14.1 | Evaluate `architecture-change-detection` for hub                                                                                   | 12  | T14    |
+| 14.2 | Write PR pipeline-gate recipe                                                                                                      | 12  | T14    |
+| 15.1 | Write `docs/services/architecture-catalog.md` runbook                                                                              | 12  | T15    |
+| 15.2 | SystemNix AGENTS.md hub section                                                                                                    | 12  | T15    |
+| 15.3 | Plan handoff: ANNOTATE phases done; TODO recap                                                                                     | 8   | T15    |
 
 ## 6. Execution graph
 
@@ -217,6 +218,7 @@ graph TD
 
 > **VERIFICATION RECORD (2026-09-23, sessions 1–4 — see
 > `docs/status/2026-09-23_13-26_eventcatalog-hub-session3-t5-t13-executed.md`):**
+>
 > - **P0: DONE** (sessions 1–2). Two-tree scratch build resolved cross-source
 >   relationships; hub CI code + E2E validated locally; first CI dispatch is
 >   owner-gated (`setup-forgejo.sh`).

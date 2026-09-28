@@ -20,19 +20,19 @@
 
 ### The 11 root failures (complete, from the full build log)
 
-| # | Derivation | Failure | Got-hash / detail |
-|---|---|---|---|
-| 1 | cqrs-lint-6170c4e76 go-modules | FOD hash mismatch | `mY+mdZEz…` vs `De0v4pUL…` |
-| 2 | branching-flow-0.2.0 go-modules | FOD hash mismatch | `Vezc2hYk…` vs `yPHQjgzZ…` |
-| 3 | inboxclean-9b02133 go-modules | FOD hash mismatch | `5WsuTeAO…` vs `ViWUbqFO…` |
-| 4 | projects-management-automation-0401824 go-modules | FOD hash mismatch | `FtTo9R75…` vs `IBX7hU/H…` |
-| 5 | signoz-frontend-5a1be60 pnpm-deps | FOD hash mismatch | `3IiQUkVB…` vs `7r+rqIcc…` |
-| 6 | signoz-otel-collector-a52dc57 go-modules | FOD hash mismatch | `BYYyzlC8… vs pJ9Qufxl…` |
-| 7 | erraudit-1c85610 go-modules | FOD hash mismatch | `dPMFk3hy…` vs `eGg9GDlf…` |
-| 8 | go-structure-linter-721c62a go-modules | FOD hash mismatch | (same class; in truncated log section) |
-| 9 | health-hub-ecccf63 go-modules | `go: updates to go.mod needed; go mod tidy` | the mr-sync "local tidy lies" class |
-| 10 | papdashboard-bfa5f786 prepared-source | mkPreparedSource validation: `go-etag/entitytag` + `go-etag/server` "modules without local replace" | publicDeps gap — CV `ed8b92f` precedent |
-| 11 | project-discovery-daemon-73b7d32 go-modules | `go.mod requires go >= 1.27.1 (running go 1.26.7; GOTOOLCHAIN=local)` | the 2026-09-17 three-wiring-points class |
+| #  | Derivation                                        | Failure                                                                                             | Got-hash / detail                        |
+| -- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| 1  | cqrs-lint-6170c4e76 go-modules                    | FOD hash mismatch                                                                                   | `mY+mdZEz…` vs `De0v4pUL…`               |
+| 2  | branching-flow-0.2.0 go-modules                   | FOD hash mismatch                                                                                   | `Vezc2hYk…` vs `yPHQjgzZ…`               |
+| 3  | inboxclean-9b02133 go-modules                     | FOD hash mismatch                                                                                   | `5WsuTeAO…` vs `ViWUbqFO…`               |
+| 4  | projects-management-automation-0401824 go-modules | FOD hash mismatch                                                                                   | `FtTo9R75…` vs `IBX7hU/H…`               |
+| 5  | signoz-frontend-5a1be60 pnpm-deps                 | FOD hash mismatch                                                                                   | `3IiQUkVB…` vs `7r+rqIcc…`               |
+| 6  | signoz-otel-collector-a52dc57 go-modules          | FOD hash mismatch                                                                                   | `BYYyzlC8… vs pJ9Qufxl…`                 |
+| 7  | erraudit-1c85610 go-modules                       | FOD hash mismatch                                                                                   | `dPMFk3hy…` vs `eGg9GDlf…`               |
+| 8  | go-structure-linter-721c62a go-modules            | FOD hash mismatch                                                                                   | (same class; in truncated log section)   |
+| 9  | health-hub-ecccf63 go-modules                     | `go: updates to go.mod needed; go mod tidy`                                                         | the mr-sync "local tidy lies" class      |
+| 10 | papdashboard-bfa5f786 prepared-source             | mkPreparedSource validation: `go-etag/entitytag` + `go-etag/server` "modules without local replace" | publicDeps gap — CV `ed8b92f` precedent  |
+| 11 | project-discovery-daemon-73b7d32 go-modules       | `go.mod requires go >= 1.27.1 (running go 1.26.7; GOTOOLCHAIN=local)`                               | the 2026-09-17 three-wiring-points class |
 
 Downstream casualties (units that cannot build): signoz.service, signoz-collector.service (+prestart), papdashboard.service, inboxclean-web/sync, PMA, project-discovery-daemon, health-dashboard, cqrs-lint + fish-completions, branching-flow. The toplevel `nixos-system-evo-x2-26.11.20260922.6774f7b` is unreachable — **no deploy can build until this wave is repaired or rolled back.**
 
@@ -40,7 +40,7 @@ Downstream casualties (units that cannot build): signoz.service, signoz-collecto
 
 ## b) PARTIALLY DONE
 
-1. **Deploy campaign** — blocked twice over: (1) *weather*: 90-min poller + second poller show the storm ran 12:10 → 16:57 continuous (trips/hour dropped 5-6 → 1-2 by late afternoon; avg10 hit 14.15 at 16:57 but load simultaneously spiked to 119 — still no true calm window); (2) *build*: the 11 FOD failures above make any deploy unbuildable regardless of weather. Force-with-evidence stays moot.
+1. **Deploy campaign** — blocked twice over: (1) _weather_: 90-min poller + second poller show the storm ran 12:10 → 16:57 continuous (trips/hour dropped 5-6 → 1-2 by late afternoon; avg10 hit 14.15 at 16:57 but load simultaneously spiked to 119 — still no true calm window); (2) _build_: the 11 FOD failures above make any deploy unbuildable regardless of weather. Force-with-evidence stays moot.
 2. **Live theme verification** — method validated and baseline captured (see a.3); cannot run until the theme actually deploys.
 
 ## c) NOT STARTED
@@ -65,6 +65,7 @@ Downstream casualties (units that cannot build): signoz.service, signoz-collecto
 ## f) NEXT — up to 50, prioritized
 
 **P0 — decide repair direction, then unblock the build:**
+
 1. Check whether a parallel session is ALREADY repairing the wave (commits/lock edits newer than ~12:08, new docs/status files) — do not duplicate or race
 2. `git log -p -- flake.lock` since `5f9740c4` — attribute each input bump to its committing session
 3. Decide: fix-forward (repair all 11) vs targeted rollback (revert ONLY the broken input nodes to last-buildable revs; keep mr-sync `6c1d3f6d` + all script/doc work)
@@ -82,7 +83,7 @@ Downstream casualties (units that cannot build): signoz.service, signoz-collecto
 15. PDA: go-1.27 wiring — find which of the three wiring points (module-lambda `goPkg` / `goPkgAttr = "go_1_27"` / `mkPreparedSource` goPkg + `buildGoModule.override { go = go_1_27; }`) is missing at rev 73b7d32
 16. Re-run preflight `--keep-going` → expect green or next domino
 17. If rollback chosen: python round-trip lock edit reverting the 11 broken nodes (keep `original`/`locked` consistent), keep mr-sync node, re-preflight
-**P0 — deploy + verify (once build is green):**
+    **P0 — deploy + verify (once build is green):**
 18. Confirm calm window (avg10 < 15 sustained + zero trips in trailing 60 min; poller needs the avg60 fix from e.4 first if reused)
 19. `nix run .#deploy` — unpiped, rc captured directly
 20. rc=12 → evidence snapshot → re-ask owner; NEVER force into active trips
@@ -98,12 +99,12 @@ Downstream casualties (units that cannot build): signoz.service, signoz-collecto
 30. hermes 0.21.4 healthy (rides this deploy — first toplevel with the bump)
 31. Check lars' browser-stored per-user theme pref (may override DEFAULT_THEME client-side)
 32. Watch tonight's btrbk window (23:00/23:30/23:45) for guard-churn starvation after today's trip budget burn
-**P1 — storm/infra follow-ups:**
+    **P1 — storm/infra follow-ups:**
 33. Queue the structural fix candidate: attic storage lives on the pool behind the ONE DAS USB link — every parallel build storm saturates it. Candidate: move attic storage to the Samsung hot tier (size it first)
 34. Owner decision: cap concurrent agent sessions during guard-active windows (`system_crush_sessions` already emitted; alerting exists at >6)
 35. Investigate go-deps-audit coverage gap (see e.3)
 36. Poller v3: positional-field extraction + disk-busy corroboration; keep it as a reusable script under scripts/ instead of inline
-**P2 — theme polish + leftovers:**
+    **P2 — theme polish + leftovers:**
 37. Chroma-exact Catppuccin syntax highlighting (`[ready]` row exists)
 38. Logo/favicon phase 2 (decision row — owner taste)
 39. Automated negative fixture for the theme-audit throw (negative-test-lints pattern)

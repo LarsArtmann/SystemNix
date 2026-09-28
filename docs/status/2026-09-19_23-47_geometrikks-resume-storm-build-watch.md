@@ -8,15 +8,15 @@
 
 ## Live state at report time (23:47)
 
-| Signal | Value | Verdict |
-| --- | --- | --- |
-| io PSI some avg10 / avg60 | 21.6% / 30.9% (decaying from 57/45) | Storm finally draining, still above the 20% deploy gate |
-| MemAvailable | **8.1G (6%)** | **DANGER — below the 10% gate floor; was 6.5% in guard samples ~23:00** |
-| zram fill | ~82% (51.5G of 62.2G swapped) | Approaching the 90% zone; memory-emergency-guard active, flm socket sacrificed (restore capped at 3/day) |
-| Guard journal | "crash #3 class: stacked full-disk readers", disk busy bursts **100%**, MemAvailable 6.5–16.9% over the last hour | Real storm, not just PSI-latency phantom |
-| Deploy log `/tmp/deploy-geometrikks2.log` | **EMPTY — watcher #3 never fired** | Deploy never attempted |
-| Build #2 (job 068, `--keep-going`) | RUNNING | First full failure enumeration in progress |
-| git HEAD | `eb8cc186` (tree clean, all work committed) | Moving shared surface — 2 more daemon commits since 22:45 |
+| Signal                                    | Value                                                                                                             | Verdict                                                                                                  |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| io PSI some avg10 / avg60                 | 21.6% / 30.9% (decaying from 57/45)                                                                               | Storm finally draining, still above the 20% deploy gate                                                  |
+| MemAvailable                              | **8.1G (6%)**                                                                                                     | **DANGER — below the 10% gate floor; was 6.5% in guard samples ~23:00**                                  |
+| zram fill                                 | ~82% (51.5G of 62.2G swapped)                                                                                     | Approaching the 90% zone; memory-emergency-guard active, flm socket sacrificed (restore capped at 3/day) |
+| Guard journal                             | "crash #3 class: stacked full-disk readers", disk busy bursts **100%**, MemAvailable 6.5–16.9% over the last hour | Real storm, not just PSI-latency phantom                                                                 |
+| Deploy log `/tmp/deploy-geometrikks2.log` | **EMPTY — watcher #3 never fired**                                                                                | Deploy never attempted                                                                                   |
+| Build #2 (job 068, `--keep-going`)        | RUNNING                                                                                                           | First full failure enumeration in progress                                                               |
+| git HEAD                                  | `eb8cc186` (tree clean, all work committed)                                                                       | Moving shared surface — 2 more daemon commits since 22:45                                                |
 
 ## Storm timeline (this session's evidence)
 
@@ -93,6 +93,7 @@
 ## f) NEXT THINGS (prioritized; ~45)
 
 **Deployment path (critical path, in order):**
+
 1. Read build #2 result from `~/.local/state/deploy-geometrikks/build2.log` when job 068 completes; if the "1 dependency failed" recurs, enumerate ALL failures via `--keep-going` output and fix root-cause (suspects: hermes 0.21.3 layout §12 warned about; health-dashboard's new input; anything the `e554fab` nixpkgs bump shifted).
 2. If build #2 is green: verify the toplevel contains `docker-geometrikks.service`, the rendered compose, and both sops secrets (`geometrikks.yaml` keys pass `sops-key-audit` — already proven at eval).
 3. Launch the LONG-HORIZON deploy watcher (≥6h, green rule: 3 consecutive polls of io avg10 <15 AND MemAvailable >20%, 2-min cadence, heartbeat + `DEPLOY-EXIT` capture to `~/.local/state/deploy-geometrikks/`) — or implement §e.1 first if the user approves the helper.

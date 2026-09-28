@@ -23,7 +23,7 @@ log database. Upstream: github:GilbN/geometrikks (Docker-only).
   `/var/log/access` inside the container. `LOGPARSER_LOG_PATHS` is a JSON list
   derived at EVAL time from `config.services.caddy.virtualHosts` (+ the global
   `access.log`) — new services are tracked automatically. Filename rule
-  replicates vhost-options.nix: `/` and ` ` -> `_` (hence
+  replicates vhost-options.nix: `/` and `` -> `_` (hence
   `access-https:__*.home.lan.log`).
 - **Container user**: `PUID=0` (root in-container). Caddy writes logs
   `caddy:caddy 0600` — only host root can read them, and the read-only bind

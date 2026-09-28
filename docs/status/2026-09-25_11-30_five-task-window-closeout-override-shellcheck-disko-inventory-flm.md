@@ -4,13 +4,13 @@
 **Scope:** The five dispatched tasks below, verified against commits/tree — not re-derived. Repo-wide state is owned by the standing harvest chain and domain libraries.
 **Window tasks:**
 
-| Task | Item | Verdict |
-|---|---|---|
-| `000001a0d1898b…` | Document nixpkgs override-shape change (`content` not `value`) + plain-`enable=false` probe-conflict class | DONE (`16719c10`) |
-| `000001a0d1a502…` | Prove shellcheck covers `scripts/*.sh` in pre-commit | DONE (`e55c4d7d` work; dispatch raced completion, verify-only run `f4c996ff` report) |
-| `000001a0d6d444…` | Fix the pre-existing `checks.disko-layout` eval failure (pre-commit flake-check gate dead for ALL agents) | DONE — environmental, not structural; fix chain `af87ce31`/`d827f478` in-tree; no-op verify run `289e879c` |
-| `000001a0d79dae…` | Build the /data damage-set inventory (single source of truth) | DONE (`f6380065`) |
-| `000001a0d7affe…` | Cross-link the flm AGENTS bullet to the snapshot-pinning doctrine table | DONE (`87cf9c6d`) |
+| Task              | Item                                                                                                       | Verdict                                                                                                    |
+| ----------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `000001a0d1898b…` | Document nixpkgs override-shape change (`content` not `value`) + plain-`enable=false` probe-conflict class | DONE (`16719c10`)                                                                                          |
+| `000001a0d1a502…` | Prove shellcheck covers `scripts/*.sh` in pre-commit                                                       | DONE (`e55c4d7d` work; dispatch raced completion, verify-only run `f4c996ff` report)                       |
+| `000001a0d6d444…` | Fix the pre-existing `checks.disko-layout` eval failure (pre-commit flake-check gate dead for ALL agents)  | DONE — environmental, not structural; fix chain `af87ce31`/`d827f478` in-tree; no-op verify run `289e879c` |
+| `000001a0d79dae…` | Build the /data damage-set inventory (single source of truth)                                              | DONE (`f6380065`)                                                                                          |
+| `000001a0d7affe…` | Cross-link the flm AGENTS bullet to the snapshot-pinning doctrine table                                    | DONE (`87cf9c6d`)                                                                                          |
 
 ---
 

@@ -10,13 +10,13 @@
 
 Empirical method: forced every `apps.aarch64-darwin.*.program`, `devShells.aarch64-darwin.*.drvPath`, and `checks.aarch64-darwin.*.drvPath` individually.
 
-| # | Breakage on aarch64-darwin | Root cause | Fix |
-|---|---|---|---|
-| 1 | `deploy`, `io-psi-forensics`, `pre-deploy-check`, `post-deploy-check`, `pre-reboot-check`, `boot-mirror-activate`, `btrfs-inventory`, `verify-io-tiers` (8 apps) | runtimeInputs carry Linux-only nixpkgs (`systemd`, `procps`, `efibootmgr`, `btrfs-progs`, `glibc`) → "Refusing to evaluate … not available on the requested hostPlatform" | Moved verbatim into the existing `lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux` block, with a why-comment. Cross-platform apps (`validate`, `fix-nixpkgs-lock`, `pocket-id-login-code`, `migrate-buildcache`, `migrate-hot-db`) stay ungated. |
-| 2 | `devShells.quickshell` | dms-shell (DankMaterialShell) is upstream Wayland/Linux-only (`meta.platforms`) | Linux-gated with why-comment |
-| 3 | `checks.borg-restore-drill-fixture` | `pinAssertionsOf` called `nixosSystem { inherit system; }` — dies when checking system is darwin | Pinned to `system = "x86_64-linux"` (the fixture's NixOS eval is platform-independent; negative cases stay LIVE on both checking platforms — same shape as the pre-existing evo-x2 cross-system evals in disko-samsung-tlc / offsite-borg-positive-render) |
-| 4 | Warning spam on EVERY nix invocation: "input 'go-cqrs-lite' has an override for a non-existent input 'systems'" | Upstream go-cqrs-lite dropped its `systems` input (flake-parts native list); the `systems.follows` was dead | Override dropped + comment. Lock node needed no reconciliation (no inputs mapping recorded). |
-| 5 | `deadnix` check failed to BUILD (pre-existing, files untouched by the session until then) | Unused let binding `domain` (geometrikks.nix:19), unused lambda arg `name` (hot-user-caches.nix:99) | Removed / `_name:`. deadnix check builds green; `hot-user-caches` VM test driver builds green. |
+| # | Breakage on aarch64-darwin                                                                                                                                       | Root cause                                                                                                                                                                | Fix                                                                                                                                                                                                                                                        |
+| - | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | `deploy`, `io-psi-forensics`, `pre-deploy-check`, `post-deploy-check`, `pre-reboot-check`, `boot-mirror-activate`, `btrfs-inventory`, `verify-io-tiers` (8 apps) | runtimeInputs carry Linux-only nixpkgs (`systemd`, `procps`, `efibootmgr`, `btrfs-progs`, `glibc`) → "Refusing to evaluate … not available on the requested hostPlatform" | Moved verbatim into the existing `lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux` block, with a why-comment. Cross-platform apps (`validate`, `fix-nixpkgs-lock`, `pocket-id-login-code`, `migrate-buildcache`, `migrate-hot-db`) stay ungated.        |
+| 2 | `devShells.quickshell`                                                                                                                                           | dms-shell (DankMaterialShell) is upstream Wayland/Linux-only (`meta.platforms`)                                                                                           | Linux-gated with why-comment                                                                                                                                                                                                                               |
+| 3 | `checks.borg-restore-drill-fixture`                                                                                                                              | `pinAssertionsOf` called `nixosSystem { inherit system; }` — dies when checking system is darwin                                                                          | Pinned to `system = "x86_64-linux"` (the fixture's NixOS eval is platform-independent; negative cases stay LIVE on both checking platforms — same shape as the pre-existing evo-x2 cross-system evals in disko-samsung-tlc / offsite-borg-positive-render) |
+| 4 | Warning spam on EVERY nix invocation: "input 'go-cqrs-lite' has an override for a non-existent input 'systems'"                                                  | Upstream go-cqrs-lite dropped its `systems` input (flake-parts native list); the `systems.follows` was dead                                                               | Override dropped + comment. Lock node needed no reconciliation (no inputs mapping recorded).                                                                                                                                                               |
+| 5 | `deadnix` check failed to BUILD (pre-existing, files untouched by the session until then)                                                                        | Unused let binding `domain` (geometrikks.nix:19), unused lambda arg `name` (hot-user-caches.nix:99)                                                                       | Removed / `_name:`. deadnix check builds green; `hot-user-caches` VM test driver builds green.                                                                                                                                                             |
 
 ## Prevention gap closed
 
@@ -38,18 +38,18 @@ flowchart LR
 
 ## Verification matrix (all executed this session)
 
-| Check | Result |
-|---|---|
-| `nix flake check --no-build --all-systems` (final tree) | **all checks passed** (x86_64-linux + aarch64-darwin) |
-| Per-attr darwin sweep: 7 apps, default devShell, borg fixture, 21 checks, formatter | all OK after fixes |
-| Linux intact: 18 apps incl. moved ones, quickshell devShell | OK |
-| Formatter pipeline (`nix fmt` → patched treefmt-config runCommand) | builds, runs, idempotent (second run: 0 changed) |
-| Trap-lint builds: gatus-pattern-lint, signoz-query-lint, module-shape-lint, chown-vs-bind-audit, statix, deadnix | all build green |
-| VM test driver sample: `.#checks.x86_64-linux.hot-user-caches.driver` | builds |
-| Pre-commit hook after edit: `bash -n`, shellcheck, `test-precommit-shellcheck.sh` selftest | all green |
-| go-cqrs-lite warning | gone (grep count 0 post-change) |
-| `'system' has been renamed` eval warning | **proven pre-existing** via worktree at 293fc566, linux-only full check → count 1 (see §d for why this needed redoing) |
-| `scripts/check-flake-inputs.sh` | exits 1 — pre-existing false positive, orphaned script (see §e) |
+| Check                                                                                                            | Result                                                                                                                 |
+| ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `nix flake check --no-build --all-systems` (final tree)                                                          | **all checks passed** (x86_64-linux + aarch64-darwin)                                                                  |
+| Per-attr darwin sweep: 7 apps, default devShell, borg fixture, 21 checks, formatter                              | all OK after fixes                                                                                                     |
+| Linux intact: 18 apps incl. moved ones, quickshell devShell                                                      | OK                                                                                                                     |
+| Formatter pipeline (`nix fmt` → patched treefmt-config runCommand)                                               | builds, runs, idempotent (second run: 0 changed)                                                                       |
+| Trap-lint builds: gatus-pattern-lint, signoz-query-lint, module-shape-lint, chown-vs-bind-audit, statix, deadnix | all build green                                                                                                        |
+| VM test driver sample: `.#checks.x86_64-linux.hot-user-caches.driver`                                            | builds                                                                                                                 |
+| Pre-commit hook after edit: `bash -n`, shellcheck, `test-precommit-shellcheck.sh` selftest                       | all green                                                                                                              |
+| go-cqrs-lite warning                                                                                             | gone (grep count 0 post-change)                                                                                        |
+| `'system' has been renamed` eval warning                                                                         | **proven pre-existing** via worktree at 293fc566, linux-only full check → count 1 (see §d for why this needed redoing) |
+| `scripts/check-flake-inputs.sh`                                                                                  | exits 1 — pre-existing false positive, orphaned script (see §e)                                                        |
 
 ---
 
@@ -90,34 +90,34 @@ Everything in §f (by instruction: report, then wait).
 
 ## f) Next things (session-derived, impact-sorted; NOT yet harvested — see §b.2)
 
-| # | Task | Impact | Effort |
-|---|---|---|---|
-| 1 | Harvest this report's §f into TODO_LIST.md + domain libraries per doctrine | doctrine | 15m |
-| 2 | Push + watch the first CI run with `--all-systems` (must be green; triage if not) | closes loop | 10m |
-| 3 | `boot.zfs.forceImportRoot`: set explicitly (nixpkgs warns "reduce the risk of data loss") | high | 15m |
-| 4 | Wire `--all-systems` into `nixpkgs-compat.yml` daily job (same blind-spot class closed in nix-check.yml; verify what it runs first) | high | 20m |
-| 5 | Fix the `'system' has been renamed` warning at its source (proven pre-existing; locate via `--show-trace` on full check — likely a test/config using the deprecated option) | medium | 30m |
-| 6 | Decide `check-flake-inputs.sh` fate: delete orphan vs. wire + exempt interactive shell-config GOTOOLCHAIN hits | medium | 20m |
-| 7 | zfs `latestCompatibleLinuxPackages` deprecation: pin kernel explicitly | medium | 20m |
-| 8 | `programs.zsh.initExtra` → `initContent` migration | low | 20m |
-| 9 | `stdenv.isLinux/isDarwin` → `stdenv.hostPlatform.*` sweep (grep count first) | low | 30m |
-| 10 | Catalog migration tail: add catalog entries for the 24 listed subdomains (ADR-008) | medium | 2-4h |
-| 11 | llama-vlm soak-test reminder: run the soak or retire the module assertion warning | medium | 1h |
-| 12 | Verify AGENTS.md cross-platform rule content landed intact in daemon commit 73b8e6ac | hygiene | 5m |
-| 13 | CHANGELOG.md entry for this session (daemon doesn't write it) | hygiene | 15m |
-| 14 | Decide gating consistency for `migrate-buildcache` / `migrate-hot-db` (eval-OK on darwin but Linux-ops semantics) — see question 2 | low | 10m |
-| 15 | Run full `nix flake check` (VM runtimes) once on a quiet host to complement CI | medium | 1-2h babysit |
-| 16 | After next `nix flake lock --update-input go-cqrs-lite`: confirm no duplicate lock node reappears for its (now un-followed) internal inputs | hygiene | 10m |
-| 17 | `lib/images.nix`: `rec` → `let` | low | 30m |
-| 18 | Check the statix `:E:0:` filter is still needed | low | 15m |
-| 19 | Cross-project lesson (crush-config `references/lessons.md`): "plain `nix flake check` omits other systems; wire `--all-systems`; worktrees under auto-commit daemons" | fleet value | 20m |
-| 20 | One-time: `nix flake check --no-build --all-systems` on the MacBook (darwin host) to confirm hook/runtime behavior there | medium | 15m |
-| 21 | Add `docs/INTERIM-INPUT-PINS.md` note that go-cqrs-lite systems-follow is gone (if that file tracks such things) | hygiene | 10m |
-| 22 | Consider promoting the per-attr "force every attr of every system" sweep into a one-liner script (`scripts/check-all-systems-attrs.sh`) for future reviews | nice | 30m |
-| 23 | Review whether `checks`' ungated cross-platform set should document its platform-independence expectation in AGENTS.md (pattern for new checks) | nice | 20m |
-| 24 | Run `nix fmt -- --fail-on-change` once over the whole tree to confirm zero global drift | hygiene | 10m |
-| 25 | browser-history (sibling repo): confirm its flake's systems list vs. actual darwin needs (pattern check only) | nice | 15m |
-| 26 | Re-run `scripts/test-precommit-shellcheck.sh` after the NEXT hook edit to keep the mutation-negative honest | standing | 5m |
+| #  | Task                                                                                                                                                                        | Impact      | Effort       |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ------------ |
+| 1  | Harvest this report's §f into TODO_LIST.md + domain libraries per doctrine                                                                                                  | doctrine    | 15m          |
+| 2  | Push + watch the first CI run with `--all-systems` (must be green; triage if not)                                                                                           | closes loop | 10m          |
+| 3  | `boot.zfs.forceImportRoot`: set explicitly (nixpkgs warns "reduce the risk of data loss")                                                                                   | high        | 15m          |
+| 4  | Wire `--all-systems` into `nixpkgs-compat.yml` daily job (same blind-spot class closed in nix-check.yml; verify what it runs first)                                         | high        | 20m          |
+| 5  | Fix the `'system' has been renamed` warning at its source (proven pre-existing; locate via `--show-trace` on full check — likely a test/config using the deprecated option) | medium      | 30m          |
+| 6  | Decide `check-flake-inputs.sh` fate: delete orphan vs. wire + exempt interactive shell-config GOTOOLCHAIN hits                                                              | medium      | 20m          |
+| 7  | zfs `latestCompatibleLinuxPackages` deprecation: pin kernel explicitly                                                                                                      | medium      | 20m          |
+| 8  | `programs.zsh.initExtra` → `initContent` migration                                                                                                                          | low         | 20m          |
+| 9  | `stdenv.isLinux/isDarwin` → `stdenv.hostPlatform.*` sweep (grep count first)                                                                                                | low         | 30m          |
+| 10 | Catalog migration tail: add catalog entries for the 24 listed subdomains (ADR-008)                                                                                          | medium      | 2-4h         |
+| 11 | llama-vlm soak-test reminder: run the soak or retire the module assertion warning                                                                                           | medium      | 1h           |
+| 12 | Verify AGENTS.md cross-platform rule content landed intact in daemon commit 73b8e6ac                                                                                        | hygiene     | 5m           |
+| 13 | CHANGELOG.md entry for this session (daemon doesn't write it)                                                                                                               | hygiene     | 15m          |
+| 14 | Decide gating consistency for `migrate-buildcache` / `migrate-hot-db` (eval-OK on darwin but Linux-ops semantics) — see question 2                                          | low         | 10m          |
+| 15 | Run full `nix flake check` (VM runtimes) once on a quiet host to complement CI                                                                                              | medium      | 1-2h babysit |
+| 16 | After next `nix flake lock --update-input go-cqrs-lite`: confirm no duplicate lock node reappears for its (now un-followed) internal inputs                                 | hygiene     | 10m          |
+| 17 | `lib/images.nix`: `rec` → `let`                                                                                                                                             | low         | 30m          |
+| 18 | Check the statix `:E:0:` filter is still needed                                                                                                                             | low         | 15m          |
+| 19 | Cross-project lesson (crush-config `references/lessons.md`): "plain `nix flake check` omits other systems; wire `--all-systems`; worktrees under auto-commit daemons"       | fleet value | 20m          |
+| 20 | One-time: `nix flake check --no-build --all-systems` on the MacBook (darwin host) to confirm hook/runtime behavior there                                                    | medium      | 15m          |
+| 21 | Add `docs/INTERIM-INPUT-PINS.md` note that go-cqrs-lite systems-follow is gone (if that file tracks such things)                                                            | hygiene     | 10m          |
+| 22 | Consider promoting the per-attr "force every attr of every system" sweep into a one-liner script (`scripts/check-all-systems-attrs.sh`) for future reviews                  | nice        | 30m          |
+| 23 | Review whether `checks`' ungated cross-platform set should document its platform-independence expectation in AGENTS.md (pattern for new checks)                             | nice        | 20m          |
+| 24 | Run `nix fmt -- --fail-on-change` once over the whole tree to confirm zero global drift                                                                                     | hygiene     | 10m          |
+| 25 | browser-history (sibling repo): confirm its flake's systems list vs. actual darwin needs (pattern check only)                                                               | nice        | 15m          |
+| 26 | Re-run `scripts/test-precommit-shellcheck.sh` after the NEXT hook edit to keep the mutation-negative honest                                                                 | standing    | 5m           |
 
 (26 items — all real, zero padding. Items 1-6 are the 20% delivering 80%.)
 
@@ -131,4 +131,4 @@ Everything in §f (by instruction: report, then wait).
 
 **Self-harvest status:** §f deliberately NOT harvested into TODO_LIST.md/domain libraries this turn (user ordered report → wait). Item f.1 is the first dispatch action.
 
-*Report scope honored: everything above derives from this session's run and its direct observations only.*
+_Report scope honored: everything above derives from this session's run and its direct observations only._

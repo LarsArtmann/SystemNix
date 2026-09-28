@@ -16,7 +16,7 @@ pre-pulled, so the switch will be short once pressure drains.
 
 1. **Research phase** — upstream README/compose/.env fetched and understood;
    deployed-Caddyfile log topology traced (per-vhost sinks, global idle);
-   nixpkgs caddy `vhost-options.nix` read (log filename rule: `/`+` `→`_`);
+   nixpkgs caddy `vhost-options.nix` read (log filename rule: `/`+``→`_`);
    Caddy docs confirmed file output ⇒ default encoder is **JSON** (no
    caddy.nix changes needed).
 2. **Image pins** (`lib/images.nix`): `ghcr.io/gilbn/geometrikks` tag

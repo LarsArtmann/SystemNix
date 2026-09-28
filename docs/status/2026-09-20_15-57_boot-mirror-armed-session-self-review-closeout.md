@@ -16,15 +16,15 @@ Profile anchored (system-787, three-way). Everything committed (`541fab97`) and 
 
 ## What actually happened this session
 
-| Time | Event |
-| --- | --- |
+| Time  | Event                                                                                                                                                                                                                                                                                           |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 15:10 | Resumed; state gather revealed the parallel session had fixed cv-server at 14:08 (`fc49dbe5` — the `-perm -u+w` fast-path fix, exactly the e.1 patch my 13:58 report proposed) and anchored system-786 → 787. My queue v7 had self-stopped at 14:00 (rc=3, NEW failure: Bank-Sync) — by design. |
-| 15:1x | Mirror evidence: sync green ("OK — 8 entries, 312M mirrored"), diff gate PASS, df 312M/4.0G, FS UUID `4F53-C156`, dark-guard metrics live (2 rogue llamas detected). |
-| 15:2x | pre-reboot-check: **its own derivation failed to build** (shellcheck SC1087 — unbraced `$MIRROR_DIR` before `[[:space:]]`). Fixed → exit 0, 21 pass, §11 WARN-grade. |
-| 15:2x | boot-mirror-activate: **aborted before any firmware mutation** (`lsblk: unknown column: PARTNUM`). Fixed (`PARTN`) → activation succeeded: Samsung entry first, QLC second. |
-| 15:2x | pre-reboot-check re-run: **23 pass / 0 fail, strict §11 grade, "SAFE TO REBOOT"**. |
-| 15:3x | CHANGELOG (2 entries), plan ticks 6/7/9, session report `15-30`, pathspec commit `541fab97` (hooks green) → pushed. browser-history upstream issue #26 filed (voice-checker passed). |
-| 15:5x | Self-review fact-checks: inboxclean failure age (Sep 05!), Bank-Sync 14:00 FAIL detail. |
+| 15:1x | Mirror evidence: sync green ("OK — 8 entries, 312M mirrored"), diff gate PASS, df 312M/4.0G, FS UUID `4F53-C156`, dark-guard metrics live (2 rogue llamas detected).                                                                                                                            |
+| 15:2x | pre-reboot-check: **its own derivation failed to build** (shellcheck SC1087 — unbraced `$MIRROR_DIR` before `[[:space:]]`). Fixed → exit 0, 21 pass, §11 WARN-grade.                                                                                                                            |
+| 15:2x | boot-mirror-activate: **aborted before any firmware mutation** (`lsblk: unknown column: PARTNUM`). Fixed (`PARTN`) → activation succeeded: Samsung entry first, QLC second.                                                                                                                     |
+| 15:2x | pre-reboot-check re-run: **23 pass / 0 fail, strict §11 grade, "SAFE TO REBOOT"**.                                                                                                                                                                                                              |
+| 15:3x | CHANGELOG (2 entries), plan ticks 6/7/9, session report `15-30`, pathspec commit `541fab97` (hooks green) → pushed. browser-history upstream issue #26 filed (voice-checker passed).                                                                                                            |
+| 15:5x | Self-review fact-checks: inboxclean failure age (Sep 05!), Bank-Sync 14:00 FAIL detail.                                                                                                                                                                                                         |
 
 ---
 
@@ -52,7 +52,7 @@ Profile anchored (system-787, three-way). Everything committed (`541fab97`) and 
 9. **F16**: pathspec commit `541fab97` (gitleaks/shellcheck/flake-check hooks all green) →
    pushed `4b0c6153..541fab97`.
 10. **F17 (artifact)**: `docs/status/2026-09-20_15-30_boot-mirror-armed-samsung-first-bootorder.md`
-    + chat report with M/F tables and the reboot handoff.
+    - chat report with M/F tables and the reboot handoff.
 11. **Upstream filing**: browser-history issue #26 (empty-batch heartbeat; source-verified
     `main.go:108` early-return, `config.go:78` freshness default; github-voice checker passed).
 12. **d) fact-checks for this report**: inboxclean failure onset = **Sep 05 00:05** (~16 days,
@@ -148,6 +148,7 @@ Profile anchored (system-787, three-way). Everything committed (`541fab97`) and 
 ## f) NEXT (ordered, ~44 items)
 
 **User actions (the critical path):**
+
 1. **REBOOT** — the armed mirror's first real boot. Everything is audited green; nothing to
    prepare. (Rollback: firmware menu F8/F11/F12 → QLC `Linux Boot Manager`, or `efibootmgr -o` QLC-first.)
 2. Post-reboot: `bootctl status | grep -i partuuid` → expect `023f66c0-…` (F18).
@@ -166,20 +167,20 @@ Profile anchored (system-787, three-way). Everything committed (`541fab97`) and 
 9. Watch tonight's 23:00+ boot-mirror-sync run (M8/F21): journal + df + no drift alert.
 10. Verify browser-history `/health` flips 200 after the user's first real browsing session.
 11. Investigate the rogue-llama SPAWNER (hermes cron worker scope at 05:40): which job, is it
-    recurring, does it need the embedding server — root-cause before/after the kill decision.
+recurring, does it need the embedding server — root-cause before/after the kill decision.
 12. Route the un-routed parked items into `docs/todo/{storage,stability,services,monitoring}.md`:
-    go-build relocation gap; deploy.sh Zone-6 trip-recency gate; in-deploy anchoring assertion;
-    exit-4 failed-unit dump; cv-state-perms heal-summary journal; smoke-baseline last-seen stamps.
+go-build relocation gap; deploy.sh Zone-6 trip-recency gate; in-deploy anchoring assertion;
+exit-4 failed-unit dump; cv-state-perms heal-summary journal; smoke-baseline last-seen stamps.
 13. Write the lsblk-column fixture test (PARTNUM class) + a build-the-app-derivation check for
-    flake apps (scripts/test-scripts.nix / flake check).
+flake apps (scripts/test-scripts.nix / flake check).
 14. Check the CV repo content-sync copy flags (`cp -a`?) — answers whether the perms drift
-    re-materializes every sync (parallel session's b.2) and whether an upstream post-copy
-    chmod is the durable fix.
+re-materializes every sync (parallel session's b.2) and whether an upstream post-copy
+chmod is the durable fix.
 15. Post-reboot: verify `hot-user-caches-go-build-bootstrap` runs green and the subvol mounts
-    (parallel session's b.3 residual: 0755 → 0700).
+(parallel session's b.3 residual: 0755 → 0700).
 16. Post-reboot: confirm the flm EADDRINUSE corpse is gone (:52626 released), flm smoke heals.
 17. Post-reboot: `bootctl` random-seed/entries sanity on BOTH ESPs; watch `/boot` vs
-    `/boot-mirror` entry count through the next generation.
+`/boot-mirror` entry count through the next generation.
 18. Sweep Gatus CV group + llama-rag-dark checks green/red-as-expected post-reboot.
 19. Watch `cv-backup` tonight (03:30 pool receive lands).
 20. Observe `cv-scan` at the 18:23 tick — proves the CV stack end-to-end post-heal.
@@ -195,34 +196,34 @@ Profile anchored (system-787, three-way). Everything committed (`541fab97`) and 
 28. Readiness-gate lint: reject `curl -sf` (or any success-only probe) in ExecStartPre gates.
 29. Eval-time lint: FOWNER-required chmod class (heal units that chown+chmod need CAP_FOWNER).
 30. Eval-time assertion: mountPoint paths that resolve through HM out-of-store symlinks
-    (canonicalization trap — the go-build class).
+(canonicalization trap — the go-build class).
 31. Extend systemd-shape-audit with the isList-ExecStart class (M10, 60–100 min).
 32. hermes-perms probe symmetry sweep (ownership-only fast paths across the tree — the
-    cv-state-perms class generalized; parallel session's f.22).
+cv-state-perms class generalized; parallel session's f.22).
 
 **Samsung / storage follow-ups:**
 33. First-weekly mirror observation after several generations (entry growth, df trend).
 34. llama-vlm model downloads decision (M9/F23 — feature dark until the GGUFs land AND the
-    rogue 8127/8128 listeners are gone).
+rogue 8127/8128 listeners are gone).
 35. Root `@` off QLC investigation (M12 — separate Pareto doc, owner-gated).
 36. hot-db waves (crush → pocket-id → postgres → forgejo → dnsblockd/papdashboard) —
-    owner-gated migrations per the Phase-2 plan.
+owner-gated migrations per the Phase-2 plan.
 37. Old dead `@nix` subvol deletion on the QLC (tracked in docs/todo/storage.md).
 
 **Monitoring / verification debt:**
 38. Add a Gatus/check for "boot-mirror-sync freshness" (or system-health mirror-age metric —
-    M11, only if the skipped-sync class is ever observed).
+M11, only if the skipped-sync class is ever observed).
 39. Verify the gatus-pattern lint + §10 gate stay green with the new `llama_rag_dark` metrics.
 40. Post-reboot: run one deliberate QLC-fallback boot from the firmware menu (F20 optional
-    half — proves the rollback path physically).
+half — proves the rollback path physically).
 41. Confirm the 4-report-deep smoke baseline chain (11:53 → 14:00 → next) actually shrinks:
-    CV-era fails must drop out after the 14:08 heal.
+CV-era fails must drop out after the 14:08 heal.
 42. File/track the upstream browser-history heartbeat implementation (issue #26) — SystemNix
-    gate stays any-status meanwhile.
+gate stays any-status meanwhile.
 
 **Attribution / bookkeeping:**
 43. Ask the user about the 11:06 nixpkgs lock-bump provenance + 04:17 reboot ownership (the
-    lost handoff questions — attribution only, both moot for correctness now).
+lost handoff questions — attribution only, both moot for correctness now).
 44. Fold the 13-58/15-02/15-30/15-57 report chain into the next docs-health harvest pass.
 
 ## g) QUESTIONS (cannot resolve from this sandbox)
@@ -243,5 +244,5 @@ Profile anchored (system-787, three-way). Everything committed (`541fab97`) and 
 
 ---
 
-*Report 15:57. System: system-787 anchored, mirror armed (Boot000C first), zero failed
-system units since 15:00, tree pushed at `541fab97`. No secrets included.*
+_Report 15:57. System: system-787 anchored, mirror armed (Boot000C first), zero failed
+system units since 15:00, tree pushed at `541fab97`. No secrets included._

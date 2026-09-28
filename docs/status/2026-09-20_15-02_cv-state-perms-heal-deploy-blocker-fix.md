@@ -7,22 +7,22 @@ Nix syntax error; mandate: "make switch work properly". All times CEST.
 
 ## Timeline (what actually happened)
 
-| Time | Event |
-| --- | --- |
-| 13:25:22 | User's deploy dies: `syntax error, unexpected '('` at `cv.nix:513` (`(lib.optionalAttrs …`). |
-| 13:25:51 | Parallel agent session re-edits `cv.nix` (mid-edit race — the syntax error existed for ~29s). Tree becomes the `mkIf` value-guard form + `test-cv.nix` co-imports `deploy-restart-audit.nix`. |
-| 13:35:35 | Parallel session lands CAP_FOWNER fix in `hot-user-caches.nix` (daemon commit `e0f287ab`). |
-| 13:46:28 | Parallel deploy starts (before this session's first action). |
+| Time        | Event                                                                                                                                                                                                                                                                                            |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 13:25:22    | User's deploy dies: `syntax error, unexpected '('` at `cv.nix:513` (`(lib.optionalAttrs …`).                                                                                                                                                                                                     |
+| 13:25:51    | Parallel agent session re-edits `cv.nix` (mid-edit race — the syntax error existed for ~29s). Tree becomes the `mkIf` value-guard form + `test-cv.nix` co-imports `deploy-restart-audit.nix`.                                                                                                    |
+| 13:35:35    | Parallel session lands CAP_FOWNER fix in `hot-user-caches.nix` (daemon commit `e0f287ab`).                                                                                                                                                                                                       |
+| 13:46:28    | Parallel deploy starts (before this session's first action).                                                                                                                                                                                                                                     |
 | 13:47–13:50 | Its activation exit-4s: `cv-server` restart ×5 → `start-limit-hit` (`rm: cannot remove … Permission denied` on `/var/lib/cv/assets/{fonts,css}/*`). Profile NOT bumped: `system-785` → old `b1b8759` build while `/run/current-system` ran the new `20b1ddd` build — reboot would have reverted. |
-| 14:0x | This session: flake check `--no-build` ✅, evo-x2 toplevel eval ✅; first deploy attempt exits on the lock (correct wait per rc-13 doctrine); post-wait discovers the anchoring gap. |
-| 14:08:24 | Root cause fixed + deployed: `cv-state-perms` fires the heal for the first time EVER ("foreign-owned entries under /var/lib/cv — healing for cv:cv") → `cv-server` starts clean at 14:08:25. |
-| 14:08+ | `system-786` created and ANCHORED (`/run/current-system` == profile). `/health/live` 200, `/cv` 200 on :8098. Zero system-level failed units in the window. |
+| 14:0x       | This session: flake check `--no-build` ✅, evo-x2 toplevel eval ✅; first deploy attempt exits on the lock (correct wait per rc-13 doctrine); post-wait discovers the anchoring gap.                                                                                                             |
+| 14:08:24    | Root cause fixed + deployed: `cv-state-perms` fires the heal for the first time EVER ("foreign-owned entries under /var/lib/cv — healing for cv:cv") → `cv-server` starts clean at 14:08:25.                                                                                                     |
+| 14:08+      | `system-786` created and ANCHORED (`/run/current-system` == profile). `/health/live` 200, `/cv` 200 on :8098. Zero system-level failed units in the window.                                                                                                                                      |
 
 ## Root cause (the one this session fixed)
 
 `cv-state-perms` (the morning's heal oneshot) had a **fast-path blindspot**: its health probe
 checked **ownership only** (`! -user cv -o ! -group cv`). The drifted tree under
-`/var/lib/cv/assets` was cv-*owned* but carried **missing owner-write bits** (store-mode
+`/var/lib/cv/assets` was cv-_owned_ but carried **missing owner-write bits** (store-mode
 copies / operator chmod class). Result: the probe fast-pathed to "healthy" in <1s every start
 (no heal echo ever fired), while `cv-server`'s upstream content-sync `rm -rf assets` EPERM'd
 on the write-less parent dirs → restart ×5 → start-limit-hit → activation exit 4 → **nh
@@ -252,5 +252,5 @@ rogue llamas are the standing known driver awaiting the user's kill decision.
 
 ---
 
-*Report written 15:02, addendum 15:50. System state: system-787 anchored (`czwfy8qf…`),
-cv-server serving, mirror armed, reboot pending (user). No secrets (public-repo rule).*
+_Report written 15:02, addendum 15:50. System state: system-787 anchored (`czwfy8qf…`),
+cv-server serving, mirror armed, reboot pending (user). No secrets (public-repo rule)._

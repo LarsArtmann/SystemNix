@@ -52,6 +52,7 @@
 ## f) NEXT — up to 50 things (from this session's vantage; queue order preserved)
 
 **Session loose ends:**
+
 1. Run `nix build .#checks.x86_64-linux.restic-app-dumps` in a quiet-IO window (gate <20%; currently ~60%)
 2. Run the extended paperless VM test (same window)
 3. Run test-attic to runtime-prove the ReadWritePaths derive
@@ -60,12 +61,12 @@
 6. Prune the new `[x]` library rows to CHANGELOG on the next pass
 7. Extend the restic test with the `-perm /077` sweep assert (c.3)
 8. ~~Verify the `6251c198` UMask fix renders~~ DONE at report time: `nix eval …restic-app-dumps-setup.serviceConfig.UMask` → `0077`
-**Deploy-gated (owner):**
+   **Deploy-gated (owner):**
 9. THE DEPLOY — the batch is one `nix run .#deploy` from real (restic module, paperless test args are test-only, attic derive, Health Hub module itself)
 10. First restic run + `restic check` smoke + dedup-ratio measurement after ≥3 nightly runs
 11. Health Hub full go-live chain items 1–10 (docs/todo/services.md blocked:deploy entry)
 12. Browser-history dbBackup leg + discordsync ~40G attachments migration riding the same deploy batch
-**Storage domain (queue):**
+    **Storage domain (queue):**
 13. Phase 2 hot-DB migration waves (pocket-id/postgres/discordsync) — owner sudo windows
 14. Offsite Borg leg to Hetzner (ACTIVE parallel session owns `docs/services/offsite-borg.md` — coordinate, don't duplicate)
 15. Offsite Borg restore path: runbook + first timed restore drill
@@ -78,7 +79,7 @@
 22. /data damage-set inventory + single-victim repair recipe codification
 23. disko config for the deferred reinstall
 24. Snapshot-pinning doctrine sweep
-**Monitoring/stability (queue highlights):**
+    **Monitoring/stability (queue highlights):**
 25. system-health-metrics section-sum vs unit-ceiling fix (≈500s vs 180s — structural)
 26. journald `SystemMaxUse` cap
 27. btrbk receive-freshness + pool-snapshot-freshness monitoring
@@ -87,7 +88,7 @@
 30. Boot-time catch-up stampede control
 31. Root-cause the 13:36:13 `mnt-pool.mount` same-second SIGTERM
 32. `Upholds=` evaluation for mount-dependent services
-**Services (queue highlights):**
+    **Services (queue highlights):**
 33. PMA `Environment=` splitting (the "Artmann" bare-token bug — still open per my session read)
 34. project-discovery-daemon IO taming
 35. Hermes deferred-cleanups cluster (some PAST DUE)
@@ -96,7 +97,7 @@
 38. Browser-history quiet-day 503 mitigation (local Gatus-condition + upstream heartbeat)
 39. Postfix `status=bounced` journal-rate metric + Gatus check
 40. dns-blocker → upstream dnsblockd module migration
-**Pipeline/docs:**
+    **Pipeline/docs:**
 41. SHA-citation verifier script (e.5 — doubly motivated now)
 42. Correct the AGENTS.md `nix fmt -- --ci` claim (it is NOT check-only — d.4)
 43. Counter-annotate the false CHANGELOG claim from the docs-health round-2 (append-only, can't edit)

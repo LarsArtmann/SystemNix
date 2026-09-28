@@ -23,10 +23,11 @@
    systemd's cycle breaker **DELETED the tmpfiles start job** (journal 22:35:09 + 22:35:10:
    "Job systemd-tmpfiles-setup.service/start deleted to break ordering cycle").
 4. **The 2026-09-20 fix was insufficient:** `DefaultDependencies=false` on the bootstrap (deployed,
-   verified in the live unit file) cures only the *activation*-time cycle; the *boot*-time cycle survives
+   verified in the live unit file) cures only the _activation_-time cycle; the _boot_-time cycle survives
    through the automount's own edges.
 
 ### Evidence chain
+
 - `journalctl -b 0 -u systemd-tmpfiles-setup` — the 22:34:56 "Starting/Finished" is the **initrd**
   instance (detection trap); real-root instance: only the two cycle/job-deletion messages.
 - `/run/systemd/units/` has `invocation:` entries ONLY for `-dev`/`-dev-early` tmpfiles passes.
@@ -41,13 +42,13 @@
 
 ## Fixes landed in-repo (committed via daemon as af87ce31 + later batch)
 
-| Layer | File | Change |
-| --- | --- | --- |
-| Root cause | `modules/nixos/services/hot-user-caches.nix` | bootstrap now `wantedBy`/`before` the on-demand **`.mount`** (`home-lars-.cache-nix.mount`) instead of the `.automount` — removes all our edges from the boot transaction; subvol is created just before the first real mount (the only moment it is needed). Eval-verified. |
-| Belt (per-switch) | `scripts/deploy.sh` | post-switch heal `sudo systemd-tmpfiles --create --remove --exclude-prefix=/dev` (NO `--boot`: boot-only `D! /tmp` must stay boot-only or every deploy wipes /tmp). |
-| Regression pin | `tests/test-hot-user-caches.nix` (NEW) + `tests/default.nix` | VM test asserts `systemd-tmpfiles-setup.service` active + a probe tmpfiles rule APPLIED after boot (only an actual boot catches transaction cycles), then automount→bootstrap→subvol→mount flow + writes landing on the hot disk. Drv evals green. |
-| Docs | `AGENTS.md` | the 2026-09-20 gotcha extended with the boot-cycle mechanism, detection traps, fix rules, manual-heal command. |
-| Belt (per-boot, parallel session) | `platforms/nixos/system/boot.nix` (d827f478, NOT mine) | `binfmt-sandbox-dir` oneshot mkdirs `/run/binfmt` at multi-user.target, gated to binfmt-enabled hosts, no ordering edges. Complementary, no conflict. |
+| Layer                             | File                                                         | Change                                                                                                                                                                                                                                                                       |
+| --------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Root cause                        | `modules/nixos/services/hot-user-caches.nix`                 | bootstrap now `wantedBy`/`before` the on-demand **`.mount`** (`home-lars-.cache-nix.mount`) instead of the `.automount` — removes all our edges from the boot transaction; subvol is created just before the first real mount (the only moment it is needed). Eval-verified. |
+| Belt (per-switch)                 | `scripts/deploy.sh`                                          | post-switch heal `sudo systemd-tmpfiles --create --remove --exclude-prefix=/dev` (NO `--boot`: boot-only `D! /tmp` must stay boot-only or every deploy wipes /tmp).                                                                                                          |
+| Regression pin                    | `tests/test-hot-user-caches.nix` (NEW) + `tests/default.nix` | VM test asserts `systemd-tmpfiles-setup.service` active + a probe tmpfiles rule APPLIED after boot (only an actual boot catches transaction cycles), then automount→bootstrap→subvol→mount flow + writes landing on the hot disk. Drv evals green.                           |
+| Docs                              | `AGENTS.md`                                                  | the 2026-09-20 gotcha extended with the boot-cycle mechanism, detection traps, fix rules, manual-heal command.                                                                                                                                                               |
+| Belt (per-boot, parallel session) | `platforms/nixos/system/boot.nix` (d827f478, NOT mine)       | `binfmt-sandbox-dir` oneshot mkdirs `/run/binfmt` at multi-user.target, gated to binfmt-enabled hosts, no ordering edges. Complementary, no conflict.                                                                                                                        |
 
 ## CURRENT BLOCKER (unchanged for ~50 min)
 
@@ -64,6 +65,7 @@ user answered "yes" but the heal has NOT landed (no journal entries, dirs still 
 ## Report card (self-assessment)
 
 ### a) FULLY DONE
+
 - Root cause identified with a complete, timestamped evidence chain (incident class: boot-transaction
   ordering cycle deleting a boot-critical unit's start job).
 - Module fix implemented + eval-verified (`wantedBy = [ "home-lars-.cache-nix.mount" ]`).
@@ -74,12 +76,14 @@ user answered "yes" but the heal has NOT landed (no journal entries, dirs still 
   never created; tmp-cleanup innocent; nixpkgs binfmt.nix innocent).
 
 ### b) PARTIALLY DONE
+
 - Verification: eval-level done; **VM test not RUN** (needs sandbox), red-run control (revert wiring →
   expect test failure) not performed.
 - `nix flake check --no-build` not run (blocked by the IFD realization needing sandbox).
 - Deploy not executed (blocked).
 
 ### c) NOT STARTED
+
 - The actual deploy of the fix (and the pending Sep-24 18:22 flake.lock bump era behind it — the deploy
   will be a heavy first build; expect duration and pressure-gate interactions).
 - Post-deploy verification (anchor check, sandbox probe without overrides, sev1-bridge green).
@@ -87,6 +91,7 @@ user answered "yes" but the heal has NOT landed (no journal entries, dirs still 
 - Reboot validation (the true end-to-end proof of the cycle fix; VM test is the proxy meanwhile).
 
 ### d) TOTALLY FUCKED UP (honest)
+
 - **The heal stall:** user answered "yes" at ~04:20; I polled passively for 20+ minutes without a crisp
   re-prompt. The critical path sat idle.
 - ~10 min on the storage-collector/red-herring trail before running `--show-trace` — the "setting up the
@@ -96,6 +101,7 @@ user answered "yes" but the heal has NOT landed (no journal entries, dirs still 
 - Question-tool call rejected once on the 600-char description limit (minor).
 
 ### e) WHAT TO IMPROVE
+
 - When a build error's trace says "setting up the build environment", diagnose the SANDBOX first
   (extra-sandbox-paths in /etc/nix/nix.conf), the config second.
 - When the resolution path requires a user action, confirm EXECUTION (journal/dir probe), not intent —
@@ -104,6 +110,7 @@ user answered "yes" but the heal has NOT landed (no journal entries, dirs still 
   local-fs/sysinit should ship with a boots-the-VM regression test in the same change.
 
 ### f) NEXT (roughly ordered)
+
 1. User runs the heal command (or grants this session sudo) — everything unblocks.
 2. Verify: `/run/binfmt` + `/run/systemnix/sev1` exist; sev1-bridge green within 10s tick; sandbox probe
    build succeeds.
@@ -128,6 +135,7 @@ user answered "yes" but the heal has NOT landed (no journal entries, dirs still 
 15. `pre-reboot-check` before that reboot (house rule).
 
 ### g) QUESTIONS I CANNOT ANSWER MYSELF
+
 1. Did the heal command actually run (or fail)? I see no journal trace and the dirs are still missing —
    if it errored, paste the output.
 2. Is `sudo` denial in this session intentional? AGENTS documents agents using sudo routinely (sops

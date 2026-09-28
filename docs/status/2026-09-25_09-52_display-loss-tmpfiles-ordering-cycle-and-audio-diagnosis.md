@@ -8,14 +8,14 @@
 
 ## Timeline
 
-| Time | Event |
-| --- | --- |
-| 09-24 22:35 | Boot with broken tmpfiles (ordering cycle deleted `systemd-tmpfiles-setup.service` start job) — machine ran headless all night |
+| Time        | Event                                                                                                                                                                  |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 09-24 22:35 | Boot with broken tmpfiles (ordering cycle deleted `systemd-tmpfiles-setup.service` start job) — machine ran headless all night                                         |
 | 05:07–05:30 | User SSH'd in: "no Display input". User restarted `display-manager.service` (05:30:21) — SDDM+Xorg came up, EDID read, both DP outputs set to 4K — screens still black |
-| 05:32 | User ran `sudo systemd-tmpfiles --create --remove --exclude-prefix=/dev` → greeter started (05:32:29), user logged in (05:32:33), niri session live |
-| 05:32–05:38 | TV shows picture; LG monitor (DP-1) stays black |
-| ~09:44 | Audio inspection: movie stream = **MONO**; YouTube test = FL/FR stereo |
-| 09:5x | User switched TV HDMI input format Bitstream → PCM; dialogue improved. Findings recorded in AGENTS.md |
+| 05:32       | User ran `sudo systemd-tmpfiles --create --remove --exclude-prefix=/dev` → greeter started (05:32:29), user logged in (05:32:33), niri session live                    |
+| 05:32–05:38 | TV shows picture; LG monitor (DP-1) stays black                                                                                                                        |
+| ~09:44      | Audio inspection: movie stream = **MONO**; YouTube test = FL/FR stereo                                                                                                 |
+| 09:5x       | User switched TV HDMI input format Bitstream → PCM; dialogue improved. Findings recorded in AGENTS.md                                                                  |
 
 ---
 
@@ -56,7 +56,7 @@ Nothing destructive. Process fumbles only:
 1. **Close open loops explicitly** — I diagnosed the monitor as "stuck monitor-side, power-cycle it" and then silently dropped the thread when the user pivoted to audio. A one-line follow-up question at the start of the audio turn would have settled it.
 2. **Read the project memory FIRST for symptom matching** — the answer to "no display input" was already in AGENTS.md (the 2026-09-25 ordering-cycle supersession note documents this exact incident on this exact boot). Live re-verification was correct and fast, but checking the doc first would have led, not followed, the evidence.
 3. **Act on deploy gaps, don't just report them** — "run `nix run .#deploy` when convenient" leaves a known reboot-rebreak landmine live. I should have offered to run it immediately (pressure gate would have protected us anyway).
-4. **Monitoring blind spot — the whole display outage was invisible to Gatus:** SDDM "active", greeter dead, both screens dark, zero alerts all night. The only symptom was sev1-bridge crash-looping 2900× (226/NAMESPACE from missing `/run/systemnix/sev1`) — an alertable crash-loop that nothing paged on as a *class*.
+4. **Monitoring blind spot — the whole display outage was invisible to Gatus:** SDDM "active", greeter dead, both screens dark, zero alerts all night. The only symptom was sev1-bridge crash-looping 2900× (226/NAMESPACE from missing `/run/systemnix/sev1`) — an alertable crash-loop that nothing paged on as a _class_.
 5. **smart-audio focus-following vs watching:** audio routes to the FOCUSED output, not the output a long-running stream is playing on. Movie on TV + focus on the (black) monitor workspace = audio silently yanks away mid-scene. Worth a "sticky sink while a stream >N min is active" design consideration.
 6. **Probe tool availability before relying on it** (`command -v pactl`), and re-resolve wpctl object IDs before `inspect` (IDs drift — the PipeWire-name-handle doctrine already in AGENTS.md, same class).
 
@@ -87,4 +87,4 @@ Nothing destructive. Process fumbles only:
 
 ---
 
-*Report ends. Waiting for instructions.*
+_Report ends. Waiting for instructions._

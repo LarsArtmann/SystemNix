@@ -14,14 +14,14 @@ _Sequence: continuation of `2026-09-19_10-44_boot-mirror-deploy-queue-v3-two-lla
 
 ## Verification Matrix
 
-| Item                                                                 | Evidence                                                                                                                                                                                                                               | State                                        |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| openseo pnpmDeps fix                                                 | FOD builds green: `k1a0ccz…-openseo-pnpm-deps`; committed `3cde5040` (content verified via git show)                                                                                                                                   | DONE                                         |
-| zram-thrash root cause                                               | delayacct delta 0µs/10s + diskstats ~2% busy + si/so >100MB/s each, bi≈si (three independent probes agree)                                                                                                                             | ROOT-CAUSED (ongoing, load-driven)           |
-| Queue v3c health                                                     | polls every 45s w/ heartbeat; fired once (13:52), rc=12 retry loop live; deadline 19:52 + gave-up breadcrumb                                                                                                                            | RUNNING                                      |
-| Nothing shipped today                                                | profile = `system-785-link`, current-system = `qg1ijnzj…b1b8759` — unchanged since 09-18                                                                                                                                               | CONFIRMED (deploy still pending)             |
-| Boot-mirror code integrity                                           | committed `260f86ef` (09-18); flake/deploy.sh/config gained only parallel-session lines (10:05 re-verification stands)                                                                                                                  | INTACT                                       |
-| /boot-mirror state                                                   | NOT mounted (expected — mounts at deploy via `boot-mirror-sync`)                                                                                                                                                                       | PENDING DEPLOY                               |
+| Item                       | Evidence                                                                                                               | State                              |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| openseo pnpmDeps fix       | FOD builds green: `k1a0ccz…-openseo-pnpm-deps`; committed `3cde5040` (content verified via git show)                   | DONE                               |
+| zram-thrash root cause     | delayacct delta 0µs/10s + diskstats ~2% busy + si/so >100MB/s each, bi≈si (three independent probes agree)             | ROOT-CAUSED (ongoing, load-driven) |
+| Queue v3c health           | polls every 45s w/ heartbeat; fired once (13:52), rc=12 retry loop live; deadline 19:52 + gave-up breadcrumb           | RUNNING                            |
+| Nothing shipped today      | profile = `system-785-link`, current-system = `qg1ijnzj…b1b8759` — unchanged since 09-18                               | CONFIRMED (deploy still pending)   |
+| Boot-mirror code integrity | committed `260f86ef` (09-18); flake/deploy.sh/config gained only parallel-session lines (10:05 re-verification stands) | INTACT                             |
+| /boot-mirror state         | NOT mounted (expected — mounts at deploy via `boot-mirror-sync`)                                                       | PENDING DEPLOY                     |
 
 ## What Went Wrong / Could Be Better
 

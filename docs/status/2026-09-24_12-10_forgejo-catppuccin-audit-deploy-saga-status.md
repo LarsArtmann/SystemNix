@@ -57,36 +57,36 @@
 
 ## f) NEXT (prioritized; P0 = blocks or directly completes this arc)
 
-| # | P | Item |
-|---|---|------|
-| 1 | P0 | Run the pending deploy (carries theme batch + mr-sync/bank-sync/branching-flow/go-taskqueue bumps + overnight commits) — owner decides force-vs-wait (question 1) |
-| 2 | P0 | Post-deploy: anchoring check (`readlink -f` both paths, rc=14 discipline) |
-| 3 | P0 | Run `nix run .#post-deploy-check` — the 4 new Forgejo checks fire for real for the first time |
-| 4 | P0 | Live theme verification: theme asset 200 + `@import` body; `data-theme="catppuccin-auto"`; title slogan; meta description; "Powered by Forgejo" GONE; gravatar requests gone (network tab); picker shows the 6 themes (authed session) |
-| 5 | P0 | Confirm arc-green is gone from the live picker (the original defect, fix until now only eval-proven) |
-| 6 | P1 | Check lars' stored per-user theme pref — it may override `DEFAULT_THEME` in the browser; reset to catppuccin-auto if stale |
-| 7 | P1 | Watch tonight's btrbk window (23:00/23:30/23:45): guard-stopped churn units re-armed correctly, no 3-day freshness failure |
-| 8 | P1 | Guard burst after-action: trips #912–#917 driver was parallel agent-session churn — record the episode + the evidence pattern (idle disks, 0 D-state, healthy memory) in the memory-emergency-guard runbook |
-| 9 | P1 | Verify forgejo-github-sync ran post-deploy (deploy.sh `--no-block` start) and `forgejo_mirror_reconcile` metrics publish |
-| 10 | P1 | Verify hermes came back clean after its deploy restart (it had 1 active session yesterday; the token-write batch rides this deploy too) |
-| 11 | P1 | cv :8098 metrics endpoint was down at every pre-deploy §10 pass yesterday — check cv-server health + Gatus "CV Pipeline Store Health" state today |
-| 12 | P1 | Investigate the recurring displaced buildcache dirs (`~/.cache/gocache`, `~/.cache/gomod` reaped as real dirs TWICE yesterday) — something env-less keeps recreating them |
-| 13 | P2 | `sudo systemctl start nix-build-cleanup.service` — 4 stale build sandboxes flagged by §8 twice |
-| 14 | P2 | mr-sync follow-up upstream: document the new "tidy-clean ≠ buildable" variant (proxy floors vs prepared-source `go 1.27.1` floors) in the mr-sync repo's notes; consider a CI check that tidies the PREPARED graph |
-| 15 | P2 | Lock-revert-race hardening (from the parallel session's finding): consider a pre-deploy guard that diffs `flake.lock` against HEAD and warns when the working tree lock is OLDER than the last lock-touching commit |
-| 16 | P2 | Nixpkgs deprecation-warning sweep surfaced by yesterday's build: `stdenv.isDarwin/isLinux`, `'system' renamed`, `programs.zsh.initExtra` — find the owning configs and fix |
-| 17 | P2 | llama-vlm post-deploy soak per its module-header warning (rides this deploy; the eval warning demands it before decommissioning manual llama-servers) |
-| 18 | P2 | Automated negative fixture for the theme audit via the `negative-test-lints.sh` harness pattern (defeat the eval-cache trap with a real mutation) |
-| 19 | P2 | VM test for forgejo theme tmpfiles (L+ materialization + asset served through the vHost) |
-| 20 | P2 | Verify crush-hot-db coverage still complete after yesterday's session burst (new sessions since 09-18 should all be symlinked to `/mnt/hot/crush/…`; depth-4 tripwire quiet) |
-| 21 | P2 | Palette decision implementation, once answered (question 2): mauve-forward variant or Mocha-forced default → update themes + THE 4 smoke lines atomically |
-| 22 | P3 | Logo/favicon phase 2 (question 3): forge/anvil glyph in Mocha palette via `custom/public/assets/img/logo.svg` + `favicon.svg` through the same tmpfiles pattern |
-| 23 | P3 | Chroma-exact Catppuccin syntax highlighting as a 4th custom asset (`[ready]` queue row) |
-| 24 | P3 | Footer extra_links (tq dashboard, status page) via `custom/templates` — check the template-dragons boundary first (only `extra_links` is sanctioned-safe) |
-| 25 | P3 | Repo-wide em-dash sweep in `.nix` comments (low priority, conflict-prone under parallel sessions — schedule for a quiet tree) |
-| 26 | P3 | Consider upstreaming the "forgejo theme-existence audit" pattern as a reusable lib helper if a second service ever ships assets (YAGNI guard: only on second consumer) |
-| 27 | P3 | Status-report skill produces canonical HTML — this report is `.md` per explicit user instruction; if `.md` becomes the norm, update the skill's format note instead of accumulating overrides |
-| 28 | P3 | Close out the 40-item phase-3 backlog in yesterday's status report via a docs-health HARVEST pass (most items are already routed; sweep for strays) |
+| #  | P  | Item                                                                                                                                                                                                                                   |
+| -- | -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | P0 | Run the pending deploy (carries theme batch + mr-sync/bank-sync/branching-flow/go-taskqueue bumps + overnight commits) — owner decides force-vs-wait (question 1)                                                                      |
+| 2  | P0 | Post-deploy: anchoring check (`readlink -f` both paths, rc=14 discipline)                                                                                                                                                              |
+| 3  | P0 | Run `nix run .#post-deploy-check` — the 4 new Forgejo checks fire for real for the first time                                                                                                                                          |
+| 4  | P0 | Live theme verification: theme asset 200 + `@import` body; `data-theme="catppuccin-auto"`; title slogan; meta description; "Powered by Forgejo" GONE; gravatar requests gone (network tab); picker shows the 6 themes (authed session) |
+| 5  | P0 | Confirm arc-green is gone from the live picker (the original defect, fix until now only eval-proven)                                                                                                                                   |
+| 6  | P1 | Check lars' stored per-user theme pref — it may override `DEFAULT_THEME` in the browser; reset to catppuccin-auto if stale                                                                                                             |
+| 7  | P1 | Watch tonight's btrbk window (23:00/23:30/23:45): guard-stopped churn units re-armed correctly, no 3-day freshness failure                                                                                                             |
+| 8  | P1 | Guard burst after-action: trips #912–#917 driver was parallel agent-session churn — record the episode + the evidence pattern (idle disks, 0 D-state, healthy memory) in the memory-emergency-guard runbook                            |
+| 9  | P1 | Verify forgejo-github-sync ran post-deploy (deploy.sh `--no-block` start) and `forgejo_mirror_reconcile` metrics publish                                                                                                               |
+| 10 | P1 | Verify hermes came back clean after its deploy restart (it had 1 active session yesterday; the token-write batch rides this deploy too)                                                                                                |
+| 11 | P1 | cv :8098 metrics endpoint was down at every pre-deploy §10 pass yesterday — check cv-server health + Gatus "CV Pipeline Store Health" state today                                                                                      |
+| 12 | P1 | Investigate the recurring displaced buildcache dirs (`~/.cache/gocache`, `~/.cache/gomod` reaped as real dirs TWICE yesterday) — something env-less keeps recreating them                                                              |
+| 13 | P2 | `sudo systemctl start nix-build-cleanup.service` — 4 stale build sandboxes flagged by §8 twice                                                                                                                                         |
+| 14 | P2 | mr-sync follow-up upstream: document the new "tidy-clean ≠ buildable" variant (proxy floors vs prepared-source `go 1.27.1` floors) in the mr-sync repo's notes; consider a CI check that tidies the PREPARED graph                     |
+| 15 | P2 | Lock-revert-race hardening (from the parallel session's finding): consider a pre-deploy guard that diffs `flake.lock` against HEAD and warns when the working tree lock is OLDER than the last lock-touching commit                    |
+| 16 | P2 | Nixpkgs deprecation-warning sweep surfaced by yesterday's build: `stdenv.isDarwin/isLinux`, `'system' renamed`, `programs.zsh.initExtra` — find the owning configs and fix                                                             |
+| 17 | P2 | llama-vlm post-deploy soak per its module-header warning (rides this deploy; the eval warning demands it before decommissioning manual llama-servers)                                                                                  |
+| 18 | P2 | Automated negative fixture for the theme audit via the `negative-test-lints.sh` harness pattern (defeat the eval-cache trap with a real mutation)                                                                                      |
+| 19 | P2 | VM test for forgejo theme tmpfiles (L+ materialization + asset served through the vHost)                                                                                                                                               |
+| 20 | P2 | Verify crush-hot-db coverage still complete after yesterday's session burst (new sessions since 09-18 should all be symlinked to `/mnt/hot/crush/…`; depth-4 tripwire quiet)                                                           |
+| 21 | P2 | Palette decision implementation, once answered (question 2): mauve-forward variant or Mocha-forced default → update themes + THE 4 smoke lines atomically                                                                              |
+| 22 | P3 | Logo/favicon phase 2 (question 3): forge/anvil glyph in Mocha palette via `custom/public/assets/img/logo.svg` + `favicon.svg` through the same tmpfiles pattern                                                                        |
+| 23 | P3 | Chroma-exact Catppuccin syntax highlighting as a 4th custom asset (`[ready]` queue row)                                                                                                                                                |
+| 24 | P3 | Footer extra_links (tq dashboard, status page) via `custom/templates` — check the template-dragons boundary first (only `extra_links` is sanctioned-safe)                                                                              |
+| 25 | P3 | Repo-wide em-dash sweep in `.nix` comments (low priority, conflict-prone under parallel sessions — schedule for a quiet tree)                                                                                                          |
+| 26 | P3 | Consider upstreaming the "forgejo theme-existence audit" pattern as a reusable lib helper if a second service ever ships assets (YAGNI guard: only on second consumer)                                                                 |
+| 27 | P3 | Status-report skill produces canonical HTML — this report is `.md` per explicit user instruction; if `.md` becomes the norm, update the skill's format note instead of accumulating overrides                                          |
+| 28 | P3 | Close out the 40-item phase-3 backlog in yesterday's status report via a docs-health HARVEST pass (most items are already routed; sweep for strays)                                                                                    |
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 
@@ -96,4 +96,4 @@
 
 ---
 
-*Evidence trail: probe outputs, gate transcripts, and journal greps are quoted verbatim in the session log; the parallel session's independent findings (mr-sync floor root cause, shellcheck fixes, lock revert race) are recorded in `docs/status/2026-09-24_12-08_mr-sync-go-floor-unblock-three-deploy-attempts.md` and were NOT re-derived here.*
+_Evidence trail: probe outputs, gate transcripts, and journal greps are quoted verbatim in the session log; the parallel session's independent findings (mr-sync floor root cause, shellcheck fixes, lock revert race) are recorded in `docs/status/2026-09-24_12-08_mr-sync-go-floor-unblock-three-deploy-attempts.md` and were NOT re-derived here._

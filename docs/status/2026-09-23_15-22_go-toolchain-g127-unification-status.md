@@ -35,20 +35,20 @@
 
 ## 2. a) FULLY DONE
 
-| Item | Evidence |
-|---|---|
-| Go wiring doctrine answered + verified live (nixpkgs go versions) | `nix eval` outputs in transcript |
-| Clean-env probe of go_1_27 defaults (GOEXPERIMENT/GOTOOLCHAIN) | `env -i` probe |
-| Tree-wide go_1_26/go_1_27 inventory with per-spot classification | `rg` sweep, 4 spots found |
-| Template flip to `go_1_27` | `templates/go-flake-parts/flake.nix:50`, change verified in `ebf2f3da` diff |
-| Post-change validation | `nix flake check --no-build` green (twice: standalone + inside pre-commit) |
+| Item                                                              | Evidence                                                                    |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Go wiring doctrine answered + verified live (nixpkgs go versions) | `nix eval` outputs in transcript                                            |
+| Clean-env probe of go_1_27 defaults (GOEXPERIMENT/GOTOOLCHAIN)    | `env -i` probe                                                              |
+| Tree-wide go_1_26/go_1_27 inventory with per-spot classification  | `rg` sweep, 4 spots found                                                   |
+| Template flip to `go_1_27`                                        | `templates/go-flake-parts/flake.nix:50`, change verified in `ebf2f3da` diff |
+| Post-change validation                                            | `nix flake check --no-build` green (twice: standalone + inside pre-commit)  |
 
 ## 3. b) PARTIALLY DONE
 
-| Item | State | Missing |
-|---|---|---|
-| "Everything on go_1_27" migration | 3 of 4 spots resolved correctly (template flipped, sops shim + CV correctly justified as keep/blocked) | SigNoz flip not attempted (needs probe first — see below) |
-| Commit hygiene for the template change | Change is committed and landed | Commit message is the daemon heuristic (`ebf2f3da`), not the drafted descriptive one; no CHANGELOG/docs line added |
+| Item                                   | State                                                                                                  | Missing                                                                                                            |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| "Everything on go_1_27" migration      | 3 of 4 spots resolved correctly (template flipped, sops shim + CV correctly justified as keep/blocked) | SigNoz flip not attempted (needs probe first — see below)                                                          |
+| Commit hygiene for the template change | Change is committed and landed                                                                         | Commit message is the daemon heuristic (`ebf2f3da`), not the drafted descriptive one; no CHANGELOG/docs line added |
 
 ## 4. c) NOT STARTED
 
@@ -62,7 +62,7 @@
 Nothing damaged. Honest accounting of the two stumbles:
 
 1. **Contaminated probe (recovered in-session)**: my first `GOEXPERIMENT=jsonv2 go env` check inherited the session env and would have produced a wrong "graduated in 1.27" answer had I stopped one probe earlier. Caught it by re-checking under `env -i`. Cost: one extra command.
-2. **Daemon race on the commit (accepted, not resolved)**: my `git add` + commit raced the auto-commit daemon — it swept my staged file into heuristic commit `ebf2f3da` mid-hook; my amend then failed because HEAD had advanced to a parallel session's `502db45d`. I stopped instead of rebasing (correct — do not rewrite commits containing foreign work), so the landed commit carries a low-information message. Per the 2026-09-14/09-19 multi-agent rules this is the sanctioned outcome, but a pathspec-scoped `git commit` fired *before* the daemon's ~10-min window would have avoided it entirely.
+2. **Daemon race on the commit (accepted, not resolved)**: my `git add` + commit raced the auto-commit daemon — it swept my staged file into heuristic commit `ebf2f3da` mid-hook; my amend then failed because HEAD had advanced to a parallel session's `502db45d`. I stopped instead of rebasing (correct — do not rewrite commits containing foreign work), so the landed commit carries a low-information message. Per the 2026-09-14/09-19 multi-agent rules this is the sanctioned outcome, but a pathspec-scoped `git commit` fired _before_ the daemon's ~10-min window would have avoided it entirely.
 
 **Parallel-session activity observed (flagged per concurrent-agent rules):** `docs/services/offsite-borg-restore.md` was modified and staged by another session during mine, landed as `502db45d` ("docs: correct sops re-render gating in Borg DR restore runbook", 9+/3−). Not my work, not verified by me, left untouched.
 
@@ -71,7 +71,7 @@ Nothing damaged. Honest accounting of the two stumbles:
 1. **Probe hygiene**: any `go env` behavior check must run under a scrubbed env (`env -i`) by default on this box — the session exports (GOTOOLCHAIN, GOEXPERIMENT, caches) poison default-observation probes.
 2. **Commit-before-daemon**: fire the pathspec commit immediately after the edit while `nix flake check` runs in parallel — not sequentially after it. The ~10-min check window is exactly the daemon's commit window.
 3. **Persist revisit triggers**: when an answer ends in "revisit when X", X goes into AGENTS.md or a TODO file in the same session, not just the transcript. This session ended with two unpersisted triggers (jsonv2 graduation; CV upstream fix eligibility).
-4. **"fix" scope ambiguity**: "fix" was correctly read as "apply your own recommendation", but the recommendation table had four rows with different risk classes — stating which rows I would/wouldn't touch *before* editing (I did after) would have made the boundary explicit up front.
+4. **"fix" scope ambiguity**: "fix" was correctly read as "apply your own recommendation", but the recommendation table had four rows with different risk classes — stating which rows I would/wouldn't touch _before_ editing (I did after) would have made the boundary explicit up front.
 
 ## 7. f) What To Do Next (prioritized, session-scoped)
 
@@ -97,4 +97,4 @@ Nothing damaged. Honest accounting of the two stumbles:
 
 ---
 
-*Verification trail: `nix eval nixpkgs#go.version` → 1.26.7; `nix eval nixpkgs#go_1_27.version` → 1.27.1; clean-env `go env` probe → GOEXPERIMENT empty / GOTOOLCHAIN auto; `rg` inventory → 4 spots; `nix flake check --no-build` → all checks passed (post-edit, pre-commit, and post-amend-attempt); landed change: `templates/go-flake-parts/flake.nix:50` in commit `ebf2f3da`.*
+_Verification trail: `nix eval nixpkgs#go.version` → 1.26.7; `nix eval nixpkgs#go_1_27.version` → 1.27.1; clean-env `go env` probe → GOEXPERIMENT empty / GOTOOLCHAIN auto; `rg` inventory → 4 spots; `nix flake check --no-build` → all checks passed (post-edit, pre-commit, and post-amend-attempt); landed change: `templates/go-flake-parts/flake.nix:50` in commit `ebf2f3da`._

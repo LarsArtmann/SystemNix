@@ -94,7 +94,7 @@ Carried from the night (unchanged, still standing lessons — full detail in 01-
 15. Build `scripts/vendorhash-fleet-audit.sh` (+ flake app): probe all LarsArtmann inputs' `#default.goModules` at lock revs in one pass; wire into pre-deploy §11 or a flake check.
 16. Root-cause the wave: diff the 7 repos' recent commits for the shared actor landing bumps without hash dances.
 17. Extend pre-deploy §11 to cover upstream-flake package inputs (currently prints "unable to determine" for 6 flakePkg inputs).
-18-23. AGENTS.md set (from night report f13-19, unchanged): wave playbook; BuildFlow hook trap; abandoned-work protocol; never-truncate rule; bank-sync floor 1.27.1 + hash `q1XZ…` + `a70aaca1` note; go-auto-upgrade master-riding note; 44a9189-wave record. **Plus one new entry: the no-unattended-waits doctrine (d1/e1).**
+    18-23. AGENTS.md set (from night report f13-19, unchanged): wave playbook; BuildFlow hook trap; abandoned-work protocol; never-truncate rule; bank-sync floor 1.27.1 + hash `q1XZ…` + `a70aaca1` note; go-auto-upgrade master-riding note; 44a9189-wave record. **Plus one new entry: the no-unattended-waits doctrine (d1/e1).**
 
 **Upstream hygiene (the 7 repos, unchanged from night):**
 

@@ -66,6 +66,7 @@
 ## f) NEXT (up to 50, ordered: owner-decisions → deploy → root-gated → hardening)
 
 **Owner decisions first (block the most):**
+
 1. Deploy the batch (pressure-gated; expect 2 deliberately-red AI checks + §10 loans for 4 new metrics).
 2. Kill rogues 995413/995415 (re-verify identity first: `ps -o user:16 -p <pid>` + `/proc/<pid>/cgroup` must say hermes cron scope + llama-cpp-0.4.0 path).
 3. Decide hermes-cron llama-server ban at source (hermes workspace cron definitions).
@@ -113,4 +114,4 @@
 
 ---
 
-*Supersedes the execution plans in `2026-09-19_12-31_ai-stack-todo-execution-session.md` §f.1-6 and `2026-09-19_14-07_ai-stack-session-followup.md` §f.1-6 (all items executed or explicitly closed); their corrections (textfile corpse gate, CPU-delta sampling) are embodied in the landed code. Post-17:40 additions: rogue regex live-verified (2 matches), soak non-root guard DIRECT_RC=2, flm corpse signals currently 0.*
+_Supersedes the execution plans in `2026-09-19_12-31_ai-stack-todo-execution-session.md` §f.1-6 and `2026-09-19_14-07_ai-stack-session-followup.md` §f.1-6 (all items executed or explicitly closed); their corrections (textfile corpse gate, CPU-delta sampling) are embodied in the landed code. Post-17:40 additions: rogue regex live-verified (2 matches), soak non-root guard DIRECT_RC=2, flm corpse signals currently 0._

@@ -98,7 +98,7 @@ _: {
         fileSystems = lib.mapAttrs' (
           _name: cache:
           lib.nameValuePair cache.mountPoint (mkFilesystem {
-            device = cfg.device;
+            inherit (cfg) device;
             fsType = "btrfs";
             options = [
               "subvol=${cache.subvol}"

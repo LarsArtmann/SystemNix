@@ -4,12 +4,12 @@ Discord backup bot (messages, attachments, reactions) — SystemNix wrapper arou
 
 ## Units
 
-| Unit                                | Shape                                                     | Notes                                                                        |
-| ----------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `discordsync.service`               | long-running daemon, `harden{}` + 2G / GOMEMLIMIT 1536MiB | API + Discord gateway; env from the `discordsync-env` sops template          |
+| Unit                                | Shape                                                     | Notes                                                                                                  |
+| ----------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `discordsync.service`               | long-running daemon, `harden{}` + 2G / GOMEMLIMIT 1536MiB | API + Discord gateway; env from the `discordsync-env` sops template                                    |
 | `discordsync-io-metrics.service`    | oneshot + 30s timer, hardened + CAP_FOWNER                | Writes `discordsync_io.prom` (cgroup IO counters, mktemp doctrine) into the node-exporter textfile dir |
-| `discordsync-db-heal.service`       | oneshot + RemainAfterExit, `+`-privileged                 | SQLite integrity check → `.recover` → BTRFS snapshot restore cascade (10min) |
-| `discordsync-immich-verify.service` | oneshot, daily timer, User=discordsync                    | Verifies the Immich API key (see below); OnFailure pages                     |
+| `discordsync-db-heal.service`       | oneshot + RemainAfterExit, `+`-privileged                 | SQLite integrity check → `.recover` → BTRFS snapshot restore cascade (10min)                           |
+| `discordsync-immich-verify.service` | oneshot, daily timer, User=discordsync                    | Verifies the Immich API key (see below); OnFailure pages                                               |
 
 ## Resource policy
 

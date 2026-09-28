@@ -10,22 +10,27 @@
 ## Brutal Self-Review (asked first by the user — answered first, honestly)
 
 ### What did I forget?
+
 - **I misidentified the running DMS version for the entire Q&A.** I located DMS source via `ls /nix/store | grep dms` and analyzed a **stale v1.5.3** store path (`…-dms-shell-1.5.3+date=2026-07-27_069ddab`) while the live user unit actually ExecStarts **`dms-shell-1.6.2+date=2026-09-17_2db7646`** (`~/.config/systemd/user/dms.service`). Caught and corrected only while writing this report. Conclusions survived re-verification — **by luck, not by method**.
 - I did not offer to act on the live sev1 alert I discovered (flm socket down, restore capped). I reported the fix command but never asked "want me to restart it?" — scope discipline taken slightly too far.
 
 ### What could I have done better?
+
 - **Resolve "what is deployed" from the live unit's `ExecStart` / running process FIRST**, never from a store-path listing. The version string in my first answer ("deployed DMS 1.5.3") was flat wrong.
 - **I made an unverified external claim**: "upstream stable is newer". Verification (during this report): our lock sits at `2db7646` = **v1.6.2 = stable branch HEAD and latest tag** — the lock is CURRENT; nothing to bump. The claim was both unverified and wrong in implication.
 - Label claims verified-vs-assumed at write time. Two session claims were below my own bar (the upstream claim; "DMS toasts bypass DND" — asserted from one grep, ToastService never read).
 
 ### What could I still improve?
+
 - The v1.6.2 DND code is **materially different** from what I quoted: it has a bypass mechanism (`_allowedInDnd`: per-app rules with `bypassDnd: true` + global `notificationDndAllowCritical`). Today both are OFF (`notificationDndAllowCritical` absent in settings.json, `notificationRules` empty), so the user-visible answer stands — but had the user enabled one bypass toggle, my v1.5.3-derived answer would have been **wrong**, and the REAL answer to "DND doesn't work" lives in exactly those toggles. Future sessions: check the live settings for both keys before answering DND questions.
 - No live/visual DND test was possible from here (no graphical session running at 00:07 — `pgrep dms` empty).
 
 ### Did I lie?
+
 No intentional lies. One factually wrong version statement (corrected above) and one unverified-then-falsified implication ("upstream newer"). Both are now corrected in this report.
 
 ### Ghost systems / split brains?
+
 None created (no code this session). **Observed knowledge split-brain risk:** the desktop-alerting tier semantics live scattered across AGENTS.md, sev1-escalation.nix comments, and DMS upstream code — no single runbook exists (see improvement f-7).
 
 ---
@@ -69,28 +74,28 @@ None created (no code this session). **Observed knowledge split-brain risk:** th
 
 ## f) Next things (impact-sorted; session-derived, not padded to 50)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 1 | Restart `fastflowlm.socket` in a calm window (live sev1 alert; flm consumers dark) | HIGH | 1 min |
-| 2 | Identify the consumer re-waking flm (3 trips/h churn; PMA go-commit / papdashboard enricher suspects) | HIGH | 30 min |
-| 3 | Get the user's exact DND observation (popup text/app vs toast vs banner) — decides bug vs design | HIGH | ask |
-| 4 | Write `docs/services/desktop-alerting.md` runbook (tiers, DND scope, bypass toggles, urgency map, Discord channels) | MED-HIGH | 1 h |
-| 5 | AGENTS.md Quickshell section: add DND semantics + bypass-toggle one-liner | MED | 5 min |
-| 6 | Live DND visual test next graphical session (`notify-send -u normal` + `-u critical` with DND on) | MED | 5 min |
-| 7 | Read ToastService (v1.6.2) — confirm/deny toasts bypass DND; document | LOW-MED | 15 min |
-| 8 | Consider per-app `notificationRules` for noisy apps (e.g., sev1 notifications → bypassDnd OFF explicitly, browser → muted popups) | MED | 20 min |
-| 9 | Decide policy: should `notificationDndAllowCritical` stay off? (Currently off = even critical sev1 pages sit in center under DND — matches movie-night rule, but `page` tier intends drop-everything; if a page emitter ever ships, re-visit) | MED | decision |
-| 10 | Warn-tier banner "movie/presentation mode" — owner decision whether hardware criticals may be deferred | MED | decision |
-| 11 | Check `settings.json.bak` accumulation in `~/.config/DankMaterialShell/` (deploy.sh backup hygiene; old known finding, still observed live) | LOW-MED | 15 min |
-| 12 | DMS runtime-expanded settings.json (530+ keys) vs declarative 19 keys — drift check tooling | LOW-MED | 1-2 h |
-| 13 | Verify `notificationFocusedMonitor` on DP-2 when 2nd monitor returns (known pending AGENTS item) | LOW | 10 min |
-| 14 | Check whether `dms ipc` exposes DND control for automation (movie-mode toggle integration) | LOW | 20 min |
-| 15 | Investigate DMS crash → in-flight notification loss (Quickshell UAF class): does history persist? | LOW | 30 min |
-| 16 | nvme/disk/website monitor notifications: document their urgency levels alongside sev1 tiers in the runbook | LOW | 15 min |
-| 17 | Optional design: desktop surfacing of select Discord alerts via papdashboard (opt-in digest) | LOW | decision |
-| 18 | DND-aware sev1 behavior: when DND is on, notify-tier alerts are invisible until center is opened — consider end-of-DND digest | LOW | design |
-| 19 | Sweep old `dms-shell-1.5.3` store paths confusion source — nothing to do in repo, but note nix-store ls is never version truth (feeds e-1) | — | — |
-| 20 | HARVEST this report's (f) into TODO_LIST/docs/todo — pending user go-ahead | MED | 15 min |
+| #  | Task                                                                                                                                                                                                                                          | Impact   | Effort   |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------- |
+| 1  | Restart `fastflowlm.socket` in a calm window (live sev1 alert; flm consumers dark)                                                                                                                                                            | HIGH     | 1 min    |
+| 2  | Identify the consumer re-waking flm (3 trips/h churn; PMA go-commit / papdashboard enricher suspects)                                                                                                                                         | HIGH     | 30 min   |
+| 3  | Get the user's exact DND observation (popup text/app vs toast vs banner) — decides bug vs design                                                                                                                                              | HIGH     | ask      |
+| 4  | Write `docs/services/desktop-alerting.md` runbook (tiers, DND scope, bypass toggles, urgency map, Discord channels)                                                                                                                           | MED-HIGH | 1 h      |
+| 5  | AGENTS.md Quickshell section: add DND semantics + bypass-toggle one-liner                                                                                                                                                                     | MED      | 5 min    |
+| 6  | Live DND visual test next graphical session (`notify-send -u normal` + `-u critical` with DND on)                                                                                                                                             | MED      | 5 min    |
+| 7  | Read ToastService (v1.6.2) — confirm/deny toasts bypass DND; document                                                                                                                                                                         | LOW-MED  | 15 min   |
+| 8  | Consider per-app `notificationRules` for noisy apps (e.g., sev1 notifications → bypassDnd OFF explicitly, browser → muted popups)                                                                                                             | MED      | 20 min   |
+| 9  | Decide policy: should `notificationDndAllowCritical` stay off? (Currently off = even critical sev1 pages sit in center under DND — matches movie-night rule, but `page` tier intends drop-everything; if a page emitter ever ships, re-visit) | MED      | decision |
+| 10 | Warn-tier banner "movie/presentation mode" — owner decision whether hardware criticals may be deferred                                                                                                                                        | MED      | decision |
+| 11 | Check `settings.json.bak` accumulation in `~/.config/DankMaterialShell/` (deploy.sh backup hygiene; old known finding, still observed live)                                                                                                   | LOW-MED  | 15 min   |
+| 12 | DMS runtime-expanded settings.json (530+ keys) vs declarative 19 keys — drift check tooling                                                                                                                                                   | LOW-MED  | 1-2 h    |
+| 13 | Verify `notificationFocusedMonitor` on DP-2 when 2nd monitor returns (known pending AGENTS item)                                                                                                                                              | LOW      | 10 min   |
+| 14 | Check whether `dms ipc` exposes DND control for automation (movie-mode toggle integration)                                                                                                                                                    | LOW      | 20 min   |
+| 15 | Investigate DMS crash → in-flight notification loss (Quickshell UAF class): does history persist?                                                                                                                                             | LOW      | 30 min   |
+| 16 | nvme/disk/website monitor notifications: document their urgency levels alongside sev1 tiers in the runbook                                                                                                                                    | LOW      | 15 min   |
+| 17 | Optional design: desktop surfacing of select Discord alerts via papdashboard (opt-in digest)                                                                                                                                                  | LOW      | decision |
+| 18 | DND-aware sev1 behavior: when DND is on, notify-tier alerts are invisible until center is opened — consider end-of-DND digest                                                                                                                 | LOW      | design   |
+| 19 | Sweep old `dms-shell-1.5.3` store paths confusion source — nothing to do in repo, but note nix-store ls is never version truth (feeds e-1)                                                                                                    | —        | —        |
+| 20 | HARVEST this report's (f) into TODO_LIST/docs/todo — pending user go-ahead                                                                                                                                                                    | MED      | 15 min   |
 
 ## g) Questions I cannot figure out myself
 

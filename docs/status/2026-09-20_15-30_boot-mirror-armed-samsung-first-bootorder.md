@@ -22,16 +22,16 @@ loader+kernel+initrd+store entirely off the Samsung; only root `@` stays on the 
 
 ## Timeline
 
-| Time | Event |
-| --- | --- |
-| 13:39–14:00 | Queue v7 cycled deploy #2; smoke rc=3 on a NEW failure (Bank-Sync — transient, see below) → queue self-stopped by design |
-| 14:05 | **Parallel session** fixed the cv-server exit-4 root cause: `cv-state-perms` fast-path added `-o ! -perm -u+w` (`fc49dbe5`; their report `2026-09-20_15-02`) — the exact blindspot this session's report had predicted (ownership-only probe vs mode-drift) |
-| 14:08 | cv-server started clean; **system-786 created + ANCHORED** — the 90-minute un-anchored window (reboot-revert risk) CLOSED |
-| 15:06 | system-787 built+anchored (parallel inboxclean work included); three-way anchor verified: profile == current-system == default boot entry |
-| 15:1x | Mirror evidence collected: sync unit green ("OK — 8 entries, 312M mirrored"), df 312M/4.0G, FS UUID `4F53-C156` |
-| 15:2x | pre-reboot-check first run: its OWN BUILD failed (shellcheck SC1087) → fixed → exit 0 (21 pass, WARN-grade §11) |
-| 15:2x | boot-mirror-activate first run: `lsblk: unknown column: PARTNUM` → fixed (`PARTN`) → **activation succeeded** (Boot000C first) |
-| 15:2x | pre-reboot-check re-run: **23 pass / 0 fail, strict §11 grade** — armed state sound |
+| Time        | Event                                                                                                                                                                                                                                                       |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 13:39–14:00 | Queue v7 cycled deploy #2; smoke rc=3 on a NEW failure (Bank-Sync — transient, see below) → queue self-stopped by design                                                                                                                                    |
+| 14:05       | **Parallel session** fixed the cv-server exit-4 root cause: `cv-state-perms` fast-path added `-o ! -perm -u+w` (`fc49dbe5`; their report `2026-09-20_15-02`) — the exact blindspot this session's report had predicted (ownership-only probe vs mode-drift) |
+| 14:08       | cv-server started clean; **system-786 created + ANCHORED** — the 90-minute un-anchored window (reboot-revert risk) CLOSED                                                                                                                                   |
+| 15:06       | system-787 built+anchored (parallel inboxclean work included); three-way anchor verified: profile == current-system == default boot entry                                                                                                                   |
+| 15:1x       | Mirror evidence collected: sync unit green ("OK — 8 entries, 312M mirrored"), df 312M/4.0G, FS UUID `4F53-C156`                                                                                                                                             |
+| 15:2x       | pre-reboot-check first run: its OWN BUILD failed (shellcheck SC1087) → fixed → exit 0 (21 pass, WARN-grade §11)                                                                                                                                             |
+| 15:2x       | boot-mirror-activate first run: `lsblk: unknown column: PARTNUM` → fixed (`PARTN`) → **activation succeeded** (Boot000C first)                                                                                                                              |
+| 15:2x       | pre-reboot-check re-run: **23 pass / 0 fail, strict §11 grade** — armed state sound                                                                                                                                                                         |
 
 ## Fixed this session (beyond the 13:58 report's five deploy-blocker fixes)
 
@@ -87,4 +87,4 @@ firmware boot menu (F8/F11/F12) → QLC `Linux Boot Manager`, or `efibootmgr -o`
 
 ---
 
-*Report 15:30. System: system-787 anchored, cv-server serving, mirror armed. No secrets.*
+_Report 15:30. System: system-787 anchored, cv-server serving, mirror armed. No secrets._

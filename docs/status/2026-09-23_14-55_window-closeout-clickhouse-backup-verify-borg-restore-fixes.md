@@ -5,13 +5,13 @@
 **Task-Queue-ID (this closeout):** 000001a0cd82286c5732569a0096d8289a60
 **Sources read:** the five window closeout reports (linked per section), the tq facts journal (`/mnt/pool/services/tq/tq.db`), and direct verification of every cited commit (`git cat-file -e` — all present and ancestors of HEAD).
 
-| Task | Subject | Work commit | Report |
-| --- | --- | --- | --- |
-| `…cb25e960` | ClickHouse backup before the next SigNoz upgrade (verification-only; already closed by `f264a805`) | `bd60d8d3` (report only) | `docs/status/2026-09-23_04-00_task-000001a0cb25e96009674c891282a42ef057.md` |
-| `…8af769f4` | Offsite Borg restore path: runbook + first timed drill (3rd dispatch; work landed in `f845d1e9`) | `af5a9726` (+ on-sight fixes in `08b43662`) | `docs/status/2026-09-23_07-47_task-000001a0cc8af769f497a7204704871623f0.md` |
-| `…d068f792` | Review fix: banned `/run/secrets-rendered` literal in drill + runbooks | `f16f6cc5` | `docs/status/2026-09-23_09-30_task-000001a0cd068f79239e5320030b96d20ad4.md` |
-| `…d068f909` | Review fix: false "host-key pin rides in the archive's etc/" claim in the restore runbook | `49677fd3` | `docs/status/2026-09-23_10-25_task-000001a0cd068f9098f0cc0f10671a06716e.md` |
-| `…d068fb02` | Review fix: `--help` truncation in `scripts/borg-restore-drill.sh` (hardcoded `sed -n '2,30p'` → derive-from-first-non-comment awk) | `27c081e4` | `docs/status/2026-09-23_10-49_task-000001a0cd068fb027be90286d1e88ac57b8.md` |
+| Task        | Subject                                                                                                                             | Work commit                                 | Report                                                                      |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | --------------------------------------------------------------------------- |
+| `…cb25e960` | ClickHouse backup before the next SigNoz upgrade (verification-only; already closed by `f264a805`)                                  | `bd60d8d3` (report only)                    | `docs/status/2026-09-23_04-00_task-000001a0cb25e96009674c891282a42ef057.md` |
+| `…8af769f4` | Offsite Borg restore path: runbook + first timed drill (3rd dispatch; work landed in `f845d1e9`)                                    | `af5a9726` (+ on-sight fixes in `08b43662`) | `docs/status/2026-09-23_07-47_task-000001a0cc8af769f497a7204704871623f0.md` |
+| `…d068f792` | Review fix: banned `/run/secrets-rendered` literal in drill + runbooks                                                              | `f16f6cc5`                                  | `docs/status/2026-09-23_09-30_task-000001a0cd068f79239e5320030b96d20ad4.md` |
+| `…d068f909` | Review fix: false "host-key pin rides in the archive's etc/" claim in the restore runbook                                           | `49677fd3`                                  | `docs/status/2026-09-23_10-25_task-000001a0cd068f9098f0cc0f10671a06716e.md` |
+| `…d068fb02` | Review fix: `--help` truncation in `scripts/borg-restore-drill.sh` (hardcoded `sed -n '2,30p'` → derive-from-first-non-comment awk) | `27c081e4`                                  | `docs/status/2026-09-23_10-49_task-000001a0cd068fb027be90286d1e88ac57b8.md` |
 
 Post-window, same family: `818d0ca4` (env-path eval pin in `backup.nix` + repair of a parallel commit's missing paren that had broken every evo-x2 eval at HEAD) and `f089c982`/`592559ec` verification docs — verified present; the tq review verdict on `…cd822838` approved the pin with independent re-eval evidence.
 
@@ -49,7 +49,7 @@ Post-window, same family: `818d0ca4` (env-path eval pin in `backup.nix` + repair
 3. **An evo-x2 eval outage at HEAD mid-window** — a parallel rework commit dropped a paren in `backup.nix`, breaking every evo-x2 eval; repaired in `818d0ca4`. (Fixed, disclosed, reviewer-approved.)
 4. **Queue waste: 3 dispatches for one queue ID.** The restore-path item was dispatched after its work commit AND report already existed; run 3 detected done-state in the first tool call. The "done-filter / same-ID idempotency" rule is queued upstream (`docs/todo/upstream.md`) and remains unimplemented — this window adds a third data point.
 5. **Daemon-race churn (3× in one window):** the auto-commit daemon captured in-flight files in heuristic commits in three separate sessions; each was hand-verified (`git show --stat`) and amended forward per AGENTS.md discipline. No foreign files absorbed; the vigilance remains manual every time.
-6. Cosmetic but real: two sessions edited TODO_LIST without View-first (rejected round-trips); one commit body used ` - ` as an em-dash stand-in (banned shape, permanent in history).
+6. Cosmetic but real: two sessions edited TODO_LIST without View-first (rejected round-trips); one commit body used `-` as an em-dash stand-in (banned shape, permanent in history).
 
 **Noticed in passing (out-of-repo, report-only):** (1) a CV task dead-lettered after 3 verify failures — `GOEXPERIMENT=jsonv2 go test ./tests/integration` FAILs on the CV repo (facts journal 2026-09-23; CV-side, tracked there). (2) A second LIVE `gho_…` GitHub token (the operator's own `gh auth token` output, 2025-05) was found in the `learnings` repo and neutralized locally (redaction committed there, **unpushed** — the token is on the private remote and still live until rotated/rotated-and-pushed). Rotation is owner action.
 

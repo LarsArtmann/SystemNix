@@ -10,14 +10,14 @@ New `scripts/fsync-bench.sh` (unprivileged by design — agent sessions have no 
 
 ## b. The matrix
 
-| # | Filesystem (dir) | mode | load | mean | p50 | p90 | p99 | max | fsync/s | ambient PSI |
-|---|------------------|------|------|------|-----|-----|-----|-----|---------|-------------|
-| 1 | QLC root `@` (/var/tmp) | cow | - | 26.8 ms | 13.1 | 74.2 | 242.9 | 417.2 | 37 | ~62 |
-| 2 | QLC root `@` | nodatacow | - | 25.2 ms | 13.9 | 65.1 | 169.8 | 214.9 | 40 | ~62 |
-| 3 | Samsung `tlc` (/mnt/hot/crush) | cow | - | **2.92 ms** | 2.89 | 3.01 | **3.94** | 12.1 | 342 | ~57 |
-| 4 | Samsung `tlc` | nodatacow | - | 3.25 ms | 2.88 | 2.99 | 11.0 | 58.6 | 308 | ~57 |
-| 5 | QLC root `@` | cow | dd×2 | 66.3 ms | 10.1 | 182.1 | **799.5** | 954.2 | 15 | ~61 |
-| 6 | Samsung `tlc` | nodatacow | dd×2 | 5.84 ms | 2.78 | 4.88 | 62.7 | 75.2 | 171 | ~61 |
+| # | Filesystem (dir)               | mode      | load | mean        | p50  | p90   | p99       | max   | fsync/s | ambient PSI |
+| - | ------------------------------ | --------- | ---- | ----------- | ---- | ----- | --------- | ----- | ------- | ----------- |
+| 1 | QLC root `@` (/var/tmp)        | cow       | -    | 26.8 ms     | 13.1 | 74.2  | 242.9     | 417.2 | 37      | ~62         |
+| 2 | QLC root `@`                   | nodatacow | -    | 25.2 ms     | 13.9 | 65.1  | 169.8     | 214.9 | 40      | ~62         |
+| 3 | Samsung `tlc` (/mnt/hot/crush) | cow       | -    | **2.92 ms** | 2.89 | 3.01  | **3.94**  | 12.1  | 342     | ~57         |
+| 4 | Samsung `tlc`                  | nodatacow | -    | 3.25 ms     | 2.88 | 2.99  | 11.0      | 58.6  | 308     | ~57         |
+| 5 | QLC root `@`                   | cow       | dd×2 | 66.3 ms     | 10.1 | 182.1 | **799.5** | 954.2 | 15      | ~61         |
+| 6 | Samsung `tlc`                  | nodatacow | dd×2 | 5.84 ms     | 2.78 | 4.88  | 62.7      | 75.2  | 171     | ~61         |
 
 Storm-sensitivity datapoint: during the window's heavier phase (PSI 66-69%) a short QLC probe measured mean 75.5 ms / p90 214 ms — the QLC penalty is storm-amplified, exactly the discordsync `database is locked` era's substrate.
 
@@ -31,17 +31,17 @@ Storm-sensitivity datapoint: during the window's heavier phase (PSI 66-69%) a sh
 
 ## d. Verdicts (the item's five + the ratified movers)
 
-| DB | Path (fs today) | Write cadence | Verdict |
-|----|-----------------|---------------|---------|
-| gatus | /var/lib/gatus (`@` QLC) | per-check ticks (~tens of rows/min) | **STAYS** — p50-class writer, pain negligible; keeps `@` snapshot coverage; no new dump job needed |
-| browser-history | /var/lib/browser-history (`@` QLC) | 5-min ingest batches | **STAYS** — batch cadence never sees the tail; `@` coverage retained |
-| inboxclean | /var/lib/inboxclean (`@` QLC) | 30-min sync | **STAYS** — clear-cut |
-| bank-sync | /mnt/pool/services/bank-sync (HDD RAID1 pool) | 5-min sync | **STAYS** — not on QLC at all; moving to the hot tier would trade btrbk-pool snapshot coverage for latency a 5-min sync does not need |
-| discordsync | /var/lib/discordsync (`@` QLC) | CONTINUOUS capture (the 404k `database is locked` era) | **MOVES** (wave after postgres) — the only real fsync-pain DB among the five; `cow = true`; RPO = existing GCS backup leg + local-first turso posture |
-| pocket-id | /var/lib/pocket-id (`@` QLC) | auth-path (login/SSO round-trips) | ratified mover; `cow = true` (finding 3 — checksums free); daily sqlite `.backup` dump exists (pocket-id-backup) |
-| postgres (immich+paperless+miniflux cluster) | /var/lib/postgresql (`@` QLC) | photo-browse/paperless/miniflux WAL commits | ratified mover, biggest blast radius → second; `cow = false` per ratified layout (large-file fragmentation rationale; finding 3 makes `true` defensible if the owner prefers checksums) |
-| forgejo | /var/lib/forgejo (`@` QLC) | git pushes | **SUPERSEDED** — its own landed Set-B design (services.forgejo.dedicatedSubvolume: `hot/forgejo` COW subvol + OWN 8h btrbk leg + weekly restore drill, snapshots.nix:334) already covers it; it must NOT also get a hot-db entry (a `forgejo`-named entry would trip the per-entry landmine against the Set-B leg — correct behavior) |
-| docker data-root | /data/docker (QLC /data partition) | container churn | own user window, unchanged by this measurement (~20 G rsync + daemon.json data-root flip) |
+| DB                                           | Path (fs today)                               | Write cadence                                          | Verdict                                                                                                                                                                                                                                                                                                                               |
+| -------------------------------------------- | --------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| gatus                                        | /var/lib/gatus (`@` QLC)                      | per-check ticks (~tens of rows/min)                    | **STAYS** — p50-class writer, pain negligible; keeps `@` snapshot coverage; no new dump job needed                                                                                                                                                                                                                                    |
+| browser-history                              | /var/lib/browser-history (`@` QLC)            | 5-min ingest batches                                   | **STAYS** — batch cadence never sees the tail; `@` coverage retained                                                                                                                                                                                                                                                                  |
+| inboxclean                                   | /var/lib/inboxclean (`@` QLC)                 | 30-min sync                                            | **STAYS** — clear-cut                                                                                                                                                                                                                                                                                                                 |
+| bank-sync                                    | /mnt/pool/services/bank-sync (HDD RAID1 pool) | 5-min sync                                             | **STAYS** — not on QLC at all; moving to the hot tier would trade btrbk-pool snapshot coverage for latency a 5-min sync does not need                                                                                                                                                                                                 |
+| discordsync                                  | /var/lib/discordsync (`@` QLC)                | CONTINUOUS capture (the 404k `database is locked` era) | **MOVES** (wave after postgres) — the only real fsync-pain DB among the five; `cow = true`; RPO = existing GCS backup leg + local-first turso posture                                                                                                                                                                                 |
+| pocket-id                                    | /var/lib/pocket-id (`@` QLC)                  | auth-path (login/SSO round-trips)                      | ratified mover; `cow = true` (finding 3 — checksums free); daily sqlite `.backup` dump exists (pocket-id-backup)                                                                                                                                                                                                                      |
+| postgres (immich+paperless+miniflux cluster) | /var/lib/postgresql (`@` QLC)                 | photo-browse/paperless/miniflux WAL commits            | ratified mover, biggest blast radius → second; `cow = false` per ratified layout (large-file fragmentation rationale; finding 3 makes `true` defensible if the owner prefers checksums)                                                                                                                                               |
+| forgejo                                      | /var/lib/forgejo (`@` QLC)                    | git pushes                                             | **SUPERSEDED** — its own landed Set-B design (services.forgejo.dedicatedSubvolume: `hot/forgejo` COW subvol + OWN 8h btrbk leg + weekly restore drill, snapshots.nix:334) already covers it; it must NOT also get a hot-db entry (a `forgejo`-named entry would trip the per-entry landmine against the Set-B leg — correct behavior) |
+| docker data-root                             | /data/docker (QLC /data partition)            | container churn                                        | own user window, unchanged by this measurement (~20 G rsync + daemon.json data-root flip)                                                                                                                                                                                                                                             |
 
 ## e. Per-wave window runbook (user sudo; entry snippets ready)
 
@@ -120,7 +120,6 @@ This report is the pending window runbook (referenced from storage.md), so the �
 - **Wave 2 verified as proposed**: `postgresql.service`, `immich-db-backup.service` (immich.nix:128), `miniflux-backup.service` (miniflux.nix:381); both backups exec pg_dump over the unix socket, so their wiring is the protective condition-skip, not file access.
 - The "verify exact oneshot names at window time" caveat is resolved — all snippet unit names now verified in-tree; the owner window needs no module spelunking.
 - Main service unit names confirmed: `pocket-id.service`, `postgresql.service`, `discordsync.service` (the nixpkgs postgres module exposes the daemon as `postgresql.service`).
-
 
 ## j. Addendum 2 — re-dispatch verification round (same task-ID, 2026-09-21 ~01:30)
 

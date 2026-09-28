@@ -181,8 +181,8 @@ _: {
           inherit onFailure;
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
-          after = dnsGate.after;
-          wants = dnsGate.wants;
+          inherit (dnsGate) after;
+          inherit (dnsGate) wants;
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";

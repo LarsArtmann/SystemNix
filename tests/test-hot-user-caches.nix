@@ -33,7 +33,7 @@ in
   name = "hot-user-caches";
 
   nodes.machine =
-    { lib, ... }:
+    { ... }:
     {
       imports = [
         ./test-helpers.nix

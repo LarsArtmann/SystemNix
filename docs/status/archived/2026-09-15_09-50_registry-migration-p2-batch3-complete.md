@@ -2,7 +2,6 @@
 
 > **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** migration deployed 2026-09-16 20:57 (gen bbb931a8); the caught paperless vHost-override regression is fixed (vHost.layer=none rule in AGENTS.md).
 
-
 **Task:** finish the P2 service-integration-registry migration (batch 3 of 3) and verify every
 migrated surface against a true pre-migration baseline.
 **Tree:** SystemNix, branch master. ~~All work uncommitted at write time~~ committed and deployed 2026-09-16 20:57 (gen bbb931a8).

@@ -8,16 +8,16 @@
 
 ## Timeline (what actually happened)
 
-| Time | Event |
-| --- | --- |
-| 09-23 ~21:5x | User ran `nix flake update mr-sync bank-sync branching-flow go-taskqueue` |
-| 09-23 22:14 | Deploy attempt 1 — mr-sync package fails `go: updates to go.mod needed; to update it: go mod tidy` |
-| 09-24 ~00:12 | This session fixed mr-sync `go.mod` (`go 1.27` → `go 1.27.1`); daemon committed upstream as `6c1d3f6d` |
-| 09-24 ~11:0x | Deploy attempt 2 — dies building `pre-deploy-check` itself: shellcheck SC2034/SC2329 on the OB_* verdict callbacks |
-| 09-24 11:19 | Deploy attempt 3 — mr-sync fails AGAIN with the identical error: build graph still on rev `26174a1e` |
-| 09-24 11:4x | Root cause: the user's morning re-lock (→ `6c1d3f6d`) was silently reverted to `26174a1e` in the working tree (parallel-session/daemon race) |
-| 09-24 11:58 | Re-locked to `6c1d3f6d`, verified package + toplevel build, lock committed by daemon (`5f9740c4`) |
-| 09-24 12:08 | This report — tree clean, lock anchored, deploy awaiting a calm window |
+| Time         | Event                                                                                                                                        |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 09-23 ~21:5x | User ran `nix flake update mr-sync bank-sync branching-flow go-taskqueue`                                                                    |
+| 09-23 22:14  | Deploy attempt 1 — mr-sync package fails `go: updates to go.mod needed; to update it: go mod tidy`                                           |
+| 09-24 ~00:12 | This session fixed mr-sync `go.mod` (`go 1.27` → `go 1.27.1`); daemon committed upstream as `6c1d3f6d`                                       |
+| 09-24 ~11:0x | Deploy attempt 2 — dies building `pre-deploy-check` itself: shellcheck SC2034/SC2329 on the OB_* verdict callbacks                           |
+| 09-24 11:19  | Deploy attempt 3 — mr-sync fails AGAIN with the identical error: build graph still on rev `26174a1e`                                         |
+| 09-24 11:4x  | Root cause: the user's morning re-lock (→ `6c1d3f6d`) was silently reverted to `26174a1e` in the working tree (parallel-session/daemon race) |
+| 09-24 11:58  | Re-locked to `6c1d3f6d`, verified package + toplevel build, lock committed by daemon (`5f9740c4`)                                            |
+| 09-24 12:08  | This report — tree clean, lock anchored, deploy awaiting a calm window                                                                       |
 
 ---
 
@@ -26,8 +26,8 @@
 1. **mr-sync build failure root-caused and fixed upstream.**
    - Symptom: `mr-sync-<rev>.drv` fails in buildPhase with `go: updates to go.mod needed`.
    - Root cause: mr-sync's `go.mod` declared `go 1.27` while two pinned flake-input deps (`project-discovery-sdk`, `go-branded-id`, copied into the prepared source as directory replaces) declare `go 1.27.1`. Under `GOTOOLCHAIN=local` + readonly mode Go refuses to load the graph.
-   - **The breakage was NOT new:** last successfully *built* mr-sync is `6996d9bb`; revs `905e61c`, `57ea030`, `3f1b097`, `26174a1e` were all equally unbuildable — the SystemNix lock had sat on unbuildable revs since the 3f1b097 lock move, and today's input bump merely forced the first rebuild that exposed it. The `ssetest` require added by a daemon commit was a red herring.
-   - Why local `go mod tidy` reported "clean": the raw repo resolves those deps from the **Go proxy** (published tags with lower go floors); only the Nix prepared-source `replace => _local_deps/` trees surface the 1.27.1 floors — the documented "local tidy lies" class, now with a new variant (tidy-clean ≠ buildable; diff the *prepared* graph).
+   - **The breakage was NOT new:** last successfully _built_ mr-sync is `6996d9bb`; revs `905e61c`, `57ea030`, `3f1b097`, `26174a1e` were all equally unbuildable — the SystemNix lock had sat on unbuildable revs since the 3f1b097 lock move, and today's input bump merely forced the first rebuild that exposed it. The `ssetest` require added by a daemon commit was a red herring.
+   - Why local `go mod tidy` reported "clean": the raw repo resolves those deps from the **Go proxy** (published tags with lower go floors); only the Nix prepared-source `replace => _local_deps/` trees surface the 1.27.1 floors — the documented "local tidy lies" class, now with a new variant (tidy-clean ≠ buildable; diff the _prepared_ graph).
    - Fix: `mr-sync/go.mod` `go 1.27` → `go 1.27.1` (upstream rev `6c1d3f6d`, daemon-committed 00:12). Verified: `nix build .#mr-sync` from the fixed tree, then rebuilt from OUR lock (`4dipiwlk…-mr-sync-6c1d3f6d…`).
 2. **Pre/post-deploy-check shellcheck failures fixed.**
    - Cause: a parallel session's offsite-borg-smoke lib extraction (09-23 evening) introduced verdict callbacks (`OB_PASS`/`OB_FAIL`/`OB_SKIP`, `ob_pre_skip`) that are invoked only via `"$OB_SKIP"` dispatch inside the sourced lib — shellcheck sees dead code and the `writeShellApplication` wrapper build fails. Wrapper builds are the FIRST thing that shellchecks those scripts → the failure surfaced as "deploy aborted — fix pre-deploy failures first".
@@ -47,7 +47,7 @@
 
 1. **btrbk-data, btrbk-root, btrfs-verify-pool-backups are now FAILED** — attempt 3's pre-check listed 5 failed units vs 2 in attempt 1. The three new ones smell like Zone-6 guard-killed btrbk sends mid-storm (interrupted-receive garble; `btrbk-pool-clean` heal class) — completely undiagnosed, only noticed.
 2. **inboxclean-sync failure** (pre-existing in both attempts, plus `service-health-check` which just reports it).
-3. **The owed reboot decision** — corpse-pile signature got *worse* across attempts (I/O PSI 51→62% with idle disks, guard trips 1→2/h, flm EADDRINUSE corpse: "only a reboot clears", flm backend already stopped by the guard).
+3. **The owed reboot decision** — corpse-pile signature got _worse_ across attempts (I/O PSI 51→62% with idle disks, guard trips 1→2/h, flm EADDRINUSE corpse: "only a reboot clears", flm backend already stopped by the guard).
 4. **cv :8098 metrics not responding** (both attempts) — unverified whether this is the known auth-gated WARN branch or a new gap.
 5. **Root fs creep 87% → 88%** (95G → 89G free) between attempts — noticed, not acted on.
 
@@ -96,4 +96,4 @@
 
 **Bottom line:** all three blockers (go floor, shellcheck, lock race) are fixed, committed, and verified from the lock; nothing is deployed yet; the box itself (corpse pile, failing btrbk trio, climbing PSI) is the bigger open front.
 
-*Reported by: crush session 2026-09-24 12:08 CEST — waiting for instructions.*
+_Reported by: crush session 2026-09-24 12:08 CEST — waiting for instructions._

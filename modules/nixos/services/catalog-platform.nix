@@ -8,7 +8,6 @@
 _: {
   flake.nixosModules.catalog-platform =
     {
-      config,
       lib,
       options,
       ...

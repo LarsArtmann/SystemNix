@@ -9,22 +9,22 @@
 
 ## a) FULLY DONE
 
-| Item | Proof |
-|------|-------|
-| Root cause of the NXDOMAIN diagnosed | `health` missing from `dns-local.nix`; no service module existed at all |
-| `cmd/health-hub` federation hub binary | Env-configured remotes (`HEALTH_HUB_REMOTES` name=url pairs, validated fail-fast, redacted logging), `HEALTH_HUB_ADDR` loopback bind, trend/metrics toggles, graceful shutdown, fleet-standard version stamp |
-| Live federation smoke test | Hub served namespaced `demo/*` checks (worst-of `warn`) fetched over HTTP from a running probe — merge-on-read verified end to end on free ports |
-| Loopback bind verified | Compiled binary answered 200 on `127.0.0.1:8197` with `HEALTH_HUB_ADDR` |
-| `packages.health-hub` flake output | buildGoModule on `go_1_27` + `GOEXPERIMENT=jsonv2` + templ preBuild + ldflags version stamp + `meta.mainProgram`; vendorHash discovered and pinned |
-| go-health master pseudo-version pin | `v0.2.1-0.20260918115637-aafc76e229a5` (federation is on master, v0.3.0 untagged); go floor raised to 1.27.1, CI flows via `go-version-file` |
-| SystemNix service module | `modules/nixos/services/health-dashboard.nix`: DynamicUser stateless unit, loopback `:8103`, Layer-2 protected vhost, integration entry (`subdomain = "health"`, liveness + aggregate-pager Gatus checks, homepage tile, monitored), remotes as typed option, non-empty eval assertion |
-| **The endpoint-domain enforcement the user demanded** | `integration.nix`'s `dnsMissing` assertion now covers the hub: shipping the web surface without the `dns-local.nix` record fails `nix flake check` |
-| Port + DNS registered | `health-dashboard = 8103` (8102 was claimed by the parallel session's geometrikks mid-session — collision avoided), `"health"` in `dns-local.nix` |
-| Host wiring | `configuration.nix` enables it with `cv=http://127.0.0.1:8098/health` (CV's live go-health endpoint, confirmed answering during the session) |
-| Full toplevel eval green | 2183/2183 assertions; port-registry, systemd-shape, gatus-coverage, mount-gating audits all pass; unit ExecStart + raw `Environment=` line + vhost + both Gatus endpoints confirmed by targeted evals |
-| Package proof | Built store path `/nix/store/ilnjdnz...-health-hub-543a5b7` is byte-identical to the path in the unit's ExecStart |
-| Both repos pushed | dashboard `ededbf1..543a5b7`, SystemNix `9be4692e..7436edec` (push explicitly authorized) |
-| Runbook | `docs/services/health-dashboard.md`: remote onboarding, `/readyz` aggregate-pager semantics, enforcement-chain explanation |
+| Item                                                  | Proof                                                                                                                                                                                                                                                                                  |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Root cause of the NXDOMAIN diagnosed                  | `health` missing from `dns-local.nix`; no service module existed at all                                                                                                                                                                                                                |
+| `cmd/health-hub` federation hub binary                | Env-configured remotes (`HEALTH_HUB_REMOTES` name=url pairs, validated fail-fast, redacted logging), `HEALTH_HUB_ADDR` loopback bind, trend/metrics toggles, graceful shutdown, fleet-standard version stamp                                                                           |
+| Live federation smoke test                            | Hub served namespaced `demo/*` checks (worst-of `warn`) fetched over HTTP from a running probe — merge-on-read verified end to end on free ports                                                                                                                                       |
+| Loopback bind verified                                | Compiled binary answered 200 on `127.0.0.1:8197` with `HEALTH_HUB_ADDR`                                                                                                                                                                                                                |
+| `packages.health-hub` flake output                    | buildGoModule on `go_1_27` + `GOEXPERIMENT=jsonv2` + templ preBuild + ldflags version stamp + `meta.mainProgram`; vendorHash discovered and pinned                                                                                                                                     |
+| go-health master pseudo-version pin                   | `v0.2.1-0.20260918115637-aafc76e229a5` (federation is on master, v0.3.0 untagged); go floor raised to 1.27.1, CI flows via `go-version-file`                                                                                                                                           |
+| SystemNix service module                              | `modules/nixos/services/health-dashboard.nix`: DynamicUser stateless unit, loopback `:8103`, Layer-2 protected vhost, integration entry (`subdomain = "health"`, liveness + aggregate-pager Gatus checks, homepage tile, monitored), remotes as typed option, non-empty eval assertion |
+| **The endpoint-domain enforcement the user demanded** | `integration.nix`'s `dnsMissing` assertion now covers the hub: shipping the web surface without the `dns-local.nix` record fails `nix flake check`                                                                                                                                     |
+| Port + DNS registered                                 | `health-dashboard = 8103` (8102 was claimed by the parallel session's geometrikks mid-session — collision avoided), `"health"` in `dns-local.nix`                                                                                                                                      |
+| Host wiring                                           | `configuration.nix` enables it with `cv=http://127.0.0.1:8098/health` (CV's live go-health endpoint, confirmed answering during the session)                                                                                                                                           |
+| Full toplevel eval green                              | 2183/2183 assertions; port-registry, systemd-shape, gatus-coverage, mount-gating audits all pass; unit ExecStart + raw `Environment=` line + vhost + both Gatus endpoints confirmed by targeted evals                                                                                  |
+| Package proof                                         | Built store path `/nix/store/ilnjdnz...-health-hub-543a5b7` is byte-identical to the path in the unit's ExecStart                                                                                                                                                                      |
+| Both repos pushed                                     | dashboard `ededbf1..543a5b7`, SystemNix `9be4692e..7436edec` (push explicitly authorized)                                                                                                                                                                                              |
+| Runbook                                               | `docs/services/health-dashboard.md`: remote onboarding, `/readyz` aggregate-pager semantics, enforcement-chain explanation                                                                                                                                                             |
 
 ## b) PARTIALLY DONE
 
@@ -65,6 +65,7 @@ Nothing deployed is broken (nothing is deployed yet), and no data or history was
 ## f) TOP 50 NEXT THINGS (brainstorm, impact-ordered within tiers)
 
 **Deploy + verify (blocking value):**
+
 1. Run `nix run .#deploy` on evo-x2 (sudo; the only step this session couldn't do).
 2. Post-deploy smoke: `curl 127.0.0.1:8103/healthz`, `/readyz`, `/health` (HTML eyeball).
 3. `dig @127.0.0.1 health.home.lan` after the switch — confirm dnsblockd serves the new record (learn whether it hot-reloads or needed the restart).
@@ -134,4 +135,4 @@ Nothing deployed is broken (nothing is deployed yet), and no data or history was
 
 ---
 
-*Point-in-time snapshot. Section (f) is HARVEST input for `TODO_LIST.md`/domain files — not yet routed (queued as item 29). Waiting for instructions.*
+_Point-in-time snapshot. Section (f) is HARVEST input for `TODO_LIST.md`/domain files — not yet routed (queued as item 29). Waiting for instructions._

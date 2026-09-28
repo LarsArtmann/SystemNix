@@ -10,11 +10,11 @@ The "unknown consumer re-waking FastFlowLM" is **not one mystery client — it i
 
 ## 1. The named wakers (M1)
 
-| # | Waker | Evidence | Class |
-|---|-------|----------|-------|
-| W1 | **PapDashboard NPU insight enricher** — default `llmBaseUrl` → `http://127.0.0.1:52625/v1` (`modules/nixos/services/papdashboard.nix` header + `PapDashboard/internal/insight/llm.go:49`); module docs explicitly note "FastFlowLM cold-loads 2-5 min on first insight request (socket activation on :52625 wakes the model)" | by design, still wired | alert-driven self-reference: guard trips generate alerts → ingest → enricher → cold load |
-| W2 | **Deploy smoke** — `scripts/post-deploy-check.sh:304` curls `:52625/v1/models` with `--max-time 480`, deliberately cold-loads AND pins the model ("the sole functional gate"); a capped-down socket makes this leg FAIL → **deploy exit 3** (the 2026-09-27 21:27 red verdict, now fully explained) | by design | every deploy = 21.6 GB read + pin |
-| W3 | **The guard's own restore** — `maxRestoresPerDay = 3`; restore re-arms the socket, then the first queued/retrying client (W1/W2) connects within seconds | by design | 2026-09-28 02:12: restore #64 → backend start + client proxy connection same second → Zone 6 re-trip 2 min later |
+| #  | Waker                                                                                                                                                                                                                                                                                                                         | Evidence               | Class                                                                                                            |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| W1 | **PapDashboard NPU insight enricher** — default `llmBaseUrl` → `http://127.0.0.1:52625/v1` (`modules/nixos/services/papdashboard.nix` header + `PapDashboard/internal/insight/llm.go:49`); module docs explicitly note "FastFlowLM cold-loads 2-5 min on first insight request (socket activation on :52625 wakes the model)" | by design, still wired | alert-driven self-reference: guard trips generate alerts → ingest → enricher → cold load                         |
+| W2 | **Deploy smoke** — `scripts/post-deploy-check.sh:304` curls `:52625/v1/models` with `--max-time 480`, deliberately cold-loads AND pins the model ("the sole functional gate"); a capped-down socket makes this leg FAIL → **deploy exit 3** (the 2026-09-27 21:27 red verdict, now fully explained)                           | by design              | every deploy = 21.6 GB read + pin                                                                                |
+| W3 | **The guard's own restore** — `maxRestoresPerDay = 3`; restore re-arms the socket, then the first queued/retrying client (W1/W2) connects within seconds                                                                                                                                                                      | by design              | 2026-09-28 02:12: restore #64 → backend start + client proxy connection same second → Zone 6 re-trip 2 min later |
 
 Trip ledger (from `/var/lib/memory-emergency-guard/`): **1374 trips all-time, 66 restores**, restore budget exhausted (3/3) since ≥21:47 today — the socket stays DOWN until a human restarts it (intended anti-churn behavior).
 
@@ -24,6 +24,7 @@ Every trip today (00:00–03:15 at ~10-min cadence, then 21:57) logs:
 `I/O PSI some avg60=41–88% sustained (max disk busy 97–100%, MemAvailable=52–76% — the crash #3 class: stacked full-disk readers livelocking the scheduler while memory looks healthy)`.
 
 Named full-disk readers:
+
 - **btrfs scrub** started 00:00 (3 scrub starts by 04:12 — `/` and `/data`)
 - **nightly btrbk** send window
 - **flm's own cold-load** (10–21.6 GB reads per attempt; 2026-09-28 02:12: "10G read from disk, 27.8G memory peak" in 1m49s)

@@ -7,26 +7,26 @@
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-|---|---|
-| Config-surface research (v15.0.9) | Deployed package inspected (`-data` output: 9 shipped themes, `templates/custom/*` slots); `app.example.ini` for tag v15.0.9 downloaded; official customization doc read; arc-green defect identified |
-| 3 Catppuccin delta themes written | `modules/nixos/services/_forgejo-themes/theme-catppuccin-{mocha,latte,auto}.css` — each `@import`s the upstream theme (stable unhashed filename) and overrides variables only (steel/zinc ramps → Catppuccin surfaces, blue primary, full palette/semantic/console/diff/badge/ansi/selection sets) |
-| Wiring in `forgejo.nix` | `forgejoThemes` attrset; tmpfiles `L+` rules merged into the module's EXISTING `systemd.tmpfiles.rules` list; `ui.THEMES` = catppuccin trio + forgejo trio (arc-green removed); `ui.DEFAULT_THEME = catppuccin-auto`; `DEFAULT.APP_SLOGAN`; quoted-flat `"ui.meta"` section; `other.SHOW_FOOTER_POWERED_BY=false`; `picture.DISABLE_GRAVATAR=true` |
-| Eval verification | `nix eval` of `ui.THEMES`, `DEFAULT`, `"ui.meta"`, `picture`, `other`, tmpfiles rules — all render correctly into store paths; restart-on-deploy mechanism source-verified (app.ini store path interpolated into unit `preStart` → stc restarts forgejo) |
-| Fleet eval gate | `nix flake check --no-build`: **all checks passed** |
-| Commit + push | `33d4b281` pathspec commit (5 files, foreign staged file correctly excluded), all pre-commit gates green (gitleaks, deadnix, statix, treefmt, flake check), pushed `1dc0862b..33d4b281` |
-| Plan doc with Pareto + mermaid | `docs/planning/2026-09-23_15-06_FORGEJO-COOL-CATPPUCCIN-THEME.md` (1%/4%/20%/rest breakdown, 30–100 min task table, ≤12 min task table, execution graph, risk register) |
-| Parallel-session hygiene | git index.lock contention handled by bounded wait; foreign session's staged task-report not swept into my commit; their docs commit (`06d0d4c8`) landed cleanly beside mine |
+| Item                              | Evidence                                                                                                                                                                                                                                                                                                                                           |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Config-surface research (v15.0.9) | Deployed package inspected (`-data` output: 9 shipped themes, `templates/custom/*` slots); `app.example.ini` for tag v15.0.9 downloaded; official customization doc read; arc-green defect identified                                                                                                                                              |
+| 3 Catppuccin delta themes written | `modules/nixos/services/_forgejo-themes/theme-catppuccin-{mocha,latte,auto}.css` — each `@import`s the upstream theme (stable unhashed filename) and overrides variables only (steel/zinc ramps → Catppuccin surfaces, blue primary, full palette/semantic/console/diff/badge/ansi/selection sets)                                                 |
+| Wiring in `forgejo.nix`           | `forgejoThemes` attrset; tmpfiles `L+` rules merged into the module's EXISTING `systemd.tmpfiles.rules` list; `ui.THEMES` = catppuccin trio + forgejo trio (arc-green removed); `ui.DEFAULT_THEME = catppuccin-auto`; `DEFAULT.APP_SLOGAN`; quoted-flat `"ui.meta"` section; `other.SHOW_FOOTER_POWERED_BY=false`; `picture.DISABLE_GRAVATAR=true` |
+| Eval verification                 | `nix eval` of `ui.THEMES`, `DEFAULT`, `"ui.meta"`, `picture`, `other`, tmpfiles rules — all render correctly into store paths; restart-on-deploy mechanism source-verified (app.ini store path interpolated into unit `preStart` → stc restarts forgejo)                                                                                           |
+| Fleet eval gate                   | `nix flake check --no-build`: **all checks passed**                                                                                                                                                                                                                                                                                                |
+| Commit + push                     | `33d4b281` pathspec commit (5 files, foreign staged file correctly excluded), all pre-commit gates green (gitleaks, deadnix, statix, treefmt, flake check), pushed `1dc0862b..33d4b281`                                                                                                                                                            |
+| Plan doc with Pareto + mermaid    | `docs/planning/2026-09-23_15-06_FORGEJO-COOL-CATPPUCCIN-THEME.md` (1%/4%/20%/rest breakdown, 30–100 min task table, ≤12 min task table, execution graph, risk register)                                                                                                                                                                            |
+| Parallel-session hygiene          | git index.lock contention handled by bounded wait; foreign session's staged task-report not swept into my commit; their docs commit (`06d0d4c8`) landed cleanly beside mine                                                                                                                                                                        |
 
 ## b) PARTIALLY DONE
 
-| Item | Done | Missing |
-|---|---|---|
-| Deployment | Code committed; evals green; restart wiring proven | **NOT DEPLOYED.** `nix run .#deploy` not run (production box, pressure-gated — left as owner step). The change is completely INERT on the running forge until then |
-| Live verification | CSS brace-balance + `@import`-position checks; cascade logic reasoned from CSS spec | No browser/headless render: the `@import` serving path (custom dir override, MIME, no CSP block) and the auto-theme media-query cascade are reasoned, not *proven*. Post-deploy smoke (curl the theme CSS, look at the UI) not run |
-| The arc-green defect | Symptom fixed (removed from `ui.THEMES`) | **The CLASS is unguarded** — nothing at eval time verifies that every `ui.THEMES` entry exists as a `theme-*.css` in the package output. The house pattern (convert every incident into an eval-time guard) not applied |
-| Memory maintenance | Plan doc carries the technical findings | `AGENTS.md` Forgejo section NOT updated (settings 2-level INI-atom trap, restart mechanism, theme pattern, arc-green lesson) — violates the house "update at the moment of discovery" rule |
-| Runbook | — | `docs/services/forgejo.md` has no theme-maintenance section (how to add/retire a theme, the @import coupling, rollback) |
+| Item                 | Done                                                                                | Missing                                                                                                                                                                                                                            |
+| -------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Deployment           | Code committed; evals green; restart wiring proven                                  | **NOT DEPLOYED.** `nix run .#deploy` not run (production box, pressure-gated — left as owner step). The change is completely INERT on the running forge until then                                                                 |
+| Live verification    | CSS brace-balance + `@import`-position checks; cascade logic reasoned from CSS spec | No browser/headless render: the `@import` serving path (custom dir override, MIME, no CSP block) and the auto-theme media-query cascade are reasoned, not _proven_. Post-deploy smoke (curl the theme CSS, look at the UI) not run |
+| The arc-green defect | Symptom fixed (removed from `ui.THEMES`)                                            | **The CLASS is unguarded** — nothing at eval time verifies that every `ui.THEMES` entry exists as a `theme-*.css` in the package output. The house pattern (convert every incident into an eval-time guard) not applied            |
+| Memory maintenance   | Plan doc carries the technical findings                                             | `AGENTS.md` Forgejo section NOT updated (settings 2-level INI-atom trap, restart mechanism, theme pattern, arc-green lesson) — violates the house "update at the moment of discovery" rule                                         |
+| Runbook              | —                                                                                   | `docs/services/forgejo.md` has no theme-maintenance section (how to add/retire a theme, the @import coupling, rollback)                                                                                                            |
 
 ## c) NOT STARTED
 
@@ -57,79 +57,86 @@ Nothing shipped broken. Honest near-misses and one systemic failure:
 ## f) NEXT (up to 50, grouped, priority-ordered within groups)
 
 **Now — activate the work (P0)**
-| # | Item |
-|---|---|
-| 1 | `nix run .#deploy` (owner timing) |
-| 2 | Post-deploy smoke: `curl -sI https://forgejo.home.lan/assets/css/theme-catppuccin-auto.css` (200, text/css, contains @import) |
+
+| # | Item                                                                                                                                                    |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | `nix run .#deploy` (owner timing)                                                                                                                       |
+| 2 | Post-deploy smoke: `curl -sI https://forgejo.home.lan/assets/css/theme-catppuccin-auto.css` (200, text/css, contains @import)                           |
 | 3 | Visual taste-check in browser: Mocha on dark scheme, Latte on light, picker shows 6 themes, footer has no "powered by", no gravatar request in devtools |
-| 4 | Verify the owner account actually follows the default (if a stored per-user theme exists, reset to "default" in profile settings) |
-| 5 | Watch Gatus "Forgejo" + journal for tmpfiles errors across the first deploy |
+| 4 | Verify the owner account actually follows the default (if a stored per-user theme exists, reset to "default" in profile settings)                       |
+| 5 | Watch Gatus "Forgejo" + journal for tmpfiles errors across the first deploy                                                                             |
 
 **Guards + hygiene (P1)**
-| # | Item |
-|---|---|
-| 6 | Eval-time `forgejo-theme-audit`: every `ui.THEMES` entry must exist as `theme-<name>.css` in `cfg.package` output; negative-test it |
-| 7 | Extend `scripts/post-deploy-check.sh` with the Forgejo theme probe |
-| 8 | Update `AGENTS.md` Forgejo section: 2-level INI-atom trap, restart mechanism, @import theme pattern, arc-green lesson |
-| 9 | Runbook `docs/services/forgejo.md`: theme maintenance section (add/retire/rollback, upstream-coupling check on upgrades) |
-| 10 | CHANGELOG entry |
-| 11 | Fix the em dash in `ui.meta.DESCRIPTION` |
-| 12 | Confirm `_forgejo-themes` stays skipped by module auto-discovery (underscore convention — assert in an existing audit if cheap) |
-| 13 | Sweep the class: audit other `settings`/config string lists against shipped artifacts (labels? runners?) — one-off |
-| 14 | Land the formatter-restyle of the tmpfiles merge currently sitting staged (owning session) |
+
+| #  | Item                                                                                                                                |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 6  | Eval-time `forgejo-theme-audit`: every `ui.THEMES` entry must exist as `theme-<name>.css` in `cfg.package` output; negative-test it |
+| 7  | Extend `scripts/post-deploy-check.sh` with the Forgejo theme probe                                                                  |
+| 8  | Update `AGENTS.md` Forgejo section: 2-level INI-atom trap, restart mechanism, @import theme pattern, arc-green lesson               |
+| 9  | Runbook `docs/services/forgejo.md`: theme maintenance section (add/retire/rollback, upstream-coupling check on upgrades)            |
+| 10 | CHANGELOG entry                                                                                                                     |
+| 11 | Fix the em dash in `ui.meta.DESCRIPTION`                                                                                            |
+| 12 | Confirm `_forgejo-themes` stays skipped by module auto-discovery (underscore convention — assert in an existing audit if cheap)     |
+| 13 | Sweep the class: audit other `settings`/config string lists against shipped artifacts (labels? runners?) — one-off                  |
+| 14 | Land the formatter-restyle of the tmpfiles merge currently sitting staged (owning session)                                          |
 
 **Phase 2 — owner-taste branding (P2)**
-| # | Item |
-|---|---|
-| 15 | Custom `logo.svg` (Mocha palette) via tmpfiles into `custom/public/assets/img/` |
-| 16 | `favicon.svg` + `apple-touch-icon.png` to match |
-| 17 | Decide primary accent: blue (current) vs mauve |
-| 18 | Decide `DEFAULT_THEME`: catppuccin-auto (current) vs force-mocha |
+
+| #  | Item                                                                                         |
+| -- | -------------------------------------------------------------------------------------------- |
+| 15 | Custom `logo.svg` (Mocha palette) via tmpfiles into `custom/public/assets/img/`              |
+| 16 | `favicon.svg` + `apple-touch-icon.png` to match                                              |
+| 17 | Decide primary accent: blue (current) vs mauve                                               |
+| 18 | Decide `DEFAULT_THEME`: catppuccin-auto (current) vs force-mocha                             |
 | 19 | `server.LANDING_PAGE`: home vs explore (mirror-heavy instance makes explore the useful page) |
-| 20 | Colorblind variants: re-add to `ui.THEMES`? (they ship; currently not selectable) |
-| 21 | Reactions list tuning; `ui.REACTION_MAX_USER_NUM` |
-| 22 | `i18n.LANGS` restriction (en-US only?) |
-| 23 | `ui.ONLY_SHOW_RELEVANT_REPOS=true` (explore is 158+ mirrors = noise) |
-| 24 | Density prefs (`ISSUE_PAGING_NUM` etc.), `DEFAULT_SHOW_FULL_NAME` |
-| 25 | Repo-avatar fallback image |
+| 20 | Colorblind variants: re-add to `ui.THEMES`? (they ship; currently not selectable)            |
+| 21 | Reactions list tuning; `ui.REACTION_MAX_USER_NUM`                                            |
+| 22 | `i18n.LANGS` restriction (en-US only?)                                                       |
+| 23 | `ui.ONLY_SHOW_RELEVANT_REPOS=true` (explore is 158+ mirrors = noise)                         |
+| 24 | Density prefs (`ISSUE_PAGING_NUM` etc.), `DEFAULT_SHOW_FULL_NAME`                            |
+| 25 | Repo-avatar fallback image                                                                   |
 
 **Phase 3 — fidelity + extras (P3)**
-| # | Item |
-|---|---|
-| 26 | Catppuccin-exact chroma per scheme (hand-rolled `.chroma` overrides in both palettes) |
-| 27 | `extra_links.tmpl`: header links to dash/tq/health |
-| 28 | Footer template touch (keep upstream-compatible slot only) |
-| 29 | Branded mail templates (`custom/templates/mail/`) — after Resend domain verification lands |
-| 30 | Custom emoji pack |
-| 31 | Announcement banner plan (maintenance notices) |
+
+| #  | Item                                                                                                       |
+| -- | ---------------------------------------------------------------------------------------------------------- |
+| 26 | Catppuccin-exact chroma per scheme (hand-rolled `.chroma` overrides in both palettes)                      |
+| 27 | `extra_links.tmpl`: header links to dash/tq/health                                                         |
+| 28 | Footer template touch (keep upstream-compatible slot only)                                                 |
+| 29 | Branded mail templates (`custom/templates/mail/`) — after Resend domain verification lands                 |
+| 30 | Custom emoji pack                                                                                          |
+| 31 | Announcement banner plan (maintenance notices)                                                             |
 | 32 | Compare my palette against the official catppuccin/forgejo port for fidelity (external fetch — owner call) |
-| 33 | `services.forgejo.themes` module option (cleaner than raw attrset) if more themes accumulate |
+| 33 | `services.forgejo.themes` module option (cleaner than raw attrset) if more themes accumulate               |
 
 **Upgrade-coupling watch (P2)**
-| # | Item |
-|---|---|
+
+| #  | Item                                                                                                                                                             |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 34 | On next Forgejo v16 bump: re-verify `theme-forgejo-{auto,light,dark}.css` still exist (the @import coupling) — fold into the theme audit (#6) so it is automatic |
-| 35 | Re-check custom-dir asset serving path after any forgejo major upgrade |
-| 36 | Re-verify `templates/custom/*` slot list when Phase 3 starts (v16 may add slots) |
+| 35 | Re-check custom-dir asset serving path after any forgejo major upgrade                                                                                           |
+| 36 | Re-verify `templates/custom/*` slot list when Phase 3 starts (v16 may add slots)                                                                                 |
 
 **Deliberately NOT done (do not "fix")**
-| # | Item |
-|---|---|
-| 37 | No full template overrides (upstream-unsupported; break on upgrades) |
+
+| #  | Item                                                                                      |
+| -- | ----------------------------------------------------------------------------------------- |
+| 37 | No full template overrides (upstream-unsupported; break on upgrades)                      |
 | 38 | No fork of upstream themes vendored into the repo (delta approach is the maintenance win) |
-| 39 | No deploy from an agent session without owner go |
-| 40 | No changes to gitea-* legacy themes (kept serving, just not listed) |
+| 39 | No deploy from an agent session without owner go                                          |
+| 40 | No changes to gitea-* legacy themes (kept serving, just not listed)                       |
 
 **Meta / process**
-| # | Item |
-|---|---|
-| 41 | Persist "verify config strings against shipped artifacts" as a house lesson if the audit (#6) proves out |
-| 42 | Consider a lightweight headless-render check for theme CSS (verify-html-diagrams.sh pattern) |
-| 43 | Group theme files as a single derivation if a second consumer (e.g. gitea elsewhere) ever wants them |
-| 44 | Document in plan doc the actual post-deploy outcome (close the loop after #1–#5) |
-| 45 | Retire plan-doc TODO rows as they land (docs-health doctrine) |
 
-*(45 items — 5 candidate slots left intentionally empty rather than padded.)*
+| #  | Item                                                                                                     |
+| -- | -------------------------------------------------------------------------------------------------------- |
+| 41 | Persist "verify config strings against shipped artifacts" as a house lesson if the audit (#6) proves out |
+| 42 | Consider a lightweight headless-render check for theme CSS (verify-html-diagrams.sh pattern)             |
+| 43 | Group theme files as a single derivation if a second consumer (e.g. gitea elsewhere) ever wants them     |
+| 44 | Document in plan doc the actual post-deploy outcome (close the loop after #1–#5)                         |
+| 45 | Retire plan-doc TODO rows as they land (docs-health doctrine)                                            |
+
+_(45 items — 5 candidate slots left intentionally empty rather than padded.)_
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 

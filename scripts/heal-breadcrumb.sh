@@ -11,7 +11,7 @@
 set -euo pipefail
 
 msg="${1:-}"
-if [[ -z "$msg" ]]; then
+if [[ -z $msg ]]; then
   echo "usage: $0 \"<what was healed> <how>\"" >&2
   exit 2
 fi
@@ -20,8 +20,8 @@ stamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 line="${stamp} user=$(id -un) uid=$(id -u) ${msg}"
 
 if command -v logger >/dev/null 2>&1; then
-  logger -t systemnix-heal -p info -- "${line}" \
-    || echo "warn: logger failed (breadcrumb kept in state file only)" >&2
+  logger -t systemnix-heal -p info -- "${line}" ||
+    echo "warn: logger failed (breadcrumb kept in state file only)" >&2
 else
   echo "warn: logger not found (breadcrumb kept in state file only)" >&2
 fi

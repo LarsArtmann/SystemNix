@@ -29,7 +29,7 @@
 ## c) NOT STARTED
 
 - `btrfs-emergency-reserve` re-provision (needs user root; reminded twice, still absent since ~Sep 7)
-- Offsite Borg leg, hot-db Phase-2 migrations, boot-mirror EFI activation — all user-gated items I only *visualized*; no implementation work was in scope
+- Offsite Borg leg, hot-db Phase-2 migrations, boot-mirror EFI activation — all user-gated items I only _visualized_; no implementation work was in scope
 - Nothing else: this session was visualization + deletion only, per instructions
 
 ## d) TOTALLY FUCKED UP (and fixed)
@@ -52,6 +52,7 @@
 ## f) NEXT — up to 50 things, prioritized
 
 **User-gated (root/hands):**
+
 1. `sudo systemctl start btrfs-emergency-reserve` (absent since ~Sep 7; Gatus should be red over it — verify alert delivery)
 2. Boot-mirror activation: `nix run .#boot-mirror-activate` + planned reboot (module deployed 09-19)
 3. /data EIO repair execution (T04–T08) — the only never-completed backup leg

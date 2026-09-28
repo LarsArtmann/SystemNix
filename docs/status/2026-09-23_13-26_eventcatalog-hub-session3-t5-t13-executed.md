@@ -9,9 +9,11 @@
 ## a) FULLY DONE this session
 
 ### Hub repo hygiene (pre-T5)
+
 - Daemon had committed **939 files** of `.eventcatalog-core/` npm working-dir noise + an empty `eventcatalog.styles.css` into unpushed `3ff9e6a`. Untracked both, extended `.gitignore`, amended into a proper message (`188c8fc`), pushed.
 
 ### T5 — NixOS serving leg (code complete, deploy owner-gated)
+
 - **DNS:** `catalog` added to `platforms/common/dns-local.nix`.
 - **caddy.nix:** `extraVHosts.port` → `nullOr`, new `root` option, `staticVHost` renderer + a protected-static variant (external → forward-auth + `file_server`, LAN → `file_server`), dispatched from `renderVHost` when `root` is set. Rendered output verified via `nix eval` (exact Caddyfile block).
 - **integration.nix:** `vHost.root` registry option; `vhostIncomplete` assertion + `vhostEntries` filter relaxed to accept root-without-port; fan-out passes `root`.
@@ -21,27 +23,32 @@
 - **Verified:** `nix flake check --no-build` green (all eval audits: shape/port/gate-timeout/deploy-restart/gatus-pattern-lint/sops-key-audit); vHost rendered; 3 gatus endpoints with absolute `https://catalog.home.lan/` URLs; monitored list; hourly timer; tile present. Confirmed `architecture-catalog-sync` matches NO converger pattern → no deploy.sh entry needed (hourly Persistent timer converges after every boot/deploy).
 
 ### T6 — Freshness monitoring (code complete)
+
 - `architecture-catalog-metrics` textfile collector (5-min timer, pool-smart-metrics pattern: mktemp + chmod 644 + CAP_FOWNER + fail-closed) emitting `architecture_catalog_{dist_present,fresh,stamp_age_seconds,scrape_errors}`; honest-absence (not scrape-error) pre-go-live.
 - Gatus **"Architecture Catalog Freshness"** check — anchored `pat(*\narchitecture_catalog_fresh 1*)` forms (HELP-comment-safe), node-exporter :9100.
 - **post-deploy-check.sh §15** — skip-with-WARN until `/var/lib/architecture-catalog/current/index.html` exists; then HTTPS check + `<title>EventCatalog` marker + collector flags.
 
 ### T7 — cqrs-htmx source #2 (done end-to-end)
+
 - Upstream `examples/catalog-demo`: **`-export-only`** headless flag (write tree, exit 0, no server). Verified E2E (5 MDX files, no port bind, `go vet` + tests green). Pushed `dd1f6162` (see §d for the pre-commit saga).
 - `sources.json`: cqrs-htmx onboarded (demo has its own go.mod; build/export/tree fields).
 - `setup-forgejo.sh`: new **mirror-sync step** for every source repo before the workflow dispatch (mirror pull interval is 8h — a freshly pushed exporter flag would otherwise fail the first CI run on a stale clone).
 - **Two-source E2E build from GitHub remotes: 123 pages, both services in `llms.txt`, link validation green.** Hub committed + pushed (`da0d304` rode the daemon; content exact).
 
 ### T8 — go-cqrs-lite rollout convention (done)
+
 - `catalog/README.md`: **"Feeding the federation hub"** (headless-export contract, 3 working shapes, sources.json onboarding) + **"Versioning your catalog"** (when to bump Version, `Changelog []Change` shape, badge semantics).
 - `catalog/cmd/catalog-export/main.go`: copy-paste template (drop in, replace `buildCatalog()`). Verified: builds, vets, exports a 3-file tree.
 - Pushed `b95e8b288` (after binary purge, §d).
 
 ### T9 — Free governance (done, plan assumption corrected)
+
 - **FALSIFIED:** `eventcatalog lint` does NOT exist in the free CLI (verified against the installed binary: only dev/build/preview/start/export/generate/federate).
 - **Found the real free tooling:** `@eventcatalog/linter` v1.1.20 rides WITH `@eventcatalog/core` (`eventcatalog-linter` CLI) — frontmatter + reference validation, free.
 - Wired BOTH free layers: strict link validation (`linkValidation: { onBrokenLinks: 'error', onBrokenAnchors: 'error' }` in the hub config — verified rc=0 on the 123-page rebuild) + a CI lint step over the merged tree with a curated `.eventcatalogrc.js` (schema/dup/unknown-field = error; the two documented exporter-format gaps = warn). Verified rc=0 on the merged tree (0 errors / 32 warnings, all the documented classes).
 
 ### T10 — Owners/teams (done)
+
 - Verified API availability across published versions: `AddUser`/`ServiceOwners` exist in v4.5.0 AND bank-sync's pinned v4.3.0; `simple.WithServiceOwners` did NOT exist anywhere published.
 - **Deliberately avoided cutting catalog/v4.6.0** (28 files of other sessions' unreleased catalog/ work would ride the tag — not mine to vouch for). Sources use the published inner-builder API instead.
 - go-cqrs-lite: added `simple.WithServiceOwners` for the NEXT release (api-surface gate caught it → `docs/api_surface.txt` regenerated; 7497 exports). Pushed `49b422849`.
@@ -49,13 +56,16 @@
 - Hub rebuilt from fresh GitHub clones with owners: both services carry them, llms.txt present.
 
 ### T11 — llms.txt + MCP (done, honest finding)
+
 - `llms.txt` verified live and complete (both services listed; Gatus-checked since T5).
 - **The official EventCatalog MCP server is Scale-license-gated** (verified against upstream docs 2026-09-23: BOTH the built-in SSR server and the standalone `@eventcatalog/mcp-server` list a Scale license as prerequisite). License-free hub → **no MCP wiring by design**; README "AI access" section documents llms.txt/schemas.txt as THE agent surface + the revisit trigger.
 
 ### T12 — Federation GO/NO-GO (done)
+
 - All four §7 triggers evaluated: un-fired (2 sources < 3, zero silent cross-source breaks, single maintainer, no pinning need, no federation-only upstream feature). **NO-GO, reviewed 2026-09-23**, documented in the hub README.
 
 ### T13 — Upstream exporter options (routed per cross-repo rule)
+
 - New TODO_LIST.md section in go-cqrs-lite: `catalog.index.json` emission (M), `skip-bootstrap-files` option (S), + the linter/ref-format finding (unversioned service dirs vs linter ref resolution; message-level owners missing) with re-arm conditions. Section index updated. Pushed `6170c4e76`.
 
 ---
@@ -95,6 +105,7 @@
 ## f) NEXT — up to 50 items (priority order)
 
 **Owner-gated (the critical path to LIVE):**
+
 1. Run `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh` (mints token, creates hub mirror, enables Actions, stores GIT_CLONE_TOKEN, mirror-syncs sources, dispatches first run).
 2. Watch `https://forgejo.home.lan/lars/eventcatalog-hub/actions` — expect green + `dist` branch. First-run watch-list: nix-shell availability for the runner user, jq on the runner, GITHUB_TOKEN git-push (PUSH_TOKEN fallback documented in the workflow).
 3. Paste the minted sync token into sops: `SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops platforms/nixos/secrets/architecture-catalog.yaml` → replace PLACEHOLDER (value format `ARCHITECTURE_CATALOG_SYNC_TOKEN=<token>`).

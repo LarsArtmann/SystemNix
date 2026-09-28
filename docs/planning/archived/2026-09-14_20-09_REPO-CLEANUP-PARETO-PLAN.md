@@ -2,7 +2,6 @@
 
 > **[docs-health 2026-09-21] RESOLVED + ARCHIVED** — every task in both tables is done: C1–C9/F1–F27 executed + verified same session (their own ✅ markers), C10/F28 (D1–D6) decided + executed 2026-09-15 (CHANGELOG "P3 cleanup decision items D1-D6 decided + executed"). Independent re-verification 2026-09-21: archives consolidated under `docs/status/archived/`, `flake.lock.feat`/`.orig` absent, root clean.
 
-
 **Date:** 2026-09-14 20:09
 **Status:** Tiers 1-3 executed and verified same session; Tier 4 decision items (D1-D6) DECIDED + EXECUTED 2026-09-15 — per-item evidence in `TODO_LIST.md` P3.
 **Trigger:** "If you needed to clean/tidy up this repo a bit, what would you do? Deep research!"
@@ -109,50 +108,50 @@ graph TD
 
 ## Coarse Task Table (30-100 min granularity — ALL tasks)
 
-| ID  | Task                                                                                                    | Impact | Effort | Status   |
-| --- | ------------------------------------------------------------------------------------------------------- | ------ | ------ | -------- |
-| C1  | Research: quantify sprawl, falsify hypotheses (2 rounds)                                                | High   | 60m    | ✅ done  |
-| C2  | Tier 1 mechanics (lockfiles, orphans, worktree, branches, gitignore verify)                             | High   | 30m    | ✅ done  |
-| C3  | Archive consolidation 3→1 + living-ref rewrites + collision checks                                      | High   | 45m    | ✅ done  |
-| C4  | Status-root sweep (reference-index rule, age gate)                                                      | Med    | 30m    | ✅ done  |
-| C5  | Loose-docs root + micro-dirs + reports/archives folds + README rewrite                                  | Med    | 45m    | ✅ done  |
-| C6  | Script triage (5 orphans → 3 rm, 2 keep+link)                                                           | Med    | 30m    | ✅ done  |
-| C7  | test-mkFilesystem registration refactor                                                                 | Med    | 30m    | ✅ done  |
-| C8  | Gates: link-check + flake check --no-build                                                              | High   | 30m    | ✅ done  |
-| C9  | Plan doc + TODO_LIST decision items + CHANGELOG                                                         | Med    | 30m    | ✅ done  |
+| ID  | Task                                                                                                    | Impact | Effort | Status                                                                                                   |
+| --- | ------------------------------------------------------------------------------------------------------- | ------ | ------ | -------------------------------------------------------------------------------------------------------- |
+| C1  | Research: quantify sprawl, falsify hypotheses (2 rounds)                                                | High   | 60m    | ✅ done                                                                                                  |
+| C2  | Tier 1 mechanics (lockfiles, orphans, worktree, branches, gitignore verify)                             | High   | 30m    | ✅ done                                                                                                  |
+| C3  | Archive consolidation 3→1 + living-ref rewrites + collision checks                                      | High   | 45m    | ✅ done                                                                                                  |
+| C4  | Status-root sweep (reference-index rule, age gate)                                                      | Med    | 30m    | ✅ done                                                                                                  |
+| C5  | Loose-docs root + micro-dirs + reports/archives folds + README rewrite                                  | Med    | 45m    | ✅ done                                                                                                  |
+| C6  | Script triage (5 orphans → 3 rm, 2 keep+link)                                                           | Med    | 30m    | ✅ done                                                                                                  |
+| C7  | test-mkFilesystem registration refactor                                                                 | Med    | 30m    | ✅ done                                                                                                  |
+| C8  | Gates: link-check + flake check --no-build                                                              | High   | 30m    | ✅ done                                                                                                  |
+| C9  | Plan doc + TODO_LIST decision items + CHANGELOG                                                         | Med    | 30m    | ✅ done                                                                                                  |
 | C10 | Owner decisions D1-D6 (minecraft, visionreviewd, hooks, history diet, DB relocation, flake-update gate) | Med    | 100m   | ~~⏳ owner~~ ✅ DECIDED + EXECUTED 2026-09-15 (CHANGELOG P3 entry; evidence in TODO_LIST P3 at the time) |
 
 ## Fine Task Table (≤12 min granularity — ALL tasks)
 
-| ID  | Task                                                      | Status |
-| --- | --------------------------------------------------------- | ------ |
-| F1  | Verify PR #139 merged + worktree clean + ancestry         | ✅     |
-| F2  | `git worktree remove` + branch -d ×2                      | ✅     |
-| F3  | `git rm flake.lock.feat flake.lock.orig gather-status.sh` | ✅     |
-| F4  | `git mv pixel6 guide → docs/hardware/`                    | ✅     |
-| F5  | `git check-ignore -v data/*` (verify, no-op)              | ✅     |
-| F6  | Collision-check 3 archive merges (comm)                   | ✅     |
-| F7  | Merge docs/archive/status → archived (134)                | ✅     |
-| F8  | Resolve README collision (stub deleted, canonical kept)   | ✅     |
-| F9  | Merge docs/status/archive → archived (570)                | ✅     |
-| F10 | sed 2 living refs archive→archived                        | ✅     |
-| F11 | Build living-docs reference index (4.7 MB corpus)         | ✅     |
-| F12 | Sweep 86 old status-root files (age + ref gates)          | ✅     |
-| F13 | Sweep 84 unreferenced loose docs-root files               | ✅     |
-| F14 | Fold 4 single-file micro-dirs                             | ✅     |
-| F15 | Fold reports→research, archives→archive                   | ✅     |
-| F16 | Rewrite docs/archive/README.md                            | ✅     |
-| F17 | Review 5 orphan scripts, rm 3                             | ✅     |
-| F18 | Refactor test-mkFilesystem to parameterized lib           | ✅     |
-| F19 | Register mkfilesystem in tests/default.nix                | ✅     |
-| F20 | Standalone runner re-verify (9/9)                         | ✅     |
-| F21 | check-doc-links gate                                      | ✅     |
-| F22 | nix eval check-drv gate                                   | ✅     |
-| F23 | nix flake check --no-build gate                           | ✅     |
-| F24 | Write this plan doc                                       | ✅     |
-| F25 | TODO_LIST: add decision items + link corruption scripts   | ✅     |
-| F26 | CHANGELOG entry                                           | ✅     |
-| F27 | Pathspec commits + git gc + push                          | ✅     |
+| ID  | Task                                                      | Status                        |
+| --- | --------------------------------------------------------- | ----------------------------- |
+| F1  | Verify PR #139 merged + worktree clean + ancestry         | ✅                            |
+| F2  | `git worktree remove` + branch -d ×2                      | ✅                            |
+| F3  | `git rm flake.lock.feat flake.lock.orig gather-status.sh` | ✅                            |
+| F4  | `git mv pixel6 guide → docs/hardware/`                    | ✅                            |
+| F5  | `git check-ignore -v data/*` (verify, no-op)              | ✅                            |
+| F6  | Collision-check 3 archive merges (comm)                   | ✅                            |
+| F7  | Merge docs/archive/status → archived (134)                | ✅                            |
+| F8  | Resolve README collision (stub deleted, canonical kept)   | ✅                            |
+| F9  | Merge docs/status/archive → archived (570)                | ✅                            |
+| F10 | sed 2 living refs archive→archived                        | ✅                            |
+| F11 | Build living-docs reference index (4.7 MB corpus)         | ✅                            |
+| F12 | Sweep 86 old status-root files (age + ref gates)          | ✅                            |
+| F13 | Sweep 84 unreferenced loose docs-root files               | ✅                            |
+| F14 | Fold 4 single-file micro-dirs                             | ✅                            |
+| F15 | Fold reports→research, archives→archive                   | ✅                            |
+| F16 | Rewrite docs/archive/README.md                            | ✅                            |
+| F17 | Review 5 orphan scripts, rm 3                             | ✅                            |
+| F18 | Refactor test-mkFilesystem to parameterized lib           | ✅                            |
+| F19 | Register mkfilesystem in tests/default.nix                | ✅                            |
+| F20 | Standalone runner re-verify (9/9)                         | ✅                            |
+| F21 | check-doc-links gate                                      | ✅                            |
+| F22 | nix eval check-drv gate                                   | ✅                            |
+| F23 | nix flake check --no-build gate                           | ✅                            |
+| F24 | Write this plan doc                                       | ✅                            |
+| F25 | TODO_LIST: add decision items + link corruption scripts   | ✅                            |
+| F26 | CHANGELOG entry                                           | ✅                            |
+| F27 | Pathspec commits + git gc + push                          | ✅                            |
 | F28 | D1-D6: owner review session                               | ~~⏳~~ ✅ executed 2026-09-15 |
 
 ## Numbers

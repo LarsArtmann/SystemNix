@@ -17,21 +17,21 @@ Consumes (never duplicates):
 
 ## Root cause & scrub evidence
 
-| When        | Evidence                                                                                                                                                  |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-08-03  | Zero-page csum signature `0x8941f998` first documented (reads return zeros = wiped region, not random media rot)                                          |
-| 2026-08-17  | Weekly scrub found **1,351,271 uncorrectable csum errors**; aborts `btrfs send` → `btrbk-data` dead since 2026-07 (re-confirmed 2026-09-05: EIO after 3h12m/258G) |
-| 2026-09-06  | **Root cause CORRECTED: operator-inflicted unsafe partition shrink, NOT failing hardware** (user correction; supersedes the earlier hardware reading)      |
-| 2026-09-11  | **Gate (a) SMART: PASS** — Lexar `QBC838R010854P220C`: `media_errors 0`, `percentage_used 15`, `available_spare 100`, `critical_warning 0`, `error_log_entries 0` |
-| 2026-09-11  | **Bounded-static hypothesis remains formally UNPROVEN** — no completed scrub since the 2026-08-31 freeze-killed run; gate (b) (before/after scrub delta) pending, blocked on the scrub-mechanism-fix deploy + a root scrub run |
+| When       | Evidence                                                                                                                                                                                                                       |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-03 | Zero-page csum signature `0x8941f998` first documented (reads return zeros = wiped region, not random media rot)                                                                                                               |
+| 2026-08-17 | Weekly scrub found **1,351,271 uncorrectable csum errors**; aborts `btrfs send` → `btrbk-data` dead since 2026-07 (re-confirmed 2026-09-05: EIO after 3h12m/258G)                                                              |
+| 2026-09-06 | **Root cause CORRECTED: operator-inflicted unsafe partition shrink, NOT failing hardware** (user correction; supersedes the earlier hardware reading)                                                                          |
+| 2026-09-11 | **Gate (a) SMART: PASS** — Lexar `QBC838R010854P220C`: `media_errors 0`, `percentage_used 15`, `available_spare 100`, `critical_warning 0`, `error_log_entries 0`                                                              |
+| 2026-09-11 | **Bounded-static hypothesis remains formally UNPROVEN** — no completed scrub since the 2026-08-31 freeze-killed run; gate (b) (before/after scrub delta) pending, blocked on the scrub-mechanism-fix deploy + a root scrub run |
 
 ## Victim set
 
 ### Resolved
 
-| Victim                                            | Disposition                                                                                                    |
-| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| inode 1331118 (the journal "headline" for 5+ weeks) | **GONE** — evidence correction 2026-09-11: absent from the full live /data walk AND the newest snapshot; the recurring signal rode stale-era parent chains |
+| Victim                                                     | Disposition                                                                                                                                                                         |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| inode 1331118 (the journal "headline" for 5+ weeks)        | **GONE** — evidence correction 2026-09-11: absent from the full live /data walk AND the newest snapshot; the recurring signal rode stale-era parent chains                          |
 | `models/llm/gemma-4-31b-abliterated-Q8_0.gguf` (~30.4 GiB) | Header EIO (os error 5); **trashed 2026-09-12** to `/data/.Trash-1000` (same-fs rename). Do NOT re-import any re-download without the `dd bs=4k count=1` header validation (jan.md) |
 
 ### Live — 10 files, ~49G total (paths resolved 2026-09-11, T05)
@@ -43,18 +43,18 @@ the journal carried ~12 bad (root,ino) pairs, of which 11 enumerated (1 gone abo
 the residual is journal-era noise; the live walk is authoritative. Deletion needs NO root
 (`lars:users 644`), only the T06a user sign-off AFTER gate (b).
 
-| root/ino            | Path                                                                                  | Size  |
-| ------------------- | ------------------------------------------------------------------------------------- | ----- |
-| 256/2114533         | `ai/models/image/perfectdeliberate_v90.safetensors`                                   | 6.9G  |
-| 256/2608101         | `ai/models/image/illustrij_v21_diffusers/tokenizer/tokenizer.json`                    |       |
-| 256/4020751         | `ai/models/image/sana-1.6b/tokenizer/tokenizer.model`                                 |       |
-| 256/4995089         | `ai/models/image/ernie-image/pe/model.safetensors`                                    | 7.7G  |
-| 256/1389858         | `ai/models/jan/llamacpp/models/qwen3.6-27b-aggressive/mmproj-f16.gguf`                | 0.9G  |
-| 256/1389877         | `ai/models/jan/llamacpp/models/qwen3.6-27b-aggressive/Qwen3.6-27B-Uncensored-HauhauCS-Aggressive-Q4_K_P.gguf` | 17.5G |
-| 256/4971282         | `ai/models/jan/llamacpp/models/llmfan46/gemma-4-26B-A4B-it-ultra-uncensored-heretic-Q4_K_M/mmproj.gguf` | 1.2G |
-| 256/2114473         | `ai/cache/huggingface/hub/models--Tongyi-MAI--Z-Image-Turbo/blobs/31349551…`          |       |
-| 256/2114488         | `ai/cache/huggingface/hub/models--Tongyi-MAI--Z-Image-Turbo/blobs/95facd59…`          |       |
-| 256/2114494         | `ai/cache/huggingface/hub/models--Tongyi-MAI--Z-Image-Turbo/blobs/aba4e37a…`          |       |
+| root/ino    | Path                                                                                                          | Size  |
+| ----------- | ------------------------------------------------------------------------------------------------------------- | ----- |
+| 256/2114533 | `ai/models/image/perfectdeliberate_v90.safetensors`                                                           | 6.9G  |
+| 256/2608101 | `ai/models/image/illustrij_v21_diffusers/tokenizer/tokenizer.json`                                            |       |
+| 256/4020751 | `ai/models/image/sana-1.6b/tokenizer/tokenizer.model`                                                         |       |
+| 256/4995089 | `ai/models/image/ernie-image/pe/model.safetensors`                                                            | 7.7G  |
+| 256/1389858 | `ai/models/jan/llamacpp/models/qwen3.6-27b-aggressive/mmproj-f16.gguf`                                        | 0.9G  |
+| 256/1389877 | `ai/models/jan/llamacpp/models/qwen3.6-27b-aggressive/Qwen3.6-27B-Uncensored-HauhauCS-Aggressive-Q4_K_P.gguf` | 17.5G |
+| 256/4971282 | `ai/models/jan/llamacpp/models/llmfan46/gemma-4-26B-A4B-it-ultra-uncensored-heretic-Q4_K_M/mmproj.gguf`       | 1.2G  |
+| 256/2114473 | `ai/cache/huggingface/hub/models--Tongyi-MAI--Z-Image-Turbo/blobs/31349551…`                                  |       |
+| 256/2114488 | `ai/cache/huggingface/hub/models--Tongyi-MAI--Z-Image-Turbo/blobs/95facd59…`                                  |       |
+| 256/2114494 | `ai/cache/huggingface/hub/models--Tongyi-MAI--Z-Image-Turbo/blobs/aba4e37a…`                                  |       |
 
 ## Snapshot-pinning timeline
 

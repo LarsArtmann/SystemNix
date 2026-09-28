@@ -13,11 +13,11 @@ binary). Module: `modules/nixos/services/health-dashboard.nix`
 | ---------- | ------------------------------------------------------------------------------------------------------------------------- |
 | UI/API     | `https://health.home.lan` — Layer 2 `protected` vHost (oauth2-proxy for external, LAN bypass)                             |
 | Listen     | `127.0.0.1:8103` (`lib/ports.nix` `health-dashboard`, via `HEALTH_HUB_ADDR`)                                              |
-| Runs as    | DynamicUser — stateless: no home, no StateDirectory, no secrets                                                          |
+| Runs as    | DynamicUser — stateless: no home, no StateDirectory, no secrets                                                           |
 | Remotes    | `services.health-dashboard.remotes` — `name=url` pairs fetched fresh on every read (merge-on-read, 5s per-fetch deadline) |
-| Trend      | `HEALTH_HUB_TREND=1` (default) — in-memory ring, ~1h at the 2s push cadence, timeline card in the UI                       |
+| Trend      | `HEALTH_HUB_TREND=1` (default) — in-memory ring, ~1h at the 2s push cadence, timeline card in the UI                      |
 | Monitoring | Gatus "Health Hub" (`/healthz` liveness) + "Health Hub Federation" (`/readyz` — the aggregate pager); system-health       |
-| Backup     | none — stateless                                                                                                         |
+| Backup     | none — stateless                                                                                                          |
 
 ## Adding a remote
 

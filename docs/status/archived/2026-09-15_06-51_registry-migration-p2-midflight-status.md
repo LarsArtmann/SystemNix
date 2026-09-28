@@ -2,7 +2,6 @@
 
 > **[docs-health 2026-09-19] RESOLVED + ARCHIVED:** mid-flight snapshot — batches 1+2 done, batch 3 completed at 09:50 (docs/status/2026-09-15_09-50_*); deployed 2026-09-16.
 
-
 Session context: executing the P2 checklist (registry migration per
 `docs/architecture-understanding/2026-09-14_19-56_service-orientation.html`,
 miniflux pilot as reference). Baselines captured before any edit; per-surface

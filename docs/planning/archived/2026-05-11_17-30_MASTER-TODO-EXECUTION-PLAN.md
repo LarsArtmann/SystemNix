@@ -84,14 +84,14 @@
 
 ## Phase 5: SCRIPT QUALITY
 
-| #  | Task                                                                     | Impact | Min | Dep   | File                            | Status                       |
-| -- | ------------------------------------------------------------------------ | ------ | --- | ----- | ------------------------------- | ---------------------------- |
-| 37 | Add `set -euo pipefail` to `gpu-recovery.sh`                             | 🟢     | 3   | —     | scripts/gpu-recovery.sh         | ✅ via writeShellApplication |
-| 38 | Add `set -euo pipefail` to `niri-drm-healthcheck.sh`                     | 🟢     | 3   | —     | scripts/niri-drm-healthcheck.sh | ✅ via writeShellApplication |
-| 39 | Add `set -euo pipefail` to `niri-health.sh`                              | 🟢     | 3   | —     | scripts/niri-health.sh          | ✅ via writeShellApplication |
-| 40 | Parameterize PCI address in `gpu-recovery.sh` (auto-detect)              | 🟢     | 8   | 37    | scripts/gpu-recovery.sh         | ✅                           |
-| 41 | Parameterize hostname in `nixos-diagnostic.sh` (remove hardcoded evo-x2) | 🟢     | 5   | —     | scripts/nixos-diagnostic.sh     | ✅                           |
-~~| 42 | Add `just validate-scripts` recipe (shellcheck all scripts)              | 🟢     | 8   | 37-41 | justfile                        | ✅                           |~~ done/obsolete — justfile retired; shellcheck gates live in .githooks/pre-commit + CI
+| #  | Task                                                                     | Impact                                                      | Min | Dep | File                            | Status                       |
+| -- | ------------------------------------------------------------------------ | ----------------------------------------------------------- | --- | --- | ------------------------------- | ---------------------------- |
+| 37 | Add `set -euo pipefail` to `gpu-recovery.sh`                             | 🟢                                                          | 3   | —   | scripts/gpu-recovery.sh         | ✅ via writeShellApplication |
+| 38 | Add `set -euo pipefail` to `niri-drm-healthcheck.sh`                     | 🟢                                                          | 3   | —   | scripts/niri-drm-healthcheck.sh | ✅ via writeShellApplication |
+| 39 | Add `set -euo pipefail` to `niri-health.sh`                              | 🟢                                                          | 3   | —   | scripts/niri-health.sh          | ✅ via writeShellApplication |
+| 40 | Parameterize PCI address in `gpu-recovery.sh` (auto-detect)              | 🟢                                                          | 8   | 37  | scripts/gpu-recovery.sh         | ✅                           |
+| 41 | Parameterize hostname in `nixos-diagnostic.sh` (remove hardcoded evo-x2) | 🟢                                                          | 5   | —   | scripts/nixos-diagnostic.sh     | ✅                           |
+| ~~ | 42                                                                       | Add `just validate-scripts` recipe (shellcheck all scripts) | 🟢  | 8   | 37-41                           | justfile                     |
 
 ---
 

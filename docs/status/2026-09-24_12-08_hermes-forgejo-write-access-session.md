@@ -7,13 +7,13 @@
 
 ## 0. TL;DR
 
-| Verdict | Item |
-| --- | --- |
-| DONE | Forgejo write-access implementation, committed + pushed (4 commits, auto-commit daemon) |
-| NOT DEPLOYED | evo-x2 still runs system-797 (09-22) — the deployed provisioner is still the **read-only** one |
-| GREEN | `nix flake check --no-build` (after fixing one Nix-interpolation escape bug I introduced) |
-| UNRESOLVED (not mine) | Full toplevel build failed on mr-sync, discordsync prepared-source, cqrs-lint FOD hash mismatch — zero overlap with my files, needs attribution |
-| STALE | My captured build-failure list is from 09-23 ~16:00; parallel sessions + a flake.lock bump (09-24 11:58) landed since — re-validation required at deploy time |
+| Verdict               | Item                                                                                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DONE                  | Forgejo write-access implementation, committed + pushed (4 commits, auto-commit daemon)                                                                       |
+| NOT DEPLOYED          | evo-x2 still runs system-797 (09-22) — the deployed provisioner is still the **read-only** one                                                                |
+| GREEN                 | `nix flake check --no-build` (after fixing one Nix-interpolation escape bug I introduced)                                                                     |
+| UNRESOLVED (not mine) | Full toplevel build failed on mr-sync, discordsync prepared-source, cqrs-lint FOD hash mismatch — zero overlap with my files, needs attribution               |
+| STALE                 | My captured build-failure list is from 09-23 ~16:00; parallel sessions + a flake.lock bump (09-24 11:58) landed since — re-validation required at deploy time |
 
 ---
 
@@ -103,6 +103,7 @@
 ## 9. f) Up to 50 things to get done next (roughly in impact order)
 
 **This change (immediate):**
+
 1. Triage the three 09-23 package-build failures against TODAY's tree (mr-sync, discordsync prepared-source, cqrs-lint FOD) — they block any toplevel build/deploy.
 2. Deploy (`nix run .#deploy`) with the pressure gate — carries the write upgrade live.
 3. Watch the first `forgejo-hermes-token` run: expect "regenerating (owner decision 2026-09-23)" + `Collaborator sweep: N repo(s) granted, 0 failure(s)`.
@@ -168,4 +169,4 @@
 
 ---
 
-*Report ends. Awaiting instructions.*
+_Report ends. Awaiting instructions._

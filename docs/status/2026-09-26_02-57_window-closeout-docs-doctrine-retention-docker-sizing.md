@@ -5,13 +5,13 @@
 **Reporter task:** `000001a0db1ee66ade1e10bded97efa994e2` (this report carries its footer)
 **Scope:** the five completed queue tasks listed below + the docs-health pass over their surfaces. Docs-only window; zero code/config changes.
 
-| # | Task | Commit(s) | Closeout report |
-|---|------|-----------|-----------------|
-| 1 | `000001a0d7c6e16844a893aafd7c9a19a748` — refresh the `/data/docker` doctrine-row sizing via no-sudo `docker system df` | work `6f7899a3` + report `050ec1ee` | `docs/status/2026-09-25_11-02_task-…748.md` |
-| 2 | `000001a0d7ddc4c5db6b3a8da3acdfb9a1d8` — reconcile the root `@` retention anomaly, restate the doctrine root window | work `22a4e88f` + report+harvest `58cb44ae` | `docs/status/2026-09-25_11-51_task-…1d8.md` |
-| 3 | `000001a0d80b8bec7736df65bb79e89dce1b` — reviewer-finding fix: stale `/data/docker` figure in the AGENTS.md Samsung section | work `fad88cbc` + report `7cfcafec` | `docs/status/2026-09-25_12-46_task-…e1b.md` |
-| 4 | `000001a0d80b8ba29cede448b76050225c24` — sweep stale root-window echoes | work `eb844911` + report `e1c4e154` (first dispatch) + verification-only re-close `323de6cf` | `docs/status/2026-09-25_12-27_task-…c24.md` + `…12-56_task-…c24.md` |
-| 5 | `000001a0da959282715434d3deed08352a8c` — reviewer-finding fix: alleged root-window contradictions in AGENTS.md (4th dispatch, NO-EDIT closure) | `563266db` + `5592c0c9` | `docs/status/2026-09-26_02-10_task-…a8c.md` |
+| # | Task                                                                                                                                           | Commit(s)                                                                                    | Closeout report                                                     |
+| - | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 1 | `000001a0d7c6e16844a893aafd7c9a19a748` — refresh the `/data/docker` doctrine-row sizing via no-sudo `docker system df`                         | work `6f7899a3` + report `050ec1ee`                                                          | `docs/status/2026-09-25_11-02_task-…748.md`                         |
+| 2 | `000001a0d7ddc4c5db6b3a8da3acdfb9a1d8` — reconcile the root `@` retention anomaly, restate the doctrine root window                            | work `22a4e88f` + report+harvest `58cb44ae`                                                  | `docs/status/2026-09-25_11-51_task-…1d8.md`                         |
+| 3 | `000001a0d80b8bec7736df65bb79e89dce1b` — reviewer-finding fix: stale `/data/docker` figure in the AGENTS.md Samsung section                    | work `fad88cbc` + report `7cfcafec`                                                          | `docs/status/2026-09-25_12-46_task-…e1b.md`                         |
+| 4 | `000001a0d80b8ba29cede448b76050225c24` — sweep stale root-window echoes                                                                        | work `eb844911` + report `e1c4e154` (first dispatch) + verification-only re-close `323de6cf` | `docs/status/2026-09-25_12-27_task-…c24.md` + `…12-56_task-…c24.md` |
+| 5 | `000001a0da959282715434d3deed08352a8c` — reviewer-finding fix: alleged root-window contradictions in AGENTS.md (4th dispatch, NO-EDIT closure) | `563266db` + `5592c0c9`                                                                      | `docs/status/2026-09-26_02-10_task-…a8c.md`                         |
 
 **Observed in passing (same window, sibling ticket):** `000001a0dad1143cdb10aef5d1afc4accbb1` (FEATURES.md echo, run 1 actually fixed it: `3e3d718a`) + its disposition report `7ca80f55` — 3 surplus no-edit dispatches there too.
 
@@ -67,6 +67,7 @@ Nothing in the window's own artifacts is broken — every landed claim re-verifi
 ## f) NEXT THINGS (harvest-routed; 9 new queue rows this pass — dedup-checked against TODO_LIST + storage.md)
 
 New `[ready]`/`[watch]` rows appended to TODO_LIST.md (all point at docs/todo/storage.md unless noted):
+
 1. Docker volume inventory (212/6/4.09G-94%) → keep/forgotten classification + prune-candidate list, NO auto-prune.
 2. Sudo-window `du`/`compsize /data/docker` vs docker-reported 15.5G (provenance like-for-like).
 3. Convert the Samsung-section docker prose to pointer-only (single-home the figure).
@@ -87,7 +88,7 @@ High-value existing rows this window re-endorses (NOT re-added — dedup): snaps
 2. **Final retention config:** is `snapshot_preserve 3d 1w` (every deleted NVMe byte pinned exactly 14 days) the intended end state on this historically-full box, or should it tighten? Decides whether the figure this ticket family chased changes again — and whether the grep-gate needs round-2 fixtures pre-seeded.
 3. **Docker volume policy:** are the ~206 inactive volumes (4.09 GB, 94% of volume bytes) known-forgotten state safe to inventory toward prune candidates, or does any hold irreplaceable data (old compose DB-sidecars, manual experiments)? Gates the inventory item's depth.
 
-*(A fourth question — why the queue re-dispatches closed findings — is already parked as blocked rows TODO_LIST:316/322 and is not duplicated here.)*
+_(A fourth question — why the queue re-dispatches closed findings — is already parked as blocked rows TODO_LIST:316/322 and is not duplicated here.)_
 
 ## h) BAND DRIFT (ADR-0015 accountability)
 

@@ -24,8 +24,8 @@ re-anchor blocked by new Zone-6 trips #654/#655 (16:32/16:46) — earliest clean
    queue reports indexed + grepped for CV/assets/PSI signals — the corpus contains NO record of
    the CV assets root-intervention origin; only the three 09-20 docs mention it).
 2. **Q1 answered (recurrence semantics, source-verified)**: the assets drift is BOTH structural
-   AND one-off. Upstream CV's own fix comment states it: *"store trees are 0555, and a read-only
-   synced dir would break the next start's overwrite"* — plain `cp -r` from the nix store
+   AND one-off. Upstream CV's own fix comment states it: _"store trees are 0555, and a read-only
+   synced dir would break the next start's overwrite"_ — plain `cp -r` from the nix store
    propagates read-only modes into `$state/assets` at EVERY sync; separately the montserrat font
    dirs were root-owned ("operator root intervention", origin never pinned anywhere). The
    upstream fix is ALREADY on CV master: best-effort `rm -rf … || true` + best-effort `cp -r` +
@@ -253,4 +253,4 @@ re-anchor blocked by new Zone-6 trips #654/#655 (16:32/16:46) — earliest clean
 - Deploy exit-code surface as of today: 12 pressure/trip-recency · 13 lock contention ·
   **14 unanchored** · 3 new smoke failures.
 
-*No secrets. Public-repo rule respected throughout.*
+_No secrets. Public-repo rule respected throughout._

@@ -61,6 +61,7 @@ The deploy failure had ONE visible root cause (bank-sync) but `--keep-going` enu
 ## f) NEXT (prioritized, up to 50)
 
 **Immediate (deploy-critical):**
+
 1. Re-run `nix run .#deploy` when io-PSI avg10 < 20% sustained ~3 min (toplevel already built; switch is light).
 2. Verify anchor after deploy: `readlink /nix/var/nix/profiles/system` == `/run/current-system` (exit-4 → re-run rule).
 3. `nix run .#post-deploy-check` (smoke: bank-sync, papdashboard, inboxclean, renamer endpoints).

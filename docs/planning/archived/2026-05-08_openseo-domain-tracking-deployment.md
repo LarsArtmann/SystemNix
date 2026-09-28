@@ -11,6 +11,7 @@
 ## Why OpenSEO
 
 ~~- Most feature-complete open-source SEO suite (keyword research, rank tracking, backlinks, domain insights, site audits)~~ done — superseded by the native-module migration (archived 2026-07-11 plan)
+
 - Self-hosted, pay-as-you-go via DataForSEO ($2–20/mo vs $99–130/mo for Ahrefs/Semrush)
 - First-class Docker support with pre-built GHCR images
 - Active development with GEO/AI visibility on roadmap

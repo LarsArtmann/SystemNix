@@ -17,11 +17,11 @@ nothing else substitutes for it.** With no recovery copy, host loss + sops
 loss = permanent data loss — that is the go-live blocker tracked in
 `docs/todo/storage.md`.
 
-| Artifact | Lives on evo-x2 | Dead-host source |
-| -------- | --------------- | ---------------- |
-| Borg passphrase | sops `borg.yaml` → `/run/secrets/borg_password` (0400 root) | **Owner recovery copy only** (password manager / printed — go-live checklist step 1). Nothing on the StorageBox can recover it. |
-| SSH key | sops `borg_ssh_key` (ed25519; public key printed in the go-live checklist) | Not required: paste a NEW public key in the Hetzner console (StorageBox authorized_keys is box-side config, independent of the repo data). |
-| Host-key pin | sops `borg_known_hosts` | Re-pin from a trusted network: `ssh-keyscan -p 23 <host>.your-storagebox.de` (TOFU caveat — verify out-of-band against Hetzner's published fingerprints when possible). |
+| Artifact        | Lives on evo-x2                                                            | Dead-host source                                                                                                                                                        |
+| --------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Borg passphrase | sops `borg.yaml` → `/run/secrets/borg_password` (0400 root)                | **Owner recovery copy only** (password manager / printed — go-live checklist step 1). Nothing on the StorageBox can recover it.                                         |
+| SSH key         | sops `borg_ssh_key` (ed25519; public key printed in the go-live checklist) | Not required: paste a NEW public key in the Hetzner console (StorageBox authorized_keys is box-side config, independent of the repo data).                              |
+| Host-key pin    | sops `borg_known_hosts`                                                    | Re-pin from a trusted network: `ssh-keyscan -p 23 <host>.your-storagebox.de` (TOFU caveat — verify out-of-band against Hetzner's published fingerprints when possible). |
 
 ## StorageBox Borg-access notes
 
@@ -207,12 +207,12 @@ already does this; borg2's `--verify-data` is used when the binary grows it).
 Proven via `--selftest` (throwaway `repokey-blake2` repo, same compression
 `auto,zstd,9` as the job):
 
-| Phase            | Run 1  | Run 2  |
-| ---------------- | ------ | ------ |
-| connect+resolve  | 281 ms | 295 ms |
-| extract          | 326 ms | 283 ms |
-| verify           | 8 ms   | 7 ms   |
-| **TOTAL**        | 615 ms | 585 ms |
+| Phase           | Run 1  | Run 2  |
+| --------------- | ------ | ------ |
+| connect+resolve | 281 ms | 295 ms |
+| extract         | 326 ms | 283 ms |
+| verify          | 8 ms   | 7 ms   |
+| **TOTAL**       | 615 ms | 585 ms |
 
 Result: PASS (both runs; extracted files byte-verified via sha256). Reproduced
 2026-09-23 across the verification re-dispatches — 5 full PASS records total
@@ -228,13 +228,13 @@ Every env block in BOTH borg runbooks checked line-by-line against the
 declarations (`modules/nixos/services/sops.nix`,
 `platforms/nixos/system/backup.nix`) — block-level, not "coherent":
 
-| Block | Claims | Verified against | Verdict |
-| ----- | ------ | ---------------- | ------- |
-| restore runbook, same-host single-file restore + drill real mode | `source /run/secrets/rendered/borg-env`; `BORG_PASSCOMMAND=cat /run/secrets/borg_password`; `BORG_RSH` (p23 + key + StrictHostKeyChecking + known-hosts); `BORG_CACHE_DIR/CONFIG_DIR=/mnt/hot/borg/*` | sops.nix secrets `borg_password`/`borg_ssh_key`/`borg_known_hosts` (0400 root) + template `borg-env` (root 0400, sops-nix renders to `/run/secrets/rendered/`); RSH byte-identical to `backup.nix` `BORG_RSH`; cache dirs = `backup.nix` environment | MATCH |
-| restore runbook, dead-host blocks (recovery-client + full restore step 3) | `BORG_REPO` scp-form; `BORG_PASSPHRASE` (recovery copy); `BORG_RSH -p 23 -i ./restore-key` (out-of-band creds, NO `/run/secrets` deps — those die with the host) | port-23 doctrine + scp-form-carries-no-port note in `backup.nix` comments | MATCH (deliberate divergence) |
-| backup runbook, ops ad-hoc block | `BORG_REPO` grepped from `/run/secrets/rendered/borg-env`; same PASSCOMMAND/RSH; `sudo -E` | same sources as row 1 | MATCH |
-| drill script | `BORG_ENV_FILE` default | eval-time assertion in `backup.nix` pins the literal to `config.sops.templates."borg-env".path` — drift fails `nix flake check` | ENFORCED |
-| secret NAMES | `borg_password`, `borg_ssh_key`, `borg_known_hosts` (secrets) + `borg_repo` (template only) | sops.nix `mkSecrets "borg.yaml"` + `templates."borg-env"` | MATCH |
+| Block                                                                     | Claims                                                                                                                                                                                                | Verified against                                                                                                                                                                                                                                     | Verdict                       |
+| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| restore runbook, same-host single-file restore + drill real mode          | `source /run/secrets/rendered/borg-env`; `BORG_PASSCOMMAND=cat /run/secrets/borg_password`; `BORG_RSH` (p23 + key + StrictHostKeyChecking + known-hosts); `BORG_CACHE_DIR/CONFIG_DIR=/mnt/hot/borg/*` | sops.nix secrets `borg_password`/`borg_ssh_key`/`borg_known_hosts` (0400 root) + template `borg-env` (root 0400, sops-nix renders to `/run/secrets/rendered/`); RSH byte-identical to `backup.nix` `BORG_RSH`; cache dirs = `backup.nix` environment | MATCH                         |
+| restore runbook, dead-host blocks (recovery-client + full restore step 3) | `BORG_REPO` scp-form; `BORG_PASSPHRASE` (recovery copy); `BORG_RSH -p 23 -i ./restore-key` (out-of-band creds, NO `/run/secrets` deps — those die with the host)                                      | port-23 doctrine + scp-form-carries-no-port note in `backup.nix` comments                                                                                                                                                                            | MATCH (deliberate divergence) |
+| backup runbook, ops ad-hoc block                                          | `BORG_REPO` grepped from `/run/secrets/rendered/borg-env`; same PASSCOMMAND/RSH; `sudo -E`                                                                                                            | same sources as row 1                                                                                                                                                                                                                                | MATCH                         |
+| drill script                                                              | `BORG_ENV_FILE` default                                                                                                                                                                               | eval-time assertion in `backup.nix` pins the literal to `config.sops.templates."borg-env".path` — drift fails `nix flake check`                                                                                                                      | ENFORCED                      |
+| secret NAMES                                                              | `borg_password`, `borg_ssh_key`, `borg_known_hosts` (secrets) + `borg_repo` (template only)                                                                                                           | sops.nix `mkSecrets "borg.yaml"` + `templates."borg-env"`                                                                                                                                                                                            | MATCH                         |
 
 ## Gotchas
 
