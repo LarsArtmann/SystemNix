@@ -1056,6 +1056,13 @@ in
                     config = {
                       global = {
                         scrape_interval = "30s";
+                        # 2026-09-28: the default 10s timeout resets mid-transfer
+                        # under load — node_exporter logged ~10.9k "error
+                        # encoding and sending metric family ... connection reset
+                        # by peer" lines per 30min (the journal's #1 noise
+                        # source). The textfile surface (storage-collector growth
+                        # history + guard + nvme) can outlast 10s on a busy box.
+                        scrape_timeout = "25s";
                       };
                       scrape_configs = [
                         {

@@ -162,6 +162,12 @@ _: {
           environmentFile = config.sops.templates."gatus-env".path;
           settings = {
             web.port = cfg.port;
+            # 2026-09-28: 67 checks × per-execution INFO lines = ~130k journal
+            # lines/day of pure "Monitored ... success=true" noise (measured
+            # 2.7k/30min) drowning real signal. WARN keeps failures + state
+            # transitions; gatus 5.36 logs "Defaulting log level to INFO"
+            # without this key.
+            logging.level = "WARN";
             storage = {
               type = "sqlite";
               path = "/var/lib/gatus/gatus.db";
