@@ -133,6 +133,12 @@ _: {
           RESTORED_COUNT_FILE="${stateDir}/restored.count"
           CHURN_STOPPED_FILE="${stateDir}/churn-stopped"
           CHURN_REARM_FILE="${stateDir}/churn-rearm.count"
+          BACKUP_STOPPED_EPOCH_FILE="${stateDir}/backup-stopped.epoch"
+          BACKUP_CATCHUP_EPOCH_FILE="${stateDir}/backup-catchup.epoch"
+          BACKUP_CATCHUP_COUNT_FILE="${stateDir}/backup-catchup.count"
+          COOLDOWN_LOG_EPOCH_FILE="${stateDir}/cooldown-log.epoch"
+          CAPPED_LOG_EPOCH_FILE="${stateDir}/capped-log.epoch"
+          CGROUP_IO_SNAPSHOT="${stateDir}/cgroup-io.last"
           SOCKET_UNITS="${lib.concatStringsSep " " cfg.socketUnits}"
           MAX_RESTORES_PER_DAY=${toString cfg.maxRestoresPerDay}
 
@@ -146,9 +152,15 @@ _: {
           PSI_SRC="''${PSI_SRC:-/proc/pressure/memory}"
           IO_PSI_SRC="''${IO_PSI_SRC:-/proc/pressure/io}"
           DISKSTATS_SRC="''${DISKSTATS_SRC:-/proc/diskstats}"
+          CGROUP_IO_SRC="''${CGROUP_IO_SRC:-/sys/fs/cgroup}"
 
           now=$(date +%s)
           CHURN_UNITS="${lib.concatStringsSep " " cfg.ioChurnUnits}"
+          BACKUP_UNITS="${lib.concatStringsSep " " cfg.backupUnits}"
+          BACKUP_STARVATION_SECONDS=${toString cfg.backupStarvationSeconds}
+          BACKUP_CATCHUP_RESUME_PERCENT=${toString cfg.backupCatchupResumePercent}
+          BACKUP_CATCHUP_PROTECT_SECONDS=${toString cfg.backupCatchupProtectSeconds}
+          VERBOSE_LOG_INTERVAL_SECONDS=${toString cfg.verboseLogIntervalSeconds}
 
           mem_available_kb=$(awk '/^MemAvailable:/ {print $2}' "$MEMINFO_SRC")
           mem_total_kb=$(awk '/^MemTotal:/ {print $2}' "$MEMINFO_SRC")
@@ -419,6 +431,53 @@ _: {
             restore_capped=1
           fi
 
+          # Backup catch-up slot state (2026-09-28): a starved backup set may
+          # be granted a bounded, protected run window — see the grant block
+          # in the metrics section. Computed here so the trip branch below
+          # can keep protected backup units running through its stops.
+          is_backup_unit() {
+            case " $BACKUP_UNITS " in
+              *" $1 "*) return 0 ;;
+            esac
+            return 1
+          }
+          backup_catchup_epoch=0
+          if [ -f "$BACKUP_CATCHUP_EPOCH_FILE" ]; then
+            backup_catchup_epoch=$(cat "$BACKUP_CATCHUP_EPOCH_FILE" 2>/dev/null) || backup_catchup_epoch=0
+          fi
+          backup_catchup_epoch="''${backup_catchup_epoch:-0}"
+          backup_catchup_age=-1
+          backup_catchup_active=0
+          if [ "$backup_catchup_epoch" -gt 0 ]; then
+            backup_catchup_age=$((now - backup_catchup_epoch))
+            if [ "$backup_catchup_age" -lt "$BACKUP_CATCHUP_PROTECT_SECONDS" ]; then
+              backup_catchup_active=1
+            fi
+          fi
+          backup_catchup_total=0
+          if [ -f "$BACKUP_CATCHUP_COUNT_FILE" ]; then
+            backup_catchup_total=$(cat "$BACKUP_CATCHUP_COUNT_FILE" 2>/dev/null) || backup_catchup_total=0
+          fi
+          backup_catchup_total="''${backup_catchup_total:-0}"
+
+          # Verbose-branch log gate (2026-09-28): the cooldown-active and
+          # restore-capped branches logged on EVERY 30 s run — live
+          # 2026-09-27 22:58-23:00 the restore-capped line fired every 30 s
+          # for hours. State transitions deserve a line; steady state gets a
+          # heartbeat at most once per verboseLogIntervalSeconds.
+          should_log_verbose() {
+            vl_epoch=0
+            if [ -f "$1" ]; then
+              vl_epoch=$(cat "$1" 2>/dev/null) || vl_epoch=0
+            fi
+            vl_epoch="''${vl_epoch:-0}"
+            if [ "$vl_epoch" -gt 0 ] && [ $((now - vl_epoch)) -lt "$VERBOSE_LOG_INTERVAL_SECONDS" ]; then
+              return 1
+            fi
+            echo "$now" > "$1" 2>/dev/null || true
+            return 0
+          }
+
           if [ "$trip" = "1" ]; then
             # Kill the ACTIVATION PATH FIRST, outside the cooldown: stopping
             # only the backend left the socket accepting, and every trip's
@@ -430,7 +489,9 @@ _: {
             fi
 
             if [ "$last_trip" -gt 0 ] && [ "$last_trip_age" -lt ${toString cfg.actionCooldownSeconds} ]; then
-              echo "MEMORY EMERGENCY still active (''${reason}) but action cooldown active (''${last_trip_age}s < ${toString cfg.actionCooldownSeconds}s) — socket stays down, skipping repeat service stop"
+              if should_log_verbose "$COOLDOWN_LOG_EPOCH_FILE"; then
+                echo "MEMORY EMERGENCY still active (''${reason}) but action cooldown active (''${last_trip_age}s < ${toString cfg.actionCooldownSeconds}s) — socket stays down, skipping repeat service stop"
+              fi
             else
               echo "MEMORY EMERGENCY: ''${reason} — stopping sockets + ${
                 lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
@@ -453,10 +514,26 @@ _: {
                 # only real stops, never no-ops. The file's first line is
                 # the trip epoch; the drain-clear below removes it once
                 # sustained io PSI falls back under the trip threshold.
+                # Backup-class units inside an ACTIVE catch-up slot are
+                # KEPT RUNNING through the stop (2026-09-28): a starved
+                # backup set that finally got its protected window must
+                # not lose it to the very next trip action. Every REAL
+                # backup stop (re)starts the starvation clock — the
+                # dedicated epoch survives churn-file rewrites that would
+                # otherwise drop inactive units from the list.
                 churn_stopped_now=""
+                churn_stop_list=""
                 for cu in $CHURN_UNITS; do
+                  if [ "$backup_catchup_active" = "1" ] && is_backup_unit "$cu"; then
+                    echo "MEMORY EMERGENCY backup catch-up slot active (''${backup_catchup_age}s < ''${BACKUP_CATCHUP_PROTECT_SECONDS}s) — keeping ''${cu} running through this trip action" >&2
+                    continue
+                  fi
+                  churn_stop_list="$churn_stop_list $cu"
                   if systemctl is-active --quiet "$cu" 2>/dev/null; then
                     churn_stopped_now="$churn_stopped_now $cu"
+                    if is_backup_unit "$cu"; then
+                      echo "$now" > "$BACKUP_STOPPED_EPOCH_FILE"
+                    fi
                   fi
                 done
                 if [ -n "$churn_stopped_now" ]; then
@@ -472,7 +549,9 @@ _: {
                 fi
                 # deliberate word splitting over the unit list
                 # shellcheck disable=SC2086
-                systemctl stop $CHURN_UNITS 2>/dev/null || true
+                if [ -n "$churn_stop_list" ]; then
+                  systemctl stop $churn_stop_list 2>/dev/null || true
+                fi
               fi
               # Attribution capture at trap time (2026-09-14): the trip says
               # "I/O stalled", not WHO stalled it. The forensics bundle
@@ -494,7 +573,43 @@ _: {
               esac
               echo "$zone1 $zone2 $zone3 $zone4 $zone5 $zone6" > "$ZONE_FILE"
               echo "$now" >> "$HISTORY_FILE"
-              echo "MEMORY EMERGENCY action taken: sockets + sacrifice units stopped (trip #''${tripped_total}, zone ''${zone})" >&2
+              # Top-I/O offender attribution (2026-09-28): 1300+ trips said
+              # "I/O stalled" without naming a culprit — attribution lived
+              # only in the forensics bundles. The per-cgroup io.stat walk
+              # runs ONLY at trip actions (>= cooldown apart), snapshotted
+              # so the NEXT action prints the delta: zero steady-state
+              # cost, and the trip line becomes self-attributing. Bounded
+              # depth + timeout (the forensics lesson: an unbounded find
+              # during an IO storm wedges the tool itself).
+              attribution=""
+              if [ -d "$CGROUP_IO_SRC" ]; then
+                cur_cg=$(
+                  timeout 10 find "$CGROUP_IO_SRC" -maxdepth 4 -name io.stat -readable -print0 2>/dev/null |
+                    while IFS= read -r -d "" f; do
+                      cg_rel="''${f#"$CGROUP_IO_SRC"/}"
+                      # the root cgroup aggregates the whole system — it
+                      # would be the permanent #1 and name no culprit
+                      [ "$cg_rel" = "io.stat" ] && continue
+                      cg_total=$(awk '{for (i = 2; i <= NF; i++) {split($i, kv, "="); if (kv[1] == "rbytes" || kv[1] == "wbytes") t += kv[2]}} END {print t + 0}' "$f" 2>/dev/null) || cg_total=0
+                      printf '%s %s\n' "''${cg_total:-0}" "$cg_rel"
+                    done | sort -rn | head -40 || true
+                )
+                if [ -n "$cur_cg" ] && [ -s "$CGROUP_IO_SNAPSHOT" ]; then
+                  attribution=$(
+                    printf '%s\n' "$cur_cg" |
+                      awk 'NR == FNR { prev[$2] = $1; next } ($2 in prev) { d = $1 - prev[$2]; if (d > 0) print d, $2 }' "$CGROUP_IO_SNAPSHOT" - |
+                      sort -rn | head -3 |
+                      awk '{ mb = int($1 / 1048576); if (mb < 1) mb = 1; printf "%s%s +%dMB", (NR > 1 ? ", " : ""), $2, mb }' || true
+                  )
+                fi
+                printf '%s\n' "$cur_cg" > "''${CGROUP_IO_SNAPSHOT}.tmp" 2>/dev/null &&
+                  mv "''${CGROUP_IO_SNAPSHOT}.tmp" "$CGROUP_IO_SNAPSHOT" || true
+              fi
+              if [ -n "$attribution" ]; then
+                echo "MEMORY EMERGENCY action taken: sockets + sacrifice units stopped (trip #''${tripped_total}, zone ''${zone}) — top io since last trip: ''${attribution}" >&2
+              else
+                echo "MEMORY EMERGENCY action taken: sockets + sacrifice units stopped (trip #''${tripped_total}, zone ''${zone})" >&2
+              fi
             fi
           elif
             [ "$sacrifice_socket_active" = "0" ] &&
@@ -523,7 +638,9 @@ _: {
             # human (a capped state with healthy memory must never look
             # like a silently working self-heal loop).
             if [ "$restore_capped" = "1" ]; then
-              echo "MEMORY EMERGENCY restore capped (''${restores_today} restores today >= $MAX_RESTORES_PER_DAY) — FastFlowLM socket stays DOWN. Manual restart once memory is healthy: systemctl start $SOCKET_UNITS" >&2
+              if should_log_verbose "$CAPPED_LOG_EPOCH_FILE"; then
+                echo "MEMORY EMERGENCY restore capped (''${restores_today} restores today >= $MAX_RESTORES_PER_DAY) — FastFlowLM socket stays DOWN. Manual restart once memory is healthy: systemctl start $SOCKET_UNITS" >&2
+              fi
             else
               systemctl reset-failed ${
                 lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
@@ -578,6 +695,9 @@ _: {
             echo "$churn_rearm_total" > "$CHURN_REARM_FILE"
             echo "MEMORY EMERGENCY io drained (io PSI some avg60=''${io_psi_some_avg60}% < ${toString cfg.ioPsiSomeAvg60ThresholdPercent}%) — churn units re-armed (re-arm #''${churn_rearm_total})" >&2
             rm -f "$CHURN_STOPPED_FILE"
+            # Backups are running again — the starvation clock stops with
+            # them (2026-09-28).
+            rm -f "$BACKUP_STOPPED_EPOCH_FILE"
           fi
           if [ -f "$CHURN_STOPPED_FILE" ]; then
             churn_epoch=$(awk 'NR==1 { print; exit }' "$CHURN_STOPPED_FILE" 2>/dev/null) || churn_epoch=0
@@ -585,6 +705,58 @@ _: {
             if [ "$churn_epoch" -gt 0 ]; then
               churn_ts_line="memory_emergency_guard_churn_stopped_timestamp_seconds ''${churn_epoch}"
               churn_block=$(awk 'NR>1 && NF { print "memory_emergency_guard_churn_units_stopped{unit=\"" $0 "\"} 1" }' "$CHURN_STOPPED_FILE" 2>/dev/null) || churn_block=""
+            fi
+          fi
+
+          # Backup starvation + bounded catch-up slot (2026-09-28): multi-day
+          # Zone-6 storms never drain under the re-arm threshold above, so
+          # the nightly btrbk sends starved SILENTLY — 2026-09-26..28 the
+          # pool receives stopped for three nights while every 23:00 start
+          # was killed within seconds and zero re-arms ever fired (the
+          # storm drivers were other workloads; btrbk was collateral). Once
+          # the backup-stopped clock exceeds the starvation budget AND io
+          # PSI is below the catch-up resume bar, the backup units are
+          # started and protected from trip stops for a bounded slot — a
+          # still-stormy box re-stops them at the next action after the
+          # slot expires and the starvation clock restarts, so the slot
+          # repeats at most once per starvation window.
+          backup_starved=0
+          backup_stopped_epoch=0
+          if [ -f "$BACKUP_STOPPED_EPOCH_FILE" ]; then
+            backup_stopped_epoch=$(cat "$BACKUP_STOPPED_EPOCH_FILE" 2>/dev/null) || backup_stopped_epoch=0
+          fi
+          backup_stopped_epoch="''${backup_stopped_epoch:-0}"
+          if [ "$backup_stopped_epoch" -gt 0 ] && [ $((now - backup_stopped_epoch)) -gt "$BACKUP_STARVATION_SECONDS" ]; then
+            backup_starved=1
+          fi
+          if
+            [ "$backup_starved" = "1" ] &&
+              [ "$io_psi_some_avg60" != "-1" ] &&
+              awk -v p="$io_psi_some_avg60" 'BEGIN { exit !(p >= 0 && p < ${toString cfg.backupCatchupResumePercent}) }' &&
+              [ "$backup_catchup_active" != "1" ]
+          then
+            # deliberate word splitting over the backup unit list
+            # shellcheck disable=SC2086
+            systemctl start $BACKUP_UNITS 2>/dev/null || true
+            echo "$now" > "$BACKUP_CATCHUP_EPOCH_FILE"
+            rm -f "$BACKUP_STOPPED_EPOCH_FILE"
+            backup_catchup_total=$((backup_catchup_total + 1))
+            echo "$backup_catchup_total" > "$BACKUP_CATCHUP_COUNT_FILE"
+            backup_catchup_active=1
+            backup_catchup_age=0
+            echo "MEMORY EMERGENCY backup catch-up slot granted (#''${backup_catchup_total}): starved backup units started under io PSI some avg60=''${io_psi_some_avg60}% and protected from trip stops for ''${BACKUP_CATCHUP_PROTECT_SECONDS}s (2026-09-26..28: three missed pool-receive nights)" >&2
+            if [ -f "$CHURN_STOPPED_FILE" ]; then
+              catchup_epoch_line=$(awk 'NR == 1 { print; exit }' "$CHURN_STOPPED_FILE" 2>/dev/null) || catchup_epoch_line=""
+              catchup_rest=$(awk -v list="$BACKUP_UNITS" 'BEGIN { n = split(list, a, " "); for (i = 1; i <= n; i++) if (a[i] != "") drop[a[i]] = 1 } NR > 1 && NF && !($0 in drop)' "$CHURN_STOPPED_FILE" 2>/dev/null) || catchup_rest=""
+              if [ -n "$catchup_rest" ]; then
+                {
+                  echo "$catchup_epoch_line"
+                  printf '%s\n' "$catchup_rest"
+                } > "$CHURN_STOPPED_FILE.tmp"
+                mv "$CHURN_STOPPED_FILE.tmp" "$CHURN_STOPPED_FILE"
+              else
+                rm -f "$CHURN_STOPPED_FILE"
+              fi
             fi
           fi
 
@@ -640,6 +812,18 @@ _: {
             echo "# HELP memory_emergency_guard_restore_capped 1 when the socket is down AND the daily restore budget is spent — restart requires manual action (systemctl start <socket>)"
             echo "# TYPE memory_emergency_guard_restore_capped gauge"
             echo "memory_emergency_guard_restore_capped ''${restore_capped}"
+
+            echo "# HELP memory_emergency_guard_backup_starved 1 when backup-class churn units have been stopped longer than backupStarvationSeconds — the nightly pool receives are starving behind a sustained I/O storm (2026-09-26..28: three missed nights, zero re-arms)"
+            echo "# TYPE memory_emergency_guard_backup_starved gauge"
+            echo "memory_emergency_guard_backup_starved ''${backup_starved}"
+
+            echo "# HELP memory_emergency_guard_backup_catchup_protected 1 while a starved-backup catch-up slot is active (backup units protected from trip stops)"
+            echo "# TYPE memory_emergency_guard_backup_catchup_protected gauge"
+            echo "memory_emergency_guard_backup_catchup_protected ''${backup_catchup_active}"
+
+            echo "# HELP memory_emergency_guard_backup_catchup_slots_total Total starved-backup catch-up slots granted since first deploy"
+            echo "# TYPE memory_emergency_guard_backup_catchup_slots_total counter"
+            echo "memory_emergency_guard_backup_catchup_slots_total ''${backup_catchup_total}"
 
             echo "# HELP memory_emergency_guard_churn_rearms_total Total churn-unit re-arms performed after io-PSI drain since first deploy"
             echo "# TYPE memory_emergency_guard_churn_rearms_total counter"
@@ -789,6 +973,41 @@ _: {
             "btrfs-scrub-mnt-pool.service"
           ];
           description = "Resumable I/O churn units stopped on ANY trip (Zone 6's real mitigation: crash #3 was stacked full-disk readers). RE-ARMED (systemctl start, best-effort) by the guard once sustained io PSI drains under the trip threshold — without the re-arm a mid-receive stop pushed the nightly btrbk send a full +24h (the timer had already fired), and a second storm in the 3-day freshness window FAILED the backup check (2026-09-16 23:00 trip #299 class). Each unit's own pre-start guards decide whether it is safe to run; an interrupted receive is healed by btrbk-pool-clean. Stopping an inactive unit is a no-op";
+        };
+
+        backupUnits = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [
+            "btrbk-root.service"
+            "btrbk-data.service"
+            "btrbk-pool.service"
+            "btrbk-forgejo.service"
+          ];
+          description = "Backup-class churn units: stopped on trip like the other ioChurnUnits, but additionally tracked for starvation. When a sustained I/O storm keeps them stopped past backupStarvationSeconds (the 2026-09-26..28 class: multi-day Zone-6 trips, zero re-arms, three missed nightly pool receives), the guard grants a bounded catch-up slot — the units are started once io PSI drains under backupCatchupResumePercent and are protected from trip stops for backupCatchupProtectSeconds. An interrupted btrbk send self-heals incrementally on the next run";
+        };
+
+        backupStarvationSeconds = lib.mkOption {
+          type = lib.types.int;
+          default = 21600;
+          description = "Seconds a backup-class churn unit may stay guard-stopped before backup_starved flips to 1 and a catch-up slot becomes grantable. 6h default: the nightly btrbk cadence means one starved day = one missed pool receive; three days = a failed freshness window";
+        };
+
+        backupCatchupResumePercent = lib.mkOption {
+          type = lib.types.int;
+          default = 50;
+          description = "io PSI some avg60 below which a starved-backup catch-up slot may be granted. Deliberately HIGHER (more permissive) than the full re-arm threshold (ioPsiSomeAvg60ThresholdPercent, 40): backups are allowed to resume into a mild storm rather than starve — but never into the extreme band at or above this bar, where adding a full-disk reader risks the crash #3 livelock";
+        };
+
+        backupCatchupProtectSeconds = lib.mkOption {
+          type = lib.types.int;
+          default = 900;
+          description = "Length of a starved-backup catch-up slot: while active, trip actions KEEP the backup units running (they are skipped in the churn stop). After expiry the normal rules resume — a still-storming box re-stops them at the next action and the starvation clock restarts, bounding the slot to once per starvation window";
+        };
+
+        verboseLogIntervalSeconds = lib.mkOption {
+          type = lib.types.int;
+          default = 600;
+          description = "Minimum seconds between two log lines from the SAME verbose steady-state branch (cooldown-active, restore-capped). They used to log on every 30 s run — live 2026-09-27 22:58-23:00 the restore-capped line fired every 30 s straight. Action/transition lines (trips, restores, re-arms, catch-up grants) always log immediately";
         };
 
         actionCooldownSeconds = lib.mkOption {
