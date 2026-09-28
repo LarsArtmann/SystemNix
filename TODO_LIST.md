@@ -249,6 +249,8 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 
 ### pipeline
 
+- [ ] **Duplicate-row lint in check-todo-system.sh: flag byte-identical one-liner rows within a TODO_LIST.md section and identical asks shared between queue and library (the ffprobe-sweep ask shipped clean through the checker in THREE places: pixel6.md prioritized + backlog + a doubled TODO_LIST row)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-28_20-53_task-000001a0e95aebd871672d672c98258ad103.md §e2)
+
 - [ ] **Pre-deploy batch build of mkLarsPackages + cv + hermes inputs** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Known-outage classification in post-deploy-check** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Eval-time audits for unit-shape contracts (the cv-226 class)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
