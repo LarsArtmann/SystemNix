@@ -364,6 +364,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Surface re-fire counts in tq verify output (go-taskqueue upstream)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-26_04-26_task-000001a0db75dfafa622748a00da7cf19ff9.md §f10)
 - [ ] **Mirror the status-report filename-hygiene micro-rule cross-project (crush-config references/lessons.md, committed THERE per the foreign-repo rule) — or close as wontfix per the lessons.md inclusion-bar verdict (micro-rules in, or major protocols only?)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-27_10-18_task-000001a0e1d32d1561aa2ef250e6ddbfb805.md §f1/§g2)
 - [ ] **AGENTS.md multi-agent-write doctrine: daemon heuristic commits + amend can bypass pre-commit filetype legs — re-run the skipped lint standalone when amending** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-28_20-40_task-000001a0e93f7494428f6bdb90352db02588.md §f7)
+- [ ] **Shellcheck availability wrapper: one command that lints a target script (shellcheck is off the interactive PATH; both the heal-breadcrumb session and the review fix had to improvise)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-29_01-10_task-000001a0ea36b4481a86862b6c993aa70c6b.md §f1)
 
 ### pixel6
 
