@@ -372,6 +372,18 @@ if $cv_enabled; then
     else
       report_fail "CV - browser render smoke failed: pages load but do not RENDER (see /tmp/.smoke-cv-render.log) - string pins can pass while renders break"
     fi
+    # Proxy-path leg (2026-09-28): the loopback leg above deliberately never
+    # exercises the TLS proxy — which is why the dnsblockd leaf-only-chain
+    # PDF failure sat invisible to deploys while browsers tolerated it. The
+    # smoke auto-wires NODE_EXTRA_CA_CERTS from /run/secrets/dnsblockd_ca_cert
+    # (re-exec) and skips its PDF leg with a reason when the CA is absent, so
+    # a red here is a REAL proxy-path regression (render or export through
+    # cv.home.lan), not a trust-environment artifact.
+    if bun /home/lars/projects/CV/scripts/render-smoke.ts https://cv.home.lan >/tmp/.smoke-cv-render-proxy.log 2>&1; then
+      report_pass "CV - proxy-path render smoke (cv.home.lan: renders + PDF export through the TLS proxy)"
+    else
+      report_fail "CV - proxy-path render smoke failed (see /tmp/.smoke-cv-render-proxy.log) - loopback is fine but the proxy path regressed"
+    fi
   else
     report_skip "CV - browser render smoke (cv checkout or bun absent on host)"
   fi
