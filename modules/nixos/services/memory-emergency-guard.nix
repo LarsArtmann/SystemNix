@@ -158,7 +158,6 @@ _: {
           CHURN_UNITS="${lib.concatStringsSep " " cfg.ioChurnUnits}"
           BACKUP_UNITS="${lib.concatStringsSep " " cfg.backupUnits}"
           BACKUP_STARVATION_SECONDS=${toString cfg.backupStarvationSeconds}
-          BACKUP_CATCHUP_RESUME_PERCENT=${toString cfg.backupCatchupResumePercent}
           BACKUP_CATCHUP_PROTECT_SECONDS=${toString cfg.backupCatchupProtectSeconds}
           VERBOSE_LOG_INTERVAL_SECONDS=${toString cfg.verboseLogIntervalSeconds}
 
