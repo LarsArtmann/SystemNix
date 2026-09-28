@@ -355,12 +355,28 @@ fi
 # (Linux-only runtimeInputs, quickshell devShell) ship while every gate was
 # green. Costs ~1s (pure eval).
 log_info "Running Nix flake check (eval-only, all systems, no builds)..."
-if nix flake check --no-build --all-systems > /tmp/nix-check.log 2>&1; then
-    log_success "Nix flake check passed!"
+
+# Docs-only fast path (2026-09-28): when EVERY staged path is .md/.html/.txt,
+# the flake eval cannot be affected by the diff (eval reads .nix sources from
+# the tracked tree only; no guard reads docs) — the leg's only possible
+# outcome on docs commits is environmental flap (store-path evictions,
+# /run/binfmt-style host-FS probes). NOTE: if a future eval-time guard ever
+# starts reading docs files, this skip must be revisited.
+# NOTE: no --diff-filter — DELETED .nix paths must be counted too (a deletion
+# affects eval exactly like an edit).
+STAGED_ALL=$(git diff --cached --name-only)
+if [ -n "$STAGED_ALL" ] && ! git diff --cached --name-only | grep -qvE '\.(md|html|txt)$'; then
+    log_info "Docs-only staged diff (.md/.html/.txt) — skipping Nix flake check (eval invariant to non-nix sources)."
+elif [ -z "$STAGED_ALL" ]; then
+    log_info "No staged files — skipping Nix flake check."
 else
-    log_error "Nix flake check failed!"
-    cat /tmp/nix-check.log
-    all_passed=false
+    if nix flake check --no-build --all-systems > /tmp/nix-check.log 2>&1; then
+        log_success "Nix flake check passed!"
+    else
+        log_error "Nix flake check failed!"
+        cat /tmp/nix-check.log
+        all_passed=false
+    fi
 fi
 
 if [ "$all_passed" = true ]; then
