@@ -204,6 +204,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 
 ### upstream
 
+- [ ] **Post-push go-taskqueue consumption: `nix flake lock --update-input go-taskqueue` + verify FOD/package from our lock + redeploy `tq-agent-pool` (agent-executable once go-taskqueue master is pushed)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **browser-history gate-count gap: read-model `Count()` = 0 despite existing users (found live 2026-09-18)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Upstream cqrs-htmx usermgmt: an ES-registered user was LOST across restarts (found live 2026-09-19)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **PMA discovery daemon starvation — upstream root cause** → [docs/todo/upstream.md](docs/todo/upstream.md)
