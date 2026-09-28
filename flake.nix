@@ -1029,36 +1029,44 @@
             };
 
           # Development shells for different program categories
-          devShells = {
-            default = pkgs.mkShellNoCC {
-              BUILDFLOW_EXCLUDE_PATTERNS = "assets/avatar.png";
-              packages =
-                with pkgs;
-                [
-                  git
-                  nixfmt
-                  alejandra
-                  treefmt
-                  deadnix
-                  shellcheck
-                  statix
-                  gitleaks
-                  jq
-                  sqlc
-                ]
-                ++ [
-                  (mkLarsPackages system).buildflow
+          devShells =
+            {
+              default = pkgs.mkShellNoCC {
+                BUILDFLOW_EXCLUDE_PATTERNS = "assets/avatar.png";
+                packages =
+                  with pkgs;
+                  [
+                    git
+                    nixfmt
+                    alejandra
+                    treefmt
+                    deadnix
+                    shellcheck
+                    statix
+                    gitleaks
+                    jq
+                    sqlc
+                  ]
+                  ++ [
+                    (mkLarsPackages system).buildflow
+                  ];
+              };
+            }
+            # Quickshell development — hot-reload QML shell development.
+            # Linux-only: dms-shell (DankMaterialShell) is Wayland/Linux-only
+            # upstream (meta.platforms), so evaluating this shell on aarch64-
+            # darwin dies "not available on the requested hostPlatform" —
+            # which plain `nix flake check` on Linux never sees (it silently
+            # omits incompatible systems; caught via --all-systems 2026-09-28).
+            // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+              quickshell = pkgs.mkShellNoCC {
+                packages = [
+                  inputs.dankMaterialShell.packages.${system}.default
+                  pkgs.qt6.qtdeclarative
+                  pkgs.qt6.qttools # provides qmlls (QML LSP)
                 ];
+              };
             };
-            # Quickshell development — hot-reload QML shell development
-            quickshell = pkgs.mkShellNoCC {
-              packages = [
-                inputs.dankMaterialShell.packages.${system}.default
-                pkgs.qt6.qtdeclarative
-                pkgs.qt6.qttools # provides qmlls (QML LSP)
-              ];
-            };
-          };
 
           checks =
             let
@@ -1475,10 +1483,20 @@
                   pinMessage = "borg-restore-drill env-path pin";
                   failingPin =
                     assertions: builtins.filter (a: !a.assertion && lib.hasInfix pinMessage a.message) assertions;
+                  # The fixture's NixOS eval is platform-INDEPENDENT (backup.nix
+                  # + integration + sops modules carry no host arch), but it
+                  # must NOT inherit the CHECKING system: on aarch64-darwin
+                  # `nixosSystem { system = "aarch64-darwin"; }` dies — which
+                  # plain `nix flake check` on a Linux runner never sees (it
+                  # silently omits incompatible systems). Pin to linux so the
+                  # negative cases stay LIVE on every platform (eval-only,
+                  # same shape as the evo-x2 cross-system evals in
+                  # disko-samsung-tlc / offsite-borg-positive-render).
                   pinAssertionsOf =
                     modules:
                     (inputs.nixpkgs.lib.nixosSystem {
-                      inherit system modules;
+                      system = "x86_64-linux";
+                      inherit modules;
                     }).config.assertions;
 
                   scriptAnchor = "drillScript = builtins.readFile ../../../scripts/borg-restore-drill.sh;";
