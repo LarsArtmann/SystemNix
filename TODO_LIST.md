@@ -130,6 +130,11 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **pool-recovery residual wiring** → [docs/todo/stability.md](docs/todo/stability.md)
 - [ ] **Root-cause idle-disk/no-D-state IO PSI accounting (pressure gate's corpse heuristic is stale)** → [docs/todo/stability.md](docs/todo/stability.md)
 - [ ] **Break the `hot-user-caches-nix-bootstrap` ↔ `systemd-tmpfiles-setup` boot ordering cycle (systemd deletes tmpfiles-setup from the boot transaction → NO boot tmpfiles rules → `/run/binfmt` missing → EVERY sandbox build fails `getting attributes of path "/run/binfmt"`, the root cause of the pipeline row's 2026-09-25 `treefmt.drv`/`disko-layout` "is not valid" instances) + add a tmpfiles-applied boot tripwire** → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-09-25_02-00_task-000001a0d5af4c01977b1f874e6689edcaae.md §c) — UPDATE 2026-09-25 06:40: ordering fix + tripwire landed in-tree `af87ce31`/`d827f478`, UNDEPLOYED (host gen 797); remaining = quiet-window VM-test run, deploy, reboot-verify
+- [ ] **Wire the heal-breadcrumb call into CONTRIBUTING's verify-gate runbook step 1** (`&& bash scripts/heal-breadcrumb.sh …` appended to the `sudo systemd-tmpfiles --create` heal line — the 05:32 class's actual entry point) → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-09-28_20-40_task-000001a0e93f7494428f6bdb90352db02588.md §f1)
+- [ ] **Capture the invoking human in heal-breadcrumb.sh under sudo** (`user=${SUDO_USER:-$(id -un)}`, uid via `id -u "$user"` — today a sudo run records `root`) → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-09-28_20-40_task-000001a0e93f7494428f6bdb90352db02588.md §f3)
+- [ ] **Sweep docs/services/* runbooks for manual-heal prescriptions and append the breadcrumb one-liner — or record an on-touch-only decision** → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-09-28_20-40_task-000001a0e93f7494428f6bdb90352db02588.md §f4)
+- [ ] **Annotate docs/status/2026-09-25_05-33_* §e5 as answered by the heal-breadcrumb convention** (close the motivating report's loop, its own §e6 habit item) → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-09-28_20-40_task-000001a0e93f7494428f6bdb90352db02588.md §f5)
+- [ ] **Check FEATURES.md for whether the heal-breadcrumb convention/helper warrants an inventory row** → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-09-28_20-40_task-000001a0e93f7494428f6bdb90352db02588.md §f6)
 
 ### monitoring
 
@@ -358,6 +363,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Codify "spot-verify config claims in queued items at queueing time" (one sentence, AGENTS.md TODO-system section)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-26_04-26_task-000001a0db75dfafa622748a00da7cf19ff9.md §f9/e3)
 - [ ] **Surface re-fire counts in tq verify output (go-taskqueue upstream)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-26_04-26_task-000001a0db75dfafa622748a00da7cf19ff9.md §f10)
 - [ ] **Mirror the status-report filename-hygiene micro-rule cross-project (crush-config references/lessons.md, committed THERE per the foreign-repo rule) — or close as wontfix per the lessons.md inclusion-bar verdict (micro-rules in, or major protocols only?)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-27_10-18_task-000001a0e1d32d1561aa2ef250e6ddbfb805.md §f1/§g2)
+- [ ] **AGENTS.md multi-agent-write doctrine: daemon heuristic commits + amend can bypass pre-commit filetype legs — re-run the skipped lint standalone when amending** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-28_20-40_task-000001a0e93f7494428f6bdb90352db02588.md §f7)
 
 ### pixel6
 
