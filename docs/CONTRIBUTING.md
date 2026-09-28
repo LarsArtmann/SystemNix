@@ -193,6 +193,8 @@ Foreign-repo landings annotate closure narratives as SOURCE-LEVEL delivery (2026
 
 Only if all four probe clean does the failure count as INTRODUCED (the only shape that burns task attempts — see the classification row in `docs/todo/pipeline.md`).
 
+**Heal-attribution breadcrumb convention (2026-09-28, task queue).** Any MANUAL system heal — `systemd-tmpfiles --create`, a `nix-daemon` restart, a manual socket/service start, any other hand-run recovery — leaves ONE breadcrumb so forensics can attribute the recovery: `bash scripts/heal-breadcrumb.sh "<what was healed> <how>"` (one `logger -t systemnix-heal` journal line + one stamp in `~/.local/state/systemnix-heals.log`; works unprivileged; never put secret VALUES in the text). Deploys already breadcrumb implicitly (profile trail + deploy.sh journal lines) and module-managed heals are journaled by their own units — this covers only the hand-run gap. Probe: `journalctl -t systemnix-heal`. Motivation: the 2026-09-25 05:32 `/run/binfmt` heal was verified real but its actor was UNKNOWABLE (owner manual heal vs parallel session vs nix-daemon-restart side effect), hanging two task attempts and the gate-row annotations on an unattributed recovery.
+
 ## Eval-Time Guards (audit modules)
 
 Most documented incident classes are ENFORCED at eval time — `nix flake check`
