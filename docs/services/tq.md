@@ -80,6 +80,31 @@ replays).
   midnight (calendar day). Raise `daily-budget` in the house module if the
   queue should burn faster.
 
+## Verify-failure classification (before burning attempts)
+
+A failed verify gate is NOT automatically a task failure. With
+`maxAttempts=3`, one more environmental/slow cycle dead-letters a task that
+was actually DONE — the 2026-09-25 repair-recipe item (`000001a0d686…`) was
+complete since attempt 1 and burned attempts 2-3 on gate failures alone.
+Classify BEFORE counting the attempt against the task:
+
+1. **Pre-existing / environmental (gate dead at the PRE-attempt rev)** —
+   the gate fails where the pre-attempt baseline already failed
+   (e.g. `/run/binfmt` missing from the tmpfiles-cycle class, GC-evicted
+   flake-input sources, stale nix-daemon fetch cache). → **Gate-dead
+   holding state + alert; NOT a task failure.** Probe order:
+   `/run/binfmt` exists → `nix flake check --no-build` at clean HEAD
+   (pre-existing vs introduced) → nix-daemon restart (stale-fetch class).
+2. **Deadline-timeout-with-progress** — the verify died on the queue's
+   time budget while the evaluation was ADVANCING (signature:
+   `context deadline exceeded` with exit_code 0; tq fact 6663: attempt 2
+   killed 30 min after claim, mid-`checks.lsblk-column-names`, under
+   ~50-56% IO PSI). The measured verify budget is ~30 min (2026-09-25); a
+   cold eval cache under an IO storm exceeds it. → **Gate-slow; retry with
+   a warm eval cache; NOT a task failure.**
+3. **Introduced** — the gate fails where the pre-attempt baseline PASSED.
+   → The ONLY shape that counts against the task's attempt budget.
+
 ## Rollback
 
 `services.tq-agent-pool.enable = false` in `configuration.nix` + redeploy
