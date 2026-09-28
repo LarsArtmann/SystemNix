@@ -524,7 +524,9 @@
         go-nix-helpers.follows = "go-nix-helpers";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
-        systems.follows = "systems";
+        # systems: dropped 2026-09-28 — upstream no longer declares a systems
+        # input (flake-parts native systems list), so the follow was dead and
+        # warned "override for a non-existent input" on every nix invocation.
       };
     };
 
@@ -2636,13 +2638,55 @@
               };
             in
             {
+              validate = mkApp "validate" "Validate flake without building" [ pkgs.nix ] ./scripts/validate.sh;
+              fix-nixpkgs-lock =
+                mkApp "fix-nixpkgs-lock"
+                  "Restore the flake.lock nixpkgs node to github type (one-command recovery from the tarball regression)"
+                  [ pkgs.nix pkgs.jq ]
+                  ./scripts/fix-nixpkgs-lock.sh;
+              migrate-hot-db =
+                mkApp "migrate-hot-db"
+                  "User-run migration of a service dataDir onto the Samsung hot-DB tier (services.hot-db): prepare|finalize with pressure gate + verify"
+                  [
+                    pkgs.bash
+                    pkgs.coreutils
+                    pkgs.findutils
+                    pkgs.gawk
+                    pkgs.rsync
+                    pkgs.util-linux
+                  ]
+                  ./scripts/migrate-hot-db.sh;
+              migrate-buildcache =
+                mkApp "migrate-buildcache"
+                  "One-time migration of build caches (Go/Rust/npm/pip/pnpm/playwright) to the USB SSD at /mnt/buildcache. Run BEFORE the first deploy of services.buildcache"
+                  [
+                    pkgs.coreutils # cut, du, find, tr, wc
+                    pkgs.e2fsprogs # e2label
+                    pkgs.findutils
+                    pkgs.gnugrep
+                    pkgs.rsync
+                    pkgs.trash-cli
+                    pkgs.util-linux # findmnt, mountpoint
+                  ]
+                  ./scripts/migrate-buildcache.sh;
+              pocket-id-login-code =
+                mkApp "pocket-id-login-code" "Generate a one-time Pocket ID login code for a new device"
+                  [ pkgs.curl pkgs.jq ]
+                  ./scripts/pocket-id-login-code.sh;
+            }
+            // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+              # evo-x2/NixOS operations apps. Linux-gated (2026-09-28): their
+              # runtimeInputs carry Linux-only nixpkgs (systemd, procps,
+              # efibootmgr, btrfs-progs, glibc) which REFUSE TO EVALUATE on
+              # aarch64-darwin — plain `nix flake check` on a Linux runner
+              # silently omits the darwin system, so the breakage is only
+              # visible via `nix flake check --all-systems` (or on the Mac).
               deploy = mkApp "deploy" "Deploy NixOS config to evo-x2 via nh with post-deploy checks" [
                 pkgs.nh
                 pkgs.systemd
                 pkgs.util-linux # flock — concurrent-deploy guard (T13)
-                pkgs.procps # ps/pgrep — wedged switch-to-configuration detection
+                pkgs.procps # ps/pgrep — wedged switch_to-configuration detection
               ] ./scripts/deploy.sh;
-              validate = mkApp "validate" "Validate flake without building" [ pkgs.nix ] ./scripts/validate.sh;
               io-psi-forensics =
                 mkApp "io-psi-forensics"
                   "Snapshot per-cgroup I/O attribution + D-state stacks to /var/tmp (run during an I/O storm; same script the guard fires on trip)"
@@ -2655,11 +2699,6 @@
                     pkgs.systemd
                   ]
                   ./scripts/io-psi-forensics.sh;
-              fix-nixpkgs-lock =
-                mkApp "fix-nixpkgs-lock"
-                  "Restore the flake.lock nixpkgs node to github type (one-command recovery from the tarball regression)"
-                  [ pkgs.nix pkgs.jq ]
-                  ./scripts/fix-nixpkgs-lock.sh;
               pre-deploy-check =
                 let
                   # mkApp single-files scripts, but pre-deploy-check.sh
@@ -2767,47 +2806,16 @@
                     pkgs.util-linux # findmnt + lsblk
                   ]
                   ./scripts/boot-mirror-activate.sh;
-              migrate-hot-db =
-                mkApp "migrate-hot-db"
-                  "User-run migration of a service dataDir onto the Samsung hot-DB tier (services.hot-db): prepare|finalize with pressure gate + verify"
-                  [
-                    pkgs.bash
-                    pkgs.coreutils
-                    pkgs.findutils
-                    pkgs.gawk
-                    pkgs.rsync
-                    pkgs.util-linux
-                  ]
-                  ./scripts/migrate-hot-db.sh;
               btrfs-inventory = mkApp "btrfs-inventory" "List all BTRFS subvolumes, snapshots, and mount points" [
                 pkgs.btrfs-progs
                 pkgs.util-linux
                 pkgs.coreutils
                 pkgs.findutils
               ] ./scripts/btrfs-subvolume-inventory.sh;
-              migrate-buildcache =
-                mkApp "migrate-buildcache"
-                  "One-time migration of build caches (Go/Rust/npm/pip/pnpm/playwright) to the USB SSD at /mnt/buildcache. Run BEFORE the first deploy of services.buildcache"
-                  [
-                    pkgs.coreutils # cut, du, find, tr, wc
-                    pkgs.e2fsprogs # e2label
-                    pkgs.findutils
-                    pkgs.gnugrep
-                    pkgs.rsync
-                    pkgs.trash-cli
-                    pkgs.util-linux # findmnt, mountpoint
-                  ]
-                  ./scripts/migrate-buildcache.sh;
               verify-io-tiers = mkApp "verify-io-tiers" "Verify BFQ I/O priority tiers are correctly applied" [
                 pkgs.systemd
                 pkgs.procps
               ] ./scripts/verify-io-tiers.sh;
-              pocket-id-login-code =
-                mkApp "pocket-id-login-code" "Generate a one-time Pocket ID login code for a new device"
-                  [ pkgs.curl pkgs.jq ]
-                  ./scripts/pocket-id-login-code.sh;
-            }
-            // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
               dns-diagnostics =
                 mkApp "dns-diagnostics" "Run DNS stack diagnostics (resolution, blocking, stats, connectivity)"
                   [
