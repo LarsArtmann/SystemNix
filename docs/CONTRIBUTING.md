@@ -159,6 +159,8 @@ scripts/verify-deployment.sh   # Deployment readiness validator
 
 ### Verification conventions (2026-09-15, window-closeout harvest)
 
+**Deploy verdicts: read them from the source, never from memory (2026-09-28, SUPERB F14.3).** Every deploy's outcome lives in exactly two places: `journalctl -t systemnix-deploy-tail` (tagged lines, fastest) and `/var/log/systemnix-deploys/<timestamp>.log` (world-readable full log). Exit-code semantics: **0** = clean switch + smoke green; **3** = post-deploy smoke regression (`grep -E '❌|FAIL' <log>` names the legs); **12** = PRE-deploy pressure-gate refusal (the switch never ran — check `journalctl -u memory-emergency-guard` for the trip window before re-trying; a refused deploy is not a code regression). The smoke's per-service verdict contract is documented in `scripts/post-deploy-check.sh` (e.g. Browser History `/health` 503 = agent-freshness decay = WARN, not FAIL; FastFlowLM unreachable while the guard holds the socket down = FAIL by design until O2 policy lands).
+
 **The 3-step probe — every "verified" claim names its depth.** A claim that something works is one of exactly three levels; record which steps ran and never skip silently:
 
 1. **Code exists** — the fix/config is present in the tracked tree.
