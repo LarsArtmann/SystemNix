@@ -632,6 +632,25 @@ _: {
                   ];
                 })
                 (mkHttpCheck {
+                  name = "Root FS Early Warning (93%)";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  # 2026-09-28: the "Root Disk Space" check above is
+                  # presence-only — it can NEVER go red however full / gets.
+                  # This is the missing threshold (SUPERB host-health M10):
+                  # fire at 93% collector-scale (statvfs — reads ~3pp below
+                  # df's reserve-inflated Use%; df said 90% while this metric
+                  # read 86), well before CV's own 97.3% health-fail cliff.
+                  # Banded glob matches integer values 93-99; 100% belongs to
+                  # the BTRFS Chunk Health / availability checks.
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*storage_collector_fs_used_percent{device=\"/dev/nvme1n1p6\",mount_point=\"/\",fstype=\"btrfs\"} 9[3-9]*)"
+                  ];
+                  alerts = discordAlert "Root filesystem >=93% used (collector scale, statvfs) — approaching the 97.3% health-fail cliff. Run the M6 deletion proposal, the coredump vacuum (~958MB), nix-gc (auto-blocked below 5GiB btrfs unalloc), and review btrbk snapshot retention. Live value: storage_collector_fs_used_percent mount_point=\"/\".";
+                })
+                (mkHttpCheck {
                   name = "BTRFS Chunk Health";
                   group = "Filesystem";
                   url = "http://localhost:${toString nodePort}/metrics";
