@@ -43,6 +43,17 @@ let
     sourcePreference = "wheel";
   };
 
+  # Legacy sdists that use setuptools' legacy backend without declaring it
+  # (uv2nix docs "patching deps" pattern: resolveBuildSystem injection).
+  pyprojectOverrides = final: prev: {
+    geohash2 = prev.geohash2.overrideAttrs (old: {
+      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ final.resolveBuildSystem { setuptools = [ ]; };
+    });
+    ipy = prev.ipy.overrideAttrs (old: {
+      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ final.resolveBuildSystem { setuptools = [ ]; };
+    });
+  };
+
   python = pkgs.python313;
 
   pythonSet =
@@ -53,6 +64,7 @@ let
         lib.composeManyExtensions [
           pyproject-build-systems.overlays.wheel
           overlay
+          pyprojectOverrides
         ]
       );
 
@@ -81,13 +93,31 @@ let
 
     installPhase = ''
       runHook preInstall
+      # A fixed-output derivation must not reference store paths. Two classes
+      # leak them into a bun-installed node_modules:
+      # 1) transitive packages shipping repo flake.lock files with /nix/store
+      #    source pins (lodash et al.) — inert for the build, delete them
+      # 2) bun rewrites `#!/usr/bin/env X` shebangs of package scripts to the
+      #    sandbox-resolved interpreter store path (playwright-core .sh class)
+      #    — restore portable env shebangs
+      find node_modules -name flake.lock -delete
+      grep -a -r -l -Z "^#!/nix/store/" node_modules 2>/dev/null |
+        while IFS= read -r -d "" f; do
+          sed -E -i '1s|^#!/nix/store/[a-z0-9]+-[^ ]*/bin/(sh|bash|node)$|#!/usr/bin/env \1|' "$f"
+        done
+      # Self-test: fail loudly if any store path still remains.
+      if grep -a -r -q "/nix/store" node_modules 2>/dev/null; then
+        echo "geometrikks-bun-deps: /nix/store references remain after scrub:" >&2
+        grep -a -r -l "/nix/store" node_modules 2>/dev/null | head -5 >&2
+        exit 1
+      fi
       cp -r node_modules "$out"
       runHook postInstall
     '';
 
     outputHashMode = "recursive";
     outputHashAlgo = "sha256";
-    outputHash = lib.fakeHash;
+    outputHash = "sha256-cshXAV1upoGsuO4M50h/kGBwLHblZQQFt1124nGAXBU=";
   };
 
   # ---- vite frontend build (upstream Dockerfile frontend-builder stage) ----
