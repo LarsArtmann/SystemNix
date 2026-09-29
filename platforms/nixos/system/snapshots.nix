@@ -511,6 +511,15 @@ in
       # post-deploy window ("Is a directory" on all three units), silently
       # suspending ALL scrub coverage incl. the /data corruption-delta gate.
       "btrfs-scrub@".serviceConfig.ExecStart = lib.mkForce "${lib.getExe scrubGuard} %f";
+      # A guard-stopped (or shutdown ExecStop-canceled) scrub makes the btrfs
+      # CLI exit 1 ("Status: aborted" — journal 2026-09-28 02:27, both / and
+      # /data) even with "Error summary: no errors found", parking the oneshot
+      # in FAILED — the chronic-FAIL exit-4 hazard on unit-file churn. Exit 1
+      # is the deliberate containment outcome, so it is SUCCESS here; REAL
+      # scrub errors exit 3 (journal 2026-09-21 @data: csum=129533 →
+      # status=3) and keep failing as the corruption tripwire, and the
+      # btrfs-health metrics + Gatus checks own the error signal regardless.
+      "btrfs-scrub@".serviceConfig.SuccessExitStatus = [ 1 ];
 
       # ── btrbk clean: GC for garbled receive targets ────────────────────────
       # `btrbk clean` is btrbk's sanctioned garbage collector for incomplete
