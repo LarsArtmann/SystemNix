@@ -117,12 +117,18 @@
       # inside -c — the miniflux-oidc-setup lesson).
       dbProvision = pkgs.writeShellScript "geometrikks-db-provision" ''
         set -euo pipefail
-        psql="${config.services.postgresql.package}/bin/psql -v ON_ERROR_STOP=1"
+        # Function, NOT a "psql -v ..." variable: a quoted variable expands
+        # to ONE word (spaces included) and exec fails with 127 "No such file
+        # or directory" (the 2026-09-29 live failure — quotes parse at
+        # definition time only in functions).
+        psql() {
+          "${config.services.postgresql.package}/bin/psql" -v ON_ERROR_STOP=1 "$@"
+        }
 
         # Bounded wait for the cluster + ensure-* machinery (nixpkgs runs
         # ensureDatabases/ensureUsers in postgresql.service postStart).
         for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
-          if "$psql" -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='geometrikks';" | grep -q 1; then
+          if psql -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='geometrikks';" | grep -q 1; then
             break
           fi
           sleep 2
@@ -140,12 +146,12 @@
           exit 1
         fi
 
-        "$psql" -d postgres -c "ALTER ROLE geometrikks WITH LOGIN PASSWORD '$pw';"
+        psql -d postgres -c "ALTER ROLE geometrikks WITH LOGIN PASSWORD '$pw';"
         # Both extensions are superuser-only to create; the app's alembic
         # migration runs CREATE EXTENSION IF NOT EXISTS postgis itself and
         # server/timescale.py applies the TimescaleDB objects — both find
         # the extension already present.
-        "$psql" -d geometrikks \
+        psql -d geometrikks \
           -c "CREATE EXTENSION IF NOT EXISTS timescaledb;" \
           -c "CREATE EXTENSION IF NOT EXISTS postgis;" \
           -c "ALTER DATABASE geometrikks SET timescaledb.max_background_workers = '32';" \
