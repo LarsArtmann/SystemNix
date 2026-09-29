@@ -155,6 +155,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 
 ### monitoring
 
+- [ ] **GCP integration hardening batch (VM test, CHANGELOG, smoke §, dnsblockd restart semantics)** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **SigNoz GCP integration: deploy the executed go-live + verify live metric names** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **Textfile-collector fixed-name `.tmp` audit (the niri EACCES class) + stale `btrfs-compression.prom.tmp` check** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **system-health-metrics worst-case section sum (≈500s) exceeds the 180s unit ceiling AND the 120s timer cadence — the collector structurally cannot finish under an IO storm** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
