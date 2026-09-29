@@ -7,77 +7,77 @@ in
   blocklists = [
     {
       name = "StevenBlack-everything";
-      url = "https://raw.githubusercontent.com/StevenBlack/hosts/4a68876c7fc71ecd572ad74e491b75a52ef2d31b/alternates/fakenews-gambling-porn-social/hosts";
+      url = "https://raw.githubusercontent.com/StevenBlack/abe587abf7979d93b7a8267d5d3e1fbc32541163/4a68876c7fc71ecd572ad74e491b75a52ef2d31b/alternates/fakenews-gambling-porn-social/abe587abf7979d93b7a8267d5d3e1fbc32541163";
       hash = "sha256-62so0hxvFuvnt0attejVSkTEBScWLyY5i+6xvgFCIdk=";
     }
     {
       name = "HaGeZi-ultimate";
-      url = hagezi "hosts/ultimate.txt";
+      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/ultimate.txt";
       hash = "sha256-TpkNSSRTbStKDw4ZNrhKU9PGR7x31XYTW6In+K448ig=";
     }
     {
       name = "HaGeZi-tif";
-      url = hagezi "hosts/tif.txt";
+      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/tif.txt";
       hash = "sha256-nfeJy0brn3ICHweoXbYYT2pwgwpSyr+c/g/M3Y8Tzsw=";
     }
     {
       name = "HaGeZi-doh";
-      url = hagezi "hosts/doh.txt";
+      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/doh.txt";
       hash = "sha256-ag2D72d8AWJ3UHXzPu+jgVbeBtY1UOHfHG6J8kj8WkQ=";
     }
     {
       name = "HaGeZi-native-apple";
-      url = hagezi "hosts/native.apple.txt";
+      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.apple.txt";
       hash = "sha256-RTK5WhFc1sWnutDkRy+Lfcj8ys5SjFnFLi7c2Xn8qp4=";
     }
     {
       name = "HaGeZi-native-amazon";
-      url = hagezi "hosts/native.amazon.txt";
+      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.amazon.txt";
       hash = "sha256-fOdp2YbyP8Hl8wlBsCid1pZaJ8XDJ2m1Oa57mTLecs0=";
     }
     {
       name = "HaGeZi-native-samsung";
-      url = hagezi "hosts/native.samsung.txt";
+      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.samsung.txt";
       hash = "sha256-Y/07IH5SYyD24eJnfd18Yjm90MAzPIffIrA+x6jtBQk=";
     }
     {
       name = "HaGeZi-native-xiaomi";
-      url = hagezi "hosts/native.xiaomi.txt";
+      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.xiaomi.txt";
       hash = "sha256-0TFOOSW6kOos8huTq/iZpyTAJbDgZ9X0CsHoxDuk4Bc=";
     }
     {
       name = "HaGeZi-native-huawei";
-      url = hagezi "hosts/native.huawei.txt";
+      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.huawei.txt";
       hash = "sha256-S0Twsy6KDuMj/VFp3U/SwxpjdUXklLJLq0881GESGrc=";
     }
     {
       name = "HaGeZi-native-lgwebos";
-      url = hagezi "hosts/native.lgwebos.txt";
+      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.lgwebos.txt";
       hash = "sha256-lPBxpNKw0sLtdptEqBEDt3g4H6HD1bXhiaQdhUhZgGA=";
     }
     {
       name = "HaGeZi-native-oppo-realme";
-      url = hagezi "hosts/native.oppo-realme.txt";
+      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.oppo-realme.txt";
       hash = "sha256-26DbGxOGeByNCAOgOh1ur866t4uySYCh2ZZ46sb7OHs=";
     }
     {
       name = "HaGeZi-native-roku";
-      url = hagezi "hosts/native.roku.txt";
+      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.roku.txt";
       hash = "sha256-VdpKYQXSSXtzzJi1yNMNbwn4a9ihB9PwYnJsalKm6XU=";
     }
     {
       name = "HaGeZi-native-vivo";
-      url = hagezi "hosts/native.vivo.txt";
+      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.vivo.txt";
       hash = "sha256-OUJ4QLR5+xVqBkv8PYL7X/bqmAK7DZ15B3acvZ+pxlU=";
     }
     {
       name = "HaGeZi-native-winoffice";
-      url = hagezi "hosts/native.winoffice.txt";
+      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.winoffice.txt";
       hash = "sha256-3jS4KyRtMlW6E0mLYUoQw7HvrFFztq6q/8qlrWY6dE0=";
     }
     {
       name = "HaGeZi-native-tiktok-extended";
-      url = hagezi "hosts/native.tiktok.extended.txt";
+      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.tiktok.extended.txt";
       hash = "sha256-R1UpS94d4+pEsczgMjrjjPtTgbYktLR/TFuKQ+nOiw8=";
     }
     {

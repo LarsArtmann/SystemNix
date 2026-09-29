@@ -102,9 +102,15 @@ let
       #    — restore portable env shebangs
       find node_modules -name flake.lock -delete
       # POSIX-portable (phase shells are NOT guaranteed bash — `read -d`
-      # broke here first): find -exec sh -c batches the files as args.
+      # broke here first): find -exec sh -c batches the files as args. The
+      # head|tr binary guard keeps `$(...)` free of null bytes (dash prints
+      # a warning per polluted substitution otherwise).
       find node_modules -type f -exec sh -c '
         for f do
+          case "$(head -c 2 "$f" | tr -d "\0" 2>/dev/null)" in
+            "#!") ;;
+            *) continue ;;
+          esac
           first=$(sed -n "1p" "$f" 2>/dev/null) || continue
           case "$first" in
             "#!/nix/store/"*/bin/sh) repl="#!/usr/bin/env sh" ;;
