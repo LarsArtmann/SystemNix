@@ -39,9 +39,11 @@ Only future-trigger: remote hosts (macOS agent, rpi3-dns) → `systemd-journal-r
 
 ## Part 3 — SigNoz → "Grafana level": ranked blockers
 
-### P0 — Telemetry retention is unmanaged (operational survival)
+### P0 — Telemetry retention is unmanaged (operational survival) — **owner decision 2026-09-29: APPEND-ONLY preferred, no TTLs**
 
-ClickHouse *internal* self-logs have converged 14d TTLs (`signoz.nix:85-611`), but the **ingested** `signoz_logs` / `signoz_traces` / `signoz_metrics` databases grow unboundedly. Our own alert names this (`signoz.nix:1331`, XFS 85%: "telemetry retention grows unboundedly … tighten TTLs in signoz.nix"). The ClickHouse data dir sits on a ~100 GiB XFS partition that **cannot shrink** — the end state of inaction is the observability stack dying with the partition. Fix: per-signal retention (SigNoz data-retention setting and/or ClickHouse TTLs on the signoz_* tables), sized so metrics keep long horizons while traces/logs are bounded.
+ClickHouse *internal* self-logs have converged 14d TTLs (`signoz.nix:85-611`), but the **ingested** `signoz_logs` / `signoz_traces` / `signoz_metrics` databases grow unboundedly. Our own alert names this (`signoz.nix:1331`, XFS 85%: "telemetry retention grows unboundedly … tighten TTLs in signoz.nix"). The ClickHouse data dir sits on a ~100 GiB XFS partition that **cannot shrink** — the end state of inaction is the observability stack dying with the partition.
+
+**Owner decision (2026-09-29, "I like my append only"): do NOT add deletion TTLs to ingested telemetry.** Current state already matches the preference — nothing deletes `signoz_*` data today. Accepting that, the P0 becomes *make append-only safe* instead of *bound it*: (a) measure actual fill velocity (GB/day from the `clickhouse-xfs-metrics` collector via a state-file delta — 34% / 34G of 100G used at decision time, so there is no near-term pressure), (b) alert on projected time-to-fill rather than only the static 85% mark, and (c) if growth ever forces a choice, the append-only-compatible lever is ClickHouse `TTL TO VOLUME` tiering to the HDD pool (data moved, not deleted, still queryable) — NOT deletion TTLs. Do not re-propose per-signal deletion windows; that door is closed unless the owner reopens it.
 
 ### P1 — Traces are SigNoz's differentiator, and they are mostly dark
 
@@ -76,6 +78,10 @@ Migrating means Grafana + Loki + Tempo (or VM/VMLogs per the 2026-08-18 doc) + r
 
 ## Follow-ups (not yet harvested — deliberately, research doc)
 
-1. **[P0]** Configure SigNoz/ClickHouse retention for signoz_logs / signoz_traces / signoz_metrics (owner decision on windows, e.g. logs 14d, traces 7-14d, metrics 30-90d).
+1. **[P0 → reframed]** ~~Configure retention windows~~ **Owner chose append-only (2026-09-29)** — instead: add fill-velocity measurement + time-to-fill alerting to `clickhouse-xfs-metrics`; escalation path if ever needed is `TTL TO VOLUME` tiering to the pool, never deletion.
 2. **[P1]** spanmetrics + servicegraph connectors in `signoz.nix` collector config + a service-map/R dashboard.
 3. **[P1]** OTel trace instrumentation upstream in overview, projects-management-automation, papdashboard, hermes (flip `wiring` in `signoz-coverage.nix` as each lands).
+
+## Decisions
+
+- **2026-09-29 — Append-only telemetry (owner):** no deletion TTLs on ingested `signoz_*` data; retention follow-up reframed to velocity monitoring + pool tiering as the only sanctioned lever. Items 2 and 3 green-lit for implementation same day.
