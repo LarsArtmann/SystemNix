@@ -135,8 +135,7 @@ in
       # the receiver's collection_interval applies to its whole metric
       # list, and polling daily-measured gauges at 300s only burns
       # Monitoring API read quota ($0.01/1k calls, 1M/month free).
-      gcpMonitoringEnabled =
-        cfg.enable && cfg.gcpMonitoring.enable && cfg.components.otelCollector;
+      gcpMonitoringEnabled = cfg.enable && cfg.gcpMonitoring.enable && cfg.components.otelCollector;
       gcpReceivers =
         let
           metricEntry = name: { metric_name = name; };
@@ -146,29 +145,25 @@ in
           };
         in
         lib.foldl' lib.mergeAttrs { } (
-          lib.mapAttrsToList
+          lib.mapAttrsToList (
+            projectId: project:
             (
-              projectId: project:
-              (
-                let
-                  fastMetrics =
-                    lib.optionals project.cloudRun gcpRunMetrics
-                    ++ lib.optionals project.cloudFunctions gcpFunctionsMetrics
-                    ++ project.extraMetrics;
-                in
-                lib.optionalAttrs (fastMetrics != [ ]) {
-                  "googlecloudmonitoring/${projectId}" =
-                    mkReceiver cfg.gcpMonitoring.collectionInterval fastMetrics;
-                }
-                // lib.optionalAttrs project.storage {
-                  "googlecloudmonitoring/${projectId}-storage" =
-                    mkReceiver cfg.gcpMonitoring.storageCollectionInterval gcpStorageMetrics;
-                }
-              )
+              let
+                fastMetrics =
+                  lib.optionals project.cloudRun gcpRunMetrics
+                  ++ lib.optionals project.cloudFunctions gcpFunctionsMetrics
+                  ++ project.extraMetrics;
+              in
+              lib.optionalAttrs (fastMetrics != [ ]) {
+                "googlecloudmonitoring/${projectId}" = mkReceiver cfg.gcpMonitoring.collectionInterval fastMetrics;
+              }
+              // lib.optionalAttrs project.storage {
+                "googlecloudmonitoring/${projectId}-storage" =
+                  mkReceiver cfg.gcpMonitoring.storageCollectionInterval gcpStorageMetrics;
+              }
             )
-            cfg.gcpMonitoring.projects
+          ) cfg.gcpMonitoring.projects
         );
-
 
       # ClickHouse internal self-logs (system db) shipped WITHOUT TTLs on this
       # install — 52 GiB / 9.13B rows (90% of the data dir) measured 2026-08-17.
@@ -1374,10 +1369,11 @@ in
                       exporters = [ "clickhousetraces" ];
                     };
                     metrics = {
-                      receivers =
-                        [ "otlp" ]
-                        ++ lib.optional cfg.components.nodeExporter "prometheus"
-                        ++ lib.optionals gcpMonitoringEnabled (builtins.attrNames gcpReceivers);
+                      receivers = [
+                        "otlp"
+                      ]
+                      ++ lib.optional cfg.components.nodeExporter "prometheus"
+                      ++ lib.optionals gcpMonitoringEnabled (builtins.attrNames gcpReceivers);
                       processors = [
                         "memory_limiter"
                         "batch"
@@ -1407,35 +1403,52 @@ in
             # (runbook: docs/services/signoz-gcp-monitoring.md) — receivers
             # then start, scrape, and fail 403 per interval without touching
             # the rest of the pipeline.
-            (lib.mkIf gcpMonitoringEnabled (lib.optionalAttrs (options ? sops) {
-              sops.secrets."signoz-gcp-credentials" = {
-                sopsFile = ../../../platforms/nixos/secrets/signoz-gcp-monitoring.yaml;
-                key = "signoz_gcp_credentials_json";
-                # Rendered raw as the credential file itself (the value IS
-                # the service-account JSON), read via
-                # GOOGLE_APPLICATION_CREDENTIALS by the collector process.
-                owner = "signoz";
-                group = "signoz";
-                mode = "0400";
-                restartUnits = [ "signoz-collector.service" ];
-              };
-              systemd.services.signoz-collector.serviceConfig.Environment = [
-                "GOOGLE_APPLICATION_CREDENTIALS=${config.sops.secrets."signoz-gcp-credentials".path}"
-              ];
-            }))
+            (lib.mkIf gcpMonitoringEnabled (
+              lib.optionalAttrs (options ? sops) {
+                sops.secrets."signoz-gcp-credentials" = {
+                  sopsFile = ../../../platforms/nixos/secrets/signoz-gcp-monitoring.yaml;
+                  key = "signoz_gcp_credentials_json";
+                  # Rendered raw as the credential file itself (the value IS
+                  # the service-account JSON), read via
+                  # GOOGLE_APPLICATION_CREDENTIALS by the collector process.
+                  owner = "signoz";
+                  group = "signoz";
+                  mode = "0400";
+                  restartUnits = [ "signoz-collector.service" ];
+                };
+                systemd.services.signoz-collector.serviceConfig.Environment = [
+                  "GOOGLE_APPLICATION_CREDENTIALS=${config.sops.secrets."signoz-gcp-credentials".path}"
+                ];
+              }
+            ))
 
             { }
 
             {
-              assertions = lib.optionals cfg.enable [
-                {
-                  assertion =
-                    !(lib.hasInfix "<background_pool_size>2</background_pool_size>" (
-                      config.services.clickhouse.extraServerConfig or ""
-                    ));
-                  message = "signoz: background_pool_size=2 triggers ClickHouse merge_tree sanity check failures. Use the default (16).";
-                }
-              ];
+              assertions =
+                lib.optionals gcpMonitoringEnabled [
+                  {
+                    assertion = options ? sops;
+                    message = "signoz.gcpMonitoring requires the sops-nix module (config.sops) for the service-account credential — import sops-nix on this host or disable gcpMonitoring";
+                  }
+                  {
+                    assertion = builtins.pathExists ../../../platforms/nixos/secrets/signoz-gcp-monitoring.yaml;
+                    message = "signoz.gcpMonitoring: platforms/nixos/secrets/signoz-gcp-monitoring.yaml is missing (git-tracked sops file carrying signoz_gcp_credentials_json)";
+                  }
+                  {
+                    assertion = cfg.gcpMonitoring.projects != { };
+                    message = "signoz.gcpMonitoring is enabled with no projects — enable at least one project preset (services.signoz.gcpMonitoring.projects.<id>.cloudRun/.cloudFunctions/.storage)";
+                  }
+                ]
+                ++ lib.optionals cfg.enable [
+                  {
+                    assertion =
+                      !(lib.hasInfix "<background_pool_size>2</background_pool_size>" (
+                        config.services.clickhouse.extraServerConfig or ""
+                      ));
+                    message = "signoz: background_pool_size=2 triggers ClickHouse merge_tree sanity check failures. Use the default (16).";
+                  }
+                ];
             }
 
           ]
@@ -1490,6 +1503,28 @@ in
                     "[BODY] == pat(*clickhouse_xfs_usage_over_threshold 0*)"
                   ];
                   alert = "ClickHouse XFS data filesystem exceeds 85% — XFS cannot shrink and telemetry retention grows unboundedly. Check per-table sizes (clickhouse-client 'SELECT database, formatReadableSize(sum(bytes_on_disk)) FROM system.parts GROUP BY database') and tighten TTLs in signoz.nix (clickhouseInternalLogs / signoz_logs / signoz_traces retention).";
+                }
+              ]
+              ++ lib.optionals gcpMonitoringEnabled [
+                {
+                  # Receiver-liveness: the receiver label only appears in
+                  # the collector's own otelcol_* sample lines once the
+                  # googlecloudmonitoring scraper actually ran (success OR
+                  # error — the placeholder-key state intentionally reads
+                  # green here while DATA freshness is owned by the
+                  # absence of GCP metrics on the dashboard). HELP/TYPE
+                  # comments never contain label strings, so the pat is
+                  # phantom-green-safe. Collector self-metrics bind
+                  # 127.0.0.1:${ports.signoz-collector-metrics}.
+                  name = "GCP Metrics Receiver";
+                  group = "Telemetry";
+                  url = "http://127.0.0.1:${toString ports.signoz-collector-metrics}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*receiver=\"googlecloudmonitoring/*)"
+                  ];
+                  alert = "GCP Metrics Receiver: the SigNoz collector lost its googlecloudmonitoring receivers — GCP Cloud Monitoring ingestion is dark (config regression or collector running a stale generation). Check: systemctl status signoz-collector, journalctl -u signoz-collector | grep googlecloudmonitoring";
                 }
               ];
               homepage = {

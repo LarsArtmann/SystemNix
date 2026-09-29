@@ -2078,6 +2078,47 @@
                 touch $out
               '';
 
+              # The 2026-09-29 gatus config-panic incident: an alert
+              # description containing `\"` (mount_point="/") made gatus
+              # 5.36.0 panic AT STARTUP ("alert description must not have
+              # \" or \") — crash-looping the whole monitoring stack while
+              # every restart fired a notify-failure@ critical popup
+              # (~5s cycle, unsuppressible by DMS DND). Source-level lints
+              # cannot see the RENDERED config (descriptions are composed
+              # across registry modules), so this check runs the REAL gatus
+              # binary's `validate` against the exact yaml the evo-x2 unit
+              # loads. NOTE: `gatus validate` also tries to open its sqlite
+              # DB AFTER validation — that panic (exit 2, "unable to open
+              # database file") is EXPECTED in the sandbox and deliberately
+              # ignored; the pass condition is the "Validated N endpoints"
+              # line plus absence of "error parsing config". Do not set
+              # GATUS_LOG_LEVEL=WARN here — the endpoint-count line is INFO.
+              gatus-config-parse =
+                let
+                  sys = inputs.self.nixosConfigurations.evo-x2;
+                  configFile = sys.config.services.gatus.configFile;
+                  gatus = sys.config.services.gatus.package;
+                in
+                pkgs.runCommand "gatus-config-parse-check"
+                  { nativeBuildInputs = [ gatus ]; }
+                  ''
+                    GATUS_OIDC_CLIENT_SECRET=check-dummy GATUS_CONFIG_PATH=${configFile} \
+                      gatus validate > validate.log 2>&1 || true
+                    if grep -q 'error parsing config' validate.log; then
+                      echo "FAIL: gatus rejected the rendered config (alert descriptions must not contain quote or backslash):"
+                      cat validate.log
+                      exit 1
+                    fi
+                    if ! grep -qE 'Validated [0-9]+ endpoints' validate.log; then
+                      echo "FAIL: no endpoint-validation line — validate never completed config validation:"
+                      cat validate.log
+                      exit 1
+                    fi
+                    echo "OK: gatus validated the rendered config:"
+                    grep -E 'Validated [0-9]+ endpoints' validate.log | head -1
+                    cp validate.log $out
+                  '';
+
               # The pre-commit hook's shellcheck leg is the stricter bar
               # (warning; CI's shellcheck job is error-level) but only fires
               # on STAGED files — this fixture proves it end-to-end so
