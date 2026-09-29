@@ -154,7 +154,6 @@
         psql -d geometrikks \
           -c "CREATE EXTENSION IF NOT EXISTS timescaledb;" \
           -c "CREATE EXTENSION IF NOT EXISTS postgis;" \
-          -c "ALTER DATABASE geometrikks SET timescaledb.max_background_workers = '32';" \
           -c "ALTER DATABASE geometrikks SET max_parallel_workers = '8';"
         echo "geometrikks-db-provision: role password set, extensions ensured, per-DB tuning applied"
       '';
@@ -239,6 +238,11 @@
           settings = {
             shared_preload_libraries = [ "timescaledb" ];
             max_worker_processes = 48;
+            # POSTMASTER-class (same as max_worker_processes): PG17 rejects
+            # `ALTER DATABASE SET` on it ("cannot be changed without restarting
+            # the server" — live 2026-09-29, exit-4'd the activation), so it
+            # lives HERE, not in the provision script.
+            timescaledb.max_background_workers = 32;
           };
         };
 
