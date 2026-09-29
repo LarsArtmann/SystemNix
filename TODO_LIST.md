@@ -116,6 +116,8 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Hermes restore drill: receive one `@home-hermes.*` into a scratch subvol + diff against live — BLOCKED: needs root for `btrfs receive`** → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-09-26_04-26_task-000001a0db75dfafa622748a00da7cf19ff9.md §f7)
 - [ ] **Owner decision: btrbk `transaction_log` persistence (retention-bounded) so prune/send forensics survive journal vacuum** → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-09-26_04-26_task-000001a0db75dfafa622748a00da7cf19ff9.md §f8)
 - [ ] **One comment block in `btrfs-verify-snapshots`: the gate checks the NEWEST snapshot's age per prefix only — 11d mid-week weeklies are expected** → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-09-26_04-26_task-000001a0db75dfafa622748a00da7cf19ff9.md §f11)
+- [ ] **Caddy access logs → Samsung sibling subvol** → [docs/todo/storage.md](docs/todo/storage.md) — journal-hot pattern minus the ordering edge; same window as the journal go-live ideally
+- [ ] **Fix the 4 hot-db vehicle defects (first-run gate, finalize verify, dry-run crash, timer window)** → [docs/todo/storage.md](docs/todo/storage.md) — before any Phase-2 wave rides the module
 
 ### stability
 

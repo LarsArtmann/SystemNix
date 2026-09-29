@@ -1328,6 +1328,57 @@ in
                     limit_mib = 768;
                     spike_limit_mib = 192;
                   };
+                  # RED metrics derived from spans — SigNoz's NATIVE processor
+                  # (not the contrib spanmetrics connector), mirroring upstream's
+                  # own default collector config byte-for-byte in the parts that
+                  # matter: same exporter, delta temporality, explicit latency
+                  # buckets, the full upstream dimension set. Emits
+                  # signoz_calls_total / signoz_latency / signoz_db_latency_* /
+                  # signoz_external_call_latency_* into signoz_metrics — these
+                  # series are what the Services page RED metrics read. Added
+                  # 2026-09-29 (gap-analysis item 2).
+                  "signozspanmetrics/delta" = {
+                    metrics_exporter = "signozclickhousemetrics";
+                    metrics_flush_interval = "60s";
+                    latency_histogram_buckets = [
+                      "100us"
+                      "1ms"
+                      "2ms"
+                      "6ms"
+                      "10ms"
+                      "50ms"
+                      "100ms"
+                      "250ms"
+                      "500ms"
+                      "1000ms"
+                      "1400ms"
+                      "2000ms"
+                      "5s"
+                      "10s"
+                      "20s"
+                      "40s"
+                      "60s"
+                    ];
+                    dimensions_cache_size = 100000;
+                    aggregation_temporality = "AGGREGATION_TEMPORALITY_DELTA";
+                    enable_exp_histogram = true;
+                    dimensions = [
+                      { name = "service.namespace"; default = "default"; }
+                      { name = "deployment.environment"; default = "default"; }
+                      # Uniqueness dimensions (upstream): identical series from
+                      # multiple collector replicas must not collide.
+                      { name = "signoz.collector.id"; }
+                      { name = "service.version"; }
+                      { name = "browser.platform"; }
+                      { name = "browser.mobile"; }
+                      { name = "k8s.cluster.name"; }
+                      { name = "k8s.node.name"; }
+                      { name = "k8s.namespace.name"; }
+                      { name = "host.name"; }
+                      { name = "host.type"; }
+                      { name = "container.name"; }
+                    ];
+                  };
                   batch = {
                     timeout = "5s";
                     send_batch_size = 8192;
@@ -1352,6 +1403,21 @@ in
                     use_new_schema = true;
                   };
                 };
+                connectors = {
+                  # Service dependency graph from client+server span pairs
+                  # (discordsync→discord.com, cv→portals, bank-sync→wise, the
+                  # browser-history agent→server leg). Emits
+                  # traces_service_graph_* metrics into signoz_metrics via the
+                  # metrics pipeline. This SigNoz version has NO server-side
+                  # service map (verified: no dependency-graph reader in the
+                  # pinned query-service), so the contrib connector is the only
+                  # source — it is compiled into our collector build
+                  # (components/components.go:427). Added 2026-09-29.
+                  servicegraph = {
+                    wait = "10s";
+                    max_connection_age = "30m";
+                  };
+                };
                 service = {
                   telemetry = {
                     metrics = {
@@ -1362,15 +1428,22 @@ in
                     traces = {
                       receivers = [ "otlp" ];
                       # memory_limiter MUST be first; batch last.
+                      # signozspanmetrics BEFORE batch (upstream order) so it
+                      # sees unbatched spans; servicegraph rides as exporter.
                       processors = [
                         "memory_limiter"
+                        "signozspanmetrics/delta"
                         "batch"
                       ];
-                      exporters = [ "clickhousetraces" ];
+                      exporters = [
+                        "clickhousetraces"
+                        "servicegraph"
+                      ];
                     };
                     metrics = {
                       receivers = [
                         "otlp"
+                        "servicegraph"
                       ]
                       ++ lib.optional cfg.components.nodeExporter "prometheus"
                       ++ lib.optionals gcpMonitoringEnabled (builtins.attrNames gcpReceivers);

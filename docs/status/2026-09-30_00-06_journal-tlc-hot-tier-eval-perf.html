@@ -1,0 +1,1214 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SystemNix Status — Journal off the QLC, eval-perf memo — 2026-09-30</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS DARK — Dashboard template
+         Design language: form follows function. Primary colors on graphite.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Dark) --- */
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        /* --- Semantic layer (shared vocabulary with editorial template) --- */
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 15%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px; /* Bauhaus default: sharp corners */
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Sticky-header offset for anchor jumps */
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges (used inside issue cards) --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges (used in tables) --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+
+      /* --- Callouts (used inside issues or standalone) --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      /* --- Stat cards / scorecards (aliased vocabulary) --- */
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad,
+      .score-bad {
+        /* default top bar already set */
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      /* --- Strengths list --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--accent);
+      } /* func, type, struct, if, return */
+      .tok-type {
+        color: var(--warning);
+      } /* int, string, bool, error */
+      .tok-string {
+        color: var(--solution);
+      } /* "quoted strings" */
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      } /* function names */
+      .tok-number {
+        color: var(--accent);
+      } /* 42, 3.14 */
+      .tok-generic {
+        color: var(--problem);
+      } /* T, ID in generics */
+      .tok-builtin {
+        color: #4dd9ff;
+      } /* make, len, append */
+      .tok-punct {
+        color: var(--text-muted);
+      } /* { } ( ) ; = : */
+      .tok-attr {
+        color: var(--accent);
+      } /* Nix attribute names */
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids (responsive) --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC (alternative to sidebar) --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>Status Report</span>
+      <span>2026-09-30 00:06</span>
+      <span>crush &middot; glm-5.3 &middot; SystemNix</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">00 &middot; Summary</a>
+          <a href="#done">01 &middot; Fully Done</a>
+          <a href="#partial">02 &middot; Partially Done</a>
+          <a href="#notstarted">03 &middot; Not Started</a>
+          <a href="#fucked">04 &middot; Fucked Up</a>
+          <a href="#improve">05 &middot; Improve</a>
+          <a href="#next">06 &middot; Next Tasks</a>
+          <a href="#question">07 &middot; Top Question</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">Status Report</div>
+          <h1>Journal off the QLC — hot tier landed, go-live pending</h1>
+          <p class="hero-subtitle">
+            Session scope: the journald&rarr;Samsung-TLC migration (code-complete, VM-proven,
+            user-gated execution), the flake-eval latency attack (formatter memoization landed),
+            a critical audit of the dormant <code>services.hot-db</code> vehicle, and the
+            standing QLC&rarr;TLC wave plan (ClickHouse removed from scope by owner decision).
+          </p>
+        </div>
+
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <div class="stat-grid">
+          <div class="stat-card stat-good">
+            <div class="stat-value">9</div>
+            <div class="stat-label">Fully Done</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">4</div>
+            <div class="stat-label">Partially Done</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">9</div>
+            <div class="stat-label">Not Started</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">5</div>
+            <div class="stat-label">Fucked Up (standing)</div>
+          </div>
+        </div>
+        <p>
+          Two workstreams shipped: <strong>(1) journald leaves the QLC root <code>@</code></strong> —
+          a doctrine-C subvolume (<code>journal</code>, nodatacow, unsnapshotted) mounted at
+          <code>/var/log/journal</code> with the load-bearing journald ordering edge, a
+          PSI-gated migration script with exact quiesced verification, and a two-node VM test
+          proving both the happy path and the Samsung-absent degraded boot. Everything except the
+          sudo-gated execution + reboot window is done and committed (auto-daemon batch
+          <code>0844fde0&hellip;d77dac83</code>). <strong>(2) eval latency</strong> — the
+          six-root-cause analysis is now AGENTS.md doctrine, and the highest-frequency payer
+          (per-commit formatter flake eval) is memoized away: full-tree treefmt
+          <code>--ci</code> runs in <strong>2.9&nbsp;s with zero eval</strong> when
+          flake.nix/lock/overlays/lib are unchanged.
+        </p>
+
+        <h2 id="done"><span class="num">01</span>Fully Done</h2>
+        <div class="strengths">
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>journal-hot module (mount + ordering landmine defused)</strong>
+              <span><code>platforms/nixos/system/journal-hot.nix</code>: by-label tlc
+              <code>subvol=journal</code> mount (nofail, 5&nbsp;s device-timeout), tmpfiles
+              mountpoint rule, and the <code>systemd-journald</code> after/wants edge — probed
+              live that systemd 261.2 ships NO <code>RequiresMountsFor=/var/log/journal</code>,
+              so without the edge a plain fstab entry silently splits the journal across two
+              filesystems. Imported via configuration.nix; eval gate green
+              (<code>nix flake check --no-build --all-systems</code>: "all checks passed").</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Migration script with exact verification</strong>
+              <span><code>scripts/migrate-journal-hot.sh</code> — prepare (PSI gate, subvol +
+              <code>chattr +C</code>, <code>journalctl --relinquish-var</code> quiesce, rsync,
+              EXACT count+size verify), finalize (<code>--flush</code> + active-file-on-mount
+              proof + marker roundtrip), dry-run mode, abandoned-window recovery documented.
+              bash -n clean.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Two-node VM test green (checks.x86_64-linux.journal-hot)</strong>
+              <span>Happy path: FSROOT is the subvol, <code>lsattr</code> proves +C, marker
+              roundtrip, and the anti-split proof (<code>findmnt -T</code> on the ACTIVE journal
+              file resolves to the mount). Degraded path: Samsung absent &rarr; failed nofail
+              mount does NOT kill journald (wants-not-requires tripwire) and the boot completes.
+              First run hung silent — root-caused as the ordering-cycle class and fixed with
+              <code>DefaultDependencies=false</code> on the TEST-ONLY pre-mount unit (production
+              graph has no such unit).</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Pre-commit formatter memo (the safe eval win)</strong>
+              <span><code>scripts/lib/precommit-eval-cache.sh</code> + hook leg +
+              <code>scripts/fmt-cached.sh</code>: content-keyed on
+              flake.nix/flake.lock/overlays/lib + nix version. Proven live: full-tree
+              <code>--ci</code> (2,476 files) in 2.858&nbsp;s with no eval; module-only commits
+              hit the memo. GC'd-path MISS, no TTL, <code>PRECOMMIT_EVAL_CACHE=0</code> hatch,
+              CI <code>nix fmt -- --ci</code> backstops drift red-never-silent.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>12-property fixture selftest registered as a flake check</strong>
+              <span><code>scripts/test-precommit-eval-cache.sh</code> &rarr;
+              <code>checks.x86_64-linux.precommit-eval-cache-selftest</code>: determinism,
+              module-edit insensitivity (the perf property), flake.nix/lock/overlays/lib
+              sensitivity, rename sensitivity, unreadable-input MISS, GC gate, non-store
+              rejection, escape hatch. All PASS; eval gate green with the registration.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Eval-slowness doctrine written down</strong>
+              <span>AGENTS.md Flake-Updates section: six ranked causes (no eval cache since
+              ~2.20, 420-node graph, O(repo) audit army, formatter eval cost, QLC-resident tree
+              + session contention, hermes/uv2nix in checks) + the landed-mitigation note and
+              the deliberate non-goal (flake-check verdict cache — decision against recorded).</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>boot.nix journald comment corrected</strong>
+              <span>The SystemMaxUse rationale no longer claims QLC SLC-cache headroom — the
+              8G cap now bounds the Samsung subvolume.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Live probes that shaped the design</strong>
+              <span>journald unit (no mount dep), journal 6.3&nbsp;G / <code>/var/log</code>
+              8.2&nbsp;G (caddy access logs 1.6&nbsp;G — companion candidate found), Samsung
+              803&nbsp;G free, retention already capped 8G/1mo, borg offsite paths do NOT
+              include /var/log (no borg change needed), no btrbk instance touches the Samsung
+              toplevel (no landmine).</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>hot-db module + migrate script audited (4 real defects found)</strong>
+              <span>Verdict delivered: NOT bug-free. Findings below &sect;05 — filed as a
+              [ready] library row so the Phase-2 waves fix them before first use.</span>
+            </div>
+          </div>
+        </div>
+
+        <h2 id="partial"><span class="num">02</span>Partially Done</h2>
+        <div class="card card-warning">
+          <h4>Journal migration go-live — code complete, execution user-gated</h4>
+          <p>
+            What remains: <code>sudo bash scripts/migrate-journal-hot.sh prepare</code> &rarr;
+            <code>nix run .#deploy</code> &rarr; <code>finalize</code> &rarr; reboot window
+            after <code>nix run .#pre-reboot-check</code>. The agent sandbox blocks sudo AND
+            systemctl, so the window is the owner's. Effort <strong>S</strong> (three commands
+            + one quiet reboot). Until then the deployed system is unchanged.
+          </p>
+        </div>
+        <div class="card card-warning">
+          <h4>QLC&rarr;TLC wave — 1 of 10 in flight, scope reshaped</h4>
+          <p>
+            Journal = item landed (pending go-live). <strong>ClickHouse removed from scope by
+            owner decision (2026-09-29)</strong> despite being the heaviest continuous writer.
+            Remaining: PG cluster, browser-history, discordsync, dnsblockd, pocket-id+gatus,
+            docker data-root, cache tail, service-DB long tail, caddy companion. Effort
+            <strong>L</strong> across maintenance windows.
+          </p>
+        </div>
+        <div class="card card-warning">
+          <h4>hot-db Phase-2 module — audited, defects open, still dormant</h4>
+          <p>
+            4 defects (see &sect;05); the interim crush-hot-db fold is still pending. Nothing
+            regressed — the module ships enable=false with zero entries. Effort
+            <strong>M</strong> to make it wave-ready.
+          </p>
+        </div>
+        <div class="card card-warning">
+          <h4>Eval-perf program — memo landed, structural items open</h4>
+          <p>
+            Input-graph diet audit and the Lix decision are filed but untouched; live
+            contention was captured (five concurrent 1-2h evals, two DUPLICATE
+            <code>checks.css-drift</code> builds from parallel sessions). Effort
+            <strong>M/L</strong>.
+          </p>
+        </div>
+
+        <h2 id="notstarted"><span class="num">03</span>Not Started</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Planned work</th><th>Why not started</th><th>Still wanted?</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Caddy access logs &rarr; Samsung sibling subvol</td><td>Found during probing this session; rides the journal window ideally</td><td><span class="badge badge-high">Yes — High</span></td></tr>
+              <tr><td>PG cluster (paperless/immich/miniflux/twenty) &rarr; Samsung</td><td>Ratified "postgres hot-db wave"; owner sudo windows</td><td><span class="badge badge-high">Yes</span></td></tr>
+              <tr><td>browser-history data.db &rarr; Samsung</td><td>Queued by the 2026-09-21 re-scope</td><td><span class="badge badge-high">Yes</span></td></tr>
+              <tr><td>dnsblockd / pocket-id / gatus sqlite &rarr; Samsung</td><td>Wave ordering not yet decided</td><td><span class="badge badge-high">Yes — high leverage/GiB</span></td></tr>
+              <tr><td>discordsync 11G sqlite &rarr; Samsung</td><td>Phase-2 wave</td><td><span class="badge badge-medium">Yes</span></td></tr>
+              <tr><td>Docker data-root (15.5G, 3 embedded DBs) &rarr; Samsung</td><td>Phase-2 wave</td><td><span class="badge badge-medium">Yes</span></td></tr>
+              <tr><td>@cache-home tail (browser caches, gopls, nix eval cache)</td><td>go-build leg PARKED on the automount canonicalization trap by design</td><td><span class="badge badge-medium">Partially</span></td></tr>
+              <tr><td>Input-graph diet (420 lock nodes)</td><td>Filed today (pipeline.md)</td><td><span class="badge badge-medium">Yes</span></td></tr>
+              <tr><td>Lix migration research</td><td>[decision]-gated; folds the nix#3768 patch question</td><td><span class="badge badge-medium">Owner call</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="fucked"><span class="num">04</span>Totally Fucked Up (standing, radical honesty)</h2>
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Reboot owed</span>
+          <h3>flm :52626 corpse — NPU LLM consumers dark since 09-11</h3>
+          <div class="where">fastflowlm &middot; since the 2026-09-07 boot (kernel 7.2.3)</div>
+          <p>
+            The v1.0.2 prefill-crash corpse (PPid 1, 2 tasks) still holds the backend listen
+            socket: every start dies <code>bind: Address already in use</code> &rarr;
+            start-limit-hit. PMA/enricher fall back to heuristic commits; only flm consumers
+            are dark (llama :8848/:8849 also disabled, separately). ONLY a reboot releases it —
+            deliberately not "fixed" in the module.
+          </p>
+        </div>
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Escape fired</span>
+          <h3>llama-rag pinned build ALSO spins — RAG dark since 09-18</h3>
+          <div class="where">llama-rag &middot; freeze #5 class</div>
+          <p>
+            The rev-pinned 0.3.0 build spun identically under the REAL systemd sandbox after a
+            direct-run green light (a shell run is NOT evidence for a unit-context bug). Escape
+            condition fired: regression is NOT the llama.cpp version — ROCm/kernel/GPU-state
+            root-cause upstream is unsolved. paperless-ai RAG stays degraded.
+          </p>
+        </div>
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Data integrity</span>
+          <h3>/data EIO corruption — btrbk-data leg fails nightly</h3>
+          <div class="where">/data &middot; root inode 1331118 &middot; docs/todo/storage.md P0</div>
+          <p>
+            Every nightly /data send aborts on the known EIO inode (and oom-kills on the
+            attempt); repair is deliberately deferred pending an owner decision. The pool-side
+            /data receive set has had ZERO complete subvolumes since August.
+          </p>
+        </div>
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Fleet blind spot</span>
+          <h3>CI dark 120+ runs — NIX_GITHUB_RO_TOKEN missing</h3>
+          <div class="where">.github/workflows &middot; 32 private github: tarball nodes 404</div>
+          <p>
+            The job-scoped GITHUB_TOKEN cannot read private tarball lock nodes, so every CI run
+            dies on the first fetch. The weekly flake-update bot failed ALL five weekly runs
+            since 08-31; its auth was ported 2026-09-29 but is UNVERIFIED until a run lands.
+            One fine-grained PAT un-darks the whole pipeline.
+          </p>
+        </div>
+        <div class="issue issue-important">
+          <span class="severity severity-important">Structural</span>
+          <h3>Eval saturation — parallel sessions contend, duplicate builds observed</h3>
+          <div class="where">nix daemon &middot; live ps evidence 2026-09-29</div>
+          <p>
+            Four-to-five concurrent 1-2h nix evals/builds from parallel agent sessions
+            (including two identical <code>checks.css-drift</code> builds). Partially mitigated
+            by the formatter memo; the structural floor (no eval cache on Nix 2.34) needs the
+            Lix decision or better session discipline.
+          </p>
+        </div>
+
+        <h2 id="improve"><span class="num">05</span>What We Should Improve</h2>
+        <div class="issue issue-important">
+          <span class="severity severity-important">Tooling</span>
+          <h3>hot-db vehicle defects — fix before any Phase-2 wave rides it</h3>
+          <div class="where">modules/nixos/services/hot-db.nix + scripts/migrate-hot-db.sh</div>
+          <p>
+            (1) <code>prepare</code>'s <code>/mnt/hot/hot</code> existence gate contradicts its
+            own documented flow order (first-ever run fails until a manual mkdir);
+            (2) <code>finalize</code> prints counts but verifies NOTHING (clickhouse precedent
+            used checksum gates); (3) <code>--dry-run prepare</code> crashes at the
+            verification step (find on a never-created staging dir); (4) the stopped-unit
+            window is procedural only — a timer fire or a parallel deploy's provisioner loop
+            can restart the consumer mid-window into a split brain.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Land the four fixes + extend the existing VM test; filed [ready] in storage.md.
+          </div>
+        </div>
+        <div class="issue issue-important">
+          <span class="severity severity-important">Conventions</span>
+          <h3>Pre-mount test scaffolding now exists in 3 divergent variants</h3>
+          <div class="where">test-cv pool-fmt &middot; test-hot-db tlc-fmt &middot; test-journal-hot tlc-fmt</div>
+          <p>
+            The journal-hot first-run silent hang proved the cycle risk is easy to reintroduce;
+            the correct shape (<code>DefaultDependencies=false</code> + udev-trigger anchor +
+            wantedBy/before the mount unit) should be a documented pattern, not re-derived per
+            test (this session paid a full test cycle for it).
+          </p>
+        </div>
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Adoption</span>
+          <h3>Agents should reach for scripts/fmt-cached.sh instead of nix fmt</h3>
+          <div class="where">session workflows</div>
+          <p>
+            Manual <code>nix fmt</code> still pays the full eval; the memoized wrapper is
+            byte-identical in output. One sentence in AGENTS.md + CONTRIBUTING would spread it.
+          </p>
+        </div>
+
+        <h2 id="next"><span class="num">06</span>Next Tasks (ranked; harvest disposition per row)</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Task</th><th>Impact</th><th>Effort</th><th>Cat</th><th>Harvest</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>Execute journal go-live: sudo prepare &rarr; deploy &rarr; finalize &rarr; pre-reboot-check &rarr; reboot</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>Feature</td><td>storage.md [blocked:user] — NEW</td></tr>
+              <tr><td>2</td><td>Reboot window clears the flm :52626 corpse (blocker for NPU LLM consumers)</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>Ops</td><td>stability.md [blocked:user] — NEW</td></tr>
+              <tr><td>3</td><td>Create NIX_GITHUB_RO_TOKEN (fine-grained PAT, Contents:RO) &rarr; CI + weekly bot un-dark; verify the 09-29 auth port</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>Infra</td><td>pipeline.md [blocked:user] — NEW</td></tr>
+              <tr><td>4</td><td>Caddy /var/log/caddy &rarr; Samsung sibling subvol (journal-hot pattern, no ordering edge needed)</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Quality</td><td>TODO_LIST + storage.md [ready] — NEW</td></tr>
+              <tr><td>5</td><td>Fix the 4 hot-db vehicle defects + extend its VM test</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Bug</td><td>TODO_LIST + storage.md [ready] — NEW</td></tr>
+              <tr><td>6</td><td>PG cluster &rarr; Samsung (postgres hot-db wave, ratified)</td><td><span class="badge badge-high">High</span></td><td>L</td><td>Feature</td><td>already libraried (storage.md Phase-2)</td></tr>
+              <tr><td>7</td><td>browser-history data.db &rarr; Samsung</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Feature</td><td>already libraried</td></tr>
+              <tr><td>8</td><td>dnsblockd tracking DB &rarr; Samsung (sole resolver, highest availability/GiB)</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Feature</td><td>already libraried</td></tr>
+              <tr><td>9</td><td>discordsync 11G sqlite &rarr; Samsung</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td>Feature</td><td>already libraried</td></tr>
+              <tr><td>10</td><td>Docker data-root &rarr; Samsung (moves twenty/manifest PG + geometrikks timescaledb)</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td>Feature</td><td>already libraried</td></tr>
+              <tr><td>11</td><td>pocket-id + gatus sqlite &rarr; Samsung</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Feature</td><td>already libraried</td></tr>
+              <tr><td>12</td><td>Extract the pre-mount-unit test scaffolding pattern (3 variants exist)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Quality</td><td>TODO_LIST + pipeline.md [ready] — NEW</td></tr>
+              <tr><td>13</td><td>Eval coalescing convention (dedupe identical concurrent builds; shared result-links)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Quality</td><td>TODO_LIST + pipeline.md [ready] — NEW</td></tr>
+              <tr><td>14</td><td>Input-graph diet audit (420 nodes)</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td>Quality</td><td>already libraried (pipeline.md, filed today)</td></tr>
+              <tr><td>15</td><td>Lix migration research (folds nix#3768 patch question)</td><td><span class="badge badge-high">High?</span></td><td>L</td><td>Decision</td><td>already libraried (pipeline.md [decision])</td></tr>
+              <tr><td>16</td><td>/data EIO repair decision (standing P0)</td><td><span class="badge badge-critical">Critical</span></td><td>L</td><td>Ops</td><td>already libraried (storage.md)</td></tr>
+              <tr><td>17</td><td>@cache-home tail (browser caches, gopls, eval cache; go-build parked by design)</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td>Feature</td><td>rides Phase-2 row</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          17 concrete rows instead of a padded 25 — the remainder of the open surface lives in
+          the domain libraries (<code>docs/todo/*.md</code>) and TODO_LIST.md; rows marked NEW
+          were harvested at authoring time per the TODO-system contract.
+        </p>
+
+        <h2 id="question"><span class="num">07</span>Top Question</h2>
+        <div class="card card-warning">
+          <h4>Is "ClickHouse stays on the QLC" permanent — and if so, what is the wave's success bar?</h4>
+          <p>
+            ClickHouse is the single heaviest continuous writer on the QLC (traces, logs, 1&nbsp;Hz
+            metrics — the 2026-08-22 move only got it off root <code>@</code>, onto another QLC
+            partition). With it removed from scope, journal+caddy+DB waves still remove the
+            small-random-IO churn and the snapshot pinning, but the sustained sequential
+            telemetry firehose remains on the storming disk. I cannot decide this myself: it is
+            a SigNoz-telemetry-value vs Samsung-endurance tradeoff only you can weigh. Runner-up
+            question: is a Lix daemon swap acceptable in a maintenance window, or is Nix 2.34
+            the hard floor (nix#3768 patch posture)?
+          </p>
+        </div>
+
+        <div class="footer">
+          Generated 2026-09-30 00:06 by crush (glm-5.3) &middot; self-contained HTML, zero
+          dependencies &middot; &sect;f harvested at authoring time (7 NEW rows across
+          TODO_LIST.md / storage.md / pipeline.md / stability.md) &middot; snapshot-only, do
+          not edit — annotate via docs-health instead.
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
