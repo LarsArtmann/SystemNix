@@ -202,11 +202,31 @@ in
                 runtimeInputs = [
                   pkgs.libnotify
                   pkgs.util-linux
+                  pkgs.coreutils
                 ];
                 text = ''
                   UNIT="''${1:-unknown}"
-                  notify-send -u critical "Scheduled task failed" "$UNIT — check journalctl -u $UNIT" 2>/dev/null || \
-                    logger -t "$UNIT" -p user.err "Scheduled task failed — check journalctl -u $UNIT"
+                  # Rate-limit: ONE desktop notification per unit per hour —
+                  # a crash-looping unit restarts every RestartUSec and must
+                  # not become a popup storm (live 2026-09-29: gatus crash-
+                  # loop = a critical popup every 5s for ~16h, un-silenceable
+                  # because critical urgency bypasses DMS Do-Not-Disturb).
+                  # Suppressed firings still land in the journal via logger.
+                  STATE_DIR="''${XDG_STATE_HOME:-$HOME/.local/state}/notify-failure"
+                  mkdir -p "$STATE_DIR"
+                  STATE_FILE="$STATE_DIR/''${UNIT//\//_}.last"
+                  NOW=$(date +%s)
+                  LAST=$(stat -c %Y "$STATE_FILE" 2>/dev/null || echo 0)
+                  if [ $(( NOW - LAST )) -ge 3600 ]; then
+                    # -u normal, NEVER critical: critical urgency bypasses
+                    # DMS Do-Not-Disturb, which made DND unable to silence
+                    # failure storms (2026-09-29 movie-night incident).
+                    notify-send -u normal "Scheduled task failed" "$UNIT — check journalctl -u $UNIT" 2>/dev/null || \
+                      logger -t "$UNIT" -p user.err "Scheduled task failed — check journalctl -u $UNIT"
+                    touch "$STATE_FILE"
+                  else
+                    logger -t "$UNIT" -p user.info "Scheduled task failed — desktop notification suppressed (rate limit 1/h) — check journalctl -u $UNIT"
+                  fi
                 '';
               };
             in
