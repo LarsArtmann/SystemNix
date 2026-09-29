@@ -2130,6 +2130,30 @@
                     touch $out
                   '';
 
+              # Fixture selftest for the pre-commit formatter memo
+              # (scripts/lib/precommit-eval-cache.sh — sourced by the hook
+              # and scripts/fmt-cached.sh, never a drifted copy). Proves the
+              # safety model: module-edit insensitivity (the perf win),
+              # flake.nix/lock/overlays/lib sensitivity, rename sensitivity,
+              # unreadable-input MISS, GC'd-path MISS, non-store rejection,
+              # and the PRECOMMIT_EVAL_CACHE=0 escape hatch.
+              precommit-eval-cache-selftest =
+                pkgs.runCommand "precommit-eval-cache-selftest"
+                  {
+                    nativeBuildInputs = [
+                      pkgs.git
+                      pkgs.nix
+                    ];
+                  }
+                  ''
+                    scratch=$(mktemp -d)
+                    mkdir -p "$scratch/scripts/lib"
+                    cp ${./scripts/test-precommit-eval-cache.sh} "$scratch/scripts/test-precommit-eval-cache.sh"
+                    cp ${./scripts/lib/precommit-eval-cache.sh} "$scratch/scripts/lib/precommit-eval-cache.sh"
+                    ${pkgs.bash}/bin/bash "$scratch/scripts/test-precommit-eval-cache.sh"
+                    touch $out
+                  '';
+
               # Offsite-borg positive-path render guard (2026-09-24 queue:
               # persists the 2026-09-23 §a6 hand probe that otherwise had to
               # be re-run at every dispatch). Renders evo-x2 with

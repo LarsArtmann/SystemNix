@@ -20,6 +20,13 @@ if [ ! -f "flake.nix" ]; then
     exit 0
 fi
 
+# Eval-expense memo for the formatter leg (2026-09-29): content-keyed on
+# flake.nix/flake.lock/overlays/lib — module-only commits reuse the resolved
+# store path and skip the full flake eval. Safety model + selftest:
+# scripts/lib/precommit-eval-cache.sh. Escape hatch: PRECOMMIT_EVAL_CACHE=0.
+# shellcheck source=scripts/lib/precommit-eval-cache.sh
+source scripts/lib/precommit-eval-cache.sh
+
 # Fast guard: reject tarball-type nixpkgs before running the slower nix flake check.
 # The global Nix registry rewrites nixpkgs/nixos-unstable to channels.nixos.org,
 # which is often months stale and breaks deploys.
@@ -286,7 +293,11 @@ if [ -n "$STAGED_NIX" ]; then
         arm64 | aarch64) sys=aarch64-darwin ;;
         *) sys=x86_64-linux ;;
     esac
-    if formatter_path="$(nix build ".#formatter.$sys" --no-link --print-out-paths --no-update-lock-file 2>/dev/null)"; then
+    formatter_path=""
+    if formatter_path="$(precommit_formatter_cached_path 2>/dev/null)"; then
+        log_info "Formatter memo HIT (flake.nix/lock/overlays/lib unchanged) — skipping the formatter flake eval."
+    elif formatter_path="$(nix build ".#formatter.$sys" --no-link --print-out-paths --no-update-lock-file 2>/dev/null)"; then
+        precommit_formatter_store_path "$formatter_path" || true
         # NUL-delimited path list: default whitespace splitting mangles staged
         # filenames containing spaces (formats/lints the wrong paths).
         fmt_failed=false
