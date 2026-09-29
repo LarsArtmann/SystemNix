@@ -875,6 +875,26 @@ _: {
                   alerts = discordAlert "Niri is running with NO graphical session (headless zombie) — it will block the next SDDM login with 'A niri session is already running' (2026-08-18 black-screen class). Recover: reboot, or as the user: systemctl --user stop niri.service niri-session-manager.service. Root cause: something pulled graphical-session.target into the user-manager boot transaction — the session-boot-audit eval guard should have caught it at eval time.";
                 })
                 (mkHttpCheck {
+                  name = "Memory Guard Backup Starved";
+                  group = "Monitoring";
+                  # Line-anchored VALUE-0 form (niri pattern): the guard always
+                  # emits the gauge, so a 1 here means backup-class churn units
+                  # have been guard-stopped > backupStarvationSeconds (6h) —
+                  # the 2026-09-26..28 class where three nightly pool receives
+                  # starved silently behind a multi-day Zone-6 storm. The
+                  # guard's catch-up slot should flip this back to 0 within one
+                  # starvation window; a persistent 1 means even the slot could
+                  # not run (io PSI never under the resume bar) and the pool
+                  # receive chain is bleeding toward the 3-day freshness cliff.
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nmemory_emergency_guard_backup_starved 0\n*)"
+                  ];
+                  alerts = discordAlert "Nightly btrbk pool receives have been guard-stopped for >6h — backups are starving behind a sustained IO storm (2026-09-26..28: three missed nights). Check: journalctl -u memory-emergency-guard --since -1h | grep -E 'catch-up|re-arm'; ls /mnt/pool/backups/root/. If no catch-up slot is granting, io PSI never drained under the resume bar — a manual quiet-window 'sudo systemctl start btrbk-root.service' closes the gap.";
+                })
+                (mkHttpCheck {
                   name = "AW Watcher Attached";
                   group = "Monitoring";
                   url = "http://localhost:${toString nodePort}/metrics";
