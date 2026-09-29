@@ -215,9 +215,10 @@ let
       esbuild # Fast JavaScript bundler and minifier
 
       # Go development
-      # go_1_27: pinned ahead of the nixpkgs default (1.26.7) — InboxClean's
-      # go.mod + go.work require >= 1.27 and GOTOOLCHAIN=local forbids
-      # downloading a newer toolchain at runtime (see users/home.nix).
+      # go_1_27: pinned ahead of the nixpkgs default (1.26.7). The ecosystem
+      # go.mod floor is 1.27.1; the shell's `go` must satisfy it natively so
+      # GOTOOLCHAIN=auto (shell default since 2026-09-29) never needs to
+      # download a toolchain at runtime.
       go_1_27
       gopls
       golangci-lint

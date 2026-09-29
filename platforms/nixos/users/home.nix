@@ -380,11 +380,6 @@ in
     __go_cache_redirect SCCACHE_DIR /tmp/bc-fallback/sccache
     __go_cache_redirect npm_config_cache /tmp/bc-fallback/npm
     __go_cache_redirect PLAYWRIGHT_BROWSERS_PATH /tmp/bc-fallback/playwright
-
-    if test "$GOTOOLCHAIN" = local
-        echo "⚠ GOTOOLCHAIN=local blocks go.work ≥1.26.6 projects — switching to auto"
-        set -gx GOTOOLCHAIN auto
-    end
   '';
 
   home = {
@@ -568,15 +563,16 @@ in
 
       # ── Cache-key unification (2026-08-15; docs/planning/2026-08-15_21-23_SMART-BUILDCACHE-OVERHAUL.md) ──
       # The build cache grew 2-3x because identical packages were compiled
-      # under multiple cache keys. Both vars below collapse it to ONE key.
+      # under multiple cache keys. GOEXPERIMENT below collapses it to ONE key.
       #
-      # GOTOOLCHAIN=local: the running (nix-pinned) go is the ONLY toolchain.
-      # The default "auto" silently downloads newer toolchains demanded by
-      # go.mod (go-codec's "go 1.26.6" pulled a 240 MiB toolchain into go-mod
-      # and forked the cache: 15k duplicate entries in one day). With "local",
-      # version mismatches fail LOUDLY — fix the go.mod or bump nixpkgs
-      # deliberately. Known loud repo today: go-codec (user is mid-upgrade).
-      GOTOOLCHAIN = "local";
+      # GOTOOLCHAIN=local was REMOVED 2026-09-29 (user decision): shells use
+      # Go's default "auto" again. The 2026-09-17 go 1.27.1 ecosystem wave
+      # made "local" fail LOUDLY on every floor-ahead repo in plain shells
+      # (mr-sync, clean-wizard, the CV hold class); "auto" downloads the
+      # demanded toolchain instead. Watch the build cache for toolchain-key
+      # forks when floors next run ahead (2026-08-15 incident class: 15k
+      # duplicate entries in one day). Nix builds stay pinned regardless:
+      # buildGoModule always runs with GOTOOLCHAIN=local.
       # GOEXPERIMENT=jsonv2: gates only the encoding/json/v2 package's
       # availability — v1 output is byte-identical (70 repos already compile
       # their deps under this flag; verified on go1.26.5: WITHOUT the flag,
