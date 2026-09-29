@@ -17,6 +17,13 @@
 # transparently reverts its extents to CoW, silently destroying the tier
 # while every check stays green.
 #
+# T14 monitoring (2026-09-30): a `hot-db-metrics` textfile collector (5 min,
+# fail-closed) exposes `hot_tier_mounted` + per-entry
+# `hot_db_entry_mounted{name}` and every enabled entry gets an anchored
+# Gatus check — the tier's failure mode (Samsung detached → mounts fail →
+# consumers condition-skip silently) was invisible. Runbook for the
+# per-service waves: docs/services/hot-db.md.
+#
 # Anti-shadow wiring (eval-time, per consumer): consumers get
 # `RequiresMountsFor` (a detached Samsung FAILS the unit — never a silent
 # root-fs shadow write) AND `ConditionPathIsMountPoint` (if a shadow
@@ -43,6 +50,8 @@
         harden
         serviceOneshotDefaults
         mkFilesystem
+        mkHttpCheck
+        discordAlert
         ;
       cfg = config.services.hot-db;
 

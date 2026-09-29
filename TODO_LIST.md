@@ -118,6 +118,8 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **One comment block in `btrfs-verify-snapshots`: the gate checks the NEWEST snapshot's age per prefix only — 11d mid-week weeklies are expected** → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-09-26_04-26_task-000001a0db75dfafa622748a00da7cf19ff9.md §f11)
 - [ ] **Caddy access logs → Samsung sibling subvol** → [docs/todo/storage.md](docs/todo/storage.md) — journal-hot pattern minus the ordering edge; same window as the journal go-live ideally
 - [ ] **Fix the 4 hot-db vehicle defects (first-run gate, finalize verify, dry-run crash, timer window)** → [docs/todo/storage.md](docs/todo/storage.md) — before any Phase-2 wave rides the module
+- [ ] **Owner decision: scrub catch-up slot for the canceled `/` + `/data` scrubs (coverage stale since Sep 21/Sep 28 — canceled scrubs never resume by the freeze-7 no-resume doctrine; @mnt-pool completed cleanly Sep 28; next weekly window Oct 5; the /data csum growing-vs-static discriminator hasn't refreshed)** → [docs/todo/stability.md](docs/todo/stability.md) — bounded catch-up slot (guard backup-slot pattern) once IO drains, or accept next-window coverage (Source: docs/status/2026-09-30_00-31_task-000001a0ef17061c3d535dd0d65b00000000.md §f2)
+- [ ] **Correct the freeze-7 forensics scrub-slice decomposition with live-confirmed numbers: 4.18 TiB @mnt-pool COMPLETED CLEANLY (not storm waste) + 549.8G @- + 656.3G @data — the "5.9 TB scrub restart loop" framing undercounts the completing pool scrub** → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-09-30_00-31_task-000001a0ef17061c3d535dd0d65b00000000.md §a.5; journal-verified 2026-09-30 00:25)
 
 ### stability
 
@@ -185,6 +187,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Gatus "I/O Stall Rate" permanently-red review** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **Signoz-coverage/observability test+panel additions** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **Pool-usage Gatus thresholds** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
+- [ ] **service-health-check report-don't-fail semantics — the checker sits FAILED whenever it lists failed units (chronic-FAILED unit = the exact class the SuccessExitStatus fix killed for the scrubs); read the module wiring first (is OnFailure the paging path?), propose `|| true` + metric-owned paging, owner-OK before changing alerting** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-09-30_00-31_task-000001a0ef17061c3d535dd0d65b00000000.md §d4/§e4)
 
 ### ai-stack
 
@@ -233,6 +236,8 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Remove the self-neutralized `probeRegistrationCleanup` block (purge EXECUTED 2026-09-20 11:33:55, journal-verified) — BLOCKED: keep or rip the generic mechanism (option + script + fixture check) after the executed purge — reusable probe-cleanup pattern or YAGNI rip?** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Browser-history quiet-day 503 (agent freshness lapses when there is nothing to ingest): local Gatus-condition mitigation + upstream empty-batch heartbeat** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Fix jan.md Architecture-table GPU row: truncated verify command + unclosed backtick (the Verification section carries the full commands)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-09-25_05-19_task-000001a0d68672297273301d23247ceeae6a.md §f3)
+- [ ] **Investigate `geometrikks.service` FAILED (seen failed 00:01/00:16 2026-09-30; service went native 2026-09-29 same-day — cause unknown from that session; check journal + whether the shared-PG restart bounce or the migration leg is implicated)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-09-30_00-31_task-000001a0ef17061c3d535dd0d65b00000000.md §d4)
+- [ ] **Investigate `inboxclean-sync.service` FAILED (seen failed 00:01/00:16 2026-09-30 — cause unknown; candidate classes: OAuth token history/invalid_grant, statement-window state; journal first, NOT the known-upstream rows)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-09-30_00-31_task-000001a0ef17061c3d535dd0d65b00000000.md §d4)
 
 ### upstream
 
