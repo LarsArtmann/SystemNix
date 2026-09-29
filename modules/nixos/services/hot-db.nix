@@ -428,34 +428,35 @@
         # undeclared path still errors when gatus-config is not imported
         # (hot-db standalone VM-test shape, flake-check-proven 2026-09-15).
         (lib.optionalAttrs (options ? services.gatus-config) {
-          services.gatus-config.extraEndpoints =
-            lib.mkIf cfg.enable
-              (
-                let
-                  # `or` guards the minimal-VM shape (no exporters module).
-                  nodePort = config.services.prometheus.exporters.node.port or 9100;
-                  mkMountCheck =
-                    name: metric: desc:
-                    mkHttpCheck {
-                      inherit name;
-                      group = "Storage";
-                      url = "http://127.0.0.1:${toString nodePort}/metrics";
-                      interval = "60s";
-                      conditions = [
-                        "[BODY] != pat(*${metric} 0\n*)"
-                        "[BODY] == pat(*\n${metric} *)"
-                      ];
-                      alerts = discordAlert desc;
-                    };
-                in
-                [
-                  (mkMountCheck "Hot Tier Mounted" "hot_tier_mounted" "Samsung hot tier toplevel is not mounted — crush session DBs fall back to the QLC root and every hot-db entry consumer is down or condition-skipped. Check: findmnt for the toplevel mount; systemctl status hot-db-metrics; journalctl -b -u hot-db-metrics. Runbook: docs/services/hot-db.md.")
-                ]
-                ++ map (
-                  e:
-                  mkMountCheck "Hot-DB ${e.name} Mounted" "hot_db_entry_mounted{name=\"${e.name}\"}" "Hot-DB entry ${e.name} is not mounted at its dataDir — the Samsung subvol is detached or a migration window left the entry undeployed. Check: systemctl status hot-db-metrics; findmnt for the entry path; runbook docs/services/hot-db.md."
-                ) entryList
-              );
+          services.gatus-config.extraEndpoints = lib.mkIf cfg.enable (
+            let
+              # `or` guards the minimal-VM shape (no exporters module).
+              nodePort = config.services.prometheus.exporters.node.port or 9100;
+              mkMountCheck =
+                name: metric: desc:
+                mkHttpCheck {
+                  inherit name;
+                  group = "Storage";
+                  url = "http://127.0.0.1:${toString nodePort}/metrics";
+                  interval = "60s";
+                  conditions = [
+                    "[BODY] != pat(*${metric} 0\n*)"
+                    "[BODY] == pat(*\n${metric} *)"
+                  ];
+                  alerts = discordAlert desc;
+                };
+            in
+            [
+              (mkMountCheck "Hot Tier Mounted" "hot_tier_mounted"
+                "Samsung hot tier toplevel is not mounted — crush session DBs fall back to the QLC root and every hot-db entry consumer is down or condition-skipped. Check: findmnt for the toplevel mount; systemctl status hot-db-metrics; journalctl -b -u hot-db-metrics. Runbook: docs/services/hot-db.md."
+              )
+            ]
+            ++ map (
+              e:
+              mkMountCheck "Hot-DB ${e.name} Mounted" "hot_db_entry_mounted{name=\"${e.name}\"}"
+                "Hot-DB entry ${e.name} is not mounted at its dataDir — the Samsung subvol is detached or a migration window left the entry undeployed. Check: systemctl status hot-db-metrics; findmnt for the entry path; runbook docs/services/hot-db.md."
+            ) entryList
+          );
         })
       ];
     };

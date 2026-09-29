@@ -1363,8 +1363,14 @@ in
                     aggregation_temporality = "AGGREGATION_TEMPORALITY_DELTA";
                     enable_exp_histogram = true;
                     dimensions = [
-                      { name = "service.namespace"; default = "default"; }
-                      { name = "deployment.environment"; default = "default"; }
+                      {
+                        name = "service.namespace";
+                        default = "default";
+                      }
+                      {
+                        name = "deployment.environment";
+                        default = "default";
+                      }
                       # Uniqueness dimensions (upstream): identical series from
                       # multiple collector replicas must not collide.
                       { name = "signoz.collector.id"; }

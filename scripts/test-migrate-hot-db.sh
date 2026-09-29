@@ -93,6 +93,12 @@ cat >"$BIN/nice" <<'EOF'
 [ "$1" = "-n" ] && shift 2
 exec "$@"
 EOF
+# SANDBOX SHEBANG TRAP (forgejo-fixture lesson): /usr/bin/env does not
+# exist inside the nix build sandbox — rewrite every stub's interpreter
+# line to the bash RUNNING THIS TEST ($BASH), so the stubs exec there too.
+for stub in "$BIN"/*; do
+  sed -i "1c #!$BASH" "$stub"
+done
 chmod +x "$BIN"/*
 export PATH="$BIN:$PATH"
 

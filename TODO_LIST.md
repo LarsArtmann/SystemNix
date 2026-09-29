@@ -238,6 +238,8 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Fix jan.md Architecture-table GPU row: truncated verify command + unclosed backtick (the Verification section carries the full commands)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-09-25_05-19_task-000001a0d68672297273301d23247ceeae6a.md §f3)
 - [ ] **Investigate `geometrikks.service` FAILED (seen failed 00:01/00:16 2026-09-30; service went native 2026-09-29 same-day — cause unknown from that session; check journal + whether the shared-PG restart bounce or the migration leg is implicated)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-09-30_00-31_task-000001a0ef17061c3d535dd0d65b00000000.md §d4)
 - [ ] **Investigate `inboxclean-sync.service` FAILED (seen failed 00:01/00:16 2026-09-30 — cause unknown; candidate classes: OAuth token history/invalid_grant, statement-window state; journal first, NOT the known-upstream rows)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-09-30_00-31_task-000001a0ef17061c3d535dd0d65b00000000.md §d4)
+- [ ] **Codify the forgejo theme shadowed-var cascade guard + post-deploy dark-body smoke assertion** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-09-30_00-44_forgejo-dark-theme-cascade-fix-status.md §f2-4)
+- [ ] **CHANGELOG row + forgejo.md runbook section for the theme cascade trap** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-09-30_00-44_forgejo-dark-theme-cascade-fix-status.md §f5)
 
 ### upstream
 

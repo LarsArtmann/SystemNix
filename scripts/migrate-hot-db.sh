@@ -85,38 +85,38 @@ EOF
 # client-secrets/).
 reg_dataDir() {
   case "$1" in
-    gatus) echo "/var/lib/private/gatus" ;;
-    dnsblockd) echo "/var/lib/dnsblockd" ;;
-    pocket-id) echo "/var/lib/pocket-id" ;;
-    browser-history) echo "/var/lib/private/browser-history" ;;
-    discordsync) echo "/var/lib/discordsync" ;;
-    *) return 1 ;;
+  gatus) echo "/var/lib/private/gatus" ;;
+  dnsblockd) echo "/var/lib/dnsblockd" ;;
+  pocket-id) echo "/var/lib/pocket-id" ;;
+  browser-history) echo "/var/lib/private/browser-history" ;;
+  discordsync) echo "/var/lib/discordsync" ;;
+  *) return 1 ;;
   esac
 }
 
 reg_units() {
   case "$1" in
-    # Monitoring blind for the window — every gatus check reds once, then
-    # resolves; the runbook notes this is expected.
-    gatus) echo "gatus.service" ;;
-    # Sole resolver: the window is a LAN-wide DNS blip (clients cache or
-    # blip; gatus "DNS Resolver" pages once and resolves).
-    dnsblockd) echo "dnsblockd.service" ;;
-    # pocket-id-provision writes client-secrets/ under the dataDir.
-    pocket-id)
-      echo "pocket-id.service"
-      echo "pocket-id-provision.service"
-      ;;
-    # agent timer+service hammer the server while it is down (noise +
-    # start-limit); token-provision writes the DB directly.
-    browser-history)
-      echo "browser-history-agent.timer"
-      echo "browser-history-agent.service"
-      echo "browser-history.service"
-      echo "browser-history-agent-token-provision.service"
-      ;;
-    discordsync) echo "discordsync.service" ;;
-    *) return 1 ;;
+  # Monitoring blind for the window — every gatus check reds once, then
+  # resolves; the runbook notes this is expected.
+  gatus) echo "gatus.service" ;;
+  # Sole resolver: the window is a LAN-wide DNS blip (clients cache or
+  # blip; gatus "DNS Resolver" pages once and resolves).
+  dnsblockd) echo "dnsblockd.service" ;;
+  # pocket-id-provision writes client-secrets/ under the dataDir.
+  pocket-id)
+    echo "pocket-id.service"
+    echo "pocket-id-provision.service"
+    ;;
+  # agent timer+service hammer the server while it is down (noise +
+  # start-limit); token-provision writes the DB directly.
+  browser-history)
+    echo "browser-history-agent.timer"
+    echo "browser-history-agent.service"
+    echo "browser-history.service"
+    echo "browser-history-agent-token-provision.service"
+    ;;
+  discordsync) echo "discordsync.service" ;;
+  *) return 1 ;;
   esac
 }
 
@@ -323,11 +323,11 @@ finalize)
   start_units
   echo "finalize OK. Functional probes before closing the window:"
   case "$NAME" in
-    gatus) echo "  https://status.$(hostname -d 2>/dev/null || echo home.lan) renders + one check cycle green" ;;
-    dnsblockd) echo "  dig cache.home.lan @127.0.0.1 +short answers; /health 200" ;;
-    pocket-id) echo "  one SSO login (passkey) through auth.home.lan" ;;
-    browser-history) echo "  dashboard loads; inboxclean/agent ingest green on next tick" ;;
-    discordsync) echo "  /api/health on :8085 OK; a new Discord message lands in the capture" ;;
+  gatus) echo "  https://status.$(hostname -d 2>/dev/null || echo home.lan) renders + one check cycle green" ;;
+  dnsblockd) echo "  dig cache.home.lan @127.0.0.1 +short answers; /health 200" ;;
+  pocket-id) echo "  one SSO login (passkey) through auth.home.lan" ;;
+  browser-history) echo "  dashboard loads; inboxclean/agent ingest green on next tick" ;;
+  discordsync) echo "  /api/health on :8085 OK; a new Discord message lands in the capture" ;;
   esac
   echo "Keep the QLC shadow under the mountpoint as rollback insurance until the soak ends."
   ;;
@@ -340,7 +340,7 @@ status)
     s="$HOT_PARENT/$n"
     sub="missing"
     btrfs subvolume show "$s" >/dev/null 2>&1 && sub="exists"
-    sub="$sub$( [ -n "$(ls -A "$s" 2>/dev/null || true)" ] && echo ",populated" || echo ",empty")"
+    sub="$sub$([ -n "$(ls -A "$s" 2>/dev/null || true)" ] && echo ",populated" || echo ",empty")"
     mp="no"
     mountpoint -q "$d" && mp="YES"
     mk="none"
