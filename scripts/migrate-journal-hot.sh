@@ -125,7 +125,10 @@ finalize)
     exit 0
   fi
   MID=$(cat /etc/machine-id)
-  NEWEST=$(ls -t "$SRC/$MID/" | head -1)
+  # sed -n 1p, NOT head -1: head exits after line 1, ls eats SIGPIPE, and
+  # pipefail turns that 141 into a silent mid-verify abort (2026-09-29:
+  # finalize died here right after a successful flush).
+  NEWEST=$(ls -t "$SRC/$MID/" | sed -n '1p')
   TARGET=$(findmnt -T "$SRC/$MID/$NEWEST" -n -o TARGET)
   if [ "$TARGET" != "$SRC" ]; then
     echo "VERIFY FAILED: active journal file ($NEWEST) lives on '$TARGET', not the mount" >&2
@@ -133,7 +136,9 @@ finalize)
   fi
   systemd-cat -t migrate-journal-hot echo "finalize marker $(date +%s)"
   sleep 2
-  journalctl -t migrate-journal-hot -b --no-pager | grep -q "finalize marker" || {
+  # No grep -q: it exits on first match, journalctl eats SIGPIPE, pipefail
+  # then reports a spurious VERIFY FAILED on a successful roundtrip.
+  journalctl -t migrate-journal-hot -b --no-pager | grep "finalize marker" >/dev/null || {
     echo "VERIFY FAILED: marker roundtrip through the mounted journal failed" >&2
     exit 1
   }
