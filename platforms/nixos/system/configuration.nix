@@ -824,6 +824,46 @@ in
 
       signoz = {
         enable = true;
+        # GCP Cloud Monitoring ingestion (self-hosted variant of SigNoz's
+        # documented GCP integration; receiver = googlecloudmonitoring on
+        # the existing collector). Project set + presets derive from the
+        # Google-Cloud-Inventory 2026-09-20 report (live resources only).
+        # Ships inert on a structurally-valid placeholder key until the
+        # service-account go-live runbook runs:
+        # docs/services/signoz-gcp-monitoring.md
+        gcpMonitoring = {
+          enable = true;
+          projects = {
+            # Cloud Run services (12 projects with running services)
+            nobletary.cloudRun = true;
+            "skylines-one".cloudRun = true;
+            issue-shield.cloudRun = true;
+            issuesafe.cloudRun = true;
+            lars-software.cloudRun = true;
+            "artmann-technologies".cloudRun = true;
+            law-gov-pl.cloudRun = true;
+            myfitment-app.cloudRun = true;
+            swetty-swipper.cloudRun = true;
+            re-cycular.cloudRun = true;
+            deepbackup.cloudRun = true;
+            toms-343020.cloudRun = true;
+            # Cloud Functions (4 projects with ACTIVE functions)
+            deepbackup.cloudFunctions = true;
+            autocont-34d1e.cloudFunctions = true;
+            lars-artmann.cloudFunctions = true;
+            "skylines-one".cloudFunctions = true;
+            # Cloud Storage (projects with live data or meaningful size)
+            discordsync-backup.storage = true;
+            signal-backups.storage = true;
+            swetty-swipper.storage = true;
+            issue-shield.storage = true;
+            nobletary.storage = true;
+            "artmann-technologies".storage = true;
+            lars-artmann.storage = true;
+            "skylines-one".storage = true;
+            deepbackup.storage = true;
+          };
+        };
       };
 
       # 2026-08-31 coverage audit: registry asserting every service is FULLY

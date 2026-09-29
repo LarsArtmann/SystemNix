@@ -295,9 +295,17 @@ _: {
                 CLIENT_SECRET=$(echo "$SECRET_RESPONSE" | jq -r '.secret // empty' 2>/dev/null || true)
 
                 if [ -n "$CLIENT_SECRET" ]; then
-                  echo "$CLIENT_SECRET" > "$SECRET_FILE"
-                  chmod 640 "$SECRET_FILE"
-                  chown pocket-id:pocket-id "$SECRET_FILE"
+                  # Atomic write: a guard kill between truncate and write would
+                  # leave a TRUNCATED secret that crash-loops the consumer
+                  # (near-miss during the 2026-09-29 storm night — the
+                  # memory-emergency-guard kills units under IO pressure).
+                  # mktemp (0600) + mv in the same dir = same-fs rename; readers
+                  # see the old or the new secret, never a partial one.
+                  TMP_SECRET="$(mktemp "$CLIENT_SECRETS_DIR/.secret.${client.clientId}.XXXXXX")"
+                  printf '%s\n' "$CLIENT_SECRET" > "$TMP_SECRET"
+                  chmod 640 "$TMP_SECRET"
+                  chown pocket-id:pocket-id "$TMP_SECRET"
+                  mv -f "$TMP_SECRET" "$SECRET_FILE"
                   echo "  Secret written to $SECRET_FILE"
                 else
                   echo "  ERROR: Failed to generate secret for '${client.name}' — consumer service will crash-loop" >&2

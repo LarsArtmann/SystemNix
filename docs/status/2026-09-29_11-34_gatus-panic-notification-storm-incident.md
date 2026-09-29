@@ -79,3 +79,17 @@
 1. **Deploy now or wait for a calmer window?** Movie is playing; box is at load ~60; the deploy is the only full stop for the storm (currently self-degraded to ≤1 popup/5min). Pressure gate may block (rc=12) — I retry automatically, or you say the word and I force it.
 2. **"Hide This Kind of Notification for X":** local proxy daemon (fast, ours, mutes per app/summary with TTL) vs upstream DMS PR (permanent, slower) vs both? My recommendation: both — proxy now, PR in parallel.
 3. **While I'm in there:** should "Scheduled task failed" desktop notifications be demoted to journal/Discord-only entirely (rate limit already caps it at 1/hour/unit), or kept on desktop at normal urgency?
+
+---
+
+## h) CORRECTION (2026-09-29 ~12:00, post-verification — fixes the timeline above)
+
+Several §incident-chain and §b claims above were WRONG; journal forensics after the report:
+
+1. **The storm did NOT start at the 18:06 system-800 deploy.** system-800's rendered gatus.yaml (`3awaaj5…`) does NOT contain the root-fs-early-warning check at all — the check entered the tree AFTER that build. The **first panic was 09:26 TODAY**, from a parallel session's deploy that shipped the bad description and **failed to anchor** (rc=14-class: `/run/current-system` advanced, profile stayed system-800 — gatus's own instant panic exit-4'd that activation).
+2. **The storm lasted ~31 minutes (09:26→09:57), not ~16h.** The 09:57 reboot reverted the unanchored generation → system-800's VALID config returned → **zero panics post-reboot** (journal-verified count = 0; §b.2's "config panic whenever prestart passes" was wrong — post-reboot failures were exclusively `gatus-wait-oidc` 300s timeouts while pocket-id/auth.home.lan was sluggish under the load-60 IO storm).
+3. **gatus self-healed at 11:43:29** when the OIDC gate finally passed — "Validated 180 endpoints", listening on :9110. It has been up and monitoring since.
+4. Residual risk that remained after the reboot: the LIVE notify-failure@ template (system-800) still fires `-u critical` un-rate-limited — any new unit crash-loop before the next deploy re-storms. The tree fixes (normal urgency + 1/h limit) close exactly this once deployed.
+5. The earlier session's "sed-proof validated the fix" was ALSO weaker than believed: `/tmp/gatus-fixed.yaml` was byte-identical to the deployed store yaml because the deployed yaml never had the bad description — the A/B never ran against a bad baseline. The REAL proof is the 12:00 negative test: tree config + reintroduced `\"` → real gatus binary panics with the exact incident message (now a permanent flake check, `checks.gatus-config-parse`, positive AND negative proven).
+
+Verified state at 12:00: gatus active, 0 Notify calls in dbus samples, DMS DND on until 12:46 with `notificationDndAllowCritical` now set false (DMS default true is why DND could not silence the critical storm).

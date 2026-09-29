@@ -418,5 +418,7 @@ in
       "${inputs.self}/modules/nixos/services/dashboards/telemetry-coverage.json";
     "signoz/dashboards/pool-storage.json".source =
       "${inputs.self}/modules/nixos/services/dashboards/pool-storage.json";
+    "signoz/dashboards/gcp.json".source =
+      "${inputs.self}/modules/nixos/services/dashboards/gcp.json";
   };
 }

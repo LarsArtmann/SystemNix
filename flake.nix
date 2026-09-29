@@ -1057,6 +1057,15 @@
                 fastflowlm
                 ;
               freebsd-zfs-vm = import ./pkgs/freebsd-zfs-vm.nix { inherit pkgs; };
+              # Native GeoMetrikks (uv2nix + bun frontend; the Docker→native
+              # migration pilot — see docs/planning/2026-09-29_*GEOMETRIKKS*).
+              # The service module builds its own instance from the same file;
+              # exposed here for `nix build .#geometrikks` FOD/dep-drift
+              # probing (the quick-go doctrine for non-vendorHash packages).
+              geometrikks = import ./pkgs/geometrikks.nix {
+                inherit pkgs lib;
+                inherit (inputs) uv2nix pyproject-nix pyproject-build-systems;
+              };
             };
 
           # Development shells for different program categories
