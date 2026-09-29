@@ -14,17 +14,19 @@
 # registry entry (monitored unit + backup-coordination freshness for the
 # parsedmarc reports directory).
 #
-# DEPLOYMENT STATE (2026-09-15): plumbing only — enabled NOWHERE yet.
-#   - services.dmarc-monitor goes live on evo-x2 once the rua mailbox
-#     exists (D1-gated, nix-email ROADMAP): set enable + fill the real
-#     dmarc-imap-password secret (platforms/nixos/secrets/nix-email.yaml,
-#     placeholder value shipped).
-#   - services.mail-server targets the future mail VPS (D1/D2-gated).
-#     When that host exists it consumes this repo the same way evo-x2
-#     does; the fallback-admin and relay secrets below are wired but
-#     placeholder-valued until then.
-# Both paths stay eval-verified by tests/test-nix-email.nix (mock-sops
-# pattern) even while disabled everywhere.
+# DEPLOYMENT STATE (2026-09-29): dmarc-monitor fully wired on evo-x2 but
+# enable = false until the mail stack is live on pbx-artmann (the rua
+# mailbox must exist first — a failing parsedmarc unit exit-4s deploys).
+# Flip services.dmarc-monitor.enable in configuration.nix as the FINAL
+# step of pbx-artmann docs/runbooks/mail-go-live.md, then paste the real
+# dmarc-imap-password secret (platforms/nixos/secrets/nix-email.yaml,
+# placeholder value shipped).
+#   - services.mail-server is now ENABLED on the pbx-artmann VPS — but it
+#     consumes the upstream module DIRECTLY (that repo has no sops; its
+#     runtime-file secrets doctrine differs), not through this wrapper.
+#     The mail-server half below still targets the general "a host that
+#     consumes this module wants a mail server" case and stays
+#     eval-verified by tests/test-nix-email.nix (mock-sops pattern).
 { inputs, ... }: {
   flake.nixosModules.nix-email =
     {

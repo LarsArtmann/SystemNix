@@ -413,6 +413,28 @@ in
       # Consumers wired to it: paperless (outbound), forgejo (notifications),
       # system/cron mail (root/postmaster aliases).
       mail-relay.enable = true;
+      # DMARC/TLS-RPT aggregate-report collection (parsedmarc) polling the
+      # dmarc@artmann.tech mailbox on the Stalwart server (pbx-artmann VPS,
+      # upstream github:LarsArtmann/nix-email). Wrapper module:
+      # modules/nixos/services/nix-email.nix pre-wires sops (nix-email.yaml),
+      # onFailure, the monitored unit + reports-freshness backup row.
+      # enable = false DELIBERATE: flipping it before the mailbox exists on
+      # the VPS guarantees a permanently-failing parsedmarc unit — a failed
+      # unit inside an activation exit-4s the deploy and skips the profile
+      # bump (reboot-revert trap). Flip to true as the FINAL mail go-live
+      # step (pbx-artmann docs/runbooks/mail-go-live.md).
+      dmarc-monitor = {
+        enable = false;
+        settings.imap = {
+          host = "mail.artmann.tech";
+          port = 993;
+          ssl = true;
+          # Stalwart GOTCHA (upstream README): IMAP LOGIN resolves by the
+          # principal NAME — the account must be created with its address
+          # as the principal name.
+          user = "dmarc@artmann.tech";
+        };
+      };
       # Per-project crush session DBs → Samsung TLC (/mnt/hot). Structural
       # fix for the 2026-09-14 QLC-root IO storm (guard Zone 6 cycling flm,
       # DEPLOY_FORCE_PRESSURE escapes): crush-hot-db-migrate moves each
