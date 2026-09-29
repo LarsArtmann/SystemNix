@@ -145,6 +145,17 @@ in
     count = machine.succeed("btrfs subvolume list /mnt/hot | grep -c 'hot/testdb'").strip()
     assert count == "1", f"expected exactly one hot/testdb subvol, got {count}"
 
+    # T14 (2026-09-30): the mount-presence collector emits the tier + entry
+    # gauges fail-closed shape (scrape_errors 0 + value gauges only on a
+    # completed run — absence, not stale values, is the failure signal the
+    # anchored Gatus conditions key on).
+    machine.succeed("systemctl start hot-db-metrics.service")
+    machine.succeed("systemctl is-enabled hot-db-metrics.timer")
+    prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/hot-db.prom")
+    assert "hot_tier_mounted 1" in prom, f"tier gauge wrong:\n{prom}"
+    assert 'hot_db_entry_mounted{name="testdb"} 1' in prom, f"entry gauge wrong:\n{prom}"
+    assert "hot_db_scrape_errors 0" in prom, f"scrape_errors not 0:\n{prom}"
+
     # 4: anti-shadow — unmount (detached-Samsung shape). The mount is
     # nofail so nothing else fails; the consumer must condition-SKIP
     # rather than write into the plain dir left behind. The consumer's

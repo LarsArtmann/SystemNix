@@ -126,7 +126,9 @@ run() {
   [ "$DRY_RUN" = "1" ] || "$@"
 }
 
-[ "$(id -u)" -eq 0 ] || {
+# MIGRATE_ROOT_UID lets sandboxed fixture tests satisfy the root gate
+# without real privileges (never set it outside tests).
+[ "$(id -u)" -eq "${MIGRATE_ROOT_UID:-0}" ] || {
   echo "must run as root (sudo)" >&2
   exit 1
 }
@@ -150,7 +152,10 @@ elif [ $# -ge 2 ]; then
   fi
 fi
 
-[ -n "$NAME" ] || usage
+# Only `status` runs without a name (it prints the whole registry).
+if [ -z "$NAME" ] && [ "$ACTION" != "status" ]; then
+  usage
+fi
 
 SUBVOL="$HOT_PARENT/$NAME"
 MARKER="$STATE_DIR/$NAME"
@@ -258,8 +263,16 @@ cutover)
       echo "Inspect $SUBVOL vs $DATADIR, then restart by hand: systemctl start$(echo "$STOP_UNITS" | sed 's/^/ /' | tr '\n' ' ')" >&2
       exit 1
     fi
+    # Biggest-file floor: the finalize gate for SMALL trees — a ±2 file-count
+    # tolerance is vacuous when the whole dataDir is 2-3 files (gatus). The
+    # main DB is always the largest file and never legitimately shrinks
+    # below the cutover size (append-mostly pages; a VACUUM shrink would
+    # trip this loudly — acceptable, it means the tree changed materially).
+    BIG=$(find "$DATADIR" -xdev -type f -printf '%s %p\n' | sort -rn | sed -n 1p)
+    BIG_SIZE=${BIG%% *}
+    BIG_PATH=${BIG#* }
     mkdir -p "$STATE_DIR"
-    printf 'FILES=%s\nBYTES=%s\nSTAMP=%s\n' "$SRC_COUNT" "$SRC_SIZE" "$(date +%s)" >"$MARKER"
+    printf 'FILES=%s\nBYTES=%s\nBIG_SIZE=%s\nBIG_PATH=%s\nSTAMP=%s\n' "$SRC_COUNT" "$SRC_SIZE" "$BIG_SIZE" "$BIG_PATH" "$(date +%s)" >"$MARKER"
   fi
   echo "cutover OK — units STOPPED, subvol quiesced-synced, marker at $MARKER."
   echo "NOW (keep tight — parallel deploys can restart the stopped units onto the QLC dir):"
@@ -278,15 +291,29 @@ finalize)
   fi
   echo "== finalize: verify mount + counts, restart [$(echo "$STOP_UNITS" | tr '\n' ' ')]"
   if [ "$DRY_RUN" != "1" ]; then
-    # The 2026-09-30 defect list: finalize used to verify NOTHING. Counts
-    # may legitimately drift UP (deploy restarted the service, writers
-    # append) and the WAL/-shm pair can appear/vanish — the gate is
-    # "not FEWER than cutover (minus the WAL/-shm pair)".
+    # The 2026-09-30 defect list: finalize used to verify NOTHING. Two
+    # gates: (1) the biggest-file floor — the main DB exists at >= its
+    # cutover size (a wrong/empty mounted tree fails this; WAL/-shm churn
+    # does not); (2) a coarse file-count floor with a ±2 WAL/-shm
+    # tolerance (catches mass loss on large trees).
     MARKER_FILES=$(sed -n 's/^FILES=//p' "$MARKER")
     MARKER_BYTES=$(sed -n 's/^BYTES=//p' "$MARKER")
+    BIG_SIZE=$(sed -n 's/^BIG_SIZE=//p' "$MARKER")
+    BIG_PATH=$(sed -n 's/^BIG_PATH=//p' "$MARKER")
     DST_COUNT=$(find "$DATADIR" -xdev -type f | wc -l)
     DST_SIZE=$(du -sb --apparent-size "$DATADIR" | awk '{print $1}')
     echo "files: cutover=$MARKER_FILES now=$DST_COUNT  bytes: cutover=$MARKER_BYTES now=$DST_SIZE"
+    if [ ! -f "$BIG_PATH" ]; then
+      echo "VERIFY FAILED: cutover's largest file ($BIG_PATH) is MISSING from the mounted tree." >&2
+      echo "Units NOT restarted. Inspect the mount before starting anything." >&2
+      exit 1
+    fi
+    NOW_BIG=$(stat -c%s "$BIG_PATH")
+    if [ "$NOW_BIG" -lt "$BIG_SIZE" ]; then
+      echo "VERIFY FAILED: $BIG_PATH shrank below its cutover size ($NOW_BIG < $BIG_SIZE) — wrong tree or a material change." >&2
+      echo "Units NOT restarted. Inspect the mount before starting anything." >&2
+      exit 1
+    fi
     if [ "$((DST_COUNT + 2))" -lt "$MARKER_FILES" ]; then
       echo "VERIFY FAILED: fewer files than the cutover snapshot ($DST_COUNT < $MARKER_FILES)." >&2
       echo "Units NOT restarted. Inspect the mount before starting anything." >&2

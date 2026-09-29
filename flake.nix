@@ -2087,6 +2087,33 @@
                 touch $out
               '';
 
+              # migrate-hot-db.sh is the DESTRUCTIVE vehicle of the hot-DB
+              # per-service waves (stops services, rsyncs dataDirs) — the
+              # 2026-09-30 storage.md row demanded a stub-fixture test BEFORE
+              # its first user window. PATH-injected stubs for btrfs/chattr/
+              # systemctl/mountpoint/ionice/nice + real rsync against
+              # scratch trees via the script's env overrides. Runs the REAL
+              # committed script (pre-deploy-metrics-selftest staging shape).
+              migrate-hot-db-fixture = pkgs.runCommand "migrate-hot-db-fixture" {
+                nativeBuildInputs = with pkgs; [
+                  bash
+                  coreutils-full
+                  rsync
+                  gawk
+                  findutils
+                  gnugrep
+                  diffutils
+                  gnused
+                ];
+              } ''
+                scratch=$(mktemp -d)
+                mkdir -p "$scratch/scripts"
+                cp ${./scripts/migrate-hot-db.sh} "$scratch/scripts/migrate-hot-db.sh"
+                cp ${./scripts/test-migrate-hot-db.sh} "$scratch/scripts/test-migrate-hot-db.sh"
+                bash "$scratch/scripts/test-migrate-hot-db.sh"
+                touch $out
+              '';
+
               # The 2026-09-29 gatus config-panic incident: an alert
               # description containing `\"` (mount_point="/") made gatus
               # 5.36.0 panic AT STARTUP ("alert description must not have
