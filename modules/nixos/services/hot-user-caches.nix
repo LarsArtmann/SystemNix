@@ -109,6 +109,11 @@ _: {
               "noauto"
               "x-systemd.automount"
               "x-systemd.idle-timeout=10min"
+              # Bounds the mount JOB itself (e.g. a btrfs mount hung on the
+              # same early-boot replay window): after the timeout the job
+              # fails and autofs returns an error to waiters instead of
+              # parking them in autofs_wait forever (2026-09-29 class).
+              "x-systemd.mount-timeout=90s"
             ];
           })
         ) cfg.caches;
@@ -140,8 +145,30 @@ _: {
             # triangle still cycles at BOOT. Pulling from the .mount instead
             # keeps this unit OUT of the boot transaction entirely; the
             # subvol is created just before the first real mount, the only
-            # moment it is needed (tests/test-hot-user-caches.nix pins the
+            # the moment it is needed (tests/test-hot-user-caches.nix pins the
             # regression).
+            #
+            # 2026-09-29 failure mode #3 of this wiring, the D-state bootstrap
+            # class: at 09:58 boot-local time btop walked into
+            # /home/lars/.cache/nix, the automount fired, the .mount job queued
+            # behind this oneshot (before=), and the oneshot's process hung in
+            # UNINTERRUPTIBLE sleep (btrfs ioctl window right after mnt-hot
+            # mount; zero output, zero queued disk I/O for 3+h). systemd's
+            # TimeoutStartSec path is useless here: it SIGKILLs, SIGKILL cannot
+            # be delivered to a D-state process, and the start job only
+            # completes once the main process settles — so the job sat
+            # "running" forever, the .mount sat "waiting" forever, and every
+            # process touching the path parked in autofs_wait D-state: all nix
+            # flake check/build/print-dev-env invocations (all AI agents hung
+            # "on outputs"), direnv, trash count — 84 D-state processes, load
+            # 86, multi-user.target never reached 3+h after boot. ONLY a
+            # JOB-level timeout can cancel the job while the process lingers:
+            # JobTimeoutSec/JobRunningTimeoutSec abort the job object itself,
+            # the before= dependent (.mount) proceeds, the mount then either
+            # succeeds (subvol exists — the 99.9% no-op boot) or fails fast
+            # through x-systemd.mount-timeout, and autofs waiters get a mount
+            # or an error instead of an eternal park. The wedged process itself
+            # stays until reboot; one zombie beats a wedged host.
             wantedBy = [ mountUnit ];
             before = [ mountUnit ];
             after = [ "mnt-hot.mount" ];
@@ -157,6 +184,14 @@ _: {
             unitConfig = {
               RequiresMountsFor = [ cfg.hotMount ];
               DefaultDependencies = false;
+              # Job-level timeouts (2026-09-29 D-state class, see comment
+              # above): TimeoutStartSec alone cannot complete a job whose
+              # process ignores SIGKILL — these cancel the JOB, freeing the
+              # .mount waiting behind before=. Budget: script is sub-second
+              # when healthy; 4min is 240x headroom and still bounds a wedged
+              # boot transaction.
+              JobTimeoutSec = "4min";
+              JobRunningTimeoutSec = "4min";
             };
             path = [
               pkgs.btrfs-progs
@@ -167,6 +202,10 @@ _: {
                 Type = "oneshot";
                 User = "root";
                 RemainAfterExit = true;
+                # Kill-attempt pass before the job-level cancel above; the
+                # global 3min default (timeout-audit.nix) would also work,
+                # this just starts it sooner.
+                TimeoutStartSec = "2min";
               }
               (serviceOneshotDefaults { })
               (harden {
