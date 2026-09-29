@@ -443,4 +443,8 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 | [docs/todo/desktop.md](docs/todo/desktop.md)       | niri, DMS/Quickshell, Qt, audio, shell UX, Signal                                                        |
 | [docs/todo/pixel6.md](docs/todo/pixel6.md)         | Pixel 6 recovery → media-archive project                                                                 |
 
+### desktop
+
+- [ ] **crush-debug: add Gatus-failing-checks as a picker source** → [docs/todo/desktop.md](docs/todo/desktop.md)
+
 _Completed work: [CHANGELOG.md](./CHANGELOG.md). Long-term ideas: [ROADMAP.md](./ROADMAP.md)._
