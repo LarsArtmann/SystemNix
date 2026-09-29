@@ -14,15 +14,13 @@ let
   flakePkg = input: (input.packages.${system} or { }).default or null;
 in
 lib.filterAttrs (_: v: v != null) {
-  # TEMPORARY vendorHash shim (2026-09-23): the root nixpkgs move (44a9189 →
-  # 6774f7bc) re-resolved the go-modules FOD graph, so the upstream
-  # vendorHash no longer reproduces (got fmLiSd6d… vs specified a/Fx2E5Z…).
-  # The fix IS committed upstream on fork (eabf846c) but UNPUSHED (origin/fork
-  # 440b8df5 still carries the stale hash). Drop when the lock moves past a
-  # pushed upstream-fixed rev. Same class + shape as the buildflow shim.
-  art-dupl = (flakePkg inputs.art-dupl).overrideAttrs {
-    vendorHash = "sha256-fmLiSd6dN0Z85m+vDks3tQUD7yb76ZeytiE5j3FEp4E=";
-  };
+  # art-dupl shim DROPPED (2026-09-29): its drop condition ("lock moves past
+  # a pushed upstream-fixed rev") is met — the lock holds f6355c24 (pushed),
+  # whose flake bakes vendorHash ts4RN6Z0… (the same "got" hash the 09-29
+  # blanket update's FOD produced; the old shim pinned the stale fmLiSd6d…
+  # and re-broke the FOD it existed to fix — the buildflow-shim lifecycle
+  # class). Re-add ONLY via nix-hash-fix evidence, never by hand.
+  art-dupl = flakePkg inputs.art-dupl;
   branching-flow = flakePkg inputs.branching-flow;
   # buildflow shim DROPPED (2026-09-23): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 5b3483a, where the
