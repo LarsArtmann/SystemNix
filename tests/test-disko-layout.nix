@@ -45,17 +45,15 @@ in
 {
   name = "disko-layout";
 
-  nodes.machine =
-    _:
-    {
-      virtualisation.emptyDiskImages = [ 8192 ];
-      virtualisation.diskSize = 8192;
-      boot.supportedFilesystems = [ "btrfs" ];
-      environment.systemPackages = [
-        diskoScript
-      ];
-      system.stateVersion = "25.11";
-    };
+  nodes.machine = _: {
+    virtualisation.emptyDiskImages = [ 8192 ];
+    virtualisation.diskSize = 8192;
+    boot.supportedFilesystems = [ "btrfs" ];
+    environment.systemPackages = [
+      diskoScript
+    ];
+    system.stateVersion = "25.11";
+  };
 
   testScript = ''
     machine.start()
