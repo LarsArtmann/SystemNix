@@ -569,11 +569,13 @@ if nix run .#pre-deploy-check; then
     sudo systemctl restart cv-server.service 2>/dev/null || true
   fi
 
-  # GeoMetrikks' Pocket ID bridge, same indirect-unit class as cv-oidc-env:
-  # geometrikks-oidc-env is only wantedBy=geometrikks.service and the app
-  # reads the OIDC_* env file at process start only.
-  if systemctl is-active --quiet geometrikks-oidc-env.service 2>/dev/null; then
-    echo "Restarting geometrikks-oidc-env.service + geometrikks.service (reload OIDC client secret)"
+  # GeoMetrikks' Pocket ID bridge, same indirect-unit class as cv-oidc-env —
+  # but GATED ON THE DAEMON (paperless-oidc-setup pattern): the bridge is
+  # ConditionPathExists-gated on the Pocket ID client secret and sits
+  # INACTIVE (condition-skip) until pocket-id-provision has created the
+  # client; gating on the bridge would skip the very first converge.
+  if systemctl is-active --quiet geometrikks.service 2>/dev/null; then
+    echo "Restarting geometrikks-oidc-env.service + geometrikks.service (converge OIDC env)"
     sudo systemctl restart geometrikks-oidc-env.service 2>/dev/null || true
     sudo systemctl restart geometrikks.service 2>/dev/null || true
   fi

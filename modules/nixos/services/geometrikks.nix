@@ -226,7 +226,7 @@
               ensureDBOwnership = true;
             }
           ];
-          extraPlugins = ps: [
+          extensions = ps: [
             ps.timescaledb
             ps.postgis
           ];
@@ -287,6 +287,7 @@
                 "geometrikks-oidc-env.service"
               ];
               wants = [
+                "network-online.target"
                 "geometrikks-db-provision.service"
                 "geometrikks-oidc-env.service"
               ];
@@ -306,7 +307,7 @@
                   StateDirectory = "geometrikks";
                   WorkingDirectory = stateDir;
                   EnvironmentFile = [
-                    (lib.mkDefault config.sops.templates."geometrikks-env".path)
+                    config.sops.templates."geometrikks-env".path
                     "-${oidcEnvFile}"
                   ];
                   ExecStartPre = [ "${assetsPreStart}" ];
@@ -374,6 +375,14 @@
               wantedBy = [ "geometrikks.service" ];
               after = [ "pocket-id-provision.service" ];
               wants = [ "pocket-id-provision.service" ];
+              # Condition-gated like paperless-oidc-setup: on the FIRST deploy
+              # carrying the OIDC client registration the Pocket ID
+              # provisioner has not created the secret yet — a condition-skip
+              # no-op beats a failed unit exit-4'ing the activation. deploy.sh
+              # converges bridge+daemon after the provisioner loop.
+              unitConfig.ConditionPathExists = [
+                "${config.services.pocket-id.dataDir}/client-secrets/geometrikks"
+              ];
               serviceConfig = lib.mkMerge [
                 (serviceOneshotDefaults { })
                 {
