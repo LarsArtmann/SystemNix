@@ -15,6 +15,44 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - uses: DeterminateSystems/nix-installer-action@e50d5f73bfe71c2dd0aa4218de8f4afa59f8f81d # v16
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes pipe-operators
+            # Same access-tokens fallback as nix-check.yml: the job-scoped
+            # GITHUB_TOKEN cannot read the 32+ private `github:`-type lock
+            # nodes, so without NIX_GITHUB_RO_TOKEN the update dies on the
+            # first private tarball fetch (all five weekly runs since
+            # 2026-08-31 failed — the bot never once succeeded).
+            access-tokens = github.com=${{ secrets.NIX_GITHUB_RO_TOKEN || secrets.GITHUB_TOKEN }}
+
+      # Ported from nix-check.yml: private git+ssh ROOT inputs (CV,
+      # go-cqrs-lite, branching-flow, file-and-image-renamer, BuildFlow)
+      # need deploy keys; the public go-nix-helpers git+ssh URL is
+      # rewritten to anonymous HTTPS.
+      - name: Configure private flake-input auth
+        env:
+          NIX_DEPLOY_KEY_CV: ${{ secrets.NIX_DEPLOY_KEY_CV }}
+          NIX_DEPLOY_KEY_GO_CQRS_LITE: ${{ secrets.NIX_DEPLOY_KEY_GO_CQRS_LITE }}
+          NIX_DEPLOY_KEY_BRANCHING_FLOW: ${{ secrets.NIX_DEPLOY_KEY_BRANCHING_FLOW }}
+          NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER: ${{ secrets.NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER }}
+          NIX_DEPLOY_KEY_BUILDFLOW: ${{ secrets.NIX_DEPLOY_KEY_BUILDFLOW }}
+        run: |
+          eval "$(ssh-agent -s)" >/dev/null
+          printf '%s\n' "$NIX_DEPLOY_KEY_CV" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_GO_CQRS_LITE" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_BRANCHING_FLOW" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_BUILDFLOW" | ssh-add -
+          git config --global url."https://github.com/LarsArtmann/go-nix-helpers".insteadOf "git@github.com:LarsArtmann/go-nix-helpers"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new" >> "$GITHUB_ENV"
+
+      # Warm every input's source through Nix's parallel fetch thread pool
+      # BEFORE the serialized walk below — `nix flake update` itself fetches
+      # inputs one at a time (Nix 2.31 release notes: "serialized on-demand
+      # fetching"); prefetch-inputs is the official parallel path.
+      - name: Prefetch all inputs in parallel
+        run: nix flake prefetch-inputs
 
       - name: Update flake inputs
         run: nix flake update
