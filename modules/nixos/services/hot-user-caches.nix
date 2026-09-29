@@ -7,39 +7,71 @@
 # caches had "no off-NVMe home" — this module is that home: each listed cache
 # gets a dedicated subvolume on the TLC disk, mounted AT its existing path.
 #
-# Style notes:
-# - Mounts follow the snapshots.nix cacheSubvolumes family (noauto +
-#   x-systemd.automount + idle-timeout), NOT the hermes plain-mount style:
-#   hermes needed tmpfiles to see the mounted subvolume (automount+tmpfiles is
-#   the shadow-dir class), while caches have no tmpfiles rules and WANT the
-#   lazy mount so both this subvol and the @cache-home parent can expire idle.
-# - fstab cannot create subvolumes: a forgejo-subvol-bootstrap-style oneshot
-#   creates parent dirs + the leaf subvol through the /mnt/hot toplevel mount
-#   before the automount unit ever answers a lookup (the test-cv pool-fmt
-#   chicken-and-egg class). Idempotent; runs at boot via the automount unit.
-# - The mount shadows any pre-existing directory content at the mount point
-#   (the ClickHouse shadow-dir class): move old cache content aside BEFORE
-#   the first activation — it is regenerable cache, not state.
-# - Caches must never join a btrbk leg (snapshot churn); the users/ tree has
-#   no legs — keep it that way when adding entries.
+# Doctrine (2026-09-29, after FOUR failed boots — see history below):
+# - Subvolumes are PROVISIONING state. disko/samsung-tlc.nix declares every
+#   cache subvolume (flake geometryGuards assert them at eval time), so a
+#   provisioned disk ALWAYS carries them. fstab just mounts. NOTHING runtime
+#   may sit between an automount and its mount — same shape as snapshots.nix
+#   cacheSubvolumes (@cache-home), which has run cleanly since forever.
+# - Missing subvol (drifted/misprovisioned disk) = mount fails FAST and LOUD
+#   ("subvol not found" in the journal, autofs returns an error to the
+#   waiter). x-systemd.mount-timeout bounds even a pathological mount job.
+#   Honest failure beats silent healing — especially healing that, in
+#   practice, never ran.
+# - Adding a cache entry: add the subvolume to disko/samsung-tlc.nix (it is
+#   created at next provision; on the LIVE disk create it once by hand:
+#   `btrfs subvolume create /mnt/hot/<subvol>`), then list it here.
+#
+# Mounts follow the snapshots.nix cacheSubvolumes family (noauto +
+# x-systemd.automount + idle-timeout), NOT the hermes plain-mount style:
+# hermes needed tmpfiles to see the mounted subvolume (automount+tmpfiles is
+# the shadow-dir class), while caches have no tmpfiles rules and WANT the
+# lazy mount so both this subvol and the @cache-home parent can expire idle.
+# The mount shadows any pre-existing directory content at the mount point
+# (the ClickHouse shadow-dir class): move old cache content aside BEFORE the
+# first activation — it is regenerable cache, not state.
+# Caches must never join a btrbk leg (snapshot churn); the users/ tree has
+# no legs — keep it that way when adding entries.
+#
+# Incident history — the deleted runtime bootstrap (2026-09-20 → 2026-09-29):
+# fstab cannot create subvolumes, so v1/v2 wired a just-in-time oneshot
+# (`hot-user-caches-<name>-bootstrap`) that idempotently created the leaf
+# subvol through /mnt/hot before the automount ever answered a lookup. It
+# NEVER completed successfully — 0 for 4 boots — and each failure wedged the
+# automount, parking every process touching the path in eternal autofs_wait
+# D-state (on this host: EVERY nix invocation — flake check, build,
+# print-devenv, direnv):
+#   2026-09-20 11:41 — ordering cycle at activation ("Transaction order is
+#     cyclic"); chmod EPERM (CapabilityBoundingSet gap) → exit-4 loop.
+#   2026-09-24 22:35 — cycle inside the boot transaction; systemd deleted
+#     systemd-tmpfiles-setup.service to break it → /run/binfmt etc. never
+#     existed; every sandboxed nix build died. (Fix attempt #1: pull the
+#     bootstrap from the .mount instead of the .automount.)
+#   2026-09-27 17:57 & 20:34 — same cycle class again (fix not yet live),
+#     bootstrap hung pre-exec both boots; the cache mount NEVER ran.
+#   2026-09-29 09:58 — fix live: no boot-transaction cycle, but btop's
+#     first walk into /home/lars/.cache/nix pulled the bootstrap into the
+#     automount transaction, where its child hung PRE-EXEC (empty
+#     /proc/<pid>/cmdline — forked, never exec'd; sandbox namespace
+#     construction × the pending direct-autofs). SIGKILL undeliverable,
+#     TimeoutStartSec unable to complete the job → mount job "waiting"
+#     forever → 84 D-state processes, load 86, boot transaction stuck
+#     3+h before anyone noticed. The subvol existed the whole time; the
+#     script had been a no-op-to-be since 2026-09-20.
+# Removed 2026-09-29. If a runtime provisioner is EVER reintroduced here,
+# it must carry JobTimeoutSec + JobRunningTimeoutSec AND must not be
+# ordered against any mount/automount unit.
 _: {
   flake.nixosModules.hot-user-caches =
     {
-      pkgs,
       lib,
       config,
-      utils,
       ...
     }:
     let
       inherit (config.users) primaryUser;
       cfg = config.services.hot-user-caches;
-      inherit (import ../../../lib/default.nix lib)
-        harden
-        serviceOneshotDefaults
-        mkFilesystem
-        ;
-      cacheGroup = config.users.users.${primaryUser}.group;
+      inherit (import ../../../lib/default.nix lib) mkFilesystem;
     in
     {
       options.services.hot-user-caches = {
@@ -51,19 +83,13 @@ _: {
           description = "Device hosting the cache subvolumes (device names swap across boots — always by-label).";
         };
 
-        hotMount = lib.mkOption {
-          type = lib.types.str;
-          default = "/mnt/hot";
-          description = "Toplevel mount of the hot disk, used by the bootstrap to create subvolumes.";
-        };
-
         caches = lib.mkOption {
           type =
             with lib.types;
             attrsOf (submodule {
               options.subvol = lib.mkOption {
                 type = str;
-                description = "Subvolume path on the hot disk filesystem (leaf component only must not exist yet).";
+                description = "Subvolume path on the hot disk filesystem. MUST also be declared in disko/samsung-tlc.nix — provisioning creates it, this module only mounts it.";
               };
               options.mountPoint = lib.mkOption {
                 type = str;
@@ -109,141 +135,14 @@ _: {
               "noauto"
               "x-systemd.automount"
               "x-systemd.idle-timeout=10min"
-              # Bounds the mount JOB itself (e.g. a btrfs mount hung on the
-              # same early-boot replay window): after the timeout the job
-              # fails and autofs returns an error to waiters instead of
-              # parking them in autofs_wait forever (2026-09-29 class).
+              # Bounds the mount JOB itself (e.g. a btrfs mount hung on an
+              # early-boot replay window): after the timeout the job fails
+              # and autofs returns an error to waiters instead of parking
+              # them in autofs_wait forever (2026-09-29 class).
               "x-systemd.mount-timeout=90s"
             ];
           })
         ) cfg.caches;
-
-        systemd.services = lib.mapAttrs' (
-          name: cache:
-          let
-            mountUnit = "${utils.escapeSystemdPath cache.mountPoint}.mount";
-          in
-          lib.nameValuePair "hot-user-caches-${name}-bootstrap" {
-            description = "Idempotently create the ${name} cache subvolume on the hot disk";
-            # The on-demand .MOUNT pulls this in at first access and waits
-            # (before): the autofs-triggered mount must never run before the
-            # subvol exists. NEVER wire wantedBy=/before= against the
-            # .AUTOMOUNT unit: at boot the fstab automount sits inside the
-            # local-fs/sysinit transaction together with
-            # systemd-tmpfiles-setup.service, and any ordering edge from this
-            # unit onto the automount closes a cycle whose victim is the
-            # TMPFILES start job — systemd deletes it to break the cycle
-            # ("Job systemd-tmpfiles-setup.service/start deleted to break
-            # ordering cycle"), the main tmpfiles pass NEVER RUNS, and
-            # /run/binfmt (nix build sandbox), /run/systemnix/sev1,
-            # /run/lock/* silently never exist for the whole boot (live
-            # 2026-09-24 22:35, the FIRST boot after deploy — every sandboxed
-            # nix build died "getting attributes of path /run/binfmt" and
-            # sev1-bridge 226'd 2900x). DefaultDependencies=false alone does
-            # NOT prevent this: the 2026-09-20 activation-cycle fix removed
-            # only the bootstrap's own sysinit deps; the automount-edge
-            # triangle still cycles at BOOT. Pulling from the .mount instead
-            # keeps this unit OUT of the boot transaction entirely; the
-            # subvol is created just before the first real mount, the only
-            # the moment it is needed (tests/test-hot-user-caches.nix pins the
-            # regression).
-            #
-            # 2026-09-29 failure mode #3 of this wiring, the D-state bootstrap
-            # class: at 09:58 boot-local time btop walked into
-            # /home/lars/.cache/nix, the automount fired, the .mount job queued
-            # behind this oneshot (before=), and the oneshot's process hung in
-            # UNINTERRUPTIBLE sleep (btrfs ioctl window right after mnt-hot
-            # mount; zero output, zero queued disk I/O for 3+h). systemd's
-            # TimeoutStartSec path is useless here: it SIGKILLs, SIGKILL cannot
-            # be delivered to a D-state process, and the start job only
-            # completes once the main process settles — so the job sat
-            # "running" forever, the .mount sat "waiting" forever, and every
-            # process touching the path parked in autofs_wait D-state: all nix
-            # flake check/build/print-dev-env invocations (all AI agents hung
-            # "on outputs"), direnv, trash count — 84 D-state processes, load
-            # 86, multi-user.target never reached 3+h after boot. ONLY a
-            # JOB-level timeout can cancel the job while the process lingers:
-            # JobTimeoutSec/JobRunningTimeoutSec abort the job object itself,
-            # the before= dependent (.mount) proceeds, the mount then either
-            # succeeds (subvol exists — the 99.9% no-op boot) or fails fast
-            # through x-systemd.mount-timeout, and autofs waiters get a mount
-            # or an error instead of an eternal park. The wedged process itself
-            # stays until reboot; one zombie beats a wedged host.
-            wantedBy = [ mountUnit ];
-            before = [ mountUnit ];
-            after = [ "mnt-hot.mount" ];
-            wants = [ "mnt-hot.mount" ];
-            # DefaultDependencies=false: default service deps add
-            # After=sysinit.target, but sysinit is After=local-fs.target and
-            # the automount this unit must PRECEDE sits in the local-fs
-            # transaction → local-fs → automount → bootstrap → sysinit →
-            # local-fs ordering CYCLE (live 2026-09-20 11:41 "Transaction
-            # order is cyclic"; at boot this class can wedge local-fs
-            # outright). The REAL dependency is mnt-hot.mount below — the
-            # default chain contributes nothing but the cycle.
-            unitConfig = {
-              RequiresMountsFor = [ cfg.hotMount ];
-              DefaultDependencies = false;
-              # Job-level timeouts (2026-09-29 D-state class, see comment
-              # above): TimeoutStartSec alone cannot complete a job whose
-              # process ignores SIGKILL — these cancel the JOB, freeing the
-              # .mount waiting behind before=. Budget: script is sub-second
-              # when healthy; 4min is 240x headroom and still bounds a wedged
-              # boot transaction.
-              JobTimeoutSec = "4min";
-              JobRunningTimeoutSec = "4min";
-            };
-            path = [
-              pkgs.btrfs-progs
-              pkgs.coreutils
-            ];
-            serviceConfig = lib.mkMerge [
-              {
-                Type = "oneshot";
-                User = "root";
-                RemainAfterExit = true;
-                # Kill-attempt pass before the job-level cancel above; the
-                # global 3min default (timeout-audit.nix) would also work,
-                # this just starts it sooner.
-                TimeoutStartSec = "2min";
-              }
-              (serviceOneshotDefaults { })
-              (harden {
-                # btrfs subvolume create is a privileged ioctl; chown for the
-                # cache owner; CAP_FOWNER for the chmod 0700 on the freshly
-                # chown'd (no-longer-root-owned) subvol — chmod is
-                # FOWNER-gated for non-owners and CAP_DAC_OVERRIDE does NOT
-                # cover it (live 2026-09-20 11:41: chown ok, chmod EPERM →
-                # unit failed → exit-4 on every activation; harden{}'s empty
-                # bounding set would EPERM all of these).
-                CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER";
-                # The MOUNT ROOT — never a subdir inside it (226 class):
-                # RequiresMountsFor above guarantees the root exists before
-                # the namespace is built.
-                ReadWritePaths = [ cfg.hotMount ];
-              })
-            ];
-            script = ''
-              set -euo pipefail
-              subvol=${cfg.hotMount}/${cache.subvol}
-              if ${pkgs.btrfs-progs}/bin/btrfs subvolume show "$subvol" >/dev/null 2>&1; then
-                echo "hot-user-caches-${name}-bootstrap: $subvol already exists"
-              else
-                mkdir -p "$(dirname "$subvol")"
-                ${pkgs.btrfs-progs}/bin/btrfs subvolume create "$subvol"
-                echo "hot-user-caches-${name}-bootstrap: created $subvol"
-              fi
-              chown ${primaryUser}:${cacheGroup} "$subvol"
-              chmod 0700 "$subvol"
-            '';
-          }
-        ) cfg.caches;
-        assertions = [
-          {
-            assertion = config.fileSystems ? ${cfg.hotMount};
-            message = "services.hot-user-caches requires the ${cfg.hotMount} Samsung-toplevel mount (hardware-configuration.nix) — the bootstrap creates subvolumes through it.";
-          }
-        ];
       };
     };
 }
