@@ -155,6 +155,7 @@ in
     ../desktop/niri-wrapped.nix # Niri scrollable-tiling compositor via niri-flake HM module
     # waybar.nix retired — DankMaterialShell replaces it entirely
     ../desktop/quickshell.nix # Quickshell desktop shell via DankMaterialShell
+    ../desktop/crush-debug.nix # Error-to-agent launcher: failed units + sev1 -> headless crush fix pass (Mod+Ctrl+D)
   ];
 
   # Quickshell desktop shell — replaces Waybar, Dunst, Wlogout, polkit_gnome

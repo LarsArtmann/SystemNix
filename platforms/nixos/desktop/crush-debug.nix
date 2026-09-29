@@ -16,6 +16,7 @@ let
     runtimeInputs = with pkgs; [
       coreutils
       fzf
+      findutils
       gnugrep
       systemd
       trash-cli
@@ -197,7 +198,8 @@ let
         fi
       } > "$ev"
 
-      ls -1dt "$STATE_ROOT"/*/ 2>/dev/null | tail -n +21 | xargs -r trash 2>/dev/null || true
+      find "$STATE_ROOT" -mindepth 1 -maxdepth 1 -type d -printf '%T@\t%p\n' 2>/dev/null \
+        | sort -rn | tail -n +21 | cut -f2- | xargs -r trash 2>/dev/null || true
 
       extra=""
       if [ "$scope" = "sev1" ]; then
@@ -222,7 +224,7 @@ let
         echo "crush-debug: SystemNix checkout not found at $REPO" >&2
         exit 1
       fi
-      cd "$REPO"
+      cd "$REPO" || exit 1
 
       if [ "$MODE" = "review" ]; then
         echo "crush-debug: review mode. Evidence: $ev"
