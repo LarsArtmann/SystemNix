@@ -52,7 +52,7 @@
     # Automatic garbage collection
     gc = {
       automatic = true;
-      options = "--delete-older-than 3d";
+      options = "--delete-older-than 7d";
     }
     // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
       interval = {
