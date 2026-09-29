@@ -2,44 +2,79 @@
 
 Reverse-proxy access-log ingestion + geo-location analytics: tails every Caddy
 per-vhost JSON access log, geolocates each request (MaxMind GeoLite2), stores
-geo-events in TimescaleDB, and serves a live MapLibre world map + searchable
-log database. Upstream: github:GilbN/geometrikks (Docker-only).
+geo-events in TimescaleDB (+PostGIS), and serves a live MapLibre world map +
+searchable log database. Upstream: github:GilbN/geometrikks.
+**Native Nix service since 2026-09-29** (Docker→Nix migration; the former
+`mkDockerService` deployment with the timescaledb-ha sidecar is gone — plan:
+`docs/planning/2026-09-29_21-41_GEOMETRIKKS-NATIVE-NIX-MIGRATION.md`).
 
 ## Architecture
 
-- **Module**: `modules/nixos/services/geometrikks.nix` — `mkDockerService`
-  pattern (manifest.nix is the reference): `geometrikks.service` runs
-  `docker compose up` with two containers (`app` + `timescale_db`), sops env
-  template, nightly pg_dump to the pool.
-- **Port**: `127.0.0.1:8102` (`ports.geometrikks` in `lib/ports.nix`); the app
-  listens on 8000 inside the container.
-- **vHost**: `geo.home.lan`, Layer 2 `protectedVHost` (oauth2-proxy gates
-  EXTERNAL access; LAN hits the app directly). The app ALSO has its own
-  single-admin login (`APP_ADMIN_USER`/`APP_ADMIN_PASSWORD`) — external users
-  pass both gates, LAN users only the app login.
-- **Logs**: Caddy's per-vhost `access-<host>.log` files (nixpkgs caddy module
-  default sinks — file output means Caddy's default encoder is **JSON** per
-  caddyserver.com/docs/caddyfile/directives/log) are bind-mounted read-only at
-  `/var/log/access` inside the container. `LOGPARSER_LOG_PATHS` is a JSON list
-  derived at EVAL time from `config.services.caddy.virtualHosts` (+ the global
-  `access.log`) — new services are tracked automatically. Filename rule
-  replicates vhost-options.nix: `/` and `` -> `_` (hence
-  `access-https:__*.home.lan.log`).
-- **Container user**: `PUID=0` (root in-container). Caddy writes logs
-  `caddy:caddy 0600` — only host root can read them, and the read-only bind
-  mount contains the blast radius (same trust level as every other
-  mkDockerService container on this host; PUID=0 also matches the upstream
-  default flow of chown+drop in the entrypoint).
-- **DB**: `timescale/timescaledb-ha:pg18` (digest-pinned in `lib/images.nix`)
-  with upstream's tuned worker pool (`max_background_workers=40`,
-  `max_worker_processes=51` — ~32 TimescaleDB background jobs + CAGG refreshes
-  fire on the same tick). Data in named volume `geometrikks_timescale_data`
-  (Docker data-root on /data). App state in `geometrikks_geoip_data`.
-- **X-Forwarded-For**: the compose `frontend` network is subnet-pinned
-  `172.32.0.0/24` (outside Docker's default pool) and
-  `APP_TRUSTED_PROXIES=172.32.0.0/24`, so login logging sees real client IPs
-  through the Caddy hop (userland-proxy is off, DNAT preserves Caddy's source
-  = the bridge gateway).
+- **Package**: `pkgs/geometrikks.nix` — builds from source at the pinned tag
+  (v0.19.0):
+  - Python venv via **uv2nix** from `uv.lock` (wheel-preferred; two legacy
+    sdists get setuptools injected via `resolveBuildSystem`)
+  - Frontend via a hand-rolled **bun FOD** (nixpkgs has no fetchBunDeps): the
+    FOD tars `node_modules` as ONE deterministic file — bun rewrites
+    `#!/usr/bin/env X` shebangs to sandbox store paths (playwright-core .sh
+    class) and some packages ship flake.lock store pins; both are scrubbed
+    inside the FOD (a directory output trips the FOD no-store-refs check even
+    with clean bytes — the tar sidesteps it), then `bun run build` runs the
+    vite build with `patchShebangs`-ed bins
+  - Layout mirrors the upstream Dockerfile: `$out/bin/geometrikks-{server,cli}`
+    wrappers + `$out/share/geometrikks/{public,migrations,alembic.ini}`
+  - `nix build .#geometrikks` for dep-drift probing; bumping = new tag + 2
+    hashes (src, bunDeps) via the got-hash loop
+- **Module**: `modules/nixos/services/geometrikks.nix` — native
+  `geometrikks.service` (same unit name the docker wrapper had → the flip was
+  atomic). ExecStartPre stamp-gates a copy of `public/` + `migrations/` +
+  `alembic.ini` into `/var/lib/geometrikks` (the app writes `.litestar.json`
+  and logs there; alembic resolves `migrations/` relative to CWD).
+- **Port**: `127.0.0.1:8102` (`ports.geometrikks`); the litestar/granian
+  server binds loopback via the wrapper's `GEOMETRIKKS_HOST/PORT`.
+- **vHost**: `geo.home.lan`, **Layer 1 plain** `reverse_proxy` — SSO is native
+  Pocket ID OIDC (auth-code + PKCE, confidential client). Behind
+  protectedVHost it would double-auth (doctrine).
+- **SSO**: `services.integration.geometrikks.oidc` registers the client;
+  `geometrikks-oidc-env` bridges the provisioner-owned secret
+  (`LoadCredential` as PID 1 → `/var/lib/geometrikks-oidc/oidc.env`, written
+  with ALL OIDC vars together). Allow-list:
+  `services.geometrikks.oidc.allowedUsers` (verified emails; REQUIRED by
+  upstream). The `admin` password login stays as break-glass while
+  `APP_ADMIN_PASSWORD` is set (provider-down fallback).
+- **DB**: the host's **shared PostgreSQL cluster** (PG17) with
+  `timescaledb` + `postgis` extensions (`services.postgresql.extensions`),
+  `shared_preload_libraries += timescaledb`, `max_worker_processes = 48`
+  (global headroom). `geometrikks-db-provision` (User=postgres, peer auth)
+  sets the role password from sops, pre-creates both extensions
+  (superuser-only) and applies per-DB tuning
+  (`timescaledb.max_background_workers=32`, `max_parallel_workers=8` —
+  upstream's container values 40/8/51 minus the POSTMASTER-level part).
+  App connects via TCP 127.0.0.1 + the sops `geometrikks_db_password`.
+- **Alembic**: `DB_MIGRATE_ON_STARTUP=true` (upstream default) — the app
+  migrates at startup in a worker thread; `DB_STARTUP_WAIT_SECONDS=60` rides
+  out a postgres boot race, degraded-then-recover otherwise.
+- **Logs**: Caddy's per-vhost `access-<host>.log` files read at their HOST
+  paths (`/var/log/caddy/...`) — the unit carries
+  `CAP_DAC_READ_SEARCH` (files are `caddy:caddy 0600`; cv-backup precedent)
+  and reads them read-only under `ProtectSystem=strict`. `LOGPARSER_LOG_PATHS`
+  is a JSON list derived at EVAL time from
+  `config.services.caddy.virtualHosts` — new services are tracked
+  automatically. The tailer polls (`LOGPARSER_POLL_INTERVAL=1.0`).
+- **X-Forwarded-For**: `APP_TRUSTED_PROXIES=127.0.0.1` (Caddy proxies from
+  loopback — README's same-host nginx guidance).
+
+## Migration notes (from the Docker era)
+
+- **No data migration was needed**: the docker DB was empty (the service ran
+  geo-degraded since bring-up — ingestion never starts without a GeoLite2
+  database). The schema is created fresh by alembic on first start.
+- The docker named volumes (`geometrikks_geometrikks_timescale_data`,
+  `geometrikks_geoip_data` on /data/docker) are retained for ≥48h green as
+  the rollback window; removal is manual:
+  `docker volume rm geometrikks_geometrikks_timescale_data geometrikks_geometrikks_geoip_data`
+- Rollback = revert the flip commit + redeploy (the docker module and image
+  pins return; containers re-create from the volumes).
 
 ## Monitoring
 
@@ -48,10 +83,11 @@ log database. Upstream: github:GilbN/geometrikks (Docker-only).
 - `geometrikks.service` in system-health `monitoredServices` (registry
   `monitored = true` — state/restart-churn metrics).
 - Homepage tile: "GeoMetrikks" (Infrastructure group, `mdi-earth`).
-- Backup: nightly 05:15 pg_dump -> `/mnt/pool/backups/geometrikks/*.sql`
-  (14d retention), registered in backup-coordination (maxAge 31h).
-  NOTE: restore needs TimescaleDB present (same image; plain pg_dump of
-  hypertables is restoreable into a timescaledb-enabled cluster).
+- Backup: nightly 05:15 `geometrikks-db-backup` pg_dump (peer auth as
+  postgres) -> `/mnt/pool/backups/geometrikks/*.sql` (14d retention),
+  registered in backup-coordination (maxAge 31h). Restore into any
+  timescaledb+postgis-enabled cluster (`CREATE EXTENSION` first, then
+  `psql -f dump.sql`).
 
 ## Login + secrets
 
@@ -61,33 +97,42 @@ log database. Upstream: github:GilbN/geometrikks (Docker-only).
 - Retrieve the admin password (Sops + Age one-liner, as your user, from the
   repo root):
   `SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops -d platforms/nixos/secrets/geometrikks.yaml`
-- Username: `admin`.
+- SSO login: "Sign in with Pocket ID" button (allow-listed emails only).
+- OIDC lockout fallback: the `admin` + sops password login stays available.
 
 ## Go-live steps (user-gated)
 
-1. **MaxMind GeoLite2** (free): sign up at maxmind.com/en/geolite2/signup,
+1. **First SSO login**: https://geo.home.lan → "Sign in with Pocket ID" →
+   passkey → map. If the login is rejected despite the right account, the
+   provider may not mark the email verified — swap the entry in
+   `services.geometrikks.oidc.allowedUsers` to the Pocket ID subject id
+   (README-sanctioned alternative; resolve it from Pocket ID's SQLite, the
+   miniflux-oidc-setup way).
+2. **MaxMind GeoLite2** (free): sign up at maxmind.com/en/geolite2/signup,
    then paste `MAXMINDDB_USER_ID` + `MAXMINDDB_LICENSE_KEY` into the sops file
    (`sops platforms/nixos/secrets/geometrikks.yaml` with the same one-liner)
    and `sudo systemctl restart geometrikks`. Until then the app runs
    geo-DEGRADED (UI banner, no map pins) — ingestion + log search work.
-2. **CARTO basemap key** (optional, free tier at carto.com/basemaps/apikey):
+3. **CARTO basemap key** (optional, free tier at carto.com/basemaps/apikey):
    paste `MAP_CARTO_API_KEY`. Keyless tiles work today but CARTO may cut them
    off at any time.
-3. Log in at https://geo.home.lan with `admin` + the sops password; verify the
-   map populates within a minute (gatus probes every service every 30s, so
-   events flow immediately).
 
 ## Gotchas
 
-- **The app REFUSES to start without `APP_ADMIN_PASSWORD`** (upstream design)
-  — the sops key must never be empty.
-- **`v0.16.0` is not a GHCR tag** — tags are unprefixed (`0.16.0`); the
-  release tag has the `v`, the image tag does not (`v0.16.0` answers
-  "manifest unknown").
-- **TimeoutStartSec=15min** on the unit: first-ever start pulls the ~2.5 GB
-  timescaledb-ha image; the global 3min default would kill it. Both images
-  were pre-pulled at setup, so this only matters on a cold cache.
+- **The app REFUSES to start without `APP_ADMIN_PASSWORD` unless OIDC is
+  configured** (upstream design) — the sops key must never be empty.
+- **Bun FOD scrub is load-bearing**: bun silently rewrites `#!/usr/bin/env`
+  shebangs of package scripts to PATH-resolved interpreters. Inside the FOD
+  sandbox that means /nix/store paths → "fixed-output derivations must not
+  reference store paths". The scrub restores portable shebangs and a
+  self-test fails the FOD if any store path remains (rc-gated so a broken
+  grep can't phantom-green it).
+- **Phase shells are NOT bash** — `read -d` and process substitution broke
+  here during bring-up; keep installPhase helpers POSIX (`find -exec sh -c`).
 - Rotated Caddy logs (`*.log.gz`) are NOT backfilled; only live files are
-  tailed. Historical import exists upstream (`litestar import-logs`) but is
-  not wired here.
+  tailed. Historical import exists upstream:
+  `sudo -u geometrikks env $(systemctl show geometrikks -p Environment | ...) geometrikks-cli import-logs <file>`
+  (or run `geometrikks-cli` with the unit's env from a root shell).
 - The Banned-IPs/CrowdSec views are inert (no CrowdSec on this host).
+- Upstream ships no license file — the package declares `licenses.unfree`
+  (personal-use posture).

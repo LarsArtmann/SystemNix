@@ -47,10 +47,12 @@ let
   # (uv2nix docs "patching deps" pattern: resolveBuildSystem injection).
   pyprojectOverrides = final: prev: {
     geohash2 = prev.geohash2.overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ final.resolveBuildSystem { setuptools = [ ]; };
+      nativeBuildInputs =
+        (old.nativeBuildInputs or [ ]) ++ final.resolveBuildSystem { setuptools = [ ]; };
     });
     ipy = prev.ipy.overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ final.resolveBuildSystem { setuptools = [ ]; };
+      nativeBuildInputs =
+        (old.nativeBuildInputs or [ ]) ++ final.resolveBuildSystem { setuptools = [ ]; };
     });
   };
 

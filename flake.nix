@@ -2108,25 +2108,23 @@
                   configFile = sys.config.services.gatus.configFile;
                   gatus = sys.config.services.gatus.package;
                 in
-                pkgs.runCommand "gatus-config-parse-check"
-                  { nativeBuildInputs = [ gatus ]; }
-                  ''
-                    GATUS_OIDC_CLIENT_SECRET=check-dummy GATUS_CONFIG_PATH=${configFile} \
-                      gatus validate > validate.log 2>&1 || true
-                    if grep -q 'error parsing config' validate.log; then
-                      echo "FAIL: gatus rejected the rendered config (alert descriptions must not contain quote or backslash):"
-                      cat validate.log
-                      exit 1
-                    fi
-                    if ! grep -qE 'Validated [0-9]+ endpoints' validate.log; then
-                      echo "FAIL: no endpoint-validation line — validate never completed config validation:"
-                      cat validate.log
-                      exit 1
-                    fi
-                    echo "OK: gatus validated the rendered config:"
-                    grep -E 'Validated [0-9]+ endpoints' validate.log | head -1
-                    cp validate.log $out
-                  '';
+                pkgs.runCommand "gatus-config-parse-check" { nativeBuildInputs = [ gatus ]; } ''
+                  GATUS_OIDC_CLIENT_SECRET=check-dummy GATUS_CONFIG_PATH=${configFile} \
+                    gatus validate > validate.log 2>&1 || true
+                  if grep -q 'error parsing config' validate.log; then
+                    echo "FAIL: gatus rejected the rendered config (alert descriptions must not contain quote or backslash):"
+                    cat validate.log
+                    exit 1
+                  fi
+                  if ! grep -qE 'Validated [0-9]+ endpoints' validate.log; then
+                    echo "FAIL: no endpoint-validation line — validate never completed config validation:"
+                    cat validate.log
+                    exit 1
+                  fi
+                  echo "OK: gatus validated the rendered config:"
+                  grep -E 'Validated [0-9]+ endpoints' validate.log | head -1
+                  cp validate.log $out
+                '';
 
               # The pre-commit hook's shellcheck leg is the stricter bar
               # (warning; CI's shellcheck job is error-level) but only fires
