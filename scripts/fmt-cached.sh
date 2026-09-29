@@ -12,13 +12,13 @@ cd "$(git rev-parse --show-toplevel)"
 source scripts/lib/precommit-eval-cache.sh
 
 case "$(uname -m)" in
-    arm64 | aarch64) sys=aarch64-darwin ;;
-    *) sys=x86_64-linux ;;
+arm64 | aarch64) sys=aarch64-darwin ;;
+*) sys=x86_64-linux ;;
 esac
 
 if p=$(precommit_formatter_cached_path 2>/dev/null); then
-    echo "[fmt-cached] memo HIT — reusing $p" >&2
-    exec "$p/bin/treefmt" "$@"
+  echo "[fmt-cached] memo HIT — reusing $p" >&2
+  exec "$p/bin/treefmt" "$@"
 fi
 
 echo "[fmt-cached] memo MISS — resolving .#formatter.$sys (full flake eval)..." >&2

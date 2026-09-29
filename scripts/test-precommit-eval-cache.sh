@@ -19,7 +19,10 @@ source "$here/lib/precommit-eval-cache.sh"
 
 fail=0
 pass() { echo "PASS: $1"; }
-flunk() { echo "FAIL: $1"; fail=1; }
+flunk() {
+  echo "FAIL: $1"
+  fail=1
+}
 
 fixture=$(mktemp -d)
 state=$(mktemp -d)
@@ -56,16 +59,16 @@ k2=$(key_in_fixture) || flunk "key computation failed on retry"
 echo 'm = 2; # module churn' >>"$fixture/modules/m.nix"
 k3=$(key_in_fixture) || flunk "key failed after module edit"
 [ "$k3" = "$k1" ] && pass "module edit does NOT move the key (memo HIT for module commits)" ||
-    flunk "module edit moved the key — memo would miss (no perf win)"
+  flunk "module edit moved the key — memo would miss (no perf win)"
 
 # 3. sensitivity to every keyed input
 mutate_expect_change() { # <desc> <file> <content-append>
-    echo "$3" >>"$fixture/$2"
-    local k
-    k=$(key_in_fixture) || flunk "key failed after $1 mutation"
-    [ "$k" != "$k_prev" ] && pass "$1 edit moves the key (safe MISS)" ||
-        flunk "$1 edit did NOT move the key — STALE FORMATTER RISK"
-    k_prev=$k
+  echo "$3" >>"$fixture/$2"
+  local k
+  k=$(key_in_fixture) || flunk "key failed after $1 mutation"
+  [ "$k" != "$k_prev" ] && pass "$1 edit moves the key (safe MISS)" ||
+    flunk "$1 edit did NOT move the key — STALE FORMATTER RISK"
+  k_prev=$k
 }
 k_prev=$k3
 mutate_expect_change "flake.nix" flake.nix '# churn'
@@ -82,15 +85,15 @@ rm "$fixture/lib/a.nix"
 git -C "$fixture" add -A
 k=$(key_in_fixture) || flunk "key failed after rename"
 [ "$k" != "$k_prev" ] && pass "same-content rename moves the key" ||
-    flunk "rename with identical content did NOT move the key"
+  flunk "rename with identical content did NOT move the key"
 k_prev=$k
 
 # 4. unreadable tracked input => MISS (never a partial key)
 rm "$fixture/flake.lock"
 if key_in_fixture 2>/dev/null; then
-    flunk "key computed despite unreadable flake.lock — PARTIAL KEY (phantom-stale class)"
+  flunk "key computed despite unreadable flake.lock — PARTIAL KEY (phantom-stale class)"
 else
-    pass "unreadable tracked input yields key MISS"
+  pass "unreadable tracked input yields key MISS"
 fi
 echo '{ "nodes": { } }' >"$fixture/flake.lock"
 
@@ -101,20 +104,20 @@ mkdir -p "$fake_store/bin"
 store_in_fixture "$fake_store" || flunk "store_path failed on a valid path"
 got=$(cached_in_fixture) || flunk "cached_path MISS despite fresh store"
 [ "$got" = "$fake_store" ] && pass "memo roundtrip serves stored path" ||
-    flunk "memo roundtrip returned '$got' != '$fake_store'"
+  flunk "memo roundtrip returned '$got' != '$fake_store'"
 
 rm -rf "$fake_store"
 if cached_in_fixture 2>/dev/null; then
-    flunk "memo served a GC'd path (store-presence gate broken)"
+  flunk "memo served a GC'd path (store-presence gate broken)"
 else
-    pass "GC'd path => MISS"
+  pass "GC'd path => MISS"
 fi
 
 store_in_fixture "/tmp/not-a-store-path" || flunk "store_path errored on non-store path"
 if cached_in_fixture 2>/dev/null; then
-    flunk "memo served a non-store path (prefix guard broken)"
+  flunk "memo served a non-store path (prefix guard broken)"
 else
-    pass "non-store path rejected"
+  pass "non-store path rejected"
 fi
 
 # 6. escape hatch
@@ -122,14 +125,14 @@ mkdir -p "$fake_store/bin"
 : >"$fake_store/bin/treefmt"
 store_in_fixture "$fake_store" || true
 if (cd "$fixture" && PRECOMMIT_EVAL_CACHE=0 precommit_formatter_cached_path 2>/dev/null); then
-    flunk "lookup succeeded with PRECOMMIT_EVAL_CACHE=0"
+  flunk "lookup succeeded with PRECOMMIT_EVAL_CACHE=0"
 else
-    pass "PRECOMMIT_EVAL_CACHE=0 disables lookups"
+  pass "PRECOMMIT_EVAL_CACHE=0 disables lookups"
 fi
 
 if [ "$fail" = 0 ]; then
-    echo "ALL PASS"
+  echo "ALL PASS"
 else
-    echo "SELFTEST FAILED"
-    exit 1
+  echo "SELFTEST FAILED"
+  exit 1
 fi

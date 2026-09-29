@@ -73,74 +73,74 @@ if ! mountpoint -q /mnt/hot; then
 fi
 
 case "$ACTION" in
-  prepare)
-    if mountpoint -q "$SRC"; then
-      echo "$SRC is already a mountpoint — already migrated?" >&2
+prepare)
+  if mountpoint -q "$SRC"; then
+    echo "$SRC is already a mountpoint — already migrated?" >&2
+    exit 1
+  fi
+  if [ -n "$(ls -A "$SUBVOL" 2>/dev/null || true)" ]; then
+    echo "$SUBVOL is not empty — refusing to overwrite (rm its contents first if this is a restart of a failed window)" >&2
+    exit 1
+  fi
+  echo "== prepare: subvol + chattr +C, quiesce /var journal, rsync (PSI avg10 ${PSI}%)"
+  if ! btrfs subvolume show "$SUBVOL" >/dev/null 2>&1; then
+    run btrfs subvolume create "$SUBVOL"
+  fi
+  # Fresh-subvolume inheritance does NOT carry +C — set explicitly so
+  # every journal file created below is nodatacow (doctrine C).
+  run chattr +C "$SUBVOL"
+  # Quiesce: journald closes /var and logs to /run only → the source tree
+  # is static → an EXACT count/size verify is meaningful.
+  run journalctl --rotate
+  run journalctl --relinquish-var
+  sleep 1
+  run ionice -c 3 nice -n 19 rsync -aHAX --numeric-ids --info=stats2 "$SRC"/ "$SUBVOL"/
+  if [ "$DRY_RUN" = "1" ]; then
+    echo "dry run: skipping verification"
+  else
+    SRC_COUNT=$(find "$SRC" -xdev -type f | wc -l)
+    DST_COUNT=$(find "$SUBVOL" -type f | wc -l)
+    SRC_SIZE=$(du -sb --apparent-size "$SRC" | awk '{print $1}')
+    DST_SIZE=$(du -sb --apparent-size "$SUBVOL" | awk '{print $1}')
+    echo "files: src=$SRC_COUNT dst=$DST_COUNT  bytes: src=$SRC_SIZE dst=$DST_SIZE"
+    if [ "$SRC_COUNT" != "$DST_COUNT" ] || [ "$SRC_SIZE" != "$DST_SIZE" ]; then
+      echo "VERIFY FAILED — counts/sizes differ. journald left in VOLATILE mode:" >&2
+      echo "  run 'journalctl --flush' to restore /var logging, inspect $SUBVOL" >&2
       exit 1
     fi
-    if [ -n "$(ls -A "$SUBVOL" 2>/dev/null || true)" ]; then
-      echo "$SUBVOL is not empty — refusing to overwrite (rm its contents first if this is a restart of a failed window)" >&2
-      exit 1
-    fi
-    echo "== prepare: subvol + chattr +C, quiesce /var journal, rsync (PSI avg10 ${PSI}%)"
-    if ! btrfs subvolume show "$SUBVOL" >/dev/null 2>&1; then
-      run btrfs subvolume create "$SUBVOL"
-    fi
-    # Fresh-subvolume inheritance does NOT carry +C — set explicitly so
-    # every journal file created below is nodatacow (doctrine C).
-    run chattr +C "$SUBVOL"
-    # Quiesce: journald closes /var and logs to /run only → the source tree
-    # is static → an EXACT count/size verify is meaningful.
-    run journalctl --rotate
-    run journalctl --relinquish-var
-    sleep 1
-    run ionice -c 3 nice -n 19 rsync -aHAX --numeric-ids --info=stats2 "$SRC"/ "$SUBVOL"/
-    if [ "$DRY_RUN" = "1" ]; then
-      echo "dry run: skipping verification"
-    else
-      SRC_COUNT=$(find "$SRC" -xdev -type f | wc -l)
-      DST_COUNT=$(find "$SUBVOL" -type f | wc -l)
-      SRC_SIZE=$(du -sb --apparent-size "$SRC" | awk '{print $1}')
-      DST_SIZE=$(du -sb --apparent-size "$SUBVOL" | awk '{print $1}')
-      echo "files: src=$SRC_COUNT dst=$DST_COUNT  bytes: src=$SRC_SIZE dst=$DST_SIZE"
-      if [ "$SRC_COUNT" != "$DST_COUNT" ] || [ "$SRC_SIZE" != "$DST_SIZE" ]; then
-        echo "VERIFY FAILED — counts/sizes differ. journald left in VOLATILE mode:" >&2
-        echo "  run 'journalctl --flush' to restore /var logging, inspect $SUBVOL" >&2
-        exit 1
-      fi
-    fi
-    echo "prepare OK. Now: nix run .#deploy  — then:  sudo $0 finalize"
-    echo "WARNING: journald is in VOLATILE mode (/run only) until the deploy — keep the window short."
-    ;;
-  finalize)
-    mountpoint -q "$SRC" || {
-      echo "$SRC is not a mountpoint — deploy the journal-hot mount first" >&2
-      exit 1
-    }
-    echo "== finalize: flush /run window entries into the mount, verify"
-    run journalctl --flush
-    sleep 2
-    if [ "$DRY_RUN" = "1" ]; then
-      echo "dry run: skipping verification"
-      exit 0
-    fi
-    MID=$(cat /etc/machine-id)
-    NEWEST=$(ls -t "$SRC/$MID/" | head -1)
-    TARGET=$(findmnt -T "$SRC/$MID/$NEWEST" -n -o TARGET)
-    if [ "$TARGET" != "$SRC" ]; then
-      echo "VERIFY FAILED: active journal file ($NEWEST) lives on '$TARGET', not the mount" >&2
-      exit 1
-    fi
-    systemd-cat -t migrate-journal-hot echo "finalize marker $(date +%s)"
-    sleep 2
-    journalctl -t migrate-journal-hot -b --no-pager | grep -q "finalize marker" || {
-      echo "VERIFY FAILED: marker roundtrip through the mounted journal failed" >&2
-      exit 1
-    }
-    echo "finalize OK: journal live on the Samsung ($NEWEST on the mount)."
-    echo "Next: reboot in a quiet window after 'nix run .#pre-reboot-check' to verify the boot path."
-    ;;
-  *)
-    usage
-    ;;
+  fi
+  echo "prepare OK. Now: nix run .#deploy  — then:  sudo $0 finalize"
+  echo "WARNING: journald is in VOLATILE mode (/run only) until the deploy — keep the window short."
+  ;;
+finalize)
+  mountpoint -q "$SRC" || {
+    echo "$SRC is not a mountpoint — deploy the journal-hot mount first" >&2
+    exit 1
+  }
+  echo "== finalize: flush /run window entries into the mount, verify"
+  run journalctl --flush
+  sleep 2
+  if [ "$DRY_RUN" = "1" ]; then
+    echo "dry run: skipping verification"
+    exit 0
+  fi
+  MID=$(cat /etc/machine-id)
+  NEWEST=$(ls -t "$SRC/$MID/" | head -1)
+  TARGET=$(findmnt -T "$SRC/$MID/$NEWEST" -n -o TARGET)
+  if [ "$TARGET" != "$SRC" ]; then
+    echo "VERIFY FAILED: active journal file ($NEWEST) lives on '$TARGET', not the mount" >&2
+    exit 1
+  fi
+  systemd-cat -t migrate-journal-hot echo "finalize marker $(date +%s)"
+  sleep 2
+  journalctl -t migrate-journal-hot -b --no-pager | grep -q "finalize marker" || {
+    echo "VERIFY FAILED: marker roundtrip through the mounted journal failed" >&2
+    exit 1
+  }
+  echo "finalize OK: journal live on the Samsung ($NEWEST on the mount)."
+  echo "Next: reboot in a quiet window after 'nix run .#pre-reboot-check' to verify the boot path."
+  ;;
+*)
+  usage
+  ;;
 esac
