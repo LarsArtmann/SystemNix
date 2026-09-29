@@ -1413,9 +1413,15 @@ in
                   # pinned query-service), so the contrib connector is the only
                   # source — it is compiled into our collector build
                   # (components/components.go:427). Added 2026-09-29.
+                  # servicegraph v0.144.0 config surface (live-fire validated
+                  # 2026-09-29: the classic `wait`/`max_connection_age` keys
+                  # were REMOVED upstream — store.ttl replaces
+                  # max_connection_age semantics).
                   servicegraph = {
-                    wait = "10s";
-                    max_connection_age = "30m";
+                    store = {
+                      max_items = 50000;
+                      ttl = "30m";
+                    };
                   };
                 };
                 service = {
