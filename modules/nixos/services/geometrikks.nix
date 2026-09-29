@@ -1,11 +1,10 @@
-# GeoMetrikks — reverse-proxy access-log ingestion + geo-location analytics
-# (services.geometrikks). Tails Caddy's per-vhost JSON access logs, geolocates
-# every request (MaxMind GeoLite2), stores geo-events in TimescaleDB, and
-# serves a live world map at geo.home.lan. Upstream is Docker-only
-# (github:GilbN/geometrikks), so this follows the mkDockerService pattern
-# (manifest.nix is the reference: app + DB sidecar, sops env template,
-# pg_dump backup to the pool).
-_: {
+# GeoMetrikks — native Nix service (Docker→Nix migration, 2026-09-29).
+# Access-log geo analytics (github:GilbN/geometrikks) built from source via
+# pkgs/geometrikks.nix (uv2nix venv + bun frontend), served by a native
+# systemd unit, DB on the host's shared PostgreSQL cluster (TimescaleDB +
+# PostGIS), SSO via native Pocket ID OIDC (Layer 1 plain vHost).
+# Plan + rationale: docs/planning/2026-09-29_21-41_GEOMETRIKKS-NATIVE-NIX-MIGRATION.md
+{ inputs, ... }: {
   flake.nixosModules.geometrikks =
     {
       config,
@@ -15,26 +14,43 @@ _: {
       ...
     }:
     let
-      cfg = config.services.geometrikks;
       libHelpers = import ../../../lib/default.nix lib;
-      inherit (libHelpers) serviceTypes images ports;
-      inherit (libHelpers.mkDockerServiceFactory { inherit pkgs; }) mkDockerService;
+      inherit (libHelpers)
+        harden
+        ioTier
+        serviceOneshotDefaults
+        onFailure
+        serviceTypes
+        ports
+        ;
 
+      cfg = config.services.geometrikks;
       secretsDir = ./../../../platforms/nixos/secrets;
+      domain = config.networking.domain;
 
-      # Tail every Caddy access-log sink. The nixpkgs caddy module writes each
-      # vhost to access-<host>.log (file output => Caddy's default encoder is
+      pkg = import ../../../pkgs/geometrikks.nix {
+        inherit pkgs lib;
+        inherit (inputs) uv2nix pyproject-nix pyproject-build-systems;
+      };
+
+      stateDir = "/var/lib/geometrikks";
+      oidcEnvFile = "/var/lib/geometrikks-oidc/oidc.env";
+      poolBackupDir = "/mnt/pool/backups/geometrikks";
+
+      # Tail every Caddy access-log sink (host paths now — no container
+      # mount mapping anymore). The nixpkgs caddy module writes each vhost
+      # to access-<host>.log (file output => Caddy's default encoder is
       # JSON per caddyserver.com/docs/caddyfile/directives/log), and the
-      # global access.log only receives un-matched traffic — so the FULL list
-      # (global + every vhost) is the complete traffic picture. Filenames
-      # replicate vhost-options.nix's own derivation: "/" and " " -> "_".
-      # Derived from config.services.caddy.virtualHosts at eval time, so new
-      # services are tracked automatically.
+      # global access.log only receives un-matched traffic — so the FULL
+      # list (global + every vhost) is the complete traffic picture.
+      # Filenames replicate vhost-options.nix's own derivation: "/" and
+      # " " -> "_". Derived from config.services.caddy.virtualHosts at
+      # eval time, so new services are tracked automatically.
       logPaths = builtins.toJSON (
-        [ "/var/log/access/access.log" ]
+        [ "/var/log/caddy/access.log" ]
         ++ map (
           host:
-          "/var/log/access/access-${
+          "/var/log/caddy/access-${
             lib.replaceStrings
               [
                 "/"
@@ -49,214 +65,131 @@ _: {
         ) (builtins.attrNames config.services.caddy.virtualHosts)
       );
 
-      composeFile = pkgs.writeText "geometrikks-docker-compose.yml" (
-        builtins.toJSON {
-          name = "geometrikks";
-          services = {
-            timescale_db = {
-              image = images.geometrikks-timescale.ref;
-              # restart=always is LOAD-BEARING (manifest precedent): docker
-              # auto-starts these containers when the daemon comes up.
-              restart = "always";
-              shm_size = "256mb";
-              # Upstream's tuned worker pool: ~32 TimescaleDB background jobs
-              # + CAGG refresh policies fire on the same tick; the image
-              # default (max_background_workers=16) is too small and logs
-              # "failed to launch job ... out of background workers".
-              command = [
-                "-c"
-                "timescaledb.max_background_workers=40"
-                "-c"
-                "max_parallel_workers=8"
-                "-c"
-                "max_worker_processes=51"
-              ];
-              environment = {
-                POSTGRES_USER = "geouser";
-                POSTGRES_PASSWORD = "\${DB_PASSWORD}";
-                POSTGRES_DB = "geometrikks";
-              };
-              volumes = [ "timescale_data:/home/postgres/pgdata/data" ];
-              # -d postgres, NOT -d geometrikks: pg_isready succeeds on a
-              # nonexistent-db FATAL (it only checks that the server accepts
-              # connections), so a -d geometrikks healthcheck reports healthy
-              # while the app's target DB is missing — the 2026-09-20 outage
-              # class (app crash-looped since bring-up; the 5s FATAL noise in
-              # the journal was this healthcheck itself). init_db below owns
-              # DB existence; this check owns server liveness only.
-              healthcheck = {
-                test = [
-                  "CMD-SHELL"
-                  "pg_isready -U geouser -d postgres"
-                ];
-                interval = "5s";
-                timeout = "5s";
-                retries = 5;
-              };
-              logging = {
-                driver = "json-file";
-                options = {
-                  max-size = "10m";
-                  max-file = "5";
-                };
-              };
-              mem_limit = "2g";
-              memswap_limit = "2g";
-              security_opt = [ "no-new-privileges:true" ];
-              networks = [ "internal" ];
-            };
-            # Idempotent DB bootstrap: the timescaledb-ha image does NOT
-            # honor POSTGRES_DB when its data dir is non-empty (init scripts
-            # only run on a fresh volume), so the app's database must be
-            # created explicitly. Runs once per `compose up`, exits 0 when
-            # the DB exists (created or pre-existing). The app gates on
-            # service_completed_successfully — a failed bootstrap leaves the
-            # app DOWN and the unit fails loudly (OnFailure) instead of
-            # crash-looping the app against a missing DB.
-            init_db = {
-              image = images.geometrikks-timescale.ref;
-              restart = "no";
-              entrypoint = [
-                "/bin/sh"
-                "-c"
-                "until pg_isready -h timescale_db -U geouser -d postgres >/dev/null 2>&1; do sleep 1; done; psql -d postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='geometrikks'\" | grep -q 1 || psql -d postgres -c 'CREATE DATABASE geometrikks OWNER geouser'"
-              ];
-              environment = {
-                PGHOST = "timescale_db";
-                PGUSER = "geouser";
-                PGPASSWORD = "\${DB_PASSWORD}";
-              };
-              networks = [ "internal" ];
-            };
-            app = {
-              image = images.geometrikks.ref;
-              restart = "always";
-              hostname = "geometrikks";
-              # All config rides compose's ${VAR} substitution from the sops
-              # --env-file (mkDockerService passes it on every exec) — same
-              # pattern as manifest, no env_file directive (its relative
-              # paths would resolve against the read-only store compose dir).
-              environment = {
-                DB_HOST = "timescale_db";
-                DB_PASSWORD = "\${DB_PASSWORD}";
-                PUID = "\${PUID}";
-                PGID = "\${PGID}";
-                APP_ADMIN_USER = "\${APP_ADMIN_USER}";
-                APP_ADMIN_PASSWORD = "\${APP_ADMIN_PASSWORD}";
-                APP_AUTH_DISABLED = "\${APP_AUTH_DISABLED}";
-                APP_SESSION_SECURE = "\${APP_SESSION_SECURE}";
-                APP_TRUSTED_PROXIES = "\${APP_TRUSTED_PROXIES}";
-                MAXMINDDB_USER_ID = "\${MAXMINDDB_USER_ID}";
-                MAXMINDDB_LICENSE_KEY = "\${MAXMINDDB_LICENSE_KEY}";
-                MAP_CARTO_API_KEY = "\${MAP_CARTO_API_KEY}";
-                LOGPARSER_LOG_PATHS = "\${LOGPARSER_LOG_PATHS}";
-                LOGPARSER_HOST_NAME = "\${LOGPARSER_HOST_NAME}";
-              };
-              ports = [ "127.0.0.1:${toString cfg.port}:8000" ];
-              volumes = [
-                "geoip_data:/app/data/geoip"
-                # Caddy's log dir (caddy:caddy 0600 files) read-only. The
-                # container runs as root (PUID=0, see the env template) —
-                # the only way to read 0600 foreign-owned files without
-                # ACL/permission gymnastics, same trust level as every
-                # mkDockerService container on this host.
-                "/var/log/caddy:/var/log/access:ro"
-              ];
-              depends_on = {
-                timescale_db.condition = "service_healthy";
-                init_db.condition = "service_completed_successfully";
-              };
-              # Granian starts with --workers-kill-timeout 15; the default
-              # 10s stop timeout SIGKILLs mid-teardown and drops the
-              # in-flight ingestion batch (upstream compose).
-              stop_grace_period = "20s";
-              healthcheck = {
-                test = [
-                  "CMD-SHELL"
-                  "python3 -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=5).status==200 else 1)\""
-                ];
-                interval = "30s";
-                timeout = "10s";
-                start_period = "90s";
-                retries = 3;
-              };
-              logging = {
-                driver = "json-file";
-                options = {
-                  max-size = "10m";
-                  max-file = "5";
-                };
-              };
-              # read_only is IMPOSSIBLE for this image (source-verified
-              # entrypoint 2026-09-20): it chowns /app under `set -e` at
-              # startup (EROFS → restart-loop exit 1) and the app rewrites
-              # /app/.litestar.json via mkstemp+rename at runtime. The
-              # entrypoint ALWAYS drops to the `geometrikks` user via gosu
-              # (PUID=0 → uid-0 user, preserving the caddy-log reads);
-              # blast-radius stays bounded by no-new-privileges, mem limits,
-              # and the internal/frontend network split.
-              read_only = false;
-              tmpfs = [ "/tmp:size=64m" ];
-              security_opt = [ "no-new-privileges:true" ];
-              mem_limit = "1g";
-              memswap_limit = "1g";
-              pids_limit = 512;
-              networks = [
-                "internal"
-                "frontend"
-              ];
-            };
-          };
-          networks = {
-            internal = {
-              driver = "bridge";
-              internal = true;
-            };
-            # Subnet-pinned so APP_TRUSTED_PROXIES can trust X-Forwarded-For
-            # from the Caddy hop deterministically (userland-proxy is off —
-            # DNAT preserves Caddy's source = this bridge's gateway).
-            frontend = {
-              driver = "bridge";
-              ipam.config = [
-                {
-                  subnet = "172.32.0.0/24";
-                }
-              ];
-            };
-          };
-          volumes = {
-            timescale_data.name = "geometrikks_timescale_data";
-            geoip_data.name = "geometrikks_geoip_data";
-          };
-        }
-      );
+      # Stamp-gated copy of the store-shipped runtime assets into the
+      # writable state dir: the app writes .litestar.json next to public/
+      # and alembic resolves migrations/ relative to CWD (Dockerfile layout).
+      assetsPreStart = pkgs.writeShellScript "geometrikks-assets" ''
+        set -euo pipefail
+        if [ "$(cat ${stateDir}/.assets-stamp 2>/dev/null || true)" != "${pkg}" ]; then
+          rm -rf ${stateDir}/public ${stateDir}/migrations
+          cp -r ${pkg}/share/geometrikks/public ${stateDir}/public
+          cp -r ${pkg}/share/geometrikks/migrations ${stateDir}/migrations
+          cp ${pkg}/share/geometrikks/alembic.ini ${stateDir}/alembic.ini
+          chmod -R u+w ${stateDir}/public ${stateDir}/migrations
+          echo "${pkg}" > ${stateDir}/.assets-stamp
+        fi
+        mkdir -p ${stateDir}/logs ${stateDir}/geoip
+      '';
 
-      docker = mkDockerService {
-        name = "geometrikks";
-        inherit composeFile;
-        envTemplate = config.sops.templates."geometrikks-env".path;
-        memoryMax = "4G";
-        extraServiceConfig = {
-          # First start pulls the timescaledb-ha image (~2.5 GB); the global
-          # 3min DefaultTimeoutStartSec would kill the pull mid-flight.
-          TimeoutStartSec = "15min";
-          RestartSec = "10s";
-        };
-        backup = {
-          # Plain pg_dump lands on the mirrored HDD pool (manifest pattern).
-          # Restore needs TimescaleDB present — same image, documented in the
-          # runbook.
-          execStart = "${pkgs.bash}/bin/bash -c '${pkgs.docker-compose}/bin/docker-compose -f ${composeFile} exec -T timescale_db pg_dump -U geouser geometrikks > /mnt/pool/backups/geometrikks/$(date +%%Y%%m%%d_%%H%%M%%S).sql && find /mnt/pool/backups/geometrikks -name \"*.sql\" -mtime +14 -delete'";
-          schedule = "*-*-* 05:15:00";
-          dir = "/mnt/pool/backups/geometrikks";
-        };
-      };
+      # OIDC secret bridge: the Pocket ID provisioner owns the client
+      # secret (dynamic, regenerated on client recreation — never in
+      # sops). systemd reads the 0750 pocket-id-owned secret file as PID
+      # 1 via LoadCredential; the bridge writes ALL OIDC vars together
+      # (all-present-or-all-absent, the browser-history Validate()
+      # crash-loop lesson).
+      oidcBridge = pkgs.writeShellScript "geometrikks-oidc-env" ''
+        set -euo pipefail
+        secret="$(cat "$CREDENTIALS_DIRECTORY/pocket-id-secret")"
+        case "$secret" in
+          *[!A-Za-z0-9+/_=-]*)
+            echo "geometrikks-oidc-env: Pocket ID client secret has unexpected characters — refusing to write env file" >&2
+            exit 1
+            ;;
+        esac
+        umask 077
+        {
+          echo "OIDC_ISSUER=https://auth.${domain}"
+          echo "OIDC_CLIENT_ID=geometrikks"
+          echo "OIDC_CLIENT_SECRET=$secret"
+          echo "OIDC_REDIRECT_URI=https://geo.${domain}/api/v1/auth/oidc/callback"
+          echo "OIDC_ALLOWED_USERS=${lib.concatStringsSep "," cfg.oidc.allowedUsers}"
+          echo "OIDC_PROVIDER_NAME=Pocket ID"
+        } > ${oidcEnvFile}.tmp
+        mv ${oidcEnvFile}.tmp ${oidcEnvFile}
+        echo "geometrikks-oidc-env: wrote ${oidcEnvFile}"
+      '';
+
+      # DB provisioning on the shared cluster (User=postgres, peer auth):
+      # role password from the sops-rendered env (systemd injects it as
+      # PID 1 — the postgres user never reads the 0400 root file), plus
+      # the superuser-only extension installs and per-DB GUC tuning.
+      # Charset-guarded inline literal (psql 17 does NOT interpolate :var
+      # inside -c — the miniflux-oidc-setup lesson).
+      dbProvision = pkgs.writeShellScript "geometrikks-db-provision" ''
+        set -euo pipefail
+        psql="${config.services.postgresql.package}/bin/psql -v ON_ERROR_STOP=1"
+
+        # Bounded wait for the cluster + ensure-* machinery (nixpkgs runs
+        # ensureDatabases/ensureUsers in postgresql.service postStart).
+        for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+          if "$psql" -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='geometrikks';" | grep -q 1; then
+            break
+          fi
+          sleep 2
+        done
+
+        pw="''${DB_PASSWORD:-}"
+        case "$pw" in
+          *[!A-Za-z0-9+/_=-]*)
+            echo "geometrikks-db-provision: DB_PASSWORD has unexpected characters — refusing" >&2
+            exit 1
+            ;;
+        esac
+        if [ -z "$pw" ]; then
+          echo "geometrikks-db-provision: DB_PASSWORD empty" >&2
+          exit 1
+        fi
+
+        "$psql" -d postgres -c "ALTER ROLE geometrikks WITH LOGIN PASSWORD '$pw';"
+        # Both extensions are superuser-only to create; the app's alembic
+        # migration runs CREATE EXTENSION IF NOT EXISTS postgis itself and
+        # server/timescale.py applies the TimescaleDB objects — both find
+        # the extension already present.
+        "$psql" -d geometrikks \
+          -c "CREATE EXTENSION IF NOT EXISTS timescaledb;" \
+          -c "CREATE EXTENSION IF NOT EXISTS postgis;" \
+          -c "ALTER DATABASE geometrikks SET timescaledb.max_background_workers = '32';" \
+          -c "ALTER DATABASE geometrikks SET max_parallel_workers = '8';"
+        echo "geometrikks-db-provision: role password set, extensions ensured, per-DB tuning applied"
+      '';
+
+      dbBackup = pkgs.writeShellScript "geometrikks-db-backup" ''
+        set -euo pipefail
+        ${config.services.postgresql.package}/bin/pg_dump -d geometrikks \
+          > ${poolBackupDir}/$(date +%Y%m%d_%H%M%S).sql
+        find ${poolBackupDir} -name "*.sql" -mtime +14 -delete
+        echo "geometrikks-db-backup: dump landed in ${poolBackupDir}"
+      '';
     in
     {
+      # Platform-truth catalog entry (ADR-008): unconditional — GeoMetrikks
+      # exists platform-wide even where this host has it disabled.
+      imports = [
+        {
+          services.catalog.geometrikks = {
+            subdomain = "geo";
+            port = ports.geometrikks;
+            description = "GeoMetrikks access-log geo analytics (native)";
+            healthPath = "/health/ready";
+          };
+        }
+      ];
+
       options.services.geometrikks = {
-        enable = lib.mkEnableOption "GeoMetrikks access-log geo analytics";
-        port = serviceTypes.servicePort ports.geometrikks "Host port for the GeoMetrikks UI";
-        imageTag = serviceTypes.dockerImageTag images.geometrikks.tag;
+        enable = lib.mkEnableOption "GeoMetrikks access-log geo analytics (native Nix service)";
+
+        port = serviceTypes.servicePort ports.geometrikks "Port for the GeoMetrikks UI";
+
+        oidc.allowedUsers = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ "lars@larsartmann.cloud" ];
+          description = ''
+            Verified email addresses (or subject identifiers) allowed to sign
+            in via Pocket ID (OIDC_ALLOWED_USERS — upstream REQUIRES a
+            non-empty allow list). The admin password login stays available as
+            break-glass while APP_ADMIN_PASSWORD is set.
+          '';
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -265,7 +198,43 @@ _: {
             assertion = config.services.caddy.enable or false;
             message = "services.geometrikks needs services.caddy — it tails Caddy's access logs";
           }
+          {
+            assertion = cfg.oidc.allowedUsers != [ ];
+            message = "services.geometrikks.oidc.allowedUsers must be non-empty — upstream refuses to start OIDC without an allow list";
+          }
         ];
+
+        users.users.geometrikks = {
+          isSystemUser = true;
+          group = "geometrikks";
+          home = stateDir;
+          description = "GeoMetrikks service user";
+        };
+        users.groups.geometrikks = { };
+
+        # Shared PG cluster: TimescaleDB + PostGIS plugins, preload, and
+        # worker headroom (upstream tunes 40 bg workers for ~32 TimescaleDB
+        # jobs + CAGG refresh policies; max_worker_processes is the only
+        # POSTMASTER-level knob, so it lands globally — harmless headroom
+        # for the paperless/immich/miniflux co-tenants).
+        services.postgresql = {
+          enable = true;
+          ensureDatabases = [ "geometrikks" ];
+          ensureUsers = [
+            {
+              name = "geometrikks";
+              ensureDBOwnership = true;
+            }
+          ];
+          extraPlugins = ps: [
+            ps.timescaledb
+            ps.postgis
+          ];
+          settings = {
+            shared_preload_libraries = [ "timescaledb" ];
+            max_worker_processes = 48;
+          };
+        };
 
         sops = {
           secrets =
@@ -290,47 +259,220 @@ _: {
             content = ''
               APP_ADMIN_USER=admin
               APP_ADMIN_PASSWORD=${config.sops.placeholder.geometrikks_admin_password}
-              # The app ships its own single-admin session auth; the protected
-              # vHost adds the oauth2-proxy layer for external access only.
-              APP_AUTH_DISABLED=false
               APP_SESSION_SECURE=true
-              APP_TRUSTED_PROXIES=172.32.0.0/24
+              # Caddy proxies from loopback on this host (plain reverse_proxy)
+              APP_TRUSTED_PROXIES=127.0.0.1
               # Empty = geo-degraded (UI banner, no GeoLite2 download attempt)
               # — the go-live paste is user-gated (free maxmind.com signup).
               MAXMINDDB_USER_ID=${config.sops.placeholder.geometrikks_maxmind_user_id}
               MAXMINDDB_LICENSE_KEY=${config.sops.placeholder.geometrikks_maxmind_license_key}
               MAP_CARTO_API_KEY=${config.sops.placeholder.geometrikks_carto_api_key}
-              LOGPARSER_LOG_PATHS=${logPaths}
-              LOGPARSER_HOST_NAME=evo-x2
               DB_PASSWORD=${config.sops.placeholder.geometrikks_db_password}
-              # 0 = container root: reads Caddy's 0600 caddy:caddy log files
-              # through the read-only bind mount; the entrypoint's PUID drop
-              # then runs the app as root in-container (contained by the
-              # :ro mount + Docker seccomp, same trust level as the other
-              # root containers on this host).
-              PUID=0
-              PGID=0
             '';
           };
         };
 
         systemd = {
-          tmpfiles.rules = docker.tmpfiles;
-          inherit (docker) services;
-          inherit (docker) timers;
+          services = {
+            # The native service. Same unit name as the former Docker
+            # wrapper — switch-to-configuration swaps it atomically.
+            geometrikks = {
+              description = "GeoMetrikks — access-log geo analytics (native)";
+              documentation = [ "https://github.com/GilbN/geometrikks" ];
+              wantedBy = [ "multi-user.target" ];
+              after = [
+                "network-online.target"
+                "postgresql.service"
+                "geometrikks-db-provision.service"
+                "geometrikks-oidc-env.service"
+              ];
+              wants = [
+                "geometrikks-db-provision.service"
+                "geometrikks-oidc-env.service"
+              ];
+
+              serviceConfig = lib.mkMerge [
+                (harden {
+                  MemoryMax = "2G";
+                  # Reads Caddy's 0600 caddy:caddy access logs (read-only
+                  # under ProtectSystem=strict; DAC bypass for foreign
+                  # ownership — cv-backup precedent).
+                  CapabilityBoundingSet = "CAP_DAC_READ_SEARCH";
+                })
+                ioTier.background
+                {
+                  User = "geometrikks";
+                  Group = "geometrikks";
+                  StateDirectory = "geometrikks";
+                  WorkingDirectory = stateDir;
+                  EnvironmentFile = [
+                    (lib.mkDefault config.sops.templates."geometrikks-env".path)
+                    "-${oidcEnvFile}"
+                  ];
+                  ExecStartPre = [ "${assetsPreStart}" ];
+                  ExecStart = "${pkg}/bin/geometrikks-server";
+                  # Cold start: alembic migrations on a fresh DB + schema
+                  # wait; granian teardown drains ingestion (15s kill
+                  # timeout inside the wrapper).
+                  TimeoutStartSec = "5min";
+                  TimeoutStopSec = "45s";
+                }
+              ];
+              environment = {
+                GEOMETRIKKS_HOST = "127.0.0.1";
+                GEOMETRIKKS_PORT = toString cfg.port;
+                # Disable dotenv loading entirely — all config rides real
+                # environment variables (upstream GEOMETRIKKS_ENV_FILE).
+                GEOMETRIKKS_ENV_FILE = "";
+                PYTHONUNBUFFERED = "1";
+                DB_HOST = "127.0.0.1";
+                DB_PORT = "5432";
+                DB_USER = "geometrikks";
+                DB_DATABASE = "geometrikks";
+                DB_STARTUP_WAIT_SECONDS = "60";
+                LOGPARSER_LOG_PATHS = logPaths;
+                LOGPARSER_HOST_NAME = "evo-x2";
+                LOG_DIR = "${stateDir}/logs";
+                GEOIP_DB_PATH = "${stateDir}/geoip/GeoLite2-City.mmdb";
+                GEOIP_ASN_DB_PATH = "${stateDir}/geoip/GeoLite2-ASN.mmdb";
+                GEOIP_VALIDATE_DB_PATH = "false";
+                VITE_DEV_MODE = "false";
+              };
+              startLimitBurst = 5;
+              startLimitIntervalSec = 300;
+              inherit onFailure;
+            };
+
+            # Role password + superuser extensions + per-DB tuning on the
+            # shared cluster. Converger: re-runs via the deploy.sh
+            # provisioner loop (matches the -provision pattern; the
+            # deploy-restart-audit guard enforces the wiring).
+            geometrikks-db-provision = {
+              description = "GeoMetrikks DB provisioning (role, extensions, tuning)";
+              wantedBy = [ "multi-user.target" ];
+              after = [ "postgresql.service" ];
+              wants = [ "postgresql.service" ];
+              serviceConfig = lib.mkMerge [
+                (serviceOneshotDefaults { })
+                {
+                  Type = "oneshot";
+                  User = "postgres";
+                  EnvironmentFile = [ config.sops.templates."geometrikks-env".path ];
+                  ExecStart = "${dbProvision}";
+                  RemainAfterExit = true;
+                  TimeoutStartSec = "2min";
+                }
+              ];
+            };
+
+            # Pocket ID client secret → OIDC env file (indirect unit: the
+            # provisioner loop's is-enabled gate skips it — deploy.sh carries
+            # a dedicated is-active-gated block restarting bridge + daemon,
+            # the dnsblockd-oidc-secret pattern).
+            geometrikks-oidc-env = {
+              description = "GeoMetrikks OIDC env bridge (Pocket ID client secret)";
+              wantedBy = [ "geometrikks.service" ];
+              after = [ "pocket-id-provision.service" ];
+              wants = [ "pocket-id-provision.service" ];
+              serviceConfig = lib.mkMerge [
+                (serviceOneshotDefaults { })
+                {
+                  Type = "oneshot";
+                  User = "geometrikks";
+                  Group = "geometrikks";
+                  StateDirectory = "geometrikks-oidc";
+                  LoadCredential = [
+                    "pocket-id-secret:${config.services.pocket-id.dataDir}/client-secrets/geometrikks"
+                  ];
+                  ExecStart = "${oidcBridge}";
+                  RemainAfterExit = true;
+                }
+              ];
+            };
+
+            # Mount-gated pool leaf creator (miniflux-backup-dir pattern:
+            # RequiresMountsFor + ReadWritePaths on the MOUNT ROOT so a
+            # fresh pool's missing leaf cannot 226 the namespace; deploy.sh
+            # provisioner-restarted).
+            geometrikks-backup-dir = {
+              description = "GeoMetrikks backup directory (pool leaf)";
+              wantedBy = [ "multi-user.target" ];
+              unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
+              serviceConfig = lib.mkMerge [
+                {
+                  Type = "oneshot";
+                  User = "root";
+                  RemainAfterExit = true;
+                }
+                (harden {
+                  MemoryMax = "128M";
+                  ReadWritePaths = [ "/mnt/pool" ];
+                  CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
+                })
+                (serviceOneshotDefaults { })
+              ];
+              script = ''
+                mkdir -p ${poolBackupDir}
+                chown postgres:postgres ${poolBackupDir}
+                chmod 0750 ${poolBackupDir}
+              '';
+            };
+
+            # Nightly pg_dump on the native cluster (peer auth as postgres).
+            geometrikks-db-backup = {
+              description = "GeoMetrikks nightly pg_dump to the pool";
+              after = [
+                "geometrikks-backup-dir.service"
+                "postgresql.target"
+              ];
+              wants = [
+                "geometrikks-backup-dir.service"
+                "postgresql.target"
+              ];
+              serviceConfig = lib.mkMerge [
+                (serviceOneshotDefaults { })
+                {
+                  Type = "oneshot";
+                  User = "postgres";
+                  ExecStart = "${dbBackup}";
+                  RequiresMountsFor = [ "/mnt/pool" ];
+                  TimeoutStartSec = "10min";
+                }
+              ];
+              onFailure = onFailure;
+            };
+          };
+
+          timers.geometrikks-db-backup = {
+            description = "GeoMetrikks nightly pg_dump";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = "*-*-* 05:15:00";
+              Persistent = true;
+              RandomizedDelaySec = "10m";
+            };
+          };
         };
 
-        # Service-integration registry entry: the geo tile, the geo vHost
-        # (Layer 2 — external access rides oauth2-proxy, the app's own login
-        # still applies), pg_dump backup freshness, unit-state monitoring,
+        # Service-integration registry entry: the geo tile, the geo vHost —
+        # LAYER 1 PLAIN now (native OIDC behind protectedVHost would
+        # double-auth), pg_dump backup freshness, unit-state monitoring,
         # and the Gatus health check.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           geometrikks = {
             inherit (cfg) enable;
             subdomain = "geo";
             inherit (cfg) port;
-            vHost.layer = "protected";
+            vHost.layer = "plain";
             monitored = true;
+            oidc = {
+              name = "GeoMetrikks";
+              clientId = "geometrikks";
+              launchURL = "https://geo.${domain}";
+              callbackURLs = [ "https://geo.${domain}/api/v1/auth/oidc/callback" ];
+              # Upstream uses the authorization code flow WITH PKCE.
+              pkceEnabled = true;
+            };
             checks = [
               {
                 name = "GeoMetrikks";
@@ -350,7 +492,7 @@ _: {
               icon = "mdi-earth";
             };
             backup = {
-              directory = "/mnt/pool/backups/geometrikks";
+              directory = poolBackupDir;
               maxAgeHours = 31;
             };
           };

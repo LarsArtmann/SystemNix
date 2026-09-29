@@ -155,14 +155,17 @@ let
 
     outputHashMode = "recursive";
     outputHashAlgo = "sha256";
-    outputHash = "sha256-cshXAV1upoGsuO4M50h/kGBwLHblZQQFt1124nGAXBU=";
+    outputHash = "sha256-/BRyoHCvEORS6jNhlHXuyNFV33lVJeQarN7wTQxcvso=";
   };
 
   # ---- vite frontend build (upstream Dockerfile frontend-builder stage) ----
   frontend = pkgs.stdenv.mkDerivation {
     name = "geometrikks-${version}-frontend";
     dontUnpack = true;
-    nativeBuildInputs = [ pkgs.bun ];
+    nativeBuildInputs = [
+      pkgs.bun
+      pkgs.nodejs # patchShebangs target for #!/usr/bin/env node bins
+    ];
 
     buildPhase = ''
       runHook preBuild
@@ -174,6 +177,9 @@ let
       mkdir node_modules
       tar -xf "${bunDeps}" -C node_modules
       chmod -R u+w ./node_modules ./resources
+      # The sandbox has no /usr/bin/env — rewrite the env-shebangs of package
+      # bins (vite, tsc, ...) to the store node interpreter.
+      patchShebangs node_modules
       bun run build
       runHook postBuild
     '';

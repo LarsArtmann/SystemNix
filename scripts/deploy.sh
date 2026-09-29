@@ -487,7 +487,7 @@ if nix run .#pre-deploy-check; then
   # forgejo-hermes-token: RemainAfterExit oneshot — re-runs re-install the
   # staged token as /run/hermes-forgejo-token after deploys that change the
   # hermes user/group or the token scripts.
-  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup browser-history-agent-token-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs cv-backup-dir inboxclean-backup-dir miniflux-backup-dir paperless-db-backup-dir browser-history-backup-dir clickhouse-db-backup-dir miniflux-oidc-setup llama-rag-model-fetch hermes-github-verify tq-storage-dir tq-bootstrap crush-hot-db-migrate boot-mirror-sync hot-user-caches-nix-bootstrap restic-app-dumps-setup discordsync-attachments-dir borg-offsite-dir; do
+  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup browser-history-agent-token-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs cv-backup-dir inboxclean-backup-dir miniflux-backup-dir paperless-db-backup-dir browser-history-backup-dir clickhouse-db-backup-dir miniflux-oidc-setup llama-rag-model-fetch hermes-github-verify tq-storage-dir tq-bootstrap crush-hot-db-migrate boot-mirror-sync hot-user-caches-nix-bootstrap restic-app-dumps-setup discordsync-attachments-dir borg-offsite-dir geometrikks-db-provision geometrikks-backup-dir; do
     # borg-offsite-dir: idempotent /mnt/hot/borg cache-dir bootstrap (offsite
     # Borg leg; gated on services.offsite-borg.enable — re-run converges).
     # restic-app-dumps-setup: idempotent repo-password bootstrap (creates
@@ -567,6 +567,15 @@ if nix run .#pre-deploy-check; then
     echo "Restarting cv-oidc-env.service + cv-server.service (reload OIDC client secret)"
     sudo systemctl restart cv-oidc-env.service 2>/dev/null || true
     sudo systemctl restart cv-server.service 2>/dev/null || true
+  fi
+
+  # GeoMetrikks' Pocket ID bridge, same indirect-unit class as cv-oidc-env:
+  # geometrikks-oidc-env is only wantedBy=geometrikks.service and the app
+  # reads the OIDC_* env file at process start only.
+  if systemctl is-active --quiet geometrikks-oidc-env.service 2>/dev/null; then
+    echo "Restarting geometrikks-oidc-env.service + geometrikks.service (reload OIDC client secret)"
+    sudo systemctl restart geometrikks-oidc-env.service 2>/dev/null || true
+    sudo systemctl restart geometrikks.service 2>/dev/null || true
   fi
 
   # Restart browser-history AFTER browser-history-oidc-setup (fresh OAuth2 env
