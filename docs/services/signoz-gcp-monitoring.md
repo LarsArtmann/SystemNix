@@ -34,15 +34,22 @@ reports) becomes dashboards + alertable series in SigNoz.
    **Do NOT add CUMULATIVE GCP metrics** (e.g. `cloudsql.googleapis.com/
    database/uptime`) to `gcpRunMetrics`-style presets without either
    bumping the fork or running a standalone collector ≥ 0.158.0.
-3. **Placeholder state is a structurally-valid throwaway key, not a junk
-   string.** `google.FindDefaultCredentials` runs at receiver `Start()` —
-   an unparseable `GOOGLE_APPLICATION_CREDENTIALS` file would fail the
-   receiver start and **kill the whole collector at boot** (all local
-   telemetry ingestion with it). The shipped sops value is a real
-   locally-generated RSA key in service-account JSON shape: credentials
-   LOAD, every scrape fails 401/403, the receiver label still appears in
-   the collector self-metrics (Gatus green = receiver registered), and GCP
-   data absence on the dashboard is the standing not-live-yet signal.
+3. **There is NO safe inert key state — CORRECTED 2026-09-29 (the original
+   "structurally-valid placeholder" assumption was FALSIFIED live).**
+   `google.FindDefaultCredentials` runs at receiver `Start()` — an
+   unparseable `GOOGLE_APPLICATION_CREDENTIALS` file fails the start and
+   kills the whole collector at boot. The original design assumed a
+   structurally-valid SA-shaped key would merely fail 401/403 per scrape
+   (pipeline intact, receiver label present in self-metrics). The first
+   deploy carrying the receivers falsified this: **the token fetch answers
+   `400 invalid_grant` AT `Start()` (account not found), which is FATAL —
+   signoz-collector crash-loops to start-limit-hit and ALL telemetry
+   ingestion goes dark**, not just the GCP leg (contained same day:
+   `gcpMonitoring.enable = false`). Consequence: keep the receivers
+   disabled until the REAL key is provisioned and rotated into sops;
+   after go-live verify `journalctl -u signoz-collector | grep -i
+   googlecloud` shows NO 400/invalid_grant and the receiver label present
+   in `:8888/metrics`.
 
 ## Go-live runbook (user-gated: gcloud mutations on both accounts)
 
@@ -55,7 +62,8 @@ project (`lars-artmann` is the natural home) and reads cross-project.
 created; `roles/monitoring.viewer` granted on all 15 monitored projects +
 monitoring API enabled; real key `64cc3cdf…` rotated into sops; verified
 16/16 projects answer HTTP 200 with live series AS the SA — 6 projects show
-real `request_count` data). **REMAINING: step 5 (deploy) + verification** —
+real `request_count` data). **REMAINING: re-arm `gcpMonitoring.enable = true`
+(containment-disabled after the falsification above), deploy, + verification** —
 the agent sandbox cannot `sudo`, and `nix run .#deploy` self-elevates.
 
 **dnsblockd dependency (found live at go-live):** blocklists classify
