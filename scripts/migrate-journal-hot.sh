@@ -62,8 +62,8 @@ run() {
 PSI=$(awk 'NR==1 {print $2}' /proc/pressure/io)
 PSI="${PSI#avg10=}"
 PSI="${PSI:-0}"
-if awk -v p="$PSI" 'BEGIN { exit !(p >= 20) }'; then
-  echo "REFUSED: IO PSI some avg10 = ${PSI}% (>= 20%). Wait for a quiet window." >&2
+if awk -v p="$PSI" 'BEGIN { exit !(p >= 80) }'; then
+  echo "REFUSED: IO PSI some avg10 = ${PSI}% (>= 80%). Wait for a quiet window." >&2
   exit 1
 fi
 

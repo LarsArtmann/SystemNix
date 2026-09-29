@@ -47,15 +47,10 @@ in
     # ESSENTIAL MODULES FOR FUNCTIONAL DESKTOP
     ./boot.nix
     ./boot-mirror.nix # Samsung 2nd boot disk: /boot-mirror ESP mirror + boot-mirror-sync
-    # DISABLED 2026-09-29 (containment, first deploy carrying it): the mount
-    # fails at every activation (fsconfig ENOENT — the `journal` subvol does
-    # not exist) because the MANDATORY one-time migration was never run:
-    #   sudo bash scripts/migrate-journal-hot.sh
-    # (creates the subvol on the Samsung + copies the journal). The failed
-    # mount unit kept every deploy rc=14/unanchored. nofail meant journald
-    # degraded to the QLC dir (documented degraded mode) — no data risk.
-    # Re-arm: run the migration, then uncomment + deploy.
-    # ./journal-hot.nix # journald on the Samsung TLC hot tier (doctrine C subvol at /var/log/journal)
+    # Re-armed 2026-09-29 ~23:40: migrate-journal-hot.sh prepare completed
+    # (subvol created, exact-copy verify passed). Run finalize after the deploy
+    # carrying this import mounts /var/log/journal.
+    ./journal-hot.nix # journald on the Samsung TLC hot tier (doctrine C subvol at /var/log/journal)
     ./networking.nix
     ./local-network.nix
     ./primary-user.nix
