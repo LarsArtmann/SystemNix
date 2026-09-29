@@ -116,7 +116,7 @@ One straggler (`legal-cases/.crush`, untouched since Sep 8) sat unmigrated for 1
 root cause: the old blanket `pgrep -x crush` skip made EVERY run self-skip while any session
 was live (16-21 always are on this box). Fixed by the per-project guard below.
 
-**Guard semantics (module ≥ 2026-09-21, deploy-pending until the next `nix run .#deploy`):**
+**Guard semantics (LIVE on the deployed 2026-09-22 generation, verified 2026-09-29):**
 a project is skipped iff a `comm=crush` process holds an fd or its cwd under THAT project's
 `.crush` (post-migration sessions hold fds on `/mnt/hot` targets and never match — their dirs
 are already symlinks); DBs written <10 min are left one more cycle; per-dir `mv` failures
@@ -135,7 +135,8 @@ WARN: .crush deeper than discovery depth 3 (stays on the QLC root): <path>
 ```
 
 The legacy whole-run line `skip: crush session(s) active (N) — next run converges` belongs
-to the pre-2026-09-21 blanket guard and should no longer appear after the next deploy.
+to the pre-2026-09-21 blanket guard and no longer appears on the deployed 2026-09-22+
+generation (the deployed script carries only the per-project skip lines above).
 
 Verify after deploy:
 `find ~/projects -mindepth 1 -maxdepth 3 -type d -name .crush | wc -l` (expect 0 real dirs;
@@ -153,8 +154,9 @@ the residual drivers are NOT crush. Two real `.crush` dirs remain: `go-daemon` (
 live-session skip, self-converges) and `legal-cases` (blocked by a root-owned EMPTY target
 `/mnt/hot/crush/legal-cases` from the interrupted first run — heal: `sudo rmdir` that empty
 dir, the next run converges it). NOTE: the review-fix batch (per-project guard, depth WARN,
-DRY_RUN, OnFailure) is LIVE on the deployed 2026-09-22 generation — the "deploy-pending"
-sentences above are stale pending the verification item in `docs/todo/storage.md`.
+DRY_RUN, OnFailure) is LIVE on the deployed 2026-09-22 generation — verified 2026-09-29
+(deployed migrate script greps + `crush-hot-db-migrate` present in BOTH the rendered
+`services.system-health.extraMonitoredServices` and the DEPLOYED system-health collector).
 
 Runbook/source: `modules/nixos/services/crush-hot-db.nix`; see the `services.hot-db` Phase-2 plan
 (`docs/planning/2026-09-14_13-27_SAMSUNG-PHASE2-HOT-DB-NATIVE-PARETO-PLAN.md`) for the long-term home.
