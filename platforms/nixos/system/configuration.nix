@@ -47,6 +47,7 @@ in
     # ESSENTIAL MODULES FOR FUNCTIONAL DESKTOP
     ./boot.nix
     ./boot-mirror.nix # Samsung 2nd boot disk: /boot-mirror ESP mirror + boot-mirror-sync
+    ./journal-hot.nix # journald on the Samsung TLC hot tier (doctrine C subvol at /var/log/journal)
     ./networking.nix
     ./local-network.nix
     ./primary-user.nix

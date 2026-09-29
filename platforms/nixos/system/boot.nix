@@ -553,10 +553,10 @@ in
 
     # ── Resilience: journald size limits ──────────────────────────────────
     # Without limits, AI services (Ollama, ComfyUI, Hermes) can fill /var/log
-    # with multi-GB logs, causing system failures. 8GB is sufficient for crash
-    # forensics while leaving headroom on the 2TB QLC NVMe (SLC cache
-    # exhaustion is the primary risk — journal writes compete with everything
-    # else for SLC cache blocks).
+    # with multi-GB logs, causing system failures. 8G is sufficient for crash
+    # forensics; since 2026-09-29 the journal lives on the Samsung TLC hot
+    # tier (journal-hot.nix) — the cap bounds the hot subvolume, and journal
+    # churn no longer competes for QLC SLC-cache blocks.
     # settings.Journal (structured) replaces services.journald.extraConfig,
     # which nixpkgs removed (2026-09-05: surfaced by the discordsync pin
     # bump pulling nixpkgs 0968519e into the eval graph).
