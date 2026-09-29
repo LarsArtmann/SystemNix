@@ -155,6 +155,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 
 ### monitoring
 
+- [ ] **SigNoz GCP integration go-live (SA + IAM + real key; user-gated)** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **Textfile-collector fixed-name `.tmp` audit (the niri EACCES class) + stale `btrfs-compression.prom.tmp` check** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **system-health-metrics worst-case section sum (≈500s) exceeds the 180s unit ceiling AND the 120s timer cadence — the collector structurally cannot finish under an IO storm** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **backup-catchup report script (`scripts/backup-catchup-report.sh`)** → [docs/todo/monitoring.md](docs/todo/monitoring.md) — the `backup_ever_succeeded` metric half landed 2026-09-23; remaining: stamps vs OnCalendar + prom diff + btrbk dry-run
