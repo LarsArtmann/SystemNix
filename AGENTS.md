@@ -846,6 +846,10 @@ serviceConfig = lib.mkMerge [
 
 > Full incident narratives, commit hashes, dates, and root-cause analysis are in [docs/gotchas-archive.md](./docs/gotchas-archive.md). Below are only enduring rules — things hard to discover from code alone.
 
+### D-state-safe job timeouts for boot-critical oneshots (2026-09-29)
+
+**TimeoutStartSec CANNOT complete a start job whose process is in uninterruptible sleep**: systemd's timeout path SIGKILLs, SIGKILL is undeliverable in D-state, and the job only settles once the main process does — so the job sits "running" forever and every `before=`/`After=` dependent (e.g. an automount-triggered `.mount`) waits forever. **Any oneshot that gates a mount must carry `JobTimeoutSec` + `JobRunningTimeoutSec`** (unitConfig): job-level timeouts cancel the JOB object itself, freeing dependants; the wedged process stays until reboot — one zombie beats a wedged host. Pair with `x-systemd.mount-timeout` on the fstab entry so a hung MOUNT job also fails fast instead of parking autofs lookups in `autofs_wait` forever. Live 2026-09-29 09:58: `hot-user-caches-nix-bootstrap` hung D-state at boot (btrfs ioctl window), wedging the `/home/lars/.cache/nix` automount — every nix invocation on the host (all agents' `nix flake check`/`build`/`print-dev-env`, direnv) parked in D, 84 processes, load 86, boot transaction never reached multi-user.target for 3+h. Fix + regression test: `modules/nixos/services/hot-user-caches.nix`, `tests/test-hot-user-caches.nix` (`wedged` node). Emergency no-root mitigation for a live wedge: `XDG_CACHE_HOME=/tmp/x nix …` bypasses the automounted cache dir entirely.
+
 ### Git zero-byte object corruption (boot death mid-commit, 2026-09-15)
 
 A boot death at 09:32:40 (mid PMA-daemon commit) left 10 loose objects as **0-byte files** while the loose ref + index metadata survived → every git command died `fatal: bad object HEAD`, git-town panicked (`branchesQuery` index-out-of-range on git's broken-ref error output). Recovery runbook (zero data loss, ~5 min):
