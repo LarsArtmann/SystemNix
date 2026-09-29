@@ -355,6 +355,102 @@
             )
           );
         })
+        # T14: mount-presence collector (fail-closed). Emits the gauges ONLY
+        # on a completed run — a dead collector leaves the textfile stale and
+        # the anchored Gatus conditions below fail on absence, never
+        # phantom-green (node_exporter serves a frozen textfile forever).
+        (lib.mkIf cfg.enable {
+          # Same rule _signoz-metrics declares (identical settings — tmpfiles
+          # `d` lines are idempotent; a DIFFERENT owner here would fight the
+          # 1777 sticky shape every other collector relies on). Keeps the
+          # collector's ReadWritePaths target existing on hosts without
+          # signoz (the 226/NAMESPACE class — namespaces build before
+          # ExecStart, a missing path aborts the unit).
+          systemd.tmpfiles.rules = [
+            "d /var/lib/prometheus-node-exporter/textfile_collectors 1777 nobody nogroup -"
+          ];
+          systemd.services.hot-db-metrics = {
+            description = "Hot-DB tier mount-presence textfile collector";
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = "root";
+                ExecStart = pkgs.writeShellScript "hot-db-metrics" ''
+                  set -euo pipefail
+                  DIR=/var/lib/prometheus-node-exporter/textfile_collectors
+                  mkdir -p "$DIR"
+                  TMP=$(mktemp "$DIR/hot-db.XXXXXX")
+                  chmod 644 "$TMP"
+                  trap 'rm -f "$TMP"' EXIT
+                  mp() {
+                    if mountpoint -q "$1"; then
+                      echo 1
+                    else
+                      echo 0
+                    fi
+                  }
+                  {
+                    echo "hot_tier_mounted $(mp ${cfg.toplevelMount})"
+                  ${lib.concatMapStringsSep "\n" (
+                    e: ''echo 'hot_db_entry_mounted{name="${e.name}"}' "$(mp ${e.path})"''
+                  ) entryList}
+                    echo "hot_db_scrape_errors 0"
+                  } >> "$TMP"
+                  mv -f "$TMP" "$DIR/hot-db.prom"
+                '';
+                ReadWritePaths = [ "/var/lib/prometheus-node-exporter/textfile_collectors" ];
+              }
+              (harden {
+                # mktemp + rename-over-foreign-owned in the sticky textfile
+                # dir (mail-relay collector doctrine, 2026-09-02..06).
+                CapabilityBoundingSet = "CAP_FOWNER";
+              })
+              (serviceOneshotDefaults { })
+            ];
+            path = [ pkgs.util-linux ];
+          };
+          systemd.timers.hot-db-metrics = {
+            description = "Hot-DB tier mount-presence collector (5 min)";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnBootSec = "2min";
+              OnUnitActiveSec = "5min";
+            };
+          };
+        })
+        # T14: one anchored Gatus check per entry + the toplevel. Mounted=1 is
+        # the green state; 0, absent metric, or a dead collector all fail
+        # (the != 0 + existence pair — asserted-value checks on a metrics
+        # body MUST be newline-anchored, the 2026-08-22 phantom-green class).
+        # Alert descriptions NEVER embed the labeled metric — gatus 5.36
+        # panics at startup on quotes in descriptions (2026-09-29 incident).
+        (lib.mkIf (cfg.enable && (options ? services.gatus-config)) {
+          services.gatus-config.extraEndpoints =
+            let
+              # `or` guards the minimal-VM shape (no exporters module).
+              nodePort = config.services.prometheus.exporters.node.port or 9100;
+              mkMountCheck =
+                name: metric: desc:
+                mkHttpCheck {
+                  inherit name;
+                  group = "Storage";
+                  url = "http://127.0.0.1:${toString nodePort}/metrics";
+                  interval = "60s";
+                  conditions = [
+                    "[BODY] != pat(*${metric} 0\n*)"
+                    "[BODY] == pat(*\n${metric} *)"
+                  ];
+                  alerts = discordAlert desc;
+                };
+            in
+            [
+              (mkMountCheck "Hot Tier Mounted" "hot_tier_mounted" "Samsung hot tier toplevel is not mounted — crush session DBs fall back to the QLC root and every hot-db entry consumer is down or condition-skipped. Check: findmnt for the toplevel mount; systemctl status hot-db-metrics; journalctl -b -u hot-db-metrics. Runbook: docs/services/hot-db.md.")
+            ]
+            ++ map (
+              e:
+              mkMountCheck "Hot-DB ${e.name} Mounted" "hot_db_entry_mounted{name=\"${e.name}\"}" "Hot-DB entry ${e.name} is not mounted at its dataDir — the Samsung subvol is detached or a migration window left the entry undeployed. Check: systemctl status hot-db-metrics; findmnt for the entry path; runbook docs/services/hot-db.md."
+            ) entryList;
+        })
       ];
     };
 }

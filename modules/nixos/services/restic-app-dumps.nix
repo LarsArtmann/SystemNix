@@ -50,6 +50,7 @@ _: {
             "/mnt/pool/backups/browser-history"
             "/mnt/pool/backups/clickhouse"
             "/mnt/pool/backups/cv"
+            "/mnt/pool/backups/discordsync"
             "/mnt/pool/backups/forgejo"
             "/mnt/pool/backups/geometrikks"
             "/mnt/pool/backups/inboxclean"

@@ -446,6 +446,16 @@ in
       # runs from a daily timer + deploy.sh provisioner loop, skips live
       # sessions. See modules/nixos/services/crush-hot-db.nix.
       crush-hot-db.enable = true;
+      # Samsung hot-DB tier (Phase 2): mounts per-service subvolumes AT the
+      # service dataDirs. Entries are added ONE PER WAVE — an entry deployed
+      # before its `migrate-hot-db.sh prepare/cutover` mounts an EMPTY subvol
+      # over the live dataDir (shadow-split). The full per-wave runbook with
+      # the verified entry snippets: docs/services/hot-db.md (waves: gatus →
+      # dnsblockd → pocket-id → browser-history → discordsync).
+      hot-db = {
+        enable = true;
+        entries = { };
+      };
       # User cache subvolumes → Samsung TLC (2026-09-18/19 IO-audit
       # relocation): the nix fetch cache (~8.7 G gitv3+tarballs) leaves the
       # saturated QLC root / @cache-home for users/lars/cache/nix on tlc.
@@ -570,6 +580,11 @@ in
         # (runs at the next deploy: stops the service, rsyncs ~40 GB,
         # checksum-verifies, removes the source).
         attachmentsDir = "/mnt/pool/services/discordsync/attachments";
+        # Dump-only RPO leg for the hot-db wave (2026-09-30): once the event
+        # store leaves the btrbk `@` snapshot set and with Turso sync
+        # free-plan blocked, this nightly gzipped dump (02:30) is its only
+        # backup. Registered in backup-coordination + the restic repo.
+        dbBackup.enable = true;
         # Immich cross-archive comparison on the /lookup page (ADR-062): the
         # server proxies hex SHA-1 hashes to Immich's bulk-upload-check.
         # Ships with a PLACEHOLDER key — create the real key in Immich scoped

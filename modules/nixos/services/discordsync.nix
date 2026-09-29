@@ -30,6 +30,8 @@
       discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default;
       sopsEnvPath = config.sops.templates."discordsync-env".path;
 
+      dbBackupDir = "/mnt/pool/backups/discordsync";
+
       textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
 
       # T17 (sweep-storm plan): expose the discordsync unit's cumulative disk
@@ -286,6 +288,14 @@
           default = null;
           description = "Pool directory for the attachment archive (null = legacy in-state <dataDir>/attachments layout)";
         };
+
+        # Nightly online sqlite .backup of the event store onto the HDD pool
+        # — the dump-only RPO leg for the hot-db tier migration (2026-09-30):
+        # once the DB leaves the btrbk `@` snapshot set its only other
+        # redundancy is the Turso cloud sync, which is free-plan BLOCKED
+        # (local-first stance). Default off: pool-less hosts/VMs register no
+        # units and no phantom backup-coordination row.
+        dbBackup.enable = lib.mkEnableOption "nightly gzipped sqlite .backup of the DiscordSync event store onto /mnt/pool/backups/discordsync (dump-only RPO leg for the hot-db wave)";
 
         immich = {
           enable = lib.mkEnableOption "Immich cross-archive comparison on the /lookup page (ADR-062: the server proxies hex SHA-1 hashes to Immich's bulk-upload-check; IMMICH_URL + IMMICH_API_KEY are cold config validated both-or-neither by the binary at startup)";
@@ -740,6 +750,109 @@
           (mkStateDir "${cfg.dataDir}/attachments" "2770" cfg.user cfg.group)
         ];
 
+        # ── Event-store dump leg (dbBackup.enable) ─────────────────────
+        # browser-history-backup pattern: mount-gated pool leaf creator +
+        # online sqlite .backup. The raw intermediate is gzip -1'd in place
+        # (message text compresses ~3x; the restic repo dedups further).
+        systemd.services.discordsync-db-backup-dir = lib.mkIf cfg.dbBackup.enable {
+          description = "Create DiscordSync DB backup directory on the HDD pool";
+          wantedBy = [ "multi-user.target" ];
+          unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "root";
+              RemainAfterExit = true;
+            }
+            # ReadWritePaths targets the MOUNT ROOT (cv-backup-dir pattern):
+            # a fresh pool has no backups/ leaf yet, and a ReadWritePaths
+            # entry under the mountpoint would abort with 226/NAMESPACE
+            # before the script can mkdir.
+            (harden {
+              MemoryMax = "128M";
+              ReadWritePaths = [ "/mnt/pool" ];
+              CapabilityBoundingSet = "CAP_FOWNER CAP_DAC_OVERRIDE";
+            })
+            (serviceOneshotDefaults { })
+          ];
+          script = ''
+            mkdir -p ${dbBackupDir}
+            chmod 0755 ${dbBackupDir}
+          '';
+        };
+
+        systemd.services.discordsync-db-backup = lib.mkIf cfg.dbBackup.enable {
+          description = "DiscordSync event-store backup (online sqlite .backup, gzipped)";
+          after = [
+            "discordsync.service"
+            "discordsync-db-backup-dir.service"
+          ];
+          wants = [
+            "discordsync.service"
+            "discordsync-db-backup-dir.service"
+          ];
+          # Detached DAS fails the run as a clean dependency error, never
+          # 226/NAMESPACE (btrbk doctrine).
+          unitConfig.RequiresMountsFor = [ dbBackupDir ];
+          inherit onFailure;
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              # 11 GB event store: .backup read + gzip write ≈ minutes on the
+              # pool HDDs; bounded well above the global 3min default.
+              TimeoutStartSec = "30min";
+              ExecStart = pkgs.writeShellScript "discordsync-db-backup" ''
+                set -euo pipefail
+                db="${cfg.databasePath}"
+                if [ ! -f "$db" ]; then
+                  echo "discordsync-db-backup: no DB at $db — nothing to back up"
+                  exit 0
+                fi
+                stamp=$(date +%Y-%m-%d)
+                raw="${dbBackupDir}/.discordsync-db-$stamp.raw"
+                dst="${dbBackupDir}/discordsync-db-$stamp.sql.gz"
+                # -readonly: a read-write root open of the live WAL database
+                # can create/replace the -shm/-wal sidecars ROOT-owned while
+                # the server (own user) holds it, poisoning the next open
+                # with SQLITE_READONLY (the browser-history 2026-09-22
+                # uid-drift class).
+                ${lib.getExe pkgs.sqlite} -readonly "$db" ".backup '$raw'"
+                ${lib.getExe pkgs.gzip} -1 -c "$raw" > "$dst.part"
+                mv "$dst.part" "$dst"
+                rm -f "$raw"
+                # 7-day retention + failed-run intermediates older than 2d.
+                find ${dbBackupDir} -name "discordsync-db-*.sql.gz" -mtime +7 -delete
+                find ${dbBackupDir} -name ".discordsync-db-*" -mtime +2 -delete
+                echo "discordsync-db-backup: wrote $dst ($(du -h "$dst" | cut -f1))"
+              '';
+              ReadWritePaths = [ dbBackupDir ];
+            }
+            # The dataDir is 2770 discordsync:discordsync — DAC-obeying root
+            # cannot traverse it without CAP_DAC_READ_SEARCH (cv-backup
+            # silent-no-op precedent).
+            (harden {
+              MemoryMax = "2G";
+              CapabilityBoundingSet = "CAP_DAC_READ_SEARCH";
+            })
+            (serviceOneshotDefaults { })
+            ioTier.background
+          ];
+        };
+
+        systemd.timers.discordsync-db-backup = lib.mkIf cfg.dbBackup.enable {
+          description = "Nightly DiscordSync event-store backup";
+          wantedBy = [ "timers.target" ];
+          after = [ "mnt-pool.mount" ];
+          timerConfig = {
+            # 02:30 — staggered: paperless-db 02:00, browser-history 02:15,
+            # this 02:30, miniflux 02:45.
+            OnCalendar = "*-*-* 02:30:00";
+            Persistent = true;
+          };
+        };
+
         # Service-integration registry entry: fans out to the Caddy vHost
         # (Layer 2), the three Gatus checks (liveness + DLQ + Turso sync),
         # and the homepage tile. Replaces rows in caddy.nix /
@@ -838,6 +951,16 @@
               icon = "discord.png";
             };
             monitored = true;
+            # Event-store dump freshness (discordsync-db-backup.timer, 02:30)
+            # — gated so pool-less hosts register no phantom backup row. The
+            # dump-only RPO leg for the hot-db wave: Turso sync is
+            # free-plan blocked, so this dump is the event store's only
+            # backup once the DB leaves the `@` snapshot set.
+            backup = lib.mkIf cfg.dbBackup.enable {
+              directory = dbBackupDir;
+              filePattern = "discordsync-db-*.sql.gz";
+              maxAgeHours = 25;
+            };
           };
         };
       };
