@@ -8,97 +8,85 @@ if [[ ! -f $BLOCKLIST_FILE ]]; then
   exit 1
 fi
 
-declare -A REPO_URLS=(
-  ["hagezi"]="https://github.com/hagezi/dns-blocklists.git"
-  ["StevenBlack"]="https://github.com/StevenBlack/hosts.git"
-)
+# Two list families, two update models:
+#   - StevenBlack: commit-pinned raw.githubusercontent.com URLs. Advance the
+#     pin to upstream HEAD, then re-hash.
+#   - HaGeZi: UNPINNED GitLab-mirror main-branch URLs (github.com/hagezi is
+#     repeatedly locked by GitHub fraud detection) rendered through the
+#     `hagezi` helper. The URL never changes; only the SRI hash drifts.
+#
+# NEVER rewrite HaGeZi URLs. The pre-2026-09-29 version of this script
+# grep'd for raw.githubusercontent.com/hagezi (which matched nothing once the
+# GitLab migration landed), then blind-sed'd a foreign commit prefix into
+# every helper argument, breaking every HaGeZi fetch at build time.
+HAGEZI_BASE="https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists"
+SB_REPO="https://github.com/StevenBlack/hosts.git"
 
-declare -A CURRENT_COMMITS
-declare -A NEW_COMMITS
-
-echo "=== Fetching latest commits ==="
-for repo in "${!REPO_URLS[@]}"; do
-  url="${REPO_URLS[$repo]}"
-  new_commit=$(git ls-remote "$url" HEAD | awk '{print $1}')
-  if [[ -z $new_commit ]]; then
-    echo "ERROR: Could not fetch HEAD for $repo"
-    exit 1
-  fi
-  NEW_COMMITS["$repo"]="$new_commit"
-  echo "  $repo: $new_commit"
-done
-
-echo ""
-echo "=== Extracting current commits ==="
-for repo in "${!REPO_URLS[@]}"; do
-  current=$(grep -oP "raw\.githubusercontent\.com/${repo}/[^/]+" "$BLOCKLIST_FILE" | head -1 | sed "s|raw\.githubusercontent\.com/${repo}/||" || true)
-  if [[ -n $current ]]; then
-    CURRENT_COMMITS["$repo"]="$current"
-    echo "  $repo: $current → ${NEW_COMMITS[$repo]}"
-  fi
-done
-
-has_changes=false
-for repo in "${!REPO_URLS[@]}"; do
-  if [[ ${CURRENT_COMMITS[$repo]:-} != "${NEW_COMMITS[$repo]}" ]]; then
-    has_changes=true
-  fi
-done
-
-if [[ $has_changes == "false" ]]; then
-  echo ""
-  echo "All blocklists are up to date. No changes needed."
-  exit 0
+echo "=== Advancing the StevenBlack commit pin ==="
+new_sb=$(git ls-remote "$SB_REPO" HEAD | awk '{print $1}')
+if [[ -z $new_sb ]]; then
+  echo "ERROR: could not fetch StevenBlack HEAD"
+  exit 1
+fi
+current_sb=$(grep -oP "raw\.githubusercontent\.com/StevenBlack/\K[^/]+" "$BLOCKLIST_FILE" | head -1 || true)
+if [[ -n ${current_sb:-} && $current_sb != "$new_sb" ]]; then
+  sed -i "s/${current_sb}/${new_sb}/g" "$BLOCKLIST_FILE"
+  echo "  StevenBlack: $current_sb -> $new_sb"
+else
+  echo "  StevenBlack: pin unchanged ($new_sb)"
 fi
 
 echo ""
-echo "=== Updating commit hashes in URLs ==="
-for repo in "${!REPO_URLS[@]}"; do
-  old="${CURRENT_COMMITS[$repo]:-}"
-  new="${NEW_COMMITS[$repo]}"
-  if [[ -n $old && $old != "$new" ]]; then
-    sed -i "s/${old}/${new}/g" "$BLOCKLIST_FILE"
-    echo "  $repo: replaced $old → $new"
+echo "=== Refreshing SRI hashes ==="
+# Each entry: <grep-able file fragment>|<fetchable URL>. The hash is always
+# the `hash = "..."` line directly BELOW the fragment's line.
+entries=()
+while IFS= read -r sub; do
+  entries+=("hagezi \"${sub}\"|${HAGEZI_BASE}/${sub}")
+done < <(grep -oP 'hagezi "\K[^"]+' "$BLOCKLIST_FILE")
+while IFS= read -r url; do
+  entries+=("${url}|${url}")
+done < <(grep -oP 'url = "\K[^"]+(?=")' "$BLOCKLIST_FILE" | grep -v '^hagezi' || true)
+
+failed=0
+for entry in "${entries[@]}"; do
+  fragment="${entry%%|*}"
+  url="${entry#*|}"
+  printf "  %-46s " "${fragment:0:46}"
+  b32=$(nix-prefetch-url --type sha256 "$url" 2>/dev/null | tail -1 || true)
+  if [[ -z $b32 ]]; then
+    echo "FAILED (nix-prefetch-url)"
+    failed=$((failed + 1))
+    continue
+  fi
+  sri=$(nix hash convert --hash-algo sha256 --to sri "$b32" 2>/dev/null || true)
+  if [[ -z $sri ]]; then
+    echo "FAILED (nix hash convert)"
+    failed=$((failed + 1))
+    continue
+  fi
+  line=$(grep -nF "$fragment" "$BLOCKLIST_FILE" | head -1 | cut -d: -f1)
+  hline=$((line + 1))
+  if [[ -z $line ]] || ! sed -n "${hline}p" "$BLOCKLIST_FILE" | grep -q 'hash = '; then
+    echo "FAILED (no hash line below fragment)"
+    failed=$((failed + 1))
+    continue
+  fi
+  old=$(sed -n "${hline}p" "$BLOCKLIST_FILE" | sed 's/.*hash = "//;s/".*//')
+  if [[ $old == "$sri" ]]; then
+    echo "unchanged"
+  else
+    sed -i "${hline}s|.*|      hash = \"$sri\";|" "$BLOCKLIST_FILE"
+    echo "updated"
   fi
 done
 
 echo ""
-echo "=== Computing new SRI hashes ==="
-urls=$(grep -oP 'url = "[^"]+"' "$BLOCKLIST_FILE" | sed 's/url = "//;s/"//')
-total=$(echo "$urls" | wc -l)
-count=0
-
-while IFS= read -r url; do
-  count=$((count + 1))
-  name=$(grep -B2 "$url" "$BLOCKLIST_FILE" | grep 'name =' | sed 's/.*name = "//;s/".*//' || true)
-  printf "  [%2d/%d] %-40s " "$count" "$total" "$name"
-
-  base32_hash=$(nix-prefetch-url --type sha256 "$url" 2>/dev/null | tail -1 || true)
-  if [[ -z $base32_hash ]]; then
-    echo "FAILED (nix-prefetch-url)"
-    continue
-  fi
-
-  sri_hash=$(nix hash convert --hash-algo sha256 --to sri "$base32_hash" 2>/dev/null || true)
-  if [[ -z $sri_hash ]]; then
-    echo "FAILED (nix hash convert)"
-    continue
-  fi
-
-  old_hash=$(grep -A1 "$url" "$BLOCKLIST_FILE" | grep 'hash =' | sed 's/.*hash = "//;s/".*//' || true)
-
-  if [[ -n $old_hash && $old_hash != "$sri_hash" ]]; then
-    sed -i "s|${old_hash}|${sri_hash}|g" "$BLOCKLIST_FILE"
-    echo "OK"
-  elif [[ $old_hash == "$sri_hash" ]]; then
-    echo "unchanged"
-  else
-    echo "SKIP (could not find old hash)"
-  fi
-done <<<"$urls"
-
-echo ""
-echo "=== Done ==="
+if [[ $failed -gt 0 ]]; then
+  echo "Done with $failed FAILED entries — review network/mirror state before deploying."
+  exit 1
+fi
+echo "Done."
 echo "Review changes: git diff $BLOCKLIST_FILE"
-echo "Validate:       just test-fast"
-echo "Apply:          just switch"
+echo "Validate:       nix flake check --no-build"
+echo "Apply:          nix run .#deploy"

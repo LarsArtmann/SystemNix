@@ -70,12 +70,19 @@ let
 
   venv = pythonSet.mkVirtualEnv "geometrikks-${version}-env" workspace.deps.default;
 
-  # ---- bun node_modules FOD ----
+  # ---- bun node_modules FOD (tarball output) ----
   # nixpkgs has no buildBunPackage/fetchBunDeps (verified 2026-09-29), so this
   # is the hand-rolled equivalent of qmd-upstream's bun FOD. --ignore-scripts:
   # every platform binary (esbuild/rolldown/oxide) ships as a prebuilt
   # optionalDependency; postinstalls are unnecessary for `bun run build` and a
-  # sandbox hazard. Hash covers ONLY node_modules content (bun.lock frozen).
+  # sandbox hazard.
+  #
+  # Output is a DETERMINISTIC TAR of node_modules, not a directory: a FOD must
+  # not reference store paths, and bun's install rewrites `#!/usr/bin/env X`
+  # shebangs to sandbox-resolved store interpreter paths (playwright-core .sh
+  # class) while some packages even ship flake.lock files with store pins —
+  # both are scrubbed below and the single-file output makes the byte surface
+  # exactly what the reference scanner sees.
   bunDeps = pkgs.stdenv.mkDerivation {
     name = "geometrikks-${version}-bun-deps";
     dontUnpack = true;
@@ -139,7 +146,10 @@ let
           exit 1
           ;;
       esac
-      cp -r node_modules "$out"
+      cp -r node_modules "$out.tmp-tree"
+      tar --sort=name --mtime='@0' --owner=0 --group=0 --numeric-owner \
+        -cf "$out" -C "$out.tmp-tree" .
+      rm -rf "$out.tmp-tree"
       runHook postInstall
     '';
 
@@ -161,7 +171,8 @@ let
       export BUN_INSTALL_CACHE_DIR="$TMPDIR/bun-cache"
       cp -r "${src}/resources" ./resources
       cp "${src}/package.json" "${src}/bun.lock" "${src}/vite.config.ts" "${src}/tsconfig.json" "${src}/components.json" "${src}/index.html" ./
-      cp -r "${bunDeps}/node_modules" ./node_modules
+      mkdir node_modules
+      tar -xf "${bunDeps}" -C node_modules
       chmod -R u+w ./node_modules ./resources
       bun run build
       runHook postBuild
