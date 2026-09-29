@@ -212,6 +212,10 @@ in
         mouse-hide-while-typing = true;
         clipboard-read = "allow";
         clipboard-write = "allow";
+        keybind = [
+          "alt+d=new_split:right"
+          "shift+alt+d=new_split:down"
+        ];
       };
     };
 

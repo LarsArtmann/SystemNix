@@ -81,7 +81,21 @@ let
             --add-flags "--restore-last-session" \
             --add-flags "--disable-session-crashed-bubble" \
             --add-flags "--simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT'" \
-            --add-flags "--check-for-update-interval=0"
+            --add-flags "--check-for-update-interval=0" \
+            --add-flags "--load-extension=/home/lars/projects/nsfw-classifier/nsfw-extension"
+          # Auto-loads the local NSFW filter extension on EVERY launch (main
+          # profile, dp1/dp2 instances, desktop file — all exec this bin).
+          # --load-extension exists in Helium's unbranded build (removed only
+          # from branded Chrome 137+; switch + loader verified live in this
+          # binary via a headless probe that installed the extension). The
+          # path MUST stay stable: Chromium derives the extension ID from a
+          # SHA-256 of the path (here: inepplcmcfagipoamngjldlehdjlihfe), so
+          # chrome.storage settings survive restarts and deploys. Pointing it
+          # at a rebuilt store-path copy would change the ID per rebuild and
+          # silently reset all extension settings. Loading the live source
+          # dir also means code edits are picked up on the next helium
+          # restart. A missing dir only logs a load error — the browser
+          # starts fine.
           # CRITICAL: --disable-background-networking and --disable-component-update
           # were REMOVED because they silently block all force_installed extensions
           # from downloading. --disable-background-networking kills the ExtensionDownloader
