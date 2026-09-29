@@ -44,12 +44,19 @@ in
 
       # Test-only scaffolding (production: scripts/migrate-journal-hot.sh
       # creates the subvol BEFORE the first deploy — fstab cannot create
-      # subvolumes). Atticd-storage-dir shape: tied to the mount unit
-      # itself, NOT before=local-fs.target (that edge is an ordering cycle).
+      # subvolumes; the production boot graph has NO pre-mount unit and NO
+      # cycle surface). DefaultDependencies=false is LOAD-BEARING here: with
+      # default deps (After=sysinit.target) the unit closes the cycle
+      # journald → var-log-journal.mount → tlc-fmt → sysinit → local-fs →
+      # mount — the hot-user-caches class; systemd's cycle breaker deleted a
+      # core boot job and the guest hung SILENT (first run). The explicit
+      # udev-trigger anchor keeps /dev/vdb visible this early.
       systemd.services.tlc-fmt = {
         description = "Format tlc disk + create journal subvolume (test-only)";
+        unitConfig.DefaultDependencies = false;
         wantedBy = [ "var-log-journal.mount" ];
         before = [ "var-log-journal.mount" ];
+        after = [ "systemd-udev-trigger.service" ];
         serviceConfig = {
           Type = "oneshot";
           User = "root";
