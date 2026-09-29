@@ -2097,11 +2097,11 @@
     "go-branded-id_14": {
       "flake": false,
       "locked": {
-        "lastModified": 1790652958,
-        "narHash": "sha256-sqRx7kCuaDJiBeYEHiC7iVTQlKdKPTJ9VAPhA02aRVE=",
+        "lastModified": 1790669564,
+        "narHash": "sha256-i6JszDUagLXS8Cq5lysw4OMsjuKD33dV51Sf5nJWNI8=",
         "ref": "master",
-        "rev": "fe552ce4923b167c5126263f0d60548ba697fb80",
-        "revCount": 225,
+        "rev": "37ef21733318671eb47ae45ebb69b21730175405",
+        "revCount": 247,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-branded-id"
       },
@@ -2767,11 +2767,11 @@
     "go-daemon": {
       "flake": false,
       "locked": {
-        "lastModified": 1790644883,
-        "narHash": "sha256-Q74Su4GglcFd/j90pojRnajvIe6usKClXpCyUZrmOw4=",
+        "lastModified": 1790675406,
+        "narHash": "sha256-ST5y+EsOLTowJIRB1V/zX/ytemWt6gBvFJ6jvMtRXnE=",
         "ref": "master",
-        "rev": "36c2eccb8ac31a09167093a6f3fc3e0df4e43cf0",
-        "revCount": 8,
+        "rev": "06b3071b83fe5956e262a5156ce277006170980f",
+        "revCount": 15,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-daemon"
       },
@@ -3023,11 +3023,11 @@
     "go-error-family_14": {
       "flake": false,
       "locked": {
-        "lastModified": 1790650751,
-        "narHash": "sha256-7qXuXhF3Cz1PAytKH8VikL7jBYjTEsTeUP4zsi7aW4s=",
+        "lastModified": 1790666450,
+        "narHash": "sha256-Sl/SS/X5351DGA0Gr5PBASDD1+eHu1M+5prQO2PZjfg=",
         "ref": "master",
-        "rev": "3098093679d60d54628e355db5fb237de49fa706",
-        "revCount": 391,
+        "rev": "7e57cb4ef63b9cef67973f3a8732a5372e280700",
+        "revCount": 396,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-error-family"
       },
@@ -4906,11 +4906,11 @@
     "go-sse_8": {
       "flake": false,
       "locked": {
-        "lastModified": 1790658266,
-        "narHash": "sha256-qBPjSSlDrSpd7J7ihlX0YaH+nV/fncB35QRu7YqdLQA=",
+        "lastModified": 1790670028,
+        "narHash": "sha256-XaCAo8Bj5J/AronvRTc1wm2vhFGl60xy+ZIhCrgi1YY=",
         "ref": "master",
-        "rev": "b2545339698eacbcf63535de2f2f849d524bf5d8",
-        "revCount": 322,
+        "rev": "61390c072623de8a3093dc715fc22f44960d6201",
+        "revCount": 339,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-sse"
       },
@@ -6426,11 +6426,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790661914,
-        "narHash": "sha256-Er8q/0QOHv85O19O6hZc0dQaqJtmbBiJe/1GBRuJWJY=",
+        "lastModified": 1790720220,
+        "narHash": "sha256-5dg4/bzfT7rWSpVEZZCHXBSey8vaheoafyQn86LVfDM=",
         "owner": "LarsArtmann",
         "repo": "overview",
-        "rev": "8ae1d4425a11eb5cc745adb2f9361db05044a00c",
+        "rev": "bffe18fcb40007da9b114a20e56f5c189c8e2fd1",
         "type": "github"
       },
       "original": {
@@ -6484,11 +6484,11 @@
     "project-discovery-daemon": {
       "flake": false,
       "locked": {
-        "lastModified": 1790648667,
-        "narHash": "sha256-uRrDHNuDmpW7FWztgQOPM3YbrEtug5XRLRWIBQ+RIFE=",
+        "lastModified": 1790658751,
+        "narHash": "sha256-mUq3hZQ35J+Lzmv1hmxsNF3CXHVjqIikY9NXgLOmrxI=",
         "ref": "master",
-        "rev": "16064960bfa11a1d79236b08a499ea7292580736",
-        "revCount": 106,
+        "rev": "bc0980fa60c5cbc7155c288a9fcd2b8b2bb5394d",
+        "revCount": 108,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-daemon"
       },
