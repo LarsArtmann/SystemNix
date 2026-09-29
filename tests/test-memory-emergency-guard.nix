@@ -29,6 +29,16 @@
 #   8b. Phantom io PSI (avg60 90%) with IDLE disks (io_ticks delta 0):
 #      MUST NOT trip — the 2026-08-24 ln phantom class (D-state on dead
 #      automounts saturates io PSI with zero real disk activity).
+#   9.  Backup starvation + bounded catch-up slot (2026-09-26..28 class): a
+#      Zone-6 trip stops the backup unit and starts the starvation clock;
+#      with the clock >6h old and io PSI avg60=45 (still tripping, above the
+#      full re-arm bar, below the catch-up resume bar of 50) the guard must
+#      GRANT a slot: start the backup unit, protect it, prune it from the
+#      churn window, export the gauges.
+#   9b. Slot protection: a trip action INSIDE the slot skips the backup unit
+#      in the churn stop; the cooldown steady-state line dedups.
+#   9c. Trip-line offender attribution: top per-cgroup io.stat delta vs the
+#      previous action's snapshot (CGROUP_IO_SRC fixture).
 #   5. Cooldown: repeat trip within 600 s → service stop skipped (counter
 #      unchanged) but the socket stays enforced down.
 #   6. Restore: healthy margins + last trip 700 s ago → socket restarted,
@@ -156,6 +166,17 @@ in
         # reset_state restarts it many times within the test window.
         startLimitBurst = lib.mkForce 100;
       };
+      # Backup-class churn unit (one of the guard's backupUnits): scenario 9
+      # proves the starved-backup catch-up slot — stopped like any churn unit
+      # on a Zone-6 trip, then started + PROTECTED through trip actions once
+      # the starvation budget (backupStarvationSeconds, default 6h, satisfied
+      # via a backdated epoch) expires under io PSI below the resume bar.
+      systemd.services.btrbk-root = {
+        description = "dummy btrbk backup unit";
+        serviceConfig.ExecStart = "${pkgs.coreutils}/bin/sleep infinity";
+        wantedBy = [ "multi-user.target" ];
+        startLimitBurst = lib.mkForce 100;
+      };
       systemd.sockets.fastflowlm = {
         description = "dummy flm activation socket";
         socketConfig.ListenStream = "/run/flm-test.sock";
@@ -260,6 +281,18 @@ in
         ioPsiAvg60 = "90.00";
         diskTicks = 1000;
       };
+      # Scenario 9: io avg60=45 — ABOVE the Zone-6 trip threshold (40: still
+      # tripping, and above the full re-arm bar so the re-arm path stays out)
+      # but BELOW the backup catch-up resume bar (50): the 2026-09-26..28
+      # starvation band where a starved btrbk may resume while the storm
+      # persists.
+      zone6mid = {
+        availPct = 0.30;
+        zramPct = 0.20;
+        psiAvg10 = "0.10";
+        ioPsiAvg60 = "45.00";
+        diskTicks = 13000;
+      };
     in
     ''
       machine.start()
@@ -277,14 +310,14 @@ in
           "grep -oP '^ExecStart=\\K.*' /etc/systemd/system/memory-emergency-guard.service"
       ).strip()
 
-      def run_guard(case):
+      def run_guard(case, extra_env=""):
           return machine.succeed(
               f"MEMINFO_SRC=/tmp/gt/{case}-meminfo"
               f" ZRAM_MM_STAT_SRC=/tmp/gt/{case}-mmstat"
               f" ZRAM_DISKSIZE_SRC=/tmp/gt/disksize"
               f" PSI_SRC=/tmp/gt/{case}-psi"
               f" IO_PSI_SRC=/tmp/gt/{case}-iopsi"
-              f" DISKSTATS_SRC=/tmp/gt/{case}-diskstats {script} 2>&1"
+              f" DISKSTATS_SRC=/tmp/gt/{case}-diskstats {extra_env} {script} 2>&1"
           )
 
       def reset_state():
@@ -298,7 +331,13 @@ in
                           " /var/lib/memory-emergency-guard/io-ticks.epoch"
                           " /var/lib/memory-emergency-guard/io-ticks.cur"
                           " /var/lib/memory-emergency-guard/churn-stopped"
-                          " /var/lib/memory-emergency-guard/churn-rearm.count")
+                          " /var/lib/memory-emergency-guard/churn-rearm.count"
+                          " /var/lib/memory-emergency-guard/backup-stopped.epoch"
+                          " /var/lib/memory-emergency-guard/backup-catchup.epoch"
+                          " /var/lib/memory-emergency-guard/backup-catchup.count"
+                          " /var/lib/memory-emergency-guard/cooldown-log.epoch"
+                          " /var/lib/memory-emergency-guard/capped-log.epoch"
+                          " /var/lib/memory-emergency-guard/cgroup-io.last")
           machine.succeed("rm -f /var/lib/memory-emergency-guard/restores-*")
           # Bring every sacrifice unit back up (the restore path only
           # restarts the socket; activation would re-spawn the backend).
@@ -317,6 +356,8 @@ in
           # The Zone 6 churn-stop target: bring it back so later trips can
           # stop it again (the guard only re-arms it on the io-drain path).
           machine.succeed("systemctl start btrfs-balance-data.service")
+          # The backup-class churn unit for the scenario-9 catch-up slot.
+          machine.succeed("systemctl start btrbk-root.service")
 
       def assert_all_down():
           machine.fail("systemctl is-active --quiet fastflowlm.socket")
@@ -601,5 +642,88 @@ in
           "a phantom (no-trip) run must not report churn stops"
       )
       assert "memory_emergency_guard_last_run_timestamp_seconds " in prom
+
+      # --- 9. Backup starvation + bounded catch-up slot (2026-09-26..28) --
+      # A Zone-6 trip stops the backup unit like any churn unit and starts
+      # the starvation clock. Backdate that clock past the 6h budget, then
+      # hold io PSI avg60 at 45% — above the trip threshold (still tripping)
+      # and above the full re-arm bar (re-arm path stays out), but below the
+      # catch-up resume bar (50): the guard must GRANT a slot — start the
+      # backup unit, protect it, prune it from the churn window, and export
+      # the starvation/catch-up gauges.
+      reset_state()
+      machine.succeed("${writeFakes "zone6real" zone6real}")
+      out = run_guard("zone6real")
+      assert "I/O PSI some avg60" in out, "scenario 9 needs a real Zone-6 trip first"
+      machine.fail("systemctl is-active --quiet btrbk-root.service")
+      prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
+      assert (
+          "memory_emergency_guard_churn_units_stopped{unit=\"btrbk-root.service\"} 1" in prom
+      ), "the trip must record the backup unit it stopped (the starvation clock source)"
+      machine.succeed(
+          "echo $(( $(date +%s) - 25200 )) > /var/lib/memory-emergency-guard/backup-stopped.epoch"
+      )
+      machine.succeed(
+          "awk -v e=\"$(( $(date +%s) - 25200 ))\" 'NR==1{$0=e}1'"
+          " /var/lib/memory-emergency-guard/churn-stopped > /tmp/cs"
+          " && mv /tmp/cs /var/lib/memory-emergency-guard/churn-stopped"
+      )
+      machine.succeed("${writeFakes "zone6mid" zone6mid}")
+      out = run_guard("zone6mid")
+      assert "backup catch-up slot granted" in out, (
+          "a backup stopped >6h under io PSI avg60 < 50 must be granted a "
+          "catch-up slot (2026-09-26..28: three missed pool-receive nights "
+          "while the full re-arm bar was unreachable)"
+      )
+      machine.succeed("systemctl is-active --quiet btrbk-root.service")
+      prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
+      assert "memory_emergency_guard_backup_starved 1" in prom
+      assert "memory_emergency_guard_backup_catchup_protected 1" in prom
+      assert "memory_emergency_guard_backup_catchup_slots_total 1" in prom
+      assert (
+          "memory_emergency_guard_churn_units_stopped{unit=\"btrbk-root.service\"} 1" not in prom
+      ), "the granted backup unit must leave the churn-stopped window (it is running again)"
+      assert (
+          "memory_emergency_guard_churn_units_stopped{unit=\"btrfs-balance-data.service\"} 1" in prom
+      ), "non-backup churn units stay stopped until the FULL re-arm"
+
+      # --- 9b. Slot protection: a trip action during the slot keeps the
+      #      backup running; the cooldown steady-state line dedups (live
+      #      2026-09-27: restore-capped fired every 30 s for hours).
+      machine.succeed(
+          "echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip"
+      )
+      out = run_guard("zone6mid")
+      assert "catch-up slot active" in out and "keeping btrbk-root.service running" in out, (
+          "a trip action inside the protection window must SKIP the backup "
+          "unit in the churn stop"
+      )
+      machine.succeed("systemctl is-active --quiet btrbk-root.service")
+      out = run_guard("zone6mid")
+      assert "cooldown active" not in out, (
+          "the cooldown steady-state line must dedup — it already logged "
+          "less than verboseLogIntervalSeconds (600) ago"
+      )
+      counter = machine.succeed("cat /var/lib/memory-emergency-guard/tripped.count").strip()
+      assert counter == "2", "scenario 9 fired one action, 9b exactly one more"
+
+      # --- 9c. Trip-line offender attribution: top per-cgroup io.stat delta
+      #      vs the previous action's snapshot (CGROUP_IO_SRC fixture — the
+      #      production walk reads /sys/fs/cgroup at trip actions only).
+      machine.succeed(
+          "mkdir -p /tmp/cgt/system.slice/offender.service"
+          " && printf '8:0 rbytes=3000000 wbytes=0\\n'"
+          " > /tmp/cgt/system.slice/offender.service/io.stat"
+          " && printf '2000000 system.slice/offender.service/io.stat\\n'"
+          " > /var/lib/memory-emergency-guard/cgroup-io.last"
+      )
+      machine.succeed(
+          "echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip"
+      )
+      out = run_guard("zone6mid", extra_env="CGROUP_IO_SRC=/tmp/cgt")
+      assert "top io since last trip" in out and "offender.service" in out, (
+          "the trip action line must name its top I/O movers (2026-09-28: "
+          "1300+ trips said 'I/O stalled' without naming a culprit)"
+      )
     '';
 }
