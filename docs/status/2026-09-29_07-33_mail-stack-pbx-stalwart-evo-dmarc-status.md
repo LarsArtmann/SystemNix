@@ -21,13 +21,13 @@ before the mailbox exists wedges every subsequent deploy.
 
 1. **Upstream module surface** (`github:LarsArtmann/nix-email` at lock
    `3b889c71`): `services.mail-server` owns ONE RFC listener set (25/587/465/993
-   + loopback-only HTTP admin, plain-priority firewall definition), relay /
-   certificate (self-signed|acme|manual) / DNSBL / rate-limit / negative-cache
-   options, and eval-time assertions encoding v0.15.5 behavior (bare-IP relay
-   refusal, loopback SSRF guard, SASL all-or-nothing). `services.dmarc-monitor`
-   wraps nixpkgs parsedmarc with two upstream-bug workarounds (py3.14
-   imapclient pin, elasticsearch-section strip) and a Stalwart LOGIN-by-principal-
-   NAME gotcha.
+   - loopback-only HTTP admin, plain-priority firewall definition), relay /
+     certificate (self-signed|acme|manual) / DNSBL / rate-limit / negative-cache
+     options, and eval-time assertions encoding v0.15.5 behavior (bare-IP relay
+     refusal, loopback SSRF guard, SASL all-or-nothing). `services.dmarc-monitor`
+     wraps nixpkgs parsedmarc with two upstream-bug workarounds (py3.14
+     imapclient pin, elasticsearch-section strip) and a Stalwart LOGIN-by-principal-
+     NAME gotcha.
 2. **Hetzner blocks ports 25 AND 465 by default on ALL cloud servers, both
    directions, per account** (upstream README go-live runbook, verified against
    Hetzner docs 2026-09-14). Only a Console limit request (granted ~1 month +
@@ -200,6 +200,7 @@ Verification (all green):
 Grouped; ✅ = already harvested this session (location noted).
 
 **Go-live critical path (owner; harvested ✅ pbx TODO §9 / runbook):**
+
 1. ✅ File Hetzner :25/:465 limit request (runbook §1).
 2. ✅ Create + push `stalwart_fallback_admin`, `stalwart_relay_password`
    (runbook §2).
@@ -216,48 +217,48 @@ Grouped; ✅ = already harvested this session (location noted).
 
 **Assistant follow-ups (harvested ✅ pbx TODO §9):**
 8. ✅ Post-cutover Gatus external checks smtp-mx/imaps with
-   CERTIFICATE_EXPIRATION > 720h (runbook §8).
+CERTIFICATE_EXPIRATION > 720h (runbook §8).
 9. ✅ Stalwart-store restore drill + backup-restore.md stalwart arm.
 
 **Design debt (harvested ✅ pbx TODO §9 at authoring time):**
 10. ✅ pbx eval-contract test for nix-email (e.1) — SystemNix
-    `tests/test-nix-email.nix` shape, ~30 lines.
+`tests/test-nix-email.nix` shape, ~30 lines.
 11. ✅ Cert-bootstrap alerting (e.2) — OnFailure on
-    `acme-mail.artmann.tech.service` or a stalwart journal-age metric.
+`acme-mail.artmann.tech.service` or a stalwart journal-age metric.
 12. ✅ Resolve `telephony-alert@` collision for real (pre-existing TODO row,
-    extended this session with the stalwart consumer note).
+extended this session with the stalwart consumer note).
 13. ✅ Verify/scope the Resend key for artmann.tech envelopes (e.5) — owner
-    decision row added (blocked:user).
+decision row added (blocked:user).
 14. After direct-to-MX someday: rDNS pin + `relay = null` flip + SPF
-    `v=spf1 mx -all` + Stalwart DKIM keys + DNS TXT (upstream runbook §3
-    shape).
+`v=spf1 mx -all` + Stalwart DKIM keys + DNS TXT (upstream runbook §3
+shape).
 15. MTA-STS + TLS-RPT records (runbook §4 optional hardening).
 16. Mail-server Gatus checks belong in a registry entry once any SystemNix
-    host consumes it — the wrapper's dmarc entry has `checks = []` today.
+host consumes it — the wrapper's dmarc entry has `checks = []` today.
 
 **Same-session adjacent items noticed but not touched (pre-existing):**
 17. SystemNix `docs/todo/pipeline.md` sits dirty from a parallel session —
-    coordinate before the next deploy batches it.
+coordinate before the next deploy batches it.
 18. The foreign `.github/workflows/flake-update.yml` that rode my AGENTS.md
-    commit — verify the parallel session intended it (auto flake-update on
-    a repo with 46+ follows is behavior-relevant).
+commit — verify the parallel session intended it (auto flake-update on
+a repo with 46+ follows is behavior-relevant).
 19. pbx AGENTS.md is ~2.2x over its own 377-line budget (existing TODO row;
-    my rows added ~5 lines — net worth a slimming pass soon).
+my rows added ~5 lines — net worth a slimming pass soon).
 20. The docs-freshness GENERIC_DF fragility (e.4) — upstream in the
-    gates-family extraction row.
+gates-family extraction row.
 
 **Deliberately NOT harvested (with reasons):**
 21. "Deploy SystemNix to land the dmarc wiring" — nothing runtime-active
-    changes until the flip; batching decision is the owner's (parallel
-    sessions active).
+changes until the flip; batching decision is the owner's (parallel
+sessions active).
 22. "Add dmarc-monitor to SigNoz coverage" — no OTel env on parsedmarc;
-    per doctrine nothing to register.
+per doctrine nothing to register.
 23. "VM test for pbx mail.nix" — upstream owns runtime E2E (stalwart-e2e,
-    relay-e2e); the consumer wiring is eval-gated; a SystemNix-style VM test
-    would duplicate upstream's suite. Revisit only if a second Stalwart host
-    appears.
+relay-e2e); the consumer wiring is eval-gated; a SystemNix-style VM test
+would duplicate upstream's suite. Revisit only if a second Stalwart host
+appears.
 24. Anything outward-facing (Resend domain verification for artmann.tech,
-    mailbox creation) — user-held values and portals, per repo doctrine.
+mailbox creation) — user-held values and portals, per repo doctrine.
 
 ## g) Questions for the owner (cannot figure out myself)
 

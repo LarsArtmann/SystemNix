@@ -63,7 +63,7 @@ auto-commit daemon, heuristic messages) but **not pushed**.
 9. **Docs/harvest** — runbook `docs/services/geometrikks.md` fully rewritten; AGENTS.md
    GeoMetrikks section rewritten (native, all gotchas incl. bun-FOD + POSIX-shell lessons);
    CHANGELOG entry; docs/todo/services.md go-live row updated (first SSO login step added)
-   + new [watch] docker-volume-removal row.
+   - new [watch] docker-volume-removal row.
 10. **The flip deploy EXECUTED** (forced past the pressure gate — see §d): pre-deploy checks
     69 passed / 0 failed / 14 warnings; switch ran; smoke 114 PASS / 4 FAIL — all 4 FAILs
     **matched the previous run's baseline** (advisory, not new regressions).
@@ -158,6 +158,7 @@ auto-commit daemon, heuristic messages) but **not pushed**.
 ## f) NEXT — up to 50 things (priority order)
 
 **P0 — recover/anchor/verify (blocking):**
+
 1. Read the activation evidence: `journalctl -b` around 23:0x for the switch transaction;
    enumerate which unit(s) failed (geometrikks/db-provision/postgresql-cascade?).
 2. `readlink /run/current-system` vs `/nix/var/nix/profiles/system` — confirm unanchored delta.
@@ -184,61 +185,61 @@ auto-commit daemon, heuristic messages) but **not pushed**.
 
 **P1 — hardening/follow-through:**
 19. User's first SSO login at geo.home.lan (go-live step 1; allow-list email-vs-sub fallback
-    documented).
+documented).
 20. MaxMind + CARTO key pastes (existing user-gated todo).
 21. Add `tests/test-geometrikks.nix` minimal VM/eval test (enable → unit shapes, PG extensions
-    wiring, registry flip) — closes the never-ran-class gap.
+wiring, registry flip) — closes the never-ran-class gap.
 22. Consider a Gatus check asserting the OIDC redirect (once the endpoint is known from #15).
 23. Watch first nightly `geometrikks-db-backup` (05:15) → dump lands pool-side, backup-
-    coordination row green.
+coordination row green.
 24. After ≥48h green: docker volume removal (`geometrikks_geometrikks_*`) + final docker
-    image GC of gilbn/geometrikks + timescaledb-ha.
+image GC of gilbn/geometrikks + timescaledb-ha.
 25. SigNoz: confirm geometrikks journald logs flow (unit name → service.name) — no OTel
-    wiring (app has none; nothing to register in signoz-coverage — verify the reverse
-    assertion stays silent).
+wiring (app has none; nothing to register in signoz-coverage — verify the reverse
+assertion stays silent).
 26. Verify LOGPARSER ingestion actually starts once MaxMind lands (map pins = gatus traffic).
 27. Re-check `systemd-analyze security geometrikks.service` vs the harden intent.
 28. Bump-path rehearsal: next upstream tag bump (2-hash loop) documented in runbook — dry-run
-    once to prove the procedure.
+once to prove the procedure.
 29. The owed REBOOT decision (corpse pile: D-state threads inflating phantom PSI; only a
-    reboot reclaims) — schedule AFTER anchoring (#5) so the profile is the new system.
+reboot reclaims) — schedule AFTER anchoring (#5) so the profile is the new system.
 
 **P2 — program/strategic:**
 30. Fleet Docker→native plan: inventory all `mkDockerService`/oci-containers services
-    (manifest, twenty, dozzle, openseo, paperless tika/gotenberg sidecars, immich*,
-    geometrikks-DONE) with per-service feasibility + value table → ROADMAP.
+(manifest, twenty, dozzle, openseo, paperless tika/gotenberg sidecars, immich*,
+geometrikks-DONE) with per-service feasibility + value table → ROADMAP.
 31. Manifest → native (own PG sidecar today; small Go/TS app? feasibility probe).
 32. Dozzle → native replacement or retirement (logs via journalctl already).
 33. Twenty → native feasibility (Node app + PG; heavy).
 34. Paperless Tika/Gotenberg → nixpkgs services (both exist in nixpkgs) — drop two containers.
 35. OpenSEO → nixpkgs/native feasibility.
 36. Document the uv2nix-in-SystemNix pattern (hermes uses upstream machinery; geometrikks
-    is the first in-tree) — CONTRIBUTING section for the next Python service.
+is the first in-tree) — CONTRIBUTING section for the next Python service.
 37. Consider `fetchBunDeps` upstream contribution (nixpkgs) — carry the scrub patterns.
 38. CI: the new inputs (uv2nix et al.) in nix-check.yml — verify no private-fetch breakage
-    (they're public; should be clean — confirm on the push).
+(they're public; should be clean — confirm on the push).
 39. Watch for the catalog eval WARNING list shrinking (geo left the missing-catalog list —
-    confirm in next flake check output).
+confirm in next flake check output).
 40. upstream (GilbN/geometrikks): file an issue/PR with the native-packaging findings
-    (shebang rewrites hit any sandboxed builder; `.python-version`/lock pinning praise,
-    license file missing) — goodwill + license clarity.
+(shebang rewrites hit any sandboxed builder; `.python-version`/lock pinning praise,
+license file missing) — goodwill + license clarity.
 41. Monitoring: a textfile metric for ingestion lag/degraded state if upstream exposes one
-    (Settings>Status page has advisories; maybe /health carries degraded flags — probe).
+(Settings>Status page has advisories; maybe /health carries degraded flags — probe).
 42. LOGPARSER_IGNORE_IPS: drop the LAN's own traffic from the map (privacy nicety, upstream
-    env exists).
+env exists).
 43. MAP_HOME_LAT/LON pin if ipify auto-detect geolocates the home wrong (cosmetic).
 44. `systemd-notify` readiness (Type=notify) — upstream doesn't sd_notify; Gatus owns
-    readiness; document as non-goal.
+readiness; document as non-goal.
 45. Consider `Restart=on-failure` + `RestartSec` tuning after observing first crash behavior.
 46. Backup restore DRILL for the timescaledb+postgis dump (restore into a scratch cluster
-    once, prove the runbook).
+once, prove the runbook).
 47. AGENTS.md: cross-link the bun-FOD lesson from the "Infrastructure Patterns" section
-    (currently only in the GeoMetrikks section — discoverability).
+(currently only in the GeoMetrikks section — discoverability).
 48. Plan doc: mark DoD checklist boxes as they verify (living doc until P1 done).
 49. If email_verified turns out missing on Pocket ID tokens (SSO rejects): either switch the
-    allow-list to subject ids OR raise upstream with Pocket ID — document whichever fires.
+allow-list to subject ids OR raise upstream with Pocket ID — document whichever fires.
 50. Retire the `mkDockerService` backup.execStart documentation reference for geometrikks in
-    any remaining docs (grep for stragglers).
+any remaining docs (grep for stragglers).
 
 ## g) Questions I CANNOT answer myself
 
@@ -261,5 +262,5 @@ auto-commit daemon, heuristic messages) but **not pushed**.
 `/run/current-system` ≠ profile (UNANCHORED — do not reboot before re-deploy); docker
 containers state unverified; no live probes run post-deploy.
 
-*Written 2026-09-29 23:13, immediately after the forced deploy returned unanchored. No
-unrelated research performed per instruction.*
+_Written 2026-09-29 23:13, immediately after the forced deploy returned unanchored. No
+unrelated research performed per instruction._

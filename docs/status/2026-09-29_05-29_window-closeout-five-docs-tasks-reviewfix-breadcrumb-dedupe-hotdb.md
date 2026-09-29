@@ -9,30 +9,34 @@
 ## a) FULLY DONE (verified this pass, not just claimed)
 
 **1. Task `…928916188de912b2eb63685bcf9` — review-fix: harvest the go-taskqueue push follow-ups to queue surfaces.** Work commit `47def23c`, report commit `4d3797af` (both in history; `git show --stat` confirms 3-file / 1-file docs-only diffs). The reviewer finding was real and is now closed with all three surfaces verified live in THIS pass:
-   - `docs/todo/upstream.md:13` carries the `[blocked:push]` go-taskqueue row (ahead 7, classification `449d72ac`, full post-push chain, Source pointer).
-   - `TODO_LIST.md:216` carries the agent-executable post-push consumption row (flake re-lock + FOD/package verify from our lock + `tq-agent-pool` redeploy).
-   - The parent report's misleading "queued as the top follow-up" sentence is corrected with a dated CORRECTION note (line 32 of `docs/status/2026-09-28_19-21_task-…f542c1.md`).
-   The task's remaining open item (its §f5 self-audit template step) was NEVER harvested — found this pass and closed by a new TODO_LIST row (see §f/item 5 below), which also unblocked archiving the report (done this pass).
+
+- `docs/todo/upstream.md:13` carries the `[blocked:push]` go-taskqueue row (ahead 7, classification `449d72ac`, full post-push chain, Source pointer).
+- `TODO_LIST.md:216` carries the agent-executable post-push consumption row (flake re-lock + FOD/package verify from our lock + `tq-agent-pool` redeploy).
+- The parent report's misleading "queued as the top follow-up" sentence is corrected with a dated CORRECTION note (line 32 of `docs/status/2026-09-28_19-21_task-…f542c1.md`).
+  The task's remaining open item (its §f5 self-audit template step) was NEVER harvested — found this pass and closed by a new TODO_LIST row (see §f/item 5 below), which also unblocked archiving the report (done this pass).
 
 **2. Task `…93f7494428f6bdb90352db02588` — heal-attribution breadcrumb convention.** Work commit `451d4f8c` (CONTRIBUTING + script + TODO_LIST + stability.md + CHANGELOG), report commit `4a82b952`. Verified live this pass:
-   - `docs/CONTRIBUTING.md:200` — the convention paragraph (one breadcrumb per manual heal via `bash scripts/heal-breadcrumb.sh "<what> <how>"`, probe `journalctl -t systemnix-heal`, hand-run-gap scoping, secret-value prohibition).
-   - `scripts/heal-breadcrumb.sh` exists, executable, 34 lines. Shellcheck (the task's own admitted bypass) was independently discharged at `--severity=warning` by the follow-up review-fix task — zero findings.
-   - `CHANGELOG.md` Added entry, `TODO_LIST.md:63` `[x]`, `docs/todo/stability.md:51` `[x]` — all three surfaces closed, no drift.
-   - Honest gap recorded by the task itself and still open as rows: runbook step 1's heal line does not yet call the helper (TODO_LIST:135), SUDO_USER attribution (136), runbook sweep (137), motivating-report annotation (138).
+
+- `docs/CONTRIBUTING.md:200` — the convention paragraph (one breadcrumb per manual heal via `bash scripts/heal-breadcrumb.sh "<what> <how>"`, probe `journalctl -t systemnix-heal`, hand-run-gap scoping, secret-value prohibition).
+- `scripts/heal-breadcrumb.sh` exists, executable, 34 lines. Shellcheck (the task's own admitted bypass) was independently discharged at `--severity=warning` by the follow-up review-fix task — zero findings.
+- `CHANGELOG.md` Added entry, `TODO_LIST.md:63` `[x]`, `docs/todo/stability.md:51` `[x]` — all three surfaces closed, no drift.
+- Honest gap recorded by the task itself and still open as rows: runbook step 1's heal line does not yet call the helper (TODO_LIST:135), SUDO_USER attribution (136), runbook sweep (137), motivating-report annotation (138).
 
 **3. Task `…95aebd871672d672c98258ad103` — dedupe the ffprobe-sweep rows.** Work commit `850b0051` (TODO_LIST −2/+1, pixel6.md −3/+1). Verified this pass: `grep -c '591 UCR WAVs'` returns exactly 1 in `TODO_LIST.md` and 1 in `docs/todo/pixel6.md` — the ask that existed in three places (library prioritized + backlog + doubled queue row) now exists once per surface, richer wording kept. The dispatched item itself is `[x]`-closed in the same commit. The extra queue-row collapse beyond the literal ask is documented by the task as defensible scope, and this pass concurs (a doubled queue row is a double-dispatch bug).
 
 **4. Task `…ea69007114315b9d2ae5d5843bca` — verify + flip the stale crush-hot-db review-fix rows.** The four-run arc (03:22/03:31/03:39/03:41 verification runs + 04:00 self-harvest repair; work flips via the parallel dispatch `7ded9002`). Verified live this pass:
-   - All four in-scope rows in `docs/todo/storage.md` are `[x]` with per-row LIVE-VERIFIED-2026-09-29 evidence (alerting/OnFailure + extraMonitoredServices, depth-4 WARN, per-project `comm=crush` guard, `--dry-run` + integrity). The four remaining `[blocked:deploy]` rows in that file belong to other services (33 boot-mirror, 42 own-tools, 117/118 btrbk/btrfs-verify) — correctly untouched.
-   - Monitoring leg: rendered `nix eval` of `extraMonitoredServices` contains `crush-hot-db-migrate` (36-entry list), matching the deployed script (prior-run probe, carried; this pass re-confirmed the rendered side via the 04-00 report's preserved evidence and the row text).
-   - "deploy-pending" sentences swept from `docs/services/crush.md` + AGENTS.md; AGENTS.md's crush-hot-db section now states the deployed-generation verification (matches the 2026-09-29 header).
-   - Self-harvest repair (the round-2 miss) landed as rows: proxyVendor eval-warning (TODO_LIST:426), duplicate-dispatch class (427), verification-verb template (428), monitoring-evidence-standard `[decision]` (429) — all four verified present this pass.
+
+- All four in-scope rows in `docs/todo/storage.md` are `[x]` with per-row LIVE-VERIFIED-2026-09-29 evidence (alerting/OnFailure + extraMonitoredServices, depth-4 WARN, per-project `comm=crush` guard, `--dry-run` + integrity). The four remaining `[blocked:deploy]` rows in that file belong to other services (33 boot-mirror, 42 own-tools, 117/118 btrbk/btrfs-verify) — correctly untouched.
+- Monitoring leg: rendered `nix eval` of `extraMonitoredServices` contains `crush-hot-db-migrate` (36-entry list), matching the deployed script (prior-run probe, carried; this pass re-confirmed the rendered side via the 04-00 report's preserved evidence and the row text).
+- "deploy-pending" sentences swept from `docs/services/crush.md` + AGENTS.md; AGENTS.md's crush-hot-db section now states the deployed-generation verification (matches the 2026-09-29 header).
+- Self-harvest repair (the round-2 miss) landed as rows: proxyVendor eval-warning (TODO_LIST:426), duplicate-dispatch class (427), verification-verb template (428), monitoring-evidence-standard `[decision]` (429) — all four verified present this pass.
 
 **5. Task `…eb0016286b1ff87e9252f392ac57` — review-fix: correct the completeness record.** Commit `76150586` (exactly TODO_LIST + the 03-22 report). Verified this pass:
-   - `TODO_LIST.md` close-out line now counts all FOUR blocked:deploy review-fix rows and names which pass flipped what (was "three").
-   - `docs/status/2026-09-29_03-22_task-…3bca.md` §b carries the inline dated CORRECTION (line 29) — the "nothing partially done" claim was false at authoring time; the f13 row was flipped same-morning by `7ded9002`.
-   - Root cause pinned better than asked: the 03:31 dispatch had corrected the count in storage.md only — a surface-blind success claim; harvested as the report-claim SURFACE rule (TODO_LIST:431).
-   - Its two self-harvest rows (430 stale deploy-pending clause, 431 surface rule) verified present.
+
+- `TODO_LIST.md` close-out line now counts all FOUR blocked:deploy review-fix rows and names which pass flipped what (was "three").
+- `docs/status/2026-09-29_03-22_task-…3bca.md` §b carries the inline dated CORRECTION (line 29) — the "nothing partially done" claim was false at authoring time; the f13 row was flipped same-morning by `7ded9002`.
+- Root cause pinned better than asked: the 03:31 dispatch had corrected the count in storage.md only — a surface-blind success claim; harvested as the report-claim SURFACE rule (TODO_LIST:431).
+- Its two self-harvest rows (430 stale deploy-pending clause, 431 surface rule) verified present.
 
 **In-window context (parallel tasks, verified in passing):** the memory-emergency-guard 4 fixes are code-landed (backup-starvation catch-up slot, starvation metrics, log heartbeat dedup, trip-line io.stat attribution; `grep` confirms the surfaces in the module) with the AGENTS.md bullet (line 1152) and the Gatus "Memory Guard Backup Starved" check inserted (`gatus-config.nix:878` — the 01-45 report's "planned, not inserted" is now stale in the check's favor); FastFlowLM waker attribution evidence complete (three named by-design wakers, all-Zone-6 trip profile); crush-db migration baseline verdict (crush-session IO ~630 → ~9 MB/min, ≈70× reduction; Zone 6 continues from OTHER drivers); the heal-breadcrumb self-harvest fix (`ea36b448`, rows TODO_LIST:135-139 + stability.md:52-56 + pipeline entry, commits `45b698b1`/`ec0e078b`).
 
@@ -76,6 +80,7 @@
 ## f) NEXT THINGS (top items; new ones appended to TODO_LIST this pass)
 
 **New this pass (appended below, 7 rows + 3 owner questions):**
+
 1. Fix the broken `naming-review` SKILL.md frontmatter (~/projects/SKILLS) + the go-cqrs-lite over-length description — the every-invocation WARN tax with real requeue costs (§d2).
 2. Triage the 5 DLQ tasks: rescue-and-verify-close `ea36b448` (work landed), root-cause the 4 foreign verify-dead before any blind rescue (§d1/d).
 3. Measure the zai 429 rate-limit tax and pick a mitigation (§d3).
@@ -98,4 +103,4 @@
 
 ---
 
-*Closeout authored 2026-09-29 05:29 CEST under Task-Queue-ID `000001a0eb1b883e781b7d2fd3e1ffa0ca89`. Scope: the five dispatched tasks + window-adjacent evidence (queue journal, parallel-session artifacts read in passing). Quality gate at authoring: `nix flake check --no-build` green; `scripts/check-todo-system.sh` green pre-edit.*
+_Closeout authored 2026-09-29 05:29 CEST under Task-Queue-ID `000001a0eb1b883e781b7d2fd3e1ffa0ca89`. Scope: the five dispatched tasks + window-adjacent evidence (queue journal, parallel-session artifacts read in passing). Quality gate at authoring: `nix flake check --no-build` green; `scripts/check-todo-system.sh` green pre-edit._

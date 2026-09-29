@@ -102,4 +102,4 @@
 
 ---
 
-*Verification anchors: deploy #13 log `/var/log/systemnix-deploys/` (rc=0, system-801), rate-limit suppression journal lines 23:00:07 + 23:10:35, signoz-provision "0 errors", `checks.gatus-config-parse` store path + negative-test transcript, PR https://github.com/AvengeMedia/DankMaterialShell/pull/3628*
+_Verification anchors: deploy #13 log `/var/log/systemnix-deploys/` (rc=0, system-801), rate-limit suppression journal lines 23:00:07 + 23:10:35, signoz-provision "0 errors", `checks.gatus-config-parse` store path + negative-test transcript, PR https://github.com/AvengeMedia/DankMaterialShell/pull/3628_

@@ -40,6 +40,7 @@
 ## d) TOTALLY FUCKED UP
 
 Nothing destroyed. **Process misses, honestly:**
+
 - **Wasted a verification gift**: the 16/16 API probe returned real timeSeries bodies and I only counted them — I could have read `metric.labels`/`resource.labels` from those responses to pre-verify the dashboard's label-key assumptions. Threw the evidence away.
 - **5 probe keys created where 1 would do** — key-deletion-vs-file-deletion confusion (deleting the local file does NOT revoke the key). Caught and fully revoked, but sloppy IAM hygiene mid-flight.
 - **Deploy blocker surfaced too late** — I discovered the sudo gate only at deploy time; should have probed it BEFORE executing the go-live and told the user earlier that one command would remain theirs.
@@ -55,6 +56,7 @@ Nothing destroyed. **Process misses, honestly:**
 ## f) NEXT — up to 50
 
 **Complete this feature (P0):**
+
 1. `nix run .#deploy` (user/root session) — carries receivers + key + whitelist.
 2. Post-deploy checklist (runbook §verification): journal 403s absent, `dig +short monitoring.googleapis.com @127.0.0.1` returns Google IP, Metrics Explorer `run_googleapis_com_request_count`, GCP Fleet panels fill (~10 min; bucket-size panels ≤24h).
 3. Verify live metric names + label keys; fix `gcp.json` queries if mangled forms differ.

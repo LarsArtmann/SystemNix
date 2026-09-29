@@ -8,7 +8,7 @@
 
 ## The Incident (one paragraph)
 
-`hot-user-caches-nix-bootstrap.service` — the runtime oneshot that was supposed to create the `~/.cache/nix` subvolume on the Samsung TLC disk before its automount fired — **hung pre-exec on 4 consecutive boots (Sep 24, Sep 27 ×2, Sep 29) and never completed successfully even once.** Kernel-proven mechanism (`/proc/10158/stack`): systemd's sandbox namespace builder calls `umount2(path, MNT_DETACH)` on autofs mounts in every forked service child; the umount's path lookup blocked on the *pending* direct autofs at `/home/lars/.cache/nix`, whose mount job was queued *behind that same service* (`before=`) — a kernel-level self-deadlock. Every process touching the path parked in `autofs_wait` D-state forever: all `nix flake check` / `nix build` / `nix print-dev-env` / direnv invocations — i.e., **every AI agent on the host appeared "stuck on outputs"**, 84 D processes, load 86, `multi-user.target` never reached. The original goal (relocate ~8.7 GB nix caches off the saturated QLC root NVMe, IO audit 2026-09-18/19) was never delivered — worse, nix was broken at the touch of `~/.cache/nix` since Sep 24.
+`hot-user-caches-nix-bootstrap.service` — the runtime oneshot that was supposed to create the `~/.cache/nix` subvolume on the Samsung TLC disk before its automount fired — **hung pre-exec on 4 consecutive boots (Sep 24, Sep 27 ×2, Sep 29) and never completed successfully even once.** Kernel-proven mechanism (`/proc/10158/stack`): systemd's sandbox namespace builder calls `umount2(path, MNT_DETACH)` on autofs mounts in every forked service child; the umount's path lookup blocked on the _pending_ direct autofs at `/home/lars/.cache/nix`, whose mount job was queued _behind that same service_ (`before=`) — a kernel-level self-deadlock. Every process touching the path parked in `autofs_wait` D-state forever: all `nix flake check` / `nix build` / `nix print-dev-env` / direnv invocations — i.e., **every AI agent on the host appeared "stuck on outputs"**, 84 D processes, load 86, `multi-user.target` never reached. The original goal (relocate ~8.7 GB nix caches off the saturated QLC root NVMe, IO audit 2026-09-18/19) was never delivered — worse, nix was broken at the touch of `~/.cache/nix` since Sep 24.
 
 ---
 
@@ -27,14 +27,14 @@
 ## b) PARTIALLY DONE
 
 1. **Full-flake validation** (`nix flake check --no-build`, running with cache redirect since ~20:19): still running at report time. Parse checks + module eval + full VM-test derivation eval: green. Flake-wide result (covers forgejo.nix + evo-x2 config + geometryGuards assertions): **pending**.
-2. **VM test executed**: only *evaluated*, not *run* (QEMU on a load-86 box = bad idea; also all nix-build work needs the XDG_CACHE_HOME workaround). Must run post-recovery.
+2. **VM test executed**: only _evaluated_, not _run_ (QEMU on a load-86 box = bad idea; also all nix-build work needs the XDG_CACHE_HOME workaround). Must run post-recovery.
 3. **Deployment**: fix is in the repo (auto-committed by the daemon: `477f9c8f`, `17dc3916`, `0bd8cd59`) but **NOT deployed** — `nh os switch` / `nix run .#deploy` requires a working nix environment (or redirect) and ideally post-recovery.
 4. **Live-system recovery**: exact commands delivered twice (cancel job → start mount; or reboot). NOT executed — user went to bed; wedge persists (84 D procs, load 86.91 at 20:21).
 
 ## c) NOT STARTED
 
 1. Pool btrfs health work: `/mnt/pool` metadata RAID1 97.9% chunk-fullness (74.41/76 GiB) with 24.88 TiB unallocated — balance + root-cause of 74 GiB metadata bloat for 2 TiB data. (Gatus "BTRFS Chunk Health" has been red.)
-2. Gatus alert calibration review (`modules/nixos/services/gatus-config.nix:673`) — chunk-fullness runs high *by design* between allocations; the rule may flap false-positives.
+2. Gatus alert calibration review (`modules/nixos/services/gatus-config.nix:673`) — chunk-fullness runs high _by design_ between allocations; the rule may flap false-positives.
 3. The 12 pre-existing `nix-checker` port-collision error findings in `tests/` (unrelated to this work; surfaced by buildflow dry-run).
 4. Root filesystem cleanup (`/` at 92%, 60G free).
 5. Fleet-wide audit for other services ordered against `.mount`/`.automount` units (only forgejo checked so far).
@@ -63,6 +63,7 @@
 ## f) NEXT — up to 50 things, impact-sorted
 
 **Recovery & deploy (do these first)**
+
 1. Run recovery: `sudo systemctl cancel <bootstrap-job-id>` then `sudo systemctl start home-lars-.cache-nix.mount` — or simply reboot (run `nix run .#pre-reboot-check` first per house rule)
 2. Deploy the fix: `cd ~/projects/SystemNix && nh os switch`
 3. Post-recovery: verify `systemctl list-jobs` empties, load < 10 within minutes
@@ -118,10 +119,10 @@
 
 ## g) Questions I can NOT figure out myself
 
-1. **Cancel-and-mount, or straight reboot?** The surgical path preserves your 25 sessions (the stuck nix commands will simply *complete* once the mount lands); reboot is guaranteed-clean but kills everything including the residual unkillable child (PID 10158). The evidence for both is ready; the call on your running work is yours. (If reboot: run `nix run .#pre-reboot-check` first.)
+1. **Cancel-and-mount, or straight reboot?** The surgical path preserves your 25 sessions (the stuck nix commands will simply _complete_ once the mount lands); reboot is guaranteed-clean but kills everything including the residual unkillable child (PID 10158). The evidence for both is ready; the call on your running work is yours. (If reboot: run `nix run .#pre-reboot-check` first.)
 2. **Forgejo doctrine**: should `hot/forgejo` become a disko-declared subvolume so its runtime bootstrap can be deleted too (making the fleet 100% free of runtime mount-gating services), or does runtime-created service state on the hot disk stay intentional? Its subvol isn't disko-declared today, so I did not delete its bootstrap — armor only.
 3. **Forensics before reboot?** Once you reboot, the D-state evidence (stacks, `/proc/*/mem`) is gone forever. Want the full capture (items 33–35) first, or is the bootstrap's kernel-proven stack enough and we close the case?
 
 ---
 
-*Point-in-time snapshot. Machine still wedged at time of writing; recovery commands in d).4 / f).1. Written by Crush (glm-5.3) during the 2026-09-29 autofs-deadlock session.*
+_Point-in-time snapshot. Machine still wedged at time of writing; recovery commands in d).4 / f).1. Written by Crush (glm-5.3) during the 2026-09-29 autofs-deadlock session._

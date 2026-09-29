@@ -8,12 +8,12 @@
 
 The guard has fired `io-psi-forensics` on every Zone 6 trip since 2026-09-14 (`/var/tmp/io-psi-forensics-*`), so both sides of the comparison use the same instrument. Cgroup `io.stat` deltas between consecutive ~12-min bundle pairs give rates; cumulative `top-io-procs` gives the all-time ranking.
 
-|                              | PRE-migration (`20260915T034939Z` → `20260915T040139Z`, 12 min) | POST-migration (`20260928T214838Z` → `20260928T220124Z`, 12.7 min) |
-| ---------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------ |
-| io PSI some avg60            | 41.7 → 47.1%                                                    | 66.6 → 44.4%                                                       |
-| Top cgroup movers            | hermes (user@975) +15.7 GiB; **crush session scopes ~7.6 GiB total** (8 scopes, top single +2.0 GiB) | system.slice +19.4 GiB (**clickhouse +7.7, nix-daemon +7.5**); user.slice +3.3 GiB; **crush sessions +0.12 GiB total** (session-3388 +0.117, session-19629 +0.005) |
-| Crush-session IO rate        | **~630 MB/min aggregate** (sessions = 5 of the top-10 movers)    | **~9 MB/min aggregate** (≈70× reduction; absent from top-10)       |
-| Worst single process (cumulative since boot) | crush PID 2607864 **50.4 GB** — #3 on the box, above clickhouse | crush PIDs 16.2/15.4 GB — far down the list, counters near-frozen |
+|                                              | PRE-migration (`20260915T034939Z` → `20260915T040139Z`, 12 min)                                      | POST-migration (`20260928T214838Z` → `20260928T220124Z`, 12.7 min)                                                                                                 |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| io PSI some avg60                            | 41.7 → 47.1%                                                                                         | 66.6 → 44.4%                                                                                                                                                       |
+| Top cgroup movers                            | hermes (user@975) +15.7 GiB; **crush session scopes ~7.6 GiB total** (8 scopes, top single +2.0 GiB) | system.slice +19.4 GiB (**clickhouse +7.7, nix-daemon +7.5**); user.slice +3.3 GiB; **crush sessions +0.12 GiB total** (session-3388 +0.117, session-19629 +0.005) |
+| Crush-session IO rate                        | **~630 MB/min aggregate** (sessions = 5 of the top-10 movers)                                        | **~9 MB/min aggregate** (≈70× reduction; absent from top-10)                                                                                                       |
+| Worst single process (cumulative since boot) | crush PID 2607864 **50.4 GB** — #3 on the box, above clickhouse                                      | crush PIDs 16.2/15.4 GB — far down the list, counters near-frozen                                                                                                  |
 
 Caveat: the two windows are different hours with different workloads — this is magnitude evidence for the crush attribution, not a controlled A/B. Both windows are storm conditions.
 
@@ -23,8 +23,8 @@ Caveat: the two windows are different hours with different workloads — this is
 
 ## 2. Zone 6 / flm ledger since the migration converged (2026-09-19 onward)
 
-| Day (Sep) | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 |
-| --------- | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- |
+| Day (Sep)                           | 19 | 20 | 21  | 22 | 23 | 24 | 25 | 26 | 27  | 28  |
+| ----------------------------------- | -- | -- | --- | -- | -- | -- | -- | -- | --- | --- |
 | Zone 6 trips (`action taken` lines) | 22 | 60 | 108 | 96 | 76 | 82 | 62 | 85 | 110 | 130 |
 
 - 790 guard "stopping sockets" lines since 09-19; trip #1385 at 2026-09-29 00:18:16 (io avg60 66.56%, max disk busy 20.8%). flm is DOWN right now (restore budget 3/day exhausted; the `fflm-waker` capture loop is polling for the next wake).

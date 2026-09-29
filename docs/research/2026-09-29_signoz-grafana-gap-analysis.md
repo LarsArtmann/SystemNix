@@ -18,12 +18,12 @@
 
 No project replaces journald under systemd; everything is a shipper or store layered on top:
 
-| Role | Projects | 2025-26 notes |
-| --- | --- | --- |
-| Shipper | Grafana **Alloy**, **OTel Collector** (journald receiver), **Fluent Bit v5**, **Vector** | Grafana Agent EOL Nov 2025 → Alloy (now "Grafana's OTel Collector distribution"); Promtail deprecated; Fluent Bit v5 went OTLP-native; Vector (Datadog-owned, still OSS) has journald source + VRL |
-| Store/query | **Loki 3.x**, **VictoriaLogs**, OpenObserve, SigNoz | Loki 3.x: native OTLP ingestion + structured metadata; VictoriaLogs is the fastest-growing low-cost store |
-| Avoid for new deploys | **Quickwit** | Acquired by Datadog (Jan 2025); OSS momentum effectively over |
-| Classic syslog | rsyslog, syslog-ng 4.x | Closest to *partial* journald displacement (network syslog, /var/log) — cannot capture service stdout under systemd |
+| Role                  | Projects                                                                                 | 2025-26 notes                                                                                                                                                                                      |
+| --------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shipper               | Grafana **Alloy**, **OTel Collector** (journald receiver), **Fluent Bit v5**, **Vector** | Grafana Agent EOL Nov 2025 → Alloy (now "Grafana's OTel Collector distribution"); Promtail deprecated; Fluent Bit v5 went OTLP-native; Vector (Datadog-owned, still OSS) has journald source + VRL |
+| Store/query           | **Loki 3.x**, **VictoriaLogs**, OpenObserve, SigNoz                                      | Loki 3.x: native OTLP ingestion + structured metadata; VictoriaLogs is the fastest-growing low-cost store                                                                                          |
+| Avoid for new deploys | **Quickwit**                                                                             | Acquired by Datadog (Jan 2025); OSS momentum effectively over                                                                                                                                      |
+| Classic syslog        | rsyslog, syslog-ng 4.x                                                                   | Closest to _partial_ journald displacement (network syslog, /var/log) — cannot capture service stdout under systemd                                                                                |
 
 True journald removal only happens when leaving systemd entirely (runit/OpenRC + syslog-ng) — an init-system decision, not a logging one.
 
@@ -41,9 +41,9 @@ Only future-trigger: remote hosts (macOS agent, rpi3-dns) → `systemd-journal-r
 
 ### P0 — Telemetry retention is unmanaged (operational survival) — **owner decision 2026-09-29: APPEND-ONLY preferred, no TTLs**
 
-ClickHouse *internal* self-logs have converged 14d TTLs (`signoz.nix:85-611`), but the **ingested** `signoz_logs` / `signoz_traces` / `signoz_metrics` databases grow unboundedly. Our own alert names this (`signoz.nix:1331`, XFS 85%: "telemetry retention grows unboundedly … tighten TTLs in signoz.nix"). The ClickHouse data dir sits on a ~100 GiB XFS partition that **cannot shrink** — the end state of inaction is the observability stack dying with the partition.
+ClickHouse _internal_ self-logs have converged 14d TTLs (`signoz.nix:85-611`), but the **ingested** `signoz_logs` / `signoz_traces` / `signoz_metrics` databases grow unboundedly. Our own alert names this (`signoz.nix:1331`, XFS 85%: "telemetry retention grows unboundedly … tighten TTLs in signoz.nix"). The ClickHouse data dir sits on a ~100 GiB XFS partition that **cannot shrink** — the end state of inaction is the observability stack dying with the partition.
 
-**Owner decision (2026-09-29, "I like my append only"): do NOT add deletion TTLs to ingested telemetry.** Current state already matches the preference — nothing deletes `signoz_*` data today. Accepting that, the P0 becomes *make append-only safe* instead of *bound it*: (a) measure actual fill velocity (GB/day from the `clickhouse-xfs-metrics` collector via a state-file delta — 34% / 34G of 100G used at decision time, so there is no near-term pressure), (b) alert on projected time-to-fill rather than only the static 85% mark, and (c) if growth ever forces a choice, the append-only-compatible lever is ClickHouse `TTL TO VOLUME` tiering to the HDD pool (data moved, not deleted, still queryable) — NOT deletion TTLs. Do not re-propose per-signal deletion windows; that door is closed unless the owner reopens it.
+**Owner decision (2026-09-29, "I like my append only"): do NOT add deletion TTLs to ingested telemetry.** Current state already matches the preference — nothing deletes `signoz_*` data today. Accepting that, the P0 becomes _make append-only safe_ instead of _bound it_: (a) measure actual fill velocity (GB/day from the `clickhouse-xfs-metrics` collector via a state-file delta — 34% / 34G of 100G used at decision time, so there is no near-term pressure), (b) alert on projected time-to-fill rather than only the static 85% mark, and (c) if growth ever forces a choice, the append-only-compatible lever is ClickHouse `TTL TO VOLUME` tiering to the HDD pool (data moved, not deleted, still queryable) — NOT deletion TTLs. Do not re-propose per-signal deletion windows; that door is closed unless the owner reopens it.
 
 ### P1 — Traces are SigNoz's differentiator, and they are mostly dark
 
@@ -58,14 +58,14 @@ Scraped Prometheus exemplars are dropped at ClickHouse export (SigNoz's schema h
 
 ### Already solved — do not re-litigate
 
-| Grafana capability | Our state |
-| --- | --- |
-| Alert routing/grouping | Route policies converge per ruleId (`_signoz-scripts.nix` v7 pattern); custom Discord templates with `{{$value}}` semantics understood |
-| Phantom-query alert bugs | `signoz-query-lint` flake check rejects `job=` matchers, `metric_sum` suffixes, bare `up{}`, dead metrics, dashboard layout overlaps |
-| Alert lifecycle (silences/acks) | PapDashboard hub + Gatus raw fast-path; adequate for a single operator |
-| Availability / synthetic checks | Gatus owns ALL of it (doctrine) — never SigNoz |
-| Alert coverage of the monitor | `signoz_logs_pipeline_stale` + traces-coverage collector + three self-watch rules |
-| Backup / DR | `clickhouse-db-backup.timer` (daily native BACKUP, 3-run retention, pool-side) |
+| Grafana capability              | Our state                                                                                                                              |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Alert routing/grouping          | Route policies converge per ruleId (`_signoz-scripts.nix` v7 pattern); custom Discord templates with `{{$value}}` semantics understood |
+| Phantom-query alert bugs        | `signoz-query-lint` flake check rejects `job=` matchers, `metric_sum` suffixes, bare `up{}`, dead metrics, dashboard layout overlaps   |
+| Alert lifecycle (silences/acks) | PapDashboard hub + Gatus raw fast-path; adequate for a single operator                                                                 |
+| Availability / synthetic checks | Gatus owns ALL of it (doctrine) — never SigNoz                                                                                         |
+| Alert coverage of the monitor   | `signoz_logs_pipeline_stale` + traces-coverage collector + three self-watch rules                                                      |
+| Backup / DR                     | `clickhouse-db-backup.timer` (daily native BACKUP, 3-run retention, pool-side)                                                         |
 
 ### Nice-to-have (skip unless bored)
 

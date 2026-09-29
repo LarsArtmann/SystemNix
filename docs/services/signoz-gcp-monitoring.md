@@ -121,11 +121,11 @@ password store — or regenerate: any valid RSA key in SA shape works).
 
 ## Metric sets + Monitoring API cost
 
-| Preset | Metrics | Kind | Interval |
-| --- | --- | --- | --- |
-| `cloudRun` | `run.googleapis.com/{container/billable_instance_time, container/containers, request_count, request_latencies, container/network/received_bytes_count, container/network/sent_bytes_count}` | delta/gauge | 300s |
-| `cloudFunctions` | `cloudfunctions.googleapis.com/function/{execution_count, execution_times, active_instances}` | delta/gauge | 300s |
-| `storage` | `storage.googleapis.com/{storage/v2/total_bytes, storage/v2/total_count, api/request_count, network/received_bytes_count}` | gauge/delta | 1800s (daily-measured gauges) |
+| Preset           | Metrics                                                                                                                                                                                     | Kind        | Interval                      |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ----------------------------- |
+| `cloudRun`       | `run.googleapis.com/{container/billable_instance_time, container/containers, request_count, request_latencies, container/network/received_bytes_count, container/network/sent_bytes_count}` | delta/gauge | 300s                          |
+| `cloudFunctions` | `cloudfunctions.googleapis.com/function/{execution_count, execution_times, active_instances}`                                                                                               | delta/gauge | 300s                          |
+| `storage`        | `storage.googleapis.com/{storage/v2/total_bytes, storage/v2/total_count, api/request_count, network/received_bytes_count}`                                                                  | gauge/delta | 1800s (daily-measured gauges) |
 
 Current fleet (2026-09-20 inventory): 14 fast receivers (84 metric-polls) +
 9 storage receivers (36) ≈ **26k read-calls/day ≈ 780k/month** — inside
@@ -155,16 +155,15 @@ mind when adding projects: each extra fast project ≈ +50k/month.
 ## Operations
 
 - Add a project: one line in `configuration.nix` (`projects.<id>.cloudRun
-  = true` etc.) + the IAM grant from the runbook + deploy. `restartTriggers
-  ` on collector.yaml already restarts the collector on config change.
+  = true` etc.) + the IAM grant from the runbook + deploy. `restartTriggers` on collector.yaml already restarts the collector on config change.
 - Rotate the key: `gcloud iam service-accounts keys create` → sops-paste →
   deploy (secret `restartUnits` restarts the collector).
 - What "down" looks like: the Gatus check turns red only if the receivers
   vanish from the collector config/unit. Credential death = 403 scrape
   errors in `journalctl -u signoz-collector` (grep `googlecloudmonitoring`)
-  + GCP panels going flat while the check stays green — data-freshness
-  alerting is deliberately NOT a Gatus pat (GCP series live in SigNoz's
-  ClickHouse, not node-exporter textfiles).
+  - GCP panels going flat while the check stays green — data-freshness
+    alerting is deliberately NOT a Gatus pat (GCP series live in SigNoz's
+    ClickHouse, not node-exporter textfiles).
 - Related standing alarm (from the inventory, not this integration): the
   `signal-backups.appspot.com` nightly backup pipeline has been stale since
   **2026-09-05** — `storage_googleapis_com_api_request_count{bucket_name=

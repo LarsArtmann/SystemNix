@@ -465,13 +465,17 @@
               maxAgeHours = 6;
             };
 
-            # ── Known upstream gaps (binary cannot emit yet) ──
+            # FLIPPED to enforced 2026-09-29: upstream fff1035 added
+            # traceMiddleware (HTTP server spans; span name = mux route
+            # pattern so spanmetrics cardinality stays bounded). Overview
+            # serves traffic continuously (Gatus checks + dashboard use) —
+            # 26h budget, the request-driven default.
             overview = {
               serviceName = "overview";
-              # SetupFromEnv runs ("OTel tracing enabled" in journal) but the
-              # codebase has ZERO span sites — needs code instrumentation.
-              wiring = "upstream";
+              wiring = "env";
+              maxAgeHours = 26;
             };
+            # ── Known upstream gaps (binary cannot emit yet) ──
             projects-management-automation = {
               serviceName = "projects-management-automation";
               wiring = "upstream"; # same class as overview

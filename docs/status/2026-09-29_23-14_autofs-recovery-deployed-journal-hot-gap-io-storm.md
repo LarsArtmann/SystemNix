@@ -117,4 +117,4 @@
 
 ---
 
-*Recovery metrics at 23:14: load 15.4 (from 86), 0 D-procs (from 84), hot-cache mount live, nix prefix-free, job queue empty. Remaining red: var-log-journal.mount (migration pending), inboxclean-sync (user OAuth), IO PSI 60-80% (fleet).*
+_Recovery metrics at 23:14: load 15.4 (from 86), 0 D-procs (from 84), hot-cache mount live, nix prefix-free, job queue empty. Remaining red: var-log-journal.mount (migration pending), inboxclean-sync (user OAuth), IO PSI 60-80% (fleet)._
