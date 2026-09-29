@@ -829,11 +829,30 @@ _: {
           # (before): fstab cannot create BTRFS subvolumes, so the subvol
           # must exist before ${dataDirMountUnit} can ever mount it — the
           # test-cv pool-fmt chicken-and-egg class.
+          #
+          # 2026-09-29 lesson (the hot-user-caches-nix-bootstrap autopsy,
+          # /proc/10158/stack): a sandboxed bootstrap child hung PRE-EXEC in
+          # autofs_wait — systemd's namespace builder MNT_DETACHes autofs
+          # mounts via umount2(), the umount's path lookup blocked on a
+          # PENDING direct autofs, and the autofs can only be satisfied by
+          # the very mount job queued behind this service. A bootstrap
+          # ordered before= a mount MUST carry job-level timeouts: they
+          # cancel the JOB (freeing the mount) even though the D-state
+          # process itself is unkillable until reboot. The hot-user-caches
+          # module deleted its bootstrap entirely (disko owns provisioning);
+          # this one stays because hot/forgejo is deliberately NOT a disko
+          # subvol (runtime-created service state) — so it gets the
+          # timeout armor instead. If this ever fires, the wedged child
+          # lingers harmlessly until the next reboot.
           wantedBy = [ dataDirMountUnit ];
           before = [ dataDirMountUnit ];
           after = [ "mnt-hot.mount" ];
           wants = [ "mnt-hot.mount" ];
-          unitConfig.RequiresMountsFor = [ "/mnt/hot" ];
+          unitConfig = {
+            RequiresMountsFor = [ "/mnt/hot" ];
+            JobTimeoutSec = "4min";
+            JobRunningTimeoutSec = "4min";
+          };
           path = [
             pkgs.btrfs-progs
             pkgs.coreutils
@@ -843,6 +862,7 @@ _: {
               Type = "oneshot";
               User = "root";
               RemainAfterExit = true;
+              TimeoutStartSec = "2min";
             }
             (serviceOneshotDefaults { })
             (harden {
