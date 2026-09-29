@@ -241,8 +241,9 @@
             # POSTMASTER-class (same as max_worker_processes): PG17 rejects
             # `ALTER DATABASE SET` on it ("cannot be changed without restarting
             # the server" — live 2026-09-29, exit-4'd the activation), so it
-            # lives HERE, not in the provision script.
-            timescaledb.max_background_workers = 32;
+            # lives HERE, not in the provision script. Quoted key: a bare
+            # dotted name nests attrsets and fails the INI-flat settings type.
+            "timescaledb.max_background_workers" = 32;
           };
         };
 
