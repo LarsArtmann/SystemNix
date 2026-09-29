@@ -82,6 +82,94 @@ in
       # before any SigNoz upgrade runs its ClickHouse schema migrations.
       chBackupDir = "/mnt/pool/backups/clickhouse";
 
+      # ── GCP Cloud Monitoring integration ─────────────────────────────────
+      # Same mechanism as SigNoz's documented GCP integration (Enterprise /
+      # SigNoz Cloud UI flow), self-hosted: named `googlecloudmonitoring`
+      # receiver instances in the EXISTING collector pull Cloud Monitoring
+      # metrics over the public Monitoring API and land them in the local
+      # metrics pipeline. Zero new services, ports, or exporters.
+      #
+      # Contrib-version note (source-verified 2026-09-29 against the locked
+      # fork rev 29e18e65): the fork pins otel-collector-contrib v0.144.0,
+      # below the v0.158.0 floor SigNoz's docs demand — but that floor
+      # exists for exactly ONE fix (contrib PR #49826: CUMULATIVE metrics
+      # were not marked IsMonotonic, breaking rate() on cumulative
+      # counters). The DELTA conversion path (ConvertDeltaToMetrics) is
+      # IDENTICAL at 0.144 and at main — delta sums are non-monotonic at
+      # every version and are queried by direct aggregation, not rate().
+      # Every preset below is DELTA or GAUGE kind; do NOT add CUMULATIVE
+      # GCP metrics (e.g. cloudsql .../database/uptime) without either
+      # switching to a standalone collector ≥ 0.158.0 or accepting broken
+      # rate() on them. Auth: ADC via GOOGLE_APPLICATION_CREDENTIALS —
+      # google.FindDefaultCredentials runs at receiver Start(), so an
+      # UNPARSEABLE key would kill the whole collector at boot; the shipped
+      # placeholder is a structurally-valid throwaway key that fails 403 at
+      # scrape time instead (see docs/services/signoz-gcp-monitoring.md).
+      gcpRunMetrics = [
+        "run.googleapis.com/container/billable_instance_time"
+        "run.googleapis.com/container/containers"
+        "run.googleapis.com/request_count"
+        "run.googleapis.com/request_latencies"
+        "run.googleapis.com/container/network/received_bytes_count"
+        "run.googleapis.com/container/network/sent_bytes_count"
+      ];
+      gcpFunctionsMetrics = [
+        "cloudfunctions.googleapis.com/function/execution_count"
+        "cloudfunctions.googleapis.com/function/execution_times"
+        "cloudfunctions.googleapis.com/function/active_instances"
+      ];
+      gcpStorageMetrics = [
+        # total_bytes / total_count are measured once per DAY by Cloud
+        # Storage (repeated every 300s in between); api/network are 60s
+        # samples. Kept on their own slower receiver interval.
+        "storage.googleapis.com/storage/v2/total_bytes"
+        "storage.googleapis.com/storage/v2/total_count"
+        "storage.googleapis.com/api/request_count"
+        "storage.googleapis.com/network/received_bytes_count"
+      ];
+
+      # One named receiver per project (receiver names become
+      # receiver="googlecloudmonitoring/<id>" labels on the collector's own
+      # otelcol_* self-metrics). Two tiers per project: a fast receiver
+      # (run/functions, 300s) and a slow `-storage` receiver (1800s) —
+      # the receiver's collection_interval applies to its whole metric
+      # list, and polling daily-measured gauges at 300s only burns
+      # Monitoring API read quota ($0.01/1k calls, 1M/month free).
+      gcpMonitoringEnabled =
+        cfg.enable && cfg.gcpMonitoring.enable && cfg.components.otelCollector;
+      gcpReceivers =
+        let
+          metricEntry = name: { metric_name = name; };
+          mkReceiver = interval: metrics: {
+            collection_interval = interval;
+            metrics_list = map metricEntry metrics;
+          };
+        in
+        lib.foldl' lib.mergeAttrs { } (
+          lib.mapAttrsToList
+            (
+              projectId: project:
+              (
+                let
+                  fastMetrics =
+                    lib.optionals project.cloudRun gcpRunMetrics
+                    ++ lib.optionals project.cloudFunctions gcpFunctionsMetrics
+                    ++ project.extraMetrics;
+                in
+                lib.optionalAttrs (fastMetrics != [ ]) {
+                  "googlecloudmonitoring/${projectId}" =
+                    mkReceiver cfg.gcpMonitoring.collectionInterval fastMetrics;
+                }
+                // lib.optionalAttrs project.storage {
+                  "googlecloudmonitoring/${projectId}-storage" =
+                    mkReceiver cfg.gcpMonitoring.storageCollectionInterval gcpStorageMetrics;
+                }
+              )
+            )
+            cfg.gcpMonitoring.projects
+        );
+
+
       # ClickHouse internal self-logs (system db) shipped WITHOUT TTLs on this
       # install — 52 GiB / 9.13B rows (90% of the data dir) measured 2026-08-17.
       # The two self-sampling logs collect at 1 Hz: metric_log via
@@ -393,6 +481,52 @@ in
           };
           default = { };
           description = "Toggle individual SigNoz stack components";
+        };
+
+        gcpMonitoring = lib.mkOption {
+          type = lib.types.submodule {
+            options = {
+              enable = lib.mkEnableOption ''
+                GCP Cloud Monitoring scraping via googlecloudmonitoring
+                receivers on the existing SigNoz collector (self-hosted
+                variant of SigNoz's documented GCP integration; see
+                docs/services/signoz-gcp-monitoring.md for the service
+                account + key runbook)'';
+
+              collectionInterval = lib.mkOption {
+                type = lib.types.strMatching "[0-9]+(s|m|h)";
+                default = "300s";
+                description = "Scrape interval for Cloud Run / Cloud Functions metrics (Monitoring API minimum is 60s; GCP samples most metrics at 60s)";
+              };
+
+              storageCollectionInterval = lib.mkOption {
+                type = lib.types.strMatching "[0-9]+(s|m|h)";
+                default = "1800s";
+                description = "Separate, slower interval for Cloud Storage metrics (bucket bytes/objects are measured once per day by GCP)";
+              };
+
+              projects = lib.mkOption {
+                type =
+                  with lib.types;
+                  attrsOf (submodule {
+                    options = {
+                      cloudRun = lib.mkEnableOption "Cloud Run service metrics (request_count, latencies, billable instance time, network)";
+                      cloudFunctions = lib.mkEnableOption "Cloud Functions metrics (execution_count, execution_times, active_instances)";
+                      storage = lib.mkEnableOption "Cloud Storage metrics on the slow receiver interval (bucket bytes, object count, API traffic, upload bytes)";
+                      extraMetrics = lib.mkOption {
+                        type = listOf str;
+                        default = [ ];
+                        description = "Additional Cloud Monitoring metric names for this project's fast receiver (full catalog: cloud.google.com/monitoring/api/metrics_gcp). DELTA/GAUGE kinds only — see the CUMULATIVE warning in the module source";
+                      };
+                    };
+                  });
+                default = { };
+                description = "GCP projects to scrape, keyed by project id, with per-service metric presets (source of truth for what exists: the Google-Cloud-Inventory reports)";
+              };
+            };
+          };
+          default = { };
+          description = "GCP Cloud Monitoring integration for the SigNoz collector";
         };
       };
 
@@ -1126,6 +1260,7 @@ in
                     };
                   };
                 }
+                // lib.optionalAttrs gcpMonitoringEnabled gcpReceivers
                 // lib.optionalAttrs cfg.components.journaldLogs {
                   journald = {
                     directory = "/var/log/journal";
@@ -1239,7 +1374,10 @@ in
                       exporters = [ "clickhousetraces" ];
                     };
                     metrics = {
-                      receivers = [ "otlp" ] ++ lib.optional cfg.components.nodeExporter "prometheus";
+                      receivers =
+                        [ "otlp" ]
+                        ++ lib.optional cfg.components.nodeExporter "prometheus"
+                        ++ lib.optionals gcpMonitoringEnabled (builtins.attrNames gcpReceivers);
                       processors = [
                         "memory_limiter"
                         "batch"
@@ -1262,6 +1400,29 @@ in
                 };
               };
             })
+
+            # GCP Cloud Monitoring receivers: ADC credential wiring for the
+            # collector + the sops-rendered service-account key. The secret
+            # carries a structurally-valid placeholder key until go-live
+            # (runbook: docs/services/signoz-gcp-monitoring.md) — receivers
+            # then start, scrape, and fail 403 per interval without touching
+            # the rest of the pipeline.
+            (lib.mkIf gcpMonitoringEnabled (lib.optionalAttrs (options ? sops) {
+              sops.secrets."signoz-gcp-credentials" = {
+                sopsFile = ../../../platforms/nixos/secrets/signoz-gcp-monitoring.yaml;
+                key = "signoz_gcp_credentials_json";
+                # Rendered raw as the credential file itself (the value IS
+                # the service-account JSON), read via
+                # GOOGLE_APPLICATION_CREDENTIALS by the collector process.
+                owner = "signoz";
+                group = "signoz";
+                mode = "0400";
+                restartUnits = [ "signoz-collector.service" ];
+              };
+              systemd.services.signoz-collector.serviceConfig.Environment = [
+                "GOOGLE_APPLICATION_CREDENTIALS=${config.sops.secrets."signoz-gcp-credentials".path}"
+              ];
+            }))
 
             { }
 

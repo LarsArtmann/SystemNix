@@ -45,6 +45,26 @@
     # Single nix-systems source — flake-utils and niri-session-manager follow this
     systems.url = "github:nix-systems/default";
 
+    # uv2nix ecosystem — builds Python apps from uv.lock hermetically.
+    # Consumed by pkgs/geometrikks.nix (services.geometrikks). Upstream org
+    # renamed pyproject.build-systems -> build-system-pkgs; all three follow
+    # our nixpkgs so the venv toolchain matches the host python313.
+    uv2nix = {
+      url = "github:pyproject-nix/uv2nix";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    pyproject-nix = {
+      url = "github:pyproject-nix/pyproject.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    pyproject-build-systems = {
+      url = "github:pyproject-nix/build-system-pkgs";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+      inputs.uv2nix.follows = "uv2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Single treefmt-nix source — dnsblockd, niri-session-manager follow this
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
