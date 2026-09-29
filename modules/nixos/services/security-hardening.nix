@@ -26,6 +26,18 @@ _: {
           pam.services.swaylock = { };
           pam.services.sddm.enableGnomeKeyring = true;
           apparmor.enable = lib.mkDefault false;
+
+          # iotop-c reads per-process I/O via the taskstats netlink, which
+          # requires CAP_NET_ADMIN — without it the binary exits with
+          # "Netlink error" and the autostarted monitor would be a dead
+          # window (the sudo-prompt-at-login trap). Single-user box: the
+          # capability only exposes per-process I/O accounting.
+          wrappers.iotop-c = {
+            source = "${pkgs.iotop-c}/bin/iotop-c";
+            owner = "root";
+            group = "root";
+            capabilities = "cap_net_admin+ep";
+          };
         };
 
         services = {

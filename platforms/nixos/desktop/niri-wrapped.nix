@@ -224,9 +224,12 @@ in
       spawn-at-startup = [
         {
           # Plain btop, NOT `sudo btop`: sudo prompts for a password inside the
-          # window and sits there unanswered at every login
+          # window and sits there unanswered at every login. --title pins the
+          # title at window-open time — open-on-* rules only apply at open,
+          # and ghostty sets the app title asynchronously.
           command = [
             "ghostty"
+            "--title=btop"
             "-e"
             "btop"
           ];
@@ -234,8 +237,38 @@ in
         {
           command = [
             "ghostty"
+            "--title=nvtop"
             "-e"
             "nvtop"
+          ];
+        }
+        {
+          # iotop-c resolves to the cap_net_admin wrapper (security-hardening)
+          # so it can read taskstats without a sudo prompt. -aoP = accumulated
+          # I/O, IO-active processes only, processes not threads.
+          command = [
+            "ghostty"
+            "--title=iotop"
+            "-e"
+            "iotop-c"
+            "-aoP"
+          ];
+        }
+        {
+          # Dedicated per-monitor browser instances. Separate user-data-dirs
+          # give each its own process — required for --class to yield a
+          # distinct app-id the window-rules can route per monitor.
+          command = [
+            "sh"
+            "-c"
+            "exec helium --class=helium-dp1 --user-data-dir=$HOME/.local/share/helium-dp1 --no-first-run --no-default-browser-check"
+          ];
+        }
+        {
+          command = [
+            "sh"
+            "-c"
+            "exec helium --class=helium-dp2 --user-data-dir=$HOME/.local/share/helium-dp2 --no-first-run --no-default-browser-check"
           ];
         }
       ];
@@ -708,16 +741,45 @@ in
           ];
           open-on-workspace = "media";
         }
+        {
+          # Monitoring terminals -> DP-1 slot 1. --title in the spawn pins
+          # the title pre-map; open-on-* is open-time-only, so a title that
+          # only appears later would never route the window.
+          matches = [
+            { title = "^btop$"; }
+            { title = "^nvtop$"; }
+            { title = "^iotop"; }
+          ];
+          open-on-workspace = "1-monitor";
+        }
+        {
+          matches = [ { app-id = "^helium-dp1$"; } ];
+          open-on-workspace = "2-web-dp1";
+        }
+        {
+          matches = [ { app-id = "^helium-dp2$"; } ];
+          open-on-workspace = "dp2-web";
+        }
       ];
 
       workspaces = {
         # Monitor-aware routing: work apps on DP-1 (primary, 60Hz),
         # chat/media on DP-2 (secondary, right). Falls back to the
         # primary output when DP-2 is disconnected.
-        main.open-on-output = "DP-1";
+        #
+        # Strip position = alphabetical key order (the niri module renders
+        # the attrset sorted), and Mod+N walks that order per output. The
+        # names are chosen so the slot-1/2 workspaces sort where the
+        # numeric bindings expect them:
+        #   DP-1: 1-monitor, 2-web-dp1, browser, dev, main
+        #   DP-2: chat, dp2-web, media
+        "1-monitor".open-on-output = "DP-1";
+        "2-web-dp1".open-on-output = "DP-1";
         browser.open-on-output = "DP-1";
         dev.open-on-output = "DP-1";
+        main.open-on-output = "DP-1";
         chat.open-on-output = "DP-2";
+        "dp2-web".open-on-output = "DP-2";
         media.open-on-output = "DP-2";
       };
 
