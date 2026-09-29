@@ -177,6 +177,21 @@ in
         wantedBy = [ "multi-user.target" ];
         startLimitBurst = lib.mkForce 100;
       };
+      # Dummy btrfs-scrub TEMPLATE mirroring the nixpkgs shape that matters
+      # for the 2026-09-29 scrub-stop phantom: Type=simple + an ExecStop
+      # (stand-in for btrfs-scrub-maybe-cancel) that stamps a marker file —
+      # proving the guard's stop of the correctly-named INSTANCE
+      # (btrfs-scrub@-) reaches the kernel-cancel path, and that the re-arm
+      # does NOT restart the no-resume scrub (freeze-#7).
+      systemd.services."btrfs-scrub@" = {
+        description = "dummy btrfs scrub template (%i = escaped mountpoint)";
+        serviceConfig = {
+          Type = "simple";
+          ExecStart = "${pkgs.coreutils}/bin/sleep infinity";
+          ExecStop = "${pkgs.coreutils}/bin/touch /tmp/scrub-cancel-ran";
+        };
+        startLimitBurst = lib.mkForce 100;
+      };
       systemd.sockets.fastflowlm = {
         description = "dummy flm activation socket";
         socketConfig.ListenStream = "/run/flm-test.sock";
@@ -356,6 +371,10 @@ in
           # The Zone 6 churn-stop target: bring it back so later trips can
           # stop it again (the guard only re-arms it on the io-drain path).
           machine.succeed("systemctl start btrfs-balance-data.service")
+          # The scrub instance the churn list must stop via its ExecStop
+          # cancel (2026-09-29 phantom); the marker proves ExecStop ran.
+          machine.succeed("rm -f /tmp/scrub-cancel-ran")
+          machine.succeed("systemctl start btrfs-scrub@-.service")
           # The backup-class churn unit for the scenario-9 catch-up slot.
           machine.succeed("systemctl start btrbk-root.service")
 
@@ -576,6 +595,11 @@ in
       )
       assert_all_down()
       machine.fail("systemctl is-active --quiet btrfs-balance-data.service")
+      # The scrub INSTANCE (not the stray name the pre-2026-09-29 list
+      # carried — that stop was a silent no-op while the 5.9 TB storm scrub
+      # ran on): the trip must stop it AND run its ExecStop cancel.
+      machine.fail("systemctl is-active --quiet btrfs-scrub@-.service")
+      machine.succeed("test -f /tmp/scrub-cancel-ran")
       prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
       assert "memory_emergency_guard_io_psi_some_avg60_percent 55.00" in prom
       # The busy% value depends on the integer-second elapsed between the
@@ -593,6 +617,9 @@ in
       assert (
           "memory_emergency_guard_churn_units_stopped{unit=\"btrfs-balance-data.service\"} 1" in prom
       ), "the trip must record WHICH churn units it actually stopped"
+      assert (
+          "memory_emergency_guard_churn_units_stopped{unit=\"btrfs-scrub@-.service\"} 1" in prom
+      ), "the stopped scrub instance must be named in the churn forensics"
       assert "memory_emergency_guard_churn_stopped_timestamp_seconds " in prom
       assert "memory_emergency_guard_last_run_timestamp_seconds " in prom
 
@@ -610,6 +637,14 @@ in
       machine.succeed(
           "systemctl is-active --quiet btrfs-balance-data.service"
       )  # the re-arm must have actually started the stopped churn unit
+      machine.fail(
+          "systemctl is-active --quiet btrfs-scrub@-.service"
+      )  # freeze-#7: btrfs scrub has NO resume — a guard-killed scrub stays
+      # dead until its own weekly timer window (a re-arm here restarts it
+      # from byte 0 and re-creates the 37 h restart-from-zero loop)
+      assert "btrfs-scrub left stopped" in out, (
+          "the re-arm line must disclose the scrub exclusion"
+      )
       prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
       assert "memory_emergency_guard_churn_units_stopped" not in prom, (
           "once io PSI drains under the trip threshold the churn window is "

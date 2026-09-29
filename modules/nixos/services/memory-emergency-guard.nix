@@ -686,13 +686,28 @@ _: {
           churn_rearm_total=$(cat "$CHURN_REARM_FILE" 2>/dev/null || echo 0)
           churn_rearm_total="''${churn_rearm_total:-0}"
           if [ -f "$CHURN_STOPPED_FILE" ] && [ "$io_psi_some_avg60" != "-1" ] && awk -v p="$io_psi_some_avg60" 'BEGIN { exit !(p < ${toString cfg.ioPsiSomeAvg60ThresholdPercent}) }'; then
+            scrub_rearm_skipped=""
             while IFS= read -r cu; do
               [ -n "$cu" ] || continue
+              case "$cu" in
+                btrfs-scrub@*.service)
+                  # btrfs scrub has NO resume — a restart re-reads the
+                  # filesystem from byte 0. Re-arming a guard-killed scrub
+                  # under an oscillating PSI was the freeze-#7 restart loop
+                  # (432 trips / 37 h / 5.9 TB read / zero completions).
+                  # A stopped scrub stays dead until its own weekly timer
+                  # window; the coverage gap is bounded and Gatus-visible
+                  # via the btrfs-health scrub metrics (never-finished),
+                  # exactly like the deferral-skip path.
+                  scrub_rearm_skipped="$scrub_rearm_skipped $cu"
+                  continue
+                  ;;
+              esac
               systemctl start "$cu" 2>/dev/null || true
             done < <(awk 'NR>1 && NF' "$CHURN_STOPPED_FILE" 2>/dev/null)
             churn_rearm_total=$((churn_rearm_total + 1))
             echo "$churn_rearm_total" > "$CHURN_REARM_FILE"
-            echo "MEMORY EMERGENCY io drained (io PSI some avg60=''${io_psi_some_avg60}% < ${toString cfg.ioPsiSomeAvg60ThresholdPercent}%) — churn units re-armed (re-arm #''${churn_rearm_total})" >&2
+            echo "MEMORY EMERGENCY io drained (io PSI some avg60=''${io_psi_some_avg60}% < ${toString cfg.ioPsiSomeAvg60ThresholdPercent}%) — churn units re-armed (re-arm #''${churn_rearm_total})''${scrub_rearm_skipped:+; btrfs-scrub left stopped (no-resume, freeze-#7):''${scrub_rearm_skipped}}" >&2
             rm -f "$CHURN_STOPPED_FILE"
             # Backups are running again — the starvation clock stops with
             # them (2026-09-28).
@@ -967,11 +982,28 @@ _: {
             "btrbk-forgejo.service"
             "btrfs-balance-metadata.service"
             "btrfs-balance-data.service"
-            "btrfs-scrub--.service"
-            "btrfs-scrub-data.service"
-            "btrfs-scrub-mnt-pool.service"
+            # btrfs-scrub TEMPLATE INSTANCES (2026-09-29 scrub-stop phantom):
+            # this list previously named the stray unit files the snapshots.nix
+            # ExecStart override once landed on ("btrfs-scrub--",
+            # "btrfs-scrub-data", "btrfs-scrub-mnt-pool") — files systemd
+            # NEVER starts (the weekly timers pull the template instances
+            # btrfs-scrub@-/@data/@mnt-pool), so every trip's scrub stop was a
+            # silent no-op and the 2026-09-28 storm scrub read 5.9 TB AFTER
+            # ~100 churn-stops. `systemctl stop` on the correctly-named
+            # instance DOES stop the kernel-side scrub: the nixpkgs template
+            # is Type=simple with ExecStop=btrfs-scrub-maybe-cancel (runs
+            # `btrfs scrub cancel %f`) — killing the CLI waiter alone would
+            # NOT stop it. A guard-side cancel is impossible here without
+            # CAP_SYS_ADMIN (BTRFS_IOC_SCRUB_CANCEL), deliberately not added.
+            # These instances are EXCLUDED from the re-arm (btrfs scrub has
+            # NO resume — a restart re-reads from byte 0; that stop→re-arm
+            # cycle was the freeze-#7 restart loop), so a guard-killed scrub
+            # stays dead until its own weekly timer window.
+            "btrfs-scrub@-.service"
+            "btrfs-scrub@data.service"
+            "btrfs-scrub@mnt-pool.service"
           ];
-          description = "Resumable I/O churn units stopped on ANY trip (Zone 6's real mitigation: crash #3 was stacked full-disk readers). RE-ARMED (systemctl start, best-effort) by the guard once sustained io PSI drains under the trip threshold — without the re-arm a mid-receive stop pushed the nightly btrbk send a full +24h (the timer had already fired), and a second storm in the 3-day freshness window FAILED the backup check (2026-09-16 23:00 trip #299 class). Each unit's own pre-start guards decide whether it is safe to run; an interrupted receive is healed by btrbk-pool-clean. Stopping an inactive unit is a no-op";
+          description = "Resumable I/O churn units stopped on ANY trip (Zone 6's real mitigation: crash #3 was stacked full-disk readers). RE-ARMED (systemctl start, best-effort) by the guard once sustained io PSI drains under the trip threshold — without the re-arm a mid-receive stop pushed the nightly btrbk send a full +24h (the timer had already fired), and a second storm in the 3-day freshness window FAILED the backup check (2026-09-16 23:00 trip #299 class). btrfs-scrub@* instances are deliberately NOT re-armed: btrfs scrub has no resume, so restarting one re-reads the whole filesystem (the freeze-#7 restart loop) — they stay dead until their own weekly timer window. Each unit's own pre-start guards decide whether it is safe to run; an interrupted receive is healed by btrbk-pool-clean. Stopping an inactive unit is a no-op";
         };
 
         backupUnits = lib.mkOption {

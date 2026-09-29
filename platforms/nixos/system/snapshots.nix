@@ -490,17 +490,27 @@ in
 
       # ── scrub deferral (2026-08-31 freeze lesson) ─────────────────────────
       # Replace the nixpkgs autoScrub ExecStart with the guarded wrapper.
+      # 2026-09-29 scrub-stop phantom fix: the override used to target the
+      # stray attrnames "btrfs-scrub--"/"btrfs-scrub-data"/"btrfs-scrub-mnt-pool"
+      # — unit FILES that systemd never starts (the weekly timers pull the
+      # template instances btrfs-scrub@-/@data/@mnt-pool), so this deferral
+      # guard was dead code from day one and the 2026-09-26..28 storm scrub
+      # ran straight through it (the 5.9 TB slice). Overriding the TEMPLATE
+      # covers every instance; %f expands to the mountpoint (systemd.unit(5):
+      # unescaped instance name with / prepended — btrfs-scrub@data → /data,
+      # btrfs-scrub@- → /), preserving the wrapper's argument contract.
       # ExecStop (btrfs-scrub-maybe-cancel) from the nixpkgs module is kept —
-      # it only matters for the shutdown-cancel path, which the wrapper's
-      # `exec btrfs scrub start -B` preserves.
+      # it is the ONLY thing that stops the KERNEL-side scrub (killing the
+      # CLI waiter does not), and with the memory-emergency-guard churn list
+      # naming these instances it now serves BOTH cancel paths: shutdown AND
+      # the guard's trip stop. The wrapper's `exec btrfs scrub start -B`
+      # keeps the main process = the btrfs CLI, so ExecStop always runs.
       # lib.getExe is REQUIRED: writeShellApplication's store path is a
       # DIRECTORY (script lives at <out>/bin/<name>) — the bare `${scrubGuard}`
       # interpolation 203/EXEC'd every weekly fire since the 2026-09-07 first
       # post-deploy window ("Is a directory" on all three units), silently
       # suspending ALL scrub coverage incl. the /data corruption-delta gate.
-      "btrfs-scrub--".serviceConfig.ExecStart = lib.mkForce "${lib.getExe scrubGuard} /";
-      btrfs-scrub-data.serviceConfig.ExecStart = lib.mkForce "${lib.getExe scrubGuard} /data";
-      btrfs-scrub-mnt-pool.serviceConfig.ExecStart = lib.mkForce "${lib.getExe scrubGuard} /mnt/pool";
+      "btrfs-scrub@".serviceConfig.ExecStart = lib.mkForce "${lib.getExe scrubGuard} %f";
 
       # ── btrbk clean: GC for garbled receive targets ────────────────────────
       # `btrbk clean` is btrbk's sanctioned garbage collector for incomplete
