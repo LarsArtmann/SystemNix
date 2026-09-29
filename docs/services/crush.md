@@ -160,3 +160,24 @@ DRY_RUN, OnFailure) is LIVE on the deployed 2026-09-22 generation — verified 2
 
 Runbook/source: `modules/nixos/services/crush-hot-db.nix`; see the `services.hot-db` Phase-2 plan
 (`docs/planning/2026-09-14_13-27_SAMSUNG-PHASE2-HOT-DB-NATIVE-PARETO-PLAN.md`) for the long-term home.
+
+## crush-debug (error-to-agent launcher, 2026-09-29)
+
+`Mod+Ctrl+D` (or `crush-debug` in any terminal) turns a system error into a crush session.
+Picker = failed system units + failed user units + the active sev1 alert (`/run/systemnix/sev1/alert`),
+fzf preview shows status + journal. On selection the script bundles evidence to
+`~/.local/state/crush-debug/<ts>-<unit>/evidence.txt`, then runs a headless `crush run` fix pass in
+`~/projects/SystemNix` (model + autonomy from the repo `.crushrc` tq block) and opens the SAME session
+interactively with `crush --continue` when the pass ends — review, ask follow-ups, or let it continue.
+
+- Flags: `crush-debug <unit>` (skip picker), `--review` (no auto pass, prompt printed for pasting),
+  `--yolo` (auto-accept everything), `-` (pipe extra evidence via stdin, e.g.
+  `journalctl -u x -n 500 | crush-debug -`).
+- The seeded prompt forbids deploying: fixes land in the flake, you run `nix run .#deploy` after review.
+- Sessions inherit SystemNix's `.crushrc` (glm-5.3-flash xhigh, bash/edit allowlisted) — the auto pass
+  needs no yolo.
+- Evidence dirs may contain log secrets (flm echoes request bodies to journald); user-only perms,
+  newest 20 kept.
+- Source: `platforms/nixos/desktop/crush-debug.nix`; known gap: Gatus-red-but-active checks are not
+  picker sources yet (root-only sqlite) — docs/todo/desktop.md.
+

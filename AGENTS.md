@@ -542,6 +542,16 @@ git gc --prune=now                                                   # evict old
 
 After push: macOS clone needs the same resync; ask GitHub support to GC cached commits (old SHAs stay fetchable until then); resolve the secret-scanning alerts (scanning + push protection ENABLED 2026-08-18) once keys are rotated. Rotation is the real fix regardless of purge — the old commit survives in forks/caches.
 
+### crush-debug (error-to-agent launcher, Mod+Ctrl+D, 2026-09-29)
+
+**Module:** `platforms/nixos/desktop/crush-debug.nix` (HM module, `programs.systemnix-crush-debug`, default on, imported by `home.nix` next to niri-wrapped) — one keybind turns a system error into a crush agent session: `Mod+Ctrl+D` opens a FLOATING ghostty (existing `app-id = "^floating$"` window rule) running the `crush-debug` picker over failed SYSTEM units, failed USER units, and the active sev1 alert file. Selection bundles evidence (`systemctl status`, `systemctl cat`, 300-line journal tail; for sev1: the alert file + guard journal) into `~/.local/state/crush-debug/<ts>-<unit>/evidence.txt`, then runs a HEADLESS `crush run` fix pass in `~/projects/SystemNix` and reopens THAT session interactively via `crush --continue`. Direct invocation: `crush-debug <unit>` (scope auto-detected), `--review` (no auto pass), `--yolo` (full auto-accept), `-` (capture piped stdin as evidence). Runbook: `docs/services/crush.md` "crush-debug".
+
+- **Prompt contract**: the agent fixes the Nix CONFIG in the flake (never hand-patches the live system), reads AGENTS.md first, verifies with `nix flake check --no-build`, and must NOT deploy (`nix run .#deploy` stays human-owned — the prompt forbids it; .crushrc-permitted bash makes this a soft guard, the user watches the run). Sev1 entries name the owning modules (sev1-escalation.nix + memory-emergency-guard.nix).
+- **Why no `--yolo` by default**: SystemNix's `.crushrc` tq-managed block already allowlists the fix toolset (`bash edit write fetch ...`); the auto pass runs unattended for exactly those tools while anything unusual still prompts.
+- **Interactive `crush` IGNORES positional prompts** (source-verified `internal/cmd/root.go` — args never reach the TUI) — that is WHY the seeded prompt rides `crush run` and follow-up rides `crush --continue`. Do not "simplify" to `crush "<prompt>"`.
+- **Evidence bundles can contain secrets** (journald carries flm request bodies) — they are user-only under `~/.local/state/crush-debug/`, same trust domain as crush session DBs; pruned to the newest 20 bundles on each run (find+trash).
+- **Error surface v1 is failed-units + sev1 ONLY**: Gatus-red-but-active incidents (the majority incident class in this file) are NOT picker sources — gatus.sqlite is root-only and the API is OIDC-gated. Root-side dump file or token'd API read is the queued follow-up (docs/todo/desktop.md).
+
 ### GeoMetrikks (access-log geo analytics, 2026-09-19)
 
 **Module:** `modules/nixos/services/geometrikks.nix` (`services.geometrikks`) — Docker-only upstream (github:GilbN/geometrikks, `mkDockerService` pattern) tailing every Caddy per-vhost JSON access log, geolocating requests via MaxMind GeoLite2, storing geo-events in a `timescaledb-ha:pg18` sidecar. UI at `geo.home.lan` (Layer 2 `protectedVHost` + the app's OWN single-admin login on top), port 8102, DNS `geo`. Runbook: `docs/services/geometrikks.md`.
