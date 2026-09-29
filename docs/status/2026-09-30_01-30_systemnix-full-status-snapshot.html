@@ -825,6 +825,243 @@
       }
     </style>
   </head>
+  <body>
+    <div class="top-bar">
+      <span>FULL STATUS SNAPSHOT</span>
+      <span>2026-09-30 01:30</span>
+    </div>
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <div class="label">Contents</div>
+        <nav>
+          <a href="#summary">00 Summary</a>
+          <a href="#done">01 Fully Done</a>
+          <a href="#partial">02 Partially Done</a>
+          <a href="#notstarted">03 Not Started</a>
+          <a href="#fucked">04 Fucked Up</a>
+          <a href="#improve">05 Improve</a>
+          <a href="#next">06 Top 25 Next</a>
+          <a href="#question">07 Top Question</a>
+        </nav>
+      </aside>
+      <main class="main">
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">STATUS REPORT</div>
+          <h1>SystemNix &mdash; where we actually are</h1>
+          <p class="hero-subtitle">
+            Cross-platform Nix config (macOS + NixOS) &middot; evo-x2 fleet &middot;
+            fleet units all green, but the QLC root is at 91% under a live IO storm,
+            and the biggest moves (hot-DB waves, boot mirror, offsite Borg) are
+            owner windows away from landing.
+          </p>
+        </div>
+        <nav class="toc">
+          <span>Live probes @ authoring:</span>
+          <span class="badge badge-low">io PSI avg10 68% / avg60 65%</span>
+          <span class="badge badge-low">root 91% &middot; critical flag 1</span>
+          <span class="badge badge-low">guard zone6 trips 1330</span>
+          <span class="badge badge-low">deploy anchored system-802</span>
+          <span class="badge badge-low">tracked TODO items 586</span>
+        </nav>
+
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <div class="stat-grid">
+          <div class="stat-card stat-good"><div class="stat-value">9</div><div class="stat-label">Fully Done (recent)</div></div>
+          <div class="stat-card stat-warn"><div class="stat-value">9</div><div class="stat-label">Partially Done</div></div>
+          <div class="stat-card"><div class="stat-value">9</div><div class="stat-label">Not Started (major)</div></div>
+          <div class="stat-card stat-bad"><div class="stat-value">8</div><div class="stat-label">Fucked Up</div></div>
+        </div>
+        <div class="card card-solution">
+          <p><strong>One-paragraph state.</strong> The service fleet itself is healthy (every monitored unit failed=0, deploy anchored at system-802, pool SMART clean). The pain is concentrated in three layers: <strong>(1) the QLC root disk</strong> at 91% with the btrfs critical flag live and an ongoing IO-storm regime (Zone-6 guard trips total 1330; 5 in the last hour) that keeps gating deploys and VM tests; <strong>(2) a queue of large ratified moves</strong> that all wait on owner sudo windows &mdash; the five hot-DB Samsung waves (vehicle armed tonight), boot-mirror activation, the /data corruption repair, and offsite-Borg go-live; <strong>(3) known-dark subsystems</strong> &mdash; CI is unauthenticated against private inputs (120+ dark runs), btrbk-data has been dead since July on the /data EIO, and two leaked llama-server instances from the disabled llama-rag module are still resident.</p>
+        </div>
+
+        <h2 id="done"><span class="num">01</span>Fully Done</h2>
+        <div class="card card-solution">
+          <p><strong>Journal &rarr; Samsung TLC (executed + live-verified).</strong> Mount on <code>tlc[/journal]</code>, +C confirmed, active journal file on the Samsung, boot continuity intact. Only the reboot-path verification remains (listed in Partial). <span class="where">docs/todo/storage.md row 155 &middot; verified 2026-09-30 00:15</span></p>
+        </div>
+        <div class="card card-solution">
+          <p><strong>Hot-DB service tier armed (tonight).</strong> <code>services.hot-db</code> live (enable=true, zero mounts until per-wave entries), migrate script rebuilt to warm-prepare/cutover/finalize fixing all 4 documented vehicle defects, T14 monitoring collector + per-entry Gatus checks, discordsync dump-only RPO leg, 21-assertion fixture check built green in-sandbox, flake check --all-systems green. <span class="where">docs/services/hot-db.md &middot; checks.migrate-hot-db-fixture &middot; status report 2026-09-30 00-55</span></p>
+        </div>
+        <div class="card card-solution">
+          <p><strong>Geometrikks is a native Nix service (Docker removed).</strong> v0.19.0 from source (uv2nix + bun FOD), host PG17 + timescale, native Pocket ID OIDC; the docker DB was empty so no migration. <span class="where">2026-09-29 &middot; docs/planning/2026-09-29_21-41_GEOMETRIKKS-NATIVE-NIX-MIGRATION.md</span></p>
+        </div>
+        <div class="card card-solution">
+          <p><strong>Eval-perf fixes.</strong> precommit eval-cache memo lib + fmt-cached.sh + 12-property selftest; AGENTS doctrine updated. <span class="where">2026-09-30 00-06 report &sect;e &middot; committed</span></p>
+        </div>
+        <div class="card card-solution">
+          <p><strong>btrbk calendar-anchor reconciliation + stale-echo sweeps.</strong> Root pin window doctrine unified to &ldquo;2w sharp&rdquo;; misread prune-gap theories closed at source level; negative cases regression-pinned. <span class="where">storage.md rows 13-19 &middot; 2026-09-25/26 task reports</span></p>
+        </div>
+        <div class="card card-solution">
+          <p><strong>Offsite-Borg guard stack (code-complete).</strong> Drill + fixture (8 cases incl. mutation-negative), smoke lib extraction, positive-render eval guard, DR runbooks. Dormant by design pending owner go-live inputs. <span class="where">2026-09-24 window closeout &middot; checks.borg-restore-drill-fixture</span></p>
+        </div>
+        <div class="card card-solution">
+          <p><strong>Forgejo dark-theme cascade fix + UI/UX batch.</strong> Catppuccin delta themes with eval-time THEMES audit; the 00-44 finding closed. <span class="where">2026-09-23 + 2026-09-30 00-44 report</span></p>
+        </div>
+        <div class="card card-solution">
+          <p><strong>ClickHouse telemetry backup coverage.</strong> Native <code>BACKUP ALL EXCEPT</code> &rarr; pool, 3-run retention, allowed_path wired, deploy-gated first run. <span class="where">storage.md row 47 DONE 2026-09-23</span></p>
+        </div>
+        <div class="card card-solution">
+          <p><strong>Pocket ID SMTP root-caused + fixed</strong> (UI_CONFIG_DISABLED env path, smtp.tls option); mail-relay E2E sends green since 2026-09-18 with SPF/DKIM routing verified. <span class="where">AGENTS Mail Relay + Pocket ID sections</span></p>
+        </div>
+
+        <h2 id="partial"><span class="num">02</span>Partially Done</h2>
+        <div class="issue issue-important">
+          <span class="severity severity-important">Owner window</span>
+          <h3>The five hot-DB migration waves</h3>
+          <div class="where">gatus &rarr; dnsblockd &rarr; pocket-id &rarr; browser-history &rarr; discordsync</div>
+          <p>Vehicle armed and fixture-tested tonight; zero waves executed. Each is a ~10-minute sudo window (runbook: docs/services/hot-db.md). Tonight's IO storm is exactly why they matter &mdash; and why they should wait for a quiet window.</p>
+        </div>
+        <div class="issue issue-important">
+          <span class="severity severity-important">Blocked: deploy/user</span>
+          <h3>Deploy of tonight's batch + the owed reboot</h3>
+          <div class="where">hot-db enable &middot; discordsync-db-backup &middot; T14 collector &middot; 7d GC (de0feb7e) &middot; memory-guard catch-up slot</div>
+          <p>Multiple landed items share one deploy + one reboot: the hot-db collector/checks go live, the discordsync dump first-runs at 02:30, the 7d GC retention activates, and the journal boot-path + hot-user-caches boot-cycle fixes get their reboot verification. <code>nix run .#pre-reboot-check</code> first.</p>
+        </div>
+        <div class="issue issue-important">
+          <span class="severity severity-important">Blocked: user</span>
+          <h3>Boot-mirror activation</h3>
+          <div class="where">boot-mirror.nix landed 2026-09-19 &middot; sync unit live &middot; EFI entry not created</div>
+          <p><code>nix run .#boot-mirror-activate</code> + BootOrder flip + &sect;11 grade change remain. Pairs naturally with the owed reboot window.</p>
+        </div>
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">PSI-gated</span>
+          <h3>VM-test rebuilds (hot-db, crush-hot-db) + test-hot-db runtime leg</h3>
+          <div class="where">io avg10 68% at snapshot &mdash; gate is &lt;20%</div>
+          <p>Eval-covered only; runtime legs ride the next quiet window. Recurring pattern: storms and VM tests contend for the same disk.</p>
+        </div>
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Proof chain</span>
+          <h3>restic-app-dumps first-run proof</h3>
+          <div class="where">deployed 2026-09-22 &middot; nightly 05:45 runs assumed green &middot; check/restore smoke unproven</div>
+          <p>Eval-green is the weakest signal for a backup pipeline; the row demands restic check + one-file restore smoke + dedup ratio measurement.</p>
+        </div>
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Fold pending</span>
+          <h3>crush-hot-db &rarr; services.hot-db fold</h3>
+          <div class="where">interim module live since 2026-09-16 &middot; 279 symlinks &middot; doctrine says do not run both</div>
+          <p>Separate queue item; the service tier going live tonight makes the fold's shape clearer but it is still unstarted work.</p>
+        </div>
+
+        <h2 id="notstarted"><span class="num">03</span>Not Started (major)</h2>
+        <div class="card card-warning">
+          <p><strong>Postgres cluster hot-db wave</strong> &mdash; ratified (cow=false), pg_dump legs all exist now; waits on a window after the five. <span class="where">storage.md row 34</span></p>
+        </div>
+        <div class="card card-warning">
+          <p><strong>Docker data-root window</strong> &mdash; ~15.5G on QLC /data to pool/hot; own window, unchanged. <span class="where">storage.md row 30</span></p>
+        </div>
+        <div class="card card-warning">
+          <p><strong>/data corruption repair T04-T08</strong> &mdash; verification-first gate; btrbk-data stays failing as the tripwire until then. <span class="where">storage.md row 24 (P0)</span></p>
+        </div>
+        <div class="card card-warning">
+          <p><strong>@data subvolume migration</strong> (~1h downtime) and <strong>Caddy access logs &rarr; Samsung sibling subvol</strong> (1.6G, [ready]). <span class="where">storage.md rows 44, 156</span></p>
+        </div>
+        <div class="card card-warning">
+          <p><strong>2-disk buildcache btrfs merge</strong> (~447G effective) + <strong>e2fsck</strong> &mdash; both maintenance-window-gated. <span class="where">storage.md rows 131, 28</span></p>
+        </div>
+        <div class="card card-warning">
+          <p><strong>@home subvolume layout + NVMe QLC replacement eval</strong> &mdash; ROADMAP-grade, see &sect;07. <span class="where">ROADMAP.md</span></p>
+        </div>
+
+        <h2 id="fucked"><span class="num">04</span>Totally Fucked Up</h2>
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Critical &middot; live</span>
+          <h3>QLC root at 91% &mdash; btrfs_health_critical 1</h3>
+          <div class="where">/ &middot; 638G/723G used &middot; 66G free &middot; 2026-06-26 ENOSPC crash precursor class</div>
+          <p>The known lever is ~366GB of snapshot/reflink usage (the disk-cleanup proposal attributes visible data at only ~262G of 628G). Root cause is structural (retention + reflinks), mitigation is the owner-gated P1-P6 cleanup plan. The hot-DB waves + caddy-log move shrink future growth but reclaim little today.</p>
+          <div class="callout callout-amber">Owner decision needed: docs/operations/disk-cleanup-proposal-2026-09-28.md (P1-P6).</div>
+        </div>
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Live regime</span>
+          <h3>IO-storm regime &mdash; Zone-6 trips 1330 total, 5 last hour</h3>
+          <div class="where">io PSI avg60 ~65% at snapshot &middot; guard containing (backup_starved 0)</div>
+          <p>Sustained QLC churn (crush sessions, DB writers, recovery readers) with memory pristine. The guard prevents freezes but the box pays constant trip/restore churn; the structural fixes are exactly the hot-DB waves + crush fold that are queued. Tonight's VM tests and any extra IO work must wait.</p>
+        </div>
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Live &middot; stale</span>
+          <h3>Two leaked llama-server instances (llama-rag disabled)</h3>
+          <div class="where">llama_rag_leaked_instances 2 &middot; leaks_present 1 &middot; module disabled since 2026-09-18</div>
+          <p>The 0.4.0 reranker rogue on :8849 (found 2026-09-17) plus one more are still resident; the portGuard only runs when the units start, and they are disabled. Kill needs root &mdash; user action; the leak collector is correctly flagging them.</p>
+        </div>
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Dead since July</span>
+          <h3>btrbk-data: zero complete /data receives</h3>
+          <div class="where">the 2026-08-18 EIO inode (root 256, ino 1331118) aborts every send</div>
+          <p>/data has NO pool backup leg beyond the app-dump dirs. The corruption repair (T04-T08) is the fix; the deliberate stance keeps the failure visible. Offsite Borg excludes the corrupt leg too (by design).</p>
+        </div>
+        <div class="issue issue-important">
+          <span class="severity severity-important">Dark</span>
+          <h3>CI unauthenticated against private inputs</h3>
+          <div class="where">NIX_GITHUB_RO_TOKEN missing &middot; 120+ dark runs &middot; weekly flake bot fails every run</div>
+          <p>Deploy keys cover git+ssh roots; the 32 private <code>github:</code>-type lock nodes 404 against the job-scoped token. One fine-grained PAT (Contents: Read-only) un-ci's the repo and re-arms the weekly lock bot.</p>
+        </div>
+        <div class="issue issue-important">
+          <span class="severity severity-important">By design (red)</span>
+          <h3>DiscordSync Turso sync blocked &amp; flm consumers dark</h3>
+          <div class="where">Turso free plan (local-only stance, red check intentional) &middot; :52625 under guard sacrifice</div>
+          <p>Both are owner decisions in flight, not bugs: Turso needs a plan upgrade or the permanent-local-only call; flm returns when IO pressure drains (corpse is gone &mdash; verified this boot).</p>
+        </div>
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Unresolved</span>
+          <h3>bank-sync phantom RFC3339 writer + InboxClean &ldquo;work&rdquo; token anomaly</h3>
+          <div class="where">statement_coverage corruption dormant since SCA paused &middot; work-token alive 14d past testing-mode expiry, unexplained</div>
+          <p>Both have watch-level rows; neither blocks anything today but both are unexplained behavior in money/email paths &mdash; keep them visible.</p>
+        </div>
+
+        <h2 id="improve"><span class="num">05</span>What We Should Improve</h2>
+        <div class="strengths">
+          <div class="strength"><div class="check">+</div><div class="text"><strong>Deploy cadence vs &ldquo;landed&rdquo; claims.</strong> Five items tonight are &ldquo;in-tree, deploy pending&rdquo;. The done/partial boundary blurs across sessions; consider a standing &ldquo;undeployed landings&rdquo; roll-up row that clears at each deploy.</div></div>
+          <div class="strength"><div class="check">+</div><div class="text"><strong>Quiet-window discipline for heavy IO work.</strong> VM tests, waves, and merges all gate on PSI &lt; 20% that rarely materializes during storm regimes. A tiny &ldquo;quiet-window advisor&rdquo; (PSI trend + guard-trip recency &rarr; go/no-go) would stop re-deriving this per session.</div></div>
+          <div class="strength"><div class="check">+</div><div class="text"><strong>Queue pacing.</strong> 423 [ready] items across libraries vs a drained dispatch queue at snapshot &mdash; the tq pool harvests faster than windows open. Not a structure bug; consider batch-routing ready items by &ldquo;needs quiet IO&rdquo; vs &ldquo;docs/eval-only&rdquo; so storms don't stall everything.</div></div>
+          <div class="strength"><div class="check">+</div><div class="text"><strong>Parallel-session file races</strong> (signoz.nix, TODO_LIST edited mid-session tonight) are handled by convention but still cost re-reads and near-miss edits. The content-pin discipline works; a pre-commit reminder hook for &ldquo;file modified since staged&rdquo; would cheapen it.</div></div>
+        </div>
+
+        <h2 id="next"><span class="num">06</span>Top 25 Next (ranked)</h2>
+        <table class="table">
+          <thead><tr><th>#</th><th>Task</th><th>Impact</th><th>Effort</th><th>Who</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Root-disk cleanup decision + execution (P1-P6; ~366G snapshot/reflink lever)</td><td><span class="badge badge-critical">Critical</span></td><td>M</td><td>User</td></tr>
+            <tr><td>2</td><td>Run hot-DB wave 1 (gatus) &mdash; then 2-5, one window each</td><td><span class="badge badge-critical">Critical</span></td><td>S/window</td><td>User</td></tr>
+            <tr><td>3</td><td>Deploy tonight's batch (hot-db/T14/discordsync-dump/7d-GC/guard-slot)</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>User</td></tr>
+            <tr><td>4</td><td>Kill the 2 leaked llama-server instances</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>User</td></tr>
+            <tr><td>5</td><td>The owed reboot (pre-reboot-check first): journal boot-path + tmpfiles-cycle verify</td><td><span class="badge badge-high">High</span></td><td>S</td><td>User</td></tr>
+            <tr><td>6</td><td>Boot-mirror activation (EFI entry + BootOrder)</td><td><span class="badge badge-high">High</span></td><td>S</td><td>User</td></tr>
+            <tr><td>7</td><td>Create NIX_GITHUB_RO_TOKEN (fine-grained PAT) &rarr; CI + weekly bot live</td><td><span class="badge badge-high">High</span></td><td>S</td><td>User</td></tr>
+            <tr><td>8</td><td>Offsite-Borg go-live inputs (StorageBox host/key pin) + first seed</td><td><span class="badge badge-high">High</span></td><td>M</td><td>User</td></tr>
+            <tr><td>9</td><td>/data corruption repair T04-T08 (ends the dead btrbk-data leg)</td><td><span class="badge badge-high">High</span></td><td>L</td><td>User</td></tr>
+            <tr><td>10</td><td>Caddy access logs &rarr; Samsung sibling subvol (1.6G off the QLC)</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Agent [ready]</td></tr>
+            <tr><td>11</td><td>Post-deploy verifications: 7d-GC unit grep, discordsync first dump, Hot Tier check green</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Agent</td></tr>
+            <tr><td>12</td><td>VM-test rebuilds (hot-db + crush-hot-db) in the first quiet window</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Agent</td></tr>
+            <tr><td>13</td><td>Wise SCA renewal (statement challenge ~90d cycle; dashboard flow)</td><td><span class="badge badge-high">High</span></td><td>S</td><td>User</td></tr>
+            <tr><td>14</td><td>restic proof chain: restic check + one-file restore smoke + dedup ratio</td><td><span class="badge badge-fixed">Med</span></td><td>M</td><td>Agent</td></tr>
+            <tr><td>15</td><td>Postgres hot-db wave (ratified; after wave 5)</td><td><span class="badge badge-fixed">Med</span></td><td>M</td><td>User</td></tr>
+            <tr><td>16</td><td>crush-hot-db &rarr; services.hot-db fold (ends the interim split)</td><td><span class="badge badge-fixed">Med</span></td><td>M</td><td>Agent</td></tr>
+            <tr><td>17</td><td>Docker data-root window (~15.5G off QLC /data)</td><td><span class="badge badge-fixed">Med</span></td><td>M</td><td>User</td></tr>
+            <tr><td>18</td><td>Hot-db plan-doc T-task table status pass</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>Agent [ready]</td></tr>
+            <tr><td>19</td><td>buildcache-init provisions the 3 new fallback targets (post-recovery dangling symlinks)</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>Agent [ready]</td></tr>
+            <tr><td>20</td><td>Single-source the 4 hand-kept cache-reap inventories (parity enforcement)</td><td><span class="badge badge-low">Low</span></td><td>M</td><td>Agent [ready]</td></tr>
+            <tr><td>21</td><td>2-disk buildcache btrfs merge window</td><td><span class="badge badge-low">Low</span></td><td>M</td><td>User</td></tr>
+            <tr><td>22</td><td>Upstream instrumentation gaps (overview/PMA/papdashboard/hermes OTel spans)</td><td><span class="badge badge-low">Low</span></td><td>L</td><td>Agent [blocked:push]</td></tr>
+            <tr><td>23</td><td>Docker pg NOCOW for twenty/manifest volumes on /data</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>User</td></tr>
+            <tr><td>24</td><td>bank-sync phantom-writer + InboxClean work-token watches (post-SCA)</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>Agent [watch]</td></tr>
+            <tr><td>25</td><td>@home subvolume layout design note (ROADMAP grooming)</td><td><span class="badge badge-low">Low</span></td><td>M</td><td>Agent</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="question"><span class="num">07</span>Top Question</h2>
+        <div class="card card-problem">
+          <p><strong>What is the actual trigger for replacing the QLC NVMe &mdash; and should the remaining disk work assume it?</strong> SMART is healthy (percentage_used 15, media errors 0) yet the disk hosts the storm regime, the 91% cliff, and the /data corruption. I cannot derive from telemetry whether the plan is: (a) clean + keep the QLC as a saturated-but-fine tier, (b) replace it once the TLC evacuation completes (making postgres/docker waves + /data repair Samsung-native instead), or (c) ride it until a failure class forces the call. The answer re-ranks items 9, 15, 17 and the /data repair's investment level &mdash; three of the top ten.</p>
+        </div>
+
+        <footer class="footer">
+          Generated 2026-09-30 01:30 &middot; Live probes: /proc/pressure, df, textfile collectors (system_health, btrfs, pool-smart, memory-emergency-guard, llama-rag), deploy anchor, git log &middot; Queue census: TODO_LIST + docs/todo/*
+        </footer>
+      </main>
+    </div>
     <script>
       (function () {
         if (!("IntersectionObserver" in window)) return;
