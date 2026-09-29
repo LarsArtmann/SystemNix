@@ -51,6 +51,23 @@ One-time service account + IAM + real key. `gcloud auth list` shows both
 in the inventory are grantable from either. The SA lives in one deployment
 project (`lars-artmann` is the natural home) and reads cross-project.
 
+**STATUS 2026-09-29: steps 1-4 EXECUTED** (SA `signoz-integration@lars-artmann`
+created; `roles/monitoring.viewer` granted on all 15 monitored projects +
+monitoring API enabled; real key `64cc3cdf…` rotated into sops; verified
+16/16 projects answer HTTP 200 with live series AS the SA — 6 projects show
+real `request_count` data). **REMAINING: step 5 (deploy) + verification** —
+the agent sandbox cannot `sudo`, and `nix run .#deploy` self-elevates.
+
+**dnsblockd dependency (found live at go-live):** blocklists classify
+`monitoring.googleapis.com` as telemetry — dnsblockd served its block page
+(HTTP **200**, HTML!) instead of the API, so failures look like JSON parse
+errors, never network errors. The domain is whitelisted in
+`platforms/common/dns-blocklists.nix` since 2026-09-29; the whitelist rides
+the SAME deploy. `oauth2.googleapis.com` (token endpoint) is NOT blocked.
+If GCP panels stay flat after deploy: `dig +short
+monitoring.googleapis.com @127.0.0.1` must return a Google IP, not
+192.168.1.200.
+
 ```bash
 # 1. Pick the deployment project and create the SA (no Cloud Run needed —
 #    the collector runs on evo-x2, so ONLY monitoring.googleapis.com must
@@ -76,19 +93,23 @@ done
 
 # 3. Create the key (the one place a JSON key is legitimate: the collector
 #    runs OUTSIDE GCP, so ADC-via-attach is unavailable):
-gcloud iam service-accounts keys create /tmp/signoz-gcp-key.json \
+gcloud iam service-accounts keys create /run/user/$(id -u)/signoz-gcp-key.json \
   --iam-account=$SA
 
-# 4. Paste into sops (interactive; never inline the key in a command):
-SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) \
-  sops platforms/nixos/secrets/signoz-gcp-monitoring.yaml
-#    replace the placeholder JSON under signoz_gcp_credentials_json with the
-#    file's content (indented block scalar), save, then:
-trash /tmp/signoz-gcp-key.json
+# 4. Rotate into sops WITHOUT the value ever touching a command line —
+#    file-based python rebuild + in-place public-key encrypt (no age key
+#    needed; the placeholder file is replaced wholesale):
+python3 - <<'EOF'
+key = open("/run/user/$(id -u)/signoz-gcp-key.json").read().rstrip("\n")
+plain = "signoz_gcp_credentials_json: |\n" + "".join("  " + l + "\n" for l in key.splitlines())
+open("platforms/nixos/secrets/signoz-gcp-monitoring.yaml", "w").write(plain)
+EOF
+sops -e -i platforms/nixos/secrets/signoz-gcp-monitoring.yaml
+rm /run/user/$(id -u)/signoz-gcp-key.json
 
-# 5. Deploy + verify:
+# 5. Deploy + verify (user/root session required — deploy.sh self-elevates):
 nix run .#deploy
-journalctl -u signoz-collector -f | grep -i googlecloud   # 403s must STOP
+journalctl -u signoz-collector -f | grep -i googlecloud   # 403s must NOT appear
 # after ~10 min: metrics explorer → run_googleapis_com_request_count
 # dashboard "GCP Fleet" panels fill (bucket size panels up to 24h — GCP
 # measures total_bytes/total_count once per day)

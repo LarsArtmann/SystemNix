@@ -47,7 +47,15 @@ in
     # ESSENTIAL MODULES FOR FUNCTIONAL DESKTOP
     ./boot.nix
     ./boot-mirror.nix # Samsung 2nd boot disk: /boot-mirror ESP mirror + boot-mirror-sync
-    ./journal-hot.nix # journald on the Samsung TLC hot tier (doctrine C subvol at /var/log/journal)
+    # DISABLED 2026-09-29 (containment, first deploy carrying it): the mount
+    # fails at every activation (fsconfig ENOENT — the `journal` subvol does
+    # not exist) because the MANDATORY one-time migration was never run:
+    #   sudo bash scripts/migrate-journal-hot.sh
+    # (creates the subvol on the Samsung + copies the journal). The failed
+    # mount unit kept every deploy rc=14/unanchored. nofail meant journald
+    # degraded to the QLC dir (documented degraded mode) — no data risk.
+    # Re-arm: run the migration, then uncomment + deploy.
+    # ./journal-hot.nix # journald on the Samsung TLC hot tier (doctrine C subvol at /var/log/journal)
     ./networking.nix
     ./local-network.nix
     ./primary-user.nix
@@ -831,8 +839,16 @@ in
         # Ships inert on a structurally-valid placeholder key until the
         # service-account go-live runbook runs:
         # docs/services/signoz-gcp-monitoring.md
+        #
+        # DISABLED 2026-09-29 (containment, first deploy carrying it): the
+        # "placeholder key fails 403 at scrape time, non-fatal" assumption
+        # was FALSIFIED live — the token fetch answers 400 invalid_grant at
+        # receiver Start() (account not found), which is FATAL for the whole
+        # collector (start-limit-hit, ALL telemetry ingestion dark).
+        # Re-arm after the go-live runbook provisions the real service
+        # account (its step 5 already verifies "403s STOP").
         gcpMonitoring = {
-          enable = true;
+          enable = false;
           projects = {
             # Cloud Run services (12 projects with running services)
             nobletary.cloudRun = true;

@@ -101,22 +101,38 @@ let
       #    sandbox-resolved interpreter store path (playwright-core .sh class)
       #    — restore portable env shebangs
       find node_modules -name flake.lock -delete
-      while IFS= read -r -d "" f; do
-        first="$(head -n 1 "$f" 2>/dev/null || true)"
-        case "$first" in
-          "#!/nix/store/"*/bin/sh) repl='#!/usr/bin/env sh' ;;
-          "#!/nix/store/"*/bin/bash) repl='#!/usr/bin/env bash' ;;
-          "#!/nix/store/"*/bin/node) repl='#!/usr/bin/env node' ;;
-          *) continue ;;
-        esac
-        printf '%s\n' "$repl" > "$f.tmp" && tail -n +2 "$f" >> "$f.tmp" && mv "$f.tmp" "$f"
-      done < <(find node_modules -type f -print0)
-      # Self-test: fail loudly if any store path still remains.
-      if grep -a -r -q "/nix/store" node_modules 2>/dev/null; then
-        echo "geometrikks-bun-deps: /nix/store references remain after scrub:" >&2
-        grep -a -r -l "/nix/store" node_modules 2>/dev/null | head -5 >&2
-        exit 1
-      fi
+      # POSIX-portable (phase shells are NOT guaranteed bash — `read -d`
+      # broke here first): find -exec sh -c batches the files as args.
+      find node_modules -type f -exec sh -c '
+        for f do
+          first=$(sed -n "1p" "$f" 2>/dev/null) || continue
+          case "$first" in
+            "#!/nix/store/"*/bin/sh) repl="#!/usr/bin/env sh" ;;
+            "#!/nix/store/"*/bin/bash) repl="#!/usr/bin/env bash" ;;
+            "#!/nix/store/"*/bin/node) repl="#!/usr/bin/env node" ;;
+            *) continue ;;
+          esac
+          printf "%s\n" "$repl" > "$f.tmp" && tail -n +2 "$f" >> "$f.tmp" && mv "$f.tmp" "$f"
+        done
+      ' sh {} +
+      # Self-test: rc 0 = refs remain (fail), 1 = clean, >1 = grep itself
+      # broken — treat as dirty so the FOD can never lie green.
+      set +e
+      grep -a -r -q "/nix/store" node_modules 2>/dev/null
+      grc=$?
+      set -e
+      case "$grc" in
+        0)
+          echo "geometrikks-bun-deps: /nix/store references remain after scrub:" >&2
+          grep -a -r -l "/nix/store" node_modules 2>/dev/null | head -5 >&2
+          exit 1
+          ;;
+        1) : ;;
+        *)
+          echo "geometrikks-bun-deps: self-test grep failed rc=$grc (treated as dirty)" >&2
+          exit 1
+          ;;
+      esac
       cp -r node_modules "$out"
       runHook postInstall
     '';
