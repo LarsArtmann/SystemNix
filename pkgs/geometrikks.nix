@@ -101,10 +101,16 @@ let
       #    sandbox-resolved interpreter store path (playwright-core .sh class)
       #    — restore portable env shebangs
       find node_modules -name flake.lock -delete
-      grep -a -r -l -Z "^#!/nix/store/" node_modules 2>/dev/null |
-        while IFS= read -r -d "" f; do
-          sed -E -i '1s|^#!/nix/store/[a-z0-9]+-[^ ]*/bin/(sh|bash|node)$|#!/usr/bin/env \1|' "$f"
-        done
+      while IFS= read -r -d "" f; do
+        first="$(head -n 1 "$f" 2>/dev/null || true)"
+        case "$first" in
+          "#!/nix/store/"*/bin/sh) repl='#!/usr/bin/env sh' ;;
+          "#!/nix/store/"*/bin/bash) repl='#!/usr/bin/env bash' ;;
+          "#!/nix/store/"*/bin/node) repl='#!/usr/bin/env node' ;;
+          *) continue ;;
+        esac
+        printf '%s\n' "$repl" > "$f.tmp" && tail -n +2 "$f" >> "$f.tmp" && mv "$f.tmp" "$f"
+      done < <(find node_modules -type f -print0)
       # Self-test: fail loudly if any store path still remains.
       if grep -a -r -q "/nix/store" node_modules 2>/dev/null; then
         echo "geometrikks-bun-deps: /nix/store references remain after scrub:" >&2

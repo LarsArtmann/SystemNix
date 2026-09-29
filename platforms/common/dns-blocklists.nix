@@ -129,6 +129,13 @@ in
     "github.com"
     "github-releases.githubusercontent.com"
     "objects.githubusercontent.com"
+    # Google Cloud Monitoring API — the SigNoz GCP integration's collector
+    # scrapes this endpoint; blocklists classify it as telemetry and
+    # dnsblockd served its block page at 192.168.1.200 (HTTP 200 HTML, so
+    # scrapes failed with JSON parse errors, not network errors — found
+    # live 2026-09-29 during the integration go-live probe). oauth2.
+    # googleapis.com (token endpoint) is NOT blocked, listed nowhere.
+    "monitoring.googleapis.com"
     "linkedin.com"
     "linkedin.at"
     "linkedin.be"
