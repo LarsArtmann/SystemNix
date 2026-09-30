@@ -78,6 +78,7 @@ in
   crush-config = import ./test-crush-config.nix { inherit pkgs inputs; };
   restic-app-dumps = makeTest (import ./test-restic-app-dumps.nix { inherit pkgs; });
   nix-email-contract = import ./test-nix-email.nix { inherit pkgs inputs system; };
+  nsfw-classifier = import ./test-nsfw-classifier.nix { inherit pkgs inputs system; };
   fastflowlm-idle-check = import ./test-fastflowlm-idle.nix { inherit pkgs self; };
 }
 // (import ./test-scripts.nix { inherit pkgs self; })
