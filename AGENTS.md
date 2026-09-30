@@ -269,6 +269,12 @@ Event-sourced Gmail assistant (go-cqrs-lite + SQLite WAL + templ/HTMX dashboard)
 - **Thresholded failure paging (owner decision 2026-09-17)**: search or fork-list failure → exit 1 → OnFailure pages. Assignment failures page ONLY when systemic — ALL attempts failed, or ≥50% of a ≥10-attempt run failed (auth/network breakage). Individual item failures WARN-log and retry on the next tick — one permanently-weird item must not page every 6h forever.
 - **`--archived=false` is load-bearing**: PATCH-assignment on archived repos fails; the search qualifier excludes them up front. Idempotence comes from `--no-assignee`: a run after a successful run finds nothing.
 
+### EMEET PIXY (webcam auto-activation daemon, registry-wired 2026-09-30)
+
+**Module:** `modules/nixos/services/emeet-pixyd.nix` — SystemNix wrapper importing upstream `inputs.emeet-pixyd.nixosModules.default` (the import MOVED here from `systems/evo-x2.nix`, cv.nix pattern; the wrapper was surface-verified unit-byte-identical at the move). Upstream owns everything: the graphical-session USER unit (`emeet-pixyd.service`), the v4l2 daemon, loopback `127.0.0.1:${ports.emeet-pixyd}` (8090) with web panel + control API. The wrapper layers ONLY the registry wiring: `services.integration.emeet-pixyd` (vHost `emeet-pixyd.home.lan` Layer 2 protected — the API carries webcam CONTROL endpoints with no native auth; cloud domain mirrors automatically), DNS subdomain, two Gatus endpoint checks, Infrastructure dashboard tile, unconditional catalog entry (`healthPath /api/health`).
+
+- **The endpoint checks are DELIBERATELY SILENT (`alert = ""`) and `monitored = false`** — the daemon is a graphical-session user unit: down during reboots and SSH-only periods is EXPECTED state, so a paging HTTP check would false-page Discord on every reboot (niri session-aware doctrine). Paging is owned by the session-aware meta check in `gatus-config.nix` (`system_emeet_pixyd_expected_down`, fires only when niri runs but the daemon doesn't). Do NOT "fix" the silent checks into alerting ones. `/api/health` answers 503 "offline" when the webcam is unplugged but the daemon is alive — hence `[STATUS] < 500`, not `== 200`, on the liveness check.
+
 ### FastFlowLM (AMD XDNA NPU LLM)
 
 Background LLM server (Qwen3.6-35B-A3B MoE, ~3B active, 21.6 GB mmap'd since v1.0.2) on the AMD XDNA NPU of evo-x2. OpenAI-compatible at `http://127.0.0.1:52625/v1`. Replaces the hand-patchelf'd `~/.local/share/fastflowlm/` install with a Nix-managed package + socket-activated systemd service.

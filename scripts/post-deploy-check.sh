@@ -1521,16 +1521,19 @@ else
   report_skip "Desktop - DMS wallpaper IPC not responding (expected in non-graphical context)"
 fi
 
-# Desktop: quickshell journal errors (last 1h)
+# Desktop: quickshell-family journal errors (last 1h). The units are dms
+# (the shell), shutdown-overlay, sev1-overlay — there is NO unit named
+# "quickshell". -q suppresses the "-- No entries --" placeholder line that a
+# bare `| wc -l` counted as exactly 1 error — the permanent phantom WARN since
+# the check shipped (adb1301a, 2026-08-09).
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u 2>/dev/null || echo 0)}"
 # journalctl exits 1 when NO entries match (repo gotcha) - under pipefail that
-# would kill the script mid-gate, but `|| echo 0` double-emits "0\n0" (wc already
-# printed 0). `|| true` keeps wc's own output as the sole value.
-_qs_errors=$(timeout 30 journalctl --user -u quickshell --since "-1hour" --no-pager -p err 2>/dev/null | wc -l) || true
+# would kill the script mid-gate. `|| true` keeps wc's own output as the value.
+_qs_errors=$(timeout 30 journalctl --user -q -u dms -u shutdown-overlay -u sev1-overlay --since "-1hour" --no-pager -p err 2>/dev/null | wc -l) || true
 if [ "${_qs_errors:-0}" -eq 0 ]; then
-  report_pass "Desktop - no errors in quickshell journal (last 1h)"
+  report_pass "Desktop - no errors in quickshell-family journal (last 1h)"
 else
-  report_warn "Desktop - ${_qs_errors} error line(s) in quickshell journal (last 1h)"
+  report_warn "Desktop - ${_qs_errors} error line(s) in quickshell-family units (dms/shutdown-overlay/sev1-overlay) journal (last 1h)"
 fi
 
 # Desktop: polkit dialog render sanity (2026-08-18 adwaita/fusion switch was
