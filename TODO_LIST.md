@@ -225,7 +225,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **PMA daemon: stop committing broken flake.lock** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Kernovia: reconcile `pkg/eventsourcing/shared` with TypeSpec-generated types** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **BuildFlow: root-cause the flake.lock flip-flopper** → [docs/todo/upstream.md](docs/todo/upstream.md)
-- [ ] **InboxClean upstream: surface a re-auth ACTION in the dashboard on `invalid_grant`** (health-validate half DONE; auth CLI dead-grant detection landed `1540a56`, unpushed) → [docs/todo/upstream.md](docs/todo/upstream.md)
+- [ ] **InboxClean deploy: dead-grant honesty chain (auth probe + `/health` aggregate + dashboard banner, unpushed)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **paperless-ngx upstream: empty-vocabulary classifier training should degrade, not FAIL the task** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Migrate `overview` + `project-dependency-graph` off the removed `project-discovery-sdk/daemon` module** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **BuildFlow: materialize the pre-commit hook on evo-x2** → [docs/todo/upstream.md](docs/todo/upstream.md)
