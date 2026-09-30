@@ -32,8 +32,8 @@
 
 ## b) PARTIALLY DONE
 
-1. **VM test NOT executed.** The test driver builds green (`checks.x86_64-linux.memory-emergency-guard.driver`), but the run was deferred twice: the host sat in an oscillating IO storm the whole session (io PSI some avg60 16→74% over ~2.5 h of polling; two calm dips of ~6 min were missed by a broken first poller, see §d). Running a qemu VM test into a 50%+ avg60 storm is exactly the reader-stacking class this task's sibling fixes target. **The VM test MUST run before this is considered deployed-quality work** (scenarios 8/8a assertions have never executed).
-2. **Footer commit not yet created.** The auto-commit daemon absorbed every file edit within minutes; the one remaining TODO_LIST hunk (this task's AGENTS.md-entry close-out) landed in HEAD `6dce3346` MIXED with a parallel session's papdashboard queue row — amending would absorb foreign work (explicitly forbidden), so the footer commit is deferred until the VM test result adds the last legitimate change to commit alongside the close-out report (this file).
+1. **VM test PASSED** (completed in the session's single calm window, ~06:40): `nix build .#checks.x86_64-linux.memory-emergency-guard` green — the check derivation executes the VM, so all scenarios including the new scrub-instance stop + ExecStop-cancel-marker + re-arm-exclusion assertions (8/8a) ran and passed. (It took two poller attempts to catch a ≥2-poll calm gate; see §d for the poller lessons.)
+2. **Footer commit not yet created.** The auto-commit daemon absorbed every file edit within minutes; the one remaining TODO_LIST hunk (this task's AGENTS.md-entry close-out) landed in HEAD `6dce3346` MIXED with a parallel session's papdashboard queue row — amending would absorb foreign work (explicitly forbidden). The footer commit below carries the VM-test-result update to this report instead.
 
 ## c) NOT STARTED
 
