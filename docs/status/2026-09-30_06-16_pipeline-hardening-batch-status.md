@@ -126,3 +126,15 @@
 ---
 
 *Report written per the status-report skill with the user-specified `.md` format (skill default is HTML — user instruction wins). No commits made by this session (harness rule); the auto-commit daemon swept the working files into heuristic commits mapped above. Verification convention: every green claim above names the command/store path that proved it (3-step probe: step 2 executed this session; step 3 n/a — nothing here is runtime-config until the next deploy, which carries zero-runtime-delta changes only).*
+
+---
+
+## §h CLOSE-OUT ADDENDUM (2026-09-30, follow-up session — the three §g questions + remaining follow-ups)
+
+**§g.1 Gate ergonomics — DECIDED: fail-fast stays.** Rationale: standard pre-commit semantics; the selftest already pins the broken-parse contract; collect-all would change the leg's exit contract and force re-deriving the selftest's mutation cases for zero recurring benefit (agents iterate per-file anyway). Recorded in the CHANGELOG close-out entry. (Not implemented — no code change.)
+
+**§g.2 crush-config lessons.md — DELIVERED (moot, the daemon resolved it):** crush-config ALSO runs a heuristic daemon — it had already swept the lessons.md write into `aa61439` (06:07). Per the daemon-race doctrine (verify contents → amend unpushed HEAD), amended into `docs(lessons): status-report filenames are measured, never guessed` (`163b76e`, 1 file +15, unpushed). Installation rides crush-config's next SystemNix input bump + home-manager rebuild (SOURCE-LEVEL delivery doctrine).
+
+**§g.3 E2E — DONE without any master commits:** both legs fired through the REAL `.githooks/pre-commit` in a throwaway `git worktree` at `/tmp/sn-hook-e2e` (removed after). Broken `.nix` staged → `Nix parse failed in staged file: broken.nix` + rc=1; docs-only staged → `Docs-only staged diff (.md/.html/.txt) — skipping Nix flake check` + rc=0; `core.hooksPath=.githooks` verified. This satisfies the E2E-harvest row and needs no history writes.
+
+**Follow-up rows executed (all pruned to CHANGELOG):** exclusivity sweep over 13 daemon commits (all session files landed, mixed commits match §d's mapping); TODO footer sweep (2 `[x]` rows verified — InboxClean `/health` fix commits `1540a56`+`d23c48a` live in ~/projects/InboxClean, row annotated); avatar-dms BuildFlow exclusion (NOT needed — BuildFlow source-verified: file-size check scans `**/*.go` only, image-scanning provider unwired; rationale comment at flake.nix `BUILDFLOW_EXCLUDE_PATTERNS`); **oci-containers `config.assertions` abort ROOT-CAUSED** — the incident report's "healed by ~05:00" premise was FALSE: upstream nixpkgs bug (`oci-containers.nix` rootless assertion MESSAGE interpolates `${podman.user}` while `podman` defaults null and docker backend requires null; any deep-force of `config.assertions` dies, toplevel/deploy evals never did — reproduced at `f8d04a8b` AND live at HEAD). Fix filed upstream (docs/todo/upstream.md); VM-checks sweep row stays queued (IO-gated).
