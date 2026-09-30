@@ -50,6 +50,11 @@ in
       systemd.enable = true;
       package = cfg.package;
 
+      # Clipboard daemon config (clsettings.json → core clipboard.Config).
+      # maxHistory is NOT a settings.json key — it lives here. Missing keys keep
+      # the Go defaults (MaxEntrySize 5M, MaxPinned 25).
+      clipboardSettings.maxHistory = 100000;
+
       enableSystemMonitoring = true;
       enableDynamicTheming = false;
       enableAudioWavelength = true;
