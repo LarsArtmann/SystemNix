@@ -29,7 +29,8 @@ landed; the five migrations themselves are owner windows.
 6. `configuration.nix`: `services.hot-db.enable = true; entries = { }`
    (ZERO mounts ship — entries land one per wave), discordsync
    `dbBackup.enable = true`.
-7. Tests: `scripts/test-migrate-hot-db.sh` (21 assertions, PATH-stubbed
+7. Tests: `scripts/test-migrate-hot-db.sh` (21 assertions [superseded 2026-09-30
+   re-dispatch: 22 PASS assertion sites, see storage.md row 36], PATH-stubbed
    btrfs/chattr/systemctl/mountpoint + real rsync) wired as
    `checks.migrate-hot-db-fixture`; `tests/test-hot-db.nix` extended with
    collector assertions.
@@ -94,7 +95,8 @@ probes).
 - `nix flake check --no-build` (x86_64-linux AND `--all-systems`): all
   checks passed, post-formatting.
 - `checks.x86_64-linux.migrate-hot-db-fixture` BUILT GREEN in-sandbox
-  (21/21 assertions; local run exit 0 too).
+  (21/21 assertions [superseded 2026-09-30 re-dispatch: 22 PASS assertion
+  sites, see storage.md row 36]; local run exit 0 too).
 - Eval renders: `hot-db-metrics` ExecStart + 5min timer;
   `extraEndpoints` 108→109 (exactly the one tier check, entries = {});
   `discordsync-db-backup` OnCalendar `*-*-* 02:30:00`, TimeoutStartSec
