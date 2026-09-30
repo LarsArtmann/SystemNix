@@ -152,14 +152,12 @@ let
     "monitor365"
     "monitor365-server"
     "overview"
-    "paperless"
     "pool-recovery"
     "pool-smart-metrics"
     "projects-management-automation"
     "signoz"
     "systemd-graph"
     "systemd-timer-monitor"
-    "taskchampion-sync-server"
     "tq-agent-pool"
     "twenty"
     "voice-agents"
@@ -174,6 +172,10 @@ in
       imports = [
         (mod "caddy.nix" "caddy")
         (mod "pocket-id.nix" "pocket-id")
+        # caddy.nix declares an mkIf-wrapped services.integration entry —
+        # an mkIf definition at an undeclared path is still collected
+        # (test-miniflux precedent: co-import the registry module).
+        (mod "integration.nix" "integration")
         { options = lib.recursiveUpdate (lib.recursiveUpdate stubs portStubs) siblingEnableStubs; }
         ./mock-sops.nix
       ];

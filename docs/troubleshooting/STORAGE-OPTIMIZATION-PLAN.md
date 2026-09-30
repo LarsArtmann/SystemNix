@@ -83,6 +83,8 @@ rm -rf ~/Library/Caches/bun
 sudo nix-collect-garbage -d --delete-older-than 3d
 ```
 
+> **Standing config is 7d since 2026-09-29** (`platforms/common/nix-settings.nix`, commit `de0feb7e` — owner wants deeper boot-menu rollback; each retained generation pins its full closure on the unsnapshotted Samsung `/nix`). The `3d` commands in this doc are EMERGENCY-ONLY deeper cuts for a genuine space emergency — do not mistake them for the current schedule.
+
 **Expected:** 3-5GB freed from old generations
 
 ### 2. Remove Unused Source Files (Free 1-2GB)
@@ -249,7 +251,7 @@ just clean-aggressive      # Comprehensive cleanup in justfile
 
 ### Phase 1: Immediate (Today, requires sudo)
 
-1. Run `sudo nix-collect-garbage -d --delete-older-than 3d`
+1. Run `sudo nix-collect-garbage -d --delete-older-than 3d`  <!-- EMERGENCY-ONLY deeper cut — standing schedule is 7d since 2026-09-29 -->
 2. Run `sudo nix-store --optimize`
 3. Run `sudo rm -rf /nix/store/*-source` (with verification)
 4. Check disk space: `df -h /`
@@ -304,7 +306,7 @@ just clean
 just clean-aggressive
 
 # Nix-specific cleanup
-nix-collect-garbage -d --delete-older-than 3d
+nix-collect-garbage -d --delete-older-than 3d  # EMERGENCY-ONLY deeper cut — standing schedule is 7d since 2026-09-29
 nix-store --optimize
 nix profile wipe-history
 ```
@@ -337,7 +339,7 @@ nix-build --option keep-going true --max-jobs 2 .#package
 
    ```bash
    # Keep at least last 2 working generations
-   nix-collect-garbage -d --delete-older-than 3d  # Not 1d
+   nix-collect-garbage -d --delete-older-than 3d  # Not 1d; EMERGENCY-ONLY deeper cut — standing schedule is 7d since 2026-09-29
    ```
 
 3. **Test after GC:**
