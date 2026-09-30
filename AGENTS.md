@@ -129,6 +129,16 @@ dnsGate = mkDnsGate { inherit pkgs; serviceName = "my-svc"; hostname = "wikidata
 
 **`includeProvision`** (default `true`) — adds `pocket-id-provision.service` to after/wants. Set to `false` for services that don't need provisioned OIDC clients.
 
+### Net VPN: split-horizon larsartmann.cloud + NetBird (2026-09-30)
+
+Architecture/decisions: `docs/brainstorming/2026-09-30_netbird-larsartmann-cloud-selfhosted-vpn.md`; phases + user gates: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.md`; runbook: `docs/services/net-vpn.md`. Facts an agent must know:
+
+- `networking.local.cloudDomain` (default `larsartmann.cloud`) is the alias zone — dnsblockd serves it on evo-x2 AND rpi3 (`dns-blocker-config.nix` + `rpi3/default.nix`, records fold from the same `dns-local.nix` list; NO wildcard local record — sdns ignores them). NEVER publish cloud service names in public DNS (domains repo keeps only apex + `netbird.` + `relay.` + Resend).
+- TLS: `dnsblockd-cert-mint.service` (in caddy.nix) mints ONE dual-zone cert from the sops'd dnsblockd CA into `/run/dnsblockd-certs/` at EVERY boot (random serial/key, 365d) — Caddy `tlsConfig` points there, After+Requires ordering, fail-closed. The old static sops server cert stays declared as fallback material. Client trust is unchanged (same CA).
+- Caddy vHosts are mirrored 1:1 under the cloud domain via `mirrorCloud` in caddy.nix (filter + replaceStrings on keys) — do NOT hand-write cloud vHosts; new vHosts under home.lan mirror automatically. Auth redirects deliberately stay on `auth.home.lan` (VPN resolves both zones; oauth2-proxy whitelists the cloud domain for the post-login redirect only).
+- NetBird client module: `services.netbird-client` (wrapper) → `services.netbird.clients.evox2` (pinned-nixpkgs surface; the JSON fragment option is `config`, NOT `settings` — `checks.cloud-domain` has a positive extendModules probe guarding renames). GATED OFF until the Phase-2 setup key exists in sops (`platforms/nixos/secrets/netbird.yaml`, key `netbird_setup_key`); enabling without the file fails activation BY DESIGN.
+- Control plane lives on the pbx server (pbx-artmann repo `hosts/pbx/netbird.nix`): NetBird server + relay(STUN 3479) + Dex (dashboard logins only). Deploy is owner-run (pbx AGENTS policy); handover: pbx `docs/runbooks/netbird-deploy.md`.
+
 **Gate-timeout floors are EVAL-ENFORCED (`gate-timeout-audit.nix`)** — any unit whose ExecStartPre contains a `-wait-oidc` script MUST set `TimeoutStartSec ≥ 6min` (gate budget 300s), any `-wait-dns` unit ≥ 4min (budget 180s), or `nix flake check` fails naming the unit. Both gate helpers return `TimeoutStartSec = mkDefault <floor>` in their serviceConfig fragment, so consumers merging the whole fragment are covered automatically; consumers that cherry-pick only `ExecStartPre` (searxng, forgejo, discordsync's hand-rolled clone) must set it explicitly. Hand-rolled gate CLONES that follow the `<service>-wait-dns` naming convention are caught by the same audit (discordsync is). Negative test pattern: `extendModules` + `mkForce "2min"` on a gate unit → assertion message must appear in `config.assertions`.
 
 ### Consuming LarsArtmann Flakes (DiscordSync/Monitor365 pattern)
