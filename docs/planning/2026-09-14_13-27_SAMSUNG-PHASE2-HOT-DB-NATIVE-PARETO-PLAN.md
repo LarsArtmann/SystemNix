@@ -101,8 +101,8 @@ Sorted by importance → impact → effort → value. Owner: **A** = agent sessi
 
 All tasks above, split into atomic verifiable steps. Convention: `Fn.m` = step m of task `Tn`. Every step ends in a verifiable artifact (file + eval/test green, or recorded output).
 
-| ID    | Step                                                                                                                                        | Est | Verifies                     | Status (2026-09-30) |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------- | --- | ---------------------------- | ----- |
+| ID    | Step                                                                                                                                        | Est | Verifies                     |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------- | --- | ---------------------------- |
 | F1.1  | Script skeleton: arg parsing (trap-time vs live), output dir `/var/lib/io-psi-forensics/<ts>`, `set -euo pipefail`                          | 12m | `bash -n`                    |
 | F1.2  | Per-cgroup `io.stat` capture (root + user slices, sorted by write bytes)                                                                    | 12m | fixture run                  |
 | F1.3  | D-state process capture (`ps` + per-pid kernel stack via `/proc/<pid>/stack`)                                                               | 12m | fixture run                  |
