@@ -169,10 +169,22 @@ if nix run .#pre-deploy-check; then
   # (checkLinkTargets "Existing file ... in the way") — so they must be reaped
   # BEFORE nh os switch. Cache data only, exact names, symlink occupants kept;
   # rm (not trash) because trashing gigabytes of rebuildable cache writes them
-  # onto the NVMe this whole setup exists to protect. Mirrors the reap loop in
-  # buildcache-usb-recovery.service. 2026-09-17: gobuild/gocache/gomod added —
-  # BuildFlow's cross-repo fallback names the original list evaded forever.
-  for d in goimports go go-build gobuild gocache gomod pnpm; do
+  # onto the NVMe this whole setup exists to protect. Names come from the
+  # single source scripts/lib/buildcache-reap-names.sh (shared with
+  # buildcache-usb-recovery step 2.5 and the home.nix activation reap —
+  # never keep a private copy here). 2026-09-17: gobuild/gocache/gomod added
+  # — BuildFlow's cross-repo fallback names the original list evaded forever.
+  reap_names_lib="$PWD/scripts/lib/buildcache-reap-names.sh"
+  if [ ! -f "$reap_names_lib" ]; then
+    echo "❌ $reap_names_lib missing — run the deploy from the SystemNix repo root (nh os switch . needs the same)." >&2
+    exit 1
+  fi
+  # shellcheck source=scripts/lib/buildcache-reap-names.sh
+  # shellcheck disable=SC1091
+  source "$reap_names_lib"
+  read -r -a reap_cache_dirs <<<"$BUILDCACHE_REAP_CACHE_DIRS"
+  read -r -a reap_home_dirs <<<"$BUILDCACHE_REAP_HOME_DIRS"
+  for d in "${reap_cache_dirs[@]}"; do
     if [ -e "$HOME/.cache/$d" ] && [ ! -L "$HOME/.cache/$d" ]; then
       sudo rm -rf -- "$HOME/.cache/$d"
       echo "  Reaped ~/.cache/$d (real dir had displaced the HM symlink)"
@@ -183,7 +195,7 @@ if nix run .#pre-deploy-check; then
   # state discipline: reaped BEFORE nh os switch even when the SSD is absent
   # (the in-config activation reap is mount-gated and would skip, and HM's
   # checkLinkTargets would then abort on "Existing file ... in the way").
-  for d in ".local/state/pnpm" ".cargo/registry"; do
+  for d in "${reap_home_dirs[@]}"; do
     if [ -e "$HOME/$d" ] && [ ! -L "$HOME/$d" ]; then
       sudo rm -rf -- "$HOME/$d"
       echo "  Reaped ~/$d (real dir had displaced the HM symlink)"

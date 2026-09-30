@@ -41,6 +41,11 @@
         onFailure
         ;
 
+      # Env-less cache reap inventories — parsed from the single source
+      # scripts/lib/buildcache-reap-names.sh (shared with deploy.sh and the
+      # home.nix activation reap; never keep a private name copy here).
+      reapNames = import ../../../lib/buildcache-cache-names.nix lib;
+
       cfg = config.services.buildcache;
 
       textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
@@ -338,23 +343,26 @@
             # re-contaminates the NVMe with build churn AND blocks the next
             # home-manager activation (checkLinkTargets "Existing file in the
             # way"). Cache data only, exact paths, symlink occupants kept.
-            # 2026-09-17: added BuildFlow's cross-repo fallback names
-            # (gobuild gocache gomod - set by BuildFlow sessions as dead-mount
-            # fallbacks) - the original 3-name list evaded them forever, leaving
-            # unowned NVMe churn after every dead-mount episode.
-            # 2026-09-22 sweep: pnpm (dlx/metadata cache, ~/.cache/pnpm — the
-            # store symlink covers only the store; env-less pnpm recreates the
-            # cache dir as a real dir on the NVMe during dead-mount windows).
-            for d in goimports go go-build gobuild gocache gomod pnpm; do
+            # Names come from the single source scripts/lib/buildcache-reap-
+            # names.sh (shared with deploy.sh and the home.nix activation reap
+            # — never a private copy). 2026-09-17: added BuildFlow's
+            # cross-repo fallback names (gobuild gocache gomod - set by
+            # BuildFlow sessions as dead-mount fallbacks) - the original
+            # 3-name list evaded them forever, leaving unowned NVMe churn
+            # after every dead-mount episode. 2026-09-22 sweep: pnpm
+            # (dlx/metadata cache, ~/.cache/pnpm — the store symlink covers
+            # only the store; env-less pnpm recreates the cache dir as a real
+            # dir on the NVMe during dead-mount windows).
+            for d in ${lib.concatStringsSep " " reapNames.cacheDirs}; do
               if [ -e "${homeDir}/.cache/$d" ] && [ ! -L "${homeDir}/.cache/$d" ]; then
                 rm -rf -- "${homeDir}/.cache/$d"
                 echo "reaped real dir at ${homeDir}/.cache/$d (HM symlink will replace it)"
               fi
             done
-            # 2026-09-22 (review fix): the non-.cache fallback paths from
-            # home.nix — env-less pnpm/cargo recreate them as real dirs during
-            # dead-mount windows, same checkLinkTargets abort class.
-            for d in ".local/state/pnpm" ".cargo/registry"; do
+            # The non-.cache fallback paths from home.nix — env-less
+            # pnpm/cargo recreate them as real dirs during dead-mount windows,
+            # same checkLinkTargets abort class (2026-09-22 review fix).
+            for d in ${lib.concatStringsSep " " reapNames.homeRelDirs}; do
               if [ -e "${homeDir}/$d" ] && [ ! -L "${homeDir}/$d" ]; then
                 rm -rf -- "${homeDir}/$d"
                 echo "reaped real dir at ${homeDir}/$d (HM symlink will replace it)"

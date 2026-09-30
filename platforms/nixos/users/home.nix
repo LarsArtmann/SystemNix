@@ -12,6 +12,11 @@ let
   colors = colorScheme.palette;
   inherit (import ../../../lib/default.nix lib) wrapWithMemoryLimit;
 
+  # Env-less cache reap inventories — parsed from the single source
+  # scripts/lib/buildcache-reap-names.sh (shared with deploy.sh and
+  # buildcache-usb-recovery step 2.5; never keep a private name copy here).
+  reapNames = import ../../../lib/buildcache-cache-names.nix lib;
+
   # Niri session manager app lists + invariant checker — single source of
   # truth lives in ./niri-session-manager-apps.nix (also consumed by the
   # pure-eval CI guard test tests/test-niri-session-config.nix). The TOML
@@ -399,8 +404,9 @@ in
       # (systemd user services, dbus-activated apps, emergency shells) fall
       # back to Go's default ~/.cache/go-build — a real dir there silently
       # moves build churn back onto the NVMe (2026-08-16: 5.4 GB accumulated
-      # in the USB-outage window). Kept in sync with the reap list in
-      # modules/nixos/services/buildcache.nix (buildcache-usb-recovery).
+      # in the USB-outage window). Name list single-sourced in
+      # scripts/lib/buildcache-reap-names.sh (all reap surfaces parse it —
+      # see the activation block below).
       ".cache/go-build".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/go-build";
       # pnpm 11 ignores npm_config_* env vars AND .npmrc for store-dir, so the
       # store is redirected via symlink at its default location instead —
@@ -463,16 +469,25 @@ in
     # ~/.local/bin/jan (AppImage binary; fails on NixOS stub-ld) so the
     # nixpkgs FHS-wrapped jan wins on PATH.
     # Cache-fallback convergence (2026-09-22 sweep, storage domain): reap the
-    # real dirs occupying the pnpm/cargo default cache paths BEFORE HM's
+    # real dirs occupying the buildcache fallback paths BEFORE HM's
     # checkLinkTargets would abort on "Existing file ... in the way"
     # (buildcache-usb-recovery reap discipline: rebuildable cache data only,
-    # rm not trash — trash would write them to the NVMe .Trash). Targets on
-    # the mount are pre-created so the symlinks never dangle. Skipped cleanly
-    # when the buildcache SSD is absent (next successful activation converges).
+    # rm not trash — trash would write them to the NVMe .Trash). Names come
+    # from the single source scripts/lib/buildcache-reap-names.sh — the FULL
+    # set (go + pnpm + cargo), so this loop cannot drift from the deploy.sh
+    # and buildcache-usb-recovery reaps. Targets on the mount are pre-created
+    # so the symlinks never dangle. Skipped cleanly when the buildcache SSD
+    # is absent (deploy.sh's unconditional pre-switch reap converges then).
     activation.migrate-buildcache-fallback-caches = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
       if mountpoint -q /mnt/buildcache; then
         mkdir -p /mnt/buildcache/pnpm-cache /mnt/buildcache/pnpm-state /mnt/buildcache/cargo/registry
-        for d in .cache/pnpm .local/state/pnpm .cargo/registry; do
+        for d in ${lib.concatStringsSep " " reapNames.cacheDirs}; do
+          if [ -e "$HOME/.cache/$d" ] && [ ! -L "$HOME/.cache/$d" ]; then
+            rm -rf -- "$HOME/.cache/$d"
+            echo "migrated buildcache fallback: removed real dir $HOME/.cache/$d (HM symlink replaces it)"
+          fi
+        done
+        for d in ${lib.concatStringsSep " " reapNames.homeRelDirs}; do
           if [ -e "$HOME/$d" ] && [ ! -L "$HOME/$d" ]; then
             rm -rf -- "$HOME/$d"
             echo "migrated buildcache fallback: removed real dir $HOME/$d (HM symlink replaces it)"
