@@ -44,11 +44,11 @@
     "art-dupl-src_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1790322378,
-        "narHash": "sha256-DGDkzQFT1ueZl6XbO98RZQ5NlPsa82qDcVyaqSDyP+U=",
+        "lastModified": 1790674725,
+        "narHash": "sha256-wMN/uTjMw1CoUs8kcBXTr/BzdxQF5KcD/ghL6xVU534=",
         "owner": "LarsArtmann",
         "repo": "art-dupl",
-        "rev": "296c726a0b41f2c5ca6078eca78c2fd4d3204666",
+        "rev": "86d807ede669453a16e43fcf6d176e9a7a6b7dff",
         "type": "github"
       },
       "original": {
@@ -596,16 +596,16 @@
     "cqrs-htmx_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1789843141,
-        "narHash": "sha256-U3ZsejIaDU7RYXilRmW1uuk5OwoccAHFfeaijVBfBRA=",
-        "ref": "refs/tags/v4.11.0",
-        "rev": "60a6b177bb9460ceb71032fcc8688171af8d316c",
-        "revCount": 2651,
+        "lastModified": 1790028864,
+        "narHash": "sha256-GcWG4ncnndRLKrciFPMeM95pQO1LvHzvC2wXbe0CiNo=",
+        "ref": "refs/tags/v4.12.0",
+        "rev": "fe1029393213fdf0a92e631869986f37e12b778e",
+        "revCount": 2789,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/cqrs-htmx"
       },
       "original": {
-        "ref": "refs/tags/v4.11.0",
+        "ref": "refs/tags/v4.12.0",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/cqrs-htmx"
       }
@@ -950,11 +950,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1790646126,
-        "narHash": "sha256-Nb2tTxriUXhEJgVFcBU4g7zJg7lkSn4hMSktUyL3Nao=",
+        "lastModified": 1790765024,
+        "narHash": "sha256-JxhXoTJxWfRqnn1INnI+oXk5CZifI0u/rFthn1sXtCw=",
         "owner": "LarsArtmann",
         "repo": "dnsblockd",
-        "rev": "75b4ce9dc63001663463e9bd922bec3c7293d97f",
+        "rev": "f625cfee2bfd75b35aa23080d369b58eef5cd626",
         "type": "github"
       },
       "original": {
@@ -2594,16 +2594,16 @@
     "go-cqrs-lite-record": {
       "flake": false,
       "locked": {
-        "lastModified": 1789844551,
-        "narHash": "sha256-nwLONMe6zVCZkhGjwE+UyixxIzHwX2IN0udIlQrc+h4=",
-        "ref": "refs/tags/record/v4.5.1",
-        "rev": "6eda5068fa11d46d2662289db3f89b161c3bd937",
-        "revCount": 7096,
+        "lastModified": 1790008531,
+        "narHash": "sha256-Qy7ce9t3Of1qIcLmmskqloCLmrhYHd/MBEYq/p78sJg=",
+        "ref": "refs/tags/record/v4.6.0",
+        "rev": "9770e7563b75d8809d637eab96cbcfe6362cce9a",
+        "revCount": 7301,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       },
       "original": {
-        "ref": "refs/tags/record/v4.5.1",
+        "ref": "refs/tags/record/v4.6.0",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       }
@@ -3792,16 +3792,16 @@
     "go-health-dashboard_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1789630678,
-        "narHash": "sha256-7oy6xoZUmtcvv6vvakvalDx1/72fy6kEYpy7EHuu900=",
-        "ref": "refs/tags/v0.9.0",
-        "rev": "5f71fa60dc1e0c24eb8c3a8231f10c330af9876f",
-        "revCount": 381,
+        "lastModified": 1790116096,
+        "narHash": "sha256-Re/OkhA9zfMQpFCWASBK7gzoqstfCUBZcyDucFpGBeM=",
+        "ref": "refs/tags/v0.10.1",
+        "rev": "e801bf9d05daf46f929b7c841b3a85478259573b",
+        "revCount": 530,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-health-dashboard"
       },
       "original": {
-        "ref": "refs/tags/v0.9.0",
+        "ref": "refs/tags/v0.10.1",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-health-dashboard"
       }
@@ -3873,16 +3873,16 @@
     "go-health_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1789553828,
-        "narHash": "sha256-WykpSqGD3R6epMndLClBmH3bcS7xkoq8pys9EVHRzIw=",
-        "ref": "refs/tags/v0.2.0",
-        "rev": "f6c583d3abec64685f4096d484cffe1d861d24ed",
-        "revCount": 196,
+        "lastModified": 1790323232,
+        "narHash": "sha256-ex/3Je7Yz7yfGATUBdN06bivifEVufEtlhywgRIIdOU=",
+        "ref": "refs/tags/v0.4.1",
+        "rev": "ffbcd86c5bca4ab7b428855a80080c987a1fb360",
+        "revCount": 254,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-health"
       },
       "original": {
-        "ref": "refs/tags/v0.2.0",
+        "ref": "refs/tags/v0.4.1",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-health"
       }
