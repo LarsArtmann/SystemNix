@@ -484,6 +484,9 @@
 
 ### services / pipeline (harvest 2026-09-30 06:5x)
 
+- [ ] [ready] **indexer-web post-deploy smoke + live bring-up verification** (unit never started yet — deploy queued; smoke §-entries + icon/pat/admin-key/coverage live checks) → [docs/todo/services.md](docs/todo/services.md)
+- [ ] [ready] **indexer-web ioTier assignment** (daily full-tree QLC scan untiered) → [docs/todo/services.md](docs/todo/services.md)
+- [ ] [ready] **indexer-web `[RESPONSE_TIME]` condition on the UI check** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] [ready] **indexer-web VM regression test** (unit + HTML + metrics + admin-key 401/200 + key oneshot idempotence; shipped 2026-09-30 without one) → [docs/todo/services.md](docs/todo/services.md)
 - [ ] [ready] **geometrikks post-deploy smoke probe** (unit + `/health/ready` + provision journal line; the service sat dark since 09-29 with ZERO deploy-gate coverage) → [docs/todo/services.md](docs/todo/services.md)
 - [ ] [ready] **CV render smoke IO-pressure-aware** (`/de/cv` proxy render leg false-FAILs under high io PSI; WARN like the shell check) → [docs/todo/services.md](docs/todo/services.md)
