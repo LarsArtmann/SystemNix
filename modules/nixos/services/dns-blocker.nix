@@ -366,6 +366,19 @@ _: {
             # falls back to "Sign in with SSO" when unset).
             oidc_button_text = cfg.oidcButtonText;
           }
+          // lib.optionalAttrs (cfg.devices != [ ]) {
+            # Household device registry (see the devices option). group is
+            # omitted entirely when null — dnsblockd treats an empty-string
+            # group differently from an absent one.
+            devices = map
+              (d: {
+                inherit (d) id name ips;
+              } // lib.optionalAttrs (d.group != null) { inherit (d) group; })
+              cfg.devices;
+          }
+          // lib.optionalAttrs (cfg.users != [ ]) {
+            users = cfg.users;
+          }
         )
       );
     in
@@ -694,6 +707,66 @@ _: {
             Example: ["1.1.1.1:53" "8.8.8.8:53"]
           '';
         };
+
+        # ── Device + user registry (household attribution) ──
+
+        devices = mkOption {
+          type = types.listOf (
+            types.submodule {
+              options = {
+                id = mkOption {
+                  # Upstream cap: lowercase-slug ids, max 256 devices.
+                  type = types.strMatching "[a-z0-9]([a-z0-9-]*[a-z0-9])?";
+                  description = "Stable device id (lowercase slug). Only the id is persisted in tracking rows; name/group are config-owned display data.";
+                };
+                name = mkOption {
+                  type = types.str;
+                  description = "Display name shown in the dashboard Top Clients table.";
+                };
+                group = mkOption {
+                  type = types.nullOr types.str;
+                  default = null;
+                  description = "Optional group tag (e.g. \"kids\") addressable by policies.";
+                };
+                ips = mkOption {
+                  type = types.listOf types.str;
+                  default = [ ];
+                  description = "Stable IP addresses or CIDRs of this device (max 16; merged into one dashboard row).";
+                };
+              };
+            }
+          );
+          default = [ ];
+          description = ''
+            Device registry for per-device attribution. DNS and HTTP tracking
+            rows carry the device id so the dashboard can answer "which device
+            queried it"; declaring devices also enables per-device pause and
+            device-scoped temp-allows. Requires dnsblockd >= v0.9.3 (T309: a
+            configured device's block-page Allow never unblocked it before).
+            DHCP-lease discovery: GET /api/devices/candidates lists active
+            leases not yet covered here.
+          '';
+        };
+
+        users = mkOption {
+          type = types.listOf (
+            types.submodule {
+              options = {
+                name = mkOption {
+                  type = types.str;
+                  description = "Owner display name (max 64 chars, PII — redacted below METADATA_AND_DNS like device names).";
+                };
+                devices = mkOption {
+                  type = types.listOf types.str;
+                  default = [ ];
+                  description = "Device ids owned by this user (must resolve to declared devices; each device at most one owner).";
+                };
+              };
+            }
+          );
+          default = [ ];
+          description = "Static users: persons who own declared devices. Renders an owner chip next to devices in Top Clients / Device Activity.";
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -717,6 +790,42 @@ _: {
           {
             assertion = !cfg.dnsDOHEnabled || cfg.dnsDOHPort != cfg.blockTLSPort;
             message = "services.dns-blocker.dnsDOHPort must differ from blockTLSPort to avoid bind conflict.";
+          }
+          {
+            # Upstream hard-caps (config load fails beyond them) — fail at
+            # eval instead of at boot, where the sole DNS resolver would die.
+            assertion = builtins.length cfg.devices <= 256 && builtins.all (d: builtins.length d.ips <= 16) cfg.devices;
+            message = "services.dns-blocker.devices exceeds upstream caps (256 devices, 16 IPs each).";
+          }
+          {
+            assertion =
+              lib.unique (map (d: d.id) cfg.devices) == map (d: d.id) cfg.devices;
+            message = "services.dns-blocker.devices has duplicate ids.";
+          }
+          {
+            # Overlapping exact IPs/CIDRs across devices would race the
+            # attribution walk; identical strings are always wrong, subnet
+            # overlap is the config author's judgment.
+            assertion =
+              lib.unique (lib.concatMap (d: d.ips) cfg.devices)
+              == lib.concatMap (d: d.ips) cfg.devices;
+            message = "services.dns-blocker.devices has duplicate IPs across devices.";
+          }
+          {
+            assertion =
+              let
+                declared = map (d: d.id) cfg.devices;
+                dangling = lib.subtractLists declared (lib.concatMap (u: u.devices) cfg.users);
+              in
+              dangling == [ ];
+            message = "services.dns-blocker.users references undeclared devices.";
+          }
+          {
+            # Upstream: each device has at most one owner.
+            assertion =
+              lib.unique (lib.concatMap (u: u.devices) cfg.users)
+              == lib.concatMap (u: u.devices) cfg.users;
+            message = "services.dns-blocker.users assigns a device to more than one owner.";
           }
         ];
 

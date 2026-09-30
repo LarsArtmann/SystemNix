@@ -64,6 +64,46 @@ in
       dnsRateLimitPerSec = 50;
       dnsRateLimitBurst = 100;
 
+      # Household device registry — named attribution in Top Clients,
+      # per-device pause, device-scoped temp-allows. Inventory 2026-09-30
+      # (/proc/net/arp + repo knowledge); unknown-identity entries carry
+      # owner-confirm markers to verify at the next deploy window (plan M11).
+      # The VRRP virtualIP (.53) and blockIP (.200) are NOT devices.
+      devices = [
+        {
+          id = "evo-x2";
+          name = "evo-x2 (this host)";
+          ips = [ "192.168.1.150" ];
+        }
+        {
+          id = "rpi3-dns";
+          name = "Raspberry Pi 3 (DNS failover)";
+          ips = [ "192.168.1.151" ];
+        }
+        {
+          id = "lan-router";
+          name = "LAN Router / Gateway";
+          ips = [ "192.168.1.1" ];
+        }
+        {
+          # owner-confirm: randomized WiFi MAC (2e:fd:a5:…) — Pixel 6 by
+          # elimination; phone DHCP address may drift, re-inventory on change.
+          id = "pixel6";
+          name = "Pixel 6";
+          ips = [ "192.168.1.29" ];
+        }
+        {
+          # owner-confirm: Realtek NIC (00:e0:4c:…) — LG TV SSCR2 by
+          # elimination; wired TVs keep stable MACs but confirm anyway.
+          id = "lg-tv";
+          name = "LG TV (SSCR2)";
+          ips = [ "192.168.1.62" ];
+        }
+      ];
+      users = [
+        { name = "Lars"; devices = [ "evo-x2" "pixel6" ]; }
+      ];
+
       # Forward via DNS-over-TLS. The sdns embedded resolver's root recursion
       # is broken in dnsblockd (middleware pipeline not wired up), so we
       # forward to trusted DoT resolvers. Local zones, blocklists, and ACLs
