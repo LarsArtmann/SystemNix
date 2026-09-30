@@ -10,6 +10,8 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 
 ## Prioritized
 
+- [ ] [blocked:deploy] **Verify AccountsService avatar re-link + DMS render post-deploy** — tmpfiles `L+` now points `/var/lib/AccountsService/icons/lars` at the 54KB `avatar-dms.png` (256x199, eval-verified rendered rule) instead of the 4MB original; needs one deploy, then `readlink /var/lib/AccountsService/icons/lars` shows the `…-avatar-dms.png` store path and the DMS user widget still renders the avatar. Also confirms the working assumption that DMS reads the icon via AccountsService/User D-Bus (never live-verified). **Source:** docs/status/2026-09-30_05-42_avatar-dms-optimization-status.md §b
+- [ ] [decision] **Avatar HiDPI sizing: accept 256x199 or regenerate at 512x398** — on the 4K DP-1 at 2x scale the SDDM/DMS avatar needs ~256-300 device px height; 199px height may render slightly soft. 512px regeneration costs ~150-250KB (still ~20x smaller than the 4MB original). Owner eyeballs the deployed 256px first. **Source:** docs/status/2026-09-30_05-42_avatar-dms-optimization-status.md §b/§g2
 - [ ] [blocked:user] **Runtime-verify wf-recorder screen recording on niri** — build-proven only. **Source:** 08-16 22-00 §c.1
 - [ ] [blocked:user] **Smart-audio: verify audible output + reverse direction (incl. DP-2 cross-output path, never tested)** — test-tone tooling is on PATH since 08-22. **Source:** archived 08-14 08-24
 - [ ] [decision] **btop privileges + terminal-restore policy (user, niri-storm session)** — sudoers NOPASSWD vs unprivileged btop; restore ONE ghostty per login (current) vs ZERO (`skip_apps`). **Source:** `2026-08-31_15-11_*` §Q1-2
