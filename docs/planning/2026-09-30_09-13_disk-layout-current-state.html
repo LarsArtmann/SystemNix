@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>
-      Disk &amp; BTRFS Layout — Current vs Target · evo-x2 · SystemNix
+      Disk Disk &amp; BTRFS Layout — Current vs Targetamp; BTRFS Layout — Current State · evo-x2 · SystemNix
     </title>
     <style>
       /* =========================================================================
@@ -459,87 +459,60 @@
   </head>
   <body>
     <div class="wrap">
-      <!-- SUPERSEDED 2026-09-30: snapshot of the 2026-09-20 era (pre hot-DB
-           vehicle, pre restic/offsite-borg deployment, root at 78%). The
-           current state lives in
-           docs/planning/2026-09-30_09-13_disk-layout-current-state.html -->
-      <div
-        style="
-          margin: 24px 0;
-          padding: 16px 20px;
-          border: 2px solid #b3552d;
-          background: #fdf3ee;
-          color: #3a2318;
-          line-height: 1.5;
-        "
-      >
-        <strong>SUPERSEDED (2026-09-30)</strong> — this snapshot reflects the
-        2026-09-20 state of the machine (QLC root at 78% right after the
-        <code>@nix</code> deletion, hot-DB migration still planned, offsite
-        Borg still a research doc, Samsung mounts still on the default 30 s
-        commit). The current disk layout now lives in
-        <a href="./2026-09-30_09-13_disk-layout-current-state.html"
-          >the 2026-09-30 disk layout visualization</a
-        >.
-      </div>
       <!-- ================= HERO ================= -->
       <header class="hero">
         <div class="kicker">SystemNix · evo-x2 · snapshot visualization</div>
-        <h1>Disk &amp; BTRFS layout — <em>current</em> vs <em>target</em></h1>
+        <h1>Disk &amp; BTRFS layout — <em>current state</em></h1>
         <p class="standfirst">
-          Every disk, partition, filesystem, BTRFS subvolume and backup flow on
-          the evo-x2 workstation, as verified live on 2026-09-20 — side-by-side
-          with the ratified target layout (Samsung synchronous-disk role
-          assignment Rev 2, per-service subvolume Set A/B/C doctrine, Hetzner
-          offsite leg).
+          Every disk, partition, filesystem, BTRFS subvolume, mount and backup
+          flow on the evo-x2 workstation, verified live on 2026-09-30 —
+          ten days after the 2026-09-20 snapshot, with the hot-DB migration
+          vehicle landed dormant, the QLC root back under pressure at 92%, and
+          the offsite Borg leg built but still owner-gated.
         </p>
         <div class="meta">
-          <span>snapshot: 2026-09-20 15:17</span>
-          <span>host: evo-x2 · NixOS · flake-managed</span>
+          <span>snapshot: 2026-09-30 09:13</span>
+          <span>host: evo-x2 · NixOS · flake-managed · gen 804 anchored</span>
           <span
-            >sources: hardware-configuration.nix · snapshots.nix · hot-db.nix ·
-            AGENTS.md · planning docs</span
+            >sources: lsblk · findmnt · df · /proc/mounts · /proc/partitions ·
+            AGENTS.md · docs/todo/storage.md</span
           >
         </div>
       </header>
 
       <nav class="toc">
         <a href="#capacity"><span class="n">01</span>Capacity</a>
-        <a href="#inventory"
-          ><span class="n">02</span>Drives &amp; partitions</a
-        >
+        <a href="#inventory"><span class="n">02</span>Drives &amp; partitions</a>
         <a href="#physical"><span class="n">03</span>Physical topology</a>
         <a href="#subvols"><span class="n">04</span>Subvolume trees</a>
-        <a href="#placement"><span class="n">05</span>Service placement</a>
-        <a href="#mounts"><span class="n">06</span>Mount table</a>
-        <a href="#backups"><span class="n">07</span>Backup flows</a>
-        <a href="#target"><span class="n">08</span>Target layout</a>
-        <a href="#bootchain"><span class="n">09</span>Boot chain</a>
-        <a href="#roadmap"><span class="n">10</span>Roadmap</a>
-        <a href="#gotchas"><span class="n">11</span>Gotchas</a>
+        <a href="#mounts"><span class="n">05</span>Mount table</a>
+        <a href="#backups"><span class="n">06</span>Backup flows</a>
+        <a href="#bootchain"><span class="n">07</span>Boot chain</a>
+        <a href="#delta"><span class="n">08</span>Delta since 09-20</a>
+        <a href="#gotchas"><span class="n">09</span>Gotchas</a>
       </nav>
 
       <!-- ================= STATS ================= -->
       <div class="stat-grid">
         <div class="stat">
           <div class="n">35.5 TB</div>
-          <div class="l">raw · 6 attached disks (32.4 TiB)</div>
+          <div class="l">raw · 6 attached disks (32.3 TiB)</div>
         </div>
         <div class="stat">
-          <div class="n">5</div>
-          <div class="l">BTRFS filesystems + 1 XFS + 1 ext4</div>
-        </div>
-        <div class="stat">
-          <div class="n">18</div>
-          <div class="l">BTRFS subvols · 16 steady-state + 2 rescue</div>
-        </div>
-        <div class="stat good">
-          <div class="n">2 / 3</div>
-          <div class="l">backup copies on-site · offsite pending</div>
+          <div class="n">5 + 2</div>
+          <div class="l">BTRFS filesystems (1 spare unmounted) + XFS + ext4</div>
         </div>
         <div class="stat alert">
-          <div class="n">1</div>
-          <div class="l">P0: /data EIO — no pool backup leg</div>
+          <div class="n">92%</div>
+          <div class="l">QLC root @ · 64G free · was 78% on Sep 20 · gate 95%</div>
+        </div>
+        <div class="stat good">
+          <div class="n">763G</div>
+          <div class="l">free on the Samsung TLC (17% used)</div>
+        </div>
+        <div class="stat alert">
+          <div class="n">P0</div>
+          <div class="l">/data EIO — pool data leg never completed (since Jul)</div>
         </div>
       </div>
 
@@ -547,602 +520,274 @@
       <section id="capacity">
         <div class="sec-head">
           <span class="idx">01</span>
-          <h2>Capacity at a glance (df, live)</h2>
+          <h2>Capacity at a glance (df, live 09:13)</h2>
         </div>
         <p class="sec-lede">
-          Usage of every live mount. <code>/</code> and <code>/data</code> share
-          the QLC Lexar; <code>/nix</code>, <code>/mnt/hot</code> and
-          <code>~/.cache/nix</code> share the Samsung TLC; the pool is the 2×16
-          TB HDD RAID1.
+          Usage of every live mount. <code>/</code> and <code>/data</code>
+          share the QLC Lexar; <code>/nix</code>, <code>/mnt/hot</code>,
+          <code>/var/log/journal</code> and <code>~/.cache/nix</code> share the
+          Samsung TLC; the pool is the 2×16 TB HDD RAID1.
         </p>
         <div class="bars">
           <div class="bar-row">
             <span class="who">/ · QLC @ root</span>
             <div class="bar-track">
-              <div class="bar-fill crit" style="width: 78%"></div>
+              <div class="bar-fill crit" style="width: 92%"></div>
             </div>
-            <span class="num"
-              >545G / 723G · 78% (@nix deleted today · was 85%)</span
-            >
+            <span class="num">641G / 723G · 92% · 64G to gate</span>
           </div>
           <div class="bar-row">
-            <span class="who">/data · QLC p8</span>
+            <span class="who">/data · QLC</span>
             <div class="bar-track">
               <div class="bar-fill crit" style="width: 76%"></div>
             </div>
-            <span class="num">772G / 1.1T · 76%</span>
+            <span class="num">775G / 1.1T · 76%</span>
           </div>
           <div class="bar-row">
-            <span class="who">/var/lib/clickhouse · XFS</span>
+            <span class="who">Samsung tlc · /nix +/mnt/hot</span>
             <div class="bar-track">
-              <div class="bar-fill warn" style="width: 33%"></div>
+              <div class="bar-fill" style="width: 17%"></div>
             </div>
-            <span class="num">33G / 100G · 33%</span>
+            <span class="num">149G / 928G · 17%</span>
           </div>
           <div class="bar-row">
-            <span class="who">/mnt/buildcache · USB ext4</span>
+            <span class="who">clickhouse · XFS p9</span>
             <div class="bar-track">
-              <div class="bar-fill warn" style="width: 51%"></div>
+              <div class="bar-fill" style="width: 34%"></div>
             </div>
-            <span class="num">106G / 220G · 51%</span>
+            <span class="num">34G / 100G · 34%</span>
           </div>
           <div class="bar-row">
-            <span class="who">/nix + /mnt/hot · Samsung TLC</span>
+            <span class="who">/mnt/pool · RAID1</span>
             <div class="bar-track">
-              <div class="bar-fill" style="width: 13%"></div>
+              <div class="bar-fill" style="width: 15%"></div>
             </div>
-            <span class="num">115G / 928G · 13%</span>
+            <span class="num">2.2T / 15T · 15%</span>
           </div>
           <div class="bar-row">
-            <span class="who">/mnt/pool · HDD RAID1</span>
+            <span class="who">/mnt/buildcache · ext4</span>
             <div class="bar-track">
-              <div class="bar-fill" style="width: 13%"></div>
+              <div class="bar-fill warn" style="width: 58%"></div>
             </div>
-            <span class="num">1.8T / 15T · 13%</span>
+            <span class="num">119G / 220G · 58%</span>
           </div>
           <div class="bar-row">
-            <span class="who">/boot · QLC ESP</span>
+            <span class="who">/boot + /boot-mirror</span>
             <div class="bar-track">
               <div class="bar-fill" style="width: 8%"></div>
             </div>
-            <span class="num">312M / 4G · 8%</span>
+            <span class="num">325M / 4G each · 8% · in parity</span>
           </div>
+          <div class="bar-row">
+            <span class="who">/tmp · tmpfs (RAM)</span>
+            <div class="bar-track">
+              <div class="bar-fill warn" style="width: 28%"></div>
+            </div>
+            <span class="num">14G / 48G · 28% · see gotchas</span>
+          </div>
+        </div>
+        <div class="callout">
+          <b class="t">root is 13 points hotter than ten days ago.</b>
+          545G → 641G used since 2026-09-20 (+96G). Drivers per the 2026-09-29
+          reports: IO-storm nights killed four consecutive btrbk prune/send runs
+          (~12 expired snapshots pin ~45G), plus storm-era build churn. The
+          deploy gate fires at 95% — 64G of headroom left.
         </div>
       </section>
 
-      <!-- ================= 2. INVENTORY ================= -->
+      <!-- ================= 2. DRIVES & PARTITIONS ================= -->
       <section id="inventory">
         <div class="sec-head">
           <span class="idx">02</span>
-          <h2>Drive &amp; partition inventory</h2>
+          <h2>Drives &amp; partitions (live)</h2>
         </div>
         <p class="sec-lede">
-          The by-id serials below are not decoration — they ARE the
-          configuration: every mount, smartd probe and udev rule pins devices by
-          these identifiers, because kernel enumeration
-          (<code>nvme0</code>/<code>nvme1</code>,
-          <code>sda…sdd</code>) reshuffles on every boot and replug.
+          Kernel names are per-boot roulette (today <code>nvme0</code> = Lexar;
+          on 2026-08-31 the Samsung held that slot). Config pins everything by
+          <code>/dev/disk/by-id</code> or <code>by-label</code> — the names
+          below are today's live truth, not config truth.
         </p>
         <table>
           <thead>
             <tr>
-              <th>Drive</th>
-              <th>by-id serial</th>
-              <th>Tech · link</th>
-              <th>Size</th>
-              <th>Role</th>
-              <th>Watch</th>
+              <th>Device</th>
+              <th>Model · role</th>
+              <th>Partitions / filesystems</th>
+              <th>State</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Lexar NQ790 2TB</td>
-              <td class="mono">QBC838R010854P220C</td>
-              <td>QLC NVMe · PCIe 4.0 x4</td>
-              <td class="mono">1.82 TiB</td>
-              <td>system + streaming disk (root @, /data, ESP, XFS)</td>
-              <td>SLC-cliff history · 15% used · smartd by-id</td>
+              <td class="mono">nvme0n1</td>
+              <td>
+                <b class="t">Lexar NQ790 2TB</b> · QLC · root disk · PCIe4 x4
+              </td>
+              <td class="mono">
+                p6 723G btrfs (@, @cache-home, @home-hermes, toplevel) · p7 4G
+                vfat /boot · p8 1.1T btrfs label=data · p9 100G XFS
+                label=clickhouse
+              </td>
+              <td><span class="chip c-live">live · 92% root</span></td>
             </tr>
             <tr>
-              <td>Samsung 970 EVO Plus 1TB</td>
-              <td class="mono">S4EWNX0RA01856V</td>
-              <td>TLC NVMe · PCIe 3.0 x4</td>
-              <td class="mono">931.5 GiB</td>
-              <td>synchronous disk (/nix, hot tier, 2nd ESP)</td>
-              <td>600 TBW · ~6–16 y projected · smartd by-id</td>
+              <td class="mono">nvme1n1</td>
+              <td>
+                <b class="t">Samsung 970 EVO Plus 1TB</b> · TLC · store + hot
+                tier + boot mirror · PCIe3 x4
+              </td>
+              <td class="mono">
+                p1 4G vfat label=SAMSUNG-EFI → /boot-mirror · p2 928G btrfs
+                label=tlc (/nix, /journal, users/lars/cache/nix, toplevel /mnt/hot)
+              </td>
+              <td><span class="chip c-live">live · 17%</span></td>
             </tr>
             <tr>
-              <td>Toshiba MG08ACA16TE</td>
-              <td class="mono">72U0A005FWTG (sda)</td>
-              <td>CMR HDD · USB</td>
-              <td class="mono">14.6 TiB</td>
-              <td>pool RAID1 member 1</td>
-              <td>~912 PoH · G-Sense 2 lifetime · smartd -d sat</td>
+              <td class="mono">sda + sdd</td>
+              <td>
+                <b class="t">2× Toshiba MG08ACA16TE 16TB</b> · DAS · BTRFS
+                RAID1 (data+metadata)
+              </td>
+              <td class="mono">
+                whole-disk btrfs label=pool → /mnt/pool (mounted via sda;
+                members matched by-label, never sd-letters)
+              </td>
+              <td><span class="chip c-live">live · 15%</span></td>
             </tr>
             <tr>
-              <td>Toshiba MG08ACA16TE</td>
-              <td class="mono">72U0A0ZUFWTG (sdd)</td>
-              <td>CMR HDD · USB</td>
-              <td class="mono">14.6 TiB</td>
-              <td>pool RAID1 member 2</td>
-              <td>~1319 PoH · G-Sense 4 lifetime · smartd -d sat</td>
+              <td class="mono">sdb</td>
+              <td>
+                <b class="t">SanDisk SDSSDA240G</b> · build-cache SSD (ext4,
+                DRAM-less SandForce)
+              </td>
+              <td class="mono">
+                sdb1 220G ext4 label=buildcache → /mnt/buildcache
+              </td>
+              <td><span class="chip c-live">live · 58%</span></td>
             </tr>
             <tr>
-              <td>SanDisk SDSSDA240G</td>
-              <td class="mono">174444471311 (sdb)</td>
-              <td>DRAM-less SSD · USB 3.0</td>
-              <td class="mono">223.6 GiB</td>
-              <td>buildcache (ext4, writeback, corruption-tolerant)</td>
-              <td>no TRIM through bridge · reformat on degrade</td>
+              <td class="mono">sdc</td>
+              <td>
+                <b class="t">SanDisk SDSSDA240G</b> · spare, earmarked for the
+                2-device buildcache btrfs merge (decided 2026-09-22)
+              </td>
+              <td class="mono">sdc1 220G btrfs label=ssd-btrfs</td>
+              <td><span class="chip c-dead">unmounted · awaiting window</span></td>
             </tr>
             <tr>
-              <td>SanDisk SDSSDA240G</td>
-              <td class="mono">174244451713 (sdc)</td>
-              <td>DRAM-less SSD · USB</td>
-              <td class="mono">223.6 GiB</td>
-              <td>spare · ssd-btrfs, unmounted · tenant decision open</td>
-              <td>frozen-adjacent: no consumer</td>
-            </tr>
-            <tr>
-              <td>WOOACME W3A894</td>
-              <td class="mono">— (sdf when attached)</td>
-              <td>low-endurance SSD · own ctrl c7:00.3</td>
-              <td class="mono">512 GB</td>
-              <td>DETACHED · frozen by owner decision</td>
-              <td>offsite-rotation use evaluated &amp; REJECTED</td>
-            </tr>
-            <tr>
-              <td>zram0</td>
-              <td class="mono">—</td>
-              <td>RAM (zstd, ~3.2x live)</td>
-              <td class="mono">62.2 GiB</td>
-              <td>sole swap (50% of 124.3 GiB visible RAM)</td>
-              <td>fill ≥90% alerts; sized generously by doctrine</td>
+              <td class="mono">zram0</td>
+              <td>RAM-backed swap · 62.2G · zstd · 50% of visible RAM</td>
+              <td class="mono">swap (only swap device)</td>
+              <td><span class="chip c-sub">memory, not disk</span></td>
             </tr>
           </tbody>
         </table>
-
-        <table>
-          <thead>
-            <tr>
-              <th colspan="4">
-                Lexar NQ790 — partition map (numbering keeps historical gaps:
-                p1–p5 were deleted; p6–p9 fill the disk, no unallocated space)
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="mono">p6 · 722.5G</td>
-              <td>btrfs (uuid 0b629b65…)</td>
-              <td>
-                root pool: @ · @cache-home · @home-hermes · @home (legacy) —
-                @nix DELETED 2026-09-20
-              </td>
-              <td class="mono">545G used · 78% (was 85%)</td>
-            </tr>
-            <tr>
-              <td class="mono">p7 · 4G</td>
-              <td>vfat (80A3-73A9)</td>
-              <td>NixOS-managed ESP — systemd-boot writes here</td>
-              <td class="mono">312M used</td>
-            </tr>
-            <tr>
-              <td class="mono">p8 · 1T</td>
-              <td>btrfs label data</td>
-              <td>
-                toplevel: ai · models · llamacpp-models · SteamLibrary · docker
-              </td>
-              <td class="mono">772G used · 76%</td>
-            </tr>
-            <tr>
-              <td class="mono">p9 · 100G</td>
-              <td>xfs label clickhouse</td>
-              <td>dedicated telemetry store (merge-heavy, no CoW)</td>
-              <td class="mono">33G used · 33%</td>
-            </tr>
-          </tbody>
-        </table>
-        <table>
-          <thead>
-            <tr>
-              <th colspan="4">
-                Samsung 970 EVO Plus — partition map (carved 2026-09-05 per the
-                ratified Rev-2 geometry: partition starts never move)
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="mono">p1 · 4G</td>
-              <td>vfat label SAMSUNG-EFI (4F53-C156)</td>
-              <td>2nd boot disk ESP — verified byte-mirror of /boot</td>
-              <td class="mono">312M mirrored</td>
-            </tr>
-            <tr>
-              <td class="mono">p2 · 927.5G</td>
-              <td>btrfs label tlc</td>
-              <td>
-                nix · users/lars/cache/* · crush/ · planned hot/* (single pool;
-                any future XFS is carved fresh from the tail)
-              </td>
-              <td class="mono">115G used · 13%</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="callout">
+          <b class="t">GPT numbering gap on the Lexar.</b>
+          Only p6–p9 exist (verified via /proc/partitions); p1–p5 are index
+          ghosts of deleted partitions, not unallocated space. p9 is the LAST
+          partition and ends 176 sectors before disk end.
+        </div>
       </section>
 
-      <!-- ================= 3. PHYSICAL ================= -->
+      <!-- ================= 3. PHYSICAL TOPOLOGY ================= -->
       <section id="physical">
         <div class="sec-head">
           <span class="idx">03</span>
-          <h2>Physical topology — CURRENT (live)</h2>
+          <h2>Physical topology</h2>
         </div>
         <p class="sec-lede">
-          Block devices → partitions → filesystems → mountpoints, exactly as
-          <code>lsblk</code> / <code>findmnt</code> report them today. All four
-          USB disks share <strong>one</strong> JMS567 bridge link (usb 8-1).
-          Kernel NVMe enumeration (<code>nvme0n1</code>/<code>nvme1n1</code>)
-          flips across boots — configs pin by-label / by-uuid only.
+          Two internal NVMe slots; ALL four DAS disks ride ONE USB 3.0 link
+          through a JMS567 port-multiplier — a single cable is the failure
+          domain for pool + buildcache + spare (2026-08-22 outage class).
         </p>
         <div class="diagram">
-          <div class="cap">Graph A · drives → partitions → mounts</div>
           <pre class="mermaid">
 flowchart LR
-    classDef disk fill:#111111,stroke:#111111,color:#f4f4f0
-    classDef part fill:#e8e8e2,stroke:#111111,color:#111111
-    classDef fs fill:#ffffff,stroke:#111111,color:#111111
-    classDef dead fill:#e63946,stroke:#111111,color:#ffffff
-    classDef plan fill:#f4d35e,stroke:#111111,color:#111111
-
-    HOST["evo-x2 · 124.3 GiB RAM · zram0 62.2G swap"]
-
-    subgraph SGQ["Lexar NQ790 2TB QLC · nvme0n1 · PCIe 4.0 x4 · streaming + system"]
-      P6["p6 · btrfs 722.5G"]
-      P7["p7 · vfat 4G · ESP"]
-      P8["p8 · btrfs 1T · label data"]
-      P9["p9 · xfs 100G · label clickhouse"]
-    end
-
-    subgraph SGS["Samsung 970 EVO Plus 1TB TLC · nvme1n1 · PCIe 3.0 x4 · synchronous"]
-      SP1["p1 · vfat 4G · label SAMSUNG-EFI"]
-      SP2["p2 · btrfs 927.5G · label tlc"]
-    end
-
-    subgraph SGD["USB DAS · one JMS567 link (usb 8-1)"]
-      PA["sda · Toshiba MG08ACA16TE 16T"]
-      PB["sdd · Toshiba MG08ACA16TE 16T"]
-      SB["sdb1 · ext4 · SanDisk 240G"]
-      SC["sdc1 · btrfs · SanDisk 240G · unmounted"]
-    end
-
-    MROOT["/ · subvol=@ · commit=300 · zstd"]
-    MBTR["/mnt/btrfs-root · toplevel · automount"]
-    MHERMES["/home/hermes · subvol=@home-hermes"]
-    MCACHE["~/.cache · subvol=@cache-home · automount"]
-    MBOOT["/boot · NixOS-managed ESP"]
-    MDATA["/data · toplevel · nofail"]
-    MCH["/var/lib/clickhouse · XFS"]
-    MMIRROR["/boot-mirror · SAMSUNG-EFI · nofail"]
-    MNIX["/nix · subvol=nix · neededForBoot"]
-    MHOT["/mnt/hot · toplevel · nofail"]
-    MNIXC["~/.cache/nix · subvol=users/lars/cache/nix · automount"]
-    MPOOL["/mnt/pool · btrfs RAID1 data+metadata"]
-    MBC["/mnt/buildcache · ext4 · writeback"]
-
-    HOST --- SGQ
-    HOST --- SGS
-    HOST --- SGD
-
-    P6 -->|"subvol=@"| MROOT
-    P6 -->|"subvolid=5"| MBTR
-    P6 -->|"subvol=@home-hermes"| MHERMES
-    P6 -->|"subvol=@cache-home"| MCACHE
-    P7 --> MBOOT
-    P8 -->|"subvolid=5"| MDATA
-    P9 --> MCH
-    SP1 --> MMIRROR
-    SP2 -->|"subvol=nix"| MNIX
-    SP2 -->|"subvolid=5"| MHOT
-    SP2 -->|"subvol=users/lars/cache/nix"| MNIXC
-    PA --> MPOOL
-    PB --> MPOOL
-    SB --> MBC
-
-    class P6,P7,P8,P9,SP1,SP2,PA,PB,SB,SC part
-    class MROOT,MHERMES,MCACHE,MBOOT,MDATA,MCH,MMIRROR,MNIX,MHOT,MNIXC,MPOOL,MBC,MBTR fs
-    class SC plan
-</pre>
+  subgraph HOST["evo-x2 · AMD Ryzen AI Max+ 395"]
+    NV0["nvme0 · Lexar NQ790 2TB QLC<br/>ROOT DISK · 92%"]
+    NV1["nvme1 · Samsung 970 EVO Plus 1TB TLC<br/>store + hot tier + boot mirror"]
+    USB["JMS567 port-multiplier<br/>ONE USB 3.0 link"]
+  end
+  USB --> SDA["sda · Toshiba MG08 16TB<br/>pool RAID1 member"]
+  USB --> SDB["sdb · SanDisk 240G<br/>ext4 buildcache"]
+  USB --> SDC["sdc · SanDisk 240G<br/>ssd-btrfs SPARE"]
+  USB --> SDD["sdd · Toshiba MG08 16TB<br/>pool RAID1 member"]
+          </pre>
         </div>
         <div class="legend">
-          <span><span class="chip c-sub"></span>partition / disk</span>
-          <span><span class="chip c-fs"></span>live mount</span>
-          <span><span class="chip c-plan"></span>unmounted spare</span>
-        </div>
-        <div class="callout amber">
-          <b class="t">frozen drive — do not touch</b>
-          <code>sdf</code> (WOOACME W3A894-512GB, own USB controller c7:00.3) is
-          frozen by owner decision — not attached to the current enumeration.
-          Never re-purpose; rotation as offsite vault was evaluated and
-          rejected.
+          <span class="chip c-live">live</span>
+          <span class="chip c-dead">dormant / unmounted</span>
+          <span class="chip c-plan">pending decision</span>
+          <span class="chip c-sub">pseudo-device</span>
         </div>
       </section>
 
-      <!-- ================= 3. SUBVOL TREES ================= -->
+      <!-- ================= 4. SUBVOLUME TREES ================= -->
       <section id="subvols">
         <div class="sec-head">
           <span class="idx">04</span>
-          <h2>BTRFS subvolume trees — CURRENT</h2>
+          <h2>Subvolume trees (live mounts + btrbk targets)</h2>
         </div>
         <p class="sec-lede">
-          Nested subvolumes are excluded from parent snapshots — the mechanism
-          is dual-use: deliberate exclusion (<code>@cache-home</code>) or silent
-          coverage loss (the exclusion trap). Set taxonomy: <strong>A</strong> =
-          plain dir riding the parent snapshot · <strong>B</strong> = own subvol
-          + own btrbk leg · <strong>C</strong> = own subvol, never snapshotted,
-          <code>+C</code> nodatacow, dump-only.
+          Four BTRFS filesystems carry subvols; the pool is flat. Nested
+          subvolumes are silently EXCLUDED from parent snapshots — the
+          per-service placement doctrine exists because of that.
         </p>
-
         <div class="diagram">
-          <div class="cap">
-            Graph B · NVMe filesystems: QLC p6 root pool + Samsung tlc
-          </div>
           <pre class="mermaid">
 flowchart TB
-    classDef live fill:#1d3557,stroke:#111111,color:#ffffff
-    classDef dead fill:#e63946,stroke:#111111,color:#ffffff
-    classDef plan fill:#f4d35e,stroke:#111111,color:#111111
-    classDef sub fill:#e8e8e2,stroke:#111111,color:#111111
-    classDef note fill:#ffffff,stroke:#111111,color:#111111
-
-    TQ0["QLC p6 · toplevel subvolid=5 · mount /mnt/btrfs-root"]
-    TS0["Samsung tlc · toplevel subvolid=5 · mount /mnt/hot · nofail"]
-
-    TQ0 -->|"→ / · btrbk 23:00"| SVAT["@ · /home/lars (268G) lives INSIDE @ · local 3d 1w · pool FOREVER · every /var/lib state rides these snapshots"]
-    TQ0 -->|"automount · excluded"| SVC["@cache-home → ~/.cache · ~16G app caches · deliberate snapshot exclusion"]
-    TQ0 -->|"own leg · 14d 4w"| SVH["@home-hermes → /home/hermes · pool 7d min / 14d 4w"]
-    TQ0 --> SVOLD["@home · legacy leftover · not mounted"]
-    TQ0 --> SBK[".rescue/@.rescue-* ×2 · read-only · chattr +a append-only canary"]
-
-    TS0 -->|"neededForBoot"| TNIX["nix → /nix · 115G store · LIVE 2026-09-07"]
-    TS0 -->|"automount"| TUCN["users/lars/cache/nix → ~/.cache/nix · LIVE"]
-    TS0 -->|"parked"| TUCG["users/lars/cache/go-build · created · HM symlink canonicalization trap"]
-    TS0 -->|"plain dirs · 45G"| TCR["crush/ · 248 project session DBs · LIVE 2026-09-18 · interim module"]
-    TS0 -->|"Set B · gate G1"| TFG["hot/forgejo · 8h btrbk leg to pool"]
-    TS0 -->|"Set C · dormant"| THOT["hot/(name) · nodatacow + chattr +C · dump-only RPO · module dormant · candidates: pocket-id · postgres cluster · forgejo · dnsblockd · papdashboard · docker data-root"]
-
-    class SVAT,SVC,SVH,TNIX,TUCN,TCR live
-    class SVOLD dead
-    class TFG,THOT,TUCG plan
-    class TQ0,TS0,SBK sub
-</pre>
+  subgraph QLCROOT["nvme0n1p6 · btrfs · 723G · 92% · compress zstd:3 commit 300"]
+    T1["toplevel · /mnt/btrfs-root automount"]
+    T1 --> A1["/@ · mounted at /<br/>system + home · btrbk 3d 1w min 2d"]
+    T1 --> A2["/@cache-home · ~/.cache automount<br/>excluded from @ snapshots"]
+    T1 --> A3["/@home-hermes · own pool leg<br/>14d 4w bounded retention"]
+    T1 --> A4[".snapshots/* · btrbk daily 23:00<br/>~4-6 live per calendar math"]
+    T1 --> A5[".rescue/* · 2 read-only<br/>dir chattr +a · canary-metricd"]
+  end
+  subgraph QLCDATA["nvme0n1p8 · btrfs label data · 1.1T · 76%"]
+    T2["toplevel · /data"]
+    T2 --> B1["ai 291G · models 210G<br/>Steam 106G · llamacpp 92G<br/>docker ~16G · per 2026-09-25 probes"]
+    T2 --> B2[".snapshots/* · 14d 4w<br/>EIO P0 blocks pool sends"]
+  end
+  subgraph TLC["nvme1n1p2 · btrfs label tlc · 928G · 17%"]
+    T3["toplevel · /mnt/hot"]
+    T3 --> C1["/nix · whole nix store<br/>/nix/store is an ro bind of it"]
+    T3 --> C2["/journal · /var/log/journal<br/>journald off the QLC root"]
+    T3 --> C3["/users/lars/cache/nix<br/>~/.cache/nix eval cache"]
+    T3 --> C4["crush/ 45G dir · migrated session DBs"]
+    T3 --> C5["borg/ dir · dormant offsite cache"]
+  end
+  subgraph POOLFS["sda+sdd · btrfs RAID1 label pool · 15T · 15%"]
+    T4["toplevel · /mnt/pool"]
+    T4 --> P1["backups/root · receives FOREVER"]
+    T4 --> P2["backups/data · NEVER completed · EIO P0"]
+    T4 --> P3["services/ immich paperless atticd discordsync<br/>btrbk-pool snapshots 23:45"]
+    T4 --> P4["backups/ dumps + restic repo · archive/ unsnapshotted"]
+  end
+          </pre>
         </div>
-
-        <div class="diagram">
-          <div class="cap">
-            Graph C · bulk tier: /data (QLC p8) + HDD pool + buildcache
-          </div>
-          <pre class="mermaid">
-flowchart TB
-    classDef live fill:#1d3557,stroke:#111111,color:#ffffff
-    classDef dead fill:#e63946,stroke:#111111,color:#ffffff
-    classDef plan fill:#f4d35e,stroke:#111111,color:#111111
-    classDef note fill:#e8e8e2,stroke:#111111,color:#111111
-
-    subgraph TD["/data · QLC p8 · toplevel · 772G used · btrbk-data 23:30"]
-      DAI["ai/ 291G · FastFlowLM weights"]
-      DMOD["models/ 210G · jan + GGUF"]
-      DLLM["llamacpp-models/ 92G"]
-      DSTEAM["SteamLibrary/ 106G · Proton prefixes"]
-      DDOCK["docker/ · LIVE Docker data-root · ~20G"]
-      DOTH["containers · cache · var · gcs-staging"]
-      DGATE["btrbk-data: send-gated by /data EIO repair marker — pool target EMPTY"]
-    end
-
-    subgraph TP["/mnt/pool · 2×16T Toshiba RAID1 · toplevel · 1.8T used"]
-      PSUB["services/ · 9 subvols (Set B): immich · paperless · atticd · bank-sync · activitywatch · tq live — monitor365 disabled — discordsync · browser-history reserved empty"]
-      PROOT["backups/root · btrbk receives · kept FOREVER"]
-      PDATA["backups/data · receive target · zero complete receives (EIO gate)"]
-      PFG["backups/forgejo-subvol · dir staged · leg INERT"]
-      PDUMP["backups/ dump targets: cv · pocket-id · forgejo · miniflux · twenty · manifest · geometrikks · inboxclean · signal-backups …"]
-      PARCH["archive/ · forensics + cold data · RAID1 only, NOT snapshotted"]
-      PSNAP[".snapshots · pool instance: snapshot-only of services/*"]
-    end
-
-    subgraph TB2["/mnt/buildcache · ext4 USB SSD · 106G / 220G"]
-      BGO["go-build · go-mod · golangci caches"]
-      BRUST["rust targets (monitor365 ~114G tier) + sccache (32G cap)"]
-      BPY["pnpm · pip · playwright · cargo"]
-      BSWAP["swapfile-emergency 16G · orphan · deletion owner-gated"]
-    end
-
-    DGATE -.->|"aborts before send"| PDATA
-    class DAI,DMOD,DLLM,DSTEAM,DDOCK,DOTH,PSUB,PROOT,PDUMP,PARCH,PSNAP,BGO,BRUST,BPY live
-    class DGATE,PDATA dead
-    class PFG,BSWAP plan
-</pre>
-        </div>
-
         <div class="callout">
-          <b class="t">the exclusion trap is live</b>
-          <code>@cache-home</code>, <code>@home-hermes</code> and the future
-          <code>hot/*</code> tier all rely on nested-subvol exclusion. The
-          <code>services.hot-db</code> module ships an eval-time "landmine"
-          assertion: if any btrbk config ever references the hot tier,
-          <code>nix flake check</code> fails — one scheduled snapshot would
-          silently revert nodatacow extents to CoW.
+          <b class="t">five more subvols are coming.</b>
+          The hot-DB migration vehicle (units deployed, dormant since gen 804)
+          will carve per-service subvols on the Samsung —
+          <code>hot/gatus</code>, <code>hot/dnsblockd</code>,
+          <code>hot/pocket-id</code>, <code>hot/browser-history</code>,
+          <code>hot/discordsync</code> — one owner sudo window each, runbook in
+          <code>docs/services/hot-db.md</code>.
         </div>
       </section>
 
-      <!-- ================= 5. PLACEMENT ================= -->
-      <section id="placement">
-        <div class="sec-head">
-          <span class="idx">05</span>
-          <h2>Service → storage placement map</h2>
-        </div>
-        <p class="sec-lede">
-          The operational question this whole layout answers:
-          <strong
-            >where does each service's state live, which snapshot set protects
-            it, and what is its recovery path?</strong
-          >
-          Set A = rides parent <code>@</code> snapshots · Set B = own subvol +
-          own btrbk leg · Set C = own subvol, never snapshotted, dump-only.
-        </p>
-        <table>
-          <thead>
-            <tr>
-              <th>State</th>
-              <th>Location</th>
-              <th>Set</th>
-              <th>Recovery path</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>nix store</td>
-              <td class="mono">Samsung tlc · /nix</td>
-              <td><span class="tag plain">none</span></td>
-              <td>rebuildable: flake.lock + attic cache + upstreams</td>
-            </tr>
-            <tr>
-              <td>crush session DBs (248)</td>
-              <td class="mono">Samsung hot · /mnt/hot/crush</td>
-              <td><span class="tag plan">→ C on fold</span></td>
-              <td>none yet — alerting is a tracked TODO</td>
-            </tr>
-            <tr>
-              <td>user nix cache</td>
-              <td class="mono">Samsung hot · ~/.cache/nix</td>
-              <td><span class="tag plain">none</span></td>
-              <td>regenerable</td>
-            </tr>
-            <tr>
-              <td>/home/lars (268G)</td>
-              <td class="mono">QLC @ · inside @</td>
-              <td><span class="tag live">A</span></td>
-              <td>@ snapshots → pool root leg (FOREVER)</td>
-            </tr>
-            <tr>
-              <td>pocket-id (SSO IdP)</td>
-              <td class="mono">QLC @ · /var/lib/pocket-id</td>
-              <td><span class="tag live">A</span></td>
-              <td>sqlite .backup 04:00 → pool · 14d</td>
-            </tr>
-            <tr>
-              <td>PostgreSQL cluster (immich · paperless · miniflux DBs)</td>
-              <td class="mono">QLC @ · /var/lib/postgresql</td>
-              <td><span class="tag live">A</span></td>
-              <td>
-                per-service dumps → pool (immich-db · paperless exporter ·
-                miniflux 02:45)
-              </td>
-            </tr>
-            <tr>
-              <td>CV server</td>
-              <td class="mono">QLC @ · /var/lib/cv</td>
-              <td><span class="tag live">A</span></td>
-              <td>nightly sqlite .backup → pool/backups/cv</td>
-            </tr>
-            <tr>
-              <td>forgejo (git mirror)</td>
-              <td class="mono">QLC @ · /var/lib/forgejo</td>
-              <td><span class="tag plan">A → B</span></td>
-              <td>
-                forgejo dump 03:30 zip · 7d → pool · hot/forgejo leg planned
-              </td>
-            </tr>
-            <tr>
-              <td>gatus (monitoring)</td>
-              <td class="mono">QLC @ · /var/lib/private/gatus</td>
-              <td><span class="tag live">A</span></td>
-              <td>@ snapshots; health read from its sqlite</td>
-            </tr>
-            <tr>
-              <td>discordsync</td>
-              <td class="mono">QLC @ · /var/lib/discordsync</td>
-              <td><span class="tag plan">A → pool</span></td>
-              <td>
-                Turso cloud mirror (local-only stance) · pool subvol reserved
-              </td>
-            </tr>
-            <tr>
-              <td>browser-history</td>
-              <td class="mono">QLC @ · /var/lib/browser-history</td>
-              <td><span class="tag plan">A → pool</span></td>
-              <td>pool subvol reserved · dump folds into migration</td>
-            </tr>
-            <tr>
-              <td>immich media library</td>
-              <td class="mono">pool · services/immich</td>
-              <td><span class="tag live">B</span></td>
-              <td>btrbk-pool 23:45 snapshots + host-PG dump</td>
-            </tr>
-            <tr>
-              <td>paperless documents</td>
-              <td class="mono">pool · services/paperless</td>
-              <td><span class="tag live">B</span></td>
-              <td>btrbk-pool + exporter → pool</td>
-            </tr>
-            <tr>
-              <td>atticd binary cache</td>
-              <td class="mono">pool · services/atticd</td>
-              <td><span class="tag live">B</span></td>
-              <td>btrbk-pool (largely rebuildable)</td>
-            </tr>
-            <tr>
-              <td>bank-sync</td>
-              <td class="mono">pool · services/bank-sync</td>
-              <td><span class="tag live">B</span></td>
-              <td>btrbk-pool + backup-coordination</td>
-            </tr>
-            <tr>
-              <td>activitywatch · tq journal</td>
-              <td class="mono">pool · services/*</td>
-              <td><span class="tag live">B</span></td>
-              <td>btrbk-pool snapshots</td>
-            </tr>
-            <tr>
-              <td>monitor365</td>
-              <td class="mono">pool · services/monitor365</td>
-              <td><span class="tag plain">B · svc off</span></td>
-              <td>populated 2026-08-18 · service disabled</td>
-            </tr>
-            <tr>
-              <td>
-                Docker data-root (twenty · manifest · dozzle · geometrikks…)
-              </td>
-              <td class="mono">/data · /data/docker</td>
-              <td><span class="tag dead">data leg</span></td>
-              <td>btrbk-data (EIO-gated!) · twenty+manifest pg_dumps → pool</td>
-            </tr>
-            <tr>
-              <td>AI models · Steam</td>
-              <td class="mono">/data</td>
-              <td><span class="tag dead">data leg</span></td>
-              <td>rebuildable · deliberately excluded from offsite</td>
-            </tr>
-            <tr>
-              <td>ClickHouse telemetry</td>
-              <td class="mono">QLC p9 · XFS</td>
-              <td><span class="tag plain">none</span></td>
-              <td>open decision (derived vs clickhouse-backup)</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-
-      <!-- ================= 4. MOUNT TABLE ================= -->
+      <!-- ================= 5. MOUNT TABLE ================= -->
       <section id="mounts">
         <div class="sec-head">
-          <span class="idx">06</span>
-          <h2>Mount table (fstab truth)</h2>
+          <span class="idx">05</span>
+          <h2>Mount table (findmnt truth, live)</h2>
         </div>
         <p class="sec-lede">
-          Every entry as declared in <code>hardware-configuration.nix</code> +
-          module-generated mounts. <code>commit=300</code> +
-          <code>nodiscard</code> are QLC doctrine; the Samsung keeps the default
-          30 s commit (TLC has no SLC-cliff problem).
+          Every real-device mount as live-verified on 2026-09-30. Correction vs
+          the 09-20 snapshot: the Samsung now ALSO carries
+          <code>commit=300</code> + <code>compress=zstd:3</code> on every btrfs
+          mount — the old "TLC keeps the default 30 s commit" note is stale.
         </p>
         <table>
           <thead>
@@ -1150,7 +795,7 @@ flowchart TB
               <th>Mount</th>
               <th>Source</th>
               <th>Type</th>
-              <th>Key options</th>
+              <th>Key options (live)</th>
               <th>Notes</th>
             </tr>
           </thead>
@@ -1159,598 +804,363 @@ flowchart TB
               <td class="mono">/</td>
               <td class="mono">nvme0n1p6 [/@]</td>
               <td class="mono">btrfs</td>
-              <td class="mono">
-                compress=zstd · noatime · nodiscard · commit=300 ·
-                space_cache=v2
-              </td>
-              <td>root @ · daily btrbk</td>
+              <td class="mono">rw,noatime,zstd:3,commit=300</td>
+              <td>root subvol · 92%</td>
             </tr>
             <tr>
-              <td class="mono">/nix</td>
-              <td class="mono">by-label/tlc [/nix]</td>
+              <td class="mono">/home/lars/.cache</td>
+              <td class="mono">nvme0n1p6 [/@cache-home]</td>
               <td class="mono">btrfs</td>
-              <td class="mono">
-                compress=zstd · noatime · nodiscard · <b>neededForBoot</b>
-              </td>
-              <td>store on Samsung · no nofail (boot-critical)</td>
-            </tr>
-            <tr>
-              <td class="mono">/mnt/hot</td>
-              <td class="mono">by-label/tlc [subvolid=5]</td>
-              <td class="mono">btrfs</td>
-              <td class="mono">nofail</td>
-              <td>hot tier toplevel · crush/ + future hot/*</td>
-            </tr>
-            <tr>
-              <td class="mono">~/.cache/nix</td>
-              <td class="mono">tlc [/users/lars/cache/nix]</td>
-              <td class="mono">btrfs</td>
-              <td class="mono">
-                noauto · x-systemd.automount · idle-timeout=10min · commit=300
-              </td>
-              <td>hot-user-caches</td>
-            </tr>
-            <tr>
-              <td class="mono">/mnt/btrfs-root</td>
-              <td class="mono">nvme0n1p6 [subvolid=5]</td>
-              <td class="mono">btrfs</td>
-              <td class="mono">automount (10 min idle) · commit=300</td>
-              <td>btrbk volume + rescue tier</td>
+              <td class="mono">automount</td>
+              <td>excluded from @ snapshots</td>
             </tr>
             <tr>
               <td class="mono">/home/hermes</td>
               <td class="mono">nvme0n1p6 [/@home-hermes]</td>
               <td class="mono">btrfs</td>
-              <td class="mono">nofail · commit=300</td>
-              <td>plain mount (tmpfiles ordering) — not automount</td>
+              <td class="mono">rw,noatime,zstd:3,commit=300</td>
+              <td>own btrbk pool leg</td>
             </tr>
             <tr>
-              <td class="mono">~/.cache</td>
-              <td class="mono">nvme0n1p6 [/@cache-home]</td>
+              <td class="mono">/mnt/btrfs-root</td>
+              <td class="mono">nvme0n1p6 [toplevel]</td>
               <td class="mono">btrfs</td>
-              <td class="mono">
-                noauto · x-systemd.automount · idle-timeout=10min
-              </td>
-              <td>~16 GB live app caches, snapshot-excluded</td>
-            </tr>
-            <tr>
-              <td class="mono">/data</td>
-              <td class="mono">by-uuid 046ea663 [subvolid=5]</td>
-              <td class="mono">btrfs</td>
-              <td class="mono">compress=zstd:3 · ssd · nofail · commit=300</td>
-              <td>models/steam/docker · EIO P0 pending</td>
-            </tr>
-            <tr>
-              <td class="mono">/var/lib/clickhouse</td>
-              <td class="mono">by-label/clickhouse</td>
-              <td class="mono">xfs</td>
-              <td class="mono">noatime · nodiscard · nofail</td>
-              <td>telemetry · xfs module in initrd</td>
+              <td class="mono">automount</td>
+              <td>btrbk access · .snapshots + .rescue</td>
             </tr>
             <tr>
               <td class="mono">/boot</td>
-              <td class="mono">uuid 80A3-73A9 (QLC p7)</td>
+              <td class="mono">nvme0n1p7</td>
               <td class="mono">vfat</td>
-              <td class="mono">fmask=0077 · dmask=0077</td>
-              <td>NixOS-managed ESP (systemd-boot)</td>
+              <td class="mono">fmask=0077</td>
+              <td>QLC primary ESP · 325M / 4G</td>
+            </tr>
+            <tr>
+              <td class="mono">/data</td>
+              <td class="mono">nvme0n1p8 [toplevel]</td>
+              <td class="mono">btrfs</td>
+              <td class="mono">rw,noatime,zstd:3,commit=300</td>
+              <td>76% · EIO P0 leg</td>
+            </tr>
+            <tr>
+              <td class="mono">/var/lib/clickhouse</td>
+              <td class="mono">nvme0n1p9</td>
+              <td class="mono">xfs</td>
+              <td class="mono">noatime,inode64</td>
+              <td>dedicated partition · 34G / 100G</td>
+            </tr>
+            <tr>
+              <td class="mono">/nix</td>
+              <td class="mono">nvme1n1p2 [/nix]</td>
+              <td class="mono">btrfs</td>
+              <td class="mono">rw,noatime,zstd:3,commit=300</td>
+              <td>Samsung store · 149G / 928G</td>
+            </tr>
+            <tr>
+              <td class="mono">/nix/store</td>
+              <td class="mono">nvme1n1p2 [bind of /nix]</td>
+              <td class="mono">btrfs</td>
+              <td class="mono">ro,nosuid,nodev</td>
+              <td>read-only bind, NOT a subvol</td>
+            </tr>
+            <tr>
+              <td class="mono">/mnt/hot</td>
+              <td class="mono">nvme1n1p2 [toplevel]</td>
+              <td class="mono">btrfs</td>
+              <td class="mono">by-label tlc · nofail</td>
+              <td>crush/ + borg/ dirs live here</td>
+            </tr>
+            <tr>
+              <td class="mono">/var/log/journal</td>
+              <td class="mono">nvme1n1p2 [/journal]</td>
+              <td class="mono">btrfs</td>
+              <td class="mono">rw,noatime,zstd:3,commit=300</td>
+              <td>journald off the QLC root</td>
+            </tr>
+            <tr>
+              <td class="mono">/home/lars/.cache/nix</td>
+              <td class="mono">nvme1n1p2 [/users/lars/cache/nix]</td>
+              <td class="mono">btrfs</td>
+              <td class="mono">rw,noatime,zstd:3,commit=300</td>
+              <td>nix eval cache</td>
             </tr>
             <tr>
               <td class="mono">/boot-mirror</td>
-              <td class="mono">uuid 4F53-C156 (Samsung p1)</td>
+              <td class="mono">nvme1n1p1</td>
               <td class="mono">vfat</td>
-              <td class="mono">nofail</td>
-              <td>2nd boot disk · byte-mirror + drift gate</td>
+              <td class="mono">fmask=0077</td>
+              <td>verified byte-mirror · 1st BootOrder</td>
             </tr>
             <tr>
               <td class="mono">/mnt/pool</td>
-              <td class="mono">by-label/pool</td>
+              <td class="mono">sda (RAID1 + sdd)</td>
               <td class="mono">btrfs</td>
-              <td class="mono">compress=zstd · nofail · commit=300</td>
-              <td>RAID1 data+metadata · by-label mounts any member</td>
+              <td class="mono">by-label pool · nofail · zstd:3</td>
+              <td>2.2T / 15T</td>
             </tr>
             <tr>
               <td class="mono">/mnt/buildcache</td>
-              <td class="mono">by-id ata-SanDisk…-part1</td>
+              <td class="mono">sdb1</td>
               <td class="mono">ext4</td>
-              <td class="mono">
-                noatime · lazytime · commit=120 · data=writeback · nofail ·
-                automount
-              </td>
-              <td>no TRIM through USB bridge</td>
+              <td class="mono">noatime,lazytime,commit=120,writeback</td>
+              <td>119G / 220G · GC Sun 05:00</td>
             </tr>
           </tbody>
         </table>
+        <div class="callout">
+          <b class="t">disk-adjacent pseudo-devices:</b>
+          <code>zram0</code> 62.2G zstd swap (the only swap), and
+          <code>/tmp</code> as a 48G tmpfs — 14G of it in use right now, which
+          is RAM, not disk (see gotchas).
+        </div>
       </section>
 
-      <!-- ================= 5. BACKUP FLOWS ================= -->
+      <!-- ================= 6. BACKUP FLOWS ================= -->
       <section id="backups">
         <div class="sec-head">
-          <span class="idx">07</span>
-          <h2>Snapshot &amp; backup dataflow — CURRENT</h2>
+          <span class="idx">06</span>
+          <h2>Backup &amp; replication flows</h2>
         </div>
         <p class="sec-lede">
-          btrbk owns the snapshot → incremental-send pipeline; dump-style
-          backups (<code>sqlite3 .backup</code>, <code>pg_dump</code>,
-          <code>forgejo dump</code>) feed <code>backup-coordination</code> and
-          Gatus freshness. The offsite leg (Hetzner Borg) is decided but not yet
-          built — today everything lives in one chassis.
+          Local snapshot tiers on the QLC, pool receives for off-disk copies,
+          per-service dump units staggered through the night, a restic dedup
+          layer, and the offsite Borg leg — implemented but dormant.
         </p>
         <div class="diagram">
-          <div class="cap">
-            Graph D · btrbk instances → pool targets → (planned) offsite
-          </div>
           <pre class="mermaid">
 flowchart LR
-    classDef live fill:#1d3557,stroke:#111111,color:#ffffff
-    classDef dead fill:#e63946,stroke:#111111,color:#ffffff
-    classDef plan fill:#f4d35e,stroke:#111111,color:#111111
-    classDef note fill:#e8e8e2,stroke:#111111,color:#111111
-
-    subgraph SRC["sources"]
-      RAT["@ · QLC root"]
-      RHERMES["@home-hermes"]
-      RDATA["/data toplevel"]
-      RSVC["pool services/* ×9"]
-      RFG["hot/forgejo · Samsung"]
-    end
-
-    subgraph SNAP["btrbk local snapshots"]
-      SAT[".snapshots/@.* · 23:00 · keep 3d 1w"]
-      SH[".snapshots/@home-hermes.* · 23:00"]
-      SD[".snapshots/data.* · 23:30 · keep 14d 4w"]
-      SP["pool .snapshots/services/* · 23:45 · snapshot-only · keep 7d 4w"]
-      SF["hot .snapshots · 05/13/21:40 · keep 3d"]
-    end
-
-    subgraph TGT["pool receive targets /mnt/pool/backups"]
-      TROOT["root · target_preserve_min=all → FOREVER"]
-      THERMES["root/@home-hermes.* · 7d min · 14d 4w"]
-      TDATA["data · 7d · 30d 12w"]
-      TFG["forgejo-subvol · 7d · 14d 8w"]
-    end
-
-    OFF["Hetzner StorageBox BX11 1TB · BorgBackup repokey-blake2 · port 23 · PLANNED"]
-
-    RAT --> SAT
-    RHERMES --> SH
-    SAT -->|"incremental send"| TROOT
-    SH -->|"incremental send"| THERMES
-    RDATA --> SD
-    SD -.->|"EIO repair gate — FAILING BY DESIGN"| TDATA
-    RSVC --> SP
-    RFG --> SF
-    SF -.->|"leg INERT (option off)"| TFG
-    TROOT -.->|"phase: offsite leg"| OFF
-    THERMES -.-> OFF
-
-    class RAT,RHERMES,RDATA,RSVC,SAT,SH,SP,TROOT,THERMES live
-    class SD,TDATA dead
-    class RFG,SF,OFF,TFG plan
-</pre>
+  subgraph LOCAL["QLC local tiers"]
+    SNAP[".snapshots · root 3d 1w<br/>data 14d 4w · daily"]
+    RESC[".rescue · 2 read-only · append-only"]
+  end
+  ROOT["@ root · QLC"] -->|"btrbk 23:00 incremental"| PROOT["pool backups/root<br/>received FOREVER"]
+  HERM["@home-hermes"] -->|"btrbk · 14d 4w"| PROOT
+  DATAX["/data toplevel · QLC"] -->|"btrbk 23:30"| PDATA["pool backups/data<br/>NEVER completed · EIO P0"]
+  SVC["service dumps · staggered 01:00-05:45<br/>paperless 02:00 · browser-history 02:15<br/>miniflux 02:45 · clickhouse 03:00 · forgejo 03:30<br/>pocket-id 04:00 · geometrikks 05:15<br/>discordsync-db · NEW gen 804"] -->|"pg_dump · sqlite backup · zips"| DUMPS["/mnt/pool/backups/*"]
+  DUMPS -->|"restic 05:45 dedup"| RST["restic-app-dumps repo · on-pool"]
+  ROOT -.->|"borg 06:30 · DORMANT"| OFF["Hetzner StorageBox BX11<br/>owner-gated go-live"]
+  QESP["/boot · QLC ESP"] -->|"boot-mirror-sync<br/>rsync + diff gate"| SESP["/boot-mirror · Samsung ESP"]
+          </pre>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>btrbk instance</th>
-              <th>Schedule</th>
-              <th>Source → snapshot dir</th>
-              <th>Local retention</th>
-              <th>Pool target</th>
-              <th>Pool retention</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="mono">root</td>
-              <td class="mono">daily 23:00</td>
-              <td class="mono">@ → /mnt/btrfs-root/.snapshots</td>
-              <td class="mono">2d min · 3d 1w</td>
-              <td class="mono">backups/root</td>
-              <td class="mono">FOREVER (min=all)</td>
-              <td><span class="tag live">LIVE</span></td>
-            </tr>
-            <tr>
-              <td class="mono">root</td>
-              <td class="mono">daily 23:00</td>
-              <td class="mono">@home-hermes</td>
-              <td class="mono">2d min · 3d 1w</td>
-              <td class="mono">backups/root</td>
-              <td class="mono">7d min · 14d 4w</td>
-              <td><span class="tag live">LIVE</span></td>
-            </tr>
-            <tr>
-              <td class="mono">data</td>
-              <td class="mono">daily 23:30</td>
-              <td class="mono">/data toplevel → /data/.snapshots</td>
-              <td class="mono">7d min · 14d 4w</td>
-              <td class="mono">backups/data</td>
-              <td class="mono">7d min · 30d 12w</td>
-              <td><span class="tag dead">EIO-GATED</span></td>
-            </tr>
-            <tr>
-              <td class="mono">pool</td>
-              <td class="mono">daily 23:45</td>
-              <td class="mono">services/* ×9 → /mnt/pool/.snapshots</td>
-              <td class="mono">2d min · 7d 4w</td>
-              <td class="mono">— (snapshot-only)</td>
-              <td class="mono">—</td>
-              <td><span class="tag live">LIVE</span></td>
-            </tr>
-            <tr>
-              <td class="mono">forgejo</td>
-              <td class="mono">05/13/21:40</td>
-              <td class="mono">hot/forgejo → /mnt/hot/.snapshots</td>
-              <td class="mono">2d min · 3d</td>
-              <td class="mono">backups/forgejo-subvol</td>
-              <td class="mono">7d min · 14d 8w</td>
-              <td><span class="tag plan">INERT</span></td>
-            </tr>
-          </tbody>
-        </table>
         <div class="callout">
-          <b class="t">the one leg that never completed</b>
-          <code>/mnt/pool/backups/data</code> has zero complete received
-          subvolumes: the nightly send aborts on the /data EIO inode (1.35M
-          uncorrectable csum errors, root-caused to an operator-inflicted unsafe
-          partition shrink). The failure is a deliberate tripwire until the
-          repair plan (T04–T08) executes. Everything else converges
-          automatically after DAS outages (btrbk resume + boot catch-up).
+          <b class="t">current reds on this map:</b>
+          (1) btrbk-data has never completed — the 10 known EIO-corrupt files
+          (~49G, all re-downloadable AI models per the 2026-09-11 inode
+          resolution) kill every full send; deletion awaits scrub-verify + user
+          sign-off. (2) btrbk-root hit a four-night guard kill streak during
+          the 2026-09-29 IO storms — pool receives stopped at
+          <code>@.20260927</code>; the next quiet 23:00 window self-heals it.
         </div>
       </section>
 
-      <!-- ================= 6. TARGET ================= -->
-      <section id="target">
-        <div class="sec-head">
-          <span class="idx">08</span>
-          <h2>TARGET layout — ratified end-state</h2>
-        </div>
-        <p class="sec-lede">
-          The destination per
-          <code>2026-08-31_samsung-role-assignment</code> (Rev 2,
-          review-ratified), the Phase-2 hot-DB Pareto plan, the per-service
-          subvolume analysis (Set A/B/C), the boot-mirror plan and the offsite
-          decision. Blue = already live, yellow = pending/decision, red =
-          blocked. Nothing else moves: models, games, media, telemetry and
-          backups stay on the QLC/HDD tiers on purpose (bandwidth-bound, not
-          latency-bound).
-        </p>
-
-        <div class="diagram">
-          <div class="cap">Graph E · target state per disk</div>
-          <pre class="mermaid">
-flowchart TB
-    classDef live fill:#1d3557,stroke:#111111,color:#ffffff
-    classDef dead fill:#e63946,stroke:#111111,color:#ffffff
-    classDef plan fill:#f4d35e,stroke:#111111,color:#111111
-    classDef note fill:#e8e8e2,stroke:#111111,color:#111111
-
-    subgraph GSAM["Samsung 1TB TLC · THE SYNCHRONOUS DISK · exec + fsync + cache-miss refill"]
-      GESP["p1 ESP · boot-mirror FIRST in BootOrder · full boot chain off QLC"]
-      GNIX["nix → /nix · LIVE"]
-      GUC["users/(user)/cache/* · nix LIVE · go-build parked until HM-symlink design"]
-      GHOT["hot/(name) subvols · Set C · nodatacow + chattr +C · dump-only RPO · never snapshotted (eval-time landmine guard)"]
-      GHOSTCAND["Phase-2 candidates: pocket-id · postgres cluster (immich+paperless+miniflux+twenty+manifest as ONE unit) · forgejo · dnsblockd · papdashboard · gatus joins WITHOUT +C · docker data-root"]
-      GHOME["home subvol · Phase 3 · 268G · DEFERRED — trigger: QLC still slow for git/editor under storms"]
-      GCACHE["caches subvol · Phase 4 · GOCACHE+GOMODCACHE only · OPTIONAL"]
-      GFG["hot/forgejo Set B · 8h btrbk leg · gate G1"]
-    end
-
-    subgraph GQLC["Lexar 2TB QLC · THE STREAMING DISK · big immutable reads + endurance sacrifice"]
-      GROOT["@ root remainder · Set A default (small cold state rides @ snapshots)"]
-      GDATA["/data · models + Steam stay · post-EIO-repair btrbk-data resumes"]
-      GCH["p9 XFS clickhouse · unchanged · telemetry backup coverage = open decision"]
-      GDEAD["@nix DELETED 2026-09-20 · ~60G freed immediately (sibling subvol, was never snapshot-pinned)"]
-    end
-
-    subgraph GPOOL["HDD pool · THE HISTORY TIER"]
-      GPSVC["services/* Set B extended per new pool service · discordsync + browser-history migrations pending"]
-      PROOTT["backups/root receives · FOREVER doctrine stands (revisit at ~50% pool)"]
-      GFGT["backups/forgejo-subvol leg ACTIVE once enabled"]
-    end
-
-    GOFF["Hetzner StorageBox BX11 1TB · Borg · repokey-blake2 · excludes rebuildable trees (~700G) so irreplaceable set fits · BX21 trigger at ~800G"]
-    GSSD2["SanDisk sdc1 ssd-btrfs · tenant decision pending (gocache module candidate)"]
-    GINTERIM["crush-hot-db interim module FOLDS into services.hot-db Phase-2 (delete interim in same change)"]
-
-    GHOSTCAND -.->|"candidates ride"| GHOT
-    GINTERIM -.->|"folds into"| GHOT
-    PROOTT -.->|"planned Borg leg · excludes rebuildable ~700G"| GOFF
-    class GESP,GNIX,GUC,GROOT,GDATA,GCH,GPSVC,PROOTT live
-    class GDEAD dead
-    class GHOT,GHOSTCAND,GHOME,GCACHE,GFG,GOFF,GSSD2,GINTERIM,GFGT plan
-</pre>
-        </div>
-
-        <div class="legend">
-          <span><span class="chip c-live"></span>live today</span>
-          <span
-            ><span class="chip c-plan"></span>pending / planned / decision</span
-          >
-          <span><span class="chip c-dead"></span>removed / blocked</span>
-        </div>
-
-        <div class="grid2">
-          <div class="callout blue">
-            <b class="t">why this split</b>
-            "Who waits, synchronously, when this IO happens?" Shell execs,
-            fsync-heavy DBs and cache-miss refills wait on the Samsung (12–28 µs
-            QD1, 0.78 ms fsync). Models, games and telemetry have no synchronous
-            waiter — they stream from the QLC/HDD tiers. A 128 GB RAM box has
-            three tiers; disk choice only matters where RAM cannot absorb the
-            access.
-          </div>
-          <div class="callout amber">
-            <b class="t">mount-option doctrine shifts</b>
-            Samsung mounts keep the DEFAULT 30 s commit (<code>commit=300</code>
-            is an SLC-preservation measure for QLC only).
-            <code>hot/*</code> entries mount with <code>nodatacow</code> +
-            <code>chattr +C</code> per subvol root (fresh-subvol inheritance
-            does not carry the flag). Qgroups stay off on QLC; the TLC pool MAY
-            enable them later for per-service accounting.
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= 9. BOOT CHAIN ================= -->
+      <!-- ================= 7. BOOT CHAIN ================= -->
       <section id="bootchain">
         <div class="sec-head">
-          <span class="idx">09</span>
-          <h2>Boot chain — current vs target</h2>
+          <span class="idx">07</span>
+          <h2>Boot chain</h2>
         </div>
         <p class="sec-lede">
-          The chain already depends on the Samsung for
-          <code>/nix</code> (stage-2 init lives in the store). The mirror ESP
-          completes the story: once the firmware boots the Samsung first, only
-          root <code>@</code> remains on the QLC. The seconds-wide window
-          between a switch and the post-switch mirror sync can boot the PREVIOUS
-          generation — safe, its store paths live ≥3 days.
+          The firmware tries the Samsung ESP first; loader, kernel, initrd and
+          the whole nix store can boot entirely off the Samsung — only the
+          root <code>@</code> subvol still lives on the QLC.
         </p>
         <div class="diagram">
-          <div class="cap">
-            Graph F · firmware → ESP → kernel → store → root
-          </div>
           <pre class="mermaid">
 flowchart LR
-    classDef live fill:#1d3557,stroke:#111111,color:#ffffff
-    classDef plan fill:#f4d35e,stroke:#111111,color:#111111
-    classDef note fill:#e8e8e2,stroke:#111111,color:#111111
-
-    subgraph NOWC["CURRENT — firmware boots the QLC ESP (loader only; store already Samsung)"]
-      F1["firmware BootOrder · Linux Boot Manager (QLC)"] --> E1["/boot · QLC p7 · systemd-boot entries"]
-      E1 --> K1["kernel + initrd from /boot"]
-      K1 --> S1["stage-2 init + closure from /nix · SAMSUNG tlc (neededForBoot)"]
-      S1 --> R1["root @ · QLC p6"]
-    end
-
-    subgraph TGTC["TARGET — boot-mirror-activate puts Samsung FIRST (activation pending)"]
-      F2["firmware BootOrder · Linux Boot Manager (Samsung) first"] --> E2["/boot-mirror · Samsung p1 · verified byte-mirror + drift gate"]
-      E2 --> K2["kernel + initrd (mirrored)"]
-      K2 --> S2["/nix · same Samsung filesystem"]
-      S2 --> R2["root @ · QLC p6 — the only QLC dependency left"]
-      FB["QLC ESP stays as FALLBACK entry — F8/F11 menu or efibootmgr re-order"]
-      FB -.-> F2
-    end
-
-    class F1,E1,K1,S1,R1 live
-    class F2,E2,K2,S2,R2,FB plan
-</pre>
+  FW["AMD firmware · BootOrder"] --> SB["Samsung ESP p1 · SAMSUNG-EFI<br/>Linux Boot Manager Samsung · FIRST"]
+  FW -.-> QB["QLC ESP p7 /boot · fallback"]
+  SB --> LD["systemd-boot loader"]
+  QB -.-> LD
+  LD --> KR["kernel + initrd<br/>present on BOTH ESPs"]
+  KR --> ST["/nix store · Samsung tlc subvol /nix"]
+  ST --> SW["stage-2 switch<br/>root @ on QLC"]
+          </pre>
+        </div>
+        <div class="callout">
+          <b class="t">mirror is verified, not assumed.</b>
+          <code>boot-mirror-sync.service</code> rsyncs
+          <code>--delete</code> and then FAILS on any <code>diff -r</code>
+          drift; a stale mirror heals with
+          <code>systemctl restart boot-mirror-sync</code>. Generation numbers
+          collide across stores (Samsung gen 761 ≠ QLC gen 761) — trust
+          closure-verified entries, never titles.
         </div>
       </section>
 
-      <!-- ================= 7. ROADMAP ================= -->
-      <section id="roadmap">
+      <!-- ================= 8. DELTA SINCE 09-20 ================= -->
+      <section id="delta">
         <div class="sec-head">
-          <span class="idx">10</span>
-          <h2>Phase roadmap — where each piece stands</h2>
+          <span class="idx">08</span>
+          <h2>Delta since the 2026-09-20 snapshot</h2>
         </div>
         <table>
           <thead>
             <tr>
-              <th>Phase</th>
-              <th>Scope</th>
-              <th>Status</th>
-              <th>Detail</th>
+              <th>Change</th>
+              <th>State on 09-20</th>
+              <th>State today (09-30)</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="mono">0</td>
-              <td>Prereqs: balance headroom + /data EIO triage</td>
-              <td><span class="tag dead">BLOCKED:user</span></td>
+              <td>QLC root usage</td>
+              <td class="mono">78% · 545G (@nix deleted that day)</td>
+              <td class="mono">92% · 641G (+96G) · 64G to deploy gate</td>
+            </tr>
+            <tr>
+              <td>hot-DB migration vehicle</td>
+              <td>planned</td>
               <td>
-                chunk-unalloc cleared 2026-09-02 (~222G); the /data corruption
-                repair (P0) is owner-gated, verify-first (SMART delta + scrub
-                delta)
+                <span class="chip c-live">deployed dormant</span> units live
+                since gen 804; five waves pending owner sudo windows
               </td>
             </tr>
             <tr>
-              <td class="mono">1</td>
-              <td>Partitions + <code>/nix</code> → Samsung <code>tlc</code></td>
-              <td><span class="tag live">LIVE</span></td>
+              <td>discordsync storage</td>
+              <td>attachments on NVMe</td>
               <td>
-                booted from tlc 2026-09-07; old
-                <code>@nix</code> DELETED 2026-09-20 (~60G freed, 85% → 78%)
+                <span class="chip c-live">live</span> 20.5G attachments on
+                pool services/discordsync + NEW nightly db dump leg
               </td>
             </tr>
             <tr>
-              <td class="mono">—</td>
-              <td>2nd boot disk (ESP mirror + BootOrder)</td>
-              <td><span class="tag plan">PENDING</span></td>
+              <td>restic dedup layer</td>
+              <td>planned</td>
+              <td><span class="chip c-live">live</span> nightly 05:45 since 09-23</td>
+            </tr>
+            <tr>
+              <td>offsite Borg (Hetzner)</td>
+              <td>research doc</td>
               <td>
-                module deployed 2026-09-19;
-                <code>nix run .#boot-mirror-activate</code> + reboot are owner
-                decisions
+                <span class="chip c-dead">dormant</span> implemented since
+                system-796; go-live owner-gated (host pin + tripwire shipped)
               </td>
             </tr>
             <tr>
-              <td class="mono">—</td>
-              <td>Crush session DBs → <code>/mnt/hot/crush</code></td>
-              <td><span class="tag live">LIVE</span></td>
+              <td>buildcache 2-disk merge</td>
+              <td>open question</td>
               <td>
-                2026-09-18 · 248 project dirs · 45G off the QLC root (interim
-                module; fold into hot-db planned)
+                <span class="chip c-plan">decided · awaiting window</span> sdc
+                (ssd-btrfs) still unmounted
               </td>
             </tr>
             <tr>
-              <td class="mono">—</td>
-              <td>User caches → <code>users/lars/cache/*</code></td>
-              <td><span class="tag plan">PARTIAL</span></td>
+              <td>btrbk-root sends</td>
+              <td>healthy</td>
               <td>
-                nix cache subvol live; go-build mount parked (systemd
-                canonicalizes through the HM symlink — needs a gating design)
+                <span class="chip c-dead">4-night kill streak</span> guard
+                Zone-6 churn-stops; receives stopped at @0927
               </td>
             </tr>
             <tr>
-              <td class="mono">2</td>
-              <td>Hot DBs → <code>hot/&lt;name&gt;</code> nodatacow (Set C)</td>
-              <td><span class="tag plan">READY</span></td>
+              <td>/data EIO P0</td>
+              <td>corruption known, paths unresolved</td>
               <td>
-                <code>services.hot-db</code> module in-tree, dormant
-                (enable=false, zero entries); migrations are user windows via
-                <code>scripts/migrate-hot-db.sh</code>
+                <span class="chip c-plan">recipe ready</span> 10 files ~49G
+                resolved, all re-downloadable; gated on scrub-verify + sign-off
               </td>
             </tr>
             <tr>
-              <td class="mono">2b</td>
-              <td>Forgejo dedicated subvol (Set B) + 8h leg</td>
-              <td><span class="tag plan">GATED</span></td>
-              <td>
-                <code>services.forgejo.dedicatedSubvolume</code> off
-                (staged-primary plan gate G1)
-              </td>
-            </tr>
-            <tr>
-              <td class="mono">3</td>
-              <td><code>/home</code> (268G) → Samsung</td>
-              <td><span class="tag plain">DEFERRED</span></td>
-              <td>
-                trigger-based: only if QLC still feels slow for git/editor after
-                1+2
-              </td>
-            </tr>
-            <tr>
-              <td class="mono">4</td>
-              <td>Go caches → <code>caches</code> subvol</td>
-              <td><span class="tag plain">OPTIONAL</span></td>
-              <td>
-                GOCACHE+GOMODCACHE only; rust/pnpm stay on the USB buildcache
-              </td>
-            </tr>
-            <tr>
-              <td class="mono">—</td>
-              <td>Docker data-root → Samsung (Phase-2 rider)</td>
-              <td><span class="tag plan">PLANNED</span></td>
-              <td>
-                moves with Phase 2; PG volume NOCOW on /data decided as
-                standalone change meanwhile
-              </td>
-            </tr>
-            <tr>
-              <td class="mono">—</td>
-              <td>Offsite: Hetzner Borg leg</td>
-              <td><span class="tag plan">READY</span></td>
-              <td>
-                blueprint complete (<code>backup.nix</code>, sops
-                <code>borg_password</code>, port-23 key); awaits StorageBox
-                credentials + passphrase-recovery policy
-              </td>
-            </tr>
-            <tr>
-              <td class="mono">—</td>
-              <td>SSD-2 (sdc1 ssd-btrfs) tenant</td>
-              <td><span class="tag plain">DECISION</span></td>
-              <td>
-                gocache-module candidate; old docker-relocation plan superseded
-                by the Samsung layout
-              </td>
+              <td>Samsung mount options</td>
+              <td class="mono">default 30s commit (per that snapshot)</td>
+              <td class="mono">zstd:3 + commit=300 everywhere (live)</td>
             </tr>
           </tbody>
         </table>
       </section>
 
-      <!-- ================= 8. GOTCHAS ================= -->
+      <!-- ================= 9. GOTCHAS ================= -->
       <section id="gotchas">
         <div class="sec-head">
-          <span class="idx">11</span>
-          <h2>Enduring gotchas encoded in this layout</h2>
+          <span class="idx">09</span>
+          <h2>Enduring gotchas</h2>
         </div>
-        <div class="callout">
-          <b class="t">enumeration flip</b>nvme0n1/nvme1n1 swap across boots
-          (and nvme0n1p9 ↔ nvme1n1p9 confusion is real: ClickHouse was once
-          briefly nvme1n1p9 by kernel enumeration). Everything pins by-label /
-          by-uuid / by-id — never kernel names. Same doctrine killed the
-          sd-letter udev rule class.
-        </div>
-        <div class="callout">
-          <b class="t">nodatacow landmine</b><code>+C</code> only sticks in
-          never-snapshotted subvols — one scheduled snapshot silently reverts
-          touched extents to CoW. Hence: hot tier never in btrbk, enforced by an
-          eval-time assertion keyed on the <code>hot/</code> prefix.
-        </div>
-        <div class="callout">
-          <b class="t">forever retention is deliberate</b
-          ><code>target_preserve_min = "all"</code> on the root leg: CoW extent
-          sharing makes snapshot count ~free, and every deleted NVMe byte stays
-          pinned pool-side. Revisit only above ~50% pool usage.
-        </div>
-        <div class="callout">
-          <b class="t">one USB link rules them all</b>Pool members, buildcache
-          and the spare share a single JMS567 bridge (usb 8-1). Time-slice heavy
-          jobs (btrbk sends vs buildcache-gc); the wedged-bridge incident class
-          lives here. Bridge power comes from host VBUS — pulling enclosure
-          power alone never resets it.
-        </div>
-        <div class="callout">
-          <b class="t">boot requires the Samsung</b><code>/nix</code> is
-          <code>neededForBoot</code> without nofail — stage-2 init lives in the
-          store. Samsung failure loses /nix (rebuildable from flake.lock +
-          attic) and, post-Phase-2, the hot DBs (dump-only RPO — that is why
-          backup-coordination freshness becomes load-bearing there).
-        </div>
-        <div class="callout">
-          <b class="t">rescue tier exists</b>Two read-only
-          <code>@</code> snapshots in <code>/mnt/btrfs-root/.rescue</code>, dir
-          pinned <code>chattr +a</code>, outside btrbk's snapshot dir — added
-          after the 2026-09-12 glob-delete incident; a kernel that stops
-          enforcing +a flips the canary check red (no phantom protection).
+        <div class="grid2">
+          <div class="callout">
+            <b class="t">enumeration roulette.</b>
+            nvme0/nvme1 swap across boots (Samsung was nvme0 on 08-31; the
+            Lexar holds it today) and sd-letters reshuffle on every DAS
+            replug. Config pins by-id/by-label exclusively — never hardcode
+            kernel names anywhere.
+          </div>
+          <div class="callout">
+            <b class="t">deletes are pinned.</b>
+            <code>rm</code> frees nothing until pinning snapshots expire:
+            root @ ≈ 2 weeks sharp (calendar-anchored 3d 1w), /data ≈ 4-5w
+            (14d 4w), pool services ≈ 4w. <code>trash</code> on /data is a
+            rename — the pin clock starts only when the trash empties.
+          </div>
+          <div class="callout">
+            <b class="t">226/NAMESPACE.</b>
+            ReadWritePaths entries must exist before unit start; every pool
+            leaf dir is created by a mount-gated oneshot
+            (RequiresMountsFor), never by ExecStartPre mkdir.
+          </div>
+          <div class="callout">
+            <b class="t">QLC doctrine, now fleet-wide.</b>
+            compress=zstd:3 + commit=300 on EVERY btrfs mount (Samsung
+            included — live-verified), nodiscard + daily fstrim at idle
+            priority; qgroups OFF (metadata tax), bees OFF (random-IO tax on
+            QLC).
+          </div>
+          <div class="callout">
+            <b class="t">no TRIM over USB bridges.</b>
+            lsblk -D shows 0B discard through the JMS567 (and the RTL9210B) —
+            buildcache endurance is fixed by reformat, not fstrim.
+          </div>
+          <div class="callout">
+            <b class="t">XFS cannot shrink.</b>
+            clickhouse p9 is the LAST partition, ending 176 sectors before
+            disk end — growing it means relocating the 1.1T /data partition
+            after it.
+          </div>
+          <div class="callout">
+            <b class="t">/tmp is RAM.</b>
+            48G tmpfs; <code>trash</code> under /tmp hoards memory via
+            .Trash-1000 (14G sitting there today) — plain delete is the honest
+            verb, and SigNoz's tmpfs-usage alert is the tell.
+          </div>
+          <div class="callout">
+            <b class="t">rescue tier exists.</b>
+            Two read-only @ snapshots in /mnt/btrfs-root/.rescue, dir pinned
+            chattr +a, outside btrbk's snapshot dir — the 2026-09-12
+            glob-delete incident's answer, canary-metricd so phantom
+            protection is visible.
+          </div>
         </div>
       </section>
 
       <footer>
         <div>
-          Snapshot artifact — point-in-time visualization, 2026-09-20.
+          Snapshot artifact — point-in-time visualization, 2026-09-30.
+          Supersedes docs/planning/2026-09-20_15-17_disk-layout-current-and-target.html.
           Mermaid.js v11.17.2 inlined (MIT); no network needed.
         </div>
         <div>
           Refresh with:
-          <code>lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,MOUNTPOINT,MODEL</code> ·
-          <code>findmnt -t btrfs,xfs,ext4,vfat</code> · <code>df -h</code> —
-          then update sections 01, 02 and 05.
+          <code>lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,MOUNTPOINTS,MODEL</code> ·
+          <code>findmnt -rn -o SOURCE,TARGET,FSTYPE,OPTIONS</code> ·
+          <code>df -h</code> — then update sections 01, 02 and 05.
         </div>
         <ul>
           <li>
-            Live state: <code>lsblk</code>, <code>findmnt</code>,
-            <code>df -h</code>, directory listings of /mnt/hot · /mnt/pool ·
-            /mnt/btrfs-root · /data
+            Live state: lsblk · findmnt · df · /proc/mounts · /proc/partitions
+            (all run 2026-09-30 09:13 as user)
           </li>
           <li>
             Config: platforms/nixos/hardware/hardware-configuration.nix ·
             platforms/nixos/system/snapshots.nix · boot-mirror.nix ·
-            modules/nixos/services/{hot-db,hot-user-caches,crush-hot-db}.nix
+            modules/nixos/services/{hot-db,hot-user-caches,crush-hot-db,buildcache,restic-app-dumps,offsite-borg}.nix
           </li>
           <li>
-            Docs:
-            docs/planning/2026-08-31_samsung-role-assignment-first-principles.md
-            · docs/planning/2026-09-15_per-service-btrfs-subvolumes-analysis.md
-            · docs/research/hetzner-storagebox-borgbackup.md ·
-            docs/todo/storage.md · AGENTS.md (BTRFS / HDD pool / Samsung
-            sections)
+            Docs: docs/todo/storage.md (EIO P0 + merge windows) ·
+            docs/services/hot-db.md (the five waves) ·
+            docs/services/offsite-borg.md · AGENTS.md (BTRFS / HDD pool /
+            Samsung sections)
           </li>
         </ul>
       </footer>
     </div>
-
     <script>
       "use strict";
       var __esbuild_esm_mermaid_nm;
