@@ -70,8 +70,9 @@ _: {
           case "$TOKEN" in
             PLACEHOLDER*|"")
               echo "architecture-catalog-sync: sync token is PLACEHOLDER — skipping." \
-                "Run scripts/setup-forgejo.sh in the eventcatalog-hub repo, then sops-paste" \
-                "the minted token into platforms/nixos/secrets/architecture-catalog.yaml."
+                "Run scripts/setup-forgejo.sh in the eventcatalog-hub repo (it stores" \
+                "the sync token root-only at /var/lib/forgejo/.eventcatalog-hub-setup/sync-token)," \
+                "then sops-paste it into platforms/nixos/secrets/architecture-catalog.yaml."
               exit 0
               ;;
           esac
