@@ -1,0 +1,997 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Report Title</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS DARK — Dashboard template
+         Design language: form follows function. Primary colors on graphite.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Dark) --- */
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        /* --- Semantic layer (shared vocabulary with editorial template) --- */
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 15%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px; /* Bauhaus default: sharp corners */
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Sticky-header offset for anchor jumps */
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges (used inside issue cards) --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges (used in tables) --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+
+      /* --- Callouts (used inside issues or standalone) --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      /* --- Stat cards / scorecards (aliased vocabulary) --- */
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad,
+      .score-bad {
+        /* default top bar already set */
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      /* --- Strengths list --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--accent);
+      } /* func, type, struct, if, return */
+      .tok-type {
+        color: var(--warning);
+      } /* int, string, bool, error */
+      .tok-string {
+        color: var(--solution);
+      } /* "quoted strings" */
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      } /* function names */
+      .tok-number {
+        color: var(--accent);
+      } /* 42, 3.14 */
+      .tok-generic {
+        color: var(--problem);
+      } /* T, ID in generics */
+      .tok-builtin {
+        color: #4dd9ff;
+      } /* make, len, append */
+      .tok-punct {
+        color: var(--text-muted);
+      } /* { } ( ) ; = : */
+      .tok-attr {
+        color: var(--accent);
+      } /* Nix attribute names */
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids (responsive) --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC (alternative to sidebar) --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>PARETO MASTER PLAN</span>
+      <span>2026-09-30</span>
+      <span>SystemNix · evo-x2</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#spine">The Spine</a>
+          <a href="#graph">Execution Graph</a>
+          <a href="#quick">Quick Wins</a>
+          <a href="#hard">Hard But Worth It</a>
+          <a href="#decisions">Decisions</a>
+          <a href="#watch">Watch</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-shapes"><div class="circle"></div><div class="square"></div><div class="tri"></div></div>
+          <div class="hero-badge">Two-Day TODO Master Plan</div>
+          <h1>68 Reports → One Plan</h1>
+          <p class="hero-subtitle">
+            Every open item from all 68 status reports of 2026-09-29 + 2026-09-30, deduplicated,
+            split into tasks of ≤12 minutes, and sorted by importance / impact / effort / customer-value.
+          </p>
+        </div>
+
+        <h2 id="summary"><span class="num">00</span>Summary — the Pareto shape</h2>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-value">68</div><div class="stat-label">Reports read</div></div>
+          <div class="stat-card stat-good"><div class="stat-value">61</div><div class="stat-label">Quick wins (agent, ≤12 min)</div></div>
+          <div class="stat-card stat-warn"><div class="stat-value">22</div><div class="stat-label">Hard-but-worth-it chains</div></div>
+          <div class="stat-card stat-bad"><div class="stat-value">18</div><div class="stat-label">Owner decisions gating work</div></div>
+        </div>
+        <div class="callout callout-solution"><strong>1% → 51% of the value:</strong>
+        Deploy the current tree → run <code>nix run .#pre-reboot-check</code> → take the owed reboot → verify. That single spine
+        clears the D-state corpse pile, the phantom IO-PSI, the journal-hot boot-path risk, and re-arms every pressure gate.
+        Next 3%: InboxClean consent (mailbox dead 26 days), the @data scrub policy (Oct 5 deadline), and the Wise SCA approval.
+        Everything else in this plan is either a ≤12-minute agent task or an owner-gated chain that is already code-complete and waiting on inputs.</div>
+
+        <h2 id="spine"><span class="num">01</span>The Spine — everything else unblocks through it</h2>
+        <div class="card card-problem"><h4>The tree is ahead of the deployed generation, and the box is owed a reboot</h4>
+        <p>Nine parallel sessions landed fixes (scrub churn-stop, nsfw-classifier, guard ordering, forgejo theme, netbird Phase-1,
+        papdashboard + browser-history upstream fixes) while the host carries a D-state pile and phantom IO-PSI from the 10-hour
+        metadata wedge. Nine separate reports end with "deploy + reboot when convenient". Until the spine runs, every verification
+        battery in this plan verifies the wrong generation.</p></div>
+        <div class="card card-solution"><h4>Sequence</h4>
+        <p><code>nix run .#deploy</code> (quiet window, rc=12 doctrine: no zone-6 trip in the last 60 min) → <code>nix run .#pre-reboot-check</code>
+        (exit 0 gate) → reboot → post-boot battery (journal mounts at boot, boot-mirror green, no D-state pile, PSI baseline, flm serves,
+        /run/binfmt present, tmpfiles ran) → one more deploy to confirm the profile anchor.</p></div>
+
+        <h2 id="graph"><span class="num">02</span>Execution graph</h2>
+        <div class="svg-wrap"><?xml version="1.0" encoding="utf-8"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" data-d2-version="v0.9.0" preserveAspectRatio="xMinYMin meet" viewBox="0 0 6557 1752"><svg class="d2-2659294649 d2-svg" width="6557" height="1752" viewBox="-91 -101 6557 1752"><rect x="-91" y="-101" width="6557" height="1752" rx="0" fill="#FFFFFF" class=" fill-N7" stroke-width="0" /><style type="text/css"><![CDATA[
+.d2-2659294649 .text {
+	font-family: "d2-2659294649-font-regular";
+}
+@font-face {
+	font-family: d2-2659294649-font-regular;
+	src: url("data:application/font-woff;base64,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");
+}
+.d2-2659294649 .text-bold {
+	font-family: "d2-2659294649-font-bold";
+}
+@font-face {
+	font-family: d2-2659294649-font-bold;
+	src: url("data:application/font-woff;base64,d09GRgABAAAAABcEAAoAAAAAIfAAAguFAAAAAAAAAAAAAAAAAAAAAAAAAABPUy8yAAAA9AAAAGAAAABgXxHXrmNtYXAAAAFUAAAA2QAAAUYIkQpWZ2x5ZgAAAjAAAA+BAAAVHPhdxp5oZWFkAAARtAAAADYAAAA2G38e1GhoZWEAABHsAAAAJAAAACQKfwYIaG10eAAAEhAAAADwAAABJJEfC75sb2NhAAATAAAAAJQAAACUwzLIam1heHAAABOUAAAAIAAAACAAYQD3bmFtZQAAE7QAAAMvAAAIKgjwVkFwb3N0AAAW5AAAACAAAAAg/9EAMgADAioCvAAFAAACigJYAAAASwKKAlgAAAFeADIBKQAAAgsHAwMEAwICBGAAAvcAAAADAAAAAAAAAABBREJPACAAIP//Au7/BgAAA9gBESAAAZ8AAAAAAfAClAAAACAAA3icjM45TqJxAMbh5xuYgRkYFRfEFRQXkMV9AUVBbYyNMUZL4g2MpefS1uUiJp7kb/LFwtK87ZO8P0QSImQlozYqSpLSSsqqauoamla1tHV0nblw5UbfnYcQiGXlm1z7kj3nLl3ru3UfQvhQlFcwYFBGLgSRlCi8hdfwEp7De3gKj3HLzxY5dujIibYDLd34e92GTVu27di1Z9+pnl8Skn77IyXtr38ysv7HLUNyho0YNaYjb1zBhElTps2YVVQyZ17ZgkVLllVUraipa2jyCQAA//8DAD1iJ9oAAAB4nIR4e3BbZXr++32Sz7EV+SIfHR1L1sU6RzpHkm3Z0tHR8V2+yPIllq+J7RBfEk9InNhxvInZGOLAzm+B7ILyg8VZCLALbNpMKQ0tNNuZAM12yizQzKYDLdB0Oiy33UnZpQVD3S0XW+p8x5c4aWf6h/TNnDnfe3m+533e9zuQBb0AeAKfAR3kQD4UAgsgm9wmryxJAq3KqipwOlVCJroXF6bP/7Hk1/v9+kDJWddd4+MoOYbPrE7vTk5M/GG8tjb91Esvp0+jYy8D4Mw3ALgFpyAHTAAMLUuiKAkUpWNkRpAE+nrBg/m5xbl6o/Wbqy9e/YnvDR/qrKsLzciRw+n7cGp17sknAQB0kATAdTgFJrABT2KTwxYLa6ZoVlsoQSeHo0pEFASTHNbW5Afx6cZyX7glfrRtvDUaCkcSA3fW1Q/glCMRKx3I1+dub2rZ4UenAoJYkh4eLvUCIAhmlnElPgvFAFm8KCqRaFQOWzhaFAWeolizRQ5HVY5Co/0PDOw83R/b5+62qkJZR+lguy9W1N1v7Prx4enH+2R+jHOEx5r3zXqsI3sAQxIAd+EUGIDdEj0lSHI4SuImAV/a90hf70N7yu1VA8HgQJUdp+IPzc4+0nbcN9LdvcsLJL4kAPocp2AbwcDNulmZFVg3m0Rn09++/z7Kx6mF7594dGHz3U807Le8m0RPpr/6+GOcWnhsYRVgI+c4Pguu/y3n9ZQVQZFNFIUO7/rRzqGHh9r2lyStVYGuPSO7zaJx+jP+O+uJR9xjFufsxL5Zg2F2Pv2OO7gWB965EbPMyopsEkyCKbn40ZkzH+HUt9+uzqGC9NJGzPAhToFOe9eUXMSp1bl1G9M4Bca15zIj6xhBR7PJRf2r51773c+e7sKp9H+ibemV9Dxi9v3FRv4f4xRkre1xs8lFhHFqdYnAs27zeZwieROLFgsnR6MqI5sEAoEq0LQgSYITs2zyZwcNhQa9wWQ48Mz9dI5Or4z2jUb0+mwap9Lv2xuczgY74lfnPi/p6XU9+fXXT7p6e0o+3/BBzp1Z88HJoqiQ/HWSYLGwbPKx5xr1+rwUWbJycSr91w9HvldzfXUOtf7/6ELNvwIA1s7nbnwW8m9hpUZ8aY322kGhweH7tm+/b3jtv6W7u6Wlu9vY//ihqR/39Dx66NDj/ffMTUzMzExMzBG7JLZKDVPzloqiBIHdrKEP2+9IJOZa+9rnG+viOCWN9HRNVPwa9U/KAYLhmo0BnII84LZWJSluYkWLTUh+2no0HlPOnD/Z11VTX1/ThVPe4e72US797aefoj2hykqRYCVklrEBn4WAlqWkWgjzlIgoSUH8P0jJcZonCpkb7wnvEAZ9wXK5dKe7Tqw9GK+aDWwvaZTE8urAjtpEzYyxMni7U+QdLkehJ68iUREdjpQFRq3FLrvTaeKLdrRGR6oAgRUAMzgFNMlEUNysYLp6EX1zERcsLKwSegLKfA2AZZyCXABZt4Uzul+89pPufC5fn1eUl3z0lziVfkvZH43uV1Clxt88AF0JToH7ln1bLAi6NW2kdafufKycyqP0BsaQOJkwMAY9nUuXn557qTE7N0tP5WbX41T6TflAJHJARqH0m6FJRTkQRqHVOeQTkx5PUkz/M2AIZJbRO2gFrCAAcDwRM1XTMVrSwGRNAvGnkvLWtO0X8d57F7HgdzV6lIqpmvH98wa9qy3b6mW661zGoVj3cL5bKmL3OjwzR9O/le3CUY4ZMpQ6ijiNC02ZZWzBl8G8riSSQAsmmaVvIavAE9FGre4Wh954bFHviPN1wxV148NidLDMb/YZ3SUKvnyhy+Zo+E7Xzjtj84mu+8t/VZhH8AdPZhldRitgu1WrbkgVR1HI2nqkqf278WCbvVUoUWKxyqIgU+MdNNbf0T8wV+/kxh1dTY1JNn9PSTE5VwxSZhmt4MvAQMkGViRqTlLkLShtkO/LkSO14xF/lZVanDfobQlcJBUypWYhWmF88M6+OxrsRV1/utoSsgnzZuuvCvNa2jpaAWuxf4RWoOgWpSU8pt2E7SpHUTo5QrwgV9vR5pbp2rbRCj1OXzMkQko0JI49cVEq46PGhrn+vrlYbCrOeHOisnuXzYlq/EoFyQVBEQCaw1fISnis3lI7pA2Ybmtu9vS2uCIFxbk2Y7Fz1y508nBWsTIYMVLTWVlu0Xks/X0AHfCZckyjFaiAWujUkBGViKposa8vUTnMyaywLh68RACSCb3MFKXbok7MuhrwovbKlzVjVW1McUmRzV8zppS5/6qHzokMqw5XIe/vHdkbX+h0SJLDIUn+cKPkla1uY3H927aqsjqfPtfnKg4X6AvjpXU9PuPUNt5c3ekx5FuYwtoWuS+IrgT8kt/n8wfSix4rV6DTFVntjjVsmshhaxwFeZObrEkwaaDTpqZF2r493Nex6Cix+4rw5Qu7rKVTo+mryB31Wbn0i5DJgAoAv8ZvYxFaAYCGBDwAkMlk/j5TBx9oz9vWn6c2fTrx5c3epco0I0g02/SQ/qfP/PkrT8/G8OX0zGtX0+/9bdtd5P3MMirElyFfw1sxyaZNYv9dV+2iKSeLpgqNXuPu7VhYvcYVInQ4iyb7AHQOtKJpjEkmAkNO/aYM6c21idR2IqQ0Me7OUO/2RUeJt5L8VaClRld5qY8PbaRdmX5xfdnAD62AeauPrfjNG/QlyU0A0VLMWX4Tfmt1oHHq/+5nltiRePxILDYTj8/EyoPB8mB5+XoN188N9N9RfzzZ2NRFSpmE1ZRpxxa0Agw4Abgb0Wm0FCWOZW7ID0nf0SHdNlk3Hi2ps2X1iNHB0oDZdwk/G7IJPzy2cz5WbO35EfJsio+WO3oIrUDhTfjS4o3Mi7tE1m4oyrUW2OvNaGkoHMrKukev94fTHwICNrOMnkYrIGnneqO/iWv9bdMY6W5OzJqpt0MHxGY+5nI7HUGbs9Z3cGf1kKvZFrFVV4sl9f5Jo+gasRZzjMnCGIyean/roFQ0bLZIRda8bUJ1sGV0jfOmzDKawXOkQ2fxoqIIiqrKRAW2CCaM9MS7THcdPy44jFYDx6jGQ4NXDlP33nvsjYCX0k9RxjVbdZll9BVaAvMt3DSty+Q/9XUsOkvsomVxfpvO1WmcGkWR9AeK3+ZA7emCVm8ZIFIHKIOW1nsot94BVVl38U/ONJJul8MYmk6fQ0u/9yYlKen9fbpgQ9fwEloC9y37tlgQ1u8XNH1m4ZFKykDp6dwc9Z6qnHxaT+fQFT84fqGczqX19Da6DC1d97aLYqdwXVvbvdfTBa8LCZ8vIbyu+SOHvoyWyFwgM9IWhzR3w0/e2YeeKjNYDPrswmz+7MOPP1Vp5Iz6HHOOhPBnvWwpy5ayvZkv+tkyli219BO7xkwDWkVLULyVB6p6ExR5eN7izrfRhdlen4H+mzNt2woN+mxTTt3pC1xVz6uUfhZleRw29Jt3+YRXaBPeTW9r2KnNZAjIMPVztKTN/QpDBhmdzIpvvYRm37rWg4LHutP/cIzUizezjD7Fp2Dbeh0qkfVykTbuJGtXHgvK3n/y5H7ys/o4zmct8hUV+YzPnTt3/vy5c88d9Y4NDY3w/MjQ0Jh2h0oAoH/BJ8g5a7O+Eo2qRGwTDxyPtPPTx4+jI7sNdvPqyvG1eJ0A6Lf4FNjJ+w1YiWyZUUg4FJkgZNbbdzIR8vNqUW/FRDw2ptSORIrqLN/bkTx5sLwiJNl6wnJ4d71y5EhUl7VA7Foyy+gDfAr8t9aboISjN3nZcpH8j+RhIe5I+Cqq7J2tg40+kVednWUTNRN3qrLa1jRlDPtG7R7JY/dbJitEt9dpu00s3T0QSlj0BcmG2oFSkhMGBgB9hU9ADqkURibdktCSUdwKQ7AQ2Gfuz0J6oy0vnP73T37e0YGyD7j6nLZocXrm7O3o7vTp2bMkBy6zjD7EJ8B1Sw5EciTGzQr0Jkr/1T0tNjvivlBNVZnd62guRJO/2+YW1d1VTYeMEe+ozRsOVYbzCgOoaeF4fmAontgX0WL1Z5bRv2k88AEgnqI3nOhuaPP68ECtN0wzRSHGKpsNVW53RYWzfqa1446W2IgzWaDahRpBZ+1w9E/VjCOvg99eHYqGA+k3mx48cvxsR7lruLDYO9RZIozf3jxO/CMoA0DX8QlNDxqw6lbcbJ6OfpriE3Xp36CX1RZvgf7Qs08MLNzW8t0TDxNR02mz7ScaZySIbHaRGxPJ1m8DultnEFHSeI3o2L6aWLm3MjJSO3Qo7A42Vt1ul/weR6DO6K3k63ysvcZY1iPXdBbp7e3haE9gvCfYZtFbu2Ph3iC6u7zSW+7xSmXpdyWf3eswMYojUAEY+Mwyuq7h6Qdg1jRWQ4/ZPMGoqvWkjWBJtNSzlR6rzBhUvqSyPjbq7C6I2j3VHmztcER3hmv2VDcQkNFfhgMapmlj0LkGpcsTGGpp3iM3PTD73cc7AEF9Zhk+h+fJfZvbUtWPirIsirJsVCSfovgkhWAfzDQggOdJT+OkaFTieWHLli5nVQ3CeixEo2I4MvJqt7nJW+oTg51N/fNAZp41X+gLLEE1AIoDRVZAUApXkBuFyD1eVWS29A9XJieJP2NmDn2SeYM85xQ3a0TvpQYGAEF7Jol8+APCAU47Q9KVSCO8GmttjY2o4bB68cD79977/gFx77WpQ9cmAEFlJokK1vdImmIRdFkzlRqpCoerRmKtrRfFiWuHpq7tFbW9gCA3swdF8euaf0bW5V7Zc+UZ3f6VJ0gdhDI7dIP4p9AM3YRRpCk34LXqysMCrzUWDR3tKSerMk1tfr7h8zBrtmz0Ux0R9HX9RBe2/2Cqvu3kH41MPz3kb+mTShuzMRt31XY41c5Sq5iL83YH2RanyqvzE4137a3uu69b6neVBPfWF7iYonyXs5S7EBw7vefgn93VvPuZg60HWnmfx+Htaw0OJQJcceC9wbI+tf1EV2Tihzsm/l8jV9Br5VCV2XrKEWx2tqzpEQ+AvsQPQDFRElkVlLWfTGs/VqBlVqAFVaAZWRUGLZ0783p2szvMk+wOc8/u3B3j3E7LAY4/kDf5ytjM2Pnz58+PzYy98soryDpD7CPgYQx9hqOEc9q3ImVtwPjHF16YfuGFsUuTly5NXiJ84eEc+gx9iUVohzmgoP3GjAzvoKWN7z5Ni2gpXQAo8zyuhgH8NrFr2kJMbzDo9QaDuDogCAHyIyMFmb/fRUtQcJNWkhGFojwuf77NwBgc3GJJ8pfZ1LROL/nRF2kmeptK/PPIgj5DdxP/jOJmeXQVWSYnAeC/AQAA//8DANWXg44AAAAAAQAAAAILhd6x4PVfDzz1AAED6AAAAADYXaCEAAAAAN1mLzb+N/7ECG0D8QABAAMAAgAAAAAAAAABAAAD2P7vAAAImP43/jcIbQABAAAAAAAAAAAAAAAAAAAASXicNMqxLjRhGEfx8/wn2XxfjPWKNVazxRjE7uyEisRO8TYbhSeRIFmFkpuQUOr0WjWN1g0obOVWNLYZsYni5DQ/vXLCO6huZrrENabSDa4CV4rrlkpPuA1xXeNq4ZrhesT1TKUzXFe4SjZUsq6y+U6GtLVEXzXRPilUs60WhZ3TVUauQ6J12LesmaogWo+YXBA1Imow99EeiPbGqt2xrANGWiBN/tGVaOs/qX2wpcCmAmMFegpkCqwosKbAjgKlAn0FciupraSa/5iBfZHahCObsGunLCb37P26v6xDhObFsmaqQP4DAAD//wMAHngpUgAAACwALABQAIQAsADUAOoA/gEuAUQBUAFqAXoBrAHOAfoCHAJCAoIClAKwAuoDIgNUA4ADsgPmBAwEdASWBKIErgTGBOIFFAU2BWIFkgWyBe4GFAY2BlIGiga2BuYG+gcmBz4HageoB8wH/gg+CFgIpgjmCPwJHAkoCTQJQAlaCXQJggnwCiAKNApACkwKYgqACo4AAQAAAEkAkAAMAGMABwABAAAAAAAAAAAAAAAAAAQAA3icnJTPbhtlFMV/TmzTCsECRVW6ib4FiyK1Y1MlVdusJqRWRkRx8LggJIQ0tie25fHMyDN2Gp6ANW/BW3TFQ/AciDW619euXRAFK4p1Zub+Od+5537AAX+yT6V6H/itnhqucFS/NrzHvfqF4X1a9T3DVR7VfjdcY1BbGK7zea1j+CPeVn8xfI/j6o+G73NYbRn+mKfVA8Of7Dv+MPwpx7xd4go852fDFQ7JDe9xwA+G93mA1axUeUDTcI3PODJc5wjoMqYkYUzKEMcNY4bMmRFTEBIzY8wNMQMcAT4Jpb5NiRQ5hv/4NiKkZEakFUeUOBJCEiIKRlbxJ83KuNaO0memSLr5lIyI6GnGhIgUR8aQjJSYidYpKcl5SYMGBX3lm1NS4FEwJsEjY8aQBm1aXNJlxJgCR0srCbOQjBtKbom0v7MIUaZPTEphrOakDJSnU36xZgdc4miTa+xm5cutCo9xfKvZwk1iHF/i6b/bYLbdd8UmYqF6ioY9EuV5qxMcqeLS1+cbxSUvcTvps83kwxoNlJ3MekyPuc5f5id5wiTFuUN8QnVQ6B7iONPngFAV+Y6ALhe0eU1Xn306dPC5okvAK81t08HxFW2uONeMQPHyW0sdc8X3OL4m0BipHZs+ork8vSE3dwt3cYacY0quWyAzlvOL8+OdJiw7lG25o1BX9HWPJFL2QFSRPYsYmitydcVUtVx5ozD9BuYI+VrqbN99l21Y2O6ttviOTHfYMTdOMrklow9N1XvPM7f65xExIKOnEX0ypjQoudOzXRMxJ8Fxrj6+0C0p8dc50udOXRIzVQYBqdaZketvZL4JjXt/y/fO7hLZvKnu6GR9ql26SOV0Y0avVb3Vt9BUjjcm0LCpZpYjE5bKy5OK9yXa2+IfqvsLvd0ynnBGRsLgbzfAUzyaHHPCKSPtIJVTFnY7NPWGaPKCUz39hFij5L58ozpJhRM8nnHCCS949p6OKybOuLg1l83ePuec0eb0P51iGd/mjFfrd//e9Vdl2tSzOJ6sn57vPMVH/8OtX/B4677s6C0gm7Owau+24oqIqXBxh5tauId4fwEAAP//AwD0t09RAAADAAAAAAAA/84AMgAAAAAAAAAAAAAAAAAAAAAAAAAA");
+}
+.d2-2659294649 .text-italic {
+	font-family: "d2-2659294649-font-italic";
+}
+@font-face {
+	font-family: d2-2659294649-font-italic;
+	src: url("data:application/font-woff;base64,d09GRgABAAAAAAuIAAoAAAAAEhAAARhRAAAAAAAAAAAAAAAAAAAAAAAAAABPUy8yAAAA9AAAAGAAAABgW1SVeGNtYXAAAAFUAAAAdAAAAJQCGQMWZ2x5ZgAAAcgAAAVuAAAHGMfYO5JoZWFkAAAHOAAAADYAAAA2G7Ur2mhoZWEAAAdwAAAAJAAAACQLeAi6aG10eAAAB5QAAABYAAAAWCN2AkFsb2NhAAAH7AAAAC4AAAAuFeYUKm1heHAAAAgcAAAAIAAAACAALgD2bmFtZQAACDwAAAMrAAAIMgntVzNwb3N0AAALaAAAACAAAAAg/8YAMgADAeEBkAAFAAACigJY//EASwKKAlgARAFeADIBIwAAAgsFAwMEAwkCBCAAAHcAAAADAAAAAAAAAABBREJPAAEAIP//Au7/BgAAA9gBESAAAZMAAAAAAeYClAAAACAAA3icZMxbqkFhGIDh599rbceF5TAAQzAlF5KIUooZmILkNDQZyKf+W71378WDpJBQKZ0xUSuUpmYWllY2dg5OEeQ7z3dta+8YEe/4xCue8Yh73OIal+z9loz9ZftfQ1NLW0dXpadvoDY04gsAAP//AwCzyBsgeJx8VEtsG2kd/3/fTGbycJ3Y84q9tieesWdsZ2zH/mxP3MR2Ejtvu2m6TZpt3pStFggouwGJVbZa2MOqQmgF0l7gtIgLqLdw4rJIKw4WaBGgCi2PE+ymUktVahmJVmSMxnm2By7fYQ7/33ugA0IA+Bv4Q6CgC3rBDQIA4YIURUxTlSii6yrLmjrHsaH3UP29H9Plm19EPnpmyPT0d38+/8+te/jDox30nfV337VW777++o1Hj6wY+tMjAAAMequJ/oMawIMKIClaNlPEJC1KxCSUaqoMo6dzpqlpquLEAi/+YqxqzG0QveCiueJ2qZNWV9zaQsgQ0r5QOSunHKtLU2+vkUiwYHlnwsmxRPLPmhKbXU+XCsd4cquJ/oXrINiqJEXTVVblCMuSXI6kRYF3Yj1dxNmMpioMy4riQ73govjSBzVdxKHr8TZ8NlTOBoaiyqKa4IkjEizg+sdb/sGby1Nvr5Gx2Ow6KRZi4QeaAgjCrSY6QA3wvaCO1ez7jMCLJJ0zJYb5bOHLRm07a4yKcU7zDy3n8pcHcqLirTlur1f2lpKKZ0gSKrvliSmvK82Hz7zD+gUt5979f/Muu6k+rfaDE/euhF92Tx/Y/Pho+GX7cFvLr1ADvBC+iCcKPMMGGfFUC0VyuWymrfDz5a/E59eGzPGAo8P6dddAOebPSwH/4o9amHJH1eyG46vbk7vXjMTVtI84S1fDHhcRZBTu6b/kS8lLgAG1QqiBGiBDoo2pm8c4JsOoFxUTimGoF9TeSy2rId9kpDjn9GjXk4Wrg7NrKa3oorjSbW4vry4qg2LKp46TQPJvmj8rKdWxNzRjean8zdfSkWDBojZvo+Bg7PeaEp1aGRoZAYBWC2QAeI4PsAY8ADAgzNhZIPs7eozr4LC3QSjCEZZTdZaVP6ht4Wcrn3zryvquF9ctP0K/tb54/NY+IDBaTXiO6+C2lWUzJmeLEPgTG78+zuzX7iDkohgWdYuOksuDv3b0Q7aLciM8QtPnuJ+hBvS3cc9qzFIqZ6dgt5iSt0ssHb2WKGY7i9VRmp7xzSQm0eFsKDU+LIes3yCD7780H0tYPzvf5F9RA3rBfzHn43HYV0/Le39hw5jbSC9sGvMbsfgiyaXtx/HG6uTeUuL4HZvYrUxMl3crE1NnfN9BDei7wFditVOePbS/GvcIr/R5Q1W5gA7XjUJXpbM0Yn0KqPXfVhPdQQ3QLzYhm9F0Tctm2sJPhiXwotSuJfPT1LpnSBrTYoXocCJvzBqJOV+CI0EtlRsoZoauOTIRTY4kVK8ue4vRwfFwKBDhvXE5oLmVUSNeCducR1tNtIJ3zjacMzm1hAlLWJW6sOFfjmVolJ/uqYbGX9l33MlTPsXp7XH1JR2leK/3EnLnO95/v2g9dLsDge4Ok+21bw+3mugJOgTP+e3zFnAnM75XyNF0sVag6Rn/tDFZ3S510pHrjgnTJXMoZ93nPHZ8aMXyzqnEzhC17gOgPx7fVTmdSKIokVzONAkrqbqm6SrDsKzxl9UrsU4nS/cO9C69Wr+1YHS6uuk+hdtA+PMdURf4qLDz76dviQlRNKQ9++4nrST6BzoELwDbzsDmaVKEOwHgCHJipnvA6XG7w+Me96tVraOTol1h9/er1t89IzN/YNl8VyGtogfWk2BNVasKch09TdYMmzeGWKuJfoe/By4Ith05Ld+Lv+b2wOvp6XBsdiubngpFZzdTejnjNxLt1zF8q/jaT96ZvnyrePOj/alC5c27lfKNyTfvViZuHHcQPkWHQLU7SMnbtS+hQ8tr+wbTeB4O8AH0AHD2/8VulcAz3+YCqsT7VTwviZ5gv+gZ+B8AAAD//wMA3yB1ZQAAAAEAAAABGFGGN2ARXw889QABA+gAAAAA2F2gzAAAAADdZi83/r3+3QgdA8kAAgADAAIAAAAAAAAAAQAAA9j+7wAACED+vf28CB0D6ADC/9EAAAAAAAAAAAAAABYCdAAkAMgAAAIZACcCGAAfAbMAJQIXACcB4QAlAhMAAQDtAB8B3AAfAPgALAINAB8CAwAnAVYAHwGS//wBRQA8AhAAOAGt/9QBwP/CAeAAKgDtAB8AAABHAAAALgAuAGYAngDMAQQBPgGGAZIBrAHOAfgCJgJEAoACrgLaAwYDNgNoA3YDjAAAAAEAAAAWAIwADABmAAcAAQAAAAAAAAAAAAAAAAAEAAN4nJyU3W4aVxSFP2KgTf8uKitybqxzmUrO4EZxlMRX4zpWRkWQMqQ/UlVpgDEgYGbEDDjOE/S6b9G3yFUfo09R9bramw1hIqtWUBRrDWf/rLP22gfY51/2qFTvAn/Vl4YrHNZ/NnyHL+pNw3uc1T8zXOWo9rfhGoPaW8N1HtQ6hj/hXfUPw5/yuPqb4bscVC8Mf86j6r7hL/cc/xj+ise8W+EKPOV3wxUOyAzfYZ9fDe9xD6tZqXKPY8M1vubQcJ1DoMuYgiljEoY4LhkzZMGcmJyQmDljLokZ4AjwmVLorwmRIsfwxl8jQgrmRFpxRIFjSsiUiJyRVXyrWSmvtKP0mSuSbj4FIyJ6mjEhIsGRMiQlIWaidQoKMp7ToEFOX/lmFOR45IyZ4pEyZ0iDNhc06TJiTI7jQisJs5CUSwquiLS/swhRpk9MQm6sFiQMlKdTfrFmBzRxtMk0drtys1ThCMePmi3cJMbxLZ7+d1vMyn3XbCKWqqdo2GOqPK90giNVXPr6/KC44DluJ33KTG7XaKDsZNZjeix0/jI/yRMmCc4d4BOqg0J3H8eZfgeEqshPBHR5SZvXdPXbp0MHnxZdAl5obpsOju9o0+JcMwLFq7MLdUyLX3B8T6AxUjs2fURz+XpDZu4W7uIMuceMTLdAZiz3F+fHO01YdigtuSNXV/R1jyRS9kBUkT2LGJorMnXFTLVceyM3/QbmCDktdLbvz2UblrZ76y2+JtUddiyMk0xuxei2qXofeOZK/3lEDEjpaUSflBkNCq71bq+IWDDFca4+fqlbUuBvcqTPtbokZqYMAhKtMyfTv5H5JjTu/ZLvnb0lsnkz3dHJ5la7dJHKydaMXqt667PQVI63JtCwqaaWIxOWyqubivcl2ivxD9X9ub5uKQ8JtK5Msn/jK3DMM044ZaRdpHrCcnMmr4REnKoCE2KNkjfzjWr1CI8TPJ5wwgnPePKBlms2zvi4Ep/t/j7nnNHm9NbbrGLbnPGiVO3/O/+pbI/1Po6Hm6+nO0/zwUe49huOSu9mR18D2aClVXu/HS0iZsLFHWxr4e7j/QcAAP//AwByoVFAAAADAAD/9QAA/84AMgAAAAAAAAAAAAAAAAAAAAAAAAAA");
+}]]></style><style type="text/css"><![CDATA[.shape {
+  shape-rendering: geometricPrecision;
+  stroke-linejoin: round;
+}
+.connection {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.blend {
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+		.d2-2659294649 .fill-N1{fill:#0A0F25;}
+		.d2-2659294649 .fill-N2{fill:#676C7E;}
+		.d2-2659294649 .fill-N5{fill:#DEE1EB;}
+		.d2-2659294649 .fill-N7{fill:#FFFFFF;}
+		.d2-2659294649 .fill-B1{fill:#0D32B2;}
+		.d2-2659294649 .fill-B4{fill:#E3E9FD;}
+		.d2-2659294649 .fill-B5{fill:#EDF0FD;}
+		.d2-2659294649 .fill-B6{fill:#F7F8FE;}
+		.d2-2659294649 .stroke-B1{stroke:#0D32B2;}
+		.d2-2659294649 .stroke-B2{stroke:#0D32B2;}.appendix text.text{fill:#0A0F25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#0D32B2;--color-border-muted:#0D32B2;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0D32B2;--color-accent-emphasis:#0D32B2;--color-attention-subtle:#676C7E;--color-danger-fg:red;}.light-code{display: block}.dark-code{display: none}]]></style><g class="cmVwb3J0cw=="><g class="shape" ><ellipse rx="108.5" ry="108.5" cx="4185.5" cy="108.5" stroke="#0D32B2" fill="#F7F8FE" class="shape stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="4185.5" y="106" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="4185.5" dy="0">68 status reports</tspan><tspan x="4185.5" dy="18.5">(09-29 + 09-30)</tspan></text></g><g class="c3BpbmU="><g class="shape" ><rect x="4006" y="337" width="359" height="881" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="4185.5" y="324" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">Deploy + Reboot Spine</text></g><g class="cXc="><g class="shape" ><rect x="10" y="793" width="3956" height="126" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="1988" y="752" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px"><tspan x="1988" dy="0">QUICK WINS</tspan><tspan x="1988" dy="32">agent-local, max 12 min each</tspan></text></g><g class="aGFyZA=="><g class="shape" ><rect x="754" y="1408" width="5611" height="142" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="3559.5" y="1367" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px"><tspan x="3559.5" dy="0">HARD BUT WORTH IT</tspan><tspan x="3559.5" dy="32">owner-gated chains</tspan></text></g><g class="ZGVjaWRl"><g class="shape" ><path d="M 1991 1076 L 1914 1146 L 1991 1217 L 2146 1217 L 2223 1146 L 2146 1076 Z" stroke="#0D32B2" fill="#DEE1EB" class=" stroke-B1 fill-N5" style="stroke-width:2;" /></g><text x="2068.5" y="1128" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="2068.5" dy="0">DECISIONS BEFORE OCT 5</tspan><tspan x="2068.5" dy="17.25">@data exit-3 policy</tspan><tspan x="2068.5" dy="17.25">scrub catch-up slot</tspan><tspan x="2068.5" dy="17.25">pool autoScrub drop</tspan></text></g><g class="c3BpbmUuZGVwbG95"><g class="shape" ><rect x="4060" y="367" width="251" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="4185.5" y="405.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="4185.5" dy="0">1. Deploy current tree</tspan><tspan x="4185.5" dy="18.5">(guard fix, nsfw, ordering fix)</tspan></text></g><g class="c3BpbmUucHJlYm9vdA=="><g class="shape" ><rect x="4060" y="570" width="252" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="4186" y="608.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">2. nix run .#pre-reboot-check</text></g><g class="c3BpbmUucmVib290"><g class="shape" ><rect x="4036" y="807" width="299" height="98" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="4185.5" y="845.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="4185.5" dy="0">3. OWED REBOOT</tspan><tspan x="4185.5" dy="17.666667">(D-state pile, phantom PSI,</tspan><tspan x="4185.5" dy="17.666667">journal-hot boot-path, boot-mirror)</tspan></text></g><g class="c3BpbmUucG9zdGJvb3Q="><g class="shape" ><rect x="4068" y="1106" width="236" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="4186" y="1144.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="4186" dy="0">4. Post-boot verify battery</tspan><tspan x="4186" dy="18.5">+ deploy to confirm anchor</tspan></text></g><g class="cXcuZG9jcw=="><g class="shape" ><rect x="40" y="823" width="489" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="284.5" y="861.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Docs debt: restore 19 deleted pipeline rows + drift/harvest lints</text></g><g class="cXcuc2NydWI="><g class="shape" ><rect x="1775" y="823" width="587" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="2068.5" y="861.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Scrub batch: Persistent=false, serialization, completion metric, negative test</text></g><g class="cXcuZ3VhcmQ="><g class="shape" ><rect x="1265" y="823" width="450" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1490" y="861.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Guard batch: per-zone gauges, disclosures, stray-unit lint</text></g><g class="cXcuZ2F0dXM="><g class="shape" ><rect x="3462" y="823" width="474" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="3699" y="861.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Gatus batch: stuck-jobs, load, mount tripwire, flm-port audit</text></g><g class="cXcuZ2F0ZXM="><g class="shape" ><rect x="2422" y="823" width="477" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="2660.5" y="861.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Gate hardening: race detector, multi-sample PSI, smoke fixes</text></g><g class="cXcub2Jz"><g class="shape" ><rect x="2959" y="823" width="443" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="3180.5" y="861.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Observability: ClickHouse fill gauge, collector-config lint</text></g><g class="cXcucmVwb3M="><g class="shape" ><rect x="589" y="823" width="616" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="897" y="861.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Repo hygiene: papdashboard lock, GoModules sweep, CV TODO_LIST, flake check</text></g><g class="aGFyZC5pbmJveA=="><g class="shape" ><rect x="784" y="1438" width="226" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="897" y="1476.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="897" dy="0">InboxClean consent chain</tspan><tspan x="897" dy="18.5">(mailbox dead 26 days)</tspan></text></g><g class="aGFyZC5kYXRh"><g class="shape" ><rect x="1932" y="1438" width="274" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="2069" y="1476.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="2069" dy="0">/data EIO repair T04-T08</tspan><tspan x="2069" dy="18.5">(P0, unblocks btrbk-data + borg)</tspan></text></g><g class="aGFyZC5uZXRiaXJk"><g class="shape" ><rect x="2628" y="1438" width="267" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="2761.5" y="1476.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="2761.5" dy="0">NetBird go-live</tspan><tspan x="2761.5" dy="18.5">(P0 journals, setup key, enable)</tspan></text></g><g class="aGFyZC5ib3Jn"><g class="shape" ><rect x="2955" y="1438" width="218" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="3064" y="1476.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="3064" dy="0">Offsite Borg go-live</tspan><tspan x="3064" dy="18.5">(inputs + policies + seed)</tspan></text></g><g class="aGFyZC5nY3A="><g class="shape" ><rect x="3595" y="1438" width="208" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="3699" y="1476.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="3699" dy="0">GCP monitoring re-arm</tspan><tspan x="3699" dy="18.5">+ verify metric names</tspan></text></g><g class="aGFyZC5jYXRhbG9n"><g class="shape" ><rect x="4168" y="1438" width="245" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="4290.5" y="1476.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="4290.5" dy="0">Architecture-catalog go-live</tspan><tspan x="4290.5" dy="18.5">(setup-forgejo.sh, CI, token)</tspan></text></g><g class="aGFyZC5ob3RkYg=="><g class="shape" ><rect x="4473" y="1438" width="327" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="4636.5" y="1476.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="4636.5" dy="0">Hot-DB waves 1-5</tspan><tspan x="4636.5" dy="18.5">(gatus, dnsblockd, pocket-id, bh, dsync)</tspan></text></g><g class="aGFyZC5tYWls"><g class="shape" ><rect x="4860" y="1438" width="229" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="4974.5" y="1476.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="4974.5" dy="0">Mail stack ladder</tspan><tspan x="4974.5" dy="18.5">(port-25, stalwart, dmarc)</tspan></text></g><g class="aGFyZC5rZXlz"><g class="shape" ><rect x="5149" y="1446" width="433" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="5365.5" y="1484.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Key rotations: Context7 (LIVE in history), Gemini delete</text></g><g class="aGFyZC5mbG0="><g class="shape" ><rect x="5642" y="1446" width="292" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="5788" y="1484.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">flm v1.0.6 + llama-rag ROCm bisect</text></g><g class="aGFyZC53aW5kb3dz"><g class="shape" ><rect x="5994" y="1438" width="341" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="6164.5" y="1476.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="6164.5" dy="0">Windows: buildcache merge, boot-mirror,</tspan><tspan x="6164.5" dy="18.5">root cleanup P1-P6, postgres wave</tspan></text></g><g class="c3BpbmUuKGRlcGxveSAtJmd0OyBwcmVib290KVswXQ=="><marker id="mk-d2-2659294649-3488378134" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"> <polygon points="0,0 10,6 0,12" fill="#0D32B2" class="connection fill-B1" stroke-width="2" /> </marker><path d="M 4185.5 450.5 C 4185.5 497.299988 4185.5 521.700012 4185.5 566.5" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2659294649-3488378134)" mask="url(#d2-2659294649)" /><text x="4185.5" y="515" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">gate</text></g><g class="c3BpbmUuKHByZWJvb3QgLSZndDsgcmVib290KVswXQ=="><path d="M 4185.5 637.5 C 4185.5 684.299988 4185.5 767 4185.5 803" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2659294649-3488378134)" mask="url(#d2-2659294649)" /><text x="4186" y="727" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">exit0</text></g><g class="c3BpbmUuKHJlYm9vdCAtJmd0OyBwb3N0Ym9vdClbMF0="><path d="M 4185.5 907 C 4185.5 945 4185.5 1033.5 4185.5 1101.5" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2659294649-3488378134)" mask="url(#d2-2659294649)" /></g><g class="KHJlcG9ydHMgLSZndDsgc3BpbmUpWzBd"><path d="M 4185.980006 218.9999 C 4185.600098 257 4185.5 272.799988 4185.5 292" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2659294649-3488378134)" mask="url(#d2-2659294649)" /></g><g class="KHJlcG9ydHMgLSZndDsgcXcpWzBd"><path d="M 4080.098699 142.620529 C 3775.600098 242 3699 277 3699 292 C 3699 307 3699 335.200012 3699 362.5 C 3699 389.799988 3699 428.299988 3699 458.75 C 3699 489.200012 3699 528.200012 3699 556.25 C 3699 584.299988 3699 715.900024 3699 789.5" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2659294649-3488378134)" mask="url(#d2-2659294649)" /></g><g class="KHJlcG9ydHMgLSZndDsgaGFyZClbMF0="><path d="M 4294.980981 124.275163 C 5116.600098 238.399994 5322.5 277 5322.5 292 C 5322.5 307 5322.5 335.200012 5322.5 362.5 C 5322.5 389.799988 5322.5 428.299988 5322.5 458.75 C 5322.5 489.200012 5322.5 528.200012 5322.5 556.25 C 5322.5 584.299988 5322.5 621.700012 5322.5 649.75 C 5322.5 677.799988 5322.5 708.599976 5322.5 726.75 C 5322.5 744.900024 5322.5 776.799988 5322.5 806.5 C 5322.5 836.200012 5322.5 875.799988 5322.5 905.5 C 5322.5 935.200012 5322.5 967.099976 5322.5 985.25 C 5322.5 1003.400024 5322.5 1041.699951 5322.5 1081 C 5322.5 1120.300049 5322.5 1170.599976 5322.5 1206.75 C 5322.5 1242.900024 5322.5 1343.699951 5322.5 1404.5" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2659294649-3488378134)" mask="url(#d2-2659294649)" /></g><g class="KHNwaW5lLnBvc3Rib290IC0mZ3Q7IGhhcmQpWzBd"><path d="M 4185.5 1190.5 C 4185.5 1251.300049 4185.5 1343.699951 4185.5 1404.5" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2659294649-3488378134)" mask="url(#d2-2659294649)" /><text x="4186" y="1304" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">unblocks</text></g><g class="KHF3LnNjcnViIC0mZ3Q7IGRlY2lkZSlbMF0="><path d="M 2068.5 891 C 2068.5 941.799988 2068.399902 1027.598999 2068.033048 1072.000137" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2659294649-3488378134)" mask="url(#d2-2659294649)" /><text x="2068.5" y="988" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">code ready</text></g><g class="KHF3LmdhdHVzIC0mZ3Q7IGhhcmQuZ2NwKVswXQ=="><path d="M 3699 891 C 3699 941.799988 3699 967.099976 3699 985.25 C 3699 1003.400024 3699 1041.699951 3699 1081 C 3699 1120.300049 3699 1170.599976 3699 1206.75 C 3699 1242.900024 3699 1279.099976 3699 1297.25 C 3699 1315.400024 3699 1398 3699 1434" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2659294649-3488378134)" mask="url(#d2-2659294649)" /></g><g class="KHF3LnJlcG9zIC0mZ3Q7IGhhcmQuaW5ib3gpWzBd"><path d="M 897 891 C 897 941.799988 897 967.099976 897 985.25 C 897 1003.400024 897 1041.699951 897 1081 C 897 1120.300049 897 1170.599976 897 1206.75 C 897 1242.900024 897 1279.099976 897 1297.25 C 897 1315.400024 897 1398 897 1434" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2659294649-3488378134)" mask="url(#d2-2659294649)" /><text x="897.5" y="1169" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">lock ready</text></g><g class="KGRlY2lkZSAtJmd0OyBoYXJkLmRhdGEpWzBd"><path d="M 2068.980006 1218.9999 C 2068.600098 1257 2068.5 1279.099976 2068.5 1297.25 C 2068.5 1315.400024 2068.5 1398 2068.5 1434" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2659294649-3488378134)" mask="url(#d2-2659294649)" /></g><mask id="d2-2659294649" maskUnits="userSpaceOnUse" x="-91" y="-101" width="6557" height="1752">
+<rect x="-91" y="-101" width="6557" height="1752" fill="white"></rect>
+<rect x="4168" y="499" width="35" height="21" fill="black"></rect>
+<rect x="4168" y="711" width="36" height="21" fill="black"></rect>
+<rect x="4154" y="1288" width="64" height="21" fill="black"></rect>
+<rect x="2030" y="972" width="77" height="21" fill="black"></rect>
+<rect x="861" y="1153" width="73" height="21" fill="black"></rect>
+</mask></svg></svg>
+</div>
+
+        <h2 id="quick"><span class="num">03</span>Quick wins — 61 agent-local tasks, each ≤12 minutes</h2>
+        <p>Sorted by impact. Pareto: P1 = first 4 (do these before anything), P2 = through row 11 (the 4% tier), P3 = the 20% tier.
+        Every row is one sitting; "→deploy" means the code change rides the next deploy window (the Spine).</p>
+        <table><thead><tr><th>#</th><th>Task (≤12 min)</th><th>Min</th><th>Pareto</th><th>Impact / why</th><th>Who</th><th>Gate</th></tr></thead><tbody><tr><td>1</td><td>Restore the ~19 pipeline.md backlog rows deleted by daemon batch d22ccd48 (git history)</td><td>10 min</td><td><span class="badge badge-med">P1</span></td><td>Report follow-ups are being permanently lost; highest-value open item of the 08-55 closeout</td><td>Agent</td><td>Docs</td></tr><tr><td>2</td><td>check-todo-system.sh: queue↔library entry-pairing check + one-shot queue↔library drift sweep</td><td>12 min</td><td><span class="badge badge-med">P1</span></td><td>TODO one-liners and library entries must not drift; gate-invisible today</td><td>Agent</td><td>Docs</td></tr><tr><td>3</td><td>check-todo-system.sh: report→queue harvest-coverage lint (§f Source cited OR harvest-log present)</td><td>10 min</td><td><span class="badge badge-med">P1</span></td><td>§f items can never silently drop again</td><td>Agent</td><td>Docs</td></tr><tr><td>4</td><td>Scrub timers Persistent=false + After= serialization (root first)</td><td>10 min</td><td><span class="badge badge-med">P1</span></td><td>Freeze-7 remaining half; kills the boot catch-up stampede (3 scrubs 24s post-boot)</td><td>Agent→deploy</td><td>Stability</td></tr><tr><td>5</td><td>btrfs_scrub_last_completed per-fs metric + Gatus staleness check</td><td>12 min</td><td><span class="badge badge-med">P2</span></td><td>Separates guard-deferred from silently-wedged scrubs; completion is invisible today</td><td>Agent→deploy</td><td>Stability</td></tr><tr><td>6</td><td>SuccessExitStatus negative-test probe (extendModules: rendered=[1], exit 3 still fails)</td><td>10 min</td><td><span class="badge badge-med">P2</span></td><td>Drift guard on the fix that de-fuses the weekly @data exit-4 deploy hazard</td><td>Agent</td><td>Stability</td></tr><tr><td>7</td><td>Fleet sweep: oneshots that legitimately exit non-zero and lack SuccessExitStatus</td><td>12 min</td><td><span class="badge badge-med">P2</span></td><td>Same exit-1 FAILED class as btrfs-scrub@, fleet-wide</td><td>Agent</td><td>Stability</td></tr><tr><td>8</td><td>Eval-time stray-unit lint (warning-grade; @-template + systemd-instantiated allowlist)</td><td>12 min</td><td><span class="badge badge-med">P2</span></td><td>Kills the btrfs-scrub-- phantom-guard class that bit BOTH the guard churn list and scrubGuard</td><td>Agent</td><td>Stability</td></tr><tr><td>9</td><td>Guard: trips_last_hour per-zone gauges (Zone-split attribution)</td><td>8 min</td><td><span class="badge badge-med">P2</span></td><td>Forensics without journal digs; the 07-19 ★2 ask</td><td>Agent→deploy</td><td>Stability</td></tr><tr><td>10</td><td>Guard: cooldown-disclosure journal line + ExecPrint churn-list drift check at start</td><td>12 min</td><td><span class="badge badge-med">P2</span></td><td>Guard-vs-operator attribution; catches churn-list/unit drift at boot</td><td>Agent→deploy</td><td>Stability</td></tr><tr><td>11</td><td>deploy.sh race-detector WARN: HEAD moved <15min AND first-activation new unit in diff</td><td>10 min</td><td><span class="badge badge-med">P2</span></td><td>The 05:50 cert-mint deploy-vs-fix race that took down all vhosts</td><td>Agent</td><td>Pipeline</td></tr><tr><td>12</td><td>Pressure-gate: 3×2s io_ticks multi-sample + downgrade 'corpse-pile' wording on empty D-state list</td><td>10 min</td><td><span class="badge badge-med">P3</span></td><td>Gate accuracy: single-sample reads misclassify; wording misleads triage</td><td>Agent</td><td>Pipeline</td></tr><tr><td>13</td><td>Gatus batch: stuck-jobs >10/10min, sustained load >20/15min, cacheSubvolume mount-state tripwire, failed-unit-count</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Wedge/storm detection: the 10h metadata wedge was invisible to every check</td><td>Agent→deploy</td><td>Monitoring</td></tr><tr><td>14</td><td>Gatus flm-port audit (zero endpoints on 52625/52626) + root-cause the :1411 low-port pair</td><td>10 min</td><td><span class="badge badge-med">P3</span></td><td>EADDRINUSE orphan-pair class; mystery pair unexplained</td><td>Agent</td><td>AI stack</td></tr><tr><td>15</td><td>fastflowlm pre-bind port forensics ExecStartPre (/proc/net/tcp :CD92 dump on EADDRINUSE)</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Root-cause data captured on the next bind failure instead of hand-archaeology</td><td>Agent→deploy</td><td>AI stack</td></tr><tr><td>16</td><td>Fixture-test dns-update.sh (scripts/test-scripts.nix)</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>The URL-mangle regression shipped with ZERO tests</td><td>Agent</td><td>Services</td></tr><tr><td>17</td><td>post-deploy smoke: gatus-active assertion + Pocket-ID SQLITE_BUSY scope-to-activation + retired-surface sweep</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>system-800 shipped panic-looping unnoticed; stale greps false-red</td><td>Agent</td><td>Pipeline</td></tr><tr><td>18</td><td>negative-test-lints.sh: add gatus-config-parse mutation case</td><td>8 min</td><td><span class="badge badge-med">P3</span></td><td>Check is proven manually only</td><td>Agent</td><td>Pipeline</td></tr><tr><td>19</td><td>GCP hardening batch: tests/test-signoz-gcp.nix + post-deploy smoke § + dnsblockd restart note + CHANGELOG</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Re-arm runway for the executed-but-contained go-live</td><td>Agent</td><td>Monitoring</td></tr><tr><td>20</td><td>ClickHouse fill-velocity gauge + projected time-to-fill alert (clickhouse-xfs-metrics)</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Append-only P0: the XFS store has no fill-rate telemetry</td><td>Agent→deploy</td><td>Monitoring</td></tr><tr><td>21</td><td>signoz-collector-config-lint flake check (render → boot real binary → assert only expected bind conflict)</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Collector config churn is only validated by deploys today</td><td>Agent</td><td>Monitoring</td></tr><tr><td>22</td><td>Batch lock-free goModules staleness sweep across ALL LarsArtmann inputs at locked revs</td><td>10 min</td><td><span class="badge badge-med">P3</span></td><td>Kills the next deploy-night vendorHash surprise class</td><td>Agent</td><td>Pipeline</td></tr><tr><td>23</td><td>PapDashboard: nix flake lock --update-input + package probe (upstream fix 4c76f4f on origin)</td><td>10 min</td><td><span class="badge badge-med">P3</span></td><td>Adopts the never-passing-test fix; env contract diff verified identical</td><td>Agent</td><td>Services</td></tr><tr><td>24</td><td>Commit or stash CV TODO_LIST.md (tq task 000001a0 refused 17×)</td><td>2 min</td><td><span class="badge badge-low">P3</span></td><td>Unsticks a dead-lettered task loop</td><td>Agent</td><td>Services</td></tr><tr><td>25</td><td>browser-history jump assessment: does 1c8f967..5f04c79 contain the 09-17 checkpoint fix?</td><td>8 min</td><td><span class="badge badge-med">P3</span></td><td>Deploy go/no-go for a 36-commit jump across a crash-loop era</td><td>Agent</td><td>Services</td></tr><tr><td>26</td><td>buildcache-init provisions the 3 fallback targets (pnpm-cache, pnpm-state, cargo/registry)</td><td>8 min</td><td><span class="badge badge-med">P3</span></td><td>Post-recovery HM symlinks dangle ENOENT until next deploy today</td><td>Agent→deploy</td><td>Storage</td></tr><tr><td>27</td><td>Single-source the 4 hand-kept env-less cache-reap inventories</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>4 name lists with no parity enforcement; drift already bit once</td><td>Agent</td><td>Storage</td></tr><tr><td>28</td><td>Heal-breadcrumb: CONTRIBUTING verify-gate step-1 wiring + SUDO_USER capture</td><td>10 min</td><td><span class="badge badge-med">P3</span></td><td>Queued §f1/§f3; the heal tool is invisible where it is needed</td><td>Agent</td><td>Stability</td></tr><tr><td>29</td><td>geometryGuards-style eval assertions for EVERY subvol-mounting fileSystems entry</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Missing subvol currently fails at boot/deploy, not eval (journal-hot precedent)</td><td>Agent</td><td>Stability</td></tr><tr><td>30</td><td>Deploy-gate hook: refuse switch when an imported module matches an unreferenced migrate-*.sh + TODO row</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>journal-hot rode a deploy un-migrated; the disable-comment pattern is manual</td><td>Agent</td><td>Pipeline</td></tr><tr><td>31</td><td>Caddy access logs → Samsung sibling subvol (journal-hot pattern)</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>1.6G of churning logs off the QLC root</td><td>Agent→deploy</td><td>Storage</td></tr><tr><td>32</td><td>ADR-008 catalog completion sweep (22–23 subdomains lacking entries)</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Unblocks the T05/T06 dns-local retirement plan</td><td>Agent</td><td>Services</td></tr><tr><td>33</td><td>Hot-db plan-doc T-task table status pass (T5/T9-T15 vs landed state)</td><td>8 min</td><td><span class="badge badge-med">P3</span></td><td>Plan doc accuracy for the wave windows</td><td>Agent</td><td>Storage</td></tr><tr><td>34</td><td>Annotate stale reports: 04-34 nsfw 'HEALED' premise; 09-25_05-33 §e5; 23-20 supersede pass</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Citation rot: 14 line-cites already broke; false premises mislead later readers</td><td>Agent</td><td>Docs</td></tr><tr><td>35</td><td>AGENTS.md fixes: canonical textfile dir path; PG17 postmaster-GUC lesson; deploy-timeline phrasing; flm corpse-bullet rewrite; freeze-7 slice decomposition</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Memory quality for every future session</td><td>Agent</td><td>Docs</td></tr><tr><td>36</td><td>Document btrfs-scrub exit contract (0/1/3) + cancel-during-storm in the owning runbooks</td><td>10 min</td><td><span class="badge badge-med">P3</span></td><td>The 02:27 attribution ambiguity cost a corrected narrative</td><td>Agent</td><td>Docs</td></tr><tr><td>37</td><td>Verify deploy.sh post-switch reset-failed covers template instances generally</td><td>8 min</td><td><span class="badge badge-med">P3</span></td><td>Any other FAILED template instance would be missed by the is-enabled-gated loops</td><td>Agent</td><td>Pipeline</td></tr><tr><td>38</td><td>Root-cause the guard's 09:56-boot silence (0 trips at avg60 79%; stale io-ticks baseline)</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>The guard was blind during the worst storm of the month</td><td>Agent</td><td>Stability</td></tr><tr><td>39</td><td>Backup-starvation audit Sep 27–29: 432 trips vs btrbk sends; did the catch-up slot fire/protect?</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Validates (or falsifies) the newest guard feature on real data</td><td>Agent</td><td>Stability</td></tr><tr><td>40</td><td>Fleet sweep: execute every authored-but-never-executed VM-test check once (quiet window)</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Eval-green VM tests are unproven code (scenario-9 bug was caught exactly this way)</td><td>Agent</td><td>Pipeline</td></tr><tr><td>41</td><td>Full nix flake check --no-build --all-systems in a quiet window (IO-deferred, owed)</td><td>10 min</td><td><span class="badge badge-med">P3</span></td><td>The batch's own gate never ran whole</td><td>Agent</td><td>Pipeline</td></tr><tr><td>42</td><td>Guard VM-test scenarios 9/9b/9c (starve→grant, slot protection, CGROUP_IO_SRC attribution)</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Behavior-verify the catch-up slot (build-verified only)</td><td>Agent</td><td>Stability</td></tr><tr><td>43</td><td>Crush-db batch A: PSI avg60 export-or-contract; phantom node_psi_io_phantom check; scrub-restart count</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Telemetry honesty: a series referenced in analyses does not exist</td><td>Agent</td><td>Stability</td></tr><tr><td>44</td><td>Crush-db batch B: auto-rmdir EMPTY foreign-owned targets + VM test (legal-cases class)</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Migration convergence without sudo intervention</td><td>Agent</td><td>Storage</td></tr><tr><td>45</td><td>Crush-db batch C: io-psi-forensics reader script + /var/tmp GC (~800 dirs) + SigNoz annotation</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Evidence tooling + hygiene</td><td>Agent</td><td>Stability</td></tr><tr><td>46</td><td>tq-agent-pool 937 GB cumulative read: attribute or dismiss</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Unknown IO driver on the QLC root</td><td>Agent</td><td>Stability</td></tr><tr><td>47</td><td>gatus-config.nix:673 'BTRFS Chunk Health' rule review (false-positive flap design)</td><td>10 min</td><td><span class="badge badge-med">P3</span></td><td>Currently red-by-design between allocations</td><td>Agent</td><td>Monitoring</td></tr><tr><td>48</td><td>system-health: /nix (Samsung) usage metric + Gatus check (7d-retention cost side)</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>min-free 5GB is the ONLY backstop for store growth today</td><td>Agent→deploy</td><td>Monitoring</td></tr><tr><td>49</td><td>Queue hygiene: land row 411 (dispatch→protocol pointer), row 412 footer-less [x] sweep, split bundled stability row</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Queue integrity</td><td>Agent</td><td>Docs</td></tr><tr><td>50</td><td>Ban bare TODO_LIST:<line> cites; codify title+Source-anchor convention</td><td>8 min</td><td><span class="badge badge-med">P3</span></td><td>14 line-cite rots found in one review</td><td>Agent</td><td>Docs</td></tr><tr><td>51</td><td>lock-age.yml failure check (2026-09-28, 3s, runnerless class)</td><td>8 min</td><td><span class="badge badge-med">P3</span></td><td>CI dark job</td><td>Agent</td><td>Pipeline</td></tr><tr><td>52</td><td>Gatus all-green sweep post-outage (caddy-metrics, CV :8098, outage-red set) + resolve stale notifications</td><td>10 min</td><td><span class="badge badge-med">P3</span></td><td>Stale reds mask new incidents</td><td>Agent</td><td>Monitoring</td></tr><tr><td>53</td><td>Verify FLM socket re-arms on next deploy; else systemctl start fastflowlm.socket</td><td>5 min</td><td><span class="badge badge-low">P3</span></td><td>NPU LLM consumers dark until then</td><td>Agent</td><td>AI stack</td></tr><tr><td>54</td><td>dns-update.sh re-run post-reboot (StevenBlack prefetch failed under load; new script exits loud)</td><td>10 min</td><td><span class="badge badge-med">P3</span></td><td>Blocklist freshness</td><td>Agent</td><td>Services</td></tr><tr><td>55</td><td>Guard restore-cap: verify sev1 FLM-RESTORE-CAPPED notify delivered; doc cap semantics for owner review</td><td>10 min</td><td><span class="badge badge-med">P3</span></td><td>Cap kept flm dark even after the port freed — policy review runway</td><td>Agent</td><td>Stability</td></tr><tr><td>56</td><td>NetBird hardening batch: Gatus mgmt + STUN 3479 checks, pbx backup.nix (netbird+dex db), integration.monitored fanout</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Go-live runway for the VPN cutover</td><td>Agent</td><td>Services</td></tr><tr><td>57</td><td>post-deploy mint/caddy TLS assertion (host-side post-deploy-check block)</td><td>10 min</td><td><span class="badge badge-med">P3</span></td><td>The cert-mint outage had no smoke leg</td><td>Agent</td><td>Pipeline</td></tr><tr><td>58</td><td>InboxClean docs: gmail_aggregate contract + dead-account runbook + inboxclean_auth_expired textfile collector</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>26-day phantom-green must not recur silently</td><td>Agent</td><td>Services</td></tr><tr><td>59</td><td>Root-cause the InboxClean→Paperless 'gmail' tag demote PATCH rejection</td><td>12 min</td><td><span class="badge badge-med">P3</span></td><td>Service-side bug, queue row open</td><td>Agent</td><td>Services</td></tr><tr><td>60</td><td>Docker pg NOCOW note/decision for twenty+manifest volumes on /data</td><td>8 min</td><td><span class="badge badge-med">P3</span></td><td>DB-on-CoW churn correctness</td><td>Agent+user</td><td>Storage</td></tr><tr><td>61</td><td>Evaluate systemd Upholds= as declarative auto-restart for mount-dependent services</td><td>10 min</td><td><span class="badge badge-med">P3</span></td><td>The enabled-but-inactive consumer class</td><td>Agent</td><td>Stability</td></tr></tbody></table>
+
+        <h2 id="hard"><span class="num">04</span>Hard but worth it — 22 owner-gated chains</h2>
+        <p>Each chain is decomposed into steps of ≤12 minutes. Most are code-complete and waiting on owner inputs, sudo windows,
+        or browser/console ceremonies — not on engineering.</p>
+        <table><thead><tr><th>#</th><th>Chain</th><th>Steps (each ≤12 min)</th><th>Impact / why</th><th>Who</th></tr></thead><tbody><tr><td>1</td><td><strong>H1 · Owed REBOOT chain</strong></td><td>nix run .#pre-reboot-check (exit 0 gate) <em>(5′)</em> → Reboot <em>(5′)</em> → Post-boot battery: journal-hot mounts at boot, boot-mirror green, no D-state pile, PSI baseline sane, flm serves on connection, /run/binfmt present, tmpfiles ran <em>(12′)</em> → Post-reboot nix run .#deploy to confirm anchoring <em>(10′)</em></td><td>Clears the D-state corpse pile, phantom IO-PSI, journal-hot boot-path risk, boot-mirror first real boot; re-baselines every pressure gate</td><td>User</td></tr><tr><td>2</td><td><strong>H2 · InboxClean consent chain (mailbox dead 26 days)</strong></td><td>Push upstream 1540a56 + d23c48a <em>(5′)</em> → Google console: consent screen → 'In production' FIRST <em>(5′)</em> → mv dead token.json aside + inboxclean auth --account main (browser) <em>(5′)</em> → nix flake lock --update-input inboxclean <em>(5′)</em> → nix run .#deploy <em>(10′)</em> → Verify: gmail_aggregate served, cursor advances past 5152620, sync green <em>(10′)</em></td><td>Restores the 26-day-dead Gmail mirror; fixes are code-complete upstream and phantom-green-proofed</td><td>User+Agent</td></tr><tr><td>3</td><td><strong>H3 · Wise SCA approval (bank-sync blocked)</strong></td><td>Dashboard → Sync State → 'Wise approval needed' → Approve now (OTP flow) <em>(10′)</em> → Restart bank-sync to reset sync_errors_total; verify smoke green <em>(10′)</em></td><td>Bank-sync is fully dark on statements until the ~90-day SCA challenge is approved</td><td>User</td></tr><tr><td>4</td><td><strong>H4 · /data EIO repair T04–T08 (P0)</strong></td><td>Locate inode 1331118 path (sudo, repair recipe in data-damage-set.md) <em>(10′)</em> → Repair-or-delete per runbook; verify btrbk-data send finally lands <em>(12′)</em></td><td>Root cause of the nightly /data backup failure since August; gates the offsite Borg seed</td><td>User</td></tr><tr><td>5</td><td><strong>H5 · NetBird VPN go-live</strong></td><td>P0 journals: netbird-management + stalwart + FIX the pbx-alert@ relay (first fire failed) <em>(12′)</em> → pbx nixos-rebuild switch (dex needs boot start) <em>(10′)</em> → curl netbird…/dex/healthz + first dashboard login → password manager <em>(5′)</em> → Create 30d setup key → sops platforms/nixos/secrets/netbird.yaml <em>(10′)</em> → Flip netbird-client.enable=true + evo-x2 deploy <em>(10′)</em> → Post-deploy ladder: dig/s_client/curl/gatus + netbird status + route/DNS-nameserver/ACL <em>(12′)</em> → MacBook + Motorola enrollment (CA import) + LTE E2E + rels:// relay check + burn-in <em>(12′)</em></td><td>Self-hosted VPN replaces Tailscale; Phase-1 stack is code-complete and go-ready</td><td>User</td></tr><tr><td>6</td><td><strong>H6 · Offsite Borg go-live (3-2-1 gap)</strong></td><td>Inputs: StorageBox hostname/username <em>(10′)</em> → Decide recovery-copy policy (passphrase off-host) + append-only posture BEFORE first seed <em>(5′)</em> → ssh-keyscan -p 23 host-key pin → sops borg_known_hosts <em>(5′)</em> → Flip enable + first WAN seed (hours; tripwire clears) <em>(10′)</em> → Real-repo restore drill (go-live checklist step 9) <em>(30′)</em></td><td>The only offsite copy of the box; implemented + dormant since 09-22, waiting on owner inputs</td><td>User</td></tr><tr><td>7</td><td><strong>H7 · SigNoz GCP monitoring re-arm</strong></td><td>gcpMonitoring.enable=true (agent) <em>(2′)</em> → nix run .#deploy <em>(10′)</em> → Verify: dig monitoring.googleapis.com, journal 403-absent, dashboard panels fill, live metric names <em>(12′)</em> → Add GCP-metrics-stale alert rule + fix gcp.json queries if mangled <em>(10′)</em></td><td>The executed go-live (SA + key + 23 receivers) sits containment-disabled; flip is the last step</td><td>User+Agent</td></tr><tr><td>8</td><td><strong>H8 · Architecture-catalog go-live</strong></td><td>sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh <em>(10′)</em> → Watch first CI run green (npm/go_1_27/job-token watch-list) <em>(15′)</em> → sops-paste ARCHITECTURE_CATALOG_SYNC_TOKEN + deploy + start architecture-catalog-sync <em>(10′)</em> → Verify: sync journal, current/index.html, dist_present 1 + fresh 1, 3 Gatus green <em>(10′)</em></td><td>Federated event-catalog hub goes live; every agent-side prep item is done</td><td>User+Agent</td></tr><tr><td>9</td><td><strong>H9 · Hot-DB waves 1–5 (QLC root relief)</strong></td><td>Wave 1 gatus + Wave 2 dnsblockd + Wave 3 pocket-id + Wave 4 browser-history + Wave 5 discordsync (migrate-hot-db.sh prepare/cutover/finalize each) <em>(12′)</em> → Post-wave: verify hot_db_entry_mounted + per-entry Gatus green <em>(10′)</em></td><td>Five ~10-min sudo windows move the hot service DBs to the Samsung tier per the ratified runbook</td><td>User</td></tr><tr><td>10</td><td><strong>H10 · Scrub policy decisions BEFORE Oct 5</strong></td><td>@data exit-3 policy (SuccessExitStatus '1 3' + Gatus owns errors vs keep-FAIL tripwire) <em>(5′)</em> → Scrub catch-up slot for the canceled / + /data scrubs (coverage stale since Sep 21/28) <em>(5′)</em> → Drop /mnt/pool from autoScrub? (flaky USB RAID1; SMART+btrbk-verify cover) <em>(5′)</em></td><td>Every snapshots.nix churn exit-4s a deploy until decided; coverage invariants going stale</td><td>User</td></tr><tr><td>11</td><td><strong>H11 · Mail stack ladder (artmann.tech)</strong></td><td>File Hetzner :25/:465 limit request (~1 month lead) <em>(10′)</em> → pbx: stalwart switch + cert verify <em>(10′)</em> → Provision Stalwart domains + dmarc@ + personal mailbox (principal NAME = address) <em>(10′)</em> → Outbound smoke via Resend (verify artmann.tech scope) <em>(10′)</em> → MX + rua=mailto:dmarc@artmann.tech on both _dmarc records <em>(10′)</em> → SystemNix: sops-paste dmarc-imap-password + flip enable + deploy + verify parsedmarc <em>(10′)</em></td><td>Full self-hosted mail + DMARC visibility; 8-step runbook landed, everything owner-sequenced</td><td>User</td></tr><tr><td>12</td><td><strong>H12 · Key rotations (security)</strong></td><td>Rotate the Context7 key (STILL LIVE in public git history) <em>(10′)</em> → Delete the leaked Gemini key (GCP project 453958689374, ends LU4k) <em>(10′)</em> → Update MCP config after rotation <em>(5′)</em></td><td>The only still-live leaked secrets; rotation is the real fix (purge is held by decision)</td><td>User</td></tr><tr><td>13</td><td><strong>H13 · flm v1.0.6 + llama-rag unblock (paperless RAG)</strong></td><td>Stage the v1.0.6 bump probe (corpse obstacle gone; clean v1.0.2 cold-load proof exists) <em>(10′)</em> → Owner validation + one-time re-pull discipline <em>(5′)</em> → llama-rag ROCm/kernel/GPU-state bisect + ≥10-min real-unit soak before any re-enable <em>(12′)</em></td><td>NPU LLM currency + the RAG leg for paperless (disabled since 09-18 escape)</td><td>User+Agent</td></tr><tr><td>14</td><td><strong>H14 · 2-disk buildcache btrfs merge (maintenance window)</strong></td><td>scripts/buildcache-btrfs-convert.sh + module flip in ONE window (~447G, zstd:1) <em>(30′)</em></td><td>~4x effective cache on the merged SanDisks; rust targets alone are 121G</td><td>User</td></tr><tr><td>15</td><td><strong>H15 · Root-disk cleanup P1–P6 (~366G lever; root 91%)</strong></td><td>Decision on docs/operations/disk-cleanup-proposal-2026-09-28.md <em>(5′)</em> → Execute approved phases in windows <em>(12′)</em></td><td>The 95% deploy gate is one bad week away; biggest single space lever on the box</td><td>User</td></tr><tr><td>16</td><td><strong>H16 · Samsung boot-mirror activation</strong></td><td>nix run .#boot-mirror-activate (creates + orders the EFI entry first) <em>(10′)</em> → pre-reboot-check §11 grade flips FAIL-on-drift; verify at next reboot <em>(5′)</em></td><td>Second boot disk has synced since 09-19 but was never activated</td><td>User</td></tr><tr><td>17</td><td><strong>H17 · GeoMetrikks keys + first login</strong></td><td>MaxMind + CARTO key pastes (sops) + deploy <em>(10′)</em> → First SSO login at geo.home.lan + verify ingestion/map <em>(5′)</em></td><td>Geo analytics is degraded-by-design until keys land (docker era never had them either)</td><td>User</td></tr><tr><td>18</td><td><strong>H18 · Service token pastes (3 placeholders)</strong></td><td>Hermes fine-grained PAT → hermes-github-token.yaml <em>(5′)</em> → mr-sync GITHUB_TOKEN → mr-sync.yaml <em>(5′)</em> → DiscordSync Immich key → discordsync-immich.yaml <em>(5′)</em></td><td>Three shipped-but-PLACEHOLDER integrations, each a 5-minute paste + deploy</td><td>User</td></tr><tr><td>19</td><td><strong>H19 · NIX_GITHUB_RO_TOKEN (fine-grained PAT)</strong></td><td>Create PAT (Contents: Read) → gh secret set in SystemNix <em>(10′)</em> → Verify: nix-check eval green + Monday's flake-update bot finally runs <em>(5′)</em></td><td>CI dark for 120+ runs; weekly lock bot dead since 08-31</td><td>User</td></tr><tr><td>20</td><td><strong>H20 · Upstream OTel instrumentation (observability gaps)</strong></td><td>PMA: daemon-cycle + socket-op spans <em>(12′)</em> → papdashboard: clone + overview-middleware pattern <em>(12′)</em> → hermes: fork/patch/upstream-PR decision then Python OTel SDK <em>(12′)</em></td><td>4 of the fleet's services emit zero spans; coverage ratchet ratchets down as each lands</td><td>Upstream</td></tr><tr><td>21</td><td><strong>H21 · crush-hot-db fold into services.hot-db Phase-2 (after waves)</strong></td><td>Delete interim module + deploy.sh entry; narrow ReadWritePaths; never run both mechanisms <em>(12′)</em></td><td>Two overlapping hot-tier mechanisms must become one</td><td>Agent+deploy</td></tr><tr><td>22</td><td><strong>H22 · Postgres hot-db wave (after wave 5)</strong></td><td>Generic <name> <dataDir> <unit> vehicle run, cow=false <em>(12′)</em></td><td>The shared PG17 cluster joins the Samsung tier last</td><td>User</td></tr></tbody></table>
+
+        <h2 id="decisions"><span class="num">05</span>Owner decisions gating work</h2>
+        <p>These are not tasks — they are 5-minute answers that un-block queued work. The first three have deadlines or mounting cost.</p>
+        <table><thead><tr><th>#</th><th>Decision</th><th>Why it gates work</th></tr></thead><tbody><tr><td>1</td><td>Deploy authority: queue-fired vs user-manual nix run .#deploy</td><td>Asked unanswered by 3+ closeouts; every runtime-zero task waits on it</td></tr><tr><td>2</td><td>Daemon-race policy: status/TODO exclusions, hook-on-empty semantics, stale-tree guard</td><td>d22ccd48 deleted 19 open rows; recurred twice</td></tr><tr><td>3</td><td>Turso: plan upgrade vs permanent local-only (DiscordSync sync breaker)</td><td>Standing red check is the designed signal; owner owns the spend</td></tr><tr><td>4</td><td>monitor365 re-enable path (publish crate / public repo / vendor)</td><td>Disabled since 08-12</td></tr><tr><td>5</td><td>CV groq key wire-or-disable (overall_status=warn)</td><td>Owner-visible warn; no check pages on it</td></tr><tr><td>6</td><td>Forgejo transferred mirrors (DarkBlocks, DialogesWebInterface): delete or re-mirror</td><td>Frozen + syncing-fails against redirects</td></tr><tr><td>7</td><td>Docker volume inventory depth (~206 inactive, 4.75G)</td><td>Doctrine never auto-prunes; owner owns 'forgotten' classification</td></tr><tr><td>8</td><td>btrbk storm policy: move hour / raise catch-up bar / separate prune leg / status quo</td><td>4-night kill streak; backlog self-heals only on a quiet 23:00</td></tr><tr><td>9</td><td>Dangling-symlink posture + archived/* migration + forgejo disko doctrine + maxdepth bound</td><td>4 hot-tier decisions bundled by the crush-db review</td></tr><tr><td>10</td><td>@reserve subvol for /btrfs-emergency-reserve (option 1)</td><td>rm today frees ~nothing for 2w — pin window</td></tr><tr><td>11</td><td>journald SystemMaxUse cap (7.7G on QLC root)</td><td>Proven ENOSPC-silence failure mode</td></tr><tr><td>12</td><td>Hermes cron llama-servers: kill+teach vs legitimize+re-enable llama-rag</td><td>Config-disabled services resurrected by cron scope</td></tr><tr><td>13</td><td>Guard restore-cap size (3/day) + FLM waker policy (W1-W3)</td><td>Cap kept flm dark after port freed; wakers re-pay 21.6G cold loads</td></tr><tr><td>14</td><td>tq pool + build-slice IO admission (io.max / heavy-job / quiet-hours)</td><td>3h storms vs harvest velocity; owner owns the tradeoff</td></tr><tr><td>15</td><td>Pocket ID CIMD stance (keep '[]' vs UNSET)</td><td>Two valid stances; pick one on next docs pass</td></tr><tr><td>16</td><td>Lix migration / nix#3768 patch posture + input-graph diet + eval coalescing</td><td>Eval latency is the tax every session pays</td></tr><tr><td>17</td><td>Legal-cases sudo rmdir (/mnt/hot/crush/legal-cases)</td><td>2-min sudo heal; last convergence straggler</td></tr><tr><td>18</td><td>Health Hub remote federation (add remotes; cadence/timeout options)</td><td>Fetch load is a live decision at 2s cadence</td></tr></tbody></table>
+
+        <h2 id="watch"><span class="num">06</span>Watch list (time-windowed, no action until they fire)</h2>
+        <table><thead><tr><th>#</th><th>Watch item</th><th>Why</th></tr></thead><tbody><tr><td>1</td><td>Tonight's btrbk 23:00: backlog send + 12-snapshot prune land (else manual quiet-window run)</td><td>Prune backlog pinning ~45G</td></tr><tr><td>2</td><td>Oct 5 weekly scrub window under the new policy (@- exit 0; @data verdict per policy)</td><td>First live exercise</td></tr><tr><td>3</td><td>restic-app-dumps proof chain: first run + restic check + one-file restore + dedup ratio</td><td>Backup pipeline eval-green only</td></tr><tr><td>4</td><td>InboxClean 'work' account: watch for the same 7-day death (alive 14d past recorded expiry)</td><td>Unexplained</td></tr><tr><td>5</td><td>PR #3628 (DMS mutes) review + CI silence + post-merge stable-pin bump</td><td>Upstream</td></tr><tr><td>6</td><td>go-taskqueue: push master (ahead 7) + re-lock + tq-agent-pool redeploy</td><td>Upstream</td></tr><tr><td>7</td><td>crush-config 163b76e push → input bump → lessons rule installs</td><td>User</td></tr><tr><td>8</td><td>CV lock hold: probe goModules at upstream master before any lock move (CI dead)</td><td>Upstream</td></tr><tr><td>9</td><td>python3 3.13/3.14 double presence + oci-containers upstream issue (message fix)</td><td>Eval observations</td></tr><tr><td>10</td><td>SigNoz catalog-freshness tile + Forgejo Phase-2 logo/favicon + forgejo size measurement</td><td>Owner-gated polish</td></tr></tbody></table>
+
+        <footer class="footer">
+          Generated 2026-09-30 09:30 · Sources: all 68 docs/status/2026-09-29* + 2026-09-30* reports ·
+          Pareto tiers per the pareto-planning skill · Items already tracked in TODO_LIST.md are cross-referenced, not duplicated
+        </footer>
+      </main>
+    </div>
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
