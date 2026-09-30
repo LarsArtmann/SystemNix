@@ -329,6 +329,25 @@
       inputs.go-nix-helpers.follows = "go-nix-helpers";
     };
 
+    # nsfw-classifier — Go/ONNX NSFW image classifier. Backend for the
+    # browser extension that helium auto-loads (platforms/common/packages/
+    # base.nix --load-extension): with default settings the extension
+    # auto-discovers nsfw.home.lan:<ports.nsfw> and pairs via the /readyz
+    # token that services.nsfw-classifier provides (--pair-token auto).
+    # Keeps its OWN nixpkgs: the flake pins go_1_27 (go-sse go 1.27.1 floor)
+    # — following SystemNix's nixpkgs could drop that floor and break the
+    # build.
+    nsfw-classifier = {
+      # INTERIM `git+file` pin — the vendorHash fix (46f02bb) exists only as
+      # an unpushed local commit (origin/master is 4d159f9); a remote pin
+      # would build the STALE vendorHash. Flip condition: push 46f02bb to
+      # origin/master, then switch to
+      # git+ssh://git@github.com/LarsArtmann/nsfw-classifier?ref=refs/heads/master
+      # (deploy-key fetch, same pattern as file-and-image-renamer) and
+      # remove the INTERIM row in docs/INTERIM-INPUT-PINS.md.
+      url = "git+file:///home/lars/projects/nsfw-classifier";
+    };
+
     # crush-daily — Daily AI-powered insights from Crush development databases
     crush-daily = {
       url = "github:LarsArtmann/crush-daily?ref=master";

@@ -410,6 +410,14 @@ in
       # stay 1. 'lars' matches both the Pocket ID username and the break-glass
       # miniflux admin (email-prefix fallback: LIKE 'lars@%').
       miniflux.oidcLink.username = "lars";
+      # nsfw-classifier (Go/ONNX NSFW image server on nsfw.home.lan:8104).
+      # Backend for the browser extension helium auto-loads
+      # (--load-extension in platforms/common/packages/base.nix): with
+      # default settings the extension auto-discovers this server and pairs
+      # via its /readyz token — zero user engagement. Fast mode (single
+      # falconsai model); models read from the live checkout. Details:
+      # modules/nixos/services/nsfw-classifier.nix header.
+      nsfw-classifier.enable = true;
       # Central outbound mail relay (Postfix null client on 127.0.0.1:25 →
       # authenticated Resend submission). Ships with a PLACEHOLDER sops
       # credential: every send defers in the postfix queue until the real

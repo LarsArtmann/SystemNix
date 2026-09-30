@@ -146,5 +146,12 @@
     # loopback-only; Caddy proxies health.home.lan to it. Serves the merged
     # dashboard + kubelet probes; its readiness merges every federated remote.
     health-dashboard = 8103;
+
+    # nsfw-classifier — NSFW image-filter server (services.nsfw-classifier),
+    # bound to all interfaces so the browser extension's auto-discovery can
+    # reach it at nsfw.home.lan:<port> (nsfw-extension/url-utils.js
+    # DEFAULT_SERVER_URLS); the /classify endpoints gate on the pairing
+    # token from --pair-token auto.
+    nsfw = 8104;
   };
 }

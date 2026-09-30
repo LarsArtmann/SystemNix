@@ -34,5 +34,6 @@
     "geo"
     "health"
     "catalog"
+    "nsfw"
   ];
 }

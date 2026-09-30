@@ -103,6 +103,7 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **Dozzle**          | 8084             | `logs.home.lan`      | Real-time Docker container log viewer                                                                                |
 | **Mail Relay**      | 25               | —                    | Central outbound SMTP null client (loopback-only, relays via Resend; Paperless/Forgejo/system mail)                  |
 | **Miniflux**        | 8101             | `rss.home.lan`       | Minimalist RSS reader (Go + local PostgreSQL, native OIDC via Pocket ID)                                             |
+| **NSFW Filter**     | 8104             | `nsfw.home.lan`      | Go/ONNX NSFW image server — browser-extension backend (auto-discovery + pairing token)                               |
 | **bank-sync**       | 8097             | `banksync.home.lan`  | Wise bank-sync dashboard (Layer 2 protected; disabled until sops go-live)                                            |
 | **File Renamer**    | 8086             | `renamer.home.lan`   | AI file-and-image renamer service                                                                                    |
 | **Monitor365**      | 3001             | `monitor.home.lan`   | Device monitoring agent + server dashboard — disabled (private wireguard-collector dep)                              |
