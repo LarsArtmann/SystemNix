@@ -1,7 +1,7 @@
 # DNS Blocker - Declarative DNS with ad blocking and block pages
 # Uses dnsblockd (embedded sdns recursive resolver + Go HTTP server for block pages)
 #
-# Coverage: ~2.5M+ unique domains across 25 blocklists
+# Coverage: ~4M+ unique domains across 23 blocklists
 # - Ads, malware, phishing, scams, fakenews, gambling, porn, social trackers
 # - DNS-over-HTTPS/VPN/TOR/Proxy bypass prevention
 # - Native telemetry: Apple, Amazon, Samsung, Xiaomi, Huawei, LG WebOS,
@@ -11,10 +11,11 @@
 #
 # Blocklists are shared with rpi3-dns via platforms/common/dns-blocklists.nix
 # Local DNS records are in platforms/common/dns-local.nix
-# DNS resolution: forwarded via DNS-over-TLS to Cloudflare + Quad9
-# (sdns root recursion requires middleware.Setup() which dnsblockd doesn't
-# call — the queryer/store needed for NS lookups are never wired, causing
-# "No reachable authoritative servers" for all non-local queries)
+# DNS resolution: forwarded via DNS-over-TLS to Cloudflare + Quad9 — a
+# deliberate choice (filtered upstream, no root-server exposure). Root
+# recursion WORKS without forwarders since dnsblockd 8e598c01 (T299,
+# resolver seams wired; deployed with lock rev f625cfee 2026-09-30) — drop
+# the forwarders block only if a future owner decision wants full recursion.
 {
   config,
   lib,
