@@ -492,6 +492,7 @@
 - [ ] [ready] **CV render smoke IO-pressure-aware** (`/de/cv` proxy render leg false-FAILs under high io PSI; WARN like the shell check) → [docs/todo/services.md](docs/todo/services.md)
 - [ ] [ready] **bank-sync smoke counter windowing** (`sync_errors_total` is restart-cumulative — smoke stays red post-fix; + distinct DB-write-failure metric) → [docs/todo/services.md](docs/todo/services.md)
 - [ ] [ready] **go-nix-helpers own-pinned consumer sweep** (4 independent lock nodes hold pre-fix `7c06ddc8`; sweep on their next bumps, no dedicated deploy) → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] [ready] **DMARC fleet follow-ups: re-add TLS-RPT as explicit optional hardening (runbook §4 dropped it in the rewrite), annotate the 2026-09-29 status report's `dmarc@artmann.tech` lines with the collector-domain supersession, and bundle the flip-time checks (parsedmarc monitoredServices + reports-freshness row live on the DEPLOYED generation, SigNoz reports panel after first data)** → [docs/todo/services.md](docs/todo/services.md)
 
 ### services / pipeline (harvest 2026-09-30 11-3x caddy review)
 
