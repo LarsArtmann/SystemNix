@@ -176,7 +176,7 @@ _: {
           builtins.map (k: lib.removeSuffix ".${domain}" k) (
             builtins.filter
               (k: lib.hasSuffix ".${domain}" k && !lib.hasInfix "*" k)
-              (builtins.attrNames homeLanVHosts)
+              (builtins.attrNames config.services.caddy.virtualHosts)
           )
         );
       # Registry subdomains (regardless of enable — a disabled service's
@@ -188,8 +188,19 @@ _: {
           )
         else [ ];
       ghostSubdomains =
+        # ghostAliases: deliberate dns-local names with no vHost of their
+        # own — `alerts` is the legacy PapDashboard alias the catch-all
+        # redirects to dash (DNS must keep resolving it).
+        let
+          ghostAliases = [ "alerts" ];
+        in
         builtins.filter
-          (s: !builtins.elem s vhostSubdomains && !builtins.elem s registrySubdomains)
+          (
+            s:
+            !builtins.elem s vhostSubdomains
+            && !builtins.elem s registrySubdomains
+            && !builtins.elem s ghostAliases
+          )
           dnsLocalSubdomains;
       # Protected/plain classification for the post-deploy smoke: a vHost is
       # "protected" iff its rendered extraConfig carries forward_auth — the
@@ -200,11 +211,16 @@ _: {
             (
               k:
               (
-                if lib.hasInfix "forward_auth" homeLanVHosts.${k}.extraConfig then "protected" else "plain"
+                if lib.hasInfix "forward_auth" config.services.caddy.virtualHosts.${k}.extraConfig then
+                  "protected"
+                else
+                  "plain"
               )
               + " ${lib.removeSuffix ".${domain}" k}"
             )
-            (builtins.filter (k: lib.hasSuffix ".${domain}" k && !lib.hasInfix "*" k) (builtins.attrNames homeLanVHosts))
+            (builtins.filter (k: lib.hasSuffix ".${domain}" k && !lib.hasInfix "*" k) (
+              builtins.attrNames config.services.caddy.virtualHosts
+            ))
         )
       );
     in
@@ -281,7 +297,15 @@ _: {
         # from the SAME rendered set as the actual proxy (the smoke's
         # hand-maintained list was the hand-copy-of-registry-data drift
         # class). home.lan zone only — cloud mirrors share the same backend.
-        environment.etc."caddy/vhost-layers".text = lib.concatStringsSep "\n" vhostLayerLines + "\n";
+        # The ghost-entry sweep rides this file's forcing: dns-local names
+        # that nothing serves. Enable-gated services keep their registry
+        # entry, so they never ghost; a NEW ghost = a dns-local addition with
+        # no consumer vHost anywhere.
+        environment.etc."caddy/vhost-layers".text =
+          lib.warnIf
+            (ghostSubdomains != [ ])
+            "caddy: dns-local subdomain(s) with no vHost and no registry entry (ghost entries): ${lib.concatStringsSep ", " ghostSubdomains}"
+            (lib.concatStringsSep "\n" vhostLayerLines + "\n");
 
         services.caddy = {
           # logFormat is wrapped by the NixOS module as `log { ${logFormat} }`
@@ -501,14 +525,7 @@ _: {
           # through the same helpers as every hand-written vHost above.
           // (lib.mapAttrs' (sub: v: lib.nameValuePair "${sub}.${domain}" (renderVHost v)) registryVHosts);
           in
-            # Ghost-entry sweep (eval WARNING): dns-local names that nothing
-            # serves. Enable-gated services keep their registry entry, so
-            # they never ghost; a NEW ghost = a dns-local addition with no
-            # consumer vHost anywhere.
-            lib.warnIf
-              (ghostSubdomains != [ ])
-              "caddy: dns-local subdomain(s) with no vHost and no registry entry (ghost entries): ${lib.concatStringsSep ", " ghostSubdomains}"
-              homeLanVHosts
+            homeLanVHosts
             // (lib.optionalAttrs (cloudDomain != null) (
               # Split-horizon aliases (brainstorming 2026-09-30): every
               # home.lan vHost mirrored under the cloud domain — identical

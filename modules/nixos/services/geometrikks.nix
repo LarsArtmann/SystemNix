@@ -98,7 +98,12 @@
         db="''${GEOMETRIKKS_OIDC_DB:-${config.services.pocket-id.dataDir}/data/pocket-id.db}"
         subs_file="''${GEOMETRIKKS_OIDC_SUBS_FILE:-${oidcSubsFile}}"
         sqlite3="${pkgs.sqlite}/bin/sqlite3"
-        out_tmp="$subs_file.tmp"
+        mktemp="${pkgs.coreutils}/bin/mktemp"
+        chmod="${pkgs.coreutils}/bin/chmod"
+        mv="${pkgs.coreutils}/bin/mv"
+        rm="${pkgs.coreutils}/bin/rm"
+        out_tmp="$("$mktemp" "$subs_file.XXXXXX")"
+        trap '"$rm" -f "$out_tmp"' EXIT
 
         if [ ! -f "$db" ]; then
           echo "geometrikks-oidc-subs: Pocket ID SQLite DB not found at $db — is Pocket ID initialized?" >&2
@@ -132,8 +137,8 @@
 
         umask 077
         printf '%s\n' "$subs" > "$out_tmp"
-        chmod 0444 "$out_tmp"
-        mv "$out_tmp" "$subs_file"
+        "$chmod" 0444 "$out_tmp"
+        "$mv" "$out_tmp" "$subs_file"
         count="$(printf '%s\n' "$subs" | grep -c . || true)"
         echo "geometrikks-oidc-subs: allowed $count enabled Pocket ID user(s) by subject id -> $subs_file"
       '';

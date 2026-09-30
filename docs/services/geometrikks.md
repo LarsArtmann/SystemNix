@@ -38,9 +38,16 @@ searchable log database. Upstream: github:GilbN/geometrikks.
 - **SSO**: `services.integration.geometrikks.oidc` registers the client;
   `geometrikks-oidc-env` bridges the provisioner-owned secret
   (`LoadCredential` as PID 1 → `/var/lib/geometrikks-oidc/oidc.env`, written
-  with ALL OIDC vars together). Allow-list:
-  `services.geometrikks.oidc.allowedUsers` (verified emails; REQUIRED by
-  upstream). The `admin` password login stays as break-glass while
+  with ALL OIDC vars together). Allow-list: the configured
+  `services.geometrikks.oidc.allowedUsers` emails PLUS every enabled Pocket
+  ID user's subject id, auto-resolved at bridge time by the unit's
+  `+`ExecStartPre `geometrikks-oidc-subs` (reads Pocket ID's SQLite,
+  stages `/var/lib/geometrikks-oidc/allowed-subs`). The sub append is
+  load-bearing: upstream matches an email only when the provider sends
+  `email_verified: true`, and Pocket ID's per-user `email_verified` defaults
+  to FALSE — the email-only list rejected every login (live 2026-09-30).
+  New/removed/renamed Pocket ID users converge on the next bridge run (boot
+  + deploy). The `admin` password login stays as break-glass while
   `APP_ADMIN_PASSWORD` is set (provider-down fallback).
 - **DB**: the host's **shared PostgreSQL cluster** (PG17) with
   `timescaledb` + `postgis` extensions (`services.postgresql.extensions`),
@@ -97,17 +104,21 @@ searchable log database. Upstream: github:GilbN/geometrikks.
 - Retrieve the admin password (Sops + Age one-liner, as your user, from the
   repo root):
   `SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops -d platforms/nixos/secrets/geometrikks.yaml`
-- SSO login: "Sign in with Pocket ID" button (allow-listed emails only).
+- SSO login: "Sign in with Pocket ID" button (every enabled Pocket ID user
+  passes the allow-list via its auto-resolved subject id; the configured
+  email entries are the verified-email fallback).
 - OIDC lockout fallback: the `admin` + sops password login stays available.
 
 ## Go-live steps (user-gated)
 
 1. **First SSO login**: https://geo.home.lan → "Sign in with Pocket ID" →
-   passkey → map. If the login is rejected despite the right account, the
-   provider may not mark the email verified — swap the entry in
-   `services.geometrikks.oidc.allowedUsers` to the Pocket ID subject id
-   (README-sanctioned alternative; resolve it from Pocket ID's SQLite, the
-   miniflux-oidc-setup way).
+   passkey → map. The subject-id auto-resolve (`geometrikks-oidc-subs`)
+   lets every enabled Pocket ID user pass the allow-list; if a login is
+   STILL rejected, check `journalctl -u geometrikks` for
+   `reason=not_allowed` and compare the logged subject against
+   `/var/lib/geometrikks-oidc/allowed-subs` — a stale file means the bridge
+   has not re-run since the Pocket ID change (`sudo systemctl restart
+   geometrikks-oidc-env geometrikks` converges it).
 2. **MaxMind GeoLite2** (free): sign up at maxmind.com/en/geolite2/signup,
    then paste `MAXMINDDB_USER_ID` + `MAXMINDDB_LICENSE_KEY` into the sops file
    (`sops platforms/nixos/secrets/geometrikks.yaml` with the same one-liner)
