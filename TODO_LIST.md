@@ -516,4 +516,18 @@
 - [ ] **Was the boot-mirror BootOrder flip lost to a firmware reset between 2026-09-19 and 09-30, or did `-o` never run until the 09-30 ~12:50 activation? — BLOCKED: only owner memory (BIOS-setup visits/CMOS resets) can answer; decides whether the mirror needs a persistence guard beyond pre-reboot-check §11's FAIL-grade gate (Source: docs/status/2026-09-30_12-58_samsung-boot-mirror-activation-boot-source-forensics.md §b)** → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] [ready] **Make the migrate-hot-db fixture count self-verifying** — have `scripts/test-migrate-hot-db.sh` emit `PASS: N` per assertion and assert `grep -c '^PASS:'` == the anchored `ok`-call count (`grep -cE '&& ok "|[|][|] ok "'` = 22) inside the run itself, so any future assertion or regex rot flips the test red instead of re-opening the 21→22→23 count-claim drift class (Source: docs/status/2026-09-30_15-40_task-000001a0f23cb0448d3b6076e73500000000.md §f2)
 
+### services / pipeline (harvest 2026-09-30 15-3x caddy fix batch)
+
+- [ ] [blocked:deploy] **Deploy caddy batch + post-deploy verify (restart caps/NNP, live QUIC, derived smoke, mint SAN assert)** — [docs/todo/services.md](docs/todo/services.md)
+- [ ] [ready] **Test the smoke's fallback auth branch (missing vhost-layers file) before the next deploy** — [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] [ready] **Verify geometrikks handling of runtime-log lines in global access.log** — [docs/todo/services.md](docs/todo/services.md)
+- [ ] [decision] **Caddy file logs on QLC root: move to /mnt/hot or bound retention** — [docs/todo/services.md](docs/todo/services.md)
+- [ ] [decision] **Per-vHost access-log roll bounds vs Caddy defaults** — [docs/todo/services.md](docs/todo/services.md)
+- [ ] [ready] **Fix pre-existing negative-test-lint failures (cv/hermes dead-guards; signoz/binary-coverage pristine controls)** — [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] [ready] **Add or de-reference the nonexistent `caddy-mutant` negative-test case** — [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] [ready] **Refresh AGENTS.md SSO-layer table vs the registry (fleet drifted)** — [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] [watch] **voice/whisper dns-local additions + exemption drop when voice-agents lands** — [docs/todo/services.md](docs/todo/services.md)
+- [ ] [watch] **Layer classification via forward_auth substring (non-forward-auth gate would misclassify)** — [docs/todo/services.md](docs/todo/services.md)
+- [ ] [decision] **Explicit `servers { protocols h1 h2 h3 }` pin for declarative h3 posture** — [docs/todo/services.md](docs/todo/services.md)
+
 _Completed work: [CHANGELOG.md](./CHANGELOG.md). Long-term ideas: [ROADMAP.md](./ROADMAP.md)._

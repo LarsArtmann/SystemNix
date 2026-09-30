@@ -51,6 +51,9 @@ in
     # (subvol created, exact-copy verify passed). Run finalize after the deploy
     # carrying this import mounts /var/log/journal.
     ./journal-hot.nix # journald on the Samsung TLC hot tier (doctrine C subvol at /var/log/journal)
+    # NOT YET MIGRATED — run scripts/migrate-caddy-logs-hot.sh prepare BEFORE
+    # uncommenting (mounting an empty subvol over live logs = split brain).
+    # ./caddy-logs-hot.nix # caddy access logs on the Samsung TLC (subvol at /var/log/caddy)
     ./networking.nix
     ./local-network.nix
     ./primary-user.nix
