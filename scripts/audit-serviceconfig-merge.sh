@@ -117,8 +117,8 @@ serviceConfig =
 EOF
   cat >"$tmp/good.nix" <<'EOF'
 serviceConfig = lib.mkMerge [ (harden { MemoryMax = "2G"; }) (serviceDefaults { }) ];
-# a URL scheme in the expression is not a merge operator
-serviceConfig = mkDefault (env "https://example.test" // { });
+# a URL scheme is not a merge operator (:// stripped before the // check)
+serviceConfig = mkDefault "https://example.test";
 EOF
   cat >"$tmp/good-multiline.nix" <<'EOF'
 # the sanctioned multi-line mkMerge shape must stay green
