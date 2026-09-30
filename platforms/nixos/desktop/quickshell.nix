@@ -64,6 +64,12 @@ in
         notificationShowTimeoutBar = true;
         notificationHistoryMaxAgeDays = 30;
         notificationHistoryMaxCount = 200;
+
+        showSeconds = true;
+        padHours12Hour = true;
+        clockDateFormat = "ddd MMM d";
+
+        useAutoLocation = true;
       };
 
       # SystemNix DMS plugins — declaratively installed via DMS's plugin system.

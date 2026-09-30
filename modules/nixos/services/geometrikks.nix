@@ -147,12 +147,17 @@
         fi
 
         psql -d postgres -c "ALTER ROLE geometrikks WITH LOGIN PASSWORD '$pw';"
-        # Both extensions are superuser-only to create; the app's alembic
-        # migration runs CREATE EXTENSION IF NOT EXISTS postgis itself and
-        # server/timescale.py applies the TimescaleDB objects — both find
-        # the extension already present.
+        # All three extensions are superuser-only to create; the app's
+        # startup migration runs CREATE EXTENSION IF NOT EXISTS for
+        # postgis and timescaledb_toolkit itself and server/timescale.py
+        # applies the TimescaleDB objects — all find the extensions
+        # already present. timescaledb_toolkit is REQUIRED, not optional:
+        # the app's startup migration dies on it and takes the worker
+        # (and the unit) down (live 2026-09-30 04:43 — the old
+        # timescaledb-ha Docker image bundled it; nixpkgs plugins do not).
         psql -d geometrikks \
           -c "CREATE EXTENSION IF NOT EXISTS timescaledb;" \
+          -c "CREATE EXTENSION IF NOT EXISTS timescaledb_toolkit;" \
           -c "CREATE EXTENSION IF NOT EXISTS postgis;" \
           -c "ALTER DATABASE geometrikks SET max_parallel_workers = '8';"
         echo "geometrikks-db-provision: role password set, extensions ensured, per-DB tuning applied"
@@ -233,6 +238,7 @@
           ];
           extensions = ps: [
             ps.timescaledb
+            ps.timescaledb_toolkit
             ps.postgis
           ];
           settings = {
