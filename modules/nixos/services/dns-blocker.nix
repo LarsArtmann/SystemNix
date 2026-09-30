@@ -285,6 +285,15 @@ _: {
             proxy_enabled = cfg.proxyEnabled;
             proxy_connect_timeout = cfg.proxyConnectTimeout;
 
+            # Double-submit CSRF protection for the dashboard's action forms
+            # (allow/report/bulk). Requires dnsblockd >= v0.9.3 (T300 fixed the
+            # token-login 403 that made csrf+API-tokens mutually exclusive —
+            # the lock is past it). csrf_cookie_secure stays at its default
+            # true: the dashboard is served HTTPS via Caddy, and the DMS widget
+            # authenticates with a Bearer token, not cookies, so both flows
+            # coexist with csrf on.
+            csrf_enabled = true;
+
             # ── Embedded DNS resolver ──
             dns_enabled = true;
             dns_exit_on_failure = true;
