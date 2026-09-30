@@ -55,6 +55,7 @@ in
   sops-recipient-audit = import ./test-sops-recipient-audit.nix { inherit pkgs inputs system; };
   integration-registry = import ./test-integration.nix { inherit pkgs inputs system; };
   cloud-domain = import ./test-cloud-domain.nix { inherit pkgs inputs system; };
+  dns-blocker-render = import ./test-dns-blocker-render.nix { inherit pkgs inputs system; };
   catalog = import ./test-catalog.nix { inherit pkgs inputs system; };
   systemd-shape-audit = import ./test-systemd-shape-audit.nix { inherit pkgs inputs system; };
   port-registry-audit = import ./test-port-registry-audit.nix { inherit pkgs inputs system; };
