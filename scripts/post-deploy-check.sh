@@ -215,6 +215,56 @@ else
   report_skip "DNS - cannot determine dnsblockd memory"
 fi
 
+# DNS: deployed config must carry the allowlist/csrf/device-registry keys.
+# The config path is extracted from the RUNNING unit's ExecStart so these
+# greps test what is actually deployed (negative-proven 2026-09-30: every
+# pattern misses the pre-f625cfe config p6s93ln6, hits 0ry4913f).
+_dns_execstart=$(systemctl show -p ExecStart --value dnsblockd 2>/dev/null || true)
+_dns_config=$(printf '%s\n' "$_dns_execstart" | grep -oE '/nix/store/[a-z0-9]+-dnsblockd-config\.yaml' | head -1 || true)
+if [ -n "$_dns_config" ] && [ -r "$_dns_config" ]; then
+  _dns_cfg_missing=""
+  # allowlist persistence: without this key every restart drops manual
+  # unblocks (the pre-2026-09-30 silent data-loss window)
+  grep -q '"allowlist_path":"/var/lib/dnsblockd/allowlist"' "$_dns_config" ||
+    _dns_cfg_missing="$_dns_cfg_missing allowlist_path"
+  grep -q '"csrf_enabled":true' "$_dns_config" ||
+    _dns_cfg_missing="$_dns_cfg_missing csrf_enabled"
+  grep -q '"id":"evo-x2"' "$_dns_config" ||
+    _dns_cfg_missing="$_dns_cfg_missing devices(evo-x2)"
+  grep -q '"name":"Lars"' "$_dns_config" ||
+    _dns_cfg_missing="$_dns_cfg_missing users(Lars)"
+  grep -q '"dns_rate_limit_per_sec":50' "$_dns_config" ||
+    _dns_cfg_missing="$_dns_cfg_missing rate_per_sec(50)"
+  grep -q '"dns_rate_limit_burst":100' "$_dns_config" ||
+    _dns_cfg_missing="$_dns_cfg_missing rate_burst(100)"
+  grep -q '"log_sampling_threshold":500' "$_dns_config" ||
+    _dns_cfg_missing="$_dns_cfg_missing log_sampling(500)"
+  if [ -z "$_dns_cfg_missing" ]; then
+    report_pass "DNS - deployed config carries allowlist/csrf/devices/users/rate keys"
+  else
+    report_fail "DNS - deployed config missing keys:$_dns_cfg_missing"
+  fi
+
+  # CSRF behavioral probe: a bare POST (no cookie, no token, no auth header)
+  # must be rejected by the CSRF middleware with 403 BEFORE auth runs — the
+  # middleware chain wraps csrf OUTSIDE requireAuth, so 401 would mean csrf
+  # is off (config key ignored / wrong binary), 403 proves it is armed.
+  # Do NOT probe the block page for csrf form fields instead: the page
+  # template emits csrf_token fields even with csrf disabled.
+  _dns_csrf_status=$(curl -s -o /tmp/.smoke-dns-csrf -w '%{http_code}' --max-time 10 \
+    -X POST -H 'Content-Type: application/json' -d '{}' \
+    http://127.0.0.1:9090/api/allow 2>/dev/null || true)
+  if [ "$_dns_csrf_status" = "403" ]; then
+    report_pass "DNS - csrf middleware armed (bare POST /api/allow -> 403)"
+  elif [ "$_dns_csrf_status" = "401" ]; then
+    report_fail "DNS - csrf middleware inactive (bare POST /api/allow -> 401; csrf_enabled not loaded)"
+  else
+    report_warn "DNS - csrf probe inconclusive (bare POST /api/allow -> ${_dns_csrf_status:-no answer})"
+  fi
+else
+  report_skip "DNS - cannot locate dnsblockd config from running unit"
+fi
+
 # --- Application health endpoints ---
 check_local "Forgejo" "3000" "/api/v1/version" "200" "" 2>/dev/null || true
 
