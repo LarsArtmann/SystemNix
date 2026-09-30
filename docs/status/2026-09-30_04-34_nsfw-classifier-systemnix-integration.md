@@ -22,31 +22,31 @@ pre-existing, unrelated eval break).
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | Wrong-verdict reports explained | `nsfw-classifier/internal/server/feedback.go:51` — `POST /feedback` appends `{media_hash, verdict: wrong\|miss, score, model_key, comment}` JSONL to `<cache>/nsfw-classifier/feedback.jsonl`; golden-set seed; `nsfw-human-review` returns `EXPLAIN-UNAVAILABLE` (complaint ≠ verified label) |
-| 2 | SystemNix wiring audit | Extension auto-installed via `--load-extension` (`platforms/common/packages/base.nix:85`); NO server, NO port, NO server-URL config; only an unchecked plan (`docs/planning/2026-09-23_18-15_dynamic-service-mesh-registry.md` T10–T14) |
-| 3 | Flake input `nsfw-classifier` | `flake.nix:353` — INTERIM `git+file?rev=46f02bb` (vendorHash fix unpushed; dirty worktree breaks the go-modules FOD); lock updated; INTERIM row added to `docs/INTERIM-INPUT-PINS.md` |
-| 4 | Port registered | `lib/ports.nix:155` — `nsfw = 8104` (uniqueness eval passes) |
-| 5 | DNS subdomain | `platforms/common/dns-local.nix:37` — `"nsfw"` (wildcard already resolved it; explicit entry satisfies the integration cross-check) |
-| 6 | Service module | `modules/nixos/services/nsfw-classifier.nix` — fast mode (`--fast --models falconsai`), `--pair-token auto`, `--host 0.0.0.0` (LAN-reachable), `User = lars` (0700 home traversal for the live-checkout models), persistent `XDG_CACHE_HOME=/var/cache` + `CacheDirectory`, hardened (`ProtectSystem=strict`, `MemoryMax=2G`, `ioTier.background`) |
-| 7 | Catalog + integration entries | Unconditional catalog entry (ADR-008); integration entry = plain vHost `nsfw.home.lan`, gatus check, homepage tile, `monitored` |
-| 8 | Enabled on evo-x2 | `platforms/nixos/system/configuration.nix:420` |
-| 9 | Pure-eval test, green | `tests/test-nsfw-classifier.nix` — 9 assertions over the resolved config (fast flag, pair token, LAN bind, models dir, lars user, cache persistence, disabled→no unit, catalog unconditional); registered in `tests/default.nix` |
-| 10 | Binary builds from the pinned rev | `/nix/store/f1wyri9…-nsfw-classifier-go-46f02bb` — same path the evo-x2 unit resolves to |
-| 11 | **Live E2E of the extension contract** | `/readyz` carries `pairing.token` ✓ → tokenless upload **401** with self-explanatory JSON ✓ → paired upload **200** `{is_nsfw:false, severity:safe, mode:fast, 149ms, model:falconsai}` ✓; `pair-token` + `verdicts.db` persisted in the cache dir ✓ |
-| 12 | Fan-out resolved on evo-x2 | gatus endpoint `http://127.0.0.1:8104/readyz` ✓, caddy vHost `nsfw.home.lan` ✓, integration `{subdomain:nsfw, port:8104, layer:plain, monitored:true}` ✓ |
-| 13 | Quality gates | BuildFlow lightning `--fix` green (doctor 20 ok / 0 fail); README + planning docs updated |
-| 14 | Read-back verification | Every critical edit re-verified by grep after the auto-commit daemon swept the changes (cross-session stale-write lesson applied) |
+| #  | Item                                   | Evidence                                                                                                                                                                                                                                                                                                                                           |
+| -- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | Wrong-verdict reports explained        | `nsfw-classifier/internal/server/feedback.go:51` — `POST /feedback` appends `{media_hash, verdict: wrong\|miss, score, model_key, comment}` JSONL to `<cache>/nsfw-classifier/feedback.jsonl`; golden-set seed; `nsfw-human-review` returns `EXPLAIN-UNAVAILABLE` (complaint ≠ verified label)                                                     |
+| 2  | SystemNix wiring audit                 | Extension auto-installed via `--load-extension` (`platforms/common/packages/base.nix:85`); NO server, NO port, NO server-URL config; only an unchecked plan (`docs/planning/2026-09-23_18-15_dynamic-service-mesh-registry.md` T10–T14)                                                                                                            |
+| 3  | Flake input `nsfw-classifier`          | `flake.nix:353` — INTERIM `git+file?rev=46f02bb` (vendorHash fix unpushed; dirty worktree breaks the go-modules FOD); lock updated; INTERIM row added to `docs/INTERIM-INPUT-PINS.md`                                                                                                                                                              |
+| 4  | Port registered                        | `lib/ports.nix:155` — `nsfw = 8104` (uniqueness eval passes)                                                                                                                                                                                                                                                                                       |
+| 5  | DNS subdomain                          | `platforms/common/dns-local.nix:37` — `"nsfw"` (wildcard already resolved it; explicit entry satisfies the integration cross-check)                                                                                                                                                                                                                |
+| 6  | Service module                         | `modules/nixos/services/nsfw-classifier.nix` — fast mode (`--fast --models falconsai`), `--pair-token auto`, `--host 0.0.0.0` (LAN-reachable), `User = lars` (0700 home traversal for the live-checkout models), persistent `XDG_CACHE_HOME=/var/cache` + `CacheDirectory`, hardened (`ProtectSystem=strict`, `MemoryMax=2G`, `ioTier.background`) |
+| 7  | Catalog + integration entries          | Unconditional catalog entry (ADR-008); integration entry = plain vHost `nsfw.home.lan`, gatus check, homepage tile, `monitored`                                                                                                                                                                                                                    |
+| 8  | Enabled on evo-x2                      | `platforms/nixos/system/configuration.nix:420`                                                                                                                                                                                                                                                                                                     |
+| 9  | Pure-eval test, green                  | `tests/test-nsfw-classifier.nix` — 9 assertions over the resolved config (fast flag, pair token, LAN bind, models dir, lars user, cache persistence, disabled→no unit, catalog unconditional); registered in `tests/default.nix`                                                                                                                   |
+| 10 | Binary builds from the pinned rev      | `/nix/store/f1wyri9…-nsfw-classifier-go-46f02bb` — same path the evo-x2 unit resolves to                                                                                                                                                                                                                                                           |
+| 11 | **Live E2E of the extension contract** | `/readyz` carries `pairing.token` ✓ → tokenless upload **401** with self-explanatory JSON ✓ → paired upload **200** `{is_nsfw:false, severity:safe, mode:fast, 149ms, model:falconsai}` ✓; `pair-token` + `verdicts.db` persisted in the cache dir ✓                                                                                               |
+| 12 | Fan-out resolved on evo-x2             | gatus endpoint `http://127.0.0.1:8104/readyz` ✓, caddy vHost `nsfw.home.lan` ✓, integration `{subdomain:nsfw, port:8104, layer:plain, monitored:true}` ✓                                                                                                                                                                                           |
+| 13 | Quality gates                          | BuildFlow lightning `--fix` green (doctor 20 ok / 0 fail); README + planning docs updated                                                                                                                                                                                                                                                          |
+| 14 | Read-back verification                 | Every critical edit re-verified by grep after the auto-commit daemon swept the changes (cross-session stale-write lesson applied)                                                                                                                                                                                                                  |
 
 ## b) PARTIALLY DONE
 
-| # | Item | Gap |
-|---|------|-----|
-| 1 | **Service activation** | Config exists and evals; the unit is NOT running — needs a rebuild/switch, currently blocked by the pre-existing assertions eval break (see d4). Nothing on the host changed at runtime. |
-| 2 | Mesh plan T10–T14 | T10 (module/unit), T11 (registry+DNS), T12 (vHost), T13 (`--pair-token`), T14 (extension gate) are functionally LANDED, but the planning doc's acceptance checkboxes are still unchecked — no annotation yet. |
-| 3 | Audit verification | Scoped verifications are complete (gatus coverage, port registry, unit config, fan-outs), but the full `config.assertions` list cannot be evaluated on evo-x2 at all (pre-existing break), so a whole-config "zero failing assertions" statement is currently **impossible** for anyone. |
-| 4 | Memory protocol | Gotchas discovered this session are recorded in flake/`INTERIM-INPUT-PINS.md` comments but NOT yet in SystemNix `AGENTS.md` (git+file dirty-FOD trap, sanctioned `?rev=` on git+file only, signoz-coverage Environment-list contract, nsfw service entry). |
+| # | Item                   | Gap                                                                                                                                                                                                                                                                                      |
+| - | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Service activation** | Config exists and evals; the unit is NOT running — needs a rebuild/switch, currently blocked by the pre-existing assertions eval break (see d4). Nothing on the host changed at runtime.                                                                                                 |
+| 2 | Mesh plan T10–T14      | T10 (module/unit), T11 (registry+DNS), T12 (vHost), T13 (`--pair-token`), T14 (extension gate) are functionally LANDED, but the planning doc's acceptance checkboxes are still unchecked — no annotation yet.                                                                            |
+| 3 | Audit verification     | Scoped verifications are complete (gatus coverage, port registry, unit config, fan-outs), but the full `config.assertions` list cannot be evaluated on evo-x2 at all (pre-existing break), so a whole-config "zero failing assertions" statement is currently **impossible** for anyone. |
+| 4 | Memory protocol        | Gotchas discovered this session are recorded in flake/`INTERIM-INPUT-PINS.md` comments but NOT yet in SystemNix `AGENTS.md` (git+file dirty-FOD trap, sanctioned `?rev=` on git+file only, signoz-coverage Environment-list contract, nsfw service entry).                               |
 
 ## c) NOT STARTED
 
@@ -81,6 +81,7 @@ pre-existing, unrelated eval break).
 ## f) NEXT — up to 50 (brainstorm for HARVEST; sorted roughly by impact)
 
 **Deploy & breakage (highest impact)**
+
 1. Fix the pre-existing oci-containers assertions eval break on evo-x2 (blocks switch/flake check for everything).
 2. Rebuild/switch to actually start `nsfw-classifier.service`; verify `/readyz` on the host.
 3. Push nsfw-classifier `46f02bb` to origin/master; flip the input to `git+ssh…?ref=refs/heads/master`, drop `?rev=`, bump lock, clear the INTERIM rows.
@@ -152,4 +153,4 @@ pre-existing, unrelated eval break).
 
 ---
 
-*Point-in-time snapshot. Section (f) is HARVEST input for `TODO_LIST.md`/`ROADMAP.md`, not an entombed checklist. Format note: written as `.md` per explicit instruction (skill default is HTML).*
+_Point-in-time snapshot. Section (f) is HARVEST input for `TODO_LIST.md`/`ROADMAP.md`, not an entombed checklist. Format note: written as `.md` per explicit instruction (skill default is HTML)._

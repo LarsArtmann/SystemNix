@@ -96,4 +96,5 @@ Nothing irreversible happened. No data lost, no false "OK" claims to the user, n
 3. **Forgejo**: flip to the Samsung now (disko-declare + migrate + enable `dedicated`), later, or keep it on QLC permanently and delete the inert subvol design?
 
 ---
-*Written as `.md` per explicit user instruction (canonical status-report format is HTML; override noted). Auto-commit daemon will sweep this file.*
+
+_Written as `.md` per explicit user instruction (canonical status-report format is HTML; override noted). Auto-commit daemon will sweep this file._

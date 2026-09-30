@@ -7,14 +7,14 @@
 
 ## 0. Incident Timeline
 
-| Time (approx) | Event |
-| --- | --- |
-| 02:39:57 | User SSH from Mac lands on evo-x2 (192.168.1.150) |
-| ~02:45–03:23 | First `nix flake update browser-history && nh os switch` — SSH connection TIMED OUT mid-build after 38m24s (two go-modules FODs were downloading the full module graph serially) |
-| 03:24:38 | Retry: both FODs fail `hash mismatch` after ~35s (module downloads now cached, failure is fast) |
-| 03:25:05 | Second retry: identical failures after 17s |
-| ~04:0x | This session starts: diagnosis → upstream fix → push → re-lock → green build |
-| 04:33 | This report |
+| Time (approx) | Event                                                                                                                                                                            |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 02:39:57      | User SSH from Mac lands on evo-x2 (192.168.1.150)                                                                                                                                |
+| ~02:45–03:23  | First `nix flake update browser-history && nh os switch` — SSH connection TIMED OUT mid-build after 38m24s (two go-modules FODs were downloading the full module graph serially) |
+| 03:24:38      | Retry: both FODs fail `hash mismatch` after ~35s (module downloads now cached, failure is fast)                                                                                  |
+| 03:25:05      | Second retry: identical failures after 17s                                                                                                                                       |
+| ~04:0x        | This session starts: diagnosis → upstream fix → push → re-lock → green build                                                                                                     |
+| 04:33         | This report                                                                                                                                                                      |
 
 **Failure signature (both runs, deterministic — two different hashes, so NOT the NAR-hash/daemon-cache divergence class):**
 
@@ -84,6 +84,7 @@ Nothing destroyed, nothing reverted, no data loss. Honest defect list (all minor
 ## f) Next work queue (ordered, session-scoped)
 
 **Deploy & verify (blocks everything else):**
+
 1. `nh os switch` (or `nix run .#deploy`) — user-gated, builds are warm so it should be fast.
 2. After switch: `readlink /run/current-system` vs `/nix/var/nix/profiles/system` — anchor MUST match (rc=14/exit-4 class).
 3. `nix run .#post-deploy-check` (browser-history vHost + smoke blocks).
@@ -116,7 +117,7 @@ Nothing destroyed, nothing reverted, no data loss. Honest defect list (all minor
 24. ADR-008 catalog completion (23 subdomains) — existing plan T05/T06, now with a fresh warning list in this report.
 25. Empty-store cleanup: the failed-build era left partial FOD outputs; harmless (GC-eligible), no action needed — noted for completeness.
 
-*(25 items — the honest queue; padding to 50 would be noise.)*
+_(25 items — the honest queue; padding to 50 would be noise.)_
 
 ---
 

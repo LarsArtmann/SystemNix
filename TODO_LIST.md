@@ -1,15 +1,20 @@
 # SystemNix TODO — Dispatch Queue
+
 **This file is the QUEUE**: every agent-actionable (`[ready]`) open item, one line each, linking into its domain library. The tq pool (`repos = "CV,SystemNix,go-taskqueue"`) harvests THIS file only — blocked, watch, decision and upstream-push items are deliberately NOT here, so agents stop being dispatched at work they are banned from doing (sudo, pushes, browser ceremonies).
 **Routing rules** (docs-health HARVEST writes at append time — NEVER as dated sections; the 2026-09-19 split retired that growth pattern):
+
 - actionable engineering → one line here + the full entry (ask + blocker + `**Source:**`) in the domain library
 - blocked on sudo / browser / external console / owner hands → library only, `[blocked:user]`
 - blocked on an upstream push/tag → library only, `[blocked:push]` (agents implement locally, never push)
 - waits on a deploy or a time window → library only, `[blocked:deploy]` / `[watch]`
 - owner question → library only, `[decision]`
 - vague / long-term → `ROADMAP.md`
-Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never persist here. Verification narratives go to the status report, never the item. Full contract: `AGENTS.md` → "TODO System".
+  Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never persist here. Verification narratives go to the status report, never the item. Full contract: `AGENTS.md` → "TODO System".
+
 ## Queue
+
 ### storage
+
 - [ ] **Phase 2: hot DBs off the QLC root** → [docs/todo/storage.md](docs/todo/storage.md) — BLOCKED: remaining work (pocket-id/postgres/discordsync migration waves + docker data-root) is owner sudo windows; fsync measurement, verdicts, entry snippets and runbook landed (storage.md + status report)
 - [ ] **Pool + disk-domain quality (2026-08-28 review)** → [docs/todo/storage.md](docs/todo/storage.md) — RUN 2026-09-22 (task queue `000001a0c5fdb2dd3166a37c82d89dc5be6c`): cache-fallback sweep executed + converged (storage.md row marked done; HM symlinks for pnpm cache/state + cargo registry, deploy-gated). NOT finished: remaining [ready] library items — the VM-test rebuild is PSI-gated (io avg10 ~68% at session time, gate <20%) and the mountPoint-vs-HM-symlink eval guard is a later run — BLOCKED: PSI-gated item cannot run mid-storm; guard item left for queue pacing
 - [ ] **Rebuild `hot-db` + `crush-hot-db` VM tests green on the current tree (quiet-IO window)** → [docs/todo/storage.md](docs/todo/storage.md)
@@ -73,6 +78,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Fix the stale "deploy-pending, converged by the next run" clause in the storage.md f2 symlink-sweep row (the per-project guard is LIVE on the 2026-09-22 generation; legal-cases converges only after the root-owned-target rmdir heal)** → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-09-29_04-46_task-000001a0eb0016286b1ff87e9252f392ac57.md §f1)
 
 ### stability
+
 - [ ] **IO admission for tq pool + parallel build slices (io.max / heavy-job)** → [docs/todo/stability.md](docs/todo/stability.md) — 2026-09-30 3h storm class; throughput tradeoff pending owner answer
 - [ ] **deploy-queue: auto-retry deploy on PSI-calm wrapper** → [docs/todo/stability.md](docs/todo/stability.md)
 - [ ] **`btrfs-scrub@data` weekly exit-3 re-FAIL policy while the 129,533 csum errors persist until the T04-T08 repair** → [docs/todo/stability.md](docs/todo/stability.md) — every template-unit churn re-finds @data FAILED (chronic-FAIL exit-4 hazard, weekly recurrence); decide SuccessExitStatus "1 3" + Gatus-owns-errors vs keep-FAIL tripwire (Source: task-…061c report §g1)
@@ -118,6 +124,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Extend pre-reboot-check (or add a self-elevating app) to print the systemd-boot entry list + per-entry generation mapping so agent sessions can verify boot-menu depth without sudo** → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-09-29_23-13_nix-gc-retention-3d-to-7d-boot-menu-depth.md §f7)
 
 ### monitoring
+
 - [ ] **ClickHouse fill-velocity gauge + time-to-fill alert (append-only P0)** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **`signoz-collector-config-lint` flake check (live-fire render validation)** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **Runbook: live-fire collector-config validation procedure** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
@@ -149,9 +156,11 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Gap-check /nix (Samsung) usage monitoring and add metric+Gatus check if missing — 7d GC retention makes store growth the cost side of the tradeoff and min-free 5GB is the only backstop** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-09-29_23-13_nix-gc-retention-3d-to-7d-boot-menu-depth.md §f8)
 
 ### ai-stack
+
 - [ ] **Bisect the llama.cpp 0.3.0 mid-load CPU-spin upstream (ROCm runtime / kernel / GPU-state — upstream of llama.cpp) — THE gate for re-enabling llama-rag and unblocking the paperless RAG item** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
 
 ### services
+
 - [ ] **InboxClean: should ONE dead Gmail account page (per-account `auth_expired` Gatus check)?** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Commit or stash CV TODO_LIST.md to unstick tq task `000001a0` (17 refusals)** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Paperless scheduled-task failure monitoring + encrypted-tag consistency alert** → [docs/todo/services.md](docs/todo/services.md)
@@ -199,6 +208,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **CHANGELOG row + forgejo.md runbook section for the theme cascade trap** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-09-30_00-44_forgejo-dark-theme-cascade-fix-status.md §f5)
 
 ### upstream
+
 - [ ] **PMA OTel span instrumentation upstream (overview `fff1035` pattern)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **papdashboard OTel span instrumentation upstream (clone first)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **papdashboard post-push chain: `nix flake lock --update-input papdashboard` → post-lock probe → deploy (sudo window) → smoke** → [docs/todo/upstream.md](docs/todo/upstream.md)
@@ -249,11 +259,13 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Root-cause + fix the duplicate-dispatch class (go-taskqueue upstream or tq-pool harvest cadence): 4 runs raced ONE Task-Queue-ID on 2026-09-29 — the work item was dispatched ~3 min after a prior run closed it, and the status-report instruction fired twice more; a dispatch-time item-state re-check kills the class** → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: docs/status/2026-09-29_04-00_task-000001a0ea69007114315b9d2ae5d5843bca.md §e1)
 
 ### security
+
 - [ ] **Create `docs/security/rotations.md` rotation ledger** → [docs/todo/security.md](docs/todo/security.md)
 - [ ] **ROOT: settle the `/run/secrets/sops-nix-age-key` ghost** → [docs/todo/security.md](docs/todo/security.md)
 - [ ] **Crush key-hygiene leftovers** → [docs/todo/security.md](docs/todo/security.md)
 
 ### pipeline
+
 - [ ] **Duplicate-row lint in check-todo-system.sh: flag byte-identical one-liner rows within a TODO_LIST.md section and identical asks shared between queue and library (the ffprobe-sweep ask shipped clean through the checker in THREE places: pixel6.md prioritized + backlog + a doubled TODO_LIST row)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-28_20-53_task-000001a0e95aebd871672d672c98258ad103.md §e2)
 - [ ] **Pre-deploy batch build of mkLarsPackages + cv + hermes inputs** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Known-outage classification in post-deploy-check** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
@@ -398,6 +410,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **CHANGELOG entries for the 09-29 deliberate rewrites the daemon’s heuristic commits hide (dns-update.sh rewrite, notify-failure@ rate-limit containment)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-29_23-53_storm-closeout-deploy-anchored-dms-pr-dns-update-rebuild.md §f18)
 
 ### pixel6
+
 - [ ] **Udev rule for Google USB vendor 18d1 (adb access)** → [docs/todo/pixel6.md](docs/todo/pixel6.md)
 - [ ] **Enrich `universal-call-recorder/index.csv` with call-log contact names** → [docs/todo/pixel6.md](docs/todo/pixel6.md)
 - [ ] **SHA256SUMS for Signal + WhatsApp + Cube ACR sets** → [docs/todo/pixel6.md](docs/todo/pixel6.md)

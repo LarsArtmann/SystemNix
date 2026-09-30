@@ -20,8 +20,8 @@ landed; the five migrations themselves are owner windows.
    escape for the future postgres wave.
 3. All four documented vehicle defects (storage.md row 157) fixed — see §b.
 4. T14 monitoring in `hot-db.nix`: `hot-db-metrics` fail-closed collector
-   + per-entry anchored Gatus checks via the `gatus-config.extraEndpoints`
-   seam (the withPapIngest pass).
+   - per-entry anchored Gatus checks via the `gatus-config.extraEndpoints`
+     seam (the withPapIngest pass).
 5. DiscordSync dump-only RPO leg: `discordsync-db-backup` (02:30, gzipped
    online sqlite `.backup` → `/mnt/pool/backups/discordsync`) + pool leaf
    creator (deploy.sh provisioner list) + backup-coordination row + restic

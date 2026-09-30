@@ -25,13 +25,13 @@ are added **ONE PER WAVE** — an entry deployed before its
 shadow-splits the service. The five waves below are ordered
 risk-ascending (regenerable stats first, the 11 GB event store last):
 
-| Wave | Entry | dataDir (REAL path) | Stop window blip | Backup leg |
-| ---- | ----- | ------------------- | ---------------- | ---------- |
-| 1 | `gatus` | `/var/lib/private/gatus` | monitoring blind ~1-3 min (every check reds once, then resolves) | none — self-pruning stats, regenerable |
-| 2 | `dnsblockd` | `/var/lib/dnsblockd` (~2.5 GB incl. the stale `dnsblockd_tracking.db` legacy file) | LAN DNS blip; gatus "DNS Resolver" pages once + resolves | none — self-pruning tracking stats |
-| 3 | `pocket-id` | `/var/lib/pocket-id` | SSO blip | `pocket-id-backup` (04:00 sqlite .backup, pool) |
-| 4 | `browser-history` | `/var/lib/private/browser-history` | ingest retries on next 5-min tick | `browser-history-backup` (02:15, pool) |
-| 5 | `discordsync` | `/var/lib/discordsync` (~11 GB — the longest delta+verify) | Discord capture gap ≈ any restart; keep tight | `discordsync-db-backup` (02:30 gzipped dump, pool — the dump-only RPO leg, Turso is plan-blocked) |
+| Wave | Entry             | dataDir (REAL path)                                                                | Stop window blip                                                 | Backup leg                                                                                        |
+| ---- | ----------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| 1    | `gatus`           | `/var/lib/private/gatus`                                                           | monitoring blind ~1-3 min (every check reds once, then resolves) | none — self-pruning stats, regenerable                                                            |
+| 2    | `dnsblockd`       | `/var/lib/dnsblockd` (~2.5 GB incl. the stale `dnsblockd_tracking.db` legacy file) | LAN DNS blip; gatus "DNS Resolver" pages once + resolves         | none — self-pruning tracking stats                                                                |
+| 3    | `pocket-id`       | `/var/lib/pocket-id`                                                               | SSO blip                                                         | `pocket-id-backup` (04:00 sqlite .backup, pool)                                                   |
+| 4    | `browser-history` | `/var/lib/private/browser-history`                                                 | ingest retries on next 5-min tick                                | `browser-history-backup` (02:15, pool)                                                            |
+| 5    | `discordsync`     | `/var/lib/discordsync` (~11 GB — the longest delta+verify)                         | Discord capture gap ≈ any restart; keep tight                    | `discordsync-db-backup` (02:30 gzipped dump, pool — the dump-only RPO leg, Turso is plan-blocked) |
 
 DynamicUser services (gatus, browser-history) mount the REAL dir behind the
 `/var/lib/<name> -> private/<name>` symlink — mounting the symlink path

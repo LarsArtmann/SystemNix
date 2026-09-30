@@ -14,17 +14,17 @@ During recovery the first `curl` probe looked like a new bug (`HTTP/0.9 when not
 
 ## Timeline (journal-exact)
 
-| Time | Event |
-| --- | --- |
-| 2026-09-29 23:48–2026-09-30 00:22 | Backend starts fail repeatedly: `bind: Address already in use` (:52626) → exit 1 → `start-limit-hit`. Each :52625 client connection re-requests a start (socket-activation churn). |
-| 2026-09-30 ~00:15 | (Parallel session) a stability-row probe found NO `:CDB2` entry and concluded "corpse GONE, backend CAN start once pressure drains" — see Falsification F2 below. |
-| 04:39–04:44 (this session) | Rootless diagnosis (systemctl is blocked in the agent sandbox): `journalctl -u fastflowlm` + `/proc/net/tcp` hex grep + `/proc/*/fd` inode walk. Found the gatus↔pocket-id established pair, no flm process/zombie, no LISTEN on 52626. |
-| ~04:40 | User: `sudo systemctl restart gatus` → pair drops to state `06` (TIME_WAIT, uid 0, inode 0). User: `reset-failed` → "Unit fastflowlm.service not loaded" (harmless — unit GC'd; the `&&` skipped the socket start). |
-| 04:41:30 | Socket started (user), client connect pulled the backend up: `Loading model: /data/ai/models/fastflowlm/models/Qwen3.6-35B-A3B-NPU2`. |
-| 04:42:25–31 | **Guard Zone-6 trip #1468** (io PSI avg60 = 61.13%, max disk busy 70.2%, MemAvailable 63.8%): stops sockets + `fastflowlm.service` mid-cold-load (15 GB read at death; 30.2G mem peak). Trip top-io: `system.slice +24.3 GB`, `user.slice +10.6 GB` per window. |
-| ~04:42–04:44 | More trips logged (04:21 #?, 04:32 already before); `restore capped (3 restores today >= 3)` at 04:17 and 04:31 — auto-restore dead for the day. |
-| 04:44 (check) | Live PSI still storming: `some avg10=57.79 avg60=60.21 avg300=65.89`. Top reader: `tq agent-pool` — **168 GB** `read_bytes` (proc 3791468); project-discovery-daemon 9.2 GB distant second. Advice: wait for calm, then manual `systemctl start fastflowlm.socket` (restore capped). |
-| ~04:50 | User attachment: `curl http://127.0.0.1:52625/v1/models` → **200, 36 models**. flm UP. |
+| Time                              | Event                                                                                                                                                                                                                                                                                |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-09-29 23:48–2026-09-30 00:22 | Backend starts fail repeatedly: `bind: Address already in use` (:52626) → exit 1 → `start-limit-hit`. Each :52625 client connection re-requests a start (socket-activation churn).                                                                                                   |
+| 2026-09-30 ~00:15                 | (Parallel session) a stability-row probe found NO `:CDB2` entry and concluded "corpse GONE, backend CAN start once pressure drains" — see Falsification F2 below.                                                                                                                    |
+| 04:39–04:44 (this session)        | Rootless diagnosis (systemctl is blocked in the agent sandbox): `journalctl -u fastflowlm` + `/proc/net/tcp` hex grep + `/proc/*/fd` inode walk. Found the gatus↔pocket-id established pair, no flm process/zombie, no LISTEN on 52626.                                              |
+| ~04:40                            | User: `sudo systemctl restart gatus` → pair drops to state `06` (TIME_WAIT, uid 0, inode 0). User: `reset-failed` → "Unit fastflowlm.service not loaded" (harmless — unit GC'd; the `&&` skipped the socket start).                                                                  |
+| 04:41:30                          | Socket started (user), client connect pulled the backend up: `Loading model: /data/ai/models/fastflowlm/models/Qwen3.6-35B-A3B-NPU2`.                                                                                                                                                |
+| 04:42:25–31                       | **Guard Zone-6 trip #1468** (io PSI avg60 = 61.13%, max disk busy 70.2%, MemAvailable 63.8%): stops sockets + `fastflowlm.service` mid-cold-load (15 GB read at death; 30.2G mem peak). Trip top-io: `system.slice +24.3 GB`, `user.slice +10.6 GB` per window.                      |
+| ~04:42–04:44                      | More trips logged (04:21 #?, 04:32 already before); `restore capped (3 restores today >= 3)` at 04:17 and 04:31 — auto-restore dead for the day.                                                                                                                                     |
+| 04:44 (check)                     | Live PSI still storming: `some avg10=57.79 avg60=60.21 avg300=65.89`. Top reader: `tq agent-pool` — **168 GB** `read_bytes` (proc 3791468); project-discovery-daemon 9.2 GB distant second. Advice: wait for calm, then manual `systemctl start fastflowlm.socket` (restore capped). |
+| ~04:50                            | User attachment: `curl http://127.0.0.1:52625/v1/models` → **200, 36 models**. flm UP.                                                                                                                                                                                               |
 
 ## Evidence (reproducible)
 
@@ -122,15 +122,15 @@ Honest count from THIS session's scope: **13 items** (5 new/harvested, 8 pointer
 
 ## Harvest record (mandated by AGENTS.md TODO System)
 
-| Item | Landed in |
-| --- | --- |
-| Pre-bind forensics ExecStartPre | `docs/todo/stability.md` (new `[ready]` row) |
-| Restore-cap policy review | `docs/todo/stability.md` (new `[decision]` row) |
-| Gatus flm-port audit + :1411 mystery | `docs/todo/monitoring.md` (new `[ready]` row) |
-| FLM-RESTORE-CAPPED delivery verification | `docs/todo/monitoring.md` (new `[watch]` row) |
-| Upstream SO_REUSEADDR ask | `docs/todo/upstream.md` (new `[decision]` row) |
-| DONE-MOOT row correction (falsified closure + hex bug) | annotated in place, `docs/todo/stability.md` |
-| AGENTS.md flm bullet supersession (F1) + hex lesson | annotated in place, `AGENTS.md` (flm corpse bullet) |
-| tq IO admission, flm v1.0.6 bump | deliberately NOT re-harvested — existing rows own them (no-dupes rule); referenced as §f.6/§f.8 |
+| Item                                                   | Landed in                                                                                       |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| Pre-bind forensics ExecStartPre                        | `docs/todo/stability.md` (new `[ready]` row)                                                    |
+| Restore-cap policy review                              | `docs/todo/stability.md` (new `[decision]` row)                                                 |
+| Gatus flm-port audit + :1411 mystery                   | `docs/todo/monitoring.md` (new `[ready]` row)                                                   |
+| FLM-RESTORE-CAPPED delivery verification               | `docs/todo/monitoring.md` (new `[watch]` row)                                                   |
+| Upstream SO_REUSEADDR ask                              | `docs/todo/upstream.md` (new `[decision]` row)                                                  |
+| DONE-MOOT row correction (falsified closure + hex bug) | annotated in place, `docs/todo/stability.md`                                                    |
+| AGENTS.md flm bullet supersession (F1) + hex lesson    | annotated in place, `AGENTS.md` (flm corpse bullet)                                             |
+| tq IO admission, flm v1.0.6 bump                       | deliberately NOT re-harvested — existing rows own them (no-dupes rule); referenced as §f.6/§f.8 |
 
-*Deliberately not harvested:* §f.9–13 (watch items below the queue bar; re-evaluate on next touch).
+_Deliberately not harvested:_ §f.9–13 (watch items below the queue bar; re-evaluate on next touch).
