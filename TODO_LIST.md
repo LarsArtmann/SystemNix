@@ -201,6 +201,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 ### upstream
 - [ ] **PMA OTel span instrumentation upstream (overview `fff1035` pattern)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **papdashboard OTel span instrumentation upstream (clone first)** → [docs/todo/upstream.md](docs/todo/upstream.md)
+- [ ] **Sweep LarsArtmann repos for the `_local_deps` tree-walking-test breakage class (papdashboard proven live 2026-09-30)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Post-push go-taskqueue consumption: `nix flake lock --update-input go-taskqueue` + verify FOD/package from our lock + redeploy `tq-agent-pool` (agent-executable once go-taskqueue master is pushed)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **browser-history gate-count gap: read-model `Count()` = 0 despite existing users (found live 2026-09-18)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Upstream cqrs-htmx usermgmt: an ES-registered user was LOST across restarts (found live 2026-09-19)** → [docs/todo/upstream.md](docs/todo/upstream.md)
