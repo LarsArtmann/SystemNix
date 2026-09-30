@@ -580,6 +580,18 @@ if nix run .#pre-deploy-check; then
     sudo systemctl restart geometrikks.service 2>/dev/null || true
   fi
 
+  # Forgejo's dedicated-subvol bootstrap (G1, forgejo.nix): indirect oneshot
+  # (wantedBy=var-lib-forgejo.mount — fstab-pulled, so the provisioner loop's
+  # is-enabled gate skips it), RemainAfterExit=true. Idempotent subvol-create;
+  # restarting on deploy converges bootstrap-script fixes (perms/ownership)
+  # without waiting for the next mount activation at boot. MUST precede any
+  # forgejo restart in this list so the subvol exists before the family gates
+  # evaluate.
+  if systemctl is-active --quiet forgejo-subvol-bootstrap.service 2>/dev/null; then
+    echo "Restarting forgejo-subvol-bootstrap.service (converge forgejo subvol)"
+    sudo systemctl restart forgejo-subvol-bootstrap.service 2>/dev/null || true
+  fi
+
   # Restart browser-history AFTER browser-history-oidc-setup (fresh OAuth2 env
   # file) AND AFTER dnsblockd above: its mkOidcGate only proves DNS was up when
   # the gate ran — restarting dnsblockd after browser-history leaves a window

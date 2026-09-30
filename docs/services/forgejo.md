@@ -135,14 +135,18 @@ then, but worth a periodic look.
 `sudo systemctl start forgejo-census && journalctl -u forgejo-census` — native-vs-mirror split
 per owner (the flip-rollout tracking numbers; census results land here at gate G2).
 
-### Storage (staged, G1-gated)
+### Storage (G1 flip STAGED 2026-09-30)
 
-`services.forgejo.dedicatedSubvolume` (default false) mounts the Samsung-TLC subvol
-`hot/forgejo` AT `/var/lib/forgejo` (Set-B: own 8h btrbk leg to `/mnt/pool/backups/forgejo-subvol`
-
-- weekly restore drill + freshness Gatus). Migration runbook:
-  `scripts/migrate-forgejo-subvol.sh` header (prepare → build → finalize → flip option → deploy;
-  abort path included). Until G1 runs, storage stays as below (root fs).
+`services.forgejo.dedicatedSubvolume` (= true since 2026-09-30, staged) mounts the Samsung-TLC
+subvol `hot/forgejo` AT `/var/lib/forgejo` (Set-B: own 8h btrbk leg to
+`/mnt/pool/backups/forgejo-subvol`, freshness Gatus `forgejo_subvol_backup_fresh`). Migration
+runbook: `scripts/migrate-forgejo-subvol.sh` header (prepare → build → finalize → deploy; abort
+path included). **Early-deploy safety:** the family condition-gates on the `.subvol-migrated`
+marker that `finalize` writes INTO the subvol — a deploy landing before `finalize` leaves
+forgejo DOWN (loud, Gatus), never minting fresh state on an empty/stale subvol. deploy.sh
+restarts `forgejo-subvol-bootstrap` (is-active-gated, indirect unit) so bootstrap fixes converge.
+Until the window runs, storage effectively stays on the QLC root (family down after the first
+flipped deploy).
 
 ## Themes / UI (Catppuccin, 2026-09-23)
 

@@ -400,6 +400,15 @@ in
       sops-config.enable = true;
       caddy.enable = true;
       forgejo.enable = true;
+      # G1 window (Samsung-TLC dedicated subvol at /var/lib/forgejo). STAGED
+      # flip: deploying this before scripts/migrate-forgejo-subvol.sh
+      # `finalize` is SAFE but leaves the forgejo family DOWN (loud, Gatus)
+      # — every stateful unit condition-gates on the .subvol-migrated marker
+      # finalize writes, so no fresh state can be minted on an empty/stale
+      # subvol. Owner window: prepare (live, non-disruptive) → build toplevel
+      # → finalize → deploy. Runbook: scripts/migrate-forgejo-subvol.sh header
+      # + docs/services/forgejo.md (Storage).
+      forgejo.dedicatedSubvolume = true;
       immich.enable = true;
       paperless.enable = true;
       # Declarative dashboards: saved views provisioned via the REST API
