@@ -68,7 +68,7 @@ leg() {
       cd "$SCRATCH" || exit 1
       parse_failed=false
       while IFS= read -r -d '' f; do
-        if ! nix-instantiate --parse "$f" > /dev/null 2> "$SCRATCH/parse-err.log"; then
+        if ! nix-instantiate --parse "$f" >/dev/null 2>"$SCRATCH/parse-err.log"; then
           parse_failed=true
         fi
       done < <(git diff --cached --name-only --diff-filter=ACM -z '*.nix')
@@ -111,7 +111,10 @@ git -C "$SCRATCH" add modules/nested/deep.nix
 if leg; then
   ok "D2 staged valid .nix (nested path) parses and passes"
 else
-  die "D2 valid nested .nix failed the leg (log: $(head -c 200 "$LEG_LOG"; head -c 200 "$SCRATCH/parse-err.log" 2>/dev/null))"
+  die "D2 valid nested .nix failed the leg (log: $(
+    head -c 200 "$LEG_LOG"
+    head -c 200 "$SCRATCH/parse-err.log" 2>/dev/null
+  ))"
 fi
 
 # D3: a staged deletion alone skips the leg (empty ACM selection guard).

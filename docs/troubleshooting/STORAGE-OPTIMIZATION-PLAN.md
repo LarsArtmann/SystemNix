@@ -251,7 +251,7 @@ just clean-aggressive      # Comprehensive cleanup in justfile
 
 ### Phase 1: Immediate (Today, requires sudo)
 
-1. Run `sudo nix-collect-garbage -d --delete-older-than 3d`  <!-- EMERGENCY-ONLY deeper cut — standing schedule is 7d since 2026-09-29 -->
+1. Run `sudo nix-collect-garbage -d --delete-older-than 3d` <!-- EMERGENCY-ONLY deeper cut — standing schedule is 7d since 2026-09-29 -->
 2. Run `sudo nix-store --optimize`
 3. Run `sudo rm -rf /nix/store/*-source` (with verification)
 4. Check disk space: `df -h /`

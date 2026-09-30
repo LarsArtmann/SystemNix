@@ -469,6 +469,13 @@ _: {
             // {
               Type = "oneshot";
               RemainAfterExit = true;
+              # RuntimeDirectory is what makes ReadWritePaths viable: it
+              # creates /run/dnsblockd-certs BEFORE systemd sets up the
+              # mount namespace. Without it the unit dies at NAMESPACE
+              # setup (226/NAMESPACE, caught by tests/test-caddy-mint.nix —
+              # the script's own install -d runs INSIDE the namespace and
+              # is too late).
+              RuntimeDirectory = "dnsblockd-certs";
               ReadWritePaths = [ "/run/dnsblockd-certs" ];
             };
           script =

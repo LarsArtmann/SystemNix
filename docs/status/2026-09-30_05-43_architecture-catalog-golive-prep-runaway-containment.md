@@ -58,7 +58,7 @@ environment; Forgejo returns 401 to everything unauthenticated).
    `/var/lib/forgejo/.eventcatalog-hub-setup/sync-token` (umask 077, value
    never printed); `revoke()`-before-mint makes the CI + sync PATs rotate
    on re-run instead of dying on Forgejo's unique-name constraint; header
-   + final summary updated. `bash -n` verified.
+   - final summary updated. `bash -n` verified.
 3. **Defect 2 fixed — runner PATH** (`modules/nixos/services/forgejo.nix`):
    `path = [ pkgs.nix pkgs.jq pkgs.python3 ]` added to the
    `gitea-runner-evo-x2` unit override (host-mode CI jobs inherit the
@@ -116,6 +116,7 @@ work, deliberately left alone.
    deploy: confirm `path=` carries nix/jq/python3 in the rendered unit.
 
 ## 5. (c) NOT STARTED (all root/owner-gated — the sandbox bans `sudo` and
+
 `systemctl`, and Forgejo 401s every unauthenticated probe)
 
 1. `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh`

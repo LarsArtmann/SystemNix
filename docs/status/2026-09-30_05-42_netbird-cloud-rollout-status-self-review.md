@@ -12,35 +12,35 @@ _Root docs: `docs/brainstorming/2026-09-30_netbird-larsartmann-cloud-selfhosted-
 
 ## a) FULLY DONE (verified this session)
 
-| # | Item | Verification |
-| --- | --- | --- |
-| 1 | Architecture + 9 ratified decisions (self-hosted-only, availability-domain IdP split, pbx-box control plane, dnsblockd-CA certs, split-horizon DNS) | brainstorming doc, owner-ratified |
-| 2 | Pareto execution plan (20/4/1% + other-20%), 2 granularities, mermaid graph, verschlimmbessern guards | planning doc |
-| 3 | `larsartmann.cloud` zone in dnsblockd — evo-x2 AND rpi3 (failover parity), explicit records, no wildcard | `checks.cloud-domain` + full `nix flake check` green |
-| 4 | Caddy vHost mirror under cloud domain (1:1 extraConfig, `:80` dual matcher, cloud catch-all) | eval-verified |
-| 5 | `dnsblockd-cert-mint.service` — dual-zone SAN leaf from existing sops'd CA, Before/After ordering, fail-closed (design) | eval-verified only — see b/d |
-| 6 | oauth2-proxy `whitelist-domain` += cloud | eval-verified |
-| 7 | `services.netbird-client` module — GATED OFF, correct pinned surface (`clients.evox2`, `config.ManagementUrl`, `login.setupKeyFile`), port 51820, catalog + integration entries | eval-verified incl. positive extendModules probe |
-| 8 | `checks.cloud-domain` regression: 12 assertions + positive module-surface probe (which caught a real option-name bug) | builds green |
-| 9 | Public DNS: wildcard `*` TRIMMED, `netbird.` + `relay.` → 46.62.241.133 added — APPLIED and confirmed at registrar NS (scoped `-target`; pre-existing larsartmann.com MX drift untouched) | authoritative dig |
-| 10 | pbx `hosts/pbx/netbird.nix`: server + relay (STUN 3479, NO coturn → no 3478 collision) + Dex at `/dex` + 2 nginx vhosts | full pbx closure builds green |
-| 11 | pbx telephony input relocked 5ba5d2b→864dc1e — pulls webphone vendorHash repair; closure did NOT build before | build verified |
-| 12 | Secrets: 4 files generated in `~/.pbx-prod-secrets/` (mgmt datastore key, relay auth secret, dex password + bcrypt); push-secrets.sh extended | files exist, script updated |
-| 13 | Docs: SystemNix runbook + AGENTS section + CHANGELOGs (3 repos) + pbx handover runbook + nix-email README note | written |
-| 14 | All four repos pushed to origin (daemon commits; detail lives in CHANGELOGs) | push confirmed |
+| #  | Item                                                                                                                                                                                      | Verification                                         |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| 1  | Architecture + 9 ratified decisions (self-hosted-only, availability-domain IdP split, pbx-box control plane, dnsblockd-CA certs, split-horizon DNS)                                       | brainstorming doc, owner-ratified                    |
+| 2  | Pareto execution plan (20/4/1% + other-20%), 2 granularities, mermaid graph, verschlimmbessern guards                                                                                     | planning doc                                         |
+| 3  | `larsartmann.cloud` zone in dnsblockd — evo-x2 AND rpi3 (failover parity), explicit records, no wildcard                                                                                  | `checks.cloud-domain` + full `nix flake check` green |
+| 4  | Caddy vHost mirror under cloud domain (1:1 extraConfig, `:80` dual matcher, cloud catch-all)                                                                                              | eval-verified                                        |
+| 5  | `dnsblockd-cert-mint.service` — dual-zone SAN leaf from existing sops'd CA, Before/After ordering, fail-closed (design)                                                                   | eval-verified only — see b/d                         |
+| 6  | oauth2-proxy `whitelist-domain` += cloud                                                                                                                                                  | eval-verified                                        |
+| 7  | `services.netbird-client` module — GATED OFF, correct pinned surface (`clients.evox2`, `config.ManagementUrl`, `login.setupKeyFile`), port 51820, catalog + integration entries           | eval-verified incl. positive extendModules probe     |
+| 8  | `checks.cloud-domain` regression: 12 assertions + positive module-surface probe (which caught a real option-name bug)                                                                     | builds green                                         |
+| 9  | Public DNS: wildcard `*` TRIMMED, `netbird.` + `relay.` → 46.62.241.133 added — APPLIED and confirmed at registrar NS (scoped `-target`; pre-existing larsartmann.com MX drift untouched) | authoritative dig                                    |
+| 10 | pbx `hosts/pbx/netbird.nix`: server + relay (STUN 3479, NO coturn → no 3478 collision) + Dex at `/dex` + 2 nginx vhosts                                                                   | full pbx closure builds green                        |
+| 11 | pbx telephony input relocked 5ba5d2b→864dc1e — pulls webphone vendorHash repair; closure did NOT build before                                                                             | build verified                                       |
+| 12 | Secrets: 4 files generated in `~/.pbx-prod-secrets/` (mgmt datastore key, relay auth secret, dex password + bcrypt); push-secrets.sh extended                                             | files exist, script updated                          |
+| 13 | Docs: SystemNix runbook + AGENTS section + CHANGELOGs (3 repos) + pbx handover runbook + nix-email README note                                                                            | written                                              |
+| 14 | All four repos pushed to origin (daemon commits; detail lives in CHANGELOGs)                                                                                                              | push confirmed                                       |
 
 ## b) PARTIALLY DONE
 
-| # | Item | What's missing / why it stopped |
-| --- | --- | --- |
-| 1 | **evo-x2 Phase-1 deploy** | Committed + built but NEVER ACTIVATED. `sudo` is agent-blocked; deploy is a user handover. The plan promised dry-activate — skipped silently instead of being loudly re-gated. Nothing from Phase 1 is live on the box yet. |
-| 2 | **Cert-mint unit** | Eval-verified, never RUN. Latent PATH bug (see d1). No VM test executes it — the one new runtime component of Phase 1 got zero runtime verification. |
-| 3 | **pbx NetBird/Dex config** | Builds green, but four runtime-unverified guesses (d2-d4, e6): management `Relay` JSON shape, Dex userID validity, redirect-URI glob, relay proxy timeouts. |
-| 4 | **Monitoring consistency** | `onFailure = pbx-alert@` wired ONLY on netbird-management. netbird-signal, netbird-relay, dex, dashboard: nothing. Violates the session's own doctrine. |
-| 5 | **pbx repo gates** | buildflow `--build-mode fast` SKIPS tests; docs-freshness never ran against the new runbook/CHANGELOG. Repo called "green" on partial gates. |
-| 6 | **NetBird dashboard config** | Route approval / DNS nameserver group / ACLs — runbook steps only (user-gated U4). |
-| 7 | **Doc backporting** | `relay.larsartmann.cloud` (DNS + vhost) and `vpn.larsartmann.cloud` (MagicDNS suffix) emerged during implementation but were never backported into the brainstorming doc's D4/D5 decision text. Drift between decision doc and reality. |
-| 8 | **sops onboarding snippet** | Runbook says "create netbird.yaml per .sops.yaml" — no exact creation-rule/key snippet; user must derive it. |
+| # | Item                         | What's missing / why it stopped                                                                                                                                                                                                         |
+| - | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **evo-x2 Phase-1 deploy**    | Committed + built but NEVER ACTIVATED. `sudo` is agent-blocked; deploy is a user handover. The plan promised dry-activate — skipped silently instead of being loudly re-gated. Nothing from Phase 1 is live on the box yet.             |
+| 2 | **Cert-mint unit**           | Eval-verified, never RUN. Latent PATH bug (see d1). No VM test executes it — the one new runtime component of Phase 1 got zero runtime verification.                                                                                    |
+| 3 | **pbx NetBird/Dex config**   | Builds green, but four runtime-unverified guesses (d2-d4, e6): management `Relay` JSON shape, Dex userID validity, redirect-URI glob, relay proxy timeouts.                                                                             |
+| 4 | **Monitoring consistency**   | `onFailure = pbx-alert@` wired ONLY on netbird-management. netbird-signal, netbird-relay, dex, dashboard: nothing. Violates the session's own doctrine.                                                                                 |
+| 5 | **pbx repo gates**           | buildflow `--build-mode fast` SKIPS tests; docs-freshness never ran against the new runbook/CHANGELOG. Repo called "green" on partial gates.                                                                                            |
+| 6 | **NetBird dashboard config** | Route approval / DNS nameserver group / ACLs — runbook steps only (user-gated U4).                                                                                                                                                      |
+| 7 | **Doc backporting**          | `relay.larsartmann.cloud` (DNS + vhost) and `vpn.larsartmann.cloud` (MagicDNS suffix) emerged during implementation but were never backported into the brainstorming doc's D4/D5 decision text. Drift between decision doc and reality. |
+| 8 | **sops onboarding snippet**  | Runbook says "create netbird.yaml per .sops.yaml" — no exact creation-rule/key snippet; user must derive it.                                                                                                                            |
 
 ## c) NOT STARTED
 
@@ -112,6 +112,7 @@ result that was telling me the surface was wrong.
 ## f) NEXT — up to 50, ordered (P0 = before any deploy)
 
 **P0 fixes (agent, ~1h):**
+
 1. Mint unit: `path = [ pkgs.openssl ]` (+ explicit coreutils), or absolute `getExe` paths
 2. VM test that RUNS the mint unit: mint → SAN assertions → caddy starts (test-caddy-auth pattern)
 3. Dex userID → real generated UUID

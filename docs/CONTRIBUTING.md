@@ -70,29 +70,29 @@ commit-msg (`.githooks/commit-msg`):
 
 pre-commit (`.githooks/pre-commit`) — fast guards, then staged-file linters:
 
-| Leg                 | Purpose                                                                    |
-| ------------------- | -------------------------------------------------------------------------- |
-| tarball-nixpkgs     | flake.lock nixpkgs must stay `github`-type (registry rewrite guard)        |
-| gatus-pat-lint      | No regex-only chars (`?`/`+`) in Gatus `pat()` patterns                    |
-| templ-committed     | Tracked `.templ` needs a tracked `*_templ.go` sibling                      |
-| nullglob-audit      | No unquoted command-vars in runCommand bodies (phantom-green class)        |
-| textfile-tmp-audit  | Collectors use unique mktemp + CAP_FOWNER; no `/run/secrets-rendered`      |
-| serviceconfig-merge | No shallow `//` on serviceConfig (selftesting)                             |
-| push-protection     | No GitHub push-protection-shaped token literals                            |
-| todo-system         | Queue rows need titles; library links resolve (selftesting)                |
-| blob-scan guard     | Hooks/scripts must not scan AI-model blob trees                            |
-| dangling-md guard   | Moved/deleted markdown leaves no live references                           |
-| unknown-author      | Commit identity must resolve (no silent fallback)                          |
-| gotoolchain guard   | No `GOTOOLCHAIN=auto` in .nix (selftested predicate)                       |
-| nix-parse           | Staged .nix must parse (`nix-instantiate --parse`, sub-second per file)    |
-| gitleaks            | Secret scan over the STAGED TREE (CI owns full history)                    |
-| trailing-whitespace | Strip trailing spaces on staged files                                      |
-| deadnix             | Dead Nix code on staged files                                              |
-| statix              | Nix antipatterns on staged files                                           |
-| treefmt             | The repo formatter on staged .nix (CI arbitrates `nix fmt -- --ci`)        |
-| shellcheck          | Staged `.sh` + `.githooks/*` at warning level                              |
-| ruff                | Staged `.py` lint                                                          |
-| nix flake check     | Eval-only, all systems; docs-only staged diffs skip the leg                |
+| Leg                 | Purpose                                                                 |
+| ------------------- | ----------------------------------------------------------------------- |
+| tarball-nixpkgs     | flake.lock nixpkgs must stay `github`-type (registry rewrite guard)     |
+| gatus-pat-lint      | No regex-only chars (`?`/`+`) in Gatus `pat()` patterns                 |
+| templ-committed     | Tracked `.templ` needs a tracked `*_templ.go` sibling                   |
+| nullglob-audit      | No unquoted command-vars in runCommand bodies (phantom-green class)     |
+| textfile-tmp-audit  | Collectors use unique mktemp + CAP_FOWNER; no `/run/secrets-rendered`   |
+| serviceconfig-merge | No shallow `//` on serviceConfig (selftesting)                          |
+| push-protection     | No GitHub push-protection-shaped token literals                         |
+| todo-system         | Queue rows need titles; library links resolve (selftesting)             |
+| blob-scan guard     | Hooks/scripts must not scan AI-model blob trees                         |
+| dangling-md guard   | Moved/deleted markdown leaves no live references                        |
+| unknown-author      | Commit identity must resolve (no silent fallback)                       |
+| gotoolchain guard   | No `GOTOOLCHAIN=auto` in .nix (selftested predicate)                    |
+| nix-parse           | Staged .nix must parse (`nix-instantiate --parse`, sub-second per file) |
+| gitleaks            | Secret scan over the STAGED TREE (CI owns full history)                 |
+| trailing-whitespace | Strip trailing spaces on staged files                                   |
+| deadnix             | Dead Nix code on staged files                                           |
+| statix              | Nix antipatterns on staged files                                        |
+| treefmt             | The repo formatter on staged .nix (CI arbitrates `nix fmt -- --ci`)     |
+| shellcheck          | Staged `.sh` + `.githooks/*` at warning level                           |
+| ruff                | Staged `.py` lint                                                       |
+| nix flake check     | Eval-only, all systems; docs-only staged diffs skip the leg             |
 
 Standing selftests (flake checks, run on every `nix flake check`):
 `scripts/test-gotoolchain-guard.sh`, `scripts/test-precommit-shellcheck.sh`,

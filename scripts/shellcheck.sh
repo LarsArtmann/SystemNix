@@ -21,7 +21,7 @@ REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 severity_default=true
 for arg in "$@"; do
   case "$arg" in
-    --severity=*) severity_default=false ;;
+  --severity=*) severity_default=false ;;
   esac
 done
 if [ "$severity_default" = true ]; then

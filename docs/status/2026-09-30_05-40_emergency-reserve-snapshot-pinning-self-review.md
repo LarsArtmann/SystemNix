@@ -13,7 +13,7 @@
 
 ## b) PARTIALLY DONE
 
-1. **Live snapshot-side verification.** I confirmed the file exists and read the btrbk config, but could NOT run `sudo` (blocked in this sandbox) — so I never directly confirmed that a given `.snapshots/@.20260929T2300` tree contains `btrfs-emergency-reserve` inside it, nor measured how many live snapshots actually pin the extents. The inference (file in `@` + `@` snapshotted → pinned) is airtight, but the *count* of pinning snapshots (4-6 live per the 2026-09-25 reconciliation) is cited from AGENTS.md, not re-probed.
+1. **Live snapshot-side verification.** I confirmed the file exists and read the btrbk config, but could NOT run `sudo` (blocked in this sandbox) — so I never directly confirmed that a given `.snapshots/@.20260929T2300` tree contains `btrfs-emergency-reserve` inside it, nor measured how many live snapshots actually pin the extents. The inference (file in `@` + `@` snapshotted → pinned) is airtight, but the _count_ of pinning snapshots (4-6 live per the 2026-09-25 reconciliation) is cited from AGENTS.md, not re-probed.
 2. **Pool-side pinning unaddressed.** Root receives on the pool are FOREVER (`target_preserve_min = "all"`). The reserve's extents are therefore ALSO pinned pool-side since 2026-08-21 policy — the fix options I gave only discussed the LOCAL window. Deleting the reserve frees NVMe chunks only after local expiry; the pool copy is permanent by design (16T headroom makes it acceptable, but the report should have said so).
 
 ## c) NOT STARTED
@@ -29,7 +29,7 @@
 
 ## e) WHAT WE SHOULD IMPROVE (session-derived)
 
-1. **The T14 caveat should live in CODE, not only in AGENTS.md.** The reserve unit's own comment block (`btrfs-health.nix:529-532`) says "Delete it for instant free space" — which is the *lie* the AGENTS.md caveat corrects. Anyone reading the module learns the wrong semantics. Fix: correct the in-module comment to state the 2w pin window, or implement option 1 and make the comment true.
+1. **The T14 caveat should live in CODE, not only in AGENTS.md.** The reserve unit's own comment block (`btrfs-health.nix:529-532`) says "Delete it for instant free space" — which is the _lie_ the AGENTS.md caveat corrects. Anyone reading the module learns the wrong semantics. Fix: correct the in-module comment to state the 2w pin window, or implement option 1 and make the comment true.
 2. **Balance/gc-guard recovery runbooks embed the same "instant" claim** (`btrfs-health.nix:136`, `:462`, `:517` — "Free extents: rm /btrfs-emergency-reserve (instant 10 GiB)"). In a real ENOSPC emergency, an operator following that line would `rm`, see ~0 GiB freed, and lose trust in the runbook. These strings should say "frees as snapshots expire (up to 2w); for TRUE instant headroom use the emergency-reserve ONLY if chunk-unalloc is already the binding constraint and the balance skip-gates are the real lever" — or, with option 1 landed, they become correct as written.
 3. **The `btrfs_emergency_reserve_present` metric cannot see pinning.** Gatus asserts presence, nothing asserts effectiveness. If option 1 lands, add a companion gauge (e.g., `btrfs_emergency_reserve_unpinned_estimate`) or at minimum a comment linking the metric to the pin-window semantics.
 4. **Runbook-line hygiene generally:** three separate echo strings in btrfs-health.nix repeat the same recovery advice — a single sourced helper (the offsite-borg-smoke.sh lib-extraction pattern) would keep them from drifting, which they demonstrably did relative to AGENTS.md.
@@ -37,6 +37,7 @@
 ## f) UP TO 50 NEXT THINGS (ranked; session-scoped)
 
 **The fix itself:**
+
 1. Owner decision: implement `@reserve` subvol option 1? (yes/no/defer)
 2. If yes: declare subvol creation in disk/mkFilesystem layer or bootstrap-unit pattern (hot-user-caches precedent — but note its 2026-09-29 D-state lesson: provisioning state belongs in disko, nothing runtime between automount and mount).
 3. If yes: add `fileSystems."/btrfs-emergency-reserve"` subvol mount (nofail, noauto-automount unnecessary — wanted by the reserve unit).

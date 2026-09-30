@@ -198,7 +198,11 @@ in
         wantedBy = [ "multi-user.target" ];
         before = [ "dnsblockd-cert-mint.service" ];
         after = [ "systemd-tmpfiles-setup.service" ];
-        serviceConfig.Type = "oneshot";
+        serviceConfig = {
+          Type = "oneshot";
+          # wait_for_unit needs the unit to STAY active after success
+          RemainAfterExit = true;
+        };
         script = ''
           ${pkgs.coreutils}/bin/install -m 0444 ${caFixture}/dnsblockd_ca_cert /run/secrets/dnsblockd_ca_cert
           ${pkgs.coreutils}/bin/install -m 0400 ${caFixture}/dnsblockd_ca_key /run/secrets/dnsblockd_ca_key

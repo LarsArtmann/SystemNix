@@ -13,7 +13,10 @@ set -euo pipefail
 
 input="${1:?usage: flake-lock-node.sh <input> [flake.lock]}"
 lock="${2:-flake.lock}"
-[ -f "$lock" ] || { echo "flake.lock not found: $lock" >&2; exit 1; }
+[ -f "$lock" ] || {
+  echo "flake.lock not found: $lock" >&2
+  exit 1
+}
 
 node_key=$(jq -r --arg i "$input" '.root as $r | .nodes[$r].inputs[$i] // empty' "$lock")
 if [ -z "$node_key" ]; then
