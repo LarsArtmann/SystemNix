@@ -90,6 +90,13 @@ in
     # `from.id = "nixpkgs/nixos-unstable"` — a COMBINED string that does NOT
     # match the global registry's `from = {id: "nixpkgs", ref: "nixos-unstable"}`
     # format. The explicit `from` field below matches the exact key format.
+    #
+    # NAMING QUIRK (live-verified 2026-09-30): these entries are keyed by the
+    # ATTRNAME (`nixpkgs-nixos-unstable`), and system-registry attrnames are
+    # NOT addressable as flake refs — bare `nix eval nixpkgs#go_1_27.version`
+    # resolves (1.27.1), but `nixpkgs-nixos-unstable#…` fails "cannot find
+    # flake". CI/workflow code must use the bare `nixpkgs#` form, never these
+    # attrnames.
     nix.registry.nixpkgs-nixos-unstable = {
       from = {
         type = "indirect";
