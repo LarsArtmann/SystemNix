@@ -340,12 +340,17 @@
     nsfw-classifier = {
       # INTERIM `git+file` pin — the vendorHash fix (46f02bb) exists only as
       # an unpushed local commit (origin/master is 4d159f9); a remote pin
-      # would build the STALE vendorHash. Flip condition: push 46f02bb to
-      # origin/master, then switch to
+      # would build the STALE vendorHash. The ?rev= is the SANCTIONED
+      # git+file-only pin form (the inputUrlRevGuard allows it here alone):
+      # the checkout's worktree churns under the auto-commit daemon, and a
+      # dirty worktree breaks the go-modules FOD (source-dependent hash) —
+      # the rev pin builds the COMMITTED state only. Flip condition: push
+      # 46f02bb to origin/master, then switch to
       # git+ssh://git@github.com/LarsArtmann/nsfw-classifier?ref=refs/heads/master
-      # (deploy-key fetch, same pattern as file-and-image-renamer) and
-      # remove the INTERIM row in docs/INTERIM-INPUT-PINS.md.
-      url = "git+file:///home/lars/projects/nsfw-classifier";
+      # (deploy-key fetch, same pattern as file-and-image-renamer), drop the
+      # ?rev=, bump the lock, and remove the INTERIM row in
+      # docs/INTERIM-INPUT-PINS.md.
+      url = "git+file:///home/lars/projects/nsfw-classifier?rev=46f02bb27b941210dc678729dd6ae64f2eb9479a";
     };
 
     # crush-daily — Daily AI-powered insights from Crush development databases

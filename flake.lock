@@ -6392,14 +6392,16 @@
         "treefmt-nix": "treefmt-nix_14"
       },
       "locked": {
-        "dirtyRev": "528ab539c99314b9bed41cdbca9af6af36217a5e-dirty",
-        "dirtyShortRev": "528ab53-dirty",
-        "lastModified": 1790732884,
-        "narHash": "sha256-nqzPuVhXXZQj3kZONBFKICKQM1EwXlHag6d6gQ0NXvU=",
+        "lastModified": 1790732266,
+        "narHash": "sha256-/2O1fNBB8lOtBmYdQH3ZpT53fOHWnue2VQOcqgdAG+o=",
+        "ref": "refs/heads/master",
+        "rev": "46f02bb27b941210dc678729dd6ae64f2eb9479a",
+        "revCount": 873,
         "type": "git",
         "url": "file:///home/lars/projects/nsfw-classifier"
       },
       "original": {
+        "rev": "46f02bb27b941210dc678729dd6ae64f2eb9479a",
         "type": "git",
         "url": "file:///home/lars/projects/nsfw-classifier"
       }

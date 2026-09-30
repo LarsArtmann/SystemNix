@@ -27,12 +27,22 @@ let
     .nixosModules
     .nsfw-classifier;
   catalogModule = (import ../modules/nixos/services/catalog.nix { }).flake.nixosModules.catalog;
+  # Every real host auto-imports the FULL module set (flake.nix
+  # discoveredModules), so services.integration always exists there; the
+  # minimal eval must mirror that or the enable-gated integration entry
+  # (an empty mkIf definition when the option is absent) errors.
+  integrationModule =
+    (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration;
 
   evalConfig =
     extra:
     (lib.nixosSystem {
       inherit system;
-      modules = [ module ] ++ extra;
+      modules = [
+        { networking.domain = "home.lan"; }
+        integrationModule
+        module
+      ] ++ extra;
     }).config;
 
   enabledConfig = evalConfig [
