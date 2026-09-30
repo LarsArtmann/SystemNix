@@ -93,9 +93,10 @@ let
       name = "pair-token-cache-persists";
       # os.UserCacheDir honors XDG_CACHE_HOME; CacheDirectory=nsfw-classifier
       # makes <XDG>/nsfw-classifier persistent across restarts so the
-      # extension stays paired.
+      # extension stays paired. Environment is a LIST (signoz-coverage
+      # contract).
       pass =
-        (sc.Environment.XDG_CACHE_HOME or "") == "/var/cache"
+        lib.elem "XDG_CACHE_HOME=/var/cache" (sc.Environment or [ ])
         && (sc.CacheDirectory or "") == "nsfw-classifier";
     }
     {

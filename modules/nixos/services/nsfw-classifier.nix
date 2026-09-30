@@ -108,11 +108,10 @@
                 # Pairing token, verdict cache, and feedback JSONL persist via
                 # os.UserCacheDir → XDG_CACHE_HOME → /var/cache/nsfw-classifier
                 # (systemd creates it; owner lars). Stable across restarts so
-                # the extension stays paired.
+                # the extension stays paired. LIST form — signoz-coverage
+                # walks serviceConfig.Environment as a list.
                 CacheDirectory = "nsfw-classifier";
-                Environment = {
-                  XDG_CACHE_HOME = "/var/cache";
-                };
+                Environment = [ "XDG_CACHE_HOME=/var/cache" ];
               }
               (serviceDefaults { })
               (harden {
