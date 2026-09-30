@@ -214,6 +214,11 @@
 - [ ] **CHANGELOG row + forgejo.md runbook section for the theme cascade trap** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-09-30_00-44_forgejo-dark-theme-cascade-fix-status.md §f5)
 - [ ] **nsfw-classifier follow-ups: runbook page, cross-repo port drift test (extension `DEFAULT_SERVER_URLS` vs `ports.nsfw`), Environment-list-shape sweep across modules** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-09-30_04-34_nsfw-classifier-systemnix-integration.md §f.9/§f.36-38)
 - [ ] **Root-cause the oci-containers `config.assertions` eval abort (rootless-podman "expected a set but found null", repro at pre-change f8d04a8b; healed by 05:00 but unexplained — blocked every switch at 04:34)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-30_04-34_nsfw-classifier-systemnix-integration.md §d4)
+- [ ] **dnsblockd: persist the permanent allowlist — `allowlist_path` wrapper line (quick-win batch incl. DNS rate limit 50/100 + log-sampling keys)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/research/2026-09-30_dnsblockd-deep-dive.html — today every "Always allow" is wiped on every restart/deploy)
+- [ ] **dnsblockd: lock bump → v0.9.3+ (FOD probe at target rev FIRST, then `--update-input`, package verify from our lock)** → [docs/todo/services.md](docs/todo/services.md) (Source: same audit — carries T299 root-recursion, T309 device-Allow fix, T300 CSRF hardening)
+- [ ] **dnsblockd: delete the dead `extraDomains` wrapper option** (declared dns-blocker.nix:408, never rendered — phantom-config trap) → [docs/todo/services.md](docs/todo/services.md) (Source: same audit)
+- [ ] **dnsblockd: enable `csrf_enabled`** (SEQUENCED after the v0.9.3 bump row — T300 fixed the csrf path) → [docs/todo/services.md](docs/todo/services.md) (Source: same audit)
+- [ ] **dnsblockd: devices + users wrapper options + LAN inventory** (`ip neigh` proposal; needs the bump for T309) → [docs/todo/services.md](docs/todo/services.md) (Source: same audit — F121/F123/F125 named attribution, per-device pause)
 
 ### upstream
 
