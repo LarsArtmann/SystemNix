@@ -114,7 +114,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Quickshell Qt-fatal coredump at freeze-7 death (09:51) — victim or desktop-death canary?** → [docs/todo/stability.md](docs/todo/stability.md) (Source: same report §f.12)
 - [ ] **Guard per-trip forensics: persist top-8 SERVICE io snapshots (not top-3 slices) to state dir** → [docs/todo/stability.md](docs/todo/stability.md) (Source: same report §f.13/§f.18)
 - [ ] **llama-rag-dark-guard timeout in the 09:56 boot journal — noticed, unowned** → [docs/todo/stability.md](docs/todo/stability.md) (Source: same report §f.14)
-- [ ] **AGENTS.md freeze-#7 entry** (scrub-restart loop; rides the owner-confirmed fix) → [docs/todo/stability.md](docs/todo/stability.md) (Source: same report §f.17)
+- [x] **AGENTS.md freeze-#7 entry** (scrub-restart loop; rides the owner-confirmed fix) → [docs/todo/stability.md](docs/todo/stability.md) (Source: same report §f.17) — DONE 2026-09-29 (task queue): entry landed in the Hardware Instability freeze list together with the scrub-stop-phantom fix it documents (stray churn names + dead deferral guard + the landed re-arm exclusion); the remaining scrub-scheduling half stays on the `Persistent = false` row (Task-Queue-ID: 000001a0eaf255cff90e3b85a22accf257e2)
 - [ ] **Extend pre-reboot-check (or add a self-elevating app) to print the systemd-boot entry list + per-entry generation mapping so agent sessions can verify boot-menu depth without sudo** → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-09-29_23-13_nix-gc-retention-3d-to-7d-boot-menu-depth.md §f7)
 
 ### monitoring
@@ -201,6 +201,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 ### upstream
 - [ ] **PMA OTel span instrumentation upstream (overview `fff1035` pattern)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **papdashboard OTel span instrumentation upstream (clone first)** → [docs/todo/upstream.md](docs/todo/upstream.md)
+- [ ] **papdashboard post-push chain: `nix flake lock --update-input papdashboard` → post-lock probe → deploy (sudo window) → smoke** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Sweep LarsArtmann repos for the `_local_deps` tree-walking-test breakage class (papdashboard proven live 2026-09-30)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Post-push go-taskqueue consumption: `nix flake lock --update-input go-taskqueue` + verify FOD/package from our lock + redeploy `tq-agent-pool` (agent-executable once go-taskqueue master is pushed)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **browser-history gate-count gap: read-model `Count()` = 0 despite existing users (found live 2026-09-18)** → [docs/todo/upstream.md](docs/todo/upstream.md)
