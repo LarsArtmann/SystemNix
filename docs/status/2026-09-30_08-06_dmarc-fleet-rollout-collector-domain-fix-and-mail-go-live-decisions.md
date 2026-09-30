@@ -114,10 +114,11 @@ the rest of the go-live ladder remain owner-run.
    rewrite removed it while fixing the collector domain and I did not re-add it
    anywhere. parsedmarc can process SMTP-TLS reports too, so this is a real
    (optional) gap, now tracked as a next step.
-4. **email-forwarding README "Usage" section not extended** — terraform-docs
-   updated the Inputs/Outputs tables, but the hand-written Usage example still
-   shows the old resource shape without the records dynamic-block wiring the 4
-   domain files now use.
+4. **email-forwarding README "Usage" section not extended at rollout time** —
+   terraform-docs updated the Inputs/Outputs tables, but the hand-written Usage
+   example still showed the old resource shape. FIXED during report authoring
+   (the records dynamic-block wiring example is in place now); recorded here
+   for timeline accuracy.
 5. **The 2026-09-29 status report not annotated** — its §b/§e/§g lines still
    say `dmarc@artmann.tech` (historical snapshot doctrine: living docs updated,
    dated report left as-is). A docs-health-style supersession annotation is
@@ -336,6 +337,23 @@ assistant-executable, then hardening/polish)
     session; leave flagged.
 50. Celebrate when the first aggregate report lands in
     `/var/lib/parsedmarc/reports` — then tighten policies with real data.
+
+### f-harvest ledger (self-harvest rule, 2026-09-30)
+
+Direct follow-ups landed in TODO systems at authoring time: items **13 + 14**
+→ the domains repo `TODO_LIST.md` DMARC-rollout row (ordering warning + RFC
+check appended); **15 + 17 + 28 (+27's panel half)** → SystemNix
+`TODO_LIST.md` queue row + `docs/todo/services.md` library row; item **16**
+was fixed on sight during authoring (report §b.4 updated). Deliberately NOT
+harvested into SystemNix: items 1–12 and 35 (already live as pbx TODO §9 /
+domains TODO rows — queueing them again would duplicate), 18–21 (already
+queued in pbx TODO §9 by the previous session), 22–26 + 43–45 (domains-repo
+tooling improvements — they belong in the domains repo's TODO on its next
+touch; not parked in a foreign repo's queue), 29–31 + 39–40 (gated on real
+mail/report data — premature as queue rows), 42 (upstream contribution —
+routed to docs/todo/upstream.md doctrine on next touch), 47 (parallel
+session's work), 48–50 (no-ops/revisit triggers already encoded in the
+runbook).
 
 ## g) Questions for the owner (cannot figure out myself)
 
