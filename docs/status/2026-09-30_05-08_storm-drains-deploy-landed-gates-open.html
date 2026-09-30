@@ -1,0 +1,1224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SystemNix Status — Storm Drains, Deploy Lands, Gates Open (2026-09-30)</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS DARK — Dashboard template
+         Design language: form follows function. Primary colors on graphite.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Dark) --- */
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        /* --- Semantic layer (shared vocabulary with editorial template) --- */
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 15%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px; /* Bauhaus default: sharp corners */
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Sticky-header offset for anchor jumps */
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges (used inside issue cards) --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges (used in tables) --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+
+      /* --- Callouts (used inside issues or standalone) --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      /* --- Stat cards / scorecards (aliased vocabulary) --- */
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad,
+      .score-bad {
+        /* default top bar already set */
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      /* --- Strengths list --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--accent);
+      } /* func, type, struct, if, return */
+      .tok-type {
+        color: var(--warning);
+      } /* int, string, bool, error */
+      .tok-string {
+        color: var(--solution);
+      } /* "quoted strings" */
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      } /* function names */
+      .tok-number {
+        color: var(--accent);
+      } /* 42, 3.14 */
+      .tok-generic {
+        color: var(--problem);
+      } /* T, ID in generics */
+      .tok-builtin {
+        color: #4dd9ff;
+      } /* make, len, append */
+      .tok-punct {
+        color: var(--text-muted);
+      } /* { } ( ) ; = : */
+      .tok-attr {
+        color: var(--accent);
+      } /* Nix attribute names */
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids (responsive) --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC (alternative to sidebar) --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+    <div class="top-bar">
+      <span>STATUS SNAPSHOT</span>
+      <span>2026-09-30 05:08 · evo-x2</span>
+      <span>window 03:29 → 05:08 · supersedes 03-29 report</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#done">a) Fully Done</a>
+          <a href="#partial">b) Partially Done</a>
+          <a href="#notstarted">c) Not Started</a>
+          <a href="#fucked">d) Totally Fucked Up</a>
+          <a href="#improve">e) Improve</a>
+          <a href="#next">f) Top 25 Next</a>
+          <a href="#question">g) Top Question</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">Status Report</div>
+          <h1>Storm Drains, Deploy Lands, Gates Open</h1>
+          <p class="hero-subtitle">
+            The 3-hour deploy freeze ended: system-804 is live and anchored with the observability
+            batch + hot-DB vehicle + discordsync dump + 7d GC. The IO storm has drained below the
+            pressure gate for the first time since ~00:20 — the next deploy window and the first
+            hot-DB migration wave are available <em>right now</em>.
+          </p>
+        </div>
+
+        <nav class="toc">
+          <a href="#summary">Summary</a>
+          <a href="#done">a) Fully Done</a>
+          <a href="#partial">b) Partially Done</a>
+          <a href="#notstarted">c) Not Started</a>
+          <a href="#fucked">d) Fucked Up</a>
+          <a href="#improve">e) Improve</a>
+          <a href="#next">f) Top 25</a>
+          <a href="#question">g) Question</a>
+        </nav>
+
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <div class="stat-grid">
+          <div class="stat-card stat-good">
+            <div class="stat-value">12</div>
+            <div class="stat-label">Fully done (landed + verified)</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">6</div>
+            <div class="stat-label">Partially done</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">4</div>
+            <div class="stat-label">System-level fuckups live</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">16.8%</div>
+            <div class="stat-label">IO PSI avg10 — gate OPEN (&lt;20%)</div>
+          </div>
+        </div>
+
+        <div class="card card-solution">
+          <strong>The one-paragraph state.</strong>
+          The observability batch + hot-DB vehicle + discordsync dump + 7d GC retention + memory-guard
+          catch-up slot all deployed as <strong>system-804</strong> (anchor verified:
+          <code>/run/current-system</code> == <code>system-804-link</code>; collector emitting
+          <code>hot_tier_mounted 1</code>; <code>delete-older-than 7d</code> in the deployed GC script;
+          spanmetrics in the live collector.yaml). The IO storm that froze deploys for 3h+ (27 guard
+          trips today, PSI 36–90%) has drained — <strong>avg10 16.8% at snapshot time</strong>. flm
+          recovered from a NEW EADDRINUSE variant (an orphaned gatus↔pocket-id socket pair, not the
+          corpse class — freed by a gatus restart, no reboot) and is now idle-unloaded by design.
+          Four upstream/build breakages were root-caused and fixed overnight. The tree is already
+          AHEAD of 804 (nsfw-classifier service + scrub-stop fix + todo closures) — a new deploy is
+          pending, the gate is open, and the first hot-DB migration wave (gatus) can ride the same
+          calm window. Standing wounds: btrbk-root killed a 4th consecutive night (12 expired
+          snapshots pin ~45 GB on a 91%-full root), and the storm drivers are still unadmitted
+          owned work.
+        </div>
+
+        <h2 id="done"><span class="num">01</span>a) Fully Done</h2>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Deployed</span>
+          <h3>system-804 landed and anchored — the whole frozen batch</h3>
+          <div class="where">anchor: /run/current-system == /nix/var/nix/profiles/system-804-link</div>
+          <p>
+            Everything the 03:29 report left frozen: SigNoz spanmetrics + servicegraph wired (config
+            live-fire-validated pre-deploy), overview real HTTP spans (upstream <code>fff1035</code>),
+            coverage ratchet armed, hot-DB module enabled with collector green
+            (<code>hot_tier_mounted 1</code>, <code>hot_db_scrape_errors 0</code>),
+            discordsync-db-backup timer deployed (first dump at next 02:30 window, Persistent),
+            7d GC retention verified in the deployed unit script, memory-guard backup-starvation
+            catch-up slot live.
+          </p>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Recovered</span>
+          <h3>flm EADDRINUSE outage — new variant root-caused, serving again without a reboot</h3>
+          <div class="where">docs/status/2026-09-30_04-51_fastflowlm-eaddrinuse-orphan-pair-recovery.md</div>
+          <p>
+            No flm corpse at all: the port was held by an orphaned ESTABLISHED loopback pair
+            (gatus uid 63216 ↔ pocket-id uid 970 — both live services). Restarting gatus released
+            it; the backend cold-loaded and served 36 models (200 verified 04:50); now idle-unloaded
+            by the 1h TTL (normal). Doctrine superseded (F1): a live foreign holder releases on ITS
+            restart — only the corpse variant needs a reboot. Hex lesson recorded: 52626 =
+            <code>0xCD92</code>, the earlier <code>:CDB2</code> probe greps the wrong port forever.
+          </p>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Fixed in-tree</span>
+          <h3>Scrub-stop phantom — every Zone-6 churn-stop was a silent no-op</h3>
+          <div class="where">docs/status/2026-09-30_04-50_task-…_scrub-stop-phantom-verdict-corrected.md</div>
+          <p>
+            The guard's <code>ioChurnUnits</code> named stray unit FILES
+            (<code>btrfs-scrub--</code> etc.) while the timers start template INSTANCES
+            (<code>btrfs-scrub@data</code>) — so ~100 trips never stopped the 09-28 storm scrub
+            (5.9 TB read), and the scrubGuard deferral override was dead since 08-31. Fixed: guard
+            now targets the instances (re-arm excludes scrubs by design), scrubGuard moved onto the
+            <code>btrfs-scrub@</code> template with <code>%f</code>, VM scenarios 8/8a added. Flakes
+            green — activation rides the pending deploy.
+          </p>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Fixed upstream</span>
+          <h3>browser-history vendorHash mismatch — probe→paste→push, re-locked, toplevel green</h3>
+          <div class="where">upstream 5f04c79 · SystemNix lock e2b6ff0 → 5f04c7994cea</div>
+          <p>
+            The user's flake update failed twice on stale baked vendorHashes (source-only churn
+            class, 3rd recurrence). Fixed upstream + pushed, re-locked with <code>--refresh</code>,
+            full toplevel built green (<code>770mr3an…</code>). Deploy pending — carries a 36-commit
+            binary jump (see b2).
+          </p>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Fixed upstream</span>
+          <h3>PapDashboard build-break — never-passing test rode 18 auto-commits to origin</h3>
+          <div class="where">origin/master = 2d0dfaa9 carries the fix (4c76f4f)</div>
+          <p>
+            New pin-test false-positives on <code>_local_deps/</code> (exists only inside the Nix
+            sandbox) — passed for its author, failed every Nix build forever. Skip-list fix verified
+            via dirty-tree nix build. CI dead since 2026-07-15 meant zero gates caught it. Lock
+            update + probe + deploy remain (see b3).
+          </p>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Landed</span>
+          <h3>nsfw-classifier × SystemNix integration complete in-tree</h3>
+          <div class="where">docs/status/2026-09-30_04-34_nsfw-classifier-systemnix-integration.md</div>
+          <p>
+            Module + port 8104 + DNS + plain vHost + catalog/integration entries + 9-assertion eval
+            test + live E2E of the extension contract (pairing token, 401 tokenless, 200 paired
+            classify in 149 ms). NOT yet running on the host — activation rides the pending deploy
+            (the eval break that blocked it has healed: toplevel eval green again).
+          </p>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Root-caused</span>
+          <h3>QLC prune backlog + btrbk kill-streak mechanism found</h3>
+          <div class="where">docs/status/2026-09-30_04-37_qlc-prune-backlog-btrbk-kill-streak.md</div>
+          <p>
+            4 consecutive killed 23:00 runs (last: 23:09:57 mid-send, zone-6 trip #1441 at
+            avg60 50.16% vs the catch-up bar at 50% — missed by 0.16%). Prune runs AFTER sends, so
+            12 expired subvols (incl. the ~45 GB .crush originals) stay pinned on the 91% root.
+            Watch row filed with the self-heal prediction; DO-NOT-hand-delete warning on the unsent
+            chain. Owner decision pending on storm policy.
+          </p>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Closed</span>
+          <h3>Stale blockers swept — 4 rows closed with live verification</h3>
+          <div class="where">docs/todo/storage.md ×2 + stability.md ×2</div>
+          <p>
+            The leaked llama-servers self-died (zero procs, nothing on :8848/:8849, no reboot —
+            18.8h uptime) — stability row closed. The 7d-GC and undeployed-landings roll-up rows
+            closed against the deployed system-804. The freeze-#7 recovery-reboot boot (09-29 09:56)
+            already cleared the flm corpse row earlier in the night.
+          </p>
+        </div>
+
+        <h2 id="partial"><span class="num">02</span>b) Partially Done</h2>
+
+        <div class="card card-warning">
+          <strong>b1 · THE pending deploy — tree is ahead of system-804, gate OPEN now.</strong>
+          New toplevel evaluates green (<code>xndn6w36…</code> ≠ deployed <code>b1sp3h1pk…</code>).
+          Riding it: nsfw-classifier activation (first live <code>/readyz</code>), the scrub
+          template fix (churn-stops become real), plus tonight's todo closures. PSI avg10 16.8% at
+          snapshot — first sub-gate window since ~00:20. Owner sudo window; calm windows are
+          perishable.
+        </div>
+
+        <div class="card card-warning">
+          <strong>b2 · browser-history 36-commit binary jump — unassessed.</strong>
+          The re-lock spans <code>1c8f967..5f04c79</code>, crossing the 09-17 SQLITE_READONLY
+          crash-loop era. SystemNix-side mitigations exist (ownership-heal ExecStartPre, uid-drift
+          doctrine), but whether upstream contains the checkpoint fix is unverified — it should gate
+          the deploy go/no-go.
+        </div>
+
+        <div class="card card-warning">
+          <strong>b3 · PapDashboard adoption chain — fix pushed, adoption not started.</strong>
+          Lock update + post-lock probe are agent-actionable; deploy + smoke owner-gated. Env-var
+          contract diff is clean (49 vars identical), so adoption risk is the 18 commits' unknown
+          intent.
+        </div>
+
+        <div class="card card-warning">
+          <strong>b4 · btrbk backlog self-heal — tonight 23:00 or manual.</strong>
+          Pool @ receives stop at 0927, hermes at 0925; <code>btrfs-verify-pool-backups</code> red
+          (4d stale). The 0930 run must survive the 23:0x trip zone (bar missed by 0.16% last
+          night). Fallback: manual quiet-window run (sudo + trip-journal check first).
+        </div>
+
+        <div class="card card-warning">
+          <strong>b5 · flm state: restored, idle-unloaded, restore-cap spent.</strong>
+          Serving was verified at 04:50; the 1h idle TTL unloaded the model (normal). Today's
+          restore budget is exhausted (3/3), so any future trip leaves it down until manual start or
+          midnight. The mystery socket pair (gatus holding LOCAL :52626, pocket-id peer on :1411 —
+          both below the ephemeral range) is explained WHO, not WHY — audit row filed.
+        </div>
+
+        <div class="card card-warning">
+          <strong>b6 · nsfw-classifier product gaps.</strong> CPU-only fast mode (no ROCm device
+          option), models from the live checkout (User=lars dependency), no runbook page, no
+          real-browser E2E. Harvested to the libraries.
+        </div>
+
+        <h2 id="notstarted"><span class="num">03</span>c) Not Started</h2>
+        <div class="card">
+          <ul>
+            <li><strong>Trace instrumentation for PMA, papdashboard, hermes</strong> — overview was 1 of 4 gap repos; PMA is next in line.</li>
+            <li><strong>ClickHouse fill-velocity monitoring</strong> — the real append-only P0 (velocity gauge + time-to-fill alert); reframed but not built.</li>
+            <li><strong>IO admission for tq pool + parallel build slices</strong> — tonight's 168 GB tq reader is the strongest datapoint yet; owner tradeoff unanswered (3+ asks).</li>
+            <li><strong>deploy-queue auto-retry wrapper</strong> — tonight cost two manual 30–60 min watch loops; [ready] row exists.</li>
+            <li><strong>The five hot-DB migration waves</strong> — vehicle armed and deployed; gatus → dnsblockd → pocket-id → browser-history → discordsync, one owner sudo window each (<code>docs/services/hot-db.md</code>).</li>
+            <li><strong>netbird VPN disposition</strong> — a parallel session is mid-write right now (netbird.nix untracked, caddy.nix modified); do not touch.</li>
+            <li><strong>oci-containers eval-break root cause</strong> — the break healed (toplevel eval green), but it blocked all switches at 04:34 and the repro pinned pre-change commit f8d04a8b; unexplained.</li>
+          </ul>
+        </div>
+
+        <h2 id="fucked"><span class="num">04</span>d) Totally Fucked Up</h2>
+
+        <div class="card card-problem">
+          <strong>d1 · The storm itself — owned work, no admission control, 27 guard trips today.</strong>
+          PSI 36–90% for 3h+; flm sacrificed repeatedly (restore-cap 3/3), one recovery cold-load
+          fed the storm it was recovering from (trip #1468 killed it mid-load — the recovery
+          session's own goal, now a pre-flight rule). Drivers rotate between the tq agent pool
+          (45.5–168 GB reads) and parallel nix builds (8.5–14.7 GB/trip) — the freeze #4/#5/#6
+          lineage. Every deploy, VM test, and migration window this night was hostage to it.
+        </div>
+
+        <div class="card card-problem">
+          <strong>d2 · btrbk-root: 4-night kill streak, backup freshness gate red.</strong>
+          Zone-6 trips fire exactly when the 23:00 run executes; the catch-up slot bar sits AT the
+          observed trip level. Consequences: pool receives stopped 0927 (@) / 0925 (hermes),
+          verify-gate FAILing, and 12 expired local snapshots pin ~45 GB of churn on a root at 91%
+          (95% = deploy gate). Prune-after-sends means any kill defers reclamation indefinitely.
+        </div>
+
+        <div class="card card-problem">
+          <strong>d3 · The Zone-6 scrub-stop was phantom protection its entire life.</strong>
+          Not a regression — never worked: every trip's scrub "stop" hit stray unit names while the
+          template instances kept reading (5.9 TB through ~100 trips in the 09-28 storm), and the
+          documented scrubGuard deferral was dead since 08-31 (explains "no completed scrub since
+          Aug 31"). Fixed in-tree but NOT deployed — until the pending deploy lands, the guard still
+          cannot stop a scrub.
+        </div>
+
+        <div class="card card-problem">
+          <strong>d4 · Unverified push channels shipped a build-break to origin.</strong>
+          PapDashboard master carried a never-Nix-passing test for ~1h (CI dead since 07-15; the
+          daemon commits AND pushes without build validation — it shipped the break and the fix
+          through the same unverified channel). SystemNix was protected only by lock staleness and
+          probe discipline. The class stands fleet-wide: CV CI dead, browser-history CI unknown,
+          the weekly flake-update bot still blocked on NIX_GITHUB_RO_TOKEN.
+        </div>
+
+        <h2 id="improve"><span class="num">05</span>e) What We Should Improve</h2>
+        <div class="card">
+          <ol>
+            <li><strong>Decide IO admission</strong> (io.max on the tq pool slice + build slices, or heavy-job routing). Tonight put an flm outage and a backup starvation on the "accept" side of the ledger.</li>
+            <li><strong>Bake collector-config live-fire validation into a flake check</strong> — the spanmetrics/servicegraph error was caught only by a manual boot of the real binary.</li>
+            <li><strong>Build the deploy-queue wrapper</strong> (poll PSI + guard recency, fire deploy on calm, heartbeat journal) — stop spending human/agent evenings as retry loops.</li>
+            <li><strong>Pre-flight PSI + guard check before ANY heavy-model start</strong> — two commands; skipping them turned a recovery into a storm contributor tonight.</li>
+            <li><strong>Probe-before-lock as doctrine + a batch staleness sweep</strong> — two inputs broke on the same class in one night; a scheduled lock-free goModules probe of every LarsArtmann input converts deploy-night surprises into a quiet-hours list.</li>
+          </ol>
+        </div>
+
+        <h2 id="next"><span class="num">06</span>f) Top 25 Next Tasks</h2>
+        <table>
+          <thead>
+            <tr><th>#</th><th>Impact</th><th>Task</th><th>Effort</th><th>Gate</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td><span class="badge badge-critical">Critical</span></td><td><strong>Deploy now</strong> — tree ahead of 804 (nsfw-classifier activation, scrub-stop fix); gate is open at snapshot time</td><td>S</td><td>owner sudo</td></tr>
+            <tr><td>2</td><td><span class="badge badge-critical">Critical</span></td><td>Post-deploy battery: nsfw <code>/readyz</code> live, scrub instances restart cleanly, <code>signoz_calls_total</code> appears, coverage gauge overview→1</td><td>S</td><td>after #1</td></tr>
+            <tr><td>3</td><td><span class="badge badge-critical">Critical</span></td><td><strong>Hot-DB wave 1: gatus</strong> — prepare → cutover → deploy → finalize per <code>docs/services/hot-db.md</code> (seconds-scale stop window)</td><td>M</td><td>owner sudo</td></tr>
+            <tr><td>4</td><td><span class="badge badge-critical">Critical</span></td><td>Hot-DB waves 2–5: dnsblockd → pocket-id → browser-history → discordsync (one window each, quiet-IO)</td><td>L</td><td>owner sudo</td></tr>
+            <tr><td>5</td><td><span class="badge badge-critical">Critical</span></td><td>btrbk-root tonight: verify backlog send + 12-snapshot prune; if killed again, manual quiet-window run</td><td>S</td><td>watch + sudo</td></tr>
+            <tr><td>6</td><td><span class="badge badge-critical">Critical</span></td><td>IO admission decision for tq pool + build slices (168 GB datapoint; 3+ unanswered asks)</td><td>M</td><td>owner decision</td></tr>
+            <tr><td>7</td><td><span class="badge badge-high">High</span></td><td>browser-history jump assessment: does <code>1c8f967..5f04c79</code> contain the 09-17 checkpoint fix? Gates its deploy</td><td>S</td><td>agent</td></tr>
+            <tr><td>8</td><td><span class="badge badge-high">High</span></td><td>PapDashboard: lock update + post-lock probe (fix already on origin)</td><td>S</td><td>agent</td></tr>
+            <tr><td>9</td><td><span class="badge badge-high">High</span></td><td>Owed reboot: <code>pre-reboot-check</code> then reboot (journal-hot boot-path verify, boot-mirror, D-state corpses)</td><td>M</td><td>owner</td></tr>
+            <tr><td>10</td><td><span class="badge badge-high">High</span></td><td>Commit/stash CV TODO_LIST.md — tq task 000001a0 refused 17× on dirty tree</td><td>S</td><td>agent</td></tr>
+            <tr><td>11</td><td><span class="badge badge-high">High</span></td><td>ClickHouse fill-velocity gauge + projected time-to-fill alert (the append-only P0)</td><td>S/M</td><td>agent</td></tr>
+            <tr><td>12</td><td><span class="badge badge-high">High</span></td><td>PMA OTel span instrumentation upstream (next of the 4 gap repos)</td><td>M</td><td>agent</td></tr>
+            <tr><td>13</td><td><span class="badge badge-high">High</span></td><td>signoz-collector-config-lint flake check (live-fire render validation)</td><td>M</td><td>agent</td></tr>
+            <tr><td>14</td><td><span class="badge badge-high">High</span></td><td>Root-disk cleanup decision (91% full; <code>docs/operations/disk-cleanup-proposal-2026-09-28.md</code>)</td><td>M</td><td>owner decision</td></tr>
+            <tr><td>15</td><td><span class="badge badge-low">Med</span></td><td>deploy-queue auto-retry wrapper (PSI-calm polling, heartbeat journal)</td><td>S/M</td><td>agent</td></tr>
+            <tr><td>16</td><td><span class="badge badge-low">Med</span></td><td>Gatus flm-port audit + root-cause the :52626/:1411 mystery pair</td><td>S</td><td>agent</td></tr>
+            <tr><td>17</td><td><span class="badge badge-low">Med</span></td><td>flm pre-bind forensics ExecStartPre (journal socket states + uids on EADDRINUSE)</td><td>S</td><td>agent</td></tr>
+            <tr><td>18</td><td><span class="badge badge-low">Med</span></td><td>Guard restore-cap policy review (3/day kept flm dark after recovery)</td><td>S</td><td>owner decision</td></tr>
+            <tr><td>19</td><td><span class="badge badge-low">Med</span></td><td>flm v1.0.6 staged-bump probe (corpse obstacle gone; upstream banner active)</td><td>M</td><td>owner</td></tr>
+            <tr><td>20</td><td><span class="badge badge-low">Med</span></td><td>Batch lock-free goModules staleness sweep across all LarsArtmann inputs</td><td>M</td><td>agent</td></tr>
+            <tr><td>21</td><td><span class="badge badge-low">Med</span></td><td>netbird VPN disposition (parallel session mid-write — coordinate first)</td><td>S</td><td>agent + owner</td></tr>
+            <tr><td>22</td><td><span class="badge badge-high">High</span></td><td>Offsite Borg go-live inputs (StorageBox host/user + host-key pin) — deployed dormant since 09-22</td><td>S</td><td>owner</td></tr>
+            <tr><td>23</td><td><span class="badge badge-high">High</span></td><td>/data EIO corruption repair T04–T08 (unblocks btrbk-data pool send + Borg path check)</td><td>L</td><td>owner sudo</td></tr>
+            <tr><td>24</td><td><span class="badge badge-low">Low</span></td><td>Resend domain verification → mail-relay + Pocket ID test email (standing user step)</td><td>S</td><td>owner browser</td></tr>
+            <tr><td>25</td><td><span class="badge badge-low">Low</span></td><td>llama-rag ROCm/kernel bisect after the owed reboot (escape fired 09-18; pinned build also spins)</td><td>L</td><td>after #9</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="question"><span class="num">07</span>g) Top Question</h2>
+        <div class="card card-problem">
+          <strong>Deploy + wave 1 now, while the gate is open?</strong>
+          The tree is ahead of system-804, the pressure gate is green (16.8%) at snapshot time, and
+          calm windows have been perishable all night. Sequence on the table: (1) deploy now,
+          (2) run post-deploy battery, (3) hot-DB wave 1 (gatus) in the same calm window. The
+          alternative is waiting for the storm's next return and losing the window. And the standing
+          companion question: <em>do agent/parallel-session work get enforced IO ceilings?</em> —
+          tonight's ledger now includes an flm outage, a 4-night backup starvation, and a 3h deploy
+          freeze, all caused by owned-but-unadmitted work.
+        </div>
+
+        <footer>
+          <p>
+            Generated 2026-09-30 05:08 · window 09-30 03:29 → 05:08 · window sources: six parallel-session
+            reports (03-29 → 04-51) + live probes (anchor, PSI, /proc/net/tcp, textfiles, deployed units,
+            journals) · broad project inventory lives in the 01:30 snapshot · §f items 1–5, 7–8, 10–13,
+            15–20 already tracked in TODO_LIST / domain libraries; owner-gated items deliberately library-only.
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -206,6 +206,8 @@
 - [ ] **Investigate `inboxclean-sync.service` FAILED (seen failed 00:01/00:16 2026-09-30 — cause unknown; candidate classes: OAuth token history/invalid_grant, statement-window state; journal first, NOT the known-upstream rows)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-09-30_00-31_task-000001a0ef17061c3d535dd0d65b00000000.md §d4)
 - [ ] **Codify the forgejo theme shadowed-var cascade guard + post-deploy dark-body smoke assertion** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-09-30_00-44_forgejo-dark-theme-cascade-fix-status.md §f2-4)
 - [ ] **CHANGELOG row + forgejo.md runbook section for the theme cascade trap** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-09-30_00-44_forgejo-dark-theme-cascade-fix-status.md §f5)
+- [ ] **nsfw-classifier follow-ups: runbook page, cross-repo port drift test (extension `DEFAULT_SERVER_URLS` vs `ports.nsfw`), Environment-list-shape sweep across modules** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-09-30_04-34_nsfw-classifier-systemnix-integration.md §f.9/§f.36-38)
+- [ ] **Root-cause the oci-containers `config.assertions` eval abort (rootless-podman "expected a set but found null", repro at pre-change f8d04a8b; healed by 05:00 but unexplained — blocked every switch at 04:34)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-30_04-34_nsfw-classifier-systemnix-integration.md §d4)
 
 ### upstream
 
