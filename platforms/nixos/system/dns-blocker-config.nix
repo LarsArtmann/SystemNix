@@ -101,7 +101,13 @@ in
         }
       ];
       users = [
-        { name = "Lars"; devices = [ "evo-x2" "pixel6" ]; }
+        {
+          name = "Lars";
+          devices = [
+            "evo-x2"
+            "pixel6"
+          ];
+        }
       ];
 
       # Forward via DNS-over-TLS. The sdns embedded resolver's root recursion

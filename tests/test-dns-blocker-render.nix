@@ -33,7 +33,9 @@ let
       msg = "dnsblockd ExecStart shape unexpected: ${toString exec}";
     }
     {
-      ok = evox2.services.dns-blocker.dnsRateLimitPerSec == 50 && evox2.services.dns-blocker.dnsRateLimitBurst == 100;
+      ok =
+        evox2.services.dns-blocker.dnsRateLimitPerSec == 50
+        && evox2.services.dns-blocker.dnsRateLimitBurst == 100;
       msg = "evo-x2 DNS rate limit must stay 50/100 (DoS belt, 2026-09-30)";
     }
     {

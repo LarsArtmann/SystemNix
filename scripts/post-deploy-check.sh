@@ -1357,7 +1357,7 @@ if [ -r /etc/caddy/vhost-layers ]; then
     else
       PLAIN_VHOSTS+=("$sub.$DOMAIN|$port")
     fi
-  done < /etc/caddy/vhost-layers
+  done </etc/caddy/vhost-layers
   echo "protected vHosts derived from /etc/caddy/vhost-layers ($((${#AUTH_VHOSTS[@]})) entries)"
 else
   echo -e "${YELLOW}WARN${NC} /etc/caddy/vhost-layers missing - hand-maintained fallback list in use"
@@ -1374,7 +1374,7 @@ fi
 # probe /healthz instead of the derived root entry.
 for i in "${!AUTH_VHOSTS[@]}"; do
   case "${AUTH_VHOSTS[$i]}" in
-  "health.$DOMAIN|"*) AUTH_VHOSTS[$i]="health.$DOMAIN/healthz|-";;
+  "health.$DOMAIN|"*) AUTH_VHOSTS[$i]="health.$DOMAIN/healthz|-" ;;
   esac
 done
 backend_listening() {

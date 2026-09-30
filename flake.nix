@@ -2325,7 +2325,6 @@
                     touch $out
                   '';
 
-
               # The post-deploy pressure verdicts must never call a storm
               # healthy (2026-09-02: PASS at memory PSI avg10 48-77% during
               # the evening storm). Fixture-driven through the SAME

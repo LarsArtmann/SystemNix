@@ -35,20 +35,23 @@ let
   tls = vhosts."auth.${home}".extraConfig;
 
   missingDnsRecords = builtins.filter (s: !dnsRecords ? "${s}.${cloud}.") subdomains;
-  mirroredFrom =
-    builtins.filter (s: vhosts ? "${s}.${home}" && !vhosts ? "${s}.${cloud}") subdomains;
-  rpi3MissingCloud = builtins.filter (s: !rpi3.services.dns-blocker.localRecords ? "${s}.${cloud}.") subdomains;
-  rpi3ZonesOk = rpi3.services.dns-blocker.localZones == [
-    "${home}."
-    "${cloud}."
-  ];
+  mirroredFrom = builtins.filter (s: vhosts ? "${s}.${home}" && !vhosts ? "${s}.${cloud}") subdomains;
+  rpi3MissingCloud = builtins.filter (
+    s: !rpi3.services.dns-blocker.localRecords ? "${s}.${cloud}."
+  ) subdomains;
+  rpi3ZonesOk =
+    rpi3.services.dns-blocker.localZones == [
+      "${home}."
+      "${cloud}."
+    ];
 
   checks = [
     {
-      ok = zones == [
-        "${home}."
-        "${cloud}."
-      ];
+      ok =
+        zones == [
+          "${home}."
+          "${cloud}."
+        ];
       msg = "evo-x2 dnsblockd localZones must contain both zones";
     }
     {

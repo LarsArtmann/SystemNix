@@ -23,9 +23,7 @@ let
 
   module =
     (import ../modules/nixos/services/nsfw-classifier.nix { inherit inputs; })
-    .flake
-    .nixosModules
-    .nsfw-classifier;
+    .flake.nixosModules.nsfw-classifier;
   catalogModule = (import ../modules/nixos/services/catalog.nix { }).flake.nixosModules.catalog;
   # Every real host auto-imports the FULL module set (flake.nix
   # discoveredModules), so services.integration always exists there; the
@@ -42,7 +40,8 @@ let
         { networking.domain = "home.lan"; }
         integrationModule
         module
-      ] ++ extra;
+      ]
+      ++ extra;
     }).config;
 
   enabledConfig = evalConfig [

@@ -173,8 +173,9 @@ _: {
         name = "systemnix-extra";
         file = filterBlocklist "systemnix-extra" (
           toString (
-            pkgs.writeText "dns-blocker-extra-domains"
-              (lib.concatLines (map (d: "0.0.0.0 ${d}") (lib.unique cfg.extraDomains)))
+            pkgs.writeText "dns-blocker-extra-domains" (
+              lib.concatLines (map (d: "0.0.0.0 ${d}") (lib.unique cfg.extraDomains))
+            )
           )
         );
       };
@@ -370,11 +371,13 @@ _: {
             # Household device registry (see the devices option). group is
             # omitted entirely when null — dnsblockd treats an empty-string
             # group differently from an absent one.
-            devices = map
-              (d: {
+            devices = map (
+              d:
+              {
                 inherit (d) id name ips;
-              } // lib.optionalAttrs (d.group != null) { inherit (d) group; })
-              cfg.devices;
+              }
+              // lib.optionalAttrs (d.group != null) { inherit (d) group; }
+            ) cfg.devices;
           }
           // lib.optionalAttrs (cfg.users != [ ]) {
             users = cfg.users;
@@ -794,12 +797,12 @@ _: {
           {
             # Upstream hard-caps (config load fails beyond them) — fail at
             # eval instead of at boot, where the sole DNS resolver would die.
-            assertion = builtins.length cfg.devices <= 256 && builtins.all (d: builtins.length d.ips <= 16) cfg.devices;
+            assertion =
+              builtins.length cfg.devices <= 256 && builtins.all (d: builtins.length d.ips <= 16) cfg.devices;
             message = "services.dns-blocker.devices exceeds upstream caps (256 devices, 16 IPs each).";
           }
           {
-            assertion =
-              lib.unique (map (d: d.id) cfg.devices) == map (d: d.id) cfg.devices;
+            assertion = lib.unique (map (d: d.id) cfg.devices) == map (d: d.id) cfg.devices;
             message = "services.dns-blocker.devices has duplicate ids.";
           }
           {
@@ -807,8 +810,7 @@ _: {
             # attribution walk; identical strings are always wrong, subnet
             # overlap is the config author's judgment.
             assertion =
-              lib.unique (lib.concatMap (d: d.ips) cfg.devices)
-              == lib.concatMap (d: d.ips) cfg.devices;
+              lib.unique (lib.concatMap (d: d.ips) cfg.devices) == lib.concatMap (d: d.ips) cfg.devices;
             message = "services.dns-blocker.devices has duplicate IPs across devices.";
           }
           {
@@ -823,8 +825,7 @@ _: {
           {
             # Upstream: each device has at most one owner.
             assertion =
-              lib.unique (lib.concatMap (u: u.devices) cfg.users)
-              == lib.concatMap (u: u.devices) cfg.users;
+              lib.unique (lib.concatMap (u: u.devices) cfg.users) == lib.concatMap (u: u.devices) cfg.users;
             message = "services.dns-blocker.users assigns a device to more than one owner.";
           }
         ];

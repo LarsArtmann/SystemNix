@@ -46,7 +46,7 @@ ok() {
 
 echo "=== Static asserts on $HOOK ==="
 grep -qF 'length=${#first_line}' "$HOOK" &&
-  ok "C1 length via \${#first_line} (locale-dependent counting, pinned by M6)" ||
+  ok 'C1 length via ${#first_line} (locale-dependent counting, pinned by M6)' ||
   die "C1 length measurement drifted"
 grep -qF -- "-gt 72" "$HOOK" &&
   ok "C2 limit enforced at -gt 72" ||

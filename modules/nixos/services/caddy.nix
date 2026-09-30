@@ -171,14 +171,13 @@ _: {
       # vHost subdomains derived from the rendered set (single source of
       # truth — registry fan-out and hand-written entries alike; catch-alls
       # and the :80 listener excluded via the "*"/suffix filters).
-      vhostSubdomains =
-        builtins.filter (s: s != "") (
-          builtins.map (k: lib.removeSuffix ".${domain}" k) (
-            builtins.filter
-              (k: lib.hasSuffix ".${domain}" k && !lib.hasInfix "*" k)
-              (builtins.attrNames config.services.caddy.virtualHosts)
+      vhostSubdomains = builtins.filter (s: s != "") (
+        builtins.map (k: lib.removeSuffix ".${domain}" k) (
+          builtins.filter (k: lib.hasSuffix ".${domain}" k && !lib.hasInfix "*" k) (
+            builtins.attrNames config.services.caddy.virtualHosts
           )
-        );
+        )
+      );
       # Registry subdomains (regardless of enable — a disabled service's
       # dns-local entry is pending work, not a ghost).
       registrySubdomains =
@@ -186,7 +185,8 @@ _: {
           builtins.map (e: e.subdomain) (
             builtins.filter (e: e.subdomain != null) (builtins.attrValues config.services.integration)
           )
-        else [ ];
+        else
+          [ ];
       ghostSubdomains =
         # ghostAliases: deliberate dns-local names with no vHost of their
         # own — `alerts` is the legacy PapDashboard alias the catch-all
@@ -194,14 +194,12 @@ _: {
         let
           ghostAliases = [ "alerts" ];
         in
-        builtins.filter
-          (
-            s:
-            !builtins.elem s vhostSubdomains
-            && !builtins.elem s registrySubdomains
-            && !builtins.elem s ghostAliases
-          )
-          dnsLocalSubdomains;
+        builtins.filter (
+          s:
+          !builtins.elem s vhostSubdomains
+          && !builtins.elem s registrySubdomains
+          && !builtins.elem s ghostAliases
+        ) dnsLocalSubdomains;
       # Protected/plain classification for the post-deploy smoke: a vHost is
       # "protected" iff its rendered extraConfig carries forward_auth — the
       # one marker that cannot drift between the helpers and reality. The
@@ -219,16 +217,17 @@ _: {
                 proxyLine = lib.findFirst (l: lib.hasInfix "localhost:" l) null (
                   lib.splitString "\n" vhost.extraConfig
                 );
-                portMatch =
-                  if proxyLine == null then null else builtins.match ".*localhost:([0-9]+).*" proxyLine;
+                portMatch = if proxyLine == null then null else builtins.match ".*localhost:([0-9]+).*" proxyLine;
               in
               "${layer} ${lib.removeSuffix ".${domain}" k} ${
                 if portMatch == null then "-" else builtins.head portMatch
               }"
             )
-            (builtins.filter (k: lib.hasSuffix ".${domain}" k && !lib.hasInfix "*" k) (
-              builtins.attrNames config.services.caddy.virtualHosts
-            ))
+            (
+              builtins.filter (k: lib.hasSuffix ".${domain}" k && !lib.hasInfix "*" k) (
+                builtins.attrNames config.services.caddy.virtualHosts
+              )
+            )
         )
       );
     in
@@ -310,8 +309,7 @@ _: {
         # entry, so they never ghost; a NEW ghost = a dns-local addition with
         # no consumer vHost anywhere.
         environment.etc."caddy/vhost-layers".text =
-          lib.warnIf
-            (ghostSubdomains != [ ])
+          lib.warnIf (ghostSubdomains != [ ])
             "caddy: dns-local subdomain(s) with no vHost and no registry entry (ghost entries): ${lib.concatStringsSep ", " ghostSubdomains}"
             (lib.concatStringsSep "\n" vhostLayerLines + "\n");
 
@@ -355,184 +353,186 @@ _: {
           '';
 
           virtualHosts =
-          let
-          homeLanVHosts = {
-          ":80" = {
-            extraConfig = ''
-            @subdomains host *.${domain}${lib.optionalString (cloudDomain != null) " *.${cloudDomain}"}
-            redir @subdomains https://{host}{uri} permanent
-            redir https://dash.${domain} permanent
-            '';
-          };
-            # Catch-all HTTPS for unknown *.home.lan — redirect to dashboard
-            # so typos/unknown subdomains never fall through to browser search
-            "https://*.${domain}" = {
-              extraConfig = ''
-                ${tlsConfig}
-                ${commonConfig}
-                redir * https://dash.${domain} permanent
-              '';
-            };
+            let
+              homeLanVHosts = {
+                ":80" = {
+                  extraConfig = ''
+                    @subdomains host *.${domain}${lib.optionalString (cloudDomain != null) " *.${cloudDomain}"}
+                    redir @subdomains https://{host}{uri} permanent
+                    redir https://dash.${domain} permanent
+                  '';
+                };
+                # Catch-all HTTPS for unknown *.home.lan — redirect to dashboard
+                # so typos/unknown subdomains never fall through to browser search
+                "https://*.${domain}" = {
+                  extraConfig = ''
+                    ${tlsConfig}
+                    ${commonConfig}
+                    redir * https://dash.${domain} permanent
+                  '';
+                };
 
-            "auth.${domain}" = {
-              extraConfig = ''
-                ${tlsConfig}
-                ${commonConfig}
-                handle /oauth2/* {
-                  ${proxyTo proxyPort}
-                }
-                handle {
-                  ${proxyTo authPort}
-                }
-              '';
-            };
-
-            # Immich vHost moved to the registry (services.integration.immich,
-            # Layer 2 protected). Paperless: native OIDC via Pocket ID
-            # (django-allauth) — Layer 1, plain reverse_proxy like
-            # Forgejo/Gatus. protectedVHost would double-auth (forward-auth
-            # + the app's own login). SSO-ONLY: password login is disabled
-            # via the paperless-oidc-setup env file (auto-break-glass
-            # restores it if the bridge degrades). /admin/* stays
-            # hard-blocked: PAPERLESS_DISABLE_REGULAR_LOGIN does NOT cover
-            # the Django admin login (documented), and nobody uses it here —
-            # paperless-manage covers admin operations. The exact-match
-            # handle /admin (2026-09-02) kills the bare /admin → /admin/ 301
-            # hop that used to leak through to the app.
-            "paperless.${domain}" = {
-              extraConfig = ''
-                ${tlsConfig}
-                ${commonConfig}
-                handle /admin/* {
-                  respond 403
-                }
-                handle /admin {
-                  respond 403
-                }
-                handle {
-                  ${proxyTo config.services.paperless.port}
-                }
-              '';
-            };
-            # Forgejo / crm / tasks / manifest / status vHosts:
-            # forgejo+crm+manifest+status moved to the registry
-            # (services.integration.<name>, plain/protected per entry). dash
-            # joined them (services.integration.papdashboard, subdomain =
-            # "dash" — the dashboard itself). tasks stays hand-written
-            # (taskchampion has no registry entry).
-            # The old alerts.<domain> PapDashboard alias is covered by the
-            # catch-all below (unknown *.home.lan → redirect to dash).
-            "tasks.${domain}" = protectedVHost config.services.taskchampion-sync-server.port;
-            # OpenSEO: Layer 2 (oauth2-proxy forward-auth). The GSC OAuth callback
-            # (/api/gsc/oauth/callback) is exempt from forward-auth — OAuth callback
-            # endpoints should be directly reachable to prevent cookie-expiry edge
-            # cases and SameSite policy regressions. The callback is browser-initiated
-            # (the browser carries the _oauth2_proxy cookie), so forward-auth would
-            # pass anyway, but exempting it makes the flow deterministic.
-            "seo.${domain}" = {
-              extraConfig = ''
-                ${tlsConfig}
-                ${commonConfig}
-                @gsc_callback path /api/gsc/oauth/callback
-                handle @gsc_callback {
-                  ${proxyTo config.services.openseo.port}
-                }
-                @external not remote_ip 127.0.0.1/8 ${lanSubnet}
-                handle @external {
-                  ${forwardAuth}
-                  ${proxyTo config.services.openseo.port}
-                }
-                handle {
-                  ${proxyTo config.services.openseo.port}
-                }
-              '';
-            };
-            # daily vHost moved to the registry (services.integration.crush-daily,
-            # Layer 2 protected).
-
-            # dnsblockd has NATIVE OIDC auth since the SSO feature (Pocket ID,
-            # authorization-code + PKCE) — plain TLS proxy like Forgejo/Gatus;
-            # oauth2-proxy forward-auth would fight the OIDC callback flow.
-            # dnsblockd's own token gate remains the inner defense layer.
-            "dnsblock.${domain}" = {
-              extraConfig = ''
-                ${tlsConfig}
-                ${commonConfig}
-                ${proxyTo config.services.dns-blocker.statsPort}
-              '';
-            };
-            "dnsblockd.${domain}" = {
-              extraConfig = ''
-                ${tlsConfig}
-                ${commonConfig}
-                redir * https://dnsblock.${domain}{uri} permanent
-              '';
-            };
-          }
-          // lib.optionalAttrs config.services.voice-agents.enable {
-            # voice/whisper vHosts stay hand-written: those subdomains are
-            # not in the shared dns-local list (voice-agents is not enabled
-            # on any current host), so registry entries for them would fail
-            # the DNS-consistency assertion.
-            "voice.${domain}" = protectedVHost config.services.livekit.settings.port;
-            "whisper.${domain}" = protectedVHost config.services.voice-agents.whisperPort;
-          }
-          //
-            lib.optionalAttrs
-              ((config.services.monitor365.enable or false) || (config.services.monitor365-server.enable or false))
-              {
-                # When SSO is enabled, Monitor365 uses native OIDC via Pocket ID.
-                # Plain reverse_proxy (like Forgejo/Gatus) avoids oauth2-proxy
-                # forward-auth interfering with the SSO callback flow.
-                "monitor.${domain}" =
-                  if (config.services.monitor365-server.sso.enable or false) then
-                    {
-                      extraConfig = ''
-                        ${tlsConfig}
-                        ${commonConfig}
-
-                        # Prevent browser from caching entry-point files that reference
-                        # content-hashed assets. Without this, a stale cached
-                        # bootstrap.js references old hashes → SPA fallback returns
-                        # index.html (text/html) for missing .js files → MIME error.
-                        @noCache path /ui /ui/ /ui/index.html /ui/bootstrap.js
-                        header @noCache Cache-Control "no-cache, no-store, must-revalidate"
-
-                        ${proxyTo ports.monitor365-server}
-                      '';
+                "auth.${domain}" = {
+                  extraConfig = ''
+                    ${tlsConfig}
+                    ${commonConfig}
+                    handle /oauth2/* {
+                      ${proxyTo proxyPort}
                     }
-                  else
-                    protectedVHost ports.monitor365-server;
+                    handle {
+                      ${proxyTo authPort}
+                    }
+                  '';
+                };
+
+                # Immich vHost moved to the registry (services.integration.immich,
+                # Layer 2 protected). Paperless: native OIDC via Pocket ID
+                # (django-allauth) — Layer 1, plain reverse_proxy like
+                # Forgejo/Gatus. protectedVHost would double-auth (forward-auth
+                # + the app's own login). SSO-ONLY: password login is disabled
+                # via the paperless-oidc-setup env file (auto-break-glass
+                # restores it if the bridge degrades). /admin/* stays
+                # hard-blocked: PAPERLESS_DISABLE_REGULAR_LOGIN does NOT cover
+                # the Django admin login (documented), and nobody uses it here —
+                # paperless-manage covers admin operations. The exact-match
+                # handle /admin (2026-09-02) kills the bare /admin → /admin/ 301
+                # hop that used to leak through to the app.
+                "paperless.${domain}" = {
+                  extraConfig = ''
+                    ${tlsConfig}
+                    ${commonConfig}
+                    handle /admin/* {
+                      respond 403
+                    }
+                    handle /admin {
+                      respond 403
+                    }
+                    handle {
+                      ${proxyTo config.services.paperless.port}
+                    }
+                  '';
+                };
+                # Forgejo / crm / tasks / manifest / status vHosts:
+                # forgejo+crm+manifest+status moved to the registry
+                # (services.integration.<name>, plain/protected per entry). dash
+                # joined them (services.integration.papdashboard, subdomain =
+                # "dash" — the dashboard itself). tasks stays hand-written
+                # (taskchampion has no registry entry).
+                # The old alerts.<domain> PapDashboard alias is covered by the
+                # catch-all below (unknown *.home.lan → redirect to dash).
+                "tasks.${domain}" = protectedVHost config.services.taskchampion-sync-server.port;
+                # OpenSEO: Layer 2 (oauth2-proxy forward-auth). The GSC OAuth callback
+                # (/api/gsc/oauth/callback) is exempt from forward-auth — OAuth callback
+                # endpoints should be directly reachable to prevent cookie-expiry edge
+                # cases and SameSite policy regressions. The callback is browser-initiated
+                # (the browser carries the _oauth2_proxy cookie), so forward-auth would
+                # pass anyway, but exempting it makes the flow deterministic.
+                "seo.${domain}" = {
+                  extraConfig = ''
+                    ${tlsConfig}
+                    ${commonConfig}
+                    @gsc_callback path /api/gsc/oauth/callback
+                    handle @gsc_callback {
+                      ${proxyTo config.services.openseo.port}
+                    }
+                    @external not remote_ip 127.0.0.1/8 ${lanSubnet}
+                    handle @external {
+                      ${forwardAuth}
+                      ${proxyTo config.services.openseo.port}
+                    }
+                    handle {
+                      ${proxyTo config.services.openseo.port}
+                    }
+                  '';
+                };
+                # daily vHost moved to the registry (services.integration.crush-daily,
+                # Layer 2 protected).
+
+                # dnsblockd has NATIVE OIDC auth since the SSO feature (Pocket ID,
+                # authorization-code + PKCE) — plain TLS proxy like Forgejo/Gatus;
+                # oauth2-proxy forward-auth would fight the OIDC callback flow.
+                # dnsblockd's own token gate remains the inner defense layer.
+                "dnsblock.${domain}" = {
+                  extraConfig = ''
+                    ${tlsConfig}
+                    ${commonConfig}
+                    ${proxyTo config.services.dns-blocker.statsPort}
+                  '';
+                };
+                "dnsblockd.${domain}" = {
+                  extraConfig = ''
+                    ${tlsConfig}
+                    ${commonConfig}
+                    redir * https://dnsblock.${domain}{uri} permanent
+                  '';
+                };
               }
-          # DiscordSync / Browser History / Attic / renamer / search / graph /
-          # overview vHosts moved to the registry (services.integration
-          # entries in their owning modules). systemd-timer-monitor stays
-          # hand-written below: it is a file_server over the state dir, not
-          # a proxy.
-          # systemd-timer-monitor — static HTML/JSON served by file_server
-          # (no upstream daemon, the audit timer writes files into the state dir).
-          // lib.optionalAttrs (config.services.systemd-timer-monitor.enable or false) {
-            "timers.${domain}" = {
-              extraConfig = ''
-                ${tlsConfig}
-                ${commonConfig}
-                root * /var/lib/systemd-timer-monitor
-                file_server
-                # The audit script always writes report.html + status.json
-                # together; serve them by their canonical names so curl users
-                # and the homepage link both land on the HTML report.
-                @report path / /index.html /report.html /report
-                handle @report {
-                  rewrite * /report.html
-                  file_server
-                }
-              '';
-            };
-          }
-          # Registry fan-out (services.integration.<name>.vHost) — rendered
-          # through the same helpers as every hand-written vHost above.
-          // (lib.mapAttrs' (sub: v: lib.nameValuePair "${sub}.${domain}" (renderVHost v)) registryVHosts);
-          in
+              // lib.optionalAttrs config.services.voice-agents.enable {
+                # voice/whisper vHosts stay hand-written: those subdomains are
+                # not in the shared dns-local list (voice-agents is not enabled
+                # on any current host), so registry entries for them would fail
+                # the DNS-consistency assertion.
+                "voice.${domain}" = protectedVHost config.services.livekit.settings.port;
+                "whisper.${domain}" = protectedVHost config.services.voice-agents.whisperPort;
+              }
+              //
+                lib.optionalAttrs
+                  (
+                    (config.services.monitor365.enable or false) || (config.services.monitor365-server.enable or false)
+                  )
+                  {
+                    # When SSO is enabled, Monitor365 uses native OIDC via Pocket ID.
+                    # Plain reverse_proxy (like Forgejo/Gatus) avoids oauth2-proxy
+                    # forward-auth interfering with the SSO callback flow.
+                    "monitor.${domain}" =
+                      if (config.services.monitor365-server.sso.enable or false) then
+                        {
+                          extraConfig = ''
+                            ${tlsConfig}
+                            ${commonConfig}
+
+                            # Prevent browser from caching entry-point files that reference
+                            # content-hashed assets. Without this, a stale cached
+                            # bootstrap.js references old hashes → SPA fallback returns
+                            # index.html (text/html) for missing .js files → MIME error.
+                            @noCache path /ui /ui/ /ui/index.html /ui/bootstrap.js
+                            header @noCache Cache-Control "no-cache, no-store, must-revalidate"
+
+                            ${proxyTo ports.monitor365-server}
+                          '';
+                        }
+                      else
+                        protectedVHost ports.monitor365-server;
+                  }
+              # DiscordSync / Browser History / Attic / renamer / search / graph /
+              # overview vHosts moved to the registry (services.integration
+              # entries in their owning modules). systemd-timer-monitor stays
+              # hand-written below: it is a file_server over the state dir, not
+              # a proxy.
+              # systemd-timer-monitor — static HTML/JSON served by file_server
+              # (no upstream daemon, the audit timer writes files into the state dir).
+              // lib.optionalAttrs (config.services.systemd-timer-monitor.enable or false) {
+                "timers.${domain}" = {
+                  extraConfig = ''
+                    ${tlsConfig}
+                    ${commonConfig}
+                    root * /var/lib/systemd-timer-monitor
+                    file_server
+                    # The audit script always writes report.html + status.json
+                    # together; serve them by their canonical names so curl users
+                    # and the homepage link both land on the HTML report.
+                    @report path / /index.html /report.html /report
+                    handle @report {
+                      rewrite * /report.html
+                      file_server
+                    }
+                  '';
+                };
+              }
+              # Registry fan-out (services.integration.<name>.vHost) — rendered
+              # through the same helpers as every hand-written vHost above.
+              // (lib.mapAttrs' (sub: v: lib.nameValuePair "${sub}.${domain}" (renderVHost v)) registryVHosts);
+            in
             homeLanVHosts
             // (lib.optionalAttrs (cloudDomain != null) (
               # Split-horizon aliases (brainstorming 2026-09-30): every
@@ -541,17 +541,9 @@ _: {
               # redirects stay on auth.<home.lan> by design: VPN clients
               # resolve both zones, and the oauth2-proxy whitelist covers
               # the cloud domain for post-login redirects.
-              (lib.mapAttrs'
-                (
-                  k: v:
-                  lib.nameValuePair (lib.replaceStrings [ "${domain}" ] [ "${cloudDomain}" ] k) v
-                )
-                (
-                  lib.filterAttrs
-                  (k: _: lib.hasInfix "${domain}" k && k != "https://*.${domain}")
-                  homeLanVHosts
-                )
-              )
+              (lib.mapAttrs' (
+                k: v: lib.nameValuePair (lib.replaceStrings [ "${domain}" ] [ "${cloudDomain}" ] k) v
+              ) (lib.filterAttrs (k: _: lib.hasInfix "${domain}" k && k != "https://*.${domain}") homeLanVHosts))
               // {
                 # Cloud catch-all: unknown *.cloud names redirect to the
                 # cloud dashboard (mirror of the home.lan catch-all).
@@ -585,20 +577,18 @@ _: {
           after = [ "sops-nix.service" ];
           wants = [ "sops-nix.service" ];
           inherit onFailure;
-          serviceConfig =
-            (serviceOneshotDefaults { })
-            // {
-              Type = "oneshot";
-              RemainAfterExit = true;
-              # RuntimeDirectory is what makes ReadWritePaths viable: it
-              # creates /run/dnsblockd-certs BEFORE systemd sets up the
-              # mount namespace. Without it the unit dies at NAMESPACE
-              # setup (226/NAMESPACE, caught by tests/test-caddy-mint.nix —
-              # the script's own install -d runs INSIDE the namespace and
-              # is too late).
-              RuntimeDirectory = "dnsblockd-certs";
-              ReadWritePaths = [ "/run/dnsblockd-certs" ];
-            };
+          serviceConfig = (serviceOneshotDefaults { }) // {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            # RuntimeDirectory is what makes ReadWritePaths viable: it
+            # creates /run/dnsblockd-certs BEFORE systemd sets up the
+            # mount namespace. Without it the unit dies at NAMESPACE
+            # setup (226/NAMESPACE, caught by tests/test-caddy-mint.nix —
+            # the script's own install -d runs INSIDE the namespace and
+            # is too late).
+            RuntimeDirectory = "dnsblockd-certs";
+            ReadWritePaths = [ "/run/dnsblockd-certs" ];
+          };
           script =
             # Absolute store paths, NOT ambient PATH (defect d1, status
             # report 2026-09-30): openssl/coreutils on the system path is
@@ -665,12 +655,11 @@ _: {
               "sops-nix.service"
             ]
             ++ lib.optional (config.services.attic-config.enable or false) "atticd.service";
-          wants =
-            [
-              "pocket-id.service"
-              "sops-nix.service"
-            ]
-            ++ lib.optional (config.services.attic-config.enable or false) "atticd.service";
+          wants = [
+            "pocket-id.service"
+            "sops-nix.service"
+          ]
+          ++ lib.optional (config.services.attic-config.enable or false) "atticd.service";
           inherit onFailure;
           unitConfig = {
             StartLimitBurst = lib.mkForce 3;

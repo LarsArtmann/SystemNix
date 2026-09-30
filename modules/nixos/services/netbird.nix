@@ -8,8 +8,7 @@
 # without that file fails activation by design — fail-closed, no placeholder
 # secrets. The login oneshot handles enrollment automatically; no inbound
 # ports are opened beyond the P2P WireGuard port (51820/udp).
-_:
-{
+_: {
   flake.nixosModules.netbird =
     {
       config,

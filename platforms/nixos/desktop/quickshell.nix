@@ -21,25 +21,26 @@ in
 
     package = lib.mkOption {
       type = lib.types.package;
-      default = dankMaterialShell.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
-        (prev: {
-          postInstall = prev.postInstall + ''
-            # Weather "pop": the bar weather widget inherits widgetIconColor/
-            # widgetTextColor, which resolve to the muted surfaceText gray in dark
-            # mode — hard to read. Recolor icon + temperature to the theme's
-            # primary accent. Scoped to Weather.qml only; every other bar widget
-            # keeps the muted look. Drop when upstream ships a per-widget accent
-            # option (none exists in the stable SettingsSpec as of 2026-09-30).
-            weatherQml="$out/share/quickshell/dms/Modules/DankBar/Widgets/Weather.qml"
-            test -f "$weatherQml"
-            chmod -R u+w "$out/share/quickshell/dms/Modules/DankBar/Widgets"
-            sed -i \
-              -e 's/color: Theme\.widgetIconColor/color: Theme.primary/g' \
-              -e 's/color: Theme\.widgetTextColor/color: Theme.primary/g' \
-              "$weatherQml"
-            grep -q 'color: Theme\.primary' "$weatherQml"
-          '';
-        });
+      default =
+        dankMaterialShell.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
+          (prev: {
+            postInstall = prev.postInstall + ''
+              # Weather "pop": the bar weather widget inherits widgetIconColor/
+              # widgetTextColor, which resolve to the muted surfaceText gray in dark
+              # mode — hard to read. Recolor icon + temperature to the theme's
+              # primary accent. Scoped to Weather.qml only; every other bar widget
+              # keeps the muted look. Drop when upstream ships a per-widget accent
+              # option (none exists in the stable SettingsSpec as of 2026-09-30).
+              weatherQml="$out/share/quickshell/dms/Modules/DankBar/Widgets/Weather.qml"
+              test -f "$weatherQml"
+              chmod -R u+w "$out/share/quickshell/dms/Modules/DankBar/Widgets"
+              sed -i \
+                -e 's/color: Theme\.widgetIconColor/color: Theme.primary/g' \
+                -e 's/color: Theme\.widgetTextColor/color: Theme.primary/g' \
+                "$weatherQml"
+              grep -q 'color: Theme\.primary' "$weatherQml"
+            '';
+          });
       description = "The DankMaterialShell package";
     };
   };
