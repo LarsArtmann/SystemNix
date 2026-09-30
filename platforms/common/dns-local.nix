@@ -36,5 +36,6 @@
     "catalog"
     "nsfw"
     "index"
+    "emeet-pixyd"
   ];
 }

@@ -84,7 +84,8 @@ nixpkgs.lib.nixosSystem {
   ++ [
     inputs.nix-ssh-config.nixosModules.ssh
     inputs.niri-session-manager.nixosModules.niri-session-manager
-    inputs.emeet-pixyd.nixosModules.default
+    # emeet-pixyd upstream module moved into the wrapper
+    # (modules/nixos/services/emeet-pixyd.nix, cv.nix pattern)
     inputs.crush-daily.nixosModules.crush-daily
     inputs.bank-sync.nixosModules.default
     inputs.go-taskqueue.nixosModules.default
