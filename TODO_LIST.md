@@ -269,6 +269,7 @@
 
 ### pipeline
 
+- [ ] **BUILDFLOW_EXCLUDE_PATTERNS: decide whether assets/avatar-dms.png needs the same exclusion as assets/avatar.png (54KB copy probably under every threshold)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-30_05-42_avatar-dms-optimization-status.md §c)
 - [ ] **Duplicate-row lint in check-todo-system.sh: flag byte-identical one-liner rows within a TODO_LIST.md section and identical asks shared between queue and library (the ffprobe-sweep ask shipped clean through the checker in THREE places: pixel6.md prioritized + backlog + a doubled TODO_LIST row)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-28_20-53_task-000001a0e95aebd871672d672c98258ad103.md §e2)
 - [ ] **Pre-deploy batch build of mkLarsPackages + cv + hermes inputs** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Known-outage classification in post-deploy-check** → [docs/todo/pipeline.md](docs/todo/pipeline.md)

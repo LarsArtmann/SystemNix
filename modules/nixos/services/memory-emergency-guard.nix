@@ -713,14 +713,6 @@ _: {
             # them (2026-09-28).
             rm -f "$BACKUP_STOPPED_EPOCH_FILE"
           fi
-          if [ -f "$CHURN_STOPPED_FILE" ]; then
-            churn_epoch=$(awk 'NR==1 { print; exit }' "$CHURN_STOPPED_FILE" 2>/dev/null) || churn_epoch=0
-            churn_epoch="''${churn_epoch:-0}"
-            if [ "$churn_epoch" -gt 0 ]; then
-              churn_ts_line="memory_emergency_guard_churn_stopped_timestamp_seconds ''${churn_epoch}"
-              churn_block=$(awk 'NR>1 && NF { print "memory_emergency_guard_churn_units_stopped{unit=\"" $0 "\"} 1" }' "$CHURN_STOPPED_FILE" 2>/dev/null) || churn_block=""
-            fi
-          fi
 
           # Backup starvation + bounded catch-up slot (2026-09-28): multi-day
           # Zone-6 storms never drain under the re-arm threshold above, so
@@ -771,6 +763,20 @@ _: {
               else
                 rm -f "$CHURN_STOPPED_FILE"
               fi
+            fi
+          fi
+
+          # Churn-window metrics are computed AFTER both possible mutations
+          # above (re-arm clear, catch-up grant prune) — computing earlier
+          # emitted units the grant had just started again (the VM test's
+          # scenario 9 caught btrbk-root still listed after "catch-up slot
+          # granted").
+          if [ -f "$CHURN_STOPPED_FILE" ]; then
+            churn_epoch=$(awk 'NR==1 { print; exit }' "$CHURN_STOPPED_FILE" 2>/dev/null) || churn_epoch=0
+            churn_epoch="''${churn_epoch:-0}"
+            if [ "$churn_epoch" -gt 0 ]; then
+              churn_ts_line="memory_emergency_guard_churn_stopped_timestamp_seconds ''${churn_epoch}"
+              churn_block=$(awk 'NR>1 && NF { print "memory_emergency_guard_churn_units_stopped{unit=\"" $0 "\"} 1" }' "$CHURN_STOPPED_FILE" 2>/dev/null) || churn_block=""
             fi
           fi
 
