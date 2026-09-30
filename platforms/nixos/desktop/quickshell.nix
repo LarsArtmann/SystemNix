@@ -61,6 +61,9 @@ in
         notificationPopupPrivacyMode = false;
         # Monitor-aware: popups only on the focused monitor, not both screens
         notificationFocusedMonitor = true;
+        notificationShowTimeoutBar = true;
+        notificationHistoryMaxAgeDays = 30;
+        notificationHistoryMaxCount = 200;
       };
 
       # SystemNix DMS plugins — declaratively installed via DMS's plugin system.
