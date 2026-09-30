@@ -72,15 +72,22 @@ switch time). Everything left is owner-gated (§3).
   improvement is the new pipeline.md row). DNS stayed healthy throughout
   (dnsblockd answered instantly; one transient Ds worker observed and
   resolved).
-- Watcher #1 (inline background shell, 120s cadence): 20 iterations, avg10
-  46→73→56%, never 3 consecutive <20/<25 — gave up 07:38. Watcher #2 armed
-  (180s cadence, 60-min patience) fires `nix run .#deploy` itself on a
-  sustained drain; deploy.sh re-runs the pressure gate at switch time, so a
-  mid-fire relapse costs another rc=12, never a dirty switch.
+- Watcher #1 (120s cadence, 40 min): gave up 07:38 — avg10 46→73→56%, zero
+  qualifying windows. Watcher #2 (180s cadence, 60 min): gave up 08:38 —
+  avg10 12→54%, ONE qualifying sample at 08:08 (12.3/14.2) followed by a 47%
+  spike: exactly the freeze-#5 "racing dips" trap the 3-consecutive-sample
+  trigger is built to refuse. Watcher #3 (300s cadence, 2h horizon) armed
+  08:39 as the session long-tail: fires `nix run .#deploy` itself on 3
+  consecutive <20/<25 samples, then GREPS the deployed runner unit for the
+  PATH and logs the verdict — self-firing AND self-verifying. deploy.sh
+  re-runs the pressure gate at switch time, so a mid-fire relapse costs
+  another rc=12, never a dirty switch.
 - NOT forcing (`DEPLOY_FORCE_PRESSURE=1`): freeze-#5 doctrine — deploys
-  queued under sustained storms, not raced through dips.
-- Post-deploy verify (§f.2): `grep path= /etc/systemd/system/gitea-runner-evo\\x2dx2.service`
-  must show nix/jq/python3; then the §f.3+ owner chain below.
+  queued under sustained storms, not raced through dips. Storm age at
+  close-out: 3h30m, peaking 77% avg10 (08:57).
+- Post-deploy verify (if watcher #3 hasn't already logged it):
+  `grep path= /etc/systemd/system/gitea-runner-evo\\x2dx2.service` must
+  show nix/jq/python3; then the §f.3+ owner chain below.
 
 ## 3. Owner sequence (deterministic, runbook-mirrored)
 
