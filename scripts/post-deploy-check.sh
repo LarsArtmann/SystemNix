@@ -1340,26 +1340,58 @@ test -e /etc/systemd/system/multi-user.target.wants/health-dashboard.service && 
 # A 500/502/503 means oauth2-proxy itself is broken - the exact SigNoz incident.
 echo ""
 echo "=== Auth Gateway Health ==="
-# Subdomain names MUST match the Caddy vHost definitions in caddy.nix
-# (dozzle→logs, monitor365→monitor, searx→search, crush-daily→daily,
-# taskchampion→tasks). Wrong names SKIP forever = phantom coverage.
-AUTH_VHOSTS=(
-  "signoz.$DOMAIN"
-  "logs.$DOMAIN"
-  "search.$DOMAIN"
-  "daily.$DOMAIN"
-  "tasks.$DOMAIN"
-  "manifest.$DOMAIN"
-)
-# monitor365 is enable-gated (disabled since 2026-08-12) - probe its vHost only
-# when the server unit is deployed, else it 000-SKIPs on every run forever.
-test -e /etc/systemd/system/monitor365-server.service && AUTH_VHOSTS+=("monitor.$DOMAIN")
-# Health Hub external leg is forward-auth gated (Layer 2) - include it so a
-# broken oauth2-proxy 500/502 on health.$DOMAIN pages like every other
-# protected vHost instead of passing silently. Entries carry an optional
-# path suffix (health.$DOMAIN/healthz — the hub binary has no / route).
-test -e /etc/systemd/system/health-dashboard.service && AUTH_VHOSTS+=("health.$DOMAIN/healthz")
-for vhost in "${AUTH_VHOSTS[@]}"; do
+# DERIVED vHost list: caddy.nix emits /etc/caddy/vhost-layers at eval time
+# from the RENDERED virtualHosts set ("layer sub port", port = the vHost's
+# first proxy target, "-" for static roots). The hand-maintained list below
+# is only the FALLBACK for generations without the file — wrong names SKIP
+# forever = phantom coverage, which is exactly what the derived list kills.
+# A backend whose port is not listening is SKIPped (its own checks own that
+# failure); 5xx with a LISTENING backend = auth-gateway/proxy regression.
+AUTH_VHOSTS=()
+PLAIN_VHOSTS=()
+if [ -r /etc/caddy/vhost-layers ]; then
+  while read -r layer sub port; do
+    [ -n "$sub" ] || continue
+    if [ "$layer" = "protected" ]; then
+      AUTH_VHOSTS+=("$sub.$DOMAIN|$port")
+    else
+      PLAIN_VHOSTS+=("$sub.$DOMAIN|$port")
+    fi
+  done < /etc/caddy/vhost-layers
+  echo "protected vHosts derived from /etc/caddy/vhost-layers ($((${#AUTH_VHOSTS[@]})) entries)"
+else
+  echo -e "${YELLOW}WARN${NC} /etc/caddy/vhost-layers missing - hand-maintained fallback list in use"
+  AUTH_VHOSTS=(
+    "signoz.$DOMAIN|-"
+    "logs.$DOMAIN|-"
+    "search.$DOMAIN|-"
+    "daily.$DOMAIN|-"
+    "tasks.$DOMAIN|-"
+    "manifest.$DOMAIN|-"
+  )
+fi
+# Health Hub is forward-auth gated (Layer 2) but its binary has no / route -
+# probe /healthz instead of the derived root entry.
+for i in "${!AUTH_VHOSTS[@]}"; do
+  case "${AUTH_VHOSTS[$i]}" in
+  "health.$DOMAIN|"*) AUTH_VHOSTS[$i]="health.$DOMAIN/healthz|-";;
+  esac
+done
+backend_listening() {
+  local port="$1"
+  if [ "$port" = "-" ] || [ -z "$port" ]; then
+    return 0
+  fi
+  timeout 1 bash -c "exec 3<>/dev/tcp/127.0.0.1/$port" 2>/dev/null
+}
+for entry in "${AUTH_VHOSTS[@]}"; do
+  vhost="${entry%%|*}"
+  port="${entry#*|}"
+  if ! backend_listening "$port"; then
+    echo -e "${YELLOW}SKIP${NC} $vhost (backend :$port not listening)"
+    SKIP=$((SKIP + 1))
+    continue
+  fi
   status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://$vhost" 2>/dev/null || true)
   case "$status" in
   200 | 301 | 302 | 303)
@@ -1381,6 +1413,45 @@ for vhost in "${AUTH_VHOSTS[@]}"; do
     ;;
   esac
 done
+
+# --- Plain vHost TLS probe ---
+# The auth block covers ONLY forward-auth vHosts; plain vHosts (native OIDC
+# / LAN-only class: forgejo, paperless, rss, geo, auth...) had zero
+# deploy-smoke coverage - a broken plain vHost (e.g. the 2026-09-30
+# cert-mint cascade) was visible only via Gatus/Discord. One derived probe:
+# any ANSWERED status counts (proves TLS termination + routing); 5xx with a
+# listening backend is a real proxy regression.
+echo ""
+echo "=== Plain vHost TLS ==="
+if [ "${#PLAIN_VHOSTS[@]}" -gt 0 ]; then
+  entry="${PLAIN_VHOSTS[0]}"
+  vhost="${entry%%|*}"
+  port="${entry#*|}"
+  if backend_listening "$port"; then
+    status=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 10 "https://$vhost" 2>/dev/null || true)
+    case "$status" in
+    000)
+      echo -e "${YELLOW}SKIP${NC} $vhost unreachable"
+      SKIP=$((SKIP + 1))
+      ;;
+    500 | 502 | 503)
+      echo -e "${RED}FAIL${NC} $vhost → $status (plain vHost BROKEN - check caddy/backend)"
+      FAIL=$((FAIL + 1))
+      record_fail "$vhost → plain vHost TLS/routing broken"
+      ;;
+    *)
+      echo -e "${GREEN}PASS${NC} $vhost → $status (plain vHost TLS + routing)"
+      PASS=$((PASS + 1))
+      ;;
+    esac
+  else
+    echo -e "${YELLOW}SKIP${NC} $vhost (backend :$port not listening)"
+    SKIP=$((SKIP + 1))
+  fi
+else
+  echo -e "${YELLOW}SKIP${NC} no plain vHosts derived"
+  SKIP=$((SKIP + 1))
+fi
 
 # --- System & Desktop Checks ---
 echo ""

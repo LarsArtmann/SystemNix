@@ -204,19 +204,27 @@ _: {
           dnsLocalSubdomains;
       # Protected/plain classification for the post-deploy smoke: a vHost is
       # "protected" iff its rendered extraConfig carries forward_auth — the
-      # one marker that cannot drift between the helpers and reality.
+      # one marker that cannot drift between the helpers and reality. The
+      # third column is the vHost's first proxy target ("-" for static
+      # roots) so the smoke can SKIP backends that are not running instead
+      # of false-FAILing enable-gated-but-undeployed services.
       vhostLayerLines = lib.sort (a: b: a < b) (
         lib.unique (
           builtins.map
             (
               k:
-              (
-                if lib.hasInfix "forward_auth" config.services.caddy.virtualHosts.${k}.extraConfig then
-                  "protected"
-                else
-                  "plain"
-              )
-              + " ${lib.removeSuffix ".${domain}" k}"
+              let
+                vhost = config.services.caddy.virtualHosts.${k};
+                layer = if lib.hasInfix "forward_auth" vhost.extraConfig then "protected" else "plain";
+                proxyLine = lib.findFirst (l: lib.hasInfix "localhost:" l) null (
+                  lib.splitString "\n" vhost.extraConfig
+                );
+                portMatch =
+                  if proxyLine == null then null else builtins.match ".*localhost:([0-9]+).*" proxyLine;
+              in
+              "${layer} ${lib.removeSuffix ".${domain}" k} ${
+                if portMatch == null then "-" else builtins.head portMatch
+              }"
             )
             (builtins.filter (k: lib.hasSuffix ".${domain}" k && !lib.hasInfix "*" k) (
               builtins.attrNames config.services.caddy.virtualHosts
