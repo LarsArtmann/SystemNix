@@ -1,0 +1,149 @@
+# Status Report — Caddy Configuration Review (Session-Scoped)
+
+**Date:** 2026-09-30 11:33 CEST
+**Scope:** This single session only — a full configuration review of the Caddy reverse-proxy module, plus this report and its self-harvest. **No project-wide research was done** (per instruction); no files were modified except this report and the todo-surface appends logged in the Harvest Log below.
+**Format note:** The `status-report` skill defaults to a styled HTML dashboard; the user explicitly requested `.md` — honored (one-off override, not propagated into the skill).
+
+---
+
+## 0) Direct answers to the three questions
+
+**What did I forget?**
+1. **Live probes.** Every finding was verified statically (read the module, the firewall config, the tests). I never ran a read-only live probe: no `nft`/`iptables` check that UDP/443 is actually dropped (finding 1), no `nix eval` of the rendered vHost map (surface-preservation doctrine), no `openssl s_client` against the deployed generation to confirm it serves the MINTED dual-zone cert and not the static fallback (the 2026-09-30 05:50 deploy-skew incident proved deployed-rev lag is real). The repo's own doctrine — "evals green ≠ surface preserved", "probe the deployed surface" — applies to reviews too.
+2. **Git archaeology BEFORE flagging.** I flagged `NoNewPrivileges = mkForce false` as "uncommented security relaxation", then found the rationale commit (`da147df6`, May 2026) only afterward — softening the finding retroactively. `default_bind` (caddy.nix:229) never got its archaeology pass at all. The nix-review checklist asks for justification AT the site; checking history first would have produced sharper findings in one pass.
+3. **The vHost debt was pre-existing, not new.** The T15-T19 hand-written→registry migration debt is named in `catalog-platform.nix:2`; my review re-derived it independently. Fine to report, but a one-line grep for "already known" would have framed it as confirmation, not discovery.
+
+**What could I have done better?**
+- Offered the fix ("want me to fix 1-2?") while findings 1-2 were still static-only — the offer would have been deploy-ready if the three live probes (above) had run first.
+- Batched the verification greps (I did parallel calls, but the follow-ups — firewall UDP check, NNP blame, brainstorming-doc bind model — were sequential afterthoughts; one planning pass would have collapsed them).
+- Did not check whether findings duplicated existing queue rows before offering fixes (checked only during harvest; luckily none duplicated).
+
+**What could I still improve?**
+- Convert the review into fixes: 13 items are now harvested (below); zero applied. Awaiting user go.
+- The same static-vs-live gap applies to the two "drift" findings: the `After+Requires` claim should be greppable against a code cite (caddy.nix:530-536) inside AGENTS.md itself when it is fixed, so the claim can never silently rot again.
+
+---
+
+## a) FULLY DONE
+
+| Work | Evidence |
+|---|---|
+| Full caddy configuration review, verdict delivered: "mostly superb, 5 findings" | In-session review answer; every claim carries `file:line` cites |
+| Read the complete 572-line module + all satellite surfaces | `modules/nixos/services/caddy.nix` (full), `integration.nix:400-480` (registry fan-out + assertions), `sops.nix:111-135` (cert owners/modes), `dns-local.nix` (37 subdomains), `local-network.nix` (options incl. cloudDomain), `networking.nix:30-45` (firewall), `lib/systemd.nix` (harden{} defaults) |
+| Verified the verification net | `tests/test-caddy-mint.nix` (real CA fixture, SAN/pairing/handshake asserts on BOTH zones, RuntimeDirectory regression), `tests/test-caddy-auth.nix` (LAN-bypass pattern pinned against the old SigNoz regression), `tests/test-cloud-domain.nix` (mirror + mint ordering), `scripts/negative-test-lints.sh:212` (caddy-mutant eval mutation) |
+| Verified monitoring/gates coverage | Gatus "Caddy" check (`gatus-config.nix:267-272`), Signoz scrape job (`signoz.nix:1208`) + `dashboards/caddy.json`, post-deploy auth-gateway 500/502 probes (`post-deploy-check.sh:1337-1380`), deploy.sh caddy restart (`deploy.sh:474-476`, PrivateTmp reload note) |
+| Root-caused the NoNewPrivileges relaxation | `git show da147df6` — May-2026 commit message carries the rationale (but its stated ACME-DNS-challenge reason is dead in today's offline-cert setup) |
+| Answered the owner's question within scope | Verdict + 5 ranked findings + fix offer, no unrelated research |
+
+## b) PARTIALLY DONE
+
+| Work | Done | Open | Blocker | Effort |
+|---|---|---|---|---|
+| Findings 1-2 verification | Static proof: caddy defaults to h3 with no `protocols` restriction (caddy.nix:230-234) vs firewall UDP = [53, 853] only (networking.nix:37-44); comment says "After+Requires" (caddy.nix:458-459, AGENTS.md net-vpn bullet) vs code ships `after`+`wants` (caddy.nix:523-536) | Live probes: nft UDP-drop check, rendered-vHost eval diff, deployed-cert SAN check | None — read-only, any session can run them | S |
+| Fix application | 13 harvested, dispatchable items exist (Harvest Log) | 0 of 5 findings applied | User go (offer made at end of review, unanswered) | S-M |
+| §f next-task list | 38 items written with impact/effort/category | 13 harvested into TODO_LIST + libraries; 25 deliberately dispositioned (see log) | tq-pool dispatch pacing is owner-owned | - |
+
+## c) NOT STARTED
+
+| Work | Why | Still wanted? |
+|---|---|---|
+| All actual fixes (findings 1-5 + the harvested batch) | Awaiting user instruction after the review | Yes — 2 are real defects (QUIC blackhole, comment/code drift) |
+| T15-T19 vHost→registry migration completion (tasks, seo, dnsblock pair, paperless, timers, monitor, voice/whisper remain hand-written) | Pre-existing debt named in `catalog-platform.nix:2`, larger than this session's follow-ups | Yes — own dispatch |
+| `docs/services/caddy.md` runbook | Never existed (confirmed: no caddy file in docs/services/) — AGENTS caddy knowledge is scattered across 6+ sections | Yes — queued (S10) |
+| Live baseline harness for future caddy vHost migrations | Paperless /admin-deletion precedent says registry migrations need worktree-baseline eval set-compares; no harness exists for caddy | Yes — candidate for the T15-T19 dispatch |
+
+## d) TOTALLY FUCKED UP
+
+Nothing in this session broke anything — the session was read-only until this report. But radical honesty about what the review FOUND live:
+
+1. **HTTP/3 is advertised but blackholed — live in prod right now.** Caddy serves h3 by default (no `protocols` key, caddy.nix:230-234) and the firewall drops UDP/443 (only 53/853 UDP open, networking.nix:37-44). Every browser sees Alt-Svc, tries QUIC, times out, falls back to TCP. Severity: low-med (first-connection latency wart per origin, worst for VPN/external clients; no outage). Root cause: h3 was never considered when the firewall was written. Mitigation: none — fix is one line either way (open UDP/443 or pin h1/h2). **Pre-existing defect, found this session.**
+2. **A false claim ships in the project's memory file.** Both the module comment (caddy.nix:458-459) and AGENTS.md's net-vpn section state the mint→caddy chain is "After+Requires, fail-closed". The code wires `after`+`wants` only (caddy.nix:523-536). Behavior IS fail-closed (failed mint → cert files absent → caddy fails to load), so there is no runtime harm — but the claim violates the repo's own "a claim must match the surface" rule and would mislead the next person debugging a boot. Severity: doc-integrity, zero runtime. **Pre-existing, found this session.**
+3. **Session-quality item (not project damage):** the review shipped with findings 1-2 statically verified only — see §0. If finding 1 had been wrong (e.g. an nft rule I didn't see), the verdict would have phantom-fired. Noted as process debt, not a defect.
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Static review → live-probe habit.** Three cheap read-only probes (nft UDP check, `nix eval` rendered-vHost set-compare, deployed-cert `openssl s_client` SAN check) turn any config verdict from "looks right" into "is right". Impact: prevents phantom findings AND phantom-cleared findings; cost ~2 min. Fix: add the probe trio to the nix-review checklist flow.
+2. **Git-archaeology before flagging.** `git log -S <line>` on any "unjustified" relaxation before writing the finding — half of them have a dated commit carrying the (sometimes stale) rationale. Impact: sharper findings, no retraction round-trips.
+3. **Claims in AGENTS.md should carry greppable code cites.** The `After+Requires` drift survived because the claim has no line cite to rot-detect against. When S2 lands, cite `caddy.nix:<line>` inline in the AGENTS bullet.
+4. **Hand-maintained copies of registry data are drift bombs.** post-deploy-check's `AUTH_VHOSTS` list (post-deploy-check.sh:1346) hand-copies what the integration registry already owns — its own comment warns "wrong names SKIP forever = phantom coverage". geometrikks already derives per-vhost paths from `config.services.caddy.virtualHosts` at eval (geometrikks.nix:47-65) — same pattern should feed the smoke.
+5. **Review→fix in one session when the owner is present.** The offer-then-pivot left zero fixes landed; if the go signal comes in the same session as the review, run the probes + apply the S-batch immediately.
+
+## f) Up to 50 things to get done next (38 items, impact-ranked)
+
+Legend: **Impact** H/M/L · **Effort** S <30min / M 30min-2h / L >2h · **Category** Bug/Feature/Quality/Cleanup/Docs/Watch · **Disposition:** HARVESTED (row in TODO_LIST + library) or NOT (reason).
+
+| # | Task | I | E | Cat | Disposition |
+|---|---|---|---|---|---|
+| 1 | Fix HTTP/3 QUIC blackhole: open UDP/443 (recommended — DoQ precedent at 53/853 UDP already open) or pin `servers { protocols h1 h2 }` | H | S | Bug | **HARVESTED** → services S1 |
+| 2 | Mint-chain alignment: add `Requires=` (matches comment + AGENTS claim) or fix both texts; recommendation: add Requires | M | S | Bug | **HARVESTED** → services S2 |
+| 3 | Inline justification comment for `NoNewPrivileges = mkForce false` (cite `da147df6`) + re-verify the commit's setuid/setgid mechanism claim against current systemd ambient-cap semantics | L | S | Quality | **HARVESTED** → services S3 |
+| 4 | Probe dropping `CAP_NET_ADMIN` from caddy's cap set (stated ACME-DNS-challenge rationale is dead: `auto_https off`, no DNS provider; nixpkgs default is NET_BIND_SERVICE only) — verify via `checks.caddy-mint` VM boot before any deploy | M | S | Security | **HARVESTED** → services S4 |
+| 5 | `default_bind` rationale comment + git archaeology (verify the dnsblockd block-page/virtualIP collision theory) + document the routing model (NetBird advertises 192.168.1.0/24 → traffic arrives at the LAN IP; no extra bind needed — brainstorm doc:89-92) | M | S | Docs | **HARVESTED** → services S5 |
+| 6 | XOR-validate registry entries: `port`+`root` both set silently serves static (renderVHost checks root first, caddy.nix:136; `vhostIncomplete` only demands OR, integration.nix:409-413); also drop the vestigial `protectedVHost _subdomain` param (caddy.nix:107) | L | S | Quality | **HARVESTED** → services S6 |
+| 7 | Add the missing `or false` guard to `config.services.monitor365.enable` (its sibling on the same line has one, caddy.nix:361) — same touch as #6 | L | S | Cleanup | **HARVESTED** (batched into S6) |
+| 8 | Check whether traffic is double-logged: caddy.nix logFormat writes a global access log while the nixpkgs module also writes per-vhost logs (geometrikks consumes those, geometrikks.nix:41-65); confirm roll bounds cover both | L-M | S | Quality | **HARVESTED** → services S7 |
+| 9 | Mint self-check: assert the minted leaf's SAN set covers both zones before `install` (openssl -text grep) so a broken extfile fails the mint, not the first TLS handshake | L | S | Quality | **HARVESTED** → services S8 |
+| 10 | Eval assertion: every HAND-WRITTEN caddy vHost subdomain ∈ dns-local (only registry entries are asserted today; a future typo'd hand-written vHost would silently get no DNS) | M | S | Quality | **HARVESTED** → services S9 |
+| 11 | dns-local ghost sweep: entries with no consumer vHost (e.g. legacy `alerts`) — eval-time cross-check precedent exists in the catalog migration | L | S | Cleanup | **HARVESTED** (batched into S9) |
+| 12 | Write `docs/services/caddy.md` runbook: vHost map + layer doctrine, cert flow (mint + static fallback), ops (restart/reload + PrivateTmp note), log layout, cloud mirroring; fold in the review's verdict table + HSTS-preload deliberately-not note | M | M | Docs | **HARVESTED** → services S10 |
+| 13 | Derive post-deploy `AUTH_VHOSTS` from the integration registry (eval-emitted file) instead of the hand-maintained list | M | M | Quality | **HARVESTED** → pipeline P1 |
+| 14 | Add one PLAIN-vHost external-TLS probe to post-deploy smoke (auth-gateway list covers only protected vhosts; plain vhosts' external path is proven only in VM tests) | M | S | Quality | **HARVESTED** → pipeline P2 |
+| 15 | Live-probe the UDP/443 drop (read-only nft/iptables check) as step 1 of S1 | M | S | Quality | rides S1 execution |
+| 16 | `nix eval` the rendered vHost map and set-compare against this review's static reading (worktree-baseline doctrine) | M | S | Quality | rides the S-batch execution (post-change verify) |
+| 17 | Confirm the DEPLOYED generation serves the minted dual-zone cert (`openssl s_client` SAN check) — deploy-skew doctrine | M | S | Quality | rides the next caddy-carrying deploy close-out |
+| 18 | Complete T15-T19 vHost→registry migration (7+ vHosts still hand-written; debt named in catalog-platform.nix:2) | M | L | Quality | NOT — pre-existing debt, larger than session scope; candidate for its own dispatch |
+| 19 | Split caddy.nix (572 lines > ~300 guideline): cert-mint → own module, vHost helpers → lib | L | M | Cleanup | NOT — hub-module refactor mid-flight; ROADMAP |
+| 20 | `request_body max_size 10GB` — deliberate (Immich uploads) or tighten per-vhost? | ? | S | Decision | NOT — riding §g Q2 |
+| 21 | CSP baseline header decision (heterogeneous apps make a global CSP hard; LAN+authed surface lowers value) | L | M | Security | NOT — ROADMAP/decision |
+| 22 | HSTS `preload` | L | S | Watch | NOT — deliberately inapplicable (internal CA, .lan/.cloud) |
+| 23 | Retire or keep the static sops cert fallback (`dnsblockd_server_cert/key`) once mint is proven everywhere | L | S | Decision | NOT — owner DR call, §g-adjacent |
+| 24 | Extend test-cloud-domain.nix: :80 cloud-name redirect + cloud https catch-all redirect coverage | L | S | Quality | NOT — test polish; rides next caddy touch |
+| 25 | Gatus "Caddy" metrics check: add `[RESPONSE_TIME] < 500` | L | S | Quality | NOT — rides next caddy touch |
+| 26 | `X-Frame-Options SAMEORIGIN` vs embed use-cases | L | S | Watch | NOT — no known embed consumer |
+| 27 | voice/whisper dns-local entries when voice-agents ever ships | L | S | Watch | NOT — feature-gated, documented in caddy.nix:351-358 |
+| 28 | Explicit `admin localhost:2019` in globalConfig for self-documentation | L | S | Cleanup | NOT — default already localhost; cosmetic |
+| 29 | caddy MemoryMax headroom check under 10GB uploads (512M via harden{}; streaming proxy so likely fine) | L | S | Quality | NOT — speculative, no observed pressure |
+| 30 | Re-run `checks.caddy-mint` + the negative-test-lints caddy-mutant case after every S-batch edit | M | S | Quality | rides S-batch execution |
+| 31 | Add SystemNix vHost map to the architecture catalog hub | L | M | Feature | NOT — cross-repo, hub-owned (sources live in the hub repo) |
+| 32 | Use geometrikks' eval-derived log-path pattern as the model for P1 | M | S | Quality | rides P1 execution |
+| 33 | Add "git-blame before flagging unjustified relaxations" to the nix-review skill checklist | L | S | Process | NOT here — skill lives in the crush-config repo (cross-repo edit) |
+| 34 | Cite exact code lines in AGENTS.md claims so drift is greppable (the After+Requires class) | L | S | Docs | covered by S2 + §e3 |
+| 35 | Fold the review verdict table into the caddy runbook when S10 lands | L | S | Docs | rides S10 |
+
+(35 substantive items; the count-50 ceiling was not padded — items 15-17, 30, 32, 35 are execution notes riding harvested rows rather than fake rows.)
+
+## §g) Three questions I cannot answer myself
+
+1. **HTTP/3 posture:** open UDP/443 in the firewall so caddy's h3 actually works (my recommendation — QUIC helps exactly the lossy WAN/VPN path, and DoQ already uses UDP on this box), or pin caddy to `h1 h2` and keep UDP/443 closed? This decides S1's direction; both are one-liners, but it is a firewall-surface call.
+2. **`request_body max_size 10GB`** (caddy.nix:87-89, applied to EVERY vHost): deliberate floor for large Immich uploads, or a copy-paste default that should be tightened per-vhost? I can't infer the intended upload profile from the repo.
+3. **Dispatch pacing:** should the 13 harvested items (S1-S10, P1-P2) go to the tq pool as one batch now, or wait for the manual-deploy/pacing decisions that several other queue rows are already blocked on? Several S-items touch the same file, so batching matters.
+
+---
+
+## Harvest Log (executed at authoring time, per AGENTS.md TODO System)
+
+Queued **13** direct follow-ups — one `[ready]` one-liner each in `TODO_LIST.md` (new dated harvest section, line 485 precedent) + full entries in the domain libraries:
+
+| Row | Library | Item |
+|---|---|---|
+| S1 | docs/todo/services.md | QUIC/HTTP-3 fix (open UDP/443 or pin h1/h2) |
+| S2 | docs/todo/services.md | Mint-chain `Requires=` + comment/AGENTS alignment |
+| S3 | docs/todo/services.md | NoNewPrivileges inline comment + mechanism re-verify |
+| S4 | docs/todo/services.md | CAP_NET_ADMIN drop probe (VM-verified) |
+| S5 | docs/todo/services.md | default_bind comment + archaeology + routing-model note |
+| S6 | docs/todo/services.md | port/root XOR assertion (+ vestigial param, + monitor365 or-guard) |
+| S7 | docs/todo/services.md | double-logging check |
+| S8 | docs/todo/services.md | mint SAN self-assert |
+| S9 | docs/todo/services.md | hand-written vHost ↔ dns-local assertion + ghost sweep |
+| S10 | docs/todo/services.md | docs/services/caddy.md runbook |
+| P1 | docs/todo/pipeline.md | AUTH_VHOSTS registry derivation |
+| P2 | docs/todo/pipeline.md | plain-vHost external-TLS post-deploy probe |
+
+**Deliberately NOT harvested (with reasons):** items 15-17, 30, 32, 35 — execution notes riding harvested rows, not standalone work; item 18 (T15-T19) — pre-existing debt larger than session scope, deserves its own dispatch; items 19, 21, 22, 23, 24, 25, 26, 27, 28, 29 — decision/watch/cosmetic classes per the queue routing rules (vague/long-term → ROADMAP; owner questions stay as §g); items 31, 33 — cross-repo surfaces (hub repo, crush-config repo).
+
+## Provenance
+
+- **Files read (no writes):** caddy.nix (full), integration.nix, sops.nix, dns-local.nix, local-network.nix, networking.nix, lib/systemd.nix, test-caddy-mint.nix, test-caddy-auth.nix, gatus-config.nix, post-deploy-check.sh, plus greps across ~100 caddy references.
+- **Files written:** this report + TODO_LIST.md + docs/todo/services.md + docs/todo/pipeline.md (harvest appends only).
+- **No commit made** — harness forbids commits without an explicit user request; the auto-commit daemon picks the files up.
+- **Nothing was deployed, nothing was researched outside the caddy surface.**
