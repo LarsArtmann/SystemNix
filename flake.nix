@@ -2220,6 +2220,109 @@
                     touch $out
                   '';
 
+              # The pre-commit nix-parse leg (the auto-commit daemon's
+              # broken-intermediate class, 4 swept into history before
+              # 2026-09-30): proves the staged-.nix parse gate end-to-end —
+              # a broken staged file FAILS, a valid nested one parses, a
+              # deletion-only staging skips — plus a mutation negative (the
+              # parse command neutered must trip the fixture's P1 assert).
+              # Bare `nix-instantiate` resolves from PATH (pinned to pkgs.nix
+              # via nativeBuildInputs; on the host that IS the hook's real
+              # invocation). Parse-only needs no store: HOME is pinned to a
+              # scratch dir so libstore init cannot write anywhere real.
+              precommit-nix-parse-selftest =
+                pkgs.runCommand "precommit-nix-parse-selftest"
+                  {
+                    nativeBuildInputs = [
+                      pkgs.git
+                      pkgs.nix
+                    ];
+                  }
+                  ''
+                    scratch=$(mktemp -d)
+                    mkdir -p "$scratch/home"
+                    export HOME="$scratch/home"
+                    cp ${./scripts/test-precommit-nix-parse.sh} "$scratch/test.sh"
+                    cp ${./.githooks/pre-commit} "$scratch/real-hook"
+                    PRECOMMIT_HOOK="$scratch/real-hook" bash "$scratch/test.sh"
+                    sed 's/nix-instantiate --parse/nix-instantiate --parse-neutered/' "$scratch/real-hook" > "$scratch/mutated-hook"
+                    if PRECOMMIT_HOOK="$scratch/mutated-hook" bash "$scratch/test.sh" > "$scratch/mut.log" 2>&1; then
+                      echo "FAIL: mutated hook (parse command neutered) passed the fixture"
+                      cat "$scratch/mut.log"
+                      exit 1
+                    fi
+                    grep -q "P1" "$scratch/mut.log" || {
+                      echo "FAIL: mutation caught but not by the P1 assert"
+                      cat "$scratch/mut.log"
+                      exit 1
+                    }
+                    touch $out
+                  '';
+
+              # Standing regression test for the pre-commit docs-only
+              # flake-check skip guard (landed 2026-09-28, verified only with
+              # a throwaway /tmp classification script until this fixture).
+              # Proves the classification (all-docs staged diff skips the
+              # leg; .nix-mixed / deleted-.nix / extension-less diffs run it)
+              # plus a mutation negative: narrowing the pattern to .md-only
+              # must trip the fixture's T1 assert — html/txt-only commits
+              # would silently lose the skip.
+              precommit-docs-skip-selftest =
+                pkgs.runCommand "precommit-docs-skip-selftest"
+                  {
+                    nativeBuildInputs = [ pkgs.git ];
+                  }
+                  ''
+                    scratch=$(mktemp -d)
+                    cp ${./scripts/test-precommit-docs-skip.sh} "$scratch/test.sh"
+                    cp ${./.githooks/pre-commit} "$scratch/real-hook"
+                    PRECOMMIT_HOOK="$scratch/real-hook" bash "$scratch/test.sh"
+                    sed "s/'\\.(md|html|txt)\\$'/'\\.(md)\\$'/" "$scratch/real-hook" > "$scratch/mutated-hook"
+                    if PRECOMMIT_HOOK="$scratch/mutated-hook" bash "$scratch/test.sh" > "$scratch/mut.log" 2>&1; then
+                      echo "FAIL: mutated hook (docs pattern narrowed to .md-only) passed the fixture"
+                      cat "$scratch/mut.log"
+                      exit 1
+                    fi
+                    grep -q "T1" "$scratch/mut.log" || {
+                      echo "FAIL: mutation caught but not by the T1 assert"
+                      cat "$scratch/mut.log"
+                      exit 1
+                    }
+                    touch $out
+                  '';
+
+              # Standing fixture test for .githooks/commit-msg (the 72-char
+              # subject contract, whose 7 verification fixtures died with its
+              # authoring session 2026-09-28). Proves the inclusive 72/73
+              # boundary, comment-scaffold skipping, both merge exemptions,
+              # and the multibyte ${#} locale semantics under LC_ALL=C — plus
+              # a mutation negative (the 72 constant drifted must trip the
+              # fixture's C2 assert).
+              commit-msg-hook-selftest =
+                pkgs.runCommand "commit-msg-hook-selftest"
+                  {
+                    nativeBuildInputs = [ pkgs.git ];
+                  }
+                  ''
+                    scratch=$(mktemp -d)
+                    cp ${./scripts/test-commit-msg-hook.sh} "$scratch/test.sh"
+                    cp ${./.githooks/commit-msg} "$scratch/real-hook"
+                    COMMIT_MSG_HOOK="$scratch/real-hook" bash "$scratch/test.sh"
+                    sed 's/-gt 72/-gt 999/' "$scratch/real-hook" > "$scratch/mutated-hook"
+                    if COMMIT_MSG_HOOK="$scratch/mutated-hook" bash "$scratch/test.sh" > "$scratch/mut.log" 2>&1; then
+                      echo "FAIL: mutated hook (limit drifted to 999) passed the fixture"
+                      cat "$scratch/mut.log"
+                      exit 1
+                    fi
+                    grep -q "C2" "$scratch/mut.log" || {
+                      echo "FAIL: mutation caught but not by the C2 assert"
+                      cat "$scratch/mut.log"
+                      exit 1
+                    }
+                    touch $out
+                  '';
+
+
               # The post-deploy pressure verdicts must never call a storm
               # healthy (2026-09-02: PASS at memory PSI avg10 48-77% during
               # the evening storm). Fixture-driven through the SAME

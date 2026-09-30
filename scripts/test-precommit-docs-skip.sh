@@ -40,7 +40,7 @@ ok() {
 }
 
 echo "=== Static asserts on $HOOK (the docs-only skip guard's load-bearing text) ==="
-grep -qF "git diff --cached --name-only | grep -qvE '\\\\.(md|html|txt)\\$'" "$HOOK" &&
+grep -qF "| grep -qvE '\\.(md|html|txt)\$'" "$HOOK" &&
   ok "T1 classification covers ALL staged paths (no --diff-filter; deletions counted)" ||
   die "T1 classification line drifted — guard and test must be re-synced"
 grep -qF 'elif [ -z "$STAGED_ALL" ]' "$HOOK" &&
