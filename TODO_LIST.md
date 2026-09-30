@@ -73,6 +73,8 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Fix the stale "deploy-pending, converged by the next run" clause in the storage.md f2 symlink-sweep row (the per-project guard is LIVE on the 2026-09-22 generation; legal-cases converges only after the root-owned-target rmdir heal)** → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-09-29_04-46_task-000001a0eb0016286b1ff87e9252f392ac57.md §f1)
 
 ### stability
+- [ ] **IO admission for tq pool + parallel build slices (io.max / heavy-job)** → [docs/todo/stability.md](docs/todo/stability.md) — 2026-09-30 3h storm class; throughput tradeoff pending owner answer
+- [ ] **deploy-queue: auto-retry deploy on PSI-calm wrapper** → [docs/todo/stability.md](docs/todo/stability.md)
 - [ ] **`btrfs-scrub@data` weekly exit-3 re-FAIL policy while the 129,533 csum errors persist until the T04-T08 repair** → [docs/todo/stability.md](docs/todo/stability.md) — every template-unit churn re-finds @data FAILED (chronic-FAIL exit-4 hazard, weekly recurrence); decide SuccessExitStatus "1 3" + Gatus-owns-errors vs keep-FAIL tripwire (Source: task-…061c report §g1)
 - [ ] **Negative-test the `btrfs-scrub@` SuccessExitStatus override (rendered = exactly [1]; exit 3 still fails)** → [docs/todo/stability.md](docs/todo/stability.md) (Source: task-…061c report §e)
 - [ ] **Codify cancel-during-storm in the guard runbook + attribute the 02:27 manual `sudo btrfs scrub cancel` (pts/22+pts/20, 2026-09-28)** → [docs/todo/stability.md](docs/todo/stability.md) (Source: task-…061c report §e/§g2)
@@ -116,6 +118,9 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Extend pre-reboot-check (or add a self-elevating app) to print the systemd-boot entry list + per-entry generation mapping so agent sessions can verify boot-menu depth without sudo** → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-09-29_23-13_nix-gc-retention-3d-to-7d-boot-menu-depth.md §f7)
 
 ### monitoring
+- [ ] **ClickHouse fill-velocity gauge + time-to-fill alert (append-only P0)** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
+- [ ] **`signoz-collector-config-lint` flake check (live-fire render validation)** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
+- [ ] **Runbook: live-fire collector-config validation procedure** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **GCP integration hardening batch (VM test, CHANGELOG, smoke §, dnsblockd restart semantics)** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **SigNoz GCP integration: re-arm (enable=true) + deploy the executed go-live + verify live metric names** → [docs/todo/monitoring.md](docs/todo/monitoring.md) — receivers are containment-DISABLED (enable=false) since the 2026-09-29 first-deploy falsification; re-arm + deploy + verification checklist
 - [ ] **Textfile-collector fixed-name `.tmp` audit (the niri EACCES class) + stale `btrfs-compression.prom.tmp` check** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
@@ -147,6 +152,7 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **Bisect the llama.cpp 0.3.0 mid-load CPU-spin upstream (ROCm runtime / kernel / GPU-state — upstream of llama.cpp) — THE gate for re-enabling llama-rag and unblocking the paperless RAG item** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
 
 ### services
+- [ ] **Commit or stash CV TODO_LIST.md to unstick tq task `000001a0` (17 refusals)** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Paperless scheduled-task failure monitoring + encrypted-tag consistency alert** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Attic-class follow-ups from the exit-4 fix** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Docker image retention follow-through (post-rework)** → [docs/todo/services.md](docs/todo/services.md)
@@ -192,6 +198,8 @@ Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never
 - [ ] **CHANGELOG row + forgejo.md runbook section for the theme cascade trap** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-09-30_00-44_forgejo-dark-theme-cascade-fix-status.md §f5)
 
 ### upstream
+- [ ] **PMA OTel span instrumentation upstream (overview `fff1035` pattern)** → [docs/todo/upstream.md](docs/todo/upstream.md)
+- [ ] **papdashboard OTel span instrumentation upstream (clone first)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Post-push go-taskqueue consumption: `nix flake lock --update-input go-taskqueue` + verify FOD/package from our lock + redeploy `tq-agent-pool` (agent-executable once go-taskqueue master is pushed)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **browser-history gate-count gap: read-model `Count()` = 0 despite existing users (found live 2026-09-18)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Upstream cqrs-htmx usermgmt: an ES-registered user was LOST across restarts (found live 2026-09-19)** → [docs/todo/upstream.md](docs/todo/upstream.md)

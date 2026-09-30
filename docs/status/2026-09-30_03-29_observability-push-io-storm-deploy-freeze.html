@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report Title</title>
+    <title>SystemNix Status — Observability Push &amp; IO-Storm Deploy Freeze (2026-09-30)</title>
     <style>
       /* =========================================================================
          BAUHAUS DARK — Dashboard template
@@ -826,211 +826,223 @@
     </style>
   </head>
   <body>
-    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>STATUS SNAPSHOT</span>
+      <span>2026-09-30 03:29 &middot; evo-x2</span>
+      <span>observability session + deploy freeze</span>
     </div>
 
     <div class="layout">
-      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
       <aside class="sidebar" data-nav>
         <nav>
           <div class="label">Contents</div>
           <a href="#summary">Summary</a>
-          <a href="#findings">Findings</a>
-          <a href="#issues">Issue Cards</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#plan">Plan</a>
+          <a href="#done">a) Fully Done</a>
+          <a href="#partial">b) Partially Done</a>
+          <a href="#notstarted">c) Not Started</a>
+          <a href="#fucked">d) Totally Fucked Up</a>
+          <a href="#improve">e) Improve</a>
+          <a href="#next">f) Top 25 Next</a>
+          <a href="#question">g) Top Question</a>
         </nav>
       </aside>
 
       <main class="main">
-        <!-- Hero -->
         <div class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="hero-badge">Report Type</div>
-          <h1>Report Title</h1>
+          <div class="hero-badge">Status Report</div>
+          <h1>Observability Push &amp; IO-Storm Deploy Freeze</h1>
           <p class="hero-subtitle">
-            One-sentence description of what this report covers.
+            Window 2026-09-29 ~23:30 &rarr; 09-30 03:29. SigNoz gap items 2+3 fully implemented and committed; the deploy is the only remaining step and has been blocked 3h by a real IO storm. Supersedes the 01:30 full snapshot for this window; the broad project inventory lives there.
           </p>
         </div>
 
-        <!-- Inline TOC (alternative to sidebar; pick one) -->
         <nav class="toc">
-          <h3>Contents</h3>
+          <h3>Context</h3>
           <ul>
-            <li><a href="#summary">Summary</a></li>
-            <li><a href="#findings">Findings</a></li>
-            <li><a href="#issues">Issue Cards</a></li>
-            <li><a href="#proposal">Proposal</a></li>
-            <li><a href="#plan">Plan</a></li>
+            <li><a href="https://github.com/LarsArtmann/SystemNix/blob/master/docs/research/2026-09-29_signoz-grafana-gap-analysis.md">gap analysis (research doc)</a></li>
+            <li>Owner decisions 2026-09-29: telemetry stays APPEND-ONLY (no deletion TTLs); gap items 2 (spanmetrics+servicegraph) and 3 (trace instrumentation) green-lit</li>
           </ul>
         </nav>
 
-        <!-- Stats Dashboard -->
         <h2 id="summary"><span class="num">00</span>Summary</h2>
         <div class="stat-grid">
-          <div class="stat-card">
-            <div class="stat-value">42</div>
-            <div class="stat-label">Total Items</div>
-          </div>
-          <div class="stat-card stat-bad">
-            <div class="stat-value">7</div>
-            <div class="stat-label">Critical</div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">6</div>
+            <div class="stat-label">Fully done (committed)</div>
           </div>
           <div class="stat-card stat-warn">
-            <div class="stat-value">12</div>
-            <div class="stat-label">Warnings</div>
+            <div class="stat-value">3</div>
+            <div class="stat-label">Partially done</div>
           </div>
-          <div class="stat-card stat-good">
-            <div class="stat-value">35</div>
-            <div class="stat-label">Resolved</div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">1</div>
+            <div class="stat-label">Deploy frozen by IO storm (3h+)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">25</div>
+            <div class="stat-label">Ranked next tasks (&sect;f)</div>
           </div>
         </div>
 
-        <!-- Findings as Cards -->
-        <h2 id="findings"><span class="num">01</span>Findings</h2>
+        <div class="card card-warning">
+          <h4>The one-paragraph state</h4>
+          <p>Everything from the observability session is implemented, tested, validated against the real collector binary, and committed on both repos (SystemNix + overview). The single remaining step &mdash; <code>nix run .#deploy</code> &mdash; has been blocked since 00:24 by the pressure gate: a sustained IO storm (PSI some avg10 oscillating 36&ndash;90%) driven first by a tq-agent-pool task wave (+45.5&nbsp;GB/trip), then by a parallel session&rsquo;s nix builds. Two patient auto-retry rounds expired at 02:20. Guard zone-6 tripped 6+ times (#1448&ndash;#1453+), sacrificing flm all night. All work is safely committed; nothing is mid-edit.</p>
+        </div>
 
-        <div class="card card-problem">
-          <h4>Critical Issue</h4>
-          <p>Description of the problem and its impact.</p>
+        <h2 id="done"><span class="num">01</span>a) Fully Done</h2>
+
+        <div class="card card-solution">
+          <h4>Gap analysis + append-only owner decision recorded</h4>
+          <p><code>docs/research/2026-09-29_signoz-grafana-gap-analysis.md</code> &mdash; P0 reframed from &ldquo;set deletion TTLs&rdquo; to &ldquo;make append-only safe&rdquo; (velocity monitoring + pool-tiering as the only sanctioned lever). Decision block added so no future session re-proposes deletion windows. Committed via daemon (b16a8a8f, 586ce520).</p>
         </div>
 
         <div class="card card-solution">
-          <h4>Recommended Fix</h4>
-          <p>Description of the solution with rationale.</p>
+          <h4>spanmetrics: SigNoz-native processor wired (gap item 2a)</h4>
+          <p><code>signoz.nix</code>: <code>signozspanmetrics/delta</code> processor mirroring upstream&rsquo;s own default collector config (same exporter, delta temporality, explicit buckets, full dimension set) in the traces pipeline before batch. Emits <code>signoz_calls_total</code> / <code>signoz_latency</code> / <code>signoz_db_latency_*</code> into signoz_metrics &mdash; the series the Services page RED metrics read. Chose the native processor over the contrib connector after reading upstream&rsquo;s OpAmp-served ground truth.</p>
         </div>
 
-        <!-- Issue Cards -->
-        <h2 id="issues"><span class="num">02</span>Issue Cards</h2>
-
-        <div class="issue issue-critical">
-          <span class="severity severity-critical">Blocking</span>
-          <h3>Critical finding title</h3>
-          <div class="where">path/to/file.go:42-58</div>
-          <p>
-            Describe the problem and cite the code or behavior that proves it.
-          </p>
-          <div class="callout callout-solution">
-            <strong>Fix</strong>
-            State the concrete recommended action.
-          </div>
+        <div class="card card-solution">
+          <h4>servicegraph connector wired + config validated live (gap item 2b)</h4>
+          <p>Contrib servicegraph connector (compiled into our collector build, components.go:427) as traces-exporter &rarr; metrics-receiver. The live-fire validation (booting the real binary against the rendered config with rebased ports) <strong>caught a real config error before deploy</strong>: v0.144.0 removed <code>wait</code>/<code>max_connection_age</code> &mdash; fixed to the <code>store.max_items</code>/<code>store.ttl</code> shape and re-validated (only failure = expected 8888 bind conflict with the live collector = config fully valid).</p>
         </div>
 
-        <div class="issue issue-important">
-          <span class="severity severity-important">Important</span>
-          <h3>Important finding title</h3>
-          <div class="where">path/to/another.go:12-19</div>
-          <p>
-            Explain the risk and why a careful reviewer would hesitate before
-            shipping.
-          </p>
+        <div class="card card-solution">
+          <h4>overview: real HTTP server spans (gap item 3, first of four repos)</h4>
+          <p>Upstream <strong>fff1035</strong> (pushed): <code>traceMiddleware</code> with span name = mux route pattern (renamed post-routing, so <code>/project/{name}</code> collapses &mdash; spanmetrics cardinality stays bounded), status capture with Flusher/Hijacker passthrough for SSE, &ge;500 marks span error, /metrics + /debug/pprof skipped. 4 new tests, full repo suite green. vendorHash refreshed (bffe18f) after a parallel session&rsquo;s indirect dep bumps &mdash; package builds green from master AND from SystemNix&rsquo;s lock.</p>
         </div>
 
-        <div class="issue issue-nice">
-          <span class="severity severity-nice">Nice to have</span>
-          <h3>Polish suggestion</h3>
-          <div class="where">docs/ or config</div>
-          <p>
-            Minor documentation gaps or future-proofing suggestions go here.
-          </p>
+        <div class="card card-solution">
+          <h4>Coverage registry ratchet armed</h4>
+          <p><code>signoz-coverage.nix</code>: overview flipped <code>wiring = "upstream" &rarr; "env"</code> (maxAgeHours 26) &mdash; once spans flow post-deploy, the runtime collector enforces freshness instead of just displaying the gap.</p>
         </div>
 
-        <!-- Strengths -->
-        <h2>Strengths</h2>
-        <div class="strengths">
-          <div class="strength">
-            <div class="check">+</div>
-            <div class="text">
-              <strong>Specific strength</strong>
-              <span>Explain why it matters and what it enables.</span>
-            </div>
-          </div>
+        <div class="card card-solution">
+          <h4>SystemNix flake re-locked</h5>
+          <p>overview input bumped to <code>bffe18fc</code> (36cb5248); evo-x2 toplevel eval + <code>nix flake check --no-build</code> both green after the GC-eviction heal (see &sect;d).</p>
         </div>
 
-        <!-- Table with Badges -->
-        <h2>Issue Table</h2>
+        <h2 id="partial"><span class="num">02</span>b) Partially Done</h2>
+
+        <div class="card card-warning">
+          <h4>THE deploy &mdash; built, all gates green, blocked at the pressure gate</h4>
+          <p><strong>What works:</strong> toplevel eval green, flake check green, pre-deploy 70-pass/0-fail at 00:24. Everything warm in the store &mdash; the deploy itself is minutes once calm.<br>
+          <strong>What remains:</strong> one <code>nix run .#deploy</code> in a calm window (avg10 &lt; 20%, and no zone-6 trip in the last 60 min per the rc=12 doctrine). Two patient background retry rounds expired 02:20 without a calm window.<br>
+          <strong>Blocker:</strong> the IO storm in &sect;d &mdash; external (owned parallel work), not fixable from this session.<br>
+          <strong>Effort:</strong> S.</p>
+        </div>
+
+        <div class="card card-warning">
+          <h4>Post-deploy verification battery</h4>
+          <p>Not run (depends on the deploy): overview spans in ClickHouse, <code>signoz_calls_total</code> series appearing, <code>traces_service_graph_*</code> edges (discordsync&rarr;discord.com, bank-sync&rarr;wise, cv&rarr;portals), <code>signoz_traces_reporting{service="overview"}</code> flipping to 1, collector journal clean of decode errors. <strong>Effort:</strong> S.</p>
+        </div>
+
+        <div class="card card-warning">
+          <h4>Trace coverage across the four gap repos</h4>
+          <p>overview done; PMA / papdashboard / hermes remain (&sect;c). <strong>Effort:</strong> M each for the Go pair, L for hermes.</p>
+        </div>
+
+        <h2 id="notstarted"><span class="num">03</span>c) Not Started</h2>
         <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Severity</th>
-              <th>Issue</th>
-              <th>Status</th>
-            </tr>
-          </thead>
+          <thead><tr><th>Item</th><th>Why not started</th><th>Still wanted?</th></tr></thead>
           <tbody>
-            <tr>
-              <td>1</td>
-              <td><span class="badge badge-critical">Critical</span></td>
-              <td>Missing error handling</td>
-              <td><span class="badge badge-fixed">Fixed</span></td>
-            </tr>
-            <tr>
-              <td>2</td>
-              <td><span class="badge badge-high">High</span></td>
-              <td>Race condition</td>
-              <td><span class="badge badge-low">Open</span></td>
-            </tr>
+            <tr><td>PMA span instrumentation (upstream Go repo)</td><td>Session scoped to one repo; PMA is next in line</td><td><span class="badge badge-high">Yes &mdash; next</span></td></tr>
+            <tr><td>papdashboard span instrumentation</td><td>No local checkout yet (clone first); alert-hub HTTP + flm-enricher call shape</td><td><span class="badge badge-high">Yes</span></td></tr>
+            <tr><td>hermes tracing (Python, external upstream)</td><td>Not our repo &mdash; needs fork/patch/upstream-PR decision</td><td><span class="badge badge-medium">Owner decision</span></td></tr>
+            <tr><td>ClickHouse fill-velocity monitoring (append-only P0)</td><td>Reframed only tonight; velocity gauge + time-to-fill alert on clickhouse-xfs-metrics not built</td><td><span class="badge badge-high">Yes &mdash; the real P0</span></td></tr>
+            <tr><td>spanmetrics RED / service-map dashboard</td><td>Deliberately deferred: SigNoz&rsquo;s Services page lights up natively from these series; custom dashboard only if the UI proves insufficient post-deploy</td><td><span class="badge badge-low">Deferred</span></td></tr>
           </tbody>
         </table>
 
-        <!-- Before/After Comparison -->
-        <h2 id="proposal">Before / After</h2>
-        <div class="compare-header">
-          <div class="compare-before">Before</div>
-          <div class="compare-after">After</div>
-        </div>
-        <div class="compare-row">
-          <div>
-            <pre><code><span class="tok-comment">// Old code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>(data <span class="tok-type">interface</span>{}) { }</code></pre>
-          </div>
-          <div>
-            <pre><code><span class="tok-comment">// New code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>[T <span class="tok-type">any</span>](data T) { }</code></pre>
-          </div>
+        <h2 id="fucked"><span class="num">04</span>d) Totally Fucked Up</h2>
+
+        <div class="card card-problem">
+          <h4>3h+ IO storm &mdash; all deploys fleet-blocked, flm sacrificed all night</h4>
+          <p><strong>What:</strong> IO PSI some avg10 36&ndash;90% continuously since ~00:20 (now ~36%). Guard zone-6 trips #1448&ndash;#1453+; flm socket stopped+restored repeatedly; the deploy pressure gate (correctly) refuses every attempt.<br>
+          <strong>Driver rotation observed:</strong> tq-agent-pool +45.5&nbsp;GB/trip (task 000001a0 wave) &rarr; nix-daemon +8.5&ndash;14.7&nbsp;GB/trip (parallel session builds) &mdash; the uncoordinated-parallel-sessions class AGAIN (freeze #4/#5/#6 lineage).<br>
+          <strong>Severity:</strong> no data loss; flm availability + the whole deploy pipeline impacted.<br>
+          <strong>Mitigation:</strong> wait-out (correct per doctrine); structural fix = IO admission for agent/session work (&sect;e3).</p>
         </div>
 
-        <!-- ASCII Diagram -->
-        <h2>Dependency Tree</h2>
-        <div class="dep-tree">
-          <span class="root">root</span> ├──
-          <span class="ok">wanted-dep</span> └──
-          <span class="unwanted">unwanted-dep</span>
+        <div class="card card-problem">
+          <h4>tq task 000001a0 refused 17&times; consecutively &mdash; dirty CV tree</h4>
+          <p>Preflight refuses to run the agent because <code>/home/lars/projects/CV</code> has uncommitted TODO_LIST.md changes (&ldquo;commit/stash first, or set require_clean=false&rdquo;). Burned a retry-after window of 15+ min and contributed harvest noise all night. Fix: S &mdash; commit/stash the CV tree (owner or next session with CV rights).</p>
         </div>
 
-        <!-- Numbered Steps -->
-        <h2 id="plan"><span class="num">03</span>Migration Plan</h2>
-        <div class="migration-step">
-          <div class="migration-num">1</div>
-          <div class="migration-content">
-            <h4>Add generic type parameter</h4>
-            <p>Update the function signature to accept a type parameter.</p>
-          </div>
+        <div class="card card-problem">
+          <h4>GC-evicted flake sources broke flake check twice this session</h4>
+          <p><code>path &hellip;backup-drifted.nix is not valid</code> (borg-restore-drill fixture) and the earlier hermes class. Healed both times by isolated check evals; root cause (which input, why evicted, prefetch leg) still queued in docs/todo/pipeline.md &mdash; recurring, unowned.</p>
         </div>
-        <div class="migration-step">
-          <div class="migration-num">2</div>
-          <div class="migration-content">
-            <h4>Update all call sites</h4>
-            <p>Pass explicit types at each call site for type safety.</p>
-          </div>
+
+        <div class="card card-warning">
+          <h4>Active parallel session owns uncommitted tree state</h4>
+          <p>flake.lock carries an uncommitted diff + 33-file daemon commit (3dce80b8: netbird VPN research, GEOMETRIKKS migration planning, pareto plan). Flagged, not touched, per multi-agent discipline. If that session dies before committing, its work is still in the tree for recovery.</p>
+        </div>
+
+        <h2 id="improve"><span class="num">05</span>e) What We Should Improve</h2>
+
+        <div class="card card-solution">
+          <h4>1. Bake collector-config validation into a flake check</h4>
+          <p>The spanmetrics/servicegraph config error was caught only because I manually live-fired the binary. A <code>signoz-collector-config-lint</code> check (render collector.yaml &rarr; boot the collector with rebased ports &rarr; assert only the expected bind-conflict failure) would gate the whole class at commit time. gatus-pattern-lint precedent. <strong>Effort M, impact: no more collector crash-loop deploys.</strong></p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>2. Stop babysitting blocked deploys</h4>
+          <p>Tonight cost two manual 30&ndash;60-min watch loops. A tiny deploy-queue wrapper (poll PSI, fire <code>nix run .#deploy</code> when calm, heartbeat journal) removes the human loop. <strong>Effort S&ndash;M.</strong></p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>3. IO admission for agent + parallel-session work</h4>
+          <p>The storm drivers are OWNED work (tq agents, parallel builds) sharing the QLC link unthrottled. cgroup <code>io.max</code> on the tq pool slice + build slices, or routing both through heavy-job, trades some throughput for freeze-class immunity. This is the session-layer version of the crush-hot-db structural fix. <strong>Effort M &mdash; owner tradeoff, see &sect;g.</strong></p>
+        </div>
+
+        <h2 id="next"><span class="num">06</span>f) Top 25 Next Tasks</h2>
+        <table>
+          <thead><tr><th>#</th><th>Impact</th><th>Effort</th><th>Category</th><th>Task</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>Feature</td><td>Deploy the observability batch in the next calm window (everything committed; only remaining step)</td></tr>
+            <tr><td>2</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>Quality</td><td>Post-deploy verification battery: overview spans, signoz_calls_total, service-graph edges, coverage gauge</td></tr>
+            <tr><td>3</td><td><span class="badge badge-high">High</span></td><td>S/M</td><td>Feature</td><td>ClickHouse fill-velocity gauge + projected time-to-fill alert on clickhouse-xfs-metrics (the append-only P0)</td></tr>
+            <tr><td>4</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Cleanup</td><td>Commit or stash CV TODO_LIST.md to unstick tq task 000001a0 (17 refusals)</td></tr>
+            <tr><td>5</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Quality</td><td>signoz-collector-config-lint flake check (live-fire render validation)</td></tr>
+            <tr><td>6</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Feature</td><td>PMA OTel span instrumentation upstream (daemon cycle spans + socket op spans)</td></tr>
+            <tr><td>7</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Feature</td><td>papdashboard OTel span instrumentation upstream (clone first; HTTP middleware pattern from overview)</td></tr>
+            <tr><td>8</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Stability</td><td>IO admission for tq pool + parallel build slices (io.max or heavy-job routing)</td></tr>
+            <tr><td>9</td><td><span class="badge badge-medium">Medium</span></td><td>S/M</td><td>Feature</td><td>deploy-queue: auto-retry deploy on PSI-calm wrapper unit</td></tr>
+            <tr><td>10</td><td><span class="badge badge-medium">Medium</span></td><td>L</td><td>Feature</td><td>hermes tracing: pick fork/patch/upstream-PR approach, then instrument (Python OTel SDK)</td></tr>
+            <tr><td>11</td><td><span class="badge badge-medium">Medium</span></td><td>S/M</td><td>Feature</td><td>spanmetrics RED dashboard IF the SigNoz UI proves insufficient post-deploy</td></tr>
+            <tr><td>12</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Quality</td><td>Ratchet signoz-coverage maxUpstreamGaps down once overview spans verified</td></tr>
+            <tr><td>13</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td>Quality</td><td>Root-cause GC-evicted flake-input sources (queued: docs/todo/pipeline.md)</td></tr>
+            <tr><td>14</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td>Feature</td><td>Let the parallel GCP-monitoring session land, then verify its registry integration</td></tr>
+            <tr><td>15</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Process</td><td>Disposition the netbird selfhosted-VPN research (parallel session, 253-line doc)</td></tr>
+            <tr><td>16</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Process</td><td>Disposition the GEOMETRIKKS native-nix migration plan (parallel session)</td></tr>
+            <tr><td>17</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Documentation</td><td>Add a SUPERSEDED banner + link on the 01:30 full snapshot pointing here</td></tr>
+            <tr><td>18</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>Documentation</td><td>Record the live-fire collector validation procedure in docs/services (runbook-grade)</td></tr>
+            <tr><td>19</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>Cleanup</td><td>Drop the now-dead &ldquo;zero span sites&rdquo; comment lineage in signoz-coverage.nix for PMA/papdashboard if stale</td></tr>
+            <tr><td>20</td><td><span class="badge badge-low">Low</span></td><td>M</td><td>Stability</td><td>llama-rag ROCm/kernel bisect after the owed reboot (standing, escape condition fired 09-18)</td></tr>
+            <tr><td>21</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>Stability</td><td>Fold crush-hot-db interim module into the hot-db Phase-2 module (standing)</td></tr>
+            <tr><td>22</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>Security</td><td>Offsite-borg go-live inputs (owner-gated: StorageBox hostname/username + host-key pin)</td></tr>
+            <tr><td>23</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>Feature</td><td>Mail relay: verify larsartmann.cloud in Resend + non-owner delivery probe (standing user step)</td></tr>
+            <tr><td>24</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>Feature</td><td>Pocket ID &ldquo;send test email&rdquo; re-click post Resend verification (standing)</td></tr>
+            <tr><td>25</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>Cleanup</td><td>/data EIO corruption repair (standing storage P0; btrbk-data leg depends on it)</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="question"><span class="num">07</span>g) Top Question</h2>
+        <div class="card card-warning">
+          <h4>Should agent/parallel-session work get enforced IO ceilings, even at throughput cost?</h4>
+          <p>Tonight&rsquo;s storm (like freezes #4/#5/#6) was driven by OWNED work: a tq agent task reading 45&nbsp;GB and a parallel session&rsquo;s nix builds, sharing one QLC link with everything else. I can build the admission (io.max on the tq pool slice + nix build slices, or heavy-job routing), but only you can decide the tradeoff: it will make agent tasks and parallel builds slower in exchange for the box never freezing (or blocking deploys) because of them. Alternatives considered and rejected: waiting it out every time (tonight cost 3h of deploy freeze), or tightening the guard further (it already trips; it can&rsquo;t throttle what it doesn&rsquo;t own).</p>
         </div>
 
         <footer class="footer">
-          Generated YYYY-MM-DD &middot; All claims verified against source code
-          where noted
+          Generated 2026-09-30 03:29 &middot; window 09-29 23:30 &rarr; 09-30 03:29 &middot; &sect;f items 1&ndash;13, 17&ndash;19 harvested to TODO_LIST / domain libraries at authoring time; standing items 20&ndash;25 already tracked in their domain files
         </footer>
       </main>
     </div>
-
     <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
     <script>
       (function () {
