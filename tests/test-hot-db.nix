@@ -178,5 +178,16 @@ in
     # The skip must leave NO shadow write.
     out = machine.succeed("ls -A /var/lib/hotdb-test || true")
     assert "probe.txt" not in out, f"shadow write detected: {out}"
+
+    # T14 failure path (review fix): after the entry unmount, the collector
+    # must flip the entry gauge to 0 — that transition is what the Gatus
+    # check alerts on; a regression in the mount probe would otherwise
+    # never be caught. The TIER gauge stays 1: only the entry mount was
+    # removed, /mnt/hot itself is still mounted.
+    machine.succeed("systemctl start hot-db-metrics.service")
+    prom2 = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/hot-db.prom")
+    assert "hot_tier_mounted 1" in prom2, f"tier gauge unexpectedly changed after entry unmount:\n{prom2}"
+    assert 'hot_db_entry_mounted{name="testdb"} 0' in prom2, f"entry gauge did not flip to 0 after unmount:\n{prom2}"
+    assert "hot_db_scrape_errors 0" in prom2, f"scrape_errors not 0 after unmount:\n{prom2}"
   '';
 }
