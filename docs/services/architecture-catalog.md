@@ -30,16 +30,29 @@ Actions, nightly 03:23 + push-triggered) union-merges sources, lints, builds
 
 ## Go-live checklist (owner steps, in order)
 
+0. Deploy the SystemNix generation carrying the runner PATH fix (nix, jq,
+   python3 on `gitea-runner-evo-x2` — forgejo.nix). The hub workflow parses
+   sources.json with `jq`, runs `merge.py` with `python3`, and shells go via
+   `nix shell nixpkgs#go_1_27`; without the PATH fix the first CI run fails
+   at `jq` (command not found).
 1. `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh` — mints
    the read-scoped `GIT_CLONE_TOKEN`, creates the hub pull mirror, enables
-   Actions, mirror-syncs source repos, dispatches the first run.
+   Actions, mirror-syncs source repos, dispatches the first run, and stores
+   the SERVING-side sync token at
+   `/var/lib/forgejo/.eventcatalog-hub-setup/sync-token` (root-only 0600).
+   Re-runnable: it rotates the CI + sync tokens instead of failing on the
+   unique token-name constraint.
 2. Watch `https://forgejo.home.lan/lars/eventcatalog-hub/actions` — expect
-   green + a `dist` branch. First-run watch-list: nix-shell for the runner
-   user, `jq` on the runner, job-token git-push (PUSH_TOKEN fallback
-   documented in the workflow).
-3. Paste the minted token:
-   `SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops platforms/nixos/secrets/architecture-catalog.yaml`
-   — keep the env-file format `ARCHITECTURE_CATALOG_SYNC_TOKEN=<token>`.
+   green + a `dist` branch. First-run watch-list: nix-daemon reachability
+   for the DynamicUser runner, `npm` resolving inside the runner PATH
+   (nodejs rides it), job-token git-push (PUSH_TOKEN fallback documented in
+   the workflow).
+3. Paste the sync token (read from the root-only file, never printed):
+   ```
+   SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops platforms/nixos/secrets/architecture-catalog.yaml
+   ```
+   — keep the env-file format `ARCHITECTURE_CATALOG_SYNC_TOKEN=<token>`,
+   reading the token via `sudo cat /var/lib/forgejo/.eventcatalog-hub-setup/sync-token`.
 4. `nix run .#deploy` (the module + DNS + smoke §15 are already in-tree),
    then `nix run .#post-deploy-check` — §15 stops warning once
    `/var/lib/architecture-catalog/current/index.html` exists.
@@ -116,3 +129,6 @@ always on. Re-arm triggers are documented in the hub TODO_LIST.
   `gate-timeout-audit.nix`.
 - Clone failures journal with the token REDACTED (sed over the captured
   stderr) — never loosen that.
+- Host-mode CI jobs inherit the runner UNIT's PATH — the nixpkgs module's
+  default set lacks `nix`/`jq`/`python3`; forgejo.nix's runner override adds
+  them. New workflow tooling must either ride those or extend that list.

@@ -1107,6 +1107,15 @@ _: {
           wants = [ "forgejo.service" ];
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
+          # Host-mode CI jobs inherit the runner's PATH — the hub workflow
+          # (eventcatalog-hub build.yml) needs nix (go_1_27 shell), jq
+          # (sources.json parsing), and python3 (merge.py) beyond the
+          # nixpkgs module's default tool set.
+          path = [
+            pkgs.nix
+            pkgs.jq
+            pkgs.python3
+          ];
           serviceConfig = lib.mkMerge [
             {
               EnvironmentFile = lib.mkForce "-/run/forgejo-runner/token";
