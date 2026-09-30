@@ -89,6 +89,9 @@ in
         clockDateFormat = "ddd MMM d";
 
         useAutoLocation = true;
+
+        osdAlwaysShowValue = true;
+        fontScale = 1.5;
       };
 
       # SystemNix DMS plugins — declaratively installed via DMS's plugin system.
