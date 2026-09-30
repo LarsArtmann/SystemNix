@@ -6,8 +6,8 @@
 # question never has to be re-asked.
 #
 # Static asserts pin the REAL hook's load-bearing properties:
-#   S1 the staged-file gate uses the `*.sh` pathspec (matches nested
-#      scripts/ paths, not just repo-root *.sh)
+#  S1 the staged-file gate uses the `*.sh` + `.githooks/*` pathspecs (matches
+#      nested scripts/ paths AND the extensionless hook scripts)
 #   S2 the run pipeline is NUL-delimited (-z + xargs -0 — space-safe paths)
 #   S3 the bar is --severity=warning (CI's shellcheck job is error-level;
 #      the hook is the stricter of the two)
@@ -49,10 +49,10 @@ ok() {
 }
 
 echo "=== Static asserts on $HOOK (the .sh leg's load-bearing text) ==="
-grep -qF "STAGED_SH=\$(git diff --cached --name-only --diff-filter=ACM '*.sh')" "$HOOK" &&
-  ok "S1 gate matches the *.sh pathspec (nested scripts/ paths covered)" ||
+grep -qF "STAGED_SH=\$(git diff --cached --name-only --diff-filter=ACM '*.sh' '.githooks/*')" "$HOOK" &&
+  ok "S1 gate matches *.sh + .githooks/* pathspecs (nested scripts/ + extensionless hooks covered)" ||
   die "S1 gate pathspec drifted — leg and test must be re-synced"
-grep -qF -- "--diff-filter=ACM -z '*.sh' | xargs -0" "$HOOK" &&
+grep -qF -- "--diff-filter=ACM -z '*.sh' '.githooks/*' | xargs -0" "$HOOK" &&
   ok "S2 run pipeline is NUL-delimited (-z + xargs -0)" ||
   die "S2 pipeline delimiter drifted"
 grep -qF -- "--severity=warning" "$HOOK" &&
@@ -78,18 +78,18 @@ leg() {
   # hook's cwd: git runs pre-commit from the worktree root, and the staged
   # paths the pipeline feeds shellcheck are repo-relative.
   local staged
-  staged=$(git -C "$SCRATCH" diff --cached --name-only --diff-filter=ACM '*.sh')
+  staged=$(git -C "$SCRATCH" diff --cached --name-only --diff-filter=ACM '*.sh' '.githooks/*')
   if [ -n "$staged" ]; then
     if (
       cd "$SCRATCH" &&
-        git diff --cached --name-only --diff-filter=ACM -z '*.sh' |
+        git diff --cached --name-only --diff-filter=ACM -z '*.sh' '.githooks/*' |
         xargs -0 "${SC_CMD[@]}" --severity=warning
     ) >"$LEG_LOG" 2>&1; then
       return 0
     fi
     return 1
   fi
-  echo "No staged .sh files — skipping shellcheck." >"$LEG_LOG"
+  echo "No staged .sh/.githooks files — skipping shellcheck." >"$LEG_LOG"
   return 0
 }
 
@@ -133,7 +133,7 @@ fi
 git -C "$SCRATCH" commit -qm touch
 git -C "$SCRATCH" rm -q scripts/clean.sh
 if leg; then
-  if grep -q "No staged .sh files" "$LEG_LOG"; then
+  if grep -q "No staged .sh/.githooks files" "$LEG_LOG"; then
     ok "D3 staged deletion skips the leg (empty-selection guard, no stdin hang)"
   else
     die "D3 leg passed but not via the skip branch"
@@ -142,10 +142,29 @@ else
   die "D3 deletion-only staging failed the leg (log: $(head -c 200 "$LEG_LOG"))"
 fi
 
+# D4: an extensionless .githooks file must be linted too (the 2026-09-28
+# coverage extension — hook scripts carry no .sh extension).
+mkdir -p "$SCRATCH/.githooks"
+cat >"$SCRATCH/.githooks/dirty-hook" <<'EOF'
+#!/usr/bin/env bash
+DIRTY_HOOK_PROOF="unused on purpose"
+echo "leg fixture: dirty hook"
+EOF
+git -C "$SCRATCH" add .githooks/dirty-hook
+if leg; then
+  die "D4 staged extensionless .githooks violation passed the leg — coverage extension is broken"
+else
+  if grep -q ".githooks/dirty-hook" "$LEG_LOG" && grep -q "SC2034" "$LEG_LOG"; then
+    ok "D4 extensionless .githooks violation rejected (SC2034 reported)"
+  else
+    die "D4 leg failed without naming .githooks/dirty-hook + SC2034 (log: $(head -c 200 "$LEG_LOG"))"
+  fi
+fi
+
 if [ "$FAILURES" -gt 0 ]; then
   echo ""
   echo "SELFTEST FAILED: $FAILURES assertion(s) broken"
   exit 1
 fi
 echo ""
-echo "SELFTEST OK: the pre-commit shellcheck leg covers staged scripts/*.sh (detect + pass + skip)"
+echo "SELFTEST OK: the pre-commit shellcheck leg covers staged scripts/*.sh AND .githooks/* (detect + pass + skip)"

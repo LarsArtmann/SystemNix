@@ -453,5 +453,8 @@
 ### desktop
 
 - [ ] **crush-debug: add Gatus-failing-checks as a picker source** → [docs/todo/desktop.md](docs/todo/desktop.md)
+- [ ] [ready] **Document DMS config surfaces in AGENTS.md** (settings.json vs clsettings.json vs plugin_settings.json + cfg.package wiring) → [docs/todo/desktop.md](docs/todo/desktop.md)
+- [ ] [ready] **Eval guard: declared DMS settings keys must exist in the pinned source's SettingsSpec.js** → [docs/todo/desktop.md](docs/todo/desktop.md)
+- [ ] [ready] **Identify DMS weather IP-geo endpoint; check dnsblockd classification** → [docs/todo/desktop.md](docs/todo/desktop.md)
 
 _Completed work: [CHANGELOG.md](./CHANGELOG.md). Long-term ideas: [ROADMAP.md](./ROADMAP.md)._
