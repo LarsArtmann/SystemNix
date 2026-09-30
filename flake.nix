@@ -2001,7 +2001,8 @@
                     [ -d "$STATE.qlc-pre-subvol/data" ] || { echo "FAIL fin: safety copy missing"; exit 1; }
                     [ -d "$STATE" ] || { echo "FAIL fin: new mountpoint missing"; exit 1; }
                     [ -z "$(ls -A "$STATE")" ] || { echo "FAIL fin: mountpoint not empty"; exit 1; }
-                    diff -r "$STATE.qlc-pre-subvol" "$SUBVOL" >/dev/null || { echo "FAIL fin: safety copy != subvol"; exit 1; }
+                    [ -f "$SUBVOL/.subvol-migrated" ] || { echo "FAIL fin: migration marker missing in subvol"; exit 1; }
+                    diff -r --exclude=.subvol-migrated "$STATE.qlc-pre-subvol" "$SUBVOL" >/dev/null || { echo "FAIL fin: safety copy != subvol"; exit 1; }
 
                     # 7. verification guard: tamper the destination with
                     # IDENTICAL size and mtime so rsync's quick-check SKIPS

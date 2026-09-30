@@ -16,8 +16,11 @@
 #   2. BUILD the next generation BEFORE finalize (see below), then `finalize` —
 #      stops the forgejo family, delta rsync (--delete), verifies, renames the
 #      QLC dir to a safety copy, leaves an empty mountpoint.
-#   3. Enable `services.forgejo.dedicatedSubvolume = true;` (configuration.nix)
-#      and `nix run .#deploy` — the mount activates, forgejo comes up on the subvol.
+#   3. `nix run .#deploy` — the mount activates, forgejo comes up on the subvol.
+#      (The option flip is normally PRE-STAGED in configuration.nix as part of
+#      the G1 window: deploying it BEFORE finalize is SAFE — the family
+#      condition-gates on the .subvol-migrated marker this script writes and
+#      stays DOWN, never minting fresh state on an empty/stale subvol.)
 #   4. After burn-in: trash the safety copy /var/lib/forgejo.qlc-pre-subvol.
 #
 # WHY BUILD BEFORE FINALIZE: finalize deliberately leaves forgejo DOWN —
@@ -162,10 +165,19 @@ finalize)
   chown forgejo:forgejo "$STATE_DIR"
   chmod 0750 "$STATE_DIR"
 
+  # Migration marker (forgejo.nix subvolMigratedCondition): every stateful
+  # family unit condition-gates on this file. Written through the toplevel
+  # path so it exists before the first mount; chown'd so nothing in the
+  # forgejo tree is foreign-owned (the perms-heal class).
+  touch "$SUBVOL/.subvol-migrated"
+  chown forgejo:forgejo "$SUBVOL/.subvol-migrated"
+
   cat <<'NEXT'
 ==> finalize DONE. Forgejo is DOWN by design. The ONLY sanctioned next action:
 
-  1. Edit configuration.nix: services.forgejo.dedicatedSubvolume = true;
+  1. Confirm services.forgejo.dedicatedSubvolume = true in configuration.nix
+     (pre-staged with the G1 window — without the .subvol-migrated marker
+     this script just wrote, the family stays DOWN by design);
   2. nix run .#deploy   (toplevel prebuilt — activation-quick)
   3. Verify: systemctl status forgejo; findmnt /var/lib/forgejo;
      gatus "Forgejo" + "Forgejo Mirror Sync" green; one mirror sync in the journal.

@@ -75,6 +75,15 @@ _: {
       # primary plan docs/planning/2026-09-18_16-44_*). Inert until enabled.
       dedicated = config.services.forgejo.dedicatedSubvolume;
       dataDirMountUnit = "${utils.escapeSystemdPath stateDir}.mount";
+      # G1 migration marker: scripts/migrate-forgejo-subvol.sh `finalize`
+      # touches this INSIDE the subvol after the delta-verify. Every stateful
+      # family unit condition-gates on it, so a dedicated generation deployed
+      # BEFORE finalize can never run against an empty/stale subvol (fresh
+      # DB mint via adminSetup, phantom empty dump) — the family skips
+      # cleanly instead: forgejo DOWN, loud, Gatus-visible (the module's
+      # designed degradation for a bad mount, extended to a wrong mount).
+      subvolMigratedMarker = "${stateDir}/.subvol-migrated";
+      subvolMigratedCondition = lib.optionals dedicated [ subvolMigratedMarker ];
       hostName = config.networking.hostName;
       runnerLabels = [
         "ubuntu-latest:docker://node:22-bookworm"
@@ -381,9 +390,12 @@ _: {
               # pulls the subvol mount into its start transaction and
               # refuses to start against a shadow dir — an absent Samsung
               # degrades to forgejo DOWN (loud, Gatus), never split-brain.
+              # The migration marker additionally refuses to start against
+              # an EMPTY/STALE subvol (deployed-before-finalize case).
               (lib.mkIf dedicated {
                 RequiresMountsFor = [ stateDir ];
                 ConditionPathIsMountPoint = stateDir;
+                ConditionPathExists = subvolMigratedCondition;
               })
             ];
             serviceConfig = lib.mkMerge [
@@ -414,6 +426,7 @@ _: {
             requires = [ "forgejo.service" ];
             inherit onFailure;
             unitConfig.RequiresMountsFor = lib.optionals dedicated [ stateDir ];
+            unitConfig.ConditionPathExists = subvolMigratedCondition;
             # Timer-driven oneshot: the timer IS the retry mechanism.
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
@@ -494,6 +507,7 @@ _: {
             wants = [ "forgejo.service" ];
             inherit onFailure;
             unitConfig.RequiresMountsFor = [ forgejoBackupDir ] ++ lib.optionals dedicated [ stateDir ];
+            unitConfig.ConditionPathExists = subvolMigratedCondition;
             serviceConfig = lib.mkMerge [
               (harden {
                 MemoryMax = "1G";
@@ -693,6 +707,7 @@ _: {
             (lib.getExe hermesForgejoTokenDeliver)
           ];
           unitConfig.RequiresMountsFor = lib.optionals dedicated [ stateDir ];
+          unitConfig.ConditionPathExists = subvolMigratedCondition;
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
@@ -729,6 +744,7 @@ _: {
           wantedBy = [ "forgejo.service" ];
           restartTriggers = [ (lib.getExe tokenGen) ];
           unitConfig.RequiresMountsFor = lib.optionals dedicated [ stateDir ];
+          unitConfig.ConditionPathExists = subvolMigratedCondition;
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
@@ -758,6 +774,7 @@ _: {
           wantedBy = [ "forgejo.service" ];
           restartTriggers = [ (lib.getExe oidcSetupScript) ];
           unitConfig.RequiresMountsFor = lib.optionals dedicated [ stateDir ];
+          unitConfig.ConditionPathExists = subvolMigratedCondition;
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
@@ -791,6 +808,7 @@ _: {
           inherit onFailure;
           restartTriggers = [ (lib.getExe addKeysScript) ];
           unitConfig.RequiresMountsFor = lib.optionals dedicated [ stateDir ];
+          unitConfig.ConditionPathExists = subvolMigratedCondition;
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";

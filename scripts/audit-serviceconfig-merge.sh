@@ -11,10 +11,15 @@
 #         (a later plain key, or a mkForce inside harden, is silently lost)
 #   GOOD: serviceConfig = lib.mkMerge [ (harden { … }) (serviceDefaults { … }) ];
 #
-# Scope v1: single-line direct assignments (`serviceConfig = X // Y`),
-# the historically recurring shape. Multi-line/nested `//` between two
-# fragments inside mkMerge is the same priority hazard but needs a parser
-# to judge — grep cannot; review those at write time.
+# Scope v2: (1) single-line direct assignments (`serviceConfig = X // Y`),
+# the historically recurring shape; (2) CONTINUATION-line shallow merges — a
+# `serviceConfig =` assignment whose `//` operator lands on a FOLLOWING line
+# (the 2026-09-30 caddy.nix dnsblockd-cert-mint defect: `serviceConfig =
+# (serviceOneshotDefaults { })` newline `// {` sailed past the v1 single-line
+# regex at landing time). The continuation check is a bounded (≤6 lines)
+# statement buffer: any `//` in the buffer (URLs `://` stripped) without a
+# `mkMerge` anywhere in it fails. Multi-line `//` between two fragments
+# INSIDE a mkMerge list is a different judgment call and stays out of scope.
 #
 # Usage:
 #   bash scripts/audit-serviceconfig-merge.sh            # scan the tree
@@ -25,16 +30,42 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 scan_file() {
   local f="$1" rel="$2"
-  # Comments may quote the banned shape to document it — strip them.
-  # Exclusions: mkMerge mentions (sanctioned wrapper), :// URL schemes.
-  grep -vE '^[[:space:]]*#' "$f" 2>/dev/null |
-    grep -nE 'serviceConfig[[:space:]]*=.*//' |
-    grep -v 'mkMerge' |
-    grep -v '://' |
-    while IFS= read -r line; do
-      echo "FAIL [$rel]: serviceConfig assigned with a shallow // merge (discards mkDefault/mkForce priority — use lib.mkMerge [...]):"
-      echo "  $line"
-    done
+  # One awk pass; comment lines skipped FIRST so reported line numbers are
+  # true FNR. `://` URL schemes are stripped before the `//` operator check.
+  awk -v rel="$rel" '
+    /^[[:space:]]*#/ { next }
+    {
+      if (collect) {
+        buf = buf "\n" $0
+        if ($0 ~ /;/) {
+          check = buf
+          gsub(/:\/\//, ":", check)
+          if (check ~ /\/\// && check !~ /mkMerge/) {
+            printf "FAIL [%s]: serviceConfig shallow // merge across continuation lines (line %d — discards mkDefault/mkForce priority; use lib.mkMerge [...]):\n", rel, startnr
+            print "  " buf
+          }
+          collect = 0
+        } else if (NR - startnr >= 6) {
+          collect = 0
+        }
+        next
+      }
+      if ($0 ~ /serviceConfig[[:space:]]*=/) {
+        line = $0
+        gsub(/:\/\//, ":", line)
+        if (line ~ /\/\// && line !~ /mkMerge/) {
+          printf "FAIL [%s]: serviceConfig assigned with a shallow // merge (line %d — discards mkDefault/mkForce priority; use lib.mkMerge [...]):\n", rel, NR
+          print "  " $0
+          next
+        }
+        if ($0 !~ /;/) {
+          collect = 1
+          startnr = NR
+          buf = $0
+        }
+      }
+    }
+  ' "$f"
 }
 
 scan_tree() {
@@ -76,15 +107,40 @@ selftest() {
 # documentation comment mentioning serviceConfig = x // y must NOT fire
 serviceConfig = harden { MemoryMax = "2G"; } // serviceDefaults {};
 EOF
+  cat >"$tmp/evil-multiline.nix" <<'EOF'
+# the 2026-09-30 caddy.nix landing shape: // on a continuation line
+serviceConfig =
+  (serviceOneshotDefaults { })
+  // {
+    Type = "oneshot";
+  };
+EOF
   cat >"$tmp/good.nix" <<'EOF'
 serviceConfig = lib.mkMerge [ (harden { MemoryMax = "2G"; }) (serviceDefaults { }) ];
 # a URL scheme in the expression is not a merge operator
 serviceConfig = mkDefault (env "https://example.test" // { });
 EOF
+  cat >"$tmp/good-multiline.nix" <<'EOF'
+# the sanctioned multi-line mkMerge shape must stay green
+serviceConfig =
+  lib.mkMerge [
+    (harden { MemoryMax = "2G"; })
+    { ReadWritePaths = [ "/var/lib/x" ]; }
+  ];
+# a plain multi-line assignment with no // is not a merge
+serviceConfig =
+  harden { MemoryMax = "2G"; };
+EOF
 
   out="$(scan_file "$tmp/evil.nix" "evil.nix")"
   if [ -z "$out" ] || ! echo "$out" | grep -q 'serviceConfig'; then
     echo "SELFTEST FAIL: scanner did not flag the banned shallow merge:"
+    echo "$out"
+    rc=1
+  fi
+  out="$(scan_file "$tmp/evil-multiline.nix" "evil-multiline.nix")"
+  if [ -z "$out" ] || ! echo "$out" | grep -q 'continuation lines'; then
+    echo "SELFTEST FAIL: scanner did not flag the continuation-line shallow merge:"
     echo "$out"
     rc=1
   fi
@@ -94,9 +150,15 @@ EOF
     echo "$out"
     rc=1
   fi
+  out="$(scan_file "$tmp/good-multiline.nix" "good-multiline.nix")"
+  if [ -n "$out" ]; then
+    echo "SELFTEST FAIL: scanner flagged sanctioned multi-line forms (mkMerge list / plain continuation):"
+    echo "$out"
+    rc=1
+  fi
   rm -rf "$tmp"
   if [ "$rc" -eq 0 ]; then
-    echo "SELFTEST PASS: detects shallow // merge, ignores mkMerge and URLs"
+    echo "SELFTEST PASS: detects single-line + continuation shallow merges, ignores mkMerge (both shapes) and URLs"
   fi
   return "$rc"
 }
