@@ -243,8 +243,21 @@ _: {
             ca_key_file = "${caKey}";
             blocklist_mapping_file = "${processedBlocklist}/mapping.json";
             temp_allowlist_path = "/var/lib/dnsblockd/temp-allowlist";
+            # Permanent allowlist persistence. Without this key the dashboard's
+            # "Always allow" verdicts and POST /api/allowlist entries live in
+            # memory ONLY — every restart (and restartTriggers restarts the
+            # unit on every deploy) wipes them, so the same false positives
+            # must be re-allowed over and over (deep-dive 2026-09-30, finding
+            # #1: the only gap in the config that actively loses data, daily).
+            allowlist_path = "/var/lib/dnsblockd/allowlist";
             tracking_mode = "METADATA_ONLY";
             tracking_db_path = "/var/lib/dnsblockd/tracking.db";
+            # Journal-flood control: the first 500 messages per message+level
+            # pass unsampled, then 1-in-100. Guards the blocked-domain burst
+            # class — a client hammering blocked domains emits one log line
+            # per query straight into the journal (→ SigNoz) otherwise.
+            log_sampling_threshold = 500;
+            log_sampling_rate = 100;
 
             # ── Reverse proxy for temp-allowed domains ──
             proxy_enabled = cfg.proxyEnabled;

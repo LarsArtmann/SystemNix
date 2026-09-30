@@ -56,6 +56,14 @@ in
 
       enableDNSSEC = true;
 
+      # DoS belt: per-client-IP token bucket (50 q/s, burst 100). A single
+      # runaway client (browser prefetch storm, misconfigured app) must not
+      # be able to starve the sole LAN resolver. The wrapper default stays 0
+      # (upstream-matching) — this is an evo-x2 stance; rpi3's failover
+      # instance stays unlimited until it ever serves standalone.
+      dnsRateLimitPerSec = 50;
+      dnsRateLimitBurst = 100;
+
       # Forward via DNS-over-TLS. The sdns embedded resolver's root recursion
       # is broken in dnsblockd (middleware pipeline not wired up), so we
       # forward to trusted DoT resolvers. Local zones, blocklists, and ACLs
