@@ -30,5 +30,15 @@
       default = "192.168.1.151";
       description = "Raspberry Pi 3 DNS backup node IP";
     };
+    cloudDomain = lib.mkOption {
+      type = lib.types.nonEmptyStr;
+      default = "larsartmann.cloud";
+      description = ''
+        Split-horizon alias zone served alongside home.lan: the same service
+        set resolves under this domain for VPN clients (and LAN clients).
+        Never published in public DNS — only dnsblockd answers it. See
+        docs/brainstorming/2026-09-30_netbird-larsartmann-cloud-selfhosted-vpn.md
+      '';
+    };
   };
 }

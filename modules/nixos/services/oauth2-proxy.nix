@@ -76,7 +76,12 @@ _: {
             # by this oauth2-proxy instance. Without this, the OIDC callback
             # succeeds but the final redirect to the original vHost is rejected
             # with "domain / port not in whitelist" and the user sees a 500.
-            whitelist-domain = [ ".${domain}" ];
+            # The cloud entry covers split-horizon aliases of the same
+            # services (*.larsartmann.cloud, brainstorming 2026-09-30).
+            whitelist-domain = [
+              ".${domain}"
+              ".${config.networking.local.cloudDomain}"
+            ];
           };
         };
 

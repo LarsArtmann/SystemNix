@@ -15,6 +15,7 @@ let
     virtualIP
     gateway
     subnet
+    cloudDomain
     ;
   interface = "eth0";
   domain = "home.lan";
@@ -119,8 +120,22 @@ in
         // {
           "*.${domain}." = lanIP;
           "${domain}." = lanIP;
+        }
+        # Split-horizon alias zone — mirrors evo-x2 (dns-blocker-config.nix)
+        # so failover clients resolve the cloud namespace too.
+        // builtins.listToAttrs (
+          map (subdomain: {
+            name = "${subdomain}.${cloudDomain}.";
+            value = lanIP;
+          }) dnsLocal.localSubdomains
+        )
+        // {
+          "${cloudDomain}." = lanIP;
         };
-      localZones = [ "${domain}." ];
+      localZones = [
+        "${domain}."
+        "${cloudDomain}."
+      ];
       allowedNetworks = [
         "127.0.0.0/8"
         "::1/128"

@@ -22,7 +22,7 @@
 }:
 let
   inherit (config.networking) domain;
-  inherit (config.networking.local) blockIP virtualIP;
+  inherit (config.networking.local) blockIP virtualIP cloudDomain;
   blocklists = import ../../common/dns-blocklists.nix;
   inherit (import ../../../lib/default.nix lib) ports;
   dnsLocal = import ../../common/dns-local.nix;
@@ -82,8 +82,24 @@ in
         // {
           "*.${domain}." = serverIP;
           "${domain}." = serverIP;
+        }
+        # Split-horizon alias zone (brainstorming 2026-09-30): the same
+        # service set under the cloud domain so VPN clients get one
+        # namespace everywhere. No wildcard entry — sdns ignores wildcard
+        # local records (gotchas-archive.md), explicit records only.
+        // builtins.listToAttrs (
+          map (subdomain: {
+            name = "${subdomain}.${cloudDomain}.";
+            value = serverIP;
+          }) dnsLocal.localSubdomains
+        )
+        // {
+          "${cloudDomain}." = serverIP;
         };
-      localZones = [ "${domain}." ];
+      localZones = [
+        "${domain}."
+        "${cloudDomain}."
+      ];
       allowedNetworks = [
         "127.0.0.0/8"
         "::1/128"

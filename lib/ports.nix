@@ -5,6 +5,10 @@
     oauth2-proxy = 4180;
     caddy-metrics = 2019;
 
+    # NetBird mesh VPN client (outbound WireGuard tunnel wt0 — see
+    # modules/nixos/services/netbird.nix; control plane on the pbx server)
+    netbird = 51820;
+
     dns-blocker = 53;
     dns-blocker-stats = 9090;
     dns-blocker-block = 8050;

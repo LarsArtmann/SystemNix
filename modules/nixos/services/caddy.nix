@@ -5,6 +5,7 @@ _: {
       config,
       options,
       lib,
+      pkgs,
       ...
     }:
     let
@@ -15,9 +16,27 @@ _: {
       authPort = config.services.pocket-id-config.port;
       proxyPort = config.services.oauth2-proxy-config.port;
       registryVHosts = config.services.caddy-config.extraVHosts;
+      # Split-horizon alias domain (brainstorming 2026-09-30): every home.lan
+      # vHost is mirrored under this zone; dnsblockd resolves it on LAN + VPN,
+      # it never appears in public DNS. Hosts without the networking.local
+      # option set (VM tests) keep single-domain behavior.
+      cloudDomain =
+        if builtins.hasAttr "local" options.networking && options.networking.local ? cloudDomain then
+          config.networking.local.cloudDomain
+        else
+          null;
+      mintedCert = "/run/dnsblockd-certs/server.crt";
+      mintedKey = "/run/dnsblockd-certs/server.key";
+      # Dual-zone leaf minted from the dnsblockd CA at boot (dnsblockd-cert-mint
+      # below) covers home.lan AND the cloud zone with one cert — same CA the
+      # clients already trust, SAN superset, so home.lan behavior is unchanged.
+      # Without the cloud option, hosts fall back to the static sops'd cert.
+      activeCert = if cloudDomain != null then mintedCert else serverCert;
+      activeKey = if cloudDomain != null then mintedKey else serverKey;
       inherit (import ../../../lib/default.nix lib)
         harden
         serviceDefaults
+        serviceOneshotDefaults
         onFailure
         ports
         ;
@@ -32,7 +51,7 @@ _: {
           null;
 
       tlsConfig = ''
-        tls ${serverCert} ${serverKey} {
+        tls ${activeCert} ${activeKey} {
           protocols tls1.2 tls1.3
         }
       '';
@@ -214,14 +233,16 @@ _: {
             metrics
           '';
 
-          virtualHosts = {
-            ":80" = {
-              extraConfig = ''
-                @subdomains host *.${domain}
-                redir @subdomains https://{host}{uri} permanent
-                redir https://dash.${domain} permanent
-              '';
-            };
+          virtualHosts =
+          let
+          homeLanVHosts = {
+          ":80" = {
+            extraConfig = ''
+            @subdomains host *.${domain}${lib.optionalString (cloudDomain != null) " *.${cloudDomain}"}
+            redir @subdomains https://{host}{uri} permanent
+            redir https://dash.${domain} permanent
+            '';
+          };
             # Catch-all HTTPS for unknown *.home.lan — redirect to dashboard
             # so typos/unknown subdomains never fall through to browser search
             "https://*.${domain}" = {
@@ -389,8 +410,40 @@ _: {
           }
           # Registry fan-out (services.integration.<name>.vHost) — rendered
           # through the same helpers as every hand-written vHost above.
-          // (lib.mapAttrs' (sub: v: lib.nameValuePair "${sub}.${domain}" (renderVHost v)) registryVHosts);
-        };
+          // (lib.mapAttrs' (sub: v: lib.nameValuePair "${sub}.${domain}" (renderVHost v)) registryVHosts)
+            };
+          in
+            homeLanVHosts
+            // (lib.optionalAttrs (cloudDomain != null) (
+              # Split-horizon aliases (brainstorming 2026-09-30): every
+              # home.lan vHost mirrored under the cloud domain — identical
+              # extraConfig (same dual-zone cert, same backends). Auth
+              # redirects stay on auth.<home.lan> by design: VPN clients
+              # resolve both zones, and the oauth2-proxy whitelist covers
+              # the cloud domain for post-login redirects.
+              (lib.mapAttrs'
+                (
+                  k: v:
+                  lib.nameValuePair (lib.replaceStrings [ "${domain}" ] [ "${cloudDomain}" ] k) v
+                )
+                (
+                  lib.filterAttrs
+                  (k: _: lib.hasInfix "${domain}" k && k != "https://*.${domain}")
+                  homeLanVHosts
+                )
+              )
+              // {
+                # Cloud catch-all: unknown *.cloud names redirect to the
+                # cloud dashboard (mirror of the home.lan catch-all).
+                "https://*.${cloudDomain}" = {
+                  extraConfig = ''
+                    ${tlsConfig}
+                    ${commonConfig}
+                    redir * https://dash.${cloudDomain} permanent
+                  '';
+                };
+              }
+            ));
 
         networking.firewall.allowedTCPPorts = [
           80
