@@ -577,18 +577,21 @@ _: {
           after = [ "sops-nix.service" ];
           wants = [ "sops-nix.service" ];
           inherit onFailure;
-          serviceConfig = (serviceOneshotDefaults { }) // {
-            Type = "oneshot";
-            RemainAfterExit = true;
-            # RuntimeDirectory is what makes ReadWritePaths viable: it
-            # creates /run/dnsblockd-certs BEFORE systemd sets up the
-            # mount namespace. Without it the unit dies at NAMESPACE
-            # setup (226/NAMESPACE, caught by tests/test-caddy-mint.nix —
-            # the script's own install -d runs INSIDE the namespace and
-            # is too late).
-            RuntimeDirectory = "dnsblockd-certs";
-            ReadWritePaths = [ "/run/dnsblockd-certs" ];
-          };
+          serviceConfig = lib.mkMerge [
+            (serviceOneshotDefaults { })
+            {
+              Type = "oneshot";
+              RemainAfterExit = true;
+              # RuntimeDirectory is what makes ReadWritePaths viable: it
+              # creates /run/dnsblockd-certs BEFORE systemd sets up the
+              # mount namespace. Without it the unit dies at NAMESPACE
+              # setup (226/NAMESPACE, caught by tests/test-caddy-mint.nix —
+              # the script's own install -d runs INSIDE the namespace and
+              # is too late).
+              RuntimeDirectory = "dnsblockd-certs";
+              ReadWritePaths = [ "/run/dnsblockd-certs" ];
+            }
+          ];
           script =
             # Absolute store paths, NOT ambient PATH (defect d1, status
             # report 2026-09-30): openssl/coreutils on the system path is
