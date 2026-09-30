@@ -462,6 +462,7 @@
 
 ### services / pipeline (harvest 2026-09-30 06:5x)
 
+- [ ] [ready] **indexer-web VM regression test** (unit + HTML + metrics + admin-key 401/200 + key oneshot idempotence; shipped 2026-09-30 without one) → [docs/todo/services.md](docs/todo/services.md)
 - [ ] [ready] **geometrikks post-deploy smoke probe** (unit + `/health/ready` + provision journal line; the service sat dark since 09-29 with ZERO deploy-gate coverage) → [docs/todo/services.md](docs/todo/services.md)
 - [ ] [ready] **CV render smoke IO-pressure-aware** (`/de/cv` proxy render leg false-FAILs under high io PSI; WARN like the shell check) → [docs/todo/services.md](docs/todo/services.md)
 - [ ] [ready] **bank-sync smoke counter windowing** (`sync_errors_total` is restart-cumulative — smoke stays red post-fix; + distinct DB-write-failure metric) → [docs/todo/services.md](docs/todo/services.md)
