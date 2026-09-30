@@ -56,6 +56,12 @@
         "npm"
         "pip"
         "pnpm-store"
+        # 2026-09-22 fallback-symlink targets (home.nix HM outOfStoreSymlinks
+        # for env-less pnpm/cargo): must be provisioned here so a post-recovery
+        # init heals the dangling ~/.cache/pnpm, ~/.local/state/pnpm, and
+        # ~/.cargo/registry links before the next HM deploy.
+        "pnpm-cache"
+        "pnpm-state"
         "playwright"
         "rust"
         "sccache"
@@ -63,6 +69,7 @@
         # the automount was retired). Seeded from ~/.cargo at migration:
         # registry, git checkouts, advisory dbs, bin, credentials.toml.
         "cargo"
+        "cargo/registry"
       ];
 
       rustProjectDirs = map (project: "rust/${project}") cfg.rustProjects;
