@@ -159,6 +159,28 @@ _: {
         file = filterBlocklist bl.name (toString bl.file);
       }) fetchedRawBlocklists;
 
+      # extraDomains → a synthetic hosts-format blocklist, appended AFTER the
+      # fetched lists. dns_blocklists order is load-bearing for source
+      # attribution (the first list containing a domain wins the dedup), so
+      # fetched sources keep attribution for overlaps — reddit.com is already
+      # in StevenBlack-everything. The option fed NOTHING before 2026-09-30
+      # (declared, never rendered — the phantom-config class): the documented
+      # 2026-09-16 owner decision to block us.i.posthog.com at DNS level was
+      # silently NOT in effect (mapping.json-verified: reddit incidentally
+      # covered, posthog not). The same whitelist filter as the fetched lists
+      # keeps allow semantics uniform across every source.
+      extraDomainsBlocklist = lib.optional (cfg.extraDomains != [ ]) {
+        name = "systemnix-extra";
+        file = filterBlocklist "systemnix-extra" (
+          toString (
+            pkgs.writeText "dns-blocker-extra-domains"
+              (lib.concatLines (map (d: "0.0.0.0 ${d}") (lib.unique cfg.extraDomains)))
+          )
+        );
+      };
+
+      allBlocklists = fetchedBlocklists ++ extraDomainsBlocklist;
+
       # Whitelist file (used by dnsblockd process for mapping.json generation)
       whitelistFile = pkgs.writeText "dns-blocker-whitelist.txt" (lib.concatLines cfg.whitelist);
 
@@ -172,7 +194,7 @@ _: {
         lib.concatMap (bl: [
           (toString "${bl.file}/${bl.name}")
           bl.name
-        ]) fetchedBlocklists
+        ]) allBlocklists
       );
 
       # Run processor at build time to generate mapping.json (domain → source → category).
@@ -209,7 +231,7 @@ _: {
       # Reference the file INSIDE the filtered derivation dir (see processorArgs
       # note above) — passing the dir itself loads 0 entries.
       blocklistPaths =
-        if cfg.tempAllowAll then [ ] else map (bl: toString "${bl.file}/${bl.name}") fetchedBlocklists;
+        if cfg.tempAllowAll then [ ] else map (bl: toString "${bl.file}/${bl.name}") allBlocklists;
 
       # Sops secret paths and generated YAML config — in outer scope so that
       # restartTriggers can reference the config file, forcing a service restart
