@@ -31,6 +31,7 @@ in
   attic = makeTest (import ./test-attic.nix { inherit pkgs; });
   searxng = makeTest (import ./test-searxng.nix { inherit pkgs; });
   caddy-auth-patterns = makeTest (import ./test-caddy-auth.nix { inherit pkgs; });
+  caddy-mint = makeTest (import ./test-caddy-mint.nix { inherit pkgs inputs; });
   gatus-patterns = makeTest (import ./test-gatus-patterns.nix { inherit pkgs; });
   pma-identity = makeTest (import ./test-pma-identity.nix { inherit pkgs; });
   ksm = makeTest (import ./test-ksm.nix { inherit pkgs; });

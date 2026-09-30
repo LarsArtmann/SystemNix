@@ -56,21 +56,48 @@ SystemNix/
 
 ## Pre-commit Hooks
 
-Installed via `pre-commit install`. All hooks must pass before merge:
+Wired via `core.hooksPath = .githooks` — plain shell scripts, NOT the python
+pre-commit framework. Every leg must pass before the commit lands; the fast
+guards are milliseconds each. The hook scripts themselves are linted: the
+staged-path shellcheck leg covers `.githooks/*`, and CI's shellcheck job
+arbitrates `scripts/*.sh .githooks/*` at error level.
 
-| Hook                  | Purpose                                                     |
-| --------------------- | ----------------------------------------------------------- |
-| commit-msg            | Reject commit subjects > 72 chars (house contract)          |
-| gitleaks              | Detect committed secrets                                    |
-| trailing-whitespace   | Clean trailing spaces                                       |
-| deadnix               | Find dead/unused Nix code                                   |
-| statix                | Detect Nix antipatterns (20+ rules)                         |
-| alejandra             | Enforce Nix formatting                                      |
-| nix-check             | Full `nix flake check --no-build`                           |
-| flake-lock-validate   | Validate lockfile integrity                                 |
-| shellcheck            | Shell script linting                                        |
-| check-merge-conflicts | Catch unresolved markers                                    |
-| protect-home-audit    | Warn when `harden {}` + `/home` lacks `ProtectHome = false` |
+commit-msg (`.githooks/commit-msg`):
+
+| Leg         | Purpose                                                   |
+| ----------- | --------------------------------------------------------- |
+| subject cap | Reject commit subjects > 72 chars (merge subjects exempt) |
+
+pre-commit (`.githooks/pre-commit`) — fast guards, then staged-file linters:
+
+| Leg                 | Purpose                                                                    |
+| ------------------- | -------------------------------------------------------------------------- |
+| tarball-nixpkgs     | flake.lock nixpkgs must stay `github`-type (registry rewrite guard)        |
+| gatus-pat-lint      | No regex-only chars (`?`/`+`) in Gatus `pat()` patterns                    |
+| templ-committed     | Tracked `.templ` needs a tracked `*_templ.go` sibling                      |
+| nullglob-audit      | No unquoted command-vars in runCommand bodies (phantom-green class)        |
+| textfile-tmp-audit  | Collectors use unique mktemp + CAP_FOWNER; no `/run/secrets-rendered`      |
+| serviceconfig-merge | No shallow `//` on serviceConfig (selftesting)                             |
+| push-protection     | No GitHub push-protection-shaped token literals                            |
+| todo-system         | Queue rows need titles; library links resolve (selftesting)                |
+| blob-scan guard     | Hooks/scripts must not scan AI-model blob trees                            |
+| dangling-md guard   | Moved/deleted markdown leaves no live references                           |
+| unknown-author      | Commit identity must resolve (no silent fallback)                          |
+| gotoolchain guard   | No `GOTOOLCHAIN=auto` in .nix (selftested predicate)                       |
+| nix-parse           | Staged .nix must parse (`nix-instantiate --parse`, sub-second per file)    |
+| gitleaks            | Secret scan over the STAGED TREE (CI owns full history)                    |
+| trailing-whitespace | Strip trailing spaces on staged files                                      |
+| deadnix             | Dead Nix code on staged files                                              |
+| statix              | Nix antipatterns on staged files                                           |
+| treefmt             | The repo formatter on staged .nix (CI arbitrates `nix fmt -- --ci`)        |
+| shellcheck          | Staged `.sh` + `.githooks/*` at warning level                              |
+| ruff                | Staged `.py` lint                                                          |
+| nix flake check     | Eval-only, all systems; docs-only staged diffs skip the leg                |
+
+Standing selftests (flake checks, run on every `nix flake check`):
+`scripts/test-gotoolchain-guard.sh`, `scripts/test-precommit-shellcheck.sh`,
+`scripts/test-precommit-nix-parse.sh`, `scripts/test-precommit-docs-skip.sh`,
+`scripts/test-commit-msg-hook.sh`.
 
 ### Auto-fix Commands
 
@@ -198,6 +225,14 @@ Foreign-repo landings annotate closure narratives as SOURCE-LEVEL delivery (2026
 Only if all four probe clean does the failure count as INTRODUCED (the only shape that burns task attempts — see the classification row in `docs/todo/pipeline.md`).
 
 **Heal-attribution breadcrumb convention (2026-09-28, task queue).** Any MANUAL system heal — `systemd-tmpfiles --create`, a `nix-daemon` restart, a manual socket/service start, any other hand-run recovery — leaves ONE breadcrumb so forensics can attribute the recovery: `bash scripts/heal-breadcrumb.sh "<what was healed> <how>"` (one `logger -t systemnix-heal` journal line + one stamp in `~/.local/state/systemnix-heals.log`; works unprivileged; never put secret VALUES in the text). Deploys already breadcrumb implicitly (profile trail + deploy.sh journal lines) and module-managed heals are journaled by their own units — this covers only the hand-run gap. Probe: `journalctl -t systemnix-heal`. Motivation: the 2026-09-25 05:32 `/run/binfmt` heal was verified real but its actor was UNKNOWABLE (owner manual heal vs parallel session vs nix-daemon-restart side effect), hanging two task attempts and the gate-row annotations on an unattributed recovery.
+
+**Agent-safe verification verbs for deployed-state claims (2026-09-29 harvest).** `systemctl` is sandbox-blocked for agent sessions — these four probes are the proven replacements, so each verification run stops re-deriving them: (1) read the DEPLOYED unit text via its `/etc/systemd/system/<unit>` symlink (a store-path read carrying the rendered unit); (2) grep the store script the unit actually executes for the change's feature marker; (3) `nix eval` the rendered option from the consuming config (proves wiring, not liveness); (4) read the collector's textfile `.prom` for the metric series AND its mtime — node_exporter serves a frozen textfile forever, so a dead collector looks green without the mtime check. Root-gated reads (0700 dirs) stay sudo-gated; the monitoring-evidence-standard decision (docs/todo/pipeline.md) owns whether the bar rises to live-series reads.
+
+**DONE-note era-annotation (2026-09-29 storage.md class).** When a closure note quotes a figure a later item corrected, append the supersession AT the quote — `(superseded: <what changed, where>, see <pointer>)` — instead of silently editing the note. A skimming reader must not re-cite a stale figure that reads as current doctrine.
+
+**Daemon-race commit policy (12+ live races, 2026-09-12 → 2026-09-27).** The auto-commit daemon sweeps staged files MID-EDIT and MID-HOOK (the hook can report all-green on an index the daemon already committed — git then finds "nothing to commit"). Policy: (1) commit immediately after the last edit, foreground, PATHSPEC-scoped (`git commit -m … -- <paths>`) — this narrows the window, it does not close it; (2) PATHSPEC excludes foreign staged files but cannot re-attach sibling paths the daemon already swept — after EVERY multi-file landing run `git show --stat HEAD` and verify BOTH exclusivity (nothing foreign) and completeness (all your paths); (3) when the daemon swept your work, prefer LAND-ON-TOP (plain retry on the daemon's HEAD; fails cheaper) over amend-under-daemon; amend only after a `git show --stat` exclusivity check proves the daemon commit carries exactly your files, and expect the ref-lock forensics pass when the amend itself races (`cannot lock ref 'HEAD'` — re-check `git log -1`, then re-amend); (4) only a daemon-side honor-file/lock fully closes the class (upstream go-taskqueue/PMA track it). Runbooks that say "in ONE commit" carry the explicit carve-out (jan.md repair recipe, step 3).
+
+**Producer inventory before enforcement (2026-09-28 commit-msg class).** Before shipping ANY commit gate, enumerate the non-human commit PRODUCERS (auto-commit daemons, bots, merge/revert drivers, codegen) and either exempt them with evidence or fix them upstream FIRST — the 72-char subject hook shipped without checking that the PMA daemon (its largest automated subject) runs hooks and can exceed the limit on long branch names.
 
 ## Eval-Time Guards (audit modules)
 
