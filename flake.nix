@@ -1095,6 +1095,9 @@
           # Development shells for different program categories
           devShells = {
             default = pkgs.mkShellNoCC {
+              # avatar-dms.png (54K) deliberately NOT excluded: BuildFlow's file-size
+              # check scans **/*.go only and no wired provider flags images (source-
+              # verified BuildFlow 2026-09-30); the 4MB original keeps a belt exclusion.
               BUILDFLOW_EXCLUDE_PATTERNS = "assets/avatar.png";
               packages =
                 with pkgs;
