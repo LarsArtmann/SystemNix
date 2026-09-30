@@ -434,10 +434,16 @@ in
       # system/cron mail (root/postmaster aliases).
       mail-relay.enable = true;
       # DMARC/TLS-RPT aggregate-report collection (parsedmarc) polling the
-      # dmarc@artmann.tech mailbox on the Stalwart server (pbx-artmann VPS,
-      # upstream github:LarsArtmann/nix-email). Wrapper module:
-      # modules/nixos/services/nix-email.nix pre-wires sops (nix-email.yaml),
-      # onFailure, the monitored unit + reports-freshness backup row.
+      # dmarc@larsartmann.cloud mailbox on the Stalwart server (pbx-artmann
+      # VPS, upstream github:LarsArtmann/nix-email). larsartmann.cloud is the
+      # DMARC collector domain (owner decision 2026-09-30): it is the only
+      # domain whose MX points at our server (artmann.tech is Google
+      # Workspace — a dmarc@artmann.tech mailbox would land at Google and
+      # parsedmarc would poll an empty inbox forever); every domain's _dmarc
+      # rua points at dmarc@larsartmann.cloud (domains repo, 2026-09-30
+      # rollout). Wrapper module: modules/nixos/services/nix-email.nix
+      # pre-wires sops (nix-email.yaml), onFailure, the monitored unit +
+      # reports-freshness backup row.
       # enable = false DELIBERATE: flipping it before the mailbox exists on
       # the VPS guarantees a permanently-failing parsedmarc unit — a failed
       # unit inside an activation exit-4s the deploy and skips the profile
@@ -452,7 +458,7 @@ in
           # Stalwart GOTCHA (upstream README): IMAP LOGIN resolves by the
           # principal NAME — the account must be created with its address
           # as the principal name.
-          user = "dmarc@artmann.tech";
+          user = "dmarc@larsartmann.cloud";
         };
       };
       # Per-project crush session DBs → Samsung TLC (/mnt/hot). Structural

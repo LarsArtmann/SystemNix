@@ -74,6 +74,10 @@
 
       config = lib.mkIf cfg.enable {
         services.indexer-web = {
+          # Explicit pin: SystemNix's nixpkgs carries no indexer-web attr
+          # (upstream's mkPackageOption default cannot resolve — bank-sync
+          # precedent).
+          package = inputs.index.packages.${pkgs.stdenv.hostPlatform.system}.indexer-web;
           addr = "127.0.0.1:${toString ports.indexer-web}";
           searchPaths = [ "/home/${primaryUser}/projects" ];
           apiKeyFile = "/run/credentials/indexer-web.service/admin-key";
