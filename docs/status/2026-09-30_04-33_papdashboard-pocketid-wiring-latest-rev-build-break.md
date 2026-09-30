@@ -7,7 +7,7 @@
 
 ## TL;DR
 
-The **SystemNix wiring is correct and complete**: Pocket ID auth rides Layer 2 (`protectedVHost` via oauth2-proxy), DNS/sops/Gatus/ingest all verified at config level. **But "latest" was NOT adoptable**: the 18 auto-commits pushed to PapDashboard master in the last ~2 h include a new import-pin test that **can never pass inside the Nix build** — it false-positives on `_local_deps/` fixture files that exist only in the `mkPreparedSource` sandbox (absent in any local checkout, so it passed for its author). Root-caused, **fixed upstream in the working tree, Nix-verified green** — but NOT committed/pushed, so the lock is NOT moved and NOT deployed. Root enabler found en route: **PapDashboard CI is dead since 2026-07-15** (3-4 s runnerless failures — the CV hosted-minutes class), so a build-breaking test sailed to origin/master despite a correctly-designed nix gate existing in `ci.yml`.
+The **SystemNix wiring is correct and complete**: Pocket ID auth rides Layer 2 (`protectedVHost` via oauth2-proxy), DNS/sops/Gatus/ingest all verified at config level. **But "latest" was NOT adoptable**: the 18 auto-commits pushed to PapDashboard master in the last ~2 h include a new import-pin test that **can never pass inside the Nix build** — it false-positives on `_local_deps/` fixture files that exist only in the `mkPreparedSource` sandbox (absent in any local checkout, so it passed for its author). Root-caused and **fixed upstream: the fix is COMMITTED (`4c76f4f`, 03:33, via the auto-commit daemon) AND PUSHED — origin/master = `2d0dfaa9` carries it**. Remaining chain: lock update → post-lock probe → deploy → smoke. Root enabler found en route: **PapDashboard CI is dead since 2026-07-15** (3-4 s runnerless failures — the CV hosted-minutes class), so the build-breaking test sailed to origin/master despite a correctly-designed nix gate existing in `ci.yml`. **Parallel-session note:** a second crush session ran the SAME audit simultaneously (read-only) and wrote `~/projects/PapDashboard/docs/status/2026-09-30_04-33_papdashboard-pocketid-auth-audit.md`; it observed HEAD move `3a53646 → 4c76f4f` mid-session and correctly attributed it to the daemon committing THIS session's fix. The two reports are complementary (this one owns the build-break + fix; that one owns the auth-model explanation).
 
 ---
 
@@ -26,13 +26,14 @@ The **SystemNix wiring is correct and complete**: Pocket ID auth rides Layer 2 (
 | 9 | **Upstream fix applied** | `_local_deps` added to the `walkDirDecision` skip-list in `cmd/server/cqrshtmx_import_pin_test.go` (vendored external code is not PapDashboard's import surface — skipping it is semantically correct, not a suppression). |
 | 10 | **Verification chain** | `go test -run TestCQRSHTMXImportSurfaceIsPinned -count=1` PASS + `go vet` PASS locally; then **`nix build /home/lars/projects/PapDashboard#server` GREEN** — the dirty-tree probe reproduces the EXACT failing environment (prepared source materializes `_local_deps`; goModules FOD green with upstream's refreshed `vendorHash.nix`; full check phase green). |
 | 11 | **CI state discovery** | `ci.yml` HAS the right gate (nix job: `nix flake check --override-input go-cqrs-lite` + `nix build .#server`) but it is **DEAD** — last run 2026-07-15, every run since fails in 3-4 s runnerless (CV hosted-minutes-exhausted class). `gh run list` shows only dependency-graph + lock-age automation executing. |
-| 12 | **Harness discipline** | No commit, no push (user-owned actions). SystemNix tree untouched. |
+| 12 | **Harness discipline** | SystemNix tree untouched by the investigation. The fix itself was authored in PapDashboard's working tree; the **auto-commit daemon committed it as `4c76f4f` (03:33:56) and master reached origin** (`origin/master = 2d0dfaa9`, fix verified present in origin's blob — checked explicitly per the daemon-race discipline: `git show origin/master:<file> | grep -c _local_deps` = 1). |
+| 13 | **Parallel-session detection + attribution** | Reflog + the foreign status report in PapDashboard (`2d0dfaa`, 04:36) resolved an apparent contradiction (clean tree + fix present + last-file-commit predating my edit): the daemon committed MY edit mid-session, and a simultaneous read-only audit session observed it. Multi-agent rules followed: verified what the daemon actually staged (`git show 2d0dfaa --stat` = the foreign report + INDEX only), confirmed fix provenance before claiming it. |
 
 ## b) PARTIALLY DONE
 
-1. **Adopting the latest PapDashboard** — fix is in the upstream working tree; the rest of the chain is not: commit → push → `nix flake lock --update-input papdashboard` → post-lock package probe → deploy → post-deploy smoke. All queued (§f P0).
+1. **Adopting the latest PapDashboard** — fix is committed AND pushed upstream (`origin/master = 2d0dfaa9`); the rest of the chain is not: `nix flake lock --update-input papdashboard` → post-lock package probe → deploy → post-deploy smoke. All queued (§f P0); the lock update + probe are agent-actionable, the deploy needs a user sudo window.
 2. **Functional review of the 18 upstream commits** — diffstat reviewed (fragments_templ.go ~1040-line regen, styles.css −1277 lines, go.mod/go.sum/`vendorHash.nix` bumped, 2 new test files, enricher +3) but the **intent is unknowable** from "chore: auto-commit … (heuristic)" messages. Green checks ≠ the change did what it was supposed to do.
-3. **Memory maintenance** — the `_local_deps`/nix-sandbox test gotcha is NOT yet recorded in PapDashboard's own AGENTS.md (its pin-test comment block explicitly routes semantics through that doc). Harvested into the push-commit item so it lands with the fix.
+3. **Memory maintenance** — the `_local_deps`/nix-sandbox test gotcha is NOT yet recorded in PapDashboard's own AGENTS.md (its pin-test comment block explicitly routes semantics through that doc); the daemon's fix commit (`4c76f4f`) carried ONLY the test file. Harvested as a follow-up so it lands with the next PapDashboard commit.
 4. **Deployed-runtime verification** — NOT performed this session (sandbox denies `systemctl`; probe returned policy-denied). Config-level wiring verified from repo files; runtime health rests on prior sessions + live Gatus.
 
 ## c) NOT STARTED
@@ -44,11 +45,11 @@ The **SystemNix wiring is correct and complete**: Pocket ID auth rides Layer 2 (
 
 ## d) TOTALLY FUCKED UP
 
-1. **PapDashboard origin/master is broken-by-build and was pushed that way.** A test that cannot pass in the Nix build rode 18 heuristic auto-commits to master with **zero working gate**: CI dead since 2026-07-15, and the auto-commit daemon pushes without build validation. Any consumer that moved its papdashboard lock since the pin-test landed hard-blocks at the package check phase. SystemNix is protected **only by lock staleness + this session's probe discipline** — by accident, not by a mechanism.
+1. **PapDashboard master was broken-by-build for ~1 h (3a53646 → 4c76f4f, fixed 03:33)** — a test that cannot pass in the Nix build rode 18 heuristic auto-commits to master with **zero working gate**: CI dead since 2026-07-15, and the auto-commit daemon commits AND PUSHES without build validation (it pushed both the break and, an hour later, this session's fix — the same unverified channel in both directions). Any consumer that moved its papdashboard lock inside that window would hard-block at the package check phase. SystemNix was protected only by lock staleness + this session's probe discipline. The structural risk stands: the daemon remains an unverified push channel.
 2. **For CI-dead inputs, the manual lock-free probe is the ONLY live gate — and nothing enforces it.** The fleet has no input-bump CI; the probe-before-lock convention lives in prose (CV doctrine) and was one reflexive habit away from being skipped this session too.
 3. *(Session-honesty, minor, no damage)*: first jq read of flake.lock used `.root.inputs` instead of `.nodes.root.inputs` (walked into the documented root-is-a-node-key trap — wasted roundtrip); an initial sops grep counted the wrong key name against `papdashboard-discord.yaml` (looked like a missing secret for one beat; the right key is present).
 
-Nothing I authored broke anything: SystemNix HEAD `fc56c516` is clean and untouched; PapDashboard carries exactly one deliberate edit (the test fix).
+Nothing I authored broke anything: SystemNix HEAD `fc56c516` is clean and untouched; PapDashboard carries exactly one deliberate edit from this session (the test fix, now `4c76f4f` on origin) plus a foreign parallel-session report (`2d0dfaa`) that was verified, attributed, and left alone.
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -66,13 +67,13 @@ Nothing I authored broke anything: SystemNix HEAD `fc56c516` is clean and untouc
 
 | # | Item | Gate |
 |---|------|------|
-| 1 | Commit + push the PapDashboard pin-test fix (incl. the AGENTS.md gotcha note, §e.4) | `[blocked:push]` owner |
+| 1 | ~~Commit + push the PapDashboard pin-test fix~~ — **DONE**: daemon committed `4c76f4f` (03:33) and pushed; `origin/master = 2d0dfaa9` carries the fix (origin blob verified) | ✅ |
 | 2 | Functional review of the 18 upstream commits — needs intent input (§g Q3) | owner input |
-| 3 | `nix flake lock --update-input papdashboard` | after #1 |
+| 3 | `nix flake lock --update-input papdashboard` | `[ready]` agent |
 | 4 | Post-lock package probe from the SystemNix lock (`inputs.papdashboard.packages...server`) | after #3 |
-| 5 | `nix run .#deploy` (quiet-IO window) | after #4 |
+| 5 | `nix run .#deploy` (quiet-IO window; sudo) | `[blocked:deploy]` user |
 | 6 | Post-deploy smoke: `dash.home.lan` renders, `/api/health` 200, Gatus ingest `status=200` in papdashboard journal, services.json drift metric green, fragment/CSS changes look intentional | after #5 |
-| 7 | PapDashboard AGENTS.md gotcha note (rides #1) | with #1 |
+| 7 | PapDashboard AGENTS.md gotcha note — the fix commit did NOT carry it; land with the next PapDashboard commit | `[ready]` upstream |
 
 ### P1 — session-surfaced
 
@@ -121,7 +122,7 @@ Nothing I authored broke anything: SystemNix HEAD `fc56c516` is clean and untouc
 
 ## g) Questions I cannot answer myself (3)
 
-1. **Commit + push authorization:** Shall I commit + push the PapDashboard pin-test fix now — and if yes, move the SystemNix lock and deploy immediately, or hold until you've reviewed the 18 upstream commits? (The fix is verified green; the chain's remaining steps are all user-owned.)
+1. **Lock + deploy now?** The fix is already on origin (daemon pushed `2d0dfaa9`), so the lock update + post-lock probe are agent-actionable the moment you say go; the deploy itself needs your sudo window. Proceed with lock → probe → deploy → smoke as one chain, or hold until you've reviewed the 18 upstream commits?
 2. **CI fate:** PapDashboard's CI has been dead since July (hosted-minutes class). Repair it (billing, or a self-hosted runner like the existing Forgejo one), officially retire it and make probe-before-lock the documented contract, or leave as-is?
 3. **Intent of the 18 auto-commits:** What were they supposed to deliver (the big template/fragment/CSS rewrite)? All messages are heuristic auto-commits, so post-deploy I can verify "green checks + no regressions" but never "the change did what you wanted" without knowing the goal.
 
@@ -130,11 +131,12 @@ Nothing I authored broke anything: SystemNix HEAD `fc56c516` is clean and untouc
 ## Harvest disposition (TODO-system compliance, recorded at authoring time)
 
 **HARVESTED now:**
-- `docs/todo/upstream.md`: (1) papdashboard pin-test fix push + lock-update chain `[blocked:push]`; (2) `_local_deps` latent-breakage sweep `[ready]`.
-- `TODO_LIST.md`: one queue row for the `[ready]` sweep (library-only items are deliberately NOT queued, per routing rules).
+- `docs/todo/upstream.md`: (1) papdashboard pin-test fix chain — reframed `[blocked:push]` → `[ready]` mid-authoring when the daemon's push was discovered (lock update + probe are agent-actionable; deploy = user sudo window); (2) `_local_deps` latent-breakage sweep `[ready]`.
+- `TODO_LIST.md`: one queue row for the `[ready]` post-push chain + one for the sweep.
 
 **Deliberately NOT harvested:**
-- §f P0 items 2-7: gated behind item 1's push — one chain, one library entry (avoiding parallel entries for the same fix).
+- §f P0 items 2, 5, 6: intent review needs owner input (§g Q3); deploy + smoke gate on the sudo window — covered by the single library entry (no parallel entries for one chain).
 - §f item 9 (CI decision) + item 12 (daemon push gate): recorded as sub-decisions inside the papdashboard library entry — same repo/context, not separate work items.
 - §f P2 items 16-40: pre-existing, already tracked in their domain libraries / AGENTS.md sections; duplicating them would violate the no-parallel-entries rule.
 - §e.3/§e.6 doctrine edits to AGENTS.md: deferred to a docs pass (user instruction: wait after this report).
+- §e.4 (AGENTS.md-before-editing lesson): folded into library entry item 7 (the gotcha note lands there).
