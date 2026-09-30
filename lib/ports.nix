@@ -157,5 +157,10 @@
     # DEFAULT_SERVER_URLS); the /classify endpoints gate on the pairing
     # token from --pair-token auto.
     nsfw = 8104;
+
+    # indexer-web — event-sourced docs index WebUI (services.indexer-web),
+    # loopback-only; Caddy proxies index.home.lan to it. Binary from the
+    # index flake (github:LarsArtmann/index).
+    indexer-web = 8105;
   };
 }

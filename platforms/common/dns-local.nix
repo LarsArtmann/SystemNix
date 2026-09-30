@@ -35,5 +35,6 @@
     "health"
     "catalog"
     "nsfw"
+    "index"
   ];
 }

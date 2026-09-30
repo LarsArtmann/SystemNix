@@ -1043,6 +1043,15 @@ in
         enable = true;
       };
 
+      # indexer-web — event-sourced docs index WebUI at index.<domain>
+      # (github:LarsArtmann/index). Scans ~/projects daily + on start,
+      # serves the fleet docs table / per-project views; admin routes
+      # behind a machine-local API key. Runbook: docs/services/
+      # indexer-web.md.
+      indexer-web = {
+        enable = true;
+      };
+
       # Architecture Catalog — federated EventCatalog hub at
       # catalog.<domain> (static Layer 2 vHost over /var/lib/
       # architecture-catalog/current). The eventcatalog-hub CI (Forgejo
