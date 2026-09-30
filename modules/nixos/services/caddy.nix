@@ -410,8 +410,7 @@ _: {
           }
           # Registry fan-out (services.integration.<name>.vHost) — rendered
           # through the same helpers as every hand-written vHost above.
-          // (lib.mapAttrs' (sub: v: lib.nameValuePair "${sub}.${domain}" (renderVHost v)) registryVHosts)
-            };
+          // (lib.mapAttrs' (sub: v: lib.nameValuePair "${sub}.${domain}" (renderVHost v)) registryVHosts);
           in
             homeLanVHosts
             // (lib.optionalAttrs (cloudDomain != null) (
@@ -444,11 +443,53 @@ _: {
                 };
               }
             ));
+        };
 
         networking.firewall.allowedTCPPorts = [
           80
           443
         ];
+
+        # Mint the dual-zone leaf cert (home.lan + cloud domain) from the
+        # dnsblockd CA at every boot into /run (tmpfs — reminted fresh, 365d
+        # validity). Same CA the clients already trust, SAN superset of the
+        # old static cert, so home.lan TLS behavior is unchanged. Reads the
+        # CA via the existing sops secrets (root-readable at activation).
+        # Fail-closed: if minting fails, Caddy never starts with a stale or
+        # missing cert (After+Requires below).
+        systemd.services.dnsblockd-cert-mint = lib.mkIf (cloudDomain != null) {
+          description = "Mint dual-zone TLS leaf from dnsblockd CA for Caddy";
+          wantedBy = [ "multi-user.target" ];
+          before = [ "caddy.service" ];
+          after = [ "sops-nix.service" ];
+          wants = [ "sops-nix.service" ];
+          inherit onFailure;
+          serviceConfig =
+            (serviceOneshotDefaults { })
+            // {
+              Type = "oneshot";
+              RemainAfterExit = true;
+              ReadWritePaths = [ "/run/dnsblockd-certs" ];
+            };
+          script = ''
+            set -euo pipefail
+            install -d -m 0750 -o caddy -g caddy /run/dnsblockd-certs
+            tmp=$(mktemp -d)
+            trap 'rm -rf "$tmp"' EXIT
+            openssl req -newkey rsa:2048 -nodes \
+              -keyout "$tmp/server.key" -out "$tmp/server.csr" \
+              -subj "/CN=${domain}/O=DNS Blocker"
+            printf 'subjectAltName=DNS:${domain},DNS:*.${domain},DNS:${cloudDomain},DNS:*.${cloudDomain}\n' > "$tmp/san.ext"
+            openssl x509 -req -in "$tmp/server.csr" \
+              -CA ${config.sops.secrets.dnsblockd_ca_cert.path} \
+              -CAkey ${config.sops.secrets.dnsblockd_ca_key.path} \
+              -set_serial "0x$(openssl rand -hex 16)" \
+              -days 365 -sha256 -extfile "$tmp/san.ext" \
+              -out "$tmp/server.crt"
+            install -m 0444 -o caddy -g caddy "$tmp/server.crt" ${mintedCert}
+            install -m 0400 -o caddy -g caddy "$tmp/server.key" ${mintedKey}
+          '';
+        };
 
         # oauth2-proxy is deliberately NOT ordered here: its ExecStartPre OIDC
         # gate probes https://auth.<domain>/... which is served BY Caddy.
@@ -460,16 +501,20 @@ _: {
         # Cost of the removed ordering: a few seconds of 502s on external
         # forward-auth paths at boot; LAN bypass is unaffected.
         systemd.services.caddy = {
-          after = [
-            "pocket-id.service"
-            "sops-nix.service"
-          ]
-          ++ lib.optional (config.services.attic-config.enable or false) "atticd.service";
-          wants = [
-            "pocket-id.service"
-            "sops-nix.service"
-          ]
-          ++ lib.optional (config.services.attic-config.enable or false) "atticd.service";
+          after =
+            lib.optional (cloudDomain != null) "dnsblockd-cert-mint.service"
+            ++ [
+              "pocket-id.service"
+              "sops-nix.service"
+            ]
+            ++ lib.optional (config.services.attic-config.enable or false) "atticd.service";
+          wants =
+            lib.optional (cloudDomain != null) "dnsblockd-cert-mint.service"
+            ++ [
+              "pocket-id.service"
+              "sops-nix.service"
+            ]
+            ++ lib.optional (config.services.attic-config.enable or false) "atticd.service";
           inherit onFailure;
           unitConfig = {
             StartLimitBurst = lib.mkForce 3;
