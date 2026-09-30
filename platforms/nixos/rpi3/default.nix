@@ -200,6 +200,4 @@ in
       };
     };
   };
-
-  nix.gc.options = lib.mkForce "--delete-older-than 7d";
 }

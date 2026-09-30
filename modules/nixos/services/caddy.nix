@@ -471,24 +471,36 @@ _: {
               RemainAfterExit = true;
               ReadWritePaths = [ "/run/dnsblockd-certs" ];
             };
-          script = ''
-            set -euo pipefail
-            install -d -m 0750 -o caddy -g caddy /run/dnsblockd-certs
-            tmp=$(mktemp -d)
-            trap 'rm -rf "$tmp"' EXIT
-            openssl req -newkey rsa:2048 -nodes \
-              -keyout "$tmp/server.key" -out "$tmp/server.csr" \
-              -subj "/CN=${domain}/O=DNS Blocker"
-            printf 'subjectAltName=DNS:${domain},DNS:*.${domain},DNS:${cloudDomain},DNS:*.${cloudDomain}\n' > "$tmp/san.ext"
-            openssl x509 -req -in "$tmp/server.csr" \
-              -CA ${config.sops.secrets.dnsblockd_ca_cert.path} \
-              -CAkey ${config.sops.secrets.dnsblockd_ca_key.path} \
-              -set_serial "0x$(openssl rand -hex 16)" \
-              -days 365 -sha256 -extfile "$tmp/san.ext" \
-              -out "$tmp/server.crt"
-            install -m 0444 -o caddy -g caddy "$tmp/server.crt" ${mintedCert}
-            install -m 0400 -o caddy -g caddy "$tmp/server.key" ${mintedKey}
-          '';
+          script =
+            # Absolute store paths, NOT ambient PATH (defect d1, status
+            # report 2026-09-30): openssl/coreutils on the system path is
+            # generation-dependent luck; a missing binary fails minting and
+            # the fail-closed ordering then blocks caddy — the whole web
+            # stack — at boot.
+            let
+              opensslBin = "${pkgs.openssl.bin}/bin/openssl";
+              installBin = "${pkgs.coreutils}/bin/install";
+              mktempBin = "${pkgs.coreutils}/bin/mktemp";
+              rmBin = "${pkgs.coreutils}/bin/rm";
+            in
+            ''
+              set -euo pipefail
+              ${installBin} -d -m 0750 -o caddy -g caddy /run/dnsblockd-certs
+              tmp=$(${mktempBin} -d)
+              trap '${rmBin} -rf "$tmp"' EXIT
+              ${opensslBin} req -newkey rsa:2048 -nodes \
+                -keyout "$tmp/server.key" -out "$tmp/server.csr" \
+                -subj "/CN=${domain}/O=DNS Blocker"
+              printf 'subjectAltName=DNS:${domain},DNS:*.${domain},DNS:${cloudDomain},DNS:*.${cloudDomain}\n' > "$tmp/san.ext"
+              ${opensslBin} x509 -req -in "$tmp/server.csr" \
+                -CA ${config.sops.secrets.dnsblockd_ca_cert.path} \
+                -CAkey ${config.sops.secrets.dnsblockd_ca_key.path} \
+                -set_serial "0x$(${opensslBin} rand -hex 16)" \
+                -days 365 -sha256 -extfile "$tmp/san.ext" \
+                -out "$tmp/server.crt"
+              ${installBin} -m 0444 -o caddy -g caddy "$tmp/server.crt" ${mintedCert}
+              ${installBin} -m 0400 -o caddy -g caddy "$tmp/server.key" ${mintedKey}
+            '';
         };
 
         # oauth2-proxy is deliberately NOT ordered here: its ExecStartPre OIDC

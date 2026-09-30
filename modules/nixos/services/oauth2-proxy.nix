@@ -3,6 +3,7 @@ _: {
   flake.nixosModules.oauth2-proxy =
     {
       config,
+      options,
       lib,
       pkgs,
       ...
@@ -10,6 +11,14 @@ _: {
     let
       cfg = config.services.oauth2-proxy-config;
       inherit (config.networking) domain;
+      # Guard symmetry with caddy.nix (status report e5, 2026-09-30):
+      # hosts without the networking.local option set (VM tests) keep
+      # single-domain behavior instead of failing eval on a hard reference.
+      cloudDomain =
+        if builtins.hasAttr "local" options.networking && options.networking.local ? cloudDomain then
+          config.networking.local.cloudDomain
+        else
+          null;
       inherit (import ../../../lib/default.nix lib)
         harden
         serviceDefaults
@@ -78,10 +87,7 @@ _: {
             # with "domain / port not in whitelist" and the user sees a 500.
             # The cloud entry covers split-horizon aliases of the same
             # services (*.larsartmann.cloud, brainstorming 2026-09-30).
-            whitelist-domain = [
-              ".${domain}"
-              ".${config.networking.local.cloudDomain}"
-            ];
+            whitelist-domain = [ ".${domain}" ] ++ lib.optional (cloudDomain != null) ".${cloudDomain}";
           };
         };
 
