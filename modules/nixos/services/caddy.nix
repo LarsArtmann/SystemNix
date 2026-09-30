@@ -104,7 +104,7 @@ _: {
         '';
       };
 
-      protectedVHost = _subdomain: port: {
+      protectedVHost = port: {
         extraConfig = ''
           ${tlsConfig}
           ${commonConfig}
@@ -156,9 +156,57 @@ _: {
               staticVHost v.root
           )
         else if v.layer == "protected" then
-          protectedVHost null v.port
+          protectedVHost v.port
         else
           plainVHost v.port;
+
+      dnsLocalSubdomains = (import ../../../platforms/common/dns-local.nix).localSubdomains;
+      # Deliberate exemptions: voice/whisper are hand-written vHosts (below)
+      # whose subdomains are deliberately NOT in dns-local — voice-agents is
+      # not enabled on any host and supplies its own zone data.
+      dnsExemptSubdomains = [
+        "voice"
+        "whisper"
+      ];
+      # vHost subdomains derived from the rendered set (single source of
+      # truth — registry fan-out and hand-written entries alike; catch-alls
+      # and the :80 listener excluded via the "*"/suffix filters).
+      vhostSubdomains =
+        builtins.filter (s: s != "") (
+          builtins.map (k: lib.removeSuffix ".${domain}" k) (
+            builtins.filter
+              (k: lib.hasSuffix ".${domain}" k && !lib.hasInfix "*" k)
+              (builtins.attrNames homeLanVHosts)
+          )
+        );
+      # Registry subdomains (regardless of enable — a disabled service's
+      # dns-local entry is pending work, not a ghost).
+      registrySubdomains =
+        if options ? services.integration then
+          builtins.map (e: e.subdomain) (
+            builtins.filter (e: e.subdomain != null) (builtins.attrValues config.services.integration)
+          )
+        else [ ];
+      ghostSubdomains =
+        builtins.filter
+          (s: !builtins.elem s vhostSubdomains && !builtins.elem s registrySubdomains)
+          dnsLocalSubdomains;
+      # Protected/plain classification for the post-deploy smoke: a vHost is
+      # "protected" iff its rendered extraConfig carries forward_auth — the
+      # one marker that cannot drift between the helpers and reality.
+      vhostLayerLines = lib.sort (a: b: a < b) (
+        lib.unique (
+          builtins.map
+            (
+              k:
+              (
+                if lib.hasInfix "forward_auth" homeLanVHosts.${k}.extraConfig then "protected" else "plain"
+              )
+              + " ${lib.removeSuffix ".${domain}" k}"
+            )
+            (builtins.filter (k: lib.hasSuffix ".${domain}" k && !lib.hasInfix "*" k) (builtins.attrNames homeLanVHosts))
+        )
+      );
     in
     {
       options.services.caddy-config = {
@@ -213,9 +261,42 @@ _: {
       };
 
       config = lib.mkIf config.services.caddy.enable {
+        # Hand-written vHost subdomains MUST exist in the shared DNS truth —
+        # a typo'd name would serve a hostname dnsblockd never resolves
+        # (registry entries are already asserted by integration.nix; this
+        # closes the hand-written half).
+        assertions = [
+          {
+            assertion = lib.all (s: lib.elem s (dnsExemptSubdomains ++ dnsLocalSubdomains)) vhostSubdomains;
+            message =
+              "caddy: vHost subdomain(s) missing from platforms/common/dns-local.nix (name would never resolve): "
+              + lib.concatStringsSep ", " (
+                builtins.filter (s: !lib.elem s (dnsExemptSubdomains ++ dnsLocalSubdomains)) vhostSubdomains
+              );
+          }
+        ];
+
+        # Derived vHost layer map for scripts/post-deploy-check.sh: one
+        # "protected <sub>" / "plain <sub>" line per home.lan vHost, computed
+        # from the SAME rendered set as the actual proxy (the smoke's
+        # hand-maintained list was the hand-copy-of-registry-data drift
+        # class). home.lan zone only — cloud mirrors share the same backend.
+        environment.etc."caddy/vhost-layers".text = lib.concatStringsSep "\n" vhostLayerLines + "\n";
+
         services.caddy = {
           # logFormat is wrapped by the NixOS module as `log { ${logFormat} }`
           # in globalConfig — do NOT add a separate `log {}` block there (collision)
+          #
+          # Logging map (verified against the rendered Caddyfile + the live log
+          # dir 2026-09-30): this global block configures the DEFAULT logger —
+          # caddy runtime logs plus any site WITHOUT its own log block. Every
+          # vHost also gets the nixpkgs per-host default `log { output file
+          # access-<host>.log }` in its site block, so each request lands in
+          # exactly ONE file (no double-logging); per-host files use Caddy's
+          # file-output defaults (roll 100MiB, keep 10 — bounded per file,
+          # aggregate grows with vHost count). geometrikks tails BOTH surfaces
+          # by design (its per-vhost path derivation matches the nixpkgs
+          # default).
           logFormat = ''
             output file /var/log/caddy/access.log {
               roll_size 100MB
@@ -226,6 +307,14 @@ _: {
           '';
           globalConfig = ''
             auto_https off
+            # Bind to the LAN IP only, never 0.0.0.0 (f43a28a3: the original
+            # `bind` inside servers {} was invalid Caddy syntax; default_bind
+            # is the global-option form). Live-verified 2026-09-30: dnsblockd
+            # serves its block page on the blockIP :80/:443, so a wildcard
+            # caddy bind would collide with it. The NetBird VPN needs no extra
+            # bind either: the client routes the whole LAN subnet through the
+            # tunnel and traffic arrives AT the LAN IP (net-vpn brainstorm,
+            # 2026-09-30).
             ${lib.optionalString (bindAddress != null) "default_bind ${bindAddress}"}
             servers {
               strict_sni_host on
@@ -301,7 +390,7 @@ _: {
             # (taskchampion has no registry entry).
             # The old alerts.<domain> PapDashboard alias is covered by the
             # catch-all below (unknown *.home.lan → redirect to dash).
-            "tasks.${domain}" = protectedVHost "tasks" config.services.taskchampion-sync-server.port;
+            "tasks.${domain}" = protectedVHost config.services.taskchampion-sync-server.port;
             # OpenSEO: Layer 2 (oauth2-proxy forward-auth). The GSC OAuth callback
             # (/api/gsc/oauth/callback) is exempt from forward-auth — OAuth callback
             # endpoints should be directly reachable to prevent cookie-expiry edge
@@ -353,12 +442,12 @@ _: {
             # not in the shared dns-local list (voice-agents is not enabled
             # on any current host), so registry entries for them would fail
             # the DNS-consistency assertion.
-            "voice.${domain}" = protectedVHost "voice" config.services.livekit.settings.port;
-            "whisper.${domain}" = protectedVHost "whisper" config.services.voice-agents.whisperPort;
+            "voice.${domain}" = protectedVHost config.services.livekit.settings.port;
+            "whisper.${domain}" = protectedVHost config.services.voice-agents.whisperPort;
           }
           //
             lib.optionalAttrs
-              (config.services.monitor365.enable || config.services.monitor365-server.enable or false)
+              ((config.services.monitor365.enable or false) || (config.services.monitor365-server.enable or false))
               {
                 # When SSO is enabled, Monitor365 uses native OIDC via Pocket ID.
                 # Plain reverse_proxy (like Forgejo/Gatus) avoids oauth2-proxy
@@ -381,7 +470,7 @@ _: {
                       '';
                     }
                   else
-                    protectedVHost "monitor" ports.monitor365-server;
+                    protectedVHost ports.monitor365-server;
               }
           # DiscordSync / Browser History / Attic / renamer / search / graph /
           # overview vHosts moved to the registry (services.integration
@@ -412,7 +501,14 @@ _: {
           # through the same helpers as every hand-written vHost above.
           // (lib.mapAttrs' (sub: v: lib.nameValuePair "${sub}.${domain}" (renderVHost v)) registryVHosts);
           in
-            homeLanVHosts
+            # Ghost-entry sweep (eval WARNING): dns-local names that nothing
+            # serves. Enable-gated services keep their registry entry, so
+            # they never ghost; a NEW ghost = a dns-local addition with no
+            # consumer vHost anywhere.
+            lib.warnIf
+              (ghostSubdomains != [ ])
+              "caddy: dns-local subdomain(s) with no vHost and no registry entry (ghost entries): ${lib.concatStringsSep ", " ghostSubdomains}"
+              homeLanVHosts
             // (lib.optionalAttrs (cloudDomain != null) (
               # Split-horizon aliases (brainstorming 2026-09-30): every
               # home.lan vHost mirrored under the cloud domain — identical
@@ -486,6 +582,7 @@ _: {
             # stack — at boot.
             let
               opensslBin = "${pkgs.openssl.bin}/bin/openssl";
+              gnugrepBin = "${pkgs.gnugrep}/bin/grep";
               installBin = "${pkgs.coreutils}/bin/install";
               mktempBin = "${pkgs.coreutils}/bin/mktemp";
               rmBin = "${pkgs.coreutils}/bin/rm";
@@ -505,6 +602,16 @@ _: {
                 -set_serial "0x$(${opensslBin} rand -hex 16)" \
                 -days 365 -sha256 -extfile "$tmp/san.ext" \
                 -out "$tmp/server.crt"
+              # Fail the MINT unit (OnFailure → Discord) instead of the first
+              # failed TLS handshake hours later: assert the signed leaf
+              # really carries all four SANs before installing it.
+              sans=$(${opensslBin} x509 -in "$tmp/server.crt" -noout -ext subjectAltName)
+              for name in '${domain}' '*.${domain}' '${cloudDomain}' '*.${cloudDomain}'; do
+                printf '%s\n' "$sans" | ${gnugrepBin} -qF "DNS:$name" || {
+                  echo "minted cert is missing SAN DNS:$name; got: $sans" >&2
+                  exit 1
+                }
+              done
               ${installBin} -m 0444 -o caddy -g caddy "$tmp/server.crt" ${mintedCert}
               ${installBin} -m 0400 -o caddy -g caddy "$tmp/server.key" ${mintedKey}
             '';
@@ -520,6 +627,12 @@ _: {
         # Cost of the removed ordering: a few seconds of 502s on external
         # forward-auth paths at boot; LAN bypass is unaffected.
         systemd.services.caddy = {
+          # Requires (not just wants) is what makes the fail-closed claim in
+          # the mint comment above literal: a dead mint unit blocks the caddy
+          # start itself, instead of relying on the missing-cert parse error
+          # downstream. After= still provides the ordering (Requires alone
+          # does not order).
+          requires = lib.optional (cloudDomain != null) "dnsblockd-cert-mint.service";
           after =
             lib.optional (cloudDomain != null) "dnsblockd-cert-mint.service"
             ++ [
@@ -528,8 +641,7 @@ _: {
             ]
             ++ lib.optional (config.services.attic-config.enable or false) "atticd.service";
           wants =
-            lib.optional (cloudDomain != null) "dnsblockd-cert-mint.service"
-            ++ [
+            [
               "pocket-id.service"
               "sops-nix.service"
             ]
@@ -541,8 +653,15 @@ _: {
           };
           serviceConfig = lib.mkMerge [
             (harden {
-              NoNewPrivileges = lib.mkForce false;
-              CapabilityBoundingSet = "CAP_NET_ADMIN CAP_NET_BIND_SERVICE";
+              # CAP_NET_BIND_SERVICE is the only capability caddy needs
+              # (:80/:443 TCP + :443/UDP QUIC). The old CAP_NET_ADMIN came
+              # from da147df6's "Let's Encrypt DNS challenge" rationale —
+              # dead since auto_https off (sops/minted certs, no DNS
+              # provider, no interface manipulation). Upstream caddy's unit
+              # ships NET_ADMIN too, but nothing in an offline-cert setup
+              # exercises it. Proof gate: checks.caddy-mint boots caddy and
+              # does real TLS handshakes on both zones without it.
+              CapabilityBoundingSet = "CAP_NET_BIND_SERVICE";
             })
             (serviceDefaults { })
             {
@@ -551,7 +670,13 @@ _: {
                 "/var/log/caddy"
               ];
               OOMScoreAdjust = lib.mkForce (-500);
-              AmbientCapabilities = "CAP_NET_ADMIN CAP_NET_BIND_SERVICE";
+              # Ambient caps were DESIGNED to work under NoNewPrivileges=true
+              # (inheritable without any setuid/setgid exec — da147df6's
+              # premise that caddy calls setuid/setgid was wrong; caddy never
+              # does). Dropping the old NNP=false mkForce restores the
+              # nixpkgs/harden default (true) with the ambient bind cap
+              # intact.
+              AmbientCapabilities = "CAP_NET_BIND_SERVICE";
             }
           ];
         };

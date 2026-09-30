@@ -389,11 +389,14 @@ _: {
           assertions =
             let
               dnsMissing = e: e.enable && e.subdomain != null && !builtins.elem e.subdomain dnsLocalSubdomains;
+              # XOR, not OR: port AND root both set would silently serve the
+              # static root (caddy's renderVHost checks root first) and lose
+              # the proxy target; neither set has nothing to serve.
               vhostIncomplete =
                 e:
                 e.enable
                 && e.vHost.layer != "none"
-                && (e.subdomain == null || (e.port == null && e.vHost.root == null));
+                && (e.subdomain == null || ((e.port == null) == (e.vHost.root == null)));
               checkWithoutPort = e: e.enable && builtins.any (c: c.url == null) e.checks && e.port == null;
             in
             [
@@ -407,7 +410,7 @@ _: {
               }
               {
                 assertion = lib.all (e: !vhostIncomplete e) (builtins.attrValues cfg);
-                message = "integration: vHost layer != none requires BOTH subdomain and (port OR vHost.root): ${
+                message = "integration: vHost layer != none requires subdomain + EXACTLY ONE of port / vHost.root: ${
                   lib.concatStringsSep ", " (lib.attrNames (lib.filterAttrs (_: vhostIncomplete) cfg))
                 }";
               }

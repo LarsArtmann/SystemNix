@@ -466,6 +466,7 @@
 - [ ] **Should the verify-gate triage runbook become executable (`scripts/verify-gate-triage.sh`: four probes → one verdict line) or is the upstream `VerifyGateError` classification sufficient, making a repo-side script redundant by design? — BLOCKED: owner decides queue-layer vs upstream-layer classification ownership**
 - [ ] **What is the authoritative verify-budget source of truth (the CONTRIBUTING runbook cites "~30 min, measured 2026-09-25") — where does the dispatch payload set `verify_timeout` and is 30 min still current? — BLOCKED: config lives queue-side; prose will silently age without the pointer**
 - [ ] **Canonical home of the verify-gate triage runbook: keep in docs/CONTRIBUTING.md or move/duplicate into docs/services/tq.md (queue operators triage from the tq runbook; duplication is a drift hazard)? — BLOCKED: owner picks the canonical surface; cross-link follows the decision**
+- [ ] [ready] **check-todo-system.sh v2: DONE-state pairing + stale-tag checks** → [docs/todo/pipeline.md](docs/todo/pipeline.md) — a `[x]` queue row whose library row is still `[ ]` (or vice versa) should fail the gate, and rows whose lifecycle tag contradicts their own body (`[blocked:deploy]` whose text says the deploy already ran) should WARN; today's checker only catches title-less rows + dead links
 
 ## Libraries
 

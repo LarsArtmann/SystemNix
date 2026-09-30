@@ -37,7 +37,11 @@
       allowedUDPPorts = [
         53
         853
-      ]; # 53=plain DNS + DoQ, 853=DoQ-over-QUIC
+        443
+      ]; # 53=plain DNS + DoQ, 853=DoQ-over-QUIC, 443=HTTP/3 QUIC (caddy serves
+      # h3 and advertises it via Alt-Svc — dropping UDP/443 here sent every
+      # VPN/external client chasing QUIC into a blackhole before the TCP
+      # fallback; LAN is unaffected either way, eno1 is a trusted interface)
     };
 
     # Static IP configuration
