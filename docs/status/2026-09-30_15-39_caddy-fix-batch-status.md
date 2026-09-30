@@ -243,3 +243,27 @@ entries must not drift — both edited in this pass.
 - Pre-existing failures surfaced (not mine): `negative-test-lints.sh` 18/5
   (dead-guard cv.nix:555 + hermes.nix:161; signoz-query-lint +
   binary-coverage-lint pristine controls).
+
+---
+
+## Appendix (post-authoring work, same session — annotated 2026-10-01 01:0x)
+
+After this report was written, the session continued under an explicit
+"keep going" instruction with one addition beyond the report's §f table:
+
+- **The parallel session's half-done "caddy.nix shallow-merge" row closed.**
+  The row (14:32 closeout, queue-only) asked for a regression case for the
+  "parenthesized-LHS shape the current regex missed at landing time".
+  Verification CORRECTED the premise: the v1 single-line regex DID flag the
+  shape (proven by running the v1 scanner against the real pre-fix source,
+  `f1e703c5~1` — FAIL at its line 435); the defect reached master because the
+  auto-commit daemon commits past a FAILING pre-commit (the row's own "every
+  commit now fails pre-commit" symptom). The row's OTHER half was real and is
+  now done: `scripts/audit-serviceconfig-merge.sh` extended v1→v2 with a
+  bounded continuation-line check (the v1 blind spot the header had punted to
+  "review at write time"), selftest grown to four fixtures, and a v1 fixture
+  bug fixed en route (the `env "https://…" // { }` "sanctioned" case was
+  itself a real shallow merge the whole-line URL exemption false-negatived).
+  Evidence: selftest rc=0; v1 AND v2 both FAIL the historical file; repo scan
+  199 files fail=0. TODO_LIST row removed; CHANGELOG entry under
+  [Unreleased] → Changed.
