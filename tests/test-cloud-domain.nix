@@ -92,6 +92,23 @@ let
       msg = "netbird client must stay gated off until Phase 2";
     }
     {
+      # Positive surface probe: the pinned nixpkgs client module shape
+      # (services.netbird.clients.<name> + login.setupKeyFile) must accept
+      # the gated config when enabled — catches option renames that a
+      # disabled mkIf would silently hide.
+      ok =
+        let
+          enabled =
+            (inputs.self.nixosConfigurations.evo-x2.extendModules {
+              modules = [ { services.netbird-client.enable = true; } ];
+            }).config;
+        in
+        enabled.services.netbird.clients ? evox2
+        && enabled.services.netbird.clients.evox2.port == ports.netbird
+        && (enabled.systemd.services ? "netbird-evox2-login");
+      msg = "netbird client module surface mismatch (services.netbird.clients)";
+    }
+    {
       ok = ports.netbird == 51820;
       msg = "netbird port not registered in lib/ports.nix";
     }

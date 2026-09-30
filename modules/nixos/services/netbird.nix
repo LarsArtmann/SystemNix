@@ -4,10 +4,10 @@
 # docs/brainstorming/2026-09-30_netbird-larsartmann-cloud-selfhosted-vpn.md
 #
 # PHASE GATE (deliberate): stays disabled until the Phase-2 setup key exists
-# in sops (platforms/nixos/secrets/netbird.yaml → netbird_env, format:
-# NETBIRD_SETUP_KEY=<key>). Enabling without that file fails activation by
-# design — fail-closed, no placeholder secrets. The tunnel interface is
-# trusted (LAN-equivalent) once up; no inbound ports are opened.
+# in sops (platforms/nixos/secrets/netbird.yaml → netbird_setup_key). Enabling
+# without that file fails activation by design — fail-closed, no placeholder
+# secrets. The login oneshot handles enrollment automatically; no inbound
+# ports are opened beyond the P2P WireGuard port (51820/udp).
 _:
 {
   flake.nixosModules.netbird =
@@ -20,7 +20,6 @@ _:
     let
       cfg = config.services.netbird-client;
       inherit (import ../../../lib/default.nix lib) ports;
-      tunnelName = "wt0";
     in
     {
       # Unconditional catalog entry (ADR-008): "what exists" — no DNS
@@ -51,20 +50,26 @@ _:
       };
 
       config = lib.mkIf cfg.enable {
-        services.netbird.tunnels.${tunnelName} = {
-          enable = true;
+        # Pinned-nixpkgs surface (2026-09-28): services.netbird.clients.<name>
+        # with automated setup-key login — no interactive browser flow on a
+        # headless server, ever. The login oneshot picks the key up from the
+        # sops-rendered file via LoadCredential.
+        services.netbird.clients.evox2 = {
           port = ports.netbird;
-          environmentFile = config.sops.secrets.netbird_env.path;
+          config.ManagementUrl = cfg.managementURL;
+          login = {
+            enable = true;
+            setupKeyFile = config.sops.secrets.netbird_setup_key.path;
+            systemdDependencies = [ "sops-install-secrets.service" ];
+          };
+          # openFirewall (default) opens 51820/udp for direct P2P;
+          # openInternalFirewall (default) trusts the tunnel interface.
         };
 
-        sops.secrets.netbird_env = {
+        sops.secrets.netbird_setup_key = {
           sopsFile = ../../../platforms/nixos/secrets/netbird.yaml;
-          restartUnits = [ "netbird-${tunnelName}.service" ];
+          key = "netbird_setup_key";
         };
-
-        # The tunnel carries only trusted mesh traffic (our own peers,
-        # single-user ACLs) — LAN-equivalent trust, same as eno1.
-        networking.firewall.trustedInterfaces = [ tunnelName ];
 
         # Service-integration registry entry: unit-state monitoring only
         # (no vHost — the client is not a web service; no port checks —
