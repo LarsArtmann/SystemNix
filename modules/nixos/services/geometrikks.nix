@@ -35,6 +35,7 @@
 
       stateDir = "/var/lib/geometrikks";
       oidcEnvFile = "/var/lib/geometrikks-oidc/oidc.env";
+      oidcSubsFile = "/var/lib/geometrikks-oidc/allowed-subs";
       poolBackupDir = "/mnt/pool/backups/geometrikks";
 
       # Tail every Caddy access-log sink (host paths now — no container
@@ -81,12 +82,69 @@
         mkdir -p ${stateDir}/logs ${stateDir}/geoip
       '';
 
+      # Resolve Pocket ID user ids (= OIDC `sub`) for the allow list. WHY:
+      # upstream matches an allow-list entry against the subject id ALWAYS
+      # but against an email ONLY when the provider marks it verified
+      # (email_verified strict boolean — a string "true" does not count).
+      # Pocket ID's email_verified is a PER-USER column defaulting to FALSE
+      # (migration 20260109090200, set only by its SMTP verification flow or
+      # an admin toggle), so an email-only allow list rejects EVERY login
+      # (live 2026-09-30: reason=not_allowed with the email claim present).
+      # Auto-allowing every ENABLED Pocket ID user by subject id fixes SSO
+      # without touching IdP state and converges when users are
+      # added/removed/renamed (next bridge run — boot + deploy.sh).
+      subResolver = pkgs.writeShellScript "geometrikks-oidc-subs" ''
+        set -euo pipefail
+        db="''${GEOMETRIKKS_OIDC_DB:-${config.services.pocket-id.dataDir}/data/pocket-id.db}"
+        subs_file="''${GEOMETRIKKS_OIDC_SUBS_FILE:-${oidcSubsFile}}"
+        sqlite3="${pkgs.sqlite}/bin/sqlite3"
+        out_tmp="$subs_file.tmp"
+
+        if [ ! -f "$db" ]; then
+          echo "geometrikks-oidc-subs: Pocket ID SQLite DB not found at $db — is Pocket ID initialized?" >&2
+          exit 1
+        fi
+
+        subs=""
+        rc=0
+        for _ in 1 2 3 4 5; do
+          if subs="$("$sqlite3" -readonly "$db" "SELECT id FROM users WHERE disabled = 0;")"; then
+            break
+          fi
+          rc=$?
+          subs=""
+          sleep 2
+        done
+        if [ "$rc" -ne 0 ]; then
+          echo "geometrikks-oidc-subs: Pocket ID users query failed after retries (rc=$rc) — locked DB or schema drift?" >&2
+          exit 1
+        fi
+        if [ -z "$subs" ]; then
+          echo "geometrikks-oidc-subs: no enabled Pocket ID users found — refusing to write an empty allow list" >&2
+          exit 1
+        fi
+
+        bad="$(printf '%s' "$subs" | grep -cvE '^[A-Za-z0-9-]*$' || true)"
+        if [ "$bad" -ne 0 ]; then
+          echo "geometrikks-oidc-subs: resolved user id(s) have unexpected characters — refusing" >&2
+          exit 1
+        fi
+
+        umask 077
+        printf '%s\n' "$subs" > "$out_tmp"
+        chmod 0444 "$out_tmp"
+        mv "$out_tmp" "$subs_file"
+        count="$(printf '%s\n' "$subs" | grep -c . || true)"
+        echo "geometrikks-oidc-subs: allowed $count enabled Pocket ID user(s) by subject id -> $subs_file"
+      '';
+
       # OIDC secret bridge: the Pocket ID provisioner owns the client
       # secret (dynamic, regenerated on client recreation — never in
       # sops). systemd reads the 0750 pocket-id-owned secret file as PID
       # 1 via LoadCredential; the bridge writes ALL OIDC vars together
       # (all-present-or-all-absent, the browser-history Validate()
-      # crash-loop lesson).
+      # crash-loop lesson). The allow list = configured emails + the
+      # subject ids the +ExecStartPre resolver staged (see subResolver).
       oidcBridge = pkgs.writeShellScript "geometrikks-oidc-env" ''
         set -euo pipefail
         secret="$(cat "$CREDENTIALS_DIRECTORY/pocket-id-secret")"
@@ -96,13 +154,28 @@
             exit 1
             ;;
         esac
+        allowed="${lib.concatStringsSep "," cfg.oidc.allowedUsers}"
+        if [ -f "${oidcSubsFile}" ]; then
+          while IFS= read -r sub; do
+            [ -z "$sub" ] && continue
+            case "$sub" in
+              *[!A-Za-z0-9-]*)
+                echo "geometrikks-oidc-env: staged subject id has unexpected characters — refusing: $sub" >&2
+                exit 1
+                ;;
+            esac
+            allowed="$allowed,$sub"
+          done < "${oidcSubsFile}"
+        else
+          echo "geometrikks-oidc-env: no staged subject ids at ${oidcSubsFile} — allow list is email-only" >&2
+        fi
         umask 077
         {
           echo "OIDC_ISSUER=https://auth.${domain}"
           echo "OIDC_CLIENT_ID=geometrikks"
           echo "OIDC_CLIENT_SECRET=$secret"
           echo "OIDC_REDIRECT_URI=https://geo.${domain}/api/v1/auth/oidc/callback"
-          echo "OIDC_ALLOWED_USERS=${lib.concatStringsSep "," cfg.oidc.allowedUsers}"
+          echo "OIDC_ALLOWED_USERS=$allowed"
           echo "OIDC_PROVIDER_NAME=Pocket ID"
         } > ${oidcEnvFile}.tmp
         mv ${oidcEnvFile}.tmp ${oidcEnvFile}
@@ -196,8 +269,14 @@
           description = ''
             Verified email addresses (or subject identifiers) allowed to sign
             in via Pocket ID (OIDC_ALLOWED_USERS — upstream REQUIRES a
-            non-empty allow list). The admin password login stays available as
-            break-glass while APP_ADMIN_PASSWORD is set.
+            non-empty allow list). Upstream matches an email only when the
+            provider marks it verified, and Pocket ID's per-user
+            email_verified defaults to FALSE — so the bridge ALSO auto-appends
+            every enabled Pocket ID user's subject id at runtime
+            (geometrikks-oidc-subs); these entries are the email fallback and
+            the non-empty assertion, not the sole gate. The admin password
+            login stays available as break-glass while APP_ADMIN_PASSWORD is
+            set.
           '';
         };
       };
@@ -410,10 +489,15 @@
                   LoadCredential = [
                     "pocket-id-secret:${config.services.pocket-id.dataDir}/client-secrets/geometrikks"
                   ];
+                  # + = full privileges for this one command (miniflux
+                  # phase-1 pattern): Pocket ID's state dir is foreign-owned
+                  # and the unit's bounding set must stay minimal.
+                  ExecStartPre = [ "+${subResolver}" ];
                   ExecStart = "${oidcBridge}";
                   RemainAfterExit = true;
                 }
               ];
+              inherit onFailure;
             };
 
             # Mount-gated pool leaf creator (miniflux-backup-dir pattern:
