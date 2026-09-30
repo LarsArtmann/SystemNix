@@ -460,4 +460,11 @@
 - [ ] [ready] **Eval guard: declared DMS settings keys must exist in the pinned source's SettingsSpec.js** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [ready] **Identify DMS weather IP-geo endpoint; check dnsblockd classification** → [docs/todo/desktop.md](docs/todo/desktop.md)
 
+### services / pipeline (harvest 2026-09-30 06:5x)
+
+- [ ] [ready] **geometrikks post-deploy smoke probe** (unit + `/health/ready` + provision journal line; the service sat dark since 09-29 with ZERO deploy-gate coverage) → [docs/todo/services.md](docs/todo/services.md)
+- [ ] [ready] **CV render smoke IO-pressure-aware** (`/de/cv` proxy render leg false-FAILs under high io PSI; WARN like the shell check) → [docs/todo/services.md](docs/todo/services.md)
+- [ ] [ready] **bank-sync smoke counter windowing** (`sync_errors_total` is restart-cumulative — smoke stays red post-fix; + distinct DB-write-failure metric) → [docs/todo/services.md](docs/todo/services.md)
+- [ ] [ready] **go-nix-helpers own-pinned consumer sweep** (4 independent lock nodes hold pre-fix `7c06ddc8`; sweep on their next bumps, no dedicated deploy) → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+
 _Completed work: [CHANGELOG.md](./CHANGELOG.md). Long-term ideas: [ROADMAP.md](./ROADMAP.md)._
