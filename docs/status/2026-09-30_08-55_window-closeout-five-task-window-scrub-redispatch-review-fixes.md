@@ -48,6 +48,7 @@
 4. **The line-number-cite habit was born, rotted twice, and propagated within one day** (152→154→107 across one finding's lifecycle; the sibling 00-31 report shipped with 13 such cites). Title-based cites are the proven fix (14 sites converted); the convention ban is queued.
 5. **The auto-commit daemon raced TWO of the window's fix commits into footer-less heuristic commits** (`e35e635f`, `abba86d9` — the 4th+ documented instance), and **the pre-commit hook reported green success twice while validating an EMPTY staged set** (gitleaks passed vacuously, flake-check leg skipped). Both recoveries were manual (amend-forward + standalone gate re-runs); the hook's green-on-empty output is queued for hardening.
 6. **Carried (not this window's doing, but visible throughout):** the same daemon batch `d22ccd48` that deleted the library pair deleted ~19 OTHER open backlog rows — the repo's todo library has zero deletion protection.
+7. **The daemon raced THIS session too:** the report file, the TODO_LIST pipeline rows, and a foreign session's file were each swept into separate footer-less heuristic commits (`1562f0a6`, `cf23f108`, `cf6c8117`) within minutes of writing — the same class §d5 documents, live on the closeout itself. All contents verified exclusive via `git show --stat`; recovery rides this session's final footer-bearing commit (amend-forward where HEAD is exclusively this session's).
 
 ## e) WHAT WE SHOULD IMPROVE
 
