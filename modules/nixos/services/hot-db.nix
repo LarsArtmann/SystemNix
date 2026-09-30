@@ -52,6 +52,7 @@
         mkFilesystem
         mkHttpCheck
         discordAlert
+        onFailure
         ;
       cfg = config.services.hot-db;
 
@@ -355,10 +356,14 @@
             )
           );
         })
-        # T14: mount-presence collector (fail-closed). Emits the gauges ONLY
-        # on a completed run — a dead collector leaves the textfile stale and
-        # the anchored Gatus conditions below fail on absence, never
-        # phantom-green (node_exporter serves a frozen textfile forever).
+        # T14: mount-presence collector. Absence of the gauges is
+        # fail-closed ONLY for the never-ran case (no textfile yet) — after
+        # the FIRST successful run the file persists forever, so a LATER
+        # collector death would serve frozen last-good metrics (the
+        # forgejo-github-sync phantom-green class). That failure mode is
+        # owned by unit-state alerting, not the textfile: OnFailure routes
+        # to Discord and `hot-db-metrics` is in system-health's
+        # monitored set below.
         (lib.mkIf cfg.enable {
           # Same rule _signoz-metrics declares (identical settings — tmpfiles
           # `d` lines are idempotent; a DIFFERENT owner here would fight the
@@ -371,6 +376,7 @@
           ];
           systemd.services.hot-db-metrics = {
             description = "Hot-DB tier mount-presence textfile collector";
+            inherit onFailure;
             serviceConfig = lib.mkMerge [
               {
                 Type = "oneshot";
@@ -418,10 +424,26 @@
             };
           };
         })
+        # T14: collector-death alerting — the Gatus anchored conditions above
+        # only fail on metric ABSENCE (the never-ran case); after the first
+        # successful run a dead collector serves frozen last-good values
+        # forever. Unit-state alerting owns that mode: OnFailure (Discord,
+        # wired on the unit above) + the system-health failed/start-limit
+        # metrics. Guarded — this module is imported STANDALONE in
+        # tests/test-hot-db.nix (no system-health module): optionalAttrs
+        # keeps the `services.system-health` attrpath absent there
+        # (crush-hot-db precedent).
+        (lib.mkIf cfg.enable (
+          lib.optionalAttrs (options ? services.system-health) {
+            services.system-health.extraMonitoredServices = [ "hot-db-metrics" ];
+          }
+        ))
         # T14: one anchored Gatus check per entry + the toplevel. Mounted=1 is
-        # the green state; 0, absent metric, or a dead collector all fail
+        # the green state; 0, or an absent metric (the never-ran case) fails
         # (the != 0 + existence pair — asserted-value checks on a metrics
         # body MUST be newline-anchored, the 2026-08-22 phantom-green class).
+        # A LATER collector death keeps serving frozen last-good values —
+        # that mode is owned by unit-state alerting, not here.
         # Alert descriptions NEVER embed the labeled metric — gatus 5.36
         # panics at startup on quotes in descriptions (2026-09-29 incident).
         # optionalAttrs OUTSIDE, mkIf on the VALUE: an mkIf-wrapped def at an
