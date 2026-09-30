@@ -197,7 +197,8 @@ in
       };
 
       tmpfiles.rules = [
-        "L+ /var/lib/AccountsService/icons/${config.users.primaryUser} - - - - ${../../../assets/avatar.png}"
+        # DMS-optimized 256px copy (54KB vs 4MB original) — DMS + SDDM read this icon
+        "L+ /var/lib/AccountsService/icons/${config.users.primaryUser} - - - - ${../../../assets/avatar-dms.png}"
         # Ensure Home Manager profile directory exists (replaces activationScripts)
         "d /nix/var/nix/profiles/per-user/${config.users.primaryUser} 0755 ${config.users.primaryUser} users -"
         # Auto-clean stale nix build sandboxes daily (interrupted builds leak them)

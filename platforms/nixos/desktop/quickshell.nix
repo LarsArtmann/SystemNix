@@ -92,6 +92,11 @@ in
 
         osdAlwaysShowValue = true;
         fontScale = 1.5;
+
+        showWorkspaceIndex = true;
+
+        showWorkspaceApps = true;
+        maxWorkspaceIcons = 5;
       };
 
       # SystemNix DMS plugins — declaratively installed via DMS's plugin system.
