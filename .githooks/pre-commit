@@ -181,6 +181,27 @@ fi
 STAGED_NIX=$(git diff --cached --name-only --diff-filter=ACM '*.nix')
 all_passed=true
 
+# Fast guard: staged .nix files must PARSE. The auto-commit daemon has swept
+# broken *.nix intermediates into history 4× (the race between a session's
+# check and its add, most recently 2026-09-19 immich round 2); a parse error
+# otherwise surfaces minutes later inside the full flake check. Parse-only is
+# sub-second per file and reads no imports — full eval stays with the flake
+# check / CI / pre-deploy.
+if [ -n "$STAGED_NIX" ]; then
+    parse_failed=false
+    while IFS= read -r -d '' f; do
+        if ! nix-instantiate --parse "$f" > /dev/null 2> /tmp/nix-parse.log; then
+            log_error "Nix parse failed in staged file: $f"
+            cat /tmp/nix-parse.log
+            parse_failed=true
+        fi
+    done < <(git diff --cached --name-only --diff-filter=ACM -z '*.nix')
+    if [ "$parse_failed" = true ]; then
+        log_error "Staged .nix file(s) do not parse — fix the syntax before committing."
+        exit 1
+    fi
+fi
+
 # Negative-test the GOTOOLCHAIN guard itself (2026-09-22 review: the FP-fix
 # narrowing silently dropped the unquoted/spaced nix shape with no pinned
 # test — hook guards get negative-tested like flake checks). The selftest
@@ -324,11 +345,16 @@ else
     log_info "No staged .nix files — skipping Nix linters."
 fi
 
-# Shellcheck on staged .sh files
-STAGED_SH=$(git diff --cached --name-only --diff-filter=ACM '*.sh')
+# Shellcheck on staged .sh files + extensionless hook scripts (.githooks/*).
+# The .githooks glob closes the permanently-unlinted surface: hook scripts
+# carry no .sh extension, so both this leg's pathspec and any *.sh-only scan
+# skipped them (2026-09-28 finding — the commit-msg leg shipped unlinted until
+# its authoring session noticed; CI's shellcheck job covers .githooks/* at
+# error level since then, this leg is the staged-path counterpart).
+STAGED_SH=$(git diff --cached --name-only --diff-filter=ACM '*.sh' '.githooks/*')
 if [ -n "$STAGED_SH" ]; then
-    log_info "Running shellcheck on staged shell scripts..."
-    if git diff --cached --name-only --diff-filter=ACM -z '*.sh' | xargs -0 nix shell nixpkgs#shellcheck --command shellcheck --severity=warning > /tmp/shellcheck.log 2>&1; then
+    log_info "Running shellcheck on staged shell scripts + .githooks/*..."
+    if git diff --cached --name-only --diff-filter=ACM -z '*.sh' '.githooks/*' | xargs -0 nix shell nixpkgs#shellcheck --command shellcheck --severity=warning > /tmp/shellcheck.log 2>&1; then
         log_success "Shellcheck passed! No issues found."
     else
         log_error "Shellcheck found issues!"
@@ -336,7 +362,7 @@ if [ -n "$STAGED_SH" ]; then
         all_passed=false
     fi
 else
-    log_info "No staged .sh files — skipping shellcheck."
+    log_info "No staged .sh/.githooks files — skipping shellcheck."
 fi
 
 # Ruff on staged .py files
