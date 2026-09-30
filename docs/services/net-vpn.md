@@ -15,6 +15,9 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
   All Caddy vHosts serve it (same CA the clients already trust — home.lan
   behavior unchanged; the old static sops server cert stays declared as
   fallback material). Fail-closed: no mint, no Caddy start.
+  RUNTIME-VERIFIED by `checks.caddy-mint` (VM test: the mint actually runs,
+  caddy starts, SANs/CA-chain/key-pairing + real TLS handshakes on BOTH
+  zones are asserted).
 - **Caddy mirror**: every home.lan vHost is mirrored under the cloud domain
   with identical routing (auth redirects still target `auth.home.lan` by
   design — VPN clients resolve both zones). Cloud catch-all redirects to
@@ -41,7 +44,14 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
 4. **Land the key in sops** (this machine):
    `SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops platforms/nixos/secrets/netbird.yaml`
    — create the file with `netbird_setup_key: <key>` (encrypt to the evo-x2
-   age recipient per `.sops.yaml`).
+   age recipient per `.sops.yaml`). Exact minimal file content:
+
+   ```yaml
+   netbird_setup_key: <paste-the-setup-key>
+   ```
+
+   (`.sops.yaml`'s creation rule for `platforms/nixos/secrets/*` already
+   picks the right age recipients — no per-file keys stanza needed.)
 5. **Enable the client**: set `services.netbird-client.enable = true` in the
    evo-x2 platform config, rebuild. Enrollment is automatic (login oneshot).
 6. **Dashboard one-time network config** (runbook step in pbx docs):
@@ -67,6 +77,14 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
 
 ## Gotchas
 
+- **The mint unit needs `RuntimeDirectory` alongside `ReadWritePaths`** —
+  systemd sets up the mount namespace BEFORE any script line runs; a
+  `ReadWritePaths` target that no earlier unit creates kills the unit at
+  NAMESPACE setup (`226/NAMESPACE`) and the fail-closed ordering then
+  blocks caddy — ALL home.lan web services down at boot. `checks.caddy-mint`
+  guards this exact failure. Script binaries are absolute store paths
+  (`${pkgs.openssl.bin}/bin/openssl`) — never ambient PATH in a hardened
+  oneshot.
 - The mint unit re-mints at every boot (tmpfs `/run`, 365d validity) — cert
   identity changes each boot by design (random serial + key); clients trust
   the CA, not the leaf.

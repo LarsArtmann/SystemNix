@@ -2277,7 +2277,7 @@
                     cp ${./scripts/test-precommit-docs-skip.sh} "$scratch/test.sh"
                     cp ${./.githooks/pre-commit} "$scratch/real-hook"
                     PRECOMMIT_HOOK="$scratch/real-hook" bash "$scratch/test.sh"
-                    sed "s/'\\.(md|html|txt)\\$'/'\\.(md)\\$'/" "$scratch/real-hook" > "$scratch/mutated-hook"
+                    sed "s/(md|html|txt)/(md)/" "$scratch/real-hook" > "$scratch/mutated-hook"
                     if PRECOMMIT_HOOK="$scratch/mutated-hook" bash "$scratch/test.sh" > "$scratch/mut.log" 2>&1; then
                       echo "FAIL: mutated hook (docs pattern narrowed to .md-only) passed the fixture"
                       cat "$scratch/mut.log"
