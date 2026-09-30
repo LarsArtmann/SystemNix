@@ -1,0 +1,1649 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dnsblockd Deep Dive — SystemNix Adoption Audit</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
+    <div class="top-bar">
+      <span>Library Deep Dive</span>
+      <span>2026-09-30</span>
+      <span>SystemNix · evo-x2</span>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#scorecard">Scorecard</a>
+          <a href="#strengths">Current usage</a>
+          <a href="#findings">Findings</a>
+          <a href="#version">Version gap</a>
+          <a href="#opportunities">Opportunities</a>
+          <a href="#appendix">Appendix</a>
+        </nav>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main">
+        <!-- Hero -->
+        <header class="hero">
+          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">LIBRARY DEEP DIVE &middot; 2026-09-30</div>
+          <h1>dnsblockd — Adoption &amp; Utilization Audit</h1>
+          <p class="subtitle">
+            SystemNix runs dnsblockd as the sole DNS resolver on evo-x2: embedded sdns
+            recursion, 23 hash-pinned blocklists, OIDC dashboard, SigNoz spans. The
+            resolver core is run superbly — but upstream&rsquo;s entire 0.9.x household-intelligence
+            arc (devices, persistent allowlist, per-device policy, domain analytics) ships in
+            the deployed binary and is switched off at the config layer.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Deployed: v0.9.2-32 (75b4ce9)</span>
+            <span class="tag">Upstream: v0.9.3-64 (8531c77)</span>
+            <span class="tag teal">Adoption Score: 62/100</span>
+          </div>
+        </header>
+
+        <!-- Scorecard -->
+        <section id="scorecard" class="scorecard">
+          <div class="score-card score-warn">
+            <div class="score">62</div>
+            <div class="label">Adoption score / 100</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">11/22</div>
+            <div class="label">Applicable capabilities fully leveraged</div>
+          </div>
+          <div class="score-card score-bad">
+            <div class="score">2</div>
+            <div class="label">High-impact missed (one loses data)</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">7</div>
+            <div class="label">Lower-impact missed / partial</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">+64</div>
+            <div class="label">Commits behind (1 minor: 0.9.2 → 0.9.3)</div>
+          </div>
+        </section>
+
+        <!-- Summary -->
+        <section id="summary">
+          <h2><span class="num">00</span>Summary</h2>
+          <p>
+            &ldquo;Are we using dnsblockd superbly?&rdquo; For the resolver half — yes, genuinely:
+            sole-resolver posture with fail-closed semantics, DNSSEC validation, DoT upstreams,
+            a hermetic SRI-pinned blocklist pipeline with a beyond-upstream runtime whitelist
+            filter, Pocket ID SSO on the dashboard, OTel spans flowing to SigNoz, and an
+            OOM-immune unit hardened by incident lessons. For everything upstream built in
+            the 0.9.x arc — no. The deployed binary (verified: store path
+            <code>dnsblockd-75b4ce9</code> in the live unit&rsquo;s ExecStart, byte-consistent with
+            flake.lock) already contains device attribution, per-device policies and pause,
+            a persistent permanent allowlist, Likely-Broken Sites detection, proxy history,
+            and day-in-the-life analytics. None of it is configured, the permanent allowlist
+            silently loses data on every restart, and the lock sits one minor version plus
+            64 commits behind on the exact day upstream shipped v0.9.3.
+          </p>
+          <div class="callout callout-amber">
+            <strong>The bottom line</strong>
+            Not to the max. One wrapper line (<code>allowlist_path</code>) stops today&rsquo;s silent
+            data loss of every &ldquo;Always allow&rdquo; click; a lock bump to v0.9.3 (which also
+            fixes the device-Allow bug and hardens CSRF) plus a devices registry and one
+            owner decision on the tracking dial would light up the entire household layer
+            the deployment already paid for.
+          </div>
+        </section>
+
+        <!-- Strengths -->
+        <section id="strengths">
+          <h2><span class="num">&#9670;</span>What's already excellent</h2>
+          <p>
+            The baseline before the criticism — this is how the resolver is actually run,
+            every claim cited to the deployed config (the rendered YAML and live unit were
+            both read for this audit, not just the Nix source).
+          </p>
+
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Sole-resolver posture, fail-closed</strong>
+                <span>dns_enabled + dns_exit_on_failure=true, :53 ACL'd to LAN + loopback
+                (dns-blocker.nix:254-257, dns-blocker-config.nix:103-107), VRRP failover
+                partner unit (dns-failover). Replaced Unbound entirely; wildcard-free
+                split-horizon localRecords for home.lan AND the larsartmann.cloud VPN alias
+                zone (dns-blocker-config.nix:75-102, the 2026-09-30 NetBird work).</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>DNSSEC on, qname minimization at the recommended level</strong>
+                <span>enableDNSSEC = true (dns-blocker-config.nix:57);
+                dns_qname_minimization_level defaults to 3 — the docs' recommended
+                privacy/perf balance; dnsIPv6Enabled = false correctly avoids 5-15s
+                timeouts on this IPv4-only box.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Hermetic blocklist pipeline — stronger than upstream's own module</strong>
+                <span>23 SRI-hash-pinned lists (dns-blocklists.nix:7-123) fetched at eval
+                time, build-time mapping.json with a fail-loud empty-mapping guard, PLUS a
+                SystemNix-only runtime whitelist pre-filter (dns-blocker.nix:75-160) that
+                strips subdomain entries of whitelisted parents before dnsblockd ever loads
+                them — something upstream's NixOS module does not do.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Pocket ID native OIDC on the dashboard</strong>
+                <span>Authorization-code + PKCE, client secret bridged by the
+                dnsblockd-oidc-secret oneshot with graceful SSO-off degradation when
+                provisioning is absent (dns-blocker.nix:686-724). The bearer token was
+                deliberately retired — SSO is the only credential.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Temp-allow UX with TLS passthrough</strong>
+                <span>proxy_enabled with explicit proxy_upstream_dns to avoid resolve
+                loops (dns-blocker-config.nix:124-129). Upstream's F120 passthrough
+                default means browsers get the real backend certificate — no CA dance,
+                no DNS-cache wait. proxy_tls_passthrough is intentionally left at its
+                default true.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Full observability chain</strong>
+                <span>otlp_endpoint wired to the local SigNoz collector (dns-blocker.nix:241,
+                dark until the 2026-08-31 coverage audit), signoz-coverage-enforced, sdns
+                telemetry bridge + cached /health anti-wedge fix both ride the deployed
+                v0.9.2 binary. Gatus watches resolver health, metrics freshness, and
+                DNSSEC composites.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Incident-hardened unit</strong>
+                <span>oomd-exempt + OOMScoreAdjust -1000 (the 730-kills/day lesson),
+                MemoryMax 4G + GOMEMLIMIT 3GiB, GOTRACEBACK=all armed for the next
+                :9090 wedge forensics, trustedProxies so Caddy-fronted audit rows carry
+                the real LAN client (dns-blocker.nix:829-849).</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Dashboard SSE live push</strong>
+                <span>dashboard_sse_enabled defaults on and is not disabled — live
+                top-clients, block-rate, and the Live DNS Wire panel stream; admin actions
+                (allow, cache flush, report) push immediately.</span>
+              </div>
+            </div>
+          </div>
+
+          <p>
+            <strong>Architecture of the integration:</strong> SystemNix does <em>not</em> consume
+            dnsblockd's upstream NixOS module (<code>services.dnsblockd</code>, in
+            <code>~/projects/dnsblockd/nix/modules/nixos/</code>). Instead,
+            <code>modules/nixos/services/dns-blocker.nix</code> is a ~900-line wrapper declaring its
+            own camelCase option surface (<code>services.dns-blocker</code>), fetching and
+            whitelist-filtering blocklists at eval time, rendering dnsblockd's YAML config
+            verbatim into the store, and running a systemd unit harder than upstream's
+            (oomd immunity, GOMEMLIMIT, attach-ip ordering). That wrapper is the single
+            integration point — and the single choke point — for every gap below: each
+            dormant capability is off not because dnsblockd lacks it, but because the
+            wrapper never renders the key.
+          </p>
+        </section>
+
+        <!-- Findings -->
+        <section id="findings">
+          <h2><span class="num">01</span>Findings</h2>
+          <p>Ordered by impact. Every capability listed here ships in the deployed
+          v0.9.2-32 binary unless explicitly marked as arriving in v0.9.3.</p>
+
+          <!-- Issue 1 -->
+          <div class="issue issue-critical" id="issue-allowlist">
+            <span class="severity severity-critical"
+              >Missed Opportunity &middot; loses data today</span
+            >
+            <h3>Permanent allowlist is volatile — every &ldquo;Always allow&rdquo; is wiped on restart</h3>
+            <div class="where">
+              modules/nixos/services/dns-blocker.nix:245 (temp_allowlist_path is set;
+              allowlist_path is never rendered) &middot; confirmed absent in the deployed YAML
+            </div>
+            <p>
+              dnsblockd maintains two allowlists. The <strong>temp</strong> allowlist
+              (5m-24h, block-page &ldquo;Continue to site&rdquo;) is persisted —
+              <code>temp_allowlist_path = "/var/lib/dnsblockd/temp-allowlist"</code>. The
+              <strong>permanent</strong> allowlist (&ldquo;Always allow&rdquo; on the block page,
+              <code>POST /api/allowlist</code>, and the whole F143 &ldquo;Likely-Broken Sites&rdquo;
+              bulk-allow workflow) defaults to <code>allowlist_path: ""</code> = in-memory
+              only. With the key unset, every permanent allow silently evaporates on every
+              restart — and the unit carries restartTriggers on config/binary/blocklists, so
+              <em>every deploy restarts it</em>. On this fleet that means the operator's
+              false-positive verdicts have a lifetime of one deploy. F143 specifically folds
+              blocked domains against the <em>live</em> permanent allowlist (CHANGELOG 0.9.2):
+              the feature's accumulated knowledge is the part being discarded.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: one line in the wrapper's config render</strong>
+              <code>StateDirectory = "dnsblockd"</code> already covers the path — no
+              ReadWritePaths or mount work needed.
+            </div>
+            <pre><code># modules/nixos/services/dns-blocker.nix — config render attrset
+temp_allowlist_path = "/var/lib/dnsblockd/temp-allowlist";
+allowlist_path      = "/var/lib/dnsblockd/allowlist";   # ← add: persist "Always allow"
+# dnsblockd creates the file on first write; entries survive restarts + deploys</code></pre>
+          </div>
+
+          <!-- Issue 2 -->
+          <div class="issue issue-important" id="issue-tracking-dial">
+            <span class="severity severity-important"
+              >Partially Used &middot; deliberate choice, uncosted</span
+            >
+            <h3>tracking_mode = METADATA_ONLY starves every domain analytic the dashboard advertises</h3>
+            <div class="where">
+              modules/nixos/services/dns-blocker.nix:246 &middot; dnsblockd
+              internal/tracking/mode.go:111 (<code>IncludesDNS()</code> requires mode ≥
+              METADATA_AND_DNS)
+            </div>
+            <p>
+              The tracking ladder is NO_TRACK → METRICS_ONLY → <strong>METADATA_ONLY (deployed)</strong>
+              → METADATA_AND_DNS → +HEADERS → FULL, plus BLOCKS_ONLY. At METADATA_ONLY the
+              store keeps request metadata (method, path, IP, UA) but <strong>no DNS
+              information — no domains, no categories</strong>. Consequence: Top Blocked
+              Domains (server-rendered since 0.9.3), the Query Log, Likely-Broken Sites
+              data, the Day Weather Map, per-device day maps, and the durable proxy-history
+              table (F136 — its own test pins zero rows written at METADATA_ONLY) are all
+              data-starved by design. Aggregate Prometheus metrics (block rate, cache,
+              latency histograms, DNSSEC coverage) remain fully alive. This is a defensible
+              privacy stance — but it is one notch on a dial, and the cost (the dashboard's
+              entire domain-level surface) is undocumented anywhere in SystemNix.
+              <strong>Owner decision required</strong>: keep METADATA_ONLY, or step to
+              METADATA_AND_DNS (domains + categories, still no headers/payloads) to light
+              up the analytics half.
+            </p>
+            <pre><code># The dial — dns-blocker.nix:246
+tracking_mode = "METADATA_ONLY";       # today: no domains stored
+tracking_mode = "METADATA_AND_DNS";    # option: domains + categories, no headers/payloads
+# retention already bounded: 30d tracks / 90d metrics / 365d block-rate (defaults)</code></pre>
+          </div>
+
+          <!-- Issue 3 -->
+          <div class="issue issue-important" id="issue-devices">
+            <span class="severity severity-important"
+              >Missed Opportunity &middot; high additive value</span
+            >
+            <h3>devices / users registries unset — named attribution, per-device pause, and the live wire run anonymous</h3>
+            <div class="where">
+              config.example.yaml <code>devices:</code> / <code>users:</code> &middot; FEATURES F121,
+              F123, F125 &middot; not rendered by the wrapper (deployed YAML confirms)
+            </div>
+            <p>
+              The deployed binary ships a full household layer: a device registry mapping
+              stable IPs/CIDRs to named machines (F121 — Top Clients rows become named,
+              multi-IP rows merge, attribution rate reported), user owners as chips,
+              per-device pause via <code>POST /api/pause</code> (F123 — block-everything
+              for 0-1440 min, audited), and the Live DNS Wire SSE panel with device names
+              (F125). This LAN has stable, known addressing (evo-x2 .150, Pixel 6, TV,
+              …) — declaring ~5 devices is pure config, and it also makes device-scoped
+              temp-allows work (a block-page Allow applies to the requesting device only).
+              <strong>Prerequisite:</strong> bump the lock first — v0.9.3 fixes that a
+              configured device's block-page Allow never unblocked it (T309).
+            </p>
+            <pre><code># Wrapper plumbing + config — upstream koanf shape
+devices:
+  - { id: evo-x2,    name: "evo-x2 Desktop", ips: ["192.168.1.150"] }
+  - { id: pixel-6,   name: "Pixel 6",        ips: ["192.168.1.x"] }
+  - { id: lg-tv,     name: "LG TV (DP-2)",   ips: ["192.168.1.x"] }
+users:
+  - { name: Lars, devices: [evo-x2, pixel-6] }</code></pre>
+          </div>
+
+          <!-- Issue 4 -->
+          <div class="issue issue-important" id="issue-version">
+            <span class="severity severity-important"
+              >Version Currency &middot; 1 minor + 64 commits</span
+            >
+            <h3>Lock at v0.9.2-32 — v0.9.3 shipped the day after our lock moved</h3>
+            <div class="where">
+              flake.lock dnsblockd rev 75b4ce9d (2026-09-29) &middot; upstream origin/master
+              8531c772 = v0.9.3-64 (2026-09-30) &middot; gap = 107 commits, 11 substantive
+              feat/fix
+            </div>
+            <p>
+              Not stale by calendar — one day — but the gap is dense: the root-recursion
+              fix (T299, see Version section), the device-Allow fix (T309), the CSRF
+              hardening batch (T300), and the dashboard top-domains starvation fix (P10)
+              all landed inside it. Deployed binary and lock are consistent (live unit
+              ExecStart = <code>dnsblockd-75b4ce9</code>), so a bump is a clean targeted
+              update — but per repo doctrine, probe the go-modules FOD at the target rev
+              first (<code>nix build github:LarsArtmann/dnsblockd/master#default.goModules</code>).
+              Bonus: the queued &ldquo;cut a release tag&rdquo; TODO (docs/todo/upstream.md:55,72)
+              is now satisfiable — v0.9.3 exists, so the tag-pin vs follow-master decision
+              is unblocked.
+            </p>
+          </div>
+
+          <!-- Issue 5 -->
+          <div class="issue issue-important" id="issue-wrapper">
+            <span class="severity severity-important"
+              >Partially Used &middot; already queued [ready]</span
+            >
+            <h3>~900-line wrapper duplicates upstream's VM-tested NixOS module</h3>
+            <div class="where">
+              modules/nixos/services/dns-blocker.nix (895 lines) vs
+              ~/projects/dnsblockd/nix/modules/nixos/ (options/core|dns|tracking|proxy-tls,
+              config.nix, assertions.nix — 83 commits of upstream maintenance)
+            </div>
+            <p>
+              The repo's own doctrine says &ldquo;always consume the upstream module — never
+              hand-roll a parallel one&rdquo; (AGENTS.md, Consuming LarsArtmann Flakes), and
+              upstream's module already exposes as options everything this report found
+              dormant: devices, policies, users, allowlist_path, dhcp_lease_file, trial
+              lists, ECS, cache dir, log sampling. Every finding here is therefore also a
+              wrapper-plumbing chore that the upstream module would have made a one-liner.
+              Drift has already bitten upstream-side once (the <code>blocklist_urls</code> →
+              koanf <code>dns_blocklist_urls</code> silent no-op, fixed in its config.nix).
+              The migration is not free: the wrapper carries real SystemNix value upstream
+              lacks (runtime whitelist pre-filter, attach-ip unit, sops CA wiring, oomd
+              exemption, MemoryMax/GOMEMLIMIT, restartTriggers, integration registry).
+              Tracked as docs/todo/services.md:57 [ready].
+            </p>
+          </div>
+
+          <!-- Issue 6 -->
+          <div class="issue issue-important" id="issue-csrf">
+            <span class="severity severity-important"
+              >Missed Opportunity &middot; defense-in-depth</span
+            >
+            <h3>csrf_enabled false — dashboard action forms ride the SSO cookie unprotected</h3>
+            <div class="where">
+              config.example.yaml <code>csrf_enabled</code> (default false) &middot; absent
+              from the wrapper render and the deployed YAML
+            </div>
+            <p>
+              The dashboard's action forms (temp-allow, report false-positive, &ldquo;Allow all
+              N&rdquo; bulk) accept POSTs authenticated only by the SSO httpOnly session
+              cookie. Modern SameSite=Lax browser defaults block plain cross-site POSTs,
+              so this is belt-and-braces rather than a gaping hole — but the OIDC flow's
+              own CSRF (state TTL) shows upstream's standard here, and v0.9.3's T300 batch
+              hardened the CSRF path end-to-end (login double-submit fixed, e2e smoke pins
+              csrf_enabled: true with the allow-form flow). Enabling is one key:
+              <code>csrf_cookie_secure</code> stays true (the dashboard is HTTPS via
+              Caddy). <strong>Order matters: bump to v0.9.3 first.</strong>
+            </p>
+            <pre><code># After the v0.9.3 bump
+csrf_enabled: true          # double-submit token on dashboard forms
+csrf_cookie_secure: true    # default — correct behind Caddy HTTPS</code></pre>
+          </div>
+
+          <!-- Issue 7 -->
+          <div class="issue issue-nice" id="issue-policies">
+            <span class="severity severity-nice">Missed Opportunity &middot; medium</span>
+            <h3>Per-device policies + shadow mode unused (F122/F124)</h3>
+            <div class="where">config.example.yaml <code>policies:</code> &middot; FEATURES F122, F124</div>
+            <p>
+              Scheduled per-device/group allow-block overrides (e.g. block games or doomscrolling
+              domains on the desktop 09:00-17:00), with truthful block pages naming the policy
+              and its window. The shadow-mode dry-run (F124 — <code>GET /api/policies/shadow</code>)
+              measures a candidate policy's would-block volume before enforcing, exactly the
+              trial-before-commit posture this repo likes. Requires the devices registry
+              first; wrapper plumbing for both.
+            </p>
+          </div>
+
+          <!-- Issue 8 -->
+          <div class="issue issue-nice" id="issue-minor-knobs">
+            <span class="severity severity-nice">Missed Opportunity &middot; assorted small knobs</span>
+            <h3>Smaller dormant capabilities, graded honestly</h3>
+            <div class="where">all verified absent from the deployed YAML</div>
+            <p>
+              <strong>Trial blocklists</strong> (<code>dns_blocklist_trial_urls</code>, T197):
+              shadow-only sources that never enforce but attribute would-block hits — ideal
+              for evaluating a HaGeZi tier change before committing; costs a runtime URL
+              fetch + persistent cache dir, a departure from the hermetic build-time
+              pipeline. <strong>ECS</strong> (<code>dns_ecs_enabled</code>): forward a
+              /24 client subnet to Cloudflare/Quad9 for CDN geolocation (big HuggingFace
+              downloads); trades a little privacy for better edge selection.
+              <strong>Per-client DNS rate limit</strong> (<code>dns_rate_limit_per_sec</code>):
+              disabled at 0 — the resolver is ACL'd to the LAN, so this is pure
+              defense-in-depth (50/s + burst 100 would be the values). <strong>h3 block
+              pages</strong> (<code>tls_h3_enabled</code>): QUIC block pages, in the deployed
+              binary, off. <strong>Log sampling</strong> (<code>log_sampling_threshold</code>):
+              off — would damp journal floods during IO storms (the 2026-09-06 forensics
+              class). <strong>DoT/DoH/DoQ client listeners</strong>: off and likely correct —
+              Android Private DNS requires a system-trusted cert, and the dnsblockd CA is
+              custom (N/A on this LAN without a client-trust project).
+            </p>
+          </div>
+
+          <!-- Issue 9 -->
+          <div class="issue issue-nice" id="issue-dead-option">
+            <span class="severity severity-nice">Anti-pattern (latent) &middot; dead config surface</span>
+            <h3>extraDomains option declared, never rendered — setting it does nothing</h3>
+            <div class="where">modules/nixos/services/dns-blocker.nix:408-412 (option) &middot; zero uses in the config render</div>
+            <p>
+              The wrapper declares <code>services.dns-blocker.extraDomains</code> (&ldquo;Additional
+              domains to block&rdquo;) but the render block never reads it. Anyone setting it
+              expects extra blocking and silently gets none — the phantom-config class this
+              repo's eval-time guards usually catch. Either wire it (feed a generated hosts
+              file into <code>dns_blocklists</code>) or delete the option.
+            </p>
+          </div>
+        </section>
+
+        <!-- Proposal -->
+        <section id="version">
+          <h2><span class="num">02</span>Version currency</h2>
+          <p>
+            Deployed v0.9.2-32 (75b4ce9d, locked 2026-09-29) vs upstream v0.9.3-64
+            (8531c772, 2026-09-30). The gap is 107 commits — 11 substantive — all landed
+            in a single intense upstream day (Backlog Pareto Execution Plan II).
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Change</th>
+                <th>Type</th>
+                <th>What it does</th>
+                <th>Relevance</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Root recursion works (T299)</td>
+                <td>Fix</td>
+                <td>Empty <code>dns_forwarders</code> now performs real root recursion instead
+                of failing; <code>/health</code> gains <code>resolverMode</code></td>
+                <td class="yes">High — SystemNix's config comment says recursion is broken
+                (dns-blocker-config.nix:14-17); at v0.9.3 it is a real privacy posture
+                option, though upstream still recommends forwarders for validated DNSSEC
+                (sdns DNSKEY race)</td>
+              </tr>
+              <tr>
+                <td>Device-scoped Allow fix (T309)</td>
+                <td>Fix</td>
+                <td>A configured device's block-page Allow now actually unblocks it</td>
+                <td class="yes">High — hard prerequisite for the devices finding</td>
+              </tr>
+              <tr>
+                <td>CSRF hardening batch (T300)</td>
+                <td>Fix</td>
+                <td>Token-login double-submit fixed; e2e smoke runs with csrf on; allow-form
+                flow pinned end-to-end</td>
+                <td class="yes">Medium — prerequisite for enabling csrf_enabled here</td>
+              </tr>
+              <tr>
+                <td>Dashboard top-domains starvation (P10)</td>
+                <td>Fix</td>
+                <td>Retires the dead auth-token card + the skipped /stats top-up poll for
+                no-auth browsers (19-day silent starvation upstream)</td>
+                <td class="no">Low — this deployment is SSO-authenticated, unaffected</td>
+              </tr>
+              <tr>
+                <td>Telemetry posture (T308/T316)</td>
+                <td>Feature</td>
+                <td><code>dnsblockd_resolver_mode_info</code> gauge + outcome-split p95 panels
+                (Grafana-side)</td>
+                <td class="no">Medium — a SigNoz-side equivalent would need query wiring;
+                the outcome-labeled histogram itself rides along</td>
+              </tr>
+              <tr>
+                <td>Server-rendered Top Domains</td>
+                <td>Feature</td>
+                <td>Last JS-concatenated table now travels server-side in the SSE payload</td>
+                <td class="no">Rides the tracking-dial decision — invisible at
+                METADATA_ONLY</td>
+              </tr>
+              <tr>
+                <td>v0.9.3 release tag exists</td>
+                <td>Release</td>
+                <td>The queued &ldquo;cut a release tag&rdquo; TODO (docs/todo/upstream.md:55,72)
+                is satisfiable; tag-pin vs follow-master decision unblocked</td>
+                <td class="yes">Medium — lock-bump hygiene</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="opportunities">
+          <h2><span class="num">03</span>Top opportunities</h2>
+          <p>
+            Pareto-ranked by impact &times; ease (1-5 each). Note the umbrella effect: the
+            queued wrapper→upstream-module migration (services.md:57) independently lowers
+            the effort of every item marked &ldquo;wrapper plumbing&rdquo;.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Opportunity</th>
+                <th>Impact</th>
+                <th>Ease</th>
+                <th>Priority</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>Set <code>allowlist_path</code> — stop losing every &ldquo;Always allow&rdquo; on restart</td>
+                <td class="yes">5</td>
+                <td class="yes">5</td>
+                <td><span class="highlight">25</span></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Lock bump → v0.9.3+ (probe goModules FOD first; fixes T309 + T300)</td>
+                <td class="yes">4</td>
+                <td class="yes">4</td>
+                <td><span class="highlight">16</span></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Declare devices + users registry (named clients, pause, live wire)</td>
+                <td class="yes">4</td>
+                <td class="yes">4</td>
+                <td><span class="highlight">16</span></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>Owner decision: tracking dial → METADATA_AND_DNS (unlock domain analytics)</td>
+                <td class="yes">4</td>
+                <td>3</td>
+                <td><span class="highlight">12</span></td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>Enable <code>csrf_enabled</code> after the bump</td>
+                <td>3</td>
+                <td class="yes">4</td>
+                <td><span class="highlight">12</span></td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td>Per-client DNS rate limit 50/s + burst 100</td>
+                <td>2</td>
+                <td class="yes">5</td>
+                <td>10</td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td>Policies + shadow dry-run (focus scheduling; needs devices)</td>
+                <td class="yes">4</td>
+                <td>2</td>
+                <td>8</td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td>Trial blocklists for tier evaluation (runtime fetch + cache dir)</td>
+                <td>3</td>
+                <td>2</td>
+                <td>6</td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td>ECS /24 for CDN geolocation (privacy tradeoff)</td>
+                <td>2</td>
+                <td>3</td>
+                <td>6</td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td>Delete or wire the dead <code>extraDomains</code> option</td>
+                <td>1</td>
+                <td class="yes">5</td>
+                <td>5</td>
+              </tr>
+              <tr>
+                <td>11</td>
+                <td>Log sampling for storm-time journal floods</td>
+                <td>1</td>
+                <td class="yes">4</td>
+                <td>4</td>
+              </tr>
+              <tr>
+                <td>12</td>
+                <td>h3 block pages (<code>tls_h3_enabled</code>)</td>
+                <td>1</td>
+                <td>3</td>
+                <td>3</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="callout callout-teal">
+            <strong>The target configuration, one diff</strong>
+            Everything above in a single wrapper render delta — the state this deployment
+            is one owner session away from.
+          </div>
+          <pre><code># Rendered-YAML delta (wrapper plumbing implied)
+allowlist_path: /var/lib/dnsblockd/allowlist      # stop the silent wipe
+devices:                                          # named household (after v0.9.3)
+  - { id: evo-x2,  name: "evo-x2 Desktop", ips: ["192.168.1.150"] }
+  - { id: pixel-6, name: "Pixel 6",        ips: ["192.168.1.x"] }
+users:
+  - { name: Lars, devices: [evo-x2, pixel-6] }
+csrf_enabled: true                                # after v0.9.3 (T300)
+dns_rate_limit_per_sec: 50                        # defense-in-depth
+dns_rate_limit_burst: 100
+tracking_mode: METADATA_AND_DNS                   # OWNER DECISION — unlocks
+                                                  # Top Domains, Query Log,
+                                                  # Likely-Broken Sites, day maps
+# policies + trial lists + ECS: second wave, after devices prove out</code></pre>
+        </section>
+
+        <!-- Appendix -->
+        <section id="appendix">
+          <h2><span class="num">04</span>Appendix — methodology, evidence, already-queued work</h2>
+          <p>
+            <strong>Method:</strong> the deployed unit's rendered config YAML and ExecStart
+            store path were read from the live system (not just the Nix source); the option
+            surface was enumerated from dnsblockd's <code>config.example.yaml</code>,
+            <code>FEATURES.md</code>, <code>CHANGELOG.md</code>, and
+            <code>internal/tracking/mode.go</code> at BOTH the locked rev (75b4ce9d) and
+            upstream HEAD (8531c772); capabilities were only graded &ldquo;missed&rdquo; after
+            confirming the feature exists at the <em>deployed</em> rev and the key is absent
+            from the deployed YAML.
+          </p>
+          <p>
+            <strong>Doc drift found during the audit</strong> (fix-on-sight candidates):
+            (1) AGENTS.md still says the deployed binary is <code>dnsblockd-94c9cb9</code> —
+            the lock moved to 75b4ce9d on 2026-09-29 and the live unit confirms it;
+            (2) dns-blocker-config.nix:14-17 says sdns root recursion is broken in dnsblockd
+            — true at the deployed rev, fixed upstream in v0.9.3 (T299); revisit on bump;
+            (3) the config header says &ldquo;25 blocklists&rdquo; — the list has 23 entries.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Issue</th>
+                <th>Severity</th>
+                <th>Effort</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Permanent allowlist volatile (allowlist_path)</td>
+                <td class="no">Critical</td>
+                <td>Trivial (1 line)</td>
+                <td class="no">Open — new finding</td>
+              </tr>
+              <tr>
+                <td>Lock one minor behind (v0.9.2 → v0.9.3)</td>
+                <td class="no">Important</td>
+                <td>Low (probe FOD, bump)</td>
+                <td class="no">Open — new finding; release-tag TODO now satisfiable</td>
+              </tr>
+              <tr>
+                <td>devices/users registry unset</td>
+                <td class="no">Important</td>
+                <td>Low-Med (wrapper plumbing)</td>
+                <td class="no">Open — new finding</td>
+              </tr>
+              <tr>
+                <td>Tracking dial starves domain analytics</td>
+                <td class="no">Important</td>
+                <td>Trivial technically</td>
+                <td class="no">Open — owner privacy decision</td>
+              </tr>
+              <tr>
+                <td>csrf_enabled off</td>
+                <td class="no">Important</td>
+                <td>Trivial (after bump)</td>
+                <td class="no">Open — new finding</td>
+              </tr>
+              <tr>
+                <td>Wrapper vs upstream module split-brain</td>
+                <td class="no">Important</td>
+                <td>Medium</td>
+                <td class="yes">Already queued — docs/todo/services.md:57 [ready]</td>
+              </tr>
+              <tr>
+                <td>tracking.db on QLC root</td>
+                <td>Important</td>
+                <td>Medium</td>
+                <td class="yes">Already queued — dnsblockd is a named services.hot-db wave service</td>
+              </tr>
+              <tr>
+                <td>Orphaned 724&nbsp;MB Jul-15 tracking DB</td>
+                <td>Nice</td>
+                <td>Trivial (sudo trash)</td>
+                <td class="yes">Already queued — docs/todo/services.md:40 [blocked:user]</td>
+              </tr>
+              <tr>
+                <td>Cached /health live-behavior verification</td>
+                <td>Nice</td>
+                <td>Trivial (post-deploy probe)</td>
+                <td class="yes">Already queued — docs/todo/services.md:87 [blocked:user]</td>
+              </tr>
+              <tr>
+                <td>extraDomains dead option</td>
+                <td>Nice</td>
+                <td>Trivial</td>
+                <td class="no">Open — new finding</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            <strong>Not applicable, verified:</strong> dhcp_lease_file discovery (no dnsmasq on
+            this host), the legacy Unbound path (unbound_control), pprof (deliberate loopback-off),
+            stats-API HTTP rate limiting (loopback bind + SSO), DoT/DoH/DoQ client listeners
+            (custom CA vs system trust stores).
+          </p>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <p>
+            Generated 2026-09-30 &middot; Audited against dnsblockd v0.9.2-32 deployed
+            (75b4ce9d, verified via live unit ExecStart) and upstream v0.9.3-64 (8531c772)
+            &middot; All config claims verified against the rendered YAML + live systemd unit
+            unless noted
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
