@@ -188,4 +188,47 @@ result that was telling me the surface was wrong.
 
 ---
 
+## h) ADDENDUM (2026-09-30 ~06:50 — P0 fixes EXECUTED, pbx deployed once)
+
+**The owner deployed the pbx side at 03:44 UTC** (before the fixes): netbird
+management/signal/relay + ACME started; **dex crashed** (nixpkgs dex unit =
+DynamicUser + ProtectSystem=strict + NO StateDirectory → sqlite storage
+unopenable) — a defect class this report did NOT list. ACME still serving the
+self-signed placeholder as of 04:20 UTC; retry command is in the pbx runbook.
+
+**§d/§f P0 items 1–9: ALL FIXED this session** (pbx-artmann + SystemNix):
+
+- ~~1. Mint unit: `path = [ pkgs.openssl ]`…~~ → absolute store paths for
+  every binary, PLUS a second latent bug the fix surfaced: `RuntimeDirectory`
+  was missing — `ReadWritePaths` on a dir nothing creates dies at systemd
+  NAMESPACE setup (226/NAMESPACE) BEFORE the script runs; fail-closed would
+  have taken the whole web stack down at EVERY boot. FIXED + pinned.
+- ~~2. VM test that RUNS the mint unit~~ → `checks.caddy-mint` (VM): real
+  module, mock-sops, build-time CA fixture; asserts mint→caddy chain, output
+  modes, dual-zone SANs, CA-chain, key pairing, real TLS handshakes on BOTH
+  zones. It FAILED twice before the fixes (co-import surface, then the
+  NAMESPACE kill) — the test paid for itself immediately. GREEN.
+- ~~3. Dex userID → real UUID~~ → `d9022bfd-be64-439d-8ff7-504c803dcb8f`.
+- ~~4. Drop `/auth/*` glob redirect~~ → dropped (dex matches exactly).
+- ~~5. Relay vhost 1d timeouts~~ → 1d read/send + client_body_timeout +
+  socket keepalive.
+- ~~6. Verify `Relay` key shape~~ → verified against netbird v0.79.0 source
+  (`management/internals/server/config/config.go` — no json tags, Go field
+  names ARE the keys): `Relay.{Addresses,Secret}` + `Stuns[].{Proto,URI}`
+  were CORRECT. Non-defect, now pinned so it cannot drift.
+- ~~7. onFailure on signal/relay/dex~~ → wired; dex also got the
+  StateDirectory fix for the live crash.
+- ~~8. pbx FULL buildflow~~ → executed (fast mode's gap closed): all doc
+  gates + netbird-contract + toplevel green. NEW `netbird-contract` check
+  (9 eval invariants) added; FEATURES/README counts 14→15.
+- ~~9. Commit + push~~ → committed (daemon); push is owner-run.
+
+Bonus fixes: oauth2-proxy cloudDomain guard symmetry (§e5), push-secrets.sh
+stale-IP host, exact sops snippet in the runbook (§b8/§f37), runbook redeploy
+section, AGENTS gotchas (NAMESPACE + absolute paths). Still open: §g
+questions, the deploy chain (§f10–28), hardening (§f29+).
+
+_Go/no-go: pbx redeploy ready (dex fix + hardening in-tree, closure green);
+evo-x2 Phase-1 deploy ready (mint unit now runtime-proven)._
+
 _Report ends. Waiting for instructions._
