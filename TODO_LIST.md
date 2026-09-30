@@ -245,7 +245,7 @@
 - [ ] **picoclaw: triage the latent test failures exposed by the sqlite v1.56 bump** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Overview upstream: retry discovery** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Queue: done-filter / same-ID idempotency short-circuit** → [docs/todo/upstream.md](docs/todo/upstream.md)
-- [x] **Upstream InboxClean: `/health` phantom-green** (merged into the re-auth-action row) → [docs/todo/upstream.md](docs/todo/upstream.md)
+- [x] **Upstream InboxClean: `/health` phantom-green** (merged into the re-auth-action row) → [docs/todo/upstream.md](docs/todo/upstream.md) — DONE 2026-09-30 (verify): merge recorded in upstream.md (validate-refresh half live: per-account `VerifyAuth` → `auth_expired`); the full dead-grant chain rides upstream.md's [blocked:push] InboxClean deploy row — commits `1540a56` + `d23c48a` verified in ~/projects/InboxClean 2026-09-30. Footer-less landing (merge into a library row, no queue task) is why the completion derivation saw nothing.
 - [ ] **Fix the website repo's `builtAt` stamping (larsartmann.com serves the 1980-01-01 placeholder sent…** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Repo-generic CI do-analyzer across all LarsArtmann Go repos** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **go-taskqueue: queue-level work-claiming/dedup** → [docs/todo/upstream.md](docs/todo/upstream.md)
