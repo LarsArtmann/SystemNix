@@ -974,11 +974,11 @@
         "treefmt-nix": "treefmt-nix_6"
       },
       "locked": {
-        "lastModified": 1790652496,
-        "narHash": "sha256-e3njUgj9q4GZ04aMP/yQG4KtzT9bizXxlrjpPX6NrOY=",
+        "lastModified": 1790824094,
+        "narHash": "sha256-W0tW+8WWbTTRphbYuiVaTzQOi11k/6QO95B+cjd2F1A=",
         "owner": "LarsArtmann",
         "repo": "emeet-pixyd",
-        "rev": "1a7b698d70a0082f3734358086b6e3594d95ff48",
+        "rev": "1535ddfd38a73abce8e603f6ce752dbb0eb5c5e5",
         "type": "github"
       },
       "original": {

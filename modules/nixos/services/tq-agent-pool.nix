@@ -85,6 +85,13 @@ _: {
             daily-budget = "30";
             repo-interval = "go-taskqueue=10m";
             dlq-backoff = "30m";
+            # DLQ repair loop (2026-10-01 queue-health plan M3): without it,
+            # dead letters landfill with zero autopsies — 317 dead across
+            # 676 tasks, 167 the gitignored-vendor gofmt class whose
+            # auto-dismiss never ran. dlqfix mints ONE autopsy per dead
+            # agent task (dedup forever) and auto-dismisses gate-artifact
+            # deaths with shipped proof.
+            "dlq-fix" = "true";
             yolo = "true";
             "project-exclusive" = "true";
             review = "true";
