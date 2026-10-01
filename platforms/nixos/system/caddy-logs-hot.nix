@@ -22,15 +22,9 @@
 # this mount (deploying the mount first would shadow the live logs into a
 # split brain). The QLC shadow dir under the mountpoint stays as rollback
 # insurance.
-{
-  config,
-  lib,
-  ...
-}:
-let
+{lib, ...}: let
   inherit (import ../../../lib/default.nix lib) mkFilesystem;
-in
-{
+in {
   config = {
     fileSystems."/var/log/caddy" = mkFilesystem {
       device = "/dev/disk/by-label/tlc";
@@ -52,8 +46,8 @@ in
     ];
 
     systemd.services.caddy = {
-      after = [ "var-log-caddy.mount" ];
-      wants = [ "var-log-caddy.mount" ];
+      after = ["var-log-caddy.mount"];
+      wants = ["var-log-caddy.mount"];
     };
   };
 }

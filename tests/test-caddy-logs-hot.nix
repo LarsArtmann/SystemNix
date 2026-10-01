@@ -19,8 +19,7 @@
 #
 # The vHost here is minimal test scaffolding writing a single access file —
 # the mount is the system under test, not the production logging map.
-{ pkgs, ... }:
-let
+{pkgs, ...}: let
   caddyLogsHot = import ../platforms/nixos/system/caddy-logs-hot.nix;
 
   entry = {
@@ -36,7 +35,7 @@ let
     ];
   };
 
-  caddyVm = { ... }: {
+  caddyVm = _: {
     services.caddy = {
       enable = true;
       globalConfig = "auto_https off";
@@ -45,19 +44,18 @@ let
         extraConfig = "respond \"caddy-hot-ok\"";
       };
     };
-    environment.systemPackages = [ pkgs.curl ];
+    environment.systemPackages = [pkgs.curl];
   };
-in
-{
+in {
   name = "caddy-logs-hot";
 
-  nodes.machine = { ... }: {
+  nodes.machine = {...}: {
     imports = [
       caddyLogsHot
       caddyVm
     ];
-    boot.supportedFilesystems = [ "btrfs" ];
-    virtualisation.emptyDiskImages = [ 512 ];
+    boot.supportedFilesystems = ["btrfs"];
+    virtualisation.emptyDiskImages = [512];
     virtualisation.fileSystems."/var/log/caddy" = entry;
 
     # Test-only scaffolding (production: scripts/migrate-caddy-logs-hot.sh
@@ -70,9 +68,9 @@ in
     systemd.services.tlc-fmt = {
       description = "Format tlc disk + create caddy-logs subvolume (test-only)";
       unitConfig.DefaultDependencies = false;
-      wantedBy = [ "var-log-caddy.mount" ];
-      before = [ "var-log-caddy.mount" ];
-      after = [ "systemd-udev-trigger.service" ];
+      wantedBy = ["var-log-caddy.mount"];
+      before = ["var-log-caddy.mount"];
+      after = ["systemd-udev-trigger.service"];
       serviceConfig = {
         Type = "oneshot";
         User = "root";
@@ -97,7 +95,7 @@ in
     };
   };
 
-  nodes.degraded = { ... }: {
+  nodes.degraded = {...}: {
     imports = [
       caddyLogsHot
       caddyVm

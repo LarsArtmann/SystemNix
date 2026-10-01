@@ -3,8 +3,7 @@
   inputs,
   system,
   ...
-}:
-let
+}: let
   # Modern NixOS test runner — replaces the deprecated make-test-python.nix.
   # Same { nodes, testScript, name } shape, cleaner API.
   makeTest = testSpec: pkgs.testers.runNixOSTest testSpec;
@@ -13,76 +12,75 @@ let
   # outputs, not reconstructions).
   self = inputs.self or (throw "tests/default.nix needs inputs.self");
 in
-{
-  boot = makeTest {
-    name = "boot";
+  {
+    boot = makeTest {
+      name = "boot";
 
-    nodes.machine = _: {
-      system.stateVersion = "25.11";
+      nodes.machine = _: {
+        system.stateVersion = "25.11";
+      };
+
+      testScript = ''
+        machine.start()
+        machine.wait_for_unit("multi-user.target")
+        machine.succeed("systemctl is-system-running | grep running")
+      '';
     };
 
-    testScript = ''
-      machine.start()
-      machine.wait_for_unit("multi-user.target")
-      machine.succeed("systemctl is-system-running | grep running")
-    '';
-  };
-
-  attic = makeTest (import ./test-attic.nix { inherit pkgs; });
-  searxng = makeTest (import ./test-searxng.nix { inherit pkgs; });
-  caddy-auth-patterns = makeTest (import ./test-caddy-auth.nix { inherit pkgs; });
-  caddy-mint = makeTest (import ./test-caddy-mint.nix { inherit pkgs inputs; });
-  gatus-patterns = makeTest (import ./test-gatus-patterns.nix { inherit pkgs; });
-  pma-identity = makeTest (import ./test-pma-identity.nix { inherit pkgs; });
-  ksm = makeTest (import ./test-ksm.nix { inherit pkgs; });
-  port-uniqueness = makeTest (import ./test-port-uniqueness.nix { inherit pkgs; });
-  browser-history = makeTest (import ./test-browser-history.nix { inherit pkgs inputs; });
-  paperless = makeTest (import ./test-paperless.nix { inherit pkgs; });
-  hermes = makeTest (import ./test-hermes.nix { inherit pkgs inputs; });
-  cv = makeTest (import ./test-cv.nix { inherit pkgs inputs; });
-  memory-emergency-guard = makeTest (import ./test-memory-emergency-guard.nix { inherit pkgs; });
-  sev1-escalation = makeTest (import ./test-sev1-escalation.nix { inherit pkgs; });
-  pool-recovery = makeTest (import ./test-pool-recovery.nix { inherit pkgs; });
-  hot-user-caches = makeTest (import ./test-hot-user-caches.nix { inherit pkgs; });
-  btrbk-rescue = makeTest (import ./test-btrbk-rescue.nix { inherit pkgs; });
-  disko-layout = makeTest (import ./test-disko-layout.nix { inherit pkgs inputs; });
-  session-boot-audit = import ./test-session-boot-audit.nix { inherit pkgs inputs system; };
-  niri-session-config = import ./test-niri-session-config.nix { inherit pkgs; };
-  niri-session = makeTest (import ./test-niri-session.nix { inherit pkgs; });
-  tmp-cleanup = makeTest (import ./test-tmp-cleanup.nix { inherit pkgs; });
-  tmp-cleaner-audit = import ./test-tmp-cleaner-audit.nix { inherit pkgs inputs system; };
-  sops-key-audit = import ./test-sops-key-audit.nix { inherit pkgs inputs system; };
-  sops-recipient-audit = import ./test-sops-recipient-audit.nix { inherit pkgs inputs system; };
-  integration-registry = import ./test-integration.nix { inherit pkgs inputs system; };
-  cloud-domain = import ./test-cloud-domain.nix { inherit pkgs inputs system; };
-  dns-blocker-render = import ./test-dns-blocker-render.nix { inherit pkgs inputs system; };
-  catalog = import ./test-catalog.nix { inherit pkgs inputs system; };
-  systemd-shape-audit = import ./test-systemd-shape-audit.nix { inherit pkgs inputs system; };
-  port-registry-audit = import ./test-port-registry-audit.nix { inherit pkgs inputs system; };
-  harden-lifecycle = import ./test-harden-lifecycle.nix { inherit pkgs inputs; };
-  mkfilesystem =
-    let
-      outcome = import ./test-mkFilesystem.nix { inherit (pkgs) lib; };
+    attic = makeTest (import ./test-attic.nix {inherit pkgs;});
+    searxng = makeTest (import ./test-searxng.nix {inherit pkgs;});
+    caddy-auth-patterns = makeTest (import ./test-caddy-auth.nix {inherit pkgs;});
+    caddy-mint = makeTest (import ./test-caddy-mint.nix {inherit pkgs inputs;});
+    gatus-patterns = makeTest (import ./test-gatus-patterns.nix {inherit pkgs;});
+    pma-identity = makeTest (import ./test-pma-identity.nix {inherit pkgs;});
+    ksm = makeTest (import ./test-ksm.nix {inherit pkgs;});
+    port-uniqueness = makeTest (import ./test-port-uniqueness.nix {inherit pkgs;});
+    browser-history = makeTest (import ./test-browser-history.nix {inherit pkgs inputs;});
+    paperless = makeTest (import ./test-paperless.nix {inherit pkgs;});
+    hermes = makeTest (import ./test-hermes.nix {inherit pkgs inputs;});
+    cv = makeTest (import ./test-cv.nix {inherit pkgs inputs;});
+    memory-emergency-guard = makeTest (import ./test-memory-emergency-guard.nix {inherit pkgs;});
+    sev1-escalation = makeTest (import ./test-sev1-escalation.nix {inherit pkgs;});
+    pool-recovery = makeTest (import ./test-pool-recovery.nix {inherit pkgs;});
+    hot-user-caches = makeTest (import ./test-hot-user-caches.nix {inherit pkgs;});
+    btrbk-rescue = makeTest (import ./test-btrbk-rescue.nix {inherit pkgs;});
+    disko-layout = makeTest (import ./test-disko-layout.nix {inherit pkgs inputs;});
+    session-boot-audit = import ./test-session-boot-audit.nix {inherit pkgs inputs system;};
+    niri-session-config = import ./test-niri-session-config.nix {inherit pkgs;};
+    niri-session = makeTest (import ./test-niri-session.nix {inherit pkgs;});
+    tmp-cleanup = makeTest (import ./test-tmp-cleanup.nix {inherit pkgs;});
+    tmp-cleaner-audit = import ./test-tmp-cleaner-audit.nix {inherit pkgs inputs system;};
+    sops-key-audit = import ./test-sops-key-audit.nix {inherit pkgs inputs system;};
+    sops-recipient-audit = import ./test-sops-recipient-audit.nix {inherit pkgs inputs system;};
+    integration-registry = import ./test-integration.nix {inherit pkgs inputs system;};
+    cloud-domain = import ./test-cloud-domain.nix {inherit pkgs inputs system;};
+    dns-blocker-render = import ./test-dns-blocker-render.nix {inherit pkgs inputs system;};
+    catalog = import ./test-catalog.nix {inherit pkgs inputs system;};
+    systemd-shape-audit = import ./test-systemd-shape-audit.nix {inherit pkgs inputs system;};
+    port-registry-audit = import ./test-port-registry-audit.nix {inherit pkgs inputs system;};
+    harden-lifecycle = import ./test-harden-lifecycle.nix {inherit pkgs inputs;};
+    mkfilesystem = let
+      outcome = import ./test-mkFilesystem.nix {inherit (pkgs) lib;};
     in
-    pkgs.runCommand "test-mkFilesystem" { } "echo ${outcome} > $out";
-  mount-gating-audit = import ./test-mount-gating-audit.nix { inherit pkgs inputs system; };
-  gatus-coverage-audit = import ./test-gatus-coverage-audit.nix { inherit pkgs inputs system; };
-  deploy-restart-audit = import ./test-deploy-restart-audit.nix { inherit pkgs inputs system; };
-  tq-agent-pool = import ./test-tq-agent-pool.nix { inherit pkgs inputs system; };
-  inboxclean-paperless = import ./test-inboxclean-paperless.nix { inherit pkgs inputs system; };
-  bank-sync-paperless = import ./test-bank-sync-paperless.nix { inherit pkgs inputs system; };
-  mail-relay = makeTest (import ./test-mail-relay.nix { inherit pkgs; });
-  wifi-failover = makeTest (import ./test-wifi-failover.nix { inherit pkgs; });
-  miniflux = makeTest (import ./test-miniflux.nix { inherit pkgs; });
-  hot-db = makeTest (import ./test-hot-db.nix { inherit pkgs; });
-  hot-db-assertions = import ./test-hot-db-assertions.nix { inherit pkgs inputs system; };
-  journal-hot = makeTest (import ./test-journal-hot.nix { inherit pkgs; });
-  caddy-logs-hot = makeTest (import ./test-caddy-logs-hot.nix { inherit pkgs; });
-  crush-hot-db = makeTest (import ./test-crush-hot-db.nix { inherit pkgs; });
-  crush-config = import ./test-crush-config.nix { inherit pkgs inputs; };
-  restic-app-dumps = makeTest (import ./test-restic-app-dumps.nix { inherit pkgs; });
-  nix-email-contract = import ./test-nix-email.nix { inherit pkgs inputs system; };
-  nsfw-classifier = import ./test-nsfw-classifier.nix { inherit pkgs inputs system; };
-  fastflowlm-idle-check = import ./test-fastflowlm-idle.nix { inherit pkgs self; };
-}
-// (import ./test-scripts.nix { inherit pkgs self; })
+      pkgs.runCommand "test-mkFilesystem" {} "echo ${outcome} > $out";
+    mount-gating-audit = import ./test-mount-gating-audit.nix {inherit pkgs inputs system;};
+    gatus-coverage-audit = import ./test-gatus-coverage-audit.nix {inherit pkgs inputs system;};
+    deploy-restart-audit = import ./test-deploy-restart-audit.nix {inherit pkgs inputs system;};
+    tq-agent-pool = import ./test-tq-agent-pool.nix {inherit pkgs inputs system;};
+    inboxclean-paperless = import ./test-inboxclean-paperless.nix {inherit pkgs inputs system;};
+    bank-sync-paperless = import ./test-bank-sync-paperless.nix {inherit pkgs inputs system;};
+    mail-relay = makeTest (import ./test-mail-relay.nix {inherit pkgs;});
+    wifi-failover = makeTest (import ./test-wifi-failover.nix {inherit pkgs;});
+    miniflux = makeTest (import ./test-miniflux.nix {inherit pkgs;});
+    hot-db = makeTest (import ./test-hot-db.nix {inherit pkgs;});
+    hot-db-assertions = import ./test-hot-db-assertions.nix {inherit pkgs inputs system;};
+    journal-hot = makeTest (import ./test-journal-hot.nix {inherit pkgs;});
+    caddy-logs-hot = makeTest (import ./test-caddy-logs-hot.nix {inherit pkgs;});
+    crush-hot-db = makeTest (import ./test-crush-hot-db.nix {inherit pkgs;});
+    crush-config = import ./test-crush-config.nix {inherit pkgs inputs;};
+    restic-app-dumps = makeTest (import ./test-restic-app-dumps.nix {inherit pkgs;});
+    nix-email-contract = import ./test-nix-email.nix {inherit pkgs inputs system;};
+    nsfw-classifier = import ./test-nsfw-classifier.nix {inherit pkgs inputs system;};
+    fastflowlm-idle-check = import ./test-fastflowlm-idle.nix {inherit pkgs self;};
+  }
+  // (import ./test-scripts.nix {inherit pkgs self;})
