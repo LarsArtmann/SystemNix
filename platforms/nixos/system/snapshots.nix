@@ -521,6 +521,32 @@ in
       # btrfs-health metrics + Gatus checks own the error signal regardless.
       "btrfs-scrub@".serviceConfig.SuccessExitStatus = [ 1 ];
 
+      # ── freeze-7 remaining half: no boot catch-up, no stampede ────────────
+      # nixpkgs sets Persistent=true on the scrub template timer; a boot
+      # after a missed weekly window catch-up-fires EVERY scrub instance at
+      # once (2026-09-29 09:56 post-freeze boot: all three running 24s in —
+      # the freeze-6/8 amplifier class). Missed windows now simply wait for
+      # the next weekly slot: coverage staleness is Gatus-visible via
+      # btrfs-health, which is the honest signal vs a boot-time IO bomb.
+      "btrfs-scrub@".timerConfig.Persistent = lib.mkForce false;
+      # All three instances share ONE weekly calendar slot; without ordering,
+      # systemd starts them as one transaction of three concurrent
+      # full-device readers (the 2026-08-31 16:34 freeze stacking class).
+      # Serial chain: root first (root fs integrity outranks data), then
+      # /data, then the pool. After= alone orders only when both units are
+      # live in the same transaction — an already-finished or guard-deferred
+      # predecessor satisfies it instantly, so a lone scrub never waits.
+      # overrideStrategy = asDropin renders these as instance-level drop-ins;
+      # a full instance unit file would SHADOW the template (no ExecStart).
+      "btrfs-scrub@data" = {
+        overrideStrategy = "asDropin";
+        after = [ "btrfs-scrub@-.service" ];
+      };
+      "btrfs-scrub@mnt\\x2dpool" = {
+        overrideStrategy = "asDropin";
+        after = [ "btrfs-scrub@data.service" ];
+      };
+
       # ── btrbk clean: GC for garbled receive targets ────────────────────────
       # `btrbk clean` is btrbk's sanctioned garbage collector for incomplete
       # (interrupted-receive) target subvolumes. It deletes ONLY subvolumes

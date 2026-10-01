@@ -161,6 +161,21 @@ if [ -n "$MOVED_MD" ]; then
     fi
 fi
 
+# Fast guard: living-docs relative links must resolve (2026-10-01 AGENTS.md
+# restructure). Knowledge now lives in docs/agents/ + docs/services/ — the
+# structure is only as durable as its links, so any commit staging markdown
+# re-validates the WHOLE living-docs set (link targets in other files break
+# just as hard as the edited one; frozen snapshots under docs/status/ and
+# docs/planning/ are exempt by policy). ~0.6s runtime.
+if git diff --cached --name-only --diff-filter=ACM -z -- '*.md' | grep -zq .; then
+    if ! doclinks_out=$(scripts/check-doc-links.sh 2>&1); then
+        echo "$doclinks_out" >&2
+        log_error "Living-docs link check failed — fix the BROKEN links above."
+        exit 1
+    fi
+    log_info "Living-docs link check passed."
+fi
+
 # Fast guard: reject commits with "Unknown Author" identity.
 # Catches the silent fallback bug where PMA daemon produced 6,400 unattributable
 # commits across 145 repos when git config couldn't be resolved.
