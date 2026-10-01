@@ -74,6 +74,15 @@ let
       ];
     }).config.systemd.services.dnsblockd.serviceConfig.ExecStart;
 
+  h3Exec =
+    (inputs.self.nixosConfigurations.evo-x2.extendModules {
+      modules = [
+        {
+          services.dns-blocker.tlsH3Enabled = true;
+        }
+      ];
+    }).config.systemd.services.dnsblockd.serviceConfig.ExecStart;
+
   # gate-timeout-audit pattern: force the variant's assertions and require
   # the one named by the message infix to be among the FAILED ones (message
   # strings are only coerced for failed assertions — short-circuit &&).
@@ -82,9 +91,9 @@ let
   policyAssertionFires =
     infix: modules:
     let
-      fired = builtins.filter (
-        a: !a.assertion && pkgs.lib.hasInfix infix a.message
-      ) (inputs.self.nixosConfigurations.evo-x2.extendModules { inherit modules; }).config.assertions;
+      fired =
+        builtins.filter (a: !a.assertion && pkgs.lib.hasInfix infix a.message)
+          (inputs.self.nixosConfigurations.evo-x2.extendModules { inherit modules; }).config.assertions;
     in
     fired != [ ];
 
@@ -96,8 +105,10 @@ let
   policyOptionEvalFails =
     modules:
     let
-      names = builtins.all (p: builtins.isString p.name)
-        (inputs.self.nixosConfigurations.evo-x2.extendModules { inherit modules; }).config.services.dns-blocker.policies;
+      names =
+        builtins.all (p: builtins.isString p.name)
+          (inputs.self.nixosConfigurations.evo-x2.extendModules { inherit modules; })
+          .config.services.dns-blocker.policies;
     in
     !(builtins.tryEval names).success;
 
@@ -185,7 +196,12 @@ let
     {
       ok = policyAssertionFires "undeclared devices" [
         {
-          services.dns-blocker.policies = [ { name = "t"; devices = [ "ghost" ]; } ];
+          services.dns-blocker.policies = [
+            {
+              name = "t";
+              devices = [ "ghost" ];
+            }
+          ];
         }
       ];
       msg = "dangling-device assertion does not fire";
@@ -193,7 +209,12 @@ let
     {
       ok = policyAssertionFires "device groups" [
         {
-          services.dns-blocker.policies = [ { name = "t"; groups = [ "kids" ]; } ];
+          services.dns-blocker.policies = [
+            {
+              name = "t";
+              groups = [ "kids" ];
+            }
+          ];
         }
       ];
       msg = "dangling-group assertion does not fire (no declared device carries a group)";
@@ -258,7 +279,9 @@ let
       msg = "dnsEcsEnabled must default to false (M16 ships inert — owner-gated privacy tradeoff)";
     }
     {
-      ok = evox2.services.dns-blocker.dnsEcsIpv4PrefixLen == 0 && evox2.services.dns-blocker.dnsEcsIpv6PrefixLen == 0;
+      ok =
+        evox2.services.dns-blocker.dnsEcsIpv4PrefixLen == 0
+        && evox2.services.dns-blocker.dnsEcsIpv6PrefixLen == 0;
       msg = "ECS prefix lengths must default to 0 (upstream /24 and /56 defaults)";
     }
     {
@@ -273,6 +296,23 @@ let
         }
       ];
       msg = "ECS prefix-range assertion does not fire (IPv4 >32 must be rejected)";
+    }
+    {
+      ok = evox2.services.dns-blocker.tlsH3Enabled == false;
+      msg = "tlsH3Enabled must default to false (M17 ships inert — owner-gated QUIC toggle)";
+    }
+    {
+      ok = h3Exec != exec;
+      msg = "tlsH3Enabled no longer feeds the rendered config (phantom-option regression)";
+    }
+    {
+      ok = policyAssertionFires "requires blockTLSPort > 0" [
+        {
+          services.dns-blocker.tlsH3Enabled = true;
+          services.dns-blocker.blockTLSPort = 0;
+        }
+      ];
+      msg = "h3-without-tls-port assertion does not fire (upstream errH3RequiresTLSPort must be mirrored)";
     }
   ];
 
@@ -289,7 +329,13 @@ else
     {
       # Interpolating exec pulls the config derivation (and its blocklist
       # dependencies) into this build — the greps run on the REAL file.
-      inherit exec policiesExec trialExec ecsExec;
+      inherit
+        exec
+        policiesExec
+        trialExec
+        ecsExec
+        h3Exec
+        ;
     }
     ''
       CFG="''${exec#* -c }"
@@ -297,11 +343,13 @@ else
       TCFG="''${trialExec#* -c }"
       ECFG="''${ecsExec#* -c }"
       fail() { echo "dns-blocker render content failure: $1"; exit 1; }
+      H3CFG="''${h3Exec#* -c }"
       [ -f "$CFG" ] || fail "rendered config not realized: $CFG"
       [ -f "$PCFG" ] || fail "variant config not realized: $PCFG"
       [ -f "$TCFG" ] || fail "trial variant config not realized: $TCFG"
       [ -f "$ECFG" ] || fail "ecs variant config not realized: $ECFG"
-      ${pkgs.python3}/bin/python3 - "$CFG" "$PCFG" "$TCFG" "$ECFG" <<'PYEOF' || fail "see python assert above"
+      [ -f "$H3CFG" ] || fail "h3 variant config not realized: $H3CFG"
+      ${pkgs.python3}/bin/python3 - "$CFG" "$PCFG" "$TCFG" "$ECFG" "$H3CFG" <<'PYEOF' || fail "see python assert above"
       import json, sys
       cfg = json.load(open(sys.argv[1]))
       assert cfg["allowlist_path"] == "/var/lib/dnsblockd/allowlist", "allowlist_path must point at the persistent state file"
@@ -332,6 +380,10 @@ else
       assert ecs["dns_ecs_enabled"] is True, "ECS enable flag not rendered"
       assert ecs["dns_ecs_ipv4_prefix_len"] == 24, "IPv4 ECS prefix not rendered verbatim"
       assert ecs["dns_ecs_ipv6_prefix_len"] == 56, "IPv6 ECS prefix not rendered verbatim"
+      assert cfg["tls_h3_enabled"] is False, "tls_h3_enabled must default to false on the host (M17 inert gate)"
+      h3 = json.load(open(sys.argv[5]))
+      assert h3["tls_h3_enabled"] is True, "tls_h3_enabled enable flag not rendered"
+      assert h3["tls_port"] == 443, "h3 variant lost the default tls_port (QUIC terminates on the same port number)"
       print("content OK")
       PYEOF
       echo "dns-blocker render: allowlist persistence, rate limit, log sampling, extraDomains belt, tracking gate, policies, trial blocklists, ECS OK" > $out

@@ -111,7 +111,7 @@ in
   name = "paperless";
 
   nodes.machine =
-    { lib, ... }:
+    { lib, pkgs, ... }:
     {
       imports = [
         paperlessNixosModule
@@ -132,6 +132,11 @@ in
       ];
 
       virtualisation.memorySize = 4096;
+
+      # The testScript pipes REST responses through jq (steps 10-13); the VM
+      # root PATH needs it declared here — a module's unit `path` does not
+      # reach the interactive shell.
+      environment.systemPackages = [ pkgs.jq ];
 
       sops.secrets.paperless_admin_password = { };
 

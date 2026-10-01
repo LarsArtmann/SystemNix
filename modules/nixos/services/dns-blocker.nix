@@ -1071,7 +1071,9 @@ _: {
             # config-level validation upstream — fail at eval instead.
             assertion =
               (cfg.dnsEcsIpv4PrefixLen == 0 || (cfg.dnsEcsIpv4PrefixLen >= 1 && cfg.dnsEcsIpv4PrefixLen <= 32))
-              && (cfg.dnsEcsIpv6PrefixLen == 0 || (cfg.dnsEcsIpv6PrefixLen >= 1 && cfg.dnsEcsIpv6PrefixLen <= 128));
+              && (
+                cfg.dnsEcsIpv6PrefixLen == 0 || (cfg.dnsEcsIpv6PrefixLen >= 1 && cfg.dnsEcsIpv6PrefixLen <= 128)
+              );
             message = "services.dns-blocker ECS prefix lengths must be 0 (upstream default) or within the address family (IPv4 1-32, IPv6 1-128).";
           }
           {

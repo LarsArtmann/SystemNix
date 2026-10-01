@@ -145,11 +145,14 @@ harvest_check() {
   while IFS= read -r report; do
     base="${report##*/}"
     case "$base" in
-      2026-0[1-8]*|2026-09-[01][0-9]*|2026-09-2[0-5]*) continue ;;
+    2026-0[1-8]* | 2026-09-[01][0-9]* | 2026-09-2[0-5]*) continue ;;
     esac
     candidates+=("$report")
   done < <(grep -lE '^#+ *f[): ]|§f' "$status_dir"/2*.md 2>/dev/null | sort)
-  [ "${#candidates[@]}" -gt 0 ] || { rm -f "$blobfile"; return 0; }
+  [ "${#candidates[@]}" -gt 0 ] || {
+    rm -f "$blobfile"
+    return 0
+  }
   local unmarked=()
   while IFS= read -r report; do
     unmarked+=("$report")

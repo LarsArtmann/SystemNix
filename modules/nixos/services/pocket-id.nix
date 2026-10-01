@@ -330,7 +330,9 @@ _: {
               echo "  Group '${grp.name}' already exists (ID: $GROUP_ID)."
             else
               echo "  Creating user group: ${grp.name}"
-              CREATE_GROUP_RESPONSE=$(api_post "/api/user-groups" '${builtins.toJSON { inherit (grp) name friendlyName; }}')
+              CREATE_GROUP_RESPONSE=$(api_post "/api/user-groups" '${
+                builtins.toJSON { inherit (grp) name friendlyName; }
+              }')
               HTTP_CODE=$(echo "$CREATE_GROUP_RESPONSE" | tail -1)
               RESPONSE_BODY=$(echo "$CREATE_GROUP_RESPONSE" | sed '$d')
               GROUP_ID=$(echo "$RESPONSE_BODY" | jq -r '.id // empty' 2>/dev/null || true)

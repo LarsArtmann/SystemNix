@@ -1136,19 +1136,19 @@ _: {
           # login is what provisions the paperless account. The options?-idiom
           # matches the integration registry: hosts that do not import
           # pocket-id.nix degrade to an empty (inert) definition.
-          services.pocket-id-config =
-            lib.optionalAttrs (options ? services.pocket-id-config)
-              (lib.mkIf (cfg.enable && oidcProvisionEnabled && oidcEnabled) {
-                provision.userGroups = [
-                  {
-                    name = oidcAdminGroup;
-                    friendlyName = "Paperless Administrators";
-                    memberUsernames = [
-                      config.services.pocket-id-config.provision.adminUser.username
-                    ];
-                  }
-                ];
-              });
+          services.pocket-id-config = lib.optionalAttrs (options ? services.pocket-id-config) (
+            lib.mkIf (cfg.enable && oidcProvisionEnabled && oidcEnabled) {
+              provision.userGroups = [
+                {
+                  name = oidcAdminGroup;
+                  friendlyName = "Paperless Administrators";
+                  memberUsernames = [
+                    config.services.pocket-id-config.provision.adminUser.username
+                  ];
+                }
+              ];
+            }
+          );
 
           services.integration = lib.optionalAttrs (options ? services.integration) {
             paperless = {
