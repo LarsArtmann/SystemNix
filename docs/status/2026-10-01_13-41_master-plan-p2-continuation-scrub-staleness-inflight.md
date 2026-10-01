@@ -113,3 +113,5 @@
 **Session ledger**: commits `eb4eca00` (CHANGELOG), `0a12995b` (plan annotations); daemon-swept authorship: `b02d295c` (snapshots.nix hermes fix + citation fixes), `abf5cda9` (P2#5 collector + gatus edits, UNVERIFIED — see b.1). Tree clean at report time; both named commits reachable from HEAD through the parallel sessions' chains.
 
 **WAITING FOR INSTRUCTIONS.**
+
+<!-- harvest log: §f fully superseded by docs/status/2026-10-01_15-39_master-plan-p2-completion-guard-attribution-stray-lint.md (P2 #5 verification closed, #8-#11 landed, crosswalk done) -->
