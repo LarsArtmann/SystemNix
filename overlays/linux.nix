@@ -218,8 +218,9 @@ let
   # locked tree, the 2026-09-23 lock-wave class). Upstream master (1ce5f6df)
   # is ahead; drop when the lock moves past an upstream-fixed rev. Must stay
   # AFTER file-and-image-renamer.overlays.default in the list below.
-  fileAndImageRenamerVendorHashShim = final: _prev: {
-    file-and-image-renamer = final.file-and-image-renamer.overrideAttrs {
+  # prev (NOT final) — final would recurse into this overlay's own override.
+  fileAndImageRenamerVendorHashShim = _final: prev: {
+    file-and-image-renamer = prev.file-and-image-renamer.overrideAttrs {
       vendorHash = "sha256-W5e+pMcBvI9laxsnUfxXLNpHarZcFIBjGtGhuAtjZag=";
     };
   };
