@@ -379,6 +379,46 @@ if nix run .#pre-deploy-check; then
   fi
 
   echo ""
+  echo "=== Deploy race detector (plan P2 #11) ==="
+  # The 05:50 cert-mint deploy-vs-fix race took down all vhosts: a deploy
+  # built from a tree whose HEAD had JUST moved (a parallel session was
+  # mid-flight) first-activated a new unit whose fix had not landed. WARN —
+  # never block — when BOTH hold:
+  #   (a) HEAD was committed <15 min ago: the auto-commit daemon and
+  #       parallel agent sessions operate at ~10 min cadence, so the tree
+  #       can churn again DURING this build — the activation may not match
+  #       the tree you think you are deploying.
+  #   (b) this config introduces units ABSENT from the running generation
+  #       (first activations are where an unlanded fix bites hardest).
+  # The unit-name eval runs ONLY when (a) holds — a stable tree pays zero
+  # extra eval latency. WARN-grade on purpose: deploys of fixes routinely
+  # land seconds after their own commit.
+  race_head_ts=$(git log -1 --format=%ct 2>/dev/null || echo 0)
+  race_head_age=$(( $(date +%s) - race_head_ts ))
+  if [ "$race_head_age" -lt 900 ]; then
+    echo "⚠ HEAD is ${race_head_age}s old (<15 min) — parallel-session window open; checking first-activation units"
+    race_new_units=$(nix eval --raw .#nixosConfigurations.evo-x2.config.systemd.services --apply 'attrs: builtins.concatStringsSep "\n" (builtins.attrNames attrs)' 2>/dev/null | sort -u || true)
+    race_running_units=""
+    for rf in /run/current-system/etc/systemd/system/*.service; do
+      [ -e "$rf" ] || continue
+      race_running_units="$race_running_units ${rf##*/}"
+    done
+    race_running_units=$(printf '%s\n' "$race_running_units" | tr ' ' '\n' | sed 's/\.service$//' | grep -v '^$' | sort -u || true)
+    race_first=$(comm -13 <(printf '%s\n' "$race_running_units") <(printf '%s\n' "$race_new_units") | grep -v '@$' | head -10 || true)
+    if [ -n "$race_first" ]; then
+      echo "⚠ RACE RISK: HEAD moved ${race_head_age}s ago AND this deploy first-activates units the running generation does not have:"
+      while IFS= read -r race_u; do
+        [ -n "$race_u" ] && echo "⚠   $race_u"
+      done <<<"$race_first"
+      echo "⚠ A parallel session's in-flight fix may NOT be in this build — if this deploy races a known fix, abort and re-run after the tree settles. (Approximate: eval attrset names minus running unit files; template roots and disabled attrs can appear.)"
+    else
+      echo "  no first-activation units detected — race exposure limited to unit-file changes"
+    fi
+  else
+    echo "  HEAD is ${race_head_age}s old (>=15 min) — no parallel-session race window"
+  fi
+
+  echo ""
   echo "=== Deploying NixOS config to evo-x2 ==="
   latest_system_generation() {
     local link num
