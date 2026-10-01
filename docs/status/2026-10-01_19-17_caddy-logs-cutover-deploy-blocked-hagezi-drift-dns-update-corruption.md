@@ -188,3 +188,28 @@
 
 *Snapshot report — will stale fast. Verification build verdict lands in the session transcript,
 not by editing this file.*
+
+---
+
+## ADDENDUM (post-press, 19:33): keep-going surfaced a SECOND failure class — LarsArtmann go-modules FOD drift
+
+The round-2 `--keep-going` build (still running at 19:33, 981+ paths substituted) enumerated
+beyond the HaGeZi fixes and found **three more root failures, all `go-modules` FOD hash
+mismatches on mkLarsPackages tools** (pins live in `lib/lars-packages.nix`):
+
+| FOD | specified | got |
+| --- | --- | --- |
+| `branching-flow-0.2.0-go-modules.drv` | `sha256-Gitg6V8+pNQWYoXwdL2bTSsZEa1G6QtNvDkF+IUD3yM=` | `sha256-QUU2TvF76UJRO/AjO+MFPWvYfWrvuBMQ+RiAMMJ5B0w=` |
+| `cqrs-lint-4d4137ee0b7920bd787cc922f83a066f67be9581-go-modules.drv` | `sha256-YHWDwUiUNwWEtnInfnqjWGfD5ljMqJN5pFVjNTMPihA=` | `sha256-yonqp/FVG61XlYlPbKWzlF6a6HTj4bMWMbJjiswtdCo=` |
+| `cv-59f2ec6-go-modules.drv` | `sha256-K+yEjs8fCsvTlpl/dPwHQifiKoQRSwu69xzVV1oDeGI=` | `sha256-w1drooS482Myluq8CaXeL0gZBMZvYHDcD2IcuAUXK44=` |
+
+**Working hypothesis (unverified):** rev-pinned LarsArtmann repos whose history was rewritten
+upstream (the repos are actively rebased), so the pinned rev now resolves to different content
+through the proxy/direct fetch — the same class the go-ecosystem docs call re-tag/rev poisoning.
+This explains why the user's 18:03 deploy never saw them (it died at 2m42s before reaching
+these FODs). **The deploy remains blocked** until these are refreshed (got-hash adoption if the
+rev content is legitimate, or re-pin if the rev is stale) — enumeration is still running, so the
+final list may grow. Fix runs through the go-ecosystem upgrade procedure (re-pin protocol:
+FOD probe at the new rev → lock/package verify → flake check), NOT blind hash adoption.
+
+§f impact: item 1 (deploy retry) is gated on fixing THIS list first; the rest of §f stands.
