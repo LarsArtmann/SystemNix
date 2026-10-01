@@ -72,5 +72,7 @@ service has a runbook; sections migrated from AGENTS.md are marked
 | Build & Deploy / Platform Constraints / Architecture / TODO System | root `AGENTS.md` (kept; boot-mirror detail → `systemd.md`)            |
 
 Anything not listed here was either kept in the root `AGENTS.md` or already
-duplicated in an existing runbook — the migration commit diff is the
-authoritative audit.
+duplicated in an existing runbook. Authoritative audit: the migration spans
+two commits — daemon-swept `d89029cf` (bulk split, includes the temporary
+stray files) + completion `8e6409dd` (strays merged into runbooks);
+`git diff d08ec9c1..8e6409dd -- AGENTS.md docs/` reconstructs it.

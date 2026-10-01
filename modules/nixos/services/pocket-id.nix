@@ -315,6 +315,53 @@ _: {
             ''
           ) (cfg.provision.oidcClients ++ cfg.provision.extraOidcClients)}
 
+          # ── Step 4: User groups (the `groups` claim) ──
+          # Create each declared group and sync its membership. PUT
+          # /user-groups/{id}/users REPLACES the whole member list, so
+          # memberUsernames is authoritative and converges on every run. A
+          # declared member that does not resolve to a Pocket ID user fails
+          # the unit loudly (a silently empty group would fail every role
+          # mapping closed).
+          ${lib.concatMapStringsSep "\n" (grp: ''
+            echo "Checking user group: ${grp.name}..."
+            ALL_GROUPS=$(api_get "/api/user-groups?pagination%5Blimit%5D=100")
+            GROUP_ID=$(echo "$ALL_GROUPS" | jq -r '.data[] | select(.name == "${grp.name}") | .id // empty' 2>/dev/null | head -1) || true
+            if [ -n "$GROUP_ID" ]; then
+              echo "  Group '${grp.name}' already exists (ID: $GROUP_ID)."
+            else
+              echo "  Creating user group: ${grp.name}"
+              CREATE_GROUP_RESPONSE=$(api_post "/api/user-groups" '${builtins.toJSON { inherit (grp) name friendlyName; }}')
+              HTTP_CODE=$(echo "$CREATE_GROUP_RESPONSE" | tail -1)
+              RESPONSE_BODY=$(echo "$CREATE_GROUP_RESPONSE" | sed '$d')
+              GROUP_ID=$(echo "$RESPONSE_BODY" | jq -r '.id // empty' 2>/dev/null || true)
+              if [ -z "$GROUP_ID" ]; then
+                echo "  ERROR: Failed to create group '${grp.name}' (HTTP $HTTP_CODE): $RESPONSE_BODY" >&2
+                exit 1
+              fi
+              echo "  Created group '${grp.name}' (ID: $GROUP_ID)."
+            fi
+
+            MEMBER_IDS_JSON="[]"
+            ${lib.concatMapStrings (un: ''
+              GROUP_USERS=$(api_get "/api/users?pagination%5Blimit%5D=100")
+              MEMBER_ID=$(echo "$GROUP_USERS" | jq -r --arg un "${un}" '.data[] | select(.username == $un) | .id // empty' 2>/dev/null | head -1) || true
+              if [ -z "$MEMBER_ID" ]; then
+                echo "  ERROR: declared member '${un}' of group '${grp.name}' not found in Pocket ID" >&2
+                exit 1
+              fi
+              MEMBER_IDS_JSON=$(echo "$MEMBER_IDS_JSON" | jq -c --arg id "$MEMBER_ID" '. + [$id]')
+            '') grp.memberUsernames}
+            GROUP_BODY=$(jq -n --argjson ids "$MEMBER_IDS_JSON" '{userIds: $ids}')
+            PUT_GROUP_RESPONSE=$(api_put "/api/user-groups/$GROUP_ID/users" "$GROUP_BODY")
+            PUT_HTTP_CODE=$(echo "$PUT_GROUP_RESPONSE" | tail -1)
+            if [ "$PUT_HTTP_CODE" = "200" ]; then
+              echo "  Group '${grp.name}' membership synced: $MEMBER_IDS_JSON"
+            else
+              echo "  ERROR: Failed to sync members of '${grp.name}' (HTTP $PUT_HTTP_CODE): $(echo "$PUT_GROUP_RESPONSE" | sed '$d')" >&2
+              exit 1
+            fi
+          '') cfg.provision.userGroups}
+
           echo "=== Pocket ID Provisioning Complete ==="
         '';
       };
@@ -392,6 +439,39 @@ _: {
               };
             };
             description = "Admin user to create declaratively";
+          };
+
+          # User groups provisioned declaratively. These drive the `groups`
+          # claim in ID tokens (emitted only when the client requests the
+          # `groups` scope — see claims_service.go) so relying parties can map
+          # IdP membership to local roles. Membership is AUTHORITATIVE: Pocket
+          # ID's PUT /user-groups/{id}/users replaces the whole list, so
+          # memberUsernames here is the single source of truth. A declared
+          # member that does not exist fails the unit loudly — a silently
+          # empty group would make every role mapping fail closed (demote),
+          # which is easy to miss.
+          userGroups = lib.mkOption {
+            type = lib.types.listOf (
+              lib.types.submodule {
+                options = {
+                  name = lib.mkOption {
+                    type = lib.types.str;
+                    description = "Group name exactly as it appears in the `groups` claim";
+                  };
+                  friendlyName = lib.mkOption {
+                    type = lib.types.str;
+                    description = "Human-readable name shown in the Pocket ID UI (2-50 chars)";
+                  };
+                  memberUsernames = lib.mkOption {
+                    type = lib.types.listOf lib.types.str;
+                    default = [ ];
+                    description = "Pocket ID usernames that belong to the group (authoritative)";
+                  };
+                };
+              }
+            );
+            default = [ ];
+            description = "User groups to create and keep in sync (drives the OIDC `groups` claim)";
           };
 
           # Client type shared with services.integration.<name>.oidc — lives

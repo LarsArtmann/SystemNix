@@ -3,7 +3,7 @@
 #
 # Why a MINIMAL nixosSystem and not evo-x2: the full host config carries
 # the known latent `config.assertions` poison (sops template entries with
-# owner=null crash message interpolation — AGENTS.md), so negative tests
+# owner=null crash message interpolation — docs/services/miniflux.md Agent Notes), so negative tests
 # that force every assertion message are impossible there. The wrapper
 # module is evaluated here against stubs instead, which validates its own
 # behavior honestly:

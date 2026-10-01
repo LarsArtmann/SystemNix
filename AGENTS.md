@@ -22,7 +22,7 @@ Deep domain knowledge lives in referenced files — **read the relevant one BEFO
 | Shell scripts, direnv/fish/zellij, GOBIN shadowing, qmd MCP                   | [docs/agents/shell-devtools.md](./docs/agents/shell-devtools.md)                                                 |
 | Git recovery, history rewrites, GitHub push protection                        | [docs/agents/git.md](./docs/agents/git.md)                                                                       |
 
-- **Service deep context** (ports, secrets, traps, runbooks): `docs/services/<service>.md` — every service has one; they own per-service state.
+- **Service deep context** (ports, secrets, traps, runbooks): `docs/services/<service>.md` — most services have one and they own per-service state; a few older services still lack runbooks (backfill queued).
 - **Incident narratives** (dates, hashes, root causes): [docs/gotchas-archive.md](./docs/gotchas-archive.md) + `docs/status/`.
 - **Open work**: [TODO_LIST.md](./TODO_LIST.md) (dispatch queue) + `docs/todo/*.md` (domain libraries) — see TODO System below.
 - `docs/agents/README.md` holds the full provenance map (old AGENTS.md section → new home).

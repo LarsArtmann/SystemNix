@@ -6,6 +6,7 @@ Documentation for the SystemNix cross-platform Nix configuration (macOS + NixOS)
 
 | Directory          | Purpose                                                                |
 | ------------------ | ---------------------------------------------------------------------- |
+| `agents/`          | Agent knowledge library: domain references split from AGENTS.md        |
 | `architecture/`    | System architecture docs, ADRs, dependency graphs                      |
 | `learnings/`       | Lessons learned from debugging and sessions                            |
 | `operations/`      | Operational procedures and post-deployment checklists                  |
@@ -16,7 +17,7 @@ Documentation for the SystemNix cross-platform Nix configuration (macOS + NixOS)
 
 ## Key Documents
 
-- **AGENTS.md** (repo root) — AI agent guide with architecture, patterns, and commands
+- **AGENTS.md** (repo root) — lean need-to-know agent guide + routing table (domain depth: `docs/agents/`, services: `docs/services/`)
 - **README.md** (repo root) — Project overview, services table, and Nix flake command reference
 - **docs/CONTRIBUTING.md** — Contributor setup, style rules, and verification commands
 - **architecture/** — ADRs (Architecture Decision Records), DNS guide, monitoring plans

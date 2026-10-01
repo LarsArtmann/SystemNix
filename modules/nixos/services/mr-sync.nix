@@ -70,6 +70,7 @@
         systemd.services.mr-sync-dashboard = {
           description = "mr-sync repo-portfolio web dashboard";
           inherit onFailure;
+          wantedBy = [ "multi-user.target" ];
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
           serviceConfig = lib.mkMerge [

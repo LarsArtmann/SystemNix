@@ -51,8 +51,20 @@ _: {
       # failing eval. A silently-disabled bridge is caught by the Gatus
       # login-page condition + the post-deploy SSO-button smoke.
       oidcEnabled = config.services.pocket-id-config.enable or false;
+      # The provisioner is what creates the OIDC client AND the admin group —
+      # SSO only exists when it runs, so gate group declaration on it.
+      oidcProvisionEnabled = config.services.pocket-id-config.provision.enable or false;
       pocketIdDataDir = config.services.pocket-id.dataDir or "/var/lib/pocket-id";
       oidcEnvFile = "/var/lib/paperless-oidc/pocket-id.env";
+
+      # Pocket ID group whose membership grants Paperless superuser+staff.
+      # The `groups` claim (emitted by Pocket ID ONLY when the client
+      # requests the `groups` scope — claims_service.go) is mapped to Django
+      # roles by paperless's allauth signal handler on every login
+      # (paperless/signals.py). Single source of truth: the same name drives
+      # the requested scope, the env mapping, and the group's declaration in
+      # Pocket ID below.
+      oidcAdminGroup = "paperless-admins";
 
       # Outbound email (share links, password-protected archives, account
       # mails) rides the central Postfix null-client relay. Off (VM tests,
@@ -81,6 +93,11 @@ _: {
               "openid"
               "profile"
               "email"
+              # Pocket ID emits the `groups` claim ONLY when this scope is
+              # requested (claims_service.go); without it the claim is absent
+              # and the role mapping below demotes every login. allauth's
+              # oauth2 provider forwards SCOPE verbatim (oauth2/provider.py).
+              "groups"
             ];
             OAUTH_PKCE_ENABLED = true;
             APPS = [
@@ -509,6 +526,15 @@ _: {
             // lib.optionalAttrs oidcEnabled {
               PAPERLESS_APPS = "allauth.socialaccount.providers.openid_connect";
               PAPERLESS_SOCIAL_AUTO_SIGNUP = true;
+              # Map the Pocket ID `groups` claim to Django roles on every
+              # login: members of oidcAdminGroup become superuser + staff.
+              # FAIL CLOSED — a missing/empty claim DEMOTES (signals.py sets
+              # is_superuser = group in claim), so a broken IdP never leaves
+              # stale privilege behind. The claim only exists when the
+              # `groups` scope is requested (see SCOPE above).
+              PAPERLESS_SOCIAL_ACCOUNT_SYNC_GROUPS_CLAIM = "groups";
+              PAPERLESS_SOCIAL_ACCOUNT_SYNC_SUPERUSER_GROUP = oidcAdminGroup;
+              PAPERLESS_SOCIAL_ACCOUNT_SYNC_STAFF_GROUP = oidcAdminGroup;
             };
           };
 
@@ -1091,6 +1117,27 @@ _: {
           # caddy.nix; the login-page + sidecar Gatus checks stay in
           # gatus-config.nix's core list (multi-unit + body-pattern
           # semantics owned by the SSO bring-up).
+
+          # Declare the Paperless admin group in Pocket ID (the IdP owns group
+          # membership; PUT /user-groups/{id}/users is authoritative). Members
+          # = the Pocket ID admin identity — the single human SSO user, whose
+          # login is what provisions the paperless account. The options?-idiom
+          # matches the integration registry: hosts that do not import
+          # pocket-id.nix degrade to an empty (inert) definition.
+          services.pocket-id-config =
+            lib.optionalAttrs (options ? services.pocket-id-config)
+              (lib.mkIf (cfg.enable && oidcProvisionEnabled && oidcEnabled) {
+                provision.userGroups = [
+                  {
+                    name = oidcAdminGroup;
+                    friendlyName = "Paperless Administrators";
+                    memberUsernames = [
+                      config.services.pocket-id-config.provision.adminUser.username
+                    ];
+                  }
+                ];
+              });
+
           services.integration = lib.optionalAttrs (options ? services.integration) {
             paperless = {
               inherit (cfg) enable;
