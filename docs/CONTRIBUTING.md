@@ -232,7 +232,31 @@ Only if all four probe clean does the failure count as INTRODUCED (the only shap
 
 **Daemon-race commit policy (12+ live races, 2026-09-12 → 2026-09-27).** The auto-commit daemon sweeps staged files MID-EDIT and MID-HOOK (the hook can report all-green on an index the daemon already committed — git then finds "nothing to commit"). Policy: (1) commit immediately after the last edit, foreground, PATHSPEC-scoped (`git commit -m … -- <paths>`) — this narrows the window, it does not close it; (2) PATHSPEC excludes foreign staged files but cannot re-attach sibling paths the daemon already swept — after EVERY multi-file landing run `git show --stat HEAD` and verify BOTH exclusivity (nothing foreign) and completeness (all your paths); (3) when the daemon swept your work, prefer LAND-ON-TOP (plain retry on the daemon's HEAD; fails cheaper) over amend-under-daemon; amend only after a `git show --stat` exclusivity check proves the daemon commit carries exactly your files, and expect the ref-lock forensics pass when the amend itself races (`cannot lock ref 'HEAD'` — re-check `git log -1`, then re-amend); (4) only a daemon-side honor-file/lock fully closes the class (upstream go-taskqueue/PMA track it). Runbooks that say "in ONE commit" carry the explicit carve-out (jan.md repair recipe, step 3).
 
+**Post-amend lint-heal commands (2026-09-30 clause; the `382ab696` empty-staged-amend class).** A message-only amend runs the hook on whatever is staged — often NOTHING, so gitleaks passes vacuously and the flake leg skips, and the amended HEAD carries unverified bytes. After ANY amend, re-run the skipped legs STANDALONE against the amended tree: `bash scripts/fmt-cached.sh <touched files>` (formatter), `nix flake check --no-build` (whenever `.nix` surfaces were touched — the commit subject says which), and a gitleaks pass over the amended HEAD (`nix run nixpkgs#gitleaks -- detect -s --log-opts="HEAD~1..HEAD"` or the repo scanner) before declaring the amend done.
+
+**Soft-reset split — the exclusivity-FAIL repair (proven live 2026-09-30).** Third daemon-race case: the daemon's heuristic commit carries YOUR files + FOREIGN files and the tree is clean — amend is forbidden by the exclusivity check and land-on-top has nothing to commit. Repair: `git reset --soft HEAD~1` (sanctioned — soft keeps index+worktree), then TWO pathspec commits: yours first with its footer, the foreign files standalone byte-identical; prove zero content loss with an empty `git diff <pre-split-batch> HEAD`. Companion rule: split-out commits must NEVER cite the pre-split batch SHA in their message (the reset dangles it) — cite the operation, not the SHA.
+
 **Producer inventory before enforcement (2026-09-28 commit-msg class).** Before shipping ANY commit gate, enumerate the non-human commit PRODUCERS (auto-commit daemons, bots, merge/revert drivers, codegen) and either exempt them with evidence or fix them upstream FIRST — the 72-char subject hook shipped without checking that the PMA daemon (its largest automated subject) runs hooks and can exceed the limit on long branch names.
+
+## Report & queue conventions
+
+**§f self-audit at report time (2026-09-28 convention, two live fires).** Before finishing any §a–§g status report, audit your own §f: every item marked direct-follow-up MUST already have a queue/library surface or an explicit "deliberately not harvested because X" note in the report. A `[x]` queue mark covers only the item's own scope, never the Source report's follow-up obligations.
+
+**Report self-consistency gate (2026-09-30 clause).** Cross-check every §f "next" item against the §a done-rows before emitting: a report that ships §f pending work its own §a already verified done has failed its self-critique (the 00-42 class — caught one review round later).
+
+**Ban bare `TODO_LIST:<line>` cites (2026-09-30 convention; 14 sites converted, proven).** Line numbers rot on every queue restructure (one cite moved 152→154→107 across one finding's lifecycle). Cite the row TITLE plus the row's `**Source:**` anchor instead — title cites survive append/prune/renumber.
+
+**60-second same-class sibling sweep (2026-09-30 habit clause).** After fixing a finding, grep the touched report's family (sibling reports, sibling rows) for the same pattern BEFORE moving on; report siblings, fix on sight when trivial. The 01-15 fix run skipped the one-grep sweep and the next review round-trip landed on the same class.
+
+**DONE-stamped items carry the completing task's Task-Queue-ID (queue convention).** A `[x] … DONE <date>` note names the task ID (or "non-queue session" + the landing commit) so verifying sessions skip daemon-commit archaeology.
+
+**Verify the footer commit LANDED before emitting TQ_RESULT (closeout convention).** The 06:10-class failure: the closeout's commit died (index lock) and only the daemon's footer-less sweep carried the report — check `git log -1 --grep Task-Queue-ID` (or your marker-commit) post-commit, before the task result is emitted.
+
+**Queue-footer discipline: each run's FIRST commit carries its Task-Queue-ID footer** — heuristic daemon commits cannot carry it, so a run that lets the daemon sweep first silently loses its queue↔git cross-reference (backfill works but leaves the audit hole).
+
+**DR-runbook provenance checklist (backup-conventions clause, 2026-09-23 class).** Any "what the backup contains" claim in a DR/restore runbook must be DERIVED from the rendered-path × archive-path intersection (sops template → tmpfs `/run/secrets` rendered path vs the `backup.nix` archive paths), never recalled from memory — and the phrase "rides in the archive" is BANNED for sops/tmpfs state (the false provenance sentence in `49677fd3` cost one review round).
+
+**Fleet-incident rule (the /run/binfmt saga, 2026-09-25).** A gate failing for ALL agents/sessions is an ENVIRONMENT incident, not N task failures: triage the shared cause first (missing `/run/binfmt`, store-GC eviction, nix-daemon stale cache, IO storm) before touching any individual task — and record the bypass decision per attempt if a documented bypass is taken.
 
 ## Eval-Time Guards (audit modules)
 
@@ -280,7 +304,18 @@ scanners: `scripts/audit-serviceconfig-merge.sh` (pre-commit + CI),
    `nix fmt --no-update-lock-file -- --ci`, and HAND-PROBE one new case via
    `extendModules` on evo-x2 — a passing negative-test derivation always has
    the same store path (pass/fail is chosen at eval), so an identical output
-   path cannot distinguish "new cases pass" from "stale eval cache".
+   path cannot distinguish "new cases pass" from "stale eval cache". The
+   full `extendModules`/`mkOverride 50` probe recipe (the `content`-not-`value`
+   trap, beating a plain `enable = false`) lives at `docs/agents/desktop.md`
+   ("extendModules probe overrides").
+   **Which negative-probe pattern does your guard support?** A guard asserting
+   via INLINE `deepSeq` inside the check attr (offsite-borg-positive-render,
+   disko-samsung-tlc shape) is only probeable by REPLICATING the assert
+   against a drifted `extendModules` render — that proves the render is read,
+   NOT that the committed guard executes on drift. Guards whose logic is
+   extracted into a shared pure lib function are directly probe-drivable
+   (call the function on drifted input). Pick the shape deliberately; new
+   guard authors used to rediscover this per incident.
 6. **Set justified allowlists ADJACENT to the offending definition site**
    (e.g. `fastflowlm.nix` sets its own `gatus-coverage-audit.allowPorts`),
    with a comment explaining WHY — not centrally.
