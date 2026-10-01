@@ -672,6 +672,7 @@ in
       pwvucontrol # Native PipeWire volume control (GTK, Rust)
       mpv # Media player — default for audio MIME types (see mimeApps below)
       signal-desktop # Secure messaging application
+      spotify # Music streaming (unfree — flake-level allowUnfree covers it)
 
       # AI Tools
       jan # Local AI assistant — nixpkgs FHS-wrapped Tauri app (data → /data/ai/models/jan via activation)
