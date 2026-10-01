@@ -127,7 +127,6 @@ let
     "inboxclean"
     "llama-rag"
     "mail-relay"
-    "manifest"
     "monitor365"
     "monitor365-server"
     "overview"
@@ -143,7 +142,7 @@ let
   ];
 
   # Port-shaped options the UNCONDITIONAL caddy base vHosts force
-  # (signoz/twenty/taskchampion/manifest/openseo/crush-daily/dns-blockd ports).
+  # (signoz/twenty/taskchampion/openseo/crush-daily/dns-blockd ports).
   portStubs = {
     services.signoz.settings.queryService.port = lib.mkOption {
       type = lib.types.port;
@@ -156,10 +155,6 @@ let
     services.twenty.port = lib.mkOption {
       type = lib.types.port;
       default = 8081;
-    };
-    services.manifest.port = lib.mkOption {
-      type = lib.types.port;
-      default = 8083;
     };
     services.openseo.port = lib.mkOption {
       type = lib.types.port;

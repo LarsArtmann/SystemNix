@@ -54,7 +54,6 @@ _: {
             "/mnt/pool/backups/forgejo"
             "/mnt/pool/backups/geometrikks"
             "/mnt/pool/backups/inboxclean"
-            "/mnt/pool/backups/manifest"
             "/mnt/pool/backups/miniflux"
             "/mnt/pool/backups/paperless"
             "/mnt/pool/backups/pocket-id"

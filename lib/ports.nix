@@ -26,8 +26,6 @@
     tika = 9998;
     gotenberg = 3199;
 
-    manifest = 2099;
-
     monitor365-server = 3001;
     monitor365-metrics = 9191;
 

@@ -438,7 +438,7 @@ _: {
           wantedBy = [ "timers.target" ];
           after = [ "mnt-pool.mount" ];
           timerConfig = {
-            # 02:45 — staggered between manifest (02:30) and cv (03:17).
+            # 02:45 — staggered between cv (03:17) and the 02:30 pg_dump slot.
             OnCalendar = "*-*-* 02:45:00";
             RandomizedDelaySec = "10min";
             Persistent = true;

@@ -52,9 +52,22 @@ let
       ];
     }).config.systemd.services.dnsblockd.serviceConfig.ExecStart;
 
+  trialExec =
+    (inputs.self.nixosConfigurations.evo-x2.extendModules {
+      modules = [
+        {
+          services.dns-blocker.blocklistTrialUrls = [
+            "https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt"
+          ];
+        }
+      ];
+    }).config.systemd.services.dnsblockd.serviceConfig.ExecStart;
+
   # gate-timeout-audit pattern: force the variant's assertions and require
   # the one named by the message infix to be among the FAILED ones (message
   # strings are only coerced for failed assertions — short-circuit &&).
+  # Generic across all wrapper assertions (not just policies) — the infix
+  # names the rule.
   policyAssertionFires =
     infix: modules:
     let
@@ -201,6 +214,34 @@ let
       ];
       msg = "slug type check accepts invalid names (strMatching regression)";
     }
+    {
+      ok = evox2.services.dns-blocker.blocklistTrialUrls == [ ];
+      msg = "blocklistTrialUrls must default to [] (M15 ships inert — shadow evaluation is opt-in)";
+    }
+    {
+      ok = evox2.services.dns-blocker.blocklistCacheDir == "/var/lib/dnsblockd/blocklist-cache";
+      msg = "blocklistCacheDir must default to the StateDirectory-backed persistent path (PrivateTmp eats upstream's /tmp default)";
+    }
+    {
+      ok = trialExec != exec;
+      msg = "blocklistTrialUrls no longer feeds the rendered config (phantom-option regression)";
+    }
+    {
+      ok = policyAssertionFires "http(s) URLs with a host" [
+        {
+          services.dns-blocker.blocklistTrialUrls = [ "file:///etc/hosts" ];
+        }
+      ];
+      msg = "trial-URL shape assertion does not fire (file:// must be rejected)";
+    }
+    {
+      ok = policyAssertionFires "absolute path" [
+        {
+          services.dns-blocker.blocklistCacheDir = "relative/cache-dir";
+        }
+      ];
+      msg = "cache-dir absolute-path assertion does not fire";
+    }
   ];
 
   failed = builtins.filter (c: !c.ok) checks;
@@ -216,15 +257,17 @@ else
     {
       # Interpolating exec pulls the config derivation (and its blocklist
       # dependencies) into this build — the greps run on the REAL file.
-      inherit exec policiesExec;
+      inherit exec policiesExec trialExec;
     }
     ''
       CFG="''${exec#* -c }"
       PCFG="''${policiesExec#* -c }"
+      TCFG="''${trialExec#* -c }"
       fail() { echo "dns-blocker render content failure: $1"; exit 1; }
       [ -f "$CFG" ] || fail "rendered config not realized: $CFG"
       [ -f "$PCFG" ] || fail "variant config not realized: $PCFG"
-      ${pkgs.python3}/bin/python3 - "$CFG" "$PCFG" <<'PYEOF' || fail "see python assert above"
+      [ -f "$TCFG" ] || fail "trial variant config not realized: $TCFG"
+      ${pkgs.python3}/bin/python3 - "$CFG" "$PCFG" "$TCFG" <<'PYEOF' || fail "see python assert above"
       import json, sys
       cfg = json.load(open(sys.argv[1]))
       assert cfg["allowlist_path"] == "/var/lib/dnsblockd/allowlist", "allowlist_path must point at the persistent state file"
@@ -235,6 +278,8 @@ else
       assert any("systemnix-extra" in p for p in cfg["dns_blocklists"]), "systemnix-extra blocklist missing from dns_blocklists"
       assert cfg["tracking_mode"] == "METADATA_ONLY", "tracking_mode must stay METADATA_ONLY until the owner flips it"
       assert "policies" not in cfg, "host config must omit the policies key while the list is empty (optionalAttrs guard)"
+      assert cfg["dns_blocklist_cache_dir"] == "/var/lib/dnsblockd/blocklist-cache", "persistent URL-blocklist cache dir missing from host config (PrivateTmp outage guard)"
+      assert "dns_blocklist_trial_urls" not in cfg, "host config must omit trial URLs while the list is empty (optionalAttrs guard)"
       pol = json.load(open(sys.argv[2]))
       p0 = pol["policies"][0]
       assert p0["name"] == "tv-night", "policy name not rendered verbatim"
@@ -243,7 +288,10 @@ else
       assert p0["allow"] == [], "per-policy empty allow must stay [] (upstream treats as no entries)"
       assert p0["block"] == ["doubleclick.net", "ads.example.com"], "policy block list not rendered verbatim"
       assert p0["schedule"] == "22:00-07:00", "policy schedule not rendered verbatim"
+      trial = json.load(open(sys.argv[3]))
+      assert trial["dns_blocklist_trial_urls"] == ["https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt"], "trial URLs not rendered verbatim"
+      assert trial["dns_blocklist_cache_dir"] == "/var/lib/dnsblockd/blocklist-cache", "trial variant lost the persistent cache dir"
       print("content OK")
       PYEOF
-      echo "dns-blocker render: allowlist persistence, rate limit, log sampling, extraDomains belt, tracking gate, policies option OK" > $out
+      echo "dns-blocker render: allowlist persistence, rate limit, log sampling, extraDomains belt, tracking gate, policies, trial blocklists OK" > $out
     ''

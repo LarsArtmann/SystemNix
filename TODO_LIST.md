@@ -165,6 +165,7 @@
 - [ ] **Pool-usage Gatus thresholds** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **service-health-check report-don't-fail semantics — the checker sits FAILED whenever it lists failed units (chronic-FAILED unit = the exact class the SuccessExitStatus fix killed for the scrubs); read the module wiring first (is OnFailure the paging path?), propose `|| true` + metric-owned paging, owner-OK before changing alerting** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-09-30_00-31_task-000001a0ef17061c3d535dd0d65b00000000.md §d4/§e4)
 - [ ] **Gap-check /nix (Samsung) usage monitoring and add metric+Gatus check if missing — 7d GC retention makes store growth the cost side of the tradeoff and min-free 5GB is the only backstop** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-09-29_23-13_nix-gc-retention-3d-to-7d-boot-menu-depth.md §f8)
+- [ ] **Gatus→Discord delivery E2E audit + chronic-red (>24h) escalation — "mr-sync Dashboard" sat red 15 days with an active alert configured and nothing acted** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-10-01_03-00_mrsync-never-enabled-outage-status.md §d2/§f4)
 
 ### ai-stack
 
@@ -225,6 +226,7 @@
 - [ ] **dnsblockd: enable `csrf_enabled`** (SEQUENCED after the v0.9.3 bump row — T300 fixed the csrf path) → [docs/todo/services.md](docs/todo/services.md) (Source: same audit) — **DEPLOYED LIVE: csrf_enabled:true in prod config; 403-vs-401 smoke probe shipped**
 - [ ] **dnsblockd: devices + users wrapper options + LAN inventory** (`ip neigh` proposal; needs the bump for T309) → [docs/todo/services.md](docs/todo/services.md) (Source: same audit — F121/F123/F125 named attribution, per-device pause) — **DEPLOYED LIVE: 4 devices + user Lars in prod config; pixel6 DECOMMISSIONED by owner 2026-10-01 (entry removed, rides next deploy), lg-tv identity confirm open**
 - [ ] **Editorial pass: merge the 21 "Agent Notes (migrated from AGENTS.md 2026-10-01)" appendices into their runbooks' narrative structure** — content is verbatim-migrated and correct, but reads as an appended block; fold into the runbooks' sections (tables/warnings) per file → [docs/todo/services.md](docs/todo/services.md)
+- [ ] **VM test for the mr-sync module (never-started ghost, fixed 2026-10-01)** → [docs/todo/services.md](docs/todo/services.md) — none exists; assert the unit starts via wantedBy, `/` renders as lars under ProtectHome=read-only with a fixture `~/.mrconfig` + config.json, PLACEHOLDER token degrades to the FetchError banner instead of crashing (Source: docs/status/2026-10-01_03-00_mrsync-never-enabled-outage-status.md §c2/§f5)
 
 ### upstream
 
@@ -453,6 +455,7 @@
 - [ ] **Markdown heading-ANCHOR checker (extend check-doc-links.sh)** — it resolves link targets but ignores `#anchors`; the restructure hand-audited ~30 anchor slugs (one real mismatch found+fixed: `gitleakstoml` vs `gitleaks-toml`). GitHub slug rules: lowercase, punctuation dropped, spaces→dashes → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Backfill runbooks for services still lacking one** — AGENTS.md routing now claims docs/services/ is the per-service knowledge home, but immich, twenty, manifest, pocket-id, oauth2-proxy, crush-daily, dozzle, openseo, taskchampion, atticd, signoz (main) have no runbook (routing claim softened meanwhile) → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **CHANGELOG entry for the AGENTS.md restructure** (605KB → 34KB split into docs/agents/ + runbooks, commits `d89029cf`+`8e6409dd`) → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] **Eval-time "never-enabled unit" audit — an integration entry with checks/`monitored = true` whose unit has no enablement path (wantedBy) fails `nix flake check`; shipped health-dashboard (2026-09-22) AND mr-sync (2026-10-01) as never-started ghosts with green evals; deploy-restart-audit is the shape precedent** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-01_03-00_mrsync-never-enabled-outage-status.md §d1/§f3)
 
 ### pixel6
 

@@ -122,8 +122,11 @@ searchable log database. Upstream: github:GilbN/geometrikks.
 2. **MaxMind GeoLite2** (free): sign up at maxmind.com/en/geolite2/signup,
    then paste `MAXMINDDB_USER_ID` + `MAXMINDDB_LICENSE_KEY` into the sops file
    (`sops platforms/nixos/secrets/geometrikks.yaml` with the same one-liner)
-   and `sudo systemctl restart geometrikks`. Until then the app runs
-   geo-DEGRADED (UI banner, no map pins) — ingestion + log search work.
+   and `sudo systemctl restart geometrikks`. Until then ingestion is DEAD —
+   the journal shows `Cannot start ingestion: failed to create GeoIP2 reader
+   ... GeoLite2-City.mmdb: FileNotFoundError` (live 2026-10-01) — so the map
+   AND the log DB stay empty; the earlier "geo-degraded, ingestion + log
+   search still work" claim was falsified live.
 3. **CARTO basemap key** (optional, free tier at carto.com/basemaps/apikey):
    paste `MAP_CARTO_API_KEY`. Keyless tiles work today but CARTO may cut them
    off at any time.

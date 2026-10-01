@@ -20,7 +20,7 @@
 #
 # Scans systemd.services.<name>.environment, .serviceConfig.Environment, and
 # virtualisation.oci-containers.containers.<name>.environment. Env vars baked
-# into generated docker-compose files (e.g. manifest) are NOT visible here —
+# into generated docker-compose files (e.g. twenty) are NOT visible here —
 # register those services in `expectations` only when they become scannable.
 _: {
   flake.nixosModules.otel-endpoint-audit =

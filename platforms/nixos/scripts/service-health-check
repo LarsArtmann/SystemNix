@@ -49,7 +49,6 @@ check_service prometheus-node-exporter
 check_service cadvisor
 check_service taskchampion-sync-server
 check_service hermes
-check_service manifest
 check_service twenty
 check_service openseo
 check_service docker

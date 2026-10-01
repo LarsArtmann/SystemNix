@@ -96,10 +96,6 @@ let
       type = lib.types.port;
       default = 8081;
     };
-    services.manifest.port = lib.mkOption {
-      type = lib.types.port;
-      default = 8083;
-    };
     services.openseo.port = lib.mkOption {
       type = lib.types.port;
       default = 8084;
@@ -148,7 +144,6 @@ let
     "inboxclean"
     "llama-rag"
     "mail-relay"
-    "manifest"
     "monitor365"
     "monitor365-server"
     "overview"

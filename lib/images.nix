@@ -8,18 +8,6 @@ let
     if digest != null then "${image}:${tag}@${digest}" else "${image}:${tag}";
 in
 {
-  manifest = rec {
-    image = "manifestdotbuild/manifest";
-    tag = "6.18.0";
-    digest = "sha256:6e4fe296afb530e494f01553d889fafa1ed9b0333f4ff1eedb1e6684f065a717";
-    ref = mkRef { inherit image tag digest; };
-  };
-  manifest-postgres = rec {
-    image = "postgres";
-    tag = "16-alpine";
-    digest = "sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685";
-    ref = mkRef { inherit image tag digest; };
-  };
   twenty = rec {
     image = "twentycrm/twenty";
     tag = "v2.32.0";

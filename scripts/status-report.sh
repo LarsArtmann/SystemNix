@@ -74,7 +74,7 @@ if [[ "$(uname)" == "Linux" ]]; then
   echo "| Service | Status |" >>"$REPORT_FILE"
   echo "|---------|--------|" >>"$REPORT_FILE"
 
-  for svc in caddy forgejo immich signoz gatus hermes manifest openseo pocket-id oauth2-proxy dnsblockd niri; do
+  for svc in caddy forgejo immich signoz gatus hermes openseo pocket-id oauth2-proxy dnsblockd niri; do
     # is-active PRINTS its verdict (inactive/failed/…) AND exits nonzero for
     # non-active — `|| echo unknown` double-emits "inactive\nunknown" into
     # $status (multi-line table cell). Assign-then-fallback keeps its output.

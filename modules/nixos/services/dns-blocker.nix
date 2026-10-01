@@ -313,6 +313,15 @@ _: {
             dns_rate_limit_burst = cfg.dnsRateLimitBurst;
             dns_rate_limit_max_clients = cfg.dnsRateLimitMaxClients;
           }
+          // lib.optionalAttrs (cfg.blocklistTrialUrls != [ ]) {
+            dns_blocklist_trial_urls = cfg.blocklistTrialUrls;
+          }
+          // lib.optionalAttrs (cfg.blocklistCacheDir != "") {
+            # Persistent URL-blocklist cache. Defaulted (not optional) —
+            # see the blocklistCacheDir option: an unset dir silently means
+            # os.TempDir(), which PrivateTmp wipes on every restart.
+            dns_blocklist_cache_dir = cfg.blocklistCacheDir;
+          }
           // lib.optionalAttrs cfg.dnsTLSEnabled {
             dns_tls_enabled = true;
             dns_tls_port = cfg.dnsTLSPort;
@@ -476,6 +485,37 @@ _: {
           type = types.listOf types.str;
           default = [ ];
           description = "Additional domains to block (not in blocklists)";
+        };
+
+        blocklistTrialUrls = mkOption {
+          type = types.listOf types.str;
+          default = [ ];
+          example = [ "https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt" ];
+          description = ''
+            TRIAL blocklist sources (upstream T197 — shadow evaluation
+            only): fetched into a separate blocklist that feeds ONLY
+            request_tracks.would_block with source prefix "trial:", never
+            enforcing blocks. Observe verdicts on the dashboard before
+            promoting a list into extraDomains or a fetched blocklist.
+
+            Entries must be http(s) URLs with a host (the fetcher speaks
+            nothing else); mirrors upstream's dns_blocklist_urls
+            validation at eval time.
+          '';
+        };
+
+        blocklistCacheDir = mkOption {
+          type = types.str;
+          default = "/var/lib/dnsblockd/blocklist-cache";
+          description = ''
+            Persistent home for the URL-blocklist last-known-good cache
+            (dns_blocklist_cache_dir). The default lives under the unit's
+            StateDirectory: a reboot combined with an upstream outage
+            then still boots the CACHED blocklist instead of an empty one
+            (PrivateTmp eats /tmp, so upstream's default cache location
+            never survives a restart). Set to "" to restore upstream's
+            os.TempDir() behavior. Must be absolute when set.
+          '';
         };
 
         categories = mkOption {
@@ -945,6 +985,18 @@ _: {
               ) (lib.splitString "," p.schedule)
             ) cfg.policies;
             message = "services.dns-blocker.policies schedule must be comma-separated zero-padded HH:MM-HH:MM windows (e.g. \"22:00-07:00\").";
+          }
+          {
+            # Upstream errInvalidBlocklistURL applies to dns_blocklist_urls;
+            # trial URLs ride the SAME fetcher — reject unloadable entries
+            # at eval instead of at first reload.
+            assertion = builtins.all (u: builtins.match "https?://[^/]+.*" u != null) cfg.blocklistTrialUrls;
+            message = "services.dns-blocker.blocklistTrialUrls entries must be http(s) URLs with a host (the upstream fetcher speaks nothing else).";
+          }
+          {
+            # Upstream errInvalidBlocklistCacheDir.
+            assertion = cfg.blocklistCacheDir == "" || lib.hasPrefix "/" cfg.blocklistCacheDir;
+            message = "services.dns-blocker.blocklistCacheDir must be an absolute path (a relative path would silently land outside persisted storage).";
           }
         ];
 

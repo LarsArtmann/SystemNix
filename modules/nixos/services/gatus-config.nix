@@ -483,8 +483,8 @@ _: {
                   ];
                   alerts = discordAlert "SigNoz upstream trace-gap budget exceeded — a new silent-noop service entered the registry. Instrument it upstream and flip its wiring, or consciously raise services.signoz-coverage.maxUpstreamGaps (the ratchet goes DOWN as gaps close)";
                 })
-                # Manifest + Twenty CRM checks moved to their owning modules
-                # (services.integration.{manifest,twenty}.checks).
+                # Twenty CRM check moved to its owning module
+                # (services.integration.twenty.checks).
                 {
                   name = "TaskChampion";
                   group = "Productivity";

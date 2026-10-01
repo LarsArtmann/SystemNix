@@ -286,8 +286,6 @@ else
   record_fail "DiscordSync (localhost:8085)"
 fi
 
-check_local "Manifest" "2099" "/api/v1/health" "200" 2>/dev/null || true
-
 check_local "Crush Daily" "8081" "/api/health" "200" 2>/dev/null || true
 
 check_local "Overview" "8083" "/" "200" "<html" 2>/dev/null || true
@@ -1417,7 +1415,6 @@ else
     "search.$DOMAIN|-"
     "daily.$DOMAIN|-"
     "tasks.$DOMAIN|-"
-    "manifest.$DOMAIN|-"
   )
 fi
 # Health Hub is forward-auth gated (Layer 2) but its binary has no / route -

@@ -300,7 +300,7 @@ cmd_metadata_check() {
   [ "${I_ACCEPT_SERVICE_OUTAGE:-0}" = "1" ] || die "this phase stops docker + unmounts /data. Re-run with I_ACCEPT_SERVICE_OUTAGE=1"
   io_window_clear || die "IO window not clear"
 
-  echo "== stopping docker (twenty/manifest/dozzle go down) =="
+  echo "== stopping docker (twenty/dozzle go down) =="
   systemctl stop docker.service docker.socket || fail "docker stop"
   sleep 5
   echo "== quiesce check =="

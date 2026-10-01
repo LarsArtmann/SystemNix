@@ -8,7 +8,6 @@
     "signoz"
     "tasks"
     "crm"
-    "manifest"
     "status"
     "seo"
     "daily"
