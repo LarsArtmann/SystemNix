@@ -147,3 +147,30 @@
 ---
 
 *Session artifacts:* feature in `deab8469`; test mock in `3e85cf1a`; my session's files verified clean in the tree at `d5ec0c8a`.
+
+---
+
+## Follow-up session (2026-10-01, same day) — §b/§c closed
+
+The incomplete work above is now done. Commits are daemon-swept (tree clean at `edab9ea5`).
+
+| § | Item | Outcome |
+|---|------|---------|
+| b1 | Tests | `tests/test-paperless.nix` gained three real assertions: provider `SCOPE` carries `"groups"` (greps the bridge env file), and `PAPERLESS_SOCIAL_ACCOUNT_SYNC_{GROUPS_CLAIM,SUPERUSER_GROUP,STAFF_GROUP}` render into the unit env. Plus an **eval drift guard** in `paperless.nix` (`config.assertions`): the mapped `oidcAdminGroup` must be declared in `provision.userGroups` — proven non-vacuous by an `extendModules` run that force-emptied the group and saw the assertion fire `false`. |
+| b1 | **Pre-existing test bugs (found running it)** | (1) `jq` was never in the VM PATH → steps 10-13 had been unreachable since `851fb1d6`; added `environment.systemPackages = [ pkgs.jq ]`. (2) Step 13 asserted `Persistent=yes`, but Nix renders `Persistent=true` on disk; corrected. `nix build .#checks.x86_64-linux.paperless` is now **GREEN**. (Sibling bug remains in `tests/test-restic-app-dumps.nix:127`, same `Persistent=yes` text — not touched, flagged.) |
+| c1 | `docs/services/paperless.md` | New "Roles → superuser/staff via Pocket ID groups" section: settings table, single-source note, FAIL-CLOSED semantics, transient-manual-flag warning, and the first-login gap. |
+| c2 | `docs/agents/sso-dns.md` | New fleet fact (sibling to `email_verified`): Pocket ID emits `groups` **only** with the `groups` scope. |
+| c3 | `CHANGELOG.md` | Unreleased/Added entry (behavioural note + deploy-required). |
+| c4 | Harvest | §f.5-7 → one `[ready]` queue row + library row (mock Pocket ID API test); §f.10-14 → `[blocked:deploy]` row; §f.27-28 + §f.19/22 → `[decision]` rows. TODO_LIST.md + docs/todo/services.md edited together. |
+| — | First-login gap | Verified from source (`allauth/.../flows/signup.py` `process_signup` → `complete_signup` fires only `user_signed_up`; `models.py:355` fires `social_account_updated` only on the EXISTING-account lookup). Confirmed real; documented, not fixed (fixing needs custom Django glue the design deliberately avoids). |
+| c5 | Deploy + live verify | **Owner-run** (`nix run .#deploy` needs sudo; agent sandbox forbids). Full system build verified instead. |
+
+### Harvest log (§f → surfaces)
+
+- §f.1-4 → DONE (VM assertions).
+- §f.5-7 → queue row + `docs/todo/services.md` `[ready]`.
+- §f.8-9 → DONE (VM test run green; flake check green).
+- §f.10-14 → `docs/todo/services.md` `[blocked:deploy]`.
+- §f.15-18 → DONE (docs + CHANGELOG + this harvest).
+- §f.19-28 → `docs/todo/services.md` `[decision]` rows.
+- §f.29-50 → either done, folded into the rows above, or deliberately out of scope (e.g. §f.42 backup scope is unchanged by group data, §f.46 eval-parity is covered by the drift assertion's `options ?`-guard).
