@@ -148,7 +148,7 @@ SIGNALERTS="modules/nixos/services/_signoz-alerts.nix"
 
 # ── green controls: pristine copy, every touched check must build ──
 if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]]; then
-  for check in signoz-query-lint gatus-pattern-lint module-shape-lint binary-coverage-lint dead-guard-lint gitleaks-coverage-selftest; do
+  for check in signoz-query-lint gatus-pattern-lint module-shape-lint binary-coverage-lint dead-guard-lint gitleaks-coverage-selftest scrub-exit-contract; do
     dir=$(make_copy "pristine-$check")
     out=$(build_check "$dir" "$check") || status=$? || true
     status=${status:-0}
@@ -204,6 +204,14 @@ run_case gatus literal-backslash-n gatus-pattern-lint fail 'literal backslash-n'
 # trap must catch. A single file backslash would be the CORRECT form.
 run_case gatus lowercase-method gatus-pattern-lint fail 'lowercase HTTP method' \
   'sed:modules/nixos/services/gatus-config.nix:s|# Smart alerting: append a PapDashboard ingest alert .type .custom.. to|evilMethod.method = "post";|'
+
+# ── scrub-exit-contract: the freeze-7 fix must resist drift ──
+# Eval-guard class (offsite-borg-positive-render shape): the guard fires as
+# a throwIfNot eval error, so the FAIL marker IS the guard's own message.
+run_case scrub exit-widened scrub-exit-contract fail 'SuccessExitStatus != \[ 1 \]' \
+  'sed:platforms/nixos/system/snapshots.nix:s|SuccessExitStatus = \[ 1 \];|SuccessExitStatus = [ 1 3 ];|'
+run_case scrub catchup-restored scrub-exit-contract fail 'Persistent must be false' \
+  'sed:platforms/nixos/system/snapshots.nix:s|Persistent = lib.mkForce false;|Persistent = lib.mkForce true;|'
 
 # ── module-shape-lint: wrapper renamed away from the filename ──
 # (A bare module ALSO breaks flake eval with a worse message — renaming the

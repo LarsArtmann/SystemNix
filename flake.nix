@@ -2428,6 +2428,41 @@
                   ''
                 );
 
+              # Freeze-7 scrub contract: exit 1 (canceled/guard-stopped) is the
+              # ONLY tolerated non-zero scrub exit; exit 3 (csum errors —
+              # journal 2026-09-21 @data csum=129533) must stay a hard failure
+              # as the corruption tripwire. Widening SuccessExitStatus would
+              # silently defuse it (the @data repair policy's Oct-5 deadline
+              # rides on this signal). Also pins the freeze-7 timer half:
+              # Persistent=false (no boot catch-up stampede) + the serial
+              # After= chain (root -> data -> pool, asDropin so the template's
+              # ExecStart survives). Negative-proven by
+              # scripts/negative-test-lints.sh (scrub group).
+              scrub-exit-contract =
+                let
+                  cfg = inputs.self.nixosConfigurations.evo-x2.config;
+                  scrubSvc = cfg.systemd.services."btrfs-scrub@".serviceConfig;
+                  dataSvc = cfg.systemd.services."btrfs-scrub@data";
+                  poolSvc = cfg.systemd.services."btrfs-scrub@mnt\\x2dpool";
+                  contractGuards =
+                    lib.throwIfNot (scrubSvc.SuccessExitStatus == [ 1 ])
+                      "scrub-exit-contract: SuccessExitStatus != [ 1 ] — exit 3 (csum corruption) must stay a hard failure"
+                    (lib.throwIfNot (cfg.systemd.timers."btrfs-scrub@".timerConfig.Persistent == false)
+                      "scrub-exit-contract: scrub timer Persistent must be false (boot catch-up stampede)"
+                    (lib.throwIfNot (dataSvc.after == [ "btrfs-scrub@-.service" ])
+                      "scrub-exit-contract: /data scrub must serialize after root"
+                    (lib.throwIfNot (poolSvc.after == [ "btrfs-scrub@data.service" ])
+                      "scrub-exit-contract: pool scrub must serialize after /data"
+                    (lib.throwIfNot (dataSvc.overrideStrategy == "asDropin" && poolSvc.overrideStrategy == "asDropin")
+                      "scrub-exit-contract: instance overrides must be asDropin (a full unit file shadows the template)"
+                    true))));
+                in
+                builtins.deepSeq contractGuards (
+                  pkgs.runCommand "scrub-exit-contract-check" { } ''
+                    echo "scrub contract OK (exit-1-only tolerance, no catch-up, serialized)" > $out
+                  ''
+                );
+
               # Auto-discovered modules under modules/nixos/{services,desktop}/
               # are flake-parts wrappers: filename -> flake.nixosModules.<filename>.
               # A bare NixOS module evaluates its let-bindings in the WRONG
