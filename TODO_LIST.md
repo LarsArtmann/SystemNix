@@ -177,6 +177,8 @@
 
 ### services
 
+- [ ] [blocked:user] **inboxclean Gmail re-consent (`inboxclean auth`) — sync DOWN on revoked token; also check OAuth app Testing status (7-day recurrence class)** → [docs/todo/services.md](docs/todo/services.md)
+- [ ] [ready] **Root-cause `nix-build-cleanup.service` failure (cause unknown, journal read truncated)** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **InboxClean: should ONE dead Gmail account page (per-account `auth_expired` Gatus check)?** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Commit or stash CV TODO_LIST.md to unstick tq task `000001a0` (17 refusals)** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **Paperless scheduled-task failure monitoring + encrypted-tag consistency alert** → [docs/todo/services.md](docs/todo/services.md)
@@ -295,6 +297,8 @@
 
 ### pipeline
 
+- [ ] [ready] **Pre-deploy eval-failure leg must surface the root cause (print eval stderr tail; the 2026-10-01 recursion needed a manual nix eval)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] [ready] **Deploy-time quiescence gate: refuse/warn when HEAD moved since the session-verified rev or a foreign commit is fresh (2026-10-01 deploy raced a parallel session's breaking commit)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **BuildFlow triage follow-ups (5m-budget run killed 3 steps; ruff/shellcheck/deadnix fixed 2026-10-01)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) — 6 harvested items: lychee >=15m rerun, full toplevel build to clear the nix-build kill, 9 dep-less tools into devShells.default, nix-checker ignore surface (107 findings = 100 expected/intentional), budget policy (owner decision), gomod-freshness kill diagnosis (Source: docs/status/2026-10-01_14-30_buildflow-failure-triage-full-status.md §f.1-6)
 - [ ] **Fixture smoke test: assert `das-link-recovery-check.sh` reaches its verdict (silent-death class: the findmnt/readlink set-e death survived since 2026-08-22 because nothing runs the script until an outage)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) — PATH-stub pattern, assert the decision tree prints; second silent-death bug in this script's history (scan_boot quoting was the first) (Source: docs/status/2026-10-01_10-01_task-000001a0f58abc5e42faabaac5ab00000000.html §e.3)
 - [ ] **Sweep scripts/ for the multi-row findmnt → readlink `set -e` silent-death pattern (findmnt without the guard's type filter lists the autofs holder row once an automount has triggered)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) — fixed instance: das-link-recovery-check.sh [5] (Source: docs/status/2026-10-01_10-01_task-000001a0f58abc5e42faabaac5ab00000000.html §f.3)
@@ -524,6 +528,9 @@
 
 ### desktop
 
+- [ ] **Deploy evo-x2 carrying Spotify (`38e146ab`) once the tree is quiescent — eval green 20:13 post-recursion-fix; switch also carries the parallel session's renamer/fastflowlm/cv work** → [docs/todo/desktop.md](docs/todo/desktop.md)
+- [ ] [blocked:deploy] **Post-deploy Spotify window-rule + session-manager verification (dead-until-now rule `^spotify$` vs the real app-id)** → [docs/todo/desktop.md](docs/todo/desktop.md)
+- [ ] [ready] **Dead-app-reference audit: niri window-rule app-ids + session-manager list ⊆ installed packages (Spotify sat dead in two files)** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] **crush-debug: add Gatus-failing-checks as a picker source** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [ready] **Document DMS config surfaces in `docs/agents/desktop.md`** (settings.json vs clsettings.json vs plugin_settings.json + cfg.package wiring; desktop docs moved out of AGENTS.md in the 2026-10-01 restructure) → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [ready] **Eval guard: declared DMS settings keys must exist in the pinned source's SettingsSpec.js** → [docs/todo/desktop.md](docs/todo/desktop.md)
