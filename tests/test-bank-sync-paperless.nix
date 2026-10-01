@@ -93,10 +93,12 @@
       };
       # nixpkgs assigns paperless.manage (read-only) only when the service
       # is enabled — enabling it here mirrors evo-x2 and makes the mint's
-      # manage reference resolvable. The mint script only interpolates its
-      # store path.
+      # manage reference resolvable. The REAL package is required: the
+      # option's apply overrides tesseract5 on it (a runCommand stub has no
+      # .override). Pure eval — this test never builds the system closure,
+      # so the package is evaluated, not realized.
       services.paperless.enable = true;
-      services.paperless.package = stubPackage;
+      services.paperless.package = pkgs.paperless-ngx;
     }
   ];
 
@@ -212,7 +214,7 @@
     {
       name = "archival-with-paperless-disabled-gates-units-and-fails-assertion";
       pass =
-        builtins.any (a: !a.assertion) archivalPaperlessOff.config.assertions
+        builtins.any (a: !a.assertion) archivalPaperlessOff.assertions
         && !(archivalPaperlessOff.systemd.services ? "bank-sync-paperless")
         && !(archivalPaperlessOff.systemd.services ? "bank-sync-paperless-token")
         && !(archivalPaperlessOff.systemd.timers ? "bank-sync-paperless");
