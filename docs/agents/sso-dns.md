@@ -17,14 +17,16 @@ Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<do
 | Layer                                   | How                                                                                                                                                                       | Services                                                                                           |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | **Layer 0 — No auth (LAN-only)**        | Read-only public data, no auth needed. Caddy uses plain `reverse_proxy` or `file_server`. No SSO integration                                                              | **systemd-graph**, **systemd-timer-monitor**                                                       |
-| **Layer 1 — Native OIDC**               | App integrates directly with Pocket ID (in-app login button). Provisioned as OIDC clients in `pocket-id.nix`; Caddy uses **plain `reverse_proxy`** (NOT `protectedVHost`) | Forgejo, Immich, **Gatus**, **Browser History**, **Paperless**, **CV**                             |
+| **Layer 1 — Native OIDC**               | App integrates directly with Pocket ID (in-app login button). Provisioned as OIDC clients in `pocket-id.nix`; Caddy uses **plain `reverse_proxy`** (NOT `protectedVHost`) | Forgejo, **Gatus**, **Browser History**, **Paperless**, **CV**                                    |
 | **Layer 2 — oauth2-proxy forward-auth** | App has no native auth; Caddy `protectedVHost` gates external access behind a Pocket ID login. LAN access is open                                                         | Homepage, Twenty, Taskchampion, OpenSEO†, Crush Daily, Dozzle, Monitor365, **SearXNG**, **SigNoz** |
 
 > **SigNoz** runs in impersonation mode (every request = root admin, no internal auth). OIDC is Enterprise-only ($4k/mo). Uses standard Layer 2 `protectedVHost`: LAN bypass (direct proxy), external forward-auth via oauth2-proxy. The previous unconditional forward-auth (no LAN bypass) caused 500 errors for ALL users when oauth2-proxy hiccuped — `protectedVHost` fixes this by keeping LAN traffic off the oauth2-proxy path entirely.
 
 > **†** OpenSEO uses a **hand-rolled Caddy vHost** (not `protectedVHost`) to exempt `/api/gsc/oauth/callback` from forward-auth — see gotcha table. All other paths follow standard Layer 2 behavior (forward-auth for external clients, LAN bypass).
 
-**Adding Layer 1 (native OIDC) to a service** — follow the immich/gatus pattern:
+> **Immich** is a deliberate HYBRID (runbook: `docs/services/immich.md`): native OIDC in-app (password login disabled, auto-launch) but routed via the registry's **Layer 2 protected** vHost. External browsers pass forward-auth first, then the auto-launch OIDC flow reuses the live `auth.<domain>` session; LAN + the mobile app (`app.immich:///oauth-callback` — a native OIDC flow that cannot carry forward-auth cookies) bypass forward-auth entirely. It is the ONE sanctioned exception to the "native OIDC ⇒ plain reverse_proxy" rule.
+
+**Adding Layer 1 (native OIDC) to a service** — follow the gatus/paperless pattern:
 
 1. Register the OIDC client in `pocket-id.nix` `provision.oidcClients` (clientId, callbackURLs)
 2. The provisioner writes the client secret to `/var/lib/pocket-id/client-secrets/<clientId>` (owned `pocket-id:pocket-id`, 640)
