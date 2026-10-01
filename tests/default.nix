@@ -58,6 +58,7 @@ in
   dns-blocker-render = import ./test-dns-blocker-render.nix { inherit pkgs inputs system; };
   catalog = import ./test-catalog.nix { inherit pkgs inputs system; };
   systemd-shape-audit = import ./test-systemd-shape-audit.nix { inherit pkgs inputs system; };
+  stray-unit-audit = import ./test-stray-unit-audit.nix { inherit pkgs inputs system; };
   port-registry-audit = import ./test-port-registry-audit.nix { inherit pkgs inputs system; };
   harden-lifecycle = import ./test-harden-lifecycle.nix { inherit pkgs inputs; };
   mkfilesystem =
