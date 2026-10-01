@@ -306,7 +306,14 @@ in
         zramPct = 0.20;
         psiAvg10 = "0.10";
         ioPsiAvg60 = "45.00";
-        diskTicks = 13000;
+        # 26000 (vs zone6real's 13000): a +13000 ms tick delta over the
+        # sub-second gap between consecutive guard runs = corroborated disk
+        # activity (>>20% busy). SAME ticks would make the corroboration a
+        # coin flip on elapsed being 0 (corroborated, fail-safe) vs >=1 s
+        # (0% busy, NO trip) — 2026-10-01: exactly this flaked 9b on one
+        # build and passed on the next. Later scenario-9 runs bump ticks
+        # again for the same reason (zone6mida/b/c below).
+        diskTicks = 26000;
       };
     in
     ''
@@ -773,13 +780,15 @@ in
       machine.succeed(
           "echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip"
       )
-      out = run_guard("zone6mid")
+      machine.succeed("${writeFakes "zone6mida" (zone6mid // { diskTicks = 39000; })}")
+      out = run_guard("zone6mida")
       assert "catch-up slot active" in out and "keeping btrbk-root.service running" in out, (
           "a trip action inside the protection window must SKIP the backup "
           "unit in the churn stop"
       )
       machine.succeed("systemctl is-active --quiet btrbk-root.service")
-      out = run_guard("zone6mid")
+      machine.succeed("${writeFakes "zone6midb" (zone6mid // { diskTicks = 52000; })}")
+      out = run_guard("zone6midb")
       assert "cooldown active" not in out, (
           "the cooldown steady-state line must dedup — it already logged "
           "less than verboseLogIntervalSeconds (600) ago"
@@ -800,7 +809,10 @@ in
       machine.succeed(
           "echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip"
       )
-      out = run_guard("zone6mid", extra_env="CGROUP_IO_SRC=/tmp/cgt")
+      machine.succeed(
+          "${writeFakes "zone6midc" (zone6mid // { diskTicks = 65000; })}"
+      )
+      out = run_guard("zone6midc", extra_env="CGROUP_IO_SRC=/tmp/cgt")
       assert "top io since last trip" in out and "offender.service" in out, (
           "the trip action line must name its top I/O movers (2026-09-28: "
           "1300+ trips said 'I/O stalled' without naming a culprit)"
