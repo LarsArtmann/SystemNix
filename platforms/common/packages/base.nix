@@ -221,6 +221,7 @@ let
       # built-in auto mode never downloads a toolchain for floor-satisfied
       # repos.
       go_1_27
+      golines # Go line-shortener (moved from stray ~/go/bin 2026-10-01, fifty-todos #45; nixpkgs 0.16.0 verified)
       gopls
       golangci-lint
       golangci-lint-langserver

@@ -146,6 +146,12 @@ in
     ];
 
     binfmt.emulatedSystems = [ "aarch64-linux" ];
+    # F-flag STATIC qemu emulators: drops /run/binfmt from nix
+    # extra-sandbox-paths entirely, ending the whole missing-dir build-sandbox
+    # class (the binfmt-sandbox-dir oneshot below becomes belt, not
+    # load-bearing). EDIT-ONLY 2026-10-01 (fifty-todos #47) — takes effect at
+    # the next owner deploy (qemu_static builds land in the store then).
+    binfmt.preferStaticEmulators = true;
 
     # Wipe /tmp on every boot — prevents stale nix build caches from accumulating
     # (2011 go-build dirs / 59 GB observed in a single boot cycle)

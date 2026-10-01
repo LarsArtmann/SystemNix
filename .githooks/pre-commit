@@ -366,14 +366,20 @@ fi
 # skipped them (2026-09-28 finding — the commit-msg leg shipped unlinted until
 # its authoring session noticed; CI's shellcheck job covers .githooks/* at
 # error level since then, this leg is the staged-path counterpart).
+# Per-leg lint logs go through mktemp (+ EXIT trap), never fixed /tmp paths:
+# a fixed path collides across concurrent hook runs (multi-agent box) and
+# leaves a stale log a later run could cat as its own (the textfile-tmp doctrine).
+LINT_LOG=$(mktemp)
+trap 'rm -f "$LINT_LOG"' EXIT
+
 STAGED_SH=$(git diff --cached --name-only --diff-filter=ACM '*.sh' '.githooks/*')
 if [ -n "$STAGED_SH" ]; then
     log_info "Running shellcheck on staged shell scripts + .githooks/*..."
-    if git diff --cached --name-only --diff-filter=ACM -z '*.sh' '.githooks/*' | xargs -0 nix shell nixpkgs#shellcheck --command shellcheck --severity=warning > /tmp/shellcheck.log 2>&1; then
+    if git diff --cached --name-only --diff-filter=ACM -z '*.sh' '.githooks/*' | xargs -0 nix shell nixpkgs#shellcheck --command shellcheck --severity=warning > "$LINT_LOG" 2>&1; then
         log_success "Shellcheck passed! No issues found."
     else
         log_error "Shellcheck found issues!"
-        cat /tmp/shellcheck.log
+        cat "$LINT_LOG"
         all_passed=false
     fi
 else
@@ -384,11 +390,11 @@ fi
 STAGED_PY=$(git diff --cached --name-only --diff-filter=ACM '*.py')
 if [ -n "$STAGED_PY" ]; then
     log_info "Running ruff on staged Python scripts..."
-    if git diff --cached --name-only --diff-filter=ACM -z '*.py' | xargs -0 nix shell nixpkgs#ruff --command ruff check > /tmp/ruff.log 2>&1; then
+    if git diff --cached --name-only --diff-filter=ACM -z '*.py' | xargs -0 nix shell nixpkgs#ruff --command ruff check > "$LINT_LOG" 2>&1; then
         log_success "Ruff passed! No issues found."
     else
         log_error "Ruff found issues!"
-        cat /tmp/ruff.log
+        cat "$LINT_LOG"
         all_passed=false
     fi
 else

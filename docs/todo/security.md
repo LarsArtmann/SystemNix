@@ -15,7 +15,7 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 
 ## Backlog (untriaged harvest)
 
-- [ ] [ready] **Create `docs/security/rotations.md` rotation ledger** — per key: created/rotated dates, sops file + key name, residue map, verification command; backfill from the 2026-09-11 key-rotation triage verdict table; document the sops ciphertext-diff pipeline (a value's ENC blob changes iff its plaintext changes — experimentally verified 2026-09-11) as the sanctioned no-sudo rotation verifier. **Source:** 07-21 §e.6/§f.14/24-25
+- [x] [ready] ~~**Create `docs/security/rotations.md` rotation ledger**~~ **DONE 2026-10-01 (fifty-todos):** ledger created (5 open owner-gated rows, 9 completed-rotation rows incl. the ciphertext-diff verifier as a principle; metadata-only by construction). **Source:** 07-21 §e.6/§f.14/24-25
 - [ ] [blocked:user] **ROOT: close the key-rotation orbit** — sudo decrypt cross-check `pocket_id_smtp_password` == mail-relay key; relay E2E test send per `docs/services/mail-relay.md`; one Pocket ID email (invite/forgot-password). **Source:** 07-21 §c.4-5/§g.1
 - [ ] [ready] **ROOT: settle the `/run/secrets/sops-nix-age-key` ghost** — absent at runtime while `quickshell.nix` + the DMS `systemnix-sops` plugin reference it; fix the render or retire the references. **Source:** 07-21 §d.5/§f.20
 - [ ] [blocked:user] **Scrub the full plaintext leaked-key values from AGENTS' purge-runbook block once Context7 + Gemini keys are dead** — values become `<REDACTED>` placeholders, the command stays; stale plaintext in a tracked file violates the repo's own no-secret-values rule the moment rotation kills the keys. **Source:** 07-21 §d.4/§f.10
