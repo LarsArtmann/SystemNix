@@ -65,6 +65,36 @@ session's deploy can restart the stopped units back onto the un-mounted QLC
 dir; a mount-over then shadow-splits the running process. Do not run waves
 while other sessions deploy.
 
+## Pre-cutover check: `*Directory=` implicit RequiresMountsFor (2026-10-01)
+
+systemd.exec "Automatic Dependencies": ANY of `WorkingDirectory=`,
+`StateDirectory=`, `RuntimeDirectory=`, `LogsDirectory=`, `CacheDirectory=`,
+`ConfigurationDirectory=` (plus RootDirectory/RootImage) gains an implicit
+`Requires=` + `After=` on every mount unit needed to reach the path —
+equivalent to `RequiresMountsFor=`. A service whose dataDir carries such a
+setting therefore HARD-REQUIRES the hot-db mount: a detached Samsung fails
+the unit instead of degrading it (VM-test-proven on caddy's
+`LogsDirectory=` — `tests/test-caddy-logs-hot.nix`, degraded node; fix
+pattern there = `serviceConfig.<X>Directory = mkForce []` + tmpfiles
+existence + `+`-prefixed ExecStartPre chown). Rendered-config sweep of the
+five wave services (evo-x2, 2026-10-01):
+
+| Service          | Settings carrying the trap                                        | Consequence at cutover                                   |
+| ---------------- | ----------------------------------------------------------------- | -------------------------------------------------------- |
+| gatus            | `StateDirectory=gatus` + `RuntimeDirectory=gatus`                 | hard-requires `var-lib-gatus.mount`                      |
+| dnsblockd        | `StateDirectory=dnsblockd` + `WorkingDirectory=/var/lib/dnsblockd` | hard-requires `var-lib-dnsblockd.mount`                  |
+| pocket-id        | `WorkingDirectory=/var/lib/pocket-id`                             | hard-requires `var-lib-pocket-id.mount`                  |
+| browser-history  | `StateDirectory=browser-history` + `WorkingDirectory=/var/lib/browser-history` | hard-requires `var-lib-browser-history.mount` |
+| discordsync      | none (`ReadWritePaths` is path-based, not mount-required)         | degrades gracefully like caddy                            |
+
+Decision framing per wave (do NOT silently inherit either way): for
+DATABASE-backed services the implicit hard-require is arguably CORRECT
+fail-closed semantics — a DB must never keep writing into the QLC shadow
+dir through the mount (silent split-brain), so let the unit fail on a
+detached Samsung (monitoring already owns the alert). For anything that
+must survive Samsung absence, apply the caddy treatment. The wave's entry
+comment in `services.hot-db.entries` should record which stance was chosen.
+
 ## Entry snippets (unit lists verified in-tree)
 
 Wave 1 — gatus:

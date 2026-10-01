@@ -869,8 +869,13 @@ in
           # @home-hermes (hermes state subvolume, 2026-09-15): its snapshots
           # live in the same SNAP_DIR but never match the '@.*' glob above.
           # Check it only while the host actually mounts the subvolume, so
-          # pre-migration generations stay green.
-          if findmnt -n /home/hermes 2>/dev/null | grep -q '@home-hermes'; then
+          # pre-migration generations stay green. Probe the mount UNIT,
+          # never the mountpoint: harden{}'s ProtectHome=true hides /home
+          # from this unit's namespace, so a findmnt probe here always
+          # fails and the gate silently skips (the phantom-green class the
+          # sibling btrfs-verify-pool-backups leg hit live 2026-09-17; this
+          # leg carried the blind probe until the 2026-10-01 fleet sweep).
+          if systemctl is-active --quiet home-hermes.mount; then
             H_LATEST=$(find "$SNAP_DIR" -maxdepth 1 -mindepth 1 -type d -name '@home-hermes.*' | sort | tail -1) || true || true
             if [ -z "$H_LATEST" ]; then
               echo "WARNING: No @home-hermes snapshots found while the subvolume is mounted"
