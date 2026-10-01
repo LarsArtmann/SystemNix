@@ -208,6 +208,18 @@ in
       query = "(node_amdgpu_mem_info_gtt_used_bytes / node_amdgpu_mem_info_gtt_total_bytes) * 100";
       target = 85;
     };
+    # DiscordSync (github mirror of monitoring/alerts.yml DiscordSyncImmichLookupFailureSpike,
+    # ADR-062 cross-archive comparison): the /lookup/immich proxy failing >5x/min for 5m.
+    # Source alert is strictly >5/min; mkRule's ops are above_or_equal|below, so this
+    # fires at >=5/min (one-call-wider, same operator response). outcome label dropped —
+    # the description carries the triage (upstream_error vs auth_error vs client_error).
+    "signoz/rules/discordsync-immich-lookup-failure-spike.json".source = mkRule {
+      name = "DiscordSync Immich Lookup Failure Spike (>=5/min for 5m)";
+      description = "POST /lookup/immich is failing frequently — upstream_error: IMMICH_URL unreachable/5xx; auth_error: IMMICH_API_KEY rejected (check asset.read+asset.upload scoping); client_error: malformed hash input. The /lookup page degrades to an 'Immich unavailable' badge; Discord lookups keep working";
+      query = ''sum(rate(discordsync_immich_lookup_total{outcome=~"upstream_error|auth_error|client_error"}[5m])) * 60'';
+      target = 5;
+      severity = "warning";
+    };
     "signoz/rules/niri-down.json".source = mkRule {
       name = "Niri Compositor Down";
       description = "Graphical session is active but niri is not running — desktop died mid-session";
