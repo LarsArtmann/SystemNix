@@ -76,7 +76,9 @@
     };
   };
 
-  stubPackage = pkgs.runCommand "bank-sync-stub" {} ''
+  stubPackage = pkgs.runCommand "bank-sync-stub" {
+    meta.mainProgram = "bank-sync";
+  } ''
     mkdir -p $out/bin
     touch $out/bin/bank-sync
   '';
