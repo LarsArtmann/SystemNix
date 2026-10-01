@@ -39,7 +39,7 @@ def log(msg):
 
 
 def run(cmd, log_err=None):
-    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
+    proc = subprocess.run(cmd, capture_output=True, stdin=subprocess.DEVNULL)
     if proc.returncode != 0 and log_err:
         with open(log_err, "ab") as fh:
             fh.write(proc.stderr)
@@ -83,7 +83,6 @@ def build_plan(rows, flac_root):
         stem = fname[:-4]
         m = re.match(r"^(\d+)_(\d{13})\.wav$", fname)
         prefix = m.group(1) if m else ""
-        epoch_ms = m.group(2) if m else ""
         contact = parse_contact(fname, r["contact_or_number"])
         date_utc = r["date_time_utc"]
         year = date_utc[:4] or "unknown"

@@ -15,3 +15,8 @@ ignore = [
     "DTZ007", # naive datetime strptime (date-only parsing, no timezone needed)
     "PLW1510", # subprocess.run without check (return code handled manually)
 ]
+
+[lint.per-file-ignores]
+# These scripts embed single-line HTML/CSS/JS templates in Python strings.
+"scripts/pixel6-contacts.py" = ["E501"]
+"scripts/ucr-web-archive.py" = ["E501"]

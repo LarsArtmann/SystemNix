@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # scripts/lib/precommit-eval-cache.sh — memo for eval-expensive pre-commit legs.
 # Sourced by .githooks/pre-commit and scripts/fmt-cached.sh; selftested by
 # scripts/test-precommit-eval-cache.sh (flake check:

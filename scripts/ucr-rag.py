@@ -121,9 +121,9 @@ def parse_srt(text):
                     start = g[0] * 3600 + g[1] * 60 + g[2] + g[3] / 1000
                     end = g[4] * 3600 + g[5] * 60 + g[6] + g[7] / 1000
                     body = " ".join(
-                        l.strip()
-                        for l in block[1:]
-                        if l.strip() and "-->" not in l and not re.fullmatch(r"\d+", l.strip())
+                        line.strip()
+                        for line in block[1:]
+                        if line.strip() and "-->" not in line and not re.fullmatch(r"\d+", line.strip())
                     )
                     if body:
                         cues.append((start, end, body))

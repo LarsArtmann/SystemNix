@@ -42,7 +42,8 @@ mkdir -p "$BIN"
 
 export MIGRATE_TOPLEVEL="$SCRATCH/hot"
 export MIGRATE_PSI_FILE="$SCRATCH/psi-ok"
-export MIGRATE_ROOT_UID=$(id -u)
+MIGRATE_ROOT_UID=$(id -u)
+export MIGRATE_ROOT_UID
 export FAKE_SUBVOLS="$SCRATCH/subvols.list"
 export SYSTEMCTL_LOG="$SCRATCH/systemctl.log"
 export MOUNTPOINT_LIST="$SCRATCH/mountpoints.list"
