@@ -2215,9 +2215,9 @@
                   ''
                     set -euo pipefail
                     FIX=$(mktemp -d)
-                    mkdir -p "$FIX/bin" "$FIX/fixtures" "$FIX/out"
+                    mkdir -p "$FIX/bin" "$FIX/fixtures" "$FIX/out" "$FIX/textfile" "$FIX/state-root"
 
-                    cat > "$FIX/bin/btrfs" <<STUBEOF
+                    cat > "$FIX/bin/btrfs" <<'STUBEOF'
                     #!${pkgs.bash}/bin/bash
                     set -uo pipefail
                     cmd="''${1:-}"; sub="''${2:-}"; mnt="''${3:-}"
@@ -2268,20 +2268,20 @@
                     expect() { # <desc> <egrep-pattern> [invert]
                       local desc="$1" pat="$2" inv="''${3:-}"
                       if [ "$inv" = "invert" ]; then
-                        if grep -qE "$pat" "$FIX/out/btrfs.prom" 2>/dev/null; then
+                        if grep -qE "$pat" "$FIX/textfile/btrfs.prom" 2>/dev/null; then
                           echo "FAIL (unexpected match): $desc"; FAILS=$((FAILS+1))
                         else
                           echo "PASS: $desc"
                         fi
-                      elif grep -qE "$pat" "$FIX/out/btrfs.prom" 2>/dev/null; then
+                      elif grep -qE "$pat" "$FIX/textfile/btrfs.prom" 2>/dev/null; then
                         echo "PASS: $desc"
                       else
                         echo "FAIL (missing match): $desc"; FAILS=$((FAILS+1))
                       fi
                     }
                     run_collector() {
-                      "$FIX/out/run.sh" >/dev/null 2>&1 || true
-                      grep -E 'btrfs_scrub_(stale|last_completed|staleness_parse_errors)' "$FIX/out/btrfs.prom" || true
+                      "$FIX/out/run.sh" >"$FIX/out/run.log" 2>"$FIX/out/run.err" || true
+                      grep -E 'btrfs_scrub_(stale|last_completed|staleness_parse_errors)' "$FIX/textfile/btrfs.prom" || true
                     }
 
                     echo "=== Run A: root=finished-old(11d) data=finished-fresh(2d) ==="
@@ -2326,7 +2326,9 @@
 
                     if [ "$FAILS" -gt 0 ]; then
                       echo "FAIL: $FAILS assertion(s) failed; last btrfs.prom:"
-                      cat "$FIX/out/btrfs.prom" || true
+                      cat "$FIX/textfile/btrfs.prom" || true
+                      echo "--- collector stderr (last run):"
+                      cat "$FIX/out/run.err" || true
                       exit 1
                     fi
                     echo "OK: all scrub-staleness fixture assertions passed"
