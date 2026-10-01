@@ -22,7 +22,11 @@
 # this mount (deploying the mount first would shadow the live logs into a
 # split brain). The QLC shadow dir under the mountpoint stays as rollback
 # insurance.
-{lib, ...}: let
+{
+  lib,
+  pkgs,
+  ...
+}: let
   inherit (import ../../../lib/default.nix lib) mkFilesystem;
 in {
   config = {
@@ -61,13 +65,19 @@ in {
       # tmpfiles-setup runs in early sysinit BEFORE the hot-tier mount lands
       # (guest journal: setup finished 3.8s, mount 7.8s), so it only ever fixes
       # the QLC shadow dir — the mounted subvol root stays root-owned and caddy
-      # died with EACCES on first config load. preStart re-enforces ownership
-      # on whichever fs is live at start (root-owned, ordered after the mount);
-      # the tmpfiles rule keeps guaranteeing the shadow dir's EXISTENCE on
-      # degraded boots; writability comes from ReadWritePaths (production
-      # override / non-sandboxed default).
+      # died with EACCES on first config load. The re-ownership must run with
+      # FULL PRIVILEGES at service start: preStart / plain ExecStartPre execute
+      # as the SERVICE USER (caddy) and fail chown with EPERM — the "+" prefix
+      # (systemd.exec) runs this one command as root, sandbox dropped. The
+      # tmpfiles rule keeps guaranteeing the shadow dir's EXISTENCE on degraded
+      # boots; writability comes from ReadWritePaths (production override /
+      # non-sandboxed default).
       serviceConfig.LogsDirectory = lib.mkForce [];
-      preStart = "chown caddy:caddy /var/log/caddy";
+      serviceConfig.ExecStartPre = [
+        "+${pkgs.writeShellScript "caddy-logdir-own" ''
+          chown caddy:caddy /var/log/caddy
+        ''}"
+      ];
     };
   };
 }

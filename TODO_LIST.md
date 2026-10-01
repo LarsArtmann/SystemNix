@@ -168,6 +168,7 @@
 - [ ] **service-health-check report-don't-fail semantics — the checker sits FAILED whenever it lists failed units (chronic-FAILED unit = the exact class the SuccessExitStatus fix killed for the scrubs); read the module wiring first (is OnFailure the paging path?), propose `|| true` + metric-owned paging, owner-OK before changing alerting** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-09-30_00-31_task-000001a0ef17061c3d535dd0d65b00000000.md §d4/§e4)
 - [ ] **Gap-check /nix (Samsung) usage monitoring and add metric+Gatus check if missing — 7d GC retention makes store growth the cost side of the tradeoff and min-free 5GB is the only backstop** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-09-29_23-13_nix-gc-retention-3d-to-7d-boot-menu-depth.md §f8)
 - [ ] **Gatus→Discord delivery E2E audit + chronic-red (>24h) escalation — "mr-sync Dashboard" sat red 15 days with an active alert configured and nothing acted** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-10-01_03-00_mrsync-never-enabled-outage-status.md §d2/§f4)
+- [ ] **monitor365 metrics :9191 connection refused (down at the 07:27 deploy + 10:20 probe — Gatus pats flag absent meanwhile)** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-10-01_10-25_deploy-813-bank-sync-live-ci-red-smoke-healed.html §f.5)
 
 ### ai-stack
 
@@ -472,6 +473,10 @@
 - [ ] **CHANGELOG entry for the AGENTS.md restructure** (605KB → 34KB split into docs/agents/ + runbooks, commits `d89029cf`+`8e6409dd`) → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Eval-time "never-enabled unit" audit — an integration entry with checks/`monitored = true` whose unit has no enablement path (wantedBy) fails `nix flake check`; shipped health-dashboard (2026-09-22) AND mr-sync (2026-10-01) as never-started ghosts with green evals; deploy-restart-audit is the shape precedent** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-01_03-00_mrsync-never-enabled-outage-status.md §d1/§f3)
 - [ ] **Codify the re-fire evidence-appendix convention in CONTRIBUTING.md: a verification re-fire of an already-run Task-Queue-ID appends a dated appendix to the EXISTING docs/status task report instead of creating a new file (collision-check `ls docs/status/ | grep task-<ID>` first); practiced live on the reap-sweep re-fire** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-01_07-16_task-000001a0f5c63f45a63113d484e100000000.md §f)
+- [ ] **Build the pre/post-deploy-check apps in flake check/CI — the smoke's shellcheck runs only at deploy time (SC2004 sat dark 17h)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-01_10-25_deploy-813-bank-sync-live-ci-red-smoke-healed.html §f.3)
+- [ ] **Probe accuracy: smoke-baseline EXPECTED-SKIP for ConditionPathExists-gated units + pre-deploy §10 UP-classify for 401 metric endpoints (cv :8098)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-01_10-25_deploy-813-bank-sync-live-ci-red-smoke-healed.html §f.4)
+- [ ] **Pin CI's statix to the flake lock (nixpkgs-weekly float shipped W03/W04/W08 overnight and reded CI without a repo change)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-01_10-25_deploy-813-bank-sync-live-ci-red-smoke-healed.html §f.8)
+- [ ] **Eval-warning cleanup batch (zsh initExtra, stdenv.is* ×4, 21 catalog subdomains, buildEnv collisions)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-01_10-25_deploy-813-bank-sync-live-ci-red-smoke-healed.html §f.21)
 
 ### pixel6
 
