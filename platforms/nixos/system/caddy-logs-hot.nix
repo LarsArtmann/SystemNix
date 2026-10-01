@@ -48,6 +48,18 @@ in {
     systemd.services.caddy = {
       after = ["var-log-caddy.mount"];
       wants = ["var-log-caddy.mount"];
+      # TRAP (VM-test-proven 2026-10-01): nixpkgs caddy sets LogsDirectory=caddy
+      # for its default logDir — and systemd turns ANY *Directory= path into an
+      # implicit RequiresMountsFor (systemd.exec "Automatic Dependencies":
+      # Requires= + After= on every mount unit needed to access the path). That
+      # hard dependency DEFEATS the wants-not-requires degradation above: with
+      # the Samsung detached, caddy died with result 'dependency' instead of
+      # degrading to the QLC shadow dir. Dropping LogsDirectory hands dir
+      # creation + ownership to the tmpfiles rule (which runs before caddy in
+      # every order — tmpfiles-setup is Before=sysinit, caddy is after the
+      # mount); writability is covered by ReadWritePaths (production override)
+      # and the non-sandboxed unit default.
+      serviceConfig.LogsDirectory = lib.mkForce [];
     };
   };
 }
