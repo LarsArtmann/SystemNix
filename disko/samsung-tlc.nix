@@ -73,6 +73,20 @@
                   "nodiscard"
                 ];
               };
+              # Live subvols created OUT-OF-BAND (migrate scripts, not disko)
+              # — declared here so a reinstall/rescue re-provision recreates
+              # them; mount wiring + +C (nodatacow, inexpressible in disko)
+              # live in the owning module/script pairs:
+              #   /journal     — platforms/nixos/system/journal-hot.nix
+              #                  + scripts/migrate-journal-hot.sh (2026-09-14)
+              #   /caddy-logs  — platforms/nixos/system/caddy-logs-hot.nix
+              #                  + scripts/migrate-caddy-logs-hot.sh (2026-10-01)
+              "/journal" = {
+                mountpoint = null;
+              };
+              "/caddy-logs" = {
+                mountpoint = null;
+              };
             };
           };
         };
