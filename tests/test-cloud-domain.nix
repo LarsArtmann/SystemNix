@@ -23,7 +23,7 @@ let
   home = "home.lan";
   cloud = "larsartmann.cloud";
   subdomains = (import ../platforms/common/dns-local.nix).localSubdomains;
-  ports = (import ../lib/ports.nix).ports;
+  inherit ((import ../lib/ports.nix)) ports;
 
   evox2 = inputs.self.nixosConfigurations.evo-x2.config;
   rpi3 = inputs.self.nixosConfigurations.rpi3-dns.config;

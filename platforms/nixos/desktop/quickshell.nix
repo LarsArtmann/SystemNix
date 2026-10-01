@@ -49,7 +49,7 @@ in
     programs.dank-material-shell = {
       enable = true;
       systemd.enable = true;
-      package = cfg.package;
+      inherit (cfg) package;
 
       # Clipboard daemon config (clsettings.json → core clipboard.Config).
       # maxHistory is NOT a settings.json key — it lives here. Missing keys keep

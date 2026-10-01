@@ -554,7 +554,7 @@
                   TimeoutStartSec = "10min";
                 }
               ];
-              onFailure = onFailure;
+              inherit onFailure;
             };
           };
 

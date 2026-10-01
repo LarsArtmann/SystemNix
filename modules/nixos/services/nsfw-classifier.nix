@@ -123,7 +123,7 @@
                 ProtectHome = false;
                 ProtectSystem = "strict";
               })
-              (ioTier.background)
+              ioTier.background
             ];
           };
 
