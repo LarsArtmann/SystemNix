@@ -10,7 +10,7 @@ Runbook for the Jan AI desktop app on evo-x2. Set up live 2026-09-06.
 | Data folder | `/data/ai/models/jan` (via `data_folder` in `~/.config/Jan/settings.json` AND `~/.local/share/Jan/settings.json`; the default path `~/.local/share/Jan/data` is a symlink to it — managed by `activation.jan-data-link` in `platforms/nixos/users/home.nix`) |
 | Models      | `<data>/llamacpp/models/` — 92G GGUF tree (gemma-4 heretic variants, qwen3.6, BAGEL, …) MOVED from `/data/llamacpp-models` on 2026-09-06; a compat symlink keeps the old path working                                                                        |
 | Engine      | Jan-managed llama.cpp downloads at `<data>/llamacpp/backends/<bNNNN>/<backend>/` — currently `b9967` + `linux-vulkan-common_cpus-x64`; auto-update is ON (Jan prunes superseded backend dirs itself)                                                         |
-| GPU         | Vulkan → RADV STRIX_HALO; ~82GB device memory reported (GTT-first memory model — see AGENTS GPU section). Verify with `grep -c libggml-vulkan /proc/$(pgrep -x llama-server                                                                                  |
+| GPU         | Vulkan → RADV STRIX_HALO; ~82GB device memory reported (GTT-first memory model — see AGENTS GPU section). Verify: `grep -c libggml-vulkan /proc/<pid>/maps` ≥ 1 (full command in Verification below)                                                     |
 | Serving     | Router mode: one `llama-server --models-preset <data>/llamacpp/router.preset.ini --models-max 2 --no-ui` on an EPHEMERAL loopback port (57385, 56883, …) — Jan owns the port; nothing else may bind or monitor it                                            |
 
 ## Critical doctrine

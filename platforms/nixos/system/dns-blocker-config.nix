@@ -87,13 +87,6 @@ in
           ips = [ "192.168.1.1" ];
         }
         {
-          # owner-confirm: randomized WiFi MAC (2e:fd:a5:…) — Pixel 6 by
-          # elimination; phone DHCP address may drift, re-inventory on change.
-          id = "pixel6";
-          name = "Pixel 6";
-          ips = [ "192.168.1.29" ];
-        }
-        {
           # owner-confirm: Realtek NIC (00:e0:4c:…) — LG TV SSCR2 by
           # elimination; wired TVs keep stable MACs but confirm anyway.
           id = "lg-tv";
@@ -106,7 +99,6 @@ in
           name = "Lars";
           devices = [
             "evo-x2"
-            "pixel6"
           ];
         }
       ];

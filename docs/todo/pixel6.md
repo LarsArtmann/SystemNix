@@ -1,6 +1,6 @@
 # TODO — Pixel6
 
-Pixel 6 recovery → media-archive project (extraction DONE; remaining: XML pulls, FLAC/Navidrome, whisper transcription, Immich ingestion, call analytics).
+Pixel 6 recovery → media-archive project (extraction DONE; remaining: XML pulls, FLAC/Navidrome, whisper transcription, Immich ingestion, call analytics). **DEVICE DECOMMISSIONED 2026-10-01 (owner: phone broke, no longer used)** — all remaining items work on the EXTRACTED archive and stay valid; nothing new can ever be pulled from the device.
 
 Domain LIBRARY of the [TODO system](../../TODO_LIST.md) — every open item for this domain, any lifecycle. The dispatch QUEUE of agent-actionable (`[ready]`) items is `TODO_LIST.md`; the tq pool harvests only the queue.
 

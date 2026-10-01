@@ -382,6 +382,13 @@ _: {
           // lib.optionalAttrs (cfg.users != [ ]) {
             users = cfg.users;
           }
+          // lib.optionalAttrs (cfg.policies != [ ]) {
+            # Per-device/group policies (see the policies option). Rendered
+            # verbatim — the submodule defaults already drop empty lists
+            # only via cfg-level omission; per-policy empty arcs stay []
+            # which upstream treats as "no entries".
+            policies = cfg.policies;
+          }
         )
       );
     in
@@ -770,6 +777,61 @@ _: {
           default = [ ];
           description = "Static users: persons who own declared devices. Renders an owner chip next to devices in Top Clients / Device Activity.";
         };
+
+        policies = mkOption {
+          type = types.listOf (
+            types.submodule {
+              options = {
+                name = mkOption {
+                  # Upstream policy.ValidSlug: 1-64 chars of a-z, 0-9, dashes.
+                  type = types.strMatching "[a-z0-9-]{1,64}";
+                  description = "Unique policy name (lowercase slug).";
+                };
+                groups = mkOption {
+                  type = types.listOf types.str;
+                  default = [ ];
+                  description = "Device group tags the policy targets (each must be the group value of at least one declared device).";
+                };
+                devices = mkOption {
+                  type = types.listOf types.str;
+                  default = [ ];
+                  description = "Device ids the policy targets (must resolve to declared devices).";
+                };
+                allow = mkOption {
+                  type = types.listOf types.str;
+                  default = [ ];
+                  description = "Domains always allowed for the targets while the schedule is active (max 512, upstream cap).";
+                };
+                block = mkOption {
+                  type = types.listOf types.str;
+                  default = [ ];
+                  description = "Domains always blocked for the targets while the schedule is active (max 512, upstream cap).";
+                };
+                schedule = mkOption {
+                  type = types.str;
+                  default = "";
+                  description = ''
+                    Active window(s), comma-separated HH:MM-HH:MM
+                    ("22:00-07:00,12:00-13:00"; max 16 windows, zero-padded
+                    clock form). Empty = always active; outside the window
+                    the policy is inert.
+                  '';
+                };
+              };
+            }
+          );
+          default = [ ];
+          description = ''
+            Per-device/group policies: scheduled allow/block lists layered
+            over the global blocklists. Policies in config are enforced on
+            their targets within the schedule (no separate enabled flag
+            upstream — remove a policy to stop enforcing it). Tuning:
+            GET /api/policies/shadow (Bearer token, same as the dashboard
+            API) aggregates would-have-blocked verdicts on allowed queries
+            per source; GET /api/policies/shadow/impact aggregates verdict
+            deltas — measure coverage before/after tightening a policy.
+          '';
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -827,6 +889,62 @@ _: {
             assertion =
               lib.unique (lib.concatMap (u: u.devices) cfg.users) == lib.concatMap (u: u.devices) cfg.users;
             message = "services.dns-blocker.users assigns a device to more than one owner.";
+          }
+          {
+            # Upstream policy caps (policy.MaxPolicies 64, MaxDomainsPerArc
+            # 512, MaxWindows 16) — config load fails beyond them; fail at
+            # eval instead of at boot, where the sole DNS resolver would die.
+            assertion =
+              builtins.length cfg.policies <= 64
+              && builtins.all (
+                p:
+                builtins.length p.allow <= 512
+                && builtins.length p.block <= 512
+                && (p.schedule == "" || builtins.length (lib.splitString "," p.schedule) <= 16)
+              ) cfg.policies;
+            message = "services.dns-blocker.policies exceeds upstream caps (64 policies, 512 domains per allow/block list, 16 schedule windows).";
+          }
+          {
+            # Upstream ErrDuplicateName.
+            assertion = lib.unique (map (p: p.name) cfg.policies) == map (p: p.name) cfg.policies;
+            message = "services.dns-blocker.policies has duplicate names.";
+          }
+          {
+            # Upstream ErrNoTargets: a policy without devices or groups is
+            # dead config (never applies to anyone).
+            assertion = builtins.all (p: p.devices != [ ] || p.groups != [ ]) cfg.policies;
+            message = "services.dns-blocker.policies: every policy must target at least one device or group.";
+          }
+          {
+            assertion =
+              let
+                declared = map (d: d.id) cfg.devices;
+                dangling = lib.subtractLists declared (lib.concatMap (p: p.devices) cfg.policies);
+              in
+              dangling == [ ];
+            message = "services.dns-blocker.policies references undeclared devices.";
+          }
+          {
+            assertion =
+              let
+                knownGroups = lib.filter (g: g != null) (map (d: d.group) cfg.devices);
+                dangling = lib.subtractLists knownGroups (lib.concatMap (p: p.groups) cfg.policies);
+              in
+              dangling == [ ];
+            message = "services.dns-blocker.policies references device groups that no declared device carries.";
+          }
+          {
+            # Upstream ParseWindows accepts zero-padded HH:MM-HH:MM windows
+            # (Atoi also takes unpadded forms; the wrapper pins the canonical
+            # padded form so configs stay uniform).
+            assertion = builtins.all (
+              p:
+              p.schedule == ""
+              || builtins.all (
+                w: builtins.match "([01][0-9]|2[0-3]):[0-5][0-9]-([01][0-9]|2[0-3]):[0-5][0-9]" w != null
+              ) (lib.splitString "," p.schedule)
+            ) cfg.policies;
+            message = "services.dns-blocker.policies schedule must be comma-separated zero-padded HH:MM-HH:MM windows (e.g. \"22:00-07:00\").";
           }
         ];
 

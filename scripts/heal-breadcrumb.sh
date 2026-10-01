@@ -17,7 +17,9 @@ if [[ -z $msg ]]; then
 fi
 
 stamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-line="${stamp} user=$(id -un) uid=$(id -u) ${msg}"
+invoker="${SUDO_USER:-$(id -un)}"
+invoker_uid="$(id -u "$invoker")"
+line="${stamp} user=${invoker} uid=${invoker_uid} ${msg}"
 
 if command -v logger >/dev/null 2>&1; then
   logger -t systemnix-heal -p info -- "${line}" ||
