@@ -91,9 +91,12 @@
         package = stubPackage;
         dataDir = "/mnt/pool/services/bank-sync";
       };
-      # nixpkgs leaves paperless.manage undefined until the service is
-      # configured; the mint script only interpolates its store path.
-      services.paperless.manage = stubPackage;
+      # nixpkgs assigns paperless.manage (read-only) only when the service
+      # is enabled — enabling it here mirrors evo-x2 and makes the mint's
+      # manage reference resolvable. The mint script only interpolates its
+      # store path.
+      services.paperless.enable = true;
+      services.paperless.package = stubPackage;
     }
   ];
 
@@ -154,7 +157,10 @@
       name = "mint-token-lives-in-tmpfs-only-with-root-handover";
       pass =
         lib.hasInfix "/run/bank-sync-paperless/env" mint.serviceConfig.ExecStart
-        && lib.hasPrefix "+" mint.serviceConfig.ExecStartPost;
+        && lib.hasPrefix "+" mint.serviceConfig.ExecStartPost
+        # Without Preserve the runtime dir is deleted the moment the mint
+        # oneshot deactivates — before the archival unit reads its env file.
+        && mint.serviceConfig.RuntimeDirectoryPreserve == true;
     }
     {
       name = "archival-requires-and-orders-after-the-mint";
@@ -204,8 +210,12 @@
         && !(serviceOff.systemd.timers ? "bank-sync-paperless");
     }
     {
-      name = "archival-with-paperless-disabled-fails-coupling-assertion";
-      pass = builtins.any (a: !a.assertion) archivalPaperlessOff.config.assertions;
+      name = "archival-with-paperless-disabled-gates-units-and-fails-assertion";
+      pass =
+        builtins.any (a: !a.assertion) archivalPaperlessOff.config.assertions
+        && !(archivalPaperlessOff.systemd.services ? "bank-sync-paperless")
+        && !(archivalPaperlessOff.systemd.services ? "bank-sync-paperless-token")
+        && !(archivalPaperlessOff.systemd.timers ? "bank-sync-paperless");
     }
   ];
 

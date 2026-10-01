@@ -38,9 +38,12 @@ _: {
       ;
     envTemplate = config.sops.templates."bank-sync-env";
     # The paperless module is optional at eval scope (only evo-x2 + the
-    # eval test carry it); the mint unit and the coupling assertion are
-    # guarded on its presence.
+    # eval test carry it). nixpkgs assigns services.paperless.manage
+    # (readOnly) ONLY when the service is enabled, so everything touching
+    # it — the mint unit and the archival units it feeds — gates on the
+    # same condition; the assertion below keeps the misconfig loud.
     paperlessPresent = options ? services.paperless;
+    paperlessEnabled = paperlessPresent && config.services.paperless.enable;
     # Idempotent DRF token mint for the archival oneshot. drf_create_token
     # is get_or_create (rest_framework/authtoken management command): the
     # SAME admin token comes back on every run, so the unit is convergent
@@ -281,7 +284,7 @@ _: {
         # oneshot shares the daemon's DB and Wise key but NEVER restarts
         # the daemon: idempotent ledgers make concurrent runs safe, and a
         # failed archival run must not perturb continuous sync.
-        systemd.services.bank-sync-paperless-token = lib.mkIf (cfg.paperlessArchive.enable && paperlessPresent) {
+        systemd.services.bank-sync-paperless-token = lib.mkIf (cfg.paperlessArchive.enable && paperlessEnabled) {
           description = "Bank-Sync Paperless archival - API token mint";
           after = [
             "network-online.target"
@@ -306,6 +309,11 @@ _: {
               RuntimeDirectory = "bank-sync-paperless";
               # 0711: bank-sync must traverse to its 0400 env file.
               RuntimeDirectoryMode = "0711";
+              # Default (no) would DELETE the dir when this oneshot
+              # deactivates — before the archival unit ever reads its
+              # EnvironmentFile. tmpfs semantics are untouched: /run is
+              # RAM-backed and cleared at reboot.
+              RuntimeDirectoryPreserve = true;
               TimeoutStartSec = "3min";
               ExecStart = mintScript;
               ExecStartPost = "+${mintChownScript}";
@@ -315,7 +323,7 @@ _: {
           ];
         };
 
-        systemd.services.bank-sync-paperless = lib.mkIf config.services.bank-sync.paperlessArchive.enable {
+        systemd.services.bank-sync-paperless = lib.mkIf (config.services.bank-sync.paperlessArchive.enable && paperlessEnabled) {
           description = "Bank-Sync weekly Paperless-ngx archival";
           after = [
             "network-online.target"
@@ -360,7 +368,7 @@ _: {
           ];
         };
 
-        systemd.timers.bank-sync-paperless = lib.mkIf config.services.bank-sync.paperlessArchive.enable {
+        systemd.timers.bank-sync-paperless = lib.mkIf (config.services.bank-sync.paperlessArchive.enable && paperlessEnabled) {
           description = "Bank-Sync weekly Paperless-ngx archival timer";
           wantedBy = ["timers.target"];
           timerConfig = {
