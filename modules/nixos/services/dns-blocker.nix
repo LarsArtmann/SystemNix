@@ -387,7 +387,7 @@ _: {
             # verbatim — the submodule defaults already drop empty lists
             # only via cfg-level omission; per-policy empty arcs stay []
             # which upstream treats as "no entries".
-            policies = cfg.policies;
+            inherit (cfg) policies;
           }
         )
       );
