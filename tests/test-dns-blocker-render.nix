@@ -308,8 +308,10 @@ let
     {
       ok = policyAssertionFires "requires blockTLSPort > 0" [
         {
+          # evo-x2 pins blockTLSPort = 443 at plain priority
+          # (dns-blocker-config.nix) — override, don't concatenate.
           services.dns-blocker.tlsH3Enabled = true;
-          services.dns-blocker.blockTLSPort = 0;
+          services.dns-blocker.blockTLSPort = pkgs.lib.mkForce 0;
         }
       ];
       msg = "h3-without-tls-port assertion does not fire (upstream errH3RequiresTLSPort must be mirrored)";

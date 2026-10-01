@@ -356,7 +356,9 @@ in
     #     provisioner wiring or the DR freshness watch).
     machine.succeed("systemctl is-enabled paperless-db-backup.timer")
     machine.succeed("systemctl cat paperless-db-backup.timer | grep -q '02:00:00'")
-    machine.succeed("systemctl cat paperless-db-backup.timer | grep -q 'Persistent=yes'")
+    #     Nix renders the boolean as `Persistent=true` on disk (systemd
+    #     normalizes to `yes` only at runtime) — grep the on-disk form.
+    machine.succeed("systemctl cat paperless-db-backup.timer | grep -q 'Persistent=true'")
     machine.succeed("systemctl cat paperless-db-backup.service | grep -q 'User=postgres'")
     machine.succeed("systemctl cat paperless-db-backup.service | grep -q 'pg_dump'")
     machine.succeed("systemctl list-unit-files | grep -q '^paperless-db-backup-dir.service'")
