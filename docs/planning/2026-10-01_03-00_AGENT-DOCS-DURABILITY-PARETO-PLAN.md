@@ -70,7 +70,7 @@ Sorted by importance → impact → effort → customer (agent-session) value.
 | T4c   | Runbook: signoz (main service; link coverage/GCP sub-docs)                  | P1  | 60min  | same                                                                |
 | T4d   | Runbook: immich                                                             | P1  | 45min  | same                                                                |
 | T5a   | Runbook: twenty                                                             | P1  | 35min  | same                                                                |
-| T5b   | Runbook: manifest                                                           | P2  | 30min  | same                                                                |
+| T5b   | ~~Runbook: manifest~~ MOOT (service removed 2026-10-01)                     | —   | —      | —                                                                   |
 | T5c   | Runbook: taskchampion                                                       | P2  | 30min  | same                                                                |
 | T5d   | Runbook: dozzle                                                             | P2  | 25min  | same                                                                |
 | T5e   | Runbook: openseo (incl. the GSC exemption pointer)                          | P2  | 30min  | same                                                                |
@@ -118,7 +118,7 @@ before the micro-task counts done.
 | M4c.1–5 | signoz runbook: module + monitoring.md split → layout → alerts/provisioner pointers → cross-refs | T4c | 5×11 | doc-links green                            |
 | M4d.1–3 | immich runbook: same 3 steps                                                | T4d    | 3×12 | doc-links green                            |
 | M5a.1–3 | twenty runbook (mkDockerService pattern)                                    | T5a    | 3×10 | doc-links green                            |
-| M5b.1–3 | manifest runbook                                                            | T5b    | 3×9  | doc-links green                            |
+| M5b.1–3 | ~~manifest runbook~~ MOOT (service removed)                                 | —      | —    | —                                          |
 | M5c.1–3 | taskchampion runbook                                                        | T5c    | 3×9  | doc-links green                            |
 | M5d.1–2 | dozzle runbook (attach-flavor note)                                         | T5d    | 2×10 | doc-links green                            |
 | M5e.1–3 | openseo runbook (GSC exemption pointer)                                     | T5e    | 3×9  | doc-links green                            |
@@ -153,7 +153,7 @@ flowchart LR
     end
     subgraph P1["Phase 1 — Routing promise (80% band)"]
         B1[Runbooks: pocket-id, oauth2-proxy, signoz, immich]
-        B2[Runbooks: twenty, manifest, taskchampion, dozzle, openseo]
+        B2[Runbooks: twenty, taskchampion, dozzle, openseo]
         B3[Runbooks: crush-daily, atticd]
         T8[T8 shell lessons]
         T17[T17 queue premise check]

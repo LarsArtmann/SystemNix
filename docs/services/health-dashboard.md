@@ -40,7 +40,7 @@ the remote URL must serve go-health `Response` JSON — the hub always sends
 `Accept: application/json` and an undecodable body becomes a permanent
 `name/reachable` FAIL row, never a skip. CV (:8098) is the only go-health
 instance in the fleet: inboxclean/overview/browser-history/papdashboard/
-manifest/geometrikks serve custom health JSON, file-and-image-renamer/
+geometrikks serve custom health JSON, file-and-image-renamer/
 discordsync/tq serve HTML dashboards, llama-rag serves llama.cpp's
 `{"status":"ok"}`, and monitor365-server/crush-daily/pma-health answer 404
 or nothing on `/health`. A service joins the hub by adopting go-health (or

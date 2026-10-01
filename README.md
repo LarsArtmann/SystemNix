@@ -98,7 +98,6 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **Attic**           | 8200             | `cache.home.lan`     | Nix binary cache (pool-backed)                                                                                       |
 | **Voice Agents**    | 7880             | —                    | AI voice agents (Docker: LiveKit + Whisper ASR) — currently disabled                                                 |
 | **TaskChampion**    | 10222            | `tasks.home.lan`     | Taskwarrior sync server (cross-platform + Android)                                                                   |
-| **Manifest**        | 2099             | `manifest.home.lan`  | Smart LLM router for AI agents (cost optimization)                                                                   |
 | **Overview**        | 8083             | —                    | Local project dashboard (git repo discovery, stats, activity)                                                        |
 | **Dozzle**          | 8084             | `logs.home.lan`      | Real-time Docker container log viewer                                                                                |
 | **Mail Relay**      | 25               | —                    | Central outbound SMTP null client (loopback-only, relays via Resend; Paperless/Forgejo/system mail)                  |

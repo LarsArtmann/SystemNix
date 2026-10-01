@@ -113,6 +113,6 @@ WHERE timestamp > toUnixTimestamp(now() - INTERVAL 1 DAY) * 1000000000;
 - **papdashboard** — OTel metrics only, no trace SDK.
 - **hermes** — Python, opentelemetry-sdk not wired.
 
-Docker containers (twenty, manifest) and config-wired services are invisible
+Docker containers (twenty) and config-wired services are invisible
 to the reverse assertion (env not eval-visible) — extend `untrackedOtelUnits`
 never, register always.
