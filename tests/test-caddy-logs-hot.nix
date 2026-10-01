@@ -39,7 +39,7 @@
     services.caddy = {
       enable = true;
       globalConfig = "auto_https off";
-      virtualHosts."localhost" = {
+      virtualHosts."http://localhost" = {
         logFormat = "output file /var/log/caddy/access-localhost.log";
         extraConfig = "respond \"caddy-hot-ok\"";
       };
@@ -109,6 +109,7 @@ in {
     machine.start()
     machine.wait_for_unit("multi-user.target")
     machine.wait_for_unit("caddy.service")
+    machine.wait_for_open_port(80)
 
     # 1a: the mount came up and is the caddy-logs subvolume.
     fsroot = machine.succeed("findmnt -n -o FSROOT /var/log/caddy").strip()
@@ -119,7 +120,8 @@ in {
     machine.succeed("lsattr -d /var/log/caddy | grep -q -- --C")
 
     # 1c: marker roundtrip — caddy accepted the mount and serves through it.
-    machine.succeed("curl -sf http://localhost/ | grep -q caddy-hot-ok")
+    out = machine.succeed("curl -sf http://localhost/")
+    assert "caddy-hot-ok" in out, f"unexpected body: {out!r}"
 
     # 1d: THE anti-split proof — the ACTIVE access-log file physically lives
     # on the mount. A lost boot race (caddy opening the QLC shadow dir first)
@@ -141,7 +143,9 @@ in {
     degraded.start()
     degraded.wait_for_unit("multi-user.target")
     degraded.wait_for_unit("caddy.service")
-    degraded.succeed("curl -sf http://localhost/ | grep -q caddy-hot-ok")
+    degraded.wait_for_open_port(80)
+    out = degraded.succeed("curl -sf http://localhost/")
+    assert "caddy-hot-ok" in out, f"unexpected body: {out!r}"
     degraded.succeed("test -f /var/log/caddy/access-localhost.log")
     degraded.fail("mountpoint -q /var/log/caddy")
   '';
