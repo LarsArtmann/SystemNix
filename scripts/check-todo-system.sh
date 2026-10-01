@@ -29,12 +29,13 @@ set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TODO="$REPO_ROOT/TODO_LIST.md"
+SCAN_TARGET="$TODO"
 fail=0
 
 check() {
   local desc="$1" pattern="$2"
   local hits
-  hits=$(grep -nE "$pattern" "$TODO" 2>/dev/null || true)
+  hits=$(grep -nE "$pattern" "$SCAN_TARGET" 2>/dev/null || true)
   if [ -n "$hits" ]; then
     echo "FAIL: $desc"
     echo "$hits" | sed 's/^/  /'
@@ -47,7 +48,7 @@ selftest() {
   tmp=$(mktemp)
   cp "$TODO" "$tmp"
   printf -- '- [ ] **Source:** → [docs/todo/storage.md](docs/todo/storage.md)\n' >>"$tmp"
-  printf -- '\n- [ ] **Selftest drift row: never-lands-anywhere** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: 1970-01-01_00-00_selftest-never-exists.md §z9)\n' >>"$tmp"
+  printf -- '- [ ] **Broken link** → [docs/todo/nonexistent-lib.md](docs/todo/nonexistent-lib.md)\n' >>"$tmp"
   local out rc
   # out is a deliberate stdout+stderr swallow
   # shellcheck disable=SC2034
@@ -61,7 +62,7 @@ selftest() {
   tmp=$(mktemp)
   cp "$TODO" "$tmp"
   printf -- '- [ ] **Selftest drift row: never-lands-anywhere** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: 1970-01-01_00-00_selftest-never-exists.md §z9)\n' >>"$tmp"
-  out=$(TODO_FILE="$tmp" CHECK_TODO_PAIRING= "$0" --scan-file "$tmp" 2>&1) && rc=0 || rc=$?
+  out=$(TODO_FILE="$tmp" env -u CHECK_TODO_PAIRING "$0" --scan-file "$tmp" 2>&1) && rc=0 || rc=$?
   if [ "$rc" -ne 0 ] || ! printf '%s\n' "$out" | grep -q 'WARN: .*entry drift'; then
     rm -f "$tmp"
     echo "SELFTEST FAIL: default pairing mode must warn-with-exit-0"
@@ -80,6 +81,7 @@ selftest() {
 
 scan_file() {
   local f="$1"
+  SCAN_TARGET="$f"
   fail=0
   check "title-less queue row (lost-harvest artifact — restore the title or delete the row)" \
     '^- \[ \] \*\*Source:\*\*'
@@ -100,7 +102,7 @@ scan_file() {
 # citation only exists in a DIFFERENT library are reported as wrong-link
 # (the routing rule files the entry under the domain that owns the fix).
 pairing_check() {
-  local f="$1" pairing_fail=0 row lib src missing elsewhere
+  local f="$1" pairing_fail=0 row lib src elsewhere
   [ "${CHECK_TODO_PAIRING:-}" = "strict" ] && pairing_fail=1
   local drift_count=0
   while IFS= read -r row; do
