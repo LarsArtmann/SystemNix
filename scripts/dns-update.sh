@@ -28,8 +28,16 @@ if [[ -z $new_sb ]]; then
   echo "ERROR: could not fetch StevenBlack HEAD"
   exit 1
 fi
-current_sb=$(grep -oP "raw\.githubusercontent\.com/StevenBlack/\K[^/]+" "$BLOCKLIST_FILE" | head -1 || true)
-if [[ -n ${current_sb:-} && $current_sb != "$new_sb" ]]; then
+# The [a-f0-9]{40} anchor is load-bearing (2026-10-01 incident): the old
+# regex stopped the capture after "StevenBlack/" and captured the "hosts"
+# path segment instead of the commit, and the global sed then rewrote every
+# "hosts" substring in the file — corrupting all 15 hagezi "hosts/…" URLs.
+current_sb=$(grep -oP "raw\.githubusercontent\.com/StevenBlack/hosts/\K[a-f0-9]{40}" "$BLOCKLIST_FILE" | head -1 || true)
+if [[ -z $current_sb ]]; then
+  echo "ERROR: could not extract current StevenBlack commit pin (expected hosts/<40-hex>/ URL shape)"
+  exit 1
+fi
+if [[ $current_sb != "$new_sb" ]]; then
   sed -i "s/${current_sb}/${new_sb}/g" "$BLOCKLIST_FILE"
   echo "  StevenBlack: $current_sb -> $new_sb"
 else

@@ -7,77 +7,77 @@ in
   blocklists = [
     {
       name = "StevenBlack-everything";
-      url = "https://raw.githubusercontent.com/StevenBlack/abe587abf7979d93b7a8267d5d3e1fbc32541163/4a68876c7fc71ecd572ad74e491b75a52ef2d31b/alternates/fakenews-gambling-porn-social/abe587abf7979d93b7a8267d5d3e1fbc32541163";
-      hash = "sha256-62so0hxvFuvnt0attejVSkTEBScWLyY5i+6xvgFCIdk=";
+      url = "https://raw.githubusercontent.com/StevenBlack/hosts/abe587abf7979d93b7a8267d5d3e1fbc32541163/alternates/fakenews-gambling-porn-social/hosts";
+      hash = "sha256-xUUG5HQMETGa5lN3y8W8cxDz5LOO3Sdw85g/6wBXK3Y=";
     }
     {
       name = "HaGeZi-ultimate";
-      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/ultimate.txt";
-      hash = "sha256-0r2kUYBaUFD7VR2uL++RpATLE9cnHmD3/DHyq6P0+9Y=";
+      url = hagezi "hosts/ultimate.txt";
+      hash = "sha256-+Vk5H3Me01tiadRF0wjNRRvuCBfavUoU7tFUq13G1Qs=";
     }
     {
       name = "HaGeZi-tif";
-      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/tif.txt";
-      hash = "sha256-/HmdFNvp5lfUn+WIbFuszAXGRsMzD/pOqGeDiMArcHY=";
+      url = hagezi "hosts/tif.txt";
+      hash = "sha256-vzIfdQCCCyiWbpt9OMIiLH8GJzFdSpv6R63XF5S9ZVI=";
     }
     {
       name = "HaGeZi-doh";
-      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/doh.txt";
+      url = hagezi "hosts/doh.txt";
       hash = "sha256-QehcUJmtVBU58QeJKDF/qm20nHRb7cebpFXS/2+26Yw=";
     }
     {
       name = "HaGeZi-native-apple";
-      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.apple.txt";
+      url = hagezi "hosts/native.apple.txt";
       hash = "sha256-jlIb5DfwXJOduNLExBGi29XyCmtdJPfDPELr4mD95ZY=";
     }
     {
       name = "HaGeZi-native-amazon";
-      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.amazon.txt";
+      url = hagezi "hosts/native.amazon.txt";
       hash = "sha256-0hD+CJKBv5YZvivMtnOjmAHHy93jtpx6PEWLcLINpYQ=";
     }
     {
       name = "HaGeZi-native-samsung";
-      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.samsung.txt";
+      url = hagezi "hosts/native.samsung.txt";
       hash = "sha256-oDtubaJoDe2AHFzdmOZPa+sJS6EQhTCVXlCDRCGjWE8=";
     }
     {
       name = "HaGeZi-native-xiaomi";
-      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.xiaomi.txt";
+      url = hagezi "hosts/native.xiaomi.txt";
       hash = "sha256-J64Zk8gbJkjDn963lXbn8y9IviT0/8/1PPG+OvBIC3A=";
     }
     {
       name = "HaGeZi-native-huawei";
-      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.huawei.txt";
+      url = hagezi "hosts/native.huawei.txt";
       hash = "sha256-juxfIKouagDVrrwDQlQN0ACCY7ZIr3Ql8nudJQSCCSI=";
     }
     {
       name = "HaGeZi-native-lgwebos";
-      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.lgwebos.txt";
+      url = hagezi "hosts/native.lgwebos.txt";
       hash = "sha256-yS23pdXRsLgbi7pUCl5uAHS4EdhCntTula7DbJtkp8k=";
     }
     {
       name = "HaGeZi-native-oppo-realme";
-      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.oppo-realme.txt";
-      hash = "sha256-XvXqv673RjVbj4EPkGw/q8fKmaK2B9iowIvbqCp+OPg=";
+      url = hagezi "hosts/native.oppo-realme.txt";
+      hash = "sha256-zON47p/1GWyhv81oh4Y5jibNwpo0Zcg8Xp1Gn8UWKP0=";
     }
     {
       name = "HaGeZi-native-roku";
-      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.roku.txt";
+      url = hagezi "hosts/native.roku.txt";
       hash = "sha256-NjOiQjTphJVntt0N8rXvD/KmneToY8uS0y4pQs1mcbY=";
     }
     {
       name = "HaGeZi-native-vivo";
-      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.vivo.txt";
+      url = hagezi "hosts/native.vivo.txt";
       hash = "sha256-9QwMj86PFQwgUWMN8WypuSOPDQuXnCXqMcQdk4ZGxbQ=";
     }
     {
       name = "HaGeZi-native-winoffice";
-      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.winoffice.txt";
+      url = hagezi "hosts/native.winoffice.txt";
       hash = "sha256-MaOnx5TGt1+Vqr0gwL2Vk0zuBWWt2TH086JCImNTUoY=";
     }
     {
       name = "HaGeZi-native-tiktok-extended";
-      url = hagezi "abe587abf7979d93b7a8267d5d3e1fbc32541163/native.tiktok.extended.txt";
+      url = hagezi "hosts/native.tiktok.extended.txt";
       hash = "sha256-3bWdSiho/HyGX2EfoIHRHM3e5DBypkJ/d9uTX/C0qXs=";
     }
     {
