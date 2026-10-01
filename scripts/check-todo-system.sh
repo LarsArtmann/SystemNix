@@ -18,6 +18,13 @@
 #      decision, 2026-09-30_05-41 report §g2); CHECK_TODO_PAIRING=strict
 #      (or --pairing-strict) fails the gate. [x] rows are exempt (their
 #      completion narrative cites commits, not reports).
+#   4. Harvest coverage (2026-10-01): status reports dated >= 2026-09-26
+#      (the self-harvest convention) that carry an §f follow-up section
+#      must be cited by TODO_LIST.md / a library OR carry an explicit
+#      harvest marker (HARVESTED / NOT HARVESTED / harvest log) — a report
+#      whose follow-ups can silently evaporate is the exact class the
+#      convention exists to kill. Default WARN; CHECK_TODO_HARVEST=strict
+#      fails. Archived reports are exempt (historical record).
 #
 # Scope v1: grep-judgeable shapes only. Semantic dedup/priority are
 # review work, not a grep gate.
@@ -75,7 +82,26 @@ selftest() {
     echo "SELFTEST FAIL: strict pairing mode must fail on seeded drift"
     exit 1
   fi
-  echo "SELFTEST OK: scanner rejects title-less rows + dead library links + detects entry drift (warn default / strict fail)"
+  # harvest leg: a recent §f-bearing report with no citation and no marker must WARN
+  local sdir
+  sdir=$(mktemp -d)
+  printf -- '# Report\n\n## f) follow-ups\n\n1. do the thing\n' >"$sdir/2026-10-01_00-00_selftest-unharvested.md"
+  out=$(TODO_FILE="$TODO" CHECK_TODO_STATUS_DIR="$sdir" "$0" --scan-file "$TODO" 2>&1) && rc=0 || rc=$?
+  rm -rf "$sdir"
+  if [ "$rc" -ne 0 ] || ! printf '%s\n' "$out" | grep -q 'WARN: .*unharvested'; then
+    echo "SELFTEST FAIL: default harvest mode must warn-with-exit-0 on an unharvested report"
+    exit 1
+  fi
+  # and a marked report must NOT be flagged
+  sdir=$(mktemp -d)
+  printf -- '# Report\n\n## f) follow-ups\n\n1. do the thing — HARVESTED at authoring\n' >"$sdir/2026-10-01_00-00_selftest-harvested.md"
+  out=$(TODO_FILE="$TODO" CHECK_TODO_STATUS_DIR="$sdir" "$0" --scan-file "$TODO" 2>&1) && rc=0 || rc=$?
+  rm -rf "$sdir"
+  if printf '%s\n' "$out" | grep -q 'selftest-harvested'; then
+    echo "SELFTEST FAIL: marked report must not be flagged"
+    exit 1
+  fi
+  echo "SELFTEST OK: title-less rows + dead links + entry drift (warn/strict) + harvest coverage (warn, marker-exempt)"
   exit 0
 }
 
@@ -94,7 +120,44 @@ scan_file() {
     }
   done < <(grep -oE 'docs/todo/[a-z0-9-]+\.md' "$f" | sort -u)
   pairing_check "$f"
+  harvest_check
   return $fail
+}
+
+# Harvest coverage: recent status reports with §f follow-up sections must be
+# cited by the queue/libraries or carry an explicit harvest marker.
+harvest_check() {
+  local status_dir="${CHECK_TODO_STATUS_DIR:-$REPO_ROOT/docs/status}"
+  [ -d "$status_dir" ] || return 0
+  local harvest_fail=0 unharvested=0 report base cited
+  [ "${CHECK_TODO_HARVEST:-}" = "strict" ] && harvest_fail=1
+  # one grep-able blob of every citation surface
+  local blob
+  blob=$(cat "$TODO" "$REPO_ROOT"/docs/todo/[a-z0-9-]*.md 2>/dev/null)
+  while IFS= read -r report; do
+    base="${report##*/}"
+    # convention landed 2026-09-26; older reports are exempt
+    case "$base" in
+      2026-0[1-8]-*|2026-09-2[0-5]-*) continue ;;
+    esac
+    # only reports carrying an f-section with numbered follow-ups
+    grep -qE '^#+ *f[): ]|§f' "$report" 2>/dev/null || continue
+    if ! grep -qE 'HARVESTED|NOT HARVESTED|not harvested|harvest log' "$report" 2>/dev/null; then
+      cited=$(printf '%s\n' "$blob" | grep -cF "$base" || true)
+      if [ "${cited:-0}" -eq 0 ]; then
+        unharvested=$((unharvested + 1))
+        printf 'UNHARVESTED: %s carries an §f section, is cited by no queue/library surface, and has no harvest marker\n' "$base"
+      fi
+    fi
+  done < <(find "$status_dir" -maxdepth 1 -name '2*.md' -type f | sort)
+  if [ "$unharvested" -gt 0 ]; then
+    if [ "$harvest_fail" -eq 1 ]; then
+      echo "FAIL: $unharvested unharvested §f-bearing report(s) — self-harvest at authoring or record why not (CHECK_TODO_HARVEST=strict)"
+      fail=1
+    else
+      echo "WARN: $unharvested unharvested §f-bearing report(s) (CHECK_TODO_HARVEST=strict fails)"
+    fi
+  fi
 }
 
 # Entry pairing: an open queue row citing a Source report filename must be
