@@ -10,9 +10,15 @@ PluginComponent {
 
     property string daemonUrl: pluginData.daemonUrl || "http://127.0.0.1:8090"
     property bool daemonUp: false
-    property string cameraName: "---"
-    readonly property string statusText: daemonUp ? cameraName : "off"
-    readonly property color statusColor: daemonUp ? Theme.primary : Theme.outline
+    property string camera: "offline"
+    readonly property string statusText: daemonUp ? camera : "off"
+    readonly property color statusColor: {
+        if (!root.daemonUp) return Theme.outline;
+        if (root.camera === "privacy") return Theme.error;
+        if (root.camera === "idle") return Theme.warning;
+        if (root.camera === "tracking") return Theme.primary;
+        return Theme.outline;
+    }
 
     Process {
         id: cameraProcess
@@ -24,10 +30,10 @@ PluginComponent {
                 try {
                     var data = JSON.parse(this.text);
                     root.daemonUp = true;
-                    root.cameraName = data.camera || data.device || "on";
+                    root.camera = data.camera || "offline";
                 } catch (e) {
                     root.daemonUp = false;
-                    root.cameraName = "---";
+                    root.camera = "offline";
                 }
             }
         }
