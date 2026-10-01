@@ -139,6 +139,7 @@ _: {
           BACKUP_CATCHUP_COUNT_FILE="${stateDir}/backup-catchup.count"
           COOLDOWN_LOG_EPOCH_FILE="${stateDir}/cooldown-log.epoch"
           CAPPED_LOG_EPOCH_FILE="${stateDir}/capped-log.epoch"
+          DRIFT_LOG_EPOCH_FILE="${stateDir}/drift-log.epoch"
           CGROUP_IO_SNAPSHOT="${stateDir}/cgroup-io.last"
           SOCKET_UNITS="${lib.concatStringsSep " " cfg.socketUnits}"
           MAX_RESTORES_PER_DAY=${toString cfg.maxRestoresPerDay}
@@ -478,6 +479,28 @@ _: {
             return 0
           }
 
+          # Churn-list drift check (2026-10-01, plan P2 #10): ioChurnUnits
+          # is baked at BUILD time — a renamed/stray unit turns every guard
+          # churn-stop into a silent no-op (the 2026-08-31..09-29
+          # btrfs-scrub-- phantom-stop class: 432 trips, the scrubs never
+          # stopped, 5.9 TB read). Probed EVERY run (a failed `systemctl
+          # cat` is the existence test — template instances resolve through
+          # their template); the WARN line is heartbeat-throttled so a
+          # standing drift does not flood the journal. Sits BELOW
+          # should_log_verbose's definition — bash needs functions defined
+          # before their call sites.
+          churn_drift=""
+          if [ -n "$CHURN_UNITS" ]; then
+            # deliberate word splitting over the baked unit list
+            # shellcheck disable=SC2086
+            for cu in $CHURN_UNITS; do
+              systemctl cat "$cu" >/dev/null 2>&1 || churn_drift="$churn_drift $cu"
+            done
+          fi
+          if [ -n "$churn_drift" ] && should_log_verbose "$DRIFT_LOG_EPOCH_FILE"; then
+            echo "GUARD CHURN-LIST DRIFT: ioChurnUnits entries that do not exist on the running system — their stop is a silent NO-OP:''${churn_drift}. The baked list has drifted from the system (rename, rename-away, or a stray attrname): fix the ioChurnUnits declaration or the unit names. (Distinct prefix on purpose: emergency greps for 'MEMORY EMERGENCY' must not match a standing drift warning.)" >&2
+          fi
+
           if [ "$trip" = "1" ]; then
             # Kill the ACTIVATION PATH FIRST, outside the cooldown: stopping
             # only the backend left the socket accepting, and every trip's
@@ -490,7 +513,12 @@ _: {
 
             if [ "$last_trip" -gt 0 ] && [ "$last_trip_age" -lt ${toString cfg.actionCooldownSeconds} ]; then
               if should_log_verbose "$COOLDOWN_LOG_EPOCH_FILE"; then
-                echo "MEMORY EMERGENCY still active (''${reason}) but action cooldown active (''${last_trip_age}s < ${toString cfg.actionCooldownSeconds}s) — socket stays down, skipping repeat service stop"
+                # Guard-vs-operator attribution (2026-10-01, plan P2 #10):
+                # disclose WHICH zone tripped and how much cooldown remains,
+                # so a journal reader can tell the guard's persistent-pressure
+                # heartbeat from a fresh operator-visible action.
+                last_zone=$(awk 'END { print (NF >= 2 ? $2 : "unknown") }' "$HISTORY_FILE" 2>/dev/null)
+                echo "MEMORY EMERGENCY still active (''${reason}) but action cooldown active (''${last_trip_age}s < ${toString cfg.actionCooldownSeconds}s, $(( ${toString cfg.actionCooldownSeconds} - last_trip_age ))s remaining; last trip zone=''${last_zone:-unknown}) — persistent pressure, NOT a new action: the trip already stopped the sockets, this line is the guard's heartbeat"
               fi
             else
               echo "MEMORY EMERGENCY: ''${reason} — stopping sockets + ${

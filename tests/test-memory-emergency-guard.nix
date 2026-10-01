@@ -352,6 +352,7 @@ in
                           " /var/lib/memory-emergency-guard/backup-catchup.count"
                           " /var/lib/memory-emergency-guard/cooldown-log.epoch"
                           " /var/lib/memory-emergency-guard/capped-log.epoch"
+                          " /var/lib/memory-emergency-guard/drift-log.epoch"
                           " /var/lib/memory-emergency-guard/cgroup-io.last")
           machine.succeed("rm -f /var/lib/memory-emergency-guard/restores-*")
           # Bring every sacrifice unit back up (the restore path only
@@ -390,6 +391,16 @@ in
       machine.succeed("${writeFakes "healthy" healthy}")
       out = run_guard("healthy")
       assert "MEMORY EMERGENCY" not in out, "healthy input must not trip"
+      # Churn-list drift check (2026-10-01): the VM defines stand-ins for
+      # only SOME ioChurnUnits (btrbk-root, btrfs-balance-data, the scrub
+      # template); the REST of the baked production list does not exist
+      # here — the first run ever (fresh drift-log.epoch) must WARN, naming
+      # them, WITHOUT the MEMORY EMERGENCY prefix (emergency greps must not
+      # match a standing drift warning).
+      assert "GUARD CHURN-LIST DRIFT" in out, (
+          "missing ioChurnUnits must be reported on the first run"
+      )
+      assert "btrbk-data.service" in out, "a missing churn unit must be named"
       machine.succeed("systemctl is-active --quiet fastflowlm.socket")
       prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
       assert "memory_emergency_guard_avail_percent 30.0" in prom
@@ -449,6 +460,11 @@ in
       # --- 5. Cooldown: repeat trip within 600 s ------------------------
       out = run_guard("zone3")
       assert "cooldown active" in out
+      # Cooldown disclosure (2026-10-01): the heartbeat line must attribute
+      # the ORIGINAL trip's zone (4c tripped Zone 4) and the remaining
+      # cooldown — guard-vs-operator attribution from the journal alone.
+      assert "last trip zone=4" in out
+      assert "s remaining" in out
       counter = machine.succeed("cat /var/lib/memory-emergency-guard/tripped.count").strip()
       assert counter == "1", "cooldown must not double-count trips"
       # The socket stays enforced down even during cooldown.
@@ -492,6 +508,35 @@ in
           "counters must attribute trips without journal digging"
       )
       assert "memory_emergency_guard_trips_last_hour " in prom
+      assert 'memory_emergency_guard_zone_trips_last_hour{zone="2"} 1' in prom, (
+          "6a's Zone-2 trip must attribute per-zone — the 07-19 forensics ask"
+      )
+      assert 'memory_emergency_guard_zone_trips_last_hour{zone="1"} 0' in prom, (
+          "zones with no trips in the window must emit explicit zeros "
+          "(fail-closed presence, not absence)"
+      )
+
+      # --- 6a-z. Zone attribution details (2026-10-01): history lines carry
+      #      the zone as field 2; LEGACY bare-timestamp lines (pre-2026-10-01)
+      #      count only in the aggregate, never per-zone. Socket is up after
+      #      6a, so this healthy run neither trips nor restores — the 6b
+      #      restore-budget expectations below stay untouched.
+      machine.succeed(
+          "echo $(( $(date +%s) - 60 )) >> /var/lib/memory-emergency-guard/trip-history"
+          " ; echo $(( $(date +%s) - 60 )) 6 >> /var/lib/memory-emergency-guard/trip-history"
+      )
+      out = run_guard("healthy")
+      prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
+      assert "memory_emergency_guard_trips_last_hour 3" in prom, (
+          "aggregate = zone2 + legacy + zone6 lines"
+      )
+      assert 'memory_emergency_guard_zone_trips_last_hour{zone="2"} 1' in prom
+      assert 'memory_emergency_guard_zone_trips_last_hour{zone="6"} 1' in prom, (
+          "the seeded zone-6 line must attribute to zone 6"
+      )
+      assert 'memory_emergency_guard_zone_trips_last_hour{zone="5"} 0' in prom, (
+          "the legacy bare-timestamp line must NOT attribute to any zone"
+      )
 
       # --- 6b-cap. Daily restore budget exhausted (maxRestoresPerDay = 2 in
       #      this VM): burn the budget with one more trip->restore cycle,

@@ -14,6 +14,8 @@
 
 ## Gatus Health Check Design Patterns
 
+> **Where checks are DECLARED:** per-service checks live in the owning module's `services.integration.<name>.checks` entry — see [integration-registry.md](./integration-registry.md) step 9. `gatus-config.nix` keeps only the infra/meta core; never hand-add service rows there.
+
 - **Alert `description` fields must NEVER contain `"` or `\`** — gatus 5.36.0 validates the description charset at startup and a violation PANICS the whole config (`alert description must not have " or \`, `invalid endpoint <key>`), crash-looping gatus while every restart fires `notify-failure@` (2026-09-29 storm: a `mount_point="/"` inside a description, ~5s popup cycle). `conditions` are exempt (validated as globs, quotes legal there). `checks.gatus-config-parse` runs the real `gatus validate` against the rendered evo-x2 yaml on every flake check — the only layer that sees descriptions composed across registry modules (source-level lints cannot). Note: `gatus validate` also attempts its sqlite open AFTER validation; that sandbox panic is expected and deliberately ignored by the check (pass = "Validated N endpoints" line present + no "error parsing config"). Do NOT set GATUS_LOG_LEVEL=WARN in that check — the endpoint-count line is INFO.
 - `pat(*metric_name*)` = presence check (metric exists in `/metrics` output)
 - `pat(*metric_name 0*)` = value check (metric exists AND equals 0 — e.g. "no errors")
