@@ -33,6 +33,16 @@
       # Where the cv-oidc-env bridge writes CV_OIDC_CLIENT_SECRET (the
       # StateDirectory below owns /var/lib/cv-oidc; dnsblockd pattern).
       oidcEnvFile = "/var/lib/cv-oidc/client-secret.env";
+      # TEMPORARY vendorHash shim (2026-10-01): the 12:13 blanket lock
+      # update (572ff71b) re-locked cv to 59f2ec6 whose upstream vendorHash
+      # no longer reproduces (got w1drooS48… vs specified K+yEjs8f…;
+      # narHash matched — source is the exact locked tree, the 2026-09-23
+      # lock-wave class). Upstream master (05482cad) is ahead; drop when the
+      # lock moves past an upstream-fixed rev. Serves BOTH consumers below
+      # (PATH CLI and service package are the same derivation, two attrs).
+      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+        vendorHash = "sha256-w1drooS482Myluq8CaXeL0gZBMZvYHDcD2IcuAUXK44=";
+      };
     in
     {
       imports = [
@@ -87,11 +97,11 @@
         # to ship new CLI/server features (PATH cv and the service move
         # together — one derivation).
         environment.systemPackages = [
-          inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.cv
+          cvPkg
         ];
 
         services.cv-server = {
-          package = lib.mkDefault inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          package = lib.mkDefault cvPkg;
           port = lib.mkDefault ports.cv;
           environmentFile = lib.mkDefault config.sops.templates."cv-env".path;
 

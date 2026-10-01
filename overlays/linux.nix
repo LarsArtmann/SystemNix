@@ -211,6 +211,18 @@ let
         '';
       };
     };
+  # TEMPORARY vendorHash shim (2026-10-01): the 12:13 blanket lock update
+  # (572ff71b) re-locked file-and-image-renamer to d745a00 whose upstream
+  # vendorHash no longer reproduces under the re-resolved FOD graph (got
+  # W5e+pMcB… vs specified Gp+9rQCd…; narHash matched — source is the exact
+  # locked tree, the 2026-09-23 lock-wave class). Upstream master (1ce5f6df)
+  # is ahead; drop when the lock moves past an upstream-fixed rev. Must stay
+  # AFTER file-and-image-renamer.overlays.default in the list below.
+  fileAndImageRenamerVendorHashShim = final: _prev: {
+    file-and-image-renamer = final.file-and-image-renamer.overrideAttrs {
+      vendorHash = "sha256-W5e+pMcBvI9laxsnUfxXLNpHarZcFIBjGtGhuAtjZag=";
+    };
+  };
 in
 [
   niriLibdisplayInfoShim
@@ -221,6 +233,7 @@ in
   monitor365SwaggerUiFixOverlay
   netwatchOverlay
   file-and-image-renamer.overlays.default
+  fileAndImageRenamerVendorHashShim
   crush-daily.overlays.default
   bank-sync.overlays.default
   overview.overlays.default
