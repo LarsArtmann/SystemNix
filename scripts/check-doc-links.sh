@@ -52,26 +52,29 @@ anchor_slugs() {
   local -A seen=()
   while IFS= read -r line || [ -n "$line" ]; do
     case "$line" in
-      '```'*) in_fence=$(( (in_fence + 1) % 2 )); continue ;;
+    '```'*)
+      in_fence=$(((in_fence + 1) % 2))
+      continue
+      ;;
     esac
     [ "$in_fence" -eq 0 ] || continue
     # ATX heading: up to 3 leading spaces, 1-6 '#', space (or EOL) after.
-    [[ "$line" =~ ^[[:space:]]{0,3}#{1,6}([[:space:]].*)?$ ]] || continue
+    [[ $line =~ ^[[:space:]]{0,3}#{1,6}([[:space:]].*)?$ ]] || continue
     text="${line#"${line%%[![:space:]]*}"}"
-    while [[ "$text" == \#* ]]; do text="${text#\#}"; done
+    while [[ $text == \#* ]]; do text="${text#\#}"; done
     text="${text#"${text%%[![:space:]]*}"}"
     text="${text%"${text##*[![:space:]]}"}"
     [ -n "$text" ] || continue
     slug=$(slug_github "$text")
     [ -n "$slug" ] || continue
-    if [[ -n "${seen[$slug]:-}" ]]; then
-      seen[$slug]=$(( ${seen[$slug]} + 1 ))
+    if [[ -n ${seen[$slug]:-} ]]; then
+      seen[$slug]=$((${seen[$slug]} + 1))
       slug="$slug-${seen[$slug]}"
     else
       seen[$slug]=0
     fi
     printf '%s\n' "$slug"
-  done < "$f"
+  done <"$f"
 }
 
 # anchor cache: file -> newline-joined slugs (lazily built)
@@ -79,7 +82,7 @@ declare -A _ANCHOR_CACHE=()
 
 anchors_of() {
   local f="$1"
-  if [[ -z "${_ANCHOR_CACHE[$f]:-}" ]]; then
+  if [[ -z ${_ANCHOR_CACHE[$f]:-} ]]; then
     _ANCHOR_CACHE[$f]=$(anchor_slugs "$f")
   fi
   printf '%s' "${_ANCHOR_CACHE[$f]}"
@@ -100,51 +103,54 @@ check_file() {
   dir=$(dirname "$f")
   while IFS= read -r line || [ -n "$line" ]; do
     case "$line" in
-      '```'*) in_fence=$(( (in_fence + 1) % 2 )); continue ;;
+    '```'*)
+      in_fence=$(((in_fence + 1) % 2))
+      continue
+      ;;
     esac
     [ "$in_fence" -eq 0 ] || continue
     rest="$line"
-    while [[ "$rest" =~ $link_re ]]; do
+    while [[ $rest =~ $link_re ]]; do
       match="${BASH_REMATCH[0]}"
       # advance past this match (first occurrence of the exact string)
       rest="${rest#*"$match"}"
       target="${match%")"}"
       target="${target##*(}"
       case "$target" in
-        http://* | https://* | mailto:*) continue ;;
+      http://* | https://* | mailto:*) continue ;;
       esac
       # angle-bracket form: [text](<path>) — strip the brackets
       target="${target#"<"}"
       target="${target%">"}"
       anchor=""
       path="$target"
-      if [[ "$target" == *"#"* ]]; then
+      if [[ $target == *"#"* ]]; then
         anchor="${target#*#}"
         path="${target%%#*}"
       fi
       path="${path//%20/ }"
       if [ -n "$path" ] && [ ! -e "$dir/$path" ]; then
         echo "BROKEN: $f -> $target"
-        BROKEN_COUNT=$(( BROKEN_COUNT + 1 ))
+        BROKEN_COUNT=$((BROKEN_COUNT + 1))
         continue
       fi
       if [ -n "$anchor" ]; then
         afile="$f"
         [ -n "$path" ] && afile="$dir/$path"
         case "$afile" in
-          *.md) ;;
-          *) continue ;; # non-markdown target: no headings to validate
+        *.md) ;;
+        *) continue ;; # non-markdown target: no headings to validate
         esac
         if [ ! -f "$afile" ]; then
           continue # directory or missing (already reported above)
         fi
         if ! anchor_exists "$afile" "$anchor"; then
           echo "BROKEN-ANCHOR: $f -> $target (no heading \"$anchor\" in $afile)"
-          BROKEN_COUNT=$(( BROKEN_COUNT + 1 ))
+          BROKEN_COUNT=$((BROKEN_COUNT + 1))
         fi
       fi
     done
-  done < "$f"
+  done <"$f"
 }
 
 run_selftest() {
@@ -152,7 +158,7 @@ run_selftest() {
   tmp=$(mktemp -d)
   trap 'rm -rf "$tmp"' RETURN
 
-  cat > "$tmp/target.md" <<'EOF'
+  cat >"$tmp/target.md" <<'EOF'
 # Title
 
 ## Section One
@@ -171,7 +177,7 @@ more
 ```
 EOF
 
-  cat > "$tmp/in.md" <<'EOF'
+  cat >"$tmp/in.md" <<'EOF'
 # In Doc
 
 [good-file](target.md)
@@ -216,10 +222,13 @@ EOF
   done
 
   # positive control: an all-good file reports nothing
-  cat > "$tmp/clean.md" <<'EOF'
+  cat >"$tmp/clean.md" <<'EOF'
 [fine](target.md#section-one)
 EOF
-  if out=$(check_file "$tmp/clean.md") || true; [ -n "$out" ]; then
+  if
+    out=$(check_file "$tmp/clean.md") || true
+    [ -n "$out" ]
+  then
     echo "SELFTEST FAIL: clean file flagged: $out"
     fail=1
   fi
