@@ -47,13 +47,16 @@ run() {
   [ "$DRY_RUN" = "1" ] || "$@"
 }
 
-[ "$(id -u)" -eq 0 ] || {
-  echo "must run as root (sudo)" >&2
-  exit 1
-}
+if [ "$DRY_RUN" != "1" ]; then
+  [ "$(id -u)" -eq 0 ] || {
+    echo "must run as root (sudo)" >&2
+    exit 1
+  }
+fi
 
 # Pressure gate (deploy-pressure doctrine).
-PSI=$(awk 'NR==1 {print $2}' /proc/pressure/io)
+# Read-only gate: survives PSI-disabled kernels (missing /proc/pressure/io).
+PSI=$(awk 'NR==1 {print $2}' /proc/pressure/io 2>/dev/null || true)
 PSI="${PSI#avg10=}"
 PSI="${PSI:-0}"
 if awk -v p="$PSI" 'BEGIN { exit !(p >= 80) }'; then
@@ -85,8 +88,10 @@ prepare)
   run chattr +C "$SUBVOL"
   # Quiesce: caddy closes the access-log fds → the source tree is static →
   # an EXACT count/size verify is meaningful. Brief vhost outage by design.
+  # Crash-safe quiesce: if ANYTHING dies (set -e) while caddy is stopped,
+  # restart it on the way out — never leave the vhosts down.
+  trap '[ "$DRY_RUN" = "1" ] || systemctl start caddy || true' EXIT
   run systemctl stop caddy
-  QUOTED=0
   if [ "$DRY_RUN" = "1" ]; then
     echo "dry run: rsync skipped"
   else
@@ -103,6 +108,7 @@ prepare)
     fi
   fi
   run systemctl start caddy
+  trap - EXIT
   echo "prepare OK. Now: nix run .#deploy  — then:  sudo $0 finalize"
   echo "WARNING: log entries written from here until the deploy land on the QLC shadow dir."
   ;;
@@ -116,9 +122,9 @@ finalize)
     echo "dry run: skipping verification"
     exit 0
   fi
-  BEFORE=$(find "$SUBVOL" -type f -newermt '-2 minutes' | wc -l)
+  BEFORE=$(find "$SUBVOL" -type f -mmin -2 | wc -l)
   sleep 35
-  AFTER=$(find "$SUBVOL" -type f -newermt '-2 minutes' | wc -l)
+  AFTER=$(find "$SUBVOL" -type f -mmin -2 | wc -l)
   echo "recently-touched files: before=$BEFORE after=$AFTER"
   if [ "$AFTER" -eq 0 ]; then
     echo "VERIFY FAILED: no log file touched on the mount in 35s — is caddy running?" >&2
