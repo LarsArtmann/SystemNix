@@ -2220,6 +2220,10 @@
                     cat > "$FIX/bin/btrfs" <<'STUBEOF'
                     #!${pkgs.bash}/bin/bash
                     set -uo pipefail
+                    # Self-locating: the check shell's FIX is NOT exported, so
+                    # resolve the fixture root from this script's own path.
+                    here=$(cd "$(dirname "$0")" && pwd)
+                    FIX=$(dirname "$here")
                     cmd="''${1:-}"; sub="''${2:-}"; mnt="''${3:-}"
                     if [ "$cmd" = "scrub" ] && [ "$sub" = "status" ]; then
                       if [ -f "$FIX/fixtures/root.fails" ] && [ "$mnt" = "/" ]; then exit 1; fi
@@ -2292,7 +2296,7 @@
                     expect "root last_completed nonzero" 'btrfs_scrub_last_completed_seconds\{mount="root"\} [1-9]'
                     expect "data stale=0" 'btrfs_scrub_stale\{mount="data"\} 0'
                     expect "data last_completed nonzero" 'btrfs_scrub_last_completed_seconds\{mount="data"\} [1-9]'
-                    expect "parse_errors=0" 'btrfs_scrub_staleness_parse_errors 0'
+                    expect "parse_errors=0" 'btrfs_scrub_staleness_parse_errors 0$'
 
                     echo "=== Run B: root=resumed-fresh data=running ==="
                     write_fixture root.txt resumed-fresh
@@ -2302,13 +2306,15 @@
                     expect "resumed root last_completed nonzero" 'btrfs_scrub_last_completed_seconds\{mount="root"\} [1-9]'
                     expect "running data stale=0" 'btrfs_scrub_stale\{mount="data"\} 0'
                     expect "running data last_completed=0" 'btrfs_scrub_last_completed_seconds\{mount="data"\} 0'
-                    expect "parse_errors=0" 'btrfs_scrub_staleness_parse_errors 0'
+                    expect "parse_errors=0" 'btrfs_scrub_staleness_parse_errors 0$'
 
                     echo "=== Run C: root=unparseable-finished data=never-started ==="
                     write_fixture root.txt unparseable
                     write_fixture data.txt never
                     run_collector
-                    expect "parse_errors=1 (fails loud, not silent 0)" 'btrfs_scrub_staleness_parse_errors 1'
+                    # $-anchored: the HELP comment line contains
+                    # "parse_errors 1 =" and phantom-matches unanchored.
+                    expect "parse_errors=1 (fails loud, not silent 0)" 'btrfs_scrub_staleness_parse_errors 1$'
                     expect "unparseable root stale=0 (parse_errors owns the failure)" 'btrfs_scrub_stale\{mount="root"\} 0'
                     expect "unparseable root last_completed=0" 'btrfs_scrub_last_completed_seconds\{mount="root"\} 0'
                     expect "never-started data stale=1" 'btrfs_scrub_stale\{mount="data"\} 1'
@@ -2329,6 +2335,16 @@
                       cat "$FIX/textfile/btrfs.prom" || true
                       echo "--- collector stderr (last run):"
                       cat "$FIX/out/run.err" || true
+                      echo "--- all scrub lines in prom:"
+                      grep -n "scrub" "$FIX/textfile/btrfs.prom" || true
+                      echo "--- rendered staleness block:"
+                      grep -n "scrub_label\|scrub_started_raw\|scrub_stale_v" "$FIX/out/run.sh" | head -20
+                      echo "--- stub ground truth:"
+                      head -3 "$FIX/fixtures/root.txt" || true
+                      "$FIX/bin/btrfs" scrub status / > "$FIX/stub.out" 2>"$FIX/stub.err"; echo "stub rc=$?"
+                      head -3 "$FIX/stub.out"; cat "$FIX/stub.err"
+                      echo "--- run.sh PATH line:"
+                      grep -n "^export PATH" "$FIX/out/run.sh" | cut -c1-120
                       exit 1
                     fi
                     echo "OK: all scrub-staleness fixture assertions passed"
