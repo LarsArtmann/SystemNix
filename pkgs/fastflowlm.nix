@@ -96,17 +96,17 @@ stdenv.mkDerivation (finalAttrs: {
     rm -f $out/flm $out/env-vars
 
     # FastFlowLM's bundled XRT libs (libxrt_swemu.so.2.21.75, libxrt_hwemu.so.2.21.75)
-    # link against libprotobuf.so.32. nixpkgs' protobuf_32 ships libprotobuf.so.32.1.0
-    # but no libprotobuf.so.32 symlink. Copy the protobuf library into $out/lib
-    # so autoPatchelf's rpath resolver can find it (the symlink target needs to
-    # be a real file in the same dir, not a store path reference).
-    cp -L ${protobuf_32}/lib/libprotobuf.so.32.1.0 $out/lib/
-    cp -L ${protobuf_32}/lib/libprotobuf.so $out/lib/ 2>/dev/null || true
-    cp -L ${protobuf_32}/lib/libutf8_range.so.32.1.0 $out/lib/ 2>/dev/null || true
-    cp -L ${protobuf_32}/lib/libutf8_range.so $out/lib/ 2>/dev/null || true
-    cp -L ${protobuf_32}/lib/libprotoc.so.32.1.0 $out/lib/ 2>/dev/null || true
-    ln -sf libprotobuf.so.32.1.0 $out/lib/libprotobuf.so.32
-    ln -sf libutf8_range.so.32.1.0 $out/lib/libutf8_range.so.32 2>/dev/null || true
+    # link against libprotobuf.so.32. protobuf_32 became MULTI-OUTPUT in the
+    # 2026-10-01 nixpkgs bump (libs live in the `lib` output; the default
+    # output has no lib/) and the patch version drifts — glob the SONAME
+    # family, never pin a filename. Copies land in $out/lib so the runtime
+    # loader resolves them (autoPatchelf ignores them by SONAME below).
+    pbLib="${lib.getLib protobuf_32}/lib"
+    cp -L $pbLib/libprotobuf.so.32* $out/lib/ 2>/dev/null || true
+    cp -L $pbLib/libutf8_range.so.32* $out/lib/ 2>/dev/null || true
+    cp -L $pbLib/libprotoc.so.32* $out/lib/ 2>/dev/null || true
+    pbReal=$(ls -v $out/lib/libprotobuf.so.32.* 2>/dev/null | tail -1)
+    [ -n "$pbReal" ] && ln -sf "$(basename "$pbReal")" $out/lib/libprotobuf.so.32
 
     # Replace the upstream bash wrapper with a nix-native one at $out/bin/flm
     # (nix convention; ExecStart uses lib.getExe). The wrapper sets XILINX_XRT
