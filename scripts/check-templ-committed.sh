@@ -2,7 +2,7 @@
 # Fail if any git-TRACKED *.templ file lacks a tracked *_templ.go sibling.
 #
 # Nix builds vendor Go source without running `templ generate`. An untracked
-# generated file breaks the build with `undefined: someFragment` (AGENTS.md
+# generated file breaks the build with `undefined: someFragment` (docs/agents/nix-flakes.md
 # gotcha). Vendored deps under gitignored dirs (e.g. vendor/) are invisible
 # to `git ls-files` and therefore exempt — only TRACKED .templ files count.
 #

@@ -170,3 +170,10 @@ the owner's 2026-09-30 QLC-churn evacuation decision (the freeze-era
 doctrine: every always-on writer that can leave the QLC should) supersedes
 them. The trade accepted: both leave `@` snapshot coverage (both have
 pool-side dump legs; gatus history is regenerable stats).
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

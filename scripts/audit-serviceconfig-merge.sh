@@ -4,7 +4,7 @@
 #
 # `//` on serviceConfig DISCARDS priority: mkDefault/mkForce inside either
 # operand is silently clobbered by the plain values of the other. The
-# documented rule (AGENTS.md gotchas, "Systemd"): ALWAYS merge fragments via
+# documented rule (docs/agents/systemd.md): ALWAYS merge fragments via
 # lib.mkMerge [...] so per-key priorities survive:
 #
 #   BAD:  serviceConfig = harden { MemoryMax = "2G"; } // serviceDefaults {};

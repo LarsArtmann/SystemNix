@@ -95,3 +95,10 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
   over VPN; polish later only if it ever annoys).
 - NetBird `ManagementUrl` lives in the client's `config` option (not
   `settings`) — the positive test probe guards this against module renames.
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

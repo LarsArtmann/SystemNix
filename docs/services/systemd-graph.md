@@ -53,3 +53,10 @@ interactively.
 - **I/O tier**: `background`
 - **After**: `dbus.service`, `network-online.target`
 - **restartTriggers**: `[ cfg.package ]` (restarts on package update)
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

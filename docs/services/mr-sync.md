@@ -69,3 +69,10 @@ and the data cache sits at the 60s TTL instead of re-fetching every 5s.
   deleted, upstream tries to re-create it under `ProtectHome = read-only`
   and the unit fails loudly into start-limit + onFailure. Restore the file
   (or run `mr-sync sync` once as lars) to clear.
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

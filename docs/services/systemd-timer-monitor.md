@@ -53,3 +53,10 @@ Caddy's `file_server`.
 | ---------- | -------- | ----------------------------- |
 | `enable`   | `false`  | Enable the service            |
 | `interval` | `"5min"` | How often to re-run the audit |
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

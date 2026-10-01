@@ -325,7 +325,7 @@
       inputs.flake-parts.follows = "flake-parts";
       # Without this, the input locks its own go-nix-helpers via git+ssh:
       # (git insteadOf pollution) — divergent narHash vs the top-level
-      # github: fetch, the "NAR hash mismatch" daemon-cache trap (AGENTS.md).
+      # github: fetch, the "NAR hash mismatch" daemon-cache trap (docs/agents/nix-flakes.md).
       inputs.go-nix-helpers.follows = "go-nix-helpers";
     };
 
@@ -785,7 +785,7 @@
     # Branch-ref governed (pin policy 2026-09-16): the lock still holds
     # 0971fe9c until an explicit `nix flake lock --update-input
     # browser-history` — probe the go-modules FOD at the target rev first
-    # (its build rides published cqrs-htmx tags; AGENTS.md probe protocol).
+    # (its build rides published cqrs-htmx tags; docs/agents/go-ecosystem.md probe protocol).
     browser-history = {
       url = "github:LarsArtmann/browser-history?ref=master";
       inputs = {
@@ -983,7 +983,7 @@
 
           # Formatter: treefmt-full-flake's treefmt with ONE local patch —
           # generated HTML report bundles under docs/ are NEVER formatted
-          # (AGENTS.md "Big self-contained HTML reports": the inline mermaid
+          # (docs/CONTRIBUTING.md "Big self-contained HTML reports": the inline mermaid
           # JS is generated content; prettier expands the 3.6 MB bundle to
           # 7.8 MB and that churn has oscillated the blob in git history
           # repeatedly — 2026-09-20 and 2026-09-21). The upstream wrapper

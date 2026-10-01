@@ -142,3 +142,10 @@ ID user `vmadmin` ≠ miniflux admin `admin` proves resolution by uniqueness;
 converged `openid_connect_id` asserted via `psql -d miniflux`; idempotent
 re-run logs "already linked"). The OIDC gate curl probe is neutered in the VM
 (no `auth.home.lan` there).
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

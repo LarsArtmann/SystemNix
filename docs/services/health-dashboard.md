@@ -71,3 +71,10 @@ The binary comes from the go-health-dashboard flake
 `GOEXPERIMENT=jsonv2` for go-sse's encoding/json/v2). go.mod pins
 go-health master (federation) as a pseudo-version until v0.3.0 is
 tagged; re-pin to the tag on the next input bump.
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

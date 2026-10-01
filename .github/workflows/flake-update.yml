@@ -61,7 +61,7 @@ jobs:
       # channels.nixos.org tarball during `nix flake update`. The tarball pointer
       # can be stale by months and trips the eval-time nixpkgsTarballGuard. This
       # step normalizes the nixpkgs node back to github type at the latest rev.
-      # See scripts/fix-nixpkgs-lock.sh and the gotcha in AGENTS.md.
+      # See scripts/fix-nixpkgs-lock.sh and the gotcha in docs/agents/nix-flakes.md.
       - name: Normalize nixpkgs node to github type
         run: bash scripts/fix-nixpkgs-lock.sh --latest
 

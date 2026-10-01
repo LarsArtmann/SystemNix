@@ -30,8 +30,8 @@ Module: `modules/nixos/services/signoz-coverage.nix` (enabled in
 
 ## Registry maintenance
 
-Register every service that pushes traces (mandatory per AGENTS.md "Adding a
-Service" step 10):
+Register every service that pushes traces (mandatory per docs/agents/integration-registry.md
+"Adding a Service" step 10):
 
 ```nix
 services.signoz-coverage.expected.my-unit = {

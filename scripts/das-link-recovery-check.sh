@@ -51,7 +51,7 @@ USER_HOME=$(getent passwd "${SUDO_USER:-$(id -un)}" | cut -d: -f6)
 
 # HM-managed symlinks that MUST stay symlinks — a real dir here is fallback
 # regrowth onto the space-critical NVMe (blocks the next HM activation and
-# re-contaminates root; see AGENTS.md buildcache section).
+# re-contaminates root; see docs/agents/storage.md buildcache section).
 CACHE_SYMLINKS=(
   "$USER_HOME/.cache/goimports"
   "$USER_HOME/.cache/go"

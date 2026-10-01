@@ -22,6 +22,7 @@ LIVING_DOCS=(
   AGENTS.md
   docs/CONTRIBUTING.md
   docs/gotchas-archive.md
+  docs/agents/*.md
   docs/services/*.md
   docs/todo/*.md
 )

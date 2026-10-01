@@ -98,3 +98,10 @@ rollback restores BOTH at once.
   backends, truthful dots), 10 decorative.
 - `alerts.home.lan` → 301 → `https://dash.home.lan` via the catch-all vhost.
 - homepage-dashboard unit absent, port 8082 free.
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

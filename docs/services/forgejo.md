@@ -184,3 +184,10 @@ saved a personal theme keep it (account preference beats DEFAULT_THEME).
 
 **Phase 2 (owner-gated):** custom logo/favicon via `custom/public/assets/img/logo.svg` +
 `favicon.svg` through the same tmpfiles pattern.
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

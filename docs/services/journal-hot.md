@@ -2,3 +2,10 @@
 
 > Module: `platforms/nixos/system/journal-hot.nix`. Body migrated verbatim from AGENTS.md on 2026-10-01 (restructure) — treat the section below as authoritative agent notes for this service.
 
+## Journal on the Samsung Hot Tier (`journal-hot`, migrated 2026-09-29)
+
+**Module:** `platforms/nixos/system/journal-hot.nix` — mounts tlc `subvol=journal` (nodatacow, unsnapshotted, doctrine C) at `/var/log/journal`. The `systemd.services.systemd-journald after/wants = var-log-journal.mount` wiring is LOAD-BEARING: upstream journald starts `Before=sysinit.target` with no `RequiresMountsFor`, so a plain fstab entry loses the boot race and the journal silently splits across the QLC shadow dir + the mount. Degraded mode (Samsung absent): `nofail` + 5s device-timeout, journald logs into the QLC dir (pre-migration behavior). Migration `scripts/migrate-journal-hot.sh` prepare → deploy → finalize EXECUTED 2026-09-29/30 (exact-copy verify passed; flush merged the volatile window; marker roundtrip verified). The QLC shadow dir under the mountpoint is deliberate rollback insurance — do not clean it while unmounted (the tmpfiles rule re-creates only the mountpoint dir).
+
+- **A module carrying a one-time migration must not be imported before the migration's prepare ran**: journal-hot rode the 21:36 deploy un-migrated, and the mount then failed at every activation (fsconfig ENOENT — missing subvol; deploy rc=14 churn) until containment-disabled in `configuration.nix`. The disable comment encoded the re-arm condition ("run the migration, then uncomment + deploy"), which worked exactly as designed when re-armed 23:40. Pattern: grep incoming modules for migration scripts/runbooks BEFORE deploying (the 09-29 unaudited-tree lesson), and encode re-arm conditions in the disable comment.
+- **`set -euo pipefail` + `cmd | head -1` / `grep -q` = silent SIGPIPE(141) abort**: head / grep -q exit early, the producer eats SIGPIPE, pipefail converts it into a mid-script kill with NO error line (finalize died right after a successful flush; reproduced, exit 141). Use `sed -n '1p'` / `grep … >/dev/null` in this repo's scripts.
+

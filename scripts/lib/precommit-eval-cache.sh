@@ -4,7 +4,7 @@
 # precommit-eval-cache-selftest — fixture-proven, never a drifted copy).
 #
 # WHAT is memoized: the resolved store path of .#formatter.$sys. Building it
-# pays a full flake eval (30-90s+ warm on this 420-input tree; see the AGENTS.md
+# pays a full flake eval (30-90s+ warm on this 420-input tree; see the docs/agents/nix-flakes.md
 # "Why plain flake EVAL is slow here" bullet) on EVERY .nix-touching commit,
 # yet the out-path is a pure function of a SMALL input set: flake.nix +
 # flake.lock + overlays/ + lib/ (perSystem pkgs imports the overlays; the

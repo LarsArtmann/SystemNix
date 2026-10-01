@@ -711,7 +711,7 @@ fi
 # 11. vendorHash freshness for local Go packages
 echo ""
 echo "11. vendorHash freshness for local Go packages"
-# vendorHash mismatches are FOD failures that --no-build cannot catch (AGENTS.md).
+# vendorHash mismatches are FOD failures that --no-build cannot catch (docs/agents/go-ecosystem.md).
 # --dry-run reveals whether the FOD is cached or would need building (stale hash).
 GO_PKGS=("dnsblockd" "monitor365" "netwatch" "emeet-pixyd" "file-and-image-renamer" "crush-daily")
 for pkg in "${GO_PKGS[@]}"; do

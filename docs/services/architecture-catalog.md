@@ -132,3 +132,10 @@ always on. Re-arm triggers are documented in the hub TODO_LIST.
 - Host-mode CI jobs inherit the runner UNIT's PATH — the nixpkgs module's
   default set lacks `nix`/`jq`/`python3`; forgejo.nix's runner override adds
   them. New workflow tooling must either ride those or extend that list.
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

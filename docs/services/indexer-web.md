@@ -29,3 +29,10 @@ Always-on, event-sourced view over the project documentation state: scans `~/pro
 
 - `docs-archive-stats` (HM module, same upstream flake): daily `indexer docs-stats --record` TSV snapshots into `~/projects/index/docs-stats-history.tsv` — the longitudinal history; indexer-web is the live view.
 - Upstream `nixosModules.default` (`services.indexer` timer/watch) is deliberately NOT enabled: report/summary generation in a projectDir with `ProtectHome = yes` — useless for /home scan roots and redundant with docs-archive-stats.
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

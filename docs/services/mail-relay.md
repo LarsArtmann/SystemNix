@@ -142,3 +142,10 @@ vars, stored in its PostgreSQL. The polling task runs every 10 min by default
 config, sender+recipient rewrite E2E, collector fail-closed) and
 `scripts/post-deploy-check.sh` §12 (live: postfix active, SMTP banner, placeholder
 WARN, paperless.conf wiring, collector textfile).
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

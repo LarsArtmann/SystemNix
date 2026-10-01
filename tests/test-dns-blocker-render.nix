@@ -64,13 +64,18 @@ let
     in
     fired != [ ];
 
-  # Bad slugs die at the option's strMatching type check — tryEval is the
-  # only witness; the error must not abort the whole check evaluation.
+  # Bad slugs die at the option's strMatching type check — but submodule
+  # field type errors are DEFERRED into the value (forcing the option
+  # returns an attrset whose name field carries «error: ...»), so the
+  # witness must force the name fields themselves. tryEval keeps the
+  # error from aborting the whole check evaluation.
   policyOptionEvalFails =
     modules:
     !(
       builtins.tryEval (
-        (inputs.self.nixosConfigurations.evo-x2.extendModules { inherit modules; }).config.services.dns-blocker.policies
+        builtins.map (p: p.name) (
+          (inputs.self.nixosConfigurations.evo-x2.extendModules { inherit modules; }).config.services.dns-blocker.policies
+        )
       )
     ).success;
 

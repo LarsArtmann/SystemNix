@@ -131,3 +131,10 @@ same journal.
   needs the fakeHash dance THERE, then `nix flake lock --update-input
   go-taskqueue` here. `nix build .#tq` (quick-go batch) surfaces drift
   before a deploy.
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

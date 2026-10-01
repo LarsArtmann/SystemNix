@@ -189,3 +189,10 @@ mind when adding projects: each extra fast project ≈ +50k/month.
    size panels within 24h.
 5. `curl -s 127.0.0.1:8888/metrics | grep googlecloudmonitoring | head` —
    receiver labels with growing accepted/error counters.
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

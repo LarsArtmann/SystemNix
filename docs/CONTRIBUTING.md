@@ -117,7 +117,7 @@ Services are self-contained flake-parts modules in `modules/nixos/services/` (or
 4. Add a Caddy vHost in `modules/nixos/services/caddy.nix` if the service is web-facing.
 5. Add a Gatus health check in `modules/nixos/services/gatus-config.nix`.
 6. Add a Homepage tile in `modules/nixos/services/homepage.nix` if user-facing.
-7. See `AGENTS.md` for the full service-adding checklist and non-obvious gotchas.
+7. See `docs/agents/integration-registry.md` for the full service-adding checklist and non-obvious gotchas.
 
 Module template:
 
@@ -308,7 +308,7 @@ serviceConfig =
 
 ### Secrets
 
-All secrets managed via sops-nix with age encryption. See `modules/nixos/services/sops.nix` and `AGENTS.md` for the Sops + Age workflow.
+All secrets managed via sops-nix with age encryption. See `modules/nixos/services/sops.nix` and `docs/agents/secrets.md` for the Sops + Age workflow.
 
 ### Native OIDC vs Forward-Auth
 
@@ -317,7 +317,7 @@ SystemNix has two SSO layers:
 - **Layer 1 — Native OIDC**: Apps integrate directly with Pocket ID (Forgejo, Immich, Gatus). Caddy uses plain `reverse_proxy`.
 - **Layer 2 — oauth2-proxy forward-auth**: Apps without native auth; Caddy uses `protectedVHost`.
 
-Never put a native-OIDC service behind `protectedVHost` — it causes a double-auth redirect loop. See `AGENTS.md` for the full SSO architecture.
+Never put a native-OIDC service behind `protectedVHost` — it causes a double-auth redirect loop. See `docs/agents/sso-dns.md` for the full SSO architecture.
 
 ## Documentation
 
@@ -330,4 +330,17 @@ When you learn something non-obvious, update the relevant doc immediately:
 - `docs/todo/*.md` — Domain libraries: every open item (incl. blocked/watch/decision), tagged by lifecycle — see AGENTS.md → "TODO System"
 - `docs/adr/` or `docs/architecture/` — Architecture decisions
 
-See `AGENTS.md` → "Project Documentation Files" for the full ownership table.
+File ownership follows the global crush-config AGENTS.md "Project Documentation Files" table (AGENTS.md = need-to-know core; domain depth in `docs/agents/*.md`; per-service state in `docs/services/*.md`).
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+
+### Big self-contained HTML reports (house pattern, decided + owner-ratified 2026-09-21)
+
+- **Single file, zero dependencies — inline the JS.** Planning/status HTML artifacts follow the html-report-kit doctrine (self-contained, no CDN, no external fonts). When a JS library is required (mermaid), INLINE it — ~3.6 MB for mermaid v11.17.2 — so the artifact renders fully offline. Never CDN-with-fallback. Canonical bundle kept OUT of the repo at `~/.local/state/systemnix/mermaid-v11.17.2.min.js` (the shipped artifact itself is the in-repo carrier; `/tmp` copies die to the tmp cleaner).
+- **One artifact per TOPIC — supersede, don't accumulate.** Each such file costs one multi-MB blob per git revision (history already carries a 7.9 MB inflated blob from the 2026-09-20 formatter incident). When a new visualization replaces an old one, add an in-file SUPERSEDED banner linking the successor (see `2026-08-31_samsung-disk-layout-visualization.html`), never keep two "current" pages.
+- **Treat the inline bundle as GENERATED content — never format these files.** A prettier-family formatter inflated the 3.6 MB disk-layout page to 7.8 MB TWICE on 2026-09-20 (15:43-16:08, riding parallel-session daemon commits; no user-shell or PATH formatter involved, nvim carries no prettier). If the bundle must be replaced, splice it in with a script, then **verify with `bash scripts/verify-html-diagrams.sh <file>`** (headless render: SVG count, error-bombs, anchors) — the gate also catches the not-self-contained/CDN regression. **ENFORCED since 2026-09-21: `nix fmt` excludes `docs/**/*.html` repo-wide** — the `formatter` output in flake.nix wraps treefmt-full-flake's wrapper with a regenerated config (the upstream wrapper bakes its `--config-file` store path, so the config text is extracted from the wrapper, string-patched to prepend the exclude to the GLOBAL excludes list, and re-served; formatter programs/versions stay byte-identical). Nix gotchas in that override: `builtins.match` STRIPS store-path context — re-add it with `/. + path` or the file is missing in the build sandbox; and a text-extraction break (wrapper no longer carries `--config-file`) fails LOUDLY at eval by design. Recurrence signature if the exclude is ever lost: daemon commits oscillating a docs HTML between ~3.6 MB and ~7.8 MB (+/-200k-line diffs).
+

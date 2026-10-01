@@ -147,3 +147,10 @@ searchable log database. Upstream: github:GilbN/geometrikks.
 - The Banned-IPs/CrowdSec views are inert (no CrowdSec on this host).
 - Upstream ships no license file — the package declares `licenses.unfree`
   (personal-use posture).
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

@@ -180,3 +180,10 @@ interactively with `crush --continue` when the pass ends — review, ask follow-
   newest 20 kept.
 - Source: `platforms/nixos/desktop/crush-debug.nix`; known gap: Gatus-red-but-active checks are not
   picker sources yet (root-only sqlite) — docs/todo/desktop.md.
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

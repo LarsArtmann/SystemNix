@@ -7,7 +7,7 @@
 
 - [Git zero-byte object corruption (recovery runbook)](#git-zero-byte-object-corruption-boot-death-mid-commit-2026-09-15)
 - [History-rewrite verification checklist](#history-rewrite-verification-checklist)
-- [GitHub push protection (GH013) — fixtures & unblock playbook](#github-push-protection-ignores-gitleaks-toml-allowlists)
+- [GitHub push protection (GH013) — fixtures & unblock playbook](#github-push-protection-ignores-gitleakstoml-allowlists)
 
 ## Git zero-byte object corruption (boot death mid-commit, 2026-09-15)
 

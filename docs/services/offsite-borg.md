@@ -24,7 +24,7 @@ secret yet (tracked as "Offsite Borg go-live inputs" in `docs/todo/storage.md`).
 The passphrase in `borg.yaml` is a real random value. Copy a recovery copy of
 it to whatever medium the owner picks (password manager / printed / split) —
 **without the passphrase the offsite repo is unrecoverable once this host is
-gone.** Read it with the Sops + Age one-liner (AGENTS.md); the
+gone.** Read it with the Sops + Age one-liner (docs/agents/secrets.md); the
 recovery-copy policy is still an open owner decision (`docs/todo/storage.md`).
 
 ## Go-live checklist (owner)
@@ -43,7 +43,7 @@ recovery-copy policy is still an open owner decision (`docs/todo/storage.md`).
    ```
 
 4. **Fill the sops placeholders** (`sops platforms/nixos/secrets/borg.yaml`,
-   as your user with the Sops + Age one-liner from AGENTS.md):
+   as your user with the Sops + Age one-liner from docs/agents/secrets.md):
    - `borg_repo`: `uXXXXX@uXXXXX.your-storagebox.de:backups/evo-x2`
    - `borg_known_hosts`: output of `ssh-keyscan -p 23 uXXXXX.your-storagebox.de`
      (pinning the host key = MITM fails loudly, github knownHosts doctrine).

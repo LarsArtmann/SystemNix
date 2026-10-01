@@ -7,7 +7,7 @@
 # scrub). It was EXECUTED once and fully succeeded — the emergency is over.
 #
 # Since 2026-08-22 p9 is the LIVE XFS ClickHouse store (label `clickhouse`,
-# see scripts/migrate-clickhouse-xfs.sh and AGENTS.md "Filesystems gotchas"):
+# see scripts/migrate-clickhouse-xfs.sh and docs/agents/storage.md "Filesystems gotchas"):
 # this script's PHASE 1 (`sgdisk -d 9`) would DESTROY that live partition.
 # The implementation is preserved in git history if ever needed.
 # ═══════════════════════════════════════════════════════════════════════════

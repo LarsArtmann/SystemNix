@@ -228,3 +228,10 @@ journalctl -u paperless-dashboard-provision.service -o cat --no-pager | tail -20
 - UI-saved values override env (`app_config.x or settings.X`) — settings-UI writes beat deploys
 - v3 filename format needs double-curly; trash dir via tmpfiles
 - VM test: `nix build .#checks.x86_64-linux.paperless --no-link --print-out-paths`
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

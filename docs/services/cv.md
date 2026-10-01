@@ -276,3 +276,10 @@ artifacts above are restorable round-trip-tested upstream).
   server restart signs the browser out, and `/pipeline` now says so honestly
   (server-rendered locked banner + sign-in link) instead of silently 401-ing
   its SSE/stats requests.
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

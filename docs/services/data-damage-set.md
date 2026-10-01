@@ -10,7 +10,7 @@ Consumes (never duplicates):
 - **Origin, repair plan, verification gates:** `docs/todo/storage.md` P0 row (T04–T08, blocked:user).
 - **New victims:** `docs/services/jan.md` → "Single-victim /data repair recipe" (this doc is now one
   of that recipe's live doc-sweep surfaces).
-- **Timeline:** `AGENTS.md` → BTRFS section → **"Snapshot-pinning doctrine"** (per-fs pin windows +
+- **Timeline:** `docs/agents/storage.md` → BTRFS section → **"Snapshot-pinning doctrine"** (per-fs pin windows +
   live tree table). This doc CITES that table; edit the doctrine there, never here, so the two cannot
   drift.
 - `docs/status/**` reports are point-in-time archives — history lives there, state lives here.
@@ -58,7 +58,7 @@ the residual is journal-era noise; the live walk is authoritative. Deletion need
 
 ## Snapshot-pinning timeline
 
-**Governing doctrine: `AGENTS.md` → BTRFS → "Snapshot-pinning doctrine" table** — /data pin window
+**Governing doctrine: `docs/agents/storage.md` → BTRFS → "Snapshot-pinning doctrine" table** — /data pin window
 ≈ 4–5 weeks (14d 4w retention, min 7d); `trash` on /data is a same-toplevel rename that frees
 NOTHING (the pin clock starts at trash-time / trash-empty). That table owns the windows; this
 section owns only the damage-set's position ON them:

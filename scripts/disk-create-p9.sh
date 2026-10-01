@@ -5,10 +5,10 @@
 # This script created p9 as a 100 GiB ext4 /rust-cache partition. That role
 # was retired 2026-08-16 (Rust targets moved to /mnt/buildcache + sccache).
 # Since 2026-08-22 p9 is the LIVE XFS ClickHouse store (label `clickhouse`,
-# see scripts/migrate-clickhouse-xfs.sh and AGENTS.md "Filesystems gotchas").
+# see scripts/migrate-clickhouse-xfs.sh and docs/agents/storage.md "Filesystems gotchas").
 #
 # Running the original logic (`sgdisk -d 9` + mkfs.ext4 on p9) would DESTROY
-# the live ClickHouse data partition — the exact footgun AGENTS.md warns
+# the live ClickHouse data partition — the exact footgun docs/agents/storage.md warns
 # about ("NEVER run the old `sudo sgdisk -d 9` deletion"). The implementation
 # is preserved in git history if ever needed for archaeology.
 # ═══════════════════════════════════════════════════════════════════════════

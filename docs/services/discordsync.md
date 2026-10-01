@@ -24,7 +24,7 @@ Values below are eval-proven against the evo-x2 topology; the upstream module de
 
 `discordsync-env` (sops template, owner `discordsync`, 0400): `DISCORD_TOKEN`, `TURSO_URL`, `TURSO_AUTH_TOKEN`, `DISCORDSYNC_WEBHOOK_URL`, and — when `services.discordsync.immich.enable` — `IMMICH_URL` + `IMMICH_API_KEY`. Raw values live in `platforms/nixos/secrets/discordsync.yaml` and `discordsync-immich.yaml`.
 
-**sops edits run as your user** with the SOPS_AGE_KEY one-liner (AGENTS.md, Sops + Age section). Plain `sudo sops` FAILS (root has no age identity).
+**sops edits run as your user** with the SOPS_AGE_KEY one-liner (docs/agents/secrets.md, Sops + Age section). Plain `sudo sops` FAILS (root has no age identity).
 
 ## Immich cross-archive comparison (`/lookup` page, ADR-062)
 
@@ -76,3 +76,10 @@ Rotation: repeat steps 2–3 (or just restart the verify unit after `sops --set`
 - Upstream `healthCheck` (ExecStartPost readiness gate) is malformed (three-colon URL) — disabled here; Gatus owns liveness
 - Always-on API server: `apiAddr` pinned to `127.0.0.1:8085` (upstream default `:8080` collides with SigNoz)
 - `discordsync-db-heal` and `discordsync-immich-verify` are indirect units (`is-enabled` rc=1) — deploy.sh carries failed-gated restarts for both
+
+---
+
+## Agent Notes (migrated from AGENTS.md 2026-10-01)
+
+Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
+

@@ -17,5 +17,5 @@ set -euo pipefail
 echo "ERROR: scripts/disk-diagnose.sh is RETIRED and refuses to run." >&2
 echo "       The 2026-06-26 p8/p9 overlap emergency is long resolved; p9 is now" >&2
 echo "       the live XFS ClickHouse store. See scripts/migrate-clickhouse-xfs.sh" >&2
-echo "       and AGENTS.md 'Filesystems gotchas'." >&2
+echo "       and docs/agents/storage.md 'Filesystems gotchas'." >&2
 exit 1
