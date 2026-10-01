@@ -63,6 +63,17 @@ let
       ];
     }).config.systemd.services.dnsblockd.serviceConfig.ExecStart;
 
+  ecsExec =
+    (inputs.self.nixosConfigurations.evo-x2.extendModules {
+      modules = [
+        {
+          services.dns-blocker.dnsEcsEnabled = true;
+          services.dns-blocker.dnsEcsIpv4PrefixLen = 24;
+          services.dns-blocker.dnsEcsIpv6PrefixLen = 56;
+        }
+      ];
+    }).config.systemd.services.dnsblockd.serviceConfig.ExecStart;
+
   # gate-timeout-audit pattern: force the variant's assertions and require
   # the one named by the message infix to be among the FAILED ones (message
   # strings are only coerced for failed assertions — short-circuit &&).
@@ -242,6 +253,27 @@ let
       ];
       msg = "cache-dir absolute-path assertion does not fire";
     }
+    {
+      ok = evox2.services.dns-blocker.dnsEcsEnabled == false;
+      msg = "dnsEcsEnabled must default to false (M16 ships inert — owner-gated privacy tradeoff)";
+    }
+    {
+      ok = evox2.services.dns-blocker.dnsEcsIpv4PrefixLen == 0 && evox2.services.dns-blocker.dnsEcsIpv6PrefixLen == 0;
+      msg = "ECS prefix lengths must default to 0 (upstream /24 and /56 defaults)";
+    }
+    {
+      ok = ecsExec != exec;
+      msg = "ECS options no longer feed the rendered config (phantom-option regression)";
+    }
+    {
+      ok = policyAssertionFires "within the address family" [
+        {
+          services.dns-blocker.dnsEcsEnabled = true;
+          services.dns-blocker.dnsEcsIpv4PrefixLen = 33;
+        }
+      ];
+      msg = "ECS prefix-range assertion does not fire (IPv4 >32 must be rejected)";
+    }
   ];
 
   failed = builtins.filter (c: !c.ok) checks;
@@ -257,17 +289,19 @@ else
     {
       # Interpolating exec pulls the config derivation (and its blocklist
       # dependencies) into this build — the greps run on the REAL file.
-      inherit exec policiesExec trialExec;
+      inherit exec policiesExec trialExec ecsExec;
     }
     ''
       CFG="''${exec#* -c }"
       PCFG="''${policiesExec#* -c }"
       TCFG="''${trialExec#* -c }"
+      ECFG="''${ecsExec#* -c }"
       fail() { echo "dns-blocker render content failure: $1"; exit 1; }
       [ -f "$CFG" ] || fail "rendered config not realized: $CFG"
       [ -f "$PCFG" ] || fail "variant config not realized: $PCFG"
       [ -f "$TCFG" ] || fail "trial variant config not realized: $TCFG"
-      ${pkgs.python3}/bin/python3 - "$CFG" "$PCFG" "$TCFG" <<'PYEOF' || fail "see python assert above"
+      [ -f "$ECFG" ] || fail "ecs variant config not realized: $ECFG"
+      ${pkgs.python3}/bin/python3 - "$CFG" "$PCFG" "$TCFG" "$ECFG" <<'PYEOF' || fail "see python assert above"
       import json, sys
       cfg = json.load(open(sys.argv[1]))
       assert cfg["allowlist_path"] == "/var/lib/dnsblockd/allowlist", "allowlist_path must point at the persistent state file"
@@ -279,6 +313,9 @@ else
       assert cfg["tracking_mode"] == "METADATA_ONLY", "tracking_mode must stay METADATA_ONLY until the owner flips it"
       assert "policies" not in cfg, "host config must omit the policies key while the list is empty (optionalAttrs guard)"
       assert cfg["dns_blocklist_cache_dir"] == "/var/lib/dnsblockd/blocklist-cache", "persistent URL-blocklist cache dir missing from host config (PrivateTmp outage guard)"
+      assert cfg["dns_ecs_enabled"] is False, "dns_ecs_enabled must default to false on the host (M16 inert gate)"
+      assert "dns_ecs_ipv4_prefix_len" not in cfg, "host config must omit ECS prefix lengths at 0 (upstream defaults apply)"
+      assert "dns_ecs_ipv6_prefix_len" not in cfg, "host config must omit ECS prefix lengths at 0 (upstream defaults apply)"
       assert "dns_blocklist_trial_urls" not in cfg, "host config must omit trial URLs while the list is empty (optionalAttrs guard)"
       pol = json.load(open(sys.argv[2]))
       p0 = pol["policies"][0]
@@ -291,7 +328,11 @@ else
       trial = json.load(open(sys.argv[3]))
       assert trial["dns_blocklist_trial_urls"] == ["https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt"], "trial URLs not rendered verbatim"
       assert trial["dns_blocklist_cache_dir"] == "/var/lib/dnsblockd/blocklist-cache", "trial variant lost the persistent cache dir"
+      ecs = json.load(open(sys.argv[4]))
+      assert ecs["dns_ecs_enabled"] is True, "ECS enable flag not rendered"
+      assert ecs["dns_ecs_ipv4_prefix_len"] == 24, "IPv4 ECS prefix not rendered verbatim"
+      assert ecs["dns_ecs_ipv6_prefix_len"] == 56, "IPv6 ECS prefix not rendered verbatim"
       print("content OK")
       PYEOF
-      echo "dns-blocker render: allowlist persistence, rate limit, log sampling, extraDomains belt, tracking gate, policies, trial blocklists OK" > $out
+      echo "dns-blocker render: allowlist persistence, rate limit, log sampling, extraDomains belt, tracking gate, policies, trial blocklists, ECS OK" > $out
     ''
