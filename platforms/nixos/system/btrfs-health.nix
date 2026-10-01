@@ -313,7 +313,11 @@ let
           # dark-coverage class. Slash-sanitized labels keep gatus pat()
           # globs legal.
           scrub_label=$(echo "$scrub_mnt" | awk '{gsub(/^\//, ""); gsub(/\//, "_"); if ($0 == "") print "root"; else print}')
-          scrub_started_raw=$(echo "$scrub_out" | awk '/^[Ss]crub started:/ {sub(/^[Ss]crub started:[[:space:]]*/, ""); print; exit}')
+          # "Scrub resumed:" too: btrfs-progs 7.1 prints it for a resumed
+          # scrub (binary-verified format strings — both start clean at
+          # column 0, no leading tab). Matching only "started:" would
+          # false-positive stale=1 on a resumed-and-finished fresh scrub.
+          scrub_started_raw=$(echo "$scrub_out" | awk '/^[Ss]crub (started|resumed):/ {sub(/^[Ss]crub (started|resumed):[[:space:]]*/, ""); print; exit}')
           if echo "$scrub_out" | grep -qE 'Status:.*running|still running'; then
             # Coverage is happening RIGHT NOW — the running scrub's status
             # output carries no previous-completion date; stale stays 0.
