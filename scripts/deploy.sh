@@ -693,11 +693,12 @@ if nix run .#pre-deploy-check; then
     sudo systemctl restart paperless-dashboard-provision.service 2>/dev/null || true
   fi
 
-  # Heal garbled btrbk receive targets at deploy time (before the next nightly
-  # window) — see snapshots.nix btrbk-pool-clean for why this must not race a
-  # live send. --no-block: the unit's After= ordering makes it WAIT behind any
-  # still-running 24h btrbk seed; a blocking restart would hang the deploy.
-  echo "Enqueueing btrbk-pool-clean.service (garbled-receive GC)"
+  # Heal garbled btrbk receive targets + prune retention-expired snapshots at
+  # deploy time (before the next nightly window) — see snapshots.nix
+  # btrbk-pool-clean for why this must not race a live send. --no-block: the
+  # unit's After= ordering makes it WAIT behind any still-running 24h btrbk
+  # seed; a blocking restart would hang the deploy.
+  echo "Enqueueing btrbk-pool-clean.service (garbled-receive GC + retention prune)"
   sudo systemctl start --no-block btrbk-pool-clean.service 2>/dev/null || true
 
   # Trigger the systemd-timer-monitor audit so the report is fresh after deploy.

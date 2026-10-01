@@ -540,7 +540,7 @@ in
         after = [ "btrfs-scrub@data.service" ];
       };
 
-      # ── btrbk clean: GC for garbled receive targets ────────────────────────
+      # ── btrbk clean + prune: garbled-receive GC + retention prune ──────────
       # `btrbk clean` is btrbk's sanctioned garbage collector for incomplete
       # (interrupted-receive) target subvolumes. It deletes ONLY subvolumes
       # whose receive never committed (no received_uuid) — never complete
@@ -553,12 +553,28 @@ in
       # clean unblocked the automatic nightly re-send, healing the chain) and
       # data.20260721T2330 (source long pruned → garbage removal only; the
       # /data seed itself still aborts on the known EIO inode, TODO P0).
+      #
+      # `btrbk prune` (added 2026-10-01, the 100%-full root incident): btrbk
+      # run prunes only AFTER its send phase, so every guard-stopped send
+      # since 2026-09-26 also skipped the prune phase — un-expired lingerers
+      # (@: 09-13/22..26 alone pinned ~102 GiB exclusive) drove the QLC root
+      # to 100% used with device-unallocated at 0%, the 2026-06-26
+      # metadata-ENOSPC precursor class. Running prune here nightly keeps the
+      # local tier bounded no matter how many sends die mid-storm. Safety,
+      # source-verified in btrbk 0.32.7 (bin/.btrbk-wrapped): the latest
+      # common snapshot per target is FORCE_PRESERVEd — send parents
+      # (@.20260927T2300, @home-hermes.20260925T2300 at fix time) can never
+      # be pruned while the target is reachable — and if ANY target aborts
+      # (pool detached) source cleanup is SKIPPED entirely, so prune is
+      # fail-safe both ways. The sudo allowlist already covers everything
+      # prune invokes (subvolume list/show/delete — the same commands the
+      # nightly run's own prune phase uses).
       # Timer 23:50 = after all three btrbk windows; After= holds the start
       # while a long seed (24h TimeoutStartSec) is still streaming, so clean
-      # never races a live receive. deploy.sh starts it --no-block post-switch
-      # so deploy-time heals land before the next nightly window.
+      # and prune never race a live receive. deploy.sh starts it --no-block
+      # post-switch so deploy-time heals land before the next nightly window.
       btrbk-pool-clean = {
-        description = "btrbk clean: delete incomplete (garbled) receive targets on the pool";
+        description = "btrbk clean+prune: garbled-receive GC + retention prune (source snapshots + pool backups)";
         unitConfig = {
           RequiresMountsFor = [ "/mnt/pool" ];
           After = [
@@ -571,6 +587,7 @@ in
           pkgs.btrbk
           pkgs.btrfs-progs
           pkgs.coreutils
+          pkgs.util-linux
         ];
         startLimitBurst = 3;
         startLimitIntervalSec = 3600;
@@ -596,10 +613,19 @@ in
           # Aggregate failures: one bad config must never mask the others.
           export PATH=/run/wrappers/bin:$PATH
           failed=0
-          for conf in root data pool; do
+          for conf in root data pool ${lib.optionalString forgejoDedicated "forgejo"}; do
+            if [ "$conf" = forgejo ] && ! mountpoint -q /mnt/hot; then
+              echo ":: skipping $conf (Samsung /mnt/hot detached — its snapshots live there; next fire retries)"
+              continue
+            fi
             echo ":: btrbk clean ($conf)"
             if ! btrbk -c /etc/btrbk/$conf.conf clean; then
               echo "ERROR: btrbk clean failed for $conf.conf" >&2
+              failed=1
+            fi
+            echo ":: btrbk prune ($conf)"
+            if ! btrbk -c /etc/btrbk/$conf.conf prune; then
+              echo "ERROR: btrbk prune failed for $conf.conf" >&2
               failed=1
             fi
           done
