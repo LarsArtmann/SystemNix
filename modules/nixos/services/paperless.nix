@@ -380,6 +380,18 @@ _: {
                 == (builtins.length (lib.unique (map (v: v.name) dcfg.savedViews)));
               message = "services.paperless-dashboard.savedViews: duplicate view names are not allowed (create-only convergence keys on the name)";
             }
+            {
+              # Drift guard: the `groups` role mapping is only meaningful if
+              # the group it keys on is actually declared in Pocket ID. Rename
+              # oidcAdminGroup (or drop provision.userGroups) and this fails
+              # eval instead of silently demoting every SSO login (the mapping
+              # is fail-closed).
+              assertion =
+                !(oidcEnabled && oidcProvisionEnabled)
+                || !(options ? services.pocket-id-config)
+                || builtins.any (g: g.name == oidcAdminGroup) config.services.pocket-id-config.provision.userGroups;
+              message = "services.paperless: OIDC superuser/staff group '${oidcAdminGroup}' is not declared in services.pocket-id-config.provision.userGroups";
+            }
           ];
         }
 

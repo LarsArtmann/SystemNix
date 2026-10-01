@@ -131,10 +131,15 @@ scan_file() {
 harvest_check() {
   local status_dir="${CHECK_TODO_STATUS_DIR:-$REPO_ROOT/docs/status}"
   [ -d "$status_dir" ] || return 0
-  local harvest_fail=0 unharvested=0 base blob
+  local harvest_fail=0 unharvested=0 base
   [ "${CHECK_TODO_HARVEST:-}" = "strict" ] && harvest_fail=1
-  # one grep-able blob of every citation surface
-  blob=$(cat "$TODO" "$REPO_ROOT"/docs/todo/[a-z0-9-]*.md 2>/dev/null)
+  # one grep-able blob of every citation surface, in a temp file: piping it
+  # through grep -q would SIGPIPE the printf under `set -o pipefail` the
+  # moment grep exits early on a match (success read as failure — 34 false
+  # positives in the first run of this check).
+  local blobfile
+  blobfile=$(mktemp)
+  cat "$TODO" "$REPO_ROOT"/docs/todo/[a-z0-9-]*.md 2>/dev/null >"$blobfile"
   # candidates: reports new enough for the convention (>= 2026-09-26) AND §f-bearing AND unmarked
   local candidates=() report
   while IFS= read -r report; do
@@ -144,18 +149,19 @@ harvest_check() {
     esac
     candidates+=("$report")
   done < <(grep -lE '^#+ *f[): ]|§f' "$status_dir"/2*.md 2>/dev/null | sort)
-  [ "${#candidates[@]}" -gt 0 ] || return 0
+  [ "${#candidates[@]}" -gt 0 ] || { rm -f "$blobfile"; return 0; }
   local unmarked=()
   while IFS= read -r report; do
     unmarked+=("$report")
   done < <(grep -LE 'HARVESTED|NOT HARVESTED|not harvested|harvest log' "${candidates[@]}" 2>/dev/null)
   for report in "${unmarked[@]}"; do
     base="${report##*/}"
-    if ! printf '%s\n' "$blob" | grep -qF "$base"; then
+    if ! grep -qF "$base" "$blobfile"; then
       unharvested=$((unharvested + 1))
       printf 'UNHARVESTED: %s carries an §f section, is cited by no queue/library surface, and has no harvest marker\n' "$base"
     fi
   done
+  rm -f "$blobfile"
   if [ "$unharvested" -gt 0 ]; then
     if [ "$harvest_fail" -eq 1 ]; then
       echo "FAIL: $unharvested unharvested §f-bearing report(s) — self-harvest at authoring or record why not (CHECK_TODO_HARVEST=strict)"
