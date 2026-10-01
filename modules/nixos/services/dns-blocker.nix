@@ -305,6 +305,7 @@ _: {
             dns_blocklists = blocklistPaths;
             dns_dnssec_enabled = cfg.enableDNSSEC;
             dns_ipv6_enabled = cfg.dnsIPv6Enabled;
+            dns_ecs_enabled = cfg.dnsEcsEnabled;
             dns_reload_interval = cfg.dnsReloadInterval;
             dns_block_ttl = cfg.dnsBlockTTL;
             dns_resolve_timeout = cfg.dnsResolveTimeout;
@@ -321,6 +322,12 @@ _: {
             # see the blocklistCacheDir option: an unset dir silently means
             # os.TempDir(), which PrivateTmp wipes on every restart.
             dns_blocklist_cache_dir = cfg.blocklistCacheDir;
+          }
+          // lib.optionalAttrs (cfg.dnsEcsIpv4PrefixLen != 0) {
+            dns_ecs_ipv4_prefix_len = cfg.dnsEcsIpv4PrefixLen;
+          }
+          // lib.optionalAttrs (cfg.dnsEcsIpv6PrefixLen != 0) {
+            dns_ecs_ipv6_prefix_len = cfg.dnsEcsIpv6PrefixLen;
           }
           // lib.optionalAttrs cfg.dnsTLSEnabled {
             dns_tls_enabled = true;
@@ -581,6 +588,41 @@ _: {
           type = types.bool;
           default = true;
           description = "Enable IPv6 upstream DNS resolution. Set to false on networks without global IPv6 (matches Unbound's do-ip6 = false).";
+        };
+
+        dnsEcsEnabled = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Attach an EDNS Client Subnet (ECS) option to forwarded queries,
+            masked to the configured prefix length (upstream never forwards
+            the client's full IP). INERT by default (owner nod 2026-09-30):
+            enabling trades privacy for CDN geo-routing accuracy — the
+            forwarder (or authoritative server) learns the client's /24
+            (IPv4) or /56 (IPv6) network locality instead of the resolver's
+            address. Only worth enabling when recursive answers visibly
+            geo-miss (e.g. CDN nodes continents away).
+          '';
+        };
+
+        dnsEcsIpv4PrefixLen = mkOption {
+          type = types.int;
+          default = 0;
+          description = ''
+            IPv4 ECS prefix length. 0 (default) keeps upstream's /24 —
+            the RFC 7871 sweet spot: one more bit would pin the client
+            to a single address; fewer bits blur geo-routing gains.
+          '';
+        };
+
+        dnsEcsIpv6PrefixLen = mkOption {
+          type = types.int;
+          default = 0;
+          description = ''
+            IPv6 ECS prefix length. 0 (default) keeps upstream's /56 —
+            a typical end-site allocation (RFC 6177), matching the /24
+            IPv4 choice in specificity.
+          '';
         };
 
         dnsReloadInterval = mkOption {
@@ -997,6 +1039,16 @@ _: {
             # Upstream errInvalidBlocklistCacheDir.
             assertion = cfg.blocklistCacheDir == "" || lib.hasPrefix "/" cfg.blocklistCacheDir;
             message = "services.dns-blocker.blocklistCacheDir must be an absolute path (a relative path would silently land outside persisted storage).";
+          }
+          {
+            # Upstream ecs.go masks client IPs to the prefix length; a
+            # prefix past the address family's bit length is nonsense
+            # config (ipv4BitLength 32 / ipv6BitLength 128). No
+            # config-level validation upstream — fail at eval instead.
+            assertion =
+              (cfg.dnsEcsIpv4PrefixLen == 0 || (cfg.dnsEcsIpv4PrefixLen >= 1 && cfg.dnsEcsIpv4PrefixLen <= 32))
+              && (cfg.dnsEcsIpv6PrefixLen == 0 || (cfg.dnsEcsIpv6PrefixLen >= 1 && cfg.dnsEcsIpv6PrefixLen <= 128));
+            message = "services.dns-blocker ECS prefix lengths must be 0 (upstream default) or within the address family (IPv4 1-32, IPv6 1-128).";
           }
         ];
 
