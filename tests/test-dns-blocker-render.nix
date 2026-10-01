@@ -388,5 +388,5 @@ else
       assert h3["tls_port"] == 443, "h3 variant lost the default tls_port (QUIC terminates on the same port number)"
       print("content OK")
       PYEOF
-      echo "dns-blocker render: allowlist persistence, rate limit, log sampling, extraDomains belt, tracking gate, policies, trial blocklists, ECS OK" > $out
+      echo "dns-blocker render: allowlist persistence, rate limit, log sampling, extraDomains belt, tracking gate, policies, trial blocklists, ECS, h3 OK" > $out
     ''
