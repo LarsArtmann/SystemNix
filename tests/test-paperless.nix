@@ -73,6 +73,17 @@ let
           type = lib.types.bool;
           default = false;
         };
+        # The SSO group mapping (deab8469) appends a userGroups entry and
+        # reads the admin username when OIDC provisioning is on — declare
+        # both leaves so the mkIf'd definition lands somewhere in the mock.
+        provision.userGroups = lib.mkOption {
+          type = lib.types.listOf lib.types.attrs;
+          default = [ ];
+        };
+        provision.adminUser.username = lib.mkOption {
+          type = lib.types.str;
+          default = "vm-admin";
+        };
       };
     };
 
