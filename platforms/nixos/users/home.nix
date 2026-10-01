@@ -17,6 +17,34 @@ let
   # buildcache-usb-recovery step 2.5; never keep a private name copy here).
   reapNames = import ../../../lib/buildcache-cache-names.nix lib;
 
+  # Every home.file mkOutOfStoreSymlink into /mnt/buildcache (see home.file
+  # below). The reap inventories in scripts/lib/buildcache-reap-names.sh
+  # MUST cover all of them — a symlink added without a reap entry recreates
+  # the 2026-09-22 drift bug (a dead-mount real-dir occupant aborts the next
+  # HM activation at checkLinkTargets). Eval-asserted below.
+  buildcacheSymlinkPaths = [
+    ".cache/goimports"
+    ".cache/go"
+    ".cache/go-build"
+    ".local/share/pnpm/store"
+    ".cache/pnpm"
+    ".local/state/pnpm"
+    ".cargo/registry"
+  ];
+  buildcacheReapMissing = lib.flatten (
+    map (
+      path:
+      lib.optional (
+        !(
+          if lib.hasPrefix ".cache/" path then
+            lib.elem (lib.removePrefix ".cache/" path) reapNames.cacheDirs
+          else
+            lib.elem path reapNames.homeRelDirs
+        )
+      ) path
+    ) buildcacheSymlinkPaths
+  );
+
   # Niri session manager app lists + invariant checker — single source of
   # truth lives in ./niri-session-manager-apps.nix (also consumed by the
   # pure-eval CI guard test tests/test-niri-session-config.nix). The TOML
@@ -930,10 +958,21 @@ in
   # Niri session manager invariants (2026-08-31 terminal-storm class).
   # Same checker as tests/test-niri-session-config.nix — fires at
   # eval/build time so the config lists can never silently rot.
-  assertions = map (message: {
-    assertion = false;
-    inherit message;
-  }) (nsmApps.mkInvariantViolations nsmApps);
+  assertions =
+    map
+      (message: {
+        assertion = false;
+        inherit message;
+      })
+      (
+        nsmApps.mkInvariantViolations nsmApps
+        ++ map (
+          path:
+          "home.nix buildcache symlink ${path} is missing from "
+          + "scripts/lib/buildcache-reap-names.sh — add it to the matching "
+          + "reap list or the dead-mount real-dir reap cannot converge it"
+        ) buildcacheReapMissing
+      );
 
   # Qt settings for consistency with GTK.
   # NEVER use gtk2 here: the gtk2 Qt platform/theme plugins are Qt5-only —
