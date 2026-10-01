@@ -28,8 +28,11 @@ Docs: `docs/agents/storage.md` backup-tier bullet rewritten (clean+prune semanti
 
 ```bash
 # outside 23:00–23:50, pool mounted (it is):
-sudo btrbk -c /etc/btrbk/root.conf prune --dryrun   # preview: expect @ 13/22/23/24/26 + hermes 16/22/23/24/26 deleted
-sudo btrbk -c /etc/btrbk/root.conf prune             # execute
+# NOTE: dry-run is a GLOBAL option and must come BEFORE the action — args
+# after "prune" are subvolume filters; "… prune --dryrun" errors "Unknown
+# option" (live 2026-10-01, harmless — nothing executed). Spelling: --dry-run.
+sudo btrbk --dry-run -c /etc/btrbk/root.conf prune  # preview: expect @ 13/22/23/24/25/26 + hermes 16/22/23/24/26 deleted
+sudo btrbk -c /etc/btrbk/root.conf prune            # execute
 df -h /                                              # climbs as the cleaner reclaims (async)
 ```
 
