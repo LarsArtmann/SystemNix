@@ -54,6 +54,9 @@ sudo nix run .#migrate-hot-db -- cutover <name>
 nix run .#deploy
 # 6. Verify + restart everything + functional probes:
 sudo nix run .#migrate-hot-db -- finalize <name>
+#    Then confirm monitoring sees the mount (node_exporter textfile, fail-closed
+#    = an ABSENT metric means the collector failed, never phantom-green):
+#    curl -s --compressed http://127.0.0.1:9100/metrics | grep -F 'hot_db_entry_mounted{name="<name>"} 1'
 ```
 
 `migrate-hot-db.sh status` prints per-entry subvol/mountpoint/marker state.
