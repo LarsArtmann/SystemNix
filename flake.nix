@@ -2184,6 +2184,155 @@
                   cp validate.log $out
                 '';
 
+              # 2026-10-01 plan P2 #5: the scrub-staleness gauges parse
+              # `btrfs scrub status` text — a format that CHANGED across
+              # btrfs-progs eras (7.1 prints "Scrub started:    %s" AND
+              # "Scrub resumed:    %s" for resumed scrubs, both binary-
+              # verified to start at column 0). A pattern regression here
+              # degrades silently: stale flips to 1 (phantom red) or never
+              # flips (dark coverage). This fixture runs the REAL rendered
+              # collector against a stub `btrfs` serving synthetic status
+              # output for the five semantic branches + the fail-closed
+              # absence branch. Output paths are sed-redirected to a
+              # scratch dir (the real textfile dir needs root for the
+              # final rename-over); the sed touches ONLY hardcoded paths
+              # and the PATH export.
+              btrfs-scrub-staleness-fixture =
+                let
+                  sys = inputs.self.nixosConfigurations.evo-x2;
+                  collector = sys.config.systemd.services.btrfs-health.serviceConfig.ExecStart;
+                in
+                pkgs.runCommand "btrfs-scrub-staleness-fixture"
+                  {
+                    nativeBuildInputs = with pkgs; [
+                      bash
+                      coreutils-full
+                      gnugrep
+                      gnused
+                      gawk
+                    ];
+                  }
+                  ''
+                    set -euo pipefail
+                    FIX=$(mktemp -d)
+                    mkdir -p "$FIX/bin" "$FIX/fixtures" "$FIX/out"
+
+                    cat > "$FIX/bin/btrfs" <<STUBEOF
+                    #!${pkgs.bash}/bin/bash
+                    set -uo pipefail
+                    cmd="''${1:-}"; sub="''${2:-}"; mnt="''${3:-}"
+                    if [ "$cmd" = "scrub" ] && [ "$sub" = "status" ]; then
+                      if [ -f "$FIX/fixtures/root.fails" ] && [ "$mnt" = "/" ]; then exit 1; fi
+                      case "$mnt" in
+                        /) cat "$FIX/fixtures/root.txt" ;;
+                        /data) cat "$FIX/fixtures/data.txt" ;;
+                        *) exit 1 ;;
+                      esac
+                      exit 0
+                    fi
+                    exit 0
+                    STUBEOF
+                    chmod +x "$FIX/bin/btrfs"
+
+                    sed \
+                      -e "s#^export PATH=\"#export PATH=\"$FIX/bin:#" \
+                      -e "s#/var/lib/prometheus-node-exporter/textfile_collectors#$FIX/textfile#g" \
+                      -e "s#/var/lib/btrfs-health#$FIX/state-root#g" \
+                      -e "s#/var/lib/memory-emergency-guard/churn-stopped#$FIX/churn-stopped#g" \
+                      ${collector} > "$FIX/out/run.sh"
+                    chmod +x "$FIX/out/run.sh"
+                    bash -n "$FIX/out/run.sh"
+
+                    ctime() { date -d "$1" '+%a %b %e %H:%M:%S %Y'; }
+                    write_fixture() { # <file> <kind>
+                      local f="$FIX/fixtures/$1" kind="$2" verb="started"
+                      [ "$kind" = "resumed-fresh" ] && verb="resumed"
+                      local d="2 days ago"
+                      case "$kind" in
+                        finished-old) d="11 days ago" ;;
+                        running) d="10 minutes ago" ;;
+                      esac
+                      case "$kind" in
+                        unparseable)
+                          printf 'UUID:             f\nScrub device:     /dev/fixture (devid 1)\nScrub started:    GARBAGE NOT A DATE\nStatus:           finished\nDuration:         0:02:15\n' > "$f" ;;
+                        never)
+                          printf 'UUID:             f\nScrub device:     /dev/fixture (devid 1)\nScrub started:    Never started\n' > "$f" ;;
+                        running)
+                          printf 'UUID:             f\nScrub device:     /dev/fixture (devid 1)\nScrub started:    %s\nStatus:           running\nDuration:         0:01:23 (still running)\n' "$(ctime "$d")" > "$f" ;;
+                        *)
+                          printf 'UUID:             f\nScrub device:     /dev/fixture (devid 1)\nScrub %s:    %s\nStatus:           finished\nDuration:         0:02:15\nTotals:           scrubbed 3.00 GiB with 0 errors\n' "$verb" "$(ctime "$d")" > "$f" ;;
+                      esac
+                    }
+
+                    FAILS=0
+                    expect() { # <desc> <egrep-pattern> [invert]
+                      local desc="$1" pat="$2" inv="''${3:-}"
+                      if [ "$inv" = "invert" ]; then
+                        if grep -qE "$pat" "$FIX/out/btrfs.prom" 2>/dev/null; then
+                          echo "FAIL (unexpected match): $desc"; FAILS=$((FAILS+1))
+                        else
+                          echo "PASS: $desc"
+                        fi
+                      elif grep -qE "$pat" "$FIX/out/btrfs.prom" 2>/dev/null; then
+                        echo "PASS: $desc"
+                      else
+                        echo "FAIL (missing match): $desc"; FAILS=$((FAILS+1))
+                      fi
+                    }
+                    run_collector() {
+                      "$FIX/out/run.sh" >/dev/null 2>&1 || true
+                      grep -E 'btrfs_scrub_(stale|last_completed|staleness_parse_errors)' "$FIX/out/btrfs.prom" || true
+                    }
+
+                    echo "=== Run A: root=finished-old(11d) data=finished-fresh(2d) ==="
+                    write_fixture root.txt finished-old
+                    write_fixture data.txt finished-fresh
+                    run_collector
+                    expect "root stale=1" 'btrfs_scrub_stale\{mount="root"\} 1'
+                    expect "root last_completed nonzero" 'btrfs_scrub_last_completed_seconds\{mount="root"\} [1-9]'
+                    expect "data stale=0" 'btrfs_scrub_stale\{mount="data"\} 0'
+                    expect "data last_completed nonzero" 'btrfs_scrub_last_completed_seconds\{mount="data"\} [1-9]'
+                    expect "parse_errors=0" 'btrfs_scrub_staleness_parse_errors 0'
+
+                    echo "=== Run B: root=resumed-fresh data=running ==="
+                    write_fixture root.txt resumed-fresh
+                    write_fixture data.txt running
+                    run_collector
+                    expect "resumed root stale=0 (btrfs-progs prints Scrub resumed:)" 'btrfs_scrub_stale\{mount="root"\} 0'
+                    expect "resumed root last_completed nonzero" 'btrfs_scrub_last_completed_seconds\{mount="root"\} [1-9]'
+                    expect "running data stale=0" 'btrfs_scrub_stale\{mount="data"\} 0'
+                    expect "running data last_completed=0" 'btrfs_scrub_last_completed_seconds\{mount="data"\} 0'
+                    expect "parse_errors=0" 'btrfs_scrub_staleness_parse_errors 0'
+
+                    echo "=== Run C: root=unparseable-finished data=never-started ==="
+                    write_fixture root.txt unparseable
+                    write_fixture data.txt never
+                    run_collector
+                    expect "parse_errors=1 (fails loud, not silent 0)" 'btrfs_scrub_staleness_parse_errors 1'
+                    expect "unparseable root stale=0 (parse_errors owns the failure)" 'btrfs_scrub_stale\{mount="root"\} 0'
+                    expect "unparseable root last_completed=0" 'btrfs_scrub_last_completed_seconds\{mount="root"\} 0'
+                    expect "never-started data stale=1" 'btrfs_scrub_stale\{mount="data"\} 1'
+                    expect "never-started data last_completed=0" 'btrfs_scrub_last_completed_seconds\{mount="data"\} 0'
+
+                    echo "=== Run D: root scrub-status FAILS data=finished-fresh ==="
+                    touch "$FIX/fixtures/root.fails"
+                    write_fixture root.txt finished-fresh
+                    write_fixture data.txt finished-fresh
+                    run_collector
+                    expect "data stale=0 still emitted" 'btrfs_scrub_stale\{mount="data"\} 0'
+                    expect "root stale line ABSENT (fail-closed; gatus presence condition owns it)" 'btrfs_scrub_stale\{mount="root"\}' invert
+                    expect "root last_completed ABSENT" 'btrfs_scrub_last_completed_seconds\{mount="root"\}' invert
+                    rm -f "$FIX/fixtures/root.fails"
+
+                    if [ "$FAILS" -gt 0 ]; then
+                      echo "FAIL: $FAILS assertion(s) failed; last btrfs.prom:"
+                      cat "$FIX/out/btrfs.prom" || true
+                      exit 1
+                    fi
+                    echo "OK: all scrub-staleness fixture assertions passed"
+                    touch $out
+                  '';
+
               # The pre-commit hook's shellcheck leg is the stricter bar
               # (warning; CI's shellcheck job is error-level) but only fires
               # on STAGED files — this fixture proves it end-to-end so
