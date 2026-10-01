@@ -5,8 +5,7 @@
   inputs,
   lib,
   ...
-}:
-let
+}: let
   inherit (import ../../../lib/default.nix lib) ports;
   theme = import ../../common/theme.nix;
 
@@ -35,8 +34,7 @@ let
     templcomponents = "https://templcomponents.lars.software";
     learnings = "https://lars-learnings.web.app";
   };
-in
-{
+in {
   imports = [
     # Import common packages shared with macOS
     ../../common/packages/base.nix
@@ -354,7 +352,7 @@ in
     # benefit when launched outside the FHS namespace.
     programs.nix-ld = {
       enable = true;
-      libraries = [ pkgs.vulkan-loader ];
+      libraries = [pkgs.vulkan-loader];
     };
 
     fonts.fontconfig.defaultFonts = {
@@ -370,7 +368,7 @@ in
         "DejaVu Serif"
         "Noto Serif"
       ];
-      emoji = [ "Noto Color Emoji" ];
+      emoji = ["Noto Color Emoji"];
     };
 
     # Experimental features
@@ -390,9 +388,11 @@ in
       interval = "10m";
       timeout = "12m";
       sourceURLs = visionreviewdSites;
-      projects = builtins.mapAttrs (site: _: [
-        "/home/${config.users.primaryUser}/.local/share/vision-review-agent/screenshots/${site}/*.png"
-      ]) visionreviewdSites;
+      projects =
+        builtins.mapAttrs (site: _: [
+          "/home/${config.users.primaryUser}/.local/share/vision-review-agent/screenshots/${site}/*.png"
+        ])
+        visionreviewdSites;
     };
 
     services = {
@@ -488,7 +488,7 @@ in
       # dnsblockd → pocket-id → browser-history → discordsync).
       hot-db = {
         enable = true;
-        entries = { };
+        entries = {};
       };
       # User cache subvolumes → Samsung TLC (2026-09-18/19 IO-audit
       # relocation): the nix fetch cache (~8.7 G gitv3+tarballs) leaves the
@@ -563,43 +563,41 @@ in
       github-auto-assign.enable = true;
       browser-policies = {
         enable = true;
-        chromiumExtensions =
-          let
-            ext = id: name: { inherit id name; };
-          in
-          [
-            # Privacy / Content Blocking
-            (ext "cjpalhdlnbpafiamejdnhcphjbkeiagm" "uBlock Origin")
-            # Secrets — ID must stay in sync with allowed_origins in
-            # platforms/common/programs/keepassxc.nix (native messaging)
-            (ext "oboonakemofpalcgghocfoadofidjkkk" "KeePassXC-Browser")
-            # Productivity
-            (ext "chphlpgkkbolifaimnlloiipkdnihall" "OneTab")
-            # Time Tracking
-            (ext "nglaklhklhcoonedhgnpgddginnjdadi" "ActivityWatch Web Watcher")
-            # Email
-            (ext "oeopbcgkkoapgobdbedcemjljbihmemj" "Checker Plus for Gmail")
-            # YouTube
-            (ext "ckagfhpboagdopichicnebandlofghbc" "YouTube Shorts Blocker")
-            (ext "bbeaicapbccfllodepmimpkgecanonai" "BlockTube")
-            (ext "mnjggcdmjocbbbhaepdhchncahnbgone" "SponsorBlock for YouTube")
-            (ext "enamippconapkdmgfgjchkhakpfinmaj" "DeArrow - Better Titles and Thumbnails")
-            (ext "hdannnflhlmdablckfkjpleikpphncik" "YouTube Playback Speed Control")
-            (ext "pgpdaocammeipkkgaeelifgakbhjoiel" "YouTube Full Title For Videos")
-            # GitHub
-            (ext "hlepfoohegkhhmjieoechaddaejaokhf" "Refined GitHub")
-            (ext "nbiddhncecgemgccalnoanpnenalmkic" "GitHub Issue Link Status")
-            (ext "ocfdgncpifmegplaglcnglhioflaimkd" "GitHub Better Line Counts")
-            (ext "pemednoikdemhakcchcmjlckmepoighb" "GitHub Milestones Timeline")
-            (ext "ialbpcipalajnakfondkflpkagbkdoib" "Lovely forks")
-            # Development Tools
-            (ext "fmkadmapgofadopljbjfkapdkoienihi" "React Developer Tools")
-            (ext "jabopobgcpjmedljpbcaablpmlmfcogm" "WhatFont")
-            # Translation
-            (ext "cofdbpoegempjloogbagkncekinflcnj" "DeepL: translate and write with AI")
-            # Social / Content
-            (ext "iffnacikcgjlndahdgnckeekdefoafbn" "Reddit Image Opener")
-          ];
+        chromiumExtensions = let
+          ext = id: name: {inherit id name;};
+        in [
+          # Privacy / Content Blocking
+          (ext "cjpalhdlnbpafiamejdnhcphjbkeiagm" "uBlock Origin")
+          # Secrets — ID must stay in sync with allowed_origins in
+          # platforms/common/programs/keepassxc.nix (native messaging)
+          (ext "oboonakemofpalcgghocfoadofidjkkk" "KeePassXC-Browser")
+          # Productivity
+          (ext "chphlpgkkbolifaimnlloiipkdnihall" "OneTab")
+          # Time Tracking
+          (ext "nglaklhklhcoonedhgnpgddginnjdadi" "ActivityWatch Web Watcher")
+          # Email
+          (ext "oeopbcgkkoapgobdbedcemjljbihmemj" "Checker Plus for Gmail")
+          # YouTube
+          (ext "ckagfhpboagdopichicnebandlofghbc" "YouTube Shorts Blocker")
+          (ext "bbeaicapbccfllodepmimpkgecanonai" "BlockTube")
+          (ext "mnjggcdmjocbbbhaepdhchncahnbgone" "SponsorBlock for YouTube")
+          (ext "enamippconapkdmgfgjchkhakpfinmaj" "DeArrow - Better Titles and Thumbnails")
+          (ext "hdannnflhlmdablckfkjpleikpphncik" "YouTube Playback Speed Control")
+          (ext "pgpdaocammeipkkgaeelifgakbhjoiel" "YouTube Full Title For Videos")
+          # GitHub
+          (ext "hlepfoohegkhhmjieoechaddaejaokhf" "Refined GitHub")
+          (ext "nbiddhncecgemgccalnoanpnenalmkic" "GitHub Issue Link Status")
+          (ext "ocfdgncpifmegplaglcnglhioflaimkd" "GitHub Better Line Counts")
+          (ext "pemednoikdemhakcchcmjlckmepoighb" "GitHub Milestones Timeline")
+          (ext "ialbpcipalajnakfondkflpkagbkdoib" "Lovely forks")
+          # Development Tools
+          (ext "fmkadmapgofadopljbjfkapdkoienihi" "React Developer Tools")
+          (ext "jabopobgcpjmedljpbcaablpmlmfcogm" "WhatFont")
+          # Translation
+          (ext "cofdbpoegempjloogbagkncekinflcnj" "DeepL: translate and write with AI")
+          # Social / Content
+          (ext "iffnacikcgjlndahdgnckeekdefoafbn" "Reddit Image Opener")
+        ];
       };
       steam-config.enable = true;
       discordsync = {
@@ -939,7 +937,7 @@ in
         # detector cannot exclude it structurally — it is legitimately
         # inactive after seeding the secret. Fixing the Type belongs to the
         # searxng module (services todo).
-        enabledInactiveAllowlist = [ "searxng-secret-key.service" ];
+        enabledInactiveAllowlist = ["searxng-secret-key.service"];
       };
 
       # 2026-08-22 kernel-freeze prevention: stops the FastFlowLM backend
@@ -1010,6 +1008,12 @@ in
       # evo-x2 dies, its host key dies with it and the events stay encrypted.
       bank-sync = {
         enable = true;
+        # Weekly statement/receipt archival into paperless. Zero-secret
+        # go-live 2026-10-01: the DRF token is runtime-minted (idempotent
+        # drf_create_token, tmpfs-only) by bank-sync-paperless-token — no
+        # paste-into-sops step, so enabling is safe (the old enable-gating
+        # existed only to block 401s from a PLACEHOLDER sops token).
+        paperlessArchive.enable = true;
       };
 
       # tq agent pool — go-taskqueue dogfood (ROUND8 plan): harvests
@@ -1082,7 +1086,7 @@ in
       overview = {
         enable = true;
         port = ports.overview;
-        searchPaths = [ "/home/${config.users.primaryUser}/projects" ];
+        searchPaths = ["/home/${config.users.primaryUser}/projects"];
         logLevel = "info";
         # Daemon architecture: overview delegates all discovery to the
         # project-discovery daemon over the unix socket. It never touches the
@@ -1102,7 +1106,7 @@ in
       # are group-managed (then tighten to 0660).
       project-discovery-daemon = {
         enable = true;
-        searchPaths = [ "/home/${config.users.primaryUser}/projects" ];
+        searchPaths = ["/home/${config.users.primaryUser}/projects"];
         cacheTTL = "24h";
         socketMode = "0666";
         extraEnvironment = {
@@ -1300,10 +1304,10 @@ in
       # SSH server with hardening (from nix-ssh-config)
       ssh-server = {
         enable = true;
-        allowUsers = [ config.users.primaryUser ];
+        allowUsers = [config.users.primaryUser];
         passwordAuthentication = false;
         allowRootLogin = false;
-        authorizedKeys = [ nix-ssh-config.sshKeys.lars ];
+        authorizedKeys = [nix-ssh-config.sshKeys.lars];
       };
 
       # Declarative Forgejo repository mirroring
@@ -1344,7 +1348,7 @@ in
       projects-management-automation = {
         enable = true;
         mode = "active"; # git auto-commit ENABLED — discovery daemon co-located
-        paths = [ "/home/${config.users.primaryUser}/projects" ];
+        paths = ["/home/${config.users.primaryUser}/projects"];
         excludePaths = [
           "/home/${config.users.primaryUser}/projects/forks"
           "/home/${config.users.primaryUser}/projects/archived"
