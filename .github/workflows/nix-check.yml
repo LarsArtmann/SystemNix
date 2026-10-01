@@ -156,6 +156,15 @@ jobs:
       - name: GOTOOLCHAIN guard selftest
         run: scripts/test-gotoolchain-guard.sh
 
+      # Living-docs link/anchor checker: selftest pins the checker's own
+      # contract (GitHub slug semantics, fence immunity, SIGPIPE safety);
+      # the full scan backstops daemon-swept commits, which bypass the
+      # pre-commit markdown leg (documented bypass class, 2026-09-28).
+      - name: Living-docs link check (selftest + scan)
+        run: |
+          scripts/check-doc-links.sh --selftest
+          scripts/check-doc-links.sh
+
       - name: Flake input hygiene (ref=master + GOTOOLCHAIN)
         run: |
           # Fail on GOTOOLCHAIN=auto (sandbox purity violation)

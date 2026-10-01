@@ -29,6 +29,7 @@ LIVING_DOCS=(
   ROADMAP.md
   CHANGELOG.md
   AGENTS.md
+  docs/README.md
   docs/CONTRIBUTING.md
   docs/gotchas-archive.md
   docs/agents/*.md
