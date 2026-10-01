@@ -43,4 +43,3 @@
 - **Runtime is `bun src/cli/qmd.ts`** through the wrapper (node never runs the CLI directly — the old "spawn node ENOENT" crash class is gone). GPU is auto-probed; CPU default is fine for the 300M-1.7B models. `QMD_FORCE_CPU=1` / `QMD_LLAMA_GPU` override
 - **User-local state:** collections in `~/.config/qmd/index.yml`, index+models in `~/.cache/qmd` (3 GGUF models, ~2 GB total, auto-download on first semantic search; BM25 `qmd search` works model-free). Onboarding a corpus: `qmd collection add <dir> --name x && qmd update && qmd embed`
 - **Crush picks up new MCP entries only on session restart** — after a deploy that changes crushrc, already-running sessions keep the old MCP set
-

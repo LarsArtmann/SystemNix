@@ -56,9 +56,10 @@ Nothing is fucked up — nothing shipped broken, no data at risk, tree eval-gree
 
 ## f) Up to 50 things to get done next
 
-*Sources: strictly this session's observations (checker output, rows read while editing, my own chain). Harvest disposition per item. Items already queued elsewhere are listed here as pointers, NOT re-queued (no duplicate rows).*
+_Sources: strictly this session's observations (checker output, rows read while editing, my own chain). Harvest disposition per item. Items already queued elsewhere are listed here as pointers, NOT re-queued (no duplicate rows)._
 
 **A. This session's direct chain (harvested/queued already):**
+
 1. Deploy + verify first archival run (both units result=success, docs in paperless) — `blocked:deploy`, queued.
 2. **bank-sync-paperless post-deploy smoke probe** in post-deploy-check.sh — `[ready]`, harvested into queue + services.md this session.
 3. Archival success-side observability (last-archival-age metric + Gatus) — deliberately not harvested (owner call after first run, c3).
@@ -126,4 +127,4 @@ Nothing is fucked up — nothing shipped broken, no data at risk, tree eval-gree
 
 ---
 
-*Report authoring per status-report skill; .md override honored per explicit user instruction. No manual commit performed (harness contract) — the auto-commit daemon picks this file up.*
+_Report authoring per status-report skill; .md override honored per explicit user instruction. No manual commit performed (harness contract) — the auto-commit daemon picks this file up._

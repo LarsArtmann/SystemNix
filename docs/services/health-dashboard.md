@@ -88,4 +88,3 @@ Knowledge below moved verbatim from the root AGENTS.md restructure — it is the
 - **Fetch load is a live decision:** merge-on-read at the default 2s push cadence ≈ 43k requests/remote/day per remote. First remote = CV (`127.0.0.1:${ports.cv}/health`); adding remotes is one `remotes = [ ... ]` line + re-deploy. Exposing cadence/timeout as module options is parked in TODO_LIST.
 - **Homepage tile icon is an MDI string** (`mdi-heart-pulse`) like every other module — a guessed `*.png` filename silently renders a broken/blank tile (caught in the 2026-09-19 harvest).
 - **Upstream coupling:** the hub binary needs go ≥ 1.27.1 (upstream floor) and its `federation` dependency is consumed from go-health master until v0.3.0 is tagged (re-pin parked in go-health-dashboard TODO_LIST). The deployed binary stamps its build rev on startup (`build <rev>` log line) — verify it matches the lock rev after deploy.
-

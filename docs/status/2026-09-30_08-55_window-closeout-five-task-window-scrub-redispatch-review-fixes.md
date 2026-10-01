@@ -3,13 +3,13 @@
 **Date:** 2026-09-30 08:55 CEST (`date` measured at session start)
 **Window tasks:**
 
-| Task ID | What it was | Landing commit | Close-out report |
-| --- | --- | --- | --- |
-| `000001a0eaf255cff90e3b85a22accf257e2` | Scrub-stop-phantom re-dispatch (verification-only; fix pre-landed by daemon batches) | `7e203ff9` | `docs/status/2026-09-29_23-20_task-000001a0eaf255cff90e3b85a22accf257e2.md` |
-| `000001a0ef17061c3d535dd0d65b00000000` | `btrfs-scrub@-`/`@data` exit-1 FAILED state close-out (re-verification only; fix landed `c7d4795b` earlier) | `2e6f579a` | `docs/status/2026-09-30_00-42_task-000001a0ef17061c3d535dd0d65b00000000.md` |
-| `000001a0ef696dedbc174971daa200000000` | Review fix: 00-42 report's §f.7 contradicted its own §a.4 (+ stale line cite) | `d0fe7a01` | `docs/status/2026-09-30_01-15_task-000001a0ef696dedbc174971daa200000000.md` |
-| `000001a0ef4039417bc0974a175500000000` | Review fix (2nd dispatch): re-land the 23-20 pipeline library pair deleted by daemon batch `d22ccd48` | `e0cb141a` | `docs/status/2026-09-30_08-05_task-000001a0ef4039417bc0974a175500000000.md` |
-| `000001a0ef4039f5828be9fccc8600000000` | Review fix: 23-20 report lacked the re-dispatch protocol's sweep-scope statement | `027d2947` (fix `382ab696`) | `docs/status/2026-09-30_08-32_task-000001a0ef4039f5828be9fccc8600000000.md` |
+| Task ID                                | What it was                                                                                                 | Landing commit              | Close-out report                                                            |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------- | --------------------------------------------------------------------------- |
+| `000001a0eaf255cff90e3b85a22accf257e2` | Scrub-stop-phantom re-dispatch (verification-only; fix pre-landed by daemon batches)                        | `7e203ff9`                  | `docs/status/2026-09-29_23-20_task-000001a0eaf255cff90e3b85a22accf257e2.md` |
+| `000001a0ef17061c3d535dd0d65b00000000` | `btrfs-scrub@-`/`@data` exit-1 FAILED state close-out (re-verification only; fix landed `c7d4795b` earlier) | `2e6f579a`                  | `docs/status/2026-09-30_00-42_task-000001a0ef17061c3d535dd0d65b00000000.md` |
+| `000001a0ef696dedbc174971daa200000000` | Review fix: 00-42 report's §f.7 contradicted its own §a.4 (+ stale line cite)                               | `d0fe7a01`                  | `docs/status/2026-09-30_01-15_task-000001a0ef696dedbc174971daa200000000.md` |
+| `000001a0ef4039417bc0974a175500000000` | Review fix (2nd dispatch): re-land the 23-20 pipeline library pair deleted by daemon batch `d22ccd48`       | `e0cb141a`                  | `docs/status/2026-09-30_08-05_task-000001a0ef4039417bc0974a175500000000.md` |
+| `000001a0ef4039f5828be9fccc8600000000` | Review fix: 23-20 report lacked the re-dispatch protocol's sweep-scope statement                            | `027d2947` (fix `382ab696`) | `docs/status/2026-09-30_08-32_task-000001a0ef4039f5828be9fccc8600000000.md` |
 
 **Window character:** ALL five landings are documentation-only (verified per-commit: `git show --stat` on every window commit touches only `docs/status/*`, `TODO_LIST.md`, `docs/todo/pipeline.md`). No code, config, or test change belongs to this window. The engineering underneath (scrub-stop churn-name fix, `SuccessExitStatus = [ 1 ]`) landed in the PRIOR window and was only verified here.
 

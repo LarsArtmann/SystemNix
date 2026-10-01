@@ -79,7 +79,7 @@ CACHE_SYMLINKS=()
 fallback_names=" $BUILDCACHE_REAP_FALLBACK_ONLY_CACHE_DIRS "
 for name in "${reap_cache_names[@]}"; do
   case "$fallback_names" in
-    *" $name "*) continue ;;
+  *" $name "*) continue ;;
   esac
   CACHE_SYMLINKS+=("$USER_HOME/.cache/$name")
 done

@@ -13,11 +13,11 @@ vHosts.
 Every vHost is rendered through ONE of three helpers (single source of truth —
 registry fan-out and hand-written entries share them):
 
-| Helper            | Shape                                                                                     | Used by                                                                                                |
-| ----------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `plainVHost`      | TLS + `reverse_proxy` — no auth here (native OIDC or LAN-only)                            | forgejo, paperless, rss, geo, health, auth, cache, dnsblock pair, cv, index, nsfw, graph, timers(static) |
-| `protectedVHost`  | `@external not remote_ip <lan>` → forward-auth + proxy; LAN bypasses auth                  | dash, signoz, seo (hand-rolled GSC-callback exemption), tasks, banksync, tq, and every registry `layer = "protected"` entry |
-| `renderVHost`/`staticVHost` | registry entries with `vHost.root` → `file_server` (layer semantics still apply) | architecture-catalog (`catalog`), systemd-timer-monitor (`timers`)                                      |
+| Helper                      | Shape                                                                            | Used by                                                                                                                     |
+| --------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `plainVHost`                | TLS + `reverse_proxy` — no auth here (native OIDC or LAN-only)                   | forgejo, paperless, rss, geo, health, auth, cache, dnsblock pair, cv, index, nsfw, graph, timers(static)                    |
+| `protectedVHost`            | `@external not remote_ip <lan>` → forward-auth + proxy; LAN bypasses auth        | dash, signoz, seo (hand-rolled GSC-callback exemption), tasks, banksync, tq, and every registry `layer = "protected"` entry |
+| `renderVHost`/`staticVHost` | registry entries with `vHost.root` → `file_server` (layer semantics still apply) | architecture-catalog (`catalog`), systemd-timer-monitor (`timers`)                                                          |
 
 Hand-written vHosts still live in `homeLanVHosts` (caddy.nix): `:80` redirect,
 catch-alls (unknown `*.home.lan` / `*.larsartmann.cloud` → `dash`), `auth`
@@ -143,19 +143,19 @@ zero benefit.
 
 ## 2026-09-30 config review — verdict table
 
-| # | Finding                                            | Disposition                                                                 |
-| - | -------------------------------------------------- | --------------------------------------------------------------------------- |
-| 1 | HTTP/3 QUIC blackhole (UDP/443 dropped)            | FIXED — UDP/443 opened (`platforms/nixos/system/networking.nix`)            |
-| 2 | After+Requires claim vs after+wants code           | FIXED — `requires` added; AGENTS.md anchor updated                          |
-| 3 | Uncommented `NoNewPrivileges = mkForce false`      | FIXED — override REMOVED (rationale was stale lore, `da147df6`)             |
-| 4 | `CAP_NET_ADMIN` with no live justification         | FIXED — dropped from bounding + ambient sets; `checks.caddy-mint` proves it |
-| 5 | `default_bind` uncommented                         | FIXED — comment documents syntax-fix origin + collision + NetBird routing   |
-| 6 | port+root both set silently serves static          | FIXED — XOR assertion in integration.nix (negative-tested)                  |
-| 7 | Vestigial `protectedVHost _subdomain` param        | FIXED — param removed, all call sites updated                               |
-| 8 | `monitor365.enable` missing `or false` guard       | FIXED                                                                       |
-| 9 | Per-vHost logs lack roll bounds                    | DOCUMENTED (Caddy defaults 100MiB×10/file; aggregate bounded by vHost count) |
-| 10| Mint installs whatever the extfile produced        | FIXED — SAN self-assert in the mint script                                  |
-| 11| Hand-written vHosts not DNS-asserted               | FIXED — eval assertion + ghost-entry warning (alerts allowlisted)           |
-| 12| No caddy runbook                                   | FIXED — this document                                                       |
-| 13| Hand-maintained smoke AUTH_VHOSTS (drift class)    | FIXED — derived from `/etc/caddy/vhost-layers`                              |
-| 14| Plain vHosts had zero deploy-smoke coverage        | FIXED — derived plain-vHost probe                                           |
+| #  | Finding                                         | Disposition                                                                  |
+| -- | ----------------------------------------------- | ---------------------------------------------------------------------------- |
+| 1  | HTTP/3 QUIC blackhole (UDP/443 dropped)         | FIXED — UDP/443 opened (`platforms/nixos/system/networking.nix`)             |
+| 2  | After+Requires claim vs after+wants code        | FIXED — `requires` added; AGENTS.md anchor updated                           |
+| 3  | Uncommented `NoNewPrivileges = mkForce false`   | FIXED — override REMOVED (rationale was stale lore, `da147df6`)              |
+| 4  | `CAP_NET_ADMIN` with no live justification      | FIXED — dropped from bounding + ambient sets; `checks.caddy-mint` proves it  |
+| 5  | `default_bind` uncommented                      | FIXED — comment documents syntax-fix origin + collision + NetBird routing    |
+| 6  | port+root both set silently serves static       | FIXED — XOR assertion in integration.nix (negative-tested)                   |
+| 7  | Vestigial `protectedVHost _subdomain` param     | FIXED — param removed, all call sites updated                                |
+| 8  | `monitor365.enable` missing `or false` guard    | FIXED                                                                        |
+| 9  | Per-vHost logs lack roll bounds                 | DOCUMENTED (Caddy defaults 100MiB×10/file; aggregate bounded by vHost count) |
+| 10 | Mint installs whatever the extfile produced     | FIXED — SAN self-assert in the mint script                                   |
+| 11 | Hand-written vHosts not DNS-asserted            | FIXED — eval assertion + ghost-entry warning (alerts allowlisted)            |
+| 12 | No caddy runbook                                | FIXED — this document                                                        |
+| 13 | Hand-maintained smoke AUTH_VHOSTS (drift class) | FIXED — derived from `/etc/caddy/vhost-layers`                               |
+| 14 | Plain vHosts had zero deploy-smoke coverage     | FIXED — derived plain-vHost probe                                            |

@@ -2447,15 +2447,23 @@
                   contractGuards =
                     lib.throwIfNot (scrubSvc.SuccessExitStatus == [ 1 ])
                       "scrub-exit-contract: SuccessExitStatus != [ 1 ] — exit 3 (csum corruption) must stay a hard failure"
-                    (lib.throwIfNot (cfg.systemd.timers."btrfs-scrub@".timerConfig.Persistent == false)
-                      "scrub-exit-contract: scrub timer Persistent must be false (boot catch-up stampede)"
-                    (lib.throwIfNot (dataSvc.after == [ "btrfs-scrub@-.service" ])
-                      "scrub-exit-contract: /data scrub must serialize after root"
-                    (lib.throwIfNot (poolSvc.after == [ "btrfs-scrub@data.service" ])
-                      "scrub-exit-contract: pool scrub must serialize after /data"
-                    (lib.throwIfNot (dataSvc.overrideStrategy == "asDropin" && poolSvc.overrideStrategy == "asDropin")
-                      "scrub-exit-contract: instance overrides must be asDropin (a full unit file shadows the template)"
-                    true))));
+                      (
+                        lib.throwIfNot (cfg.systemd.timers."btrfs-scrub@".timerConfig.Persistent == false)
+                          "scrub-exit-contract: scrub timer Persistent must be false (boot catch-up stampede)"
+                          (
+                            lib.throwIfNot (dataSvc.after == [ "btrfs-scrub@-.service" ])
+                              "scrub-exit-contract: /data scrub must serialize after root"
+                              (
+                                lib.throwIfNot (poolSvc.after == [ "btrfs-scrub@data.service" ])
+                                  "scrub-exit-contract: pool scrub must serialize after /data"
+                                  (
+                                    lib.throwIfNot (dataSvc.overrideStrategy == "asDropin" && poolSvc.overrideStrategy == "asDropin")
+                                      "scrub-exit-contract: instance overrides must be asDropin (a full unit file shadows the template)"
+                                      true
+                                  )
+                              )
+                          )
+                      );
                 in
                 builtins.deepSeq contractGuards (
                   pkgs.runCommand "scrub-exit-contract-check" { } ''

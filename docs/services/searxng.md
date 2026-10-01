@@ -23,4 +23,3 @@
 - **`formats = [ "html" ]`** — Blocks JSON API (403). Deliberate privacy hardening. Test in HTML mode.
 - **`autocomplete = "duckduckgo"`** — Google leaked every keystroke.
 - **XFF health-check noise is benign** — `/healthz` is exempt from limiter.
-

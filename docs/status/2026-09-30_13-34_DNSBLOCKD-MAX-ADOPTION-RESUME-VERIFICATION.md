@@ -107,6 +107,7 @@ extendModules bug (fixed with `mkForce`).
 ## f) NEXT — up to 50 things (ordered, resumable)
 
 **M10 — smoke additions (resume point):**
+
 1. Read `scripts/post-deploy-check.sh` dnsblockd section in full (the §-numbered block
    containing the memory check).
 2. Insert `_dns_*` probes: extract deployed config path via
@@ -131,27 +132,27 @@ extendModules bug (fixed with `mkForce`).
 13. Standalone statix/deadnix on the three touched .nix files (daemon-amend bypass).
 14. `nix flake check --no-build` at current HEAD (parallel sessions moved the tree).
 15. `git show --stat b9310217` — confirm the absorbing daemon commit carried only
-    flake.lock.
+flake.lock.
 
 **M12 — docs sweep:**
 16. Fix stale recursion comment `dns-blocker-config.nix:14-17` (T299 fixed in tree;
-    forwarders are now a choice — keep them, update the comment).
+forwarders are now a choice — keep them, update the comment).
 17. Verify + fix blocklist count claim (25→23) in the header comment.
 18. AGENTS.md dnsblockd section: deployed-rev claims (75b4ce9 until M11), allowlist
-    persistence note, tracking-dial memo pointer, devices/users options.
+persistence note, tracking-dial memo pointer, devices/users options.
 19. `docs/services/dnsblockd.md` runbook: new options, smoke-probe inventory, memo link.
 
 **M13 — TODO reconciliation:**
 20. Annotate the 5 TODO_LIST.md queue rows + `docs/todo/services.md` library entries
-    as "in-tree, awaiting M11 deploy" (do NOT mark `[x]` pre-deploy).
+as "in-tree, awaiting M11 deploy" (do NOT mark `[x]` pre-deploy).
 21. Re-check queue/library drift after annotations (edit-both rule).
 
 **W7 — remaining upstream surface (author + inert defaults, owner-gated activation):**
 22. M14: `policies` option in the wrapper (caps: 64 policies / 512 domains,
-    lowercase-slug name assertions).
+lowercase-slug name assertions).
 23. M14: shadow-mode probe doc (observe policy hits before enforcement).
 24. M15: `blocklistTrialUrls` option + PERSISTENT `blocklistCacheDir` (PrivateTmp eats
-    /tmp — T197 shadow-only trap).
+/tmp — T197 shadow-only trap).
 25. M15: StateDirectory/ReadWritePaths audit for the cache dir.
 26. M16: ECS options (`dns_ecs_enabled`, ipv4 prefix 24 / ipv6 56) — inert defaults.
 27. M17: `tls_h3_enabled` option — inert default + UDP-443 check design.
@@ -160,19 +161,19 @@ extendModules bug (fixed with `mkForce`).
 **W8 — upstream-module migration (LAST):**
 29. M18: mapping table wrapper option ↔ upstream module option (core|dns|tracking|proxy-tls).
 30. M18: surface-preservation baseline — `git worktree` at pre-migration commit, eval
-    JSON of unit + config keys both trees, set-compare.
+JSON of unit + config keys both trees, set-compare.
 31. M19: impl A — consume upstream `nixosModules` in the wrapper.
 32. M20: impl B — re-add SystemNix-only overlays (whitelist pre-filter, attach-ip,
-    harden/oomd-exempt, sops env bridging).
+harden/oomd-exempt, sops env bridging).
 33. M21: set-compare verification + VM test green.
 
 **M11 prep (agent-safe parts only):**
 34. Pre-build toplevel for warm cache
-    (`nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel`).
+(`nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel`).
 35. Check dnsblockd for a config-validate/dry-run CLI (upstream repo) for pre-deploy
-    binary acceptance of the new keys.
+binary acceptance of the new keys.
 36. Write the M11 runbook addendum (deploy → smoke → allowlist persistence verify →
-    csrf 403 verify → device attribution spot-check).
+csrf 403 verify → device attribution spot-check).
 
 **Close-out:**
 37. Final execution report (supersedes/extends the 13-07 one) with dead-SHA corrections.
@@ -182,9 +183,9 @@ extendModules bug (fixed with `mkForce`).
 
 **Discovered extras (from verification):**
 41. Consider a `scripts/`-level guard that fails docs referencing non-ancestor SHAs
-    (cheap git hook class) — candidate, not committed work.
+(cheap git hook class) — candidate, not committed work.
 42. Check whether rpi3's dnsblockd render (it inherits `extraDomains`) also needs the
-    new options documented in its runbook section.
+new options documented in its runbook section.
 
 ## g) QUESTIONS (cannot figure out myself)
 

@@ -22,4 +22,3 @@ Background LLM server (Qwen3.6-35B-A3B MoE, ~3B active, 21.6 GB mmap'd since v1.
 - **Crates runtime**: `XILINX_XRT` is set to `$out` (the package's store path) so XRT can find `./lib/x86_64-linux-gnu/`. The wrapper creates the multiarch symlinks on first run if absent.
 - **Hand-started process is now obsolete**: delete `~/.local/share/fastflowlm/`, `~/.local/bin/flm`, and the LD_LIBRARY_PATH exports in `~/.bashrc` after the deploy proves stable.
 - **Manual install**: `~/projects/anime-comic-pipeline/docs/npu-fastflowlm-llm-server.md` has the measured resource usage (24.9 GB RSS at idle, 14 t/s decode, ~3 s TTFT) and full operational guide.
-

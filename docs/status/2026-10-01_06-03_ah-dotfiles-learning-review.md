@@ -34,7 +34,7 @@
 
 1. **First fetch of the GitHub URL returned only GitHub's nav chrome** (SPA page, zero repo content) — wasted one round trip; recovered immediately with `gh` CLI. Minor, but the lesson stands: GitHub HTML fetches are unreliable, default to `gh api` first.
 2. **`gh api .../git/trees/main` 404** before checking the default branch — guessed `main` instead of querying `default_branch` first. Trivial, self-corrected in the next call.
-Nothing in the SystemNix repo itself is broken by this session.
+   Nothing in the SystemNix repo itself is broken by this session.
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -45,20 +45,20 @@ Nothing in the SystemNix repo itself is broken by this session.
 
 ## f) Up to 50 things we should get done next
 
-Ranked by impact. **Harvest status: deliberately NOT harvested into TODO_LIST.md at authoring time** — the user explicitly said "report, then wait for instructions"; every item below is a *proposal* derived from one reference repo and needs the user's pick before queueing (queueing all 50 against an undecided idea-set would poison the dispatch queue). Items 1–5 are the ones I would harvest immediately on approval; the rest are ROADMAP fuel.
+Ranked by impact. **Harvest status: deliberately NOT harvested into TODO_LIST.md at authoring time** — the user explicitly said "report, then wait for instructions"; every item below is a _proposal_ derived from one reference repo and needs the user's pick before queueing (queueing all 50 against an undecided idea-set would poison the dispatch queue). Items 1–5 are the ones I would harvest immediately on approval; the rest are ROADMAP fuel.
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Build a self-contained portable neovim flake package (baked treesitter + LSP servers, `nix run .#neovim`) | High | L | Feature |
-| 2 | Spike `xc` (markdown-embedded tasks) alongside flake apps for rebuild/deploy documentation-as-tasks | Medium | S | Feature |
-| 3 | Add `unstableGoFor`-style single-package-unstable helper to `lib/` so gopls/tooling can track unstable Go while systems stay on stable | Medium | M | Feature |
-| 4 | Extract a `getPkgsForSystem system extraConfig` helper for per-host nixpkgs config (ROCm/CUDA/unfree opt-ins) | Medium | M | Quality |
-| 5 | Adopt colocated pin-rationale comments for every scary flake input pin (linking gotchas-archive entries) | Medium | M | Documentation |
-| 6 | Evaluate Disko for documenting evo-x2's current partition layout declaratively (documentation artifact, not re-partitioning) | Medium | M | Documentation |
-| 7 | Study a-h's `desktop-linux/hardware/*.nix` + `network.nix` for further patterns (not yet read) | Low | S | Research |
-| 8 | Study a-h's `.macos` script for macOS de-cruft settings we may be missing on `Lars-MacBook-Air` | Low | S | Research |
-| 9 | Audit our overlays for missing root-cause comments on override fixes (libcap-class fixes should explain WHY at the fix site) | Low | M | Quality |
-| 10 | Consider a `pkgs/portable/` convention for self-contained interactive tools (editors, shells, debuggers) | Low | M | Feature |
+| #  | Task                                                                                                                                   | Impact | Effort | Category      |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
+| 1  | Build a self-contained portable neovim flake package (baked treesitter + LSP servers, `nix run .#neovim`)                              | High   | L      | Feature       |
+| 2  | Spike `xc` (markdown-embedded tasks) alongside flake apps for rebuild/deploy documentation-as-tasks                                    | Medium | S      | Feature       |
+| 3  | Add `unstableGoFor`-style single-package-unstable helper to `lib/` so gopls/tooling can track unstable Go while systems stay on stable | Medium | M      | Feature       |
+| 4  | Extract a `getPkgsForSystem system extraConfig` helper for per-host nixpkgs config (ROCm/CUDA/unfree opt-ins)                          | Medium | M      | Quality       |
+| 5  | Adopt colocated pin-rationale comments for every scary flake input pin (linking gotchas-archive entries)                               | Medium | M      | Documentation |
+| 6  | Evaluate Disko for documenting evo-x2's current partition layout declaratively (documentation artifact, not re-partitioning)           | Medium | M      | Documentation |
+| 7  | Study a-h's `desktop-linux/hardware/*.nix` + `network.nix` for further patterns (not yet read)                                         | Low    | S      | Research      |
+| 8  | Study a-h's `.macos` script for macOS de-cruft settings we may be missing on `Lars-MacBook-Air`                                        | Low    | S      | Research      |
+| 9  | Audit our overlays for missing root-cause comments on override fixes (libcap-class fixes should explain WHY at the fix site)           | Low    | M      | Quality       |
+| 10 | Consider a `pkgs/portable/` convention for self-contained interactive tools (editors, shells, debuggers)                               | Low    | M      | Feature       |
 
 (Items 11–50 were not fabricated as filler: the session's genuine output surfaces ~10 actionable follow-ups. Padding to 50 with invented work would violate the "queue authors spot-verify config claims" discipline. If the user wants a 50-item brainstorm, run pareto-planning against the full repo — that is a separate task.)
 
@@ -70,4 +70,4 @@ Ranked by impact. **Harvest status: deliberately NOT harvested into TODO_LIST.md
 
 ---
 
-*Report is a point-in-time snapshot. Section (f) harvest deliberately deferred pending user instruction (reason recorded above per the self-harvest rule). No commits made (harness rule); auto-commit daemon will pick this file up.*
+_Report is a point-in-time snapshot. Section (f) harvest deliberately deferred pending user instruction (reason recorded above per the self-harvest rule). No commits made (harness rule); auto-commit daemon will pick this file up._

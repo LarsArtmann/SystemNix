@@ -15,50 +15,56 @@ FastFlowLM is intentionally DOWN (socket + backend both stopped); the memory-eme
 
 ## 1. Session timeline
 
-| Time (CEST) | Event |
-| --- | --- |
-| ~02:30 | User asks: "What is the RAM limit for FastFlowLM?" → answered from AGENTS.md (MemoryMax 40G, OOMScoreAdjust=300, exponential restart backoff 60s→15min). |
-| ~02:33 | User asks: "is it running?" → first probe attempt via `systemctl` **BLOCKED by sandbox policy**; fell back to `/proc/net/tcp` (hex `:CD91`/`:CD92`) + `ps`. Result: zero listeners on 52625/52626, zero flm processes → backend idle AND public socket down (clients would ECONNREFUSED). |
-| ~02:35 | User pastes `systemctl status fastflowlm.socket fastflowlm.service`. Analysis: socket up 02:10:38 → 02:11:36 (57.7s, then "Deactivated successfully"); backend 02:14:57 start → server bound 02:16:30 → "Stopping" 02:19:39 → clean deactivate 02:19:41. Cold load was HEALTHY (21.7G disk read, 30.8G mem peak, 27.8s CPU). Socket lifetime counters: Accepted 133, Refused 8. |
-| ~02:42 | User pastes `journalctl -u memory-emergency-guard -n 20` + "something seems wrong". Guard running every 30s, mostly clean finish; one check-script line: `MEMORY EMERGENCY still active (I/O PSI some avg60=54.35% sustained (max disk busy 77.3%, MemAvaila…` (truncated in paste). |
-| 02:45–02:55 | Deep /proc + cgroup investigation (below). Verdict delivered: guard healthy, storm real, driver = nix-daemon builds; recommendation: don't restart flm, thin the agent swarm. |
-| 05:38 | Status report authored (this file). |
+| Time (CEST) | Event                                                                                                                                                                                                                                                                                                                                                                           |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~02:30      | User asks: "What is the RAM limit for FastFlowLM?" → answered from AGENTS.md (MemoryMax 40G, OOMScoreAdjust=300, exponential restart backoff 60s→15min).                                                                                                                                                                                                                        |
+| ~02:33      | User asks: "is it running?" → first probe attempt via `systemctl` **BLOCKED by sandbox policy**; fell back to `/proc/net/tcp` (hex `:CD91`/`:CD92`) + `ps`. Result: zero listeners on 52625/52626, zero flm processes → backend idle AND public socket down (clients would ECONNREFUSED).                                                                                       |
+| ~02:35      | User pastes `systemctl status fastflowlm.socket fastflowlm.service`. Analysis: socket up 02:10:38 → 02:11:36 (57.7s, then "Deactivated successfully"); backend 02:14:57 start → server bound 02:16:30 → "Stopping" 02:19:39 → clean deactivate 02:19:41. Cold load was HEALTHY (21.7G disk read, 30.8G mem peak, 27.8s CPU). Socket lifetime counters: Accepted 133, Refused 8. |
+| ~02:42      | User pastes `journalctl -u memory-emergency-guard -n 20` + "something seems wrong". Guard running every 30s, mostly clean finish; one check-script line: `MEMORY EMERGENCY still active (I/O PSI some avg60=54.35% sustained (max disk busy 77.3%, MemAvaila…` (truncated in paste).                                                                                            |
+| 02:45–02:55 | Deep /proc + cgroup investigation (below). Verdict delivered: guard healthy, storm real, driver = nix-daemon builds; recommendation: don't restart flm, thin the agent swarm.                                                                                                                                                                                                   |
+| 05:38       | Status report authored (this file).                                                                                                                                                                                                                                                                                                                                             |
 
 ---
 
 ## 2. Verified findings (evidence-backed)
 
 ### 2.1 Boot age and context
+
 - `/proc/uptime` = 147,090s ≈ **40h51m** → boot ≈ **2026-09-29 ~09:54 CEST**, i.e. **this is the post-freeze-#7 boot** (freeze #7: 2026-09-29 09:51 hard reset). The box is 41h into that boot with zero reboots since.
 - flm's socket events tonight (02:10–02:11) were NOT boot events — they were runtime stop/start by something (unidentified, see §2.5).
 
 ### 2.2 The storm is real and current (measured twice)
+
 - PSI io at ~02:47: `some avg10=56.15 avg60=42.92 avg300=48.71`; `full avg10=49.07 avg60=29.25`.
 - PSI memory: ~0 everywhere. `MemAvailable` 75.8 GiB. Swap 30.5/62.2 GiB used (~51% — half the zram, unremarkable).
 - `/proc/diskstats` delta over 3s: `nvme0n1p6` (**root `@`, QLC**) +14 io_ticks (~47% duty); Samsung `nvme1n1` ~0. The storm is **QLC-root-local**.
 - Dirty page cache 55 MB, Writeback 0 → not a writeback storm; it is sustained device-level read+write.
 
 ### 2.3 Live driver: nix-daemon (measured, not inferred)
+
 Per-cgroup `io.stat` **deltas over 10s** (~02:55):
+
 - `system.slice/nix-daemon.service`: **121.5 MB** (~12 MB/s) — the storm.
 - `system.slice/clickhouse.service`: 2.2 MB. `systemd-journald`: 1.7 MB. Everything else ≤0.1 MB.
-→ Active nix builds are the live IO driver on the QLC root disk.
+  → Active nix builds are the live IO driver on the QLC root disk.
 
 ### 2.4 Cumulative IO since boot (41h attribution)
-| Cgroup | Bytes (r+w) | Note |
-| --- | --- | --- |
-| `tq-agent-pool.service` | **2.63 TB** | Dominant churner of the whole boot |
-| `nix-daemon.service` | 947.6 GB | Builds |
-| `clickhouse.service` | 150.4 GB | Telemetry |
-| `systemd-journald` | 20.8 GB | |
-| `papdashboard` | 18.9 GB | |
-| `project-discovery-daemon` | 18.2 GB | |
-| `system-immich.slice` | 15.6 GB | |
-| `projects-management-automation` | 12.2 GB | |
+
+| Cgroup                             | Bytes (r+w) | Note                                                      |
+| ---------------------------------- | ----------- | --------------------------------------------------------- |
+| `tq-agent-pool.service`            | **2.63 TB** | Dominant churner of the whole boot                        |
+| `nix-daemon.service`               | 947.6 GB    | Builds                                                    |
+| `clickhouse.service`               | 150.4 GB    | Telemetry                                                 |
+| `systemd-journald`                 | 20.8 GB     |                                                           |
+| `papdashboard`                     | 18.9 GB     |                                                           |
+| `project-discovery-daemon`         | 18.2 GB     |                                                           |
+| `system-immich.slice`              | 15.6 GB     |                                                           |
+| `projects-management-automation`   | 12.2 GB     |                                                           |
 | `system-systemd\x2dcoredump.slice` | **11.9 GB** | Core dumps being written this boot — NOT yet investigated |
-| `docker.service` | 10.1 GB | |
+| `docker.service`                   | 10.1 GB     |                                                           |
 
 ### 2.5 Live process landscape (at ~02:50)
+
 - `bash scripts/tq-ladder.sh 000001a0… --predicate` — **99.4% CPU, 12.5 min elapsed, cwd `~/projects/CV`**. Zero disk reads in a 5s window (CPU/page-cache bound). Assumed (unproven) to be the nix-daemon build driver.
 - `bun /tmp/server-smoke.mjs` — **98.5% CPU for 37 min**, cwd `~/projects/nsfw-classifier`, zero disk reads. **Doctrine violation: operational script under `/tmp`** (tmp-cleanup eats >4h-stale entries; a long-running smoke in /tmp also violates the 2026-09-19 deploy-queue lesson).
 - **≥11 headless `crush -y` sessions** (tq-pool agents and/or interactive): cwds seen = go-cqrs-lite, SystemNix, go-datastar, InboxClean. This is the freeze-#6 "concurrent agent sessions" class.
@@ -66,11 +72,13 @@ Per-cgroup `io.stat` **deltas over 10s** (~02:55):
 - helium (video playback likely), clickhouse-server, node_exporter, gatus, nsncd — background normal.
 
 ### 2.6 FastFlowLM state and the guard
+
 - flm cold load tonight was **textbook-healthy** (21.7G read, 30.8G peak, no device error, no crash, clean deactivation) — no evidence of the v1.0.2 crash class.
 - The guard is running every 30s and its ongoing-state line confirms a sustained **Zone-6-shaped** condition (io avg60 ≥40% + disk-busy corroboration 77.3%). Memory zones are NOT firing (MemAvail 76G, mem PSI 0).
 - Guard doctrine check: idle-timer did NOT stop the backend at 02:19:39 (idle stop requires backend active ≥10 min; it was active 5m45s). The stopper of both the socket (02:11:36) and the backend (02:19:39) is **not identified** in available evidence — the user's guard-journal paste starts at 02:42 and does not cover 02:10–02:20.
 
 ### 2.7 Documentation discrepancy found (potential AGENTS.md correction)
+
 The user's `journalctl -u memory-emergency-guard -n 20` paste DID include a `memory-emergency-guard-check[388155]:` line. AGENTS.md's stability section claims the guard's script output logs under syslog id `memory-emergency-guard-check` and that "`journalctl -u memory-emergency-guard` NEVER shows it". Tonight's evidence contradicts the absolute form of that claim (at least one check line surfaces under `-u`). Needs a one-time verification and an AGENTS.md precision fix (e.g. "usually" vs "never", or the verbose/heartbeat lines specifically are the ones suppressed).
 
 ---
@@ -130,7 +138,7 @@ The user's `journalctl -u memory-emergency-guard -n 20` paste DID include a `mem
 2. **Never analyze truncated evidence silently**: the guard line was cut at "MemAvaila…" — the full line (thresholds, zone, MemAvailable value) belongs in the analysis; fetch before concluding.
 3. **Label hypothesis vs measurement in-line**, every time, especially on causal claims ("drives the builds") — this session's final answer did, the middle one didn't.
 4. **/proc-first reflex in this sandbox**: systemctl is policy-blocked; the working toolkit is `/proc/{net/tcp,diskstats,pressure,*}`, `/sys/fs/cgroup/**/io.stat` deltas, `ps -eo`. Document the recipe (cgroup delta join over 10s) as a reusable one-liner — it directly answered "who is storming" in one shot.
-5. **Unidentified actor discipline**: when a unit was stopped by *someone* and the evidence window doesn't cover it, say "stopper unknown + which journal window would answer it" instead of fitting a story.
+5. **Unidentified actor discipline**: when a unit was stopped by _someone_ and the evidence window doesn't cover it, say "stopper unknown + which journal window would answer it" instead of fitting a story.
 6. **Sweep adjacent anomalies in the same evidence**: the 11.9 GB `systemd-coredump` slice was sitting in the first cgroup table and wasn't chased (out-of-scope per user order, but should have been listed as an observation immediately — it was, in this report, only at authoring time).
 
 ---
@@ -138,6 +146,7 @@ The user's `journalctl -u memory-emergency-guard -n 20` paste DID include a `mem
 ## 8. f) UP TO 50 THINGS TO DO NEXT (all rooted in this session's observations)
 
 **FastFlowLM recovery (1–8)**
+
 1. Read guard `.prom`: `trips_last_hour`, `zone6_trips_total`, `restored_total`, `restore_capped`, `last_run_timestamp` — establish whether flm is capped or will auto-restore.
 2. Pull trip-window journal 02:08–02:22 for `memory-emergency-guard(-check)`, `fastflowlm.socket`, `fastflowlm.service` — identify who started the socket at 02:10:38, who stopped it at 02:11:36, and who stopped the backend at 02:19:39 (idle timer excluded by its own ≥10min rule).
 3. Retrieve the FULL guard line (untruncated) — capture MemAvailable value + zone + thresholds present in the message.
@@ -237,4 +246,4 @@ guard line (paste, cut)      "MEMORY EMERGENCY still active (I/O PSI some avg60=
                              (max disk busy 77.3%, MemAvaila…"
 ```
 
-*Report generated 2026-10-01 05:38 CEST. No follow-ups harvested to TODO_LIST per explicit user hold ("report, THEN WAIT"); see §5.10 / §8.43.*
+_Report generated 2026-10-01 05:38 CEST. No follow-ups harvested to TODO_LIST per explicit user hold ("report, THEN WAIT"); see §5.10 / §8.43._

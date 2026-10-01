@@ -1,486 +1,495 @@
 # sops-nix secret definitions for all SystemNix services
-_: let
+_:
+let
   secretsDir = ./../../../platforms/nixos/secrets;
 
-  mkSecrets = file: defaults: names:
+  mkSecrets =
+    file: defaults: names:
     names
     |> map (name: {
       inherit name;
-      value =
-        defaults
-        // {
-          sopsFile = secretsDir + "/${file}";
-        };
+      value = defaults // {
+        sopsFile = secretsDir + "/${file}";
+      };
     })
     |> builtins.listToAttrs;
 
-  mkKeyedSecrets = file: defaults: keyMap:
+  mkKeyedSecrets =
+    file: defaults: keyMap:
     keyMap
     |> builtins.mapAttrs (
       _name: key:
-        defaults
-        // {
-          sopsFile = secretsDir + "/${file}";
-          inherit key;
-        }
+      defaults
+      // {
+        sopsFile = secretsDir + "/${file}";
+        inherit key;
+      }
     );
-in {
-  flake.nixosModules.sops = {
-    config,
-    lib,
-    ...
-  }: let
-    cfg = config.services.sops-config;
-    inherit (config.users) primaryUser;
-    svcEnabled = name: (config.services.${name} or {}).enable or false;
-  in {
-    options.services.sops-config = {
-      enable = lib.mkEnableOption "sops-nix secret definitions for SystemNix services";
-    };
+in
+{
+  flake.nixosModules.sops =
+    {
+      config,
+      lib,
+      ...
+    }:
+    let
+      cfg = config.services.sops-config;
+      inherit (config.users) primaryUser;
+      svcEnabled = name: (config.services.${name} or { }).enable or false;
+    in
+    {
+      options.services.sops-config = {
+        enable = lib.mkEnableOption "sops-nix secret definitions for SystemNix services";
+      };
 
-    config = lib.mkIf cfg.enable {
-      sops = {
-        defaultSopsFile = lib.path.append secretsDir "secrets.yaml";
-        age.sshKeyPaths = ["/etc/ssh/ssh_host_ed25519_key"];
-        gnupg.sshKeyPaths = [];
+      config = lib.mkIf cfg.enable {
+        sops = {
+          defaultSopsFile = lib.path.append secretsDir "secrets.yaml";
+          age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+          gnupg.sshKeyPaths = [ ];
 
-        secrets =
-          {}
-          // mkSecrets "secrets.yaml"
-          {
-            owner = primaryUser;
-            group = "users";
-            restartUnits = [
-              "forgejo-github-sync.service"
-              "forgejo-ensure-repos.service"
-            ];
-          }
-          [
-            "github_token"
-            "github_user"
-          ]
-          // mkSecrets "pocket-id.yaml"
-          {
-            owner = "pocket-id";
-            group = "pocket-id";
-            restartUnits = ["pocket-id.service"];
-          }
-          [
-            "pocket_id_encryption_key"
-            "pocket_id_static_api_key"
-            "pocket_id_smtp_password"
-          ]
-          // {
-            oauth2_proxy_client_secret = {
-              sopsFile = lib.path.append secretsDir "pocket-id.yaml";
-              owner = "oauth2-proxy";
-              group = "oauth2-proxy";
-              restartUnits = ["oauth2-proxy.service"];
-            };
-            oauth2_proxy_cookie_secret = {
-              sopsFile = lib.path.append secretsDir "pocket-id.yaml";
-              owner = "oauth2-proxy";
-              group = "oauth2-proxy";
-              restartUnits = ["oauth2-proxy.service"];
-            };
-          }
-          // {
-            immich_oauth_client_secret = {
-              sopsFile = lib.path.append secretsDir "pocket-id.yaml";
-              owner = "immich";
-              group = "immich";
-              restartUnits = ["immich-server.service"];
-            };
-          }
-          // {
-            paperless_admin_password = {
-              sopsFile = lib.path.append secretsDir "paperless.yaml";
-              # Root-owned: paperless-scheduler reads it via systemd
-              # LoadCredential (PID 1 reads the file, not the service user).
-              restartUnits = ["paperless-scheduler.service"];
-            };
-          }
-          // {
-            # The CA cert is PUBLIC material (every browser trust store gets
-            # a copy by design). It MUST be world-readable: the
-            # dnsblockd-cert-import USER unit runs certutil as the session
-            # user, and Firefox policies read the same path at startup.
-            # root:root 0400 made both fail with EACCES (certutil exit 255,
-            # 2026-08-22 boot).
-            dnsblockd_ca_cert = {
-              sopsFile = lib.path.append secretsDir "dnsblockd-certs.yaml";
-              mode = "0444";
-            };
-            dnsblockd_ca_key = {
-              sopsFile = lib.path.append secretsDir "dnsblockd-certs.yaml";
-              mode = "0400";
-            };
-            dnsblockd_server_cert = {
-              sopsFile = lib.path.append secretsDir "dnsblockd-certs.yaml";
-              owner = "caddy";
-              group = "caddy";
-            };
-            dnsblockd_server_key = {
-              sopsFile = lib.path.append secretsDir "dnsblockd-certs.yaml";
-              owner = "caddy";
-              group = "caddy";
-              mode = "0400";
-            };
-          }
-          // lib.optionalAttrs (svcEnabled "voice-agents") (
-            mkSecrets "voice-agents.yaml" {
-              restartUnits = ["livekit.service"];
-            } ["livekit_keys"]
-          )
-          // lib.optionalAttrs (svcEnabled "hermes") (
-            mkKeyedSecrets "hermes.yaml"
-            {
-              owner = "hermes";
-              group = "hermes";
-              restartUnits = ["hermes.service"];
-            }
-            {
-              hermes_discord_bot_token = "discord_bot_token";
-              hermes_glm_api_key = "glm_api_key";
-              hermes_minimax_api_key = "minimax_api_key";
-              hermes_xiaomi_api_key = "xiaomi_api_key";
-              hermes_fal_key = "fal_key";
-              hermes_firecrawl_api_key = "firecrawl_api_key";
-            }
-          )
-          // lib.optionalAttrs (svcEnabled "hermes") (
-            # Read-only GitHub PAT for private-repo clones (T14, user
-            # decision 2026-08-20: read-only, permanently no-push). Own
-            # file because hermes.yaml is modifiable only with the host
-            # age PRIVATE key — this one was created public-key-only, so
-            # the user can `sops --set` the real token in after creating
-            # a fine-grained PAT (Contents: Read-only). Ships as a
-            # PLACEHOLDER: every consumer treats non-github_pat_/ghp_
-            # values as "no token" and stays inert.
-            mkKeyedSecrets "hermes-github-token.yaml"
-            {
-              owner = "hermes";
-              group = "hermes";
-              restartUnits = [
-                "hermes.service"
-                "hermes-github-verify.service"
-              ];
-            }
-            {
-              hermes_github_read_token = "github_read_token";
-            }
-          )
-          // lib.optionalAttrs (svcEnabled "crush-daily") (
-            mkSecrets "crush-daily.yaml" {
-              owner = primaryUser;
-              group = "users";
-              restartUnits = ["crush-daily.service"];
-            } ["synthetic_api_key"]
-          )
-          # Interactive crush provider keys (user sessions), relocated
-          # 2026-08-31 out of the machine auth store
-          # (~/.local/share/crush/crush.json) — plaintext keys readable by
-          # every agent running as the user. Consumed by the HM crushrc
-          # (`provider add --api-key "$(cat /run/secrets/<name>)"`), which
-          # never persists the keys back. No restartUnits: read
-          # interactively at crush session start. hyper stays store-owned
-          # (OAuth refresh state, self-rotating — not a static key).
-          // mkSecrets "crush.yaml"
-          {
-            owner = primaryUser;
-            group = "users";
-            mode = "0400";
-          }
-          [
-            "zai_api_key"
-            "gemini_api_key"
-            "minimax_api_key"
-            "kimi_api_key"
-          ]
-          // lib.optionalAttrs (svcEnabled "bank-sync") (
-            # The AES key lives in its own file: bank-sync.yaml holds the
-            # real Wise token and is decryptable only with the host key
-            # (root), so the encryption key was sops-encrypted to the
-            # host age PUBLIC key in a separate file instead.
-            mkSecrets "bank-sync.yaml" {
-              owner = "bank-sync";
-              group = "bank-sync";
-              restartUnits = ["bank-sync.service"];
-            } ["wise_api_key"]
-            // mkSecrets "bank-sync-encryption.yaml" {
-              owner = "bank-sync";
-              group = "bank-sync";
-              restartUnits = ["bank-sync.service"];
-            } ["encryption_key"]
-          )
-          // lib.optionalAttrs (svcEnabled "file-and-image-renamer") (
-            mkKeyedSecrets "crush-daily.yaml"
-            {
-              owner = primaryUser;
-              group = "users";
-              restartUnits = ["file-and-image-renamer.service"];
-            }
-            {
-              # Same encrypted key as crush-daily's synthetic_api_key, but
-              # owned by primaryUser so the HM user service can read it.
-              file_renamer_synthetic_api_key = "synthetic_api_key";
-            }
-          )
-          // lib.optionalAttrs (svcEnabled "openseo") (
-            mkSecrets "openseo.yaml"
-            {
-              owner = "root";
-              group = "root";
-              restartUnits = ["openseo.service"];
-            }
-            (
-              ["dataforseo_api_key"]
-              ++ lib.optionals config.services.openseo.googleSearchConsole.enable [
-                "google_client_id"
-                "google_client_secret"
-                "better_auth_secret"
-              ]
-              ++ lib.optionals config.services.openseo.aiFeatures.enable [
-                "openrouter_api_key"
-              ]
-            )
-          )
-          # cloud_auth_token: single tenant-level API key shared by ALL monitor365
-          # consumers (server bootstrap, unified agent).  The same YAML key is
-          # materialised as a sops secret entry owned by the monitor365-server
-          # system user.
-          # Server + agent secrets — owned by dedicated system user
-          // lib.optionalAttrs (svcEnabled "monitor365-server") (
-            mkSecrets "monitor365.yaml"
-            {
-              owner = "monitor365-server";
-              group = "monitor365-server";
-              restartUnits = [
-                "monitor365-server.service"
-                "monitor365.service"
-              ];
-            }
-            [
-              "server_jwt_secret"
-              "cloud_auth_token"
-            ]
-          )
-          // lib.optionalAttrs
-          (
-            svcEnabled "signoz"
-            || svcEnabled "gatus-config"
-            || svcEnabled "discordsync"
-            || svcEnabled "papdashboard"
-          )
-          (
-            mkSecrets "signoz.yaml" {
-              owner = "root";
-              group = "root";
-              restartUnits =
+          secrets =
+            { }
+            //
+              mkSecrets "secrets.yaml"
+                {
+                  owner = primaryUser;
+                  group = "users";
+                  restartUnits = [
+                    "forgejo-github-sync.service"
+                    "forgejo-ensure-repos.service"
+                  ];
+                }
                 [
-                  "signoz-provision.service"
-                  "gatus.service"
+                  "github_token"
+                  "github_user"
                 ]
-                ++ lib.optional (svcEnabled "discordsync") "discordsync.service"
-                ++ lib.optional (svcEnabled "papdashboard") "papdashboard.service";
-            } ["discord_alert_webhook_url"]
-          )
-          // lib.optionalAttrs (svcEnabled "papdashboard") (
-            mkSecrets "papdashboard.yaml" {
-              owner = "root";
-              group = "root";
-              restartUnits = ["papdashboard.service"];
-            } ["papdashboard_api_key"]
-          )
-          // lib.optionalAttrs (svcEnabled "papdashboard") (
-            # Dedicated insights-channel webhook (channel 1539383848549486632) —
-            # raw Gatus alerts keep the shared discord_alert_webhook_url, so
-            # the two streams land in two different Discord channels.
-            mkSecrets "papdashboard-discord.yaml" {
-              owner = "root";
-              group = "root";
-              restartUnits = ["papdashboard.service"];
-            } ["papdashboard_insights_webhook_url"]
-          )
-          // lib.optionalAttrs (svcEnabled "discordsync") (
-            mkSecrets "discordsync.yaml"
-            {
-              owner = "discordsync";
-              group = "discordsync";
-              restartUnits = ["discordsync.service"];
+            //
+              mkSecrets "pocket-id.yaml"
+                {
+                  owner = "pocket-id";
+                  group = "pocket-id";
+                  restartUnits = [ "pocket-id.service" ];
+                }
+                [
+                  "pocket_id_encryption_key"
+                  "pocket_id_static_api_key"
+                  "pocket_id_smtp_password"
+                ]
+            // {
+              oauth2_proxy_client_secret = {
+                sopsFile = lib.path.append secretsDir "pocket-id.yaml";
+                owner = "oauth2-proxy";
+                group = "oauth2-proxy";
+                restartUnits = [ "oauth2-proxy.service" ];
+              };
+              oauth2_proxy_cookie_secret = {
+                sopsFile = lib.path.append secretsDir "pocket-id.yaml";
+                owner = "oauth2-proxy";
+                group = "oauth2-proxy";
+                restartUnits = [ "oauth2-proxy.service" ];
+              };
             }
-            [
-              "discordsync_discord_token"
-              "discordsync_turso_url"
-              "discordsync_turso_auth_token"
-            ]
-          )
-          // lib.optionalAttrs
-          (svcEnabled "discordsync" && (config.services.discordsync.gcsBucket or null) != null)
-          {
-            discordsync_gcs_credentials = {
-              sopsFile = lib.path.append secretsDir "discordsync.yaml";
-              owner = "discordsync";
-              group = "discordsync";
-              restartUnits = ["discordsync.service"];
-            };
-          }
-          // lib.optionalAttrs (svcEnabled "discordsync" && (config.services.discordsync.immich.enable or false))
-          {
-            # Own encrypted file (split-file precedent:
-            # papdashboard-discord.yaml) — agent sessions can encrypt a
-            # NEW file with the public key but cannot add a key to the
-            # existing discordsync.yaml without the host age identity.
-            discordsync_immich_api_key = {
-              sopsFile = lib.path.append secretsDir "discordsync-immich.yaml";
-              owner = "discordsync";
-              group = "discordsync";
-              restartUnits = [
-                "discordsync.service"
-                "discordsync-immich-verify.service"
-              ];
-            };
-          }
-          // lib.optionalAttrs (svcEnabled "dns-failover") (
-            mkSecrets "dns-failover.yaml" {} ["vrrp_auth_password"]
-          )
-          // lib.optionalAttrs (svcEnabled "cv-server") (
-            # Root-owned raw secret; the service consumes the "cv-env"
-            # template (owner cv) which interpolates the placeholder.
-            # cv_evaluation_citizenships: ISO-3166 alpha-2 comma string
-            # (e.g. "de") feeding CV_EVALUATION_CITIZENSHIPS — the D5.1
-            # carve-out that stops SÜG/NATO clearance demands from
-            # categorically skipping for an operator whose citizenship
-            # CAN obtain them (PII → sops only, never a tracked config
-            # file; staged 2026-09-15 with the defense-portal bundle).
-            mkSecrets "cv.yaml"
-            {
-              owner = "root";
-              group = "root";
-              restartUnits = ["cv-server.service"];
+            // {
+              immich_oauth_client_secret = {
+                sopsFile = lib.path.append secretsDir "pocket-id.yaml";
+                owner = "immich";
+                group = "immich";
+                restartUnits = [ "immich-server.service" ];
+              };
             }
-            [
-              "cv_api_key"
-              "cv_evaluation_citizenships"
-            ]
-          )
-          // lib.optionalAttrs (svcEnabled "inboxclean") (
-            # Raw Google OAuth client credentials.json; the upstream module's
-            # ExecStartPre seed script runs as User=inboxclean and copies it
-            # into /var/lib/inboxclean/credentials.json on every start.
-            mkSecrets "inboxclean.yaml" {
-              owner = "inboxclean";
-              group = "inboxclean";
-              restartUnits = [
-                "inboxclean-web.service"
-                "inboxclean-sync.service"
-              ];
-            } ["inboxclean_gmail_credentials"]
-          )
-          // lib.optionalAttrs (svcEnabled "inboxclean") (
-            # Paperless REST API token for InboxClean's Gmail-attachment
-            # archiving (uploads ride the sync hook). Nothing reads the
-            # raw secret — the inboxclean-paperless-env and gatus-env
-            # templates interpolate it for the inboxclean units and the
-            # Gatus auth check. Ships as PLACEHOLDER; go-live = paste the
-            # real token (paperless-manage drf_create_token) + flip
-            # services.inboxclean.paperless.enable.
-            mkSecrets "inboxclean-paperless.yaml" {
-              owner = "root";
-              group = "root";
-              mode = "0400";
-            } ["paperless_api_token"]
-          )
-          // lib.optionalAttrs (svcEnabled "inboxclean") (
-            # Decrypt password for password-protected PDF attachments
-            # (Polish bank statements). InboxClean's papersync decrypts
-            # them with qpdf before upload — without it, Paperless-ngx
-            # archives the statement with EMPTY content (pdftotext fails,
-            # ocrmypdf refuses) and the doc is unsearchable. A PLACEHOLDER
-            # value is inert by design (papersync skips decryption and
-            # tags such uploads "encrypted"). Go-live = paste the bank's
-            # PDF password: sudo sops platforms/nixos/secrets/inboxclean-decrypt.yaml
-            mkSecrets "inboxclean-decrypt.yaml" {
-              owner = "root";
-              group = "root";
-              mode = "0400";
-              restartUnits = [
-                "inboxclean-web.service"
-                "inboxclean-sync.service"
-              ];
-            } ["paperless_decrypt_password"]
-          )
-          // lib.optionalAttrs (svcEnabled "attic-config") (
-            # atticd runs with DynamicUser=true (nixpkgs module default), so the
-            # "atticd" user does NOT exist at sops-decrypt time and cannot own
-            # files — same constraint as Gatus. The EnvironmentFile is read by
-            # systemd (PID 1, root) and the env vars injected into the atticd
-            # process, so a root-owned file is correct and secure.
-            mkSecrets "attic.yaml" {
-              owner = "root";
-              group = "root";
-              restartUnits = ["atticd.service"];
-            } ["attic_token_rs256_secret_base64"]
-          )
-          // lib.optionalAttrs (svcEnabled "browser-history") (
-            mkSecrets "browser-history.yaml" {
-              owner = "root";
-              group = "root";
-              restartUnits = ["browser-history.service"];
-            } ["browser_history_agent_token"]
-          )
-          // lib.optionalAttrs (svcEnabled "google-sync") (
-            # Full rclone.conf INI for the Drive mirror (token is a JSON blob —
-            # a file, not an env var: systemd EnvironmentFile quote-stripping
-            # around embedded double quotes is a footgun). Root-owned: the
-            # sync unit runs as root to write /mnt/pool.
-            mkSecrets "google-sync.yaml" {
-              owner = "root";
-              restartUnits = ["google-sync.service"];
-            } ["google_sync_rclone_config"]
-          )
-          // lib.optionalAttrs (svcEnabled "mail-relay") (
-            # Upstream submission credential for the Postfix null client
-            # (mail-relay.nix). Ships as a PLACEHOLDER — go-live is an
-            # interactive `sudo sops platforms/nixos/secrets/mail-relay.yaml`
-            # (paste the Resend re_... API key as mail_relay_password), then
-            # postfix restarts via the template's restartUnits. Raw secret is
-            # root-owned: only the rendered template (owner postfix) is read
-            # by the daemon.
-            mkSecrets "mail-relay.yaml" {
-              owner = "root";
-              group = "root";
-              restartUnits = ["postfix.service"];
-            } ["mail_relay_password"]
-          )
-          // lib.optionalAttrs (svcEnabled "offsite-borg") (
-            # Offsite Borg leg (platforms/nixos/system/backup.nix): the
-            # passphrase (repokey-blake2 recovery secret), the dedicated
-            # StorageBox SSH key (pubkey in docs/services/offsite-borg.md),
-            # and the pinned StorageBox host key (placeholder = fail-closed
-            # on any host key until go-live pins it). All root-owned: the
-            # borg job runs as root. Rotation restarts the job unit; the
-            # borg-env template carries the BORG_REPO target.
-            mkSecrets "borg.yaml"
-            {
-              owner = "root";
-              group = "root";
-              mode = "0400";
-              restartUnits = ["borgbackup-job-hetzner.service"];
+            // {
+              paperless_admin_password = {
+                sopsFile = lib.path.append secretsDir "paperless.yaml";
+                # Root-owned: paperless-scheduler reads it via systemd
+                # LoadCredential (PID 1 reads the file, not the service user).
+                restartUnits = [ "paperless-scheduler.service" ];
+              };
             }
-            [
-              "borg_password"
-              "borg_ssh_key"
-              "borg_known_hosts"
-            ]
-          );
+            // {
+              # The CA cert is PUBLIC material (every browser trust store gets
+              # a copy by design). It MUST be world-readable: the
+              # dnsblockd-cert-import USER unit runs certutil as the session
+              # user, and Firefox policies read the same path at startup.
+              # root:root 0400 made both fail with EACCES (certutil exit 255,
+              # 2026-08-22 boot).
+              dnsblockd_ca_cert = {
+                sopsFile = lib.path.append secretsDir "dnsblockd-certs.yaml";
+                mode = "0444";
+              };
+              dnsblockd_ca_key = {
+                sopsFile = lib.path.append secretsDir "dnsblockd-certs.yaml";
+                mode = "0400";
+              };
+              dnsblockd_server_cert = {
+                sopsFile = lib.path.append secretsDir "dnsblockd-certs.yaml";
+                owner = "caddy";
+                group = "caddy";
+              };
+              dnsblockd_server_key = {
+                sopsFile = lib.path.append secretsDir "dnsblockd-certs.yaml";
+                owner = "caddy";
+                group = "caddy";
+                mode = "0400";
+              };
+            }
+            // lib.optionalAttrs (svcEnabled "voice-agents") (
+              mkSecrets "voice-agents.yaml" {
+                restartUnits = [ "livekit.service" ];
+              } [ "livekit_keys" ]
+            )
+            // lib.optionalAttrs (svcEnabled "hermes") (
+              mkKeyedSecrets "hermes.yaml"
+                {
+                  owner = "hermes";
+                  group = "hermes";
+                  restartUnits = [ "hermes.service" ];
+                }
+                {
+                  hermes_discord_bot_token = "discord_bot_token";
+                  hermes_glm_api_key = "glm_api_key";
+                  hermes_minimax_api_key = "minimax_api_key";
+                  hermes_xiaomi_api_key = "xiaomi_api_key";
+                  hermes_fal_key = "fal_key";
+                  hermes_firecrawl_api_key = "firecrawl_api_key";
+                }
+            )
+            // lib.optionalAttrs (svcEnabled "hermes") (
+              # Read-only GitHub PAT for private-repo clones (T14, user
+              # decision 2026-08-20: read-only, permanently no-push). Own
+              # file because hermes.yaml is modifiable only with the host
+              # age PRIVATE key — this one was created public-key-only, so
+              # the user can `sops --set` the real token in after creating
+              # a fine-grained PAT (Contents: Read-only). Ships as a
+              # PLACEHOLDER: every consumer treats non-github_pat_/ghp_
+              # values as "no token" and stays inert.
+              mkKeyedSecrets "hermes-github-token.yaml"
+                {
+                  owner = "hermes";
+                  group = "hermes";
+                  restartUnits = [
+                    "hermes.service"
+                    "hermes-github-verify.service"
+                  ];
+                }
+                {
+                  hermes_github_read_token = "github_read_token";
+                }
+            )
+            // lib.optionalAttrs (svcEnabled "crush-daily") (
+              mkSecrets "crush-daily.yaml" {
+                owner = primaryUser;
+                group = "users";
+                restartUnits = [ "crush-daily.service" ];
+              } [ "synthetic_api_key" ]
+            )
+            # Interactive crush provider keys (user sessions), relocated
+            # 2026-08-31 out of the machine auth store
+            # (~/.local/share/crush/crush.json) — plaintext keys readable by
+            # every agent running as the user. Consumed by the HM crushrc
+            # (`provider add --api-key "$(cat /run/secrets/<name>)"`), which
+            # never persists the keys back. No restartUnits: read
+            # interactively at crush session start. hyper stays store-owned
+            # (OAuth refresh state, self-rotating — not a static key).
+            //
+              mkSecrets "crush.yaml"
+                {
+                  owner = primaryUser;
+                  group = "users";
+                  mode = "0400";
+                }
+                [
+                  "zai_api_key"
+                  "gemini_api_key"
+                  "minimax_api_key"
+                  "kimi_api_key"
+                ]
+            // lib.optionalAttrs (svcEnabled "bank-sync") (
+              # The AES key lives in its own file: bank-sync.yaml holds the
+              # real Wise token and is decryptable only with the host key
+              # (root), so the encryption key was sops-encrypted to the
+              # host age PUBLIC key in a separate file instead.
+              mkSecrets "bank-sync.yaml" {
+                owner = "bank-sync";
+                group = "bank-sync";
+                restartUnits = [ "bank-sync.service" ];
+              } [ "wise_api_key" ]
+              // mkSecrets "bank-sync-encryption.yaml" {
+                owner = "bank-sync";
+                group = "bank-sync";
+                restartUnits = [ "bank-sync.service" ];
+              } [ "encryption_key" ]
+            )
+            // lib.optionalAttrs (svcEnabled "file-and-image-renamer") (
+              mkKeyedSecrets "crush-daily.yaml"
+                {
+                  owner = primaryUser;
+                  group = "users";
+                  restartUnits = [ "file-and-image-renamer.service" ];
+                }
+                {
+                  # Same encrypted key as crush-daily's synthetic_api_key, but
+                  # owned by primaryUser so the HM user service can read it.
+                  file_renamer_synthetic_api_key = "synthetic_api_key";
+                }
+            )
+            // lib.optionalAttrs (svcEnabled "openseo") (
+              mkSecrets "openseo.yaml"
+                {
+                  owner = "root";
+                  group = "root";
+                  restartUnits = [ "openseo.service" ];
+                }
+                (
+                  [ "dataforseo_api_key" ]
+                  ++ lib.optionals config.services.openseo.googleSearchConsole.enable [
+                    "google_client_id"
+                    "google_client_secret"
+                    "better_auth_secret"
+                  ]
+                  ++ lib.optionals config.services.openseo.aiFeatures.enable [
+                    "openrouter_api_key"
+                  ]
+                )
+            )
+            # cloud_auth_token: single tenant-level API key shared by ALL monitor365
+            # consumers (server bootstrap, unified agent).  The same YAML key is
+            # materialised as a sops secret entry owned by the monitor365-server
+            # system user.
+            # Server + agent secrets — owned by dedicated system user
+            // lib.optionalAttrs (svcEnabled "monitor365-server") (
+              mkSecrets "monitor365.yaml"
+                {
+                  owner = "monitor365-server";
+                  group = "monitor365-server";
+                  restartUnits = [
+                    "monitor365-server.service"
+                    "monitor365.service"
+                  ];
+                }
+                [
+                  "server_jwt_secret"
+                  "cloud_auth_token"
+                ]
+            )
+            //
+              lib.optionalAttrs
+                (
+                  svcEnabled "signoz"
+                  || svcEnabled "gatus-config"
+                  || svcEnabled "discordsync"
+                  || svcEnabled "papdashboard"
+                )
+                (
+                  mkSecrets "signoz.yaml" {
+                    owner = "root";
+                    group = "root";
+                    restartUnits = [
+                      "signoz-provision.service"
+                      "gatus.service"
+                    ]
+                    ++ lib.optional (svcEnabled "discordsync") "discordsync.service"
+                    ++ lib.optional (svcEnabled "papdashboard") "papdashboard.service";
+                  } [ "discord_alert_webhook_url" ]
+                )
+            // lib.optionalAttrs (svcEnabled "papdashboard") (
+              mkSecrets "papdashboard.yaml" {
+                owner = "root";
+                group = "root";
+                restartUnits = [ "papdashboard.service" ];
+              } [ "papdashboard_api_key" ]
+            )
+            // lib.optionalAttrs (svcEnabled "papdashboard") (
+              # Dedicated insights-channel webhook (channel 1539383848549486632) —
+              # raw Gatus alerts keep the shared discord_alert_webhook_url, so
+              # the two streams land in two different Discord channels.
+              mkSecrets "papdashboard-discord.yaml" {
+                owner = "root";
+                group = "root";
+                restartUnits = [ "papdashboard.service" ];
+              } [ "papdashboard_insights_webhook_url" ]
+            )
+            // lib.optionalAttrs (svcEnabled "discordsync") (
+              mkSecrets "discordsync.yaml"
+                {
+                  owner = "discordsync";
+                  group = "discordsync";
+                  restartUnits = [ "discordsync.service" ];
+                }
+                [
+                  "discordsync_discord_token"
+                  "discordsync_turso_url"
+                  "discordsync_turso_auth_token"
+                ]
+            )
+            //
+              lib.optionalAttrs
+                (svcEnabled "discordsync" && (config.services.discordsync.gcsBucket or null) != null)
+                {
+                  discordsync_gcs_credentials = {
+                    sopsFile = lib.path.append secretsDir "discordsync.yaml";
+                    owner = "discordsync";
+                    group = "discordsync";
+                    restartUnits = [ "discordsync.service" ];
+                  };
+                }
+            //
+              lib.optionalAttrs (svcEnabled "discordsync" && (config.services.discordsync.immich.enable or false))
+                {
+                  # Own encrypted file (split-file precedent:
+                  # papdashboard-discord.yaml) — agent sessions can encrypt a
+                  # NEW file with the public key but cannot add a key to the
+                  # existing discordsync.yaml without the host age identity.
+                  discordsync_immich_api_key = {
+                    sopsFile = lib.path.append secretsDir "discordsync-immich.yaml";
+                    owner = "discordsync";
+                    group = "discordsync";
+                    restartUnits = [
+                      "discordsync.service"
+                      "discordsync-immich-verify.service"
+                    ];
+                  };
+                }
+            // lib.optionalAttrs (svcEnabled "dns-failover") (
+              mkSecrets "dns-failover.yaml" { } [ "vrrp_auth_password" ]
+            )
+            // lib.optionalAttrs (svcEnabled "cv-server") (
+              # Root-owned raw secret; the service consumes the "cv-env"
+              # template (owner cv) which interpolates the placeholder.
+              # cv_evaluation_citizenships: ISO-3166 alpha-2 comma string
+              # (e.g. "de") feeding CV_EVALUATION_CITIZENSHIPS — the D5.1
+              # carve-out that stops SÜG/NATO clearance demands from
+              # categorically skipping for an operator whose citizenship
+              # CAN obtain them (PII → sops only, never a tracked config
+              # file; staged 2026-09-15 with the defense-portal bundle).
+              mkSecrets "cv.yaml"
+                {
+                  owner = "root";
+                  group = "root";
+                  restartUnits = [ "cv-server.service" ];
+                }
+                [
+                  "cv_api_key"
+                  "cv_evaluation_citizenships"
+                ]
+            )
+            // lib.optionalAttrs (svcEnabled "inboxclean") (
+              # Raw Google OAuth client credentials.json; the upstream module's
+              # ExecStartPre seed script runs as User=inboxclean and copies it
+              # into /var/lib/inboxclean/credentials.json on every start.
+              mkSecrets "inboxclean.yaml" {
+                owner = "inboxclean";
+                group = "inboxclean";
+                restartUnits = [
+                  "inboxclean-web.service"
+                  "inboxclean-sync.service"
+                ];
+              } [ "inboxclean_gmail_credentials" ]
+            )
+            // lib.optionalAttrs (svcEnabled "inboxclean") (
+              # Paperless REST API token for InboxClean's Gmail-attachment
+              # archiving (uploads ride the sync hook). Nothing reads the
+              # raw secret — the inboxclean-paperless-env and gatus-env
+              # templates interpolate it for the inboxclean units and the
+              # Gatus auth check. Ships as PLACEHOLDER; go-live = paste the
+              # real token (paperless-manage drf_create_token) + flip
+              # services.inboxclean.paperless.enable.
+              mkSecrets "inboxclean-paperless.yaml" {
+                owner = "root";
+                group = "root";
+                mode = "0400";
+              } [ "paperless_api_token" ]
+            )
+            // lib.optionalAttrs (svcEnabled "inboxclean") (
+              # Decrypt password for password-protected PDF attachments
+              # (Polish bank statements). InboxClean's papersync decrypts
+              # them with qpdf before upload — without it, Paperless-ngx
+              # archives the statement with EMPTY content (pdftotext fails,
+              # ocrmypdf refuses) and the doc is unsearchable. A PLACEHOLDER
+              # value is inert by design (papersync skips decryption and
+              # tags such uploads "encrypted"). Go-live = paste the bank's
+              # PDF password: sudo sops platforms/nixos/secrets/inboxclean-decrypt.yaml
+              mkSecrets "inboxclean-decrypt.yaml" {
+                owner = "root";
+                group = "root";
+                mode = "0400";
+                restartUnits = [
+                  "inboxclean-web.service"
+                  "inboxclean-sync.service"
+                ];
+              } [ "paperless_decrypt_password" ]
+            )
+            // lib.optionalAttrs (svcEnabled "attic-config") (
+              # atticd runs with DynamicUser=true (nixpkgs module default), so the
+              # "atticd" user does NOT exist at sops-decrypt time and cannot own
+              # files — same constraint as Gatus. The EnvironmentFile is read by
+              # systemd (PID 1, root) and the env vars injected into the atticd
+              # process, so a root-owned file is correct and secure.
+              mkSecrets "attic.yaml" {
+                owner = "root";
+                group = "root";
+                restartUnits = [ "atticd.service" ];
+              } [ "attic_token_rs256_secret_base64" ]
+            )
+            // lib.optionalAttrs (svcEnabled "browser-history") (
+              mkSecrets "browser-history.yaml" {
+                owner = "root";
+                group = "root";
+                restartUnits = [ "browser-history.service" ];
+              } [ "browser_history_agent_token" ]
+            )
+            // lib.optionalAttrs (svcEnabled "google-sync") (
+              # Full rclone.conf INI for the Drive mirror (token is a JSON blob —
+              # a file, not an env var: systemd EnvironmentFile quote-stripping
+              # around embedded double quotes is a footgun). Root-owned: the
+              # sync unit runs as root to write /mnt/pool.
+              mkSecrets "google-sync.yaml" {
+                owner = "root";
+                restartUnits = [ "google-sync.service" ];
+              } [ "google_sync_rclone_config" ]
+            )
+            // lib.optionalAttrs (svcEnabled "mail-relay") (
+              # Upstream submission credential for the Postfix null client
+              # (mail-relay.nix). Ships as a PLACEHOLDER — go-live is an
+              # interactive `sudo sops platforms/nixos/secrets/mail-relay.yaml`
+              # (paste the Resend re_... API key as mail_relay_password), then
+              # postfix restarts via the template's restartUnits. Raw secret is
+              # root-owned: only the rendered template (owner postfix) is read
+              # by the daemon.
+              mkSecrets "mail-relay.yaml" {
+                owner = "root";
+                group = "root";
+                restartUnits = [ "postfix.service" ];
+              } [ "mail_relay_password" ]
+            )
+            // lib.optionalAttrs (svcEnabled "offsite-borg") (
+              # Offsite Borg leg (platforms/nixos/system/backup.nix): the
+              # passphrase (repokey-blake2 recovery secret), the dedicated
+              # StorageBox SSH key (pubkey in docs/services/offsite-borg.md),
+              # and the pinned StorageBox host key (placeholder = fail-closed
+              # on any host key until go-live pins it). All root-owned: the
+              # borg job runs as root. Rotation restarts the job unit; the
+              # borg-env template carries the BORG_REPO target.
+              mkSecrets "borg.yaml"
+                {
+                  owner = "root";
+                  group = "root";
+                  mode = "0400";
+                  restartUnits = [ "borgbackup-job-hetzner.service" ];
+                }
+                [
+                  "borg_password"
+                  "borg_ssh_key"
+                  "borg_known_hosts"
+                ]
+            );
 
-        templates =
-          {
+          templates = {
             "forgejo-sync.env" = {
               owner = primaryUser;
               group = "users";
-              content = lib.generators.toKeyValue {} {
+              content = lib.generators.toKeyValue { } {
                 GITHUB_TOKEN = config.sops.placeholder.github_token;
                 GITHUB_USER = config.sops.placeholder.github_user;
               };
@@ -491,8 +500,8 @@ in {
               owner = "hermes";
               group = "hermes";
               mode = "0400";
-              restartUnits = ["hermes.service"];
-              content = lib.generators.toKeyValue {} {
+              restartUnits = [ "hermes.service" ];
+              content = lib.generators.toKeyValue { } {
                 DISCORD_BOT_TOKEN = config.sops.placeholder.hermes_discord_bot_token;
                 GLM_API_KEY = config.sops.placeholder.hermes_glm_api_key;
                 MINIMAX_API_KEY = config.sops.placeholder.hermes_minimax_api_key;
@@ -516,7 +525,7 @@ in {
             "pma-env" = {
               owner = primaryUser;
               group = "users";
-              restartUnits = ["projects-management-automation.service"];
+              restartUnits = [ "projects-management-automation.service" ];
               content = "";
             };
           }
@@ -524,8 +533,8 @@ in {
             "monitor365-server-env" = {
               owner = "monitor365-server";
               group = "monitor365-server";
-              restartUnits = ["monitor365-server.service"];
-              content = lib.generators.toKeyValue {} {
+              restartUnits = [ "monitor365-server.service" ];
+              content = lib.generators.toKeyValue { } {
                 MONITOR365_SERVER__JWT_SECRET = config.sops.placeholder.server_jwt_secret;
               };
             };
@@ -535,8 +544,8 @@ in {
               owner = "root";
               group = "root";
               mode = "0400";
-              restartUnits = ["openseo.service"];
-              content = lib.generators.toKeyValue {} (
+              restartUnits = [ "openseo.service" ];
+              content = lib.generators.toKeyValue { } (
                 {
                   DATAFORSEO_API_KEY = config.sops.placeholder.dataforseo_api_key;
                 }
@@ -556,8 +565,8 @@ in {
               owner = primaryUser;
               group = "users";
               mode = "0400";
-              restartUnits = ["crush-daily.service"];
-              content = lib.generators.toKeyValue {} {
+              restartUnits = [ "crush-daily.service" ];
+              content = lib.generators.toKeyValue { } {
                 CRUSH_DAILY_LLM_API_KEY = config.sops.placeholder.synthetic_api_key;
               };
             };
@@ -567,8 +576,8 @@ in {
               owner = "bank-sync";
               group = "bank-sync";
               mode = "0400";
-              restartUnits = ["bank-sync.service"];
-              content = lib.generators.toKeyValue {} {
+              restartUnits = [ "bank-sync.service" ];
+              content = lib.generators.toKeyValue { } {
                 BANK_SYNC_WISE_API_KEY = config.sops.placeholder.wise_api_key;
                 BANK_SYNC_SECURITY_ENCRYPTION_KEY = config.sops.placeholder.encryption_key;
               };
@@ -578,8 +587,8 @@ in {
             "gatus-env" = {
               owner = "root";
               group = "root";
-              restartUnits = ["gatus.service"];
-              content = lib.generators.toKeyValue {} (
+              restartUnits = [ "gatus.service" ];
+              content = lib.generators.toKeyValue { } (
                 {
                   DISCORD_WEBHOOK_URL = config.sops.placeholder.discord_alert_webhook_url;
                 }
@@ -593,16 +602,17 @@ in {
                   # reads the guarded sse-stats endpoint.
                   CV_API_KEY = config.sops.placeholder.cv_api_key;
                 }
-                // lib.optionalAttrs
-                (svcEnabled "inboxclean" && (config.services.inboxclean.paperless.enable or false))
-                {
-                  # Paperless REST token for the "InboxClean Paperless
-                  # Archive Auth" check — the SAME secret inboxclean-sync
-                  # uploads attachments with, so the check fails exactly
-                  # when the archiving credential is dead (401) or the
-                  # API is unreachable.
-                  PAPERLESS_TOKEN = config.sops.placeholder.paperless_api_token;
-                }
+                //
+                  lib.optionalAttrs
+                    (svcEnabled "inboxclean" && (config.services.inboxclean.paperless.enable or false))
+                    {
+                      # Paperless REST token for the "InboxClean Paperless
+                      # Archive Auth" check — the SAME secret inboxclean-sync
+                      # uploads attachments with, so the check fails exactly
+                      # when the archiving credential is dead (401) or the
+                      # API is unreachable.
+                      PAPERLESS_TOKEN = config.sops.placeholder.paperless_api_token;
+                    }
               );
             };
           }
@@ -611,8 +621,8 @@ in {
               owner = "root";
               group = "root";
               mode = "0400";
-              restartUnits = ["papdashboard.service"];
-              content = lib.generators.toKeyValue {} {
+              restartUnits = [ "papdashboard.service" ];
+              content = lib.generators.toKeyValue { } {
                 PAP_API_KEY = config.sops.placeholder.papdashboard_api_key;
                 # Insights go to their OWN Discord channel; raw Gatus alerts
                 # stay on the shared discord_alert_webhook_url channel.
@@ -631,8 +641,8 @@ in {
               owner = "root";
               group = "root";
               mode = "0400";
-              restartUnits = ["tq-agent-pool.service"];
-              content = lib.generators.toKeyValue {} {
+              restartUnits = [ "tq-agent-pool.service" ];
+              content = lib.generators.toKeyValue { } {
                 TQ_PAP_API_KEY = config.sops.placeholder.papdashboard_api_key;
               };
             };
@@ -644,14 +654,13 @@ in {
               mode = "0400";
               # Verify unit is conditional (immich.enable): restartUnits must
               # never name a unit that does not exist in the generation.
-              restartUnits =
-                [
-                  "discordsync.service"
-                ]
-                ++ lib.optionals (config.services.discordsync.immich.enable or false) [
-                  "discordsync-immich-verify.service"
-                ];
-              content = lib.generators.toKeyValue {} (
+              restartUnits = [
+                "discordsync.service"
+              ]
+              ++ lib.optionals (config.services.discordsync.immich.enable or false) [
+                "discordsync-immich-verify.service"
+              ];
+              content = lib.generators.toKeyValue { } (
                 {
                   DISCORD_TOKEN = config.sops.placeholder.discordsync_discord_token;
                   TURSO_URL = config.sops.placeholder.discordsync_turso_url;
@@ -680,7 +689,7 @@ in {
               owner = "root";
               group = "root";
               mode = "0400";
-              content = lib.generators.toKeyValue {} {
+              content = lib.generators.toKeyValue { } {
                 VRRP_AUTH_PASSWORD = config.sops.placeholder.vrrp_auth_password;
               };
             };
@@ -690,8 +699,8 @@ in {
               owner = "cv";
               group = "cv";
               mode = "0400";
-              restartUnits = ["cv-server.service"];
-              content = lib.generators.toKeyValue {} {
+              restartUnits = [ "cv-server.service" ];
+              content = lib.generators.toKeyValue { } {
                 # Guards mutating/admin API routes (X-API-Key header).
                 # Read/rotate: sudo sops platforms/nixos/secrets/cv.yaml
                 CV_API_KEY = config.sops.placeholder.cv_api_key;
@@ -722,8 +731,8 @@ in {
               owner = "root";
               group = "root";
               mode = "0400";
-              restartUnits = ["atticd.service"];
-              content = lib.generators.toKeyValue {} {
+              restartUnits = [ "atticd.service" ];
+              content = lib.generators.toKeyValue { } {
                 ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64 = config.sops.placeholder.attic_token_rs256_secret_base64;
               };
             };
@@ -744,7 +753,7 @@ in {
               restartUnits = [
                 "browser-history.service"
               ];
-              content = lib.generators.toKeyValue {} {
+              content = lib.generators.toKeyValue { } {
                 BROWSER_HISTORY_AGENT_TOKEN = config.sops.placeholder.browser_history_agent_token;
               };
             };
@@ -761,31 +770,32 @@ in {
               owner = "postfix";
               group = "postfix";
               mode = "0400";
-              restartUnits = ["postfix.service"];
+              restartUnits = [ "postfix.service" ];
               content = "[${config.services.mail-relay.relayHost}]:${toString config.services.mail-relay.relayPort} ${config.services.mail-relay.smtpUsername}:${config.sops.placeholder.mail_relay_password}";
             };
           }
-          // lib.optionalAttrs
-          (svcEnabled "inboxclean" && (config.services.inboxclean.paperless.enable or false))
-          {
-            # PAPERLESS_TOKEN for InboxClean's attachment archiving.
-            # Root-owned ON PURPOSE: systemd reads EnvironmentFile as PID 1
-            # (mail-relay-sasl rationale), the service user never needs it.
-            # Rotation restarts BOTH units so the next sync tick re-reads.
-            "inboxclean-paperless-env" = {
-              owner = "root";
-              group = "root";
-              mode = "0400";
-              restartUnits = [
-                "inboxclean-web.service"
-                "inboxclean-sync.service"
-              ];
-              content = ''
-                PAPERLESS_TOKEN=${config.sops.placeholder.paperless_api_token}
-                PAPERLESS_DECRYPT_PASSWORD=${config.sops.placeholder.paperless_decrypt_password}
-              '';
-            };
-          }
+          //
+            lib.optionalAttrs
+              (svcEnabled "inboxclean" && (config.services.inboxclean.paperless.enable or false))
+              {
+                # PAPERLESS_TOKEN for InboxClean's attachment archiving.
+                # Root-owned ON PURPOSE: systemd reads EnvironmentFile as PID 1
+                # (mail-relay-sasl rationale), the service user never needs it.
+                # Rotation restarts BOTH units so the next sync tick re-reads.
+                "inboxclean-paperless-env" = {
+                  owner = "root";
+                  group = "root";
+                  mode = "0400";
+                  restartUnits = [
+                    "inboxclean-web.service"
+                    "inboxclean-sync.service"
+                  ];
+                  content = ''
+                    PAPERLESS_TOKEN=${config.sops.placeholder.paperless_api_token}
+                    PAPERLESS_DECRYPT_PASSWORD=${config.sops.placeholder.paperless_decrypt_password}
+                  '';
+                };
+              }
           // lib.optionalAttrs (svcEnabled "dns-blocker") {
             # Retired 2026-08-21: the Bearer token (DNSBLOCKD_AUTH_TOKEN) was
             # dropped in favor of OIDC SSO as the only dashboard credential.
@@ -800,13 +810,13 @@ in {
               owner = "root";
               group = "root";
               mode = "0400";
-              restartUnits = ["borgbackup-job-hetzner.service"];
-              content = lib.generators.toKeyValue {} {
+              restartUnits = [ "borgbackup-job-hetzner.service" ];
+              content = lib.generators.toKeyValue { } {
                 BORG_REPO = config.sops.placeholder.borg_repo;
               };
             };
           };
+        };
       };
     };
-  };
 }

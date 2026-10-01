@@ -18,6 +18,7 @@ sync-token path message). The go-live chain beyond that is still
 PLACEHOLDER-inert by design (owner chain not run; hub unchanged, 2 unpushed).
 
 **What I forgot — honest list:**
+
 1. **Self-firing automation verdict persistence (the big one).** Watcher #3
    was armed to self-fire the deploy + verify the PATH, logging ONLY to its
    background-shell buffer. The session gap killed the buffer: whether it
@@ -74,8 +75,8 @@ PLACEHOLDER-inert by design (owner chain not run; hub unchanged, 2 unpushed).
     `dprint check` rc=0.
 11. **Overnight-state reconciliation (this resume)**: profile system-810
     (Sep 30 15:48) identified; runner unit PATH verified live; sync journal
-    + collector textfile read (still PLACEHOLDER-inert, honest zeros);
-    hub repo unchanged (HEAD `5ec04cd`, 2 unpushed, clean tree).
+    - collector textfile read (still PLACEHOLDER-inert, honest zeros);
+      hub repo unchanged (HEAD `5ec04cd`, 2 unpushed, clean tree).
 12. **Deploy-watch campaign (Sep 30 morning)**: three inline watchers, ~2h
     of 2-5-min PSI sampling against a 3.5h storm (avg10 12-77%); none
     fired (correctly — the lone qualifying dip at 08:08 lasted <3 min and
@@ -101,6 +102,7 @@ PLACEHOLDER-inert by design (owner chain not run; hub unchanged, 2 unpushed).
    re-apply → verify), but each cost a round trip — see §e.4.
 
 ## c) NOT STARTED (owner/root/auth-gated — sandbox bans `sudo`/`systemctl`,
+
 Forgejo 401s anonymous probes)
 
 1. `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh` (mirror,

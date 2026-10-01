@@ -57,6 +57,7 @@ Nothing at the "destroyed work / wrong premise" level. The honest list:
 ## f) UP TO 50 THINGS TO GET DONE NEXT (prioritized; §f1-4 self-harvested into the queue at authoring time)
 
 **Immediate (this service):**
+
 1. Deploy indexer-web when `memory_emergency_guard_trips_last_hour == 0` and io PSI drains: `nix run .#deploy` → `nix run .#post-deploy-check`.
 2. Post-deploy smoke + live bring-up verification (unit start, `/` HTML + `pat(*<html*)` live check, admin 401/200 with `/var/lib/indexer-web-keys/admin-key`, coverage gauge) — QUEUED.
 3. ioTier assignment for the scan unit — QUEUED.
@@ -99,4 +100,4 @@ Nothing at the "destroyed work / wrong premise" level. The honest list:
 
 ---
 
-*Report ends. Waiting for instructions.*
+_Report ends. Waiting for instructions._

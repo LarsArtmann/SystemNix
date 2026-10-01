@@ -8,4 +8,3 @@
 
 - **A module carrying a one-time migration must not be imported before the migration's prepare ran**: journal-hot rode the 21:36 deploy un-migrated, and the mount then failed at every activation (fsconfig ENOENT — missing subvol; deploy rc=14 churn) until containment-disabled in `configuration.nix`. The disable comment encoded the re-arm condition ("run the migration, then uncomment + deploy"), which worked exactly as designed when re-armed 23:40. Pattern: grep incoming modules for migration scripts/runbooks BEFORE deploying (the 09-29 unaudited-tree lesson), and encode re-arm conditions in the disable comment.
 - **`set -euo pipefail` + `cmd | head -1` / `grep -q` = silent SIGPIPE(141) abort**: head / grep -q exit early, the producer eats SIGPIPE, pipefail converts it into a mid-script kill with NO error line (finalize died right after a successful flush; reproduced, exit 141). Use `sed -n '1p'` / `grep … >/dev/null` in this repo's scripts.
-

@@ -476,7 +476,7 @@
 - [ ] **Build the pre/post-deploy-check apps in flake check/CI — the smoke's shellcheck runs only at deploy time (SC2004 sat dark 17h)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-01_10-25_deploy-813-bank-sync-live-ci-red-smoke-healed.html §f.3)
 - [ ] **Probe accuracy: smoke-baseline EXPECTED-SKIP for ConditionPathExists-gated units + pre-deploy §10 UP-classify for 401 metric endpoints (cv :8098)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-01_10-25_deploy-813-bank-sync-live-ci-red-smoke-healed.html §f.4)
 - [ ] **Pin CI's statix to the flake lock (nixpkgs-weekly float shipped W03/W04/W08 overnight and reded CI without a repo change)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-01_10-25_deploy-813-bank-sync-live-ci-red-smoke-healed.html §f.8)
-- [ ] **Eval-warning cleanup batch (zsh initExtra, stdenv.is* ×4, 21 catalog subdomains, buildEnv collisions)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-01_10-25_deploy-813-bank-sync-live-ci-red-smoke-healed.html §f.21)
+- [ ] __Eval-warning cleanup batch (zsh initExtra, stdenv.is_ ×4, 21 catalog subdomains, buildEnv collisions)_* → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-01_10-25_deploy-813-bank-sync-live-ci-red-smoke-healed.html §f.21)
 
 ### pixel6
 

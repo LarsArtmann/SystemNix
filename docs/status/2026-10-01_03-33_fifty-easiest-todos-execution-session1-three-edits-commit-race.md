@@ -28,7 +28,7 @@ All remaining ranked items: **#4–40** (37 items: AGENTS.md edits #4/#6/#30/#49
 ## d) TOTALLY FUCKED UP
 
 1. **Lost the commit race I had just been warned about.** CONTRIBUTING's daemon-race policy (line ~233) says commit immediately after the last edit, pathspec-scoped. I inserted a live test + `git status` between the edits and the commit — widening the window to minutes — and the daemon swept all three files into `873ffb2e`. Result: zero commits under my own footer this session, and my first commit attempt died on `index.lock` held by a live queue agent (correctly diagnosed as FRESH, not stale — no lock removal).
-2. **Ignored my own evidence in the same output.** Right after editing, my test command's `git status` showed my three files as ` M` (unstaged) even though the same command had run `git add` on them — the add silently didn't stick (or was reset by the racing commit). I noticed it and proceeded anyway instead of stopping. That unstaged state is exactly what let the sweep win.
+2. **Ignored my own evidence in the same output.** Right after editing, my test command's `git status` showed my three files as `M` (unstaged) even though the same command had run `git add` on them — the add silently didn't stick (or was reset by the racing commit). I noticed it and proceeded anyway instead of stopping. That unstaged state is exactly what let the sweep win.
 3. **Wasted a round trip on the lock investigation** (a bounded sleep-loop auto-backgrounded). A quick non-blocking `stat` of the lock age would have classified it immediately.
 
 ## e) WHAT WE SHOULD IMPROVE

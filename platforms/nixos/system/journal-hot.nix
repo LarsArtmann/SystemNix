@@ -32,7 +32,6 @@
 # as rollback insurance. Regression: tests/test-journal-hot.nix (boots the
 # mount path AND the Samsung-absent degraded shape).
 {
-  config,
   lib,
   ...
 }:

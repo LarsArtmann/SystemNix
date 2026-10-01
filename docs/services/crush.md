@@ -200,4 +200,3 @@ Per-project `~/projects/**/.crush/` session DBs (2-5 GB + WALs each) were the 20
 - **Interactive `crush` IGNORES positional prompts** (source-verified `internal/cmd/root.go` — args never reach the TUI) — that is WHY the seeded prompt rides `crush run` and follow-up rides `crush --continue`. Do not "simplify" to `crush "<prompt>"`.
 - **Evidence bundles can contain secrets** (journald carries flm request bodies) — they are user-only under `~/.local/state/crush-debug/`, same trust domain as crush session DBs; pruned to the newest 20 bundles on each run (find+trash).
 - **Error surface v1 is failed-units + sev1 ONLY**: Gatus-red-but-active incidents (the majority incident class in this file) are NOT picker sources — gatus.sqlite is root-only and the API is OIDC-gated. Root-side dump file or token'd API read is the queued follow-up (docs/todo/desktop.md).
-

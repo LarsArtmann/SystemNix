@@ -69,6 +69,7 @@
 ## f) NEXT (up to 50, rough order)
 
 **Upstream (dnsblockd repo):**
+
 1. Run the upstream VM test (`checks.*` nixos-vm) against `4e99b6d1` — exercises DNS+HTTP through the changed processor path.
 2. Full `nix flake check --no-build` in dnsblockd.
 3. Add upstream negative tests: `blocklist_files` rides loader+processor (assert mapping.json gains its entries); `csrf_enabled` renders (module-eval content assert).

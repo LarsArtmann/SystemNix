@@ -32,7 +32,7 @@ pathspec-scoped). Pre-commit gates passed on `8e6409dd` (gitleaks, whitespace,
    dnsblockd, github-auto-assign, emeet-pixyd, nix-email, journal-hot,
    wifi-failover, bank-sync, projects-management-automation.
 4. **21 runbook appendices** ("Agent Notes (migrated from AGENTS.md 2026-10-01)")
-   + CONTRIBUTING appendix (HTML-report house pattern).
+   - CONTRIBUTING appendix (HTML-report house pattern).
 5. **New lean AGENTS.md**: routing table ("working on X → read Y first"),
    architecture, TODO system, prevention-layers table, universal critical rules
    (3 long rules condensed to 2-line pointers; full text in git.md/nix-flakes.md),
@@ -57,8 +57,8 @@ pathspec-scoped). Pre-commit gates passed on `8e6409dd` (gitleaks, whitespace,
 
 ## b) PARTIALLY DONE
 
-1. **"Clean it up" vs "move it"**: the split is verbatim-preserving; the *prose
-   itself* was not rewritten/tightened (deliberate: zero-loss migration first).
+1. **"Clean it up" vs "move it"**: the split is verbatim-preserving; the _prose
+   itself_ was not rewritten/tightened (deliberate: zero-loss migration first).
    Superseded-chain narratives ("SUPERSEDED 2026-09-30", corrected claims) survive
    as-is inside the new files — accurate but verbose.
 2. **Critical Rules**: 3 long rules condensed in core with pointers; the remaining
@@ -94,7 +94,7 @@ pathspec-scoped). Pre-commit gates passed on `8e6409dd` (gitleaks, whitespace,
    real look. Direct violation of the house "TEST AFTER CHANGES" rule (batched
    21 edits, verified 3, partially).
 3. **The conservation audit itself was initially broken**: `grep -qF "$line"` with
-   lines starting `- ` was parsed as OPTIONS (859 false "missing"). The broken
+   lines starting `-` was parsed as OPTIONS (859 false "missing"). The broken
    audit is what surfaced the real bug — two errors cancelling into discovery is
    luck, not method. Correct form: `grep -qF -e "$line"`.
 4. **Daemon race**: the auto-commit daemon committed mid-flight (`d89029cf`),

@@ -11,12 +11,12 @@ are fully functional at the deployed binary.
 
 ## What each mode stores (source: `internal/tracking/mode.go`, v0.9.3)
 
-| Mode | Metadata (method, path, IP, user agent) | DNS domain + category | HTTP headers | Payloads |
-|------|---|---|---|---|
-| `METADATA_ONLY` (current) | ✅ | ❌ | ❌ | ❌ |
-| `METADATA_AND_DNS` (proposed) | ✅ | ✅ | ❌ | ❌ |
-| `METADATA_AND_DNS_AND_HEADERS` | ✅ | ✅ | ✅ | ❌ |
-| `FULL` | ✅ | ✅ | ✅ | ✅ |
+| Mode                           | Metadata (method, path, IP, user agent) | DNS domain + category | HTTP headers | Payloads |
+| ------------------------------ | --------------------------------------- | --------------------- | ------------ | -------- |
+| `METADATA_ONLY` (current)      | ✅                                      | ❌                    | ❌           | ❌       |
+| `METADATA_AND_DNS` (proposed)  | ✅                                      | ✅                    | ❌           | ❌       |
+| `METADATA_AND_DNS_AND_HEADERS` | ✅                                      | ✅                    | ✅           | ❌       |
+| `FULL`                         | ✅                                      | ✅                    | ✅           | ✅       |
 
 Both rows above the proposal exist but are **not on the table** — they add header/
 payload capture with no dashboard feature we use today requiring them.

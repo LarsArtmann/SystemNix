@@ -211,9 +211,11 @@ but four things were sloppy or came too close:
    (TODO row or "deferred" note), not silent deletion.
 
 ## f) NEXT (up to 50, ordered: owner-gated go-live ladder first, then
+
 assistant-executable, then hardening/polish)
 
 **Owner — mail go-live ladder (pbx TODO §9 / runbook §0–§7):**
+
 1. Republish the installer release: `./installer/publish-release.sh`, then
    `nix run .#release-freshness` (expect FRESH) — decision: BEFORE go-live.
 2. File the Hetzner limit request for :25/:465 (Console → Limits).
@@ -242,101 +244,101 @@ assistant-executable, then hardening/polish)
 
 **Assistant-executable (queued/ready):**
 13. Split-or-annotate the domains rollout so the larsartmann.cloud MX carries
-    an explicit "apply only post-unblock" marker (commit split or loud TODO
-    note + plan-time comment).
+an explicit "apply only post-unblock" marker (commit split or loud TODO
+note + plan-time comment).
 14. Verify the RFC 7489 §7.1 record name format against the RFC text before
-    the apply (5 minutes; encode the citation in the Terraform comment).
+the apply (5 minutes; encode the citation in the Terraform comment).
 15. Re-add TLS-RPT as explicit optional hardening (runbook §4 note + a wired
-    `_smtp._tls TXT "v=TLSRPTv1; rua=mailto:dmarc@larsartmann.cloud"` on the
-    two sending domains, or a deliberate decision to skip).
+`_smtp._tls TXT "v=TLSRPTv1; rua=mailto:dmarc@larsartmann.cloud"` on the
+two sending domains, or a deliberate decision to skip).
 16. Extend the email-forwarding README Usage section with the records
-    dynamic-block wiring example the 4 domain files now use.
+dynamic-block wiring example the 4 domain files now use.
 17. Annotate the 2026-09-29 status report (§b/§e/§g) with the
-    collector-domain supersession per docs-health doctrine.
+collector-domain supersession per docs-health doctrine.
 18. nix-email eval-contract test in pbx-artmann (~30 lines, SystemNix
-    `tests/test-nix-email.nix` shape).
+`tests/test-nix-email.nix` shape).
 19. ACME-bootstrap alerting: OnFailure on `acme-mail.artmann.tech.service`
-    (today a typo'd DNS record is silent ~5-min journal noise forever).
+(today a typo'd DNS record is silent ~5-min journal noise forever).
 20. Post-cutover Gatus external checks on evo-x2
-    (`starttls://mail.artmann.tech:25`, `tls://mail.artmann.tech:993`,
-    `CERTIFICATE_EXPIRATION > 720h`) — add ONLY after MX lands (red-until-live
-    by design).
+(`starttls://mail.artmann.tech:25`, `tls://mail.artmann.tech:993`,
+`CERTIFICATE_EXPIRATION > 720h`) — add ONLY after MX lands (red-until-live
+by design).
 21. stalwart-store restore drill: extend backup-restore.md with the
-    `stalwart-store.tgz` arm once real mail exists.
+`stalwart-store.tgz` arm once real mail exists.
 22. Root-cause the terraform-fmt hook vs devShell terraform divergence
-    (identify the hook's pinned binary/version; align them or document the
-    difference so trees stop flipping between two formattings).
+(identify the hook's pinned binary/version; align them or document the
+difference so trees stop flipping between two formattings).
 23. Run `nix run .#lint` (tflint) and `nix run .#security` (trivy) over the
-    new HCL.
+new HCL.
 24. Run the full 12-module test loop (`nix run .#test`) in the domains repo.
 25. Add `--all-systems` to the domains repo's flake check (SystemNix
-    2026-09-28 lesson).
+2026-09-28 lesson).
 26. Make the domains devShell pin the SAME terraform the pre-commit hook uses
-    (single formatter arbiter doctrine, ports cleanly from SystemNix).
+(single formatter arbiter doctrine, ports cleanly from SystemNix).
 27. SigNoz: a DMARC-reports panel/rule once reports flow (parsedmarc output
-    rate; zero-reports-in-7d alert on the collector).
+rate; zero-reports-in-7d alert on the collector).
 28. Confirm at flip time that parsedmarc's monitoredServices entry + the
-    reports-freshness backup row are actually live in system-health (the
-    wrapper wires them; verify on the deployed generation, not the eval).
+reports-freshness backup row are actually live in system-health (the
+wrapper wires them; verify on the deployed generation, not the eval).
 29. Stalwart DKIM keys for larsartmann.cloud (store data; provisioning step
-    extension in runbook §5 if relay DKIM alignment is wanted later).
+extension in runbook §5 if relay DKIM alignment is wanted later).
 30. Pin Hetzner rDNS for the VPS IP → `mail.artmann.tech` early (harmless
-    now, required the day direct-MX is ever revisited).
+now, required the day direct-MX is ever revisited).
 31. Data-driven DMARC tightening review after ~30 days of reports:
-    helpless.ai / jetpackx.io / skylines.one `p=none` → quarantine candidates.
+helpless.ai / jetpackx.io / skylines.one `p=none` → quarantine candidates.
 32. Same review for the 4 forwarding domains (`p=none` → quarantine) + decide
-    whether forwarding SPF/SRS investment is ever worth it (question g3).
+whether forwarding SPF/SRS investment is ever worth it (question g3).
 33. If g1 answers "split": carve the MX record into its own commit gated on
-    the unblock; if "apply now": fix the runbook TODO wording to bless early
-    apply explicitly.
+the unblock; if "apply now": fix the runbook TODO wording to bless early
+apply explicitly.
 34. Sweep `docs/` + both repos' AGENTS.md for any remaining
-    `dmarc@artmann.tech` references once the flip is done (the historical
-    status report keeps them by design; nothing else should).
+`dmarc@artmann.tech` references once the flip is done (the historical
+status report keeps them by design; nothing else should).
 35. pbx TODO row 153 (Resend scoping) closes with item 8's decision — link
-    the two rows so one close closes both.
+the two rows so one close closes both.
 
 **Hardening/polish (lower priority):**
 36. parsedmarc `mailbox.watch = true` behavior check in VM (IMAP IDLE vs
-    poll cadence) at flip time.
+poll cadence) at flip time.
 37. DMARC report volume sizing: estimate expected reports/day from 17 domains
-    after first week; tune parsedmarc retention + the reports backup window.
+after first week; tune parsedmarc retention + the reports backup window.
 38. Add the collector mailbox to Stalwart's backup verification checklist
-    (backup-restore.md) — the dmarc principal's inbox is now operationally
-    load-bearing.
+(backup-restore.md) — the dmarc principal's inbox is now operationally
+load-bearing.
 39. Consider `sp=reject` → `sp=quarantine` review for larsartmann.cloud once
-    subdomain sending patterns are known (currently inherits reject).
+subdomain sending patterns are known (currently inherits reject).
 40. README (domains repo): add the DMARC collector convention (one
-    MX-controlled collector domain + per-domain rua + verification TXTs) to
-    the module-catalog docs so the pattern survives repo churn.
+MX-controlled collector domain + per-domain rua + verification TXTs) to
+the module-catalog docs so the pattern survives repo churn.
 41. upstream nix-email: contribute the collector-domain gotcha
-    ("put the rua mailbox on an MX-controlled domain; check what already owns
-    the MX") to the upstream README (docs/todo/upstream.md row).
+("put the rua mailbox on an MX-controlled domain; check what already owns
+the MX") to the upstream README (docs/todo/upstream.md row).
 42. Upstream nix-email: the dmarc-monitor module could eval-assert that
-    `settings.imap.host` resolves to a domain the module itself does not own
-    an MX for — soft warning, prevents the exact class this session caught.
+`settings.imap.host` resolves to a domain the module itself does not own
+an MX for — soft warning, prevents the exact class this session caught.
 43. domains repo: consider a `terraform test` at the ROOT level asserting the
-    larsartmann.cloud zone renders exactly ONE MX + 16 verification TXTs
-    (fleet invariant, currently only implied by the HCL).
+larsartmann.cloud zone renders exactly ONE MX + 16 verification TXTs
+(fleet invariant, currently only implied by the HCL).
 44. Domains TODO: the drift-report app row (already queued) would have made
-    the apply preview of this rollout trivially reviewable — bump its
-    priority when the apply happens.
+the apply preview of this rollout trivially reviewable — bump its
+priority when the apply happens.
 45. Namecheap API: confirm the verification TXT records render with the
-    dotted hostname intact (`<domain>._report._dmarc`) in `#dns-audit` after
-    apply (provider quirks with multi-label TXT hostnames are a known genre).
+dotted hostname intact (`<domain>._report._dmarc`) in `#dns-audit` after
+apply (provider quirks with multi-label TXT hostnames are a known genre).
 46. After the flip: add `dmarc@larsartmann.cloud` to the SystemNix mail-relay
-    postmaster/canonical map story only if system mail should DMARC-report
-    (probably not — note why not, one line, in mail-relay.md).
+postmaster/canonical map story only if system mail should DMARC-report
+(probably not — note why not, one line, in mail-relay.md).
 47. Keep an eye on the parallel session's journald-hot work (journal-hot.nix)
-    for its own follow-ups — unrelated, but it entered every eval this
-    session.
+for its own follow-ups — unrelated, but it entered every eval this
+session.
 48. pbx: consider moving the relay-password placeholder warning into
-    pre-deploy-check-style gating when this repo grows one (currently
-    generate.sh FATALs — sufficient; revisit only on touch).
+pre-deploy-check-style gating when this repo grows one (currently
+generate.sh FATALs — sufficient; revisit only on touch).
 49. House-keeping: the 2026-09-29 status report §f.18 flagged a foreign
-    flake-update.yml provenance question — still unresolved upstream of this
-    session; leave flagged.
+flake-update.yml provenance question — still unresolved upstream of this
+session; leave flagged.
 50. Celebrate when the first aggregate report lands in
-    `/var/lib/parsedmarc/reports` — then tighten policies with real data.
+`/var/lib/parsedmarc/reports` — then tighten policies with real data.
 
 ### f-harvest ledger (self-harvest rule, 2026-09-30)
 

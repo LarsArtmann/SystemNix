@@ -156,7 +156,7 @@ close-out report.
 20. M20: migration impl B — re-add SystemNix overlays (whitelist filter → blocklistFiles
     post-processing; harden/oomd layering; sops CA).
 21. M21: migration verification — baseline set-compare (order-insensitive where semantic)
-    + VM test green; zero silent surface loss.
+    - VM test green; zero silent surface loss.
 22. M22: prepare the USER cutover runbook (deploy + smoke + watch DNS one restart cycle) —
     agent never deploys.
 23. Close-out report superseding `docs/status/2026-09-30_13-07_*`: dead-SHA corrections

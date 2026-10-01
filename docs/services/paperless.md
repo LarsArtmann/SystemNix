@@ -30,15 +30,15 @@
 
 Pocket ID emits a `groups` OIDC claim **only when the client requests the `groups` scope** (`claims_service.go`), which the paperless client now does (appended to the provider `SCOPE`). On each login django-allauth fires `social_account_updated`, and paperless's handler (`signals.py`) maps the claim to Django roles:
 
-| Setting                                             | Value              | Effect                            |
-| --------------------------------------------------- | ------------------ | --------------------------------- |
-| `PAPERLESS_SOCIAL_ACCOUNT_SYNC_GROUPS_CLAIM`        | `groups`           | which claim to read               |
-| `PAPERLESS_SOCIAL_ACCOUNT_SYNC_SUPERUSER_GROUP`     | `paperless-admins` | membership ⟺ `is_superuser`       |
-| `PAPERLESS_SOCIAL_ACCOUNT_SYNC_STAFF_GROUP`         | `paperless-admins` | membership ⟺ `is_staff`           |
+| Setting                                         | Value              | Effect                      |
+| ----------------------------------------------- | ------------------ | --------------------------- |
+| `PAPERLESS_SOCIAL_ACCOUNT_SYNC_GROUPS_CLAIM`    | `groups`           | which claim to read         |
+| `PAPERLESS_SOCIAL_ACCOUNT_SYNC_SUPERUSER_GROUP` | `paperless-admins` | membership ⟺ `is_superuser` |
+| `PAPERLESS_SOCIAL_ACCOUNT_SYNC_STAFF_GROUP`     | `paperless-admins` | membership ⟺ `is_staff`     |
 
 - **Single source of truth:** `oidcAdminGroup = "paperless-admins"` in `paperless.nix` drives the requested scope, both env mappings, AND the group declaration in Pocket ID (`services.pocket-id-config.provision.userGroups`; provisioner Step 4 creates the group and authoritatively `PUT`s membership). An eval assertion fails if the mapped group is not declared — a rename cannot silently demote every login.
 - **FAIL CLOSED:** the handler sets `is_superuser = <group> in <claim>` on every login, so a missing/empty claim **demotes**. A broken IdP can never leave stale privilege behind. Corollary: a manual `paperless-manage shell -c "...update(is_superuser=True)"` is now **transient** — the next login overwrites it. Grant admin by adding your Pocket ID user to `paperless-admins` (declaratively via `memberUsernames`).
-- **First-login gap (known, upstream):** allauth fires `social_account_added` only when *linking* an account; on auto-signup neither social signal fires, and paperless connects **only** `social_account_updated`. A brand-new user is therefore promoted on their **second** login, not the first. The single SSO user already has an account, so this does not affect them.
+- **First-login gap (known, upstream):** allauth fires `social_account_added` only when _linking_ an account; on auto-signup neither social signal fires, and paperless connects **only** `social_account_updated`. A brand-new user is therefore promoted on their **second** login, not the first. The single SSO user already has an account, so this does not affect them.
 
 ## Break-glass (how to get in when Pocket ID is down)
 
@@ -266,4 +266,3 @@ Knowledge below moved verbatim from the root AGENTS.md restructure — it is the
 - **v3 features wired:** `PAPERLESS_TRASH_DIR = ${dataDir}/trash` (30d; tmpfiles rule creates it), barcode splitting (`ENABLE_BARCODES` + `ENABLE_ASN_BARCODE`, PATCHT + Code-39 ASN), `CONSUMER_RECURSIVE`, filename format `{{ created_year }}/{{ correspondent }}/{{ title }}` — v3 REQUIRES double-curly (single-curly still auto-converts via `convert_format_str_to_template_format` but warns on every start; the VM test caught this)
 - **Monitoring:** Gatus login-page body check (`pat(*Paperless-ngx sign in*)` + `pat(*oidc/pocket-id*)` SSO button when Pocket ID is enabled — functional, not just 200) + Tika `:9998/` + Gotenberg `:3199/health`, all Discord-alerting; 6 services in system-health `monitoredServices`; deploy smoke in `post-deploy-check.sh` (login body + SSO button + both sidecars). **The mail-wiring smoke was a permanent phantom-RED until 2026-09-05:** it grepped `/var/lib/paperless/paperless.conf`, a file NOTHING generates — the nixpkgs module renders `services.paperless.settings` as `Environment=` directives in the deployed unit (verified live), and `/var/lib/paperless` is the legacy pre-pool dataDir anyway. The check now greps `/etc/systemd/system/paperless-web.service` (symlink to the store unit). Rule: probe the surface the config actually lands on — verify the delivery mechanism before writing a file-path assertion
 - **Old SQLite data:** pre-PG export sits in `/mnt/pool/services/paperless/export`; recover via `document_importer` if wanted (user decision pending). Old traps still true: flakes only see TRACKED files (`git add` new modules at write time); hardened oneshots get scratch space from `mktemp -d`, never host paths under `ReadWritePaths` (status 226)
-

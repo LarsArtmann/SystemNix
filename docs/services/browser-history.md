@@ -26,7 +26,6 @@
 - **templ-components monolith-era source pins cause ambiguous imports** — a `-src` input pinned to ≤v1.8.1 (pre-extraction, no nested `go.mod`s) + go.mod requiring the extracted sub-modules from the proxy = "found package in multiple modules" FOD failure. Pin to ≥v1.8.3 (extracted state, sub-module `go.mod`s present) — see file-and-image-renamer `fa890d6e`
 - **Consumer subtree lock drift vs upstream's own lock** — a package that builds standalone (`nix build github:LarsArtmann/<repo>/<rev>#default`) but fails in SystemNix with a vendorHash mismatch means SystemNix's lock subtree for that input has drifted from the upstream repo's own flake.lock pins. Fix is SystemNix-side only: `nix flake lock --update-input <repo>` re-syncs the subtree from upstream's lock (seen with projects-management-automation 2026-08-16)
 
-
 ## Gotchas
 
 - **Browser History: WebAuthn + OAuth2, direct TLS proxy** — Caddy uses plain `reverse_proxy` (NOT `protectedVHost`). Forward-auth would intercept WebAuthn/OAuth2 API calls and break registration/login. The app has built-in passkey auth PLUS native OAuth2/OIDC via Pocket ID. OTel uses gRPC (port 4317, NOT 4318) because the Go code uses `otlptracegrpc`, not `otlptracehttp`.

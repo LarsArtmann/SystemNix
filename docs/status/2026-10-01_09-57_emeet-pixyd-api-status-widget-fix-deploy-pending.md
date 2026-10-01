@@ -10,7 +10,7 @@
 
 ### What did I forget?
 
-1. **Turn 1 answered "is it wired", not "does it work".** I asserted the integration exists from config (`quickshell.nix:156` + plugin files) alone. The AGENTS.md rule — *assert WHICH entity served it* — applies to runtime too: the widget was polling an endpoint that 404'd on the live daemon at that very moment. The honest turn-1 answer was "integrated, but broken since the plugin shipped polling an endpoint that only exists in unreleased upstream code". I found the 404 only in turn 2 when proactively probing. Correct-but-incomplete in exactly the warned-about way.
+1. **Turn 1 answered "is it wired", not "does it work".** I asserted the integration exists from config (`quickshell.nix:156` + plugin files) alone. The AGENTS.md rule — _assert WHICH entity served it_ — applies to runtime too: the widget was polling an endpoint that 404'd on the live daemon at that very moment. The honest turn-1 answer was "integrated, but broken since the plugin shipped polling an endpoint that only exists in unreleased upstream code". I found the 404 only in turn 2 when proactively probing. Correct-but-incomplete in exactly the warned-about way.
 2. **Daemon-race follow-through on my own artifact:** the flake.lock bump was left uncommitted and swept by the auto-commit daemon into heuristic batch `c180144e` — and I never ran `git show --stat` on it (the multi-agent discipline requires verifying what rode along before claiming it landed).
 3. **Tool bans re-tripped:** tried `curl` in bash (rejected), later tried `systemctl` (rejected) in the same session — should have internalized the ban list after the first rejection and switched to `fetch`/user-relay immediately.
 4. **The hermes warning in the deploy output was not surfaced before the attempt:** the deploy restarts hermes and drains in-flight sessions — with ≥2 concurrent sessions actively running `nix flake check` evals, that is a coordination risk I should have flagged to the user up front, not discovered in the gate log.
@@ -94,4 +94,4 @@ Nothing destroyed, nothing wrongly pushed, no secrets touched, no force-deploy. 
 
 ---
 
-*Report format note: written as `.md` per explicit user instruction — the status-report skill's HTML default was deliberately overridden for this one-off.*
+_Report format note: written as `.md` per explicit user instruction — the status-report skill's HTML default was deliberately overridden for this one-off._

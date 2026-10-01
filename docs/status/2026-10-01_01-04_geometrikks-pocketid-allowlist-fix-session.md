@@ -59,6 +59,7 @@ Nothing destroyed or broken. Honest worst-of list (degradations, not disasters):
 Grouped; **[HARVESTED]** rows already landed in TODO_LIST + the owning library this session; everything else is brainstorm (ROADMAP fuel, deliberately NOT harvested — awaiting triage, per the HARVEST anti-patterns).
 
 **Geometrikks / OIDC (this session's direct domain):**
+
 1. **[HARVESTED]** Deploy + first live SSO login (unblocks the [blocked:user] go-live half; deploy.sh bridge+daemon block converges the env) — existing go-live row, updated.
 2. **[HARVESTED]** Extend geometrikks post-deploy smoke probe: unit + `/health/ready` + provision journal + `allowed-subs` non-empty + `OIDC_ALLOWED_USERS` carries a UUID sub — existing row, extended both surfaces.
 3. **[HARVESTED]** Persist the 9-case OIDC scripts fixture as `checks.geometrikks-oidc-scripts-fixture` (forgejo-scripts-fixture pattern; env overrides already exist) — new [ready] pair.
@@ -127,10 +128,10 @@ Grouped; **[HARVESTED]** rows already landed in TODO_LIST + the owning library t
 
 ## Commit trail (for archaeology)
 
-| Hash | Content |
-| --- | --- |
-| `6f37b5f5` | geometrikks.nix v1 (resolver + bridge + unit wiring) — daemon heuristic message |
-| `0da82794` | my AGENTS.md edits MIXED with parallel session's caddy/integration/networking (not amended, per policy) |
-| `432e193e` | geometrikks.nix mktemp fix + my two doc files MIXED with parallel session's caddy.nix |
-| `dfdd83b6` | my CHANGELOG entry MIXED with parallel session's AGENTS.md buildcache edit |
-| (pending daemon) | this report + the harvest edits (TODO_LIST, docs/todo/services.md) |
+| Hash             | Content                                                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------- |
+| `6f37b5f5`       | geometrikks.nix v1 (resolver + bridge + unit wiring) — daemon heuristic message                         |
+| `0da82794`       | my AGENTS.md edits MIXED with parallel session's caddy/integration/networking (not amended, per policy) |
+| `432e193e`       | geometrikks.nix mktemp fix + my two doc files MIXED with parallel session's caddy.nix                   |
+| `dfdd83b6`       | my CHANGELOG entry MIXED with parallel session's AGENTS.md buildcache edit                              |
+| (pending daemon) | this report + the harvest edits (TODO_LIST, docs/todo/services.md)                                      |

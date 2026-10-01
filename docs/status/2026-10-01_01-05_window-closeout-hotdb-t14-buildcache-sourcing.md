@@ -54,16 +54,16 @@
 
 Most candidates are ALREADY queued and were NOT re-appended (dedup check performed against all 460 unchecked rows): parity assertion (27), das-check convergence (28), stale-phrase sweep (29), serviceconfig selftest (288), live hot-tier Gatus/timer legs (511), helper-rename (516) + self-verifying count (harvested 15-40), caddy regression case (519), deploy-authority decision (34), hot-db wave sequencing question, crush-hot-db fold question. The following NEW items were appended this pass (7 tasks + 3 questions):
 
-| # | Item | Source |
-|---|------|--------|
-| 1 | Post-deploy verify `hot-db-metrics` OnFailure + extraMonitoredServices on the live generation | 15-18 §f1 |
-| 2 | Fixture test for `buildcache-init` dir provisioning (PATH-stub mkdir/chown per entry) | 00-11 §f4 |
-| 3 | `buildcache-metrics` pnpm-cache/pnpm-state size gauges (growth visibility) | 00-11 §f5 |
-| 4 | Deploy the buildcache-init fix + post-deploy dir-existence proof (folds with the next deploy window) | 00-11 §f6 |
-| 5 | Eval-time lint: textfile-collector units must be in system-health monitoring OR carry onFailure | 15-18 §f2 |
-| 6 | Opposing-state assertions in the other collector VM tests (backup-coordination, buildcache-metrics, pool-smart) | 15-29 §f2 |
-| 7 | AGENTS.md-adjacent: `hot_db_metrics_fresh` mtime gauge as belt for the wedged-collector residual (watch-listed) | 15-18 §f3 |
-| Q1-Q3 | Questions below, appended as BLOCKED items | §g |
+| #     | Item                                                                                                            | Source    |
+| ----- | --------------------------------------------------------------------------------------------------------------- | --------- |
+| 1     | Post-deploy verify `hot-db-metrics` OnFailure + extraMonitoredServices on the live generation                   | 15-18 §f1 |
+| 2     | Fixture test for `buildcache-init` dir provisioning (PATH-stub mkdir/chown per entry)                           | 00-11 §f4 |
+| 3     | `buildcache-metrics` pnpm-cache/pnpm-state size gauges (growth visibility)                                      | 00-11 §f5 |
+| 4     | Deploy the buildcache-init fix + post-deploy dir-existence proof (folds with the next deploy window)            | 00-11 §f6 |
+| 5     | Eval-time lint: textfile-collector units must be in system-health monitoring OR carry onFailure                 | 15-18 §f2 |
+| 6     | Opposing-state assertions in the other collector VM tests (backup-coordination, buildcache-metrics, pool-smart) | 15-29 §f2 |
+| 7     | AGENTS.md-adjacent: `hot_db_metrics_fresh` mtime gauge as belt for the wedged-collector residual (watch-listed) | 15-18 §f3 |
+| Q1-Q3 | Questions below, appended as BLOCKED items                                                                      | §g        |
 
 **Deliberately not harvested:** the plan-doc status column maintenance (one-time snapshot, 14-12 §e4), ROADMAP-fuel echoes already tracked elsewhere (offsite-borg, /data, llama-rag bisect, CV hold, etc. — all have living rows), and the 00-11 report's items 8-50 (pre-existing backlog echoes; re-appending would mint the duplicate-dispatch class the queue doctrine explicitly bans).
 
@@ -84,4 +84,4 @@ Priority movement this window happened through the queue's normal claim ordering
 
 ---
 
-*Task-Queue-ID: 000001a0f466956bfcfc4a4de8fe00000000*
+_Task-Queue-ID: 000001a0f466956bfcfc4a4de8fe00000000_

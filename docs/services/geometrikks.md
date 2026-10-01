@@ -47,8 +47,8 @@ searchable log database. Upstream: github:GilbN/geometrikks.
   `email_verified: true`, and Pocket ID's per-user `email_verified` defaults
   to FALSE — the email-only list rejected every login (live 2026-09-30).
   New/removed/renamed Pocket ID users converge on the next bridge run (boot
-  + deploy). The `admin` password login stays as break-glass while
-  `APP_ADMIN_PASSWORD` is set (provider-down fallback).
+  - deploy). The `admin` password login stays as break-glass while
+    `APP_ADMIN_PASSWORD` is set (provider-down fallback).
 - **DB**: the host's **shared PostgreSQL cluster** (PG17) with
   `timescaledb` + `postgis` extensions (`services.postgresql.extensions`),
   `shared_preload_libraries += timescaledb`, `max_worker_processes = 48`
@@ -170,4 +170,3 @@ Knowledge below moved verbatim from the root AGENTS.md restructure — it is the
 - **No data migration was needed**: the docker DB was EMPTY (geo-degraded since bring-up — ingestion never starts without a GeoLite2 database; MaxMind keys still user-gated). Docker volumes retained ≥48h green as rollback (removal todo in docs/todo/services.md); rollback = revert commit + redeploy.
 - **Phase shells are NOT bash**: `read -d` and `< <(...)` broke inside the FOD installPhase during bring-up — keep installPhase helpers POSIX (`find -exec sh -c`).
 - App refuses to start without `APP_ADMIN_PASSWORD` unless OIDC configured (upstream) — sops key never empty; password login stays as break-glass. MaxMind/CARTO ship EMPTY (geo-degraded = banner, no crash). Backup: nightly 05:15 native pg_dump (peer auth) → `/mnt/pool/backups/geometrikks`, 14d retention; restore into any timescaledb+postgis cluster. Upstream has no license file → `licenses.unfree`.
-

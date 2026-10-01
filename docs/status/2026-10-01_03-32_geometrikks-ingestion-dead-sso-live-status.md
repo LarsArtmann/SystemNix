@@ -22,7 +22,7 @@ geo.home.lan is **up, logged-in, and completely empty**: the SSO allow-list fix 
 3. **Go-live row updated on its owning surface** (`docs/todo/services.md:117`): SSO step (1) marked DONE with the live journal proof; MaxMind + CARTO remain as the only user-gated steps. The row lives only in the domain library (blocked:user items are not queue-harvested — correct per the TODO system).
 4. **Session-runner orientation corrected**: `hostname` = evo-x2 — this session runs ON the target host, so `journalctl` works directly (used for every finding above). This invalidates the first turn's "can't read logs, ssh is blocked" limitation.
 5. **User's journalctl confusion resolved**: the pasted output (`journalctl -u geometrikks`, lines 1–35) is oldest-first docker-era history (Sep 20, `docker-compose[3679957]`) — journalctl prints oldest-first; the native entries sit at the END. The old lines are not evidence of anything being wrong.
-6. **§f self-harvest applied at authoring time** (per the TODO-system rule): the smoke-probe row extended with the ingestion leg + a NEW data-plane Gatus check row, both landed on `TODO_LIST.md` (~:512) AND `docs/todo/services.md` (~:148) — no drift.
+6. **§f self-harvest applied at authoring time** (per the TODO-system rule): the smoke-probe row extended with the ingestion leg + a NEW data-plane Gatus check row, both landed on `TODO_LIST.md` (~~:512) AND `docs/todo/services.md` (~~:148) — no drift.
 
 ## b) PARTIALLY DONE
 
@@ -84,7 +84,7 @@ geo.home.lan is **up, logged-in, and completely empty**: the SSO allow-list fix 
 17. **journalctl oldest-first gotcha** (the user's own paste tripped it): one line in `docs/agents/shell-devtools.md` ("`journalctl -u X` prints oldest-first; use `-n`/`-e` for recent") would have saved this session's §a5 exchange. Trivial, rides any shell-devtools touch.
 18. **Post-smoke extension**: when the smoke row (#1) is built, include the data-plane assertion (#2's check) so deploy gates catch dead ingestion at the gate, not in Gatus 5 minutes later.
 
-*(Stopped at 18: items 1–5 are the real work; 6–18 are honest observations. Padding to 50 would be fabrication — this session's scope was one service's diagnosis.)*
+_(Stopped at 18: items 1–5 are the real work; 6–18 are honest observations. Padding to 50 would be fabrication — this session's scope was one service's diagnosis.)_
 
 ## g) Questions I can NOT figure out myself
 
@@ -94,4 +94,4 @@ geo.home.lan is **up, logged-in, and completely empty**: the SSO allow-list fix 
 
 ---
 
-*Report authored 2026-10-01 03:32 CEST. Evidence: live `journalctl -u geometrikks[-oidc-env]` (03:02–03:10 window + since 09-30), `https://geo.home.lan/*` fetches, node_exporter `/metrics` textfile pull, `/var/lib/geometrikks-oidc/` listing, live unit file ExecStartPre. Session duration ~30 min, two user turns. Format: Markdown per explicit user instruction (skill's canonical HTML overridden — flagged per skill rule).*
+_Report authored 2026-10-01 03:32 CEST. Evidence: live `journalctl -u geometrikks[-oidc-env]` (03:02–03:10 window + since 09-30), `https://geo.home.lan/*` fetches, node_exporter `/metrics` textfile pull, `/var/lib/geometrikks-oidc/` listing, live unit file ExecStartPre. Session duration ~30 min, two user turns. Format: Markdown per explicit user instruction (skill's canonical HTML overridden — flagged per skill rule)._

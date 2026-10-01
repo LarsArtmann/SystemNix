@@ -3,13 +3,13 @@
 **Date:** 2026-09-30 14:32 CEST (`date` measured at authoring)
 **Window tasks:**
 
-| Task ID | What it was | Landing commits (current history) | Close-out report |
-| --- | --- | --- | --- |
-| `000001a0ef696bd6beb80100b7f100000000` | Review fix: the 00-42 scrub report shipped without its self-harvest accounting (6 §f items would have died unharvested) | `dd249cc2` (work) + `b81f7a10` (report) | `docs/status/2026-09-30_08-46_task-000001a0ef696bd6beb80100b7f100000000.md` |
-| `000001a0f137c3365d8dabb0782000000000` | Review fix: the 08-46 review-fix report repeated the same violation with its own two post-authoring §f items | `f07c727a` (work) + `d466e427` (report) | `docs/status/2026-09-30_09-46_task-000001a0f137c3365d8dabb0782000000000.md` |
-| `000001a0f1aa342a1f2cec4fb02d00000000` | Boot-mirror activation + reboot — honestly closed BLOCKED (agent sandbox forbids sudo) | `1c89e6c6` (work) + `dc4dca0e` (report) | `docs/status/2026-09-30_11-39_task-000001a0f1aa342a1f2cec4fb02d00000000.md` |
-| `000001a0f1b7efd7de7037442bee00000000` | T14 hot-db tier monitoring — RE-FIRE verification (work pre-landed) + dangling closure-pointer repair | `3db0dfeb` (footer) + `8a2d0be2` (report) | `docs/status/2026-09-30_12-34_task-000001a0f1b7efd7de7037442bee00000000.md` |
-| `000001a0f1ea4ac4421df201faa700000000` | `migrate-hot-db.sh` stub-fixture test — RE-FIRE verification (test pre-landed) + count-claim reconciliation | `0fa21cf6` (footer) + `8d74db5b` (report) | `docs/status/2026-09-30_12-54_task-000001a0f1ea4ac4421df201faa700000000.md` |
+| Task ID                                | What it was                                                                                                             | Landing commits (current history)         | Close-out report                                                            |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------- |
+| `000001a0ef696bd6beb80100b7f100000000` | Review fix: the 00-42 scrub report shipped without its self-harvest accounting (6 §f items would have died unharvested) | `dd249cc2` (work) + `b81f7a10` (report)   | `docs/status/2026-09-30_08-46_task-000001a0ef696bd6beb80100b7f100000000.md` |
+| `000001a0f137c3365d8dabb0782000000000` | Review fix: the 08-46 review-fix report repeated the same violation with its own two post-authoring §f items            | `f07c727a` (work) + `d466e427` (report)   | `docs/status/2026-09-30_09-46_task-000001a0f137c3365d8dabb0782000000000.md` |
+| `000001a0f1aa342a1f2cec4fb02d00000000` | Boot-mirror activation + reboot — honestly closed BLOCKED (agent sandbox forbids sudo)                                  | `1c89e6c6` (work) + `dc4dca0e` (report)   | `docs/status/2026-09-30_11-39_task-000001a0f1aa342a1f2cec4fb02d00000000.md` |
+| `000001a0f1b7efd7de7037442bee00000000` | T14 hot-db tier monitoring — RE-FIRE verification (work pre-landed) + dangling closure-pointer repair                   | `3db0dfeb` (footer) + `8a2d0be2` (report) | `docs/status/2026-09-30_12-34_task-000001a0f1b7efd7de7037442bee00000000.md` |
+| `000001a0f1ea4ac4421df201faa700000000` | `migrate-hot-db.sh` stub-fixture test — RE-FIRE verification (test pre-landed) + count-claim reconciliation             | `0fa21cf6` (footer) + `8d74db5b` (report) | `docs/status/2026-09-30_12-54_task-000001a0f1ea4ac4421df201faa700000000.md` |
 
 **Window character:** ALL five landings are documentation/queue-hygiene only — no code, config, or test change belongs to this window (verified per-commit `git show --stat`). The engineering underneath (hot-db vehicle wave + fixture test + T14 monitoring) landed in the overnight vehicle-wave window and was only verified here; the boot-mirror ACTIVATION happened mid-window by the OWNER (~12:50, a parallel session's forensics), superseding task 3's blocker hours after its report.
 
@@ -92,6 +92,6 @@
 
 ---
 
-*Point-in-time snapshot. §f "NEW" items are the only queue appendages this pass made (plus evidence-backed ticks); everything else was deduped against the 448 open rows. Committed with the window-closeout Task-Queue-ID footer; never pushed.*
+_Point-in-time snapshot. §f "NEW" items are the only queue appendages this pass made (plus evidence-backed ticks); everything else was deduped against the 448 open rows. Committed with the window-closeout Task-Queue-ID footer; never pushed._
 
 _Arte in Aeternum_

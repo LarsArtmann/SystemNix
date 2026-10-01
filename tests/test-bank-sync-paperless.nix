@@ -21,11 +21,12 @@
   pkgs,
   inputs,
   system,
-}: let
+}:
+let
   lib = inputs.nixpkgs.lib;
   # The module file is a flake-parts wrapper (`_: {...}:`) taking no inputs.
   bankSyncWrapper =
-    ((import ../modules/nixos/services/bank-sync.nix) {}).flake.nixosModules.bank-sync;
+    ((import ../modules/nixos/services/bank-sync.nix) { }).flake.nixosModules.bank-sync;
 
   # Stub for the UPSTREAM bank-sync module's options (the wrapper only reads
   # enable/package/dataDir and sets addr/wiseApiKeyFile/encryptionKeyFile).
@@ -35,7 +36,7 @@
         type = lib.types.bool;
         default = false;
       };
-      package = lib.mkOption {type = lib.types.package;};
+      package = lib.mkOption { type = lib.types.package; };
       addr = lib.mkOption {
         type = lib.types.str;
         default = "127.0.0.1:8097";
@@ -63,11 +64,11 @@
   # NOTE: services.paperless.* needs NO stub — nixpkgs' module-list imports
   # misc/paperless.nix in every nixosSystem (config gated on enable), so
   # user/manage/dataDir/enable come with real options and safe defaults.
-  sopsStub = {lib, ...}: {
+  sopsStub = { lib, ... }: {
     options.sops.templates = lib.mkOption {
       type = lib.types.attrsOf (
         lib.types.submodule {
-          options.path = lib.mkOption {type = lib.types.path;};
+          options.path = lib.mkOption { type = lib.types.path; };
         }
       );
     };
@@ -76,12 +77,15 @@
     };
   };
 
-  stubPackage = pkgs.runCommand "bank-sync-stub" {
-    meta.mainProgram = "bank-sync";
-  } ''
-    mkdir -p $out/bin
-    touch $out/bin/bank-sync
-  '';
+  stubPackage =
+    pkgs.runCommand "bank-sync-stub"
+      {
+        meta.mainProgram = "bank-sync";
+      }
+      ''
+        mkdir -p $out/bin
+        touch $out/bin/bank-sync
+      '';
 
   base = [
     bankSyncWrapper
@@ -104,15 +108,16 @@
     }
   ];
 
-  eval = extra:
+  eval =
+    extra:
     (lib.nixosSystem {
       inherit system;
       modules = base ++ extra;
     }).config;
 
-  archivalOn = eval [{services.bank-sync.paperlessArchive.enable = true;}];
-  archivalOff = eval [{}];
-  serviceOff = eval [{services.bank-sync.enable = lib.mkForce false;}];
+  archivalOn = eval [ { services.bank-sync.paperlessArchive.enable = true; } ];
+  archivalOff = eval [ { } ];
+  serviceOff = eval [ { services.bank-sync.enable = lib.mkForce false; } ];
   archivalPaperlessOff = eval [
     {
       services.bank-sync.paperlessArchive.enable = lib.mkForce true;
@@ -135,17 +140,14 @@
     }
     {
       name = "archival-url-derived-from-port-registry";
-      pass =
-        builtins.any (
-          e: e == "BANK_SYNC_PAPERLESS_URL=http://127.0.0.1:2892"
-        )
-        oneshot.serviceConfig.Environment;
+      pass = builtins.any (
+        e: e == "BANK_SYNC_PAPERLESS_URL=http://127.0.0.1:2892"
+      ) oneshot.serviceConfig.Environment;
     }
     {
       name = "mint-unit-exists-and-is-idempotent-oneshot";
       pass =
-        mint.serviceConfig.Type
-        == "oneshot"
+        mint.serviceConfig.Type == "oneshot"
         && lib.hasInfix "drf_create_token admin" mint.script
         && lib.hasInfix "paperless-manage" mint.script
         && lib.hasInfix "[0-9a-f]{40}" mint.script;
@@ -153,10 +155,9 @@
     {
       name = "mint-runs-as-paperless-user-with-datarite-access";
       pass =
-        mint.serviceConfig.User
-        == "paperless"
+        mint.serviceConfig.User == "paperless"
         && builtins.elem "/var/lib/paperless" mint.serviceConfig.ReadWritePaths
-        && mint.unitConfig.RequiresMountsFor == ["/var/lib/paperless"];
+        && mint.unitConfig.RequiresMountsFor == [ "/var/lib/paperless" ];
     }
     {
       name = "mint-token-lives-in-tmpfs-only-with-root-handover";
@@ -180,15 +181,13 @@
     }
     {
       name = "oneshot-points-at-shared-db";
-      pass =
-        builtins.any (
-          e: lib.hasPrefix "BANK_SYNC_DATABASE_PATH=/mnt/pool/services/bank-sync" e
-        )
-        oneshot.serviceConfig.Environment;
+      pass = builtins.any (
+        e: lib.hasPrefix "BANK_SYNC_DATABASE_PATH=/mnt/pool/services/bank-sync" e
+      ) oneshot.serviceConfig.Environment;
     }
     {
       name = "oneshot-mount-gated-on-datadir";
-      pass = oneshot.unitConfig.RequiresMountsFor == ["/mnt/pool/services/bank-sync"];
+      pass = oneshot.unitConfig.RequiresMountsFor == [ "/mnt/pool/services/bank-sync" ];
     }
     {
       name = "oneshot-archives-receipts";
@@ -197,8 +196,7 @@
     {
       name = "timer-fires-sunday-0300";
       pass =
-        archivalOn.systemd.timers.bank-sync-paperless.timerConfig.OnCalendar
-        == "Sun *-*-* 03:00:00"
+        archivalOn.systemd.timers.bank-sync-paperless.timerConfig.OnCalendar == "Sun *-*-* 03:00:00"
         && archivalOn.systemd.timers.bank-sync-paperless.timerConfig.Persistent;
     }
     {
@@ -227,6 +225,7 @@
 
   broken = map (c: c.name) (builtins.filter (c: !c.pass) cases);
 in
-  if broken == []
-  then pkgs.runCommand "bank-sync-paperless-test" {} "touch $out"
-  else throw "bank-sync-paperless test failures: ${lib.concatStringsSep ", " broken}"
+if broken == [ ] then
+  pkgs.runCommand "bank-sync-paperless-test" { } "touch $out"
+else
+  throw "bank-sync-paperless test failures: ${lib.concatStringsSep ", " broken}"

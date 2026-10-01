@@ -54,6 +54,7 @@
 Ranked, batch-grouped, targets verified this session:
 
 **Batch C — storage (7 items, all targets located):**
+
 1. #4 Cross-link the single-victim /data repair recipe (jan.md) from `docs/agents/storage.md`'s /data-damage context (the csum-discriminator paragraph, line 39)
 2. #7 Fold `hot_db_entry_mounted{name="gatus"}` presence into hot-db.md wave-procedure step 6
 3. #8 Reword the stale "deploy-pending, converged by the next run" clause in storage.md line 94 (per-row script: "guard live + `legal-cases` still gated on the rmdir heal")

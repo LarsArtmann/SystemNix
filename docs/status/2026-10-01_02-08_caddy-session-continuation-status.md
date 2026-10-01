@@ -60,25 +60,25 @@ time — flagged, untouched).
 
 ## §a FULLY DONE (continuation stretch, all verified)
 
-| # | Item | Evidence |
-| - | ---- | -------- |
-| a1 | **11-row self-harvest** of the 15-39 report's direct follow-ups: TODO_LIST queue section + 7 `docs/todo/services.md` entries + 4 `docs/todo/pipeline.md` entries | `check-todo-system.sh` OK; both surfaces edited in one pass (no drift) |
-| a2 | **Audit guard v1→v2**: bounded (≤6-line) continuation check — `serviceConfig =` with the `//` operator on a FOLLOWING line now fails (v1's documented blind spot) | selftest rc=0 |
-| a3 | **Selftest grown to four fixtures**: single-line evil, continuation-line evil, multi-line mkMerge good, plain-continuation good | `--selftest` PASS line |
-| a4 | **v1 fixture false-negative fixed**: `env "https://…" // { }` was a real shallow merge blessed as "sanctioned" by the whole-line URL exemption; `://` now stripped per-occurrence (URL + genuine `//` FAILS) | fixture diff; the new good.nix case tests stripping without merging |
+| #  | Item                                                                                                                                                                                                                                                                                | Evidence                                                                                 |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| a1 | **11-row self-harvest** of the 15-39 report's direct follow-ups: TODO_LIST queue section + 7 `docs/todo/services.md` entries + 4 `docs/todo/pipeline.md` entries                                                                                                                    | `check-todo-system.sh` OK; both surfaces edited in one pass (no drift)                   |
+| a2 | **Audit guard v1→v2**: bounded (≤6-line) continuation check — `serviceConfig =` with the `//` operator on a FOLLOWING line now fails (v1's documented blind spot)                                                                                                                   | selftest rc=0                                                                            |
+| a3 | **Selftest grown to four fixtures**: single-line evil, continuation-line evil, multi-line mkMerge good, plain-continuation good                                                                                                                                                     | `--selftest` PASS line                                                                   |
+| a4 | **v1 fixture false-negative fixed**: `env "https://…" // { }` was a real shallow merge blessed as "sanctioned" by the whole-line URL exemption; `://` now stripped per-occurrence (URL + genuine `//` FAILS)                                                                        | fixture diff; the new good.nix case tests stripping without merging                      |
 | a5 | **Historical verification**: BOTH v1 and v2 flag the real pre-fix source (`f1e703c5~1`, the `(serviceOneshotDefaults { }) // {` line) — correcting the 14:32 row's "regex missed at landing" premise; the true landing mechanism is the daemon committing past a failing pre-commit | v1 scanner run against historical file → FAIL; v1 script content at `3ce86d9b` inspected |
-| a6 | **Repo scan clean under v2**: 199 files, fail=0 — the legit own-line `//` attrset merges (caddy.nix virtualHosts) and all mkMerge forms do not false-positive | `audit-serviceconfig-merge.sh` full run |
-| a7 | **Stale row closed**: removed from TODO_LIST (queue-only — no library entry existed, the 14:32 session's drift, noted); CHANGELOG entry under [Unreleased] → Changed with the corrected premise | surgical diff; `check-todo-system.sh` OK |
-| a8 | **15-39 report annotated** (end-of-file appendix, ANNOTATE mode — never a rewrite) with the post-authoring work | appendix in the report file |
-| a9 | **Gates**: `bash -n` + `scripts/shellcheck.sh` clean on the extended script; all session files daemon-swept (`4d06a0a7`, `aaece76d`, `dfdd83b6` — contents verified via `git show --stat`) | command outputs |
+| a6 | **Repo scan clean under v2**: 199 files, fail=0 — the legit own-line `//` attrset merges (caddy.nix virtualHosts) and all mkMerge forms do not false-positive                                                                                                                       | `audit-serviceconfig-merge.sh` full run                                                  |
+| a7 | **Stale row closed**: removed from TODO_LIST (queue-only — no library entry existed, the 14:32 session's drift, noted); CHANGELOG entry under [Unreleased] → Changed with the corrected premise                                                                                     | surgical diff; `check-todo-system.sh` OK                                                 |
+| a8 | **15-39 report annotated** (end-of-file appendix, ANNOTATE mode — never a rewrite) with the post-authoring work                                                                                                                                                                     | appendix in the report file                                                              |
+| a9 | **Gates**: `bash -n` + `scripts/shellcheck.sh` clean on the extended script; all session files daemon-swept (`4d06a0a7`, `aaece76d`, `dfdd83b6` — contents verified via `git show --stat`)                                                                                          | command outputs                                                                          |
 
 ## §b PARTIALLY DONE
 
-| # | Item | State |
-| - | ---- | ----- |
-| b1 | Caddy fix-batch deploy legs (from 15-39 §b: live QUIC probe, derived smoke on live system, mint SAN journal line, first restart under new caps) | unchanged — still `blocked:deploy`, queued as services.md row 1 of the 15-39 harvest; NOT re-harvested here |
-| b2 | negative-test-lints 18/5 pre-existing failures (cv/hermes dead-guards; signoz/binary-coverage pristine controls) | queued in the 15-39 harvest; not started |
-| b3 | The foreign parallel work visible in this stretch (`geometrikks-pocketid-allowlist-fix-session`, `caddy-logs-tlc-hot-tier-staged` reports; the 02:08 staged set touching TODO_LIST/home.nix/heal-breadcrumb) | theirs, mid-flight — flagged only |
+| #  | Item                                                                                                                                                                                                         | State                                                                                                       |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| b1 | Caddy fix-batch deploy legs (from 15-39 §b: live QUIC probe, derived smoke on live system, mint SAN journal line, first restart under new caps)                                                              | unchanged — still `blocked:deploy`, queued as services.md row 1 of the 15-39 harvest; NOT re-harvested here |
+| b2 | negative-test-lints 18/5 pre-existing failures (cv/hermes dead-guards; signoz/binary-coverage pristine controls)                                                                                             | queued in the 15-39 harvest; not started                                                                    |
+| b3 | The foreign parallel work visible in this stretch (`geometrikks-pocketid-allowlist-fix-session`, `caddy-logs-tlc-hot-tier-staged` reports; the 02:08 staged set touching TODO_LIST/home.nix/heal-breadcrumb) | theirs, mid-flight — flagged only                                                                           |
 
 ## §c NOT STARTED
 
@@ -122,16 +122,16 @@ check, alerts explicit redirect, per-vhost roll bounds, etc.).
 
 ## §f Things to get done next (continuation-specific; the 15-39 §f table remains the caddy backlog)
 
-| # | Item | Impact | Effort | Cat |
-| - | ---- | ------ | ------ | --- |
-| 1 | **H [ready] Daemon-past-failing-hooks guard** — 2nd confirmed instance (caddy 14:30, heal-breadcrumb 09-28); the daemon should refuse to commit when pre-commit fails, or at minimum record hook-failure state in the commit (owner-infra decision rides §g Q1) | HIGH | 1h | pipeline |
-| 2 | **H [ready] Spot-verify the remaining 14:32-closeout queued rows' premises** — the shallow-merge row's premise was FALSE (proven); its same-report siblings (storage/boot-mirror domain) get the same "run the tool against the artifact" check before anyone dispatches them | MED | 45m | pipeline |
-| 3 | **H [ready] E2E the extended audit through the REAL hook** — plant a continuation-shape defect on a throwaway worktree, run `.githooks/pre-commit`, prove the block (the hook's exact two commands ran green manually; the hook itself unexecuted) | LOW-MED | 20m | pipeline |
-| 4 | [watch] awk scanner's 6-line continuation cap — longer continuations escape silently; documented in the script header, revisit only if a real shape ever hits it | LOW | — | pipeline |
-| 5 | Caddy deploy + post-deploy verification legs (15-39 §b/§f row 1 — queued, unchanged) | HIGH | 30m | services |
-| 6 | The 15-39 §f rows 2-11 (fallback smoke test, geometrikks runtime logs, log storage/rolls, lint 18/5, caddy-mutant case, AGENTS SSO table, voice/whisper, layer classification, h3 pin) — queued, unchanged | MED | — | services/pipeline |
-| 7 | The 15-39 §f rows 12-25 (foreign geometrikks review, nsfw/index 502 window, alerts redirect, and the ROADMAP-fuel rows) — dispositioned, unchanged | LOW | — | services/ROADMAP |
-| 8 | Two foreign sessions are visibly working rows harvested from MY 15-39 report (`caddy-logs-tlc-hot-tier-staged`, `geometrikks-pocketid-allowlist-fix`) — watch for double-close-out drift on those queue rows (two sessions closing the same row = premise-check both) | MED | — | process |
+| # | Item                                                                                                                                                                                                                                                                          | Impact  | Effort | Cat               |
+| - | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------ | ----------------- |
+| 1 | **H [ready] Daemon-past-failing-hooks guard** — 2nd confirmed instance (caddy 14:30, heal-breadcrumb 09-28); the daemon should refuse to commit when pre-commit fails, or at minimum record hook-failure state in the commit (owner-infra decision rides §g Q1)               | HIGH    | 1h     | pipeline          |
+| 2 | **H [ready] Spot-verify the remaining 14:32-closeout queued rows' premises** — the shallow-merge row's premise was FALSE (proven); its same-report siblings (storage/boot-mirror domain) get the same "run the tool against the artifact" check before anyone dispatches them | MED     | 45m    | pipeline          |
+| 3 | **H [ready] E2E the extended audit through the REAL hook** — plant a continuation-shape defect on a throwaway worktree, run `.githooks/pre-commit`, prove the block (the hook's exact two commands ran green manually; the hook itself unexecuted)                            | LOW-MED | 20m    | pipeline          |
+| 4 | [watch] awk scanner's 6-line continuation cap — longer continuations escape silently; documented in the script header, revisit only if a real shape ever hits it                                                                                                              | LOW     | —      | pipeline          |
+| 5 | Caddy deploy + post-deploy verification legs (15-39 §b/§f row 1 — queued, unchanged)                                                                                                                                                                                          | HIGH    | 30m    | services          |
+| 6 | The 15-39 §f rows 2-11 (fallback smoke test, geometrikks runtime logs, log storage/rolls, lint 18/5, caddy-mutant case, AGENTS SSO table, voice/whisper, layer classification, h3 pin) — queued, unchanged                                                                    | MED     | —      | services/pipeline |
+| 7 | The 15-39 §f rows 12-25 (foreign geometrikks review, nsfw/index 502 window, alerts redirect, and the ROADMAP-fuel rows) — dispositioned, unchanged                                                                                                                            | LOW     | —      | services/ROADMAP  |
+| 8 | Two foreign sessions are visibly working rows harvested from MY 15-39 report (`caddy-logs-tlc-hot-tier-staged`, `geometrikks-pocketid-allowlist-fix`) — watch for double-close-out drift on those queue rows (two sessions closing the same row = premise-check both)         | MED     | —      | process           |
 
 (8 rows: 3 harvested H, 5 referenced/dispositioned — the heavy backlog lives
 in the 15-39 report and is already queued; padding this table past the new
@@ -165,6 +165,7 @@ signal would duplicate the queue, which is its own anti-pattern.)
 the real hook). Queue one-liners + library entries land together in this pass.
 
 **Deliberately NOT harvested:**
+
 - §f row 4 (scanner cap): documented in the script's own header comment — the
   code is the annotation; a queue row would restate it.
 - §f rows 5-7: already queued/ dispositioned by the 15-39 harvest — re-adding
@@ -178,7 +179,7 @@ the real hook). Queue one-liners + library entries land together in this pass.
 - Session commits carrying continuation work (daemon-swept, verified via
   `git show --stat`): `4d06a0a7` (report + CHANGELOG + todo prunes),
   `aaece76d` 15:52 (audit script v2), `dfdd83b6` 01:03 (fixture fix + CHANGELOG
-  + AGENTS line).
+  - AGENTS line).
 - Verification: selftest rc=0 (4 fixtures); v1 (content at `3ce86d9b`) run
   against `/tmp` copy of `f1e703c5~1` caddy.nix → FAIL (line 435); v2 same →
   FAIL (line 580 in the later revision); repo scan 199 files fail=0;

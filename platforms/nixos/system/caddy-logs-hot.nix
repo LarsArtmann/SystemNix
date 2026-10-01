@@ -26,9 +26,11 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   inherit (import ../../../lib/default.nix lib) mkFilesystem;
-in {
+in
+{
   config = {
     fileSystems."/var/log/caddy" = mkFilesystem {
       device = "/dev/disk/by-label/tlc";
@@ -50,8 +52,8 @@ in {
     ];
 
     systemd.services.caddy = {
-      after = ["var-log-caddy.mount"];
-      wants = ["var-log-caddy.mount"];
+      after = [ "var-log-caddy.mount" ];
+      wants = [ "var-log-caddy.mount" ];
       # TRAP (VM-test-proven 2026-10-01): nixpkgs caddy sets LogsDirectory=caddy
       # for its default logDir — and systemd turns ANY *Directory= path into an
       # implicit RequiresMountsFor (systemd.exec "Automatic Dependencies":
@@ -72,7 +74,7 @@ in {
       # tmpfiles rule keeps guaranteeing the shadow dir's EXISTENCE on degraded
       # boots; writability comes from ReadWritePaths (production override /
       # non-sandboxed default).
-      serviceConfig.LogsDirectory = lib.mkForce [];
+      serviceConfig.LogsDirectory = lib.mkForce [ ];
       serviceConfig.ExecStartPre = [
         "+${pkgs.writeShellScript "caddy-logdir-own" ''
           chown caddy:caddy /var/log/caddy
