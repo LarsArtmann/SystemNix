@@ -80,8 +80,10 @@ key after rotation) fail the unit → onFailure alert.
 ## Weekly gun.io check (user timer, no root)
 
 `scripts/gunio-weekly-check.sh` (CV checkout) is the monitoring cluster's
-weekly core: profile verify (session + criteria + baseline diff), jobs-feed
-diff, and the funnel bridge. Registered 2026-09-08 as a systemd USER timer
+weekly core: profile verify (session + criteria + baseline diff), then ONE
+`funnel --refresh-baseline` fetch (since 2026-09-21 the jobs-feed diff, the
+transition ledger, the baseline refresh, and the funnel bridge all fold into
+that single polite GET). Registered 2026-09-08 as a systemd USER timer
 (deadportals no-root precedent), with the rc semantics wired:
 
 - **rc 1 (drift/probe failure) = ALERT** — the unit fails, `OnFailure`
