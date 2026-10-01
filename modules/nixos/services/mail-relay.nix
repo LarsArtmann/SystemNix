@@ -21,7 +21,6 @@
 # ships with a placeholder password. Replace it interactively and restart:
 #   sudo sops platforms/nixos/secrets/mail-relay.yaml   # set mail_relay_password
 #   sudo systemctl restart postfix
-# Runbook: docs/services/mail-relay.md
 _: {
   flake.nixosModules.mail-relay =
     {
