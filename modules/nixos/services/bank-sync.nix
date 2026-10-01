@@ -51,17 +51,8 @@ _: {
     # only in tmpfs (/run — RAM-backed, gone at reboot, never on disk);
     # this replaces the old paste-the-token-into-sops go-live, which is
     # why paperless archival can now be enabled with zero manual steps.
-    mintScript = pkgs.writeShellScript "bank-sync-paperless-token-mint" ''
-      MINT_OUT=/run/bank-sync-paperless/env
-      umask 077
-      token="$(${config.services.paperless.manage}/bin/paperless-manage drf_create_token admin)"
-      hex="$(printf '%s\n' "$token" | grep -oE '[0-9a-f]{40}' | head -n1)"
-      if [ -z "$hex" ]; then
-        echo "bank-sync-paperless-token: token extraction failed (unexpected drf_create_token output)" >&2
-        exit 1
-      fi
-      printf 'BANK_SYNC_PAPERLESS_TOKEN=%s\n' "$hex" > "$MINT_OUT"
-    '';
+    # Inline `script` (not writeShellScript) so the eval regression test
+    # can assert on the command content without IFD.
     # The mint runs as the paperless user (drf_create_token needs the
     # peer-auth PostgreSQL socket identity); the consumer unit runs as
     # bank-sync, so a root ExecStartPost ("+" prefix) hands the file over.
@@ -298,6 +289,18 @@ _: {
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
           unitConfig.RequiresMountsFor = [config.services.paperless.dataDir];
+          path = [pkgs.coreutils pkgs.gnugrep];
+          script = ''
+            MINT_OUT=/run/bank-sync-paperless/env
+            umask 077
+            token="$(${config.services.paperless.manage}/bin/paperless-manage drf_create_token admin)"
+            hex="$(printf '%s\n' "$token" | grep -oE '[0-9a-f]{40}' | head -n1)"
+            if [ -z "$hex" ]; then
+              echo "bank-sync-paperless-token: token extraction failed (unexpected drf_create_token output)" >&2
+              exit 1
+            fi
+            printf 'BANK_SYNC_PAPERLESS_TOKEN=%s\n' "$hex" > "$MINT_OUT"
+          '';
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
@@ -315,7 +318,6 @@ _: {
               # RAM-backed and cleared at reboot.
               RuntimeDirectoryPreserve = true;
               TimeoutStartSec = "3min";
-              ExecStart = mintScript;
               ExecStartPost = "+${mintChownScript}";
             }
             (harden {ProtectSystem = "strict";})

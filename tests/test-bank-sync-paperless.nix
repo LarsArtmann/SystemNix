@@ -144,8 +144,9 @@
       pass =
         mint.serviceConfig.Type
         == "oneshot"
-        && lib.hasInfix "drf_create_token admin" mint.serviceConfig.ExecStart
-        && lib.hasInfix "paperless-manage" mint.serviceConfig.ExecStart;
+        && lib.hasInfix "drf_create_token admin" mint.script
+        && lib.hasInfix "paperless-manage" mint.script
+        && lib.hasInfix "[0-9a-f]{40}" mint.script;
     }
     {
       name = "mint-runs-as-paperless-user-with-datarite-access";
@@ -158,7 +159,8 @@
     {
       name = "mint-token-lives-in-tmpfs-only-with-root-handover";
       pass =
-        lib.hasInfix "/run/bank-sync-paperless/env" mint.serviceConfig.ExecStart
+        lib.hasInfix "/run/bank-sync-paperless/env" mint.script
+        && lib.hasSuffix "bank-sync-paperless-token-chown" mint.serviceConfig.ExecStartPost
         && lib.hasPrefix "+" mint.serviceConfig.ExecStartPost
         # Without Preserve the runtime dir is deleted the moment the mint
         # oneshot deactivates — before the archival unit reads its env file.
