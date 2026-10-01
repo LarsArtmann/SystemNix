@@ -136,6 +136,12 @@ in
       sops.secrets.paperless_admin_password = { };
 
       services.pocket-id-config.enable = true;
+      # Provisioning ON: the SSO admin group (paperless-admins) is only
+      # declared when the provisioner runs, so flip it to exercise the
+      # group declaration + Step 4 rendering. The VM's mock Pocket ID has
+      # no API (no pocket-id.service is imported), so the provision unit
+      # never starts — its rendered script is inspected, not executed.
+      services.pocket-id-config.provision.enable = true;
 
       # Boot-time fake: paperless-oidc-setup is ConditionPathExists-gated on
       # the Pocket ID client secret (LoadCredential cannot tolerate a missing
@@ -208,6 +214,15 @@ in
     # stored byte-identical copies because the paperless default only warns).
     assert "PAPERLESS_CONSUMER_DELETE_DUPLICATES=true" in env, "duplicate rejection missing from unit env"
 
+    # 3b. OIDC role mapping (deab8469): Pocket ID `groups` claim → Django
+    #     roles. The claim is emitted ONLY when the client requests the
+    #     `groups` scope; the SUPERUSER/STAFF group names must equal the
+    #     group declared in Pocket ID (single-source oidcAdminGroup).
+    #     FAIL CLOSED: a missing/empty claim demotes on every login.
+    assert "PAPERLESS_SOCIAL_ACCOUNT_SYNC_GROUPS_CLAIM=groups" in env, "groups-claim mapping missing from unit env"
+    assert "PAPERLESS_SOCIAL_ACCOUNT_SYNC_SUPERUSER_GROUP=paperless-admins" in env, "superuser-group mapping missing from unit env"
+    assert "PAPERLESS_SOCIAL_ACCOUNT_SYNC_STAFF_GROUP=paperless-admins" in env, "staff-group mapping missing from unit env"
+
     # 8. Relay-gated email settings render as Environment= directives — the
     #    settings surface the config ACTUALLY lands on (the old smoke's
     #    /var/lib/paperless/paperless.conf grep was a permanent phantom-RED:
@@ -239,6 +254,20 @@ in
     assert "PAPERLESS_SOCIAL_AUTO_SIGNUP=true" in env, "social auto-signup missing from unit env"
     envfiles = machine.succeed("systemctl show paperless-web --property=EnvironmentFiles")
     assert "/var/lib/paperless-oidc/pocket-id.env" in envfiles, "OIDC env file not attached to paperless-web"
+    #    The provider SCOPE must request `groups` — without it Pocket ID omits
+    #    the claim (claims_service.go) and the role mapping above fails closed.
+    machine.succeed("grep -q '\"groups\"' /var/lib/paperless-oidc/pocket-id.env")
+
+    # 6b. The Paperless admin group is declared declaratively in Pocket ID
+    #     (provisioner Step 4: idempotent create + authoritative membership
+    #     PUT). The VM's mock has no Pocket ID API, so the generated script is
+    #     inspected rather than executed.
+    provision_script = machine.succeed(
+      "systemctl show -p ExecStart --value pocket-id-provision.service "
+      "| grep -oE '/nix/store/[a-z0-9]+-pocket-id-provision' | head -1"
+    ).strip()
+    assert provision_script, "pocket-id-provision ExecStart path not found"
+    machine.succeed(f"grep -q 'paperless-admins' {provision_script}/bin/pocket-id-provision")
 
     # 7. SSO-only mode live: the login page still renders (200) but with the
     #    password form GONE (PAPERLESS_DISABLE_REGULAR_LOGIN), the Pocket ID

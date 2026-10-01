@@ -126,30 +126,36 @@ scan_file() {
 
 # Harvest coverage: recent status reports with §f follow-up sections must be
 # cited by the queue/libraries or carry an explicit harvest marker.
+# Batched greps (one pass per predicate over all candidates) — the per-file
+# loop variant cost ~7s against ~250 reports; this stays sub-second.
 harvest_check() {
   local status_dir="${CHECK_TODO_STATUS_DIR:-$REPO_ROOT/docs/status}"
   [ -d "$status_dir" ] || return 0
-  local harvest_fail=0 unharvested=0 report base cited
+  local harvest_fail=0 unharvested=0 base blob
   [ "${CHECK_TODO_HARVEST:-}" = "strict" ] && harvest_fail=1
   # one grep-able blob of every citation surface
-  local blob
   blob=$(cat "$TODO" "$REPO_ROOT"/docs/todo/[a-z0-9-]*.md 2>/dev/null)
+  # candidates: reports new enough for the convention (>= 2026-09-26) AND §f-bearing AND unmarked
+  local candidates=() report
   while IFS= read -r report; do
     base="${report##*/}"
-    # convention landed 2026-09-26; older reports are exempt
     case "$base" in
-      2026-0[1-8]-*|2026-09-2[0-5]-*) continue ;;
+      2026-0[1-8]*|2026-09-[01][0-9]*|2026-09-2[0-5]*) continue ;;
     esac
-    # only reports carrying an f-section with numbered follow-ups
-    grep -qE '^#+ *f[): ]|§f' "$report" 2>/dev/null || continue
-    if ! grep -qE 'HARVESTED|NOT HARVESTED|not harvested|harvest log' "$report" 2>/dev/null; then
-      cited=$(printf '%s\n' "$blob" | grep -cF "$base" || true)
-      if [ "${cited:-0}" -eq 0 ]; then
-        unharvested=$((unharvested + 1))
-        printf 'UNHARVESTED: %s carries an §f section, is cited by no queue/library surface, and has no harvest marker\n' "$base"
-      fi
+    candidates+=("$report")
+  done < <(grep -lE '^#+ *f[): ]|§f' "$status_dir"/2*.md 2>/dev/null | sort)
+  [ "${#candidates[@]}" -gt 0 ] || return 0
+  local unmarked=()
+  while IFS= read -r report; do
+    unmarked+=("$report")
+  done < <(grep -LE 'HARVESTED|NOT HARVESTED|not harvested|harvest log' "${candidates[@]}" 2>/dev/null)
+  for report in "${unmarked[@]}"; do
+    base="${report##*/}"
+    if ! printf '%s\n' "$blob" | grep -qF "$base"; then
+      unharvested=$((unharvested + 1))
+      printf 'UNHARVESTED: %s carries an §f section, is cited by no queue/library surface, and has no harvest marker\n' "$base"
     fi
-  done < <(find "$status_dir" -maxdepth 1 -name '2*.md' -type f | sort)
+  done
   if [ "$unharvested" -gt 0 ]; then
     if [ "$harvest_fail" -eq 1 ]; then
       echo "FAIL: $unharvested unharvested §f-bearing report(s) — self-harvest at authoring or record why not (CHECK_TODO_HARVEST=strict)"
