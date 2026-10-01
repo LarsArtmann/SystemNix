@@ -719,6 +719,30 @@ _: {
                   alerts = discordAlert "BTRFS scrub is incomplete (never started or interrupted) WITHOUT a guard deferral — a silently wedged scrub, not the memory-guard churn-stop class (that sets btrfs_scrub_deferred_by_guard 1 and this check stays green). Check 'btrfs scrub status /' and '/data', memory-emergency-guard journal for recent trips; the next weekly autoScrub window retries.";
                 })
                 (mkHttpCheck {
+                  name = "BTRFS Scrub Staleness";
+                  group = "Filesystem";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "10m";
+                  # Completion-age coverage (2026-10-01, plan P2 #5): a scrub
+                  # that FINISHED weeks ago stays green on every other check
+                  # while later windows are guard-deferred — and since the
+                  # scrub timers dropped Persistent=false, a missed window no
+                  # longer catch-ups at boot. 10-day budget = weekly cadence
+                  # + storm-era grace; a RUNNING scrub counts as fresh.
+                  # Labels are slash-sanitized (root/data) because gatus
+                  # pat() globs cannot match a literal slash.
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*\nbtrfs_scrub_stale{mount=\"root\"} 1\n*)"
+                    "[BODY] == pat(*\nbtrfs_scrub_stale{mount=\"root\"} *)"
+                    "[BODY] != pat(*\nbtrfs_scrub_stale{mount=\"data\"} 1\n*)"
+                    "[BODY] == pat(*\nbtrfs_scrub_stale{mount=\"data\"} *)"
+                    "[BODY] != pat(*\nbtrfs_scrub_staleness_parse_errors 1\n*)"
+                    "[BODY] == pat(*\nbtrfs_scrub_staleness_parse_errors *)"
+                  ];
+                  alerts = discordAlert "BTRFS scrub coverage is dark: no scrub has FINISHED on / or /data within the 10-day budget (weekly cadence + storm grace). Guard-deferred windows no longer catch up at boot (Persistent=false since 2026-10-01) — check 'btrfs scrub status /' and '/data', the btrfs-scrub@ timers ('systemctl list-timers btrfs-scrub@*'), and the memory-emergency-guard journal for sustained IO storms. If the storm has drained, 'sudo systemctl start btrfs-scrub@-.service btrfs-scrub@data.service' re-arms coverage.";
+                })
+                (mkHttpCheck {
                   name = "BTRFS Emergency Reserve";
                   group = "Filesystem";
                   url = "http://localhost:${toString nodePort}/metrics";

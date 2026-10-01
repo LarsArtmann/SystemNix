@@ -260,6 +260,11 @@ let
         echo "# TYPE btrfs_scrub_duration_seconds gauge"
         echo "# HELP btrfs_scrub_error_free Composite: 1=all mounts finished+error-free 0=errors or not finished"
         echo "# TYPE btrfs_scrub_error_free gauge"
+        echo "# HELP btrfs_scrub_last_completed_seconds Epoch of the start of the last FINISHED scrub (0 = never finished or unknown while a scrub runs). Labels are slash-sanitized (root=/, data=/data): gatus pat() globs cannot match a literal slash."
+        echo "# TYPE btrfs_scrub_last_completed_seconds gauge"
+        echo "# HELP btrfs_scrub_stale 1 = no scrub has FINISHED within the 10-day budget (weekly cadence + storm-era grace). With Persistent=false on the scrub timers a guard-deferred window does not catch up — a stale value is THE dark-coverage signal; a RUNNING scrub counts as fresh."
+        echo "# TYPE btrfs_scrub_stale gauge"
+        scrub_parse_errors=0
         scrub_total_errors=0
         scrub_all_finished=1
         scrub_incomplete=0
@@ -301,6 +306,38 @@ let
               print "btrfs_scrub_duration_seconds{mount=\"" mnt "\"} " duration
             }
           '
+          # ── Last-COMPLETED staleness (2026-10-01, plan P2 #5) ──────────
+          # A scrub that FINISHED weeks ago stays green on every existing
+          # check while later windows are guard-deferred (scrub status keeps
+          # reporting the last run) — only the completion AGE exposes the
+          # dark-coverage class. Slash-sanitized labels keep gatus pat()
+          # globs legal.
+          scrub_label=$(echo "$scrub_mnt" | awk '{gsub(/^\//, ""); gsub(/\//, "_"); if ($0 == "") print "root"; else print}')
+          scrub_started_raw=$(echo "$scrub_out" | awk '/^[Ss]crub started:/ {sub(/^[Ss]crub started:[[:space:]]*/, ""); print; exit}')
+          if echo "$scrub_out" | grep -qE 'Status:.*running|still running'; then
+            # Coverage is happening RIGHT NOW — the running scrub's status
+            # output carries no previous-completion date; stale stays 0.
+            scrub_last_completed=0
+            scrub_stale_v=0
+          elif echo "$scrub_out" | grep -q 'Status:.*finished' && [ -n "$scrub_started_raw" ]; then
+            scrub_last_completed=$(date -d "$scrub_started_raw" +%s 2>/dev/null) || scrub_last_completed=""
+            if [ -n "$scrub_last_completed" ]; then
+              scrub_age=$(( $(date +%s) - scrub_last_completed ))
+              if [ "$scrub_age" -gt 864000 ]; then scrub_stale_v=1; else scrub_stale_v=0; fi
+            else
+              # Unparseable date on a FINISHED scrub — surface loudly; the
+              # gatus parse-errors leg fails rather than trusting 0.
+              scrub_parse_errors=1
+              scrub_last_completed=0
+              scrub_stale_v=0
+            fi
+          else
+            # Never started or interrupted: no completion within budget.
+            scrub_last_completed=0
+            scrub_stale_v=1
+          fi
+          echo "btrfs_scrub_last_completed_seconds{mount=\"$scrub_label\"} $scrub_last_completed"
+          echo "btrfs_scrub_stale{mount=\"$scrub_label\"} $scrub_stale_v"
           # Only consider error-free if the scrub actually FINISHED (status=2)
           if [ "$scrub_err" -eq 0 ] && echo "$scrub_out" | grep -q 'Status:.*finished'; then
             : # this mount is finished and error-free
@@ -342,6 +379,10 @@ let
         echo "# HELP btrfs_scrub_deferred_by_guard 1 = the memory-emergency-guard stopped scrub units in the last 24h and its churn window is still open — an incomplete scrub is EXPECTED (deferred), not a wedge"
         echo "# TYPE btrfs_scrub_deferred_by_guard gauge"
         echo "btrfs_scrub_deferred_by_guard ''${SCRUB_DEFERRED}"
+
+        echo "# HELP btrfs_scrub_staleness_parse_errors 1 = a FINISHED scrub's started-timestamp failed to parse — the staleness gauges above are unreliable"
+        echo "# TYPE btrfs_scrub_staleness_parse_errors gauge"
+        echo "btrfs_scrub_staleness_parse_errors ''${scrub_parse_errors:-1}"
 
         if [ "$scrub_total_errors" -gt 0 ]; then
           echo "btrfs_scrub_errors_present 1"
