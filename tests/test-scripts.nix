@@ -237,7 +237,7 @@
   # outputs from the evo-x2 config through the degraded/fresh/stale/baseline
   # scenarios. Mocks are injected by SED into copies of the store scripts —
   # writeShellApplication pins runtimeInputs FIRST in PATH, so env-PATH
-  # shadowing can never win against them (AGENTS.md rule); renaming the
+  # shadowing can never win against them (docs/agents/desktop.md rule); renaming the
   # call inside the script text is the only faithful injection.
   guard-scripts =
     let

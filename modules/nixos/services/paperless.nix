@@ -341,7 +341,7 @@ _: {
           );
           # Both target InboxClean papersync tags (documents/bank statements
           # archived by the Gmail pipeline); the "encrypted" tag marks
-          # password-protected PDFs parked undecrypted (see AGENTS.md).
+          # password-protected PDFs parked undecrypted (see docs/services/paperless.md).
           default = [
             {
               name = "Gmail Archive";

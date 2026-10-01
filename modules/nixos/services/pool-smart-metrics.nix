@@ -10,7 +10,7 @@
 # Metric doctrine (matches scripts/hdd-vibration-check.sh):
 #   - All SMART raw counters are LIFETIME totals since manufacture — only
 #     same-drive DELTAS between runs are meaningful (the *_increased flags
-#     carry them; the baseline lives in AGENTS.md, 2026-09-12).
+#     carry them; the baseline lives in docs/agents/stability.md, 2026-09-12).
 #   - Disk_Shift raw is vendor-packed 48-bit on the MG08s (millions-scale
 #     while normalized sits at 100) — exposed for delta forensics only.
 #   - Zero drives present (whole-DAS outage) keeps all_healthy=1: that

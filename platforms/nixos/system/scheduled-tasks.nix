@@ -82,7 +82,7 @@ in
         unit's private /tmp then fails ENOENT — self-perpetuating, because a
         broken service writes nothing and its dir always profiles as stale.
         Restore the case-arm exclusion (tests/test-tmp-cleanup.nix asserts the
-        behavior). See AGENTS.md "NEVER let any /tmp cleaner touch
+        behavior). See docs/agents/systemd.md "NEVER let any /tmp cleaner touch
         systemd-private-*".
       '';
     }

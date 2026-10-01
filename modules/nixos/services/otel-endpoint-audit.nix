@@ -278,7 +278,7 @@ _: {
             otel-endpoint-audit: ${violation.context} violates the OTel endpoint contract:
             ${lib.concatStringsSep "\n" (map (e: "  - ${e}") violation.errors)}
 
-            Convention (AGENTS.md "For OTLP tracing"): Go http = host:4318 (no
+            Convention (docs/agents/integration-registry.md "For OTLP tracing"): Go http = host:4318 (no
             scheme), Go/Rust gRPC = http://host:4317, Python = http://host:4318,
             Docker = http://host.docker.internal:4318.
           '';

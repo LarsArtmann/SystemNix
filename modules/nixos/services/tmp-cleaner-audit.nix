@@ -21,7 +21,7 @@
 # at eval time). The deployed tmp-cleanup script itself is a store-path
 # derivation (invisible here) — it is guarded by a dedicated self-assertion
 # in platforms/nixos/system/scheduled-tasks.nix and behaviorally by
-# tests/test-tmp-cleanup.nix. See AGENTS.md "NEVER let any /tmp cleaner
+# tests/test-tmp-cleanup.nix. See docs/agents/systemd.md "NEVER let any /tmp cleaner
 # touch systemd-private-*".
 _: {
   flake.nixosModules.tmp-cleaner-audit =

@@ -520,7 +520,7 @@
 ### desktop
 
 - [ ] **crush-debug: add Gatus-failing-checks as a picker source** → [docs/todo/desktop.md](docs/todo/desktop.md)
-- [ ] [ready] **Document DMS config surfaces in AGENTS.md** (settings.json vs clsettings.json vs plugin_settings.json + cfg.package wiring) → [docs/todo/desktop.md](docs/todo/desktop.md)
+- [ ] [ready] **Document DMS config surfaces in `docs/agents/desktop.md`** (settings.json vs clsettings.json vs plugin_settings.json + cfg.package wiring; desktop docs moved out of AGENTS.md in the 2026-10-01 restructure) → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [ready] **Eval guard: declared DMS settings keys must exist in the pinned source's SettingsSpec.js** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [ready] **Identify DMS weather IP-geo endpoint; check dnsblockd classification** → [docs/todo/desktop.md](docs/todo/desktop.md)
 
@@ -564,7 +564,7 @@
 - [ ] [decision] **Per-vHost access-log roll bounds vs Caddy defaults** — [docs/todo/services.md](docs/todo/services.md)
 - [ ] [ready] **Fix pre-existing negative-test-lint failures (cv/hermes dead-guards; signoz/binary-coverage pristine controls)** — [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] [ready] **Add or de-reference the nonexistent `caddy-mutant` negative-test case** — [docs/todo/pipeline.md](docs/todo/pipeline.md)
-- [ ] [ready] **Refresh AGENTS.md SSO-layer table vs the registry (fleet drifted)** — [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] [ready] **Refresh the SSO-layer table in `docs/agents/sso-dns.md` vs the registry (fleet drifted; table moved out of AGENTS.md in the 2026-10-01 restructure)** — [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] [watch] **voice/whisper dns-local additions + exemption drop when voice-agents lands** — [docs/todo/services.md](docs/todo/services.md)
 - [ ] [watch] **Layer classification via forward_auth substring (non-forward-auth gate would misclassify)** — [docs/todo/services.md](docs/todo/services.md)
 - [ ] [decision] **Explicit `servers { protocols h1 h2 h3 }` pin for declarative h3 posture** — [docs/todo/services.md](docs/todo/services.md)

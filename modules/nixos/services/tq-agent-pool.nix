@@ -227,7 +227,7 @@ _: {
         systemd.services.tq-agent-pool = {
           after = [ "tq-storage-dir.service" ];
           wants = [ "tq-storage-dir.service" ];
-          # AGENTS.md rule 5: start-limit bounds + onFailure on every service.
+          # docs/agents/integration-registry.md step 5: start-limit bounds + onFailure on every service.
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
           inherit onFailure;

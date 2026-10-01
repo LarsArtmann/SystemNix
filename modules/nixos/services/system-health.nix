@@ -9,7 +9,7 @@
 # boolean threshold flags (0=ok, 1=alert) that Gatus checks via
 # `[BODY] == pat(*metric 0*)`.
 #
-# See AGENTS.md rule 9: every service MUST be monitored.
+# See docs/agents/integration-registry.md step 9: every service MUST be monitored.
 _: {
   flake.nixosModules.system-health =
     {

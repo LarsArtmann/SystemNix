@@ -582,7 +582,7 @@ _: {
             AUDIT_LOG_RETENTION_DAYS = "90";
             # Explicit env-mode pin of Pocket ID's CIMD gate (default is also
             # "[]" = deny-all): keeps the no-CIMD decision load-bearing in the
-            # module instead of relying on upstream defaults. See AGENTS.md,
+            # module instead of relying on upstream defaults. See docs/agents/sso-dns.md,
             # SSO/OIDC section (decision 2026-09-17).
             CIMD_URL_ALLOWLIST = "[]";
             DB_CONNECTION_STRING = "data/pocket-id.db";

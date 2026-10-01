@@ -12,7 +12,7 @@
 # Executing commands (RUN+=) at letter-matched disks is banned; attribute
 # sets on whole-class matches (e.g. queue/scheduler=bfq for sd[a-z]*) are
 # intentional and allowed. Match disks by ENV{ID_SERIAL} or
-# ATTRS{idVendor}/ATTRS{idProduct} instead — never by letter. See AGENTS.md
+# ATTRS{idVendor}/ATTRS{idProduct} instead — never by letter. See docs/agents/stability.md
 # "DAS USB link" gotcha.
 _: {
   flake.nixosModules.udev-block-letter-audit =

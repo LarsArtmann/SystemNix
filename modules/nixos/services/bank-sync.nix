@@ -167,7 +167,7 @@ _: {
           systemd.services.bank-sync = {
             after = [ "bank-sync-storage-dir.service" ];
             wants = [ "bank-sync-storage-dir.service" ];
-            # AGENTS.md rule 5: every service sets start-limit bounds + onFailure.
+            # docs/agents/integration-registry.md step 5: every service sets start-limit bounds + onFailure.
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
             inherit onFailure;

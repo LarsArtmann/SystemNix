@@ -12,7 +12,7 @@ let
   # Guard against mathematically vacuous conditions.
   #   target=0 + above_or_equal → fires when metric >= 0 → ALWAYS true for non-negative metrics
   #   target=0 + below          → fires when metric < 0  → NEVER true for non-negative metrics
-  # Both are almost certainly bugs. See AGENTS.md gotcha:
+  # Both are almost certainly bugs. See docs/agents/monitoring.md gotcha:
   # "SigNoz alert rule target=0 + above_or_equal = always firing".
   validateTarget =
     name: op: target:

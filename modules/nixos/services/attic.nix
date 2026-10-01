@@ -186,7 +186,7 @@ _: {
           # onto the root filesystem under the /mnt/pool mountpoint (same
           # semantics as the immich/paperless pool gating).
           unitConfig.RequiresMountsFor = [ cfg.storagePath ];
-          # AGENTS.md rule 5: every service sets start-limit bounds + onFailure.
+          # docs/agents/integration-registry.md step 5: every service sets start-limit bounds + onFailure.
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
           inherit onFailure;

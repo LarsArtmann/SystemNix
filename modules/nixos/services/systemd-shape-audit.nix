@@ -1,7 +1,7 @@
 # Eval-time audit: INVALID or RACY systemd unit SHAPES that systemd itself
 # either refuses to load or accepts while silently arming a failure cascade.
 #
-# Three bug classes, all with live incident history (see AGENTS.md gotchas):
+# Three bug classes, all with live incident history (see docs/agents/systemd.md gotchas):
 #
 # 1. Type=oneshot + Restart=always/on-success/on-abnormal/on-watchdog
 #    systemd REFUSES to load such a unit (service-defaults.nix documents the

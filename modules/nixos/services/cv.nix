@@ -340,7 +340,7 @@
             # disabled by default; the key is inert until then).
             graphrag.store_dsn = "/var/lib/cv/data/graphrag.sqlite";
             # Operator sign-in via Pocket ID (native OIDC, Layer 1 — moved
-            # off protectedVHost 2026-09-13 per the AGENTS.md double-auth
+            # off protectedVHost 2026-09-13 per the docs/agents/sso-dns.md double-auth
             # doctrine): the locked /admin access card renders the provider
             # sign-in button; a successful passkey login mints the app's own
             # operator session. redirect_url MUST equal the callbackURLs

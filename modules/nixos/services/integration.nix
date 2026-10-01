@@ -63,7 +63,7 @@ _: {
         lib.mapAttrsToList (name: e: map (check: { inherit name e check; }) e.checks) enabledEntries
       );
 
-      # Alerting is default-ON (AGENTS.md: every service must be monitored):
+      # Alerting is default-ON (docs/agents/integration-registry.md: every service must be monitored):
       # a check without an explicit alert description gets an auto-generated
       # one; set `alert = ""` explicitly for a deliberately silent check.
       checkAlert =
@@ -217,7 +217,7 @@ _: {
                         type = lib.types.listOf lib.types.str;
                         default = [ "[STATUS] == 200" ];
                         description = ''
-                          Gatus conditions. Follow the AGENTS.md pat()
+                          Gatus conditions. Follow the docs/agents/monitoring.md pat()
                           escape rules — `nix fmt`-surviving single-backslash
                           newlines, no ?/+ wildcards, anchored metric forms.
                         '';

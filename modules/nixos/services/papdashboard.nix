@@ -776,7 +776,7 @@
                 group = "Monitoring";
                 url = "http://localhost:${toString nodeExporterPort}/metrics";
                 interval = "5m";
-                # Asserted-1 anchored pair (AGENTS.md pat() rules): the
+                # Asserted-1 anchored pair (docs/agents/monitoring.md pat() rules): the
                 # != 0 arm is line-anchored on the trailing newline so a
                 # HELP comment can never phantom-green it, and the == arm
                 # proves the metric line exists at all — a dead collector

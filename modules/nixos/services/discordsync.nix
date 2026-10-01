@@ -914,7 +914,7 @@
               {
                 # Deliberately RED while local-only — the standing
                 # stale-mirror signal (Turso free plan, decision-pending;
-                # see AGENTS.md). Do not silence it.
+                # see docs/services/discordsync.md). Do not silence it.
                 name = "DiscordSync Turso Sync Active";
                 group = "Infrastructure";
                 url = "http://localhost:${toString ports.discordsync-api}/metrics";
