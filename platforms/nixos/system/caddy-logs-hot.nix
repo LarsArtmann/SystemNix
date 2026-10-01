@@ -54,12 +54,20 @@ in {
       # Requires= + After= on every mount unit needed to access the path). That
       # hard dependency DEFEATS the wants-not-requires degradation above: with
       # the Samsung detached, caddy died with result 'dependency' instead of
-      # degrading to the QLC shadow dir. Dropping LogsDirectory hands dir
-      # creation + ownership to the tmpfiles rule (which runs before caddy in
-      # every order — tmpfiles-setup is Before=sysinit, caddy is after the
-      # mount); writability is covered by ReadWritePaths (production override)
-      # and the non-sandboxed unit default.
+      # degrading to the QLC shadow dir. Dropping LogsDirectory means NOTHING
+      # chowns the dir after the mount — systemd's *Directory= machinery (which
+      # creates + chowns at service start, correctly ordered after the mount)
+      # was doing that job too. The tmpfiles rule CANNOT take it over:
+      # tmpfiles-setup runs in early sysinit BEFORE the hot-tier mount lands
+      # (guest journal: setup finished 3.8s, mount 7.8s), so it only ever fixes
+      # the QLC shadow dir — the mounted subvol root stays root-owned and caddy
+      # died with EACCES on first config load. preStart re-enforces ownership
+      # on whichever fs is live at start (root-owned, ordered after the mount);
+      # the tmpfiles rule keeps guaranteeing the shadow dir's EXISTENCE on
+      # degraded boots; writability comes from ReadWritePaths (production
+      # override / non-sandboxed default).
       serviceConfig.LogsDirectory = lib.mkForce [];
+      preStart = "chown caddy:caddy /var/log/caddy";
     };
   };
 }
