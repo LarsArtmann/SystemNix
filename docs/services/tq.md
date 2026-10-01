@@ -138,3 +138,13 @@ same journal.
 
 Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
 
+### tq Agent Pool (go-taskqueue dogfood, 2026-09-08)
+
+**Modules:** house `modules/nixos/services/tq-agent-pool.nix` over upstream `inputs.go-taskqueue.nixosModules.default` — units `tq-agent-pool` (harvest + headless crush agents over CV/SystemNix/go-taskqueue TODO_LISTs), `tq-serve` (read-only dashboard, `tq.home.lan` Layer 2, `ports.tq` 8100), `tq-storage-dir` (pool-gated subvol), `tq-bootstrap` (seeds `.tq-verify`/`.crushrc` rails, commits them, never pushes). Journal on `/mnt/pool/services/tq/tq.db` (btrbk-pool snapshotted); CLI on PATH with `TQ_DB` session var. Runbook incl. the round-9 manual-pool cutover: `docs/services/tq.md`.
+
+- **Pool unit hardening is upstream-owned and deliberately looser than `harden{}`**: `ProtectSystem=full`, NO ProtectHome restriction, `KillSignal=SIGINT` + `KillMode=process` + `TimeoutStopSec=45min` (in-flight agents must finish; a shared drain deadline strands tasks in `running` forever). Never wrap the pool in `harden{}` (ProtectHome=read-only kills every agent at first repo write); the serve unit IS hardened (ReadWritePaths covers SQLite WAL/SHM for the read-only dashboard).
+- **Runs as the primary user** (browser-history-agent precedent): agents commit in `~/projects` with that user's git identity + crush config. Model pinned per-repo by the `.crushrc` managed block (zai/glm-5.3-flash, xhigh) — a pool-level `--model` would RESET reasoning effort (upstream bootstrap.go comment); budget 30/day + max-per-tick 3 cap spend.
+- **PapDashboard bridge key rides a DEDICATED sops template** (`tq-agent-pool-env`, root-owned): agent payloads inherit the pool env, so sharing `papdashboard-env`/`gatus-env` would leak other services' secrets into every agent process tree.
+- **Flake input flipped to `github:LarsArtmann/go-taskqueue?ref=master` (2026-09-18, deployed gen 784)** — the interim `git+file:?rev=1a4eb480` pin is GONE: upstream push landed, CI can fetch, `nix flake lock --update-input go-taskqueue` works (live `tq 0.3.0, go1.27.1`). `go-nix-helpers` NOT followed (bank-sync vendorHash FOD trap). vendorHash refresh dances happen UPSTREAM (`nix build .#tq` in the quick-go batch surfaces drift pre-deploy).
+- **pool.conf typos fail loudly** at unit start (upstream design: unknown key = error, never silent default) → start-limit + onFailure alert. Misbehavior runbook (stop → `tq dlq` → rescue/cancel), rollback, and watermarks: `docs/services/tq.md`.
+

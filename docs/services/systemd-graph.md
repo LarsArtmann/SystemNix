@@ -60,3 +60,4 @@ interactively.
 
 Knowledge below moved verbatim from the root AGENTS.md restructure — it is the authoritative deep context for this service.
 
+- **systemd-graph (icholy/systemd-graph)** — Live D-Bus-driven systemd dependency graph at `graph.home.lan`. Go backend + React SPA (Cytoscape.js). DynamicUser, `MemoryMax=128M`, no persistent state. Port 8847 in `lib/ports.nix`. LAN-only (no auth, plain `reverse_proxy`). `pkgs/systemd-graph/` has separate `webui.nix` derivation (pnpm + Vite) injected into Go source via `runCommand` re-pack (`//go:embed dist`). Docs: `docs/services/systemd-graph.md`
