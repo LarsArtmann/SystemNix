@@ -22,6 +22,7 @@ Documentation for the SystemNix cross-platform Nix configuration (macOS + NixOS)
 - **docs/CONTRIBUTING.md** — Contributor setup, style rules, and verification commands
 - **architecture/** — ADRs (Architecture Decision Records), DNS guide, monitoring plans
 - **docs/status/archived/manual-steps-after-deployment.md** — Post-deployment checklist
+- **dnsblockd OIDC recovery runbooks** — secret-desync vs client-row-vanish diagnosis + fix chain: `status/archived/2026-08-22_02-46_dnsblockd-oidc-secret-desync-diagnosis.md` and `status/archived/2026-08-22_03-49_dnsblockd-oidc-outage-fixed-self-review.md` (recovery = one provisioner run + the bridge-then-daemon restart order from deploy.sh)
 
 ## Naming Convention
 

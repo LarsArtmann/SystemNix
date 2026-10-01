@@ -172,6 +172,17 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString /home/lars/project
 # → error: forgejo theme audit: ui.THEMES entries with no backing theme-<name>.css: arc-green ...
 ```
 
+**Auto-theme dark-mode cascade trap (hit live 2026-09-30, fixed same day):** `@media
+(prefers-color-scheme: dark)` grants NO cascade priority — document order wins at equal
+specificity, so ANY variable the auto delta's LIGHT `:root` block sets that its DARK block does
+NOT re-declare shadows upstream's dark-block value in dark mode (live: delta-light's
+`--color-body: #f7f8fc` sat after the imported upstream file and beat its `var(--steel-800)`
+→ near-white page body under steel-text = the washed-out half-dark look). The explicit
+catppuccin-mocha/latte deltas are immune (single override block, no opposing scheme block).
+**Rule:** every var added to the auto delta's light block must be re-pinned in its dark block;
+verify with the shadowed-set diff (delta-light ∩ upstream-dark − delta-dark must be empty),
+not by eye.
+
 **Adding a theme:** drop a delta css in `_forgejo-themes/`, add it to `forgejoThemes`, add the
 name to the `ui.THEMES` CSV, deploy. **Package-bump checklist:** re-verify `upstreamThemeNames`
 against the new package's `data/public/assets/css/` (upstream renamed theme files → themes
