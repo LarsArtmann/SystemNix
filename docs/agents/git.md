@@ -1,0 +1,30 @@
+# Git Operations — Agent Reference
+
+> Migrated verbatim from AGENTS.md on 2026-10-01 (restructure).
+> **Read when:** recovering from corruption/boot-death mid-commit, ANY history rewrite (amend/rebase/filter-repo), or a GitHub push-protection block (GH013).
+
+## Index
+
+- [Git zero-byte object corruption (recovery runbook)](#git-zero-byte-object-corruption-boot-death-mid-commit-2026-09-15)
+- [History-rewrite verification checklist](#history-rewrite-verification-checklist)
+- [GitHub push protection (GH013) — fixtures & unblock playbook](#github-push-protection-ignores-gitleaks-toml-allowlists)
+
+## Git zero-byte object corruption (boot death mid-commit, 2026-09-15)
+
+A boot death at 09:32:40 (mid PMA-daemon commit) left 10 loose objects as **0-byte files** while the loose ref + index metadata survived → every git command died `fatal: bad object HEAD`, git-town panicked (`branchesQuery` index-out-of-range on git's broken-ref error output). Recovery runbook (zero data loss, ~5 min):
+
+1. `git cat-file -e <sha>` **false-greens on 0-byte loose files** (stat-only check) — validate with `git fsck --full`, never `-e`.
+2. Real tip = the last `.git/logs/refs/heads/master` entry's new-sha (reflog entries are written before corruption; the lost commit's reflog line may never have landed).
+3. Backup `.git` → tar in /tmp; `trash` the 0-byte objects; `git update-ref -m "recover: ..." refs/heads/master <reflog-tip>`.
+4. Missing blobs referenced by the index = staged content: `git hash-object -w <worktree-file>`; a hash EQUAL to the index sha proves byte-exact restoration (it did for all 3 lost blobs).
+5. `git write-tree` rebuilds the whole tree chain from the index AND repopulates the cache-tree ext — here it reproduced the lost root tree byte-exact (`0e45a87d…`, the exact sha the cache-tree pointed at).
+6. fsck validates reflog OLD-shas too — after recovery, `git reflog delete <ref>@{0}` any entry referencing a permanently-lost object, or fsck errors forever.
+7. Prevention now in `platforms/common/programs/git.nix`: `core.fsync = "loose-object,index"` (git does NOT fsync loose objects by default; on this box's crash history that is an unacceptable gamble).
+
+## History-rewrite verification checklist
+
+- **History-rewrite verification checklist — run ALL of these after ANY amend/rebase/filter-branch/filter-repo that rewrites claimed history**: (a) `git merge-base --is-ancestor <new-sha> HEAD && echo OK` (the new history is actually reachable); (b) `git log --all --grep=<claim-text>` (the claim's message is present where expected); (c) `git for-each-ref | grep <old-sha>` (no branch/tag still pins the pre-rewrite SHA — a leftover ref silently resurrects the old history on the next push). Never assert "rewrite landed" from the rewriting command's exit code alone (the 2026-09-14 message-only-rewrite session). **AND re-run (a)/(b) after ANY later rebase/update-ref onto origin/master: an unpushed rewrite lineage is ABANDONED by rebasing onto origin history, silently resurrecting the old messages locally** (2026-09-15 recurrence: the `120ada36` gitleaks-message purge regressed this way — `0ae59e3b` un-ancestored, `120ada36` reachable again after the 09-14 10:00 + 09-15 04:11/05:08 rebases; while the push is held, local message rewrites are cosmetic — the durable fix is the push-time re-filter in the purge runbook, plus key rotation). **SAGA CLOSED 2026-09-15 (verification-only): NO further local message-only rewrites** — `120ada36` was re-verified REACHABLE ON ORIGIN post-push (`git merge-base --is-ancestor 120ada36 origin/master` → OK, origin `ad6edcbb`); the sentence dies only at the push-time re-filter (the runbook's replacements file is now BUILT INTERACTIVELY — the full secret literals were redacted out of this file 2026-09-15 after they kept the secret-history scanner red AND re-exposed the still-live Context7 key in a public tree) or goes inert via key rotation
+
+## GitHub push protection (ignores .gitleaks.toml allowlists)
+
+- **GitHub push protection IGNORES .gitleaks.toml allowlists — it pattern-matches raw blobs in the push range (2026-09-15 GH013 push block)** — the gitleaks-coverage-selftest fixture carried a handcrafted `sgp_<40hex>` literal (synthetic, allowlisted repo-side, passes pre-commit + CI) and GitHub still blocked the push on 4 commits; gitleaks allowlists never reach GitHub's scanner. Fixture/detector-test tokens must be TEMPLATES: `@HEX40@` placeholders substituted with a deterministic sha256-derived hex at scan time (flake.nix `expect_detect`), so no rule-matching literal is ever tracked; drift-mutations must still collapse ENTROPY (`sgpX_aaa…`), because `sgpX_` keeps the `sgp` keyword substring alive for the keyword-gated bare-hex alternative. If a literal that both gitleaks AND GitHub flag is ever unavoidable, the resolution is the push-protection unblock URL with reason "used in tests" (allowlists that one secret), not an improvised history rewrite. **2026-09-16 recurrence + unblock playbook:** a documented-FAKE Slack token QUOTED into a status report and hardcoded fixture components inside `scripts/audit-push-protection-literals.sh`'s own EARLIER iterations (`sgp_0123…`, bare `hex40='0123…'`) each blocked the push — fake is not an exemption, and one file carrying both a rule keyword and ANY 40-char component suffices. Status reports must SHAPE-DESCRIBE tokens (`xoxb-<12 digits>-<16 letters>`), never quote even fake ones; every fixture component must be runtime-derived (the audit script now also covers the Slack shape). Unblock playbook: backup branch → `git filter-repo --force --refs origin/master..HEAD --replace-text` (exact + `regex:` lines) → verify against the NEW-BLOB SET (`git rev-list --objects origin/master..HEAD | cat-file --batch-check` → grep prefix-required shapes) until flagged-hits=0 — working-tree greps and one `git log -S` sweep MISS historical file VERSIONS, so expect MULTIPLE passes; blobs shared with pre-range history are NOT rewritten (boundary blobs pass through — safe: the remote has them and never rescans) → `git town continue` finishes the interrupted sync
