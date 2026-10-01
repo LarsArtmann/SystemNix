@@ -26,6 +26,20 @@
   - the REST API: existing API tokens keep working; username/password auth on the API is a SEPARATE surface (see API caveat below)
 - **Logout bounce-back is ACCEPTED** (user decision 2026-09-02): logging out of Paperless while the Pocket ID session is alive auto-bounces you straight back in on the next page load. Single Logout is partial by architecture (see AGENTS SSO section). If this ever needs to change: shorter `SESSION_COOKIE_AGE` / Pocket ID RP-initiated logout — do not "fix" silently.
 
+## Roles → superuser/staff via Pocket ID groups (2026-10-01)
+
+Pocket ID emits a `groups` OIDC claim **only when the client requests the `groups` scope** (`claims_service.go`), which the paperless client now does (appended to the provider `SCOPE`). On each login django-allauth fires `social_account_updated`, and paperless's handler (`signals.py`) maps the claim to Django roles:
+
+| Setting                                             | Value              | Effect                            |
+| --------------------------------------------------- | ------------------ | --------------------------------- |
+| `PAPERLESS_SOCIAL_ACCOUNT_SYNC_GROUPS_CLAIM`        | `groups`           | which claim to read               |
+| `PAPERLESS_SOCIAL_ACCOUNT_SYNC_SUPERUSER_GROUP`     | `paperless-admins` | membership ⟺ `is_superuser`       |
+| `PAPERLESS_SOCIAL_ACCOUNT_SYNC_STAFF_GROUP`         | `paperless-admins` | membership ⟺ `is_staff`           |
+
+- **Single source of truth:** `oidcAdminGroup = "paperless-admins"` in `paperless.nix` drives the requested scope, both env mappings, AND the group declaration in Pocket ID (`services.pocket-id-config.provision.userGroups`; provisioner Step 4 creates the group and authoritatively `PUT`s membership). An eval assertion fails if the mapped group is not declared — a rename cannot silently demote every login.
+- **FAIL CLOSED:** the handler sets `is_superuser = <group> in <claim>` on every login, so a missing/empty claim **demotes**. A broken IdP can never leave stale privilege behind. Corollary: a manual `paperless-manage shell -c "...update(is_superuser=True)"` is now **transient** — the next login overwrites it. Grant admin by adding your Pocket ID user to `paperless-admins` (declaratively via `memberUsernames`).
+- **First-login gap (known, upstream):** allauth fires `social_account_added` only when *linking* an account; on auto-signup neither social signal fires, and paperless connects **only** `social_account_updated`. A brand-new user is therefore promoted on their **second** login, not the first. The single SSO user already has an account, so this does not affect them.
+
 ## Break-glass (how to get in when Pocket ID is down)
 
 **Automatic:** the SSO flags ride in the SAME env file as the provider JSON. If the Pocket ID secret is missing (provisioner hasn't run / degraded), the bridge writes an empty-providers file WITHOUT the disable flags ⇒ the password login form comes back by itself. SSO fully on or fully off — never a locked-out middle state.

@@ -251,6 +251,10 @@ _: {
             listen_addr = cfg.blockIP;
             port = cfg.blockPort;
             tls_port = cfg.blockTLSPort;
+            # HTTP/3 (QUIC) on the same port number as tls_port (upstream
+            # errH3RequiresTLSPort rejects tls_h3_enabled with tls_port <= 0 —
+            # asserted below). Inert: false matches the upstream default.
+            tls_h3_enabled = cfg.tlsH3Enabled;
             stats_addr = "127.0.0.1";
             stats_port = cfg.statsPort;
             # OTLP trace export to the local SigNoz collector (Go
@@ -622,6 +626,26 @@ _: {
             IPv6 ECS prefix length. 0 (default) keeps upstream's /56 —
             a typical end-site allocation (RFC 6177), matching the /24
             IPv4 choice in specificity.
+          '';
+        };
+
+        tlsH3Enabled = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Serve dnsblockd's own HTTP surfaces (block page, dashboard)
+            over HTTP/3 (QUIC) in addition to HTTP/2, on the SAME port
+            number as blockTLSPort (upstream koanf key tls_h3_enabled).
+            INERT by default (owner-gated 2026-09-30): QUIC advertisement
+            mainly helps high-latency links; on LAN the TCP block page is
+            already sub-millisecond. Enabling adds a UDP listener on
+            <blockTLSPort> — at the default 443 that port is already open
+            host-wide (caddy h3 precedent; dropping UDP/443 once sent
+            Alt-Svc-following clients into a blackhole), and the block
+            page binds the SPECIFIC blockIP (192.168.1.200), so it
+            coexists with caddy's wildcard UDP/443 bind. A non-default
+            blockTLSPort needs <port>/udp opened in networking.firewall
+            for off-LAN clients (LAN rides the trusted interface).
           '';
         };
 
@@ -1049,6 +1073,14 @@ _: {
               (cfg.dnsEcsIpv4PrefixLen == 0 || (cfg.dnsEcsIpv4PrefixLen >= 1 && cfg.dnsEcsIpv4PrefixLen <= 32))
               && (cfg.dnsEcsIpv6PrefixLen == 0 || (cfg.dnsEcsIpv6PrefixLen >= 1 && cfg.dnsEcsIpv6PrefixLen <= 128));
             message = "services.dns-blocker ECS prefix lengths must be 0 (upstream default) or within the address family (IPv4 1-32, IPv6 1-128).";
+          }
+          {
+            # Upstream errH3RequiresTLSPort (validation.go
+            # tls_h3_requires_tls_port): HTTP/3 terminates QUIC on the same
+            # port number as the HTTPS block page listener — h3 without a
+            # TLS port is rejected at startup, so fail at eval instead.
+            assertion = !cfg.tlsH3Enabled || cfg.blockTLSPort > 0;
+            message = "services.dns-blocker.tlsH3Enabled requires blockTLSPort > 0 (upstream: HTTP/3 terminates QUIC on the same port number as the HTTPS block page listener).";
           }
         ];
 

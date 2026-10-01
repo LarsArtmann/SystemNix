@@ -522,13 +522,6 @@ in
       "btrfs-scrub@".serviceConfig.SuccessExitStatus = [ 1 ];
 
       # ── freeze-7 remaining half: no boot catch-up, no stampede ────────────
-      # nixpkgs sets Persistent=true on the scrub template timer; a boot
-      # after a missed weekly window catch-up-fires EVERY scrub instance at
-      # once (2026-09-29 09:56 post-freeze boot: all three running 24s in —
-      # the freeze-6/8 amplifier class). Missed windows now simply wait for
-      # the next weekly slot: coverage staleness is Gatus-visible via
-      # btrfs-health, which is the honest signal vs a boot-time IO bomb.
-      "btrfs-scrub@".timerConfig.Persistent = lib.mkForce false;
       # All three instances share ONE weekly calendar slot; without ordering,
       # systemd starts them as one transaction of three concurrent
       # full-device readers (the 2026-08-31 16:34 freeze stacking class).
@@ -901,6 +894,16 @@ in
         '';
       };
     };
+
+    # nixpkgs sets Persistent=true on the scrub template timer; a boot after
+    # a missed weekly window catch-up-fires EVERY scrub instance at once
+    # (2026-09-29 09:56 post-freeze boot: all three running 24s in — the
+    # freeze-6/8 amplifier class). Missed windows now simply wait for the
+    # next weekly slot: coverage staleness stays Gatus-visible via
+    # btrfs-health, the honest signal vs a boot-time IO bomb. Instance
+    # serialization (root -> data -> pool) lives in the services block
+    # above as asDropin After= chains.
+    timers."btrfs-scrub@".timerConfig.Persistent = lib.mkForce false;
 
     timers."btrfs-verify-snapshots" = {
       description = "Verify BTRFS snapshot freshness daily";
