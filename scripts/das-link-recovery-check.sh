@@ -49,18 +49,44 @@ KNOWN_CACHE_ENTRIES=(
 # user's cache symlinks when the whole script is run under sudo).
 USER_HOME=$(getent passwd "${SUDO_USER:-$(id -un)}" | cut -d: -f6)
 
-# HM-managed symlinks that MUST stay symlinks — a real dir here is fallback
-# regrowth onto the space-critical NVMe (blocks the next HM activation and
-# re-contaminates root; see docs/agents/storage.md buildcache section).
-CACHE_SYMLINKS=(
-  "$USER_HOME/.cache/goimports"
-  "$USER_HOME/.cache/go"
-  "$USER_HOME/.cache/go-build"
-  "$USER_HOME/.local/share/pnpm/store"
-)
-# Sibling-session fallback caches (BuildFlow names) — NOT in the recovery
-# reap list; surfaced with sizes because the disposition decision is open.
-FALLBACK_CACHE_DIRS=(gobuild gocache gomod)
+# Both cache lists below derive from the canonical reap-name inventory
+# scripts/lib/buildcache-reap-names.sh (shared with deploy.sh, the
+# buildcache-usb-recovery reap and the home.nix activation reap — never a
+# private copy; a new name lands there and this check follows it):
+#   CACHE_SYMLINKS      — every HM out-of-store symlink whose target lives on
+#                         /mnt/buildcache: REAP_CACHE_DIRS minus the
+#                         fallback-only names, as ~/.cache/<name>, plus every
+#                         REAP_HOME_DIRS entry as $HOME/<path>. A real dir in
+#                         any of these is fallback regrowth onto the
+#                         space-critical NVMe (blocks the next HM activation
+#                         and re-contaminates root; see docs/agents/storage.md
+#                         buildcache section).
+#   FALLBACK_CACHE_DIRS — the fallback-only names: reaped (deploy.sh,
+#                         pre-switch) but NOT HM-managed, so [7] only reports
+#                         real-dir regrowth — absence is their normal state.
+reap_names_lib="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/lib/buildcache-reap-names.sh"
+if [ ! -f "$reap_names_lib" ]; then
+  echo "❌ $reap_names_lib missing — run this script from a SystemNix checkout (the cache inventories must not be hand-kept here)." >&2
+  exit 1
+fi
+# shellcheck source=lib/buildcache-reap-names.sh
+# shellcheck disable=SC1091
+source "$reap_names_lib"
+read -r -a reap_cache_names <<<"$BUILDCACHE_REAP_CACHE_DIRS"
+read -r -a reap_fallback_names <<<"$BUILDCACHE_REAP_FALLBACK_ONLY_CACHE_DIRS"
+read -r -a reap_home_rel <<<"$BUILDCACHE_REAP_HOME_DIRS"
+CACHE_SYMLINKS=()
+fallback_names=" $BUILDCACHE_REAP_FALLBACK_ONLY_CACHE_DIRS "
+for name in "${reap_cache_names[@]}"; do
+  case "$fallback_names" in
+    *" $name "*) continue ;;
+  esac
+  CACHE_SYMLINKS+=("$USER_HOME/.cache/$name")
+done
+for rel in "${reap_home_rel[@]}"; do
+  CACHE_SYMLINKS+=("$USER_HOME/$rel")
+done
+FALLBACK_CACHE_DIRS=("${reap_fallback_names[@]}")
 
 issues=0
 bad() {
@@ -338,10 +364,10 @@ done
 for name in "${FALLBACK_CACHE_DIRS[@]}"; do
   p="$USER_HOME/.cache/$name"
   if [ -e "$p" ] && [ ! -L "$p" ]; then
-    note "$p (sibling-session fallback, disposition open):"
-    hint "$(du -sh "$p" 2>/dev/null | cut -f1) on the space-critical NVMe;"
-    hint "not in the buildcache-usb-recovery reap list — user decision"
-    hint "pending (keep while DAS is down vs quarantine/remove)."
+    note "$p (BuildFlow fallback regrowth, $(du -sh "$p" 2>/dev/null | cut -f1)) —"
+    hint "on the space-critical NVMe; not HM-managed, so this does not"
+    hint "block activation — the next deploy reaps it pre-switch"
+    hint "(scripts/lib/buildcache-reap-names.sh)."
   fi
 done
 

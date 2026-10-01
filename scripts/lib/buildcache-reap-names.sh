@@ -17,3 +17,10 @@
 # fallback names the original list evaded forever.
 BUILDCACHE_REAP_CACHE_DIRS="goimports go go-build gobuild gocache gomod pnpm"
 BUILDCACHE_REAP_HOME_DIRS=".local/state/pnpm .cargo/registry .local/share/pnpm/store"
+# Subset of BUILDCACHE_REAP_CACHE_DIRS that is reaped but deliberately NOT
+# an HM out-of-store symlink (no home.file entry): BuildFlow's cross-repo
+# fallback names exist only when an env-less tool ran without the mount, so
+# absence is their normal state. Surfaces that need the "HM-managed
+# must-be-symlink paths" set derive it as
+# REAP_CACHE_DIRS − REAP_FALLBACK_ONLY_CACHE_DIRS, plus REAP_HOME_DIRS.
+BUILDCACHE_REAP_FALLBACK_ONLY_CACHE_DIRS="gobuild gocache gomod"
