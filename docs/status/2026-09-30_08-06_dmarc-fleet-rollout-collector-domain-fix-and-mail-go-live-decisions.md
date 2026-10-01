@@ -373,6 +373,16 @@ runbook).
    SPF-hostile; quarantine/reject risks eating legit forwarded mail), invest
    in SRS/proper forwarding later, or tighten to quarantine on data?
 
+### Answers (owner, 2026-09-30 08:15, via question tool)
+
+1. **Apply everything NOW** — the early-MX concern is blessed away; runbook
+   §4 and the pbx TODO row updated to bless early apply explicitly (pre-unblock
+   reports bounce harmlessly; no existing mail affected).
+2. **Personal mailbox YES, provision at go-live** — runbook §5.3 now names
+   `lars@larsartmann.cloud` as the provisioning item.
+3. **Decide on data** — the p=none + rua start stands; revisit after ~30 days
+   of report data (items f.31/f.32).
+
 ---
 
 ## Verification summary (what proves the above)
