@@ -826,207 +826,536 @@
     </style>
   </head>
   <body>
-    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
+    <!-- Full-bleed top bar -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>SYSTEMNIX STATUS SNAPSHOT</span>
+      <span>2026-10-01 04:35</span>
+      <span>evo-x2 &middot; master (7 unpushed)</span>
     </div>
 
     <div class="layout">
-      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
       <aside class="sidebar" data-nav>
         <nav>
           <div class="label">Contents</div>
           <a href="#summary">Summary</a>
-          <a href="#findings">Findings</a>
-          <a href="#issues">Issue Cards</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#plan">Plan</a>
+          <a href="#done">a &middot; Fully Done</a>
+          <a href="#partial">b &middot; Partially Done</a>
+          <a href="#notstarted">c &middot; Not Started</a>
+          <a href="#fucked">d &middot; Fucked Up</a>
+          <a href="#improve">e &middot; Improve</a>
+          <a href="#next">f &middot; Top 25 Next</a>
+          <a href="#question">g &middot; Question</a>
         </nav>
       </aside>
 
       <main class="main">
-        <!-- Hero -->
         <div class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
-          <div class="hero-shapes">
-            <div class="circle"></div>
-            <div class="square"></div>
-            <div class="tri"></div>
-          </div>
-          <div class="hero-badge">Report Type</div>
-          <h1>Report Title</h1>
+          <div class="hero-badge">Status Snapshot</div>
+          <h1>SystemNix Status &mdash; 2026-10-01 04:35</h1>
           <p class="hero-subtitle">
-            One-sentence description of what this report covers.
+            Point-in-time fleet snapshot of the cross-platform Nix configuration
+            (evo-x2 NixOS + macOS). Deployed generation <strong>system-811</strong>
+            (anchored), 37 open dispatch-queue rows, ~491 [ready] rows across 10
+            domain libraries, 1 active sev1-notify condition. Parallel agent
+            sessions were active while this was written &mdash; numbers are honest
+            at authoring time, not a guarantee of the next minute.
           </p>
         </div>
 
-        <!-- Inline TOC (alternative to sidebar; pick one) -->
-        <nav class="toc">
-          <h3>Contents</h3>
-          <ul>
-            <li><a href="#summary">Summary</a></li>
-            <li><a href="#findings">Findings</a></li>
-            <li><a href="#issues">Issue Cards</a></li>
-            <li><a href="#proposal">Proposal</a></li>
-            <li><a href="#plan">Plan</a></li>
-          </ul>
-        </nav>
-
-        <!-- Stats Dashboard -->
         <h2 id="summary"><span class="num">00</span>Summary</h2>
         <div class="stat-grid">
-          <div class="stat-card">
-            <div class="stat-value">42</div>
-            <div class="stat-label">Total Items</div>
-          </div>
-          <div class="stat-card stat-bad">
-            <div class="stat-value">7</div>
-            <div class="stat-label">Critical</div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">10</div>
+            <div class="stat-label">Fully Done (window)</div>
           </div>
           <div class="stat-card stat-warn">
-            <div class="stat-value">12</div>
-            <div class="stat-label">Warnings</div>
+            <div class="stat-value">8</div>
+            <div class="stat-label">Partially Done</div>
           </div>
-          <div class="stat-card stat-good">
-            <div class="stat-value">35</div>
-            <div class="stat-label">Resolved</div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">8</div>
+            <div class="stat-label">Not Started</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">8</div>
+            <div class="stat-label">Fucked Up</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">37</div>
+            <div class="stat-label">[ready] Queue Rows</div>
           </div>
         </div>
+        <p>
+          Recent arc (2026-09-22 &rarr; 10-01, from CHANGELOG [Unreleased]): deploy
+          system-796 recovery closed the deploy-required backlog; offsite-borg,
+          ClickHouse backup, Forgejo themes, task-queue hygiene, pipeline
+          hardening and close-out, NetBird/cloud P0 batch, hot-db T14 +
+          buildcache convergence, boot-mirror activation, Paperless SSO group
+          mapping, and the AGENTS.md restructure into a knowledge library all
+          landed. This session added the emeet-pixyd registry wiring (deployed,
+          live probe still owed).
+        </p>
 
-        <!-- Findings as Cards -->
-        <h2 id="findings"><span class="num">01</span>Findings</h2>
+        <h2 id="done"><span class="num">01</span>a &middot; Fully Done</h2>
 
-        <div class="card card-problem">
-          <h4>Critical Issue</h4>
-          <p>Description of the problem and its impact.</p>
+        <div class="card card-solution">
+          <h4>emeet-pixyd wired into the fleet registry &mdash; and deployed</h4>
+          <p>
+            New wrapper <code>modules/nixos/services/emeet-pixyd.nix</code>
+            (cv.nix pattern) owns the upstream import and declares the
+            integration entry: <code>emeet-pixyd.home.lan</code> Layer-2
+            protected vHost (+ automatic cloud mirror), DNS record, 2
+            deliberately-silent Gatus endpoint checks, Infrastructure tile,
+            unconditional catalog entry. Upstream import moved out of
+            <code>systems/evo-x2.nix</code>; rendered user unit verified
+            byte-identical to the deployed one at the move.
+            <code>nix flake check --no-build --all-systems</code> green.
+            Commits <code>b097eacc</code> (+ AGENTS.md entry). DEPLOYED: the
+            live Caddy config and <code>/etc/caddy/vhost-layers</code> carry
+            the vHost. Live probe of the served surface still owed (see &sect;f
+            #6) &mdash; agent curl is sandbox-banned.
+          </p>
         </div>
 
         <div class="card card-solution">
-          <h4>Recommended Fix</h4>
-          <p>Description of the solution with rationale.</p>
+          <h4>AGENTS.md restructured into a knowledge library (zero loss)</h4>
+          <p>
+            The 605 KB / 1,327-line monolith became a 150-line lean core
+            (&minus;94.4%) + 12 domain references in <code>docs/agents/</code>
+            + 15 new <code>docs/services/</code> runbooks + 21 migrated
+            appendices. Line-level conservation audit: 0 of 1,021 non-blank
+            lines lost (scripted verbatim extraction, 99 chunks). Landed
+            <code>d89029cf</code> &rarr; <code>8e6409dd</code> &rarr;
+            <code>deab8469</code>; durability plan in
+            <code>docs/planning/2026-10-01_03-00_AGENT-DOCS-DURABILITY-PARETO-PLAN.md</code>.
+          </p>
         </div>
 
-        <!-- Issue Cards -->
-        <h2 id="issues"><span class="num">02</span>Issue Cards</h2>
-
-        <div class="issue issue-critical">
-          <span class="severity severity-critical">Blocking</span>
-          <h3>Critical finding title</h3>
-          <div class="where">path/to/file.go:42-58</div>
+        <div class="card card-solution">
+          <h4>Samsung boot-mirror ACTIVATED &mdash; firmware boots the Samsung first</h4>
           <p>
-            Describe the problem and cite the code or behavior that proves it.
+            Owner ran <code>nix run .#boot-mirror-activate</code> (2026-09-30):
+            BootOrder <code>000C</code> (Samsung) first, QLC fallback; 
+            pre-reboot-check green at FAIL grade, tree identical. Corrects the
+            09-18&ndash;20 "already first" claim &mdash; the flip had never actually
+            applied. Since <code>/nix</code> lives on the Samsung, the NEXT
+            reboot boots loader+kernel+initrd+store entirely off it. First
+            boot + efivar proof pending (owner-owned).
           </p>
-          <div class="callout callout-solution">
-            <strong>Fix</strong>
-            State the concrete recommended action.
+        </div>
+
+        <div class="card card-solution">
+          <h4>NetBird/cloud P0 batch fixed + runtime-proven</h4>
+          <p>
+            The 05:50 first live activation died <code>226/NAMESPACE</code>
+            (deployed rev predated the fix) and took the web stack fail-closed;
+            recovered 07:00 with the profile anchored. Fixes:
+            <code>RuntimeDirectory</code> + absolute store-path binaries on
+            <code>dnsblockd-cert-mint</code>, new <code>checks.caddy-mint</code>
+            VM test asserting REAL TLS handshakes on both zones against the
+            minted CA. Dual-zone TLS live-verified (<code>dash.larsartmann.cloud</code>,
+            OIDC discovery).
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>Hot-db T14 review hardening + buildcache convergence (five-task window)</h4>
+          <p>
+            <code>hot-db-metrics</code> gained OnFailure + extraMonitoredServices
+            (<code>65e93b80</code> &mdash; third instance of the dead-collector
+            phantom-green class closed), VM test asserts the FAILURE transition,
+            <code>buildcacheDirs</code> provisions the 3 fallback targets
+            (<code>af9b3ef2</code>, UNDEPLOYED), the 4 reap loops single-sourced
+            into <code>scripts/lib/buildcache-reap-names.sh</code> with an
+            eval-time parser (<code>0fdbf2d7</code>), Phase-2 T-table got an
+            evidence-backed status column, and the migrate fixture's wrong
+            count command corrected on all 3 surfaces (anchored form = 22).
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>Paperless SSO &rarr; superuser via Pocket ID groups</h4>
+          <p>
+            Manual <code>is_superuser</code> shell habit replaced by IdP-driven
+            mapping: provisioner gained authoritative <code>userGroups</code>
+            sync (Step 4), paperless requests the <code>groups</code> scope and
+            maps <code>paperless-admins</code> &rarr; superuser+staff.
+            Fail-closed by design (missing claim DEMOTES). VM test extended
+            (+ its red-since-<code>851fb1d6</code> missing-jq fixed). Live
+            verification pending (see &sect;b).
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>Pipeline close-out + task-queue hygiene</h4>
+          <p>
+            Real-hook E2E proven (nix-parse leg rejects broken staged files
+            through the actual <code>.githooks/pre-commit</code>); crush-config
+            lessons.md delivered source-level (<code>163b76e</code>);
+            13-commit daemon exclusivity sweep clean; oci-containers
+            <code>config.assertions</code> abort ROOT-CAUSED as an upstream
+            nixpkgs bug (<code>f8d04a8b</code>, "healed by 05:00" premise
+            falsified). Hygiene window: 8 harvest one-liner+library pairs
+            landed, two re-dispatches verified first-hand, soft-reset split
+            codified as the daemon-race repair.
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>Architecture-catalog go-live prep + earlier window landings</h4>
+          <p>
+            Runner unit PATH contract (<code>nix jq python3</code>) and
+            self-minting setup-script token handoff landed before the first CI
+            dispatch; go-live stays owner-gated. Earlier in the window: offsite-borg
+            gate/fixture/drill batch (7 items), Forgejo Catppuccin delta themes
+            + eval-time THEMES audit, ClickHouse native server-side backup
+            (deploy-gated before the next SigNoz upgrade), restic-app-dumps
+            hardened, health-hub + DiscordSync attachments + browser-history
+            uid-drift heal all verified live in system-796.
+          </p>
+        </div>
+
+        <h2 id="partial"><span class="num">02</span>b &middot; Partially Done</h2>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">In flight</span>
+          <h3>GeoMetrikks: native migration done, ingestion data plane still dark</h3>
+          <div class="where">modules/nixos/services/geometrikks.nix &middot; docs/todo/services.md</div>
+          <p>
+            <strong>Works:</strong> Docker&rarrownative migration live; the
+            timescaledb_toolkit gap fixed (system-804, live-proven app start).
+            <strong>Open:</strong> ingestion never starts without a GeoLite2
+            database (MaxMind keys user-gated); <code>/health/ready</code>
+            stayed 200 through a DEAD pipeline &mdash; a data-plane Gatus check
+            does not exist yet.
+          </p>
+          <div class="callout callout-warning">
+            <strong>Next</strong> Queue rows: data-plane check (services.md),
+            post-deploy smoke incl. OIDC allow-list + ingestion-leg asserts.
+            Effort M once keys exist.
           </div>
         </div>
 
         <div class="issue issue-important">
-          <span class="severity severity-important">Important</span>
-          <h3>Important finding title</h3>
-          <div class="where">path/to/another.go:12-19</div>
+          <span class="severity severity-important">Armed, not fired</span>
+          <h3>Hot-db Samsung tier: vehicle shipped, zero entries cut over</h3>
+          <div class="where">docs/services/hot-db.md &middot; docs/todo/storage.md</div>
           <p>
-            Explain the risk and why a careful reviewer would hesitate before
-            shipping.
+            <strong>Works:</strong> migrate vehicle (fixture-proven), T14
+            monitoring (review-hardened), discordsync dump-only RPO leg wired.
+            <strong>Open:</strong> not one of the five entries (gatus &rarr;
+            dnsblockd &rarr; pocket-id &rarr; browser-history &rarr; discordsync)
+            has been cut over; the first nightly discordsync dump is unproven;
+            the T14 hardening rides an UNDEPLOYED generation.
+          </p>
+          <div class="callout callout-warning">
+            <strong>Blocker</strong> Maintenance windows (one entry per window)
+            + the deploy carrying <code>65e93b80</code>/<code>af9b3ef2</code>.
+            Effort M per entry.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Shipped, unverified live</span>
+          <h3>indexer-web + Paperless group mapping + emeet-pixyd: live-verify legs open</h3>
+          <div class="where">docs/todo/services.md &middot; docs/todo/pipeline.md</div>
+          <p>
+            indexer-web deployed but never bring-up-verified (smoke, ioTier,
+            RESPONSE_TIME condition, VM test all queued). Paperless
+            group&rarr;superuser mapping needs a deploy + two-login observation
+            (known upstream second-login gap). emeet-pixyd vHost deployed,
+            never live-probed. A pattern this window: shipping outpaced live
+            verification.
           </p>
         </div>
 
+        <div class="issue issue-important">
+          <span class="severity severity-important">User-gated</span>
+          <h3>DMARC/Stalwart, InboxClean grant chain, offsite borg</h3>
+          <div class="where">docs/services/ + docs/todo/{services,storage}.md</div>
+          <p>
+            DMARC collector domain decided (larsartmann.cloud, 09-30) &mdash; flip
+            blocked on the pbx Stalwart <code>dmarc@</code> mailbox + real
+            sops password (owner). InboxClean: upstream dead-grant fix +
+            health probe landed (1540a56/d23c48a) &mdash; deploy chain state to
+            confirm. Offsite borg: fully gated + fixture-proven &mdash; dormant
+            on owner inputs (StorageBox host/user + host-key pin) and the
+            real-repo restore drill.
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Held</span>
+          <h3>FastFlowLM pinned at v1.0.2; flm reliability still open upstream</h3>
+          <div class="where">modules/nixos/services/fastflowlm.nix</div>
+          <p>
+            v1.0.3 bump was reverted same-day (start death); v1.0.4 exists
+            upstream. Any future bump needs live-serve validation + one-time
+            weight re-pull discipline. Meanwhile the box leans on the
+            guard's sacrifice/restore machinery &mdash; which is EXACTLY what is
+            capped right now (see &sect;d #1).
+          </p>
+        </div>
+
+        <h2 id="notstarted"><span class="num">03</span>c &middot; Not Started</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Planned</th><th>Why not started</th><th>Priority</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Hot-db per-entry cutovers (5 entries)</td><td>Waits for calm maintenance windows (PSI-gated)</td><td><span class="badge badge-high">High</span></td></tr>
+              <tr><td>Buildcache 2-disk btrfs merge (both SanDisks)</td><td>Needs one window; module flip must ride the same reformat</td><td><span class="badge badge-medium">Medium</span></td></tr>
+              <tr><td>llama-rag root-cause (ROCm/kernel bisect under REAL units)</td><td>Escape-disabled since 09-18; soak discipline expensive; needs owner appetite</td><td><span class="badge badge-medium">Medium</span></td></tr>
+              <tr><td>NetBird Phase-2 client enable on evo-x2</td><td>Gated on the sops setup key (owner ceremony)</td><td><span class="badge badge-medium">Medium</span></td></tr>
+              <tr><td>Scrub timers Persistent=false + serialization</td><td>Queued from freeze-#7; not yet wired</td><td><span class="badge badge-high">High</span></td></tr>
+              <tr><td>Per-service btrfs subvol doctrine waves (A/B/C)</td><td>Doctrine ratified; migrations ride the hot-db windows</td><td><span class="badge badge-medium">Medium</span></td></tr>
+              <tr><td>monitor365 re-enable</td><td>Blocked on private wireguard-collector crate decision (owner)</td><td><span class="badge badge-low">Low</span></td></tr>
+              <tr><td>caddy-logs hot-tier migration first run</td><td>Staged script needs hardening first (queue row: -newermt&rarr;-mmin, shellcheck)</td><td><span class="badge badge-medium">Medium</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="fucked"><span class="num">04</span>d &middot; Totally Fucked Up</h2>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">ACTIVE NOW</span>
+          <h3>FastFlowLM socket DOWN with restore budget spent &mdash; a consumer keeps re-waking it</h3>
+          <div class="where">memory-emergency-guard &middot; fastflowlm.socket &middot; verified live 04:24 (no listener on 52625/52626)</div>
+          <p>
+            The guard tripped repeatedly (3 trips in the last hour at alert
+            time); a consumer re-wakes flm after every restore; the daily
+            restore budget is spent, so the socket stays DOWN by design until
+            a human restarts it. Impact: PMA auto-commit + PapDashboard
+            enricher + paperless-ai lose their LLM (heuristic fallbacks on the
+            commit path).
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix (sudo, owner or trusted session)</strong>
+            When memory is healthy:
+            <code>sudo systemctl start fastflowlm.socket</code>. The churn
+            consumer identification (who re-wakes) is a queued stability row.
+          </div>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Gate dark</span>
+          <h3>audit-serviceconfig-merge selftest fails on a CLEAN tree &mdash; pre-commit leg dark</h3>
+          <div class="where">scripts/audit-serviceconfig-merge.sh &middot; .githooks/pre-commit</div>
+          <p>
+            The caddy shallow <code>//</code> merge that blocked every commit
+            was converted to <code>lib.mkMerge</code> (f1e703c5), but the
+            audit's SELFTEST fixture is flagged by its own scanner &mdash; the
+            leg fails on a clean tree for all sessions. A guard that cries wolf
+            is a guard nobody trusts.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong> Repair the selftest fixture; prove via
+            negative-test-lints. Companion rows: pre-existing negative-test-lint
+            failures (cv/hermes dead-guards) and the nonexistent
+            <code>caddy-mutant</code> case.
+          </div>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Upstream, unfixable here</span>
+          <h3>nixpkgs oci-containers assertion bug breaks deep assertion evals</h3>
+          <div class="where">nixpkgs 7a0f122f oci-containers.nix:618</div>
+          <p>
+            Any deep-force of <code>config.assertions</code> on a host with a
+            docker-backend container dies (rootless-podman message interpolates
+            a null <code>podman</code>). Toplevel/deploy evals survive only
+            because they force less. Reproduced at f8d04a8b; no local fix
+            exists. Fix is upstream (verify-before-filing gated).
+          </p>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">CI dark</span>
+          <h3>Private-input CI still dead &mdash; NIX_GITHUB_RO_TOKEN never created</h3>
+          <div class="where">.github/workflows/{nix-check,flake-update}.yml</div>
+          <p>
+            32 private repos ride <code>github:</code>-type lock nodes the
+            job-scoped GITHUB_TOKEN cannot read. The fine-grained PAT
+            (Contents: Read) has been the documented unblock since 2026-09-03;
+            without it every CI run dies unauthenticated and the weekly
+            flake-update bot never worked. Owner-only ceremony (GitHub secret).
+          </p>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Fleet dark legs</span>
+          <h3>llama-rag disabled 13 days; CV input frozen; monitor365 off</h3>
+          <div class="where">llama-rag.nix &middot; flake.lock (cv) &middot; configuration.nix</div>
+          <p>
+            llama-rag: mid-load CPU spin on the PINNED build &mdash; root cause
+            unknown (ROCm/kernel/GPU-state suspected), paperless RAG silently
+            off since 09-18. CV: lock HELD at the proven rev while upstream's
+            go.mod floor (1.27.1) exceeds nixpkgs go_1_26 &mdash; input bumps
+            frozen. monitor365: disabled since 08-12 on the private-crate
+            build problem, decision pending.
+          </p>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Discipline breach, structural</span>
+          <h3>The auto-commit daemon has committed past failing hooks twice</h3>
+          <div class="where">docs/todo/pipeline.md (queue rows 565/566)</div>
+          <p>
+            caddy shallow-merge (14:30 past a red hook) and heal-breadcrumb
+            (09-28 past skipped lint legs) both landed through the daemon.
+            Shape of the fix (refuse vs record) is an owner decision &mdash;
+            flagged as the 02-08 report's &sect;g Q1 and still unanswered.
+          </p>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Phantom-green class, 3&times;</span>
+          <h3>Dead textfile collectors stay green &mdash; coverage still not mechanical</h3>
+          <div class="where">forgejo-github-sync &middot; memory-guard &middot; hot-db-metrics</div>
+          <p>
+            Three separate incidents of a dead collector leaving anchored Gatus
+            checks permanently green (node_exporter serves frozen textfiles
+            forever). T14 got unit-state alerting; the other two got it too;
+            but the CLASS needs the queued eval-time lint so the next collector
+            cannot ship without coverage.
+          </p>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Report honesty</span>
+          <h3>Two same-day false premises shipped in reports before review caught them</h3>
+          <div class="where">docs/status/2026-09-30_11-39 / 14-32 closeouts</div>
+          <p>
+            "BootOrder already Samsung-first" (false &mdash; never applied) and
+            "hot-db batch armed but undeployed" (false &mdash; library row
+            recorded it deployed). Spot-verify queued (row 566); report-time
+            freshness discipline (grep the library for fresher rows before
+            asserting live state) is the durable fix.
+          </p>
+        </div>
+
+        <h2 id="improve"><span class="num">05</span>e &middot; What We Should Improve</h2>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Systemic</span>
+          <h3>Ship&rarr;verify gap: live-probe legs keep lagging deploys</h3>
+          <p>
+            indexer-web, geometrikks ingestion, emeet-pixyd, paperless groups,
+            T14 &mdash; all deployed or deploy-armed with verification owed.
+            Fix pattern: every new service ships WITH its post-deploy smoke
+            entries in the SAME change (the rule exists &mdash; enforce it in
+            review), and treat "deployed" as "&sect;b partially done" until a
+            live probe lands.
+          </p>
+        </div>
+        <div class="issue issue-important">
+          <span class="severity severity-important">Mechanize</span>
+          <h3>Collector coverage + collector-test opposing states</h3>
+          <p>
+            The eval-time lint (every collector unit must appear in
+            system-health monitoring OR carry onFailure) turns the 3&times;
+            phantom-green class mechanical; opposing-state assertions in
+            backup-coordination/buildcache-metrics/pool-smart VM tests close
+            the happy-path-only snapshot gap.
+          </p>
+        </div>
+        <div class="issue issue-important">
+          <span class="severity severity-important">Queue hygiene</span>
+          <h3>Dedup preflight + premise spot-verification at queue time</h3>
+          <p>
+            4 closed task IDs re-fired 7 times in one window; a false premise
+            ("regex missed at landing") survived a full dispatch cycle. Both
+            fixes are queued &mdash; land them before the queue grows further.
+          </p>
+        </div>
         <div class="issue issue-nice">
-          <span class="severity severity-nice">Nice to have</span>
-          <h3>Polish suggestion</h3>
-          <div class="where">docs/ or config</div>
+          <span class="severity severity-nice">Docs</span>
+          <h3>AGENTS.md durability + boot-mirror evidence path</h3>
           <p>
-            Minor documentation gaps or future-proofing suggestions go here.
+            The restructure needs its decay plan executed (03-00 planning doc);
+            document where boot-mirror-activate logs its runs (owner shell vs
+            journal) so post-activation audits stop dead-ending.
           </p>
         </div>
 
-        <!-- Strengths -->
-        <h2>Strengths</h2>
-        <div class="strengths">
-          <div class="strength">
-            <div class="check">+</div>
-            <div class="text">
-              <strong>Specific strength</strong>
-              <span>Explain why it matters and what it enables.</span>
-            </div>
-          </div>
+        <h2 id="next"><span class="num">06</span>f &middot; Top 25 Next (by impact)</h2>
+        <div class="callout callout-warning">
+          <strong>Harvest log</strong> Direct follow-ups authored with this
+          report: #6 (emeet-pixyd live verify) is NEW and was harvested into
+          <code>TODO_LIST.md</code> + <code>docs/todo/services.md</code> at
+          authoring time. All other rows cite existing queue/library surfaces.
+          Owner-only actions (#1, #14, #15) are deliberately NOT harvested
+          &mdash; agents cannot sudo, create GitHub secrets, or schedule reboots;
+          they are surfaced in &sect;d/&sect;g instead.
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Impact</th><th>Task</th><th>Effort</th><th>Category</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td><span class="badge badge-critical">Critical</span></td><td>Restart <code>fastflowlm.socket</code> when memory is healthy (sudo) &mdash; restores PMA/enricher LLM path now</td><td>S</td><td>Ops (owner)</td></tr>
+              <tr><td>2</td><td><span class="badge badge-critical">Critical</span></td><td>Fix the audit-serviceconfig-merge selftest on a clean tree &rarr; re-arm the pre-commit leg for all sessions</td><td>M</td><td>Bug</td></tr>
+              <tr><td>3</td><td><span class="badge badge-high">High</span></td><td>Fix pre-existing negative-test-lint failures (cv/hermes dead-guards; signoz/binary-coverage controls) + add/de-reference the caddy-mutant case</td><td>M</td><td>Bug</td></tr>
+              <tr><td>4</td><td><span class="badge badge-high">High</span></td><td>Scrub timers <code>Persistent=false</code> + serialization (freeze-#7 queued fix)</td><td>M</td><td>Quality</td></tr>
+              <tr><td>5</td><td><span class="badge badge-high">High</span></td><td>Hot-db wave-1 cutover window (gatus), folding the entry-mounted Gatus check into the cutover smoke</td><td>L</td><td>Feature</td></tr>
+              <tr><td>6</td><td><span class="badge badge-high">High</span></td><td>Live-verify emeet-pixyd.home.lan (vHost + both silent checks + dnsblockd record + tile) &mdash; NEW, harvested</td><td>S</td><td>Verification</td></tr>
+              <tr><td>7</td><td><span class="badge badge-high">High</span></td><td>geometrikks ingestion data-plane Gatus check (fail-closed on newest-event age / count delta)</td><td>M</td><td>Feature</td></tr>
+              <tr><td>8</td><td><span class="badge badge-high">High</span></td><td>geometrikks post-deploy smoke: OIDC allow-list + ingestion-leg asserts (post-MaxMind-keys)</td><td>M</td><td>Verification</td></tr>
+              <tr><td>9</td><td><span class="badge badge-high">High</span></td><td>Prove the first nightly <code>discordsync-db-backup</code> dump lands (pool + backup_all_healthy + restic pickup)</td><td>S</td><td>Verification</td></tr>
+              <tr><td>10</td><td><span class="badge badge-high">High</span></td><td>Daemon-past-failing-hooks guard: pick the shape (refuse vs record) &mdash; owner decision blocking row 565</td><td>S</td><td>Decision</td></tr>
+              <tr><td>11</td><td><span class="badge badge-high">High</span></td><td>Eval-time lint: every collector-pattern unit must appear in system-health OR carry onFailure (3&times; class)</td><td>L</td><td>Quality</td></tr>
+              <tr><td>12</td><td><span class="badge badge-medium">Medium</span></td><td>Deploy the pending generation carrying T14 hardening + buildcache-init fallback provisioning; post-deploy proof both</td><td>S</td><td>Ops</td></tr>
+              <tr><td>13</td><td><span class="badge badge-medium">Medium</span></td><td>indexer-web bring-up bundle: live smoke + ioTier + RESPONSE_TIME condition + VM regression test</td><td>M</td><td>Verification</td></tr>
+              <tr><td>14</td><td><span class="badge badge-medium">Medium</span></td><td>Owner reboot proving the Samsung boot path (LoaderDevicePartUUID decode + BootCurrent 000C) &mdash; see &sect;g</td><td>S</td><td>Ops (owner)</td></tr>
+              <tr><td>15</td><td><span class="badge badge-medium">Medium</span></td><td>Create NIX_GITHUB_RO_TOKEN (fine-grained PAT, Contents: Read) &rarr; CI + weekly flake-update bot unblock</td><td>S</td><td>Ops (owner)</td></tr>
+              <tr><td>16</td><td><span class="badge badge-medium">Medium</span></td><td>Post-deploy verify T14 review hardening on the live generation (OnFailure + extraMonitoredServices)</td><td>S</td><td>Verification</td></tr>
+              <tr><td>17</td><td><span class="badge badge-medium">Medium</span></td><td>Verify "Hot Tier Mounted" Gatus green on live gatus + hot-db-metrics timer active</td><td>S</td><td>Verification</td></tr>
+              <tr><td>18</td><td><span class="badge badge-medium">Medium</span></td><td>E2E the serviceconfig-merge v2 audit through the REAL hook in a throwaway worktree</td><td>M</td><td>Quality</td></tr>
+              <tr><td>19</td><td><span class="badge badge-medium">Medium</span></td><td>check-todo-system v2: DONE-state pairing + stale-tag checks</td><td>M</td><td>Quality</td></tr>
+              <tr><td>20</td><td><span class="badge badge-medium">Medium</span></td><td>Paperless SSO group mapping: deploy + two-login superuser observation; decide the first-login gap (accept vs close)</td><td>M</td><td>Verification</td></tr>
+              <tr><td>21</td><td><span class="badge badge-medium">Medium</span></td><td>Opposing-state assertions in backup-coordination/buildcache/pool-smart VM tests</td><td>M</td><td>Quality</td></tr>
+              <tr><td>22</td><td><span class="badge badge-medium">Medium</span></td><td>Harden staged migrate-caddy-logs-hot.sh (-newermt&rarr;-mmin, shellcheck, dry-run) before first real run</td><td>S</td><td>Quality</td></tr>
+              <tr><td>23</td><td><span class="badge badge-medium">Medium</span></td><td>CV render smoke PSI-aware + bank-sync smoke counter windowing (both false-FAIL classes)</td><td>S</td><td>Bug</td></tr>
+              <tr><td>24</td><td><span class="badge badge-medium">Medium</span></td><td>DMARC fleet follow-ups bundle: TLS-RPT row, annotate 09-29 report, flip-time checks list</td><td>M</td><td>Documentation</td></tr>
+              <tr><td>25</td><td><span class="badge badge-low">Low</span></td><td>DMS trio: AGENTS doc surfaces, settings-keys eval guard, weather endpoint dnsblockd classification</td><td>M</td><td>Quality</td></tr>
+            </tbody>
+          </table>
         </div>
 
-        <!-- Table with Badges -->
-        <h2>Issue Table</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Severity</th>
-              <th>Issue</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>1</td>
-              <td><span class="badge badge-critical">Critical</span></td>
-              <td>Missing error handling</td>
-              <td><span class="badge badge-fixed">Fixed</span></td>
-            </tr>
-            <tr>
-              <td>2</td>
-              <td><span class="badge badge-high">High</span></td>
-              <td>Race condition</td>
-              <td><span class="badge badge-low">Open</span></td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- Before/After Comparison -->
-        <h2 id="proposal">Before / After</h2>
-        <div class="compare-header">
-          <div class="compare-before">Before</div>
-          <div class="compare-after">After</div>
-        </div>
-        <div class="compare-row">
-          <div>
-            <pre><code><span class="tok-comment">// Old code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>(data <span class="tok-type">interface</span>{}) { }</code></pre>
-          </div>
-          <div>
-            <pre><code><span class="tok-comment">// New code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>[T <span class="tok-type">any</span>](data T) { }</code></pre>
-          </div>
-        </div>
-
-        <!-- ASCII Diagram -->
-        <h2>Dependency Tree</h2>
-        <div class="dep-tree">
-          <span class="root">root</span> ├──
-          <span class="ok">wanted-dep</span> └──
-          <span class="unwanted">unwanted-dep</span>
-        </div>
-
-        <!-- Numbered Steps -->
-        <h2 id="plan"><span class="num">03</span>Migration Plan</h2>
-        <div class="migration-step">
-          <div class="migration-num">1</div>
-          <div class="migration-content">
-            <h4>Add generic type parameter</h4>
-            <p>Update the function signature to accept a type parameter.</p>
-          </div>
-        </div>
-        <div class="migration-step">
-          <div class="migration-num">2</div>
-          <div class="migration-content">
-            <h4>Update all call sites</h4>
-            <p>Pass explicit types at each call site for type safety.</p>
+        <h2 id="question"><span class="num">07</span>g &middot; Top Question</h2>
+        <div class="issue issue-important">
+          <span class="severity severity-important">Owner only</span>
+          <h3>When do you want the Samsung-boot reboot &mdash; and what should ride it?</h3>
+          <p>
+            The boot-mirror flip is ACTIVATED: the next reboot boots
+            loader+kernel+initrd+store entirely off the Samsung for the first
+            time (only root <code>@</code> remains on the QLC). I cannot
+            schedule reboots on your workstation, and the standing proof
+            (decode <code>LoaderDevicePartUUID</code> &rarr;
+            <code>023f66c0-3677-4c15-9ce7-f9e1f1457edb</code>, BootCurrent ==
+            000C) can only run after it. What I tried: pre-reboot-check is
+            green at FAIL grade and the mirror tree is verified identical, so
+            nothing technical is blocking &mdash; the blocker is purely your
+            calendar.
+          </p>
+          <div class="callout callout-warning">
+            <strong>Why it matters now</strong> The reboot also clears
+            wedge-era state the stability rows keep deferring (flm corpse/orphan
+            classes historically released only by reboot) and is the natural
+            anchor for the hot-db wave windows. Candidate answer shapes:
+            "today after the current work drains", "bundle with the first
+            hot-db cutover window", or "hold until &lt;event&gt;". Your call
+            sets the schedule for rows #5, #12 and &sect;b's boot-proof leg.
           </div>
         </div>
 
         <footer class="footer">
-          Generated YYYY-MM-DD &middot; All claims verified against source code
-          where noted
+          Generated 2026-10-01 04:35 &middot; Claims verified against the live
+          system / git where noted &middot; &sect;f harvest logged (1 new row
+          &rarr; TODO_LIST + services.md; owner-only rows deliberately not
+          harvested)
         </footer>
       </main>
     </div>

@@ -252,3 +252,85 @@ flowchart TD
 ## Harvest (executed with this plan)
 
 Queue rows added (`TODO_LIST.md` → services): allowlist quick-win batch, lock bump, extraDomains removal, csrf (sequenced), devices+users. Library entries added (`docs/todo/services.md`): the five above in full + tracking-dial `[decision]` + deploy/verify wave `[blocked:user]` + second-wave capabilities `[watch]`. Annotated `docs/todo/upstream.md` tag row (v0.9.3 exists → tag decision unblocked).
+
+---
+
+## M18 deliverable: wrapper→upstream mapping table (2026-10-01, lock f625cfee)
+
+Upstream module: `~/projects/dnsblockd/nix/modules/nixos/` (namespace **`services.dnsblockd`**, snake_case options; a `mkRenamedOptionModule` alias keeps the deprecated `blockIP` spelling working). Wrapper: `modules/nixos/services/dns-blocker.nix` (`services.dns-blocker`, camelCase).
+
+### A. Option mapping (wrapper → upstream)
+
+| Wrapper (`services.dns-blocker.*`) | Upstream (`services.dnsblockd.*`) | Migration action |
+| --- | --- | --- |
+| `enable` | `enable` | set |
+| `blockIP` | `block_ip` (aliased) | set |
+| `blockPort` | `port` | set (80) |
+| `blockTLSPort` | `tls_port` | set (443) |
+| `tlsH3Enabled` (M17) | `tls_h3_enabled` | set (false inert) |
+| `statsPort` | `stats_port` | set (9090; upstream `stats_addr` default `127.0.0.1` matches render) |
+| `trustedProxies` | `trusted_proxies` | set |
+| `blocklists` (name/url/hash) | `blocklists` (IDENTICAL submodule shape) | pass-through |
+| `whitelist` | `whitelist` | pass-through (filter overlay re-adds pre-filtering, see B1) |
+| `extraDomains` | — NONE | overlay: synthesize `systemnix-extra` list (B1) |
+| `blocklistTrialUrls` (M15) | `blocklist_trial_urls` | set |
+| `blocklistCacheDir` (M15) | `blocklist_cache_dir` (nullOr; default `/var/lib/dnsblockd/blocklist-cache` = same value) | set |
+| `categories` | `categories` (+ `categories_file` auto-rendered) | pass-through |
+| `tempAllowAll` | `temp_allow_all` | SEMANTIC DELTA: upstream asserts blocklists+blocklist_urls EMPTY; wrapper just passes an empty loader list while keeping lists configured. Wrapper semantics must be preserved via overlay (B6) or the option left un-set and handled wrapper-side |
+| `enableDNSSEC` | `dns_dnssec_enabled` | set |
+| `dnsForwarders` | `dns_forwarders` | set |
+| `localRecords` | `dns_local_records` | set |
+| `localZones` | `dns_local_zones` | set |
+| `allowedNetworks` | `dns_allowed_networks` | set |
+| `dnsIPv6Enabled` | `dns_ipv6_enabled` | set (false) |
+| `dnsEcsEnabled`/`dnsEcsIpv4PrefixLen`/`dnsEcsIpv6PrefixLen` (M16) | `dns_ecs_enabled`/`dns_ecs_ipv4_prefix_len`/`dns_ecs_ipv6_prefix_len` | set (false/0/0) |
+| `dnsReloadInterval` | `dns_reload_interval` | set |
+| `dnsBlockResponse` | `dns_block_response` | set |
+| `dnsBlockTTL` | `dns_block_ttl` | set |
+| `dnsResolveTimeout` | `dns_resolve_timeout` | set |
+| `dnsRestartBackoff` | `dns_restart_backoff` | set |
+| `dnsRateLimitPerSec`/`Burst`/`MaxClients` | `dns_rate_limit_per_sec`/`_burst`/`_max_clients` | set (50/100/10000) |
+| `dnsTLSEnabled`/`dnsTLSPort` | `dns_tls_enabled`/`dns_tls_port` | set |
+| `dnsDOHEnabled`/`Port`/`Path`/`TrustedProxies` | `dns_doh_enabled`/`_port`/`_path`/`_trusted_proxies` | set |
+| `proxyEnabled` | `proxy_enabled` | set |
+| `proxyConnectTimeout` | `proxy_connect_timeout` | set |
+| `proxyUpstreamDNS` | `proxy_upstream_dns` | set |
+| `oidcIssuerURL` | `oidc_issuer_url` | set |
+| `oidcClientID` | `oidc_client_id` | set |
+| `oidcRedirectURL` | `oidc_redirect_url` | set |
+| `oidcButtonText` | `oidc_button_text` | set |
+| `devices` (M06-M08) | `devices` (IDENTICAL submodule: id/name/group/ips) | pass-through |
+| `users` (M06-M08) | `users` (IDENTICAL submodule: name/devices) | pass-through |
+| `policies` (M14) | `policies` (IDENTICAL submodule: name/groups/devices/allow/block/schedule) | pass-through |
+| `blockInterface` / `blockIPPrefix` | — NONE | overlay (B2) |
+| — (rendered constants) | `package` | default `pkgs.dnsblockd` = the SAME input-overlay package the wrapper ExecStart uses today (`overlays/linux.nix:218`) — no override needed |
+| — (rendered `tracking_mode`) | `tracking_mode` (enum incl. METADATA_ONLY; default NO_TRACK) | set METADATA_ONLY (owner dial unchanged) |
+| — (rendered `tracking_db_path`) | `tracking_db_path` | default matches (`/var/lib/dnsblockd/tracking.db`) — no-op |
+| — (rendered `otlp_endpoint`) | `otlp_endpoint` | set `localhost:4318` |
+| — (rendered `log_sampling_*`) | `log_sampling_threshold`/`log_sampling_rate` | set 500/100 |
+| — (rendered `csrf_enabled = true`, M06) | — NONE (no option, never rendered) | **HARD GAP — upstream config.go:400 defaults `CSRFEnabled: false`**: migration would silently drop the csrf belt. Fix belongs UPSTREAM (add a `csrf_enabled` option, default false, render it) — dnsblockd is our repo; until it ships, the wrapper CANNOT inject the key into upstream's internally-owned configFile. Blocks M19 or forces an ExecStart overlay that re-points at a SystemNix-rendered config (defeating the migration's purpose) |
+| — (rendered `allowlist_path`) | `allowlist_path` | **DISK-STATE DELTA**: upstream default `/var/lib/dnsblockd/allowlist.json` vs wrapper's `/var/lib/dnsblockd/allowlist` — MUST set explicitly or the LIVE allowlist file orphans (empty `allowlist.json` starts fresh; dashboard "Always allow" history lost) |
+| — (rendered `temp_allowlist_path`) | `temp_allowlist_path` | **DISK-STATE DELTA**: upstream default `temp-allowlist.json` vs wrapper's `temp-allowlist` — set explicitly |
+| — (rendered `ca_cert_file`/`ca_key_file`) | `ca_cert_file`/`ca_key_file` | set to sops paths (`/run/secrets/dnsblockd_ca_{cert,key}`) |
+| — (rendered `blocklist_mapping_file`) | `blocklist_mapping_file` | upstream auto-derives from ITS processed blocklist; wrapper's filtered mapping comes from the overlay pipeline (B1) |
+| — (rendered `dns_listen_addr`/`dns_port`/`dns_block_ip`/`dns_exit_on_failure`) | same names | upstream defaults cover (`0.0.0.0`/53/block_ip); set explicitly where defaults differ |
+
+Upstream extras the wrapper never exposed (available post-migration, all default-inert): `dns_doq_*`, `dns_doh3_*`, `dns_qname_minimization_level`, `dns_cache_size`, `dns_answer_ttl_max`, `dns_max_restarts`, `dns_circuit_breaker_*`, `dns_dead_protocol_retry_interval`, `pprof_enabled`, `dashboard_sse_*`, `auth_token(_file)`, `oidc_scopes/session_ttl/state_ttl`, `max_body_bytes`, `rate_limit_*` (HTTP), `log_format`, `otlp_trace_sampler_ratio`, `retention_*`, `unbound.*` (legacy), `proxy_tls_passthrough`, `dhcp_lease_file`.
+
+### B. Wrapper-only machinery → overlays (upstream module CANNOT express)
+
+1. **Whitelist pre-filter + systemnix-extra synthesis**: `filterBlocklist` (python hosts-filter over `whitelistFileForFilter`) applied to every fetched list + `extraDomains` → `systemnix-extra` appended LAST (source-attribution order). Upstream `blocklists` only does raw fetchurl. Overlay shape: post-process upstream's fetched lists before they reach `dns_blocklists`/`process` — or keep the wrapper-side pipeline and feed results via a file-carrying option. **mapping.json non-empty build gate rides here.**
+2. **attach-ip oneshot** (`dnsblockd-attach-ip`): `ip addr add blockIP/prefix dev blockInterface`, ordering on `sys-subsystem-net-devices-<if>.device`, restartTriggers on the script. Upstream has no notion of the .200 service IP.
+3. **oomd exemption + memory ceiling**: `ManagedOOMPreference=omit`, `OOMScoreAdjust=-1000`, `MemoryMax=4G`, `GOMEMLIMIT=3GiB`, `GOTRACEBACK=all` (upstream: only `memory_max` + its own sandbox set).
+4. **sops CA + secret gates**: `ca_cert_file`/`ca_key_file` ← sops paths, `dnsblockd-wait-secrets` ExecStartPre, oidc-secret bridge (`dnsblockd-oidc-secret` oneshot → env file; upstream's `oidc_client_secret_file` can consume the SAME env file directly — verify format at M19).
+5. **restartTriggers** on config/package (stale-config-after-switch class, 2026-08-31 unbound era).
+6. **tempAllowAll semantics** (kill-switch WITHOUT unconfiguring blocklists) — upstream's `temp_allow_all` asserts lists empty; preserve wrapper behavior via the blocklist-paths overlay (B1 pipeline owns which files reach the loader).
+7. House `harden {}` deltas vs upstream's hand-rolled sandbox (Type=notify + AF_UNIX, TasksMax=64, LimitNOFILE=65536, SystemCallFilter=@system-service allow-list): set-compare at M21 — upstream's set was CI-verified via its nixos-vm-test; adopt upstream's unless a wrapper-only key surfaces.
+8. **Unit identity + state ownership**: wrapper unit runs as ROOT (no User=; StateDirectory dnsblockd root-owned; tmpfiles 0755 root:root; RestrictAddressFamilies lacks AF_UNIX). Upstream runs as a dedicated `dnsblockd:dnsblockd` user with user-owned state + CAP_NET_BIND_SERVICE ambient caps + Type=notify (READY=1 gating for After= consumers). Migration needs a ONE-TIME state-dir chown heal (cv-state-perms pattern: `+`-privileged ExecStartPre `chown -R` + ownership-heal fast path) over `/var/lib/dnsblockd` (allowlist, temp-allowlist, tracking.db, blocklist-cache are root-owned today) — or an explicit `user = "root"` override with justification (loses the non-root win; NOT recommended).
+9. **Default-value deltas that MUST be set explicitly** (upstream defaults differ from the wrapper's rendered values): `listen_addr` (`::` vs `192.168.1.200`), `dns_listen_addr` (`::` dual-stack vs `0.0.0.0` — evo-x2 has no global IPv6), `dns_enabled` (false vs true), `memory_max` (512M vs 4G), `allowlist_path`/`temp_allowlist_path` (`.json` suffix disk-state delta, see A). `dns_block_ip` follows `block_ip` by default — one setting covers both.
+
+### C. Pre-migration baseline (M21 comparison anchor)
+
+- Anchor commit: `3cc72123` (recorded in `/tmp/m18-baseline/ANCHOR_COMMIT`; ephemeral — M21 MUST re-derive via `git worktree add /tmp/pre-mig 3cc72123` per the surface-preservation doctrine, never trust /tmp copies).
+- Baseline surfaces captured 2026-10-01 04:29: rendered config (store `lr78gq5g…`, 7.3 KB JSON-as-YAML, 96 top-level keys incl. devices/users/policies/cache-dir/ECS/h3) + deployed unit text (`/etc/systemd/system/dnsblockd.service`, 53 lines) under `/tmp/m18-baseline/`.
+- M21 procedure: worktree-eval BOTH trees' `configFile` content + `unitText`/unit-file, set-compare order-insensitively, filter store-path noise (`/nix/store/<hash>-` prefixes), and diff the systemd unit line-classified (drop PrivateTmp-irrelevant noise only with justification).
