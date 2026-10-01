@@ -1,3 +1,4 @@
+# Runbook: docs/services/memory-emergency-guard.md
 # Memory emergency guard.
 #
 # Converts the memory-thrash kernel-freeze death spiral into a controlled
@@ -571,7 +572,11 @@ _: {
                 6) zone6=$((zone6 + 1)) ;;
               esac
               echo "$zone1 $zone2 $zone3 $zone4 $zone5 $zone6" > "$ZONE_FILE"
-              echo "$now" >> "$HISTORY_FILE"
+              # Zone rides with the timestamp (2026-10-01): per-zone
+              # trips_last_hour attribution. Lines written before this
+              # change carry only $1 — they count in the aggregate, never
+              # per-zone (the per-zone awk requires a valid $2).
+              echo "$now $zone" >> "$HISTORY_FILE"
               # Top-I/O offender attribution (2026-09-28): 1300+ trips said
               # "I/O stalled" without naming a culprit — attribution lived
               # only in the forensics bundles. The per-cgroup io.stat walk
@@ -654,12 +659,29 @@ _: {
 
           # trips_last_hour: the churn gauge the bridge appends to its trip
           # page (>=2 = a consumer is re-waking flm after every restore).
-          # Prune the history file to the window while we are here.
+          # Prune the history file to the window while we are here. Zone-
+          # attributed counts (2026-10-01): which trip condition dominates
+          # the current storm — forensics without journal digs. Legacy
+          # lines (bare timestamp) count only in the aggregate.
           trips_last_hour=0
+          zone1_lh=0
+          zone2_lh=0
+          zone3_lh=0
+          zone4_lh=0
+          zone5_lh=0
+          zone6_lh=0
           if [ -f "$HISTORY_FILE" ]; then
             cutoff=$((now - 3600))
             trips_last_hour=$(awk -v c="$cutoff" 'BEGIN { n = 0 } $1 >= c { n++ } END { print n }' "$HISTORY_FILE")
             trips_last_hour="''${trips_last_hour:-0}"
+            # shellcheck disable=SC2046 # deliberate word splitting into positional params
+            set -- $(awk -v c="$cutoff" 'BEGIN { for (i = 1; i <= 6; i++) n[i] = 0 } $1 >= c && $2 >= 1 && $2 <= 6 { n[$2]++ } END { for (i = 1; i <= 6; i++) printf "%d%s", n[i], (i < 6 ? " " : "\n") }' "$HISTORY_FILE")
+            zone1_lh="''${1:-0}"
+            zone2_lh="''${2:-0}"
+            zone3_lh="''${3:-0}"
+            zone4_lh="''${4:-0}"
+            zone5_lh="''${5:-0}"
+            zone6_lh="''${6:-0}"
             awk -v c="$cutoff" '$1 >= c' "$HISTORY_FILE" > "''${HISTORY_FILE}.tmp" || true
             mv "''${HISTORY_FILE}.tmp" "$HISTORY_FILE" 2>/dev/null || true
           fi
@@ -828,6 +850,15 @@ _: {
             echo "# HELP memory_emergency_guard_trips_last_hour Emergency stops in the last hour — >=2 is the CHURN class (trip -> restore -> consumer re-wakes flm -> re-trip)"
             echo "# TYPE memory_emergency_guard_trips_last_hour gauge"
             echo "memory_emergency_guard_trips_last_hour ''${trips_last_hour}"
+
+            echo "# HELP memory_emergency_guard_zone_trips_last_hour Per-zone emergency stops in the last hour — which trip condition dominates the current storm (forensics without journal digs). Trips recorded before 2026-10-01 carry no zone and count only in the aggregate."
+            echo "# TYPE memory_emergency_guard_zone_trips_last_hour gauge"
+            echo "memory_emergency_guard_zone_trips_last_hour{zone=\"1\"} ''${zone1_lh}"
+            echo "memory_emergency_guard_zone_trips_last_hour{zone=\"2\"} ''${zone2_lh}"
+            echo "memory_emergency_guard_zone_trips_last_hour{zone=\"3\"} ''${zone3_lh}"
+            echo "memory_emergency_guard_zone_trips_last_hour{zone=\"4\"} ''${zone4_lh}"
+            echo "memory_emergency_guard_zone_trips_last_hour{zone=\"5\"} ''${zone5_lh}"
+            echo "memory_emergency_guard_zone_trips_last_hour{zone=\"6\"} ''${zone6_lh}"
 
             echo "# HELP memory_emergency_guard_restore_capped 1 when the socket is down AND the daily restore budget is spent — restart requires manual action (systemctl start <socket>)"
             echo "# TYPE memory_emergency_guard_restore_capped gauge"

@@ -1,3 +1,4 @@
+# Runbook: docs/services/taskchampion.md
 # TaskChampion sync server for Taskwarrior task management
 _: {
   flake.nixosModules.taskchampion =

@@ -1,3 +1,4 @@
+# Runbook: docs/services/mr-sync.md
 # mr-sync — read-only repo-portfolio web dashboard.
 #
 # The mr-sync CLI ships on PATH via mkLarsPackages (pure CLI, source-only

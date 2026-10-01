@@ -1,3 +1,4 @@
+# Runbook: docs/services/inboxclean.md
 # InboxClean — SystemNix wrapper around upstream nixos-module.
 #
 # The upstream module (inputs.inboxclean.nixosModules.default, nix/module.nix

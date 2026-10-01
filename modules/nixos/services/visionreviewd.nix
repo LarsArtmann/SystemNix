@@ -1,3 +1,4 @@
+# Runbook: docs/services/visionreviewd.md
 # visionreviewd — SystemNix wrapper around the upstream nixos-module.
 #
 # The upstream module (inputs.vision-review-agent.nixosModules.visionreviewd)

@@ -1,3 +1,4 @@
+# Runbook: docs/services/monitor365.md
 # Monitor365: thin SystemNix wrapper around upstream NixOS modules.
 #
 # Heavy lifting (TOML generation, systemd services, hardening, collector

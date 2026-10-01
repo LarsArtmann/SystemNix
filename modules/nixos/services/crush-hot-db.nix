@@ -1,3 +1,4 @@
+# Runbook: docs/services/hot-db.md
 # crush-hot-db — relocate per-project crush session DBs off the QLC root.
 #
 # The 2026-09-14 boot IO storm (docs/todo/storage.md): `~/projects/**/.crush/crush.db`

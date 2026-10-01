@@ -1,3 +1,4 @@
+# Runbook: docs/services/atticd.md
 # Attic — self-hosted Nix binary cache server
 #
 # Provides a private binary cache at https://cache.${domain}/ for CI builds.

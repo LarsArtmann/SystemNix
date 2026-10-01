@@ -1,3 +1,4 @@
+# Runbook: docs/services/dnsblockd.md
 # DNS blocker: dnsblockd (embedded recursive resolver) + blocklists + block page + stats API
 #
 # dnsblockd is the sole DNS resolver on :53 with an embedded recursive resolver

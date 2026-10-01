@@ -1,3 +1,4 @@
+# Runbook: docs/services/paperless.md
 # Paperless-ngx 3.x document management (OCR, consume, archive, AI) on the
 # mirrored pool. Layered on top of the nixpkgs services.paperless module:
 #

@@ -1,3 +1,4 @@
+# Runbook: docs/services/mail-relay.md
 # Central outbound mail relay: a Postfix NULL CLIENT on loopback. Every local
 # service (paperless, forgejo, system cron) submits unauthenticated to
 # 127.0.0.1:25; Postfix relays everything through ONE authenticated upstream

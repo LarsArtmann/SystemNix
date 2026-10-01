@@ -1,3 +1,4 @@
+# Runbook: docs/services/papdashboard.md
 # PapDashboard — event-sourced alert hub with NPU insight enricher
 #
 # Architecture (smart alerting, 2026-08):

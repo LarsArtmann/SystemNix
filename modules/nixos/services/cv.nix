@@ -1,3 +1,4 @@
+# Runbook: docs/services/cv.md
 # CV — SystemNix wrapper around the upstream NixOS module.
 #
 # The upstream module (inputs.cv.nixosModules.default → services.cv-server)

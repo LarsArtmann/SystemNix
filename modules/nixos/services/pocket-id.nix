@@ -1,3 +1,4 @@
+# Runbook: docs/services/pocket-id.md
 # Pocket ID: passkey-only OIDC provider replacing Authelia
 # Declaratively provisions admin user, OIDC clients, and avatar
 _: {

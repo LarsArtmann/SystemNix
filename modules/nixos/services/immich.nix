@@ -1,3 +1,4 @@
+# Runbook: docs/services/immich.md
 # Immich photo/video management: OAuth, PostgreSQL, automated backups
 _: {
   flake.nixosModules.immich =

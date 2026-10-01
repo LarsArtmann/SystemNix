@@ -1,3 +1,4 @@
+# Runbook: docs/services/wifi-failover.md
 # WiFi standby failover — carrier-based default-route guard for eno1.
 #
 # PROBLEM (why a desktop with connected WiFi still loses connectivity when the

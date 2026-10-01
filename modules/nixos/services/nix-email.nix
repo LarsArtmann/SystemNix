@@ -1,3 +1,4 @@
+# Runbook: docs/services/nix-email.md
 # nix-email — SystemNix wrapper around the upstream LarsArtmann/nix-email
 # flake (github:LarsArtmann/nix-email, public).
 #

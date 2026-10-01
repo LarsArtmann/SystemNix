@@ -1,3 +1,4 @@
+# Runbook: docs/services/twenty.md
 # Twenty CRM via Docker Compose with PostgreSQL and Redis
 # SSO: native OIDC/SAML is gated behind a billing entitlement (contact
 # twenty.com). Config is per-workspace via GraphQL/UI, not env vars. Access is

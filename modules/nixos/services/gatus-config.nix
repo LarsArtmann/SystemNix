@@ -1,3 +1,4 @@
+# Runbook: docs/services/gatus.md
 # Gatus health check monitoring with Discord alerts and endpoints
 _: {
   flake.nixosModules.gatus-config =

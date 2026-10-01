@@ -1,3 +1,4 @@
+# Runbook: docs/services/llama-rag.md
 # llama.cpp RAG stack - embeddings + reranking on the GPU (ROCm)
 #
 # Two lightweight llama-server instances for retrieval-augmented generation:

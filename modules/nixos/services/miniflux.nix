@@ -1,3 +1,4 @@
+# Runbook: docs/services/miniflux.md
 # Miniflux — minimalist self-hosted RSS reader (single Go binary + PostgreSQL).
 # Wraps the nixpkgs module (services.miniflux) with SystemNix wiring:
 #   - Layer 1 native OIDC via Pocket ID. Miniflux reads the client secret from

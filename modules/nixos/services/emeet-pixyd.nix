@@ -1,3 +1,4 @@
+# Runbook: docs/services/emeet-pixyd.md
 # EMEET PIXY — SystemNix wrapper around the upstream NixOS module.
 #
 # The upstream module (inputs.emeet-pixyd.nixosModules.default →

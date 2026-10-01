@@ -1,3 +1,4 @@
+# Runbook: docs/services/browser-history.md
 # Browser History — SystemNix wrapper around upstream NixOS modules.
 #
 # The upstream modules (inputs.browser-history.nixosModules.browser-history-server

@@ -1,3 +1,4 @@
+# Runbook: docs/services/google-sync.md
 # Google Drive → HDD pool mirror (rclone).
 #
 # Continuous one-way sync of Google Drive accounts to /mnt/pool/backups,

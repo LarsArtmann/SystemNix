@@ -1,3 +1,4 @@
+# Runbook: docs/services/oauth2-proxy.md
 # oauth2-proxy: forward-auth bridge between Caddy and Pocket ID
 _: {
   flake.nixosModules.oauth2-proxy =

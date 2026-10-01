@@ -1,3 +1,4 @@
+# Runbook: docs/services/dozzle.md
 # Dozzle — Lightweight Docker container log tailing web UI
 _: {
   flake.nixosModules.dozzle =

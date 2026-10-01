@@ -1,3 +1,4 @@
+# Runbook: docs/services/architecture-catalog.md
 # Architecture Catalog — license-free federated EventCatalog hub.
 #
 # Serves the STATIC dist/ tree that the eventcatalog-hub CI (Forgejo

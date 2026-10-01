@@ -1,3 +1,4 @@
+# Runbook: docs/services/bank-sync.md
 # bank-sync — SystemNix deployment overlay for the bank-sync service
 #
 # Upstream module (inputs.bank-sync.nixosModules.default, imported in

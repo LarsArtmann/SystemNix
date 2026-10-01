@@ -1,3 +1,4 @@
+# Runbook: docs/services/signoz-coverage.md
 # SigNoz service telemetry coverage audit — the "register EVERY service FULLY" rail.
 #
 # WHY THIS EXISTS (2026-08-31): SigNoz's Services page is TRACE-driven — a

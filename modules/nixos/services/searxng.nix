@@ -1,3 +1,4 @@
+# Runbook: docs/services/searxng.md
 # SearXNG: privacy-focused metasearch engine aggregating results from
 # Google, Bing, DuckDuckGo, Brave, and dozens of other search services.
 # Uses nixpkgs services.searx (package: searxng) with SystemNix hardening,

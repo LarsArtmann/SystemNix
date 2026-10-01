@@ -1,3 +1,4 @@
+# Runbook: docs/services/file-and-image-renamer.md
 # AI-powered file and screenshot renaming watcher daemon + health dashboard
 _: {
   flake.nixosModules.file-and-image-renamer =

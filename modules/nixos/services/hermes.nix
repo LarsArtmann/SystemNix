@@ -1,3 +1,4 @@
+# Runbook: docs/services/hermes.md
 # Hermes AI Agent Gateway: Discord bot, cron scheduler, messaging
 # Projects access: services.hermes.projectsDir bind-mounts the primary
 # user's projects tree READ-ONLY into the agent sandbox — see the option

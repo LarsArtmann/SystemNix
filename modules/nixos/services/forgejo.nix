@@ -1,3 +1,4 @@
+# Runbook: docs/services/forgejo.md
 # Forgejo self-hosted Git forge: GitHub sync, Actions runner, admin setup
 _: {
   flake.nixosModules.forgejo =

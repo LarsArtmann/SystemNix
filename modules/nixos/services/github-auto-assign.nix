@@ -1,3 +1,4 @@
+# Runbook: docs/services/github-auto-assign.md
 # github-auto-assign — periodic GitHub issue/PR self-assignment.
 #
 # Every 6 hours, finds every OPEN issue and PR with NO assignee across ALL

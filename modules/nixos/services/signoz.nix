@@ -1,3 +1,4 @@
+# Runbook: docs/services/signoz.md
 # SigNoz observability: ClickHouse, OTel collector, dashboards, alerts
 # Auth: SigNoz CE OIDC/SAML is Enterprise-only ($4k/mo). Instead, impersonation
 # mode disables all internal auth (every request = root admin). The Caddy vHost

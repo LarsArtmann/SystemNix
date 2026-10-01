@@ -1,3 +1,4 @@
+# Runbook: docs/services/tq.md
 # tq agent-pool — SystemNix deployment overlay for go-taskqueue
 #
 # Upstream module (inputs.go-taskqueue.nixosModules.default, imported in

@@ -1,3 +1,4 @@
+# Runbook: docs/services/hot-db.md
 # hot-db — the declarative mechanism for the Samsung hot-DB tier
 # (Samsung 970 EVO Plus TLC, Phase 2 of the ratified design).
 #

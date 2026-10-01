@@ -1,3 +1,4 @@
+# Runbook: docs/services/caddy.md
 # Caddy reverse proxy: TLS termination, forward auth, virtual host routing
 _: {
   flake.nixosModules.caddy =

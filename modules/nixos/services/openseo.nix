@@ -1,3 +1,4 @@
+# Runbook: docs/services/openseo.md
 # OpenSEO self-hosted SEO suite (keyword research, rank tracking, audits)
 # Native NixOS service — builds from source, no Docker container.
 # SSO: no built-in auth (AUTH_MODE=local_noauth). Access is gated by

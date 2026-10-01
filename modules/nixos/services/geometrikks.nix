@@ -1,3 +1,4 @@
+# Runbook: docs/services/geometrikks.md
 # GeoMetrikks — native Nix service (Docker→Nix migration, 2026-09-29).
 # Access-log geo analytics (github:GilbN/geometrikks) built from source via
 # pkgs/geometrikks.nix (uv2nix venv + bun frontend), served by a native

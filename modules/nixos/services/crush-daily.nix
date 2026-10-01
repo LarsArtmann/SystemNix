@@ -1,3 +1,4 @@
+# Runbook: docs/services/crush-daily.md
 # crush-daily — SystemNix hardening overlay for the crush-daily service
 #
 # The upstream crush-daily flake module (flake.nix) now declares

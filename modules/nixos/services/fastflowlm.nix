@@ -1,3 +1,4 @@
+# Runbook: docs/services/fastflowlm.md
 # FastFlowLM — AMD XDNA NPU LLM server (OpenAI-compatible)
 #
 # Wraps the FastFlowLM (https://github.com/ROCm/FastFlowLM) v1.0.1 NPU runtime

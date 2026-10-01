@@ -1,3 +1,4 @@
+# Runbook: docs/services/nsfw-classifier.md
 # nsfw-classifier — native Nix service for the Go/ONNX NSFW image
 # classifier (flake input nsfw-classifier).
 #

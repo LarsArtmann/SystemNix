@@ -1,3 +1,4 @@
+# Runbook: docs/services/systemd-graph.md
 # systemd-graph: live web UI for the systemd unit dependency graph.
 # Scoped to system units only (skips user bus if unavailable). D-Bus driven,
 # serves a React SPA + JSON/SSE API. Zero state — restart is safe.

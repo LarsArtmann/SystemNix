@@ -1,3 +1,4 @@
+# Runbook: docs/services/indexer-web.md
 # indexer-web — event-sourced docs index WebUI (index.home.lan).
 #
 # Runs upstream's indexer-web binary (github:LarsArtmann/index,

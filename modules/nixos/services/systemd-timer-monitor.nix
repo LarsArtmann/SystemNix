@@ -1,3 +1,4 @@
+# Runbook: docs/services/systemd-timer-monitor.md
 # systemd-timer-monitor: read-only audit of systemd services+timers, served
 # as a static HTML page. Zero-dep Python (cappy-dev/systemd-timer-monitor),
 # runs every 5 minutes via a systemd timer, output lands in StateDirectory

@@ -1,3 +1,4 @@
+# Runbook: docs/services/health-dashboard.md
 # health-dashboard — federated go-health hub (health.home.lan).
 #
 # Runs upstream's health-hub binary (github:LarsArtmann/go-health-dashboard,

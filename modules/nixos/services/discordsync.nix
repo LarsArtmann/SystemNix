@@ -1,3 +1,4 @@
+# Runbook: docs/services/discordsync.md
 # DiscordSync — SystemNix wrapper around upstream nixos-module.
 #
 # The upstream module (inputs.discordsync.nixosModules.default) provides every
