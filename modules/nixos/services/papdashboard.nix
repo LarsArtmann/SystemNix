@@ -449,7 +449,7 @@
                   # PostgreSQL and Redis are decorative tiles: neither exposes
                   # a public HTTP health endpoint (pg_isready is TCP-only;
                   # Redis exports to Prometheus only). Their dependents
-                  # (Immich, Gatus, Manifest) show errors when the DB/cache
+                  # (Immich, Gatus) show errors when the DB/cache
                   # goes down — that's the real signal. All service health
                   # monitoring is owned by Gatus (Discord alerting); dashboard
                   # tiles are navigation, the dots are live probes.

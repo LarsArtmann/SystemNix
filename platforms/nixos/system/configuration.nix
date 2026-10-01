@@ -1276,13 +1276,12 @@ in
       # Cross-service backup health monitoring. Checks all backup dirs for
       # freshness and writes Prometheus metrics. Gatus alerts on Discord
       # when any backup is stale (>25h). Schedules are staggered to avoid
-      # IO spikes: Immich ~01:00, Twenty ~02:00, Manifest ~02:30,
-      # Monitor365 03:00.
+      # IO spikes: Immich ~01:00, Twenty ~02:00, Monitor365 03:00.
       backup-coordination = {
         enable = true;
         # All backup freshness rows moved to their owning modules
         # (services.integration.<name>.backup): immich, paperless, twenty,
-        # manifest, forgejo, pocket-id (2026-09-15), and earlier monitor365,
+        # forgejo, pocket-id (2026-09-15), and earlier monitor365,
         # cv, inboxclean.
       };
 

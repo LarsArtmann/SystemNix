@@ -2,7 +2,7 @@
 #
 # Generates Prometheus textfile metrics for all configured backup directories,
 # so Gatus can alert when any backup is stale (>maxAgeHours). Staggered backup
-# schedules avoid IO spikes: Immich 01:00, Twenty 02:00, Manifest 02:30,
+# schedules avoid IO spikes: Immich 01:00, Twenty 02:00,
 # Monitor365 03:00 (set in each service's timer config).
 #
 # Replaces the former monitor365-backup-health service — the generic module
