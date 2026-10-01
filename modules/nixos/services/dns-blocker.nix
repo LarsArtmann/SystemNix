@@ -380,7 +380,7 @@ _: {
             ) cfg.devices;
           }
           // lib.optionalAttrs (cfg.users != [ ]) {
-            users = cfg.users;
+            inherit (cfg) users;
           }
           // lib.optionalAttrs (cfg.policies != [ ]) {
             # Per-device/group policies (see the policies option). Rendered
