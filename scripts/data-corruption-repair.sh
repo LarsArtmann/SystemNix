@@ -384,7 +384,7 @@ case "${1:---status}" in
 --scrub) cmd_scrub ;;
 --resume-seed) cmd_resume_seed ;;
 *)
-  sed -n '2,30p' "${BASH_SOURCE[0]}" | grep -E '^#' | sed 's/^# \{0,1\}//'
+  awk 'NR == 1 { next } !/^#/ { exit } { sub(/^# ?/, ""); print }' "${BASH_SOURCE[0]}"
   exit 2
   ;;
 esac
