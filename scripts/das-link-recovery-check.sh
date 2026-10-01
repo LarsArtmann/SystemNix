@@ -276,7 +276,11 @@ if findmnt -n -t ext4 /mnt/buildcache >/dev/null 2>&1; then
   # Superblock error counter — persists across reboots until fsck clears it.
   # Scoped to buildcache's OWN device only (a global /sys/fs/ext4/* sweep
   # would flag unrelated ext4 filesystems).
-  src=$(readlink -f "$(findmnt -n -o SOURCE /mnt/buildcache)")
+  # Same -t ext4 filter as the guard: without it findmnt also lists the
+  # autofs holder (systemd-1) once the automount has triggered, and the
+  # multi-line readlink -f fails under set -e — silent death between [5]
+  # and the decision tree.
+  src=$(readlink -f "$(findmnt -n -o SOURCE -t ext4 /mnt/buildcache)")
   ec_file="/sys/fs/ext4/${src##*/}/errors_count"
   if [ -r "$ec_file" ]; then
     ec_val=$(cat "$ec_file" 2>/dev/null || true)
