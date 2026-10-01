@@ -1,0 +1,60 @@
+# Fifty-Todos Execution — Session 3 (Batches C–G): 35 Remaining Items Closed
+
+**Session window:** 2026-10-01 ~11:40 → 13:07 CEST. Continuation of the ranked 50-easiest-TODO-items execution (canonical list: `2026-10-01_03-33_*` §f; session-2 state: `2026-10-01_10-13_*`). User directive at session start: "GET SHIT DONE! The WHOLE TODO LIST!" — taken as YES on all three §g questions from session 2 (ranked order; footer-bearing pathspec commits for non-queue sessions; deploy-gated items edit-only).
+
+**Post-restructure correction found at start:** session 2's "13 marks stripped" alarm was a FALSE grep pattern (`fifty-todos execution session 2` vs the actual `fifty-todos session 2`); all 13 batch-A marks had survived.
+
+---
+
+## a) FULLY DONE — 7 footer-bearing commits, all exclusive (`git show --stat` verified per commit)
+
+| Batch | Commit | Items | What landed |
+| --- | --- | --- | --- |
+| C storage | `95944afb` | #4, #7, #8, #9, #10, #11, #21 | csum-discriminator paragraph crosslinks jan.md's repair recipe + data-damage-set; hot-db wave step 6 gains the fail-closed `hot_db_entry_mounted` verify; symlink-sweep row's stale deploy-pending clause reworded (guard live since 09-22; legal-cases gated on the rmdir heal); P0 row's ~12-vs-11 reconciled via the damage-set pointer; boot-mirror-activate logging surface documented (plain script app → invoking shell, never journal) + duplicated `## Docker & Containers` heading collapsed; `d60d598c` review-fix lineage cited on both cache-sweep rows + the TODO_LIST parent note; calendar-anchored "11d mid-week weeklies" comment block inside `btrfs-verify-snapshots` |
+| D stability | `f5ce0129` | #14, #15, #16, #22, #23 | freeze-7 report corrected (5.9 TB = 4.18 TiB @mnt-pool COMPLETED clean + 549.8G @- + 656.3G @data cancelled — "never completed" holds for @-/@data only); scrub exit contract (0/1/3 + SuccessExitStatus semantics) in docs/agents/storage.md; cancel-during-storm codified as SANCTIONED in the guard runbook (02:27:41-02:28:37 evidence, pts/22+pts/20, actor stays an open owner question); 05-33 §e5 annotated ANSWERED; 23-20 report annotated with post-authoring landings (RE-FIRE-3 VM-test green + `9d9c17ea` churn-metrics fix + SuccessExitStatus resolution); stability rows 34/36/61 marked |
+| E services | `3fd91681` | #17, #19, #20 | forgejo.md Themes/UI gains the auto-theme dark-mode cascade trap + CHANGELOG row; paperless.md mail-wiring smoke marked PASS-since-2026-09-05; docs index links both dnsblockd OIDC recovery runbooks (healthcheck half deliberately not built — rationale recorded on the row) |
+| F conventions | `ce1bfd52` | #18, #24–29, #31–33, #36–38 (13 items) | new CONTRIBUTING "Report & queue conventions" block (§f self-audit, report self-consistency gate, `TODO_LIST:<line>`-cite ban, 60-second sibling sweep, DONE-stamp Task-Queue-ID, footer-before-TQ_RESULT, first-commit-footer, DR-runbook provenance, fleet-incident rule); daemon-race policy gains post-amend lint-heal commands + the soft-reset split repair; guard-writing section gains the deepSeq-inline vs shared-lib probe doctrine + mkOverride-50 recipe pointer (recipe verified at docs/agents/desktop.md:65); 12 queue rows marked |
+| G pipeline | `95164b03` | #39, #43, #45, #46, #47, #48 | 3 fastflowlm-203 gotchas into gotchas-archive (restricted-PATH deploys / flat layouts vs `lib.getExe` / phantom-metric same-changeset); the 2 genuinely-open `d22ccd48`-deleted rows restored (12 of 21 verified closed by later passes — audit note in the file); `golines` into base.nix (nixpkgs 0.16.0 verified live before the edit); `docs/security/rotations.md` ledger created (5 open owner-gated + 9 completed rows, metadata-only, ciphertext-diff verifier as a principle); `boot.binfmt.preferStaticEmulators = true` (EDIT-ONLY, deploy owner-gated); pre-commit lint logs via shared `mktemp` + EXIT trap (`bash -n` clean); 8 queue rows marked |
+| #49 sweep | `c88033f3` | #49 | 3 stale `AGENTS.md "Snapshot-pinning doctrine"` cites repointed at `docs/agents/storage.md` (jan.md ×2, fastflowlm.md ×1); remaining in-place-delete bullets verified already carrying pointers |
+| bookkeeping | `89ca6e6b` | #5, #42 | #5 mark-only (annotation verified landed at plan line 86); #42 verdict recorded (closure surface = batch-A queue mark + the CHANGELOG entry; conversion `f1e703c5` live at caddy.nix:580/671, no open row remains) |
+
+**Final verification:** `nix flake check --no-build` GREEN at HEAD (expected darwin-omission warning only); `nix fmt --no-update-lock-file -- --ci` over the three touched .nix files: 0 changed; zero flake.lock churn; 22 `fifty-todos session 2` marks live in TODO_LIST (13 batch-A + 9 new).
+
+**Session tally:** 48 of the 50 ranked items are now closed or deliberately resolved; the 2 residuals are #35's template-doc scope decision and #42's already-satisfied verdict (both recorded here).
+
+## b) PARTIALLY DONE
+
+1. **#35 (verification-verb template doc)** — the seed paragraph exists (CONTRIBUTING "Agent-safe verification verbs", landed pre-restructure and re-verified at line 229 this session); the ask's "standalone template doc" form was closed in session 2's batch A as verified-present. If a fuller standalone doc is still wanted, it is new scope, not a residual.
+2. **#45 deploy leg** — base.nix edit landed; `~/go/bin/golines` trash + shadow-detector allowlist collapse ride the next owner deploy (recorded on the row).
+
+## c) NOT STARTED (deliberately)
+
+1. **Soft-reset split repair of `510033cc`** — the session-2 attribution-muddled daemon commit now sits ~15 commits deep with titled commits from OTHER sessions on top of it. The repair procedure (documented in CONTRIBUTING this session, batch F) is designed for a freshly-landed HEAD batch; applying it through 15 commits of others' history would rewrite claimed work I did not author — the exact sabotage the Critical Rules forbid. Verdict: DO NOT REPAIR; the attribution note in the session-2 report + this one is the durable record. The procedure itself is now doctrine for FUTURE exclusivity-FAIL cases.
+2. **Deploys** — #45 (golines binary), #47 (preferStaticEmulators), and all other edit-only changes activate at the next owner deploy; nothing here requires a deploy window decision beyond what the rows record.
+
+## d) TOTALLY FUCKED UP
+
+1. **First batch-C attempt failed twice on avoidable errors** — (1) a non-unique python anchor (`set -euo pipefail\nMAX_AGE_DAYS=3` matched 2 scripts in snapshots.nix); (2) a 108-char commit subject rejected by the house 72-char hook. Both caught by the gates (assert + hook), zero bad content landed; but each cost a full hook cycle (~2-3 min on this repo's eval latency).
+2. **A dead-code python line in the batch-G script aborted it mid-run** (leftover `t.index(...)` before the clean lines-based insert) — the exception fired BEFORE any write, so nothing landed half-done, but the whole call was wasted. The lesson is the same as the batch-A python pattern: write the edit script, then RE-READ it before running; dead code inside a write-path script is a live abort risk.
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Verify-before-edit is the highest-yield habit in this repo** — re-verified all 35 remaining items against the live tree at session start; found #25's recipe already landed (desktop.md:65), 12 of 21 deleted pipeline rows already closed, and the isDarwin sweep already covered by an existing tail row. Blind execution would have manufactured ~15 duplicate/restored-wrong rows.
+2. **Anchor uniqueness asserts in the python edit pattern held up** — every `count != 1` failure (snapshots.nix) was a REAL ambiguity, not a false positive. Keep the assert; never drop to replace-all.
+3. **The 72-char subject hook is doing its job** — catching it at commit time (vs CI) is the designed behavior; write subjects ≤72 first-line by construction.
+4. **Queue-row marking in the same commit as content** (house rule) worked cleanly across 6 commits — zero "code landed, row open" drift introduced this session; the pre-existing 63-drift backlog is the pairing check's separate sweep (master-plan P1b, queued).
+
+## f) Up to 50 next things
+
+1–3. Owner: run the deploy window for the batch-G config edits (golines, preferStaticEmulators) + the standing hot-db/caddy-logs waves — then trash `~/go/bin/golines`.
+4. Owner: the scrub-exit @data [decision] row (stability.md) — `SuccessExitStatus [1 3]` vs keep-FAIL before the next Oct 5 weekly fire re-parks the unit.
+5. Owner: rotations.md's open rows (Context7, Gemini delete, NetBird setup key, Hermes PAT, decrypt password).
+6. Attr actor of the 02:27 manual scrub cancels (pts/22+pts/20) — recorded unattributed in the guard runbook; owner memory is the only source.
+7+. All remaining §f items below are ALREADY QUEUED with surfaces — no new harvests from this report.
+
+**Harvest log (self-audit per the batch-F convention):** every §f item above either carries its existing queue/library surface in-line (items 3–6: TODO rows 322/45-residual, stability [decision] row, rotations.md open table, guard runbook §g3 note) or is owner-action with no queue surface by design (items 1–2 deploy windows). NOTHING NEW requires harvesting — this report introduces zero un-landed follow-ups.
+
+## g) Questions
+
+1. **#35 standalone doc:** is the CONTRIBUTING paragraph sufficient, or do you want the full verification-verb template doc as its own file? (Currently recorded closed; re-opening is new scope.)
+2. **Queue↔library pairing sweep (63 standing WARNs)** — run the master-plan P1b sweep now that the fifty-todos queue churn is done, or leave it to the queued dispatch?
