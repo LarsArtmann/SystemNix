@@ -215,6 +215,15 @@
     # (tests/test-hermes.nix covers the env wiring, not the upstream Python
     # behavior).
     hermes-agent = {
+      # INTERIM-ROLLBACK (2026-10-02): the 09:31 auto lock update re-locked
+      # hermes-agent to 10c6188d, whose flake eval-forces the
+      # `hermes-python-source` FOD (IFD class) — `nix flake check --no-build`
+      # (the pre-commit gate) fails with "path …-hermes-python-source is not
+      # valid" while bafb42b4 evals clean (verified by lock swap 2026-10-02).
+      # The lock node is held at bafb42b4 (url above stays unpinned so a
+      # later `nix flake lock --update-input hermes-agent` can move forward);
+      # do NOT blanket-update back to a rev that breaks the eval gate. Drop
+      # this rollback once an upstream rev evals green under --no-build.
       url = "github:NousResearch/hermes-agent";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
