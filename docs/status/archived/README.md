@@ -36,3 +36,7 @@ design — they still carry open work.
 2. `git log --follow docs/status/archived/<file>` — pre-archive history.
 3. Open work never lives here: check [`../../todo/`](../../todo/) libraries and
    [`TODO_LIST.md`](../../../TODO_LIST.md) first.
+
+## Bulk-archive manifest — 2026-10-03 (docs-health pass, window closeout)
+
+10 files moved from `docs/status/` — all no-op re-fire verification reports of fix ticket `000001a0fada084de720013c96a300000000` (reviewer finding on `5844537b`'s false provenance claim; finding was already applied at `4eb7fc12`/`b26c11b7`). Classification: **ARCHIVE** — every item is a pure point-in-time re-verification reaching the identical "finding CLOSED as already-applied" verdict; the reports carry their own in-body resolution and a `RESOLVED + ARCHIVED` banner. Files: `2026-10-02_{06-41,06-57,07-12,07-23,07-44,07-57,08-07,08-18,08-59,re-fire9}_task-000001a0fada….md`. Deciding reason: uncited by any live doc (checked TODO_LIST.md, docs/todo/*, CHANGELOG.md, AGENTS/README/ROADMAP/FEATURES); the cited siblings (06-25, 07-35, 08-30, 08-31) stay in place. Canonical narrative: `docs/status/2026-10-03_01-15_window-closeout-reap-single-sourcing-lineage-and-fix-tickets.md` §d/§e.
