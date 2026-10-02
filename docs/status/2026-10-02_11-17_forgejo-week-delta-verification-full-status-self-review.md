@@ -1,5 +1,7 @@
 # Full Status + Brutal Self-Review — Forgejo Week-Delta Verification Session
 
+> **⚠ CORRECTED 2026-10-02 (later session): the §0 headline "G1 (storage migration) was executed 2026-09-30" is FALSE.** Falsified by physical evidence the same afternoon: owner-run `sudo -u forgejo du -sh /var/lib/forgejo` = **16K** (the EMPTY Samsung subvol mounted at that path); forgejo `:3000` connection-refused; reconcile metrics frozen at 09-30 21:40. Only the flip DEPLOY landed (`268289da`: mount live, family gated down on the absent marker) — `prepare`/`finalize` never ran; the real data is intact but SHADOWED on the QLC root subvol beneath the mountpoint (btrbk-root covered). §a.2's "LIVE physical evidence" (findmnt + btrbk snapshot list + known-stale mtime) proved the MOUNT and timer state, never the CONTENT — precisely the sub-proof class §d.1 flags. The "green" btrbk forgejo-subvol snapshots are of the EMPTY subvol (phantom-backup class). Queue + library surfaces re-pointed in `docs/todo/services.md`; repair sequence (umount-first) recorded on the G1 window row.
+
 **Date:** 2026-10-02 11:17 CEST
 **Session type:** verification-only continuation of the 2026-09-18 Forgejo staged-primary handoff. Two user turns ("Status!?" and "It's been a week; Did anything change on Forgejo?") + this report. **Zero tree changes made before this report.**
 **Format note:** user explicitly requested `.md` — the status-report skill's HTML default is overridden for this report only.
