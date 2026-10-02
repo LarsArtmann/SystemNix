@@ -10,7 +10,7 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 
 ## Prioritized
 
-- [ ] [decision] **flm prompt-echo privacy: paperless document text → journald → SigNoz (`all=true`)** — paperless-ai sends document content to flm, which echoes full request/response bodies to journald (fastflowlm.md usage baseline) → personal document text lands in observability logs once the AI workflow drives real traffic. Decide: journald filter for the flm units vs SigNoz `all=false` vs accepted risk. **Source:** docs/research/2026-10-02_paperless-ngx-ai-deep-dive.html roadmap #9
+- [x] ~~[decision] **flm prompt-echo privacy: paperless document text → journald → SigNoz (`all=true`)**~~ **ANSWERED 2026-10-02 (owner: SigNoz + journald are TRUSTED — echo accepted as-is, no filter, no `all=false`)**; recorded in fastflowlm.md (the state owner) so future sessions don't re-flag it; dissolves deep-dive roadmap #9 + the contingent filter PoC #22. **Source:** docs/research/2026-10-02_paperless-ngx-ai-deep-dive.html roadmap #9 + docs/status/2026-10-02_12-50_paperless-ai-deep-dive-status.md §g.2
 - [ ] [decision] **MiniMax quota decision (carried ×5)** — upgrade / PAYG / wait for reset
 - [ ] [watch] **flm upstream release watch (T3.4)** — v1.0.2 SIGABRT heap bug recurrence watch (20:17 coredump 08-31); v1.0.3 retry gated on the 7.2.2 reboot. **Source:** stability plan T3.4
 

@@ -127,3 +127,9 @@ Ranked by impact; `[Q]` = already queued/tracked this session (do NOT re-file), 
 **Parallel-session observations (flagged, untouched):** 10 heuristic daemon commits 11:51→12:50 from other sessions' work (incl. what was my foreign `flake.lock` M + untracked disk-layout planning doc — both now absorbed/committed by the daemon, not by me); branch showed `ahead 1` of origin at report time; a status report I read during discovery flagged `llama-vlm.nix` under active construction by a parallel session earlier today.
 
 **Wait state:** report written; awaiting instructions.
+
+---
+
+## APPENDIX (2026-10-02 ~13:05 — non-destructive annotation)
+
+**§g.2 ANSWERED:** owner ruled journald + SigNoz TRUSTED — the flm prompt echo is accepted as-is (no filter, no `all=false`). Resolution recorded in `docs/services/fastflowlm.md` (state owner) + the `[x]`-marked decision row in `docs/todo/ai-stack.md`. Effect: **privacy no longer gates the AI-workflow go-live** — §f #11 resolved, #22 dissolved, #3's sequencing constraint ("before any workflow goes live") removed. §g Q1 (scope) and Q3 (extraction schema) remain open.
