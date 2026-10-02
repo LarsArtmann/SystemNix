@@ -104,6 +104,9 @@ in
       imports = [
         paperlessNixosModule
         paperlessGptNixosModule
+        # Options-only import: paperless.nix reads
+        # config.services.llama-rag.embeddingsAlias (embedding model name).
+        (import ../modules/nixos/services/llama-rag.nix { }).flake.nixosModules.llama-rag
         # co-import: the module declares a services.integration entry (the
         # options?-guard does not survive mkIf cfg.enable with enable=true —
         # the 2026-09-15 flake-check-proven caveat).

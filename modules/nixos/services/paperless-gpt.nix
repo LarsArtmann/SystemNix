@@ -90,7 +90,15 @@
         # clobber manual metadata.
         CREATE_NEW_TAGS = lib.boolToString cfg.createNewTags;
         PRESERVE_EXISTING_METADATA = lib.boolToString cfg.preserveExistingMetadata;
-      };
+      }
+      // (lib.optionalAttrs (cfg.ocrProvider == "llm") {
+        OCR_PROVIDER = "llm";
+        VISION_LLM_PROVIDER = "ollama";
+        VISION_LLM_MODEL = cfg.visionModel;
+        OLLAMA_HOST = "http://127.0.0.1:${toString config.services.ollama.port or 11434}";
+        OCR_LIMIT_PAGES = toString cfg.ocrLimitPages;
+        OCR_MAX_RETRIES = "3";
+      });
     in
     {
       # Platform-truth catalog entry (ADR-008): unconditional — describes
@@ -193,6 +201,40 @@
           default = true;
           description = "Never overwrite manually-set metadata on processed documents.";
         };
+
+        # --- Vision OCR (A16 surface — DARK by default until the B56 eval) ---
+        # CONSTRAINT (verified against paperless-gpt v0.28.0 main.go): the
+        # openai vision provider SHARES OPENAI_BASE_URL with the main LLM,
+        # so llama-vlm (:8127/:8128) is NOT reachable as the vision backend
+        # while the main LLM points at FastFlowLM — a second OpenAI base
+        # URL does not exist upstream. The working shape is the OLLAMA
+        # provider path against the local ollama daemon (qwen2.5vl:3b is
+        # already pulled). Do NOT wire VISION_LLM_PROVIDER=openai here.
+        ocrProvider = lib.mkOption {
+          type = lib.types.enum [
+            "off"
+            "llm"
+          ];
+          default = "off";
+          description = ''
+            OCR provider for tesseract-failing scans. "off" (default)
+            disables the OCR leg entirely; "llm" routes page images
+            through the vision model below, tag-gated upstream by
+            AUTO_OCR_TAG (paperless-gpt-ocr-auto).
+          '';
+        };
+
+        visionModel = lib.mkOption {
+          type = lib.types.str;
+          default = "qwen2.5vl:3b";
+          description = "Ollama vision model for the LLM OCR rescue path (ignored while ocrProvider = \"off\"; must exist in the local ollama daemon).";
+        };
+
+        ocrLimitPages = lib.mkOption {
+          type = lib.types.ints.positive;
+          default = 5;
+          description = "Pages per document the image-mode OCR path processes (upstream default 5; 0 would mean all — kept positive for bounded cost).";
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -218,8 +260,19 @@
         # --- API token mint (runtime, tmpfs-only, zero sops) --------------
         systemd.services.paperless-gpt-token = {
           description = "paperless-gpt - Paperless API token mint";
-          after = [ "postgresql.service" ];
-          wants = [ "postgresql.service" ];
+          # AFTER the scheduler: its preStart runs the DB migrations + the
+          # drf token table needs auth_user to EXIST. On a fresh database a
+          # bare after=postgresql raced the migrations and died
+          # "relation auth_user does not exist" (the engine-switch bootstrap
+          # trap, VM-proven 2026-10-02).
+          after = [
+            "postgresql.service"
+            "paperless-scheduler.service"
+          ];
+          wants = [
+            "postgresql.service"
+            "paperless-scheduler.service"
+          ];
           inherit onFailure;
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
