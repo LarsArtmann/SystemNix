@@ -2036,6 +2036,18 @@
                     printf '#!${pkgs.bash}/bin/bash\nexit 0\n' > "$STUB_BIN/chown"
                     chmod +x "$STUB_BIN/chown"
 
+                    cat > "$STUB_BIN/findmnt" <<'STUBEOF'
+                    #!${pkgs.bash}/bin/bash
+                    # findmnt -n -o SOURCE --mountpoint <path>: mountpoint
+                    # iff STUB_STATE_MOUNTED=1 (the flip-deploy-live state).
+                    if [ "''${STUB_STATE_MOUNTED:-0}" = 1 ]; then
+                      echo "/dev/stub-nvme0n1p2[/hot/forgejo]"
+                      exit 0
+                    fi
+                    exit 1
+                    STUBEOF
+                    chmod +x "$STUB_BIN/findmnt"
+
                     export PATH="$STUB_BIN:$PATH"
                     SCRIPT=${./scripts/migrate-forgejo-subvol.sh}
                     rc=0; capt=""
@@ -2067,6 +2079,24 @@
                     fresh prep
                     run prepare; need_rc prep 0; need_has prep "prepare done"
                     run prepare; need_rc prep2 0; need_has prep2 "subvol already exists"
+
+                    # 2b. flip-deploy-live state (2026-10-02 class): STATE_DIR
+                    # is the mounted EMPTY subvol, real data shadowed -> prepare
+                    # refuses with the umount repair, never rsyncs the mount.
+                    fresh shadowed
+                    export STUB_STATE_MOUNTED=1
+                    run prepare; need_rc shadowed 1; need_has shadowed "MOUNTPOINT"
+                    printf '%s\n' "$capt" | grep -qF "umount $STATE" || { echo "FAIL shadowed: umount repair missing"; exit 1; }
+                    [ ! -e "$SUBVOL/data" ] || { echo "FAIL shadowed: rsync ran against the mount"; exit 1; }
+                    unset STUB_STATE_MOUNTED
+
+                    # 2c. already migrated (marker present + mounted) -> refuse
+                    fresh done
+                    touch "$SUBVOL/.subvol-migrated"
+                    export STUB_STATE_MOUNTED=1
+                    run prepare; need_rc done 1; need_has done "ALREADY COMPLETED"
+                    unset STUB_STATE_MOUNTED
+                    rm -f "$SUBVOL/.subvol-migrated"
 
                     # 3. finalize without prepare (empty subvol) refuses
                     fresh noprep

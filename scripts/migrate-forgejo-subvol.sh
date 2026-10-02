@@ -21,6 +21,9 @@
 #      the G1 window: deploying it BEFORE finalize is SAFE — the family
 #      condition-gates on the .subvol-migrated marker this script writes and
 #      stays DOWN, never minting fresh state on an empty/stale subvol.)
+#      If the flip deploy ALREADY landed, `sudo umount /var/lib/forgejo`
+#      FIRST — the state-mount guard below refuses loudly otherwise (the
+#      mounted dir is the EMPTY subvol; the real data is shadowed beneath).
 #   4. After burn-in: trash the safety copy /var/lib/forgejo.qlc-pre-subvol.
 #
 # WHY BUILD BEFORE FINALIZE: finalize deliberately leaves forgejo DOWN —
@@ -30,7 +33,10 @@
 #   nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel
 #
 # ABORT (if step 3 goes wrong before activation):
-#   sudo rmdir /var/lib/forgejo        # the empty placeholder, if present
+#   If /var/lib/forgejo is a MOUNTPOINT (flip deploy already active):
+#     sudo umount /var/lib/forgejo      # the empty subvol mount; QLC dir reappears
+#   else:
+#     sudo rmdir /var/lib/forgejo        # the empty placeholder, if present
 #   sudo mv /var/lib/forgejo.qlc-pre-subvol /var/lib/forgejo
 #   sudo systemctl start forgejo
 #
@@ -67,6 +73,7 @@ BTRFS=$(resolve_tool btrfs)
 RSYNC=$(resolve_tool rsync)
 SYSTEMCTL=$(resolve_tool systemctl)
 FIND=$(resolve_tool find)
+FINDMNT=$(resolve_tool findmnt)
 DU=$(resolve_tool du)
 SHA256SUM=$(resolve_tool sha256sum)
 SORT=$(resolve_tool sort)
@@ -92,6 +99,25 @@ mount_check() {
     die "/mnt/hot is not mounted — forgejo-subvol-bootstrap needs it (Samsung present?)"
 }
 
+# The G1 flip deploy can land BEFORE this window runs. Then STATE_DIR is the
+# mounted (empty) subvol and the real QLC data is SHADOWED beneath it — rsync
+# would copy the empty mount onto itself: a silent no-op "success" (live
+# discovery 2026-10-02). Refuse and print the repair instead.
+state_mount_guard() {
+  if [ -e "$SUBVOL/.subvol-migrated" ]; then
+    die "$STATE_DIR: $SUBVOL/.subvol-migrated exists — migration ALREADY COMPLETED, nothing to do"
+  fi
+  if shadow_src=$("$FINDMNT" -n -o SOURCE --mountpoint "$STATE_DIR" 2>/dev/null); then
+    echo "ERROR: $STATE_DIR is a MOUNTPOINT ($shadow_src) — the real forgejo data is" >&2
+    echo "shadowed beneath it; rsync would copy the empty mount onto itself." >&2
+    echo "Repair:" >&2
+    echo "  sudo umount $STATE_DIR" >&2
+    echo "  sudo du -sh $STATE_DIR   # must now show the real GB-scale QLC data" >&2
+    echo "  sudo $0 $cmd" >&2
+    exit 1
+  fi
+}
+
 ensure_subvol() {
   mount_check
   if "$BTRFS" subvolume show "$SUBVOL" >/dev/null 2>&1; then
@@ -108,6 +134,7 @@ ensure_subvol() {
 cmd="${1:-}"
 case "$cmd" in
 prepare)
+  state_mount_guard
   ensure_subvol
   echo "==> live pre-rsync (forgejo keeps running; no --delete)"
   # -H: hardlinks (git object store), -A/-X: ACLs/xattrs, --partial: resumable
@@ -116,6 +143,7 @@ prepare)
   ;;
 
 finalize)
+  state_mount_guard
   dry_run="${2:-}"
   mount_check
   "$BTRFS" subvolume show "$SUBVOL" >/dev/null 2>&1 ||
