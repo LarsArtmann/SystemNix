@@ -1,0 +1,34 @@
+{
+  "version": 7,
+  "nodes": {
+    "root": {
+      "inputs": {
+        "nixpkgs": "nixpkgs",
+        "flake-parts": "flake-parts",
+        "tool": "tool",
+        "fod-tool": "fod-tool"
+      }
+    },
+    "nixpkgs": {
+      "locked": { "rev": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "type": "github" }
+    },
+    "flake-parts": {
+      "locked": { "rev": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "type": "github" }
+    },
+    "tool": {
+      "inputs": {
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": { "rev": "cccccccccccccccccccccccccccccccccccccccc", "type": "github" }
+    },
+    "fod-tool": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_2"
+      },
+      "locked": { "rev": "dddddddddddddddddddddddddddddddddddddddd", "type": "github" }
+    },
+    "nixpkgs_2": {
+      "locked": { "rev": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "type": "github" }
+    }
+  }
+}

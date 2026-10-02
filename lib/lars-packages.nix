@@ -73,6 +73,7 @@ lib.filterAttrs (_: v: v != null) {
   project-meta = flakePkg inputs.project-meta;
   project-discovery-daemon = flakePkg inputs.project-discovery-daemon;
   projects-management-automation = flakePkg inputs.projects-management-automation;
+  samber-linter = flakePkg inputs.samber-linter;
   todo-list-ai = flakePkg inputs.todo-list-ai;
   tq = flakePkg inputs.go-taskqueue;
 }

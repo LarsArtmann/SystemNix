@@ -19,12 +19,22 @@
 # and NEVER a plain node-key string of its own. Anything else is a violation
 # unless listed in `deliberate` below with a reason.
 #
-# Fix for a violation: add `<input>.inputs.<dep>.follows = "<dep>";` to the
+# fix for a violation: add `<input>.inputs.<dep>.follows = "<dep>";` to the
 # infra-follows group at the end of the inputs attrset in flake.nix
 # (eval-only deps are ALWAYS safe to follow). Only if the consumer's FODs
 # were validated against its own pin (qmd bun, discordsync rollback class)
 # add a documented entry to `deliberate` instead — never both.
-lock:
+# `lock` is the parsed flake.lock; `deliberate` (optional, attrset
+# "<input>.<dep>" -> reason) overrides the built-in non-follow table — used
+# by the self-test fixtures, which contain none of the real edges.
+{
+  lock,
+  deliberate ? {
+    "discordsync.nixpkgs" = "FOD cache-hit interim rollback (2026-09-23): upstream vendorHash validated against its own locked nixpkgs";
+    "qmd.nixpkgs" = "bun nodeModules FOD hash validated against upstream's own nixpkgs bun";
+    "nsfw-classifier.nixpkgs" = "git+file local dev checkout; own build env until its FODs are next regenerated";
+  },
+}:
 let
   inherit (lock) nodes;
   rootInputs = nodes.root.inputs;
@@ -36,14 +46,6 @@ let
     "systems"
     "flake-utils"
   ];
-
-  # Deliberate non-follows. Key: "<input>.<dep>". Every entry needs a
-  # reason naming the FOD/class it protects.
-  deliberate = {
-    "discordsync.nixpkgs" = "FOD cache-hit interim rollback (2026-09-23): upstream vendorHash validated against its own locked nixpkgs";
-    "qmd.nixpkgs" = "bun nodeModules FOD hash validated against upstream's own nixpkgs bun";
-    "nsfw-classifier.nixpkgs" = "git+file local dev checkout; own build env until its FODs are next regenerated";
-  };
 
   # A dep value is a follows alias iff the string names a root input (alias
   # semantics dominate: the lock generator suffixes node keys on collision,

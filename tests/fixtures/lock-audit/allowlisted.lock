@@ -1,0 +1,27 @@
+{
+  "version": 7,
+  "nodes": {
+    "root": {
+      "inputs": {
+        "nixpkgs": "nixpkgs",
+        "flake-parts": "flake-parts",
+        "tool": "tool"
+      }
+    },
+    "nixpkgs": {
+      "locked": { "rev": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "type": "github" }
+    },
+    "flake-parts": {
+      "locked": { "rev": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "type": "github" }
+    },
+    "tool": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_2"
+      },
+      "locked": { "rev": "cccccccccccccccccccccccccccccccccccccccc", "type": "github" }
+    },
+    "nixpkgs_2": {
+      "locked": { "rev": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "type": "github" }
+    }
+  }
+}

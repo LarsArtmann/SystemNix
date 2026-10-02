@@ -569,6 +569,18 @@
       };
     };
 
+    # samber-linter — static analyzer detecting health-washing in samber/do v2 containers
+    # No goPkgAttr upstream: go-standard auto-selects go_1_27 (go.mod floor
+    # 1.27.1, nixpkgs default go is 1.26). GOEXPERIMENT=jsonv2 rides the
+    # upstream extraBuildAttrs; vendorHash lives upstream.
+    samber-linter = {
+      url = "github:LarsArtmann/samber-linter?ref=master";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        go-nix-helpers.follows = "go-nix-helpers";
+      };
+    };
+
     # go-cqrs-lite — CQRS/Event-Sourcing library (provides cqrs-lint CLI)
     # Go dep inputs (go-finding, go-output, etc.) are NOT followed — overriding
     # flake=false tarballs changes vendored content and breaks vendorHash.
@@ -862,6 +874,8 @@
     #   vendorHash FODs (2026-08-25 got-hash drift class). go-nix-helpers
     #   below = following NIXPKGS into the helper flake (eval-only for its
     #   lib), NOT the helper into tools.
+    emeet-pixyd.inputs.flake-parts.follows = "flake-parts";
+    emeet-pixyd.inputs.treefmt-nix.follows = "treefmt-nix";
     buildflow.inputs.flake-parts.follows = "flake-parts";
     cv.inputs.flake-parts.follows = "flake-parts";
     cv.inputs.treefmt-nix.follows = "treefmt-nix";
@@ -887,6 +901,7 @@
     papdashboard.inputs.treefmt-nix.follows = "treefmt-nix";
     papdashboard.inputs.nixpkgs.follows = "nixpkgs";
     projects-management-automation.inputs.nixpkgs.follows = "nixpkgs";
+    samber-linter.inputs.flake-parts.follows = "flake-parts";
     qmd.inputs.flake-utils.follows = "flake-utils";
     storage-collector.inputs.flake-parts.follows = "flake-parts";
     todo-list-ai.inputs.flake-parts.follows = "flake-parts";
