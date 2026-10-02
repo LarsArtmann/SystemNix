@@ -144,6 +144,8 @@ in
         local org="$1" org_id code
         org_id=$(curl -s -H "Authorization: token $FORGEJO_TOKEN" \
           "$FORGEJO_URL/api/v1/orgs/$org" | jq -r '.id // empty' 2>/dev/null)
+        # NOTE: progress output MUST go to stderr — the caller captures this
+        # function's stdout as the numeric org id.
         if [[ ! "$org_id" =~ ^[0-9]+$ ]]; then
           code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
             -H "Authorization: token $FORGEJO_TOKEN" \
@@ -151,11 +153,11 @@ in
             "$FORGEJO_URL/api/v1/orgs" \
             -d "$(jq -n --arg u "$org" '{username: $u}')")
           if [[ "$code" == "200" || "$code" == "201" ]]; then
-            echo "  + Created forgejo org: $org"
+            echo "  + Created forgejo org: $org" >&2
             org_id=$(curl -s -H "Authorization: token $FORGEJO_TOKEN" \
               "$FORGEJO_URL/api/v1/orgs/$org" | jq -r '.id // empty' 2>/dev/null)
           else
-            echo "  ✗ Failed to create forgejo org $org (HTTP $code)"
+            echo "  ✗ Failed to create forgejo org $org (HTTP $code)" >&2
             return 1
           fi
         fi

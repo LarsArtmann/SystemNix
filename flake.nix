@@ -1445,10 +1445,14 @@
                     }
                     PUSH="$FIX/forgejo-push-mirror"
                     FLIP="$FIX/forgejo-flip-repo"
+                    MIRROR="$FIX/forgejo-mirror-github"
+                    RECON="$FIX/forgejo-reconcile-mirrors"
                     HEALTH="$FIX/forgejo-mirror-health"
                     CENSUS="$FIX/forgejo-census"
                     inject ${lib.getExe forgejoScripts.pushMirrorScript} "$PUSH"
                     inject ${lib.getExe forgejoScripts.flipRepoScript} "$FLIP"
+                    inject ${lib.getExe forgejoScripts.mirrorGithubScript} "$MIRROR"
+                    inject ${lib.getExe forgejoScripts.reconcileMirrorsScript} "$RECON"
                     inject ${lib.getExe forgejoScripts.mirrorHealthScript} "$HEALTH"
                     inject ${lib.getExe forgejoScripts.censusScript} "$CENSUS"
 
@@ -1540,7 +1544,131 @@
                     printf 204 > "$STUB_HTTP/$FJM.DELETE.1.code"
                     printf 422 > "$STUB_HTTP/localhost_3000_api_v1_repos_migrate.POST.2.code"
                     run "$FLIP" flip-mid; need_rc flip-mid 1; need_has flip-mid "mirror already deleted"
-                    # the migrate POST counter advanced — re-arm for census below if needed
+                    # the migrate POST counter advanced — the mirror section
+                    # below continues it at .3 (flip used .1/.2).
+
+                    # ============ mirror-github (org-inclusive, 2026-10-02) ============
+                    GH_USER_REPOS=api.github.com_user_repos_visibility_all_affiliation_owner_per_page_100_page_1.GET
+                    GH_ORGS=api.github.com_user_orgs_per_page_100_page_1.GET
+                    GH_ARTM=api.github.com_orgs_Artmann-Minecraft_repos_type_all_per_page_100_page_1.GET
+                    GH_FRESH=api.github.com_orgs_fresh-org_repos_type_all_per_page_100_page_1.GET
+                    MIGR=localhost_3000_api_v1_repos_migrate.POST
+
+                    printf 200 > "$STUB_HTTP/$GH_USER_REPOS.1.code"
+                    cat > "$STUB_HTTP/$GH_USER_REPOS.1.body" <<'JEOF'
+                    [{"name":"SystemNix","clone_url":"https://github.com/LarsArtmann/SystemNix","private":true,"description":"d"},{"name":"new-repo","clone_url":"https://github.com/LarsArtmann/new-repo","private":false,"description":""}]
+                    JEOF
+                    printf 200 > "$STUB_HTTP/$GH_ORGS.1.code"
+                    printf '[{"login":"Artmann-Minecraft"},{"login":"fresh-org"}]' > "$STUB_HTTP/$GH_ORGS.1.body"
+                    printf 200 > "$STUB_HTTP/$GH_ARTM.1.code"
+                    printf '[{"name":"DarkBlocks","clone_url":"https://github.com/Artmann-Minecraft/DarkBlocks","private":true,"description":"x"}]' > "$STUB_HTTP/$GH_ARTM.1.body"
+                    printf 200 > "$STUB_HTTP/$GH_FRESH.1.code"
+                    printf '[{"name":"org-repo","clone_url":"https://github.com/fresh-org/org-repo","private":true,"description":""}]' > "$STUB_HTTP/$GH_FRESH.1.body"
+
+                    printf 200 > "$STUB_HTTP/localhost_3000_api_v1_user.GET.code"
+                    printf '{"id":1}' > "$STUB_HTTP/localhost_3000_api_v1_user.GET.body"
+                    printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_SystemNix.GET.code"
+                    printf '{"id":2,"mirror":true}' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_SystemNix.GET.body"
+                    printf 200 > "$STUB_HTTP/localhost_3000_api_v1_orgs_Artmann-Minecraft.GET.code"
+                    printf '{"id":7}' > "$STUB_HTTP/localhost_3000_api_v1_orgs_Artmann-Minecraft.GET.body"
+                    printf 404 > "$STUB_HTTP/localhost_3000_api_v1_orgs_fresh-org.GET.1.code"
+                    printf 200 > "$STUB_HTTP/localhost_3000_api_v1_orgs_fresh-org.GET.2.code"
+                    printf '{"id":9}' > "$STUB_HTTP/localhost_3000_api_v1_orgs_fresh-org.GET.2.body"
+                    printf 201 > "$STUB_HTTP/localhost_3000_api_v1_orgs.POST.code"
+                    printf '{}' > "$STUB_HTTP/localhost_3000_api_v1_orgs.POST.body"
+                    printf 201 > "$STUB_HTTP/$MIGR.3.code"
+                    printf '{}' > "$STUB_HTTP/$MIGR.3.body"
+                    printf 201 > "$STUB_HTTP/$MIGR.4.code"
+                    printf '{}' > "$STUB_HTTP/$MIGR.4.body"
+                    printf 201 > "$STUB_HTTP/$MIGR.5.code"
+                    printf '{}' > "$STUB_HTTP/$MIGR.5.body"
+
+                    run "$MIRROR"; need_rc mirror-happy 0
+                    need_has mirror-happy "Already mirrored: lars/SystemNix"
+                    need_has mirror-happy "Created mirror: lars/new-repo"
+                    need_has mirror-happy "Created forgejo org: fresh-org"
+                    need_has mirror-happy "Created mirror: Artmann-Minecraft/DarkBlocks"
+                    need_has mirror-happy "Created mirror: fresh-org/org-repo"
+                    need_has mirror-happy "2 user + 2 org"
+                    # migrate payloads: user repo under uid 1, org repos under
+                    # the resolved org uids (7 / 9)
+                    grep -q '"uid": 1' "$STUB_STATE/req.$MIGR.3.json" || { echo "FAIL mirror: user migrate uid"; cat "$STUB_STATE/req.$MIGR.3.json"; exit 1; }
+                    grep -q '"uid": 7' "$STUB_STATE/req.$MIGR.4.json" || { echo "FAIL mirror: ArtM migrate uid"; cat "$STUB_STATE/req.$MIGR.4.json"; exit 1; }
+                    grep -q '"uid": 9' "$STUB_STATE/req.$MIGR.5.json" || { echo "FAIL mirror: fresh-org migrate uid"; cat "$STUB_STATE/req.$MIGR.5.json"; exit 1; }
+                    grep -q '"username": "fresh-org"' "$STUB_STATE/req.localhost_3000_api_v1_orgs.POST.1.json" \
+                      || { echo "FAIL mirror: org create payload"; cat "$STUB_STATE/req.localhost_3000_api_v1_orgs.POST.1.json"; exit 1; }
+
+                    # rate limit: non-array user listing dies loud
+                    printf 200 > "$STUB_HTTP/$GH_USER_REPOS.2.code"
+                    printf '{"message":"rate limited"}' > "$STUB_HTTP/$GH_USER_REPOS.2.body"
+                    run "$MIRROR"; need_rc mirror-rl 1; need_has mirror-rl "did not return an array"
+
+                    # org listing failure dies loud too
+                    printf 200 > "$STUB_HTTP/$GH_USER_REPOS.3.code"
+                    printf '[]' > "$STUB_HTTP/$GH_USER_REPOS.3.body"
+                    printf 200 > "$STUB_HTTP/$GH_ORGS.2.code"
+                    printf '{"message":"bad credentials"}' > "$STUB_HTTP/$GH_ORGS.2.body"
+                    run "$MIRROR"; need_rc mirror-orgfail 1; need_has mirror-orgfail "org listing"
+
+                    # ============ reconcile (pair-keyed, org-aware) ============
+                    export XDG_STATE_HOME="$FIX/xdgstate"; rm -rf "$XDG_STATE_HOME"; mkdir -p "$XDG_STATE_HOME"
+                    TF_R="$FIX/tfr"; mkdir -p "$TF_R"
+                    export FORGEJO_MIRROR_TEXTFILE_DIR="$TF_R"
+
+                    # unnumbered fallbacks for every listing key (numbered
+                    # .1-.3 consumed above; reconcile runs use .4+)
+                    printf 200 > "$STUB_HTTP/$GH_USER_REPOS.code"
+                    cat > "$STUB_HTTP/$GH_USER_REPOS.body" <<'JEOF'
+                    [{"owner":{"login":"LarsArtmann"},"name":"SystemNix"},{"owner":{"login":"LarsArtmann"},"name":"new-repo"},{"owner":{"login":"LarsArtmann"},"name":"renamed-repo"}]
+                    JEOF
+                    printf 200 > "$STUB_HTTP/$GH_ORGS.code"
+                    printf '[{"login":"Artmann-Minecraft"},{"login":"fresh-org"}]' > "$STUB_HTTP/$GH_ORGS.body"
+                    printf 200 > "$STUB_HTTP/$GH_ARTM.code"
+                    printf '[{"name":"DarkBlocks"}]' > "$STUB_HTTP/$GH_ARTM.body"
+                    printf 200 > "$STUB_HTTP/$GH_FRESH.code"
+                    printf '[{"name":"org-repo"}]' > "$STUB_HTTP/$GH_FRESH.body"
+
+                    printf 200 > "$STUB_HTTP/localhost_3000_api_v1_user_repos_limit_50_page_1.GET.code"
+                    cat > "$STUB_HTTP/localhost_3000_api_v1_user_repos_limit_50_page_1.GET.body" <<'JEOF'
+                    [
+                      {"owner":{"login":"lars"},"mirror":true,"name":"SystemNix"},
+                      {"owner":{"login":"lars"},"mirror":true,"name":"new-repo"},
+                      {"owner":{"login":"lars"},"mirror":true,"name":"renamed-repo"},
+                      {"owner":{"login":"lars"},"mirror":true,"name":"old-name"},
+                      {"owner":{"login":"lars"},"mirror":true,"name":"moved-repo"},
+                      {"owner":{"login":"Artmann-Minecraft"},"mirror":true,"name":"DarkBlocks"},
+                      {"owner":{"login":"Artmann-Minecraft"},"mirror":true,"name":"ghost-repo"},
+                      {"owner":{"login":"starred"},"mirror":true,"name":"stranger-repo"}
+                    ]
+                    JEOF
+                    printf 'LarsArtmann/renamed-repo' > "$STUB_HTTP/gh_repos_LarsArtmann_old-name.body"
+                    printf 'SomeOrg/moved-repo' > "$STUB_HTTP/gh_repos_LarsArtmann_moved-repo.body"
+                    printf '{"id":5,"mirror":true}' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_old-name.GET.body"
+                    printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_old-name.GET.code"
+                    printf 204 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_old-name.DELETE.code"
+
+                    run "$RECON"; need_rc recon1 0
+                    need_has recon1 "rename confirmed (1st pass, will delete next run): LarsArtmann/old-name"
+                    need_has recon1 "archived: Artmann-Minecraft/ghost-repo"
+                    need_has recon1 "transferred: LarsArtmann/moved-repo (SomeOrg/moved-repo)"
+                    need_has recon1 "out-of-scope skipped"
+                    grep -q '^forgejo_mirror_total 7$' "$TF_R/forgejo_mirror_reconcile.prom" \
+                      || { echo "FAIL recon1: total 7"; cat "$TF_R/forgejo_mirror_reconcile.prom"; exit 1; }
+                    grep -q '^forgejo_mirror_org_mirrors 2$' "$TF_R/forgejo_mirror_reconcile.prom" \
+                      || { echo "FAIL recon1: org_mirrors 2"; exit 1; }
+                    grep -q '^forgejo_mirror_upstream_deleted_archived 1$' "$TF_R/forgejo_mirror_reconcile.prom" \
+                      || { echo "FAIL recon1: archived 1"; exit 1; }
+                    grep -q '^forgejo_mirror_pending_deletes 1$' "$TF_R/forgejo_mirror_reconcile.prom" \
+                      || { echo "FAIL recon1: pending 1"; exit 1; }
+                    [ "$(wc -l < "$XDG_STATE_HOME/forgejo-mirror-reconcile/known-stale.txt")" = 3 ] \
+                      || { echo "FAIL recon1: known-stale flat lines"; cat "$XDG_STATE_HOME/forgejo-mirror-reconcile/known-stale.txt"; exit 1; }
+                    grep -qxF 'artmann-minecraft/ghost-repo' "$XDG_STATE_HOME/forgejo-mirror-reconcile/known-stale-pairs.txt" \
+                      || { echo "FAIL recon1: known-stale pairs"; exit 1; }
+
+                    run "$RECON"; need_rc recon2 0
+                    need_has recon2 "healed rename: deleted stale 'LarsArtmann/old-name'"
+                    grep -q '^forgejo_mirror_pending_deletes 0$' "$TF_R/forgejo_mirror_reconcile.prom" \
+                      || { echo "FAIL recon2: pending 0"; exit 1; }
 
                     # ============ mirror-health (M07) ============
                     TF="$FIX/tf"; mkdir -p "$TF"
