@@ -444,7 +444,11 @@ fi
 # GGUF is missing). The RAG endpoints themselves are exercised functionally
 # below.
 llama_rag_enabled=false
+llama_rag_reranker=false
 systemctl list-unit-files 'llama-*' --no-legend 2>/dev/null | grep -q llama-embeddings && llama_rag_enabled=true
+# Reranker leg is optional since 2026-10-02 (consumerless, plan A13) —
+# probe it only when the unit actually exists on this host.
+systemctl list-unit-files 'llama-*' --no-legend 2>/dev/null | grep -q llama-reranker && llama_rag_reranker=true
 
 if $llama_rag_enabled; then
   # Warmup tolerance: a deploy restart makes llama-server reload its GGUF
@@ -452,11 +456,15 @@ if $llama_rag_enabled; then
   # 503 until the model is ready. Wait up to 2 min per port before the
   # one-shot checks below declare failure (Gatus covers continuous
   # health; this only needs to catch config regressions post-warmup).
-  for port in 8848 8849; do
+  RAG_PORTS="8848"
+  $llama_rag_reranker && RAG_PORTS="8848 8849"
+  for port in $RAG_PORTS; do
     wait_for_200 "http://127.0.0.1:$port/health" 12 10 || true
   done
   check_local "llama.cpp Embeddings" "8848" "/health" "200" "ok" 2>/dev/null || true
-  check_local "llama.cpp Reranker" "8849" "/health" "200" "ok" 2>/dev/null || true
+  if $llama_rag_reranker; then
+    check_local "llama.cpp Reranker" "8849" "/health" "200" "ok" 2>/dev/null || true
+  fi
 else
   report_skip "llama.cpp RAG - service disabled (units absent from systemd)"
 fi
@@ -1195,17 +1203,19 @@ if $llama_rag_enabled; then
     report_fail "llama.cpp Embeddings - /v1/embeddings unreachable (journalctl -u llama-embeddings -n 30)"
   fi
 
-  if curl -s --compressed --max-time 30 -o /tmp/.smoke-lmrr -w "%{http_code}" \
-    -H "Content-Type: application/json" \
-    -d '{"model":"bge-reranker-v2-m3","query":"what is the capital of france","documents":["paris is the capital of france","london is the capital of england"]}' \
-    "http://localhost:8849/v1/rerank" 2>/dev/null | grep -q "200"; then
-    if jq -e '.results[0].index == 0' /tmp/.smoke-lmrr >/dev/null 2>&1; then
-      report_pass "llama.cpp Reranker - /v1/rerank ranks the correct document first"
+  if $llama_rag_reranker; then
+    if curl -s --compressed --max-time 30 -o /tmp/.smoke-lmrr -w "%{http_code}" \
+      -H "Content-Type: application/json" \
+      -d '{"model":"bge-reranker-v2-m3","query":"what is the capital of france","documents":["paris is the capital of france","london is the capital of england"]}' \
+      "http://localhost:8849/v1/rerank" 2>/dev/null | grep -q "200"; then
+      if jq -e '.results[0].index == 0' /tmp/.smoke-lmrr >/dev/null 2>&1; then
+        report_pass "llama.cpp Reranker - /v1/rerank ranks the correct document first"
+      else
+        report_fail "llama.cpp Reranker - /v1/rerank answered but did not rank the correct document first"
+      fi
     else
-      report_fail "llama.cpp Reranker - /v1/rerank answered but did not rank the correct document first"
+      report_fail "llama.cpp Reranker - /v1/rerank unreachable (journalctl -u llama-reranker -n 30)"
     fi
-  else
-    report_fail "llama.cpp Reranker - /v1/rerank unreachable (journalctl -u llama-reranker -n 30)"
   fi
 fi
 

@@ -1,16 +1,20 @@
 # Runbook: docs/services/llama-rag.md
-# llama.cpp RAG stack - embeddings + reranking on the GPU (ROCm)
+# llama.cpp RAG stack - embeddings (+ optional reranking) on the GPU (ROCm)
 #
-# Two lightweight llama-server instances for retrieval-augmented generation:
+# Lightweight llama-server instances for retrieval-augmented generation:
 #
 #   llama-embeddings  127.0.0.1:8848  bge-m3          --embedding
 #   llama-reranker    127.0.0.1:8849  bge-reranker-v2-m3  --reranking --pooling rank
+#     (reranker leg OFF by default since 2026-10-02: zero consumers exist —
+#      paperless has NO rerank support upstream, and no other candidate in
+#      the ecosystem calls /v1/rerank. Owner-default decision D-rerank,
+#      AI-max plan A13; flip services.llama-rag.reranker.enable to revive)
 #
 # Both models are ~568M params: cold load ~1s, VRAM ~1-2 GB each. No socket
 # activation needed (unlike FastFlowLM's 13.6 GB NPU model) - always-on is
 # affordable for services that need instant embedding/rerank responses.
 #
-# Why two instances: llama.cpp's --embedding and --reranking modes are
+# Why separate instances: llama.cpp's --embedding and --reranking modes are
 # mutually exclusive per server process. Ollama could serve embeddings but
 # does NOT support reranking (issue #3368, open since Mar 2024). Using
 # llama-server for both keeps the RAG stack on a single engine, fully
@@ -20,7 +24,7 @@
 # (/data/ai/models/gguf, created by ai-models.nix) by the
 # llama-rag-model-fetch oneshot, then the servers are started:
 #   /data/ai/models/gguf/bge-m3.gguf
-#   /data/ai/models/gguf/bge-reranker-v2-m3.gguf
+#   /data/ai/models/gguf/bge-reranker-v2-m3.gguf   (only with the reranker leg)
 # Sources are gpustack's verified GGUF conversions of the BAAI checkpoints
 # (gpustack/bge-m3-GGUF, gpustack/bge-reranker-v2-m3-GGUF).
 _: {
@@ -86,16 +90,26 @@ _: {
       # each file into modelDir (same filesystem → atomic rename from .part),
       # verifies the GGUF magic, and stamps the source URL next to the model
       # (a URL change re-fetches; a truncated/partial file is re-downloaded).
-      modelFetches = [
-        {
-          url = "https://huggingface.co/gpustack/bge-m3-GGUF/resolve/main/bge-m3-FP16.gguf";
-          file = cfg.embeddingsModel;
-        }
-        {
-          url = "https://huggingface.co/gpustack/bge-reranker-v2-m3-GGUF/resolve/main/bge-reranker-v2-m3-FP16.gguf";
-          file = cfg.rerankerModel;
-        }
-      ];
+      modelFetches =
+        [
+          {
+            url = "https://huggingface.co/gpustack/bge-m3-GGUF/resolve/main/bge-m3-FP16.gguf";
+            file = cfg.embeddingsModel;
+          }
+        ]
+        ++ lib.optionals cfg.reranker.enable [
+          {
+            url = "https://huggingface.co/gpustack/bge-reranker-v2-m3-GGUF/resolve/main/bge-reranker-v2-m3-FP16.gguf";
+            file = cfg.rerankerModel;
+          }
+        ];
+
+      # Ports with a legitimate owner under the current shape. The leak
+      # monitor and its expected-instance count derive from this; a dropped
+      # reranker leg must not make a single legit embeddings server read as
+      # "expected 2, saw 1".
+      activePorts = [ cfg.embeddingsPort ] ++ lib.optionals cfg.reranker.enable [ cfg.rerankerPort ];
+      activePortRegex = lib.concatStringsSep "|" (map toString activePorts);
 
       fetchScript = pkgs.writeShellScript "llama-rag-model-fetch.sh" ''
           set -euo pipefail
@@ -201,14 +215,14 @@ _: {
           scrape_errors=0
           leaks=0
           for pid in $(${pkgs.procps}/bin/pgrep -x llama-server 2>/dev/null || true); do
-            if ! grep -F "pid=''${pid}," <<<"$ss_out" | grep -Eq ":(${toString cfg.embeddingsPort}|${toString cfg.rerankerPort})[^0-9]"; then
+            if ! grep -F "pid=''${pid}," <<<"$ss_out" | grep -Eq ":(${activePortRegex})[^0-9]"; then
               leaks=$((leaks + 1))
             fi
           done
         fi
 
         {
-          echo "llama_rag_expected_instances 2"
+          echo "llama_rag_expected_instances ${toString (lib.length activePorts)}"
           if [ -n "$leaks" ]; then
             echo "llama_rag_leaked_instances $leaks"
             if [ "$leaks" -gt 0 ]; then
@@ -296,6 +310,22 @@ _: {
           description = "Model alias reported via the /v1/models endpoint and accepted in API requests.";
         };
 
+        reranker.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = ''
+            Serve the reranking leg (bge-reranker-v2-m3 on rerankerPort).
+            OFF since 2026-10-02 (AI-max plan A13, owner-default decision
+            D-rerank): ZERO consumers exist — paperless-ngx has no rerank
+            support in any version (no PAPERLESS_AI_LLM_RERANKER_* env), and
+            the 2026-10-02 deep-dive audit found no consumer in the entire
+            candidate ecosystem. Serving + monitoring + smoke-checking a
+            consumerless endpoint is a phantom path. Flip to true only once
+            an actual /v1/rerank consumer exists (re-add the Gatus check,
+            the signoz rule and the post-deploy functional probe with it).
+          '';
+        };
+
         rerankerModel = lib.mkOption {
           type = lib.types.str;
           default = "bge-reranker-v2-m3.gguf";
@@ -369,10 +399,8 @@ _: {
             wantedBy = [ "multi-user.target" ];
             after = [ "network-online.target" ];
             wants = [ "network-online.target" ];
-            before = [
-              "llama-embeddings.service"
-              "llama-reranker.service"
-            ];
+            before = [ "llama-embeddings.service" ]
+              ++ lib.optionals cfg.reranker.enable [ "llama-reranker.service" ];
             path = [
               pkgs.curl
               pkgs.coreutils
@@ -424,7 +452,7 @@ _: {
             startLimitIntervalSec = 300;
           };
 
-          systemd.services.llama-reranker = {
+          systemd.services.llama-reranker = lib.mkIf cfg.reranker.enable {
             description = "llama.cpp reranking server (bge-reranker-v2-m3, ROCm GPU)";
             after = [
               "network-online.target"
@@ -460,10 +488,8 @@ _: {
           # foreign fails without it).
           systemd.services.llama-rag-leak-metrics = {
             description = "llama-rag leaked llama-server instance metrics";
-            after = [
-              "llama-embeddings.service"
-              "llama-reranker.service"
-            ];
+            after = [ "llama-embeddings.service" ]
+              ++ lib.optionals cfg.reranker.enable [ "llama-reranker.service" ];
             serviceConfig = lib.mkMerge [
               (harden { })
               {
@@ -508,6 +534,8 @@ _: {
                   ];
                   alert = "llama.cpp embeddings server down - RAG indexing and semantic search unavailable";
                 }
+              ]
+              ++ lib.optionals cfg.reranker.enable [
                 {
                   name = "llama.cpp Reranker";
                   group = "AI";
@@ -519,6 +547,8 @@ _: {
                   ];
                   alert = "llama.cpp reranker down - RAG reranking unavailable, search quality degraded";
                 }
+              ]
+              ++ [
                 {
                   # Metric-based (node-exporter textfile): leaked llama-server
                   # processes holding no port listener - the restart-under-QLC-
@@ -533,7 +563,7 @@ _: {
                     "[BODY] == pat(*\nllama_rag_leaks_present 0*)"
                     "[BODY] != pat(*\nllama_rag_scrape_errors 1*)"
                   ];
-                  alert = "llama.cpp leaked server instances detected (llama-server procs holding no :${toString cfg.embeddingsPort}/:${toString cfg.rerankerPort} listener) - the restart-under-IO-saturation D-state leak class. Check: pgrep -ax llama-server, journalctl -u llama-embeddings -u llama-reranker -n 50; a clean reboot unwinds D-state corpses";
+                  alert = "llama.cpp leaked server instances detected (llama-server procs holding no :${activePortRegex} listener) - the restart-under-IO-saturation D-state leak class. Check: pgrep -ax llama-server, journalctl -u llama-embeddings -u llama-reranker -n 50; a clean reboot unwinds D-state corpses";
                 }
               ];
               # Decorative tile: loopback-only embeddings + reranking on GPU.
@@ -550,8 +580,8 @@ _: {
               vHost.layer = "none";
               monitored = true;
             };
-            llama-reranker = {
-              inherit (cfg) enable;
+            llama-reranker = lib.mkIf cfg.reranker.enable {
+              enable = cfg.enable && cfg.reranker.enable;
               vHost.layer = "none";
               monitored = true;
             };
