@@ -142,7 +142,14 @@ in
         )
         // {
           "${cloudDomain}." = serverIP;
-        };
+        }
+        # Public hosts inside the authoritative cloud zone (see
+        # dns-local.nix cloudPublicRecords): the NetBird control plane on
+        # pbx must resolve to its public IP instead of being
+        # shadow-NXDOMAINed by the alias zone. Without this, evo-x2 cannot
+        # reach netbird.larsartmann.cloud at all — client enrollment AND
+        # Gatus checks die on DNS (found live 2026-10-02).
+        // builtins.mapAttrs' (sub: ip: lib.nameValuePair "${sub}.${cloudDomain}." ip) dnsLocal.cloudPublicRecords;
       localZones = [
         "${domain}."
         "${cloudDomain}."
