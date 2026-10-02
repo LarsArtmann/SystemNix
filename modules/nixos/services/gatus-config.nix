@@ -184,6 +184,49 @@ _: {
         })
       ];
 
+      # Mail stack on the pbx VPS (pbx-artmann hosts/pbx/mail.nix: upstream
+      # nix-email Stalwart behind nginx-ACME manual-mode certs; MX for
+      # larsartmann.cloud is 10 mail.artmann.tech). BOTH CHECKS ARE
+      # RED-UNTIL-LIVE BY DESIGN — this pair is the mail-go-live tracker
+      # (pbx-artmann docs/runbooks/mail-go-live.md §8), added the moment
+      # its §4 DNS half landed (live-verified 2026-10-02: MX + null SPF +
+      # DMARC p=reject on larsartmann.cloud all resolve via 1.1.1.1).
+      # Live probe 2026-10-02 from evo-x2: :25/:465/:587/:993 all
+      # connection-REFUSED, :143 filtered — Hetzner's per-account
+      # mail-port block (runbook §1, owner limit request pending) and the
+      # listener-exposure step both still stand; the checks flip green
+      # exactly when the go-live completes. Do NOT delete a red mail
+      # check to clean the dashboard (the 2026-09-02 ossWebsites removal
+      # doctrine covers PERMANENTLY dead targets only) and do NOT wire
+      # discordAlert until the day both checks first read green — a
+      # permanently-red endpoint burns Discord failure events around the
+      # clock (same doctrine). Schemes verified against gatus 5.37
+      # source, not the README alone: starttls:// runs a real SMTP
+      # STARTTLS dialogue, tls:// is implicit TLS, and both populate
+      # [CERTIFICATE_EXPIRATION].
+      mailChecks = [
+        (mkHttpCheck {
+          name = "Mail MX STARTTLS";
+          group = "Mail";
+          url = "starttls://mail.artmann.tech:25";
+          interval = "5m";
+          conditions = [
+            "[CONNECTED] == true"
+            "[CERTIFICATE_EXPIRATION] > 720h"
+          ];
+        })
+        (mkHttpCheck {
+          name = "Mail IMAPS";
+          group = "Mail";
+          url = "tls://mail.artmann.tech:993";
+          interval = "5m";
+          conditions = [
+            "[CONNECTED] == true"
+            "[CERTIFICATE_EXPIRATION] > 720h"
+          ];
+        })
+      ];
+
       # Native OIDC via Pocket ID (Layer 1 SSO). Provision-only: evo-x2 always
       # runs pocket-id-config.provision, which writes the client secret to the
       # file below. systemd LoadCredential reads it as root (DynamicUser means the
@@ -1107,6 +1150,7 @@ _: {
               ]
               ++ map mkWebsiteCheck ossWebsites
               ++ netbirdControlPlaneChecks
+              ++ mailChecks
               # Registry fan-out (services.integration.<name>.checks) — inside
               # the withPapIngest pass so registry endpoints get the
               # PapDashboard ingest alert appended like every built-in one.
