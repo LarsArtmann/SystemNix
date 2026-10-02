@@ -17,7 +17,7 @@
 
 ## b) PARTIALLY DONE
 
-1. **Full `nix flake check --no-build --all-systems` final verdict** — ran post-collapse (job 062): output showed only the 9 pre-existing dead-override warnings, no error lines; a re-run with proper exit-code capture (job 06F) was still in flight at report time. Evidence so far suggests green; exit code unproven at authoring.
+1. **Full `nix flake check --no-build --all-systems`** — GREEN, exit 0, "all checks passed!" (re-verified with proper exit-code capture after authoring; only the 9 pre-existing dead-override warnings remain). Moved to done: item 3 below is closed.
 2. **evo-x2 toplevel build** (job 064, `--keep-going`, covers the papdashboard nixpkgs flip) — launched ~10:15, still running at 10:29. Eval of the same toplevel is green; build verdict pending.
 3. **Named implementation commit + push (original directive item 8)** — NOT done: the daemon swept my in-flight work into 8 heuristic commits (`9722711d`…`6c94fbec`) mid-session; I amended only the hermes rollback (`9f75621d`). The dedup implementation exists as a clean tree but its history is heuristic-message commits; 9 commits total are unpushed. Remains: one properly-messaged implementation commit (squash the heuristic stack via `git reset --soft` to `9f75621d` and re-commit) + push.
 
@@ -48,7 +48,7 @@
 |---|------|--------|--------|----------|
 | 1 | Squash heuristic commit stack into named implementation commit + push (original directive finish) | Critical | S | Pipeline |
 | 2 | Confirm toplevel build (job 064) green → papdashboard flip proven at build level | Critical | S | Quality |
-| 3 | Re-verify `nix flake check --no-build --all-systems` exit 0 (job 06F) | Critical | S | Quality |
+| 3 | ~~Re-verify flake check~~ DONE at 10:33: exit 0, all checks passed | Critical | S | Quality |
 | 4 | flake-compat + git-hooks root-promotion + follows (12 nodes) — queued | High | M | Quality |
 | 5 | Add hermes-class rollback-on-red to the flake-update bot runbook | High | S | Pipeline |
 | 6 | Remove 9 dead `systems` override lines (warnings on every eval) | Medium | S | Cleanup |
