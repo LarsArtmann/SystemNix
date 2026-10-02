@@ -58,7 +58,6 @@ in
                   group = "users";
                   restartUnits = [
                     "forgejo-github-sync.service"
-                    "forgejo-ensure-repos.service"
                   ];
                 }
                 [

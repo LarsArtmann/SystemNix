@@ -1320,9 +1320,11 @@ in
         authorizedKeys = [ nix-ssh-config.sshKeys.lars ];
       };
 
-      # Declarative Forgejo repository mirroring
+      # Declarative Forgejo repository mirroring — COLLAPSED 2026-10-02:
+      # redundant since the 2026-09-18 general sync (now org-inclusive) covers
+      # every owned repo every 6h; module kept for potential future use.
       forgejo-repos = {
-        enable = true;
+        enable = false;
         repos = [
           "git@github.com:LarsArtmann/dnsblockd.git"
           "git@github.com:LarsArtmann/BuildFlow.git"
