@@ -22,3 +22,39 @@ Background LLM server (Qwen3.6-35B-A3B MoE, ~3B active, 21.6 GB mmap'd since v1.
 - **Crates runtime**: `XILINX_XRT` is set to `$out` (the package's store path) so XRT can find `./lib/x86_64-linux-gnu/`. The wrapper creates the multiarch symlinks on first run if absent.
 - **Hand-started process is now obsolete**: delete `~/.local/share/fastflowlm/`, `~/.local/bin/flm`, and the LD_LIBRARY_PATH exports in `~/.bashrc` after the deploy proves stable.
 - **Manual install**: `~/projects/anime-comic-pipeline/docs/npu-fastflowlm-llm-server.md` has the measured resource usage (24.9 GB RSS at idle, 14 t/s decode, ~3 s TTFT) and full operational guide.
+
+## Connection budget (MaxConnections=8 vs the consumer fleet, AI-max plan A23 2026-10-02)
+
+`fastflowlm.socket` (`:52625`) is inetd-style with **`MaxConnections = 8`** — flm's
+own hard limit is 10, so 8 deliberately never approaches it (probing it with HTTP
+during cold load churned slots and reset genuine clients, 2026-08-18). Every
+consumer is a loopback OpenAI-compatible client; each OPEN connection holds one
+slot for its FULL request duration (2-5 min cold load included — the connection
+queues in-socket, the slot is held from accept to close).
+
+| Consumer | Concurrency | Notes |
+| --- | --- | --- |
+| paperless celery ×2 workers (`PAPERLESS_TASK_WORKERS=2`) | ≤2 | native AI suggestions (v3.1 workflow); one in-flight LLM call per worker |
+| paperless-gpt daemon (:8106) | ≤1 | langchaingo client, rate-limited (default 120 rpm, 3 retries, 30s backoff cap) — sequential per document batch |
+| papdashboard PAP_INSIGHT enricher | ≤1 | periodic insight generation |
+| PMA go-commit daemon | ≤1 | commit-message generation, bursty |
+| ad-hoc shells (`llama-server-rocm`, crush sessions) | 0-2 | human-driven, rare |
+
+**Worst case:** 2+1+1+1+2 = **7 of 8 slots** — within budget but with exactly one
+slot of headroom. If a SECOND always-on LLM consumer is ever added (e.g. a weekly
+digest oneshot overlapping a suggestion batch), audit this table FIRST; beyond 8
+the socket refuses new connections (flm hard-fails at 10). Contention symptoms:
+`fastflowlm@.service` instances exiting with connect errors against :52626 while
+the backend journal shows accepts — see the 2026-08-18 slot-churn incident.
+
+**Identifying consumers in SigNoz (B76):** flm's per-connection bridge units are
+named `fastflowlm@<n>.service`, which do NOT identify the CALLER. The caller
+shows in the FLM REQUEST ECHO (journald `all=true`, owner-trusted 2026-10-02):
+each echoed request body carries the consumer's prompt signature (paperless
+suggestions embed document content + the fixed paperless system prompt;
+paperless-gpt prompts are recognizable by the Go template shape;
+PAP_INSIGHT/commit messages by their fixed preambles). SigNoz query:
+`reporter=flm` logs filtered by body keyword, or journalctl
+`-u fastflowlm --since -24h | grep -F '<signature>'`. There is no
+connection-level source-service label in flm itself (loopback, no auth headers
+distinction) — the echo is the attribution surface.

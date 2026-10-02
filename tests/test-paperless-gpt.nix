@@ -55,6 +55,10 @@ in
       imports = [
         paperlessNixosModule
         paperlessGptNixosModule
+        # co-import: the module declares a services.integration entry (the
+        # options?-guard does not survive mkIf cfg.enable with enable=true —
+        # the 2026-09-15 flake-check-proven caveat).
+        (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration
         # co-import: paperless-gpt declares an unconditional
         # services.catalog entry (ADR-008; loud eval failure if missing).
         (import ../modules/nixos/services/catalog.nix { }).flake.nixosModules.catalog
