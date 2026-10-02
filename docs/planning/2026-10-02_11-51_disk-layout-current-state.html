@@ -287,16 +287,16 @@
       }
 
       /* ---- tables --------------------------------------------------------- */
-      table {
-        display: block;
-        width: max-content;
-        max-width: 100%;
+      .tbl {
         overflow-x: auto;
+        margin: 16px 0;
+        border: 1px solid var(--border-strong);
+      }
+      table {
+        width: 100%;
         border-collapse: collapse;
         background: var(--surface-raised);
-        border: 1px solid var(--border-strong);
         font-size: 14px;
-        margin: 16px 0;
       }
       th {
         font-family: var(--font-mono);
@@ -321,6 +321,9 @@
       th.mono {
         font-family: var(--font-mono);
         font-size: 12.5px;
+      }
+      .sheet td,
+      .sheet th {
         white-space: nowrap;
       }
       td.wrap {
@@ -454,7 +457,7 @@
       }
       @media (max-width: 520px) {
         .bar-row {
-          grid-template-columns: 86px 1fr 92px;
+          grid-template-columns: 90px 1fr 92px;
           gap: 10px;
         }
         .bar-row .who {
@@ -467,11 +470,12 @@
           max-width: none;
           padding: 0;
         }
-        table {
-          display: table;
-          width: 100%;
+        .tbl {
+          overflow-x: visible;
+          border: none;
         }
         td.mono {
+          white-space: normal;
           overflow-wrap: anywhere;
         }
         .diagram {
@@ -637,6 +641,7 @@
           <code>/dev/disk/by-id</code> or <code>by-label</code> — the names
           below are today's live truth, not config truth.
         </p>
+        <div class="tbl">
         <table>
           <thead>
             <tr>
@@ -712,6 +717,7 @@
             </tr>
           </tbody>
         </table>
+        </div>
         <div class="callout">
           <b class="t">GPT numbering gap on the Lexar.</b>
           Only p6–p9 exist (verified via /proc/partitions); p1–p5 are index
@@ -826,6 +832,7 @@ flowchart TB
           mount off the Samsung's <code>hot/forgejo</code> subvol — the first
           hot-DB migration landed.
         </p>
+        <div class="tbl sheet">
         <table>
           <thead>
             <tr>
@@ -950,6 +957,7 @@ flowchart TB
             </tr>
           </tbody>
         </table>
+        </div>
         <div class="callout">
           <b class="t">disk-adjacent pseudo-devices:</b>
           <code>zram0</code> 62.2G zstd swap (the only swap), and
@@ -1045,6 +1053,7 @@ flowchart LR
           <span class="idx">08</span>
           <h2>Delta since the 2026-09-30 snapshot</h2>
         </div>
+        <div class="tbl">
         <table>
           <thead>
             <tr>
@@ -1126,6 +1135,7 @@ flowchart LR
             </tr>
           </tbody>
         </table>
+        </div>
       </section>
 
       <!-- ================= 9. GOTCHAS ================= -->
