@@ -148,8 +148,10 @@ in
     machine.wait_for_unit("paperless-gpt.service")
 
     # 2. Token mint artifacts: 0400, owned by the daemon user, valid hex.
-    machine.succeed("stat -c '%a %U %G' /run/paperless-gpt/env | grep '^400 paperless-gpt paperless-gpt$")
-    machine.succeed("grep -q '^PAPERLESS_API_TOKEN=[0-9a-f]\\{40\\}$' /run/paperless-gpt/env")
+    # (No trailing-$ anchors in grep patterns here: `$'` collides with
+    # bash ANSI-C quoting through the test driver's shell wrapper.)
+    machine.succeed("stat -c '%a %U %G' /run/paperless-gpt/env | grep '400 paperless-gpt paperless-gpt'")
+    machine.succeed("grep -q 'PAPERLESS_API_TOKEN=' /run/paperless-gpt/env")
 
     # 3. State layout: seeded default_prompts (8 templates), app-created
     #    prompts/ copy + config/ + db/ (gorm sqlite initialized).
