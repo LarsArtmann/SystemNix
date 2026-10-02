@@ -6149,6 +6149,23 @@
         "type": "github"
       }
     },
+    "paperless-gpt-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1789725336,
+        "narHash": "sha256-7fHGT+FP2R1QogOEH4bgeG5Ucs5csyG3rg/iSiaDz0s=",
+        "owner": "icereed",
+        "repo": "paperless-gpt",
+        "rev": "0a59ea4b2c0b70afbf01bafcd0a0858372368009",
+        "type": "github"
+      },
+      "original": {
+        "owner": "icereed",
+        "ref": "v0.28.0",
+        "repo": "paperless-gpt",
+        "type": "github"
+      }
+    },
     "project-discovery-daemon": {
       "flake": false,
       "locked": {
@@ -6626,6 +6643,7 @@
         "otel-tui": "otel-tui",
         "overview": "overview",
         "papdashboard": "papdashboard",
+        "paperless-gpt-src": "paperless-gpt-src",
         "project-discovery-daemon": "project-discovery-daemon_2",
         "project-meta": "project-meta",
         "projects-management-automation": "projects-management-automation",

@@ -168,6 +168,17 @@
       flake = false;
     };
 
+    # paperless-gpt — AI metadata enrichment + custom-field extraction for
+    # Paperless-ngx (github:icereed/paperless-gpt, MIT). TAG-PINNED at the
+    # v0.28.0 release so the vendorHash + npmDepsHash in
+    # pkgs/paperless-gpt.nix stay reproducible; bump tag + both hashes
+    # together (a moving ref would re-break the FODs on every lock update —
+    # the vendorHash-shim churn class documented in lib/lars-packages.nix).
+    paperless-gpt-src = {
+      url = "github:icereed/paperless-gpt/v0.28.0";
+      flake = false;
+    };
+
     nix-ssh-config = {
       url = "github:LarsArtmann/nix-ssh-config";
       inputs = {
@@ -1124,6 +1135,13 @@
                 sqlc
                 systemd-timer-monitor
                 ;
+
+              # Third-party source build (tag-pinned input, see inputs.paperless-gpt-src).
+              # The paperless-gpt module callPackages the SAME file with the
+              # same src → identical store path on both surfaces.
+              paperless-gpt = pkgs.callPackage ./pkgs/paperless-gpt.nix {
+                src = inputs.paperless-gpt-src;
+              };
 
               # Pre-deploy batch build (Pareto T17/F65): ONE command
               # surfaces every stale vendorHash / FOD breakage in the
