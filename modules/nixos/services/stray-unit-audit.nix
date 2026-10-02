@@ -47,7 +47,16 @@
       cfg = config.services.stray-unit-audit;
 
       getList =
-        u: k: if u ? "${k}" then (let v = u."${k}"; in if lib.isList v then v else [ ]) else [ ];
+        u: k:
+        if u ? "${k}" then
+          (
+            let
+              v = u."${k}";
+            in
+            if lib.isList v then v else [ ]
+          )
+        else
+          [ ];
 
       depKeys = [
         "after"
@@ -64,16 +73,18 @@
       depText =
         units:
         lib.concatStrings (
-          lib.mapAttrsToList (
-            _n: u: lib.concatStringsSep " " (lib.concatMap (getList u) depKeys) + " "
-          ) units
+          lib.mapAttrsToList (_n: u: lib.concatStringsSep " " (lib.concatMap (getList u) depKeys) + " ") units
         );
 
       wantedByText =
         units:
         lib.concatStrings (
           lib.mapAttrsToList (
-            _n: u: lib.concatStringsSep " " (getList u "wantedBy") + " " + lib.concatStringsSep " " (getList u "requiredBy") + " "
+            _n: u:
+            lib.concatStringsSep " " (getList u "wantedBy")
+            + " "
+            + lib.concatStringsSep " " (getList u "requiredBy")
+            + " "
           ) units
         );
 
@@ -90,7 +101,9 @@
 
       stray =
         n:
-        let s = config.systemd.services."${n}"; in
+        let
+          s = config.systemd.services."${n}";
+        in
         s.enable
         && getList s "wantedBy" == [ ]
         && getList s "requiredBy" == [ ]

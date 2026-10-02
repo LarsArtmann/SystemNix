@@ -48,8 +48,9 @@ let
     s: !(dnsRecords ? "${s}.${cloud}.") || dnsRecords."${s}.${cloud}." != cloudPublic.${s}
   ) (builtins.attrNames cloudPublic);
   rpi3MissingPublicCloud = builtins.filter (
-    s: !(rpi3.services.dns-blocker.localRecords ? "${s}.${cloud}.")
-      || rpi3.services.dns-blocker.localRecords."${s}.${cloud}." != cloudPublic.${s}
+    s:
+    !(rpi3.services.dns-blocker.localRecords ? "${s}.${cloud}.")
+    || rpi3.services.dns-blocker.localRecords."${s}.${cloud}." != cloudPublic.${s}
   ) (builtins.attrNames cloudPublic);
   rpi3ZonesOk =
     rpi3.services.dns-blocker.localZones == [

@@ -1025,8 +1025,10 @@
       # flake.lock hygiene gate (2026-10-02 dedup): fails eval when a root
       # input re-grows its own infra-dep lock node (blanket lock waves do
       # this silently). Semantics + deliberate non-follows: lib/lock-audit.nix.
-      lockAuditViolations = import ./lib/lock-audit.nix (
-        builtins.fromJSON (builtins.readFile ./flake.lock)
+      lockAuditViolations = (
+        import ./lib/lock-audit.nix {
+          lock = builtins.fromJSON (builtins.readFile ./flake.lock);
+        }
       );
       lockAuditGuard =
         assert
@@ -1037,9 +1039,7 @@
             Fix: add '<input>.inputs.<dep>.follows = "<dep>";' to the infra-follows group at the end of the inputs attrset in flake.nix (eval-only deps are always safe to follow) — or, only if the consumer's FODs were validated against its own pin, a documented entry in lib/lock-audit.nix `deliberate`.
           '';
         true;
-      allEvalGuards = builtins.seq nixpkgsTarballGuard (
-        builtins.seq inputUrlRevGuard lockAuditGuard
-      );
+      allEvalGuards = builtins.seq nixpkgsTarballGuard (builtins.seq inputUrlRevGuard lockAuditGuard);
     in
     builtins.seq allEvalGuards flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [
@@ -3148,6 +3148,47 @@
                 echo "gitleaks coverage: 3 positive classes detected, 3 negative classes clean"
                 touch $out
               '';
+
+              # Lock-audit selftest (2026-10-02 dedup): proves the eval-time
+              # flake.lock gate (lib/lock-audit.nix, forced via allEvalGuards)
+              # actually fires. Mirrors the gitleaks-coverage pattern: a guard
+              # that has never seen a positive fixture is phantom coverage —
+              # the audit landed only after catching a real miss (emeet-pixyd)
+              # in its first live run.
+              lock-audit-selftest =
+                pkgs.runCommand "lock-audit-selftest"
+                  {
+                    nativeBuildInputs = [ pkgs.nix ];
+                  }
+                  ''
+                    set -u
+                    run() { nix eval --json --expr "$1" 2>/dev/null; }
+                    AUDIT=${./lib/lock-audit.nix}
+                    FIXTURES=${./tests/fixtures/lock-audit}
+
+                    # 1. clean lock + empty deliberate -> no violations
+                    out=$(run "(import $AUDIT { lock = builtins.fromJSON (builtins.readFile $FIXTURES/clean.lock); deliberate = {}; })")
+                    [ "$res" = "[]" ] || { echo "SELFTEST FAIL: clean fixture produced violations: $out"; exit 1; }
+
+                    # 2. same-rev dup edge -> violation naming input + dep
+                    out=$(run "(import $AUDIT { lock = builtins.fromJSON (builtins.readFile $FIXTURES/evil-dup.lock); deliberate = {}; })")
+                    echo "$res" | grep -q 'tool.*flake-parts' || { echo "SELFTEST FAIL: evil-dup not flagged: $out"; exit 1; }
+
+                    # 3. foreign-rev (drift) edge -> violation
+                    out=$(run "(import $AUDIT { lock = builtins.fromJSON (builtins.readFile $FIXTURES/evil-drift.lock); deliberate = {}; })")
+                    echo "$res" | grep -q 'fod-tool.*nixpkgs' || { echo "SELFTEST FAIL: evil-drift not flagged: $out"; exit 1; }
+
+                    # 4. deliberate-allowlisted edge -> clean (the qmd/discordsync class)
+                    out=$(run "(import $AUDIT { lock = builtins.fromJSON (builtins.readFile $FIXTURES/allowlisted.lock); deliberate = { \"tool.nixpkgs\" = \"fixture reason\"; }; })")
+                    [ "$res" = "[]" ] || { echo "SELFTEST FAIL: allowlisted fixture flagged: $out"; exit 1; }
+
+                    # 5. stale deliberate entry -> flagged (table cannot rot)
+                    out=$(run "(import $AUDIT { lock = builtins.fromJSON (builtins.readFile $FIXTURES/clean.lock); deliberate = { \"ghost.nixpkgs\" = \"x\"; }; })")
+                    echo "$res" | grep -q 'matches no live edge' || { echo "SELFTEST FAIL: stale deliberate not flagged: $out"; exit 1; }
+
+                    echo "lock-audit: 5 legs green (clean, dup, drift, allowlisted, stale-deliberate)"
+                    touch $out
+                  '';
 
               # Recursive chown/chmod walks in modules that also configure
               # Bind*Paths: systemd builds the mount namespace BEFORE any

@@ -138,7 +138,9 @@ in
         # NetBird DNS nameserver group points VPN clients at this host —
         # without the records, netbird.larsartmann.cloud NXDOMAINs inside
         # the VPN itself (found live 2026-10-02).
-        // lib.mapAttrs' (sub: ip: lib.nameValuePair "${sub}.${cloudDomain}." ip) dnsLocal.cloudPublicRecords;
+        // lib.mapAttrs' (
+          sub: ip: lib.nameValuePair "${sub}.${cloudDomain}." ip
+        ) dnsLocal.cloudPublicRecords;
       localZones = [
         "${domain}."
         "${cloudDomain}."

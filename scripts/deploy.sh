@@ -394,7 +394,7 @@ if nix run .#pre-deploy-check; then
   # extra eval latency. WARN-grade on purpose: deploys of fixes routinely
   # land seconds after their own commit.
   race_head_ts=$(git log -1 --format=%ct 2>/dev/null || echo 0)
-  race_head_age=$(( $(date +%s) - race_head_ts ))
+  race_head_age=$(($(date +%s) - race_head_ts))
   if [ "$race_head_age" -lt 900 ]; then
     echo "⚠ HEAD is ${race_head_age}s old (<15 min) — parallel-session window open; checking first-activation units"
     race_new_units=$(nix eval --raw .#nixosConfigurations.evo-x2.config.systemd.services --apply 'attrs: builtins.concatStringsSep "\n" (builtins.attrNames attrs)' 2>/dev/null | sort -u || true)

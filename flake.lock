@@ -6632,6 +6632,7 @@
         "pyproject-build-systems": "pyproject-build-systems_2",
         "pyproject-nix": "pyproject-nix_2",
         "qmd": "qmd",
+        "samber-linter": "samber-linter_2",
         "signoz-collector-src": "signoz-collector-src",
         "signoz-src": "signoz-src",
         "silent-sddm": "silent-sddm",
@@ -6820,6 +6821,33 @@
       "original": {
         "owner": "LarsArtmann",
         "ref": "refs/tags/v0.3.0",
+        "repo": "samber-linter",
+        "type": "github"
+      }
+    },
+    "samber-linter_2": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "go-nix-helpers": [
+          "go-nix-helpers"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790868818,
+        "narHash": "sha256-WEpG2mxpvokTNvmZIKOpDyz1ouukksB2t6qJ7VluhLE=",
+        "owner": "LarsArtmann",
+        "repo": "samber-linter",
+        "rev": "2b0910fbb819ad2c42e2623a281823db6ae64698",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "master",
         "repo": "samber-linter",
         "type": "github"
       }

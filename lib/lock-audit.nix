@@ -30,9 +30,11 @@
 {
   lock,
   deliberate ? {
-    "discordsync.nixpkgs" = "FOD cache-hit interim rollback (2026-09-23): upstream vendorHash validated against its own locked nixpkgs";
+    "discordsync.nixpkgs" =
+      "FOD cache-hit interim rollback (2026-09-23): upstream vendorHash validated against its own locked nixpkgs";
     "qmd.nixpkgs" = "bun nodeModules FOD hash validated against upstream's own nixpkgs bun";
-    "nsfw-classifier.nixpkgs" = "git+file local dev checkout; own build env until its FODs are next regenerated";
+    "nsfw-classifier.nixpkgs" =
+      "git+file local dev checkout; own build env until its FODs are next regenerated";
   },
 }:
 let
@@ -64,11 +66,7 @@ let
           let
             value = nodeInputs.${dep} or null;
             isDeliberate = builtins.hasAttr "${inputName}.${dep}" deliberate;
-            bad =
-              value != null
-              && !isAlias value
-              && !builtins.isList value
-              && !isDeliberate;
+            bad = value != null && !isAlias value && !builtins.isList value && !isDeliberate;
           in
           if bad then
             [
@@ -85,31 +83,25 @@ let
       let
         ref = rootInputs.${inputName};
       in
-      if builtins.isString ref && builtins.hasAttr ref nodes then
-        checkInput inputName ref
-      else
-        [ ]
+      if builtins.isString ref && builtins.hasAttr ref nodes then checkInput inputName ref else [ ]
     ) (builtins.attrNames rootInputs);
 
   # A deliberate entry pointing at an edge that no longer exists is stale
   # configuration — fail so the table cannot rot.
   staleDeliberate =
     let
-      activeEdges =
-        builtins.concatLists (
-          builtins.map (
-            inputName:
-            let
-              ref = rootInputs.${inputName};
-            in
-            if builtins.isString ref && builtins.hasAttr ref nodes then
-              builtins.map (dep: "${inputName}.${dep}") (
-                builtins.attrNames (nodes.${ref}.inputs or { })
-              )
-            else
-              [ ]
-          ) (builtins.attrNames rootInputs)
-        );
+      activeEdges = builtins.concatLists (
+        builtins.map (
+          inputName:
+          let
+            ref = rootInputs.${inputName};
+          in
+          if builtins.isString ref && builtins.hasAttr ref nodes then
+            builtins.map (dep: "${inputName}.${dep}") (builtins.attrNames (nodes.${ref}.inputs or { }))
+          else
+            [ ]
+        ) (builtins.attrNames rootInputs)
+      );
     in
     builtins.map (key: "deliberate allowlist entry '${key}' matches no live edge — remove it") (
       builtins.filter (key: !builtins.elem key activeEdges) (builtins.attrNames deliberate)

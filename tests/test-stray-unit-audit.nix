@@ -30,8 +30,7 @@
 let
   lib = inputs.nixpkgs.lib;
 
-  audit =
-    (import ../modules/nixos/services/stray-unit-audit.nix).flake.nixosModules.stray-unit-audit;
+  audit = (import ../modules/nixos/services/stray-unit-audit.nix).flake.nixosModules.stray-unit-audit;
 
   evalWarnings =
     extraModules:
