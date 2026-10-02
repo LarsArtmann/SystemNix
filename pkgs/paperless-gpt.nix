@@ -72,6 +72,11 @@ buildGoModule' {
   # go.mod requires go >= 1.27.1.
   vendorHash = "sha256-81a3B16v4rF8ut2HcT0w/KgT8XaZahQ3GPv/oEenXPk=";
 
+  # Upstream tests are E2E (docker-compose paperless + LLM mock, pdfcpu
+  # wants $HOME) — not hermetic. Binary verification happens via the
+  # module's deploy smoke + version print, not here.
+  doCheck = false;
+
   # mattn/go-sqlite3 (gorm local DB) needs CGO_ENABLED=1.
   env.CGO_ENABLED = 1;
 

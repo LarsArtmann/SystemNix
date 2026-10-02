@@ -155,7 +155,7 @@
                     "-identity-db ${stateDir}/identity.db"
                     "-api-token \${API_TOKEN}"
                   ]
-                  ++ lib.optionals cfg.auth [
+                  ++ lib.optionals cfg.auth.enable [
                     "-auth"
                     "-rpid crm.${domain}"
                     "-origin https://crm.${domain}"
