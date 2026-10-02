@@ -298,6 +298,10 @@
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
+              # Stay active(exited) after the mint: the daemon's Requires=
+              # pulls become no-ops (the llama-rag-model-fetch pattern),
+              # deploy.sh re-runs it explicitly to converge a revoked token.
+              RemainAfterExit = true;
               User = paperlessCfg.user;
               ReadWritePaths = [ paperlessCfg.dataDir ];
               RuntimeDirectory = "paperless-gpt";

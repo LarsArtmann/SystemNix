@@ -266,3 +266,43 @@ Knowledge below moved verbatim from the root AGENTS.md restructure — it is the
 - **v3 features wired:** `PAPERLESS_TRASH_DIR = ${dataDir}/trash` (30d; tmpfiles rule creates it), barcode splitting (`ENABLE_BARCODES` + `ENABLE_ASN_BARCODE`, PATCHT + Code-39 ASN), `CONSUMER_RECURSIVE`, filename format `{{ created_year }}/{{ correspondent }}/{{ title }}` — v3 REQUIRES double-curly (single-curly still auto-converts via `convert_format_str_to_template_format` but warns on every start; the VM test caught this)
 - **Monitoring:** Gatus login-page body check (`pat(*Paperless-ngx sign in*)` + `pat(*oidc/pocket-id*)` SSO button when Pocket ID is enabled — functional, not just 200) + Tika `:9998/` + Gotenberg `:3199/health`, all Discord-alerting; 6 services in system-health `monitoredServices`; deploy smoke in `post-deploy-check.sh` (login body + SSO button + both sidecars). **The mail-wiring smoke was a permanent phantom-RED until 2026-09-05:** it grepped `/var/lib/paperless/paperless.conf`, a file NOTHING generates — the nixpkgs module renders `services.paperless.settings` as `Environment=` directives in the deployed unit (verified live), and `/var/lib/paperless` is the legacy pre-pool dataDir anyway. The check now greps `/etc/systemd/system/paperless-web.service` (symlink to the store unit) and has been PASSING continuously since the 2026-09-05 fix — current status: mail wiring verified, no action pending. Rule: probe the surface the config actually lands on — verify the delivery mechanism before writing a file-path assertion
 - **Old SQLite data:** pre-PG export sits in `/mnt/pool/services/paperless/export`; recover via `document_importer` if wanted (user decision pending). Old traps still true: flakes only see TRACKED files (`git add` new modules at write time); hardened oneshots get scratch space from `mktemp -d`, never host paths under `ReadWritePaths` (status 226)
+
+## AI enrichment bridge: paperless-gpt (2026-10-02, AI-max plan A8)
+
+`services.paperless-gpt` (module `paperless-gpt.nix`, loopback :8106, NO vHost —
+the embedded UI has no auth) adds what native paperless AI cannot do: custom-field
+extraction (Append/Update/Replace write modes) and tag-gated background
+processing (`paperless-gpt-auto` → `paperless-gpt-auto-complete`; retry cap 3 →
+`paperless-gpt-failed`). Package: `pkgs/paperless-gpt.nix` from the tag-pinned
+`paperless-gpt-src` input (v0.28.0, MIT). Token: runtime-minted
+(`paperless-gpt-token` oneshot, bank-sync pattern — zero sops). LLM: FastFlowLM
+(qwen3.6-moe) via the OpenAI-compatible path; suggestion language pinned German.
+Safe defaults: `CREATE_NEW_TAGS=false` (existing vocabulary only) +
+`PRESERVE_EXISTING_METADATA=true`. Vision OCR options exist but stay OFF
+(`ocrProvider = "off"`) until the B56 eval — and note the CONSTRAINT: the openai
+vision provider shares OPENAI_BASE_URL with the main LLM, so llama-vlm is NOT
+reachable as paperless-gpt's vision backend; the viable path is the ollama
+provider (qwen2.5vl:3b is already pulled).
+
+**Stage-0 eval (A3):** `sudo scripts/paperless-ai-stage0-eval.sh` renders the
+per-field suggestion-quality table for 10 representative docs via
+`GET /api/documents/<id>/ai_suggestions/` (read-only — computes, never applies).
+Includes the reasoning-burn check (empty suggestions = the qwen3.6-moe
+think-token signature). Run it before enabling the Apply-AI-suggestions
+workflow (A4 gate).
+
+**Quarterly re-audit (A24):** re-run the adoption audit
+(`docs/research/2026-10-02_paperless-ngx-ai-deep-dive.html` baseline, score
+42/100) every quarter — next due 2027-01-02. Check: native AI version delta
+(new suggestion targets?), paperless-gpt release notes (upstream is ACTIVE),
+flm consumer count vs the connection budget in `docs/services/fastflowlm.md`.
+
+## llama-vlm live verification (A15, 2026-10-02)
+
+First verified inferences since system-796: :8128 (Qwen3-VL-8B captioner) —
+correct image description in 100s/image, cold load 5m07s, 8.9 GB RSS.
+:8127 (Gemma-4-E4B) — text-only works (35s for a 5-token answer), but the
+VISION path exceeds 10 MINUTES per 32x32 image (mmproj processing as
+configured; n_slots=4 CPU split suspected) — do NOT wire it into any vision
+pipeline without a slot/parallelism retune; the captioner is the vision
+workhorse. Both sockets survived sustained load without wedge (24 min soak).
