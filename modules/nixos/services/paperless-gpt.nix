@@ -69,6 +69,7 @@
       '';
 
       daemonEnvironment = {
+        PAPERLESS_BASE_URL = "http://127.0.0.1:${toString paperlessPort}";
         LISTEN_INTERFACE = "127.0.0.1:${toString cfg.port}";
         GIN_MODE = "release";
         LOG_LEVEL = cfg.logLevel;
