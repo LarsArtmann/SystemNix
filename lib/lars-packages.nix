@@ -74,5 +74,17 @@ lib.filterAttrs (_: v: v != null) {
   projects-management-automation = flakePkg inputs.projects-management-automation;
   samber-linter = flakePkg inputs.samber-linter;
   todo-list-ai = flakePkg inputs.todo-list-ai;
-  tq = flakePkg inputs.go-taskqueue;
+  # tq: the checkPhase runs upstream's test suite, which shells out to git
+  # (TestDoctorTreeGofmt does `git init -q` in a tmpdir, upstream 2026-10-02)
+  # — the go-standard sandbox ships no git and the package build fails with
+  # `exec: "git": executable file not found in $PATH`. Git in
+  # nativeBuildInputs lets the suite run as upstream dev does (that test is
+  # the ONLY failure in the full log, 2026-10-02); drop when upstream's
+  # flake adds git itself.
+  tq =
+    (flakePkg inputs.go-taskqueue).overrideAttrs (old: {
+      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+        inputs.nixpkgs.legacyPackages.${system}.git
+      ];
+    });
 }

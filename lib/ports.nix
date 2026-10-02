@@ -169,5 +169,10 @@
     # loopback-only; Caddy proxies index.home.lan to it. Binary from the
     # index flake (github:LarsArtmann/index).
     indexer-web = 8105;
+
+    # paperless-gpt — AI metadata enrichment + custom-field extraction
+    # bridge (services.paperless-gpt). Loopback ONLY: the embedded web UI
+    # has NO built-in auth, so it must never gain a vHost.
+    paperless-gpt = 8106;
   };
 }
