@@ -1155,6 +1155,13 @@ _: {
                       total="$($PSQL -c "SELECT count(*) FROM documents_paperlesstask WHERE status='failure' AND NOT acknowledged;" || fail=1)"
                       bytype="$($PSQL -c "SELECT 'paperless_tasks_failed_by_type{task_type=\"' || task_type || '\"} ' || count(*) FROM documents_paperlesstask WHERE status='failure' AND NOT acknowledged GROUP BY task_type;" || fail=1)"
                       pending="$($PSQL -c "SELECT count(*) FROM documents_paperlesstask WHERE status IN ('pending','started');" || fail=1)"
+                      # AI-max plan A17: inbox depth (documents still carrying
+                      # the default inbox tag) and LLM-index freshness. The
+                      # freshness is -1 while no successful llm_index task has
+                      # EVER run (RAG dark era) — honest absence, not a fake
+                      # zero-age.
+                      inbox="$($PSQL -c "SELECT count(DISTINCT d.id) FROM documents_document d JOIN documents_document_tags dt ON dt.document_id = d.id JOIN documents_tag t ON t.id = dt.tag_id WHERE t.slug = 'inbox';" || fail=1)"
+                      idxage="$($PSQL -c "SELECT COALESCE(EXTRACT(EPOCH FROM (now() - MAX(date_created)))::bigint, -1) FROM documents_paperlesstask WHERE task_type = 'llm_index' AND status = 'success';" || fail=1)"
 
                       out=$(mktemp "$TF_DIR/paperless_tasks.XXXXXX")
                       {
@@ -1171,6 +1178,12 @@ _: {
                           echo "# HELP paperless_tasks_pending_total Tasks waiting or running in the queue."
                           echo "# TYPE paperless_tasks_pending_total gauge"
                           echo "paperless_tasks_pending_total $pending"
+                          echo "# HELP paperless_inbox_count Documents still carrying the inbox tag (unprocessed backlog)."
+                          echo "# TYPE paperless_inbox_count gauge"
+                          echo "paperless_inbox_count $inbox"
+                          echo "# HELP paperless_llmindex_last_success_age_seconds Age of the last successful llm_index task; -1 = never run (RAG dark)."
+                          echo "# TYPE paperless_llmindex_last_success_age_seconds gauge"
+                          echo "paperless_llmindex_last_success_age_seconds ''${idxage:--1}"
                         fi
                       } > "$out"
                       mv "$out" "$TF_DIR/paperless_tasks.prom"

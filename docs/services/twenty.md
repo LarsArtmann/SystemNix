@@ -2,7 +2,29 @@
 
 **Service:** `services.twenty` — `modules/nixos/services/twenty.nix` via `mkDockerService` (`lib/docker.nix`). Port 3200 (`lib/ports.nix`), loopback; compose stack = server + worker + postgres sidecar + redis. URL: `crm.<domain>` (**Layer 2 protected** — Twenty's native OIDC/SAML is billing-gated upstream; workspace config is GraphQL/UI, not env). DNS `crm`.
 
-Images are digest-relevant: `twenty` (app), `twenty-postgres`, `twenty-redis` in `lib/images.nix`; the app image is the one entry still WITHOUT a digest pin (decision row open). **A v2.32.0 → v2.43.0 bump is queued (docs/todo/services.md) — DB-backed app: read the 11 minors of release notes for breaking migrations BEFORE bumping.**
+Images are digest-relevant: `twenty` (app), `twenty-postgres`, `twenty-redis` in `lib/images.nix`; the app image is the one entry still WITHOUT a digest pin (decision row open — the queued v2.43 bump is MOOT: see Decommission below).
+
+## Decommission (cutover 2026-10-02, micro-plan T29+)
+
+Twenty is being replaced by the **Ledger CRM** (`docs/services/crm.md`,
+`services.crm-server`). The `crm.nix` module is live in the tree with
+`services.crm-server.enable = true`; while `services.twenty.enable` stays
+`true`, Twenty keeps the `crm.<domain>` vHost + tile and the Ledger serves
+loopback-only. The teardown ladder:
+
+1. **Freeze (T42)** — `services.twenty.enable = false` + `nix run .#deploy`:
+   the Ledger's integration entry flips its vHost from `none` to `plain` in
+   the SAME deploy (subdomain collision is impossible by registry design).
+   The Gatus "Twenty CRM" check, tile, and the `twenty-*` units vanish.
+2. **Final archive (T44, pre-down)** — `pg_dump` + full-fidelity CSVs +
+   manifest → `/mnt/pool/backups/twenty/final/` (the extraction tooling:
+   crm repo `scripts/extract-twenty/`).
+3. **Soak (T56–T58)** — 7 days of Ledger-green checks before any data loss.
+4. **Down (T59, owner-gated)** — `docker compose down` + `docker volume rm`
+   of `db-data` + `server-local-data`; the final archive is the safety net.
+5. **Module removal (T60–T63)** — delete `twenty.nix`, retire the backup
+   registry row, `git mv` this runbook to `docs/services/archived/`, strike
+   the FEATURES row. `lib/images.nix` twenty entries go with the module.
 
 ## What it serves
 
