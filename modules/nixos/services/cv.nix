@@ -336,7 +336,9 @@
             # with the env var set, so both keys must be present here.
             crm = {
               enabled = true;
-              base_url = "http://127.0.0.1:8091";
+              # Port-registry derived (ports.crm = 8091, lib/ports.nix) —
+              # never a hardcoded literal (port-registry-audit rule).
+              base_url = "http://127.0.0.1:${toString ports.crm}";
               api_key = "";
               timeout = "30s";
             };

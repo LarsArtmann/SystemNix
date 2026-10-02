@@ -838,6 +838,15 @@
       url = "git+ssh://git@github.com/LarsArtmann/CV?ref=master";
     };
 
+    # Ledger CRM — LarsArtmann's own event-sourced CRM (PRIVATE repo:
+    # git+ssh, cv pattern). Builds Go 1.27 via its own go-nix-helpers lock
+    # (go.mod floor 1.27.1), so NO nixpkgs follows — it must consume its
+    # own build environment. Consumed by modules/nixos/services/crm.nix
+    # (services.crm-server unit); the CV syncer targets its REST surface.
+    crm = {
+      url = "git+ssh://git@github.com/LarsArtmann/crm?ref=master";
+    };
+
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)
     # Brings quickshell transitively — no separate quickshell input needed
     dankMaterialShell = {
@@ -890,6 +899,9 @@
     buildflow.inputs.flake-parts.follows = "flake-parts";
     cv.inputs.flake-parts.follows = "flake-parts";
     cv.inputs.treefmt-nix.follows = "treefmt-nix";
+    # crm has no direct treefmt-nix input (it arrives nested under its
+    # pinned go-nix-helpers); flake-parts is its only direct infra edge.
+    crm.inputs.flake-parts.follows = "flake-parts";
     crush-config.inputs.treefmt-nix.follows = "treefmt-nix";
     erraudit.inputs.flake-parts.follows = "flake-parts";
     go-auto-upgrade.inputs.flake-parts.follows = "flake-parts";

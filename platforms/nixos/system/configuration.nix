@@ -968,6 +968,15 @@ in
         enable = true;
       };
 
+      # Ledger CRM — LarsArtmann's own event-sourced CRM, the Twenty
+      # replacement (cutover micro-plan 2026-10-02, T19–T28). While
+      # twenty.enable stays true above, Twenty keeps the crm vHost and
+      # this serves loopback-only (monitored + backed up); freezing
+      # Twenty (T42) hands crm.<domain> over atomically in that deploy.
+      crm-server = {
+        enable = true;
+      };
+
       # Voice agents (LiveKit + Whisper ASR)
       voice-agents = {
         enable = false;
