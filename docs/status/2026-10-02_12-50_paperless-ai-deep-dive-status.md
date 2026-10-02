@@ -1,0 +1,129 @@
+# Status Report — Paperless-ngx AI Deep Dive (research session)
+
+**Task-Queue-ID:** none (direct user prompt: "use AI to the max for Paperless-ngx, DEEP RESEARCH")
+**Generated:** 2026-10-02 12:50 CEST · **Session scope:** research/audit/planning ONLY — zero `.nix` source changes, zero deploys, zero live-host probes (read-only repo + upstream docs).
+**Deliverables:** `docs/research/2026-10-02_paperless-ngx-ai-deep-dive.html` (commit `bdea860d`) + TODO fan-out (commit `3dfacf05`).
+**Format note:** HTML is the status-report canonical per skill; user explicitly demanded `.md` at this path — one-off override, honored, flagged, not propagated.
+
+---
+
+## a) FULLY DONE
+
+| # | What | Evidence |
+|---|------|----------|
+| a1 | **Phase-1 discovery** — full current-state model of the Paperless-ngx + AI stack: runbook, module (1226 lines), llama-rag/fastflowlm/visionreviewd runbooks, ai-stack todo, ports, papdashboard PAP_INSIGHT wiring | `docs/services/paperless.md`, `modules/nixos/services/paperless.nix:420-570`, `docs/services/llama-rag.md`, `docs/services/fastflowlm.md`, `docs/todo/ai-stack.md` — all read this session |
+| a2 | **Phase-2 upstream research** — v3.0.0→3.2.1 release map (native AI = 3.0.0 #10319; Apply-AI-suggestions workflow = 3.1.0 #13639; empty-content skip + async WF = 3.2.0); all **14** `PAPERLESS_AI_*` settings w/ defaults (raw configuration.md fetch); suggestion scope (title/tags/correspondent/type/path/date — **custom fields NOT an AI target**); chat = RAG over sqlite-vec; remote OCR = Azure-only; **zero rerank support upstream** (Sourcegraph-verified) | github.com/paperless-ngx/paperless-ngx releases + docs fetched 2026-10-02; cited in report appendix |
+| a3 | **Ecosystem verdicts** — icereed/paperless-gpt (ACTIVE: custom-field extraction, LLM/vision OCR, Append/Update/Replace modes, OpenAI-compatible backends, **no built-in auth**); clusterzx/paperless-ai (UNMAINTAINED, author cites native integration — do not adopt) | report findings #3, #7 |
+| a4 | **Deep-dive HTML report** — 1793 lines, editorial-light design, adoption score 42/100, 7 findings, version table, 10-row prioritized roadmap (impact×ease), target-architecture diagram, capability matrix + sources + honesty notes | `docs/research/2026-10-02_paperless-ngx-ai-deep-dive.html`, commit `bdea860d` (1793 insertions, single file — verified via `git show --stat`) |
+| a5 | **TODO fan-out (self-harvest part 1)** — 3 `[ready]` queue rows (Apply-AI-suggestions workflow, paperless-gpt module, AI env-hygiene batch) + 1 `[watch]` (vision OCR chain) in `docs/todo/services.md`; mirrored one-liners in `TODO_LIST.md`; existing monitoring row extended (AI-task class); reranker `[decision]` updated with the audit input; NEW `[decision]` flm prompt-echo privacy in `docs/todo/ai-stack.md` | commit `3dfacf05` (3 files, +10/−2); `check-todo-system.sh` → "OK: TODO queue/library structure clean" |
+| a6 | **Daemon-race recovery executed per policy** — auto-commit daemon swept my report AND the todo edits into heuristic commits; converted both into properly-messaged commits via allowed `git reset --soft` + atomic pathspec commits; post-rewrite verification ran (claim-message presence, per-file stats, foreign changes untouched) | `bdea860d` + `3dfacf05` in history; docs/CONTRIBUTING "Daemon-race commit policy" + AGENTS history-rewrite checklist |
+| a7 | **Parallel-session discipline held** — foreign in-flight changes (flake.lock M, untracked `docs/planning/2026-10-02_11-51_disk-layout-current-state.html`, 10 daemon commits 11:51→12:50 from other sessions' work) observed, flagged, never touched; pathspec commits guaranteed no foreign files swept into mine | `git status` snapshots at 11:48/11:52/12:50; git log |
+
+## b) PARTIALLY DONE
+
+| # | What | Works | Missing | Blocker | Effort |
+|---|------|-------|---------|---------|--------|
+| b1 | **§f self-harvest** | Top-5 actionable items landed as queue/library rows (a5) | The remaining ~40 brainstorm items are NOT routed to the todo system — deliberately (brainstorm ≠ commitment list per status-report skill; duplicates of existing rows annotated in §f instead). 4 small direct follow-ups harvested inline with this report (see §f marks: `[HARVESTED]`) | None — policy choice, recorded here | S (done) |
+| b2 | **Deployed-version precision** | Report states 3.1.1 (runbook 2026-10-01) with module comment referencing 3.1.3, and LABELS the uncertainty in the honesty notes | Exact live patch version never probed on the host (needs sudo/live session) | Live-host probe out of scope for a read-only research session | S |
+| b3 | **"Zero observed traffic" claim** | Cited precisely as the Aug 18–21 flm baseline (fastflowlm.md), not overstated to "current" | No fresh traffic probe this session (would need host access) — re-assert queued inside the workflow item | Same | S |
+| b4 | **Reranker decision input** | Decision row now carries the audit's "no consumer exists anywhere" finding + recommendation (drop :8849 at re-enable) | The decision itself is still OPEN — owner hasn't answered | `[decision]` semantics | S (after answer) |
+
+## c) NOT STARTED
+
+All implementation work from the roadmap — this session was research-only **by design**; nothing below has code:
+
+1. **llama-rag re-enable execution** — soak harness exists (`scripts/llama-rag-soak.sh`, shipped 2026-09-19), execution is owner+root-gated; module flip + `document_llmindex rebuild` + end-to-end embeddings verification all unstarted.
+2. **Apply-AI-suggestions workflow provisioning** — no workflow exists in paperless; no provisioning oneshot written.
+3. **paperless-gpt packaging** — no flake input, no `pkgs/` buildGoModule, no module, no port, no sops wiring, no VM test.
+4. **Vision OCR chain** — gated on llama-vlm live-verification (never run: captioner has never had a verified inference) + item 3.
+5. **nixpkgs 3.2.x ride** — no bump executed; not queued until the version appears in nixpkgs.
+6. **AI env hygiene** — OUTPUT_LANGUAGE unset, app_config precedence unprobed, index cron un-staggered.
+7. **AI monitoring depth** — collector + index-freshness checks unstarted (existing queued row owns the base collector).
+
+## d) TOTALLY FUCKED UP
+
+1. **The audit's core finding IS a fucked-up state (pre-existing, now proven):** the AI stack purchased with real hardware (flm 21.6 GB NPU model, 2 GPU llama-servers, reranker) delivers **~zero observable value for paperless today** — suggestions manual-only with zero observed flm traffic since go-live, RAG/chat/semantic search dark behind the disabled embeddings endpoint, reranker serving an API nothing calls. Severity: silent value loss, not data loss. Mitigation: the roadmap; no further damage accruing while dark.
+2. **Doc self-contradiction in `docs/services/llama-rag.md:19`:** "RAG semantic search is **now active** when both `paperless` and `llama-rag` are enabled" — written during the 2026-09-18 re-enable window that was rolled back the same day; the conditional phrasing technically saves it, but a reader skimming the runbook's head bullets reads "active". The accurate state lives 8 bullets lower. Severity: doc-drift misleads future sessions (the exact class the 2026-09-19 "premise stale" incident punished). Fix: one-line amendment to the bullet. *(Flagged here; not edited this session — state narratives in todo files are forbidden, runbook edits during a report pass would mix concerns. Queued in §f #27.)*
+3. **My commit sequence lost the first race AND the second:** (i) first `git commit --amend` targeted a daemon commit and sat in background long enough that the daemon stacked ANOTHER commit on top — the amend failed "would make it empty" (exit 1); (ii) the todo commit failed the 72-char subject hook on first attempt. Two retries, ~15 min lost, one shared-tree history rewrite (allowed, verified). Root cause: multi-step git flow vs ~10-min daemon cadence + background-shell latency. Lesson applied (and worked): **atomic chained pathspec commits**. Severity: process only, zero data impact.
+4. **flm prompt-echo privacy gap (latent, becomes real when AI workflows go live):** paperless document text → flm → journald → SigNoz (`all=true`) — personal document content lands in observability logs. No decision exists. Queued as `[decision]` (a5). Severity: privacy, growing with AI traffic.
+5. **`python3.14-torchcodec` / `llama-index-embeddings-huggingface` FOD casualties** (noticed in `docs/status/2026-10-01_21-04` §6): the native **huggingface embedding backend** (my documented fallback while llama-rag is gated) may be BROKEN in the current nixpkgs FOD graph — the fallback plan has an unverified dependency. Severity: contingency risk only (primary path is GPU llama-server, not HF). Queued in §f #13 `[HARVESTED]`.
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Commit-vs-daemon choreography** — the daemon race cost 2 failed commits. Concrete fix (proven this session): always `git commit -- <paths>` chained in ONE command; never amend into a daemon HEAD when the daemon is <5 min from its cadence. Candidate: a house script `scripts/commit-mine.sh` (status → diff-review → pathspec commit) to make the safe path the default. *(Improvement-class → §f #36.)*
+2. **Live-fact probes for audits** — this audit is config/docs-sourced; three claims (live version, app_config DB rows, fresh traffic) need host probes. Fix: a read-only `scripts/paperless-facts.sh` (version, app_config AI rows, task counts, token ages) that agents can request and owners run in one paste. *(§f #37.)*
+3. **Secondhand fetch summaries** — the settings list came from a raw-file fetch (strong); the AI feature semantics came via agent-summarized fetches. For commit-message-grade claims, prefer raw fetches (verify-external-claims discipline). Applied here by labeling sources per-claim in the report appendix.
+4. **Runbook head-bullet staleness** (d2) — llama-rag.md leads with a stale-conditional "now active" bullet. Pattern fix: runbook head bullets carry a dated status word (ACTIVE/DARK/GATED) so skimmers can't be misled; the 2026-09-19 "premise falsified by one grep" lesson generalizes to runbook headers. *(§f #27.)*
+5. **"One ask" rule borderline** — my "AI env hygiene batch" bundles 3 sub-asks on one surface. Defensible (single surface-pass, eval-verified together) but flagging it honestly; harvesters should split it if either sub-ask grows.
+6. **Extraction dependency chain not visible anywhere before this report** — AI extraction on statements is gated on the OWNER-GATED decrypt go-live (`inboxclean-decrypt.yaml` still PLACEHOLDER): no password → empty content → nothing to extract. This cross-item dependency existed in no single row; it is now stated in the report + appended to the paperless-gpt row. Dependency mapping between queue rows should happen at queueing time, not at audit time.
+
+## f) Top 50 things to get done next
+
+Ranked by impact; `[Q]` = already queued/tracked this session (do NOT re-file), `[HARVESTED]` = filed inline with this report, `[B]` = brainstorm (ROADMAP fuel, deliberately not harvested — needs owner triage), `[X]` = already tracked pre-session (skip).
+
+| # | Task | Impact | Effort | Category | Status |
+|---|------|--------|--------|----------|--------|
+| 1 | Owner executes the llama-rag soak (`sudo ./scripts/llama-rag-soak.sh …` — the re-enable gate) | Critical | S | Feature | `[X]` ai-stack.md:22 `[blocked:user]` |
+| 2 | Re-enable llama-rag → `document_llmindex rebuild` → E2E verify (chat cites sources, index task green, embeddings traffic asserted) | Critical | M | Feature | `[X]` verify leg = services.md `[watch]` row |
+| 3 | Wire Apply-AI-suggestions workflow (DRF-provisioned declaratively; title+tags+correspondent; create-missing tags; overwrite title) | Critical | M | Feature | `[Q]` services.md `[ready]` |
+| 4 | Package paperless-gpt NixOS module (buildGoModule input, loopback-only, runtime-minted sops token, flm backend, Append mode) | Critical | L | Feature | `[Q]` services.md `[ready]` |
+| 5 | Decide reranker leg fate BEFORE the re-enable (drop :8849 → unit/Gatus/smoke set shrinks; affects #2's checklist) | High | S | Decision | `[X]` ai-stack.md `[decision]` (updated w/ audit input) |
+| 6 | Ride nixpkgs to paperless 3.2.x when it lands; re-verify AI env + dashboard views after bump | High | S | Feature | `[HARVESTED]` services.md `[watch]` |
+| 7 | Sequence #3 AFTER #1/#2 (warm endpoints) and #6 (server-side empty-skip) — ordering now recorded in the queue row | High | S | Planning | `[Q]` (in row text) |
+| 8 | AI env hygiene batch (OUTPUT_LANGUAGE, app_config precedence probe, index-cron stagger) | High | S | Quality | `[Q]` services.md `[ready]` |
+| 9 | Vision OCR chain: llama-vlm soak → captioner-vs-stock-Qwen3-VL evaluation → paperless-gpt `VISION_LLM_*` tag-gated | High | M | Feature | `[Q]` services.md `[watch]` |
+| 10 | Paperless failed-tasks collector + encrypted-tag alert (+ AI-workflow failure class + index freshness once live) | High | M | Quality | `[X]` services.md `[ready]` (extended) |
+| 11 | flm prompt-echo privacy decision (journald filter vs SigNoz `all=false` vs accept) — blocks #3 go-live in good conscience | High | S | Decision | `[Q]` ai-stack.md `[decision]` (new) |
+| 12 | Statement decrypt go-live (sops password) — **hard dependency for AI extraction on statements** (no password → empty content → nothing to extract); dependency now recorded on the paperless-gpt row | Critical | S | Feature | `[X]` services.md `[blocked:user]` (dependency note appended `[HARVESTED]`) |
+| 13 | Verify the huggingface embedding-backend FOD (`llama-index-embeddings-huggingface`) builds in current nixpkgs before ever relying on the HF fallback | Medium | S | Bug | `[HARVESTED]` appended to env-hygiene row |
+| 14 | One-time corpus retro-pass policy: batch Apply-AI-suggestions over the existing archive (task-queue-soft, scoped filters) — owner decision on cost/noise | High | S | Decision | `[B]` |
+| 15 | Custom-field schema definition (statements: IBAN/amount/period/…; receipts: …) — owner domain knowledge, blocks #4's prompt templates | High | S | Decision | `[B]` → also §g Q3 |
+| 16 | Declarative custom-field creation via DRF in the same provisioning oneshot as #3/#4 | Medium | S | Feature | `[B]` (fold into #4 at design time) |
+| 17 | VM test: workflows provision idempotently (with #3) | Medium | M | Quality | `[B]` |
+| 18 | VM test for the paperless-gpt module (with #4) | Medium | M | Quality | `[B]` |
+| 19 | paperless-gpt port registered in `lib/ports.nix` + derived URLs (port-registry-audit will demand it) | Medium | S | Quality | `[B]` (fold into #4) |
+| 20 | Connection budget doc: flm `MaxConnections=8` vs celery(2) + paperless-gpt + PMA + papdashboard concurrent consumers | Medium | S | Documentation | `[B]` |
+| 21 | SigNoz: tag flm request bodies by consumer (paperless vs PMA vs papdashboard) to size the #11 blast radius | Medium | M | Quality | `[B]` |
+| 22 | journald filter PoC for the flm units (if #11 = filter) | Medium | M | Feature | `[B]` (contingent on #11) |
+| 23 | Where does the sqlite-vec index live? Verify it is NOT covered by pg_dump/document-exporter; document "index = rebuildable, not backed up" + a `document_llmindex compact` note in the runbook | Medium | S | Documentation | `[B]` |
+| 24 | Suggestion-latency benchmark through socket activation (cold 2-5 min vs warm) once #3 lands; confirm 480 s timeout headroom | Medium | S | Quality | `[B]` |
+| 25 | Polish OCR language evaluation (`pol` tesseract pack) when decrypted/scanned statements arrive (current: deu+eng) | Low | S | Feature | `[B]` |
+| 26 | Amend `llama-rag.md:19` head bullet with a dated status word (DARK/GATED) — kill the "now active" misread (d2) | Medium | S | Documentation | `[HARVESTED]` services.md `[ready]` (runbook-pointer row) |
+| 27 | Link the deep-dive report from `docs/services/paperless.md` (AI section pointer) | Low | S | Documentation | `[HARVESTED]` (done inline with this report) |
+| 28 | Add AI-env assertions to `tests/test-paperless.nix` (mail env asserted; AI env unasserted) at the #6 bump | Medium | S | Quality | `[B]` (fold into #6) |
+| 29 | flm v1.0.2→v1.0.6 staged-bump decision gains urgency once paperless becomes a REAL consumer (crash-class watch) | Medium | S | Decision | `[X]` ai-stack.md Prioritized |
+| 30 | llama-vlm live-verification + soak (gate for #9; never had a verified inference) | High | S | Quality | `[X]` ai-stack.md `[watch]` |
+| 31 | llama.cpp mid-load spin bisect (THE upstream gate under #1) | Critical | L | Bug | `[X]` TODO_LIST→ai-stack |
+| 32 | `gmail` tag demote PATCH rejection root-cause (tag state matters to #3's filters) | Medium | M | Bug | `[X]` services.md `[ready]` |
+| 33 | Paperless DRF-token age metric + Gatus check (token rotation becomes load-bearing once more AI consumers hold tokens) | Medium | M | Quality | `[X]` services.md `[ready]` |
+| 34 | Post-#2: rebuild Gatus/smoke rows to match the kept llama-rag unit set (if #5 = drop) | Medium | S | Quality | `[B]` (contingent on #5) |
+| 35 | Runbook cross-link: extraction-quality note ("encrypted/empty content → AI blind") into paperless.md Encrypted section | Low | S | Documentation | `[B]` |
+| 36 | House script `scripts/commit-mine.sh` (status → diff-review → pathspec commit) — makes the daemon-safe commit path the default (e1) | Medium | M | Quality | `[B]` |
+| 37 | `scripts/paperless-facts.sh` read-only probe (version, app_config AI rows, task counts) for future sessions (e2) | Medium | M | Quality | `[B]` |
+| 38 | ROADMAP: corpus retro-extraction vision (statements → structured finance data feeding bank-sync/tq) | Medium | S | Planning | `[B]` |
+| 39 | FEATURES.md row for AI capabilities once #2/#3 land (docs-health will own it) | Low | S | Documentation | `[B]` |
+| 40 | `document_llmindex compact` scheduling after the first rebuild cycle | Low | S | Cleanup | `[B]` |
+| 41 | Chat permission-model note for a future second user (SSO groups already map superuser) | Low | S | Documentation | `[B]` |
+| 42 | Train-classifier (hourly) vs index-task (02:10) collision check after #6's nixpkgs ride | Low | S | Quality | `[B]` |
+| 43 | Azure remote OCR + clusterzx/paperless-ai: record the REJECTION rationale in the runbook so no future session re-evaluates from scratch | Low | S | Documentation | `[HARVESTED]` (in report finding #7; runbook pointer = #27) |
+| 44 | Upstream: empty-vocabulary classifier training should degrade, not FAIL (3.2.0's skip covers apply-AI-suggestions only, NOT the classic classifier task — verify at #6) | Medium | S | Bug | `[X]` upstream.md `[ready]` |
+| 45 | Verify T13 API-auth closure decision still holds once paperless-gpt becomes an API consumer (it uses Token auth — unaffected, confirm at #4) | Low | S | Quality | `[B]` |
+| 46 | Suggestion-quality eval set: 10 representative docs (DE/EN/PL) → apply workflow → human-grade the suggestions before trusting bulk mode | High | M | Quality | `[B]` (recommended BEFORE #14 retro-pass) |
+| 47 | Backup-coordination: add the vec-index location answer (#23) to the paperless-db registry entry notes | Low | S | Documentation | `[B]` (contingent on #23) |
+| 48 | Consider `PAPERLESS_TASK_WORKERS` bump (2→3) if #14's retro-pass occupies the queue too long (upstream's own advice: more workers) | Low | S | Quality | `[B]` |
+| 49 | Post-deploy smoke: AI-workflow health probe (task API shows apply-suggestions successes, not just service liveness) | Medium | M | Quality | `[B]` |
+| 50 | Re-run this deep dive in ~1 quarter (upstream AI moves fast: 3.0→3.2 in two months) — point-in-time reports rot | Low | S | Documentation | `[B]` |
+
+**Harvest ledger:** items 6, 12, 13, 26, 27, 43 harvested inline with this report (direct follow-ups). Items 1-5, 7-11, 29-33, 44 were already tracked pre-session or queued in `3dfacf05` — no re-filing. Remaining `[B]` rows: brainstorm, deliberately not harvested (status-report skill: larger N = brainstorm; docs-health HARVEST owns routing if the owner promotes them).
+
+## g) Questions I can NOT answer myself
+
+1. **Workflow blast radius:** Should Apply-AI-suggestions run on EVERY consumed document automatically, or only a tagged pilot subset first? (Sub-question: is auto-CREATING new correspondents acceptable, or tags-only for create-missing?) — determines #3's filters, #46's eval design, and the #11 privacy exposure timeline.
+2. **Privacy posture:** accept paperless document text landing in journald→SigNoz via flm's prompt echo, or must the filter exist BEFORE any workflow goes live? — orders #3 vs #11/#22.
+3. **Extraction schema:** exactly which custom fields per document class (statements: IBAN/amount/period/owner/currency? receipts: merchant/total/VAT? other classes?) and should extracted values feed downstream systems (bank-sync, tq) or stay paperless-only? — blocks #4's prompt templates and sizes #38.
+
+---
+
+**Parallel-session observations (flagged, untouched):** 10 heuristic daemon commits 11:51→12:50 from other sessions' work (incl. what was my foreign `flake.lock` M + untracked disk-layout planning doc — both now absorbed/committed by the daemon, not by me); branch showed `ahead 1` of origin at report time; a status report I read during discovery flagged `llama-vlm.nix` under active construction by a parallel session earlier today.
+
+**Wait state:** report written; awaiting instructions.
