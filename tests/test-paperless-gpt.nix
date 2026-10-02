@@ -45,6 +45,55 @@ let
         };
       };
     };
+
+  # Option-only mocks copied from test-paperless.nix: the paperless module's
+  # registry entry fans its OIDC client into pocket-id-config.provision and
+  # reads mail-relay.enable — the option PATHS must exist in this minimal VM.
+  pocketIdOptionsMock =
+    { lib, ... }:
+    {
+      options.services.pocket-id-config = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+        };
+        provision.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+        };
+        provision.extraOidcClients = lib.mkOption {
+          type = lib.types.listOf lib.types.attrs;
+          default = [ ];
+        };
+        provision.userGroups = lib.mkOption {
+          type = lib.types.listOf lib.types.attrs;
+          default = [ ];
+        };
+        provision.adminUser.username = lib.mkOption {
+          type = lib.types.str;
+          default = "vm-admin";
+        };
+        dataDir = lib.mkOption {
+          type = lib.types.str;
+          default = "/var/lib/pocket-id";
+        };
+      };
+    };
+
+  mailRelayOptionsMock =
+    { lib, ... }:
+    {
+      options.services.mail-relay = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+        };
+        fromAddress = lib.mkOption {
+          type = lib.types.str;
+          default = "noreply@larsartmann.cloud";
+        };
+      };
+    };
 in
 {
   name = "paperless-gpt";
@@ -63,6 +112,8 @@ in
         # services.catalog entry (ADR-008; loud eval failure if missing).
         (import ../modules/nixos/services/catalog.nix { }).flake.nixosModules.catalog
         fastflowlmOptionsMock
+        pocketIdOptionsMock
+        mailRelayOptionsMock
         ./mock-sops.nix
         ./test-helpers.nix
       ];
