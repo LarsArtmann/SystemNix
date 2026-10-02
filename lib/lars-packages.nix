@@ -21,15 +21,14 @@ lib.filterAttrs (_: v: v != null) {
   # and re-broke the FOD it existed to fix — the buildflow-shim lifecycle
   # class). Re-add ONLY via nix-hash-fix evidence, never by hand.
   art-dupl = flakePkg inputs.art-dupl;
-  # TEMPORARY vendorHash shim (2026-10-01): the 12:13 blanket lock update
-  # (572ff71b) re-locked branching-flow to 5d4965c8 whose upstream
-  # vendorHash no longer reproduces under the re-resolved FOD graph (got
-  # QUU2TvF7… vs specified Gitg6V8+…; narHash matched — source is the exact
-  # locked tree, the 2026-09-23 lock-wave class). Upstream master (2a82b63a)
-  # is ahead; drop when the lock moves past an upstream-fixed rev.
-  branching-flow = (flakePkg inputs.branching-flow).overrideAttrs {
-    vendorHash = "sha256-QUU2TvF76UJRO/AjO+MFPWvYfWrvuBMQ+RiAMMJ5B0w=";
-  };
+  # branching-flow shim DROPPED (2026-10-02): its drop condition ("lock moves
+  # past an upstream-fixed rev") is met — the lock holds 2a82b63a, whose flake
+  # pins flowVendorHash = sha256-T0Q7PXNA… (the same "got" hash the stale
+  # shim's FOD produced 2026-10-02; the old shim pinned the 2026-10-01 wave's
+  # QUU2TvF7… for rev 5d4965c8 and re-broke the FOD it existed to fix —
+  # the buildflow-shim lifecycle class). Re-add ONLY via nix-hash-fix
+  # evidence, never by hand.
+  branching-flow = flakePkg inputs.branching-flow;
   # buildflow shim DROPPED (2026-09-23): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 5b3483a, where the
   # vendorHash fix IS pushed (upstream vendorHash.nix = sha256-WIFsGVLBMsCK…,

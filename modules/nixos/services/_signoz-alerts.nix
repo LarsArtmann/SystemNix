@@ -256,16 +256,10 @@ in
       interval = "1m";
       severity = "warning";
     };
-    "signoz/rules/llama-reranker-down.json".source = mkRule {
-      name = "llama.cpp Reranker Down";
-      description = "llama.cpp reranker is not active — RAG reranking unavailable, search quality degraded";
-      query = ''node_systemd_unit_state{name="llama-reranker.service",state="active"}'';
-      step = 60;
-      op = "below";
-      target = 1;
-      interval = "1m";
-      severity = "warning";
-    };
+    # "llama-reranker-down" rule REMOVED 2026-10-02 (AI-max plan A13): the
+    # consumerless :8849 reranker leg is dropped (services.llama-rag.reranker
+    # defaults false — see llama-rag.nix). If the leg is ever revived, restore
+    # this rule alongside the Gatus check and post-deploy probe.
     "signoz/rules/cv-server-down.json".source = mkRule {
       name = "CV Server Down";
       description = "cv-server unit is not active — resume site and PDF export at cv.home.lan unreachable";
