@@ -33,7 +33,13 @@ let
     inherit version src;
     sourceRoot = "source/web-app";
 
-    npmDepsHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+    npmDepsHash = "sha256-bnGMNxAEzYxMLzmO61Krs+gIVszEAOeIGHg4EJAomac=";
+
+    # cpu-features (transitive dev-dep: testcontainers -> ssh2) is a Nan
+    # addon that no longer compiles on Node 24 and is never imported at
+    # build time; vite/esbuild/swc ship prebuilt platform binaries via
+    # optionalDependencies, so no install scripts are needed.
+    npmFlags = [ "--ignore-scripts" ];
 
     # Upstream builds with node 24 (Dockerfile: node:24-alpine).
     nodejs = nodejs_24;
@@ -64,7 +70,7 @@ buildGoModule' {
   '';
 
   # go.mod requires go >= 1.27.1.
-  vendorHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+  vendorHash = "sha256-81a3B16v4rF8ut2HcT0w/KgT8XaZahQ3GPv/oEenXPk=";
 
   # mattn/go-sqlite3 (gorm local DB) needs CGO_ENABLED=1.
   env.CGO_ENABLED = 1;
