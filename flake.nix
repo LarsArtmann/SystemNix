@@ -1625,6 +1625,10 @@
                     printf '[{"login":"Artmann-Minecraft"},{"login":"fresh-org"}]' > "$STUB_HTTP/$GH_ORGS.body"
                     printf 200 > "$STUB_HTTP/$GH_ARTM.code"
                     printf '[{"name":"DarkBlocks"}]' > "$STUB_HTTP/$GH_ARTM.body"
+                    # reconcile lowercases org logins for its namespace map, so
+                    # its canonical org-repos fetches hit the lowercase URL key
+                    printf 200 > "$STUB_HTTP/api.github.com_orgs_artmann-minecraft_repos_type_all_per_page_100_page_1.GET.code"
+                    printf '[{"name":"DarkBlocks"}]' > "$STUB_HTTP/api.github.com_orgs_artmann-minecraft_repos_type_all_per_page_100_page_1.GET.body"
                     printf 200 > "$STUB_HTTP/$GH_FRESH.code"
                     printf '[{"name":"org-repo"}]' > "$STUB_HTTP/$GH_FRESH.body"
 
