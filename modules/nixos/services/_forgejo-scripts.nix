@@ -41,10 +41,14 @@ in
       pkgs.curl
       pkgs.jq
       pkgs.gh
+      pkgs.coreutils
+      pkgs.gnugrep
+      pkgs.gawk
     ];
     text = ''
       REPOS_FILE=$(mktemp)
-      trap 'rm -f "$REPOS_FILE"' EXIT
+      ORGS_FILE=$(mktemp)
+      trap 'rm -f "$REPOS_FILE" "$ORGS_FILE"' EXIT
 
       FORGEJO_URL="${forgejoUrl}"
       FORGEJO_OWNER="${primaryUser}"
@@ -69,38 +73,115 @@ in
         exit 1
       fi
 
+      # Fail loud on non-array listing responses (rate limit, auth failure,
+      # HTML error pages): without this guard .[] yields nothing, `length` sees
+      # <100, the loop breaks, and the run reports success with ZERO repos
+      # processed — a phantom green that silently stops all mirror creation.
+      gh_list_guard() {
+        if ! echo "$1" | jq -e 'type == "array"' > /dev/null; then
+          echo "Error: $2 did not return an array:"
+          echo "$1" | jq -r '.message // tostring' 2>/dev/null | head -3
+          exit 1
+        fi
+      }
+
       echo "Fetching repositories for GitHub user: $GITHUB_USER (owned, public+private)"
 
       page=1
       while true; do
         response=$(curl -s --compressed -H "Authorization: token $GITHUB_TOKEN" \
           "https://api.github.com/user/repos?visibility=all&affiliation=owner&per_page=100&page=$page")
-        # Fail loud on non-array responses (rate limit, auth failure, HTML error
-        # pages): without this guard .[] yields nothing, `length` sees <100, the
-        # loop breaks, and the run reports success with ZERO repos processed —
-        # a phantom green that silently stops all mirror creation.
-        echo "$response" | jq -e 'type == "array"' > /dev/null || {
-          echo "Error: GitHub repo listing (page $page) did not return an array:"
-          echo "$response" | jq -r '.message // tostring' 2>/dev/null | head -3
-          exit 1
-        }
-        echo "$response" | jq -r '.[] | "\(.name)|\(.clone_url)|\(.private)|\(.description // "")"' >> "$REPOS_FILE"
+        gh_list_guard "$response" "GitHub repo listing (page $page)"
+        echo "$response" | jq -r --arg owner "$FORGEJO_OWNER" \
+          '.[] | "\($owner)|\(.name)|\(.clone_url)|\(.private)|\(.description // "")"' >> "$REPOS_FILE"
         [[ $(echo "$response" | jq 'length') -lt 100 ]] && break
         page=$((page + 1))
       done
 
+      # ALL orgs the token can see (owner directive 2026-10-02: full backups
+      # include every org). Each org mirrors into a same-named forgejo org
+      # namespace; private org repos appear when the token has access.
+      page=1
+      while true; do
+        response=$(curl -s --compressed -H "Authorization: token $GITHUB_TOKEN" \
+          "https://api.github.com/user/orgs?per_page=100&page=$page")
+        gh_list_guard "$response" "GitHub org listing (page $page)"
+        echo "$response" | jq -r '.[].login' >> "$ORGS_FILE"
+        [[ $(echo "$response" | jq 'length') -lt 100 ]] && break
+        page=$((page + 1))
+      done
+      sort -u -o "$ORGS_FILE" "$ORGS_FILE"
+
+      while read -r org; do
+        [[ -z "$org" ]] && continue
+        echo "Fetching repositories for GitHub org: $org"
+        page=1
+        while true; do
+          response=$(curl -s --compressed -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/orgs/$org/repos?type=all&per_page=100&page=$page")
+          gh_list_guard "$response" "GitHub org repo listing: $org (page $page)"
+          echo "$response" | jq -r --arg owner "$org" \
+            '.[] | "\($owner)|\(.name)|\(.clone_url)|\(.private)|\(.description // "")"' >> "$REPOS_FILE"
+          [[ $(echo "$response" | jq 'length') -lt 100 ]] && break
+          page=$((page + 1))
+        done
+      done < "$ORGS_FILE"
+
       FAILED=0
 
-      while IFS='|' read -r name clone_url private description; do
+      # The migrate endpoint is uid-keyed: resolve the forgejo user's uid once.
+      FJ_USER_UID=$(curl -s -H "Authorization: token $FORGEJO_TOKEN" \
+        "$FORGEJO_URL/api/v1/user" | jq -r '.id // empty' 2>/dev/null)
+      if [[ ! "$FJ_USER_UID" =~ ^[0-9]+$ ]]; then
+        echo "Error: could not resolve forgejo user id via $FORGEJO_URL/api/v1/user"
+        exit 1
+      fi
+
+      # org create-if-missing; echoes the org's numeric forgejo id, or fails.
+      # A transient org-GET failure is self-healing: the create POST 422s
+      # (already exists) and the re-GET then resolves the id.
+      ensure_org() {
+        local org="$1" org_id code
+        org_id=$(curl -s -H "Authorization: token $FORGEJO_TOKEN" \
+          "$FORGEJO_URL/api/v1/orgs/$org" | jq -r '.id // empty' 2>/dev/null)
+        if [[ ! "$org_id" =~ ^[0-9]+$ ]]; then
+          code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            -H "Authorization: token $FORGEJO_TOKEN" \
+            -H "Content-Type: application/json" \
+            "$FORGEJO_URL/api/v1/orgs" \
+            -d "$(jq -n --arg u "$org" '{username: $u}')")
+          if [[ "$code" == "200" || "$code" == "201" ]]; then
+            echo "  + Created forgejo org: $org"
+            org_id=$(curl -s -H "Authorization: token $FORGEJO_TOKEN" \
+              "$FORGEJO_URL/api/v1/orgs/$org" | jq -r '.id // empty' 2>/dev/null)
+          else
+            echo "  ✗ Failed to create forgejo org $org (HTTP $code)"
+            return 1
+          fi
+        fi
+        [[ "$org_id" =~ ^[0-9]+$ ]] || return 1
+        echo "$org_id"
+      }
+
+      while IFS='|' read -r dest name clone_url private description; do
         [[ -z "$name" ]] && continue
 
         existing=$(curl -s -o /dev/null -w "%{http_code}" \
           -H "Authorization: token $FORGEJO_TOKEN" \
-          "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name")
+          "$FORGEJO_URL/api/v1/repos/$dest/$name")
 
         if [[ "$existing" == "200" ]]; then
-          echo "✓ Already mirrored: $name"
+          echo "✓ Already mirrored: $dest/$name"
           continue
+        fi
+
+        dest_uid="$FJ_USER_UID"
+        if [[ "$dest" != "$FORGEJO_OWNER" ]]; then
+          if ! dest_uid=$(ensure_org "$dest"); then
+            echo "  ✗ Failed (org unavailable): $dest/$name"
+            FAILED=$((FAILED + 1))
+            continue
+          fi
         fi
 
         # Clear any orphan git dir left by an interrupted migrate (past OOM/crash).
@@ -109,9 +190,9 @@ in
         # 204 = orphan deleted, 404 = no orphan existed (normal for never-migrated repos).
         curl -s -o /dev/null -X DELETE \
           -H "Authorization: token $FORGEJO_TOKEN" \
-          "$FORGEJO_URL/api/v1/admin/unadopted/$FORGEJO_OWNER/$name"
+          "$FORGEJO_URL/api/v1/admin/unadopted/$dest/$name"
 
-        echo "→ Mirroring: $name"
+        echo "→ Mirroring: $dest/$name"
 
         code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
           -H "Authorization: token $FORGEJO_TOKEN" \
@@ -123,7 +204,7 @@ in
             --argjson private "$private" \
             --arg description "$description" \
             --arg auth_token "$GITHUB_TOKEN" \
-            --arg uid "1" \
+            --arg uid "$dest_uid" \
             '{
               clone_addr: $clone_url,
               repo_name: $name,
@@ -142,15 +223,16 @@ in
             }')")
 
         if [[ "$code" == "200" || "$code" == "201" ]]; then
-          echo "  ✓ Created mirror: $name"
+          echo "  ✓ Created mirror: $dest/$name"
         else
-          echo "  ✗ Failed (HTTP $code): $name"
+          echo "  ✗ Failed (HTTP $code): $dest/$name"
           FAILED=$((FAILED + 1))
         fi
       done < "$REPOS_FILE"
 
       count=$(wc -l < "$REPOS_FILE")
-      echo "✓ Done! $count repos processed, $FAILED failed"
+      org_count=$(awk -F'|' -v owner="$FORGEJO_OWNER" '$1 != owner' "$REPOS_FILE" | wc -l)
+      echo "✓ Done! $count repos processed ($((count - org_count)) user + $org_count org), $FAILED failed"
 
       if [[ "$FAILED" -gt 0 ]]; then
         exit 1
@@ -231,128 +313,185 @@ in
       mkdir -p "$STATE_DIR"
       touch "$PENDING"
       CANONICAL=$(mktemp)
+      ORGS=$(mktemp)
       FJMIRRORS=$(mktemp)
       STALE=$(mktemp)
       DELETED=$(mktemp)
       TRANSFERRED=$(mktemp)
       PENDING_NEW=$(mktemp)
       PENDING_TMP=$(mktemp)
-      trap 'rm -f "$CANONICAL" "$FJMIRRORS" "$STALE" "$DELETED" "$TRANSFERRED" "$PENDING_NEW" "$PENDING_TMP"' EXIT
+      trap 'rm -f "$CANONICAL" "$ORGS" "$FJMIRRORS" "$STALE" "$DELETED" "$TRANSFERRED" "$PENDING_NEW" "$PENDING_TMP"' EXIT
 
       echo "=== Forgejo mirror reconciliation (owner: $GITHUB_USER) ==="
 
-      # 1. Canonical GitHub repo names (same listing source as the mirror script).
+      # 1. Canonical GitHub owner/name pairs — user repos + ALL org repos
+      # (the mirror script's listing sources; org-inclusive since 2026-10-02).
       page=1
       while true; do
         response=$(curl -s --compressed -H "Authorization: token $GITHUB_TOKEN" \
           "https://api.github.com/user/repos?visibility=all&affiliation=owner&per_page=100&page=$page")
         n=$(echo "$response" | jq -r 'if type == "array" then length else -1 end')
         [[ "$n" == "-1" ]] && { echo "Error: GitHub listing failed: $(echo "$response" | jq -r '.message // "unknown"')"; exit 1; }
-        echo "$response" | jq -r '.[].name' | tr '[:upper:]' '[:lower:]' >> "$CANONICAL"
+        echo "$response" | jq -r '.[] | "\(.owner.login)/\(.name)"' | tr '[:upper:]' '[:lower:]' >> "$CANONICAL"
         [[ "$n" -lt 100 ]] && break
         page=$((page + 1))
       done
+
+      page=1
+      while true; do
+        response=$(curl -s --compressed -H "Authorization: token $GITHUB_TOKEN" \
+          "https://api.github.com/user/orgs?per_page=100&page=$page")
+        n=$(echo "$response" | jq -r 'if type == "array" then length else -1 end')
+        [[ "$n" == "-1" ]] && { echo "Error: GitHub org listing failed: $(echo "$response" | jq -r '.message // "unknown"')"; exit 1; }
+        echo "$response" | jq -r '.[].login' | tr '[:upper:]' '[:lower:]' >> "$ORGS"
+        [[ "$n" -lt 100 ]] && break
+        page=$((page + 1))
+      done
+      sort -u -o "$ORGS" "$ORGS"
+
+      while read -r org; do
+        [[ -z "$org" ]] && continue
+        page=1
+        while true; do
+          response=$(curl -s --compressed -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/orgs/$org/repos?type=all&per_page=100&page=$page")
+          n=$(echo "$response" | jq -r 'if type == "array" then length else -1 end')
+          [[ "$n" == "-1" ]] && { echo "Error: GitHub org repo listing failed ($org): $(echo "$response" | jq -r '.message // "unknown"')"; exit 1; }
+          echo "$response" | jq -r --arg org "$org" '.[] | "\($org)/\(.name)"' | tr '[:upper:]' '[:lower:]' >> "$CANONICAL"
+          [[ "$n" -lt 100 ]] && break
+          page=$((page + 1))
+        done
+      done < "$ORGS"
       sort -u -o "$CANONICAL" "$CANONICAL"
 
-      # 2. Forgejo pull mirrors owned by the forgejo account.
+      # 2. Forgejo pull mirrors, as GitHub-style owner/name pairs: the user
+      # namespace maps to $GITHUB_USER, every mirrored org namespace keeps
+      # its org login. Out-of-scope namespaces (e.g. the local `starred` org
+      # whose upstreams are strangers' repos by design) are skipped and
+      # counted, never reconciled.
+      skipped_out_of_scope=0
       page=1
       while true; do
         response=$(curl -s -H "Authorization: token $FORGEJO_TOKEN" \
           "$FORGEJO_URL/api/v1/user/repos?limit=50&page=$page")
         n=$(echo "$response" | jq -r 'if type == "array" then length else -1 end')
         [[ "$n" == "-1" ]] && { echo "Error: Forgejo listing failed: $(echo "$response" | jq -r '.message // "unknown"')"; exit 1; }
-        echo "$response" | jq -r --arg owner "$FORGEJO_OWNER" \
-          '.[] | select((.owner.login | ascii_downcase) == ($owner | ascii_downcase)) | select(.mirror == true) | .name' \
-          >> "$FJMIRRORS"
+        while IFS=$'\t' read -r login name; do
+          [[ -z "$login" ]] && continue
+          if [[ "$login" == "''${FORGEJO_OWNER,,}" ]]; then
+            echo "$GITHUB_USER/$name" >> "$FJMIRRORS"
+          elif grep -qxF "$login" "$ORGS"; then
+            echo "$login/$name" >> "$FJMIRRORS"
+          else
+            skipped_out_of_scope=$((skipped_out_of_scope + 1))
+          fi
+        done < <(echo "$response" | jq -r '.[] | select(.mirror == true) | "\(.owner.login | ascii_downcase)\t\(.name)"')
         [[ "$n" -lt 50 ]] && break
         page=$((page + 1))
       done
 
       total=$(wc -l < "$FJMIRRORS")
 
-      # 3. Stale = forgejo mirrors whose name is no longer a canonical GitHub name.
+      # 3. Stale = forgejo pairs no longer canonical upstream.
       sort -u -o "$FJMIRRORS" "$FJMIRRORS"
       comm -23 <(tr '[:upper:]' '[:lower:]' < "$FJMIRRORS" | sort -u) "$CANONICAL" > "$STALE"
       stale_count=$(wc -l < "$STALE")
 
-      # 4. Classify each stale mirror by probing its (old) GitHub path.
+      # 4. Classify each stale pair by probing its (old) GitHub path.
       # gh api prints HTTP error BODIES to stdout even on failure (live-proven
       # 2026-09-18: every 404 leaked {"message":"Not Found",...} into $probe and
       # upstream-deleted repos misclassified as "transferred" with a garbage
       # owner). Trust the EXIT CODE plus an owner/name shape check, never the
       # captured stdout alone.
+      # pending-deletes.txt switched to owner/name PAIRS 2026-10-02; the live
+      # file was empty (0 pending) at the switch, any legacy flat name simply
+      # never matches a pair and ages out — pending only gates deletes, never
+      # causes them.
       : > "$PENDING_NEW"
-      while read -r lower; do
-        # recover the original-case forgejo name for API calls
-        name=$(grep -ixF "$lower" "$FJMIRRORS" | head -1)
+      while read -r lower_pair; do
+        # recover the original-case forgejo pair for API calls
+        pair=$(grep -ixF "$lower_pair" "$FJMIRRORS" | head -1)
+        gh_owner="''${pair%%/*}"
+        name="''${pair##*/}"
         # errexit-safe: a 404/network failure must not kill the loop
         rc=0
-        probe=$(gh api "repos/$GITHUB_USER/$name" --jq .full_name 2>/dev/null) || rc=$?
+        probe=$(gh api "repos/$gh_owner/$name" --jq .full_name 2>/dev/null) || rc=$?
         if [[ "$rc" -eq 0 && "$probe" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]; then
           :
         elif [[ "$rc" -eq 0 ]]; then
           # exit 0 but no owner/name shape (jq oddity) — never classify on garbage
-          echo "  unresolved probe (will retry): $name (raw: ''${probe:0:60})"
+          echo "  unresolved probe (will retry): $pair (raw: ''${probe:0:60})"
           continue
         else
           # gh HTTP/network error — 404 is the overwhelmingly common case here
-          # (the name is already absent from the listing). A rare network blip
+          # (the pair is already absent from the listing). A rare network blip
           # misclassifies as archived for ONE report-only run; next run heals.
-          echo "$name" >> "$DELETED"
+          echo "$pair" >> "$DELETED"
           continue
         fi
         up_owner="''${probe%%/*}"
         up_name="''${probe##*/}"
-        if [[ "''${up_owner,,}" == "''${GITHUB_USER,,}" ]]; then
-          if grep -qxF "''${up_name,,}" "$CANONICAL" && grep -ixF "$up_name" "$FJMIRRORS" &>/dev/null; then
+        if [[ "''${up_owner,,}" == "''${gh_owner,,}" ]]; then
+          if grep -qxF "''${up_owner,,}/''${up_name,,}" "$CANONICAL" && grep -ixF "$up_owner/$up_name" "$FJMIRRORS" &>/dev/null; then
             # canonical-named mirror already exists → stale copy is redundant.
             # Two-run confirmation: delete only when the verdict repeats.
-            if grep -qxF "$name" "$PENDING"; then
+            if grep -qxF "$lower_pair" "$PENDING"; then
+              # forgejo-side owner: user namespace maps back to FORGEJO_OWNER
+              if [[ "''${gh_owner,,}" == "''${GITHUB_USER,,}" ]]; then
+                fj_owner="$FORGEJO_OWNER"
+              else
+                fj_owner="$gh_owner"
+              fi
               is_mirror=$(curl -s -H "Authorization: token $FORGEJO_TOKEN" \
-                "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name" | jq -r '.mirror // false')
+                "$FORGEJO_URL/api/v1/repos/$fj_owner/$name" | jq -r '.mirror // false')
               if [[ "$is_mirror" == "true" ]]; then
                 code=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE \
                   -H "Authorization: token $FORGEJO_TOKEN" \
-                  "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name")
+                  "$FORGEJO_URL/api/v1/repos/$fj_owner/$name")
                 if [[ "$code" == "204" || "$code" == "200" ]]; then
-                  echo "  healed rename: deleted stale '$name' (canonical '$up_name' mirrored)"
+                  echo "  healed rename: deleted stale '$pair' (canonical '$up_owner/$up_name' mirrored)"
                 else
-                  echo "  FAILED to delete stale '$name' (HTTP $code) — kept"
-                  echo "$name" >> "$PENDING_NEW"
+                  echo "  FAILED to delete stale '$pair' (HTTP $code) — kept"
+                  echo "$lower_pair" >> "$PENDING_NEW"
                 fi
               else
-                echo "  refusing to delete '$name': no longer a pull mirror"
+                echo "  refusing to delete '$pair': no longer a pull mirror"
               fi
-              grep -vxF "$name" "$PENDING" > "$PENDING_TMP" || true
+              grep -vxF "$lower_pair" "$PENDING" > "$PENDING_TMP" || true
               mv "$PENDING_TMP" "$PENDING"
             else
-              echo "  rename confirmed (1st pass, will delete next run): $name → $up_name"
-              echo "$name" >> "$PENDING_NEW"
+              echo "  rename confirmed (1st pass, will delete next run): $pair → $up_owner/$up_name"
+              echo "$lower_pair" >> "$PENDING_NEW"
             fi
           else
-            # canonical mirror not created yet — phase 1 creates it; reset any pending verdict
-            echo "  rename pending creation: $name → $up_name"
-            grep -vxF "$name" "$PENDING" > "$PENDING_TMP" || true
+            # canonical mirror not created yet — the mirror phase creates it; reset any pending verdict
+            echo "  rename pending creation: $pair → $up_owner/$up_name"
+            grep -vxF "$lower_pair" "$PENDING" > "$PENDING_TMP" || true
             mv "$PENDING_TMP" "$PENDING"
           fi
         else
-          echo "$name ($probe)" >> "$TRANSFERRED"
+          echo "$pair ($probe)" >> "$TRANSFERRED"
         fi
       done < "$STALE"
       mv "$PENDING_NEW" "$PENDING"
 
-      # Persist the full stale-name set (lowercase) for the dead-mirror
-      # collector (forgejo-mirror-health): known-stale = every mirror name
-      # that is NOT a canonical GitHub name (renamed / transferred /
-      # upstream-deleted). Those fail their dead remotes forever BY DESIGN
-      # and must never count as dead candidates. Atomic write: the 5-min
-      # collector may read it concurrently.
+      # Persist the stale set for the dead-mirror collector
+      # (forgejo-mirror-health). known-stale.txt stays FLAT-NAMED because the
+      # collector greps flat names from notice paths — a same-named live repo
+      # in another namespace suppresses that name's dead-candidate count
+      # (superset semantics, accepted). The pair file carries full fidelity.
+      # Atomic writes: the 5-min collector may read concurrently.
+      stale_tmp=$(mktemp "$STATE_DIR/known-stale.XXXXXX")
+      sort -u "$STALE" | cut -d/ -f2 > "$stale_tmp"
+      mv "$stale_tmp" "$STATE_DIR/known-stale.txt"
       stale_tmp=$(mktemp "$STATE_DIR/known-stale.XXXXXX")
       sort -u "$STALE" > "$stale_tmp"
-      mv "$stale_tmp" "$STATE_DIR/known-stale.txt"
+      mv "$stale_tmp" "$STATE_DIR/known-stale-pairs.txt"
+
+      org_mirrors=$(awk -F'/' -v u="''${GITHUB_USER,,}" 'tolower($1) != u' "$FJMIRRORS" | wc -l)
 
       echo "=== Reconcile summary ==="
-      echo "forgejo pull mirrors: $total"
+      echo "forgejo pull mirrors: $total ($org_mirrors in org namespaces, $skipped_out_of_scope out-of-scope skipped)"
       echo "stale names examined: $stale_count"
       echo "upstream deleted (kept as frozen archive): $(wc -l < "$DELETED")"
       cat "$DELETED" | sed 's/^/  archived: /'
@@ -369,6 +508,7 @@ in
         echo "# forgejo mirror reconcile metrics"
         echo "forgejo_mirror_reconcile_scrape_errors 0"
         echo "forgejo_mirror_total $total"
+        echo "forgejo_mirror_org_mirrors $org_mirrors"
         echo "forgejo_mirror_stale_names $stale_count"
         echo "forgejo_mirror_upstream_deleted_archived $(wc -l < "$DELETED")"
         echo "forgejo_mirror_transferred $(wc -l < "$TRANSFERRED")"
