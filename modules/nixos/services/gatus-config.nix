@@ -115,6 +115,75 @@ _: {
 
       inherit (config.networking) domain;
 
+      # NetBird control plane on the pbx VPS (pbx-artmann repo,
+      # hosts/pbx/netbird.nix) — the self-hosted mesh VPN this LAN's remote
+      # access depends on. All four surfaces ride public DNS + LE certs, so
+      # each check proves the full external chain from evo-x2. Healthy-state
+      # statuses are NON-obvious and pinned by live probes (2026-10-02):
+      #   - /api/peers answers 401 when the management gRPC-gateway is UP
+      #     and evaluating auth (502 = backend dead). 200 would mean an auth
+      #     bypass; 404 means the gateway route vanished.
+      #   - relay / answers 404 from the relay PROCESS for non-upgrade GETs
+      #     (it speaks rels:// websockets, not HTTP). 502 = relay service
+      #     dead behind nginx; 200 = the vhost fell back to the default
+      #     server (cert/SNI mismatch class).
+      # DNS dependency: netbird/relay.larsartmann.cloud only resolve on this
+      # host via dns-local.nix cloudPublicRecords (the authoritative alias
+      # zone otherwise NXDOMAINs them) — same repo, same switch, deployed
+      # atomically with these checks. STUN UDP 3479 is deliberately NOT
+      # checked: gatus udp:// dials without a handshake, so a closed port
+      # still reads CONNECTED — phantom-green (2026-08-22 doctrine); an
+      # honest STUN binding probe needs a STUN client, not a dial.
+      netbirdControlPlaneChecks = [
+        (mkHttpCheck {
+          name = "NetBird Dashboard";
+          group = "NetBird Control Plane";
+          url = "https://netbird.larsartmann.cloud/";
+          interval = "5m";
+          conditions = [
+            "[STATUS] == 200"
+            "[RESPONSE_TIME] < 2000"
+            "[BODY] == pat(*<html*)"
+            "[CERTIFICATE_EXPIRATION] > 168h"
+          ];
+          alerts = discordAlert "NetBird dashboard down — remote-access control plane unreachable from the LAN (DNS alias-zone shadow, pbx nginx, or LE cert broken; pbx-artmann hosts/pbx/netbird.nix)";
+        })
+        (mkHttpCheck {
+          name = "NetBird Management API";
+          group = "NetBird Control Plane";
+          url = "https://netbird.larsartmann.cloud/api/peers";
+          interval = "5m";
+          conditions = [
+            "[STATUS] == 401"
+            "[RESPONSE_TIME] < 2000"
+          ];
+          alerts = discordAlert "NetBird management API not answering 401 — the gRPC-gateway is dead or unreachable (502 = unit down; anything-but-401 also fires when auth itself broke). Peers cannot re-connect or enroll while this is down";
+        })
+        (mkHttpCheck {
+          name = "NetBird Dex IdP";
+          group = "NetBird Control Plane";
+          url = "https://netbird.larsartmann.cloud/dex/healthz";
+          interval = "5m";
+          conditions = [
+            "[STATUS] == 200"
+            "[RESPONSE_TIME] < 2000"
+          ];
+          alerts = discordAlert "NetBird dex healthz failing — dashboard LOGINS are dead (peers keep working on setup keys; dex serves /dex under the netbird vhost on pbx)";
+        })
+        (mkHttpCheck {
+          name = "NetBird Relay";
+          group = "NetBird Control Plane";
+          url = "https://relay.larsartmann.cloud/";
+          interval = "5m";
+          conditions = [
+            "[STATUS] == 404"
+            "[RESPONSE_TIME] < 2000"
+            "[CERTIFICATE_EXPIRATION] > 168h"
+          ];
+          alerts = discordAlert "NetBird relay not answering 404 — relay fallback path for NAT-ed peers is dead (502 = relay unit down behind nginx; 200 = vhost/SNI fell back to the default server). Direct P2P still works; LTE/CGNAT peers lose connectivity";
+        })
+      ];
+
       # Native OIDC via Pocket ID (Layer 1 SSO). Provision-only: evo-x2 always
       # runs pocket-id-config.provision, which writes the client secret to the
       # file below. systemd LoadCredential reads it as root (DynamicUser means the
@@ -1037,6 +1106,7 @@ _: {
                 })
               ]
               ++ map mkWebsiteCheck ossWebsites
+              ++ netbirdControlPlaneChecks
               # Registry fan-out (services.integration.<name>.checks) — inside
               # the withPapIngest pass so registry endpoints get the
               # PapDashboard ingest alert appended like every built-in one.

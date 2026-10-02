@@ -27,6 +27,14 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
   `platforms/nixos/secrets/netbird.yaml` (key `netbird_setup_key`).
   Uses pinned-nixpkgs `services.netbird.clients.evox2` + automated
   setup-key login. Port 51820/udp (`ports.netbird`).
+- **DNS prerequisite** (fixed 2026-10-02): `netbird.`/`relay.larsartmann.cloud`
+  resolve on the LAN/VPN only via explicit `cloudPublicRecords`
+  (platforms/common/dns-local.nix → dnsblockd localRecords on BOTH evo-x2 and
+  rpi3). dnsblockd is authoritative for the cloud zone, so without those
+  records the names NXDOMAIN locally (while resolving publicly) — enrollment,
+  the phase-2 DNS nameserver group (VPN clients query rpi3), and the Gatus
+  "NetBird Control Plane" checks all depend on them. Guarded by
+  `checks.cloud-domain`.
 
 ## Phase 2 handover (user-run, in order)
 

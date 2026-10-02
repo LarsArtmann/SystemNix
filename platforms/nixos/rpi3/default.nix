@@ -131,7 +131,14 @@ in
         )
         // {
           "${cloudDomain}." = lanIP;
-        };
+        }
+        # Public hosts inside the authoritative cloud zone (see
+        # dns-local.nix cloudPublicRecords) — mirrors evo-x2. Critical here
+        # twice over: failover clients resolve via rpi3, AND the phase-1
+        # NetBird DNS nameserver group points VPN clients at this host —
+        # without the records, netbird.larsartmann.cloud NXDOMAINs inside
+        # the VPN itself (found live 2026-10-02).
+        // lib.mapAttrs' (sub: ip: lib.nameValuePair "${sub}.${cloudDomain}." ip) dnsLocal.cloudPublicRecords;
       localZones = [
         "${domain}."
         "${cloudDomain}."

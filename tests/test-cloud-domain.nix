@@ -27,6 +27,7 @@ let
 
   evox2 = inputs.self.nixosConfigurations.evo-x2.config;
   rpi3 = inputs.self.nixosConfigurations.rpi3-dns.config;
+  cloudPublic = (import ../platforms/common/dns-local.nix).cloudPublicRecords;
 
   dnsRecords = evox2.services.dns-blocker.localRecords;
   zones = evox2.services.dns-blocker.localZones;
@@ -39,6 +40,17 @@ let
   rpi3MissingCloud = builtins.filter (
     s: !rpi3.services.dns-blocker.localRecords ? "${s}.${cloud}."
   ) subdomains;
+  # The authoritative cloud zone shadows public records: every entry in
+  # dns-local.nix cloudPublicRecords (the NetBird control plane on pbx)
+  # MUST exist as an explicit local record on BOTH hosts, or the name
+  # NXDOMAINs on the LAN/VPN while resolving publicly (found 2026-10-02).
+  missingPublicCloud = builtins.filter (
+    s: !(dnsRecords ? "${s}.${cloud}.") || dnsRecords."${s}.${cloud}." != cloudPublic.${s}
+  ) (builtins.attrNames cloudPublic);
+  rpi3MissingPublicCloud = builtins.filter (
+    s: !(rpi3.services.dns-blocker.localRecords ? "${s}.${cloud}.")
+      || rpi3.services.dns-blocker.localRecords."${s}.${cloud}." != cloudPublic.${s}
+  ) (builtins.attrNames cloudPublic);
   rpi3ZonesOk =
     rpi3.services.dns-blocker.localZones == [
       "${home}."
@@ -61,6 +73,10 @@ let
     {
       ok = rpi3MissingCloud == [ ] && rpi3ZonesOk;
       msg = "rpi3-dns failover parity broken: missing ${toString rpi3MissingCloud}";
+    }
+    {
+      ok = missingPublicCloud == [ ] && rpi3MissingPublicCloud == [ ];
+      msg = "public cloud records shadowed by the alias zone (evo-x2: ${toString missingPublicCloud}, rpi3: ${toString rpi3MissingPublicCloud}) — netbird/relay would NXDOMAIN on the LAN/VPN";
     }
     {
       ok = mirroredFrom == [ ];

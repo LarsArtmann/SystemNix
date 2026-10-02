@@ -1,0 +1,1252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SystemNix Status 2026-10-02 — QLC root full recurrence + dnsblockd SIGBUS forensics</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS DARK — Dashboard template
+         Design language: form follows function. Primary colors on graphite.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Dark) --- */
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        /* --- Semantic layer (shared vocabulary with editorial template) --- */
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 15%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px; /* Bauhaus default: sharp corners */
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Sticky-header offset for anchor jumps */
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges (used inside issue cards) --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges (used in tables) --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+
+      /* --- Callouts (used inside issues or standalone) --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      /* --- Stat cards / scorecards (aliased vocabulary) --- */
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad,
+      .score-bad {
+        /* default top bar already set */
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      /* --- Strengths list --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--accent);
+      } /* func, type, struct, if, return */
+      .tok-type {
+        color: var(--warning);
+      } /* int, string, bool, error */
+      .tok-string {
+        color: var(--solution);
+      } /* "quoted strings" */
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      } /* function names */
+      .tok-number {
+        color: var(--accent);
+      } /* 42, 3.14 */
+      .tok-generic {
+        color: var(--problem);
+      } /* T, ID in generics */
+      .tok-builtin {
+        color: #4dd9ff;
+      } /* make, len, append */
+      .tok-punct {
+        color: var(--text-muted);
+      } /* { } ( ) ; = : */
+      .tok-attr {
+        color: var(--accent);
+      } /* Nix attribute names */
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids (responsive) --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC (alternative to sidebar) --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+<!-- Top bar -->
+<div class="top-bar">
+  <span>Status Report &middot; Incident + Full Snapshot</span>
+  <span>2026-10-02 08:36 CEST</span>
+  <span>Crush session (evo-x2 live forensics)</span>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" data-nav>
+    <nav>
+      <div class="label">Contents</div>
+      <a href="#summary">00 Summary</a>
+      <a href="#done">01 Fully Done</a>
+      <a href="#partial">02 Partially Done</a>
+      <a href="#notstarted">03 Not Started</a>
+      <a href="#fucked">04 Totally Fucked Up</a>
+      <a href="#improve">05 Improve</a>
+      <a href="#next">06 Top 25 Next</a>
+      <a href="#question">07 Top Question</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="hero">
+      <div class="hero-shapes">
+        <div class="circle"></div>
+        <div class="square"></div>
+        <div class="tri"></div>
+      </div>
+      <div class="hero-badge">Point-in-time snapshot</div>
+      <h1>QLC root full AGAIN &mdash; dnsblockd SIGBUS forensics, space accounting, and where SystemNix actually stands</h1>
+      <p class="hero-subtitle">
+        Second root-100% event in 24 hours took down LAN DNS at 06:33. This report root-causes the
+        outage, accounts for every gigabyte on the QLC partition, records the owner-executed emergency
+        prune, and inventories overall project state: deploy backlog, thermal-crash recovery debt,
+        a blind system-health collector, and the hot-tier migrations that would end this incident class.
+      </p>
+    </div>
+
+    <h2 id="summary"><span class="num">00</span>Summary</h2>
+    <div class="stat-grid">
+      <div class="stat-card stat-bad">
+        <div class="stat-value">4.2G</div>
+        <div class="stat-label">Root free (100% used, 723G QLC)</div>
+      </div>
+      <div class="stat-card stat-good">
+        <div class="stat-value">UP</div>
+        <div class="stat-label">dnsblockd (recovered 06:33:16, v f625cfe)</div>
+      </div>
+      <div class="stat-card stat-bad">
+        <div class="stat-value">2&times;</div>
+        <div class="stat-label">Root-100% events in 24h (10-01 21:30, 10-02 06:32)</div>
+      </div>
+      <div class="stat-card stat-bad">
+        <div class="stat-value">BLIND</div>
+        <div class="stat-label">system_health metrics (textfile parse error)</div>
+      </div>
+      <div class="stat-card stat-warn">
+        <div class="stat-value">3</div>
+        <div class="stat-label">Boots 10-01 evening (freeze #8/#9 thermal)</div>
+      </div>
+      <div class="stat-card stat-warn">
+        <div class="stat-value">506</div>
+        <div class="stat-label">Open TODO queue rows</div>
+      </div>
+    </div>
+
+    <div class="callout callout-warning" style="margin-top:1rem">
+      <strong>Headline</strong>
+      dnsblockd is not broken &mdash; the disk it lives on is. ENOSPC on the QLC root faulted the
+      modernc-sqlite WAL mmap (SIGBUS), the first restart failed mid-migration (<code>disk I/O error 4874</code>),
+      the second succeeded. The durable fixes are already designed (hot-DB tier, churn reduction);
+      what was missing ran today: the expired-snapshot backlog prune (owner, 07:32) and honest
+      space accounting (below).
+    </div>
+
+    <h2 id="done"><span class="num">01</span>Fully Done (this session, evidence-cited)</h2>
+
+    <div class="issue issue-nice">
+      <span class="severity severity-nice">Root-caused</span>
+      <h3>dnsblockd outage = ENOSPC collateral, not a dnsblockd bug</h3>
+      <div class="where">journalctl -u dnsblockd 06:33:08&ndash;06:33:21</div>
+      <p>
+        SIGBUS at <code>modernc.org/sqlite _walTryBeginRead &rarr; AtomicStoreNUint32</code> (exit 2) &mdash;
+        the mmap'd WAL shared index faulted when the full disk prevented WAL extension. Restart #1 died
+        migrating tracking.db (<code>disk I/O error (4874)</code>); restart #2 at 06:33:16 completed startup
+        in 5.6s, loaded 4,296,867 blocklist domains, and served. Verified live:
+        <code>dig @127.0.0.1 example.com</code> &rarr; 104.20.23.154 and
+        <code>auth.home.lan</code> &rarr; 192.168.1.150; blocking logs flowing 06:33:36 onward.
+        Same storm hit pocket-id (<code>database or disk is full (13)</code>), gatus storage inserts,
+        and helium (SIGBUS + coredump rejected ENOSPC).
+      </p>
+    </div>
+
+    <div class="issue issue-nice">
+      <span class="severity severity-nice">Accounted</span>
+      <h3>Every gigabyte on the QLC partition attributed</h3>
+      <div class="where">df + du -x + /mnt/btrfs-root/.snapshots + .rescue</div>
+      <p>
+        706G used = live <code>@</code> 192G (projects 75G, tmp 54G, .local 13G, .config 11G) +
+        <code>@cache-home</code> 22.3G + 10G emergency reserve + <strong>~470G of churn pinned by the
+        snapshot chain</strong>: 11 daily <code>@</code> snapshots (09-13 &rarr; 10-01, du 205&ndash;314G each
+        &mdash; shared extents, not additive) + 2 rescue snapshots (by-design keep=2 tier). The "lost data"
+        is deleted/overwritten bytes held immutable by snapshots on the same partition as <code>/</code>.
+      </p>
+    </div>
+
+    <div class="issue issue-nice">
+      <span class="severity severity-nice">Executed</span>
+      <h3>Emergency backlog prune run by owner (paste transcript)</h3>
+      <div class="where">sudo btrbk -c /etc/btrbk/root.conf prune &mdash; 07:32:42</div>
+      <p>
+        Deleted 6 expired <code>@</code> snapshots (09-13, 09-23&ndash;09-28) + 9 <code>@home-hermes</code>
+        (6 local, 3 pool-side). Freed only ~3G (1.3G &rarr; 4.2G) because their extents were shared with
+        survivors &mdash; the lingerers were mostly duplicated pin, exactly why the earlier ~105GiB
+        estimate (docs/todo/storage.md:18) didn't materialize. Retention now correct: 5 <code>@</code>
+        snapshots (09-20 weekly + 09-27&hellip;10-01 dailies). Fail-safe held: send-parents force-preserved,
+        pool receives untouched.
+      </p>
+    </div>
+
+    <div class="issue issue-nice">
+      <span class="severity severity-nice">Found</span>
+      <h3>system_health collector blindness root-caused</h3>
+      <div class="where">node_exporter textfile error, system_health.prom line 785</div>
+      <p>
+        <code>unit="gitea-runner-evo\x2dx2.service"</code> &mdash; the collector emits systemd's
+        <code>\x2d</code> escaping into a Prometheus text-format label value where it is invalid
+        (writer: modules/nixos/services/system-health.nix:1488). node_exporter rejects the ENTIRE file
+        &rarr; every system_health_* metric is phantom-missing. Same writer had the 2026-09-20
+        <code>nrestarts="[not"</code> quoting incident &mdash; second occurrence of the class.
+      </p>
+    </div>
+
+    <div class="issue issue-nice">
+      <span class="severity severity-nice">Consolidated</span>
+      <h3>10-01 evening crash context reconciled (not re-discovered)</h3>
+      <div class="where">docs/status/2026-10-01_18-49_* and _19-21_*</div>
+      <p>
+        The abrupt boot boundaries (18:27:13, 18:56:07) are freeze #8/#9 &mdash; documented thermal
+        crashes (Tctl 99&deg;C, both NVMe drives exonerated). Current boot 0 started 18:57:43, uptime
+        13.7h at writing. No new unexplained crash. Boot-mirror first-reboot verify remains owed
+        (row TODO_LIST:21) since both intervening boots were crash reboots.
+      </p>
+    </div>
+
+    <h2 id="partial"><span class="num">02</span>Partially Done</h2>
+
+    <div class="issue issue-important">
+      <span class="severity severity-important">Blocked on deploy</span>
+      <h3>Deploy pipeline: fixes staged, activation not re-run</h3>
+      <div class="where">staged since 2026-10-01 (hagezi FOD repair ee80e46e, caddy-logs subvol prepared + rsync'd 1.89GB)</div>
+      <p>
+        Live system verified LAGGING: spotify binaries absent from <code>/run/current-system</code> (0 hits),
+        <code>/var/log/caddy</code> mount absent (findmnt). Riding the next deploy: hagezi hash fix,
+        caddy-logs cutover finalize, spotify, pixel6 dnsblockd-device removal. Blocker: owner-run
+        <code>nix run .#deploy</code> (sudo-gated). Effort: M.
+      </p>
+    </div>
+
+    <div class="issue issue-important">
+      <span class="severity severity-important">Waiting on calendar</span>
+      <h3>Root space: backlog cleared, biggest pin still held</h3>
+      <div class="where">/mnt/btrfs-root/.snapshots/@.20260920T2300 (du 301G)</div>
+      <p>
+        The 09-20 weekly exits its 2-week window with the 10-03/10-04 nightly prune (btrbk-pool-clean,
+        23:50) &mdash; that frees the 09-20&rarr;09-27 churn, likely the largest single drop remaining.
+        Verification of df before/after that prune is NOT yet scheduled anywhere. Effort: S.
+      </p>
+    </div>
+
+    <div class="issue issue-important">
+      <span class="severity severity-important">Staged, undeployed</span>
+      <h3>Thermal-crash mitigations from 10-01 evening</h3>
+      <div class="where">19-21 report &sect;c.1&ndash;3</div>
+      <p>
+        amd_pstate performance&rarr;guided revert, k10temp Gatus check (warn 90 / crit 95),
+        NVMe composite checks (must key on stable identity, not nvme0/nvme1) &mdash; all queued,
+        none deployed. Also pending: flm socket restore verification, recovery-reader cleanup.
+        Effort: M.
+      </p>
+    </div>
+
+    <div class="issue issue-important">
+      <span class="severity severity-important">Active</span>
+      <h3>SEV1 bridge conditions still notifying as of 08:36</h3>
+      <div class="where">sev1-bridge-check 08:36:34</div>
+      <p>
+        "MEMORY EMERGENCY GUARD TRIPPED" + "FLM RESTORE CAPPED" (severity=notify). Standing class
+        from the stability domain &mdash; but 13.7h post-boot is long enough to ask whether these are
+        latched stale rather than live conditions. Needs a triage look. Effort: S.
+      </p>
+    </div>
+
+    <h2 id="notstarted"><span class="num">03</span>Not Started (the structural fixes)</h2>
+
+    <div class="card card-problem">
+      <h4>Hot-DB migration waves &mdash; module armed, zero services migrated</h4>
+      <p>
+        <code>services.hot-db</code> went live (enabled) 2026-09-30 with entries planned one-per-window:
+        gatus, dnsblockd, pocket-id, browser-history, discordsync. The dnsblockd 1.9G tracking.db that
+        faulted this morning belongs on the Samsung (756G free). Blocked on owner migration windows &mdash;
+        two 100%-full incidents have now happened while waiting.
+      </p>
+    </div>
+    <div class="card card-warning">
+      <h4>Crush session DBs off the QLC root</h4>
+      <p>
+        2.9GB &times; 5+ concurrent sessions of churn inside <code>@</code> (storage.md:28) &mdash; the
+        2026-09-14 boot storm's sustained driver. Blocked:user.
+      </p>
+    </div>
+    <div class="card card-warning">
+      <h4>dnsblockd wrapper &rarr; upstream module (M19-M21)</h4>
+      <p>
+        Blocked:push &mdash; csrf_enabled + blocklist_files options landed locally in
+        ~/projects/dnsblockd (4e99b6d1), unpushed. Also owner decision folded in: non-root
+        <code>dnsblockd</code> user vs <code>user="root"</code> override.
+      </p>
+    </div>
+    <div class="card card-warning">
+      <h4>Offsite Borg go-live</h4>
+      <p>
+        Deployed DORMANT since system-796. Owner-gated on StorageBox host-key pin. The pool is
+        same-chassis; offsite is the only leg that survives the house.
+      </p>
+    </div>
+
+    <h2 id="fucked"><span class="num">04</span>Totally Fucked Up</h2>
+
+    <div class="issue issue-critical">
+      <span class="severity severity-critical">Recurrence</span>
+      <h3>Second root-100% event in 24 hours &mdash; the fix shipped 10-01 was insufficient</h3>
+      <div class="where">10-01 21:30 incident &rarr; 10-02 06:32 ENOSPC storm</div>
+      <p>
+        The 10-01 fix (explicit prune in btrbk-pool-clean) prevents FUTURE pile-up but did not clear
+        the existing backlog &mdash; the manual prune item sat undone until the owner ran it at 07:32
+        today, i.e. <strong>after</strong> the second incident, not before it. Impact at 06:32-06:33:
+        LAN DNS outage window (~13s hard down via restart cycle, degraded before), pocket-id health
+        writes failing, gatus result storage failing, helium SIGBUS-crashed with coredump rejected,
+        coredump storage dead. Root cause of the class: heavy churn inside the snapshotted
+        <code>@</code> subvol + no enforced free-space floor. Mitigation available: see &sect;05.
+      </p>
+    </div>
+
+    <div class="issue issue-critical">
+      <span class="severity severity-critical">Phantom metrics</span>
+      <h3>The system-health collector has been emitting an unparseable .prom file</h3>
+      <div class="where">node_exporter ERROR textfile.go:242, every scrape since the bad line appeared</div>
+      <p>
+        ALL system_health_* metrics are missing from monitoring &mdash; including
+        <code>flm_prom</code> state that post-deploy-check.sh:348 depends on and the enabled/inactive
+        sweep that guards the 2026-09-14 pool-dropout class. On a box this instrumented, an entire
+        collector silently returning nothing is exactly the phantom-coverage failure the repo's
+        audits exist to catch &mdash; and none caught it, because nothing asserts the file PARSES.
+        Blind window: unknown (at least since gitea-runner-evo-x2 became enabled+inactive; needs a
+        first-occurrence check in journal history).
+      </p>
+    </div>
+
+    <div class="issue issue-critical">
+      <span class="severity severity-critical">Alert&rarr;action gap</span>
+      <h3>A 93% root-usage Gatus alert exists &mdash; the disk hit 100% anyway</h3>
+      <div class="where">gatus-config.nix:671 (storage_collector_fs_used_percent &ge;93% &rarr; Discord)</div>
+      <p>
+        Either the alert never fired (metric blind &mdash; plausible: is this metric from the SAME broken
+        textfile? the check name says "collector scale", needs verification), or it fired and was not
+        acted on. Both branches are bad; which one is true decides the fix. See &sect;07 question.
+      </p>
+    </div>
+
+    <div class="issue issue-important">
+      <span class="severity severity-important">Ignored warning</span>
+      <h3>redis overcommit warning at every boot since forever</h3>
+      <div class="where">redis-server[2189/2215] at 2026-10-01 18:29:47, and earlier boots</div>
+      <p>
+        <code>vm.overcommit_memory=1</code> not set &mdash; background saves "may fail under low memory
+        conditions". One sysctl line; trivially fixable in the next deploy. Classified under
+        minor-but-repeatedly-ignored.
+      </p>
+    </div>
+
+    <h2 id="improve"><span class="num">05</span>What We Should Improve</h2>
+
+    <div class="card card-solution">
+      <h4>1. Enforce a root free-space floor mechanically</h4>
+      <p>
+        Wire an auto-response into btrbk-pool-clean (or its own timer): when root usage &gt;90%,
+        run <code>btrbk prune</code> immediately and emit a textfile metric +
+        notify. The ladder today is: 93% gatus alert &rarr; (nothing) &rarr; 100% &rarr; outage.
+        Prune is already fail-safe (send-parents preserved). Effort: S/M.
+      </p>
+    </div>
+    <div class="card card-solution">
+      <h4>2. Centralize label escaping in every textfile writer + add a parse gate</h4>
+      <p>
+        Two quoting incidents from the same collector (2026-09-20 nrestarts, today \x2d) &mdash;
+        by the feedback-loop rule this deserves a mechanical gate, not a third manual fix:
+        a shared sanitize function for label values AND a check (or VM test) that renders a
+        hyphen-carrying unit name and validates the .prom with a real parser (promtool/expfmt).
+      </p>
+    </div>
+    <div class="card card-solution">
+      <h4>3. Textfile presence canary</h4>
+      <p>
+        Add a gatus check asserting <code>system_health_</code> series presence in node_exporter
+        /metrics &mdash; the phantom-metric canary pattern already used for nvme and coverage audits.
+        Catches ANY future whole-file rejection, not just this escape bug.
+      </p>
+    </div>
+    <div class="card card-solution">
+      <h4>4. Schedule hot-tier migrations BEFORE the next 100% event</h4>
+      <p>
+        Two incidents have now preceded the migration windows. The wave plan (one service per window)
+        is sound; the windows need dates. Owner call.
+      </p>
+    </div>
+
+    <h2 id="next"><span class="num">06</span>Top 25 Things To Do Next</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Impact</th><th>Effort</th><th>Task</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td><span class="badge badge-critical">Critical</span></td><td>M</td><td>Re-run the deploy (hagezi fix + dns-update repair staged) &mdash; unblocks caddy-logs cutover, spotify, pixel6 removal; then post-deploy-check</td><td><span class="badge badge-low">QUEUED &middot; owner</span></td></tr>
+          <tr><td>2</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>Verify the ~10-04 nightly prune drops the 09-20 weekly pin: df before/after, record freed GB</td><td><span class="badge badge-medium">NEW</span></td></tr>
+          <tr><td>3</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Fix \x2d label escaping in system-health.nix:1488 + regression test with a hyphenated unit</td><td><span class="badge badge-medium">NEW</span></td></tr>
+          <tr><td>4</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Gatus canary: system_health_* series presence in node_exporter /metrics</td><td><span class="badge badge-medium">NEW</span></td></tr>
+          <tr><td>5</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Root-space floor: auto-prune trigger at &gt;90% root usage + notify + textfile metric</td><td><span class="badge badge-medium">NEW</span></td></tr>
+          <tr><td>6</td><td><span class="badge badge-critical">Critical</span></td><td>M</td><td>Hot-DB migration wave 1 (gatus, dnsblockd, pocket-id) &mdash; dates for the owner windows</td><td><span class="badge badge-low">QUEUED &middot; owner</span></td></tr>
+          <tr><td>7</td><td><span class="badge badge-high">High</span></td><td>S</td><td>User-space reclaim: trash /home/lars/tmp (54G), @cache-home.regular-dir-bak (1.3G), orphaned dnsblockd_tracking.db (724M, services.md:40)</td><td><span class="badge badge-medium">NEW + QUEUED</span></td></tr>
+          <tr><td>8</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Boot-mirror first-reboot verify: BootCurrent=000C, LoaderDevicePartUUID = 023f66c0-&hellip; (TODO_LIST:21)</td><td><span class="badge badge-low">QUEUED</span></td></tr>
+          <tr><td>9</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Deploy thermal mitigations: amd_pstate=guided revert + k10temp + NVMe stable-identity checks (19-21 &sect;c)</td><td><span class="badge badge-low">QUEUED</span></td></tr>
+          <tr><td>10</td><td><span class="badge badge-high">High</span></td><td>S</td><td>SEV1 triage: are MEMORY EMERGENCY GUARD + FLM RESTORE CAPPED live conditions or latched stale, 13.7h post-boot?</td><td><span class="badge badge-medium">NEW</span></td></tr>
+          <tr><td>11</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Verify helium recovered after the 06:32 SIGBUS crash (restarted? session state?)</td><td><span class="badge badge-medium">NEW</span></td></tr>
+          <tr><td>12</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Crush session DBs off the QLC root (storage.md:28) &mdash; pairs with wave scheduling</td><td><span class="badge badge-low">QUEUED &middot; owner</span></td></tr>
+          <tr><td>13</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Find first occurrence of the system_health.prom parse error in journal history (bounds the blind window)</td><td><span class="badge badge-medium">NEW</span></td></tr>
+          <tr><td>14</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Confirm whether storage_collector_fs_used_percent comes from the broken textfile (alert-never-fired branch of &sect;04.3)</td><td><span class="badge badge-medium">NEW</span></td></tr>
+          <tr><td>15</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>sysctl vm.overcommit_memory=1 for redis (boot.nix or sysctl.d)</td><td><span class="badge badge-medium">NEW</span></td></tr>
+          <tr><td>16</td><td><span class="badge badge-high">High</span></td><td>M</td><td>sdb USB IO-stall investigation (freeze #6/#7/#10 amplifier, 19-21 &sect;a.7)</td><td><span class="badge badge-low">QUEUED</span></td></tr>
+          <tr><td>17</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>pool_smart_* 404 root-cause (pool + sdb temps unverified)</td><td><span class="badge badge-low">QUEUED</span></td></tr>
+          <tr><td>18</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>34&times; pam login:session closes at 18:25:13 &mdash; still unexplained (19-21 &sect;c.9)</td><td><span class="badge badge-low">QUEUED</span></td></tr>
+          <tr><td>19</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td>dnsblockd M19-M21 module migration once upstream options are pushed; fold in non-root-user decision</td><td><span class="badge badge-low">QUEUED &middot; blocked:push</span></td></tr>
+          <tr><td>20</td><td><span class="badge badge-high">High</span></td><td>M</td><td>Offsite Borg go-live (StorageBox pin + enable) &mdash; the only house-surviving backup leg</td><td><span class="badge badge-low">QUEUED &middot; owner</span></td></tr>
+          <tr><td>21</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>dnsblockd dashboard walk + Q3 attribution-rate check (deployed 09-30, never walked)</td><td><span class="badge badge-low">QUEUED &middot; owner</span></td></tr>
+          <tr><td>22</td><td><span class="badge badge-low">Low</span></td><td>M</td><td>quickshell init_platform SIGABRT coredumps (2&times; 17:59:42, 10-01)</td><td><span class="badge badge-low">QUEUED</span></td></tr>
+          <tr><td>23</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Decision: temporarily narrow root weekly retention 1w&rarr;3d until hot-tier migrations land</td><td><span class="badge badge-medium">NEW &middot; decision</span></td></tr>
+          <tr><td>24</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>Watch: /data at 79% (798G/1.1T) &mdash; models/Steam growth trend</td><td><span class="badge badge-medium">NEW &middot; watch</span></td></tr>
+          <tr><td>25</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>GCP integration hardening batch tail: VM test + smoke &sect; + dnsblockd restart semantics (TODO_LIST:147)</td><td><span class="badge badge-low">QUEUED</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="hero-subtitle" style="font-size:0.9rem">
+      NEW items get harvested into TODO_LIST.md + domain libraries after this report (see closing note
+      in the footer). QUEUED items already have owner rows &mdash; not duplicated.
+    </p>
+
+    <h2 id="question"><span class="num">07</span>The One Question I Cannot Answer</h2>
+
+    <div class="issue issue-important">
+      <span class="severity severity-important">Owner-only</span>
+      <h3>Did the 93% root-usage Discord alert actually reach you before the disk hit 100% &mdash; and if yes, why did no prune run?</h3>
+      <div class="where">gatus-config.nix:671 &mdash; storage_collector_fs_used_percent &ge;93%</div>
+      <p>
+        I tried to answer it myself and could not: Discord is unreachable from this session, and the
+        metric's own liveness is now suspect (the textfile collector that may feed it is the one
+        emitting unparseable output &mdash; &sect;04.2). The two branches demand opposite fixes:
+        <strong>never-fired</strong> &rarr; the alerting path is phantom (canary + metric-source fix,
+        &sect;05.3) and last night was undetectable; <strong>fired-and-ignored</strong> &rarr; the
+        detection worked and the process gap is response (auto-prune floor, &sect;05.1, becomes the
+        mandatory fix and the alert becomes the early heads-up). Your answer picks the branch.
+      </p>
+    </div>
+
+    <footer class="footer">
+      Written 2026-10-02 08:36 CEST &middot; All live claims verified against journalctl / df / du / dig
+      this session &middot; Space figures are logical (du) unless marked df &middot; Snapshot sizes
+      over-count shared extents by design &middot; &sect;06 NEW rows harvested to TODO_LIST.md +
+      domain libraries at authoring time per the self-harvest rule.
+    </footer>
+  </main>
+</div>
+
+  <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>

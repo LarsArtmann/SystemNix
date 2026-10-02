@@ -149,7 +149,7 @@ in
         # shadow-NXDOMAINed by the alias zone. Without this, evo-x2 cannot
         # reach netbird.larsartmann.cloud at all — client enrollment AND
         # Gatus checks die on DNS (found live 2026-10-02).
-        // builtins.mapAttrs' (sub: ip: lib.nameValuePair "${sub}.${cloudDomain}." ip) dnsLocal.cloudPublicRecords;
+        // lib.mapAttrs' (sub: ip: lib.nameValuePair "${sub}.${cloudDomain}." ip) dnsLocal.cloudPublicRecords;
       localZones = [
         "${domain}."
         "${cloudDomain}."
