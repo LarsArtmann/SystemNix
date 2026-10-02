@@ -497,6 +497,20 @@ _: {
               # idle unload. 480s matches the fastflowlm proxy deadline (v1.0.2
               # weights grew 13.6 GB → 21.6 GB — 300s sat exactly at the boundary).
               PAPERLESS_AI_LLM_REQUEST_TIMEOUT = 480;
+              # Pin suggestion output to German — the archive's majority
+              # language (DE docs/receipts + PL statements + EN manuals).
+              # Unset, paperless falls back to the per-user UI display
+              # language, which makes titles/tags drift with account
+              # settings. Revisit if the Stage-0 eval (execution plan A3)
+              # shows per-document language matters more than consistency.
+              PAPERLESS_AI_LLM_OUTPUT_LANGUAGE = "German";
+              # LLM index (RAG vector store) daily rebuild. Upstream default
+              # 10 2 * * * sits inside the 02:00 backup cluster (db-backup
+              # 02:00+jitter, share-link cleanup 02:00); 03:30 keeps the
+              # nightly IO burst staggered after the exporter (01:30). This
+              # is a 3.2.x setting — inert-but-harmless on 3.1.x, live once
+              # the locked nixpkgs 3.2.1 rides in on the next deploy.
+              PAPERLESS_LLM_INDEX_TASK_CRON = "30 3 * * *";
               # --- Embeddings (RAG semantic search) on llama-server (GPU) -------
               # Served by the llama-rag module's embeddings instance (bge-m3)
               # at :8848. llama-server is OpenAI-compatible and ignores the
