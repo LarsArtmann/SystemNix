@@ -78,6 +78,8 @@ Direct descendants (queued this pass unless already queued — noted):
 
 (21–50 deliberately not enumerated: the standing backlog in TODO_LIST.md + docs/todo/* already owns fleet-wide work; padding this list with restatements would fabricate backlog — same rule the 07-40 report applied.)
 
+**Self-harvest statement (HARVESTED 2026-10-03):** items 4–7 and 17 appended to TODO_LIST.md this pass (Phase-2 table sweep, table-shape lint, verify-only cheap gates, pre-dispatch done-grep); items 1–3, 8–13 already queued (:340, :659, :32, :33, :646, :31, :30, :39); item 16 standing; item 20 owner-gated (:21); §g questions appended as BLOCKED rows.
+
 ## g) QUESTIONS ONLY THE OWNER CAN ANSWER
 
 1. **Re-fire retirement clause:** is "3 consecutive clean fires with zero tree delta → retire + stop appending" the intended terminal state for re-dispatched verification items? Without a threshold the loop is structurally infinite (10 and 9 fires and counting).

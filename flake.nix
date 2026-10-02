@@ -1143,12 +1143,13 @@
                 systemd-timer-monitor
                 ;
 
-              # Third-party source build (tag-pinned input, see inputs.paperless-gpt-src).
-              # The paperless-gpt module callPackages the SAME file with the
-              # same src → identical store path on both surfaces.
-              paperless-gpt = pkgs.callPackage ./pkgs/paperless-gpt.nix {
-                src = inputs.paperless-gpt-src;
-              };
+              # Third-party source build (tag-pinned input, see
+              # inputs.paperless-gpt-src). The paperless-gpt module
+              # callPackages the SAME file with the same src → identical store
+              # path on both surfaces. Lives in the isLinux block below: the
+              # package meta pins platforms to x86_64-linux and the module is
+              # NixOS-only — an unconditional exposure trips the meta.platforms
+              # assert on the darwin `flake check --all-systems` leg.
 
               # Pre-deploy batch build (Pareto T17/F65): ONE command
               # surfaces every stale vendorHash / FOD breakage in the
@@ -1198,6 +1199,9 @@
                 crush-daily
                 fastflowlm
                 ;
+              paperless-gpt = pkgs.callPackage ./pkgs/paperless-gpt.nix {
+                src = inputs.paperless-gpt-src;
+              };
               freebsd-zfs-vm = import ./pkgs/freebsd-zfs-vm.nix { inherit pkgs; };
               # Native GeoMetrikks (uv2nix + bun frontend; the Docker→native
               # migration pilot — see docs/planning/2026-09-29_*GEOMETRIKKS*).
