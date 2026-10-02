@@ -289,8 +289,7 @@
       /* ---- tables --------------------------------------------------------- */
       table {
         display: block;
-        width: fit-content;
-        min-width: 100%;
+        width: max-content;
         max-width: 100%;
         overflow-x: auto;
         border-collapse: collapse;
@@ -322,6 +321,7 @@
       th.mono {
         font-family: var(--font-mono);
         font-size: 12.5px;
+        white-space: nowrap;
       }
       td.wrap {
         overflow-wrap: anywhere;
@@ -449,11 +449,16 @@
           grid-template-columns: 1fr;
         }
         .bar-row {
-          grid-template-columns: 110px 1fr 110px;
+          grid-template-columns: 110px 1fr 100px;
+        }
+      }
+      @media (max-width: 520px) {
+        .bar-row {
+          grid-template-columns: 86px 1fr 92px;
+          gap: 10px;
         }
         .bar-row .who {
-          font-size: 11px;
-          overflow-wrap: anywhere;
+          font-size: 10px;
         }
       }
 
