@@ -417,6 +417,11 @@ in
       # auto-resolves to the Pocket ID SSO user (fallback admin). Runbook:
       # docs/services/paperless.md (Dashboards section).
       paperless-dashboard.enable = true;
+      # paperless-gpt — AI enrichment bridge (custom-field extraction +
+      # tag-gated background processing) on FastFlowLM. Loopback-only
+      # (:8106, no auth in the embedded UI), token runtime-minted.
+      # AI-max plan A8 (2026-10-02); fields/extraction wiring = A9.
+      paperless-gpt.enable = true;
       # Miniflux RSS reader (rss.home.lan). Admin password rides sops
       # platforms/nixos/secrets/miniflux.yaml — retrieve with the Sops + Age
       # one-liner (break-glass only); daily login is Pocket ID OIDC. The

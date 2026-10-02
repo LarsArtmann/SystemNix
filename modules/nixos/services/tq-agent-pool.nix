@@ -43,7 +43,16 @@ _: {
       cfg = config.services.tq-agent-pool;
       primaryUser = config.users.primaryUser or "lars";
       domain = config.networking.domain;
-      tqPkg = inputs.go-taskqueue.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # Same git-in-sandbox override as the `tq` entry in
+      # lib/lars-packages.nix: the upstream checkPhase test suite shells
+      # out to git (TestDoctorTreeGofmt, 2026-10-02) and the go-standard
+      # sandbox ships none. Drop both when upstream's flake adds git to
+      # nativeBuildInputs.
+      tqPkg =
+        (inputs.go-taskqueue.packages.${pkgs.stdenv.hostPlatform.system}.default).overrideAttrs
+          (old: {
+            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.git ];
+          });
       inherit (import ../../../lib/default.nix lib)
         harden
         serviceDefaults

@@ -695,6 +695,16 @@ if nix run .#pre-deploy-check; then
     sudo systemctl restart paperless-dashboard-provision.service 2>/dev/null || true
   fi
 
+  # paperless-gpt: re-mint the API token (idempotent drf_create_token) then
+  # restart the daemon so a revoked/stale token converges at deploy time.
+  # The daemon's Requires= alone would see the token oneshot active(exited)
+  # and skip the re-mint (bank-sync-paperless-token semantics).
+  if systemctl is-enabled --quiet paperless-gpt.service 2>/dev/null; then
+    echo "Restarting paperless-gpt-token.service + paperless-gpt.service (converge minted token)"
+    sudo systemctl restart paperless-gpt-token.service 2>/dev/null || true
+    sudo systemctl restart paperless-gpt.service 2>/dev/null || true
+  fi
+
   # Heal garbled btrbk receive targets + prune retention-expired snapshots at
   # deploy time (before the next nightly window) — see snapshots.nix
   # btrbk-pool-clean for why this must not race a live send. --no-block: the

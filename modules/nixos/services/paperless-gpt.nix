@@ -100,7 +100,8 @@ _: {
       imports = [
         {
           services.catalog.paperless-gpt = {
-            subdomain = "paperless-gpt";
+            # Loopback-only service: NO DNS presence (subdomain null).
+            subdomain = null;
             inherit (cfg) port;
             description = "paperless-gpt AI enrichment bridge (loopback-only, no vHost)";
             healthPath = "/api/filter-tag";
@@ -113,7 +114,11 @@ _: {
           default = false;
         };
 
-        package = lib.mkPackageOption pkgs "paperless-gpt" { };
+        package = lib.mkOption {
+          type = lib.types.package;
+          default = pkg;
+          description = "paperless-gpt package (built from the tag-pinned paperless-gpt-src input).";
+        };
 
         port = lib.mkOption {
           type = lib.types.port;
