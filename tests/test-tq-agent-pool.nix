@@ -23,6 +23,10 @@ let
   inherit ((import ../lib/default.nix lib)) ports;
 
   fakeTq = pkgs.writeShellScriptBin "tq" "exit 0";
+  # The house module wraps the input package in overrideAttrs (git-in-sandbox
+  # fix, 2026-10-02), so identity equality against fakeTq can never hold —
+  # assertions must tolerate one wrapper layer around the input package.
+  fakeTqName = fakeTq.name;
 
   eval =
     enableFlag:
@@ -88,9 +92,13 @@ let
       pass = builtins.elem "tq-storage-dir.service" (pool.after or [ ]);
     }
     {
+      # Suffix match, not full-string equality: the module's ExecStart embeds
+      # the overrideAttrs-wrapped package path (2026-10-02), so only the
+      # "/bin/tq serve --addr 127.0.0.1:<port>" tail is stable — which still
+      # pins the binary basename, every flag, the loopback addr, and the port.
       name = "serve-exact-execstart-loopback-port";
       pass =
-        serve.serviceConfig.ExecStart == "${fakeTq}/bin/tq serve --addr 127.0.0.1:${toString ports.tq}";
+        lib.hasSuffix "/bin/tq serve --addr 127.0.0.1:${toString ports.tq}" serve.serviceConfig.ExecStart;
     }
     {
       name = "serve-writable-journal-dir";
@@ -114,8 +122,11 @@ let
         && lib.hasSuffix "/bin/tq" (firstToken bootstrap.serviceConfig.ExecStart);
     }
     {
+      # Name match, not identity: overrideAttrs (2026-10-02) changes the
+      # derivation identity, but the name pins it to the pool's tq CLI — the
+      # guarded regression is the CLI vanishing from systemPackages entirely.
       name = "tq-cli-on-system-path";
-      pass = builtins.any (p: p == fakeTq) on.environment.systemPackages;
+      pass = builtins.any (p: p == fakeTq || p.name == fakeTqName) on.environment.systemPackages;
     }
     {
       name = "disabled-yields-no-units";
