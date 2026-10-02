@@ -6838,11 +6838,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790868818,
-        "narHash": "sha256-WEpG2mxpvokTNvmZIKOpDyz1ouukksB2t6qJ7VluhLE=",
+        "lastModified": 1790934808,
+        "narHash": "sha256-//vkdNmix/KOReBiu2oGVxBIvaIhMV8q3F3EjW/S4Ys=",
         "owner": "LarsArtmann",
         "repo": "samber-linter",
-        "rev": "2b0910fbb819ad2c42e2623a281823db6ae64698",
+        "rev": "7d764647b6d0257816ca7763ea9aa36ebc3b6384",
         "type": "github"
       },
       "original": {
