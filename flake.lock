@@ -845,7 +845,9 @@
         "go-business-rules": "go-business-rules",
         "go-cqrs-lite": "go-cqrs-lite_5",
         "go-nix-helpers": "go-nix-helpers_3",
-        "nixpkgs": "nixpkgs_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
         "nixpkgs-typst": "nixpkgs-typst",
         "treefmt-nix": [
           "treefmt-nix"
@@ -935,7 +937,7 @@
         "go-retry": "go-retry_4",
         "go-sse": "go-sse_4",
         "gogenfilter": "gogenfilter_6",
-        "nixpkgs": "nixpkgs_3",
+        "nixpkgs": "nixpkgs_2",
         "samber-do-auditlog": "samber-do-auditlog_2",
         "templ-components": "templ-components_4",
         "treefmt-nix": [
@@ -6076,22 +6078,6 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1790822859,
-        "narHash": "sha256-69xHQhAeMAD2wDXO7T2pcOZIF9Sga2W+JkmY2a11Ops=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "c59305bab2065cfecc4944690d9eedbb56f3a9fa",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_5": {
-      "locked": {
         "lastModified": 1790578696,
         "narHash": "sha256-ZoxIApko70jCdbH3l20HWXOBaT2HZd87orzd2yJ9dVE=",
         "owner": "NixOS",
@@ -6106,7 +6092,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_6": {
+    "nixpkgs_5": {
       "locked": {
         "lastModified": 1769188852,
         "narHash": "sha256-aBAGyMum27K7cP5OR7BMioJOF3icquJMZDDgk6ZEg1A=",
@@ -6148,7 +6134,7 @@
         "flake-parts": [
           "flake-parts"
         ],
-        "nixpkgs": "nixpkgs_5",
+        "nixpkgs": "nixpkgs_4",
         "systems": [
           "systems"
         ],
@@ -6721,7 +6707,7 @@
         "flake-utils": [
           "flake-utils"
         ],
-        "nixpkgs": "nixpkgs_6"
+        "nixpkgs": "nixpkgs_5"
       },
       "locked": {
         "lastModified": 1786919312,
@@ -6795,7 +6781,7 @@
         "nix-homebrew": "nix-homebrew",
         "nix-ssh-config": "nix-ssh-config",
         "nixos-hardware": "nixos-hardware",
-        "nixpkgs": "nixpkgs_4",
+        "nixpkgs": "nixpkgs_3",
         "nixpkgs-llama-rag": "nixpkgs-llama-rag",
         "nsfw-classifier": "nsfw-classifier",
         "nur": "nur",

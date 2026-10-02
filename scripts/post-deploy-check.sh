@@ -1369,9 +1369,16 @@ check "Immich (HTTPS)" "https://immich.$DOMAIN/api/server/ping" "200" "" 2>/dev/
 # above): a disabled bank-sync leaves the Caddy vHost proxying to a dead
 # port, which would false-FAIL every deploy until the service goes live.
 $banksync_enabled && check "Bank-Sync (HTTPS)" "https://banksync.$DOMAIN/" "200" "Bank-Sync Dashboard" 2>/dev/null || true
-# Enable-gated via the twenty unit (banksync pattern): a disabled Twenty
-# leaves crm vHost proxying to a dead container port.
-test -e /etc/systemd/system/twenty.service && check "Twenty CRM (HTTPS)" "https://crm.$DOMAIN/" "200" "<html" 2>/dev/null || true
+# Cutover gate (2026-10-02 micro-plan T28): while twenty.service lives it
+# owns the crm vHost; once the freeze removes it, crm-server claims the
+# subdomain (vHost goes plain-layer in the same deploy). Probe whichever
+# owns crm.$DOMAIN — with -auth the Ledger serves its login page at
+# /login (registered route, 200 HTML; / itself redirects to it).
+if test -e /etc/systemd/system/twenty.service; then
+  check "Twenty CRM (HTTPS)" "https://crm.$DOMAIN/" "200" "<html" 2>/dev/null || true
+elif test -e /etc/systemd/system/crm-server.service; then
+  check "Ledger CRM (HTTPS)" "https://crm.$DOMAIN/login" "200" "<html" 2>/dev/null || true
+fi
 check "Overview (HTTPS)" "https://overview.$DOMAIN/" "200" "<html" 2>/dev/null || true
 
 # Enable-gated review tools (LAN-only, no auth)

@@ -399,7 +399,6 @@
         # its own locked helper version for reproducible builds.
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
-        systems.follows = "systems";
       };
     };
 
@@ -503,7 +502,6 @@
         go-nix-helpers.follows = "go-nix-helpers";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
-        systems.follows = "systems";
       };
     };
 
@@ -516,7 +514,6 @@
         nixpkgs.follows = "nixpkgs";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
-        systems.follows = "systems";
       };
     };
 
@@ -630,7 +627,6 @@
         go-nix-helpers.follows = "go-nix-helpers";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
-        systems.follows = "systems";
       };
     };
 
@@ -719,7 +715,6 @@
         go-nix-helpers.follows = "go-nix-helpers";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
-        systems.follows = "systems";
       };
     };
 
@@ -757,7 +752,6 @@
         # discordsync must consume its own locked build environment.
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
-        systems.follows = "systems";
       };
     };
 
@@ -794,7 +788,6 @@
       inputs = {
         nixpkgs.follows = "nixpkgs";
         flake-parts.follows = "flake-parts";
-        systems.follows = "systems";
         treefmt-nix.follows = "treefmt-nix";
       };
     };
@@ -807,7 +800,6 @@
       url = "github:LarsArtmann/md-go-validator?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        systems.follows = "systems";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
       };
@@ -825,7 +817,6 @@
         go-nix-helpers.follows = "go-nix-helpers";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
-        systems.follows = "systems";
       };
     };
 
@@ -899,6 +890,10 @@
     buildflow.inputs.flake-parts.follows = "flake-parts";
     cv.inputs.flake-parts.follows = "flake-parts";
     cv.inputs.treefmt-nix.follows = "treefmt-nix";
+    # cv's own nixpkgs pin sat at the SAME rev as root nixpkgs (verified
+    # 2026-10-02 before following) — no-op build-wise, keeps the lock-audit
+    # dedup honest when a re-lock re-resolves cv's transitive inputs.
+    cv.inputs.nixpkgs.follows = "nixpkgs";
     # crm has no direct treefmt-nix input (it arrives nested under its
     # pinned go-nix-helpers); flake-parts is its only direct infra edge.
     crm.inputs.flake-parts.follows = "flake-parts";
