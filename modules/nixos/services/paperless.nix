@@ -1120,7 +1120,79 @@ _: {
                   ioTier.background
                 ];
               };
+
+              # Failed-tasks textfile collector (AI-max plan A12, 2026-10-02).
+              # The web UI's Tasks view is otherwise the ONLY surface where
+              # failed background tasks are visible — consume, classifier,
+              # llm-index and (once the AI workflow lands) apply_ai_suggestions
+              # failures could pile up unwatched for days. Counts
+              # unacknowledged failures straight from PostgreSQL (peer auth,
+              # paperless user) into the node-exporter textfile dir; the
+              # registry Gatus check alerts on any non-zero count.
+              # documents_paperlesstask.status values (3.1.3 == 3.2.x):
+              # pending|started|success|failure|revoked.
+              paperless-tasks-collector = {
+                description = "Paperless - failed-tasks textfile collector";
+                after = [ "postgresql.service" ];
+                wants = [ "postgresql.service" ];
+                inherit onFailure;
+                startLimitBurst = 5;
+                startLimitIntervalSec = 300;
+                serviceConfig = lib.mkMerge [
+                  {
+                    Type = "oneshot";
+                    User = cfg.user;
+                    ExecStart = pkgs.writeShellScript "paperless-tasks-collector" ''
+                      set -euo pipefail
+                      TF_DIR=/var/lib/prometheus-node-exporter/textfile_collectors
+                      PSQL="${config.services.postgresql.package}/bin/psql -tA -d ${cfg.settings.PAPERLESS_DBNAME or "paperless"}"
+
+                      # Fail-closed (pocket-id busy pattern): a failed query
+                      # round writes collector_success 0 and NO counts — the
+                      # Gatus conditions then fire on both the success flag
+                      # and the absent count lines.
+                      fail=0
+                      total="$($PSQL -c "SELECT count(*) FROM documents_paperlesstask WHERE status='failure' AND NOT acknowledged;" || fail=1)"
+                      bytype="$($PSQL -c "SELECT 'paperless_tasks_failed_by_type{task_type=\"' || task_type || '\"} ' || count(*) FROM documents_paperlesstask WHERE status='failure' AND NOT acknowledged GROUP BY task_type;" || fail=1)"
+                      pending="$($PSQL -c "SELECT count(*) FROM documents_paperlesstask WHERE status IN ('pending','started');" || fail=1)"
+
+                      out=$(mktemp "$TF_DIR/paperless_tasks.XXXXXX")
+                      {
+                        echo "# HELP paperless_tasks_collector_success 1 = DB query round-trip succeeded, 0 = failed (fail-closed: count metrics are omitted)."
+                        echo "# TYPE paperless_tasks_collector_success gauge"
+                        echo "paperless_tasks_collector_success $(( 1 - fail ))"
+                        if [ "$fail" -eq 0 ]; then
+                          echo "# HELP paperless_tasks_failed_unack_total Unacknowledged FAILED paperless background tasks (all types)."
+                          echo "# TYPE paperless_tasks_failed_unack_total gauge"
+                          echo "paperless_tasks_failed_unack_total $total"
+                          echo "# HELP paperless_tasks_failed_by_type Unacknowledged FAILED tasks per task_type (consume_file, train_classifier, llm_index, apply_ai_suggestions, ...)."
+                          echo "# TYPE paperless_tasks_failed_by_type gauge"
+                          printf '%s\n' "$bytype"
+                          echo "# HELP paperless_tasks_pending_total Tasks waiting or running in the queue."
+                          echo "# TYPE paperless_tasks_pending_total gauge"
+                          echo "paperless_tasks_pending_total $pending"
+                        fi
+                      } > "$out"
+                      mv "$out" "$TF_DIR/paperless_tasks.prom"
+                    '';
+                    # Sticky 1777 textfile dir (audit-textfile-tmp pattern).
+                    ReadWritePaths = [ "/var/lib/prometheus-node-exporter/textfile_collectors" ];
+                  }
+                  (harden { ProtectSystem = "strict"; })
+                  (serviceOneshotDefaults { })
+                ];
+              };
             };
+
+          systemd.timers.paperless-tasks-collector = {
+            description = "Paperless failed-tasks textfile collector (5m)";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = "*-*-* *:00/5:00";
+              Persistent = true;
+              RandomizedDelaySec = "30s";
+            };
+          };
 
           systemd.timers.paperless-db-backup = {
             description = "Nightly Paperless PostgreSQL backup";
@@ -1190,6 +1262,25 @@ _: {
                 ];
                 pkceEnabled = true;
               };
+              checks = [
+                {
+                  # AI-max plan A12: failed-tasks textfile collector (5m).
+                  # Anchored pat() forms — a bare pat(*metric 0*) would match
+                  # the HELP comment and stay green at any value
+                  # (2026-08-22 phantom-green class).
+                  name = "Paperless Failed Tasks";
+                  group = "Documents";
+                  url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                  interval = "5m";
+                  client.timeout = "10s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\npaperless_tasks_collector_success 1\n*)"
+                    "[BODY] == pat(*\npaperless_tasks_failed_unack_total 0\n*)"
+                  ];
+                  alert = "Paperless has unacknowledged FAILED background tasks (or the tasks collector could not query the DB) — open Settings > Tasks in the paperless UI, then journalctl -u paperless-task-queue -u paperless-consumer. AI-workflow failures (apply_ai_suggestions) surface with a task_type label on paperless_tasks_failed_by_type.";
+                }
+              ];
             };
             # PG-level dump freshness (paperless-db-backup.timer, 02:00) —
             # separate entry so the exporter manifest and the DB dump are
