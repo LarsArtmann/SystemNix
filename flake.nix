@@ -866,8 +866,6 @@
     cv.inputs.flake-parts.follows = "flake-parts";
     cv.inputs.treefmt-nix.follows = "treefmt-nix";
     crush-config.inputs.treefmt-nix.follows = "treefmt-nix";
-    emeet-pixd.inputs.flake-parts.follows = "flake-parts";
-    emeet-pixd.inputs.treefmt-nix.follows = "treefmt-nix";
     erraudit.inputs.flake-parts.follows = "flake-parts";
     go-auto-upgrade.inputs.flake-parts.follows = "flake-parts";
     go-nix-helpers.inputs.flake-parts.follows = "flake-parts";
@@ -1009,7 +1007,24 @@
             Fix: drop ?rev= from the URL and pin via flake.lock, or use a git+file: interim pin (local checkouts only).
           '';
         true;
-      allEvalGuards = builtins.seq nixpkgsTarballGuard inputUrlRevGuard;
+      # flake.lock hygiene gate (2026-10-02 dedup): fails eval when a root
+      # input re-grows its own infra-dep lock node (blanket lock waves do
+      # this silently). Semantics + deliberate non-follows: lib/lock-audit.nix.
+      lockAuditViolations = import ./lib/lock-audit.nix (
+        builtins.fromJSON (builtins.readFile ./flake.lock)
+      );
+      lockAuditGuard =
+        assert
+          lockAuditViolations == [ ]
+          || throw ''
+            flake.lock infra-follows audit failed:
+              ${lib.concatStringsSep "\n  " lockAuditViolations}
+            Fix: add '<input>.inputs.<dep>.follows = "<dep>";' to the infra-follows group at the end of the inputs attrset in flake.nix (eval-only deps are always safe to follow) — or, only if the consumer's FODs were validated against its own pin, a documented entry in lib/lock-audit.nix `deliberate`.
+          '';
+        true;
+      allEvalGuards = builtins.seq nixpkgsTarballGuard (
+        builtins.seq inputUrlRevGuard lockAuditGuard
+      );
     in
     builtins.seq allEvalGuards flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [
