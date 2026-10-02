@@ -1,0 +1,1793 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Paperless-ngx AI — Adoption &amp; Utilization Audit</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar -->
+    <div class="top-bar">
+      <span>LIBRARY DEEP DIVE</span>
+      <span>2026-10-02</span>
+      <span>SYSTEMNIX &middot; evo-x2</span>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar TOC -->
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#scorecard">Scorecard</a>
+          <a href="#strengths">Current Usage</a>
+          <a href="#findings">Capability Gaps</a>
+          <a href="#version">Version Currency</a>
+          <a href="#roadmap">Roadmap</a>
+          <a href="#target">Target Architecture</a>
+          <a href="#appendix">Appendix &amp; Sources</a>
+        </nav>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main">
+        <!-- Hero -->
+        <header class="hero">
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">LIBRARY DEEP DIVE &middot; 2026-10-02</div>
+          <h1>Paperless-ngx AI — Adoption &amp; Utilization Audit</h1>
+          <p class="subtitle">
+            How much of Paperless-ngx's native AI surface (v3.0–3.2), the
+            surrounding local LLM fleet, and the extraction ecosystem does
+            SystemNix actually use? The pipeline is architecturally excellent;
+            the AI layer inside it is ~42% awake — every expensive component is
+            either dark, manual-only, or consumerless.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Deployed: 3.1.1 (nixpkgs)</span>
+            <span class="tag">Latest upstream: 3.2.1</span>
+            <span class="tag teal">Adoption Score: 42/100</span>
+            <span class="tag">Host: evo-x2 (Strix Halo, NPU+GPU)</span>
+          </div>
+        </header>
+
+        <!-- Scorecard -->
+        <section id="scorecard" class="scorecard">
+          <div class="score-card score-bad">
+            <div class="score">42</div>
+            <div class="label">Adoption score /100</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">3/11</div>
+            <div class="label">AI capabilities fully leveraged</div>
+          </div>
+          <div class="score-card score-bad">
+            <div class="score">5</div>
+            <div class="label">Missed opportunities</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">1</div>
+            <div class="label">Split-brain wiring</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">2 minor</div>
+            <div class="label">Version gap (3.1.1 → 3.2.1)</div>
+          </div>
+        </section>
+
+        <!-- Summary -->
+        <section id="summary">
+          <h2><span class="num">00</span>Summary</h2>
+          <p>
+            SystemNix runs Paperless-ngx 3.1.x on evo-x2 with an unusually good
+            non-AI foundation: PostgreSQL backend, Tika + Gotenberg consume
+            path, barcode ASN + splitting, duplicate rejection, SSO-only login,
+            declarative dashboards, nightly PG dumps. The
+            <strong>native AI layer (v3 "Paperless AI")</strong> is correctly
+            wired to the local FastFlowLM NPU LLM (qwen3.6-moe:35b-a3b) and the
+            llama-rag GPU embeddings instance (bge-m3) — on paper a textbook
+            fully-local setup.
+          </p>
+          <p>
+            In practice, the audit found the AI layer is mostly idle:
+            LLM suggestions run per-document and <em>manual-only</em> (observed
+            flm traffic from paperless-ai: zero), the RAG/semantic layer is
+            <em>dark</em> (llama-rag config-disabled since the 2026-09-18
+            llama.cpp regression, so the embedding endpoint, the sqlite-vec
+            index, chat grounding, and semantic search never went live), the
+            automation lever that makes AI metadata <em>automatic</em> — the
+            "Apply AI suggestions" workflow action shipped in 3.1.0 — is not
+            wired anywhere, structured data extraction (custom fields) is
+            <em>not a native capability at all</em> and has no local substitute
+            deployed, and the bge-reranker instance on :8849 is served,
+            monitored, and smoke-checked with <em>zero consumers</em> because
+            upstream paperless has no rerank support.
+          </p>
+          <div class="callout callout-amber">
+            <strong>The bottom line</strong>
+            The single highest-leverage move is not adding anything new — it is
+            <em>finishing</em> what is wired: (1) re-enable llama-rag via the
+            already-shipped soak harness so RAG, chat, and semantic search go
+            live, (2) wire an "Apply AI suggestions" workflow so every consumed
+            document gets LLM title/tags automatically, and (3) deploy
+            paperless-gpt as a small NixOS module to get the one capability
+            paperless will never have natively — structured custom-field
+            extraction from statements and receipts, plus local vision OCR via
+            the already-served Qwen3-VL model.
+          </div>
+        </section>
+
+        <!-- Current Usage -->
+        <section id="strengths">
+          <h2><span class="num">&#9670;</span>What's already excellent</h2>
+          <p>
+            The baseline is strong. These are verified, working pieces the AI
+            plan builds on — none of this needs rework.
+          </p>
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Native Paperless AI correctly pointed at local
+                inference</strong>
+                <span
+                  ><code>modules/nixos/services/paperless.nix:490-514</code> —
+                  <code>PAPERLESS_AI_LLM_BACKEND=openai-like</code> → FastFlowLM
+                  NPU (:52625, socket-activated), 480&nbsp;s timeout sized to
+                  the 21.6&nbsp;GB cold load; dummy-key pattern documented and
+                  binary-verified. No cloud dependency.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Classic ML classifier doctrine is live and
+                incident-hardened</strong>
+                <span
+                  >Auto-matching kept ON for correspondents (sender prediction
+                  on scans), OFF for tags — the 2026-09-06 empty-vocabulary
+                  incident produced a durable doctrine, not a patch.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Consume pipeline fully built out</strong>
+                <span
+                  >Tika (:9998) + Gotenberg (:3199), deu+eng tesseract,
+                  PATCHT barcode splitting + Code-39 ASN, recursive consume,
+                  <code>CONSUMER_DELETE_DUPLICATES</code> (live-proven against
+                  dual-mailbox statements), 2 celery workers.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>A complete local model fleet already exists</strong>
+                <span
+                  >NPU chat LLM (FastFlowLM qwen3.6-moe:35b-a3b), GPU
+                  embeddings + reranker (llama-rag bge-m3 / bge-reranker-v2-m3),
+                  CPU vision models (llama-vlm: Gemma-4-E4B :8127, Qwen3-VL-8B
+                  :8128), ollama — all socket-activated with idle unloads.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Automation rails for paperless already exist</strong>
+                <span
+                  >InboxClean and bank-sync archive INTO paperless
+                  programmatically (DRF token minting automated 2026-10-01);
+                  <code>paperless-dashboard-provision</code> proves the
+                  declarative-DRF-oneshot pattern that workflow provisioning
+                  can copy.</span
+                >
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Findings -->
+        <section id="findings">
+          <h2><span class="num">01</span>Capability assessment</h2>
+          <p>
+            Feature-by-feature, ordered by impact. "Native" = capability of
+            paperless-ngx v3.2.1 upstream; grading compares deployed 3.1.x
+            behavior against that surface.
+          </p>
+
+          <!-- Finding 1 -->
+          <div class="issue issue-critical" id="finding-workflows">
+            <span class="severity severity-critical"
+              >Missed opportunity &middot; Highest impact</span
+            >
+            <h3>
+              "Apply AI suggestions" workflow never wired — every suggestion is
+              a manual click, and observed AI traffic is zero
+            </h3>
+            <div class="where">
+              modules/nixos/services/paperless.nix:490-499 (AI env wired, no
+              workflow anywhere) &middot; docs/services/fastflowlm.md:19
+              ("paperless-ai wired but zero observed traffic")
+            </div>
+            <p>
+              Native v3 can suggest title, tags, correspondent, document type,
+              storage path, and created date per document (opt-in "Suggest"
+              button), and since <strong>3.1.0 (#13639)</strong> the same
+              suggestions can be applied <em>automatically in bulk</em> via the
+              <strong>Apply AI suggestions workflow action</strong> — triggered
+              on consumption finish, scoped by filters, with create-missing and
+              overwrite options. SystemNix wires the LLM but has zero
+              workflows, so the "AI to the max" automation that makes metadata
+              free never engages: documents land raw and the model sits idle
+              (zero observed traffic, Aug 18–21 baseline).
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Add a Consumption-finished workflow: filter = all non-empty docs
+              (or a pilot tag first), action = Apply AI suggestions with
+              fields <code>title + tags + correspondent</code>, "create
+              missing" ON for tags, "overwrite existing" ON for title only.
+              Documented caveats: empty-text docs are skipped (3.2.0 hardens
+              this), storage paths are never auto-created, each matching doc =
+              one LLM query (scope the filter; the NPU socket-activation +
+              480&nbsp;s timeout already absorb cold loads). Provision it
+              declaratively via the DRF API using the
+              <code>paperless-dashboard-provision</code> pattern so it survives
+              DB restores and lands in the VM test.
+            </div>
+          </div>
+
+          <!-- Finding 2 -->
+          <div class="issue issue-critical" id="finding-rag">
+            <span class="severity severity-critical"
+              >Missed opportunity &middot; High impact</span
+            >
+            <h3>
+              The entire RAG layer is dark: embeddings endpoint dead → no
+              sqlite-vec index → no semantic search, no grounded chat
+            </h3>
+            <div class="where">
+              modules/nixos/services/llama-rag.nix (config-disabled since
+              2026-09-18) &middot; paperless.nix:506-509 points
+              PAPERLESS_AI_LLM_EMBEDDING_* at the dead :8848 &middot;
+              docs/todo/ai-stack.md:22 (soak harness shipped, execution
+              owner-gated)
+            </div>
+            <p>
+              Native v3's semantic index (sqlite-vec vector store,
+              <code>document_llmindex</code> CLI, daily
+              <code>PAPERLESS_LLM_INDEX_TASK_CRON</code>) powers: AI chat with
+              source-document links (single-doc AND corpus-wide from the
+              toolbar), similarity-grounded suggestions, and semantic search.
+              All of it silently no-ops without an embedding backend. The
+              deployment chose the RIGHT backend (GPU bge-m3 via llama-server,
+              OpenAI-compatible) — it is simply down, gated on the llama.cpp
+              mid-load spin regression. The 2026-09-18 re-enable attempt also
+              proved the config ships correctly; only the underlying runtime
+              gate remains.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Execute the already-shipped soak gate:
+              <code>sudo ./scripts/llama-rag-soak.sh --server &lt;candidate&gt;
+              --model /data/ai/models/gguf/bge-m3.gguf --minutes 10</code>
+              (systemd-run sandbox mirroring the deployed units; a PASS verdict
+              is the re-enable gate per docs/todo/ai-stack.md). Then:
+              re-enable module → <code>document_llmindex rebuild</code> →
+              verify end-to-end (the open [watch] item "Verify Paperless AI
+              actually USES the llama-rag embeddings"): chat answers cite
+              source docs, index task green at 02:10, flm/llama traffic
+              observable in SigNoz. Fallback while gated: the native
+              <code>huggingface</code> embedding backend runs fully in-process
+              (CPU, default all-MiniLM-L6-v2; bge-m3 selectable) — but decide
+              ONCE, because switching embedding model later forces a full index
+              rebuild.
+            </div>
+          </div>
+
+          <!-- Finding 3 -->
+          <div class="issue issue-critical" id="finding-custom-fields">
+            <span class="severity severity-critical"
+              >Missed opportunity &middot; High impact (the "smart extraction"
+              ask)</span
+            >
+            <h3>
+              Structured data extraction (custom fields) is not native — and no
+              local substitute is deployed
+            </h3>
+            <div class="where">
+              Upstream docs (usage/advanced_usage/configuration + wiki, checked
+              2026-10-02): custom fields are NOT an AI suggestion target in any
+              v3 release &middot; no extraction sidecar in
+              modules/nixos/services/
+            </div>
+            <p>
+              The core request — "smart document data extraction" (IBAN,
+              amount, statement period from Polish bank statements; totals and
+              merchants from receipts) — maps to paperless
+              <em>custom fields</em>, which native AI does not populate: the
+              suggestion surface stops at title/tags/correspondent/type/path/
+              date. The ecosystem answer is <strong>icereed/paperless-gpt</strong>
+              (active Go project, ~2.7k stars): automatic custom-field
+              generation with editable
+              <code>custom_field_prompt.tmpl</code>, write modes
+              Append/Update/Replace, tag-driven auto-processing
+              (<code>paperless-gpt-auto</code>), and any OpenAI-compatible
+              backend — i.e., it rides FastFlowLM as-is. clusterzx/paperless-ai
+              was evaluated and rejected (unmaintained; author cites the native
+              integration as superseding it).
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Package paperless-gpt as a NixOS module
+              (<code>pkgs/</code> buildGoModule from a pinned flake input, the
+              house pattern): bind loopback only (it has NO built-in auth —
+              visionreviewd precedent: no vHost, unit-state monitoring only),
+              <code>PAPERLESS_API_TOKEN</code> via sops
+              (runtime-mint like bank-sync-paperless-token, never pasted),
+              <code>OPENAI_BASE_URL=http://127.0.0.1:52625/v1</code>. Define
+              custom fields for statements (IBAN, amount, period, account) and
+              receipts (merchant, total); start in <strong>Append</strong> mode
+              (only fills missing fields — cannot clobber) with a dedicated
+              auto tag + retries. Define fields declaratively via the DRF API
+              in the same provisioning oneshot.
+            </div>
+          </div>
+
+          <!-- Finding 4 -->
+          <div class="issue issue-important" id="finding-vision-ocr">
+            <span class="severity severity-important"
+              >Missed opportunity &middot; Medium-high impact</span
+            >
+            <h3>
+              Local vision OCR is one wire away: llama-vlm already serves
+              Qwen3-VL-8B, but nothing consumes it and the model has never had
+              a verified inference
+            </h3>
+            <div class="where">
+              modules/nixos/services/llama-vlm.nix (live since system-796,
+              2026-09-22) &middot; docs/todo/ai-stack.md:24 ("verify a real
+              inference through each socket … before relying on them") &middot;
+              native remote OCR = Azure-only (cloud)
+            </div>
+            <p>
+              Upstream's "remote OCR" is Azure Document Intelligence only — a
+              paid cloud dependency on the most sensitive documents in the
+              archive; correctly not adopted. The local alternative already
+              runs: paperless-gpt does LLM-enhanced OCR through
+              <code>VISION_LLM_PROVIDER=openai</code> against any
+              OpenAI-compatible vision endpoint, and llama-vlm's captioner
+              (Qwen3-VL-8B Q8_0 + mmproj, :8128) is exactly that. Two gates:
+              the llama-vlm instances have never been soak-verified
+              (queued [watch] item), and they are CPU-inference — fine for
+              occasional bad scans, not bulk retro-OCR; the GPU llama.cpp path
+              stays blocked by the same spin regression as llama-rag.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Sequence: (1) run the llama-vlm live verification item (real
+              inference + cold-load timing through :8128/:8127), (2) evaluate
+              captioner-vs-stock: the NSFWCaption-v3 fine-tune may degrade
+              document OCR — llama-vlm's <code>mapAttrs'</code> design makes a
+              third instance (stock Qwen3-VL GGUF) a config row, (3) point
+              paperless-gpt's <code>VISION_LLM_*</code> at it, tag-gated
+              (<code>paperless-gpt-ocr-auto</code> + retries) so only scans the
+              tesseract layer fails on pay the CPU cost.
+            </div>
+          </div>
+
+          <!-- Finding 5 -->
+          <div class="issue issue-important" id="finding-suggestion-quality">
+            <span class="severity severity-important"
+              >Partially used &middot; Medium impact</span
+            >
+            <h3>
+              Suggestion layer left at defaults: output language unset,
+              DB-over-env precedence unverified, no post-wiring traffic
+              assertion
+            </h3>
+            <div class="where">
+              paperless.nix:490-514 (no PAPERLESS_AI_LLM_OUTPUT_LANGUAGE) &middot;
+              paperless.md "Known traps": "UI-saved values override env"
+              &middot; docs/todo/services.md:26 [watch] (embeddings
+              end-to-end verify)
+            </div>
+            <p>
+              Three small gaps compound: <code>PAPERLESS_AI_LLM_OUTPUT_LANGUAGE</code>
+              (3.0.4+) is unset so suggestion language follows the UI account
+              (the archive is German/English/Polish — an explicit value makes
+              tag/correspondent suggestions consistent); the known
+              <code>app_config.x or settings.X</code> precedence trap means a
+              single UI save in Application Configuration would silently
+              override the env wiring (never audited); and after wiring the
+              workflow, nobody asserted WHICH entity served the traffic — the
+              house rule from the glm-5.3-flash incident applies verbatim.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Set <code>PAPERLESS_AI_LLM_OUTPUT_LANGUAGE</code> explicitly;
+              probe <code>paperless-manage shell</code> for
+              <code>app_config</code> AI rows once (a five-minute check that
+              converts the trap from "known" to "ruled out"); after the
+              workflow lands, verify flm's journal/SigNoz traffic comes from
+              paperless-web/celery, not another consumer.
+            </div>
+          </div>
+
+          <!-- Finding 6 -->
+          <div class="issue issue-important" id="finding-reranker">
+            <span class="severity severity-important"
+              >Split-brain wiring &middot; Medium impact</span
+            >
+            <h3>
+              bge-reranker-v2-m3 on :8849 is served, monitored, and smoke-checked
+              — with zero consumers, because upstream has no rerank support
+            </h3>
+            <div class="where">
+              modules/nixos/services/llama-rag.nix (reranker instance + Gatus +
+              smoke) &middot; paperless.nix:512-514 ("No PAPERLESS_AI_LLM_RERANKER_*
+              exists … zero rerank support upstream — do not attempt") &middot;
+              docs/todo/ai-stack.md:19 (decision queued, source-verified)
+            </div>
+            <p>
+              The reranker is a research artifact that outlived its hypothesis:
+              paperless retrieves by plain vector KNN against sqlite-vec (no
+              rerank anywhere upstream, Sourcegraph-verified), paperless-gpt
+              doesn't rerank either, and a query-time proxy sidecar is not
+              semantically valid. Every deploy carries the instance, its health
+              checks, its smoke assertions, and its wedge surface for nothing.
+              This is already a queued [decision] — this audit adds the missing
+              input: <strong>no consumer exists in the entire candidate
+              ecosystem today</strong>.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Resolve the decision as: drop the :8849 leg at re-enable
+              (instance + Gatus + smoke rows), keep the bge-m3 embeddings leg.
+              Revisit only if a reranker consumer lands (e.g., a future
+              custom RAG tool over the paperless corpus) — the module resurrects
+              from git history in minutes. Keeping a monitored-dead hardware
+              path contradicts the "no phantom greens" doctrine.
+            </div>
+          </div>
+
+          <!-- Finding 7 -->
+          <div class="issue issue-nice" id="finding-excluded">
+            <span class="severity severity-nice"
+              >Fully leveraged &middot; consciously excluded</span
+            >
+            <h3>
+              What was evaluated and correctly rejected (keep it that way)
+            </h3>
+            <div class="where">ecosystem research, 2026-10-02</div>
+            <p>
+              <strong>clusterzx/paperless-ai</strong>: unmaintained (author
+              publicly unsure the rewrite will finish, citing the native
+              integration) — its tagging/RAG features are now native; adopting
+              it would add a Docker sidecar that duplicates v3.0. DO NOT
+              adopt. <strong>Azure remote OCR</strong>
+              (<code>PAPERLESS_REMOTE_OCR_*</code>): sends documents to
+              Microsoft cloud; the whole stack here exists to keep documents
+              local; llama-vlm covers the bad-scan case offline. DO NOT enable.
+              The classic ML classifier + native AI coexist by design — never
+              "replace" the classifier with LLM suggestions; they answer
+              different latency/cost budgets.
+            </p>
+          </div>
+        </section>
+
+        <!-- Version Currency -->
+        <section id="version">
+          <h2><span class="num">02</span>Version currency</h2>
+          <p>
+            Deployed 3.1.1 (runbook, live) with the module referencing 3.1.3;
+            upstream is <strong>3.2.1</strong> (2026-09-20). Updates ride
+            nixpkgs by policy — the gap below closes on the next nixpkgs bump,
+            and two of the three 3.2.0 changes fix live pain classes on this
+            box.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Version</th>
+                <th>Type</th>
+                <th>Notable change</th>
+                <th>Relevance to SystemNix</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>3.2.1</td>
+                <td>Patch</td>
+                <td>OCRmyPDF bump, search-index rebuild + mail lock fixes</td>
+                <td class="yes">Routine ride-along</td>
+              </tr>
+              <tr>
+                <td>3.2.0</td>
+                <td>Feature</td>
+                <td>
+                  Apply-AI-suggestions skips empty-content docs (#13985);
+                  suggestions run async in the WF editor (#14004); better LLM
+                  errors (#14031); tantivy fallback for taxonomy candidates
+                </td>
+                <td class="yes">
+                  HIGH — the empty-content skip is exactly the
+                  encrypted-statement class that caused the 2026-09-06
+                  classifier incident; better LLM errors de-bug the NPU path
+                </td>
+              </tr>
+              <tr>
+                <td>3.1.3</td>
+                <td>Patch</td>
+                <td>
+                  LLM tool-calling localization prompt; skip vector-store doc
+                  filter for unrestricted chat
+                </td>
+                <td class="yes">Already deployed (nixpkgs)</td>
+              </tr>
+              <tr>
+                <td>3.1.0</td>
+                <td>Feature</td>
+                <td>
+                  <strong>Apply AI suggestions workflow action</strong>
+                  (#13639); AI prompts moved to Jinja2 templates; selectable
+                  remote OCR engines
+                </td>
+                <td class="yes">
+                  Already deployed — but the workflow action is UNUSED (finding
+                  #1)
+                </td>
+              </tr>
+              <tr>
+                <td>3.1.1</td>
+                <td>Patch</td>
+                <td>OpenAI-like API-key handling fix; suggestion count display</td>
+                <td class="yes">Deployed baseline (runbook: "3.1.1 live")</td>
+              </tr>
+              <tr>
+                <td>3.0.0</td>
+                <td>Feature</td>
+                <td>
+                  Native Paperless AI (#10319): suggestions, chat, LLM index
+                  (sqlite-vec)
+                </td>
+                <td class="yes">Deployed — partially awake (this report)</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-teal">
+            <strong>Action</strong>
+            No manual package override — watch the nixpkgs paperless version
+            and re-verify AI env wiring + the dashboard/views after the bump
+            ride (the VM test already asserts the mail env; add an AI-env
+            assertion to <code>tests/test-paperless.nix</code> in the same
+            pass).
+          </div>
+        </section>
+
+        <!-- Roadmap -->
+        <section id="roadmap">
+          <h2><span class="num">03</span>Top opportunities (impact &times; ease)</h2>
+          <p>
+            Pareto-ranked. Items 1–3 deliver ~80% of the value; everything
+            below is compounding hygiene.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Opportunity</th>
+                <th>Impact</th>
+                <th>Ease</th>
+                <th>Priority</th>
+                <th>Gate / owner</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>
+                  <strong>Re-enable llama-rag</strong> (soak harness → module
+                  enable → <code>document_llmindex rebuild</code>) — brings
+                  semantic search, grounded AI chat, similarity-grounded
+                  suggestions live
+                </td>
+                <td class="yes">5</td>
+                <td>3</td>
+                <td><span class="highlight">15</span></td>
+                <td>soak PASS verdict (owner-run, root)</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>
+                  <strong>Wire Apply-AI-suggestions workflow</strong>
+                  (consumption trigger; title+tags+correspondent; create-missing
+                  tags) — makes AI metadata automatic on every ingest
+                </td>
+                <td class="yes">5</td>
+                <td>3</td>
+                <td><span class="highlight">15</span></td>
+                <td>none — config only; declarative provisioning</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>
+                  <strong>Bump to 3.2.x</strong> via nixpkgs — empty-content
+                  skip + async WF suggestions + better LLM errors
+                </td>
+                <td class="yes">3</td>
+                <td class="yes">4</td>
+                <td><span class="highlight">12</span></td>
+                <td>nixpkgs version availability</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>
+                  <strong>AI-operations monitoring</strong>: failed-tasks
+                  collector + Gatus (already queued as services.md item) gains
+                  the AI-workflow failure class; add index-freshness +
+                  post-wiring traffic assertion
+                </td>
+                <td class="yes">3</td>
+                <td class="yes">4</td>
+                <td><span class="highlight">12</span></td>
+                <td>none — textfile collector pattern exists</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>
+                  <strong>Verify DB-over-env precedence</strong> for all
+                  PAPERLESS_AI_* keys (one <code>paperless-manage shell</code>
+                  probe) + set PAPERLESS_AI_LLM_OUTPUT_LANGUAGE
+                </td>
+                <td class="yes">3</td>
+                <td class="yes">4</td>
+                <td><span class="highlight">12</span></td>
+                <td>none — five-minute probe</td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td>
+                  <strong>Deploy paperless-gpt</strong> for custom-field
+                  structured extraction (statements: IBAN/amount/period;
+                  receipts: merchant/total), Append mode, sops token,
+                  loopback-only module
+                </td>
+                <td class="yes">5</td>
+                <td>2</td>
+                <td><span class="highlight">10</span></td>
+                <td>new module + package (buildGoModule)</td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td>
+                  <strong>Local vision OCR</strong>: llama-vlm live-verify →
+                  (stock Qwen3-VL instance if needed) → paperless-gpt
+                  VISION_LLM_* → tag-gated <code>paperless-gpt-ocr-auto</code>
+                </td>
+                <td class="yes">4</td>
+                <td>2</td>
+                <td><span class="highlight">8</span></td>
+                <td>llama-vlm soak [watch] item; CPU throughput cap</td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td>
+                  <strong>Resolve the reranker decision</strong>: drop the
+                  consumerless :8849 leg at re-enable (this audit supplies the
+                  input: no upstream consumer exists)
+                </td>
+                <td>2</td>
+                <td class="yes">4</td>
+                <td><span class="highlight">8</span></td>
+                <td>owner decision (already queued)</td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td>
+                  <strong>flm prompt-echo privacy filter</strong>: personal
+                  document text flows paperless → flm → journald → SigNoz
+                  (<code>all=true</code>); decide filter vs. acceptance
+                </td>
+                <td>2</td>
+                <td class="yes">4</td>
+                <td><span class="highlight">8</span></td>
+                <td>owner decision (privacy posture)</td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td>
+                  <strong>Stagger the LLM-index cron</strong>
+                  (02:10 default) clear of the 02:00+10min-jitter paperless
+                  PG dump window
+                </td>
+                <td>1</td>
+                <td class="yes">5</td>
+                <td><span class="highlight">5</span></td>
+                <td>none — one env var</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Target Architecture -->
+        <section id="target">
+          <h2><span class="num">04</span>Target architecture</h2>
+          <p>
+            Where the pipeline lands if items 1, 2, 6, and 7 execute. Every box
+            is local (NPU/GPU/CPU on evo-x2); no new hardware, no cloud.
+          </p>
+          <div class="diagram">
+            <span class="node">Ingest</span>
+            <span class="arrow">→</span>
+            <span class="node">OCR (tesseract)</span>
+            <span class="arrow">⇢</span>
+            <span class="node">vision OCR (paperless-gpt → Qwen3-VL, tag-gated)</span>
+            <span class="arrow">→</span>
+            <span class="node">classifier (auto-match ML)</span>
+            <span class="arrow">→</span>
+            <span class="node-core">AI suggestions (flm NPU, workflow-driven)</span>
+            <span class="arrow">→</span>
+            <span class="node">custom-field extraction (paperless-gpt)</span>
+            <span class="arrow">→</span>
+            <span class="node-good">bge-m3 index (GPU) → chat + semantic search</span>
+          </div>
+          <pre><code><span class="tok-comment">// Nix-side shape of the two NEW modules (finding #3 + #1 provisioning)</span>
+services.paperless-gpt = {
+  <span class="tok-attr">enable</span> = <span class="tok-keyword">true</span>;
+  <span class="tok-attr">bind</span> = <span class="tok-string">"127.0.0.1"</span>;                <span class="tok-comment">// no auth upstream → loopback only</span>
+  <span class="tok-attr">paperless</span>.<span class="tok-attr">url</span> = <span class="tok-string">"http://127.0.0.1:${toString ports.paperless}"</span>;
+  <span class="tok-attr">paperless</span>.<span class="tok-attr">tokenFile</span> = <span class="tok-string">"/run/secrets/rendered/paperless-gpt-token"</span>;
+  <span class="tok-attr">llm</span>.<span class="tok-attr">baseUrl</span> = <span class="tok-string">"http://127.0.0.1:52625/v1"</span>;   <span class="tok-comment">// FastFlowLM NPU</span>
+  <span class="tok-attr">vision</span>.<span class="tok-attr">baseUrl</span> = <span class="tok-string">"http://127.0.0.1:8128/v1"</span>; <span class="tok-comment">// llama-vlm captioner</span>
+  <span class="tok-attr">customFields</span> = [ <span class="tok-string">"iban"</span> <span class="tok-string">"amount"</span> <span class="tok-string">"period"</span> ];
+};
+
+services.paperless-provision.workflows = [ {
+  <span class="tok-attr">name</span> = <span class="tok-string">"AI metadata on consume"</span>;
+  <span class="tok-attr">trigger</span> = <span class="tok-string">"consumption-finished"</span>;
+  <span class="tok-attr">filter</span> = { <span class="tok-attr">hasContent</span> = <span class="tok-keyword">true</span>; };        <span class="tok-comment">// 3.2.0 also skips empties server-side</span>
+  <span class="tok-attr">action</span> = { <span class="tok-attr">type</span> = <span class="tok-string">"apply-ai-suggestions"</span>;
+             <span class="tok-attr">fields</span> = [ <span class="tok-string">"title"</span> <span class="tok-string">"tags"</span> <span class="tok-string">"correspondent"</span> ];
+             <span class="tok-attr">createMissingTags</span> = <span class="tok-keyword">true</span>; <span class="tok-attr">overwriteTitle</span> = <span class="tok-keyword">true</span>; };
+} ];</code></pre>
+          <div class="callout callout-amber">
+            <strong>Sequencing constraint (do not reorder)</strong>
+            The workflow (item 2) works today but floods flm with cold-load
+            cycles until the model warms; run it AFTER item 1 so the daily
+            index task and chat share the warm endpoints, and AFTER the 3.2.x
+            bump so empty-content docs skip server-side. paperless-gpt
+            (item 6) is independent — it can land in any window.
+          </div>
+        </section>
+
+        <!-- Conclusion -->
+        <section id="conclusion">
+          <h2><span class="num">05</span>Conclusion</h2>
+          <p>
+            SystemNix's Paperless AI posture is "wired but not alive": a
+            correctly-architected fully-local stack (NPU LLM, GPU embeddings,
+            CPU vision) where the semantic layer is down behind a known runtime
+            gate, the automation that makes LLM metadata free is unwired, the
+            one capability native paperless will never ship (structured custom
+            fields) has an active, fit-for-purpose ecosystem answer, and a
+            reranker serves an API that does not exist. None of the gaps
+            require new infrastructure — they require finishing gates that are
+            already built and adopting one small sidecar. Items 1+2 alone move
+            the adoption score from 42 to roughly 70; adding paperless-gpt
+            closes the extraction gap that motivated this audit.
+          </p>
+        </section>
+
+        <!-- Appendix -->
+        <section id="appendix">
+          <h2><span class="num">06</span>Appendix — capability matrix &amp; sources</h2>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Capability (native v3.2.1 surface)</th>
+                <th>Status here</th>
+                <th>Evidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Classic ML auto-matching (classifier)</td>
+                <td class="yes">Fully leveraged</td>
+                <td>paperless.md §Classifier doctrine</td>
+              </tr>
+              <tr>
+                <td>Consume pipeline (Tika/Gotenberg/barcodes/dedup)</td>
+                <td class="yes">Fully leveraged</td>
+                <td>paperless.nix:427-482</td>
+              </tr>
+              <tr>
+                <td>LLM suggestions (title/tags/corr./type/path/date)</td>
+                <td>Partially — manual-only, zero traffic</td>
+                <td>paperless.nix:490-499; fastflowlm.md:19</td>
+              </tr>
+              <tr>
+                <td>Apply-AI-suggestions workflow (3.1.0)</td>
+                <td class="no">Not used</td>
+                <td>no workflow config anywhere in repo</td>
+              </tr>
+              <tr>
+                <td>AI chat (single + corpus, source links)</td>
+                <td class="no">Dark (needs embedding backend)</td>
+                <td>paperless.nix:506-509 → dead :8848</td>
+              </tr>
+              <tr>
+                <td>LLM index / semantic search (sqlite-vec)</td>
+                <td class="no">Dark (index never built)</td>
+                <td>llama-rag.md:29; ai-stack.md:22</td>
+              </tr>
+              <tr>
+                <td>Embedding backends (openai-like/hf/ollama)</td>
+                <td>Partially — right choice, gated runtime</td>
+                <td>ai-stack.md:22 (soak harness shipped)</td>
+              </tr>
+              <tr>
+                <td>Custom-field AI extraction</td>
+                <td class="no">Not native; no substitute deployed</td>
+                <td>upstream docs 2026-10-02; no sidecar in repo</td>
+              </tr>
+              <tr>
+                <td>Remote OCR (Azure)</td>
+                <td class="yes">Consciously excluded (cloud)</td>
+                <td>finding #7</td>
+              </tr>
+              <tr>
+                <td>Local vision OCR (paperless-gpt + VLM)</td>
+                <td class="no">Not deployed; VLM already served</td>
+                <td>llama-vlm.nix; ai-stack.md:24</td>
+              </tr>
+              <tr>
+                <td>Reranking</td>
+                <td class="no">Not supported upstream; :8849 consumerless</td>
+                <td>paperless.nix:512-514; ai-stack.md:19</td>
+              </tr>
+            </tbody>
+          </table>
+          <h3>Sources</h3>
+          <ul>
+            <li>
+              Upstream releases v3.0.0–v3.2.1 (AI feature map, dates):
+              github.com/paperless-ngx/paperless-ngx/releases — fetched
+              2026-10-02
+            </li>
+            <li>
+              PAPERLESS_AI_* settings (14 settings, defaults):
+              docs/configuration.md @ main — fetched 2026-10-02
+            </li>
+            <li>
+              Feature semantics (suggestions scope, workflow action options,
+              chat, sqlite-vec index, document_llmindex, Azure-only remote
+              OCR, no reranker): docs/usage.md, docs/advanced_usage.md,
+              docs/administration.md, src/paperless_ai/vector_store.py,
+              wiki AI-Model-Recommendations — fetched 2026-10-02
+            </li>
+            <li>
+              icereed/paperless-gpt (custom fields, vision OCR, providers,
+              no-auth warning) and clusterzx/paperless-ai (unmaintained
+              notice) — fetched 2026-10-02
+            </li>
+            <li>
+              Local state: modules/nixos/services/{paperless,llama-rag,llama-vlm,fastflowlm,papdashboard}.nix,
+              docs/services/{paperless,llama-rag,fastflowlm,visionreviewd}.md,
+              docs/todo/{ai-stack,services}.md — this repo
+            </li>
+          </ul>
+          <div class="callout callout-amber">
+            <strong>Honesty notes</strong>
+            (1) Deployed version cited as 3.1.1 from the runbook (2026-10-01
+            restructure) with the module comment referencing 3.1.3 — the exact
+            live patch was not probed on the host for this report. (2) The
+            "zero observed traffic" claim is the Aug 18–21 flm baseline and
+            predates this audit; re-assert at workflow wiring time. (3) Ecosystem
+            facts (paperless-gpt features, upstream AI scope) are from upstream
+            docs/releases, not from a deployed instance of those tools.
+          </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <p>
+            Generated 2026-10-02 &middot; Reviewed against paperless-ngx
+            3.1.1/3.2.1, llama-rag (disabled), llama-vlm (live), paperless-gpt
+            (ecosystem) &middot; All claims cited to repo files or upstream
+            docs fetched 2026-10-02
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
