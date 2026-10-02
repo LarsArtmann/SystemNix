@@ -839,6 +839,60 @@
         flake-parts.follows = "flake-parts";
       };
     };
+
+    # Infra follows (2026-10-02 lock dedup): Nix locks one node per
+    # input-graph PATH, so every consumer that declared flake-parts /
+    # treefmt-nix / systems / nixpkgs without a follows pin carried its own
+    # duplicate lock copy (421 lock nodes for 235 unique revs). These
+    # attrpath follows collapse them onto the root pins; the list is
+    # DATA-DERIVED from the lock graph (docs/planning/
+    # 2026-10-02_09-47_flake-lock-infra-dedup.md) and lib/lock-audit.nix
+    # fails eval if a NEW unfollowed edge appears — extend this group (or
+    # allowlist it in the audit), never hand-pin around it.
+    # RULES (docs/agents/nix-flakes.md "Infra follows"):
+    # - Eval-only deps (flake-parts, treefmt-nix, systems, flake-utils) are
+    #   always safe to follow — they never enter FOD hashes.
+    # - nixpkgs follows change the consumer's build env: papdashboard is the
+    #   only real rev flip below; go-nix-helpers/projects-management-automation
+    #   copies already sat at the root rev (pure alias collapse). Deliberate
+    #   non-follows: qmd nixpkgs (bun nodeModules FOD), discordsync nixpkgs
+    #   (FOD cache-hit rollback 2026-09-23).
+    # - NEVER follow Go source deps (go-* tarballs, go-nix-helpers) INTO Go
+    #   tool flakes: that changes vendored module content and breaks
+    #   vendorHash FODs (2026-08-25 got-hash drift class). go-nix-helpers
+    #   below = following NIXPKGS into the helper flake (eval-only for its
+    #   lib), NOT the helper into tools.
+    buildflow.inputs.flake-parts.follows = "flake-parts";
+    cv.inputs.flake-parts.follows = "flake-parts";
+    cv.inputs.treefmt-nix.follows = "treefmt-nix";
+    crush-config.inputs.treefmt-nix.follows = "treefmt-nix";
+    emeet-pixd.inputs.flake-parts.follows = "flake-parts";
+    emeet-pixd.inputs.treefmt-nix.follows = "treefmt-nix";
+    erraudit.inputs.flake-parts.follows = "flake-parts";
+    go-auto-upgrade.inputs.flake-parts.follows = "flake-parts";
+    go-nix-helpers.inputs.flake-parts.follows = "flake-parts";
+    go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
+    go-nix-helpers.inputs.nixpkgs.follows = "nixpkgs";
+    go-structure-linter.inputs.flake-parts.follows = "flake-parts";
+    go-structure-linter.inputs.treefmt-nix.follows = "treefmt-nix";
+    go-taskqueue.inputs.flake-parts.follows = "flake-parts";
+    golangci-lint-auto-configure.inputs.flake-parts.follows = "flake-parts";
+    inboxclean.inputs.flake-parts.follows = "flake-parts";
+    inboxclean.inputs.treefmt-nix.follows = "treefmt-nix";
+    index.inputs.flake-parts.follows = "flake-parts";
+    monitor365.inputs.flake-parts.follows = "flake-parts";
+    monitor365.inputs.treefmt-nix.follows = "treefmt-nix";
+    nsfw-classifier.inputs.flake-parts.follows = "flake-parts";
+    nsfw-classifier.inputs.treefmt-nix.follows = "treefmt-nix";
+    nsfw-classifier.inputs.systems.follows = "systems";
+    papdashboard.inputs.flake-parts.follows = "flake-parts";
+    papdashboard.inputs.treefmt-nix.follows = "treefmt-nix";
+    papdashboard.inputs.nixpkgs.follows = "nixpkgs";
+    projects-management-automation.inputs.nixpkgs.follows = "nixpkgs";
+    qmd.inputs.flake-utils.follows = "flake-utils";
+    storage-collector.inputs.flake-parts.follows = "flake-parts";
+    todo-list-ai.inputs.flake-parts.follows = "flake-parts";
+    todo-list-ai.inputs.treefmt-nix.follows = "treefmt-nix";
   };
 
   outputs =
