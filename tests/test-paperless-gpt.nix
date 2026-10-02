@@ -154,10 +154,12 @@ in
     machine.succeed("grep -q 'PAPERLESS_API_TOKEN=' /run/paperless-gpt/env")
 
     # 3. State layout: seeded default_prompts (8 templates), app-created
-    #    prompts/ copy + config/ + db/ (gorm sqlite initialized).
+    #    prompts/ copy + config/ + db/ (gorm sqlite initialized). The app
+    #    populates prompts/ LATE in startup (behind its first paperless API
+    #    round-trips — minutes-slow on a cold VM), so poll, don't assert.
     machine.succeed("ls /var/lib/paperless-gpt/default_prompts/ | wc -l | grep -qx 8")
-    machine.succeed("test -f /var/lib/paperless-gpt/prompts/custom_field_prompt.tmpl")
-    machine.succeed("test -f /var/lib/paperless-gpt/config/settings.json")
+    machine.wait_until_succeeds("test -f /var/lib/paperless-gpt/prompts/custom_field_prompt.tmpl", timeout=300)
+    machine.wait_until_succeeds("test -f /var/lib/paperless-gpt/config/settings.json", timeout=60)
     machine.succeed("test -d /var/lib/paperless-gpt/db")
 
     # 4. Loopback-only bind (the embedded UI has NO auth — 0.0.0.0 would
