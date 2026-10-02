@@ -576,6 +576,31 @@ else
   report_skip "Paperless - service disabled (units absent from systemd)"
 fi
 
+# paperless-gpt (AI-max plan A10): the /api/filter-tag endpoint answers
+# without auth (liveness), the loopback bind holds (the embedded UI has NO
+# auth — a wildcard bind would be a security regression), and the minted
+# token env file exists with the daemon user's ownership (the bank-sync
+# runtime-mint pattern). Enable-gated like every service leg.
+if systemctl is-active paperless-gpt.service >/dev/null 2>&1; then
+  if curl -s --compressed --max-time 10 "http://127.0.0.1:8106/api/filter-tag" 2>/dev/null | grep -q '"tag"'; then
+    report_pass "paperless-gpt - /api/filter-tag answers (daemon + router alive)"
+  else
+    report_fail "paperless-gpt - :8106/api/filter-tag unreachable (journalctl -u paperless-gpt -n 30)"
+  fi
+  if ss -tln 2>/dev/null | grep -q '127.0.0.1:8106' && ! ss -tln 2>/dev/null | grep -qE '0\.0\.0\.0:8106|\[::\]:8106'; then
+    report_pass "paperless-gpt - loopback-only bind on :8106"
+  else
+    report_fail "paperless-gpt - :8106 NOT loopback-only (the embedded UI has no auth — never expose)"
+  fi
+  if [ "$(stat -c '%U' /run/paperless-gpt/env 2>/dev/null)" = "paperless-gpt" ]; then
+    report_pass "paperless-gpt - runtime-minted token file present (owned by daemon user)"
+  else
+    report_fail "paperless-gpt - /run/paperless-gpt/env missing or misowned (journalctl -u paperless-gpt-token -n 30)"
+  fi
+else
+  report_skip "paperless-gpt - service disabled (unit absent from systemd)"
+fi
+
 # Bank-Sync: the dashboard BODY proves the templ stack + SQLite read models
 # answer, /metrics proves the sync daemon wired its callback, and a nonzero
 # profile count proves the first Wise sync actually wrote data (catches the

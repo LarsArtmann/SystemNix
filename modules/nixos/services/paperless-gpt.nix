@@ -27,14 +27,15 @@
 #   /var/lib/paperless-gpt/config/    settings.json (web-UI-saved defaults)
 #   /var/lib/paperless-gpt/db/        gorm sqlite (modification history)
 #   /var/lib/paperless-gpt/default_prompts/  seeded from the package
-_: {
+_:
+{ inputs }:
+{
   flake.nixosModules.paperless-gpt =
     {
       config,
       options,
       pkgs,
       lib,
-      inputs,
       ...
     }:
     let
