@@ -165,7 +165,8 @@ in
     # 4. Loopback-only bind (the embedded UI has NO auth — 0.0.0.0 would
     #    be a security regression) + liveness probe without auth.
     machine.succeed("ss -tln | grep '127.0.0.1:8106'")
-    machine.fail("ss -tln | grep -E '0\\.0\\.0\\.0:8106|\\[::\\]:8106' || true")
+    machine.fail("ss -tln | grep '0.0.0.0:8106'")
+    machine.fail("ss -tln | grep '\[::\]:8106'")
     machine.succeed("curl -sf http://127.0.0.1:8106/api/filter-tag | jq -e '.tag == \"paperless-gpt\"'")
 
     # 5. END-TO-END: the daemon's startup EnsureTagExists must have created
