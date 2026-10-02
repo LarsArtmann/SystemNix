@@ -3153,39 +3153,56 @@
               # flake.lock gate (lib/lock-audit.nix, forced via allEvalGuards)
               # actually fires. Mirrors the gitleaks-coverage pattern: a guard
               # that has never seen a positive fixture is phantom coverage —
-              # the audit landed only after catching a real miss (emeet-pixyd)
-              # in its first live run.
+              # the audit's first live run caught a real miss (emeet-pixyd),
+              # and this check pins that behavior. All legs evaluate at CHECK
+              # EVAL time (pure Nix, no nix binary in the sandbox — the
+              # in-sandbox nix eval approach fails on missing state dirs);
+              # the bash only asserts the precomputed verdicts.
               lock-audit-selftest =
+                let
+                  auditWith =
+                    lockFile: deliberate:
+                    (import ./lib/lock-audit.nix {
+                      lock = builtins.fromJSON (builtins.readFile lockFile);
+                      inherit deliberate;
+                    });
+                  legs = {
+                    clean = builtins.toJSON (auditWith ./tests/fixtures/lock-audit/clean.lock { });
+                    dup = builtins.toJSON (auditWith ./tests/fixtures/lock-audit/evil-dup.lock { });
+                    drift = builtins.toJSON (auditWith ./tests/fixtures/lock-audit/evil-drift.lock { });
+                    allowlisted = builtins.toJSON (
+                      auditWith ./tests/fixtures/lock-audit/allowlisted.lock {
+                        "tool.nixpkgs" = "fixture reason";
+                      }
+                    );
+                    stale = builtins.toJSON (
+                      auditWith ./tests/fixtures/lock-audit/clean.lock {
+                        "ghost.nixpkgs" = "x";
+                      }
+                    );
+                  };
+                in
                 pkgs.runCommand "lock-audit-selftest"
                   {
-                    nativeBuildInputs = [ pkgs.nix ];
+                    inherit (legs)
+                      clean
+                      dup
+                      drift
+                      allowlisted
+                      stale
+                      ;
                   }
                   ''
                     set -u
-                    run() { nix eval --json --expr "$1" 2>/dev/null; }
-                    AUDIT=${./lib/lock-audit.nix}
-                    FIXTURES=${./tests/fixtures/lock-audit}
-
-                    # 1. clean lock + empty deliberate -> no violations
-                    out=$(run "(import $AUDIT { lock = builtins.fromJSON (builtins.readFile $FIXTURES/clean.lock); deliberate = {}; })")
-                    [ "$res" = "[]" ] || { echo "SELFTEST FAIL: clean fixture produced violations: $out"; exit 1; }
-
-                    # 2. same-rev dup edge -> violation naming input + dep
-                    out=$(run "(import $AUDIT { lock = builtins.fromJSON (builtins.readFile $FIXTURES/evil-dup.lock); deliberate = {}; })")
-                    echo "$res" | grep -q 'tool.*flake-parts' || { echo "SELFTEST FAIL: evil-dup not flagged: $out"; exit 1; }
-
-                    # 3. foreign-rev (drift) edge -> violation
-                    out=$(run "(import $AUDIT { lock = builtins.fromJSON (builtins.readFile $FIXTURES/evil-drift.lock); deliberate = {}; })")
-                    echo "$res" | grep -q 'fod-tool.*nixpkgs' || { echo "SELFTEST FAIL: evil-drift not flagged: $out"; exit 1; }
-
-                    # 4. deliberate-allowlisted edge -> clean (the qmd/discordsync class)
-                    out=$(run "(import $AUDIT { lock = builtins.fromJSON (builtins.readFile $FIXTURES/allowlisted.lock); deliberate = { \"tool.nixpkgs\" = \"fixture reason\"; }; })")
-                    [ "$res" = "[]" ] || { echo "SELFTEST FAIL: allowlisted fixture flagged: $out"; exit 1; }
-
-                    # 5. stale deliberate entry -> flagged (table cannot rot)
-                    out=$(run "(import $AUDIT { lock = builtins.fromJSON (builtins.readFile $FIXTURES/clean.lock); deliberate = { \"ghost.nixpkgs\" = \"x\"; }; })")
-                    echo "$res" | grep -q 'matches no live edge' || { echo "SELFTEST FAIL: stale deliberate not flagged: $out"; exit 1; }
-
+                    fail() { echo "SELFTEST FAIL: $1"; exit 1; }
+                    [ "$clean" = "[]" ] || fail "clean fixture produced violations: $clean"
+                    echo "$dup" | grep -q 'tool' && echo "$dup" | grep -q 'flake-parts' \
+                      || fail "evil-dup (same-rev duplicate edge) not flagged: $dup"
+                    echo "$drift" | grep -q 'fod-tool' && echo "$drift" | grep -q 'nixpkgs' \
+                      || fail "evil-drift (foreign-rev edge) not flagged: $drift"
+                    [ "$allowlisted" = "[]" ] || fail "deliberate-allowlisted edge flagged (qmd/discordsync class): $allowlisted"
+                    echo "$stale" | grep -q 'matches no live edge' \
+                      || fail "stale deliberate entry not flagged (table rot): $stale"
                     echo "lock-audit: 5 legs green (clean, dup, drift, allowlisted, stale-deliberate)"
                     touch $out
                   '';
