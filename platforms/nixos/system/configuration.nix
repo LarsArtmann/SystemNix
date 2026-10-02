@@ -1297,6 +1297,13 @@ in
       # bounded retention (forgejo zips share ~0 extents across nights).
       restic-app-dumps.enable = true;
 
+      # Pull-side PBX backup leg (pbx.artmann.tech → pool, every 6h;
+      # runbook docs/services/pbx-backup-pull.md). Freshness rides
+      # backup-coordination via the module's integration entry.
+      # Persistent=true: the FIRST pull fires immediately on the deploy
+      # that enables this (the timer has never run before).
+      pbx-backup-pull.enable = true;
+
       # Offsite Borg leg to the Hetzner StorageBox (3rd copy for 3-2-1).
       # Dormant: go-live needs the owner's StorageBox hostname/username + the
       # borg pubkey pasted into the Hetzner console (checklist:
