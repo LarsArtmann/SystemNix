@@ -38,11 +38,19 @@ BUILDCACHE_PART="/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311-part1"
 # Frozen by user decision ("do not touch them; yet") — absent is EXPECTED.
 FROZEN_SPARE="/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174244451713"
 
-# Expected top-level entries on a healthy buildcache SSD — must mirror
-# buildcacheDirs in modules/nixos/services/buildcache.nix.
+# Expected top-level entries on a healthy buildcache SSD. The buildcacheDirs
+# mirror (modules/nixos/services/buildcache.nix) is covered by the first line;
+# the extra names are benign residents reconciled 2026-10-02 (triage narrative:
+# docs/todo/storage.md item [6]):
+#   lost+found   — standard ext4 residue, always present
+#   tmp          — recurring ad-hoc TMPDIR target (agent go-build temp dirs)
+#   go-bin-salvage — ~/go/bin binaries salvaged at the @cargo retirement
+#                    (docs/agents/storage.md, 2026-08-17)
+#   .Trash-1000  — the user's trash dir on this volume; never auto-cleaned
 KNOWN_CACHE_ENTRIES=(
-  cargo go go-build go-mod goimports golangci-lint npm pip pnpm-store
-  playwright rust sccache
+  cargo go go-bin-salvage go-build go-mod goimports golangci-lint npm pip
+  pnpm-cache pnpm-state pnpm-store playwright rust sccache tmp lost+found
+  .Trash-1000
 )
 
 # Home of the invoking user (SUDO_USER-aware so [7] still checks the real
@@ -178,7 +186,10 @@ check_mount() {
   local target="$1" want_fs="$2"
   shift 2
   local line fstype source have_dev=0 dev
-  line=$(findmnt -n -o FSTYPE,SOURCE "$target" 2>/dev/null || true)
+  # head -1: multi-device btrfs mounts emit one SOURCE line PER MEMBER —
+  # concatenating them made the -b probe compare a two-line string and
+  # false-flag every healthy pool mount as a zombie (2026-10-02).
+  line=$(findmnt -n -o FSTYPE,SOURCE "$target" 2>/dev/null | head -1 || true)
   if [ -z "$line" ]; then
     bad "$target: not mounted, no armed automount"
     return
