@@ -615,6 +615,8 @@
 - [ ] [ready] **Document DMS config surfaces in `docs/agents/desktop.md`** (settings.json vs clsettings.json vs plugin_settings.json + cfg.package wiring; desktop docs moved out of AGENTS.md in the 2026-10-01 restructure) → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [ready] **Eval guard: declared DMS settings keys must exist in the pinned source's SettingsSpec.js** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [ready] **Identify DMS weather IP-geo endpoint; check dnsblockd classification** → [docs/todo/desktop.md](docs/todo/desktop.md)
+- [ ] [ready] **Close the suspend lock race: make `dms-lock` wait for compositor-confirmed lock before exiting** (poll `dms ipc call lock isLocked` — returns ext-session-lock `secure` state — with timeout before exit 0; iNiR's `lock prepareSleep` pattern) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: 2026-10-03 iNiR research session)
+- [ ] [ready] **Adopt iNiR's mandatory QML patterns for `pkgs/dms-plugins/` in docs/CONTRIBUTING.md** (`pragma ComponentBehavior: Bound` first line, typed properties over `var`, declared IPC return types, no hardcoded colors/spacing) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same session)
 
 ### services / pipeline (harvest 2026-09-30 06:5x)
 
