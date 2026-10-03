@@ -97,8 +97,7 @@ let
       # "/bin/tq serve --addr 127.0.0.1:<port>" tail is stable — which still
       # pins the binary basename, every flag, the loopback addr, and the port.
       name = "serve-exact-execstart-loopback-port";
-      pass =
-        lib.hasSuffix "/bin/tq serve --addr 127.0.0.1:${toString ports.tq}" serve.serviceConfig.ExecStart;
+      pass = lib.hasSuffix "/bin/tq serve --addr 127.0.0.1:${toString ports.tq}" serve.serviceConfig.ExecStart;
     }
     {
       name = "serve-writable-journal-dir";
