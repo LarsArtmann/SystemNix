@@ -1196,6 +1196,10 @@ _: {
                           echo "paperless_llmindex_last_success_age_seconds ''${idxage:--1}"
                         fi
                       } > "$out"
+                      # mktemp creates 0600 and mv preserves it — node_exporter
+                      # (own uid) then skips the whole file as unreadable
+                      # (2026-10-03: every paperless_tasks_* metric dark).
+                      chmod 0644 "$out"
                       mv "$out" "$TF_DIR/paperless_tasks.prom"
                     '';
                     # Sticky 1777 textfile dir (audit-textfile-tmp pattern).

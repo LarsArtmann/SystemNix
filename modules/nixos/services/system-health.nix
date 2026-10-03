@@ -1481,11 +1481,19 @@ _: {
             echo "system_units_enabled_inactive_scrape_errors ''${INACTIVE_SCRAPE_ERRORS}"
             # Per-unit detail: manager label + unit name (system | username).
             # Iterating the word list unquoted is deliberate (shellcheck
-            # SC2086): entries are "label:unit" with no spaces — unit names
-            # and usernames are [a-zA-Z0-9@._-] identifiers.
+            # SC2086): entries are "label:unit" with no spaces.
             # shellcheck disable=SC2086
             for iu in ''${INACTIVE_UNITS:-}; do
-              echo "system_unit_enabled_inactive{manager=\"''${iu%%:*}\",unit=\"''${iu#*:}\"} 1"
+              # Wants-symlink filenames are systemd-ESCAPED (a
+              # gitea-runner@evo-x2 instance surfaces as
+              # gitea-runner-evo\x2dx2.service): decode the common
+              # \x2d/\x5f classes back to the real unit name and
+              # prom-escape any surviving backslash — a raw \x is an
+              # INVALID escape that makes node_exporter reject the WHOLE
+              # file (2026-10-03 line-811 class: every system_* metric
+              # went dark on one template instance).
+              unit="$(printf '%s' "''${iu#*:}" | sed -e 's/\\x2d/-/g' -e 's/\\x5f/_/g' -e 's/\\/\\\\/g')"
+              echo "system_unit_enabled_inactive{manager=\"''${iu%%:*}\",unit=\"$unit\"} 1"
             done
 
             echo "# HELP docker_container_restart_count Total restart count per Docker container"
