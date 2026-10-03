@@ -401,6 +401,26 @@ else
     log_info "No staged .py files — skipping ruff."
 fi
 
+# buildcache parity guard (2026-10-04): the flake-check leg's eval invariant
+# covers buildcache.nix edits, but it is SKIPPED on docs/shell-only staged
+# diffs — and the parity sources include a .sh file (das-link-recovery-check.sh),
+# so a staged hand-edit to either list could commit locally without the
+# KNOWN_CACHE_ENTRIES ↔ buildcacheDirs guard ever running. Run it directly when
+# either parity source is staged.
+# NOTE: no --diff-filter for deletions — a deleted parity source is caught by
+# the flake-check leg (a .nix/.sh path never satisfies the docs-only fast path).
+if git diff --cached --name-only | grep -qE '(^modules/nixos/services/buildcache\.nix$|^scripts/das-link-recovery-check\.sh$)'; then
+    log_info "buildcache parity source staged — running check-buildcache-known-parity.sh..."
+    if bash scripts/check-buildcache-known-parity.sh; then
+        log_success "buildcache parity check passed!"
+    else
+        log_error "buildcache parity check FAILED: buildcacheDirs and KNOWN_CACHE_ENTRIES drifted!"
+        all_passed=false
+    fi
+else
+    log_info "No staged buildcache parity sources — skipping parity check."
+fi
+
 # Eval-only flake check (2026-09-14 gate split): the hook validates SYNTAX and
 # EVAL, never BUILDS — plain `nix flake check` realizes every check derivation
 # incl. NixOS VM tests (minutes each), which trained the `--no-verify` habit on
