@@ -103,6 +103,7 @@
 ### stability
 
 - [ ] [ready] **SEV1 triage: MEMORY EMERGENCY GUARD TRIPPED + FLM RESTORE CAPPED — live or latched stale 13.7h post-boot?** (sev1-bridge still notifying at 08:36) → [docs/todo/stability.md](docs/todo/stability.md) (Source: same report §f.10)
+- [ ] [ready] **Triage the 10-03 10:42 kernel-OOM cascade (niri-spawned helium scope + helium.service killed; bun install/e2e/test systemd-runs co-present)** → [docs/todo/stability.md](docs/todo/stability.md)
 
 - [ ] **IO admission for tq pool + parallel build slices (io.max / heavy-job)** → [docs/todo/stability.md](docs/todo/stability.md) — 2026-09-30 3h storm class; throughput tradeoff pending owner answer
 - [ ] **deploy-queue: auto-retry deploy on PSI-calm wrapper** → [docs/todo/stability.md](docs/todo/stability.md)
@@ -605,7 +606,7 @@
 
 ### desktop
 
-- [ ] [ready] **Verify helium recovered after the 06:32 SIGBUS crash** (ENOSPC coredump-rejected; unit + session state unverified) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §f.11)
+- [x] [ready] **Verify helium recovered after the 06:32 SIGBUS crash** (ENOSPC coredump-rejected; unit + session state unverified) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §f.11) — VERIFIED 2026-10-03: recovered (crash-looped to the 11:01 session, ran until the 10-03 10:42 kernel OOM — own stability row — relaunched 10:48); History DBs survived (main + dp1 quick_check ok; dp2 live-locked)
 
 - [ ] **Deploy evo-x2 carrying Spotify (`38e146ab`) once the tree is quiescent — eval green 20:13 post-recursion-fix; switch also carries the parallel session's renamer/fastflowlm/cv work** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [blocked:deploy] **Post-deploy Spotify window-rule + session-manager verification (dead-until-now rule `^spotify$` vs the real app-id)** → [docs/todo/desktop.md](docs/todo/desktop.md)
