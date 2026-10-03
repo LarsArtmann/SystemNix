@@ -73,6 +73,13 @@
       assetsPreStart = pkgs.writeShellScript "geometrikks-assets" ''
         set -euo pipefail
         if [ "$(cat ${stateDir}/.assets-stamp 2>/dev/null || true)" != "${pkg}" ]; then
+          # Heal perms BEFORE rm: cp -r from the store preserves its 444/555
+          # modes, and unlinking from a 555 dir EPERMs even as the owner —
+          # the 2026-10-03 15:35 activation failure. chmod needs ownership,
+          # not write permission, so the owner can always reopen its own
+          # tree. 2>/dev/null || true: paths may not exist on a first run;
+          # a real chmod failure still surfaces via the rm below.
+          chmod -R u+w ${stateDir}/public ${stateDir}/migrations ${stateDir}/alembic.ini 2>/dev/null || true
           rm -rf ${stateDir}/public ${stateDir}/migrations
           # alembic.ini must be removed too: a stale copy is mode 444 (cp
           # reuses the store file's perms) and cp's O_TRUNC on it EPERMs as
