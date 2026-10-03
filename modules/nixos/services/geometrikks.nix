@@ -74,10 +74,14 @@
         set -euo pipefail
         if [ "$(cat ${stateDir}/.assets-stamp 2>/dev/null || true)" != "${pkg}" ]; then
           rm -rf ${stateDir}/public ${stateDir}/migrations
+          # alembic.ini must be removed too: a stale copy is mode 444 (cp
+          # reuses the store file's perms) and cp's O_TRUNC on it EPERMs as
+          # the service user — the 2026-10-03 activation failure.
+          rm -f ${stateDir}/alembic.ini
           cp -r ${pkg}/share/geometrikks/public ${stateDir}/public
           cp -r ${pkg}/share/geometrikks/migrations ${stateDir}/migrations
           cp ${pkg}/share/geometrikks/alembic.ini ${stateDir}/alembic.ini
-          chmod -R u+w ${stateDir}/public ${stateDir}/migrations
+          chmod -R u+w ${stateDir}/public ${stateDir}/migrations ${stateDir}/alembic.ini
           echo "${pkg}" > ${stateDir}/.assets-stamp
         fi
         mkdir -p ${stateDir}/logs ${stateDir}/geoip
@@ -234,11 +238,24 @@
         # the app's startup migration dies on it and takes the worker
         # (and the unit) down (live 2026-09-30 04:43 — the old
         # timescaledb-ha Docker image bundled it; nixpkgs plugins do not).
+        # Tolerant pre-pass: migrate an EXISTING timescaledb catalog to the
+        # version the current postgresql plugin set ships. nixpkgs bumps
+        # otherwise strand the catalog pointing at a $libdir that no longer
+        # exists — `CREATE EXTENSION IF NOT EXISTS` then dies on
+        # "could not access file \"$libdir/timescaledb-2.30.1\"" (the
+        # 2026-10-03 activation failure, timescaledb 2.30.1 -> 2.30.2).
+        # `|| true` covers first bootstrap, where no extension exists yet
+        # and the CREATEs below are what matter. The collation refreshes
+        # silence the glibc 2.42 -> 2.44 version-mismatch warnings.
+        psql -d geometrikks -c "ALTER EXTENSION timescaledb UPDATE;" || true
+        psql -d geometrikks -c "ALTER EXTENSION timescaledb_toolkit UPDATE;" || true
         psql -d geometrikks \
           -c "CREATE EXTENSION IF NOT EXISTS timescaledb;" \
           -c "CREATE EXTENSION IF NOT EXISTS timescaledb_toolkit;" \
           -c "CREATE EXTENSION IF NOT EXISTS postgis;" \
-          -c "ALTER DATABASE geometrikks SET max_parallel_workers = '8';"
+          -c "ALTER DATABASE geometrikks SET max_parallel_workers = '8';" \
+          -c "ALTER DATABASE geometrikks REFRESH COLLATION VERSION;" \
+          -c "ALTER DATABASE postgres REFRESH COLLATION VERSION;"
         echo "geometrikks-db-provision: role password set, extensions ensured, per-DB tuning applied"
       '';
 

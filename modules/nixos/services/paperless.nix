@@ -663,6 +663,14 @@ _: {
                 before = [ "paperless-scheduler.service" ];
                 wantedBy = [ "paperless-scheduler.service" ];
                 serviceConfig.Type = "oneshot";
+                # Stay "active (exited)" after the first run: wantedBy points
+                # at paperless-scheduler (not a target), so every scheduler
+                # restart re-pulls this unit — without RemainAfterExit each
+                # pull re-runs the script and the activation-window churn
+                # burned the start limit (start-limit-hit exit-4 at the
+                # 2026-10-03 switch). The script is only ever needed once
+                # per boot while db.sqlite3 still exists.
+                serviceConfig.RemainAfterExit = true;
                 script = "rm -f '${dataDir}/superuser-state' '${dataDir}/src-version'";
               };
 

@@ -165,6 +165,13 @@ let
       pre-commit
       openssh
       ssh-to-age
+      # Secrets-workflow CLIs (the sops-secret-management skill runs these).
+      # GLOBAL operator tools — they must never ride a service module's
+      # conditional systemPackages: services.forgejo-repos going enable=false
+      # on 2026-10-03 silently dropped both from the system closure and
+      # broke every `sops`/`age` invocation on the host until this restore.
+      sops
+      age
 
       # Modern CLI productivity tools
       glow # Render markdown on the CLI, with pizzazz

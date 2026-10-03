@@ -434,7 +434,18 @@
               [
                 "pocket-id-provision.service"
                 "cv-oidc-env.service"
-              ];
+              ]
+          # Ledger CRM replay ordering: the pipeline syncer's startup event
+          # replay (career-pipeline/crm Syncer.Start) fires thousands of REST
+          # calls with NO retry — a joint restart where cv-server comes up
+          # while crm-server is still binding loses the whole backfill
+          # (2026-10-03 switch: 10489 refused company creates in 11 s, all
+          # dropped until the next cv restart). after+wants orders the
+          # restart; the ExecStartPre socket wait below closes systemd's
+          # started-but-not-yet-listening gap.
+          ++ lib.optionals (config.services.crm-server.enable or false) [
+            "crm-server.service"
+          ];
           wants = [
             "sops-nix.service"
             "cv-state-perms.service"
@@ -446,7 +457,10 @@
               )
               [
                 "pocket-id-provision.service"
-              ];
+              ]
+          ++ lib.optionals (config.services.crm-server.enable or false) [
+            "crm-server.service"
+          ];
           inherit onFailure;
 
           serviceConfig = lib.mkMerge [
@@ -462,6 +476,13 @@
                 "GOMEMLIMIT=768MiB"
                 "OTEL_EXPORTER_OTLP_ENDPOINT=localhost:${toString ports.signoz-otlp-http}"
                 "OTEL_ENVIRONMENT=production"
+              ];
+              # Wait (bounded, fail-open) for crm-server's socket before the
+              # event replay runs — see the after/wants note above. The
+              # /dev/tcp probe needs no caps and no curl in the closure
+              # (same idiom as fastflowlm's proxy-conn wait).
+              ExecStartPre = lib.optionals (config.services.crm-server.enable or false) [
+                "${pkgs.bash}/bin/bash -c 'deadline=$((SECONDS + 120)); until (exec 3<>"/dev/tcp/127.0.0.1/${toString ports.crm}") 2>/dev/null; do if [ "$SECONDS" -ge "$deadline" ]; then echo \"cv-server: crm-server 127.0.0.1:${toString ports.crm} not reachable within 120s — starting anyway (CRM sync backfill waits for the next restart)\" >&2; exit 0; fi; sleep 1; done'"
               ];
             }
             (lib.mkIf
