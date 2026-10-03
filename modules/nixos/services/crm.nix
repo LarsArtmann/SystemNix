@@ -300,11 +300,15 @@
             ];
             # Tile appears with the vHost claim (cutover): while Twenty
             # lives, its "Twenty CRM" tile owns the crm.<domain> href.
-            homepage = if twentyEnabled then null else {
-              name = "Ledger CRM";
-              group = "Productivity";
-              description = "Event-sourced personal CRM (passkey)";
-            };
+            homepage =
+              if twentyEnabled then
+                null
+              else
+                {
+                  name = "Ledger CRM";
+                  group = "Productivity";
+                  description = "Event-sourced personal CRM (passkey)";
+                };
             backup = {
               # Nightly WAL-safe journal snapshot (crm-backup.timer, 03:40)
               # onto the mirrored pool.

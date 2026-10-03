@@ -42,11 +42,11 @@
           # --keep-going enumeration evidence; class comment at
           # lib/lars-packages.nix). Drop when upstream re-pins or the lock
           # moves past an upstream-fixed rev.
-          package =
-            lib.mkDefault
-              (inputs.vision-review-agent.packages.${pkgs.stdenv.hostPlatform.system}.visionreviewd.overrideAttrs {
-                vendorHash = "sha256-dymChDH9CHbVP0eTo8wubkuZxPyH8m3CmbzWA+/PQ+I=";
-              });
+          package = lib.mkDefault (
+            inputs.vision-review-agent.packages.${pkgs.stdenv.hostPlatform.system}.visionreviewd.overrideAttrs {
+              vendorHash = "sha256-dymChDH9CHbVP0eTo8wubkuZxPyH8m3CmbzWA+/PQ+I=";
+            }
+          );
           llamaServer.port = lib.mkDefault ports.visionreviewd-llama;
         };
 

@@ -1153,7 +1153,9 @@ _: {
                     ExecStart = pkgs.writeShellScript "paperless-tasks-collector" ''
                       set -euo pipefail
                       TF_DIR=/var/lib/prometheus-node-exporter/textfile_collectors
-                      PSQL="${config.services.postgresql.package}/bin/psql -tA -d ${cfg.settings.PAPERLESS_DBNAME or "paperless"}"
+                      PSQL="${config.services.postgresql.package}/bin/psql -tA -d ${
+                        cfg.settings.PAPERLESS_DBNAME or "paperless"
+                      }"
 
                       # Fail-closed (pocket-id busy pattern): a failed query
                       # round writes collector_success 0 and NO counts — the

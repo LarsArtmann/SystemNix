@@ -31,14 +31,14 @@ MANAGE="$(command -v paperless-manage || echo /run/current-system/sw/bin/paperle
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --doc-ids)
-      read -r -a DOC_IDS <<< "$2"
-      shift 2
-      ;;
-    *)
-      echo "usage: $0 [--doc-ids \"1 2 3\"]" >&2
-      exit 64
-      ;;
+  --doc-ids)
+    read -r -a DOC_IDS <<<"$2"
+    shift 2
+    ;;
+  *)
+    echo "usage: $0 [--doc-ids \"1 2 3\"]" >&2
+    exit 64
+    ;;
   esac
 done
 
@@ -53,8 +53,8 @@ chmod 600 "$TOKEN_FILE"
 
 # Mint as the paperless OS user (peer auth); token never touches argv of
 # other processes — only this file, which the trap removes.
-runuser -u paperless -- "$MANAGE" drf_create_token admin \
-  | grep -oE '[0-9a-f]{40}' | head -n1 > "$TOKEN_FILE"
+runuser -u paperless -- "$MANAGE" drf_create_token admin |
+  grep -oE '[0-9a-f]{40}' | head -n1 >"$TOKEN_FILE"
 TOKEN=$(cat "$TOKEN_FILE")
 if ! printf '%s' "$TOKEN" | grep -qE '^[0-9a-f]{40}$'; then
   echo "token mint failed" >&2

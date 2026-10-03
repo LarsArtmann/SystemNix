@@ -90,19 +90,18 @@ _: {
       # each file into modelDir (same filesystem → atomic rename from .part),
       # verifies the GGUF magic, and stamps the source URL next to the model
       # (a URL change re-fetches; a truncated/partial file is re-downloaded).
-      modelFetches =
-        [
-          {
-            url = "https://huggingface.co/gpustack/bge-m3-GGUF/resolve/main/bge-m3-FP16.gguf";
-            file = cfg.embeddingsModel;
-          }
-        ]
-        ++ lib.optionals cfg.reranker.enable [
-          {
-            url = "https://huggingface.co/gpustack/bge-reranker-v2-m3-GGUF/resolve/main/bge-reranker-v2-m3-FP16.gguf";
-            file = cfg.rerankerModel;
-          }
-        ];
+      modelFetches = [
+        {
+          url = "https://huggingface.co/gpustack/bge-m3-GGUF/resolve/main/bge-m3-FP16.gguf";
+          file = cfg.embeddingsModel;
+        }
+      ]
+      ++ lib.optionals cfg.reranker.enable [
+        {
+          url = "https://huggingface.co/gpustack/bge-reranker-v2-m3-GGUF/resolve/main/bge-reranker-v2-m3-FP16.gguf";
+          file = cfg.rerankerModel;
+        }
+      ];
 
       # Ports with a legitimate owner under the current shape. The leak
       # monitor and its expected-instance count derive from this; a dropped
@@ -399,8 +398,10 @@ _: {
             wantedBy = [ "multi-user.target" ];
             after = [ "network-online.target" ];
             wants = [ "network-online.target" ];
-            before = [ "llama-embeddings.service" ]
-              ++ lib.optionals cfg.reranker.enable [ "llama-reranker.service" ];
+            before = [
+              "llama-embeddings.service"
+            ]
+            ++ lib.optionals cfg.reranker.enable [ "llama-reranker.service" ];
             path = [
               pkgs.curl
               pkgs.coreutils
@@ -488,8 +489,10 @@ _: {
           # foreign fails without it).
           systemd.services.llama-rag-leak-metrics = {
             description = "llama-rag leaked llama-server instance metrics";
-            after = [ "llama-embeddings.service" ]
-              ++ lib.optionals cfg.reranker.enable [ "llama-reranker.service" ];
+            after = [
+              "llama-embeddings.service"
+            ]
+            ++ lib.optionals cfg.reranker.enable [ "llama-reranker.service" ];
             serviceConfig = lib.mkMerge [
               (harden { })
               {

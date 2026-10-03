@@ -84,7 +84,12 @@
         # Tag-gating: documents enter processing ONLY via the auto tag —
         # nothing happens to untagged documents. AUTO_TAG_COMPLETE marks
         # processed docs; FAIL_TAG breaks the retry loop after max retries.
-        inherit (cfg) manualTag autoTag autoTagComplete failTag;
+        inherit (cfg)
+          manualTag
+          autoTag
+          autoTagComplete
+          failTag
+          ;
         AUTO_TAG_MAX_RETRIES = toString cfg.autoTagMaxRetries;
         # Bounded-write posture (Stage-A spirit from the AI-max plan):
         # suggest only EXISTING tags (no unbounded tag creation) and never

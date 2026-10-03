@@ -482,7 +482,7 @@
               # /dev/tcp probe needs no caps and no curl in the closure
               # (same idiom as fastflowlm's proxy-conn wait).
               ExecStartPre = lib.optionals (config.services.crm-server.enable or false) [
-                "${pkgs.bash}/bin/bash -c 'deadline=$((SECONDS + 120)); until (exec 3<>"/dev/tcp/127.0.0.1/${toString ports.crm}") 2>/dev/null; do if [ "$SECONDS" -ge "$deadline" ]; then echo \"cv-server: crm-server 127.0.0.1:${toString ports.crm} not reachable within 120s — starting anyway (CRM sync backfill waits for the next restart)\" >&2; exit 0; fi; sleep 1; done'"
+                "${pkgs.bash}/bin/bash -c 'deadline=$$((SECONDS + 120)); until (exec 3<>\"/dev/tcp/127.0.0.1/${toString ports.crm}\") 2>/dev/null; do if [ \"$$SECONDS\" -ge \"$$deadline\" ]; then echo \"cv-server: crm-server 127.0.0.1:${toString ports.crm} not reachable within 120s — starting anyway (CRM sync backfill waits for the next restart)\" >&2; exit 0; fi; sleep 1; done'"
               ];
             }
             (lib.mkIf

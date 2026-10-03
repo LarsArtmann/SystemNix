@@ -35,9 +35,11 @@
       # overlays/linux.nix shim covers the pkgs.discordsync surface, this
       # one the direct input reference). Drop when upstream re-pins or the
       # lock moves past an upstream-fixed rev.
-      discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-/d/40ffYAzSF9MUbK0RnMaJFvg+vnFDYWwvGZxhZvTc=";
-      };
+      discordsyncPkg =
+        inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
+          {
+            vendorHash = "sha256-/d/40ffYAzSF9MUbK0RnMaJFvg+vnFDYWwvGZxhZvTc=";
+          };
       sopsEnvPath = config.sops.templates."discordsync-env".path;
 
       dbBackupDir = "/mnt/pool/backups/discordsync";

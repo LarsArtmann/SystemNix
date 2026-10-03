@@ -6,15 +6,17 @@
 let
   # Fix XRT build with Boost 1.89.0 - boost_system was removed in 1.87+
   # Use callPackage to override the boost input to the XRT package
-  xrt-fixed = (pkgs.callPackage (nix-amd-npu + "/pkgs/xrt") {
-    boost = pkgs.boost187;
-  }).overrideAttrs (old: {
-    # 2026-10-01 nixpkgs bump: protobuf 36.2 pulls abseil-cpp 20260817 whose
-    # headers require C++20 (<compare>: std::partial_ordering et al.); XRT's
-    # CMake defaults those TUs (xbtracer's generated .pb.cc) to C++17 and the
-    # build dies "'partial_ordering' has not been declared in 'std'".
-    cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DCMAKE_CXX_STANDARD=20" ];
-  });
+  xrt-fixed =
+    (pkgs.callPackage (nix-amd-npu + "/pkgs/xrt") {
+      boost = pkgs.boost187;
+    }).overrideAttrs
+      (old: {
+        # 2026-10-01 nixpkgs bump: protobuf 36.2 pulls abseil-cpp 20260817 whose
+        # headers require C++20 (<compare>: std::partial_ordering et al.); XRT's
+        # CMake defaults those TUs (xbtracer's generated .pb.cc) to C++17 and the
+        # build dies "'partial_ordering' has not been declared in 'std'".
+        cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DCMAKE_CXX_STANDARD=20" ];
+      });
 in
 {
   # AMD NPU (XDNA) Support for Ryzen AI Max+ 395 (Strix Halo)
