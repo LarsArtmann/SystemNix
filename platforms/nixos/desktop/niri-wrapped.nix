@@ -68,17 +68,32 @@ let
     runtimeInputs = [ pkgs.procps ];
     text = ''
       # Guard against the "opening in existing browser session" empty-window loop.
-      # When a helium main process is already alive (e.g. it survived a
+      # When a helium MAIN-profile process is already alive (e.g. it survived a
       # graphical-session restart on deploy), a fresh invocation just opens an
       # empty window and exits 0 — with Restart=always that becomes a loop
       # of empty windows every RestartSec.
-      # Instead: wait for the existing instance to die, then launch fresh.
+      # Instead: wait for the existing main instance to die, then launch fresh.
       # No timeout: if the instance is alive, we block here indefinitely.
       # This makes helium-launch a monitor — systemd sees the service as
       # "running" while waiting, and only execs helium when the old one dies.
       # If helium is truly stuck (zombie), kill it manually and this will
       # detect the death within 5s and launch fresh.
-      while pgrep -f "helium --ozone-platform-hint" >/dev/null 2>&1; do
+      # Scope the guard to the MAIN profile ONLY (2026-10-03): the
+      # per-monitor dp1/dp2 instances are separate --user-data-dir
+      # singletons, so a fresh main-profile launch can never merge into
+      # them — but a bare pgrep for the binary matched them too and wedged
+      # this service for whole sessions (main profile never auto-launched
+      # since the 2026-09-29 per-monitor instance change).
+      main_alive() {
+        local pid
+        while IFS= read -r pid; do
+          if ! grep -aq user-data-dir "/proc/$pid/cmdline" 2>/dev/null; then
+            return 0
+          fi
+        done < <(pgrep -f "helium --ozone-platform-hint")
+        return 1
+      }
+      while main_alive; do
         sleep 5
       done
       exec env -u QT_STYLE_OVERRIDE helium
