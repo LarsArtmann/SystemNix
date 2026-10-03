@@ -617,10 +617,23 @@ if nix run .#pre-deploy-check; then
   # gate skips it) and cv-server reads the CV_OIDC_CLIENT_SECRET env file at
   # process start only. A provisioner-rotated secret would otherwise never
   # reach the running server.
+  # cv-server restarts ONLY when the re-rendered env actually CHANGED: every
+  # cv-server start replays the full CRM event history and the syncer's
+  # idempotency is in-memory only (companies dedupe via find-before-create,
+  # opportunities DO NOT) — the unconditional restart duplicated 10,489
+  # opportunities on 2026-10-03 16:17. Drop this gate only after the CV
+  # syncer grows a durable replay checkpoint.
   if systemctl is-active --quiet cv-oidc-env.service 2>/dev/null; then
-    echo "Restarting cv-oidc-env.service + cv-server.service (reload OIDC client secret)"
+    cv_env="/var/lib/cv-oidc/client-secret.env"
+    cv_before="$(sha256sum "$cv_env" 2>/dev/null || echo absent)"
     sudo systemctl restart cv-oidc-env.service 2>/dev/null || true
-    sudo systemctl restart cv-server.service 2>/dev/null || true
+    cv_after="$(sha256sum "$cv_env" 2>/dev/null || echo absent)"
+    if [ "$cv_before" != "$cv_after" ]; then
+      echo "Restarting cv-oidc-env.service + cv-server.service (OIDC client secret changed)"
+      sudo systemctl restart cv-server.service 2>/dev/null || true
+    else
+      echo "cv OIDC env unchanged — cv-server NOT restarted (avoids CRM replay duplication)"
+    fi
   fi
 
   # GeoMetrikks' Pocket ID bridge, same indirect-unit class as cv-oidc-env —

@@ -114,6 +114,15 @@
             # (2026-09-22): RequiresMountsFor gates the service on the pool,
             # so a dropout leaves it failed/inactive and needs the converge.
             "discordsync.service"
+            # tq's journal lives on the pool (/mnt/pool/services/tq/tq.db),
+            # so the remount path's mnt-pool.mount stop PROPAGATES to
+            # tq-serve/tq-agent-pool (implicit RequiresMountsFor) — the
+            # 2026-10-03 16:18 deploy-run class: a storm-slowed 20s I/O
+            # probe tripped a false-stale remount, the mount stop TERMed
+            # both tq units mid-flight, and the converge list (without
+            # them) left the queue dark until the next reboot.
+            "tq-serve.service"
+            "tq-agent-pool.service"
           ];
           description = ''
             Pool consumers to converge once the pool mount is healthy: FAILED
