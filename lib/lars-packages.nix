@@ -123,7 +123,17 @@ lib.filterAttrs (_: v: v != null) {
   samber-linter = (flakePkg inputs.samber-linter).overrideAttrs {
     vendorHash = "sha256-pTZB1VawQ8kEby34hWQVJerhFNUvX6M8rSABfwnvzpU=";
   };
-  todo-list-ai = flakePkg inputs.todo-list-ai;
+  # todo-list-ai TEMPORARILY DROPPED (2026-10-03, null → filtered by the
+  # null-safe guard below): the 2026-10-01 root-nixpkgs bump moved its
+  # followed bun 1.4.1→1.4.2, which re-hashed the deps FOD (pinned
+  # FkAUaar… now produces dOQ37ka…) AND breaks --frozen-lockfile on every
+  # lockfile regenerated after 448b941 (lock metadatata skew; verified:
+  # 448b941's lock passes bun 1.4.2's frozen check, all later regens fail).
+  # The deps FOD is inline in the input's flake — not SystemNix-overridable.
+  # RESTORE when upstream regenerates bun.lock under nixpkgs' current bun
+  # AND re-pins depsHash (got-hash evidence above), then re-lock past it.
+  # Input pinned to 448b941 meanwhile (last frozen-compatible lockfile).
+  todo-list-ai = null;
   # tq: the checkPhase runs upstream's test suite, which shells out to git
   # (TestDoctorTreeGofmt does `git init -q` in a tmpdir, upstream 2026-10-02)
   # — the go-standard sandbox ships no git and the package build fails with
