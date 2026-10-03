@@ -46,3 +46,24 @@ Guard trips #1773–#1778+ all day, every build/deploy/battery feeding avg60 >40
 1. **Anchoring deploy**: `/run/current-system` != system-813 profile — **a reboot WILL revert to the 15:35 generation** (which lacks the geometrikks perm-heal — harmless on the now-healed tree — and lacks today's 5 fixes). My delayed loop will deploy once the guard gate clears (60 min trip-free + PSI <20); force (`DEPLOY_FORCE_PRESSURE=1 nix run .#deploy`) if you want it sooner. The deploy also brings tq back.
 2. **CRM duplicates**: confirm dedupe sequencing (after the CV-repo checkpoint fix? via UI as lars?) — ~10,489 duplicate opportunities are live in the CRM now.
 3. **crm.nix token-on-cmdline**: queued [blocked:user] — needs a cr-repo env/file option first (see §e); bundles naturally with the CV syncer rev bump.
+
+## Addendum (17:15, anchoring landed + one more layered bug)
+
+**The owner preempted the gated loop and ran the anchoring deploy manually at 17:00:07** (interactive fish on pts/1, same SSH session that forced 16:17). Deploy **exit 0 at 17:07:41 after 450s**; log `/var/log/systemnix-deploys/2026-10-03_17-00-11.log`; **new profile generation: system-814** (`/run/current-system` == `system-814-link` == `kjzj5qa9…` — anchored, reboot-safe). Smoke 121 PASS / 12 FAIL / 9 SKIP / 4 WARN — **all 12 FAILs match the previous run's baseline, advisory exit 1, no new regressions**.
+
+Verify battery, item by item against §f.2:
+
+- activation exit 0 ✓; profile anchored ✓ (all three links agree)
+- **tq-serve + tq-agent-pool ✓** — restarted 17:05:07 by pool-usb-recovery converge (the restartUnits fix proving itself); :8100 answers 200; budget note "30/30 tasks enqueued today"
+- **paperless-gpt-token ✓** — mint Finished 17:06:10, no EPERM (rm -f fix proven live)
+- **`system_*` metrics ✓** — 10 `system_unit_enabled_inactive` series with REAL unit names (`activitywatch-watcher-aw-watcher-utilification.service` — decoded, not `\x2d`-escaped); the \x-escape fix works
+- **NO third cv replay ✓** — deploy log line: `cv OIDC env unchanged — cv-server NOT restarted (avoids CRM replay duplication)`; the sha256 gate fired as designed; cv :8098 /health/live 200 on the untouched process
+- **`paperless_tasks_*` ✗ — one MORE layered bug found and fixed.** The 0644 chmod fix made node_exporter READ the file for the first time, and it fails to PARSE: line 18 `paperless_inbox_count ` (empty value). Root cause is two-layered:
+  1. `WHERE t.slug = 'inbox'` — **paperless ≥3.1 moved Tag to TreeNodeModel and the `slug` column no longer exists** (`ERROR: column t.slug does not exist` in the collector journal). The version-proof column is `is_inbox_tag` (present in both 3.1.3 and 3.2.1 models).
+  2. **psql exits 0 on SQL errors by default** — so `|| fail=1` never fired, `collector_success` read 1 (round-trip "succeeded"), and the empty value poisoned the whole .prom. Fix: `-v ON_ERROR_STOP=1` in the collector's PSQL (fail-closed now actually closes).
+  Both landed in `modules/nixos/services/paperless.nix` (eval-verified, drv `3p2l1mvq…`); deploy rides a NEW transparent gated loop (0C7: same gate — 0 guard trips in trailing 60 min AND IO PSI some avg10 < 20 — replacing the opaque 08B loop). Residual open item is the narrowed TODO_LIST/services.md row.
+- geometrikks ✓ (:8102 HTTP 200, still green), btrbk-pool-clean ✓ (self-healed 17:06, clean no_action run)
+
+**Baseline FAIL ownership (all pre-existing, none new):** Forgejo = deliberate `ConditionPathExists=/var/lib/forgejo/.subvol-migrated` gate (subvol migration pending since 10-01, tracked in storage.md/services.md); FastFlowLM = guard restore-cap, owner manual restore once PSI calm; CV render = ONLY the `/de/cv` leg, known IO-PSI false-FAIL (TODO_LIST row: CV render smoke IO-pressure-aware); Bank-Sync = Wise event `version_conflict` on save (app-level, restart-cumulative counter keeps smoke red — windowing row already queued; execution trace auto-captured at `/mnt/pool/services/bank-sync/traces/`); Desktop polkit = long-standing 2026-08-18 class; memory PSI calm (0.00%), IO still saturated (avg10 ~80% during the deploy's own eval).
+
+**Storm/guard at addendum time:** trips #1777–#1781 in the trailing hour (16:13–16:59); nix-daemon IO during the deploy was the deploy's own pre-deploy-check eval (the heavy `systemd.services` ExecStart audit), not a separate runaway. Thermal/cooling inspection (freeze #12) still stands as the owner action.
