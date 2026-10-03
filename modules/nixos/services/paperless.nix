@@ -1158,7 +1158,9 @@ _: {
                       # fail-closed gate below and gets the whole .prom rejected
                       # (2026-10-03: t.slug era poisoned every paperless_tasks_*
                       # metric while collector_success still read 1).
-                      PSQL="${config.services.postgresql.package}/bin/psql -tA -v ON_ERROR_STOP=1 -d ${cfg.settings.PAPERLESS_DBNAME or "paperless"}"
+                      PSQL="${config.services.postgresql.package}/bin/psql -tA -v ON_ERROR_STOP=1 -d ${
+                        cfg.settings.PAPERLESS_DBNAME or "paperless"
+                      }"
 
                       # Fail-closed (pocket-id busy pattern): a failed query
                       # round writes collector_success 0 and NO counts — the

@@ -3298,6 +3298,21 @@
               # time, because GitHub push protection pattern-matches raw
               # blobs and IGNORES .gitleaks.toml allowlists — a literal
               # sgp_ fixture blocked the 2026-09-15 master push (GH013).
+              # buildcacheDirs ↔ KNOWN_CACHE_ENTRIES parity guard
+              # (scripts/check-buildcache-known-parity.sh). Extracts the
+              # literal dirs from buildcache.nix and the names from the das-
+              # link KNOWN array and asserts full coverage — the [6] drift
+              # class fails at CI instead of at the next manual re-fire
+              # (2026-10-02 re-fire-9). Selftesting: the positive control
+              # plus three deliberate drift shapes must FAIL (gitleaks-
+              # coverage-selftest house pattern).
+              buildcache-known-parity = pkgs.runCommand "buildcache-known-parity" { } ''
+                ${pkgs.bash}/bin/bash ${./scripts/check-buildcache-known-parity.sh} --selftest \
+                  ${./modules/nixos/services/buildcache.nix} \
+                  ${./scripts/das-link-recovery-check.sh} \
+                  | tee $out
+              '';
+
               gitleaks-coverage-selftest = pkgs.runCommand "gitleaks-coverage-selftest" { } ''
                 set -u
                 cfg=${./.gitleaks.toml}
