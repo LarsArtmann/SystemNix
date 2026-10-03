@@ -91,14 +91,18 @@ lib.filterAttrs (_: v: v != null) {
   # go.mod floor is 1.27.1 while nixpkgs' default go is 1.26.8 — the FOD
   # dies "go: go.mod requires go >= 1.27.1 (GOTOOLCHAIN=local)" (the
   # 2026-09-17 go 1.27 wave class; fix forward with go_1_27, never pin the
-  # toolchain back). .override (NOT overrideAttrs) so the new go reaches
-  # the go-modules FOD itself. vendorHash under go_1_27 LEARNED via the
-  # fakeHash mismatch build (2026-10-03), then pasted below.
+  # toolchain back). Upstream's package.nix hardcodes the toolchain (its
+  # lambda takes no `go`), so the override rebinds `buildGoModule` itself
+  # (the documented wiring point 3) — that propagates go_1_27 into the
+  # go-modules FOD. vendorHash under go_1_27 LEARNED via the fakeHash
+  # mismatch build (2026-10-03), then pasted below. Drop both when upstream
+  # bumps its toolchain and re-pins its hash.
   md-go-validator =
-    (flakePkg inputs.md-go-validator).override {
-      go = inputs.nixpkgs.legacyPackages.${system}.go_1_27;
-      vendorHash = lib.fakeHash;
-    };
+    ((flakePkg inputs.md-go-validator).override {
+      buildGoModule = inputs.nixpkgs.legacyPackages.${system}.buildGoModule.override {
+        go = inputs.nixpkgs.legacyPackages.${system}.go_1_27;
+      };
+    }).overrideAttrs { vendorHash = "sha256-h3p6Hh2Ak1cPwnrtVNX+OTOJZMRpDRDPRDrb2r9JpS0="; };
   # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.
   # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
   mr-sync = flakePkg inputs.mr-sync;

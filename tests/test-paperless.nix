@@ -219,6 +219,16 @@ in
     # stored byte-identical copies because the paperless default only warns).
     assert "PAPERLESS_CONSUMER_DELETE_DUPLICATES=true" in env, "duplicate rejection missing from unit env"
 
+    # 3a. A11 AI-suggestion tuning (2026-10-03 wave): suggestion language
+    #     pinned to German and the nightly LLM index moved off the paperless
+    #     default (10 2 * * * — which landed inside the 02:00–03:00 NPU
+    #     contention window) to 03:30. INDEX_TASK_CRON exists only on
+    #     paperless-ngx 3.2.x (custom.py env parser): inert on 3.1.3,
+    #     live after the version ride — the assertion pins the ENV RENDER
+    #     (the config surface SystemNix owns), not the task behavior.
+    assert "PAPERLESS_AI_LLM_OUTPUT_LANGUAGE=German" in env, "AI output language missing from unit env"
+    assert "PAPERLESS_LLM_INDEX_TASK_CRON=30 3 * * *" in env, "LLM index cron missing from unit env"
+
     # 3b. OIDC role mapping (deab8469): Pocket ID `groups` claim → Django
     #     roles. The claim is emitted ONLY when the client requests the
     #     `groups` scope; the SUPERUSER/STAFF group names must equal the
