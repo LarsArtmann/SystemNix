@@ -256,6 +256,32 @@ systemctl start cv-server   # rehydration replays events, no snapshot needed
 A real restore drill remains pending (owner root shell; the 8 backup
 artifacts above are restorable round-trip-tested upstream).
 
+### Root-shell prerequisites (prep list, 2026-10-03 — one sitting)
+
+Collect these BEFORE starting so the drill never half-completes:
+
+1. **Root shell on cv.home.lan** — `ssh root@cv.home.lan` (the dev machine's
+   `art@` user cannot `su`; this was the 2026-09-16 blocker).
+2. **Pick the backup + record its expected shape**: `ls -la
+   /mnt/pool/backups/cv/ | tail`, note the newest `pipeline-*.sqlite` size
+   and (pre-stop) the CURRENT app count for comparison:
+   `curl -s http://localhost:8098/api/pipeline/applications | jq length`
+   (run before stopping — the restored count must match the backup's point
+   in time, not the live one).
+3. **Stop order matters**: stop `cv-scan.timer` FIRST (a 6h tick landing
+   mid-drill would append events into the restoring store), then
+   `cv-server.service`.
+4. **Copy, never move** — leave the backup file in place (`cp`), restore
+   into the state dir per the block above.
+5. **Rehydrate proof** (the drill's pass criteria): after start, (a)
+   `/health/ready` serves 200, (b) the applications count matches the
+   backup's expected count from step 2, (c) `journalctl -t cv-server` shows
+   no payload-decode failures during replay, (d) `/api/pipeline/sse-stats`
+   `funnelStale` is `false` after the first scan tick resumes.
+6. **Restart the timer** (`cv-scan.timer` start) and watch one tick.
+7. **Record the drill**: date + backup filename + counts in this file —
+   the runbook row is only closed by a recorded pass.
+
 ## Rotating `CV_API_KEY`
 
 1. Generate: `openssl rand -hex 32`.

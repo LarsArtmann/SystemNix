@@ -13,6 +13,12 @@
 
 ## Queue
 
+- [ ] [ready] **Script the `buildcacheDirs`↔`KNOWN_CACHE_ENTRIES` parity extraction as a selftesting repo check** (extract literal dirs from buildcache.nix + names from the KNOWN array; assert every literal dir is covered — the check re-fire 9 ran by hand; selftesting precedent: `checks.x86_64-linux.gitleaks-coverage-selftest` / pre-commit guard scripts) → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-10-02_08-25_task-000001a0f97e2c06e0f314b5991900000000.md §f.7)
+- [ ] [ready] **Verify the ~10-04 nightly prune frees the 09-20 root weekly pin** (df -BG / before/after the 23:50 btrbk-pool-clean run; record freed GB — the largest remaining reclaim after the 10-02 emergency prune cleared only ~3G) → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-10-02_08-36_qlc-full-recurrence-dnsblockd-sigbus-full-status.html §f.2)
+- [ ] [ready] **Root-space floor: auto-prune trigger at >90% root usage** (btrbk-pool-clean or own timer: immediate `btrbk prune` + notify + textfile metric — the 10-02 06:33 dnsblockd SIGBUS/ENOSPC outage class; prune is fail-safe, send-parents preserved) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.5)
+- [ ] [blocked:user] **User-space reclaim: trash /home/lars/tmp (54G) + @cache-home.regular-dir-bak (1.3G)** (the 724M orphaned dnsblockd_tracking.db already queues at services.md) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.7)
+- [ ] [decision] **Narrow root weekly retention 1w→3d until hot-tier migrations land?** (halves the max snapshot pin window while churn is unmanaged — two 100% events in 24h rode the 2-week window) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.23)
+- [ ] [watch] /data at 79% (798G/1.1T, models/Steam growth trend) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.24)
 ### storage
 
 - [ ] **Phase 2: hot DBs off the QLC root** → [docs/todo/storage.md](docs/todo/storage.md) — BLOCKED: remaining work (pocket-id/postgres/discordsync migration waves + docker data-root) is owner sudo windows; fsync measurement, verdicts, entry snippets and runbook landed (storage.md + status report)
@@ -93,6 +99,7 @@
 - [ ] **Extend `test-migrate-hot-db.sh` coverage: per-entry `status` rendering (marker state, populated/empty subvol), `--dry-run finalize`, and the marker's BYTES/BIG_SIZE/BIG_PATH fields — today only the gatus registry line + the finalize count gate are asserted; also derive assertion counts mechanically (`grep -cE '&& ok "|[|][|] ok "' scripts/test-migrate-hot-db.sh` = 22 call sites — the bare `grep -c 'ok "'` form over-counts 23 by matching the helper body, era note in the source report)** → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-09-30_12-54_task-000001a0f1ea4ac4421df201faa700000000.md §e)
 - [ ] **Shared PATH-stub scaffolding for script fixture tests (forgejo-scripts-fixture + migrate-forgejo-subvol-fixture + test-migrate-hot-db.sh hand-roll the same btrfs/systemctl/mountpoint stub set + $BASH shebang sed loop each)** → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-09-30_12-54_task-000001a0f1ea4ac4421df201faa700000000.md §e)
 
+- [ ] [ready] **SEV1 triage: MEMORY EMERGENCY GUARD TRIPPED + FLM RESTORE CAPPED — live or latched stale 13.7h post-boot?** (sev1-bridge still notifying at 08:36) → [docs/todo/stability.md](docs/todo/stability.md) (Source: same report §f.10)
 ### stability
 
 - [ ] **IO admission for tq pool + parallel build slices (io.max / heavy-job)** → [docs/todo/stability.md](docs/todo/stability.md) — 2026-09-30 3h storm class; throughput tradeoff pending owner answer
@@ -145,6 +152,9 @@
 - [ ] **Audit-label `btrfs scrub cancel` invocations so forensics don't need pts archaeology next time** (agent-initiated vs operator-initiated breadcrumb, the heal-breadcrumb pattern applied to scrub cancels; 2026-09-28 02:27 cost a full TTY-session attribution pass) (Source: docs/status/2026-09-30_00-42_task-000001a0ef17061c3d535dd0d65b00000000.md §f.10)
 - [ ] **Split the bundled stability.md "Guard/crash-forensics follow-ups" row into atomic queue rows** (it bundles the PSI-gate nix-gc + btrbk question, smartd liveness, the `systemctl is-active`-vs-oneshot lint, and crash2 cascade triage — violates the one-ask-per-row convention; each sub-item then dispatches independently) (Source: docs/status/2026-09-29_23-20_task-000001a0eaf255cff90e3b85a22accf257e2.md §f.15)
 
+- [ ] [ready] **Fix \x2d label escaping in the system-health textfile writer** (system-health.nix:1488 renders systemd's \x2d escape into label values — invalid in Prometheus text format; node_exporter rejects the WHOLE system_health.prom, all system-health metrics blind; 2nd quoting incident from this collector after 2026-09-20 nrestarts) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: same report §f.3)
+- [ ] [ready] **Gatus canary: system_health_* series presence in node_exporter /metrics** (whole-file textfile rejection is invisible today — the phantom-metric canary pattern already used for nvme/coverage) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: same report §f.4)
+- [ ] [ready] **Bound the system_health blind window + confirm the 93%-root-alert metric source** (journal grep for first parse-error occurrence; then check whether storage_collector_fs_used_percent (gatus-config.nix:671) feeds from the broken textfile — decides the fired-vs-phantom branch of the alert→action gap) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: same report §f.13/14)
 ### monitoring
 
 - [ ] **ClickHouse fill-velocity gauge + time-to-fill alert (append-only P0)** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
@@ -183,6 +193,7 @@
 
 - [ ] **Bisect the llama.cpp 0.3.0 mid-load CPU-spin upstream (ROCm runtime / kernel / GPU-state — upstream of llama.cpp) — THE gate for re-enabling llama-rag and unblocking the paperless RAG item** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
 
+- [ ] [ready] **sysctl vm.overcommit_memory=1 for redis** (warned at every boot: background saves may fail under low memory; one line, rides next deploy) → [docs/todo/services.md](docs/todo/services.md) (Source: same report §f.15)
 ### services
 
 - [ ] [ready] **Nightly dns-blocklist drift automation — scheduled run of `scripts/dns-update.sh` (image-updates.yml pattern: auto-commit or issue-on-drift); HaGeZi mirror drift killed deploys 2026-10-01 AND 2026-10-03** → [docs/todo/services.md](docs/todo/services.md)
@@ -320,6 +331,8 @@
 - [ ] **ROOT: settle the `/run/secrets/sops-nix-age-key` ghost** → [docs/todo/security.md](docs/todo/security.md)
 - [ ] **Crush key-hygiene leftovers** → [docs/todo/security.md](docs/todo/security.md)
 
+- [ ] [ready] **Sweep the other re-fired task IDs (2026-09-23/24 window, 4 IDs / 7 fires) for the re-entry pattern** — `[x]`-closed items with appended verification rows apparently re-entering the harvest pool; confirm whether the re-fire-loop gate (queued at storage re-fire-4) covers them or whether each appended re-fire row is itself the re-feeding source → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-02_08-25_task-000001a0f97e2c06e0f314b5991900000000.md §f.10)
+- [ ] [ready] **Give the re-fire protocol's step 4 a canonical landing spot** — a single re-fire evidence log (e.g. `docs/status/_refire-log.md` or per-task file) instead of unbounded inline growth on the `[x]` queue rows; protocol edit in CONTRIBUTING + one 10-line migration of the existing 9 re-fire rows off TODO_LIST.md/storage.md (→ pipeline.md) (Source: docs/status/2026-10-02_08-40_task-000001a0f97e2c06e0f314b5991900000000.md §f.10)
 ### pipeline
 
 - [ ] [ready] **Add hermes-class rollback-on-red to the flake-update bot procedure: any bot PR whose own `nix flake check --no-build` goes red on one input gets that input's lock entry rolled back (discordsync/hermes pattern, twice-proven) instead of shipping a repo-gate-bricking PR** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-02_10-29_flake-lock-infra-dedup-status.md §d.1/§e.2)
@@ -565,6 +578,7 @@
 | [docs/todo/desktop.md](docs/todo/desktop.md)       | niri, DMS/Quickshell, Qt, audio, shell UX, Signal                                                        |
 | [docs/todo/pixel6.md](docs/todo/pixel6.md)         | Pixel 6 recovery → media-archive project                                                                 |
 
+- [ ] [ready] **Verify helium recovered after the 06:32 SIGBUS crash** (ENOSPC coredump-rejected; unit + session state unverified) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §f.11)
 ### desktop
 
 - [ ] **Deploy evo-x2 carrying Spotify (`38e146ab`) once the tree is quiescent — eval green 20:13 post-recursion-fix; switch also carries the parallel session's renamer/fastflowlm/cv work** → [docs/todo/desktop.md](docs/todo/desktop.md)
@@ -645,20 +659,6 @@
 *(The 2026-10-01 21-04 report's §f.8 upstream-vendorHash item is deliberately NOT queued — it is [blocked:push] in [docs/todo/upstream.md](docs/todo/upstream.md): agents never push; the owner push window gates it.)*
 
 _Completed work: [CHANGELOG.md](./CHANGELOG.md). Long-term ideas: [ROADMAP.md](./ROADMAP.md)._
-- [ ] [ready] **Script the `buildcacheDirs`↔`KNOWN_CACHE_ENTRIES` parity extraction as a selftesting repo check** (extract literal dirs from buildcache.nix + names from the KNOWN array; assert every literal dir is covered — the check re-fire 9 ran by hand; selftesting precedent: `checks.x86_64-linux.gitleaks-coverage-selftest` / pre-commit guard scripts) → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-10-02_08-25_task-000001a0f97e2c06e0f314b5991900000000.md §f.7)
-- [ ] [ready] **Sweep the other re-fired task IDs (2026-09-23/24 window, 4 IDs / 7 fires) for the re-entry pattern** — `[x]`-closed items with appended verification rows apparently re-entering the harvest pool; confirm whether the re-fire-loop gate (queued at storage re-fire-4) covers them or whether each appended re-fire row is itself the re-feeding source → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-02_08-25_task-000001a0f97e2c06e0f314b5991900000000.md §f.10)
-- [ ] [ready] **Verify the ~10-04 nightly prune frees the 09-20 root weekly pin** (df -BG / before/after the 23:50 btrbk-pool-clean run; record freed GB — the largest remaining reclaim after the 10-02 emergency prune cleared only ~3G) → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-10-02_08-36_qlc-full-recurrence-dnsblockd-sigbus-full-status.html §f.2)
-- [ ] [ready] **Root-space floor: auto-prune trigger at >90% root usage** (btrbk-pool-clean or own timer: immediate `btrbk prune` + notify + textfile metric — the 10-02 06:33 dnsblockd SIGBUS/ENOSPC outage class; prune is fail-safe, send-parents preserved) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.5)
-- [ ] [blocked:user] **User-space reclaim: trash /home/lars/tmp (54G) + @cache-home.regular-dir-bak (1.3G)** (the 724M orphaned dnsblockd_tracking.db already queues at services.md) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.7)
-- [ ] [decision] **Narrow root weekly retention 1w→3d until hot-tier migrations land?** (halves the max snapshot pin window while churn is unmanaged — two 100% events in 24h rode the 2-week window) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.23)
-- [ ] [watch] /data at 79% (798G/1.1T, models/Steam growth trend) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.24)
-- [ ] [ready] **Fix \x2d label escaping in the system-health textfile writer** (system-health.nix:1488 renders systemd's \x2d escape into label values — invalid in Prometheus text format; node_exporter rejects the WHOLE system_health.prom, all system-health metrics blind; 2nd quoting incident from this collector after 2026-09-20 nrestarts) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: same report §f.3)
-- [ ] [ready] **Gatus canary: system_health_* series presence in node_exporter /metrics** (whole-file textfile rejection is invisible today — the phantom-metric canary pattern already used for nvme/coverage) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: same report §f.4)
-- [ ] [ready] **Bound the system_health blind window + confirm the 93%-root-alert metric source** (journal grep for first parse-error occurrence; then check whether storage_collector_fs_used_percent (gatus-config.nix:671) feeds from the broken textfile — decides the fired-vs-phantom branch of the alert→action gap) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: same report §f.13/14)
-- [ ] [ready] **SEV1 triage: MEMORY EMERGENCY GUARD TRIPPED + FLM RESTORE CAPPED — live or latched stale 13.7h post-boot?** (sev1-bridge still notifying at 08:36) → [docs/todo/stability.md](docs/todo/stability.md) (Source: same report §f.10)
-- [ ] [ready] **Verify helium recovered after the 06:32 SIGBUS crash** (ENOSPC coredump-rejected; unit + session state unverified) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §f.11)
-- [ ] [ready] **sysctl vm.overcommit_memory=1 for redis** (warned at every boot: background saves may fail under low memory; one line, rides next deploy) → [docs/todo/services.md](docs/todo/services.md) (Source: same report §f.15)
-- [ ] [ready] **Give the re-fire protocol's step 4 a canonical landing spot** — a single re-fire evidence log (e.g. `docs/status/_refire-log.md` or per-task file) instead of unbounded inline growth on the `[x]` queue rows; protocol edit in CONTRIBUTING + one 10-line migration of the existing 9 re-fire rows off TODO_LIST.md/storage.md (→ pipeline.md) (Source: docs/status/2026-10-02_08-40_task-000001a0f97e2c06e0f314b5991900000000.md §f.10)
 - [ ] [ready] **Write the missing freeze #8/#9/#10/#11 entries into docs/agents/stability.md** (taxonomy ends at #7; #11 = instant cut at 91 °C after 3 h at 98.4–99.1 °C, discriminators + recovered thermal series; re-stamp of the never-harvested 10-01 queueing) → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-10-02_11-10_freeze-11-thermal-ceiling-instant-cut-forensics.md §f.1)
 - [ ] [ready] **Thermal alerting: Gatus checks for k10temp Tctl + GPU edge** (three crashes with zero CPU-temp alerting; sustained-ceiling ≥98 °C = pre-crash signal) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: same report §f.2)
 - [ ] [ready] **Freeze-#11 post-crash protocol on boot 0: flm :52625/:52626 socket verify + stop recovery readers if the storm persists** (SEV1 RESTORE-CAPPED at death; trip #1680 live 11:05; sudo legs owner) → [docs/todo/stability.md](docs/todo/stability.md) (Source: same report §f.3)
