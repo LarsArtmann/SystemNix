@@ -548,6 +548,7 @@
 - [ ] **What is the authoritative verify-budget source of truth (the CONTRIBUTING runbook cites "~30 min, measured 2026-09-25") — where does the dispatch payload set `verify_timeout` and is 30 min still current? — BLOCKED: config lives queue-side; prose will silently age without the pointer**
 - [ ] **Canonical home of the verify-gate triage runbook: keep in docs/CONTRIBUTING.md or move/duplicate into docs/services/tq.md (queue operators triage from the tq runbook; duplication is a drift hazard)? — BLOCKED: owner picks the canonical surface; cross-link follows the decision**
 - [ ] [ready] **check-todo-system.sh v2: DONE-state pairing + stale-tag checks** → [docs/todo/pipeline.md](docs/todo/pipeline.md) — a `[x]` queue row whose library row is still `[ ]` (or vice versa) should fail the gate, and rows whose lifecycle tag contradicts their own body (`[blocked:deploy]` whose text says the deploy already ran) should WARN; today's checker only catches title-less rows + dead links
+- [ ] **Run-on evidence-row splice guard: a `check-todo-system.sh` leg that fails when a `Report:`/`Source:` pointer tail is fused to the previous sentence with no separating space (the RE-FIRE-10 `step 4.Report:` class, caught only by human review)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-03_04-00_task-000001a0fed8b75f95ab1446514d00000000.md §f.1)
 
 ## Libraries
 
