@@ -314,7 +314,10 @@ let
       # System diagnostics
       radeontop # AMD GPU monitoring
       strace # System call tracer
-      ltrace # Library call tracer
+      # 2026-10-01 nixpkgs bump: ltrace's testsuite dies under make check in
+      # the sandbox (ptrace class); the binary itself builds clean. Drop the
+      # override when nixpkgs ships a fixed ltrace.
+      (ltrace.overrideAttrs (_: { doCheck = false; })) # Library call tracer
       nethogs # Per-process network bandwidth
       iftop # Network interface bandwidth
       netwatch # Real-time network diagnostics TUI (interfaces, connections, packets, health probes)

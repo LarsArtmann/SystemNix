@@ -49,6 +49,13 @@ _: {
       # internal/backuppull, which pins the script's --check contract).
       pullScript = pkgs.writeShellApplication {
         name = "pbx-backup-pull";
+        # SC2029 (info): both ssh legs expand '$SRC' on the CLIENT side ON
+        # PURPOSE — the local staging-path var must be interpolated into the
+        # remote command, single-quoted so remote word-splitting can't touch
+        # it. The 2026-10-01 nixpkgs bump made writeShellApplication's
+        # shellcheck leg gate on info-level findings; exclude the note, not
+        # the script text (verbatim contract with pbx-artmann).
+        excludeShellChecks = [ "SC2029" ];
         runtimeInputs = [
           pkgs.coreutils
           pkgs.findutils
