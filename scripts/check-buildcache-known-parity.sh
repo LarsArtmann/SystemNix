@@ -91,8 +91,8 @@ fi
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
-cp "$buildcache_nix" "$work/buildcache.nix"
-cp "$das_check" "$work/das-check.sh"
+cat "$buildcache_nix" >"$work/buildcache.nix"
+cat "$das_check" >"$work/das-check.sh"
 
 echo "selftest: positive control (real files)"
 run_check "$work/buildcache.nix" "$work/das-check.sh"
@@ -100,7 +100,7 @@ run_check "$work/buildcache.nix" "$work/das-check.sh"
 echo "selftest: drift shape 1 — KNOWN name removed"
 sed -i 's/\bgo-build\b/go-build-renamed/' "$work/das-check.sh"
 expect_fail "KNOWN name removed" "$work/buildcache.nix" "$work/das-check.sh"
-cp "$das_check" "$work/das-check.sh"
+cat "$das_check" >"$work/das-check.sh"
 
 echo "selftest: drift shape 2 — new buildcacheDirs literal"
 sed -i 's|^        "sccache"$|        "sccache"\n        "brand-new-drift-dir"|' "$work/buildcache.nix"
