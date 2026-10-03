@@ -7381,11 +7381,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790868864,
-        "narHash": "sha256-ut7mSxciuZALIRSIEusWqoxeeoHWBARdQxvrFaAxxtM=",
+        "lastModified": 1790860907,
+        "narHash": "sha256-uhbqLvcNfrurgyH2lFr8QWXlBRmNJTS7Q81kFTFbIV8=",
         "owner": "LarsArtmann",
         "repo": "todo-list-ai",
-        "rev": "22482a6f76e31df039406bd364ab6ce5528bbabd",
+        "rev": "ed47b8a38c65d25d3c710064178fe3bc637c37cb",
         "type": "github"
       },
       "original": {

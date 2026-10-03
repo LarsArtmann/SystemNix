@@ -36,7 +36,18 @@ lib.filterAttrs (_: v: v != null) {
   # value, re-breaking the FOD it existed to fix) and the package builds
   # clean (nix build .#buildflow verified in ~/projects/BuildFlow).
   # Re-add ONLY via nix-hash-fix evidence, never by hand.
-  buildflow = flakePkg inputs.buildflow;
+  # TEMPORARY vendorHash shims (2026-10-03): the 2026-10-01 nixpkgs bump
+  # (c59305b) re-vendored the module graph under go 1.26.8; upstream-pinned
+  # hashes no longer reproduce (got-hash evidence: evo-x2 toplevel
+  # --keep-going enumeration, /tmp/toplevel-build.log — narHash matched, so
+  # this is toolchain drift, not source drift; the 2026-09-23 lock-wave
+  # class). Drop each when upstream pins the got-hash or the lock moves
+  # past an upstream-fixed rev. Bootstrap exception: buildflow nix-hash-fix
+  # could not run (flake-show degraded behind the failing FODs); hashes
+  # pasted from first-hand build output, never invented.
+  buildflow = (flakePkg inputs.buildflow).overrideAttrs {
+    vendorHash = "sha256-0zQhoKtBZOVOYwBLSazCQkqftz+FzblOKq2gAjtLDa8=";
+  };
   # TEMPORARY vendorHash shim (2026-10-01): same 12:13 lock-wave class —
   # cqrs-lint at the locked go-cqrs-lite rev (package version 4d4137ee)
   # no longer reproduces (got yonqp/FVG… vs specified YHWDwUiU…). Upstream
@@ -52,27 +63,62 @@ lib.filterAttrs (_: v: v != null) {
       pkg.overrideAttrs {
         vendorHash = "sha256-yonqp/FVG61XlYlPbKWzlF6a6HTj4bMWMbJjiswtdCo=";
       };
-  # TEMPORARY vendorHash shim (RE-ADDED 2026-10-01 — the 09-24 drop was
-  # overtaken by the 12:13 blanket lock wave): erraudit at the locked rev
-  # (c319d8ab) no longer reproduces (got 53gE251C… vs specified N3/5p5IB…).
-  # Upstream master (ff6cffa6) is ahead; drop when the lock moves past an
-  # upstream-fixed rev.
+  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-03 — the 2026-10-01
+  # value 53gE251C… stopped reproducing under the 2026-10-01 nixpkgs bump's
+  # go 1.26.8; got vDCDafsa… at locked rev ff6cffa; class comment at
+  # buildflow): drop when the lock moves past an upstream-fixed rev.
   erraudit = (flakePkg inputs.erraudit).overrideAttrs {
-    vendorHash = "sha256-53gE251CxBy+Bd4kjQHPxLsVeUPA4SyrF8Hu4UVFenA=";
+    vendorHash = "sha256-vDCDafsaiklmIVxUd0cd388RGPIPxFn8tmSq5Zh/Mdc=";
   };
-  go-auto-upgrade = flakePkg inputs.go-auto-upgrade;
-  go-humanize-linter = flakePkg inputs.go-humanize-linter;
+  # TEMPORARY vendorHash shim (2026-10-03, class comment at buildflow):
+  # got ehwnSdmK… vs upstream-specified aUUDRHJq… at locked rev 523de68.
+  go-auto-upgrade = (flakePkg inputs.go-auto-upgrade).overrideAttrs {
+    vendorHash = "sha256-ehwnSdmKoaLpg8ArmfOKN75YGoTlTNxEjpIQBktogQw=";
+  };
+  # TEMPORARY vendorHash shim (2026-10-03, class comment at buildflow):
+  # got 0tQggc3i… vs upstream-specified 1e7f3SGh… at locked rev eb7ecab.
+  go-humanize-linter = (flakePkg inputs.go-humanize-linter).overrideAttrs {
+    vendorHash = "sha256-0tQggc3iaMXzw5/Vxzh358JlNmd6LOxisShxYFjOzuk=";
+  };
   go-structure-linter = flakePkg inputs.go-structure-linter;
   golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
-  library-policy = flakePkg inputs.library-policy;
-  md-go-validator = flakePkg inputs.md-go-validator;
+  # TEMPORARY vendorHash shim (2026-10-03, class comment at buildflow):
+  # got mRy5adkB… vs upstream-specified n7AlfJzR… at locked rev ff6a493.
+  library-policy = (flakePkg inputs.library-policy).overrideAttrs {
+    vendorHash = "sha256-mRy5adkB7U5jAE8mEyFl9AVaecmHlq1uOY0qhU/lLUc=";
+  };
+  # TEMPORARY go toolchain + vendorHash shim (2026-10-03): md-go-validator's
+  # go.mod floor is 1.27.1 while nixpkgs' default go is 1.26.8 — the FOD
+  # dies "go: go.mod requires go >= 1.27.1 (GOTOOLCHAIN=local)" (the
+  # 2026-09-17 go 1.27 wave class; fix forward with go_1_27, never pin the
+  # toolchain back). .override (NOT overrideAttrs) so the new go reaches
+  # the go-modules FOD itself. vendorHash under go_1_27 LEARNED via the
+  # fakeHash mismatch build (2026-10-03), then pasted below.
+  md-go-validator =
+    (flakePkg inputs.md-go-validator).override {
+      go = inputs.nixpkgs.legacyPackages.${system}.go_1_27;
+      vendorHash = lib.fakeHash;
+    };
   # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.
   # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
   mr-sync = flakePkg inputs.mr-sync;
-  project-meta = flakePkg inputs.project-meta;
+  # TEMPORARY vendorHash shim (2026-10-03, class comment at buildflow):
+  # got 05qifzqW… vs upstream-specified WARVEIZC… at locked rev c37517b
+  # (upstream package name is "meta").
+  project-meta = (flakePkg inputs.project-meta).overrideAttrs {
+    vendorHash = "sha256-05qifzqWumAD+Yy0gtWr+h/w/g6CVrPNBbaZBPTwV1M=";
+  };
   project-discovery-daemon = flakePkg inputs.project-discovery-daemon;
-  projects-management-automation = flakePkg inputs.projects-management-automation;
-  samber-linter = flakePkg inputs.samber-linter;
+  # TEMPORARY vendorHash shim (2026-10-03, class comment at buildflow):
+  # got sNgwtT8V… vs upstream-specified +kBpR6ki… at locked rev 78b01da.
+  projects-management-automation = (flakePkg inputs.projects-management-automation).overrideAttrs {
+    vendorHash = "sha256-sNgwtT8VFNgVVKrbouHTvY4Jn9BwvL7Z1ZLeJ4LxjxU=";
+  };
+  # TEMPORARY vendorHash shim (2026-10-03, class comment at buildflow):
+  # got pTZB1Vaw… vs upstream-specified lp4uWTm6… at locked rev a18ed72.
+  samber-linter = (flakePkg inputs.samber-linter).overrideAttrs {
+    vendorHash = "sha256-pTZB1VawQ8kEby34hWQVJerhFNUvX6M8rSABfwnvzpU=";
+  };
   todo-list-ai = flakePkg inputs.todo-list-ai;
   # tq: the checkPhase runs upstream's test suite, which shells out to git
   # (TestDoctorTreeGofmt does `git init -q` in a tmpdir, upstream 2026-10-02)

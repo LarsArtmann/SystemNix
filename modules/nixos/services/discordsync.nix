@@ -28,7 +28,16 @@
         serviceOneshotDefaults
         ;
       cfg = config.services.discordsync;
-      discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # TEMPORARY vendorHash shim (2026-10-03): 2026-10-01 nixpkgs bump
+      # go-1.26.8 toolchain drift — upstream hash no longer reproduces at
+      # locked rev 1c20710 (got /d/40ffY…; evo-x2 toplevel --keep-going
+      # enumeration evidence; class comment at lib/lars-packages.nix; the
+      # overlays/linux.nix shim covers the pkgs.discordsync surface, this
+      # one the direct input reference). Drop when upstream re-pins or the
+      # lock moves past an upstream-fixed rev.
+      discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+        vendorHash = "sha256-/d/40ffYAzSF9MUbK0RnMaJFvg+vnFDYWwvGZxhZvTc=";
+      };
       sopsEnvPath = config.sops.templates."discordsync-env".path;
 
       dbBackupDir = "/mnt/pool/backups/discordsync";

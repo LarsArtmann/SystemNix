@@ -211,17 +211,33 @@ let
         '';
       };
     };
-  # TEMPORARY vendorHash shim (2026-10-01): the 12:13 blanket lock update
-  # (572ff71b) re-locked file-and-image-renamer to d745a00 whose upstream
-  # vendorHash no longer reproduces under the re-resolved FOD graph (got
-  # W5e+pMcB… vs specified Gp+9rQCd…; narHash matched — source is the exact
-  # locked tree, the 2026-09-23 lock-wave class). Upstream master (1ce5f6df)
-  # is ahead; drop when the lock moves past an upstream-fixed rev. Must stay
+  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-03): the 2026-10-01 nixpkgs
+  # bump (c59305b) re-vendored under go 1.26.8; the 2026-10-01 value
+  # (W5e+pMcB…) no longer reproduces at locked rev 0bd519b (got
+  # xoPCvuTn…; evo-x2 toplevel --keep-going enumeration evidence; class
+  # comment at lib/lars-packages.nix). Upstream master is ahead; drop when
+  # the lock moves past an upstream-fixed rev. Must stay
   # AFTER file-and-image-renamer.overlays.default in the list below.
   # prev (NOT final) — final would recurse into this overlay's own override.
   fileAndImageRenamerVendorHashShim = _final: prev: {
     file-and-image-renamer = prev.file-and-image-renamer.overrideAttrs {
-      vendorHash = "sha256-W5e+pMcBvI9laxsnUfxXLNpHarZcFIBjGtGhuAtjZag=";
+      vendorHash = "sha256-xoPCvuTnR0qNmezn6Kxl899Tpi66kha2GCcJOWDnl0k=";
+    };
+  };
+  # TEMPORARY vendorHash shims (2026-10-03, class comment at
+  # lib/lars-packages.nix): overview (got gaRXLohu… at rev 25dd08e) and
+  # discordsync (got /d/40ffY… at rev 1c20710) — 2026-10-01 nixpkgs bump
+  # go-1.26.8 toolchain drift. prev (NOT final) — same recursion guard as
+  # above; stay AFTER the respective upstream overlays in the list below.
+  # Drop when upstreams re-pin or the lock moves past upstream-fixed revs.
+  overviewVendorHashShim = _final: prev: {
+    overview = prev.overview.overrideAttrs {
+      vendorHash = "sha256-gaRXLohuCBTdVN5oCBk+0uzR33u6nD/mjM5vykjcFMA=";
+    };
+  };
+  discordsyncVendorHashShim = _final: prev: {
+    discordsync = prev.discordsync.overrideAttrs {
+      vendorHash = "sha256-/d/40ffYAzSF9MUbK0RnMaJFvg+vnFDYWwvGZxhZvTc=";
     };
   };
 in
@@ -238,7 +254,9 @@ in
   crush-daily.overlays.default
   bank-sync.overlays.default
   overview.overlays.default
+  overviewVendorHashShim
   discordsync.overlays.default
+  discordsyncVendorHashShim
   bunMemoryLimitOverlay
   systemdGraphOverlay
   printSafeOverlay
