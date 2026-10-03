@@ -7232,6 +7232,21 @@
         "type": "github"
       }
     },
+    "systems_6": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
     "templ-components": {
       "flake": false,
       "locked": {
@@ -7376,16 +7391,17 @@
         "nixpkgs": [
           "nixpkgs"
         ],
+        "systems": "systems_6",
         "treefmt-nix": [
           "treefmt-nix"
         ]
       },
       "locked": {
-        "lastModified": 1790860907,
-        "narHash": "sha256-uhbqLvcNfrurgyH2lFr8QWXlBRmNJTS7Q81kFTFbIV8=",
+        "lastModified": 1788613742,
+        "narHash": "sha256-Mh0e4PoVEY0Bmth6L+ptEJMjH45UJHEdXR7NXdwMAE4=",
         "owner": "LarsArtmann",
         "repo": "todo-list-ai",
-        "rev": "ed47b8a38c65d25d3c710064178fe3bc637c37cb",
+        "rev": "448b941e165ee05c591376bee3c255bc07f102de",
         "type": "github"
       },
       "original": {
