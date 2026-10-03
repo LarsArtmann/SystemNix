@@ -65,3 +65,11 @@
 ---
 
 *Self-harvest note: §f.1 landed in TODO_LIST.md + docs/todo/services.md at authoring time; §f.2-6 are this mission's remaining steps (deliberately not separately harvested — same standing rationale as the 00-33 wave report). Evidence: `/tmp/toplevel-myverdict.log` (attempt #2, MY_EXIT=1 line 63), `/tmp/topfinal2.log` (073, interrupted), deploy log dir last entry 03:57 (pre-session), gen list verified `system-813-link` → `r6fcay8x…`.*
+
+---
+
+## CORRECTION (in-place, 2026-10-03 ~11:55, deploy-train session): §d.1/§f.1 premise RESOLVED — there never was a googleapis flake
+
+The "UNDIAGNOSED googleapis ExternalProject failure" premise of §d.1/§e.1/§f.1 is **falsified**. Root cause (journal-correlated to the second): the LOCAL `nix-build-cleanup.service` reaped LIVE build sandboxes — its `find /nix/var/nix/builds -maxdepth 1 -name 'nix-*' -mmin +60 -exec rm -rf` matched by the TOP-LEVEL dir mtime, which freezes at sandbox creation while builds churn deep inside. Timer fires at 03:20:50, 07:24:13 (= attempt #2's death second), 11:25:43 (= attempt #3's death — twin error `setting permissions on <sandbox>: ENOENT`; #3 never reached any googleapis step). The 03:20 fire also explains the user's 03:29/03:56 deploy failures. The googleapis-shaped error was nix's own `SysError("opening directory %s")` (readDirectoryIgnoringInodes) racing the vanished sandbox — found by grepping every build tool for the string (zero hits), then locating the format in nix's source, then correlating `journalctl -u nix-build-cleanup` with both deaths.
+
+**Post-state:** fix landed in `platforms/nixos/system/scheduled-tasks.nix` (orphan = embedded builder PID dead AND no tree writes in the last hour; mock-tested 3-case; daemon-swept into an amend-contended heuristic commit), live with the NEXT deploy. Surfaces corrected: this report (§d.1/§f.1), TODO_LIST.md queue row → [x], docs/todo/services.md row → [x], docs/gotchas-archive.md (new entry), CHANGELOG Unreleased/Fixed. §f.1 is DONE; §f.7 (in-repo clickhouse patch) is moot — no clickhouse defect exists. Until the fix deploys, the OLD killer still fires every ~4h (next ~15:27, then ~19:29); toplevel attempt #4 (this session, detached setsid, `--cores 32`, log `/tmp/toplevel-attempt4.log`) is staggered behind the parallel session's 11:28 attempt as a self-healing fallback.
