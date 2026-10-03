@@ -578,7 +578,7 @@ in
       };
 
       nix-build-cleanup = {
-        description = "Remove orphaned Nix build sandboxes older than 1 hour";
+        description = "Remove orphaned Nix build sandboxes (builder PID dead, no writes >1h)";
         inherit onFailure;
         serviceConfig =
           harden {
@@ -606,8 +606,31 @@ in
                     before_kb=$(du -sk "$BUILD_DIR" 2>/dev/null | cut -f1 || true)
                     before_kb=''${before_kb:-0}
 
-                    # Remove sandboxes untouched for >1h (active builds constantly write)
-                    find "$BUILD_DIR" -maxdepth 1 -type d -name 'nix-*' -mmin +60 -exec rm -rf {} +
+                    # A sandbox is orphaned ONLY if its embedded daemon-builder PID
+                    # is gone AND nothing in its tree was written in the last hour.
+                    # The old top-level `-mmin +60` check murdered LIVE builds: the
+                    # top dir's mtime freezes at creation while builds churn deep
+                    # inside, so every >1h build (clickhouse: 2-4h at -j8) was
+                    # rm -rf'd mid-build by this very service (2026-10-03: three
+                    # builds killed at 03:20/07:24/11:25; nix then died with
+                    # "opening directory"/"setting permissions" ENOENT races).
+                    candidates=$(find "$BUILD_DIR" -maxdepth 1 -type d -name 'nix-*' -mmin +60 2>/dev/null || true)
+                    for dir in $candidates; do
+                      name=$(basename "$dir")
+                      pid=''${name#nix-}
+                      pid=''${pid%%-*}
+                      if [[ "$pid" =~ ^[0-9]+$ ]] && kill -0 "$pid" 2>/dev/null; then
+                        # Builder still alive = active build. Pid-recycle edge
+                        # cases only ever DELAY cleanup, never kill a build.
+                        echo "Skipping $name: builder PID $pid alive"
+                        continue
+                      fi
+                      if [ -n "$(find "$dir" -mmin -60 -print -quit 2>/dev/null)" ]; then
+                        echo "Skipping $name: writes within the last hour"
+                        continue
+                      fi
+                      rm -rf "$dir"
+                    done
 
                     after_kb=$(du -sk "$BUILD_DIR" 2>/dev/null | cut -f1 || true)
                     after_kb=''${after_kb:-0}
