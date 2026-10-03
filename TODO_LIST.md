@@ -620,6 +620,8 @@
 - [ ] [ready] **Identify DMS weather IP-geo endpoint; check dnsblockd classification** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [ready] **Close the suspend lock race: make `dms-lock` wait for compositor-confirmed lock before exiting** (poll `dms ipc call lock isLocked` — returns ext-session-lock `secure` state — with timeout before exit 0; iNiR's `lock prepareSleep` pattern) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: 2026-10-03 iNiR research session)
 - [ ] [ready] **Adopt iNiR's mandatory QML patterns for `pkgs/dms-plugins/` in docs/CONTRIBUTING.md** (`pragma ComponentBehavior: Bound` first line, typed properties over `var`, declared IPC return types, no hardcoded colors/spacing) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same session)
+- [ ] [ready] **Add "known-harmless desktop journal noise" section to docs/agents/desktop.md** (curated safe-to-ignore list: bluez DBus, PolicyKit listener, portal dependency-flaps; iNiR ARCHITECTURE.md pattern) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: docs/status/2026-10-03_11-37_inir-desktop-shell-research-session.md §f.5)
+- [ ] [ready] **DMS/quickshell RSS + restart-count metric via the niri-health collector** (observe the Quickshell leak class instead of blind `Restart=always` resets — iNiR's `memory` IPC target pattern) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §f.6)
 
 ### services / pipeline (harvest 2026-09-30 06:5x)
 
