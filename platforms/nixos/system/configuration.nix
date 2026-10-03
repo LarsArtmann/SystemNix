@@ -322,7 +322,11 @@ in
       pkgs.uv
       pkgs.shfmt
       pkgs.nodejs
-      inputs.buildflow.packages.${pkgs.system}.default
+      # TEMPORARY vendorHash shim (2026-10-03, class comment at lib/lars-packages.nix):
+      # got 0zQhoKtB… vs upstream-specified o3zkJtoT… at locked rev 1066dea.
+      (inputs.buildflow.packages.${pkgs.system}.default.overrideAttrs {
+        vendorHash = "sha256-0zQhoKtBZOVOYwBLSazCQkqftz+FzblOKq2gAjtLDa8=";
+      })
       # flm CLI (NPU LLM; service consumes the same package). Replaces the
       # deleted ~/.local/bin/flm wrapper — the nix package sets its own
       # XILINX_XRT/LD_LIBRARY_PATH, no hand-maintained script needed.

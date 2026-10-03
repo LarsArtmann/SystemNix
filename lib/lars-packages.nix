@@ -45,9 +45,16 @@ lib.filterAttrs (_: v: v != null) {
   # past an upstream-fixed rev. Bootstrap exception: buildflow nix-hash-fix
   # could not run (flake-show degraded behind the failing FODs); hashes
   # pasted from first-hand build output, never invented.
-  buildflow = (flakePkg inputs.buildflow).overrideAttrs {
-    vendorHash = "sha256-0zQhoKtBZOVOYwBLSazCQkqftz+FzblOKq2gAjtLDa8=";
-  };
+  buildflow =
+    let
+      pkg = flakePkg inputs.buildflow;
+    in
+    if pkg == null then
+      null
+    else
+      pkg.overrideAttrs {
+        vendorHash = "sha256-0zQhoKtBZOVOYwBLSazCQkqftz+FzblOKq2gAjtLDa8=";
+      };
   # TEMPORARY vendorHash shim (2026-10-01): same 12:13 lock-wave class —
   # cqrs-lint at the locked go-cqrs-lite rev (package version 4d4137ee)
   # no longer reproduces (got yonqp/FVG… vs specified YHWDwUiU…). Upstream
@@ -67,26 +74,54 @@ lib.filterAttrs (_: v: v != null) {
   # value 53gE251C… stopped reproducing under the 2026-10-01 nixpkgs bump's
   # go 1.26.8; got vDCDafsa… at locked rev ff6cffa; class comment at
   # buildflow): drop when the lock moves past an upstream-fixed rev.
-  erraudit = (flakePkg inputs.erraudit).overrideAttrs {
-    vendorHash = "sha256-vDCDafsaiklmIVxUd0cd388RGPIPxFn8tmSq5Zh/Mdc=";
-  };
+  erraudit =
+    let
+      pkg = flakePkg inputs.erraudit;
+    in
+    if pkg == null then
+      null
+    else
+      pkg.overrideAttrs {
+        vendorHash = "sha256-vDCDafsaiklmIVxUd0cd388RGPIPxFn8tmSq5Zh/Mdc=";
+      };
   # TEMPORARY vendorHash shim (2026-10-03, class comment at buildflow):
   # got ehwnSdmK… vs upstream-specified aUUDRHJq… at locked rev 523de68.
-  go-auto-upgrade = (flakePkg inputs.go-auto-upgrade).overrideAttrs {
-    vendorHash = "sha256-ehwnSdmKoaLpg8ArmfOKN75YGoTlTNxEjpIQBktogQw=";
-  };
+  go-auto-upgrade =
+    let
+      pkg = flakePkg inputs.go-auto-upgrade;
+    in
+    if pkg == null then
+      null
+    else
+      pkg.overrideAttrs {
+        vendorHash = "sha256-ehwnSdmKoaLpg8ArmfOKN75YGoTlTNxEjpIQBktogQw=";
+      };
   # TEMPORARY vendorHash shim (2026-10-03, class comment at buildflow):
   # got 0tQggc3i… vs upstream-specified 1e7f3SGh… at locked rev eb7ecab.
-  go-humanize-linter = (flakePkg inputs.go-humanize-linter).overrideAttrs {
-    vendorHash = "sha256-0tQggc3iaMXzw5/Vxzh358JlNmd6LOxisShxYFjOzuk=";
-  };
+  go-humanize-linter =
+    let
+      pkg = flakePkg inputs.go-humanize-linter;
+    in
+    if pkg == null then
+      null
+    else
+      pkg.overrideAttrs {
+        vendorHash = "sha256-0tQggc3iaMXzw5/Vxzh358JlNmd6LOxisShxYFjOzuk=";
+      };
   go-structure-linter = flakePkg inputs.go-structure-linter;
   golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
   # TEMPORARY vendorHash shim (2026-10-03, class comment at buildflow):
   # got mRy5adkB… vs upstream-specified n7AlfJzR… at locked rev ff6a493.
-  library-policy = (flakePkg inputs.library-policy).overrideAttrs {
-    vendorHash = "sha256-mRy5adkB7U5jAE8mEyFl9AVaecmHlq1uOY0qhU/lLUc=";
-  };
+  library-policy =
+    let
+      pkg = flakePkg inputs.library-policy;
+    in
+    if pkg == null then
+      null
+    else
+      pkg.overrideAttrs {
+        vendorHash = "sha256-mRy5adkB7U5jAE8mEyFl9AVaecmHlq1uOY0qhU/lLUc=";
+      };
   # TEMPORARY go toolchain + vendorHash shim (2026-10-03): md-go-validator's
   # go.mod floor is 1.27.1 while nixpkgs' default go is 1.26.8 — the FOD
   # dies "go: go.mod requires go >= 1.27.1 (GOTOOLCHAIN=local)" (the
@@ -98,36 +133,64 @@ lib.filterAttrs (_: v: v != null) {
   # mismatch build (2026-10-03), then pasted below. Drop both when upstream
   # bumps its toolchain and re-pins its hash.
   md-go-validator =
-    ((flakePkg inputs.md-go-validator).override {
-      buildGoModule = inputs.nixpkgs.legacyPackages.${system}.buildGoModule.override {
-        go = inputs.nixpkgs.legacyPackages.${system}.go_1_27;
-      };
-    }).overrideAttrs { vendorHash = "sha256-h3p6Hh2Ak1cPwnrtVNX+OTOJZMRpDRDPRDrb2r9JpS0="; };
+    let
+      pkg = flakePkg inputs.md-go-validator;
+    in
+    if pkg == null then
+      null
+    else
+      (pkg.override {
+        buildGoModule = inputs.nixpkgs.legacyPackages.${system}.buildGoModule.override {
+          go = inputs.nixpkgs.legacyPackages.${system}.go_1_27;
+        };
+      }).overrideAttrs
+        { vendorHash = "sha256-h3p6Hh2Ak1cPwnrtVNX+OTOJZMRpDRDPRDrb2r9JpS0="; };
   # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.
   # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
   mr-sync = flakePkg inputs.mr-sync;
   # TEMPORARY vendorHash shim (2026-10-03, class comment at buildflow):
   # got 05qifzqW… vs upstream-specified WARVEIZC… at locked rev c37517b
   # (upstream package name is "meta").
-  project-meta = (flakePkg inputs.project-meta).overrideAttrs {
-    vendorHash = "sha256-05qifzqWumAD+Yy0gtWr+h/w/g6CVrPNBbaZBPTwV1M=";
-  };
+  project-meta =
+    let
+      pkg = flakePkg inputs.project-meta;
+    in
+    if pkg == null then
+      null
+    else
+      pkg.overrideAttrs {
+        vendorHash = "sha256-05qifzqWumAD+Yy0gtWr+h/w/g6CVrPNBbaZBPTwV1M=";
+      };
   project-discovery-daemon = flakePkg inputs.project-discovery-daemon;
   # TEMPORARY vendorHash shim (2026-10-03, class comment at buildflow):
   # got sNgwtT8V… vs upstream-specified +kBpR6ki… at locked rev 78b01da.
-  projects-management-automation = (flakePkg inputs.projects-management-automation).overrideAttrs {
-    vendorHash = "sha256-sNgwtT8VFNgVVKrbouHTvY4Jn9BwvL7Z1ZLeJ4LxjxU=";
-  };
+  projects-management-automation =
+    let
+      pkg = flakePkg inputs.projects-management-automation;
+    in
+    if pkg == null then
+      null
+    else
+      pkg.overrideAttrs {
+        vendorHash = "sha256-sNgwtT8VFNgVVKrbouHTvY4Jn9BwvL7Z1ZLeJ4LxjxU=";
+      };
   # TEMPORARY vendorHash shim (2026-10-03, class comment at buildflow):
   # got pTZB1Vaw… vs upstream-specified lp4uWTm6… at locked rev a18ed72.
-  samber-linter = (flakePkg inputs.samber-linter).overrideAttrs {
-    vendorHash = "sha256-pTZB1VawQ8kEby34hWQVJerhFNUvX6M8rSABfwnvzpU=";
-  };
+  samber-linter =
+    let
+      pkg = flakePkg inputs.samber-linter;
+    in
+    if pkg == null then
+      null
+    else
+      pkg.overrideAttrs {
+        vendorHash = "sha256-pTZB1VawQ8kEby34hWQVJerhFNUvX6M8rSABfwnvzpU=";
+      };
   # todo-list-ai TEMPORARILY DROPPED (2026-10-03, null → filtered by the
   # null-safe guard below): the 2026-10-01 root-nixpkgs bump moved its
   # followed bun 1.4.1→1.4.2, which re-hashed the deps FOD (pinned
   # FkAUaar… now produces dOQ37ka…) AND breaks --frozen-lockfile on every
-  # lockfile regenerated after 448b941 (lock metadatata skew; verified:
+  # lockfile regenerated after 448b941 (lock metadata skew; verified:
   # 448b941's lock passes bun 1.4.2's frozen check, all later regens fail).
   # The deps FOD is inline in the input's flake — not SystemNix-overridable.
   # RESTORE when upstream regenerates bun.lock under nixpkgs' current bun
@@ -141,10 +204,9 @@ lib.filterAttrs (_: v: v != null) {
   # nativeBuildInputs lets the suite run as upstream dev does (that test is
   # the ONLY failure in the full log, 2026-10-02); drop when upstream's
   # flake adds git itself.
-  tq =
-    (flakePkg inputs.go-taskqueue).overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
-        inputs.nixpkgs.legacyPackages.${system}.git
-      ];
-    });
+  tq = (flakePkg inputs.go-taskqueue).overrideAttrs (old: {
+    nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+      inputs.nixpkgs.legacyPackages.${system}.git
+    ];
+  });
 }

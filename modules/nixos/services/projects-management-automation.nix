@@ -51,7 +51,16 @@
 
       config = lib.mkIf cfg.enable {
         services.projects-management-automation = {
-          package = inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          # TEMPORARY vendorHash shim (2026-10-03, class comment at
+          # lib/lars-packages.nix): got sNgwtT8V… vs upstream-specified
+          # +kBpR6ki… at locked rev 78b01da (2026-10-01 nixpkgs bump
+          # go-1.26.8 toolchain drift; this is the SERVICE surface —
+          # lars-packages.nix covers the systemPackages surface).
+          package =
+            inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
+              {
+                vendorHash = "sha256-sNgwtT8VFNgVVKrbouHTvY4Jn9BwvL7Z1ZLeJ4LxjxU=";
+              };
           user = primaryUser;
           group = "users";
           home = "/home/${primaryUser}";
