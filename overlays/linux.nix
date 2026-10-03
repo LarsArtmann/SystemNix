@@ -240,8 +240,31 @@ let
       vendorHash = "sha256-/d/40ffYAzSF9MUbK0RnMaJFvg+vnFDYWwvGZxhZvTc=";
     };
   };
+  # TEMPORARY version pin (2026-10-03): nixpkgs 7a0f122f (the 2026-10-01
+  # lock) produced clickhouse 26.8.7.19 with a derivation that is ALREADY
+  # built in the local store; the 2026-10-02 bump (c59305ba) changed the
+  # derivation (same version string) and cache.nixos.org does not carry
+  # clickhouse, forcing a ~1.5 h from-source build on every deploy until
+  # nixpkgs lands a cached rebuild. Importing that exact rev reproduces the
+  # cached derivation bit-for-bit, so this pin costs ZERO builds. Drop when
+  # current nixpkgs' clickhouse derivation matches a published binary cache
+  # entry (check: nix eval nixpkgs#clickhouse.drvPath vs the pinned drv).
+  clickhouseVersionPinOverlay = _final: prev: {
+    clickhouse =
+      (import
+        (builtins.fetchTarball {
+          url = "https://github.com/NixOS/nixpkgs/archive/7a0f122f5090cf4c2ade2a13a0e229d4e19ba71f.tar.gz";
+          sha256 = "sha256-ZoxIApko70jCdbH3l20HWXOBaT2HZd87orzd2yJ9dVE=";
+        })
+        {
+          system = prev.stdenv.hostPlatform.system;
+          config.allowUnfree = true;
+        }
+      ).clickhouse;
+  };
 in
 [
+  clickhouseVersionPinOverlay
   niriLibdisplayInfoShim
   openaudibleOverlay
   dnsblockd.overlays.default
