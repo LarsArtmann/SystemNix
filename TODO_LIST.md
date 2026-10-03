@@ -185,6 +185,7 @@
 
 ### services
 
+- [ ] [ready] **Nightly dns-blocklist drift automation — scheduled run of `scripts/dns-update.sh` (image-updates.yml pattern: auto-commit or issue-on-drift); HaGeZi mirror drift killed deploys 2026-10-01 AND 2026-10-03** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] [blocked:user] **inboxclean Gmail re-consent (`inboxclean auth`) — sync DOWN on revoked token; also check OAuth app Testing status (7-day recurrence class)** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] [ready] **Root-cause `nix-build-cleanup.service` failure (cause unknown, journal read truncated)** → [docs/todo/services.md](docs/todo/services.md)
 - [ ] **InboxClean: should ONE dead Gmail account page (per-account `auth_expired` Gatus check)?** → [docs/todo/services.md](docs/todo/services.md)
