@@ -924,6 +924,10 @@
     storage-collector.inputs.flake-parts.follows = "flake-parts";
     todo-list-ai.inputs.flake-parts.follows = "flake-parts";
     todo-list-ai.inputs.treefmt-nix.follows = "treefmt-nix";
+    # 448b941 (the bun-1.4.2-compatible lockfile pin, 2026-10-03) still
+    # carries a nix-systems/default input; later revs dropped it — drop
+    # this follow when the pin moves past the systems-removal rev.
+    todo-list-ai.inputs.systems.follows = "systems";
   };
 
   outputs =
