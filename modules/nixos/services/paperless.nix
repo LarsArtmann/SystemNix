@@ -1153,9 +1153,12 @@ _: {
                     ExecStart = pkgs.writeShellScript "paperless-tasks-collector" ''
                       set -euo pipefail
                       TF_DIR=/var/lib/prometheus-node-exporter/textfile_collectors
-                      PSQL="${config.services.postgresql.package}/bin/psql -tA -d ${
-                        cfg.settings.PAPERLESS_DBNAME or "paperless"
-                      }"
+                      # ON_ERROR_STOP: psql exits 0 on SQL errors by default —
+                      # without it a bad query emits an EMPTY value, defeats the
+                      # fail-closed gate below and gets the whole .prom rejected
+                      # (2026-10-03: t.slug era poisoned every paperless_tasks_*
+                      # metric while collector_success still read 1).
+                      PSQL="${config.services.postgresql.package}/bin/psql -tA -v ON_ERROR_STOP=1 -d ${cfg.settings.PAPERLESS_DBNAME or "paperless"}"
 
                       # Fail-closed (pocket-id busy pattern): a failed query
                       # round writes collector_success 0 and NO counts — the
@@ -1166,11 +1169,14 @@ _: {
                       bytype="$($PSQL -c "SELECT 'paperless_tasks_failed_by_type{task_type=\"' || task_type || '\"} ' || count(*) FROM documents_paperlesstask WHERE status='failure' AND NOT acknowledged GROUP BY task_type;" || fail=1)"
                       pending="$($PSQL -c "SELECT count(*) FROM documents_paperlesstask WHERE status IN ('pending','started');" || fail=1)"
                       # AI-max plan A17: inbox depth (documents still carrying
-                      # the default inbox tag) and LLM-index freshness. The
-                      # freshness is -1 while no successful llm_index task has
+                      # an inbox tag) and LLM-index freshness. The freshness
+                      # is -1 while no successful llm_index task has
                       # EVER run (RAG dark era) — honest absence, not a fake
                       # zero-age.
-                      inbox="$($PSQL -c "SELECT count(DISTINCT d.id) FROM documents_document d JOIN documents_document_tags dt ON dt.document_id = d.id JOIN documents_tag t ON t.id = dt.tag_id WHERE t.slug = 'inbox';" || fail=1)"
+                      # is_inbox_tag, not slug='inbox': paperless >= 3.1 moved
+                      # Tag to TreeNodeModel and dropped the slug column
+                      # (2026-10-03: "column t.slug does not exist").
+                      inbox="$($PSQL -c "SELECT count(DISTINCT d.id) FROM documents_document d JOIN documents_document_tags dt ON dt.document_id = d.id JOIN documents_tag t ON t.id = dt.tag_id WHERE t.is_inbox_tag;" || fail=1)"
                       idxage="$($PSQL -c "SELECT COALESCE(EXTRACT(EPOCH FROM (now() - MAX(date_created)))::bigint, -1) FROM documents_paperlesstask WHERE task_type = 'llm_index' AND status = 'success';" || fail=1)"
 
                       out=$(mktemp "$TF_DIR/paperless_tasks.XXXXXX")
