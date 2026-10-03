@@ -299,6 +299,13 @@
               echo "paperless-gpt-token: token extraction failed (unexpected drf_create_token output)" >&2
               exit 1
             fi
+            # The previous mint's ExecStartPost chowns this file to the gpt
+            # user at 0400 (daemon reads it) — the next mint's O_TRUNC then
+            # EPERMs as the paperless user (2026-10-03 16:18 activation
+            # failure). Unlink first: the RuntimeDirectory is paperless-
+            # owned, so rm works even when the file itself is not
+            # (geometrikks alembic.ini class, same day).
+            rm -f "$MINT_OUT"
             printf 'PAPERLESS_API_TOKEN=%s\n' "$hex" > "$MINT_OUT"
           '';
           serviceConfig = lib.mkMerge [
