@@ -2408,6 +2408,28 @@
                 touch $out
               '';
 
+              # thermal-pstate-guard.sh flips the amd_pstate driver mode
+              # (active<->guided) on hysteresis over hwmon sensors — the
+              # freeze #8-#14 thermal-ceiling family's enforcement leg (a
+              # written "no heavy builds" gate was violated within the hour
+              # it was written). Runs the REAL committed script against
+              # fixture sysfs trees (pre-deploy-metrics-selftest staging
+              # shape): enter/exit hysteresis, snapshot restore, external-
+              # override adoption, blind-sensor degradation.
+              thermal-pstate-guard-selftest = pkgs.runCommand "thermal-pstate-guard-selftest"
+                {
+                  nativeBuildInputs = with pkgs; [
+                    bash
+                    coreutils
+                  ];
+                }
+                ''
+                  scratch=$(mktemp -d)
+                  cp ${./scripts/thermal-pstate-guard.sh} "$scratch/thermal-pstate-guard.sh"
+                  ${pkgs.bash}/bin/bash "$scratch/thermal-pstate-guard.sh" selftest
+                  touch $out
+                '';
+
               # The pre-deploy §11 vendorHash-freshness parsers BLOCK deploys
               # on FOD hash mismatch — the greps they replaced matched output
               # nix never produces and warned "unable to determine status" on

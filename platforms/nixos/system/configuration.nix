@@ -959,6 +959,14 @@ in
         enable = true;
       };
 
+      # 2026-10-04 freeze #8–#14 prevention: flips amd_pstate
+      # active→guided at the thermal ceiling and back when cool (module
+      # header has the incident narrative; runbook docs/services/
+      # thermal-pstate-guard.md).
+      thermal-pstate-guard = {
+        enable = true;
+      };
+
       # 2026-08-22 stability plan: bounding heavy-job demand (flock queue
       # `heavy-job` wrapper; build memory is separately bounded via
       # nix-daemon MemoryHigh in networking.nix).

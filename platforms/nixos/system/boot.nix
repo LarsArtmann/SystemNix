@@ -94,12 +94,16 @@ in
       # under heavy compute/ML workloads on Strix Halo
       "amdgpu.lockup_timeout=30000"
       "amdgpu.gpu_recovery=1" # Attempt GPU reset on hang instead of leaving GPU in dead state
-      # amd_pstate=performance: bypass firmware frequency management, keep cores at max under load.
-      # Previously "guided" (firmware decides freq within min/max). Switched to "performance" to
-      # eliminate firmware freq management overhead and maintain max clocks during heavy workloads.
-      # The ~130W power ceiling is GMKtec firmware PPT — not OS-controllable (no ryzen_smu for
-      # Strix Halo yet, no RAPL constraints exposed, no platform profile in BIOS).
-      "amd_pstate=performance"
+      # amd_pstate=active (EPP mode): max clocks come from the performance
+      # governor + EPP, which services.thermal-pstate-guard snapshots and
+      # restores while flipping the driver to "guided" (firmware-managed
+      # thermals) whenever sensors hit the freeze-#8-#14 ceiling band — see
+      # docs/services/thermal-pstate-guard.md. The pre-2026-10-04 value
+      # "performance" is not a documented driver mode (the live driver came up
+      # "active" regardless of it). The ~130W power ceiling is GMKtec firmware
+      # PPT — not OS-controllable (no ryzen_smu for Strix Halo yet, no RAPL
+      # constraints exposed, no platform profile in BIOS).
+      "amd_pstate=active"
       # TTM: GTT allocation ceiling. amdgpu.gttsize is GONE in kernel 7.0+ —
       # ttm.pages_limit (here + extraModprobeConfig below) is the only knob.
       "amdgpu.ttm.pages_limit=${toString ttmPagesLimit}"
