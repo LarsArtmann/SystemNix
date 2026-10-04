@@ -49,8 +49,10 @@ usage() {
 [ $# -eq 1 ] || usage
 ACTION=$1
 
-SRC=/var/log/caddy
-SUBVOL=/mnt/hot/caddy-logs
+# Fixture hooks (scripts/test-migrate-caddy-logs-hot.sh overrides these —
+# same pattern as migrate-hot-db.sh; production uses the defaults).
+SRC=${CADDY_MIGRATE_SRC:-/var/log/caddy}
+SUBVOL=${CADDY_MIGRATE_SUBVOL:-/mnt/hot/caddy-logs}
 
 run() {
   echo "+ $*"
@@ -58,7 +60,7 @@ run() {
 }
 
 if [ "$DRY_RUN" != "1" ]; then
-  [ "$(id -u)" -eq 0 ] || {
+  [ "$(id -u)" -eq "${CADDY_MIGRATE_ROOT_UID:-0}" ] || {
     echo "must run as root (sudo)" >&2
     exit 1
   }
@@ -66,7 +68,7 @@ fi
 
 # Pressure gate (deploy-pressure doctrine).
 # Read-only gate: survives PSI-disabled kernels (missing /proc/pressure/io).
-PSI=$(awk 'NR==1 {print $2}' /proc/pressure/io 2>/dev/null || true)
+PSI=$(awk 'NR==1 {print $2}' "${CADDY_MIGRATE_PSI_FILE:-/proc/pressure/io}" 2>/dev/null || true)
 PSI="${PSI#avg10=}"
 PSI="${PSI:-0}"
 if awk -v p="$PSI" 'BEGIN { exit !(p >= 80) }'; then
@@ -175,9 +177,9 @@ shadow-cleanup)
     exit 1
   }
 
-  AUX=/run/caddy-shadow-view
+  AUX=${CADDY_MIGRATE_AUX:-/run/caddy-shadow-view}
   AUX_SHADOW=$AUX/var/log/caddy
-  ARCHIVE_DIR=/mnt/pool/backups/caddy
+  ARCHIVE_DIR=${CADDY_MIGRATE_ARCHIVE_DIR:-/mnt/pool/backups/caddy}
   ARCHIVE=$ARCHIVE_DIR/caddy-logs-shadow-final-$(date +%Y-%m-%d).tar.zst
 
   if [ "$DRY_RUN" = "1" ]; then
