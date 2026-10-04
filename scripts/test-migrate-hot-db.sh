@@ -10,17 +10,23 @@
 # `<name> <dataDir> <unit...>` registry-escape form.
 #
 # Covers: warm prepare (no stop), cutover stop-set + delta + --delete +
-# exact verify + marker, finalize verify + restart, dry-run no-mutation
-# (the old script crashed at its verify step on a never-created staging
-# tree), and the refusal gates (PSI, already-mounted, missing subvol).
+# exact verify + marker (ALL four marker fields), finalize verify +
+# restart, dry-run no-mutation (the old script crashed at its verify step
+# on a never-created staging tree), dry-run finalize, per-entry status
+# rendering (missing/populated/marker states), the refusal gates (PSI,
+# already-mounted, missing subvol), and a SELF-VERIFYING assertion count
+# (emitted PASS lines == anchored ok-call sites — the 21→22→23 hand-count
+# drift class flips red here instead of rotting silently).
 set -euo pipefail
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 SCRIPT_UNDER_TEST=$HERE/migrate-hot-db.sh
 
 FAILURES=0
+PASS_COUNT=0
 ok() {
   echo "PASS: $1"
+  PASS_COUNT=$((PASS_COUNT + 1))
 }
 fail() {
   echo "FAIL: $1" >&2
@@ -215,6 +221,51 @@ run_migrate --dry-run prepare fixture-name "$DATA" fixture.service >/dev/null 2>
 # ── 9. status: prints the registry ──────────────────────────────────────────
 out=$(run_migrate status 2>&1)
 grep -qF "gatus: dataDir=/var/lib/private/gatus" <<<"$out" && ok "status lists the registry" || fail "status output missing gatus: $out"
+
+# ── 10. marker fields: FILES/BYTES/BIG_SIZE/BIG_PATH ────────────────────────
+# (row 39: the finalize gates read BIG_SIZE/BIG_PATH — they were never
+# asserted; a marker that silently dropped them would gut the finalize
+# floor checks while every existing test stayed green)
+mkfixture
+echo "post-warm" >"$DATA/main.db"
+run_migrate prepare fixture-name "$DATA" fixture.service >/dev/null 2>&1 || fail "marker-field prepare failed"
+run_migrate cutover fixture-name "$DATA" fixture.service >/dev/null 2>&1 || fail "marker-field cutover failed"
+grep -q "^FILES=3$" "$STATE" && ok "marker FILES counts the quiesced tree" || fail "marker FILES wrong: $(cat "$STATE")"
+expected_bytes=$(du -sb --apparent-size "$DATA" | awk '{print $1}')
+grep -q "^BYTES=$expected_bytes$" "$STATE" && ok "marker BYTES matches the apparent size" || fail "marker BYTES wrong: $(cat "$STATE")"
+grep -q "^BIG_PATH=$DATA/main.db$" "$STATE" && ok "marker BIG_PATH names the biggest file" || fail "marker BIG_PATH wrong: $(cat "$STATE")"
+expected_big=$(stat -c%s "$DATA/main.db")
+grep -q "^BIG_SIZE=$expected_big$" "$STATE" && ok "marker BIG_SIZE matches the biggest file" || fail "marker BIG_SIZE wrong: $(cat "$STATE")"
+
+# ── 11. per-entry status rendering: missing/populated/marker states ─────────
+out=$(run_migrate status gatus 2>&1)
+grep -qF "gatus: dataDir=/var/lib/private/gatus mountpoint=no subvol=missing,empty marker=none" <<<"$out" && ok "status gatus renders the missing-state line" || fail "status gatus rendering wrong: $out"
+mkdir -p "$MIGRATE_TOPLEVEL/hot/gatus" "$MIGRATE_TOPLEVEL/hot/.migrate-state"
+echo content >"$MIGRATE_TOPLEVEL/hot/gatus/anything"
+echo "$MIGRATE_TOPLEVEL/hot/gatus" >>"$FAKE_SUBVOLS"
+printf 'FILES=1\n' >"$MIGRATE_TOPLEVEL/hot/.migrate-state/gatus"
+out=$(run_migrate status gatus 2>&1)
+grep -qF "subvol=exists,populated marker=FILES=1" <<<"$out" && ok "status renders populated subvol + marker state" || fail "status populated rendering wrong: $out"
+out=$(run_migrate status 2>&1)
+grep -qF "discordsync: dataDir=/var/lib/discordsync" <<<"$out" && ok "status without a name prints the whole registry" || fail "full-registry status missing discordsync: $out"
+
+# ── 12. dry-run finalize: banner, no verify, no unit starts ─────────────────
+echo "$DATA" >>"$MOUNTPOINT_LIST"
+: >"$SYSTEMCTL_LOG"
+out=$(run_migrate --dry-run finalize fixture-name "$DATA" fixture.service extra.timer 2>&1) || fail "dry-run finalize exited non-zero: $out"
+[ ! -s "$SYSTEMCTL_LOG" ] && ok "dry-run finalize started no units" || fail "dry-run finalize ran systemctl: $(cat "$SYSTEMCTL_LOG")"
+grep -qF "== finalize" <<<"$out" && ok "dry-run finalize prints its banner" || fail "dry-run finalize output wrong: $out"
+
+# ── self-verifying assertion count (storage.md row 177) ─────────────────────
+# Both sides are derived mechanically at runtime: emitted PASS lines (the
+# ok() counter) vs anchored ok-call sites in THIS file. Any future assertion
+# added without its PASS emission — or regex rot in the anchor pattern —
+# trips this instead of re-opening the hand-count drift class.
+SELF=${BASH_SOURCE[0]}
+ANCHOR_RE='&& ok "|[|][|] ok "'
+anchored=$(grep -cE "$ANCHOR_RE" "$SELF" || true)
+anchored=${anchored:-0}
+[ "$anchored" -eq "$PASS_COUNT" ] && ok "self-count ($PASS_COUNT emitted == $anchored anchored call sites)" || fail "assertion count drift: $PASS_COUNT emitted vs $anchored anchored call sites"
 
 echo
 if [ "$FAILURES" -eq 0 ]; then
