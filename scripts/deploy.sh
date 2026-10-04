@@ -632,6 +632,7 @@ if nix run .#pre-deploy-check; then
     # scripts/check-cv-oidc-gate.sh — the echo strings are the deploy-output
     # smoke contract, byte-stable).
     # shellcheck source=scripts/lib/cv-oidc-gate.sh
+    # shellcheck disable=SC1091
     source "$PWD/scripts/lib/cv-oidc-gate.sh"
     if cv_oidc_gate_decide "$cv_before" "$cv_after"; then
       sudo systemctl restart cv-server.service 2>/dev/null || true
