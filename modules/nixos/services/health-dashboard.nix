@@ -58,8 +58,8 @@
 
         package = lib.mkOption {
           type = lib.types.package;
-          default = inputs.go-health-dashboard.packages.${pkgs.system}.default;
-          defaultText = lib.literalExpression "inputs.go-health-dashboard.packages.${pkgs.system}.default";
+          default = inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          defaultText = lib.literalExpression "inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default";
           description = "The health-hub package (github:LarsArtmann/go-health-dashboard).";
         };
 

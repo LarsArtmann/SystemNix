@@ -324,7 +324,7 @@ in
       pkgs.nodejs
       # TEMPORARY vendorHash shim (2026-10-03, class comment at lib/lars-packages.nix):
       # got 0zQhoKtB… vs upstream-specified o3zkJtoT… at locked rev 1066dea.
-      (inputs.buildflow.packages.${pkgs.system}.default.overrideAttrs {
+      (inputs.buildflow.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
         vendorHash = "sha256-0zQhoKtBZOVOYwBLSazCQkqftz+FzblOKq2gAjtLDa8=";
       })
       # flm CLI (NPU LLM; service consumes the same package). Replaces the
@@ -335,7 +335,7 @@ in
       # rerank) over markdown/code collections; also the binary Crush spawns
       # for the `qmd` MCP server (crushrc). Upstream flake pin — see flake.nix
       # input for why nixpkgs is not followed.
-      inputs.qmd.packages.${pkgs.system}.default
+      inputs.qmd.packages.${pkgs.stdenv.hostPlatform.system}.default
       # Partitioning for user-run sudo migration scripts (sgdisk). NOT in the
       # system env before 2026-08-22 — the first migrate-clickhouse-xfs.sh
       # prepare run died at "sgdisk: command not found" after stopping the

@@ -15,7 +15,7 @@
 {
   programs.superfile = {
     enable = true;
-    package = superfile.packages.${pkgs.system}.default;
+    package = superfile.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
     settings = {
       # Built-in Catppuccin Mocha theme — matches the global theme

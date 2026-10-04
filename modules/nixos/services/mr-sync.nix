@@ -53,8 +53,8 @@
           type = lib.types.package;
           # Same source the PATH CLI rides (lib/lars-packages.nix flakePkg) —
           # lars packages are flake outputs, NOT pkgs attributes.
-          default = inputs.mr-sync.packages.${pkgs.system}.default;
-          defaultText = lib.literalExpression "inputs.mr-sync.packages.${pkgs.system}.default";
+          default = inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          defaultText = lib.literalExpression "inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default";
           description = "The mr-sync package (github:LarsArtmann/mr-sync).";
         };
       };

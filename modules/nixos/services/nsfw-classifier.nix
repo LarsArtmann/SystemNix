@@ -37,7 +37,7 @@
 
       cfg = config.services.nsfw-classifier;
 
-      pkg = inputs.nsfw-classifier.packages.${pkgs.system}.nsfw-classifier-go;
+      pkg = inputs.nsfw-classifier.packages.${pkgs.stdenv.hostPlatform.system}.nsfw-classifier-go;
       modelsDir = "/home/lars/projects/nsfw-classifier/models";
 
       # Fast mode (single model, minimum latency) — exactly what the
