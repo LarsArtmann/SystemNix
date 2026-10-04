@@ -98,9 +98,11 @@ prepare)
   run chattr +C "$SUBVOL"
   # Quiesce: caddy closes the access-log fds → the source tree is static →
   # an EXACT count/size verify is meaningful. Brief vhost outage by design.
-  # Crash-safe quiesce: if ANYTHING dies (set -e) while caddy is stopped,
-  # restart it on the way out — never leave the vhosts down.
-  trap '[ "$DRY_RUN" = "1" ] || systemctl start caddy || true' EXIT
+  # Crash-safe quiesce: if ANYTHING dies (set -e, or a fatal signal — an
+  # operator Ctrl-C mid-rsync kills bash without running a plain EXIT trap)
+  # while caddy is stopped, restart it on the way out — never leave the
+  # vhosts down.
+  trap '[ "$DRY_RUN" = "1" ] || systemctl start caddy || true' INT TERM EXIT
   run systemctl stop caddy
   if [ "$DRY_RUN" = "1" ]; then
     echo "dry run: rsync skipped"
@@ -132,12 +134,17 @@ finalize)
     echo "dry run: skipping verification"
     exit 0
   fi
-  BEFORE=$(find "$SUBVOL" -type f -mmin -2 | wc -l)
+  EXISTING=$(find "$SUBVOL" -type f | wc -l)
+  if [ "$EXISTING" -eq 0 ]; then
+    echo "VERIFY FAILED: no log files on the mount at all — caddy never wrote there." >&2
+    exit 1
+  fi
+  WINDOW_START=$(date +%s)
   sleep 35
-  AFTER=$(find "$SUBVOL" -type f -mmin -2 | wc -l)
-  echo "recently-touched files: before=$BEFORE after=$AFTER"
-  if [ "$AFTER" -eq 0 ]; then
-    echo "VERIFY FAILED: no log file touched on the mount in 35s — is caddy running?" >&2
+  FRESH=$(find "$SUBVOL" -type f -newermt "@$WINDOW_START" | wc -l)
+  echo "files on mount: $EXISTING; touched during the 35s window: $FRESH"
+  if [ "$FRESH" -eq 0 ]; then
+    echo "VERIFY FAILED: no log file touched on the mount during the 35s window — is caddy running?" >&2
     exit 1
   fi
   echo "finalize OK: caddy logs live on the Samsung."
@@ -185,7 +192,7 @@ shadow-cleanup)
     umount "$AUX" 2>/dev/null || true
     rmdir "$AUX" 2>/dev/null || true
   }
-  trap cleanup_aux EXIT
+  trap cleanup_aux INT TERM EXIT
 
   mkdir -p "$AUX" "$ARCHIVE_DIR"
   run mount -o subvol=@,ro "$ROOT_PART" "$AUX"
