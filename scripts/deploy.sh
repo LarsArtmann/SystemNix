@@ -628,11 +628,13 @@ if nix run .#pre-deploy-check; then
     cv_before="$(sha256sum "$cv_env" 2>/dev/null || echo absent)"
     sudo systemctl restart cv-oidc-env.service 2>/dev/null || true
     cv_after="$(sha256sum "$cv_env" 2>/dev/null || echo absent)"
-    if [ "$cv_before" != "$cv_after" ]; then
-      echo "Restarting cv-oidc-env.service + cv-server.service (OIDC client secret changed)"
+    # Decision lives in the lib (contract-tested by
+    # scripts/check-cv-oidc-gate.sh — the echo strings are the deploy-output
+    # smoke contract, byte-stable).
+    # shellcheck source=scripts/lib/cv-oidc-gate.sh
+    source "$PWD/scripts/lib/cv-oidc-gate.sh"
+    if cv_oidc_gate_decide "$cv_before" "$cv_after"; then
       sudo systemctl restart cv-server.service 2>/dev/null || true
-    else
-      echo "cv OIDC env unchanged — cv-server NOT restarted (avoids CRM replay duplication)"
     fi
   fi
 

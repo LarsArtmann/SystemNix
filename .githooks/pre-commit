@@ -421,6 +421,22 @@ else
     log_info "No staged buildcache parity sources — skipping parity check."
 fi
 
+# cv-oidc-gate contract guard (2026-10-04): deploy.sh's cv-server anti-replay
+# restart decision lives in scripts/lib/cv-oidc-gate.sh (the 10,489-dup
+# class). A staged edit to either side must keep the byte-stable
+# "cv OIDC env unchanged" smoke line + the wiring intact.
+if git diff --cached --name-only | grep -qE '(^scripts/deploy\.sh$|^scripts/lib/cv-oidc-gate\.sh$)'; then
+    log_info "cv-oidc gate source staged — running check-cv-oidc-gate.sh..."
+    if bash scripts/check-cv-oidc-gate.sh; then
+        log_success "cv-oidc gate contract check passed!"
+    else
+        log_error "cv-oidc gate check FAILED: the anti-replay decision or its deploy.sh wiring regressed!"
+        all_passed=false
+    fi
+else
+    log_info "No staged cv-oidc gate sources — skipping cv-oidc gate check."
+fi
+
 # Eval-only flake check (2026-09-14 gate split): the hook validates SYNTAX and
 # EVAL, never BUILDS — plain `nix flake check` realizes every check derivation
 # incl. NixOS VM tests (minutes each), which trained the `--no-verify` habit on

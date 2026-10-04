@@ -59,7 +59,10 @@ EOF
   if [[ -z $got ]]; then ok "hagezi hosts/ decoy never matches"; else bad "hagezi decoy matched '$got'"; fi
 
   echo "dns-update pin-extraction selftest: $pass passed, $fail failed"
-  [[ $fail -eq 0 ]]
+  if [[ $fail -gt 0 ]]; then
+    exit 1
+  fi
+  exit 0
 fi
 
 echo "=== Advancing the StevenBlack commit pin ==="
