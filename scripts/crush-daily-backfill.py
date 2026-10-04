@@ -202,30 +202,59 @@ def main() -> int:
             idx = succeeded + failed + 1
             print(f"[{idx}/{len(zero_events)}] {target_date}")
 
-            conn.execute("DELETE FROM events WHERE id = ?", (event["id"],))
+            # The DailyReport aggregate accumulates derived events
+            # (CrossProjectInsightsGenerated, ReportGenerated) on top of the
+            # zero-data DailyDataCollected one — deleting only the base event
+            # leaves a version gap and the re-collect fails with
+            # event.version_conflict. Remove the WHOLE aggregate lineage and
+            # restore everything if collect fails.
+            lineage_rows = conn.execute(
+                "SELECT id, event_type, version, payload, occurred_at FROM events "
+                "WHERE aggregate_id = ? ORDER BY version",
+                (event["aggregate_id"],),
+            ).fetchall()
+            lineage = [
+                {
+                    "id": r[0],
+                    "event_type": r[1],
+                    "version": r[2],
+                    "payload": r[3],
+                    "occurred_at": r[4],
+                }
+                for r in lineage_rows
+            ]
+            conn.execute(
+                "DELETE FROM events WHERE aggregate_id = ?",
+                (event["aggregate_id"],),
+            )
             conn.commit()
+
+            def restore_lineage():
+                for e in lineage:
+                    conn.execute(
+                        "INSERT INTO events (id, aggregate_id, aggregate_type, version, event_type, payload, occurred_at) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        (
+                            e["id"],
+                            event["aggregate_id"],
+                            event["aggregate_type"],
+                            e["version"],
+                            e["event_type"],
+                            e["payload"],
+                            e["occurred_at"],
+                        ),
+                    )
+                conn.commit()
 
             # Step 1: Collect (always required)
             ok, output = run_step(binary, "collect", target_date, config, api_key)
             if not ok:
                 print(f"  COLLECT FAILED: {output[-200:]}")
                 failed += 1
-                # Re-insert the deleted event so the data isn't permanently lost.
+                # Re-insert the deleted events so the data isn't permanently lost.
                 # We have the backup, but this avoids requiring manual restore.
-                conn.execute(
-                    "INSERT INTO events (id, aggregate_id, aggregate_type, version, event_type, payload, occurred_at) "
-                    "VALUES (?, ?, ?, ?, 'DailyDataCollected', ?, ?)",
-                    (
-                        event["id"],
-                        event["aggregate_id"],
-                        event["aggregate_type"],
-                        event["version"],
-                        event.get("payload", ""),
-                        event["occurred_at"],
-                    ),
-                )
-                conn.commit()
-                print(f"  Restored original event (id={event['id']})")
+                restore_lineage()
+                print(f"  Restored original events ({len(lineage)} rows)")
                 continue
 
             sessions = verify_event(conn, target_date)

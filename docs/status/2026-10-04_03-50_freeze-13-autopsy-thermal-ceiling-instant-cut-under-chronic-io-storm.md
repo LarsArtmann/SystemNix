@@ -1,6 +1,6 @@
 # Freeze #13 Autopsy — Thermal-Ceiling Instant Cut Under the Chronic IO Storm (2026-10-04 03:36)
 
-**Session:** 2026-10-04 03:38 → ~03:55 — single-question session ("why did we crashed?"): prose verdict delivered at the turn boundary FIRST, then this report + the mandated harvest. Read-only forensics plus ONE in-tree fix (tq `startLimit*` passthrough cleanup, §a.4); no deploys, no service actions (agent sandbox blocks sudo/systemctl — owner legs flagged in the Live section).
+**Session:** 2026-10-04 03:38 → ~03:55 — single-question session ("why did we crashed?"): prose verdict delivered at the turn boundary FIRST, then this report + the mandated harvest. Read-only forensics plus one attempted-and-reverted local-fix investigation (tq `startLimit*` passthrough, §a.4 — the fix belongs upstream); no deploys, no service actions (agent sandbox blocks sudo/systemctl — owner legs flagged in the Live section).
 
 **Sibling context:** freeze #12 autopsy (`2026-10-03_14-23`) and the storm/anchoring session (`2026-10-04_03-05`, "storm-gated 9h") — this crash is the continuation of exactly the regime both documented.
 
