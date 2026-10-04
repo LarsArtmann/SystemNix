@@ -3688,15 +3688,11 @@
               crush-daily-backfill = {
                 type = "app";
                 program = "${
-                  pkgs.writeShellApplication {
-                    name = "crush-daily-backfill";
-                    runtimeInputs = [
-                      pkgs.python3
-                      inputs.crush-daily.packages.${system}.default or pkgs.crush-daily
-                        or (throw "crush-daily package not found")
-                    ];
-                    text = builtins.readFile ./scripts/crush-daily-backfill.py;
-                  }
+                  pkgs.writers.writePython3Bin "crush-daily-backfill"
+                    {
+                      flakeIgnore = [ "E501" "E265" ];
+                    }
+                    (builtins.readFile ./scripts/crush-daily-backfill.py)
                 }/bin/crush-daily-backfill";
                 meta.description = "Backfill crush-daily reports for zero-data or missing dates";
               };
