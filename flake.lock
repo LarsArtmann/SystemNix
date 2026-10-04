@@ -10,11 +10,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1791104393,
-        "narHash": "sha256-6UOGozCjvRdaikEyo5PkofkDlZkiIbyTX6+MZXwdoSw=",
+        "lastModified": 1791153165,
+        "narHash": "sha256-noPSsoEZoCoyRT/el6yH8C3J/VmroLVrq+eMJaKHp2Q=",
         "ref": "refs/heads/fork",
-        "rev": "b2a3b4ec0be9ecd570cccafeb4cbc49aa446ac67",
-        "revCount": 2441,
+        "rev": "8ebf0631553bc8137730296b55cca1dd7fa5f0d6",
+        "revCount": 2442,
         "type": "git",
         "url": "https://github.com/LarsArtmann/art-dupl"
       },
@@ -157,11 +157,11 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1791128229,
-        "narHash": "sha256-/uVwzRSC06zA9Nfx3AtFdNzwoXlJ9aTS3QXTlEzq5Y8=",
+        "lastModified": 1791153310,
+        "narHash": "sha256-7zxud+dDgcIInp5n7F5VpcZh9nzzbBbRW8JrTvVQWH0=",
         "owner": "LarsArtmann",
         "repo": "bank-sync",
-        "rev": "466ae1421a8e366b2899bcb677689975f8192f1b",
+        "rev": "82a94617eb51732f8a74052a3f1155c77e50dfea",
         "type": "github"
       },
       "original": {
