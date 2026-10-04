@@ -20,7 +20,7 @@ PSTATE_ROOT="${PSTATE_ROOT:-/sys/devices/system/cpu/amd_pstate}"
 CPUFREQ_ROOT="${CPUFREQ_ROOT:-/sys/devices/system/cpu/cpufreq}"
 STATE_DIR="${STATE_DIR:-/var/lib/thermal-pstate-guard}"
 TEXTFILE_OUT="${THERMAL_GUARD_TEXTFILE_OUT:-/var/lib/prometheus-node-exporter/textfile_collectors/thermal-pstate-guard.prom}"
-SENSORS_SPEC="${THERMAL_GUARD_SENSORS:-k10temp:95:80 nvme:70:60 amdgpu:90:75 acpitz:85:70}"
+SENSORS_SPEC="${THERMAL_GUARD_SENSORS:-k10temp=95/80 nvme=70/60 amdgpu=90/75 acpitz=85/70}"
 ENTER_TICKS="${THERMAL_GUARD_ENTER_TICKS:-2}"
 EXIT_TICKS="${THERMAL_GUARD_EXIT_TICKS:-12}"
 VERBOSE_INTERVAL="${THERMAL_GUARD_VERBOSE_INTERVAL:-600}"
@@ -178,13 +178,15 @@ tick() {
   echo "$state_mode" > "$MODE_FILE"
 
   # Read every sensor pattern from the spec. Absent patterns do not vote.
+  # spec form: name=high/low (degrees C). Colon-separated numbers would
+  # trip the port-registry audit's host:port literal patterns.
   local spec name high low reading value hot=0 cool=1 missing=0 present=0
   local sensor_labels=() sensor_summary=""
   for spec in $SENSORS_SPEC; do
-    name="${spec%%:*}"
-    rest="${spec#*:}"
-    high="${rest%%:*}"
-    low="${rest#*:}"
+    name="${spec%%=*}"
+    rest="${spec#*=}"
+    high="${rest%%/*}"
+    low="${rest#*/}"
     reading=$(read_sensor_pattern "$name")
     if [ -z "$reading" ]; then
       missing=$((missing + 1))
@@ -302,7 +304,7 @@ run_selftest() {
     CPUFREQ_ROOT="$fixture/cpufreq"
     STATE_DIR="$fixture/state"
     THERMAL_GUARD_TEXTFILE_OUT="$fixture/textfile/guard.prom"
-    THERMAL_GUARD_SENSORS="k10temp:95:80 nvme:70:60"
+    THERMAL_GUARD_SENSORS="k10temp=95/80 nvme=70/60"
     THERMAL_GUARD_ENTER_TICKS=2
     THERMAL_GUARD_EXIT_TICKS=3
     THERMAL_GUARD_VERBOSE_INTERVAL=0
@@ -388,7 +390,7 @@ run_selftest() {
     CPUFREQ_ROOT="$fixture/cpufreq"
     STATE_DIR="$fixture/state-blind"
     THERMAL_GUARD_TEXTFILE_OUT="$fixture/textfile/blind.prom"
-    THERMAL_GUARD_SENSORS="nonexistent:50:40"
+    THERMAL_GUARD_SENSORS="nonexistent=50/40"
   )
   env "${blind_env[@]}" bash "$0" tick
   assert_eq "blind-no-change" "$(cat "$fixture/pstate/status")" "active"

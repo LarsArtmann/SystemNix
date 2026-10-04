@@ -841,6 +841,13 @@
     # (services.crm-server unit); the CV syncer targets its REST surface.
     crm = {
       url = "git+ssh://git@github.com/LarsArtmann/crm?ref=master";
+      # crm pins its own go-nix-helpers (lock node go-nix-helpers_2,
+      # e8075ef8) which predates go-standard's proxyVendor mkDefault fix —
+      # its prepared-source (deps) packages default proxyVendor = true and
+      # emit "go-standard.proxyVendor = true is ignored when deps are set"
+      # on every evo-x2 eval. Follow our root pin (64f2927b) which defaults
+      # proxyVendor off for deps consumers.
+      inputs.go-nix-helpers.follows = "go-nix-helpers";
     };
 
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)

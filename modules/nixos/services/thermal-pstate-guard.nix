@@ -60,8 +60,10 @@ _:
         text = builtins.readFile ../../../scripts/thermal-pstate-guard.sh;
       };
 
+      # name=high/low: colon-separated numbers would trip the port-registry
+      # audit's host:port literal patterns.
       sensorSpec = lib.concatStringsSep " " (
-        map (s: "${s.name}:${toString s.highCelsius}:${toString s.lowCelsius}") cfg.sensors
+        map (s: "${s.name}=${toString s.highCelsius}/${toString s.lowCelsius}") cfg.sensors
       );
     in
     {
