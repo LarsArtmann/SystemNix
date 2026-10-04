@@ -108,15 +108,14 @@
           "inboxclean",
           "nixpkgs"
         ],
-        "systems": "systems_3",
         "treefmt-nix": "treefmt-nix_5"
       },
       "locked": {
-        "lastModified": 1790674725,
-        "narHash": "sha256-wMN/uTjMw1CoUs8kcBXTr/BzdxQF5KcD/ghL6xVU534=",
+        "lastModified": 1791098555,
+        "narHash": "sha256-R1yBiXVHnPwN75wYcuqsQDjLhdYV+Q2axK02kGhe/zE=",
         "ref": "refs/heads/fork",
-        "rev": "86d807ede669453a16e43fcf6d176e9a7a6b7dff",
-        "revCount": 2401,
+        "rev": "23fcbda9d0a6c37012ed4f9de0d09e11202c13d3",
+        "revCount": 2439,
         "type": "git",
         "url": "https://github.com/LarsArtmann/art-dupl"
       },
@@ -1396,11 +1395,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788450739,
-        "narHash": "sha256-glZLQlzIn1fXH6PazR2iUmTo7kzzyYSshrWhLS9TqCU=",
+        "lastModified": 1790898470,
+        "narHash": "sha256-zTwuwezD0w3hpga6a6P8emidzAZFyWqlNeRBlpWOOl8=",
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "rev": "31729ca8cbdb4fa927b34e5f4353e6a83f39e993",
+        "rev": "024633cd702b10285db5cb19b40ad48d2399ba60",
         "type": "github"
       },
       "original": {
@@ -5435,11 +5434,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790940274,
-        "narHash": "sha256-FpDjFk3LnCrMS94bIZKJCGVe2nkMQvtHjaPY/OozDbk=",
+        "lastModified": 1791104339,
+        "narHash": "sha256-1G2nnuulJ7DyuhVrH4sb8PdBeOECedzYcxUt4VVUros=",
         "owner": "LarsArtmann",
         "repo": "InboxClean",
-        "rev": "01d2c5e4d083752d4d8391b31c7a4cab972637db",
+        "rev": "3658732ffa735d2e43381d30827296cf84a88aa6",
         "type": "github"
       },
       "original": {
@@ -6762,7 +6761,7 @@
         "sops-nix": "sops-nix",
         "storage-collector": "storage-collector",
         "superfile": "superfile",
-        "systems": "systems_4",
+        "systems": "systems_3",
         "todo-list-ai": "todo-list-ai",
         "treefmt-full-flake": "treefmt-full-flake",
         "treefmt-nix": "treefmt-nix_8",
@@ -7147,21 +7146,6 @@
       }
     },
     "systems_3": {
-      "locked": {
-        "lastModified": 1681028828,
-        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
-        "owner": "nix-systems",
-        "repo": "default",
-        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-systems",
-        "repo": "default",
-        "type": "github"
-      }
-    },
-    "systems_4": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
