@@ -20,7 +20,7 @@
 
 ## b) PARTIALLY DONE
 
-1. **Full `nix flake check --no-build` after my `flake.nix` edit** — running in background (shell 027) at report time; targeted `nix build .#checks.x86_64-linux.migrate-caddy-logs-fixture` already BUILD-OK, and the edit is purely additive (new attr in an existing attrset). Result lands before this report is committed; failure in FOREIGN attrs would be parallel-session work, not mine.
+1. **Full `nix flake check --no-build` after my `flake.nix` edit** — RESOLVED at authoring time: **all checks passed** (shell 027; only the expected aarch64-darwin incompatibility warning). Targeted `nix build .#checks.x86_64-linux.migrate-caddy-logs-fixture` also BUILD-OK.
 2. **Upstream vendorHash pushes (the shim-drop path)** — still `[blocked:push]` in `docs/todo/upstream.md`; never authorized this session. The ~10 local shims persist with documented drop conditions until a re-lock past upstream-fixed revs.
 
 ## c) NOT STARTED
