@@ -40,7 +40,7 @@ let
           services.dns-blocker.policies = [
             {
               name = "tv-night";
-              devices = [ "lg-tv" ];
+              devices = [ "macbook" ];
               block = [
                 "doubleclick.net"
                 "ads.example.com"
@@ -149,7 +149,7 @@ let
           services.dns-blocker.policies = [
             {
               name = "t";
-              devices = [ "lg-tv" ];
+              devices = [ "macbook" ];
               block = map (n: "d${toString n}.example.com") (pkgs.lib.range 1 513);
             }
           ];
@@ -162,7 +162,7 @@ let
         {
           services.dns-blocker.policies = map (n: {
             name = "p${toString n}";
-            devices = [ "lg-tv" ];
+            devices = [ "macbook" ];
           }) (pkgs.lib.range 1 65);
         }
       ];
@@ -174,7 +174,7 @@ let
           services.dns-blocker.policies = [
             {
               name = "t";
-              devices = [ "lg-tv" ];
+              devices = [ "macbook" ];
             }
             {
               name = "t";
@@ -225,7 +225,7 @@ let
           services.dns-blocker.policies = [
             {
               name = "t";
-              devices = [ "lg-tv" ];
+              devices = [ "macbook" ];
               schedule = "25:00-26:00";
             }
           ];
@@ -239,7 +239,7 @@ let
           services.dns-blocker.policies = [
             {
               name = "TV_Night";
-              devices = [ "lg-tv" ];
+              devices = [ "macbook" ];
             }
           ];
         }
@@ -370,7 +370,7 @@ else
       pol = json.load(open(sys.argv[2]))
       p0 = pol["policies"][0]
       assert p0["name"] == "tv-night", "policy name not rendered verbatim"
-      assert p0["devices"] == ["lg-tv"], "policy devices not rendered verbatim"
+      assert p0["devices"] == ["macbook"], "policy devices not rendered verbatim"
       assert p0["groups"] == [], "per-policy empty groups must stay [] (upstream treats as no entries)"
       assert p0["allow"] == [], "per-policy empty allow must stay [] (upstream treats as no entries)"
       assert p0["block"] == ["doubleclick.net", "ads.example.com"], "policy block list not rendered verbatim"

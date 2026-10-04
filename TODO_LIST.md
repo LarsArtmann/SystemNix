@@ -691,6 +691,8 @@
 - [ ] [decision] **Per-vHost access-log roll bounds vs Caddy defaults** — [docs/todo/services.md](docs/todo/services.md)
 - [x] [ready] **Fix pre-existing negative-test-lint failures (7 dead-guards: cv/hermes/btrfs-health/_forgejo-scripts; signoz pristine control)** — CLOSED 2026-10-04: dead-guard 7 judged+fixed (2 FPs marked, 5 rescue-reassigned), signoz gcp.json FP fixed in the scanner; harness 26/0. Pruned to CHANGELOG. — [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] [ready] **Add or de-reference the nonexistent `caddy-mutant` negative-test case** — [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] [ready] **Extend dead-guard-lint v2 to non-`-z`/`-n` guard forms (the census `:967` blind-spot class)** — [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] [blocked:user] **Triage the 6 failing VM tests (disko-layout/hermes/hot-user-caches/crush-hot-db/browser-history/restic-app-dumps) with provenance** — [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] [ready] **Refresh the SSO-layer table in `docs/agents/sso-dns.md` vs the registry (fleet drifted; table moved out of AGENTS.md in the 2026-10-01 restructure)** — [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] [watch] **voice/whisper dns-local additions + exemption drop when voice-agents lands** — [docs/todo/services.md](docs/todo/services.md)
 - [ ] [watch] **Layer classification via forward_auth substring (non-forward-auth gate would misclassify)** — [docs/todo/services.md](docs/todo/services.md)
