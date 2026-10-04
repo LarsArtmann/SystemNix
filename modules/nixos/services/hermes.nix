@@ -161,7 +161,7 @@
           # user. Cost: one metadata walk per start (the heal branch already
           # pays three on drift).
           tree_converged() {
-            stray=$(find ${cfg.stateDir} -xdev -path '${cfg.stateDir}/workspace/projects' -prune -o \( ! -user ${cfg.user} -o ! -group ${cfg.group} \) -print -quit 2>/dev/null)
+            stray=$(find ${cfg.stateDir} -xdev -path '${cfg.stateDir}/workspace/projects' -prune -o \( ! -user ${cfg.user} -o ! -group ${cfg.group} \) -print -quit 2>/dev/null) # dead-guard-ok: fn runs in if-tested context — errexit suppressed body-wide
             [ -z "$stray" ] \
               && [ "$(stat -c '%U:%G' ${cfg.stateDir} 2>/dev/null)" = "${cfg.user}:${cfg.group}" ] \
               && [ "$(stat -c '%a' ${cfg.stateDir} 2>/dev/null)" = "2770" ]

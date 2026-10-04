@@ -317,7 +317,7 @@ let
           # scrub (binary-verified format strings — both start clean at
           # column 0, no leading tab). Matching only "started:" would
           # false-positive stale=1 on a resumed-and-finished fresh scrub.
-          scrub_started_raw=$(echo "$scrub_out" | awk '/^[Ss]crub (started|resumed):/ {sub(/^[Ss]crub (started|resumed):[[:space:]]*/, ""); print; exit}')
+          scrub_started_raw=$(echo "$scrub_out" | awk '/^[Ss]crub (started|resumed):/ {sub(/^[Ss]crub (started|resumed):[[:space:]]*/, ""); print; exit}') # dead-guard-ok: script downgrades to set -uo pipefail (no errexit) — the -n guard is reachable
           if echo "$scrub_out" | grep -qE 'Status:.*running|still running'; then
             # Coverage is happening RIGHT NOW — the running scrub's status
             # output carries no previous-completion date; stale stays 0.

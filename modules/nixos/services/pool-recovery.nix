@@ -93,7 +93,11 @@
         bound = lib.any (
           p: p == cfg.mountPoint || lib.hasPrefix "${cfg.mountPoint}/" p
         ) paths;
-        daemon = (svc.serviceConfig or {}).Restart or null != null;
+        # Restart="no" is the lib oneshot default (serviceOneshotDefaults
+        # sets it explicitly) — an explicitly-set no-restart is a oneshot,
+        # not a daemon; only non-"no" Restart survives the filter.
+        restart = (svc.serviceConfig or {}).Restart or null;
+        daemon = restart != null && restart != "no";
       in
         bound && daemon
       ) config.systemd.services;

@@ -332,7 +332,7 @@ in
       while true; do
         response=$(curl -s --compressed -H "Authorization: token $GITHUB_TOKEN" \
           "https://api.github.com/user/repos?visibility=all&affiliation=owner&per_page=100&page=$page")
-        n=$(echo "$response" | jq -r 'if type == "array" then length else -1 end')
+        n=$(echo "$response" | jq -r 'if type == "array" then length else -1 end') || n=""
         [[ -z "$n" || "$n" == "-1" ]] && { echo "Error: GitHub listing failed: $(echo "$response" | jq -r '.message // "unknown"')"; exit 1; }
         echo "$response" | jq -r '.[] | "\(.owner.login)/\(.name)"' | tr '[:upper:]' '[:lower:]' >> "$CANONICAL"
         [[ "$n" -lt 100 ]] && break
@@ -343,7 +343,7 @@ in
       while true; do
         response=$(curl -s --compressed -H "Authorization: token $GITHUB_TOKEN" \
           "https://api.github.com/user/orgs?per_page=100&page=$page")
-        n=$(echo "$response" | jq -r 'if type == "array" then length else -1 end')
+        n=$(echo "$response" | jq -r 'if type == "array" then length else -1 end') || n=""
         [[ -z "$n" || "$n" == "-1" ]] && { echo "Error: GitHub org listing failed: $(echo "$response" | jq -r '.message // "unknown"')"; exit 1; }
         echo "$response" | jq -r '.[].login' | tr '[:upper:]' '[:lower:]' >> "$ORGS"
         [[ "$n" -lt 100 ]] && break
@@ -357,7 +357,7 @@ in
         while true; do
           response=$(curl -s --compressed -H "Authorization: token $GITHUB_TOKEN" \
             "https://api.github.com/orgs/$org/repos?type=all&per_page=100&page=$page")
-          n=$(echo "$response" | jq -r 'if type == "array" then length else -1 end')
+          n=$(echo "$response" | jq -r 'if type == "array" then length else -1 end') || n=""
           [[ -z "$n" || "$n" == "-1" ]] && { echo "Error: GitHub org repo listing failed ($org): $(echo "$response" | jq -r '.message // "unknown"')"; exit 1; }
           echo "$response" | jq -r --arg org "$org" '.[] | "\($org)/\(.name)"' | tr '[:upper:]' '[:lower:]' >> "$CANONICAL"
           [[ "$n" -lt 100 ]] && break
@@ -376,7 +376,7 @@ in
       while true; do
         response=$(curl -s -H "Authorization: token $FORGEJO_TOKEN" \
           "$FORGEJO_URL/api/v1/user/repos?limit=50&page=$page")
-        n=$(echo "$response" | jq -r 'if type == "array" then length else -1 end')
+        n=$(echo "$response" | jq -r 'if type == "array" then length else -1 end') || n=""
         [[ -z "$n" || "$n" == "-1" ]] && { echo "Error: Forgejo listing failed: $(echo "$response" | jq -r '.message // "unknown"')"; exit 1; }
         while IFS=$'\t' read -r login name; do
           [[ -z "$login" ]] && continue
@@ -964,7 +964,7 @@ in
       while true; do
         response=$(curl -s --compressed -H "Authorization: token $FORGEJO_TOKEN" \
           "$FORGEJO_URL/api/v1/user/repos?limit=50&page=$page")
-        n=$(echo "$response" | jq -r 'if type == "array" then length else -1 end')
+        n=$(echo "$response" | jq -r 'if type == "array" then length else -1 end') || n="-1"
         [[ "$n" == "-1" ]] && { echo "Error: forgejo listing failed: $(echo "$response" | jq -r '.message // "unknown"')" >&2; exit 1; }
         echo "$response" >> "$ALL"
         [[ "$n" -lt 50 ]] && break

@@ -587,7 +587,7 @@
             # Convergence check: a non-empty leftover names an unhealable
             # residue (e.g. a mount the caps cannot touch) — warn loudly,
             # never fail the boot.
-            leftover=$(find "$state" -xdev \( ! -user ${cfg.user} -o ! -group ${cfg.group} -o ! -perm -u+w \) -print -quit 2>/dev/null)
+            leftover=$(find "$state" -xdev \( ! -user ${cfg.user} -o ! -group ${cfg.group} -o ! -perm -u+w \) -print -quit 2>/dev/null) || true
             if [ -n "$leftover" ]; then
               echo "cv-state-perms: WARNING — unhealable residue remains: $leftover" >&2
             else

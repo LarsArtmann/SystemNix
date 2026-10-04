@@ -605,8 +605,6 @@ else
   else
     report_fail "paperless-gpt - /run/paperless-gpt/env missing or misowned (journalctl -u paperless-gpt-token -n 30)"
   fi
-else
-  report_skip "paperless-gpt - service disabled (unit absent from systemd)"
 fi
 
 # Bank-Sync: the dashboard BODY proves the templ stack + SQLite read models
