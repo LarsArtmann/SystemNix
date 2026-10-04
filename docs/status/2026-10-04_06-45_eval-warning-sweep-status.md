@@ -1,0 +1,59 @@
+# Eval-Warning Sweep — Five-Deprecation Fix + Lock-Pin Realignments
+
+Date: 2026-10-04 06:45 CEST · Tree at `b958d77c` (daemon-swept; all session edits committed by the auto-commit daemon)
+
+## 0. Task
+
+Fix the five eval-warning classes reported at session start: `'system' has been renamed` (×6 visible), `stdenv.isDarwin` (×2), `stdenv.isLinux` (×3), `programs.zsh.initExtra` (×5), and the `go-standard.proxyVendor = true is ignored when deps are set` trace (×1). Baseline census came from `nix flake check` at session start (2026-10-04 ~04:55).
+
+A concurrent agent session was active throughout (thermal-pstate-guard module + boot.nix work, auto-commits interleaved with mine). Per the shared-tree rules, its files were not touched; one of its auto-commits broke a lint gate, which is flagged in §b and fixed because it blocked the same `nix flake check` gate this task verifies against.
+
+## a. In-repo fixes (the five classes)
+
+| Class | Root cause | Fix |
+| --- | --- | --- |
+| `'system' renamed` ×6 | six call sites used the deprecated `pkgs.system` package-set alias instead of the repo-standard `pkgs.stdenv.hostPlatform.system` | mechanical migration in `platforms/nixos/system/configuration.nix:327,338` (buildflow, qmd), `modules/nixos/services/nsfw-classifier.nix:40`, `mr-sync.nix:56-57` (default + defaultText), `health-dashboard.nix:61-62` (default + defaultText), `platforms/common/programs/superfile.nix:18` |
+| `'system' renamed` — hidden 7th | `inputs.index` flake `flake.nix:675` (`docs-archive-stats` package default) fires when the HM default is forced | explicit pin `services.docs-archive-stats.package = inputs.index.packages.x86_64-linux.default` in `systems/evo-x2.nix` (bank-sync pattern; default stays lazy, warning never fires) |
+| `'system' renamed` — hidden 8th | `inputs.storage-collector` flake `flake.nix:477-478` (package option default + defaultText) | explicit pin `services.storage-collector.package` in `configuration.nix:1208` |
+| `'system' renamed` — node-level | the locked `rust-overlay` node (4cdea398) still carried the alias family; reached via a herdr follow to an orphan lock node | new root input `rust-overlay` (resolves b8876490, already migrated) + `herdr.inputs.rust-overlay.follows` + `rust-overlay.inputs.nixpkgs.follows` (the latter demanded by the repo's own infra-follows audit, §b) |
+| `isDarwin`/`isLinux` (uv2nix pair) | hermes-agent pinned its own uv2nix 5a836d39 (2026-07-28) whose `lib/build.nix:280` uses `optionalAttrs stdenv.isDarwin` | `hermes-agent.inputs.uv2nix.follows = "uv2nix"` — the root pin (a24323e9, 2026-09-25) is already migrated to `hostPlatform.*` |
+| `isLinux` (rust-overlay) | old node's `lib/mk-aggregated.nix:76` `stdenv.isLinux` | killed by the rust-overlay pin above |
+| `zsh.initExtra` ×5 | home-manager deprecation (every HM surface: darwin + evo-x2 + audit evals) | `initExtra` → `initContent` in `platforms/common/programs/zsh.nix:54` |
+| `proxyVendor` trace ×1 | `inputs.crm` pins its own go-nix-helpers e8075ef8, which predates go-standard's `proxyVendor` mkDefault fix (root pin 64f2927b): its prepared-source packages defaulted `proxyVendor = true` + deps set → trace at package construction; fired once per evo-x2 toplevel eval via the crm service unit | `crm.inputs.go-nix-helpers.follows = "go-nix-helpers"`; verified `inputs.crm.packages.x86_64-linux.default.drvPath` now evals with zero traces |
+
+Bisect method for the two hidden aliases and crm: `NIX_ABORT_ON_WARN=1 nix eval … --show-trace` (warning stacks), unit-text forcing + binary search for the first, then per-input drvPath forcing THROUGH our flake context (standalone store-path evals use each input's OWN pins and miss exactly the inputs that follow ours — recorded in docs/agents/nix-flakes.md).
+
+## b. En-route gate repairs (not part of the five classes)
+
+- **binary-coverage-lint FAILED** (`platforms/nixos/desktop/crush-debug.nix` execs bare `awk` without gawk in runtimeInputs — introduced by auto-commit `7222daa5` from the concurrent session's sweep, NOT this session's work). Fixed by adding `pkgs.gawk` to `runtimeInputs` (the scanner's own prescription; real 127-risk, not a scanner FP). Check now builds green, and `binary-coverage-selftest` builds green.
+- **infra-follows audit FAILED** after adding the rust-overlay root input (it locked its own 2025-04 nixpkgs). Fixed with `rust-overlay.inputs.nixpkgs.follows = "nixpkgs"` per the audit's message — the repo gate caught its own new input, working as designed.
+
+## c. Verification (fresh evals, eval-cache disabled)
+
+| Surface | Before (session start) | After |
+| --- | --- | --- |
+| `nixosConfigurations.evo-x2` toplevel drvPath | 6 warnings (system ×1, isLinux ×2, isDarwin ×1, +2 domain) | **0 deprecation warnings** — only the deliberate catalog/llama-vlm domain messages + 1 hermes-agent upstream isLinux |
+| `darwinConfigurations.Lars-MacBook-Air` toplevel | zsh initExtra + superfile pkgs.system | **0 warnings, 0 traces** |
+| checks: dns-blocker-render / nsfw-classifier / session-boot-audit / tmp-cleaner-audit | system ×11+ / system+deprecations / stateVersion ×4 / stateVersion ×4 | dns-blocker-render: 1 (hermes-agent upstream isLinux only) · nsfw-classifier: **0** · audits: stateVersion ×4 only (separate class, §d) |
+| `inputs.crm…default`, `inputs.herdr…default` drvPath | proxyVendor trace / rust-overlay isLinux | **0 / 0** |
+| full `nix flake check` | 6× system, 2× isDarwin, 3× isLinux, 5× zsh, 1× proxyVendor + 2 build failures | **0 of the five classes**; remaining: 1× isLinux (hermes-agent upstream), zfs 26.11 advisories ×2, stateVersion ×81, catalog/caddy/llama-vlm domain messages, dead-guard-lint failure (§d, pre-existing) |
+
+## d. Residuals (owned elsewhere, all queued or deliberate)
+
+1. **hermes-agent (NousResearch) `stdenv.isLinux` ×3** — `nix/hermes-agent.nix:154,342`, `nix/packages.nix:69`; upstream repo, mechanical fix, [ready] row in docs/todo/upstream.md (verify-before-filing gates it). The ONLY remaining deprecation from the user's classes.
+2. **dead-guard-lint check FAILED — pre-existing, grew during the session** — 7 findings: cv.nix:590, hermes.nix:164 (both pre-existing), btrfs-health.nix:320 and _forgejo-scripts.nix ×4 (files last touched 10-02/10-03, before this session). The existing pipeline.md row said 2 findings; refreshed to 7 in both surfaces (TODO_LIST.md + pipeline.md). NOT fixed here — each needs a `|| true` vs `# dead-guard-ok` judgment call in someone else's module.
+3. **stateVersion ×81** — VM-test/extendModules synthetic nodes defaulting to 26.11; separate warning class, [decision] row queued in pipeline.md (silence via explicit stateVersion in the shared test base vs accept).
+4. **zfs 26.11 advisories ×2** (forceImportRoot default flip, latestCompatibleLinuxPackages deprecation) — harvested: [ready] pin row + [decision] forceImportRoot row in storage.md, [ready] pin queued in TODO_LIST.md.
+5. **catalog/caddy ghost-entry + llama-vlm soak warnings** — deliberate module audit messages, untouched.
+6. **index + storage-collector upstream `pkgs.system` fixes** — [blocked:push] rows queued in upstream.md; the SystemNix-side pins can drop after those pushes.
+
+## e. Harvest record
+
+- Refreshed (drift rule): dead-guard-lint row in TODO_LIST.md:692 + docs/todo/pipeline.md:223 (2→7 findings, current line numbers, binary-coverage resolution noted).
+- Added: storage.md ×2 (zfs), pipeline.md ×1 (stateVersion), upstream.md ×4 (crm follow, hermes-agent migration, index, storage-collector).
+- Queued [ready] one-liners: dead-guard refresh (existed), zfs pin (new).
+- Deliberately NOT harvested: none — every §d item is either queued above or was already tracked (catalog/caddy/llama-vlm are live module audit output, not work items).
+
+## f. Memory
+
+The NIX_ABORT_ON_WARN hunting technique, the standalone-vs-follows input-eval discrepancy, orphan lock-node archaeology, and the extendModules warning-isolation pattern are recorded in `docs/agents/nix-flakes.md` → "Hunting eval warnings to their source (2026-10-04)".
