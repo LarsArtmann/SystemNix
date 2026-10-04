@@ -48,3 +48,28 @@ No destructive operations ran. Two edit-tool refusals (monitoring.md/AGENTS.md b
 ## Harvest log
 
 §f items 1-4 and the c) items are deliberately NOT queued as new rows this pass — the session was halted by the owner for this report; items 1-4 map onto EXISTING open rows (they are the completion-side flips and already-open [ready] rows), so new queue rows would duplicate. Next session: flip surfaces per §f.1 before the tq pool re-fires any of the 13.
+
+---
+
+## Continuation (2026-10-04 23:02 — owner meta-dispatch "keep going until done")
+
+IO storm STILL active at continuation start (some avg10 54→56% across the session; load ~9-10). All movie-window constraints honored: no deploys, no VM tests, no builds, no sudo, **zero nix invocations** (freeze-15 class — every verification used direct script runs + bash -n).
+
+### a) Closed this continuation
+
+1. **§b.1 bookkeeping — DONE.** All 13 rows flipped `[x]` on BOTH surfaces (TODO_LIST one-liners + services/monitoring/pipeline/storage library rows; the boot-mirror-logging item annotated onto its storage.md fold row, the T14-verify row carried its library evidence inside the DONE stamp — queue-only row). `check-todo-system.sh` green rc=0 before and after (0 FAIL; the 49-DRIFT + 88-UNHARVESTED WARNs are the pre-existing standing backlogs). The tq pool can no longer re-fire the 13.
+2. **§b.2 das-check `[6]` empty-dir distinction — DONE + live-proven.** Empty-dir branch landed; first live run showed the recreated-empty `golangci-lint-analysis` (5th recreation) printing "(empty, recurring transient?)" while `alt-nix`/`scratch`/the three check-probe dirs kept the debris hint. `bash -n` green (shellcheck absent from the sandbox — pre-commit/CI legs own it).
+3. **§c.1 dns-update.sh pin-extraction selftest — DONE (4/4) with one in-session incident.** `--selftest` mode exercises the SHIPPED extraction via a shared `extract_sb_pin()` (single regex — no test-copy drift): healthy `hosts/<40-hex>/` URL → commit, never `hosts`; commit-less URL → empty (fail-loud path); hagezi `hosts/` decoy → no match. **Incident:** the first cut lacked `exit` and FELL THROUGH into the main path — it ran `git ls-remote` + refreshed SRI hashes, mutating `platforms/common/dns-blocklists.nix` (16 lines). Caught within the minute, `git restore`d (tree was clean at 22:50 — the diff was 100% this run's product), `exit` added, re-run hermetic (no network, no repo file touched). Side observation: 16/23 lists drifted again — the nightly-drift-automation row (TODO_LIST:240) remains the real fix.
+4. **§c.2 deploy.sh cv OIDC smoke assertion — DONE.** Decision extracted to `scripts/lib/cv-oidc-gate.sh` (pure `cv_oidc_gate_decide <before> <after>`, byte-stable deploy-output lines; deploy.sh keeps the systemctl/sha256sum plumbing — output byte-identical to the pre-extraction gate). `scripts/check-cv-oidc-gate.sh` asserts unchanged→skip+line, rotated/absent-edge→restart, plus deploy.sh wiring greps (source + call + plumbing); selftest rejects 4 drift shapes (inverted decision, reworded unchanged-line, unwired call, deleted function); plain run green; wired as a pre-commit leg on staged deploy.sh/lib edits (parity-leg pattern; standalone hook run green rc=0 with the skip path proven). `bash -n` on all five touched shell files green; nullglob audit: 4 pre-existing warnings (flake.nix ×3, test-caddy-mint.nix), none mine.
+5. **Owner Q2 (nvme0n1p8 corruption counter) — queued, not dropped:** `[blocked:user]` triage row in docs/todo/storage.md (by-id mapping across the nvme0↔nvme1 swap, magnitude reconciliation vs the documented 1.35M csum damage, device-stats delta across the next scrub).
+6. **CHANGELOG:** continuation-batch bullet added under [Unreleased]/Added (an initial edit fused it with the storm-deploy bullet via a line-prefix match — caught by grep, split restored, both bullets verified intact).
+
+### b) Deliberately NOT done
+
+1. **Owner Q3 / §c.3 parity-leg live-fire — still deferred by the row's own constraint:** PSI some avg10 54-56% throughout; the row demands a quiescent moment AND a full pre-commit run executes `nix flake check`. Re-probe at the next calm window.
+2. **Flake-check wiring for `check-cv-oidc-gate.sh`** — same no-nix-mid-storm constraint; HARVESTED as a new [ready] row on both surfaces (TODO_LIST pipeline section + pipeline.md).
+3. Stretch items (§c.4) untouched — they remain open queue rows.
+
+### Harvest log (continuation)
+
+New follow-ups born this continuation: (1) cv-oidc-gate flake-check wiring — QUEUED both surfaces; (2) HaGeZi 16/23-list re-drift observation — deliberately not queued, tracked by the existing nightly-drift-automation row (TODO_LIST:240 + services.md:55); (3) shellcheck-absent-from-sandbox — deliberately not queued, pre-commit/CI legs own script lint, no repo gap. All closed items carry evidence pointers into this report's §a + Continuation §a.
