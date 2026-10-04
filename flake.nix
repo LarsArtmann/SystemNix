@@ -872,7 +872,10 @@
     # rust-overlay — herdr's Rust toolchain provider. Declared as a root
     # input purely to pin herdr's transitive resolve (see herdr block) at a
     # rev with the stdenv.hostPlatform.* migration.
-    rust-overlay.url = "github:oxalica/rust-overlay";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # go-humanize-linter — AST linter detecting hand-rolled reimplementations of go-humanize
     # Go dep inputs (go-finding, go-linter-sdk, go-error-family) are NOT followed —
@@ -2434,19 +2437,20 @@
               # fixture sysfs trees (pre-deploy-metrics-selftest staging
               # shape): enter/exit hysteresis, snapshot restore, external-
               # override adoption, blind-sensor degradation.
-              thermal-pstate-guard-selftest = pkgs.runCommand "thermal-pstate-guard-selftest"
-                {
-                  nativeBuildInputs = with pkgs; [
-                    bash
-                    coreutils
-                  ];
-                }
-                ''
-                  scratch=$(mktemp -d)
-                  cp ${./scripts/thermal-pstate-guard.sh} "$scratch/thermal-pstate-guard.sh"
-                  ${pkgs.bash}/bin/bash "$scratch/thermal-pstate-guard.sh" selftest
-                  touch $out
-                '';
+              thermal-pstate-guard-selftest =
+                pkgs.runCommand "thermal-pstate-guard-selftest"
+                  {
+                    nativeBuildInputs = with pkgs; [
+                      bash
+                      coreutils
+                    ];
+                  }
+                  ''
+                    scratch=$(mktemp -d)
+                    cp ${./scripts/thermal-pstate-guard.sh} "$scratch/thermal-pstate-guard.sh"
+                    ${pkgs.bash}/bin/bash "$scratch/thermal-pstate-guard.sh" selftest
+                    touch $out
+                  '';
 
               # The pre-deploy §11 vendorHash-freshness parsers BLOCK deploys
               # on FOD hash mismatch — the greps they replaced matched output
