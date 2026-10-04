@@ -3688,11 +3688,12 @@
               crush-daily-backfill = {
                 type = "app";
                 program = "${
-                  pkgs.writers.writePython3Bin "crush-daily-backfill"
-                    {
-                      flakeIgnore = [ "E501" "E265" ];
-                    }
-                    (builtins.readFile ./scripts/crush-daily-backfill.py)
+                  pkgs.writers.writePython3Bin "crush-daily-backfill" {
+                    flakeIgnore = [
+                      "E501"
+                      "E265"
+                    ];
+                  } (builtins.readFile ./scripts/crush-daily-backfill.py)
                 }/bin/crush-daily-backfill";
                 meta.description = "Backfill crush-daily reports for zero-data or missing dates";
               };

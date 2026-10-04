@@ -404,6 +404,9 @@ _: {
               subdomain = "banksync";
               port = ports.bank-sync;
               vHost.layer = "protected";
+              # The daemon's DNS-rebinding guard 403s any non-localhost Host
+              # on its loopback bind — rewrite the upstream Host to localhost.
+              vHost.hostOverride = "localhost";
               checks = [
                 {
                   name = "Bank-Sync";

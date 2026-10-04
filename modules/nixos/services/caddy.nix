@@ -278,10 +278,19 @@ _: {
                   ];
                   default = "protected";
                   description = ''
-                    "protected" = Layer 2 (oauth2-proxy forward-auth for external, LAN bypass) —
-                    for apps without their own auth. "plain" = Layer 0/1 direct
+                     "protected" = Layer 2 (oauth2-proxy forward-auth for external, LAN bypass) —
+                     for apps without their own auth. "plain" = Layer 0/1 direct
                     reverse_proxy — for LAN-only UIs and apps with native OIDC
-                    (forward-auth would double-auth them).
+                     (forward-auth would double-auth them).
+                  '';
+                };
+                hostOverride = lib.mkOption {
+                  type = lib.types.nullOr lib.types.str;
+                  default = null;
+                  description = ''
+                    Rewrite the upstream Host header to this value (bank-sync
+                    DNS-rebinding-guard class: loopback apps that 403 any
+                    non-localhost Host).
                   '';
                 };
               };
