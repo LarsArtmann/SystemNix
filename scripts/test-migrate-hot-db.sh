@@ -32,13 +32,6 @@ fail() {
   echo "FAIL: $1" >&2
   FAILURES=$((FAILURES + 1))
 }
-assert_contains() {
-  if grep -qF -- "$2" "$1"; then
-    ok "$3"
-  else
-    fail "$3 (expected '$2' in '$1')"
-  fi
-}
 
 # ── fixture scaffolding ─────────────────────────────────────────────────────
 SCRATCH=$(mktemp -d)
@@ -263,9 +256,14 @@ grep -qF "== finalize" <<<"$out" && ok "dry-run finalize prints its banner" || f
 # trips this instead of re-opening the hand-count drift class.
 SELF=${BASH_SOURCE[0]}
 ANCHOR_RE='&& ok "|[|][|] ok "'
-anchored=$(grep -cE "$ANCHOR_RE" "$SELF" || true)
+# grep -v excludes the ANCHOR_RE definition itself — the pattern string
+# matches its own literal (probe-proven: first run counted 33 sites for 32
+# real ones and the self-check correctly refused to bless it).
+anchored=$(grep -E "$ANCHOR_RE" "$SELF" | grep -cv '^ANCHOR_RE=' || true)
 anchored=${anchored:-0}
-[ "$anchored" -eq "$PASS_COUNT" ] && ok "self-count ($PASS_COUNT emitted == $anchored anchored call sites)" || fail "assertion count drift: $PASS_COUNT emitted vs $anchored anchored call sites"
+# +1: THIS check's own site is in the anchored count but emits only after
+# the comparison passes — the success invariant is PASS_COUNT+1 == anchored.
+[ "$anchored" -eq "$((PASS_COUNT + 1))" ] && ok "self-count ($((PASS_COUNT + 1)) emitted incl. this == $anchored anchored call sites)" || fail "assertion count drift: $((PASS_COUNT + 1)) emitted vs $anchored anchored call sites"
 
 echo
 if [ "$FAILURES" -eq 0 ]; then
