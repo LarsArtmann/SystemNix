@@ -1207,6 +1207,10 @@ in
       # threshold events at 85 % with 80 % re-arm hysteresis.
       storage-collector = {
         enable = true;
+        # Explicit package pin: the upstream module default resolves
+        # `self.packages.${pkgs.system}` — the deprecated pkgs.system alias —
+        # and emits the renamed warning on every evo-x2 eval once forced.
+        package = inputs.storage-collector.packages.${pkgs.stdenv.hostPlatform.system}.default;
       };
 
       # Monitor365 server (dashboard + API) runs on the same machine
