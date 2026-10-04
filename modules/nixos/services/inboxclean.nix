@@ -1,6 +1,12 @@
 # Runbook: docs/services/inboxclean.md
 # InboxClean — SystemNix wrapper around upstream nixos-module.
 #
+# Deployment note (2026-10-04): repeatable paperless --checksum/--document
+# flags only work on nix-built binaries from upstream rev 5d81308 or newer
+# (bumps cmdguard to the released v4.1.0 slice-flag fix; proxy cmdguard
+# v4.0.2 mis-parses pflag's bracketed render). Check the locked inboxclean
+# input rev before relying on those flags in a manual run.
+#
 # The upstream module (inputs.inboxclean.nixosModules.default, nix/module.nix
 # in the InboxClean repo) provides every option (enable, package, addr, dataDir,
 # environmentFile, gmailCredentialsFile, gmailTokenFile, extraEnvironment,
