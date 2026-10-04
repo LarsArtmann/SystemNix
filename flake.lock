@@ -157,11 +157,11 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1791097452,
-        "narHash": "sha256-IqkeFgEWD7EkZEMKIe3cj0+HyRYUYD44A9BmEeUY8eo=",
+        "lastModified": 1791107813,
+        "narHash": "sha256-YKXa8BkJL13dysmJa7vn/XMqwQdBsuURTAu8Ohq/ZrM=",
         "owner": "LarsArtmann",
         "repo": "bank-sync",
-        "rev": "b092229a68b31285e1f3dfcc4b62686d95f43db2",
+        "rev": "5bdc739e583edc3edf4f76ad822ad7e09d2df3c3",
         "type": "github"
       },
       "original": {
@@ -385,11 +385,11 @@
     "cmdguard_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1791107820,
-        "narHash": "sha256-L23KMbBdNG2HwGW0uNyfNMr8fQ+Iibe6VbZAeksTxh4=",
+        "lastModified": 1791107951,
+        "narHash": "sha256-mQzP68OpR/NBnlYweWTxhKp22wNcetOsN6EWHoTNzZQ=",
         "owner": "LarsArtmann",
         "repo": "cmdguard",
-        "rev": "33d8a7cd6f4bda6a44c9b45e35416580d37b804a",
+        "rev": "0ca8957f200c6aa93127e6aa459bf058da709c4f",
         "type": "github"
       },
       "original": {
@@ -748,11 +748,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1791106313,
-        "narHash": "sha256-EcWbcCwEc3/zfHbx1spf6fR+7TRRWI9b+ZmMP4Bd9sI=",
+        "lastModified": 1791107778,
+        "narHash": "sha256-f4Em25NXbwidoGc80hW4rM4k6R3CsrZbFrnqQvMNm5I=",
         "ref": "master",
-        "rev": "cb075abc8f2ab64fafdf4a94fea9839cf585d750",
-        "revCount": 526,
+        "rev": "883839810d3468fcb60a48121d01cf90025b1d75",
+        "revCount": 530,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crm"
       },
@@ -1008,11 +1008,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1791107182,
-        "narHash": "sha256-CJEpY2bQ0aK/s0YC8shFAMg2a5RphUdvHKW3ozeX2NI=",
+        "lastModified": 1791107985,
+        "narHash": "sha256-eHsgMe4uDrpED04rxbqPyS6vSiwJcoZvlqXd3SEXkYg=",
         "owner": "LarsArtmann",
         "repo": "dnsblockd",
-        "rev": "c716036f88e17f29bc6103af0c346b939a8a0333",
+        "rev": "8810481407bdc7d1a668271ed34b9f5f7a2bf15c",
         "type": "github"
       },
       "original": {
@@ -1152,11 +1152,11 @@
         "vision-review-agent-src": "vision-review-agent-src"
       },
       "locked": {
-        "lastModified": 1791082784,
-        "narHash": "sha256-Nbcw6sYgjJ4bOO7BKdsU2df5+wkw6fOGFZw9OpYM9Bo=",
+        "lastModified": 1791104922,
+        "narHash": "sha256-tnOIEWo2mGDt8WYEu9dtAB7CcJ9Jjw8uqrW3NVPK/Ag=",
         "ref": "refs/heads/master",
-        "rev": "45e61827e17611cda802d7227fd54c72cf1cf921",
-        "revCount": 1499,
+        "rev": "0ff447227f265cc7fc6c40af406e9fe97a88c540",
+        "revCount": 1500,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/file-and-image-renamer"
       },
