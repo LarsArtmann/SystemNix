@@ -3624,6 +3624,10 @@
                       # unstaged = the gate dies at source time on EVERY deploy
                       # (the 2026-09-02 metrics-gate staging class).
                       cp ${./scripts/lib/offsite-borg-smoke.sh} $out/bin/lib/offsite-borg-smoke.sh
+                      # vendor-freshness.sh was added to the script's sources
+                      # without a staging line — same 2026-09-02 class; every
+                      # deploy aborted at source time until staged (2026-10-04).
+                      cp ${./scripts/lib/vendor-freshness.sh} $out/bin/lib/vendor-freshness.sh
                       chmod +x $out/bin/pre-deploy-check
                     ''
                   }/bin/pre-deploy-check";

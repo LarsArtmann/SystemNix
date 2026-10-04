@@ -66,7 +66,14 @@ nixpkgs.lib.nixosSystem {
             enable = true;
             package = inputs.bank-sync.packages.x86_64-linux.default;
           };
-          services.docs-archive-stats.enable = true;
+          services.docs-archive-stats = {
+            enable = true;
+            # Explicit package pin (bank-sync pattern above): the upstream
+            # module default resolves `inputs.self.packages.${pkgs.system}`
+            # — the deprecated pkgs.system alias — and emits the renamed
+            # warning on every evo-x2 eval once forced.
+            package = inputs.index.packages.x86_64-linux.default;
+          };
         };
         extraSpecialArgs = sharedHomeManagerSpecialArgs // {
           wallpapers = inputs.wallpapers-src;
