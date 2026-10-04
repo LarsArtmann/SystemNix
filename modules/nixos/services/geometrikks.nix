@@ -42,9 +42,15 @@
       # Tail every Caddy access-log sink (host paths now — no container
       # mount mapping anymore). The nixpkgs caddy module writes each vhost
       # to access-<host>.log (file output => Caddy's default encoder is
-      # JSON per caddyserver.com/docs/caddyfile/directives/log), and the
-      # global access.log only receives un-matched traffic — so the FULL
-      # list (global + every vhost) is the complete traffic picture.
+      # JSON per caddyserver.com/docs/caddyfile/directives/log). The
+      # global access.log is Caddy's DEFAULT logger: it receives access
+      # records for hosts without their own log block PLUS Caddy runtime
+      # log lines (JSON without a `request` object). The tailer drops
+      # runtime lines harmlessly by construction — formats/caddy.py
+      # parse() returns None when the decoded object has no `request` or
+      # no client IP (verified against geometrikks v0.19.0 source,
+      # 2026-10-04) — so the FULL list (global + every vhost) is the
+      # complete traffic picture.
       # Filenames replicate vhost-options.nix's own derivation: "/" and
       # " " -> "_". Derived from config.services.caddy.virtualHosts at
       # eval time, so new services are tracked automatically.
