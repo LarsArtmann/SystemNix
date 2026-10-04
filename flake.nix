@@ -238,6 +238,11 @@
       url = "github:NousResearch/hermes-agent";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
+      # Upstream pins its own uv2nix (2026-07-28) whose lib/build.nix still
+      # uses the deprecated stdenv.isDarwin/isLinux accessors — eval warnings
+      # on every hermes eval. Follow our root pin (a24323e9, migrated to
+      # stdenv.hostPlatform.*) instead.
+      inputs.uv2nix.follows = "uv2nix";
     };
 
     # monitor365 — Device monitoring agent (Rust)

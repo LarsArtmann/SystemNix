@@ -5287,7 +5287,9 @@
         "npm-lockfile-fix": "npm-lockfile-fix",
         "pyproject-build-systems": "pyproject-build-systems",
         "pyproject-nix": "pyproject-nix",
-        "uv2nix": "uv2nix"
+        "uv2nix": [
+          "uv2nix"
+        ]
       },
       "locked": {
         "lastModified": 1790943006,
@@ -6806,7 +6808,7 @@
         "todo-list-ai": "todo-list-ai",
         "treefmt-full-flake": "treefmt-full-flake",
         "treefmt-nix": "treefmt-nix_9",
-        "uv2nix": "uv2nix_2",
+        "uv2nix": "uv2nix",
         "vision-review-agent": "vision-review-agent",
         "wallpapers-src": "wallpapers-src"
       }
@@ -7620,31 +7622,6 @@
       }
     },
     "uv2nix": {
-      "inputs": {
-        "nixpkgs": [
-          "hermes-agent",
-          "nixpkgs"
-        ],
-        "pyproject-nix": [
-          "hermes-agent",
-          "pyproject-nix"
-        ]
-      },
-      "locked": {
-        "lastModified": 1785277507,
-        "narHash": "sha256-9Tq3UDX2hD/aveW/HvkBlAmEwJTOlY5HQXJM+L5BGmE=",
-        "owner": "pyproject-nix",
-        "repo": "uv2nix",
-        "rev": "5a836d395cbf5fc22670eb98dd4aa4fc4d406977",
-        "type": "github"
-      },
-      "original": {
-        "owner": "pyproject-nix",
-        "repo": "uv2nix",
-        "type": "github"
-      }
-    },
-    "uv2nix_2": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
