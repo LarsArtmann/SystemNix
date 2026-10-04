@@ -3236,7 +3236,10 @@
                                               fi
 
                                               # 2. underscore histogram/summary suffixes are stored DOTTED
-                                              if stream "$f" | grep -nE '[a-z_0-9]+_(sum|count|bucket)\b' >lint_hits; then
+                                              # (googleapis_com exemption: GCP-native metric names like
+                                              # storage_googleapis_com_api_request_count END in _count by
+                                              # GCP convention — not Prometheus histogram components).
+                                              if stream "$f" | grep -nE '[a-z_0-9]+_(sum|count|bucket)\b' | grep -v 'googleapis_com' >lint_hits; then
                                                 echo "FAIL [$label] $f: underscore histogram suffix (metric_sum/_count/_bucket)."
                                                 echo "  SigNoz stores suffixes DOTTED: metric.sum, metric.count, metric.bucket."
                                                 echo "  The underscore form matches zero series (caddy/dns dashboards 2026-08-27)."
