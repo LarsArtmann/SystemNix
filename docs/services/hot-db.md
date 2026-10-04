@@ -25,6 +25,35 @@ are added **ONE PER WAVE** — an entry deployed before its
 shadow-splits the service. The five waves below are ordered
 risk-ascending (regenerable stats first, the 11 GB event store last):
 
+### Pre-flight verified (2026-10-04, agent session — tree untouched, throwaway extendModules)
+
+- **All six snippets eval-green**: every entry below (+ the postgres future
+  wave) applied to evo-x2 via `extendModules` — zero failed assertions
+  (incl. the btrbk landmine scan), mounts render (`subvol=hot/<name>`,
+  `nofail`, device `/dev/disk/by-label/tlc`; postgres carries `nodatacow`),
+  anti-shadow `RequiresMountsFor`/`ConditionPathIsMountPoint` land on every
+  unit AND merge with pre-existing pool gating (discordsync: attachments
+  path + dataDir both wired; browser-history-backup: pool backup dir +
+  dataDir), bootstrap `wantedBy` carries all six systemd-escaped mount unit
+  names, 7 anchored Gatus checks render ("Hot Tier Mounted" + per entry).
+- **Vehicle green**: `checks.x86_64-linux.migrate-hot-db-fixture` builds rc=0.
+- **Tier live**: `hot_tier_mounted 1`, `hot_db_scrape_errors 0`, Samsung
+  `/mnt/hot` has ~768 GB free.
+- **GATE (wave 5)**: the discordsync dump leg is STALLED — newest
+  `discordsync-db-*.sql.gz` is 2026-10-01 (82 h at check; `backup_healthy{discordsync} 0`);
+  the 02:30 runs during the freeze-#12..#14 storms failed and `Persistent`
+  does NOT retry failed activations (only missed ones). Before the
+  discordsync window: `sudo systemctl start discordsync-db-backup.service`
+  and confirm a fresh dump + `backup_all_healthy 1` — with Turso blocked
+  this dump is the event store's only backup once it leaves `@`.
+- **GATE (all waves)**: IO PSI avg10 was 54% at verification (Zone-6 storm,
+  5 memory-guard trips/h) — no window until quiescence (the script's own
+  ≥ 20% refusal fires anyway).
+- Known flake-gate hazard (not wave-specific): the `hermes-python-source`
+  IFD orphan can brick `nix flake check --no-build` after a GC — see
+  `docs/todo/pipeline.md` "orphan" row; build `.#checks.x86_64-linux.hermes`
+  once to re-realize the path.
+
 | Wave | Entry             | dataDir (REAL path)                                                                | Stop window blip                                                 | Backup leg                                                                                        |
 | ---- | ----------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | 1    | `gatus`           | `/var/lib/private/gatus`                                                           | monitoring blind ~1-3 min (every check reds once, then resolves) | none — self-pruning stats, regenerable                                                            |
