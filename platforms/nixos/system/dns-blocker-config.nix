@@ -87,10 +87,14 @@ in
           ips = [ "192.168.1.1" ];
         }
         {
-          # owner-confirm: Realtek NIC (00:e0:4c:…) — LG TV SSCR2 by
-          # elimination; wired TVs keep stable MACs but confirm anyway.
-          id = "lg-tv";
-          name = "LG TV (SSCR2)";
+          # Identity CONFIRMED by owner 2026-10-04: .62 is Lars's MacBook
+          # Air. The 2026-09-30 ARP inventory guessed "LG TV SSCR2" by
+          # elimination — but that TV is evo-x2's DP-2 monitor (niri
+          # outputs), and the Realtek NIC (00:e0:4c:…) is the Mac's USB
+          # ethernet adapter. Wi-Fi IPs (Apple OUI) are NOT covered: add
+          # that IP here too if the Mac roams, or it shows as a raw row.
+          id = "macbook";
+          name = "MacBook Air";
           ips = [ "192.168.1.62" ];
         }
       ];
@@ -99,6 +103,7 @@ in
           name = "Lars";
           devices = [
             "evo-x2"
+            "macbook"
           ];
         }
       ];
