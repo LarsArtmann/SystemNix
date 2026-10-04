@@ -105,7 +105,7 @@ cat >"$BIN/findmnt" <<'EOF'
 #!/usr/bin/env bash
 # fixture stub
 if [ "$2" = "SOURCE" ]; then
-  awk -v p="$3" '$1 == p {print $2; found=1} END {exit !found}' "$FINDMNT_MAP"
+  awk -v p="$3" '$1 == p {print $2; found=1; exit} END {exit !found}' "$FINDMNT_MAP"
 else
   exit 1
 fi
@@ -149,7 +149,7 @@ EOF
 cat >"$BIN/tar" <<EOF
 #!/usr/bin/env bash
 # fixture stub
-if [ "\${TAR_MODE:-}" = "truncated" ]; then
+if [ "\${TAR_MODE:-}" = "truncated" ] && [ "\$1" = "-C" ]; then
   exec "$REAL_TAR" -C "\$2" --zstd -cf "\$5" caddy/access-a.log
 fi
 exec "$REAL_TAR" "\$@"
@@ -185,6 +185,8 @@ mkshadow() {
 : >"$MOUNTPOINT_LIST"
 echo /mnt/hot >>"$MOUNTPOINT_LIST"
 echo /mnt/pool >>"$MOUNTPOINT_LIST"
+# default findmnt answers (per-case blocks rewrite this as needed)
+printf '%s %s\n' "/" "/dev/fixture-rootp6[/@]" >"$FINDMNT_MAP"
 
 run_migrate() {
   bash "$SCRIPT_UNDER_TEST" "$@"
@@ -278,6 +280,9 @@ mkshadow
 grep -vxF "$SRC_F" "$MOUNTPOINT_LIST" >"$MOUNTPOINT_LIST.tmp" || true
 mv "$MOUNTPOINT_LIST.tmp" "$MOUNTPOINT_LIST"
 run_migrate prepare >/dev/null 2>&1
+# pin mtimes into the past: rsync JUST wrote these, and with the sleep stub
+# there is no 35s separation — a same-second mtime would false-positive FRESH.
+find "$SUBVOL_F" -type f -exec touch -d '1 hour ago' {} +
 : >"$SYSTEMCTL_LOG"
 echo "$SRC_F" >>"$MOUNTPOINT_LIST"
 out=$(FIXTURE_SLEEP_TOUCH='' run_migrate finalize 2>&1) && fail "finalize passed a quiet window" || {
@@ -309,6 +314,7 @@ out=$(run_migrate shadow-cleanup 2>&1) && fail "shadow-cleanup ran with caddy on
 }
 
 # ── 15. shadow-cleanup refusal: pool archive target missing ─────────────────
+printf '%s %s\n' "/" "/dev/fixture-rootp6[/@]" >"$FINDMNT_MAP"
 printf '%s %s\n' "$SRC_F" "/dev/fixture-samsungp2[/caddy-logs]" >>"$FINDMNT_MAP"
 grep -vxF /mnt/pool "$MOUNTPOINT_LIST" >"$MOUNTPOINT_LIST.tmp" || true
 mv "$MOUNTPOINT_LIST.tmp" "$MOUNTPOINT_LIST"
@@ -318,6 +324,8 @@ out=$(run_migrate shadow-cleanup 2>&1) && fail "shadow-cleanup ran without the p
 echo /mnt/pool >>"$MOUNTPOINT_LIST"
 
 # ── 16. shadow-cleanup: archive verify-fail leaves the shadow intact ────────
+printf '%s %s\n' "/" "/dev/fixture-rootp6[/@]" >"$FINDMNT_MAP"
+printf '%s %s\n' "$SRC_F" "/dev/fixture-samsungp2[/caddy-logs]" >>"$FINDMNT_MAP"
 QLC_SHADOW=$FIXTURE_QLC_AT/var/log/caddy
 rm -rf "$FIXTURE_QLC_AT"
 mkdir -p "$QLC_SHADOW/nested"
@@ -331,6 +339,8 @@ out=$(TAR_MODE=truncated run_migrate shadow-cleanup 2>&1) && fail "shadow-cleanu
 [ ! -e "$CADDY_MIGRATE_AUX" ] && ok "failed verify unmounted the aux view (crash-safe trap)" || fail "aux view leaked after failure"
 
 # ── 17. shadow-cleanup happy path ───────────────────────────────────────────
+printf '%s %s\n' "/" "/dev/fixture-rootp6[/@]" >"$FINDMNT_MAP"
+printf '%s %s\n' "$SRC_F" "/dev/fixture-samsungp2[/caddy-logs]" >>"$FINDMNT_MAP"
 out=$(run_migrate shadow-cleanup 2>&1) || {
   fail "shadow-cleanup exited non-zero: $out"
   exit 1

@@ -2498,6 +2498,39 @@
                     touch $out
                   '';
 
+              # migrate-caddy-logs-hot.sh did its live 2026-10-01→10-04
+              # window with only shellcheck + dry-run coverage — every
+              # FAILURE branch (verify-fail caddy restart, EXIT/INT traps,
+              # refusal gates, the hardened finalize window checks, and the
+              # destructive shadow-cleanup's detached-Samsung guard) was
+              # never exercised for real. Same stub-fixture pattern as the
+              # hot-db sibling: PATH stubs for the root-bound commands,
+              # real rsync/find/tar, aux-mount faked by symlink.
+              migrate-caddy-logs-fixture =
+                pkgs.runCommand "migrate-caddy-logs-fixture"
+                  {
+                    nativeBuildInputs = with pkgs; [
+                      bash
+                      coreutils-full
+                      rsync
+                      gawk
+                      findutils
+                      gnugrep
+                      diffutils
+                      gnused
+                      gnutar
+                      zstd
+                    ];
+                  }
+                  ''
+                    scratch=$(mktemp -d)
+                    mkdir -p "$scratch/scripts"
+                    cp ${./scripts/migrate-caddy-logs-hot.sh} "$scratch/scripts/migrate-caddy-logs-hot.sh"
+                    cp ${./scripts/test-migrate-caddy-logs-hot.sh} "$scratch/scripts/test-migrate-caddy-logs-hot.sh"
+                    bash "$scratch/scripts/test-migrate-caddy-logs-hot.sh"
+                    touch $out
+                  '';
+
               # The 2026-09-29 gatus config-panic incident: an alert
               # description containing `\"` (mount_point="/") made gatus
               # 5.36.0 panic AT STARTUP ("alert description must not have
