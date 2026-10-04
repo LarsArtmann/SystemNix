@@ -74,6 +74,33 @@
           map (m: builtins.match "(ata|scsi|usb)-(.+)" (baseNameOf m)) cfg.members
         )
       );
+
+      # Eval-time converge-coverage guard (2026-10-04 outage): every pool-bound
+      # DAEMON must be reachable by converge_consumers. Bound = any
+      # unitConfig.RequiresMountsFor path on or under the mount point
+      # (RequiresMountsFor gates every mount CONTAINING the path, so both the
+      # exact "/mnt/pool" and "/mnt/pool/services/x" forms bind mnt-pool.mount);
+      # daemon = carries Restart= (oneshots/timers self-heal on their next
+      # tick — a dead daemon stays dark until a human notices). The assertion
+      # in config fails the eval naming every uncovered unit, so the next
+      # paperless-gpt cannot silently join the blast radius.
+      poolBoundDaemons = lib.filterAttrs (_: svc: let
+        rmf = (svc.unitConfig or {}).RequiresMountsFor or null;
+        paths =
+          if lib.isList rmf
+          then map toString rmf
+          else lib.optionals (rmf != null) [ (toString rmf) ];
+        bound = lib.any (
+          p: p == cfg.mountPoint || lib.hasPrefix "${cfg.mountPoint}/" p
+        ) paths;
+        daemon = (svc.serviceConfig or {}).Restart or null != null;
+      in
+        bound && daemon
+      ) config.systemd.services;
+
+      unconvergedDaemons = lib.filter (
+        unit: !lib.elem "${unit}.service" (cfg.restartUnits ++ cfg.restartUnitsExempt)
+      ) (lib.attrNames poolBoundDaemons);
     in
     {
       options.services.pool-recovery = {
@@ -105,6 +132,11 @@
             "atticd.service"
             "atticd-bootstrap.service"
             "immich-server.service"
+            # ML is pool-bound too (RequiresMountsFor /mnt/pool/services/immich)
+            # and the 2026-10-04 remount stopped it with everything else — but
+            # only the server was in this list, so smart search/thumbnails
+            # stayed dark until a manual start. Same class as tq below.
+            "immich-machine-learning.service"
             "paperless-web.service"
             "paperless-consumer.service"
             "paperless-task-queue.service"
@@ -123,6 +155,13 @@
             # them) left the queue dark until the next reboot.
             "tq-serve.service"
             "tq-agent-pool.service"
+            # paperless-gpt is pool-bound VIA ITS TOKEN unit: the mint sets
+            # RequiresMountsFor = paperless dataDir and the daemon Requires=
+            # the token, so a remount's mount-stop cascade kills the daemon
+            # too (2026-10-04: healthy at 07:40:18, stopped at :21, dark
+            # until manual start — the converge list predated the service).
+            # requires= pulls the token back up, so only the daemon is listed.
+            "paperless-gpt.service"
           ];
           description = ''
             Pool consumers to converge once the pool mount is healthy: FAILED
@@ -138,6 +177,17 @@
           '';
         };
 
+        restartUnitsExempt = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = ''
+            Pool-bound daemons deliberately NOT converged after a remount.
+            The only escape hatch from the eval-time coverage assertion —
+            every entry needs a comment justifying why the unit self-heals
+            (own timer, watchdog, etc.).
+          '';
+        };
+
         settleTimeoutSeconds = lib.mkOption {
           type = lib.types.int;
           default = 90;
@@ -146,6 +196,14 @@
       };
 
       config = lib.mkIf cfg.enable {
+        assertions = [
+          {
+            assertion = unconvergedDaemons == [ ];
+            message = ''
+              pool-recovery: pool-bound daemon(s) missing from services.pool-recovery.restartUnits — a stale-mount remount stops them and NOTHING converges them back (2026-10-04: paperless-gpt + immich-machine-learning went dark 20+ min after a deploy-time remount). Add to restartUnits, or restartUnitsExempt with a reason: ${lib.concatStringsSep ", " unconvergedDaemons}
+            '';
+          }
+        ];
         # One rule per member serial, whole-disk add only (pool members are
         # unpartitioned). SYSTEMD_WANTS coalesces the two near-simultaneous
         # triggers into one unit job; the script also flocks for safety.

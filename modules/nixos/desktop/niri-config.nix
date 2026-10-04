@@ -46,6 +46,27 @@ _: {
           package = niriPkg;
         };
 
+        # Disable niri-flake's polkit-kde-agent-1 — DMS (quickshell) owns the
+        # polkit agent slot instead. Two independent reasons:
+        #   1. The KDE agent is a QQC2 app whose Qt env cannot resolve its QML
+        #      style: every auth request aborts with `qrc:/qml/QuickAuthDialog.
+        #      qml: module "fusion" is not installed` → KCrash (the 2026-08-18
+        #      gtk2 class, recurred as fusion 2026-10-03: 191 crash-loop
+        #      restarts). Whenever a polkit prompt fires, the dialog never
+        #      renders — GUI auth dead system-wide.
+        #   2. It RACES DMS's native agent for the one registration slot:
+        #      niri starts it (WantedBy=niri.service) seconds before DMS, and
+        #      DMS's registration then fails with "An authentication agent
+        #      already exists for the given subject" (journal 2026-10-04
+        #      05:11) — so the BROKEN KDE agent is the sole registered agent.
+        # DMS's agent (Quickshell.Services.Polkit, compiled into quickshell) is
+        # immune to the QQC2 style class and renders in the shell theme.
+        # Upstream-documented knob (niri-flake README: "If you prefer a
+        # different polkit authentication agent"). POST-DEPLOY: restart the dms
+        # user service (or re-login) — its startup registration failed while
+        # the KDE agent still held the slot, and it does not retry.
+        systemd.user.services.niri-flake-polkit.enable = false;
+
         systemd.tmpfiles.rules = [
           (mkStateDir "/var/lib/niri-drm-healthcheck" "0755" config.users.primaryUser "users")
           (mkStateDir "/var/lib/display-watchdog" "0755" "root" "root")

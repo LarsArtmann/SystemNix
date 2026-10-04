@@ -580,8 +580,16 @@ fi
 # without auth (liveness), the loopback bind holds (the embedded UI has NO
 # auth — a wildcard bind would be a security regression), and the minted
 # token env file exists with the daemon user's ownership (the bank-sync
-# runtime-mint pattern). Enable-gated like every service leg.
-if systemctl is-active paperless-gpt.service >/dev/null 2>&1; then
+# runtime-mint pattern). Gate on unit-file PRESENCE like the other legs
+# (Paperless/Miniflux/Hermes), never on is-active alone: a deployed-but-
+# inactive unit must FAIL, not SKIP as "disabled" — 2026-10-04 the SKIP
+# mislabeled a remount-killed daemon and the battery stayed near-green
+# while the service was dark 20+ min.
+if [ ! -e /etc/systemd/system/paperless-gpt.service ]; then
+  report_skip "paperless-gpt - not deployed (unit absent from systemd)"
+elif ! systemctl is-active paperless-gpt.service >/dev/null 2>&1; then
+  report_fail "paperless-gpt - unit deployed but NOT active (systemctl status paperless-gpt; remount-orphan class = check pool-recovery restartUnits)"
+else
   if curl -s --compressed --max-time 10 "http://127.0.0.1:8106/api/filter-tag" 2>/dev/null | grep -q '"tag"'; then
     report_pass "paperless-gpt - /api/filter-tag answers (daemon + router alive)"
   else
