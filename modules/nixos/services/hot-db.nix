@@ -159,8 +159,18 @@
             map (e: e.path) entryList
           );
           badAbs = lib.findFirst (e: !lib.hasPrefix "/" e.path || e.path == "/") null entryList;
+          # underHot must catch the REAL mountpoint nesting — an entry whose
+          # dataDir sits inside the toplevel mount (e.g. /mnt/hot/foo) would
+          # double-expose the same subvol (once via the toplevel, once via
+          # its dedicated mount). The literal /hot/ check alone missed it
+          # (probe-proven 2026-10-04: /mnt/hot/foo evals green with the old
+          # form — the guard claimed protection it did not deliver).
           underHot = lib.findFirst (
-            e: lib.hasPrefix "/${hotParent}/" e.path || e.path == "/${hotParent}"
+            e:
+            lib.hasPrefix "/${hotParent}/" e.path
+            || e.path == "/${hotParent}"
+            || lib.hasPrefix "${cfg.toplevelMount}/" e.path
+            || e.path == cfg.toplevelMount
           ) null entryList;
         in
         lib.optional (cfg.entries != { } && !cfg.enable)
@@ -168,7 +178,7 @@
         ++ lib.optionals (dupPaths != null) [ "duplicate entry path ${dupPaths}" ]
         ++ lib.optionals (badAbs != null) [ "entry ${badAbs.name} path must be absolute and not /" ]
         ++ lib.optionals (underHot != null) [
-          "entry ${underHot.name} path must not be under /${hotParent}"
+          "entry ${underHot.name} path must not be under the hot tier (/${hotParent} or ${cfg.toplevelMount})"
         ];
     in
     {
