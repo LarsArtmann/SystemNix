@@ -690,7 +690,6 @@
 - [ ] [decision] **Caddy file logs on QLC root: move to /mnt/hot or bound retention** — [docs/todo/services.md](docs/todo/services.md)
 - [ ] [decision] **Per-vHost access-log roll bounds vs Caddy defaults** — [docs/todo/services.md](docs/todo/services.md)
 - [ ] [ready] **Fix pre-existing negative-test-lint failures (7 dead-guards: cv/hermes/btrfs-health/_forgejo-scripts; signoz pristine control)** — [docs/todo/pipeline.md](docs/todo/pipeline.md)
-- [ ] [ready] **Pin `zfs.latestCompatibleLinuxPackages` explicitly (26.11 deprecation advisory, behavior-neutral)** — [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] [ready] **Add or de-reference the nonexistent `caddy-mutant` negative-test case** — [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] [ready] **Refresh the SSO-layer table in `docs/agents/sso-dns.md` vs the registry (fleet drifted; table moved out of AGENTS.md in the 2026-10-01 restructure)** — [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] [watch] **voice/whisper dns-local additions + exemption drop when voice-agents lands** — [docs/todo/services.md](docs/todo/services.md)

@@ -145,12 +145,17 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Resolve the server's main PID from the scope cgroup.
+# Resolve the server's main PID from the scope cgroup. The `|| true` is
+# load-bearing under `set -euo pipefail`: a not-yet-listed process makes
+# grep exit 1, and an unguarded pipeline here would kill the script
+# silently BEFORE the retry loop below ever runs (first real execution
+# 2026-10-04: instant silent exit at t=0). Empty output is the normal
+# race the loop is designed to absorb.
 get_pid() {
   systemd-cgls -u "$SCOPE.service" --no-pager 2>/dev/null |
     grep -oE '[0-9]+ .*/'"$(basename "$SERVER")" |
     head -1 |
-    awk '{print $1}'
+    awk '{print $1}' || true
 }
 
 # CPU-time sample: utime+stime (ticks) from /proc/<pid>/stat field 14+15.

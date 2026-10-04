@@ -43,15 +43,15 @@ Bisect method for the two hidden aliases and crm: `NIX_ABORT_ON_WARN=1 nix eval 
 1. **hermes-agent (NousResearch) `stdenv.isLinux` ×3** — `nix/hermes-agent.nix:154,342`, `nix/packages.nix:69`; upstream repo, mechanical fix, [ready] row in docs/todo/upstream.md (verify-before-filing gates it). The ONLY remaining deprecation from the user's classes.
 2. **dead-guard-lint check FAILED — pre-existing, grew during the session** — 7 findings: cv.nix:590, hermes.nix:164 (both pre-existing), btrfs-health.nix:320 and _forgejo-scripts.nix ×4 (files last touched 10-02/10-03, before this session). The existing pipeline.md row said 2 findings; refreshed to 7 in both surfaces (TODO_LIST.md + pipeline.md). NOT fixed here — each needs a `|| true` vs `# dead-guard-ok` judgment call in someone else's module.
 3. **stateVersion ×81** — VM-test/extendModules synthetic nodes defaulting to 26.11; separate warning class, [decision] row queued in pipeline.md (silence via explicit stateVersion in the shared test base vs accept).
-4. **zfs 26.11 advisories ×2** (forceImportRoot default flip, latestCompatibleLinuxPackages deprecation) — harvested: [ready] pin row + [decision] forceImportRoot row in storage.md, [ready] pin queued in TODO_LIST.md.
+4. **zfs 26.11 advisories ×2** (forceImportRoot default flip, latestCompatibleLinuxPackages deprecation) — ~~harvested~~ **REMOVED 2026-10-04: owner states ZFS is no longer in use anywhere** — the advisories are inert nixpkgs-default noise on a box without ZFS pools; the [ready]/[decision] rows were voided and dropped from storage.md + TODO_LIST.md same day. Do not re-harvest these.
 5. **catalog/caddy ghost-entry + llama-vlm soak warnings** — deliberate module audit messages, untouched.
 6. **index + storage-collector upstream `pkgs.system` fixes** — [blocked:push] rows queued in upstream.md; the SystemNix-side pins can drop after those pushes.
 
 ## e. Harvest record
 
 - Refreshed (drift rule): dead-guard-lint row in TODO_LIST.md:692 + docs/todo/pipeline.md:223 (2→7 findings, current line numbers, binary-coverage resolution noted).
-- Added: storage.md ×2 (zfs), pipeline.md ×1 (stateVersion), upstream.md ×4 (crm follow, hermes-agent migration, index, storage-collector).
-- Queued [ready] one-liners: dead-guard refresh (existed), zfs pin (new).
+- Added: pipeline.md ×1 (stateVersion), upstream.md ×4 (crm follow, hermes-agent migration, index, storage-collector). (The storage.md ×2 zfs rows were added then removed same day — voided by the owner's no-ZFS decision.)
+- Queued [ready] one-liners: dead-guard refresh (existed). (zfs pin queued then dropped same day — void.)
 - Deliberately NOT harvested: none — every §d item is either queued above or was already tracked (catalog/caddy/llama-vlm are live module audit output, not work items).
 
 ## f. Memory
