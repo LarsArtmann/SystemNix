@@ -246,6 +246,11 @@ _: {
           # template: agent payloads inherit the environment).
           serviceConfig = lib.mkMerge [
             {
+              # Upstream (go-taskqueue, lock rev e845a92) also sets these;
+              # systemd rejects them in [Service] — null-force them out,
+              # the [Unit] keys above are the working placement.
+              startLimitBurst = lib.mkForce null;
+              startLimitIntervalSec = lib.mkForce null;
               EnvironmentFile = [ config.sops.templates."tq-agent-pool-env".path ];
               # GOEXPERIMENT must match the interactive session (home.nix):
               # the verify gate and agent-run go commands inherit THIS env
@@ -269,6 +274,10 @@ _: {
           startLimitIntervalSec = 300;
           inherit onFailure;
           serviceConfig = lib.mkMerge [
+            # Upstream (go-taskqueue, lock rev e845a92) also sets these;
+            # systemd rejects them in [Service] — null-force them out,
+            # the [Unit] keys above are the working placement.
+            { startLimitBurst = lib.mkForce null; startLimitIntervalSec = lib.mkForce null; }
             # WAL/SHM siblings need write access to the DB dir even for a
             # read-only dashboard process.
             { ReadWritePaths = [ "/mnt/pool/services/tq" ]; }
