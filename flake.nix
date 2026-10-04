@@ -2408,6 +2408,22 @@
                 touch $out
               '';
 
+              # The pre-deploy §11 vendorHash-freshness parsers BLOCK deploys
+              # on FOD hash mismatch — the greps they replaced matched output
+              # nix never produces and warned "unable to determine status" on
+              # every run for two months (the 2026-08 stale-vendorHash class
+              # broke two deploys unseen). Fixtures are REAL captured nix
+              # output; same staging + through-nix rationale as
+              # pre-deploy-metrics-selftest above.
+              pre-deploy-vendor-selftest = pkgs.runCommand "pre-deploy-vendor-selftest" { } ''
+                scratch=$(mktemp -d)
+                mkdir -p "$scratch/scripts/lib"
+                cp ${./scripts/test-pre-deploy-vendor.sh} "$scratch/scripts/test-pre-deploy-vendor.sh"
+                cp ${./scripts/lib/vendor-freshness.sh} "$scratch/scripts/lib/vendor-freshness.sh"
+                ${pkgs.bash}/bin/bash "$scratch/scripts/test-pre-deploy-vendor.sh"
+                touch $out
+              '';
+
               # migrate-hot-db.sh is the DESTRUCTIVE vehicle of the hot-DB
               # per-service waves (stops services, rsyncs dataDirs) — the
               # 2026-09-30 storage.md row demanded a stub-fixture test BEFORE

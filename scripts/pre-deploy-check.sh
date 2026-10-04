@@ -56,6 +56,11 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/offsite-borg-smoke.sh"
 OB_PASS=pass OB_FAIL=fail OB_SKIP=ob_pre_skip
 # shellcheck disable=SC2329
 ob_pre_skip() { echo "   $1"; }
+# Shared §11 vendor-freshness FOD gate (fixture-tested by
+# scripts/test-pre-deploy-vendor.sh and the pre-deploy-vendor-selftest
+# flake check — the got-hash verdict blocks deploys).
+# shellcheck source=scripts/lib/vendor-freshness.sh disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/lib/vendor-freshness.sh"
 
 echo "=== Pre-Deploy Validation ==="
 echo ""
@@ -64,10 +69,14 @@ echo ""
 # without paying for the flake check / vendorHash dry-runs — the gate that
 # actually blocks deploys is the one that needs the most iterations when its
 # classifiers change. Same summary/exit semantics as a full run.
+# --section-11-only (2026-10-04): same pattern for the §11 vendorHash
+# FOD-preview gate (real-build verdicts; see scripts/lib/vendor-freshness.sh).
 SECTION10_ONLY=false
+SECTION11_ONLY=false
 for arg in "$@"; do
   case "$arg" in
   --section-10-only) SECTION10_ONLY=true ;;
+  --section-11-only) SECTION11_ONLY=true ;;
   *)
     echo "unknown option: $arg" >&2
     exit 64
@@ -75,7 +84,7 @@ for arg in "$@"; do
   esac
 done
 
-if [ "$SECTION10_ONLY" != true ]; then
+if [ "$SECTION10_ONLY" != true ] && [ "$SECTION11_ONLY" != true ]; then
   # 1. Flake syntax check
   echo "1. Flake syntax validation"
   FLAKE_CHECK_OUTPUT="$(nix flake check --no-build 2>&1 || true)"
@@ -340,7 +349,28 @@ if [ "$SECTION10_ONLY" != true ]; then
   fi
 
 # 10. Metric presence — verify Gatus pat() metric names actually appear in /metrics
-fi # end of skip-when---section-10-only (sections 1-9)
+fi # end of skip-when---section-10-only/---section-11-only (sections 1-9)
+
+if [ "$SECTION11_ONLY" = true ]; then
+  echo ""
+  echo "11. vendorHash freshness (deploy FOD preview)"
+  # SC2034: callbacks are read inside the sourced vendor-freshness.sh
+  # (same sourced-lib indirection as the OB_PASS producers above).
+  # shellcheck disable=SC2034
+  VENDOR_FRESHNESS_PASS=pass VENDOR_FRESHNESS_WARN=warn VENDOR_FRESHNESS_FAIL=fail
+  vendor_freshness_run_gate
+  echo ""
+  echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="
+  if [ "$FAIL" -gt 0 ]; then
+    echo ""
+    echo "❌ DEPLOY BLOCKED — fix failures above before deploying"
+    exit 1
+  fi
+  echo ""
+  echo "✅ §11-only run passed — safe (full gate still runs inside nix run .#deploy)"
+  exit 0
+fi
+
 echo ""
 echo "10. Metric presence validation (phantom metric detection)"
 GATUS_CONFIG="modules/nixos/services/gatus-config.nix"
@@ -708,23 +738,23 @@ if [ "$SECTION10_ONLY" = true ]; then
   exit 0
 fi
 
-# 11. vendorHash freshness for local Go packages
+# 11. vendorHash freshness — real FOD verdicts from the deploy-build preview
+# The toplevel --dry-run is the EXACT list of derivations `nh os switch`
+# would build on this commit. Any *-go-modules.drv listed there is an
+# uncached FOD the deploy build will attempt — a stale vendorHash fails
+# exactly there, AFTER ~12 minutes of unrelated building. The gate builds
+# those FODs NOW: clean = vendorHash proven + cache warm; mismatch = the
+# August-2026 deploy-killer class caught in seconds with the got-hash in
+# hand. (The 2026-08-08 version hardcoded 6 package names and grepped for
+# output nix never produces — it warned "unable to determine status" on
+# every run and missed bank-sync, the one package that then hard-failed
+# the build.) Mechanics + fixtures: scripts/lib/vendor-freshness.sh.
 echo ""
-echo "11. vendorHash freshness for local Go packages"
-# vendorHash mismatches are FOD failures that --no-build cannot catch (docs/agents/go-ecosystem.md).
-# --dry-run reveals whether the FOD is cached or would need building (stale hash).
-GO_PKGS=("dnsblockd" "monitor365" "netwatch" "emeet-pixyd" "file-and-image-renamer" "crush-daily")
-for pkg in "${GO_PKGS[@]}"; do
-  # shellcheck disable=SC2086
-  output=$(nix build .#$pkg.goModules --dry-run 2>&1 || true)
-  if echo "$output" | grep -q "would build"; then
-    warn "$pkg.goModules not cached — vendorHash may be stale or needs building"
-  elif echo "$output" | grep -qE "would (copy|fetch)"; then
-    pass "$pkg.goModules cached (vendorHash valid)"
-  else
-    warn "$pkg.goModules — unable to determine status (may not be a buildGoModule)"
-  fi
-done
+echo "11. vendorHash freshness (deploy FOD preview)"
+# SC2034: callbacks are read inside the sourced vendor-freshness.sh.
+# shellcheck disable=SC2034
+VENDOR_FRESHNESS_PASS=pass VENDOR_FRESHNESS_WARN=warn VENDOR_FRESHNESS_FAIL=fail
+vendor_freshness_run_gate
 
 # 12. ExecStart executables exist — 203/EXEC prevention
 # A unit whose ExecStart path doesn't exist fails instantly with status=203/EXEC,
