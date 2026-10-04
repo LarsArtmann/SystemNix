@@ -5214,7 +5214,9 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "rust-overlay": "rust-overlay"
+        "rust-overlay": [
+          "rust-overlay"
+        ]
       },
       "locked": {
         "lastModified": 1790952319,
@@ -5642,7 +5644,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "rust-overlay": "rust-overlay_2",
+        "rust-overlay": "rust-overlay",
         "ssh-key-monitor": "ssh-key-monitor",
         "treefmt-nix": [
           "treefmt-nix"
@@ -6056,6 +6058,22 @@
         "owner": "NixOS",
         "repo": "nixpkgs",
         "rev": "a1bab9e494f5f4939442a57a58d0449a109593fe",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_6": {
+      "locked": {
+        "lastModified": 1744536153,
+        "narHash": "sha256-awS2zRgF4uTwrOKwwiJcByDzDOdo3Q1rPZbiHQg/N38=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "18dd725c29603f582cf1900e0d25f9f1063dbf11",
         "type": "github"
       },
       "original": {
@@ -6752,6 +6770,7 @@
         "pyproject-build-systems": "pyproject-build-systems_2",
         "pyproject-nix": "pyproject-nix_2",
         "qmd": "qmd",
+        "rust-overlay": "rust-overlay_2",
         "samber-linter": "samber-linter_2",
         "signoz-collector-src": "signoz-collector-src",
         "signoz-src": "signoz-src",
@@ -6771,27 +6790,6 @@
     "rust-overlay": {
       "inputs": {
         "nixpkgs": [
-          "herdr",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1783577481,
-        "narHash": "sha256-EWMxOWrJ031f8f/lrcEmhTRs4npw1/5N3Hcjin846c8=",
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "rev": "4cdea398dc491b082dccdce0fad1ed0b75fa3394",
-        "type": "github"
-      },
-      "original": {
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "type": "github"
-      }
-    },
-    "rust-overlay_2": {
-      "inputs": {
-        "nixpkgs": [
           "monitor365",
           "nixpkgs"
         ]
@@ -6802,6 +6800,24 @@
         "owner": "oxalica",
         "repo": "rust-overlay",
         "rev": "b88764907c1b2de6c0e206d8d9d9634d91c81334",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "rust-overlay_2": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_6"
+      },
+      "locked": {
+        "lastModified": 1791013993,
+        "narHash": "sha256-BiFPwFsbFnZH5GfWbQFKYuQNg+67aNQCoRSRNTeJFQc=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "7470661ba2b51156048af08464b82020223dc942",
         "type": "github"
       },
       "original": {

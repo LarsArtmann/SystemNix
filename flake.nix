@@ -861,7 +861,18 @@
     herdr = {
       url = "github:ogulcancelik/herdr";
       inputs.nixpkgs.follows = "nixpkgs";
+      # herdr resolves rust-overlay from the lock graph (node rust-overlay,
+      # 4cdea398) whose lib/mk-aggregated.nix still uses the deprecated
+      # stdenv.isLinux/isDarwin accessors — eval warnings on every evo-x2
+      # eval that renders the herdr Rust toolchain. Follow our explicit root
+      # pin (master, migrated to stdenv.hostPlatform.*).
+      inputs.rust-overlay.follows = "rust-overlay";
     };
+
+    # rust-overlay — herdr's Rust toolchain provider. Declared as a root
+    # input purely to pin herdr's transitive resolve (see herdr block) at a
+    # rev with the stdenv.hostPlatform.* migration.
+    rust-overlay.url = "github:oxalica/rust-overlay";
 
     # go-humanize-linter — AST linter detecting hand-rolled reimplementations of go-humanize
     # Go dep inputs (go-finding, go-linter-sdk, go-error-family) are NOT followed —
