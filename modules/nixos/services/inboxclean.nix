@@ -55,8 +55,14 @@
 #      must show every account "connected". NOTE: on InboxClean releases
 #      before the lazy-reconnect fix (web a6ec3df), /health showed the
 #      clients captured at web-service START — a token minted afterwards
-#      kept showing not_connected until the next deploy/restart. Newer
-#      builds self-heal within ~30s of the token landing.
+#      kept showing not_connected until the next deploy/restart. The
+#      self-heal claim is BROKEN AGAIN on deployed 01d2c5e (2026-10-04):
+#      the health-driven reconnect passed the brand-prefixed id form
+#      ("Account:main") where the prod closure matches plain "main", so
+#      every attempt failed silently and a freshly re-minted token NEVER
+#      healed /health (stays auth_expired). Upstream fix e9735c7 (unpushed
+#      as of 2026-10-04). Until it deploys: restart inboxclean-web after
+#      any re-auth — startup builds clients fresh from the token files.
 #   5. Flip services.inboxclean.sync.enable to true and redeploy.
 #      Until then the sync timer stays off: without a token every run fails
 #      (Infrastructure family, exit 69) and would spam onFailure alerts.
