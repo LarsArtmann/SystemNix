@@ -152,6 +152,17 @@ _: {
                 description = "Backend port (from lib/ports.nix) for the vHost and relative check URLs";
               };
 
+              vHost.hostOverride = lib.mkOption {
+                type = lib.types.nullOr lib.types.str;
+                default = null;
+                description = ''
+                  Rewrite the upstream Host header to this value (Caddy
+                  header_up Host <value>). For loopback-bound apps whose own
+                  guards reject non-localhost Hosts (bank-sync's DNS-rebinding
+                  guard class) while the vHost name stays banksync.<domain>.
+                '';
+              };
+
               vHost.layer = lib.mkOption {
                 type = lib.types.enum [
                   "plain"

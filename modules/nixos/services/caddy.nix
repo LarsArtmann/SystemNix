@@ -90,11 +90,19 @@ _: {
         }
       '';
 
-      proxyTo = port: ''
-        reverse_proxy localhost:${toString port} {
-          header_up X-Real-IP {remote_host}
-        }
-      '';
+      proxyTo =
+        port:
+        {
+          # Rewrite the upstream Host (bank-sync's DNS-rebinding guard 403s
+          # any non-localhost Host on its loopback bind).
+          hostOverride ? null,
+        }:
+        ''
+          reverse_proxy localhost:${toString port} {
+            header_up X-Real-IP {remote_host}
+            ${lib.optionalString (hostOverride != null) "header_up Host ${hostOverride}"}
+          }
+        '';
 
       staticVHost = root: {
         extraConfig = ''
@@ -105,26 +113,26 @@ _: {
         '';
       };
 
-      protectedVHost = port: {
+      protectedVHost = port: hostOverride: {
         extraConfig = ''
           ${tlsConfig}
           ${commonConfig}
           @external not remote_ip 127.0.0.1/8 ${lanSubnet}
           handle @external {
             ${forwardAuth}
-            ${proxyTo port}
+            ${proxyTo port { inherit hostOverride; }}
           }
           handle {
-            ${proxyTo port}
+            ${proxyTo port { inherit hostOverride; }}
           }
         '';
       };
 
-      plainVHost = port: {
+      plainVHost = port: hostOverride: {
         extraConfig = ''
           ${tlsConfig}
           ${commonConfig}
-          ${proxyTo port}
+          ${proxyTo port { inherit hostOverride; }}
         '';
       };
 
@@ -157,9 +165,9 @@ _: {
               staticVHost v.root
           )
         else if v.layer == "protected" then
-          protectedVHost v.port
+          protectedVHost v.port v.hostOverride
         else
-          plainVHost v.port;
+          plainVHost v.port v.hostOverride;
 
       dnsLocalSubdomains = (import ../../../platforms/common/dns-local.nix).localSubdomains;
       # Deliberate exemptions: voice/whisper are hand-written vHosts (below)
@@ -378,10 +386,10 @@ _: {
                     ${tlsConfig}
                     ${commonConfig}
                     handle /oauth2/* {
-                      ${proxyTo proxyPort}
+                      ${proxyTo proxyPort { hostOverride = null; }}
                     }
                     handle {
-                      ${proxyTo authPort}
+                      ${proxyTo authPort { hostOverride = null; }}
                     }
                   '';
                 };
@@ -409,7 +417,7 @@ _: {
                       respond 403
                     }
                     handle {
-                      ${proxyTo config.services.paperless.port}
+                      ${proxyTo config.services.paperless.port { hostOverride = null; }}
                     }
                   '';
                 };
@@ -421,7 +429,7 @@ _: {
                 # (taskchampion has no registry entry).
                 # The old alerts.<domain> PapDashboard alias is covered by the
                 # catch-all below (unknown *.home.lan → redirect to dash).
-                "tasks.${domain}" = protectedVHost config.services.taskchampion-sync-server.port;
+                "tasks.${domain}" = protectedVHost config.services.taskchampion-sync-server.port null;
                 # OpenSEO: Layer 2 (oauth2-proxy forward-auth). The GSC OAuth callback
                 # (/api/gsc/oauth/callback) is exempt from forward-auth — OAuth callback
                 # endpoints should be directly reachable to prevent cookie-expiry edge
@@ -434,15 +442,15 @@ _: {
                     ${commonConfig}
                     @gsc_callback path /api/gsc/oauth/callback
                     handle @gsc_callback {
-                      ${proxyTo config.services.openseo.port}
+                      ${proxyTo config.services.openseo.port { hostOverride = null; }}
                     }
                     @external not remote_ip 127.0.0.1/8 ${lanSubnet}
                     handle @external {
                       ${forwardAuth}
-                      ${proxyTo config.services.openseo.port}
+                      ${proxyTo config.services.openseo.port { hostOverride = null; }}
                     }
                     handle {
-                      ${proxyTo config.services.openseo.port}
+                      ${proxyTo config.services.openseo.port { hostOverride = null; }}
                     }
                   '';
                 };
@@ -457,7 +465,7 @@ _: {
                   extraConfig = ''
                     ${tlsConfig}
                     ${commonConfig}
-                    ${proxyTo config.services.dns-blocker.statsPort}
+                    ${proxyTo config.services.dns-blocker.statsPort { hostOverride = null; }}
                   '';
                 };
                 "dnsblockd.${domain}" = {
@@ -473,8 +481,8 @@ _: {
                 # not in the shared dns-local list (voice-agents is not enabled
                 # on any current host), so registry entries for them would fail
                 # the DNS-consistency assertion.
-                "voice.${domain}" = protectedVHost config.services.livekit.settings.port;
-                "whisper.${domain}" = protectedVHost config.services.voice-agents.whisperPort;
+                "voice.${domain}" = protectedVHost config.services.livekit.settings.port null;
+                "whisper.${domain}" = protectedVHost config.services.voice-agents.whisperPort null;
               }
               //
                 lib.optionalAttrs
@@ -499,11 +507,11 @@ _: {
                             @noCache path /ui /ui/ /ui/index.html /ui/bootstrap.js
                             header @noCache Cache-Control "no-cache, no-store, must-revalidate"
 
-                            ${proxyTo ports.monitor365-server}
+                            ${proxyTo ports.monitor365-server { hostOverride = null; }}
                           '';
                         }
                       else
-                        protectedVHost ports.monitor365-server;
+                        protectedVHost ports.monitor365-server null;
                   }
               # DiscordSync / Browser History / Attic / renamer / search / graph /
               # overview vHosts moved to the registry (services.integration
