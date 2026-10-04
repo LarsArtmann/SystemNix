@@ -51,7 +51,7 @@ in
     # NOT an alias — zsh expands aliases before function lookup, so an
     # alias `spf` would shadow this and break cd-on-quit. Calls
     # `command superfile` (the upstream flake binary name).
-    initExtra = ''
+    initContent = ''
       spf() {
         if [[ "$(uname -s)" == "Darwin" ]]; then
           export SPF_LAST_DIR="$HOME/Library/Application Support/superfile/lastdir"
