@@ -124,7 +124,7 @@ DEVICE_ARGS=(
   --property='DeviceAllow=/dev/full'
   --property='DeviceAllow=/dev/random'
   --property='DeviceAllow=/dev/urandom'
-  --property='DeviceAllow=/dev/dri/'
+  --property='DeviceAllow=char-drm'
   --property='DeviceAllow=/dev/dri/renderD128'
   --property='DeviceAllow=/dev/kfd'
 )

@@ -40,7 +40,12 @@ rec {
       "/dev/full"
       "/dev/random"
       "/dev/urandom"
-      "/dev/dri/"
+      # char-drm pattern, NOT "/dev/dri/" — systemd 258+ hard-errors directory
+      # paths at unit load ("DeviceAllow= requires device node or pattern";
+      # first proven live 2026-10-04 on the very first soak-harness execution).
+      # The pattern matches the drm subsystem (card0, renderD128) while accel
+      # nodes stay subsystem "accel", so the NPU-exclusion intent above holds.
+      "char-drm"
       "/dev/dri/renderD128"
       "/dev/kfd"
     ];
