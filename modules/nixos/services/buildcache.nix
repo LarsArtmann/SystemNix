@@ -5,6 +5,7 @@
 # NVMe. The NVMe's SLC cache exhaustion incidents (2026-08-12 WDT crashes, 93%
 # disk crisis) were driven by exactly this ephemeral churn. Cache data is
 # disposable: if the 10-year-old drive dies, everything rebuilds.
+
 #
 # Why ext4 + data=writeback: build caches are small-file, stat-heavy workloads
 # where ext4 measured 2x lower random latency than btrfs on this drive (234us
