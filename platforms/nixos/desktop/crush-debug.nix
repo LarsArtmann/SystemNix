@@ -18,6 +18,7 @@ let
       fzf
       findutils
       gnugrep
+      gawk
       systemd
       trash-cli
     ];
