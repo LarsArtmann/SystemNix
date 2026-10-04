@@ -54,7 +54,7 @@ log() {
 # Prints "<value_celsius> <hwmon_dir>" for the max temp*_input of the first
 # hwmon whose name matches; empty when no such sensor exists.
 read_sensor_pattern() {
-  local name="$1" dir hwmon best="" best_dir=""
+  local name="$1" dir best="" best_dir=""
   for dir in "$HWMON_ROOT"/hwmon*; do
     [ -r "$dir/name" ] || continue
     [ "$(cat "$dir/name")" = "$name" ] || continue
