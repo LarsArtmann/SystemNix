@@ -22,6 +22,16 @@
 # shadows it — they survive in the shadow as rollback insurance. Keep the
 # prepare→deploy window short.
 #
+#   4. sudo bash scripts/migrate-caddy-logs-hot.sh shadow-cleanup
+#      At soak end (or owner override): archives the QLC shadow dir (the
+#      log-gap insurance) to /mnt/pool/backups/caddy, verifies the archive
+#      (exact file count), then deletes the shadow CONTENTS through an
+#      auxiliary subvol=@ mount — the live Samsung mount is never touched
+#      and the mountpoint dir itself is kept. REFUSES if /var/log/caddy is
+#      not on a different device than the QLC root (detached Samsung =
+#      the shadow dir IS the live log store; deleting it would destroy
+#      live logs).
+#
 # DRY RUN: --dry-run prints every action without executing.
 set -euo pipefail
 
@@ -32,7 +42,7 @@ if [ "${1:-}" = "--dry-run" ]; then
 fi
 
 usage() {
-  echo "usage: migrate-caddy-logs-hot.sh [--dry-run] prepare|finalize" >&2
+  echo "usage: migrate-caddy-logs-hot.sh [--dry-run] prepare|finalize|shadow-cleanup" >&2
   exit 2
 }
 
@@ -133,6 +143,87 @@ finalize)
   echo "finalize OK: caddy logs live on the Samsung."
   echo "Next: reboot in a quiet window after 'nix run .#pre-reboot-check' to verify the boot path."
   echo "Keep the QLC shadow dir under the mountpoint as rollback insurance until the soak ends."
+  ;;
+shadow-cleanup)
+  # The root partition is derived from the RUNNING root at runtime — kernel
+  # nvmeX names flip across boots on this box (by-id trap), but findmnt is
+  # always self-consistent within one boot.
+  ROOT_PART=$(findmnt -no SOURCE /)
+  ROOT_PART=${ROOT_PART%%\[*}
+  LIVE_SRC=$(findmnt -no SOURCE "$SRC" || true)
+  LIVE_BASE=${LIVE_SRC%%\[*}
+
+  mountpoint -q "$SRC" || {
+    echo "$SRC is not a mountpoint — nothing to clean up (or the mount regressed)." >&2
+    exit 1
+  }
+  if [ "$LIVE_BASE" = "$ROOT_PART" ]; then
+    echo "REFUSED: $SRC is on the QLC root device ($LIVE_BASE) — the Samsung is" >&2
+    echo "detached and the shadow dir IS the live log store. Deleting it would" >&2
+    echo "destroy live logs. Re-attach the Samsung first." >&2
+    exit 1
+  fi
+  mountpoint -q /mnt/pool || {
+    echo "/mnt/pool is not a mountpoint — archive target missing. Refusing." >&2
+    exit 1
+  }
+
+  AUX=/run/caddy-shadow-view
+  AUX_SHADOW=$AUX/var/log/caddy
+  ARCHIVE_DIR=/mnt/pool/backups/caddy
+  ARCHIVE=$ARCHIVE_DIR/caddy-logs-shadow-final-$(date +%Y-%m-%d).tar.zst
+
+  if [ "$DRY_RUN" = "1" ]; then
+    echo "plan: aux-mount $ROOT_PART (subvol=@, ro) at $AUX"
+    echo "plan: tar --zstd $AUX_SHADOW -> $ARCHIVE (verify exact file count)"
+    echo "plan: remount rw, delete CONTENTS of $AUX_SHADOW (mountpoint dir kept)"
+    echo "plan: live mount at $SRC ($LIVE_SRC) is never touched"
+    exit 0
+  fi
+
+  cleanup_aux() {
+    umount "$AUX" 2>/dev/null || true
+    rmdir "$AUX" 2>/dev/null || true
+  }
+  trap cleanup_aux EXIT
+
+  mkdir -p "$AUX" "$ARCHIVE_DIR"
+  run mount -o subvol=@,ro "$ROOT_PART" "$AUX"
+  # The shadow must be a PLAIN dir in this view — a mountpoint here would mean
+  # the wrong universe got mounted (would delete through to something live).
+  if mountpoint -q "$AUX_SHADOW"; then
+    echo "REFUSED: $AUX_SHADOW is a mountpoint in the aux view — wrong view." >&2
+    exit 1
+  fi
+  [ -d "$AUX_SHADOW" ] || {
+    echo "shadow dir not found at $AUX_SHADOW — nothing to archive." >&2
+    exit 1
+  }
+
+  FILES=$(find "$AUX_SHADOW" -type f | wc -l)
+  SIZE=$(du -sb --apparent-size "$AUX_SHADOW" | awk '{print $1}')
+  echo "shadow: files=$FILES bytes=$SIZE"
+  if [ "$FILES" -eq 0 ]; then
+    echo "shadow is already empty — nothing to do." >&2
+    exit 0
+  fi
+
+  run tar -C "$AUX/var/log" --zstd -cf "$ARCHIVE" caddy
+  TFILES=$(tar --zstd -tf "$ARCHIVE" | grep -vc '/$')
+  if [ "$TFILES" != "$FILES" ]; then
+    echo "ARCHIVE VERIFY FAILED: tar=$TFILES files vs src=$FILES — shadow NOT deleted." >&2
+    exit 1
+  fi
+  echo "archive verified: $TFILES files -> $ARCHIVE ($(stat -c%s "$ARCHIVE") bytes)"
+
+  run umount "$AUX"
+  run mount -o subvol=@ "$ROOT_PART" "$AUX"
+  run find "$AUX_SHADOW" -mindepth 1 -delete
+  run umount "$AUX"
+  trap - EXIT
+  cleanup_aux
+  echo "shadow-cleanup OK: insurance archived to the pool + QLC shadow emptied."
+  echo "QLC freed ~$SIZE bytes (visible space settles as @ snapshots holding them expire)."
   ;;
 *)
   usage
