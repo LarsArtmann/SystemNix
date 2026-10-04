@@ -52,7 +52,7 @@ SystemNix/
 
 - **LF line endings**, UTF-8, final newline enforced
 - **Python**: 4-space indent
-- **Shell scripts**: `set -euo pipefail`, use `lib.sh` helpers
+- **Shell scripts**: `set -euo pipefail`, use `lib.sh` helpers. Lint with `scripts/shellcheck.sh <file>...` (locked-nixpkgs shellcheck; default bar = warning). Shellcheck is NOT on the interactive PATH — availability comes from the repo, never `$PATH` — and pre-commit only covers STAGED files (daemon commits skip the leg entirely). **Severity trap**: scripts packaged by flake apps (`writeShellApplication`) are linted by their builder at DEFAULT severity (style), so an info-level finding (e.g. SC1091 on an extracted lib source) blocks every deploy while the wrapper's warning bar stays green — lint any mkApp-packaged script with `scripts/shellcheck.sh --severity=style <file>` before trusting the edit (2026-10-04: the cv-oidc-gate extraction shipped `bash -n`-only and blocked the deploy build on SC1091, invisible at the warning bar)
 
 ## Pre-commit Hooks
 
