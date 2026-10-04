@@ -25,6 +25,15 @@
 #      whose follow-ups can silently evaporate is the exact class the
 #      convention exists to kill. Default WARN; CHECK_TODO_HARVEST=strict
 #      fails. Archived reports are exempt (historical record).
+#   5. Time-gated [ready] rows (2026-10-04): an unchecked [ready] row whose
+#      body tells the dispatcher to WAIT ("tonight", "re-dispatch after",
+#      "after the <x> run", "fires … HH:MM", "after HH:MM", "tomorrow")
+#      without a ` — BLOCKED:` marker reads as dispatchable and gets
+#      harvested early (the 10-04 prune-verify row, ~23h early, review
+#      finding / fix f9652db3 made the marker the convention — this leg
+#      makes it a gate). Historical timestamp mentions ("notifying at
+#      08:36", "nightly … 03:00" schedule context) are NOT matches — the
+#      signals are the wait-imperative forms only.
 #
 # Scope v1: grep-judgeable shapes only. Semantic dedup/priority are
 # review work, not a grep gate.
@@ -101,7 +110,27 @@ selftest() {
     echo "SELFTEST FAIL: marked report must not be flagged"
     exit 1
   fi
-  echo "SELFTEST OK: title-less rows + dead links + entry drift (warn/strict) + harvest coverage (warn, marker-exempt)"
+  # timegate leg: a [ready] row with wait-language and no BLOCKED marker must FAIL
+  tmp=$(mktemp)
+  cp "$TODO" "$tmp"
+  printf -- '- [ ] [ready] **Selftest timegate row** → [docs/todo/pipeline.md](docs/todo/pipeline.md) — verification run fires 2026-10-04 23:50 btrbk-pool-clean; re-dispatch after.\n' >>"$tmp"
+  out=$(TODO_FILE="$tmp" CHECK_TODO_STATUS_DIR=/nonexistent "$0" --scan-file "$tmp" 2>&1) && rc=0 || rc=$?
+  if [ "$rc" -eq 0 ] || ! printf '%s\n' "$out" | grep -q 'FAIL: time-gated'; then
+    rm -f "$tmp"
+    echo "SELFTEST FAIL: time-gated [ready] row without BLOCKED must fail the gate"
+    exit 1
+  fi
+  # same row WITH the marker must NOT be flagged
+  tmp2=$(mktemp)
+  cp "$TODO" "$tmp2"
+  printf -- '- [ ] [ready] **Selftest timegate row (compliant)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) — BLOCKED: verification run fires 2026-10-04 23:50; re-dispatch after.\n' >>"$tmp2"
+  out=$(TODO_FILE="$tmp2" CHECK_TODO_STATUS_DIR=/nonexistent "$0" --scan-file "$tmp2" 2>&1) && rc=0 || rc=$?
+  rm -f "$tmp" "$tmp2"
+  if printf '%s\n' "$out" | grep -q 'FAIL: time-gated'; then
+    echo "SELFTEST FAIL: BLOCKED-marked time-gated row must not be flagged"
+    exit 1
+  fi
+  echo "SELFTEST OK: title-less rows + dead links + entry drift (warn/strict) + harvest coverage (warn, marker-exempt) + time-gated [ready] rows (marker-exempt)"
   exit 0
 }
 
@@ -111,6 +140,18 @@ scan_file() {
   fail=0
   check "title-less queue row (lost-harvest artifact — restore the title or delete the row)" \
     '^- \[ \] \*\*Source:\*\*'
+  # time-gated [ready] rows without a BLOCKED marker read as dispatchable
+  # and get harvested early. Signals are wait-imperative forms only — see
+  # header note 5. Historical "at HH:MM" mentions must not trip this.
+  local timegate_hits
+  timegate_hits=$(grep -E '^- \[ \] \[ready\]' "$f" 2>/dev/null \
+    | grep -E 'tonight|tomorrow|re-dispatch after|after the [a-z0-9 -]+ run|after [0-9]{1,2}:[0-9]{2}|\bfires [^|]*[0-9]{1,2}:[0-9]{2}' \
+    | grep -v 'BLOCKED' || true)
+  if [ -n "$timegate_hits" ]; then
+    echo "FAIL: time-gated [ready] row(s) without a ' — BLOCKED:' marker — wait-language reads as dispatchable (early-harvest class, 2026-10-04):"
+    printf '%s\n' "$timegate_hits" | sed 's/^/  /' | cut -c1-200
+    fail=1
+  fi
   # verify every referenced library file exists
   local lib
   while IFS= read -r lib; do
