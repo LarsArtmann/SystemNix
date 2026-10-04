@@ -353,9 +353,15 @@ if findmnt -n -t ext4 /mnt/buildcache >/dev/null 2>&1; then
       fi
     done
     if [ "$known" = 0 ]; then
-      note "unexpected entry on cache SSD: /mnt/buildcache/$entry (debris or"
-      hint "path-join bug — e.g. an 'mnt' dir means something created"
-      hint "/mnt/buildcache//mnt/... inside the mount)"
+      if [ -d "/mnt/buildcache/$entry" ] && [ -z "$(ls -A "/mnt/buildcache/$entry" 2>/dev/null)" ]; then
+        note "unexpected entry on cache SSD: /mnt/buildcache/$entry (empty, recurring"
+        hint "transient? — a tool recreating an empty cache dir; bless the name into"
+        hint "KNOWN_CACHE_ENTRIES with provenance or hunt the writer)"
+      else
+        note "unexpected entry on cache SSD: /mnt/buildcache/$entry (debris or"
+        hint "path-join bug — e.g. an 'mnt' dir means something created"
+        hint "/mnt/buildcache//mnt/... inside the mount)"
+      fi
     fi
   done < <(ls -A /mnt/buildcache 2>/dev/null)
 else

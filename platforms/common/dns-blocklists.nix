@@ -13,32 +13,32 @@ in
     {
       name = "HaGeZi-ultimate";
       url = hagezi "hosts/ultimate.txt";
-      hash = "sha256-dZ94y7QHjQ3iNIQNsnaHHQNKmBg0zgPi4KY2F7DzNNo=";
+      hash = "sha256-/BxA0JKaglBqikrLva55zS3E930id/kqz89nCVq87Qw=";
     }
     {
       name = "HaGeZi-tif";
       url = hagezi "hosts/tif.txt";
-      hash = "sha256-+yKUNbke7hXXV/DF7eeMnLGtnEBQWXCoYttCkcRucVc=";
+      hash = "sha256-FgArI+dGod2f9FxyUDArCE1g1U8+tcKV4IFx/QLEr5Q=";
     }
     {
       name = "HaGeZi-doh";
       url = hagezi "hosts/doh.txt";
-      hash = "sha256-dCxEaYGTFDpVOx0krPdYCDAIVQNcesdJdthRM3bBpC4=";
+      hash = "sha256-ZDJre/YP68lbrrYXzerBH1X0w4O8p45IbejQRlNxQgg=";
     }
     {
       name = "HaGeZi-native-apple";
       url = hagezi "hosts/native.apple.txt";
-      hash = "sha256-jlIb5DfwXJOduNLExBGi29XyCmtdJPfDPELr4mD95ZY=";
+      hash = "sha256-OGE9IwfmyM9gtZgxMpYCkWHZK93Hl+kt58Oj2urb5Nw=";
     }
     {
       name = "HaGeZi-native-amazon";
       url = hagezi "hosts/native.amazon.txt";
-      hash = "sha256-0hD+CJKBv5YZvivMtnOjmAHHy93jtpx6PEWLcLINpYQ=";
+      hash = "sha256-did4f4Ge5of4E16iWxvwqS/eTiAnLs8YVgJ0p187LN0=";
     }
     {
       name = "HaGeZi-native-samsung";
       url = hagezi "hosts/native.samsung.txt";
-      hash = "sha256-oDtubaJoDe2AHFzdmOZPa+sJS6EQhTCVXlCDRCGjWE8=";
+      hash = "sha256-uhLpFsVHB3CGcYn/4d0b9xmZwG1MI9gQkysQwpwm558=";
     }
     {
       name = "HaGeZi-native-xiaomi";
@@ -53,7 +53,7 @@ in
     {
       name = "HaGeZi-native-lgwebos";
       url = hagezi "hosts/native.lgwebos.txt";
-      hash = "sha256-yS23pdXRsLgbi7pUCl5uAHS4EdhCntTula7DbJtkp8k=";
+      hash = "sha256-9+NykH1uTC6sTY6DO7GVXhDpNI2r0LLLv8ayYGRqw3E=";
     }
     {
       name = "HaGeZi-native-oppo-realme";
@@ -68,27 +68,27 @@ in
     {
       name = "HaGeZi-native-vivo";
       url = hagezi "hosts/native.vivo.txt";
-      hash = "sha256-9QwMj86PFQwgUWMN8WypuSOPDQuXnCXqMcQdk4ZGxbQ=";
+      hash = "sha256-ArcvZxyImEcICOSq7km/UP8Di2YIv39r9b0oMtFUox4=";
     }
     {
       name = "HaGeZi-native-winoffice";
       url = hagezi "hosts/native.winoffice.txt";
-      hash = "sha256-MaOnx5TGt1+Vqr0gwL2Vk0zuBWWt2TH086JCImNTUoY=";
+      hash = "sha256-jgFuf0IrCUTYNrlyWO0Qz2uuC3gaE0MN0zH8SuX21T8=";
     }
     {
       name = "HaGeZi-native-tiktok-extended";
       url = hagezi "hosts/native.tiktok.extended.txt";
-      hash = "sha256-JM7HV3aDwpcfmRx4lR3gAbIfbQcWOS9Q6ubo0sqgvPk=";
+      hash = "sha256-oY76y6kJ3A8d1lqqGGPuIThqqYkoQQRFspHkeRIkUTg=";
     }
     {
       name = "HaGeZi-gambling";
       url = hagezi "dnsmasq/gambling.txt";
-      hash = "sha256-tR2zsmeZgsQfIXypjOOOu6dFFLAs4lnrFcIJwEpbF0Q=";
+      hash = "sha256-Iqy9PZ5cuiRwQzlrp4kRjzGqZ9cjAcEn5dRSiIZ7vro=";
     }
     {
       name = "HaGeZi-nsfw";
       url = hagezi "dnsmasq/nsfw.txt";
-      hash = "sha256-5bkuzA42H2jIV1GKeIKYruRCxI8rxo5R6lNKkEpiuiQ=";
+      hash = "sha256-dQzhnWEuiyM56za0jaa9IUpUPmniuPKzx17/V80sgKY=";
     }
     {
       name = "HaGeZi-social";
@@ -98,27 +98,27 @@ in
     {
       name = "HaGeZi-dyndns";
       url = hagezi "dnsmasq/dyndns.txt";
-      hash = "sha256-WicFbQed/nOrWJTNrwhrp/in1YsGAB3Nhk8u3OKdtC8=";
+      hash = "sha256-sEWGDR5ztxevOvkGC0l+0IRD1j13d6z0wdGAIWyIm08=";
     }
     {
       name = "HaGeZi-hoster";
       url = hagezi "dnsmasq/hoster.txt";
-      hash = "sha256-krMISugRWSeaqkXpnyAqPuljae3cwdyFNteYUnPM0eI=";
+      hash = "sha256-yq5KLUIdTnrTqDlNMd9lQlb57wOic7g9EXPyFOkCmfM=";
     }
     {
       name = "HaGeZi-urlshortener";
       url = hagezi "dnsmasq/urlshortener.txt";
-      hash = "sha256-mdtTLmubK6lMwkLkofYGWoIdf8KmGSZh5WyjfF++MEs=";
+      hash = "sha256-HaqZsgSunOyJLL/oGSA0JbdvdvG4r7OixAbPNfog1sA=";
     }
     {
       name = "HaGeZi-nosafesearch";
       url = hagezi "dnsmasq/nosafesearch.txt";
-      hash = "sha256-r1KeVIFm3FeGASvj3aSzsuF+gflWTjLYo4wHsREwgOg=";
+      hash = "sha256-WNYasp5RDyXMCVqHeiZn4OHlijBocB+9CfTnvcEB0qU=";
     }
     {
       name = "HaGeZi-dga7";
       url = hagezi "domains/dga7.txt";
-      hash = "sha256-DU5K9nnuyr2ebu+UxQwDjRpiNVAyoeEkMCNGMXA7FtM=";
+      hash = "sha256-rYt+Q7qoDlSsdA17gFDd4kISf6zk91lDcaspNbGZIo4=";
     }
   ];
 

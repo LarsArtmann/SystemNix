@@ -22,17 +22,53 @@ fi
 HAGEZI_BASE="https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists"
 SB_REPO="https://github.com/StevenBlack/hosts.git"
 
+extract_sb_pin() {
+  # The [a-f0-9]{40} anchor is load-bearing (2026-10-01 incident): the old
+  # regex stopped the capture after "StevenBlack/" and captured the "hosts"
+  # path segment instead of the commit, and the global sed then rewrote every
+  # "hosts" substring in the file — corrupting all 15 hagezi "hosts/…" URLs.
+  grep -oP "raw\.githubusercontent\.com/StevenBlack/hosts/\K[a-f0-9]{40}" "$1" | head -1 || true
+}
+
+if [[ "${1:-}" == "--selftest" ]]; then
+  # Proves the SHIPPED extraction (the function above) against fixture
+  # blocklist files — no network, no repo-root requirement.
+  tmp=$(mktemp -d)
+  trap 'rm -rf "$tmp"' EXIT
+  pass=0
+  fail=0
+  ok() { echo "  ok: $1"; pass=$((pass + 1)); }
+  bad() { echo "FAIL: $1"; fail=$((fail + 1)); }
+
+  commit=21605ccaecf26941005d4a7a3c1267af234599cf
+
+  cat > "$tmp/healthy.nix" <<EOF
+      name = "StevenBlack-everything";
+      url = "https://raw.githubusercontent.com/StevenBlack/hosts/${commit}/alternates/fakenews-gambling-porn-social/hosts";
+EOF
+  got=$(extract_sb_pin "$tmp/healthy.nix")
+  if [[ $got == "$commit" ]]; then ok "healthy fixture extracts the commit"; else bad "healthy fixture returned '$got' (want $commit)"; fi
+  if [[ $got != "hosts" ]]; then ok "never returns the 'hosts' path segment (2026-10-01 class)"; else bad "returned 'hosts' — the 2026-10-01 corruption class"; fi
+
+  printf 'url = "https://raw.githubusercontent.com/StevenBlack/hosts//alternates/hosts";\n' > "$tmp/corrupt.nix"
+  got=$(extract_sb_pin "$tmp/corrupt.nix")
+  if [[ -z $got ]]; then ok "commit-less URL extracts empty (main path errors out)"; else bad "commit-less URL returned '$got' (want empty)"; fi
+
+  printf 'url = "https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/hosts/tif";\n' > "$tmp/decoy.nix"
+  got=$(extract_sb_pin "$tmp/decoy.nix")
+  if [[ -z $got ]]; then ok "hagezi hosts/ decoy never matches"; else bad "hagezi decoy matched '$got'"; fi
+
+  echo "dns-update pin-extraction selftest: $pass passed, $fail failed"
+  [[ $fail -eq 0 ]]
+fi
+
 echo "=== Advancing the StevenBlack commit pin ==="
 new_sb=$(git ls-remote "$SB_REPO" HEAD | awk '{print $1}')
 if [[ -z $new_sb ]]; then
   echo "ERROR: could not fetch StevenBlack HEAD"
   exit 1
 fi
-# The [a-f0-9]{40} anchor is load-bearing (2026-10-01 incident): the old
-# regex stopped the capture after "StevenBlack/" and captured the "hosts"
-# path segment instead of the commit, and the global sed then rewrote every
-# "hosts" substring in the file — corrupting all 15 hagezi "hosts/…" URLs.
-current_sb=$(grep -oP "raw\.githubusercontent\.com/StevenBlack/hosts/\K[a-f0-9]{40}" "$BLOCKLIST_FILE" | head -1 || true)
+current_sb=$(extract_sb_pin "$BLOCKLIST_FILE")
 if [[ -z $current_sb ]]; then
   echo "ERROR: could not extract current StevenBlack commit pin (expected hosts/<40-hex>/ URL shape)"
   exit 1
