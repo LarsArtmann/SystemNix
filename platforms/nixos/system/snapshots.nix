@@ -141,6 +141,28 @@ let
     '';
   };
 
+  # Root-space floor (2026-10-06, the 10-02 06:33 dnsblockd SIGBUS/ENOSPC
+  # outage class): the ladder 93% gatus alert -> (nothing) -> 100% -> outage
+  # had an empty rung. Above 90% df-scale root usage this runs the SAME
+  # fail-safe retention prune btrbk-pool-clean runs nightly, immediately —
+  # `btrbk run` only prunes AFTER its send phase, so storm-killed sends
+  # defer pruning indefinitely (the exact accumulation that drove the root
+  # to 100% on 10-01/10-02). Racing a live nightly send is safe: the latest
+  # common snapshot per target is FORCE_PRESERVEd, so prune only ever
+  # deletes snapshots already past retention. Logic + metric contract:
+  # scripts/root-prune-guard.sh (fixture-tested via the
+  # root-prune-guard-fixture flake check).
+  rootPruneGuard = pkgs.writeShellApplication {
+    name = "root-prune-guard";
+    runtimeInputs = [
+      pkgs.btrbk
+      pkgs.btrfs-progs
+      pkgs.coreutils
+      pkgs.gawk
+    ];
+    text = builtins.readFile ../../../scripts/root-prune-guard.sh;
+  };
+
   # btrbk-data EIO repair gate (2026-09-11, docs/todo/storage.md /data repair item).
   # The /data -> pool send has been structurally dead since 2026-07 (EIO csum
   # errors from the unsafe-partition-shrink corruption), yet every nightly
@@ -633,6 +655,51 @@ in
         '';
       };
 
+      # ── root-prune-guard: the root-space floor (90% auto-prune) ───────────
+      # Runs as the btrbk user — same sudo allowlist story as
+      # btrbk-pool-clean (backend btrfs-progs-sudo covers subvolume
+      # list/show/delete; NOPASSWD comes from the nixpkgs btrbk module's
+      # sudoRule). Deliberately NOT harden {}: NoNewPrivileges would break
+      # the setuid sudo wrapper.
+      #
+      # The unit always exits 0: prune failures land in
+      # root_prune_guard_prune_exit + the journal, and the Gatus "Root
+      # Auto-Prune Floor" check is red while fired 1 — a failed prune is an
+      # operational state to surface, not a crash for systemd to retry (the
+      # 5-min timer IS the retry). No RequiresMountsFor: with the pool
+      # detached, btrbk prune itself fail-safes (aborted target skips source
+      # cleanup, nonzero exit recorded in the metric) — failing the unit on
+      # mount state would only add OnFailure noise while the actionable
+      # state (root still >90%) is already Gatus-red.
+      root-prune-guard = {
+        description = "Root-space floor: immediate btrbk root prune above 90% df usage";
+        path = [
+          pkgs.btrbk
+          pkgs.btrfs-progs
+          pkgs.coreutils
+          pkgs.gawk
+        ];
+        inherit onFailure;
+        serviceConfig = lib.mkMerge [
+          {
+            Type = "oneshot";
+            User = "btrbk";
+            Group = "btrbk";
+            StateDirectory = "btrbk";
+            Nice = 10;
+            IOSchedulingClass = "best-effort";
+            TimeoutStartSec = "30min";
+          }
+          (serviceOneshotDefaults { })
+        ];
+        script = ''
+          # /run/wrappers/bin: the sudo wrapper the btrfs-progs-sudo backend
+          # shells out to (writeShellApplication keeps it via inheritPath).
+          export PATH=/run/wrappers/bin:$PATH
+          exec ${rootPruneGuard}/bin/root-prune-guard
+        '';
+      };
+
       # Mirrored-pool Prometheus metrics (mount presence with real-I/O gate,
       # usage, free/total). Same always-write-the-.prom contract as
       # buildcache-metrics: a detached DAS flips pool_mounted to 0 and Gatus
@@ -986,6 +1053,21 @@ in
         OnCalendar = "23:50";
         Persistent = true;
         AccuracySec = "5min";
+      };
+    };
+
+    # Root-space floor sweep (10-02 outage class): 5-min cadence keeps the
+    # >90% -> prune latency far below the growth rates that produced two
+    # 100% events in 24h; below threshold a run is a df parse + a metrics
+    # write. systemd never double-starts the oneshot while active, so a
+    # long prune simply consumes the cadence.
+    timers.root-prune-guard = {
+      description = "Check root usage every 5 minutes; prune above 90%";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "2min";
+        OnUnitActiveSec = "5min";
+        Persistent = true;
       };
     };
   };

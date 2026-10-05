@@ -783,6 +783,26 @@ _: {
                   alerts = discordAlert "Root filesystem >=93% used (collector scale, statvfs) — approaching the 97.3% health-fail cliff. Follow docs/operations/disk-cleanup-proposal-2026-09-28.md (btrfs snapshot/retention audit is the biggest lever), the coredump vacuum (~958MB), nix-gc (auto-blocked below 5GiB btrfs unalloc), and btrbk snapshot retention. Live value: storage_collector_fs_used_percent mount_point=/.";
                 })
                 (mkHttpCheck {
+                  name = "Root Auto-Prune Floor (90%)";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  # The 10-02 outage ladder had an empty rung between this
+                  # check and the 100% outage: root-prune-guard (5-min
+                  # timer, snapshots.nix) fills it — above 90% df scale it
+                  # runs the fail-safe btrbk root retention prune
+                  # IMMEDIATELY, and this check is red for the WHOLE
+                  # excursion (auto-remediation already applied), resolving
+                  # when usage drops below 90. Polarity per the house rule:
+                  # anchored presence leg + negative on the alert value.
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nroot_prune_guard_fired *)"
+                    "[BODY] != pat(*\nroot_prune_guard_fired 1\n*)"
+                  ];
+                  alerts = discordAlert "Root filesystem crossed 90 percent (df scale) and the auto-prune floor FIRED: btrbk root retention prune ran immediately (latest-common send parents are force-preserved, so the incremental chain cannot break). This is auto-remediation engaged, not an outage — but the root is in the band where the 10-02 100 percent ENOSPC outages started. Check what is filling /, whether usage is falling across cycles, and journalctl -u root-prune-guard (prune_exit nonzero: a live nightly btrbk run or a detached /mnt/pool makes prune skip; the next 5-min cycle retries). Resolves below 90.";
+                })
+                (mkHttpCheck {
                   name = "BTRFS Chunk Health";
                   group = "Filesystem";
                   url = "http://localhost:${toString nodePort}/metrics";
