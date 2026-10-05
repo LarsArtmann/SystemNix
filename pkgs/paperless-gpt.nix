@@ -25,8 +25,6 @@
 # Keep `version` in sync with the tag-pinned input ref in flake.nix.
 let
   version = "0.28.0";
-in
-let
   # Vite frontend embedded into the Go binary.
   frontend = buildNpmPackage {
     pname = "paperless-gpt-web";

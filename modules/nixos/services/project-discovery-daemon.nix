@@ -50,9 +50,11 @@ _: {
           # --keep-going enumeration evidence; this is the SERVICE surface,
           # lars-packages.nix covers the systemPackages surface). Drop when
           # upstream re-pins or the lock moves past an upstream-fixed rev.
-          default = inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-Mrn25ftfpqf9rov194lDd/JqiDeBbgiGSt9+r0hnYF8=";
-          };
+          default =
+            inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
+              {
+                vendorHash = "sha256-Mrn25ftfpqf9rov194lDd/JqiDeBbgiGSt9+r0hnYF8=";
+              };
           defaultText = lib.literalExpression ''
             inputs.project-discovery-daemon.packages.''${system}.default
           '';

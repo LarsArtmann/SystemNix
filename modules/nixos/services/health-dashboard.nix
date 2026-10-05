@@ -63,9 +63,11 @@
           # reproduces at locked rev f7354eb (got GW7xT4Hu…; evo-x2
           # toplevel --keep-going enumeration evidence). Drop when upstream
           # re-pins or the lock moves past an upstream-fixed rev.
-          default = inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-GW7xT4Hu1r9vAa8aRDS4ZlgcTppCtak75IhhkOTAUhU=";
-          };
+          default =
+            inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
+              {
+                vendorHash = "sha256-GW7xT4Hu1r9vAa8aRDS4ZlgcTppCtak75IhhkOTAUhU=";
+              };
           defaultText = lib.literalExpression "inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default";
           description = "The health-hub package (github:LarsArtmann/go-health-dashboard).";
         };
