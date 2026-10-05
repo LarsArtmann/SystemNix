@@ -21,14 +21,26 @@ lib.filterAttrs (_: v: v != null) {
   # and re-broke the FOD it existed to fix — the buildflow-shim lifecycle
   # class). Re-add ONLY via nix-hash-fix evidence, never by hand.
   art-dupl = flakePkg inputs.art-dupl;
-  # branching-flow shim DROPPED (2026-10-02): its drop condition ("lock moves
-  # past an upstream-fixed rev") is met — the lock holds 2a82b63a, whose flake
-  # pins flowVendorHash = sha256-T0Q7PXNA… (the same "got" hash the stale
-  # shim's FOD produced 2026-10-02; the old shim pinned the 2026-10-01 wave's
-  # QUU2TvF7… for rev 5d4965c8 and re-broke the FOD it existed to fix —
-  # the buildflow-shim lifecycle class). Re-add ONLY via nix-hash-fix
-  # evidence, never by hand.
-  branching-flow = flakePkg inputs.branching-flow;
+  # TEMPORARY vendorHash shim (2026-10-05, class comment at buildflow): got
+  # OBmrPDoU… vs upstream-specified PirjczMaw… at locked rev 05d8209f
+  # (first-hand evidence: 07:37 deploy build, log
+  # /var/log/systemnix-deploys/2026-10-05_07-37-03.log). The 2026-10-02 drop
+  # went stale when the lock moved to a re-broken rev (upstream re-broke the
+  # hash it had fixed; lifecycle class at buildflow). Bootstrap exception: the
+  # upstream checkout is owned by a live parallel session mid version-sync
+  # (0.2.0->0.6.4, fix at unpushed 65a4d189), so buildflow nix-hash-fix cannot
+  # run there; hash pasted from first-hand build output, never invented. Drop
+  # when the lock moves past a PUSHED upstream-fixed rev.
+  branching-flow =
+    let
+      pkg = flakePkg inputs.branching-flow;
+    in
+    if pkg == null then
+      null
+    else
+      pkg.overrideAttrs {
+        vendorHash = "sha256-OBmrPDoUGaHFUBzALSv/YzercrzA8lAQ/N4sl6D2vJU=";
+      };
   # buildflow shim DROPPED (2026-09-23): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 5b3483a, where the
   # vendorHash fix IS pushed (upstream vendorHash.nix = sha256-WIFsGVLBMsCK…,
