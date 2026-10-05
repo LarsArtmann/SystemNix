@@ -1079,11 +1079,9 @@
       # flake.lock hygiene gate (2026-10-02 dedup): fails eval when a root
       # input re-grows its own infra-dep lock node (blanket lock waves do
       # this silently). Semantics + deliberate non-follows: lib/lock-audit.nix.
-      lockAuditViolations = (
-        import ./lib/lock-audit.nix {
-          lock = builtins.fromJSON (builtins.readFile ./flake.lock);
-        }
-      );
+      lockAuditViolations = import ./lib/lock-audit.nix {
+        lock = builtins.fromJSON (builtins.readFile ./flake.lock);
+      };
       lockAuditGuard =
         assert
           lockAuditViolations == [ ]
