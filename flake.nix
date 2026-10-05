@@ -42,7 +42,7 @@
       inputs.systems.follows = "systems";
     };
 
-    # Single nix-systems source — flake-utils and niri-session-manager follow this
+    # Single nix-systems source — flake-utils follows this
     systems.url = "github:nix-systems/default";
 
     # uv2nix ecosystem — builds Python apps from uv.lock hermetically.
@@ -297,7 +297,6 @@
       url = "github:LarsArtmann/niri-session-manager";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        systems.follows = "systems";
         treefmt-nix.follows = "treefmt-nix";
       };
     };
@@ -969,10 +968,6 @@
     storage-collector.inputs.flake-parts.follows = "flake-parts";
     todo-list-ai.inputs.flake-parts.follows = "flake-parts";
     todo-list-ai.inputs.treefmt-nix.follows = "treefmt-nix";
-    # 448b941 (the bun-1.4.2-compatible lockfile pin, 2026-10-03) still
-    # carries a nix-systems/default input; later revs dropped it — drop
-    # this follow when the pin moves past the systems-removal rev.
-    todo-list-ai.inputs.systems.follows = "systems";
   };
 
   outputs =
