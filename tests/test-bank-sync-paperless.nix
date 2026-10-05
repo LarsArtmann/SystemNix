@@ -24,9 +24,8 @@
 }:
 let
   lib = inputs.nixpkgs.lib;
-  # The module file is a flake-parts wrapper taking `inputs` (the a7868a7
-  # wave's vendorHash shim on services.bank-sync.package references
-  # inputs.bank-sync; 2026-10-05).
+  # The module file is a flake-parts wrapper taking `inputs` (the
+  # services.bank-sync.package mkDefault references inputs.bank-sync; 2026-10-05).
   bankSyncWrapper =
     ((import ../modules/nixos/services/bank-sync.nix) { inherit inputs; }).flake.nixosModules.bank-sync;
 

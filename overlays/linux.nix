@@ -240,17 +240,6 @@ let
       vendorHash = "sha256-YZTwoufR11jtyfnlfiL8JOX4JOzJlTK7PMpWTTe4l1E=";
     };
   };
-  # TEMPORARY vendorHash shim (2026-10-05, a7868a7 wave — class comment at
-  # lib/lars-packages.nix): bank-sync's upstream overlay hash no longer
-  # reproduces at locked rev 82a94617 (got Q6pdKKRH…). prev (NOT final) —
-  # same recursion guard; stay AFTER bank-sync.overlays.default in the list
-  # below. Drop when upstream re-pins or the lock moves past an
-  # upstream-fixed rev.
-  bankSyncVendorHashShim = _final: prev: {
-    bank-sync = prev.bank-sync.overrideAttrs {
-      vendorHash = "sha256-Q6pdKKRHoO1rqaqc+t7Sr0xk1RtyeSouyLVvGuidtKM=";
-    };
-  };
   # TEMPORARY doCheck shim (2026-10-05, class comment at
   # lib/lars-packages.nix): crush-daily's chromedp cdproto shadowing was
   # fixed upstream (05fe675: chromedp v0.19.1 + pinned vendorHash djxdMOJ…,
@@ -306,7 +295,6 @@ in
   crush-daily.overlays.default
   crushDailyVendorHashShim
   bank-sync.overlays.default
-  bankSyncVendorHashShim
   overview.overlays.default
   overviewVendorHashShim
   discordsync.overlays.default

@@ -64,15 +64,7 @@ nixpkgs.lib.nixosSystem {
           ];
           programs.bank-sync = {
             enable = true;
-            # TEMPORARY vendorHash shim (2026-10-05, a7868a7 wave — class
-            # comment at lib/lars-packages.nix): the HM CLI surface; the
-            # module's service surface is shimmed in
-            # modules/nixos/services/bank-sync.nix and the pkgs surface in
-            # overlays/linux.nix. Drop when upstream re-pins or the lock
-            # moves past an upstream-fixed rev.
-            package = inputs.bank-sync.packages.x86_64-linux.default.overrideAttrs {
-              vendorHash = "sha256-Q6pdKKRHoO1rqaqc+t7Sr0xk1RtyeSouyLVvGuidtKM=";
-            };
+            package = inputs.bank-sync.packages.x86_64-linux.default;
           };
           services.docs-archive-stats = {
             enable = true;

@@ -110,19 +110,13 @@
             wiseApiKeyFile = config.sops.templates."bank-sync-env".path;
             encryptionKeyFile = config.sops.templates."bank-sync-env".path;
 
-            # TEMPORARY vendorHash shim (RE-ADDED 2026-10-05, a7868a7 wave —
-            # class comment at lib/lars-packages.nix): the 2026-09-03 drop
-            # below was correct for ITS wave, but the 2026-10-04/05 flake
-            # update re-vendored the module graph and upstream's baked hash no
-            # longer reproduces at locked rev 82a94617 (got Q6pdKKRH…; evo-x2
-            # toplevel --keep-going enumeration evidence). The overlays/linux.nix
-            # shim covers the pkgs.bank-sync surface; this one the upstream
-            # module's package default. Drop when upstream re-pins or the lock
-            # moves past an upstream-fixed rev.
+            # 2026-10-05: the a7868a7-wave vendorHash shim DROPPED — the lock
+            # moved past upstream-fixed rev 87531d04 (buildflow nix-hash-fix
+            # upstream; our-lock got uiBySJb7… equals upstream's declared
+            # hash, evo-x2 keep-going evidence). Re-add ONLY via nix-hash-fix
+            # evidence, never by hand.
             package = lib.mkDefault (
-              inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-                vendorHash = "sha256-Q6pdKKRHoO1rqaqc+t7Sr0xk1RtyeSouyLVvGuidtKM=";
-              }
+              inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default
             );
           };
 
