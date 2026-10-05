@@ -322,10 +322,12 @@ in
       pkgs.uv
       pkgs.shfmt
       pkgs.nodejs
-      # TEMPORARY vendorHash shim (2026-10-03, class comment at lib/lars-packages.nix):
-      # got 0zQhoKtB… vs upstream-specified o3zkJtoT… at locked rev 1066dea.
+      # TEMPORARY vendorHash shim (RE-PINNED 2026-10-05, a7868a7 wave —
+      # class comment at lib/lars-packages.nix): got PEVbgZ6J… at locked rev
+      # 1066dea (this is the SYSTEM-PATH surface; lars-packages.nix covers
+      # the mkLarsPackages surface).
       (inputs.buildflow.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-0zQhoKtBZOVOYwBLSazCQkqftz+FzblOKq2gAjtLDa8=";
+        vendorHash = "sha256-PEVbgZ6J8/YvynKLkB8W8S9+EoORRR/AfUctpVJhT2Q=";
       })
       # flm CLI (NPU LLM; service consumes the same package). Replaces the
       # deleted ~/.local/bin/flm wrapper — the nix package sets its own

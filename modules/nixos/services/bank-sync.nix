@@ -110,10 +110,18 @@ _: {
             wiseApiKeyFile = config.sops.templates."bank-sync-env".path;
             encryptionKeyFile = config.sops.templates."bank-sync-env".path;
 
-            # vendorHash override DROPPED 2026-09-03: upstream at lock rev
-            # c6342780 now ships the SAME vendorHash the override carried
-            # (sha256-xkA6…, verified via nix eval on the locked input's
-            # package) — the override had become an identity no-op.
+            # TEMPORARY vendorHash shim (RE-ADDED 2026-10-05, a7868a7 wave —
+            # class comment at lib/lars-packages.nix): the 2026-09-03 drop
+            # below was correct for ITS wave, but the 2026-10-04/05 flake
+            # update re-vendored the module graph and upstream's baked hash no
+            # longer reproduces at locked rev 82a94617 (got Q6pdKKRH…; evo-x2
+            # toplevel --keep-going enumeration evidence). The overlays/linux.nix
+            # shim covers the pkgs.bank-sync surface; this one the upstream
+            # module's package default. Drop when upstream re-pins or the lock
+            # moves past an upstream-fixed rev.
+            package = inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+              vendorHash = "sha256-Q6pdKKRHoO1rqaqc+t7Sr0xk1RtyeSouyLVvGuidtKM=";
+            };
           };
 
           # The pool mounts nofail — systemd-tmpfiles could create the dir on the
