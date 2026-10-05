@@ -108,6 +108,8 @@ Universal, hard rules. Domain-specific critical rules live at the top of each `d
 
 ## Session Discipline (shared tree, auto-commit daemon)
 
+- **Planning-layer pre-read + live-state verification (2026-10-05)**: before proposing or designing ANY architecture, `rg -il` the topic across `docs/brainstorming/` + `docs/planning/` — a ratified plan there outranks a fresh design (the 2026-10-05 case: a full Pocket-ID-HA flake design was drafted and answered while the owner-ratified net-vpn plan rejecting it sat unread in docs/brainstorming). And never assert a service capability from a doc claim alone — `ss`/`dig`/config-grep the LIVE state first (the stale "dnsblockd serves DoQ 853" claim shipped in an answer because nobody ran `ss -lun`). A "verified" label must cover every fact asserted, not just the facts checked.
+
 ### Multi-agent write discipline (2026-09-19)
 
 - **Content-pin BEFORE every write**: `git rev-parse HEAD` + `git status --short` + `git log --stat` since your last known rev — parallel agent sessions commit continuously and may have touched YOUR target files in "heuristic" daemon commits. Diff-review anything new before editing.
