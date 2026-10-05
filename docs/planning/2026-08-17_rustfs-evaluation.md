@@ -6,6 +6,13 @@
 **License:** Apache-2.0 (explicitly marketed as "avoiding the restrictions of AGPL" — no relicensing event in LICENSE history)
 **Status:** NOT ADOPTED — evaluation only. Candidate follow-up to the pool-completion master plan.
 
+> **Docs-health re-verify (2026-10-05): STALE IN PART.** Three facts moved since this evaluation:
+> 1. **Stable 1.0 shipped.** 1.0.0 released 2026-09-16, 1.0.1 on 2026-10-03. The adoption gate in the Decision section ("gated on a stable 1.0 release") has FIRED; the RC-status gotcha no longer applies as written.
+> 2. **nixpkgs now ships RustFS** — `pkgs/by-name/ru/rustfs` (1.0.1, `buildRustPackage`, plus a separate `rustfs.console` 0.1.34), a **NixOS module** (`nixos/modules/services/web-servers/rustfs.nix`), and `nixosTests.rustfs` — upstream issue #1897 is effectively resolved and the "no nixpkgs package / module → Docker route" note is obsolete.
+> 3. **The backup-gap motivation is superseded by ratified topology.** The 2026-09-11 offsite decision picked Hetzner StorageBox + Borg (`services.offsite-borg`, implemented 2026-09-22, dormant pending owner-gated go-live, PLACEHOLDER fail-closed) plus pool-native `restic-app-dumps` — overtaking this doc's "restic-over-SFTP closes it" Pareto recommendation.
+>
+> Still accurate: MinIO still abandoned in nixpkgs (same 6 CVEs + migration note); SystemNix still runs zero S3 endpoints; Garage is 1.3.1 (default) / 2.4.1 (was 2.3.0); the erasure-coding-on-RAID1 and no-`/metrics` gotchas are unverified but uncontradicted. Outcome for THIS box unchanged — still not adopted — but the standing reasons are now the ratified backup topology and the absence of an S3 consumer (DiscordSync has no S3 cold-tier backend; see its 2026-08-17 object-store-backend-expansion exploration), NOT RC status or packaging.
+
 ## Overview
 
 RustFS is an S3-compatible high-performance object storage system written in Rust, positioned as a MinIO alternative for AI/data-lake workloads. Relevance trigger: nixpkgs has marked **MinIO as abandoned** (six unfixed CVEs — CVE-2026-40344, -41145, -33322, -33419, -34204, -39414 — with the note "users should migrate to alternatives such as Garage, SeaweedFS, or Ceph"), and SystemNix currently runs **zero S3 endpoints**.
