@@ -79,6 +79,8 @@ The best passkey path for Helium is **KeePassXC-Browser passkeys** — not anyth
 
 ## f) Next (session-scoped; honestly ~20, not padded to 50 — the instruction forbids researching unrelated work)
 
+**Harvest log (§f items HARVESTED at authoring time):** f.1 → `[blocked:deploy]` row, docs/todo/desktop.md (queued pre-report). f.2–f.6 → `[ready]` rows in TODO_LIST.md queue + full entries in docs/todo/desktop.md. f.7/f.11/f.12/f.15 → watches/notices, deliberately not harvested as items (post-deploy observations or foreign-change checks; f.12 belongs to the parallel session's scope). f.8–f.10 → `[decision]` rows in docs/todo/desktop.md (library-only by the routing rules). f.13 → pre-existing docs-health debt, deliberately not duplicated here. f.14 → resurfaced as an owner-gated notice, same class as f.8.
+
 | # | Task | State | Gate |
 |---|------|-------|------|
 | 1 | Deploy + live passkey ceremony verify (chrome://policy render, KeePassXC dialog, fallback path, `.home.lan` RP probe) | queued `[blocked:deploy]` | deploy |
