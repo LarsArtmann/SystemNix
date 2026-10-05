@@ -470,6 +470,23 @@
     "cmdguard_7": {
       "flake": false,
       "locked": {
+        "lastModified": 1791136324,
+        "narHash": "sha256-Sgy6/i8y8QUZCLodXST4hkCrcDlXhaNGBSawdawWZsQ=",
+        "owner": "LarsArtmann",
+        "repo": "cmdguard",
+        "rev": "0c4d25f8cea25a1aa96a37a491be7161ac8ef806",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "v4.1.0",
+        "repo": "cmdguard",
+        "type": "github"
+      }
+    },
+    "cmdguard_8": {
+      "flake": false,
+      "locked": {
         "lastModified": 1790997584,
         "narHash": "sha256-rHL7Halz1E8qsCweYRrKV+xqA9JSiZj0G+4CxD2iE98=",
         "owner": "LarsArtmann",
@@ -1432,6 +1449,28 @@
     "flake-parts_8": {
       "inputs": {
         "nixpkgs-lib": [
+          "project-dependency-graph",
+          "go-nix-helpers",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785627969,
+        "narHash": "sha256-4dtXQk/NMePegK/nWp5NSeuZKLATItOq61lpEvmXqGw=",
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "rev": "427bf4bd9435fdf21321c8cc628c24efc14c0f7a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "type": "github"
+      }
+    },
+    "flake-parts_9": {
+      "inputs": {
+        "nixpkgs-lib": [
           "projects-management-automation",
           "go-nix-helpers",
           "nixpkgs"
@@ -1866,6 +1905,23 @@
     "go-branded-id_15": {
       "flake": false,
       "locked": {
+        "lastModified": 1790667043,
+        "narHash": "sha256-I1nyYWNCUdIixs4qJs2/ZJ6f09rqcHIw24WGl/C/Rx8=",
+        "owner": "LarsArtmann",
+        "repo": "go-branded-id",
+        "rev": "0fe9f367e6176d446634312c462477d2276ba025",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "v0.7.0",
+        "repo": "go-branded-id",
+        "type": "github"
+      }
+    },
+    "go-branded-id_16": {
+      "flake": false,
+      "locked": {
         "lastModified": 1790868602,
         "narHash": "sha256-b8xr0MqkVr8iKuLoz+S6kQfeu9/5T/kpYpraOUc3LCk=",
         "owner": "LarsArtmann",
@@ -1880,7 +1936,7 @@
         "type": "github"
       }
     },
-    "go-branded-id_16": {
+    "go-branded-id_17": {
       "flake": false,
       "locked": {
         "lastModified": 1791002057,
@@ -2222,6 +2278,23 @@
     "go-composable-business-types_4": {
       "flake": false,
       "locked": {
+        "lastModified": 1784831700,
+        "narHash": "sha256-AE3W5wKgfO/u8BHvHbc5qT6Il5ROyiEHqkukCmOxBf0=",
+        "owner": "LarsArtmann",
+        "repo": "go-composable-business-types",
+        "rev": "4248e6b216ba025fada8d490b5c83236818ddec9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "v0.7.0",
+        "repo": "go-composable-business-types",
+        "type": "github"
+      }
+    },
+    "go-composable-business-types_5": {
+      "flake": false,
+      "locked": {
         "lastModified": 1790879167,
         "narHash": "sha256-tqARtD06tvkC47wnoIHXXJ8+UkTU1epUBXyMZZIbNpU=",
         "owner": "LarsArtmann",
@@ -2236,7 +2309,7 @@
         "type": "github"
       }
     },
-    "go-composable-business-types_5": {
+    "go-composable-business-types_6": {
       "flake": false,
       "locked": {
         "lastModified": 1791003071,
@@ -2857,6 +2930,23 @@
     "go-error-family_16": {
       "flake": false,
       "locked": {
+        "lastModified": 1790635349,
+        "narHash": "sha256-KhLv/Szlch6g4K8o+paKhEvifTAF7oSM8y1dmBNn7WU=",
+        "owner": "LarsArtmann",
+        "repo": "go-error-family",
+        "rev": "2d0679e03652e6244c5b6bbbcaa935fbf57e78ef",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "v0.11.0",
+        "repo": "go-error-family",
+        "type": "github"
+      }
+    },
+    "go-error-family_17": {
+      "flake": false,
+      "locked": {
         "lastModified": 1790868647,
         "narHash": "sha256-idCoHoJAk2IXOWWoviVJZ0tyfOqkZQXI5DsewUux/iU=",
         "owner": "LarsArtmann",
@@ -2871,7 +2961,7 @@
         "type": "github"
       }
     },
-    "go-error-family_17": {
+    "go-error-family_18": {
       "flake": false,
       "locked": {
         "lastModified": 1791004027,
@@ -3179,6 +3269,23 @@
     "go-filewatcher_4": {
       "flake": false,
       "locked": {
+        "lastModified": 1785107568,
+        "narHash": "sha256-jApWWZWqrt0cG6jyk7JTzYkx5OD8KZJL4A0RnKDG9KQ=",
+        "owner": "LarsArtmann",
+        "repo": "go-filewatcher",
+        "rev": "6e164bb1ce18302eeec4ff378a31c6a76e4c9d3b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "v2.3.0",
+        "repo": "go-filewatcher",
+        "type": "github"
+      }
+    },
+    "go-filewatcher_5": {
+      "flake": false,
+      "locked": {
         "lastModified": 1790868649,
         "narHash": "sha256-NTOJqV2BksaaZhI6gi0OiqXbntob5K3rd/vNPP+axGg=",
         "owner": "LarsArtmann",
@@ -3193,7 +3300,7 @@
         "type": "github"
       }
     },
-    "go-filewatcher_5": {
+    "go-filewatcher_6": {
       "flake": false,
       "locked": {
         "lastModified": 1791004209,
@@ -4201,10 +4308,35 @@
       "inputs": {
         "flake-parts": "flake-parts_8",
         "nixpkgs": [
+          "project-dependency-graph",
+          "nixpkgs"
+        ],
+        "systems": "systems",
+        "treefmt-nix": "treefmt-nix_7"
+      },
+      "locked": {
+        "lastModified": 1788518894,
+        "narHash": "sha256-M+mVeDQxJleffweNizSdeifkzTatxMf7t0ZYYJ3569o=",
+        "owner": "LarsArtmann",
+        "repo": "go-nix-helpers",
+        "rev": "0f9565203b093a9cbc8441bd08f0012e70eba51b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "repo": "go-nix-helpers",
+        "rev": "0f9565203b093a9cbc8441bd08f0012e70eba51b",
+        "type": "github"
+      }
+    },
+    "go-nix-helpers_9": {
+      "inputs": {
+        "flake-parts": "flake-parts_9",
+        "nixpkgs": [
           "projects-management-automation",
           "nixpkgs"
         ],
-        "treefmt-nix": "treefmt-nix_7"
+        "treefmt-nix": "treefmt-nix_8"
       },
       "locked": {
         "lastModified": 1790980627,
@@ -4255,6 +4387,23 @@
       }
     },
     "go-output_10": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790934703,
+        "narHash": "sha256-FCIhaaxx853A4y2nURDvF4Xfp2LNpIjyUoUNoIbMk5k=",
+        "owner": "LarsArtmann",
+        "repo": "go-output",
+        "rev": "da86a811658b29315c980c5c03a77772b86049ee",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "v0.38.3",
+        "repo": "go-output",
+        "type": "github"
+      }
+    },
+    "go-output_11": {
       "flake": false,
       "locked": {
         "lastModified": 1790934703,
@@ -4979,6 +5128,23 @@
     "gogenfilter_15": {
       "flake": false,
       "locked": {
+        "lastModified": 1789772414,
+        "narHash": "sha256-mjR5qxcDAkvou6sAWsYM8iiYB27tFjr1Dkj8mKVf1Oc=",
+        "owner": "LarsArtmann",
+        "repo": "gogenfilter",
+        "rev": "7183352045a350140ae848bb7e84cd8a64e9a23a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "v3.6.1",
+        "repo": "gogenfilter",
+        "type": "github"
+      }
+    },
+    "gogenfilter_16": {
+      "flake": false,
+      "locked": {
         "lastModified": 1790860970,
         "narHash": "sha256-d2sz9Zk0nohOdMj6hAKHHIh9F/oFhWo7I12TZk8Ch2k=",
         "owner": "LarsArtmann",
@@ -4993,7 +5159,7 @@
         "type": "github"
       }
     },
-    "gogenfilter_16": {
+    "gogenfilter_17": {
       "flake": false,
       "locked": {
         "lastModified": 1790860970,
@@ -6082,6 +6248,22 @@
     },
     "nixpkgs_5": {
       "locked": {
+        "lastModified": 1790822859,
+        "narHash": "sha256-69xHQhAeMAD2wDXO7T2pcOZIF9Sga2W+JkmY2a11Ops=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "c59305bab2065cfecc4944690d9eedbb56f3a9fa",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_6": {
+      "locked": {
         "lastModified": 1769188852,
         "narHash": "sha256-aBAGyMum27K7cP5OR7BMioJOF3icquJMZDDgk6ZEg1A=",
         "owner": "NixOS",
@@ -6298,6 +6480,39 @@
         "type": "github"
       }
     },
+    "project-dependency-graph": {
+      "inputs": {
+        "cmdguard": "cmdguard_7",
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "go-branded-id": "go-branded-id_15",
+        "go-composable-business-types": "go-composable-business-types_4",
+        "go-error-family": "go-error-family_16",
+        "go-filewatcher": "go-filewatcher_4",
+        "go-nix-helpers": "go-nix-helpers_8",
+        "go-output": "go-output_10",
+        "gogenfilter": "gogenfilter_15",
+        "nixpkgs": "nixpkgs_5",
+        "project-discovery-sdk": "project-discovery-sdk_6",
+        "project-discovery-sdk-daemon": "project-discovery-sdk-daemon",
+        "samber-do-auditlog": "samber-do-auditlog_7"
+      },
+      "locked": {
+        "lastModified": 1791194568,
+        "narHash": "sha256-IBeZr7BL0iXWjZOM/80LOAj6UfDO5dAEGhjXIT5FXDM=",
+        "ref": "refs/heads/master",
+        "rev": "d9c5aa3be7c0f979c010cbc819c0a52c302d68bb",
+        "revCount": 1707,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/project-dependency-graph"
+      },
+      "original": {
+        "ref": "refs/heads/master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/project-dependency-graph"
+      }
+    },
     "project-discovery-daemon": {
       "flake": false,
       "locked": {
@@ -6327,7 +6542,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "project-discovery-sdk": "project-discovery-sdk_6"
+        "project-discovery-sdk": "project-discovery-sdk_7"
       },
       "locked": {
         "lastModified": 1791087131,
@@ -6374,6 +6589,23 @@
       },
       "original": {
         "ref": "refs/tags/v0.22.0",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
+      }
+    },
+    "project-discovery-sdk-daemon": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1786521981,
+        "narHash": "sha256-qXPxtqcO6dKG9i+Tblq5tNeBmLIqnyDzr8lzoVwlhn4=",
+        "ref": "refs/tags/v0.19.2",
+        "rev": "2f4ffbb6408d4fda5bf2e7df40900f8e07562c3d",
+        "revCount": 1228,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
+      },
+      "original": {
+        "ref": "refs/tags/v0.19.2",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       }
@@ -6451,6 +6683,23 @@
       "locked": {
         "lastModified": 1790644566,
         "narHash": "sha256-QxVbCG5LEFqYa38Sw7h/zV2f9VZ+P+iwE5dKots+rqg=",
+        "ref": "refs/tags/v0.22.0",
+        "rev": "db2781a2ce9ff2a1a722bd168ab0dc55fd51f473",
+        "revCount": 1308,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
+      },
+      "original": {
+        "ref": "refs/tags/v0.22.0",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
+      }
+    },
+    "project-discovery-sdk_7": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790644566,
+        "narHash": "sha256-QxVbCG5LEFqYa38Sw7h/zV2f9VZ+P+iwE5dKots+rqg=",
         "ref": "master",
         "rev": "db2781a2ce9ff2a1a722bd168ab0dc55fd51f473",
         "revCount": 1308,
@@ -6464,7 +6713,7 @@
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       }
     },
-    "project-discovery-sdk_7": {
+    "project-discovery-sdk_8": {
       "flake": false,
       "locked": {
         "lastModified": 1790860907,
@@ -6481,7 +6730,7 @@
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       }
     },
-    "project-discovery-sdk_8": {
+    "project-discovery-sdk_9": {
       "flake": false,
       "locked": {
         "lastModified": 1790644566,
@@ -6505,18 +6754,18 @@
         ],
         "git-hooks": "git-hooks_5",
         "go-atomic-write": "go-atomic-write_6",
-        "go-branded-id": "go-branded-id_15",
-        "go-composable-business-types": "go-composable-business-types_4",
-        "go-error-family": "go-error-family_16",
-        "go-filewatcher": "go-filewatcher_4",
+        "go-branded-id": "go-branded-id_16",
+        "go-composable-business-types": "go-composable-business-types_5",
+        "go-error-family": "go-error-family_17",
+        "go-filewatcher": "go-filewatcher_5",
         "go-nix-helpers": [
           "go-nix-helpers"
         ],
-        "gogenfilter": "gogenfilter_15",
+        "gogenfilter": "gogenfilter_16",
         "nixpkgs": [
           "nixpkgs"
         ],
-        "project-discovery-sdk": "project-discovery-sdk_7"
+        "project-discovery-sdk": "project-discovery-sdk_8"
       },
       "locked": {
         "lastModified": 1791011612,
@@ -6552,32 +6801,32 @@
     },
     "projects-management-automation": {
       "inputs": {
-        "cmdguard": "cmdguard_7",
+        "cmdguard": "cmdguard_8",
         "flake-parts": [
           "flake-parts"
         ],
         "go-atomic-write": "go-atomic-write_7",
-        "go-branded-id": "go-branded-id_16",
+        "go-branded-id": "go-branded-id_17",
         "go-commit": "go-commit_2",
-        "go-composable-business-types": "go-composable-business-types_5",
-        "go-error-family": "go-error-family_17",
-        "go-filewatcher": "go-filewatcher_5",
+        "go-composable-business-types": "go-composable-business-types_6",
+        "go-error-family": "go-error-family_18",
+        "go-filewatcher": "go-filewatcher_6",
         "go-finding": "go-finding_12",
         "go-flightrecorder": "go-flightrecorder_5",
         "go-health": "go-health_4",
         "go-ndjson": "go-ndjson_7",
-        "go-nix-helpers": "go-nix-helpers_8",
-        "go-output": "go-output_10",
+        "go-nix-helpers": "go-nix-helpers_9",
+        "go-output": "go-output_11",
         "go-retry": "go-retry_6",
         "go-sse": "go-sse_9",
-        "gogenfilter": "gogenfilter_16",
+        "gogenfilter": "gogenfilter_17",
         "nixpkgs": [
           "nixpkgs"
         ],
         "project-discovery-daemon": "project-discovery-daemon_3",
-        "project-discovery-sdk": "project-discovery-sdk_8",
+        "project-discovery-sdk": "project-discovery-sdk_9",
         "project-meta": "project-meta_2",
-        "samber-do-auditlog": "samber-do-auditlog_7"
+        "samber-do-auditlog": "samber-do-auditlog_8"
       },
       "locked": {
         "lastModified": 1791018621,
@@ -6695,7 +6944,7 @@
         "flake-utils": [
           "flake-utils"
         ],
-        "nixpkgs": "nixpkgs_5"
+        "nixpkgs": "nixpkgs_6"
       },
       "locked": {
         "lastModified": 1786919312,
@@ -6777,6 +7026,7 @@
         "overview": "overview",
         "papdashboard": "papdashboard",
         "paperless-gpt-src": "paperless-gpt-src",
+        "project-dependency-graph": "project-dependency-graph",
         "project-discovery-daemon": "project-discovery-daemon_2",
         "project-meta": "project-meta",
         "projects-management-automation": "projects-management-automation",
@@ -6791,10 +7041,10 @@
         "sops-nix": "sops-nix",
         "storage-collector": "storage-collector",
         "superfile": "superfile",
-        "systems": "systems",
+        "systems": "systems_2",
         "todo-list-ai": "todo-list-ai",
         "treefmt-full-flake": "treefmt-full-flake",
-        "treefmt-nix": "treefmt-nix_8",
+        "treefmt-nix": "treefmt-nix_9",
         "uv2nix": "uv2nix",
         "vision-review-agent": "vision-review-agent",
         "wallpapers-src": "wallpapers-src"
@@ -6944,6 +7194,23 @@
       }
     },
     "samber-do-auditlog_7": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1786726432,
+        "narHash": "sha256-6//SURDJ3LjRgZxduJZAh+dHlrMlBDvz1Z5LGZXT9lM=",
+        "owner": "LarsArtmann",
+        "repo": "samber-do-auditlog",
+        "rev": "b80152a2c424093035cc1d867d90bbd3b86ee5e2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "v0.10.0",
+        "repo": "samber-do-auditlog",
+        "type": "github"
+      }
+    },
+    "samber-do-auditlog_8": {
       "flake": false,
       "locked": {
         "lastModified": 1790860976,
@@ -7146,6 +7413,21 @@
       }
     },
     "systems": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_2": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
@@ -7483,6 +7765,28 @@
     "treefmt-nix_7": {
       "inputs": {
         "nixpkgs": [
+          "project-dependency-graph",
+          "go-nix-helpers",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785945821,
+        "narHash": "sha256-NLSyTCW4K4ofhNBllt3omPasm6QpralXH1DBZOc91Dw=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "ae7910970dddc408fe6ab1c8e4b277bb21d72dc0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "treefmt-nix_8": {
+      "inputs": {
+        "nixpkgs": [
           "projects-management-automation",
           "go-nix-helpers",
           "nixpkgs"
@@ -7502,7 +7806,7 @@
         "type": "github"
       }
     },
-    "treefmt-nix_8": {
+    "treefmt-nix_9": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"

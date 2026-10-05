@@ -32,6 +32,8 @@
   deliberate ? {
     "discordsync.nixpkgs" =
       "FOD cache-hit interim rollback (2026-09-23): upstream vendorHash validated against its own locked nixpkgs";
+    "project-dependency-graph.nixpkgs" =
+      "vendorHash validated against upstream's own locked nixpkgs (go 1.27.1 via nixos-unstable; following would re-tool the go-modules FOD on every root-nixpkgs bump — the 2026-10-05 a7868a7 wave class)";
     "qmd.nixpkgs" = "bun nodeModules FOD hash validated against upstream's own nixpkgs bun";
     "nsfw-classifier.nixpkgs" =
       "git+file local dev checkout; own build env until its FODs are next regenerated";

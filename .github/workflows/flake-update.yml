@@ -36,6 +36,8 @@ jobs:
           NIX_DEPLOY_KEY_BRANCHING_FLOW: ${{ secrets.NIX_DEPLOY_KEY_BRANCHING_FLOW }}
           NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER: ${{ secrets.NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER }}
           NIX_DEPLOY_KEY_BUILDFLOW: ${{ secrets.NIX_DEPLOY_KEY_BUILDFLOW }}
+          NIX_DEPLOY_KEY_PROJECT_DEPENDENCY_GRAPH: ${{ secrets.NIX_DEPLOY_KEY_PROJECT_DEPENDENCY_GRAPH }}
+          NIX_DEPLOY_KEY_PROJECT_DISCOVERY_SDK: ${{ secrets.NIX_DEPLOY_KEY_PROJECT_DISCOVERY_SDK }}
         run: |
           eval "$(ssh-agent -s)" >/dev/null
           printf '%s\n' "$NIX_DEPLOY_KEY_CV" | ssh-add -
@@ -43,6 +45,8 @@ jobs:
           printf '%s\n' "$NIX_DEPLOY_KEY_BRANCHING_FLOW" | ssh-add -
           printf '%s\n' "$NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER" | ssh-add -
           printf '%s\n' "$NIX_DEPLOY_KEY_BUILDFLOW" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_PROJECT_DEPENDENCY_GRAPH" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_PROJECT_DISCOVERY_SDK" | ssh-add -
           git config --global url."https://github.com/LarsArtmann/go-nix-helpers".insteadOf "git@github.com:LarsArtmann/go-nix-helpers"
           echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
           echo "GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new" >> "$GITHUB_ENV"
