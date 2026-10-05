@@ -72,7 +72,7 @@ run_check() {
   # inside the gate's then-branch (grep-level lock — a deleted gate is the
   # regression class this row exists for).
   grep -q "lib/cv-oidc-gate.sh" "$deploy_sh" || fail "deploy.sh no longer sources lib/cv-oidc-gate.sh"
-  grep -q 'cv_oidc_gate_decide "\$cv_before" "\$cv_after"' "$deploy_sh" || fail "deploy.sh no longer calls cv_oidc_gate_decide \$cv_before \$cv_after"
+  grep -q 'cv_oidc_gate_decide "\$cv_before" "\$cv_after"' "$deploy_sh" || fail 'deploy.sh no longer calls cv_oidc_gate_decide $cv_before $cv_after'
   grep -q 'cv_before=.*sha256sum "\$cv_env"' "$deploy_sh" || fail "deploy.sh lost the cv_before sha256sum plumbing"
   grep -q 'cv_after=.*sha256sum "\$cv_env"' "$deploy_sh" || fail "deploy.sh lost the cv_after sha256sum plumbing"
 

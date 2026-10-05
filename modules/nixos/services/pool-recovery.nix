@@ -84,21 +84,18 @@
       # tick — a dead daemon stays dark until a human notices). The assertion
       # in config fails the eval naming every uncovered unit, so the next
       # paperless-gpt cannot silently join the blast radius.
-      poolBoundDaemons = lib.filterAttrs (_: svc: let
-        rmf = (svc.unitConfig or {}).RequiresMountsFor or null;
-        paths =
-          if lib.isList rmf
-          then map toString rmf
-          else lib.optionals (rmf != null) [ (toString rmf) ];
-        bound = lib.any (
-          p: p == cfg.mountPoint || lib.hasPrefix "${cfg.mountPoint}/" p
-        ) paths;
-        # Restart="no" is the lib oneshot default (serviceOneshotDefaults
-        # sets it explicitly) — an explicitly-set no-restart is a oneshot,
-        # not a daemon; only non-"no" Restart survives the filter.
-        restart = (svc.serviceConfig or {}).Restart or null;
-        daemon = restart != null && restart != "no";
-      in
+      poolBoundDaemons = lib.filterAttrs (
+        _: svc:
+        let
+          rmf = (svc.unitConfig or { }).RequiresMountsFor or null;
+          paths = if lib.isList rmf then map toString rmf else lib.optionals (rmf != null) [ (toString rmf) ];
+          bound = lib.any (p: p == cfg.mountPoint || lib.hasPrefix "${cfg.mountPoint}/" p) paths;
+          # Restart="no" is the lib oneshot default (serviceOneshotDefaults
+          # sets it explicitly) — an explicitly-set no-restart is a oneshot,
+          # not a daemon; only non-"no" Restart survives the filter.
+          restart = (svc.serviceConfig or { }).Restart or null;
+          daemon = restart != null && restart != "no";
+        in
         bound && daemon
       ) config.systemd.services;
 

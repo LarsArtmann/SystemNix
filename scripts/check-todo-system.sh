@@ -144,9 +144,9 @@ scan_file() {
   # and get harvested early. Signals are wait-imperative forms only — see
   # header note 5. Historical "at HH:MM" mentions must not trip this.
   local timegate_hits
-  timegate_hits=$(grep -E '^- \[ \] \[ready\]' "$f" 2>/dev/null \
-    | grep -E 'tonight|tomorrow|re-dispatch after|after the [a-z0-9 -]+ run|after [0-9]{1,2}:[0-9]{2}|\bfires [^|]*[0-9]{1,2}:[0-9]{2}' \
-    | grep -v 'BLOCKED' || true)
+  timegate_hits=$(grep -E '^- \[ \] \[ready\]' "$f" 2>/dev/null |
+    grep -E 'tonight|tomorrow|re-dispatch after|after the [a-z0-9 -]+ run|after [0-9]{1,2}:[0-9]{2}|\bfires [^|]*[0-9]{1,2}:[0-9]{2}' |
+    grep -v 'BLOCKED' || true)
   if [ -n "$timegate_hits" ]; then
     echo "FAIL: time-gated [ready] row(s) without a ' — BLOCKED:' marker — wait-language reads as dispatchable (early-harvest class, 2026-10-04):"
     printf '%s\n' "$timegate_hits" | sed 's/^/  /' | cut -c1-200

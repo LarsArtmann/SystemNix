@@ -41,7 +41,7 @@ read_count() {
 
 write_sysfs() {
   local value="$1" path="$2"
-  if ! printf '%s' "$value" > "$path" 2>/dev/null; then
+  if ! printf '%s' "$value" >"$path" 2>/dev/null; then
     echo "thermal-pstate-guard: WARN: sysfs write failed: $path <- $value" >&2
     return 1
   fi
@@ -82,7 +82,7 @@ restore_performance() {
     [ -n "$policy" ] || continue
     write_sysfs "${governor:-$NORMAL_GOVERNOR}" "$CPUFREQ_ROOT/$policy/scaling_governor" || true
     write_sysfs "${epp:-$NORMAL_EPP}" "$CPUFREQ_ROOT/$policy/energy_performance_preference" || true
-  done < "${1:-/dev/null}"
+  done <"${1:-/dev/null}"
   # Snapshot-less restores (external-mode adoption) get the configured normal.
   if [ ! -s "${1:-/dev/null}" ]; then
     for policy in "$CPUFREQ_ROOT"/policy*; do
@@ -95,14 +95,14 @@ restore_performance() {
 
 snapshot_governors() {
   local policy governor epp
-  : > "$SNAPSHOT_FILE.tmp"
+  : >"$SNAPSHOT_FILE.tmp"
   for policy in "$CPUFREQ_ROOT"/policy*; do
     [ -d "$policy" ] || continue
     governor="performance"
     [ -r "$policy/scaling_governor" ] && governor=$(cat "$policy/scaling_governor")
     epp="$NORMAL_EPP"
     [ -r "$policy/energy_performance_preference" ] && epp=$(cat "$policy/energy_performance_preference")
-    echo "$(basename "$policy") $governor $epp" >> "$SNAPSHOT_FILE.tmp"
+    echo "$(basename "$policy") $governor $epp" >>"$SNAPSHOT_FILE.tmp"
   done
   mv -f "$SNAPSHOT_FILE.tmp" "$SNAPSHOT_FILE"
 }
@@ -141,7 +141,7 @@ write_metrics() {
     echo "# HELP thermal_pstate_guard_last_run_timestamp_seconds Unix time of the last completed tick (frozen file = dead guard)"
     echo "# TYPE thermal_pstate_guard_last_run_timestamp_seconds gauge"
     echo "thermal_pstate_guard_last_run_timestamp_seconds $(date +%s)"
-  } > "$tmp"
+  } >"$tmp"
   mv -f "$tmp" "$TEXTFILE_OUT"
 }
 
@@ -164,8 +164,8 @@ tick() {
   if [ "$current_mode" != "$state_mode" ]; then
     log "adopted externally-set mode: $current_mode (state said $state_mode); streaks reset"
     state_mode="$current_mode"
-    echo 0 > "$ENTER_STREAK_FILE"
-    echo 0 > "$EXIT_STREAK_FILE"
+    echo 0 >"$ENTER_STREAK_FILE"
+    echo 0 >"$EXIT_STREAK_FILE"
     if [ "$state_mode" = "active" ]; then
       if [ -f "$SNAPSHOT_FILE" ]; then
         restore_performance "$SNAPSHOT_FILE"
@@ -175,7 +175,7 @@ tick() {
       fi
     fi
   fi
-  echo "$state_mode" > "$MODE_FILE"
+  echo "$state_mode" >"$MODE_FILE"
 
   # Read every sensor pattern from the spec. Absent patterns do not vote.
   # spec form: name=high/low (degrees C). Colon-separated numbers would
@@ -221,24 +221,24 @@ tick() {
 
   if [ "$state_mode" = "guided" ]; then
     if [ "$hot" -eq 1 ]; then
-      echo 0 > "$EXIT_STREAK_FILE"
+      echo 0 >"$EXIT_STREAK_FILE"
       local last_log
       last_log=$(read_count "$THROTTLE_LOG_EPOCH_FILE")
       if [ $((now - last_log)) -ge "$VERBOSE_INTERVAL" ]; then
         log "throttled (guided), still hot:$sensor_summary"
-        echo "$now" > "$THROTTLE_LOG_EPOCH_FILE"
+        echo "$now" >"$THROTTLE_LOG_EPOCH_FILE"
       fi
     elif [ "$cool" -eq 1 ]; then
       exit_streak=$((exit_streak + 1))
-      echo "$exit_streak" > "$EXIT_STREAK_FILE"
+      echo "$exit_streak" >"$EXIT_STREAK_FILE"
       if [ "$exit_streak" -ge "$EXIT_TICKS" ]; then
         if write_sysfs active "$PSTATE_ROOT/status"; then
           restore_performance "$SNAPSHOT_FILE"
           rm -f "$SNAPSHOT_FILE"
-          echo active > "$MODE_FILE"
-          echo 0 > "$EXIT_STREAK_FILE"
+          echo active >"$MODE_FILE"
+          echo 0 >"$EXIT_STREAK_FILE"
           restores=$((restores + 1))
-          echo "$restores" > "$RESTORES_FILE"
+          echo "$restores" >"$RESTORES_FILE"
           log "THERMAL THROTTLE EXIT: amd_pstate restored to active + $NORMAL_GOVERNOR after ${EXIT_TICKS}x cool ticks:$sensor_summary"
         else
           log "ERROR: failed to write active to $PSTATE_ROOT/status; staying guided"
@@ -246,20 +246,20 @@ tick() {
       fi
     else
       # Middle band: below high but above low — dwell resets, silent.
-      echo 0 > "$EXIT_STREAK_FILE"
+      echo 0 >"$EXIT_STREAK_FILE"
     fi
   else
     if [ "$hot" -eq 1 ]; then
       enter_streak=$((enter_streak + 1))
-      echo "$enter_streak" > "$ENTER_STREAK_FILE"
+      echo "$enter_streak" >"$ENTER_STREAK_FILE"
       if [ "$enter_streak" -ge "$ENTER_TICKS" ]; then
         snapshot_governors
         if write_sysfs guided "$PSTATE_ROOT/status"; then
-          echo guided > "$MODE_FILE"
-          echo 0 > "$ENTER_STREAK_FILE"
+          echo guided >"$MODE_FILE"
+          echo 0 >"$ENTER_STREAK_FILE"
           trips=$((trips + 1))
-          echo "$trips" > "$TRIPS_FILE"
-          echo "$now" > "$THROTTLE_LOG_EPOCH_FILE"
+          echo "$trips" >"$TRIPS_FILE"
+          echo "$now" >"$THROTTLE_LOG_EPOCH_FILE"
           log "THERMAL THROTTLE ENTER: amd_pstate -> guided after ${ENTER_TICKS}x hot ticks:$sensor_summary"
         else
           log "ERROR: failed to write guided to $PSTATE_ROOT/status; staying $state_mode"
@@ -267,7 +267,7 @@ tick() {
         fi
       fi
     else
-      echo 0 > "$ENTER_STREAK_FILE"
+      echo 0 >"$ENTER_STREAK_FILE"
     fi
   fi
 
@@ -286,17 +286,22 @@ run_selftest() {
     "$fixture/pstate" "$fixture/cpufreq/policy0" "$fixture/cpufreq/policy1" \
     "$fixture/state" "$fixture/textfile"
 
-  echo nvme > "$fixture/hwmon/hwmon0/name"; echo 55000 > "$fixture/hwmon/hwmon0/temp1_input"
-  echo nvme > "$fixture/hwmon/hwmon1/name"; echo 57000 > "$fixture/hwmon/hwmon1/temp1_input"
-  echo amdgpu > "$fixture/hwmon/hwmon2/name"; echo 42000 > "$fixture/hwmon/hwmon2/temp1_input"
-  echo k10temp > "$fixture/hwmon/hwmon3/name"; echo 60000 > "$fixture/hwmon/hwmon3/temp1_input"
-  echo acpitz > "$fixture/hwmon/hwmon4/name"; echo 45000 > "$fixture/hwmon/hwmon4/temp1_input"
+  echo nvme >"$fixture/hwmon/hwmon0/name"
+  echo 55000 >"$fixture/hwmon/hwmon0/temp1_input"
+  echo nvme >"$fixture/hwmon/hwmon1/name"
+  echo 57000 >"$fixture/hwmon/hwmon1/temp1_input"
+  echo amdgpu >"$fixture/hwmon/hwmon2/name"
+  echo 42000 >"$fixture/hwmon/hwmon2/temp1_input"
+  echo k10temp >"$fixture/hwmon/hwmon3/name"
+  echo 60000 >"$fixture/hwmon/hwmon3/temp1_input"
+  echo acpitz >"$fixture/hwmon/hwmon4/name"
+  echo 45000 >"$fixture/hwmon/hwmon4/temp1_input"
 
-  echo active > "$fixture/pstate/status"
-  echo performance > "$fixture/cpufreq/policy0/scaling_governor"
-  echo performance > "$fixture/cpufreq/policy0/energy_performance_preference"
-  echo performance > "$fixture/cpufreq/policy1/scaling_governor"
-  echo performance > "$fixture/cpufreq/policy1/energy_performance_preference"
+  echo active >"$fixture/pstate/status"
+  echo performance >"$fixture/cpufreq/policy0/scaling_governor"
+  echo performance >"$fixture/cpufreq/policy0/energy_performance_preference"
+  echo performance >"$fixture/cpufreq/policy1/scaling_governor"
+  echo performance >"$fixture/cpufreq/policy1/energy_performance_preference"
 
   local env_common=(
     HWMON_ROOT="$fixture/hwmon"
@@ -326,7 +331,7 @@ run_selftest() {
   assert_eq "cold-start-pstate" "$(cat "$fixture/pstate/status")" "active"
 
   # 2. One hot tick: debounce holds active.
-  echo 96000 > "$fixture/hwmon/hwmon3/temp1_input"
+  echo 96000 >"$fixture/hwmon/hwmon3/temp1_input"
   env "${env_common[@]}" bash "$0" tick
   assert_eq "debounce-holds-active" "$(cat "$fixture/pstate/status")" "active"
 
@@ -342,14 +347,14 @@ run_selftest() {
   assert_eq "trips-still-1" "$(cat "$fixture/state/trips")" "1"
 
   # 5. Middle band (85C, above low 80): dwell resets, stays guided.
-  echo 85000 > "$fixture/hwmon/hwmon3/temp1_input"
+  echo 85000 >"$fixture/hwmon/hwmon3/temp1_input"
   env "${env_common[@]}" bash "$0" tick
   env "${env_common[@]}" bash "$0" tick
   assert_eq "middle-band-resets" "$(cat "$fixture/state/exit-streak")" "0"
   assert_eq "middle-band-stays" "$(cat "$fixture/pstate/status")" "guided"
 
   # 6. Cool x3: restores active + snapshotted governor.
-  echo 70000 > "$fixture/hwmon/hwmon3/temp1_input"
+  echo 70000 >"$fixture/hwmon/hwmon3/temp1_input"
   env "${env_common[@]}" bash "$0" tick
   env "${env_common[@]}" bash "$0" tick
   assert_eq "exit-debounce-holds" "$(cat "$fixture/pstate/status")" "guided"
@@ -369,16 +374,16 @@ run_selftest() {
   assert_eq "metric-freshness" "$?" "0"
 
   # 8. External override: operator flips to guided; guard adopts, does not fight.
-  echo guided > "$fixture/pstate/status"
+  echo guided >"$fixture/pstate/status"
   env "${env_common[@]}" bash "$0" tick
   assert_eq "adopt-external-guided" "$(cat "$fixture/state/mode")" "guided"
 
   # 9. External flip back without our snapshot: adoption restores the
   # configured performance governor even over a mode-switch reset.
-  echo 96000 > "$fixture/hwmon/hwmon3/temp1_input"
+  echo 96000 >"$fixture/hwmon/hwmon3/temp1_input"
   env "${env_common[@]}" bash "$0" tick # stays guided (hot)
-  echo active > "$fixture/pstate/status"
-  echo schedutil > "$fixture/cpufreq/policy0/scaling_governor" # simulate mode-switch reset
+  echo active >"$fixture/pstate/status"
+  echo schedutil >"$fixture/cpufreq/policy0/scaling_governor" # simulate mode-switch reset
   env "${env_common[@]}" bash "$0" tick
   assert_eq "adopt-external-active" "$(cat "$fixture/state/mode")" "active"
   assert_eq "adopt-restores-governor" "$(cat "$fixture/cpufreq/policy0/scaling_governor")" "performance"
@@ -405,10 +410,10 @@ run_selftest() {
 }
 
 case "${1:-tick}" in
-  tick) tick ;;
-  selftest) run_selftest ;;
-  *)
-    echo "usage: $0 [tick|selftest]" >&2
-    exit 2
-    ;;
+tick) tick ;;
+selftest) run_selftest ;;
+*)
+  echo "usage: $0 [tick|selftest]" >&2
+  exit 2
+  ;;
 esac

@@ -34,7 +34,8 @@ expect_eq() {
 # Uncached: batch dry-run of three go packages whose FODs were never built
 # since the last lock move (verbatim, incl. the non-FOD drvs a real
 # preview lists — the extractor must pick ONLY the FODs).
-FIX_UNCACHED=$(cat <<'EOF'
+FIX_UNCACHED=$(
+  cat <<'EOF'
 these 6 derivations will be built:
   /nix/store/8wa0f1mkmhpzmrvhh7h9a2g11cl11n7i-crush-daily-prepared-source-12bf69f398ab3309f39c54699d6ec34669107c32.drv
   /nix/store/kbwg8d2lb5i5jxhbgnkm0g19ib4zpw0n-crush-daily-12bf69f398ab3309f39c54699d6ec34669107c32-go-modules.drv
@@ -46,7 +47,8 @@ EOF
 )
 
 # Cached: a fully-warm preview prints nix notices only.
-FIX_CACHED=$(cat <<'EOF'
+FIX_CACHED=$(
+  cat <<'EOF'
 Using saved setting for 'extra-experimental-features = nix-command flakes pipe-operators' from ~/.local/share/nix/trusted-settings.json.
 Using saved setting for 'warn-dirty = false' from ~/.local/share/nix/trusted-settings.json.
 EOF
@@ -54,7 +56,8 @@ EOF
 
 # Genuine FOD hash mismatch, produced by a bogus outputHash override
 # (dnsblockd, verbatim wording and exit semantics).
-FIX_MISMATCH=$(cat <<'EOF'
+FIX_MISMATCH=$(
+  cat <<'EOF'
 this derivation will be built:
   /nix/store/b2sqmvvrvsgmp6vhzjq1cxpk1qz7h8wz-dnsblockd-1ffa8ff-go-modules.drv
 building '/nix/store/b2sqmvvrvsgmp6vhzjq1cxpk1qz7h8wz-dnsblockd-1ffa8ff-go-modules.drv'...

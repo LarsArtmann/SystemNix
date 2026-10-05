@@ -30,19 +30,25 @@ extract_sb_pin() {
   grep -oP "raw\.githubusercontent\.com/StevenBlack/hosts/\K[a-f0-9]{40}" "$1" | head -1 || true
 }
 
-if [[ "${1:-}" == "--selftest" ]]; then
+if [[ ${1:-} == "--selftest" ]]; then
   # Proves the SHIPPED extraction (the function above) against fixture
   # blocklist files — no network, no repo-root requirement.
   tmp=$(mktemp -d)
   trap 'rm -rf "$tmp"' EXIT
   pass=0
   fail=0
-  ok() { echo "  ok: $1"; pass=$((pass + 1)); }
-  bad() { echo "FAIL: $1"; fail=$((fail + 1)); }
+  ok() {
+    echo "  ok: $1"
+    pass=$((pass + 1))
+  }
+  bad() {
+    echo "FAIL: $1"
+    fail=$((fail + 1))
+  }
 
   commit=21605ccaecf26941005d4a7a3c1267af234599cf
 
-  cat > "$tmp/healthy.nix" <<EOF
+  cat >"$tmp/healthy.nix" <<EOF
       name = "StevenBlack-everything";
       url = "https://raw.githubusercontent.com/StevenBlack/hosts/${commit}/alternates/fakenews-gambling-porn-social/hosts";
 EOF
@@ -50,11 +56,11 @@ EOF
   if [[ $got == "$commit" ]]; then ok "healthy fixture extracts the commit"; else bad "healthy fixture returned '$got' (want $commit)"; fi
   if [[ $got != "hosts" ]]; then ok "never returns the 'hosts' path segment (2026-10-01 class)"; else bad "returned 'hosts' — the 2026-10-01 corruption class"; fi
 
-  printf 'url = "https://raw.githubusercontent.com/StevenBlack/hosts//alternates/hosts";\n' > "$tmp/corrupt.nix"
+  printf 'url = "https://raw.githubusercontent.com/StevenBlack/hosts//alternates/hosts";\n' >"$tmp/corrupt.nix"
   got=$(extract_sb_pin "$tmp/corrupt.nix")
   if [[ -z $got ]]; then ok "commit-less URL extracts empty (main path errors out)"; else bad "commit-less URL returned '$got' (want empty)"; fi
 
-  printf 'url = "https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/hosts/tif";\n' > "$tmp/decoy.nix"
+  printf 'url = "https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/hosts/tif";\n' >"$tmp/decoy.nix"
   got=$(extract_sb_pin "$tmp/decoy.nix")
   if [[ -z $got ]]; then ok "hagezi hosts/ decoy never matches"; else bad "hagezi decoy matched '$got'"; fi
 

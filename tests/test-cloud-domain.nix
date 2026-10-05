@@ -125,7 +125,11 @@ let
         in
         enabled.services.netbird.clients ? evox2
         && enabled.services.netbird.clients.evox2.port == ports.netbird
-        && (enabled.systemd.services ? "netbird-evox2-login");
+        && (enabled.systemd.services ? "netbird-evox2-login")
+        # routing-peer wiring: without "both", VPN→LAN forwarding (server
+        # arm: ip_forward) and LAN-local P2P answers on the 100.x address
+        # (client arm: loose rp_filter) both silently break
+        && (enabled.services.netbird.useRoutingFeatures or null) == "both";
       msg = "netbird client module surface mismatch (services.netbird.clients)";
     }
     {

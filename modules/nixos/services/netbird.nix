@@ -53,16 +53,29 @@ _: {
         # with automated setup-key login — no interactive browser flow on a
         # headless server, ever. The login oneshot picks the key up from the
         # sops-rendered file via LoadCredential.
-        services.netbird.clients.evox2 = {
-          port = ports.netbird;
-          config.ManagementUrl = cfg.managementURL;
-          login = {
-            enable = true;
-            setupKeyFile = config.sops.secrets.netbird_setup_key.path;
-            systemdDependencies = [ "sops-install-secrets.service" ];
+        services.netbird = {
+          clients.evox2 = {
+            port = ports.netbird;
+            config.ManagementUrl = cfg.managementURL;
+            login = {
+              enable = true;
+              setupKeyFile = config.sops.secrets.netbird_setup_key.path;
+              systemdDependencies = [ "sops-install-secrets.service" ];
+            };
+            # openFirewall (default) opens 51820/udp for direct P2P;
+            # openInternalFirewall (default) trusts the tunnel interface.
           };
-          # openFirewall (default) opens 51820/udp for direct P2P;
-          # openInternalFirewall (default) trusts the tunnel interface.
+
+          # Routing-peer role: evo-x2 forwards VPN traffic into the LAN
+          # (192.168.1.0/24 — the network route itself is MANAGEMENT-SIDE:
+          # dashboard "Networks" picks evo-x2 as routing peer; NetBird has
+          # no client-side route-advertise CLI, verified against
+          # docs.netbird.io/manage/network-routes). nixpkgs semantics:
+          #   "server" arm → net.ipv4/ip_forward + net.ipv6 forwarding
+          #   "client" arm → firewall checkReversePath "loose" (needed here
+          #     too: LAN-local peers reach evo-x2's 100.x address with
+          #     sources that strict rp_filter would drop on the LAN iface)
+          useRoutingFeatures = "both";
         };
 
         sops.secrets.netbird_setup_key = {

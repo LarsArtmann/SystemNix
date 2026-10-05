@@ -29,8 +29,7 @@
 # Metric freshness follows the memory-guard doctrine: the .prom is rewritten
 # atomically on every tick and stamps last_run_timestamp_seconds, so a dead
 # guard is detectable by staleness (gatus wiring tracked separately).
-_:
-{
+_: {
   flake.nixosModules.thermal-pstate-guard =
     {
       config,
