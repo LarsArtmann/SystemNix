@@ -26,7 +26,12 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
   GATED OFF (`enable = false`) until the Phase-2 setup key lands in
   `platforms/nixos/secrets/netbird.yaml` (key `netbird_setup_key`).
   Uses pinned-nixpkgs `services.netbird.clients.evox2` + automated
-  setup-key login. Port 51820/udp (`ports.netbird`).
+  setup-key login. Port 51820/udp (`ports.netbird`). Routing-peer role
+  WIRED (2026-10-05): `useRoutingFeatures = "both"` — the "server" arm
+  enables IPv4/IPv6 forwarding (VPN → LAN), the "client" arm sets
+  `checkReversePath = "loose"` (LAN-local peers answering evo-x2's
+  100.x address would be dropped by strict rp_filter). Pinned by the
+  `checks.cloud-domain` positive probe.
 - **DNS prerequisite** (fixed 2026-10-02): `netbird.`/`relay.larsartmann.cloud`
   resolve on the LAN/VPN only via explicit `cloudPublicRecords`
   (platforms/common/dns-local.nix → dnsblockd localRecords on BOTH evo-x2 and
@@ -63,7 +68,11 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
 5. **Enable the client**: set `services.netbird-client.enable = true` in the
    evo-x2 platform config, rebuild. Enrollment is automatic (login oneshot).
 6. **Dashboard one-time network config** (runbook step in pbx docs):
-   - Routes: approve evo-x2's advertised `192.168.1.0/24`
+   - Routes: CREATE the `192.168.1.0/24` network route dashboard-side
+     with evo-x2 as routing peer + distribution to all-employees (there
+     is NO client-side advertisement — `netbird` CLI cannot advertise;
+     verified against docs.netbird.io/manage/network-routes; forwarding
+     is already wired via `useRoutingFeatures = "both"`)
    - DNS: nameserver group forwarding `home.lan` + `larsartmann.cloud`
      → `192.168.1.53` (matched domains only)
    - ACLs: default single-user policy
