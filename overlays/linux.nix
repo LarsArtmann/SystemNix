@@ -275,17 +275,15 @@ let
   # current nixpkgs' clickhouse derivation matches a published binary cache
   # entry (check: nix eval nixpkgs#clickhouse.drvPath vs the pinned drv).
   clickhouseVersionPinOverlay = _final: prev: {
-    clickhouse =
-      (import
-        (builtins.fetchTarball {
-          url = "https://github.com/NixOS/nixpkgs/archive/7a0f122f5090cf4c2ade2a13a0e229d4e19ba71f.tar.gz";
-          sha256 = "sha256-ZoxIApko70jCdbH3l20HWXOBaT2HZd87orzd2yJ9dVE=";
-        })
-        {
-          system = prev.stdenv.hostPlatform.system;
-          config.allowUnfree = true;
-        }
-      ).clickhouse;
+    inherit ((import
+      (builtins.fetchTarball {
+        url = "https://github.com/NixOS/nixpkgs/archive/7a0f122f5090cf4c2ade2a13a0e229d4e19ba71f.tar.gz";
+        sha256 = "sha256-ZoxIApko70jCdbH3l20HWXOBaT2HZd87orzd2yJ9dVE=";
+      })
+      {
+        system = prev.stdenv.hostPlatform.system;
+        config.allowUnfree = true;
+      })) clickhouse;
   };
 in
 [

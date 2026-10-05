@@ -49,7 +49,7 @@
 
       paperlessCfg = config.services.paperless;
       paperlessPort = paperlessCfg.port;
-      fastflowlmEnabled = (config.services.fastflowlm.enable or false);
+      fastflowlmEnabled = config.services.fastflowlm.enable or false;
 
       stateDir = "/var/lib/paperless-gpt";
       runtimeEnvFile = "/run/paperless-gpt/env";
@@ -257,7 +257,7 @@
 
         users.users.${cfg.user} = {
           isSystemUser = true;
-          group = cfg.group;
+          inherit (cfg) group;
           home = stateDir;
           description = "paperless-gpt service user";
         };

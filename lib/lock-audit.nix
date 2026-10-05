@@ -59,7 +59,7 @@ let
       checkInput =
         inputName: nodeKey:
         let
-          nodeInputs = (nodes.${nodeKey}.inputs or { });
+          nodeInputs = nodes.${nodeKey}.inputs or { };
         in
         builtins.concatMap (
           dep:

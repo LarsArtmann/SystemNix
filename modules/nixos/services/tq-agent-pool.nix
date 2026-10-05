@@ -53,7 +53,7 @@ _: {
       # the locked rev (AGENTS.md 17102 B > the repo's own 15400 B budget);
       # drop the gate when upstream prunes/resets and the lock moves past.
       tqPkg =
-        (inputs.go-taskqueue.packages.${pkgs.stdenv.hostPlatform.system}.default).overrideAttrs
+        inputs.go-taskqueue.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
           (old: {
             nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.git ];
             vendorHash = "sha256-/fevyHgdr1ycM/mvjNQX8iassOS+q4UtS1yA6XsXwsQ=";
