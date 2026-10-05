@@ -32,7 +32,9 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     # sourceRoot. Point it directly at webui/ inside the source archive.
     src = "${finalAttrs.src}/webui";
     fetcherVersion = 4;
-    hash = "sha256-MkUfxSvFwesc65UIp2wNg2WQhgvZbNwvVY8G4xP3Mtg=";
+    # 2026-10-05: re-measured for the a7868a7 flake-update wave (nixpkgs
+    # fetchPnpmDeps drift; src/lockfile unchanged).
+    hash = "sha256-SnGeF0rOPyRGx7h1eS1YAWtdN2B721Ma9qDL6dEOy20=";
   };
 
   # pnpmConfigHook (in nativeBuildInputs) runs in postConfigure and handles

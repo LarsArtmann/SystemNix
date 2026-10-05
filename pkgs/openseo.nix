@@ -37,7 +37,9 @@ stdenv.mkDerivation (finalAttrs: {
     fetcherVersion = 4;
     # 2026-09-19: refreshed for nixpkgs 20260917.e554fab (fetchPnpmDeps output
     # changed with the nixpkgs bump; src/lockfile unchanged at v0.1.1).
-    hash = "sha256-qTuljy/AcDxrHXq40C0bFjHYo0kg/NtNL4zOWECpi4I=";
+    # 2026-10-05: re-measured for the a7868a7 flake-update wave (same class;
+    # src/lockfile unchanged).
+    hash = "sha256-U5kmGreIloSOGwPJxvy9/EF4vWBCbS2A+uQlrRjdjF8=";
   };
 
   # Provide native libraries at build time so vite/wrangler/workerd can load native addons.

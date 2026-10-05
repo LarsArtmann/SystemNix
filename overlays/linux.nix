@@ -211,33 +211,49 @@ let
         '';
       };
     };
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-03): the 2026-10-01 nixpkgs
-  # bump (c59305b) re-vendored under go 1.26.8; the 2026-10-01 value
-  # (W5e+pMcB…) no longer reproduces at locked rev 0bd519b (got
-  # xoPCvuTn…; evo-x2 toplevel --keep-going enumeration evidence; class
-  # comment at lib/lars-packages.nix). Upstream master is ahead; drop when
-  # the lock moves past an upstream-fixed rev. Must stay
+  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-05, a7868a7 wave — class
+  # comment at lib/lars-packages.nix): the 2026-10-04/05 flake update
+  # re-vendored the module graph; the 2026-10-03 value (xoPCvuTn…) no
+  # longer reproduces at locked rev 0bd519b (got DubDFIjq…; evo-x2
+  # toplevel --keep-going enumeration evidence). Upstream master is ahead;
+  # drop when the lock moves past an upstream-fixed rev. Must stay
   # AFTER file-and-image-renamer.overlays.default in the list below.
   # prev (NOT final) — final would recurse into this overlay's own override.
   fileAndImageRenamerVendorHashShim = _final: prev: {
     file-and-image-renamer = prev.file-and-image-renamer.overrideAttrs {
-      vendorHash = "sha256-xoPCvuTnR0qNmezn6Kxl899Tpi66kha2GCcJOWDnl0k=";
+      vendorHash = "sha256-DubDFIjqw/PzLsyWR5It/401y/HMQUvGTJuLfmMpv6k=";
     };
   };
-  # TEMPORARY vendorHash shims (2026-10-03, class comment at
-  # lib/lars-packages.nix): overview (got gaRXLohu… at rev 25dd08e) and
-  # discordsync (got /d/40ffY… at rev 1c20710) — 2026-10-01 nixpkgs bump
-  # go-1.26.8 toolchain drift. prev (NOT final) — same recursion guard as
-  # above; stay AFTER the respective upstream overlays in the list below.
+  # TEMPORARY vendorHash shims (RE-PINNED 2026-10-05, a7868a7 wave — class
+  # comment at lib/lars-packages.nix): overview (got nzYv48yC… at rev
+  # 25dd08e) and discordsync (got YZTwoufR… at rev 1c20710). prev (NOT
+  # final) — same recursion guard as above; stay AFTER the respective
+  # upstream overlays in the list below.
   # Drop when upstreams re-pin or the lock moves past upstream-fixed revs.
   overviewVendorHashShim = _final: prev: {
     overview = prev.overview.overrideAttrs {
-      vendorHash = "sha256-gaRXLohuCBTdVN5oCBk+0uzR33u6nD/mjM5vykjcFMA=";
+      vendorHash = "sha256-nzYv48yCOCPRTA25B0WnYLgMqv9kzGN7Jz+/Vo2Lso0=";
     };
   };
   discordsyncVendorHashShim = _final: prev: {
     discordsync = prev.discordsync.overrideAttrs {
-      vendorHash = "sha256-/d/40ffYAzSF9MUbK0RnMaJFvg+vnFDYWwvGZxhZvTc=";
+      vendorHash = "sha256-YZTwoufR11jtyfnlfiL8JOX4JOzJlTK7PMpWTTe4l1E=";
+    };
+  };
+  # TEMPORARY vendorHash shims (2026-10-05, a7868a7 wave — class comment at
+  # lib/lars-packages.nix): bank-sync (got Q6pdKKRH… at rev 82a94617) and
+  # crush-daily (got 1M0D24aR… at rev b31fc79f) — their UPSTREAM overlays'
+  # hashes no longer reproduce. prev (NOT final) — same recursion guard;
+  # stay AFTER the respective upstream overlays in the list below. Drop
+  # when upstreams re-pin or the lock moves past upstream-fixed revs.
+  bankSyncVendorHashShim = _final: prev: {
+    bank-sync = prev.bank-sync.overrideAttrs {
+      vendorHash = "sha256-Q6pdKKRHoO1rqaqc+t7Sr0xk1RtyeSouyLVvGuidtKM=";
+    };
+  };
+  crushDailyVendorHashShim = _final: prev: {
+    crush-daily = prev.crush-daily.overrideAttrs {
+      vendorHash = "sha256-1M0D24aRkhPkgkOQfKKV7Y4oGkzAIhLerOe3JYotlFQ=";
     };
   };
   # TEMPORARY version pin (2026-10-03): nixpkgs 7a0f122f (the 2026-10-01
@@ -275,7 +291,9 @@ in
   file-and-image-renamer.overlays.default
   fileAndImageRenamerVendorHashShim
   crush-daily.overlays.default
+  crushDailyVendorHashShim
   bank-sync.overlays.default
+  bankSyncVendorHashShim
   overview.overlays.default
   overviewVendorHashShim
   discordsync.overlays.default

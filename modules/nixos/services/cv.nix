@@ -33,16 +33,17 @@
       # Where the cv-oidc-env bridge writes CV_OIDC_CLIENT_SECRET (the
       # StateDirectory below owns /var/lib/cv-oidc; dnsblockd pattern).
       oidcEnvFile = "/var/lib/cv-oidc/client-secret.env";
-      # TEMPORARY vendorHash shim (RE-PINNED 2026-10-03): the 2026-10-01
-      # nixpkgs bump (c59305b) re-vendored under go 1.26.8; the 2026-10-01
-      # shim value (w1drooS48…) no longer reproduces at locked rev aac6a1e
-      # (got qovjz12C…; evo-x2 toplevel --keep-going enumeration evidence —
-      # toolchain drift, not source drift; class comment at lib/lars-packages.nix).
+      # TEMPORARY vendorHash shim (RE-PINNED 2026-10-05, a7868a7 wave —
+      # class comment at lib/lars-packages.nix): the 2026-10-04/05 flake
+      # update re-vendored the module graph; the 2026-10-03 value
+      # (qovjz12C…) no longer reproduces at locked rev aac6a1e
+      # (got mJIYVldX…; evo-x2 toplevel --keep-going enumeration evidence —
+      # toolchain drift, not source drift).
       # Upstream master is ahead; drop when the lock moves past an
       # upstream-fixed rev. Serves BOTH consumers below
       # (PATH CLI and service package are the same derivation, two attrs).
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-qovjz12CZ236RyXY/NWtiNcQ/KVnV+0jXY+72woipZo=";
+        vendorHash = "sha256-mJIYVldXCbaLCxetz76xuFcUsKvPLNgy2uIQgIWQCwY=";
       };
     in
     {
