@@ -74,11 +74,24 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
      verified against docs.netbird.io/manage/network-routes; forwarding
      is already wired via `useRoutingFeatures = "both"`)
    - DNS: nameserver group forwarding `home.lan` + `larsartmann.cloud`
-     → `192.168.1.53` (matched domains only)
-   - ACLs: default single-user policy
+     → `192.168.1.53` (matched domains only). Facts (source-verified
+     2026-10-05): NetBird nameservers are UDP-only — the API enum has no
+     dot/doq/doh schemes (`dns/nameserver.go`), custom port IS supported;
+     the queries ride INSIDE the WireGuard tunnel to the routing peer, so
+     plain :53 here is not plaintext-on-wire and an encrypted dnsblockd
+     listener would add nothing. The group needs an access policy allowing
+     UDP 53 toward `192.168.1.53` (NetBird internal-DNS requirement).
+     Non-matched domains resolve via each client's normal resolver (D5) —
+     plaintext on untrusted Wi-Fi; the exit-node option below closes that.
+   - ACLs: default single-user policy — must include the nameserver group's
+     UDP 53 toward 192.168.1.53
 7. **Enroll clients**: MacBook + Motorola (install NetBird app; import the
    dnsblockd CA into the phone's user store for `*.larsartmann.cloud` TLS).
 8. **Burn-in**, then retire Tailscale on the MacBook (D6).
+9. **Optional post-burn-in**: exit node (`0.0.0.0/0` route via evo-x2) for the
+   phone — roaming adblock (ALL DNS then flows through dnsblockd inside the
+   tunnel, including currently-leaking non-matched domains) + encrypted
+   everything on untrusted Wi-Fi.
 
 ## Verification (post-deploy)
 

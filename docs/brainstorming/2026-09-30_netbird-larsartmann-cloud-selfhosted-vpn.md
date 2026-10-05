@@ -26,7 +26,10 @@ self-hosted on own hardware — no third-party services at any layer._
   behind Caddy `*.home.lan` (~34 explicit subdomains in
   `platforms/common/dns-local.nix`; wildcard does NOT resolve — dnsblockd
   limitation), oauth2-proxy + Pocket ID SSO (`auth.home.lan`), dnsblockd DNS
-  (127.0.0.1:53 + DoQ 853) with rpi3 VRRP failover (VIP 192.168.1.53),
+  (plain :53 tcp+udp on all interfaces — NO encrypted listener; the earlier
+  "DoQ 853" claim was stale, corrected 2026-10-05 via `ss -lun`; VPN-resolver
+  queries are WireGuard-tunnel-encrypted by construction, see §6 DNS) with
+  rpi3 VRRP failover (VIP 192.168.1.53),
   internal dnsblockd CA with sops'd certs (`dnsblockd-certs.yaml`:
   ca_cert/ca_key/server_cert/server_key), firewall LAN-trust only. No VPN
   anywhere (no wireguard/netbird/tailscale in any of the three repos).
