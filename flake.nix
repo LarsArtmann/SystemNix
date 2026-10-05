@@ -699,6 +699,19 @@
       };
     };
 
+    # project-dependency-graph — depgraph CLI: renders the LarsArtmann Go
+    # monorepo dependency graph (D2/HTML/JSON/…) and answers who-uses/why/
+    # update-plan/release-suggestions queries. PRIVATE repo → git+ssh
+    # (deploy-key recipe; see docs/agents/go-ecosystem.md). nixpkgs and
+    # go-nix-helpers deliberately NOT followed (discordsync/bank-sync
+    # precedent): the vendorHash is validated against upstream's OWN lock —
+    # following re-tools the FOD under SystemNix's nixpkgs and re-hashes it
+    # on every root-nixpkgs bump (the 2026-10-05 a7868a7 wave class).
+    project-dependency-graph = {
+      url = "git+ssh://git@github.com/LarsArtmann/project-dependency-graph?ref=refs/heads/master";
+      inputs.flake-parts.follows = "flake-parts";
+    };
+
     # project-meta — Per-project metadata management CLI
     project-meta = {
       url = "github:LarsArtmann/project-meta?ref=master";

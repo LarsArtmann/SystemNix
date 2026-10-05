@@ -176,6 +176,29 @@ lib.filterAttrs (_: v: v != null) {
         };
       }).overrideAttrs
         { vendorHash = "sha256-h3p6Hh2Ak1cPwnrtVNX+OTOJZMRpDRDPRDrb2r9JpS0="; };
+  # depgraph CLI: renders the LarsArtmann Go monorepo dependency graph and
+  # answers who-uses/why/update-plan/release-suggestions queries. Rides
+  # PATH via base.nix attrValues (both hosts). Upstream repo is PRIVATE
+  # (git+ssh input + CI deploy key, see flake.nix).
+  #
+  # TEMPORARY vendorHash shim (2026-10-05): got ZMNM9if4… vs upstream's
+  # committed w2eY11c/… at locked rev d9c5aa3b — the cmdguard v4.1.0 input
+  # bump re-vendored the closure and upstream's regenerated vendorHash.nix
+  # was still UNCOMMITTED at lock time (parallel session 2026-10-05 12:06,
+  # docs/status/2026-10-05_12-06_flake-review-treefmt-sandbox-input-drift.md;
+  # got-hash pasted from first-hand `nix build .#project-dependency-graph`
+  # output this session). Drop when the lock moves past an upstream rev
+  # with the corrected vendorHash.nix committed.
+  project-dependency-graph =
+    let
+      pkg = flakePkg inputs.project-dependency-graph;
+    in
+    if pkg == null then
+      null
+    else
+      pkg.overrideAttrs {
+        vendorHash = "sha256-ZMNM9if43WnLjqbw1RUSMMWFMjYn6ehS+zXfbaI0pcI=";
+      };
   # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.
   # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
   mr-sync = flakePkg inputs.mr-sync;

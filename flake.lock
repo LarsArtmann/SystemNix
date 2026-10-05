@@ -157,11 +157,11 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1791153310,
-        "narHash": "sha256-7zxud+dDgcIInp5n7F5VpcZh9nzzbBbRW8JrTvVQWH0=",
+        "lastModified": 1791193756,
+        "narHash": "sha256-+Zz1IaYTteLoYgw6V4SymoVRsafNHosvn2Qd3arOi+Q=",
         "owner": "LarsArtmann",
         "repo": "bank-sync",
-        "rev": "82a94617eb51732f8a74052a3f1155c77e50dfea",
+        "rev": "299d13a5631bcd10292092ab509d027e5233ddb5",
         "type": "github"
       },
       "original": {
@@ -519,16 +519,16 @@
     "cqrs-htmx": {
       "flake": false,
       "locked": {
-        "lastModified": 1790834008,
-        "narHash": "sha256-OvquTiFhaLeqEQJTbbyfMhqgYdWf7iQ3BIqPEPUzfoI=",
+        "lastModified": 1790833685,
+        "narHash": "sha256-FUZ7AOPnia8prk79nfDjI9TWc443MaJNAKqB3wfVXKc=",
         "owner": "LarsArtmann",
         "repo": "cqrs-htmx",
-        "rev": "ce3599e4ca10e5c20554cf9d2b159c3c091d685f",
+        "rev": "dbeac86f45637519b300247de5179d6498e90cd1",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "dashboardui/v4.12.1",
+        "ref": "v4.13.0",
         "repo": "cqrs-htmx",
         "type": "github"
       }
