@@ -119,9 +119,11 @@
             # shim covers the pkgs.bank-sync surface; this one the upstream
             # module's package default. Drop when upstream re-pins or the lock
             # moves past an upstream-fixed rev.
-            package = inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-              vendorHash = "sha256-Q6pdKKRHoO1rqaqc+t7Sr0xk1RtyeSouyLVvGuidtKM=";
-            };
+            package = lib.mkDefault (
+              inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+                vendorHash = "sha256-Q6pdKKRHoO1rqaqc+t7Sr0xk1RtyeSouyLVvGuidtKM=";
+              }
+            );
           };
 
           # The pool mounts nofail — systemd-tmpfiles could create the dir on the

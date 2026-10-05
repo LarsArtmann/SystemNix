@@ -24,9 +24,11 @@
 }:
 let
   lib = inputs.nixpkgs.lib;
-  # The module file is a flake-parts wrapper (`_: {...}:`) taking no inputs.
+  # The module file is a flake-parts wrapper taking `inputs` (the a7868a7
+  # wave's vendorHash shim on services.bank-sync.package references
+  # inputs.bank-sync; 2026-10-05).
   bankSyncWrapper =
-    ((import ../modules/nixos/services/bank-sync.nix) { }).flake.nixosModules.bank-sync;
+    ((import ../modules/nixos/services/bank-sync.nix) { inherit inputs; }).flake.nixosModules.bank-sync;
 
   # Stub for the UPSTREAM bank-sync module's options (the wrapper only reads
   # enable/package/dataDir and sets addr/wiseApiKeyFile/encryptionKeyFile).
