@@ -1,0 +1,140 @@
+# Status Report — 2026-10-05 07:26 CEST — art-dupl deploy unblock (3 failed deploy attempts, 2026-10-05 00:37–00:46)
+
+Session scope: the 2026-10-04/05 deploy-unblock chain — (1) the cv-oidc-gate SC1091 deploy-app build failure, (2) the shellcheck-wrapper queue row, (3) the art-dupl stale-upstream-vendorHash chain that killed three deploy attempts, (4) the PSI-gate "corpse-pile" block root-cause. Written at 07:26, ~6.5 h after the last unblock action; fresh state re-verified at authoring time.
+
+**Bottom line: every blocker that killed the three deploy attempts is FIXED and verified — but the deploy itself has NOT landed.** Journal confirms zero deploy attempts since 00:46:33. All 12 pre-deploy gates + config evals were green at 00:40; the chain is ready. PSI is 69% RIGHT NOW (overnight parallel sessions, NOT fstrim — that finished), so the gate would still block. The DEPLOY REQUIRED stack (polkit agent fix, caddy-logs hot-tier work, llama-rag DeviceAllow fix, tonight's lock wave) is still undeployed.
+
+---
+
+## a) FULLY DONE
+
+| # | Item | Evidence |
+| - | ---- | -------- |
+| 1 | **deploy.sh cv-oidc-gate SC1091 build blocker fixed** — the extraction shipped `source "$PWD/scripts/lib/cv-oidc-gate.sh"` without `disable=SC1091`; writeShellApplication lints at default severity (style), so an info-level finding killed the deploy app's build before any gate ran. One directive line added (precedent: the identical buildcache-reap-names source block 450 lines up) | commit `92322849`; `scripts/shellcheck.sh --severity=style scripts/deploy.sh` green; the previously-failing drv rebuilt green (`1jb129i…-deploy.drv` → `0q5hjv…-deploy`) |
+| 2 | **Shellcheck-wrapper queue row closed on both surfaces** — all five 2026-10-04 continuation shell files lint clean at the wrapper's warning bar; deploy.sh additionally proven at `--severity=style` (the builder's bar — the row's premise was refined: the SC1091 finding is info-level, INVISIBLE at the warning bar) | commits `92322849` + `31a97735`; wrapper runs recorded in-session; `TODO_LIST.md` + `docs/todo/pipeline.md` rows flipped with DONE narratives |
+| 3 | **CONTRIBUTING shell-script conventions upgraded** — wrapper adoption ("availability from the repo, never `$PATH`") + the severity trap (mkApp-packaged scripts must lint at `--severity=style`; pre-commit covers staged files only, daemon commits skip the leg entirely) | `docs/CONTRIBUTING.md` Shell-scripts bullet, commit `31a97735` |
+| 4 | **art-dupl fork vendorHash fixed UPSTREAM** — root cause of all three deploy failures: root `art-dupl` input resolved to fork HEAD `8ebf0631`, whose flake.nix still pinned stale `utsGF+`; lock moves could not fix it. buildflow `nix-hash-fix --fix` in the covered `~/projects/art-dupl` checkout → hash refreshed to observed `FHCPqa…` → committed (pma daemon swept it; amended into a proper message `7e761e99`) → **pushed to `fork`** | `git ls-remote` at 07:26 confirms `7e761e99` on origin; goModules FOD AND full package (`bin/art-dupl`) build green from the committed tree |
+| 5 | **SystemNix re-locked onto the fixed rev and verified through its own resolution** — targeted `nix flake update art-dupl`; new FOD drv `i9k0mwzs…` ≠ stale `96p57rjbb9…`; builds green (content-identical to the probe build, cache hit) | flake.lock re-lock committed by daemon (`169d6a6e`); eval + build outputs in-session |
+| 6 | **PSI-gate "corpse-pile" block root-caused — it was fstrim, not corpses** — the Monday-00:00(+rand) weekly `fstrim --listed-in /etc/fstab` pegged the USB buildcache SSD (sdb) at 100% util for 13+ min while both NVMes sat idle → the exact PSI-high-with-idle-disks signature the gate's classifier keys on; a crush/bun victim stalled in `blk_mq_get_tag` alongside. Gate code read: `DEPLOY_FORCE_PRESSURE=1` DOES proceed past the block (deploy.sh:318-327) — the third attempt died at nh on the vendorHash, not at the gate | forensics bundle `/var/tmp/io-psi-forensics-20261004T230809Z` (fstrim D-state 758s+, bun victim, per-disk util); deploy log `2026-10-05_00-40-24.log` tail |
+| 7 | **§11 `flakePkg` FOD-blindness gap discovered and queued** — §11 passed "30 uncached go-modules FOD(s) built clean" in the SAME run whose nh failed 4 min later on the 31st FOD, because art-dupl enters via `flakePkg inputs.art-dupl` (lib/lars-packages.nix:23) and §11 enumerates only SystemNix's own package surface | queued on BOTH surfaces (TODO_LIST.md:767 + docs/todo/pipeline.md:35) with the toplevel-preview fix sketch |
+| 8 | **CHANGELOG bullets** for both deploy-blocker incidents (deploy-app SC1094 fix; art-dupl upstream vendorHash + fstrim finding) | CHANGELOG.md §Fixed, commits `31a97735` + `b6f922de` |
+| 9 | **cv-oidc-gate contract re-verified after the directive edit** — selftest 4/4 drift shapes rejected (inverted decision, reworded line, unwired call, deleted function), positive control green | `scripts/check-cv-oidc-gate.sh --selftest` output in-session |
+
+## b) PARTIALLY DONE
+
+| # | Item | Works | Open | Blocker | Effort |
+| - | ---- | ----- | ---- | ------- | ------ |
+| 1 | **THE DEPLOY ITSELF** | All 12 pre-deploy gates green (incl. §11's "30 uncached FODs built clean"); config evaluates; the vendorHash fix is locked + verified; DEPLOY_FORCE_PRESSURE semantics understood | No switch has run since 00:46; zero of tonight's DEPLOY REQUIRED fixes are live (polkit agent, caddy-logs, llama-rag, the entire lock wave) | io PSI 69% at 07:26 — overnight parallel sessions (NOT fstrim; that finished). Gate would block; forcing into a live storm is the freeze-#5 death pattern | **S** — one command once PSI < 20 |
+| 2 | **Nested art-dupl consumer safety** (NEW) | Root input verified end-to-end (re-lock + FOD green) | `discordsync/art-dupl` + `inboxclean/art-dupl` lock nodes still sit at `b2a3b4ec` — PRE-hash-fix. UNVERIFIED whether either pulls the stale FOD into the evo-x2 toplevel closure; if yes, nh fails on a NEW drv path | None — a 2-min eval check; queued as [ready] pre-deploy step (harvested this report) | **S** |
+| 3 | **§11 `flakePkg` blindness fix** | Gap identified, fix sketch queued (derive FOD list from the toplevel `--dry-run` preview, which already knows every FOD) | Implementation not started | Quiet-eval-window doctrine + it's a gate change (needs selftest updates) | **M** |
+| 4 | **fstrim × USB buildcache SSD** | Root cause identified, forensics bundle preserved, deploy-side mitigation documented (never force; wait for drain) | NO fix for the RECURRENCE: fstrim.timer hits the USB SSD every weekly window, landing in agent-session prime time. Queued as [decision] with 4 fix options (harvested this report) | Owner policy call on fix shape | **S-M** after decision |
+| 5 | **cv-oidc-gate flake-check wiring** (pre-existing) | Pre-commit leg + standalone check + selftest green | `checks.x86_64-linux.cv-oidc-gate` still unwired; CI has no leg | Deliberately deferred to a quiet eval window (freeze-15 class) — PSI 69% is definitively not quiet | **S** |
+| 6 | **TODO_LIST `[x]` prune pass** (pre-existing) | 17 rows now flipped with evidence (mine: 2 this chain) | 20+ `[x]` rows persist in the queue pending the owner's flip-vs-prune policy answer | Owner decision (23-19 report §g Q2) | **S** |
+
+## c) NOT STARTED
+
+1. **§11 toplevel-preview FOD derivation** (queued, b3) — waiting for implementation.
+2. **Nested-consumer pre-deploy verification** (queued, b2) — waiting for a quiet-ish moment or the next deploy attempt.
+3. **fstrim USB-SSD fix** (queued [decision]) — waiting on owner.
+4. **corpse-pile gate self-attribution** (queued this report): per-disk busy sampling + auto-run `io-psi-forensics` into the deploy log — the 00:46 block's only attribution died with the truncated terminal.
+5. **`docs/agents/stability.md` class note** for the fstrim-on-USB signature (fold into the fstrim row's fix) — I forgot to write this doc note in-session; queued via the row.
+6. **tq-agent-pool guard coverage** [decision] (pre-existing) — re-evidenced by tonight's forensics (187 GB lifetime IO, top system-slice writer).
+7. **deploy.sh `--when-calm` mode** (pre-existing [ready]) — directly relevant: tonight proved the gate-vs-storm dance needs the self-contained gated loop.
+8. **Per-unit io.stat top-consumer sampler** (pre-existing [ready]) — I hand-rolled worse versions of this twice tonight.
+9. **Flake-update bot rollback-on-red** (pre-existing [ready]).
+10. **Remove 9 dead `systems` follows overrides** (pre-existing [ready]) — the warnings still print on EVERY nix invocation (visible in tonight's outputs 6+ times).
+11. **CI read-only PAT** (pre-existing [blocked:user]) — CI dark 120+ runs.
+12. **macOS deploy** (pre-existing [blocked:user]).
+13. **88→89 unharvested §f-bearing reports** (pre-existing WARN in check-todo-system).
+14. **crush-config phase 2**, **service-completeness manifest audit**, **input-graph diet audit**, **flake-compat/git-hooks node collapse**, **legacy-follows migration**, **AGENTS.md lock-audit naming**, **2026-10-02 dedup CHANGELOG entry**, **CONTRIBUTING selftest-modes-exit-first audit**, **pre-deploy eval-failure leg root-cause surfacing** (all pre-existing [ready], untouched — full list in TODO_LIST/pipeline.md).
+
+## d) TOTALLY FUCKED UP
+
+Radical honesty, mine first:
+
+1. **The deliverable never landed.** I unblocked the deploy and then… nobody deployed. 7 hours later the DEPLOY REQUIRED stack is still pending and PSI is 69% again from other load. My final hand-off said "run when PSI < 20" with a `watch -g` one-liner — but I had no mechanism to notice PSI re-degrading or re-engage. An unblock that doesn't end in a landing is half a job.
+2. **Two broken hand-rolled measurement cycles during a live storm.** (a) My /proc/diskstats sampler used the wrong field (weighted-time, not io_ticks) → garbage "1306% util" numbers; (b) my MemAvailable one-liner divided by a hardcoded garbage constant → a FALSE "4.4% available" that briefly read as pre-freeze and could have triggered a panic decision. Both while the repo's own sanctioned tool — `nix run .#io-psi-forensics` — sat one command away and answered everything in one shot. This is the EXACT "agent tool-blindness" class the conventions doc warns about (availability derived from ad-hoc reflexes instead of the repo's tools), and I did it while EDITING the conventions doc that warns about it.
+3. **I raced the user's deploy with my own heavy build.** I launched the `--keep-going` toplevel enumeration at ~00:45 while the user was mid-deploy — duplicating IO in a PSI-sensitive window against a lock they were simultaneously re-locking (the enumeration's result was obsolete the moment their targeted update landed). Should have checked `/tmp/.systemnix-deploy.lock` freshness + running nix procs first. Content-pin discipline exists; process-pin discipline doesn't and should.
+4. **I misread the third deploy as gate-blocked** and reasoned from a truncated paste; the run had actually FORCE-proceeded past the gate and failed at nh. Found only when I read `/var/log/systemnix-deploys/` — which deploy.sh conveniently tees everything into. The log should have been my FIRST read, not my fourth.
+5. **I trusted §11's green in the same run it failed to protect.** "30 FODs built clean" vs nh's failure 4 minutes later was a visible contradiction (the failing FOD was in the deploy's OWN dep graph, printed right there in nh's tree). I only caught the enumeration-blindness in retrospect while queueing it.
+6. **Upstream push carried a foreign commit.** The art-dupl pma daemon's unpushed `eac6fd42` (go.sum −2 lines) rode my push. It's PROVEN consistent (the full package builds green from the pushed tree), but pushing someone's unreviewed daemon commit without inspecting its diff first was luck, not discipline.
+7. **Nested-consumer risk shipped unverified** (b2): my "everything fixed" claim was true for the ROOT input only; a `discordsync`-side stale FOD would falsify it at the next nh. Mitigation queued as the FIRST pre-deploy check.
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Repo-tool-first reflex under incident pressure.** `io-psi-forensics` existed for exactly this moment; two ad-hoc samplers preceded it. Suggested hardening: add one line to `docs/agents/stability.md` routing — "on ANY PSI-gate block, run io-psi-forensics BEFORE reasoning" — and to the corpse-pile branch itself (queued: auto-run it).
+2. **Process-pin, not just content-pin.** The shared-tree discipline checks `git rev-parse` before edits; tonight showed the missing twin: check the deploy flock + running nix builds before launching anything heavy. Suggested: a one-liner in CONTRIBUTING's multi-agent section (`cat /tmp/.systemnix-deploy.lock; pgrep -af 'nix build|nh os'`).
+3. **Read the persisted log before reasoning from truncated pastes.** deploy.sh tees EVERYTHING to `/var/log/systemnix-deploys/` and journal-records every exit (`journalctl -t systemnix-deploy`). First response to "deploy looks weird": read the log, not the scrollback. Adjacent to the existing "assert WHICH entity served it" rule: assert WHICH outcome from the SOURCE.
+4. **A gate's green must be closure-derived, not enumeration-derived.** §11 enumerates a package surface and reports "N FODs clean" — a count that silently excludes anything outside the enumeration. The fix (queued) derives the FOD set from the toplevel dry-run preview; the general lesson: a validator that enumerates its own inputs reports completeness, not correctness.
+5. **Real IO wears phantom costumes.** The corpse-pile classifier (PSI-high + idle-disks) correctly refused to distinguish its inputs but the message names only the dead-automount hypothesis. Tonight's reality: a slow USB device saturating = same signature, different remedy (wait, not investigate mounts). The queued gate improvement (per-disk busy + forensics auto-run) fixes the attribution gap permanently.
+6. **Weekly-timer placement is an availability decision.** fstrim's randomized Monday-00:00 window lands in peak agent/deploy hours on a box that runs deploys at midnight. Any timer that can monopolize a slow device for 15+ min should be window-pinned away from the deploy/agent band (owner decision, queued).
+7. **Amend-forward discipline worked, but the mixed daemon commit did not.** `7c33c0ea` swept my todo rows TOGETHER with a foreign `storage.md` edit. I correctly declined to amend (would have absorbed their work) — but then my row edits live in a heuristic commit forever. Pathspec-commit my own files BEFORE the daemon sweeps, when the sweep would mix sessions.
+
+## f) NEXT TASKS (ranked; harvest status marked)
+
+**Harvested this report (new rows on both surfaces):**
+
+| # | Task | Impact | Effort | Category |
+| - | ---- | ------ | ------ | -------- |
+| 1 | Re-run the deploy once io PSI < 20 (the pending deliverable; carries the whole DEPLOY REQUIRED stack) | Critical | S | Op |
+| 2 | Pre-deploy: verify nested art-dupl consumers (discordsync, inboxclean @ `b2a3b4ec`) can't pull the stale FOD — scan toplevel dry-run preview for `*art-dupl*go-modules*` besides `i9k0mwzs…` | Critical | S | Bug |
+| 3 | fstrim × USB buildcache SSD fix (owner decision: exclude sdb / move window / nodiscard / retire SSD) | High | S-M | Bug/Policy |
+| 4 | Implement §11 FOD derivation from the toplevel `--dry-run` preview | High | M | Bug |
+| 5 | corpse-pile gate branch: per-disk busy sampling + auto-run io-psi-forensics | Medium | S | Quality |
+| 6 | stability.md class note: fstrim-on-USB PSI signature (fold into row 3's fix) | Low | S | Documentation |
+
+**Existing queue rows re-surfaced by this session (already on surfaces; not duplicated):**
+
+| # | Task | Why now |
+| - | ---- | ------- |
+| 7 | Wire `check-cv-oidc-gate.sh` as a flake check | Still CI-dark; needs a genuinely quiet eval window |
+| 8 | deploy.sh `--when-calm` mode | Tonight re-proved the deploy-vs-storm dance needs the self-contained gate |
+| 9 | Per-unit io.stat top-consumer sampler | I hand-rolled two bad versions of it tonight |
+| 10 | tq-agent-pool guard coverage [decision] | Top lifetime IO writer in tonight's forensics (187 GB) |
+| 11 | Remove 9 dead `systems` follows overrides | Warnings polluted every command tonight (6+ occurrences) |
+| 12 | TODO_LIST `[x]` prune pass | 20+ flipped rows persist; blocked on owner policy |
+| 13 | Flake-update bot rollback-on-red | Tonight's 3-attempt domino is the class it prevents |
+| 14 | CONTRIBUTING selftest-modes-exit-first audit | check-cv-oidc-gate `--selftest` is a mode-carrying script to audit |
+| 15 | Pre-deploy eval-failure leg root-cause surfacing | Same "gate output must carry its own WHY" theme as row 5 |
+| 16 | CI read-only PAT [blocked:user] | CI dark 120+ runs |
+| 17 | 88→89 unharvested §f-bearing reports | WARN fires on every todo-guard run |
+| 18 | Service-completeness manifest audit | Queued, untouched |
+| 19 | Input-graph diet audit | Queued, untouched |
+| 20 | flake-compat/git-hooks duplicate-node collapse | Queued, untouched |
+| 21 | Legacy per-input follows → infra-follows group migration | Queued, untouched |
+| 22 | AGENTS.md prevention-layer table: name lib/lock-audit.nix | Queued, untouched |
+| 23 | 2026-10-02 lock-dedup CHANGELOG entry | Queued, untouched |
+| 24 | crush-config phase 2 | Queued, untouched |
+| 25 | macOS deploy [blocked:user] | Queued, untouched |
+
+**Brainstorm (session-observed, deliberately NOT harvested — speculative/roadmap/no owner pull):**
+
+| # | Idea | Why not harvested |
+| - | ---- | ----------------- |
+| 26 | Deploy gate: distinguish slow-device saturation (sdb @100%) from idle-disk corpses (sample N times, attribute per device) | Subsumed by harvested row 5 |
+| 27 | art-dupl upstream CI leg: vendorHash freshness check so fork HEAD can't ship stale again | Upstream repo decision; needs owner buy-in there first |
+| 28 | fstrim timer window pinning away from 00:00-06:00 agent hours | Folded into harvested row 3's option (b) |
+| 29 | buildcache USB SSD → Samsung hot-tier absorption (bridge bandwidth ceiling measured tonight) | ROADMAP fuel; big storage-policy change |
+| 30 | art-dupl fish-completions in the SYSTEM closure — YAGNI check: is a lint tool supposed to ship in system-path? | Needs intent confirmation before touching; could be deliberate |
+| 31 | DEPLOY_FORCE_PRESSURE: log the override reason + require the failing gate's name when forcing | Gate UX polish; wait for the gate-improvement row to land first |
+| 32 | post-deploy-check smoke: run one lars-packages tool binary (e.g. art-dupl --help) as layout proof | Marginal; §12 already warns "verify layout after build" |
+| 33 | Upstream checkouts: prevent pma-daemon commits from riding unrelated pushes (inspect staged daemon commits before push) | Process habit, not a buildable thing yet |
+| 34 | Shared deploy-window mutex for agent sessions (process-pin formalized) | Folded into improvement e2; needs a convention, not a row, until it recurs |
+| 35 | journal truncated-file warning (`system@…journal~ is truncated, ignoring`) seen in journalctl output | One-off kernel/journal rotation artifact; watch only |
+
+## g) THREE QUESTIONS I CANNOT ANSWER MYSELF
+
+1. **fstrim × USB buildcache SSD — which fix shape?** (a) exclude sdb from the weekly trim entirely, (b) keep the trim but pin the window outside agent/deploy hours, (c) nodiscard-style policy for the USB SSD + periodic manual trim, or (d) retire the USB SSD via the Samsung-hot-tier doctrine. I tried: fstab/mount inspection, the timer unit, the forensics bundle — the DATA is all gathered; the storage-policy call is yours. (Queued [decision].)
+2. **Should parallel agent sessions be gated during deploy windows?** Tonight a VM-test battery (`nix flake check -L` building an aarch64 crate via qemu), fstrim, and 4+ sessions kept io PSI > 20 for 7 hours and the deploy never landed. Do you want agent-session verification batteries added to a deploy-window stop list (extending `ioChurnUnits` / the `--when-calm` gate to sessions), or is manual coordination ("wait for PSI") acceptable? I tried: the existing `[decision]` row covers only tq-agent-pool; no row covers session batteries.
+3. **When do you want the next deploy attempt — and with what precondition?** Options: (a) ASAP with my row-2 nested-consumer check + `PSI < 20` as hard preconditions, (b) after the §11 fix lands so the gate can actually see `flakePkg` FODs (adds an M-sized gate change + selftest work before any switch), or (c) at the next natural quiet-window batch. I can't weigh your deploy-urgency for the pending DEPLOY REQUIRED stack (polkit auth is dead system-wide until this lands) against another mid-storm attempt.
+
+---
+
+## Self-harvest record (docs-health discipline)
+
+- **Harvested at authoring time:** §f rows 1-6 → `TODO_LIST.md` + `docs/todo/pipeline.md` (rows 2, 4, 5) + `docs/todo/stability.md` (rows 3, 6); check-todo-system: structure clean.
+- **Deliberately not harvested:** §f rows 7-25 (pre-existing queue rows — cited, not duplicated); §f rows 26-35 (brainstorm: 26 folded into row 5, 28 into row 3, 34 into improvement e2 — the rest are upstream-policy/roadmap/watch items with no actionable one-ask yet).
+
+**Format note:** the status-report skill's canonical output is a styled HTML dashboard; the user explicitly demanded `.md` at `docs/status/<…>.md` — honored, flagged here per the skill's override rule.
+
+**Report hygiene:** point-in-time snapshot at 2026-10-05 07:26 CEST; git HEAD `c54ec2df` at authoring; every "done" claim above cites its commit/output. Session commits: `92322849`, `31a97735`, `b6f922de` (SystemNix), `7e761e99` (art-dupl fork, pushed), plus daemon-swept `169d6a6e` (flake.lock re-lock), `7c33c0ea` (todo rows + foreign storage.md — mixed, flagged).
