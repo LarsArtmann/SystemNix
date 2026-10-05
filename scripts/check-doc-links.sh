@@ -14,9 +14,14 @@
 # Slugs: lowercase, punctuation dropped (alnum/_/- kept), each whitespace
 # char -> '-', duplicate headings get -1, -2 suffixes. Links and headings
 # inside ``` fences are ignored (quoted markdown is not real structure).
+# 2026-10-06: single-backtick inline-code spans are stripped before link
+# matching for the same reason — a bracketed-generic invocation written in
+# backticks (chromedp Evaluate shape) parsed as a fake link with a
+# non-path target and red-locked every markdown-staging commit.
 #
 # --selftest runs fixture cases (good/bad anchor, dot punctuation, dedup,
-# fence immunity) and exits 0 only if all expectations hold.
+# fence immunity, inline-code immunity) and exits 0 only if all
+# expectations hold.
 set -euo pipefail
 
 repo_root=$(git rev-parse --show-toplevel)
@@ -110,7 +115,14 @@ check_file() {
       ;;
     esac
     [ "$in_fence" -eq 0 ] || continue
+    # strip inline-code spans (`...`): their content is literal text, never
+    # link structure — fence immunity at span size. One span per pass, not a
+    # greedy glob, so real links BETWEEN two spans survive.
     rest="$line"
+    local code_re='`[^`]+`'
+    while [[ $rest =~ $code_re ]]; do
+      rest="${rest/"${BASH_REMATCH[0]}"/}"
+    done
     while [[ $rest =~ $link_re ]]; do
       match="${BASH_REMATCH[0]}"
       # advance past this match (first occurrence of the exact string)
@@ -191,6 +203,9 @@ EOF
 [bad-same-file](#nope)
 [bad-dup-2](target.md#dup-2)
 [fence-heading-ref](target.md#fenced-heading)
+`Evaluate[T](expr, opts...) Action[T]` must never parse as a link
+`span one` then [real-between-spans](target.md#missing-code-span) then `span two`
+[`ticked text`](target.md#section-one)
 EOF
 
   local expect_broken=(
@@ -199,6 +214,7 @@ EOF
     "in.md -> #nope"
     "in.md -> target.md#dup-2"
     "in.md -> target.md#fenced-heading"
+    "in.md -> target.md#missing-code-span"
   )
   local expect_ok=(
     "target.md#section-one"
@@ -206,6 +222,8 @@ EOF
     "#in-doc"
     "target.md#dup-1"
     "broken-in-fence"
+    "expr, opts..."
+    "in.md -> target.md#section-one"
   )
 
   out=$(check_file "$tmp/in.md") || true
@@ -238,7 +256,7 @@ EOF
     echo "SELFTEST: FAIL"
     return 1
   fi
-  echo "SELFTEST: OK (anchors, dots, dedup, fences)"
+  echo "SELFTEST: OK (anchors, dots, dedup, fences, inline code)"
 }
 
 if [ "${1:-}" = "--selftest" ]; then
