@@ -2543,6 +2543,88 @@
                     touch $out
                   '';
 
+              # root-prune-guard.sh decides a live prune from a df parse (the
+              # 10-02 06:33 dnsblockd SIGBUS/ENOSPC outage class fix). A
+              # threshold or parse regression either NEVER prunes (the empty
+              # ladder rung again: 93% alert -> nothing -> 100% -> outage) or
+              # prunes below the band (needless churn). PATH stubs for
+              # df/btrbk + real coreutils/gawk; runs the REAL committed
+              # script (pre-deploy-metrics-selftest staging shape). Covers:
+              # below-threshold no-fire, the strict >90 boundary (90 = off,
+              # 91 = fire), the exact btrbk invocation, failing-prune
+              # recording (exit recorded, unit still 0, prom still written).
+              root-prune-guard-fixture =
+                pkgs.runCommand "root-prune-guard-fixture"
+                  {
+                    nativeBuildInputs = with pkgs; [
+                      bash
+                      coreutils-full
+                      gawk
+                      gnugrep
+                    ];
+                  }
+                  ''
+                    scratch=$(mktemp -d)
+                    stubs="$scratch/stubs"
+                    mkdir -p "$stubs"
+
+                    cat > "$stubs/df" <<'EOF'
+                    #!/usr/bin/env bash
+                    echo "Filesystem 1024-blocks Used Available Capacity Mounted"
+                    echo "overlay 1000 $DF_USED $DF_AVAIL 0% /"
+                    EOF
+                    cat > "$stubs/btrbk" <<'EOF'
+                    #!/usr/bin/env bash
+                    echo "$*" >> "$BTRBK_LOG"
+                    exit "$BTRBK_RC"
+                    EOF
+                    chmod +x "$stubs/df" "$stubs/btrbk"
+                    patchShebangs "$stubs/df" "$stubs/btrbk"
+
+                    run_case() {
+                      case_name="$1"
+                      expect_fired="$2"
+                      expect_rc="$3"
+                      rm -f "$scratch/out.prom" "$scratch/btrbk.log"
+                      guard_rc=0
+                      DF_USED="$df_used" DF_AVAIL="$df_avail" BTRBK_RC="$btrbk_rc" \
+                        BTRBK_LOG="$scratch/btrbk.log" \
+                        ROOT_PRUNE_GUARD_OUT="$scratch/out.prom" \
+                        PATH="$stubs:$PATH" \
+                        bash ${./scripts/root-prune-guard.sh} || guard_rc=$?
+                      [ "$guard_rc" -eq 0 ] \
+                        || { echo "FAIL ($case_name): guard exited $guard_rc (contract: always 0)"; exit 1; }
+                      grep -Fx "root_prune_guard_fired $expect_fired" "$scratch/out.prom" \
+                        || { echo "FAIL ($case_name): fired != $expect_fired"; cat "$scratch/out.prom"; exit 1; }
+                      grep -Fx "root_prune_guard_prune_exit $expect_rc" "$scratch/out.prom" \
+                        || { echo "FAIL ($case_name): prune_exit != $expect_rc"; cat "$scratch/out.prom"; exit 1; }
+                      grep -Fx "root_prune_guard_usage_pct $pct" "$scratch/out.prom" \
+                        || { echo "FAIL ($case_name): usage_pct != $pct"; cat "$scratch/out.prom"; exit 1; }
+                    }
+
+                    # Below threshold: no prune, metrics still written.
+                    df_used=50; df_avail=50; btrbk_rc=0; pct=50
+                    run_case "below-threshold" 0 0
+                    [ -s "$scratch/btrbk.log" ] && { echo "FAIL: btrbk invoked below threshold"; exit 1; }
+
+                    # Boundary: 90% is NOT > 90 — strict comparison.
+                    df_used=90; df_avail=10; btrbk_rc=0; pct=90
+                    run_case "at-90-no-fire" 0 0
+                    [ -s "$scratch/btrbk.log" ] && { echo "FAIL: btrbk invoked at exactly 90"; exit 1; }
+
+                    # 91%: fires, exact invocation contract.
+                    df_used=91; df_avail=9; btrbk_rc=0; pct=91
+                    run_case "over-90-fires" 1 0
+                    grep -Fx -- "-c /etc/btrbk/root.conf prune" "$scratch/btrbk.log" \
+                      || { echo "FAIL: wrong btrbk invocation"; cat "$scratch/btrbk.log"; exit 1; }
+
+                    # Failing prune: exit recorded, script still 0, prom fresh.
+                    df_used=95; df_avail=5; btrbk_rc=7; pct=95
+                    run_case "prune-failure-recorded" 1 7
+
+                    touch $out
+                  '';
+
               # The 2026-09-29 gatus config-panic incident: an alert
               # description containing `\"` (mount_point="/") made gatus
               # 5.36.0 panic AT STARTUP ("alert description must not have

@@ -800,7 +800,7 @@ _: {
                     "[BODY] == pat(*\nroot_prune_guard_fired *)"
                     "[BODY] != pat(*\nroot_prune_guard_fired 1\n*)"
                   ];
-                  alerts = discordAlert "Root filesystem crossed 90 percent (df scale) and the auto-prune floor FIRED: btrbk root retention prune ran immediately (latest-common send parents are force-preserved, so the incremental chain cannot break). This is auto-remediation engaged, not an outage — but the root is in the band where the 10-02 100 percent ENOSPC outages started. Check what is filling /, whether usage is falling across cycles, and journalctl -u root-prune-guard (prune_exit nonzero: a live nightly btrbk run or a detached /mnt/pool makes prune skip; the next 5-min cycle retries). Resolves below 90.";
+                  alerts = discordAlert "Root filesystem crossed 90 percent (df scale) and the auto-prune floor FIRED: btrbk root retention prune ran immediately (latest-common send parents are force-preserved, so the incremental chain cannot break). This is auto-remediation engaged, not an outage, but the root is in the band where the 10-02 100 percent ENOSPC outages started. Check what is filling /, whether usage is falling across cycles, and journalctl -u root-prune-guard (prune_exit nonzero: a live nightly btrbk run or a detached /mnt/pool makes prune skip; the next 5-min cycle retries). Resolves below 90.";
                 })
                 (mkHttpCheck {
                   name = "BTRFS Chunk Health";
