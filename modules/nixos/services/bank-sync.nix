@@ -18,7 +18,7 @@
 #     renewal runbook)
 #   - Pool-gated storage-dir oneshot + house hardening (harden {},
 #     serviceDefaults, onFailure, start limits, background I/O tier)
-_: {
+{ inputs, ... }: {
   flake.nixosModules.bank-sync =
     {
       config,

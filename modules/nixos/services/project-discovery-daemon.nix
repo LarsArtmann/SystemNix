@@ -44,7 +44,15 @@ _: {
 
         package = mkOption {
           type = types.package;
-          default = inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          # TEMPORARY vendorHash shim (2026-10-05, a7868a7 wave — class
+          # comment at lib/lars-packages.nix): upstream hash no longer
+          # reproduces at locked rev 1f9b57c (got Mrn25ftf…; evo-x2 toplevel
+          # --keep-going enumeration evidence; this is the SERVICE surface,
+          # lars-packages.nix covers the systemPackages surface). Drop when
+          # upstream re-pins or the lock moves past an upstream-fixed rev.
+          default = inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+            vendorHash = "sha256-Mrn25ftfpqf9rov194lDd/JqiDeBbgiGSt9+r0hnYF8=";
+          };
           defaultText = lib.literalExpression ''
             inputs.project-discovery-daemon.packages.''${system}.default
           '';

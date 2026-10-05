@@ -47,11 +47,13 @@ _: {
       # lib/lars-packages.nix: the upstream checkPhase test suite shells
       # out to git (TestDoctorTreeGofmt, 2026-10-02) and the go-standard
       # sandbox ships none. Drop both when upstream's flake adds git to
-      # nativeBuildInputs.
+      # nativeBuildInputs. vendorHash re-pinned 2026-10-05 (a7868a7 wave,
+      # class comment at lib/lars-packages.nix): got /fevyHgd….
       tqPkg =
         (inputs.go-taskqueue.packages.${pkgs.stdenv.hostPlatform.system}.default).overrideAttrs
           (old: {
             nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.git ];
+            vendorHash = "sha256-/fevyHgdr1ycM/mvjNQX8iassOS+q4UtS1yA6XsXwsQ=";
           });
       inherit (import ../../../lib/default.nix lib)
         harden
