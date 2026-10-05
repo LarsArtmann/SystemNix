@@ -5871,16 +5871,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1790766089,
-        "narHash": "sha256-eElnQ4qW7KiDASUWTt3DTtxOpqgK02Ys1DUQlZahdLk=",
+        "lastModified": 1790132077,
+        "narHash": "sha256-7oqvo3FstX0Z08MTS7nasLP+O71zoXdcTo1VLpdPNTs=",
         "owner": "LarsArtmann",
         "repo": "nix-email",
-        "rev": "0d7ff9b4ead1c59546c0923385d9a20da6b79844",
+        "rev": "febb1e493c428acf1b4454cc966582a4c8eeb9c8",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "master",
+        "ref": "v0.4.0",
         "repo": "nix-email",
         "type": "github"
       }

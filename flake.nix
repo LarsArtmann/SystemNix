@@ -774,7 +774,13 @@
     # (not a shared rev) is the compat doctrine now. Upstream master has
     # its own CI + stalwart/relay/parsedmarc E2E suites since v0.3.0.
     nix-email = {
-      url = "github:LarsArtmann/nix-email?ref=master";
+      # HARD-PINNED to the release tag (C17a decision, 2026-10-05): the
+      # tag worktree was smoke-verified before pinning (flake show EXIT 0
+      # + a real demo-VM boot answering JMAP for admin and the provisioned
+      # account). Master advances independently of releases; the consumer
+      # tracks RELEASES, and the pin-advance runbook (upstream README)
+      # owns moving this. nix-email-contract still gates the eval.
+      url = "github:LarsArtmann/nix-email?ref=v0.4.0";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         # Dedupe (2026-09-22, per the nix-email CHANGELOG hint): collapse
