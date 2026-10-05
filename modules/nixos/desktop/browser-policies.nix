@@ -95,33 +95,48 @@
             Set to "blocked" for allowlist-only security (prevents installing unlisted extensions).
           '';
         };
+
+        extraChromiumPolicies = lib.mkOption {
+          type = lib.types.attrsOf lib.types.anything;
+          default = { };
+          description = ''
+            Extra Chromium/Helium policies merged verbatim into
+            programs.chromium.extraOpts (rendered to
+            /etc/chromium/policies/managed/). Helium reads the /etc/chromium
+            policy path too (see header). Use for 3rdparty extension managed
+            storage (e.g. KeePassXC-Browser passkeys) and other policies the
+            extension list above does not cover.
+          '';
+        };
       };
 
       config = lib.mkIf cfg.enable {
         programs.chromium = {
           enable = true;
 
-          extraOpts.ExtensionSettings = {
-            "*" = {
-              installation_mode = cfg.defaultInstallationMode;
-            };
-          }
-          // (builtins.listToAttrs (
-            map (ext: {
-              name = ext.id;
-              value = {
-                installation_mode = ext.installationMode;
-                toolbar_pin = ext.toolbarPin;
-                # Helium extension proxy — see header comment. Using
-                # clients2.google.com here silently installs NOTHING.
-                update_url = "https://services.helium.imput.net/ext";
+          extraOpts = cfg.extraChromiumPolicies // {
+            ExtensionSettings = {
+              "*" = {
+                installation_mode = cfg.defaultInstallationMode;
               };
-            }) cfg.chromiumExtensions
-          ));
+            }
+            // (builtins.listToAttrs (
+              map (ext: {
+                name = ext.id;
+                value = {
+                  installation_mode = ext.installationMode;
+                  toolbar_pin = ext.toolbarPin;
+                  # Helium extension proxy — see header comment. Using
+                  # clients2.google.com here silently installs NOTHING.
+                  update_url = "https://services.helium.imput.net/ext";
+                };
+              }) cfg.chromiumExtensions
+            ));
 
-          # Chromium 150+ deprecates MV2. Some extensions may be MV2-only.
-          # 2 = allow both MV2 and MV3 (matches macOS config).
-          extraOpts.ExtensionManifestV2Availability = 2;
+            # Chromium 150+ deprecates MV2. Some extensions may be MV2-only.
+            # 2 = allow both MV2 and MV3 (matches macOS config).
+            ExtensionManifestV2Availability = 2;
+          };
         };
 
         programs.firefox.policies.Preferences = {

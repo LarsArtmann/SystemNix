@@ -575,6 +575,23 @@ in
       github-auto-assign.enable = true;
       browser-policies = {
         enable = true;
+        # KeePassXC-Browser passkeys via chrome.storage.managed (2026-10-05):
+        # the extension ships passkey support DISABLED by default, and its
+        # options live in chrome.storage.local = PER user-data-dir (the dp1/dp2
+        # instances would each need a manual checkbox). Managed storage applies
+        # to every Helium profile declaratively. KeePassXC itself (2.7.12)
+        # needs nothing — passkeys ride Browser.Enabled native messaging.
+        # Requires extension >= 1.10.2 (managed-settings race fix #2969);
+        # 1.10.4.1 is live. passkeysFallback = on cancel, fall back to the
+        # browser-native flow (YubiKey CTAP2 / phone hybrid QR).
+        extraChromiumPolicies = {
+          "3rdparty".extensions."oboonakemofpalcgghocfoadofidjkkk".policy = {
+            settings = {
+              passkeys = true;
+              passkeysFallback = true;
+            };
+          };
+        };
         chromiumExtensions =
           let
             ext = id: name: { inherit id name; };
