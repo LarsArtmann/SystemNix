@@ -142,6 +142,8 @@ node_modules/
 *_templ.go
 # Sensitive files
 secrets*
+# except the agent reference doc (masked prefixes only; found untracked 2026-10-05)
+!docs/agents/secrets.md
 *.crt
 
 # direnv build artifacts
