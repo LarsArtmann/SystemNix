@@ -620,7 +620,7 @@
 - [ ] [ready] **Trace the 10:48 session-restore helium non-spawn + journal-pin when the wedged launch guard actually started swallowing main launches** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [ready] **Live-verify KeePassXC passkeys in Helium (user-assisted ceremony: chrome://policy + one real passkey create/re-auth — policy went live with the 10-06 deploy)** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [ready] **Attribute the gkr-pam `couldn't unlock the login keyring` activation bursts (promptless, post-password-store=basic; incl. the 2 pre-login lines)** → [docs/todo/desktop.md](docs/todo/desktop.md)
-- [ ] [ready] **Login instance audit: helium.service + session-manager restore must converge on ONE instance (guard not stuck in wait-loop; crash-restart execs the new wrapper)** → [docs/todo/desktop.md](docs/todo/desktop.md)
+- [x] [ready] **Login instance audit: helium.service + session-manager restore must converge on ONE instance (guard not stuck in wait-loop; crash-restart execs the new wrapper)** → [docs/todo/desktop.md](docs/todo/desktop.md)
 
 - [ ] **Deploy evo-x2 carrying Spotify (`38e146ab`) once the tree is quiescent — eval green 20:13 post-recursion-fix; switch also carries the parallel session's renamer/fastflowlm/cv work** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [blocked:deploy] **Post-deploy Spotify window-rule + session-manager verification (dead-until-now rule `^spotify$` vs the real app-id)** → [docs/todo/desktop.md](docs/todo/desktop.md)

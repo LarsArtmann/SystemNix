@@ -37,7 +37,7 @@ info() { echo "==> $*"; }
 [ "$(id -un)" = "lars" ] || fail "run as lars (nix run .#migrate-rust-cache)"
 $SUDO true 2>/dev/null || fail "passwordless sudo required"
 
-for bin in lsblk mkfs.btrfs mount findmnt rsync; do
+for bin in lsblk mkfs.btrfs mount findmnt mountpoint rsync df; do
   command -v "$bin" >/dev/null || fail "$bin not on PATH"
 done
 
@@ -61,7 +61,11 @@ else
     fail "$DEVICE is mounted ($MNT_NOW) — unmount before formatting"
   fi
   info "formatting $DEVICE as btrfs (label $LABEL, single profile)"
-  $SUDO mkfs.btrfs -L "$LABEL" -d single -m single "$DEVICE"
+  # -f is REQUIRED here (mkfs refuses to overwrite the existing ssd-btrfs
+  # filesystem otherwise) and SAFE: the gate above already verified this is
+  # the exact serial-pinned spare disk, unmounted, holding only the old
+  # ssd-btrfs earmark this script exists to replace.
+  $SUDO mkfs.btrfs -f -L "$LABEL" -d single -m single "$DEVICE"
 fi
 
 if ! mountpoint -q "$MOUNT"; then
