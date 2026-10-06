@@ -1,0 +1,91 @@
+# Freeze #20 Autopsy — the Migration's THIRD Launch into a Live Build Battery; Freeze #21 Forming on Boot 0 at Authoring (2026-10-06)
+
+**Session:** 2026-10-06 22:12 → 22:20 — trigger: user "We crashed again since, so we also rebooted again! Review!" Read-only forensics (journal + guard bundles + live cgroup attribution) + TODO harvest; NO live process stops this time (see §c.1). Autopsy of the 21:50:42 cut (#20 = boot -1, the post-#19 recovery boot, 40 m 50 s) + live review of boot 0.
+
+**Sibling context:** freeze #19 autopsy (`21-25`, its containment SIGSTOP'd the re-fired migration at ~21:21 and predicted this cut's conditions would persist), boot-speed deep research (`21-31` + `21-58` — its changes are **still UNDEPLOYED**, live gen 828 from 16:49), buildcache-parity dispatch fire 9 (`21-37` — resumed nix builds at 21:30 in the death window). **SIXTH consecutive cut predicted by its predecessor's autopsy with zero owner-leg execution between** (#14→#15→#16/17→#18→#19→#20).
+
+## Verdict
+
+**Freeze #20 = the freeze-#19 IO-collapse class with a NEW acute sequence: the freeze-19 containment HELD (proven below), then the migration was launched a THIRD time (~21:33, fresh PIDs 621330/623170/623182 from session-62.scope — the SAME terminal scope as the 21:11 re-fire) into a box already carrying a four-way build battery: the boot-speed session's VM-test nix builds, the buildcache-parity dispatch session's `nix build`/`nix flake check` (resumed ~21:30), freshly-opened user terminals spinning editor/LSP indexing (golangci-lint, go, templ), and the post-crash fleet catch-up writers (discordsync-wr, inboxclean).** Eight minutes after the #19 autopsy queued the entry-gate row, its exact scenario re-executed. The death signature is NEW vs #19: **mixed CPU+IO pileup** (loadavg 141, IO PSI some avg10 44.98 %, CPU PSI some avg10 56.04 %, MemAvailable healthy at 57.9/130.4 GB) vs #19's pure-IO (loadavg 748, IO 96.78 %, CPU 0.51 %) — and **zero thermal ENTER events**, the first family cut with NO thermal amplifier: this one is 100 % our own workload stacking. Choke points unchanged: `flush-8:16` army in `blk_mq_get_tag` (sdb ext4 buildcache writeback, wbt-throttled queue starvation), `usb_sg_wait`, rsync in `folio_wait_bit_common` (222 s), `go`/`nix` D-state. Guard ran its whole playbook (#2108→#2111 at 10-min cadence, sacrifices stopped, flm restore capped, SEV1 notify 10–20 s pre-cut) and could not see any of the actual drivers — rsync, builds, and LSPs are all outside `ioChurnUnits` (the freeze-6 blind spot, now extended to dev workloads). 0 OOM/MCE/BTRFS kernel events, no vmcore (livelock class), NOT mid-deploy (0 switch-to-configuration lines in the death window; live gen 828 from 16:49). Guard counter continuity held 5th consecutive cut (#2111→#2112).
+
+**The crash-recovery window is now empirically a free-for-all:** in the 40 minutes of boot -1 after the #19 containment, four different actor classes (owner terminal, two agent sessions, the service fleet's catch-up writers) each independently started heavy IO into an already-tripping box. Freeze-6 rule (a) ("stop the resumable readers") undershoots the reality: it is not just resumable readers — it is ALL heavy work, and nothing gates any of it.
+
+## Evidence
+
+| # | Finding | Evidence |
+|---|---------|----------|
+| 1 | #20 hard cut, no ceremony | boot -1 (21:09:52 → 21:50:42, 40 m 50 s) ends mid-traffic (last line 21:50:42.859 `pma: processing batch`); no shutdown/Stopping sequence; wtmp carries no shutdown record; boot 0 starts 21:52:21 |
+| 2 | Guard cadence whole-boot + SEV1 death signature | trips #2108 (21:12:20) → #2109 (21:22:25) → #2110 (21:32:29) → #2111 (21:42:31), ~10 min; SEV1 `MEMORY EMERGENCY GUARD TRIPPED; FLM RESTORE CAPPED` (severity notify — policy held) at 21:50:22 + :32, 10–20 s before the cut |
+| 3 | Containment HELD 21:21 → ~21:32 | #2110 bundle (21:32) top-io: the SIGSTOP'd rsyncs 23860/23862 sit at frozen cumulative 33–34 GB; #2110 window attribution: user.slice **+3.6 GB total** (a running migration does ~27 GB/10 min) |
+| 4 | THIRD migration launch ∈ (21:32:29, 21:42) | #2111 bundle (21:42) top-io: NEW rsyncs 623170/623182 (parent 621330), 3.47 GB read each; dstate: 623170 `DN folio_wait_bit_common` **222 s** D-time; session-62.scope cumulative **53.8 GB** at #2111 — same terminal scope as the 21:11 re-fire |
+| 5 | Four-way build battery concurrent | #2111 dstate: `go` (`blk_mq_get_tag`) + `nix` (`Dl+`) D-state; top-io: golangci-lint-l 1.6 GB, 6× crush; nix-daemon 7.0 GB cumulative at 21:42 (boot-speed VM tests + parity dispatch `nix build .#checks…`/flake check, its 21:37 report §a.2); user terminals opened 21:30:23/21:30:39/21:31:03 (sessions 329/358/359) |
+| 6 | NEW mixed CPU+IO death signature | #2111 bundle meta/psi: loadavg 141.09/102.54/51.85, 160/6040 tasks; IO some avg10 44.98 / full avg10 0.22 / full avg300 22.81; CPU some avg10 **56.04**; memory some 0.01; MemAvailable 57.9 GB / 130.4 GB — vs #19 (748 / 96.78 / 0.51) and vs #2110 at 21:32 (loadavg 13.33, IO some avg10 60.57 / **full 49.52**, CPU 2.88): the storm deepened from total IO stall into runnable pileup |
+| 7 | Choke points = #19 family | #2110/#2111 dstate: `flush-8:16` kworkers in `blk_mq_get_tag` (sdb ext4 buildcache writeback, ext4_writepages stack), `usb-storage` in `usb_sg_wait`; rsync `folio_wait_bit_common`; `go`/`nix` `blk_mq_get_tag` |
+| 8 | Not mid-deploy, kernel-clean, no vmcore | 0 `switch-to-configuration`/`activating the configuration` lines 21:44–21:51; live system = gen 828 (16:49) throughout; boot -1 kernel: 0 OOM-kill, 0 MCE, 0 BTRFS errors; `/var/crash` empty (livelock class produces no kdump) |
+| 9 | First family cut with ZERO thermal amplifier | boot -1 thermal log: only routine thermal-pstate-guard unit ticks; no 96 °C ENTER events (vs #19's four ENTER windows) — the chronic cooling deficit did not participate; #20 is purely self-inflicted workload stacking |
+| 10 | Post-crash catch-up writers quantified (freeze-6 amplifier, now numbered) | #2111 cgroup-io: `discordsync.service` **12.3 GB**, `inboxclean-web.service` **9.2 GB** cumulative in the 40-min boot; repeated on boot 0 (12.3 GB / 5.8 GB by 22:04) — every crash re-triggers a multi-GB cold-boot write burst |
+| 11 | Boot readers benign; hermes old scan still live | crush-hot-db-migrate: 0 relocated (skip-fast); discordsync-db-heal passed by 21:11:38; btrfs-rescue 36 s — but gen 828 still carries the PRE-boot-speed hermes ExecStartPre perms+integrity walk (96.9 s class) feeding the #2108 window |
+| 12 | Guard blind to every actual driver | trips list `ioChurnUnits` (flm/btrbk/churn) only; rsync, nix-daemon builds, cargo/go, LSPs, discordsync/inboxclean catch-up all outside — 4 trips changed nothing, same structural gap as freeze #6 |
+| 13 | **Freeze #21 forming LIVE on boot 0 at authoring** | trips #2112 (21:54:50), #2113 (22:04:52, system.slice +30.7 GB / user +12.9 GB in one window); no #2114 at the 22:14:52 tick; 22:16: IO PSI some avg10 **64.35** / avg60 46.17, loadavg 69.5 — live drivers: nixbld11 `go test`/`vet` battery via nix-daemon (w +561 MB/5 s = 112 MB/s), monitor365 cargo duckdb `ar cqD` in D-state, `go mod tidy` at 1300 % CPU, `buildflow --build-mode pre-commit` build, discordsync 43 % CPU, 5 crush sessions + 6 golangci-lint LSPs indexing — NO migration involved |
+
+## Live regime at authoring (boot 0, 22:16)
+
+- IO PSI some avg10 64 % and climbing; loadavg 69.5; trips #2112/#2113 already spent (flm socket down, guard-gated). Five build drivers active (§Evidence 13). **Freeze #21 will form if the build battery continues stacking** — this is the #20 recipe minus rsync.
+- No containment executed this session: the drivers are INTERACTIVE builds (`nix build` children, `cargo`, `go mod tidy`, buildflow) owned by active user/agent terminals — SIGSTOPping nix builds risks wedging locks, and their owners can Ctrl-C faster than I can judge (deliberation in §c.1). The owner has been warned with names and numbers in the session answer.
+
+## a) FULLY DONE
+
+1. Full #20 autopsy with all portable discriminators answered (Evidence table): hard cut, kernel-clean, not-mid-deploy, counter continuity, livelock class.
+2. **Containment-verification**: proved the freeze-19 SIGSTOP held (frozen cumulative counters + the 3.6 GB window) AND that a fresh third launch undid it — the first autopsy here that validates a predecessor's containment quantitatively rather than assuming it failed.
+3. Live writer attribution twice on boot 0 (5–6 s cgroup io deltas + D-state + top-CPU) per the documented protocol — named the exact processes, not the family.
+4. Thermal participation checked and EXCLUDED for the first time in the family (no ENTER events) — the cooling-deficit counter was deliberately NOT bumped (§c.4).
+5. Post-crash catch-up writers quantified per-boot (discordsync 12.3 GB, inboxclean 9.2 GB) — the freeze-6 crash-loop amplifier finally has numbers.
+6. TODO harvest at authoring: 2 rows extended with #20 proofs (both surfaces), 3 new rows routed (§f).
+
+## b) NOTICED, NOT DIAGNOSED
+
+1. WHO launched migration run #3 at ~21:33 — session-62.scope/pts is identified, but the actor behind the terminal (owner vs. agent) is owner-only knowledge (§g.1).
+2. sdb writeback writer identity — #2110's `ext4_writepages` on flush-8:16 implies GBs of WRITES to the buildcache ext4; candidates are the go/cargo build caches (the battery's `go`/`nix` D-states), but per-writer attribution to sdb was not derivable from the bundles.
+3. discordsync's 12 GB/boot mechanism (backlog replay vs. WAL vacuum vs. attachment sync after the crash) — unopened.
+4. The CPU PSI 56 % composition at death — runnable pileup from go/golangci-lint burning CPU while IO-blocked tasks queued; not decomposed per-process.
+
+## c) DELIBERATELY NOT DONE
+
+1. **No live SIGSTOPs on boot 0** — unlike freeze-19 (clean to stop a maintenance rsync), today's drivers are interactive builds owned by active terminals; SIGSTOPping nix/cargo children risks build-lock wedges and silently hangs other sessions' work. The owner is present (terminals active 22:01–22:13) and was warned instead. This is a judgment call: if PSI crosses ~80 % avg10 with the battery still running, the calculus changes — hard-cut data loss exceeds wedged builds.
+2. No deploy — mid-storm activation is the freeze-#4/#5 death recipe; the boot-speed restructure deploy stays user-gated for a calm window (§g.3).
+3. No module edits (entry gate etc.) — mid-storm builds are forbidden by the very rule being implemented.
+4. No `[blocked:user]` cooling-row extension — #20 had zero thermal ENTERs; bumping the bait-taken counter on a thermally-clean cut would dilute the row's signal.
+5. No ClickHouse thermal/pstate series extraction (n/a — no thermal events); no pstore/btrfs-sysfs reads (standing owner-gated rows).
+
+## d) SELF-CRITICISM
+
+1. My first read of #2110's low attribution was "the drain held" — the COMPLETE inference required comparing top-io-procs across bundles for NEW PIDs; the fresh-launch proof was one diff away. Lesson repeated from #19 §d.2: assert the mechanism (which PIDs, which scope), never the trend.
+2. I ran several full-boot `journalctl | grep` pipes during a live storm — my own forensics added QLC read load. Windowed `--since/--until` greps only from here on.
+3. Botched the block-device stat field math twice before the clean python probe — wasted ~30 s of storm-window time on arithmetic; under live-risk, lead with the script that already works (the documented 5 s protocol).
+4. The autopsy prioritized diagnosis over the boot-0 escalation for ~4 minutes (22:12–22:16) before the second attribution pass caught the build battery — the freeze-19 §d.3 lesson (containment/flagging outranks diagnosis) applies to WARNING too; the user heard about #21 risk only in the final answer.
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Idempotent + un-gated = crash loop, now proven THREE times in one day.** The entry-gate row (queue row 98) was queued at 21:25 by the #19 autopsy; run #3 launched at ~21:33. A queue row cannot contain a live crash loop — the gate must EXIST before the next `migrate-*` invocation, and the migration must be considered ARMED until then.
+2. **The crash-recovery window needs a no-heavy-work gate for ALL actors, not a pause list for readers.** Four actor classes independently started heavy IO into a tripping box (owner terminal, two agent build sessions, catch-up writers). Freeze-6 rule (a) and row 99's pause automation cover only the reader class; nothing refuses `nix build`/`cargo`/`go test`/buildflow while the guard is trip-active.
+3. **Post-crash catch-up writers are quantified crash-loop amplifiers** (12.3 + 9.2 GB per cold boot): they convert every crash's recovery boot into a partial storm by themselves. Defer-or-throttle them while guard-active.
+4. `visionreviewd.service` ships `OnFailure` inside `serviceConfig` (→ `[Service]` section) where systemd ignores it — noticed in passing in the boot -1 journal; the module's own comment says the intent is real (upstream ships no OnFailure).
+
+## f) NEXT THINGS (self-harvested at authoring; routed per TODO rules)
+
+1. **[ready] Entry gate + serialization for migrate-* maintenance scripts** — standing row EXTENDED with #20 (run #3, 8 min after this row was queued; containment-proven-then-undone). **Source:** this report §e.1 + freeze-19 §e.1/§f.1.
+2. **[ready] Post-crash resumable-reader pause automation (freeze-6 rule a)** — standing row EXTENDED: #20 proves reader-pausing alone is insufficient; see f.3. **Source:** this report §e.2.
+3. **[ready] Crash-recovery no-build admission (NEW)** — refuse/queue heavy build entry points (`nix build`/`nix run` wrapper, cargo, go test, buildflow) while the guard is trip-active or IO PSI some avg10 ≥ 40 % — the workload-admission module's slot gate extended to build entry. **Source:** this report §e.2.
+4. **[ready] visionreviewd OnFailure section fix (NEW)** — move `OnFailure` from `serviceConfig` to the unit level in `modules/nixos/services/visionreviewd.nix:54`; journal-proven "Unknown key … ignoring". **Source:** this report §e.4.
+5. **[watch] Post-crash catch-up writer deferral (NEW, library-only)** — discordsync 12.3 GB + inboxclean 9.2 GB per cold boot; quantify mechanism, then defer-while-guard-active. **Source:** this report §e.3.
+6. **[blocked:deploy] Deploy the boot-speed restructure in the next calm window** — gen 828 still carries the hermes boot-scan amplifier that fed #2108's window (Evidence 11); the existing stability row covers re-measurement, this note covers the deploy prerequisite.
+
+## g) QUESTIONS ONLY THE OWNER CAN ANSWER
+
+1. **Who launched migration run #3 at ~21:33 from session-62 (the same terminal as the 21:11 re-fire)?** Manual `nix run .#migrate-rust-cache`? This determines whether the fix class is "owner discipline" or "agent guardrail" — and it is the third launch of a script whose autopsy was 8 minutes old.
+2. **Will you stop the current build battery?** Freeze #21 is forming live (IO PSI avg10 64 %, loadavg 69, five drivers: nixbld11 go test/vet, monitor365 cargo duckdb, go mod tidy, buildflow, + LSP indexing). Ctrl-C-ing the builds now is the containment; riding it out repeats #20.
+3. **When is the calm-window deploy of the boot-speed restructure?** (Also still open from the prior session: BIOS Fast Boot/Memory-Context-Restore availability — firmware leg = 62.5 s — and the daemon pre-commit-legs question.)
+
+**Standing state at report close:** freeze #20 autopsied (IO-collapse class, third-migration-launch-triggered, ZERO thermal participation, mixed CPU+IO pileup death signature); guard counter continuity intact (#2111→#2112); freeze-19 containment verified HELD and then undone by run #3; boot 0 in a LIVE build-battery storm at IO PSI avg10 ~64 % with freeze #21 forming; boot-speed restructure still undeployed (gen 828); migration at 27/79 GB (SIGSTOP'd processes died with boot -1; target dir holds the partial copy; re-runs converge).
+
+_Arte in Aeternum_
