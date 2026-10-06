@@ -1,7 +1,9 @@
+> [docs-health 2026-10-06] RESOLVED + ARCHIVED: every item resolved in this point-in-time record (2026-10-06 full-corpus docs-health sweep; uncited by any live doc at archive time). See archived/README.md manifest.
+
 # Nix Anti-Patterns Remediation - Phase 3 & 4 Execution Plan
 
 **Created:** 2026-01-12 19:09
-**Status:** Ready to Execute
+~~**Status:** Ready to Execute~~ EXECUTED 100% per docs/status/archived/2026-01-13_00-15-NIX-ANTI-PATTERNS-PHASE-3-4-FINAL-COMPLETION-REPORT.md
 **Goal:** Complete migration of remaining imperative configurations to declarative Nix management
 
 ---
