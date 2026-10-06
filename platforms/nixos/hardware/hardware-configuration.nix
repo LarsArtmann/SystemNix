@@ -192,8 +192,10 @@ in
       ];
     };
     # Old /rust-cache mount (p9, ext4, by-partlabel/rust-cache) removed
-    # 2026-08-16: Rust targets moved to /mnt/buildcache/rust + sccache. The
-    # partition slot now carries the XFS ClickHouse store above.
+    # 2026-08-16: Rust targets moved off it (to /mnt/buildcache/rust + sccache;
+    # since 2026-10-06 to the dedicated Rust cache SSD at /mnt/rust-cache —
+    # services.rust-cache). The partition slot now carries the XFS ClickHouse
+    # store above.
   };
 
   # xfs kernel module support for the ClickHouse data mount. Without this,
