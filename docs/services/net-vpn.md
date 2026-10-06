@@ -53,7 +53,19 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
 2. **First dashboard login**: https://netbird.larsartmann.cloud → Dex login
    (`lars@artmann.tech`; password in `~/.pbx-prod-secrets/netbird_dex_admin_password`
    — put it in the password manager, it is the ONLY copy).
-3. **Create a setup key** (dashboard → Setup Keys → reusable, expires 30d).
+3. **Mint a PAT** (dashboard → Profile → Personal Access Tokens; value starts
+   `nbp_`) and save it to `~/.pbx-prod-secrets/netbird_api_pat`, then
+   `~/.pbx-prod-secrets/push-secrets.sh` + redeploy pbx. The
+   `netbird-provision.service` reconciler (pbx-artmann
+   `hosts/pbx/netbird-provision.nix`, live since 2026-10-06) now creates
+   EVERYTHING dashboard-side by itself within one timer run (30 min) or on
+   `systemctl start netbird-provision.service`: the `evo-x2-enroll` setup
+   key (reusable, 30d), the `lan` network + `192.168.1.0/24` resource, the
+   DNS nameserver group (`home.lan` + `larsartmann.cloud` → `192.168.1.53`),
+   and the `lan-access` policy (covers the UDP-53-to-192.168.1.53
+   requirement). The plain setup key lands root-only at
+   `/var/lib/netbird-provision/setup-key` on pbx — fetch it with
+   `ssh root@pbx.artmann.tech cat /var/lib/netbird-provision/setup-key`.
 4. **Land the key in sops** (this machine):
    `SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops platforms/nixos/secrets/netbird.yaml`
    — create the file with `netbird_setup_key: <key>` (encrypt to the evo-x2
@@ -67,24 +79,16 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
    picks the right age recipients — no per-file keys stanza needed.)
 5. **Enable the client**: set `services.netbird-client.enable = true` in the
    evo-x2 platform config, rebuild. Enrollment is automatic (login oneshot).
-6. **Dashboard one-time network config** (runbook step in pbx docs):
-   - Routes: CREATE the `192.168.1.0/24` network route dashboard-side
-     with evo-x2 as routing peer + distribution to all-employees (there
-     is NO client-side advertisement — `netbird` CLI cannot advertise;
-     verified against docs.netbird.io/manage/network-routes; forwarding
-     is already wired via `useRoutingFeatures = "both"`)
-   - DNS: nameserver group forwarding `home.lan` + `larsartmann.cloud`
-     → `192.168.1.53` (matched domains only). Facts (source-verified
-     2026-10-05): NetBird nameservers are UDP-only — the API enum has no
-     dot/doq/doh schemes (`dns/nameserver.go`), custom port IS supported;
-     the queries ride INSIDE the WireGuard tunnel to the routing peer, so
-     plain :53 here is not plaintext-on-wire and an encrypted dnsblockd
-     listener would add nothing. The group needs an access policy allowing
-     UDP 53 toward `192.168.1.53` (NetBird internal-DNS requirement).
-     Non-matched domains resolve via each client's normal resolver (D5) —
-     plaintext on untrusted Wi-Fi; the exit-node option below closes that.
-   - ACLs: default single-user policy — must include the nameserver group's
-     UDP 53 toward 192.168.1.53
+6. **Routing peer** — nothing to click: once evo-x2 enrolls, the NEXT
+   provisioner run creates the network router (evo-x2, masquerade on —
+   the home gateway has no route back to the VPN subnet). Facts
+   (source-verified 2026-10-05): NetBird nameservers are UDP-only — the API
+   enum has no dot/doq/doh schemes (`dns/nameserver.go`), custom port IS
+   supported; the queries ride INSIDE the WireGuard tunnel to the routing
+   peer, so plain :53 here is not plaintext-on-wire and an encrypted
+   dnsblockd listener would add nothing. Non-matched domains resolve via
+   each client's normal resolver (D5) — plaintext on untrusted Wi-Fi; the
+   exit-node option below closes that.
 7. **Enroll clients**: MacBook + Motorola (install NetBird app; import the
    dnsblockd CA into the phone's user store for `*.larsartmann.cloud` TLS).
 8. **Burn-in**, then retire Tailscale on the MacBook (D6).
