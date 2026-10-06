@@ -51,13 +51,17 @@
       # upstream re-pins the got-hashes — re-add ONLY via nix-hash-fix
       # evidence, never by hand.
       serverPkg =
-        (inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-server).overrideAttrs {
-          vendorHash = "sha256-hca9rn9tx7i8V5WC07HqZm2Tmq0bUouayOtQ1kTG1ns=";
-        };
+        (inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-server)
+        .overrideAttrs
+          {
+            vendorHash = "sha256-hca9rn9tx7i8V5WC07HqZm2Tmq0bUouayOtQ1kTG1ns=";
+          };
       agentPkg =
-        (inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-agent).overrideAttrs {
-          vendorHash = "sha256-l6ATO1jfBQ2WvM09ENNlDAC6/TZGC4ORavKa2vygxsE=";
-        };
+        (inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-agent)
+        .overrideAttrs
+          {
+            vendorHash = "sha256-l6ATO1jfBQ2WvM09ENNlDAC6/TZGC4ORavKa2vygxsE=";
+          };
       primaryUser = config.users.primaryUser or "lars";
       sopsEnvPath = config.sops.templates."browser-history-env".path;
 
