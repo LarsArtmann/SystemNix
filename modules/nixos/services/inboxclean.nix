@@ -267,7 +267,7 @@
         };
 
         systemd.services.inboxclean-backup = {
-          description = "InboxClean event-store SQLite backup (online .backup)";
+          description = "InboxClean DB + corpus backup (online .backup + .eml archive)";
           after = [
             "inboxclean-web.service"
             "inboxclean-backup-dir.service"
@@ -286,6 +286,10 @@
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
+              # The corpus archive grows with the mailbox; the systemd
+              # 90s default start timeout would kill the run within a
+              # year of corpus growth.
+              TimeoutStartSec = "30min";
               ExecStart = pkgs.writeShellScript "inboxclean-backup" ''
                 set -euo pipefail
                 db="${cfg.dataDir}/inboxclean.db"
@@ -296,9 +300,27 @@
                 ts=$(date +%Y%m%dT%H%M%S)
                 dst="${inboxcleanBackupDir}/inboxclean-$ts.db"
                 ${lib.getExe pkgs.sqlite} "$db" ".backup '$dst'"
+                # The corpus .eml store IS the mail backup (ADR-023): the DB
+                # alone carries only the index. 2026-10-07 rehearsal finding
+                # F1 — a DB-only restore made doctor report "corpus root
+                # missing". Root runs here under CAP_DAC_READ_SEARCH, so the
+                # 0700 inboxclean-owned dir is readable without chmod.
+                corpus="${cfg.dataDir}/corpus"
+                corpus_dst=""
+                trap 'rm -f "$corpus_dst"' EXIT
+                if [ -d "$corpus" ]; then
+                  corpus_dst="${inboxcleanBackupDir}/corpus-$ts.tar.zst"
+                  ${pkgs.gnutar}/bin/tar -C "${cfg.dataDir}" -cf - corpus \
+                    | ${pkgs.zstd}/bin/zstd -q -o "$corpus_dst" -
+                  echo "inboxclean-backup: wrote $corpus_dst"
+                else
+                  echo "inboxclean-backup: no corpus dir yet — DB-only backup"
+                fi
+                trap - EXIT
                 # 14-day retention (pocket-id/cv pattern): the online .backup
                 # rewrites every page, so nothing dedups between nights.
                 find "${inboxcleanBackupDir}" -name "inboxclean-*.db" -mtime +14 -delete
+                find "${inboxcleanBackupDir}" -name "corpus-*.tar.zst" -mtime +14 -delete
                 echo "inboxclean-backup: wrote $dst"
               '';
               ReadWritePaths = [
