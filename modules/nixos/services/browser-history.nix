@@ -40,6 +40,11 @@
         ;
 
       cfg = config.services.browser-history;
+      # vendorHash shims DROPPED (2026-10-06): the got-hashes
+      # hca9rn9t…/l6ATO1jf… captured at locked rev 8360d30 were re-baked
+      # upstream by 68d0b6d (same go-modules content, corrected pins) —
+      # verified by a clean no-shim toplevel build. Re-add ONLY via
+      # nix-hash-fix evidence, never by hand.
       serverPkg =
         inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-server;
       agentPkg = inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-agent;
