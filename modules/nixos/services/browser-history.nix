@@ -40,21 +40,23 @@
         ;
 
       cfg = config.services.browser-history;
-      # TEMPORARY vendorHash shims (2026-10-06, class comment at buildflow):
-      # got hca9rn9t… (server) / l6ATO1jf… (agent) — first captured at locked
-      # rev 8360d30 and STILL required at 68d0b6d (no-shim build verified
-      # FAILING there: upstream keeps stale baked go-modules pins; the module
-      # content is unchanged between the revs, so the got-hashes carry over).
-      # First-hand --keep-going toplevel evidence this session; buildflow
-      # nix-hash-fix could not attribute them behind the failing VM-check
-      # cascade. Drop when the lock moves past an upstream-fixed rev or
-      # upstream re-pins the got-hashes — re-add ONLY via nix-hash-fix
-      # evidence, never by hand.
+      # TEMPORARY vendorHash shims (2026-10-06, RE-PINNED 2026-10-07 at the
+      # d834910 update, class comment at buildflow): got 4Rrty+r2… (server,
+      # first-hand --keep-going toplevel evidence) — server captured earlier
+      # at locked revs 8360d30/68d0b6d as hca9rn9t… (upstream keeps stale
+      # baked go-modules pins; the module content is unchanged between the
+      # revs, so the got-hash carries over). buildflow nix-hash-fix could not
+      # attribute them behind the failing VM-check cascade; the agent's
+      # l6ATO1jf… was captured at 8360d30/68d0b6d and carried UNCHANGED (its
+      # FOD is not in the d834910 toplevel build graph — the §11 preview is
+      # its real-build evidence). Drop when the
+      # lock moves past an upstream-fixed rev or upstream re-pins the
+      # got-hashes — re-add ONLY via nix-hash-fix evidence, never by hand.
       serverPkg =
         (inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-server)
         .overrideAttrs
           {
-            vendorHash = "sha256-hca9rn9tx7i8V5WC07HqZm2Tmq0bUouayOtQ1kTG1ns=";
+            vendorHash = "sha256-4Rrty+r2dKLZYuK4ADP2FYbMKRukVwCZclVZy+j1M6k=";
           };
       agentPkg =
         (inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-agent)
