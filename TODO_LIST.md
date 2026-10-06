@@ -154,6 +154,8 @@
 - [ ] [ready] **Midnight 85 GB system.slice IO attribution + nix-gc/QLC-full(06:32) correlation** → [docs/todo/stability.md](docs/todo/stability.md) (Source: same report §f.5)
 - [ ] [ready] **Guard trip-log line: add load average** (death-minute regime required ClickHouse archaeology otherwise) → [docs/todo/stability.md](docs/todo/stability.md) (Source: same report §f.10)
 - [ ] [ready] **btrfs device-stats pre/post-#11 baseline comparison** (freeze-8 protocol row 15, never run; ClickHouse btrfs series first, root-assisted fallback) → [docs/todo/stability.md](docs/todo/stability.md) (Source: same report §f.11)
+- [ ] [blocked:user] **BIOS boot-time walk on the GMKtec EVO-X2 (firmware leg = 62.5 s of the 3min 8s boot)** — check Fast Boot / Memory Context Restore / POST device-init options; one reboot per enabled option to measure → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-10-06_21-31_boot-speed-deep-research.md §d1/§f1)
+- [ ] [blocked:deploy] **Re-measure boot on the first calm post-deploy boot** (boot-speed fixes landed: hermes perms walk post-start, boot-gated oneshots → timers, buildcache fsck off; expect userspace ≤~40 s; hermes-perms-heal journal must show one `hermes-perms: converged` line per hermes start) → [docs/todo/stability.md](docs/todo/stability.md) (Source: same report §f2)
 
 ### monitoring
 
@@ -300,6 +302,8 @@
 - [ ] [ready] **Free port 3000 for forgejo — the knowledge-graph service squats it (deploy smoke false-PASSed on the wrong listener)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-05_13-52_post-deploy-triage-forgejo-g1-indexer-web-otlp-follows-cleanup.md §f.2)
 
 - [ ] [ready] **Extend gitleaks-coverage-selftest with the ULID-user_id FP fixture + pin the allowlist-regex-region semantics** — allowlist regexes match the CAPTURED SECRET region, not the full line (the `user_id:"<ULID>"` line-shape allowlist silently no-oped; only the literal `01M2X…` form worked, verified live 2026-10-06); fixture both the FP shape and a real-secret negative control → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: this docs-health session, .gitleaks.toml allowlist fix)
+- [ ] [decision] **bank-sync notify-gate: decouple login from dashboard readiness or accept** — Type=notify holds multi-user ~69 s (pool mount + event-store replay); options = upstream-module override, late target, or accept → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-06_21-31_boot-speed-deep-research.md §d2/§f3)
+- [ ] [watch] **home-manager-lars activation time post-storm** (46.8 s under the boot-0 storm; re-measure calm — if still >30 s, dig HM activation steps) → [docs/todo/services.md](docs/todo/services.md) (Source: same report §d3/§f4)
 
 ### upstream
 
@@ -579,6 +583,7 @@
 - [ ] [ready] **Determine whether nixpkgs-compat.yml's nightly `nix flake check --no-build` forces the new project-dependency-graph git+ssh nodes (workflow has NO auth block); if yes, wire deploy-key auth or document why it cannot fire** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-05_12-27_depgraph-integration-on-evo-x2.md §f.3)
 - [ ] [ready] **Run actionlint (or equivalent YAML-schema lint) over the 3 workflow files edited by the depgraph session (nix-check/flake-update/go-deps-audit) — daemon-swept commits bypassed pre-commit legs; `nix fmt -- --ci` verified formatting only** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: same report §f.4)
 - [ ] [ready] **Land the agent-doc pointer: depgraph is on PATH (mkLarsPackages) — use `who-uses`/`update-plan` for cross-repo blast radius before dep bumps instead of hand-grepping** (one line in docs/agents/go-ecosystem.md or shell-devtools.md) → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: same report §f.5)
+- [ ] [watch] **test-paperless-gpt flake wiring is red for the whole tree** (`nix flake check` aborts: test takes `{ inputs }`, flake calls it with `pkgs`; committed 20:54/21:00:52 by another session, PRE-dates the boot-speed session) — owning session/owner fixes the call shape → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-06_21-31_boot-speed-deep-research.md §e/§f5)
 
 ### pixel6
 

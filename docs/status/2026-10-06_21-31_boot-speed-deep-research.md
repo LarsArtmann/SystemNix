@@ -67,7 +67,7 @@ Boot total was **3 min 8 s** (firmware 62.5 s + loader 2.7 s + kernel 1.9 s + in
 ## g) Verification appendix
 
 - crush-hot-db VM test: **PASS** (exit 0, booted VM, migrated fixtures + new static/timer shape asserted).
-- hermes VM test: running at authoring — result to be appended when done.
+- hermes VM test: **PASS** (exit 0 — post-start heal topology, completion-marker waits, WAL-gated migrate, D1/6/6b perms regressions, v3 doc literals; both nodes booted).
 - Full toplevel eval (all eval-time audits): PASS.
 - Generated fstab buildcache line: `… 0 0` (fsck off) — verified.
 - Daemon-race note: the auto-commit daemon swept most of these files into heuristic commits mid-session (verified via `git show --stat` per the amend policy); one intermediate commit briefly carried the invalid `fsckPass = 0` (option does not exist) — the working tree/next commit carries `noCheck = true`; toplevel eval green on the final tree.
