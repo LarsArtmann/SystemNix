@@ -96,7 +96,8 @@ let
         let
           homeCatchAll = vhosts."https://*.${home}".extraConfig or "";
           cloudCatchAll = vhosts."https://*.${cloud}".extraConfig or "";
-          serves404Page = cfg: builtins.match ".*error 404.*" cfg != null && builtins.match ".*handle_errors.*" cfg != null;
+          serves404Page =
+            cfg: builtins.match ".*error 404.*" cfg != null && builtins.match ".*handle_errors.*" cfg != null;
           redirectsToDash = cfg: builtins.match ".*redir.*dash.*" cfg != null;
         in
         serves404Page homeCatchAll
