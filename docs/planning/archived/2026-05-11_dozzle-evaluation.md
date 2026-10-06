@@ -1,3 +1,5 @@
+> [docs-health 2026-10-06] RESOLVED + ARCHIVED: evaluation ADOPTED — Dozzle deployed and live (2026-08-31+; README/FEATURES services tables). See archived/README.md manifest.
+
 # Dozzle — Evaluation
 
 **Date:** 2026-05-11
@@ -67,4 +69,4 @@ Dozzle fills a different niche than SigNoz — real-time log tailing vs. histori
 - Protect with Authelia forward auth (already supported by Dozzle)
 - No custom NixOS module needed — Docker Compose service is sufficient
 
-**Recommendation:** Worth adding. Best-in-class for live container log tailing. Complements SigNoz (historical search/alerting). Authelia forward auth support means clean integration with existing SSO.
+~~**Recommendation:** Worth adding. Best-in-class for live container log tailing. Complements SigNoz (historical search/alerting). Authelia forward auth support means clean integration with existing SSO.~~ done: deployed live (README/FEATURES services tables; seen live 2026-08-31)
