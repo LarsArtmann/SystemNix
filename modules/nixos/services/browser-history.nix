@@ -40,14 +40,24 @@
         ;
 
       cfg = config.services.browser-history;
-      # vendorHash shims DROPPED (2026-10-06): the got-hashes
-      # hca9rn9t…/l6ATO1jf… captured at locked rev 8360d30 were re-baked
-      # upstream by 68d0b6d (same go-modules content, corrected pins) —
-      # verified by a clean no-shim toplevel build. Re-add ONLY via
-      # nix-hash-fix evidence, never by hand.
+      # TEMPORARY vendorHash shims (2026-10-06, class comment at buildflow):
+      # got hca9rn9t… (server) / l6ATO1jf… (agent) — first captured at locked
+      # rev 8360d30 and STILL required at 68d0b6d (no-shim build verified
+      # FAILING there: upstream keeps stale baked go-modules pins; the module
+      # content is unchanged between the revs, so the got-hashes carry over).
+      # First-hand --keep-going toplevel evidence this session; buildflow
+      # nix-hash-fix could not attribute them behind the failing VM-check
+      # cascade. Drop when the lock moves past an upstream-fixed rev or
+      # upstream re-pins the got-hashes — re-add ONLY via nix-hash-fix
+      # evidence, never by hand.
       serverPkg =
-        inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-server;
-      agentPkg = inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-agent;
+        (inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-server).overrideAttrs {
+          vendorHash = "sha256-hca9rn9tx7i8V5WC07HqZm2Tmq0bUouayOtQ1kTG1ns=";
+        };
+      agentPkg =
+        (inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-agent).overrideAttrs {
+          vendorHash = "sha256-l6ATO1jfBQ2WvM09ENNlDAC6/TZGC4ORavKa2vygxsE=";
+        };
       primaryUser = config.users.primaryUser or "lars";
       sopsEnvPath = config.sops.templates."browser-history-env".path;
 
