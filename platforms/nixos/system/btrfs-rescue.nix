@@ -132,9 +132,12 @@ in
   config = lib.mkIf cfg.enable {
     systemd.services.btrfs-rescue-snapshot = {
       description = "Rescue snapshot of @ outside btrbk retention (glob-delete survivor)";
-      # Boot-run converges the tier on every deploy/reboot (idempotent);
-      # the daily timer keeps it fresh between boots.
-      wantedBy = [ "multi-user.target" ];
+      # Boot convergence WITHOUT boot gating (2026-10-06): this oneshot's
+      # 36s snapshot IO used to gate multi-user.target directly (wantedBy),
+      # delaying the login screen. The timer's OnBootSec preserves the
+      # every-boot convergence (idempotent); the daily OnCalendar keeps it
+      # fresh between boots; deploy coverage is unchanged (it was never in
+      # deploy.sh — the timer re-fires after any deploy reboot).
       inherit onFailure;
       startLimitBurst = 3;
       startLimitIntervalSec = 3600;
@@ -159,9 +162,10 @@ in
     };
 
     systemd.timers.btrfs-rescue-snapshot = {
-      description = "Daily rescue snapshot of @ (outside btrbk retention)";
+      description = "Rescue snapshot of @ — every boot (2min settle) + daily";
       wantedBy = [ "timers.target" ];
       timerConfig = {
+        OnBootSec = "2min";
         OnCalendar = cfg.onCalendar;
         Persistent = true;
         Unit = "btrfs-rescue-snapshot.service";

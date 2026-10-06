@@ -539,7 +539,7 @@ if nix run .#pre-deploy-check; then
   # forgejo-hermes-token: RemainAfterExit oneshot — re-runs re-install the
   # staged token as /run/hermes-forgejo-token after deploys that change the
   # hermes user/group or the token scripts.
-  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup browser-history-agent-token-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs cv-backup-dir crm-backup-dir inboxclean-backup-dir miniflux-backup-dir paperless-db-backup-dir browser-history-backup-dir discordsync-db-backup-dir clickhouse-db-backup-dir miniflux-oidc-setup llama-rag-model-fetch hermes-github-verify tq-storage-dir tq-bootstrap crush-hot-db-migrate boot-mirror-sync hot-user-caches-nix-bootstrap restic-app-dumps-setup discordsync-attachments-dir borg-offsite-dir geometrikks-db-provision geometrikks-backup-dir; do
+  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup browser-history-agent-token-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs cv-backup-dir crm-backup-dir inboxclean-backup-dir miniflux-backup-dir paperless-db-backup-dir browser-history-backup-dir discordsync-db-backup-dir clickhouse-db-backup-dir miniflux-oidc-setup llama-rag-model-fetch hermes-github-verify tq-storage-dir tq-bootstrap boot-mirror-sync hot-user-caches-nix-bootstrap restic-app-dumps-setup discordsync-attachments-dir borg-offsite-dir geometrikks-db-provision geometrikks-backup-dir; do
     # borg-offsite-dir: idempotent /mnt/hot/borg cache-dir bootstrap (offsite
     # Borg leg; gated on services.offsite-borg.enable — re-run converges).
     # restic-app-dumps-setup: idempotent repo-password bootstrap (creates
@@ -547,10 +547,6 @@ if nix run .#pre-deploy-check; then
     # miniflux-oidc-setup: converges miniflux users.openid_connect_id to the
     # Pocket ID user id — re-links after a Pocket ID DB recreation (its subs
     # change; stale sub = every SSO login 400s) and links fresh hosts.
-    # crush-hot-db-migrate: daily-timer oneshot converging per-project
-    # crush DBs onto /mnt/hot (Samsung TLC). Deploy-time convergence
-    # matters because new sessions create fresh QLC-root .crush dirs;
-    # the unit self-skips while crush sessions are live.
     # boot-mirror-sync: refreshes the Samsung 2nd-boot ESP after every
     # switch — the sd-boot builder only writes /boot (nixpkgs
     # mirroredBoots is grub-only), and the mirror must never boot a
@@ -574,6 +570,18 @@ if nix run .#pre-deploy-check; then
       sudo systemctl restart "$provisioner.service" 2>/dev/null || true
     fi
   done
+
+  # crush-hot-db-migrate: daily-timer oneshot converging per-project
+  # crush DBs onto /mnt/hot (Samsung TLC). Deploy-time convergence
+  # matters because new sessions create fresh QLC-root .crush dirs; the
+  # unit self-skips while crush sessions are live. It left the provisioner
+  # loop above (2026-10-06): the unit is now timer-pulled static (OnBootSec
+  # boot convergence, no multi-user gating), so `is-enabled` returns rc=1
+  # and the loop would silently skip it — the restart is unconditional
+  # here instead (RemainAfterExit=true: restart = re-run, converges; the
+  # name staying in this file keeps the deploy-restart-audit green).
+  echo "Restarting provisioner: crush-hot-db-migrate.service (explicit, timer-static)"
+  sudo systemctl restart crush-hot-db-migrate.service 2>/dev/null || true
 
   # discordsync-db-heal: RemainAfterExit oneshot pulled INDIRECTLY by
   # discordsync (is-enabled returns rc=1, so the loop above skips it). A

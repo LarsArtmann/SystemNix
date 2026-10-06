@@ -63,10 +63,14 @@
         (lib.mkIf cfg.enable {
           systemd.services.crush-hot-db-migrate = {
             description = "Relocate per-project crush session DBs to the hot-DB disk";
-            # Enabled, not static: deploy.sh's provisioner loop gates on
-            # `systemctl is-enabled` (rc=1 for static units) — without this the
-            # deploy-time restart silently never happens (dnsblockd-bridge trap).
-            wantedBy = [ "multi-user.target" ];
+            # Timer-pulled, NOT boot-gated (2026-10-06): the 37.5s migrate
+            # run used to gate multi-user.target directly (wantedBy),
+            # delaying the login screen. The timer's OnBootSec preserves
+            # every-boot convergence; deploy-time convergence moved to an
+            # explicit restart block in scripts/deploy.sh (the provisioner
+            # loop's `is-enabled` gate returns rc=1 for this now-static
+            # unit — the name stays in deploy.sh, keeping the
+            # deploy-restart-audit green).
             unitConfig.RequiresMountsFor = [ cfg.mountPoint ];
             # List EVERY binary the script execs: the default unit PATH
             # (coreutils/findutils/gnugrep/gnused/systemd) has NO flock
@@ -251,6 +255,14 @@
             description = "Periodically converge per-project crush DBs onto the hot-DB disk";
             wantedBy = [ "timers.target" ];
             timerConfig = {
+              # OnBootSec replaces the old wantedBy=multi-user boot-run
+              # (boot convergence without boot gating, 2026-10-06). The
+              # service is RemainAfterExit=true, so the boot fire is the one
+              # effective run per boot — identical cadence to the old
+              # boot-run, just at boot+2min instead of gating login. Note
+              # the window: a crush session live at boot+2min makes the unit
+              # self-skip (by design), converging on the next deploy/boot.
+              OnBootSec = "2min";
               # Quiet window; Persistent catches up missed boots.
               OnCalendar = "*-*-* 04:10:00";
               Persistent = true;

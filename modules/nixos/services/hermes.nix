@@ -475,11 +475,20 @@
           fi
 
           DB="$NEW/state.db"
-          if [ -f "$DB" ]; then
+          # Integrity check ONLY after an unclean shutdown: with
+          # journal_mode=WAL, sqlite deletes state.db-wal when the last
+          # connection closes cleanly, so a PRESENT -wal file is the
+          # unclean-shutdown signal (freeze/crash class). The unconditional
+          # full-scan integrity_check on the 1.4 GB db was half of the
+          # ~96s boot-IO-storm ExecStartPre cost that gated
+          # multi-user.target (2026-10-06 boot research) — and a no-op after
+          # every clean stop. journal_mode is persistent in the db header,
+          # so the clean path needs no pragma re-assert either.
+          if [ -f "$DB" ] && [ -f "$DB-wal" ]; then
             INTEGRITY=$(sqlite3 "$DB" "PRAGMA integrity_check;" 2>&1 || echo "error")
             if [ "$INTEGRITY" != "ok" ]; then
               BACKUP="$DB.malformed-$(date +%Y%m%d-%H%M%S)"
-              echo "hermes-migrate: SQLite database malformed, backing up to $BACKUP"
+              echo "hermes-migrate: SQLite database malformed (unclean shutdown), backing up to $BACKUP"
               mv "$DB" "$BACKUP"
               rm -f "$DB-wal" "$DB-shm"
             else
@@ -584,9 +593,11 @@
         environment.systemPackages = [ hermesPkg ];
 
         # Directory creation and ownership handled declaratively via tmpfiles.
-        # The stale-ACL revoke and recursive file permission fix-up run via
-        # ExecStartPre (aclRevokeScript + fixPermissionsScript) — they cannot
-        # be expressed as tmpfiles rules.
+        # The stale-ACL revoke runs via ExecStartPre (aclRevokeScript — it
+        # cannot be expressed as tmpfiles rules). The full-tree permission
+        # fix-up moved to the post-start hermes-perms-heal unit (see below:
+        # its metadata walk over the whole state tree cost ~96s of boot IO
+        # storm while gating multi-user.target via this unit, 2026-10-06).
         systemd.tmpfiles.rules =
           map (path: mkStateDir path "2770" cfg.user cfg.group) (
             [
@@ -631,6 +642,10 @@
             "sops-nix.service"
             "dnsblockd.service"
             "user@${toString hermesUid}.service"
+            # Pull the post-start perms heal on EVERY start (boot + every
+            # deploy restart) — see hermes-perms-heal below for why the
+            # walk no longer lives in ExecStartPre.
+            "hermes-perms-heal.service"
           ];
           inherit onFailure;
           startLimitIntervalSec = 600;
@@ -666,7 +681,6 @@
               Group = cfg.group;
               ExecStartPre = [
                 "+${lib.getExe aclRevokeScript}"
-                "+${lib.getExe fixPermissionsScript}"
                 "+${lib.getExe migrateScript}"
                 "${lib.getExe mergeEnvScript}"
                 "${lib.getExe lspBinHealScript}"
@@ -729,12 +743,14 @@
               KillMode = "mixed";
               KillSignal = "SIGTERM";
               TimeoutStopSec = cfg.timeoutStopSec;
-              # State check/migration (state has grown to ~1.1 GB) + ACL revoke
-              # + permission fix can exceed shorter budgets during boot I/O
-              # storms: 2026-08-31 boot (load avg 24) hit the full 3min in
-              # ExecStartPre, failed into OnFailure alerting, then completed
-              # in 50s on the retry. 6min absorbs the storm without paging.
-              TimeoutStartSec = "6min";
+              # Budget history: the 6min era existed for the full-tree perms
+              # walk + unconditional integrity_check (2026-08-31 boot hit the
+              # full 3min, 2026-10-06 boot -1 hit the full 6min and paid a
+              # restart retry). Both scans left ExecStartPre 2026-10-06
+              # (perms walk → hermes-perms-heal post-start; integrity check
+              # → WAL-gated in the migrate script). 3min still absorbs the
+              # remaining steps under a boot IO storm.
+              TimeoutStartSec = "3min";
               ExecReload = "/bin/kill -USR1 $MAINPID";
               StandardOutput = "journal";
               StandardError = "journal";
@@ -762,6 +778,61 @@
               ProtectHome = false;
               ReadWritePaths = [ cfg.stateDir ];
             })
+          ];
+        };
+
+        # Post-start ownership convergence for the hermes state tree.
+        # Moved OUT of hermes' ExecStartPre 2026-10-06: the probe walk
+        # (full-tree find over stateDir on the QLC root) cost ~96s under the
+        # boot IO storm on a converged tree — with Type=simple that entire
+        # cost gated multi-user.target (the login screen waited on it), and
+        # the 2026-10-06 boot -1 first attempt even hit the 6min start
+        # timeout, paid a restart cooldown, and finished its ExecStartPre at
+        # ~534s. Probe+heal move here TOGETHER, unchanged — the cv-state-perms
+        # lesson (2026-09-20) requires the probe to flag exactly what the
+        # heal repairs; splitting them would re-create the phantom-green
+        # class. Wiring: hermes.service Wants= this unit, this unit is
+        # After=hermes.service — so it still runs on every boot AND every
+        # deploy restart (same convergence cadence), but only AFTER the
+        # gateway process forked, i.e. off the boot critical path. Failure
+        # here does not fail hermes (Wants, not Requires) — it alerts via
+        # OnFailure and retries on the next hermes start.
+        systemd.services.hermes-perms-heal = {
+          description = "Hermes state-tree ownership convergence (post-start)";
+          after = [ "hermes.service" ];
+          inherit onFailure;
+          startLimitBurst = 3;
+          startLimitIntervalSec = 3600;
+          unitConfig = {
+            # Same loud-failure mount gate as hermes.service: never converge
+            # against a shadow dir if the @home-hermes mount is missing.
+            RequiresMountsFor = [ (toString cfg.stateDir) ];
+          };
+          serviceConfig = lib.mkMerge [
+            (serviceOneshotDefaults { })
+            (harden {
+              # chown on foreign-owned entries (CAP_CHOWN), chmod on files
+              # owned by others (CAP_FOWNER), traversal of the 2770 state
+              # dirs (CAP_DAC_OVERRIDE) — same capability needs as the old
+              # root-prefixed ExecStartPre (+fixPermissionsScript).
+              CapabilityBoundingSet = "CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER";
+              ProtectHome = false;
+              ReadWritePaths = [ cfg.stateDir ];
+            })
+            {
+              Type = "oneshot";
+              User = "root";
+              ExecStart = lib.getExe fixPermissionsScript;
+              # The walk is IO-bound metadata traffic by design — best-effort
+              # priority 6 keeps it behind the gateway warmup, desktop login,
+              # and every foreground workload.
+              IOSchedulingClass = "best-effort";
+              IOSchedulingPriority = 6;
+              Nice = 15;
+              # The walk itself can be slow under a storm (that was the whole
+              # point of moving it off the critical path) — give it room.
+              TimeoutStartSec = "10min";
+            }
           ];
         };
 
