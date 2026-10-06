@@ -54,9 +54,19 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
    (`lars@artmann.tech`; password in `~/.pbx-prod-secrets/netbird_dex_admin_password`
    — put it in the password manager, it is the ONLY copy).
 3. **Mint a PAT** (dashboard → Profile → Personal Access Tokens; value starts
-   `nbp_`) and save it to `~/.pbx-prod-secrets/netbird_api_pat`, then
-   `~/.pbx-prod-secrets/push-secrets.sh` + redeploy pbx. The
-   `netbird-provision.service` reconciler (pbx-artmann
+   `nbp_`) and save it to `~/.pbx-prod-secrets/netbird_api_pat`. Then IN THIS
+   ORDER — the push-secrets dead-unit guard FATALs while `netbird-provision`
+   is missing from the staged closure, so STAGE BEFORE PUSHING:
+
+   ```bash
+   cd ~/projects/pbx-artmann
+   nix build .#nixosConfigurations.pbx.config.system.build.toplevel -o /tmp/pbx-toplevel-root
+   ~/.pbx-prod-secrets/push-secrets.sh
+   nixos-rebuild test --flake .#pbx --target-host root@pbx.artmann.tech   # verify units, then:
+   nixos-rebuild switch --flake .#pbx --target-host root@pbx.artmann.tech
+   ```
+
+   The `netbird-provision.service` reconciler (pbx-artmann
    `hosts/pbx/netbird-provision.nix`, live since 2026-10-06) now creates
    EVERYTHING dashboard-side by itself within one timer run (30 min) or on
    `systemctl start netbird-provision.service`: the `evo-x2-enroll` setup
@@ -66,6 +76,10 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
    requirement). The plain setup key lands root-only at
    `/var/lib/netbird-provision/setup-key` on pbx — fetch it with
    `ssh root@pbx.artmann.tech cat /var/lib/netbird-provision/setup-key`.
+   EXPIRY EDGE: the key lives 30d — do step 4-5 within that window or
+   re-fetch; on expiry the provisioner silently mints a fresh key (file
+   overwritten) and the sops copy goes stale (the only failure signal is
+   evo-x2's login oneshot).
 4. **Land the key in sops** (this machine):
    `SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops platforms/nixos/secrets/netbird.yaml`
    — create the file with `netbird_setup_key: <key>` (encrypt to the evo-x2
