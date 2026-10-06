@@ -513,6 +513,9 @@ _: {
                             # content-hashed assets. Without this, a stale cached
                             # bootstrap.js references old hashes → SPA fallback returns
                             # index.html (text/html) for missing .js files → MIME error.
+                            # The upstream server now sends identical headers itself;
+                            # this block is redundant once that rev is deployed —
+                            # removal tracked in docs/todo/services.md.
                             @noCache path /ui /ui/ /ui/index.html /ui/bootstrap.js
                             header @noCache Cache-Control "no-cache, no-store, must-revalidate"
 

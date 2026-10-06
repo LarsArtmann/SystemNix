@@ -174,6 +174,24 @@ from the preload list if it ever breaks) and larsartmann.cloud serves only
 LAN/VPN traffic; preloading would brick non-VPN external access patterns for
 zero benefit.
 
+## Caching
+
+Caddy does no server-side caching. Its entire cache influence is header
+policy in `commonConfig`: a **set-if-absent** `?Cache-Control "no-cache"`
+default, so every vHost revalidates unless the backend sends its own
+`Cache-Control` (apps owning content-addressed media, e.g. Immich's
+`immutable`, are preserved; `file_server` vHosts get the default).
+
+The hand-written `monitor` vHost additionally force-overrides
+`no-cache, no-store, must-revalidate` on `/ui/index.html` + `/ui/bootstrap.js`
+(`faae52ac`): a stale cached `bootstrap.js` requests old content hashes, the
+SPA fallback masks the 404 as `text/html`, and the browser MIME-errors. The
+monitor365 server now ships this policy itself (entry points `no-cache,
+no-store, must-revalidate`, trunk-hashed assets `immutable`), so the Caddy
+override is redundant once that upstream rev is locked + deployed — removal
+is tracked in `docs/todo/services.md`; the global `?` default remains the
+backstop for any backend that sends no cache headers.
+
 ## 2026-09-30 config review — verdict table
 
 | #  | Finding                                         | Disposition                                                                  |
