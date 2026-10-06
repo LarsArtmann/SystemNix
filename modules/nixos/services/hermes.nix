@@ -170,6 +170,10 @@
 
           if tree_converged; then
             converge_ssh
+            # Completion markers (both paths): the hermes-perms-heal unit is
+            # async post-start, so tests and runbooks wait on THESE lines
+            # instead of unit state (a finished oneshot reads inactive).
+            echo "hermes-perms: converged (fast path)"
             exit 0
           fi
 
@@ -195,6 +199,7 @@
           find ${cfg.stateDir} -xdev \( -path '${cfg.stateDir}/workspace/projects' -o -path '${cfg.stateDir}/.ssh' \) -prune -o -type f -exec chmod u=rwX,g=rwX,o= {} + 2>/dev/null || true
 
           converge_ssh
+          echo "hermes-perms: converged (heal path)"
         '';
       };
 
@@ -785,7 +790,7 @@
         # Post-start ownership convergence for the hermes state tree.
         # Moved OUT of hermes' ExecStartPre 2026-10-06: the probe walk
         # (full-tree find over stateDir on the QLC root) cost ~96s under the
-        # boot IO storm on a converged tree — with Type=simple that entire
+        # boot IO storm on a CONVERGED tree — with Type=simple that entire
         # cost gated multi-user.target (the login screen waited on it), and
         # the 2026-10-06 boot -1 first attempt even hit the 6min start
         # timeout, paid a restart cooldown, and finished its ExecStartPre at
@@ -797,7 +802,9 @@
         # deploy restart (same convergence cadence), but only AFTER the
         # gateway process forked, i.e. off the boot critical path. Failure
         # here does not fail hermes (Wants, not Requires) — it alerts via
-        # OnFailure and retries on the next hermes start.
+        # OnFailure and retries on the next hermes start. The script logs a
+        # completion line per run (fast/heal path); the VM test waits on
+        # those because a finished oneshot reads inactive, not active.
         systemd.services.hermes-perms-heal = {
           description = "Hermes state-tree ownership convergence (post-start)";
           after = [ "hermes.service" ];

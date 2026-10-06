@@ -27,10 +27,14 @@
 #      proven in the user-space harness, see docs/services/crush.md)
 #   6. idempotent re-run: "0 project(s) relocated", already-migrated
 #      symlinks skipped (find -type d does not match them)
-#   7. the is-enabled regression (deploy.sh's provisioner loop silently
-#      skipped static units) and the unit-shape regressions: RequiresMountsFor
-#      present (226 class) and the declared unit path carrying flock
-#      (exit-127 phantom-binary class)
+#   7. the unit-shape regressions: RequiresMountsFor present (226 class)
+#      and the declared unit path carrying flock (exit-127 phantom-binary
+#      class). The OLD is-enabled=enabled assertion retired 2026-10-06: the
+#      unit is now timer-pulled static (OnBootSec boot convergence, no
+#      multi-user gating — the boot-speed restructure), and deploy.sh
+#      converges it via an explicit restart block; this test pins the new
+#      shape (service static + timer enabled) so a silent [Install]
+#      regression still fails loudly here.
 #
 # /mnt/hot is a tmpfs stand-in (virtualisation.fileSystems — plain
 # fileSystems silently vanish in VM tests, test-cv 2026-09-02); the module's
@@ -165,9 +169,11 @@ in
     machine.wait_for_unit("multi-user.target")
     machine.wait_for_unit("crush-hot-db-migrate.service")
 
-    # ---- Regressions 1: is-enabled (deploy.sh provisioner loop gate) ----
+    # ---- Regressions 1: enablement shape (2026-10-06 restructure) ----
+    # Timer-pulled static service + enabled timer: the OnBootSec/Persistent
+    # boot fires converge, deploy.sh owns deploy-time restarts explicitly.
     machine.succeed(
-        'test "$(systemctl is-enabled crush-hot-db-migrate.service)" = enabled'
+        'test "$(systemctl is-enabled crush-hot-db-migrate.service)" = static'
     )
     machine.succeed(
         'test "$(systemctl is-enabled crush-hot-db-migrate.timer)" = enabled'
