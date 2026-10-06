@@ -2,10 +2,11 @@
 # DAS USB link recovery diagnostics — READ-ONLY, safe to run any time.
 #
 # After a crash/freeze the DAS enclosure (USB link 8-1) can drop off the bus
-# entirely: ALL external disks (both pool Toshibas, both SanDisks incl. the
-# buildcache SSD) vanish simultaneously, sometimes mid-write (ext4 journal
-# abort). Software cannot heal a dead link — this script gathers the facts and
-# prints the decision tree so the next session does not rediscover them.
+# entirely: ALL external disks (both pool Toshibas, both SanDisks — the
+# buildcache SSD and the Rust cache SSD) vanish simultaneously, sometimes
+# mid-write (ext4 journal abort / btrfs EIO). Software cannot heal a dead link
+# — this script gathers the facts and prints the decision tree so the next
+# session does not rediscover them.
 #
 # Also catches the software-side failure modes seen around such events:
 # zombie mounts (findmnt green, every I/O EIOs), root-fs shadow contamination
@@ -35,8 +36,10 @@ POOL_MEMBERS=(
 )
 BUILDCACHE_DISK="/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311"
 BUILDCACHE_PART="/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311-part1"
-# Frozen by user decision ("do not touch them; yet") — absent is EXPECTED.
-FROZEN_SPARE="/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174244451713"
+# Second SanDisk: dedicated Rust cache (services.rust-cache, btrfs) since
+# 2026-10-06 — no longer a frozen spare.
+RUSTCACHE_DISK="/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174244451713"
+RUSTCACHE_PART="/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174244451713-part1"
 
 # Expected top-level entries on a healthy buildcache SSD. The buildcacheDirs
 # mirror (modules/nixos/services/buildcache.nix) is covered by the first line;
@@ -51,6 +54,13 @@ KNOWN_CACHE_ENTRIES=(
   cargo go go-bin-salvage go-build go-mod goimports golangci-lint npm pip
   pnpm-cache pnpm-state pnpm-store playwright rust sccache tmp lost+found
   .Trash-1000
+)
+
+# Expected top-level entries on the Rust cache SSD (btrfs, services.rust-cache).
+# rust-cache-init provisions cargo/ (with cargo/registry), rust/, sccache/;
+# lost+found is standard btrfs residue.
+KNOWN_RUSTCACHE_ENTRIES=(
+  cargo rust sccache lost+found
 )
 
 # Home of the invoking user (SUDO_USER-aware so [7] still checks the real
@@ -146,6 +156,11 @@ if [ -n "$fstab_bc" ] && [ "$fstab_bc" != "$BUILDCACHE_PART" ]; then
   bad "fstab drift: /mnt/buildcache uses $fstab_bc but this script knows"
   hint "$BUILDCACHE_PART — update the constants at the top of this script."
 fi
+fstab_rc=$(fstab_device /mnt/rust-cache)
+if [ -n "$fstab_rc" ] && [ "$fstab_rc" != "$RUSTCACHE_PART" ]; then
+  bad "fstab drift: /mnt/rust-cache uses $fstab_rc but this script knows"
+  hint "$RUSTCACHE_PART — update the constants at the top of this script."
+fi
 fstab_pool=$(fstab_device /mnt/pool)
 if [ -n "$fstab_pool" ] && [ "$fstab_pool" != "$POOL_FSTAB_DEVICE" ]; then
   bad "fstab drift: /mnt/pool uses $fstab_pool but this script knows"
@@ -153,18 +168,13 @@ if [ -n "$fstab_pool" ] && [ "$fstab_pool" != "$POOL_FSTAB_DEVICE" ]; then
   hint "(If $fstab_pool is the pre-2026-08-27 by-id member path, deploy first:"
   hint " the by-label fstab entry ships with this same change.)"
 fi
-for dev in "${POOL_MEMBERS[@]}" "$BUILDCACHE_DISK"; do
+for dev in "${POOL_MEMBERS[@]}" "$BUILDCACHE_DISK" "$RUSTCACHE_DISK"; do
   if [ -b "$dev" ]; then
     ok "present: $(basename "$dev")"
   else
     bad "ABSENT: $(basename "$dev")"
   fi
 done
-if [ -b "$FROZEN_SPARE" ]; then
-  ok "present (frozen spare, do not touch): $(basename "$FROZEN_SPARE")"
-else
-  ok "frozen spare absent (expected — user decision: do not touch)"
-fi
 
 # ── 3. Block devices ────────────────────────────────────────────────────────
 echo "[3] sd* block devices"
@@ -230,6 +240,7 @@ check_mount() {
 }
 echo "[4] Mounts"
 check_mount /mnt/buildcache ext4 "$BUILDCACHE_PART"
+check_mount /mnt/rust-cache btrfs "$RUSTCACHE_PART"
 check_mount /mnt/pool btrfs "${POOL_MEMBERS[@]}"
 if findmnt -n /mnt/pool >/dev/null 2>&1; then
   present_members=0
@@ -366,6 +377,24 @@ if findmnt -n -t ext4 /mnt/buildcache >/dev/null 2>&1; then
   done < <(ls -A /mnt/buildcache 2>/dev/null)
 else
   note "cache SSD not mounted — debris check skipped (re-run after recovery)"
+fi
+if findmnt -n -t btrfs /mnt/rust-cache >/dev/null 2>&1; then
+  while IFS= read -r entry; do
+    [ -n "$entry" ] || continue
+    rknown=0
+    for k in "${KNOWN_RUSTCACHE_ENTRIES[@]}"; do
+      if [ "$entry" = "$k" ]; then
+        rknown=1
+        break
+      fi
+    done
+    if [ "$rknown" = 0 ]; then
+      note "unexpected entry on Rust cache SSD: /mnt/rust-cache/$entry (debris or"
+      hint "an ad-hoc dir; bless the name into KNOWN_RUSTCACHE_ENTRIES or hunt it)"
+    fi
+  done < <(ls -A /mnt/rust-cache 2>/dev/null)
+else
+  note "Rust cache SSD not mounted — debris check skipped (re-run after recovery)"
 fi
 
 # ── 7. Cache symlinks + NVMe fallback growth ────────────────────────────────

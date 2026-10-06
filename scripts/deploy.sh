@@ -768,6 +768,12 @@ if nix run .#pre-deploy-check; then
     sudo systemctl start buildcache-usb-recovery.service 2>/dev/null || true
   fi
 
+  # Same for the dedicated Rust cache SSD (own mount + automount + udev rule).
+  if systemctl cat rust-cache-usb-recovery.service >/dev/null 2>&1; then
+    echo "Running rust-cache-usb-recovery.service (zombie reaper + remount)"
+    sudo systemctl start rust-cache-usb-recovery.service 2>/dev/null || true
+  fi
+
   # Same convergence for the pool: verifies the mount devt matches a live
   # member, remounts if stale, and restarts failed pool consumers. Exits
   # cleanly when the whole DAS is absent (DAS-link Gatus check owns that).
@@ -799,6 +805,12 @@ if nix run .#pre-deploy-check; then
   if systemctl cat buildcache-gc.service >/dev/null 2>&1; then
     echo "Running buildcache-gc.service (prune verification + reclaim)"
     sudo systemctl start buildcache-gc.service 2>/dev/null || true
+  fi
+
+  # Same per-deploy verification for the Rust cache GC (stale target dirs).
+  if systemctl cat rust-cache-gc.service >/dev/null 2>&1; then
+    echo "Running rust-cache-gc.service (stale target prune verification)"
+    sudo systemctl start rust-cache-gc.service 2>/dev/null || true
   fi
 
   # Same per-deploy verification for sandbox cleanup: stc never restarts

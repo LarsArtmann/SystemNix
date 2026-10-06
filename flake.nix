@@ -3713,6 +3713,17 @@
                 pkgs.util-linux # flock — concurrent-deploy guard (T13)
                 pkgs.procps # ps/pgrep — wedged switch_to-configuration detection
               ] ./scripts/deploy.sh;
+              migrate-rust-cache =
+                mkApp "migrate-rust-cache"
+                  "One-time setup of the dedicated Rust cache SSD (/mnt/rust-cache, second SanDisk SDSSDA240G): format btrfs, mount, and move rust/sccache/cargo off /mnt/buildcache. Run BEFORE the first deploy of services.rust-cache"
+                  [
+                    pkgs.btrfs-progs # mkfs.btrfs
+                    pkgs.coreutils # df, find, ls, rm, wc
+                    pkgs.findutils
+                    pkgs.rsync
+                    pkgs.util-linux # findmnt, mount, mountpoint
+                  ]
+                  ./scripts/migrate-rust-cache.sh;
               io-psi-forensics =
                 mkApp "io-psi-forensics"
                   "Snapshot per-cgroup I/O attribution + D-state stacks to /var/tmp (run during an I/O storm; same script the guard fires on trip)"
