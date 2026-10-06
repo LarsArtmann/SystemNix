@@ -114,7 +114,6 @@
           description = "Whole-disk device for SMART queries (smartctl -d sat).";
         };
 
-
         usageThresholdPercent = lib.mkOption {
           type = lib.types.int;
           default = 85;

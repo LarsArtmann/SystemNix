@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# ⚠ SUPERSEDED 2026-10-06 — DO NOT RUN. The two-SanDisk merge was dropped: the
+# second disk is now the dedicated Rust cache (`nix run .#migrate-rust-cache`,
+# services.rust-cache). Kept for history.
+#
 # Merge BOTH SanDisk SDSSDA240G SSDs into ONE btrfs filesystem at /mnt/buildcache.
 # DECIDED 2026-09-22 (user): the ssd-btrfs Docker earmark is DROPPED (never taken
 # up — Docker data-root is /data/docker on QLC) and both SSDs merge into one
