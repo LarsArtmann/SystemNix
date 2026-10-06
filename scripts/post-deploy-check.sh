@@ -745,7 +745,12 @@ if $inboxclean_enabled; then
   elif [ -z "$inboxclean_health" ]; then
     report_fail "InboxClean - :8099/health unreachable after 6 attempts (journalctl -u inboxclean-web -n 30)"
   else
-    report_fail "InboxClean - /health answered but status is not ok"
+    inboxclean_health_status="$(jq -r '.status // "unparseable"' <<<"$inboxclean_health" 2>/dev/null)" || true
+    if [ "$inboxclean_health_status" = "timeout" ]; then
+      report_fail "InboxClean - /health exceeded its handler budget (status 'timeout': box under load? cat /proc/pressure/io; the app itself may be fine - 2026-10-06 class, IO storm blew the 3s cap on every poll)"
+    else
+      report_fail "InboxClean - /health answered but status is '$inboxclean_health_status' (not ok)"
+    fi
   fi
   inboxclean_body="$(wait_body_pattern "http://127.0.0.1:8099/" 'Dashboard' 6 5)" || true
   if grep -q 'Dashboard' <<<"$inboxclean_body"; then
@@ -753,6 +758,13 @@ if $inboxclean_enabled; then
   else
     report_fail "InboxClean - :8099 answered but the dashboard body lacks content"
   fi
+  # Timeout bodies (and empty/unparseable ones) carry NO services object,
+  # so the account-state and projections checks below would read "missing"
+  # and blame binary age - on 2026-10-06 every poll answered
+  # {"status":"timeout"} under an IO-storm window and both WARNs fired
+  # with wrong premises. Only judge sub-fields when a services map exists.
+  inboxclean_has_services=false
+  jq -e '.services' <<<"${inboxclean_health:-}" >/dev/null 2>&1 && inboxclean_has_services=true
   # Per-account Gmail map: {"main":"connected","work":"connected",...}.
   inboxclean_main_state="$(jq -r '.services.gmail.main // "missing"' <<<"${inboxclean_health:-}" 2>/dev/null)" || true
   case "$inboxclean_main_state" in
@@ -760,7 +772,9 @@ if $inboxclean_enabled; then
     report_pass "InboxClean - Gmail main connected (OAuth token active)"
     ;;
   missing)
-    report_warn "InboxClean - /health carries no services.gmail.main entry (binary predates multi-account?)"
+    if [ "$inboxclean_has_services" = true ]; then
+      report_warn "InboxClean - /health carries no services.gmail.main entry (binary predates multi-account?)"
+    fi
     ;;
   *)
     report_warn "InboxClean - Gmail main '$inboxclean_main_state': complete the OAuth runbook (inboxclean.nix header) and enable services.inboxclean.sync"
@@ -792,7 +806,9 @@ if $inboxclean_enabled; then
     report_warn "InboxClean - projections still draining (unexpected post-Init; re-check /health/projections)"
     ;;
   missing)
-    report_warn "InboxClean - no services.projections field (binary predates projection readiness)"
+    if [ "$inboxclean_has_services" = true ]; then
+      report_warn "InboxClean - no services.projections field (binary predates projection readiness)"
+    fi
     ;;
   esac
   # Convergence guard (2026-08-29 drift incident): the deployed InboxClean
