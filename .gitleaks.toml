@@ -79,6 +79,13 @@ regexes = [
   # Canonical example ULID from the ULID spec (users_view.key parseability
   # fixture in VM tests + session docs) — a well-known literal, not a credential
   '''01ARZ3NDEKTSV4RRFFQ69G5FAV''',
+  # Pocket ID user id quoted verbatim from the evo-x2 journal in
+  # docs/status/2026-10-06_14-34 (browser-history raw:0 diagnosis) — a ULID
+  # identifier, not a credential; landed via a daemon heuristic commit so the
+  # hook never saw it, then blocked every manual commit. Literal form because
+  # allowlist regexes match the captured secret region, not the full line
+  # (the `user_id:"<ULID>"` line-shape form did NOT match — verified live).
+  '''01M2X007JZB9Y1WDYF35AD5GSD''',
 ]
 
 # Detector-coverage fixtures (tests/fixtures/gitleaks/, consumed by the

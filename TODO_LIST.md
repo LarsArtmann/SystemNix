@@ -294,6 +294,8 @@
 - [ ] [ready] **Eval-time forgejo-family gate assertion: every unit consuming forgejo (the gitea-runner `forgejo-gen-runner-token` ExecStartPre class) must carry the `.subvol-migrated` marker condition — generalize the freeze-18 fix into a flake-check assertion** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-06_16-02_freeze-18-autopsy-predicted-cut-runner-failloop-gated.md §f.5)
 - [ ] [ready] **Free port 3000 for forgejo — the knowledge-graph service squats it (deploy smoke false-PASSed on the wrong listener)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-05_13-52_post-deploy-triage-forgejo-g1-indexer-web-otlp-follows-cleanup.md §f.2)
 
+- [ ] [ready] **Extend gitleaks-coverage-selftest with the ULID-user_id FP fixture + pin the allowlist-regex-region semantics** — allowlist regexes match the CAPTURED SECRET region, not the full line (the `user_id:"<ULID>"` line-shape allowlist silently no-oped; only the literal `01M2X…` form worked, verified live 2026-10-06); fixture both the FP shape and a real-secret negative control → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: this docs-health session, .gitleaks.toml allowlist fix)
+
 ### upstream
 
 - [ ] **PMA OTel span instrumentation upstream (overview `fff1035` pattern)** → [docs/todo/upstream.md](docs/todo/upstream.md)
