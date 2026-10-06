@@ -17,124 +17,121 @@
 # fastflowlm is an OPTIONS-ONLY mock: paperless-gpt reads .enable/.model/
 # .port from it (assertion + env rendering) but the daemon never CALLS the
 # LLM in a fresh VM (no auto-tagged documents exist), so no NPU units run.
-{ pkgs, inputs }:
-let
-  paperlessFlakeOutput = (import ../modules/nixos/services/paperless.nix) { };
+{
+  pkgs,
+  inputs,
+}: let
+  paperlessFlakeOutput = (import ../modules/nixos/services/paperless.nix) {};
   paperlessNixosModule = paperlessFlakeOutput.flake.nixosModules.paperless;
 
-  paperlessGptFlakeOutput = (import ../modules/nixos/services/paperless-gpt.nix) { inherit inputs; };
+  paperlessGptFlakeOutput = (import ../modules/nixos/services/paperless-gpt.nix) {inherit inputs;};
   paperlessGptNixosModule = paperlessGptFlakeOutput.flake.nixosModules.paperless-gpt;
 
   # Option-only mock (pocketIdEnableMock pattern from test-paperless.nix):
   # declares exactly the leaves paperless-gpt reads. No flm units in the VM.
-  fastflowlmOptionsMock =
-    { lib, ... }:
-    {
-      options.services.fastflowlm = {
-        enable = lib.mkOption {
-          type = lib.types.bool;
-          default = false;
-        };
-        model = lib.mkOption {
-          type = lib.types.str;
-          default = "vm-mock-model";
-        };
-        port = lib.mkOption {
-          type = lib.types.port;
-          default = 52625;
-        };
+  fastflowlmOptionsMock = {lib, ...}: {
+    options.services.fastflowlm = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+      };
+      model = lib.mkOption {
+        type = lib.types.str;
+        default = "vm-mock-model";
+      };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 52625;
       };
     };
+  };
 
   # Option-only mocks copied from test-paperless.nix: the paperless module's
   # registry entry fans its OIDC client into pocket-id-config.provision and
   # reads mail-relay.enable — the option PATHS must exist in this minimal VM.
-  pocketIdOptionsMock =
-    { lib, ... }:
-    {
-      options.services.pocket-id-config = {
-        enable = lib.mkOption {
-          type = lib.types.bool;
-          default = false;
-        };
-        provision.enable = lib.mkOption {
-          type = lib.types.bool;
-          default = false;
-        };
-        provision.extraOidcClients = lib.mkOption {
-          type = lib.types.listOf lib.types.attrs;
-          default = [ ];
-        };
-        provision.userGroups = lib.mkOption {
-          type = lib.types.listOf lib.types.attrs;
-          default = [ ];
-        };
-        provision.adminUser.username = lib.mkOption {
-          type = lib.types.str;
-          default = "vm-admin";
-        };
-        dataDir = lib.mkOption {
-          type = lib.types.str;
-          default = "/var/lib/pocket-id";
-        };
+  pocketIdOptionsMock = {lib, ...}: {
+    options.services.pocket-id-config = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+      };
+      provision.enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+      };
+      provision.extraOidcClients = lib.mkOption {
+        type = lib.types.listOf lib.types.attrs;
+        default = [];
+      };
+      provision.userGroups = lib.mkOption {
+        type = lib.types.listOf lib.types.attrs;
+        default = [];
+      };
+      provision.adminUser.username = lib.mkOption {
+        type = lib.types.str;
+        default = "vm-admin";
+      };
+      dataDir = lib.mkOption {
+        type = lib.types.str;
+        default = "/var/lib/pocket-id";
       };
     };
+  };
 
-  mailRelayOptionsMock =
-    { lib, ... }:
-    {
-      options.services.mail-relay = {
-        enable = lib.mkOption {
-          type = lib.types.bool;
-          default = false;
-        };
-        fromAddress = lib.mkOption {
-          type = lib.types.str;
-          default = "noreply@larsartmann.cloud";
-        };
+  mailRelayOptionsMock = {lib, ...}: {
+    options.services.mail-relay = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+      };
+      fromAddress = lib.mkOption {
+        type = lib.types.str;
+        default = "noreply@larsartmann.cloud";
       };
     };
-in
-{
+  };
+in {
   name = "paperless-gpt";
 
-  nodes.machine =
-    { lib, pkgs, ... }:
-    {
-      imports = [
-        paperlessNixosModule
-        paperlessGptNixosModule
-        # Options-only import: paperless.nix reads
-        # config.services.llama-rag.embeddingsAlias (embedding model name).
-        (import ../modules/nixos/services/llama-rag.nix { }).flake.nixosModules.llama-rag
-        # co-import: the module declares a services.integration entry (the
-        # options?-guard does not survive mkIf cfg.enable with enable=true —
-        # the 2026-09-15 flake-check-proven caveat).
-        (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration
-        # co-import: paperless-gpt declares an unconditional
-        # services.catalog entry (ADR-008; loud eval failure if missing).
-        (import ../modules/nixos/services/catalog.nix { }).flake.nixosModules.catalog
-        fastflowlmOptionsMock
-        pocketIdOptionsMock
-        mailRelayOptionsMock
-        ./mock-sops.nix
-        ./test-helpers.nix
-      ];
+  nodes.machine = {
+    lib,
+    pkgs,
+    ...
+  }: {
+    imports = [
+      paperlessNixosModule
+      paperlessGptNixosModule
+      # Options-only import: paperless.nix reads
+      # config.services.llama-rag.embeddingsAlias (embedding model name).
+      (import ../modules/nixos/services/llama-rag.nix {}).flake.nixosModules.llama-rag
+      # co-import: the module declares a services.integration entry (the
+      # options?-guard does not survive mkIf cfg.enable with enable=true —
+      # the 2026-09-15 flake-check-proven caveat).
+      (import ../modules/nixos/services/integration.nix {}).flake.nixosModules.integration
+      # co-import: paperless-gpt declares an unconditional
+      # services.catalog entry (ADR-008; loud eval failure if missing).
+      (import ../modules/nixos/services/catalog.nix {}).flake.nixosModules.catalog
+      fastflowlmOptionsMock
+      pocketIdOptionsMock
+      mailRelayOptionsMock
+      ./mock-sops.nix
+      ./test-helpers.nix
+    ];
 
-      virtualisation.memorySize = 4096;
+    virtualisation.memorySize = 4096;
 
-      environment.systemPackages = [ pkgs.jq ];
+    environment.systemPackages = [pkgs.jq];
 
-      sops.secrets.paperless_admin_password = { };
+    sops.secrets.paperless_admin_password = {};
 
-      services.fastflowlm.enable = true;
-      services.paperless = {
-        enable = true;
-        dataDir = lib.mkForce "/var/lib/paperless";
-        configureTika = lib.mkForce false;
-      };
-      services.paperless-gpt.enable = true;
+    services.fastflowlm.enable = true;
+    services.paperless = {
+      enable = true;
+      dataDir = lib.mkForce "/var/lib/paperless";
+      configureTika = lib.mkForce false;
     };
+    services.paperless-gpt.enable = true;
+  };
 
   testScript = ''
     machine.start()
