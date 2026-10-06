@@ -323,7 +323,8 @@ in
     };
   };
 
-  # Go/Rust/lint cache self-healing for a dead or absent /mnt/buildcache.
+  # Go/Rust/lint cache self-healing for a dead or absent USB cache SSD
+  # (/mnt/buildcache for Go/JS/Python, /mnt/rust-cache for Rust).
   # Fish conf.d (runs BEFORE config.fish, in login AND interactive shells).
   # 2026-08-24: the original hand-written version probed writability with a
   # BARE `mkdir -p $val` — on the dead buildcache automount every probe
@@ -448,10 +449,11 @@ in
       # (~/.cargo/registry — used when CARGO_HOME is absent; converges onto
       # the SAME registry the env'd cargo already populates) are symlinked.
       # Real-dir occupants are removed by the activation block below
-      # (rebuildable cache data only).
+      # (rebuildable cache data only). 2026-10-06: cargo's registry now lives
+      # on the dedicated Rust cache SSD (/mnt/rust-cache), not /mnt/buildcache.
       ".cache/pnpm".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/pnpm-cache";
       ".local/state/pnpm".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/pnpm-state";
-      ".cargo/registry".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/cargo/registry";
+      ".cargo/registry".source = config.lib.file.mkOutOfStoreSymlink "/mnt/rust-cache/cargo/registry";
 
       # golangci-lint-lsp wrapper — pins the lint cache to /mnt/buildcache but
       # falls back to ~/tmp/go-lint when the mount is dead (the fish
@@ -508,7 +510,12 @@ in
     # is absent (deploy.sh's unconditional pre-switch reap converges then).
     activation.migrate-buildcache-fallback-caches = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
       if mountpoint -q /mnt/buildcache; then
-        mkdir -p /mnt/buildcache/pnpm-cache /mnt/buildcache/pnpm-state /mnt/buildcache/cargo/registry
+        mkdir -p /mnt/buildcache/pnpm-cache /mnt/buildcache/pnpm-state
+      fi
+      if mountpoint -q /mnt/rust-cache; then
+        mkdir -p /mnt/rust-cache/cargo/registry
+      fi
+      if mountpoint -q /mnt/buildcache || mountpoint -q /mnt/rust-cache; then
         for d in ${lib.concatStringsSep " " reapNames.cacheDirs}; do
           if [ -e "$HOME/.cache/$d" ] && [ ! -L "$HOME/.cache/$d" ]; then
             rm -rf -- "$HOME/.cache/$d"
@@ -631,7 +638,7 @@ in
       # cargo lacks, ends per-project target/ duplication growth. Nix builds
       # unaffected (sandboxed, no env). Dir creation + GC: buildcache module.
       RUSTC_WRAPPER = "sccache";
-      SCCACHE_DIR = "/mnt/buildcache/sccache";
+      SCCACHE_DIR = "/mnt/rust-cache/sccache";
       SCCACHE_CACHE_SIZE = "32G";
       # CARGO_HOME since 2026-08-17: was the @cargo NVMe subvolume (snapshot-
       # excluded via automount). With the subvolume retired, the registry/git
@@ -641,7 +648,9 @@ in
       # CARGO_HOME here; env-less cargo (CARGO_HOME absent) falls back to
       # ~/.cargo/registry, which the 2026-09-22 HM symlink sweep redirects
       # onto this same registry on the mount.
-      CARGO_HOME = "/mnt/buildcache/cargo";
+      # 2026-10-06: moved from /mnt/buildcache to the dedicated Rust cache SSD
+      # (/mnt/rust-cache) - see modules/nixos/services/rust-cache.nix.
+      CARGO_HOME = "/mnt/rust-cache/cargo";
 
       # Wayland specific
       MOZ_ENABLE_WAYLAND = "1";
