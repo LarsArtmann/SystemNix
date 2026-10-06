@@ -156,6 +156,7 @@
             "discordsync-attachments-migrate" # deploy.sh dedicated --no-block block (static unit)
             "forgejo-census" # runbook-manual (sudo systemctl start, census docs)
             "pool-usb-recovery" # udev SYSTEMD_WANTS (Toshiba ID_SERIALs) + deploy.sh
+            "rust-cache-usb-recovery" # udev SYSTEMD_WANTS (SanDisk 174244451713) + deploy.sh
             # ── Inert-by-config: hot-db-bootstrap fills its wantedBy with the
             #    per-entry mount units; with entries = {} (pre-wave) nothing
             #    pulls it BY DESIGN (also in deploy-restart-audit.allowUnits).
