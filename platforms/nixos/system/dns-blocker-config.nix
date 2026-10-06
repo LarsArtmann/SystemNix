@@ -122,8 +122,12 @@ in
       tempAllowAll = false;
 
       # Local DNS records: home.lan zone with all service subdomains.
-      # Zone boundary ensures unknown *.home.lan names return NXDOMAIN
-      # (like Unbound's local-zone "static").
+      # The *.home.lan wildcard record makes UNKNOWN names resolve to the
+      # server on purpose: Caddy's catch-all answers them with a real 404
+      # page (a NXDOMAIN would only surface as a browser DNS error). The
+      # cloud zone is deliberately wildcard-free (sdns ignores wildcard
+      # local records anyway): unknown *.cloud names return NXDOMAIN at
+      # the zone boundary.
       localRecords =
         builtins.listToAttrs (
           map (subdomain: {

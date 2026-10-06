@@ -57,6 +57,83 @@ _: {
         }
       '';
 
+      # Branded 404 page served by the catch-all vHosts below for unknown
+      # *.home.lan / *.cloud hosts. Store-served (immutable, world-readable),
+      # fully self-contained: inline CSS plus one inline script that echoes
+      # the requested host, no external assets (LAN-offline safe). Hexes are
+      # Catppuccin Mocha (theme.nix base/text/subtext0/surface0/lavender/
+      # mauve), hardcoded so the server config does not depend on the
+      # desktop theme file.
+      notFoundRoot = pkgs.linkFarm "caddy-notfound-root" [
+        {
+          name = "index.html";
+          path = pkgs.writeText "caddy-notfound-index.html" ''
+            <!doctype html>
+            <html lang="en">
+            <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>404 - Nothing here</title>
+            <style>
+            :root { color-scheme: dark; }
+            * { margin: 0; box-sizing: border-box; }
+            body {
+              min-height: 100vh;
+              display: grid;
+              place-items: center;
+              background: #1e1e2e;
+              color: #cdd6f4;
+              font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+              padding: 2rem;
+            }
+            main { text-align: center; max-width: 34rem; }
+            .code {
+              font-size: clamp(5rem, 18vw, 9rem);
+              font-weight: 800;
+              letter-spacing: 0.05em;
+              color: #b4befe;
+              line-height: 1;
+            }
+            h1 { font-size: 1.4rem; font-weight: 600; margin: 1.25rem 0 0.5rem; }
+            p { color: #a6adc8; line-height: 1.65; }
+            code {
+              background: #313244;
+              border-radius: 0.4rem;
+              padding: 0.15rem 0.5rem;
+              font-family: ui-monospace, "JetBrains Mono", monospace;
+              font-size: 0.95em;
+              word-break: break-all;
+            }
+            a {
+              display: inline-block;
+              margin-top: 2rem;
+              padding: 0.7rem 1.5rem;
+              border-radius: 0.6rem;
+              background: #b4befe;
+              color: #1e1e2e;
+              font-weight: 600;
+              text-decoration: none;
+            }
+            a:hover { background: #cba6f7; }
+            footer { margin-top: 2.5rem; font-size: 0.85rem; color: #6c7086; }
+            </style>
+            </head>
+            <body>
+            <main>
+            <div class="code">404</div>
+            <h1>No service at this address</h1>
+            <p>Nothing runs at <code id="host">this hostname</code>.</p>
+            <p>Check the address for a typo, or head back to the dashboard.</p>
+            <a href="https://dash.${domain}">Go to the dashboard</a>
+            <footer>${domain} private network</footer>
+            </main>
+            <script>document.getElementById("host").textContent = window.location.host;</script>
+            </body>
+            </html>
+          '';
+        }
+      ];
+
       forwardAuth = ''
         forward_auth localhost:${toString proxyPort} {
           uri /oauth2/auth
@@ -198,10 +275,11 @@ _: {
           [ ];
       ghostSubdomains =
         # ghostAliases: deliberate dns-local names with no vHost of their
-        # own — `alerts` is the legacy PapDashboard alias the catch-all
-        # redirects to dash (DNS must keep resolving it).
+        # own. Empty since 2026-10-07: alerts (the legacy PapDashboard
+        # alias) became an explicit redirect vHost when the catch-all
+        # stopped redirecting to dash.
         let
-          ghostAliases = [ "alerts" ];
+          ghostAliases = [ ];
         in
         builtins.filter (
           s:
@@ -380,9 +458,31 @@ _: {
                     redir https://dash.${domain} permanent
                   '';
                 };
-                # Catch-all HTTPS for unknown *.home.lan — redirect to dashboard
-                # so typos/unknown subdomains never fall through to browser search
+                # Catch-all HTTPS for unknown *.home.lan: every request gets
+                # a real 404 with a branded page (was: permanent redirect to
+                # dash; flipped 2026-10-07 so a typo names itself instead of
+                # silently landing on the dashboard). error + handle_errors
+                # serves the page WITH the 404 status (proven in the sandbox
+                # against the deployed caddy 2.11.4).
                 "https://*.${domain}" = {
+                  extraConfig = ''
+                    ${tlsConfig}
+                    ${commonConfig}
+                    root * ${notFoundRoot}
+                    error 404
+                    handle_errors {
+                      rewrite * /index.html
+                      file_server
+                    }
+                  '';
+                };
+
+                # Legacy PapDashboard alias: alerts.<domain> pre-dates the
+                # dash rename and relied on the old catch-all redirect. Now
+                # an explicit vHost with the SAME redirect semantics (drop
+                # the URI), kept for old bookmarks/tiles. The cloud mirror
+                # comes free via the mirror map below.
+                "alerts.${domain}" = {
                   extraConfig = ''
                     ${tlsConfig}
                     ${commonConfig}
@@ -436,8 +536,9 @@ _: {
                 # joined them (services.integration.papdashboard, subdomain =
                 # "dash" — the dashboard itself). tasks stays hand-written
                 # (taskchampion has no registry entry).
-                # The old alerts.<domain> PapDashboard alias is covered by the
-                # catch-all below (unknown *.home.lan → redirect to dash).
+                # The old alerts.<domain> PapDashboard alias has its own
+                # redirect vHost above (kept when the catch-all became a
+                # 404 page).
                 "tasks.${domain}" = protectedVHost config.services.taskchampion-sync-server.port null;
                 # OpenSEO: Layer 2 (oauth2-proxy forward-auth). The GSC OAuth callback
                 # (/api/gsc/oauth/callback) is exempt from forward-auth — OAuth callback
@@ -566,13 +667,22 @@ _: {
                 k: v: lib.nameValuePair (lib.replaceStrings [ "${domain}" ] [ "${cloudDomain}" ] k) v
               ) (lib.filterAttrs (k: _: lib.hasInfix "${domain}" k && k != "https://*.${domain}") homeLanVHosts))
               // {
-                # Cloud catch-all: unknown *.cloud names redirect to the
-                # cloud dashboard (mirror of the home.lan catch-all).
+                # Cloud catch-all: same 404 page as the home.lan catch-all
+                # (mirror semantics). Unknown cloud names NXDOMAIN in DNS
+                # (explicit records only, sdns ignores wildcards), so only
+                # explicit-record names without a vHost land here. The
+                # page's dashboard link stays on dash.home.lan by design
+                # (auth-redirect doctrine: VPN clients resolve both zones).
                 "https://*.${cloudDomain}" = {
                   extraConfig = ''
                     ${tlsConfig}
                     ${commonConfig}
-                    redir * https://dash.${cloudDomain} permanent
+                    root * ${notFoundRoot}
+                    error 404
+                    handle_errors {
+                      rewrite * /index.html
+                      file_server
+                    }
                   '';
                 };
               }
