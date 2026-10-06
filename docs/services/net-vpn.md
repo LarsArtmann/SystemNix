@@ -20,8 +20,8 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
   zones are asserted).
 - **Caddy mirror**: every home.lan vHost is mirrored under the cloud domain
   with identical routing (auth redirects still target `auth.home.lan` by
-  design — VPN clients resolve both zones). Cloud catch-all redirects to
-  `dash.larsartmann.cloud`. oauth2-proxy whitelists `.${cloudDomain}`.
+  design — VPN clients resolve both zones). Cloud catch-all serves the same
+  branded 404 page as home.lan. oauth2-proxy whitelists `.${cloudDomain}`.
 - **NetBird client** (`services.netbird-client`, modules/nixos/services/netbird.nix):
   ENABLED since the 2026-10-06 phase-2 flip (`enable = true`; sops
   `netbird_setup_key` in `platforms/nixos/secrets/netbird.yaml`).

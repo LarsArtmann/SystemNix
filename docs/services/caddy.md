@@ -20,7 +20,7 @@ registry fan-out and hand-written entries share them):
 | `renderVHost`/`staticVHost` | registry entries with `vHost.root` → `file_server` (layer semantics still apply) | architecture-catalog (`catalog`), systemd-timer-monitor (`timers`)                                                          |
 
 Hand-written vHosts still live in `homeLanVHosts` (caddy.nix): `:80` redirect,
-catch-alls (unknown `*.home.lan` / `*.larsartmann.cloud` → `dash`), `auth`
+catch-alls (unknown `*.home.lan` / `*.larsartmann.cloud` → branded 404 page), `auth`
 (pocket-id + oauth2-proxy split), `paperless` (with the `/admin/*` 403
 hard-block), `tasks`, `seo` (GSC callback exempt from forward-auth), the
 `dnsblock`/`dnsblockd` pair, `monitor` (enable-gated), `voice`/`whisper`
@@ -40,9 +40,27 @@ hard-block), `tasks`, `seo` (GSC callback exempt from forward-auth), the
 **DNS coupling (eval-asserted):** every vHost subdomain must exist in
 `platforms/common/dns-local.nix` — the assertion in caddy.nix fails eval on a
 typo'd hand-written vHost, and an eval WARNING names dns-local entries that
-nothing serves (`alerts` is the allowlisted legacy alias — the catch-all
+nothing serves (`alerts` is the allowlisted legacy alias — an explicit vHost
 redirects it to `dash`). Registry entries carry the same assertion in
 integration.nix.
+
+## Unknown-host 404 page
+
+Both catch-alls serve a branded 404 page instead of redirecting to `dash` (a
+typo'd hostname used to masquerade as a dashboard bounce): `root *` points at
+the self-contained `notFoundRoot` derivation (caddy.nix — inline CSS, one
+inline JS echoing the requested host, Catppuccin Mocha, a `dash.home.lan`
+link by auth-doctrine; zero external assets) and `error 404` +
+`handle_errors { rewrite * /index.html; file_server }` returns a REAL 404
+status with the page body on every path (sandbox-proven against the deployed
+caddy 2.11.4). The legacy `alerts` alias keeps its documented dash redirect
+via an explicit vHost that landed in the SAME change — no behavior gap
+between deploys. Regression pins at three layers: `checks.cloud-domain`
+asserts both catch-alls keep `error 404` + `handle_errors` and rejects any
+dash `redir` returning to them; Gatus "Caddy Catch-All 404" probes
+`catchall-probe.home.lan` expecting 404 (resolves via the wildcard
+`*.home.lan` DNS record by design, deliberately NOT in dns-local — no ghost
+warning); `post-deploy-check.sh` smokes the same URL.
 
 ## TLS / cert flow
 
@@ -140,8 +158,9 @@ duration is also in every access-log line (`duration` field).
 
 Every home.lan vHost is mirrored 1:1 under `larsartmann.cloud` by the
 `mirrorCloud` filter at the end of `virtualHosts` — do NOT hand-write cloud
-vHosts; new home.lan vHosts mirror automatically. The cloud catch-all
-redirects to `dash.larsartmann.cloud`. Auth redirects deliberately stay on
+vHosts; new home.lan vHosts mirror automatically. The cloud catch-all serves
+the same branded 404 page as home.lan (single page, `dash.home.lan` link).
+Auth redirects deliberately stay on
 `auth.home.lan` (VPN resolves both zones; oauth2-proxy whitelists the cloud
 domain for post-login redirects only). NEVER publish cloud service names in
 public DNS. Architecture: `docs/brainstorming/2026-09-30_netbird-larsartmann-cloud-selfhosted-vpn.md`.
