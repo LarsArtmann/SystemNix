@@ -56,6 +56,20 @@ let
           # --disable-background-media-suspend: media keeps playing in background tabs
           rm -rf $out/bin
           mkdir -p $out/bin
+          # --password-store=basic: Helium must NEVER touch gnome-keyring.
+          # The login keyring's password desynced from the SDDM password
+          # (journal: gkr-pam "the password for the login keyring was
+          # invalid"), so PAM auto-unlock failed and every browser start
+          # popped a gcr-prompter "unlock login keyring" dialog — the
+          # double password at login — plus 100+ gkr-pam journal
+          # lines/boot from DBus activation retries. Verified lossless
+          # 2026-10-06: all profiles' Cookies were ALREADY v11
+          # (basic-store AES, hardcoded key) because the keyring never
+          # unlocked — nothing of Helium's lives in the keyring; KeePassXC
+          # owns credentials. (NOTE: comments must NEVER sit between the
+          # backslash-continued --add-flags lines — a comment line ends
+          # the command and the next flag line becomes "command not found"
+          # at build time, invisible to eval-only checks.)
           makeWrapper $out/opt/helium/helium $out/bin/helium \
             --prefix LD_LIBRARY_PATH : "${
               pkgs.lib.makeLibraryPath (
@@ -80,16 +94,6 @@ let
             --add-flags "--disable-background-media-suspend" \
             --add-flags "--restore-last-session" \
             --add-flags "--disable-session-crashed-bubble" \
-            # Basic password store: Helium must NEVER touch gnome-keyring.
-            # The login keyring's password desynced from the SDDM password
-            # (gkr-pam: "the password for the login keyring was invalid"),
-            # so PAM auto-unlock fails and every browser start popped a
-            # gcr-prompter "unlock login keyring" dialog — the double
-            # password at login (plus 100+ gkr-pam journal lines/boot from
-            # DBus activation retries). Verified lossless 2026-10-06: all
-            # three profiles' Cookies were ALREADY v11 (basic-store AES,
-            # hardcoded key) because the keyring never unlocked — nothing
-            # of Helium's lives in the keyring. KeePassXC owns credentials.
             --add-flags "--password-store=basic" \
             --add-flags "--simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT'" \
             --add-flags "--check-for-update-interval=0" \
