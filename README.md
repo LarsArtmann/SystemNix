@@ -89,7 +89,7 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **SigNoz**          | 4317, 4318, 8080 | `signoz.home.lan`    | Observability: traces, metrics, logs + node_exporter + cAdvisor, 6 dashboards                                        |
 | **Pocket ID**       | 1411             | `auth.home.lan`      | Passkey-based SSO/IDP + oauth2-proxy forward auth                                                                    |
 | **Hermes**          | —                | —                    | AI agent gateway (Discord bot, cron scheduler, multi-provider LLM)                                                   |
-| **Twenty CRM**      | 3200             | `crm.home.lan`       | Self-hosted CRM (Docker Compose: PostgreSQL + Redis)                                                                 |
+| **Twenty CRM**      | 3200             | `crm.home.lan`       | Self-hosted CRM (Docker Compose: PostgreSQL + Redis; FROZEN 2026-10-02 — Ledger CRM replacement cutover pending)                                                                 |
 | **Paperless-ngx**   | 2892             | `paperless.home.lan` | Document management + OCR + AI tagging (PG backend, Tika/Gotenberg, NPU LLM)                                         |
 | **PapDashboard**    | 8088             | `dash.home.lan`      | Alert lifecycle hub + NPU insight enricher + services dashboard (ingests Gatus; old `alerts.home.lan` redirects)     |
 | **Browser History** | 8087             | `history.home.lan`   | Cross-device browser history (WebAuthn + Pocket ID OIDC)                                                             |
@@ -102,6 +102,9 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **Dozzle**          | 8084             | `logs.home.lan`      | Real-time Docker container log viewer                                                                                |
 | **Mail Relay**      | 25               | —                    | Central outbound SMTP null client (loopback-only, relays via Resend; Paperless/Forgejo/system mail)                  |
 | **Miniflux**        | 8101             | `rss.home.lan`       | Minimalist RSS reader (Go + local PostgreSQL, native OIDC via Pocket ID)                                             |
+| **Ledger CRM**     | 8091             | `crm.home.lan`*      | Event-sourced CRM (Go + go-cqrs-lite, WebAuthn) — Twenty replacement; loopback-only until the cutover freeze flips its vHost |
+| **indexer-web**    | 8105             | —                    | Event-sourced docs index WebUI (deploy queued) |
+| **NetBird VPN**    | 51820            | —                    | Self-hosted WireGuard mesh (pbx control plane) — gated off until the phase-2 setup key |
 | **NSFW Filter**     | 8104             | `nsfw.home.lan`      | Go/ONNX NSFW image server — browser-extension backend (auto-discovery + pairing token)                               |
 | **bank-sync**       | 8097             | `banksync.home.lan`  | Wise bank-sync dashboard (Layer 2 protected; disabled until sops go-live)                                            |
 | **File Renamer**    | 8086             | `renamer.home.lan`   | AI file-and-image renamer service                                                                                    |

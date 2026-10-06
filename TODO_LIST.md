@@ -291,6 +291,9 @@
 - [ ] **Resolve the catalog eval warning "integration subdomain(s) without catalog entries" (21 names) — add catalog entries or document the warning as accepted** → [docs/todo/services.md](docs/todo/services.md) — catalog, cache, banksync, history, daily, discordsync, logs, renamer, status, immich, inbox, mr-sync, overview, dash, paperless, search, signoz, graph, timers, tq, crm "will vanish from derived DNS once platforms/common/dns-local.nix is deleted" (modules/nixos/services/catalog.nix:102) (Source: docs/status/2026-10-01_04-50_task-000001a0f4b8fac17b8e3519076b00000000.md §f.2)
 
 
+- [ ] [ready] **Eval-time forgejo-family gate assertion: every unit consuming forgejo (the gitea-runner `forgejo-gen-runner-token` ExecStartPre class) must carry the `.subvol-migrated` marker condition — generalize the freeze-18 fix into a flake-check assertion** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-06_16-02_freeze-18-autopsy-predicted-cut-runner-failloop-gated.md §f.5)
+- [ ] [ready] **Free port 3000 for forgejo — the knowledge-graph service squats it (deploy smoke false-PASSed on the wrong listener)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-05_13-52_post-deploy-triage-forgejo-g1-indexer-web-otlp-follows-cleanup.md §f.2)
+
 ### upstream
 
 - [ ] **PMA OTel span instrumentation upstream (overview `fff1035` pattern)** → [docs/todo/upstream.md](docs/todo/upstream.md)
