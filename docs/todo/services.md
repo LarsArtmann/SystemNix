@@ -10,6 +10,8 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 
 ## Prioritized
 
+- [ ] [ready] **bank-sync `wise.exchange_rate` FX-total corruption diagnosis** — bank-sync logs `[corruption] wise.exchange_rate: wise: exchange rate PLN-EUR` + "net worth FX total failed; rendering without total" every cycle (observed at boot -2's final lines 15:12:57 and still live through the 10-06 crashes — NOT crash damage): identify whether the cached rate row is malformed (a migration artifact) vs the Wise API response shape changed, then repair the cache or pin the parser. **Source:** docs/status/2026-10-06_16-02_freeze-18-autopsy-predicted-cut-runner-failloop-gated.md Collateral table
+
 - [ ] [ready] **paperless postgres collation refresh** — journal warns `database "paperless" has a collation version mismatch` (created 2.42, OS provides 2.44) every cycle since the glibc bump; run `ALTER DATABASE paperless REFRESH COLLATION VERSION` (postgres SU via the paperless db container/sock) to stop the warning and close the silent index-corruption drift window. **Source:** docs/status/2026-10-06_16-02_freeze-18-autopsy-predicted-cut-runner-failloop-gated.md Collateral table
 - [ ] [ready] **Forgejo stateful-family condition gate by construction, not copy-paste** — the gitea-runner token fail-loop (boots -3..0, ~63 s cadence) existed because every family unit carried `subvolMigratedCondition` individually and the runner unit was missed (fixed ad-hoc 2026-10-06, deploy-gated); add an eval-time assertion that every `forgejo*`/`gitea*` stateful unit in the dedicated generation carries the marker condition so the class is structurally closed. **Source:** docs/status/2026-10-06_16-02_freeze-18-autopsy-predicted-cut-runner-failloop-gated.md §e.2
 
