@@ -1126,6 +1126,13 @@ _: {
           wants = [ "forgejo.service" ];
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
+          # Same inert-until-finalized gate as the rest of the stateful family:
+          # without it the runner's +forgejo-gen-runner-token ExecStartPre hammers
+          # a skipped (API-down) forgejo in a ~63s fail-loop on every dedicated
+          # generation deployed before `migrate-forgejo-subvol.sh finalize`
+          # (observed live 2026-10-06, boots -3..0).
+          unitConfig.RequiresMountsFor = lib.optionals dedicated [ stateDir ];
+          unitConfig.ConditionPathExists = subvolMigratedCondition;
           # Host-mode CI jobs inherit the runner's PATH — the hub workflow
           # (eventcatalog-hub build.yml) needs nix (go_1_27 shell), jq
           # (sources.json parsing), and python3 (merge.py) beyond the

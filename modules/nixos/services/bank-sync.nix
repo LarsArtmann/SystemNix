@@ -115,9 +115,7 @@
             # upstream; our-lock got uiBySJb7… equals upstream's declared
             # hash, evo-x2 keep-going evidence). Re-add ONLY via nix-hash-fix
             # evidence, never by hand.
-            package = lib.mkDefault (
-              inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default
-            );
+            package = lib.mkDefault (inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default);
           };
 
           # The pool mounts nofail — systemd-tmpfiles could create the dir on the
