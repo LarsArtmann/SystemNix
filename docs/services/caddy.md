@@ -90,6 +90,39 @@ under NNP by design, caddy never calls setuid/setgid). Proof gate:
   2026-09-30; before that VPN/external clients chased Alt-Svc QUIC into a
   blackhole — LAN was unaffected, eno1 is a trusted interface).
 
+## encode / compression behavior (verified 2026-10-06, Caddy 2.11.4)
+
+`commonConfig` sets `encode zstd gzip` on EVERY vHost, but Caddy's default
+response matcher is a Content-Type **allowlist** (text/*, json/js/xml variants,
+fonts, `image/svg+xml*`, `image/vnd.microsoft.icon*`, `image/x-icon*`,
+application/x-protobuf, multipart/bag) + minimum 512 bytes. Empirically probed
+on this host: html/json/svg → `Content-Encoding: zstd`; **png/jpeg/webp/mp4/
+octet-stream → NOT encoded by Caddy**. Caddy also skips any response that
+already has Content-Encoding (so app-compressed responses pass through
+untouched) and disables encoding on 206 partial responses.
+
+**Consequence:** if you observe `Content-Encoding: zstd/gzip` on image/* or
+media responses, it came from the UPSTREAM app, not Caddy — `reverse_proxy`
+forwards the client's `Accept-Encoding` unchanged, and browsers attach it to
+every fetch including images, so backends with compression middleware
+(Express/NestJS `compression`, Django GZipMiddleware, …) compress media
+themselves. Distinguish by probing the backend port directly with
+`Accept-Encoding` set; suppress app-side compression with
+`header_up Accept-Encoding identity` on the relevant proxy block.
+
+**Server-Timing:** no core support (no directive, no official plugin). Verified
+recipe for a total-time metric (deferred set, milliseconds per RFC 9111 spec —
+`{http.request.duration}` is a Go duration string, `duration_ms` is the ms
+float):
+
+```
+header >Server-Timing "caddy;dur={http.request.duration_ms}"
+```
+
+Per-phase timings (proxy connect, app DB, …) must come from the apps — Caddy
+passes backend-emitted Server-Timing headers through untouched. Total request
+duration is also in every access-log line (`duration` field).
+
 ## Logs
 
 - **Global** `/var/log/caddy/access.log` — the DEFAULT logger (runtime JSON +
