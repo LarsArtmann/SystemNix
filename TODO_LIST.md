@@ -162,6 +162,9 @@
 - [ ] [ready] **Bound the system_health blind window + confirm the 93%-root-alert metric source** (journal grep for first parse-error occurrence; then check whether storage_collector_fs_used_percent (gatus-config.nix:671) feeds from the broken textfile — decides the fired-vs-phantom branch of the alert→action gap) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: same report §f.13/14)
 - [ ] [ready] **k10temp thermal Gatus check + fan-telemetry gap** (Tctl ≥95°C sustained pages; investigate why NO fan RPM is exposed in sensors — freezes #8/#9/#11/#12 are the thermal lineage riding an unmonitored ceiling; live 99°C at load ~20, no build running, 2026-10-03 14:26) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-10-03_14-23_freeze-12-autopsy-thermal-leading-livelock-competing.md §f.5)
 - [ ] [ready] **Zone-6 guard trip-RATE alert (trips/hour sustained over 2h pages — freeze #12 ran 90+ trips/2d with zero trend signal; the rate also rode thermal #11, so storm-signal not livelock-specific)** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: same report §f.13)
+- [ ] [ready] **Deploy + post-deploy verify the batched user-manager scan fix (gkr-pam burst): system-health.nix built green 20:5x/21:1x, deploy PSI-blocked — after switch: gkr burst ~0-3/2-min window, textfile updates, scrape_errors=0, INACTIVE parity, then CHANGELOG + close-out** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-10-06_21-32_gkrpam-attribution-batched-scan-fix-helium-followups-status.md §c/§f.1)
+- [ ] [ready] **node_exporter `write: connection reset by peer` journal spam (~30 lines per scrape window, 18:53 observed) — identify the scraping consumer dropping connections mid-scrape** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: same report §e.3)
+- [ ] [watch] **Truncated journal segment `/var/log/journal/…/system@00065cc9….journal~` is being ignored on every journalctl call — verify + rotate out the damaged segment (ENOSPC-era damage class)** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: same report §e.4)
 
 - [ ] **ClickHouse fill-velocity gauge + time-to-fill alert (append-only P0)** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **`signoz-collector-config-lint` flake check (live-fire render validation)** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
@@ -621,7 +624,7 @@
 
 - [ ] [ready] **Trace the 10:48 session-restore helium non-spawn + journal-pin when the wedged launch guard actually started swallowing main launches** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [ready] **Live-verify KeePassXC passkeys in Helium (user-assisted ceremony: chrome://policy + one real passkey create/re-auth — policy went live with the 10-06 deploy)** → [docs/todo/desktop.md](docs/todo/desktop.md)
-- [ ] [ready] **Attribute the gkr-pam `couldn't unlock the login keyring` activation bursts (promptless, post-password-store=basic; incl. the 2 pre-login lines)** → [docs/todo/desktop.md](docs/todo/desktop.md)
+- [x] [ready] **Attribute the gkr-pam `couldn't unlock the login keyring` activation bursts (promptless, post-password-store=basic; incl. the 2 pre-login lines)** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [x] [ready] **Login instance audit: helium.service + session-manager restore must converge on ONE instance (guard not stuck in wait-loop; crash-restart execs the new wrapper)** → [docs/todo/desktop.md](docs/todo/desktop.md)
 
 - [ ] **Deploy evo-x2 carrying Spotify (`38e146ab`) once the tree is quiescent — eval green 20:13 post-recursion-fix; switch also carries the parallel session's renamer/fastflowlm/cv work** → [docs/todo/desktop.md](docs/todo/desktop.md)
