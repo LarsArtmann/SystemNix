@@ -641,6 +641,10 @@
 - [ ] [ready] **Eval-check pinning the 3rdparty passkey policy render** (extendModules probe + negative case — my own first edit shape broke evo-x2 eval, nothing pins the extraOpts merge against restructure) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same self-review)
 - [ ] [ready] **Single-source the KeePassXC extension ID (3-way split brain: keepassxc.nix allowed_origins, configuration.nix extension list, 3rdparty policy key)** → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same self-review)
 - [ ] [ready] **Check conditional UI (autofill webauthn) support in KeePassXC-Browser 1.10.4.1** (if absent, only button-initiated ceremonies are intercepted — sets login-page UX expectations for Pocket ID et al.) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same self-review)
+- [ ] [blocked:deploy] **Post-deploy Unhook install probe** (chrome://extensions shows khncfooichmfjbepaaaebmommgaepoid, CRX served via helium proxy — extension added to configuration.nix:625 this session, eval-green only) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: docs/status/2026-10-06_21-31_yt-sidebar-unhook-extension-landed.md §c)
+- [ ] [blocked:user] **Unhook toggle ceremony + functional check** (popup → Hide Video Sidebar → Hide Recommended; watch page shows no recommendation sidebar) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §c)
+- [ ] [watch] **Unhook maintenance watch** (closed-source, updated 2026-03-19; if YT DOM churn breaks sidebar hiding, fall back to the one-line uBO filter) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §f.3)
+- [ ] [decision] **Darwin YT-extension parity: Unhook (and the YT drawer) on macOS Brave/Helium too?** (platforms/common/programs/chromium.nix carries only ytShortsBlocker there) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §g.3)
 
 ### services / pipeline (harvest 2026-09-30 06:5x)
 

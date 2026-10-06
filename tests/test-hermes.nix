@@ -14,19 +14,25 @@
 #      half-configured surface
 #   4. acl-revoke removes a stale grant exactly once, then is a no-op
 #   5. D1 regression: stateDir permission drift + the RO bind present must
-#      NOT crash-loop the ExecStartPre permission walk (the 2026-08-20
-#      chown-vs-bind EROFS landmine)
+#      NOT break the perms heal (old code: chown -R EROFS -> start-limit
+#      crash-loop; since the 2026-10-06 boot restructure the walk runs in
+#      the post-start hermes-perms-heal unit, so this also pins that the
+#      heal unit itself never crosses into the read-only bind)
 #   6. LSP bin heal: stripped binaries under lsp/bin get their exec bit
 #      back; the perms walk is exec-PRESERVING (0755 files stay executable,
 #      plain files still converge to group-readable)
-#   7. workspace AGENTS.md v2: marker-based — agent edits survive restarts
-#      within a version, v1 files upgrade to v2 (old content replaced)
+#   7. workspace AGENTS.md v3: marker-based — agent edits survive restarts
+#      within a version, v1 files upgrade to v3 (old content replaced)
 #   8. hermes-github-verify: skip-cleanly when the token env is unset;
 #      unit absent on the bare node (projectsDir = null)
 #   9. ~/.ssh perms converge: the exec-preserving walk prunes ~/.ssh and
 #      a dedicated converge heals group-writable ssh config on EVERY
 #      restart (OpenSSH 'Bad owner or permissions', live 2026-08-21) —
 #      both on the full-walk path and on the fast-path exit
+#  10. hermes-perms-heal topology (2026-10-06 restructure): the walk is
+#      pulled by hermes.service Wants= AFTER the gateway fork (off the
+#      boot critical path), runs on EVERY hermes (re)start, and logs one
+#      completion marker per run — the test waits on those markers.
 #  10. restart-safe cron dispatch topology (live outage 2026-09-05..11:
 #      every cron job failed "systemd-run --user --scope is unavailable"
 #      — a system service has no user bus and NixOS has no /bin/true).
@@ -132,6 +138,16 @@ in
     def main_pid(machine):
         return machine.succeed("systemctl show hermes -p MainPID --value").strip()
 
+    # The perms heal is ASYNC post-start (hermes.service Wants= + After=):
+    # a finished oneshot reads inactive, so wait for the Nth COMPLETION
+    # marker instead of unit state. One marker per heal run: boot = 1,
+    # every hermes restart = +1.
+    def wait_perms_heal(machine, count):
+        machine.wait_until_succeeds(
+            "test \"$(journalctl -u hermes-perms-heal --no-pager | grep -c 'hermes-perms: converged')\" = "
+            + str(count)
+        )
+
 
     # --- bound node: the full projects-access surface -------------------
     bound.start()
@@ -183,20 +199,23 @@ in
     bound.succeed("setfacl -m g:hermes:r-x /home/testuser")
     bound.systemctl("restart hermes")
     bound.wait_for_unit("hermes.service")
+    wait_perms_heal(bound, 2)
     assert bound.succeed("journalctl -u hermes --no-pager | grep -c 'removed stale g:hermes ACL' || true").strip() == "1"
     bound.systemctl("restart hermes")
     bound.wait_for_unit("hermes.service")
+    wait_perms_heal(bound, 3)
     assert bound.succeed("journalctl -u hermes --no-pager | grep -c 'removed stale g:hermes ACL' || true").strip() == "1"
 
     # 5. D1 regression: stateDir perm drift + RO bind present must NOT
-    #    crash the permission walk (old code: chown -R EROFS -> start-limit)
+    #    break the perms heal (old code: chown -R EROFS -> start-limit)
     bound.succeed("chmod 0755 /home/hermes")
     bound.systemctl("restart hermes")
     bound.wait_for_unit("hermes.service")
+    wait_perms_heal(bound, 4)
     # the guard tripped and the walk actually ran...
-    assert bound.succeed("journalctl -u hermes --no-pager | grep -c 'hermes-perms: fixing ownership' || true").strip() == "1"
+    assert bound.succeed("journalctl -u hermes-perms-heal --no-pager | grep -c 'hermes-perms: fixing ownership' || true").strip() == "1"
     # ...without crossing into the read-only bind
-    assert bound.succeed("journalctl -u hermes --no-pager | grep -c 'Read-only file system' || true").strip() == "0"
+    assert bound.succeed("journalctl -u hermes-perms-heal --no-pager | grep -c 'Read-only file system' || true").strip() == "0"
 
     # 6. LSP heal + exec-preserving walk. Seed a STRIPPED binary (the exact
     #    state the old chmod 0660 walk left behind since 2026-08-16) and an
@@ -208,6 +227,7 @@ in
     bound.succeed("chmod 0755 /home/hermes")
     bound.systemctl("restart hermes")
     bound.wait_for_unit("hermes.service")
+    wait_perms_heal(bound, 5)
     bound.succeed("test -x /home/hermes/lsp/bin/pyright-langserver")
     assert bound.succeed("journalctl -u hermes --no-pager | grep -c 'restored execute bit on 1 LSP binaries' || true").strip() == "1"
     bound.succeed("test -x /home/hermes/tool.sh")
@@ -215,6 +235,7 @@ in
     # second restart: heal is idempotent (no repeat journal line)
     bound.systemctl("restart hermes")
     bound.wait_for_unit("hermes.service")
+    wait_perms_heal(bound, 6)
     assert bound.succeed("journalctl -u hermes --no-pager | grep -c 'restored execute bit on' || true").strip() == "1"
 
     # 6b. ssh perms converge (regression: live 2026-08-21 'Bad owner or
@@ -228,6 +249,7 @@ in
     bound.succeed("chmod 0755 /home/hermes")
     bound.systemctl("restart hermes")
     bound.wait_for_unit("hermes.service")
+    wait_perms_heal(bound, 7)
     assert bound.succeed("stat -c %a /home/hermes/.ssh/config").strip() == "600"
     assert bound.succeed("stat -c %a /home/hermes/.ssh").strip() == "700"
     # Case B: stateDir healthy -> fast-path exit; .ssh drift alone must
@@ -235,23 +257,24 @@ in
     bound.succeed("chmod 0660 /home/hermes/.ssh/config")
     bound.systemctl("restart hermes")
     bound.wait_for_unit("hermes.service")
+    wait_perms_heal(bound, 8)
     assert bound.succeed("stat -c %a /home/hermes/.ssh/config").strip() == "600"
 
-    # 7. workspace AGENTS.md v2: marker on line 1; agent edits survive
+    # 7. workspace AGENTS.md v3: marker on line 1; agent edits survive
     #    restarts within a version; a v1 marker upgrades (content replaced)
     doc = "/home/hermes/workspace/AGENTS.md"
-    bound.succeed(f"head -1 {doc} | grep -q 'systemnix-workspace-doc: v2'")
+    bound.succeed(f"head -1 {doc} | grep -q 'systemnix-workspace-doc: v3'")
     bound.succeed(f"runuser -u hermes -- sh -c 'echo agent-note >> {doc}'")
     bound.systemctl("restart hermes")
     bound.wait_for_unit("hermes.service")
     bound.succeed(f"grep -q agent-note {doc}")
-    bound.succeed("journalctl -u hermes --no-pager | grep -q 'AGENTS.md present (v2, agent edits preserved)'")
-    bound.succeed(f"sed -i '1s/v2/v1/' {doc}")
+    bound.succeed("journalctl -u hermes --no-pager | grep -q 'AGENTS.md present (v3, agent edits preserved)'")
+    bound.succeed(f"sed -i '1s/v3/v1/' {doc}")
     bound.systemctl("restart hermes")
     bound.wait_for_unit("hermes.service")
-    bound.succeed(f"head -1 {doc} | grep -q 'systemnix-workspace-doc: v2'")
+    bound.succeed(f"head -1 {doc} | grep -q 'systemnix-workspace-doc: v3'")
     bound.succeed(f"! grep -q agent-note {doc}")
-    bound.succeed("journalctl -u hermes --no-pager | grep -q 'upgraded AGENTS.md v1 -> v2'")
+    bound.succeed("journalctl -u hermes --no-pager | grep -q 'upgraded AGENTS.md v1 -> v3'")
 
     # 7b. marker-less migration (the live-host case: doc installed by the
     #     OLD once-only script has no version line). Byte-equal to the
@@ -263,7 +286,7 @@ in
     bound.succeed(f"cat {v1} > {doc}")
     bound.systemctl("restart hermes")
     bound.wait_for_unit("hermes.service")
-    bound.succeed(f"head -1 {doc} | grep -q 'systemnix-workspace-doc: v2'")
+    bound.succeed(f"head -1 {doc} | grep -q 'systemnix-workspace-doc: v3'")
     bound.succeed("journalctl -u hermes --no-pager | grep -q 'upgraded marker-less AGENTS.md (was unmodified v1)'")
     bound.succeed(f"printf 'agent rewrote this\n' > {doc}")
     bound.systemctl("restart hermes")
