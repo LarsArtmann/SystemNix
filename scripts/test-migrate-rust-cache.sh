@@ -122,7 +122,6 @@ export PATH="$BIN:$PATH"
 
 # sed-patched copy: scratch paths, no sudo, current user gate
 COPY="$SCRATCH/migrate.sh"
-cp "$SCRIPT_UNDER_TEST" "$COPY"
 sed -e "s|^DEVICE=\"/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174244451713-part1\"|DEVICE=\"$FIXTURE_DEV\"|" \
   -e "s|^MOUNT=\"/mnt/rust-cache\"|MOUNT=\"$FIXTURE_MOUNT\"|" \
   -e "s|^SOURCES=\"/mnt/buildcache\"|SOURCES=\"$FIXTURE_BUILD\"|" \

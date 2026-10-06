@@ -2510,6 +2510,36 @@
                     touch $out
                   '';
 
+              # migrate-rust-cache.sh FORMATS the second SanDisk and moves the
+              # live Rust caches off buildcache — its first live run
+              # (2026-10-06) died at the mkfs call (missing -f) BEFORE any
+              # destructive step; this fixture pins that fix and every
+              # refusal gate so the ONE real sudo window executes a proven
+              # script. SED-patched copy (scratch DEVICE/MOUNT/SOURCES,
+              # SUDO="", user gate) + PATH stubs for lsblk/mkfs.btrfs/mount/
+              # findmnt/mountpoint/chown; real rsync/find/df vs scratch trees.
+              migrate-rust-cache-fixture =
+                pkgs.runCommand "migrate-rust-cache-fixture"
+                  {
+                    nativeBuildInputs = with pkgs; [
+                      bash
+                      coreutils-full
+                      findutils
+                      gawk
+                      gnugrep
+                      gnused
+                      rsync
+                    ];
+                  }
+                  ''
+                    scratch=$(mktemp -d)
+                    mkdir -p "$scratch/scripts"
+                    cp ${./scripts/migrate-rust-cache.sh} "$scratch/scripts/migrate-rust-cache.sh"
+                    cp ${./scripts/test-migrate-rust-cache.sh} "$scratch/scripts/test-migrate-rust-cache.sh"
+                    bash "$scratch/scripts/test-migrate-rust-cache.sh"
+                    touch $out
+                  '';
+
               # migrate-caddy-logs-hot.sh did its live 2026-10-01→10-04
               # window with only shellcheck + dry-run coverage — every
               # FAILURE branch (verify-fail caddy restart, EXIT/INT traps,
