@@ -157,11 +157,11 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1791315826,
-        "narHash": "sha256-er8wvFXGk4YrfTeIFu/QEy6mH9pYrMcP404IcNh9ryg=",
+        "lastModified": 1791323202,
+        "narHash": "sha256-0pRnSgwtR81R2a+Koa9R90fTGa4exxqakVWGWAIF0EI=",
         "owner": "LarsArtmann",
         "repo": "bank-sync",
-        "rev": "76d44b6b97052985c97192834a484f6566fa5999",
+        "rev": "49739c0ee14f162e33300c9a575f2f6dda7ecddc",
         "type": "github"
       },
       "original": {
@@ -962,11 +962,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791320412,
-        "narHash": "sha256-5j8Q8u/eNeoBN1+vsaO8fMF9zMLgAXWpSCWyl5MggO0=",
+        "lastModified": 1791321972,
+        "narHash": "sha256-YShVikJ8ajNpA3jnV3YzWKdrGvgIwN5dpTS5NjlvICE=",
         "owner": "LarsArtmann",
         "repo": "DiscordSync",
-        "rev": "e72838bb87050a0298e817d9604fd8465161ff67",
+        "rev": "1ac31f83e0234b9bd3017cbb8bac20c17e3a2508",
         "type": "github"
       },
       "original": {
