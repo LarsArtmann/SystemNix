@@ -157,11 +157,11 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1791256772,
-        "narHash": "sha256-gZHDxbTa5cKkkxXYFOBfJfZxxZMjMlO+AbkzuzTbAeE=",
+        "lastModified": 1791195813,
+        "narHash": "sha256-hGjGUFIA23v8TOSLOi/aH4BUHI7MzFb/Tl/h32F4lGI=",
         "owner": "LarsArtmann",
         "repo": "bank-sync",
-        "rev": "73827888b2da2138c22f2d97e7fadaa812e2e744",
+        "rev": "87531d044b1bb0deafe294a9242e0ae39e400e75",
         "type": "github"
       },
       "original": {
@@ -4157,11 +4157,11 @@
     "go-nix-helpers": {
       "flake": false,
       "locked": {
-        "lastModified": 1791200362,
-        "narHash": "sha256-fdHqg2v5AHue/G0GoBE50R4nVBzUf94Bg/Od2QSHZCM=",
+        "lastModified": 1790980627,
+        "narHash": "sha256-BeSlgqjgPLzhvCBNhCDeArZ1VnjWgy+TB7GwyWdvIcQ=",
         "owner": "LarsArtmann",
         "repo": "go-nix-helpers",
-        "rev": "5d02c56cd329b1c08d25993f3afcfecbf5f4177b",
+        "rev": "0fc140f044c0425e6306646100265206efffb85a",
         "type": "github"
       },
       "original": {
@@ -7445,16 +7445,16 @@
     "templ-components": {
       "flake": false,
       "locked": {
-        "lastModified": 1791206225,
-        "narHash": "sha256-A9yVgtIDxBjac67MbL+h7x9uNVPN60fByQQwlZhGu7U=",
+        "lastModified": 1790353862,
+        "narHash": "sha256-htrL7wCLMHyJv9NLUjw7tEcwApUE4VnZiB+RsGSai14=",
         "owner": "LarsArtmann",
         "repo": "templ-components",
-        "rev": "819158d31551ff61810fcd50266793fb7694bcf8",
+        "rev": "7f7338181bc89095c736c7c4d142bee54fe4d9fa",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "v1.20.0",
+        "ref": "v1.19.4",
         "repo": "templ-components",
         "type": "github"
       }
