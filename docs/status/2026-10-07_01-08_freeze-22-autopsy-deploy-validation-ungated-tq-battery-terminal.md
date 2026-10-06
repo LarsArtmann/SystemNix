@@ -1,0 +1,104 @@
+# Freeze #22 Autopsy — the Deploy's Own Ungated Validation Phase, the tq-agent-pool Battery, and the Fifth Cut of the Day (2026-10-07)
+
+**Session:** 2026-10-07 01:01 → ~01:10 — trigger: user "5th crash today. Write a report on why!". Read-only forensics (journal boots -6..0, guard log, deploy logs, live PSI/cgroup probes); NO live process stops (freeze-20 §c.1 policy held; the spike decayed on its own, see Live regime). Autopsy of the 00:58:02 cut (#22 = boot -1, 00:02:52 → 00:58:02, 55 m 10 s) + live review of boot 0.
+
+**Day ledger (six hard cuts in ~34 h, all journal-cut mid-activity, zero shutdown ceremony):** #16 Mon 10-05 19:41:16 · #17 Tue 15:12:57 · #18 15:41:14 · #19 21:08:23 · #20 21:50:42 · #21 Wed 00:00:59 · **#22 00:58:02**. The user's "today" (since Tue 15:41) = exactly #18→#22 = five cuts; this report autopsies #22, the one that just landed.
+
+**Sibling context:** freeze #21 autopsy (`00-15`) — its §Live regime literally watched this boot's first 15 min and wrote "Freeze #22 formed partway and is decaying — watch it"; it landed 43 min later. **EIGHTH consecutive cut predicted by its predecessor's autopsy with zero owner-leg execution between** (#14→#15→#16/17→#18→#19→#20→#21→#22).
+
+## Verdict
+
+**Freeze #22 = the IO-livelock family (crash #3 class), four stacked layers, one of them NEW:**
+
+1. **CHRONIC — the post-#21 recovery boot never settled.** The re-fired nix-gc ran 00:03:35→00:09:05 with trip #2125 INSIDE its window (the freeze-21 Evidence-12 crash-loop amplifier, executed as predicted), the build battery rebuilt instead of draining, and Zone 6 tripped five times at the ~10-min cadence with **ESCALATING avg60: #2125 (00:07:06, 63.93 %) → #2126 (00:19:08, 40.12 %) → #2127 (00:29:09, 70.05 %) → #2128 (00:39:10, 74.09 %) → #2129 (00:49:12, 84.50 %)**. The boot's single restore (#91, 00:17:08) lasted 2 minutes. Memory was healthy the whole way (MemAvailable 31.5–86.1 %, memory PSI 5 % at death) — pure stacked-reader IO livelock.
+2. **BATTERY DRIVER NAMED — `tq-agent-pool.service` is the top IO writer of the death approach.** Trip attributions: #2127 `tq-agent-pool +164,233 MB`, #2128 `+90,623 MB`, #2129 `+179,790 MB` per ~10-min window (system.slice totals +201/+108/+197 GB) — the TODO-dispatch agent pool's session workloads (flake checks, VM tests, builds) churning the shared QLC + USB buildcache links. The standing `[decision]` row has flagged this pool since trip #1808 (+139 GB, 2026-10-04; also #13's +155 GB at #1771) — **this is the cut where it graduated from "top producer" to co-killer**, and it still sits in NO guard list (socketUnits/sacrificeUnits/ioChurnUnits) and under NO admission gate.
+3. **THERMAL — the standing physical cooling deficit rode along at death.** Two ENTER windows: 00:12:25 (k10temp 97 °C → guided, EXIT 00:27:03 at 73 °C) and **00:48:08 (98 °C → guided, held to death, no EXIT)** — 10 minutes before the cut, while Zone 6 was already at trip levels. Same class as #8/#9/#11–#21: amplifier, not discriminator.
+4. **TERMINAL (NEW) — deploy #2's own validation phase entered ungated and the box died 2 m 55 s in.** Deploy #1 (00:34:54) was **correctly blocked** by the pressure gate at 00:41:03 (exit 12: "I/O PSI some avg10 = 97.86 % WITH disk busy = 101.8 % — REAL I/O storm" — the gate works). Deploy #2 launched at **00:55:07, 5 m 55 s after trip #2129**, and died mid **"1. Flake syntax validation"**: the deploy log is 317 bytes and ends at that heading; the nix-daemon connection burst at 00:58:00.58–02 (8+ connections, pids 1660201→1660500, user lars) is its eval traffic; journal cut 00:58:02.404. **The structural gap: BOTH deploy gates — pressure (deploy.sh:249) and guard trip-recency (deploy.sh:333, 60-min trip window, would have fired on #2129) — run AFTER the 13-section pre-deploy validation battery (deploy.sh:55). A deploy launched into a tripped box spends its first minutes running exactly the ungated nix-eval IO that kills it, before any gate can veto.** NOT the #4/#5 mid-switch class: #22 never reached build/activation.
+
+Death discriminators: hard cut, no ceremony (last lines: postgres collation WARNs + sev1-bridge/thermal-guard start lines — healthy ms-latency traffic to the end); kernel-clean (0 OOM, 0 MCE beyond the boot-time decoding-init line; BTRFS errors only the csum class below); `/var/crash` absent (livelock produces no kdump); guard counter continuity held 7th consecutive cut (#2129 → #2130); SEV1 notify-tier latched every 10 s from 00:56:21 to 00:57:52 (policy held — memory never overlays).
+
+**The structural headline: deploy.sh guards the SWITCH, not the ENTRY.** Everything else on this box has been told (in prose) to queue behind the guard; the deploy script itself — the repo's most-used heavy command — runs its validation battery into whatever PSI state it finds, and its gates fire only afterward, if the box survives that long. Deploy #2 is the first cut where the terminal trigger was the repo's own tooling entering un-gated.
+
+## Evidence
+
+| # | Finding | Evidence |
+|---|---------|----------|
+| 1 | #22 hard cut, no ceremony | boot -1 (00:02:52 → 00:58:02, 55 m 10 s) ends on postgres collation-version WARNs + "Starting SEV1 escalation bridge…" + "Starting Thermal pstate guard…" (00:58:02.37–.40); no shutdown/Stopping lines; boot 0 starts 00:59:41; `--list-boots` warns truncated `system@00065cc9….journal~` |
+| 2 | Five-trip escalating Zone-6 storm | trips #2125 (00:07:06, avg60 63.93 %, MemAvail 86.1 %), #2126 (00:19:08, 40.12 %, 31.5 %), #2127 (00:29:09, 70.05 %, 60.3 %), #2128 (00:39:10, 74.09 %, 66.9 %), #2129 (00:49:12, 84.50 %, 62.8 %); restore #91 at 00:17:08 (MemAvail 56.7 %) tripped again 2 min later |
+| 3 | tq-agent-pool = top death-approach writer | #2127: system.slice +201,754 MB, **tq-agent-pool.service +164,233 MB**, user.slice +148,322 MB; #2128: +108,809/**90,623**/+68,025; #2129: +197,523/**+179,790**/+45,551 — unit sits in NO guard list (row [decision] since 2026-10-04) |
+| 4 | Terminal burst = deploy #2 validation | nix-daemon "accepted connection from pid 1660201…1660500, user lars" 00:58:00.58→01.25 (8+ conns); deploy log `/var/log/systemnix-deploys/2026-10-07_00-55-07.log` = 317 bytes, ends at "1. Flake syntax validation"; sudo journal: deploy logging preamble (mkdir/tee/find) at 00:55:07.79–.88 |
+| 5 | Deploy #1 blocked correctly 14 min earlier | log `2026-10-07_00-34-54.log`: 13 validation sections PASS (75/10/0), then "✗ I/O PSI some avg10 = 97.86 % WITH disk busy = 101.8 % — REAL I/O storm (crash #3 precursor class)"; "deploy exited code=12 at 2026-10-07 00:41:03 after 369s" |
+| 6 | Gate ordering is the gap | deploy.sh:55 "Pre-Deploy Validation" → :249 "Memory pressure gate" → :333 "Guard trip-recency gate (freeze #5 doctrine)" — the recency gate greps `journalctl -u memory-emergency-guard --since "-60 min"` for "MEMORY EMERGENCY action taken" and WOULD have fired (trip #2129 at 00:49:12 < 60 min); it never executed because death preceded it |
+| 7 | Thermal ENTER held to death | ENTER 00:12:25 k10temp=97 °C → EXIT 00:27:03 (73 °C, 12 cool ticks); ENTER 00:48:08 k10temp=98 °C — no EXIT line in boot -1 |
+| 8 | Memory healthy throughout | guard trip MemAvailable series 86.1/31.5/60.3/66.9/62.8 %; death-window storage-collector: memory some avg10 5.03 % / full 2.48 % — the crash-#3 signature (IO livelock, memory pristine) |
+| 9 | Death-window disk saturation | storage-collector 00:58:00 (60-s window): sdb (buildcache USB) 59,997 ms busy (~100 % of the minute), nvme0n1 (= Lexar QLC root+data this boot) 58,803 ms busy, sda (pool) 58,370 ms busy — three disks pegged simultaneously; io some avg10 79.27 % / full avg10 44.88 % |
+| 10 | Kernel-clean, no vmcore, not mid-switch | boot -1 kernel scan: 0 OOM-kill, 0 MCE events, BTRFS errors only the /data csum class (Evidence 12); `/var/crash` absent; 0 switch-to-configuration/activation lines — deploy #2 died in validation section 1, pre-gates |
+| 11 | Guard continuity + blindness | #2129 (boot -1) → #2130 (boot 0, 01:02:11) — 7th consecutive clean carry; all 5 trips acted only on flm sockets (a victim) — tq-agent-pool, sibling build sessions, and the deploy all invisible (freeze-6/#20/#21 structural gap) |
+| 12 | /data read-time csum failures (collateral) | 43 "BTRFS warning … csum failed root 5" lines, 00:38:47→00:40:03, FIVE distinct inodes (2114463 ×10, 2608104 ×10, 4971289 ×10, 5394006 ×3, 5395427 ×10); dev-stat corrupt counter 386583438 (boot-mount line 00:03:26) → 386583619 (00:40:03) = **+181** — the baseline freeze-18 Evidence 5 pinned byte-identical since #12/#13 MOVED for the first time; ino 2114463's blocks all report the same computed csum 0x8941f998 = pages reading as ALL ZEROS; reads of the KNOWN 129,533-error population (row [decision] since 2026-09-29), not new writes |
+| 13 | SEV1 + policy | "SEV1 active … MEMORY EMERGENCY GUARD TRIPPED" every 10 s 00:56:21→00:57:52, severity notify — memory conditions never overlay (policy held) |
+| 14 | Post-crash peripherals clean | boot 0: eno1 operstate up; /mnt/pool (sda) + /mnt/buildcache (sdb1) + /mnt/hot mounted; sdc (rust-cache target) UNMOUNTED — migration did not re-fire (converge-on-rerun holds); no NIC-vanish, no DAS-drop class |
+
+## Live regime at authoring (boot 0, 01:02–01:07)
+
+- **Trip #2130 fired at 01:02:11** (2.5 min into boot): IO PSI some avg60 74.57 %, disk busy 97.3 % — the crash-recovery storm re-formed immediately: the freeze-6 reader trio re-fired AGAIN (hermes-fix-permissions `find` walk, crush-hot-db-migrate `find`, discordsync-db-heal `sqlite3` integrity check — all D-state at 01:03) PLUS a fresh battery: `nix flake check` (147 % CPU), **two concurrent qemu VM-test builds** (78 % + 62 %), an InboxClean go battery (go list 385 %, compile/vet 113–250 %, cache roots split across /nix/store go, /mnt/buildcache/go-mod, AND /tmp), node `cache:flush` (128 %).
+- At 01:03:45: IO PSI some avg10 32.24 / avg60 59.96 / full avg10 22.95, loadavg 48.85; by 01:07 the battery had exited and the box was DECAYING (some avg10 25.95, loadavg 21.69) — the freeze-21 "formed and decaying" shape again. Freeze #23's recipe (battery + recovery readers into a tripped boot) assembled and partially drained; whether the 10-min cadence re-latches is the live question.
+
+## a) FULLY DONE
+
+1. Full #22 autopsy with all portable discriminators answered (Evidence table): hard cut, kernel-clean, not-mid-switch, counter continuity, thermal participation quantified (2 ENTERs, 98 °C held to death).
+2. Named the terminal trigger to the second (deploy #2 launch 00:55:07 → nix-daemon eval burst 00:58:00-02 → cut 00:58:02.404) from the deploy log + sudo journal + nix-daemon lines.
+3. Verified the gate story against SOURCE before claiming: deploy.sh:249 pressure gate and :333 trip-recency gate both exist and work (deploy #1's exit-12 log proves the pressure half; the recency half's 60-min window would have fired on #2129) — the gap is ORDERING (both after the 13-section validation battery), not absence.
+4. Named tq-agent-pool as the top death-approach writer from trip attributions (#2127-#2129, 90–180 GB per window) and tied it to its standing [decision] row history (#1808, #1771).
+5. Caught and decoded the /data csum collateral: +181 counter movement on the freeze-18-pinned baseline, 5 inodes, zero-page pattern — routed to the existing 129,533-population rows, NOT misreported as storm damage or a new corruption source.
+6. Decoded the nvme device-name FLIP between boots (boot -1: Lexar = nvme0n1, so nvme0n1p8 = /data; boot 0: Lexar = nvme1n1) before attributing the csum lines to a disk.
+7. Live boot-0 review: two PSI/load probes 3.5 min apart (spike + decay), battery attribution by cgroup/proc, peripheral checklist (NIC, pool, buildcache, rust-cache-unmounted).
+8. TODO harvest at authoring: 1 new row + 4 extended rows across both surfaces (§f).
+
+## b) NOTICED, NOT DIAGNOSED
+
+1. WHO launched deploy #2 at 00:55:07, 14 min after the gate blocked deploy #1 — and whether DEPLOY_FORCE_PRESSURE was intended (death preceded the gate, so the intent is unknowable from logs; owner-only knowledge, §g.1).
+2. What ran INSIDE tq-agent-pool's cgroup in windows #2127–#2129 (child pids died with the boot; the pool dispatches agent sessions whose specific tasks — likely [ready]-row verification batteries — are un-attributable post-mortem).
+3. Whether the two live qemu VM tests on boot 0 were tq-dispatched or an interactive session (cgroup reads came back empty after the procs exited; the flake-check owner is likewise gone).
+4. The recency gate's latent fail-open: `timeout 15 journalctl … || true` under a real IO storm can time out, return 0 trips, and pass — untested this session (deploy #1's gate read succeeded), flagged for the entry-gate row.
+
+## c) DELIBERATELY NOT DONE
+
+1. No live SIGSTOPs or systemctl stops on boot 0 — drivers were interactive builds (freeze-20 §c.1) and the spike decayed on its own; the freeze-6 reader-trio stop remains the documented next-boot runbook step for the owner.
+2. No deploy, no module edits mid-storm (the freeze-#4/#5/#18/#22 death recipe — deploying the entry-gate fix during this storm would be its own irony).
+3. No full-journal export of the csum-failed inode list beyond the 5 known inos (btrfs inspect-lookup needs sudo — owner-gated).
+4. No stability.md agent-doc edit for #22 (the taxonomy row in docs/todo/stability.md is the sanctioned carrier; the agent doc still ends at #7 by standing practice).
+
+## d) SELF-CRITICISM
+
+1. My first guard-trip grep filtered on `-u memory-emergency-guard` + `_COMM=bash` and returned nothing — the trip lines live under the unit but needed the text grep (`-g "MEMORY EMERGENCY"`); a wrong-negative there would have hidden the entire escalation series and mis-shaped the verdict.
+2. I initially drafted "deploy.sh has no trip-recency gate" from the pressure-gate section alone — deploy.sh HAS one at :333. Corrected only because deploy #1's log quoted gate text that forced a source re-read. The queue rule (verify config claims before queueing) was nearly violated against my own report.
+3. The nvme0n1↔nvme1n1 enumeration flip between boots could have attributed the csum storm to the SAMSUNG (wrong disk) — only the boot -1 mount line ("device label data … /dev/nvme0n1p8") resolved it. Always decode device names per-boot on this box.
+4. The death-window journal read pulled ~30 lines of storage-collector noise before the signal lines; windowed + filtered greps would have been tighter (freeze-21 §d.1 lesson — mostly held, not perfectly).
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **deploy.sh needs an ENTRY gate, not just a switch gate — this is the new cut class.** Run (or duplicate) the pressure + trip-recency checks BEFORE section 1's evals, not after 13 sections of them. The gates exist and demonstrably work when reached; #22 is the proof they are reached too late. Cheap fix, immediate payoff: a blocked deploy costs 30 seconds; a dead box costs the 55-min crash-recovery cycle.
+2. **Harden the recency gate's journal read while moving it**: `timeout 15 journalctl || true` fails OPEN under the exact storm it guards against (a timed-out read counts as zero trips); on timeout, treat as blocked (fail-closed).
+3. **The tq-agent-pool [decision] row now has killer-grade evidence** (#1771, #1808, and now #2127–#2129 co-driving the #22 death boot at 90–180 GB per window). ioChurnUnits membership vs an admission/dispatch gate is overdue for an owner call — the pool harvests [ready] rows, and this queue keeps feeding it build-heavy verification tasks.
+4. **The /data 129,533-error population is no longer scan-only knowledge** — live reads hit it (5 inodes, zero-page reads) during the storm; the T04-T08 repair window's urgency rises, and the "growing-vs-static" discriminator row finally has fresh data (moved: +181).
+5. The freeze-6 recovery-reader trio (hermes-fix-permissions, crush-hot-db-migrate, discordsync-db-heal) re-fired on the first boot after the cut for the THIRD consecutive crash cycle — the pause-automation row is now proven necessary twice over.
+
+## f) NEXT THINGS (self-harvested at authoring; routed per TODO rules)
+
+1. **[ready] NEW — deploy.sh entry gate: run pressure + guard-trip-recency checks BEFORE the pre-deploy validation battery** (+ fail-closed the journalctl timeout). Queue + stability library. **Source:** this report §e.1/§e.2, Evidence 4/5/6.
+2. **[ready] EXTENDED — no-heavy-builds gate enforcement leg (row: freeze-14 driver)**: #22 update — the class killed again; NEW member: the deploy's own validation battery (ungated entry IO); violation #7 live on boot 0 (flake check + 2 VM tests + InboxClean battery + reader trio at trip #2130). **Source:** this report §Verdict layer 4, Live regime.
+3. **[decision] EXTENDED — Guard coverage for tq-agent-pool**: #2127–#2129 attribution (90–180 GB per 10-min window, top writer of the #22 death approach; third named appearance). **Source:** this report Evidence 3.
+4. **[decision]/[watch] EXTENDED — /data csum rows (129,533 population + scrub catch-up)**: read-time failures now live (+181 counter, 5 inodes, zero-page reads, 00:38:47–00:40:03); the growing-vs-static discriminator MOVED. **Source:** this report Evidence 12.
+5. **[ready] EXTENDED — post-crash resumable-reader pause automation (freeze-6 rule (a))**: third consecutive post-crash re-fire of the trio (hermes-fix-permissions + crush-hot-db-migrate + discordsync-db-heal) into trip #2130. **Source:** this report Live regime.
+6. **[ready] EXTENDED — freeze-series taxonomy row** (#8–#13 entries): appended #21 + #22 summaries (draft: this report Verdict + Evidence table).
+
+## g) QUESTIONS ONLY THE OWNER CAN ANSWER
+
+1. **Who launched deploy #2 at 00:55:07** — 14 minutes after the gate correctly blocked deploy #1 at 00:41:03, and 6 minutes after trip #2129? A deliberate retry after seeing the exit-12 block? DEPLOY_FORCE_PRESSURE intent never got tested (death came first). This decides whether the fix is tooling-only (entry gate) or also workflow (what triggers an immediate re-deploy after a block).
+2. **The /data repair window (T04-T08 class, standing row)**: reads are hitting the known-corrupt population live now — schedule it before the next storm reads something that matters (docker/steam/models dirs are on that fs).
+3. **tq-agent-pool policy** (standing [decision] row, now killer-grade): ioChurnUnits membership, an IO tier (io.max), or a dispatch admission gate — which trade?
+4. Boot 0's battery exited by 01:07 (decay observed); confirm nothing re-latches the 10-min cadence before leaving the box unattended tonight — the freeze-23 watch.
+
+**Standing state at report close:** freeze #22 autopsied (IO-livelock class; chronic = post-#21 recovery boot with 5 escalating zone-6 trips #2125→#2129, avg60 40→84.5 %; battery driver = tq-agent-pool at 90–180 GB/window, guard-blind; thermal = 2 ENTERs, 98 °C held to death; terminal = deploy #2's own UNGATED validation phase — both deploy gates exist and work but run AFTER the 13-section validation battery, and the box died in section 1 at 00:58:02, 2 m 55 s after launch, 5 m 55 s after trip #2129); memory healthy end-to-end; guard counter continuity 7th consecutive (#2129→#2130); collateral = first movement of the /data csum baseline (+181 read-time failures, 5 inodes of the known 129,533 population); boot 0 re-tripped at 01:02:11 on reader-trio + battery, decaying at 01:07 (loadavg 21.69); deploy #1's gate block PROVES the gates fire when reached — the entry-gate row is the whole ask; eighth consecutive predecessor-predicted cut with zero owner-leg execution between.
+
+_Arte in Aeternum_
