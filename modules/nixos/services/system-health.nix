@@ -241,46 +241,33 @@ _: {
           #     connection (fastflowlm class)
           #   - template units (@): never instantiated
           # Scans the SYSTEM manager plus every user manager in
-          # monitoredUserManagers (user_systemctl: direct user bus, machined
-          # fallback). Fail-closed: a failed listing sets scrape_errors 1.
+          # monitoredUserManagers (machined bus proxy for user managers).
+          # Fail-closed: a failed listing sets scrape_errors 1.
           INACTIVE_UNITS=""
           INACTIVE_COUNT=0
           INACTIVE_SCRAPE_ERRORS=0
           collect_inactive_enabled=${lib.boolToString cfg.collectEnabledInactive}
           # shellcheck disable=SC2086  # word split intentional: config-set unit identifiers
           INACTIVE_ALLOW="${lib.concatStringsSep " " cfg.enabledInactiveAllowlist}"
-          # user_systemctl: run systemctl against a user's --user manager.
-          # Direct user bus first (XDG_RUNTIME_DIR as root): the machined
-          # proxy (systemctl --machine=u@.host --user) shells out to
-          # `systemd-run -M.host -pUser=u -pPAMName=login
-          # systemd-stdio-bridge`, opening a full `login` PAM session per
-          # call — and pam_gnome_keyring auto_start (the only stack carrying
-          # it is /etc/pam.d/login) then fails promptless ("couldn't unlock
-          # the login keyring") on every one: ~28 journal lines + throwaway
-          # logind sessions per 2-min scan (2026-10-06 gkr-pam burst
-          # attribution). The direct bus opens no PAM session at all. Falls
-          # back to --machine when the bus socket is absent or the probe
-          # fails (logged out), preserving the wedge-detection semantics.
-          # Every call timeout(1)-bounded: a wedged user manager must never
-          # stall the collector.
-          user_systemctl() { # $1 = username; remaining args = systemctl args
-            local u="$1"
-            shift
-            local uid=""
-            uid=$(id -u "$u" 2>/dev/null) || uid=""
-            if [ -n "$uid" ] && [ -S "/run/user/$uid/bus" ] \
-              && XDG_RUNTIME_DIR="/run/user/$uid" timeout 10 systemctl --user show-environment >/dev/null 2>&1; then
-              XDG_RUNTIME_DIR="/run/user/$uid" timeout 10 systemctl --user "$@"
-            else
-              timeout 10 systemctl --machine="$u"@.host --user "$@"
-            fi
-          }
-          scan_inactive_units() { # $1 = label; remaining args = full systemctl invocation ("timeout 45 systemctl" or "user_systemctl <user>")
+          # 2026-10-06 gkr-pam burst fix: each `systemctl
+          # --machine=u@.host --user` call shells out to `systemd-run -M.host
+          # -pUser=u -pPAMName=login systemd-stdio-bridge`, opening a full
+          # `login` PAM session — and pam_gnome_keyring auto_start (the only
+          # stack carrying it is /etc/pam.d/login) fails promptless
+          # ("couldn't unlock the login keyring") on every one. The old
+          # per-unit is-active/show/is-enabled probing here meant ~28
+          # journal lines + throwaway logind sessions per 2-min scan. The
+          # direct user bus cannot replace it from this unit: harden{}
+          # caps (CAP_DAC_READ_SEARCH+CAP_FOWNER) bar connecting to the
+          # 0660 user-bus socket and any setuid drop. So BATCH instead: one
+          # `show` for all candidate services + one for their sockets
+          # (2-3 machined bridges per scan instead of ~30).
+          scan_inactive_units() { # $1 = label; remaining args = systemctl prefix ("--machine=u@.host --user" or none)
             local label="$1"
             shift
-            local ctl=("$@")
-            local out="" unit="" unit_type=""
-            out=$("''${ctl[@]}" list-unit-files --type=service --state=enabled --legend=no --no-legend --plain 2>/dev/null) || {
+            local out="" unit="" u="" candidates="" line="" cur=""
+            # shellcheck disable=SC2086  # empty prefix must expand to zero words
+            out=$(timeout 45 systemctl "$@" list-unit-files --type=service --state=enabled --legend=no --no-legend --plain 2>/dev/null) || {
               INACTIVE_SCRAPE_ERRORS=1
               return 0
             }
@@ -293,24 +280,52 @@ _: {
                 [ "$unit" = "$allowed" ] && { skip=1; break; }
               done
               [ "$skip" = 1 ] && continue
-              if "''${ctl[@]}" is-active --quiet "$unit" 2>/dev/null; then
-                continue
-              fi
-              unit_type=$("''${ctl[@]}" show -p Type --value "$unit" 2>/dev/null) || unit_type=""
-              [ "$unit_type" = "oneshot" ] && continue
-              # Socket-activated: a matching ENABLED .socket owns startup
-              if "''${ctl[@]}" is-enabled --quiet "''${unit%.service}.socket" 2>/dev/null; then
-                continue
-              fi
-              INACTIVE_UNITS="$INACTIVE_UNITS $label:$unit"
-              INACTIVE_COUNT=$((INACTIVE_COUNT + 1))
+              candidates="$candidates $unit"
             done <<< "$out"
+            [ -n "$candidates" ] || return 0
+            # ONE batched show for all candidates: Id anchors each per-unit
+            # property block (same active-state set is-active exits 0 for).
+            local -A seen_active=() seen_type=()
+            # shellcheck disable=SC2086  # candidate list holds validated unit names
+            while IFS= read -r line; do
+              case "$line" in
+                Id=*) cur="''${line#Id=}" ;;
+                ActiveState=*) [ -n "$cur" ] && seen_active["''${cur}"]="''${line#ActiveState=}" ;;
+                Type=*) [ -n "$cur" ] && seen_type["''${cur}"]="''${line#Type=}" ;;
+              esac
+            done < <(timeout 45 systemctl "$@" show -p Id -p ActiveState -p Type $candidates 2>/dev/null)
+            # Socket-activated: a matching ENABLED .socket owns startup.
+            # ONE batched show for the sockets of surviving candidates
+            # (normally zero — this pass only runs during real findings).
+            local -A socket_state=()
+            local sock_candidates=""
+            for u in $candidates; do
+              case "''${seen_active[$u]:-}" in active|reloading|activating) continue ;; esac
+              [ "''${seen_type[$u]:-}" = "oneshot" ] && continue
+              sock_candidates="$sock_candidates ''${u%.service}.socket"
+            done
+            if [ -n "$sock_candidates" ]; then
+              # shellcheck disable=SC2086
+              while IFS= read -r line; do
+                case "$line" in
+                  Id=*) cur="''${line#Id=}" ;;
+                  UnitFileState=*) [ -n "$cur" ] && socket_state["''${cur}"]="''${line#UnitFileState=}" ;;
+                esac
+              done < <(timeout 45 systemctl "$@" show -p Id -p UnitFileState $sock_candidates 2>/dev/null)
+            fi
+            for u in $candidates; do
+              case "''${seen_active[$u]:-}" in active|reloading|activating) continue ;; esac
+              [ "''${seen_type[$u]:-}" = "oneshot" ] && continue
+              case "''${socket_state["''${u%.service}.socket"]:-}" in enabled*) continue ;; esac
+              INACTIVE_UNITS="$INACTIVE_UNITS $label:$u"
+              INACTIVE_COUNT=$((INACTIVE_COUNT + 1))
+            done
           }
           if [ "$collect_inactive_enabled" = "true" ]; then
-            scan_inactive_units system timeout 45 systemctl
+            scan_inactive_units system
             # shellcheck disable=SC2043  # single-user hosts legitimately iterate once
             for u in ${lib.concatMapStringsSep " " (u: "${u}") cfg.monitoredUserManagers}; do
-              scan_inactive_units "$u" user_systemctl "$u"
+              scan_inactive_units "$u" --machine="$u"@.host --user
             done
           fi
 
@@ -1463,14 +1478,14 @@ _: {
             # smart-audio (a USER unit) sat dead in start-limit-hit the whole
             # 16:38 boot while every system-level check stayed green: nothing
             # watched the user manager. Counts failed units per monitored user
-            # via user_systemctl (direct user bus, machined fallback). Every
+            # via the machined bus proxy (--machine=<user>@.host --user). Every
             # call is bounded by timeout(1) — a wedged user manager must never
             # stall the collector. Distinguishes logout from wedge: /run/user/<uid>
             # absent = logged out (legitimate, no alert); present but query
             # failed = scrape_errors 1 (the dnsblockd-:9090 wedge class).
-            echo "# HELP system_user_units_failed Failed units in the user's systemd --user manager (direct user bus with machined fallback; 0 = healthy or manager not running)"
+            echo "# HELP system_user_units_failed Failed units in the user's systemd --user manager (via machined; 0 = healthy or manager not running)"
             echo "# TYPE system_user_units_failed gauge"
-            echo "# HELP system_user_manager_reachable 1 if the user manager answered (direct bus or machined), 0 if not running (logged out) — informational, no alert"
+            echo "# HELP system_user_manager_reachable 1 if the user manager answered via machined, 0 if not running (logged out) — informational, no alert"
             echo "# TYPE system_user_manager_reachable gauge"
             echo "# HELP system_user_units_scrape_errors 1 if the user manager should be reachable (/run/user/<uid> exists) but the query failed or timed out (wedge class), 0 otherwise"
             echo "# TYPE system_user_units_scrape_errors gauge"
@@ -1483,7 +1498,7 @@ _: {
               user_reachable=0
               user_scrape_err=0
               user_uid=$(id -u "$u" 2>/dev/null) || user_uid=""
-              if user_units="$(user_systemctl "$u" --no-legend --plain list-units --state=failed 2>/dev/null)"; then
+              if user_units="$(timeout 10 systemctl --machine="$u"@.host --user --no-legend --plain list-units --state=failed 2>/dev/null)"; then
                 user_reachable=1
                 if [ -n "$user_units" ]; then
                   user_failed=$(printf '%s\n' "$user_units" | grep -c .) || user_failed=0
@@ -1771,8 +1786,7 @@ _: {
           default = lib.optional (config.users ? primaryUser) config.users.primaryUser;
           description = ''
             Users whose systemd --user manager is checked for failed units
-            (system_user_units_failed via the user bus, machined fallback).
-            Catches
+            (system_user_units_failed via the machined bus proxy). Catches
             user-unit deaths invisible to system-level monitoring
             (2026-08-31: smart-audio sat in start-limit-hit the whole boot
             with nothing alerting). Empty list disables the section and its
