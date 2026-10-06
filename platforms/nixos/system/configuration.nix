@@ -622,6 +622,7 @@ in
             (ext "enamippconapkdmgfgjchkhakpfinmaj" "DeArrow - Better Titles and Thumbnails")
             (ext "hdannnflhlmdablckfkjpleikpphncik" "YouTube Playback Speed Control")
             (ext "pgpdaocammeipkkgaeelifgakbhjoiel" "YouTube Full Title For Videos")
+            (ext "khncfooichmfjbepaaaebmommgaepoid" "Unhook")
             # GitHub
             (ext "hlepfoohegkhhmjieoechaddaejaokhf" "Refined GitHub")
             (ext "nbiddhncecgemgccalnoanpnenalmkic" "GitHub Issue Link Status")
