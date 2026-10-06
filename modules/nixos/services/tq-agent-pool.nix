@@ -108,6 +108,16 @@ _: {
             # agent task (dedup forever) and auto-dismisses gate-artifact
             # deaths with shipped proof.
             "dlq-fix" = "true";
+            # Claim-time done gate (go-taskqueue 2026-10-06, spec
+            # docs/planning/2026-10-06_18-50_dispatch-done-preflight-gate.md
+            # THERE): a claimed task whose work is provably already landed
+            # (Task-Queue-ID footer commits in git, todo item now [x]/gone,
+            # fix-ticket rejected-SHA cured, closeout report) completes
+            # with ZERO agent spend. Kills the re-fire class — task
+            # 000001a0f97e2c06… was enqueued once, claimed 15×, every
+            # claim a paid no-op over its own 21 footer commits.
+            # Takes effect at the next input bump + owner deploy.
+            "done-preflight" = "true";
             yolo = "true";
             "project-exclusive" = "true";
             review = "true";
