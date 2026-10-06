@@ -404,6 +404,17 @@ _: {
                   alerts = discordAlert "oauth2-proxy down — all external service access broken";
                 })
                 (mkHttpCheck {
+                  name = "Caddy Catch-All 404";
+                  group = "Infrastructure";
+                  url = "https://catchall-probe.home.lan/";
+                  conditions = [
+                    "[STATUS] == 404"
+                    "[RESPONSE_TIME] < 1000"
+                    "[CERTIFICATE_EXPIRATION] > 168h"
+                  ];
+                  alerts = discordAlert "Caddy catch-all regressed: an unknown *.home.lan host no longer answers 404 (301/308 = a redirect was reintroduced; TLS failure = the wildcard cert mint broke). The wildcard DNS record still resolves unknown names, so this must stay a 404 page";
+                })
+                (mkHttpCheck {
                   name = "ClickHouse";
                   group = "Infrastructure";
                   url = "http://127.0.0.1:${toString ports.signoz-clickhouse-http}/ping";

@@ -77,7 +77,7 @@ Death discriminators: hard cut, no ceremony (last lines are `nix-gc-start: delet
 2. **The migrate-* entry gate is now 4 launches and 3 crashed boxes old** (#19, #20, #21 all migration-present; runs #1/#2 → #19, #3 → #20, #4 → #21). A queue row cannot contain a live crash loop — the gate must EXIST before the next `nix run .#migrate-*` invocation; treat every migrate-* script as ARMED until then.
 3. **The no-heavy-builds enforcement leg (row 96) is the highest-leverage unresolved row in the repo**: the battery class has now killed #15(?), #18, #20, #21 and recurred on this boot 0 (go-licenses/govulncheck/vulnix, violation #6). Mirror deploy.sh's zone6_recent gate onto `nix build/flake check` + buildflow entry.
 4. **Interrupted-GC refire into recovery boots is a named crash-loop amplifier** (Evidence 12): the daily timer re-ran the GC into a tripped boot 43 s after login-greet. The IO-admission gate (e.1) covers this too — same fix, two surfaces.
-5. Root QLC at 4 % unallocated passed the space gate — the 5 GiB floor is about to become the常态 normal case; schedule reclaim or raise the floor's semantics (percent-based) before it does.
+5. Root QLC at 4 % unallocated passed the space gate — the 5 GiB floor is about to become the normal case; schedule reclaim or raise the floor's semantics (percent-based) before it does.
 
 ## f) NEXT THINGS (self-harvested at authoring; routed per TODO rules)
 

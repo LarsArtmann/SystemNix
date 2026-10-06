@@ -103,7 +103,8 @@ expect_fail "KNOWN name removed" "$work/buildcache.nix" "$work/das-check.sh"
 cat "$das_check" >"$work/das-check.sh"
 
 echo "selftest: drift shape 2 — new buildcacheDirs literal"
-sed -i 's|^        "sccache"$|        "sccache"\n        "brand-new-drift-dir"|' "$work/buildcache.nix"
+sed -i '/buildcacheDirs = \[/,/^\s*\];/ s|^      \];$|        "brand-new-drift-dir"\n      ];|' "$work/buildcache.nix"
+grep -qF '"brand-new-drift-dir"' "$work/buildcache.nix" || fail "selftest: drift injection did not land — buildcacheDirs block shape drifted past the injector"
 expect_fail "new buildcacheDirs literal" "$work/buildcache.nix" "$work/das-check.sh"
 
 echo "selftest: fail-closed on empty extraction"

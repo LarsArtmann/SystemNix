@@ -174,6 +174,7 @@ echo ""
 # --- Infrastructure ---
 check_local "Caddy metrics" "2019" "/metrics" "200" "" 2>/dev/null || true
 check "Caddy HTTP redirect" "http://dash.$DOMAIN" "301" "" 2>/dev/null || true
+check "Caddy catch-all 404" "https://catchall-probe.$DOMAIN/" "404" "" 2>/dev/null || true
 
 check_local "Pocket ID" "1411" "/healthz" "204" 2>/dev/null ||
   check_local "Pocket ID" "1411" "/" "200" "" 2>/dev/null || true

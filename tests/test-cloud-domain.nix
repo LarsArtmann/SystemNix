@@ -6,7 +6,7 @@
 #   1. dnsblockd serves BOTH zones on BOTH DNS hosts; every subdomain has a
 #      cloud twin record (no wildcard — sdns ignores them).
 #   2. Caddy mirrors every home.lan vHost under the cloud domain, plus a
-#      cloud catch-all redirecting to the cloud dashboard.
+#      cloud catch-all serving the branded 404 page (both zones).
 #   3. TLS comes from the boot-minted dual-zone cert: vHosts reference
 #      /run/dnsblockd-certs, the mint unit exists, orders itself before
 #      Caddy, after sops-nix, and its SAN list covers both zones.
@@ -86,6 +86,30 @@ let
     {
       ok = vhosts ? "https://*.${cloud}";
       msg = "cloud catch-all vHost missing";
+    }
+    {
+      # 2026-10-07: the catch-alls serve a real 404 page (was: redirect to
+      # dash). Per-line matches (builtins.match . does not cross newlines).
+      # A reintroduced redir breaks the contract the gatus "Caddy Catch-All
+      # 404" check enforces at runtime.
+      ok =
+        let
+          homeCatchAll = vhosts."https://*.${home}".extraConfig or "";
+          cloudCatchAll = vhosts."https://*.${cloud}".extraConfig or "";
+          serves404Page = cfg: builtins.match ".*error 404.*" cfg != null && builtins.match ".*handle_errors.*" cfg != null;
+          redirectsToDash = cfg: builtins.match ".*redir.*dash.*" cfg != null;
+        in
+        serves404Page homeCatchAll
+        && serves404Page cloudCatchAll
+        && !redirectsToDash homeCatchAll
+        && !redirectsToDash cloudCatchAll;
+      msg = "catch-alls must serve the 404 page (error 404 + handle_errors), not redirect to dash";
+    }
+    {
+      # The legacy alerts alias used to ride the catch-all redirect; with
+      # the catch-all serving 404s it needs its own vHost in BOTH zones.
+      ok = vhosts ? "alerts.${home}" && vhosts ? "alerts.${cloud}";
+      msg = "legacy alerts alias vHosts missing (the catch-all no longer redirects)";
     }
     {
       ok = builtins.match ".*tls /run/dnsblockd-certs/server.crt.*" tls != null;
