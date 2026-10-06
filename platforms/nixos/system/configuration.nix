@@ -1257,15 +1257,27 @@ in
         sso.enable = lib.mkDefault true;
       };
 
-      # USB SSD build cache (/mnt/buildcache) — keeps Go/Rust/npm build churn
-      # off the QLC NVMe (root cause of the 2026-08-12 SLC exhaustion crashes).
+      # USB SSD build cache (/mnt/buildcache) — keeps Go/npm/pnpm/pip build
+      # churn off the QLC NVMe (root cause of the 2026-08-12 SLC exhaustion
+      # crashes). Rust churn now lives on its own SSD (rust-cache below).
       # Migration: nix run .#migrate-buildcache (see module docs).
       buildcache = {
         enable = true;
-        # Weekly GC: npm/pnpm prune, stale rust targets (>14d), go clean -cache
-        # guard at >=90% (go-build is unbounded — gopls mtime refresh defeats
-        # Go's native 5-day LRU trim). See buildcache.nix + planning doc
+        # Weekly GC: npm/pnpm prune + go clean -cache guard at >=90% (go-build
+        # is unbounded — gopls mtime refresh defeats Go's native 5-day LRU
+        # trim). See buildcache.nix + planning doc
         # docs/planning/2026-08-15_21-23_SMART-BUILDCACHE-OVERHAUL.md.
+        gc.enable = true;
+      };
+
+      # Dedicated Rust cache SSD (/mnt/rust-cache) — the second SanDisk
+      # SDSSDA240G, giving Rust's target/ + sccache + CARGO_HOME their own
+      # btrfs (zstd:1) filesystem so Go/JS/Python caches keep headroom on
+      # /mnt/buildcache and Rust's write pressure is off that disk. Supersedes
+      # the 2026-09-22 two-SanDisk btrfs merge (2026-10-06 user direction).
+      # Migration: nix run .#migrate-rust-cache (see module docs).
+      rust-cache = {
+        enable = true;
         gc.enable = true;
       };
 
@@ -1311,7 +1323,7 @@ in
           # stable across sdb/sdc letter swaps between the two enclosures;
           # -d sat is required — the USB bridge hides the ATA identity at the
           # plain SCSI layer. SSD 1 = build cache (services.buildcache),
-          # SSD 2 = future Docker storage.
+          # SSD 2 = Rust cache (services.rust-cache).
           {
             device = "/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311";
             options = "-d sat -d removable";

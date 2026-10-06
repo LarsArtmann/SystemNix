@@ -72,16 +72,18 @@ let
     };
   };
 
-  # Rust projects whose target/ dirs should live on ext4 — avoids COW
-  # fragmentation from 85K+ small files and keeps them out of btrbk snapshots.
-  # Target dirs moved from the old /rust-cache NVMe partition (p9) to the USB
-  # SSD build cache (services.buildcache) on 2026-08-14: removes build churn
-  # from the QLC NVMe entirely. Dirs are created by buildcache-init (post-
+  # Rust projects whose target/ dirs should live on the USB cache SSD — avoids
+  # COW fragmentation from 85K+ small files and keeps them out of btrbk
+  # snapshots. Target dirs moved from the old /rust-cache NVMe partition (p9) to
+  # the build cache SSD on 2026-08-14, then to the DEDICATED Rust cache SSD
+  # (/mnt/rust-cache, services.rust-cache) on 2026-10-06: removes build churn
+  # from the QLC NVMe entirely and keeps Rust's target/ churn off the
+  # Go/JS/Python buildcache disk. Dirs are created by rust-cache-init (post-
   # mount); only the ~/projects/<p>/target symlinks are managed here.
   rustCacheProjects = [ "monitor365" ];
 
   rustCacheLinks = builtins.map (
-    p: "L+ /home/${primaryUser}/projects/${p}/target - - - - /mnt/buildcache/rust/${p}"
+    p: "L+ /home/${primaryUser}/projects/${p}/target - - - - /mnt/rust-cache/rust/${p}"
   ) rustCacheProjects;
 
   # Scrub deferral guard (2026-08-31 freeze lesson). The nixpkgs autoScrub
@@ -394,9 +396,10 @@ in
       ];
     };
 
-    # Rust target dirs now live on the USB SSD build cache (see rustCacheLinks
-    # above). buildcache-init creates the directories after the mount is up.
-    buildcache.rustProjects = rustCacheProjects;
+    # Rust target dirs now live on the dedicated Rust cache SSD (see
+    # rustCacheLinks above). rust-cache-init creates the directories after the
+    # mount is up.
+    rust-cache.rustProjects = rustCacheProjects;
   };
 
   systemd = {

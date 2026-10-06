@@ -53,6 +53,10 @@
       primaryUser = config.users.primaryUser;
       homeDir = config.users.users.${primaryUser}.home;
 
+      # Rust dirs (rust/, sccache/, cargo/, cargo/registry) were MOVED to the
+      # dedicated Rust cache SSD on 2026-10-06 — see
+      # modules/nixos/services/rust-cache.nix. This module now owns only the
+      # Go / JS / Python build caches.
       buildcacheDirs = [
         "go-build"
         "go-mod"
@@ -63,22 +67,13 @@
         "pip"
         "pnpm-store"
         # 2026-09-22 fallback-symlink targets (home.nix HM outOfStoreSymlinks
-        # for env-less pnpm/cargo): must be provisioned here so a post-recovery
-        # init heals the dangling ~/.cache/pnpm, ~/.local/state/pnpm, and
-        # ~/.cargo/registry links before the next HM deploy.
+        # for env-less pnpm): must be provisioned here so a post-recovery
+        # init heals the dangling ~/.cache/pnpm and ~/.local/state/pnpm links
+        # before the next HM deploy.
         "pnpm-cache"
         "pnpm-state"
         "playwright"
-        "rust"
-        "sccache"
-        # CARGO_HOME since 2026-08-17 (was the @cargo NVMe subvolume until
-        # the automount was retired). Seeded from ~/.cargo at migration:
-        # registry, git checkouts, advisory dbs, bin, credentials.toml.
-        "cargo"
-        "cargo/registry"
       ];
-
-      rustProjectDirs = map (project: "rust/${project}") cfg.rustProjects;
 
       # ID_SERIAL of the cache SSD, parsed from the by-id device path
       # ("ata-<model>_<serial>-partN"). null for non-by-id devices - the udev
@@ -119,15 +114,6 @@
           description = "Whole-disk device for SMART queries (smartctl -d sat).";
         };
 
-        rustProjects = lib.mkOption {
-          type = lib.types.listOf lib.types.str;
-          default = [ ];
-          description = ''
-            Rust project names that get a target/ dir symlinked from
-            ~/projects/<name>/target into the cache (see snapshots.nix - same
-            pattern the old /rust-cache NVMe partition used, minus COW).
-          '';
-        };
 
         usageThresholdPercent = lib.mkOption {
           type = lib.types.int;
@@ -136,17 +122,7 @@
         };
 
         gc = {
-          enable = lib.mkEnableOption "weekly build cache garbage collection (npm/pnpm prune, stale rust targets, high-watermark go clean)";
-
-          maxAgeDays = lib.mkOption {
-            type = lib.types.int;
-            default = 14;
-            description = ''
-              Rust target/ dirs under <mountPoint>/rust untouched for this many
-              days are deleted. Safe with sccache: a deleted target dir rebuilds
-              from sccache hits without re-invoking rustc for dependencies.
-            '';
-          };
+          enable = lib.mkEnableOption "weekly build cache garbage collection (npm/pnpm prune, high-watermark go clean)";
 
           highWatermarkPercent = lib.mkOption {
             type = lib.types.int;
@@ -268,7 +244,7 @@
           ];
           script = ''
             set -eu
-            for dir in ${lib.concatStringsSep " " (buildcacheDirs ++ rustProjectDirs)}; do
+            for dir in ${lib.concatStringsSep " " buildcacheDirs}; do
               mkdir -p "${cfg.mountPoint}/$dir"
               chown ${primaryUser}:users "${cfg.mountPoint}/$dir"
               chmod 0755 "${cfg.mountPoint}/$dir"
@@ -514,7 +490,7 @@
         # the exact I/O this SSD exists to keep OFF the NVMe. Cache data only,
         # never user data; paths are anchored under the mount point.
         systemd.services.buildcache-gc = lib.mkIf cfg.gc.enable {
-          description = "Build cache garbage collection (npm/pnpm prune, stale rust targets, high-watermark go clean)";
+          description = "Build cache garbage collection (npm/pnpm prune, high-watermark go clean)";
           startLimitBurst = 3;
           startLimitIntervalSec = 300;
           unitConfig = {
@@ -530,8 +506,6 @@
             pkgs.nodejs
             pkgs.pnpm
             pkgs.coreutils
-            pkgs.findutils
-            pkgs.gnused
           ];
           inherit onFailure;
           serviceConfig = lib.mkMerge [
@@ -544,9 +518,9 @@
               # writable and always exists for this unit.
               WorkingDirectory = cfg.mountPoint;
               # 45min: `go clean -cache` at high-watermark scale (100G+ of
-              # small files) and rust-target rm -rf are metadata-bound on a
-              # DRAM-less USB SSD - 20min was too tight to survive the exact
-              # scenario the watermark guard exists for.
+              # small files) is metadata-bound on a DRAM-less USB SSD - 20min
+              # was too tight to survive the exact scenario the watermark guard
+              # exists for.
               TimeoutStartSec = "45min";
             }
             (harden {
@@ -568,7 +542,6 @@
           script = ''
             set -eu
             mnt="${cfg.mountPoint}"
-            max_age=${toString cfg.gc.maxAgeDays}
             watermark=${toString cfg.gc.highWatermarkPercent}
 
             usage() {
@@ -587,10 +560,7 @@
             #    (silent weekly prune failure, caught 2026-08-16).
             pnpm store prune --store "$mnt/pnpm-store" || echo "buildcache-gc: pnpm store prune failed (non-fatal)"
 
-            # 3. Stale rust target dirs - cheap to lose with sccache
-            find "$mnt/rust" -mindepth 1 -maxdepth 1 -type d -mtime "+$max_age" -print -exec rm -rf -- {} + || true
-
-            # 4. High watermark: go-build is the only unbounded cache (gopls
+            # 3. High watermark: go-build is the only unbounded cache (gopls
             #    mtime refresh defeats Go's 5-day LRU trim). Cold it if needed.
             pct=$(usage)
             if [ -z "''${pct:-}" ]; then
