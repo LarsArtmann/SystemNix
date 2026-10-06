@@ -295,6 +295,13 @@ in
       port = ports.dozzle;
     };
 
+    # NetBird mesh VPN client — Phase 2 flip (2026-10-06): setup key in sops
+    # (platforms/nixos/secrets/netbird.yaml, provisioned by the pbx
+    # netbird-provision reconciler), control plane live on the pbx. The
+    # login oneshot enrolls via LoadCredential; the LAN routing-peer router
+    # lands on the provisioner's next run after this host shows up as a peer.
+    services.netbird-client.enable = true;
+
     # EMEET PIXY webcam auto-activation
     hardware.emeet-pixy = {
       enable = true;

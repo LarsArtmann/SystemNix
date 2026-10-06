@@ -108,8 +108,11 @@ let
       msg = "oauth2-proxy whitelist missing the cloud domain";
     }
     {
-      ok = !(evox2.services.netbird-client.enable or true);
-      msg = "netbird client must stay gated off until Phase 2";
+      # Phase 2 flipped 2026-10-06: the sops setup key exists
+      # (platforms/nixos/secrets/netbird.yaml) and the pbx provisioner is
+      # green — the client must now be ON.
+      ok = evox2.services.netbird-client.enable or false;
+      msg = "netbird client must be ON (Phase 2 flipped 2026-10-06: sops netbird_setup_key present, pbx provisioner green)";
     }
     {
       # Positive surface probe: the pinned nixpkgs client module shape
@@ -148,5 +151,5 @@ if failed != [ ] then
   ''
 else
   pkgs.runCommand "cloud-domain-test" { } ''
-    echo "split-horizon cloud domain: DNS both hosts, Caddy mirror, dual-zone cert, oauth2 whitelist, gated netbird OK" > $out
+    echo "split-horizon cloud domain: DNS both hosts, Caddy mirror, dual-zone cert, oauth2 whitelist, netbird client enabled OK" > $out
   ''
