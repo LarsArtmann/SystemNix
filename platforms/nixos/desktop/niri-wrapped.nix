@@ -269,23 +269,6 @@ in
             "-aoP"
           ];
         }
-        {
-          # Dedicated per-monitor browser instances. Separate user-data-dirs
-          # give each its own process — required for --class to yield a
-          # distinct app-id the window-rules can route per monitor.
-          command = [
-            "sh"
-            "-c"
-            "exec helium --class=helium-dp1 --user-data-dir=$HOME/.local/share/helium-dp1 --no-first-run --no-default-browser-check"
-          ];
-        }
-        {
-          command = [
-            "sh"
-            "-c"
-            "exec helium --class=helium-dp2 --user-data-dir=$HOME/.local/share/helium-dp2 --no-first-run --no-default-browser-check"
-          ];
-        }
       ];
 
       screenshot-path = "~/Pictures/screenshots/%Y-%m-%d %H-%M-%S.png";
@@ -767,14 +750,6 @@ in
           ];
           open-on-workspace = "1-monitor";
         }
-        {
-          matches = [ { app-id = "^helium-dp1$"; } ];
-          open-on-workspace = "2-web-dp1";
-        }
-        {
-          matches = [ { app-id = "^helium-dp2$"; } ];
-          open-on-workspace = "dp2-web";
-        }
       ];
 
       workspaces = {
@@ -788,6 +763,13 @@ in
         # numeric bindings expect them:
         #   DP-1: 1-monitor, 2-web-dp1, browser, dev, main
         #   DP-2: chat, dp2-web, media
+        # The per-monitor dedicated helium instances (helium-dp1/dp2 with
+        # private user-data-dirs) were REMOVED 2026-10-06 — one profile per
+        # browser was a split brain (History/cookies/KeePassXC fill each
+        # lived in its own copy). The web workspaces stay as landing spots
+        # for manually moved browser windows (Mod+Shift+Tab /
+        # move-column-to-monitor-next); ALL helium windows share the main
+        # profile and open on "main".
         "1-monitor".open-on-output = "DP-1";
         "2-web-dp1".open-on-output = "DP-1";
         browser.open-on-output = "DP-1";
