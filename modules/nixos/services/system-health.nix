@@ -25,6 +25,7 @@ _: {
         serviceOneshotDefaults
         onFailure
         mkStateDir
+        ioTier
         ;
 
       cfg = config.services.system-health;
@@ -1943,6 +1944,13 @@ _: {
                 # reaps its own SIGKILL corpses since this change.
                 TimeoutStartSec = "5min";
               }
+              # Boot-window demotion (2026-10-06): the first fire lands at
+              # boot+30s — right when the desktop session is settling — and
+              # its journal/docker/fork storm on the QLC amplified the boot
+              # IO storm (48s first-run measured 2026-10-06). BE/6 keeps it
+              # yielding to everything foreground; steady-state runs are
+              # unaffected (BFQ only reorders under contention).
+              ioTier.background
             ];
           };
 

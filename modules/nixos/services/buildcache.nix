@@ -157,6 +157,14 @@
         fileSystems.${cfg.mountPoint} = mkFilesystem {
           inherit (cfg) device;
           fsType = "ext4";
+          # No boot fsck (2026-10-06): passno would otherwise run a full
+          # systemd-fsck@ on this DRAM-less cache SSD whenever the automount
+          # is first pulled (49.9s of boot-transaction IO storm, measured
+          # 2026-10-06) — for a REBUILDABLE cache whose ext4 journal already
+          # replays unclean shutdowns. The GC timer + SMART alerts own its
+          # health; if corruption ever eats it, re-run the documented mkfs
+          # (line 22) and let the caches rebuild.
+          fsckPass = 0;
           options = [
             "noatime"
             "lazytime"

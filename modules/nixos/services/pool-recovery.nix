@@ -53,6 +53,7 @@
         harden
         serviceOneshotDefaults
         onFailure
+        ioTier
         ;
 
       cfg = config.services.pool-recovery;
@@ -225,18 +226,26 @@
             pkgs.btrfs-progs
             pkgs.systemd
           ];
-          serviceConfig = {
-            Type = "oneshot";
-            User = "root";
-            CapabilityBoundingSet = "CAP_SYS_ADMIN";
-            NoNewPrivileges = true;
-            LockPersonality = true;
-            MemoryDenyWriteExecute = true;
-            MemoryMax = "128M";
-            RestrictRealtime = true;
-            RestrictSUIDSGID = true;
-            SystemCallArchitectures = "native";
-          };
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "root";
+              CapabilityBoundingSet = "CAP_SYS_ADMIN";
+              NoNewPrivileges = true;
+              LockPersonality = true;
+              MemoryDenyWriteExecute = true;
+              MemoryMax = "128M";
+              RestrictRealtime = true;
+              RestrictSUIDSGID = true;
+              SystemCallArchitectures = "native";
+            }
+            # Boot-window demotion (2026-10-06): the boot+2min fire's btrfs
+            # recovery IO (94s first-run measured 2026-10-06) landed right in
+            # the post-login settle window on the shared DAS link. BE/6 yields
+            # to foreground; recovery correctness is unaffected (idempotent,
+            # re-fires every 5min).
+            ioTier.background
+          ];
           script =
             let
               membersStr = lib.concatStringsSep " " cfg.members;

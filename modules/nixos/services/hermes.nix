@@ -22,6 +22,7 @@
         serviceTypes
         ports
         mkDnsGate
+        ioTier
         ;
       cfg = config.services.hermes;
       # Hermes v0.21.0 dispatches restart-safe cron workers through
@@ -823,16 +824,13 @@
               Type = "oneshot";
               User = "root";
               ExecStart = lib.getExe fixPermissionsScript;
-              # The walk is IO-bound metadata traffic by design — best-effort
-              # priority 6 keeps it behind the gateway warmup, desktop login,
-              # and every foreground workload.
-              IOSchedulingClass = "best-effort";
-              IOSchedulingPriority = 6;
-              Nice = 15;
-              # The walk itself can be slow under a storm (that was the whole
-              # point of moving it off the critical path) — give it room.
+              # The walk is IO-bound metadata traffic by design — ioTier.build
+              # (BE/7 + Nice 10) keeps it behind the gateway warmup, desktop
+              # login, and every foreground workload, without the starvation
+              # tail of the idle class.
               TimeoutStartSec = "10min";
             }
+            ioTier.build
           ];
         };
 
