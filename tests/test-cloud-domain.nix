@@ -132,7 +132,13 @@ let
         # routing-peer wiring: without "both", VPN→LAN forwarding (server
         # arm: ip_forward) and LAN-local P2P answers on the 100.x address
         # (client arm: loose rp_filter) both silently break
-        && (enabled.services.netbird.useRoutingFeatures or null) == "both";
+        && (enabled.services.netbird.useRoutingFeatures or null) == "both"
+        # management URL rides the NB_MANAGEMENT_URL env var (wrapper maps
+        # NB_* env onto CLI flags); netbird >=0.80 parses ManagementURL as a
+        # url.URL OBJECT — a string in the `config` fragment crashes the
+        # daemon at startup (2026-10-06 phase-2 flip incident)
+        && enabled.services.netbird.clients.evox2.environment ? "NB_MANAGEMENT_URL"
+        && !(enabled.services.netbird.clients.evox2.config ? "ManagementUrl");
       msg = "netbird client module surface mismatch (services.netbird.clients)";
     }
     {

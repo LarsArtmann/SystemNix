@@ -56,7 +56,16 @@ _: {
         services.netbird = {
           clients.evox2 = {
             port = ports.netbird;
-            config.ManagementUrl = cfg.managementURL;
+            # Management URL goes via ENV, never the `config` JSON fragment:
+            # netbird >=0.80 serializes ManagementURL as a nested url.URL
+            # OBJECT in config.json — a string fragment crashes the daemon at
+            # startup ("json: cannot unmarshal string into Go struct field
+            # Config.ManagementURL of type url.URL"; bit us on the 2026-10-06
+            # phase-2 flip deploy). Sanctioned path: the wrapper maps NB_* env
+            # vars onto CLI flags (NB_MANAGEMENT_URL -> --management-url), and
+            # `netbird up` forwards it in the LoginRequest — the daemon then
+            # persists the correctly-shaped object itself.
+            environment.NB_MANAGEMENT_URL = cfg.managementURL;
             login = {
               enable = true;
               setupKeyFile = config.sops.secrets.netbird_setup_key.path;
@@ -82,6 +91,25 @@ _: {
           sopsFile = ../../../platforms/nixos/secrets/netbird.yaml;
           key = "netbird_setup_key";
         };
+
+        # State hygiene (2026-10-06): the phase-2 deploy's string-form
+        # "ManagementUrl" fragment poisoned /var/lib/netbird-evox2/config.json,
+        # and the nixpkgs preStart jq fragment-merge never REMOVES keys — purge
+        # string-typed management-URL keys ourselves. Object-typed values were
+        # written by netbird itself and must survive. mkAfter because the
+        # nixpkgs preStart is what exports $NB_CONFIG and the jq PATH.
+        systemd.services.netbird-evox2.preStart = lib.mkAfter ''
+          if [ -f "$NB_CONFIG" ] && jq -e '
+              (.ManagementUrl | type) == "string" or (.ManagementURL | type) == "string"
+            ' "$NB_CONFIG" >/dev/null 2>&1; then
+            jq '
+                if (.ManagementUrl | type) == "string" then del(.ManagementUrl) else . end
+                | if (.ManagementURL | type) == "string" then del(.ManagementURL) else . end
+              ' "$NB_CONFIG" > "$NB_CONFIG.purged"
+            mv "$NB_CONFIG.purged" "$NB_CONFIG"
+            echo "netbird: purged string-form management URL from $NB_CONFIG (netbird >=0.80 requires url.URL object form)"
+          fi
+        '';
 
         # Service-integration registry entry: unit-state monitoring only
         # (no vHost — the client is not a web service; no port checks —
