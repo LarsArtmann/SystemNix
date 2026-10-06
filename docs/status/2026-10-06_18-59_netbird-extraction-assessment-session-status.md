@@ -97,3 +97,17 @@ Honest count: **3 new + 10 already-tracked.** Not padded to 50 — everything el
 ---
 
 **Format note:** `.md` at an explicitly demanded `docs/status/` path (user instruction overrides the skill's HTML default; standing task-queue/dispatch precedent also `.md`). Report intentionally written to SystemNix per the established cross-repo root-docs pattern for netbird topics. No commit made — auto-commit daemon owns report commits per harness contract. §f NEW items are flagged as docs-health HARVEST candidates for the next maintenance pass.
+
+---
+
+## Appendix (2026-10-06 ~19:05 CEST — §g Q2 answered, same-session annotation)
+
+The owner answered **Q2**: the mesh grows to **rpi3 + Lars's MacBook + (one day) KanyuNix** — the second-client question is no longer hypothetical, it is a three-client commitment. Verified this turn: rpi3 = in-repo SystemNix NixOS host; Lars's MacBook = `platforms/darwin` (and was ALREADY anticipated by net-vpn.md phase-2's "enroll MacBook + phone" — §b.3 of this report under-cited it, the intent existed); KanyuNix = separate darwin-only flake-parts repo for **Kanyu's** MacBook, status "Scaffolding" (formatting toolchain only, no nix-darwin/home-manager/secrets).
+
+Consequences applied:
+
+- **N3 BLOCKED→ready**: parameterization is committed work, rows routed to `docs/todo/services.md` → "netbird client-fleet expansion (2026-10-06 session)" (4 rows: parameterize, darwin enrollment mechanism decision, multi-peer keys + policy scoping for the non-Lars device, extraction trigger armed).
+- **Verdict revised, not flipped**: extraction stays NO today (KanyuNix cannot consume anything yet), but the trigger is now concrete and named — the first cross-repo consumer. The darwin client code (Lars's MacBook) should be written extraction-clean because its second consumer is a different person's repo.
+- **§d.1 upgrade**: the RAM-split scenario now compounds — a control-plane VPS split AND a growing client fleet both push toward netbird living outside pbx/SystemNix. Still not today.
+- **§g Q3 (provisioner ambition) is now load-bearing**: multi-peer setup keys + policy scoping for a non-Lars device is the provisioner's first real growth; the private-plumbing-vs-publishable question decides how that growth is shaped.
+- **Q1 (RAM split) still open** — unchanged.

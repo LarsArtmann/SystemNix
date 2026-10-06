@@ -23,10 +23,16 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
   design — VPN clients resolve both zones). Cloud catch-all redirects to
   `dash.larsartmann.cloud`. oauth2-proxy whitelists `.${cloudDomain}`.
 - **NetBird client** (`services.netbird-client`, modules/nixos/services/netbird.nix):
-  GATED OFF (`enable = false`) until the Phase-2 setup key lands in
-  `platforms/nixos/secrets/netbird.yaml` (key `netbird_setup_key`).
+  ENABLED since the 2026-10-06 phase-2 flip (`enable = true`; sops
+  `netbird_setup_key` in `platforms/nixos/secrets/netbird.yaml`).
   Uses pinned-nixpkgs `services.netbird.clients.evox2` + automated
-  setup-key login. Port 51820/udp (`ports.netbird`). Routing-peer role
+  setup-key login. Port 51820/udp (`ports.netbird`). The management URL
+  rides the `NB_MANAGEMENT_URL` env var (the wrapper maps NB_* env onto
+  CLI flags) — NEVER a `config.ManagementUrl` string fragment: netbird
+  ≥0.80 parses ManagementURL as a nested url.URL OBJECT and crashes at
+  startup on a string (the 2026-10-06 first deploy did exactly that;
+  `checks.cloud-domain` now pins the env-var surface AND the fragment's
+  cleanliness). Routing-peer role
   WIRED (2026-10-05): `useRoutingFeatures = "both"` — the "server" arm
   enables IPv4/IPv6 forwarding (VPN → LAN), the "client" arm sets
   `checkReversePath = "loose"` (LAN-local peers answering evo-x2's
@@ -93,6 +99,10 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
    picks the right age recipients — no per-file keys stanza needed.)
 5. **Enable the client**: set `services.netbird-client.enable = true` in the
    evo-x2 platform config, rebuild. Enrollment is automatic (login oneshot).
+   DONE 2026-10-06 — the first deploy crashed the daemon on a string-form
+   `ManagementUrl` fragment (netbird ≥0.80 needs the url.URL object form);
+   fixed same day via the `NB_MANAGEMENT_URL` env var + a preStart purge of
+   the poisoned state key — see the client bullet above.
 6. **Routing peer** — nothing to click: once evo-x2 enrolls, the NEXT
    provisioner run creates the network router (evo-x2, masquerade on —
    the home gateway has no route back to the VPN subnet). Facts
@@ -141,8 +151,12 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
 - Native-OIDC apps (paperless/forgejo) still register `*.home.lan` redirect
   URIs in Pocket ID; cloud-originated logins hop via home.lan names (works
   over VPN; polish later only if it ever annoys).
-- NetBird `ManagementUrl` lives in the client's `config` option (not
-  `settings`) — the positive test probe guards this against module renames.
+- NetBird's management URL rides `NB_MANAGEMENT_URL` (wrapper env → CLI
+  flag → LoginRequest → daemon persists the url.URL object itself); the
+  client's `config` fragment option must NOT carry a string `ManagementUrl`
+  — netbird ≥0.80 parses ManagementURL as a url.URL object and crashes at
+  startup otherwise. The positive test probe pins both sides of that
+  contract.
 
 ---
 
@@ -157,7 +171,7 @@ Architecture/decisions: `docs/brainstorming/2026-09-30_netbird-larsartmann-cloud
 - `networking.local.cloudDomain` (default `larsartmann.cloud`) is the alias zone — dnsblockd serves it on evo-x2 AND rpi3 (`dns-blocker-config.nix` + `rpi3/default.nix`, records fold from the same `dns-local.nix` list; NO wildcard local record — sdns ignores them). NEVER publish cloud service names in public DNS (domains repo keeps only apex + `netbird.` + `relay.` + Resend).
 - TLS: `dnsblockd-cert-mint.service` (in caddy.nix) mints ONE dual-zone cert from the sops'd dnsblockd CA into `/run/dnsblockd-certs/` at EVERY boot (random serial/key, 365d) — Caddy `tlsConfig` points there, After+Requires ordering (`systemd.services.caddy.requires` in caddy.nix — the literal fail-closed mechanism, aligned 2026-09-30), fail-closed. The old static sops server cert stays declared as fallback material. Client trust is unchanged (same CA). RUNTIME-VERIFIED by `checks.caddy-mint` (VM test: mint → caddy starts → SANs/CA/pairing/TLS-handshake on both zones; the mint unit also SELF-ASSERTS the four SANs before install — a broken extfile fails the mint, not the first handshake). **FIRST LIVE ACTIVATION DIED ANYWAY (2026-09-30 05:50, deployed rev `10602885`): 226/NAMESPACE — the deployed rev PREDATED the RuntimeDirectory fix (landed `d22ccd48` 06:11; the shared-tree deploy lagged its verification session's commit by 20 min)**. caddy fail-closed (by design), browser-history-agent + oauth2-proxy cascade-failed (the agent's readiness gate accepts any ANSWERED status — connection-refused to a down caddy is the expected transient; the 5-min timer converges it once caddy is up), exit-4 left the profile unanchored (reboot-revertible until re-deploy — run the anchor check from the deploy-generation gotcha first). Deploy-vs-fix-commit race rule: before the FIRST live deploy of a unit a same-morning session just fixed, confirm the deployed rev CONTAINS the fix commit (`git merge-base --is-ancestor <fix> <deployed-rev>`) — "verified in the tree" ≠ "verified in the rev you deployed". Two eval-invisible gotchas pinned there: (a) `ReadWritePaths` needs `RuntimeDirectory` — systemd sets up the mount namespace BEFORE any script runs, and a ReadWritePaths target that nothing creates kills the unit at NAMESPACE setup (`226/NAMESPACE`), fail-closing the whole web stack at boot; (b) script binaries must be absolute store paths (`${pkgs.openssl.bin}/bin/openssl` etc.) — ambient PATH is generation-dependent.
 - Caddy vHosts are mirrored 1:1 under the cloud domain via `mirrorCloud` in caddy.nix (filter + replaceStrings on keys) — do NOT hand-write cloud vHosts; new vHosts under home.lan mirror automatically. Auth redirects deliberately stay on `auth.home.lan` (VPN resolves both zones; oauth2-proxy whitelists the cloud domain for the post-login redirect only).
-- NetBird client module: `services.netbird-client` (wrapper) → `services.netbird.clients.evox2` (pinned-nixpkgs surface; the JSON fragment option is `config`, NOT `settings` — `checks.cloud-domain` has a positive extendModules probe guarding renames). GATED OFF until the Phase-2 setup key exists in sops (`platforms/nixos/secrets/netbird.yaml`, key `netbird_setup_key`); enabling without the file fails activation BY DESIGN.
+- NetBird client module: `services.netbird-client` (wrapper) → `services.netbird.clients.evox2` (pinned-nixpkgs surface; the JSON fragment option is `config`, NOT `settings` — and it must NOT carry a string `ManagementUrl`: netbird ≥0.80 requires the url.URL object form, the URL rides `NB_MANAGEMENT_URL` env instead — `checks.cloud-domain` has a positive extendModules probe guarding the whole surface incl. that contract). ENABLED since the 2026-10-06 phase-2 flip (sops `netbird_setup_key` present); enabling without the file fails activation BY DESIGN.
 - Control plane lives on the pbx server (pbx-artmann repo `hosts/pbx/netbird.nix`): NetBird server + relay(STUN 3479) + Dex (dashboard logins only). Deploy is owner-run (pbx AGENTS policy); handover: pbx `docs/runbooks/netbird-deploy.md`.
 
 **Gate-timeout floors are EVAL-ENFORCED (`gate-timeout-audit.nix`)** — any unit whose ExecStartPre contains a `-wait-oidc` script MUST set `TimeoutStartSec ≥ 6min` (gate budget 300s), any `-wait-dns` unit ≥ 4min (budget 180s), or `nix flake check` fails naming the unit. Both gate helpers return `TimeoutStartSec = mkDefault <floor>` in their serviceConfig fragment, so consumers merging the whole fragment are covered automatically; consumers that cherry-pick only `ExecStartPre` (searxng, forgejo, discordsync's hand-rolled clone) must set it explicitly. Hand-rolled gate CLONES that follow the `<service>-wait-dns` naming convention are caught by the same audit (discordsync is). Negative test pattern: `extendModules` + `mkForce "2min"` on a gate unit → assertion message must appear in `config.assertions`.
