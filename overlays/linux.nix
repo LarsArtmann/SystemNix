@@ -224,9 +224,10 @@ let
       vendorHash = "sha256-DubDFIjqw/PzLsyWR5It/401y/HMQUvGTJuLfmMpv6k=";
     };
   };
-  # TEMPORARY vendorHash shims (RE-PINNED 2026-10-05, a7868a7 wave — class
-  # comment at lib/lars-packages.nix): overview (got nzYv48yC… at rev
-  # 25dd08e) and discordsync (got YZTwoufR… at rev 1c20710). prev (NOT
+  # TEMPORARY vendorHash shims (class comment at lib/lars-packages.nix):
+  # overview (RE-PINNED 2026-10-05, a7868a7 wave; got nzYv48yC… at rev
+  # 25dd08e) and discordsync (RE-PINNED 2026-10-07, 1ac31f8 update; got
+  # /NYfLmDMx… at rev 1ac31f8). prev (NOT
   # final) — same recursion guard as above; stay AFTER the respective
   # upstream overlays in the list below.
   # Drop when upstreams re-pin or the lock moves past upstream-fixed revs.
@@ -237,7 +238,7 @@ let
   };
   discordsyncVendorHashShim = _final: prev: {
     discordsync = prev.discordsync.overrideAttrs {
-      vendorHash = "sha256-YZTwoufR11jtyfnlfiL8JOX4JOzJlTK7PMpWTTe4l1E=";
+      vendorHash = "sha256-/NYfLmDMxO+YDEJQqELmP4DXzxtKjgLXDiHLWjeL018=";
     };
   };
   # TEMPORARY doCheck shim (2026-10-05, class comment at

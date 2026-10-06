@@ -157,11 +157,11 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1791323202,
-        "narHash": "sha256-0pRnSgwtR81R2a+Koa9R90fTGa4exxqakVWGWAIF0EI=",
+        "lastModified": 1791324044,
+        "narHash": "sha256-qG5XtMPdVf4O0Uns2J/GFnfzm22GFrT2delBnItXBGQ=",
         "owner": "LarsArtmann",
         "repo": "bank-sync",
-        "rev": "49739c0ee14f162e33300c9a575f2f6dda7ecddc",
+        "rev": "6ae53e007a3976d3720b47829a32a30e06a80a4a",
         "type": "github"
       },
       "original": {
@@ -266,11 +266,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791305243,
-        "narHash": "sha256-KyIhCdSFFd9wRWmPtR1FT4/SIOCxc1uwT4SeSZD+EMs=",
+        "lastModified": 1791323919,
+        "narHash": "sha256-GAj8A5ga43yeeaUs1pm1jtQH6R8sTCxgrhC//xMBpYw=",
         "owner": "LarsArtmann",
         "repo": "browser-history",
-        "rev": "717cfc6b6b0b361ff32359faa031a3b3ebec91b9",
+        "rev": "d834910d7a9fee569b1a70f1e7314695175751bd",
         "type": "github"
       },
       "original": {
@@ -7930,17 +7930,17 @@
     "wise-go": {
       "flake": false,
       "locked": {
-        "lastModified": 1789405218,
-        "narHash": "sha256-dYzNnlxU4zVRz0yxeb71vM+1nTBmqftAF/vWZdXZOTE=",
+        "lastModified": 1791289263,
+        "narHash": "sha256-+m2OtCvuwchSgavRBksc7iWEMbLIJOx5It8qUpLnC/k=",
         "owner": "LarsArtmann",
         "repo": "wise-go",
-        "rev": "5a6448c444ae14780a96d4064cf433da7f83d0b7",
+        "rev": "68af145cc3aa74f148cdc80021135a99c942f3f6",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "v0.11.0",
         "repo": "wise-go",
+        "rev": "68af145cc3aa74f148cdc80021135a99c942f3f6",
         "type": "github"
       }
     },

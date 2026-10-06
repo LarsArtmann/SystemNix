@@ -28,17 +28,18 @@
         serviceOneshotDefaults
         ;
       cfg = config.services.discordsync;
-      # TEMPORARY vendorHash shim (RE-PINNED 2026-10-05, a7868a7 wave —
+      # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07, 1ac31f8 update —
       # class comment at lib/lars-packages.nix): upstream hash no longer
-      # reproduces at locked rev 1c20710 (got YZTwoufR…; evo-x2 toplevel
-      # --keep-going enumeration evidence; the
-      # overlays/linux.nix shim covers the pkgs.discordsync surface, this
-      # one the direct input reference). Drop when upstream re-pins or the
-      # lock moves past an upstream-fixed rev.
+      # reproduces at locked rev 1ac31f8 (got /NYfLmDMx…; evo-x2 toplevel
+      # --keep-going enumeration evidence after the browser-history,
+      # bank-sync, discordsync flake update; the overlays/linux.nix shim
+      # covers the pkgs.discordsync surface, this one the direct input
+      # reference). Drop when upstream re-pins or the lock moves past an
+      # upstream-fixed rev.
       discordsyncPkg =
         inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
           {
-            vendorHash = "sha256-YZTwoufR11jtyfnlfiL8JOX4JOzJlTK7PMpWTTe4l1E=";
+            vendorHash = "sha256-/NYfLmDMxO+YDEJQqELmP4DXzxtKjgLXDiHLWjeL018=";
           };
       sopsEnvPath = config.sops.templates."discordsync-env".path;
 
