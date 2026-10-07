@@ -53,7 +53,8 @@ inline JS echoing the requested host, Catppuccin Mocha, a `dash.home.lan`
 link by auth-doctrine; zero external assets) and `error 404` +
 `handle_errors { rewrite * /index.html; file_server }` returns a REAL 404
 status with the page body on every path (sandbox-proven against the deployed
-caddy 2.11.4). The legacy `alerts` alias keeps its documented dash redirect
+caddy 2.11.4). Live debugging: `rg 'root \*' /etc/caddy/caddy_config` names
+the served store path. The legacy `alerts` alias keeps its documented dash redirect
 via an explicit vHost that landed in the SAME change — no behavior gap
 between deploys. Regression pins at three layers: `checks.cloud-domain`
 asserts both catch-alls keep `error 404` + `handle_errors` and rejects any
