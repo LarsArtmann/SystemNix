@@ -223,7 +223,7 @@ Keep the shadowed QLC originals as rollback insurance until each wave's
 soak ends (journal-hot doctrine). When cleaning: remove the CONTENTS, keep
 the DIRECTORY — systemd never creates mountpoints, and the mount unit needs
 the dir to exist at boot. Space frees as the `@` snapshots pinning the old
-bytes expire (root pin window = 2w sharp, calendar-anchored).
+bytes expire (root pin window = 3d since 2026-10-08, was 2w sharp, calendar-anchored).
 
 ## Why gatus/browser-history moved despite the 2026-09-21 "STAY" verdicts
 

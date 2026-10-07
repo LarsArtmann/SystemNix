@@ -926,13 +926,13 @@ in
           # MAX_AGE_DAYS gates the NEWEST snapshot only — a freshness alarm
           # (did nightly btrbk stop taking snapshots?), NOT a retention check.
           # Older snapshots in the same dir are retention-owned and
-          # calendar-anchored (btrbk `3d 1w`: days start 00:00, weeks start
-          # Sunday): a mid-week inventory LEGITIMATELY shows the previous
-          # week's weekly up to 14 days old (e.g. ~11d on a Wednesday). Do
-          # NOT "fix" a stale-looking weekly here — the doctrine lives in
-          # docs/agents/storage.md (snapshot-pinning + retention
-          # reconciliation, live-verified 2026-09-25); this unit alarms only
-          # when the NEWEST snapshot exceeds the freshness threshold.
+          # calendar-anchored (btrbk `3d`: days start 00:00; was `3d 1w` with
+          # a 14d weekly tail until 2026-10-08): a snapshot a few days old
+          # is retention-owned, not evidence of a stalled schedule. The
+          # doctrine lives in docs/agents/storage.md (snapshot-pinning +
+          # retention reconciliation, live-verified 2026-09-25); this unit
+          # alarms only when the NEWEST snapshot exceeds the freshness
+          # threshold.
           MAX_AGE_DAYS=3
 
           SNAP_DIR="/mnt/btrfs-root/.snapshots"
