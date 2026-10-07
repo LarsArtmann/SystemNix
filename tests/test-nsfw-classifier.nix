@@ -13,8 +13,11 @@
 #   3. Disabled (default): no unit — hosts that never enable it stay clean.
 #   4. The catalog entry exists even when the service is disabled
 #      (ADR-008 "what exists" is unconditional).
-#   5. Start-limit per integration-registry step 5 (5 starts / 5 min).
-#   6. Cross-repo drift guard: the extension's DEFAULT_SERVER_URLS[0] port
+#   5. Start-limit per integration-registry step 5 (5 starts / 5 min) and
+#      unit-failure paging via the notify-failure template (Discord).
+#   6. Gatus /readyz check carries a RESPONSE_TIME condition
+#      (integration-registry step 9; measured 0.3-10 ms live).
+#   7. Cross-repo drift guard: the extension's DEFAULT_SERVER_URLS[0] port
 #      equals the resolved port (discovery breaks silently on drift).
 {
   pkgs,
@@ -125,6 +128,27 @@ let
       pass =
         enabledConfig.systemd.services.nsfw-classifier.startLimitBurst or 0 == 5
         && enabledConfig.systemd.services.nsfw-classifier.startLimitIntervalSec or 0 == 300;
+    }
+    {
+      name = "failure-alert-routing";
+      # Registry convention: unit failures page via the notify-failure
+      # template (Discord) — silent failures are unacceptable.
+      pass =
+        enabledConfig.systemd.services.nsfw-classifier.onFailure or [ ]
+        == [ "notify-failure@%n.service" ];
+    }
+    {
+      name = "gatus-check-latency-condition";
+      # integration-registry step 9: user-facing services carry a
+      # RESPONSE_TIME condition. /readyz runs no inference (measured
+      # 0.3-10 ms live) — 500 ms is a tight bound with headroom.
+      pass =
+        let
+          checks = enabledConfig.services.integration.nsfw-classifier.checks or [ ];
+          readyz =
+            lib.findFirst (c: c.path or "" == "/readyz") { conditions = [ ]; } checks;
+        in
+        builtins.elem "[RESPONSE_TIME] < 500" (readyz.conditions or [ ]);
     }
     {
       name = "disabled-no-unit";

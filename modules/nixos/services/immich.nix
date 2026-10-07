@@ -109,7 +109,7 @@ _: {
               })
               (serviceDefaults { RestartSec = "10s"; })
               {
-                Environment = lib.mkForce "HOME=/var/lib/immich";
+                Environment = lib.mkForce [ "HOME=/var/lib/immich" ];
               }
             ];
             immich-server = {

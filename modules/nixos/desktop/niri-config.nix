@@ -192,7 +192,7 @@ _: {
                   Type = "oneshot";
                   ExecStart = lib.getExe displayWatchdog;
                   OOMScoreAdjust = -500;
-                  Environment = "PRIMARY_USER=${config.users.primaryUser}";
+                  Environment = [ "PRIMARY_USER=${config.users.primaryUser}" ];
                 }
                 (harden {
                   MemoryMax = "512M";
