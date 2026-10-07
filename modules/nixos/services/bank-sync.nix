@@ -112,14 +112,17 @@
 
             # Explicit package pin: SystemNix's nixpkgs carries no bank-sync
             # attr, so the module's mkPackageOption default cannot resolve.
-            # vendorHash shim DROPPED 2026-10-07: the lock moved to upstream
-            # 4890be63, whose flake.nix:424 declares exactly the got-hash
-            # ax8CYIwS… our nixpkgs-followed graph computes (first-hand
-            # keep-going enumeration) — upstream ran the vendorHash dance
-            # themselves. Re-add a shim only with a fresh first-hand got-hash
-            # (never invented) and mirror it at the HM surface
-            # (systems/evo-x2.nix programs.bank-sync) or the two surfaces
-            # build different drvs.
+            # vendorHash shim DROPPED 2026-10-07: upstream 4890be63's
+            # flake.nix:424 declared exactly the got-hash (ax8CYIwS…) our
+            # nixpkgs-followed graph computes — upstream ran the dance
+            # themselves. SAME-DAY RECURRENCE: 728e719a bumped go.mod/go.sum
+            # without redoing it and broke the deploy again; the fresh got
+            # rd4R+EG5… was pasted UPSTREAM (ab2c9dcd, DiscordSync protocol).
+            # The upstream-owned hash re-stales on every upstream source
+            # touch — re-probe first, never re-pin blindly. Re-add a shim
+            # only with a fresh first-hand got-hash (never invented) and
+            # mirror it at the HM surface (systems/evo-x2.nix
+            # programs.bank-sync) or the two surfaces build different drvs.
             package = lib.mkDefault inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default;
           };
 

@@ -8,7 +8,11 @@
 #      option (the pre-2026-09-30 state) renders byte-identically
 #   4. tracking_mode stays METADATA_ONLY until the owner flips it (M09 gate
 #      — an agent must never be able to flip this by accident)
-#   5. policies (M14): inert on the host ([] renders NO policies key),
+#   5. journal WAL enabled (owner decision 2026-10-07): journal_enabled
+#      true + DSN inside the StateDirectory — koanf's CWD-relative default
+#      would follow WorkingDirectory, but the absolute pin survives any
+#      future WorkingDirectory change
+#   6. policies (M14): inert on the host ([] renders NO policies key),
 #      rendered verbatim when set, and every wrapper assertion (caps /
 #      duplicates / targets / dangling refs / schedule shape / slug type)
 #      fires on its matching violation at eval time
@@ -361,6 +365,8 @@ else
       assert cfg["dns_rate_limit_burst"] == 100, "dns_rate_limit_burst drifted"
       assert any("systemnix-extra" in p for p in cfg["dns_blocklists"]), "systemnix-extra blocklist missing from dns_blocklists"
       assert cfg["tracking_mode"] == "METADATA_ONLY", "tracking_mode must stay METADATA_ONLY until the owner flips it"
+      assert cfg["journal_enabled"] is True, "journal WAL must stay enabled on the host (owner decision 2026-10-07, dnsblockd T354 precondition)"
+      assert cfg["journal_dsn"] == "/var/lib/dnsblockd/journal.db", "journal DSN must stay inside the StateDirectory (koanf default is CWD-relative)"
       assert "policies" not in cfg, "host config must omit the policies key while the list is empty (optionalAttrs guard)"
       assert cfg["dns_blocklist_cache_dir"] == "/var/lib/dnsblockd/blocklist-cache", "persistent URL-blocklist cache dir missing from host config (PrivateTmp outage guard)"
       assert cfg["dns_ecs_enabled"] is False, "dns_ecs_enabled must default to false on the host (M16 inert gate)"
@@ -388,5 +394,5 @@ else
       assert h3["tls_port"] == 443, "h3 variant lost the default tls_port (QUIC terminates on the same port number)"
       print("content OK")
       PYEOF
-      echo "dns-blocker render: allowlist persistence, rate limit, log sampling, extraDomains belt, tracking gate, policies, trial blocklists, ECS, h3 OK" > $out
+      echo "dns-blocker render: allowlist persistence, rate limit, log sampling, extraDomains belt, tracking gate, journal WAL, policies, trial blocklists, ECS, h3 OK" > $out
     ''

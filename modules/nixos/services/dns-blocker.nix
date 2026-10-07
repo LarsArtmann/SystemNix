@@ -280,6 +280,18 @@ _: {
             allowlist_path = "/var/lib/dnsblockd/allowlist";
             tracking_mode = "METADATA_ONLY";
             tracking_db_path = "/var/lib/dnsblockd/tracking.db";
+            # Operator WAL (CQRS journal) — owner-enabled 2026-10-07 (the
+            # evo-x2 enablement decision from the 2026-10-06 WAL landing's
+            # open questions, dnsblockd TODO T354): append-only Command+
+            # Events+Queries journal riding BESIDE the tracking tables.
+            # audit_entries stays the evidence doctrine; nothing serves
+            # analytics reads from the WAL. Engine/durability/query-log/
+            # retention ride upstream defaults (sqlite, normal, off, 30d).
+            # The DSN is absolute: the koanf default is CWD-relative.
+            # Inspect: `dnsblockd journal status|replay|verify -c <this
+            # file>` (read-only open, safe against the live DB).
+            journal_enabled = true;
+            journal_dsn = "/var/lib/dnsblockd/journal.db";
             # Journal-flood control: the first 500 messages per message+level
             # pass unsampled, then 1-in-100. Guards the blocked-domain burst
             # class — a client hammering blocked domains emits one log line
