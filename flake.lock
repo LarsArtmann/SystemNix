@@ -316,11 +316,11 @@
         "samber-linter": "samber-linter"
       },
       "locked": {
-        "lastModified": 1791350922,
-        "narHash": "sha256-7468+8o291LXz5J5lMD4wK3dX2fYcPttft2AB6jRCWA=",
+        "lastModified": 1791356063,
+        "narHash": "sha256-ff21Mg+A/ayuOX0tIqzNs8T/5keqq+w7QIzzr8LiEas=",
         "ref": "refs/heads/master",
-        "rev": "2592cb1aa6688eed76d703831d0b66701ff66e7e",
-        "revCount": 7178,
+        "rev": "2a1c252075d3a5e2a784d96a0ce8a3a78b601c81",
+        "revCount": 7204,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -1084,11 +1084,11 @@
     "erraudit_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1791193770,
-        "narHash": "sha256-z1F6PXO66+p//E9l/IWE20hBHppGjTCCU7JzkJmOa54=",
+        "lastModified": 1791351484,
+        "narHash": "sha256-Mo1gvGFQP2WRGIbGONOPrgyY5EXUna7Fctas7xc7aCw=",
         "ref": "refs/heads/master",
-        "rev": "1df91c68e2ad0d1c52279f2c74370e5ae3f9b3a0",
-        "revCount": 1716,
+        "rev": "a3b3d814a3e6ceb80628f423e66c116ebed7b5e9",
+        "revCount": 1718,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/erraudit"
       },
