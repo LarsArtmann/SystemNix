@@ -265,6 +265,63 @@
             };
           };
 
+          # Rev-drift tripwire: the RUNNING bank-sync binary must be the one
+          # this generation declares. A unit that survives a switch without a
+          # restart (failed restart, manual start from an old generation,
+          # GC'd store path surfacing as '(deleted)') keeps serving stale
+          # code while every config surface claims the new rev. ExecStart
+          # embeds the store path, so a package bump normally restarts the
+          # unit — this hourly /proc/<MainPID>/exe comparison is the
+          # belt-and-suspenders that catches every path around that.
+          # Runs as root: reading another unit's /proc/PID/exe needs it
+          # (harden{} deliberately sets no Proc* keys, see lib/systemd docs).
+          # Ordering only (never `wants`): a tripwire must not start the
+          # service it monitors.
+          systemd.services.bank-sync-rev-drift = {
+            description = "Bank-Sync running-binary rev-drift tripwire";
+            after = [ "bank-sync.service" ];
+            inherit onFailure;
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = "root";
+              }
+              (harden { })
+              (serviceOneshotDefaults { })
+            ];
+            script = ''
+              expected="${lib.getExe cfg.package}"
+              main_pid="$(${pkgs.systemd}/bin/systemctl show -p MainPID --value bank-sync.service)"
+              if [ -z "$main_pid" ] || [ "$main_pid" = "0" ]; then
+                echo "bank-sync-rev-drift: bank-sync.service has no MainPID (daemon down — the liveness check owns that alarm, failing here too so the state is never silent)" >&2
+                exit 1
+              fi
+              running="$(${pkgs.coreutils}/bin/readlink "/proc/$main_pid/exe")"
+              if [ "$running" != "$expected" ]; then
+                echo "bank-sync-rev-drift: running binary does not match the deployed generation." >&2
+                echo "  running : $running" >&2
+                echo "  expected: $expected" >&2
+                echo "  The unit survived a generation switch without restarting onto the new binary. Re-run 'nix run .#deploy' and confirm bank-sync.service restarts; if it already did, find why the old binary is still live." >&2
+                exit 1
+              fi
+              echo "bank-sync-rev-drift: OK ($running)"
+            '';
+          };
+
+          systemd.timers.bank-sync-rev-drift = {
+            description = "Bank-Sync rev-drift tripwire timer";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = "hourly";
+              # Catch up when the box was off; jitter avoids a fixed thunder
+              # minute shared with other hourly units.
+              Persistent = true;
+              RandomizedDelaySec = "5m";
+            };
+          };
+
           assertions = lib.optionals paperlessPresent [
             {
               assertion = !cfg.paperlessArchive.enable || config.services.paperless.enable;
@@ -445,6 +502,43 @@
                     "[BODY] == pat(*bank_sync_last_sync_timestamp_seconds*)"
                   ];
                   alert = "Bank-Sync syncs are failing (or never succeeded) while the dashboard stays green — the August invisible-outage class. Check: journalctl -u bank-sync -n 100, then curl localhost:8097/metrics and read bank_sync_sync_errors_total + bank_sync_last_sync_timestamp_seconds.";
+                }
+                # SCA approval-pending sentinel: bank_sync_sca_approval_pending
+                # flips to 1 while any balance waits on a Wise SCA approval —
+                # statements paused, degraded transfers fallback active,
+                # dashboard GREEN. That combination stayed silent for 12
+                # weeks in 2026-06..09; this is the push that ends the
+                # silence. Anchored value-line pattern (\n<metric> <val>\n):
+                # HELP/TYPE comment lines can never satisfy it, so a help
+                # rewording can't turn the check phantom-green
+                # (docs/agents/monitoring.md pat() trap classes).
+                {
+                  name = "Bank-Sync SCA Approval";
+                  group = "Finance";
+                  url = "http://localhost:${toString ports.bank-sync}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nbank_sync_sca_approval_pending 0\n*)"
+                  ];
+                  alert = "Bank-Sync: a Wise SCA approval is pending — statements paused while the dashboard stays green. Approve via the dashboard approval flow or the Wise app (~90-day cadence, runbook docs/services/bank-sync-sca.md); the one-time token is never surfaced here.";
+                }
+                # Sustained-outage sentinel: bank_sync_sync_sustained_failure
+                # flips to 1 once any provider fails >= 4 consecutive sync
+                # cycles (~1h at the 15m default). The daemon owns the
+                # windowing (single blips reset on recovery, streaks re-seed
+                # after restart) so gatus only pattern-matches the text —
+                # no PromQL for a ratio-over-time condition.
+                {
+                  name = "Bank-Sync Sync Sustained";
+                  group = "Finance";
+                  url = "http://localhost:${toString ports.bank-sync}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nbank_sync_sync_sustained_failure 0\n*)"
+                  ];
+                  alert = "Bank-Sync: syncs failing >= 4 consecutive cycles (~1h) — sustained provider outage behind a green dashboard. Check journalctl -u bank-sync -n 100 and read bank_sync_sync_consecutive_failures per provider on /metrics.";
                 }
               ];
               homepage = {
