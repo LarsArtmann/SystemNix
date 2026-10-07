@@ -265,8 +265,11 @@ lib.filterAttrs (_: v: v != null) {
   # `exec: "git": executable file not found in $PATH`. Git in
   # nativeBuildInputs lets the suite run as upstream dev does (that test is
   # the ONLY failure in the full log, 2026-10-02); drop when upstream's
-  # flake adds git itself. vendorHash re-pinned 2026-10-05 (a7868a7 wave,
-  # class comment at buildflow): got /fevyHgd… at locked rev. doCheck
+  # flake adds git itself. vendorHash shim DROPPED 2026-10-07 (10-07
+  # protocol): upstream 1164a1af's flake declares the exact first-hand
+  # got-hash (KcxoZhGt…), so the override only recreated the drift
+  # treadmill; the hash lives upstream now. Re-add only with a fresh
+  # first-hand got-hash that upstream's own flake lacks. doCheck
   # gated off 2026-10-05: upstream's own TestAgentsDocSizeGuard is red at
   # the locked rev (AGENTS.md 17102 B > the repo's own 15400 B budget —
   # upstream repo hygiene, not binary correctness); drop the gate when
@@ -276,7 +279,6 @@ lib.filterAttrs (_: v: v != null) {
     nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
       inputs.nixpkgs.legacyPackages.${system}.git
     ];
-    vendorHash = "sha256-/fevyHgdr1ycM/mvjNQX8iassOS+q4UtS1yA6XsXwsQ=";
     doCheck = false;
   });
 }

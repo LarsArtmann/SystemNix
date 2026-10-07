@@ -47,16 +47,15 @@ _: {
       # lib/lars-packages.nix: the upstream checkPhase test suite shells
       # out to git (TestDoctorTreeGofmt, 2026-10-02) and the go-standard
       # sandbox ships none. Drop both when upstream's flake adds git to
-      # nativeBuildInputs. vendorHash re-pinned 2026-10-05 (a7868a7 wave,
-      # class comment at lib/lars-packages.nix): got /fevyHgd…. doCheck
-      # gated off 2026-10-05: upstream's TestAgentsDocSizeGuard is red at
+      # nativeBuildInputs. vendorHash shim DROPPED 2026-10-07 (class comment
+      # at lib/lars-packages.nix): upstream's own flake carries the hash.
+      # doCheck gated off 2026-10-05: upstream's TestAgentsDocSizeGuard is red at
       # the locked rev (AGENTS.md 17102 B > the repo's own 15400 B budget);
       # drop the gate when upstream prunes/resets and the lock moves past.
       tqPkg =
         inputs.go-taskqueue.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
           (old: {
             nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.git ];
-            vendorHash = "sha256-/fevyHgdr1ycM/mvjNQX8iassOS+q4UtS1yA6XsXwsQ=";
             doCheck = false;
           });
       inherit (import ../../../lib/default.nix lib)
