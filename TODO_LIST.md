@@ -378,6 +378,7 @@
 
 - [ ] **ROOT: settle the `/run/secrets/sops-nix-age-key` ghost** → [docs/todo/security.md](docs/todo/security.md)
 - [ ] **Crush key-hygiene leftovers** → [docs/todo/security.md](docs/todo/security.md)
+- [ ] [ready] **Triage the pre-commit gitleaks blocker in HEAD's tree** (foreign status report `:101` user_id line committed past the hook by daemon sweep `c245f3f6` — blocks every commit's tree scan since; scrub if credential-shaped or fix the scanner rule; push protection ignores allowlists) → [docs/todo/security.md](docs/todo/security.md) (Source: docs/status/2026-10-07_01-22_task-000001a108f0f4d06c46923e573800000000.md verification appendix)
 
 ### pipeline
 
