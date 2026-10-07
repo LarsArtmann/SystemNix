@@ -57,11 +57,9 @@
       # (got 22PDGv7X…; first-hand keep-going enumeration,
       # /tmp/toplevel-fix-20261007.log; upstream stale at locked rev AND
       # HEAD — push the fix upstream when authorized, then drop this).
-      crmPkg =
-        inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
-          {
-            vendorHash = "sha256-22PDGv7XDLPZtQJP51afi132WckZEmnUJZsstn5iJ/4=";
-          };
+      crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+        vendorHash = "sha256-22PDGv7XDLPZtQJP51afi132WckZEmnUJZsstn5iJ/4=";
+      };
       twentyEnabled = config.services.twenty.enable or false;
     in
     {
