@@ -36,11 +36,23 @@ let
   # over ${pkgs.btrbk}/bin/btrbk in the VM because the module's
   # writeShellApplication wrapper prepends its runtimeInputs to PATH ahead
   # of any unit-level path stub.
-  btrbkStub = pkgs.writeShellScript "btrbk" ''
+  btrbkStub = pkgs.writeShellScriptBin "btrbk" ''
     echo "$*" >> /tmp/btrbk.log
     [ -f /tmp/btrbk-rc ] && exit "$(cat /tmp/btrbk-rc)"
     exit 0
   '';
+  dfStub = pkgs.writeShellScriptBin "df" ''
+    echo "Filesystem 1024-blocks Used Available Capacity Mounted"
+    if [ -f /tmp/cross ]; then
+      echo "overlay 1000 910 90 91% /"
+    else
+      echo "overlay 1000 500 500 50% /"
+    fi
+  '';
+  stubBin = pkgs.symlinkJoin {
+    name = "root-prune-guard-stubs";
+    paths = [ btrbkStub dfStub ];
+  };
 in
 {
   name = "root-prune-guard";
@@ -79,6 +91,23 @@ in
           isSystemUser = true;
           group = "btrbk";
         };
+
+        # THRESHOLD-CROSSING STUB: df is stubbed at the unit-PATH level,
+        # gated on /tmp/cross (below: 50%, above: 91% df scale), and btrbk
+        # logs its invocation + exits /tmp/btrbk-rc (default 0). The module's
+        # writeShellApplication wrapper prepends its runtimeInputs to PATH
+        # ahead of any unit path, so the stub must BE the ExecStart: the
+        # script override execs the SAME committed script with the stubbed
+        # PATH while every unit-side surface (User=btrbk, StateDirectory,
+        # timer wiring, always-exit-0, default .prom path) stays production.
+        systemd.services."root-prune-guard" = {
+          script = lib.mkForce "exec ${pkgs.bash}/bin/bash ${../scripts/root-prune-guard.sh}";
+          path = lib.mkForce [
+            stubBin
+            pkgs.coreutils
+            pkgs.gawk
+          ];
+        };
       };
     };
 
@@ -105,14 +134,9 @@ in
         "chown btrbk:btrbk /var/lib/prometheus-node-exporter/textfile_collectors"
     )
 
-    # Stub btrbk by overwriting its store binary (the wrapper prepends its
-    # runtimeInputs to PATH ahead of any unit-level path stub). Default:
-    # log the invocation, exit 0; /tmp/btrbk-rc lets the failure-leg flip it.
-    # The store path is computed host-side from the SAME pkgs instance the
-    # module's writeShellApplication wrapper uses — identical store path.
-    btrbk_store = "${pkgs.btrbk}/bin/btrbk"
-    machine.succeed("mount -o remount,rw /nix/store")
-    machine.succeed("cp ${btrbkStub} " + btrbk_store)
+    # The df stub decides on /tmp/cross (below: 50%, above: 91% df scale);
+    # starts below threshold first.
+    machine.succeed("rm -f /tmp/cross /tmp/btrbk.log")
 
     prom = "/var/lib/prometheus-node-exporter/textfile_collectors/root-prune-guard.prom"
 
@@ -129,13 +153,8 @@ in
     assert metric("prune_exit") == "0"
     machine.succeed("test ! -e /tmp/btrbk.log")  # btrbk never invoked below threshold
 
-    # 3: REAL threshold crossing — fill the root past 90% (df scale:
-    # used/(used+avail)). fallocate 95% of current avail pushes the ratio
-    # over the floor on any root with used > ~5% (a booted NixOS VM root).
-    machine.succeed(
-        "AVAIL=$(df -Pk / | awk 'NR==2{print $4}') && "
-        "fallocate -l $((AVAIL * 95 / 100)) /fill"
-    )
+    # 3: THRESHOLD CROSSING — the df stub now reports 91% (df scale), past
+    # the strict >90 floor.
     machine.succeed("rm -f /tmp/btrbk.log")
     machine.succeed("systemctl start root-prune-guard.service")  # must exit 0
     usage = metric("usage_pct")
@@ -153,7 +172,7 @@ in
     assert metric("fired") == "1"
 
     # 4b: below threshold again — fired flips back, btrbk not invoked.
-    machine.succeed("rm -f /fill /tmp/btrbk-rc /tmp/btrbk.log")
+    machine.succeed("rm -f /tmp/cross /tmp/btrbk-rc /tmp/btrbk.log")
     machine.succeed("systemctl start root-prune-guard.service")
     assert metric("fired") == "0"
     assert metric("prune_exit") == "0"
