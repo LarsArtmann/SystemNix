@@ -231,10 +231,18 @@
       # `hermes-python-source` FOD (IFD class) — `nix flake check --no-build`
       # (the pre-commit gate) fails with "path …-hermes-python-source is not
       # valid" while bafb42b4 evals clean (verified by lock swap 2026-10-02).
-      # The lock node is held at bafb42b4 (url above stays unpinned so a
-      # later `nix flake lock --update-input hermes-agent` can move forward);
+      # The url above stays unpinned so a later
+      # `nix flake lock --update-input hermes-agent` can move forward;
       # do NOT blanket-update back to a rev that breaks the eval gate. Drop
       # this rollback once an upstream rev evals green under --no-build.
+      # ROLLBACK REPLAY (2026-10-07 19:00): the daemon's blanket lock updates
+      # advanced 0e21933 (via 489c1ac) whose WEB frontend fails TypeScript
+      # typecheck (TS1484 'SessionFilterCategory' type-only import under
+      # verbatimModuleSyntax, web-0.0.0 buildPhase) — deploy blocked until
+      # pinned back to e76fb95, the rev behind the proven 17:22 generation.
+      # Blanket `nix flake update` keeps re-introducing this class; move the
+      # input forward ONLY after `nix build
+      # .#nixosConfigurations.evo-x2.config.system.build.toplevel` passes.
       url = "github:NousResearch/hermes-agent";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
