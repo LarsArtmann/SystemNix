@@ -235,30 +235,36 @@
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
             path = [ pkgs.python3 ];
+            # script at unit TOP LEVEL (2026-10-07 fix): serviceConfig is a
+            # freeform attrset — nested there, the script serialized
+            # line-by-line as garbage [Service] keys (script=/dst=/src=…),
+            # the unit rendered without ExecStart, and systemd refused to
+            # LOAD it: backups never ran from the 2026-10-03 cutover deploy
+            # until this hoist (docs/status/2026-10-07_15-50_* §a5/§d1).
+            script = ''
+              set -euo pipefail
+              dst="${backupDir}/ledger-$(date +%Y-%m-%d).db"
+              python3 - "${stateDir}/ledger.db" "$dst" <<'PY'
+              import sqlite3, sys
+
+              src = sqlite3.connect(sys.argv[1])
+              dst = sqlite3.connect(sys.argv[2])
+              src.backup(dst)
+              dst.close()
+              src.close()
+              PY
+              chmod 0644 "$dst"
+              # 30-day retention (twenty pg_dump pattern): one snapshot
+              # per night, oldest fall off.
+              find ${backupDir} -name "ledger-*.db" -mtime +30 -delete
+              echo "crm-backup: wrote $dst"
+            '';
             serviceConfig = lib.mkMerge [
               {
                 Type = "oneshot";
                 User = user;
                 Group = group;
                 ReadWritePaths = [ backupDir ];
-                script = ''
-                  set -euo pipefail
-                  dst="${backupDir}/ledger-$(date +%Y-%m-%d).db"
-                  python3 - "${stateDir}/ledger.db" "$dst" <<'PY'
-                  import sqlite3, sys
-
-                  src = sqlite3.connect(sys.argv[1])
-                  dst = sqlite3.connect(sys.argv[2])
-                  src.backup(dst)
-                  dst.close()
-                  src.close()
-                  PY
-                  chmod 0644 "$dst"
-                  # 30-day retention (twenty pg_dump pattern): one snapshot
-                  # per night, oldest fall off.
-                  find ${backupDir} -name "ledger-*.db" -mtime +30 -delete
-                  echo "crm-backup: wrote $dst"
-                '';
               }
               (serviceOneshotDefaults { })
               ioTier.background

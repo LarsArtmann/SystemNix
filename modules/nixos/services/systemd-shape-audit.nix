@@ -33,6 +33,14 @@
 #    user units (config.systemd.user.services — the hardenUser consumers);
 #    Home-Manager-internal units are evaluated in the HM closure, not here.
 #
+# 5. Unit-level script options (script/preStart/postStart/…) nested inside
+#    serviceConfig. serviceConfig is a FREEFORM attrset serialized verbatim
+#    into [Service]: a script nested there renders line-by-line as garbage
+#    keys (script=/dst=/src=…), the unit gets NO ExecStart, and systemd
+#    REFUSES TO LOAD it — while eval stays green (live incident: crm-backup,
+#    unloadable from its 2026-10-03 cutover deploy until 2026-10-07; backups
+#    silently never ran, docs/status/2026-10-07_15-50_* §a5/§d1).
+#
 # Assertions are forced by `nix flake check` (pre-commit + CI); a bare
 # `nix eval ...toplevel.drvPath` does NOT check them.
 {
@@ -116,6 +124,27 @@
           ) config.systemd.user.services;
         in
         lib.attrNames bad;
+
+      # --- class 5: unit-level script options nested inside serviceConfig ---
+      # None of these are real systemd [Service] keys — inside the freeform
+      # serviceConfig they serialize as garbage lines, so flagging is
+      # false-positive-free by construction.
+      unitScriptKeys = [
+        "script"
+        "preStart"
+        "preStop"
+        "postStart"
+        "postStop"
+        "stopScript"
+        "reloadScript"
+      ];
+      scriptInServiceConfigOffenders =
+        let
+          bad = lib.filterAttrs (
+            _name: svc: builtins.any (k: svc.serviceConfig ? ${k}) unitScriptKeys
+          ) config.systemd.services;
+        in
+        lib.attrNames bad;
     in
     {
       options.services.systemd-shape-audit = {
@@ -179,6 +208,21 @@
             Hardened user services may not expand $HOME (environment stripped).
             Use the systemd specifier %h instead:
               ExecStart = "/bin/app --config %h/.config/app";
+          '';
+        }
+        {
+          assertion = scriptInServiceConfigOffenders == [ ];
+          message = ''
+            systemd-shape-audit: unit-level script option(s) nested inside serviceConfig:
+            ${lib.concatStringsSep ", " scriptInServiceConfigOffenders}
+            serviceConfig is freeform and serializes verbatim into the [Service]
+            section — a script nested there renders line-by-line as garbage keys
+            (script=…, dst=…), the unit gets NO ExecStart, and systemd REFUSES
+            TO LOAD it while eval stays green (crm-backup, 2026-10-03 →
+            2026-10-07: backups silently never ran).
+            Fix: hoist script/preStart/postStart/… to the unit TOP LEVEL
+            (sibling of path/after); keep only real [Service] keys (Type,
+            User, ReadWritePaths, …) inside serviceConfig.
           '';
         }
       ];

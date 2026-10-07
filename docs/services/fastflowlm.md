@@ -42,7 +42,12 @@ queues in-socket, the slot is held from accept to close).
 | ad-hoc shells (`llama-server-rocm`, crush sessions) | 0-2 | human-driven, rare |
 
 **Worst case:** 2+1+1+1+2 = **7 of 8 slots** — within budget but with exactly one
-slot of headroom. If a SECOND always-on LLM consumer is ever added (e.g. a weekly
+slot of headroom. **Slot-hold duration note (2026-10-07):** go-commit now waits
+up to `OPENAI_TIMEOUT=10m` (SystemNix PMA env, pending the go-commit re-vendor)
+— a cold-load commit can hold its slot for the full bridge deadline (480s)
+instead of bailing at 30s, so PMA bursts against a cold backend hold slots
+~16× longer; the budget COUNT is unchanged, but a second always-on consumer
+now has materially less timing headroom during cold loads. If a SECOND always-on LLM consumer is ever added (e.g. a weekly
 digest oneshot overlapping a suggestion batch), audit this table FIRST; beyond 8
 the socket refuses new connections (flm hard-fails at 10). Contention symptoms:
 `fastflowlm@.service` instances exiting with connect errors against :52626 while
