@@ -35,28 +35,35 @@ Actions, nightly 03:23 + push-triggered) union-merges sources, lints, builds
    sources.json with `jq`, runs `merge.py` with `python3`, and shells go via
    `nix shell nixpkgs#go_1_27`; without the PATH fix the first CI run fails
    at `jq` (command not found).
-1. `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh` — mints
+1. forgejo must be UP first (2026-10-07 live-verified prereq): the
+   Samsung-subvol G1 finalize must have landed — until it does,
+   `forgejo.service` (and the whole family) condition-skips on the missing
+   `.subvol-migrated` marker and everything 502s. Owner:
+   `sudo ./scripts/migrate-forgejo-subvol.sh finalize` (+ `nix run .#deploy`),
+   then probe `https://forgejo.home.lan` answers. Open rows:
+   `docs/todo/services.md` G1 entries.
+2. `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh` — mints
    the read-scoped `GIT_CLONE_TOKEN`, creates the hub pull mirror, enables
    Actions, mirror-syncs source repos, dispatches the first run, and stores
    the SERVING-side sync token at
    `/var/lib/forgejo/.eventcatalog-hub-setup/sync-token` (root-only 0600).
    Re-runnable: it rotates the CI + sync tokens instead of failing on the
    unique token-name constraint.
-2. Watch `https://forgejo.home.lan/lars/eventcatalog-hub/actions` — expect
+3. Watch `https://forgejo.home.lan/lars/eventcatalog-hub/actions` — expect
    green + a `dist` branch. First-run watch-list: nix-daemon reachability
    for the DynamicUser runner, `npm` resolving inside the runner PATH
    (nodejs rides it), job-token git-push (PUSH_TOKEN fallback documented in
    the workflow).
-3. Paste the sync token (read from the root-only file, never printed):
+4. Paste the sync token (read from the root-only file, never printed):
    ```
    SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops platforms/nixos/secrets/architecture-catalog.yaml
    ```
    — keep the env-file format `ARCHITECTURE_CATALOG_SYNC_TOKEN=<token>`,
    reading the token via `sudo cat /var/lib/forgejo/.eventcatalog-hub-setup/sync-token`.
-4. `nix run .#deploy` (the module + DNS + smoke §15 are already in-tree),
+5. `nix run .#deploy` (the module + DNS + smoke §15 are already in-tree),
    then `nix run .#post-deploy-check` — §15 stops warning once
    `/var/lib/architecture-catalog/current/index.html` exists.
-5. Converge immediately instead of waiting for the timer:
+6. Converge immediately instead of waiting for the timer:
    `sudo systemctl start architecture-catalog-sync`, then watch Gatus.
 
 ## PLACEHOLDER-inert pre-go-live behavior (by design)
