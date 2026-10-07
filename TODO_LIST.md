@@ -321,6 +321,12 @@
 - [ ] [ready] **Extend the "Caddy Catch-All 404" gatus alert text for the NXDOMAIN shape** (wildcard record removed → DNS failure, not 301/502; current text names only the redirect + cert regression shapes) → [docs/todo/services.md](docs/todo/services.md) (Source: same report §f.18)
 - [ ] [ready] **Smoke the `:80` non-subdomain branch** (bare-IP / foreign-Host HTTP still lands on the dash redirect — unprobed; one more post-deploy-check line) → [docs/todo/services.md](docs/todo/services.md) (Source: same report §f.20)
 - [ ] [ready] **Sweep dns-blocker-config.nix for comments contradicting adjacent config** (the 404 session found one of that exact class — a stale "NXDOMAIN" note beside the wildcard record, fixed same session; check for siblings) → [docs/todo/services.md](docs/todo/services.md) (Source: same report §f.21)
+- [ ] [ready] **browser-history runbook: document machine labels + annotate the stale 09-17 hold bullet + live-probe recipe** (capability verified live 2026-10-07 but undocumented; runbook still reads lock `0971fe9c` as current vs `3ebbfbfee`) → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-07_08-48_browser-history-device-labels-verification-session.md §f.2)
+- [ ] [ready] **browser-history: verify cross-machine visit dedup upstream** (visit ID = `url+ts+browser` may exclude machine_id → same-second same-URL visits from two machines could silently merge; read upstream derivation + dedup tests first) → [docs/todo/services.md](docs/todo/services.md) (Source: same report §f.3)
+- [ ] [ready] **browser-history: confirm the RUNNING generation is lock `3ebbfbfee`** (the 08-48 session verified the rev via flake.lock + git, never off the live unit) → [docs/todo/services.md](docs/todo/services.md) (Source: same report §f.4)
+- [ ] [ready] **browser-history: eval-assert provisioner token label == agent machineId** (two independent sources for the same identity today; upstream drift would silently split them) → [docs/todo/services.md](docs/todo/services.md) (Source: same report §f.5)
+- [ ] [ready] **browser-history: VM-test step for machine attribution** (tests cover agent freshness, not the `?machine=` e2e wiring) → [docs/todo/services.md](docs/todo/services.md) (Source: same report §f.7)
+- [ ] [decision] **browser-history second machine (macOS) agent** — timing + machineId label convention (remote agents need their own `bh_` token) → [docs/todo/services.md](docs/todo/services.md) (Source: same report §f.8/§g.3)
 
 ### upstream
 
