@@ -1,0 +1,119 @@
+# Status: Browser-History Dispatch Close-Out — Machine Labels, AD-2 Verdict, VM Test Green
+
+**Session:** 2026-10-07, ~09:40–10:27 CEST (single dispatch session; "READ, UNDERSTAND … execute" on the five `[ready]` browser-history harvests from the 08-48 session)
+**Scope discipline:** ONLY this session's work + what it directly noticed. No unrelated research (the parallel bank-sync/overview session's work is flagged where it touched my tree, never adjudicated).
+**Author:** Crush agent session (close-out of `docs/status/2026-10-07_08-48_browser-history-device-labels-verification-session.md`, whose §h table is the per-item evidence anchor)
+
+---
+
+## a) FULLY DONE
+
+| # | Item | Evidence |
+| --- | --- | --- |
+| a1 | **Direct health probe** (closes the 08-48 §d "server healthy rested on indirect evidence" gap): `GET https://history.home.lan/health` → 200, `status:ok`, `db:ok`, `agents.active=1`, `lastIngestAt=08:00:39Z`, uptime 26 min (post-restart health, not stale luck) | fetch output 08:06:19 UTC, recorded in 08-48 report §h |
+| a2 | **Running-generation rev proof** (closes §f.4): live unit `/etc/systemd/system/browser-history.service` → `ExecStart=/nix/store/999dlpy9…-browser-history-server-3ebbfbf/bin/…` — the running generation IS lock `3ebbfbfee`, read off the machine, not inferred from flake.lock | `readlink` + unit ExecStart, §h |
+| a3 | **AD-2 dedup verdict** (closes §f.3, REVERSES the prior session's data-loss hypothesis): upstream `domain/visit/visit_data.go:61-65` states machine_id is "Attribution only — never part of the deterministic VisitID hash (AD-2)"; guard test `api/dedup_test.go::TestDedup_SameVisitFromTwoMachines_ProducesOneRecord` pins one-row + first-dispatch-wins (browser-sync replication semantics, deliberate). NOT a bug; nothing filed upstream; semantics documented in the runbook instead | upstream source read (see b2 for the rev nuance) + VM step 12 behavioral proof at the deployed rev |
+| a4 | **Single-source machineId binding** (§f.5): `modules/nixos/services/browser-history.nix` dropped the `. or "evo-x2"` fallback — the binding reads the upstream option directly (required, no default; evo-x2 sets `machineId = "evo-x2"` at configuration.nix:731). An upstream option rename now FAILS EVAL LOUDLY instead of silently relabeling provisioned tokens while visits keep the header value | committed (in HEAD 52746d00 via daemon sweep); `nix eval .#nixosConfigurations.evo-x2.config.services.browser-history-agent.machineId` → `"evo-x2"` |
+| a5 | **VM-test machine-attribution steps** (§f.7): `tests/test-browser-history.nix` steps 11-12 — provisioned-token label == `machineId` option (`SELECT label FROM agent_tokens` = `vm-test`); header-stamped `/ingest` lands `machine_id=machine-a` in `visits`; re-ingest of the SAME visit under `machine-b` stays ONE row keeping `machine-a` (AD-2 proven on the deployed NixOS wiring, not just upstream Go tests) | full suite `nix build .#checks.x86_64-linux.browser-history` → **rc=0** |
+| a6 | **Pre-existing VM failure root-caused + fixed** (bonus): step 2 died `curl -sf /health` (HTTP ≥400 AFTER `wait_for_open_port` passed) — since `AGENT_FRESHNESS` (lock `10fe5d8a+`) a server with no agent ingest answers 503 "degraded"; demanding 200 is exactly the liveness-deadlock class the module's `waitServerReady` gate documents. Step 2 now accepts any answered status; new step 7.5 asserts the agent's empty-batch ingest heals the server to 200. The browser-history VM test is OFF the known-failing list (6 → 5) | first run traceback 08:13:22Z; re-run rc=0; CHANGELOG Fixed bullet |
+| a7 | **Runbook refresh** (§f.2/§f.6/§f.17): `docs/services/browser-history.md` gained the machine-labels bullet (full chain option → `--machine-id` → `X-Machine-ID` → `visits.machine_id` → dashboard dropdown/`?machine=`/`?browser=`), the AD-2 verdict, the agent live-probe recipe (textfile freshness / backup-DB + `nix shell nixpkgs#sqlite` workaround / fetch-not-curl / rev-from-store-path), and a lock-note superseding the 09-17 hold bullet (kept for the uid-drift lesson). FEATURES.md Browser History row extended | file diffs (daemon-committed) |
+| a8 | **Close-out surfaces all landed, no drift:** 08-48 report §h addendum; `docs/todo/services.md` 5 rows → `[x]` with verdicts (asks preserved); `TODO_LIST.md` 5 queue rows PRUNED; CHANGELOG Added + Fixed bullets; VM-triage row corrected 6 → 5 on BOTH surfaces (pipeline.md + TODO_LIST one-liner) | `scripts/check-todo-system.sh` → "OK: TODO queue/library structure clean" |
+| a9 | **Formatter misfire recovered with zero net damage** (see d1 for the near-miss itself): unpinned-alejandra whole-file rewrite reverted; repo `nix fmt` confirms 0 changes — committed state is canonical | `nix fmt <2 files>` → "formatted 2 files (0 changed)" |
+| a10 | **Validation battery:** targeted evals green (machineId option, check name); one VM build rc=0; todo-system checker clean; no full `nix flake check` (deliberate — see c7) | command outputs this session |
+
+---
+
+## b) PARTIALLY DONE
+
+1. **VM machine-coverage vs the ORIGINAL queue ask (f.7).** The ask said "dashboard/REST `?machine=` filter returns only that machine's visits"; I delivered DB-level (`machine_id` column) + token-label + AD-2 dedup. The filter SURFACE itself (auth-gated dashboard) is not exercised in the VM — it needs an auth harness (session/CSRF) the test doesn't have. Upstream `dashboard_machine_test.go` covers filter logic; prod UI check rides the existing `[blocked:user]` login row. Remaining: M (auth harness in VM), deliberately not harvested this pass — reason recorded in §f item 3.
+2. **AD-2 citation rev nuance (b2 → harvested as f1).** I read the upstream source at the local checkout HEAD `f597e1c6`, NOT pinned at the deployed lock rev `3ebbfbfee` (the 08-48 session was careful about exactly this). Mitigation: the VM test builds FROM the lock rev via the flake input, so the AD-2 BEHAVIOR is proven at `3ebbfbfee` empirically (step 12 green); only the comment/test CITATIONS are unpinned. Follow-up harvested (§f item 1).
+3. **Deploy state:** the machineId binding + VM fixes are committed but UNDEPLOYED. Behaviorally identical on evo-x2 today (option is set; the change only bites on a future upstream rename), and the VM test proves the next deploy's payload. Deploy cadence is owner-driven; no urgency. S residual, rides normal deploys.
+4. **Prod dashboard machine UI render:** still code+DB verified only (dropdown, `evo-x2` row, `?machine=` click-through, Aug 14 → Oct 5 range) — blocked on your login (§g.1).
+5. **Daemon-commit attribution:** my files landed across 3+ heuristic daemon commits (93cddf1a / 52746d00 / 7b665b08) interleaved with the parallel session's. I deliberately did NOT amend-forward (the daemon-race policy requires exclusivity verification per commit; the marginal value didn't justify the risk mid-session with another session live). History hygiene is partial by choice.
+
+---
+
+## c) NOT STARTED
+
+1. **The other 5 failing VM tests** (`disko-layout`/`hermes`/`hot-user-caches`/`crush-hot-db`/`restic-app-dumps`) — owner-gated triage row, untouched (`[blocked:user]`).
+2. **Second machine (macOS) agent** — `[decision]` row untouched; needs your timing + label convention.
+3. **Your §g trio from the 08-48 session** — still unanswered (dashboard render / "devices" intent / macOS plans); re-asked below.
+4. **Per-machine freshness gauges** (`browser_history_agents_active{label=…}`) — prior §f.9, deliberately parked until a second machine exists.
+5. **Upstream brainstorm residue** (machineId free-text validation, `/devices` naming UX, `machine_id` index, ListMachines ordering test, auth-guard test, DOMAIN_LANGUAGE glossary, f.20-30 list) — all explicitly NOT HARVESTED in the 08-48 report with reasons; unchanged.
+6. **Gatus-side probe of the "Browser History Agent Data" check** (prior §f.13) — not done; the collector output is green, gatus eval unprobed.
+7. **Full `nix flake check` this session** — deliberately SKIPPED: (i) the freeze-21/22/25 reports identify verification batteries (incl. VM-test builds + flake evals) as the freeze driver class, and I already ran one VM build; (ii) the tree carried the parallel session's dirty `bank-sync.nix`, so a failure wouldn't cleanly attribute. Targeted evals + the one VM build were the right scope; a quiescent-window full check remains open.
+
+---
+
+## d) TOTALLY FUCKED UP
+
+1. **THE FORMATTER MISFIRE (this session's real near-miss; recovered, net damage zero, process fault real).** I ran UNPINNED `nix run nixpkgs#alejandra -- --check` instead of the repo's canonical `nix fmt` (treefmt-pinned alejandra). It wanted reformatting, and I APPLIED it: whole-file rewrites (1486 lines in the module, 96 in the test) from a version-behavior drift vs the repo pin — in a SHARED multi-session tree, a full-file reformat diff would poison review and fight CI. Worse, the recovery command CHAINED the safety verification (`git show HEAD:… | rg` for my edits) and the destructive `git restore` into ONE compound command — I could not have aborted if the verification had failed. It only ended cleanly because the auto-commit daemon had already swept my semantic edits into HEAD (52746d00), which I confirmed in the same breath as the restore executed. If the daemon had been 10 minutes slower, `git restore` would have silently destroyed steps 11-12 + the fixes (reconstructable from my known edit strings, but only because I wrote them — that is luck-adjacent, not process). **Root cause:** reached for the global-store tool out of habit instead of the repo's documented formatter first. **Mitigation landed:** none in-tree yet — harvested as §f item 2 (CONTRIBUTING note); the sequencing lesson is §e2.
+2. **What I FORGOT (honest list):** (i) the rev-pin nuance on AD-2 citations (b2) — the one correctness gap in an otherwise rev-careful session lineage; (ii) the FEATURES.md `Updated:` header stamp — I extended the Browser History row but left the file header claiming `Updated: 2026-10-06` (fixing on sight during this report's authoring, per the trivial-staleness owner permission); (iii) I did not pre-check whether the VM test was even reaching MY steps before writing them — the first run failed two steps earlier, which is fine (it validated the suite honestly) but my step code was untested-by-VM until the second run.
+3. **Currently-broken inventory from this session's vantage:** nothing new is broken by this session. The pre-existing broken thing it touched (browser-history VM test) is now GREEN. The 5 remaining failing VM tests are pre-existing and owner-gated (c1). The 86 UNHARVESTED-report warnings are pre-existing cross-session debt (was 85 at session start; the +1 is the parallel session's own 09-48 report — not mine to adjudicate).
+
+---
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Formatter discipline (harvested):** ALWAYS `nix fmt` (the treefmt pin); NEVER `nix run nixpkgs#alejandra` or any unpinned formatter — the versions behave differently and the repo pin is the only canonical one. One-line CONTRIBUTING note, harvest-ready (§f item 2).
+2. **Never chain a destructive command with its own safety verification (process lesson).** Verify-then-act must be SEQUENCED commands with a human-readable checkpoint between them. Candidate for `crush-config` `references/lessons.md` (cross-project) — needs a commit there, owner-gated; recorded here until then.
+3. **Cite the rev when citing upstream source.** "visit_data.go:62 says X" is only as true as the checkout it was read at. One `git show <rev>:<path>` habit (or stating the rev inline) closes it.
+4. **VM tests are freeze-battery members.** This session ran 2 VM builds + several evals on a box whose freeze autopsies name exactly this class. Batch VM verification in quiet windows; prefer targeted evals where they suffice (this session got that half right — one VM build, targeted evals, no full flake check).
+5. **Queue asks should name the testable surface.** f.7's ask ("dashboard/REST filter") over-scoped what a VM can verify without an auth harness; DB-level + label-level was the honest NixOS-wiring surface. Writing the ask with the surface split (VM-testable vs prod-login-verifiable) would have made "done" unambiguous.
+6. **Daemon-race awareness worked, keep it:** content-pin at session start caught the foreign `bank-sync.nix` + `systems/evo-x2.nix` + `docs/todo/upstream.md` changes immediately; nothing foreign was touched, all my edits re-read after the mid-session `file modified` rejection. This is the policy working — no change needed, just kept as the standard.
+
+---
+
+## f) Top ~40 things we should get done next (ranked; harvest disposition explicit)
+
+**Harvest contract:** items 1-2 are THIS report's direct follow-ups and are HARVESTED NOW (services.md / pipeline.md + TODO_LIST one-liners). Items marked TRACKED already have queue/library rows (no re-harvest). Items marked PARKED have explicit reasons.
+
+| # | Task | Impact | Effort | Category | Disposition |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Pin-check AD-2 at the deployed rev: `git show 3ebbfbfee:api/dedup_test.go` + `visit_data.go` in `~/projects/browser-history` — confirm the comment + guard test exist at `3ebbfbfee` (behavior already VM-proven there); then pin the revs in the runbook's upstream citations | Medium | S | Quality | **HARVESTED NOW** → services.md `[ready]` + TODO_LIST one-liner |
+| 2 | Document formatter rule in `docs/CONTRIBUTING.md`: "never `nixpkgs#<formatter>` — always `nix fmt` (treefmt pin)"; cite this session's 1486-line unpinned-alejandra near-miss | Medium | S | Documentation | **HARVESTED NOW** → pipeline.md `[ready]` + TODO_LIST one-liner |
+| 3 | VM-level `?machine=` filter coverage (needs an auth/CSRF harness in the VM, or a token-authed REST probe) | Low-Med | M | Quality | **NOT HARVESTED** — upstream covers filter logic; prod UI rides item 4's login row; auth harness is a project of its own |
+| 4 | Run the browser-history login e2e (dashboard dropdown, `evo-x2` row, filter click-through, Aug 14 → Oct 5 range) — the only acceptance test nobody has run | High | S | Verification | TRACKED — `[blocked:user]` login row (services.md:58) |
+| 5 | Deploy when next convenient: carries machineId binding + VM fixes (behaviorally identical on evo-x2 today) | Low | S | Deploy | PARKED — owner deploy cadence; no row needed |
+| 6 | Triage the 5 remaining failing VM tests with provenance (disko-layout / hermes / hot-user-caches / crush-hot-db / restic-app-dumps) | High | M | Bug | TRACKED — `[blocked:user]` triage row (pipeline.md:18, updated 6 → 5 this session) |
+| 7 | Second machine (macOS) agent: timing + machineId label + its own `bh_` token | Medium | S | Feature | TRACKED — `[decision]` row (services.md:307) |
+| 8 | Drop-check the 4 module-surface vendorHash shims (project-discovery-daemon, health-dashboard, visionreviewd, discordsync) | Medium | M | Cleanup | TRACKED — upstream.md `[ready]` |
+| 9 | Delete the 9 dead `inputs.systems.follows` lines | Low | S | Cleanup | TRACKED — pipeline.md `[ready]` |
+| 10 | Post-deploy-check: poll browser-history `/health` + drop deploy.sh explicit restart | Low | S | Quality | TRACKED — pipeline.md `[ready]` |
+| 11 | CSRF double-submit registration-gate smoke (403 wall vs closed-gate discrimination) | Medium | S | Security | TRACKED — services.md `[ready]` (line 147) |
+| 12 | Gatus check on `browser_history_users` (alert on decrease/increase past baseline) | Medium | S | Monitoring | TRACKED — services.md `[ready]` (line 148) |
+| 13 | `/auth/import` unauthenticated-reachability audit + cqrs-htmx user-creation sweep | High | M | Security | TRACKED — services.md `[ready]` (line 150) |
+| 14 | Consume the importUsers gating fix (cqrs-htmx tag + browser-history bump chain) | Medium | M | Bug | TRACKED — upstream bump chain rows |
+| 15 | Count-gap read-model fix consume (upstream fix queued after 2026-09-18 probe) | High | M | Bug | TRACKED — upstream.md |
+| 16 | `expires_at` session-reaper schema error | Low | M | Bug | TRACKED — FEATURES known-gaps |
+| 17 | DeleteUser admin surface upstream (8 zombie duplicate users; `browser_history_users 9`) | Low-Med | M | Feature | TRACKED — duplicate-identity runbook bullet |
+| 18 | Revoke the 4 test bring-up users (user, dashboard) | Low | S | Cleanup | TRACKED — `[blocked:user]` (services.md:65) |
+| 19 | AGENT_FRESHNESS quiet-day 503 upstream heartbeat | Medium | S | Bug | TRACKED — services.md `[ready]` |
+| 20 | Hot-tier (Samsung) browser-history DB wave (Phase-2, owner sudo windows; wave 4 of 5) | Medium | M | Storage | TRACKED — hot-db wave plan |
+| 21 | CHANGELOG row for the 2026-10-07 vendorHash wave (skeleton already written in the row) | Low | S | Documentation | TRACKED — services.md `[ready]` (line 301) |
+| 22 | Refresh the SSO-layer table in docs/agents/sso-dns.md vs the registry | Low | M | Documentation | TRACKED — TODO_LIST:724 |
+| 23 | voice/whisper dns-local additions + exemption drop when voice-agents lands | Low | S | Feature | TRACKED — `[watch]` TODO_LIST:725 |
+| 24 | Freeze-class enforcement leg: admission gate for interactive nix batteries (the freeze-14/15/20/21/22/25 ask) | Critical | L | Stability | TRACKED — TODO_LIST:93 (the whole ask) |
+| 25 | docs-health pass over the 86 UNHARVESTED §f-bearing reports (harvest-or-explicitly-park each) | Medium | L | Documentation | PARKED — standing cross-session debt; one pass, not per-session |
+| 26 | Per-machine freshness gauges (`…_active{label=…}` + label in textfile) | Low-Med | S | Monitoring | PARKED — revisit when item 7 lands (08-48 f.9) |
+| 27 | machineId free-text validation upstream (typo = phantom machine row) | Low | M | Feature | PARKED — upstream brainstorm (08-48 f.10) |
+| 28 | `/devices` passkey naming UX upstream (no more "Unnamed device") | Low | M | UX | PARKED — upstream brainstorm (f.11) |
+| 29 | Index `machine_id` for ListMachines GROUP BY (fine at 4219 rows) | Low | S | Perf | PARKED — premature (f.12) |
+| 30 | Probe Gatus itself for the "Browser History Agent Data" check (collector green ≠ gatus green) | Low | S | Verification | PARKED — folds into any next health pass (f.13) |
+| 31 | Verify ListMachines most-recent-first ordering has an upstream test | Low | S | Quality | PARKED — ride along item 1's upstream dig (f.14) |
+| 32 | Pin dashboard auth-guard on machine-filter routes with a test (unauth `/?machine=` leak) | Low | S | Security | PARKED — test-only nicety (f.15) |
+| 33 | DOMAIN_LANGUAGE.md glossary upstream: label vs machine vs device vs credential | Low | S | Documentation | PARKED — upstream brainstorm (f.16) |
+| 34-40 | Machine-UX brainstorm residue: filter-state persistence; per-machine colors; machine column in visits table; token-label ↔ machine-id lint upstream; per-machine `/metrics` labels; multi-agent README recipe; count badge / per-machine CSV / rename-migration story / new-machine alert / i18n | Low | M | Feature | PARKED — ROADMAP fuel (f.20-30); tq must not see these |
+| 41 | Optional: attribute today's ~07:40 UTC browser-history service restart (generation-link/journal read) — I deliberately did not research it mid-session (out of scope) | Low | S | Verification | PARKED — see §g.2 |
+
+---
+
+## g) QUESTIONS I CANNOT ANSWER MYSELF
+
+1. **Did the dashboard actually render machine labels?** On your next login to `history.home.lan`: does the "All machines" dropdown appear, does the `evo-x2` row show a sane count, does clicking it filter (`/?machine=evo-x2`), and does the range read Aug 14 → Oct 5? This simultaneously closes the standing 03-02 acceptance test. (I cannot authenticate; code + DB + VM all say yes.)
+2. **Was today's ~07:40 UTC browser-history service restart an intended deploy** (yours or the parallel bank-sync session's), or something you want looked at? My health probe caught it mid-uptime and everything was green after — I deliberately did not chase whose deploy it was (out of this session's scope), but if nothing of yours was in flight, that restart deserves a journal look.
+3. **Second machine (macOS):** is it actually planned, and if yes — what `machineId` label (e.g. `lars-macbook-air`), and do you want its `bh_` token minted by you in the dashboard (paste into sops-free env) or a runbook recipe for a remote provisioner? Everything is one knob away per the runbook; only timing/naming is yours.
+
+---
+
+**Next action:** WAITING FOR INSTRUCTIONS. Items f1-f2 harvested at authoring time per the TODO contract; everything else explicitly dispositioned above.

@@ -1,0 +1,74 @@
+# Status: overview/mr-sync lock-move vendorHash fix + bank-sync shim drops, deploy unblocked
+
+**2026-10-07 10:22 CEST · scope: the user's `nix flake update nsfw-classifier mr-sync overview` + `nh os switch` failure (09:51 build, `--keep-going`) and this session's fix. Same class as the 06-50/06-59/09-48 vendorHash-wave thread, third wave of the day. A parallel session was ACTIVE on this tree throughout (browser-history work + further lock moves) — every green here is point-in-time.**
+
+**TL;DR:** Three root failures, three different mechanisms, all fixed: (1) **overview** — the lock move to `4bb130c` invalidated the `overviewVendorHashShim`; lock-free probe proved upstream's fresh `vendorHash.nix` (`PxedSD8g…`) can NEVER match our graph (root-nixpkgs follow diverges the toolchain), so the shim is structurally required → RE-PINNED to the first-hand got-hash `GkGHKtRQ…`. (2) **mr-sync** — upstream `3b579663` dropped its treefmt-nix input; our follow tripped an eval warning → stale follow REMOVED (warning gone from eval). (3) **bank-sync** — the lock had silently moved past the morning session's `68ceffa3` to `4890be63`, where upstream FIXED their own vendorHash (`ax8CYIwS…` = our got-hash, flake.nix:424) → both consumer shims DROPPED (NixOS module + HM), explicit package pins kept. evo-x2 toplevel green ×3 (surviving a mid-session lock move to `0a8c9c98`/helper `ad423c8f`), §11 gate passed ×2, statix/deadnix/treefmt clean, `nix flake check --no-build` clean. **Deploy NOT run (user sudo-gate).** Bonus finding: bank-sync's lock node carries a doctrine-violating go-nix-helpers alias (latent relock-time FOD breaker) — queued `[ready]` in both surfaces.
+
+---
+
+## What happened, with evidence
+
+| # | Event | Evidence |
+| - | ----- | -------- |
+| 1 | User update moved mr-sync (`27d1f1de`→`3b579663`) + overview (`fd5a612a`→`4bb130c`) + nsfw-classifier; `nh os switch --keep-going` failed: overview go-modules FOD specified `nzYv48yC…` (= our 2026-10-05 shim) vs got `GkGHKtRQ…`; cascade through unit-overview → system-units → etc → activate → toplevel | user paste, 09:51:55 build |
+| 2 | Overview upstream probe at locked rev `4bb130c` (`nix flake prefetch`, lock-free): upstream `vendorHash.nix` = `PxedSD8g…` ≠ our got `GkGHKtRQ…` — upstream pinned for ITS OWN lock; our root-nixpkgs follow diverges the Go toolchain → shim structurally required, re-pin not drop | store path `hq8wq7zx…-source`, grep flake.nix:188 |
+| 3 | Fix 1: `overviewVendorHashShim` re-pinned to `GkGHKtRQ…` (overlays/linux.nix:236) with fresh provenance + drop condition | commit `0e06e1dc` (daemon-swept, contents verified: my 2 files + user's lock + morning report, no foreign files) |
+| 4 | Fix 2: dangling `treefmt-nix.follows` removed from the mr-sync input block (upstream `3b579663` dropped the input; update log line "Removed input 'mr-sync/treefmt-nix'"); eval warning gone from all subsequent builds | flake.nix mr-sync block; `rg "warning: input"` over later build logs = empty |
+| 5 | Second `--keep-going` enumeration (rule: enumerate ALL root failures in one pass) surfaced a FOURTH-wave failure the first build hadn't reached: bank-sync go-modules FOD specified `pE2+3UF1…` (= the morning session's 09:48 re-pin at rev `68ceffa3`) vs got `ax8CYIwS…` | /tmp build log 1st rerun |
+| 6 | Lock attribution: committed HEAD lock already held bank-sync at `4890be63` (≠ morning's `68ceffa3`) — a post-morning update moved it; upstream probe at `4890be63`: flake.nix:424 declares EXACTLY `ax8CYIwS…` → upstream ran the vendorHash dance themselves → same verdict as the 09:48 buildflow case: DROP the shims | `git show HEAD:flake.lock` jq; store `ydm8mwlm…-source` |
+| 7 | Fix 3: both bank-sync shims DROPPED (modules/nixos/services/bank-sync.nix + systems/evo-x2.nix), explicit `package` pins kept, drop-condition/provenance comments rewritten | commits `97458786` + `30adebf7` (daemon-swept; `git show --stat` exclusivity-verified: only my files) |
+| 8 | statix caught my now-useless parens (`lib.mkDefault (…overrideAttrs…)` collapsed to `.default`) — fixed in `30adebf7`; treefmt reformatted bank-sync.nix once (1 changed, no foreign files) | statix clean; `nix fmt` output "formatted 33 files (1 changed)" |
+| 9 | MID-SESSION the parallel session moved the lock AGAIN (bank-sync `4890be63`→`0a8c9c98`, go-nix-helpers `5d02c56c`→`ad423c8f`, committed `6216e69d` together with THEIR browser-history.nix edits) → toplevel REBUILT green against the new lock; upstream re-probe at `0a8c9c98`: STILL `ax8CYIwS…` at flake.nix:424 → the drop holds at the live rev | `nix flake prefetch 0a8c9c98` → same hash line; NIX_EXIT=0 |
+| 10 | Final gates: toplevel ×3 green, §11 `--section-11-only` "all deploy go-modules FODs cached" ×2, statix/deadnix clean on touched files, `nix flake check --no-build` no errors | command outputs this session |
+| 11 | Bonus finding (not fixed, queued): lock's `bank-sync` node ALIASES the root go-nix-helpers (`"go-nix-helpers": "go-nix-helpers"` string edge) while flake.nix declares a deliberate NON-follow (2026-08-18 `4BsvdHH…`-vs-`gRJEQt…` trap) and the infra-follows group header bans helper-follows into Go flakes. The alias survives rev updates via lock-edge reuse (observed through BOTH of today's bank-sync moves) and re-derives only on clean relock/input-set change → latent deploy blocker | `jq '.nodes["bank-sync"].inputs["go-nix-helpers"]'` = string; `git log -S` archaeology: the follow declaration flip-flopped across 8+ commits, currently absent |
+
+## a) FULLY DONE
+
+1. All three root failures diagnosed to their hash SOURCE (shim vs upstream declaration) via lock-free upstream probes at the exact locked revs — zero guessed hashes; every hash in this report is first-hand.
+2. overview shim re-pinned (`GkGHKtRQ…`), drop condition + structural-cause documented in the comment.
+3. mr-sync stale treefmt-nix follow removed; eval warning verified gone.
+4. bank-sync shims dropped on BOTH surfaces with pins kept and mirrored-comment discipline; drop verdict re-verified at the SECOND post-fix lock rev (`0a8c9c98`).
+5. Verification to the question asked: "does the deploy build under the CURRENT lock?" — YES, three times, including once after a mid-session lock move by the parallel session.
+6. Canonical §11 gate produced (twice), closing the 09:48 report's §d.1 evidence-class gap.
+7. Daemon-race discipline: every daemon-swept commit exclusivity-checked via `git show --stat` before proceeding; no foreign files in my commits; the parallel session's browser-history work left untouched and unverified-by-me.
+8. Todo corrections without drift: morning's now-moot `[blocked:push]` bank-sync row RESOLVED in BOTH surfaces (TODO_LIST.md + docs/todo/upstream.md), the a7868a7-sweep row annotated, the go-nix-helpers bump row annotated (its trigger FIRED today — the bank-sync green rebuilds ARE the consumer-FOD probe it asks for).
+9. New finding harvested at authoring time: bank-sync helper-alias contradiction queued `[ready]` in BOTH surfaces with the exact relock trigger semantics.
+
+## b) PARTIALLY DONE
+
+1. **Deploy unblock** — the tree builds green; the DEPLOY has not run (user sudo-gate). On this tree (3 lock waves today + an active parallel session), re-run §11 right before deploying.
+2. **mr-sync override warning family** — only mr-sync's follow was dangling after this update; the other `treefmt-nix.follows` declarations were not individually re-audited (they produced no warnings, which is the eval-time signal, but a warning-free eval is not an audit).
+3. **darwin** — the dropped bank-sync shims were evo-x2 surfaces and overlays/linux.nix is Linux-only, so darwin risk is LOW, but the darwin toplevel was not evaled; next Mac deploy is the first proof (standing gap from the 09:48 report, unchanged).
+
+## c) NOT STARTED
+
+1. Post-deploy battery: bank-sync CLI on PATH + version assert (WHICH entity serves), overview dashboard smoke, bank-sync-paperless canary legs — all deploy-time (covered by the existing post-deploy rows; not duplicated).
+2. rpi3-dns toplevel eval on the new lock (bank-sync/overview likely unconsumed there — unverified; §11 is evo-x2-hardcoded).
+3. `nix flake check --all-systems` — deliberately not run (CI skips darwin by design; documented).
+4. nsfw-classifier: the user's update moved its lock node but NO nsfw-classifier drv appeared in any build list → cache-hit or unbuilt on evo-x2 — not individually probed. The §11 gate covers deploy FODs, which passed.
+
+## d) TOTALLY FUCKED UP
+
+1. **Trusted the morning report's rev citation over the live lock.** I started from `68ceffa3` (the 09:48 report's bank-sync rev) and only discovered the move to `4890be63` when the rebuild failed — one wasted build cycle. The report was TWO lock moves stale within two hours. Live-state-first is the rule; I applied it to upstream probes but not to our own lock before the first rebuild.
+2. **Nearly repeated the report's critique:** after fixing overview I reached for "re-pin bank-sync" reflexively; the enumeration + upstream probe protocol is what forced the DROP verdict. Protocol held, but the reflex shows the wave fatigue is real — 3 same-class fixes today, each with a DIFFERENT correct verdict (re-pin / remove-follow / drop).
+3. **One tool-discipline stumble:** edited flake.nix via sed-view instead of View-first — edit rejected, cost a round trip. Zero damage, pure process slip.
+4. **Lint debt swept mid-flight:** the daemon committed my bank-sync.nix paren violation (`97458786`) before statix caught it; healed in `30adebf7`. Two heuristic commits now carry a fix-then-fixes-it pair — noise a reviewer must diff through; per-file statix BEFORE landing would have kept it to one commit.
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Lock-rev freshness check as step zero of ANY vendorHash triage:** `jq` the failing node's locked rev from the CURRENT flake.lock before reading ANY report — on a multi-session tree, reports' revs have a half-life of hours.
+2. **Same-class ≠ same-verdict discipline held today only because of the probe protocol** — keep "upstream probe at locked rev → drop-or-repin" as the non-negotiable gate; the verdict distribution (2 drops, 1 re-pin, 1 follow-removal in one day) is itself the argument.
+3. **The §11 gate caught nothing today because it ran AFTER my raw builds** — its real value is deploy-time enumeration; running it BEFORE the first fix (gate-first ordering, the 09:48 report's §e.1) would have surfaced bank-sync without the extra cycle.
+4. **Parallel-session lock churn makes every green point-in-time** — the pre-deploy §11 rerun (b.1) should be a hard rule on multi-session days, not a suggestion.
+
+## f) Up to 50 things we should get done next
+
+*Session-direct (harvested at authoring time):*
+
+1. ~~bank-sync helper-alias contradiction~~ → HARVESTED: `[ready]` row in TODO_LIST.md + docs/todo/upstream.md (queue↔library, no drift).
+2. ~~morning's bank-sync `[blocked:push]` row now moot~~ → HARVESTED: RESOLVED annotation in both surfaces + a7868a7-sweep row + go-nix-helpers trigger-fired annotation.
+3. Pre-deploy §11 rerun immediately before `nix run .#deploy` on this tree → folded into b.1; no separate row (covered by the deploy script running the full gate anyway).
+4. Post-deploy smoke battery → NOT re-queued: the existing post-deploy rows from the 09:48 report (§b.4) cover the same deploy; deliberately not duplicated.
+5. darwin toplevel eval → NOT queued: standing low-risk gap already recorded in two prior reports; next Mac deploy proves it.
+
+*Older waves:* the discordsync/overview/file-and-image-renamer/crush-daily shims in overlays/linux.nix remain subject to the `[ready]` drop-check row (docs/todo/upstream.md, browser-history-precedent row) — unchanged scope, not re-queued.

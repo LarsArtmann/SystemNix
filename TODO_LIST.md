@@ -324,6 +324,7 @@
 - [ ] [ready] **Smoke the `:80` non-subdomain branch** (bare-IP / foreign-Host HTTP still lands on the dash redirect — unprobed; one more post-deploy-check line) → [docs/todo/services.md](docs/todo/services.md) (Source: same report §f.20)
 - [ ] [ready] **Sweep dns-blocker-config.nix for comments contradicting adjacent config** (the 404 session found one of that exact class — a stale "NXDOMAIN" note beside the wildcard record, fixed same session; check for siblings) → [docs/todo/services.md](docs/todo/services.md) (Source: same report §f.21)
 - [ ] [decision] **browser-history second machine (macOS) agent** — timing + machineId label convention (remote agents need their own `bh_` token) → [docs/todo/services.md](docs/todo/services.md) (Source: same report §f.8/§g.3)
+- [ ] [ready] **browser-history: pin-check the AD-2 citations at the deployed rev `3ebbfbfee`** (source+test were read at checkout HEAD, behavior already VM-proven at the lock) → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-07_10-27_browser-history-dispatch-closeout-machine-labels-ad2-vm-green.md §f1)
 
 ### upstream
 
