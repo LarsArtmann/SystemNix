@@ -86,6 +86,16 @@ regexes = [
   # allowlist regexes match the captured secret region, not the full line
   # (the `user_id:"<ULID>"` line-shape form did NOT match — verified live).
   '''01M2X007JZB9Y1WDYF35AD5GSD''',
+  # Pocket ID user id (the ORIGINAL data-owner row — sibling of 01M2X007…)
+  # quoted verbatim from the oauth_login audit line in
+  # docs/status/2026-10-07_03-02 (:101) and the browser-history runbook — a
+  # ULID identifier, not a credential; landed via daemon sweep c245f3f6 past
+  # the hook (generic-api-key, entropy 3.79) and wedged every manual commit's
+  # staged-tree scan. Adjudicated plain identifier per the
+  # docs/todo/security.md triage protocol → fix the scanner. Literal form:
+  # same region-matching caveat as above. Push-protection concern void: the
+  # sibling ULID already rides origin/master (d53706c3).
+  '''01M000JA6P0VR4Q1BNEPSJN3ME''',
 ]
 
 # Detector-coverage fixtures (tests/fixtures/gitleaks/, consumed by the
