@@ -30,8 +30,7 @@ let
   snapshots = import ../platforms/nixos/system/snapshots.nix;
   # snapshots.nix sets services.rust-cache.rustProjects (target/ symlink
   # tmpfiles), whose option lives in this flake-parts wrapper module.
-  rustCache =
-    (import ../modules/nixos/services/rust-cache.nix).flake.nixosModules.rust-cache;
+  rustCache = (import ../modules/nixos/services/rust-cache.nix).flake.nixosModules.rust-cache;
   # btrbk stub: logs the invocation, exits /tmp/btrbk-rc (default 0). Written
   # over ${pkgs.btrbk}/bin/btrbk in the VM because the module's
   # writeShellApplication wrapper prepends its runtimeInputs to PATH ahead
@@ -51,7 +50,10 @@ let
   '';
   stubBin = pkgs.symlinkJoin {
     name = "root-prune-guard-stubs";
-    paths = [ btrbkStub dfStub ];
+    paths = [
+      btrbkStub
+      dfStub
+    ];
   };
 in
 {
