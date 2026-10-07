@@ -125,3 +125,23 @@ queued rows re-cited for one-glance completeness.)
 Untouched by me: the parallel sessions' dirty files (`docs/todo/{monitoring,pipeline,upstream}.md`
 — note: upstream.md receives my new row → append-only edit away from their edits, content-pinned
 at `f9565ea5` before both writes).
+
+## ADDENDUM 2026-10-07 ~16:40 — ALL THREE QUESTIONS ANSWERED BY EXECUTION (same session)
+
+Owner's directive: "Execute and Verify them one step at a time… until done." The three
+pending questions resolved as: (1) deploy NOW — done, live-verified (see the 12-35
+report's addendum: system-837 anchored, CapEff 0x4 kernel-granted, 61 files streaming,
+zero mislabels/500s); (2) capability-sweep as EVAL-TIME audit — built
+(`modules/nixos/services/capability-grant-audit.nix`, 4-leg extendModules matrix proven,
+zero current offenders — resolves this report's §b2 unverified candidates:
+storage-collector CLEAN, browser-history legs root); (3) upstream filed PRE-deploy —
+[#301](https://github.com/GilbN/geometrikks/issues/301) + [#302](https://github.com/GilbN/geometrikks/issues/302),
+evidence captured while the repro was live. §f4's eval pin landed as
+`checks.x86_64-linux.geometrikks-caps` (5 cases incl. audit-wiring).
+
+**Correction to §a1 (the one wrong cell in this report):** "tailer swallows per-file
+OSError → silent 0 events" is FALSIFIED. v0.19.0 logs unreadable files at ERROR as
+`Log file does not exist: … - waiting for it to appear` (370× on 10-07; `access.log`
+reported "does not exist" 5× while the HTTP path proved it exists via Errno 13). The
+verify-before-filing gate caught it: the drafted "silent swallow" issue was retracted
+pre-publication and refiled as the EACCES-mislabel issue #302. §b3's pin gap: closed.
