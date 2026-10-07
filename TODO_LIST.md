@@ -15,8 +15,6 @@
 
 ### storage
 
-- [ ] [blocked:deploy] **Deploy-activate root-prune-guard on evo-x2 + live verification** (repo-complete + Gatus-wired but inert on host: no .prom, zero journal entries 2026-10-06 02:45) — after next deploy: timer active, first run writes the .prom (fired 0, usage ~81), journal entry present, Gatus check green → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-10-06_02-49_task-000001a10e49403b5b0a88d1c4c200000000.md §b)
-- [ ] [ready] **Confirm the deployed textfile dir matches the guard's OUT default and is actually scraped by node_exporter** (dir spellings vary across modules; grep-verified canonical: /var/lib/prometheus-node-exporter/textfile_collectors) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §b)
 - [ ] [blocked:user] **User-space reclaim: trash /home/lars/tmp (54G) + @cache-home.regular-dir-bak (1.3G)** (the 724M orphaned dnsblockd_tracking.db already queues at services.md) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.7)
 - [ ] [decision] **Narrow root weekly retention 1w→3d until hot-tier migrations land?** (halves the max snapshot pin window while churn is unmanaged — two 100% events in 24h rode the 2-week window) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.23)
 - [ ] [watch] /data at 79% (798G/1.1T, models/Steam growth trend) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.24)
