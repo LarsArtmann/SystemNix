@@ -79,6 +79,7 @@ in
   hot-db = makeTest (import ./test-hot-db.nix { inherit pkgs; });
   hot-db-assertions = import ./test-hot-db-assertions.nix { inherit pkgs inputs system; };
   journal-hot = makeTest (import ./test-journal-hot.nix { inherit pkgs; });
+  root-prune-guard = makeTest (import ./test-root-prune-guard.nix { inherit pkgs; });
   caddy-logs-hot = makeTest (import ./test-caddy-logs-hot.nix { inherit pkgs; });
   crush-hot-db = makeTest (import ./test-crush-hot-db.nix { inherit pkgs; });
   crush-config = import ./test-crush-config.nix { inherit pkgs inputs; };
