@@ -82,7 +82,7 @@ Wise SCA has all **20/20 balances statement-blocked since 2026-09-30** (degraded
 15. [watch] bank-sync input vs master drift (728e719a class) — re-probe vendorHash before the next bump; upstream re-staled twice already.
 16. [ready] Add "SCA send/verify journal lines" to the post-deploy smoke for bank-sync so approval-flow regressions surface at deploy time.
 17. [ready] Assert in an eval/VM test that the SCA gatus checks + sentinel gauges stay paired (the load-bearing deploy-order invariant is currently runbook prose, not a check).
-18. [decision] Expose gatus status read-only on LAN for agent verification (see §e.7).
+18. [decision] Expose gatus status read-only on LAN for agent verification (see §e.7) — **DEDUPED at harvest: an existing [ready] row already owns this** (`docs/todo/monitoring.md` "Sanctioned agent-readable Gatus recorded-verdict surface", Source 2026-10-07_06-27 report §g.3); no parallel row created.
 19. [watch] Wise API docs for a future TOTP/PIN public flow — if Wise ever exposes the PIN challenge type (JOSE/JWE), bank-sync could offer app-based approval; revisit quarterly.
 20. [ready] Fold the python-gunzip `/metrics` probe recipe into the monitoring runbook (fetch tool fails on gzip bodies; the workaround took a wasted call to find).
 21. [ready] Document in shell-devtools or monitoring docs: `systemctl` is tool-banned in agent sessions — the working probes are `pgrep -a`, `/proc/<pid>/exe`, `journalctl -u` (this session's working set).
@@ -114,9 +114,18 @@ tail /tmp/bank-sync-sca-watch.log                             # watcher state (u
 ## Harvest footer
 
 Per the TODO-system contract, §f direct follow-ups self-harvested at authoring time:
-queue rows 4–7 + 16–17 + 20–21 (`TODO_LIST.md` → services), library entries in `docs/todo/services.md`
-(4,5,6,7,8,9,16,17,20,21,22,23,24), upstream items 10–13 + 19 in `docs/todo/upstream.md`.
-Items 1–3 are `[blocked:user]` — library only, deliberately not queued for dispatch.
-"Deliberately not harvested": none — every §f item landed somewhere.
+
+- **Queue (`TODO_LIST.md`):** 8 rows — 5 under `### services` (§f.4, §f.5, §f.7, §f.16, §f.17), 1 under `### monitoring` (§f.20), 2 under `### pipeline` (§f.21 ready + §f.22 decision).
+- **`docs/todo/services.md`:** 12 rows — [blocked:user] f.1–3 (wrong-phone fix → approve → resume+backfill, one row), [ready] f.4/f.5/f.6/f.7/f.16/f.17, [decision] f.8/f.9, [watch] f.14/f.15/f.23. f.24 folded into the f.4 row (procedure step 0).
+- **`docs/todo/upstream.md`:** 5 rows — [blocked:push] f.10–13, [watch] f.19.
+- **`docs/todo/monitoring.md`:** 1 row (f.20). **f.18 deliberately NOT harvested** — deduped into the pre-existing "Sanctioned agent-readable Gatus recorded-verdict surface" row (06-27 report §g.3), which already owns it.
+- **`docs/todo/pipeline.md`:** 2 rows — f.21 [ready], f.22 [decision].
+
+Correction during harvest (meta-finding): the first multiedit quoted the LIBRARY wording of two
+queue rows as queue anchors and failed — `TODO_LIST.md` one-liners and `docs/todo/*.md` library
+entries for the same items had already drifted apart in wording (two surfaces, same concept). The
+edits were re-anchored on the true queue text. This is a live specimen of the drift the
+"queue one-liners and their library entries must not drift" rule guards against — flagged, not
+fixed here (out of session scope).
 
 **— END OF REPORT. WAITING FOR INSTRUCTIONS. —**
