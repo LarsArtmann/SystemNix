@@ -43,10 +43,7 @@
       ];
 
       capList =
-        v:
-        lib.filter (s: s != "") (
-          lib.concatMap (s: lib.splitString " " s) (lib.toList (toString v))
-        );
+        v: lib.filter (s: s != "") (lib.concatMap (s: lib.splitString " " s) (lib.toList (toString v)));
 
       isNonRoot =
         svc:
@@ -65,17 +62,16 @@
         lib.filter (c: builtins.elem c dacCaps && !builtins.elem c ambient) bound;
 
       offenders =
-        lib.mapAttrsToList (name: svc: {
-          inherit name;
-          caps = ungrantedDacCaps name svc;
-        }) (
-          lib.filterAttrs (
-            name: svc:
-            isNonRoot svc
-            && ungrantedDacCaps name svc != [ ]
-            && !builtins.elem name cfg.allow
-          ) config.systemd.services
-        );
+        lib.mapAttrsToList
+          (name: svc: {
+            inherit name;
+            caps = ungrantedDacCaps name svc;
+          })
+          (
+            lib.filterAttrs (
+              name: svc: isNonRoot svc && ungrantedDacCaps name svc != [ ] && !builtins.elem name cfg.allow
+            ) config.systemd.services
+          );
     in
     {
       options.services.capability-grant-audit = {
