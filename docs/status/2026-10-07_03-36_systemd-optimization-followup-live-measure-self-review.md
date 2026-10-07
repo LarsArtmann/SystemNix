@@ -76,5 +76,41 @@ The HM journal pinpoints a **96-second gap** (02:51:25 → 02:53:01) between `St
 2. **Can we schedule ONE deliberate reboot window** to bundle: the calm-boot re-measure (needs a fresh quiet boot), the boot-mirror PartUUID/BootCurrent decode verify (open since 2026-09-30), and optionally the first BIOS-walk option? The box has had 5 boots since midnight — owner picks the quiet moment.
 3. **The parked buildcache go-build relocation (home.nix hook): delete the remnant, or is the fallback relocation still wanted?** Its mountpoint probes are dead code today; intent decides delete-vs-fix before anyone spends a dispatch on it.
 
+*Annotation (2026-10-07 03:59, execution self-review `2026-10-07_03-59_login-gate-fix-execution-self-review.md`):* Q1 is MOOT — the fix deferred activitywatch-theme off the login path entirely (OnBootSec timer), so no start-policy decision is needed. Q3 is ANSWERED — triage found the hook is the LIVE 2026-09-22 cache-fallback convergence (not the parked relocation); fixed via absolute `${pkgs.util-linux}/bin/mountpoint`, deploy queued [ready]. Q2 (reboot window) remains open and now pairs with that deploy row.
+
 ---
 *Self-harvested at authoring time per the TODO System rule: §f.1, §f.3 → new rows in docs/todo/stability.md + TODO_LIST.md; §f.2, §f.4 → extensions of existing rows in both surfaces (queue + library kept in sync). §f.5-§f.10 land on already-queued rows — no duplicates minted. Deliberately NOT harvested: §f.11-§f.12 (speculative, contingent on §f.1's outcome — they become actionable only after the HM mechanism is known).*
+
+---
+
+## ADDENDUM — re-dispatch executed (2026-10-07 ~04:15, same session)
+
+User directive: "DO MORE RESEARCH AND IMPROVE THINGS FOR REAL." §f.1 and §f.3 executed end-to-end; both closed on all surfaces.
+
+### Mechanism VERIFIED (closes §b.1)
+
+The 96 s blockage is **`activitywatch-theme.service` ALONE** — the server and both watchers started in ~1 ms; the theme oneshot ran 02:51:25.596 → 02:53:01.743 (96.1 s). Chain: HM activation blocks on `systemctl --user start` for every enabled oneshot → theme's curl POST (`--retry 5 --retry-delay 2 --retry-connrefused`, **NO `--max-time`**) connected to aw-server but waited on its response — aw-server's 13 GB sqlite sits behind the /mnt/pool data-to-pool symlink and only answered once the boot storm drained. My earlier alternative candidates (daemon-reload cost / user-bus contention) were wrong; it was an unbounded response wait on a cosmetic POST.
+
+### Hook triage resolved (corrects §f.3's hypothesis AND 2026-10-06 §d3's "cosmetic" verdict)
+
+The hook is NOT the parked go-build relocation remnant — it is the **live 2026-09-22 cache-fallback convergence** (reaps real dirs before HM's checkLinkTargets aborts; pre-creates mount targets). It has been a **silent no-op since it landed**: the generated activate script's PATH contains no util-linux (verified: bash/coreutils/diffutils/findutils/gettext/gnugrep/gnused/jq/ncurses/nix), so every `mountpoint -q` exits 127 → all guards false → pre-creates AND reaps never ran. Landmine, not cosmetic: any real dir reappearing in the fallback set would abort HM activation → home-manager-lars fails → exit-4 activation class + login-gate damage. Correction surfaces: this addendum, the stability.md row, the CHANGELOG Fixed entry.
+
+### Fixes landed (in-tree, daemon commit `cf8aa52e`; UNDEPLOYED by design)
+
+1. `platforms/common/programs/activitywatch.nix` — theme de-gated from HM activation (`Install.WantedBy` removed) → `systemd.user.timers.activitywatch-theme` (OnBootSec=2min, Persistent=false, timers.target); curl bounded (`--connect-timeout 3 --max-time 30`). The 2026-10-06 boot-critical-path doctrine applied at the user-manager layer. Theme persists in aw-server's DB → PartOf-driven stops need no re-apply before the next boot's fire.
+2. `platforms/nixos/users/home.nix` — all four `mountpoint` call sites → absolute `${pkgs.util-linux}/bin/mountpoint`.
+
+### Verification
+
+- Targeted eval: hook text renders the store path (all sites); ExecStart carries the bounds; service `Install` gone; timer shape correct (OnBootSec 2min / Persistent false / timers.target).
+- Full `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath` **GREEN** — every eval-time assertion battery (systemd-shape, deploy-restart, mount-gating, stray-unit, port-registry, gatus-coverage, pool-recovery converge-coverage) passes with the changes.
+- `nix fmt`: 0 diffs (alejandra-verified standalone — the daemon committed the files, so the daemon-race lint-skip doctrine applied).
+- **NOT deployed**: IO PSI held 40-60 % avg10 through the session (post-freeze-22 storm residue; a deploy's validation battery is the freeze-22 death class). Post-deploy verification checklist lives in the CHANGELOG Fixed entry.
+
+### Expected effect
+
+HM activation now completes at its non-theme cost (this boot's remaining activation steps ran in ~3 s) → the userspace login floor drops from 1 min 42 s toward the ≤~40 s re-measure expectation. stability.md:169 stays open pending a CALM boot — this boot's reading carried the 96 s theme block plus stampede amplification, so it never falsified the expectation in the first place (§d1 stands).
+
+### Queue state
+
+Both [ready] rows closed on both surfaces: TODO_LIST rows pruned (prune-wins contract), stability.md rows flipped [x] with evidence, CHANGELOG `### Fixed` entry added under [Unreleased].
