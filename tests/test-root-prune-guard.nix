@@ -32,6 +32,15 @@ let
   # tmpfiles), whose option lives in this flake-parts wrapper module.
   rustCache =
     (import ../modules/nixos/services/rust-cache.nix).flake.nixosModules.rust-cache;
+  # btrbk stub: logs the invocation, exits /tmp/btrbk-rc (default 0). Written
+  # over ${pkgs.btrbk}/bin/btrbk in the VM because the module's
+  # writeShellApplication wrapper prepends its runtimeInputs to PATH ahead
+  # of any unit-level path stub.
+  btrbkStub = pkgs.writeShellScript "btrbk" ''
+    echo "$*" >> /tmp/btrbk.log
+    [ -f /tmp/btrbk-rc ] && exit "$(cat /tmp/btrbk-rc)"
+    exit 0
+  '';
 in
 {
   name = "root-prune-guard";
@@ -99,23 +108,11 @@ in
     # Stub btrbk by overwriting its store binary (the wrapper prepends its
     # runtimeInputs to PATH ahead of any unit-level path stub). Default:
     # log the invocation, exit 0; /tmp/btrbk-rc lets the failure-leg flip it.
-    # The store path comes from the wrapper script's runtimeInputs PATH line.
-    btrbk_store = machine.succeed(
-        "wrapper=$(systemctl show root-prune-guard.service -p ExecStart --value"
-        " | grep -o '/nix/store/[^ \"]*bin/root-prune-guard' | head -1) && "
-        "grep -o '/nix/store/[a-z0-9.-]*-btrbk/bin/btrbk' \"$wrapper\" | head -1"
-    ).strip()
-    assert btrbk_store, "could not resolve the btrbk store path from the unit wrapper"
+    # The store path is computed host-side from the SAME pkgs instance the
+    # module's writeShellApplication wrapper uses — identical store path.
+    btrbk_store = "${pkgs.btrbk}/bin/btrbk"
     machine.succeed("mount -o remount,rw /nix/store")
-    machine.succeed(f"""
-      rm -f {btrbk_store} && cat > {btrbk_store} <<'EOF'
-      #!/usr/bin/env bash
-      echo "$*" >> /tmp/btrbk.log
-      [ -f /tmp/btrbk-rc ] && exit "$(cat /tmp/btrbk-rc)"
-      exit 0
-      EOF
-      chmod +x {btrbk_store}
-    """)
+    machine.succeed("cp ${btrbkStub} " + btrbk_store)
 
     prom = "/var/lib/prometheus-node-exporter/textfile_collectors/root-prune-guard.prom"
 
