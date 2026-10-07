@@ -210,6 +210,7 @@
 - [ ] [ready] **SigNoz time_series_v2 empty — metadata retention vs samples retention investigation** (labels gone, samples survive; every label-keyed join broken) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: same report §f.6)
 - [ ] [ready] **Durable hwmon fingerprint→chip mapping table in docs/agents/monitoring.md** (+ the fingerprint-scan query pattern) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: same report §f.9)
 - [ ] [ready] **Confirm the "Caddy Catch-All 404" gatus check surfaces in the SigNoz Infrastructure dashboard group** (check live since the 2026-10-07 404-page deploy; verify results propagate, no alert noise on the first cycles) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-10-07_00-49_caddy-catchall-404-page-session-status.md §f.39)
+- [ ] [blocked:deploy] **Run post-deploy-check.sh after the vendorHash-wave switch** (bank-sync ab2c9dcd / InboxClean b514bda / tq 36f9d64b / dnsblockd b90b306 units all restart; auth-gateway 500/502 + SigNoz impersonation legs) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-10-07_12-17_vendorhash-wave3-fod-unblock.md §f)
 
 ### ai-stack
 
@@ -381,6 +382,7 @@
 - [ ] **Hermes-cron port policy — BLOCKED: may hermes cron workers bind config-disabled services' ports (today's llama-server resurrection on :8848/:8849), or should cron scopes be denied those ports — and which stance should the durable guard encode?** (owner policy call; pairs with the stability kill-or-legitimize row)
 - [ ] **Investigate the `go-standard.proxyVendor = true is ignored when deps are set` eval warning (fires 2× on every evo-x2 config eval): which consumers set the dead flag (prepared-source builds vendor via injected `_local_deps` replaces, never the Go proxy) — drop it in consumers or silence/fix the warning upstream in go-nix-helpers** → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: docs/status/2026-09-29_04-00_task-000001a0ea69007114315b9d2ae5d5843bca.md §f)
 - [ ] **Root-cause + fix the duplicate-dispatch class (go-taskqueue upstream or tq-pool harvest cadence): 4 runs raced ONE Task-Queue-ID on 2026-09-29 — the work item was dispatched ~3 min after a prior run closed it, and the status-report instruction fired twice more; a dispatch-time item-state re-check kills the class** → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: docs/status/2026-09-29_04-00_task-000001a0ea69007114315b9d2ae5d5843bca.md §e1)
+- [ ] [ready] **Verify upstream CI green for the two 2026-10-07 vendorHash paste pushes** (bank-sync `ab2c9dcd` — local pre-commit golangci-lint leg was red before the change, confirm CI agrees it is not the paste; InboxClean `b514bda` — repo renamed from inboxclean, redirect active) → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: docs/status/2026-10-07_12-17_vendorhash-wave3-fod-unblock.md §a/§b)
 
 ### security
 
@@ -619,6 +621,7 @@
 - [ ] [ready] **Investigate the tq queue's re-fire of completed task 000001a114260b6eacb70df0fe2500000000** — its footer commit was reachable on master at dispatch time (`badc5510`, `git merge-base --is-ancestor` rc=0, exact footer in `%B`) yet the queue dispatched again; reproduce the completion derivation (which ref does the queue grep — does it see unpushed master?) and fix or document the blind spot → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-07_08-54_task-000001a114260b6eacb70df0fe2500000000.md §d.1)
 - [ ] [ready] **Extend the MEASURED-filenames rule to task IDs in status-report filenames** — paste, never retype: the 05-49 prior fire's report dropped a trailing zero from the ID (`task-000001a114260b6eacb70df0fe250000000.md`, 35 vs 36 chars), so filename-prefix collision greps can miss same-task reports → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-07_08-54_task-000001a114260b6eacb70df0fe2500000000.md §d.2)
 - [ ] [ready] **Codify store-hit identity as sufficient re-dispatch step-2 spot-check evidence in CONTRIBUTING** — same store path + empty source log since the green run = the green result carries bit-exact (stronger than a re-run); stops future re-fires from re-booting VMs pointlessly under PSI pressure → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-07_08-54_task-000001a114260b6eacb70df0fe2500000000.md §e.3)
+- [ ] [ready] **Rebuild + reinstall the BuildFlow CLI (stale binary)** — doctor binary-freshness warn: binary `acdb606` < BuildFlow repo HEAD `678bd99`; surfaced in the bank-sync pre-commit run 2026-10-07 (results may not reflect current code) → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-07_12-17_vendorhash-wave3-fod-unblock.md §e)
 
 ### pixel6
 

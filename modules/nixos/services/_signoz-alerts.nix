@@ -183,6 +183,23 @@ in
       interval = "1m";
       severity = "warning";
     };
+    # Operator WAL drops (journal enabled 2026-10-07, dns-blocker.nix): the
+    # bounded drop-and-count channels overflow or appends fail — the replay
+    # surface silently loses history while audit_entries stays the evidence.
+    # Mirrors upstream prometheus/alerts.yml DnsblockdJournalDropping
+    # (increase >10 in 15m for 15m). Absence-safe: the counter series only
+    # exists after the first drop is recorded, so a never-dropping WAL never
+    # fires.
+    "signoz/rules/dnsblockd-journal-dropping.json".source = mkRule {
+      name = "DNS Blocker Journal Dropping";
+      description = "dnsblockd operator WAL is dropping observations (buffer overflow or append failures) — the replay surface is losing history; check journal_dsn disk health and engine errors";
+      query = "increase(dnsblockd_journal_drops_total[15m])";
+      step = 60;
+      op = "above";
+      target = 10;
+      interval = "1m";
+      severity = "warning";
+    };
     "signoz/rules/emeet-pixyd-down.json".source = mkRule {
       name = "EMEET PIXY Daemon Down";
       description = "emeet-pixyd is not running while a graphical session is active — webcam auto-management broken";

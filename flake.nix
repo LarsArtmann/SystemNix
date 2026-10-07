@@ -358,9 +358,10 @@
     # base.nix --load-extension): with default settings the extension
     # auto-discovers nsfw.home.lan:<ports.nsfw> and pairs via the /readyz
     # token that services.nsfw-classifier provides (--pair-token auto).
-    # Keeps its OWN nixpkgs: the flake pins go_1_27 (go-sse go 1.27.1 floor)
-    # — following SystemNix's nixpkgs could drop that floor and break the
-    # build.
+    # nixpkgs FOLLOWS root since 2026-10-07: root (a7868a72) carries
+    # go_1_27 = 1.27.1 — the same minor the flake pins — and the go-modules
+    # FOD rebuild on the flip verified the vendorHash holds. Deliberate
+    # entry dropped from lib/lock-audit.nix in the same change.
     nsfw-classifier = {
       # INTERIM `git+file` pin — the vendorHash fix (46f02bb) exists only as
       # an unpushed local commit (origin/master is 4d159f9); a remote pin
@@ -958,6 +959,7 @@
     monitor365.inputs.flake-parts.follows = "flake-parts";
     monitor365.inputs.treefmt-nix.follows = "treefmt-nix";
     nsfw-classifier.inputs.flake-parts.follows = "flake-parts";
+    nsfw-classifier.inputs.nixpkgs.follows = "nixpkgs";
     nsfw-classifier.inputs.treefmt-nix.follows = "treefmt-nix";
     nsfw-classifier.inputs.systems.follows = "systems";
     papdashboard.inputs.flake-parts.follows = "flake-parts";
