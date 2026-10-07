@@ -28,6 +28,10 @@
 { pkgs, ... }:
 let
   snapshots = import ../platforms/nixos/system/snapshots.nix;
+  # snapshots.nix sets services.rust-cache.rustProjects (target/ symlink
+  # tmpfiles), whose option lives in this flake-parts wrapper module.
+  rustCache =
+    (import ../modules/nixos/services/rust-cache.nix).flake.nixosModules.rust-cache;
 in
 {
   name = "root-prune-guard";
@@ -35,16 +39,37 @@ in
   nodes.machine =
     { lib, ... }:
     {
-      imports = [ snapshots ];
-      boot.supportedFilesystems = [ "btrfs" ];
+      imports = [
+        snapshots
+        rustCache
+        (import ../platforms/nixos/system/primary-user.nix)
+      ];
 
-      # Production creates the btrbk user via the nixpkgs services.btrbk
-      # module's sudoRule story; the guard only needs the user/group to
-      # exist, so the test creates them directly.
-      users.groups.btrbk = { };
-      users.users.btrbk = {
-        isSystemUser = true;
-        group = "btrbk";
+      # Registry-fan-out option stub (test-integration precedent): rust-cache
+      # declares a services.integration entry behind `mkIf enable`, which
+      # still requires the option to EXIST — the owning module is not part
+      # of this test's import set.
+      options.services.integration = lib.mkOption {
+        type = lib.types.lazyAttrsOf lib.types.raw;
+        default = { };
+      };
+      config = {
+        boot.supportedFilesystems = [ "btrfs" ];
+
+        # primaryUser ("lars") is referenced for tmpfiles/home paths; the
+        # production user account is created by HM wiring the VM does not run.
+        users.users.lars = {
+          isNormalUser = true;
+        };
+
+        # Production creates the btrbk user via the nixpkgs services.btrbk
+        # module's sudoRule story; the guard only needs the user/group to
+        # exist, so the test creates them directly.
+        users.groups.btrbk = { };
+        users.users.btrbk = {
+          isSystemUser = true;
+          group = "btrbk";
+        };
       };
     };
 
