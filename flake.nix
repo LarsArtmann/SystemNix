@@ -1872,19 +1872,17 @@
                       inherit modules;
                     }).config.assertions;
 
-                  scriptAnchor = "drillScript = builtins.readFile ../../../scripts/borg-restore-drill.sh;";
-                  backupSrc = builtins.readFile ./platforms/nixos/system/backup.nix;
-                  driftedScriptFile = builtins.toFile "borg-restore-drill-drifted.sh" (
-                    lib.replaceStrings [ "/run/secrets/rendered/borg-env" ] [ "/run/secrets/rendered/borg-env-DRIFT" ] (
-                      builtins.readFile ./scripts/borg-restore-drill.sh
-                    )
-                  );
-                  driftedBackupSrc =
-                    lib.replaceStrings
-                      [ scriptAnchor ]
-                      [ "drillScript = builtins.readFile ${toString driftedScriptFile};" ]
-                      backupSrc;
-                  driftedModule = import (builtins.toFile "backup-drifted.nix" driftedBackupSrc);
+                  # The drifted module injects the drift through the
+                  # drillScript option (inline string) — NOT through
+                  # builtins.toFile + import: a toFile source path is
+                  # un-rooted, so a GC sweep (or the flake eval cache
+                  # serving the stale path) breaks every eval-only gate
+                  # with "path '…-backup-drifted.nix' is not valid".
+                  driftedModule = {
+                    services.offsite-borg.drillScript =
+                      lib.replaceStrings [ "/run/secrets/rendered/borg-env" ] [ "/run/secrets/rendered/borg-env-DRIFT" ]
+                        (builtins.readFile ./scripts/borg-restore-drill.sh);
+                  };
 
                   # enable=true + declared template so the guard consults the
                   # template's .path (while dormant it pins the sops-nix
@@ -1911,16 +1909,13 @@
                   templateDriftFailing = failingPin (pinAssertionsOf templateOverrideModules);
 
                   pinGuards =
-                    if driftedBackupSrc == backupSrc then
-                      throw "borg-restore-drill-fixture: env-pin negative-case anchor no longer matches platforms/nixos/system/backup.nix — update scriptAnchor in the fixture"
-                    else
-                      assert controlFailing == [ ];
-                      assert scriptDriftFailing != [ ];
-                      assert lib.hasInfix ''BORG_ENV_FILE="''${BORG_ENV_FILE:-/run/secrets/rendered/borg-env}"''
-                        (builtins.head scriptDriftFailing).message;
-                      assert templateDriftFailing != [ ];
-                      assert lib.hasInfix "borg-env-DRIFT" (builtins.head templateDriftFailing).message;
-                      true;
+                    assert controlFailing == [ ];
+                    assert scriptDriftFailing != [ ];
+                    assert lib.hasInfix ''BORG_ENV_FILE="''${BORG_ENV_FILE:-/run/secrets/rendered/borg-env}"''
+                      (builtins.head scriptDriftFailing).message;
+                    assert templateDriftFailing != [ ];
+                    assert lib.hasInfix "borg-env-DRIFT" (builtins.head templateDriftFailing).message;
+                    true;
                 in
                 builtins.deepSeq pinGuards (
                   pkgs.runCommand "borg-restore-drill-fixture"

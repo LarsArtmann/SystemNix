@@ -47,7 +47,7 @@ let
   # module is dormant it pins the sops-nix default shape so the guard
   # still fires in the default gate (proven: an in-mkIf placement passed
   # flake check on a drifted script).
-  drillScript = builtins.readFile ../../../scripts/borg-restore-drill.sh;
+  drillScript = cfg.drillScript;
   borgEnvRenderPath =
     if options ? sops.templates && config.sops.templates ? "borg-env" then
       config.sops.templates."borg-env".path
@@ -58,6 +58,18 @@ in
 {
   options.services.offsite-borg = {
     enable = lib.mkEnableOption "offsite Borg backup to the Hetzner StorageBox";
+
+    drillScript = lib.mkOption {
+      type = lib.types.str;
+      description = ''
+        Contents of the restore-drill script, pinned by the env-path
+        assertion in this module. Overridable so the
+        borg-restore-drill-fixture can inject a drifted script inline
+        instead of round-tripping through builtins.toFile (an un-rooted
+        store path that GC evicts under eval-only gates).
+      '';
+      default = builtins.readFile ../../../scripts/borg-restore-drill.sh;
+    };
 
     paths = lib.mkOption {
       type = lib.types.listOf lib.types.str;
