@@ -157,11 +157,11 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1791324044,
-        "narHash": "sha256-qG5XtMPdVf4O0Uns2J/GFnfzm22GFrT2delBnItXBGQ=",
+        "lastModified": 1791357525,
+        "narHash": "sha256-24t+Aw0oScozSRoHakWgsi7bNLxdJth6n4/t3ZfWNR8=",
         "owner": "LarsArtmann",
         "repo": "bank-sync",
-        "rev": "6ae53e007a3976d3720b47829a32a30e06a80a4a",
+        "rev": "68ceffa3ad378e2400ecb64acc3f901d13459b29",
         "type": "github"
       },
       "original": {
@@ -316,11 +316,11 @@
         "samber-linter": "samber-linter"
       },
       "locked": {
-        "lastModified": 1791356063,
-        "narHash": "sha256-ff21Mg+A/ayuOX0tIqzNs8T/5keqq+w7QIzzr8LiEas=",
+        "lastModified": 1791357557,
+        "narHash": "sha256-/e+2Ysx/gRQBBJuwml19YsuUvPtgk+tx4upIxdGTBBQ=",
         "ref": "refs/heads/master",
-        "rev": "2a1c252075d3a5e2a784d96a0ce8a3a78b601c81",
-        "revCount": 7204,
+        "rev": "234679985f565566cceea3bce73bfbbd07de0bc3",
+        "revCount": 7211,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -534,16 +534,16 @@
     "cqrs-htmx": {
       "flake": false,
       "locked": {
-        "lastModified": 1791249315,
-        "narHash": "sha256-XzaVp25FPOrzqV2CSX/04Lr8uMzaiNNYkzY8aTAhMJI=",
+        "lastModified": 1791339067,
+        "narHash": "sha256-JThu1De9wsJIxjHgNdSLB2WH4OwrEixwbQ3Rs1dZWBc=",
         "owner": "LarsArtmann",
         "repo": "cqrs-htmx",
-        "rev": "3f8af7731a7bfebc76bf265819e98319bc10d250",
+        "rev": "0b52fcba77f74d57d2386676ecb49d579091e181",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "v4.13.1",
+        "ref": "v4.13.2",
         "repo": "cqrs-htmx",
         "type": "github"
       }
@@ -3531,16 +3531,16 @@
     "go-flightrecorder": {
       "flake": false,
       "locked": {
-        "lastModified": 1786456968,
-        "narHash": "sha256-FZmCihtA3lvyhHDUA6qk8HJ5+xhP62B8pXHQF7drr1s=",
+        "lastModified": 1791307066,
+        "narHash": "sha256-0GaqAEPZUJ4oZp74ZcJho3aH8pGy90Otj+/lQ6OOmNA=",
         "owner": "LarsArtmann",
         "repo": "go-flightrecorder",
-        "rev": "583f2f5e89515708d39270fbb0b48e66a513882a",
+        "rev": "48dfd208ca6c02804da71a5b6e1ac094b17a94dd",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "v0.2.0",
+        "ref": "v0.2.1",
         "repo": "go-flightrecorder",
         "type": "github"
       }
@@ -7906,17 +7906,17 @@
     "wise-go": {
       "flake": false,
       "locked": {
-        "lastModified": 1791289263,
-        "narHash": "sha256-+m2OtCvuwchSgavRBksc7iWEMbLIJOx5It8qUpLnC/k=",
+        "lastModified": 1791340126,
+        "narHash": "sha256-eLJqomLDvwzN+4moh9tBKZQn/EvuysTNUP399EjppZg=",
         "owner": "LarsArtmann",
         "repo": "wise-go",
-        "rev": "68af145cc3aa74f148cdc80021135a99c942f3f6",
+        "rev": "220e2c843304584950ed9d8b9f93fd53782d9f42",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
+        "ref": "v0.12.0",
         "repo": "wise-go",
-        "rev": "68af145cc3aa74f148cdc80021135a99c942f3f6",
         "type": "github"
       }
     },

@@ -110,12 +110,22 @@
             wiseApiKeyFile = config.sops.templates."bank-sync-env".path;
             encryptionKeyFile = config.sops.templates."bank-sync-env".path;
 
-            # 2026-10-05: the a7868a7-wave vendorHash shim DROPPED — the lock
-            # moved past upstream-fixed rev 87531d04 (buildflow nix-hash-fix
-            # upstream; our-lock got uiBySJb7… equals upstream's declared
-            # hash, evo-x2 keep-going evidence). Re-add ONLY via nix-hash-fix
-            # evidence, never by hand.
-            package = lib.mkDefault (inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default);
+            # TEMPORARY vendorHash shim RE-PINNED (2026-10-07, class comment
+            # at lib/lars-packages.nix): the 2026-10-05 drop's condition broke
+            # — `nix flake update bank-sync` moved the lock to upstream
+            # 68ceffa3 whose declared hash xvAXxSvB… no longer reproduces
+            # from our lock (got pE2+3UF1…, 09:25 evo-x2 keep-going
+            # enumeration — first-hand build output, never invented).
+            # Upstream genuinely stale at the locked rev: drop when the lock
+            # moves past an upstream-fixed rev (fix upstream, push, re-lock —
+            # DiscordSync protocol). MUST mirror the same override at the HM
+            # surface (systems/evo-x2.nix programs.bank-sync) or the two
+            # surfaces build different drvs.
+            package =
+              lib.mkDefault
+                (inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+                  vendorHash = "sha256-pE2+3UF1eU+PC2E89nf9ueC84aEjcn/NUCLuQrvdepo=";
+                });
           };
 
           # The pool mounts nofail — systemd-tmpfiles could create the dir on the

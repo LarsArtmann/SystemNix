@@ -64,16 +64,12 @@ lib.filterAttrs (_: v: v != null) {
   # + /tmp/toplevel-shimmed-20261005.log; same bootstrap exception — the
   # upstream checkouts are owned by live parallel sessions). Same drop
   # conditions.
-  buildflow =
-    let
-      pkg = flakePkg inputs.buildflow;
-    in
-    if pkg == null then
-      null
-    else
-      pkg.overrideAttrs {
-        vendorHash = "sha256-PEVbgZ6J8/YvynKLkB8W8S9+EoORRR/AfUctpVJhT2Q=";
-      };
+  # buildflow shim DROPPED (2026-10-07): the lock moved to 2346799 (user
+  # nix flake update) whose upstream vendorHash.nix ALREADY carries the got
+  # hash (m8gL3Z4Z… == the 09:25 keep-going enumeration's got — shim-drop
+  # protocol, docs/agents/nix-flakes.md). Re-add ONLY via nix-hash-fix
+  # evidence, never by hand.
+  buildflow = flakePkg inputs.buildflow;
   # TEMPORARY vendorHash shim (RE-PINNED 2026-10-05, a7868a7 wave — class
   # comment at buildflow): got heAweMaV… vs the 2026-10-01 shim value
   # yonqp/FVG… at locked rev 4d4137ee. Upstream master (abb38b28) is ahead;
