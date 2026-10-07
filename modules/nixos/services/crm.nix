@@ -51,7 +51,17 @@
       # 2026-09-18 decision: the unit adopts the journal in place).
       stateDir = "/home/${user}/.local/share/crm";
       backupDir = "/mnt/pool/backups/crm";
-      crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # TEMPORARY vendorHash shim (2026-10-07 wave — class comment at
+      # lib/lars-packages.nix): upstream fe9da495's own vendorHash
+      # (BqpkpL7U…) no longer reproduces after the 2026-10-07 lock wave
+      # (got 22PDGv7X…; first-hand keep-going enumeration,
+      # /tmp/toplevel-fix-20261007.log; upstream stale at locked rev AND
+      # HEAD — push the fix upstream when authorized, then drop this).
+      crmPkg =
+        inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
+          {
+            vendorHash = "sha256-22PDGv7XDLPZtQJP51afi132WckZEmnUJZsstn5iJ/4=";
+          };
       twentyEnabled = config.services.twenty.enable or false;
     in
     {

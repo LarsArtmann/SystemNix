@@ -93,7 +93,11 @@ let
     };
   });
 
-  collectorVendorHash = "sha256-pJ9QufxlWHupZA67TpvUNx/4OJmou7DaBa/XNOn/9+g=";
+  # RE-PINNED 2026-10-07 wave (first-hand keep-going enumeration, got
+  # R0nm9HFa… at locked signoz-otel-collector rev e0c4766,
+  # /tmp/toplevel-fix-20261007.log) — the signoz-* sources ride ?ref=main
+  # and the lock wave re-vendored both module graphs.
+  collectorVendorHash = "sha256-R0nm9HFaO1CM4uhl3+gS0R+/2odhowDxzOmhEP1s+GI=";
 
   schemaMigrator = buildGoModule {
     pname = "signoz-schema-migrator";
@@ -128,7 +132,9 @@ let
     pname = "signoz";
     inherit version;
     src = srcPatched;
-    vendorHash = "sha256-p/XXGwnxOSHBmVT/zMy7GG5HsTDSPSBYGDbrfxi3FI8=";
+    # RE-PINNED 2026-10-07 wave (got 4SEPk/O9… at locked signoz rev
+    # bb62c9c; same enumeration as collectorVendorHash above).
+    vendorHash = "sha256-4SEPk/O9Nf2FgVOEs0z4RKhO3SwintKDUiSyDAhw2TE=";
     subPackages = [ "cmd/community" ];
     proxyVendor = true;
     tags = [ "timetzdata" ];
