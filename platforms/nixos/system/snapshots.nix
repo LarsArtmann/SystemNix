@@ -246,13 +246,12 @@ in
         # snapshot of each delta_days group <= 3 (day boundaries are
         # hour-of-day corrected, 00:00 default) — at the nightly 23:00
         # cadence that is 4 dailies (run day + 3 back), one rotating out per
-        # night. "1w" keeps the FIRST snapshot of each of the TWO calendar
-        # weeks covered (delta_weeks <= 1, weeks start Sunday per
-        # preserve_day_of_week default), so a Sunday-dated weekly lives
-        # exactly 14 days. The root pin window is therefore 2w sharp, NOT
-        # "3d+1w" (~10d) flat.
+        # night. WAS "3d 1w": the extra "1w" kept a Sunday-dated weekly alive
+        # exactly 14 days, giving a 2-week pin window — the window both
+        # 2026-10 space-100% events rode while churn is unmanaged (decision
+        # 2026-10-08; revisit to 1w once the hot-tier waves land).
         snapshot_preserve_min = "2d";
-        snapshot_preserve = "3d 1w";
+        snapshot_preserve = "3d";
         # Pool = FOREVER (user decision 2026-08-21): target_preserve_min = "all"
         # disables automatic deletion of received backups entirely. Space cost
         # stays near raw data churn — received subvolumes share extents via CoW
@@ -277,7 +276,7 @@ in
             # problem — every byte hermes ever deleted is pinned pool-side
             # today); 7d min / 14d 4w keeps skills, cron, memories and
             # sessions off-NVMe without the forever tier. Local snapshot
-            # retention inherits the volume-level 2d / 3d 1w. Receives land
+            # retention inherits the volume-level 2d / 3d. Receives land
             # in the SAME pool dir as @ — btrfs-verify-pool-backups checks
             # both prefixes.
             "@home-hermes" = {
