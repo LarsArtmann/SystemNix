@@ -427,9 +427,16 @@
               serviceConfig = lib.mkMerge [
                 (harden {
                   MemoryMax = "2G";
-                  # Reads Caddy's 0600 caddy:caddy access logs (read-only
-                  # under ProtectSystem=strict; DAC bypass for foreign
-                  # ownership — cv-backup precedent).
+                  # Reads Caddy's 0750 caddy:caddy dir + 0600 access logs
+                  # read-only under ProtectSystem=full. AmbientCapabilities
+                  # is what GRANTS the cap to a non-root User= — the
+                  # bounding set only LIMITS (2026-09-06 mail-relay lesson;
+                  # the cv-backup precedent is a root process, where the
+                  # bounding set alone grants). Without the ambient grant
+                  # the tailer swallows EACCES per file and ingests 0
+                  # events forever while /health stays 200 (live
+                  # 2026-10-07: "Total processed: 0" since the 09-29 flip).
+                  AmbientCapabilities = "CAP_DAC_READ_SEARCH";
                   CapabilityBoundingSet = "CAP_DAC_READ_SEARCH";
                 })
                 ioTier.background

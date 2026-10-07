@@ -62,9 +62,12 @@ searchable log database. Upstream: github:GilbN/geometrikks.
   migrates at startup in a worker thread; `DB_STARTUP_WAIT_SECONDS=60` rides
   out a postgres boot race, degraded-then-recover otherwise.
 - **Logs**: Caddy's per-vhost `access-<host>.log` files read at their HOST
-  paths (`/var/log/caddy/...`) — the unit carries
-  `CAP_DAC_READ_SEARCH` (files are `caddy:caddy 0600`; cv-backup precedent)
-  and reads them read-only under `ProtectSystem=strict`. `LOGPARSER_LOG_PATHS`
+  paths (`/var/log/caddy/...`) — the unit carries `AmbientCapabilities` +
+  `CapabilityBoundingSet = CAP_DAC_READ_SEARCH` (dir `0750 caddy:caddy`,
+  files `0600`; AmbientCapabilities is what GRANTS the cap to the non-root
+  unit — BoundingSet alone only limits, the 2026-09-06 mail-relay lesson;
+  missing it meant zero ingested events since the 2026-09-29 flip, fixed
+  2026-10-07) and reads them read-only under `ProtectSystem=full`. `LOGPARSER_LOG_PATHS`
   is a JSON list derived at EVAL time from
   `config.services.caddy.virtualHosts` — new services are tracked
   automatically. The tailer polls (`LOGPARSER_POLL_INTERVAL=1.0`).
