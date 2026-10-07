@@ -102,6 +102,7 @@
 ## Harvest ledger (TODO contract compliance)
 
 - **Queued this session (synced pairs, TODO_LIST.md stability + services clusters):** §f.1+§f.5 (live clean-stop proof incl. failed-state clearance check → stability.md), §f.2 (eval-time socket-bridge exit-contract check → stability.md), §f.3 (llama-rag.md runbook line → services.md), §f.4 (`|| true || true` cleanup → services.md).
+- **CLOSE-OUT UPDATE 2026-10-07 (evening "fix things" session):** §f.2 DONE (`checks.bridge-exit-contract` in flake.nix — fastflowlm enumerated, llama-vlm DERIVED from `services.llama-vlm.servers`; negative-proven both legs in `scripts/negative-test-lints.sh` bridge group; §g.2 auto-class question stays open by design). §f.3 DONE (bullet appended to llama-rag.md). §f.4 DONE (single `|| true`). §f.1/§f.5 remain open (natural-observation gated). Premise correction recorded in the stability.md library row: the "only two tree-wide" count was template FAMILIES — the live config has THREE bridge instances (`fastflowlm@`, `llama-vlm-e4b@`, `llama-vlm-cap@`), all covered.
 - **Deliberately NOT harvested, with reasons:** §f.6 (attribution signal for an already-tracked item — enrich the existing row, no duplicate); §f.7 (tracked services.md:34-35, this session adds timestamps as evidence only); §f.8 (tracked in the runbook + services items); §f.9 (decision-gated by §g.3 — queueing a scope decision as `[ready]` would violate the dispatch-queue contract); §f.10-11 (roadmap/checklist fuel + tracked elsewhere).
 
 ## Evidence appendix
@@ -115,5 +116,5 @@
 | Gate green | `nix flake check --no-build` → all checks passed |
 | Fix live | `/run/current-system/etc/systemd/system/{fastflowlm,llama-vlm-e4b}@.service` both `SuccessExitStatus=143`; `readlink /run/current-system` = `acrc1r92…` |
 | Commit attribution | `git show --stat 3bf7157f` → exactly 3 files, 20 insertions |
-| Class completeness | `rg "Accept = true" modules/ platforms/` → 2 hits, both fixed |
+| Class completeness | `rg "Accept = true" modules/ platforms/` → 2 hits, both fixed (2 MODULE families; the llama-vlm mapAttrs' template fans out to 2 enabled servers → 3 live bridge instances — `fastflowlm@`, `llama-vlm-e4b@`, `llama-vlm-cap@`, clarified 2026-10-07 evening) |
 | Push closed | `git fetch` → `## master...origin/master` (ahead 0) |
