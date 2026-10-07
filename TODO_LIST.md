@@ -15,7 +15,7 @@
 
 ### storage
 
-- [ ] [blocked:user] **User-space reclaim: trash /home/lars/tmp (54G) + @cache-home.regular-dir-bak (1.3G)** (the 724M orphaned dnsblockd_tracking.db already queues at services.md) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.7)
+- [ ] [blocked:deploy] **User-space reclaim: trash /home/lars/tmp Go caches (54G, DONE 2026-10-08 — sits in ~/.local/share/Trash awaiting trash-empty) + delete @cache-home.regular-dir-bak subvol (1.3G, needs sudo btrfs subvolume delete)** (the 724M orphaned dnsblockd_tracking.db already queues at services.md) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.7)
 - [ ] [decision] **Narrow root weekly retention 1w→3d until hot-tier migrations land?** (halves the max snapshot pin window while churn is unmanaged — two 100% events in 24h rode the 2-week window) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.23)
 - [ ] [watch] /data at 79% (798G/1.1T, models/Steam growth trend) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.24)
 
