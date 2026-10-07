@@ -213,6 +213,16 @@ run_case scrub exit-widened scrub-exit-contract fail 'SuccessExitStatus != \[ 1 
 run_case scrub catchup-restored scrub-exit-contract fail 'Persistent must be false' \
   'sed:platforms/nixos/system/snapshots.nix:s|Persistent = lib.mkForce false;|Persistent = lib.mkForce true;|'
 
+# ── bridge-exit-contract: the 2026-10-07 deploy-exit-4 fix must resist drift ──
+# Eval-guard class (scrub-exit-contract shape): the guard fires as a throwIfNot
+# eval error, so the FAIL marker IS the guard's own message. fastflowlm@ is
+# enumerated in the check; llama-vlm-<name>@ is DERIVED from the module's
+# servers attrset — one widening mutation per leg proves both paths.
+run_case bridge fastflowlm-widened bridge-exit-contract fail 'SuccessExitStatus != \[ 143 \]' \
+  'sed:modules/nixos/services/fastflowlm.nix:s|SuccessExitStatus = \[ 143 \];|SuccessExitStatus = [ 143 1 ];|'
+run_case bridge vlm-widened bridge-exit-contract fail 'SuccessExitStatus != \[ 143 \]' \
+  'sed:modules/nixos/services/llama-vlm.nix:s|SuccessExitStatus = \[ 143 \];|SuccessExitStatus = [ 143 1 ];|'
+
 # ── module-shape-lint: wrapper renamed away from the filename ──
 # (A bare module ALSO breaks flake eval with a worse message — renaming the
 # wrapper key keeps eval valid so the LINT is what fires.)

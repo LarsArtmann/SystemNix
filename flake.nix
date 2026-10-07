@@ -3151,6 +3151,45 @@
                   ''
                 );
 
+              # Socket-bridge exit contract (2026-10-07 deploy-exit-4 class):
+              # Accept=true per-connection socat bridges (fastflowlm@,
+              # llama-vlm-<name>@) exit 143 when systemd stop-SIGTERMs them —
+              # socat propagates TERM as an exit code (code=exited, NOT a
+              # signal-kill), so without SuccessExitStatus = [ 143 ] every
+              # PLANNED stop (memory-guard Zone-6 sacrifice, idle TTL, unit
+              # churn, shutdown) parks the instance FAILED and exit-4s any
+              # deploy running at that moment (live: guard trip #2211
+              # mid-switch 2026-10-07 17:06). fastflowlm enumerated; llama-vlm
+              # DERIVED from its own servers attrset — the module only ever
+              # generates socat bridges, so family-internal derivation cannot
+              # false-positive a non-socat design (tree-wide Accept=true
+              # auto-classing stays an owner decision, source report §g.2).
+              # No crash-visibility tradeoff: bridges are stateless, sockets
+              # re-spawn per connection, backends keep their own failure
+              # metrics. Negative-proven by scripts/negative-test-lints.sh
+              # (bridge group).
+              bridge-exit-contract =
+                let
+                  cfg = inputs.self.nixosConfigurations.evo-x2.config;
+                  vlmTemplates =
+                    if cfg.services.llama-vlm.enable then
+                      map (name: "llama-vlm-${name}@") (builtins.attrNames cfg.services.llama-vlm.servers)
+                    else
+                      [ ];
+                  bridgeTemplates = [ "fastflowlm@" ] ++ vlmTemplates;
+                  contractGuards = builtins.all (
+                    tmpl:
+                    lib.throwIfNot (cfg.systemd.services."${tmpl}".serviceConfig.SuccessExitStatus == [ 143 ])
+                      "bridge-exit-contract: ${tmpl} SuccessExitStatus != [ 143 ] — planned stops would park the bridge FAILED and exit-4 concurrent deploys (2026-10-07 class)"
+                      true
+                  ) bridgeTemplates;
+                in
+                builtins.deepSeq contractGuards (
+                  pkgs.runCommand "bridge-exit-contract-check" { } ''
+                    echo "bridge exit contract OK (${toString (lib.length bridgeTemplates)} Accept=true socat templates tolerate exit 143)" > $out
+                  ''
+                );
+
               # Auto-discovered modules under modules/nixos/{services,desktop}/
               # are flake-parts wrappers: filename -> flake.nixosModules.<filename>.
               # A bare NixOS module evaluates its let-bindings in the WRONG
