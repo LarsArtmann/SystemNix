@@ -71,6 +71,15 @@ searchable log database. Upstream: github:GilbN/geometrikks.
   is a JSON list derived at EVAL time from
   `config.services.caddy.virtualHosts` — new services are tracked
   automatically. The tailer polls (`LOGPARSER_POLL_INTERVAL=1.0`).
+  During the outage the tailer was NOT silent: v0.19.0 logs unreadable
+  files at ERROR as "Log file does not exist" (an EACCES mislabel —
+  upstream issue [#302](https://github.com/GilbN/geometrikks/issues/302));
+  grep the journal for `does not exist`, not just `processed`, when
+  diagnosing ingestion. The `/api/v1/logs/files` endpoint 500s on the
+  same EACCES (upstream
+  [#301](https://github.com/GilbN/geometrikks/issues/301)). The render is
+  pinned by `checks.x86_64-linux.geometrikks-caps`; the whole non-root
+  class is eval-audited by `modules/nixos/services/capability-grant-audit.nix`.
 - **X-Forwarded-For**: `APP_TRUSTED_PROXIES=127.0.0.1` (Caddy proxies from
   loopback — README's same-host nginx guidance).
 
