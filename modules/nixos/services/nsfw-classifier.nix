@@ -30,6 +30,7 @@
       libHelpers = import ../../../lib/default.nix lib;
       inherit (libHelpers)
         harden
+        onFailure
         serviceDefaults
         ioTier
         ports
@@ -97,6 +98,9 @@
             wants = [ "network-online.target" ];
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
+            # Unit failures page via the notify-failure template (Discord) —
+            # registry convention: silent failures are unacceptable.
+            inherit onFailure;
 
             # Binds the port BEFORE loading models (fast-fail on port-in-use),
             # so Type=simple is sufficient; /readyz gates readiness during
@@ -146,6 +150,15 @@
                   name = "nsfw-classifier";
                   group = "AI";
                   path = "/readyz";
+                  # /readyz is READINESS: 503 while models load/warm (first
+                  # check after a cold start is expected red), and it runs no
+                  # inference — measured 0.3-10 ms live, so 500 ms is a tight
+                  # bound with ample headroom (integration-registry step 9).
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 500"
+                  ];
+                  alert = "NSFW classifier down — nsfw.home.lan unreachable (unit failed or model load wedged). Check: systemctl status nsfw-classifier, journalctl -u nsfw-classifier — runbook: docs/services/nsfw-classifier.md";
                 }
               ];
               homepage = {
