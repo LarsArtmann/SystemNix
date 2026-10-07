@@ -117,12 +117,11 @@
               # Stateless network daemon: no home, no state dir, no secrets.
               DynamicUser = true;
               ExecStart = "${lib.getExe cfg.package}";
-              Environment =
-                [
-                  "HEALTH_HUB_ADDR=127.0.0.1:${toString ports.health-dashboard}"
-                  "HEALTH_HUB_REMOTES=${lib.concatStringsSep "," cfg.remotes}"
-                ]
-                ++ lib.optional cfg.trend "HEALTH_HUB_TREND=1";
+              Environment = [
+                "HEALTH_HUB_ADDR=127.0.0.1:${toString ports.health-dashboard}"
+                "HEALTH_HUB_REMOTES=${lib.concatStringsSep "," cfg.remotes}"
+              ]
+              ++ lib.optional cfg.trend "HEALTH_HUB_TREND=1";
             }
             (harden { MemoryMax = "256M"; })
             (serviceDefaults { })

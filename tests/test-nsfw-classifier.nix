@@ -134,8 +134,7 @@ let
       # Registry convention: unit failures page via the notify-failure
       # template (Discord) — silent failures are unacceptable.
       pass =
-        enabledConfig.systemd.services.nsfw-classifier.onFailure or [ ]
-        == [ "notify-failure@%n.service" ];
+        enabledConfig.systemd.services.nsfw-classifier.onFailure or [ ] == [ "notify-failure@%n.service" ];
     }
     {
       name = "gatus-check-latency-condition";
@@ -145,8 +144,7 @@ let
       pass =
         let
           checks = enabledConfig.services.integration.nsfw-classifier.checks or [ ];
-          readyz =
-            lib.findFirst (c: c.path or "" == "/readyz") { conditions = [ ]; } checks;
+          readyz = lib.findFirst (c: c.path or "" == "/readyz") { conditions = [ ]; } checks;
         in
         builtins.elem "[RESPONSE_TIME] < 500" (readyz.conditions or [ ]);
     }
