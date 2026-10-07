@@ -64,13 +64,14 @@ nixpkgs.lib.nixosSystem {
           ];
           programs.bank-sync = {
             enable = true;
-            # TEMPORARY vendorHash shim (2026-10-07) — provenance + drop
-            # condition in modules/nixos/services/bank-sync.nix; MUST mirror
-            # that override or HM and the daemon build DIFFERENT package drvs
-            # (the un-shimmed one fails the FOD).
-            package = inputs.bank-sync.packages.x86_64-linux.default.overrideAttrs {
-              vendorHash = "sha256-pE2+3UF1eU+PC2E89nf9ueC84aEjcn/NUCLuQrvdepo=";
-            };
+            # Explicit package pin: SystemNix's nixpkgs carries no bank-sync
+            # attr, so the upstream module default cannot resolve. The
+            # vendorHash shim here was DROPPED 2026-10-07 (upstream 4890be63
+            # declares the correct hash; provenance in
+            # modules/nixos/services/bank-sync.nix). If a shim is ever
+            # re-added, mirror it on BOTH surfaces or HM and the daemon build
+            # DIFFERENT package drvs.
+            package = inputs.bank-sync.packages.x86_64-linux.default;
           };
           services.docs-archive-stats = {
             enable = true;
