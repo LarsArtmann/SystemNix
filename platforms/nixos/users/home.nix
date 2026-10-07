@@ -508,14 +508,19 @@ in
     # and buildcache-usb-recovery reaps. Targets on the mount are pre-created
     # so the symlinks never dangle. Skipped cleanly when the buildcache SSD
     # is absent (deploy.sh's unconditional pre-switch reap converges then).
+    # mountpoint MUST be the absolute store path: the HM activation PATH
+    # carries no util-linux, so a bare `mountpoint` exited 127 on every
+    # activation since 2026-09-22 — silently disabling the pre-creates AND
+    # the reaps (any reappearing real dir would abort checkLinkTargets and
+    # fail home-manager-lars → exit-4 activation class; found 2026-10-07).
     activation.migrate-buildcache-fallback-caches = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
-      if mountpoint -q /mnt/buildcache; then
+      if ${pkgs.util-linux}/bin/mountpoint -q /mnt/buildcache; then
         mkdir -p /mnt/buildcache/pnpm-cache /mnt/buildcache/pnpm-state
       fi
-      if mountpoint -q /mnt/rust-cache; then
+      if ${pkgs.util-linux}/bin/mountpoint -q /mnt/rust-cache; then
         mkdir -p /mnt/rust-cache/cargo/registry
       fi
-      if mountpoint -q /mnt/buildcache || mountpoint -q /mnt/rust-cache; then
+      if ${pkgs.util-linux}/bin/mountpoint -q /mnt/buildcache || ${pkgs.util-linux}/bin/mountpoint -q /mnt/rust-cache; then
         for d in ${lib.concatStringsSep " " reapNames.cacheDirs}; do
           if [ -e "$HOME/.cache/$d" ] && [ ! -L "$HOME/.cache/$d" ]; then
             rm -rf -- "$HOME/.cache/$d"

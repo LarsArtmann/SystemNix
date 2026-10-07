@@ -112,6 +112,16 @@ in
       };
     };
 
+    # The theme POST must NEVER sit on the Home Manager activation path: HM
+    # blocks its `systemctl --user start` on every enabled oneshot, and
+    # home-manager-lars.service gates the login screen (systemd-user-sessions
+    # ← display-manager ← graphical). On the 2026-10-07 recovery boot this
+    # unit cost 96 s there: aw-server (13 GB sqlite behind the /mnt/pool
+    # symlink) accepted the connection but only answered once the boot IO
+    # storm drained, and the curl had no --max-time. Deferred to a timer
+    # instead of activitywatch.target, and the curl is bounded. The setting
+    # persists in aw-server's DB, so PartOf-driven stops on server restarts
+    # need no re-apply before the next boot's fire.
     activitywatch-theme = {
       Unit = {
         Description = "Set ActivityWatch theme to dark";
@@ -121,10 +131,21 @@ in
       };
       Service = {
         Type = "oneshot";
-        ExecStart = "${lib.getExe pkgs.curl} --retry 5 --retry-delay 2 --retry-connrefused -X POST -H 'Content-Type: application/json' -d '\"dark\"' http://localhost:${toString ports.activitywatch}/api/0/settings/theme";
+        ExecStart = "${lib.getExe pkgs.curl} --connect-timeout 3 --max-time 30 --retry 5 --retry-delay 2 --retry-connrefused -X POST -H 'Content-Type: application/json' -d '\"dark\"' http://localhost:${toString ports.activitywatch}/api/0/settings/theme";
         RemainAfterExit = true;
       };
-      Install.WantedBy = [ "activitywatch.target" ];
+    };
+  };
+
+  systemd.user.timers = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+    activitywatch-theme = {
+      Timer = {
+        OnBootSec = "2min";
+        # Cosmetic: no catch-up after downtime — the next boot's fire is
+        # enough (the theme also persists in aw-server's DB).
+        Persistent = false;
+      };
+      Install.WantedBy = [ "timers.target" ];
     };
   };
 }
