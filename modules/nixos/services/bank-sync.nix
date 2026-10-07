@@ -120,9 +120,7 @@
             # (never invented) and mirror it at the HM surface
             # (systems/evo-x2.nix programs.bank-sync) or the two surfaces
             # build different drvs.
-            package = lib.mkDefault (
-              inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default
-            );
+            package = lib.mkDefault inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default;
           };
 
           # The pool mounts nofail — systemd-tmpfiles could create the dir on the
