@@ -69,6 +69,12 @@
           # chain (DefaultChainFromEnv) reads OPENAI_BASE_URL + OPENAI_MODEL
           # from its environment — support landed in go-commit v0.8.0, which
           # PMA's own flake.lock pins (7321133, since master 7aff6aa6).
+          # OPENAI_TIMEOUT (go-commit, 2026-10-07): go-commit's HTTP client
+          # defaulted to 30s — shorter than flm's 2-5 min cold load, so every
+          # cold-load commit disconnected the client mid-prefill and tripped
+          # the flm v1.0.2 heap-corruption SIGABRT (crash 2026-10-07 12:23).
+          # 10m covers the socket bridge's own 480s deadline with margin.
+          # Inert until PMA re-vendors a go-commit with the env knob.
           # NOTE (2026-08-27): PMA's flake input no longer follows our
           # nixpkgs/go-commit/go-nix-helpers — its vendorHash is validated
           # against its OWN lock (DiscordSync/bank-sync/qmd precedent);
@@ -77,6 +83,7 @@
             "OPENAI_API_KEY=local"
             "OPENAI_BASE_URL=http://127.0.0.1:${toString ports.fastflowlm}/v1"
             "OPENAI_MODEL=qwen3.6-moe:35b-a3b"
+            "OPENAI_TIMEOUT=10m"
           ];
         };
 
