@@ -6269,11 +6269,11 @@
         "wireguard-collector": "wireguard-collector"
       },
       "locked": {
-        "lastModified": 1791386676,
-        "narHash": "sha256-4UHrqZGE1ETnC9n2Ov5KorchEOGx5XOZV+JWhBYbUYQ=",
+        "lastModified": 1791387100,
+        "narHash": "sha256-+TfE9Lx+vtFl4Q7qn1Kiu40PAfxn4L8g6Syov/ZYBN0=",
         "owner": "LarsArtmann",
         "repo": "monitor365",
-        "rev": "3562441cb46ff788c4cd8e1d189eeafa56d42799",
+        "rev": "707d92a0a4e8ba3199041d115bc5d75495335d0b",
         "type": "github"
       },
       "original": {
@@ -6805,11 +6805,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791385393,
-        "narHash": "sha256-Ge6AdoLq2q5G0Vfqbjp6gFQYkB8bsDQqA7dDenZ0ybk=",
+        "lastModified": 1791387367,
+        "narHash": "sha256-ZYsmFvPqDdWgIFCr2RVkpjv8E/LS07pRbnJ+n/Ge0cE=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "8d65983e85170831fb77e002a084e4a90447dbbf",
+        "rev": "2acc866129eeeea2d2156ba6b022b76e2106278a",
         "type": "github"
       },
       "original": {
