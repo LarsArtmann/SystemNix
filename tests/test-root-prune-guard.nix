@@ -155,7 +155,7 @@ in
 
     # 3: THRESHOLD CROSSING — the df stub now reports 91% (df scale), past
     # the strict >90 floor.
-    machine.succeed("rm -f /tmp/btrbk.log")
+    machine.succeed("touch /tmp/cross && rm -f /tmp/btrbk.log")
     machine.succeed("systemctl start root-prune-guard.service")  # must exit 0
     usage = metric("usage_pct")
     assert int(usage) > 90, f"fill did not cross 90% (usage_pct={usage})"
