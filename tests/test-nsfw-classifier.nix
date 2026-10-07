@@ -13,6 +13,9 @@
 #   3. Disabled (default): no unit — hosts that never enable it stay clean.
 #   4. The catalog entry exists even when the service is disabled
 #      (ADR-008 "what exists" is unconditional).
+#   5. Start-limit per integration-registry step 5 (5 starts / 5 min).
+#   6. Cross-repo drift guard: the extension's DEFAULT_SERVER_URLS[0] port
+#      equals the resolved port (discovery breaks silently on drift).
 {
   pkgs,
   inputs,
@@ -80,6 +83,23 @@ let
       pass = lib.hasInfix "--host 0.0.0.0" sc.ExecStart && lib.hasInfix "--port 8104" sc.ExecStart;
     }
     {
+      name = "extension-default-url-port-drift";
+      # Cross-repo drift guard: the extension's discovery candidate list
+      # (nsfw-extension/url-utils.js, DEFAULT_SERVER_URLS[0]) hardcodes
+      # nsfw.home.lan:<port>; if either side moves the port, discovery
+      # silently breaks. Pin the extension source (the flake input's pinned
+      # rev) to the resolved services.nsfw-classifier.port.
+      pass =
+        let
+          content = builtins.readFile "${inputs.nsfw-classifier}/nsfw-extension/url-utils.js";
+          declLine =
+            lib.findFirst (l: lib.hasInfix "const DEFAULT_SERVER_URLS" l) ""
+              (lib.splitString "\n" content);
+          m = builtins.match ".*\"http://nsfw\\.home\\.lan:(9[0-9]+)\".*" declLine;
+        in
+        m != null && builtins.elemAt m 0 == toString enabledConfig.services.nsfw-classifier.port;
+    }
+    {
       name = "models-from-live-checkout";
       pass = lib.hasInfix "--models-dir /home/lars/projects/nsfw-classifier/models" sc.ExecStart;
     }
@@ -97,6 +117,14 @@ let
       pass =
         lib.elem "XDG_CACHE_HOME=/var/cache" (sc.Environment or [ ])
         && (sc.CacheDirectory or "") == "nsfw-classifier";
+    }
+    {
+      name = "start-limit-per-registry";
+      # integration-registry step 5 MUST: the crash-loop budget is 5 starts
+      # per 5 minutes, not systemd's default window of 5 starts / 10 s.
+      pass =
+        enabledConfig.systemd.services.nsfw-classifier.startLimitBurst or 0 == 5
+        && enabledConfig.systemd.services.nsfw-classifier.startLimitIntervalSec or 0 == 300;
     }
     {
       name = "disabled-no-unit";

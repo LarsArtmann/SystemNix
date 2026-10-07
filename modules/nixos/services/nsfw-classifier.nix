@@ -95,6 +95,8 @@
             wantedBy = [ "multi-user.target" ];
             after = [ "network-online.target" ];
             wants = [ "network-online.target" ];
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
 
             # Binds the port BEFORE loading models (fast-fail on port-in-use),
             # so Type=simple is sufficient; /readyz gates readiness during
