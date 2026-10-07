@@ -108,16 +108,12 @@ _: {
             # agent task (dedup forever) and auto-dismisses gate-artifact
             # deaths with shipped proof.
             "dlq-fix" = "true";
-            # Claim-time done gate (go-taskqueue 2026-10-06, spec
-            # docs/planning/2026-10-06_18-50_dispatch-done-preflight-gate.md
-            # THERE): a claimed task whose work is provably already landed
-            # (Task-Queue-ID footer commits in git, todo item now [x]/gone,
-            # fix-ticket rejected-SHA cured, closeout report) completes
-            # with ZERO agent spend. Kills the re-fire class — task
-            # 000001a0f97e2c06… was enqueued once, claimed 15×, every
-            # claim a paid no-op over its own 21 footer commits.
-            # Takes effect at the next input bump + owner deploy.
-            "done-preflight" = "true";
+            # NO done-preflight key here yet: the claim-time done gate is
+            # implemented in go-taskqueue master but UNPUSHED (ahead 13 —
+            # docs/todo/upstream.md), and tq FAILS FAST on unknown settings
+            # keys, so this key crash-looped the pool on locked 0.3.1
+            # (2026-10-07 deploy). Re-add `"done-preflight" = "true";` at the
+            # post-push consumption step (TODO_LIST.md → upstream.md).
             yolo = "true";
             "project-exclusive" = "true";
             review = "true";

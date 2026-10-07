@@ -328,7 +328,7 @@
 - [ ] **papdashboard OTel span instrumentation upstream (clone first)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **papdashboard post-push chain: `nix flake lock --update-input papdashboard` → post-lock probe → deploy (sudo window) → smoke** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Sweep LarsArtmann repos for the `_local_deps` tree-walking-test breakage class (papdashboard proven live 2026-09-30)** → [docs/todo/upstream.md](docs/todo/upstream.md)
-- [ ] **Post-push go-taskqueue consumption: `nix flake lock --update-input go-taskqueue` + verify FOD/package from our lock + redeploy `tq-agent-pool` (agent-executable once go-taskqueue master is pushed)** → [docs/todo/upstream.md](docs/todo/upstream.md)
+- [ ] **Post-push go-taskqueue consumption: `nix flake lock --update-input go-taskqueue` + verify FOD/package from our lock + redeploy `tq-agent-pool` + RE-ADD the `done-preflight = true` pool-config key (removed 2026-10-07: premature landing crash-looped the pool — tq fail-fasts on unknown keys, feature only in unpushed master) (agent-executable once go-taskqueue master is pushed)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **browser-history gate-count gap: read-model `Count()` = 0 despite existing users (found live 2026-09-18)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Upstream cqrs-htmx usermgmt: an ES-registered user was LOST across restarts (found live 2026-09-19)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **PMA discovery daemon starvation — upstream root cause** → [docs/todo/upstream.md](docs/todo/upstream.md)
