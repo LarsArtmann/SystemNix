@@ -127,6 +127,11 @@ in
     ).strip()
     assert user == "btrbk", f"service User is {user!r}, expected btrbk"
 
+    # The wiring assertions are done: stop the timer so the OnBootSec=2min
+    # auto-fire cannot interleave a real unit run between the manual-run
+    # legs below and race the /tmp/btrbk.log one-invocation assertions.
+    machine.succeed("systemctl stop root-prune-guard.timer")
+
     # The script's default OUT dir must exist (production: the node-exporter
     # textfile dir) — the mktemp + sticky-rename contract needs it.
     machine.succeed(
