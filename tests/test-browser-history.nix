@@ -7,6 +7,9 @@
 #      mints a real bh_ DB token non-interactively (the kill-the-manual-sops
 #      flow), the agent env file lands root-owned, and the agent itself runs
 #      against the provisioned token.
+#   4. Machine attribution wiring: the provisioner labels the token with the
+#      machineId option, a header-stamped ingest lands in the visits table,
+#      and AD-2 cross-machine dedup keeps first-dispatch attribution.
 #
 # Uses mock-sops.nix + test-helpers.nix for shared mock infrastructure.
 # Pocket ID/OIDC integration is NOT enabled (conditional on pocketIdEnabled),
@@ -174,6 +177,44 @@ in
     assert "browser_history_agents_active" not in prom, prom
     machine.succeed("mv /var/lib/browser-history/data.db.bak /var/lib/browser-history/data.db")
 
-    print("Browser History verified — server healthy, token provisioning converges, agent runs")
+    # 11. Machine attribution wiring: the token label is the machineId option
+    #     (single source of truth shared with the agent's X-Machine-Id header,
+    #     enforced at eval by the wrapper's machineId binding), and a header-
+    #     stamped /ingest lands machine_id in the visits table.
+    machine.succeed(
+      "test \"$(sqlite3 /var/lib/browser-history/data.db 'SELECT label FROM agent_tokens')\" = vm-test"
+    )
+    machine.succeed(
+      "curl -sf -X POST http://127.0.0.1:8087/ingest "
+      "-H \"Authorization: Bearer $(sed -n 's/^BROWSER_HISTORY_AGENT_TOKEN=//p' /var/lib/browser-history-agent-token/agent.env)\" "
+      "-H \"X-Machine-Id: machine-a\" -H \"Content-Type: application/json\" "
+      "-d '{\"visits\":[{\"url\":\"https://vm-machine.test/page-a\",\"title\":\"machine attribution probe\",\"domain\":\"vm-machine.test\",\"visitCount\":1,\"lastVisitTime\":\"2026-10-07T00:00:00Z\",\"typedCount\":0,\"browser\":\"chrome\",\"profile\":\"default\",\"productivity\":0}]}'"
+    )
+    machine.succeed(
+      "test \"$(sqlite3 /var/lib/browser-history/data.db "
+      "\"SELECT machine_id FROM visits WHERE url = 'https://vm-machine.test/page-a'\")\" = machine-a"
+    )
+
+    # 12. AD-2 cross-machine dedup on the deployed wiring: the SAME visit
+    #     re-ingested under a different machine stays ONE row and keeps the
+    #     first dispatcher's attribution (machine_id is attribution only,
+    #     never part of the deterministic VisitID hash; upstream guard
+    #     api/dedup_test.go).
+    machine.succeed(
+      "curl -sf -X POST http://127.0.0.1:8087/ingest "
+      "-H \"Authorization: Bearer $(sed -n 's/^BROWSER_HISTORY_AGENT_TOKEN=//p' /var/lib/browser-history-agent-token/agent.env)\" "
+      "-H \"X-Machine-Id: machine-b\" -H \"Content-Type: application/json\" "
+      "-d '{\"visits\":[{\"url\":\"https://vm-machine.test/page-a\",\"title\":\"machine attribution probe\",\"domain\":\"vm-machine.test\",\"visitCount\":1,\"lastVisitTime\":\"2026-10-07T00:00:00Z\",\"typedCount\":0,\"browser\":\"chrome\",\"profile\":\"default\",\"productivity\":0}]}'"
+    )
+    machine.succeed(
+      "test \"$(sqlite3 /var/lib/browser-history/data.db "
+      "\"SELECT count(*) FROM visits WHERE url = 'https://vm-machine.test/page-a'\")\" = 1"
+    )
+    machine.succeed(
+      "test \"$(sqlite3 /var/lib/browser-history/data.db "
+      "\"SELECT machine_id FROM visits WHERE url = 'https://vm-machine.test/page-a'\")\" = machine-a"
+    )
+
+    print("Browser History verified — server healthy, token provisioning converges, agent runs, machine attribution wired")
   '';
 }
