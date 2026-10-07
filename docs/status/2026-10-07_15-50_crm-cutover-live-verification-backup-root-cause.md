@@ -160,9 +160,11 @@ this session, `[config]` read from rendered/deployed files this session,
 2. **Dedupe decision:** delete the ~10,489 duplicate opportunities via
    API/UI as lars after the CV checkpoint is verified, or knowingly accept
    them into the Ledger? (Tracked blocked:user; only you can decide.)
-3. **Upstream push window:** the crm vendorHash fix (`fe9da495`) needs a
-   push before the SystemNix shim can drop — do you push in your next
-   window, or is there an authorized agent-push path I should use?
+3. **Upstream push window:** the crm vendorHash fix (`fe9da495`) needs an
+   upstream push before the SystemNix shim can drop — today's wave already
+   paste-pushed bank-sync (`ab2c9dcd`) and InboxClean (`b514bda`); should the
+   crm paste ride the same pattern/window, and is that path open to agent
+   sessions or owner-only?
 
 ---
 
