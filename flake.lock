@@ -1041,11 +1041,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1791349778,
-        "narHash": "sha256-YLkUr1YwEgbfdFRDKiJqfTz0QEJ2LkHQayrfnZu6xk0=",
+        "lastModified": 1791365755,
+        "narHash": "sha256-Byo8o9Fb2iToJRgYaqxOH15bG6xugjltPXraorWL+rg=",
         "owner": "LarsArtmann",
         "repo": "dnsblockd",
-        "rev": "0aa2db30c3ef964ad80d472d116fe5965129570c",
+        "rev": "b90b30653f90ecc66e4fe51b9619dea8b38a9635",
         "type": "github"
       },
       "original": {
@@ -5329,11 +5329,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791363264,
-        "narHash": "sha256-7+ymnwLwpGhm+gGZ6Nc+R8AxUGDDutQQ9tSNXq//h8E=",
+        "lastModified": 1791365390,
+        "narHash": "sha256-eeMOJhhtjaNf4QsJ84KvFJo1+rUhiMNeEjMeQVzrpMk=",
         "owner": "LarsArtmann",
         "repo": "go-taskqueue",
-        "rev": "d8f2e7910f2f56c3acf458d64cf5111577177126",
+        "rev": "1164a1afb0871b9edfe8ed7bd77cb9afb6a5bf82",
         "type": "github"
       },
       "original": {
