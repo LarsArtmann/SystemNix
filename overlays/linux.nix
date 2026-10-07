@@ -211,17 +211,19 @@ let
         '';
       };
     };
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-05, a7868a7 wave — class
-  # comment at lib/lars-packages.nix): the 2026-10-04/05 flake update
-  # re-vendored the module graph; the 2026-10-03 value (xoPCvuTn…) no
-  # longer reproduces at locked rev 0bd519b (got DubDFIjq…; evo-x2
-  # toplevel --keep-going enumeration evidence). Upstream master is ahead;
-  # drop when the lock moves past an upstream-fixed rev. Must stay
-  # AFTER file-and-image-renamer.overlays.default in the list below.
-  # prev (NOT final) — final would recurse into this overlay's own override.
+  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave — class
+  # comment at lib/lars-packages.nix): the 2026-10-07 lock commits
+  # re-vendored the module graph; the 2026-10-05 value (DubDFIjq…; itself
+  # a re-pin of the 2026-10-03 xoPCvuTn…) no longer reproduces at locked
+  # rev 12b1828 (got IrQ4Zsuw…; first-hand keep-going enumeration,
+  # /tmp/toplevel-fix-20261007.log). Upstream master is stale at locked
+  # rev AND HEAD; drop when the lock moves past an upstream-fixed rev.
+  # Must stay AFTER file-and-image-renamer.overlays.default in the list
+  # below. prev (NOT final) — final would recurse into this overlay's own
+  # override.
   fileAndImageRenamerVendorHashShim = _final: prev: {
     file-and-image-renamer = prev.file-and-image-renamer.overrideAttrs {
-      vendorHash = "sha256-DubDFIjqw/PzLsyWR5It/401y/HMQUvGTJuLfmMpv6k=";
+      vendorHash = "sha256-IrQ4Zsuw8Jjqv0AcI/M8Dg6Utu+lrsp7nZL5wnInlmQ=";
     };
   };
   # TEMPORARY vendorHash shims (class comment at lib/lars-packages.nix):
@@ -243,17 +245,24 @@ let
       vendorHash = "sha256-/NYfLmDMxO+YDEJQqELmP4DXzxtKjgLXDiHLWjeL018=";
     };
   };
-  # TEMPORARY doCheck shim (2026-10-05, class comment at
+  # TEMPORARY doCheck + vendorHash shim (doCheck leg 2026-10-05,
+  # vendorHash leg RE-PINNED 2026-10-07 wave — class comment at
   # lib/lars-packages.nix): crush-daily's chromedp cdproto shadowing was
   # fixed upstream (05fe675: chromedp v0.19.1 + pinned vendorHash djxdMOJ…,
   # re-locked), but internal/server/ui_behavior_test.go does not compile
   # against the v0.19 generic action API yet (Evaluate/Poll signature
   # migration is upstream follow-up work) — the package itself builds green;
   # the test gate stays off until the migration lands and the lock moves
-  # past it. prev (NOT final) — same recursion guard; stay AFTER
-  # crush-daily.overlays.default in the list below.
+  # past it. The 2026-10-07 lock wave moved the input past 05fe675 to
+  # dbb69172, where upstream's djxdMOJ… no longer reproduces (got
+  # Kqqi9bYj…; first-hand keep-going enumeration,
+  # /tmp/toplevel-fix-20261007.log; upstream stale at locked rev AND HEAD,
+  # checkout owned by a parallel session). prev (NOT final) — same
+  # recursion guard; stay AFTER crush-daily.overlays.default in the list
+  # below.
   crushDailyVendorHashShim = _final: prev: {
     crush-daily = prev.crush-daily.overrideAttrs {
+      vendorHash = "sha256-Kqqi9bYjcTXMDw83j1IOosoMfyWPDVb3qsMUJr5AGGw=";
       doCheck = false;
     };
   };

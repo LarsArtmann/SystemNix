@@ -36,14 +36,15 @@
 
       config = lib.mkIf cfg.enable {
         services.vision-review-agent = {
-          # TEMPORARY vendorHash shim (RE-PINNED 2026-10-05, a7868a7 wave —
-          # class comment at lib/lars-packages.nix): upstream hash no longer
-          # reproduces at locked rev 085d07d (got oBs/pY0H…; evo-x2 toplevel
-          # --keep-going enumeration evidence). Drop when upstream re-pins or
+          # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave —
+          # class comment at lib/lars-packages.nix): upstream hash stale at
+          # locked rev 00042ee5 AND HEAD (got q+Mb6q3G…; first-hand
+          # keep-going enumeration, /tmp/toplevel-fix-20261007.log).
+          # Drop when upstream re-pins or
           # the lock moves past an upstream-fixed rev.
           package = lib.mkDefault (
             inputs.vision-review-agent.packages.${pkgs.stdenv.hostPlatform.system}.visionreviewd.overrideAttrs {
-              vendorHash = "sha256-oBs/pY0HHe7hHuewlKK6ERMqbl98tFbNnSReMBVCjgY=";
+              vendorHash = "sha256-q+Mb6q3GCiVCU53gq/RvlJntCzIvoxVoH0EbbA15CNU=";
             }
           );
           llamaServer.port = lib.mkDefault ports.visionreviewd-llama;

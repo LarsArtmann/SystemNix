@@ -33,18 +33,14 @@
       # Where the cv-oidc-env bridge writes CV_OIDC_CLIENT_SECRET (the
       # StateDirectory below owns /var/lib/cv-oidc; dnsblockd pattern).
       oidcEnvFile = "/var/lib/cv-oidc/client-secret.env";
-      # TEMPORARY vendorHash shim (RE-PINNED 2026-10-05, a7868a7 wave —
-      # class comment at lib/lars-packages.nix): the 2026-10-04/05 flake
-      # update re-vendored the module graph; the 2026-10-03 value
-      # (qovjz12C…) no longer reproduces at locked rev aac6a1e
-      # (got mJIYVldX…; evo-x2 toplevel --keep-going enumeration evidence —
-      # toolchain drift, not source drift).
-      # Upstream master is ahead; drop when the lock moves past an
-      # upstream-fixed rev. Serves BOTH consumers below
+      # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
+      # docs/agents/nix-flakes.md): upstream b3a9172f ALREADY bakes the got
+      # hash fpTOHKF+… (first-hand keep-going enumeration,
+      # /tmp/toplevel-fix-20261007.log); the stale override only re-created
+      # the drift treadmill. Serves BOTH consumers below
       # (PATH CLI and service package are the same derivation, two attrs).
-      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-mJIYVldXCbaLCxetz76xuFcUsKvPLNgy2uIQgIWQCwY=";
-      };
+      # Re-add ONLY via nix-hash-fix evidence, never by hand.
+      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
     in
     {
       imports = [

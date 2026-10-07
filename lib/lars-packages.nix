@@ -21,26 +21,13 @@ lib.filterAttrs (_: v: v != null) {
   # and re-broke the FOD it existed to fix — the buildflow-shim lifecycle
   # class). Re-add ONLY via nix-hash-fix evidence, never by hand.
   art-dupl = flakePkg inputs.art-dupl;
-  # TEMPORARY vendorHash shim (2026-10-05, class comment at buildflow): got
-  # OBmrPDoU… vs upstream-specified PirjczMaw… at locked rev 05d8209f
-  # (first-hand evidence: 07:37 deploy build, log
-  # /var/log/systemnix-deploys/2026-10-05_07-37-03.log). The 2026-10-02 drop
-  # went stale when the lock moved to a re-broken rev (upstream re-broke the
-  # hash it had fixed; lifecycle class at buildflow). Bootstrap exception: the
-  # upstream checkout is owned by a live parallel session mid version-sync
-  # (0.2.0->0.6.4, fix at unpushed 65a4d189), so buildflow nix-hash-fix cannot
-  # run there; hash pasted from first-hand build output, never invented. Drop
-  # when the lock moves past a PUSHED upstream-fixed rev.
-  branching-flow =
-    let
-      pkg = flakePkg inputs.branching-flow;
-    in
-    if pkg == null then
-      null
-    else
-      pkg.overrideAttrs {
-        vendorHash = "sha256-OBmrPDoUGaHFUBzALSv/YzercrzA8lAQ/N4sl6D2vJU=";
-      };
+  # vendorHash shim DROPPED (2026-10-07 wave — the 13:14/14:59 lock commits
+  # moved the input; drop-protocol, docs/agents/nix-flakes.md): upstream
+  # 60a91081 ALREADY bakes the got hash A8ZHASMR… (first-hand: evo-x2
+  # toplevel --keep-going enumeration, /tmp/toplevel-fix-20261007.log), so
+  # the override only re-created the drift treadmill. Re-add ONLY via
+  # nix-hash-fix evidence, never by hand.
+  branching-flow = flakePkg inputs.branching-flow;
   # buildflow shim DROPPED (2026-09-23): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 5b3483a, where the
   # vendorHash fix IS pushed (upstream vendorHash.nix = sha256-WIFsGVLBMsCK…,
@@ -70,11 +57,11 @@ lib.filterAttrs (_: v: v != null) {
   # protocol, docs/agents/nix-flakes.md). Re-add ONLY via nix-hash-fix
   # evidence, never by hand.
   buildflow = flakePkg inputs.buildflow;
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-05, a7868a7 wave — class
-  # comment at buildflow): got heAweMaV… vs the 2026-10-01 shim value
-  # yonqp/FVG… at locked rev 4d4137ee. Upstream master (abb38b28) is ahead;
-  # drop when the lock moves past an upstream-fixed rev. Null-safe: keeps
-  # the missing-package filter honest.
+  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave — class
+  # comment at buildflow): got t2UbXb33… at locked rev 28b2eade
+  # (upstream stale at locked rev AND HEAD; first-hand keep-going
+  # enumeration, /tmp/toplevel-fix-20261007.log). Drop when upstream
+  # re-pins or the lock moves past an upstream-fixed rev.
   cqrs-lint =
     let
       pkg = inputs.go-cqrs-lite.packages.${system}.cqrs-lint or null;
@@ -83,12 +70,12 @@ lib.filterAttrs (_: v: v != null) {
       null
     else
       pkg.overrideAttrs {
-        vendorHash = "sha256-heAweMaV7hMinU5eNAWOYrcYDVN8h192kxAaRl3nxZs=";
+        vendorHash = "sha256-t2UbXb33dwEkhaLZzYNsGx3JzxqZjMgGCGr3rJTa4D0=";
       };
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-05, a7868a7 wave — class
-  # comment at buildflow): the 2026-10-03 value vDCDafsa… stopped
-  # reproducing; got 96zTy5ij… at locked rev ff6cffa. Drop when the lock
-  # moves past an upstream-fixed rev.
+  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave — class
+  # comment at buildflow): got 4wgXASTZ… at locked rev c09818e3
+  # (upstream stale at locked rev AND HEAD). Drop when upstream re-pins
+  # or the lock moves past an upstream-fixed rev.
   erraudit =
     let
       pkg = flakePkg inputs.erraudit;
@@ -97,22 +84,18 @@ lib.filterAttrs (_: v: v != null) {
       null
     else
       pkg.overrideAttrs {
-        vendorHash = "sha256-96zTy5ij7yBNwcTb+YnWLyNWYB776S4Zbd949Ok6Jdk=";
+        vendorHash = "sha256-4wgXASTZkT+/FwDewDe/C3jm5v5qYWaRAjBPV5WBkCI=";
       };
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-05, a7868a7 wave — class
-  # comment at buildflow): got RAmyzsGd… at locked rev 523de68.
-  go-auto-upgrade =
-    let
-      pkg = flakePkg inputs.go-auto-upgrade;
-    in
-    if pkg == null then
-      null
-    else
-      pkg.overrideAttrs {
-        vendorHash = "sha256-RAmyzsGdgQbFsiErKKYgBu/IVvcbqiYXI5K63LycsEU=";
-      };
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-05, a7868a7 wave — class
-  # comment at buildflow): got cBUoF13V… at locked rev eb7ecab.
+  # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
+  # docs/agents/nix-flakes.md): upstream 74baca53 ALREADY bakes the got
+  # hash G0hMfZId… (first-hand keep-going enumeration,
+  # /tmp/toplevel-fix-20261007.log). Re-add ONLY via nix-hash-fix
+  # evidence, never by hand.
+  go-auto-upgrade = flakePkg inputs.go-auto-upgrade;
+  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave — class
+  # comment at buildflow): got JrBhDyCx… at locked rev 4cee06df
+  # (upstream stale at locked rev AND HEAD). Drop when upstream re-pins
+  # or the lock moves past an upstream-fixed rev.
   go-humanize-linter =
     let
       pkg = flakePkg inputs.go-humanize-linter;
@@ -121,24 +104,19 @@ lib.filterAttrs (_: v: v != null) {
       null
     else
       pkg.overrideAttrs {
-        vendorHash = "sha256-cBUoF13VZohsIRvBARQChXH7nlmYjC657kvj0G25gWM=";
+        vendorHash = "sha256-JrBhDyCx9lr4sUoODRBgMZIpdag0TvlEOptBw2x51CU=";
       };
   go-structure-linter = flakePkg inputs.go-structure-linter;
-  # TEMPORARY vendorHash shim (2026-10-05, a7868a7 wave — class comment at
-  # buildflow): got Ky0wHN9Z… vs upstream-specified AAFXbSdH… at locked rev
-  # ec98ce76.
-  golangci-lint-auto-configure =
-    let
-      pkg = flakePkg inputs.golangci-lint-auto-configure;
-    in
-    if pkg == null then
-      null
-    else
-      pkg.overrideAttrs {
-        vendorHash = "sha256-Ky0wHN9ZmLYAxjwgRwgoxLzakqaeHFhnoim3Ixjn3Ag=";
-      };
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-05, a7868a7 wave — class
-  # comment at buildflow): got W9D93IZf… at locked rev ff6a493.
+  # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
+  # docs/agents/nix-flakes.md): upstream cb9a8b79 ALREADY bakes the got
+  # hash cdxICkri… (first-hand keep-going enumeration,
+  # /tmp/toplevel-fix-20261007.log). Re-add ONLY via nix-hash-fix
+  # evidence, never by hand.
+  golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
+  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave — class
+  # comment at buildflow): got MUWz8cpf… at locked rev 4fc973bc
+  # (upstream stale at locked rev AND HEAD). Drop when upstream re-pins
+  # or the lock moves past an upstream-fixed rev.
   library-policy =
     let
       pkg = flakePkg inputs.library-policy;
@@ -147,17 +125,19 @@ lib.filterAttrs (_: v: v != null) {
       null
     else
       pkg.overrideAttrs {
-        vendorHash = "sha256-W9D93IZfOwxE8Y1wEuz+qVWqNjxcAkTXruiuvO9osTw=";
+        vendorHash = "sha256-MUWz8cpfjmMxS9hjVBCFVUKwmGLQArHJKul0QH26xwM=";
       };
-  # TEMPORARY go toolchain + vendorHash shim (2026-10-03): md-go-validator's
+  # TEMPORARY go toolchain + vendorHash shim (toolchain leg 2026-10-03,
+  # vendorHash leg RE-PINNED 2026-10-07 wave): md-go-validator's
   # go.mod floor is 1.27.1 while nixpkgs' default go is 1.26.8 — the FOD
   # dies "go: go.mod requires go >= 1.27.1 (GOTOOLCHAIN=local)" (the
   # 2026-09-17 go 1.27 wave class; fix forward with go_1_27, never pin the
   # toolchain back). Upstream's package.nix hardcodes the toolchain (its
   # lambda takes no `go`), so the override rebinds `buildGoModule` itself
   # (the documented wiring point 3) — that propagates go_1_27 into the
-  # go-modules FOD. vendorHash under go_1_27 LEARNED via the fakeHash
-  # mismatch build (2026-10-03), then pasted below. Drop both when upstream
+  # go-modules FOD. vendorHash under go_1_27 RE-LEARNED via first-hand
+  # keep-going enumeration (got e+jOFi3m… at locked rev 5e70003,
+  # /tmp/toplevel-fix-20261007.log). Drop both when upstream
   # bumps its toolchain and re-pins its hash.
   md-go-validator =
     let
@@ -171,19 +151,16 @@ lib.filterAttrs (_: v: v != null) {
           go = inputs.nixpkgs.legacyPackages.${system}.go_1_27;
         };
       }).overrideAttrs
-        { vendorHash = "sha256-h3p6Hh2Ak1cPwnrtVNX+OTOJZMRpDRDPRDrb2r9JpS0="; };
+        { vendorHash = "sha256-e+jOFi3mjRy4207Y56Fo5H1VMNpFQAaeZaPZk1ADFmw="; };
   # depgraph CLI: renders the LarsArtmann Go monorepo dependency graph and
   # answers who-uses/why/update-plan/release-suggestions queries. Rides
   # PATH via base.nix attrValues (both hosts). Upstream repo is PRIVATE
   # (git+ssh input + CI deploy key, see flake.nix).
   #
-  # TEMPORARY vendorHash shim (2026-10-05): got ZMNM9if4… vs upstream's
-  # committed w2eY11c/… at locked rev d9c5aa3b — the cmdguard v4.1.0 input
-  # bump re-vendored the closure and upstream's regenerated vendorHash.nix
-  # was still UNCOMMITTED at lock time (parallel session 2026-10-05 12:06,
-  # docs/status/2026-10-05_12-06_flake-review-treefmt-sandbox-input-drift.md;
-  # got-hash pasted from first-hand `nix build .#project-dependency-graph`
-  # output this session). Drop when the lock moves past an upstream rev
+  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave): got
+  # w3uyGueT… at locked rev 7ff7ff43 (upstream stale at locked rev AND
+  # HEAD; first-hand keep-going enumeration,
+  # /tmp/toplevel-fix-20261007.log). Drop when the lock moves past an upstream rev
   # with the corrected vendorHash.nix committed.
   project-dependency-graph =
     let
@@ -193,14 +170,14 @@ lib.filterAttrs (_: v: v != null) {
       null
     else
       pkg.overrideAttrs {
-        vendorHash = "sha256-ZMNM9if43WnLjqbw1RUSMMWFMjYn6ehS+zXfbaI0pcI=";
+        vendorHash = "sha256-w3uyGueTBhgtLamcIDX2borG5Gcs7aa+odqGDOe0Lpg=";
       };
   # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.
   # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
   mr-sync = flakePkg inputs.mr-sync;
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-05, a7868a7 wave — class
-  # comment at buildflow): got mkVtnCAg… at locked rev c37517b
-  # (upstream package name is "meta").
+  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave — class
+  # comment at buildflow): got KDFDf97T… at locked rev a95111f4
+  # (upstream stale at locked rev AND HEAD).
   project-meta =
     let
       pkg = flakePkg inputs.project-meta;
@@ -209,7 +186,7 @@ lib.filterAttrs (_: v: v != null) {
       null
     else
       pkg.overrideAttrs {
-        vendorHash = "sha256-mkVtnCAg/4zLUkPfnfamR1PIUTYcG51dphQzLiRmr2A=";
+        vendorHash = "sha256-KDFDf97TfikkIA/URtSDTPt7VbdJfVXpIMIn0+Mv6uM=";
       };
   # TEMPORARY vendorHash shim (2026-10-05, a7868a7 wave — class comment at
   # buildflow): got Mrn25ftf… vs upstream-specified 8kSXYjwa… at locked rev
@@ -224,8 +201,9 @@ lib.filterAttrs (_: v: v != null) {
       pkg.overrideAttrs {
         vendorHash = "sha256-Mrn25ftfpqf9rov194lDd/JqiDeBbgiGSt9+r0hnYF8=";
       };
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-05, a7868a7 wave — class
-  # comment at buildflow): got XFHNI8Cw… at locked rev 78b01da.
+  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave — class
+  # comment at buildflow): got +/NGC//7… at locked rev 53159116
+  # (upstream stale at locked rev AND HEAD).
   projects-management-automation =
     let
       pkg = flakePkg inputs.projects-management-automation;
@@ -234,20 +212,14 @@ lib.filterAttrs (_: v: v != null) {
       null
     else
       pkg.overrideAttrs {
-        vendorHash = "sha256-XFHNI8CwnEE2GK74fXzm16XGil5y14RMCEs3RKBRQdY=";
+        vendorHash = "sha256-+/NGC//7EOQoXVOn4qQZxOtplZpPFCD6nCvZqWGOmnU=";
       };
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-05, a7868a7 wave — class
-  # comment at buildflow): got 9w7D9nyu… at locked rev a18ed72.
-  samber-linter =
-    let
-      pkg = flakePkg inputs.samber-linter;
-    in
-    if pkg == null then
-      null
-    else
-      pkg.overrideAttrs {
-        vendorHash = "sha256-9w7D9nyuitluLTq3a5gW+T3BEYwfobB3HdxHu92fBdE=";
-      };
+  # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
+  # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
+  # hash wH3k7WiK… (first-hand keep-going enumeration,
+  # /tmp/toplevel-fix-20261007.log). Re-add ONLY via nix-hash-fix
+  # evidence, never by hand.
+  samber-linter = flakePkg inputs.samber-linter;
   # todo-list-ai TEMPORARILY DROPPED (2026-10-03, null → filtered by the
   # null-safe guard below): the 2026-10-01 root-nixpkgs bump moved its
   # followed bun 1.4.1→1.4.2, which re-hashed the deps FOD (pinned

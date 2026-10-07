@@ -51,14 +51,15 @@
 
       config = lib.mkIf cfg.enable {
         services.projects-management-automation = {
-          # TEMPORARY vendorHash shim (RE-PINNED 2026-10-05, a7868a7 wave —
-          # class comment at lib/lars-packages.nix): got XFHNI8Cw… at locked
-          # rev 78b01da (this is the SERVICE surface —
-          # lars-packages.nix covers the systemPackages surface).
+          # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave —
+          # class comment at lib/lars-packages.nix): got +/NGC//7… at locked
+          # rev 53159116 (upstream stale at locked rev AND HEAD; this is the
+          # SERVICE surface — lars-packages.nix covers the systemPackages
+          # surface; both MUST carry the same value).
           package =
             inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
               {
-                vendorHash = "sha256-XFHNI8CwnEE2GK74fXzm16XGil5y14RMCEs3RKBRQdY=";
+                vendorHash = "sha256-+/NGC//7EOQoXVOn4qQZxOtplZpPFCD6nCvZqWGOmnU=";
               };
           user = primaryUser;
           group = "users";
