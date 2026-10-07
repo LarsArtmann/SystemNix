@@ -121,11 +121,11 @@
             # DiscordSync protocol). MUST mirror the same override at the HM
             # surface (systems/evo-x2.nix programs.bank-sync) or the two
             # surfaces build different drvs.
-            package =
-              lib.mkDefault
-                (inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-                  vendorHash = "sha256-pE2+3UF1eU+PC2E89nf9ueC84aEjcn/NUCLuQrvdepo=";
-                });
+            package = lib.mkDefault (
+              inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+                vendorHash = "sha256-pE2+3UF1eU+PC2E89nf9ueC84aEjcn/NUCLuQrvdepo=";
+              }
+            );
           };
 
           # The pool mounts nofail — systemd-tmpfiles could create the dir on the
