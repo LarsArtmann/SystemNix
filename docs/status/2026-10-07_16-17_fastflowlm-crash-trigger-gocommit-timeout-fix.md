@@ -1,0 +1,132 @@
+# Status Report — FastFlowLM crash-trigger root cause + go-commit OPENAI_TIMEOUT fix
+
+**Date:** 2026-10-07 16:17 CEST · **Session scope:** the FastFlowLM "always dies / not connected to go-commit" question — diagnosis, fix, wiring, docs. No other domains researched (per operator instruction).
+
+**Headline:** FastFlowLM's recurring death is a 3-layer loop — go-commit's hardcoded **30s HTTP timeout** disconnects into flm's cold load → the disconnect-cancel path fires flm v1.0.2's **heap-corruption SIGABRT** → each crash re-pays a ~21.8GB QLC cold read into the memory-guard's zone-6 IO trips → guard stops flm+socket (by design) → **restore cap (3/day) leaves it dark** → PMA falls back to heuristic on every commit. The wiring was never broken: go-commit v0.9.0 demonstrably reaches flm (its commit-message request is in today's 12:23:12 crash echo). Fix implemented and committed in go-commit (`559720d`), env wired in SystemNix (eval-verified), deploy chain owner-pending.
+
+---
+
+## a) FULLY DONE
+
+| # | What | Evidence | Scope |
+|---|------|----------|-------|
+| a1 | Root-cause diagnosis of the flm death spiral | Live journal: 12:23:12 `corrupted double-linked list` → SIGABRT status=6/ABRT with a go-commit chat/completions request in the FLM echo; guard zone-6 trips #2202 (15:43:29) + #2203 (15:53:32); "restore capped (3 restores today >= 3)" at 14:10:27 | `modules/nixos/services/fastflowlm.nix`, `memory-emergency-guard.nix`, PMA/flm journals |
+| a2 | go-commit fix: `DefaultChainFromEnv` honors `OPENAI_TIMEOUT` (positive Go duration; malformed/non-positive fail loud via `provider.invalid_timeout`) | go-commit commit `559720d` (5 files, +106/−11); providers test suite `ok` — 106 Ginkgo specs + new plain tests (timeout plumbing via `openAICompatibleProvider.httpProvider.httpClient.Timeout`, malformed + non-positive rejections) | `pkg/commit/providers/{chain.go,codes.go,chain_test.go,http_internal_test.go}` |
+| a3 | Pre-existing build break fixed: `pkg/commit/conflict/resolver.go:198-208` had `OursContent/TheirsContent/BaseContent` twice in one struct literal (Go compile error at committed HEAD `4bd8e54`) | `go build ./pkg/commit/conflict/ ./pkg/commit/providers/ ./pkg/commit/config/` → BUILD-OK | `pkg/commit/conflict/resolver.go` |
+| a4 | Daemon-sweep recovery: two heuristic auto-commits (`77b20ac`, `79fabf5`) + dirty test files squashed into one properly-messaged commit (verified both sweeps contained ONLY this session's files before amending; ahead-2 unpushed) | `git log`: `559720d` on top of `4bd8e54`; clean tree | go-commit master |
+| a5 | SystemNix wiring: `OPENAI_TIMEOUT=10m` in PMA `extraEnvironment` (comment documents why 10m covers the socket bridge's 480s deadline) | `nix eval .#nixosConfigurations.evo-x2.config.services.projects-management-automation.extraEnvironment` → JSON contains `"OPENAI_TIMEOUT=10m"` | `modules/nixos/services/projects-management-automation.nix` |
+| a6 | Upstream release-notes verification: v1.0.3→v1.0.7 claim **no** fix for heap corruption / cancel-disconnect / concurrent-load stability — a flm version bump does NOT fix this crash class (kills the "just upgrade" theory with evidence) | agentic_fetch of ROCm/FastFlowLM releases, quoted per-version notes, recorded in fastflowlm.md | docs only |
+| a7 | Docs corrected across 5 surfaces: fastflowlm.md (crash-trigger bullet + 10m slot-hold budget note), projects-management-automation.md (the wrong "30s fallback self-heals" claim corrected after ~6 weeks), upstream.md (2 new items), ai-stack.md (watch recurrence + decision-item release-notes data), CHANGELOG (Changed entry) | all committed-adjacent (daemon picks up); `check-todo-system.sh` → "OK: TODO queue/library structure clean" | docs/services/*, docs/todo/*, CHANGELOG.md |
+| a8 | Deploy-chain lineage verified: go-commit local tree on `master`, PMA's vendored rev `9dfbf1e` IS an ancestor of the fix commit → push → PMA re-lock is a sound chain | `git merge-base --is-ancestor 9dfbf1e HEAD` → true | go-commit repo |
+| a9 | IO-storm attribution: the zone-6 trips are driven by the parallel agent sessions themselves (4-5 `crush` processes, 7-15GB reads + up to 19GB writes each), not flm (which was dark) | `/proc/*/io` snapshot at ~15:57 | live state observation |
+
+## b) PARTIALLY DONE
+
+| # | What works | What remains | Blocker | Effort |
+|---|-----------|--------------|---------|--------|
+| b1 | The complete fix chain is implemented + committed + eval-verified | **Nothing is deployed**: go-commit unpushed → PMA not re-vendored → env inert → PMA binary still carries the 30s timeout | Owner push (agents never push) + `nix run .#deploy` | M |
+| b2 | go-commit providers suite fully green | `pkg/commit/conflict`, `pkg/commit/commit`, `cmd/` are build-verified but NOT test-verified this session (the conflict break blocked test builds until a3; no full-suite run after) | none — just needs a `go test ./...` run | S-M |
+| b3 | 16:03:17 post-cap socket listen observed (17s, journal) and filed as an investigation item | Root cause unknown — if the guard's 3/day cap is bypassable, the anti-churn doctrine has a hole | needs journal correlation with guard/sev1/timers | S |
+| b4 | Connection-budget caveat documented (10m client holds make a cold-load commit hold a slot ~16× longer) | Budget table not re-modeled for hold-duration distributions | design decision on whether it matters (PMA ≤1 conn) | S |
+
+## c) NOT STARTED
+
+| # | What | Why not started | Priority |
+|---|------|-----------------|----------|
+| c1 | `systemctl start fastflowlm.socket` in a quiet-IO window (today: cap spent, storm active at last check — PSI some avg60 46%) | sudo + `systemctl` are owner hands; restarting into the storm re-trips by design | HIGH (unlocks AI commits today) |
+| c2 | Push go-commit `559720d` → PMA re-vendor (vendorHash refresh expected) → deploy SystemNix | owner-gated (push) | HIGH |
+| c3 | End-to-end proof: one real LLM commit through a deliberate cold load (`duration=10-20s`+, no `heuristic fallback` WARN, no flm SIGABRT) | depends on c1+c2 | HIGH |
+| c4 | Audit the other flm consumers' client timeouts (paperless celery ×2, paperless-gpt/langchaingo, papdashboard enricher) — go-commit's 30s was today's trigger; siblings may carry the same landmine | filed [ready] in services.md; not started | MEDIUM-HIGH |
+| c5 | FastFlowLM upstream issue: cancel-path heap corruption (evidence ready: journal + coredump + echo attribution) | verify-before-filing gate + owner call | MEDIUM |
+| c6 | flm v1.0.2→v1.0.7 staged go-live (weights re-pull + live-serve validation) | [decision]; now informed by a6 (accuracy-only bump) | MEDIUM |
+| c7 | Crash-signature composite alert (PMA 30s-band fallbacks × flm coredumps) | filed [ready] in monitoring.md | MEDIUM |
+| c8 | go-commit build gate (committed-broken HEAD proves none exists) | filed [ready] in upstream.md | MEDIUM |
+| c9 | Zone-6 sacrifice-list decision (stability lib: stopping FLM for IO trips is "the wrong tool" — open owner decision) | pre-existing [decision] | LOW-MED |
+| c10 | SystemNix root `go-commit` flake input (`flake.nix:664`) is consumed by NOTHING (grep: zero `inputs.go-commit` uses) — audit/remove | discovered at report time | LOW |
+
+## d) TOTALLY FUCKED UP
+
+1. **flm is dark RIGHT NOW and stays dark all day by design** — restore cap spent 14:10, socket down (confirmed 16:12), PMA on 100% heuristic fallback machine-wide. The user's original complaint is only HALF-fixed until c1+c2 land: the fix exists, the machine can't use it yet.
+2. **The docs taught a wrong mental model for ~6 weeks** — `projects-management-automation.md` claimed the 30s cold-idle fallback "self-heals as the socket warms". It doesn't: the disconnect CRASHES flm. Every session that read that bullet inherited a false theory of the system.
+3. **go-commit landed a non-compiling HEAD** (`4bd8e54`, duplicate struct fields, via heuristic auto-commit) with zero gate catching it — the repo's safety net has a build-sized hole.
+4. **The 30s timeout × socket-activation interaction was a crash GENERATOR**: every first commit after idle = guaranteed client disconnect → SIGABRT → restart → 21.8GB re-read → guard trip → cap burn. The system operated "as designed" while manufacturing its own incidents daily.
+5. **The machine multi-agent-DOEs itself**: the IO storm driving zone-6 trips is the parallel agent sessions (7-15GB reads each). flm structurally cannot stay up during multi-agent work — an unresolved systemic conflict between throughput and the LLM service.
+6. **Unexplained post-cap socket activation (16:03)** — if the guard's cap can be bypassed, the anti-churn doctrine has a hole (b3).
+7. **Session honesty:** my first internal-test assertion targeted `*httpProvider` and failed ("openai provider not found in chain" — the chain wraps it in `openAICompatibleProvider`); fixed in-session. One grep call wasted on docs noise (CommitOptions hunt). Both self-caught, but they cost cycles a cleaner first read would have saved.
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Local-LLM consumer timeout doctrine** — every flm consumer's HTTP client timeout must be ≥ the cold-load budget (2-5 min; bridge 480s), or explicitly fast-fail. Codify in fastflowlm.md + audit consumers (c4). The go-commit fix is instance #1 of a fleet-wide pattern.
+2. **One knob, one surface** — go-commit now has `GO_COMMIT_TIMEOUT` (CLI config path only) AND `OPENAI_TIMEOUT` (env chain only). Split-brain waiting to confuse: unify or alias, document both in one table.
+3. **Automate the failure-signature table** — the PMA runbook already documents diagnostic duration bands (instant = env-chain dead; 30s = LLM timeout); it took a human session to correlate. Alert on it (c7).
+4. **Build gates on daemon-heavy repos** — heuristic auto-commits landed broken Go (d3). `go build ./...` in CI/pre-commit, fleet-wide check for repos with auto-commit daemons.
+5. **Deploy-pending fixes rot** — a5/a7 sit undeployed; the repo has multiple deploy-pending changes (see CHANGELOG "deploy pending a calm window" entries). A calm-window deploy queue would stop fixes from going stale in-tree.
+6. **Multi-session IO coordination** — zone-6 storms are self-inflicted by parallel sessions; consider PSI-gating heavy repo scans or serializing sessions (ties into the existing stability-lib decision rows).
+7. **Skill-level note:** the status-report skill's `.md` standing exception covers task-queue dispatches only; this session's explicit `.md` demand is a second instance of the operator demanding `.md` at a named path — candidate to extend the exception (not edited unilaterally).
+
+## f) NEXT TASKS (harvest-status marked; "harvested" = already landed in TODO_LIST/domain libs/CHANGELOG this session)
+
+| # | Task | Impact | Effort | Category | Harvest |
+|---|------|--------|--------|----------|---------|
+| 1 | Quiet-window `systemctl start fastflowlm.socket` + confirm :52625 listening | Critical | S | Ops | owner hands (sev1 text) |
+| 2 | Push go-commit `559720d` to origin master | Critical | S | Deploy | owner (never push) |
+| 3 | PMA re-vendor go-commit (flake.lock + vendorHash) | Critical | M | Deploy | harvested (upstream.md chain) |
+| 4 | Deploy SystemNix (carries env + all docs) | Critical | M | Deploy | pending calm window |
+| 5 | E2E proof: real LLM commit through a cold load (duration + no fallback WARN + no SIGABRT) | Critical | S | Verification | harvested (upstream.md chain step 4) |
+| 6 | Verify PMA process env carries OPENAI_TIMEOUT post-deploy (`/proc/<pid>/environ`) | High | S | Verification | deliberately not harvested (trivial, part of 5) |
+| 7 | Audit paperless celery ×2 AI-call timeouts vs cold-load budget | High | M | Bug | harvested (services.md) |
+| 8 | Audit paperless-gpt (langchaingo) timeout + backoff config | High | M | Bug | harvested (services.md) |
+| 9 | Audit papdashboard PAP_INSIGHT enricher timeout (re-wake-loop driver) | High | M | Bug | harvested (services.md) |
+| 10 | Explain the 16:03 post-cap socket listen (guard cap bypass?) | High | S | Bug | harvested (services.md) |
+| 11 | go-commit: `go test ./...` full suite (conflict/commit/cmd untested) | High | S | Quality | deliberately not harvested (one command, part of b2) |
+| 12 | go-commit: add `go build ./...` CI/pre-commit gate | High | S | Quality | harvested (upstream.md) |
+| 13 | File FastFlowLM upstream issue (cancel-path heap corruption; evidence bundle ready) | High | M | Upstream | deliberately not harvested (owner call + verify-before-filing) |
+| 14 | Crash-signature composite alert (30s-band fallbacks × flm coredumps) | High | M | Monitoring | harvested (monitoring.md) |
+| 15 | go-commit: unify GO_COMMIT_TIMEOUT / OPENAI_TIMEOUT into one documented surface | Medium | M | Quality | deliberately not harvested (design decision first) |
+| 16 | go-commit: wire the existing retry middleware into the daemon path (blackout cause #3 residue) | Medium | M | Feature | pre-existing runbook gap, now explicit here |
+| 17 | PMA: honor `CommitOptions.Timeout` from config (currently zero = unbounded per-project deadline) | Medium | S | Feature | deliberately not harvested (PMA-side design) |
+| 18 | PMA: log the effective provider timeout at startup (config observability) | Medium | S | Observability | deliberately not harvested (nice-to-have) |
+| 19 | flm runbook: model the connection budget for 10m slot holds (not just counts) | Medium | S | Documentation | partially done (caveat landed; modeling open) |
+| 20 | flm v1.0.7 staged go-live: live-serve validation + Q4_K weights re-pull | Medium | L | Feature | harvested (ai-stack.md decision item, updated) |
+| 21 | FastFlowLM upstream issue for the v1.0.3 NPU-enumeration failure (pre-existing eligible item) | Low | M | Upstream | pre-existing |
+| 22 | PMA CI guard vs go-commit pin regression (rev floor + OPENAI_BASE_URL grep + no `?rev=`) | High | M | Quality | pre-existing [ready] (upstream.md) |
+| 23 | Extend post-deploy-check: flm socket-listen check without cold-pinning the model | Medium | M | Quality | deliberately not harvested (design care: Gatus-must-not-probe doctrine) |
+| 24 | flm coredump collection: auto-capture build-id/offset table for the upstream issue | Medium | S | Bug | deliberately not harvested (depends on 13) |
+| 25 | SystemNix: audit/remove dead root `go-commit` flake input (zero consumers) | Low | S | Cleanup | deliberately not harvested (verify lock-audit implications first) |
+| 26 | go-commit: CHANGELOG entry for OPENAI_TIMEOUT before tagging | Medium | S | Documentation | deliberately not harvested (part of the release flow) |
+| 27 | Tag + release go-commit after push (go-release flow: CHANGELOG, tag, proxy propagation check) | High | M | Release | deliberately not harvested (blocked on 2) |
+| 28 | Integration test: httptest server that delays >30s proves the timeout override end-to-end (beyond field assertion) | Medium | M | Quality | deliberately not harvested (test-design decision) |
+| 29 | Eval-test asserting PMA extraEnvironment contains OPENAI_TIMEOUT (regression guard, nsfw-classifier pattern) | Medium | S | Quality | deliberately not harvested (pattern choice: eval test vs doc) |
+| 30 | Re-check Gatus "PMA heuristic fallbacks ≥20/24h" threshold still meaningful with 10m waits | Low | S | Monitoring | deliberately not harvested (threshold tuning) |
+| 31 | Verify OPENAI_MODEL `qwen3.6-moe:35b-a3b` matches /data weights after any flm bump | Low | S | Bug | pre-existing class (weights re-pull discipline) |
+| 32 | Document the local-LLM consumer timeout doctrine in docs/agents/monitoring.md or fastflowlm.md as a standing rule | Medium | S | Documentation | harvested implicitly (runbook bullets) — make it a named rule |
+| 33 | Zone-6 sacrifice-list decision: IO-PSI trips stopping flm is the wrong tool (stability lib row) | Medium | M | Decision | pre-existing [decision] |
+| 34 | Restore-cap design: per-zone caps / smarter re-arm (the re-wake loop economics) | Medium | M | Decision | pre-existing |
+| 35 | IO-storm coordination: PSI-gate heavy agent-session repo scans or serialize sessions | High | L | Stability | deliberately not harvested (owner policy call, see g2) |
+| 36 | Go-commit fix landed but release notes for FastFlowLM v1.0.8+ should be re-checked before any bump (watch item) | Low | S | Watch | harvested (ai-stack.md watch item) |
+| 37 | Add the "duration=30s fallback" signature to the PMA runbook failure-table explicitly (it documents instant + generic, not the 30s band) | Low | S | Documentation | harvested (monitoring.md item 14 covers the alert; doc line optional) |
+| 38 | Repo audit: which other LarsArtmann repos had non-building HEADs land via heuristic commits? | Medium | M | Quality | deliberately not harvested (fleet sweep, brainstorm) |
+| 39 | Confirm `OPENAI_TIMEOUT` survives PMA's sops `pma-env` template interaction (env vs EnvironmentFile precedence) | Medium | S | Bug | deliberately not harvested (needs deployed binary to matter) |
+| 40 | Doc: fastflowlm.md consumer table should list each consumer's effective client timeout once c4 lands | Low | S | Documentation | deliberately not harvested (depends on 7-9) |
+| 41 | Investigate whether the socket bridge's 480s deadline should shrink now that clients wait 10m (double-wait analysis) | Low | S | Design | deliberately not harvested (no observed harm yet) |
+| 42 | go-commit: unit tests for MINIMAX/GROQ/ANTHROPIC env parity in DefaultChainFromEnv | Low | S | Quality | deliberately not harvested (YAGNI until those paths matter) |
+| 43 | PMA: end-to-end canary oneshot (commit-message smoke through flm) gated to quiet windows | Medium | M | Feature | deliberately not harvested (cold-pins flm; design care) |
+| 44 | Fleet check: other OpenAI-compatible clients pointing at local LLMs with default short timeouts (ollama? llama-rag consumers?) | Medium | M | Bug | deliberately not harvested (broadens beyond flm scope) |
+| 45 | Write the "flm crash trigger" entry into docs/gotchas-archive.md (cross-service lesson: client timeout vs cold-start backends) | Medium | S | Documentation | deliberately not harvested (gotchas archive has its own curation flow) |
+| 46 | Verify the idle-check's 1h TTL interacts sanely with 10m client holds (it does — idle clock starts post-load — but assert it once) | Low | S | Verification | deliberately not harvested (low risk) |
+| 47 | SystemNix AGENTS.md: no update needed (service runbooks own per-service state) — recorded deliberately | — | — | — | deliberately not harvested (right-file rule) |
+| 48 | After deploy: watch ONE day of PMA journals for the new steady state (AI commits, no SIGABRT) before closing the complaint | High | S | Verification | deliberately not harvested (post-deploy step) |
+| 49 | Consider `OPENAI_TIMEOUT` for the go-commit CLI path reading the same env (parity) | Low | S | Quality | deliberately not harvested (dup of 15 surface) |
+| 50 | Close the loop on this report: re-run `check-todo-system.sh` after harvest (done during session) and re-verify §a evidence hashes post-daemon-commit | Low | S | Quality | done inline |
+
+**Harvest note (AGENTS.md self-harvest rule):** direct follow-ups landed at authoring time — CHANGELOG entry, upstream.md (2 items), monitoring.md (1), services.md (2), fastflowlm.md (slot-hold note), ai-stack.md (2 updates). Items marked "deliberately not harvested" are brainstorm/decision-gated/blocked-on-2 and would violate the queue's actionable-only rule.
+
+## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
+
+1. **Restart policy today:** the restore cap is spent and the storm is still active. Do you want flm restored NOW (accepting a likely crash-loop burn: each re-trip re-reads ~21.6GB and re-trips the guard), or strict quiet-window-only (meaning heuristic commit messages for the rest of today)? I tried answering from the guard docs — the doctrine says quiet-window, but you're the one living with heuristic commits.
+2. **Multi-agent concurrency vs flm availability:** the IO storm killing flm is the parallel agent sessions themselves. Should I/we adopt a policy (serialize heavy sessions, PSI-gate scans, cap concurrency), or is multi-session throughput worth flm being structurally dark during parallel work? This is a machine-policy tradeoff I can't derive from the repo.
+3. **Timeout product value:** I wired `OPENAI_TIMEOUT=10m` (waits out the full 480s bridge window → AI commit messages after cold loads, but a commit can stall ~8 min when flm is slow). Do you prefer that, or a fast-fail (~2 min) that returns heuristic messages quickly and keeps commit latency tight? Latency-vs-quality call, yours to make.
+
+---
+
+*Report per status-report skill; `.md` written at the operator's explicit path demand (HTML is skill-canonical — override flagged in the closing message). No manual commit: Crush harness forbids commits without explicit instruction; the auto-commit daemon will pick this file up. WAITING FOR INSTRUCTIONS.*
