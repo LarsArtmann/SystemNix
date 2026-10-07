@@ -92,10 +92,10 @@ let
       pass =
         let
           content = builtins.readFile "${inputs.nsfw-classifier}/nsfw-extension/url-utils.js";
-          declLine =
-            lib.findFirst (l: lib.hasInfix "const DEFAULT_SERVER_URLS" l) ""
-              (lib.splitString "\n" content);
-          m = builtins.match ".*\"http://nsfw\\.home\\.lan:(9[0-9]+)\".*" declLine;
+          declLine = lib.findFirst (l: lib.hasInfix "const DEFAULT_SERVER_URLS" l) "" (
+            lib.splitString "\n" content
+          );
+          m = builtins.match ".*\"http://nsfw\\.home\\.lan:([0-9]+)\".*" declLine;
         in
         m != null && builtins.elemAt m 0 == toString enabledConfig.services.nsfw-classifier.port;
     }
