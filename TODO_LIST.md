@@ -117,8 +117,6 @@
 - [ ] **ADR: zram-only swap decision** → [docs/todo/stability.md](docs/todo/stability.md)
 - [ ] **Scoped polkit rule: service restarts without interactive auth** → [docs/todo/stability.md](docs/todo/stability.md)
 - [ ] **Boot-time catch-up stampede control** → [docs/todo/stability.md](docs/todo/stability.md)
-- [ ] [ready] **Diagnose the 96s home-manager-lars `reloadSystemd` blockage (the new login gate)** (`journalctl --user -b -u 'activitywatch*'` + hm-activate timestamps → blocking unit-start vs daemon-reload vs user-bus wait; then decouple: defer activitywatch starts off the login path or fix the slow unit) → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-10-07_03-36_systemd-optimization-followup-live-measure-self-review.md §f.1)
-- [ ] [ready] **Triage `migrate-buildcache-fallback-caches` hook (platforms/nixos/users/home.nix)** (`mountpoint: command not found` ×4 per activation — probes never run; parked go-build relocation remnant? delete, or fix util-linux PATH + reconcile cosmetic-vs-phantom-green severity vs 2026-10-06 §d3) → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-10-07_03-36_systemd-optimization-followup-live-measure-self-review.md §f.3)
 - [ ] **Root-cause the 13:36:13 `mnt-pool.mount` same-second SIGTERM** → [docs/todo/stability.md](docs/todo/stability.md)
 - [ ] **Evaluate systemd `Upholds=` as the declarative auto-restart for mount-dependent services** → [docs/todo/stability.md](docs/todo/stability.md)
 - [ ] **Zone 6 alert fatigue** → [docs/todo/stability.md](docs/todo/stability.md)
