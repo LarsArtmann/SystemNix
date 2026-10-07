@@ -39,14 +39,62 @@ trap deploy_exit_record EXIT
 # lives on /tmp (tmpfs): it vanishes on reboot (no stale-lock class), and
 # flock itself is released by the kernel the moment the holder exits — even
 # on crash or SIGKILL — so a dead deploy can never wedge the next one. The
-# holder PID is recorded for diagnostics.
+# holder PID is recorded for diagnostics, and the abort path below verifies
+# that record live (liveness + name + command + elapsed) and asks the kernel
+# for the real fd holder, since the record can be stale (append-open lines)
+# or beaten by fd inheritance (children like nh/nix/sudo keep the lock alive
+# after the recorded process is gone).
 deploy_lock=/tmp/.systemnix-deploy.lock
 # Open in APPEND mode: `>` (O_TRUNC) would wipe the holder's recorded PID
 # before flock even runs, so the abort message always showed an empty PID.
 exec 9>>"$deploy_lock"
 if ! flock -n 9; then
-  lock_holder=$(cat "$deploy_lock" 2>/dev/null || echo "unknown")
-  echo "❌ Another deploy is already running (lock: $deploy_lock, holder PID: $lock_holder)."
+  echo "❌ Another deploy is already running (lock: $deploy_lock)."
+  # Ground truth first: walk /proc fd tables for whatever process still has
+  # the lock file open (the flock holder itself or a child that inherited
+  # fd 9). Same-user processes only: another user's fd table is unreadable
+  # and simply yields no match.
+  real_holders=""
+  for proc_dir in /proc/[0-9]*; do
+    holder_pid=${proc_dir##*/}
+    if [ "$holder_pid" = "$$" ]; then continue; fi
+    for fd_link in "$proc_dir"/fd/*; do
+      if [ "$(readlink "$fd_link" 2>/dev/null)" = "$deploy_lock" ]; then
+        real_holders="$real_holders $holder_pid"
+        break
+      fi
+    done
+  done
+  if [ -n "$real_holders" ]; then
+    echo "   Lock held by (per /proc fd scan):"
+    for holder_pid in $real_holders; do
+      holder_detail=$(ps -o ppid=,comm=,etime=,args= -p "$holder_pid" 2>/dev/null | tr -s ' ')
+      echo "     PID $holder_pid: ${holder_detail:-gone since scan}"
+    done
+  else
+    echo "   No readable /proc fd table points at the lock (holder may run as another user, or it exited in the last instant)."
+  fi
+  # Then the recorded holder PID(s) as corroboration: the append-opened file
+  # can carry stale lines, a dead PID cannot hold flock, and the kernel may
+  # have reused the PID for an unrelated process, so this layer is context,
+  # never the verdict (the fd scan above rules).
+  lock_record=$(cat "$deploy_lock" 2>/dev/null || true)
+  have_record=""
+  for recorded in $lock_record; do
+    case "$recorded" in
+    *[!0-9]*) continue ;;
+    esac
+    have_record=1
+    if ps -o pid= -p "$recorded" >/dev/null 2>&1; then
+      recorded_detail=$(ps -o ppid=,comm=,etime=,args= -p "$recorded" 2>/dev/null | tr -s ' ')
+      echo "   Recorded holder PID $recorded is ALIVE: $recorded_detail"
+    else
+      echo "   Recorded holder PID $recorded is DEAD (its flock was released with it)."
+    fi
+  done
+  if [ -z "$have_record" ]; then
+    echo "   Lock file carries no readable holder PID (holder aborted before writing it)."
+  fi
   echo "   Wait for it to finish and re-run — flock releases automatically if that deploy dies."
   exit 13
 fi
