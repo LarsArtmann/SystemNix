@@ -505,7 +505,8 @@
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
         flake-parts.follows = "flake-parts";
-        treefmt-nix.follows = "treefmt-nix";
+        # treefmt-nix follow removed 2026-10-07: upstream mr-sync dropped
+        # the input (3b579663); the stale follow tripped the eval warning.
       };
     };
 

@@ -225,15 +225,17 @@ let
     };
   };
   # TEMPORARY vendorHash shims (class comment at lib/lars-packages.nix):
-  # overview (RE-PINNED 2026-10-05, a7868a7 wave; got nzYv48yC… at rev
-  # 25dd08e) and discordsync (RE-PINNED 2026-10-07, 1ac31f8 update; got
-  # /NYfLmDMx… at rev 1ac31f8). prev (NOT
+  # overview (RE-PINNED 2026-10-07, 4bb130c update; got GkGHKtRQ… at rev
+  # 4bb130c — the root-nixpkgs follow diverges the Go toolchain from
+  # upstream's own lock, so upstream's refreshed vendorHash.nix PxedSD8g…
+  # can never match our graph) and discordsync (RE-PINNED 2026-10-07,
+  # 1ac31f8 update; got /NYfLmDMx… at rev 1ac31f8). prev (NOT
   # final) — same recursion guard as above; stay AFTER the respective
   # upstream overlays in the list below.
   # Drop when upstreams re-pin or the lock moves past upstream-fixed revs.
   overviewVendorHashShim = _final: prev: {
     overview = prev.overview.overrideAttrs {
-      vendorHash = "sha256-nzYv48yCOCPRTA25B0WnYLgMqv9kzGN7Jz+/Vo2Lso0=";
+      vendorHash = "sha256-GkGHKtRQfDXGVftlaQImcBYsP3bIoPtO3beWf/lT12w=";
     };
   };
   discordsyncVendorHashShim = _final: prev: {
