@@ -116,3 +116,23 @@ Dispositions per the TODO contract: **HARVESTED** = landed in `docs/todo/service
 ---
 
 **Next action:** WAITING FOR INSTRUCTIONS. Per the standing rule, §f direct follow-ups are already harvested (see dispositions); nothing else was touched.
+
+---
+
+## h) DISPATCH CLOSE-OUT (same day, ~10:15 UTC — the five `[ready]` harvests executed + the two d-gaps closed)
+
+The user's execute instruction dispatched the harvested queue. All five `[ready]` items landed and verified; both d-gaps closed with direct evidence.
+
+| Item | Verdict | Evidence |
+| --- | --- | --- |
+| d-gap "server healthy rested on indirect evidence" | **CLOSED — direct probe.** `GET https://history.home.lan/health` via the fetch tool returned 200 `{"status":"ok","db":"ok","agents":{"active":1,...},"lastIngestAt":"2026-10-07T08:00:39Z"}` at 08:06 UTC (uptime 26 min — the server had restarted ~07:40 UTC, so this is post-restart health, not stale-session luck) | fetch output, this section |
+| d-gap "running generation rev never read off the live unit" | **CLOSED — store-path proof.** `/etc/systemd/system/browser-history.service` → `ExecStart=/nix/store/999dlpy9…-browser-history-server-3ebbfbf/bin/…`: the RUNNING generation is lock rev `3ebbfbfee` (short form in the store path name) | `readlink` + unit ExecStart |
+| f.2 runbook refresh | **DONE.** `docs/services/browser-history.md` gained: machine-labels bullet (full chain option → `--machine-id` → `X-Machine-ID` → `visits.machine_id` → dashboard dropdown/`?machine=`), the AD-2 verdict below, the live-probe recipe (textfile / backup-DB-sqlite-workaround / fetch-not-curl / rev-from-store-path), and a lock-note superseding the 09-17 hold bullet (kept for the uid-drift lesson). FEATURES.md Browser History row extended | runbook diff |
+| f.3 cross-machine dedup | **VERDICT REVERSED — NOT a bug, it is architecture (AD-2).** Upstream `domain/visit/visit_data.go:62-64`: machine_id is "Attribution only — never part of the deterministic VisitID hash (AD-2)". Guard test `api/dedup_test.go::TestDedup_SameVisitFromTwoMachines_ProducesOneRecord` PINS one-row + first-dispatch-wins (machine-a keeps attribution) — deliberate browser-sync replication semantics, and the test message says breaking it = someone added machineID to the hash. This session's §f.3 "potential data-loss bug" hypothesis is ANSWERED: no upstream issue to file; semantics documented in the runbook instead | upstream source + test, read at `f597e1c6` |
+| f.4 running rev | **DONE** (see store-path proof above) | — |
+| f.5 token-label == machineId | **DONE — single shared binding, no fallback.** Module's `machineId` let-binding dropped the `. or "evo-x2"`: the binding now reads the upstream option directly (required, no default; evo-x2 sets it in configuration.nix:731). An upstream option rename now FAILS EVAL LOUDLY instead of silently relabeling tokens "evo-x2" while visits keep carrying the header value. Eval-verified: `nix eval .#nixosConfigurations.evo-x2.config.services.browser-history-agent.machineId` → `"evo-x2"` | module diff + eval |
+| f.7 VM-test machine step | **DONE + test GREEN.** `tests/test-browser-history.nix` steps 11-12: provisioned-token label == machineId option (`SELECT label FROM agent_tokens` = `vm-test`); header-stamped ingest lands `machine_id` (`machine-a`); re-ingest of the SAME visit under `machine-b` stays ONE row keeping `machine-a` (AD-2 verified on the deployed NixOS wiring, not just upstream Go tests). Full test rc=0 | `nix build .#checks.x86_64-linux.browser-history` rc=0 |
+
+**Bonus fix (pre-existing blocker removed en route): the browser-history VM test is OFF the known-failing list.** Its step 2 died at `curl -sf /health` (HTTP error after `wait_for_open_port` succeeded): since `AGENT_FRESHNESS` (lock `10fe5d8a+`) a server with no agent ingest yet answers **503 degraded** — demanding 200 there is exactly the liveness-deadlock class the module's own `waitServerReady` gate documents. Fixed to accept any answered status, plus new step 7.5 proving the agent's empty-batch ingest HEALS the server back to 200. This closes the browser-history leg of the `[blocked:user]` six-failing-VM-tests triage row (pipeline.md) with root cause + fix; the other five remain owner-triage.
+
+**Still open (unchanged):** §g.1-3 owner questions (dashboard render, "devices" intent, macOS plans — unanswered); f.1 login e2e (`[blocked:user]`); f.8 second machine (`[decision]`). No commit made (daemon handles it, per harness policy).

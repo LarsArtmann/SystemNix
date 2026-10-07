@@ -102,7 +102,15 @@ in
     # 2. Health endpoint responds (Go server may need a moment to bind after
     #    systemd marks Type=simple as active)
     machine.wait_for_open_port(8087, timeout=30)
-    machine.succeed("curl -sf http://localhost:8087/health")
+    # Any ANSWERED status = healthy wiring. Since AGENT_FRESHNESS
+    # (lock 10fe5d8a+) a server with no agent ingest yet answers 503
+    # "degraded" — demanding 200 here is the liveness-deadlock class
+    # (the module's waitServerReady gate documents it); step 7's agent run
+    # is what heals the server, asserted below.
+    machine.wait_until_succeeds(
+      "[[ $(curl -s -o /dev/null -w '%{http_code}' http://localhost:8087/health) =~ ^[1-9][0-9][0-9]$ ]]",
+      timeout=60,
+    )
 
     # 3. Provisioner fails LOUDLY with no registered user (fresh-host guard)
     machine.succeed("systemctl start browser-history-agent-token-provision.service || true")
@@ -140,6 +148,12 @@ in
     machine.wait_until_succeeds(
       "[[ $(systemctl show -p Result --value browser-history-agent.service) == success ]]"
     )
+
+    # 7.5 The agent's (empty-batch) ingest HEALS the freshness-degraded
+    #     health: AGENT_FRESHNESS flips the server back to 200 on first
+    #     agent activity — the exact behavior the prod waitServerReady gate
+    #     relies on.
+    machine.wait_until_succeeds("curl -sf http://localhost:8087/health", timeout=60)
 
     # 8. Agent-activity collector: timer enabled, fresh ingest → active=1
     machine.succeed("systemctl is-active browser-history-agent-metrics.timer")
