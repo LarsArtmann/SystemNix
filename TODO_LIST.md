@@ -16,6 +16,8 @@
 ### storage
 
 - [ ] [blocked:deploy] **User-space reclaim: trash /home/lars/tmp Go caches (54G, DONE 2026-10-08 — sits in ~/.local/share/Trash awaiting trash-empty) + delete @cache-home.regular-dir-bak subvol (1.3G, needs sudo btrfs subvolume delete)** (the 724M orphaned dnsblockd_tracking.db already queues at services.md) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.7)
+- [ ] [ready] **Add a trash-prune mechanism (weekly `trash-empty 30d` user timer or autotrash)** — trash doctrine has no closing loop on this box: no autotrash/timer exists, and 55G is parked in ~/.local/share/Trash since 2026-10-08; a prune timer also gates f.1's blanket-empty question → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/tasks/2026-10-08_00-09_task-000001a118621479a16a3ec1e9d100000000.md §e.2/§f.2)
+- [ ] [decision] **Triage the residual ~17G scratch in /home/lars/tmp** (hash dirs 00–ff, tmpdir 487M, bin 314M stray go-install binaries) — identify owners/tool origin, then trash what is provably regenerable; playwright stays (live cv.nix dep) → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/tasks/2026-10-08_00-09_task-000001a118621479a16a3ec1e9d100000000.md §f.3)
 - [ ] [decision] **Narrow root weekly retention 1w→3d until hot-tier migrations land?** (halves the max snapshot pin window while churn is unmanaged — two 100% events in 24h rode the 2-week window) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.23)
 - [ ] [watch] /data at 79% (798G/1.1T, models/Steam growth trend) → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f.24)
 
