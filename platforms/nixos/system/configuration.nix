@@ -332,7 +332,7 @@ in
       # buildflow shim DROPPED 2026-10-07 (both surfaces — mkLarsPackages +
       # this system-path one): upstream vendorHash.nix at locked rev 2346799
       # already carries the got hash. Re-add ONLY via nix-hash-fix evidence.
-      (inputs.buildflow.packages.${pkgs.stdenv.hostPlatform.system}.default)
+      inputs.buildflow.packages.${pkgs.stdenv.hostPlatform.system}.default
       # flm CLI (NPU LLM; service consumes the same package). Replaces the
       # deleted ~/.local/bin/flm wrapper — the nix package sets its own
       # XILINX_XRT/LD_LIBRARY_PATH, no hand-maintained script needed.

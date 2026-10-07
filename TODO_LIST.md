@@ -346,6 +346,7 @@
 - [ ] **go-nix-helpers lock bump: dynamic go-toolchain auto-select obsoletes explicit goPkgAttr pins** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Verify go-codec floor vs nixpkgs go (1.26.7)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] [ready] **Drop-check the 4 module-surface vendorHash shims (project-discovery-daemon, health-dashboard, visionreviewd, discordsync) — upstream is often ALREADY correct at the locked rev: grep, drop-if-green, real-build the FOD (browser-history precedent)** → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: docs/status/2026-10-07_01-25_browser-history-vendorhash-shim-drop-deploy-unblock.md §f)
+- [ ] [blocked:push] **bank-sync upstream: default-package vendorHash stale at locked rev 68ceffa3 — fix upstream, push, then drop the 2026-10-07 re-pinned consumer shims (NixOS module + HM)** → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: modules/nixos/services/bank-sync.nix shim comment, 2026-10-07 deploy-unblock session)
 - [ ] **Hermes upstream: propose `projectsDir` RO-bind pattern for the NixOS module** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Pin go-cqrs-lite benchstat `rev = "master"`** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **Switch root `go-cqrs-lite` flake input from `git+ssh://` to `github:`** → [docs/todo/upstream.md](docs/todo/upstream.md)
