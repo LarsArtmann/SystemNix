@@ -157,11 +157,11 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1791359316,
-        "narHash": "sha256-iwQI9RBE8KjjUEmAdFdG7f8DKEn1U6Sq41bgQtujiOM=",
+        "lastModified": 1791360305,
+        "narHash": "sha256-yiP2TDIihpWhI8rMXSLKyDDg0v7k7Ayw9kkFIAxdZR4=",
         "owner": "LarsArtmann",
         "repo": "bank-sync",
-        "rev": "4890be6328874cbec0cb0f92847e0cd04b71ccf4",
+        "rev": "0a8c9c981b5baa73ee6f4d01fab6cf5c69d895b9",
         "type": "github"
       },
       "original": {
@@ -4185,11 +4185,11 @@
     "go-nix-helpers": {
       "flake": false,
       "locked": {
-        "lastModified": 1791200362,
-        "narHash": "sha256-fdHqg2v5AHue/G0GoBE50R4nVBzUf94Bg/Od2QSHZCM=",
+        "lastModified": 1791359181,
+        "narHash": "sha256-OkiOWUgLc6dwHXTS58hix19lQRhZ704iCiW0nqbvkxA=",
         "owner": "LarsArtmann",
         "repo": "go-nix-helpers",
-        "rev": "5d02c56cd329b1c08d25993f3afcfecbf5f4177b",
+        "rev": "ad423c8f97963d875e351e7752ab72687c24df80",
         "type": "github"
       },
       "original": {

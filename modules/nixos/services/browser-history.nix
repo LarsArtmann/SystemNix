@@ -159,7 +159,13 @@
       fqdn = "history.${domain}";
       pocketIdEnabled = config.services.pocket-id-config.enable;
       oauth2SecretsFile = "/var/lib/browser-history-oidc/oauth2-secrets.env";
-      machineId = config.services.browser-history-agent.machineId or "evo-x2";
+      # Machine identity has ONE source: the upstream agent module's machineId
+      # option (required, no default). It drives BOTH the agent's X-Machine-ID
+      # header (--machine-id flag) and the provisioner's token label above, so
+      # the two cannot drift. No `. or` fallback on purpose: an upstream option
+      # rename must fail eval loudly instead of silently relabeling every
+      # token "evo-x2" while visits keep carrying the agent's own header value.
+      machineId = config.services.browser-history-agent.machineId;
     in
     {
       imports = [
