@@ -67,3 +67,40 @@ claimed `ProtectSystem=strict`, the deployed unit renders `full` (harden default
 - The data-plane Gatus check row (fail-closed on event-count delta) remains the durable
   guard for this class — today proved `/health/ready` 200 + `ingestion_started` is
   compatible with a totally dead pipeline even AFTER the mmdb blocker cleared.
+
+## ADDENDUM 2026-10-07 ~16:40 — DEPLOYED + LIVE-VERIFIED (same-day execution session)
+
+The owner's "execute until done" instruction answered the report's three open
+questions: deploy now (yes), eval-time audit (built), file upstream pre-deploy (done).
+
+- **Deployed & anchored**: generation `system-837` == `/run/current-system`; deployed
+  unit carries `AmbientCapabilities=CAP_DAC_READ_SEARCH` beside the bounding set.
+- **Kernel-verified grant**: live process `CapEff=0x4` (CAP_DAC_READ_SEARCH effective,
+  CapBnd matches) — not just the rendered unit.
+- **Pipeline alive**: 61 files logging `Streaming log file events (async)` — the exact
+  step that EACCES-died for 8 days; ZERO `does not exist` mislabels, ZERO
+  PermissionError, ZERO HTTP 500s since the switch; `/health/ready` `{"ready":true}`.
+- **Correction to this report's evidence section**: the "tailer silently swallowing
+  per-file OSError" reading was WRONG — v0.19.0 logs every unreadable file at ERROR as
+  `Log file does not exist: … - waiting for it to appear` (370 lines on 10-07 alone,
+  every restart; `access.log` itself reported "does not exist" 5× while producing
+  Errno 13 on the HTTP path). The silence was a diagnosis-grep artifact (this session
+  grepped for read errors, not existence messages). Upstream filed as GilbN/geometrikks#302
+  (EACCES mislabeled "does not exist"); companion issue #301 (`/api/v1/logs/files` 500
+  on EACCES, `_entry()` catches the stat but line-97 `is_file()` re-raises).
+- **Strict `processed > 0` counter**: not observable at info level pre-shutdown —
+  surfaces at the next ingestion restart's stop line or tonight's nightly backup;
+  the streaming + zero-error evidence above is the strongest journal-accessible proof.
+- Same-session additions: `modules/nixos/services/capability-grant-audit.nix`
+  (eval-time class audit, 4-leg proven, zero current offenders) +
+  `checks.x86_64-linux.geometrikks-caps` (render pin, 5 cases) — details in CHANGELOG.
+- Deploy note: three switch attempts — (1) aborted at the I/O-pressure gate
+  (sustained PSI from parallel sessions; devices measured idle ≤15% util, override
+  `DEPLOY_FORCE_PRESSURE=1` justified on evidence), (2) first switch activated but the
+  profile anchor lagged (UNANCHORED warning; the script's own re-run remedy), (3) the
+  re-run failed on a SHARED-toplevel blocker: the parallel wave4 lock move put cv at
+  `cdac11b` whose upstream-baked vendorHash is stale (new go deps download → FOD
+  mismatch). Fixed by the sanctioned pin-only move
+  `nix flake lock --override-input cv github:LarsArtmann/cv/b3a9172f46c3e88a263618c1385e213ac2cd0c82`
+  (the wave-verified-good rev; discordsync-rollback precedent) — cv upstream needs a
+  hash re-bake before the pin can advance again (queued in docs/todo/pipeline.md).
