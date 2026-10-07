@@ -279,6 +279,18 @@ _: {
               # fresh one for the next client. Type=exec is "started" at
               # exec — TimeoutStartSec cannot fire mid-wait-loop; the loop
               # carries its own 300 s deadline.
+              # Planned stops must not park the instance FAILED (the
+              # hermes/btrfs-scrub SuccessExitStatus class): socat propagates
+              # systemd's stop SIGTERM as exit code 143, so every PLANNED
+              # stopper — memory-guard sacrifice (trip #2211, 2026-10-07
+              # 17:06, exit-4'd that deploy's activation while the switch
+              # itself was fine), idle TTL, unit churn, shutdown — would
+              # mark the instance failed and break the exit code of any
+              # deploy running at that moment. No crash-visibility tradeoff
+              # for a per-connection proxy: the socket spawns a fresh
+              # instance per connection and the backend's
+              # fastflowlm_failed/crash-loop metrics own real alerting.
+              SuccessExitStatus = [ 143 ];
             }
             (harden {
               # socat holds one TCP stream; the harden default of 512M is

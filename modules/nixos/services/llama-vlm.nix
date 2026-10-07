@@ -235,6 +235,13 @@ _: {
                   ExecStart = lib.getExe (bridgeConn name s);
                   StandardInput = "socket";
                   StandardOutput = "socket";
+                  # Same class as fastflowlm@ (2026-10-07): the socat bridge
+                  # exits 143 on any planned stop (memory-guard sacrifice,
+                  # idle TTL, unit churn, shutdown) — without this every
+                  # planned stop parks the bridge FAILED and exit-4s any
+                  # deploy running at that moment. Per-connection bridges
+                  # are stateless; the socket re-spawns them per client.
+                  SuccessExitStatus = [ 143 ];
                 }
                 (harden { MemoryMax = "64M"; })
               ];
