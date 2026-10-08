@@ -535,7 +535,7 @@
 - [ ] **User-env single-source enforcement: profile-emptiness + `~/go/bin` shadow-detector checks** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **deploy-queue systemd user unit (queued deploys survive sessions)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **deploy.sh pressure gate: re-measure immediately pre-switch (rebound race)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
-- [ ] **Prune the stale `flake: false` `go-health-dashboard` lock node (input resolving as `_4`)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [x] ~~**Prune the stale `flake: false` `go-health-dashboard` lock node (input resolving as `_4`)**~~ **CLOSED 2026-10-08, premise stale:** all 5 `go-health-dashboard*` nodes have live parents at distinct revs (discordsync/dnsblockd/root/library-policy/file-and-image-renamer) — no orphan; root maps to `_3`; deliberate own-pin class (FOD-sensitive Go tool) → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Investigate + gate the unformatted-commit path (geometrikks.nix + 3 scripts + hot-user-caches.nix + test-paperless-gpt.nix landed pre-`nix fmt`; the test file was ALSO eval-BREAKING — `{ inputs }` vs `pkgs` call-shape — and blocked ALL deploys hours)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **File the daemon-beat-precommit-hook incident into the fleet lessons** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **deploy wrapper: refuse early with a clear message in agent sandboxes (no sudo)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
