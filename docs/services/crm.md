@@ -1,4 +1,4 @@
-# Ledger CRM (crm-server)
+# Kith CRM (crm-server)
 
 LarsArtmann's own event-sourced personal CRM (Go + go-cqrs-lite) at
 `github:LarsArtmann/crm` — the Twenty replacement. The journal
@@ -16,7 +16,7 @@ disposable. Upstream repo: `/home/lars/projects/crm` (runbooks in
 | Auth       | WebAuthn passkey (`-auth`, `-rpid crm.home.lan`, `-secure true`); `/healthz` + bearer API stay outside the session gate |
 | Machine API| `-api-token` bearer → `/api` + `/rest` (Twenty-compatible surface for the CV pipeline sync) |
 | Secret     | `crm_api_token` in `platforms/nixos/secrets/crm.yaml` (age-public-key-encrypted; same value as the pre-module `~/.local/share/crm/api-token`) → sops template `crm-server-env` → `EnvironmentFile` |
-| Gatus      | "Ledger CRM" on `/healthz` (loopback, 5m) — live from day one |
+| Gatus      | "Kith CRM" on `/healthz` (loopback, 5m) — live from day one |
 | Backup     | `crm-backup.timer` 03:40 nightly — WAL-safe sqlite snapshots (backup API) of BOTH durable dbs → `/mnt/pool/backups/crm/{ledger,identity}-YYYY-MM-DD.db` (ledger 0644, identity 0600 — passkey/session bearer material), 30-day retention. LIVE since 2026-10-08 03:47 (first artifact). Timer note: a freshly-written stamp (first load of the unit) suppresses Persistent catch-up — first run waits for the next calendar slot. `api-token` deliberately NOT backed up (sops-owned, repo-recoverable) |
 | State      | `~/.local/share/crm/` (journal + identity.db — adopted in place, 2026-09-18 standing decision: NO /var/lib migration) |
 
@@ -27,7 +27,7 @@ artifact 03:47 integrity-ok + restore drill green with the production binary).
 `twenty.enable = false` landed in `platforms/nixos/system/configuration.nix`;
 that deploy flips `services.integration.crm-server.vHost.layer` from `"none"`
 to `"plain"` atomically — the registry keys vHosts by subdomain, so the two
-can never both claim it. The homepage tile, the "Ledger CRM" Gatus check
+can never both claim it. The homepage tile, the "Kith CRM" Gatus check
 (HTTPS, `/login`), and the post-deploy-check gate switch over with it.
 Twenty's containers stop; its Docker data stayed intact until the retirement
 decision — the Twenty module + its runbooks were deleted 2026-10-08 with the

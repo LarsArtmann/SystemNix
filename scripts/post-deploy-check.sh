@@ -1430,12 +1430,12 @@ $banksync_enabled && check "Bank-Sync (HTTPS)" "https://banksync.$DOMAIN/" "200"
 # Cutover gate (2026-10-02 micro-plan T28): while twenty.service lives it
 # owns the crm vHost; once the freeze removes it, crm-server claims the
 # subdomain (vHost goes plain-layer in the same deploy). Probe whichever
-# owns crm.$DOMAIN — with -auth the Ledger serves its login page at
+# owns crm.$DOMAIN — with -auth the Kith CRM serves its login page at
 # /login (registered route, 200 HTML; / itself redirects to it).
 if test -e /etc/systemd/system/twenty.service; then
   check "Twenty CRM (HTTPS)" "https://crm.$DOMAIN/" "200" "<html" 2>/dev/null || true
 elif test -e /etc/systemd/system/crm-server.service; then
-  check "Ledger CRM (HTTPS)" "https://crm.$DOMAIN/login" "200" "<html" 2>/dev/null || true
+  check "Kith CRM (HTTPS)" "https://crm.$DOMAIN/login" "200" "<html" 2>/dev/null || true
 fi
 check "Overview (HTTPS)" "https://overview.$DOMAIN/" "200" "<html" 2>/dev/null || true
 
