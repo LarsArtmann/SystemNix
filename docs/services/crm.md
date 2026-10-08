@@ -34,7 +34,10 @@ decision — the Twenty module + its runbooks were deleted 2026-10-08 with the
 Docker removal (data reclaim tracked in `docs/todo/services.md`). Known
 post-flip gap: `crm.larsartmann.cloud`
 also proxies here but WebAuthn `-rpid` is `crm.home.lan` — passkey login works
-on `crm.home.lan` only until the cloud-domain decision lands.
+on `crm.home.lan` only. **Decision 2026-10-08 (owner): per-domain auth
+upstream** — multi-RP-ID WebAuthn issue drafted at the crm repo
+`docs/drafts/2026-10-08_multi-rpid-webauthn.md` (filing push-gated); the
+cloud vHost stays as-is meanwhile.
 
 First login: visit `https://crm.home.lan` → register the sole passkey
 (MaxUsers=1 closes registration). Escape hatch: `services.crm-server.auth.enable
