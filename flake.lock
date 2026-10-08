@@ -438,11 +438,11 @@
     "cmdguard_5": {
       "flake": false,
       "locked": {
-        "lastModified": 1791199010,
-        "narHash": "sha256-XwMAx0oY+YMyY2Eqex7GIlQGLrHkvtl9zDvL1ICCYu8=",
+        "lastModified": 1791363447,
+        "narHash": "sha256-VxxchkSLviH0jyyo3xIjFSEFdAn6GAjmx8jJPhWOPd0=",
         "owner": "LarsArtmann",
         "repo": "cmdguard",
-        "rev": "58d7986b2029dc7fe949809fc55a2164afc49fa7",
+        "rev": "b17298d0dbf7027309fd557884675fcc34bb2420",
         "type": "github"
       },
       "original": {
@@ -2798,11 +2798,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791386061,
-        "narHash": "sha256-yy9yUl6X0RsJ1w58wEBCBRP4BmGUugJsKRdoW0237wc=",
+        "lastModified": 1791486021,
+        "narHash": "sha256-4klJF3DRrDzMDZV7RJS7SnwgPJQ/2x05tFIAYobbcRI=",
         "ref": "refs/heads/master",
-        "rev": "c546d155975ddf641f90d950e55b846506e356b1",
-        "revCount": 7922,
+        "rev": "e2f1137bf70ad07066eebaeb127f3bae0f5182b8",
+        "revCount": 7997,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       },
@@ -3406,11 +3406,11 @@
     "go-error-family_9": {
       "flake": false,
       "locked": {
-        "lastModified": 1791200506,
-        "narHash": "sha256-+kXbTbkVQ03BCfg/kEFzxDl4QU7Lk9Mvkdykm8S65Tk=",
+        "lastModified": 1791369666,
+        "narHash": "sha256-aLFML0qoqSoJJs+v+Dn6NKqwj+lLfx3ZxR1R5KSIiVI=",
         "owner": "LarsArtmann",
         "repo": "go-error-family",
-        "rev": "add4ee0c2a70afc6ec02a2d58c6e9e9e8ac7c567",
+        "rev": "ace30f6132e47e96e53e30dce88ff769a788b840",
         "type": "github"
       },
       "original": {
@@ -6207,11 +6207,11 @@
     "md-go-validator": {
       "flake": false,
       "locked": {
-        "lastModified": 1791202336,
-        "narHash": "sha256-HFblveOrhySbhxmYUCFPx36ggCjbWI6osfOoQNUfe+8=",
+        "lastModified": 1791350722,
+        "narHash": "sha256-y6FNsJjHABa5IcD7YNJnS3Thwmaptv15y9NvineRtrs=",
         "owner": "LarsArtmann",
         "repo": "md-go-validator",
-        "rev": "5e308580f52199d8a17959ded89167992774d134",
+        "rev": "5e700039873c376f5e5dbaf0ae694c76f9073850",
         "type": "github"
       },
       "original": {
@@ -7665,11 +7665,11 @@
     "samber-do-auditlog_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1791293751,
-        "narHash": "sha256-zYFpSZ4nWs/MBcuzDMgpCyDDKlAsOgmHTcFB7ev3Yrw=",
+        "lastModified": 1791368837,
+        "narHash": "sha256-VeCf6FyI3ILrwRYW/R5L4XLm6r4WbRPtg0OLBbmRFRQ=",
         "owner": "LarsArtmann",
         "repo": "samber-do-auditlog",
-        "rev": "cd240281bc2d9d7c5cc73e9ff973ea6d73245beb",
+        "rev": "3bb39c0ef3a72bf66d356a2302ac1c9cfe57dcd6",
         "type": "github"
       },
       "original": {
