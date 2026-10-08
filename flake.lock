@@ -7017,11 +7017,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791452140,
-        "narHash": "sha256-yzYUheaEO4aCbI734mvnr/pPfdSvCP407QC8RW9ZQmY=",
+        "lastModified": 1791457440,
+        "narHash": "sha256-yIzq7eBpSzXzZJkvZmd4iP1doe1i5d6wIfTpRv0KHfM=",
         "ref": "refs/heads/master",
-        "rev": "f5646ea196431c25a10a3c5673ce24320516d8c2",
-        "revCount": 1592,
+        "rev": "016f39dec9c929fd1660743ab4dcf690e28f8cf2",
+        "revCount": 1593,
         "type": "git",
         "url": "file:///home/lars/projects/nsfw-classifier"
       },
