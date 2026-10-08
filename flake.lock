@@ -6259,11 +6259,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791386909,
-        "narHash": "sha256-3ogfb/ts9uFmAzeNni8LbLM7oFWEffiB/jaxec/JxX4=",
+        "lastModified": 1791480040,
+        "narHash": "sha256-PfW4cakifPg7eaFAV3QnzyH7h/OIlFlhYX3SIWsR2EI=",
         "owner": "LarsArtmann",
         "repo": "InboxClean",
-        "rev": "2d0914d9bf3fbdc7ead518db40f8558a1a76e4b1",
+        "rev": "99dd01158197bf698b101714cd333d27e793723a",
         "type": "github"
       },
       "original": {
