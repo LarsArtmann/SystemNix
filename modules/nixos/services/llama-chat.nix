@@ -127,8 +127,8 @@ _: {
 
         memoryMax = lib.mkOption {
           type = lib.types.str;
-          default = "32G";
-          description = "Memory ceiling: 23.4 GB MoE weights (page cache) + KV cache for 32k ctx + runtime overhead.";
+          default = "48G";
+          description = "Memory ceiling. Measured 2026-10-08: 23.4 GB weights (file-backed, charged on cold cache) + ~8.9 GB anon (KV cache 32k ctx + compute buffers) = ~32.3 GB idle-serving — 32G would OOM-kill on cold boot; 48G leaves headroom.";
         };
 
         host = lib.mkOption {
@@ -179,8 +179,10 @@ _: {
               Restart = "on-failure";
               RestartSec = "10";
               OOMScoreAdjust = 300;
-              MemoryMax = cfg.memoryMax;
-              CPUQuota = "400%";
+              # Quota matches threads (12 of 16 cores): threads share the CPU
+              # time the quota grants, so a 400% quota would silently quarter
+              # the measured ~17 tok/s interactive throughput.
+              CPUQuota = "1200%";
               # Same D-state rationale as llama-rag: a stop during saturated
               # disk I/O cannot complete until the mmap reads finish. The
               # initial 23.4 GB page-in is IO-heavy but one-shot at boot —
@@ -198,7 +200,14 @@ _: {
               # Restart=on-failure heals instead of active-but-dead.
               ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 240 --retry-delay 2 --retry-all-errors http://${cfg.host}:${toString cfg.port}/health";
             }
-            (harden { })
+            # harden derives MemoryHigh (the throttle watermark) as 80% of
+            # the MemoryMax ARGUMENT — calling `harden {}` bare merges its
+            # phantom 512M default: the standalone MemoryMax won at 32G but
+            # MemoryHigh stayed at 410M and strangled the first deployment
+            # (443 MB peak, 10.7 GB swapped, 1h53m stuck load; a 16-token
+            # reply timed out at 45s with 46k throttle events). The ceiling
+            # MUST flow into harden so both watermarks agree.
+            (harden { MemoryMax = cfg.memoryMax; })
           ];
 
           startLimitBurst = 5;
