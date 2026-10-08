@@ -93,7 +93,7 @@ Wise SCA has all **20/20 balances statement-blocked since 2026-09-30** (degraded
 ## g) QUESTIONS (cannot figure out myself)
 
 1. **Do you still have access to the wrong number Wise holds** (old SIM still active / number ported away), or is it fully unreachable? — This decides self-service change vs Wise Support + ID verification, and how long the block persists.
-2. **Backfill scope once approved:** only the SCA-blocked window (2026-09-30 → now) or full statement history (2021 →, as the dashboard button attempted)? The watcher currently fires the narrow one.
+2. **Backfill scope once approved:** only the SCA-blocked window (2026-09-30 → now) or full statement history (2021 →, as the dashboard button attempted)? The watcher currently fires the narrow one. **→ ANSWERED 2026-10-08: FULL history.** Watcher rebuilt as v2 at `/var/tmp/bank-sync-sca-watch.py` (24 h window, full-range POST, completion polling; the /tmp original was eaten by a mid-session tmpfiles cleanup — extra evidence for the systemd-ize decision).
 3. **Watcher posture:** leave it armed and I re-arm in 2.5 h increments until you've fixed the number, or stand down and you ping me after the Wise fix for a full manual verify + backfill?
 
 ## Verification appendix (what future sessions can re-run)
