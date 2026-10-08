@@ -265,11 +265,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791377724,
-        "narHash": "sha256-/PQsG8sS6Ghj138L5HxmMZLnuU9sUDKnwVg14zZUMns=",
+        "lastModified": 1791458175,
+        "narHash": "sha256-Wl7MWDhsja0UN0A6v1EKetYCf6Fns4OuDa/wfOwmGzs=",
         "owner": "LarsArtmann",
         "repo": "browser-history",
-        "rev": "43606882d6a1db214df84f36ad5364a2a3ac71c2",
+        "rev": "a7ac76d5868f5524e5fa3b076b6985d0c67754c4",
         "type": "github"
       },
       "original": {
@@ -780,11 +780,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1791377764,
-        "narHash": "sha256-/JrZJCQ8YjCvVmCKbcxlSZDODRdpPgx8IJLWP8NSVds=",
+        "lastModified": 1791460417,
+        "narHash": "sha256-N4YJMyZ2Vjhe6Z4KB3E1j98SrJeauDAyuPAqdl8tCyc=",
         "ref": "master",
-        "rev": "fe9da495e6c84b1470cb68ddbec479f5ed191825",
-        "revCount": 582,
+        "rev": "2bb5d8fd730c65ed666f3bdbc7448063d9e400e9",
+        "revCount": 583,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crm"
       },
