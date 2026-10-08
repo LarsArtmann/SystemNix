@@ -100,7 +100,7 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **Logs**            | —                | `logs.home.lan`      | Redirect to the SigNoz logs explorer (Dozzle retired with the Docker removal, 2026-10-08)                            |
 | **Mail Relay**      | 25               | —                    | Central outbound SMTP null client (loopback-only, relays via Resend; Paperless/Forgejo/system mail)                  |
 | **Miniflux**        | 8101             | `rss.home.lan`       | Minimalist RSS reader (Go + local PostgreSQL, native OIDC via Pocket ID)                                             |
-| **Ledger CRM**     | 8091             | `crm.home.lan`*      | Event-sourced CRM (Go + go-cqrs-lite, WebAuthn) — Twenty replacement (Twenty module removed 2026-10-08 with Docker) |
+| **Kith CRM**       | 8091             | `crm.home.lan`*      | Event-sourced CRM (Go + go-cqrs-lite, WebAuthn) — Twenty replacement, rebranded **Ledger → Kith** 2026-10-08 (Twenty module removed same day with Docker) |
 | **indexer-web**    | 8105             | —                    | Event-sourced docs index WebUI (deploy queued) |
 | **NetBird VPN**    | 51820            | —                    | Self-hosted WireGuard mesh (pbx control plane) — gated off until the phase-2 setup key |
 | **NSFW Filter**     | 8104             | `nsfw.home.lan`      | Go/ONNX NSFW image server — browser-extension backend (auto-discovery + pairing token)                               |

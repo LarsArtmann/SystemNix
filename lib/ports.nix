@@ -118,7 +118,7 @@
     llama-vlm-cap = 8128;
     llama-vlm-cap-backend = 8138;
 
-    # Ledger CRM — LarsArtmann's own event-sourced CRM (services.crm-server,
+    # Kith CRM — LarsArtmann's own event-sourced CRM (services.crm-server,
     # modules/nixos/services/crm.nix), loopback-only behind the crm vHost.
     # Same port the pre-module deploy unit and the CV syncer's base_url
     # always used (2026-09-18 standing decision) — the registry entry makes

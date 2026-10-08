@@ -991,7 +991,7 @@ in
         enable = true;
       };
 
-      # Ledger CRM — LarsArtmann's own event-sourced CRM, the Twenty
+      # Kith CRM — LarsArtmann's own event-sourced CRM, the Twenty
       # replacement. Twenty was fully retired 2026-10-08 (module deleted with
       # the Docker removal; its data stayed on disk in /data/docker until the
       # manual reclaim — docs/todo/services.md).
@@ -1325,7 +1325,7 @@ in
       # Cross-service backup health monitoring. Checks all backup dirs for
       # freshness and writes Prometheus metrics. Gatus alerts on Discord
       # when any backup is stale (>25h). Schedules are staggered to avoid
-      # IO spikes: Immich ~01:00, Ledger CRM 03:40, Monitor365 03:00.
+      # IO spikes: Immich ~01:00, Kith CRM 03:40, Monitor365 03:00.
       backup-coordination = {
         enable = true;
         # All backup freshness rows moved to their owning modules

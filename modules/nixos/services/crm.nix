@@ -1,5 +1,5 @@
 # Runbook: docs/services/crm.md
-# Ledger CRM — LarsArtmann's own event-sourced personal CRM (Go +
+# Kith CRM — LarsArtmann's own event-sourced personal CRM (Go +
 # go-cqrs-lite), replacing the Twenty docker-compose stack. Self-contained
 # module: the upstream flake (github:LarsArtmann/crm) exposes packages
 # only, so this file owns the whole service shape, ported from the crm
@@ -17,7 +17,7 @@
 #     gate (api.go: "called OUTSIDE the CRM's session gate") — the CV
 #     syncer keeps working headless with -auth on
 #   - CUTOVER SEMANTICS: while services.twenty.enable is true, Twenty
-#     keeps the crm.<domain> vHost and the dashboard tile; the Ledger
+#     keeps the crm.<domain> vHost and the dashboard tile; the Kith
 #     serves loopback only (still monitored + backed up). Flipping
 #     twenty.enable = false (the freeze, 2026-10-02 cutover micro-plan
 #     T42) hands the subdomain over ATOMICALLY in the same deploy — the
@@ -65,21 +65,21 @@
     {
       imports = [
         # Platform-truth catalog entry (ADR-008): unconditional — the
-        # Ledger CRM platform service exists wherever the module set is
+        # Kith CRM platform service exists wherever the module set is
         # imported, even where this host has it disabled. Requires
         # nixosModules.catalog (auto-discovered; VM tests must co-import).
         {
           services.catalog.crm = {
             subdomain = "crm";
             port = ports.crm;
-            description = "Ledger CRM (event-sourced, passkey-authed)";
+            description = "Kith CRM (event-sourced, passkey-authed)";
             healthPath = "/healthz";
           };
         }
       ];
 
       options.services.crm-server = {
-        enable = lib.mkEnableOption "Ledger CRM (crm-server)";
+        enable = lib.mkEnableOption "Kith CRM (crm-server)";
 
         package = lib.mkOption {
           type = lib.types.package;
@@ -88,7 +88,7 @@
           description = "crm-server package from the github:LarsArtmann/crm flake";
         };
 
-        port = serviceTypes.servicePort ports.crm "Host port for the Ledger CRM server (loopback)";
+        port = serviceTypes.servicePort ports.crm "Host port for the Kith CRM server (loopback)";
 
         auth = {
           enable = lib.mkOption {
@@ -139,7 +139,7 @@
 
         systemd.services = {
           crm-server = {
-            description = "Ledger CRM (event-sourced personal CRM)";
+            description = "Kith CRM (event-sourced personal CRM)";
             inherit onFailure;
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
@@ -188,7 +188,7 @@
 
           # Pool leaf creator (cv-backup-dir / miniflux-backup-dir pattern).
           crm-backup-dir = {
-            description = "Create Ledger CRM backup directory on the HDD pool";
+            description = "Create Kith CRM backup directory on the HDD pool";
             wantedBy = [ "multi-user.target" ];
             unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
             serviceConfig = lib.mkMerge [
@@ -225,7 +225,7 @@
           # sops-owned (crm_api_token) and repo-recoverable — no secrets on
           # the pool.
           crm-backup = {
-            description = "Ledger CRM journal + identity backup (WAL-safe sqlite snapshots)";
+            description = "Kith CRM journal + identity backup (WAL-safe sqlite snapshots)";
             after = [
               "crm-server.service"
               "crm-backup-dir.service"
@@ -286,7 +286,7 @@
         };
 
         systemd.timers.crm-backup = {
-          description = "Nightly Ledger CRM backup (journal + identity)";
+          description = "Nightly Kith CRM backup (journal + identity)";
           wantedBy = [ "timers.target" ];
           after = [ "mnt-pool.mount" ];
           timerConfig = {
@@ -300,7 +300,7 @@
 
         # Service-integration registry entry: ONE declaration fans out to
         # Caddy vHost, Gatus checks, dashboard tile, backup freshness, and
-        # system-health monitored-unit metrics. Layer "plain": the Ledger
+        # system-health monitored-unit metrics. Layer "plain": the Kith
         # carries its OWN auth (WebAuthn passkeys) — a "protected" layer
         # would double-auth (native-OIDC double-auth doctrine).
         # The vHost + tile stay dormant while Twenty owns the subdomain
@@ -316,7 +316,7 @@
                 # Functional liveness: /healthz is the server's own probe
                 # (unauthenticated by design, main.go) — green means the
                 # mux serves.
-                name = "Ledger CRM";
+                name = "Kith CRM";
                 group = "Productivity";
                 path = "/healthz";
                 interval = "5m";
@@ -324,7 +324,7 @@
                   "[STATUS] == 200"
                   "[RESPONSE_TIME] < 1000"
                 ];
-                alert = "Ledger CRM down — the event-sourced journal-serving surface is unreachable (unit crm-server). Check: systemctl status crm-server, journalctl -u crm-server";
+                alert = "Kith CRM down — the event-sourced journal-serving surface is unreachable (unit crm-server). Check: systemctl status crm-server, journalctl -u crm-server";
               }
             ];
             # Tile appears with the vHost claim (cutover): while Twenty
@@ -334,7 +334,7 @@
                 null
               else
                 {
-                  name = "Ledger CRM";
+                  name = "Kith CRM";
                   group = "Productivity";
                   description = "Event-sourced personal CRM (passkey)";
                 };

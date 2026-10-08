@@ -612,7 +612,7 @@ if nix run .#pre-deploy-check; then
     # browser-history-backup-dir: mount-gated pool leaf creator for the
     # nightly DB dump dir (cv-backup-dir pattern).
     # crm-backup-dir: mount-gated pool leaf creator for the nightly
-    # Ledger journal snapshot dir (cv-backup-dir pattern).
+    # Kith journal snapshot dir (cv-backup-dir pattern).
     if systemctl is-enabled --quiet "$provisioner.service" 2>/dev/null; then
       echo "Restarting provisioner: $provisioner.service"
       sudo systemctl restart "$provisioner.service" 2>/dev/null || true

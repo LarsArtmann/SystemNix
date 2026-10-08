@@ -856,7 +856,7 @@
       url = "git+ssh://git@github.com/LarsArtmann/CV?ref=master";
     };
 
-    # Ledger CRM — LarsArtmann's own event-sourced CRM (PRIVATE repo:
+    # Kith CRM — LarsArtmann's own event-sourced CRM (PRIVATE repo:
     # git+ssh, cv pattern). Builds Go 1.27 via its own go-nix-helpers lock
     # (go.mod floor 1.27.1), so NO nixpkgs follows — it must consume its
     # own build environment. Consumed by modules/nixos/services/crm.nix

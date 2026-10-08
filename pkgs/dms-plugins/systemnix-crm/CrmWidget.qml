@@ -9,7 +9,7 @@ PluginComponent {
     id: root
 
     // Fallback only (settings normally injected from quickshell.nix).
-    // Ledger CRM loopback healthz — port mirrors lib/ports.nix `crm`.
+    // Kith CRM loopback healthz — port mirrors lib/ports.nix `crm`.
     property string crmUrl: pluginData.crmUrl || "http://127.0.0.1:8091/healthz"
     property bool crmUp: false
     property int latencyMs: 0

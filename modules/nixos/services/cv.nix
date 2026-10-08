@@ -322,8 +322,8 @@
                 inbox_id = "";
               };
             };
-            # Ledger CRM sync (Twenty-compatible REST subset — the pipeline
-            # mirrors applications into the Ledger CRM as deals; runbook:
+            # Kith CRM sync (Twenty-compatible REST subset — the pipeline
+            # mirrors applications into the Kith CRM as deals; runbook:
             # ledger repo docs/ops/CV-SYNC.md). base_url is the ledger
             # crm-server's -addr (loopback, behind its -api-token bearer
             # gate). Same env-secret pattern as agentmail: api_key stays
@@ -432,7 +432,7 @@
                 "pocket-id-provision.service"
                 "cv-oidc-env.service"
               ]
-          # Ledger CRM replay ordering: the pipeline syncer's startup event
+          # Kith CRM replay ordering: the pipeline syncer's startup event
           # replay (career-pipeline/crm Syncer.Start) fires thousands of REST
           # calls with NO retry — a joint restart where cv-server comes up
           # while crm-server is still binding loses the whole backfill
