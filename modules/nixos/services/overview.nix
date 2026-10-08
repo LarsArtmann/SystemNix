@@ -33,7 +33,6 @@
     }:
     let
       cfg = config.services.overview;
-      pmaCfg = config.services.projects-management-automation;
       inherit (import ../../../lib/default.nix lib) ports;
       daemonSock = "/run/project-discovery/daemon.sock";
       daemonMode = cfg.daemonSocket != "";
@@ -50,7 +49,7 @@
             sleep 1
           done
           echo "overview: project-discovery daemon not available at ${daemonSock} after 60s — not starting overview." >&2
-          echo "Enable services.projects-management-automation or set services.overview.daemonSocket = \"\" for in-process discovery." >&2
+          echo "Enable services.project-discovery-daemon or set services.overview.daemonSocket = \"\" for in-process discovery." >&2
           exit 1
         '';
       };
@@ -83,21 +82,28 @@
 
       config = lib.mkIf cfg.enable {
         assertions = lib.optional daemonMode {
-          assertion = pmaCfg.enable;
+          assertion = (config.services.project-discovery-daemon.enable or false)
+            || (config.services.projects-management-automation.enableDiscoveryDaemon or false);
           message = ''
             overview.service is configured with daemonSocket = "${cfg.daemonSocket}"
-            but services.projects-management-automation.enable is false.
-            The project-discovery daemon is provided by PMA — either:
-              1. Enable PMA: services.projects-management-automation.enable = true
+            but no discovery daemon is enabled.
+            The socket at ${daemonSock} is owned by the standalone
+            project-discovery-daemon service (2026-09-07 flip) — either:
+              1. Enable it: services.project-discovery-daemon.enable = true
               2. Use in-process discovery: services.overview.daemonSocket = ""
           '';
         };
 
         systemd = {
           services.overview = {
-            after = [ "projects-management-automation.service" ];
-            wants = [ "projects-management-automation.service" ];
-            partOf = [ "projects-management-automation.service" ];
+            # The socket consumer depends on the SOCKET OWNER, not PMA
+            # (2026-10-08 ghost-socket fix completing the 2026-09-07 flip):
+            # partOf PMA bounced overview on every PMA deploy/restart — the
+            # exact coupling the standalone-daemon flip removed. PMA is just
+            # another client of the daemon socket now.
+            after = [ "project-discovery-daemon.service" ];
+            wants = [ "project-discovery-daemon.service" ];
+            partOf = [ "project-discovery-daemon.service" ];
             # Fix: upstream sets these in serviceConfig ([Service] section)
             # where systemd 261+ silently ignores them. Top-level options
             # map to [Unit] where they actually take effect.

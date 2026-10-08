@@ -23,7 +23,9 @@ Always-on CPU llama-server (llama.cpp) serving Lars's abliterated Qwen3.6
 
 `/data/ai/models/jan/llamacpp/models/qwen3.6-35b-a3b-aggressive/
 Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q4_K_P.gguf` (23.4 GB,
-sha256 `1c6a4813…`, completed 2026-10-08 — the April download had been
+sha256 `8d344a4336d8ea7da0cbfc12792d1471e568be7abe8930c52260698bfd01d731`
+(locally measured 2026-10-08; the earlier `1c6a4813…` noted here was the HF
+xet-bridge ETag, not a sha256), completed 2026-10-08 — the April download had been
 interrupted). Part of the Jan model tree; no service fetch unit. If the
 file is missing the unit skips (`ConditionPathExists`).
 
