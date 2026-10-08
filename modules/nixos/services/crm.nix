@@ -215,12 +215,17 @@
             '';
           };
 
-          # Nightly WAL-safe journal snapshot (the sqlite backup API — a
-          # consistent standalone copy against a RUNNING server; ported
-          # from the crm repo's scripts/backup-ledger.sh). The journal is
-          # the source of truth: projections are disposable.
+          # Nightly WAL-safe snapshots of BOTH durable databases (the
+          # sqlite backup API — a consistent standalone copy against a
+          # RUNNING server; ported from the crm repo's scripts/backup-ledger.sh).
+          # The journal is the source of truth: projections are disposable.
+          # identity.db (users/passkeys/sessions) joined 2026-10-08 (owner
+          # decision "full backups" — its loss previously cost a passkey
+          # re-registration). The api-token is deliberately NOT here: it is
+          # sops-owned (crm_api_token) and repo-recoverable — no secrets on
+          # the pool.
           crm-backup = {
-            description = "Ledger CRM journal backup (WAL-safe sqlite snapshot)";
+            description = "Ledger CRM journal + identity backup (WAL-safe sqlite snapshots)";
             after = [
               "crm-server.service"
               "crm-backup-dir.service"
@@ -241,21 +246,31 @@
             # until this hoist (docs/status/2026-10-07_15-50_* §a5/§d1).
             script = ''
               set -euo pipefail
-              dst="${backupDir}/ledger-$(date +%Y-%m-%d).db"
-              python3 - "${stateDir}/ledger.db" "$dst" <<'PY'
-              import sqlite3, sys
+              python3 - ${stateDir} ${backupDir} <<'PY'
+              import datetime, os, sqlite3, sys
 
-              src = sqlite3.connect(sys.argv[1])
-              dst = sqlite3.connect(sys.argv[2])
-              src.backup(dst)
-              dst.close()
-              src.close()
+              state_dir, backup_dir = sys.argv[1], sys.argv[2]
+              stamp = datetime.date.today().isoformat()
+              for name in ("ledger", "identity"):
+                  src_path = os.path.join(state_dir, name + ".db")
+                  if not os.path.exists(src_path):
+                      # sqlite would silently CREATE an empty db and mint a
+                      # healthy-looking worthless artifact — refuse instead.
+                      raise SystemExit(f"crm-backup: {src_path} missing — refusing empty backup")
+                  dst_path = os.path.join(backup_dir, f"{name}-{stamp}.db")
+                  src = sqlite3.connect(src_path)
+                  dst = sqlite3.connect(dst_path)
+                  src.backup(dst)
+                  dst.close()
+                  src.close()
+                  # identity.db carries passkey/session tables (bearer
+                  # material) — tighter mode than the journal snapshot.
+                  os.chmod(dst_path, 0o600 if name == "identity" else 0o644)
+                  print(f"crm-backup: wrote {dst_path}")
               PY
-              chmod 0644 "$dst"
               # 30-day retention (twenty pg_dump pattern): one snapshot
-              # per night, oldest fall off.
-              find ${backupDir} -name "ledger-*.db" -mtime +30 -delete
-              echo "crm-backup: wrote $dst"
+              # per night per database, oldest fall off.
+              find ${backupDir} \( -name "ledger-*.db" -o -name "identity-*.db" \) -mtime +30 -delete
             '';
             serviceConfig = lib.mkMerge [
               {
@@ -271,7 +286,7 @@
         };
 
         systemd.timers.crm-backup = {
-          description = "Nightly Ledger CRM journal backup";
+        description = "Nightly Ledger CRM backup (journal + identity)";
           wantedBy = [ "timers.target" ];
           after = [ "mnt-pool.mount" ];
           timerConfig = {
@@ -324,8 +339,11 @@
                   description = "Event-sourced personal CRM (passkey)";
                 };
             backup = {
-              # Nightly WAL-safe journal snapshot (crm-backup.timer, 03:40)
-              # onto the mirrored pool.
+              # Nightly WAL-safe snapshots (crm-backup.timer, 03:40) onto
+              # the mirrored pool: ledger-*.db AND identity-*.db. Freshness
+              # deliberately anchors on the ledger file only — the journal
+              # IS the source of truth; an identity-leg failure fails the
+              # whole unit (set -e + onFailure paging), not freshness.
               directory = "/mnt/pool/backups/crm";
               filePattern = "ledger-*.db";
               maxAgeHours = 26;
