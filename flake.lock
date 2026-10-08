@@ -265,11 +265,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791458175,
-        "narHash": "sha256-Wl7MWDhsja0UN0A6v1EKetYCf6Fns4OuDa/wfOwmGzs=",
+        "lastModified": 1791462569,
+        "narHash": "sha256-LKCwE6zwejNw3qTJWm4qBqBry4Ttkz05PxsdWES7tI0=",
         "owner": "LarsArtmann",
         "repo": "browser-history",
-        "rev": "a7ac76d5868f5524e5fa3b076b6985d0c67754c4",
+        "rev": "21456b565de8ade46d7de123e1fda36edac52a78",
         "type": "github"
       },
       "original": {
