@@ -2401,12 +2401,13 @@
     "go-cqrs-lite": {
       "flake": false,
       "locked": {
-        "lastModified": 1790719671,
-        "narHash": "sha256-Ux1LlxNxgSNAUoGgqdBLlROwnaeVwFI6xTBFzBGULX0=",
-        "owner": "LarsArtmann",
-        "repo": "go-cqrs-lite",
-        "rev": "7142e43de4fdb1096a8b96b08048e8480bedb9df",
-        "type": "github"
+        "lastModified": 1791386061,
+        "narHash": "sha256-yy9yUl6X0RsJ1w58wEBCBRP4BmGUugJsKRdoW0237wc=",
+        "ref": "refs/heads/master",
+        "rev": "c546d155975ddf641f90d950e55b846506e356b1",
+        "revCount": 7922,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       },
       "original": {
         "ref": "refs/heads/master",
