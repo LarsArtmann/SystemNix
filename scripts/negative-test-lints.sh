@@ -148,7 +148,7 @@ SIGNALERTS="modules/nixos/services/_signoz-alerts.nix"
 
 # ── green controls: pristine copy, every touched check must build ──
 if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]]; then
-  for check in signoz-query-lint gatus-pattern-lint module-shape-lint binary-coverage-lint dead-guard-lint gitleaks-coverage-selftest scrub-exit-contract; do
+  for check in signoz-query-lint gatus-pattern-lint module-shape-lint binary-coverage-lint dead-guard-lint gitleaks-coverage-selftest scrub-exit-contract bridge-exit-contract; do
     dir=$(make_copy "pristine-$check")
     out=$(build_check "$dir" "$check") || status=$? || true
     status=${status:-0}
@@ -222,6 +222,12 @@ run_case bridge fastflowlm-widened bridge-exit-contract fail 'SuccessExitStatus 
   'sed:modules/nixos/services/fastflowlm.nix:s|SuccessExitStatus = \[ 143 \];|SuccessExitStatus = [ 143 1 ];|'
 run_case bridge vlm-widened bridge-exit-contract fail 'SuccessExitStatus != \[ 143 \]' \
   'sed:modules/nixos/services/llama-vlm.nix:s|SuccessExitStatus = \[ 143 \];|SuccessExitStatus = [ 143 1 ];|'
+# Absent-list variant (2026-10-08): the queue contract said "widened OR absent
+# must fail" — deleting the line leaves valid nix (empty line inside the
+# attrset) so the eval GUARD fires, not a syntax accident; the merged default
+# ([ ]) != [ 143 ] produces the same marker as the widened case.
+run_case bridge fastflowlm-absent bridge-exit-contract fail 'SuccessExitStatus != \[ 143 \]' \
+  'sed:modules/nixos/services/fastflowlm.nix:s|SuccessExitStatus = \[ 143 \];||'
 
 # ── module-shape-lint: wrapper renamed away from the filename ──
 # (A bare module ALSO breaks flake eval with a worse message — renaming the
