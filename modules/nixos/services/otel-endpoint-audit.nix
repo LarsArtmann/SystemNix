@@ -33,6 +33,36 @@ _: {
     let
       inherit (import ../../../lib/default.nix lib) ports;
 
+      # Built-in shape contracts for every in-tree service that sets
+      # OTEL_EXPORTER_OTLP_ENDPOINT. Applied as a PLAIN config definition —
+      # NOT the mkOption default, and NOT mkDefault — so the integration
+      # registry's whole-attrset fan-out (integration.nix
+      # "otel-endpoint-audit.expectations") merges per-key at the SAME
+      # priority instead of silently discarding these (an option default is
+      # dropped the moment ANY config definition exists, and a mkDefault
+      # definition is dropped the moment a stronger one exists; both shapes
+      # wiped every registration incl. cv-server on evo-x2 while eval stayed
+      # green). A same-key collision with a different value now fails eval
+      # loudly — a contested unit contract should not pass silently.
+      defaultExpectations = {
+        # gRPC (port 4317), scheme REQUIRED
+        browser-history = "grpc-url"; # Go otlptracegrpc (upstream v0.5.0+ normalizes)
+        monitor365-server = "grpc-url"; # Rust tonic
+        # OTLP HTTP (port 4318) via URL-parsing SDKs, scheme REQUIRED
+        hermes = "http-url"; # Python opentelemetry-sdk
+        # OTLP HTTP (port 4318), Go otlptracehttp — bare host:port, NO scheme
+        discordsync = "http-host-port";
+        crush-daily = "http-host-port";
+        overview = "http-host-port";
+        projects-management-automation = "http-host-port";
+        file-and-image-renamer = "http-host-port";
+        file-and-image-renamer-health = "http-host-port";
+        papdashboard = "http-host-port";
+        cv-server = "http-host-port";
+        bank-sync = "http-host-port";
+        gotenberg = "http-url"; # upstream autoexport parses a full URL
+      };
+
       cfg = config.services.otel-endpoint-audit;
 
       grpcPort = toString ports.signoz-otlp-grpc;
@@ -238,24 +268,7 @@ _: {
               "http-host-port"
             ]
           );
-          default = {
-            # gRPC (port 4317), scheme REQUIRED
-            browser-history = "grpc-url"; # Go otlptracegrpc (upstream v0.5.0+ normalizes)
-            monitor365-server = "grpc-url"; # Rust tonic
-            # OTLP HTTP (port 4318) via URL-parsing SDKs, scheme REQUIRED
-            hermes = "http-url"; # Python opentelemetry-sdk
-            # OTLP HTTP (port 4318), Go otlptracehttp — bare host:port, NO scheme
-            discordsync = "http-host-port";
-            crush-daily = "http-host-port";
-            overview = "http-host-port";
-            projects-management-automation = "http-host-port";
-            file-and-image-renamer = "http-host-port";
-            file-and-image-renamer-health = "http-host-port";
-            papdashboard = "http-host-port";
-            cv-server = "http-host-port";
-            bank-sync = "http-host-port";
-            gotenberg = "http-url"; # upstream autoexport parses a full URL
-          };
+          default = { };
           description = ''
             Per-service OTLP endpoint shape contract. Register EVERY service
             that sets OTEL_EXPORTER_OTLP_ENDPOINT so its scheme-ness is
@@ -267,11 +280,17 @@ _: {
                                  (read the env var as a full URL)
             - "http-host-port":  host:4318 — Go otlptracehttp (the SDK builds
                                  the URL itself; a scheme corrupts it)
+
+            The built-in registrations (defaultExpectations below) apply as a
+            plain config definition, so explicit per-service definitions —
+            e.g. the integration registry fan-out — merge per-key at the same
+            priority; a same-key value collision fails eval loudly.
           '';
         };
       };
 
       config = lib.mkIf cfg.enable {
+        services.otel-endpoint-audit.expectations = defaultExpectations;
         assertions = map (violation: {
           assertion = false;
           message = ''
