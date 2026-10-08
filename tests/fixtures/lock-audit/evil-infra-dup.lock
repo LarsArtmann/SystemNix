@@ -1,0 +1,55 @@
+{
+  "version": 7,
+  "nodes": {
+    "root": {
+      "inputs": {
+        "git-hooks": "git-hooks",
+        "flake-compat": "flake-compat",
+        "hook-tool": "hook-tool",
+        "compat-tool": "compat-tool"
+      }
+    },
+    "git-hooks": {
+      "locked": {
+        "rev": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "type": "github"
+      }
+    },
+    "flake-compat": {
+      "locked": {
+        "rev": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "type": "github"
+      }
+    },
+    "hook-tool": {
+      "inputs": {
+        "git-hooks": "git-hooks_2"
+      },
+      "locked": {
+        "rev": "cccccccccccccccccccccccccccccccccccccccc",
+        "type": "github"
+      }
+    },
+    "compat-tool": {
+      "inputs": {
+        "flake-compat": "flake-compat_2"
+      },
+      "locked": {
+        "rev": "dddddddddddddddddddddddddddddddddddddddd",
+        "type": "github"
+      }
+    },
+    "git-hooks_2": {
+      "locked": {
+        "rev": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "type": "github"
+      }
+    },
+    "flake-compat_2": {
+      "locked": {
+        "rev": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "type": "github"
+      }
+    }
+  }
+}

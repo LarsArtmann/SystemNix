@@ -22,24 +22,20 @@
     nixpkgs-llama-rag.url = "github:NixOS/nixpkgs/0968519e14f7aa7d3e9b389682bd74d2b51c8ce8";
     nix-darwin = {
       url = "github:LnL7/nix-darwin";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     home-manager = {
       url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # Add flake-parts for modular architecture
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
-      inputs.nixpkgs-lib.follows = "nixpkgs";
     };
 
     # Single flake-utils source — all inputs follow this to avoid 10+ duplicate instances
     flake-utils = {
       url = "github:numtide/flake-utils";
-      inputs.systems.follows = "systems";
     };
 
     # Single nix-systems source — flake-utils follows this
@@ -51,38 +47,27 @@
     # our nixpkgs so the venv toolchain matches the host python313.
     uv2nix = {
       url = "github:pyproject-nix/uv2nix";
-      inputs.pyproject-nix.follows = "pyproject-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     pyproject-nix = {
       url = "github:pyproject-nix/pyproject.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     pyproject-build-systems = {
       url = "github:pyproject-nix/build-system-pkgs";
-      inputs.pyproject-nix.follows = "pyproject-nix";
-      inputs.uv2nix.follows = "uv2nix";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # Single treefmt-nix source — dnsblockd, niri-session-manager follow this
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # Add NUR (Nix User Repository) for other packages
     nur = {
       url = "github:nix-community/NUR";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-parts.follows = "flake-parts";
     };
 
     # Helium Browser
     helium = {
       url = "github:schembriaiden/helium-browser-nix-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.utils.follows = "flake-utils";
     };
 
     # Add nix-homebrew for declarative Homebrew management
@@ -103,41 +88,32 @@
     # Niri scrollable-tiling Wayland compositor
     niri = {
       url = "github:sodiboo/niri-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # OpenTelemetry TUI viewer
     otel-tui = {
       url = "github:ymtdzzz/otel-tui";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
     };
 
     # Superfile terminal file manager (upstream flake — nixpkgs stuck at 1.3.3,
     # upstream v1.6.0 ships bubbletea-v2 preview reliability + sidebar config)
     superfile = {
       url = "github:yorukot/superfile";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
     };
 
     # AMD NPU (XDNA) driver for Ryzen AI Max+ Strix Halo
     nix-amd-npu = {
       url = "github:robcohen/nix-amd-npu";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-parts.follows = "flake-parts";
     };
 
     # Secrets management via sops + age
     sops-nix = {
       url = "github:Mic92/sops-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # SilentSDDM - customizable SDDM theme with Catppuccin support
     silent-sddm = {
       url = "github:uiriansan/SilentSDDM";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # Declarative disk partitioning — geometry-spec only for SystemNix:
@@ -147,7 +123,6 @@
     # disko CLI (dry-run script rendering / rescue use).
     disko = {
       url = "github:nix-community/disko";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # SigNoz observability platform sources (flake = false, packaged in
@@ -181,30 +156,17 @@
 
     nix-ssh-config = {
       url = "github:LarsArtmann/nix-ssh-config";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        home-manager.follows = "home-manager";
-        flake-parts.follows = "flake-parts";
-        treefmt-nix.follows = "treefmt-nix";
-      };
     };
 
     # Crush AI Agent Configuration — global AI assistant settings
     # This ensures AGENTS.md and all references are synced across machines
     crush-config = {
       url = "github:LarsArtmann/crush-config?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-parts.follows = "flake-parts";
     };
 
     # dnsblockd — DNS blocklist service with block pages and blocklist processing
     dnsblockd = {
       url = "github:LarsArtmann/dnsblockd?ref=master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        flake-parts.follows = "flake-parts";
-        go-nix-helpers.follows = "go-nix-helpers";
-      };
     };
 
     wallpapers-src = {
@@ -244,19 +206,11 @@
       # input forward ONLY after `nix build
       # .#nixosConfigurations.evo-x2.config.system.build.toplevel` passes.
       url = "github:NousResearch/hermes-agent";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-parts.follows = "flake-parts";
-      # Upstream pins its own uv2nix (2026-07-28) whose lib/build.nix still
-      # uses the deprecated stdenv.isDarwin/isLinux accessors — eval warnings
-      # on every hermes eval. Follow our root pin (a24323e9, migrated to
-      # stdenv.hostPlatform.*) instead.
-      inputs.uv2nix.follows = "uv2nix";
     };
 
     # monitor365 — Device monitoring agent (Rust)
     monitor365 = {
       url = "github:LarsArtmann/monitor365?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # storage-collector — filesystem capacity tracking daemon (Rust).
@@ -269,7 +223,6 @@
     # moves to `github:`.
     storage-collector = {
       url = "github:LarsArtmann/storage-collector?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # PapDashboard — event-sourced alert hub with NPU insight enricher (Go)
@@ -285,38 +238,26 @@
     # InboxClean — Gmail AI assistant: web dashboard + incremental sync (Go)
     inboxclean = {
       url = "github:LarsArtmann/InboxClean?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # NixOS hardware profiles (Raspberry Pi, etc.)
     nixos-hardware = {
       url = "github:NixOS/nixos-hardware";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # EMEET PIXY webcam auto-activation daemon
     emeet-pixyd = {
       url = "github:LarsArtmann/emeet-pixyd?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # Niri session manager — automatic window save/restore
     niri-session-manager = {
       url = "github:LarsArtmann/niri-session-manager";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        treefmt-nix.follows = "treefmt-nix";
-      };
     };
 
     # Treefmt formatter with auto-discovery for nix fmt
     treefmt-full-flake = {
       url = "github:LarsArtmann/treefmt-full-flake";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        flake-parts.follows = "flake-parts";
-        treefmt-nix.follows = "treefmt-nix";
-      };
     };
 
     # todo-list-ai — AI-powered CLI tool for extracting TODOs from codebases
@@ -325,7 +266,6 @@
     # (package build probe passed) — pin dropped per the pin policy.
     todo-list-ai = {
       url = "github:LarsArtmann/todo-list-ai?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # library-policy — Banned/vulnerable library detector for Go projects
@@ -335,11 +275,6 @@
     # `nix flake lock --update-input library-policy --refresh`.
     library-policy = {
       url = "github:LarsArtmann/library-policy?ref=master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        go-nix-helpers.follows = "go-nix-helpers";
-        flake-parts.follows = "flake-parts";
-      };
     };
 
     # file-and-image-renamer — AI-powered screenshot renaming tool
@@ -353,12 +288,6 @@
       # Branch-ref governed (pin policy 2026-09-16: ?ref=master as much as
       # possible; the lock holds the exact rev until an explicit update).
       url = "git+ssh://git@github.com/LarsArtmann/file-and-image-renamer";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-parts.follows = "flake-parts";
-      # Without this, the input locks its own go-nix-helpers via git+ssh:
-      # (git insteadOf pollution) — divergent narHash vs the top-level
-      # github: fetch, the "NAR hash mismatch" daemon-cache trap (docs/agents/nix-flakes.md).
-      inputs.go-nix-helpers.follows = "go-nix-helpers";
     };
 
     # nsfw-classifier — Go/ONNX NSFW image classifier. Backend for the
@@ -389,23 +318,11 @@
     # crush-daily — Daily AI-powered insights from Crush development databases
     crush-daily = {
       url = "github:LarsArtmann/crush-daily?ref=master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        go-nix-helpers.follows = "go-nix-helpers";
-        flake-parts.follows = "flake-parts";
-        treefmt-nix.follows = "treefmt-nix";
-        systems.follows = "systems";
-      };
     };
 
     # bank-sync — Wise/Qonto bank transaction sync into SQLite + dashboard
     bank-sync = {
       url = "github:LarsArtmann/bank-sync?ref=master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        flake-parts.follows = "flake-parts";
-        treefmt-nix.follows = "treefmt-nix";
-      };
     };
 
     # index — project documentation indexer; the docs-archive-stats
@@ -414,7 +331,6 @@
     # go-nix-helpers deliberately NOT followed (bank-sync FOD-mismatch trap).
     index = {
       url = "github:LarsArtmann/index?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # go-taskqueue — projects-aware task work queue + agent pool (tq CLI).
@@ -425,7 +341,6 @@
     # locked helper.
     go-taskqueue = {
       url = "github:LarsArtmann/go-taskqueue?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # qmd — on-device hybrid search (BM25 + vector embeddings + LLM rerank)
@@ -491,10 +406,6 @@
     # golangci-lint-auto-configure — auto-configure golangci-lint for Go projects
     golangci-lint-auto-configure = {
       url = "github:LarsArtmann/golangci-lint-auto-configure?ref=master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        go-nix-helpers.follows = "go-nix-helpers";
-      };
     };
 
     # mr-sync — CLI to keep ~/.mrconfig in sync with GitHub repos
@@ -503,13 +414,6 @@
     # Only build-infra inputs are followed.
     mr-sync = {
       url = "github:LarsArtmann/mr-sync?ref=master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        go-nix-helpers.follows = "go-nix-helpers";
-        flake-parts.follows = "flake-parts";
-        # treefmt-nix follow removed 2026-10-07: upstream mr-sync dropped
-        # the input (3b579663); the stale follow tripped the eval warning.
-      };
     };
 
     # go-health-dashboard — federated go-health hub (health.home.lan).
@@ -517,11 +421,6 @@
     # owns the go_1_27 + GOEXPERIMENT=jsonv2 toolchain wiring).
     go-health-dashboard = {
       url = "github:LarsArtmann/go-health-dashboard?ref=master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        flake-parts.follows = "flake-parts";
-        treefmt-nix.follows = "treefmt-nix";
-      };
     };
 
     # erraudit — Error handling pattern analyzer for Go projects
@@ -529,11 +428,6 @@
     # the mkLarsPackages attr follow the new name. 2026-09-17.)
     erraudit = {
       url = "github:LarsArtmann/erraudit?ref=master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        go-nix-helpers.follows = "go-nix-helpers";
-        # go-finding: NOT followed — upstream hasn't been updated for the new Confidence type API
-      };
     };
 
     # BuildFlow — Zero-configuration build automation for Go projects
@@ -552,10 +446,6 @@
       # `nix build .#buildflow` before switching, and re-shim ONLY via
       # nix-hash-fix evidence, never by hand.
       url = "git+ssh://git@github.com/LarsArtmann/BuildFlow?ref=refs/heads/master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        go-nix-helpers.follows = "go-nix-helpers";
-      };
     };
 
     # go-auto-upgrade — Automate Go library upgrades
@@ -564,10 +454,6 @@
     # `nix flake lock --update-input go-auto-upgrade --refresh`.
     go-auto-upgrade = {
       url = "github:LarsArtmann/go-auto-upgrade?ref=master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        go-nix-helpers.follows = "go-nix-helpers";
-      };
     };
 
     # go-structure-linter — Go project structure validator
@@ -578,10 +464,6 @@
       # back to 96b6a01f (gen-797-proven). Do NOT update-input until upstream
       # wires go_1_27 (the library-policy three-wiring-points pattern).
       url = "github:LarsArtmann/go-structure-linter?ref=master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        go-nix-helpers.follows = "go-nix-helpers";
-      };
     };
 
     # samber-linter — static analyzer detecting health-washing in samber/do v2 containers
@@ -590,10 +472,6 @@
     # upstream extraBuildAttrs; vendorHash lives upstream.
     samber-linter = {
       url = "github:LarsArtmann/samber-linter?ref=master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        go-nix-helpers.follows = "go-nix-helpers";
-      };
     };
 
     # go-cqrs-lite — CQRS/Event-Sourcing library (provides cqrs-lint CLI)
@@ -608,15 +486,6 @@
       # (branch-ref governed per the 2026-09-16 pin policy). git+ssh kept
       # (PRIVATE repo; CI fetches via NIX_DEPLOY_KEY_GO_CQRS_LITE).
       url = "git+ssh://git@github.com/LarsArtmann/go-cqrs-lite?ref=refs/heads/master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        go-nix-helpers.follows = "go-nix-helpers";
-        flake-parts.follows = "flake-parts";
-        treefmt-nix.follows = "treefmt-nix";
-        # systems: dropped 2026-09-28 — upstream no longer declares a systems
-        # input (flake-parts native systems list), so the follow was dead and
-        # warned "override for a non-existent input" on every nix invocation.
-      };
     };
 
     # branching-flow — Error context preservation analyzer
@@ -629,12 +498,6 @@
       # policy 2026-09-16: ?ref=master as much as possible; the lock holds
       # the exact rev until an explicit update).
       url = "git+ssh://git@github.com/LarsArtmann/branching-flow?ref=refs/heads/master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        go-nix-helpers.follows = "go-nix-helpers";
-        flake-parts.follows = "flake-parts";
-        treefmt-nix.follows = "treefmt-nix";
-      };
     };
 
     # art-dupl — Code duplication detector
@@ -653,7 +516,6 @@
       # handles it, and the locked narHash is byte-identical to the old
       # local pin, so no consumer hash churn.)
       url = "git+https://github.com/LarsArtmann/art-dupl?ref=refs/heads/fork";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # art-dupl raw source — consumed transitively by dnsblockd (follows this input)
@@ -681,9 +543,6 @@
       # vendorHash (FOD + package verified, PMA's own lock). Bumps flow via
       # `nix flake lock --update-input projects-management-automation --refresh`.
       url = "github:LarsArtmann/projects-management-automation?ref=master";
-      inputs = {
-        flake-parts.follows = "flake-parts";
-      };
     };
 
     # project-discovery-daemon — standalone discovery daemon owning
@@ -692,13 +551,6 @@
     # PROJECT_DISCOVERY_SEARCH_PATHS and PROJECT_DISCOVERY_SOCKET_MODE.
     project-discovery-daemon = {
       url = "github:LarsArtmann/project-discovery-daemon?ref=master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        flake-parts.follows = "flake-parts";
-        # go-nix-helpers master tip is currently broken (undefined `mod` in
-        # mkPreparedSource.nix, 2a74b8b4); follow this flake's known-good pin.
-        go-nix-helpers.follows = "go-nix-helpers";
-      };
     };
 
     # project-dependency-graph — depgraph CLI: renders the LarsArtmann Go
@@ -711,17 +563,11 @@
     # on every root-nixpkgs bump (the 2026-10-05 a7868a7 wave class).
     project-dependency-graph = {
       url = "git+ssh://git@github.com/LarsArtmann/project-dependency-graph?ref=refs/heads/master";
-      inputs.flake-parts.follows = "flake-parts";
     };
 
     # project-meta — Per-project metadata management CLI
     project-meta = {
       url = "github:LarsArtmann/project-meta?ref=master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        go-nix-helpers.follows = "go-nix-helpers";
-        flake-parts.follows = "flake-parts";
-      };
     };
 
     # Overview — local project dashboard (discovers and browses git repos via web UI)
@@ -730,12 +576,6 @@
       # vendorHash (FOD + package verified). Bumps flow via
       # `nix flake lock --update-input overview --refresh`.
       url = "github:LarsArtmann/overview?ref=master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        go-nix-helpers.follows = "go-nix-helpers";
-        flake-parts.follows = "flake-parts";
-        treefmt-nix.follows = "treefmt-nix";
-      };
     };
 
     # DiscordSync — Continuous Discord backup with Turso cloud sync
@@ -762,17 +602,6 @@
       # followed, so the FOD is a cache hit). Do NOT update-input until
       # upstream wires go-sqlitestore and the FOD + package probe green.
       url = "github:LarsArtmann/DiscordSync?ref=master";
-      inputs = {
-        # go-nix-helpers AND nixpkgs deliberately NOT followed (bank-sync +
-        # qmd precedents): upstream's vendorHash was validated against ITS
-        # own lock — a different mkPreparedSource (helper version) or a
-        # different go (nixpkgs) changes the vendored module set and breaks
-        # the go-modules FOD hash (2026-08-25: both mismatch classes hit
-        # live before this pin; got-hash drifted with each follows change).
-        # discordsync must consume its own locked build environment.
-        flake-parts.follows = "flake-parts";
-        treefmt-nix.follows = "treefmt-nix";
-      };
     };
 
     # nix-email — Declarative mail stack (Stalwart + DMARC monitoring).
@@ -790,14 +619,6 @@
     # its own CI + stalwart/relay/parsedmarc E2E suites since v0.3.0.
     nix-email = {
       url = "github:LarsArtmann/nix-email";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        # Dedupe (2026-09-22, per the nix-email CHANGELOG hint): collapse
-        # upstream's flake-parts into OUR flake-parts node - without this
-        # the lock carries a second flake-parts (flake-parts_17) that only
-        # nix-email consumes.
-        flake-parts.follows = "flake-parts";
-      };
     };
 
     # vision-review-agent — visionreviewd, the event-sourced UI review daemon
@@ -805,11 +626,6 @@
     # this time enabled on evo-x2, pointed at llama-vlm's captioner endpoint)
     vision-review-agent = {
       url = "github:LarsArtmann/vision-review-agent?ref=master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        flake-parts.follows = "flake-parts";
-        treefmt-nix.follows = "treefmt-nix";
-      };
     };
 
     # md-go-validator — Validate code blocks embedded in Markdown/MDX docs
@@ -818,11 +634,6 @@
     # pin dropped per the pin policy (?ref=master everywhere possible).
     md-go-validator = {
       url = "github:LarsArtmann/md-go-validator?ref=master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        flake-parts.follows = "flake-parts";
-        treefmt-nix.follows = "treefmt-nix";
-      };
     };
 
     # browser-history — Browser history intelligence server (CQRS/ES, WebAuthn)
@@ -832,12 +643,6 @@
     # (its build rides published cqrs-htmx tags; docs/agents/go-ecosystem.md probe protocol).
     browser-history = {
       url = "github:LarsArtmann/browser-history?ref=master";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        go-nix-helpers.follows = "go-nix-helpers";
-        flake-parts.follows = "flake-parts";
-        treefmt-nix.follows = "treefmt-nix";
-      };
     };
 
     # CV — resume generator + career pipeline server (PRIVATE repo: git+ssh).
@@ -856,32 +661,17 @@
     # (services.crm-server unit); the CV syncer targets its REST surface.
     crm = {
       url = "git+ssh://git@github.com/LarsArtmann/crm?ref=master";
-      # crm pins its own go-nix-helpers (lock node go-nix-helpers_2,
-      # e8075ef8) which predates go-standard's proxyVendor mkDefault fix —
-      # its prepared-source (deps) packages default proxyVendor = true and
-      # emit "go-standard.proxyVendor = true is ignored when deps are set"
-      # on every evo-x2 eval. Follow our root pin (64f2927b) which defaults
-      # proxyVendor off for deps consumers.
-      inputs.go-nix-helpers.follows = "go-nix-helpers";
     };
 
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)
     # Brings quickshell transitively — no separate quickshell input needed
     dankMaterialShell = {
       url = "github:AvengeMedia/DankMaterialShell/stable";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # herdr — Agent multiplexer for the terminal (runs multiple AI coding agents with real panes)
     herdr = {
       url = "github:ogulcancelik/herdr";
-      inputs.nixpkgs.follows = "nixpkgs";
-      # herdr resolves rust-overlay from the lock graph (node rust-overlay,
-      # 4cdea398) whose lib/mk-aggregated.nix still uses the deprecated
-      # stdenv.isLinux/isDarwin accessors — eval warnings on every evo-x2
-      # eval that renders the herdr Rust toolchain. Follow our explicit root
-      # pin (master, migrated to stdenv.hostPlatform.*).
-      inputs.rust-overlay.follows = "rust-overlay";
     };
 
     # rust-overlay — herdr's Rust toolchain provider. Declared as a root
@@ -889,7 +679,6 @@
     # rev with the stdenv.hostPlatform.* migration.
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # go-humanize-linter — AST linter detecting hand-rolled reimplementations of go-humanize
@@ -897,11 +686,6 @@
     # they are flake=false git+ssh inputs fetched by the upstream flake itself.
     go-humanize-linter = {
       url = "github:LarsArtmann/go-humanize-linter?ref=main";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        go-nix-helpers.follows = "go-nix-helpers";
-        flake-parts.follows = "flake-parts";
-      };
     };
 
     # git-hooks.nix + flake-compat — root inputs declared SOLELY to own the
@@ -1009,6 +793,149 @@
     superfile.inputs.flake-compat.follows = "flake-compat";
     todo-list-ai.inputs.flake-parts.follows = "flake-parts";
     todo-list-ai.inputs.treefmt-nix.follows = "treefmt-nix";
+    art-dupl.inputs.nixpkgs.follows = "nixpkgs";
+    bank-sync.inputs.flake-parts.follows = "flake-parts";
+    bank-sync.inputs.nixpkgs.follows = "nixpkgs";
+    bank-sync.inputs.treefmt-nix.follows = "treefmt-nix";
+    branching-flow.inputs.flake-parts.follows = "flake-parts";
+    branching-flow.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    branching-flow.inputs.nixpkgs.follows = "nixpkgs";
+    branching-flow.inputs.treefmt-nix.follows = "treefmt-nix";
+    browser-history.inputs.flake-parts.follows = "flake-parts";
+    browser-history.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    browser-history.inputs.nixpkgs.follows = "nixpkgs";
+    browser-history.inputs.treefmt-nix.follows = "treefmt-nix";
+    buildflow.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    buildflow.inputs.nixpkgs.follows = "nixpkgs";
+    # crm pins its own go-nix-helpers (lock node go-nix-helpers_2,
+    # e8075ef8) which predates go-standard's proxyVendor mkDefault fix —
+    # its prepared-source (deps) packages default proxyVendor = true and
+    # emit "go-standard.proxyVendor = true is ignored when deps are set"
+    # on every evo-x2 eval. Follow our root pin (64f2927b) which defaults
+    # proxyVendor off for deps consumers.
+    crm.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    crush-config.inputs.flake-parts.follows = "flake-parts";
+    crush-config.inputs.nixpkgs.follows = "nixpkgs";
+    crush-daily.inputs.flake-parts.follows = "flake-parts";
+    crush-daily.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    crush-daily.inputs.nixpkgs.follows = "nixpkgs";
+    crush-daily.inputs.systems.follows = "systems";
+    crush-daily.inputs.treefmt-nix.follows = "treefmt-nix";
+    dankMaterialShell.inputs.nixpkgs.follows = "nixpkgs";
+    discordsync.inputs.flake-parts.follows = "flake-parts";
+    discordsync.inputs.treefmt-nix.follows = "treefmt-nix";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
+    dnsblockd.inputs.flake-parts.follows = "flake-parts";
+    dnsblockd.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    dnsblockd.inputs.nixpkgs.follows = "nixpkgs";
+    emeet-pixyd.inputs.nixpkgs.follows = "nixpkgs";
+    erraudit.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    erraudit.inputs.nixpkgs.follows = "nixpkgs";
+    file-and-image-renamer.inputs.flake-parts.follows = "flake-parts";
+    # Without this, the input locks its own go-nix-helpers via git+ssh:
+    # (git insteadOf pollution) — divergent narHash vs the top-level
+    # github: fetch, the "NAR hash mismatch" daemon-cache trap (docs/agents/nix-flakes.md).
+    file-and-image-renamer.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    file-and-image-renamer.inputs.nixpkgs.follows = "nixpkgs";
+    flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
+    flake-utils.inputs.systems.follows = "systems";
+    go-auto-upgrade.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    go-auto-upgrade.inputs.nixpkgs.follows = "nixpkgs";
+    go-cqrs-lite.inputs.flake-parts.follows = "flake-parts";
+    go-cqrs-lite.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    go-cqrs-lite.inputs.nixpkgs.follows = "nixpkgs";
+    go-cqrs-lite.inputs.treefmt-nix.follows = "treefmt-nix";
+    go-health-dashboard.inputs.flake-parts.follows = "flake-parts";
+    go-health-dashboard.inputs.nixpkgs.follows = "nixpkgs";
+    go-health-dashboard.inputs.treefmt-nix.follows = "treefmt-nix";
+    go-humanize-linter.inputs.flake-parts.follows = "flake-parts";
+    go-humanize-linter.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    go-humanize-linter.inputs.nixpkgs.follows = "nixpkgs";
+    go-structure-linter.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    go-structure-linter.inputs.nixpkgs.follows = "nixpkgs";
+    go-taskqueue.inputs.nixpkgs.follows = "nixpkgs";
+    golangci-lint-auto-configure.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    golangci-lint-auto-configure.inputs.nixpkgs.follows = "nixpkgs";
+    helium.inputs.nixpkgs.follows = "nixpkgs";
+    helium.inputs.utils.follows = "flake-utils";
+    herdr.inputs.nixpkgs.follows = "nixpkgs";
+    # herdr resolves rust-overlay from the lock graph (node rust-overlay,
+    # 4cdea398) whose lib/mk-aggregated.nix still uses the deprecated
+    # stdenv.isLinux/isDarwin accessors — eval warnings on every evo-x2
+    # eval that renders the herdr Rust toolchain. Follow our explicit root
+    # pin (master, migrated to stdenv.hostPlatform.*).
+    herdr.inputs.rust-overlay.follows = "rust-overlay";
+    hermes-agent.inputs.flake-parts.follows = "flake-parts";
+    hermes-agent.inputs.nixpkgs.follows = "nixpkgs";
+    # Upstream pins its own uv2nix (2026-07-28) whose lib/build.nix still
+    # uses the deprecated stdenv.isDarwin/isLinux accessors — eval warnings
+    # on every hermes eval. Follow our root pin (a24323e9, migrated to
+    # stdenv.hostPlatform.*) instead.
+    hermes-agent.inputs.uv2nix.follows = "uv2nix";
+    home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    inboxclean.inputs.nixpkgs.follows = "nixpkgs";
+    index.inputs.nixpkgs.follows = "nixpkgs";
+    library-policy.inputs.flake-parts.follows = "flake-parts";
+    library-policy.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    library-policy.inputs.nixpkgs.follows = "nixpkgs";
+    md-go-validator.inputs.flake-parts.follows = "flake-parts";
+    md-go-validator.inputs.nixpkgs.follows = "nixpkgs";
+    md-go-validator.inputs.treefmt-nix.follows = "treefmt-nix";
+    monitor365.inputs.nixpkgs.follows = "nixpkgs";
+    mr-sync.inputs.flake-parts.follows = "flake-parts";
+    mr-sync.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    mr-sync.inputs.nixpkgs.follows = "nixpkgs";
+    niri.inputs.nixpkgs.follows = "nixpkgs";
+    niri-session-manager.inputs.nixpkgs.follows = "nixpkgs";
+    niri-session-manager.inputs.treefmt-nix.follows = "treefmt-nix";
+    nix-amd-npu.inputs.flake-parts.follows = "flake-parts";
+    nix-amd-npu.inputs.nixpkgs.follows = "nixpkgs";
+    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+    nix-email.inputs.flake-parts.follows = "flake-parts";
+    nix-email.inputs.nixpkgs.follows = "nixpkgs";
+    nix-ssh-config.inputs.flake-parts.follows = "flake-parts";
+    nix-ssh-config.inputs.home-manager.follows = "home-manager";
+    nix-ssh-config.inputs.nixpkgs.follows = "nixpkgs";
+    nix-ssh-config.inputs.treefmt-nix.follows = "treefmt-nix";
+    nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
+    nur.inputs.flake-parts.follows = "flake-parts";
+    nur.inputs.nixpkgs.follows = "nixpkgs";
+    otel-tui.inputs.flake-utils.follows = "flake-utils";
+    otel-tui.inputs.nixpkgs.follows = "nixpkgs";
+    overview.inputs.flake-parts.follows = "flake-parts";
+    overview.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    overview.inputs.nixpkgs.follows = "nixpkgs";
+    overview.inputs.treefmt-nix.follows = "treefmt-nix";
+    project-dependency-graph.inputs.flake-parts.follows = "flake-parts";
+    project-discovery-daemon.inputs.flake-parts.follows = "flake-parts";
+    project-discovery-daemon.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    project-discovery-daemon.inputs.nixpkgs.follows = "nixpkgs";
+    project-meta.inputs.flake-parts.follows = "flake-parts";
+    project-meta.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    project-meta.inputs.nixpkgs.follows = "nixpkgs";
+    projects-management-automation.inputs.flake-parts.follows = "flake-parts";
+    pyproject-build-systems.inputs.nixpkgs.follows = "nixpkgs";
+    pyproject-build-systems.inputs.pyproject-nix.follows = "pyproject-nix";
+    pyproject-build-systems.inputs.uv2nix.follows = "uv2nix";
+    pyproject-nix.inputs.nixpkgs.follows = "nixpkgs";
+    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
+    samber-linter.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    samber-linter.inputs.nixpkgs.follows = "nixpkgs";
+    silent-sddm.inputs.nixpkgs.follows = "nixpkgs";
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+    storage-collector.inputs.nixpkgs.follows = "nixpkgs";
+    superfile.inputs.flake-utils.follows = "flake-utils";
+    superfile.inputs.nixpkgs.follows = "nixpkgs";
+    todo-list-ai.inputs.nixpkgs.follows = "nixpkgs";
+    treefmt-full-flake.inputs.flake-parts.follows = "flake-parts";
+    treefmt-full-flake.inputs.nixpkgs.follows = "nixpkgs";
+    treefmt-full-flake.inputs.treefmt-nix.follows = "treefmt-nix";
+    treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
+    uv2nix.inputs.nixpkgs.follows = "nixpkgs";
+    uv2nix.inputs.pyproject-nix.follows = "pyproject-nix";
+    vision-review-agent.inputs.flake-parts.follows = "flake-parts";
+    vision-review-agent.inputs.nixpkgs.follows = "nixpkgs";
+    vision-review-agent.inputs.treefmt-nix.follows = "treefmt-nix";
   };
 
   outputs =
@@ -3681,6 +3608,9 @@
                     clean = builtins.toJSON (auditWith ./tests/fixtures/lock-audit/clean.lock { });
                     dup = builtins.toJSON (auditWith ./tests/fixtures/lock-audit/evil-dup.lock { });
                     drift = builtins.toJSON (auditWith ./tests/fixtures/lock-audit/evil-drift.lock { });
+                    infraDup = builtins.toJSON (
+                      auditWith ./tests/fixtures/lock-audit/evil-infra-dup.lock { }
+                    );
                     allowlisted = builtins.toJSON (
                       auditWith ./tests/fixtures/lock-audit/allowlisted.lock {
                         "tool.nixpkgs" = "fixture reason";
@@ -3699,6 +3629,7 @@
                       clean
                       dup
                       drift
+                      infraDup
                       allowlisted
                       stale
                       ;
@@ -3711,10 +3642,14 @@
                       || fail "evil-dup (same-rev duplicate edge) not flagged: $dup"
                     echo "$drift" | grep -q 'fod-tool' && echo "$drift" | grep -q 'nixpkgs' \
                       || fail "evil-drift (foreign-rev edge) not flagged: $drift"
+                    echo "$infraDup" | grep -q 'hook-tool' && echo "$infraDup" | grep -q 'git-hooks' \
+                      || fail "evil-infra-dup (git-hooks own-copy edge) not flagged: $infraDup"
+                    echo "$infraDup" | grep -q 'compat-tool' && echo "$infraDup" | grep -q 'flake-compat' \
+                      || fail "evil-infra-dup (flake-compat own-copy edge) not flagged: $infraDup"
                     [ "$allowlisted" = "[]" ] || fail "deliberate-allowlisted edge flagged (qmd/discordsync class): $allowlisted"
                     echo "$stale" | grep -q 'matches no live edge' \
                       || fail "stale deliberate entry not flagged (table rot): $stale"
-                    echo "lock-audit: 5 legs green (clean, dup, drift, allowlisted, stale-deliberate)"
+                    echo "lock-audit: 6 legs green (clean, dup, drift, infra-dup, allowlisted, stale-deliberate)"
                     touch $out
                   '';
 
