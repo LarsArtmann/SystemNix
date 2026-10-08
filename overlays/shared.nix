@@ -81,6 +81,26 @@
   })
 
   (_final: prev: {
+    # go-licenses must run from the go 1.27 generation on BOTH axes
+    # (verified 2026-10-08; BuildFlow gotcha #188 class — an analyzer drives
+    # a go of its own toolchain generation):
+    #   buildGoModule bakes the binary's toolchain generation, AND
+    #   go feeds package.nix's postInstall `--set GOROOT '${go}/share/go'`
+    #     (upstream go-licenses#149 workaround). With only the builder
+    #     overridden, a go1.27-built binary still reads the go1.26 std tree
+    #     at runtime (env GOROOT beats the baked one) and FATALs identically
+    #     with "package uuid is not in std".
+    # Same one-way rule as pkgs/govalid.nix: build Go analyzers with the
+    # NEWEST fleet toolchain (new reads old; old cannot read new). Drop the
+    # whole block once nixpkgs' default go >= 1.27; if go_1_27 is removed
+    # before that, alias forward like the sops-nix shim above.
+    go-licenses = prev.go-licenses.override {
+      buildGoModule = prev.buildGo127Module;
+      go = prev.go_1_27;
+    };
+  })
+
+  (_final: prev: {
     systemd-timer-monitor = prev.callPackage ../pkgs/systemd-timer-monitor.nix { };
   })
 

@@ -301,6 +301,7 @@ let
 
       # Go testing
       ginkgo # BDD testing framework for Go
+      go-licenses # Dependency license reporting — go1.27-rebuilt via overlays/shared.nix (analyzers lead the fleet toolchain)
       govalid # Type-safe struct validation code generator
       gotools # Go tools (goimports, etc.)
 
