@@ -142,3 +142,18 @@ serviceConfig attrNames (16:1x); `/tmp/shape-audit-selftest.nix` negative
 leg ("NEGATIVE TEST GREEN"); `nix flake check --no-build` all-pass;
 `nix fmt` 1-file diff scoped to my surfaces; `check-todo-system.sh` OK;
 daemon commit `40c1df1e` stat; IO PSI `some avg10=34.92 avg60=41.68`.*
+
+---
+
+**Appendix (2026-10-08 07:52 — annotation, not rewrite):** The "critical
+fact" framing above — gen-836 live, everything committed after 12:21
+undeployed — went stale within minutes of authoring: **gen-837 switched
+16:30** and carried the crm-backup fix, shape-audit class 5, and the wave4
+FOD re-pins. Discovered live 2026-10-07 16:59 (running binary `fe9da495`,
+real `ExecStart` in the unit, timer loaded 16:29). First pool artifact
+landed 03:47 (`ledger-2026-10-08.db`, integrity ok). Full close-out:
+`docs/status/2026-10-08_07-48_crm-migration-finish-first-backup-green-self-review.md`.
+
+Harvest marker: §e1/§f1 were harvested at authoring time (script-BODY queue
+row + services.md library row, both closed `[x]` 2026-10-08); §f2/f3 were
+already tracked (upstream.md vendorHash row, pipeline.md shape-audit row).
