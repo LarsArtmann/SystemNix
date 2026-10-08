@@ -52,6 +52,11 @@ First login: visit `https://crm.home.lan` → register the sole passkey
   same sops key).
 - **Restore**: stop crm-server, move the journal aside, copy a pool
   snapshot back, start (full drill: crm repo `docs/ops/RESTORE-DRILL.md`).
+- **Artifact verification (quarterly)**: the sanctioned headless check is
+  `crm-server -db <copy of the newest pool artifact> -export /tmp/crm-verify.jsonl`
+  — auth-free, emits the exact rebuild truth (proven 2026-10-08: 29,053
+  events). Page-render probes on scratch boots always gate at the login
+  page (the journal persists auth-on).
 - **The package builds from the PUSHED tip** of `github:LarsArtmann/crm`
   (flake input). Unpushed local commits are NOT deployed — push, then
   `nix flake lock --update-input crm`, then deploy.
