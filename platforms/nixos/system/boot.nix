@@ -478,11 +478,12 @@ in
     #
     # Threshold rationale (adjusted 2026-08-14, up from 50%/20s):
     # The previous 50%/20s killed nix-daemon mid-build (65% pressure during
-    # legitimate 4-8 GB nix build spike) and the Twenty Docker worker in
-    # steady-state (856 MB container was largest under system.slice).
-    # 60% sustained 30s catches genuine memory exhaustion (slow leaks, runaway
-    # processes) while tolerating the transient pressure spikes inherent to
-    # nix builds, AI model loads (Ollama 32G), and Docker container restarts.
+    # legitimate 4-8 GB nix build spike) and the former Twenty Docker worker
+    # in steady-state (856 MB container was largest under system.slice,
+    # pre-Docker-removal history). 60% sustained 30s catches genuine memory
+    # exhaustion (slow leaks, runaway processes) while tolerating the
+    # transient pressure spikes inherent to nix builds and AI model loads
+    # (Ollama 32G).
     # nix-daemon is additionally exempted via ManagedOOMPreference=omit.
     # Per-slice MemoryMax limits (user-1000: 90G hard cap) remain as backstop.
     oomd = {

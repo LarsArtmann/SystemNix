@@ -247,13 +247,9 @@ _: {
           plainVHost v.port v.hostOverride;
 
       dnsLocalSubdomains = (import ../../../platforms/common/dns-local.nix).localSubdomains;
-      # Deliberate exemptions: voice/whisper are hand-written vHosts (below)
-      # whose subdomains are deliberately NOT in dns-local — voice-agents is
-      # not enabled on any host and supplies its own zone data.
-      dnsExemptSubdomains = [
-        "voice"
-        "whisper"
-      ];
+      # Deliberate exemptions: (none live — the former voice/whisper
+      # hand-written vHost exemptions died with voice-agents, 2026-10-08).
+      dnsExemptSubdomains = [ ];
       # vHost subdomains derived from the rendered set (single source of
       # truth — registry fan-out and hand-written entries alike; catch-alls
       # and the :80 listener excluded via the "*"/suffix filters).

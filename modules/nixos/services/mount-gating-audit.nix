@@ -11,7 +11,8 @@
 # sanctioned gating forms, all with live precedent in this repo:
 #
 #   - unitConfig.RequiresMountsFor = <path>  — fails LOUDLY on a detached
-#     DAS (mkDockerService / cv-backup / bank-sync pattern). A descendant
+#     DAS (cv-backup / bank-sync pattern; the former mkDockerService used
+#     the same gating). A descendant
 #     entry gates every ancestor on the same mount and vice versa
 #     (atticd-storage-dir uses the descendant form deliberately).
 #   - ConditionPathIsMountPoint = <path>     — SKIPS cleanly when the

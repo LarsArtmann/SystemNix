@@ -28,8 +28,9 @@
 #
 # RestartSec convention (2026-08-14 audit): the 5s default fits most daemons.
 # Intentional outliers: dnsblockd 3s (DNS must recover fast), browser-history
-# 2-5min (avoid crash-loop amplification), immich/twenty 10s (heavy
-# startup). Do NOT normalize these — each is tuned to the service's restart cost.
+# 2-5min (avoid crash-loop amplification), immich 10s (heavy startup; the
+# former twenty 10s died with the module, 2026-10-08). Do NOT normalize
+# these — each is tuned to the service's restart cost.
 #
 # TimeoutStopSec convention: no global default. Systemd default (90s) applies;
 # services with slow graceful shutdown set their own (15s-60s). A manager-level

@@ -290,7 +290,8 @@ in
     };
 
     # /data is a separate BTRFS filesystem (subvolid=5, toplevel) containing
-    # Docker volumes, Immich DB, AI models. Snapshots are crash-consistent.
+    # the dormant /data/docker residue (Docker removed 2026-10-08), the
+    # Immich DB, AI models. Snapshots are crash-consistent.
     # The "." subvolume refers to the BTRFS toplevel. Nested subvolumes (like
     # .snapshots itself) are automatically excluded from snapshots by BTRFS.
     # Since 2026-08-16 snapshots are also sent to /mnt/pool/backups/data.

@@ -1094,9 +1094,7 @@ in
             signozMetrics
 
             (lib.mkIf cfg.components.otelCollector {
-              users.groups.systemd-journal-member = lib.mkIf (
-                cfg.components.nodeExporter
-              ) { };
+              users.groups.systemd-journal-member = lib.mkIf (cfg.components.nodeExporter) { };
               systemd.services.signoz-collector = {
                 description = "SigNoz OTel Collector";
                 inherit onFailure;
