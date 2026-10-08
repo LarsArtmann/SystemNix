@@ -911,6 +911,23 @@
       };
     };
 
+    # git-hooks.nix + flake-compat — root inputs declared SOLELY to own the
+    # shared pin for the infra-follows group (2026-10-08 collapse of 5×
+    # git-hooks + 7× flake-compat duplicate lock nodes; rust-overlay
+    # precedent: never consumed by any output directly). Rev-in-URL per the
+    # pin policy: BOTH promotions lock exactly the rev every consumer
+    # already shared (verified: 1 distinct rev + 1 narHash per group), so
+    # the collapse is a no-op build-wise. A git-hooks move changes 5 repos'
+    # pre-commit evals (bank-sync, inboxclean, library-policy, overview,
+    # project-meta) — bump deliberately via `nix flake lock --update-input
+    # git-hooks` + `nix flake check --no-build --all-systems` after;
+    # flake-compat is tarball-only (flake = false, safe).
+    git-hooks.url = "github:cachix/git-hooks.nix/a0e4241b51206fbcbf52fd322eb5f0cd80f153c4";
+    flake-compat = {
+      url = "github:NixOS/flake-compat/5edf11c44bc78a0d334f6334cdaf7d60d732daab";
+      flake = false;
+    };
+
     # Infra follows (2026-10-02 lock dedup): Nix locks one node per
     # input-graph PATH, so every consumer that declared flake-parts /
     # treefmt-nix / systems / nixpkgs without a follows pin carried its own
@@ -921,8 +938,11 @@
     # fails eval if a NEW unfollowed edge appears — extend this group (or
     # allowlist it in the audit), never hand-pin around it.
     # RULES (docs/agents/nix-flakes.md "Infra follows"):
-    # - Eval-only deps (flake-parts, treefmt-nix, systems, flake-utils) are
-    #   always safe to follow — they never enter FOD hashes.
+    # - Eval-only deps (flake-parts, treefmt-nix, systems, flake-utils,
+    #   flake-compat, git-hooks) are always safe to follow — they never enter
+    #   FOD hashes. flake-compat/git-hooks joined the guarded set 2026-10-08
+    #   (root-promoted at the consumers' shared revs; see the input blocks
+    #   above).
     # - nixpkgs follows change the consumer's build env: papdashboard is the
     #   only real rev flip below; go-nix-helpers/projects-management-automation
     #   copies already sat at the root rev (pure alias collapse). Deliberate
@@ -935,6 +955,7 @@
     #   lib), NOT the helper into tools.
     emeet-pixyd.inputs.flake-parts.follows = "flake-parts";
     emeet-pixyd.inputs.treefmt-nix.follows = "treefmt-nix";
+    bank-sync.inputs.git-hooks.follows = "git-hooks";
     buildflow.inputs.flake-parts.follows = "flake-parts";
     cv.inputs.flake-parts.follows = "flake-parts";
     cv.inputs.treefmt-nix.follows = "treefmt-nix";
@@ -946,6 +967,7 @@
     # pinned go-nix-helpers); flake-parts is its only direct infra edge.
     crm.inputs.flake-parts.follows = "flake-parts";
     crush-config.inputs.treefmt-nix.follows = "treefmt-nix";
+    dankMaterialShell.inputs.flake-compat.follows = "flake-compat";
     erraudit.inputs.flake-parts.follows = "flake-parts";
     go-auto-upgrade.inputs.flake-parts.follows = "flake-parts";
     go-nix-helpers.inputs.flake-parts.follows = "flake-parts";
@@ -957,6 +979,8 @@
     golangci-lint-auto-configure.inputs.flake-parts.follows = "flake-parts";
     inboxclean.inputs.flake-parts.follows = "flake-parts";
     inboxclean.inputs.treefmt-nix.follows = "treefmt-nix";
+    inboxclean.inputs.git-hooks.follows = "git-hooks";
+    library-policy.inputs.git-hooks.follows = "git-hooks";
     index.inputs.flake-parts.follows = "flake-parts";
     monitor365.inputs.flake-parts.follows = "flake-parts";
     monitor365.inputs.treefmt-nix.follows = "treefmt-nix";
@@ -966,10 +990,13 @@
     papdashboard.inputs.flake-parts.follows = "flake-parts";
     papdashboard.inputs.treefmt-nix.follows = "treefmt-nix";
     papdashboard.inputs.nixpkgs.follows = "nixpkgs";
+    overview.inputs.git-hooks.follows = "git-hooks";
+    project-meta.inputs.git-hooks.follows = "git-hooks";
     projects-management-automation.inputs.nixpkgs.follows = "nixpkgs";
     samber-linter.inputs.flake-parts.follows = "flake-parts";
     qmd.inputs.flake-utils.follows = "flake-utils";
     storage-collector.inputs.flake-parts.follows = "flake-parts";
+    superfile.inputs.flake-compat.follows = "flake-compat";
     todo-list-ai.inputs.flake-parts.follows = "flake-parts";
     todo-list-ai.inputs.treefmt-nix.follows = "treefmt-nix";
   };

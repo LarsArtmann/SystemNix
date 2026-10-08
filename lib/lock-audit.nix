@@ -1,10 +1,13 @@
 # flake.lock infra-follows audit (2026-10-02 lock dedup).
 #
 # Nix locks one node per input-graph PATH: any root input that declares an
-# infra dep (flake-parts, treefmt-nix, nixpkgs, systems, flake-utils) without
-# a `follows` pin to the root carries its own duplicate lock copy. Before the
-# 2026-10-02 dedup that accumulated 421 lock nodes for 235 unique revs; a
-# blanket lock wave regrows it silently.
+# infra dep (flake-parts, treefmt-nix, nixpkgs, systems, flake-utils,
+# flake-compat, git-hooks) without a `follows` pin to the root carries its
+# own duplicate lock copy. Before the 2026-10-02 dedup that accumulated 421
+# lock nodes for 235 unique revs; a blanket lock wave regrows it silently.
+# flake-compat + git-hooks joined the guarded set 2026-10-08 (root-promoted
+# at the consumers' shared revs — see the input blocks above the
+# infra-follows group in flake.nix).
 #
 # This audit runs at EVAL time (forced via builtins.seq in flake.nix outputs)
 # and fails any eval when a NEW root-owned, unfollowed infra edge appears.
@@ -47,6 +50,8 @@ let
     "nixpkgs"
     "systems"
     "flake-utils"
+    "flake-compat"
+    "git-hooks"
   ];
 
   # A dep value is a follows alias iff the string names a root input (alias
