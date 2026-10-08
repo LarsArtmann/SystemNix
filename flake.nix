@@ -403,13 +403,6 @@
       url = "github:LarsArtmann/bank-sync?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        # go-nix-helpers is deliberately NOT followed: mkPreparedSource from
-        # a different helper version than the one bank-sync's vendorHash was
-        # validated against produces a different prepared source (replace
-        # directives) and therefore a different vendor tree — FOD hash
-        # mismatch (2026-08-18: followed eca72e10 vs pinned 064a269e
-        # produced 4BsvdHH… vs the expected gRJEQt…). bank-sync must consume
-        # its own locked helper version for reproducible builds.
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
       };
@@ -914,17 +907,18 @@
     # git-hooks.nix + flake-compat — root inputs declared SOLELY to own the
     # shared pin for the infra-follows group (2026-10-08 collapse of 5×
     # git-hooks + 7× flake-compat duplicate lock nodes; rust-overlay
-    # precedent: never consumed by any output directly). Rev-in-URL per the
-    # pin policy: BOTH promotions lock exactly the rev every consumer
-    # already shared (verified: 1 distinct rev + 1 narHash per group), so
-    # the collapse is a no-op build-wise. A git-hooks move changes 5 repos'
-    # pre-commit evals (bank-sync, inboxclean, library-policy, overview,
-    # project-meta) — bump deliberately via `nix flake lock --update-input
-    # git-hooks` + `nix flake check --no-build --all-systems` after;
+    # precedent: never consumed by any output directly). FLOATING
+    # (?ref=master, owner decision 2026-10-08 — the pin-policy default):
+    # both currently lock exactly the rev every consumer already shared
+    # (verified: 1 distinct rev + 1 narHash per group), so the collapse is
+    # a no-op build-wise, but a lock wave MAY move them. A git-hooks move
+    # changes 5 repos' pre-commit evals (bank-sync, inboxclean,
+    # library-policy, overview, project-meta) — run `nix flake check
+    # --no-build --all-systems` after any wave that touches them;
     # flake-compat is tarball-only (flake = false, safe).
-    git-hooks.url = "github:cachix/git-hooks.nix/a0e4241b51206fbcbf52fd322eb5f0cd80f153c4";
+    git-hooks.url = "github:cachix/git-hooks.nix?ref=master";
     flake-compat = {
-      url = "github:NixOS/flake-compat/5edf11c44bc78a0d334f6334cdaf7d60d732daab";
+      url = "github:NixOS/flake-compat?ref=master";
       flake = false;
     };
 
@@ -948,11 +942,13 @@
     #   copies already sat at the root rev (pure alias collapse). Deliberate
     #   non-follows: qmd nixpkgs (bun nodeModules FOD), discordsync nixpkgs
     #   (FOD cache-hit rollback 2026-09-23).
-    # - NEVER follow Go source deps (go-* tarballs, go-nix-helpers) INTO Go
-    #   tool flakes: that changes vendored module content and breaks
-    #   vendorHash FODs (2026-08-25 got-hash drift class). go-nix-helpers
-    #   below = following NIXPKGS into the helper flake (eval-only for its
-    #   lib), NOT the helper into tools.
+    # - NEVER follow Go MODULE tarballs (go-*) INTO Go tool flakes: that
+    #   changes vendored module content and breaks vendorHash FODs
+    #   (2026-08-25 got-hash drift class). The helper itself is the one
+    #   sanctioned exception for LarsArtmann tools (NAR-hash MUST-rule,
+    #   docs/agents/nix-flakes.md) — bank-sync rides it under the got-hash
+    #   protocol; the go-nix-helpers line below follows NIXPKGS INTO the
+    #   helper flake (eval-only for its lib), not the helper into tools.
     # The promoted git-hooks input needs its OWN nested edges followed too:
     # without these, a re-lock un-follows them (git-hooks locks its own
     # nixpkgs-unstable pin + a floating flake-compat copy — verified in the
@@ -961,6 +957,14 @@
     git-hooks.inputs.flake-compat.follows = "flake-compat";
     emeet-pixyd.inputs.flake-parts.follows = "flake-parts";
     emeet-pixyd.inputs.treefmt-nix.follows = "treefmt-nix";
+    # bank-sync follows the helper onto the root node (2026-10-08, owner
+    # option a): its own lock node had moved in lockstep with root's
+    # through 3 rev waves with builds green each time (ad423c8f,
+    # content-identical), so this makes the lockstep structural. Helper
+    # bumps may re-hash bank-sync's FOD — got-hash protocol (probe at rev,
+    # paste upstream, re-lock); that protocol covers the 2026-08-18
+    # mismatch class.
+    bank-sync.inputs.go-nix-helpers.follows = "go-nix-helpers";
     bank-sync.inputs.git-hooks.follows = "git-hooks";
     buildflow.inputs.flake-parts.follows = "flake-parts";
     cv.inputs.flake-parts.follows = "flake-parts";
