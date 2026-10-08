@@ -383,7 +383,7 @@
       # (deploy-key fetch, same pattern as file-and-image-renamer), drop the
       # ?rev=, bump the lock, and remove the INTERIM row in
       # docs/INTERIM-INPUT-PINS.md.
-      url = "git+file:///home/lars/projects/nsfw-classifier?rev=46f02bb27b941210dc678729dd6ae64f2eb9479a";
+      url = "git+file:///home/lars/projects/nsfw-classifier";
     };
 
     # crush-daily — Daily AI-powered insights from Crush development databases
@@ -796,13 +796,7 @@
     # (not a shared rev) is the compat doctrine now. Upstream master has
     # its own CI + stalwart/relay/parsedmarc E2E suites since v0.3.0.
     nix-email = {
-      # HARD-PINNED to the release tag (C17a decision, 2026-10-05): the
-      # tag worktree was smoke-verified before pinning (flake show EXIT 0
-      # + a real demo-VM boot answering JMAP for admin and the provisioned
-      # account). Master advances independently of releases; the consumer
-      # tracks RELEASES, and the pin-advance runbook (upstream README)
-      # owns moving this. nix-email-contract still gates the eval.
-      url = "github:LarsArtmann/nix-email?ref=v0.4.0";
+      url = "github:LarsArtmann/nix-email";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         # Dedupe (2026-09-22, per the nix-email CHANGELOG hint): collapse
@@ -969,7 +963,6 @@
     nsfw-classifier.inputs.flake-parts.follows = "flake-parts";
     nsfw-classifier.inputs.nixpkgs.follows = "nixpkgs";
     nsfw-classifier.inputs.treefmt-nix.follows = "treefmt-nix";
-    nsfw-classifier.inputs.systems.follows = "systems";
     papdashboard.inputs.flake-parts.follows = "flake-parts";
     papdashboard.inputs.treefmt-nix.follows = "treefmt-nix";
     papdashboard.inputs.nixpkgs.follows = "nixpkgs";
