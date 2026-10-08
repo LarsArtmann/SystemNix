@@ -50,3 +50,13 @@
 1. **Push?** 11 unpushed commits on master (the ghost-socket batch + the parallel inboxclean migration). I never push without an explicit ask — push now or hold for your window?
 2. **Parallel inboxclean session:** its migration went LIVE via my sanctioned bump + deploy `system-848` (their module comment's "then merge this branch" precondition is satisfied from my side). Does that session still owe steps (their own verification, a branch merge), or is the migration complete?
 3. **The three deeper heuristic commits** (`daa4af16`/`ae075301`/`4e8d6110`) still carry "inboxclean-module-migration" labels while carrying my ghost-socket edits. Rewording them needs an interactive rebase (banned for me) — worth a quiet-window rebase by you, or leave them (attribution documented in the reports/CHANGELOG)?
+
+---
+
+## Addendum (2026-10-08 ~22:05) — answers received and executed
+
+1. **Push:** answered "push now" — `git push origin master` returned **"Everything up-to-date"**: the owner's own merge-and-deploy action had already pushed the lineage; `origin/master == dbf455cb == HEAD`. Directive satisfied; the rewritten lineage is now public (which also permanently settles §g3 — no reword possible after push, matching the owner's "leave as-is" answer).
+2. **Parallel session:** owner answered "I just merged all and ran `DEPLOY_FORCE_PRESSURE=1 nix run .#deploy`" — the migration is COMPLETE from the owner's side; no further steps owed. The owner's deploys advanced the profile past my `system-848` to **`system-850`**.
+3. **Live sanity at `system-850` (journal sweep 21:47–22:02):** overview serving 200s continuously; service-health-check tick 21:49:49 `OK: 4/4 critical services active` + `GATED (expected down): forgejo`; ZERO "Failed to start" events in the window — every fix from this session survived the owner's deploys.
+
+**Session closed: all work done, all directives executed, queues current, tree clean and pushed.**
