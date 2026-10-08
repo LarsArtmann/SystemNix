@@ -585,6 +585,17 @@ _: {
                     redir * https://dnsblock.${domain}{uri} permanent
                   '';
                 };
+                # logs.<domain> — Dozzle's old home. Docker removal 2026-10-08
+                # retired Dozzle; logs live in SigNoz (whole-journal journald
+                # ingestion + live tail), so the subdomain redirects to the
+                # SigNoz logs explorer instead of growing a new service.
+                "logs.${domain}" = {
+                  extraConfig = ''
+                    ${tlsConfig}
+                    ${commonConfig}
+                    redir * https://signoz.${domain}/logs{uri} permanent
+                  '';
+                };
               }
               //
                 lib.optionalAttrs
