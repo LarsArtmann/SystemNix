@@ -347,7 +347,8 @@
             serviceConfig.CPUQuota = "200%"; # Cap at 2 cores — prevents CB busy-loop runaway
             # Detached DAS fails the agent loudly instead of writing the event
             # buffer onto the root filesystem under the /mnt/pool mountpoint
-            # (same semantics as mkDockerService backup.dir gating).
+            # (same RequiresMountsFor mount-gating semantics the deleted
+            # mkDockerService backup.dir used to enforce).
             unitConfig.RequiresMountsFor = [ agentStoragePath ];
           };
         })

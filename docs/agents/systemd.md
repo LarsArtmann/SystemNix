@@ -117,6 +117,8 @@ serviceConfig = lib.mkMerge [
 
 ## Docker & Containers
 
+> **Historical — Docker removed 2026-10-08.** The lessons below are kept verbatim in case a container runtime ever returns; nothing in the live config consumes them (the `Docker & Containers` incidents behind them: gotchas-archive + `docs/status/`).
+
 - **`oci-containers` backend defaults to Podman** — Set `backend = "docker"` when Docker is already enabled.
 - **`Requires=docker.service` on compose units = permanent outage after any docker blip (fixed 2026-08-31)** — a Requires= dependency failure at boot (dockerd's containerd startup timed out ONCE under I/O storm, then self-healed via its own Restart) fails the compose unit's start JOB with result=dependency, and job failures NEVER re-trigger `Restart=always` (restarts only apply to executed processes) — manifest + twenty stayed down until a deploy. `mkDockerService` now uses `wants` so ExecStart failing against a not-yet-ready daemon feeds the normal Restart loop. Companion rule: EVERY compose service incl. DB sidecars MUST set `restart = "always"` — manifest's postgres lacked it, died exit-255 at the docker restart, and the app crash-looped against the dead DB for 15+ min (gatus red) until `docker start mnfst-postgres-1`. Runtime remediation for that class: restart the compose unit (needs root) or `docker start <db-container>` (works via docker group).
 - **Docker 29.x `userland-proxy-path`** — `daemon.settings.userland-proxy = false`.

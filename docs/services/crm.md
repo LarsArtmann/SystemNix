@@ -29,8 +29,10 @@ that deploy flips `services.integration.crm-server.vHost.layer` from `"none"`
 to `"plain"` atomically — the registry keys vHosts by subdomain, so the two
 can never both claim it. The homepage tile, the "Ledger CRM" Gatus check
 (HTTPS, `/login`), and the post-deploy-check gate switch over with it.
-Twenty's containers stop; its Docker data stays intact until the retirement
-ladder (`docs/services/twenty.md`). Known post-flip gap: `crm.larsartmann.cloud`
+Twenty's containers stop; its Docker data stayed intact until the retirement
+decision — the Twenty module + its runbooks were deleted 2026-10-08 with the
+Docker removal (data reclaim tracked in `docs/todo/services.md`). Known
+post-flip gap: `crm.larsartmann.cloud`
 also proxies here but WebAuthn `-rpid` is `crm.home.lan` — passkey login works
 on `crm.home.lan` only until the cloud-domain decision lands.
 

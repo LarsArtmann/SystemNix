@@ -144,7 +144,6 @@ inherit (import ../../../lib/default.nix lib)
 | `onFailure`                                                                                                                                 | Constant `["notify-failure@%n.service"]` — route failures to the notify template.                                              |
 | `serviceTypes.systemdServiceIdentity { defaultUser = "..."; }`                                                                              | Generates `user`, `group`, `stateDir` options with defaults.                                                                   |
 | `serviceTypes.servicePort 8080 "..."`                                                                                                       | Port option with collision checking.                                                                                           |
-| `serviceTypes.dockerImageTag "1.2.3"`                                                                                                       | Docker tag option that rejects `"latest"` at eval time.                                                                        |
 | `serviceTypes.restartDelay "5"`                                                                                                             | Restart delay option (string, seconds).                                                                                        |
 | `serviceTypes.stopTimeout "120"`                                                                                                            | Stop timeout option (string, seconds).                                                                                         |
 | `mkStateDir "/var/lib/foo" "0755" "foo" "foo"`                                                                                              | Generates a `systemd.tmpfiles` rule string.                                                                                    |
@@ -340,7 +339,9 @@ _: {
 
 ### Docker Service
 
-Use `mkDockerService` for Docker Compose workloads:
+> **Removed — Docker is gone from this repo (2026-10-08).** `mkDockerService`, `lib/images.nix`, and `serviceTypes.dockerImageTag` were deleted with the Docker removal. This template is kept as the reference shape in case a container runtime ever returns; the hardening/ordering rules below were paid for in live outages and apply to any future compose-era unit.
+
+**Docker service rules:**
 
 ```nix
 # Bar dashboard: Node.js app with Postgres
@@ -468,7 +469,6 @@ Files prefixed with `_` are skipped by auto-discovery. Service documentation and
 Moved out of this directory (no longer cluttering the module tree):
 
 - `docs/services/immich-bull-board.patch` + `IMMICH-BULL-BOARD-PATCH-GUIDE.md`
-- `docs/services/twenty-POST-SETUP.md`, `twenty-FREELANCE-PROJECTS.md`
 
 ---
 
