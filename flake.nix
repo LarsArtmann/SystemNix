@@ -352,7 +352,7 @@
       # via the NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER read-only deploy key.
       # Branch-ref governed (pin policy 2026-09-16: ?ref=master as much as
       # possible; the lock holds the exact rev until an explicit update).
-      url = "git+ssh://git@github.com/LarsArtmann/file-and-image-renamer?ref=refs/heads/master";
+      url = "git+ssh://git@github.com/LarsArtmann/file-and-image-renamer";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
       # Without this, the input locks its own go-nix-helpers via git+ssh:
