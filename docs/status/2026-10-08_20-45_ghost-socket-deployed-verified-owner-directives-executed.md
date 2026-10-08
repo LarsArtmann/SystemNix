@@ -17,9 +17,9 @@
 
 ## §b — PARTIALLY DONE
 
-1. **Smoke known-failures ledger is now stale** (`~/.local/state/systemnix/smoke-fail-baseline.txt`): overview + papdashboard entries are healed but still listed; the comparator passed as subset-advisory. Noted in the addendum but initially NOT harvested as a row — fixed at report time (see §f).
-2. **Amend-forward attribution** (queued, pipeline.md): the whole fix batch rides "inboxclean-module-migration"-labeled auto-commits (`549cd42d` bump, `128753f0` close-outs, plus the pending fmt sweep). Contents verified, attribution still mushed.
-3. **bank-sync sentinel residual (b)**: gatus live-status confirm remains agent-unverifiable (API 401-gated); (d) FX-total render and (e) fault-inject proof remain queued.
+1. **Smoke known-failures ledger — CLAIM CORRECTED (21:15):** the original §b1 said the ledger "still lists" healed overview/papdashboard entries — written WITHOUT reading the file. The 20:16 deploy's own smoke re-baselined it at 20:32:21; it contains only the genuinely-still-failing set (CV, Caddy catch-all, FastFlowLM, Forgejo ×6, InboxClean). The owner's "prune" directive is satisfied by the existing mechanism; harvested rows closed as moot. (Third instance this session of a claim outrunning a check — see §e.)
+2. **Amend-forward attribution — EXECUTED at HEAD level (21:04–21:10):** my six topmost commits squashed into three properly-messaged pathspec commits (`c10d80f7` fix, `903fa1fa` lock bump, `9c2ae353` docs), full pre-commit suite green (incl. one statix `inherit` fix + one 72-char subject fix). The three DEEPER heuristic commits of mine (`daa4af16`/`ae075301`/`4e8d6110`) sit below the parallel session's commits — rewording them requires interactive rebase (banned); their attribution rides the status reports + CHANGELOG.
+3. **bank-sync sentinel residual (b)**: gatus live-status confirm remains agent-unverifiable (API 401-gated); owner CONFIRMED the SCA wrong-phone block is still active, so the red SCA check is expected until resolved. (d) FX-total render and (e) fault-inject proof remain queued.
 
 ## §c — NOT STARTED (queued, none blocking)
 
