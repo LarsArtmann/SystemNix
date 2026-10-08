@@ -143,7 +143,9 @@
         "go-finding": "go-finding",
         "go-flightrecorder": "go-flightrecorder",
         "go-idempotency": "go-idempotency",
-        "go-nix-helpers": "go-nix-helpers",
+        "go-nix-helpers": [
+          "go-nix-helpers"
+        ],
         "go-retry": "go-retry",
         "go-sse": "go-sse",
         "gogenfilter": "gogenfilter_2",
@@ -878,7 +880,7 @@
         ],
         "go-business-rules": "go-business-rules",
         "go-cqrs-lite": "go-cqrs-lite_5",
-        "go-nix-helpers": "go-nix-helpers_2",
+        "go-nix-helpers": "go-nix-helpers",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -969,7 +971,7 @@
         "go-httputil": "go-httputil_2",
         "go-idempotency": "go-idempotency_4",
         "go-ndjson": "go-ndjson_2",
-        "go-nix-helpers": "go-nix-helpers_3",
+        "go-nix-helpers": "go-nix-helpers_2",
         "go-output": "go-output_3",
         "go-retry": "go-retry_4",
         "go-sse": "go-sse_4",
@@ -1231,8 +1233,8 @@
       },
       "original": {
         "owner": "NixOS",
+        "ref": "master",
         "repo": "flake-compat",
-        "rev": "5edf11c44bc78a0d334f6334cdaf7d60d732daab",
         "type": "github"
       }
     },
@@ -1492,8 +1494,8 @@
       },
       "original": {
         "owner": "cachix",
+        "ref": "master",
         "repo": "git-hooks.nix",
-        "rev": "a0e4241b51206fbcbf52fd322eb5f0cd80f153c4",
         "type": "github"
       }
     },
@@ -2819,7 +2821,7 @@
         "go-error-family": "go-error-family_15",
         "go-finding": "go-finding_12",
         "go-ndjson": "go-ndjson_7",
-        "go-nix-helpers": "go-nix-helpers_7",
+        "go-nix-helpers": "go-nix-helpers_6",
         "go-output": "go-output_10",
         "gogenfilter": "gogenfilter_14",
         "md-go-validator": "md-go-validator_3",
@@ -4524,46 +4526,6 @@
       }
     },
     "go-nix-helpers": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1791359181,
-        "narHash": "sha256-OkiOWUgLc6dwHXTS58hix19lQRhZ704iCiW0nqbvkxA=",
-        "owner": "LarsArtmann",
-        "repo": "go-nix-helpers",
-        "rev": "ad423c8f97963d875e351e7752ab72687c24df80",
-        "type": "github"
-      },
-      "original": {
-        "owner": "LarsArtmann",
-        "ref": "master",
-        "repo": "go-nix-helpers",
-        "type": "github"
-      }
-    },
-    "go-nix-helpers_10": {
-      "inputs": {
-        "flake-parts": "flake-parts_10",
-        "nixpkgs": [
-          "projects-management-automation",
-          "nixpkgs"
-        ],
-        "treefmt-nix": "treefmt-nix_9"
-      },
-      "locked": {
-        "lastModified": 1791200362,
-        "narHash": "sha256-fdHqg2v5AHue/G0GoBE50R4nVBzUf94Bg/Od2QSHZCM=",
-        "owner": "LarsArtmann",
-        "repo": "go-nix-helpers",
-        "rev": "5d02c56cd329b1c08d25993f3afcfecbf5f4177b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "LarsArtmann",
-        "repo": "go-nix-helpers",
-        "type": "github"
-      }
-    },
-    "go-nix-helpers_2": {
       "inputs": {
         "flake-parts": "flake-parts_2",
         "nixpkgs": [
@@ -4587,7 +4549,7 @@
         "url": "ssh://git@github.com/LarsArtmann/go-nix-helpers"
       }
     },
-    "go-nix-helpers_3": {
+    "go-nix-helpers_2": {
       "flake": false,
       "locked": {
         "lastModified": 1787824862,
@@ -4604,7 +4566,7 @@
         "type": "github"
       }
     },
-    "go-nix-helpers_4": {
+    "go-nix-helpers_3": {
       "inputs": {
         "flake-parts": [
           "flake-parts"
@@ -4631,7 +4593,7 @@
         "type": "github"
       }
     },
-    "go-nix-helpers_5": {
+    "go-nix-helpers_4": {
       "inputs": {
         "flake-parts": "flake-parts_5",
         "nixpkgs": [
@@ -4655,7 +4617,7 @@
         "type": "github"
       }
     },
-    "go-nix-helpers_6": {
+    "go-nix-helpers_5": {
       "inputs": {
         "flake-parts": "flake-parts_7",
         "nixpkgs": [
@@ -4664,6 +4626,23 @@
         ],
         "treefmt-nix": "treefmt-nix_6"
       },
+      "locked": {
+        "lastModified": 1791200362,
+        "narHash": "sha256-fdHqg2v5AHue/G0GoBE50R4nVBzUf94Bg/Od2QSHZCM=",
+        "owner": "LarsArtmann",
+        "repo": "go-nix-helpers",
+        "rev": "5d02c56cd329b1c08d25993f3afcfecbf5f4177b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "master",
+        "repo": "go-nix-helpers",
+        "type": "github"
+      }
+    },
+    "go-nix-helpers_6": {
+      "flake": false,
       "locked": {
         "lastModified": 1791200362,
         "narHash": "sha256-fdHqg2v5AHue/G0GoBE50R4nVBzUf94Bg/Od2QSHZCM=",
@@ -4697,23 +4676,6 @@
       }
     },
     "go-nix-helpers_8": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1791200362,
-        "narHash": "sha256-fdHqg2v5AHue/G0GoBE50R4nVBzUf94Bg/Od2QSHZCM=",
-        "owner": "LarsArtmann",
-        "repo": "go-nix-helpers",
-        "rev": "5d02c56cd329b1c08d25993f3afcfecbf5f4177b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "LarsArtmann",
-        "ref": "master",
-        "repo": "go-nix-helpers",
-        "type": "github"
-      }
-    },
-    "go-nix-helpers_9": {
       "inputs": {
         "flake-parts": "flake-parts_9",
         "nixpkgs": [
@@ -4735,6 +4697,29 @@
         "owner": "LarsArtmann",
         "repo": "go-nix-helpers",
         "rev": "0f9565203b093a9cbc8441bd08f0012e70eba51b",
+        "type": "github"
+      }
+    },
+    "go-nix-helpers_9": {
+      "inputs": {
+        "flake-parts": "flake-parts_10",
+        "nixpkgs": [
+          "projects-management-automation",
+          "nixpkgs"
+        ],
+        "treefmt-nix": "treefmt-nix_9"
+      },
+      "locked": {
+        "lastModified": 1791200362,
+        "narHash": "sha256-fdHqg2v5AHue/G0GoBE50R4nVBzUf94Bg/Od2QSHZCM=",
+        "owner": "LarsArtmann",
+        "repo": "go-nix-helpers",
+        "rev": "5d02c56cd329b1c08d25993f3afcfecbf5f4177b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "repo": "go-nix-helpers",
         "type": "github"
       }
     },
@@ -5352,7 +5337,7 @@
         "flake-parts": [
           "flake-parts"
         ],
-        "go-nix-helpers": "go-nix-helpers_5",
+        "go-nix-helpers": "go-nix-helpers_4",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -6103,7 +6088,7 @@
         "flake-parts": [
           "flake-parts"
         ],
-        "go-nix-helpers": "go-nix-helpers_6",
+        "go-nix-helpers": "go-nix-helpers_5",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -6973,7 +6958,7 @@
         ],
         "go-cqrs-lite": "go-cqrs-lite_9",
         "go-daemon": "go-daemon_3",
-        "go-nix-helpers": "go-nix-helpers_8",
+        "go-nix-helpers": "go-nix-helpers_7",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -7023,7 +7008,7 @@
         "go-composable-business-types": "go-composable-business-types_4",
         "go-error-family": "go-error-family_17",
         "go-filewatcher": "go-filewatcher_4",
-        "go-nix-helpers": "go-nix-helpers_9",
+        "go-nix-helpers": "go-nix-helpers_8",
         "go-output": "go-output_11",
         "gogenfilter": "gogenfilter_16",
         "nixpkgs": "nixpkgs_7",
@@ -7349,7 +7334,7 @@
         "go-flightrecorder": "go-flightrecorder_6",
         "go-health": "go-health_4",
         "go-ndjson": "go-ndjson_8",
-        "go-nix-helpers": "go-nix-helpers_10",
+        "go-nix-helpers": "go-nix-helpers_9",
         "go-output": "go-output_12",
         "go-retry": "go-retry_6",
         "go-sse": "go-sse_9",
@@ -7528,7 +7513,7 @@
         "go-finding": "go-finding_7",
         "go-health-dashboard": "go-health-dashboard_3",
         "go-humanize-linter": "go-humanize-linter_2",
-        "go-nix-helpers": "go-nix-helpers_4",
+        "go-nix-helpers": "go-nix-helpers_3",
         "go-output": "go-output_6",
         "go-structure-linter": "go-structure-linter_2",
         "go-taskqueue": "go-taskqueue",
