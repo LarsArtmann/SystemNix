@@ -169,8 +169,7 @@ let
     {
       name = "llama-chat-llm-env-survives-migration";
       pass =
-        builtins.any (lib.hasPrefix "LLM_PROVIDER=openai") (paperlessEnv archivingOn)
-        == false
+        builtins.any (lib.hasPrefix "LLM_PROVIDER=openai") (paperlessEnv archivingOn) == false
         && builtins.any (lib.hasPrefix "LLM_PROVIDER=openai") (syncConfig archivingOn).Environment
         && builtins.any (lib.hasPrefix "OPENAI_BASE_URL=") (syncConfig archivingOn).Environment
         && builtins.any (lib.hasPrefix "LLM_MODEL=") (syncConfig archivingOn).Environment;
