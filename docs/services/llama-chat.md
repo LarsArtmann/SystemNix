@@ -27,7 +27,13 @@ sha256 `8d344a4336d8ea7da0cbfc12792d1471e568be7abe8930c52260698bfd01d731`
 (locally measured 2026-10-08; the earlier `1c6a4813…` noted here was the HF
 xet-bridge ETag, not a sha256), completed 2026-10-08 — the April download had been
 interrupted). Part of the Jan model tree; no service fetch unit. If the
-file is missing the unit skips (`ConditionPathExists`).
+file is missing the unit skips (`ConditionPathExists`) — but conditions
+never RE-evaluate, so the `llama-chat-ensure` 10-min convergence timer
+(unit + timer in the module, added 2026-10-08) starts the unit once the
+file completes; "started" additionally means `/health` serves 200
+(ExecStartPost start-contract; TimeoutStartSec 15min covers a cold 23.4 GB
+page-in + probe). First convergence live 2026-10-08 20:23–20:26: timer
+fired, model cold-loaded 3m16s, `/v1/models` serving — zero sudo.
 
 Source: <https://huggingface.co/HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive>
 
