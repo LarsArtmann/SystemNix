@@ -1,0 +1,97 @@
+# Status Report — llama-chat Gatus Coverage Fix Session
+
+**Date:** 2026-10-08 18:47 CEST
+**Session scope:** fix the failed `nh os switch` (gatus-coverage-audit gate) and everything that surfaced while doing it. Per operator instruction: NO unrelated research — every item below was touched, read, or observed during THIS session only.
+**Parallel-session note:** another agent session was active on this tree throughout (see §d.2). Work attribution is explicit everywhere.
+
+---
+
+## a) FULLY DONE
+
+| # | What | Evidence | Files |
+|---|------|----------|-------|
+| a1 | Root-caused the failed deploy: eval-time `gatus-coverage-audit` gate — registered port **8850** referenced by live units (`llama-chat`, `inboxclean-sync`, `inboxclean-web`) but probed by zero gatus endpoints | The user's pasted nh output (17:19:04, 16s) + `gatus-coverage-audit.nix` mechanism read (unit-text port scan ∩ registry ∩ gatus URL set) | — |
+| a2 | **Fix: added the monitoring** — `services.integration.llama-chat` registry entry with a gatus check (`http://localhost:8850/health`, 60s, group AI, freeze-#5-class alert text), llama-rag pattern, `vHost.layer = "none"` (loopback-only) | Daemon commit `a436a5b0` (17:23); `nix eval` shows `http://localhost:8850/health` in `services.gatus.settings.endpoints`; `config.assertions` failing list now `[]` | `modules/nixos/services/llama-chat.nix:176-202` |
+| a3 | Full prevention-layer pass re-run: `nix flake check --no-build` → **all checks passed** (after the second latent failure in §d.1 was fixed) | EXIT 0, "all checks passed!", expected aarch64-darwin skip warning only | whole flake |
+| a4 | evo-x2 toplevel **builds** (`--keep-going`, no activation) | EXIT 0; final drv `nixos-system-evo-x2-26.11.20261006.151fa4e` | — |
+| a5 | Runbook updated with the monitoring line (check name, endpoint, what 200/503/red mean) | Pathspec commit `a6c97ac0` (18:38) — deliberately `git commit -- <path>` so no foreign staged files were swept | `docs/services/llama-chat.md` |
+| a6 | **Closed the daemon lint-bypass gap on my own swept file** (doctrine: re-run skipped lint legs standalone after a daemon commit): deadnix ✓, statix ✓, and the **repo-pinned** formatter ✓ (0 changed) | `nix fmt -- --no-cache --fail-on-change` → "0 changed" on both my file and the co-import test file | `modules/nixos/services/llama-chat.nix`, `tests/test-inboxclean-paperless.nix` |
+| a7 | (Authored by the PARALLEL session, verified by me): `tests/test-inboxclean-paperless.nix` llama-chat module co-import — I attempted the same fix, hit the mid-edit race, re-read, found theirs already landed, verified it builds | `checks.x86_64-linux.inboxclean-paperless` builds green; their change in daemon batch `6bb3897a` (18:21) | `tests/test-inboxclean-paperless.nix:71-73` |
+| a8 | §f self-harvest done at authoring time (standing rule): one `[blocked:deploy]` row queued in the ai-stack library. NOT queued in `TODO_LIST.md` — the dispatch queue takes `[ready]` rows only, and this item is deploy-gated | Premise-checked first: zero pre-existing llama-chat rows in TODO_LIST/docs/todo (grep) | `docs/todo/ai-stack.md` (Prioritized) |
+
+## b) PARTIALLY DONE
+
+| # | Item | What works | What remains | Blocker | Effort |
+|---|------|-----------|--------------|---------|--------|
+| b1 | **The fix itself is eval-proven, not live.** The gatus check exists in config and evals clean, but no deploy has run — in prod, port 8850 is STILL unmonitored until the next switch | Eval: endpoint present, assertions `[]`, toplevel builds | Run the switch, then verify: check goes green post model-map, no boot 503 noise, `inboxclean doctor` passes | Deploy ownership — see §d.2 | S |
+| b2 | §f list below is session-derived only (operator scope instruction). The direct follow-up (b1) is harvested; brainstorm-grade items are deliberately NOT queued | Harvested row in ai-stack.md | Whether items f4/f5/f8 get queued is an owner call (they change doctrine/UX) | Owner decisions (§g) | — |
+
+## c) NOT STARTED
+
+| # | Item | Why not started | Still wanted? |
+|---|------|----------------|---------------|
+| c1 | Live post-deploy verification chain (b1) | Blocked on the deploy (§g.1) | Yes — queued `[blocked:deploy]` |
+| c2 | PapDashboard decorative AI-group tile for llama-chat (llama-rag parity) | Owner preference unknown (§g.2) | Ask first |
+| c3 | Boot-grace / noise study for the new check (first 23.4 GB page-in vs 60s interval) | Wants LIVE evidence first — don't fix a noise problem that may not exist | Yes, post-deploy |
+| c4 | Decoupling inboxclean→llama-chat options coupling | Architecture tradeoff = owner decision (§g.3) | Ask first |
+| c5 | Prevention-layer integrity investigation: how did `9e19dff2` land with BOTH a failing eval gate AND a broken flake check (§d.1) — did pre-commit's `nix flake check` leg run for that commit, or was it daemon-raced? | Not started (out of session scope per operator); needs git forensics on that commit's authorship path | Yes — HIGH value: it decides whether the prevention table in AGENTS.md is currently lying |
+
+## d) TOTALLY FUCKED UP
+
+| # | What is broken | Severity | Root cause | Mitigation |
+|---|---------------|----------|------------|------------|
+| d1 | **`9e19dff2` (feat: llama-chat, 2026-10-08) landed on master with a failing deploy gate AND a broken test check.** The gatus coverage assertion made every subsequent `nh os switch` fail at eval (blocked the user 17:19), and `checks.inboxclean-paperless` was broken since the same commit (found only because I ran a full `nix flake check` an hour later). Two of the five prevention layers (eval-time assertions, pre-commit/CI) demonstrably failed to stop a same-day feature | HIGH — blocked all deploys; one broken check sat on master | NOT fully known. The test breakage is mechanically explained (inboxclean reads `config.services.llama-chat.*` without co-import — the documented options?-guard caveat), but the process question is open: pre-commit runs `nix flake check`, so either the hook didn't run for that commit (daemon race / amend bypass) or it did and something else masked the failure. Needs the §c5 forensics before trusting the prevention table | Tree is green NOW (a3). Both defects fixed same-day. Residual risk: whatever let them through is still let-through-able |
+| d2 | **Master is currently un-deployable under my safety rules.** The working tree / HEAD carries a parallel session's in-flight work — `bank-sync.nix` + `scheduled-tasks.nix` (batch `6bb3897a`) and `otel-endpoint-audit.nix` (batch `a2d73a0d`) — that THIS session never authored, reviewed, or verified for intent. Any `nh os switch` the user runs now activates all of it | MEDIUM-HIGH — activation of unvetted changes into prod | Two concurrent agent sessions + the ~10-min auto-commit daemon batching foreign files together | The otel change got an attribution commit (`824c8723`); bank-sync/scheduled-tasks remain unattributed. I did NOT deploy and said so — §g.1 asks for the owner call |
+| d3 | **My own process miss: I skipped the content-pin before my first write** (rev-parse + status + log-since-last-rev, per the multi-agent write discipline) and hit the predicted consequence — "file modified since read" on the test file mid-edit. Zero damage, but that is luck, not discipline | LOW | Rushed from diagnosis into edit | Caught and handled correctly (re-read, attributed theirs, verified rather than clobbered). No code change needed — the miss is mine to not repeat |
+| d4 | Minor: I ran **`nix run nixpkgs#alejandra`** (nixpkgs-CURRENT) as my first formatting check instead of the repo-pinned formatter. It false-flagged BOTH clean files ("Requires formatting"), a version-skew artifact; the pinned `nix fmt` shows 0 changed | LOW — wasted a cycle, nearly reported false drift | Reached for the tool before checking the repo's pinned toolchain | Resolution documented in a6; rule of thumb: `nix fmt` IS the truth, ad-hoc nixpkgs linters are not |
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Feature sessions must end with a full `nix flake check --no-build`** — not a targeted eval. The llama-chat feature session proved a targeted eval can pass while BOTH the assertion gate (in a check context) and a sibling test burn. Concrete: this belongs as a session-discipline bullet in AGENTS.md §Session Discipline if not already implied by "Test first" (it is implied — it was still not done).
+2. **Daemon-swept .nix files: the standalone lint re-run is cheap and works** — deadnix/statix/pinned-alejandra took ~2 minutes this session. The doctrine exists; the gap is that it fires on "amend" wording only. It should equally fire after ANY daemon commit containing your files.
+3. **Stale guard error text**: `gatus-coverage-audit.nix`'s assertion message still says "add a check in gatus-config.nix", but the 2026-09-15 migration moved service checks into owning modules (integration registry). Every future hit of this gate sends the reader to the wrong file first. One-line message fix.
+4. **Ad-hoc linter skew**: running `nixpkgs#<linter>` against a repo with pinned toolchain versions produces false positives (d4). The repo-side rule "use `nix fmt`, never ad-hoc formatter runs" deserves a line in `docs/agents/nix-flakes.md`.
+5. **Em-dash convention conflict**: the global rule says no em dashes in source; this repo's Nix alert strings and comments use them pervasively (I followed file convention). Pick one and write it down — right now the two rules disagree and every session guesses.
+6. **Cross-module option reads keep taxing the test suite**: inboxclean reading `config.services.llama-chat.*` is the second co-import entry that test needed. Each new cross-read multiplies VM-test import burden (documented trap, hit again today). Either centralize cross-service reads behind a small registry option or accept + document the co-import tax per test.
+7. **Attribution debt**: `824c8723` shows the right pattern (attribute foreign daemon batches). Bank-sync/scheduled-tasks still owe theirs (d2). The daemon could link batches to sessions in the message — a crush-config improvement, not a repo one.
+
+## f) UP TO 50 THINGS WE SHOULD GET DONE NEXT
+
+**Honesty note:** operator capped scope at "this session's run and what you noticed" — padding this to 50 would mean inventing unrelated work. These 24 are all session-derived; impact-ranked. Format: task — impact / effort / category.
+
+1. **Run the pending deploy** (`nh os switch .` or `nix run .#deploy`) once the parallel session declares quiescence — unblocks b1/c1 and ships the gatus fix. — Critical / S / Deploy
+2. **Post-deploy verify chain**: `llama.cpp Chat` gatus green post model-map → no boot 503/refused noise during the 23.4 GB page-in → `inboxclean doctor` passes. — Critical / S / Bug (queued `[blocked:deploy]` in docs/todo/ai-stack.md)
+3. **Forensics on `9e19dff2`** (§c5): determine whether pre-commit ran and was bypassed (daemon race/amend) or never gated this commit; if the hook CAN be raced, tighten it. — High / M / Quality
+4. **Fix the stale `gatus-coverage-audit` assertion message** to point at the integration-registry path (owning module), not gatus-config.nix. — Medium / S / Docs
+5. **Add a negative test pinning the llama-chat class**: an integration-registry `checks` entry satisfies gatus-coverage-audit (so the registry fan-out is itself regression-guarded). — Medium / S / Quality
+6. **Attribute the foreign batches** `bank-sync.nix`/`scheduled-tasks.nix` (6bb3897a) like `824c8723` did for otel — before they deploy unclaimed. — High / S / Process
+7. **Watch MemoryMax=32G vs real RSS** on llama-chat after a day (23.4 GB weights in page cache + 32k KV cache + runtime — does the ceiling bind or is it dead headroom?). — Medium / S / Watch
+8. **Verify `CPUQuota=400%` vs `threads=12` interplay** — is the quota actually binding, and does token latency hold InboxClean's 3-min turn bound under concurrent sync load? — Medium / S / Watch
+9. **Boot-noise decision for the new check** (c3): if gatus logs boot-time failures during first page-in, add grace (interval/alert-threshold) rather than silencing. — Medium / S / Quality
+10. **PapDashboard tile** for llama-chat (c2, pending §g.2). — Low / S / Feature
+11. **CHANGELOG entry** for the monitoring fix (repo keeps CHANGELOG.md; the daemon commits don't write it). — Low / S / Docs
+12. **FEATURES.md check**: confirm the llama-chat row (landed yesterday's feature) reflects monitoring. — Low / S / Docs
+13. **post-deploy-check.sh**: check whether llama-chat/:8850 belongs in the post-deploy smoke set (premise not verified in-session — check first). — Medium / S / Quality
+14. **docs/agents/monitoring.md**: add the new check to the monitoring routing notes if that file indexes per-service checks (premise not verified). — Low / S / Docs
+15. **`nix fmt` is the only formatter truth** line in docs/agents/nix-flakes.md (e4). — Low / S / Docs
+16. **Em-dash rule reconciliation** (e5) — global rule vs repo convention, write the decision down once. — Low / S / Docs
+17. **inboxclean↔llama-chat coupling decision** (c4, §g.3). — Medium / M / Decision
+18. **catalog entry for llama-chat** (ADR-008 migration is partial — llama-rag has none either; decide whether AI daemons get catalog rows at all). — Low / S / Decision
+19. **Crush hook candidate**: warn when a daemon commit sweeps a file your session recently wrote (would have caught a436a5b0's lint bypass and d3 automatically). — Medium / M / Quality
+20. **Session-discipline bullet**: "full `nix flake check --no-build` before declaring a service-module change done" (e1) — add explicitly to AGENTS.md §Session Discipline if forensics (f3) confirms the gap. — Medium / S / Docs
+21. **llama-chat runbook: first-fire note** — after the first real (or simulated) alert, record what the Discord message actually looks like. — Low / S / Docs
+22. **Watch the check in SigNoz**: gatus alert events land in logs — confirm the new endpoint's state transitions are visible in the logs explorer (Dozzle's replacement). — Low / S / Watch
+23. **Revisit `RESPONSE_TIME < 2000`** after live data — /health on a warm 35B MoE should be ms-fast; 2s is generous llama-rag parity, tighten with evidence. — Low / S / Quality
+24. **GPU re-enable path stays roadmap** (unchanged by this session): when the ROCm wedge is root-caused, the runbook swap-brain op covers the migration; the soak-harness row in ai-stack.md owns the gate. — Low / L / Roadmap (already tracked)
+
+Items 2, 4, 5, 10, 17, 19, 20, 23 are candidates for TODO_LIST/domain-library queueing AFTER owner answers (§g) or after f3 forensics; item 2 is already queued; items 7-9, 21-22 are watch-class (belong in libraries only if they fire).
+
+## g) THREE QUESTIONS I CANNOT FIGURE OUT MYSELF
+
+1. **Deploy authorization.** Master carries the parallel session's in-flight `bank-sync.nix` + `scheduled-tasks.nix` + `otel-endpoint-audit.nix` changes. Do I run the switch NOW (activating their unvetted work together with the gatus fix), or do you want that session to finish/attribute first? I cannot determine its completion state from git alone — the daemon batches make tree provenance ambiguous by design.
+2. **Dashboard presence.** Should llama-chat get a decorative PapDashboard tile (AI group, llama-rag parity), or is the brain deliberately absent from the dashboard since it has no UI of its own?
+3. **Coupling architecture.** Keep inboxclean hard-reading `services.llama-chat.port/.alias` (single source of truth, but every consumer eval now needs the co-import — it broke once today), or inline defaults in inboxclean with an eval-time assertion pinning drift against llama-chat? One of the two conventions should be written down as THE pattern for cross-service option reads.
+
+---
+
+**Verification close-out discipline note:** everything claimed above names its surface — eval-verified ≠ live-verified (b1), and the parallel session's work is attributed as theirs, not claimed (a7, d2).
