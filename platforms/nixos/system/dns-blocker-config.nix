@@ -108,10 +108,10 @@ in
         }
       ];
 
-      # Forward via DNS-over-TLS. The sdns embedded resolver's root recursion
-      # is broken in dnsblockd (middleware pipeline not wired up), so we
-      # forward to trusted DoT resolvers. Local zones, blocklists, and ACLs
-      # are still handled by dnsblockd before forwarding.
+      # Forward via DNS-over-TLS to trusted resolvers. Root recursion WORKS
+      # without forwarders since upstream 8e598c01 (T299) — these are a
+      # deliberate owner choice, not a workaround. Local zones, blocklists,
+      # and ACLs are still handled by dnsblockd before forwarding.
       dnsForwarders = [
         "tls://1.1.1.1:853"
         "tls://9.9.9.9:853"
