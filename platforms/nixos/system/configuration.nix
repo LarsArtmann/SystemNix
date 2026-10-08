@@ -864,6 +864,13 @@ in
       # real service units — not a shell direct-run).
       llama-rag.enable = false;
 
+      # llama.cpp chat server — the interactive brain for InboxClean's
+      # dashboard /chat (see modules/nixos/services/llama-chat.nix for why
+      # CPU MoE + always-on and not FastFlowLM/Ollama/GPU; runbook:
+      # docs/services/llama-chat.md). Serves the qwen3.6-35b-a3b abliterated
+      # tune with native tool calls at 127.0.0.1:8850/v1.
+      llama-chat.enable = true;
+
       file-and-image-renamer = {
         enable = true;
         watchPaths = [

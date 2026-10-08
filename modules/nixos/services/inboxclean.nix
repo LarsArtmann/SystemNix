@@ -185,7 +185,23 @@
           environmentFile = lib.mkIf cfg.paperless.enable (
             lib.mkDefault config.sops.templates."inboxclean-paperless-env".path
           );
-          extraEnvironment = lib.mkIf cfg.paperless.enable {
+          # Chat AI (/chat dashboard): the brain is llama-chat (CPU MoE
+          # llama-server), overriding the upstream module's keyless
+          # LLM_PROVIDER=ollama placeholder. NOT FastFlowLM (socket-activated
+          # NPU: 2-5 min cold load + memory-guard sacrifice — async
+          # workloads only). Keyless: llama-server ignores Authorization.
+          # LLM_MODEL tracks llama-chat's alias (single source); chat agent
+          # turns send native OpenAI-format tool calls, so the model must
+          # keep a tool-call chat template. 2026-10-08 incident: without an
+          # explicit model the built-in Ollama default silently 404'd every
+          # chat turn — `inboxclean doctor` now probes /v1/models and fails
+          # loudly if base URL or model id ever drifts.
+          extraEnvironment = {
+            LLM_PROVIDER = "openai";
+            OPENAI_BASE_URL = "http://127.0.0.1:${toString config.services.llama-chat.port}/v1";
+            LLM_MODEL = config.services.llama-chat.alias;
+          }
+          // lib.optionalAttrs cfg.paperless.enable {
             PAPERLESS_URL = cfg.paperless.url;
             PAPERLESS_TAGS = lib.concatStringsSep "," cfg.paperless.tags;
           };

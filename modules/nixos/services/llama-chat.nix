@@ -2,9 +2,21 @@
 # llama.cpp chat server — the interactive agent brain behind InboxClean's
 # dashboard chat (/chat) and any other local OpenAI-compatible consumer.
 #
-#   llama-chat  127.0.0.1:8850  qwen3.6-27b-aggressive  --jinja (native tool calls)
+#   llama-chat  127.0.0.1:8850  qwen3.6-35b-a3b-aggressive  --jinja (native tool calls)
 #
-# Why a dedicated always-on GPU server and NOT the existing options:
+# Why CPU and NOT the GPU: the llama.cpp/ROCm path on gfx1150 WEDGES under
+# systemd units regardless of version — freeze #5 (2026-09-18) proved the
+# rev-pinned 0.3.0 build spins identically to 0.4.0 (94% single-thread CPU
+# right after the vocab warning; see llama-rag.nix's ESCAPE CONDITION
+# narrative). Direct-run verification outside the unit context is
+# insufficient evidence there. The CPU llama.cpp build (0.5.0 from root
+# nixpkgs) is the proven-in-production path on this host — llama-vlm's
+# caption/verdict servers run it under systemd daily. CPU is not a
+# compromise here: the model is a Qwen3.6 35B-A3B MoE (3B active params),
+# so CPU inference still streams interactive-fast tokens while the full
+# 23.4 GB expert pool sits in page cache (128 GB host).
+#
+# Why a dedicated always-on server and NOT the existing options:
 #   - FastFlowLM (:52625, NPU): socket-activated with a 2-5 min cold load,
 #     idle-unloads after 1h, and is the memory-emergency-guard's designated
 #     sacrifice — perfect for ASYNC workloads (paperless-gpt tagging,
@@ -12,22 +24,15 @@
 #     (InboxClean bounds one chat turn at 3 min; a guard trip mid-turn kills
 #     the conversation).
 #   - Ollama (:11434): owner-rejected as the standard.
-# A resident ~17.5 GB Q4 27B on the iGPU answers the first token in
-# milliseconds and survives memory-guard trips (it is not on any sacrifice
-# list — revisit if it ever becomes a trip CAUSE).
 #
-# llama.cpp comes from the same REV-PINNED nixpkgs as llama-rag (flake input
-# `nixpkgs-llama-rag`): 0.3.0 is the last build proven serving on gfx1150 —
-# root nixpkgs 0.4.0+ builds wedge mid-model-load (full narrative in
-# llama-rag.nix). Drop both pins together once the regression is fixed
-# upstream and re-verified live.
-#
-# Model: Lars's own abliterated Qwen3.6 tune from the Jan model tree.
-# Qwen3.6 ships a native tool-call chat template, which --jinja enables —
-# the InboxClean agent drives its Gmail tools through OpenAI-format tool
-# calls. To swap brains (e.g. the 35B-A3B MoE once its interrupted download
-# is finished), change modelPath + alias here AND LLM_MODEL in the
-# inboxclean wiring (configuration.nix); `inboxclean doctor` verifies the
+# Model: Lars's own abliterated Qwen3.6 MoE tune from the Jan model tree
+# (the April download was interrupted; completed + sha256-verified
+# 2026-10-08). Qwen3.6 ships a native tool-call chat template, which --jinja
+# enables — the InboxClean agent drives its Gmail tools through OpenAI-format
+# tool calls (round-trip verified live 2026-10-08 on the sibling qwen3:4b:
+# finish_reason "tool_calls" with parsed arguments). To swap brains, change
+# modelPath + alias here AND LLM_MODEL in the inboxclean wiring
+# (modules/nixos/services/inboxclean.nix); `inboxclean doctor` verifies the
 # served model id against /v1/models at deploy time.
 #
 # No fetch unit: the GGUF is part of the Jan-managed model tree
@@ -40,7 +45,6 @@ _: {
       config,
       lib,
       pkgs,
-      inputs,
       ...
     }:
     let
@@ -52,19 +56,12 @@ _: {
         ;
       inherit (config.users) primaryUser;
 
-      llamaPkgs = import inputs.nixpkgs-llama-rag {
-        inherit (pkgs) system;
-        config.allowUnfree = true;
-      };
-      rocm = libHelpers.rocm { pkgs = llamaPkgs; };
-      llama-cpp-rocwmma = llamaPkgs.llama-cpp.override { rocmSupport = true; };
-      llamaServer = lib.getExe' llama-cpp-rocwmma "llama-server";
-      ldLibPath = rocm.makeLdLibraryPath lib;
+      llamaServer = lib.getExe' cfg.package "llama-server";
 
       # --jinja makes llama-server apply the GGUF's embedded chat template,
       # which is what turns OpenAI-format `tools` into native Qwen3.6
-      # tool-call responses (verified live 2026-10-08: finish_reason
-      # "tool_calls" with parsed function arguments).
+      # tool-call responses. No --n-gpu-layers: the ROCm path is wedged on
+      # this host (freeze #5); CPU + MoE is the deliberate posture above.
       execStart =
         "${llamaServer}"
         + " -m ${cfg.modelPath}"
@@ -72,22 +69,24 @@ _: {
         + " --host ${cfg.host}"
         + " --port ${toString cfg.port}"
         + " --ctx-size ${toString cfg.ctxSize}"
-        + " --n-gpu-layers ${toString cfg.gpuLayers}"
+        + " --threads ${toString cfg.threads}"
         + " --jinja";
     in
     {
       options.services.llama-chat = {
-        enable = lib.mkEnableOption "llama.cpp chat server (ROCm GPU, always-on, OpenAI-compatible with native tool calls)";
+        enable = lib.mkEnableOption "llama.cpp chat server (CPU, always-on, OpenAI-compatible with native tool calls)";
+
+        package = lib.mkPackageOption pkgs "llama-cpp" { };
 
         modelPath = lib.mkOption {
           type = lib.types.str;
-          default = "/data/ai/models/jan/llamacpp/models/qwen3.6-27b-aggressive/Qwen3.6-27B-Uncensored-HauhauCS-Aggressive-Q4_K_P.gguf";
+          default = "/data/ai/models/jan/llamacpp/models/qwen3.6-35b-a3b-aggressive/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q4_K_P.gguf";
           description = "GGUF to serve. Must embed a tool-call chat template (Qwen3.6 family does).";
         };
 
         alias = lib.mkOption {
           type = lib.types.str;
-          default = "qwen3.6-27b-aggressive";
+          default = "qwen3.6-35b-a3b-aggressive";
           description = "Model id reported via /v1/models and accepted in API requests; consumers' LLM_MODEL must match.";
         };
 
@@ -97,16 +96,16 @@ _: {
           description = "Context window (tokens). 32k covers long email threads with tool-call history.";
         };
 
-        gpuLayers = lib.mkOption {
+        threads = lib.mkOption {
           type = lib.types.int;
-          default = 999;
-          description = "Layers offloaded to the GPU (999 = all).";
+          default = 12;
+          description = "CPU threads. 12 of 16 cores — leaves headroom for the desktop session instead of pinning everything.";
         };
 
         memoryMax = lib.mkOption {
           type = lib.types.str;
-          default = "28G";
-          description = "Memory ceiling: ~17.5 GB Q4 weights + KV cache for 32k ctx + ROCm overhead.";
+          default = "32G";
+          description = "Memory ceiling: 23.4 GB MoE weights (page cache) + KV cache for 32k ctx + runtime overhead.";
         };
 
         host = lib.mkOption {
@@ -143,34 +142,30 @@ _: {
         ];
 
         systemd.services.llama-chat = {
-          description = "llama.cpp chat server (${cfg.alias}, ROCm GPU, native tool calls)";
+          description = "llama.cpp chat server (${cfg.alias}, CPU MoE, native tool calls)";
           after = [ "network-online.target" ];
           wants = [ "network-online.target" ];
           wantedBy = [ "multi-user.target" ];
           unitConfig.ConditionPathExists = cfg.modelPath;
-
-          environment = rocm.env // {
-            LD_LIBRARY_PATH = ldLibPath;
-          };
 
           serviceConfig = lib.mkMerge [
             {
               Type = "exec";
               User = cfg.user;
               Group = cfg.group;
-              SupplementaryGroups = [ "render" ];
               Restart = "on-failure";
               RestartSec = "10";
               OOMScoreAdjust = 300;
               MemoryMax = cfg.memoryMax;
-              CPUQuota = "200%";
+              CPUQuota = "400%";
               # Same D-state rationale as llama-rag: a stop during saturated
-              # disk I/O cannot complete until the mmap reads finish.
+              # disk I/O cannot complete until the mmap reads finish. The
+              # initial 23.4 GB page-in is IO-heavy but one-shot at boot.
+              TimeoutStartSec = "10min";
               TimeoutStopSec = "2min";
               ExecStart = execStart;
             }
             (harden { })
-            rocm.deviceCgroup
           ];
 
           startLimitBurst = 5;
