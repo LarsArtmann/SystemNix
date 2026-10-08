@@ -17,7 +17,7 @@ disposable. Upstream repo: `/home/lars/projects/crm` (runbooks in
 | Machine API| `-api-token` bearer → `/api` + `/rest` (Twenty-compatible surface for the CV pipeline sync) |
 | Secret     | `crm_api_token` in `platforms/nixos/secrets/crm.yaml` (age-public-key-encrypted; same value as the pre-module `~/.local/share/crm/api-token`) → sops template `crm-server-env` → `EnvironmentFile` |
 | Gatus      | "Ledger CRM" on `/healthz` (loopback, 5m) — live from day one |
-| Backup     | `crm-backup.timer` 03:40 nightly — WAL-safe sqlite snapshot (backup API) → `/mnt/pool/backups/crm/ledger-YYYY-MM-DD.db`, 30-day retention |
+| Backup     | `crm-backup.timer` 03:40 nightly — WAL-safe sqlite snapshots (backup API) of BOTH durable dbs → `/mnt/pool/backups/crm/{ledger,identity}-YYYY-MM-DD.db` (ledger 0644, identity 0600 — passkey/session bearer material), 30-day retention. LIVE since 2026-10-08 03:47 (first artifact). Timer note: a freshly-written stamp (first load of the unit) suppresses Persistent catch-up — first run waits for the next calendar slot. `api-token` deliberately NOT backed up (sops-owned, repo-recoverable) |
 | State      | `~/.local/share/crm/` (journal + identity.db — adopted in place, 2026-09-18 standing decision: NO /var/lib migration) |
 
 ## Cutover (2026-10-02 micro-plan, T19–T44)
