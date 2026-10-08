@@ -1005,15 +1005,20 @@ in
         enable = true;
       };
 
+      # T42 FREEZE executed 2026-10-08 (owner-authorized; cutover micro-plan
+      # 2026-10-02, T19–T44): backup-green precondition was satisfied
+      # (first pool artifact 2026-10-08 03:47 integrity-ok + restore drill
+      # green with the production binary — docs/status/2026-10-08_07-48_*).
+      # Twenty's containers stop but its Docker data stays intact in
+      # /data/docker until the retirement decision (docs/todo/services.md).
       twenty = {
-        enable = true;
+        enable = false;
       };
 
       # Ledger CRM — LarsArtmann's own event-sourced CRM, the Twenty
-      # replacement (cutover micro-plan 2026-10-02, T19–T28). While
-      # twenty.enable stays true above, Twenty keeps the crm vHost and
-      # this serves loopback-only (monitored + backed up); freezing
-      # Twenty (T42) hands crm.<domain> over atomically in that deploy.
+      # replacement. With Twenty frozen above, this deploy hands
+      # crm.<domain> over atomically (integration registry keys vHosts by
+      # subdomain): Ledger claims the vHost, dashboard tile, and checks.
       crm-server = {
         enable = true;
       };
