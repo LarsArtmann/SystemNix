@@ -7153,11 +7153,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791371674,
-        "narHash": "sha256-kVuMqjFOPsHtXxpc0Hm5FHBa5XGo08RESQWlR12Y+yU=",
+        "lastModified": 1791466487,
+        "narHash": "sha256-Lg2iEk7oCaPOFQk1rJqd5dpMRJDtHOc9480BJjkvuqM=",
         "owner": "LarsArtmann",
         "repo": "PapDashboard",
-        "rev": "eda3e89045b59b32b9d7c1c4dcdb9eb0aff396af",
+        "rev": "81201c88b9788ad3fdc14b195dd5b3141056e33c",
         "type": "github"
       },
       "original": {
