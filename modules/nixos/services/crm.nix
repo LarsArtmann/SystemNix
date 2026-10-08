@@ -286,7 +286,7 @@
         };
 
         systemd.timers.crm-backup = {
-        description = "Nightly Ledger CRM backup (journal + identity)";
+          description = "Nightly Ledger CRM backup (journal + identity)";
           wantedBy = [ "timers.target" ];
           after = [ "mnt-pool.mount" ];
           timerConfig = {
