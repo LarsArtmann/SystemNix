@@ -133,11 +133,6 @@ in
                 mode = "0400";
               };
             }
-            // lib.optionalAttrs (svcEnabled "voice-agents") (
-              mkSecrets "voice-agents.yaml" {
-                restartUnits = [ "livekit.service" ];
-              } [ "livekit_keys" ]
-            )
             // lib.optionalAttrs (svcEnabled "hermes") (
               mkKeyedSecrets "hermes.yaml"
                 {

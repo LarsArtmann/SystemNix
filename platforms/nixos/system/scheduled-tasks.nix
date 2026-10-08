@@ -120,16 +120,6 @@ in
         wantedBy = [ "timers.target" ];
       };
 
-      docker-prune = {
-        description = lib.mkForce "Weekly Docker system prune";
-        wantedBy = [ "timers.target" ];
-        timerConfig = lib.mkForce {
-          OnCalendar = "Mon *-*-* 03:00";
-          Persistent = true;
-          RandomizedDelaySec = "1h";
-        };
-      };
-
       rust-target-cleanup = {
         description = "Weekly Rust target/ cleanup (dirs >2GB)";
         timerConfig = {
@@ -397,27 +387,6 @@ in
             "DISPLAY=:0"
             "WAYLAND_DISPLAY=wayland-1"
             "XDG_RUNTIME_DIR=/run/user/${uid}"
-          ];
-          StandardOutput = "journal";
-          StandardError = "journal";
-        };
-      };
-
-      docker-prune = {
-        description = lib.mkForce "Prune unused Docker resources";
-        inherit onFailure;
-        path = [ pkgs.docker ];
-        # WHY granular, not `system prune`: on docker 29.x `system prune --filter
-        # until=168h` logged 0B reclaimed while 8 GB build cache + 2-3-week-old
-        # dangling images sat eligible (2026-08-31), and without `-a` tagged-but-unused
-        # images (old version tags) are NEVER collectible. Volumes stay out on purpose.
-        serviceConfig = lib.mkForce {
-          Type = "oneshot";
-          ExecStart = [
-            "${lib.getExe pkgs.docker} container prune -f"
-            "${lib.getExe pkgs.docker} network prune -f"
-            "${lib.getExe pkgs.docker} image prune -af --filter until=168h"
-            "${lib.getExe pkgs.docker} builder prune -f --filter until=168h"
           ];
           StandardOutput = "journal";
           StandardError = "journal";

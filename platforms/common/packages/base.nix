@@ -281,10 +281,6 @@ let
       terraform # Infrastructure as Code tool from HashiCorp
       google-cloud-sdk # Google Cloud SDK for cloud management
 
-      # Container tools
-      docker # Docker CLI tools
-      docker-compose # Multi-container Docker applications
-
       # Kubernetes tools
       kubectl # Kubernetes CLI (includes fish/zsh/bash completions!)
       k9s # Kubernetes CLI To Manage Your Clusters In Style

@@ -179,10 +179,6 @@ _: {
       # cannot accumulate here.
       restartChurnThreshold = 5;
 
-      # Docker container restart alert: restarts per collection interval (2min).
-      # The Twenty 235-restart loop had ~12 restarts per 2min. 3 catches rapid loops.
-      dockerRestartAlertThreshold = 3;
-
       systemHealthMetrics = pkgs.writeShellApplication {
         name = "system-health-metrics";
         runtimeInputs = [
@@ -194,7 +190,6 @@ _: {
           pkgs.curl
           pkgs.jq
           pkgs.procps
-          pkgs.docker
           pkgs.sqlite
         ];
         text = ''
@@ -220,15 +215,13 @@ _: {
           CPU_STATE_TMP=""
           RESTART_STATE_TMP=""
           OOMD_STATE_TMP=""
-          DOCKER_STATE_TMP=""
           TMP="$(mktemp "${textfileDir}/system_health.prom.XXXXXX")"
           chmod 644 "$TMP"
           WALK_DIR="$(mktemp -d)"
-          trap 'rm -f "$TMP"; rm -rf "$WALK_DIR"; for f in "$CPU_STATE_TMP" "$RESTART_STATE_TMP" "$OOMD_STATE_TMP" "$DOCKER_STATE_TMP"; do if [ -n "$f" ]; then rm -f "$f"; fi; done' EXIT
+          trap 'rm -f "$TMP"; rm -rf "$WALK_DIR"; for f in "$CPU_STATE_TMP" "$RESTART_STATE_TMP" "$OOMD_STATE_TMP"; do if [ -n "$f" ]; then rm -f "$f"; fi; done' EXIT
           CPU_STATE="${textfileDir}/.system_health_cpu_state"
           RESTART_STATE="${textfileDir}/.system_health_restart_state"
           OOMD_STATE="${textfileDir}/.system_health_oomd_state"
-          DOCKER_STATE="${textfileDir}/.system_health_docker_state"
           NOW_EPOCH=$(date +%s)
 
           # === Enabled-but-inactive unit detection (2026-09-19) ===
@@ -1043,20 +1036,7 @@ _: {
             fi
           fi
 
-          # === Docker container restart count monitoring ===
-          # Docker container restart counts are not exported as Prometheus
-          # metrics by default. The Twenty 235-restart loop went unnoticed.
-          # This collector tracks restart count deltas per container.
-          collect_docker=${lib.boolToString cfg.collectDockerRestarts}
-          DOCKER_ANY_ALERT=0
-          declare -A prev_docker_restarts
-          if [ "$collect_docker" = "true" ] && [ -f "$DOCKER_STATE" ]; then
-            while IFS=' ' read -r n r; do
-              [ -n "$n" ] && prev_docker_restarts["$n"]="$r"
-            done < "$DOCKER_STATE"
-          fi
-
-          {
+          # === Enabled-but-inactive unit detection (2026-09-19) ===
             echo "# HELP system_service_active 1 if systemd service is active, 0 otherwise"
             echo "# TYPE system_service_active gauge"
 
@@ -1534,54 +1514,6 @@ _: {
               unit="$(printf '%s' "''${iu#*:}" | sed -e 's/\\x2d/-/g' -e 's/\\x5f/_/g' -e 's/\\/\\\\/g')"
               echo "system_unit_enabled_inactive{manager=\"''${iu%%:*}\",unit=\"$unit\"} 1"
             done
-
-            echo "# HELP docker_container_restart_count Total restart count per Docker container"
-            echo "# TYPE docker_container_restart_count gauge"
-
-            echo "# HELP docker_container_restart_alert 1 if container restarted >=${toString dockerRestartAlertThreshold} times since last collection, 0 otherwise"
-            echo "# TYPE docker_container_restart_alert gauge"
-
-            # timeout-bounded: a wedged/slow dockerd must never stall the
-            # collector into its unit timeout (same class as the 2026-08-31
-            # evening forgejo journal walk). SINGLE inspect for the whole
-            # fleet (2026-09-19 hardening): the old per-container
-            # `timeout 10 docker inspect` summed to 10s × N containers —
-            # ~150s worst case at 15 containers, nearly the whole unit
-            # budget by itself. Now: one `docker ps` (5s) + one `docker
-            # inspect` over ALL names (10s) = 15s worst case, flat.
-            if [ "$collect_docker" = "true" ] && timeout 15 docker info >/dev/null 2>&1; then
-              DOCKER_STATE_TMP="$(mktemp "''${DOCKER_STATE}.XXXXXX")"
-              docker_containers=""
-              docker_containers=$(timeout 5 docker ps --format '{{.Names}}' 2>/dev/null) || docker_containers=""
-              docker_inspect_out=""
-              if [ -n "$docker_containers" ]; then
-                # shellcheck disable=SC2086  # deliberate word split: docker ps names contain no spaces
-                docker_inspect_out=$(timeout 10 docker inspect --format '{{.Name}}={{.RestartCount}}' $docker_containers 2>/dev/null) || docker_inspect_out=""
-              fi
-              while IFS='=' read -r cname cur_rc; do
-                cname="''${cname#/}"
-                [ -n "$cname" ] || continue
-                cur_rc="''${cur_rc:-0}"
-                echo "$cname $cur_rc" >> "$DOCKER_STATE_TMP"
-                prev_rc="''${prev_docker_restarts[$cname]:-0}"
-                rc_delta=0
-                if [ "$cur_rc" -gt "$prev_rc" ] 2>/dev/null; then
-                  rc_delta=$((cur_rc - prev_rc))
-                fi
-                rc_alert=0
-                if [ "$rc_delta" -ge ${toString dockerRestartAlertThreshold} ] 2>/dev/null; then
-                  rc_alert=1
-                  DOCKER_ANY_ALERT=1
-                fi
-                echo "docker_container_restart_count{name=\"$cname\"} ''${cur_rc}"
-                echo "docker_container_restart_alert{name=\"$cname\"} ''${rc_alert}"
-              done <<< "''${docker_inspect_out:-}"
-              mv "$DOCKER_STATE_TMP" "$DOCKER_STATE"
-            fi
-
-            echo "# HELP system_any_docker_container_restart_alert 1 if ANY Docker container is rapidly restarting, 0 otherwise"
-            echo "# TYPE system_any_docker_container_restart_alert gauge"
-            echo "system_any_docker_container_restart_alert ''${DOCKER_ANY_ALERT}"
           } > "$TMP"
           mv "$TMP" "$OUT"
         '';
@@ -1795,12 +1727,6 @@ _: {
           '';
         };
 
-        collectDockerRestarts = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Collect Docker container restart count metrics (auto-disabled if Docker is not enabled)";
-        };
-
         collectZram = lib.mkOption {
           type = lib.types.bool;
           default = true;
@@ -1894,9 +1820,6 @@ _: {
           })
           // (lib.optionalAttrs (options ? services.pocket-id) {
             collectPocketIdBusy = lib.mkDefault (config.services.pocket-id.enable or false);
-          })
-          // (lib.optionalAttrs (options ? virtualisation.docker) {
-            collectDockerRestarts = lib.mkDefault (config.virtualisation.docker.enable or false);
           })
           // (lib.optionalAttrs (options ? services.zramSwap) {
             collectZram = lib.mkDefault (config.services.zramSwap.enable or false);

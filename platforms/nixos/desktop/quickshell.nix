@@ -144,13 +144,6 @@ in
             diskMount = "/";
           };
         };
-        systemnix-voice-agent = {
-          src = ../../../pkgs/dms-plugins/systemnix-voice-agent;
-          settings = {
-            whisperUrl = "http://127.0.0.1:${toString ports.whisper}";
-            livekitUrl = "http://127.0.0.1:${toString ports.livekit}";
-          };
-        };
         systemnix-camera = {
           src = ../../../pkgs/dms-plugins/systemnix-camera;
           settings.daemonUrl = "http://127.0.0.1:${toString ports.emeet-pixyd}";

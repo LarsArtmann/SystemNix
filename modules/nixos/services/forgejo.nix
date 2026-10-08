@@ -86,9 +86,10 @@ _: {
       subvolMigratedMarker = "${stateDir}/.subvol-migrated";
       subvolMigratedCondition = lib.optionals dedicated [ subvolMigratedMarker ];
       hostName = config.networking.hostName;
+      # Docker labels REMOVED 2026-10-08 with the Docker removal — jobs
+      # requesting ubuntu-latest find no runner and stay queued (deliberate;
+      # re-add a docker:// label only if a container runtime returns).
       runnerLabels = [
-        "ubuntu-latest:docker://node:22-bookworm"
-        "ubuntu-22.04:docker://node:22-bookworm"
         "native:host"
       ];
       runnerSettings = {

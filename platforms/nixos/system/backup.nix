@@ -107,7 +107,6 @@ in
         "/data/models"
         "/data/SteamLibrary"
         "/data/cache"
-        "/data/docker"
         "/data/tmp-bench"
         "/data/tmp-crush-test"
         # Home tool/rebuildable trees. Code lives on GitHub (pushed repos,
