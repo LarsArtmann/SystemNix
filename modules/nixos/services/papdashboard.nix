@@ -24,8 +24,12 @@
 # papdashboard_insights_webhook_url), so raw alerts and LLM insights land
 # in two separate Discord channels.
 #
-# The UI has no built-in auth (only the ingest API is key-gated) — external
-# access goes through protectedVHost (Layer 2 SSO); LAN access is open.
+# The UI gates browser routes behind an API-key login overlay (upstream
+# 2026-09-18): the key is exchanged for an in-memory pap_session cookie so
+# SSE streams work (EventSource can't send headers) — sessions die on every
+# unit restart, so LAN users re-enter the key (sops papdashboard_api_key)
+# after reboots. External access ALSO goes through protectedVHost (Layer 2
+# SSO) — two independent auth layers.
 #
 # FastFlowLM cold-loads 2-5 min on first insight request (socket activation
 # on :52625 wakes the model; v1.0.2 weights are 21.6 GB) — hence the generous
@@ -750,7 +754,8 @@
         environment.etc."papdashboard/services.json".source = servicesConfig;
 
         # Service-integration registry entry: fans out to the Caddy vHost
-        # (Layer 2 — the UI has no built-in auth) and the Gatus /api/health
+        # (Layer 2 — the UI also has its own API-key login overlay) and the
+        # Gatus /api/health
         # check. The dashboard IS this service, so it carries no dashboard
         # tile of its own (a self-tile is a navigation no-op).
         services.integration = lib.optionalAttrs (options ? services.integration) {

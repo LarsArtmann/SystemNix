@@ -11,11 +11,11 @@ and the rollback path. Product docs: the PapDashboard repo `README.md` (§Servic
 
 | Surface                                          | Where                                               | Auth                                   |
 | ------------------------------------------------ | --------------------------------------------------- | -------------------------------------- |
-| Dashboard UI (tabs: Services first when enabled) | `GET /` via templ                                   | public (assets public by design)       |
-| Tiles + live status JSON                         | `GET /api/services`                                 | API key (401 without)                  |
+| Dashboard UI (tabs: Services first when enabled) | `GET /` via templ                                   | login overlay: API key → `pap_session` cookie |
+| Tiles + live status JSON                         | `GET /api/services`                                 | API key or dashboard session            |
 | Server-rendered tiles fragment                   | `GET /api/fragments/services`                       | public (same class as `/dashboard.js`) |
 | Host vitals JSON (CPU/MEM/TEMP/UPTIME/net/disks) | `GET /api/system`                                   | public (`/metrics` exposure class)     |
-| Status flips                                     | SSE `service.status` events on `/api/events/stream` | public stream                          |
+| Status flips                                     | SSE `service.status` events on `/api/events/stream` | dashboard session (SSE can't send headers — the reason the login overlay exists) |
 
 ## services.json anatomy (where each field comes from)
 
@@ -107,7 +107,7 @@ Knowledge below moved verbatim from the root AGENTS.md restructure — it is the
 
 ### PapDashboard (Smart Alerting Hub)
 
-**Module:** `modules/nixos/services/papdashboard.nix` (`services.papdashboard`) — alert lifecycle hub + NPU insight enricher at `dash.home.lan` (Layer 2 `protectedVHost` via the registry, `subdomain = "dash"`; the UI has no built-in auth, only the ingest API is key-gated). The old `alerts.home.lan` hostname redirects via the caddy catch-all (unknown `*.home.lan` → `dash`). Port 8088 in `lib/ports.nix`.
+**Module:** `modules/nixos/services/papdashboard.nix` (`services.papdashboard`) — alert lifecycle hub + NPU insight enricher at `dash.home.lan` (Layer 2 `protectedVHost` via the registry, `subdomain = "dash"`; the UI ALSO has its own auth since upstream 2026-09-18: a login overlay exchanges the API key for an in-memory `pap_session` cookie — EventSource can't attach Authorization headers. Sessions live in RAM (7-day TTL), so every reboot/unit restart re-prompts; the key is sops `papdashboard_api_key` — the SAME value gatus uses as `PAPDASHBOARD_INGEST_KEY` and tq as `TQ_PAP_API_KEY`). The old `alerts.home.lan` hostname redirects via the caddy catch-all (unknown `*.home.lan` → `dash`). Port 8088 in `lib/ports.nix`.
 
 - **Services dashboard surface (2026-09-18 homepage-dashboard merge):** the module renders `/etc/papdashboard/services.json` (title, tiles/groups, bookmarks, search, host-vitals config) consumed via `PAP_SERVICES_CONFIG`; `restartTriggers` restarts the unit when the rendered file changes. Built-in groups/bookmarks live in the `dashboard` option defaults; every `services.integration.<name>.homepage` registry tile fans into `services.papdashboard.extraTiles` and folds into its named group. Tile status is probed SERVER-SIDE by PapDashboard (30s HTTP probes, bus-only `service.status` events — uptime history stays with Gatus). The dashboard carries NO self-tile (same doctrine as homepage before it). **Smoke follow-up: the post-deploy loopback `Homepage :8082` check was REMOVED with the merge** (the service no longer exists; the check false-FAILED the first post-merge deploy as a NEW-baseline regression). The external vHost check retargets `dash.$DOMAIN`. Rule: when a service is retired/merged, sweep `scripts/post-deploy-check.sh` for its probes in the SAME change.
 
