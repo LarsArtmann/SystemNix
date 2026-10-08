@@ -11,11 +11,21 @@ and the rollback path. Product docs: the PapDashboard repo `README.md` (§Servic
 
 | Surface                                          | Where                                               | Auth                                   |
 | ------------------------------------------------ | --------------------------------------------------- | -------------------------------------- |
-| Dashboard UI (tabs: Services first when enabled) | `GET /` via templ                                   | login overlay: API key → `pap_session` cookie |
-| Tiles + live status JSON                         | `GET /api/services`                                 | API key or dashboard session            |
+| Dashboard UI (tabs: Services first when enabled) | `GET /` via templ                                   | public at the app; auth = Caddy vHost (Layer 2 protected) |
+| Tiles + live status JSON                         | `GET /api/services`                                 | public at the app (upstream `publicPaths` contract) |
 | Server-rendered tiles fragment                   | `GET /api/fragments/services`                       | public (same class as `/dashboard.js`) |
 | Host vitals JSON (CPU/MEM/TEMP/UPTIME/net/disks) | `GET /api/system`                                   | public (`/metrics` exposure class)     |
-| Status flips                                     | SSE `service.status` events on `/api/events/stream` | dashboard session (SSE can't send headers — the reason the login overlay exists) |
+| Status flips                                     | SSE `service.status` events on `/api/events/stream` | public at the app (SSE can't send headers — why the gate lives at the proxy) |
+
+Auth model note (upstream re-pin 2026-10-08, flake bump `f12d5604` → rev `81201c88`):
+the whole browser read surface above is public AT THE APP by pinned upstream contract
+(`middleware/auth.go` `publicPaths`, enforced by `cmd/server/auth_invariants_integration_test.go`)
+— EventSource cannot attach Authorization headers, so an in-app key gate can never cover the
+stream. Access control for the UI is the Caddy `protected` vHost (Pocket ID SSO off-LAN;
+`*.home.lan` from the LAN is direct). The app-level `PAP_API_KEY` gate covers the MACHINE
+surface only (ingest, forwarder, dead-letter, batch/export); an empty key disables it, hence
+the module's `mkSecretCheck` ExecStartPre. This replaced the 2026-09-18 login-overlay
+(`pap_session` cookie) model.
 
 ## services.json anatomy (where each field comes from)
 
@@ -55,7 +65,9 @@ Invalid config = **startup fails loudly** (unit won't start) — there is no sil
 ## Deploy verification (built into post-deploy-check)
 
 `scripts/post-deploy-check.sh` probes the surface on every deploy (all no-key, status-code +
-public-fragment based): `/api/services` must 401 (route + auth gate), `/api/system` must 200
+public-fragment based): `/api/services` must 200 with the enabled payload (route + surface
+on; 404 = stale flake pin), unauthenticated `GET /api/ingest` must 401 (machine-surface key
+gate armed; the auth middleware runs before routing), `/api/system` must 200
 with nonzero `memTotalBytes`, `/api/fragments/services` must render group headings + tiles
 with zero inline `onclick`, plus the existing `/api/health`, ingest-route, and gatus-ingest-
 in-journal checks. Manual deep-dive:
@@ -107,7 +119,7 @@ Knowledge below moved verbatim from the root AGENTS.md restructure — it is the
 
 ### PapDashboard (Smart Alerting Hub)
 
-**Module:** `modules/nixos/services/papdashboard.nix` (`services.papdashboard`) — alert lifecycle hub + NPU insight enricher at `dash.home.lan` (Layer 2 `protectedVHost` via the registry, `subdomain = "dash"`; the UI ALSO has its own auth since upstream 2026-09-18: a login overlay exchanges the API key for an in-memory `pap_session` cookie — EventSource can't attach Authorization headers. Sessions live in RAM (7-day TTL), so every reboot/unit restart re-prompts; the key is sops `papdashboard_api_key` — the SAME value gatus uses as `PAPDASHBOARD_INGEST_KEY` and tq as `TQ_PAP_API_KEY`). The old `alerts.home.lan` hostname redirects via the caddy catch-all (unknown `*.home.lan` → `dash`). Port 8088 in `lib/ports.nix`.
+**Module:** `modules/nixos/services/papdashboard.nix` (`services.papdashboard`) — alert lifecycle hub + NPU insight enricher at `dash.home.lan` (Layer 2 `protectedVHost` via the registry, `subdomain = "dash"` — since the upstream auth re-pin (2026-10-08, rev `81201c88`) this is the ONLY auth layer on the browser surface: the app serves the UI + read APIs + SSE public by contract (`publicPaths`, pinned by upstream auth_invariants tests) because EventSource can't attach Authorization headers. The app-level key gate covers the machine surface (ingest etc.); the key is sops `papdashboard_api_key` — the SAME value gatus uses as `PAPDASHBOARD_INGEST_KEY` and tq as `TQ_PAP_API_KEY`). The old `alerts.home.lan` hostname redirects via the caddy catch-all (unknown `*.home.lan` → `dash`). Port 8088 in `lib/ports.nix`.
 
 - **Services dashboard surface (2026-09-18 homepage-dashboard merge):** the module renders `/etc/papdashboard/services.json` (title, tiles/groups, bookmarks, search, host-vitals config) consumed via `PAP_SERVICES_CONFIG`; `restartTriggers` restarts the unit when the rendered file changes. Built-in groups/bookmarks live in the `dashboard` option defaults; every `services.integration.<name>.homepage` registry tile fans into `services.papdashboard.extraTiles` and folds into its named group. Tile status is probed SERVER-SIDE by PapDashboard (30s HTTP probes, bus-only `service.status` events — uptime history stays with Gatus). The dashboard carries NO self-tile (same doctrine as homepage before it). **Smoke follow-up: the post-deploy loopback `Homepage :8082` check was REMOVED with the merge** (the service no longer exists; the check false-FAILED the first post-merge deploy as a NEW-baseline regression). The external vHost check retargets `dash.$DOMAIN`. Rule: when a service is retired/merged, sweep `scripts/post-deploy-check.sh` for its probes in the SAME change.
 

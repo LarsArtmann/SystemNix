@@ -151,6 +151,15 @@ _: {
             # Owned by cfg.user; the socket inside carries cfg.socketMode.
             RuntimeDirectory = "project-discovery";
             RuntimeDirectoryMode = "0755";
+            # Start contract: "started" means the SOCKET exists, not just the
+            # process. During the 2026-10-07 ghost-socket incident the daemon
+            # ran 26h "active" while unreachable (socket unlinked by another
+            # unit's RuntimeDirectory stop) — overview crash-looped on its
+            # daemon-gate the whole time. Bounded wait covers a notify-before-
+            # bind race; if the socket never appears the unit FAILS and
+            # Restart=always (serviceDefaults) heals it, instead of silently
+            # leaving every consumer gated forever.
+            ExecStartPost = "${pkgs.coreutils}/bin/timeout 30 ${pkgs.bash}/bin/bash -c 'until test -S ${cfg.socketPath}; do sleep 1; done'";
           }
           // (harden {
             # Full discovery of ~260 repos spikes ~7GB (measured while PMA

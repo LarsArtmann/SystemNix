@@ -957,15 +957,23 @@ if $papdashboard_enabled; then
   else
     report_warn "PapDashboard - no ingest 200s in the last 30 min (normal when no alert transitioned; re-check after the next Gatus alert)"
   fi
-  # Services surface (2026-09-18 homepage merge): status-code + public-fragment
-  # probes, no API key needed. 401 on /api/services proves BOTH that the route
-  # exists (404 = binary predates the merge or PAP_SERVICES_CONFIG unset) and
-  # that the auth gate is armed; a 200 here would mean the key gate silently
-  # dropped. The fragment is public by contract (same class as /dashboard.js),
-  # so tile rendering is observable without secrets - and it must never carry
-  # inline onclick handlers (the delegated data-action rule, pinned at build
-  # time by cmd/server/no_inline_handlers_test.go).
-  check "PapDashboard services surface keyed" "http://127.0.0.1:8088/api/services" "401" ""
+  # Services surface (2026-09-18 homepage merge; auth model re-pinned upstream
+  # 2026-10-08 by flake bump f12d5604 -> rev 81201c88): the browser read
+  # surface (/api/services, /api/system, fragments, SSE) is PUBLIC AT THE APP
+  # by upstream contract (middleware/auth.go publicPaths, pinned by
+  # cmd/server/auth_invariants_integration_test.go) - SSE cannot carry headers,
+  # so an in-app key gate can never cover the stream; UI access control is the
+  # Caddy vHost (registry layer "protected"). The app-level key gate covers the
+  # MACHINE surface only, so probe it there: GET /api/ingest without a key
+  # must 401 (the auth middleware runs before routing, so 401 proves the gate
+  # is armed; 404 = stale flake pin predating the ingest route). /api/services
+  # must 200 with the enabled payload (404 = binary predates the merge or
+  # PAP_SERVICES_CONFIG unset). The fragment is public by contract (same class
+  # as /dashboard.js), so tile rendering is observable without secrets - and
+  # it must never carry inline onclick handlers (the delegated data-action
+  # rule, pinned at build time by cmd/server/no_inline_handlers_test.go).
+  check "PapDashboard services surface live" "http://127.0.0.1:8088/api/services" "200" "\"enabled\": ?true"
+  check "PapDashboard ingest gate armed" "http://127.0.0.1:8088/api/ingest" "401" ""
   check "PapDashboard host vitals live" "http://127.0.0.1:8088/api/system" "200" '"memTotalBytes":[1-9]'
   check "PapDashboard services fragment renders" "http://127.0.0.1:8088/api/fragments/services" "200" "services-group-heading"
   # /tmp/.smoke-body still holds the fragment body from the previous check.

@@ -24,12 +24,17 @@
 # papdashboard_insights_webhook_url), so raw alerts and LLM insights land
 # in two separate Discord channels.
 #
-# The UI gates browser routes behind an API-key login overlay (upstream
-# 2026-09-18): the key is exchanged for an in-memory pap_session cookie so
-# SSE streams work (EventSource can't send headers) — sessions die on every
-# unit restart, so LAN users re-enter the key (sops papdashboard_api_key)
-# after reboots. External access ALSO goes through protectedVHost (Layer 2
-# SSO) — two independent auth layers.
+# Auth model (upstream re-pinned 2026-10-08, flake bump f12d5604 -> rev
+# 81201c88; replaces the 2026-09-18 login-overlay model): the BROWSER surface
+# (UI pages, /api/services, /api/system, fragments, SSE stream) is public AT
+# THE APP by upstream contract (middleware/auth.go publicPaths, pinned by
+# upstream auth_invariants tests) because SSE cannot carry headers, so an
+# in-app key gate can never cover the stream. UI access control is the Caddy
+# vHost: this service registers vHost.layer = "protected" (Pocket ID SSO for
+# off-LAN; *.home.lan from the LAN is direct by design). The app-level
+# PAP_API_KEY gate covers the MACHINE surface only (ingest, forwarder,
+# dead-letter, batch/export); an empty key would disable it entirely, hence
+# the mkSecretCheck ExecStartPre on the env template.
 #
 # FastFlowLM cold-loads 2-5 min on first insight request (socket activation
 # on :52625 wakes the model; v1.0.2 weights are 21.6 GB) — hence the generous
@@ -754,8 +759,9 @@
         environment.etc."papdashboard/services.json".source = servicesConfig;
 
         # Service-integration registry entry: fans out to the Caddy vHost
-        # (Layer 2 — the UI also has its own API-key login overlay) and the
-        # Gatus /api/health
+        # (Layer 2 SSO — the ONLY auth layer on the browser surface since the
+        # upstream auth re-pin 2026-10-08; the app-level key gate covers the
+        # machine surface only) and the Gatus /api/health
         # check. The dashboard IS this service, so it carries no dashboard
         # tile of its own (a self-tile is a navigation no-op).
         services.integration = lib.optionalAttrs (options ? services.integration) {

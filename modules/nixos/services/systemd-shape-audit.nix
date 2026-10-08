@@ -41,6 +41,16 @@
 #    unloadable from its 2026-10-03 cutover deploy until 2026-10-07; backups
 #    silently never ran, docs/status/2026-10-07_15-50_* §a5/§d1).
 #
+# 6. The SAME RuntimeDirectory declared by more than one unit. systemd removes
+#    a unit's RuntimeDirectory when that unit stops; with two declarers,
+#    whichever stops first unlinks the OTHER unit's live files (sockets!)
+#    inside it — the other unit keeps running but is unreachable (live
+#    incident 2026-10-07: PMA's stale RuntimeDirectory=project-discovery vs
+#    the standalone project-discovery-daemon; PMA's deploy-stop flushed the
+#    live daemon's socket and overview crash-looped ~26h on its daemon-gate).
+#    A runtime dir has exactly ONE owning unit; consumers connect to the
+#    socket, they never co-declare the directory.
+#
 # Assertions are forced by `nix flake check` (pre-commit + CI); a bare
 # `nix eval ...toplevel.drvPath` does NOT check them.
 {
@@ -145,6 +155,31 @@
           ) config.systemd.services;
         in
         lib.attrNames bad;
+
+      # --- class 6: one RuntimeDirectory declared by more than one unit ---
+      # RuntimeDirectory accepts a string or a list; normalize both. Empty
+      # strings (explicitly cleared via mkForce []) mean "owns nothing" and
+      # are skipped.
+      sharedRuntimeDirs =
+        let
+          unitDirs = lib.concatLists (
+            lib.mapAttrsToList (
+              name: svc:
+              let
+                dirs = builtins.map toString (lib.toList (svc.serviceConfig.RuntimeDirectory or [ ]));
+              in
+              lib.optional svc.enable (
+                builtins.map (d: {
+                  inherit name;
+                  dir = d;
+                }) (builtins.filter (d: d != "") dirs)
+              )
+            ) config.systemd.services
+          );
+        in
+        lib.filterAttrs (_dir: owners: builtins.length owners > 1) (
+          lib.groupBy (x: x.dir) unitDirs
+        );
     in
     {
       options.services.systemd-shape-audit = {
@@ -223,6 +258,25 @@
             Fix: hoist script/preStart/postStart/… to the unit TOP LEVEL
             (sibling of path/after); keep only real [Service] keys (Type,
             User, ReadWritePaths, …) inside serviceConfig.
+          '';
+        }
+        {
+          assertion = sharedRuntimeDirs == { };
+          message = ''
+            systemd-shape-audit: RuntimeDirectory declared by more than one unit:
+            ${lib.concatStringsSep ", " (
+              lib.mapAttrsToList (
+                dir: owners: "${dir} (" + lib.concatStringsSep ", " (map (o: o.name) owners) + ")"
+              ) sharedRuntimeDirs
+            )}
+            systemd removes a unit's RuntimeDirectory when that unit stops —
+            whichever unit stops first unlinks the OTHER unit's live files
+            (sockets) inside it; the other unit keeps running but becomes
+            unreachable (2026-10-07 ghost-socket: PMA's stop flushed the live
+            project-discovery-daemon socket; overview crash-looped ~26h).
+            A runtime dir has exactly ONE owning unit; consumers connect to
+            the socket, they never co-declare the directory. Clear the
+            non-owner with RuntimeDirectory = lib.mkForce [ ];
           '';
         }
       ];

@@ -149,6 +149,19 @@
           {
             Type = lib.mkForce "exec";
             WatchdogSec = lib.mkForce "0";
+            # Ghost-socket root cause (2026-10-07 16:28 incident): upstream's
+            # module still declares RuntimeDirectory=project-discovery on THIS
+            # service, a leftover from the pre-2026-09-07 era when PMA hosted
+            # the embedded discovery daemon. systemd removes a unit's
+            # RuntimeDirectory on stop — PMA's deploy-stop flushed
+            # /run/project-discovery/, unlinking the LIVE standalone daemon's
+            # socket; PMA's restart then recreated the dir EMPTY. The daemon
+            # process kept running yet was unreachable: overview crash-looped
+            # ~26h on its (correct) daemon-gate. The socket dir has exactly ONE
+            # owner now: project-discovery-daemon.service. PMA is a CLIENT —
+            # clients connect, they never co-declare the directory
+            # (systemd-shape-audit class 6 enforces this repo-wide).
+            RuntimeDirectory = lib.mkForce [ ];
             MemoryMax = lib.mkForce "16G";
             MemoryHigh = lib.mkForce "12G";
             MemorySwapMax = lib.mkForce "0";
