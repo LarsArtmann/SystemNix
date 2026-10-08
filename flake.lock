@@ -1232,8 +1232,8 @@
       "original": {
         "owner": "NixOS",
         "repo": "flake-compat",
-        "type": "github",
-        "rev": "5edf11c44bc78a0d334f6334cdaf7d60d732daab"
+        "rev": "5edf11c44bc78a0d334f6334cdaf7d60d732daab",
+        "type": "github"
       }
     },
     "flake-parts": {
@@ -1475,9 +1475,10 @@
     },
     "git-hooks": {
       "inputs": {
-        "flake-compat": "flake-compat",
+        "flake-compat": [
+          "flake-compat"
+        ],
         "nixpkgs": [
-          "bank-sync",
           "nixpkgs"
         ]
       },
@@ -1492,8 +1493,8 @@
       "original": {
         "owner": "cachix",
         "repo": "git-hooks.nix",
-        "type": "github",
-        "rev": "a0e4241b51206fbcbf52fd322eb5f0cd80f153c4"
+        "rev": "a0e4241b51206fbcbf52fd322eb5f0cd80f153c4",
+        "type": "github"
       }
     },
     "gitignore": {
@@ -7514,8 +7515,10 @@
         "emeet-pixyd": "emeet-pixyd",
         "erraudit": "erraudit_3",
         "file-and-image-renamer": "file-and-image-renamer",
+        "flake-compat": "flake-compat",
         "flake-parts": "flake-parts_4",
         "flake-utils": "flake-utils",
+        "git-hooks": "git-hooks",
         "go-auto-upgrade": "go-auto-upgrade_2",
         "go-branded-id": "go-branded-id_9",
         "go-commit": "go-commit",
@@ -7580,9 +7583,7 @@
         "treefmt-nix": "treefmt-nix_10",
         "uv2nix": "uv2nix",
         "vision-review-agent": "vision-review-agent",
-        "wallpapers-src": "wallpapers-src",
-        "git-hooks": "git-hooks",
-        "flake-compat": "flake-compat"
+        "wallpapers-src": "wallpapers-src"
       }
     },
     "rust-overlay": {

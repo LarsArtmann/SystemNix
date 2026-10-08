@@ -953,6 +953,12 @@
     #   vendorHash FODs (2026-08-25 got-hash drift class). go-nix-helpers
     #   below = following NIXPKGS into the helper flake (eval-only for its
     #   lib), NOT the helper into tools.
+    # The promoted git-hooks input needs its OWN nested edges followed too:
+    # without these, a re-lock un-follows them (git-hooks locks its own
+    # nixpkgs-unstable pin + a floating flake-compat copy — verified in the
+    # 2026-10-08 worktree canonicalization pass).
+    git-hooks.inputs.nixpkgs.follows = "nixpkgs";
+    git-hooks.inputs.flake-compat.follows = "flake-compat";
     emeet-pixyd.inputs.flake-parts.follows = "flake-parts";
     emeet-pixyd.inputs.treefmt-nix.follows = "treefmt-nix";
     bank-sync.inputs.git-hooks.follows = "git-hooks";
