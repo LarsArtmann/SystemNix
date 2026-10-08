@@ -17,8 +17,8 @@
 #   --safety-copy   T04 copy monitor365 data to /mnt/pool/archive/monitor365-nvme-safety (root)
 #   --repair-list   print proposed per-file destructive actions (plan step 06a) (any user)
 #   --apply-repair  T06 trash the redownloadable corrupt files (root; T04 must have run)
-#   --metadata-check T07 maintenance window: docker down -> umount /data ->
-#                   btrfs check --mode=low-risk (read-only) -> remount -> docker up (root)
+#   --metadata-check T07 maintenance window: umount /data ->
+#                   btrfs check --mode=low-risk (read-only) -> remount (root)
 #   --scrub         T08 scrub /data, gate on 0 csum errors (root)
 #   --resume-seed   T09 re-kick btrbk-data after an IO-window check (root)
 #
@@ -158,7 +158,7 @@ cmd_map_user() {
       echo "  ino $ino -> $p"
       resolved=$((resolved + 1))
     else
-      echo "  ino $ino -> not in user-readable trees (root-owned / docker / snapshot)"
+      echo "  ino $ino -> not in user-readable trees (root-owned / snapshot)"
       unresolved="$unresolved $ino"
     fi
   done
@@ -188,7 +188,7 @@ cmd_map_user() {
 # T05 root-extended mapping: resolve the journal inodes via the btrfs ioctl
 # (user inode-resolve is EPERM) and read-verify the root-owned trees.
 cmd_map_full() {
-  need_root "--map-full" "inode-resolve ioctl + /data/{docker,containers} reads"
+  need_root "--map-full" "inode-resolve ioctl + /data/containers reads"
   need_bins btrfs
   io_window_clear || die "IO window not clear (see WARN above)"
 
@@ -203,13 +203,13 @@ cmd_map_full() {
     if [ -n "$p" ]; then echo "  ino $ino -> $p"; else echo "  ino $ino -> unresolved (not in /data root tree — likely a snapshot subvol or already deleted)"; fi
   done
 
-  echo "== read-verify root-owned trees (/data/docker /data/containers) =="
+  echo "== read-verify root-owned trees (/data/containers) =="
   local tmp="$STATE_DIR/corrupt-files.root-owned"
   : >"$tmp"
   while IFS= read -r -d '' f; do
     dd if="$f" of=/dev/null bs=4M 2>/dev/null ||
       echo "$f" >>"$tmp"
-  done < <(find /data/docker /data/containers -xdev -type f -print0 2>/dev/null)
+  done < <(find /data/containers -xdev -type f -print0 2>/dev/null)
   echo "  root-owned read fails: $(wc -l <"$tmp") (listed in $tmp)"
 }
 
@@ -253,7 +253,7 @@ cmd_repair_list() {
     /data/models/* | /data/ai/*)
       echo "  TRASH (redownloadable model weights): $f"
       ;;
-    /data/docker/* | /data/containers/*)
+    /data/containers/*)
       echo "  MANUAL (container state — restore from pool pg_dumps, do not blind-delete): $f"
       ;;
     *.duckdb* | */monitor365/*)
@@ -295,26 +295,21 @@ cmd_apply_repair() {
 # T07: the maintenance window. Read-only btrfs check, service outage gated
 # behind an explicit flag so it can never ride along accidentally.
 cmd_metadata_check() {
-  need_root "--metadata-check" "docker stop, umount /data, btrfs check"
-  need_bins btrfs lsof mount umount systemctl trash
-  [ "${I_ACCEPT_SERVICE_OUTAGE:-0}" = "1" ] || die "this phase stops docker + unmounts /data. Re-run with I_ACCEPT_SERVICE_OUTAGE=1"
+  need_root "--metadata-check" "umount /data, btrfs check"
+  need_bins btrfs lsof mount umount trash
+  [ "${I_ACCEPT_SERVICE_OUTAGE:-0}" = "1" ] || die "this phase unmounts /data (all /data consumers go down). Re-run with I_ACCEPT_SERVICE_OUTAGE=1"
   io_window_clear || die "IO window not clear"
 
-  echo "== stopping docker (twenty/dozzle go down) =="
-  systemctl stop docker.service docker.socket || fail "docker stop"
-  sleep 5
   echo "== quiesce check =="
   if lsof +f -- /data 2>/dev/null | tail -n +2 | grep -qv '^$'; then
     lsof +f -- /data | tail -n +2 | sed 's/^/  OPEN: /'
-    systemctl start docker.service
-    fail "/data still in use — aborted (docker restarted)"
+    fail "/data still in use — aborted"
     return
   fi
   ok "/data quiesced"
   echo "== unmount /data =="
   umount /data || {
     fail "umount /data"
-    systemctl start docker.service
     return
   }
   local dev
@@ -326,9 +321,8 @@ cmd_metadata_check() {
   echo "== btrfs check --mode=low-risk (read-only) on $dev =="
   btrfs check --mode=low-risk "$dev"
   local rc=$?
-  echo "== remount + restart docker =="
+  echo "== remount /data =="
   mount /data || die "remount /data FAILED — check dmesg, this is the one non-recoverable step"
-  systemctl start docker.service || fail "docker start"
   [ "$rc" -eq 0 ] && ok "btrfs check clean" || { fail "btrfs check exit $rc — capture the report"; }
 }
 

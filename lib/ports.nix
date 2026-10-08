@@ -34,7 +34,6 @@
     signoz = 8080;
     signoz-otlp-grpc = 4317;
     signoz-otlp-http = 4318;
-    signoz-cadvisor = 9193;
     signoz-node-exporter = 9100;
     signoz-collector-metrics = 8888;
     signoz-clickhouse = 9000;

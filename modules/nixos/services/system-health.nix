@@ -1036,7 +1036,7 @@ _: {
             fi
           fi
 
-          # === Enabled-but-inactive unit detection (2026-09-19) ===
+          {
             echo "# HELP system_service_active 1 if systemd service is active, 0 otherwise"
             echo "# TYPE system_service_active gauge"
 
@@ -1858,8 +1858,8 @@ _: {
                 # scan once wedged this collector for 11-28 min. Raised to
                 # 5min on 2026-09-19 as the interim of the worst-case
                 # section-sum fix (docs/todo/monitoring.md): the five journal
-                # walks are now parallel and the per-service/docker loops are
-                # single-read (worst case ≈ max(60s) + docker 15s + loops),
+                # walks are now parallel and the per-service loops are
+                # single-read (worst case ≈ max(60s) + loops),
                 # but a full fork+exec storm on the QLC root can still push a
                 # legitimate run past the old 3min ceiling — a killed run
                 # wrote NO textfile (stale metrics + sev1 paging) while a
@@ -1869,7 +1869,7 @@ _: {
               }
               # Boot-window demotion (2026-10-06): the first fire lands at
               # boot+30s — right when the desktop session is settling — and
-              # its journal/docker/fork storm on the QLC amplified the boot
+              # its journal/fork storm on the QLC amplified the boot
               # IO storm (48s first-run measured 2026-10-06). BE/6 keeps it
               # yielding to everything foreground; steady-state runs are
               # unaffected (BFQ only reorders under contention).
@@ -2440,17 +2440,6 @@ _: {
                   "[BODY] == pat(*system_oomd_kills_scrape_errors 0*)"
                 ];
                 alert = "systemd-oomd killed a process since last check (memory pressure OOM; check: journalctl -u systemd-oomd --grep 'Killed' -n 20 — the killed service may be in start-limit-hit state), OR the bounded oomd journal scan timed out (system_oomd_kills_scrape_errors=1; check: systemctl status system-health-metrics)";
-              }
-              {
-                name = "Docker Container Restarts";
-                group = "Monitoring";
-                url = "http://localhost:${toString nodePort}/metrics";
-                interval = "2m";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[BODY] == pat(*system_any_docker_container_restart_alert 0*)"
-                ];
-                alert = "A Docker container is rapidly restarting (3+ restarts in 2 min). Check: docker ps -a, docker inspect --format '{{.RestartCount}}' <container>. Likely OOM-killed by systemd-oomd (exit code 137).";
               }
             ]
             ++

@@ -291,19 +291,6 @@ in
       target = 1;
       interval = "1m";
     };
-    "signoz/rules/docker-down.json".source = mkRule {
-      name = "Docker Daemon Down";
-      description = "Docker engine daemon unit is not active";
-      # up{job="docker-engine"} was phantom-green (no series carries a `job`
-      # label — see dnsblockd-down). Unit-state gauge is the real signal;
-      # engine metrics presence is separately visible via the collector's
-      # scrape coverage.
-      query = ''node_systemd_unit_state{name="docker.service",state="active"}'';
-      step = 60;
-      op = "below";
-      target = 1;
-      interval = "1m";
-    };
     "signoz/rules/service-failed-spike.json".source = mkRule {
       name = "Service Failure Spike";
       description = "Multiple systemd units in failed state simultaneously — possible systemic issue";
@@ -433,8 +420,6 @@ in
       "${inputs.self}/modules/nixos/services/dashboards/overview.json";
     "signoz/dashboards/gpu.json".source = "${inputs.self}/modules/nixos/services/dashboards/gpu.json";
     "signoz/dashboards/dns.json".source = "${inputs.self}/modules/nixos/services/dashboards/dns.json";
-    "signoz/dashboards/docker.json".source =
-      "${inputs.self}/modules/nixos/services/dashboards/docker.json";
     "signoz/dashboards/caddy.json".source =
       "${inputs.self}/modules/nixos/services/dashboards/caddy.json";
     "signoz/dashboards/telemetry-coverage.json".source =

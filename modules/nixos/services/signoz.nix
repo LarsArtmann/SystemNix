@@ -441,7 +441,6 @@ in
                   description = "Data directory for the query service (runtime path, not copied to store)";
                 };
               };
-              cadvisorPort = serviceTypes.servicePort ports.signoz-cadvisor "Port for cAdvisor container metrics";
               collector = {
                 port = serviceTypes.servicePort ports.signoz-otlp-grpc "OTLP gRPC receiver port";
                 httpPort = serviceTypes.servicePort ports.signoz-otlp-http "OTLP HTTP receiver port";
@@ -465,9 +464,6 @@ in
                 default = true;
               };
               nodeExporter = lib.mkEnableOption "Prometheus node exporter" // {
-                default = true;
-              };
-              cadvisor = lib.mkEnableOption "cAdvisor container metrics" // {
                 default = true;
               };
               journaldLogs = lib.mkEnableOption "journald log collection via OTel receiver" // {
@@ -1097,28 +1093,9 @@ in
 
             signozMetrics
 
-            (lib.mkIf cfg.components.cadvisor {
-              systemd.services.cadvisor = {
-                description = "cAdvisor — container metrics";
-                wantedBy = [ "signoz.target" ];
-                after = [ "docker.service" ];
-                requires = [ "docker.service" ];
-                startLimitBurst = 5;
-                startLimitIntervalSec = 300;
-                serviceConfig = lib.mkMerge [
-                  {
-                    ExecStart = "${lib.getExe pkgs.cadvisor} --listen_ip=127.0.0.1 --port=${toString cfg.settings.cadvisorPort} --docker_only=true";
-                    NoNewPrivileges = lib.mkForce false;
-                  }
-                  (harden { })
-                  (serviceDefaults { })
-                ];
-              };
-            })
-
             (lib.mkIf cfg.components.otelCollector {
               users.groups.systemd-journal-member = lib.mkIf (
-                cfg.components.nodeExporter || cfg.components.cadvisor
+                cfg.components.nodeExporter
               ) { };
               systemd.services.signoz-collector = {
                 description = "SigNoz OTel Collector";
@@ -1149,9 +1126,7 @@ in
                     Type = "simple";
                     User = "signoz";
                     Group = "signoz";
-                    SupplementaryGroups = lib.optional (
-                      cfg.components.nodeExporter || cfg.components.cadvisor
-                    ) "systemd-journal";
+                    SupplementaryGroups = lib.optional (cfg.components.nodeExporter) "systemd-journal";
                     WorkingDirectory = cfg.settings.queryService.dataDir;
                     ExecStart = "${lib.getExe packages.otelCollector} --config /etc/signoz/collector.yaml";
                   }
@@ -1202,10 +1177,6 @@ in
                           ];
                         }
                         {
-                          job_name = "cadvisor";
-                          static_configs = [ { targets = [ "127.0.0.1:${toString cfg.settings.cadvisorPort}" ]; } ];
-                        }
-                        {
                           job_name = "caddy";
                           static_configs = [ { targets = [ "127.0.0.1:${toString ports.caddy-metrics}" ]; } ];
                         }
@@ -1243,13 +1214,6 @@ in
                           # memory, disks — the telemetry store observing itself.
                           job_name = "clickhouse";
                           static_configs = [ { targets = [ "127.0.0.1:${toString ports.signoz-clickhouse-metrics}" ]; } ];
-                          metrics_path = "/metrics";
-                        }
-                        {
-                          # Docker engine metrics (metrics-addr in
-                          # default-services.nix): container counts, daemon health.
-                          job_name = "docker-engine";
-                          static_configs = [ { targets = [ "127.0.0.1:${toString ports.docker-engine-metrics}" ]; } ];
                           metrics_path = "/metrics";
                         }
                       ];
@@ -1543,7 +1507,7 @@ in
         # Service-integration registry entries: the two ClickHouse XFS
         # data-mount checks, the SigNoz vHost (Layer 2 — impersonation
         # mode has no internal auth; LAN bypass keeps oauth2-proxy
-        # failures off the LAN path), the SigNoz + cAdvisor tiles, and
+        # failures off the LAN path), the SigNoz tiles, and
         # system-health monitoring of the signoz target unit. Replaces
         # rows in gatus-config.nix / homepage.nix.
         (lib.optionalAttrs (options ? services.integration) {
@@ -1618,16 +1582,6 @@ in
                 group = "Monitoring";
                 description = "Observability Platform (Traces, Metrics, Logs)";
                 icon = "signoz.png";
-              };
-            };
-            cadvisor = {
-              inherit (cfg) enable;
-              vHost.layer = "none";
-              homepage = {
-                name = "cAdvisor";
-                group = "Monitoring";
-                description = "Container Metrics";
-                icon = "docker.png";
               };
             };
           };
