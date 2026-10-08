@@ -972,7 +972,7 @@ if $papdashboard_enabled; then
   # as /dashboard.js), so tile rendering is observable without secrets - and
   # it must never carry inline onclick handlers (the delegated data-action
   # rule, pinned at build time by cmd/server/no_inline_handlers_test.go).
-  check "PapDashboard services surface live" "http://127.0.0.1:8088/api/services" "200" "\"enabled\": ?true"
+  check "PapDashboard services surface live" "http://127.0.0.1:8088/api/services" "200" '"enabled": ?true'
   check "PapDashboard ingest gate armed" "http://127.0.0.1:8088/api/ingest" "401" ""
   check "PapDashboard host vitals live" "http://127.0.0.1:8088/api/system" "200" '"memTotalBytes":[1-9]'
   check "PapDashboard services fragment renders" "http://127.0.0.1:8088/api/fragments/services" "200" "services-group-heading"

@@ -72,6 +72,28 @@ _: {
         + " --ctx-size ${toString cfg.ctxSize}"
         + " --threads ${toString cfg.threads}"
         + " --jinja";
+
+      # Convergence helper (2026-10-08): ConditionPathExists is evaluated
+      # once per start attempt — a unit skipped at boot (model still a .part
+      # download) stays skipped forever after the file completes. The ensure
+      # timer re-attempts convergence: model present + unit not running →
+      # systemctl start. Zero manual systemd state (owner doctrine 2026-10-08:
+      # "everything should be nix managed"; polkit bars agents from starts).
+      ensureScript = pkgs.writeShellApplication {
+        name = "llama-chat-ensure";
+        runtimeInputs = [ pkgs.systemd ];
+        text = ''
+          if [ ! -e ${cfg.modelPath} ]; then
+            echo "llama-chat-ensure: model ${cfg.modelPath} absent — nothing to converge"
+            exit 0
+          fi
+          if systemctl is-active --quiet llama-chat.service; then
+            exit 0
+          fi
+          echo "llama-chat-ensure: model present, llama-chat not active — starting"
+          systemctl start llama-chat.service
+        '';
+      };
     in
     {
       options.services.llama-chat = {
@@ -161,16 +183,44 @@ _: {
               CPUQuota = "400%";
               # Same D-state rationale as llama-rag: a stop during saturated
               # disk I/O cannot complete until the mmap reads finish. The
-              # initial 23.4 GB page-in is IO-heavy but one-shot at boot.
-              TimeoutStartSec = "10min";
+              # initial 23.4 GB page-in is IO-heavy but one-shot at boot —
+              # 15min covers a cold page-in under an IO storm PLUS the
+              # ExecStartPost probe budget below (was 10min).
+              TimeoutStartSec = "15min";
               TimeoutStopSec = "2min";
               ExecStart = execStart;
+              # Start contract (2026-10-08, same doctrine as the daemon
+              # socket contract): "started" means /health serves 200, not
+              # just that execve succeeded. llama-server binds its listener
+              # early and 503s while the 23.4 GB model maps, so -f +
+              # --retry-all-errors retries through the whole load; a load
+              # that wedges (freeze-#5 class) FAILS the unit and
+              # Restart=on-failure heals instead of active-but-dead.
+              ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 240 --retry-delay 2 --retry-all-errors http://${cfg.host}:${toString cfg.port}/health";
             }
             (harden { })
           ];
 
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
+        };
+
+        systemd.services.llama-chat-ensure = {
+          description = "Converge llama-chat when its model file exists (ConditionPathExists never re-evaluates)";
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${ensureScript}/bin/llama-chat-ensure";
+          };
+        };
+
+        systemd.timers.llama-chat-ensure = {
+          description = "Re-attempt llama-chat convergence every 10 minutes";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "5min";
+            OnUnitActiveSec = "10min";
+            AccuracySec = "1min";
+          };
         };
 
         # Service-integration registry entry: loopback-only server (no vHost

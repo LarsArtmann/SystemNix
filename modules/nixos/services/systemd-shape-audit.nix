@@ -159,27 +159,29 @@
       # --- class 6: one RuntimeDirectory declared by more than one unit ---
       # RuntimeDirectory accepts a string or a list; normalize both. Empty
       # strings (explicitly cleared via mkForce []) mean "owns nothing" and
-      # are skipped.
+      # are skipped. NOTE: deliberately NO lib.groupBy — nixpkgs 26.11's
+      # groupBy no longer folds a list of records into an attrset of lists
+      # (breaks eval with "expected a set but found a list"); the foldl'
+      # accumulation is version-stable.
       sharedRuntimeDirs =
         let
-          unitDirs = lib.concatLists (
-            lib.mapAttrsToList (
-              name: svc:
-              let
-                dirs = builtins.map toString (lib.toList (svc.serviceConfig.RuntimeDirectory or [ ]));
-              in
-              lib.optional svc.enable (
+          units = lib.mapAttrsToList (name: svc: { inherit name svc; }) config.systemd.services;
+          addUnitDirs =
+            acc: p:
+            let
+              dirs = builtins.map toString (lib.toList (p.svc.serviceConfig.RuntimeDirectory or [ ]));
+            in
+            if !p.svc.enable then
+              acc
+            else
+              builtins.foldl' (acc': x: acc' // { ${x.dir} = (acc'.${x.dir} or [ ]) ++ [ x ]; }) acc (
                 builtins.map (d: {
-                  inherit name;
+                  inherit (p) name;
                   dir = d;
                 }) (builtins.filter (d: d != "") dirs)
-              )
-            ) config.systemd.services
-          );
+              );
         in
-        lib.filterAttrs (_dir: owners: builtins.length owners > 1) (
-          lib.groupBy (x: x.dir) unitDirs
-        );
+        lib.filterAttrs (_dir: owners: builtins.length owners > 1) (builtins.foldl' addUnitDirs { } units);
     in
     {
       options.services.systemd-shape-audit = {

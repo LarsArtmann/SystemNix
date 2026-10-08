@@ -82,7 +82,8 @@
 
       config = lib.mkIf cfg.enable {
         assertions = lib.optional daemonMode {
-          assertion = (config.services.project-discovery-daemon.enable or false)
+          assertion =
+            (config.services.project-discovery-daemon.enable or false)
             || (config.services.projects-management-automation.enableDiscoveryDaemon or false);
           message = ''
             overview.service is configured with daemonSocket = "${cfg.daemonSocket}"

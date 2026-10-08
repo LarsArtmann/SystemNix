@@ -149,6 +149,32 @@ let
           }
         ]) == [ ];
     }
+    {
+      # Class 6 (2026-10-07 ghost-socket incident): string and list forms of
+      # RuntimeDirectory must normalize to the same dir name — the duplicate
+      # is flagged no matter how each unit declares it.
+      name = "runtime-dir-shared-not-caught";
+      pass = flaggedWith "RuntimeDirectory declared by more than one unit" (evalAssertions [
+        {
+          systemd.services.dir-owner.serviceConfig.RuntimeDirectory = "project-x";
+          systemd.services.dir-squatter.serviceConfig.RuntimeDirectory = [ "project-x" ];
+        }
+      ]);
+    }
+    {
+      # The clearance path: mkForce [] (the PMA fix) and disabled units own
+      # nothing — neither may trip the guard.
+      name = "runtime-dir-cleared-falsely-flagged";
+      pass =
+        failing (evalAssertions [
+          {
+            systemd.services.dir-owner.serviceConfig.RuntimeDirectory = "project-x";
+            systemd.services.dir-client.serviceConfig.RuntimeDirectory = [ ];
+            systemd.services.dir-disabled.serviceConfig.RuntimeDirectory = "project-x";
+            systemd.services.dir-disabled.enable = false;
+          }
+        ]) == [ ];
+    }
   ];
 
   broken = map (c: c.name) (builtins.filter (c: !c.pass) cases);

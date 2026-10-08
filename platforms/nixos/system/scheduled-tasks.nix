@@ -283,9 +283,24 @@ in
             let
               criticalSystemServices = [
                 "caddy"
-                "forgejo"
                 "dnsblockd"
                 "postgresql"
+              ];
+              # Intentionally-gated critical services: down + gate marker
+              # absent = EXPECTED (report-only, never fails the unit — the
+              # 2026-09-09 chronic-FAIL doctrine applied 2026-10-08 with the
+              # owner's "forgejo is not ready yet" confirmation: forgejo stays
+              # subvol-gated until the migration finalizes, and a per-tick
+              # FAIL keeps service-health-check failed + opens deploy exit-4
+              # windows for a KNOWN state). Marker present + down = real
+              # failure. Marker mirrors forgejo.nix's subvolMigratedMarker
+              # (ConditionPathExists semantics: unit runs only once it
+              # exists). "or" chain covers a missing forgejo module.
+              gatedSystemServices = [
+                {
+                  name = "forgejo";
+                  marker = "${config.services.forgejo.stateDir or "/var/lib/forgejo"}/.subvol-migrated";
+                }
               ];
               ignoredFailedServices = [
                 "session-*"
@@ -298,6 +313,7 @@ in
               # with zero output, because of exactly this). Failures must
               # accumulate in FAILED and reach the report.
               checkBlock = svc: "check_service ${svc} || true";
+              gatedBlock = { name, marker }: "check_gated_service ${name} ${marker} || true";
               ignorePattern = builtins.concatStringsSep " | " ignoredFailedServices;
               healthCheck = pkgs.writeShellApplication {
                 name = "service-health-check";
@@ -315,6 +331,7 @@ in
                   export XDG_RUNTIME_DIR
 
                   FAILED=""
+                  GATED=""
                   TOTAL=0
 
                   check_service() {
@@ -327,6 +344,23 @@ in
                           fi
                           sleep 2
                       done
+                      FAILED="$FAILED\n  $1"
+                      return 1
+                  }
+
+                  # shellcheck disable=SC2329
+                  # Gated critical service: down + condition marker absent =
+                  # expected-by-design (report in GATED, never fail); marker
+                  # present + down = genuine regression (fail like any other).
+                  check_gated_service() {
+                      TOTAL=$((TOTAL + 1))
+                      if systemctl is-active --quiet "$1" 2>/dev/null; then
+                          return 0
+                      fi
+                      if [ ! -e "$2" ]; then
+                          GATED="$GATED\n  $1 (gated: $2 absent)"
+                          return 0
+                      fi
                       FAILED="$FAILED\n  $1"
                       return 1
                   }
@@ -346,6 +380,9 @@ in
 
                   # === Critical system services — must be running ===
                   ${builtins.concatStringsSep "\n" (map checkBlock criticalSystemServices)}
+
+                  # === Gated critical services — down is expected while the gate holds ===
+                  ${builtins.concatStringsSep "\n" (map gatedBlock gatedSystemServices)}
 
                   # === Dynamic: catch any other failed system services ===
                   while IFS= read -r svc; do
@@ -379,9 +416,15 @@ in
                   if [ -n "$FAILED" ]; then
                       notify-send -u critical "Health Check: services down" "$(echo -e "$FAILED")" 2>/dev/null || true
                       echo "FAILED:$(echo -e "$FAILED")"
+                      if [ -n "$GATED" ]; then
+                          echo -e "GATED (expected down):$GATED"
+                      fi
                       exit 1
                   else
                       echo "OK: $TOTAL/$TOTAL critical services active, no failed services"
+                      if [ -n "$GATED" ]; then
+                          echo -e "GATED (expected down):$GATED"
+                      fi
                       exit 0
                   fi
                 '';
