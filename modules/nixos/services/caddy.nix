@@ -586,14 +586,6 @@ _: {
                   '';
                 };
               }
-              // lib.optionalAttrs config.services.voice-agents.enable {
-                # voice/whisper vHosts stay hand-written: those subdomains are
-                # not in the shared dns-local list (voice-agents is not enabled
-                # on any current host), so registry entries for them would fail
-                # the DNS-consistency assertion.
-                "voice.${domain}" = protectedVHost config.services.livekit.settings.port null;
-                "whisper.${domain}" = protectedVHost config.services.voice-agents.whisperPort null;
-              }
               //
                 lib.optionalAttrs
                   (

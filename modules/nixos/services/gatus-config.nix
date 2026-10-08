@@ -620,13 +620,6 @@ _: {
                   interval = "60s";
                   alerts = discordAlert "Node exporter down — system metrics monitoring blind";
                 })
-                (mkHttpCheck {
-                  name = "cAdvisor";
-                  group = "Monitoring";
-                  url = "http://localhost:${toString config.services.signoz.settings.cadvisorPort}/metrics";
-                  interval = "60s";
-                  alerts = discordAlert "cAdvisor down — container metrics monitoring blind";
-                })
                 {
                   name = "DNS Resolver";
                   group = "Infrastructure";
