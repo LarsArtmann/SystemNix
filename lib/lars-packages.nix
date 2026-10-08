@@ -57,12 +57,11 @@ lib.filterAttrs (_: v: v != null) {
   # protocol, docs/agents/nix-flakes.md). Re-add ONLY via nix-hash-fix
   # evidence, never by hand.
   buildflow = flakePkg inputs.buildflow;
-  # cqrs-lint shim DROPPED (2026-10-09): the lock moved to 8ab092fa
-  # (go-cqrs-lite input update carrying the F031 database/sql exemption)
-  # whose upstream flake.nix ALREADY carries the got hash (qRvdn5dH… ==
-  # the FOD mismatch output — shim-drop protocol, docs/agents/nix-flakes.md).
-  # Re-add ONLY via nix-hash-fix evidence, never by hand.
-  cqrs-lint = flakePkg inputs.go-cqrs-lite;
+  # NOT flakePkg: upstream go-cqrs-lite's `packages.default` is a deliberate
+  # no-op derivation (BuildFlow `nix build .` needs it; the real CLI lives at
+  # packages.cqrs-lint). The 2026-10-09 shim drop kept flakePkg, which resolved
+  # to the empty derivation — deploying it would silently remove the binary.
+  cqrs-lint = (inputs.go-cqrs-lite.packages.${system} or { }).cqrs-lint or null;
   # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave — class
   # comment at buildflow): got 4wgXASTZ… at locked rev c09818e3
   # (upstream stale at locked rev AND HEAD). Drop when upstream re-pins
