@@ -10,7 +10,9 @@
 #
 #   1. paperless.enable=true + paperless present: the sops env file rides
 #      BOTH inboxclean units (upstream commonServiceConfig) and
-#      PAPERLESS_URL/PAPERLESS_TAGS land in extraEnvironment.
+#      PAPERLESS_URL/PAPERLESS_TAGS land in the units — option definitions,
+#      env plumbing, and qpdf live UPSTREAM since the 2026-10-08 migration;
+#      this wrapper contributes only the port default and the token file.
 #   2. paperless.enable=true + paperless ABSENT: the eval-time assertion
 #      fires (the sync hook would fail-fast + warn on every tick).
 #   3. Archiving off (the shipped default): nothing leaks into the units —
@@ -160,6 +162,18 @@ let
     {
       name = "present-paperless-no-assertion";
       pass = failingPaperlessAssertions archivingOn == [ ];
+    }
+    # Chat brain (llama-chat, 2026-10-08): the LLM_* extraEnvironment must
+    # survive the migration — upstream owns PAPERLESS_* now, the wrapper
+    # owns the LLM override of upstream's keyless ollama placeholder.
+    {
+      name = "llama-chat-llm-env-survives-migration";
+      pass =
+        builtins.any (lib.hasPrefix "LLM_PROVIDER=openai") (paperlessEnv archivingOn)
+        == false
+        && builtins.any (lib.hasPrefix "LLM_PROVIDER=openai") (syncConfig archivingOn).Environment
+        && builtins.any (lib.hasPrefix "OPENAI_BASE_URL=") (syncConfig archivingOn).Environment
+        && builtins.any (lib.hasPrefix "LLM_MODEL=") (syncConfig archivingOn).Environment;
     }
     {
       name = "off-state-leaks-nothing";

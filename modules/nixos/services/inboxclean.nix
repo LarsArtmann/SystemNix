@@ -10,11 +10,20 @@
 # The upstream module (inputs.inboxclean.nixosModules.default, nix/module.nix
 # in the InboxClean repo) provides every option (enable, package, addr, dataDir,
 # environmentFile, gmailCredentialsFile, gmailTokenFile, extraEnvironment,
-# sync.{enable,interval,persistent}) plus inboxclean-web.service, the
-# inboxclean-sync.service oneshot and its timer, with OAuth seeding into the
-# state dir. This file layers ONLY SystemNix-specific concerns: sops secret
-# wiring, port from lib/ports.nix, onFailure alert routing, GOMEMLIMIT,
-# systemd hardening, and IO tiering.
+# sync.{enable,interval,persistent}, paperless.{enable,url,tags} incl. the
+# PAPERLESS_URL/TAGS env + qpdf on the sync PATH, backup.{enable,dir,calendar,
+# retentionDays} incl. the mount-gated dir creator, the WAL-safe backup units
+# and timer, the CLI on system PATH, and mkDefault MemoryMax/GOMEMLIMIT/
+# start-limit guards) plus inboxclean-web.service, the inboxclean-sync.service
+# oneshot and its timer, with OAuth seeding into the state dir — all pinned by
+# upstream's `nixos-module` QEMU VM test. Since the 2026-10-08 migration this
+# file layers ONLY SystemNix-specific concerns: sops secret wiring, port from
+# lib/ports.nix, the llama-chat LLM brain, onFailure alert routing, the fleet
+# harden baseline + IO tiering, and the Gatus/Caddy integration registry.
+# DEPLOY GATE: this wrapper requires an inboxclean input rev at or past the
+# 2026-10-08 module migration — against the pre-migration lock it fails eval
+# on the paperless/backup options. Bump with `nix flake lock --update-input
+# inboxclean` once upstream master is pushed, then merge this branch.
 #
 # Runbook (one-time, per Google account):
 #   1. The sops secret inboxclean_gmail_credentials holds the Google OAuth
@@ -108,42 +117,11 @@
         ;
       cfg = config.services.inboxclean;
       inboxcleanPkg = inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default;
-      inboxcleanBackupDir = "/mnt/pool/backups/inboxclean";
     in
     {
       imports = [ inputs.inboxclean.nixosModules.default ];
 
-      options.services.inboxclean.paperless = {
-        enable = lib.mkEnableOption ''
-          Gmail-attachment archiving into Paperless-ngx (upstream papersync
-          integration: after every sync, InboxClean uploads new attachments
-          and opt-in .eml bodies via the Paperless REST API; a local ledger
-          plus Paperless checksum dedup make runs idempotent; failures are
-          warnings, never fatal). Requires the real API token in
-          platforms/nixos/secrets/inboxclean-paperless.yaml — see the header
-          go-live runbook BEFORE flipping this on.
-        '';
-        url = lib.mkOption {
-          type = lib.types.str;
-          default = "http://127.0.0.1:${toString ports.paperless}";
-          description = "Paperless-ngx base URL the sync hook uploads to.";
-        };
-        tags = lib.mkOption {
-          type = lib.types.listOf lib.types.str;
-          default = [ "gmail" ];
-          description = ''
-            PAPERLESS_TAGS (comma-joined) applied to every upload — the
-            provenance marker that makes archived attachments filterable
-            in Paperless.
-          '';
-        };
-      };
-
       config = lib.mkIf cfg.enable {
-        # CLI on PATH for the one-time `auth` runbook and operator use
-        # (events/undo/export/doctor against the service database).
-        environment.systemPackages = [ cfg.package ];
-
         assertions = [
           {
             assertion = cfg.paperless.enable -> (config.services.paperless.enable or false);
@@ -174,17 +152,29 @@
           # state dir and survive redeploys.
           sync.enable = true;
 
-          # Attachment archiving (upstream papersync pipeline). The token
-          # rides the sops template — root-owned on purpose, systemd reads
-          # EnvironmentFile as PID 1; URL + tags are non-secret and go
-          # through extraEnvironment. Upstream applies both to web + sync
-          # units (commonServiceConfig), so the /sync dashboard card lights
-          # up with upload stats too. No systemd ordering against
-          # paperless-web: the hook pings the document API fail-fast and the
-          # next 30-min tick retries; the ledger keeps it idempotent.
+          # Attachment archiving (upstream papersync pipeline): options,
+          # PAPERLESS_URL/TAGS env, and qpdf on the sync PATH all live
+          # UPSTREAM now. This layer contributes the host port (Paperless
+          # answers on the lib/ports.nix port, not upstream's 8000 default)
+          # and the sops token template — root-owned on purpose, systemd
+          # reads EnvironmentFile as PID 1. No systemd ordering against
+          # paperless-web: the hook pings the document API fail-fast and
+          # the next 30-min tick retries; the ledger keeps it idempotent.
+          paperless.url = lib.mkDefault "http://127.0.0.1:${toString ports.paperless}";
           environmentFile = lib.mkIf cfg.paperless.enable (
             lib.mkDefault config.sops.templates."inboxclean-paperless-env".path
           );
+
+          # Nightly backup chain (units + timer + retention) lives UPSTREAM
+          # now; this layer pins the host facts: the mirrored HDD pool dir
+          # and the 04:30 stagger (backup-coordination doctrine — off the
+          # 01:00-03:00 btrbk peak and the 03:17/03:30/04:00 dump backups).
+          # mkDefault true preserves the pre-migration always-on behavior.
+          backup = {
+            enable = lib.mkDefault true;
+            dir = "/mnt/pool/backups/inboxclean";
+            calendar = "*-*-* 04:30:00";
+          };
           # Chat AI (/chat dashboard): the brain is llama-chat (CPU MoE
           # llama-server), overriding the upstream module's keyless
           # LLM_PROVIDER=ollama placeholder. NOT FastFlowLM (socket-activated
@@ -200,172 +190,38 @@
             LLM_PROVIDER = "openai";
             OPENAI_BASE_URL = "http://127.0.0.1:${toString config.services.llama-chat.port}/v1";
             LLM_MODEL = config.services.llama-chat.alias;
-          }
-          // lib.optionalAttrs cfg.paperless.enable {
-            PAPERLESS_URL = cfg.paperless.url;
-            PAPERLESS_TAGS = lib.concatStringsSep "," cfg.paperless.tags;
           };
         };
 
+        # Fleet baseline only: MemoryMax 512M (harden default) and the
+        # GOMEMLIMIT=384MiB / start-limit guards now ship upstream with
+        # identical mkDefault values; ReadWritePaths=dataDir likewise.
         systemd.services.inboxclean-web = {
           after = [ "sops-nix.service" ];
           wants = [ "sops-nix.service" ];
           inherit onFailure;
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
 
           serviceConfig = lib.mkMerge [
-            (harden {
-              MemoryMax = "512M";
-              ReadWritePaths = [ cfg.dataDir ];
-            })
+            (harden { })
             (serviceDefaults { })
             ioTier.background
-            { Environment = [ "GOMEMLIMIT=384MiB" ]; }
           ];
         };
 
+        # MemoryMax stays explicit: harden{}'s 512M default and upstream's
+        # mkDefault 1G would collide at eval time the day upstream changes
+        # its default — fail-closed by design. GOMEMLIMIT/start-limits/
+        # qpdf-on-PATH now ship upstream.
         systemd.services.inboxclean-sync = {
           after = [ "sops-nix.service" ];
           wants = [ "sops-nix.service" ];
           inherit onFailure;
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
-
-          # qpdf decrypts password-protected PDF attachments before upload
-          # (upstream papersync PAPERLESS_DECRYPT_PASSWORD feature; resolved
-          # via PATH lookup at runner construction). Without it the feature
-          # degrades to tagging such uploads "encrypted".
-          path = lib.mkIf cfg.paperless.enable [ pkgs.qpdf ];
 
           serviceConfig = lib.mkMerge [
-            (harden {
-              MemoryMax = "1G";
-              ReadWritePaths = [ cfg.dataDir ];
-            })
-            (serviceOneshotDefaults { })
-            ioTier.background
-            { Environment = [ "GOMEMLIMIT=768MiB" ]; }
-          ];
-        };
-
-        # Nightly WAL-safe backup of the event-store DB onto the mirrored
-        # HDD pool (cv-backup pattern). The SQLite file holds both Gmail
-        # accounts' sync state AND the paperless upload ledger — losing it
-        # means a full Gmail re-sync plus lost upload idempotency.
-        #
-        # Mount-gated creator for the pool-side dir (atticd-storage-dir /
-        # cv-backup-dir pattern): ReadWritePaths needs the path to exist
-        # BEFORE namespace setup, and tmpfiles would pre-create it on the
-        # root fs, shadowing the pool copy during a DAS outage.
-        systemd.services.inboxclean-backup-dir = {
-          description = "Create InboxClean backup directory on the HDD pool";
-          wantedBy = [ "multi-user.target" ];
-          unitConfig.RequiresMountsFor = [ inboxcleanBackupDir ];
-          serviceConfig = lib.mkMerge [
-            {
-              Type = "oneshot";
-              User = "root";
-              RemainAfterExit = true;
-            }
-            # Targets the PARENT — pointing ReadWritePaths at the leaf
-            # itself would 226/NAMESPACE before it can mkdir (cv lesson).
-            (harden {
-              MemoryMax = "128M";
-              ReadWritePaths = [ "/mnt/pool/backups" ];
-            })
-            (serviceOneshotDefaults { })
-          ];
-          script = ''
-            mkdir -p ${inboxcleanBackupDir}
-            chmod 0755 ${inboxcleanBackupDir}
-          '';
-        };
-
-        systemd.services.inboxclean-backup = {
-          description = "InboxClean DB + corpus backup (online .backup + .eml archive)";
-          after = [
-            "inboxclean-web.service"
-            "inboxclean-backup-dir.service"
-          ];
-          wants = [
-            "inboxclean-web.service"
-            "inboxclean-backup-dir.service"
-          ];
-          # A detached DAS fails the run as a clean dependency error instead
-          # of 226/NAMESPACE, and boot catch-up waits for the pool mount.
-          unitConfig.RequiresMountsFor = [ inboxcleanBackupDir ];
-          inherit onFailure;
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
-
-          serviceConfig = lib.mkMerge [
-            {
-              Type = "oneshot";
-              # The corpus archive grows with the mailbox; the systemd
-              # 90s default start timeout would kill the run within a
-              # year of corpus growth.
-              TimeoutStartSec = "30min";
-              ExecStart = pkgs.writeShellScript "inboxclean-backup" ''
-                set -euo pipefail
-                db="${cfg.dataDir}/inboxclean.db"
-                if [ ! -f "$db" ]; then
-                  echo "inboxclean-backup: no inboxclean.db yet — nothing to back up"
-                  exit 0
-                fi
-                ts=$(date +%Y%m%dT%H%M%S)
-                dst="${inboxcleanBackupDir}/inboxclean-$ts.db"
-                ${lib.getExe pkgs.sqlite} "$db" ".backup '$dst'"
-                # The corpus .eml store IS the mail backup (ADR-023): the DB
-                # alone carries only the index. 2026-10-07 rehearsal finding
-                # F1 — a DB-only restore made doctor report "corpus root
-                # missing". Root runs here under CAP_DAC_READ_SEARCH, so the
-                # 0700 inboxclean-owned dir is readable without chmod.
-                corpus="${cfg.dataDir}/corpus"
-                corpus_dst=""
-                trap 'rm -f "$corpus_dst"' EXIT
-                if [ -d "$corpus" ]; then
-                  corpus_dst="${inboxcleanBackupDir}/corpus-$ts.tar.zst"
-                  ${pkgs.gnutar}/bin/tar -C "${cfg.dataDir}" -cf - corpus \
-                    | ${pkgs.zstd}/bin/zstd -q -o "$corpus_dst" -
-                  echo "inboxclean-backup: wrote $corpus_dst"
-                else
-                  echo "inboxclean-backup: no corpus dir yet — DB-only backup"
-                fi
-                trap - EXIT
-                # 14-day retention (pocket-id/cv pattern): the online .backup
-                # rewrites every page, so nothing dedups between nights.
-                find "${inboxcleanBackupDir}" -name "inboxclean-*.db" -mtime +14 -delete
-                find "${inboxcleanBackupDir}" -name "corpus-*.tar.zst" -mtime +14 -delete
-                echo "inboxclean-backup: wrote $dst"
-              '';
-              ReadWritePaths = [
-                inboxcleanBackupDir
-                cfg.dataDir
-              ];
-            }
-            (harden {
-              # The state dir is foreign-owned (inboxclean); root with an
-              # EMPTY CapabilityBoundingSet obeys DAC and cannot stat
-              # through it — the cv-backup silent-no-op class.
-              # CAP_DAC_READ_SEARCH = read-only traversal.
-              CapabilityBoundingSet = "CAP_DAC_READ_SEARCH";
-            })
+            (harden { MemoryMax = "1G"; })
             (serviceOneshotDefaults { })
             ioTier.background
           ];
-        };
-
-        # 04:30 — staggered off the 01:00-03:00 btrbk peak and the
-        # 03:17/03:30/04:00 dump backups (backup-coordination doctrine).
-        systemd.timers.inboxclean-backup = {
-          description = "Nightly InboxClean DB backup (04:30)";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnCalendar = "*-*-* 04:30:00";
-            Persistent = true;
-            Unit = "inboxclean-backup.service";
-          };
         };
 
         # Service-integration registry entry: fans out to the Caddy vHost
@@ -497,7 +353,8 @@
             backup = {
               # Nightly online .backup of the event-store DB
               # (inboxclean-backup.timer, 04:30) onto the mirrored pool.
-              directory = "/mnt/pool/backups/inboxclean";
+              # Same value as services.inboxclean.backup.dir (single source).
+              directory = cfg.backup.dir;
               filePattern = "inboxclean-*.db";
               maxAgeHours = 25;
             };
