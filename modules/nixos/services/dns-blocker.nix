@@ -1336,7 +1336,8 @@ _: {
                       # GOTRACEBACK=single shows only the signal-handling
                       # goroutine, which says nothing about a mutex deadlock).
                       "GOTRACEBACK=all"
-                    ] ++ lib.optionals (cfg.proxyInjectScriptURL != null) [
+                    ]
+                    ++ lib.optionals (cfg.proxyInjectScriptURL != null) [
                       # proxy_inject_script_url rides the env, never the YAML:
                       # the config file is world-readable in the Nix store and
                       # the URL can carry a sensitive host:port (same rule as

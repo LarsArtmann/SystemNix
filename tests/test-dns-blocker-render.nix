@@ -163,7 +163,9 @@ let
       msg = "proxyFilterDomains no longer feeds the rendered config (phantom-option regression)";
     }
     {
-      ok = pkgs.lib.hasInfix "DNSBLOCKD_PROXY_INJECT_SCRIPT_URL=http://127.0.0.1:8104/inject/filter.js" (toString filterSvc.serviceConfig.Environment);
+      ok = pkgs.lib.hasInfix "DNSBLOCKD_PROXY_INJECT_SCRIPT_URL=http://127.0.0.1:8104/inject/filter.js" (
+        toString filterSvc.serviceConfig.Environment
+      );
       msg = "inject URL must ride the systemd env, never the YAML";
     }
     {
@@ -348,13 +350,12 @@ let
       msg = "h3-without-tls-port assertion does not fire (upstream errH3RequiresTLSPort must be mirrored)";
     }
     {
-      ok =
-        policyAssertionFires "ErrFilterNeedsAddressResponse" [
-          {
-            services.dns-blocker.proxyFilterDomains = [ "porn.example.com" ];
-            services.dns-blocker.dnsBlockResponse = "nxdomain";
-          }
-        ];
+      ok = policyAssertionFires "ErrFilterNeedsAddressResponse" [
+        {
+          services.dns-blocker.proxyFilterDomains = [ "porn.example.com" ];
+          services.dns-blocker.dnsBlockResponse = "nxdomain";
+        }
+      ];
       msg = "filter-domains x nxdomain assertion does not fire (upstream ErrFilterNeedsAddressResponse must be mirrored)";
     }
   ];
