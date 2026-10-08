@@ -103,11 +103,17 @@ Nothing catastrophic, four honest items:
 
 1. **My buildflow invocation churned go.mod on a broken graph.** BuildFlow's
    workspace-build-verify ran a "module update" (partial tidy) that FAILED,
-   leaving modified go.mod/go.sum that the daemon committed at 17:05
-   (`3b59c9f`: id/v4 v4.7.1→v4.7.2, metaengine/v4 v4.16.1→v4.17.0 bumps).
-   Self-inflicted churn on a surface a parallel session had just touched.
-   Should have run `buildflow --dry-run`/baseline `go build` on the foreign
-   tree BEFORE the full gate.
+   leaving a modified go.mod (id/v4 v4.7.1→v4.7.2, metaengine/v4
+   v4.16.1→v4.17.0 bumps) that the daemon committed at 17:05 (`3b59c9f`,
+   riding alongside my flake.nix pname edit). CORRECTED IN-SESSION: after
+   discovering `docs/todo/upstream.md` row 137 (the parallel session's
+   policy: naive-tidy churn "must never ride an upstream crm commit"), the
+   go.mod was restored in-worktree to the pre-churn state (daemon commits
+   the restore). Should have run `buildflow --dry-run`/baseline `go build`
+   on the foreign tree BEFORE the full gate. The ROOT CAUSE of the go
+   failure is row 137's class (local sibling replaces vs untagged
+   cqrs-htmx/go-appkit state), NOT a missing metaengine tag as first
+   written — crm TODO_LIST row added with the corrected diagnosis.
 2. **Stale-premise owner question** — the CV-lock question presented "hold at
    b3a9172" as status quo while the live lock sat 52 commits past the forward
    target. Caught pre-execution (premise live-verified before editing);
@@ -179,17 +185,16 @@ Nothing catastrophic, four honest items:
 
 ## g) QUESTIONS FOR THE OWNER (cannot figure out myself)
 
-1. **The 17:05 go.mod/go.sum churn (from my buildflow run)**: keep the
-   partial-tidy bumps (id v4.7.2, metaengine v4.17.0 — direction the graph
-   wants) or revert those two files to the pre-buildflow state?
-2. **Module-graph fix ownership**: the crm repo's `go build` is blocked on a
-   missing upstream tag (`go-cqrs-lite stack/metaengine v4.0.0`, referenced
-   by stack/sqlite's tests; dep bump came from the parallel CSP session).
-   Take it in a fresh session now, leave it for that session, or wait for an
-   upstream tag?
-3. **Rebrand push timing**: fold the rebrand into the already-queued crm push
-   window (with the multi-RPID draft), or do you want it pushed/tagged
-   separately and deployed sooner?
+1. **Module-graph fix ownership**: crm's local `go build` is blocked by the
+   sibling-replaces/untagged state (upstream.md row 137, root-caused by the
+   parallel session). Take the cqrs-htmx push/tag round in a fresh session
+   now, leave it for that session, or wait for your push window?
+2. **Rebrand push timing**: fold the rebrand into the already-queued crm push
+   window (with the multi-RPID draft, one chain per the new [blocked:push]
+   row), or push/tag it separately and deploy sooner?
+3. **`~/projects/ledger` dir name**: rename the local dir to `journal` to
+   kill the naming inversion that started this session? (Purely cosmetic,
+   owner-only; repo remote stays `LarsArtmann/journal`.)
 
 ---
 Self-harvest: §f items 1-3 landed this session (queue + libraries); the rest
