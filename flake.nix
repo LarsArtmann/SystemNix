@@ -1904,6 +1904,7 @@
                   ]);
                   scriptDriftFailing = failingPin (pinAssertionsOf [
                     inputs.self.nixosModules.integration
+                    ./platforms/nixos/system/backup.nix
                     driftedModule
                   ]);
                   templateDriftFailing = failingPin (pinAssertionsOf templateOverrideModules);
