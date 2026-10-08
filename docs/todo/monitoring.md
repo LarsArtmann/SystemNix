@@ -10,6 +10,9 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 
 ## Prioritized
 
+- [ ] [ready] **Gatus UI "Logs" button → `logs.home.lan`** — the Dozzle button was removed with Docker (2026-10-08); `logs.<domain>` is now a redirect to the SigNoz logs explorer, and the gatus header buttons (Dashboard/Forgejo/SigNoz) have no logs shortcut. One entry in gatus-config.nix `ui.buttons`. **Source:** docs/status/2026-10-08_14-23_docker-removal-logs-redirect-self-review.md §f4
+- [ ] [watch] **CI green on the Docker-removal stub cleanup** — `tests/test-integration.nix` + `tests/test-caddy-mint.nix` lost their twenty/voice-agents/cadvisorPort stubs after the 2026-10-08 removal; eval is green but the VM tests have not been RUN yet (CI is the first executor — confirm integration-registry + caddy-mint pass, not just eval). **Source:** same report §f3
+
 - [ ] [ready] **Textfile-collector exit-0/empty-value class audit** — every textfile emitter using `cmd || fail=1` where cmd exits 0 on partial failure (psql without `-v ON_ERROR_STOP=1` is the proven instance: the 2026-10-03 `t.slug` SQL error emitted an EMPTY `paperless_inbox_count`, `collector_success` read 1, whole .prom rejected, paperless failed-task alerting dark) or interpolating unguarded `$var` into metric lines. Audit all ~20 collectors for both holes. **Source:** docs/status/2026-10-04_03-05_anchoring-verified-collector-fix-storm-gated-9h-self-review.md §f.2
 - [x] [ready] ~~**Record the two 2026-10-03 collector gotchas in docs/agents/monitoring.md**~~ **DONE 2026-10-04 (movie-window session):** bullet landed (psql `-v ON_ERROR_STOP=1` requirement + paperless ≥3.1 `is_inbox_tag`, no `slug` column). Evidence: docs/status/2026-10-04_19-43_movie-window-light-batch-live-verifies-docs-gates.md §a.6(i) **Source:** docs/status/2026-10-04_03-05_anchoring-verified-collector-fix-storm-gated-9h-self-review.md §f.9
 
