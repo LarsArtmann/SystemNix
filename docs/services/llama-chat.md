@@ -40,6 +40,9 @@ Source: <https://huggingface.co/HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Agg
 
 ## Operations
 
+- Monitored: gatus check `llama.cpp Chat` probes `/health` every 60s (200 =
+  model mapped and serving; 503 while loading; red when the unit is down or
+  skipped). The integration-registry entry lives in this module.
 - Swap the brain: change `services.llama-chat.modelPath` + `alias` (the
   inboxclean `LLM_MODEL` follows automatically) — e.g. the dense 27B
   sibling, or a future GPU re-enable once the ROCm wedge is fixed upstream.
