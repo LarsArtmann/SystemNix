@@ -88,14 +88,6 @@ let
       type = lib.types.port;
       default = 8080;
     };
-    services.signoz.settings.cadvisorPort = lib.mkOption {
-      type = lib.types.port;
-      default = 8087;
-    };
-    services.twenty.port = lib.mkOption {
-      type = lib.types.port;
-      default = 8081;
-    };
     services.openseo.port = lib.mkOption {
       type = lib.types.port;
       default = 8084;
@@ -154,8 +146,6 @@ let
     "systemd-graph"
     "systemd-timer-monitor"
     "tq-agent-pool"
-    "twenty"
-    "voice-agents"
   ];
 in
 {

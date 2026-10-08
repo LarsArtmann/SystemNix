@@ -75,10 +75,6 @@ let
       type = lib.types.bool;
       default = false;
     };
-    services.voice-agents.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-    };
     services.discordsync.enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
@@ -137,24 +133,14 @@ let
     "systemd-graph"
     "systemd-timer-monitor"
     "tq-agent-pool"
-    "twenty"
-    "voice-agents"
   ];
 
   # Port-shaped options the UNCONDITIONAL caddy base vHosts force
-  # (signoz/twenty/taskchampion/openseo/crush-daily/dns-blockd ports).
+  # (signoz/taskchampion/openseo/crush-daily/dns-blocker ports).
   portStubs = {
     services.signoz.settings.queryService.port = lib.mkOption {
       type = lib.types.port;
       default = 8080;
-    };
-    services.signoz.settings.cadvisorPort = lib.mkOption {
-      type = lib.types.port;
-      default = 8087;
-    };
-    services.twenty.port = lib.mkOption {
-      type = lib.types.port;
-      default = 8081;
     };
     services.openseo.port = lib.mkOption {
       type = lib.types.port;
