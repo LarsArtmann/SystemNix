@@ -43,6 +43,7 @@ _: {
   flake.nixosModules.llama-chat =
     {
       config,
+      options,
       lib,
       pkgs,
       ...
@@ -170,6 +171,34 @@ _: {
 
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
+        };
+
+        # Service-integration registry entry: loopback-only server (no vHost
+        # — the port registry forbids external exposure), so this is the sole
+        # Gatus surface watching :8850. Without it the port is served but
+        # nothing notices a wedged/missing brain (the freeze-#5 class) until
+        # InboxClean chat turns start failing.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          llama-chat = {
+            inherit (cfg) enable;
+            vHost.layer = "none";
+            checks = [
+              {
+                # /health is 200 only after the GGUF is mapped and the model
+                # is serving; it 503s while loading and refuses when the unit
+                # is down or skipped (ConditionPathExists with a missing GGUF).
+                name = "llama.cpp Chat";
+                group = "AI";
+                url = "http://localhost:${toString cfg.port}/health";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 2000"
+                ];
+                alert = "llama.cpp chat server down — InboxClean /chat agent brain unreachable. Check: systemctl status llama-chat, journalctl -u llama-chat -n 50 (freeze-#5 class: 94% single-thread CPU spin after the vocab warning means the ROCm/CPU path wedged).";
+              }
+            ];
+          };
         };
       };
     };
