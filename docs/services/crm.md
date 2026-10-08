@@ -22,14 +22,17 @@ disposable. Upstream repo: `/home/lars/projects/crm` (runbooks in
 
 ## Cutover (2026-10-02 micro-plan, T19–T44)
 
-While `services.twenty.enable = true`, Twenty keeps the `crm` vHost and
-the dashboard tile; crm-server serves loopback only (monitored + backed
-up). **Freezing Twenty** (`services.twenty.enable = false` +
-`nix run .#deploy`) flips `services.integration.crm-server.vHost.layer`
-from `"none"` to `"plain"` atomically in that same deploy — the registry
-keys vHosts by subdomain, so the two can never both claim it. The
-homepage tile and the post-deploy-check gate (`Ledger CRM (HTTPS)` on
-`/login`) switch over with it.
+**T42 EXECUTED 2026-10-08** (owner-authorized after backup-green: first pool
+artifact 03:47 integrity-ok + restore drill green with the production binary).
+`twenty.enable = false` landed in `platforms/nixos/system/configuration.nix`;
+that deploy flips `services.integration.crm-server.vHost.layer` from `"none"`
+to `"plain"` atomically — the registry keys vHosts by subdomain, so the two
+can never both claim it. The homepage tile, the "Ledger CRM" Gatus check
+(HTTPS, `/login`), and the post-deploy-check gate switch over with it.
+Twenty's containers stop; its Docker data stays intact until the retirement
+ladder (`docs/services/twenty.md`). Known post-flip gap: `crm.larsartmann.cloud`
+also proxies here but WebAuthn `-rpid` is `crm.home.lan` — passkey login works
+on `crm.home.lan` only until the cloud-domain decision lands.
 
 First login: visit `https://crm.home.lan` → register the sole passkey
 (MaxUsers=1 closes registration). Escape hatch: `services.crm-server.auth.enable

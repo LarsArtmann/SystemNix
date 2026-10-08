@@ -8,7 +8,9 @@ import qs.Widgets
 PluginComponent {
     id: root
 
-    property string crmUrl: pluginData.crmUrl || "http://127.0.0.1:3200"
+    // Fallback only (settings normally injected from quickshell.nix).
+    // Ledger CRM loopback healthz — port mirrors lib/ports.nix `crm`.
+    property string crmUrl: pluginData.crmUrl || "http://127.0.0.1:8091/healthz"
     property bool crmUp: false
     property int latencyMs: 0
     readonly property string statusText: crmUp ? (latencyMs > 0 ? latencyMs + "ms" : "up") : "down"

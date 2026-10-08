@@ -1,5 +1,13 @@
 # twenty (CRM, Docker Compose)
 
+> **STATUS: FROZEN — T42 executed 2026-10-08** (owner-authorized; backup-green
+> precondition satisfied, `docs/status/2026-10-08_07-48_*`). `twenty.enable =
+> false` landed in `platforms/nixos/system/configuration.nix`; the next deploy
+> stops the containers and hands `crm.<domain>` to the Ledger CRM atomically.
+> Docker data in `/data/docker` stays INTACT until the retirement ladder
+> below (T44 final archive first). This runbook now describes a disabled
+> service + its teardown plan.
+
 **Service:** `services.twenty` — `modules/nixos/services/twenty.nix` via `mkDockerService` (`lib/docker.nix`). Port 3200 (`lib/ports.nix`), loopback; compose stack = server + worker + postgres sidecar + redis. URL: `crm.<domain>` (**Layer 2 protected** — Twenty's native OIDC/SAML is billing-gated upstream; workspace config is GraphQL/UI, not env). DNS `crm`.
 
 Images are digest-relevant: `twenty` (app), `twenty-postgres`, `twenty-redis` in `lib/images.nix`; the app image is the one entry still WITHOUT a digest pin (decision row open — the queued v2.43 bump is MOOT: see Decommission below).

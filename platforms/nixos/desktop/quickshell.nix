@@ -161,7 +161,10 @@ in
         };
         systemnix-crm = {
           src = ../../../pkgs/dms-plugins/systemnix-crm;
-          settings.crmUrl = "http://127.0.0.1:${toString ports.twenty}";
+          # T42 (2026-10-08): Ledger CRM loopback healthz — unauthenticated
+          # by design (crm main.go), so the status pill measures the server
+          # without auth/TLS noise; the vHost chain is gatus's job.
+          settings.crmUrl = "http://127.0.0.1:${toString ports.crm}/healthz";
         };
         systemnix-dual-wan = {
           src = ../../../pkgs/dms-plugins/systemnix-dual-wan;
