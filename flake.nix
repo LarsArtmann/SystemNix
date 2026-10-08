@@ -3608,9 +3608,7 @@
                     clean = builtins.toJSON (auditWith ./tests/fixtures/lock-audit/clean.lock { });
                     dup = builtins.toJSON (auditWith ./tests/fixtures/lock-audit/evil-dup.lock { });
                     drift = builtins.toJSON (auditWith ./tests/fixtures/lock-audit/evil-drift.lock { });
-                    infraDup = builtins.toJSON (
-                      auditWith ./tests/fixtures/lock-audit/evil-infra-dup.lock { }
-                    );
+                    infraDup = builtins.toJSON (auditWith ./tests/fixtures/lock-audit/evil-infra-dup.lock { });
                     allowlisted = builtins.toJSON (
                       auditWith ./tests/fixtures/lock-audit/allowlisted.lock {
                         "tool.nixpkgs" = "fixture reason";

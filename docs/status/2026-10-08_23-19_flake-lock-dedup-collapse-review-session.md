@@ -90,3 +90,15 @@ Dispatch: `cat flake.nix flake.lock` + "review! and deduplicate". Mapped to the 
 **Session artifacts:** migration script logic (form-A/B follows extraction, comment attachment, empty-`inputs={}` collapse, group generation — reproducible from §c.3 description), throwaway worktree `/tmp/sn-head-probe` (disposable; canonical lock copies `/tmp/flake.lock.pre-surgery`, `/tmp/canonical-v3.lock`, `/tmp/flake.nix.pre-w3`), lock surgery jq program `/tmp/surgery.jq`.
 
 **Self-harvest note (per AGENTS TODO rules):** §f items 9 (selftest fixture leg) and 19 (PSI-aware hook fast-path) are genuinely NEW actionable items not yet in any queue — harvested into TODO_LIST/pipeline at authoring time; items 1–8 are this session's own completion chain (tracked here, not re-queued); item 11 and 16 extend EXISTING queued rows (noted on them).
+
+---
+
+## ADDENDUM 2026-10-09 — owner rulings on §g + completion-session outcome
+
+The §g questions were answered by the owner at session resume (2026-10-09):
+
+1. **Q1 attribution collapse: DENIED — keep the heuristic commits.** The §c.1 planned `git reset --soft origin/master` + pathspec re-commits is CANCELLED; attribution of the 2026-10-08 work rides THIS report only. Future sessions: do not re-attempt the collapse.
+2. **Q2 bank-sync: option (a) CONFIRMED** — the follow is declared; see upstream.md:121 close-out.
+3. **Q3 pin posture: FLOAT, not rev-in-URL** — both root pins flipped to `?ref=master` (upstream master HEAD verified == the previously locked revs at flip time, so zero rev movement; posture change only). The input comment in flake.nix documents the float semantics + the 5-repo pre-commit blast-radius check duty after waves.
+
+The completion session (2026-10-09) executed the remaining chain: W2+Q3 applied and canonicalized (444→443 nodes, bank-sync dup merged, sync-probe exit 0), W3 legacy-follows migration applied to the real tree (parity 169==169 exact, zero-diff lock re-derivation), selftest infra-dup fixture leg added (standalone verdicts verified: both new-dep dup edges FAIL the audit; clean fixture and real lock stay `[]`), nix-flakes.md doctrine refreshed (float posture, nested-edge rule, worktree-canonicalize pattern, 6 legs, bank-sync exception, regrowth datapoint). Full details + the deferred-battery outcome: `docs/status/2026-10-09_*_flake-lock-dedup-completion.md`.
