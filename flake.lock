@@ -2409,10 +2409,9 @@
         "type": "github"
       },
       "original": {
-        "owner": "LarsArtmann",
-        "repo": "go-cqrs-lite",
-        "rev": "7142e43de4fdb1096a8b96b08048e8480bedb9df",
-        "type": "github"
+        "ref": "refs/heads/master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       }
     },
     "go-cqrs-lite-claiming": {
