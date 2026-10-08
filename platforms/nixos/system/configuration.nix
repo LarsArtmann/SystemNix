@@ -236,7 +236,6 @@ in
       extraGroups = [
         "networkmanager"
         "wheel"
-        "docker"
         "input"
         "video"
         "audio"
@@ -280,19 +279,6 @@ in
           DefaultSearchProviderSuggestURL = "https://search.${config.networking.domain}/autocompleter?q={searchTerms}";
         };
       };
-    };
-
-    # Dozzle — Docker container log tailing at logs.home.lan
-    # Backend set to docker to avoid running Podman alongside Docker
-    # Definition lives in modules/nixos/services/dozzle.nix (hardened: memory
-    # cap, no-new-privileges, cap-drop=ALL). The former INLINE definition here
-    # was a split brain: the dormant module's hardening never reached the
-    # container (extraOptions absent from the generated docker run — the
-    # "config sets 256m but running container has Memory=0" TODO mystery).
-    virtualisation.oci-containers.backend = "docker";
-    services.dozzle = {
-      enable = true;
-      port = ports.dozzle;
     };
 
     # NetBird mesh VPN client — Phase 2 flip (2026-10-06): setup key in sops
@@ -1005,27 +991,12 @@ in
         enable = true;
       };
 
-      # T42 FREEZE executed 2026-10-08 (owner-authorized; cutover micro-plan
-      # 2026-10-02, T19–T44): backup-green precondition was satisfied
-      # (first pool artifact 2026-10-08 03:47 integrity-ok + restore drill
-      # green with the production binary — docs/status/2026-10-08_07-48_*).
-      # Twenty's containers stop but its Docker data stays intact in
-      # /data/docker until the retirement decision (docs/todo/services.md).
-      twenty = {
-        enable = false;
-      };
-
       # Ledger CRM — LarsArtmann's own event-sourced CRM, the Twenty
-      # replacement. With Twenty frozen above, this deploy hands
-      # crm.<domain> over atomically (integration registry keys vHosts by
-      # subdomain): Ledger claims the vHost, dashboard tile, and checks.
+      # replacement. Twenty was fully retired 2026-10-08 (module deleted with
+      # the Docker removal; its data stayed on disk in /data/docker until the
+      # manual reclaim — docs/todo/services.md).
       crm-server = {
         enable = true;
-      };
-
-      # Voice agents (LiveKit + Whisper ASR)
-      voice-agents = {
-        enable = false;
       };
 
       # Hermes AI Agent Gateway (Discord, cron jobs, messaging)

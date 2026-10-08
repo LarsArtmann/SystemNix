@@ -103,17 +103,6 @@ in
       description = "Timeout for graceful shutdown";
     };
 
-  dockerImageTag =
-    default:
-    mkOption {
-      type = types.str // {
-        check = x: types.str.check x && x != "latest";
-        description = types.str.description + " (must not be 'latest')";
-      };
-      inherit default;
-      description = "Pinned Docker image tag (must not be 'latest')";
-    };
-
   # List-of-clients option built from oidcClientType. Options compose via
   # `//` (e.g. pocket-id overrides the default list) — the raw type is
   # exported separately for single-client options (services.integration).

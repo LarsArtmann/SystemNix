@@ -44,26 +44,16 @@
     signoz-clickhouse-metrics = 9363;
     signoz-clickhouse-keeper = 9181;
     signoz-clickhouse-raft = 9234;
-    docker-engine-metrics = 9390;
 
     taskchampion = 10222;
-
-    twenty = 3200;
 
     ollama = 11434;
 
     gatus = 9110;
 
-    whisper = 7860;
-    livekit = 7880;
-    livekit-udp-start = 50000;
-    livekit-udp-end = 51000;
-
     emeet-pixyd = 8090;
 
     minecraft = 25565;
-
-    dozzle = 8084;
 
     crush-daily = 8081;
 

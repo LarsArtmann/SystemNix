@@ -20,17 +20,6 @@ in
     onFailure
     ;
   serviceTypes = import ./types.nix lib;
-  mkDockerServiceFactory =
-    { pkgs }:
-    import ./docker.nix {
-      inherit
-        pkgs
-        lib
-        harden
-        serviceDefaults
-        onFailure
-        ;
-    };
 
   mkStateDir =
     path: mode: user: group:
