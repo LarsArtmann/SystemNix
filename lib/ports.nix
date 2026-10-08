@@ -102,6 +102,12 @@
     llama-embeddings = 8848;
     llama-reranker = 8849;
 
+    # llama.cpp chat server (ROCm GPU, always-on) — the interactive agent
+    # brain for InboxClean's dashboard chat (services.llama-chat). OpenAI-
+    # compatible /v1 with native tool calls; distinct from FastFlowLM's
+    # socket-activated NPU endpoint (:52625, async workloads only).
+    llama-chat = 8850;
+
     # llama.cpp vision-language servers (CPU, socket-activated) — NSFW-audit
     # captioning/verdict stack (services.llama-vlm). Public socket on 812x,
     # internal backend on 813x (the socat bridge forwards only when the
