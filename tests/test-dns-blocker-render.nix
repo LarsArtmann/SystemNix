@@ -16,6 +16,10 @@
 #      rendered verbatim when set, and every wrapper assertion (caps /
 #      duplicates / targets / dangling refs / schedule shape / slug type)
 #      fires on its matching violation at eval time
+#   7. scoped filter proxy (ADR-0018): inert on the host (no
+#      proxy_filter_domains key while empty), rendered verbatim when set,
+#      inject URL rides the systemd env (DNSBLOCKD_PROXY_INJECT_SCRIPT_URL)
+#      and NEVER the YAML (store is world-readable)
 # Content checks grep the REAL rendered YAML, realized through the ExecStart
 # string context — not a reconstruction of the generator.
 {
@@ -87,6 +91,17 @@ let
       ];
     }).config.systemd.services.dnsblockd.serviceConfig.ExecStart;
 
+  filterSvc =
+    (inputs.self.nixosConfigurations.evo-x2.extendModules {
+      modules = [
+        {
+          services.dns-blocker.proxyFilterDomains = [ "porn.example.com" ];
+          services.dns-blocker.proxyInjectScriptURL = "http://127.0.0.1:8104/inject/filter.js";
+        }
+      ];
+    }).config.systemd.services.dnsblockd;
+  filterExec = filterSvc.serviceConfig.ExecStart;
+
   # gate-timeout-audit pattern: force the variant's assertions and require
   # the one named by the message infix to be among the FAILED ones (message
   # strings are only coerced for failed assertions — short-circuit &&).
@@ -138,6 +153,18 @@ let
     {
       ok = svc.serviceConfig.StateDirectory == "dnsblockd";
       msg = "StateDirectory must stay dnsblockd (parent of allowlist_path)";
+    }
+    {
+      ok = evox2.services.dns-blocker.proxyFilterDomains == [ ];
+      msg = "evo-x2 must keep the scoped filter proxy OFF (owner opt-in, ADR-0018)";
+    }
+    {
+      ok = filterExec != exec;
+      msg = "proxyFilterDomains no longer feeds the rendered config (phantom-option regression)";
+    }
+    {
+      ok = pkgs.lib.hasInfix "DNSBLOCKD_PROXY_INJECT_SCRIPT_URL=http://127.0.0.1:8104/inject/filter.js" (toString filterSvc.serviceConfig.Environment);
+      msg = "inject URL must ride the systemd env, never the YAML";
     }
     {
       ok = evox2.services.dns-blocker.policies == [ ];
@@ -320,6 +347,16 @@ let
       ];
       msg = "h3-without-tls-port assertion does not fire (upstream errH3RequiresTLSPort must be mirrored)";
     }
+    {
+      ok =
+        policyAssertionFires "ErrFilterNeedsAddressResponse" [
+          {
+            services.dns-blocker.proxyFilterDomains = [ "porn.example.com" ];
+            services.dns-blocker.dnsBlockResponse = "nxdomain";
+          }
+        ];
+      msg = "filter-domains x nxdomain assertion does not fire (upstream ErrFilterNeedsAddressResponse must be mirrored)";
+    }
   ];
 
   failed = builtins.filter (c: !c.ok) checks;
@@ -341,6 +378,7 @@ else
         trialExec
         ecsExec
         h3Exec
+        filterExec
         ;
     }
     ''
@@ -350,12 +388,14 @@ else
       ECFG="''${ecsExec#* -c }"
       fail() { echo "dns-blocker render content failure: $1"; exit 1; }
       H3CFG="''${h3Exec#* -c }"
+      FCFG="''${filterExec#* -c }"
       [ -f "$CFG" ] || fail "rendered config not realized: $CFG"
       [ -f "$PCFG" ] || fail "variant config not realized: $PCFG"
       [ -f "$TCFG" ] || fail "trial variant config not realized: $TCFG"
       [ -f "$ECFG" ] || fail "ecs variant config not realized: $ECFG"
       [ -f "$H3CFG" ] || fail "h3 variant config not realized: $H3CFG"
-      ${pkgs.python3}/bin/python3 - "$CFG" "$PCFG" "$TCFG" "$ECFG" "$H3CFG" <<'PYEOF' || fail "see python assert above"
+      [ -f "$FCFG" ] || fail "filter variant config not realized: $FCFG"
+      ${pkgs.python3}/bin/python3 - "$CFG" "$PCFG" "$TCFG" "$ECFG" "$H3CFG" "$FCFG" <<'PYEOF' || fail "see python assert above"
       import json, sys
       cfg = json.load(open(sys.argv[1]))
       assert cfg["allowlist_path"] == "/var/lib/dnsblockd/allowlist", "allowlist_path must point at the persistent state file"
@@ -392,6 +432,13 @@ else
       h3 = json.load(open(sys.argv[5]))
       assert h3["tls_h3_enabled"] is True, "tls_h3_enabled enable flag not rendered"
       assert h3["tls_port"] == 443, "h3 variant lost the default tls_port (QUIC terminates on the same port number)"
+      assert "proxy_filter_domains" not in cfg, "host config must omit proxy_filter_domains while the filter proxy is OFF (owner opt-in)"
+      assert cfg["proxy_tls_passthrough"] is True, "proxy_tls_passthrough drifted from the upstream splice default"
+      assert cfg["proxy_inject_strip_csp"] is True, "proxy_inject_strip_csp drifted from the upstream default"
+      assert "proxy_inject_script_url" not in cfg, "inject URL leaked into the YAML (must ride the env only — store is world-readable)"
+      filt = json.load(open(sys.argv[6]))
+      assert filt["proxy_filter_domains"] == ["porn.example.com"], "filter domains not rendered verbatim"
+      assert "proxy_inject_script_url" not in filt, "inject URL leaked into the YAML on the filter variant too"
       print("content OK")
       PYEOF
       echo "dns-blocker render: allowlist persistence, rate limit, log sampling, extraDomains belt, tracking gate, journal WAL, policies, trial blocklists, ECS, h3 OK" > $out

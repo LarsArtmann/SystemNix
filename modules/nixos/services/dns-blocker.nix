@@ -4,7 +4,9 @@
 # dnsblockd is the sole DNS resolver on :53 with an embedded recursive resolver
 # (IANA root hints + DNSSEC), local zones, LAN ACLs, DoT/DoH forwarding, and
 # blocklist matching.
-# The block-page HTTP server runs on the block IP (:80/:443).
+# The block-page HTTP server runs on the block IP (:80/:443). It also hosts the
+# scoped filter proxy (ADR-0018): opted-in domains resolve to the block IP and
+# the L7 proxy serves the real upstream with the classifier script injected.
 #
 # Blocklist files are fetched at eval time (pkgs.fetchurl) and passed directly
 # to dnsblockd via the dns_blocklists config key — dnsblockd parses them natively
@@ -301,7 +303,11 @@ _: {
 
             # ── Reverse proxy for temp-allowed domains ──
             proxy_enabled = cfg.proxyEnabled;
+            proxy_tls_passthrough = cfg.proxyTLSPassthrough;
             proxy_connect_timeout = cfg.proxyConnectTimeout;
+            # CSP stripping applies only to injected filter-proxy responses;
+            # rendered unconditionally so the deployed config stays explicit.
+            proxy_inject_strip_csp = cfg.proxyInjectStripCSP;
 
             # Double-submit CSRF protection for the dashboard's action forms
             # (allow/report/bulk). Requires dnsblockd >= v0.9.3 (T300 fixed the
@@ -363,6 +369,9 @@ _: {
           }
           // lib.optionalAttrs (cfg.proxyUpstreamDNS != [ ]) {
             proxy_upstream_dns = cfg.proxyUpstreamDNS;
+          }
+          // lib.optionalAttrs (cfg.proxyFilterDomains != [ ]) {
+            proxy_filter_domains = cfg.proxyFilterDomains;
           }
           // lib.optionalAttrs (cfg.dnsForwarders != [ ]) {
             dns_forwarders = cfg.dnsForwarders;
@@ -837,6 +846,56 @@ _: {
           '';
         };
 
+        proxyTLSPassthrough = mkOption {
+          type = types.bool;
+          default = true;
+          description = ''
+            Splice HTTPS connections for temp-allowed domains to the real backend
+            at the TCP layer (SNI routing), so browsers get the backend's real
+            certificate without trusting the dnsblockd CA. Filter domains
+            (proxyFilterDomains) never splice regardless — their TLS must
+            terminate on the operator CA for script injection (ADR-0018).
+          '';
+        };
+
+        # ── Scoped filter proxy (ADR-0018) ──
+
+        proxyFilterDomains = mkOption {
+          type = types.listOf types.str;
+          default = [ ];
+          description = ''
+            Registrable-domain suffixes answered with the block IP so the L7
+            proxy can serve the real upstream and inject the classifier script
+            (ADR-0018 scoped DNS lie). TLS for these domains always terminates
+            on the operator CA — devices must trust the dnsblockd CA. Empty =
+            feature off. Precedence: allowlist > filter > block. Requires
+            dnsBlockResponse "zero_ip" (a lie needs an address; upstream
+            rejects the NXDOMAIN combination at startup). The filter set is
+            read at startup — changes restart the service (blocklist feeds
+            keep their own hot reload).
+          '';
+        };
+
+        proxyInjectScriptURL = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = ''
+            Script injected into strict text/html 200 responses (<=2MB) on
+            filter domains — typically the nsfw-classifier's
+            http://<host>:<port>/inject/filter.js. Empty disables injection
+            (zero-touch passthrough). Passed via the DNSBLOCKD_PROXY_INJECT_SCRIPT_URL
+            env var, NOT the YAML: the config file lands world-readable in the
+            Nix store and the URL can carry a sensitive host:port (same rule
+            as upstream's auth_token).
+          '';
+        };
+
+        proxyInjectStripCSP = mkOption {
+          type = types.bool;
+          default = true;
+          description = "Strip upstream Content-Security-Policy headers on injected filter-proxy responses only (inert while proxyInjectScriptURL is null).";
+        };
+
         # ── Device + user registry (household attribution) ──
 
         devices = mkOption {
@@ -962,6 +1021,14 @@ _: {
           {
             assertion = cfg.localZones != [ ] || cfg.localRecords == { };
             message = "services.dns-blocker.localZones must be set when localRecords has entries — without zone boundaries, unknown names in local zones leak upstream.";
+          }
+          {
+            # Upstream NewHandler rejects filter domains under NXDOMAIN block
+            # mode (ErrFilterNeedsAddressResponse): the scoped DNS lie needs an
+            # address to answer with. Fail at eval instead of crash-looping
+            # the sole LAN resolver at boot.
+            assertion = cfg.proxyFilterDomains == [ ] || cfg.dnsBlockResponse == "zero_ip";
+            message = "services.dns-blocker.proxyFilterDomains requires dnsBlockResponse \"zero_ip\" (upstream ErrFilterNeedsAddressResponse: a DNS lie needs an address).";
           }
           {
             assertion = !(cfg.dnsRateLimitPerSec > 0) || cfg.dnsRateLimitBurst > 0;
@@ -1269,6 +1336,14 @@ _: {
                       # GOTRACEBACK=single shows only the signal-handling
                       # goroutine, which says nothing about a mutex deadlock).
                       "GOTRACEBACK=all"
+                    ] ++ lib.optionals (cfg.proxyInjectScriptURL != null) [
+                      # proxy_inject_script_url rides the env, never the YAML:
+                      # the config file is world-readable in the Nix store and
+                      # the URL can carry a sensitive host:port (same rule as
+                      # upstream's auth_token). Koanf's flat env mapping turns
+                      # DNSBLOCKD_PROXY_INJECT_SCRIPT_URL into the
+                      # proxy_inject_script_url config key.
+                      "DNSBLOCKD_PROXY_INJECT_SCRIPT_URL=${cfg.proxyInjectScriptURL}"
                     ];
                     EnvironmentFile = lib.optionals (cfg.oidcIssuerURL != "") [ oidcEnvFile ];
                     ExecStartPre = [
