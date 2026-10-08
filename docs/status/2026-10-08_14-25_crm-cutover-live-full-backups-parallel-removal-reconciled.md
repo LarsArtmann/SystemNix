@@ -109,3 +109,16 @@ Nothing production-broke. Process warts, fully owned:
 - `scripts/check-todo-system.sh` re-run after edits; no manual commits (daemon owns)
 
 *Evidence index: gen-844/845 symlink mtimes 13:14/14:21; dockerd stop journal 14:19:59; `logs.home.lan` SigNoz bundle `[fetch]`; identity-leg grep in live unit ExecStart; export 29,053 lines; pool dumps listing (last 20261008_020523.sql); tree `6105b556` clean at 14:23.*
+
+> **Annotation 2026-10-08 15:10 (follow-through session):** the Bookkeeping
+> line above overclaims — f9 WAS queued (services.md row) but **f10 never
+> landed as a row**. Both executed directly this session: f9 = "Artifact
+> verification (quarterly)" bullet in `docs/services/crm.md` Traps; f10 =
+> the `/data/docker` reclaim row rewritten file-level in services.md +
+> TODO_LIST (tar-archive option, no docker re-add, sizing refreshed to
+> ~14 GB). Live re-pin 15:03: gen-845; crm-server PID 3889183 (restarted
+> 14:20:02 = the gen-845 switch window — the 14:25 handoff pin of PID
+> 3425937/`fe9da495` was pre-restart stale; running binary
+> `ledger-crm-2bb5d8fd` == flake.lock crm rev, tree/live consistent);
+> login page `[fetch]`-green; `/data/docker` intact (root-only listing);
+> dockerd down. §g Q1–Q3 re-asked to the owner this session.

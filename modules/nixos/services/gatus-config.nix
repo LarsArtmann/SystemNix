@@ -227,6 +227,29 @@ _: {
         })
       ];
 
+      # Onprem host reachability (CV TODO row 225, harvested 2026-09-30):
+      # the host at 192.168.1.100 went L2-absent 2026-09-29 and NOTHING
+      # paged — the outage only surfaced as 90+ accumulating blocked-
+      # predicate readings in CV's task queue. TCP-22 is the same
+      # reachability predicate CV's scripts/host-reachable.sh dials (gatus
+      # icmp would need raw sockets; SSH-port reachability is the owner's
+      # declared signal). Doctrine (same as mailChecks above): the host is
+      # KNOWN-RED right now, so NO discordAlert is wired yet — a
+      # permanently-red endpoint burns Discord failure events around the
+      # clock. The check still reaches PapDashboard via the ingest pass
+      # (dashboard-visible, not page-loud). Wire
+      #   alerts = discordAlert "onprem nixos-0 unreachable over SSH — host down/off (power, cable, switch port). Check: router ARP table, switch port LEDs, smart-plug power.";
+      # only after this check first reads green, so a FUTURE outage pages.
+      onpremChecks = [
+        (mkHttpCheck {
+          name = "onprem nixos-0 SSH";
+          group = "Infrastructure";
+          url = "tcp://192.168.1.100:22";
+          interval = "5m";
+          conditions = [ "[CONNECTED] == true" ];
+        })
+      ];
+
       # Native OIDC via Pocket ID (Layer 1 SSO). Provision-only: evo-x2 always
       # runs pocket-id-config.provision, which writes the client secret to the
       # file below. systemd LoadCredential reads it as root (DynamicUser means the
@@ -1171,6 +1194,7 @@ _: {
               ++ map mkWebsiteCheck ossWebsites
               ++ netbirdControlPlaneChecks
               ++ mailChecks
+              ++ onpremChecks
               # Registry fan-out (services.integration.<name>.checks) — inside
               # the withPapIngest pass so registry endpoints get the
               # PapDashboard ingest alert appended like every built-in one.
