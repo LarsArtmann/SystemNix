@@ -57,21 +57,12 @@ lib.filterAttrs (_: v: v != null) {
   # protocol, docs/agents/nix-flakes.md). Re-add ONLY via nix-hash-fix
   # evidence, never by hand.
   buildflow = flakePkg inputs.buildflow;
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave — class
-  # comment at buildflow): got t2UbXb33… at locked rev 28b2eade
-  # (upstream stale at locked rev AND HEAD; first-hand keep-going
-  # enumeration, /tmp/toplevel-fix-20261007.log). Drop when upstream
-  # re-pins or the lock moves past an upstream-fixed rev.
-  cqrs-lint =
-    let
-      pkg = inputs.go-cqrs-lite.packages.${system}.cqrs-lint or null;
-    in
-    if pkg == null then
-      null
-    else
-      pkg.overrideAttrs {
-        vendorHash = "sha256-t2UbXb33dwEkhaLZzYNsGx3JzxqZjMgGCGr3rJTa4D0=";
-      };
+  # cqrs-lint shim DROPPED (2026-10-09): the lock moved to 8ab092fa
+  # (go-cqrs-lite input update carrying the F031 database/sql exemption)
+  # whose upstream flake.nix ALREADY carries the got hash (qRvdn5dH… ==
+  # the FOD mismatch output — shim-drop protocol, docs/agents/nix-flakes.md).
+  # Re-add ONLY via nix-hash-fix evidence, never by hand.
+  cqrs-lint = flakePkg inputs.go-cqrs-lite;
   # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave — class
   # comment at buildflow): got 4wgXASTZ… at locked rev c09818e3
   # (upstream stale at locked rev AND HEAD). Drop when upstream re-pins
