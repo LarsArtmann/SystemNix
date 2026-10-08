@@ -291,7 +291,13 @@ in
                 "session-*"
                 "user@*"
               ];
-              checkBlock = svc: "check_service ${svc}";
+              # `|| true`: writeShellApplication runs with errexit — a bare
+              # failing check_service kills the script before the FAILED
+              # report or notify-send ever runs (2026-10-08: the checker died
+              # silently at the gated-down forgejo, 6s of retries then exit 1
+              # with zero output, because of exactly this). Failures must
+              # accumulate in FAILED and reach the report.
+              checkBlock = svc: "check_service ${svc} || true";
               ignorePattern = builtins.concatStringsSep " | " ignoredFailedServices;
               healthCheck = pkgs.writeShellApplication {
                 name = "service-health-check";

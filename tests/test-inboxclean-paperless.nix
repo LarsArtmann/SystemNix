@@ -68,6 +68,9 @@ let
     inboxcleanModule
     # co-import: the module declares a services.integration entry (mkIf-wrapped options?-guard caveat, 2026-09-15)
     (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration
+    # co-import: inboxclean's chat wiring references services.llama-chat
+    # options (OPENAI_BASE_URL/LLM_MODEL, single source of truth, 2026-10-08)
+    (import ../modules/nixos/services/llama-chat.nix { }).flake.nixosModules.llama-chat
     sopsStub
     (
       { lib, ... }:

@@ -296,7 +296,14 @@
                 Type = "oneshot";
                 User = "root";
               }
-              (harden { })
+              # CAP_SYS_PTRACE (2026-10-08): reading /proc/<pid>/exe of a
+              # foreign-uid process (bank-sync runs as its own user) needs it;
+              # the empty default CapabilityBoundingSet strips it from root,
+              # readlink dies EACCES, and NixOS's implicit `set -e` in the
+              # script wrapper then killed the unit BEFORE any diagnostic echo
+              # — 40/40 silent false-positive failures since go-live (the
+              # nix-build-cleanup CAP_DAC_OVERRIDE class).
+              (harden { CapabilityBoundingSet = "CAP_SYS_PTRACE"; })
               (serviceOneshotDefaults { })
             ];
             script = ''
@@ -306,7 +313,10 @@
                 echo "bank-sync-rev-drift: bank-sync.service has no MainPID (daemon down — the liveness check owns that alarm, failing here too so the state is never silent)" >&2
                 exit 1
               fi
-              running="$(${pkgs.coreutils}/bin/readlink "/proc/$main_pid/exe")"
+              # `|| true`: NixOS script wrappers run under `set -e` — a failed
+              # readlink (EACCES/EPERM) must surface as the loud mismatch
+              # report below, never a silent pre-echo death.
+              running="$(${pkgs.coreutils}/bin/readlink "/proc/$main_pid/exe" || true)"
               if [ "$running" != "$expected" ]; then
                 echo "bank-sync-rev-drift: running binary does not match the deployed generation." >&2
                 echo "  running : $running" >&2
