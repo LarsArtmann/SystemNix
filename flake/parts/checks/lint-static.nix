@@ -612,17 +612,17 @@
                   inherit deliberate;
                 });
               legs = {
-                clean = builtins.toJSON (auditWith ./tests/fixtures/lock-audit/clean.lock { });
-                dup = builtins.toJSON (auditWith ./tests/fixtures/lock-audit/evil-dup.lock { });
-                drift = builtins.toJSON (auditWith ./tests/fixtures/lock-audit/evil-drift.lock { });
-                infraDup = builtins.toJSON (auditWith ./tests/fixtures/lock-audit/evil-infra-dup.lock { });
+                clean = builtins.toJSON (auditWith (root + "/tests/fixtures/lock-audit/clean.lock") { });
+                dup = builtins.toJSON (auditWith (root + "/tests/fixtures/lock-audit/evil-dup.lock") { });
+                drift = builtins.toJSON (auditWith (root + "/tests/fixtures/lock-audit/evil-drift.lock") { });
+                infraDup = builtins.toJSON (auditWith (root + "/tests/fixtures/lock-audit/evil-infra-dup.lock") { });
                 allowlisted = builtins.toJSON (
-                  auditWith ./tests/fixtures/lock-audit/allowlisted.lock {
+                  auditWith (root + "/tests/fixtures/lock-audit/allowlisted.lock") {
                     "tool.nixpkgs" = "fixture reason";
                   }
                 );
                 stale = builtins.toJSON (
-                  auditWith ./tests/fixtures/lock-audit/clean.lock {
+                  auditWith (root + "/tests/fixtures/lock-audit/clean.lock") {
                     "ghost.nixpkgs" = "x";
                   }
                 );

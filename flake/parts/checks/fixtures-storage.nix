@@ -92,7 +92,7 @@
             templateOverrideModules = [
               inputs.self.nixosModules.integration
               inputs.sops-nix.nixosModules.sops
-              ./platforms/nixos/system/backup.nix
+              (root + "/platforms/nixos/system/backup.nix")
               {
                 services.offsite-borg.enable = true;
                 sops.templates."borg-env".content = "BORG_REPO=x";
@@ -102,11 +102,11 @@
 
             controlFailing = failingPin (pinAssertionsOf [
               inputs.self.nixosModules.integration
-              ./platforms/nixos/system/backup.nix
+              (root + "/platforms/nixos/system/backup.nix")
             ]);
             scriptDriftFailing = failingPin (pinAssertionsOf [
               inputs.self.nixosModules.integration
-              ./platforms/nixos/system/backup.nix
+              (root + "/platforms/nixos/system/backup.nix")
               driftedModule
             ]);
             templateDriftFailing = failingPin (pinAssertionsOf templateOverrideModules);
