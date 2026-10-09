@@ -1075,8 +1075,28 @@
         "x86_64-linux"
       ];
 
-      # Import service modules — registered as flake-parts modules (inputs.self.nixosModules.*)
-      imports = discoveredModulePaths;
+      # Import the split perSystem parts (formatter, packages, devShells,
+      # checks, apps — flake/parts/) + the auto-discovered service modules —
+      # registered as flake-parts modules (inputs.self.nixosModules.*).
+      # Part files receive `inputs` via mkFlake specialArgs and the shared
+      # bindings below via _module.args (see docs/agents/nix-flakes.md).
+      imports = [
+        ./flake/parts/formatter.nix
+      ] ++ discoveredModulePaths;
+
+      # Values the part files need that are NOT raw flake inputs: computed
+      # once here (they also feed systems/*.nix below) and injected as module
+      # args. `root` is the flake source root — part files use it instead of
+      # `./.`-relative paths (their own directory differs).
+      _module.args = {
+        inherit
+          mkLarsPackages
+          sharedOverlays
+          linuxOnlyOverlays
+          disableTests
+          ;
+        root = ./.;
+      };
 
       # Executable disk-geometry specs (docs, not applied by any host —
       # see disko/samsung-tlc.nix for the discovery-trap rationale).
@@ -1101,46 +1121,6 @@
               ++ [ disableTests ]
               ++ lib.optionals (lib.hasSuffix "-linux" system) linuxOnlyOverlays;
           };
-
-          # Formatter: treefmt-full-flake's treefmt with ONE local patch —
-          # generated HTML report bundles under docs/ are NEVER formatted
-          # (docs/CONTRIBUTING.md "Big self-contained HTML reports": the inline mermaid
-          # JS is generated content; prettier expands the 3.6 MB bundle to
-          # 7.8 MB and that churn has oscillated the blob in git history
-          # repeatedly — 2026-09-20 and 2026-09-21). The upstream wrapper
-          # bakes its --config-file store path; the config text is
-          # regenerated with the excludes added and the formatter programs
-          # and their versions stay untouched.
-          formatter =
-            let
-              upstream = treefmt-full-flake.formatter.${system};
-              # The wrapper's --config-file path is extracted in the BUILDER,
-              # never at eval: reading "${upstream}/bin/treefmt" at eval forces
-              # realization of the treefmt package during EVERY flake check,
-              # and after nixpkgs churn invalidates the drv the eval dies
-              # `path '...treefmt.drv' is not valid` (the niri-class
-              # package-output-coercion gotcha; dead pre-commit gate
-              # 2026-09-24..25). A failed extraction fails the BUILD loudly.
-              patchedConfig = pkgs.runCommand "treefmt-systemnix-excludes.toml" { } ''
-                wrapper="${upstream}/bin/treefmt"
-                configLine="$(grep -m1 -- '--config-file=' "$wrapper" || true)"
-                case "$configLine" in
-                  *--config-file=*) ;;
-                  *)
-                    echo "treefmt-full-flake wrapper no longer carries --config-file; rework the formatter override in flake.nix" >&2
-                    exit 1
-                    ;;
-                esac
-                upstreamConfig="$(printf '%s\n' "$configLine" | sed -n 's/.*--config-file=\([^[:space:]]\+\).*/\1/p')"
-                substitute "$upstreamConfig" "$out" \
-                  --replace 'excludes = ["*.lock"' 'excludes = [
-                "docs/**/*.html",
-                "*.lock"'
-              '';
-            in
-            pkgs.writeShellScriptBin "treefmt" ''
-              exec ${upstream}/bin/treefmt --config-file=${patchedConfig} --tree-root-file=flake.nix "$@"
-            '';
 
           packages =
             (mkLarsPackages system)

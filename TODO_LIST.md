@@ -797,6 +797,7 @@
 - [ ] [blocked:user] **Unhook toggle ceremony + functional check** (popup → Hide Video Sidebar → Hide Recommended; watch page shows no recommendation sidebar) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §c)
 - [ ] [watch] **Unhook maintenance watch** (closed-source, updated 2026-03-19; if YT DOM churn breaks sidebar hiding, fall back to the one-line uBO filter) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §f.3)
 - [ ] [decision] **Darwin YT-extension parity: Unhook (and the YT drawer) on macOS Brave/Helium too?** (platforms/common/programs/chromium.nix carries only ytShortsBlocker there) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §g.3)
+- [ ] [ready] **Enable `programs.nix-index` + `services.plocate` (which-package-provides-X + locate QoL)** — check the index-timer IO weight against the PSI doctrine first → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: docs/status/2026-10-09_21-13_cool-nixos-options-exploration-self-review.md §f.11)
 
 ### services / pipeline (harvest 2026-09-30 06:5x)
 
