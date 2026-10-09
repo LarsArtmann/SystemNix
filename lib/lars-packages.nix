@@ -61,7 +61,26 @@ lib.filterAttrs (_: v: v != null) {
   # no-op derivation (BuildFlow `nix build .` needs it; the real CLI lives at
   # packages.cqrs-lint). The 2026-10-09 shim drop kept flakePkg, which resolved
   # to the empty derivation — deploying it would silently remove the binary.
-  cqrs-lint = (inputs.go-cqrs-lite.packages.${system} or { }).cqrs-lint or null;
+  # TEMPORARY vendorHash shim RE-ADDED (2026-10-09 ~23:00, first-hand FOD
+  # evidence — the documented bootstrap exception): the 00:55 drop was valid
+  # at lock rev 8ab092fa ("upstream ALREADY carries the got hash qRvdn5dH…"),
+  # but the lock moved to 0a05f681 at 01:06 and upstream still pins the
+  # 8ab092fa-era hash at BOTH the locked rev and master (ee2244d90). Evidence:
+  # the 22:36 deploy FOD run failed specified qRvdn5dH… vs got RmVOSlDz….
+  # Upstream repo is BUSY (live session, ~250-file churn, unmerged path) so
+  # the paste-upstream → push → re-lock → re-drop cycle is queued
+  # (docs/todo/upstream.md), not raced. Drop when upstream re-pins or the
+  # lock moves past an upstream-fixed rev.
+  cqrs-lint =
+    let
+      pkg = (inputs.go-cqrs-lite.packages.${system} or { }).cqrs-lint or null;
+    in
+    if pkg == null then
+      null
+    else
+      pkg.overrideAttrs {
+        vendorHash = "sha256-RmVOSlDzlz1mhrh/w2/dKg3RC3ZR+FMjmI17lWqaATo=";
+      };
   # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave — class
   # comment at buildflow): got 4wgXASTZ… at locked rev c09818e3
   # (upstream stale at locked rev AND HEAD). Drop when upstream re-pins
