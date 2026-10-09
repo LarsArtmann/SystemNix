@@ -103,20 +103,13 @@ lib.filterAttrs (_: v: v != null) {
   # /tmp/toplevel-fix-20261007.log). Re-add ONLY via nix-hash-fix
   # evidence, never by hand.
   golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave — class
-  # comment at buildflow): got MUWz8cpf… at locked rev 4fc973bc
-  # (upstream stale at locked rev AND HEAD). Drop when upstream re-pins
-  # or the lock moves past an upstream-fixed rev.
-  library-policy =
-    let
-      pkg = flakePkg inputs.library-policy;
-    in
-    if pkg == null then
-      null
-    else
-      pkg.overrideAttrs {
-        vendorHash = "sha256-MUWz8cpfjmMxS9hjVBCFVUKwmGLQArHJKul0QH26xwM=";
-      };
+  # library-policy shim DROPPED (2026-10-09): its drop condition ("lock
+  # moves past an upstream-fixed rev") is met — the lock holds 5d2a670,
+  # whose flake bakes vendorHash Qey6w74G… (the same "got" hash the stale
+  # shim overrode with MUWz8cpf…, re-breaking the FOD it existed to fix)
+  # and `nix build .#library-policy` builds clean (verified 2026-10-09).
+  # Re-add ONLY via nix-hash-fix evidence, never by hand.
+  library-policy = flakePkg inputs.library-policy;
   # TEMPORARY go toolchain + vendorHash shim (toolchain leg 2026-10-03,
   # vendorHash leg RE-PINNED 2026-10-07 wave): md-go-validator's
   # go.mod floor is 1.27.1 while nixpkgs' default go is 1.26.8 — the FOD
