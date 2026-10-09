@@ -37,6 +37,16 @@ fired, model cold-loaded 3m16s, `/v1/models` serving — zero sudo.
 
 Source: <https://huggingface.co/HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive>
 
+## Measured (2026-10-08, uncapped manual run mirroring unit flags)
+
+- Load: 3m16s from warm page cache; ~8.3 min cold under concurrent IO
+  (the unit's 15min start budget covers it).
+- Throughput: ~17 tok/s plain generation (12 threads); a 167-token tool
+  call answered in 16s. `CPUQuota = 1200%` matches threads=12 — a 400%
+  quota would quarter this.
+- Tools: `finish_reason: tool_calls` with parsed arguments in auto mode —
+  the abliterated tune keeps the Qwen3.6 tool template intact.
+
 ## Consumers
 
 - **InboxClean** (`modules/nixos/services/inboxclean.nix`):
@@ -57,6 +67,13 @@ Source: <https://huggingface.co/HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Agg
 - Verify: `curl :8850/v1/models` must list the alias;
   `journalctl -u llama-chat -n 50` for load/wedge signatures (the freeze-#5
   class: 94% single-thread CPU spin after a vocab warning).
-- The 23.4 GB expert pool lives in page cache; `MemoryMax = 32G` bounds the
-  unit. If the memory-emergency-guard ever trips BECAUSE of this residency,
-  add `llama-chat.service` to its churn list — do not silence the guard.
+- The 23.4 GB expert pool lives in page cache (charged to the unit on a
+  cold cache); measured idle-serving footprint ~32.3 GB (weights + ~8.9 GB
+  anon KV/compute), so `memoryMax = "48G"` and harden derives
+  `MemoryHigh = 80% x 48G = 38.4G`. NEVER merge `MemoryMax` outside a bare
+  `harden {}` call: the throttle watermark derives from harden's own
+  ARGUMENT — the first deployment silently ran MemoryHigh at 410 MB
+  (443 MB peak, 10.7 GB swapped, 1h53m stuck load, 45s timeout on a
+  16-token reply). If the memory-emergency-guard ever trips BECAUSE of this
+  residency, add `llama-chat.service` to its churn list — do not silence
+  the guard.
