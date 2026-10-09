@@ -19,7 +19,7 @@
     }:
     {
       # Allow unfree and broken packages for all systems
-      _module.args.pkgs = import nixpkgs {
+      _module.args.pkgs = import inputs.nixpkgs {
         inherit system;
         config.allowUnfree = true;
         config.allowBroken = false; # # <-- THIS MUST ALWAYS BE FALSE!
@@ -28,6 +28,5 @@
           ++ [ disableTests ]
           ++ lib.optionals (lib.hasSuffix "-linux" system) linuxOnlyOverlays;
       };
-
     };
 }

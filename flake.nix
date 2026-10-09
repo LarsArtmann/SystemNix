@@ -1080,7 +1080,17 @@
       # Part files receive `inputs` via mkFlake specialArgs and the shared
       # bindings below via _module.args (see docs/agents/nix-flakes.md).
       imports = [
+        ./flake/parts/pkgs.nix
         ./flake/parts/formatter.nix
+        ./flake/parts/packages.nix
+        ./flake/parts/devshells.nix
+        ./flake/parts/apps.nix
+        ./flake/parts/checks/lint-static.nix
+        ./flake/parts/checks/fixtures-forgejo.nix
+        ./flake/parts/checks/fixtures-storage.nix
+        ./flake/parts/checks/fixtures-migrations.nix
+        ./flake/parts/checks/selftests.nix
+        ./flake/parts/checks/vm-tests.nix
       ]
       ++ discoveredModulePaths;
 
