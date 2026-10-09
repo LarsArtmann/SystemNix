@@ -74,6 +74,10 @@ Source: <https://huggingface.co/HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Agg
   `harden {}` call: the throttle watermark derives from harden's own
   ARGUMENT — the first deployment silently ran MemoryHigh at 410 MB
   (443 MB peak, 10.7 GB swapped, 1h53m stuck load, 45s timeout on a
-  16-token reply). If the memory-emergency-guard ever trips BECAUSE of this
-  residency, add `llama-chat.service` to its churn list — do not silence
-  the guard.
+  16-token reply). Eval-enforced since 2026-10-09: `memory-watermark-audit.nix`
+  throws on ANY unit whose final `MemoryHigh` < 50% of `MemoryMax`
+  (negative-tested in `scripts/negative-test-lints.sh`, group `memory`);
+  live residue probe: `cat /sys/fs/cgroup/system.slice/llama-chat.service/memory.events`
+  — a nonzero `high` counter = throttling since start (resets on restart).
+  If the memory-emergency-guard ever trips BECAUSE of this residency, add
+  `llama-chat.service` to its churn list — do not silence the guard.

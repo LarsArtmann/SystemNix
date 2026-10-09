@@ -223,6 +223,7 @@
 - [ ] [decision] **Loader timeout 2→1** — ~1 s boot win vs the boot-mirror selection window (hold-a-key still interrupts at 1 s); owner call on the tradeoff → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-10-06_21-58_boot-speed-session-brutal-self-review-status.md §f8)
 - [ ] [ready] **Root-cause the dead automount trapping node_exporter threads in D-state (2 threads 18:4x 2026-10-07, 1 still at 07:38; phantom-PSI ~69% with 0.2% disk busy makes EVERY deploy need DEPLOY_FORCE_PRESSURE=1 until reboot): identify the mount (timeout=0 autofs candidates: buildcache/rust-cache/btrfs-root), fix it or exclude it from the filesystem collector** → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-10-08_07-38_backlog-closeout-deploy-unblock-misdiagnosis-self-review.md §f.1)
 
+- [ ] [ready] **Extend memory-watermark-audit to HM user services** (audit covers NixOS system+user units; HM user services set zero memory knobs today, verified — future-proofing) → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-10-09_22-20_memory-watermark-trap-audit-status.md §f.2)
 ### monitoring
 
 - [ ] [ready] **Fix \x2d label escaping in the system-health textfile writer** (system-health.nix:1488 renders systemd's \x2d escape into label values — invalid in Prometheus text format; node_exporter rejects the WHOLE system_health.prom, all system-health metrics blind; 2nd quoting incident from this collector after 2026-09-20 nrestarts) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: same report §f.3)
@@ -275,6 +276,7 @@
 - [ ] [ready] **Fold the python-urllib+gunzip `/metrics` probe recipe into the monitoring runbook** (the fetch tool fails on gzip bodies with "not valid UTF-8"; recipe lives in `/tmp/bank-sync-sca-watch.py`, fold it durably) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-10-07_17-25_bank-sync-sca-blocked-wrong-phone-session.md §f.20)
 - [ ] [ready] **Push-lag tripwire: alert when master runs far ahead of origin or last-push ages out** (daemon commits but never pushes — proven 2026-10-08 when 38 commits sat unpushed ~15 h with remote fine; ahead-by > N or push-age > M → gatus/textfile alert) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-10-08_09-10_self-review-brutal-post-execution-session.md §f.13)
 
+- [ ] [ready] **Automated runtime throttle detection: memory.events `high` counter sweep in post-deploy-check (+ optional textfile/SigNoz rule)** — eval gate kills NEW config traps; a runtime-throttled unit still surfaces nowhere (llama-chat 2026-10-08: 46k events, zero alerts) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-10-09_22-20_memory-watermark-trap-audit-status.md §f.1)
 ### ai-stack
 
 - [ ] **Bisect the llama.cpp 0.3.0 mid-load CPU-spin upstream (ROCm runtime / kernel / GPU-state — upstream of llama.cpp) — THE gate for re-enabling llama-rag and unblocking the paperless RAG item** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
@@ -414,6 +416,7 @@
 - [x] [ready] ~~**hermes drain check: did the 19:01 deploy restart kill an in-flight agent session?**~~ **ANSWERED 2026-10-08: NO drain — hermes.service never restarted at the gen-840 switch** (main pid alive since 16:29, no Stop/Start lines 19:00-19:12; the deploy warning fired conservatively) → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-08_07-38_backlog-closeout-deploy-unblock-misdiagnosis-self-review.md §f.11 · evidence: docs/status/2026-10-08_08-22_handoff-nextsteps-execution-forensics-closeout.md §a.7)
 - [ ] [ready] **bank-sync fix-locus verification (DEPLOY BLOCKER): upstream re-push vs tree-side — can buildflow even reach it?** (watch row claims buildflow owns the repair, but the vendorHash appears baked upstream — neither mismatch hash is tree-side; verify buildflow touches bank-sync, check if the got-hash output already exists in store, correct the row if the ownership claim is wrong; trash the two /tmp evidence logs when resolved) → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-08_09-10_self-review-brutal-post-execution-session.md §d.2/§f.5)
 
+- [ ] [ready] **Fix the `catalog` integration-subdomains eval warning** (19 subdomains without catalog entries will vanish from derived DNS once dns-local.nix is deleted; warning on every toplevel eval) → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-09_22-20_memory-watermark-trap-audit-status.md §f.4)
 ### upstream
 
 - [ ] **PMA OTel span instrumentation upstream (overview `fff1035` pattern)** → [docs/todo/upstream.md](docs/todo/upstream.md)
@@ -471,6 +474,7 @@
 - [ ] [ready] **Verify upstream CI green for the two 2026-10-07 vendorHash paste pushes** (bank-sync `ab2c9dcd` — local pre-commit golangci-lint leg was red before the change, confirm CI agrees it is not the paste; InboxClean `b514bda` — repo renamed from inboxclean, redirect active) → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: docs/status/2026-10-07_12-17_vendorhash-wave3-fod-unblock.md §a/§b)
 - [ ] [watch] **hermes-agent: move the lock forward once upstream fixes the web TS1484 build** (0e21933 fails web-0.0.0 buildPhase — type-only imports under verbatimModuleSyntax, SessionsPage.tsx:52-53; held at proven e76fb95; forward-move only after a green toplevel build; the blanket-update source must not race it) → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: docs/status/2026-10-08_07-38_backlog-closeout-deploy-unblock-misdiagnosis-self-review.md §f.3)
 
+- [ ] [ready] **Drop or fix the go-structure-linter `treefmt-nix` override in flake.nix** (every eval warns the override targets a non-existent input; flake.nix ~459-466) → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: docs/status/2026-10-09_22-20_memory-watermark-trap-audit-status.md §f.5)
 ### security
 
 - [ ] **ROOT: settle the `/run/secrets/sops-nix-age-key` ghost** → [docs/todo/security.md](docs/todo/security.md)
@@ -727,6 +731,7 @@
 - [ ] [ready] **Same-rev FOD drift probe: pre-deploy re-verification for pinned FOD inputs** (bank-sync go-modules mismatched 2026-10-08 with UNCHANGED rev+recipe — built fine 14 h earlier; probe re-runs pinned FOD fetches / dry-run-diffs against store before deploys to catch the subclass) → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-08_09-10_self-review-brutal-post-execution-session.md §f.14)
 - [ ] [ready] **Standardize the report harvest marker + teach it to check-todo-system** (ledger sections should carry the literal HARVESTED / NOT HARVESTED vocabulary the checker greps; the 08-22 report's freeform ledger style risks not registering) → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-08_09-10_self-review-brutal-post-execution-session.md §f.18)
 
+- [ ] [ready] **Wire negative-test-lints.sh into CI** (zero workflow references — all lint selftests incl. the new memory-watermark contract run only when a local session remembers) → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-09_22-20_memory-watermark-trap-audit-status.md §f.3)
 ### pixel6
 
 - [ ] **Udev rule for Google USB vendor 18d1 (adb access)** → [docs/todo/pixel6.md](docs/todo/pixel6.md)

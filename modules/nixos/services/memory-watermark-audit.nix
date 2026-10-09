@@ -26,7 +26,8 @@ _: {
       config,
       lib,
       ...
-    }: let
+    }:
+    let
       cfg = config.services.memory-watermark-audit;
       mult = {
         K = 1024;
@@ -36,14 +37,14 @@ _: {
         "" = 1;
       };
       # Bytes, or null when unparseable (percent / "infinity" / "max").
-      parseBytes = v:
+      parseBytes =
+        v:
         let
           m = builtins.match "([0-9]+)([KMGT]?)" (toString v);
         in
-          if m == null
-          then null
-          else (builtins.fromJSON (builtins.elemAt m 0)) * mult.${builtins.elemAt m 1};
-      trap = name: svc:
+        if m == null then null else (builtins.fromJSON (builtins.elemAt m 0)) * mult.${builtins.elemAt m 1};
+      trap =
+        name: svc:
         !(builtins.elem name cfg.allowUnits)
         && (
           let
@@ -51,7 +52,7 @@ _: {
             high = if sc ? MemoryHigh && sc.MemoryHigh != null then parseBytes sc.MemoryHigh else null;
             max = if sc ? MemoryMax && sc.MemoryMax != null then parseBytes sc.MemoryMax else null;
           in
-            high != null && max != null && max > 0 && high * 2 < max
+          high != null && max != null && max > 0 && high * 2 < max
         );
       systemOffenders = lib.attrNames (lib.filterAttrs trap config.systemd.services);
       userOffenders = lib.attrNames (lib.filterAttrs trap config.systemd.user.services);
@@ -62,10 +63,11 @@ _: {
         aggressive-reclaim design goes in
         services.memory-watermark-audit.allowUnits with a justification.
       '';
-    in {
+    in
+    {
       options.services.memory-watermark-audit.allowUnits = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = [];
+        default = [ ];
         description = ''
           Units exempt from the MemoryHigh/MemoryMax coherence check. Every
           entry needs a justification comment where it is set: a sub-50%
@@ -75,7 +77,7 @@ _: {
 
       config.assertions = [
         {
-          assertion = systemOffenders == [];
+          assertion = systemOffenders == [ ];
           message = ''
             memory-watermark-audit: MemoryHigh < 50% of MemoryMax on system units:
             ${lib.concatStringsSep ", " systemOffenders}
@@ -87,7 +89,7 @@ _: {
           '';
         }
         {
-          assertion = userOffenders == [];
+          assertion = userOffenders == [ ];
           message = ''
             memory-watermark-audit: MemoryHigh < 50% of MemoryMax on user units:
             ${lib.concatStringsSep ", " userOffenders}
