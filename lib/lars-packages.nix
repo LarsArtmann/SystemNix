@@ -140,21 +140,13 @@ lib.filterAttrs (_: v: v != null) {
   # PATH via base.nix attrValues (both hosts). Upstream repo is PRIVATE
   # (git+ssh input + CI deploy key, see flake.nix).
   #
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave): got
-  # w3uyGueT… at locked rev 7ff7ff43 (upstream stale at locked rev AND
-  # HEAD; first-hand keep-going enumeration,
-  # /tmp/toplevel-fix-20261007.log). Drop when the lock moves past an upstream rev
-  # with the corrected vendorHash.nix committed.
-  project-dependency-graph =
-    let
-      pkg = flakePkg inputs.project-dependency-graph;
-    in
-    if pkg == null then
-      null
-    else
-      pkg.overrideAttrs {
-        vendorHash = "sha256-w3uyGueTBhgtLamcIDX2borG5Gcs7aa+odqGDOe0Lpg=";
-      };
+  # vendorHash shim DROPPED (2026-10-09): its drop condition ("lock moves
+  # past an upstream rev with the corrected vendorHash.nix committed") is
+  # met — the lock holds 58cfdaab, whose vendorHash.nix bakes ADzN0+X0…
+  # (the same "got" hash the stale shim overrode with w3uyGueT…;
+  # first-hand keep-going enumeration, /tmp/toplevel-fix-20261009.log).
+  # Re-add ONLY via nix-hash-fix evidence, never by hand.
+  project-dependency-graph = flakePkg inputs.project-dependency-graph;
   # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.
   # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
   mr-sync = flakePkg inputs.mr-sync;
@@ -184,19 +176,13 @@ lib.filterAttrs (_: v: v != null) {
       pkg.overrideAttrs {
         vendorHash = "sha256-Mrn25ftfpqf9rov194lDd/JqiDeBbgiGSt9+r0hnYF8=";
       };
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave — class
-  # comment at buildflow): got +/NGC//7… at locked rev 53159116
-  # (upstream stale at locked rev AND HEAD).
-  projects-management-automation =
-    let
-      pkg = flakePkg inputs.projects-management-automation;
-    in
-    if pkg == null then
-      null
-    else
-      pkg.overrideAttrs {
-        vendorHash = "sha256-+/NGC//7EOQoXVOn4qQZxOtplZpPFCD6nCvZqWGOmnU=";
-      };
+  # vendorHash shim DROPPED (2026-10-09): its drop condition ("lock moves
+  # past an upstream-fixed rev") is met — the lock holds 96fd9304, whose
+  # flake bakes vendorHash Bvuf0KUY… (the same "got" hash the stale shim
+  # overrode with +/NGC//7…, re-breaking the FOD it existed to fix;
+  # first-hand keep-going enumeration, /tmp/toplevel-fix-20261009.log).
+  # Re-add ONLY via nix-hash-fix evidence, never by hand.
+  projects-management-automation = flakePkg inputs.projects-management-automation;
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,

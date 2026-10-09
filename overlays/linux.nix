@@ -211,21 +211,13 @@ let
         '';
       };
     };
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave — class
-  # comment at lib/lars-packages.nix): the 2026-10-07 lock commits
-  # re-vendored the module graph; the 2026-10-05 value (DubDFIjq…; itself
-  # a re-pin of the 2026-10-03 xoPCvuTn…) no longer reproduces at locked
-  # rev 12b1828 (got IrQ4Zsuw…; first-hand keep-going enumeration,
-  # /tmp/toplevel-fix-20261007.log). Upstream master is stale at locked
-  # rev AND HEAD; drop when the lock moves past an upstream-fixed rev.
-  # Must stay AFTER file-and-image-renamer.overlays.default in the list
-  # below. prev (NOT final) — final would recurse into this overlay's own
-  # override.
-  fileAndImageRenamerVendorHashShim = _final: prev: {
-    file-and-image-renamer = prev.file-and-image-renamer.overrideAttrs {
-      vendorHash = "sha256-IrQ4Zsuw8Jjqv0AcI/M8Dg6Utu+lrsp7nZL5wnInlmQ=";
-    };
-  };
+  # fileAndImageRenamerVendorHashShim DROPPED (2026-10-09): its drop
+  # condition ("lock moves past an upstream-fixed rev") is met — the lock
+  # holds ca734a9, whose flake bakes vendorHash MZFO73xT… upstream
+  # ("re-pinned 2026-10-09 after the concurrent x/text+x/term dep sweep"),
+  # the same "got" hash the stale shim overrode with IrQ4Zsuw…
+  # (first-hand keep-going enumeration, /tmp/toplevel-fix-20261009.log).
+  # Re-add ONLY via nix-hash-fix evidence, never by hand.
   # TEMPORARY vendorHash shims (class comment at lib/lars-packages.nix):
   # overview (RE-PINNED 2026-10-07, 4bb130c update; got GkGHKtRQ… at rev
   # 4bb130c — the root-nixpkgs follow diverges the Go toolchain from
@@ -303,7 +295,6 @@ in
   monitor365SwaggerUiFixOverlay
   netwatchOverlay
   file-and-image-renamer.overlays.default
-  fileAndImageRenamerVendorHashShim
   crush-daily.overlays.default
   crushDailyVendorHashShim
   bank-sync.overlays.default

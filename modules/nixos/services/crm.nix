@@ -51,14 +51,16 @@
       # 2026-09-18 decision: the unit adopts the journal in place).
       stateDir = "/home/${user}/.local/share/crm";
       backupDir = "/mnt/pool/backups/crm";
-      # TEMPORARY vendorHash shim (2026-10-07 wave — class comment at
-      # lib/lars-packages.nix): upstream fe9da495's own vendorHash
-      # (BqpkpL7U…) no longer reproduces after the 2026-10-07 lock wave
-      # (got 22PDGv7X…; first-hand keep-going enumeration,
-      # /tmp/toplevel-fix-20261007.log; upstream stale at locked rev AND
-      # HEAD — push the fix upstream when authorized, then drop this).
+      # TEMPORARY vendorHash shim (RE-PINNED 2026-10-09 — class comment at
+      # lib/lars-packages.nix): got jIP0Y7LD… at locked rev 0c1526bf
+      # (first-hand keep-going enumeration, /tmp/toplevel-fix-20261009.log).
+      # STRUCTURAL, not lock-wave drift: upstream 0c1526bf bakes nhFzbS2y…,
+      # computed under ITS OWN rev-pinned go-nix-helpers (0fc140f0), while
+      # our flake follows crm's go-nix-helpers to root (ad423c8f) — the
+      # overview precedent: upstream's hash can never match our graph, so
+      # this shim does not converge by lock movement alone.
       crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-22PDGv7XDLPZtQJP51afi132WckZEmnUJZsstn5iJ/4=";
+        vendorHash = "sha256-jIP0Y7LD1S8b1J8jHvXuA27tI+Hg9/a8QPXbkOJm+Wk=";
       };
       twentyEnabled = config.services.twenty.enable or false;
     in
