@@ -21,7 +21,7 @@ if [ ! -f "flake.nix" ]; then
 fi
 
 # Eval-expense memo for the formatter leg (2026-09-29): content-keyed on
-# flake.nix/flake.lock/overlays/lib — module-only commits reuse the resolved
+# flake.nix/flake.lock/overlays/lib/flake-parts — module-only commits reuse the resolved
 # store path and skip the full flake eval. Safety model + selftest:
 # scripts/lib/precommit-eval-cache.sh. Escape hatch: PRECOMMIT_EVAL_CACHE=0.
 # shellcheck source=scripts/lib/precommit-eval-cache.sh
@@ -331,7 +331,7 @@ if [ -n "$STAGED_NIX" ]; then
     esac
     formatter_path=""
     if formatter_path="$(precommit_formatter_cached_path 2>/dev/null)"; then
-        log_info "Formatter memo HIT (flake.nix/lock/overlays/lib unchanged) — skipping the formatter flake eval."
+        log_info "Formatter memo HIT (flake.nix/lock/overlays/lib/parts unchanged) — skipping the formatter flake eval."
     elif formatter_path="$(nix build ".#formatter.$sys" --no-link --print-out-paths --no-update-lock-file 2>/dev/null)"; then
         precommit_formatter_store_path "$formatter_path" || true
         # NUL-delimited path list: default whitespace splitting mangles staged

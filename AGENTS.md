@@ -32,7 +32,15 @@ Deep domain knowledge lives in referenced files — **read the relevant one BEFO
 ## Architecture
 
 ```
-flake.nix              # Entry point: inputs + flake-parts wiring + mkLarsPackages + checks/apps
+flake.nix              # Entry point: inputs (927-line parser-locked registry — CANNOT move) + eval guards
+                       # + shared let-bindings + host assembly (flake.lib, 3 hosts)
+flake/parts/           # flake-parts modules — ALL perSystem logic (split 2026-10-09, was 4023-line flake.nix)
+  pkgs.nix             # perSystem _module.args.pkgs (nixpkgs instantiation)
+  formatter.nix        # treefmt wrapper
+  packages.nix         # mkLarsPackages + nixpkgs picks + Linux-only
+  devshells.nix        # default + quickshell shells
+  apps.nix             # all 19 apps
+  checks/              # lint-static, fixtures-{forgejo,storage,migrations}, selftests, vm-tests
 systems/               # Host assembly: evo-x2.nix, darwin.nix, rpi3-dns.nix
 lib/                   # Helpers — import via lib/default.nix (single import point)
   lars-packages.nix    # mkLarsPackages — single source of truth for LarsArtmann Go tools
@@ -49,7 +57,7 @@ platforms/nixos/       # NixOS — user: lars
 scripts/               # Shell + Python operational scripts
 ```
 
-**Module auto-discovery:** `flake.nix` scans `modules/nixos/{services,desktop}/` — filenames MUST be unique across both dirs (filename → `flake.nixosModules.<name>`). `_`-prefixed files are helpers (skipped). docs/patches live in `docs/services/`, not the module tree.
+**Module auto-discovery:** `flake.nix` scans `modules/nixos/{services,desktop}/` — filenames MUST be unique across both dirs (filename → `flake.nixosModules.<name>`). `_`-prefixed files are helpers (skipped). docs/patches live in `docs/services/`, not the module tree. `flake/parts/` files are imported EXPLICITLY in the mkFlake `imports` list (no auto-discovery there — new part file = one imports line in flake.nix; conventions: [docs/agents/nix-flakes.md](./docs/agents/nix-flakes.md)).
 
 | System | Hostname           | Platform       | Constraints                                                                                                                                                        |
 | ------ | ------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

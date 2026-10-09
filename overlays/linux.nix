@@ -219,17 +219,22 @@ let
   # (first-hand keep-going enumeration, /tmp/toplevel-fix-20261009.log).
   # Re-add ONLY via nix-hash-fix evidence, never by hand.
   # TEMPORARY vendorHash shims (class comment at lib/lars-packages.nix):
-  # overview (RE-PINNED 2026-10-07, 4bb130c update; got GkGHKtRQ… at rev
-  # 4bb130c — the root-nixpkgs follow diverges the Go toolchain from
-  # upstream's own lock, so upstream's refreshed vendorHash.nix PxedSD8g…
-  # can never match our graph) and discordsync (RE-PINNED 2026-10-07,
-  # 1ac31f8 update; got /NYfLmDMx… at rev 1ac31f8). prev (NOT
-  # final) — same recursion guard as above; stay AFTER the respective
-  # upstream overlays in the list below.
+  # dnsblockd (ADDED 2026-10-10: got mpNspwwR… at locked rev 039ba0f —
+  # upstream nix/vendor-hash.nix 7kbAnQkq… stale at locked rev AND HEAD;
+  # first-hand keep-going enumeration, /tmp/toplevel-fix-20261009b.log)
+  # and discordsync (RE-PINNED 2026-10-07, 1ac31f8 update; got /NYfLmDMx…
+  # at rev 1ac31f8). prev (NOT final) — same recursion guard as above;
+  # stay AFTER the respective upstream overlays in the list below.
   # Drop when upstreams re-pin or the lock moves past upstream-fixed revs.
-  overviewVendorHashShim = _final: prev: {
-    overview = prev.overview.overrideAttrs {
-      vendorHash = "sha256-GkGHKtRQfDXGVftlaQImcBYsP3bIoPtO3beWf/lT12w=";
+  # overview shim DROPPED (2026-10-10): its drop condition ("lock moves
+  # past an upstream-fixed rev") is met — the lock holds 5730bd9, whose
+  # flake bakes vendorHash I+gcCYgO… (the same "got" hash the stale shim
+  # overrode with GkGHKtRQ…; first-hand keep-going enumeration,
+  # /tmp/toplevel-fix-20261009b.log). Re-add ONLY via nix-hash-fix
+  # evidence, never by hand.
+  dnsblockdVendorHashShim = _final: prev: {
+    dnsblockd = prev.dnsblockd.overrideAttrs {
+      vendorHash = "sha256-mpNspwwRvuVEc279U0iscUCcqMN5x+hSzuIHZdVEr5Y=";
     };
   };
   discordsyncVendorHashShim = _final: prev: {
@@ -238,23 +243,24 @@ let
     };
   };
   # TEMPORARY doCheck + vendorHash shim (doCheck leg 2026-10-05,
-  # vendorHash leg RE-PINNED 2026-10-07 wave — class comment at
+  # vendorHash leg RE-PINNED 2026-10-10 — class comment at
   # lib/lars-packages.nix): crush-daily's chromedp cdproto shadowing was
-  # fixed upstream (05fe675: chromedp v0.19.1 + pinned vendorHash djxdMOJ…,
-  # re-locked), but internal/server/ui_behavior_test.go does not compile
-  # against the v0.19 generic action API yet (Evaluate/Poll signature
-  # migration is upstream follow-up work) — the package itself builds green;
-  # the test gate stays off until the migration lands and the lock moves
-  # past it. The 2026-10-07 lock wave moved the input past 05fe675 to
-  # dbb69172, where upstream's djxdMOJ… no longer reproduces (got
-  # Kqqi9bYj…; first-hand keep-going enumeration,
-  # /tmp/toplevel-fix-20261007.log; upstream stale at locked rev AND HEAD,
-  # checkout owned by a parallel session). prev (NOT final) — same
+  # fixed upstream (05fe675: chromedp v0.19.1 + pinned vendorHash), but
+  # internal/server/ui_behavior_test.go does not compile against the v0.19
+  # generic action API yet (Evaluate/Poll signature migration is upstream
+  # follow-up work) — the package itself builds green; the test gate stays
+  # off until the migration lands and the lock moves past it. The lock
+  # wave holds 3bc09ce4, where upstream's djxdMOJ… no longer reproduces
+  # (got xo4ePVg0…; first-hand keep-going enumeration,
+  # /tmp/toplevel-fix-20261009b.log; upstream stale at locked rev AND HEAD
+  # — a matching xo4ePVg0… fix sits UNCOMMITTED in
+  # ~/projects/crush-daily/vendorHash.nix, owned by a live session; drop
+  # when it is pushed AND the lock moves past it). prev (NOT final) — same
   # recursion guard; stay AFTER crush-daily.overlays.default in the list
   # below.
   crushDailyVendorHashShim = _final: prev: {
     crush-daily = prev.crush-daily.overrideAttrs {
-      vendorHash = "sha256-Kqqi9bYjcTXMDw83j1IOosoMfyWPDVb3qsMUJr5AGGw=";
+      vendorHash = "sha256-xo4ePVg0iOvmW0oXmpI1qMQftQSeYCh7+AY+X3g74k8=";
       doCheck = false;
     };
   };
@@ -290,6 +296,7 @@ in
   niriLibdisplayInfoShim
   openaudibleOverlay
   dnsblockd.overlays.default
+  dnsblockdVendorHashShim
   emeet-pixyd.overlays.default
   monitor365.overlays.default
   monitor365SwaggerUiFixOverlay
@@ -299,7 +306,6 @@ in
   crushDailyVendorHashShim
   bank-sync.overlays.default
   overview.overlays.default
-  overviewVendorHashShim
   discordsync.overlays.default
   discordsyncVendorHashShim
   bunMemoryLimitOverlay

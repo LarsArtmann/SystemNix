@@ -2,7 +2,7 @@
 # fmt-cached — format files with the repo's LOCKED treefmt formatter,
 # reusing the pre-commit formatter memo (scripts/lib/precommit-eval-cache.sh)
 # to skip the full flake eval whenever flake.nix / flake.lock / overlays/ /
-# lib/ are unchanged since the last resolve. Any miss falls through to the
+# lib/ / flake/parts/ are unchanged since the last resolve. Any miss falls through to the
 # real `nix build .#formatter.$sys`. CI arbitrates formatting with
 # `nix fmt -- --ci` either way — drift fails red, never silent.
 set -euo pipefail

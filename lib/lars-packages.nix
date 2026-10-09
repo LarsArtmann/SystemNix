@@ -81,9 +81,10 @@ lib.filterAttrs (_: v: v != null) {
       pkg.overrideAttrs {
         vendorHash = "sha256-RmVOSlDzlz1mhrh/w2/dKg3RC3ZR+FMjmI17lWqaATo=";
       };
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave — class
-  # comment at buildflow): got 4wgXASTZ… at locked rev c09818e3
-  # (upstream stale at locked rev AND HEAD). Drop when upstream re-pins
+  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-10 — class comment at
+  # buildflow): got NYg9nBod… at locked rev 5f7e9ef4 (upstream flake
+  # bakes N3/5p5IB… stale at locked rev AND HEAD, verified in the
+  # ~/projects/erraudit checkout). Drop when upstream re-pins
   # or the lock moves past an upstream-fixed rev.
   erraudit =
     let
@@ -93,7 +94,7 @@ lib.filterAttrs (_: v: v != null) {
       null
     else
       pkg.overrideAttrs {
-        vendorHash = "sha256-4wgXASTZkT+/FwDewDe/C3jm5v5qYWaRAjBPV5WBkCI=";
+        vendorHash = "sha256-NYg9nBodI4/6INf+gU2yS6mxi4ebx+qti+LZdlGoDGQ=";
       };
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 74baca53 ALREADY bakes the got
@@ -169,19 +170,13 @@ lib.filterAttrs (_: v: v != null) {
   # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.
   # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
   mr-sync = flakePkg inputs.mr-sync;
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave — class
-  # comment at buildflow): got KDFDf97T… at locked rev a95111f4
-  # (upstream stale at locked rev AND HEAD).
-  project-meta =
-    let
-      pkg = flakePkg inputs.project-meta;
-    in
-    if pkg == null then
-      null
-    else
-      pkg.overrideAttrs {
-        vendorHash = "sha256-KDFDf97TfikkIA/URtSDTPt7VbdJfVXpIMIn0+Mv6uM=";
-      };
+  # vendorHash shim DROPPED (2026-10-10): its drop condition ("lock moves
+  # past an upstream-fixed rev") is met — the lock holds 7567b4ec, whose
+  # flake bakes vendorHash HWYco+tb… (the same "got" hash the stale shim
+  # overrode with KDFDf97T…; first-hand keep-going enumeration,
+  # /tmp/toplevel-fix-20261009b.log). Re-add ONLY via nix-hash-fix
+  # evidence, never by hand.
+  project-meta = flakePkg inputs.project-meta;
   # TEMPORARY vendorHash shim (2026-10-05, a7868a7 wave — class comment at
   # buildflow): got Mrn25ftf… vs upstream-specified 8kSXYjwa… at locked rev
   # 1f9b57c.

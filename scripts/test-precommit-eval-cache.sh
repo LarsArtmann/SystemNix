@@ -5,8 +5,8 @@
 #   1. key determinism (same tree => same key)
 #   2. MODULE-EDIT INSENSITIVITY — the whole point: module-only commits hit
 #      the memo and skip the eval
-#   3. sensitivity to flake.nix / flake.lock / overlays/ / lib/ edits and
-#      to same-content renames (path identity is keyed)
+#   3. sensitivity to flake.nix / flake.lock / overlays/ / lib/ /
+#      flake/parts/ edits and to same-content renames (path identity is keyed)
 #   4. unreadable input => key MISS (never a partial/stale key)
 #   5. the memo only serves EXISTING store paths (GC gate) and rejects
 #      non-store paths
@@ -31,11 +31,12 @@ trap 'rm -rf "$fixture" "$state"' EXIT
 git -C "$fixture" init -q
 git -C "$fixture" config user.email selftest@invalid
 git -C "$fixture" config user.name selftest
-mkdir -p "$fixture/lib" "$fixture/overlays" "$fixture/modules"
+mkdir -p "$fixture/lib" "$fixture/overlays" "$fixture/modules" "$fixture/flake/parts"
 echo '{ }' >"$fixture/flake.nix"
 echo '{ "nodes": { } }' >"$fixture/flake.lock"
 echo 'a = 1;' >"$fixture/lib/a.nix"
 echo 'o = 1;' >"$fixture/overlays/o.nix"
+echo 'p = 1;' >"$fixture/flake/parts/p.nix"
 echo 'm = 1;' >"$fixture/modules/m.nix"
 git -C "$fixture" add -A
 git -C "$fixture" commit -qm fixture
@@ -75,6 +76,7 @@ mutate_expect_change "flake.nix" flake.nix '# churn'
 mutate_expect_change "flake.lock" flake.lock '# churn'
 mutate_expect_change "overlays/" overlays/o.nix '# churn'
 mutate_expect_change "lib/" lib/a.nix '# churn'
+mutate_expect_change "flake/parts/" flake/parts/p.nix '# churn (2026-10-09: parts now eval-relevant — key must cover them)'
 
 # rename with identical content still moves the key (path identity keyed).
 # NOTE: the rename is STAGED — git ls-files follows the INDEX, and an

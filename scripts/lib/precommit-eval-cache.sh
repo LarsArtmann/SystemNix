@@ -8,10 +8,13 @@
 # pays a full flake eval (30-90s+ warm on this 420-input tree; see the docs/agents/nix-flakes.md
 # "Why plain flake EVAL is slow here" bullet) on EVERY .nix-touching commit,
 # yet the out-path is a pure function of a SMALL input set: flake.nix +
-# flake.lock + overlays/ + lib/ (perSystem pkgs imports the overlays; the
-# formatter block lives in flake.nix; the patched treefmt config is derived
+# flake.lock + overlays/ + lib/ + flake/parts/ (perSystem pkgs imports the
+# overlays; the formatter/pkgs blocks live in flake/parts/ since the
+# 2026-10-09 split; the patched treefmt config is derived
 # at BUILD time from the locked treefmt-full-flake input) + the nix client
 # version. Module edits do NOT move it — which is the common case.
+# Git pathspec globs cross directories (wildmatch without :(glob) magic),
+# so 'flake/parts/*.nix' also covers the nested checks/ files.
 #
 # SAFETY MODEL (deliberate non-goals):
 #  - The `nix flake check` leg is NOT memoized: its docs-only/no-staged fast
@@ -48,7 +51,7 @@ _pec_state_dir() {
 precommit_formatter_key() {
   local listing
   listing=$(
-    git ls-files -z -- 'flake.nix' 'flake.lock' 'overlays/*.nix' 'lib/*.nix' |
+    git ls-files -z -- 'flake.nix' 'flake.lock' 'overlays/*.nix' 'lib/*.nix' 'flake/parts/*.nix' |
       xargs -0 -r sha256sum
   ) || return 1
   [ -n "$listing" ] || return 1
