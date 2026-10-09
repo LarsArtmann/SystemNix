@@ -7301,11 +7301,11 @@
         "project-discovery-sdk": "project-discovery-sdk_8"
       },
       "locked": {
-        "lastModified": 1791581322,
-        "narHash": "sha256-brSx6y2/vdt4bW9F84x1RtqTFUGu30cCDykFcYG2n0E=",
+        "lastModified": 1791589187,
+        "narHash": "sha256-wxmRmCjpfJLRXl+4rqYOg36dWckqYvIOryPEbKTGDqw=",
         "ref": "refs/heads/master",
-        "rev": "7567b4ec60f0f9272aec2f8ec81b105430d4b7a5",
-        "revCount": 750,
+        "rev": "5d754a574ec190b7d5f833fc1b1dc32026711841",
+        "revCount": 751,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-meta"
       },
