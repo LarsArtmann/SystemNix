@@ -199,7 +199,9 @@ in
   # The repo owns the renderer and the machine-independent set (provider key
   # wiring, glm-5.3-flash model declaration, gopls/oxlint LSPs, context
   # paths); ONLY host-coupled values live here: the host-managed golangci
-  # wrapper command and the qmd MCP (both exist only on this machine).
+  # wrapper command (exists only on this machine). The qmd MCP is NOT wired
+  # here anymore (2026-10-09): it is project-scoped to ~/projects/CV via
+  # that repo's own .crushrc, so every other Crush session spawns without it.
   #
   # Secrets doctrine (unchanged): provider keys NEVER live in crush's auth
   # store (~/.local/share/crush/crush.json, machine-owned plaintext state
@@ -213,10 +215,6 @@ in
     enable = true;
     # secretsDir defaults to "/run/secrets" (the sops-nix render dir).
     golangciLintLspCommand = "$HOME/.local/bin/golangci-lint-lsp-wrapper";
-    mcps.qmd = {
-      command = "qmd";
-      args = [ "mcp" ];
-    };
   };
 
   # SSH hosts defined in common/programs/ssh-config.nix

@@ -35,12 +35,10 @@ let
           programs.crush-config = {
             enable = true;
             # evo-x2 shape (platforms/nixos/users/home.nix): the host-coupled
-            # wrapper (as the user config writes it) + the qmd MCP.
+            # wrapper (as the user config writes it; the qmd MCP was
+            # rescoped to ~/projects/CV/.crushrc on 2026-10-09, so no mcps
+            # ride the global crushrc anymore).
             golangciLintLspCommand = "$HOME/.local/bin/golangci-lint-lsp-wrapper";
-            mcps.qmd = {
-              command = "qmd";
-              args = [ "mcp" ];
-            };
           };
         }
         extra
@@ -80,7 +78,7 @@ let
       name = "host-coupled-values-rendered-quoted";
       pass =
         lib.hasInfix "lsp add golangci_lint_ls --command \"$HOME/.local/bin/golangci-lint-lsp-wrapper\"" rc
-        && lib.hasInfix "mcp add qmd --command \"qmd\" --args \"mcp\"" rc;
+        && !lib.hasInfix "mcp add qmd" rc;
     }
     {
       name = "personal-set-rendered";
