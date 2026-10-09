@@ -12,16 +12,16 @@ The HM journal pinpoints a **96-second gap** (02:51:25 → 02:53:01) between `St
 
 ## Evidence (boot 0, all live)
 
-| # | Finding | Evidence |
-|---|---------|----------|
-| 1 | `systemd-analyze time`: 62.5s firmware + 2.7s loader + 1.9s kernel + 7.3s initrd + 1min 42.3s userspace = 2min 56.8s | live 03:0x |
-| 2 | Critical chain gates on `home-manager-lars.service @3.000s +1min 39.262s` → `systemd-user-sessions` → `display-manager` | `systemd-analyze critical-chain` |
-| 3 | HM activation: steps complete 02:51:25, `Starting units: activitywatch*` at 02:51:25, next step (`signal-theme`) at **02:53:01** — 96s inside `reloadSystemd`'s user-unit start window | `journalctl -b -u home-manager-lars.service` |
-| 4 | `mountpoint: command not found` ×4 (activate script lines 277/280/283×2) inside `migrate-buildcache-fallback-caches` — the hook's mountpoint probes cannot run | same journal; hook defined in `platforms/nixos/users/home.nix` (our code, not upstream) |
-| 5 | Blame top: clickhouse-db-backup 2min 58.6s, home-manager-lars 1min 39.3s, buildcache-usb-recovery 1min 31.2s, hermes 1min 9.3s, pool-usb-recovery 1min 9.2s, discordsync-db-heal 1min 8.8s, bank-sync 47.7s — the full post-crash catch-up fleet in one window | `systemd-analyze blame` |
-| 6 | Boot 0 is a **recovery boot**: boots -3/-2/-1 span 00:02→02:49 (3 short-lived boots in 2h47m — the freeze #21/#22 overnight sequence), boot -1's journal cuts mid-traffic at 02:49:28, and the SEV1 bridge started this boot with conditions live, clearing only at 02:52:10 | `journalctl --list-boots`, `-b -1 -n 2`, boot-0 SEV1 grep |
-| 7 | The 2026-10-06 restructure IS deployed: hermes off the chain, hermes-perms-heal unit live (15.1s), no buildcache fsck in blame | critical-chain + blame |
-| 8 | Queued backlog mapped (agent sweep): stampede control, tmpfiles-cycle tripwire (in-tree, undeployed), verify sweep, boot-duration collector, stray-unit lint, BIOS walk, loader timeout — all already in TODO_LIST/docs/todo | agent report, spot-checked |
+| # | Finding                                                                                                                                                                                                                                                                      | Evidence                                                                                |
+| - | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| 1 | `systemd-analyze time`: 62.5s firmware + 2.7s loader + 1.9s kernel + 7.3s initrd + 1min 42.3s userspace = 2min 56.8s                                                                                                                                                         | live 03:0x                                                                              |
+| 2 | Critical chain gates on `home-manager-lars.service @3.000s +1min 39.262s` → `systemd-user-sessions` → `display-manager`                                                                                                                                                      | `systemd-analyze critical-chain`                                                        |
+| 3 | HM activation: steps complete 02:51:25, `Starting units: activitywatch*` at 02:51:25, next step (`signal-theme`) at **02:53:01** — 96s inside `reloadSystemd`'s user-unit start window                                                                                       | `journalctl -b -u home-manager-lars.service`                                            |
+| 4 | `mountpoint: command not found` ×4 (activate script lines 277/280/283×2) inside `migrate-buildcache-fallback-caches` — the hook's mountpoint probes cannot run                                                                                                               | same journal; hook defined in `platforms/nixos/users/home.nix` (our code, not upstream) |
+| 5 | Blame top: clickhouse-db-backup 2min 58.6s, home-manager-lars 1min 39.3s, buildcache-usb-recovery 1min 31.2s, hermes 1min 9.3s, pool-usb-recovery 1min 9.2s, discordsync-db-heal 1min 8.8s, bank-sync 47.7s — the full post-crash catch-up fleet in one window               | `systemd-analyze blame`                                                                 |
+| 6 | Boot 0 is a **recovery boot**: boots -3/-2/-1 span 00:02→02:49 (3 short-lived boots in 2h47m — the freeze #21/#22 overnight sequence), boot -1's journal cuts mid-traffic at 02:49:28, and the SEV1 bridge started this boot with conditions live, clearing only at 02:52:10 | `journalctl --list-boots`, `-b -1 -n 2`, boot-0 SEV1 grep                               |
+| 7 | The 2026-10-06 restructure IS deployed: hermes off the chain, hermes-perms-heal unit live (15.1s), no buildcache fsck in blame                                                                                                                                               | critical-chain + blame                                                                  |
+| 8 | Queued backlog mapped (agent sweep): stampede control, tmpfiles-cycle tripwire (in-tree, undeployed), verify sweep, boot-duration collector, stray-unit lint, BIOS walk, loader timeout — all already in TODO_LIST/docs/todo                                                 | agent report, spot-checked                                                              |
 
 ## a) FULLY DONE
 
@@ -76,11 +76,10 @@ The HM journal pinpoints a **96-second gap** (02:51:25 → 02:53:01) between `St
 2. **Can we schedule ONE deliberate reboot window** to bundle: the calm-boot re-measure (needs a fresh quiet boot), the boot-mirror PartUUID/BootCurrent decode verify (open since 2026-09-30), and optionally the first BIOS-walk option? The box has had 5 boots since midnight — owner picks the quiet moment.
 3. **The parked buildcache go-build relocation (home.nix hook): delete the remnant, or is the fallback relocation still wanted?** Its mountpoint probes are dead code today; intent decides delete-vs-fix before anyone spends a dispatch on it.
 
-*Annotation (2026-10-07 03:59, execution self-review `2026-10-07_03-59_login-gate-fix-execution-self-review.md`):* Q1 is MOOT — the fix deferred activitywatch-theme off the login path entirely (OnBootSec timer), so no start-policy decision is needed. Q3 is ANSWERED — triage found the hook is the LIVE 2026-09-22 cache-fallback convergence (not the parked relocation); fixed via absolute `${pkgs.util-linux}/bin/mountpoint`, deploy queued [ready]. Q2 (reboot window) remains open and now pairs with that deploy row.
+_Annotation (2026-10-07 03:59, execution self-review `2026-10-07_03-59_login-gate-fix-execution-self-review.md`):_ Q1 is MOOT — the fix deferred activitywatch-theme off the login path entirely (OnBootSec timer), so no start-policy decision is needed. Q3 is ANSWERED — triage found the hook is the LIVE 2026-09-22 cache-fallback convergence (not the parked relocation); fixed via absolute `${pkgs.util-linux}/bin/mountpoint`, deploy queued [ready]. Q2 (reboot window) remains open and now pairs with that deploy row.
 
 ---
 *Self-harvested at authoring time per the TODO System rule: §f.1, §f.3 → new rows in docs/todo/stability.md + TODO_LIST.md; §f.2, §f.4 → extensions of existing rows in both surfaces (queue + library kept in sync). §f.5-§f.10 land on already-queued rows — no duplicates minted. Deliberately NOT harvested: §f.11-§f.12 (speculative, contingent on §f.1's outcome — they become actionable only after the HM mechanism is known).*
-
 ---
 
 ## ADDENDUM — re-dispatch executed (2026-10-07 ~04:15, same session)

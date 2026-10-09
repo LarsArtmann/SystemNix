@@ -6,14 +6,14 @@ The SSO backbone: every Layer 1 (native OIDC) and Layer 2 (forward-auth) consume
 
 ## What it serves
 
-| Route                        | Auth                                | What                                                                    |
-| ---------------------------- | ----------------------------------- | ----------------------------------------------------------------------- |
-| `/`                          | Pocket ID session (passkey)         | Admin UI (users, clients, groups) — READ-ONLY: `UI_CONFIG_DISABLED` env |
-| `/healthz`                   | none                                | Liveness (ExecStartPost gate, Gatus)                                    |
-| `/metrics`                   | none (port 9464)                    | Prometheus: pocket-id self-metrics                                      |
-| `/.well-known/*`             | none                                | OAuth2/OIDC discovery — the consumer gate probes this                   |
-| `/oauth2/*`                  | none (Caddy routes to oauth2-proxy) | The oauth2-proxy leg of `auth.<domain>`                                 |
-| `/api/*`                     | `STATIC_API_KEY` (provisioner only) | Provisioning API                                                        |
+| Route            | Auth                                | What                                                                    |
+| ---------------- | ----------------------------------- | ----------------------------------------------------------------------- |
+| `/`              | Pocket ID session (passkey)         | Admin UI (users, clients, groups) — READ-ONLY: `UI_CONFIG_DISABLED` env |
+| `/healthz`       | none                                | Liveness (ExecStartPost gate, Gatus)                                    |
+| `/metrics`       | none (port 9464)                    | Prometheus: pocket-id self-metrics                                      |
+| `/.well-known/*` | none                                | OAuth2/OIDC discovery — the consumer gate probes this                   |
+| `/oauth2/*`      | none (Caddy routes to oauth2-proxy) | The oauth2-proxy leg of `auth.<domain>`                                 |
+| `/api/*`         | `STATIC_API_KEY` (provisioner only) | Provisioning API                                                        |
 
 ## Ops
 

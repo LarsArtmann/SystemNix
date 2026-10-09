@@ -6,10 +6,10 @@ Backend for the Helium NSFW extension (loaded via `--load-extension` from the so
 
 ## What it serves
 
-| Route     | Auth                          | What                                            |
-| --------- | ----------------------------- | ----------------------------------------------- |
-| `/readyz` | none                          | Readiness (model load + warmup) — Gatus check   |
-| classify  | pairing token (in-app)        | Image classification API (extension clients)    |
+| Route     | Auth                   | What                                          |
+| --------- | ---------------------- | --------------------------------------------- |
+| `/readyz` | none                   | Readiness (model load + warmup) — Gatus check |
+| classify  | pairing token (in-app) | Image classification API (extension clients)  |
 
 ## Ops
 

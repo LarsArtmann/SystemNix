@@ -7,7 +7,7 @@
 
 ## Problem
 
-The startup path in `geometrikks/services/logsources/file.py:108-112` (main, v0.20.0) decides existence with `os.path.exists()`, which returns `False` for *any* `OSError` - `EACCES` included:
+The startup path in `geometrikks/services/logsources/file.py:108-112` (main, v0.20.0) decides existence with `os.path.exists()`, which returns `False` for _any_ `OSError` - `EACCES` included:
 
 ```python
 # geometrikks/services/logsources/file.py:108-112 (wait_ready)

@@ -83,4 +83,4 @@
 
 ---
 
-*Self-review honesty note: the session's headline quality gap is d)6 — every automated gate stayed green while a real residue class sat in `tests/`. The user's forced self-review, not the pipeline, found it. That's the improvement that matters (e)2/e)4).*
+_Self-review honesty note: the session's headline quality gap is d)6 — every automated gate stayed green while a real residue class sat in `tests/`. The user's forced self-review, not the pipeline, found it. That's the improvement that matters (e)2/e)4)._

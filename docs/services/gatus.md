@@ -6,11 +6,11 @@ The fleet's alerting backbone: every endpoint check (infra core here + per-servi
 
 ## What it serves
 
-| Route                            | Auth               | What                                        |
-| -------------------------------- | ------------------ | ------------------------------------------- |
-| `/`                              | Gatus OIDC session | Dashboard (status pages, uptime history)    |
-| `/authorization-code/callback`   | OIDC flow          | Login callback (fixed path)                 |
-| `/api/v1/*`                      | OIDC session       | Status API                                   |
+| Route                          | Auth               | What                                     |
+| ------------------------------ | ------------------ | ---------------------------------------- |
+| `/`                            | Gatus OIDC session | Dashboard (status pages, uptime history) |
+| `/authorization-code/callback` | OIDC flow          | Login callback (fixed path)              |
+| `/api/v1/*`                    | OIDC session       | Status API                               |
 
 ## Ops
 

@@ -23,10 +23,10 @@ weather-blocked (IO-PSI freeze-precursor gate). The journal is NOT live on the b
    The upstream NixOS-module options exist in dnsblockd's own flake but are NOT what SystemNix
    consumes — SystemNix's `dns-blocker.nix` generates the YAML itself.
 3. **Config change landed** — `modules/nixos/services/dns-blocker.nix`: `journal_enabled = true`
-   + `journal_dsn = "/var/lib/dnsblockd/journal.db"` (absolute; koanf default is CWD-relative)
-   next to the tracking keys. Engine/durability/query-log/retention ride upstream defaults
-   (sqlite / normal / off / 30d — all validated sentinels). Tracking gate satisfied
-   (METADATA_ONLY > NO_TRACK).
+   - `journal_dsn = "/var/lib/dnsblockd/journal.db"` (absolute; koanf default is CWD-relative)
+     next to the tracking keys. Engine/durability/query-log/retention ride upstream defaults
+     (sqlite / normal / off / 30d — all validated sentinels). Tracking gate satisfied
+     (METADATA_ONLY > NO_TRACK).
 4. **Render contract extended** — `tests/test-dns-blocker-render.nix`: python asserts pin
    `journal_enabled is True` + the DSN against the REAL rendered YAML (anti-phantom, same
    mechanism as the tracking_mode gate). Header pin list renumbered (journal = pin 5).
@@ -152,10 +152,10 @@ Nothing destructive. Honest waste:
 
 ---
 
-*Self-harvest note (per TODO-system discipline): §f items are deliberately NOT harvested
+_Self-harvest note (per TODO-system discipline): §f items are deliberately NOT harvested
 into TODO_LIST.md/domain libraries yet — the owner explicitly ordered report-then-wait;
 harvest on instruction. The deploy-dependency is captured in the runbook bullet; the dnsblockd
-side is captured in its T354 annotation.*
+side is captured in its T354 annotation._
 
-*Weather at report time: IO PSI some avg10=35.18 avg60=42.62 (iter 20 of watcher 044) —
-still above the 15/20 deploy gate.*
+_Weather at report time: IO PSI some avg10=35.18 avg60=42.62 (iter 20 of watcher 044) —
+still above the 15/20 deploy gate._

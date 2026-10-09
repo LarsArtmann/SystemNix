@@ -69,4 +69,4 @@
 
 ---
 
-*Evidence: `/tmp/toplevel-myverdict3.log` (attempt #3 death), `journalctl -u nix-build-cleanup.service` fires 03:20:50/07:24:13/11:25:43, `/tmp/toplevel-attempt4.log` (detached attempt #4), `/tmp/toplevel-watch.log` (custody watcher), mock-test transcript in session, commits `4ada8dd5` (fix, daemon-swept) + `b9228df8`/`7c104378` (doc sync). Clickhouse drv under construction: `x1c3z55sf98m90c7142yn3lcvvqgx46p-clickhouse-26.8.7.19-lts.drv`.*
+_Evidence: `/tmp/toplevel-myverdict3.log` (attempt #3 death), `journalctl -u nix-build-cleanup.service` fires 03:20:50/07:24:13/11:25:43, `/tmp/toplevel-attempt4.log` (detached attempt #4), `/tmp/toplevel-watch.log` (custody watcher), mock-test transcript in session, commits `4ada8dd5` (fix, daemon-swept) + `b9228df8`/`7c104378` (doc sync). Clickhouse drv under construction: `x1c3z55sf98m90c7142yn3lcvvqgx46p-clickhouse-26.8.7.19-lts.drv`._

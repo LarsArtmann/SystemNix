@@ -8,18 +8,18 @@
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | `startLimitBurst = 5; startLimitIntervalSec = 300` on the nsfw-classifier unit (integration-registry step 5 MUST; was riding systemd's 5-starts/10s default) | `modules/nixos/services/nsfw-classifier.nix:98-99` |
-| 2 | `start-limit-per-registry` eval-test case | `tests/test-nsfw-classifier.nix` |
-| 3 | `extension-default-url-port-drift` eval-test case — reads `DEFAULT_SERVER_URLS` from the pinned flake input's `nsfw-extension/url-utils.js` at eval time (guarded parse: `findFirst` + `builtins.match`, fails loudly → named case) and pins the `nsfw.home.lan:<port>` candidate to the resolved `services.nsfw-classifier.port` | same file; check `checks.x86_64-linux.nsfw-classifier` |
-| 4 | Negative tests, BOTH cases, atomic neuter→FAIL→restore cycles: startLimit case FAILED with `startLimitBurst = 6`; drift case FAILED naming `extension-default-url-port-drift` when the regex was neutered to `9[0-9]+`; post-restore green (same out-path `higlxq0mkx`) | build logs this session |
-| 5 | evo-x2 toplevel eval green (`nix eval .#nixosConfigurations.evo-x2...drvPath`); `nsfw` correctly ABSENT from the missing-catalog warning list | eval output |
-| 6 | Queue closure on BOTH surfaces, no drift: `TODO_LIST.md` startLimit row → `[x]` DONE with landing commits; `docs/todo/services.md` row 220 same; runbook/port-drift sub-parts struck from the sweep row (remaining: Environment sweep) | `26d416d1` |
-| 7 | CHANGELOG entry under `## [Unreleased]` | `c7e07493` |
-| 8 | Direct follow-up self-harvested at authoring time (drift-guard scope gap, §e.3) into `TODO_LIST.md` + `docs/todo/services.md` | both surfaces, one row |
-| 9 | Properly-messaged pathspec commit with pre-commit hooks GREEN (gitleaks/markdownlint/link-scan legs ran — unlike the daemon's sweeps) | `26d416d1` |
-| 10 | Daemon-race healing: land-on-top `3eda16bf` restores the neutered regex; no amend-under-daemon, no `git reset` | `git log` `16a69d89`→`3eda16bf` |
+| #  | Item                                                                                                                                                                                                                                                                                                                              | Evidence                                               |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| 1  | `startLimitBurst = 5; startLimitIntervalSec = 300` on the nsfw-classifier unit (integration-registry step 5 MUST; was riding systemd's 5-starts/10s default)                                                                                                                                                                      | `modules/nixos/services/nsfw-classifier.nix:98-99`     |
+| 2  | `start-limit-per-registry` eval-test case                                                                                                                                                                                                                                                                                         | `tests/test-nsfw-classifier.nix`                       |
+| 3  | `extension-default-url-port-drift` eval-test case — reads `DEFAULT_SERVER_URLS` from the pinned flake input's `nsfw-extension/url-utils.js` at eval time (guarded parse: `findFirst` + `builtins.match`, fails loudly → named case) and pins the `nsfw.home.lan:<port>` candidate to the resolved `services.nsfw-classifier.port` | same file; check `checks.x86_64-linux.nsfw-classifier` |
+| 4  | Negative tests, BOTH cases, atomic neuter→FAIL→restore cycles: startLimit case FAILED with `startLimitBurst = 6`; drift case FAILED naming `extension-default-url-port-drift` when the regex was neutered to `9[0-9]+`; post-restore green (same out-path `higlxq0mkx`)                                                           | build logs this session                                |
+| 5  | evo-x2 toplevel eval green (`nix eval .#nixosConfigurations.evo-x2...drvPath`); `nsfw` correctly ABSENT from the missing-catalog warning list                                                                                                                                                                                     | eval output                                            |
+| 6  | Queue closure on BOTH surfaces, no drift: `TODO_LIST.md` startLimit row → `[x]` DONE with landing commits; `docs/todo/services.md` row 220 same; runbook/port-drift sub-parts struck from the sweep row (remaining: Environment sweep)                                                                                            | `26d416d1`                                             |
+| 7  | CHANGELOG entry under `## [Unreleased]`                                                                                                                                                                                                                                                                                           | `c7e07493`                                             |
+| 8  | Direct follow-up self-harvested at authoring time (drift-guard scope gap, §e.3) into `TODO_LIST.md` + `docs/todo/services.md`                                                                                                                                                                                                     | both surfaces, one row                                 |
+| 9  | Properly-messaged pathspec commit with pre-commit hooks GREEN (gitleaks/markdownlint/link-scan legs ran — unlike the daemon's sweeps)                                                                                                                                                                                             | `26d416d1`                                             |
+| 10 | Daemon-race healing: land-on-top `3eda16bf` restores the neutered regex; no amend-under-daemon, no `git reset`                                                                                                                                                                                                                    | `git log` `16a69d89`→`3eda16bf`                        |
 
 ## b) PARTIALLY DONE
 
@@ -69,6 +69,7 @@
 ## f) THINGS WE SHOULD GET DONE NEXT (up to 50; session-grounded, sorted by impact; brainstorm per the larger-N rule — most are queue/ROADMAP fuel)
 
 **Deploy & ship (highest impact)**
+
 1. Deploy evo-x2 — carries the startLimit budget + keeps the drift-guard contract honest at runtime (eval-green is not live).
 2. Push the unpushed lineage (`3eda16bf`..`26d416d1` + this report) — resolve the `16a69d89` push-state ambiguity first (`git log origin/master..HEAD` fresh).
 3. Push `46f02bb` upstream in nsfw-classifier, then flip the SystemNix input off the interim `git+file` pin → `github:?ref=master` (existing `[blocked:push]` row).
@@ -122,4 +123,4 @@
 
 ---
 
-*Sources: this session's build/eval outputs, `git log` `36c980d1`→`26d416d1`, `modules/nixos/services/nsfw-classifier.nix`, `tests/test-nsfw-classifier.nix`, `docs/CONTRIBUTING.md` daemon-race policy, queue surfaces as cited inline. Prose revs are 7-char short form. No secrets in this report.*
+_Sources: this session's build/eval outputs, `git log` `36c980d1`→`26d416d1`, `modules/nixos/services/nsfw-classifier.nix`, `tests/test-nsfw-classifier.nix`, `docs/CONTRIBUTING.md` daemon-race policy, queue surfaces as cited inline. Prose revs are 7-char short form. No secrets in this report._

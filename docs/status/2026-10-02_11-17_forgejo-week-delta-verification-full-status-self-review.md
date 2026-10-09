@@ -60,6 +60,7 @@ The week moved WITHOUT me: **G1 (storage migration) was executed 2026-09-30**, P
 ## f) Next things (this session's direct follow-ups; honest count 15 — no padding to 50)
 
 **Forgejo staged-primary program (mine):**
+
 1. [ready] Docs-sync G1 execution: plan §10 addendum + forgejo.md Storage section — replace "G1 remains the owner gate"/"until the window runs" with executed-state + evidence pointers.
 2. [ready] CHANGELOG row for the G1 storage-migration execution + Phase-1 deploy (no record on either surface today).
 3. [ready] G1 gate-completeness: find or run the F24 restore drill (2+ green sends proven; drill unproven).
@@ -88,4 +89,4 @@ The week moved WITHOUT me: **G1 (storage migration) was executed 2026-09-30**, P
 
 ---
 
-*Session end state: tree untouched by me; report + queue/library harvest rows are this session's only writes. Auto-commit daemon picks them up; no manual commit (harness contract). WAITING FOR INSTRUCTIONS.*
+_Session end state: tree untouched by me; report + queue/library harvest rows are this session's only writes. Auto-commit daemon picks them up; no manual commit (harness contract). WAITING FOR INSTRUCTIONS._

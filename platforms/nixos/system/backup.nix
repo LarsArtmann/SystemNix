@@ -47,7 +47,7 @@ let
   # module is dormant it pins the sops-nix default shape so the guard
   # still fires in the default gate (proven: an in-mkIf placement passed
   # flake check on a drifted script).
-  drillScript = cfg.drillScript;
+  inherit (cfg) drillScript;
   borgEnvRenderPath =
     if options ? sops.templates && config.sops.templates ? "borg-env" then
       config.sops.templates."borg-env".path

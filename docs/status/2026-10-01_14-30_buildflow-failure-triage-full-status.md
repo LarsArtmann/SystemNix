@@ -50,6 +50,7 @@ Nothing in this session is "fucked up" — no data loss, no broken surfaces, no 
 ## f) NEXT — 50 things to get done (brainstorm; §f.1-6 are this report's own follow-ups, harvested at authoring)
 
 **This session's direct follow-ups (harvested → `docs/todo/pipeline.md` + `TODO_LIST.md`):**
+
 1. Rerun lychee with a ≥15m budget to get a real pass/fail (2227 files; current 4.5m kill proves nothing).
 2. Run a full toplevel `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going` (heavy-job wrapped / quiet-IO window) to clear the nix-build kill verdict.
 3. Add `prettier`, `ruff`, `dprint`, `lychee`, `vulnix`, `interrogate` (+ the other 3 from `buildflow doctor`) to `devShells.default` — kills 9 WARNs and the dep-less fallback class.
@@ -119,4 +120,4 @@ Nothing in this session is "fucked up" — no data loss, no broken surfaces, no 
 
 ---
 
-*Point-in-time snapshot. §f.1-6 harvested into `TODO_LIST.md` + `docs/todo/pipeline.md` at authoring time (2026-10-01).*
+_Point-in-time snapshot. §f.1-6 harvested into `TODO_LIST.md` + `docs/todo/pipeline.md` at authoring time (2026-10-01)._

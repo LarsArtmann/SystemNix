@@ -1094,7 +1094,7 @@ in
             signozMetrics
 
             (lib.mkIf cfg.components.otelCollector {
-              users.groups.systemd-journal-member = lib.mkIf (cfg.components.nodeExporter) { };
+              users.groups.systemd-journal-member = lib.mkIf cfg.components.nodeExporter { };
               systemd.services.signoz-collector = {
                 description = "SigNoz OTel Collector";
                 inherit onFailure;
@@ -1124,7 +1124,7 @@ in
                     Type = "simple";
                     User = "signoz";
                     Group = "signoz";
-                    SupplementaryGroups = lib.optional (cfg.components.nodeExporter) "systemd-journal";
+                    SupplementaryGroups = lib.optional cfg.components.nodeExporter "systemd-journal";
                     WorkingDirectory = cfg.settings.queryService.dataDir;
                     ExecStart = "${lib.getExe packages.otelCollector} --config /etc/signoz/collector.yaml";
                   }

@@ -9,12 +9,12 @@ and the rollback path. Product docs: the PapDashboard repo `README.md` (§Servic
 
 ## Surface map
 
-| Surface                                          | Where                                               | Auth                                   |
-| ------------------------------------------------ | --------------------------------------------------- | -------------------------------------- |
-| Dashboard UI (tabs: Services first when enabled) | `GET /` via templ                                   | public at the app; auth = Caddy vHost (Layer 2 protected) |
-| Tiles + live status JSON                         | `GET /api/services`                                 | public at the app (upstream `publicPaths` contract) |
-| Server-rendered tiles fragment                   | `GET /api/fragments/services`                       | public (same class as `/dashboard.js`) |
-| Host vitals JSON (CPU/MEM/TEMP/UPTIME/net/disks) | `GET /api/system`                                   | public (`/metrics` exposure class)     |
+| Surface                                          | Where                                               | Auth                                                                         |
+| ------------------------------------------------ | --------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Dashboard UI (tabs: Services first when enabled) | `GET /` via templ                                   | public at the app; auth = Caddy vHost (Layer 2 protected)                    |
+| Tiles + live status JSON                         | `GET /api/services`                                 | public at the app (upstream `publicPaths` contract)                          |
+| Server-rendered tiles fragment                   | `GET /api/fragments/services`                       | public (same class as `/dashboard.js`)                                       |
+| Host vitals JSON (CPU/MEM/TEMP/UPTIME/net/disks) | `GET /api/system`                                   | public (`/metrics` exposure class)                                           |
 | Status flips                                     | SSE `service.status` events on `/api/events/stream` | public at the app (SSE can't send headers — why the gate lives at the proxy) |
 
 Auth model note (upstream re-pin 2026-10-08, flake bump `f12d5604` → rev `81201c88`):

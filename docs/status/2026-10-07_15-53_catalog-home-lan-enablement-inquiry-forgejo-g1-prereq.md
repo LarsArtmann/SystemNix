@@ -26,15 +26,15 @@
 
 ### Evidence table
 
-| Probe | Result | Verdict |
-| --- | --- | --- |
-| `fetch https://catalog.home.lan/` | 404 | vHost live, no content (pre-go-live by design) |
-| `ls /var/lib/architecture-catalog/` | `generations` only, dir empty | sync never pulled; PLACEHOLDER-inert holds |
-| `fetch https://forgejo.home.lan/api/v1/repos/lars/eventcatalog-hub/branches` and `/explore` | 502 (×2) | forgejo upstream down |
-| `ss -tln` | nothing on `:3000` | forgejo not listening |
-| `journalctl -u forgejo` | condition-skip lines 09-30 → today 12:21, 4 boots | `.subvol-migrated` gate = designed loud-down |
-| `ls /var/lib/forgejo/.eventcatalog-hub-setup/` | Permission denied | prior setup-run existence UNKNOWABLE to me |
-| `git show --stat 6a759775` | daemon sweep 15:46: TODO_LIST, upstream.md, crm.nix, _signoz-packages.nix | foreign session's work absorbed; flagged post-hoc (§d.3) |
+| Probe                                                                                       | Result                                                                    | Verdict                                                  |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `fetch https://catalog.home.lan/`                                                           | 404                                                                       | vHost live, no content (pre-go-live by design)           |
+| `ls /var/lib/architecture-catalog/`                                                         | `generations` only, dir empty                                             | sync never pulled; PLACEHOLDER-inert holds               |
+| `fetch https://forgejo.home.lan/api/v1/repos/lars/eventcatalog-hub/branches` and `/explore` | 502 (×2)                                                                  | forgejo upstream down                                    |
+| `ss -tln`                                                                                   | nothing on `:3000`                                                        | forgejo not listening                                    |
+| `journalctl -u forgejo`                                                                     | condition-skip lines 09-30 → today 12:21, 4 boots                         | `.subvol-migrated` gate = designed loud-down             |
+| `ls /var/lib/forgejo/.eventcatalog-hub-setup/`                                              | Permission denied                                                         | prior setup-run existence UNKNOWABLE to me               |
+| `git show --stat 6a759775`                                                                  | daemon sweep 15:46: TODO_LIST, upstream.md, crm.nix, _signoz-packages.nix | foreign session's work absorbed; flagged post-hoc (§d.3) |
 
 ---
 
@@ -91,40 +91,40 @@
 
 Sorted by impact. `[TRACKED]` = existing queue row (pointer given, deliberately NOT re-queued — no duplicates); `[NEW]` = harvested this session.
 
-| # | Item | Tag / where |
-| --- | --- | --- |
-| 1 | G1 finalize: `sudo ./scripts/migrate-forgejo-subvol.sh finalize` (+ umount-first if the state-mount guard refuses) then `nix run .#deploy` — unblocks EVERYTHING forgejo | `[TRACKED]` `[blocked:user]` TODO_LIST:221 / services.md:283 |
-| 2 | Before #1: enumerate the live blast radius of the 7-day outage (what silently 502s: other repos' CI, mirror consumers, embedded links, pollers) to pick the window honestly | `[NEW → harvested]` TODO_LIST + services.md (this session) |
-| 3 | Post-finalize: probe forgejo UI/API + verify the gitea-runner token-gen fail-loop is healed (freeze-18 fix is deploy-gated) | `[TRACKED]` services.md:288 / TODO_LIST:323 (assertion) + runner row |
-| 4 | Post-finalize: verify the forgejo dark-mode body fix (`--color-body`) renders on a hard refresh | `[TRACKED]` `[blocked:deploy]` services.md:169 |
-| 5 | Catalog go-live: `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh` (rotates PATs, mints sync token, dispatches first run) | `[TRACKED]` services.md:162 step (1) |
-| 6 | Watch first hub CI run green + `dist` branch (watch-list: nix-daemon for DynamicUser, npm in job env, job-token push fallback) | `[TRACKED]` services.md:162 step (2) |
-| 7 | sops-paste `ARCHITECTURE_CATALOG_SYNC_TOKEN` (runbook step 4 shape; never inline the value) | `[TRACKED]` services.md:162 step (3) |
-| 8 | `nix run .#deploy` → `sudo systemctl start architecture-catalog-sync` → full verify chain (journal, `current/index.html` + `build-stamp.json`, collector flip, 3 Gatus green, smoke §15) | `[TRACKED]` services.md:162 steps (4)-(5) |
-| 9 | Trash `/mnt/buildcache/scratch/eventcatalog-t0/` (2.7G) in the same go-live closeout | `[TRACKED]` decision inside services.md:162 |
-| 10 | `architecture-catalog` VM test (PLACEHOLDER skip, fake-dist converge, atomic swap, keep-N, fail-closed collector) | `[TRACKED]` `[ready]` services.md:163 |
-| 11 | SigNoz tile for `architecture_catalog_stamp_age_seconds` once live | `[TRACKED]` `[watch]` services.md:164 |
-| 12 | Resolve the 21-integration-subdomains warning (entries or documented acceptance) — catalog, cache, banksync, … | `[TRACKED]` TODO_LIST:320 / services.md:243 / pipeline.md:277 |
-| 13 | Eval-time forgejo-family gate assertion (every forgejo-consuming unit carries the marker condition) | `[TRACKED]` `[ready]` TODO_LIST:323 / services.md:288 |
-| 14 | First-hand verify `/var/lib/forgejo` mount + marker state at the finalize window (2 probes, part of the #2 dispatch) | `[NEW — folded into #2]` |
-| 15 | Answer §g.1 (did setup-forgejo ever run) — one sudo `ls`, decide whether go-live step 5 can be skipped | `[NEW — owner knows or 1 command]` |
-| 16 | indexer-web VM regression test | `[TRACKED]` `[ready]` services.md:30 |
-| 17 | Post-deploy live-verify emeet-pixyd registry wiring (panel behind protected layer) | `[TRACKED]` `[ready]` services.md:264 |
-| 18 | nsfw-classifier remaining residue (per its row) | `[TRACKED]` services.md:216 |
-| 19 | Parameterize netbird client module for multi-host (rpi3) + touch test-cloud-domain | `[TRACKED]` `[ready]` services.md:209 |
-| 20 | Health-hub remote-2..N decision (no other fleet service speaks go-health) | `[TRACKED]` `[decision]` services.md:157 |
-| 21 | Health-hub fetch cadence decision (2s vs 30s/1m) | `[TRACKED]` `[decision]` services.md:158 |
-| 22 | Health-hub protected-vs-plain decision | `[TRACKED]` `[decision]` services.md:159 |
-| 23 | Health-hub hardening toggles decision (drain/rate-limit/webhook) | `[TRACKED]` `[decision]` services.md:160 |
-| 24 | Rogue hermes llamas: kill/re-port/delete the cron spawner | `[TRACKED]` `[decision]` services.md:161 |
-| 25 | Forgejo Phase 2 logo/favicon (owner glyph pick) | `[TRACKED]` `[decision]` services.md:165 |
-| 26 | Codify theme shadowed-var cascade guard + served-CSS smoke | `[TRACKED]` `[ready]` services.md:170 |
-| 27 | CHANGELOG row + forgejo.md section for the theme cascade trap | `[TRACKED]` `[ready]` services.md:171 |
-| 28 | Theme strategy decision (deltas vs official catppuccin theme) | `[TRACKED]` `[decision]` services.md:172 |
-| 29 | nix-email mail stack go-live (dmarc flip + paste) | `[TRACKED]` `[blocked:user]` services.md:168 |
-| 30 | alt-nix (530M) + scratch dispositions (buildcache [6] flags) | `[TRACKED]` `[blocked:user]` TODO_LIST:26 / storage.md:134 |
+| #  | Item                                                                                                                                                                                     | Tag / where                                                          |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| 1  | G1 finalize: `sudo ./scripts/migrate-forgejo-subvol.sh finalize` (+ umount-first if the state-mount guard refuses) then `nix run .#deploy` — unblocks EVERYTHING forgejo                 | `[TRACKED]` `[blocked:user]` TODO_LIST:221 / services.md:283         |
+| 2  | Before #1: enumerate the live blast radius of the 7-day outage (what silently 502s: other repos' CI, mirror consumers, embedded links, pollers) to pick the window honestly              | `[NEW → harvested]` TODO_LIST + services.md (this session)           |
+| 3  | Post-finalize: probe forgejo UI/API + verify the gitea-runner token-gen fail-loop is healed (freeze-18 fix is deploy-gated)                                                              | `[TRACKED]` services.md:288 / TODO_LIST:323 (assertion) + runner row |
+| 4  | Post-finalize: verify the forgejo dark-mode body fix (`--color-body`) renders on a hard refresh                                                                                          | `[TRACKED]` `[blocked:deploy]` services.md:169                       |
+| 5  | Catalog go-live: `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh` (rotates PATs, mints sync token, dispatches first run)                                                 | `[TRACKED]` services.md:162 step (1)                                 |
+| 6  | Watch first hub CI run green + `dist` branch (watch-list: nix-daemon for DynamicUser, npm in job env, job-token push fallback)                                                           | `[TRACKED]` services.md:162 step (2)                                 |
+| 7  | sops-paste `ARCHITECTURE_CATALOG_SYNC_TOKEN` (runbook step 4 shape; never inline the value)                                                                                              | `[TRACKED]` services.md:162 step (3)                                 |
+| 8  | `nix run .#deploy` → `sudo systemctl start architecture-catalog-sync` → full verify chain (journal, `current/index.html` + `build-stamp.json`, collector flip, 3 Gatus green, smoke §15) | `[TRACKED]` services.md:162 steps (4)-(5)                            |
+| 9  | Trash `/mnt/buildcache/scratch/eventcatalog-t0/` (2.7G) in the same go-live closeout                                                                                                     | `[TRACKED]` decision inside services.md:162                          |
+| 10 | `architecture-catalog` VM test (PLACEHOLDER skip, fake-dist converge, atomic swap, keep-N, fail-closed collector)                                                                        | `[TRACKED]` `[ready]` services.md:163                                |
+| 11 | SigNoz tile for `architecture_catalog_stamp_age_seconds` once live                                                                                                                       | `[TRACKED]` `[watch]` services.md:164                                |
+| 12 | Resolve the 21-integration-subdomains warning (entries or documented acceptance) — catalog, cache, banksync, …                                                                           | `[TRACKED]` TODO_LIST:320 / services.md:243 / pipeline.md:277        |
+| 13 | Eval-time forgejo-family gate assertion (every forgejo-consuming unit carries the marker condition)                                                                                      | `[TRACKED]` `[ready]` TODO_LIST:323 / services.md:288                |
+| 14 | First-hand verify `/var/lib/forgejo` mount + marker state at the finalize window (2 probes, part of the #2 dispatch)                                                                     | `[NEW — folded into #2]`                                             |
+| 15 | Answer §g.1 (did setup-forgejo ever run) — one sudo `ls`, decide whether go-live step 5 can be skipped                                                                                   | `[NEW — owner knows or 1 command]`                                   |
+| 16 | indexer-web VM regression test                                                                                                                                                           | `[TRACKED]` `[ready]` services.md:30                                 |
+| 17 | Post-deploy live-verify emeet-pixyd registry wiring (panel behind protected layer)                                                                                                       | `[TRACKED]` `[ready]` services.md:264                                |
+| 18 | nsfw-classifier remaining residue (per its row)                                                                                                                                          | `[TRACKED]` services.md:216                                          |
+| 19 | Parameterize netbird client module for multi-host (rpi3) + touch test-cloud-domain                                                                                                       | `[TRACKED]` `[ready]` services.md:209                                |
+| 20 | Health-hub remote-2..N decision (no other fleet service speaks go-health)                                                                                                                | `[TRACKED]` `[decision]` services.md:157                             |
+| 21 | Health-hub fetch cadence decision (2s vs 30s/1m)                                                                                                                                         | `[TRACKED]` `[decision]` services.md:158                             |
+| 22 | Health-hub protected-vs-plain decision                                                                                                                                                   | `[TRACKED]` `[decision]` services.md:159                             |
+| 23 | Health-hub hardening toggles decision (drain/rate-limit/webhook)                                                                                                                         | `[TRACKED]` `[decision]` services.md:160                             |
+| 24 | Rogue hermes llamas: kill/re-port/delete the cron spawner                                                                                                                                | `[TRACKED]` `[decision]` services.md:161                             |
+| 25 | Forgejo Phase 2 logo/favicon (owner glyph pick)                                                                                                                                          | `[TRACKED]` `[decision]` services.md:165                             |
+| 26 | Codify theme shadowed-var cascade guard + served-CSS smoke                                                                                                                               | `[TRACKED]` `[ready]` services.md:170                                |
+| 27 | CHANGELOG row + forgejo.md section for the theme cascade trap                                                                                                                            | `[TRACKED]` `[ready]` services.md:171                                |
+| 28 | Theme strategy decision (deltas vs official catppuccin theme)                                                                                                                            | `[TRACKED]` `[decision]` services.md:172                             |
+| 29 | nix-email mail stack go-live (dmarc flip + paste)                                                                                                                                        | `[TRACKED]` `[blocked:user]` services.md:168                         |
+| 30 | alt-nix (530M) + scratch dispositions (buildcache [6] flags)                                                                                                                             | `[TRACKED]` `[blocked:user]` TODO_LIST:26 / storage.md:134           |
 
-*(Stopped at 30: items 31–50 would be padding beyond what this session actually touched or read — the remaining queue rows were not opened this session and re-listing them here would be research-free filler, exactly what the "nothing unrelated" instruction forbids. The harvestable set is fully covered: items 2 and 14–15.)*
+_(Stopped at 30: items 31–50 would be padding beyond what this session actually touched or read — the remaining queue rows were not opened this session and re-listing them here would be research-free filler, exactly what the "nothing unrelated" instruction forbids. The harvestable set is fully covered: items 2 and 14–15.)_
 
 **Self-harvest record:** item 2 landed in TODO_LIST.md + docs/todo/services.md this session (both surfaces). Item 14 was folded into item 2's text (same dispatch). Item 15 is owner-knowledge, recorded as §g.1 instead of a fake queue row. Everything else is deliberately not re-queued (already tracked at the cited rows — re-adding would be the duplicate-finding anti-pattern).
 
@@ -136,4 +136,4 @@ Sorted by impact. `[TRACKED]` = existing queue row (pointer given, deliberately 
 
 ---
 
-*Report ends. Waiting for instructions.*
+_Report ends. Waiting for instructions._

@@ -6,9 +6,9 @@ Web dashboard over the project fleet (repos, stats, activity), fed by the **proj
 
 ## What it serves
 
-| Route | Auth                        | What                                    |
-| ----- | --------------------------- | --------------------------------------- |
-| `/`   | forward-auth / open LAN     | Project dashboard                       |
+| Route | Auth                    | What              |
+| ----- | ----------------------- | ----------------- |
+| `/`   | forward-auth / open LAN | Project dashboard |
 
 ## Ops
 

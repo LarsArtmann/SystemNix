@@ -68,48 +68,48 @@ Nothing the session shipped is broken. Honest negatives:
 
 Ranked by impact within category; each is specific enough to dispatch. (Deliberately stopped at 40 quality items rather than padding to 50 — the remainder are already-queued rows restated.)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Attribute the 09:23:57 `cv-server` activation (journalctl `/proc` forensics or crush.db query) and record it | High | S | Bug |
-| 2 | Re-run `nix run .#deploy` once the tree settles to clear the 12:04 nh-switch failure and restore HEAD==deployed | High | M | Bug |
-| 3 | Triage the 12:04 failure: `nsfw-classifier-go-f5646ea-go-modules` FOD (log tail shows `templ-components/errorpage v1.20.1` download) — stale vendorHash class? | High | M | Bug |
-| 4 | Fix row 780: make CV render smokes IO-pressure-aware (WARN above a PSI threshold instead of FAIL) | High | M | Quality |
-| 5 | Answer Q3 (below) and either wire a groq key into sops `cv-env` or disable the chat provider in `cv.nix` settings | High | S | Decision |
-| 6 | Run the restore drill per the `cv.md` root-shell prep list and record the pass in the runbook (canon: closed only by recorded pass) | High | M | Quality |
-| 7 | Burn down the 13–14 standing smoke FAILs (Forgejo ×6, Overview ×3, FastFlowLM, Caddy catch-all, InboxClean budget, CV flap) then re-baseline | High | M | Bug |
-| 8 | Investigate the IO storm window (~09:30–13:00, io avg300≈65): identify writer(s) via per-cgroup io.pressure | High | M | Bug |
-| 9 | Document-or-ban direct `nh os switch` activation (deploy-log audit hole, class of item 1) | High | S | Documentation |
-| 10 | Tighten the new `cv.md` breadcrumb: replace "deployed" with the activation mechanism once item 1 lands | Med | S | Documentation |
-| 11 | Add the en-route CHANGELOG row for the cv.md hold-lift fix (canon) | Med | S | Documentation |
-| 12 | Close row 386 (lock-forward premise resolved at `b2cab453`): edit queue + `docs/todo/services.md` + source report (three-surface rule) | Med | S | Documentation |
-| 13 | Add an "agent verification" subsection to `cv.md` (fetch-based probes, file-based evidence, sandbox limits) | Med | S | Documentation |
-| 14 | Persist smoke render-fail logs to a durable home (`~/.local/share/cv-verify/` or deploy-log dir) instead of `/tmp` | Med | S | Quality |
-| 15 | Verify the 2026-10-05 09:41 `cv-profile-probe` run outcome from the journal (last fire not agent-verifiable) | Med | S | Bug |
-| 16 | Re-probe Forgejo 502s (HTTPS version + Catppuccin theme asset) seen in the 09:49 smoke — storm-transient or real? | Med | S | Bug |
-| 17 | Re-probe Overview (:8083) and the Caddy catch-all probe from the 09:49 smoke | Med | S | Bug |
-| 18 | FastFlowLM :52625 socket-dead class (2026-09-27 + today's 09:49 smoke) — root-cause the guard-down recurrence | Med | S | Bug |
-| 19 | Revisit the InboxClean `/health` 3s handler budget (blew during the IO storm; 2026-10-06 class) | Med | S | Bug |
-| 20 | Wire row 841: `checks.x86_64-linux.cv-oidc-gate` flake check (selftest already 4/4 green) | Med | S | Quality |
-| 21 | Capture + file the 09:49 vs 11:37 render-flap evidence (`/tmp/.smoke-cv-render*.log`) before /tmp cleanup feeds item 4 | Med | S | Bug |
-| 22 | Verify `cv-backup` retention is still exactly 14 days (only the 4 newest artifacts were listed this session) | Med | S | Quality |
-| 23 | Push CV `0597a1799` → origin/master when the owner next allows pushes (private repo, lock consumers benefit) | Med | S | Cleanup |
-| 24 | Refresh `checks.cv` VM-test evidence on the post-hold tree (`nix build .#checks.x86_64-linux.cv.driver` + test-script run) | Med | M | Quality |
-| 25 | Confirm the 11:52 deploy (exit 0 in 2s) was a deliberate no-op, not a swallowed validation failure | Med | S | Quality |
-| 26 | Verify the `crm-server :8091` ExecStartPre wait-gate still matches the CRM's actual port after crm.nix changes | Low | S | Quality |
-| 27 | Consider PSI-aware WARN parity for the Gatus funnel-freshness check (same flap class as item 4, 2.4–12s latencies under load) | Low | M | Quality |
-| 28 | Add a post-deploy smoke leg asserting the Gatus CV Auto-Apply last-pass check's endpoint (check exists; smoke doesn't cover it) | Low | S | Quality |
-| 29 | Refresh the "Pending root-gated proofs" intro in `cv.md` (evidence dates to 2026-09-08) | Low | S | Documentation |
-| 30 | Record the restore-drill row in `cv.md` once run (pairs with item 6) | Low | S | Documentation |
-| 31 | monitor365 :9191 refused (already queued) — keep on the dispatch train | Med | S | Bug |
-| 32 | node_exporter connection-reset journal spam (already queued) — identify the scraper | Low | M | Bug |
-| 33 | Confirm `gunio-weekly` transient timer re-registration state (dies at logout by design; re-register command in `cv.md`) | Low | S | Quality |
-| 34 | Sweep `data/accounts.json` staleness (last write 2026-10-01 18:11) — probe freshness is the profile-probe's job; confirm the probe still updates it | Low | S | Bug |
-| 35 | Decide whether deploy smokes should run a PSI gate of their own (postpone render legs above the same threshold row 780 picks) | Low | S | Quality |
-| 36 | Add `checks.any-count`-style evidence: record the `nix build` store-path equivalence check (unit ExecStart == fresh build) as a reusable deploy-currency probe in the runbook | Low | S | Documentation |
-| 37 | Backfill the 2026-10-08 lock-move into CV's CHANGELOG (SystemNix-facing note) if CV conventions want lock bumps recorded | Low | S | Documentation |
-| 38 | Annotate the `ef1ce387` hold era in `docs/gotchas-archive.md` (incident narrative closure for the hold) | Low | S | Documentation |
-| 39 | Evaluate a `systemd` unit-state textfile exporter so agent sandboxes can read timer/unit outcomes without journal access | Low | M | Feature |
-| 40 | After Q1 lands: add the 2026-10-08 activation to the deploy-log narrative trail (one-line appendix in the closest deploy log or the incident note) | Low | S | Documentation |
+| #  | Task                                                                                                                                                                          | Impact | Effort | Category      |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
+| 1  | Attribute the 09:23:57 `cv-server` activation (journalctl `/proc` forensics or crush.db query) and record it                                                                  | High   | S      | Bug           |
+| 2  | Re-run `nix run .#deploy` once the tree settles to clear the 12:04 nh-switch failure and restore HEAD==deployed                                                               | High   | M      | Bug           |
+| 3  | Triage the 12:04 failure: `nsfw-classifier-go-f5646ea-go-modules` FOD (log tail shows `templ-components/errorpage v1.20.1` download) — stale vendorHash class?                | High   | M      | Bug           |
+| 4  | Fix row 780: make CV render smokes IO-pressure-aware (WARN above a PSI threshold instead of FAIL)                                                                             | High   | M      | Quality       |
+| 5  | Answer Q3 (below) and either wire a groq key into sops `cv-env` or disable the chat provider in `cv.nix` settings                                                             | High   | S      | Decision      |
+| 6  | Run the restore drill per the `cv.md` root-shell prep list and record the pass in the runbook (canon: closed only by recorded pass)                                           | High   | M      | Quality       |
+| 7  | Burn down the 13–14 standing smoke FAILs (Forgejo ×6, Overview ×3, FastFlowLM, Caddy catch-all, InboxClean budget, CV flap) then re-baseline                                  | High   | M      | Bug           |
+| 8  | Investigate the IO storm window (~09:30–13:00, io avg300≈65): identify writer(s) via per-cgroup io.pressure                                                                   | High   | M      | Bug           |
+| 9  | Document-or-ban direct `nh os switch` activation (deploy-log audit hole, class of item 1)                                                                                     | High   | S      | Documentation |
+| 10 | Tighten the new `cv.md` breadcrumb: replace "deployed" with the activation mechanism once item 1 lands                                                                        | Med    | S      | Documentation |
+| 11 | Add the en-route CHANGELOG row for the cv.md hold-lift fix (canon)                                                                                                            | Med    | S      | Documentation |
+| 12 | Close row 386 (lock-forward premise resolved at `b2cab453`): edit queue + `docs/todo/services.md` + source report (three-surface rule)                                        | Med    | S      | Documentation |
+| 13 | Add an "agent verification" subsection to `cv.md` (fetch-based probes, file-based evidence, sandbox limits)                                                                   | Med    | S      | Documentation |
+| 14 | Persist smoke render-fail logs to a durable home (`~/.local/share/cv-verify/` or deploy-log dir) instead of `/tmp`                                                            | Med    | S      | Quality       |
+| 15 | Verify the 2026-10-05 09:41 `cv-profile-probe` run outcome from the journal (last fire not agent-verifiable)                                                                  | Med    | S      | Bug           |
+| 16 | Re-probe Forgejo 502s (HTTPS version + Catppuccin theme asset) seen in the 09:49 smoke — storm-transient or real?                                                             | Med    | S      | Bug           |
+| 17 | Re-probe Overview (:8083) and the Caddy catch-all probe from the 09:49 smoke                                                                                                  | Med    | S      | Bug           |
+| 18 | FastFlowLM :52625 socket-dead class (2026-09-27 + today's 09:49 smoke) — root-cause the guard-down recurrence                                                                 | Med    | S      | Bug           |
+| 19 | Revisit the InboxClean `/health` 3s handler budget (blew during the IO storm; 2026-10-06 class)                                                                               | Med    | S      | Bug           |
+| 20 | Wire row 841: `checks.x86_64-linux.cv-oidc-gate` flake check (selftest already 4/4 green)                                                                                     | Med    | S      | Quality       |
+| 21 | Capture + file the 09:49 vs 11:37 render-flap evidence (`/tmp/.smoke-cv-render*.log`) before /tmp cleanup feeds item 4                                                        | Med    | S      | Bug           |
+| 22 | Verify `cv-backup` retention is still exactly 14 days (only the 4 newest artifacts were listed this session)                                                                  | Med    | S      | Quality       |
+| 23 | Push CV `0597a1799` → origin/master when the owner next allows pushes (private repo, lock consumers benefit)                                                                  | Med    | S      | Cleanup       |
+| 24 | Refresh `checks.cv` VM-test evidence on the post-hold tree (`nix build .#checks.x86_64-linux.cv.driver` + test-script run)                                                    | Med    | M      | Quality       |
+| 25 | Confirm the 11:52 deploy (exit 0 in 2s) was a deliberate no-op, not a swallowed validation failure                                                                            | Med    | S      | Quality       |
+| 26 | Verify the `crm-server :8091` ExecStartPre wait-gate still matches the CRM's actual port after crm.nix changes                                                                | Low    | S      | Quality       |
+| 27 | Consider PSI-aware WARN parity for the Gatus funnel-freshness check (same flap class as item 4, 2.4–12s latencies under load)                                                 | Low    | M      | Quality       |
+| 28 | Add a post-deploy smoke leg asserting the Gatus CV Auto-Apply last-pass check's endpoint (check exists; smoke doesn't cover it)                                               | Low    | S      | Quality       |
+| 29 | Refresh the "Pending root-gated proofs" intro in `cv.md` (evidence dates to 2026-09-08)                                                                                       | Low    | S      | Documentation |
+| 30 | Record the restore-drill row in `cv.md` once run (pairs with item 6)                                                                                                          | Low    | S      | Documentation |
+| 31 | monitor365 :9191 refused (already queued) — keep on the dispatch train                                                                                                        | Med    | S      | Bug           |
+| 32 | node_exporter connection-reset journal spam (already queued) — identify the scraper                                                                                           | Low    | M      | Bug           |
+| 33 | Confirm `gunio-weekly` transient timer re-registration state (dies at logout by design; re-register command in `cv.md`)                                                       | Low    | S      | Quality       |
+| 34 | Sweep `data/accounts.json` staleness (last write 2026-10-01 18:11) — probe freshness is the profile-probe's job; confirm the probe still updates it                           | Low    | S      | Bug           |
+| 35 | Decide whether deploy smokes should run a PSI gate of their own (postpone render legs above the same threshold row 780 picks)                                                 | Low    | S      | Quality       |
+| 36 | Add `checks.any-count`-style evidence: record the `nix build` store-path equivalence check (unit ExecStart == fresh build) as a reusable deploy-currency probe in the runbook | Low    | S      | Documentation |
+| 37 | Backfill the 2026-10-08 lock-move into CV's CHANGELOG (SystemNix-facing note) if CV conventions want lock bumps recorded                                                      | Low    | S      | Documentation |
+| 38 | Annotate the `ef1ce387` hold era in `docs/gotchas-archive.md` (incident narrative closure for the hold)                                                                       | Low    | S      | Documentation |
+| 39 | Evaluate a `systemd` unit-state textfile exporter so agent sandboxes can read timer/unit outcomes without journal access                                                      | Low    | M      | Feature       |
+| 40 | After Q1 lands: add the 2026-10-08 activation to the deploy-log narrative trail (one-line appendix in the closest deploy log or the incident note)                            | Low    | S      | Documentation |
 
 **Harvest status (canon obligation):** items 2, 3, 5, 7, 8, 10, 11, 12, 13, 14 are the §f direct follow-ups of THIS report — deliberately NOT rowed at authoring time because `TODO_LIST.md` is mid-edit by a parallel session (hot-file discipline). This paragraph is the explicit "not harvested because X" record the canon requires; the harvest pass is owed immediately after `TODO_LIST.md` settles.
 
@@ -121,4 +121,4 @@ Ranked by impact within category; each is specific enough to dispatch. (Delibera
 
 ---
 
-*Then waiting for instructions.*
+_Then waiting for instructions._

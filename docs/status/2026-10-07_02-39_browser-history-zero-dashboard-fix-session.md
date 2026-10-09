@@ -25,13 +25,13 @@ The dashboard renders zeros because the OAuth login resolves to a duplicate user
 
 ## Deployment Attempts This Session (what blocked them)
 
-| Attempt | Result |
-| --- | --- |
-| `nix run .#deploy` #1 (~02:00) | Blocked: deploy lock held by other session (PID 966623). That deploy then died mid-flight (post-activation, pre-restart). |
-| `nix run .#deploy` #2 (~02:20) | Aborted at pre-deploy PSI gate: I/O some avg10 = 43.7% + disk busy 101% (crash-#3 precursor class). |
-| PSI poll loop | Drained to 15.2% once, then re-spiked (54.4%) → attempt #3 aborted at the gate. |
-| `nix run .#deploy` #3 (~02:29) | Aborted at PSI gate again. Storm source: concurrent session's go-cqrs-lite test suite (`metaengine.test`, `duckdbengine.test`, 30m timeouts) + parallel nix builds/checks. |
-| User's own `nh os switch` (~02:35, from paste) | SUCCESS in 55s → `vi223xl9` live. Did NOT restart browser-history (no unit diff vs `s31cl42n` — correct switch behavior, both closures carry the 3ebbfbf unit). |
+| Attempt                                        | Result                                                                                                                                                                     |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `nix run .#deploy` #1 (~02:00)                 | Blocked: deploy lock held by other session (PID 966623). That deploy then died mid-flight (post-activation, pre-restart).                                                  |
+| `nix run .#deploy` #2 (~02:20)                 | Aborted at pre-deploy PSI gate: I/O some avg10 = 43.7% + disk busy 101% (crash-#3 precursor class).                                                                        |
+| PSI poll loop                                  | Drained to 15.2% once, then re-spiked (54.4%) → attempt #3 aborted at the gate.                                                                                            |
+| `nix run .#deploy` #3 (~02:29)                 | Aborted at PSI gate again. Storm source: concurrent session's go-cqrs-lite test suite (`metaengine.test`, `duckdbengine.test`, 30m timeouts) + parallel nix builds/checks. |
+| User's own `nh os switch` (~02:35, from paste) | SUCCESS in 55s → `vi223xl9` live. Did NOT restart browser-history (no unit diff vs `s31cl42n` — correct switch behavior, both closures carry the 3ebbfbf unit).            |
 
 **Live state at 02:39:** pid 512961 (since 01:51:21) still runs `browser-history-server-68d0b6d` (UNFIXED). Unit on disk = `3ebbfbf` (FIXED). Gap = one restart.
 
@@ -80,6 +80,7 @@ The dashboard renders zeros because the OAuth login resolves to a duplicate user
 ## f) NEXT (prioritized; ~30 items)
 
 **Close out the fix (P0)**
+
 1. `sudo systemctl restart browser-history.service` (or re-run `nix run .#deploy` when PSI allows — deploy.sh explicitly restarts it).
 2. Verify post-restart: process = `browser-history-server-3ebbfbf`, hydration logs clean, no readonly in first 10 min.
 3. User: log out + log in at history.home.lan; confirm login resolves `01M000JA6…` (journal `user_id` on `/login` 302) and the dashboard shows the 1018 visits.

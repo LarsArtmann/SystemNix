@@ -10,21 +10,21 @@
 
 ## Evidence
 
-| # | Finding | Evidence |
-|---|---------|----------|
-| 1 | Hard cut, no ceremony | journal cuts 05:07:41.14 mid-traffic; `last -x` shows zero shutdown entries between the 03:38 and 05:09 boots |
-| 2 | Healthy-to-silence < 1 s = instant-cut discriminator | last line nsfw-server `/readyz` 200 at 05:07:41.140; cv/inboxclean/geometrikks requests at ms latency through 05:07:38; no escalating stall cascade |
-| 3 | Not OOM, not storage, not hardware-error | kernel scan of boot -1: zero OOM-kill lines, zero MCE/EDAC, zero BTRFS error lines |
-| 4 | Guard + SEV1 active to the last second | SEV1 bridges 05:07:18 → :28 → :38 ("MEMORY EMERGENCY GUARD TRIPPED; FLM RESTORE CAPPED"); guard unit ran 05:07:11; trip #1820 (05:01:12) = the whole-box IO numbers above |
-| 5 | Death-minute nix storm, driver UNIDENTIFIED | 3,014 nix-daemon accepted-connection lines in the 1h30m boot; dense burst (dozens/sec) 05:07:33–38; no switch-to-configuration/nixos-rebuild/nh lines in the window; pids gone at autopsy — gate violation regardless of who |
-| 6 | btrfs: no new error events | kernel-log scan of BOTH boots: zero BTRFS error lines. Weaker than the #13 mount-counter protocol — sysfs devstats not readable from this sandbox (glob no-match), stated as run |
-| 7 | Thermal deficit live on boot 0 | 05:14: Tctl 81.5 °C @ PPT 46.4 W, load 2.7 — near-idle power holding near-throttle temperature; zero fan telemetry (same as freeze-12 probe) |
-| 8 | Storm INTENSIFIED on boot 0 | IO PSI some avg10 75.2 / avg60 **80.2** / avg300 47.1 at 05:14 — vs 61 % at #13-report authoring and 64.4 % at its death trip |
-| 9 | Guard trip-counter continuity HELD this cut | boot -1 last persisted trip #1820 (05:01:12) → boot 0 first trip #1821 (05:15:32, top IO fsck +232 MB) — no duplicate-counter anomaly; no action-trip occurred between 05:01 and the power cut, so nothing was lost |
-| 10 | Panic-dump discriminators still unavailable | `/var/crash` still ABSENT (kdump row stability.md:106, open since freeze-8); pstore unreadable from the agent sandbox (stated unreadable, NOT empty) |
-| 11 | Thermal alerting STILL dark | fifth thermal-family crash with zero CPU-temperature alerting (monitoring.md:17 + :79, open since 10-02) |
-| 12 | Death-adjacent forensics bundle SURVIVED this time | `/var/tmp/io-psi-forensics-20261004T030111Z` exists (trip #1820's bundle); boot-0 trip bundle 031532Z also present — the #13 013546Z vanish (finding 9 there) did not recur, but the durability fix row stands |
-| 13 | niri tty flood ABSENT in both latest boots | `early import: Error::DeviceMissing` = 0 lines in boot -1 AND boot 0 (140,411 lines in the 10-03 14:15 boot) — desktop row stays open but is not reproducing on these two boots |
+| #  | Finding                                              | Evidence                                                                                                                                                                                                                     |
+| -- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | Hard cut, no ceremony                                | journal cuts 05:07:41.14 mid-traffic; `last -x` shows zero shutdown entries between the 03:38 and 05:09 boots                                                                                                                |
+| 2  | Healthy-to-silence < 1 s = instant-cut discriminator | last line nsfw-server `/readyz` 200 at 05:07:41.140; cv/inboxclean/geometrikks requests at ms latency through 05:07:38; no escalating stall cascade                                                                          |
+| 3  | Not OOM, not storage, not hardware-error             | kernel scan of boot -1: zero OOM-kill lines, zero MCE/EDAC, zero BTRFS error lines                                                                                                                                           |
+| 4  | Guard + SEV1 active to the last second               | SEV1 bridges 05:07:18 → :28 → :38 ("MEMORY EMERGENCY GUARD TRIPPED; FLM RESTORE CAPPED"); guard unit ran 05:07:11; trip #1820 (05:01:12) = the whole-box IO numbers above                                                    |
+| 5  | Death-minute nix storm, driver UNIDENTIFIED          | 3,014 nix-daemon accepted-connection lines in the 1h30m boot; dense burst (dozens/sec) 05:07:33–38; no switch-to-configuration/nixos-rebuild/nh lines in the window; pids gone at autopsy — gate violation regardless of who |
+| 6  | btrfs: no new error events                           | kernel-log scan of BOTH boots: zero BTRFS error lines. Weaker than the #13 mount-counter protocol — sysfs devstats not readable from this sandbox (glob no-match), stated as run                                             |
+| 7  | Thermal deficit live on boot 0                       | 05:14: Tctl 81.5 °C @ PPT 46.4 W, load 2.7 — near-idle power holding near-throttle temperature; zero fan telemetry (same as freeze-12 probe)                                                                                 |
+| 8  | Storm INTENSIFIED on boot 0                          | IO PSI some avg10 75.2 / avg60 **80.2** / avg300 47.1 at 05:14 — vs 61 % at #13-report authoring and 64.4 % at its death trip                                                                                                |
+| 9  | Guard trip-counter continuity HELD this cut          | boot -1 last persisted trip #1820 (05:01:12) → boot 0 first trip #1821 (05:15:32, top IO fsck +232 MB) — no duplicate-counter anomaly; no action-trip occurred between 05:01 and the power cut, so nothing was lost          |
+| 10 | Panic-dump discriminators still unavailable          | `/var/crash` still ABSENT (kdump row stability.md:106, open since freeze-8); pstore unreadable from the agent sandbox (stated unreadable, NOT empty)                                                                         |
+| 11 | Thermal alerting STILL dark                          | fifth thermal-family crash with zero CPU-temperature alerting (monitoring.md:17 + :79, open since 10-02)                                                                                                                     |
+| 12 | Death-adjacent forensics bundle SURVIVED this time   | `/var/tmp/io-psi-forensics-20261004T030111Z` exists (trip #1820's bundle); boot-0 trip bundle 031532Z also present — the #13 013546Z vanish (finding 9 there) did not recur, but the durability fix row stands               |
+| 13 | niri tty flood ABSENT in both latest boots           | `early import: Error::DeviceMissing` = 0 lines in boot -1 AND boot 0 (140,411 lines in the 10-03 14:15 boot) — desktop row stays open but is not reproducing on these two boots                                              |
 
 ## Live regime at authoring (freeze-8 rule: verdicts carry current-boot state)
 
@@ -74,4 +74,3 @@
 6. **Deliberately NOT harvested:** the SEV1 live-vs-latched question (row stability.md:100 — #14's SEV1 lines show the latch cycling, adds no new ask beyond that row), hermes duplicate-key (services.md:20, unchanged), IO-admission row (stability queue — cited in §e.1 as the structural fix, already open).
 
 **Bottom line for the owner:** the box died the same death twice in 88 minutes, the second time exactly as predicted in writing — heat it cannot shed at ANY load level (81.5 °C at 46 W idle-ish minutes after reboot), under a storm that is now stronger than at #13's death (IO PSI avg60 80 %). The cooling inspection is the only action on the critical path; second is stopping the recovery readers now (PSI trigger long passed); third is finding what ran the nix eval burst against the written gate.
-

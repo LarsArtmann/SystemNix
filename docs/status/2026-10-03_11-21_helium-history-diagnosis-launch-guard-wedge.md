@@ -5,20 +5,20 @@
 
 ## Evidence (all live-checked this session)
 
-| Check | Command/probe | Result |
-| --- | --- | --- |
-| Main History DB | python3 sqlite3, `PRAGMA quick_check`, ro | **ok**, 1510 urls, last visit 04:18 UTC 10-03, 98 visits since 10-02 06:00 UTC |
-| dp1 History DB | same | **ok**, 6 urls |
-| dp2 History DB | same | **live-locked** (18s+ retry failures); History-journal 0 bytes = no hot journal → likely fine, UNVERIFIED |
-| Guard match | `pgrep -af "helium --ozone-platform-hint"` | matches BOTH dp instances (PIDs 1705618/1705619, up since 10:48:08) |
-| Main instance running? | `ps` at ~10:51 | NO process without `--user-data-dir`; main profile mtime 09:08 |
-| Crash timeline | `journalctl --user -u helium.service` | 10-02 06:33 SIGBUS (crashpad `writev: ENOSPC`), SEGV 06:33:13, restarts 2–3, clean from 11:01 session; 10-03 06:25 start → 10:42:44 `app-niri-sh-3244533.scope` kernel-OOM (1.1G peak, 905M swap) → 10:43:55 helium.service OOM-killed → 10:48:08 relaunched |
-| Disk | `df -h` | `/` 89% (84G free), `/data` 79%, pool 15% |
-| Fix logic | fake main instance (`exec -a` + python3) | guard rc=0 with main alive, rc=1 dp-only (launch proceeds) |
-| Lint | `shellcheck --severity=style` on extracted text | clean (SC2148 shebang artifact only) |
-| Eval | `nix flake check --no-build` | all checks passed |
-| Formatting | `alejandra --check` | fails on **HEAD too** (`01e7e1c1`) — pre-existing drift, not mine; left alone, queued |
-| Queue guard | `scripts/check-todo-system.sh` | structure OK; 51 drift + 80 unharvested §f WARNs (pre-existing backlog) |
+| Check                  | Command/probe                                   | Result                                                                                                                                                                                                                                                       |
+| ---------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Main History DB        | python3 sqlite3, `PRAGMA quick_check`, ro       | **ok**, 1510 urls, last visit 04:18 UTC 10-03, 98 visits since 10-02 06:00 UTC                                                                                                                                                                               |
+| dp1 History DB         | same                                            | **ok**, 6 urls                                                                                                                                                                                                                                               |
+| dp2 History DB         | same                                            | **live-locked** (18s+ retry failures); History-journal 0 bytes = no hot journal → likely fine, UNVERIFIED                                                                                                                                                    |
+| Guard match            | `pgrep -af "helium --ozone-platform-hint"`      | matches BOTH dp instances (PIDs 1705618/1705619, up since 10:48:08)                                                                                                                                                                                          |
+| Main instance running? | `ps` at ~10:51                                  | NO process without `--user-data-dir`; main profile mtime 09:08                                                                                                                                                                                               |
+| Crash timeline         | `journalctl --user -u helium.service`           | 10-02 06:33 SIGBUS (crashpad `writev: ENOSPC`), SEGV 06:33:13, restarts 2–3, clean from 11:01 session; 10-03 06:25 start → 10:42:44 `app-niri-sh-3244533.scope` kernel-OOM (1.1G peak, 905M swap) → 10:43:55 helium.service OOM-killed → 10:48:08 relaunched |
+| Disk                   | `df -h`                                         | `/` 89% (84G free), `/data` 79%, pool 15%                                                                                                                                                                                                                    |
+| Fix logic              | fake main instance (`exec -a` + python3)        | guard rc=0 with main alive, rc=1 dp-only (launch proceeds)                                                                                                                                                                                                   |
+| Lint                   | `shellcheck --severity=style` on extracted text | clean (SC2148 shebang artifact only)                                                                                                                                                                                                                         |
+| Eval                   | `nix flake check --no-build`                    | all checks passed                                                                                                                                                                                                                                            |
+| Formatting             | `alejandra --check`                             | fails on **HEAD too** (`01e7e1c1`) — pre-existing drift, not mine; left alone, queued                                                                                                                                                                        |
+| Queue guard            | `scripts/check-todo-system.sh`                  | structure OK; 51 drift + 80 unharvested §f WARNs (pre-existing backlog)                                                                                                                                                                                      |
 
 ## a) FULLY DONE
 
@@ -66,6 +66,7 @@ Nothing landed broken. Honest sloppiness, worst first:
 ## f) NEXT (prioritized; tagged per queue taxonomy)
 
 **Helium / this session's direct follow-ups**
+
 1. [blocked:deploy] Deploy + verify the main-only guard (row queued in desktop.md; probe: with dp windows open, helium.service must exec a main-profile instance).
 2. [decision] Profile-split fork: keep dp instances (three histories) vs drop them (one history, lose per-monitor routing) vs keep+document (row queued).
 3. [ready] Trace the 10:48 session-restore non-spawn + journal-pin the wedge's real start date (row queued; includes: are dp-window app-ids `helium-dp1/dp2` saved/restored by niri-session-manager at all?).
@@ -94,6 +95,7 @@ Nothing landed broken. Honest sloppiness, worst first:
 22. Re-check the 10-02 ENOSPC underlying growth: root refilled to 89% within a day of the storm — is the growth driver actually fixed or just freed?
 
 **Deliberately NOT harvested from §f**
+
 - Chromium History `.backup` snapshot before risky deploys — btrbk already snapshots root; belt-and-suspenders only if the owner asks.
 - Entry-point→profile map doc (item 7) — blocked on §g.1/§g.2 answers; harvesting a row now would bake in a wrong premise (the queue's spot-verify rule).
 - dp-window restore-policy sub-question — folded into item 3's row rather than a separate row.

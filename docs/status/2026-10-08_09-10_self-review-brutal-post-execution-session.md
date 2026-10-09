@@ -145,8 +145,8 @@ this is the mandated self-critique pass. No unrelated research was performed.
 10. **sudo-gated phantom root-cause** — `/proc/<tid>/stack` on a ghostty stalling thread; identify the
     exact fd/path; then either a ghostty upgrade or a config workaround.
 11. **deploy.sh PSI-gate classifier refinement** — userspace io-accounted sleepers ≠ IO storm (idle-disk
-    + per-cgroup attribution as classifier inputs); stops the force-override from becoming standing
-    practice.
+    - per-cgroup attribution as classifier inputs); stops the force-override from becoming standing
+      practice.
 12. **2026-10-05 corpse-scan upgrade row** — kernel-thread D-states + flush-<maj:min> decode (still
     open, reinforced by this session's invisible-stall finding).
 13. **Push-lag tripwire** — daemon or gatus check on ahead-by/last-push age (e.4).

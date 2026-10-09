@@ -58,30 +58,30 @@
 
 ## f) NEXT — up to 50, grounded in this session (25; each one ask, `Source:` this report §-refs)
 
-| # | Tag | Item |
-|---|-----|------|
-| 1 | [ready] | Post-switch verify the 14:31 generation live: `clickhouse.service` active, `ExecMainStartTimestamp` predates the switch (no restart fired), restart-triggers units unchanged, run `scripts/post-deploy-check.sh` → `docs/todo/services.md` |
-| 2 | [ready] | Root-cause the `fzq1ngjk` → `x1c3z55` clickhouse drv diff (what nixpkgs `7a0f122f`→`c59305ba` changed; informs when ANY pin can drop) → `docs/todo/upstream.md` |
-| 3 | [ready] | Pre-deploy build-set enumeration: add a dry-run leg listing derivations-to-build with cache probes, flagging multi-minute uncached giants before they start → `docs/todo/pipeline.md` |
-| 4 | [watch] | Mechanical pin-drop check: `nix path-info --store https://cache.nixos.org` on `x1c3z55^out` (and successors); when a cache hit appears, drop the overlay in one edit → `docs/todo/upstream.md` |
-| 5 | [ready] | Sweep the `b4fd65b1`→`c59305ba` lock window for OTHER same-version drv drift victims (predict the full remaining rebuild set before the next deploy) → `docs/todo/upstream.md` |
-| 6 | [decision] | Private binary cache (cachix/attic) for clickhouse-class uncached giants — needs owner account/creds → `docs/todo/pipeline.md` |
-| 7 | [ready] | Verify the whole clickhouse unit closure store-hits (fish-completions, `X-Restart-Triggers-clickhouse`, db-backup, log-ttl, xfs-metrics units) — not just the package attr → `docs/todo/services.md` |
-| 8 | [watch] | GC anchor: confirm `1rb0…` stays anchored by the live generation across the next `nix-collect-garbage` while the pin is in place → `docs/todo/upstream.md` |
-| 9 | [ready] | Orphan sweep: `navpwg…` (26.7.5.10-stable) is now unreferenced by any eval — confirm no other host/system uses it, then let GC take it (no action beyond a check) |
-| 10 | [ready] | Characterize the `<out>.lock` residue class (`^C` mid-build leaves a 0-byte lock occupying the output namespace) and crosslink the 2026-10-01 203/EXEC invalid-output pre-deploy item → `docs/todo/pipeline.md` |
-| 11 | [ready] | Expand `docs/agents/nix-flakes.md` with the drv-archaeology METHOD (lock-rev history × `nix eval <pkg>.drvPath` bisect; `nixos-version --json` for suffix disambiguation) — the lesson bullet landed, the method section is the follow-up |
-| 12 | [ready] | Document the pin in the owning service runbook (`docs/services/` clickhouse/signoz doc): pin present, drop condition, cache-miss caveat → `docs/todo/services.md` |
-| 13 | [verify-then-file] | Upstream nixpkgs: clickhouse 26.8 absent from cache.nixos.org (check hydra build status first) — file issue or record deliberate non-filing → `docs/todo/upstream.md` |
-| 14 | [verify-then-file] | Upstream nixpkgs hygiene: the cc-wrapper `--target x86_64-linux-gnu != x86_64-unknown-linux-gnu` warning fires per-object (thousands of lines of build-log spam for clickhouse) → `docs/todo/upstream.md` |
-| 15 | [ready] | Giant-package cache-miss sweep: probe the full toplevel closure against cache.nixos.org, list every multi-minute uncached attr (anticipate the next bump's dominos) → `docs/todo/pipeline.md` |
-| 16 | [decision] | ccache/sccache for local clickhouse-class rebuilds (complements, not replaces, #6) → `docs/todo/pipeline.md` |
-| 17 | [watch] | Every future nixpkgs bump: assert WHICH drv (not version string) for giant services before deploy — fold into the bump checklist in `docs/agents/nix-flakes.md` |
-| 18 | [ready] | Critical-rules addition to AGENTS.md: "assert WHICH drv" as sibling of the 2026-09-18 assert-WHICH-question rule (needs owner sign-off for a Critical Rules edit) |
-| 19 | [watch] | When the pin drops, also verify no OTHER overlay/consumer pinned transitive deps that would then drift (single-edit drop + full toplevel drv re-assert) |
-| 20 | [ready] | Add the store-hit-first reflex to the deploy runbook: check `drvPath` + `nix path-info` before accepting a giant build start |
+| #  | Tag                | Item                                                                                                                                                                                                                                       |
+| -- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1  | [ready]            | Post-switch verify the 14:31 generation live: `clickhouse.service` active, `ExecMainStartTimestamp` predates the switch (no restart fired), restart-triggers units unchanged, run `scripts/post-deploy-check.sh` → `docs/todo/services.md` |
+| 2  | [ready]            | Root-cause the `fzq1ngjk` → `x1c3z55` clickhouse drv diff (what nixpkgs `7a0f122f`→`c59305ba` changed; informs when ANY pin can drop) → `docs/todo/upstream.md`                                                                            |
+| 3  | [ready]            | Pre-deploy build-set enumeration: add a dry-run leg listing derivations-to-build with cache probes, flagging multi-minute uncached giants before they start → `docs/todo/pipeline.md`                                                      |
+| 4  | [watch]            | Mechanical pin-drop check: `nix path-info --store https://cache.nixos.org` on `x1c3z55^out` (and successors); when a cache hit appears, drop the overlay in one edit → `docs/todo/upstream.md`                                             |
+| 5  | [ready]            | Sweep the `b4fd65b1`→`c59305ba` lock window for OTHER same-version drv drift victims (predict the full remaining rebuild set before the next deploy) → `docs/todo/upstream.md`                                                             |
+| 6  | [decision]         | Private binary cache (cachix/attic) for clickhouse-class uncached giants — needs owner account/creds → `docs/todo/pipeline.md`                                                                                                             |
+| 7  | [ready]            | Verify the whole clickhouse unit closure store-hits (fish-completions, `X-Restart-Triggers-clickhouse`, db-backup, log-ttl, xfs-metrics units) — not just the package attr → `docs/todo/services.md`                                       |
+| 8  | [watch]            | GC anchor: confirm `1rb0…` stays anchored by the live generation across the next `nix-collect-garbage` while the pin is in place → `docs/todo/upstream.md`                                                                                 |
+| 9  | [ready]            | Orphan sweep: `navpwg…` (26.7.5.10-stable) is now unreferenced by any eval — confirm no other host/system uses it, then let GC take it (no action beyond a check)                                                                          |
+| 10 | [ready]            | Characterize the `<out>.lock` residue class (`^C` mid-build leaves a 0-byte lock occupying the output namespace) and crosslink the 2026-10-01 203/EXEC invalid-output pre-deploy item → `docs/todo/pipeline.md`                            |
+| 11 | [ready]            | Expand `docs/agents/nix-flakes.md` with the drv-archaeology METHOD (lock-rev history × `nix eval <pkg>.drvPath` bisect; `nixos-version --json` for suffix disambiguation) — the lesson bullet landed, the method section is the follow-up  |
+| 12 | [ready]            | Document the pin in the owning service runbook (`docs/services/` clickhouse/signoz doc): pin present, drop condition, cache-miss caveat → `docs/todo/services.md`                                                                          |
+| 13 | [verify-then-file] | Upstream nixpkgs: clickhouse 26.8 absent from cache.nixos.org (check hydra build status first) — file issue or record deliberate non-filing → `docs/todo/upstream.md`                                                                      |
+| 14 | [verify-then-file] | Upstream nixpkgs hygiene: the cc-wrapper `--target x86_64-linux-gnu != x86_64-unknown-linux-gnu` warning fires per-object (thousands of lines of build-log spam for clickhouse) → `docs/todo/upstream.md`                                  |
+| 15 | [ready]            | Giant-package cache-miss sweep: probe the full toplevel closure against cache.nixos.org, list every multi-minute uncached attr (anticipate the next bump's dominos) → `docs/todo/pipeline.md`                                              |
+| 16 | [decision]         | ccache/sccache for local clickhouse-class rebuilds (complements, not replaces, #6) → `docs/todo/pipeline.md`                                                                                                                               |
+| 17 | [watch]            | Every future nixpkgs bump: assert WHICH drv (not version string) for giant services before deploy — fold into the bump checklist in `docs/agents/nix-flakes.md`                                                                            |
+| 18 | [ready]            | Critical-rules addition to AGENTS.md: "assert WHICH drv" as sibling of the 2026-09-18 assert-WHICH-question rule (needs owner sign-off for a Critical Rules edit)                                                                          |
+| 19 | [watch]            | When the pin drops, also verify no OTHER overlay/consumer pinned transitive deps that would then drift (single-edit drop + full toplevel drv re-assert)                                                                                    |
+| 20 | [ready]            | Add the store-hit-first reflex to the deploy runbook: check `drvPath` + `nix path-info` before accepting a giant build start                                                                                                               |
 
-*(Deliberately not harvested: #9 beyond the one check — GC handles it; in-session failures from §d — no fix owed; the `f50a6322` foreign files — another session's property.)*
+_(Deliberately not harvested: #9 beyond the one check — GC handles it; in-session failures from §d — no fix owed; the `f50a6322` foreign files — another session's property.)_
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 

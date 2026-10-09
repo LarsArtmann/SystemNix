@@ -51,6 +51,7 @@
 ## f) UP TO 50 THINGS TO GET DONE NEXT (prioritized; harvested into the queue+libraries where new)
 
 **Urgent — the regression/alert-noise window is NOW:**
+
 1. Triage the wildcard NXDOMAIN: determine whether dnsblockd `97962cd` ever glob-matched (`git log` that repo / check older builds in the store), and whether it regressed in a rebuild or never worked. `[ready]` → services.md
 2. Silence or fix the "Caddy Catch-All 404" Gatus check until DNS works (it WILL page Discord on the DNS-failure shape): either pause the check or change the probe to an IP/Host-header form that bypasses DNS (`https://192.168.1.150/` + `Host: catchall-probe.home.lan` header — gatus supports headers; NOTE strict_sni_host may need the header form validated first). `[ready]` → services.md
 3. Fix the wildcard: either upstream dnsblockd (implement/honor `*.` keys in dns_local_records) or change the dns-blocker-config shape to something the binary honors. `[ready]` → services.md
@@ -80,7 +81,7 @@
 21. Extend the AGENTS.md "probe the live state" rule explicitly to config-presence claims (§e.4). `[ready]` → pipeline.md
 22. Consider a pre-deploy gate leg: host-side resolve a wildcard name before shipping anything that depends on it. `[ready]` → pipeline.md
 
-*(Items 1-6 and 18-22 are the NEW harvest from this report; 7-17 were already queued in this session's sweep. Deliberately not harvested: the sandbox fixture-port hygiene note (covered by item 11), HTTP/3 informational probe (00-49 §f.40), favicon-error-body cosmetics (§f.34).)*
+_(Items 1-6 and 18-22 are the NEW harvest from this report; 7-17 were already queued in this session's sweep. Deliberately not harvested: the sandbox fixture-port hygiene note (covered by item 11), HTTP/3 informational probe (00-49 §f.40), favicon-error-body cosmetics (§f.34).)_
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
@@ -90,4 +91,4 @@
 
 ---
 
-*Evidence: rendered Caddyfile `/nix/store/3f6dkjs4555v7nk3zfwrs17ms8c106qq-Caddyfile-formatted/Caddyfile` lines 37/68/1519/1555; notFoundRoot `/nix/store/vni2dx59xq0vwn07fmd0s4znbks38wk4-caddy-notfound-root`; commit `34211ef4` (docs) atop daemon commits `3267b34e`/`4fba14c3`; pre-deploy 77/0 ×2; generation 828 → 829 at ~02:37; live probes 02:39-02:44 (alerts 301→dash via no-follow opener; NXDOMAIN rcode=3 via raw DNS to 127.0.0.1/192.168.1.150; live config `9w1zcrmp...` shows `"*.home.lan."` configured; dnsblockd `97962cd` up since 01:30); deploy logs `/var/log/systemnix-deploys/2026-10-07_02-{10-30,11-50,12-46,13-16,20-43,22-25}.log` (last success NONE; code=12 pressure-gate exits ×2, code=13 lock-refusals); PSI trace 02:09-02:37 in-session.*
+_Evidence: rendered Caddyfile `/nix/store/3f6dkjs4555v7nk3zfwrs17ms8c106qq-Caddyfile-formatted/Caddyfile` lines 37/68/1519/1555; notFoundRoot `/nix/store/vni2dx59xq0vwn07fmd0s4znbks38wk4-caddy-notfound-root`; commit `34211ef4` (docs) atop daemon commits `3267b34e`/`4fba14c3`; pre-deploy 77/0 ×2; generation 828 → 829 at ~02:37; live probes 02:39-02:44 (alerts 301→dash via no-follow opener; NXDOMAIN rcode=3 via raw DNS to 127.0.0.1/192.168.1.150; live config `9w1zcrmp...` shows `"*.home.lan."` configured; dnsblockd `97962cd` up since 01:30); deploy logs `/var/log/systemnix-deploys/2026-10-07_02-{10-30,11-50,12-46,13-16,20-43,22-25}.log` (last success NONE; code=12 pressure-gate exits ×2, code=13 lock-refusals); PSI trace 02:09-02:37 in-session._

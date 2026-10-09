@@ -83,6 +83,7 @@ Nothing data-destroying. Honest worst-of list:
 ## f) NEXT (up to 50)
 
 **samber-linter — analyzer correctness/coverage**
+
 1. Fixture: method-value provider (`do.Provide(injector, s.provider)` — SelectorExpr branch of `providerBody` is untested).
 2. Fixture: divergent concrete returns (two distinct concrete return types → unresolved).
 3. Fixture: generic/type-param provider (isConcrete's TypeParam branch untested).

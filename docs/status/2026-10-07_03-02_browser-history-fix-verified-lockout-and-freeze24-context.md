@@ -8,15 +8,15 @@
 
 ## Timeline of this window (all journal-verified)
 
-| Time | Event |
-|---|---|
-| 02:39–02:46 | Old pid 512961 (unfixed binary) still serving; 4 more readonly errors (reaper + heartbeat) — user locked out, `create_session` fails readonly on every login attempt |
-| 02:48:57–58 | **User restarted browser-history** → pid 3015803 running the FIXED binary `browser-history-server-3ebbfbf` |
-| **02:49:03** | **`oauth_login` audit event: `user_id=01M000JA6P0VR4Q1BNEPSJN3ME`** — login resolved to the ORIGINAL data owner. Keep-first fix works in production. User saw their dashboard. |
-| 02:49:28 | **FREEZE #24** — machine dies 25 s after the successful login. IO-livelock class (PSI avg60 ≈ 60%, disk 99.9%, memory healthy). 4th crash tonight (#21 00:00, #22 00:58, #23 01:28, #24 02:49). |
-| 02:51:56 | Recovery boot auto-starts browser-history (pid 9360, same fixed binary) |
-| 02:52:11+ | Ingest flowing: `accepted=1` at 02:57:10; **0 readonly errors** in pid 9360 — the restart also cleared the write wedge |
-| 02:52:14 | "session authentication failed / authentication required" DEBUG lines — the user's fresh session from 02:49:03 likely did not survive crash #24 (session INSERT written 25 s before death; WAL not necessarily checkpointed) → **user probably needs to log in once more** |
+| Time         | Event                                                                                                                                                                                                                                                                      |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 02:39–02:46  | Old pid 512961 (unfixed binary) still serving; 4 more readonly errors (reaper + heartbeat) — user locked out, `create_session` fails readonly on every login attempt                                                                                                       |
+| 02:48:57–58  | **User restarted browser-history** → pid 3015803 running the FIXED binary `browser-history-server-3ebbfbf`                                                                                                                                                                 |
+| **02:49:03** | **`oauth_login` audit event: `user_id=01M000JA6P0VR4Q1BNEPSJN3ME`** — login resolved to the ORIGINAL data owner. Keep-first fix works in production. User saw their dashboard.                                                                                             |
+| 02:49:28     | **FREEZE #24** — machine dies 25 s after the successful login. IO-livelock class (PSI avg60 ≈ 60%, disk 99.9%, memory healthy). 4th crash tonight (#21 00:00, #22 00:58, #23 01:28, #24 02:49).                                                                            |
+| 02:51:56     | Recovery boot auto-starts browser-history (pid 9360, same fixed binary)                                                                                                                                                                                                    |
+| 02:52:11+    | Ingest flowing: `accepted=1` at 02:57:10; **0 readonly errors** in pid 9360 — the restart also cleared the write wedge                                                                                                                                                     |
+| 02:52:14     | "session authentication failed / authentication required" DEBUG lines — the user's fresh session from 02:49:03 likely did not survive crash #24 (session INSERT written 25 s before death; WAL not necessarily checkpointed) → **user probably needs to log in once more** |
 
 ---
 
@@ -62,6 +62,7 @@
 ## f) NEXT (consolidated; carried + new)
 
 **P0 — close the user-facing loop**
+
 1. User: log in once more (crash #24 likely ate the 02:49 session) — confirm dashboard shows Aug 14 → Oct 5 data.
 2. Verify no NEW duplicate user was created by tonight's four login attempts (users_view count still 9).
 3. Gatus/health state: confirm /health returns 200 now that heartbeat recording works (freshness heals on next agent tick).

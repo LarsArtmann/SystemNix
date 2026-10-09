@@ -4,9 +4,9 @@
 
 ## What it serves
 
-| Route | Auth                        | What                                        |
-| ----- | --------------------------- | ------------------------------------------- |
-| `/`   | forward-auth / open LAN     | Health dashboard (queue, dead letters, history) |
+| Route | Auth                    | What                                            |
+| ----- | ----------------------- | ----------------------------------------------- |
+| `/`   | forward-auth / open LAN | Health dashboard (queue, dead letters, history) |
 
 ## Ops
 

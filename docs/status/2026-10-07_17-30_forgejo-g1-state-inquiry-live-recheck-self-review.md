@@ -14,14 +14,14 @@
 
 ### Evidence table
 
-| Probe | Result | Verdict |
-| --- | --- | --- |
-| `fetch https://forgejo.home.lan/api/v1/version` | 502 | forgejo down (17:23) |
-| `ss -tln` filtered `:3000` | nothing listening | no listener on the registry port |
-| `findmnt /var/lib/forgejo` | `nvme0n1p2[/hot/forgejo]`, subvolid 260, btrfs | G1 flip deploy LIVE (mount side) |
-| `ls …/.subvol-migrated` | Permission denied | marker not directly stat-able by agent |
-| `journalctl -u forgejo` (17:23:26) + runner (17:21:42) | condition-skip, both units | marker ABSENT (root-side check); family gated down |
-| `ls /var/lib/forgejo.qlc-pre-subvol` | No such file | finalize never ran; QLC data shadowed, not renamed |
+| Probe                                                  | Result                                         | Verdict                                            |
+| ------------------------------------------------------ | ---------------------------------------------- | -------------------------------------------------- |
+| `fetch https://forgejo.home.lan/api/v1/version`        | 502                                            | forgejo down (17:23)                               |
+| `ss -tln` filtered `:3000`                             | nothing listening                              | no listener on the registry port                   |
+| `findmnt /var/lib/forgejo`                             | `nvme0n1p2[/hot/forgejo]`, subvolid 260, btrfs | G1 flip deploy LIVE (mount side)                   |
+| `ls …/.subvol-migrated`                                | Permission denied                              | marker not directly stat-able by agent             |
+| `journalctl -u forgejo` (17:23:26) + runner (17:21:42) | condition-skip, both units                     | marker ABSENT (root-side check); family gated down |
+| `ls /var/lib/forgejo.qlc-pre-subvol`                   | No such file                                   | finalize never ran; QLC data shadowed, not renamed |
 
 ---
 

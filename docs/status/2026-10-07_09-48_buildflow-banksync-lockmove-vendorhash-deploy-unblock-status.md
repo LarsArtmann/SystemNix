@@ -8,21 +8,21 @@
 
 ## What happened, with evidence
 
-| # | Event | Evidence |
-| - | ----- | -------- |
-| 1 | User `ssh`'d to evo-x2, synced, ran `nix flake update buildflow` + `nh os switch` — ^C'd at 22s (no failure evidence, possible `<out>.lock` residue per nix-flakes.md:114) | user paste |
-| 2 | Second attempt: `nix flake update buildflow bank-sync` + `nh os switch --keep-going` — 2 root FOD failures, 39-error cascade | user paste; `/tmp` nh out-link gone |
-| 3 | buildflow FOD: specified `PEVbgZ6J8` (= SystemNix shim, lib/lars-packages.nix:75 + configuration.nix:337) vs got `m8gL3Z4Z` | failing build log |
-| 4 | bank-sync FOD: specified `xvAXxSvB` (= upstream flake.nix:422 at 68ceffa3; NO SystemNix shim — dropped 2026-10-05) vs got `pE2+3UF1` | failing build log + upstream source read |
-| 5 | Lock-free probe: BuildFlow flake @ `2346799` `vendorHash.nix` = `m8gL3Z4Z…` == got → shim-drop protocol | `builtins.getFlake "git+ssh://…rev=2346799…"` → `/nix/store/w3bv3m8d…-source` |
-| 6 | Lock-free probe: bank-sync flake @ `68ceffa3` declares `xvAXxSvB…` (line 422; +2 more FOD blocks at :621/:656) → genuinely stale from our lock | `/nix/store/06vkcjka…-source` |
-| 7 | Local checkouts checked for parallel sessions BEFORE any upstream reasoning: bank-sync clean AT locked rev; BuildFlow clean at `699dd4e2` (≠ locked rev, ahead/parallel unknown) | `git -C` probes |
-| 8 | Consumer enumeration: bank-sync package pinned at bank-sync.nix:118 (module) + evo-x2.nix:67 (HM) → shim must mirror BOTH; buildflow at lars-packages.nix + configuration.nix → drop BOTH | `rg inputs\.(buildflow\|bank-sync)` |
-| 9 | Fix applied: 2 shim drops + 2 shim re-pins, all with provenance/drop-condition comments | commits swept by daemon (see §d.3) |
-| 10 | Verified: `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going` GREEN — these were the only 2 root failures | build output, toplevel realized |
-| 11 | treefmt "0 changed" final, statix clean (one self-introduced paren warning caught + fixed), deadnix clean | standalone lint runs (daemon bypasses these legs) |
-| 12 | Todo discipline: bank-sync upstream fix queued `[blocked:push]` (TODO_LIST.md + docs/todo/upstream.md); upstream.md BuildFlow-repair row annotated as SystemNix-side-resolved | edits in `8ab98a43` |
-| 13 | check-todo-system.sh: my rows pass pairing ("structure clean"); 51 pre-existing WARN-grade drifts + 85 unharvested reports NOT worsened | script output |
+| #  | Event                                                                                                                                                                                     | Evidence                                                                      |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| 1  | User `ssh`'d to evo-x2, synced, ran `nix flake update buildflow` + `nh os switch` — ^C'd at 22s (no failure evidence, possible `<out>.lock` residue per nix-flakes.md:114)                | user paste                                                                    |
+| 2  | Second attempt: `nix flake update buildflow bank-sync` + `nh os switch --keep-going` — 2 root FOD failures, 39-error cascade                                                              | user paste; `/tmp` nh out-link gone                                           |
+| 3  | buildflow FOD: specified `PEVbgZ6J8` (= SystemNix shim, lib/lars-packages.nix:75 + configuration.nix:337) vs got `m8gL3Z4Z`                                                               | failing build log                                                             |
+| 4  | bank-sync FOD: specified `xvAXxSvB` (= upstream flake.nix:422 at 68ceffa3; NO SystemNix shim — dropped 2026-10-05) vs got `pE2+3UF1`                                                      | failing build log + upstream source read                                      |
+| 5  | Lock-free probe: BuildFlow flake @ `2346799` `vendorHash.nix` = `m8gL3Z4Z…` == got → shim-drop protocol                                                                                   | `builtins.getFlake "git+ssh://…rev=2346799…"` → `/nix/store/w3bv3m8d…-source` |
+| 6  | Lock-free probe: bank-sync flake @ `68ceffa3` declares `xvAXxSvB…` (line 422; +2 more FOD blocks at :621/:656) → genuinely stale from our lock                                            | `/nix/store/06vkcjka…-source`                                                 |
+| 7  | Local checkouts checked for parallel sessions BEFORE any upstream reasoning: bank-sync clean AT locked rev; BuildFlow clean at `699dd4e2` (≠ locked rev, ahead/parallel unknown)          | `git -C` probes                                                               |
+| 8  | Consumer enumeration: bank-sync package pinned at bank-sync.nix:118 (module) + evo-x2.nix:67 (HM) → shim must mirror BOTH; buildflow at lars-packages.nix + configuration.nix → drop BOTH | `rg inputs\.(buildflow\|bank-sync)`                                           |
+| 9  | Fix applied: 2 shim drops + 2 shim re-pins, all with provenance/drop-condition comments                                                                                                   | commits swept by daemon (see §d.3)                                            |
+| 10 | Verified: `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going` GREEN — these were the only 2 root failures                                                  | build output, toplevel realized                                               |
+| 11 | treefmt "0 changed" final, statix clean (one self-introduced paren warning caught + fixed), deadnix clean                                                                                 | standalone lint runs (daemon bypasses these legs)                             |
+| 12 | Todo discipline: bank-sync upstream fix queued `[blocked:push]` (TODO_LIST.md + docs/todo/upstream.md); upstream.md BuildFlow-repair row annotated as SystemNix-side-resolved             | edits in `8ab98a43`                                                           |
+| 13 | check-todo-system.sh: my rows pass pairing ("structure clean"); 51 pre-existing WARN-grade drifts + 85 unharvested reports NOT worsened                                                   | script output                                                                 |
 
 ---
 
@@ -76,7 +76,7 @@
 
 ## f) Up to 50 things we should get done next
 
-*Session-direct (this fix's tail), highest priority first:*
+_Session-direct (this fix's tail), highest priority first:_
 
 1. Deploy evo-x2 (`nix run .#deploy`, user sudo-gate) — the full pre-deploy gate incl. §11 runs there; expect "all FODs cached".
 2. Post-deploy: assert WHICH binary serves — `buildflow --version` / bank-sync version == `68ceffa3` lineage on PATH (HM surface) and in the units.
@@ -93,7 +93,7 @@
 13. rpi3-dns toplevel eval on the new lock (host parity; likely unconsumed — make it said, not assumed).
 14. After deploy: cross-check fleet hash health with the NEW buildflow binary — `buildflow -s nix-hash-fix --dry-run` in covered repos (dogfood: the tool we just updated).
 
-*VendorHash/shim-system debt (the standing treadmill):*
+_VendorHash/shim-system debt (the standing treadmill):_
 
 15. §11 shim-presence tripwire (warning-grade) — any `overrideAttrs { vendorHash …}` in the module tree warns at pre-deploy (open since the 01-25 report §d).
 16. §11 blind to `flakePkg`-imported FODs (art-dupl class, pipeline.md:46) — enumerate from the toplevel `--dry-run` preview.
@@ -112,13 +112,13 @@
 29. Interim `git+file`/pinned input sweep (upstream.md:18) — how many INTERIM pins remain in flake.nix?
 30. 2026-09-22/23 nixpkgs-move FOD casualty enumeration via the existing batch build (pipeline.md:182).
 
-*Eval/runtime warnings noticed live in this session's logs:*
+_Eval/runtime warnings noticed live in this session's logs:_
 
 31. `stdenv.isLinux is deprecated` fires on every eval — triangulate the emitting input (`NIX_ABORT_ON_WARN=1 nix eval … --show-trace` per nix-flakes.md) and fix upstream or pin.
 32. `catalog: integration subdomain(s) without catalog entries` lists 20 subdomains every eval — confirm this standing warning has a queue home (dns-local deletion plan) or file it.
 33. llama-vlm soak-test warning fires every eval by design — leave; noted so nobody "fixes" it.
 
-*Process/docs debt observed this session:*
+_Process/docs debt observed this session:_
 
 34. Daemon-push policy: if the daemon pushes (origin carried `5e1f11eb` ≤3 min after commit — mechanism UNVERIFIED, §g Q1), rewrite CONTRIBUTING's amend-forward guidance: window ≈ 0, heuristic messages are permanent, consider a push delay or push-gate for amendability.
 35. Mixed-authorship heuristic commits: the user's flake.lock rode `698803a0` with my edits — the pathspec-commit rule exists but the daemon can't honor it; document the attribution reality or add session-tag trailers (DLQ row already exists — re-prioritize?).
@@ -133,7 +133,7 @@
 44. Verify the deployed generation's `configurationRevision` == `8ab98a43`-lineage rev after switch (assert the rev, not "a deploy happened").
 45. gatus green post-deploy: bank-sync checks + the auth-gateway smoke (post-deploy-check.sh runs it — confirm exit 0 in the deploy log).
 
-*Adjacent, noticed while in the tree:*
+_Adjacent, noticed while in the tree:_
 
 46. `lib/lars-packages.nix` class-comment block (lines 51-66) has grown into a 3-epoch archaeology record (2026-10-03 → 10-05 re-pins → per-entry drops) — consider a true single "SHIM CLASS COMMENT" block decoupled from the buildflow entry so entries can drop without prose surgery.
 47. BuildFlow local checkout at `699dd4e2` ≠ locked `2346799` — reconcile (is the checkout ahead? diverged?) before anyone runs local `nix build .#buildflow` evidence there.
@@ -149,10 +149,10 @@
 
 ## Harvest ledger (self-harvest at authoring time)
 
-| Follow-up | Landed where | Status |
-| --------- | ------------ | ------ |
-| bank-sync upstream vendorHash fix `[blocked:push]` | TODO_LIST.md:349 + docs/todo/upstream.md:113 | harvested mid-session (before this report) |
-| BuildFlow-repair row supersession (SystemNix side resolved) | docs/todo/upstream.md:81 annotation | harvested at authoring |
-| CHANGELOG wave chapter | existing row services.md:301 | deliberately NOT double-queued — same item, extend its skeleton when written (§f #4) |
-| §11 / flake-check / darwin / rpi3 / residue sweep / post-deploy battery | §f #1-#13 | deliberately NOT queued as new rows — deploy-time or one-shot verification steps owned by the deploy run itself + existing rows (#8's doc conflict noted for triage) |
-| Daemon-push policy, treefmt --ci mechanism, AGENTS.md doc conflict | §f #34, #36, #37 | deliberately NOT queued pending owner answers (§g Q1) + one verification run each — premature rows would encode unverified mechanisms |
+| Follow-up                                                               | Landed where                                 | Status                                                                                                                                                               |
+| ----------------------------------------------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| bank-sync upstream vendorHash fix `[blocked:push]`                      | TODO_LIST.md:349 + docs/todo/upstream.md:113 | harvested mid-session (before this report)                                                                                                                           |
+| BuildFlow-repair row supersession (SystemNix side resolved)             | docs/todo/upstream.md:81 annotation          | harvested at authoring                                                                                                                                               |
+| CHANGELOG wave chapter                                                  | existing row services.md:301                 | deliberately NOT double-queued — same item, extend its skeleton when written (§f #4)                                                                                 |
+| §11 / flake-check / darwin / rpi3 / residue sweep / post-deploy battery | §f #1-#13                                    | deliberately NOT queued as new rows — deploy-time or one-shot verification steps owned by the deploy run itself + existing rows (#8's doc conflict noted for triage) |
+| Daemon-push policy, treefmt --ci mechanism, AGENTS.md doc conflict      | §f #34, #36, #37                             | deliberately NOT queued pending owner answers (§g Q1) + one verification run each — premature rows would encode unverified mechanisms                                |

@@ -53,6 +53,7 @@
 ## f) NEXT THINGS (session-grounded, prioritized)
 
 **Owner-now / P0:**
+
 1. Settle the box: load 39 / io PSI 82 % / trips live on the current boot — whatever the 14 sessions are running, the cooling-gate rule says park it.
 2. Physical cooling inspection (standing row 117 — now the documented kill mechanism of FOUR cuts: #13/#14/#15/#16).
 3. Deploy thermal-pstate-guard (row 139) — first-deploy arming decision (shadow vs live) still pending from the 06-39 report §g.

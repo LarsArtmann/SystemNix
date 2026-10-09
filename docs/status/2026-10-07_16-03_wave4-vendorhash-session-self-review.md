@@ -96,4 +96,4 @@
 
 ---
 
-*Harvest record: §f items 2, 7, 14, 15 + the §d.2 decision landed as queue/library rows at authoring time (docs/todo/pipeline.md + TODO_LIST.md, 5 pairs); items 1/3/11 are the deploy sequence itself (deliberately not queued — single existing commands); items 5/6/18 are owner-gated rows that already exist (updated this session); the rest are doc-polish/watch items recorded here per the non-harvest rule.*
+_Harvest record: §f items 2, 7, 14, 15 + the §d.2 decision landed as queue/library rows at authoring time (docs/todo/pipeline.md + TODO_LIST.md, 5 pairs); items 1/3/11 are the deploy sequence itself (deliberately not queued — single existing commands); items 5/6/18 are owner-gated rows that already exist (updated this session); the rest are doc-polish/watch items recorded here per the non-harvest rule._

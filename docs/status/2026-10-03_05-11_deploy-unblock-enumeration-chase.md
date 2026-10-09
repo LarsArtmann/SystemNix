@@ -66,6 +66,6 @@
 
 ---
 
-*Report written from this session's run log only. In-flight at authoring: toplevel --keep-going 073 (/tmp/topfinal2.log, zero errors at 05:10). Tree at 42db5138 + this report; 7 parallel crush sessions active all night (pgrep-verified); flake.lock restored to enumeration-consistent state.*
+_Report written from this session's run log only. In-flight at authoring: toplevel --keep-going 073 (/tmp/topfinal2.log, zero errors at 05:10). Tree at 42db5138 + this report; 7 parallel crush sessions active all night (pgrep-verified); flake.lock restored to enumeration-consistent state._
 
-*Deliberately NOT harvested (per TODO rules): the deploy chain (§f.3) is in-flight; §f.4 blocked on 3; owner-gate items live in §g and §f.5.*
+_Deliberately NOT harvested (per TODO rules): the deploy chain (§f.3) is in-flight; §f.4 blocked on 3; owner-gate items live in §g and §f.5._

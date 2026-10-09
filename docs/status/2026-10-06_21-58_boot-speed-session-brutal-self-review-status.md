@@ -7,16 +7,19 @@
 ## Self-review answers (the questions asked)
 
 **1. What did you forget?**
+
 - The **CHANGELOG entry** — the repo convention requires one for significant changes; written only during this review (now in `## [Unreleased] → Changed`).
 - The **btrbk-rescue VM test blast radius** — I changed `btrfs-rescue-snapshot`'s wiring and never checked whether `checks.x86_64-linux.btrbk-rescue` asserts the old shape. Caught during this review; test inspected (drives the unit manually, line 102) and RUN: **PASS**.
 - **`systemd-analyze firmware` unavailability** — mentioned in passing, never explained (needs UEFI FirmwarePerformanceTablet support; folds into the BIOS-walk item).
 - The **WAL-gate assumption is unproven on the live host** (see §d2): everything hinges on the hermes gateway checkpointing+deleting `state.db-wal` on SIGTERM shutdown — never verified because it needs the deployed unit + a live restart (drains agent sessions, user-gated).
 
 **2. What is stupid that we do anyway?**
+
 - **The auto-commit daemon commits BROKEN intermediate states**: one daemon commit carries `fsckPass = 0` (an option that does not exist in this nixpkgs) — git history now contains a tree that cannot eval. The daemon also committed past the red `nix flake check` (paperless-gpt) all session. Both are the documented-by-design tradeoffs of the daemon, but "history contains unevaluable trees" is still stupid.
 - **Blame numbers get quoted as unit cost** — `systemd-analyze blame` conflates dependency-wait with own-cost (bank-sync 55s ≠ bank-sync's own work; see §d1). We (I) keep reading it as per-unit cost.
 
 **3. What could you have done better?**
+
 - **Eval/journal-verify EVERY config fact before writing it** (two failures this session, §d1+§d2: `Type=notify` and `fsckPass`). Both were written from memory/prior-knowledge instead of one eval command each. The repo's own rule ("a 'verified' label must cover every fact asserted") exists exactly for this.
 - **Chase arithmetic impossibilities immediately**: pool-usb-recovery showed 1:33 active at ~2min uptime with an OnBootSec=2min timer — arithmetically impossible. I said "not critical" and dropped it; the udev `SYSTEMD_WANTS` trigger (pool-recovery.nix:214) explains it in 30 seconds and changes the framing (it's a boot-window unit via udev, the ioTier demotion matters MORE than I claimed).
 - **Run the blast-radius check of test files in the same breath as the wiring change** (btrbk-rescue above).
@@ -24,9 +27,10 @@
 **4. What could you still improve?** — see §e/§f.
 
 **5. Did you lie to you?** — **YES, twice, both caught and corrected in-session:**
+
 - "bank-sync.service is Type=notify, event-store replay gates multi-user" — FALSE (Type=simple per eval; pool mounts at 17s; mechanism genuinely unknown). Corrected on ALL THREE surfaces (report §d2/§f3 + TODO_LIST row + docs/todo/services.md row) per the correction-surface rule.
 - The implicit claim that `fileSystems.<mp>.fsckPass` exists — it does not in this nixpkgs (`noCheck` is the knob); the first write broke eval until fixed.
-Everything else claimed as verified was actually verified (3 VM test PASSes, toplevel eval, fstab render, timer evals, journal timestamps).
+  Everything else claimed as verified was actually verified (3 VM test PASSes, toplevel eval, fstab render, timer evals, journal timestamps).
 
 **6. How can we be less stupid?** — Make "assert = verify-first" mechanical: any config fact in a report gets the eval/journal command that produced it INLINE (I did this for ~90% of facts; the two lies were the two I skipped). Chasing-impossibilities: a blame number that can't be reconciled with its trigger source is a FINDING, not noise.
 
@@ -89,6 +93,7 @@ Everything else claimed as verified was actually verified (3 VM test PASSes, top
 ## f) NEXT THINGS (up to 50; session-scoped)
 
 **Already queued by the main run (pointers, not duplicated):**
+
 1. `[blocked:user]` BIOS boot-time walk — firmware 62.5s (stability.md).
 2. `[blocked:deploy]` Calm-boot re-measure — expect userspace ≤~40s (stability.md).
 3. `[decision]` bank-sync 55s activation mechanism-first (services.md, corrected).

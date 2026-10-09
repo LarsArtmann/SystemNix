@@ -63,7 +63,7 @@ Nothing destructive was done. But two real hazards were confirmed and one near-m
 2. **Port 3000 is squatted by a user dev server** (`knowledge-graph`), which both falsifies the smoke's Forgejo PASS and blocks forgejo's rebind. The eval-time `port-registry-audit.nix` cannot see non-systemd processes, so nothing in the pipeline catches this class.
 3. **indexer-web has NEVER emitted a span** — `signoz_traces_reporting{service="indexer-web"} 0`, `last_span_age_seconds -1`, live in a 13:27-fresh `signoz-coverage.prom`. The binary logs, every 60 s:
    `failed to upload metrics: failed to send metrics to http://localhost:4318/: 404 Not Found (body: 404 page not found)`.
-   - Root cause chain: the `index` repo fix `internal/readmeindexer/otlp_endpoint.go` (commit `2d0d103`, 2026-10-05 08:43) documents exactly this — *"since otel v1.46 a pathless URL passed to WithEndpointURL targets the collector ROOT path instead of /v1/traces + /v1/metrics"* — and replaces `WithEndpointURL` with `WithEndpoint(host)`.
+   - Root cause chain: the `index` repo fix `internal/readmeindexer/otlp_endpoint.go` (commit `2d0d103`, 2026-10-05 08:43) documents exactly this — _"since otel v1.46 a pathless URL passed to WithEndpointURL targets the collector ROOT path instead of /v1/traces + /v1/metrics"_ — and replaces `WithEndpointURL` with `WithEndpoint(host)`.
    - But `2d0d103` is **UNPUSHED** (`git -C ~/projects/index branch -vv` → `master … [origin/master: ahead 3]`; `merge-base --is-ancestor HEAD origin/master` → false).
    - And `flake.lock` pins `index` at `a2b261b9`, which does **not** contain `otlp_endpoint.go` (`git cat-file -e a2b261b9:…otlp_endpoint.go` → absent). The running binary is `/nix/store/486acm32…-indexer-2.11.0/bin/indexer`.
    - ⇒ This is the live driver of the `SigNoz Trace Coverage Missing` alert that has been firing >24 h.
@@ -85,6 +85,7 @@ Nothing destructive was done. But two real hazards were confirmed and one near-m
 ## §f — UP TO 50 THINGS TO GET DONE NEXT
 
 **P0 — this incident**
+
 1. Forgejo G1 finalize (owner, root): confirm `/var/lib/forgejo` is a mount → `sudo umount /var/lib/forgejo` if the guard refuses → `sudo scripts/migrate-forgejo-subvol.sh finalize` → `nix run .#deploy`.
 2. Free port 3000 (stop/move the `knowledge-graph` dev server) BEFORE the forgejo deploy, else EADDRINUSE.
 3. Push `index` `master` (`2d0d103` + the 2 following auto-commits) to `origin/master`.

@@ -7,6 +7,7 @@
 **Status:** NOT ADOPTED — evaluation only. Candidate follow-up to the pool-completion master plan.
 
 > **Docs-health re-verify (2026-10-05): STALE IN PART.** Three facts moved since this evaluation:
+>
 > 1. **Stable 1.0 shipped.** 1.0.0 released 2026-09-16, 1.0.1 on 2026-10-03. The adoption gate in the Decision section ("gated on a stable 1.0 release") has FIRED; the RC-status gotcha no longer applies as written.
 > 2. **nixpkgs now ships RustFS** — `pkgs/by-name/ru/rustfs` (1.0.1, `buildRustPackage`, plus a separate `rustfs.console` 0.1.34), a **NixOS module** (`nixos/modules/services/web-servers/rustfs.nix`), and `nixosTests.rustfs` — upstream issue #1897 is effectively resolved and the "no nixpkgs package / module → Docker route" note is obsolete.
 > 3. **The backup-gap motivation is superseded by ratified topology.** The 2026-09-11 offsite decision picked Hetzner StorageBox + Borg (`services.offsite-borg`, implemented 2026-09-22, dormant pending owner-gated go-live, PLACEHOLDER fail-closed) plus pool-native `restic-app-dumps` — overtaking this doc's "restic-over-SFTP closes it" Pareto recommendation.
@@ -14,6 +15,7 @@
 > Still accurate: MinIO still abandoned in nixpkgs (same 6 CVEs + migration note); SystemNix still runs zero S3 endpoints; Garage is 1.3.1 (default) / 2.4.1 (was 2.3.0); the erasure-coding-on-RAID1 and no-`/metrics` gotchas are unverified but uncontradicted. Outcome for THIS box unchanged — still not adopted — but the standing reasons are now the ratified backup topology and the absence of an S3 consumer (DiscordSync has no S3 cold-tier backend; see its 2026-08-17 object-store-backend-expansion exploration), NOT RC status or packaging.
 >
 > **Live capability trial (2026-10-05, evo-x2, scratch /tmp instance from locked-rev `a7868a7`, torn down after):**
+>
 > - **Resources:** idle RSS **176.7 MB**, 0.1% CPU, 64 threads, no swap (first measured idle figure — no official number exists); after a 256 MiB roundtrip: RSS 294 MB, 77 threads. 256 MiB loopback PUT at **1.33 GiB/s**, byte-identical GET verified. Single binary, trivial footprint — resource cost is a non-argument on this box.
 > - **Verified capabilities:** S3 SigV4 API + health endpoint; versioning (both PUTs retained, version-ID pinned); IAM users + policy attach with REAL enforcement (builtin `readonly` is STRICTER than MinIO's — denies ListBucket; use a custom policy JSON for read-only+list); presigned URLs (SigV4, version-pinned, expiry enforced: 5s URL → 403 after expiry); content-addressed WORM write pattern (DiscordSync's exact shape) works natively; web console (browser-UA-gated, login page serves on the console port); `rustfs info`/`inspect bucket-meta`/`diagnose` offline forensics subcommands.
 > - **Nits:** console 403s non-browser clients with S3-XML errors (confusing without UA sniffing); `rustfs inspect` is subcommand-shaped, not `<dir>`; OTLP push = `RUSTFS_OBS_ENDPOINT` (OTLP/HTTP :4318 — would drop into the SigNoz collector, not wired in the trial).

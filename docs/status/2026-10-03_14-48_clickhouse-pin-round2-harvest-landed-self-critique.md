@@ -49,28 +49,28 @@
 
 ## f) NEXT — grounded in this session (no new queue rows; all items below are ALREADY harvested — pointer table)
 
-| # | Item | Where it lives (harvested at 14:34) |
-|---|------|-------------------------------------|
-| 1 | Post-switch verify: clickhouse.service active, no restart, closure units store-hit, **post-deploy-check HTTP legs** | services.md queue row 1 |
-| 2 | Root-cause the `fzq1ngjk`→`x1c3z55` drv diff (retry with working diff tooling) | upstream.md row 1 |
-| 3 | Sweep `b4fd65b1`→`c59305ba` for other same-version drv drift victims | upstream.md row 2 |
-| 4 | Pin-drop cache check (`path-info --store cache.nixos.org` on `x1c3z55^out`) | upstream.md row 3 `[watch]` |
-| 5 | GC anchor for `1rb0…` across the next gc | upstream.md row 4 `[watch]` |
-| 6 | Upstream probe/file: clickhouse absent from cache.nixos.org | upstream.md row 5 `[verify-then-file]` |
-| 7 | Upstream probe/file: cc-wrapper `--target` per-object warning spam | upstream.md row 6 `[verify-then-file]` |
-| 8 | Pre-deploy build-set enumeration leg (dry-run + cache probes, flag giants) | pipeline.md row 1 |
-| 9 | Store-hit-first reflex in the deploy runbook | pipeline.md row 2 |
-| 10 | `<out>.lock` residue characterization + crosslink to 203/EXEC item | pipeline.md row 3 |
-| 11 | Giant-package cache-miss sweep of the toplevel closure | pipeline.md row 4 |
-| 12 | cachix/attic decision (+ccache/sccache complement) | pipeline.md row 5 `[decision]` |
-| 13 | Runbook: document the pin in the owning services doc | services.md queue row 2 |
-| 14 | Run drv-diff with CORRECT tooling first (the retry that proves §d.1's lesson) — folded into #2 |
-| 15 | Attempt `post-deploy-check.sh` HTTP legs before next "blocked" claim — folded into #1 |
-| 16 | Load `section-quality-guide.md` before the NEXT status report — process item, deliberately NOT queued (single-session discipline, not a work item) |
-| 17 | Verify no other system evaluation consumes `pkgs.clickhouse` (rpi3/darwin) — trivial grep, folded into #2's session |
-| 18 | Commit hygiene: the 5 uncommitted harvest files ride the next daemon batch — no action (daemon's job), monitored |
+| #  | Item                                                                                                                                               | Where it lives (harvested at 14:34)    |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 1  | Post-switch verify: clickhouse.service active, no restart, closure units store-hit, **post-deploy-check HTTP legs**                                | services.md queue row 1                |
+| 2  | Root-cause the `fzq1ngjk`→`x1c3z55` drv diff (retry with working diff tooling)                                                                     | upstream.md row 1                      |
+| 3  | Sweep `b4fd65b1`→`c59305ba` for other same-version drv drift victims                                                                               | upstream.md row 2                      |
+| 4  | Pin-drop cache check (`path-info --store cache.nixos.org` on `x1c3z55^out`)                                                                        | upstream.md row 3 `[watch]`            |
+| 5  | GC anchor for `1rb0…` across the next gc                                                                                                           | upstream.md row 4 `[watch]`            |
+| 6  | Upstream probe/file: clickhouse absent from cache.nixos.org                                                                                        | upstream.md row 5 `[verify-then-file]` |
+| 7  | Upstream probe/file: cc-wrapper `--target` per-object warning spam                                                                                 | upstream.md row 6 `[verify-then-file]` |
+| 8  | Pre-deploy build-set enumeration leg (dry-run + cache probes, flag giants)                                                                         | pipeline.md row 1                      |
+| 9  | Store-hit-first reflex in the deploy runbook                                                                                                       | pipeline.md row 2                      |
+| 10 | `<out>.lock` residue characterization + crosslink to 203/EXEC item                                                                                 | pipeline.md row 3                      |
+| 11 | Giant-package cache-miss sweep of the toplevel closure                                                                                             | pipeline.md row 4                      |
+| 12 | cachix/attic decision (+ccache/sccache complement)                                                                                                 | pipeline.md row 5 `[decision]`         |
+| 13 | Runbook: document the pin in the owning services doc                                                                                               | services.md queue row 2                |
+| 14 | Run drv-diff with CORRECT tooling first (the retry that proves §d.1's lesson) — folded into #2                                                     |                                        |
+| 15 | Attempt `post-deploy-check.sh` HTTP legs before next "blocked" claim — folded into #1                                                              |                                        |
+| 16 | Load `section-quality-guide.md` before the NEXT status report — process item, deliberately NOT queued (single-session discipline, not a work item) |                                        |
+| 17 | Verify no other system evaluation consumes `pkgs.clickhouse` (rpi3/darwin) — trivial grep, folded into #2's session                                |                                        |
+| 18 | Commit hygiene: the 5 uncommitted harvest files ride the next daemon batch — no action (daemon's job), monitored                                   |                                        |
 
-*(Deliberately not harvested: #16 and #18 — process/observational, not work items; everything else already carries a queue row with this report chain as Source.)*
+_(Deliberately not harvested: #16 and #18 — process/observational, not work items; everything else already carries a queue row with this report chain as Source.)_
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF (re-asked — unanswered from report #1)
 

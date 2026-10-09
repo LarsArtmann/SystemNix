@@ -9,17 +9,20 @@
 ## Self-Review (asked first: what did I forget / do worse / still improve?)
 
 **What I forgot:**
+
 - **The vocabulary lives in the product repo.** I answered "DNS proxies" from the consumer repo (SystemNix) and never checked `/home/lars/projects/dnsblockd`, where ADR-0018 defines the term. The owner had to spend a correction round on me. The corrected answer even required reading the upstream ADR I could have grepped in the first minute.
 - **Supply-side verification came late.** I verified the live config YAML but not which dnsblockd binary runs, until after the wiring was done. Had the lock predated the filter-proxy feature (ADR dated 2026-10-03, last-known lock 2026-09-30), everything would have been a silent no-op. It turned out fine (lock `8c35ccd` == live binary), but by luck of a parallel deploy, not by my ordering.
-- **Formatter not run before verification.** My hand-edits deviated from alejandra; the scoped treefmt reformatted 2 files *after* the render check had passed, forcing a rebuild cycle.
+- **Formatter not run before verification.** My hand-edits deviated from alejandra; the scoped treefmt reformatted 2 files _after_ the render check had passed, forcing a rebuild cycle.
 - **Banned tool on first try.** I reached for `systemctl show` (tool-blocked) before reading the unit file from `/etc/systemd/system` — the working probe set is even documented in the TODO library.
 
 **What I could have done better:**
+
 - Asked/checked "which repo owns this term?" before answering instead of after being corrected.
 - Run buildflow first (this repo is BuildFlow-covered; I ran raw `nix build`/`nix flake check` before loading the buildflow skill and only found the 5 pre-existing findings later).
 - Verified the deploy-parity (lock rev ↔ live binary ↔ feature presence) as step one of any upstream-feature wiring, not as an afterthought.
 
 **What I could still improve (open, not done this session):**
+
 - The wrapper now defines options upstream's own NixOS module also defines (split-brain risk — see (e) item 1).
 - No rpi3-dns render-contract coverage (module is shared; render test only extends evo-x2).
 - Did not formally prove the 5 buildflow findings pre-date this session (triaged from content, not from a pre-session run).
@@ -28,35 +31,35 @@
 
 ## a) FULLY DONE
 
-| # | Work | Evidence | Scope |
-|---|------|----------|-------|
-| a1 | Scoped filter proxy wired into the dns-blocker module: `proxyFilterDomains`, `proxyInjectScriptURL`, `proxyInjectStripCSP`, `proxyTLSPassthrough` options; filter domains render into YAML only when set; inject URL rides `DNSBLOCKD_PROXY_INJECT_SCRIPT_URL` systemd env (never the store YAML); eval assertion mirrors upstream `ErrFilterNeedsAddressResponse` (filter domains require `zero_ip`) | daemon commit `6d7ef905` (dns-blocker.nix +77); `checks.x86_64-linux.dns-blocker-render` green ("content OK", store `azrbdmxrl1qa84c38cjb3dbaikvr61bh`); `nix flake check --no-build` = all checks passed | `modules/nixos/services/dns-blocker.nix` |
-| a2 | Render-test contract item 7: host renders NO filter key (inert), variant renders verbatim, inject URL pinned env-only in BOTH directions, negative test proves the nxdomain assertion fires | same commit `6d7ef905` (test +49); render check green incl. negative tests | `tests/test-dns-blocker-render.nix` |
-| a3 | Stale comment corrected: "sdns root recursion is broken" falsified (recursion works since upstream `8e598c01`/T299; forwarders are a deliberate owner choice) | daemon commit `30194cb2`; parse-checked | `platforms/nixos/system/dns-blocker-config.nix` |
-| a4 | Runbook entry: scoped filter proxy constraints (zero_ip requirement, never-splice TLS, CA trust, startup-only filter set, fail-open classifier) | daemon commit `99c10a98` | `docs/services/dnsblockd.md` |
-| a5 | Supply-side parity verified: locked dnsblockd rev `8c35ccd` == local repo HEAD, `internal/filterdomain` exists at that rev, live unit already runs `dnsblockd-8c35ccd` | merge-base ancestry check + `git cat-file -e` at lock rev + live unit ExecStart read | flake.lock / live system |
-| a6 | Scoped formatting + TODO-system validation | `nix fmt` scoped (3 files, 2 reflowed → daemon commit `052888fb`); `check-todo-system.sh` = "queue/library structure clean" (exit 0) | session files |
-| a7 | Post-deploy probe + 6 direct follow-ups self-harvested into `TODO_LIST.md` + `docs/todo/services.md` (+1 upstream row) at authoring time | same checker run, structure clean | TODO surfaces |
+| #  | Work                                                                                                                                                                                                                                                                                                                                                                                                  | Evidence                                                                                                                                                                                                  | Scope                                           |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| a1 | Scoped filter proxy wired into the dns-blocker module: `proxyFilterDomains`, `proxyInjectScriptURL`, `proxyInjectStripCSP`, `proxyTLSPassthrough` options; filter domains render into YAML only when set; inject URL rides `DNSBLOCKD_PROXY_INJECT_SCRIPT_URL` systemd env (never the store YAML); eval assertion mirrors upstream `ErrFilterNeedsAddressResponse` (filter domains require `zero_ip`) | daemon commit `6d7ef905` (dns-blocker.nix +77); `checks.x86_64-linux.dns-blocker-render` green ("content OK", store `azrbdmxrl1qa84c38cjb3dbaikvr61bh`); `nix flake check --no-build` = all checks passed | `modules/nixos/services/dns-blocker.nix`        |
+| a2 | Render-test contract item 7: host renders NO filter key (inert), variant renders verbatim, inject URL pinned env-only in BOTH directions, negative test proves the nxdomain assertion fires                                                                                                                                                                                                           | same commit `6d7ef905` (test +49); render check green incl. negative tests                                                                                                                                | `tests/test-dns-blocker-render.nix`             |
+| a3 | Stale comment corrected: "sdns root recursion is broken" falsified (recursion works since upstream `8e598c01`/T299; forwarders are a deliberate owner choice)                                                                                                                                                                                                                                         | daemon commit `30194cb2`; parse-checked                                                                                                                                                                   | `platforms/nixos/system/dns-blocker-config.nix` |
+| a4 | Runbook entry: scoped filter proxy constraints (zero_ip requirement, never-splice TLS, CA trust, startup-only filter set, fail-open classifier)                                                                                                                                                                                                                                                       | daemon commit `99c10a98`                                                                                                                                                                                  | `docs/services/dnsblockd.md`                    |
+| a5 | Supply-side parity verified: locked dnsblockd rev `8c35ccd` == local repo HEAD, `internal/filterdomain` exists at that rev, live unit already runs `dnsblockd-8c35ccd`                                                                                                                                                                                                                                | merge-base ancestry check + `git cat-file -e` at lock rev + live unit ExecStart read                                                                                                                      | flake.lock / live system                        |
+| a6 | Scoped formatting + TODO-system validation                                                                                                                                                                                                                                                                                                                                                            | `nix fmt` scoped (3 files, 2 reflowed → daemon commit `052888fb`); `check-todo-system.sh` = "queue/library structure clean" (exit 0)                                                                      | session files                                   |
+| a7 | Post-deploy probe + 6 direct follow-ups self-harvested into `TODO_LIST.md` + `docs/todo/services.md` (+1 upstream row) at authoring time                                                                                                                                                                                                                                                              | same checker run, structure clean                                                                                                                                                                         | TODO surfaces                                   |
 
 ## b) PARTIALLY DONE
 
-| # | Work | Works now | Remains open | Blocker | Effort |
-|---|------|-----------|--------------|---------|--------|
-| b1 | Filter-proxy capability end-to-end | Eval-time wiring, render contract, assertion, docs all green | Nothing runs at runtime until the owner picks domains + inject URL; no post-deploy probe yet (queued) | Next deploy (currently blocked by bank-sync FOD, tracked elsewhere) | S |
-| b2 | Upstream-consumption readiness | Confirmed lock rev + live binary carry `filterdomain`; koanf env mapping verified from source (`DNSBLOCKD_` prefix, flat keys) | `/inject/filter.js` endpoint existence on nsfw-classifier never verified; inject-URL validation surface upstream unchecked (both queued) | none | S |
-| b3 | buildflow quality gate | Triaged: 5 error findings (nix-checker 4, flake-meta-checker 1) all name transitive flake.lock inputs — the skill's documented false-positive class; preflight warns (24 fetch-scheme mismatches, stale buildflow binary) | Formal pre-session proof + AGENTS.md known-tool-bug record (queued); gate stays red at HEAD regardless | none | M |
-| b4 | CA-trust claim for filter-domain enablement | Runbook documents the precondition; configuration.nix:133 comment asserts evo-x2 trusts the dnsblockd CA | Byte-compare pki store entry vs the sops `dnsblockd_ca_cert` never done (queued) | none | S |
+| #  | Work                                        | Works now                                                                                                                                                                                                                 | Remains open                                                                                                                             | Blocker                                                             | Effort |
+| -- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------ |
+| b1 | Filter-proxy capability end-to-end          | Eval-time wiring, render contract, assertion, docs all green                                                                                                                                                              | Nothing runs at runtime until the owner picks domains + inject URL; no post-deploy probe yet (queued)                                    | Next deploy (currently blocked by bank-sync FOD, tracked elsewhere) | S      |
+| b2 | Upstream-consumption readiness              | Confirmed lock rev + live binary carry `filterdomain`; koanf env mapping verified from source (`DNSBLOCKD_` prefix, flat keys)                                                                                            | `/inject/filter.js` endpoint existence on nsfw-classifier never verified; inject-URL validation surface upstream unchecked (both queued) | none                                                                | S      |
+| b3 | buildflow quality gate                      | Triaged: 5 error findings (nix-checker 4, flake-meta-checker 1) all name transitive flake.lock inputs — the skill's documented false-positive class; preflight warns (24 fetch-scheme mismatches, stale buildflow binary) | Formal pre-session proof + AGENTS.md known-tool-bug record (queued); gate stays red at HEAD regardless                                   | none                                                                | M      |
+| b4 | CA-trust claim for filter-domain enablement | Runbook documents the precondition; configuration.nix:133 comment asserts evo-x2 trusts the dnsblockd CA                                                                                                                  | Byte-compare pki store entry vs the sops `dnsblockd_ca_cert` never done (queued)                                                         | none                                                                | S      |
 
 ## c) NOT STARTED
 
-| # | Work | Why not started | Priority |
-|---|------|-----------------|----------|
-| c1 | **Filter-proxy enablement** (domain list + inject URL + device CA rollout) | Owner-gated by doctrine (ADR-0018 opt-in; the max-adoption/tracking precedents require owner sanction for behavioral DNS changes) | owner decides |
-| c2 | nsfw-classifier as the inject consumer (wiring `nsfw.home.lan:8104/inject/filter.js` into the module) | Depends on c1 + b2 verification | after c1 |
-| c3 | Filter-proxy observability (SigNoz rule / Gatus check / metric audit for filter-path labels) | Feature off; monitoring without a feature is phantom-metric class | with c1 |
-| c4 | rpi3-dns render variant in the render test | Queued this session, not dispatched | Medium |
-| c5 | Client-device CA trust rollout doc (macbook etc.) | Owner-domain knowledge; ADR says rollout runbook documents it — SystemNix side has nothing | with c1 |
-| c6 | Wrapper-vs-upstream-module migration decision (consume upstream `nix/modules/nixos` options instead of forking them) | Architecture call, owner input needed (see g2) | decision |
+| #  | Work                                                                                                                 | Why not started                                                                                                                   | Priority      |
+| -- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| c1 | **Filter-proxy enablement** (domain list + inject URL + device CA rollout)                                           | Owner-gated by doctrine (ADR-0018 opt-in; the max-adoption/tracking precedents require owner sanction for behavioral DNS changes) | owner decides |
+| c2 | nsfw-classifier as the inject consumer (wiring `nsfw.home.lan:8104/inject/filter.js` into the module)                | Depends on c1 + b2 verification                                                                                                   | after c1      |
+| c3 | Filter-proxy observability (SigNoz rule / Gatus check / metric audit for filter-path labels)                         | Feature off; monitoring without a feature is phantom-metric class                                                                 | with c1       |
+| c4 | rpi3-dns render variant in the render test                                                                           | Queued this session, not dispatched                                                                                               | Medium        |
+| c5 | Client-device CA trust rollout doc (macbook etc.)                                                                    | Owner-domain knowledge; ADR says rollout runbook documents it — SystemNix side has nothing                                        | with c1       |
+| c6 | Wrapper-vs-upstream-module migration decision (consume upstream `nix/modules/nixos` options instead of forking them) | Architecture call, owner input needed (see g2)                                                                                    | decision      |
 
 ## d) TOTALLY FUCKED UP
 
@@ -78,9 +81,10 @@ Nothing this session **built** is broken — every check is green and nothing to
 
 ## f) 50 things to get done next
 
-*Brainstorm per the skill's rule: items 1-8 are session-owned follow-ups (harvested); 9-15 are tracked-elsewhere pointers (deliberately not re-queued); 16+ are ROADMAP fuel — docs-health HARVEST must apply routing rigor, most are NOT queue-ready. Impact/Effort/Category per item.*
+_Brainstorm per the skill's rule: items 1-8 are session-owned follow-ups (harvested); 9-15 are tracked-elsewhere pointers (deliberately not re-queued); 16+ are ROADMAP fuel — docs-health HARVEST must apply routing rigor, most are NOT queue-ready. Impact/Effort/Category per item._
 
 **Session-owned (harvested this session):**
+
 1. Owner decision: enable the filter proxy (domains + inject URL) — Impact Critical (unlocks the whole feature) · Effort S (owner time) · Decision
 2. Post-deploy probe: filter-proxy keys + clean restart after next deploy — High · S · Verification
 3. Add rpi3-dns render variant to the render test — Medium · S · Quality
@@ -144,8 +148,8 @@ Nothing this session **built** is broken — every check is green and nothing to
 
 ---
 
-*Harvest status: items 1-9 self-harvested at authoring time into `TODO_LIST.md` + `docs/todo/services.md` (+ `docs/todo/upstream.md`); 15-25 already tracked elsewhere; the rest deliberately not harvested (ROADMAP fuel / owner-gated / duplicate pointers) per the TODO-system doctrine. Checker: structure clean, exit 0.*
+_Harvest status: items 1-9 self-harvested at authoring time into `TODO_LIST.md` + `docs/todo/services.md` (+ `docs/todo/upstream.md`); 15-25 already tracked elsewhere; the rest deliberately not harvested (ROADMAP fuel / owner-gated / duplicate pointers) per the TODO-system doctrine. Checker: structure clean, exit 0._
 
-*Format note: skill default is a styled HTML dashboard; this report is `.md` because the prompt explicitly named the `.md` path — honored as the standing dispatch-report shape, not propagated as a new default.*
+_Format note: skill default is a styled HTML dashboard; this report is `.md` because the prompt explicitly named the `.md` path — honored as the standing dispatch-report shape, not propagated as a new default._
 
-*No commit made (harness rule: never commit without explicit instruction) — the auto-commit daemon owns this file.*
+_No commit made (harness rule: never commit without explicit instruction) — the auto-commit daemon owns this file._

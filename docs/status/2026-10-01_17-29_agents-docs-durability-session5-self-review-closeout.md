@@ -4,20 +4,20 @@
 
 ## a) FULLY DONE
 
-| Work | Evidence | Verify probe |
-| ---- | -------- | ------------ |
-| T4a–d runbooks (pocket-id, oauth2-proxy, signoz, immich) — deep module-verified | `05e72d12`, `b416ccbc` | check-doc-links green; immich layer resolved by EVAL of the rendered caddy vHost |
-| sso-dns immich layer fix (stale Layer 1 row → hybrid footnote) | `b416ccbc` | eval + module + caddy.nix triple-confirmed |
-| T5 runbooks (twenty, taskchampion, dozzle, openseo) | `dfad9354` | check-doc-links green |
-| T6 runbooks (crush-daily, atticd) | `8905a3f0` | same |
-| 6 beyond-scope runbooks (gatus, renamer, overview, nsfw-classifier, visionreviewd, website-deploy-monitor) | `e98e2a22` | same — depth caveat in §b |
-| Post-backfill: AGENTS.md:25 claim true now; queue+library rows closed BOTH surfaces | `92a461fc` + daemon sweep | check-todo-system structure OK |
-| T9: `# Runbook:` pointer in 51 modules | `df99aaf4` + dedupe `b03fd8b3` | coverage probe 100%; count probe **51 files × exactly 1** (after §d1 fix) |
-| T10: bidirectional cross-links registry↔monitoring | daemon-swept `0c82c3c5` (content verified in tree) | T2 anchor checker green |
-| T12: 16 stale comment pointers retargeted; gotchas-archive header; 2 queue-row premises fixed in both surfaces | `89b3c725` | classification table in the 15-16 report |
-| Session-3/4 §f disposition audit + closeout + harvest rows + drift-proof count row | `45900a58` | check-todo-system OK |
-| mail-relay pointer dedupe (found in THIS self-review) | `b03fd8b3` | grep count 51×1 |
-| /tmp emergency reclaim (~8G freed, gitleaks unblocked) | manual | df 100%→82% |
+| Work                                                                                                           | Evidence                                           | Verify probe                                                                     |
+| -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------- |
+| T4a–d runbooks (pocket-id, oauth2-proxy, signoz, immich) — deep module-verified                                | `05e72d12`, `b416ccbc`                             | check-doc-links green; immich layer resolved by EVAL of the rendered caddy vHost |
+| sso-dns immich layer fix (stale Layer 1 row → hybrid footnote)                                                 | `b416ccbc`                                         | eval + module + caddy.nix triple-confirmed                                       |
+| T5 runbooks (twenty, taskchampion, dozzle, openseo)                                                            | `dfad9354`                                         | check-doc-links green                                                            |
+| T6 runbooks (crush-daily, atticd)                                                                              | `8905a3f0`                                         | same                                                                             |
+| 6 beyond-scope runbooks (gatus, renamer, overview, nsfw-classifier, visionreviewd, website-deploy-monitor)     | `e98e2a22`                                         | same — depth caveat in §b                                                        |
+| Post-backfill: AGENTS.md:25 claim true now; queue+library rows closed BOTH surfaces                            | `92a461fc` + daemon sweep                          | check-todo-system structure OK                                                   |
+| T9: `# Runbook:` pointer in 51 modules                                                                         | `df99aaf4` + dedupe `b03fd8b3`                     | coverage probe 100%; count probe **51 files × exactly 1** (after §d1 fix)        |
+| T10: bidirectional cross-links registry↔monitoring                                                             | daemon-swept `0c82c3c5` (content verified in tree) | T2 anchor checker green                                                          |
+| T12: 16 stale comment pointers retargeted; gotchas-archive header; 2 queue-row premises fixed in both surfaces | `89b3c725`                                         | classification table in the 15-16 report                                         |
+| Session-3/4 §f disposition audit + closeout + harvest rows + drift-proof count row                             | `45900a58`                                         | check-todo-system OK                                                             |
+| mail-relay pointer dedupe (found in THIS self-review)                                                          | `b03fd8b3`                                         | grep count 51×1                                                                  |
+| /tmp emergency reclaim (~8G freed, gitleaks unblocked)                                                         | manual                                             | df 100%→82%                                                                      |
 
 ## b) PARTIALLY DONE
 

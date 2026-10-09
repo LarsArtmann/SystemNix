@@ -59,7 +59,7 @@
 
 ## f) Up to 50 things we should get done next
 
-*Session-direct, highest priority first:*
+_Session-direct, highest priority first:_
 
 1. **Deploy** (user sudo-gate): `nix run .#deploy` — with §11 re-run FIRST (tree churned twice mid-session; point-in-time green).
 2. **Post-deploy smoke battery:** bank-sync CLI version assert (WHICH entity serves — `4890be63`/`0a8c9c98` first deploy), overview dashboard render, **mr-sync dashboard + CLI on `3b579663` (first deploy of this rev)**, bank-sync-paperless canary legs. Covered by standing post-deploy rows; execute on deploy day.
@@ -77,7 +77,7 @@
 14. **Local `nix flake check --no-build --all-systems`** before the next cross-platform deploy (CI runs it; local last-run unknown — the scoping trap that bit me in §d.4).
 15. **86-unharvested-reports WARN class** — standing; a docs-health HARVEST pass owns it, not a fix session (deliberately not worsened by me: my 10-22 and this report are both cited by queue surfaces).
 
-*Older waves, unchanged scope:* discordsync/overview/file-and-image-renamer/crush-daily shims stay subject to the `[ready]` drop-check row; the a7868a7 sweep row lost its bank-sync entry today; the flake-update bot remains blocked on `NIX_GITHUB_RO_TOKEN`.
+_Older waves, unchanged scope:_ discordsync/overview/file-and-image-renamer/crush-daily shims stay subject to the `[ready]` drop-check row; the a7868a7 sweep row lost its bank-sync entry today; the flake-update bot remains blocked on `NIX_GITHUB_RO_TOKEN`.
 
 ## g) Three questions I cannot answer myself
 

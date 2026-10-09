@@ -61,6 +61,7 @@
 ## f) UP TO 50 THINGS TO GET DONE NEXT (this session's scope + directly adjacent rows read this session; NEW = minted/landed this session, EXISTING = already queued, restated in impact order)
 
 **NEW — landed on both surfaces this session:**
+
 1. **Delete the buildcache-resident migration debris (~2.8G `buildcache/{cargo,rust,sccache}`) + add a fixture-proven cleanup leg to the migrate script** — no auto-reap exists (grep-falsified); deletion after a fresh das-link writer-check; prevention leg so the next `buildcacheDirs` move can't recreate the class. [ready, storage.md]
 2. **Verify the Rust Cache Gatus checks live-evaluate** — prom freshness + values proven; the two checks ("Rust Cache SSD", "Rust Cache Usage") never observed evaluating; fold in a `rustcache` first-run evidence check for `rust-cache-gc` (has the GC EVER run? next slot Sun 05:15 or manual trigger). [ready, storage.md]
 3. **Post-migration performance proofs:** `sudo compsize /mnt/rust-cache` ratio pinned in docs (vs the migration-time 2.05×; rust/ grew 88G→133G du since, diluting compression) + one monitor365 incremental build proving warm-sccache HITS with registry+target+SCCACHE_DIR all on the new mount. [ready, storage.md — owner-timed, see §g.2]

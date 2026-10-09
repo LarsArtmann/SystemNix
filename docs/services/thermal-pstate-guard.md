@@ -9,10 +9,10 @@
 
 Flips the `amd_pstate` driver mode on thermal hysteresis, every 10 s tick (oneshot + timer, the memory-emergency-guard pattern):
 
-| State | Driver mode | Governor/EPP | Entered when | Left when |
-|---|---|---|---|---|
-| **normal** | `active` | performance + performance (max clocks) | default | any sensor ≥ its high for 2 consecutive ticks → **guided** |
-| **throttled** | `guided` | (firmware-managed) | transition snapshots governor/EPP per policy | ALL sensors ≤ their low for 12 consecutive ticks → snapshot restored |
+| State         | Driver mode | Governor/EPP                           | Entered when                                 | Left when                                                            |
+| ------------- | ----------- | -------------------------------------- | -------------------------------------------- | -------------------------------------------------------------------- |
+| **normal**    | `active`    | performance + performance (max clocks) | default                                      | any sensor ≥ its high for 2 consecutive ticks → **guided**           |
+| **throttled** | `guided`    | (firmware-managed)                     | transition snapshots governor/EPP per policy | ALL sensors ≤ their low for 12 consecutive ticks → snapshot restored |
 
 Default sensors (`services.thermal-pstate-guard.sensors`): k10temp 95/80 °C, nvme 70/60, amdgpu 90/75, acpitz 85/70. Sensors resolve by **hwmon `name`**, never by the unstable `hwmonN` index. Absent patterns never vote and increment `thermal_pstate_guard_sensors_missing`.
 

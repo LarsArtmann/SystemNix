@@ -12,14 +12,14 @@
 
 ## 1. What it IS — and is NOT
 
-| Claim                                        | Verdict                                                                                                                                            |
-| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Claim                                        | Verdict                                                                                                                                                                                                                    |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | App identity service for graphical sessions  | **Yes** — "a centralized place to keep track of the user's apps… allows all session services (dbus, pipewire, portals, Wayland compositors) to reliably identify apps and learn about their current permissions" (PR body) |
-| Per-app runtime permission/entitlement store | **Yes** — metadata on top of identity; enforcers (e.g. PipeWire) are told about changes and must apply them before `SetPermissions()` returns       |
-| User-session scoped                          | **Yes** — `units/user/systemd-appd.service.in`, `PartOf=graphical-session.target`, `Slice=session.slice`. No system-level daemon, no server relevance |
-| Packaging / install / update mechanism       | **No** — it explicitly does not install, package, or update apps (common misconception given the name)                                              |
-| Container/image runtime (like portabled)     | **No** — unrelated to portable services, sysext, confext, sysupdate despite the `-d` naming family                                                  |
-| Merged / released                            | **No** — draft PR #43885, milestone v263 (RC1 2026-11-19, due 2026-12-17). No NEWS entry, no man page yet                                            |
+| Per-app runtime permission/entitlement store | **Yes** — metadata on top of identity; enforcers (e.g. PipeWire) are told about changes and must apply them before `SetPermissions()` returns                                                                              |
+| User-session scoped                          | **Yes** — `units/user/systemd-appd.service.in`, `PartOf=graphical-session.target`, `Slice=session.slice`. No system-level daemon, no server relevance                                                                      |
+| Packaging / install / update mechanism       | **No** — it explicitly does not install, package, or update apps (common misconception given the name)                                                                                                                     |
+| Container/image runtime (like portabled)     | **No** — unrelated to portable services, sysext, confext, sysupdate despite the `-d` naming family                                                                                                                         |
+| Merged / released                            | **No** — draft PR #43885, milestone v263 (RC1 2026-11-19, due 2026-12-17). No NEWS entry, no man page yet                                                                                                                  |
 
 ## 2. Verified fact base
 

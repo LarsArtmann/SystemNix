@@ -47,28 +47,28 @@
 
 ## f) NEXT TASKS (session-derived; §f.1–§f.10 HARVESTED to TODO_LIST + pipeline.md at authoring)
 
-| # | Task | Impact | Effort | Category | Harvest |
-|---|------|--------|--------|----------|---------|
-| 1 | Daemon commit-discard forensics (identify what abandoned `7d9fc871` + reverted worktree files) → CONTRIBUTING daemon-race policy entry | High | M | Bug/Process | ✅ queued |
-| 2 | check-todo-system.sh leg: DONE-stamp hashes must resolve (`git cat-file -e`), selftested | High | S | Quality | ✅ queued |
-| 3 | docs/agents/go-ecosystem.md: refresh vendorHash-freshness section to the §11 oracle (not verified this session) | Medium | S | Documentation | ✅ queued |
-| 4 | docs-health ANNOTATE: 5 historical "§11 warns ×6" reports → resolution pointer `8ef8d57f` | Low | S | Documentation | ✅ queued |
-| 5 | §11 got-hash handoff file (`/run/systemnix-fod-got-hash.txt`) for direct nix-hash-fix consumption | Low | S | Feature | ✅ queued |
-| 6 | Per-host §11 gate (`--host` arg; rpi3-dns + darwin toplevel attrs) | Medium | M | Feature | ✅ queued |
-| 7 | Flow-level stub-`nix` selftest driving `vendor_freshness_run_gate` through all 4 branches | Medium | S | Quality | ✅ queued |
-| 8 | pre-deploy-check: exit 64 on mutually-exclusive section flags (currently §10-only silently wins) | Low | S | Quality | ✅ queued |
-| 9 | Suppress nix trusted-setting notices in gate captures (`NIX_CONFIG` inline) | Low | S | Cleanup | ✅ queued |
-| 10 | Nix-output-shape drift canary: sandbox re-capture of real dry-run/mismatch output diffed against committed fixtures | High | M | Quality | ✅ queued |
-| 11 | Re-message heuristic `8ef8d57f` (unpushed) or accept it — blocked on §g2 | Low | S | Cleanup | ⏸ §g2 |
-| 12 | Full pre-deploy gate run on a quiet window as a one-off regression sweep of §10–§13 | Low | S | Verification | ❌ not harvested — one-off check, not standing work |
-| 13 | Shared-eval refactor of the gate (§10/§11/§12 each pay a full config eval today) | Medium | L | Feature | ❌ not harvested — ROADMAP fuel; blocked on §g3 cost-acceptance answer first |
-| 14 | Remaining deploy-gate noise (§12 "not built yet" ×3, buildEnv collision spam, mandb whatis) | Medium | M | Cleanup | ❌ not harvested — ALREADY queued (2026-09-17 06-16 §c.8); do not duplicate |
-| 15 | `quick-go` explicit output (cv + hermes inputs) | Medium | M | Feature | ❌ not harvested — existing pipeline.md row, annotated today |
-| 16 | f37 remainder: classify genuinely non-Go inputs (qmd) in input-hygiene | Low | S | Quality | ❌ not harvested — pre-existing 2026-09-24 report item outside this session's domain |
-| 17 | CI visibility: un-darks `nix flake check`-run selftests via `NIX_GITHUB_RO_TOKEN` | High | S | Infra | ❌ not harvested — existing `blocked:user` row |
-| 18 | Post-deploy-check null-byte WARN lines (133/633) — named in this morning's 04-29 deploy report as unaddressed | Low | S | Quality | ❌ not harvested — owned by the 04-29 report's own follow-ups, different session's scope |
-| 19 | AGENTS.md: extend the concurrent-session section with the worktree-revert leg observed today (actor restoring files over fresh edits) | Medium | S | Documentation | ❌ not harvested — deliberately folded into §f.1's CONTRIBUTING write to avoid a second doc surface for the same fix |
-| 20 | Consider `nix build --dry-run` JSON-ish structured source (nix eval–based drv listing) if output wording drifts again | Low | M | Feature | ❌ not harvested — speculative; §f.10 canary is the cheap guard |
+| #  | Task                                                                                                                                   | Impact | Effort | Category      | Harvest                                                                                                              |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 1  | Daemon commit-discard forensics (identify what abandoned `7d9fc871` + reverted worktree files) → CONTRIBUTING daemon-race policy entry | High   | M      | Bug/Process   | ✅ queued                                                                                                            |
+| 2  | check-todo-system.sh leg: DONE-stamp hashes must resolve (`git cat-file -e`), selftested                                               | High   | S      | Quality       | ✅ queued                                                                                                            |
+| 3  | docs/agents/go-ecosystem.md: refresh vendorHash-freshness section to the §11 oracle (not verified this session)                        | Medium | S      | Documentation | ✅ queued                                                                                                            |
+| 4  | docs-health ANNOTATE: 5 historical "§11 warns ×6" reports → resolution pointer `8ef8d57f`                                              | Low    | S      | Documentation | ✅ queued                                                                                                            |
+| 5  | §11 got-hash handoff file (`/run/systemnix-fod-got-hash.txt`) for direct nix-hash-fix consumption                                      | Low    | S      | Feature       | ✅ queued                                                                                                            |
+| 6  | Per-host §11 gate (`--host` arg; rpi3-dns + darwin toplevel attrs)                                                                     | Medium | M      | Feature       | ✅ queued                                                                                                            |
+| 7  | Flow-level stub-`nix` selftest driving `vendor_freshness_run_gate` through all 4 branches                                              | Medium | S      | Quality       | ✅ queued                                                                                                            |
+| 8  | pre-deploy-check: exit 64 on mutually-exclusive section flags (currently §10-only silently wins)                                       | Low    | S      | Quality       | ✅ queued                                                                                                            |
+| 9  | Suppress nix trusted-setting notices in gate captures (`NIX_CONFIG` inline)                                                            | Low    | S      | Cleanup       | ✅ queued                                                                                                            |
+| 10 | Nix-output-shape drift canary: sandbox re-capture of real dry-run/mismatch output diffed against committed fixtures                    | High   | M      | Quality       | ✅ queued                                                                                                            |
+| 11 | Re-message heuristic `8ef8d57f` (unpushed) or accept it — blocked on §g2                                                               | Low    | S      | Cleanup       | ⏸ §g2                                                                                                                |
+| 12 | Full pre-deploy gate run on a quiet window as a one-off regression sweep of §10–§13                                                    | Low    | S      | Verification  | ❌ not harvested — one-off check, not standing work                                                                  |
+| 13 | Shared-eval refactor of the gate (§10/§11/§12 each pay a full config eval today)                                                       | Medium | L      | Feature       | ❌ not harvested — ROADMAP fuel; blocked on §g3 cost-acceptance answer first                                         |
+| 14 | Remaining deploy-gate noise (§12 "not built yet" ×3, buildEnv collision spam, mandb whatis)                                            | Medium | M      | Cleanup       | ❌ not harvested — ALREADY queued (2026-09-17 06-16 §c.8); do not duplicate                                          |
+| 15 | `quick-go` explicit output (cv + hermes inputs)                                                                                        | Medium | M      | Feature       | ❌ not harvested — existing pipeline.md row, annotated today                                                         |
+| 16 | f37 remainder: classify genuinely non-Go inputs (qmd) in input-hygiene                                                                 | Low    | S      | Quality       | ❌ not harvested — pre-existing 2026-09-24 report item outside this session's domain                                 |
+| 17 | CI visibility: un-darks `nix flake check`-run selftests via `NIX_GITHUB_RO_TOKEN`                                                      | High   | S      | Infra         | ❌ not harvested — existing `blocked:user` row                                                                       |
+| 18 | Post-deploy-check null-byte WARN lines (133/633) — named in this morning's 04-29 deploy report as unaddressed                          | Low    | S      | Quality       | ❌ not harvested — owned by the 04-29 report's own follow-ups, different session's scope                             |
+| 19 | AGENTS.md: extend the concurrent-session section with the worktree-revert leg observed today (actor restoring files over fresh edits)  | Medium | S      | Documentation | ❌ not harvested — deliberately folded into §f.1's CONTRIBUTING write to avoid a second doc surface for the same fix |
+| 20 | Consider `nix build --dry-run` JSON-ish structured source (nix eval–based drv listing) if output wording drifts again                  | Low    | M      | Feature       | ❌ not harvested — speculative; §f.10 canary is the cheap guard                                                      |
 
 (Items beyond #20 would be padding — everything else this session noticed is either already queued upstream, recorded above with rationale, or §g-dependent.)
 
@@ -80,4 +80,4 @@
 
 ---
 
-*Landing commits: code `8ef8d57f` (heuristic message — see §d.1), docs `29d55e15`. Report itself not manually committed (harness rule); the daemon will sweep it.*
+_Landing commits: code `8ef8d57f` (heuristic message — see §d.1), docs `29d55e15`. Report itself not manually committed (harness rule); the daemon will sweep it._

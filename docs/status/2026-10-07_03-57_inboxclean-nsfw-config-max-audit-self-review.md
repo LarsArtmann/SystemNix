@@ -10,18 +10,18 @@
 
 Answer given: **excellent, but honestly not "to the max" — one live red signal right now.**
 
-| Claim in verdict | Evidence class |
-|---|---|
-| InboxClean consumes upstream `nixosModules.default` (registry gold pattern); nsfw hand-roll justified (upstream exports none) | [config-read] flake.nix of both repos + both modules |
-| Port registry, DNS (`inbox`, `nsfw`), integration entries, gatus checks, backup entry, VM tests registered, runbooks exist | [config-read] |
-| nsfw `/readyz` all-checks pass, uptime 1h0m42s, version `46f02bb` | [live] 03:52:22 probe |
-| Ports listening: 8099 loopback, 8104 wildcard | [live] `ss` |
-| **InboxClean `/health` = 503, twice** (~03:53, ~03:56) → primary liveness check cannot be green | [live] — the gatus-red consequence is [inferred], API is auth-gated (401) |
-| Deployed InboxClean = lock `7a29ab7`, lags upstream fixes | [lock-read] — but "unpushed" framing was [doc-derived] and is now suspect (see §d.6) |
-| nsfw input is interim `git+file:///home/lars/...?rev=46f02bb` pin | [lock-read] |
-| CI red ×3 today | [live] `gh run list` — root cause branching-flow ssh fetch, **already tracked** (pipeline.md:16) |
-| InboxClean lacks `services.catalog.inbox` entry | [config-read] — **already tracked** in the 21-names warning item (TODO_LIST:309 / services.md:233) |
-| nsfw unit misses `startLimitBurst/IntervalSec` | [config-read] — genuinely NEW, queued this session |
+| Claim in verdict                                                                                                              | Evidence class                                                                                     |
+| ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| InboxClean consumes upstream `nixosModules.default` (registry gold pattern); nsfw hand-roll justified (upstream exports none) | [config-read] flake.nix of both repos + both modules                                               |
+| Port registry, DNS (`inbox`, `nsfw`), integration entries, gatus checks, backup entry, VM tests registered, runbooks exist    | [config-read]                                                                                      |
+| nsfw `/readyz` all-checks pass, uptime 1h0m42s, version `46f02bb`                                                             | [live] 03:52:22 probe                                                                              |
+| Ports listening: 8099 loopback, 8104 wildcard                                                                                 | [live] `ss`                                                                                        |
+| **InboxClean `/health` = 503, twice** (~03:53, ~03:56) → primary liveness check cannot be green                               | [live] — the gatus-red consequence is [inferred], API is auth-gated (401)                          |
+| Deployed InboxClean = lock `7a29ab7`, lags upstream fixes                                                                     | [lock-read] — but "unpushed" framing was [doc-derived] and is now suspect (see §d.6)               |
+| nsfw input is interim `git+file:///home/lars/...?rev=46f02bb` pin                                                             | [lock-read]                                                                                        |
+| CI red ×3 today                                                                                                               | [live] `gh run list` — root cause branching-flow ssh fetch, **already tracked** (pipeline.md:16)   |
+| InboxClean lacks `services.catalog.inbox` entry                                                                               | [config-read] — **already tracked** in the 21-names warning item (TODO_LIST:309 / services.md:233) |
+| nsfw unit misses `startLimitBurst/IntervalSec`                                                                                | [config-read] — genuinely NEW, queued this session                                                 |
 
 ## a) FULLY DONE (this session)
 
@@ -79,6 +79,7 @@ Answer given: **excellent, but honestly not "to the max" — one live red signal
 ## f) Next things (session-scoped; ≤50 asked, 27 delivered — quality over padding)
 
 **InboxClean deploy train (unblocks the live 503):**
+
 1. [NEW, 5-min] Verify containment: `git -C ~/projects/InboxClean merge-base --is-ancestor e9735c7 origin/master` (repeat for `c4d62a3`, `1540a56`, `d23c48a`, `7aa5c3`) — decides whether anything still needs a push at all.
 2. [tracked: docs/todo/upstream.md] Push window for whatever (1) shows unpushed.
 3. [tracked] `nix flake lock --update-input inboxclean` + deploy.

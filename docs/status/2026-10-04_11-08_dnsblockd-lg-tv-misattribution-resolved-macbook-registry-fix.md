@@ -7,7 +7,7 @@
 ## a) FULLY DONE
 
 1. **Diagnosed the "LG-TV is using us" observation end-to-end:** Top Clients names come ONLY from the config-declared `devices:` registry (`internal/device.Registry`, exact-IP); `lg-tv`/.62 was a 2026-09-30 ARP-inventory guess ("Realtek NIC 00:e0:4c:… — LG TV SSCR2 by elimination"). The queries from .62 were real; the name was a hypothesis with an open owner-confirm marker.
-2. **Root-caused the guess:** the actual LG TV SSCR2 is evo-x2's DP-2 *monitor* (niri outputs, `niri-wrapped.nix`); the Realtek NIC at .62 is the MacBook Air's USB ethernet adapter. The inventory's "by elimination" eliminated itself once the owner spoke.
+2. **Root-caused the guess:** the actual LG TV SSCR2 is evo-x2's DP-2 _monitor_ (niri outputs, `niri-wrapped.nix`); the Realtek NIC at .62 is the MacBook Air's USB ethernet adapter. The inventory's "by elimination" eliminated itself once the owner spoke.
 3. **Config fix (`platforms/nixos/system/dns-blocker-config.nix:89-101`):** entry renamed `lg-tv` → `macbook` (name "MacBook Air"), identity-confirmed comment recorded, **`macbook` added to `users.Lars.devices`** (owner chip now attributes its traffic to Lars).
 4. **Test fixtures fixed (`tests/test-dns-blocker-render.nix`):** 7 `lg-tv` policy-fixture refs → `macbook`. Load-bearing: the check `extendModules` over the REAL evo-x2 config (line 23), so fixture device ids MUST stay declared — the dangling-device assertion would have failed `checks.x86_64-linux.dns-blocker-render` otherwise.
 5. **Docs reconciled:** runbook `docs/services/dnsblockd.md` (both owner-confirm markers closed — pixel6 was the other; stale pixel6 removed from the live-list sentence), `TODO_LIST.md:301` + `docs/todo/services.md:81` ("lg-tv identity confirm open" → RESOLVED, Q1 closed), CHANGELOG `### Changed` entry with verification evidence.
@@ -28,7 +28,7 @@
 
 ## d) TOTALLY FUCKED UP (owned, with lessons)
 
-1. **Turn-1 false claim: "tracking mode is default FULL, 30d retention."** I read dnsblockd's *default* and stated it as the *deployed* fact. The wrapper sets METADATA_ONLY — discoverable in one grep I didn't run until later. Exactly the verify-external-claims violation class: encoded an unverified claim into an answer.
+1. **Turn-1 false claim: "tracking mode is default FULL, 30d retention."** I read dnsblockd's _default_ and stated it as the _deployed_ fact. The wrapper sets METADATA_ONLY — discoverable in one grep I didn't run until later. Exactly the verify-external-claims violation class: encoded an unverified claim into an answer.
 2. **Turn-1 recommended data-starved surfaces as the answer to "what do they request"** (Query Log, day weather map, weekly digest, /api/devices/new-domains). At METADATA_ONLY those are ALL dark. Materially misleading until corrected in a later turn.
 3. **Declared the render test "synthetic fixtures" without reading it** — it extends the REAL evo-x2 config. Had I stopped after the config edit (no second pass), the gate would have gone red on the next check. The disciplined breakdown pass (user-prompted!) is what caught it, not my initial diligence.
 4. **Minor:** `echo FMT_EXIT=$?` after a pipeline captured `tail`'s exit, not `nix fmt`'s — reported "FMT_EXIT=0" while the formatter had actually errored (fail-on-change). Shell footgun; the Error line was still read correctly.

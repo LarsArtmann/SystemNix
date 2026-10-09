@@ -13,15 +13,15 @@ Session scope: the post-deploy-check FAIL ("InboxClean - /health answered but st
 
 ## What was changed (by surface)
 
-| Surface | Change | State |
-| --- | --- | --- |
-| InboxClean `internal/web/server.go` | health budget 3s→**8s** (under post-deploy-check's 10s curl patience) + incident comment | pushed (`c4d62a3`) |
-| InboxClean `internal/web/server.go` | **gmailVerdicts cache**: 60s TTL default, `Config.GmailVerdictTTL` override, `cachedGmailStatus` (probe metadata `last_probe`/`latency_ms` always describes the ACTUAL probe, also on cache hits) | pushed (`c4d62a3`) |
-| InboxClean `internal/web/health_reconnect_test.go` | `GmailVerdictTTL: time.Millisecond` in the two multi-probe tests | pushed (`c4d62a3`) |
-| InboxClean master repair | templ regen via `nix run .#generate` (17 files) after the buildflow skew broke compilation | committed `db8efa4`, **unpushed** at session end |
-| SystemNix `scripts/post-deploy-check.sh` | timeout-aware FAIL (names the class, points at `/proc/pressure/io`) + `inboxclean_has_services` guard suppressing both false-premise WARNs when the body has no `services` object | committed by daemon, pushed |
-| SystemNix `docs/services/inboxclean.md` | incident bullet: mechanism, evidence, fix, deploy chain | committed by daemon, pushed |
-| SystemNix `docs/todo/services.md` | `[blocked:push]` deploy-chain row with vendorHash contingency | committed by daemon, pushed |
+| Surface                                            | Change                                                                                                                                                                                            | State                                            |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| InboxClean `internal/web/server.go`                | health budget 3s→**8s** (under post-deploy-check's 10s curl patience) + incident comment                                                                                                          | pushed (`c4d62a3`)                               |
+| InboxClean `internal/web/server.go`                | **gmailVerdicts cache**: 60s TTL default, `Config.GmailVerdictTTL` override, `cachedGmailStatus` (probe metadata `last_probe`/`latency_ms` always describes the ACTUAL probe, also on cache hits) | pushed (`c4d62a3`)                               |
+| InboxClean `internal/web/health_reconnect_test.go` | `GmailVerdictTTL: time.Millisecond` in the two multi-probe tests                                                                                                                                  | pushed (`c4d62a3`)                               |
+| InboxClean master repair                           | templ regen via `nix run .#generate` (17 files) after the buildflow skew broke compilation                                                                                                        | committed `db8efa4`, **unpushed** at session end |
+| SystemNix `scripts/post-deploy-check.sh`           | timeout-aware FAIL (names the class, points at `/proc/pressure/io`) + `inboxclean_has_services` guard suppressing both false-premise WARNs when the body has no `services` object                 | committed by daemon, pushed                      |
+| SystemNix `docs/services/inboxclean.md`            | incident bullet: mechanism, evidence, fix, deploy chain                                                                                                                                           | committed by daemon, pushed                      |
+| SystemNix `docs/todo/services.md`                  | `[blocked:push]` deploy-chain row with vendorHash contingency                                                                                                                                     | committed by daemon, pushed                      |
 
 Verification: `go build ./internal/web/` RC 0; `go test ./internal/web/ ./internal/health/ -count=1` **ok / ok** (includes the health, reconnect-backoff, aggregate, concurrency suites); script: `bash -n` + `shellcheck -S warning` clean + 3-shape branch self-test (timeout body → FAIL named + WARNs suppressed; ok body → normal; degraded body → FAIL names status, honest WARNs); `scripts/check-todo-system.sh` rc 0.
 
@@ -55,7 +55,7 @@ Verification: `go build ./internal/web/` RC 0; `go test ./internal/web/ ./intern
 2. **Three background jobs' outputs were lost to interruptions** (041, 044, 001) — I re-ran work blind instead of logging to files from the start; the unwatched buildflow run is what caused (1).
 3. **First-turn misdiagnosis**: answered "DB or event-store probe is degraded — most common: dataDir/permission or DB-path mismatch" — wrong; also initially REPEATED the check's false "binary predates multi-account" premise instead of challenging it. Both corrected in-session once the live body was fetched.
 4. **Skill activation order violated**: ran raw `gofmt`/`go build`/`go test` BEFORE checking `.buildflow.yml`/loading the buildflow skill.
-5. **Sloppy edits**: one mangled test Config block (whitespace-failed multiedit cascaded, needed repair), one ` ttl :=` indentation slip (gofmt caught).
+5. **Sloppy edits**: one mangled test Config block (whitespace-failed multiedit cascaded, needed repair), one `ttl :=` indentation slip (gofmt caught).
 6. **Amend-forward window lost**: the daemon swept my 2 files into `c4d62a3`; by the time the interruption gaps cleared, it was pushed — properly-messaged amend impossible (and correctly not attempted).
 
 ## e) WHAT WE SHOULD IMPROVE (self-review answers)
@@ -72,6 +72,7 @@ Verification: `go build ./internal/web/` RC 0; `go test ./internal/web/ ./intern
 ## f) Next things (session-derived; NOT all commitments)
 
 Harvested now (queue + library, both surfaces):
+
 1. [blocked:push, already in docs/todo/services.md] Deploy chain: push trio → `nix flake lock --update-input inboxclean` → `nix run .#deploy` → verify /health under load + green InboxClean section.
 2. [ready] Upstream: dedicated regression test — second /health within TTL must not re-probe (cache pin; rides next push).
 3. [ready] Identify the 30s /health poller (grep monitor365/papdashboard/systemd-timer-monitor configs for 8099 cadence).
@@ -100,4 +101,5 @@ Deliberately NOT harvested (brainstorm fuel / owner calls, per status-report ski
 3. **The 8s budget is my judgment call** (picked to sit under the deploy check's 10s curl patience). Accept, or would you rather have a different budget — or the cheap dedicated liveness endpoint (f7) so `/health` can stay strict?
 
 ---
+
 Harvest record: §f items 2–4 landed in `TODO_LIST.md` (services) + `docs/todo/services.md`; item 1 was already there pre-report; items 5–18 deliberately not harvested (brainstorm/owner-call fuel per docs-health HARVEST anti-patterns).

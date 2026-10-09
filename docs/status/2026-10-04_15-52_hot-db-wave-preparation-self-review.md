@@ -95,4 +95,4 @@ Rest of the 50-slot budget: deliberately unfilled — no honest session-derived 
 
 ---
 
-*Harvest record: §f1-2 landed as new rows in docs/todo/storage.md + TODO_LIST.md; §f3 evidence-update landed in docs/todo/pipeline.md; §f4-10 owner/watch items ride existing rows or this report; §f11-20 deliberately NOT harvested (owned by existing rows/domains); §f21-25 deliberately NOT harvested (polish, below queue bar).*
+_Harvest record: §f1-2 landed as new rows in docs/todo/storage.md + TODO_LIST.md; §f3 evidence-update landed in docs/todo/pipeline.md; §f4-10 owner/watch items ride existing rows or this report; §f11-20 deliberately NOT harvested (owned by existing rows/domains); §f21-25 deliberately NOT harvested (polish, below queue bar)._

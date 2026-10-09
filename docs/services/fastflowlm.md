@@ -34,13 +34,13 @@ consumer is a loopback OpenAI-compatible client; each OPEN connection holds one
 slot for its FULL request duration (2-5 min cold load included — the connection
 queues in-socket, the slot is held from accept to close).
 
-| Consumer | Concurrency | Notes |
-| --- | --- | --- |
-| paperless celery ×2 workers (`PAPERLESS_TASK_WORKERS=2`) | ≤2 | native AI suggestions (v3.1 workflow); one in-flight LLM call per worker |
-| paperless-gpt daemon (:8106) | ≤1 | langchaingo client, rate-limited (default 120 rpm, 3 retries, 30s backoff cap) — sequential per document batch |
-| papdashboard PAP_INSIGHT enricher | ≤1 | periodic insight generation |
-| PMA go-commit daemon | ≤1 | commit-message generation, bursty |
-| ad-hoc shells (`llama-server-rocm`, crush sessions) | 0-2 | human-driven, rare |
+| Consumer                                                 | Concurrency | Notes                                                                                                          |
+| -------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------- |
+| paperless celery ×2 workers (`PAPERLESS_TASK_WORKERS=2`) | ≤2          | native AI suggestions (v3.1 workflow); one in-flight LLM call per worker                                       |
+| paperless-gpt daemon (:8106)                             | ≤1          | langchaingo client, rate-limited (default 120 rpm, 3 retries, 30s backoff cap) — sequential per document batch |
+| papdashboard PAP_INSIGHT enricher                        | ≤1          | periodic insight generation                                                                                    |
+| PMA go-commit daemon                                     | ≤1          | commit-message generation, bursty                                                                              |
+| ad-hoc shells (`llama-server-rocm`, crush sessions)      | 0-2         | human-driven, rare                                                                                             |
 
 **Worst case:** 2+1+1+1+2 = **7 of 8 slots** — within budget but with exactly one
 slot of headroom. **Slot-hold duration note (2026-10-07):** go-commit now waits

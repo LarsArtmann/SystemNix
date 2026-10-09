@@ -72,38 +72,38 @@ The 2026-10-04/05 full flake update re-broke **25 fixed-output derivations at on
 5. crush-daily upstream: migrate ui_behavior_test.go (blocked:push row, patterns documented).
 6. tq upstream: AGENTS.md reconcile → drop both doCheck gates.
 7. mr-sync upstream: cmdguard/v4 classification → unpin lock.
-8–15. Upstream re-pin sweep, wave class A (lars-packages tools): buildflow, go-cqrs-lite, erraudit, go-auto-upgrade, go-humanize-linter, library-policy, project-meta, projects-management-automation.
-16–19. Wave class B (module-surface tools): cv, discordsync, vision-review-agent, go-health-dashboard.
-20–21. Wave class C: bank-sync (all 3 surfaces), golangci-lint-auto-configure, project-discovery-daemon (2 surfaces each where applicable).
-22. Root-cause the devshell-vs-FOD tidy divergence (pipeline row).
-23. §11 flakePkg FOD-blindness: toplevel dry-run FOD derivation (queued previously — today proved its value 4×).
-24. gotchas-archive: chromedp pseudo-version shadowing entry (pipeline row).
-25. Encode the post-lock-wave enumeration gate (CONTRIBUTING + deploy.sh §11 preamble) (pipeline row).
-26. ★ fstrim×USB buildcache decision (stability.md [decision], 4 options — unanswered since 07:26 yesterday).
-27. ★ Session-gating policy during deploy windows (new stability.md [decision]).
-28. Corpse-pile gate self-attribution (per-disk busy + auto io-psi-forensics) (queued previously).
-29. stability.md fstrim class note (queued previously).
-30. cv-oidc-gate flake-check wiring, quiet window (queued previously).
-31. Post-deploy: read §11's first REAL run over 25 cached-green FODs — confirm no per-FOD rebuild storm.
-32. md-go-validator go_1_27 + vendorHash shim: drop when upstream bumps toolchain (watch).
-33. todo-list-ai restore conditions recheck (bun 1.4.2 frozen-lockfile skew) (watch).
-34. Consider: nixpkgs-bump compat check should run the toplevel keep-going enumeration (the daily nixpkgs-compat.yml would have caught this wave on a branch).
-35. Daemon-commit lint bypass: evo-x2.nix shipped format-dirty via daemon sweeps — consider a CI fmt leg (or daemon-side hook) so drift doesn't accumulate (niri-wrapped.nix row exists; same class).
-36. Verify bank-sync HM CLI actually works post-deploy (`bank-sync --help` from a user shell) — the third surface had never been shimmed before today.
-37. Crush-daily CHANGELOG upstream entry (their repo) if the session that owns it didn't write one.
-38. Re-verify inboxclean/art-dupl nested lock nodes next blanket update (green through 07:37; keep an eye).
-39. Post-deploy GC anchor check: the wave's 25 new FOD outputs + packages ride the new generation — confirm the next `nix-collect-garbage` keeps them (profile-anchored, should be fine; cheap check).
-40. Review whether tq's doCheck=false hides OTHER real test failures (gate is all-or-nothing; the suite ran green 2026-10-02 at an earlier rev).
-41. The 07:26 status report: docs-health ANNOTATE pass appending the corrected readiness claim pointer (correction lives in CHANGELOG today; the report itself is uncorrected).
-42. §11 gate: add the 3 pnpm-deps FODs to its enumeration if it only scans go-modules drvs (jscpd/webui/openseo were invisible to the "vendorHash" naming too).
-43. Consider a `nix flake update` runbook: update → keep-going enumeration → §11-only dry run → THEN deploy (one doc, kills the whole class).
-44. Watch the next nixpkgs bump in nixpkgs-compat.yml — if the wave recurs, the shims ALL need re-pinning again (the 3rd wave in 5 days; the upstream re-pin sweep in #8–21 is the durable exit).
-45. Post-deploy crush-daily reports: verify the daily report pipeline still produces (chromedp v0.19 drives the real browser session).
-46. If PSI stays >20 for hours: identify the current driver by PID/PPID chain and report to owner (it's sibling sessions; only the owner can pause them).
-47. Queue hygiene: the re-fire stamp bloat visible on the parity rows (compaction row queued) — this report adds no stamps, deliberately.
-48. Upstream go-nix-helpers: consider exposing doCheck as a flake option so consumers don't need overrideAttrs shims for red upstream tests.
-49. Consider lock-node pin-back helper (script) — mr-sync's python node-restore is the second hand-rolled instance (todo-list-ai first); a `scripts/flake-pin-back.sh` would encode the consistency check.
-50. Breathe. Then land the deploy.
+   8–15. Upstream re-pin sweep, wave class A (lars-packages tools): buildflow, go-cqrs-lite, erraudit, go-auto-upgrade, go-humanize-linter, library-policy, project-meta, projects-management-automation.
+   16–19. Wave class B (module-surface tools): cv, discordsync, vision-review-agent, go-health-dashboard.
+   20–21. Wave class C: bank-sync (all 3 surfaces), golangci-lint-auto-configure, project-discovery-daemon (2 surfaces each where applicable).
+8. Root-cause the devshell-vs-FOD tidy divergence (pipeline row).
+9. §11 flakePkg FOD-blindness: toplevel dry-run FOD derivation (queued previously — today proved its value 4×).
+10. gotchas-archive: chromedp pseudo-version shadowing entry (pipeline row).
+11. Encode the post-lock-wave enumeration gate (CONTRIBUTING + deploy.sh §11 preamble) (pipeline row).
+12. ★ fstrim×USB buildcache decision (stability.md [decision], 4 options — unanswered since 07:26 yesterday).
+13. ★ Session-gating policy during deploy windows (new stability.md [decision]).
+14. Corpse-pile gate self-attribution (per-disk busy + auto io-psi-forensics) (queued previously).
+15. stability.md fstrim class note (queued previously).
+16. cv-oidc-gate flake-check wiring, quiet window (queued previously).
+17. Post-deploy: read §11's first REAL run over 25 cached-green FODs — confirm no per-FOD rebuild storm.
+18. md-go-validator go_1_27 + vendorHash shim: drop when upstream bumps toolchain (watch).
+19. todo-list-ai restore conditions recheck (bun 1.4.2 frozen-lockfile skew) (watch).
+20. Consider: nixpkgs-bump compat check should run the toplevel keep-going enumeration (the daily nixpkgs-compat.yml would have caught this wave on a branch).
+21. Daemon-commit lint bypass: evo-x2.nix shipped format-dirty via daemon sweeps — consider a CI fmt leg (or daemon-side hook) so drift doesn't accumulate (niri-wrapped.nix row exists; same class).
+22. Verify bank-sync HM CLI actually works post-deploy (`bank-sync --help` from a user shell) — the third surface had never been shimmed before today.
+23. Crush-daily CHANGELOG upstream entry (their repo) if the session that owns it didn't write one.
+24. Re-verify inboxclean/art-dupl nested lock nodes next blanket update (green through 07:37; keep an eye).
+25. Post-deploy GC anchor check: the wave's 25 new FOD outputs + packages ride the new generation — confirm the next `nix-collect-garbage` keeps them (profile-anchored, should be fine; cheap check).
+26. Review whether tq's doCheck=false hides OTHER real test failures (gate is all-or-nothing; the suite ran green 2026-10-02 at an earlier rev).
+27. The 07:26 status report: docs-health ANNOTATE pass appending the corrected readiness claim pointer (correction lives in CHANGELOG today; the report itself is uncorrected).
+28. §11 gate: add the 3 pnpm-deps FODs to its enumeration if it only scans go-modules drvs (jscpd/webui/openseo were invisible to the "vendorHash" naming too).
+29. Consider a `nix flake update` runbook: update → keep-going enumeration → §11-only dry run → THEN deploy (one doc, kills the whole class).
+30. Watch the next nixpkgs bump in nixpkgs-compat.yml — if the wave recurs, the shims ALL need re-pinning again (the 3rd wave in 5 days; the upstream re-pin sweep in #8–21 is the durable exit).
+31. Post-deploy crush-daily reports: verify the daily report pipeline still produces (chromedp v0.19 drives the real browser session).
+32. If PSI stays >20 for hours: identify the current driver by PID/PPID chain and report to owner (it's sibling sessions; only the owner can pause them).
+33. Queue hygiene: the re-fire stamp bloat visible on the parity rows (compaction row queued) — this report adds no stamps, deliberately.
+34. Upstream go-nix-helpers: consider exposing doCheck as a flake option so consumers don't need overrideAttrs shims for red upstream tests.
+35. Consider lock-node pin-back helper (script) — mr-sync's python node-restore is the second hand-rolled instance (todo-list-ai first); a `scripts/flake-pin-back.sh` would encode the consistency check.
+36. Breathe. Then land the deploy.
 
 ## g) QUESTIONS (cannot figure these out myself)
 
@@ -113,4 +113,4 @@ The 2026-10-04/05 full flake update re-broke **25 fixed-output derivations at on
 
 ---
 
-*Report format: user-mandated `.md` (overrides the status-report skill's HTML default — flagged per skill contract). §f harvested at authoring: upstream.md ×5, pipeline.md ×3, services.md ×1, stability.md ×1, TODO_LIST pipeline one-liners ×3; one stale harvested row (bank-sync eval break) flipped to DONE on both surfaces. The auto-commit daemon sweeps this file; no manual commit.*
+_Report format: user-mandated `.md` (overrides the status-report skill's HTML default — flagged per skill contract). §f harvested at authoring: upstream.md ×5, pipeline.md ×3, services.md ×1, stability.md ×1, TODO_LIST pipeline one-liners ×3; one stale harvested row (bank-sync eval break) flipped to DONE on both surfaces. The auto-commit daemon sweeps this file; no manual commit._

@@ -54,7 +54,7 @@
         dynamic == true || (user != null && user != "root");
 
       ungrantedDacCaps =
-        name: svc:
+        _name: svc:
         let
           bound = capList (svc.serviceConfig.CapabilityBoundingSet or [ ]);
           ambient = capList (svc.serviceConfig.AmbientCapabilities or [ ]);

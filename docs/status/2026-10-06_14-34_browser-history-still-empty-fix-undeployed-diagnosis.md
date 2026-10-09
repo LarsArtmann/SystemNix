@@ -13,39 +13,39 @@
 
 Evidence chain (all verified THIS session, not inherited from the Oct-4 report):
 
-| Claim | How verified |
-|---|---|
-| Deployed binary is pre-fix | unit `ExecStart` store-path rev `328d8cb`; `git show 328d8cb9:flake.lock` → cqrs-htmx `2853fb3a`; `git show 328d8cb9:flake.nix:28` → `?rev=2853fb3a…` |
-| `2853fb3a` lacks the fix | `git grep -n "oldest\|keep-first" 2853fb3a -- usermgmt/` → empty; `git show 2853fb3a:usermgmt/es_readmodel.go` → unguarded `m.emails[p.Email] = aggID` |
-| Fix exists and is pushed | `git log` in cqrs-htmx: `796ed4f5`; `git branch -r --contains 796ed4f5` → `origin/master`; `git merge-base --is-ancestor 796ed4f5 usermgmt/v4.14.0` → yes |
-| Fix behaves as claimed | ran `go test ./usermgmt/ -run Duplicate` → `ok … 0.422s` (`TestUserReadModel_DuplicateIdentityKeepsOldest`) |
-| Live symptom | journal 14:22:46: `oauth_login user_id:"01M2X007JZB9Y1WDYF35AD5GSD"` then `GET / status:200 user_id:"01M2X…"` |
-| Agent collecting no data | journal: every 5-min tick `extracted browser profile … raw:0 filtered_out:0 skipped_by_cursor:0 kept:0` for firefox + helium; `ingest complete total:0` |
+| Claim                      | How verified                                                                                                                                              |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Deployed binary is pre-fix | unit `ExecStart` store-path rev `328d8cb`; `git show 328d8cb9:flake.lock` → cqrs-htmx `2853fb3a`; `git show 328d8cb9:flake.nix:28` → `?rev=2853fb3a…`     |
+| `2853fb3a` lacks the fix   | `git grep -n "oldest\|keep-first" 2853fb3a -- usermgmt/` → empty; `git show 2853fb3a:usermgmt/es_readmodel.go` → unguarded `m.emails[p.Email] = aggID`    |
+| Fix exists and is pushed   | `git log` in cqrs-htmx: `796ed4f5`; `git branch -r --contains 796ed4f5` → `origin/master`; `git merge-base --is-ancestor 796ed4f5 usermgmt/v4.14.0` → yes |
+| Fix behaves as claimed     | ran `go test ./usermgmt/ -run Duplicate` → `ok … 0.422s` (`TestUserReadModel_DuplicateIdentityKeepsOldest`)                                               |
+| Live symptom               | journal 14:22:46: `oauth_login user_id:"01M2X007JZB9Y1WDYF35AD5GSD"` then `GET / status:200 user_id:"01M2X…"`                                             |
+| Agent collecting no data   | journal: every 5-min tick `extracted browser profile … raw:0 filtered_out:0 skipped_by_cursor:0 kept:0` for firefox + helium; `ingest complete total:0`   |
 
 ---
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | Re-established the root cause with live, independent evidence | journal login line today 14:22:46 → `01M2X…`; deployed store-path rev chain traced to pre-fix cqrs-htmx |
-| 2 | Proved the deployed build is pre-fix at the exact rev | `git show 328d8cb9:flake.lock` → `cqrs-htmx 2853fb3a`; flake.nix `?rev=2853fb3a` at that rev |
-| 3 | Proved the fix WAS pushed (correcting the Oct-4 report's "local, unpushed") | `796ed4f5` is on `origin/master`; tags `usermgmt/v4.14.0`/`v4.14.1` pushed (`git ls-remote`) |
-| 4 | Proved the fix is effective (not just present) | ran the regression test — passes (`0.422s`) |
-| 5 | Mapped the exact build chain that hides the fix | browser-history `flake.nix` `deps["github.com/larsartmann/cqrs-htmx/v4"] = cqrs-htmx` + `vendorHash sha256-2EJOLeH4…` (`flake.nix:347-351`) |
-| 6 | Identified the precise edit sites for the ladder | browser-history `flake.nix:28` (rev), `flake.nix:351` (vendorHash), `flake.lock`; SystemNix `flake.lock` browser-history node |
-| 7 | Found candidate post-fix revs to pin | `usermgmt/v4.14.1` → peeled `6e1336e1`; `usermgmt/v4.14.0` → peeled `fcfc290d`; origin/master → `3f8af773` |
-| 8 | Surfaced a SECOND live issue the Oct-4 report missed | agent `raw:0` every tick for both browsers |
+| # | Item                                                                        | Evidence                                                                                                                                    |
+| - | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | Re-established the root cause with live, independent evidence               | journal login line today 14:22:46 → `01M2X…`; deployed store-path rev chain traced to pre-fix cqrs-htmx                                     |
+| 2 | Proved the deployed build is pre-fix at the exact rev                       | `git show 328d8cb9:flake.lock` → `cqrs-htmx 2853fb3a`; flake.nix `?rev=2853fb3a` at that rev                                                |
+| 3 | Proved the fix WAS pushed (correcting the Oct-4 report's "local, unpushed") | `796ed4f5` is on `origin/master`; tags `usermgmt/v4.14.0`/`v4.14.1` pushed (`git ls-remote`)                                                |
+| 4 | Proved the fix is effective (not just present)                              | ran the regression test — passes (`0.422s`)                                                                                                 |
+| 5 | Mapped the exact build chain that hides the fix                             | browser-history `flake.nix` `deps["github.com/larsartmann/cqrs-htmx/v4"] = cqrs-htmx` + `vendorHash sha256-2EJOLeH4…` (`flake.nix:347-351`) |
+| 6 | Identified the precise edit sites for the ladder                            | browser-history `flake.nix:28` (rev), `flake.nix:351` (vendorHash), `flake.lock`; SystemNix `flake.lock` browser-history node               |
+| 7 | Found candidate post-fix revs to pin                                        | `usermgmt/v4.14.1` → peeled `6e1336e1`; `usermgmt/v4.14.0` → peeled `fcfc290d`; origin/master → `3f8af773`                                  |
+| 8 | Surfaced a SECOND live issue the Oct-4 report missed                        | agent `raw:0` every tick for both browsers                                                                                                  |
 
 ## b) PARTIALLY DONE
 
-| # | Item | State |
-|---|------|-------|
-| 1 | Independent confirm that `01M2X…` owns **zero** visits and `01M000…` owns the 595 | Did NOT re-run the DB query this session — no `sqlite3` in PATH and I did not re-do the nix-shell dance. This claim rests on the Oct-4 report + the journal login line, not a fresh DB probe |
-| 2 | "Second issue" (agent `raw:0`) root-caused | Started: found firefox `places.sqlite` mtime **Sep 30 05:42**, real helium DBs at `~/.local/share/helium-dp{1,2}/Default/History` (mtime Oct-5 19:45), agent runs as `lars`. Did NOT determine which path the agent reads, nor whether the cursor is simply caught up vs the path is wrong |
-| 3 | Deploy ladder readiness | Fully mapped but NOT executed; no local browser-history edit was made. Gated on the push |
-| 4 | Whether bumping the cqrs-htmx rev actually re-vendors the **usermgmt submodule** source | Reasoned yes (deps key covers the repo prefix) but did NOT prove it against `go-nix-helpers` `mkPreparedSource` |
-| 5 | Whether browser-history upstream already contains a newer rev/vendorHash bump SystemNix just needs to consume | Did NOT check browser-history commits newer than `328d8cb9` for a cqrs bump |
+| # | Item                                                                                                          | State                                                                                                                                                                                                                                                                                      |
+| - | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 | Independent confirm that `01M2X…` owns **zero** visits and `01M000…` owns the 595                             | Did NOT re-run the DB query this session — no `sqlite3` in PATH and I did not re-do the nix-shell dance. This claim rests on the Oct-4 report + the journal login line, not a fresh DB probe                                                                                               |
+| 2 | "Second issue" (agent `raw:0`) root-caused                                                                    | Started: found firefox `places.sqlite` mtime **Sep 30 05:42**, real helium DBs at `~/.local/share/helium-dp{1,2}/Default/History` (mtime Oct-5 19:45), agent runs as `lars`. Did NOT determine which path the agent reads, nor whether the cursor is simply caught up vs the path is wrong |
+| 3 | Deploy ladder readiness                                                                                       | Fully mapped but NOT executed; no local browser-history edit was made. Gated on the push                                                                                                                                                                                                   |
+| 4 | Whether bumping the cqrs-htmx rev actually re-vendors the **usermgmt submodule** source                       | Reasoned yes (deps key covers the repo prefix) but did NOT prove it against `go-nix-helpers` `mkPreparedSource`                                                                                                                                                                            |
+| 5 | Whether browser-history upstream already contains a newer rev/vendorHash bump SystemNix just needs to consume | Did NOT check browser-history commits newer than `328d8cb9` for a cqrs bump                                                                                                                                                                                                                |
 
 ## c) NOT STARTED
 
@@ -80,6 +80,7 @@ Evidence chain (all verified THIS session, not inherited from the Oct-4 report):
 ## f) NEXT — up to 50 things (impact-ordered)
 
 **To make the data visible (highest impact, push-gated):**
+
 1. Bump browser-history `flake.nix:28` `cqrs-htmx` rev `2853fb3a…` → `6e1336e1…` (`usermgmt/v4.14.1`) — or origin/master `3f8af773`.
 2. `nix flake lock --update-input cqrs-htmx` in browser-history.
 3. Rebuild to capture the new `vendorHash` (`flake.nix:351`); `--keep-going` first.
@@ -153,4 +154,4 @@ Evidence chain (all verified THIS session, not inherited from the Oct-4 report):
 
 ---
 
-*Artifacts: none created by me this session except this report (uncommitted; the auto-commit daemon may sweep it). No repo files edited. `/tmp/bh-copy.sqlite` from the Oct-4 session is gone. cqrs-htmx `796ed4f5` is already on origin/master.*
+_Artifacts: none created by me this session except this report (uncommitted; the auto-commit daemon may sweep it). No repo files edited. `/tmp/bh-copy.sqlite` from the Oct-4 session is gone. cqrs-htmx `796ed4f5` is already on origin/master._

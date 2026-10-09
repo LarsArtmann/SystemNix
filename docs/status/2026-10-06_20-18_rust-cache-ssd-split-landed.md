@@ -62,38 +62,38 @@ Nothing catastrophic — tree is green, nothing deployed, nothing irreversible d
 
 ## f) NEXT (prioritized; §f.1-§f.5 harvested to `docs/todo/storage.md` + `TODO_LIST.md` at authoring time)
 
-| # | Task | Why / class |
-|---|------|-------------|
-| 1 | Fixture-test `migrate-rust-cache.sh` (PATH stubs: mkfs.btrfs/mount/findmnt/mountpoint/lsblk/rsync; content-gate refusals; already-formatted skip; move/verify/rm; SKIP-when-buildcache-unmounted) | UNEXECUTED script runs once under sudo (migrate-hot-db fixture pattern) — **HARVESTED §f.1** |
-| 2 | Parity guard `rustCacheDirs` ↔ `KNOWN_RUSTCACHE_ENTRIES` (+ selftest incl. positive-asymmetry shape) | re-fire-9 drift class; hand-kept both sides — **HARVESTED §f.2** |
-| 3 | Give `rust-cache-gc` its own `highWatermarkPercent` (today alert-threshold 85 == destructive-prune trigger; buildcache separates 85/90) | one-number coupling of alert and rm -rf — **HARVESTED §f.3** |
-| 4 | Sweep stale "frozen spare / SSD 2 / spare SSDs" references (system-health.nix DAS-link alert text + gotchas-archive/stability/monitor365 docs) | renamed-role staleness — **HARVESTED §f.4** |
-| 5 | Close the rust-cache-metrics first-scrape race (device-absent early exit skips metrics start; 2-min Gatus phantom-red window) | phantom-metric class — **HARVESTED §f.5** |
-| 6 | Run the maintenance window: `nix run .#migrate-rust-cache && nix run .#deploy` (owner, sudo, quiesced builds) | the actual goal |
-| 7 | Post-migration proof: `findmnt /mnt/rust-cache` (btrfs), `compsize` compression ratio, first `cargo build` in monitor365 hits sccache, both Gatus checks green, `.prom` present | assert WHICH disk served the build |
-| 8 | Post-migration buildcache reclaim check: `rust/`, `sccache/`, `cargo/` GONE from `/mnt/buildcache` (df before/after; expect ~50G+ freed), `das-link-recovery-check.sh` full pass | the split must actually free the buildcache |
-| 9 | Verify env-less rust path: with the mount up, a fresh shell has `CARGO_HOME` → rust-cache; HM activation heals `~/.cargo/registry` without checkLinkTargets abort | symlink-landing proof |
-| 10 | Decide: keep buildcache ext4 permanently, or revisit ext4→btrfs (checksums for npm/pnpm) in a later window — the merge rationale (compression+checksums) now lives only on the rust disk | owner decision, was folded into the merge |
-| 11 | Fold the old `[blocked:user] e2fsck /dev/sdc1 (buildcache)` row's device naming — sdc letters rotate; the row should name the by-id serial 174444471311 | stale-device-naming trap |
-| 12 | Extract shared `lib/usb-cache-fs.nix` helper; refactor buildcache.nix + rust-cache.nix onto it (dedup ~200 lines) | §e.1 |
-| 13 | Consider a `docs/services/rust-cache.md` (and buildcache) runbook IF the owner wants per-service docs for infra modules | doctrine decision, not solo |
-| 14 | Extend P15's VM-test row to cover rust-cache-metrics opposing states (device-absent `.prom` shape) alongside buildcache/pool-smart | rides existing queue item |
-| 15 | Add rust-cache to the deploy-FOD §11 / pre-deploy vendorHash preview? N/A check — confirm no pre-deploy §-leg is owed for a mount-only module (no ports, no images) | completeness audit |
-| 16 | After first deploy: confirm `rust-cache-usb-recovery` fires on a real replug event (or at least the deploy.sh path) and recovery sweeps `~/.cargo/registry` | live-verify the copied machinery |
-| 17 | Watch first weekly `rust-cache-gc` run (Sun 05:15): stale-prune + watermark branches, ioTier.maintenance respected | first-run verification class |
-| 18 | SigNoz: decide whether `rustcache_*` gauges deserve a dashboard tile/rule (buildcache ones have none beyond Gatus) | monitoring parity question |
-| 19 | Gatus alert text charset check on the two new checks (alert-description rule) at first deploy smoke | monitoring.md rule |
-| 20 | Update `docs/planning/*` disk-layout HTML(s) if regenerated — they still show the spare as earmarked-for-merge (stale-artifact rule applies only on regeneration) | stale-planning-artifacts |
-| 21 | Confirm `system-health.nix` DAS-link alert's checked-mount enumeration doesn't need `/mnt/rust-cache` added (mount-presence leg, not just text) | §f.4 sibling |
-| 22 | When the merge is truly dead, delete or archive `scripts/buildcache-btrfs-convert.sh` (today: header-marked do-not-run; scripts/ dead-code policy says trash after a soak period) | dead code hygiene |
-| 23 | `check-image-updates`/ports audits: confirm nothing registers for the new module (expected: nothing) — one-time sanity, then close | belt-and-braces |
-| 24 | Re-run `nix flake check --all-systems` from the Mac once, to prove the Linux-gated migrate-rust-cache app + module evals cleanly on darwin (flake-check omits darwin by default) | the documented darwin blind spot |
-| 25 | After migration, re-baseline `df` dashboards/health-dashboard tiles if buildcache usage drops ~50G (tiles may show a step change worth annotating) | observability hygiene |
-| 26 | Queue a one-line AGENTS.md touch ONLY if the rust-cache split proves durable post-window (storage.md is the owner today; AGENTS buildcache routing line says "read docs/agents/storage.md" already) | avoid premature memory writes |
-| 27 | Extend the buildcache+rust-cache fixture test (TODO row fixed this session) to PATH-stub both inits in one harness | rides harvested item |
-| 28 | If more Rust projects appear, add them to `services.rust-cache.rustProjects` (drives init dirs + target symlinks) — check for Cargo.toml trees beyond monitor365 | config surface |
-| 29 | Consider whether `go-bin-salvage`/`.Trash-1000`-style KNOWN entries will be needed on /mnt/rust-cache (btrfs has no lost+found? — btrfs DOES create lost+found; already in KNOWN) — verify at first mount | small correctness check |
-| 30 | Post-window: update the decision doc's Status line from "awaiting maintenance window" to executed, with the commit/profile anchors | decision-record hygiene |
+| #  | Task                                                                                                                                                                                                      | Why / class                                                                                  |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| 1  | Fixture-test `migrate-rust-cache.sh` (PATH stubs: mkfs.btrfs/mount/findmnt/mountpoint/lsblk/rsync; content-gate refusals; already-formatted skip; move/verify/rm; SKIP-when-buildcache-unmounted)         | UNEXECUTED script runs once under sudo (migrate-hot-db fixture pattern) — **HARVESTED §f.1** |
+| 2  | Parity guard `rustCacheDirs` ↔ `KNOWN_RUSTCACHE_ENTRIES` (+ selftest incl. positive-asymmetry shape)                                                                                                      | re-fire-9 drift class; hand-kept both sides — **HARVESTED §f.2**                             |
+| 3  | Give `rust-cache-gc` its own `highWatermarkPercent` (today alert-threshold 85 == destructive-prune trigger; buildcache separates 85/90)                                                                   | one-number coupling of alert and rm -rf — **HARVESTED §f.3**                                 |
+| 4  | Sweep stale "frozen spare / SSD 2 / spare SSDs" references (system-health.nix DAS-link alert text + gotchas-archive/stability/monitor365 docs)                                                            | renamed-role staleness — **HARVESTED §f.4**                                                  |
+| 5  | Close the rust-cache-metrics first-scrape race (device-absent early exit skips metrics start; 2-min Gatus phantom-red window)                                                                             | phantom-metric class — **HARVESTED §f.5**                                                    |
+| 6  | Run the maintenance window: `nix run .#migrate-rust-cache && nix run .#deploy` (owner, sudo, quiesced builds)                                                                                             | the actual goal                                                                              |
+| 7  | Post-migration proof: `findmnt /mnt/rust-cache` (btrfs), `compsize` compression ratio, first `cargo build` in monitor365 hits sccache, both Gatus checks green, `.prom` present                           | assert WHICH disk served the build                                                           |
+| 8  | Post-migration buildcache reclaim check: `rust/`, `sccache/`, `cargo/` GONE from `/mnt/buildcache` (df before/after; expect ~50G+ freed), `das-link-recovery-check.sh` full pass                          | the split must actually free the buildcache                                                  |
+| 9  | Verify env-less rust path: with the mount up, a fresh shell has `CARGO_HOME` → rust-cache; HM activation heals `~/.cargo/registry` without checkLinkTargets abort                                         | symlink-landing proof                                                                        |
+| 10 | Decide: keep buildcache ext4 permanently, or revisit ext4→btrfs (checksums for npm/pnpm) in a later window — the merge rationale (compression+checksums) now lives only on the rust disk                  | owner decision, was folded into the merge                                                    |
+| 11 | Fold the old `[blocked:user] e2fsck /dev/sdc1 (buildcache)` row's device naming — sdc letters rotate; the row should name the by-id serial 174444471311                                                   | stale-device-naming trap                                                                     |
+| 12 | Extract shared `lib/usb-cache-fs.nix` helper; refactor buildcache.nix + rust-cache.nix onto it (dedup ~200 lines)                                                                                         | §e.1                                                                                         |
+| 13 | Consider a `docs/services/rust-cache.md` (and buildcache) runbook IF the owner wants per-service docs for infra modules                                                                                   | doctrine decision, not solo                                                                  |
+| 14 | Extend P15's VM-test row to cover rust-cache-metrics opposing states (device-absent `.prom` shape) alongside buildcache/pool-smart                                                                        | rides existing queue item                                                                    |
+| 15 | Add rust-cache to the deploy-FOD §11 / pre-deploy vendorHash preview? N/A check — confirm no pre-deploy §-leg is owed for a mount-only module (no ports, no images)                                       | completeness audit                                                                           |
+| 16 | After first deploy: confirm `rust-cache-usb-recovery` fires on a real replug event (or at least the deploy.sh path) and recovery sweeps `~/.cargo/registry`                                               | live-verify the copied machinery                                                             |
+| 17 | Watch first weekly `rust-cache-gc` run (Sun 05:15): stale-prune + watermark branches, ioTier.maintenance respected                                                                                        | first-run verification class                                                                 |
+| 18 | SigNoz: decide whether `rustcache_*` gauges deserve a dashboard tile/rule (buildcache ones have none beyond Gatus)                                                                                        | monitoring parity question                                                                   |
+| 19 | Gatus alert text charset check on the two new checks (alert-description rule) at first deploy smoke                                                                                                       | monitoring.md rule                                                                           |
+| 20 | Update `docs/planning/*` disk-layout HTML(s) if regenerated — they still show the spare as earmarked-for-merge (stale-artifact rule applies only on regeneration)                                         | stale-planning-artifacts                                                                     |
+| 21 | Confirm `system-health.nix` DAS-link alert's checked-mount enumeration doesn't need `/mnt/rust-cache` added (mount-presence leg, not just text)                                                           | §f.4 sibling                                                                                 |
+| 22 | When the merge is truly dead, delete or archive `scripts/buildcache-btrfs-convert.sh` (today: header-marked do-not-run; scripts/ dead-code policy says trash after a soak period)                         | dead code hygiene                                                                            |
+| 23 | `check-image-updates`/ports audits: confirm nothing registers for the new module (expected: nothing) — one-time sanity, then close                                                                        | belt-and-braces                                                                              |
+| 24 | Re-run `nix flake check --all-systems` from the Mac once, to prove the Linux-gated migrate-rust-cache app + module evals cleanly on darwin (flake-check omits darwin by default)                          | the documented darwin blind spot                                                             |
+| 25 | After migration, re-baseline `df` dashboards/health-dashboard tiles if buildcache usage drops ~50G (tiles may show a step change worth annotating)                                                        | observability hygiene                                                                        |
+| 26 | Queue a one-line AGENTS.md touch ONLY if the rust-cache split proves durable post-window (storage.md is the owner today; AGENTS buildcache routing line says "read docs/agents/storage.md" already)       | avoid premature memory writes                                                                |
+| 27 | Extend the buildcache+rust-cache fixture test (TODO row fixed this session) to PATH-stub both inits in one harness                                                                                        | rides harvested item                                                                         |
+| 28 | If more Rust projects appear, add them to `services.rust-cache.rustProjects` (drives init dirs + target symlinks) — check for Cargo.toml trees beyond monitor365                                          | config surface                                                                               |
+| 29 | Consider whether `go-bin-salvage`/`.Trash-1000`-style KNOWN entries will be needed on /mnt/rust-cache (btrfs has no lost+found? — btrfs DOES create lost+found; already in KNOWN) — verify at first mount | small correctness check                                                                      |
+| 30 | Post-window: update the decision doc's Status line from "awaiting maintenance window" to executed, with the commit/profile anchors                                                                        | decision-record hygiene                                                                      |
 
 **Deliberately NOT harvested:** items 6-12, 16-17, 21-30 are either the owner's window/decisions, one-time post-migration verifications that only make sense AFTER the window, or already covered by existing queue rows (14). Harvesting them now would seed stale queue rows that pre-suppose an executed migration — the two source-of-truth rows (the setup row in `docs/todo/storage.md` + the decision doc) already carry them.
 
@@ -111,16 +111,16 @@ Nothing catastrophic — tree is green, nothing deployed, nothing irreversible d
 
 ## Commit mapping (auto-commit daemon; short revs)
 
-| Commit | Contents |
-|--------|----------|
-| `ff9c6053` | rust-cache.nix (new module) + home.nix rewiring |
-| `6c32ad94` | buildcache.nix trim + configuration.nix + snapshots.nix + migrate-rust-cache.sh |
-| `7b614182` | flake app + das-link-recovery-check.sh + deploy.sh |
-| `0ebb6605` | storage.md + todo/storage.md doc updates |
-| `cb572682` | stray-unit-audit allowUnits entry |
+| Commit     | Contents                                                                                                                                                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ff9c6053` | rust-cache.nix (new module) + home.nix rewiring                                                                                                                                                               |
+| `6c32ad94` | buildcache.nix trim + configuration.nix + snapshots.nix + migrate-rust-cache.sh                                                                                                                               |
+| `7b614182` | flake app + das-link-recovery-check.sh + deploy.sh                                                                                                                                                            |
+| `0ebb6605` | storage.md + todo/storage.md doc updates                                                                                                                                                                      |
+| `cb572682` | stray-unit-audit allowUnits entry                                                                                                                                                                             |
 | `b01f5212` | ⚠ NOT THIS SESSION — another session's netbird work rode the daemon commit (netbird status report + TODO_LIST +4 + docs/todo/services.md). Flagged per shared-tree discipline; not verified or touched by me. |
-| `695cef4a` | decision doc + buildcache.nix whitespace (treefmt) + btrfs-convert.sh superseded header |
-| `143cdd4a` | hardware-configuration.nix comment fix |
+| `695cef4a` | decision doc + buildcache.nix whitespace (treefmt) + btrfs-convert.sh superseded header                                                                                                                       |
+| `143cdd4a` | hardware-configuration.nix comment fix                                                                                                                                                                        |
 
 Uncommitted at report time: the §f harvest rows + TODO_LIST premise fixes + this report (daemon will sweep them).
 

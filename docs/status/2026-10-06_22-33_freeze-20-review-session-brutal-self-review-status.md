@@ -9,6 +9,7 @@
 ## Self-Review Questions (brutal)
 
 **1. What did you forget?**
+
 - **Boot-0 thermal + SEV1 state**: my live-regime reporting (report §"Live regime" + the warning to the user) omitted temperature and overlay state while five build drivers ran — boot 0 HAS one 96 °C-class thermal ENTER and the SEV1 loop is latched. Found only during this review's re-probe.
 - **The rust-cache mount question**: my autopsy report's standing state said "migration at 27/79 GB; target dir holds the partial copy" — printed WITHOUT re-measuring. Reality: `/mnt/rust-cache` on boot 0 is an empty root-owned QLC **shadow dir**; the sdc btrfs fs with the partial copy is **UNMOUNTED** (the 21:04 mount was manual and died with boot -1; the fstab mount + CARGO_HOME + gatus unmount-alert in `rust-cache.nix` are in-tree but postdate gen 828 = undeployed). Corrected in the report this review.
 - **Report §f.3 lied about its own harvest**: it promised a "NEW row" for no-build admission; I actually landed an EXTENSION of the standing freeze-14/15/18 enforcement-leg row (the correct, drift-free choice) — the §f text now says so.
@@ -17,10 +18,12 @@
 - **Interim warnings**: none sent 22:12→22:21 while the storm escalated; the user (actively at the box, terminals open) first heard "#21 forming" in my final answer.
 
 **2. What is something stupid we do anyway?**
+
 - **We extend rows instead of executing them.** The no-builds enforcement-leg row now carries FOUR sources across three days and five dead boxes; the entry-gate row was 8 minutes old when violated by run #3. The dispatch pool and the crash loop are racing — the crash loop leads 6:0 in consecutive-predicted cuts.
 - **Hard cuts are routine**: wtmp shows ZERO clean shutdowns since Oct 1. We treat "the box died again" as a work queue input, not an emergency.
 
 **3. What could you have done better?**
+
 - **Warn in seconds, not minutes**: one progress line at ~22:13 ("#21 forming — stop builds") could have reached the owner 8 minutes earlier. The freeze-19 §d.3 lesson (containment outranks diagnosis) applies to WARNING too; I re-learned it with real cost attached.
 - Read ALL files of a pre-staged forensic bundle on the first pass.
 - Verify point-in-time numbers (GB copied, mount state) before printing them as standing state.
@@ -33,6 +36,7 @@
 Yes — twice by imprecision and once by omission, all self-caught in this review and corrected in the report: (a) §f.3 "NEW row" vs landed extension; (b) "27/79 GB, target dir holds the partial copy" (stale + unverifiable — sdc unmounted); (c) live-regime omission of boot-0 thermal/SEV1 state. No intentional falsehoods; the failure mode was printing UNVERIFIED claims with confident wording — the exact class this repo has burned before (assert WHICH question your evidence answers).
 
 **6. How can we be less stupid?**
+
 - Implement the three containment rows (entry gate, reader pause, no-build enforcement) BEFORE the next migration/build battery, not after the next autopsy.
 - Treat any crash-recovery boot as no-build-by-default for ALL actor classes until PSI avg60 < 20 for 30 min.
 - Finish the taxonomy (one freeze-entry format the next session starts from) so every autopsy stops re-deriving the family tree.
@@ -87,14 +91,14 @@ Yes — twice by imprecision and once by omission, all self-caught in this revie
 
 ## f) NEXT THINGS (self-harvested at authoring; routed per TODO rules)
 
-1. **[ready] Implement the migrate-* entry gate** (standing row, 3-proofs-today) — pre-flight PSI/guard gate + heavy-job wrap + USB→USB serialization. **Source:** freeze-20 §e.1.
+1. __[ready] Implement the migrate-_ entry gate_* (standing row, 3-proofs-today) — pre-flight PSI/guard gate + heavy-job wrap + USB→USB serialization. **Source:** freeze-20 §e.1.
 2. **[ready] Implement post-crash reader pause automation** (standing row, extended). **Source:** freeze-20 §e.2.
 3. **[ready] Implement the no-build enforcement leg** (standing freeze-14/15/18/20 row — 4 sources, 5 crashes). **Source:** freeze-20 §e.2.
 4. **[ready] Complete freeze-20 driver attribution: sdb writeback writer + boot-0 driver→session scopes** (NEW row, stability) — read the #2110/#2111 `diskstats.txt`, split cgroup rbytes/wbytes, map nixbld11/cargo/go-mod-tidy/buildflow to session scopes. **Source:** this report §b.2/§b.3 + freeze-20 §b.2.
 5. **[ready] visionreviewd OnFailure section fix** (row, services). **Source:** freeze-20 §e.4.
 6. **[watch] Post-crash catch-up writers** (row, services). **Source:** freeze-20 §e.3.
 7. **[ready] Write the freeze #8–#20 taxonomy entries** (row extended through #20 today). **Source:** freeze-20 + this review Q10.
-8. **[blocked:deploy] Boot-speed restructure deploy + calm-boot re-measure + WAL-gate falsification** (rows). 
+8. **[blocked:deploy] Boot-speed restructure deploy + calm-boot re-measure + WAL-gate falsification** (rows).
 9. **[blocked:deploy] Deploy-order guard: `rust-cache.nix` live BEFORE migration resume** (NEW note on the resume decision — fold into the entry-gate row's scope) — the manual-mount shadow-dir era must not survive the next deploy.
 10. **[decision] Loader timeout 2→1** (row). **[blocked:user] BIOS boot-time walk** (row). **[owner] daemon pre-commit-legs answer** (carried).
 11. **[owner/live] Stop the build battery / decide the ride-out** — #21 imminent at review close.

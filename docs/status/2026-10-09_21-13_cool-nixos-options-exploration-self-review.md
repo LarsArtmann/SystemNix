@@ -55,6 +55,7 @@
 ## f) Next things (session-derived; harvested at authoring time per AGENTS.md rule)
 
 **Resolved during this report's authoring (no queue entries needed):**
+
 1. ~~verify gamemode/steam enabled~~ — TRUE (configuration.nix:624 + steam.nix:27-28)
 2. ~~verify attic-config enabled~~ — TRUE (configuration.nix:503-506; multi-line attrset, first grep missed it)
 3. ~~verify sched_ext kernel support~~ — TRUE (CONFIG_SCHED_CLASS_EXT=y, live kernel 7.2.9)

@@ -59,6 +59,7 @@ No fabricated claims. One evidence-strength failure, corrected above (the "sops 
 ## d) TOTALLY FUCKED UP!
 
 Nothing irreversible. The ranked self-inflicted costs:
+
 1. **The sops "tracked ✓" false confirmation** (detailed in Brutal answers) — one wasted deploy cycle, caught by the gate, root-caused to the ignore rule, fixed with `-f` and a queued permanent guard (§f).
 2. **`| tail -15` on a failing gate** — discarded the evidence I needed most; re-ran to recover it. Dumb, cheap, avoidable.
 3. **Two mock-fidelity burns shipped green** — the check suite said YES while reality said 422/null. The tests existed but tested a lie; fixed by making the mock as strict as the handler source. This is the day's real lesson: a permissive mock is a green light over a pothole.

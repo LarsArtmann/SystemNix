@@ -4,10 +4,10 @@
 
 ## What it serves
 
-| Route                     | Auth                        | What                                              |
-| ------------------------- | --------------------------- | ------------------------------------------------- |
-| `/`                       | forward-auth / open LAN     | SEO dashboard (keywords, ranks, audits)           |
-| `/api/gsc/oauth/callback` | EXEMPT from forward-auth    | Google Search Console OAuth callback              |
+| Route                     | Auth                     | What                                    |
+| ------------------------- | ------------------------ | --------------------------------------- |
+| `/`                       | forward-auth / open LAN  | SEO dashboard (keywords, ranks, audits) |
+| `/api/gsc/oauth/callback` | EXEMPT from forward-auth | Google Search Console OAuth callback    |
 
 ## Ops
 

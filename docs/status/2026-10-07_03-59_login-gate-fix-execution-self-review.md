@@ -65,4 +65,5 @@ Since the 03-36 report's addendum already documents the execution in detail, thi
 3. **Eval floor policy:** my session ran 4 single `nix eval`s + `nix fmt` at PSI 40-60 (checked before each, never stacked, no builds/VM tests). The queued entry-gate rows propose ≥30 PSI admission for heavy jobs — do you want a hard interactive floor for agent evals too (e.g. "no nix eval above PSI 50 avg10"), or is single-eval-with-preflight the accepted line?
 
 ---
-*Self-harvest: §f.1 → NEW [ready] row (both surfaces); §f.2 → extension of stability.md:169 + TODO_LIST re-measure one-liner; §f.3 → annotation of the 03-36 report. §f.4-§f.7 are post-deploy steps folded into §f.1's row/checklist — not separately queued. §f.8 records deliberate non-queues.*
+
+_Self-harvest: §f.1 → NEW [ready] row (both surfaces); §f.2 → extension of stability.md:169 + TODO_LIST re-measure one-liner; §f.3 → annotation of the 03-36 report. §f.4-§f.7 are post-deploy steps folded into §f.1's row/checklist — not separately queued. §f.8 records deliberate non-queues._

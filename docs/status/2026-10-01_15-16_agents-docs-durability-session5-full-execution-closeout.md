@@ -6,18 +6,18 @@
 
 ## a) What was executed
 
-| Wave | Work | Commit(s) | Verify |
-| ---- | ---- | --------- | ------ |
-| T4a/b | `docs/services/pocket-id.md` + `oauth2-proxy.md` | `05e72d12` | check-doc-links green |
-| T4c/d | `signoz.md` + `immich.md` + **sso-dns layer fix** | `b416ccbc` | check-doc-links green + eval-proof below |
-| T5 | `twenty.md` `taskchampion.md` `dozzle.md` `openseo.md` | `dfad9354` | check-doc-links green |
-| T6 | `crush-daily.md` `atticd.md` | `8905a3f0` | check-doc-links green |
-| Beyond-scope | `gatus.md` `file-and-image-renamer.md` `overview.md` `nsfw-classifier.md` `visionreviewd.md` `website-deploy-monitor.md` | `e98e2a22` | check-doc-links green |
-| Post-backfill | AGENTS.md:25 claim updated; both queue+library rows closed | `92a461fc` + daemon sweep (TODO_LIST) | check-todo-system structure OK |
-| T9 | `# Runbook:` pointer line 1 in **51** service modules (aliases attic→atticd, dns-blocker→dnsblockd, gatus-config→gatus, tq-agent-pool→tq, netbird-client→net-vpn, crush-hot-db→hot-db) | `df99aaf4` | grep coverage probe: **100%** |
-| T10 | bidirectional links integration-registry step 9 ↔ monitoring.md patterns | daemon `0c82c3c5` (swept mid-commit; content verified in tree) | T2 anchor checker green |
-| T11 (2 of 7) | storage p9 bullet + systemd hot-user-caches bullet lead-with-truth rewrites | `89b3c725` | zero fact loss (reorders, dates kept) |
-| T12 | 16 stale `AGENTS.md` comment pointers → docs/agents/runbook targets; gotchas-archive header; 2 queue-row premises fixed in BOTH surfaces | `89b3c725` | classification table §c; check-doc-links + check-todo-system green |
+| Wave          | Work                                                                                                                                                                                   | Commit(s)                                                      | Verify                                                             |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------ |
+| T4a/b         | `docs/services/pocket-id.md` + `oauth2-proxy.md`                                                                                                                                       | `05e72d12`                                                     | check-doc-links green                                              |
+| T4c/d         | `signoz.md` + `immich.md` + **sso-dns layer fix**                                                                                                                                      | `b416ccbc`                                                     | check-doc-links green + eval-proof below                           |
+| T5            | `twenty.md` `taskchampion.md` `dozzle.md` `openseo.md`                                                                                                                                 | `dfad9354`                                                     | check-doc-links green                                              |
+| T6            | `crush-daily.md` `atticd.md`                                                                                                                                                           | `8905a3f0`                                                     | check-doc-links green                                              |
+| Beyond-scope  | `gatus.md` `file-and-image-renamer.md` `overview.md` `nsfw-classifier.md` `visionreviewd.md` `website-deploy-monitor.md`                                                               | `e98e2a22`                                                     | check-doc-links green                                              |
+| Post-backfill | AGENTS.md:25 claim updated; both queue+library rows closed                                                                                                                             | `92a461fc` + daemon sweep (TODO_LIST)                          | check-todo-system structure OK                                     |
+| T9            | `# Runbook:` pointer line 1 in **51** service modules (aliases attic→atticd, dns-blocker→dnsblockd, gatus-config→gatus, tq-agent-pool→tq, netbird-client→net-vpn, crush-hot-db→hot-db) | `df99aaf4`                                                     | grep coverage probe: **100%**                                      |
+| T10           | bidirectional links integration-registry step 9 ↔ monitoring.md patterns                                                                                                               | daemon `0c82c3c5` (swept mid-commit; content verified in tree) | T2 anchor checker green                                            |
+| T11 (2 of 7)  | storage p9 bullet + systemd hot-user-caches bullet lead-with-truth rewrites                                                                                                            | `89b3c725`                                                     | zero fact loss (reorders, dates kept)                              |
+| T12           | 16 stale `AGENTS.md` comment pointers → docs/agents/runbook targets; gotchas-archive header; 2 queue-row premises fixed in BOTH surfaces                                               | `89b3c725`                                                     | classification table §c; check-doc-links + check-todo-system green |
 
 **Runbook count:** `docs/services/` grew 59 → 75 files (the .md set); every enabled service now has a runbook (AI-stack daemons live in `llama-rag.md` + the root GPU section — named in the updated AGENTS.md:25 claim).
 
@@ -27,15 +27,15 @@
 
 ## c) T12 classification table (living surfaces; archived/plans/status are historical by definition)
 
-| Surface | Mentions | Class | Action |
-| ------- | -------- | ----- | ------ |
-| `docs/agents/README.md`, banners in `docs/agents/*.md` | migration provenance | historical-correct | none |
-| `docs/README.md`, `docs/CONTRIBUTING.md`, `README.md`, `docs/security/rotations.md` | live pointers to the root routing core | live-valid | none |
-| root GPU section pointers (`gpu-active.nix`, `system-health.nix:72`) | GPU Platform Constraints stayed in root | live-valid | none |
-| hermes/crush `AGENTS.md` refs (hermes.nix, tests, flake.nix, post-deploy-check) | DIFFERENT files (workspace doc, crush config repo) | live-valid | none |
-| 16 module/test comments ("See AGENTS.md rule/gotcha …") | sections moved 2026-10-01 | **stale** | retargeted to `docs/agents/{systemd,stability,monitoring,sso-dns,integration-registry,desktop}.md` or the owning runbook (`89b3c725`) |
-| `docs/gotchas-archive.md` header + rule-9 row | gotcha table dissolved | **stale** | retargeted |
-| TODO_LIST 523/567 + matching library rows | premises name AGENTS.md sections that moved | **stale premise** | fixed in BOTH surfaces (queue+library drift rule) |
+| Surface                                                                             | Mentions                                           | Class              | Action                                                                                                                                |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/agents/README.md`, banners in `docs/agents/*.md`                              | migration provenance                               | historical-correct | none                                                                                                                                  |
+| `docs/README.md`, `docs/CONTRIBUTING.md`, `README.md`, `docs/security/rotations.md` | live pointers to the root routing core             | live-valid         | none                                                                                                                                  |
+| root GPU section pointers (`gpu-active.nix`, `system-health.nix:72`)                | GPU Platform Constraints stayed in root            | live-valid         | none                                                                                                                                  |
+| hermes/crush `AGENTS.md` refs (hermes.nix, tests, flake.nix, post-deploy-check)     | DIFFERENT files (workspace doc, crush config repo) | live-valid         | none                                                                                                                                  |
+| 16 module/test comments ("See AGENTS.md rule/gotcha …")                             | sections moved 2026-10-01                          | **stale**          | retargeted to `docs/agents/{systemd,stability,monitoring,sso-dns,integration-registry,desktop}.md` or the owning runbook (`89b3c725`) |
+| `docs/gotchas-archive.md` header + rule-9 row                                       | gotcha table dissolved                             | **stale**          | retargeted                                                                                                                            |
+| TODO_LIST 523/567 + matching library rows                                           | premises name AGENTS.md sections that moved        | **stale premise**  | fixed in BOTH surfaces (queue+library drift rule)                                                                                     |
 
 ## d) Session-3 §f (37) + session-4 §f (50) disposition audit
 

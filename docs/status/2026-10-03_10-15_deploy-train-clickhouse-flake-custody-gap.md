@@ -53,7 +53,7 @@
 4. **Post-deploy battery** (wave-1 report §f items 1-5): post-deploy-check.sh green incl. paperless-gpt legs; :8106 `/api/filter-tag`; `/run/paperless-gpt/env` 0400 + owner; `paperless-gpt-failed` tag exists live; 3.2.1 referenced by `/run/current-system`; collector `.prom` with all 6 metrics; gatus reranker check ABSENT; bank-sync-paperless units result=success.
 5. **Surface sync** (handoff step 5, mapping done): TODO_LIST rows (shim fleet drop conditions, todo-list-ai drop + upstream-fix obligation, xrt C++20, ltrace doCheck, SC2029 exclusion, B53 done, deploy outcome, 3.2.x-ride row → done); docs/todo/services.md + pipeline.md siblings; CHANGELOG deploy-unblock entry + deploy outcome; FEATURES.md paperless-gpt row → ✅.
 6. **Restate the 3 owner questions in the final answer** (§g below — they remain unanswered from the 05:11 report).
-7. *(from item 1, if systematic)* land the clickhouse fix in-repo (patch/override) and re-enumerate.
+7. _(from item 1, if systematic)_ land the clickhouse fix in-repo (patch/override) and re-enumerate.
 8. Deliberately NOT harvested (in-flight mission steps owned by this deploy session, already implicit in the staged rows per the wave-1 report's self-harvest note): items 2-6. No NEW untracked follow-ups exist beyond item 1.
 
 ## §g) Questions I can NOT figure out myself (restated from 05:11, still unanswered)
@@ -64,7 +64,7 @@
 
 ---
 
-*Self-harvest note: §f.1 landed in TODO_LIST.md + docs/todo/services.md at authoring time; §f.2-6 are this mission's remaining steps (deliberately not separately harvested — same standing rationale as the 00-33 wave report). Evidence: `/tmp/toplevel-myverdict.log` (attempt #2, MY_EXIT=1 line 63), `/tmp/topfinal2.log` (073, interrupted), deploy log dir last entry 03:57 (pre-session), gen list verified `system-813-link` → `r6fcay8x…`.*
+_Self-harvest note: §f.1 landed in TODO_LIST.md + docs/todo/services.md at authoring time; §f.2-6 are this mission's remaining steps (deliberately not separately harvested — same standing rationale as the 00-33 wave report). Evidence: `/tmp/toplevel-myverdict.log` (attempt #2, MY_EXIT=1 line 63), `/tmp/topfinal2.log` (073, interrupted), deploy log dir last entry 03:57 (pre-session), gen list verified `system-813-link` → `r6fcay8x…`._
 
 ---
 

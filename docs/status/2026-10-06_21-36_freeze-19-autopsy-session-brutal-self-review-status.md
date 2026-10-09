@@ -49,24 +49,24 @@ Freeze #19 (21:08:23, boot -1 15:42→21:08) = IO-collapse instant cut, acute tr
 
 ## f) NEXT (up to 50; this session's realistic set — first 3 harvested already, rows exist)
 
-| # | Task | Class |
-|---|------|-------|
-| 1 | Entry gate + serialization for migrate-* scripts (PSI/guard-active pre-flight, heavy-job wrap, USB→USB = dual readers) | **HARVESTED** (stability.md + TODO_LIST) |
-| 2 | Post-crash resumable-reader pause automation (freeze-6 rule (a)) | **HARVESTED** (stability.md + TODO_LIST) |
-| 3 | Resume migration in owner-chosen quiet window; then rust-cache report §f.6–10 post-migration proofs | owner/live |
-| 4 | Capture the residual `go` writer's `/proc/<pid>/cmdline` at next sight (43 MB/s through sdb1 at 21:34) | watch/evidence |
-| 5 | flm socket :52625/:52626 live probe on boot 0 (asserted, not probed) | 1-command verify |
-| 6 | Read boot-0 bundle `20261006T191221Z/dstate.txt` (recovery-boot wedge inventory pre-containment) | evidence |
-| 7 | Read the death bundle's `journal-tail.txt` vs my journalctl reconstruction | evidence |
-| 8 | Append the #19-bundle-SURVIVED note to the io-psi-forensics retention row (vanish class is intermittent) | row correction |
-| 9 | Journal-grep the 18:36→21:04 dangling-CARGO_HOME era for bc-fallback/env-failure evidence (the answerable half of my §g.3 punt) | figure-outable |
-| 10 | Reconcile session-3072 ↔ pts/5 ↔ pts/37 ↔ the cargo battery (loginctl/journal session-TTY mapping; was the battery a sibling agent session?) | attribution |
-| 11 | Loadavg field in the guard trip log (stability.md :109) — now twice-proven load-bearing | priority bump |
-| 12 | No-heavy-builds enforcement leg (standing, 4th re-proof tonight) | standing row |
-| 13 | Decompose cv's LowDiskSpace 90.20 % firing at 21:08:00 — WHICH disk is 90 % full? | noticed, not diagnosed |
-| 14 | Monitor guard restore on boot 0 (flm socket + zram + episode-bucket decay) once PSI genuinely drains | watch |
-| 15 | `scripts/crash-autopsy.sh` (standing; 11th manual derivation logged this session) | standing row |
-| 16 | Verify the daemon sweeps (d7d4c6e9 etc.) carried my report/harvest intact (`git show --stat` per daemon-race policy) | shared-tree hygiene |
+| #  | Task                                                                                                                                         | Class                                    |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| 1  | Entry gate + serialization for migrate-* scripts (PSI/guard-active pre-flight, heavy-job wrap, USB→USB = dual readers)                       | **HARVESTED** (stability.md + TODO_LIST) |
+| 2  | Post-crash resumable-reader pause automation (freeze-6 rule (a))                                                                             | **HARVESTED** (stability.md + TODO_LIST) |
+| 3  | Resume migration in owner-chosen quiet window; then rust-cache report §f.6–10 post-migration proofs                                          | owner/live                               |
+| 4  | Capture the residual `go` writer's `/proc/<pid>/cmdline` at next sight (43 MB/s through sdb1 at 21:34)                                       | watch/evidence                           |
+| 5  | flm socket :52625/:52626 live probe on boot 0 (asserted, not probed)                                                                         | 1-command verify                         |
+| 6  | Read boot-0 bundle `20261006T191221Z/dstate.txt` (recovery-boot wedge inventory pre-containment)                                             | evidence                                 |
+| 7  | Read the death bundle's `journal-tail.txt` vs my journalctl reconstruction                                                                   | evidence                                 |
+| 8  | Append the #19-bundle-SURVIVED note to the io-psi-forensics retention row (vanish class is intermittent)                                     | row correction                           |
+| 9  | Journal-grep the 18:36→21:04 dangling-CARGO_HOME era for bc-fallback/env-failure evidence (the answerable half of my §g.3 punt)              | figure-outable                           |
+| 10 | Reconcile session-3072 ↔ pts/5 ↔ pts/37 ↔ the cargo battery (loginctl/journal session-TTY mapping; was the battery a sibling agent session?) | attribution                              |
+| 11 | Loadavg field in the guard trip log (stability.md :109) — now twice-proven load-bearing                                                      | priority bump                            |
+| 12 | No-heavy-builds enforcement leg (standing, 4th re-proof tonight)                                                                             | standing row                             |
+| 13 | Decompose cv's LowDiskSpace 90.20 % firing at 21:08:00 — WHICH disk is 90 % full?                                                            | noticed, not diagnosed                   |
+| 14 | Monitor guard restore on boot 0 (flm socket + zram + episode-bucket decay) once PSI genuinely drains                                         | watch                                    |
+| 15 | `scripts/crash-autopsy.sh` (standing; 11th manual derivation logged this session)                                                            | standing row                             |
+| 16 | Verify the daemon sweeps (d7d4c6e9 etc.) carried my report/harvest intact (`git show --stat` per daemon-race policy)                         | shared-tree hygiene                      |
 
 ## g) QUESTIONS ONLY THE OWNER CAN ANSWER
 

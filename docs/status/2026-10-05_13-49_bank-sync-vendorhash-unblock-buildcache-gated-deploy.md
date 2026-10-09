@@ -31,7 +31,7 @@ a dead disk.
    on origin/master**.
 3. **SystemNix lock re-pinned** `299d13a5` → `87531d04` via `nix flake update bank-sync`.
 4. **All three stale shims DROPPED, not re-pasted.** Their own comments carried the drop
-   condition — *"Drop when upstream re-pins or the lock moves past an upstream-fixed rev"*
+   condition — _"Drop when upstream re-pins or the lock moves past an upstream-fixed rev"_
    — now met; lib/lars-packages.nix class doctrine ("Re-add ONLY via nix-hash-fix
    evidence") honored: the evidence is the failing build's `got:` equaling upstream's
    declared hash **from our lock**. Test-file comment corrected to match post-shim reality.
@@ -145,11 +145,11 @@ a dead disk.
 
 **Harvested this session (both surfaces updated, no drift):**
 
-| # | Item | Where |
-| - | ---- | ----- |
-| 1 | Deploy-gate corpse-scan upgrade: kernel-thread D-states + `flush-<major:minor>`→device decode in the verdict | TODO_LIST + docs/todo/stability.md `[ready]` |
-| 2 | Decision: un-follow bank-sync's nixpkgs input (its own lock) to kill the toolchain-skew class; cost = second Go closure | TODO_LIST + docs/todo/services.md `[decision]` |
-| 3 | Post-deploy battery extended: un-shimmed bank-sync FOD from our lock + test-bank-sync-paperless run + rev-87531d04/preflight-gate assert | docs/todo/services.md `[watch]` row extended |
+| # | Item                                                                                                                                     | Where                                          |
+| - | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| 1 | Deploy-gate corpse-scan upgrade: kernel-thread D-states + `flush-<major:minor>`→device decode in the verdict                             | TODO_LIST + docs/todo/stability.md `[ready]`   |
+| 2 | Decision: un-follow bank-sync's nixpkgs input (its own lock) to kill the toolchain-skew class; cost = second Go closure                  | TODO_LIST + docs/todo/services.md `[decision]` |
+| 3 | Post-deploy battery extended: un-shimmed bank-sync FOD from our lock + test-bank-sync-paperless run + rev-87531d04/preflight-gate assert | docs/todo/services.md `[watch]` row extended   |
 
 **Immediate chain (deliberately NOT harvested — time-bound/owner-coordinated, and the
 run-gated-tag row exists precisely because premature dispatch spawned a 3-task fix chain;
@@ -218,6 +218,6 @@ here; everything else belongs to the standing domain libraries, which already ca
 
 ---
 
-*Auto-commit daemon note: the tree is shared and churning (browser-policies.nix +
+_Auto-commit daemon note: the tree is shared and churning (browser-policies.nix +
 configuration.nix landed mid-session from a sibling session at 13:36); my report file
-rides the daemon like everything else.*
+rides the daemon like everything else._

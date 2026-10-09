@@ -8,9 +8,9 @@
 
 Took 6 "easy/fast" queue items: **1 needed a real fix** (CONTRIBUTING re-stamp rule), **4 were already landed but never closed** (a prior session's commit `95944afb` fixed the work and left the queue rows open — closed them with live evidence), and **1 (help-slicer sweep) I got WRONG first**: shipped a false "sweep clean" verdict, caught it in self-verification, corrected the verdict, found and fixed 2 real instances of the truncation class. Filed the next drift trio as a fresh `[ready]` row. Three daemon races, one foreign concurrent session, zero data loss, all work pushed.
 
-| a) Fully done | b) Partially done | c) Not started | d) Fucked up | e) Improvements | f) Next | g) Questions |
-|---|---|---|---|---|---|---|
-| 6 | 4 | 2 (triaged out) | 4 | 6 | 50 | 3 |
+| a) Fully done | b) Partially done | c) Not started  | d) Fucked up | e) Improvements | f) Next | g) Questions |
+| ------------- | ----------------- | --------------- | ------------ | --------------- | ------- | ------------ |
+| 6             | 4                 | 2 (triaged out) | 4            | 6               | 50      | 3            |
 
 ---
 
@@ -60,11 +60,12 @@ Took 6 "easy/fast" queue items: **1 needed a real fix** (CONTRIBUTING re-stamp r
 ## f) 50 THINGS TO GET DONE NEXT (brainstorm, impact-tiered; most are pre-existing queue rows)
 
 **Tier 0 — this session's direct follow-ups**
-1. Close the `95944afb` trio (hot-db wave-step-6 fold, ~12-vs-11 reconcile, boot-mirror-activate logging doc) — verify landings live, `[x]` both surfaces. *(filed `[ready]` this session)*
-2. Prioritize `check-todo-system.sh` v2 (DONE-state pairing + stale-tag WARN) — mechanically kills the landed-but-unclosed class this session kept finding. *(queued)*
-3. Owner answers (§g) → then: pixel6 backup-script reconstruction, queue-pacing choice, heuristic-commit convention. *(blocked on §g)*
-4. Add "truncation-safe probes + rg -r footgun" to CONTRIBUTING verification conventions (one paragraph each). *(new, from §e)*
-5. Prune this session's five `[x]` rows to CHANGELOG at the next docs-health pass. *(standing contract)*
+
+1. Close the `95944afb` trio (hot-db wave-step-6 fold, ~12-vs-11 reconcile, boot-mirror-activate logging doc) — verify landings live, `[x]` both surfaces. _(filed `[ready]` this session)_
+2. Prioritize `check-todo-system.sh` v2 (DONE-state pairing + stale-tag WARN) — mechanically kills the landed-but-unclosed class this session kept finding. _(queued)_
+3. Owner answers (§g) → then: pixel6 backup-script reconstruction, queue-pacing choice, heuristic-commit convention. _(blocked on §g)_
+4. Add "truncation-safe probes + rg -r footgun" to CONTRIBUTING verification conventions (one paragraph each). _(new, from §e)_
+5. Prune this session's five `[x]` rows to CHANGELOG at the next docs-health pass. _(standing contract)_
 6. Note the pre-existing drift found en route: storage.md's "DR-runbook provenance checklist" library row is open while its TODO_LIST row is `[x]` (covered by v2 gate once built).
 
 **Tier 1 — easy/fast `[ready]` queue items (docs, fixtures, small tests)**
@@ -98,19 +99,19 @@ Took 6 "easy/fast" queue items: **1 needed a real fix** (CONTRIBUTING re-stamp r
 32. Prove the first `discordsync-db-backup` nightly dump (after a 02:30 window).
 33. Deploy the buildcache-init fallback-provisioning fix + live proof (`af9b3ef2` UNDEPLOYED).
 34. Post-deploy verify the T14 review hardening on the live generation.
-35. indexer-web post-deploy smoke + live bring-up verification. *[blocked:deploy]*
+35. indexer-web post-deploy smoke + live bring-up verification. _[blocked:deploy]_
 36. indexer-web ioTier assignment. 37. indexer-web `[RESPONSE_TIME]` condition. 38. indexer-web VM regression test.
 39. geometrikks post-deploy smoke probe (unit + `/health/ready` + OIDC surface + ingestion leg).
-40. bank-sync→paperless archival post-deploy verify (both units success + docs in paperless). *[blocked:deploy]*
-41. Deploy caddy batch + post-deploy verify (restart caps/NNP, live QUIC, derived smoke). *[blocked:deploy]*
-42. Restic repo post-deploy proof chain (first run, `restic check`, restore smoke). *[deploy]*
-43. Paperless DR completion (pg_restore drill + dump-integrity gate). *[deploy]*
+40. bank-sync→paperless archival post-deploy verify (both units success + docs in paperless). _[blocked:deploy]_
+41. Deploy caddy batch + post-deploy verify (restart caps/NNP, live QUIC, derived smoke). _[blocked:deploy]_
+42. Restic repo post-deploy proof chain (first run, `restic check`, restore smoke). _[deploy]_
+43. Paperless DR completion (pg_restore drill + dump-integrity gate). _[deploy]_
 44. VM test for the offsite-borg module BEFORE go-live (zero coverage today).
 45. VM rehearsal of offsite-borg runtime FAIL shapes (mock sops). 46. Fix §16's enable-blind SKIP + fixture.
 47. Fix the 4 hot-db vehicle defects (first-run gate, finalize verify, dry-run crash, timer window).
 48. Converge `~/.npm` onto the buildcache + give `~/tmp/go-lint` a reclamation path.
 49. Pin CI's statix to the flake lock; 50. Eval-warning cleanup batch (zsh initExtra, stdenv.is_ ×4, catalog subdomains, buildEnv collisions).
-*(Standing larger pools deliberately not re-enumerated: master-plan P3 quiet-window batch, offsite-borg decision set, Phase-2 hot-DB sudo windows.)*
+_(Standing larger pools deliberately not re-enumerated: master-plan P3 quiet-window batch, offsite-borg decision set, Phase-2 hot-DB sudo windows.)_
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
@@ -122,4 +123,3 @@ Took 6 "easy/fast" queue items: **1 needed a real fix** (CONTRIBUTING re-stamp r
 
 - **Harvested:** §f.1 (the `95944afb` trio close-out) → `[ready]` row in TODO_LIST + docs/todo/storage.md, landed this session. §f.4 (truncation-safe probes + `rg -r` footgun) → CONTRIBUTING verification conventions clause, landed at authoring (2026-10-01 clause, false-sweep class).
 - **Deliberately not harvested:** §f.5 (CHANGELOG prune) is a standing docs-health-pass contract, not a new ask. §f.6 (DR-runbook library-row drift) is an instance of the DONE-state-pairing class already owned by the queued check-todo-system v2 row. §f.3 items are the §g questions themselves (blocked on owner answers). Tier 1-2 rows (§f.7-50) are pre-existing queue/library rows — restated here for prioritization, not new asks; re-adding them would duplicate the libraries this session's closures just converged.
-

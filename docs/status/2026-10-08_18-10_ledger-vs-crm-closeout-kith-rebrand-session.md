@@ -13,7 +13,7 @@ overrides the skill's HTML default).
    `github.com/LarsArtmann/journal` (the accounting kernel); `~/projects/crm`
    = `github.com/LarsArtmann/crm` (the CRM whose product was branded
    "Ledger"). 0 shared commits (intersected full logs). Naming inversion
-   documented: dir `ledger` ↔ repo *journal*; repo `crm` ↔ product *Ledger*.
+   documented: dir `ledger` ↔ repo _journal_; repo `crm` ↔ product _Ledger_.
    Multi-RPID draft home CONFIRMED = crm (it owns the identity/webauthn
    code). Annotated `docs/todo/upstream.md:135`.
 2. **Three §g owner decisions collected (question tool, 16:40) and executed
@@ -197,6 +197,7 @@ Nothing catastrophic, four honest items:
    owner-only; repo remote stays `LarsArtmann/journal`.)
 
 ---
+
 Self-harvest: §f items 1-3 landed this session (queue + libraries); the rest
 map to existing rows (285/286/14, watch row, upstream bundle) — HARVESTED at
 authoring.

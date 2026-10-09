@@ -8,7 +8,7 @@
 
 ## a) FULLY DONE
 
-1. **Full-corpus classification — every active 2026-0* file read.** 13 parallel classifier batches over `docs/status/` by date-window (589 files: Aug 22, Sep 1–9 20, Sep 10–15 53, Sep 16–18 66, Sep 19–22 64, Sep 23–25 71, Sep 26–28 46, Sep 29–30 81, Oct 1–2 82, Oct 3 28, Oct 4 24, Oct 5–6 34) + planning (19) + research (8) + reviews/brainstorming/troubleshooting (5). Every file read fully; per-file verdict (ARCHIVE-CANDIDATE / OPEN-CARRIER), MARKED-state, and open-ask inventory returned. Aggregate verdict: the corpus is overwhelmingly OPEN-CARRIER by design (reports carry open §f/§g tails); ~31 candidates were fully resolved; 5 of those cited by live rows → stayed.
+1. __Full-corpus classification — every active 2026-0_ file read._* 13 parallel classifier batches over `docs/status/` by date-window (589 files: Aug 22, Sep 1–9 20, Sep 10–15 53, Sep 16–18 66, Sep 19–22 64, Sep 23–25 71, Sep 26–28 46, Sep 29–30 81, Oct 1–2 82, Oct 3 28, Oct 4 24, Oct 5–6 34) + planning (19) + research (8) + reviews/brainstorming/troubleshooting (5). Every file read fully; per-file verdict (ARCHIVE-CANDIDATE / OPEN-CARRIER), MARKED-state, and open-ask inventory returned. Aggregate verdict: the corpus is overwhelmingly OPEN-CARRIER by design (reports carry open §f/§g tails); ~31 candidates were fully resolved; 5 of those cited by live rows → stayed.
 2. **Archive sweep: 23 files annotated + moved with manifest.** Banner (`[docs-health 2026-10-06] RESOLVED + ARCHIVED`) + one evidence-bearing inline strikethrough per file; `git mv` → `docs/status/archived/` (20) + `docs/planning/archived/` (3: dozzle evaluation = ADOPTED, both NIX-ANTI-PATTERNS docs = 100% executed per the archived 2026-01-13 completion report); one-line-per-file deciding-reason manifest + updated counts appended to `docs/status/archived/README.md`. Citation sweep before every move: all 23 uncited by TODO_LIST/docs-todo/living docs; the 5 cited candidates stayed in place.
 3. **Completed-todo prune: TODO_LIST is now 100% open work.** All 90 `[x]` rows removed (734 lines remain: 0 `[x]`, 647 open rows, structure clean per the gate). Completion record preserved: `CHANGELOG.md` `### Removed` gained one consolidated bullet carrying all 90 row titles verbatim with pre-prune line numbers + the contract citation; this also settles the 23-19 §g Q2 flip-vs-prune policy question (prune wins) and closed the "TODO_LIST `[x]` prune pass" queue row itself.
 4. **Harvest: 6 verified-new open asks landed on both surfaces.** forgejo-family eval-gate assertion (freeze-18 §f.5) + port-3000 squat → `TODO_LIST.md` §services + `docs/todo/services.md`; helium launch-guard deploy → `docs/todo/desktop.md`; browser-history empty-dashboard fix chain + CAA domains push → `docs/todo/upstream.md`; gitleaks selftest fixture → `TODO_LIST.md` + `docs/todo/pipeline.md`. Every candidate was dedup-grepped against TODO_LIST + libraries first (7 candidate classes rejected as already-tracked).
@@ -51,6 +51,7 @@
 ## f) Up to 50 next things (session follow-ups first, then top items noticed this session)
 
 **Session direct follow-ups:**
+
 1. Decide + implement the archive completeness-gate shape (relax to "banner OR strike" vs backfill sweep) — `[decision]`, harvested.
 2. Build the gitleaks-coverage-selftest fixture (ULID-user_id FP + real-secret negative control) — queued.
 3. Decide the research-archive convention; move the superseded 2026-07-11 btrfs-wiki file when it exists — `[decision]`, harvested.
@@ -106,7 +107,7 @@
 
 ## g) Questions for the owner (cannot self-answer)
 
-1. **Cross-session prune etiquette:** the sweep pruned 5 netbird `[x]` rows your *other active session* had flipped hours earlier (contract-compliant, content preserved verbatim in CHANGELOG + git). Should same-day `[x]` rows from a sibling session be exempt from a docs pass's prune, or is any-pass prunes-all the standing rule?
+1. **Cross-session prune etiquette:** the sweep pruned 5 netbird `[x]` rows your _other active session_ had flipped hours earlier (contract-compliant, content preserved verbatim in CHANGELOG + git). Should same-day `[x]` rows from a sibling session be exempt from a docs pass's prune, or is any-pass prunes-all the standing rule?
 2. **Archive gate:** the strict completeness gate (`grep -rLn '~~' archived/ → nothing`) is violated by ~1,074 existing archived files that carry banner-only resolutions. Relax the gate to "banner OR strikethrough" (codify current practice), or fund a mechanical backfill sweep that adds one inline strikethrough per legacy file?
 3. **Research archive:** should `docs/research/` grow an `archived/` convention (the superseded 2026-07-11 btrfs-wiki file then moves), or does research stay flat forever as frozen reference?
 

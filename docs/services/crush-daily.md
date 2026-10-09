@@ -6,11 +6,11 @@ Daily collector over the user's crush session DBs (`~/.local/share/crush/.crush`
 
 ## What it serves
 
-| Route         | Auth                       | What                                        |
-| ------------- | -------------------------- | ------------------------------------------- |
-| `/`           | forward-auth / open LAN    | Report dashboard                            |
-| `/api/health` | none (loopback)            | Gatus "Crush Daily" (5m, 200 + <1s)         |
-| `/api/reports`| forward-auth / open LAN    | JSON report list (deploy smoke probes it — pass `--compressed`, the API answers gzip) |
+| Route          | Auth                    | What                                                                                  |
+| -------------- | ----------------------- | ------------------------------------------------------------------------------------- |
+| `/`            | forward-auth / open LAN | Report dashboard                                                                      |
+| `/api/health`  | none (loopback)         | Gatus "Crush Daily" (5m, 200 + <1s)                                                   |
+| `/api/reports` | forward-auth / open LAN | JSON report list (deploy smoke probes it — pass `--compressed`, the API answers gzip) |
 
 ## Ops
 

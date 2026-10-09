@@ -6,14 +6,14 @@ Fleet telemetry backbone: traces/metrics/logs from every OTel-instrumented servi
 
 ## What it serves
 
-| Route / port                | Auth            | What                                                                       |
-| --------------------------- | --------------- | -------------------------------------------------------------------------- |
-| `:8080/` + `/api/v1/*`      | impersonation   | Web UI + query/rules/dashboards API — every request acts as root admin      |
-| `:4317` / `:4318`           | none (loopback) | OTLP ingest (traces + metrics + logs from fleet services)                   |
-| `:8888/metrics`             | none (loopback) | Collector self-metrics (export failures, receiver liveness incl. GCP)       |
-| `:9363/metrics`             | none (loopback) | ClickHouse prometheus endpoint (parts, merges, memory)                      |
-| `:9193`                     | none (loopback) | cAdvisor (`--docker_only`, docker-engine container metrics)                 |
-| `:8080/api/v1/rules`        | impersonation   | Alert rules + states (used by probes; see monitoring.md)                    |
+| Route / port           | Auth            | What                                                                   |
+| ---------------------- | --------------- | ---------------------------------------------------------------------- |
+| `:8080/` + `/api/v1/*` | impersonation   | Web UI + query/rules/dashboards API — every request acts as root admin |
+| `:4317` / `:4318`      | none (loopback) | OTLP ingest (traces + metrics + logs from fleet services)              |
+| `:8888/metrics`        | none (loopback) | Collector self-metrics (export failures, receiver liveness incl. GCP)  |
+| `:9363/metrics`        | none (loopback) | ClickHouse prometheus endpoint (parts, merges, memory)                 |
+| `:9193`                | none (loopback) | cAdvisor (`--docker_only`, docker-engine container metrics)            |
+| `:8080/api/v1/rules`   | impersonation   | Alert rules + states (used by probes; see monitoring.md)               |
 
 ## Ops
 

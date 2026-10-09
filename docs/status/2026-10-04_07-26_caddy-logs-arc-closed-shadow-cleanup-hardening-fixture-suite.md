@@ -47,21 +47,21 @@
 
 ## f) Next tasks (ranked; ⏳ = user-gated)
 
-| # | Task | Impact | Effort | Cat | Note |
-|---|------|--------|--------|-----|------|
-| 1 | ⏳ Authorize upstream pushes: 11+ vendorHashes + crush-daily `go-sse` flake input → re-lock → drop ~10 local shims | High | M | Upstream | the arc's only standing debt |
-| 2 | Mount-degradation probe: alert when `/var/log/caddy` (and journal-hot) fall back to the QLC shadow (detached Samsung, wants-not-requires path) — textfile-collector + gatus pattern | Medium | S | Monitoring | noticed this arc; nothing watches the fallback |
-| 3 | Verify shell 027 (`nix flake check --no-build`) result; fix anything in MY attrs only | High | S | Verification | closes b.1 |
-| 4 | Verify the daemon-swept commits carry my fixture/flake/row edits intact (content greps, not messages) | Low | S | Hygiene | standing rule |
-| 5 | Boot-mirror: did the Oct 4 05:09 reboot exercise the Samsung ESP? Check NVRAM ordering + boot source; flip AGENTS.md "first reboot pending" if proven | Medium | S | Verification | adjacent, not mine this arc |
-| 6 | QLC `df` recheck after @ snapshot expiry settles the freed extents | Low | S | Cleanup | informational |
-| 7 | ⏳ The 06:33 deploy aborted on the pressure guard (exit 12) — retry in a quiet window if that intent was yours | Unknown | S | Deploy | foreign intent |
-| 8 | The 06:25 deploy aborted in pre-check (2s) — unknown failing check; read that log before any retry | Medium | S | Bug | foreign |
-| 9 | The 04:35 deploy logged "⚠ Some smoke checks failed — review above" — triage those smoke failures | Medium | S | Bug | foreign deploy, noticed |
-| 10 | Archive retention decision: the 227M shadow tarball has no expiry policy on the pool (other pool backups carry 30d-style retention) | Low | S | Decision | product call |
-| 11 | Consider restoring/merging the Oct 1→4 gap entries from the archive anywhere, or ratify archive-as-final | Low | S | Decision | see §g.3 |
-| 12 | Foreign `[ ]` rows seen in checker output: geometrikks.service FAILED, inboxclean-sync.service FAILED, service-health-check report-don't-fail semantics — owners' queue, not touched | Medium | S | Bug | foreign |
-| 13 | Fixture-suite follow-on (optional): port the INT/TERM + verify-fail patterns back into `test-migrate-hot-db.sh` if the hot-db script lacks equivalents | Low | M | Quality | cross-pollination |
+| #  | Task                                                                                                                                                                                 | Impact  | Effort | Cat          | Note                                           |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- | ------ | ------------ | ---------------------------------------------- |
+| 1  | ⏳ Authorize upstream pushes: 11+ vendorHashes + crush-daily `go-sse` flake input → re-lock → drop ~10 local shims                                                                   | High    | M      | Upstream     | the arc's only standing debt                   |
+| 2  | Mount-degradation probe: alert when `/var/log/caddy` (and journal-hot) fall back to the QLC shadow (detached Samsung, wants-not-requires path) — textfile-collector + gatus pattern  | Medium  | S      | Monitoring   | noticed this arc; nothing watches the fallback |
+| 3  | Verify shell 027 (`nix flake check --no-build`) result; fix anything in MY attrs only                                                                                                | High    | S      | Verification | closes b.1                                     |
+| 4  | Verify the daemon-swept commits carry my fixture/flake/row edits intact (content greps, not messages)                                                                                | Low     | S      | Hygiene      | standing rule                                  |
+| 5  | Boot-mirror: did the Oct 4 05:09 reboot exercise the Samsung ESP? Check NVRAM ordering + boot source; flip AGENTS.md "first reboot pending" if proven                                | Medium  | S      | Verification | adjacent, not mine this arc                    |
+| 6  | QLC `df` recheck after @ snapshot expiry settles the freed extents                                                                                                                   | Low     | S      | Cleanup      | informational                                  |
+| 7  | ⏳ The 06:33 deploy aborted on the pressure guard (exit 12) — retry in a quiet window if that intent was yours                                                                       | Unknown | S      | Deploy       | foreign intent                                 |
+| 8  | The 06:25 deploy aborted in pre-check (2s) — unknown failing check; read that log before any retry                                                                                   | Medium  | S      | Bug          | foreign                                        |
+| 9  | The 04:35 deploy logged "⚠ Some smoke checks failed — review above" — triage those smoke failures                                                                                    | Medium  | S      | Bug          | foreign deploy, noticed                        |
+| 10 | Archive retention decision: the 227M shadow tarball has no expiry policy on the pool (other pool backups carry 30d-style retention)                                                  | Low     | S      | Decision     | product call                                   |
+| 11 | Consider restoring/merging the Oct 1→4 gap entries from the archive anywhere, or ratify archive-as-final                                                                             | Low     | S      | Decision     | see §g.3                                       |
+| 12 | Foreign `[ ]` rows seen in checker output: geometrikks.service FAILED, inboxclean-sync.service FAILED, service-health-check report-don't-fail semantics — owners' queue, not touched | Medium  | S      | Bug          | foreign                                        |
+| 13 | Fixture-suite follow-on (optional): port the INT/TERM + verify-fail patterns back into `test-migrate-hot-db.sh` if the hot-db script lacks equivalents                               | Low     | M      | Quality      | cross-pollination                              |
 
 ## g) Questions I cannot answer myself
 
@@ -71,4 +71,4 @@
 
 ---
 
-*Point-in-time snapshot. Auto-commit daemon sweeps this file; verify by content. The caddy-logs arc is closed — items above are the arc's tail debts (upstream, monitoring) and foreign observations only.*
+_Point-in-time snapshot. Auto-commit daemon sweeps this file; verify by content. The caddy-logs arc is closed — items above are the arc's tail debts (upstream, monitoring) and foreign observations only._

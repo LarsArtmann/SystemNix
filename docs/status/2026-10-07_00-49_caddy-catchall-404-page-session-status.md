@@ -67,6 +67,7 @@
 ## f) UP TO 50 THINGS TO GET DONE NEXT
 
 **This task — finish the chain (in order):**
+
 1. Collect background shell 00D; eyeball the rendered Caddyfile: `*.home.lan` + `*.larsartmann.cloud` blocks carry `root * <store>` + `error 404` + `handle_errors`; `alerts.home.lan`/`alerts.larsartmann.cloud` carry the dash redirect; no other block changed.
 2. `nix flake check --no-build` (whole-flake gate incl. audits).
 3. Standalone `shellcheck scripts/post-deploy-check.sh` + alejandra check on the 4 edited Nix files (daemon-swept lint bypass).
@@ -124,7 +125,7 @@
 
 ---
 
-*Evidence: sandbox probe outputs in-session (caddy 2.11.4, port 18099, 3× 404 + fixture body); `checks.x86_64-linux.cloud-domain` build success `/nix/store/sp8jl6gmfsk0q0xr64h55faixjkf3wnb-cloud-domain-test`; caddy.nix:67/467/485; gatus-config.nix:406-414; post-deploy-check.sh:177; test-cloud-domain.nix:92-112; dns-blocker-config.nix:124-131.*
+_Evidence: sandbox probe outputs in-session (caddy 2.11.4, port 18099, 3× 404 + fixture body); `checks.x86_64-linux.cloud-domain` build success `/nix/store/sp8jl6gmfsk0q0xr64h55faixjkf3wnb-cloud-domain-test`; caddy.nix:67/467/485; gatus-config.nix:406-414; post-deploy-check.sh:177; test-cloud-domain.nix:92-112; dns-blocker-config.nix:124-131._
 
 ## §f harvest disposition (close-out 2026-10-07 02:0x)
 

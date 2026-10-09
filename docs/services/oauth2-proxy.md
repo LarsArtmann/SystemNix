@@ -6,13 +6,13 @@ One instance fronts EVERY Layer 2 service (SigNoz, SearXNG, Twenty, Dozzle, Crus
 
 ## What it serves
 
-| Route                | Auth | What                                                                     |
-| -------------------- | ---- | ------------------------------------------------------------------------ |
-| `/oauth2/auth`       | none | The forward-auth decision endpoint Caddy calls on every external request |
-| `/oauth2/sign_in`    | none | Login redirect target (Caddy 401-handler sends users here)              |
-| `/oauth2/callback`   | none | OIDC code callback (redirectURL `https://auth.<domain>/oauth2/callback`) |
-| `/oauth2/sign_out`   | none | Logout — clears the shared `.<domain>` cookie for ALL Layer 2 apps      |
-| `/ping`              | none | Liveness (ExecStartPost gate)                                            |
+| Route              | Auth | What                                                                     |
+| ------------------ | ---- | ------------------------------------------------------------------------ |
+| `/oauth2/auth`     | none | The forward-auth decision endpoint Caddy calls on every external request |
+| `/oauth2/sign_in`  | none | Login redirect target (Caddy 401-handler sends users here)               |
+| `/oauth2/callback` | none | OIDC code callback (redirectURL `https://auth.<domain>/oauth2/callback`) |
+| `/oauth2/sign_out` | none | Logout — clears the shared `.<domain>` cookie for ALL Layer 2 apps       |
+| `/ping`            | none | Liveness (ExecStartPost gate)                                            |
 
 ## Ops
 

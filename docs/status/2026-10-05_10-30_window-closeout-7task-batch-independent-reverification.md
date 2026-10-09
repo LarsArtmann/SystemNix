@@ -15,7 +15,7 @@
 3. **Prune-verify task (000001a103f14c57…): DONE, verified live.** TODO_LIST row 21 carries the full evidence chain: pre-state 01:05 (pins ALIVE, df 632G used / 81G free / 89%), then **DONE VERIFIED 2026-10-05 00:15** — an early `btrbk-pool-clean` activation 2026-10-04 03:05:13 deleted both 09-20 pins (journal `btrfs subvolume delete`, both prefixes); the 23:50 run no-oped. df 632→565G used, 81→138G free, 89%→81% = **~67G net freed** (upper bound; freeze-recovery cleanups shared the window). CHANGELOG entry exists (line 102). The early-activation timing question is queued as owner-gated row 106.
 4. **Buildcache parity check (000001a103c819c9…): confirmed landed.** `scripts/check-buildcache-known-parity.sh` re-verified (`PARITY OK: 15 buildcacheDirs literals / 18 KNOWN names`, selftest green, flake check `buildcache-known-parity` wired); verification note on the library surface (`83501f42`). CHANGELOG entry exists (line 13).
 5. **Pre-commit parity leg (000001a104283c8bb…): landed AND since live-fired.** Hook leg `8eb8ece6`; the lander's "never observed FIRING" gap was closed 2026-10-05 via an isolated `GIT_INDEX_FILE` harness on a staged whitespace-only parity-source edit (TODO_LIST row 20 `[x]`). Both queue surfaces closed in sync.
-6. **BLOCKED-marker finding (000001a104283d4667…): fixed exactly.** ` — BLOCKED: verification run fires 2026-10-04 23:50 btrbk-pool-clean; re-dispatch after.` on both rows, fix `f9652db3`, single footer, gates green. Its direct follow-up (BLOCKED-marker lint leg) has since landed (row 759 `[x]`).
+6. **BLOCKED-marker finding (000001a104283d4667…): fixed exactly.** `— BLOCKED: verification run fires 2026-10-04 23:50 btrbk-pool-clean; re-dispatch after.` on both rows, fix `f9652db3`, single footer, gates green. Its direct follow-up (BLOCKED-marker lint leg) has since landed (row 759 `[x]`).
 7. **Todo-narrative-shrink finding (000001a104283d5200…): fixed exactly.** Both pre-state rows shrunk to one-liners + report pointer + recipe + BLOCKED marker (`92e31273`); queue↔library parity; pathspec-commit discipline. Its deferred §f.2 (annotation-verbosity guard) is queued as row 611, so the deferral resolved safely.
 
 ## b) PARTIALLY DONE
@@ -70,4 +70,4 @@ All three of this dispatch's unanswerables are already queued as BLOCKED rows (7
 
 ---
 
-*Point-in-time snapshot. Sources: the seven per-task reports cited in §a, the 09:58 primary close-out, TODO_LIST.md @ HEAD `cfe17aba`, CHANGELOG.md lines 13/102, `git log` lineage `86a38abe`/`15168c12`/`07533607`/`e24afb09`/`83501f42`/`8eb8ece6`/`90cb3434`/`f9652db3`/`92e31273`, `tq facts` (38,467 entries, reprioritized = 0).*
+_Point-in-time snapshot. Sources: the seven per-task reports cited in §a, the 09:58 primary close-out, TODO_LIST.md @ HEAD `cfe17aba`, CHANGELOG.md lines 13/102, `git log` lineage `86a38abe`/`15168c12`/`07533607`/`e24afb09`/`83501f42`/`8eb8ece6`/`90cb3434`/`f9652db3`/`92e31273`, `tq facts` (38,467 entries, reprioritized = 0)._

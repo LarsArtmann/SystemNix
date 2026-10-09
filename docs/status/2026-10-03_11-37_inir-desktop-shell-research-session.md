@@ -11,7 +11,7 @@
 1. **Full iNiR source research** — README, ARCHITECTURE.md, CONTRIBUTING.md, docs/IPC.md, docs/NIXOS.md, flake.nix, and all four `nix/*` module/packaging files fetched and read; repo tree enumerated via gh api (2,394 files).
 2. **SystemNix-side comparison grounded in actual config** — `docs/agents/desktop.md` (full), `platforms/nixos/desktop/quickshell.nix` (full), `pkgs/dms-lock.nix` (full), the swayidle invocation in `niri-wrapped.nix:837`, `docs/todo/desktop.md`, TODO_LIST desktop section.
 3. **Suspension lock race discovered and verified end-to-end** (the session's main finding):
-   - `pkgs/dms-lock.nix:17` exits 0 on `dms ipc lock lock` IPC *ack* — not when the ext-session-lock surface is secure.
+   - `pkgs/dms-lock.nix:17` exits 0 on `dms ipc lock lock` IPC _ack_ — not when the ext-session-lock surface is secure.
    - swayidle man page confirms `-w` waits for the before-sleep command to exit before sleep — so the hook CAN hold sleep longer; today it just exits too early.
    - DMS source (Lock.qml, verified via Sourcegraph): `isLocked(): bool` returns `sessionLock.secure`.
    - **Live probe on evo-x2 (2026-10-03):** `dms ipc call lock isLocked` → `false`; `lock status` → JSON with `sessionLockSecure`. Syntax and return shape confirmed from agent context.
@@ -82,15 +82,15 @@ Deliberately NOT harvested: 8 (gated on 3), 9/11 (no concrete vehicle — patter
 
 ## Harvest ledger (authoring-time, per AGENTS.md TODO System rule)
 
-| §f item | Landed | Surface(s) |
-|---|---|---|
-| f.1 dms-lock secure-wait | yes (pre-review) | TODO_LIST desktop + docs/todo/desktop.md |
-| f.2 QML conventions | yes (pre-review) | TODO_LIST desktop + docs/todo/desktop.md |
-| f.3 iNiR trial decision | yes (pre-review) | docs/todo/desktop.md `[decision]` |
-| f.4 connection notices | yes (pre-review) | ROADMAP Theme 3 |
-| f.5 harmless-noise doc | yes (this pass) | TODO_LIST desktop + docs/todo/desktop.md |
-| f.6 DMS RSS metric | yes (this pass) | TODO_LIST desktop + docs/todo/desktop.md |
-| f.7 frame-pacing idea | yes (this pass) | ROADMAP Theme 3 |
-| f.8–f.12 | no — gated/vague/symptom-gated, reasons inline | — |
+| §f item                  | Landed                                         | Surface(s)                               |
+| ------------------------ | ---------------------------------------------- | ---------------------------------------- |
+| f.1 dms-lock secure-wait | yes (pre-review)                               | TODO_LIST desktop + docs/todo/desktop.md |
+| f.2 QML conventions      | yes (pre-review)                               | TODO_LIST desktop + docs/todo/desktop.md |
+| f.3 iNiR trial decision  | yes (pre-review)                               | docs/todo/desktop.md `[decision]`        |
+| f.4 connection notices   | yes (pre-review)                               | ROADMAP Theme 3                          |
+| f.5 harmless-noise doc   | yes (this pass)                                | TODO_LIST desktop + docs/todo/desktop.md |
+| f.6 DMS RSS metric       | yes (this pass)                                | TODO_LIST desktop + docs/todo/desktop.md |
+| f.7 frame-pacing idea    | yes (this pass)                                | ROADMAP Theme 3                          |
+| f.8–f.12                 | no — gated/vague/symptom-gated, reasons inline | —                                        |
 
 **Notices:** (1) Format override — this report is `.md` per explicit user instruction (skill default is HTML); flagged here so the divergence stays visible. (2) Prior self-review series cross-reference (docs/reviews/, last 2026-09-16) deliberately skipped — out of the session-scoped instruction. (3) Parallel session was ACTIVE throughout (helium verification landed mid-session; kernel OOM 10:42 noted in d.2).

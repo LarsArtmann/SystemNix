@@ -38,7 +38,7 @@
 
 ## d) TOTALLY FUCKED UP
 
-*(no data loss or prod damage this session — but five honest self-inflicted/environmental failures)*
+_(no data loss or prod damage this session — but five honest self-inflicted/environmental failures)_
 
 1. **I relayed an unverified doc claim as fact, and it was wrong.** My first answer told the user the deployed build "self-heals ~30s" — quoted from the runbook header without a live probe. Reality: the deployed build's heal path is the very bug this session fixed. Cost: a false expectation for the user and ~15 minutes of debugging predicated on "it should have healed by now". Verification-class lesson: assert behavior from probes, never from documentation (queued for crush-config `references/lessons.md`, §f #20-21).
 2. **The "verified pre-existing via stash" baseline was methodologically VOID** — `git stash` had nothing to stash because the auto-commit daemon had already committed my changes; my "baseline" run executed WITH the fix. The conclusion still holds (categorize/emailcqrs do not import `internal/web` — dependency isolation), but the evidence step was broken. Caught in-flight; flagged here so nobody cites the stash run.
@@ -60,7 +60,7 @@
 
 ## f) Up to 50 things to get done next
 
-*Session-scoped, impact-ordered. Dispositions per the TODO contract: **[landed]** = queued this session; **[not-harvested: reason]**.*
+_Session-scoped, impact-ordered. Dispositions per the TODO contract: **[landed]** = queued this session; **[not-harvested: reason]**._
 
 1. Confirm Cloud Console OAuth consent screen is "In production" — else new `main` token dies ~2026-10-11 and this incident recurs weekly. **[landed]** (residue row).
 2. Push InboxClean `1540a56` + `d23c48a` + `e9735c7` (owner; agents never push). **[landed]** (upstream.md deploy row).
@@ -89,7 +89,7 @@
 25. Investigate the `docs/status/` report-vanishing sweeper (§d4) — find what deleted two fresh reports this morning and guard it. **[landed]** (recorded in this report's integrity note + §e9; if the sweeper is a foreign session's script, its session owns the fix).
 26. Adjacent-open, resurfaced: Paperless decrypt-password go-live + API-token rotation (existing `[blocked:user]` rows) — archiving for `main` is live again, so the decrypt password is the next archiving gap. **[not-harvested: rows exist]**
 
-*(27-50 intentionally unused — everything beyond #26 is already queued elsewhere or would be fabricated scope; 26 real session-derived items beat 50 padded ones.)*
+_(27-50 intentionally unused — everything beyond #26 is already queued elsewhere or would be fabricated scope; 26 real session-derived items beat 50 padded ones.)_
 
 ## g) Questions I cannot answer myself
 

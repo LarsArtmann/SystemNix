@@ -6,13 +6,13 @@ Media lives on the HDD pool (`/mnt/pool/services/immich`) — immich-server, imm
 
 ## What it serves
 
-| Route                      | Auth                                    | What                                                        |
-| -------------------------- | --------------------------------------- | ----------------------------------------------------------- |
-| `/`                        | forward-auth (external) / open (LAN)    | Web UI                                                      |
-| `/api/*`                   | immich session (OIDC)                   | App + mobile API                                            |
-| `/auth/login`, `/user-settings` | immich session (OIDC)              | OAuth callback redirect targets (registered in Pocket ID)   |
-| `app.immich:///oauth-callback` | immich session (OIDC)               | Mobile app callback scheme (LAN path — forward-auth exempt) |
-| `/api/system_config`       | 401 unauthenticated                     | Gatus probe target — 401 PROVES API up + auth enforced      |
+| Route                           | Auth                                 | What                                                        |
+| ------------------------------- | ------------------------------------ | ----------------------------------------------------------- |
+| `/`                             | forward-auth (external) / open (LAN) | Web UI                                                      |
+| `/api/*`                        | immich session (OIDC)                | App + mobile API                                            |
+| `/auth/login`, `/user-settings` | immich session (OIDC)                | OAuth callback redirect targets (registered in Pocket ID)   |
+| `app.immich:///oauth-callback`  | immich session (OIDC)                | Mobile app callback scheme (LAN path — forward-auth exempt) |
+| `/api/system_config`            | 401 unauthenticated                  | Gatus probe target — 401 PROVES API up + auth enforced      |
 
 ## Ops
 

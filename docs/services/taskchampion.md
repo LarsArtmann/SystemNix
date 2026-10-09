@@ -6,10 +6,10 @@ Sync endpoint for Taskwarrior clients (`task sync` against the taskchampion prot
 
 ## What it serves
 
-| Route    | Auth                        | What                                    |
-| -------- | --------------------------- | --------------------------------------- |
-| sync API | forward-auth / open LAN     | Taskwarrior task sync (binary protocol) |
-| `:10222` | Gatus TCP probe (loopback)  | "TaskChampion Sync" check (connect-only)|
+| Route    | Auth                       | What                                     |
+| -------- | -------------------------- | ---------------------------------------- |
+| sync API | forward-auth / open LAN    | Taskwarrior task sync (binary protocol)  |
+| `:10222` | Gatus TCP probe (loopback) | "TaskChampion Sync" check (connect-only) |
 
 ## Ops
 

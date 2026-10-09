@@ -31,11 +31,11 @@ quarterly restore drill lives in the pbx-artmann repo
 
 ## Units
 
-| Unit                        | Shape                                                        |
-| --------------------------- | ------------------------------------------------------------ |
-| `pbx-backup-pull.service`   | oneshot, `User=lars`, `RequiresMountsFor=/mnt/pool`, 20min cap |
-| `pbx-backup-pull.timer`     | `OnCalendar=*-*-* 00,06,12,18:15:00`, `Persistent=true`, ±5m  |
-| tmpfiles rule               | `d /mnt/pool/backups/pbx 0755 lars users` (boot + every deploy) |
+| Unit                      | Shape                                                           |
+| ------------------------- | --------------------------------------------------------------- |
+| `pbx-backup-pull.service` | oneshot, `User=lars`, `RequiresMountsFor=/mnt/pool`, 20min cap  |
+| `pbx-backup-pull.timer`   | `OnCalendar=*-*-* 00,06,12,18:15:00`, `Persistent=true`, ±5m    |
+| tmpfiles rule             | `d /mnt/pool/backups/pbx 0755 lars users` (boot + every deploy) |
 
 Monitoring: the module's integration entry declares the
 `backup-coordination` freshness row (`maxAgeHours = 25`) — Gatus pages

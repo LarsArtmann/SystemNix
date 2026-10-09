@@ -63,7 +63,7 @@ Boot −1 (Oct 1 18:57:43 → Oct 2 10:57:54, ~16 h) died with the journal cut m
 
 **NEW — queued this session into TODO_LIST + domain libraries:**
 
-1. Write the missing freeze #8/#9/#10/#11 entries into `docs/agents/stability.md` (thermal class, discriminators incl. the recovered k10temp trajectories, the #8-#10 harvest failure noted). → stability lib *(re-stamp of the never-harvested 10-01 §f.6, now four freezes)*
+1. Write the missing freeze #8/#9/#10/#11 entries into `docs/agents/stability.md` (thermal class, discriminators incl. the recovered k10temp trajectories, the #8-#10 harvest failure noted). → stability lib _(re-stamp of the never-harvested 10-01 §f.6, now four freezes)_
 2. Thermal alerting coverage: Gatus checks for k10temp (Tctl) + GPU edge — three crashes have now occurred with zero CPU-temperature alerting (freeze-8 verified the gap at `gatus-config.nix:791`; nothing landed). → monitoring lib
 3. Freeze-#11 post-crash protocol on boot 0: verify flm :52625/:52626 socket state (restore-capped at death), check/stop recovery readers `crush-hot-db-migrate` + `discordsync-db-heal` per freeze-6 rule (a) if the storm persists — sudo legs are owner actions. → stability lib
 4. Identify the 04:00–07:00 UTC (06:00–09:00 CEST) compute driver that held Tctl at 98.4–99.1 °C — ClickHouse CPU attribution by cgroup (samples survive; labels don't — fingerprint-scan method applies). → stability lib

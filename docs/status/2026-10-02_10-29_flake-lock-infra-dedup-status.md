@@ -44,21 +44,21 @@
 
 ## f) Next things (ranked)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Squash heuristic commit stack into named implementation commit + push (original directive finish) | Critical | S | Pipeline |
-| 2 | Confirm toplevel build (job 064) green → papdashboard flip proven at build level | Critical | S | Quality |
-| 3 | ~~Re-verify flake check~~ DONE at 10:33: exit 0, all checks passed | Critical | S | Quality |
-| 4 | flake-compat + git-hooks root-promotion + follows (12 nodes) — queued | High | M | Quality |
-| 5 | Add hermes-class rollback-on-red to the flake-update bot runbook | High | S | Pipeline |
-| 6 | Remove 9 dead `systems` override lines (warnings on every eval) | Medium | S | Cleanup |
-| 7 | Add lock-audit to AGENTS.md eval-time prevention table | Medium | S | Docs |
-| 8 | CHANGELOG entry for the dedup | Medium | S | Docs |
-| 9 | Upstream fleet follows (deep dup class) — blocked:push, queued upstream | High | L | Upstream |
-| 10 | Legacy hand-follows migration into the infra-follows group — queued | Low | M | Cleanup |
-| 11 | nsfw-classifier nixpkgs flip when its FODs next regenerate (drop one `deliberate` entry) | Low | S | Quality |
-| 12 | Drop hermes rollback when an upstream rev evals green under --no-build | Medium | S | Watch |
-| 13 | Drop the 3 vendorHash shims in lars-packages.nix when locks move past upstream-fixed revs (pre-existing, owner-gated) | Medium | S | Quality |
+| #  | Task                                                                                                                  | Impact   | Effort | Category |
+| -- | --------------------------------------------------------------------------------------------------------------------- | -------- | ------ | -------- |
+| 1  | Squash heuristic commit stack into named implementation commit + push (original directive finish)                     | Critical | S      | Pipeline |
+| 2  | Confirm toplevel build (job 064) green → papdashboard flip proven at build level                                      | Critical | S      | Quality  |
+| 3  | ~~Re-verify flake check~~ DONE at 10:33: exit 0, all checks passed                                                    | Critical | S      | Quality  |
+| 4  | flake-compat + git-hooks root-promotion + follows (12 nodes) — queued                                                 | High     | M      | Quality  |
+| 5  | Add hermes-class rollback-on-red to the flake-update bot runbook                                                      | High     | S      | Pipeline |
+| 6  | Remove 9 dead `systems` override lines (warnings on every eval)                                                       | Medium   | S      | Cleanup  |
+| 7  | Add lock-audit to AGENTS.md eval-time prevention table                                                                | Medium   | S      | Docs     |
+| 8  | CHANGELOG entry for the dedup                                                                                         | Medium   | S      | Docs     |
+| 9  | Upstream fleet follows (deep dup class) — blocked:push, queued upstream                                               | High     | L      | Upstream |
+| 10 | Legacy hand-follows migration into the infra-follows group — queued                                                   | Low      | M      | Cleanup  |
+| 11 | nsfw-classifier nixpkgs flip when its FODs next regenerate (drop one `deliberate` entry)                              | Low      | S      | Quality  |
+| 12 | Drop hermes rollback when an upstream rev evals green under --no-build                                                | Medium   | S      | Watch    |
+| 13 | Drop the 3 vendorHash shims in lars-packages.nix when locks move past upstream-fixed revs (pre-existing, owner-gated) | Medium   | S      | Quality  |
 
 Items 1–3 are this session's own unfinished obligations; 4 and 6–8 harvested to TODO_LIST.md + docs/todo/pipeline.md at authoring time (1–3 are session-blocked on user instruction below, 5 harvested to pipeline, 9 already in upstream library, 10 already queued, 11–13 are watch/owner-gated conditions recorded on existing rows and deliberately not re-queued).
 
@@ -70,4 +70,4 @@ Items 1–3 are this session's own unfinished obligations; 4 and 6–8 harvested
 
 ---
 
-*Verification narrative sources: plan doc close-out table; jobs 062 (check output), 064 (toplevel build, pending), 06F (check exit, pending); commit `9f75621d` message.*
+_Verification narrative sources: plan doc close-out table; jobs 062 (check output), 064 (toplevel build, pending), 06F (check exit, pending); commit `9f75621d` message._

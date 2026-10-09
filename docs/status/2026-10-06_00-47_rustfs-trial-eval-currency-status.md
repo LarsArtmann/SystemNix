@@ -58,20 +58,20 @@
 
 ## f) UP TO 50 THINGS TO GET DONE NEXT
 
-Grounded in THIS session only; tags per the TODO system. Only §f.1 is harvested to a domain library at authoring time (the adopt-or-close decision). Items marked *(only-if-adopted)* are intentionally NOT library rows — they are adoption-path work recorded here + in the eval doc, and would bloat the library as unowned speculation. §f.20+ are genuine brainstorm/ROADMAP fuel.
+Grounded in THIS session only; tags per the TODO system. Only §f.1 is harvested to a domain library at authoring time (the adopt-or-close decision). Items marked _(only-if-adopted)_ are intentionally NOT library rows — they are adoption-path work recorded here + in the eval doc, and would bloat the library as unowned speculation. §f.20+ are genuine brainstorm/ROADMAP fuel.
 
 1. **[decision] RustFS/S3: adopt or close permanently** — HARVESTED to `docs/todo/storage.md` (owner call; the eval's adoption gate fired, the trial passed, the blocker is the absence of a ratified consumer).
-2. *(only-if-adopted)* Register ports in `lib/ports.nix` (9300/9301-class — 9000/9001 collide with signoz-clickhouse) + module enable via a minimal PR-shaped commit.
-3. *(only-if-adopted)* sops `environmentFile` template for `RUSTFS_ACCESS_KEY`/`RUSTFS_SECRET_KEY` (attic/dnsblockd DynamicUser-safe pattern; module preStart enforces presence).
-4. *(only-if-adopted)* DataDir = `/mnt/pool/services/rustfs` with mount-gating + `pool-recovery` registration + `ioTier.background` (pool-native doctrine, eval-doc sketch).
-5. *(only-if-adopted)* Gatus functional probe (PUT/GET roundtrip) — no `/metrics` to `pat()`; phantom-green-proof per eval doc.
-6. *(only-if-adopted)* Wire `RUSTFS_OBS_ENDPOINT=http://localhost:4318` + register in `otel-endpoint-audit.nix` expectations (`rustfs_*` metrics land in SigNoz via push).
-7. *(only-if-adopted)* VM-test first: run `nixosTests.rustfs` against OUR enablement shape before any prod deploy.
-8. *(only-if-adopted)* Exercise the untested capability set that matters for a cold tier: object lock/WORM, SSE/KMS, bucket replication.
-9. *(only-if-adopted)* Runbook: `docs/services/rustfs.md` incl. `rustfs diagnose`/`inspect bucket-meta` forensics + teardown path.
-10. *(only-if-adopted)* Decide `RUSTFS_SERVER_DOMAINS` (path-style vs vhost) for LAN clients; rclone/mc need `force_path_style` otherwise (verified live this session).
-11. *(only-if-adopted)* Re-do the eval doc's use-case ranking with post-1.0 facts (restic-target vs sccache vs cold-tier) — the §b.2 gap.
-12. *(only-if-adopted)* Copy-freeze consideration: object store on BTRFS + btrbk snapshots — validate snapshot semantics for a live S3 volume (never tested).
+2. _(only-if-adopted)_ Register ports in `lib/ports.nix` (9300/9301-class — 9000/9001 collide with signoz-clickhouse) + module enable via a minimal PR-shaped commit.
+3. _(only-if-adopted)_ sops `environmentFile` template for `RUSTFS_ACCESS_KEY`/`RUSTFS_SECRET_KEY` (attic/dnsblockd DynamicUser-safe pattern; module preStart enforces presence).
+4. _(only-if-adopted)_ DataDir = `/mnt/pool/services/rustfs` with mount-gating + `pool-recovery` registration + `ioTier.background` (pool-native doctrine, eval-doc sketch).
+5. _(only-if-adopted)_ Gatus functional probe (PUT/GET roundtrip) — no `/metrics` to `pat()`; phantom-green-proof per eval doc.
+6. _(only-if-adopted)_ Wire `RUSTFS_OBS_ENDPOINT=http://localhost:4318` + register in `otel-endpoint-audit.nix` expectations (`rustfs_*` metrics land in SigNoz via push).
+7. _(only-if-adopted)_ VM-test first: run `nixosTests.rustfs` against OUR enablement shape before any prod deploy.
+8. _(only-if-adopted)_ Exercise the untested capability set that matters for a cold tier: object lock/WORM, SSE/KMS, bucket replication.
+9. _(only-if-adopted)_ Runbook: `docs/services/rustfs.md` incl. `rustfs diagnose`/`inspect bucket-meta` forensics + teardown path.
+10. _(only-if-adopted)_ Decide `RUSTFS_SERVER_DOMAINS` (path-style vs vhost) for LAN clients; rclone/mc need `force_path_style` otherwise (verified live this session).
+11. _(only-if-adopted)_ Re-do the eval doc's use-case ranking with post-1.0 facts (restic-target vs sccache vs cold-tier) — the §b.2 gap.
+12. _(only-if-adopted)_ Copy-freeze consideration: object store on BTRFS + btrbk snapshots — validate snapshot semantics for a live S3 volume (never tested).
 13. Check upstream 1.0.1 delta before the next flake-update wave sweeps the lock to it (changelog review, 10 minutes).
 14. **[watch]** Idle-RSS figure: re-measure on a populated volume (~20 GB class) before anyone sizes MemoryMax from the 176.7 MB number.
 15. **[ready]** Eval doc: add the mechanical re-verify checklist (§e.4) — 15-minute docs task, makes future audits trivial.
@@ -79,19 +79,19 @@ Grounded in THIS session only; tags per the TODO system. Only §f.1 is harvested
 17. **[watch]** Console login walkthrough (headless browser) — UI panels unverified (§b.3).
 18. **Upstream candidate (verify-before-filing first):** the `services.rustfs` module lacks StateDirectory/ReadWritePaths shaping our systemd-shape-audit would flag; potential upstream contribution after a real adoption.
 19. **Upstream candidate (verify-before-filing first):** console 403s non-browser clients with S3-XML AccessDenied — confusing ops behavior; upstream issue material with the captured evidence.
-20. *(brainstorm)* MacBook backup leg on RustFS (darwin build check) — only if the ratified consumer is "MacBook restic target".
-21. *(brainstorm)* Shared sccache S3 backend (MacBook + evo-x2 one Rust compile cache) — the eval's Med-value use case, still unowned.
-22. *(brainstorm)* Second-machine cold tier ADR — flips DiscordSync G1's offsite options; owner-gated, no motion until §f.1 resolves "adopt".
-23. *(brainstorm)* restic-over-S3 vs Borg-over-SSH honest re-comparison if the S3 question reopens — measured, not vibes.
-24. *(brainstorm)* Garage vs RustFS head-to-head on the same trial harness if adoption proceeds (eval doc already names Garage the lower-risk move; a same-harness comparison would make it evidence).
-25. *(brainstorm)* Swift/WebDAV/SFTP API surfaces of RustFS — untested; relevant only for exotic consumers, none known.
-26. *(brainstorm)* Multi-volume EC behavior test — expected outcome is "confirm reject", but one 2-volume scratch run would replace the assumption with data.
-27. *(brainstorm)* RustFS upgrade path (1.0.0 → future minors): does the data format migrate in place; is there a documented downgrade story? Unknown as of this session.
-28. *(brainstorm)* Auth hardening review before any LAN exposure: module ships well-known-default-credential guard (preStart) but no builtin rotation story; check IAM key rotation workflow.
-29. *(brainstorm)* Backup-integration shape IF adopted: is the S3 volume itself btrbk-snapped, restic-ed, or trusted to bitrot protection? Needs an explicit answer in the runbook, not an assumption.
-30. *(brainstorm)* Post-adopt load-shaping: the DAS `8-1` link carries the pool — confirm S3 traffic patterns (large sequential GETs) can't recreate the 2026-08-22 mid-write disconnect class via USB power/thermal stress.
+20. _(brainstorm)_ MacBook backup leg on RustFS (darwin build check) — only if the ratified consumer is "MacBook restic target".
+21. _(brainstorm)_ Shared sccache S3 backend (MacBook + evo-x2 one Rust compile cache) — the eval's Med-value use case, still unowned.
+22. _(brainstorm)_ Second-machine cold tier ADR — flips DiscordSync G1's offsite options; owner-gated, no motion until §f.1 resolves "adopt".
+23. _(brainstorm)_ restic-over-S3 vs Borg-over-SSH honest re-comparison if the S3 question reopens — measured, not vibes.
+24. _(brainstorm)_ Garage vs RustFS head-to-head on the same trial harness if adoption proceeds (eval doc already names Garage the lower-risk move; a same-harness comparison would make it evidence).
+25. _(brainstorm)_ Swift/WebDAV/SFTP API surfaces of RustFS — untested; relevant only for exotic consumers, none known.
+26. _(brainstorm)_ Multi-volume EC behavior test — expected outcome is "confirm reject", but one 2-volume scratch run would replace the assumption with data.
+27. _(brainstorm)_ RustFS upgrade path (1.0.0 → future minors): does the data format migrate in place; is there a documented downgrade story? Unknown as of this session.
+28. _(brainstorm)_ Auth hardening review before any LAN exposure: module ships well-known-default-credential guard (preStart) but no builtin rotation story; check IAM key rotation workflow.
+29. _(brainstorm)_ Backup-integration shape IF adopted: is the S3 volume itself btrbk-snapped, restic-ed, or trusted to bitrot protection? Needs an explicit answer in the runbook, not an assumption.
+30. _(brainstorm)_ Post-adopt load-shaping: the DAS `8-1` link carries the pool — confirm S3 traffic patterns (large sequential GETs) can't recreate the 2026-08-22 mid-write disconnect class via USB power/thermal stress.
 
-*(Stopping at 30 rather than padding to 50: items 31–50 would be repetition or fleet-wide speculation beyond this session's observed scope. The skill's guidance is explicit — a larger N is a brainstorm, not a commitment list.)*
+_(Stopping at 30 rather than padding to 50: items 31–50 would be repetition or fleet-wide speculation beyond this session's observed scope. The skill's guidance is explicit — a larger N is a brainstorm, not a commitment list.)_
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
@@ -101,4 +101,4 @@ Grounded in THIS session only; tags per the TODO system. Only §f.1 is harvested
 
 ---
 
-*Report authored 2026-10-06 00:47 CEST. Point-in-time snapshot; §f.1 self-harvested to `docs/todo/storage.md` at authoring time. All other §f items deliberately not harvested (recorded above with reasons). No commit made (harness contract: no commit without explicit instruction; auto-commit daemon will sweep this file).*
+_Report authored 2026-10-06 00:47 CEST. Point-in-time snapshot; §f.1 self-harvested to `docs/todo/storage.md` at authoring time. All other §f items deliberately not harvested (recorded above with reasons). No commit made (harness contract: no commit without explicit instruction; auto-commit daemon will sweep this file)._

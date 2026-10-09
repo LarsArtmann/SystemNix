@@ -78,7 +78,7 @@ Nothing catastrophic landed. Ranked close calls, honestly:
 ## f) Next things (harvested at authoring time → docs/todo/services.md + TODO_LIST.md [ready] rows)
 
 1. [blocked:user] **Owner executes the 7-step go-live checklist** (PAT mint → push → test/switch → key fetch → sops → evo-x2 flip → convergence verify) — closing message of this session; also net-vpn.md Phase 2.
-2. [ready] **Identify the /tmp/pbx-toplevel-* deletion actor + harden the anchors** — 2 occurrences (14:57–15:33 current-only; 15:34–15:47 BOTH links); no repo script deletes them; set an inotify watch at occurrence #3's first sign; propose relocating anchors to per-user gcroots (owner-gated half).
+2. [ready] __Identify the /tmp/pbx-toplevel-_ deletion actor + harden the anchors_* — 2 occurrences (14:57–15:33 current-only; 15:34–15:47 BOTH links); no repo script deletes them; set an inotify watch at occurrence #3's first sign; propose relocating anchors to per-user gcroots (owner-gated half).
 3. [ready] **pbx: roots-restore one-liner into the runbook's stage-first block** (netbird-deploy.md Post-deploy) so the gremlin costs one paste, not one investigation.
 4. [ready] **pbx: deploy-freshness exit-2 prints the restore one-liner** (target derivable from the ledger baseline + flake eval) — self-healing guard UX.
 5. [ready] **pbx: secrets-preflight derives expected-local names from generate.sh** (catches cat-read secrets like netbird_api_pat; unit-ref scanning stays for the host-side paste).

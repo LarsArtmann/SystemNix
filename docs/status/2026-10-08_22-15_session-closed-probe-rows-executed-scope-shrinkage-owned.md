@@ -28,11 +28,12 @@
 
 ## §d — TOTALLY FUCKED UP / MISTAKES (this segment + session-wide ledger)
 
-*This segment:*
+_This segment:_
+
 1. **Edit-tool process friction:** three edit attempts failed on the mtime guard because I re-checked file state with bash `sed` instead of the View tool (which is what clears the guard). Several wasted round-trips on a purely mechanical rule.
 2. **Plan-scope shrinkage** (§b1) — announced five, delivered three, said nothing at the moment of reduction.
 
-*Session-wide (already documented in prior reports, consolidated):*
+_Session-wide (already documented in prior reports, consolidated):_
 3. **Three-strike claims-before-checks:** class-6 "eval-enforced" (falsified by flake check → groupBy bug), stale probe label, ledger-staleness claim. All caught and corrected; all were avoidable by reading/running before writing.
 4. **Premature-verification docs** and **fmt-after-deploy** (both in the 20-45 report §d).
 
@@ -59,4 +60,4 @@ Exactly §c's list — all already queued with sources on both surfaces; nothing
 
 1. **Backlog:** LEAVE QUEUED for the tq pool — no follow-up run.
 2. **Cadence:** CONTINUOUS — keep executing until natural completion; reports at arc ends. Noted for future sessions.
-3. **Q2 ("what do you think?") — my recommendation: YES, make it doctrine, but with a precise trigger so it is checkable and not blanket-applied.** The trap exists ONLY when the ConditionPathExists gate file is expected to APPEAR AT RUNTIME (not nix-managed): llama-chat's downloaded GGUF, forgejo's migration marker, future model/download/migration files. For units whose gate file is nix-managed (store paths, provisioner-created markers), a deploy RESTARTS the unit and re-evaluates the condition — an ensure timer there is pure waste. Proposed rule for `docs/agents/systemd.md`: *"A ConditionPathExists-gated unit whose gate file appears at runtime (downloads, external migrations — anything not created by the Nix activation itself) MUST carry a convergence timer (the `llama-chat-ensure` pattern); units with activation-created gate files must NOT (deploy restart is the re-evaluation point)."* Sweep candidates at implementation time: grep `ConditionPathExists` across modules, classify each gate file by creator. Queued as a `[ready]` row (docs/todo/services.md + TODO_LIST) so the tq pool can dispatch it; not executed now per Q1.
+3. **Q2 ("what do you think?") — my recommendation: YES, make it doctrine, but with a precise trigger so it is checkable and not blanket-applied.** The trap exists ONLY when the ConditionPathExists gate file is expected to APPEAR AT RUNTIME (not nix-managed): llama-chat's downloaded GGUF, forgejo's migration marker, future model/download/migration files. For units whose gate file is nix-managed (store paths, provisioner-created markers), a deploy RESTARTS the unit and re-evaluates the condition — an ensure timer there is pure waste. Proposed rule for `docs/agents/systemd.md`: _"A ConditionPathExists-gated unit whose gate file appears at runtime (downloads, external migrations — anything not created by the Nix activation itself) MUST carry a convergence timer (the `llama-chat-ensure` pattern); units with activation-created gate files must NOT (deploy restart is the re-evaluation point)."_ Sweep candidates at implementation time: grep `ConditionPathExists` across modules, classify each gate file by creator. Queued as a `[ready]` row (docs/todo/services.md + TODO_LIST) so the tq pool can dispatch it; not executed now per Q1.

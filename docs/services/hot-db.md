@@ -111,13 +111,13 @@ pattern there = `serviceConfig.<X>Directory = mkForce []` + tmpfiles
 existence + `+`-prefixed ExecStartPre chown). Rendered-config sweep of the
 five wave services (evo-x2, 2026-10-01):
 
-| Service          | Settings carrying the trap                                        | Consequence at cutover                                   |
-| ---------------- | ----------------------------------------------------------------- | -------------------------------------------------------- |
-| gatus            | `StateDirectory=gatus` + `RuntimeDirectory=gatus`                 | hard-requires `var-lib-gatus.mount`                      |
-| dnsblockd        | `StateDirectory=dnsblockd` + `WorkingDirectory=/var/lib/dnsblockd` | hard-requires `var-lib-dnsblockd.mount`                  |
-| pocket-id        | `WorkingDirectory=/var/lib/pocket-id`                             | hard-requires `var-lib-pocket-id.mount`                  |
-| browser-history  | `StateDirectory=browser-history` + `WorkingDirectory=/var/lib/browser-history` | hard-requires `var-lib-browser-history.mount` |
-| discordsync      | none (`ReadWritePaths` is path-based, not mount-required)         | degrades gracefully like caddy                            |
+| Service         | Settings carrying the trap                                                     | Consequence at cutover                        |
+| --------------- | ------------------------------------------------------------------------------ | --------------------------------------------- |
+| gatus           | `StateDirectory=gatus` + `RuntimeDirectory=gatus`                              | hard-requires `var-lib-gatus.mount`           |
+| dnsblockd       | `StateDirectory=dnsblockd` + `WorkingDirectory=/var/lib/dnsblockd`             | hard-requires `var-lib-dnsblockd.mount`       |
+| pocket-id       | `WorkingDirectory=/var/lib/pocket-id`                                          | hard-requires `var-lib-pocket-id.mount`       |
+| browser-history | `StateDirectory=browser-history` + `WorkingDirectory=/var/lib/browser-history` | hard-requires `var-lib-browser-history.mount` |
+| discordsync     | none (`ReadWritePaths` is path-based, not mount-required)                      | degrades gracefully like caddy                |
 
 Decision framing per wave (do NOT silently inherit either way): for
 DATABASE-backed services the implicit hard-require is arguably CORRECT

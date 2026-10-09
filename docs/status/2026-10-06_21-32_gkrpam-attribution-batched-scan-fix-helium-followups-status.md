@@ -19,15 +19,15 @@
 
 ### b.1 gkr-pam burst attribution — CLOSED (queue row, desktop.md row 52)
 
-| Question | Answer | Evidence |
-|---|---|---|
-| Who logs the bursts? | `(systemd-stdio-bridge)[<pid>]` transient SYSTEM units `run-p<pid>-i<seq>.service`, root-owned, `login` PAM stack | `journalctl -o verbose -g "couldn.t unlock"` → `_SYSTEMD_UNIT=run-p3301524-i3323539.service`, `_EXE=…systemd-executor`, `pam_unix(login:session) opened for lars` |
-| Who spawns them? | **`system-health-metrics.service`** | live ps capture: `systemd-run -M.host -PGq --wait -pUser=lars -pPAMName=login systemd-stdio-bridge --user --quiet`, pid 3407337, cgroup `system-health-metrics.service` — the internal mechanics of `systemctl --machine=lars@.host --user` |
-| Why one line per call? | `pam_gnome_keyring auto_start` runs in every `login` PAM session with **no authtok** (scripted, passwordless) → promptless failure log. `/etc/pam.d/login` is the ONLY stack carrying it; sddm substacks `login`, which is why real logins also log it (with the desync message) | `/etc/pam.d/login` grep; `grep -Rl gnome_keyring /etc/pam.d/` → login only |
-| Why ~28/2 min? | `scan_inactive_units` (system-health.nix) does per-unit `is-active`/`show -p Type`/`is-enabled <socket>` over ~28 enabled user services, every 2-min timer tick | code read + burst/burst-start journal correlation (18:49:35, 18:51:34, 18:53:35, each ~26-30 lines); timer `OnUnitActiveSec = cfg.interval`; each burst preceded by "Health check completed checks_count=41" |
-| The "2 pre-login lines at 15:16:04"? | SAME pattern — metrics timer firing during early login (previous boot); includes `gnome-keyring-daemon started properly` (auto_start spawned the running daemon, pid 16210) | `journalctl -b -1 --since 15:15:50` |
-| Independent of the desync? | Yes — no authtok either way; would persist even after keyring alignment | mechanism analysis |
-| Method note | The original row suggested dbus-broker stats; **journal verbose fields alone sufficed** (`_SYSTEMD_UNIT` names the transient unit; a 135s ps-sampling loop caught the caller's cgroup live) | /home/lars/.cache/gkr-burst-capture.txt |
+| Question                             | Answer                                                                                                                                                                                                                                                                           | Evidence                                                                                                                                                                                                                                    |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Who logs the bursts?                 | `(systemd-stdio-bridge)[<pid>]` transient SYSTEM units `run-p<pid>-i<seq>.service`, root-owned, `login` PAM stack                                                                                                                                                                | `journalctl -o verbose -g "couldn.t unlock"` → `_SYSTEMD_UNIT=run-p3301524-i3323539.service`, `_EXE=…systemd-executor`, `pam_unix(login:session) opened for lars`                                                                           |
+| Who spawns them?                     | **`system-health-metrics.service`**                                                                                                                                                                                                                                              | live ps capture: `systemd-run -M.host -PGq --wait -pUser=lars -pPAMName=login systemd-stdio-bridge --user --quiet`, pid 3407337, cgroup `system-health-metrics.service` — the internal mechanics of `systemctl --machine=lars@.host --user` |
+| Why one line per call?               | `pam_gnome_keyring auto_start` runs in every `login` PAM session with **no authtok** (scripted, passwordless) → promptless failure log. `/etc/pam.d/login` is the ONLY stack carrying it; sddm substacks `login`, which is why real logins also log it (with the desync message) | `/etc/pam.d/login` grep; `grep -Rl gnome_keyring /etc/pam.d/` → login only                                                                                                                                                                  |
+| Why ~28/2 min?                       | `scan_inactive_units` (system-health.nix) does per-unit `is-active`/`show -p Type`/`is-enabled <socket>` over ~28 enabled user services, every 2-min timer tick                                                                                                                  | code read + burst/burst-start journal correlation (18:49:35, 18:51:34, 18:53:35, each ~26-30 lines); timer `OnUnitActiveSec = cfg.interval`; each burst preceded by "Health check completed checks_count=41"                                |
+| The "2 pre-login lines at 15:16:04"? | SAME pattern — metrics timer firing during early login (previous boot); includes `gnome-keyring-daemon started properly` (auto_start spawned the running daemon, pid 16210)                                                                                                      | `journalctl -b -1 --since 15:15:50`                                                                                                                                                                                                         |
+| Independent of the desync?           | Yes — no authtok either way; would persist even after keyring alignment                                                                                                                                                                                                          | mechanism analysis                                                                                                                                                                                                                          |
+| Method note                          | The original row suggested dbus-broker stats; **journal verbose fields alone sufficed** (`_SYSTEMD_UNIT` names the transient unit; a 135s ps-sampling loop caught the caller's cgroup live)                                                                                      | /home/lars/.cache/gkr-burst-capture.txt                                                                                                                                                                                                     |
 
 ### b.2 The fix — implemented, built, verified at every level except the live switch
 
@@ -36,7 +36,7 @@
 - **Batched**: ONE `systemctl … show -p Id -p ActiveState -p Type unit1 unit2 …` for all candidates (parsed into assoc arrays) + ONE `show -p Id -p UnitFileState` for the sockets of surviving candidates → **2-3 machined bridges per scan instead of ~30**; also kills ~26 throwaway logind session scopes per tick (session-2696→2714 observed created per burst).
 - **Semantics parity**: same skip rules (active → skip; oneshot → skip; enabled socket → exempt), same fail-open-on-unreachable behavior (all candidates counted, exactly like the old per-unit probe failures), same `INACTIVE_SCRAPE_ERRORS` trip on list failure. `activating|reloading` explicitly skipped (flap-safe superset of `is-active` exit-0 set).
 - **Verified**: bash syntax + fixture-tested all branches (active/oneshot/activating/reloading/socket-enabled/socket-static/missing → only e.service-class counted); toplevel built green twice (shellcheck + bash -n run inside `writeShellApplication`); **live-verified `show` prints dash-named units UNESCAPED** (`Id=activitywatch.service`, zero `\x2d`) so candidate↔Id matching holds — this was checked because queue rows 160-162 document a PRE-EXISTING `\x2d` escape bug at the old line 1488 that makes node_exporter reject the whole textfile (different emission; my region clean; verification post-deploy must parse the `.prom` file directly, not trust node_exporter).
-- **Rejected design, documented in-module**: direct user-bus (`XDG_RUNTIME_DIR` as root) — the unit's `CapabilityBoundingSet = CAP_DAC_READ_SEARCH CAP_FOWNER` bars connecting to the 0660 `/run/user/<uid>/bus` socket (socket-connect is a DAC *write* check) and any setuid drop (no CAP_SETUID). Would have silently fallen back forever. First version was built before this was caught — see §d.1.
+- **Rejected design, documented in-module**: direct user-bus (`XDG_RUNTIME_DIR` as root) — the unit's `CapabilityBoundingSet = CAP_DAC_READ_SEARCH CAP_FOWNER` bars connecting to the 0660 `/run/user/<uid>/bus` socket (socket-connect is a DAC _write_ check) and any setuid drop (no CAP_SETUID). Would have silently fallen back forever. First version was built before this was caught — see §d.1.
 
 ### b.3 Helium login-instance audit — CLOSED (queue row, desktop.md row 55)
 
@@ -50,12 +50,12 @@ Lock moved to rev `f091af3` (parallel session). Toplevel builds green WITH the s
 
 ### b.5 Owner decisions — all three landed + docs updated
 
-| Decision | Answer | Action taken |
-|---|---|---|
-| Keyring endgame | **Align via seahorse** | seahorse launched into the session (`seahorse-keyring-align.service`, verified active) with 3-step instructions. **Not completed by the owner yet** — see §c.1 |
-| Workspace fate | **Keep both slots** (after a what-was-removed explanation round) | no config change; desktop.md row 54 closed with the decision |
-| Trash/backup retention | **Manual** — keep until the owner calls the purge | desktop.md row 53 annotated; no auto-purge anywhere |
-| Passkey ceremony (bonus Q) | **Later** | stays queued [blocked:user] (row 58 / queue 623) |
+| Decision                   | Answer                                                           | Action taken                                                                                                                                                   |
+| -------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Keyring endgame            | **Align via seahorse**                                           | seahorse launched into the session (`seahorse-keyring-align.service`, verified active) with 3-step instructions. **Not completed by the owner yet** — see §c.1 |
+| Workspace fate             | **Keep both slots** (after a what-was-removed explanation round) | no config change; desktop.md row 54 closed with the decision                                                                                                   |
+| Trash/backup retention     | **Manual** — keep until the owner calls the purge                | desktop.md row 53 annotated; no auto-purge anywhere                                                                                                            |
+| Passkey ceremony (bonus Q) | **Later**                                                        | stays queued [blocked:user] (row 58 / queue 623)                                                                                                               |
 
 ### b.6 Docs landed
 
@@ -139,16 +139,16 @@ Deploy attempt at ~20:35 passed all 13 pre-deploy checks (76 passed / 0 failed) 
 
 ### Harvest ledger (per the AGENTS self-harvest rule)
 
-| §f item | TODO_LIST queue | domain library |
-|---|---|---|
-| f.1-2 deploy+verify | added (monitoring section) | docs/todo/monitoring.md added |
-| f.7 node_exporter spam | added | added |
-| f.8 truncated journal | added | added |
-| f.3 CHANGELOG | deliberately not harvested — executes at deploy time with f.1 | — |
-| f.4-5 | pre-existing rows 50/51 (annotated, not duplicated) | pre-existing |
-| f.9 hermes dup key | deliberately not harvested — services.md mid-edit by a concurrent session (§e.3) | — |
-| f.6 | pre-existing watch item (browser-history.nix comment) | — |
-| f.10, f.14, f.15-17 | not harvested — suggestions/improvements, owner-gated prioritization (Pareto call) | — |
+| §f item                | TODO_LIST queue                                                                    | domain library                |
+| ---------------------- | ---------------------------------------------------------------------------------- | ----------------------------- |
+| f.1-2 deploy+verify    | added (monitoring section)                                                         | docs/todo/monitoring.md added |
+| f.7 node_exporter spam | added                                                                              | added                         |
+| f.8 truncated journal  | added                                                                              | added                         |
+| f.3 CHANGELOG          | deliberately not harvested — executes at deploy time with f.1                      | —                             |
+| f.4-5                  | pre-existing rows 50/51 (annotated, not duplicated)                                | pre-existing                  |
+| f.9 hermes dup key     | deliberately not harvested — services.md mid-edit by a concurrent session (§e.3)   | —                             |
+| f.6                    | pre-existing watch item (browser-history.nix comment)                              | —                             |
+| f.10, f.14, f.15-17    | not harvested — suggestions/improvements, owner-gated prioritization (Pareto call) | —                             |
 
 **Session files touched:** `modules/nixos/services/system-health.nix` (the fix), `TODO_LIST.md`, `docs/todo/desktop.md`, `docs/todo/monitoring.md`, `docs/agents/monitoring.md`, this report. All committed by the auto-commit daemon. Working tree at 21:32 holds only OTHER sessions' files (`platforms/nixos/secrets/geometrikks.yaml`, `tests/test-hermes.nix`).
 

@@ -74,7 +74,7 @@ Four concrete misses, all mine, all recovered:
 16. AGENTS.md STATUS line v0.3.2 → current release (owning session's; spot-fix if still stale at next touch).
 17. SystemNix deployment leg when §g-3 lands: sops token, systemd unit, port registry entry, gatus check (23-34 §f-19).
 
-*Harvest note: §f is deliberately NOT harvested into SystemNix TODO_LIST.md — items 2-5, 9 are owner-gated on the §g answers, the rest are go-taskqueue-repo work that repo's own TODO system owns (same recorded rationale as the 23-34 report). Re-harvest after the owner answers §g.*
+_Harvest note: §f is deliberately NOT harvested into SystemNix TODO_LIST.md — items 2-5, 9 are owner-gated on the §g answers, the rest are go-taskqueue-repo work that repo's own TODO system owns (same recorded rationale as the 23-34 report). Re-harvest after the owner answers §g._
 
 ## g) Questions I cannot figure out myself
 
@@ -86,4 +86,4 @@ Four concrete misses, all mine, all recovered:
 
 **Session verdict:** all non-gated close-out work is done and per-leg verified green; the two self-inflicted wounds (a premature GREEN claim, a byte-math misattribution) were caught, corrected in the surfaces they were written in, and encoded as process rules. The pipeline itself needed nothing — `clipStr` was the only code touched, and it came out STRONGER than the minimum de-branch (real rune-safety + a test that proves it). What remains is one quiescent ci-local pass, owner decisions, and the harvest.
 
-*Awaiting instructions.*
+_Awaiting instructions._

@@ -54,7 +54,7 @@
 9. Verify `docs/services/dnsblockd.md` names `dns-update.sh` as the canonical drift fix (not read this session — runbook-first violation d.2).
 10. Carried from 00:34: pre-deploy check 1b extension (pkgs/ + secrets/); CI builds toplevel on lock pushes.
 
-*Deliberately NOT harvested (per TODO rules): the deploy chain (b.1/c.1) is user-gated and in-flight; carried 00:34 items already live in their domain files.*
+_Deliberately NOT harvested (per TODO rules): the deploy chain (b.1/c.1) is user-gated and in-flight; carried 00:34 items already live in their domain files._
 
 ## g) QUESTIONS ONLY YOU CAN ANSWER (3)
 
@@ -64,4 +64,4 @@
 
 ---
 
-*Report written from this session's run log only. In-flight at authoring: `--keep-going` toplevel build (job 014), parallel session's telephony/lint check builds. Tree at report time: my fmt fix (test file) uncommitted; another session's report staged.*
+_Report written from this session's run log only. In-flight at authoring: `--keep-going` toplevel build (job 014), parallel session's telephony/lint check builds. Tree at report time: my fmt fix (test file) uncommitted; another session's report staged._

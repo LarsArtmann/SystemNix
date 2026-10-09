@@ -46,28 +46,28 @@
 
 ## f) NEXT (up to 50; scoped to this session + what it noticed; ★ = NEW this session, rest already tracked)
 
-| # | Item | Status pointer |
-|---|------|----------------|
-| 1 | ★ `deploy.sh --wait-for-pressure <min>` with target-live guard | NEW → queued (pipeline.md + TODO_LIST) |
-| 2 | ★ `[watch]` toFile fixture `path … is not valid` under GC/storm; self-heal protocol | NEW → queued (pipeline.md) |
-| 3 | Drop-check the 4 module-surface shims (incl. my `discordsync.nix` one) — likely droppable NOW | queued: 01-25 report row |
-| 4 | DiscordSync upstream hash fix + shim drop (both sites) | queued: row 111 |
-| 5 | Post-deploy health pass for the wave (discordsync catch-up writer, Gatus, auth vHosts) — owner unclear, see §g3 | NEW (action, not queued) |
-| 6 | Row 741/754 nested art-dupl FOD check — tonight's 25-drv build list showed NO art-dupl FODs; candidate for closure via re-dispatch protocol | queued: TODO_LIST 754 |
-| 7 | Row 111's remaining ~19 repos of the a7868a7 sweep | queued: row 111 |
-| 8 | bank-sync input probe (never directly verified this session) | NEW (small) |
-| 9 | mr-sync cmdguard/v4 classification (blocked:push) | queued: upstream.md |
-| 10 | branching-flow 0.6.4 version-sync push + shim drop | queued: upstream.md |
-| 11 | browser-history empty-dashboard chain (cqrs-htmx push → deploy → verify) | queued: upstream.md |
-| 12 | Domains repo push (CAA reconciliation) | queued: upstream.md |
-| 13 | nixpkgs netbird `ManagementUrl` module fix (verify-before-filing first) | queued: upstream.md |
-| 14 | monitor365 `/ds/` cache-policy follow-ups | queued: upstream.md |
-| 15 | Catalog integration-subdomain warning (21 names) | queued: services.md/TODO_LIST |
-| 16 | discordsync-db-backup stalled-dump failure catch-up (OnFailure retry) | queued: storage.md |
-| 17 | discordsync-attachments-migrate stub-fixture test BEFORE its deploy trigger | queued: storage.md |
-| 18 | Post-crash resumable-reader pause automation (freeze-6 rule (a)) | queued: stability.md |
-| 19 | Freeze #8–#13 taxonomy entries for stability.md | queued: stability.md |
-| 20 | tq-agent-pool +97 GB write attribution → dispatch gating (freeze-#23 conditions live) | queued: stability.md lineage |
+| #  | Item                                                                                                                                        | Status pointer                         |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 1  | ★ `deploy.sh --wait-for-pressure <min>` with target-live guard                                                                              | NEW → queued (pipeline.md + TODO_LIST) |
+| 2  | ★ `[watch]` toFile fixture `path … is not valid` under GC/storm; self-heal protocol                                                         | NEW → queued (pipeline.md)             |
+| 3  | Drop-check the 4 module-surface shims (incl. my `discordsync.nix` one) — likely droppable NOW                                               | queued: 01-25 report row               |
+| 4  | DiscordSync upstream hash fix + shim drop (both sites)                                                                                      | queued: row 111                        |
+| 5  | Post-deploy health pass for the wave (discordsync catch-up writer, Gatus, auth vHosts) — owner unclear, see §g3                             | NEW (action, not queued)               |
+| 6  | Row 741/754 nested art-dupl FOD check — tonight's 25-drv build list showed NO art-dupl FODs; candidate for closure via re-dispatch protocol | queued: TODO_LIST 754                  |
+| 7  | Row 111's remaining ~19 repos of the a7868a7 sweep                                                                                          | queued: row 111                        |
+| 8  | bank-sync input probe (never directly verified this session)                                                                                | NEW (small)                            |
+| 9  | mr-sync cmdguard/v4 classification (blocked:push)                                                                                           | queued: upstream.md                    |
+| 10 | branching-flow 0.6.4 version-sync push + shim drop                                                                                          | queued: upstream.md                    |
+| 11 | browser-history empty-dashboard chain (cqrs-htmx push → deploy → verify)                                                                    | queued: upstream.md                    |
+| 12 | Domains repo push (CAA reconciliation)                                                                                                      | queued: upstream.md                    |
+| 13 | nixpkgs netbird `ManagementUrl` module fix (verify-before-filing first)                                                                     | queued: upstream.md                    |
+| 14 | monitor365 `/ds/` cache-policy follow-ups                                                                                                   | queued: upstream.md                    |
+| 15 | Catalog integration-subdomain warning (21 names)                                                                                            | queued: services.md/TODO_LIST          |
+| 16 | discordsync-db-backup stalled-dump failure catch-up (OnFailure retry)                                                                       | queued: storage.md                     |
+| 17 | discordsync-attachments-migrate stub-fixture test BEFORE its deploy trigger                                                                 | queued: storage.md                     |
+| 18 | Post-crash resumable-reader pause automation (freeze-6 rule (a))                                                                            | queued: stability.md                   |
+| 19 | Freeze #8–#13 taxonomy entries for stability.md                                                                                             | queued: stability.md                   |
+| 20 | tq-agent-pool +97 GB write attribution → dispatch gating (freeze-#23 conditions live)                                                       | queued: stability.md lineage           |
 
 (Remaining ~30 slots deliberately NOT filled with repo-wide items — this report's scope is this session; `docs-health` HARVEST can widen later.)
 
@@ -79,4 +79,4 @@
 
 ---
 
-*Self-harvest at authoring: §f1 + §f2 landed in `docs/todo/pipeline.md` (+ §f1 one-liner in `TODO_LIST.md`); §f3–§f20 were already queued by prior sessions (verified present before writing — no duplication).*
+_Self-harvest at authoring: §f1 + §f2 landed in `docs/todo/pipeline.md` (+ §f1 one-liner in `TODO_LIST.md`); §f3–§f20 were already queued by prior sessions (verified present before writing — no duplication)._

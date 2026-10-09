@@ -15,14 +15,14 @@
 
 Evidence base actually read this session (everything else about tq is assumption, see §d):
 
-| Fact used in design | Source verified |
-| --- | --- |
-| `POST /api/v1/tasks` route exists; `enqueueRequest{project,type,payload,priority,maxAttempts,notBefore,deps,dedupKey}` wire contract; 1 MiB body cap | `internal/httpapi/httpapi.go:79,177-188,213` |
-| DedupKey idempotency ("re-enqueue returns the stored task") | README (Quickstart) |
-| Priority bands backlog 0-99 / hot 100-149 / machine 150+ (ADR-015) | README (Priority system) |
-| Agent pool rails: `--project-exclusive`, clean-tree guard, `.tq-agents` autonomy, verify gates **pinned at enqueue time** (`--verify name=cmd`), `tq doctor --hygiene` stale-pin audit, `--review --review-autofix`, daily budget, per-task output journal, SSE board | README (Agent pool, Command map) |
-| Loopback `tq serve` needs no token; token required only for non-loopback binds | README (Serving beyond localhost) |
-| No `allowWrites` gate inside `internal/httpapi` (enqueue API ≠ dashboard write opt-in) | grep of `httpapi.go` |
+| Fact used in design                                                                                                                                                                                                                                                   | Source verified                              |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `POST /api/v1/tasks` route exists; `enqueueRequest{project,type,payload,priority,maxAttempts,notBefore,deps,dedupKey}` wire contract; 1 MiB body cap                                                                                                                  | `internal/httpapi/httpapi.go:79,177-188,213` |
+| DedupKey idempotency ("re-enqueue returns the stored task")                                                                                                                                                                                                           | README (Quickstart)                          |
+| Priority bands backlog 0-99 / hot 100-149 / machine 150+ (ADR-015)                                                                                                                                                                                                    | README (Priority system)                     |
+| Agent pool rails: `--project-exclusive`, clean-tree guard, `.tq-agents` autonomy, verify gates **pinned at enqueue time** (`--verify name=cmd`), `tq doctor --hygiene` stale-pin audit, `--review --review-autofix`, daily budget, per-task output journal, SSE board | README (Agent pool, Command map)             |
+| Loopback `tq serve` needs no token; token required only for non-loopback binds                                                                                                                                                                                        | README (Serving beyond localhost)            |
+| No `allowWrites` gate inside `internal/httpapi` (enqueue API ≠ dashboard write opt-in)                                                                                                                                                                                | grep of `httpapi.go`                         |
 
 ---
 
@@ -30,7 +30,7 @@ Evidence base actually read this session (everything else about tq is assumption
 
 1. **Comparison answer (Q1) delivered** — matrix + mental model + "they compose, not compete" conclusion + explicit tie to the existing SigNoz deployment. Complete as a conversational answer.
 2. **Pipeline design v1 (Q2) delivered end-to-end on paper:** capture (client `error`/`unhandledrejection`, beacon, session cap), enrichment (request ID, OTel trace → SigNoz deep link, release SHA, route pattern, sanitized body), fingerprinting (`sha256(kind|msg|top-frame|repo)`), storm control (`dedupKey = fp:YYYY-MM-DD` → N identical errors = 1 task/day; recurrence post-completion = new task = regression signal), priority mapping (first occurrence 120/hot, regression 150/machine), `maxAttempts: 2`, tq-down fallback to structured logging, redact-before-enqueue rule, build order (server-side first), and the free-rails inventory.
-3. **Every tq API claim in the design traced to source or README** (table above) — no invented routes or fields in the *enqueue contract itself*.
+3. **Every tq API claim in the design traced to source or README** (table above) — no invented routes or fields in the _enqueue contract itself_.
 4. **Session discipline partially honored:** `rg -il` pre-read across SystemNix `docs/brainstorming/` + `docs/planning/` WAS run before designing (the 2026-10-05 rule), and go-taskqueue's live code was grepped rather than trusted from docs.
 
 ## b) PARTIALLY DONE
@@ -52,7 +52,7 @@ Evidence base actually read this session (everything else about tq is assumption
 
 Nothing shipped, nothing broken in a runtime sense, no secret touched, no tree damage. But ranked design-integrity defects — the things a future implementer would trip over:
 
-1. **The wire example is probably wrong about `verify`.** I put a `verify` command inside `payload.contract`. The README is explicit that agent verify gates are **pinned at enqueue time** via `--verify name=cmd` and audited by `tq doctor --hygiene` against the repo's gate ladder — i.e. verify is an enqueue-surface concept, not a payload field. I invented a schema for the one part I hadn't read (the agent task payload contract) and presented it with a JSON example as if verified. This is exactly the 2026-09-18 class: *a close-out/design claim must answer the question asked, from the surface that owns it* — my enqueue example answered from imagination.
+1. **The wire example is probably wrong about `verify`.** I put a `verify` command inside `payload.contract`. The README is explicit that agent verify gates are **pinned at enqueue time** via `--verify name=cmd` and audited by `tq doctor --hygiene` against the repo's gate ladder — i.e. verify is an enqueue-surface concept, not a payload field. I invented a schema for the one part I hadn't read (the agent task payload contract) and presented it with a JSON example as if verified. This is exactly the 2026-09-18 class: _a close-out/design claim must answer the question asked, from the surface that owns it_ — my enqueue example answered from imagination.
 2. **Designed against a repo without reading its `AGENTS.md` or `DOMAIN_LANGUAGE.md`.** Both exist in go-taskqueue; the global Project Discovery checklist mandates both before writing code there, and I proposed a module (`errtask`) and vocabulary without them. Rule violated, not rule unknown.
 3. **Unverified 2026 product-state claims stated flatly in Q1** ("PostHog OSS deprecated", "Sentry self-hosted de-emphasized"). True to my training data; unverified against today. The verify-external-claims skill exists precisely for this. Not a lie — I believe them — but "believed, unverified, stated without hedge" is the overconfident cousin.
 4. **Search-results-dismissed-unread** (the 5 planning hits): pattern-matched the filenames as unrelated Pareto plans without opening them. The 2026-10-05 Pocket-ID-HA incident was exactly this shape.
@@ -73,9 +73,10 @@ Nothing shipped, nothing broken in a runtime sense, no secret touched, no tree d
 
 ## f) Next things (brainstorm-graded, grouped; owner picks)
 
-*Deliberately NOT harvested into SystemNix `TODO_LIST.md`/`docs/todo/*`: every actionable item below belongs to **go-taskqueue's** TODO system (the fix lives in that repo — domain-routing rule), and the top 3 are owner-gated questions anyway. Recorded here per the self-harvest rule's escape hatch. If ratified, they should be filed in go-taskqueue's `TODO_LIST.md` in that repo, not here.*
+_Deliberately NOT harvested into SystemNix `TODO_LIST.md`/`docs/todo/*`: every actionable item below belongs to **go-taskqueue's** TODO system (the fix lives in that repo — domain-routing rule), and the top 3 are owner-gated questions anyway. Recorded here per the self-harvest rule's escape hatch. If ratified, they should be filed in go-taskqueue's `TODO_LIST.md` in that repo, not here._
 
 **Close the design gaps (cheap, high impact):**
+
 1. Read `internal/bridge/` — is an event→task bridge already built? Report ghost-or-live.
 2. Read go-taskqueue `AGENTS.md` + `docs/DOMAIN_LANGUAGE.md`; correct vocabulary/module naming in the design.
 3. Read the agent task payload contract (executor code + `examples/api/`) and rewrite the wire example against reality.
@@ -113,7 +114,7 @@ Nothing shipped, nothing broken in a runtime sense, no secret touched, no tree d
 
 **Hardening / later:**
 29. Type tag or label on the dashboard for error-origin tasks (filterable incident view).
-30. Optional SigNoz→tq *manual* action button later — but never webhook-auto (query surface vs action surface split stands).
+30. Optional SigNoz→tq _manual_ action button later — but never webhook-auto (query surface vs action surface split stands).
 31. ROADMAP-fodder: fleet-wide rollout pattern for all LarsArtmann web apps once v1 proves out.
 
 ## g) Questions I cannot figure out myself
@@ -126,4 +127,4 @@ Nothing shipped, nothing broken in a runtime sense, no secret touched, no tree d
 
 **Session verdict:** two answers given, one design drafted and 80% grounded — the ungrounded 20% (agent payload schema, verify placement) was presented with the same confidence as the grounded part, which is the actual failure of this session. Fix is cheap: read before example.
 
-*Awaiting instructions.*
+_Awaiting instructions._

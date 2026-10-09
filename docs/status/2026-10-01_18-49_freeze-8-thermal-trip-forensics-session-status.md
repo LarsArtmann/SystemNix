@@ -13,28 +13,28 @@ The box is **re-entering the failure regime RIGHT NOW**: load average **94.95 an
 
 ## Executive summary
 
-Freeze #8 (2026-10-01 18:27:13, boot -1: Sep 29 09:56 → Oct 1 18:27, ~2.5 d uptime) is a **NEW class: hardware thermal trip** — not the #1–#7 IO/memory/PSI livelock family. The SoC (k10temp) rode **95–99.8°C all day** (hourly maxima 98.9–100.0°C since 08:00) with **zero thermal alerting** (gatus has an NVMe temp check only — verified `gatus-config.nix:791`, no CPU/k10temp check exists). At 18:27:02 it read 97.8°C; 11 s later the journal cut mid-write. No kernel panic (pstore empty + kdump armed at 128M with empty `/var/crash`), no shutdown sequence, journal truncated mid-write = **instant power loss with unflushed caches — the SMU/EC thermal-trip signature**. **Correction 19:20:** the btrfs `corrupt 1`/`corrupt 12` counters originally cited as torn-write proof are STALE (byte-identical at the pre-crash Sep 29 boot), and the NVMe drives are exonerated entirely — zero wr/rd/flush errors, zero controller resets (boots −4→0), and neither drive ever approached its composite trip point (84.8°C Samsung / 94.8°C Lexar) all day. Final-hour amplifiers: load1 up to **133 with only 4–29 runnable procs** (~100+ in D-state; IO PSI avg60 92–96% with idle disks — the Zone-6 phantom filter suppressed trips *by design*), and `amd_pstate=performance` (`boot.nix:97-102`, deliberately switched from "guided") keeping clocks pinned at the thermal ceiling. No fan is visible in hwmon at all (EC-controlled cooling cannot be verified from Linux — needs physical check).
+Freeze #8 (2026-10-01 18:27:13, boot -1: Sep 29 09:56 → Oct 1 18:27, ~2.5 d uptime) is a **NEW class: hardware thermal trip** — not the #1–#7 IO/memory/PSI livelock family. The SoC (k10temp) rode **95–99.8°C all day** (hourly maxima 98.9–100.0°C since 08:00) with **zero thermal alerting** (gatus has an NVMe temp check only — verified `gatus-config.nix:791`, no CPU/k10temp check exists). At 18:27:02 it read 97.8°C; 11 s later the journal cut mid-write. No kernel panic (pstore empty + kdump armed at 128M with empty `/var/crash`), no shutdown sequence, journal truncated mid-write = **instant power loss with unflushed caches — the SMU/EC thermal-trip signature**. **Correction 19:20:** the btrfs `corrupt 1`/`corrupt 12` counters originally cited as torn-write proof are STALE (byte-identical at the pre-crash Sep 29 boot), and the NVMe drives are exonerated entirely — zero wr/rd/flush errors, zero controller resets (boots −4→0), and neither drive ever approached its composite trip point (84.8°C Samsung / 94.8°C Lexar) all day. Final-hour amplifiers: load1 up to **133 with only 4–29 runnable procs** (~100+ in D-state; IO PSI avg60 92–96% with idle disks — the Zone-6 phantom filter suppressed trips _by design_), and `amd_pstate=performance` (`boot.nix:97-102`, deliberately switched from "guided") keeping clocks pinned at the thermal ceiling. No fan is visible in hwmon at all (EC-controlled cooling cannot be verified from Linux — needs physical check).
 
 ---
 
 ## Evidence chain (all verified this session)
 
-| # | Finding | Evidence |
-|---|---------|----------|
-| 1 | Journal cut mid-activity 18:27:13, no shutdown/panic lines | `journalctl -b -1` tail: routine traffic (ollama 200 OK 1.9ms) then nothing; truncated `system@00065cc9ec260c9d-…journal~` |
-| 2 | No kernel panic | `ConditionDirectoryNotEmpty=/sys/fs/pstore` unmet at boot 0 (pstore EMPTY despite `pstore.backend=efi pstore.max_reason=3`); kdump armed (`kexec_crash_size` = 134217728) with empty `/var/crash` |
-| 3 | Instant power loss, caches unflushed | journal file truncated mid-append. **RETRACTED 19:20** (post-session baseline check): the `corrupt 1`/`corrupt 12` btrfs counters first cited here are byte-identical at the pre-crash Sep 29 boot (boot −2) — stale, NOT crash-created. Only the truncated `journal~` file is torn-write evidence |
-| 4 | NOT the #1–#7 memory/IO class | At death: MemAvailable 46–49 GB, zram 74–75%, memory PSI avg10 0–0.4%, GPU busy 0–2% (SigNoz/ClickHouse, per-minute) |
-| 5 | SoC thermally saturated all day | k10temp (`pci0000:00:18.3` temp1) hourly max/avg 98.9/94.9 (08:00) → 100/94.5 (17:00) → 99.8/92 (18:00); last sample 97.8°C at 18:27:02; thermal_zone0 85–99°C alongside |
-| 6 | Guard exonerated | 187 trip/zone6 lines in boot -1, first Sep 29 21:36, **last 16:46:47** — 1h40m of silence before death; restore-capped since 16:05 (flm socket left DOWN) |
-| 7 | D-state wedge, not CPU saturation | load1 12.5 (18:04) → 133 (18:16) sustained ~100 → death; `node_procs_running` only 4–29; IO PSI avg60 92–96% (18:14–18:26) with idle disks → Zone-6 phantom filter correctly suppressed (stopping flm could not help) |
-| 8 | Deploys did NOT cause it | Deploy #1 17:44:52 = validation only (exit 0); deploy #2 17:54:11 **FAILED 18:03:14** — HaGeZi-dga7-raw FOD hash mismatch (matches the dirty `dns-blocklists.nix` + `dns-update.sh` in the tree); config never activated. No activation was running at death (unlike freezes #4/#5) |
-| 9 | No thermal monitoring existed | gatus temp check = `node_nvme_temperature_celsius` only; no k10temp/Tctl check anywhere in `gatus-config.nix` |
-| 10 | Governor pinned high | `amd_pstate=performance` at `platforms/nixos/system/boot.nix:97-102` (deliberate, from "guided") |
-| 11 | No fan in hwmon | zero `fan*_input` nodes across all hwmon chips (nvme, amdgpu, k10temp, mt7925, acpitz) |
-| 12 | Desktop-side noise, mostly chronic | quickshell 2× SIGABRT 17:59:42 (`init_platform` Qt fatal, coredumps present); DP-1 (LG HDR 4K) disconnect+reconnect 18:14:14; 34× `pam_unix(login:session)` closes in 1 s at 18:25:13 (**unexplained**); portal-gnome errors since 06:49; eMeet pixyd `status=0` 832×/day and IDLE-INHIBITED 822×/day = chronic noise, NOT pre-crash signals |
-| 13 | NIC survived the warm reboot | `lan-nic-watchdog`: eno1 present at 18:31 (the 2026-08-22 trap did not recur) |
-| 14 | The crash reboot was the boot-mirror's FIRST reboot | mirror activated 2026-09-30, verify pending — **not checked this session** (see §d) |
+| #  | Finding                                                    | Evidence                                                                                                                                                                                                                                                                                                                                     |
+| -- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | Journal cut mid-activity 18:27:13, no shutdown/panic lines | `journalctl -b -1` tail: routine traffic (ollama 200 OK 1.9ms) then nothing; truncated `system@00065cc9ec260c9d-…journal~`                                                                                                                                                                                                                   |
+| 2  | No kernel panic                                            | `ConditionDirectoryNotEmpty=/sys/fs/pstore` unmet at boot 0 (pstore EMPTY despite `pstore.backend=efi pstore.max_reason=3`); kdump armed (`kexec_crash_size` = 134217728) with empty `/var/crash`                                                                                                                                            |
+| 3  | Instant power loss, caches unflushed                       | journal file truncated mid-append. **RETRACTED 19:20** (post-session baseline check): the `corrupt 1`/`corrupt 12` btrfs counters first cited here are byte-identical at the pre-crash Sep 29 boot (boot −2) — stale, NOT crash-created. Only the truncated `journal~` file is torn-write evidence                                           |
+| 4  | NOT the #1–#7 memory/IO class                              | At death: MemAvailable 46–49 GB, zram 74–75%, memory PSI avg10 0–0.4%, GPU busy 0–2% (SigNoz/ClickHouse, per-minute)                                                                                                                                                                                                                         |
+| 5  | SoC thermally saturated all day                            | k10temp (`pci0000:00:18.3` temp1) hourly max/avg 98.9/94.9 (08:00) → 100/94.5 (17:00) → 99.8/92 (18:00); last sample 97.8°C at 18:27:02; thermal_zone0 85–99°C alongside                                                                                                                                                                     |
+| 6  | Guard exonerated                                           | 187 trip/zone6 lines in boot -1, first Sep 29 21:36, **last 16:46:47** — 1h40m of silence before death; restore-capped since 16:05 (flm socket left DOWN)                                                                                                                                                                                    |
+| 7  | D-state wedge, not CPU saturation                          | load1 12.5 (18:04) → 133 (18:16) sustained ~100 → death; `node_procs_running` only 4–29; IO PSI avg60 92–96% (18:14–18:26) with idle disks → Zone-6 phantom filter correctly suppressed (stopping flm could not help)                                                                                                                        |
+| 8  | Deploys did NOT cause it                                   | Deploy #1 17:44:52 = validation only (exit 0); deploy #2 17:54:11 **FAILED 18:03:14** — HaGeZi-dga7-raw FOD hash mismatch (matches the dirty `dns-blocklists.nix` + `dns-update.sh` in the tree); config never activated. No activation was running at death (unlike freezes #4/#5)                                                          |
+| 9  | No thermal monitoring existed                              | gatus temp check = `node_nvme_temperature_celsius` only; no k10temp/Tctl check anywhere in `gatus-config.nix`                                                                                                                                                                                                                                |
+| 10 | Governor pinned high                                       | `amd_pstate=performance` at `platforms/nixos/system/boot.nix:97-102` (deliberate, from "guided")                                                                                                                                                                                                                                             |
+| 11 | No fan in hwmon                                            | zero `fan*_input` nodes across all hwmon chips (nvme, amdgpu, k10temp, mt7925, acpitz)                                                                                                                                                                                                                                                       |
+| 12 | Desktop-side noise, mostly chronic                         | quickshell 2× SIGABRT 17:59:42 (`init_platform` Qt fatal, coredumps present); DP-1 (LG HDR 4K) disconnect+reconnect 18:14:14; 34× `pam_unix(login:session)` closes in 1 s at 18:25:13 (**unexplained**); portal-gnome errors since 06:49; eMeet pixyd `status=0` 832×/day and IDLE-INHIBITED 822×/day = chronic noise, NOT pre-crash signals |
+| 13 | NIC survived the warm reboot                               | `lan-nic-watchdog`: eno1 present at 18:31 (the 2026-08-22 trap did not recur)                                                                                                                                                                                                                                                                |
+| 14 | The crash reboot was the boot-mirror's FIRST reboot        | mirror activated 2026-09-30, verify pending — **not checked this session** (see §d)                                                                                                                                                                                                                                                          |
 
 ---
 
@@ -95,48 +95,48 @@ Freeze #8 (2026-10-01 18:27:13, boot -1: Sep 29 09:56 → Oct 1 18:27, ~2.5 d up
 
 **P0 — tonight, before anything else (thermal emergency):**
 
-1. Kill/defer `projection.test` (544% CPU), the `go` build, `mr-sync`; cap crush sessions — let the box settle. *(Critical, S, owner decision)*
-2. Drop `amd_pstate=performance` → guided/schedutil until cooling is verified (`boot.nix:97-102`). *(Critical, S, needs deploy)*
-3. Physical inspection: fan spin/audibility, vents, dust, paste. *(Critical, S, owner hands — cannot be verified from Linux)*
-4. k10temp Gatus check (warn ≥90°C, crit ≥95°C) + sev1-bridge notify-tier emitter. *(Critical, S)*
-5. Write freeze #8 into `docs/agents/stability.md` (thermal class, discriminators, evidence). *(Critical, S)*
-6. Verify/restore flm socket (guard left it restore-capped DOWN at 16:05 — service may still be unavailable post-crash). *(High, S)*
-7. Stop/verify post-crash recovery readers (`crush-hot-db-migrate`, `discordsync-db-heal`) per freeze-#6 rule (a). *(High, S)*
-8. Scrub catch-up check on boot 0 (freeze-#7 amplifier; `Persistent=false` + `After=` serialization still queued from 2026-09-29). *(High, S)*
+1. Kill/defer `projection.test` (544% CPU), the `go` build, `mr-sync`; cap crush sessions — let the box settle. _(Critical, S, owner decision)_
+2. Drop `amd_pstate=performance` → guided/schedutil until cooling is verified (`boot.nix:97-102`). _(Critical, S, needs deploy)_
+3. Physical inspection: fan spin/audibility, vents, dust, paste. _(Critical, S, owner hands — cannot be verified from Linux)_
+4. k10temp Gatus check (warn ≥90°C, crit ≥95°C) + sev1-bridge notify-tier emitter. _(Critical, S)_
+5. Write freeze #8 into `docs/agents/stability.md` (thermal class, discriminators, evidence). _(Critical, S)_
+6. Verify/restore flm socket (guard left it restore-capped DOWN at 16:05 — service may still be unavailable post-crash). _(High, S)_
+7. Stop/verify post-crash recovery readers (`crush-hot-db-migrate`, `discordsync-db-heal`) per freeze-#6 rule (a). _(High, S)_
+8. Scrub catch-up check on boot 0 (freeze-#7 amplifier; `Persistent=false` + `After=` serialization still queued from 2026-09-29). _(High, S)_
 
 **P1 — this week:**
 
-9. Fix HaGeZi-dga7-raw hash mismatch (`dns-blocklists.nix` + `dns-update.sh` dirty in tree) and re-run the deploy — **caddy-logs-hot mount is still waiting on it**. *(High, S)*
-10. Boot-mirror first-reboot verify: decode `LoaderDevicePartUUID` (UTF-16) == mirror PARTUUID `023f66c0-…`, `BootCurrent` = `000C`. *(High, S)*
-11. btrfs corrupt triage — **ANSWERED 19:20** (post-session): `corrupt 1` (root), `corrupt 12` (tlc), `corrupt 386583438` (/data) are byte-identical pre- vs post-freeze (Sep 29 boot −2 baseline vs boots −1/0): freezes #8/#9 created NONE of them. Shrunk to: investigate the ancient 386M garbage counter on /data (predates Sep 29; wr/rd/flush all 0). *(Low, M)*
-12. Deploy thermal entry gate in `scripts/deploy.sh` (block at Tctl ≥ 90°C). *(High, S)*
-13. Guard Zone 7 (thermal): k10temp ≥95°C → notify + stop churn units (never overlay — movie-night rule). *(High, M)*
-14. `node_load1` (>80 on 32 threads) + `node_procs_blocked` (>50) Gatus checks. *(High, S)*
-15. Freeze-runbook discriminator branch: thermal/power-trip class (pstore-empty + no-vmcore + torn-writes + green-PSI). *(High, S)*
-16. Gatus/Discord alert-history sweep 18:00–18:27 — confirm the true alert blackout (what else is blind?). *(Medium, S)*
-17. Kernel thermal throttling review: trip points, `thermal_zone` policy, any throttle counters — did the kernel throttle at all before the trip? *(Medium, S)*
+9. Fix HaGeZi-dga7-raw hash mismatch (`dns-blocklists.nix` + `dns-update.sh` dirty in tree) and re-run the deploy — **caddy-logs-hot mount is still waiting on it**. _(High, S)_
+10. Boot-mirror first-reboot verify: decode `LoaderDevicePartUUID` (UTF-16) == mirror PARTUUID `023f66c0-…`, `BootCurrent` = `000C`. _(High, S)_
+11. btrfs corrupt triage — **ANSWERED 19:20** (post-session): `corrupt 1` (root), `corrupt 12` (tlc), `corrupt 386583438` (/data) are byte-identical pre- vs post-freeze (Sep 29 boot −2 baseline vs boots −1/0): freezes #8/#9 created NONE of them. Shrunk to: investigate the ancient 386M garbage counter on /data (predates Sep 29; wr/rd/flush all 0). _(Low, M)_
+12. Deploy thermal entry gate in `scripts/deploy.sh` (block at Tctl ≥ 90°C). _(High, S)_
+13. Guard Zone 7 (thermal): k10temp ≥95°C → notify + stop churn units (never overlay — movie-night rule). _(High, M)_
+14. `node_load1` (>80 on 32 threads) + `node_procs_blocked` (>50) Gatus checks. _(High, S)_
+15. Freeze-runbook discriminator branch: thermal/power-trip class (pstore-empty + no-vmcore + torn-writes + green-PSI). _(High, S)_
+16. Gatus/Discord alert-history sweep 18:00–18:27 — confirm the true alert blackout (what else is blind?). _(Medium, S)_
+17. Kernel thermal throttling review: trip points, `thermal_zone` policy, any throttle counters — did the kernel throttle at all before the trip? _(Medium, S)_
 
 **P2 — next weeks:**
 
-18. Identify the 34-session pam burst source (audit session opens; consider `auditd`/session logging). *(Medium, M)*
-19. quickshell DMS liveness Gatus check (it was dead 27 min before the crash, undetected). *(Medium, S)*
-20. Investigate quickshell `init_platform` double SIGABRT (coredumps available in `coredumpctl`). *(Medium, M)*
-21. Guard "phantom-stall" visibility: metric + one-shot log when io PSI high + disks idle (the by-design Zone-6 no-op). *(Medium, S)*
-22. `scripts/signoz-query.sh` helper + ClickHouse schema/timezone notes in `docs/agents/monitoring.md`. *(Medium, S)*
-23. Thermal-soak benchmark after cooling fix (before/after Tctl under fixed load — reuse `scripts/bench-*` pattern). *(Medium, M)*
-24. BIOS check: EVO-X2 1.11 → newer firmware with thermal/EC fixes. *(Medium, S)*
-25. journald truncated `*.journal~` cleanup verification (rotated away cleanly on boot 0?). *(Low, S)*
-26. pstore record retention policy: verify old EFI records are erased after read so a future panic isn't masked by stale content. *(Low, S)*
-27. Guard heartbeat gap: guard check emitted NO output 17:00→death despite restore-capped state (heartbeat is ≤1/600s — verify it actually heartbeats). *(Medium, S)*
-28. Log-noise reduction: eMeet pixyd `status=0` (832/day) + sway-audio-idle-inhibit (822/day) + portal-gnome (since 06:49) — fix or demote verbosity so real signals stand out. *(Low, S)*
-29. `amd_pstate=guided` default with performance opt-in only for planned build windows (reverses the 97-line rationale under new evidence — update the comment when decided). *(Medium, S)*
-30. Document in AGENTS.md/stability.md: "no fan node in hwmon on evo-x2 — EC-controlled cooling is unverifiable from Linux; physical check required" so future sessions don't re-derive it. *(Medium, S)*
+18. Identify the 34-session pam burst source (audit session opens; consider `auditd`/session logging). _(Medium, M)_
+19. quickshell DMS liveness Gatus check (it was dead 27 min before the crash, undetected). _(Medium, S)_
+20. Investigate quickshell `init_platform` double SIGABRT (coredumps available in `coredumpctl`). _(Medium, M)_
+21. Guard "phantom-stall" visibility: metric + one-shot log when io PSI high + disks idle (the by-design Zone-6 no-op). _(Medium, S)_
+22. `scripts/signoz-query.sh` helper + ClickHouse schema/timezone notes in `docs/agents/monitoring.md`. _(Medium, S)_
+23. Thermal-soak benchmark after cooling fix (before/after Tctl under fixed load — reuse `scripts/bench-*` pattern). _(Medium, M)_
+24. BIOS check: EVO-X2 1.11 → newer firmware with thermal/EC fixes. _(Medium, S)_
+25. journald truncated `*.journal~` cleanup verification (rotated away cleanly on boot 0?). _(Low, S)_
+26. pstore record retention policy: verify old EFI records are erased after read so a future panic isn't masked by stale content. _(Low, S)_
+27. Guard heartbeat gap: guard check emitted NO output 17:00→death despite restore-capped state (heartbeat is ≤1/600s — verify it actually heartbeats). _(Medium, S)_
+28. Log-noise reduction: eMeet pixyd `status=0` (832/day) + sway-audio-idle-inhibit (822/day) + portal-gnome (since 06:49) — fix or demote verbosity so real signals stand out. _(Low, S)_
+29. `amd_pstate=guided` default with performance opt-in only for planned build windows (reverses the 97-line rationale under new evidence — update the comment when decided). _(Medium, S)_
+30. Document in AGENTS.md/stability.md: "no fan node in hwmon on evo-x2 — EC-controlled cooling is unverifiable from Linux; physical check required" so future sessions don't re-derive it. _(Medium, S)_
 
-*(28 more candidate items existed in brainstorm; deliberately capped at the 30 that are actionable and session-derived — padding to 50 would dilute harvest quality.)*
+_(28 more candidate items existed in brainstorm; deliberately capped at the 30 that are actionable and session-derived — padding to 50 would dilute harvest quality.)_
 
 ## g) Questions (cannot figure out myself)
 
-1. **What did you actually experience at ~18:27?** Frozen screen / black screen / instant power-off / audible fan change / chassis hot to the touch? This is the ONE discriminator the logs cannot provide: EC thermal trip (machine cut its own power) vs desktop hang + your power-button long-press (machine was alive, display/input dead). The torn writes are consistent with both; your observation is not recoverable from disk. *(Tried: journal tail, pstore, wtmp, kernel log — all silent by definition.)*
+1. **What did you actually experience at ~18:27?** Frozen screen / black screen / instant power-off / audible fan change / chassis hot to the touch? This is the ONE discriminator the logs cannot provide: EC thermal trip (machine cut its own power) vs desktop hang + your power-button long-press (machine was alive, display/input dead). The torn writes are consistent with both; your observation is not recoverable from disk. _(Tried: journal tail, pstore, wtmp, kernel log — all silent by definition.)_
 2. **Is the chassis fan physically spinning/audible right now?** No fan exists in hwmon (verified), and EC-controlled fans are invisible to Linux — I cannot distinguish "fan dead", "fan invisible but fine", or "inadequate cooling design at this sustained load" from software. The 98.5°C at 21-min-post-boot reading makes "fan fine" unlikely, but only your ears/fingers can confirm.
 3. **May I kill `projection.test`, the `go` build and `mr-sync`, and deploy the governor rollback (`amd_pstate=guided`) right now** — or is the current load deliberate and untouchable? Load was 95 and climbing at 18:51; I did not act without your call because it's your test run, but every minute at Tctl ~98°C is rollable into another trip.
 

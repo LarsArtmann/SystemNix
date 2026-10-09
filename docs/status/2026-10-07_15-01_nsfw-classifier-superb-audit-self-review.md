@@ -49,7 +49,7 @@
 
 ## §f NEXT (session-scoped, harvested to queue + services.md unless noted)
 
-1. [ready] Deploy the session's config (onFailure paging + gatus conditions + alert string) — then verify gatus green on the new conditions. *(deploy-gated)*
+1. [ready] Deploy the session's config (onFailure paging + gatus conditions + alert string) — then verify gatus green on the new conditions. _(deploy-gated)_
 2. [ready] Fix the stale "walker walks as a list" comment in nsfw-classifier.nix (walker normalizes str+list; list is convention, not walker requirement).
 3. [ready] Codify RESPONSE_TIME tiering in integration-registry.md step 9 (500/1000/2000 with rationale).
 4. [ready] systemd-shape-audit (or new audit): reject non-list `serviceConfig.Environment` at eval time; port the 3 converted units as positive fixtures.
@@ -68,7 +68,7 @@
 17. [watch] The 86 unharvested §f-bearing status reports flagged by check-todo-system (pre-existing, cross-domain — NOT this session's residue; recorded here because I noticed it).
 18. [watch] `templ-cli`'s nested `nixpkgs_5` — confirm it's covered by the documented "deep edges fixable upstream" queue class.
 
-*(18 items — not padded to 50; everything else I could list would be invention rather than residue.)*
+_(18 items — not padded to 50; everything else I could list would be invention rather than residue.)_
 
 ## §g QUESTIONS ONLY THE OWNER CAN ANSWER
 

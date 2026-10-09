@@ -63,32 +63,32 @@
 
 ## f) Next tasks (ranked; feeds HARVEST — deferred, see §c.5)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | USER: `sudo poweroff` + physical fan/vents/paste inspection — gates everything | Critical | — | Hardware |
-| 2 | USER: if staying up, run `sudo cpupower frequency-set -u 1500000` NOW | Critical | S | Mitigation |
-| 3 | Land `amd_pstate=guided` revert (`boot.nix:97-102`) + rationale comment on the post-check reboot | High | S | Bug/Mitigation |
-| 4 | Add k10temp Gatus check (warn ≥90/crit ≥95) + notify tier (never overlay) | High | S | Monitoring |
-| 5 | Add NVMe temp checks keyed on serial/by-path (NOT chip nvme0/1 — flips between boots), thresholds 84.8/94.8 | High | S | Monitoring |
-| 6 | Write freeze #8/#9/#10 entries into `docs/agents/stability.md` (thermal class, discriminators incl. drive exoneration, corrections) | High | M | Documentation |
-| 7 | Trace what triggered pre-deploy-check + buildflow at ~19:07; did deploy #3 attempt activation mid-emergency? | High | S | Incident |
-| 8 | Investigate sdb USB SanDisk stall (flush-8:16 wedge, mr-sync writer; mount nofail/timeouts; #6/#7 family) | High | M | Bug |
-| 9 | Root-cause pool_smart 404 (read body; verify series exist in `time_series_v4`) | Medium | S | Monitoring |
-| 10 | Boot-mirror first-reboot verify (`LoaderDevicePartUUID` == `023f66c0-…`, `BootCurrent`=`000C`) | Medium | S | Verification |
-| 11 | Fix HaGeZi-dga7-raw hash (`dns-blocklists.nix` + `dns-update.sh`) → re-deploy → unblock caddy-logs-hot | Medium | S | Bug |
-| 12 | Post-crash protocol: flm socket verify; stop `crush-hot-db-migrate`/`discordsync-db-heal`; scrub catch-up | Medium | S | Operations |
-| 13 | smartd: add `-W` temperature directives for both NVMe + pool disks; consider extending the pool_smart textfile collector to NVMe | Medium | S | Monitoring |
-| 14 | Add acpitz + all trip points to monitoring visibility | Medium | S | Monitoring |
-| 15 | Append NVMe-exoneration + sdb-amplifier rows to the 18-49 report evidence table (surface rule) | Medium | S | Documentation |
-| 16 | HARVEST this §f + the 18-49 §f into `TODO_LIST.md` + domain libs (on user instruction) | Medium | S | Documentation |
-| 17 | Investigate 34× pam `login:session` close burst 18:25:13 | Medium | M | Security |
-| 18 | Incident-mode gate design doc (block builds/deploys during thermal alerts) | Medium | M | Feature |
-| 19 | Minute-resolution NVMe + k10temp pull at the freeze instants (18:27, 18:56) for the record | Low | S | Forensics |
-| 20 | 386M stale `/data` corrupt counter archaeology (boot-log history) | Low | M | Cleanup |
-| 21 | quickshell init_platform SIGABRT coredumps | Low | M | Bug |
-| 22 | EC fan telemetry research (acpi/ec_sys paths) — only AFTER physical check | Low | M | Research |
-| 23 | Verify deploy pipeline health end-to-end after cooling is fixed | Medium | S | Verification |
-| 24 | `sudo smartctl -x /dev/nvme0 /dev/nvme1` read of unsafe_shutdowns/media_errors/percentage_used (needs user root; confirms drive health definitively) | Low | S | Forensics |
+| #  | Task                                                                                                                                                 | Impact   | Effort | Category       |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | -------------- |
+| 1  | USER: `sudo poweroff` + physical fan/vents/paste inspection — gates everything                                                                       | Critical | —      | Hardware       |
+| 2  | USER: if staying up, run `sudo cpupower frequency-set -u 1500000` NOW                                                                                | Critical | S      | Mitigation     |
+| 3  | Land `amd_pstate=guided` revert (`boot.nix:97-102`) + rationale comment on the post-check reboot                                                     | High     | S      | Bug/Mitigation |
+| 4  | Add k10temp Gatus check (warn ≥90/crit ≥95) + notify tier (never overlay)                                                                            | High     | S      | Monitoring     |
+| 5  | Add NVMe temp checks keyed on serial/by-path (NOT chip nvme0/1 — flips between boots), thresholds 84.8/94.8                                          | High     | S      | Monitoring     |
+| 6  | Write freeze #8/#9/#10 entries into `docs/agents/stability.md` (thermal class, discriminators incl. drive exoneration, corrections)                  | High     | M      | Documentation  |
+| 7  | Trace what triggered pre-deploy-check + buildflow at ~19:07; did deploy #3 attempt activation mid-emergency?                                         | High     | S      | Incident       |
+| 8  | Investigate sdb USB SanDisk stall (flush-8:16 wedge, mr-sync writer; mount nofail/timeouts; #6/#7 family)                                            | High     | M      | Bug            |
+| 9  | Root-cause pool_smart 404 (read body; verify series exist in `time_series_v4`)                                                                       | Medium   | S      | Monitoring     |
+| 10 | Boot-mirror first-reboot verify (`LoaderDevicePartUUID` == `023f66c0-…`, `BootCurrent`=`000C`)                                                       | Medium   | S      | Verification   |
+| 11 | Fix HaGeZi-dga7-raw hash (`dns-blocklists.nix` + `dns-update.sh`) → re-deploy → unblock caddy-logs-hot                                               | Medium   | S      | Bug            |
+| 12 | Post-crash protocol: flm socket verify; stop `crush-hot-db-migrate`/`discordsync-db-heal`; scrub catch-up                                            | Medium   | S      | Operations     |
+| 13 | smartd: add `-W` temperature directives for both NVMe + pool disks; consider extending the pool_smart textfile collector to NVMe                     | Medium   | S      | Monitoring     |
+| 14 | Add acpitz + all trip points to monitoring visibility                                                                                                | Medium   | S      | Monitoring     |
+| 15 | Append NVMe-exoneration + sdb-amplifier rows to the 18-49 report evidence table (surface rule)                                                       | Medium   | S      | Documentation  |
+| 16 | HARVEST this §f + the 18-49 §f into `TODO_LIST.md` + domain libs (on user instruction)                                                               | Medium   | S      | Documentation  |
+| 17 | Investigate 34× pam `login:session` close burst 18:25:13                                                                                             | Medium   | M      | Security       |
+| 18 | Incident-mode gate design doc (block builds/deploys during thermal alerts)                                                                           | Medium   | M      | Feature        |
+| 19 | Minute-resolution NVMe + k10temp pull at the freeze instants (18:27, 18:56) for the record                                                           | Low      | S      | Forensics      |
+| 20 | 386M stale `/data` corrupt counter archaeology (boot-log history)                                                                                    | Low      | M      | Cleanup        |
+| 21 | quickshell init_platform SIGABRT coredumps                                                                                                           | Low      | M      | Bug            |
+| 22 | EC fan telemetry research (acpi/ec_sys paths) — only AFTER physical check                                                                            | Low      | M      | Research       |
+| 23 | Verify deploy pipeline health end-to-end after cooling is fixed                                                                                      | Medium   | S      | Verification   |
+| 24 | `sudo smartctl -x /dev/nvme0 /dev/nvme1` read of unsafe_shutdowns/media_errors/percentage_used (needs user root; confirms drive health definitively) | Low      | S      | Forensics      |
 
 ## g) Questions I cannot answer myself
 
@@ -98,4 +98,4 @@
 
 ---
 
-*Deviations: report written as `.md` per user's explicit instruction (canonical format is HTML — flagged). Manual commit skipped per harness contract (auto-commit daemon sweeps). §f HARVEST deliberately deferred mid-emergency (§c.5).*
+_Deviations: report written as `.md` per user's explicit instruction (canonical format is HTML — flagged). Manual commit skipped per harness contract (auto-commit daemon sweeps). §f HARVEST deliberately deferred mid-emergency (§c.5)._

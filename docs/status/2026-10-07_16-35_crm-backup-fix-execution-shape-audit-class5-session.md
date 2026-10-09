@@ -28,17 +28,17 @@ claimed by another session's report, not independently verified.
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | Now-state established: IO PSI ~35-42 (avg60 41.7, above the 15/20 deploy gate), live generation = **system-836, created 12:21** — everything committed after 12:21 is undeployed | `head -1 /proc/pressure/io`, profile link mtimes `[live]` |
-| 2 | **crm-backup fixed in-tree**: `script` hoisted from inside `serviceConfig` to the unit top level in `crm.nix`, with an incident-comment at the hoist site | daemon commit `40c1df1e` (verified via `git show --stat` — carried crm.nix + systemd-shape-audit.nix + 4 foreign doc files) `[tree]` |
-| 3 | **Fix eval-proven at unit level**: top-level `script` exists; merged `serviceConfig` attrNames = `[ExecStart Group IOSchedulingClass IOSchedulingPriority ReadWritePaths Restart RestartSec Type User]` — real ExecStart, no garbage keys, AND the `serviceOneshotDefaults` + `ioTier.background` mkMerge legs still compose (Restart/IOScheduling* present) | `nix eval` ×2 `[eval]` |
-| 4 | **systemd-shape-audit class 5 landed**: flags `script`/`preStart`/`preStop`/`postStart`/`postStop`/`stopScript`/`reloadScript` inside `serviceConfig` — none are real `[Service]` keys, so the check is false-positive-free by construction; header comment documents class 5 with the incident | same commit `[tree]` |
-| 5 | **Audit proven non-vacuous**: throwaway `extendModules` negative leg (`/tmp/shape-audit-selftest.nix`, tree untouched) → bad unit makes toplevel eval THROW ("NEGATIVE TEST GREEN: audit fired"); evo-x2 itself clean (zero offenders) | `nix eval --impure --file` `[eval]` |
-| 6 | Full gates: evo-x2 toplevel eval green; `nix flake check --no-build` **all checks passed** (darwin omission expected); `nix fmt` — 1 file reformatted (my crm.nix hunk), zero foreign files touched; post-fmt unit-shape re-verify `true` | command outputs `[eval]` |
-| 7 | Queue/library close-outs on all 3 surfaces: TODO_LIST rows → `[x]` (fix half / full); `docs/todo/services.md` crm-backup row → `[blocked:deploy]` ACTIVATION residue (deploy + first snapshot + `backup_healthy`→1 + restore drill + T42 precondition); `docs/todo/pipeline.md` shape-audit row → `[x]` with evidence | `check-todo-system.sh`: "OK: TODO queue/library structure clean" (51-drift + 88-unharvested warnings are pre-existing global state) `[tree]` |
-| 8 | CHANGELOG: (1) crm-backup Fixed entry (root cause, fix, paired guard, activation caveat); (2) the four-wave vendorHash-day row (closing the tracked [ready] queue row — facts taken from all four wave reports, deploy state pinned to gen 836/12:21) | CHANGELOG.md `### Fixed` `[tree]` |
-| 9 | Daemon-race discipline held: contents of every daemon commit that swept my work verified (`git show --stat` on `40c1df1e`, `6a759775` read earlier); no amend attempted (shared batches); foreign mid-edit on CHANGELOG/flake.lock detected via empty-unstaged-diff → re-checked before writing | git probes `[tree]` |
+| # | Item                                                                                                                                                                                                                                                                                                                                                         | Evidence                                                                                                                                     |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | Now-state established: IO PSI ~35-42 (avg60 41.7, above the 15/20 deploy gate), live generation = **system-836, created 12:21** — everything committed after 12:21 is undeployed                                                                                                                                                                             | `head -1 /proc/pressure/io`, profile link mtimes `[live]`                                                                                    |
+| 2 | **crm-backup fixed in-tree**: `script` hoisted from inside `serviceConfig` to the unit top level in `crm.nix`, with an incident-comment at the hoist site                                                                                                                                                                                                    | daemon commit `40c1df1e` (verified via `git show --stat` — carried crm.nix + systemd-shape-audit.nix + 4 foreign doc files) `[tree]`         |
+| 3 | **Fix eval-proven at unit level**: top-level `script` exists; merged `serviceConfig` attrNames = `[ExecStart Group IOSchedulingClass IOSchedulingPriority ReadWritePaths Restart RestartSec Type User]` — real ExecStart, no garbage keys, AND the `serviceOneshotDefaults` + `ioTier.background` mkMerge legs still compose (Restart/IOScheduling* present) | `nix eval` ×2 `[eval]`                                                                                                                       |
+| 4 | **systemd-shape-audit class 5 landed**: flags `script`/`preStart`/`preStop`/`postStart`/`postStop`/`stopScript`/`reloadScript` inside `serviceConfig` — none are real `[Service]` keys, so the check is false-positive-free by construction; header comment documents class 5 with the incident                                                              | same commit `[tree]`                                                                                                                         |
+| 5 | **Audit proven non-vacuous**: throwaway `extendModules` negative leg (`/tmp/shape-audit-selftest.nix`, tree untouched) → bad unit makes toplevel eval THROW ("NEGATIVE TEST GREEN: audit fired"); evo-x2 itself clean (zero offenders)                                                                                                                       | `nix eval --impure --file` `[eval]`                                                                                                          |
+| 6 | Full gates: evo-x2 toplevel eval green; `nix flake check --no-build` **all checks passed** (darwin omission expected); `nix fmt` — 1 file reformatted (my crm.nix hunk), zero foreign files touched; post-fmt unit-shape re-verify `true`                                                                                                                    | command outputs `[eval]`                                                                                                                     |
+| 7 | Queue/library close-outs on all 3 surfaces: TODO_LIST rows → `[x]` (fix half / full); `docs/todo/services.md` crm-backup row → `[blocked:deploy]` ACTIVATION residue (deploy + first snapshot + `backup_healthy`→1 + restore drill + T42 precondition); `docs/todo/pipeline.md` shape-audit row → `[x]` with evidence                                        | `check-todo-system.sh`: "OK: TODO queue/library structure clean" (51-drift + 88-unharvested warnings are pre-existing global state) `[tree]` |
+| 8 | CHANGELOG: (1) crm-backup Fixed entry (root cause, fix, paired guard, activation caveat); (2) the four-wave vendorHash-day row (closing the tracked [ready] queue row — facts taken from all four wave reports, deploy state pinned to gen 836/12:21)                                                                                                        | CHANGELOG.md `### Fixed` `[tree]`                                                                                                            |
+| 9 | Daemon-race discipline held: contents of every daemon commit that swept my work verified (`git show --stat` on `40c1df1e`, `6a759775` read earlier); no amend attempted (shared batches); foreign mid-edit on CHANGELOG/flake.lock detected via empty-unstaged-diff → re-checked before writing                                                              | git probes `[tree]`                                                                                                                          |
 
 ## b) PARTIALLY DONE
 
@@ -101,20 +101,20 @@ claimed by another session's report, not independently verified.
 
 ## f) Things to get done next (ranked; [new] = harvested this report, [tracked] = already queued)
 
-| # | Task | Tag |
-|---|------|-----|
-| 1 | [new] Pre-deploy: test the crm-backup script BODY against a copy of `ledger.db` in /tmp (sqlite backup API, chmod, retention find) — proves the logic before the first live 03:40 run | [ready] services.md + queue |
-| 2 | [tracked] The deploy (owner, PSI-gated) — carries crm-backup fix + audit + wave4 FODs + nsfw + dnsblockd WAL | [blocked:deploy] |
-| 3 | [tracked] Post-deploy: first `ledger-*.db` + `backup_healthy`→1 + journal lines + timer loaded | activation row |
-| 4 | [tracked] Restore drill on the first snapshot; then T42 freeze precondition green | activation row |
-| 5 | [tracked] nsfw post-deploy gatus-conditions verify + helium pairing | nsfw rows |
-| 6 | [tracked] dnsblockd post-deploy journal probes (journal.db, metrics, SigNoz rule) | dnsblockd rows |
-| 7 | [tracked] Ledger binary rev jump `33b7dd8 → fe9da495` health check post-deploy | 15:50 report §f.4 |
-| 8 | [tracked] Forgejo blast-radius enumeration → G1 finalize window | 15:53 report |
-| 9 | [tracked] CRM ladder: CV checkpoint → dedupe decision → T33-35 → T32 → T42 | cutover plan |
-| 10 | [tracked] Upstream push window: 5 non-follower vendorHash pushes (incl. crm `fe9da495`) + nsfw `46f02bb` + CI-verify today's 2 | upstream.md |
-| 11 | [tracked] Overview-class un-follow [decision] (kills 8 permanent re-pins) | upstream.md |
-| 12 | [watch] Trash `/tmp/shape-audit-selftest.nix` (cosmetic; /tmp is ephemeral) | this report |
+| #  | Task                                                                                                                                                                                  | Tag                         |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| 1  | [new] Pre-deploy: test the crm-backup script BODY against a copy of `ledger.db` in /tmp (sqlite backup API, chmod, retention find) — proves the logic before the first live 03:40 run | [ready] services.md + queue |
+| 2  | [tracked] The deploy (owner, PSI-gated) — carries crm-backup fix + audit + wave4 FODs + nsfw + dnsblockd WAL                                                                          | [blocked:deploy]            |
+| 3  | [tracked] Post-deploy: first `ledger-*.db` + `backup_healthy`→1 + journal lines + timer loaded                                                                                        | activation row              |
+| 4  | [tracked] Restore drill on the first snapshot; then T42 freeze precondition green                                                                                                     | activation row              |
+| 5  | [tracked] nsfw post-deploy gatus-conditions verify + helium pairing                                                                                                                   | nsfw rows                   |
+| 6  | [tracked] dnsblockd post-deploy journal probes (journal.db, metrics, SigNoz rule)                                                                                                     | dnsblockd rows              |
+| 7  | [tracked] Ledger binary rev jump `33b7dd8 → fe9da495` health check post-deploy                                                                                                        | 15:50 report §f.4           |
+| 8  | [tracked] Forgejo blast-radius enumeration → G1 finalize window                                                                                                                       | 15:53 report                |
+| 9  | [tracked] CRM ladder: CV checkpoint → dedupe decision → T33-35 → T32 → T42                                                                                                            | cutover plan                |
+| 10 | [tracked] Upstream push window: 5 non-follower vendorHash pushes (incl. crm `fe9da495`) + nsfw `46f02bb` + CI-verify today's 2                                                        | upstream.md                 |
+| 11 | [tracked] Overview-class un-follow [decision] (kills 8 permanent re-pins)                                                                                                             | upstream.md                 |
+| 12 | [watch] Trash `/tmp/shape-audit-selftest.nix` (cosmetic; /tmp is ephemeral)                                                                                                           | this report                 |
 
 ## g) Questions I cannot figure out myself
 
@@ -132,16 +132,16 @@ claimed by another session's report, not independently verified.
 
 ---
 
-*Self-harvest: §f.1 landed in TODO_LIST.md + docs/todo/services.md at
+_Self-harvest: §f.1 landed in TODO_LIST.md + docs/todo/services.md at
 authoring time ([ready]); items 2-11 are pre-existing tracked rows (not
 re-queued — no-drift rule); item 12 recorded here deliberately (cosmetic,
-not queue-worthy).*
+not queue-worthy)._
 
-*Evidence index: profile mtimes for gen 836 (12:21); `nix eval` script +
+_Evidence index: profile mtimes for gen 836 (12:21); `nix eval` script +
 serviceConfig attrNames (16:1x); `/tmp/shape-audit-selftest.nix` negative
 leg ("NEGATIVE TEST GREEN"); `nix flake check --no-build` all-pass;
 `nix fmt` 1-file diff scoped to my surfaces; `check-todo-system.sh` OK;
-daemon commit `40c1df1e` stat; IO PSI `some avg10=34.92 avg60=41.68`.*
+daemon commit `40c1df1e` stat; IO PSI `some avg10=34.92 avg60=41.68`._
 
 ---
 

@@ -55,6 +55,7 @@
 ## f) NEXT THINGS (the harvested subset lives in TODO_LIST.md; full list below)
 
 Direct descendants (queued this pass unless already queued — noted):
+
 1. Land the re-fire dedup gate (Task-ID + rejected-SHA, ≥3 fires → halt) — already queued :340/pipeline:273.
 2. Re-fire retirement clause decision — queued below as blocked:user.
 3. Re-fire evidence landing spot + row migration — already queued :659/pipeline:280.

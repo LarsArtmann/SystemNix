@@ -28,19 +28,19 @@ built from the system binary).
    applies to every vHost, but Caddy's default response matcher is a
    Content-Type ALLOWLIST (text/*, json/js/xml, fonts, `image/svg+xml*`,
    `image/vnd.microsoft.icon*`, `image/x-icon*`, x-protobuf, multipart/bag)
-   + minimum 512 B. Empirical probe on the system Caddy 2.11.4 binary,
-   throwaway instance, fixtures >512 B:
-   | Content-Type | Result |
-   |---|---|
-   | text/html, application/json, image/svg+xml | `Content-Encoding: zstd` |
-   | image/png, image/jpeg, image/webp, video/mp4, application/octet-stream | NOT encoded |
-   Additional invariants verified from source: skips responses that already
-   carry Content-Encoding; 206 partial responses never re-encoded.
-   **Mechanism for the observation:** `reverse_proxy` forwards the client's
-   `Accept-Encoding` unchanged, browsers attach it to EVERY fetch including
-   media, so backends with compression middleware (NestJS/Express
-   `compression`, Django GZipMiddleware, …) compress media themselves and
-   Caddy relays it. Suppression knob: `header_up Accept-Encoding identity`.
+   - minimum 512 B. Empirical probe on the system Caddy 2.11.4 binary,
+     throwaway instance, fixtures >512 B:
+     | Content-Type                                                             | Result                   |
+     | ------------------------------------------------------------------------ | ------------------------ |
+     | text/html, application/json, image/svg+xml                               | `Content-Encoding: zstd` |
+     | image/png, image/jpeg, image/webp, video/mp4, application/octet-stream   | NOT encoded              |
+     | Additional invariants verified from source: skips responses that already |                          |
+     | carry Content-Encoding; 206 partial responses never re-encoded.          |                          |
+     | **Mechanism for the observation:** `reverse_proxy` forwards the client's |                          |
+     | `Accept-Encoding` unchanged, browsers attach it to EVERY fetch including |                          |
+     | media, so backends with compression middleware (NestJS/Express           |                          |
+     | `compression`, Django GZipMiddleware, …) compress media themselves and   |                          |
+     | Caddy relays it. Suppression knob: `header_up Accept-Encoding identity`. |                          |
 3. **Runbook deliverable landed:** new section "encode / compression behavior
    (verified 2026-10-06, Caddy 2.11.4)" in docs/services/caddy.md (33 lines,
    between Ops and Logs) — allowlist table consequence, app-side mechanism,

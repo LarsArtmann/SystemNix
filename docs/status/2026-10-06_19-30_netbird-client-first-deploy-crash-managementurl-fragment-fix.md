@@ -44,6 +44,7 @@ day). The live system is otherwise healthy; the failed unit is inert (new servic
 ## c) Fix (all committed; daemon commit `e9a2028f` + docs sweeps)
 
 `modules/nixos/services/netbird.nix`:
+
 1. Fragment no longer carries the URL: `config.ManagementUrl` → `environment.NB_MANAGEMENT_URL`
    (wrapper bakes the env into daemon AND login unit invocations).
 2. preStart purge (`lib.mkAfter` the nixpkgs merge — that script exports `$NB_CONFIG` + jq PATH):

@@ -45,7 +45,6 @@ design — they still carry open work.
 
 2 files moved from `docs/status/` — both verified no-op re-dispatch reports of reviewer-fix tickets whose findings were already healed by earlier lineage: `2026-10-03_05-47_task-000001a0fed8b75…` (splice-finding; fixed by `86a38abe`) and `2026-10-03_14-21_task-000001a0fed8bb32…` (tail-relocation finding; fixed by `192a9309`→`15168c12`). Classification: **ARCHIVE** — pure point-in-time re-verification, identical "already healed" verdict, each carrying a `RESOLVED + ARCHIVED` banner; uncited by any live doc at archive time. Deciding reason per file: zero references (grep over TODO_LIST.md, docs/todo/*, CHANGELOG.md, AGENTS/README/ROADMAP/FEATURES). Canonical narrative: `docs/status/2026-10-05_09-58_window-closeout-reviewfix-nop-pruneverify-parityguard-batch.md` §a.1–2.
 
-
 ## Bulk-archive manifest — 2026-10-06 (docs-health full-corpus sweep)
 
 23 files archived — 20 from `docs/status/`, 3 from `docs/planning/` — by the 2026-10-06 docs-health AUDIT (~620 dated files classified across status/planning/research/reviews/brainstorming/troubleshooting). Every archived file was verified **UNCITED** by `TODO_LIST.md`, `docs/todo/*`, and the living docs at archive time (cited siblings — movie-window 19-43, freeze-13/14/15 autopsies, eval-warning-sweep, two pipeline-cited re-fire records — stayed in place). Classification: **ARCHIVE** — every file is a pure point-in-time record with every item resolved in-body; each gained a `RESOLVED + ARCHIVED` banner + one inline strikethrough at archive time.

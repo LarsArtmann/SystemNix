@@ -84,15 +84,15 @@ The error→auto-fix pipeline from the 22-05 design is now REAL CODE inside go-t
 
 1. **Project-name contract:** should `Report.Project` be validated at INGEST against a known repo registry (400 on unknown project), or stay tolerant (unknown project dead-letters at execution, DLQ autopsy owns it — what the E2E demonstrated)? Fail-closed-ingest protects agent budget from typos; tolerant-ingest never drops an error report. Which failure mode do you prefer?
 2. **Unconditional or flag-gated sweep?** I wired the incident sweep UNCONDITIONALLY into the agent-pool tick (minting is journal-cheap; the tasks stay inert behind the existing autonomy gates: --agents, .tq-agents, budgets, exclusivity). Every sibling sweeper is flag-gated. Keep unconditional, or gate it behind e.g. `--incidents`?
-3. **First target app?** The pipeline is live but has no producer. Which app/repo gets the `/internal/errors` beacon + middleware reporter first (name + repo)? This also answers whether v1 needs the client-side (browser) leg at all or starts server-errors-only. *(Same question as the 22-05 report — still open, now the only blocker to real usage.)*
+3. **First target app?** The pipeline is live but has no producer. Which app/repo gets the `/internal/errors` beacon + middleware reporter first (name + repo)? This also answers whether v1 needs the client-side (browser) leg at all or starts server-errors-only. _(Same question as the 22-05 report — still open, now the only blocker to real usage.)_
 
 ---
 
 **Session verdict:** the pipeline works end-to-end and its invariants are test-pinned (storm/replay/regression/restart), but the session violated its own discipline twice where it mattered — deferred a smelled-wrong semantic until E2E caught it, and batched the repo gates so the daemon committed ungated code first. Both are process fixes, both encoded in §e.
 
-*Harvest note: §f items are deliberately NOT harvested into SystemNix TODO_LIST.md — items 1-18 are go-taskqueue-repo work (that repo owns its own TODO system with format guards) and 19 is deployment-dependent on §g-3. Re-harvest after the owner answers §g.*
+_Harvest note: §f items are deliberately NOT harvested into SystemNix TODO_LIST.md — items 1-18 are go-taskqueue-repo work (that repo owns its own TODO system with format guards) and 19 is deployment-dependent on §g-3. Re-harvest after the owner answers §g._
 
-*Awaiting instructions.*
+_Awaiting instructions._
 
 ---
 

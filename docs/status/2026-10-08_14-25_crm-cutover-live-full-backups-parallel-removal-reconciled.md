@@ -30,24 +30,24 @@ Deploy timeline this session (all `[live]` profile mtimes): gen-844 **13:14** (T
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
+| #  | Item                                                                                                                                                                                                                                                                                                                                                           | Evidence                                                                                                                                                                                                                                                 |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | a1 | **identity.db nightly backup** (owner mandate "full backups!"): one python pass snapshots both durable dbs — ledger 0644, identity **0600** (passkey/session bearer material); missing-src hard refusal (sqlite would mint an empty healthy-looking artifact); dual-pattern 30-day retention; api-token deliberately excluded (sops-owned, no secrets on pool) | `[eval]` rendered script; body-test vs live dbs: both artifacts `integrity_check` ok, identity parity exact; negative leg exit 1 nothing minted; decoy retention proven; **live unit carries the identity leg** (ExecStart script grep, 4 hits) `[live]` |
-| a2 | **T42 flip executed + deployed** (owner mandate, no soak): `twenty.enable = false`; eval-proven layer `none→plain`, tile "Ledger CRM", twenty registry entry GONE, Caddy claims both domains | gen-844 13:14; `crm.home.lan` serves the Ledger passkey page `[fetch]` |
-| a3 | **Straggler fix at flip time:** DMS `systemnix-crm` status pill pointed at Twenty `:3200` → now loopback `/healthz` on `ports.crm` (quickshell.nix + CrmWidget.qml fallback) | `[tree]` + toplevel eval green |
-| a4 | **Contacts-render proof closed — stronger than asked:** `-export` from the newest POOL artifact → **29,053 events** (deal.lost 10,018 / deal.created 6,649 / stage_changed 5,832 / reopened 5,159 / company.created 1,394 / deal.won 1 — the CV-sync shape), integrity ok | `[live]` export run with production binary; root cause of CHECK-MANUALLY documented (journal persists auth-on — scratch boots gate at login) |
-| a5 | **Reconciliation of the parallel removal** `[parallel]`: twenty module + 3 runbooks + dozzle + docker teardown committed 13:58, deployed gen-845 14:21 — dockerd stopped 14:19:59 `[journal]`, docker CLI gone, `logs.home.lan` serves SigNoz `[fetch]`, twenty containers/vHost/tile gone, `:3200` free | all `[live]` |
-| a6 | **Twenty data archived through the end:** nightly SQL dumps `/mnt/pool/backups/twenty/` unbroken Sep 7 → **Oct 8 02:05** (3.0 MB, largest = final state) | `[file]` |
-| a7 | **/tmp session residue trashed** (7 dirs/files; parallel-session artifacts left alone); **queue hygiene:** 6 rows closed `[x]` with evidence, 1 watch row created, TODO gate structure-clean | `[tree]` check-todo-system OK |
-| a8 | **Runbooks current:** `crm.md` (T42 EXECUTED, cloud-rpid gap, backup dual-db + stamp semantics) — with the parallel session's citation fixes incorporated; `twenty.md` deleted with its module (its ladder content lives in the row-13 reclaim row) | `[tree]` |
+| a2 | **T42 flip executed + deployed** (owner mandate, no soak): `twenty.enable = false`; eval-proven layer `none→plain`, tile "Ledger CRM", twenty registry entry GONE, Caddy claims both domains                                                                                                                                                                   | gen-844 13:14; `crm.home.lan` serves the Ledger passkey page `[fetch]`                                                                                                                                                                                   |
+| a3 | **Straggler fix at flip time:** DMS `systemnix-crm` status pill pointed at Twenty `:3200` → now loopback `/healthz` on `ports.crm` (quickshell.nix + CrmWidget.qml fallback)                                                                                                                                                                                   | `[tree]` + toplevel eval green                                                                                                                                                                                                                           |
+| a4 | **Contacts-render proof closed — stronger than asked:** `-export` from the newest POOL artifact → **29,053 events** (deal.lost 10,018 / deal.created 6,649 / stage_changed 5,832 / reopened 5,159 / company.created 1,394 / deal.won 1 — the CV-sync shape), integrity ok                                                                                      | `[live]` export run with production binary; root cause of CHECK-MANUALLY documented (journal persists auth-on — scratch boots gate at login)                                                                                                             |
+| a5 | **Reconciliation of the parallel removal** `[parallel]`: twenty module + 3 runbooks + dozzle + docker teardown committed 13:58, deployed gen-845 14:21 — dockerd stopped 14:19:59 `[journal]`, docker CLI gone, `logs.home.lan` serves SigNoz `[fetch]`, twenty containers/vHost/tile gone, `:3200` free                                                       | all `[live]`                                                                                                                                                                                                                                             |
+| a6 | **Twenty data archived through the end:** nightly SQL dumps `/mnt/pool/backups/twenty/` unbroken Sep 7 → **Oct 8 02:05** (3.0 MB, largest = final state)                                                                                                                                                                                                       | `[file]`                                                                                                                                                                                                                                                 |
+| a7 | **/tmp session residue trashed** (7 dirs/files; parallel-session artifacts left alone); **queue hygiene:** 6 rows closed `[x]` with evidence, 1 watch row created, TODO gate structure-clean                                                                                                                                                                   | `[tree]` check-todo-system OK                                                                                                                                                                                                                            |
+| a8 | **Runbooks current:** `crm.md` (T42 EXECUTED, cloud-rpid gap, backup dual-db + stamp semantics) — with the parallel session's citation fixes incorporated; `twenty.md` deleted with its module (its ladder content lives in the row-13 reclaim row)                                                                                                            | `[tree]`                                                                                                                                                                                                                                                 |
 
 ## b) PARTIALLY DONE
 
-| # | Item | State | Remaining |
-|---|------|-------|-----------|
-| b1 | First **dual** backup run | identity leg live in the unit; ledger artifacts proven | tomorrow 03:40 produces the first `identity-*.db` on the pool — verify + 0600 perms |
-| b2 | Owner first login | login page live, MaxUsers=1 | owner registers the sole passkey on `https://crm.home.lan` |
-| b3 | Tile/gatus visual green | eval-proven render; gatus API is OIDC-gated for headless probing | owner glance at dashboard (tile "Ledger CRM", HTTPS check green) |
+| #  | Item                      | State                                                            | Remaining                                                                           |
+| -- | ------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| b1 | First **dual** backup run | identity leg live in the unit; ledger artifacts proven           | tomorrow 03:40 produces the first `identity-*.db` on the pool — verify + 0600 perms |
+| b2 | Owner first login         | login page live, MaxUsers=1                                      | owner registers the sole passkey on `https://crm.home.lan`                          |
+| b3 | Tile/gatus visual green   | eval-proven render; gatus API is OIDC-gated for headless probing | owner glance at dashboard (tile "Ledger CRM", HTTPS check green)                    |
 
 ## c) NOT STARTED
 
@@ -80,10 +80,10 @@ Nothing production-broke. Process warts, fully owned:
 4. **Owner: dedupe decision** after CV checkpoint verify (~10,489 dups)
 5. **Owner: upstream push window** — crm `fe9da495` (+4 others), nsfw `46f02bb`
 6. **Owner: forgejo G1 finalize**
-7. Tomorrow 03:40: verify first dual backup (ledger + identity-*.db, 0600) + backup freshness green *(watch row)*
-8. Dashboard visual: tile "Ledger CRM" + gatus HTTPS check green *(watch row)*
-9. Runbook line: `-export` from the newest artifact as the standard quarterly restore verification *(new, harvest below)*
-10. Row-13 rewrite: reclaim steps to file-level (`trash /data/docker` after archive decision) — docker-based steps are obsolete post-gen-845 *(new)*
+7. Tomorrow 03:40: verify first dual backup (ledger + identity-*.db, 0600) + backup freshness green _(watch row)_
+8. Dashboard visual: tile "Ledger CRM" + gatus HTTPS check green _(watch row)_
+9. Runbook line: `-export` from the newest artifact as the standard quarterly restore verification _(new, harvest below)_
+10. Row-13 rewrite: reclaim steps to file-level (`trash /data/docker` after archive decision) — docker-based steps are obsolete post-gen-845 _(new)_
 11. Post-login: confirm identity backups contain the registered user (row count > 0)
 12. 30-day retention fall-off proof ~2026-11-07
 13. Restore drill quarterly re-run due 2027-01 (with identity leg now in the nightly unit, extend the drill's pass criteria to cover an identity artifact)
@@ -108,7 +108,7 @@ Nothing production-broke. Process warts, fully owned:
 - New harvest: runbook export-verification line (f9) + row-13 file-level rewrite (f10) — queued to services.md
 - `scripts/check-todo-system.sh` re-run after edits; no manual commits (daemon owns)
 
-*Evidence index: gen-844/845 symlink mtimes 13:14/14:21; dockerd stop journal 14:19:59; `logs.home.lan` SigNoz bundle `[fetch]`; identity-leg grep in live unit ExecStart; export 29,053 lines; pool dumps listing (last 20261008_020523.sql); tree `6105b556` clean at 14:23.*
+_Evidence index: gen-844/845 symlink mtimes 13:14/14:21; dockerd stop journal 14:19:59; `logs.home.lan` SigNoz bundle `[fetch]`; identity-leg grep in live unit ExecStart; export 29,053 lines; pool dumps listing (last 20261008_020523.sql); tree `6105b556` clean at 14:23._
 
 > **Annotation 2026-10-08 15:10 (follow-through session):** the Bookkeeping
 > line above overclaims — f9 WAS queued (services.md row) but **f10 never

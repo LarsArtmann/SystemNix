@@ -154,7 +154,7 @@ my fixes later swept by daemon into `06e26904` (see §d1).
 
 ## e) WHAT WE SHOULD IMPROVE (structural)
 
-1. **Ban inline Exec* shell strings in this repo** — the JSON→Nix→systemd→bash
+1. __Ban inline Exec_ shell strings in this repo_* — the JSON→Nix→systemd→bash
    quoting stack is where this session's worst error happened AND where the
    `$SECONDS` systemd-substitution bug almost shipped. House pattern exists
    (`writeShellApplication`, fastflowlm.nix:77-100). Convert my cv.nix wait to it
@@ -187,6 +187,7 @@ my fixes later swept by daemon into `06e26904` (see §d1).
 ## f) Next — prioritized (impact-ordered)
 
 **Deploy & verify the landed fixes:**
+
 1. Re-run `nix flake check --no-build` verdict (`/tmp/flakecheck-postfix.log`) — must be green before deploy.
 2. Deploy the 4 fixes (`nix run .#deploy`, owner-gated; PSI must drop below the gate first — was avg10 50.7%).
 3. Post-deploy: verify `sops --version` + `age --version` answer on the new generation.
@@ -245,8 +246,8 @@ my fixes later swept by daemon into `06e26904` (see §d1).
 
 ---
 
-*Verification evidence: crm journal (systemd unit logs via journalctl), live gatus
+_Verification evidence: crm journal (systemd unit logs via journalctl), live gatus
 config `/nix/store/iisvnnxv…-gatus.yaml`, `nix why-depends` on
 `/nix/var/nix/profiles/system-812-link`, post-deploy logs
 `/tmp/pdc-full.log`, `/tmp/flakecheck-postfix.log` (in flight), deploy paste
-(owner terminal, 14:36).*
+(owner terminal, 14:36)._

@@ -86,4 +86,4 @@
 
 ---
 
-*Report written from session memory + tree verification only (`date`, git status/log, flake metadata, targeted greps). No new research beyond re-confirming my own threads were still open at 00:34.*
+_Report written from session memory + tree verification only (`date`, git status/log, flake metadata, targeted greps). No new research beyond re-confirming my own threads were still open at 00:34._

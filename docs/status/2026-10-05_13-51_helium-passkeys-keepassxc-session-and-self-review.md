@@ -15,24 +15,24 @@ The best passkey path for Helium is **KeePassXC-Browser passkeys** — not anyth
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | **Passkey landscape research (multi-source)** | Linux/ungoogled has no builtin passkey storage; GPM-needs-signin + macOS-only-profile-storage confirmed against Google docs, Bitdefender 2025 Linux-browser passkey testing, ungoogled-chromium issues. KeePassXC passkey support verified: 2.7.7 introduced (2.7.12 in nixpkgs — eval'd), extension 1.9.0+ finalized (1.10.4 = PRF + cross-origin iframes), managed storage schema keys found |
-| 2 | **`extraChromiumPolicies` option** (`modules/nixos/desktop/browser-policies.nix`) | Generic attrsOf-anything option merged verbatim into `programs.chromium.extraOpts`; consumed by configuration.nix for the 3rdparty policy |
-| 3 | **KeePassXC passkey policy** (`platforms/nixos/system/configuration.nix`) | `3rdparty.extensions.oboonakemofpalcgghocfoadofidjkkk.policy.settings.{passkeys,passkeysFallback} = true` — managed storage applies to ALL Helium profiles (extension options are per-user-data-dir; the policy is the only way main/dp1/dp2 get it at once) |
-| 4 | **Render-verified** | `nix eval` of `environment.etc."chromium/policies/managed/extra.json".text` shows the exact 3rdparty JSON; all pre-existing policies (search provider, ExtensionSettings, MV2) intact |
-| 5 | **Checks green** | `nix flake check --no-build` passed on the final nix state; alejandra-formatted both edited nix files; `check-todo-system.sh` structure OK |
-| 6 | **Docs** | desktop.md Helium section (design + rationale + dp-gap caveat), FEATURES.md KeePassXC row, CHANGELOG entry |
-| 7 | **TODO hygiene** | `[blocked:deploy]` verify row + 8 follow-up rows in docs/todo/desktop.md; 5 `[ready]` rows harvested into TODO_LIST.md queue |
-| 8 | **Live facts pinned before claiming** | KeePassXC 2.7.12 (eval), extension 1.10.4.1 in main profile Extensions dir, keepassxc.ini live settings, managed-storage race fix (#2969) landed in extension 1.10.2 < installed 1.10.4.1 |
+| # | Item                                                                              | Evidence                                                                                                                                                                                                                                                                                                                                                                                       |
+| - | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Passkey landscape research (multi-source)**                                     | Linux/ungoogled has no builtin passkey storage; GPM-needs-signin + macOS-only-profile-storage confirmed against Google docs, Bitdefender 2025 Linux-browser passkey testing, ungoogled-chromium issues. KeePassXC passkey support verified: 2.7.7 introduced (2.7.12 in nixpkgs — eval'd), extension 1.9.0+ finalized (1.10.4 = PRF + cross-origin iframes), managed storage schema keys found |
+| 2 | **`extraChromiumPolicies` option** (`modules/nixos/desktop/browser-policies.nix`) | Generic attrsOf-anything option merged verbatim into `programs.chromium.extraOpts`; consumed by configuration.nix for the 3rdparty policy                                                                                                                                                                                                                                                      |
+| 3 | **KeePassXC passkey policy** (`platforms/nixos/system/configuration.nix`)         | `3rdparty.extensions.oboonakemofpalcgghocfoadofidjkkk.policy.settings.{passkeys,passkeysFallback} = true` — managed storage applies to ALL Helium profiles (extension options are per-user-data-dir; the policy is the only way main/dp1/dp2 get it at once)                                                                                                                                   |
+| 4 | **Render-verified**                                                               | `nix eval` of `environment.etc."chromium/policies/managed/extra.json".text` shows the exact 3rdparty JSON; all pre-existing policies (search provider, ExtensionSettings, MV2) intact                                                                                                                                                                                                          |
+| 5 | **Checks green**                                                                  | `nix flake check --no-build` passed on the final nix state; alejandra-formatted both edited nix files; `check-todo-system.sh` structure OK                                                                                                                                                                                                                                                     |
+| 6 | **Docs**                                                                          | desktop.md Helium section (design + rationale + dp-gap caveat), FEATURES.md KeePassXC row, CHANGELOG entry                                                                                                                                                                                                                                                                                     |
+| 7 | **TODO hygiene**                                                                  | `[blocked:deploy]` verify row + 8 follow-up rows in docs/todo/desktop.md; 5 `[ready]` rows harvested into TODO_LIST.md queue                                                                                                                                                                                                                                                                   |
+| 8 | **Live facts pinned before claiming**                                             | KeePassXC 2.7.12 (eval), extension 1.10.4.1 in main profile Extensions dir, keepassxc.ini live settings, managed-storage race fix (#2969) landed in extension 1.10.2 < installed 1.10.4.1                                                                                                                                                                                                      |
 
 ## b) PARTIALLY DONE
 
-| # | Item | What remains |
-|---|------|--------------|
-| 1 | **Passkey enablement itself** | Config landed, committed (daemon), NOT deployed, NOT live-verified. One real ceremony post-deploy is the acceptance test (`[blocked:deploy]` row carries the full probe protocol incl. chrome://policy render + a `.home.lan` RP probe) |
-| 2 | **"All three profiles" coverage** | TRUE for the policy (global /etc/chromium/policies), FALSE for the chain: dp1/dp2 native messaging is missing (see §d.2). Corrected on all surfaces this session |
-| 3 | **Managed-storage key names** | `settings.passkeys`/`passkeysFallback` sourced from an AI sub-agent reading the extension repo (direct fetch 404'd). If a key name were wrong, chrome.storage.managed would SILENTLY ignore it. Verification row queued (read managed_storage.json out of the installed CRX) |
+| # | Item                              | What remains                                                                                                                                                                                                                                                                 |
+| - | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Passkey enablement itself**     | Config landed, committed (daemon), NOT deployed, NOT live-verified. One real ceremony post-deploy is the acceptance test (`[blocked:deploy]` row carries the full probe protocol incl. chrome://policy render + a `.home.lan` RP probe)                                      |
+| 2 | **"All three profiles" coverage** | TRUE for the policy (global /etc/chromium/policies), FALSE for the chain: dp1/dp2 native messaging is missing (see §d.2). Corrected on all surfaces this session                                                                                                             |
+| 3 | **Managed-storage key names**     | `settings.passkeys`/`passkeysFallback` sourced from an AI sub-agent reading the extension repo (direct fetch 404'd). If a key name were wrong, chrome.storage.managed would SILENTLY ignore it. Verification row queued (read managed_storage.json out of the installed CRX) |
 
 ## c) NOT STARTED
 
@@ -53,26 +53,32 @@ The best passkey path for Helium is **KeePassXC-Browser passkeys** — not anyth
 ## e) WHAT WE SHOULD IMPROVE (brutal self-review answers)
 
 **What did you forget?**
+
 - The dp-profile plumbing question until the self-review forced it ("does my claim hold for all three profiles?"). I verified the POLICY scope but never the CHAIN it rides on.
 - That the session-added policy widened the extension-ID split brain (2 → 3 surfaces).
 - macOS entirely (the standing open question from 2026-09-14 Q3 was never resurfaced until this review).
 
 **What is stupid that we do anyway?**
+
 - Research findings from AI sub-agens flow into config/docs with keys and semantics I did not read from primary sources — in THIS repo, whose whole prevention-layer philosophy is "verify the claim, not the vibe". The `verify-external-claims` skill exists for exactly this and I did not invoke its discipline on the managed-storage keys.
 - The KeePassXC native-messaging manifest is deployed to exactly ONE browser profile dir with no system-wide host — a shape whose coverage was never mapped when the dp instances were created. (Not mine, but I shipped docs ON TOP of it without checking.)
 
 **What could you have done better?**
+
 - Pin before write; read the option definition before wiring module merges; run `alejandra --check` before the first daemon window, not after (the daemon can commit unformatted files and my final formatting pass churned 265 lines of browser-policies.nix — formatting noise mixed into a semantic diff, worse reviewability).
 - Fact-check comfortable claims against the machine BEFORE they land in docs, not during the self-review. Two `ls` commands took ten seconds.
 
 **Did you lie?**
+
 - No claim was fabricated. One claim was OVERBROAD ("all three profiles") — true for the policy, false for the underlying chain; it was corrected on all surfaces the moment the fact-check falsified it. The live-verified facts (versions, rendered JSON, flake check) all hold at HEAD.
 
 **Ghost systems / split brains?**
+
 - No ghost systems (everything wired; the new option has one consumer by design).
 - Split brain WIDENED: extension ID now in 3 places (queued fix). Doc restatement across desktop.md/FEATURES/CHANGELOG is repo convention, not a split brain.
 
 **How are we doing on tests?**
+
 - This session added config without a regression check — below this repo's own bar (the tree has eval-guard + selftesting-check patterns for exactly this class). The queued eval-check + negative case closes it.
 
 **Scope creep?** No — the session stayed on the ask; the follow-ups are all passkey-adjacent or direct self-review findings.
@@ -81,23 +87,23 @@ The best passkey path for Helium is **KeePassXC-Browser passkeys** — not anyth
 
 **Harvest log (§f items HARVESTED at authoring time):** f.1 → `[blocked:deploy]` row, docs/todo/desktop.md (queued pre-report). f.2–f.6 → `[ready]` rows in TODO_LIST.md queue + full entries in docs/todo/desktop.md. f.7/f.11/f.12/f.15 → watches/notices, deliberately not harvested as items (post-deploy observations or foreign-change checks; f.12 belongs to the parallel session's scope). f.8–f.10 → `[decision]` rows in docs/todo/desktop.md (library-only by the routing rules). f.13 → pre-existing docs-health debt, deliberately not duplicated here. f.14 → resurfaced as an owner-gated notice, same class as f.8.
 
-| # | Task | State | Gate |
-|---|------|-------|------|
-| 1 | Deploy + live passkey ceremony verify (chrome://policy render, KeePassXC dialog, fallback path, `.home.lan` RP probe) | queued `[blocked:deploy]` | deploy |
-| 2 | dp1/dp2 native-messaging manifests (`xdg.dataFile`, ONE manifest def, three targets) | queued `[ready]` | — |
-| 3 | Verify managed-storage keys against installed CRX's managed_storage.json | queued `[ready]` | — |
-| 4 | Eval-check pinning the 3rdparty policy (+ negative case) | queued `[ready]` | — |
-| 5 | Extension-ID single-source constant | queued `[ready]` | — |
-| 6 | Conditional-UI support check (1.10.4.1) → UX expectations for login pages | queued `[ready]` | — |
-| 7 | YubiKey CTAP2 ceremony as fallback-path proof (key attached, udev shipped) | notice | post-deploy |
-| 8 | Second Pocket ID authenticator (YubiKey) before consolidating passkeys | queued `[decision]` | owner |
-| 9 | Migrate/import existing passkeys into KeePassXC (`.passkey` files)? | queued `[decision]` | owner |
-| 10 | macOS passkey parity for darwin browsers | queued `[decision]` | owner |
-| 11 | KeePassXC DB-unlock UX: locked DB = failed ceremony; document/verify autostart path | notice | — |
-| 12 | flake.nix `systems`-override warnings: confirm gone after the parallel session's cleanup (foreign change completeness — unverified by me) | notice | — |
-| 13 | 92 unharvested §f-bearing status reports (`check-todo-system.sh` WARN, pre-existing process debt noticed during final guard run) | notice | docs-health HARVEST pass |
-| 14 | PasswordManagerEnabled=false policy question (open since 2026-07-29 item 31) — sharper now that KeePassXC would own secrets + passkeys | notice | owner |
-| 15 | Post-deploy: confirm extension auto-updates reach dp profiles via the Helium proxy too | notice | post-deploy |
+| #  | Task                                                                                                                                      | State                     | Gate                     |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ------------------------ |
+| 1  | Deploy + live passkey ceremony verify (chrome://policy render, KeePassXC dialog, fallback path, `.home.lan` RP probe)                     | queued `[blocked:deploy]` | deploy                   |
+| 2  | dp1/dp2 native-messaging manifests (`xdg.dataFile`, ONE manifest def, three targets)                                                      | queued `[ready]`          | —                        |
+| 3  | Verify managed-storage keys against installed CRX's managed_storage.json                                                                  | queued `[ready]`          | —                        |
+| 4  | Eval-check pinning the 3rdparty policy (+ negative case)                                                                                  | queued `[ready]`          | —                        |
+| 5  | Extension-ID single-source constant                                                                                                       | queued `[ready]`          | —                        |
+| 6  | Conditional-UI support check (1.10.4.1) → UX expectations for login pages                                                                 | queued `[ready]`          | —                        |
+| 7  | YubiKey CTAP2 ceremony as fallback-path proof (key attached, udev shipped)                                                                | notice                    | post-deploy              |
+| 8  | Second Pocket ID authenticator (YubiKey) before consolidating passkeys                                                                    | queued `[decision]`       | owner                    |
+| 9  | Migrate/import existing passkeys into KeePassXC (`.passkey` files)?                                                                       | queued `[decision]`       | owner                    |
+| 10 | macOS passkey parity for darwin browsers                                                                                                  | queued `[decision]`       | owner                    |
+| 11 | KeePassXC DB-unlock UX: locked DB = failed ceremony; document/verify autostart path                                                       | notice                    | —                        |
+| 12 | flake.nix `systems`-override warnings: confirm gone after the parallel session's cleanup (foreign change completeness — unverified by me) | notice                    | —                        |
+| 13 | 92 unharvested §f-bearing status reports (`check-todo-system.sh` WARN, pre-existing process debt noticed during final guard run)          | notice                    | docs-health HARVEST pass |
+| 14 | PasswordManagerEnabled=false policy question (open since 2026-07-29 item 31) — sharper now that KeePassXC would own secrets + passkeys    | notice                    | owner                    |
+| 15 | Post-deploy: confirm extension auto-updates reach dp profiles via the Helium proxy too                                                    | notice                    | post-deploy              |
 
 ## g) Questions I cannot figure out myself
 

@@ -18,7 +18,6 @@
 # .port from it (assertion + env rendering) but the daemon never CALLS the
 # LLM in a fresh VM (no auto-tagged documents exist), so no NPU units run.
 {
-  pkgs,
   inputs,
 }:
 let

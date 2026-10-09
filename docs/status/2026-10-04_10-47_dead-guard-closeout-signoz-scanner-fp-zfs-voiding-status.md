@@ -67,6 +67,7 @@
 ## f) NEXT (up to 50, prioritized; owner-dispatched)
 
 **High (unblock the tree gate):**
+
 1. Triage the 6 failing VM tests with provenance (log timestamps vs commits): `disko-layout`, `hermes`, `hot-user-caches`, `crush-hot-db`, `browser-history`, `restic-app-dumps` — split concurrent-session in-flight vs genuinely pre-existing.
 2. Coordinate with the concurrent session on `disko/samsung-tlc.nix` (10:08 commit) vs `tests/test-disko-layout.nix` expectations (`/mnt/hot` subvol list) — likely one side mid-refactor.
 3. Investigate hermes `systemnix-workspace-doc: v2` assertion (workspace doc version mismatch) — new failure class, first observed 07:03 today.
@@ -102,4 +103,4 @@
 
 ---
 
-*Evidence anchors: CHANGELOG "negative-test-lints harness fully green" entry; `docs/todo/pipeline.md` closed row; `TODO_LIST.md` closed row; sweep report §d/§e; commits `716e3953` (my 4 code files, daemon-swept with the concurrent session's 2).*
+_Evidence anchors: CHANGELOG "negative-test-lints harness fully green" entry; `docs/todo/pipeline.md` closed row; `TODO_LIST.md` closed row; sweep report §d/§e; commits `716e3953` (my 4 code files, daemon-swept with the concurrent session's 2)._

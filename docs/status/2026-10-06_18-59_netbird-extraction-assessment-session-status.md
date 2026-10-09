@@ -3,20 +3,20 @@
 **Date:** 2026-10-06 18:59 CEST
 **Session type:** advisory only — one architecture question answered, zero code changes, zero repo writes before this report
 **Repos touched (read-only):** `pbx-artmann`, `SystemNix`
-**Question under review:** *Both pbx-artmann and SystemNix have netbird — could it make sense to extract it into a dedicated flake-parts repo?*
+**Question under review:** _Both pbx-artmann and SystemNix have netbird — could it make sense to extract it into a dedicated flake-parts repo?_
 
 ---
 
 ## What this session actually did
 
-| # | Action | Evidence base |
-|---|--------|---------------|
-| 1 | Dual-repo netbird grep (surface inventory) | 100+ matches per repo (both result sets truncated) |
-| 2 | Read SystemNix client module in full | `modules/nixos/services/netbird.nix` (127 lines) |
-| 3 | Read pbx control-plane module in full | `hosts/pbx/netbird.nix` (176 lines) |
-| 4 | Flake-architecture verification | SystemNix `flake.nix` (flake-parts confirmed); pbx `flake.nix` inputs (no flake-parts — classic split `flake/*.nix`; sibling-input pattern: `telephony`, `mail`; `nixpkgs.follows = "telephony/nixpkgs"`) |
-| 5 | Cross-repo input check | SystemNix has NO pbx-artmann flake input (eval-side coupling is via local checkouts only) |
-| 6 | Size inventory of pbx netbird surface | 1012 lines total across 6 files (host modules 446, tests 566) |
+| # | Action                                     | Evidence base                                                                                                                                                                                             |
+| - | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | Dual-repo netbird grep (surface inventory) | 100+ matches per repo (both result sets truncated)                                                                                                                                                        |
+| 2 | Read SystemNix client module in full       | `modules/nixos/services/netbird.nix` (127 lines)                                                                                                                                                          |
+| 3 | Read pbx control-plane module in full      | `hosts/pbx/netbird.nix` (176 lines)                                                                                                                                                                       |
+| 4 | Flake-architecture verification            | SystemNix `flake.nix` (flake-parts confirmed); pbx `flake.nix` inputs (no flake-parts — classic split `flake/*.nix`; sibling-input pattern: `telephony`, `mail`; `nixpkgs.follows = "telephony/nixpkgs"`) |
+| 5 | Cross-repo input check                     | SystemNix has NO pbx-artmann flake input (eval-side coupling is via local checkouts only)                                                                                                                 |
+| 6 | Size inventory of pbx netbird surface      | 1012 lines total across 6 files (host modules 446, tests 566)                                                                                                                                             |
 
 **Verdict delivered: NO — not today.** Rationale: (1) the two surfaces are the SERVER and the CLIENT — disjoint nixpkgs option surfaces sharing essentially constants, not code; (2) the majority of each file is local doctrine (telephony-secrets / `pbx-alert@` vs `services.catalog` / `services.integration` / sops paths), which genericizing would only option-ize, growing net code; (3) one consumer each; (4) a third repo makes the F86 version-compat problem harder, not easier (own lockfile, cannot eval either consumer's closure); (5) phase-2 flipped the same day — mid-bring-up is the worst moment to move code. Cheaper alternatives offered: parameterize the hardcoded `evox2` client name when a second client joins; close F86 as already planned; revisit only if the provisioner outgrows one box. Noted pbx-artmann isn't flake-parts, so the extraction shape would be the telephony/mail classic-flake pattern anyway.
 
@@ -67,26 +67,26 @@ Honest count: **3 new + 10 already-tracked.** Not padded to 50 — everything el
 
 **NEW (harvest candidates — no owning row exists yet):**
 
-| # | Task | Impact | Effort | Status |
-|---|------|--------|--------|--------|
-| N1 | Write the RAM-split dependency note into the extraction decision: one paragraph in SystemNix's netbird planning doc stating the verdict reopens if the cx23 dedicated-VPS split lands (control plane off pbx dissolves the doctrine coupling) | Medium | 5min | 🔴 TODO |
-| N2 | Pin the cross-repo shared netbird constants (management URL, port 51820, relay/STUN endpoint) in one contract check that evals BOTH local checkouts — closes the only real split-brain vector; natural extension of F86's mechanism | Medium | 30min | 🔴 TODO |
-| N3 | [conditional] Parameterize SystemNix client module's hardcoded `evox2` (client name, unit name `netbird-evox2`, preStart target) → per-host option — prep only when a second client is actually committed (see §g Q2) | Low-Med | 1h | 🔵 BLOCKED (decision) |
+| #  | Task                                                                                                                                                                                                                                          | Impact  | Effort | Status                |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------ | --------------------- |
+| N1 | Write the RAM-split dependency note into the extraction decision: one paragraph in SystemNix's netbird planning doc stating the verdict reopens if the cx23 dedicated-VPS split lands (control plane off pbx dissolves the doctrine coupling) | Medium  | 5min   | 🔴 TODO               |
+| N2 | Pin the cross-repo shared netbird constants (management URL, port 51820, relay/STUN endpoint) in one contract check that evals BOTH local checkouts — closes the only real split-brain vector; natural extension of F86's mechanism           | Medium  | 30min  | 🔴 TODO               |
+| N3 | [conditional] Parameterize SystemNix client module's hardcoded `evox2` (client name, unit name `netbird-evox2`, preStart target) → per-host option — prep only when a second client is actually committed (see §g Q2)                         | Low-Med | 1h     | 🔵 BLOCKED (decision) |
 
 **ALREADY TRACKED (noticed this session; owners elsewhere — do NOT duplicate):**
 
-| # | Existing row | Owner |
-|---|--------------|-------|
-| T1 | F86 netbird version-compat eval grep (pbx server closure vs SystemNix client 0.80.0) + runbook pin note | pbx TODO §T17 |
-| T2 | F87 post-enrollment probes (`netbird status` from evo-x2, tunnel DNS dig @192.168.1.53, Gatus eyeball) | pbx TODO §T17 |
-| T3 | Post-flip verify: provisioner "converged" incl. router + `/api/peers` lists evo-x2 | SystemNix services.md |
-| T4 | RAM watch on cx23 (4 GB) → dedicated-VPS decision — the §d.1 dependency itself | pbx TODO |
-| T5 | roots-restore one-liner into netbird-deploy.md stage-first block | SystemNix services.md |
-| T6 | secrets-preflight: derive expected-local names from generate.sh (cat-read secrets like `netbird_api_pat` invisible today) | SystemNix services.md |
-| T7 | docs-gates: aggregate ALL 5 gates instead of first-exit | SystemNix services.md |
-| T8 | Identify `/tmp/pbx-toplevel-*` deletion actor + inotify watch | SystemNix services.md |
-| T9 | pbx AGENTS: staging-ritual gotchas (`--no-link` contradiction, symlink verify, cwd distrust) | SystemNix services.md |
-| T10 | mail-SNI TLS note into mail-go-live.md (netbird-default cert on the mail vhost is not a missing mail cert) | pbx TODO |
+| #   | Existing row                                                                                                              | Owner                 |
+| --- | ------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| T1  | F86 netbird version-compat eval grep (pbx server closure vs SystemNix client 0.80.0) + runbook pin note                   | pbx TODO §T17         |
+| T2  | F87 post-enrollment probes (`netbird status` from evo-x2, tunnel DNS dig @192.168.1.53, Gatus eyeball)                    | pbx TODO §T17         |
+| T3  | Post-flip verify: provisioner "converged" incl. router + `/api/peers` lists evo-x2                                        | SystemNix services.md |
+| T4  | RAM watch on cx23 (4 GB) → dedicated-VPS decision — the §d.1 dependency itself                                            | pbx TODO              |
+| T5  | roots-restore one-liner into netbird-deploy.md stage-first block                                                          | SystemNix services.md |
+| T6  | secrets-preflight: derive expected-local names from generate.sh (cat-read secrets like `netbird_api_pat` invisible today) | SystemNix services.md |
+| T7  | docs-gates: aggregate ALL 5 gates instead of first-exit                                                                   | SystemNix services.md |
+| T8  | Identify `/tmp/pbx-toplevel-*` deletion actor + inotify watch                                                             | SystemNix services.md |
+| T9  | pbx AGENTS: staging-ritual gotchas (`--no-link` contradiction, symlink verify, cwd distrust)                              | SystemNix services.md |
+| T10 | mail-SNI TLS note into mail-go-live.md (netbird-default cert on the mail vhost is not a missing mail cert)                | pbx TODO              |
 
 ## g) Questions I cannot figure out myself
 

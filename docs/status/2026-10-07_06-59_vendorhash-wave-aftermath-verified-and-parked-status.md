@@ -8,17 +8,17 @@
 
 ## Delta since the 06:50 report (what this continuation pass added)
 
-| Fact | Evidence (06:56–06:59) |
-|------|------------------------|
-| HEAD moved `0e8ef11d` → `17efd3a8` | `git log`: `17efd3a8` is the daemon sweep of exactly OUR 3 files (status report + TODO_LIST:785 + pipeline.md:361); `4b4f9acf` is the parallel session's root-prune-guard self-review (theirs, unrelated) |
-| Live generation unchanged | `readlink /run/current-system` → `vyjjl6al8pb5cb9vixgh54a2vach42h7-nixos-system-evo-x2-…` |
-| Unit-level state re-proven | ExecStart greps in `/run/current-system/etc/systemd/system/` (not `etc/systemd-system`, which does not exist): discordsync on OUR build, browser-history on the parallel session's `3ebbfbf` |
-| Shim states re-proven | `sha256-/NYfLmDMx…` at `discordsync.nix:42` + `overlays/linux.nix:241` (exactly 1 hit each); `grep -c` of all three old browser-history hash markers in `browser-history.nix` = 0 (drop stands) |
-| Todo rows re-proven, no drift | `TODO_LIST.md:785` ↔ `docs/todo/pipeline.md:361`, both citing the 06:50 report §e.1 |
-| **I/O storm STILL live** | `/proc/pressure/io`: some avg10 **36.36** / avg60 27.66 / avg300 28.54; mem PSI calm (some avg10 3.59); zram 24.4/62.2 G (39%); mem 68/124 Gi used, 55 Gi available — a retry deploy right now would rc=12 again |
-| Todo list reconciled in-session | session todo tracker: 9 items completed (matching verified reality), 1 parked item "await §g answers" |
-| NEW gap found | CHANGELOG has NO row for the 2026-10-07 vendorHash wave (today's 5 entries cover root-prune-guard ×2, caddy catch-all, deploy-lock diagnostics, login-gate; the 09-21 wave precedent lives at `CHANGELOG.md:193`) — harvested this report, see §d.7 |
-| Small verification shortfall | my direct `flake.lock` rev grep came back empty (pattern too shallow) and I proceeded on the store-path-name inference (`discordsync-1ac31f8` encodes the rev — strong, but the direct probe silently failed and was not retried) — see §d.8 |
+| Fact                               | Evidence (06:56–06:59)                                                                                                                                                                                                                              |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| HEAD moved `0e8ef11d` → `17efd3a8` | `git log`: `17efd3a8` is the daemon sweep of exactly OUR 3 files (status report + TODO_LIST:785 + pipeline.md:361); `4b4f9acf` is the parallel session's root-prune-guard self-review (theirs, unrelated)                                           |
+| Live generation unchanged          | `readlink /run/current-system` → `vyjjl6al8pb5cb9vixgh54a2vach42h7-nixos-system-evo-x2-…`                                                                                                                                                           |
+| Unit-level state re-proven         | ExecStart greps in `/run/current-system/etc/systemd/system/` (not `etc/systemd-system`, which does not exist): discordsync on OUR build, browser-history on the parallel session's `3ebbfbf`                                                        |
+| Shim states re-proven              | `sha256-/NYfLmDMx…` at `discordsync.nix:42` + `overlays/linux.nix:241` (exactly 1 hit each); `grep -c` of all three old browser-history hash markers in `browser-history.nix` = 0 (drop stands)                                                     |
+| Todo rows re-proven, no drift      | `TODO_LIST.md:785` ↔ `docs/todo/pipeline.md:361`, both citing the 06:50 report §e.1                                                                                                                                                                 |
+| **I/O storm STILL live**           | `/proc/pressure/io`: some avg10 **36.36** / avg60 27.66 / avg300 28.54; mem PSI calm (some avg10 3.59); zram 24.4/62.2 G (39%); mem 68/124 Gi used, 55 Gi available — a retry deploy right now would rc=12 again                                    |
+| Todo list reconciled in-session    | session todo tracker: 9 items completed (matching verified reality), 1 parked item "await §g answers"                                                                                                                                               |
+| NEW gap found                      | CHANGELOG has NO row for the 2026-10-07 vendorHash wave (today's 5 entries cover root-prune-guard ×2, caddy catch-all, deploy-lock diagnostics, login-gate; the 09-21 wave precedent lives at `CHANGELOG.md:193`) — harvested this report, see §d.7 |
+| Small verification shortfall       | my direct `flake.lock` rev grep came back empty (pattern too shallow) and I proceeded on the store-path-name inference (`discordsync-1ac31f8` encodes the rev — strong, but the direct probe silently failed and was not retried) — see §d.8        |
 
 ---
 
@@ -76,40 +76,40 @@
 
 ## f) NEXT (30 items, ranked; ★ = new this report; "tracked" = existing row verified 06:58)
 
-| # | Item | Impact | Effort | Category | Status / pointer |
-|---|------|--------|--------|----------|------------------|
-| 1 | Run `post-deploy-check.sh` vs `vyjjl6al…` + discordsync catch-up writer check + Gatus verdicts for both wave services | Critical | S | Quality | gated §g3 (owner is the ask; deliberately not queued) |
-| 2 | I/O storm attribution + pause/continue ruling: io-PSI some avg10 still **36.4% at 06:56** (avg300 28.5, 4h+ sustained); tq-agent-pool +97 GB lineage | Critical | S | Bug | gated §g1; underlying attribution tracked in stability.md lineage |
-| 3 | tq-agent-pool +97 GB write attribution → dispatch gating (freeze-#23 conditions) | Critical | M | Quality | tracked: stability.md lineage |
-| 4 | `deploy.sh --wait-for-pressure <min>` bounded wait + target-live guard | High | M | Feature | tracked: pipeline.md:361 + TODO_LIST:785 |
-| 5 | DiscordSync upstream `nix-hash-fix` + push + re-lock + drop BOTH shims (`/NYfLmDMx…`) | High | S | Feature | tracked: upstream.md:111 — gated §g2 |
-| 6 | Drop-check the 4 module-surface shims (upstream often already correct at locked rev) | High | S | Cleanup | tracked: upstream.md:116 |
-| 7 | ★ Write the CHANGELOG row for the 2026-10-07 wave (re-pins, shim drop `f0442ea3`, `vyjjl6al…` landing; 09-21 precedent at CHANGELOG.md:193) | Medium | S | Documentation | ★ harvested THIS report → services.md + TODO_LIST |
-| 8 | Post-crash resumable-reader pause automation (freeze-6 rule (a)) | High | M | Feature | tracked: stability.md |
-| 9 | Row-111 a7868a7-wave upstream re-pin sweep (~20 repos incl. discordsync) | Medium | L | Cleanup | tracked: upstream.md:111 |
-| 10 | bank-sync input probe (never directly verified this thread) | Medium | S | Quality | new small; parked with §c.3 |
-| 11 | mr-sync cmdguard/v4 classification | Medium | S | Feature | tracked: upstream.md (blocked:push) |
-| 12 | branching-flow 0.6.4 version-sync push + shim drop | Medium | M | Feature | tracked: upstream.md:110 |
-| 13 | crush-daily chromedp v0.19 migration (then drop `crushDailyVendorHashShim` gate) | Medium | M | Feature | tracked: upstream.md:107 |
-| 14 | browser-history empty-dashboard chain (cqrs-htmx push → deploy → verify) | Medium | L | Feature | tracked: upstream.md |
-| 15 | Fleet-wide infra lock-dedup follows in tool repos (inner edges; 421→387 done) | Medium | L | Cleanup | tracked: upstream.md:13 |
-| 16 | discordsync-db-backup stalled-dump OnFailure retry | Medium | S | Bug | tracked: storage.md |
-| 17 | discordsync-attachments-migrate stub-fixture test BEFORE its deploy trigger | Medium | M | Quality | tracked: storage.md |
-| 18 | Freeze #8–#13 taxonomy entries for stability.md | Medium | M | Documentation | tracked: stability.md |
-| 19 | ★ Deploy-wrapper idempotence guard (refuse switch when target already live) | Medium | S | Feature | ★ new (§e.3) — candidate amendment to #4's surface |
-| 20 | ★ Promote drop-check-first to doctrine step order in docs/agents/nix-flakes.md | Medium | S | Documentation | ★ new (§e.2) |
-| 21 | ★ Cross-session claim-marker convention (prevent duplicate re-pin/drop churn) | Medium | S | Process | ★ new (§e.6) — needs owner buy-in |
-| 22 | Catalog integration-subdomain warning (21 names) | Low | M | Cleanup | tracked: services.md / TODO_LIST |
-| 23 | Hot-DB five per-service Samsung migration waves (owner sudo windows) | Medium | L | Feature | tracked: storage.md (CHANGELOG:47) |
-| 24 | Domains repo CAA reconciliation push | Low | S | Cleanup | tracked: upstream.md |
-| 25 | nixpkgs netbird `ManagementUrl` module fix (verify-before-filing first) | Low | M | Feature | tracked: upstream.md |
-| 26 | monitor365 `/ds/` cache-policy follow-ups | Low | M | Quality | tracked: upstream.md |
-| 27 | art-dupl FOD row 741/754 closure candidate (25-drv list showed NO art-dupl FODs; re-dispatch protocol applies) | Low | M | Quality | tracked: TODO_LIST 754 |
-| 28 | ★ Daemon-title semantic guard (amend-forward recognizable heuristic commits) | Low | S | Process | ★ new (§e.7) |
-| 29 | ★ Direct lock-rev verification protocol note (nix-flakes.md) | Low | S | Documentation | ★ new (§e.9) |
-| 30 | ★ CHANGELOG-at-close-out convention for wave sessions | Low | S | Process | ★ new (§e.8) |
+| #  | Item                                                                                                                                                 | Impact   | Effort | Category      | Status / pointer                                                  |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- | ----------------------------------------------------------------- |
+| 1  | Run `post-deploy-check.sh` vs `vyjjl6al…` + discordsync catch-up writer check + Gatus verdicts for both wave services                                | Critical | S      | Quality       | gated §g3 (owner is the ask; deliberately not queued)             |
+| 2  | I/O storm attribution + pause/continue ruling: io-PSI some avg10 still **36.4% at 06:56** (avg300 28.5, 4h+ sustained); tq-agent-pool +97 GB lineage | Critical | S      | Bug           | gated §g1; underlying attribution tracked in stability.md lineage |
+| 3  | tq-agent-pool +97 GB write attribution → dispatch gating (freeze-#23 conditions)                                                                     | Critical | M      | Quality       | tracked: stability.md lineage                                     |
+| 4  | `deploy.sh --wait-for-pressure <min>` bounded wait + target-live guard                                                                               | High     | M      | Feature       | tracked: pipeline.md:361 + TODO_LIST:785                          |
+| 5  | DiscordSync upstream `nix-hash-fix` + push + re-lock + drop BOTH shims (`/NYfLmDMx…`)                                                                | High     | S      | Feature       | tracked: upstream.md:111 — gated §g2                              |
+| 6  | Drop-check the 4 module-surface shims (upstream often already correct at locked rev)                                                                 | High     | S      | Cleanup       | tracked: upstream.md:116                                          |
+| 7  | ★ Write the CHANGELOG row for the 2026-10-07 wave (re-pins, shim drop `f0442ea3`, `vyjjl6al…` landing; 09-21 precedent at CHANGELOG.md:193)          | Medium   | S      | Documentation | ★ harvested THIS report → services.md + TODO_LIST                 |
+| 8  | Post-crash resumable-reader pause automation (freeze-6 rule (a))                                                                                     | High     | M      | Feature       | tracked: stability.md                                             |
+| 9  | Row-111 a7868a7-wave upstream re-pin sweep (~20 repos incl. discordsync)                                                                             | Medium   | L      | Cleanup       | tracked: upstream.md:111                                          |
+| 10 | bank-sync input probe (never directly verified this thread)                                                                                          | Medium   | S      | Quality       | new small; parked with §c.3                                       |
+| 11 | mr-sync cmdguard/v4 classification                                                                                                                   | Medium   | S      | Feature       | tracked: upstream.md (blocked:push)                               |
+| 12 | branching-flow 0.6.4 version-sync push + shim drop                                                                                                   | Medium   | M      | Feature       | tracked: upstream.md:110                                          |
+| 13 | crush-daily chromedp v0.19 migration (then drop `crushDailyVendorHashShim` gate)                                                                     | Medium   | M      | Feature       | tracked: upstream.md:107                                          |
+| 14 | browser-history empty-dashboard chain (cqrs-htmx push → deploy → verify)                                                                             | Medium   | L      | Feature       | tracked: upstream.md                                              |
+| 15 | Fleet-wide infra lock-dedup follows in tool repos (inner edges; 421→387 done)                                                                        | Medium   | L      | Cleanup       | tracked: upstream.md:13                                           |
+| 16 | discordsync-db-backup stalled-dump OnFailure retry                                                                                                   | Medium   | S      | Bug           | tracked: storage.md                                               |
+| 17 | discordsync-attachments-migrate stub-fixture test BEFORE its deploy trigger                                                                          | Medium   | M      | Quality       | tracked: storage.md                                               |
+| 18 | Freeze #8–#13 taxonomy entries for stability.md                                                                                                      | Medium   | M      | Documentation | tracked: stability.md                                             |
+| 19 | ★ Deploy-wrapper idempotence guard (refuse switch when target already live)                                                                          | Medium   | S      | Feature       | ★ new (§e.3) — candidate amendment to #4's surface                |
+| 20 | ★ Promote drop-check-first to doctrine step order in docs/agents/nix-flakes.md                                                                       | Medium   | S      | Documentation | ★ new (§e.2)                                                      |
+| 21 | ★ Cross-session claim-marker convention (prevent duplicate re-pin/drop churn)                                                                        | Medium   | S      | Process       | ★ new (§e.6) — needs owner buy-in                                 |
+| 22 | Catalog integration-subdomain warning (21 names)                                                                                                     | Low      | M      | Cleanup       | tracked: services.md / TODO_LIST                                  |
+| 23 | Hot-DB five per-service Samsung migration waves (owner sudo windows)                                                                                 | Medium   | L      | Feature       | tracked: storage.md (CHANGELOG:47)                                |
+| 24 | Domains repo CAA reconciliation push                                                                                                                 | Low      | S      | Cleanup       | tracked: upstream.md                                              |
+| 25 | nixpkgs netbird `ManagementUrl` module fix (verify-before-filing first)                                                                              | Low      | M      | Feature       | tracked: upstream.md                                              |
+| 26 | monitor365 `/ds/` cache-policy follow-ups                                                                                                            | Low      | M      | Quality       | tracked: upstream.md                                              |
+| 27 | art-dupl FOD row 741/754 closure candidate (25-drv list showed NO art-dupl FODs; re-dispatch protocol applies)                                       | Low      | M      | Quality       | tracked: TODO_LIST 754                                            |
+| 28 | ★ Daemon-title semantic guard (amend-forward recognizable heuristic commits)                                                                         | Low      | S      | Process       | ★ new (§e.7)                                                      |
+| 29 | ★ Direct lock-rev verification protocol note (nix-flakes.md)                                                                                         | Low      | S      | Documentation | ★ new (§e.9)                                                      |
+| 30 | ★ CHANGELOG-at-close-out convention for wave sessions                                                                                                | Low      | S      | Process       | ★ new (§e.8)                                                      |
 
-*Remaining ~20 slots deliberately NOT filled: everything else this thread touched is either already tracked above or would be unsourced brainstorm padding — `docs-health` HARVEST can widen later. §f items marked "gated §gN" are deliberately not queued: the answer to the question IS the next action.*
+_Remaining ~20 slots deliberately NOT filled: everything else this thread touched is either already tracked above or would be unsourced brainstorm padding — `docs-health` HARVEST can widen later. §f items marked "gated §gN" are deliberately not queued: the answer to the question IS the next action._
 
 ## g) QUESTIONS (3 — unchanged since 06:50, re-asked; no answer found in tree as of 06:59)
 
@@ -119,4 +119,4 @@
 
 ---
 
-*Self-harvest at authoring (06:59): §f.7 (CHANGELOG row) landed NEW in `docs/todo/services.md` + `TODO_LIST.md` queue; §f.1/§f.2 gated on §g3/§g1 — deliberately not queued (the ruling is the ask); §f.19–§f.21, §f.28–§f.30 are process/doctrine proposals needing owner buy-in — deliberately not queued; every other §f row was already tracked and its pointer verified this pass. No other queue files touched.*
+_Self-harvest at authoring (06:59): §f.7 (CHANGELOG row) landed NEW in `docs/todo/services.md` + `TODO_LIST.md` queue; §f.1/§f.2 gated on §g3/§g1 — deliberately not queued (the ruling is the ask); §f.19–§f.21, §f.28–§f.30 are process/doctrine proposals needing owner buy-in — deliberately not queued; every other §f row was already tracked and its pointer verified this pass. No other queue files touched._

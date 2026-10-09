@@ -7,24 +7,24 @@
 ## Problem
 
 `flake.lock` holds **421 nodes for only 235 unique revs**. Nix creates one lock node
-per *path* in the input graph: every LarsArtmann tool flake that consumes
+per _path_ in the input graph: every LarsArtmann tool flake that consumes
 `flake-parts` / `treefmt-nix` / `nixpkgs` / `systems` without a `follows` pin to the
 root gets its own locked copy, uniquified with `_N` suffixes. 43+ LarsArtmann inputs
 that transitively depend on each other multiply this.
 
 ### Measured duplicate inventory (2026-10-02 analysis)
 
-| Dep             | Nodes | Distinct revs | Flavor                                                |
-| --------------- | ----- | ------------- | ----------------------------------------------------- |
-| flake-parts     | 24    | 2             | 23 same-rev dups + real drift (old rev buried deep)   |
-| treefmt-nix     | 18    | 1             | pure bloat (27 root consumers)                        |
+| Dep             | Nodes | Distinct revs | Flavor                                                  |
+| --------------- | ----- | ------------- | ------------------------------------------------------- |
+| flake-parts     | 24    | 2             | 23 same-rev dups + real drift (old rev buried deep)     |
+| treefmt-nix     | 18    | 1             | pure bloat (27 root consumers)                          |
 | nixpkgs         | 8     | 3             | 5 same-rev dups + qmd (intentional) + papdashboard/nsfw |
-| systems         | 7     | 1             | pure bloat                                            |
-| flake-compat    | 7     | 1             | pure bloat                                            |
-| go-nix-helpers  | 8     | 6             | hermetic per-tool pins — DO NOT touch                 |
-| git-hooks       | 5     | 1             | pure bloat                                            |
-| flake-utils     | 2     | 1             | pure bloat                                            |
-| Go lib tarballs | ~130  | 2–5 each      | hermetic per-tool pins — DO NOT touch (vendorHash)    |
+| systems         | 7     | 1             | pure bloat                                              |
+| flake-compat    | 7     | 1             | pure bloat                                              |
+| go-nix-helpers  | 8     | 6             | hermetic per-tool pins — DO NOT touch                   |
+| git-hooks       | 5     | 1             | pure bloat                                              |
+| flake-utils     | 2     | 1             | pure bloat                                              |
+| Go lib tarballs | ~130  | 2–5 each      | hermetic per-tool pins — DO NOT touch (vendorHash)      |
 
 Root's own nodes are `nixpkgs_4`, `flake-parts_8`, `treefmt-nix_18`, `systems_7` —
 node names are allocation artifacts; node COUNT is the metric.
@@ -110,46 +110,46 @@ flowchart TD
 
 ## Medium-granularity plan (30–100 min each, importance-sorted)
 
-| #   | Task                                                                                                   | Impact | Effort | Why first                                                |
-| --- | ------------------------------------------------------------------------------------------------------ | ------ | ------ | -------------------------------------------------------- |
-| M1  | `infraFollows` overlay in flake.nix (data-derived map, exceptions table)                               | High   | 45m    | The 1% that collapses 51% of the dup mass                |
-| M2  | Lock reconcile `nix flake lock` + diff review (no rev floats) + node metric                            | High   | 30m    | Realizes the collapse; highest risk control point        |
-| M3  | `lib/lock-audit.nix` + eval-time throw + selftest check with fixtures                                  | High   | 60m    | Makes the fix permanent (blocks lock-wave regrowth)      |
-| M4  | Verification battery: `nix flake check --no-build`, evo-x2 eval, papdashboard probe, toplevel build    | High   | 40m    | No-break-build mandate; FOD exposure of the nixpkgs flip |
-| M5  | Docs: nix-flakes.md doctrine (overlay usage, exceptions, audit semantics) + this plan                  | Med    | 30m    | Prevents next contributor from re-adding hand follows    |
-| M6  | Commits (2, pathspec) with detailed messages + push                                                    | Med    | 15m    | User-requested; push protection aware                    |
-| M7  | Baseline capture + post-metric report (nodes, revs, drift)                                             | Med    | 20m    | Honest before/after evidence in close-out                |
-| M8  | Stale nsfw-classifier prune verification (rides M2) + follow-up queue item for hand-follows cleanup     | Low    | 20m    | Queue-only; explicitly out of session scope              |
+| #  | Task                                                                                                | Impact | Effort | Why first                                                |
+| -- | --------------------------------------------------------------------------------------------------- | ------ | ------ | -------------------------------------------------------- |
+| M1 | `infraFollows` overlay in flake.nix (data-derived map, exceptions table)                            | High   | 45m    | The 1% that collapses 51% of the dup mass                |
+| M2 | Lock reconcile `nix flake lock` + diff review (no rev floats) + node metric                         | High   | 30m    | Realizes the collapse; highest risk control point        |
+| M3 | `lib/lock-audit.nix` + eval-time throw + selftest check with fixtures                               | High   | 60m    | Makes the fix permanent (blocks lock-wave regrowth)      |
+| M4 | Verification battery: `nix flake check --no-build`, evo-x2 eval, papdashboard probe, toplevel build | High   | 40m    | No-break-build mandate; FOD exposure of the nixpkgs flip |
+| M5 | Docs: nix-flakes.md doctrine (overlay usage, exceptions, audit semantics) + this plan               | Med    | 30m    | Prevents next contributor from re-adding hand follows    |
+| M6 | Commits (2, pathspec) with detailed messages + push                                                 | Med    | 15m    | User-requested; push protection aware                    |
+| M7 | Baseline capture + post-metric report (nodes, revs, drift)                                          | Med    | 20m    | Honest before/after evidence in close-out                |
+| M8 | Stale nsfw-classifier prune verification (rides M2) + follow-up queue item for hand-follows cleanup | Low    | 20m    | Queue-only; explicitly out of session scope              |
 
 ## Fine-granularity plan (≤12 min each)
 
-| #    | Task                                                                      | Phase | Verify                        |
-| ---- | ------------------------------------------------------------------------- | ----- | ----------------------------- |
-| F01  | Write this plan doc                                                       | P     | file exists, mermaid renders  |
-| F02  | Capture baseline: node count, dup inventory (done above), flake check bg  | P     | baseline green                |
-| F03  | Insert overlay skeleton (`withInfraFollows`) wrapping inputs block        | M1    | `nix eval .#inputs` parses    |
-| F04  | Fill `infraFollows` map: flake-parts consumers (~45 inputs)               | M1    | eval parses                   |
-| F05  | Fill map: treefmt-nix + systems consumers                                 | M1    | eval parses                   |
-| F06  | Fill map: extras — flake-compat (7), git-hooks (5), papdashboard nixpkgs  | M1    | eval parses                   |
-| F07  | Exceptions table comments (qmd, discordsync, go-taskqueue rationale)      | M1    | read-through                  |
-| F08  | `nix fmt`                                                                 | M1    | clean diff                    |
-| F09  | Eval gate: evo-x2 toplevel drvPath eval                                   | M1    | exit 0                        |
-| F10  | `nix flake lock` (no args)                                                | M2    | lock rewritten                |
-| F11  | Lock diff review: root input revs byte-identical                          | M2    | `git diff` inspection         |
-| F12  | Node metric re-scan (target ~355, 0 infra dups)                           | M2    | python re-scan                |
-| F13  | `lib/lock-audit.nix` pure-Nix checker function                            | M3    | unit-call in nix repl/eval    |
-| F14  | Wire eval-time throw in flake.nix outputs                                 | M3    | eval still passes (clean lock)|
-| F15  | Fixtures: clean.lock, evil-dup.lock, evil-drift.lock                      | M3    | jq-valid JSON                 |
-| F16  | `checks.lock-audit-selftest` entry (positive + negative legs)             | M3    | check runs in flake check     |
-| F17  | `nix flake check --no-build` full green                                   | M4    | exit 0                        |
-| F18  | Papdashboard package probe (`nix build` its default pkg)                  | M4    | exit 0 or documented fallback|
-| F19  | Toplevel build launch (background, warms deploy cache)                    | M4    | started, monitored            |
-| F20  | docs/agents/nix-flakes.md doctrine section                                | M5    | read-through                  |
-| F21  | Commit 1: plan doc (pathspec)                                             | M6    | git log                       |
-| F22  | Commit 2: implementation (pathspec)                                       | M6    | pre-commit hook green         |
-| F23  | Push (user-requested)                                                     | M6    | remote updated                |
-| F24  | TODO_LIST queue item: hand-follows source cleanup follow-up               | M7    | row added                     |
-| F25  | Close-out metric table in this doc (executed status)                     | M7    | tables below updated          |
+| #   | Task                                                                     | Phase | Verify                         |
+| --- | ------------------------------------------------------------------------ | ----- | ------------------------------ |
+| F01 | Write this plan doc                                                      | P     | file exists, mermaid renders   |
+| F02 | Capture baseline: node count, dup inventory (done above), flake check bg | P     | baseline green                 |
+| F03 | Insert overlay skeleton (`withInfraFollows`) wrapping inputs block       | M1    | `nix eval .#inputs` parses     |
+| F04 | Fill `infraFollows` map: flake-parts consumers (~45 inputs)              | M1    | eval parses                    |
+| F05 | Fill map: treefmt-nix + systems consumers                                | M1    | eval parses                    |
+| F06 | Fill map: extras — flake-compat (7), git-hooks (5), papdashboard nixpkgs | M1    | eval parses                    |
+| F07 | Exceptions table comments (qmd, discordsync, go-taskqueue rationale)     | M1    | read-through                   |
+| F08 | `nix fmt`                                                                | M1    | clean diff                     |
+| F09 | Eval gate: evo-x2 toplevel drvPath eval                                  | M1    | exit 0                         |
+| F10 | `nix flake lock` (no args)                                               | M2    | lock rewritten                 |
+| F11 | Lock diff review: root input revs byte-identical                         | M2    | `git diff` inspection          |
+| F12 | Node metric re-scan (target ~355, 0 infra dups)                          | M2    | python re-scan                 |
+| F13 | `lib/lock-audit.nix` pure-Nix checker function                           | M3    | unit-call in nix repl/eval     |
+| F14 | Wire eval-time throw in flake.nix outputs                                | M3    | eval still passes (clean lock) |
+| F15 | Fixtures: clean.lock, evil-dup.lock, evil-drift.lock                     | M3    | jq-valid JSON                  |
+| F16 | `checks.lock-audit-selftest` entry (positive + negative legs)            | M3    | check runs in flake check      |
+| F17 | `nix flake check --no-build` full green                                  | M4    | exit 0                         |
+| F18 | Papdashboard package probe (`nix build` its default pkg)                 | M4    | exit 0 or documented fallback  |
+| F19 | Toplevel build launch (background, warms deploy cache)                   | M4    | started, monitored             |
+| F20 | docs/agents/nix-flakes.md doctrine section                               | M5    | read-through                   |
+| F21 | Commit 1: plan doc (pathspec)                                            | M6    | git log                        |
+| F22 | Commit 2: implementation (pathspec)                                      | M6    | pre-commit hook green          |
+| F23 | Push (user-requested)                                                    | M6    | remote updated                 |
+| F24 | TODO_LIST queue item: hand-follows source cleanup follow-up              | M7    | row added                      |
+| F25 | Close-out metric table in this doc (executed status)                     | M7    | tables below updated           |
 
 ## Executed close-out (2026-10-02, same session)
 
@@ -180,16 +180,16 @@ emeet-pixyd found by the audit's first live run (its lock entry was typo'd
 
 ### Measured results
 
-| Metric                          | Before | After |
-| ------------------------------- | ------ | ----- |
-| Lock nodes                      | 421    | **387** |
-| flake-parts nodes               | 24 (2 revs) | 9 |
-| treefmt-nix nodes               | 18     | 9     |
-| nixpkgs nodes                   | 8 (3 revs) | 5 (root + nsfw + qmd, all deliberate) |
-| systems nodes                   | 7      | 4     |
-| flake-utils nodes               | 2      | 1     |
-| Root input revs floated         | —      | **0** (byte-verified) |
-| papdashboard nixpkgs            | 7a0f122f (foreign) | root rev (only real flip) |
+| Metric                  | Before             | After                                 |
+| ----------------------- | ------------------ | ------------------------------------- |
+| Lock nodes              | 421                | **387**                               |
+| flake-parts nodes       | 24 (2 revs)        | 9                                     |
+| treefmt-nix nodes       | 18                 | 9                                     |
+| nixpkgs nodes           | 8 (3 revs)         | 5 (root + nsfw + qmd, all deliberate) |
+| systems nodes           | 7                  | 4                                     |
+| flake-utils nodes       | 2                  | 1                                     |
+| Root input revs floated | —                  | **0** (byte-verified)                 |
+| papdashboard nixpkgs    | 7a0f122f (foreign) | root rev (only real flip)             |
 
 ### Verification (all green)
 

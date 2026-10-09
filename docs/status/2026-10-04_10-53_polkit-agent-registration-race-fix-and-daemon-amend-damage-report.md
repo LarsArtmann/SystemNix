@@ -59,6 +59,7 @@
 ## f) NEXT — session-derived queue (harvested per contract; 21 real items, not padded to 50)
 
 **The gate item:**
+
 1. `[blocked:deploy]` **Deploy the polkit fix, then `systemctl --user restart dms` (or re-login), then fire ONE real polkit prompt** — confirm the DMS-themed dialog renders; confirm `niri-flake-polkit` is gone (`ls /etc/systemd/user/`), zero new "is not installed" aborts over 24h, and the smoke's polkit leg goes green. → docs/todo/desktop.md (harvested)
 
 **Direct follow-ups (this session's §f obligations):**
@@ -80,6 +81,7 @@
 13. `[ready]` **The KDE agent defect: file upstream (nixpkgs kdePackages.polkit-kde-agent-1)** — "module fusion is not installed" from its own closure is a packaging bug worth one upstream issue after reproducing outside NixOS (verify-before-filing gate applies). → docs/todo/upstream.md (harvested)
 
 **Explicitly NOT harvested (deliberate, with reasons):**
+
 - Item 7 duplicate row — parallel session owns it (anti-drift rule).
 - "Re-run flake check after every daemon commit" — already the standing discipline; no row needed.
 - The 04:29 report's §c/§d/e leftovers (forgejo finalize, crush-daily gap, btrfs unallocated 4%, backup rot) — owned by other sessions' queued rows; not mine to re-queue.

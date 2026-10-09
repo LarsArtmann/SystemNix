@@ -96,7 +96,7 @@
 29. **Stage-0 script hardening after first real run**: fix whatever the owner's run surfaces (doc-language spread, latency columns) — first-run scripts always need one iteration.
 30. **paperless-gpt VM test into CI cadence**: it rides `checks` already; confirm the nightly nixpkgs-compat workflow tolerates its ~6-min runtime (or marks it big-job).
 
-*(30 items — everything else in the plan is either done above, a sub-step of items 1-19, or unchanged from the plan's own list.)*
+_(30 items — everything else in the plan is either done above, a sub-step of items 1-19, or unchanged from the plan's own list.)_
 
 ## §g) Questions I can NOT figure out myself
 
@@ -106,4 +106,4 @@
 
 ---
 
-*Self-harvest note: §f items 1-5 are the deploy-verification wave (executed by the next session that deploys — already implicit in the staged rows); items 6/8/9/12 are the standing owner gates the plan already tracks; item 21 is pre-tracked in pipeline.md; items 25-27 pre-exist in services.md. No NEW untracked follow-ups are invented by this report beyond what the TODO surface edits in-session already captured.*
+_Self-harvest note: §f items 1-5 are the deploy-verification wave (executed by the next session that deploys — already implicit in the staged rows); items 6/8/9/12 are the standing owner gates the plan already tracks; item 21 is pre-tracked in pipeline.md; items 25-27 pre-exist in services.md. No NEW untracked follow-ups are invented by this report beyond what the TODO surface edits in-session already captured._

@@ -38,14 +38,14 @@ discovery (CV lock) that converted a planned lock edit into row corrections.
 
 ### b1 — `~/projects/ledger` vs `~/projects/crm` (the answer)
 
-| | `~/projects/ledger` | `~/projects/crm` |
-| --- | --- | --- |
-| Remote | `git@github.com:LarsArtmann/journal.git` | `git@github.com:LarsArtmann/crm.git` |
-| What | **journal — the accounting kernel**: double-entry bookkeeping, chart of accounts, bank reconciliation, VAT (README) | **The CRM product, branded "Ledger"** (README title): event-sourced contacts/pipeline/tasks |
-| Binary | `cmd/journal` | `cmd/crm-server`, package pname `ledger-crm` (crm/flake.nix:80) |
-| Identity/WebAuthn | none (internal/: app, clock, config, cqrs, domain, legalrules) | `internal/identity` + cqrs-htmx webauthn — the multi-RPID code |
-| Shared commits | 0 (intersected full `log --format=%H` of both) | 0 |
-| SystemNix input | not an input | flake input `crm` @ master `2bb5d8fd730c` = the deployed `crm.home.lan` service |
+|                   | `~/projects/ledger`                                                                                                 | `~/projects/crm`                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Remote            | `git@github.com:LarsArtmann/journal.git`                                                                            | `git@github.com:LarsArtmann/crm.git`                                                        |
+| What              | **journal — the accounting kernel**: double-entry bookkeeping, chart of accounts, bank reconciliation, VAT (README) | **The CRM product, branded "Ledger"** (README title): event-sourced contacts/pipeline/tasks |
+| Binary            | `cmd/journal`                                                                                                       | `cmd/crm-server`, package pname `ledger-crm` (crm/flake.nix:80)                             |
+| Identity/WebAuthn | none (internal/: app, clock, config, cqrs, domain, legalrules)                                                      | `internal/identity` + cqrs-htmx webauthn — the multi-RPID code                              |
+| Shared commits    | 0 (intersected full `log --format=%H` of both)                                                                      | 0                                                                                           |
+| SystemNix input   | not an input                                                                                                        | flake input `crm` @ master `2bb5d8fd730c` = the deployed `crm.home.lan` service             |
 
 Naming is the only overlap — confusingly inverted: the LOCAL dir `ledger`
 holds the repo named **journal**, while the repo named **crm** ships the
@@ -58,13 +58,13 @@ committed by the daemon).
 
 Walk of every flake.lock commit (cv rev at each):
 
-| When | cv rev | Note |
-| --- | --- | --- |
-| 10-07 16:13 | cdac11b | stale-vendorHash blocker |
-| 10-07 16:22 → 10-08 02:12 | b3a9172 | sanctioned pin-back |
-| 10-07 17:43–18:33 | acc099a → 339ca0 → **e76d638** | e76d638 briefly LOCKED, then rolled back (misdiagnosis) |
-| **10-08 09:11** | **b2cab45** | 13-input wave (commit `5511390f`) — CURRENT |
-| 10-08 10:21 → 10:36 | c47f6e0 blip | experiment, reverted (`68e0e522`) |
+| When                      | cv rev                         | Note                                                    |
+| ------------------------- | ------------------------------ | ------------------------------------------------------- |
+| 10-07 16:13               | cdac11b                        | stale-vendorHash blocker                                |
+| 10-07 16:22 → 10-08 02:12 | b3a9172                        | sanctioned pin-back                                     |
+| 10-07 17:43–18:33         | acc099a → 339ca0 → **e76d638** | e76d638 briefly LOCKED, then rolled back (misdiagnosis) |
+| **10-08 09:11**           | **b2cab45**                    | 13-input wave (commit `5511390f`) — CURRENT             |
+| 10-08 10:21 → 10:36       | c47f6e0 blip                   | experiment, reverted (`68e0e522`)                       |
 
 Ancestry: e76d638 = revCount 7475; b2cab45 = revCount 7527 (both master) →
 b2cab45 is 52 commits past the "forward" target.

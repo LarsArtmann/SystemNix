@@ -6,8 +6,8 @@ CI (Forgejo Actions) pushes build outputs; LAN machines pull — avoiding redund
 
 ## What it serves
 
-| Route | Auth | What                                              |
-| ----- | ---- | ------------------------------------------------- |
+| Route | Auth | What                                               |
+| ----- | ---- | -------------------------------------------------- |
 | `/`   | none | Nix cache API (NAR info + content, pull is public) |
 | push  | JWT  | `attic push` with a token from atticadm            |
 

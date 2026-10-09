@@ -51,28 +51,28 @@
 
 ## f) Next tasks (ranked; feeds HARVEST)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Wait for 03B exit; extract FINAL unique root-failure list from `~/.cache/shim-verify2.log` | Critical | S | Verification |
-| 2 | USER DECISION: roll `flake.lock` back to pre-572ff71b (+ drop the 5 shims) to ship the caddy-logs cutover NOW, or fix the full 12:13 wave forward first | Critical | S/M | Decision |
-| 3 | Fix-forward path: shim the 6+ new vendorHash mismatches (recipe identical; pairs in log) | High | M | Bug |
-| 4 | `nix log` the crush-daily prepared-source drv; root-cause its patchPhase exit 1 | High | M | Bug |
-| 5 | Triage nixpkgs casualties: ltrace-0.7.91, litestar-htmx + litestar wheels, python3.14-torchcodec / llama-index-embeddings-huggingface | High | M/L | Bug |
-| 6 | pre-deploy-check: probe `nix path-info` DB-validity before declaring 203/EXEC "layout bug" (fastflowlm false-positive raced build debris) | High | S | Hardening |
-| 7 | HARVESTED → `docs/todo/pipeline.md` + TODO_LIST (this §f.6 row) | — | S | Docs |
-| 8 | Upstream canonical fix: paste the (now 11+) got-hashes into the LarsArtmann repos, push, re-lock, drop all shims — USER-GATED push | High | M | Upstream |
-| 9 | HARVESTED → `docs/todo/upstream.md` + TODO_LIST (this §f.8 row) | — | S | Docs |
-| 10 | USER: re-run `nix run .#deploy` once toplevel is green | Critical | — | Deploy |
-| 11 | USER: `sudo bash scripts/migrate-caddy-logs-hot.sh finalize` (gates on mountpoint + `-mmin -2`; EXIT trap restarts caddy) | Critical | — | Deploy |
-| 12 | Agent: post-finalize verify — `findmnt /var/log/caddy` = `/dev/nvme1n1p2[/caddy-logs]`, fresh mtimes under mount, `pgrep -x caddy` | High | S | Verification |
-| 13 | Flip STAGED→LIVE: AGENTS.md doctrine-C bullet, TODO_LIST ~554, `docs/todo/storage.md` ~161, CHANGELOG (note deployed generation) | Med | S | Docs |
-| 14 | Remind user: QLC shadow dir (1.8G) purge only after ~2-week soak | Med | — | Ops |
-| 15 | Record the protobuf_32 multi-output split + glob-don't-pin lesson in `docs/agents/nix-flakes.md` gotchas | Med | S | Docs |
-| 16 | dns-update.sh pin-extraction selftest (carried, already queued 19:17 report) | Med | S | Test |
-| 17 | Kill leftover build 576926 if still alive after 03B finishes (old-tree eval; mine to kill) | Low | S | Ops |
-| 18 | Boot-mirror first-reboot verify (the 18:57 boot WAS it) — sibling session's §f.10 owns it; flag not claim | Med | S | Verification |
-| 19 | Still-open user answers carried: hot-db `*Directory=` stance; `106c340e` history decision (see §g + body) | Med | — | Decision |
-| 20 | Support sibling session's incident-mode gate design (no builds/deploys during thermal alerts) — do not duplicate | Med | M | Stability |
+| #  | Task                                                                                                                                                    | Impact   | Effort | Category     |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------ |
+| 1  | Wait for 03B exit; extract FINAL unique root-failure list from `~/.cache/shim-verify2.log`                                                              | Critical | S      | Verification |
+| 2  | USER DECISION: roll `flake.lock` back to pre-572ff71b (+ drop the 5 shims) to ship the caddy-logs cutover NOW, or fix the full 12:13 wave forward first | Critical | S/M    | Decision     |
+| 3  | Fix-forward path: shim the 6+ new vendorHash mismatches (recipe identical; pairs in log)                                                                | High     | M      | Bug          |
+| 4  | `nix log` the crush-daily prepared-source drv; root-cause its patchPhase exit 1                                                                         | High     | M      | Bug          |
+| 5  | Triage nixpkgs casualties: ltrace-0.7.91, litestar-htmx + litestar wheels, python3.14-torchcodec / llama-index-embeddings-huggingface                   | High     | M/L    | Bug          |
+| 6  | pre-deploy-check: probe `nix path-info` DB-validity before declaring 203/EXEC "layout bug" (fastflowlm false-positive raced build debris)               | High     | S      | Hardening    |
+| 7  | HARVESTED → `docs/todo/pipeline.md` + TODO_LIST (this §f.6 row)                                                                                         | —        | S      | Docs         |
+| 8  | Upstream canonical fix: paste the (now 11+) got-hashes into the LarsArtmann repos, push, re-lock, drop all shims — USER-GATED push                      | High     | M      | Upstream     |
+| 9  | HARVESTED → `docs/todo/upstream.md` + TODO_LIST (this §f.8 row)                                                                                         | —        | S      | Docs         |
+| 10 | USER: re-run `nix run .#deploy` once toplevel is green                                                                                                  | Critical | —      | Deploy       |
+| 11 | USER: `sudo bash scripts/migrate-caddy-logs-hot.sh finalize` (gates on mountpoint + `-mmin -2`; EXIT trap restarts caddy)                               | Critical | —      | Deploy       |
+| 12 | Agent: post-finalize verify — `findmnt /var/log/caddy` = `/dev/nvme1n1p2[/caddy-logs]`, fresh mtimes under mount, `pgrep -x caddy`                      | High     | S      | Verification |
+| 13 | Flip STAGED→LIVE: AGENTS.md doctrine-C bullet, TODO_LIST ~554, `docs/todo/storage.md` ~161, CHANGELOG (note deployed generation)                        | Med      | S      | Docs         |
+| 14 | Remind user: QLC shadow dir (1.8G) purge only after ~2-week soak                                                                                        | Med      | —      | Ops          |
+| 15 | Record the protobuf_32 multi-output split + glob-don't-pin lesson in `docs/agents/nix-flakes.md` gotchas                                                | Med      | S      | Docs         |
+| 16 | dns-update.sh pin-extraction selftest (carried, already queued 19:17 report)                                                                            | Med      | S      | Test         |
+| 17 | Kill leftover build 576926 if still alive after 03B finishes (old-tree eval; mine to kill)                                                              | Low      | S      | Ops          |
+| 18 | Boot-mirror first-reboot verify (the 18:57 boot WAS it) — sibling session's §f.10 owns it; flag not claim                                               | Med      | S      | Verification |
+| 19 | Still-open user answers carried: hot-db `*Directory=` stance; `106c340e` history decision (see §g + body)                                               | Med      | —      | Decision     |
+| 20 | Support sibling session's incident-mode gate design (no builds/deploys during thermal alerts) — do not duplicate                                        | Med      | M      | Stability    |
 
 ## g) Questions I cannot answer myself
 
@@ -80,8 +80,8 @@
 2. **Upstream pushes:** do you authorize pushing the vendorHash fixes to the affected LarsArtmann repos (branching-flow, go-cqrs-lite, cv, erraudit, file-and-image-renamer, +6 more) so the shims can drop? I never push without instruction.
 3. **caddy-logs retention ratification (carried):** the finalize bakes "no new rotation" on the unsnapshotted subvol — ratify that, or cap it (e.g. logrotate size cap / subvol quota) before the soak ends?
 
-*Also carried unanswered from the 19:17 report: hot-db `*Directory=` fail-closed-vs-degrade stance; whether to rewrite local history around `106c340e` (daemon-committed dns-blocklists corruption, superseded by `ee80e46e`) before the held push.*
+_Also carried unanswered from the 19:17 report: hot-db `*Directory=` fail-closed-vs-degrade stance; whether to rewrite local history around `106c340e` (daemon-committed dns-blocklists corruption, superseded by `ee80e46e`) before the held push._
 
 ---
 
-*Deviations: `.md` per house convention of `docs/status/`. Manual commit skipped (auto-commit daemon sweeps). §f harvest executed at authoring time (rows 7+9 = §f.6 + §f.8 into TODO_LIST + `docs/todo/pipeline.md` + `docs/todo/upstream.md`); everything else either already queued, user-gated, or recorded as deliberately deferred pending the §g answers.*
+_Deviations: `.md` per house convention of `docs/status/`. Manual commit skipped (auto-commit daemon sweeps). §f harvest executed at authoring time (rows 7+9 = §f.6 + §f.8 into TODO_LIST + `docs/todo/pipeline.md` + `docs/todo/upstream.md`); everything else either already queued, user-gated, or recorded as deliberately deferred pending the §g answers._

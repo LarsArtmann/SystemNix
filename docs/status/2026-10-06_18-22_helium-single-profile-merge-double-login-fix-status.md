@@ -96,4 +96,4 @@ Harvested into `TODO_LIST.md` + `docs/todo/desktop.md`: f1 (login acceptance, `[
 
 ---
 
-*Report basis: this session only (15:19–18:22). No unrelated research performed. Corrections welcome — annotate, don't rewrite.*
+_Report basis: this session only (15:19–18:22). No unrelated research performed. Corrections welcome — annotate, don't rewrite._

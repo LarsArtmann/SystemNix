@@ -52,6 +52,7 @@
 ## f) NEXT — up to 50 things
 
 **T4 completion (7):**
+
 1. Finish `signoz.nix` read (660–983 units detail; 1140–1540 collector.yaml/journald/scrape/GCP wiring; 200–400 TTL script).
 2. Grep `docs/agents/{sso-dns,secrets,monitoring}.md` headings for valid runbook Related anchors.
 3. Write `docs/services/pocket-id.md`.

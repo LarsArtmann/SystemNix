@@ -9,14 +9,14 @@
 
 ## What this round did
 
-| # | Action | Outcome |
-|---|--------|---------|
-| 1 | Verified all three targets before revising the verdict | rpi3 = in-repo NixOS host (`platforms/nixos/rpi3/`); MacBook = `platforms/darwin/`; KanyuNix = **separate flake-parts repo for Kanyu's MacBook** (a different person), darwin-only, README status "Scaffolding" — formatting toolchain only, no nix-darwin/home-manager/secrets |
-| 2 | Revised the extraction verdict | Still NO today; trigger armed and named: the first cross-repo consumer (KanyuNix). Thin `nix-netbird` sibling (telephy/mail pattern, darwin-first) WHEN KanyuNix can consume — not making a second person's machine eval SystemNix's input graph is the point |
-| 3 | Routed 4 rows to `docs/todo/services.md` → new subsection **"netbird client-fleet expansion (2026-10-06 session)"** | parameterize-for-rpi3 [ready]; darwin enrollment mechanism [decision]; multi-peer setup keys + policy scoping for the non-Lars device [decision]; extraction trigger armed [blocked:kanyunix] |
-| 4 | Annotated the 18-59 report (end-of-file appendix, no rewrite) | Q2 answered; N3 BLOCKED→ready; §d.1 upgraded (RAM split + fleet growth compound) |
-| 5 | Raised the trust/policy flag | Kanyu's MacBook is a non-Lars device; today's single `lan-access` policy exposes all of `192.168.1.0/24` — separate setup key + restricted policy BEFORE it enrolls |
-| 6 | Self-corrected two of my own fresh rows (19:08) | see §d.2/§d.3 — citation honesty + missing test touchpoint folded back into the rows |
+| # | Action                                                                                                              | Outcome                                                                                                                                                                                                                                                                         |
+| - | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | Verified all three targets before revising the verdict                                                              | rpi3 = in-repo NixOS host (`platforms/nixos/rpi3/`); MacBook = `platforms/darwin/`; KanyuNix = **separate flake-parts repo for Kanyu's MacBook** (a different person), darwin-only, README status "Scaffolding" — formatting toolchain only, no nix-darwin/home-manager/secrets |
+| 2 | Revised the extraction verdict                                                                                      | Still NO today; trigger armed and named: the first cross-repo consumer (KanyuNix). Thin `nix-netbird` sibling (telephy/mail pattern, darwin-first) WHEN KanyuNix can consume — not making a second person's machine eval SystemNix's input graph is the point                   |
+| 3 | Routed 4 rows to `docs/todo/services.md` → new subsection **"netbird client-fleet expansion (2026-10-06 session)"** | parameterize-for-rpi3 [ready]; darwin enrollment mechanism [decision]; multi-peer setup keys + policy scoping for the non-Lars device [decision]; extraction trigger armed [blocked:kanyunix]                                                                                   |
+| 4 | Annotated the 18-59 report (end-of-file appendix, no rewrite)                                                       | Q2 answered; N3 BLOCKED→ready; §d.1 upgraded (RAM split + fleet growth compound)                                                                                                                                                                                                |
+| 5 | Raised the trust/policy flag                                                                                        | Kanyu's MacBook is a non-Lars device; today's single `lan-access` policy exposes all of `192.168.1.0/24` — separate setup key + restricted policy BEFORE it enrolls                                                                                                             |
+| 6 | Self-corrected two of my own fresh rows (19:08)                                                                     | see §d.2/§d.3 — citation honesty + missing test touchpoint folded back into the rows                                                                                                                                                                                            |
 
 ## a) FULLY DONE
 
@@ -59,11 +59,11 @@
 
 **NEW this round (harvest candidates):**
 
-| # | Task | Impact | Effort | Status |
-|---|------|--------|--------|--------|
-| N4 | READ the provisioner (module + script, 288 lines) — closes the twice-cited read debt; prerequisite for the policy-scoping row and for Q3 having an answer grounded in code | High | 30min | 🔴 TODO |
-| N5 | KanyuNix recency check (`git log -1`, AGENTS.md skim) + make the blocker chain explicit (nix-darwin/HM → secrets → netbird) on the [blocked:kanyunix] row | Low-Med | 10min | 🔴 TODO |
-| N6 | Write the "extraction-clean" allowed-coupling checklist for the future darwin netbird module (§e.4) | Medium | 30min | 🔴 TODO |
+| #  | Task                                                                                                                                                                       | Impact  | Effort | Status  |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------ | ------- |
+| N4 | READ the provisioner (module + script, 288 lines) — closes the twice-cited read debt; prerequisite for the policy-scoping row and for Q3 having an answer grounded in code | High    | 30min  | 🔴 TODO |
+| N5 | KanyuNix recency check (`git log -1`, AGENTS.md skim) + make the blocker chain explicit (nix-darwin/HM → secrets → netbird) on the [blocked:kanyunix] row                  | Low-Med | 10min  | 🔴 TODO |
+| N6 | Write the "extraction-clean" allowed-coupling checklist for the future darwin netbird module (§e.4)                                                                        | Medium  | 30min  | 🔴 TODO |
 
 **ALREADY ROUTED (this session, awaiting execution window):** the 4 rows in services.md → netbird client-fleet expansion (parameterize rpi3 [ready]; darwin mechanism [decision]; multi-peer keys/policy [decision]; extraction trigger [blocked:kanyunix]).
 

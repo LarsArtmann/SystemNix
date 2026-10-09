@@ -10,12 +10,12 @@
 
 The user's one-liner `sudo -u forgejo du -sh /var/lib/forgejo` → **16K** falsified today-morning's 11-17 report headline ("G1 storage migration EXECUTED 2026-09-30"): only the flip DEPLOY landed; the subvol mounted at `/var/lib/forgejo` is EMPTY, forgejo has been gated-down by design since ~09-30 21:50, and the real data sits intact-but-shadowed on the QLC beneath the mountpoint. I corrected all poisoned surfaces (queue, library, source-report banner, CHANGELOG), then implemented the user's "full backups incl. ALL orgs" directive end-to-end (org-inclusive mirroring + pair-keyed reconcile + persisted fixtures — the 09-18 session's throwaway fixtures finally became a flake check), collapsed the redundant `forgejo-repos` declarative list, and hard-guarded the migrate script against the exact mount-shadow trap the live system is in. Everything evaluates and every fixture is green; **all of it is UNDEPLOYED and rides the owner's G1-window deploy** (umount-first sequence recorded on the G1 row + script header).
 
-| Owner answer (question tool) | What I did with it |
-| ---------------------------- | ------------------ |
-| "Full backups, these include ALL my orgs too" | Org-inclusive mirror + reconcile implemented, fixture-tested, queued for live verify |
-| "Tell me fucking more" (32 frozen archives) | Listed all 32 from the journal (mostly Minecraft-plugin era); keep-all default stands |
-| "explain; not enough context" (ensure-repos) | Explained, then collapsed it as part of the batch |
-| du → 16K, "Something is wrong?" | YES — falsified the 11-17 "G1 executed" claim; repaired every surface; guarded the script |
+| Owner answer (question tool)                  | What I did with it                                                                        |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| "Full backups, these include ALL my orgs too" | Org-inclusive mirror + reconcile implemented, fixture-tested, queued for live verify      |
+| "Tell me fucking more" (32 frozen archives)   | Listed all 32 from the journal (mostly Minecraft-plugin era); keep-all default stands     |
+| "explain; not enough context" (ensure-repos)  | Explained, then collapsed it as part of the batch                                         |
+| du → 16K, "Something is wrong?"               | YES — falsified the 11-17 "G1 executed" claim; repaired every surface; guarded the script |
 
 ---
 
@@ -34,12 +34,12 @@ The user's one-liner `sudo -u forgejo du -sh /var/lib/forgejo` → **16K** falsi
 
 ## b) PARTIALLY DONE
 
-| Item | What remains |
-| ---- | ------------ |
-| Org-inclusive mirroring | Code + fixtures DONE; **live verification blocked:deploy** — first post-G1 run must mass-create org mirrors, `forgejo_mirror_org_mirrors > 0`, reconcile clean (queued, blocked:deploy) |
-| G1 falsification record | All surfaces corrected; the 16-45 report's own §g1-3 annotations still owed (queued); plan §10 addendum left AS-IS (it was RIGHT — only the 11-17's rewrite impulse was wrong) |
-| Runbook sync | Table + sync-works paragraph updated in-session; the deeper "Renames/transfers BREAK the mirror silently" section still describes flat-name semantics (queued — missed mid-session, caught at self-review) |
-| Everything in this session | UNDEPLOYED — rides the G1-window deploy; the daemon has been auto-committing the work in parallel batches |
+| Item                       | What remains                                                                                                                                                                                               |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Org-inclusive mirroring    | Code + fixtures DONE; **live verification blocked:deploy** — first post-G1 run must mass-create org mirrors, `forgejo_mirror_org_mirrors > 0`, reconcile clean (queued, blocked:deploy)                    |
+| G1 falsification record    | All surfaces corrected; the 16-45 report's own §g1-3 annotations still owed (queued); plan §10 addendum left AS-IS (it was RIGHT — only the 11-17's rewrite impulse was wrong)                             |
+| Runbook sync               | Table + sync-works paragraph updated in-session; the deeper "Renames/transfers BREAK the mirror silently" section still describes flat-name semantics (queued — missed mid-session, caught at self-review) |
+| Everything in this session | UNDEPLOYED — rides the G1-window deploy; the daemon has been auto-committing the work in parallel batches                                                                                                  |
 
 ## c) NOT STARTED
 
@@ -52,16 +52,16 @@ The user's one-liner `sudo -u forgejo du -sh /var/lib/forgejo` → **16K** falsi
 
 ## d) TOTALLY FUCKED UP (all caught in-session, all fixed before the fixtures went green)
 
-| What | Root cause | Lesson |
-| ---- | ---------- | ------ |
-| First status answer relied on STALE rows without sweeping the freshest reports | I answered "staged, owner window pending" from services.md/pipeline.md rows; the same-day 11-17 report claiming EXECUTED existed and I hadn't seen it until the du forced a re-look. My answer was accidentally correct — the reasoning path was still wrong | Grep the newest docs/status BEFORE asserting live state; a stale row and a fresh row disagreeing IS the investigation |
-| Asked the owner to run `du` when `findmnt` + a port probe would have reframed the question first | Verify-before-ask (the 11-17 report's own §d.1 lesson, repeated by me 2 hours later) | Probe the live system's unauthenticated surface (mounts, ports, world-readable prom files) before any owner question |
-| 2-chunk multiedit lost to a daemon race → only 1 chunk reapplied → fixture died `MIRROR: unbound variable` | After the "file modified since read" failure I re-applied the section I cared about and forgot the inject-block chunk | After ANY partially-failed multi-part edit, verify EVERY chunk landed (grep the file), not just the one that failed loudly |
-| `ensure_org` echoed progress to stdout, captured into the org uid | Command-substitution capture discipline | Any function whose stdout is captured emits progress to stderr, always |
-| Fixture asserts `'"uid":1'` vs jq's pretty-printed `'"uid": 1'` | Wrote asserts without reading the sibling assertions in the same fixture (`'"interval": "8h"'` was right there) | Copy the existing assertion conventions of the fixture you are extending |
-| Lowercase-vs-mixed-case stub key mismatch (reconcile lowercases org logins → org-repos URL key differs from the mirror's) | Two scripts derive the same URL differently through the same stub | When two code paths share a stub, assert the KEY derivation too — case transformations are part of the contract |
-| Wrote "3 user + 3 org" assertion against stubs that produce 2+2 | Authored expectation without reconciling against my own stub data | Derive expected counts FROM the stub bodies, never from memory |
-| `rg -rln 'forgejo-ensure-repos'` — the `-r` flag silently made it a REPLACE, mangling displayed matches | Typed `-rln` meaning "recursive-list", got replace-with-"ln" | rg has no `-r` recursion flag; `-r` is replace. Wrong-tool-flag output looks plausible — sanity-check one known match by line |
+| What                                                                                                                      | Root cause                                                                                                                                                                                                                                                   | Lesson                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| First status answer relied on STALE rows without sweeping the freshest reports                                            | I answered "staged, owner window pending" from services.md/pipeline.md rows; the same-day 11-17 report claiming EXECUTED existed and I hadn't seen it until the du forced a re-look. My answer was accidentally correct — the reasoning path was still wrong | Grep the newest docs/status BEFORE asserting live state; a stale row and a fresh row disagreeing IS the investigation         |
+| Asked the owner to run `du` when `findmnt` + a port probe would have reframed the question first                          | Verify-before-ask (the 11-17 report's own §d.1 lesson, repeated by me 2 hours later)                                                                                                                                                                         | Probe the live system's unauthenticated surface (mounts, ports, world-readable prom files) before any owner question          |
+| 2-chunk multiedit lost to a daemon race → only 1 chunk reapplied → fixture died `MIRROR: unbound variable`                | After the "file modified since read" failure I re-applied the section I cared about and forgot the inject-block chunk                                                                                                                                        | After ANY partially-failed multi-part edit, verify EVERY chunk landed (grep the file), not just the one that failed loudly    |
+| `ensure_org` echoed progress to stdout, captured into the org uid                                                         | Command-substitution capture discipline                                                                                                                                                                                                                      | Any function whose stdout is captured emits progress to stderr, always                                                        |
+| Fixture asserts `'"uid":1'` vs jq's pretty-printed `'"uid": 1'`                                                           | Wrote asserts without reading the sibling assertions in the same fixture (`'"interval": "8h"'` was right there)                                                                                                                                              | Copy the existing assertion conventions of the fixture you are extending                                                      |
+| Lowercase-vs-mixed-case stub key mismatch (reconcile lowercases org logins → org-repos URL key differs from the mirror's) | Two scripts derive the same URL differently through the same stub                                                                                                                                                                                            | When two code paths share a stub, assert the KEY derivation too — case transformations are part of the contract               |
+| Wrote "3 user + 3 org" assertion against stubs that produce 2+2                                                           | Authored expectation without reconciling against my own stub data                                                                                                                                                                                            | Derive expected counts FROM the stub bodies, never from memory                                                                |
+| `rg -rln 'forgejo-ensure-repos'` — the `-r` flag silently made it a REPLACE, mangling displayed matches                   | Typed `-rln` meaning "recursive-list", got replace-with-"ln"                                                                                                                                                                                                 | rg has no `-r` recursion flag; `-r` is replace. Wrong-tool-flag output looks plausible — sanity-check one known match by line |
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -73,20 +73,20 @@ The user's one-liner `sudo -u forgejo du -sh /var/lib/forgejo` → **16K** falsi
 
 ## f) Up to 50 things we should get done next
 
-| # | Task | Impact | Effort |
-| - | ---- | ------ | ------ |
-| 1 | OWNER: run the G1 window (umount → du sanity → prepare → build → finalize → `nix run .#deploy`) — forgejo returns, this session's whole batch activates | High | M |
-| 2 | Post-deploy live verification of org mirroring (mass-create run, `forgejo_mirror_org_mirrors > 0`, reconcile clean, gatus green) | High | S |
-| 3 | Annotate the 16-45 report §g1-3 resolutions + persist the 32-archive inventory (queued) | Medium | S |
-| 4 | Runbook reconcile-detail section → pair-keyed semantics (queued) | Medium | S |
-| 5 | btrbk forgejo-subvol snapshot content-floor sanity (queued) | High | S |
-| 6 | Mirror script per-org counts in summary (PAT-scope visibility) (queued) | Medium | S |
-| 7 | Mutation-negative pass over BOTH extended fixtures (existing predecessor-debt row owns it — scope now includes my new cases) | Medium | M |
-| 8 | G1 F24 restore drill re-earn after real data (queued) | High | M |
-| 9 | Watch first org mass-migration against `TimeoutStartSec = 2h` | Medium | S |
-| 10 | Decide `forgejo-repos.nix` module fate (keep inert vs delete) at next tree cleanup | Low | S |
-| 11 | The 11-17 session's still-open rows I did NOT touch: live-verify metrics/Gatus (root-gated), G2 execution, M09+ | Medium | M |
-| 12 | KNOWN_NEW_METRICS check after deploy: confirm nothing references `forgejo_mirror_org_mirrors` in config (nothing should — informational metric) | Low | S |
+| #  | Task                                                                                                                                                    | Impact | Effort |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 1  | OWNER: run the G1 window (umount → du sanity → prepare → build → finalize → `nix run .#deploy`) — forgejo returns, this session's whole batch activates | High   | M      |
+| 2  | Post-deploy live verification of org mirroring (mass-create run, `forgejo_mirror_org_mirrors > 0`, reconcile clean, gatus green)                        | High   | S      |
+| 3  | Annotate the 16-45 report §g1-3 resolutions + persist the 32-archive inventory (queued)                                                                 | Medium | S      |
+| 4  | Runbook reconcile-detail section → pair-keyed semantics (queued)                                                                                        | Medium | S      |
+| 5  | btrbk forgejo-subvol snapshot content-floor sanity (queued)                                                                                             | High   | S      |
+| 6  | Mirror script per-org counts in summary (PAT-scope visibility) (queued)                                                                                 | Medium | S      |
+| 7  | Mutation-negative pass over BOTH extended fixtures (existing predecessor-debt row owns it — scope now includes my new cases)                            | Medium | M      |
+| 8  | G1 F24 restore drill re-earn after real data (queued)                                                                                                   | High   | M      |
+| 9  | Watch first org mass-migration against `TimeoutStartSec = 2h`                                                                                           | Medium | S      |
+| 10 | Decide `forgejo-repos.nix` module fate (keep inert vs delete) at next tree cleanup                                                                      | Low    | S      |
+| 11 | The 11-17 session's still-open rows I did NOT touch: live-verify metrics/Gatus (root-gated), G2 execution, M09+                                         | Medium | M      |
+| 12 | KNOWN_NEW_METRICS check after deploy: confirm nothing references `forgejo_mirror_org_mirrors` in config (nothing should — informational metric)         | Low    | S      |
 
 Noticed in passing (NOT re-verified, other sessions' domains): a Paperless-AI planner session committed `224426ab` mid-session; the daemon swept my in-flight edits twice (both verified by content, never amended into foreign commits); `check-todo-system.sh` still WARNs 78 unharvested §f-bearing reports (pre-existing, owned by the harvest-lint work).
 
@@ -101,4 +101,3 @@ Noticed in passing (NOT re-verified, other sessions' domains): a Paperless-AI pl
 **Evidence trail:** owner `du` 16K (chat, 2026-10-02 ~12:30); `findmnt /var/lib/forgejo` → `/dev/nvme0n1p2[/hot/forgejo]` subvolid 260; `/dev/tcp/127.0.0.1/3000` refused; `/var/lib/prometheus-node-exporter/textfile_collectors/forgejo_mirror_reconcile.prom` last_run 1790797823 (09-30 21:40 CEST), total 391 / archived 32 / transferred 2 / pending 0; `journalctl -u forgejo-github-sync` 09-30 archived-name list; `nix build .#checks.x86_64-linux.{forgejo-scripts-fixture,migrate-forgejo-subvol-fixture}` green; `nix flake check --no-build` all passed; evo-x2 toplevel eval OK.
 
 **Harvest log:** §f1-6 → TODO_LIST queue + docs/todo/services.md library rows landed at authoring time (4 new pairs); #7 folded into the existing predecessor-debt trio row (no duplicate created); #10-11 deliberately not harvested — owned by the 11-17 report's rows and the Paperless session respectively.
-

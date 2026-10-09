@@ -32,7 +32,7 @@
 
 ## d) TOTALLY FUCKED UP (brutal honest)
 
-1. **The cv misdiagnosis — evidence ignored twice before reading it.** The 18:47 deploy failure was hermes-agent's web TS build (TS1484, `src/pages/SessionsPage.tsx`). I blamed cv and pinned cv back to b3a9172. The truth was on screen BOTH times before I acted: (i) the nh build tree listed `hermes-agent-0.0.0` and `hermes-agent-inputs.json` right next to the failure; (ii) the keep-going log named `SessionsPage.tsx` — a hermes concept (agent sessions), not a CV page. I instead correlated "flake.lock bumped cv 4× today" (true, irrelevant) and patched the correlation. Only when the cv pin changed nothing did I inspect the failing drv's inputs (`hermes-agent-1.0.0-sources`, `hermes-icons`) — which settled it in one command that should have been the FIRST command. Class: **confirmation bias from session history** (the 16:15 cv FOD cascade primed me). Rule candidate: *when a build fails, read the failing derivation's input set BEFORE blaming a flake input; lock-bump correlation is a hypothesis, not a diagnosis.*
+1. **The cv misdiagnosis — evidence ignored twice before reading it.** The 18:47 deploy failure was hermes-agent's web TS build (TS1484, `src/pages/SessionsPage.tsx`). I blamed cv and pinned cv back to b3a9172. The truth was on screen BOTH times before I acted: (i) the nh build tree listed `hermes-agent-0.0.0` and `hermes-agent-inputs.json` right next to the failure; (ii) the keep-going log named `SessionsPage.tsx` — a hermes concept (agent sessions), not a CV page. I instead correlated "flake.lock bumped cv 4× today" (true, irrelevant) and patched the correlation. Only when the cv pin changed nothing did I inspect the failing drv's inputs (`hermes-agent-1.0.0-sources`, `hermes-icons`) — which settled it in one command that should have been the FIRST command. Class: **confirmation bias from session history** (the 16:15 cv FOD cascade primed me). Rule candidate: _when a build fails, read the failing derivation's input set BEFORE blaming a flake input; lock-bump correlation is a hypothesis, not a diagnosis._
 2. **The cv rollback may fight owner intent.** cv advanced cdac11b→b3a9172→acc099a→339ca0f→e76d638 today — that is an actively-developed repo (owner's). My rollback to b3a9172 was justified only as "proven-live", not as "e76d638 is bad" — cv e76d638's own builds were never the failure. If the owner wants the lock forward, my pin must be reverted. Question §g.1.
 3. **Wasted a deploy cycle on the unverified hypothesis** (18:53 attempt, ~19s build + gate re-run) — cheap this time; the pattern is the problem, not the seconds.
 
@@ -41,30 +41,30 @@
 1. **Drv-input inspection before input blame** (§d.1) — candidate CONTRIBUTING/nix-flakes rule; the keep-going log already names the failing drv, one `rg` on its ATerm inputs identifies the owning source.
 2. **Full negative-suite runs, not just the new group** — I ran only `CASES=bridge`. My edits cannot structurally break the other groups (different files, different checks), but that is an argument, not a proof; the suite takes minutes and the script exists precisely to be run whole.
 3. **Absent-list mutation variant untested** — the queue row said "widened or absent list must fail the check"; I proved widened only. Logically the absent case throws the same `throwIfNot` (null ≠ [ 143 ]), but the whole point of negative tests is to not trust that reasoning. Queued (§f.4).
-4. **Noticed-but-unqueued discipline** — the dead automount, the baseline FAILs, and the push backlog were all *observed* mid-session and none was harvested until this report forced it. The harvest contract exists exactly for this; do it at notice-time, not report-time.
+4. **Noticed-but-unqueued discipline** — the dead automount, the baseline FAILs, and the push backlog were all _observed_ mid-session and none was harvested until this report forced it. The harvest contract exists exactly for this; do it at notice-time, not report-time.
 5. **`DEPLOY_FORCE_PRESSURE=1` is becoming a crutch** — it was the right call under the verified corpse-pile signature, but the phantom PSI (D-state node_exporter threads on a dead automount) is PERMANENT until reboot, so every future deploy hits the gate. Fix the cause (§f.1), don't institutionalize the override.
 6. **Deploy drained hermes mid-activity** — the pre-deploy warning showed agent activity in the last 10 min; I proceeded (sanctioned order) but never verified whether an in-flight session was harmed. Queued (§f.14).
 7. **AGENTS.md prevention-table drift** — I added a check to flake.nix and did not update the Prevention Layers map; fixed on sight this session (see harvest ledger), but the omission itself is the finding: new checks should land WITH their table entry.
 
 ## f) Next things to get done (this session's harvest — 15 items, no padding)
 
-| # | Item | Impact | Effort | State |
-|---|------|--------|--------|-------|
-| 1 | Dead-automount D-state forensics: identify the mount trapping node_exporter threads (2 yesterday, 1 this morning); exclude it from `--collector.filesystem.mount-points-exclude` or fix the mount; kills the permanent phantom-PSI deploy gate | High | M | queued → stability |
-| 2 | Verify cv@e76d638 builds clean (toplevel with lock override); if green, the rollback was pure misdiagnosis fallout — restore forward pending §g.1 | Med | S | queued → services |
-| 3 | hermes-agent forward-move: watch upstream for the TS1484 (`SessionFilterCategory` type-only import) fix; re-lock past e76fb95 only after a toplevel build passes | Med | S | queued → upstream (watch) |
-| 4 | Absent-list negative case for bridge-exit-contract (sed-delete the line, assert check fails) — completes the "widened or absent" contract | Low | S | queued → pipeline |
-| 5 | Identify the actor behind the blanket flake.lock updates at 17:43/17:48/18:23 (user shell? agent session? automation?) — if automation, gate it behind a toplevel build | High | S-M | queued → pipeline |
-| 6 | CI gap: lock-bump commits never build the toplevel — add a toplevel-build job (or extend nix-check.yml) so the web-TS class dies in CI, not at deploy time | High | M | queued → pipeline |
-| 7 | Enumerate + triage the 14 baseline smoke FAILs against `~/.local/state/systemnix/smoke-fail-baseline.txt` — baseline drift can hide real regressions (the Overview outage row is presumably in there) | Med | S | queued → services |
-| 8 | Batch-harvest the 88 unharvested §f-bearing reports (strict check fails; three are from 2026-10-07 alone) — dispatchable in batches by domain | Med | M | queued → pipeline |
-| 9 | Push backlog: master is **ahead 34** with the daemon not delivering pushes since last night — diagnose daemon push health or owner-push; unpushed work is one disk away from lost | High | S | queued → pipeline |
-| 10 | Natural stop-event observation for the 143 override (existing stability row, half-closed) — journal watch on next guard-up window with a live connection | Med | S | existing row |
-| 11 | hermes drain check: did the 19:01 deploy restart kill an in-flight agent session? (journal correlation, 1 command) | Low | S | queued → services |
-| 12 | §g.2 owner decision: auto-class the bridge exit-contract (any Accept=true socat template) vs keep derived-enumerated | Med | — | existing decision |
-| 13 | §f.9 owner decision (prior report): extend the SuccessExitStatus fleet sweep to bridge templates + TERM-exiting daemons | Med | — | existing decision |
-| 14 | §g.1 owner decision (prior report, re-asked): controlled stop-test vs natural observation for the 143 override | Med | — | existing decision |
-| 15 | AGENTS.md prevention-table entry for bridge-exit-contract — DONE ON SIGHT during this report (see ledger); listed for audit trail only | Low | S | done |
+| #  | Item                                                                                                                                                                                                                                           | Impact | Effort | State                     |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------------------- |
+| 1  | Dead-automount D-state forensics: identify the mount trapping node_exporter threads (2 yesterday, 1 this morning); exclude it from `--collector.filesystem.mount-points-exclude` or fix the mount; kills the permanent phantom-PSI deploy gate | High   | M      | queued → stability        |
+| 2  | Verify cv@e76d638 builds clean (toplevel with lock override); if green, the rollback was pure misdiagnosis fallout — restore forward pending §g.1                                                                                              | Med    | S      | queued → services         |
+| 3  | hermes-agent forward-move: watch upstream for the TS1484 (`SessionFilterCategory` type-only import) fix; re-lock past e76fb95 only after a toplevel build passes                                                                               | Med    | S      | queued → upstream (watch) |
+| 4  | Absent-list negative case for bridge-exit-contract (sed-delete the line, assert check fails) — completes the "widened or absent" contract                                                                                                      | Low    | S      | queued → pipeline         |
+| 5  | Identify the actor behind the blanket flake.lock updates at 17:43/17:48/18:23 (user shell? agent session? automation?) — if automation, gate it behind a toplevel build                                                                        | High   | S-M    | queued → pipeline         |
+| 6  | CI gap: lock-bump commits never build the toplevel — add a toplevel-build job (or extend nix-check.yml) so the web-TS class dies in CI, not at deploy time                                                                                     | High   | M      | queued → pipeline         |
+| 7  | Enumerate + triage the 14 baseline smoke FAILs against `~/.local/state/systemnix/smoke-fail-baseline.txt` — baseline drift can hide real regressions (the Overview outage row is presumably in there)                                          | Med    | S      | queued → services         |
+| 8  | Batch-harvest the 88 unharvested §f-bearing reports (strict check fails; three are from 2026-10-07 alone) — dispatchable in batches by domain                                                                                                  | Med    | M      | queued → pipeline         |
+| 9  | Push backlog: master is **ahead 34** with the daemon not delivering pushes since last night — diagnose daemon push health or owner-push; unpushed work is one disk away from lost                                                              | High   | S      | queued → pipeline         |
+| 10 | Natural stop-event observation for the 143 override (existing stability row, half-closed) — journal watch on next guard-up window with a live connection                                                                                       | Med    | S      | existing row              |
+| 11 | hermes drain check: did the 19:01 deploy restart kill an in-flight agent session? (journal correlation, 1 command)                                                                                                                             | Low    | S      | queued → services         |
+| 12 | §g.2 owner decision: auto-class the bridge exit-contract (any Accept=true socat template) vs keep derived-enumerated                                                                                                                           | Med    | —      | existing decision         |
+| 13 | §f.9 owner decision (prior report): extend the SuccessExitStatus fleet sweep to bridge templates + TERM-exiting daemons                                                                                                                        | Med    | —      | existing decision         |
+| 14 | §g.1 owner decision (prior report, re-asked): controlled stop-test vs natural observation for the 143 override                                                                                                                                 | Med    | —      | existing decision         |
+| 15 | AGENTS.md prevention-table entry for bridge-exit-contract — DONE ON SIGHT during this report (see ledger); listed for audit trail only                                                                                                         | Low    | S      | done                      |
 
 ## g) Questions I cannot answer myself (3)
 
@@ -82,17 +82,17 @@
 
 ## Evidence appendix
 
-| Claim | Command / artifact |
-|---|---|
-| Fix rendered live (3 templates) | `rg SuccessExitStatus /run/current-system/etc/systemd/system/{fastflowlm,llama-vlm-e4b,llama-vlm-cap}@.service` → `=143` all three |
-| idleCheck single `\|\| true` live | `rg -c "\|\| true \|\| true" …/fastflowlm-idle-check/bin/…` → absent |
-| Generation | `/nix/var/nix/profiles/system-840-link` → `xfc3qrij…` (19:01 2026-10-07); still current at 07:38 2026-10-08 |
-| Check green | `nix flake check --no-build` → all checks passed (run post-check and post-pins) |
-| Negative proof | `CASES=bridge bash scripts/negative-test-lints.sh` → 2 passed, 0 failed |
-| Real blocker identified | drv ATerm inputs of `b6y1…-web-0.0.0.drv` → `hermes-agent-1.0.0-sources.drv`, `hermes-icons.drv` |
-| Pins | flake.lock: cv → b3a9172 (18:44), hermes-agent → e76fb95 (18:56); both via `nix flake lock --override-input` |
-| Phantom PSI verified | 2 D-state node_exporter threads, disks 0.2% busy, load draining; override used twice with the documented signature |
-| FAILED clearance | `system_health.prom` (07:38 today) → zero `state_failed 1` lines |
-| No natural stop event yet | `journalctl -u 'fastflowlm@*' --since 2026-10-07 19:01` → no entries; :52625 not listening; guard trip 07:39 |
-| Daemon commit custody | `git show --stat` on 9f894cca/00d9076c/9b36ab88/a764bca6 → exactly my files, no foreign content |
-| Push backlog | `git status -sb` (07:38) → `ahead 34` |
+| Claim                             | Command / artifact                                                                                                                 |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Fix rendered live (3 templates)   | `rg SuccessExitStatus /run/current-system/etc/systemd/system/{fastflowlm,llama-vlm-e4b,llama-vlm-cap}@.service` → `=143` all three |
+| idleCheck single `\|\| true` live | `rg -c "\|\| true \|\| true" …/fastflowlm-idle-check/bin/…` → absent                                                               |
+| Generation                        | `/nix/var/nix/profiles/system-840-link` → `xfc3qrij…` (19:01 2026-10-07); still current at 07:38 2026-10-08                        |
+| Check green                       | `nix flake check --no-build` → all checks passed (run post-check and post-pins)                                                    |
+| Negative proof                    | `CASES=bridge bash scripts/negative-test-lints.sh` → 2 passed, 0 failed                                                            |
+| Real blocker identified           | drv ATerm inputs of `b6y1…-web-0.0.0.drv` → `hermes-agent-1.0.0-sources.drv`, `hermes-icons.drv`                                   |
+| Pins                              | flake.lock: cv → b3a9172 (18:44), hermes-agent → e76fb95 (18:56); both via `nix flake lock --override-input`                       |
+| Phantom PSI verified              | 2 D-state node_exporter threads, disks 0.2% busy, load draining; override used twice with the documented signature                 |
+| FAILED clearance                  | `system_health.prom` (07:38 today) → zero `state_failed 1` lines                                                                   |
+| No natural stop event yet         | `journalctl -u 'fastflowlm@*' --since 2026-10-07 19:01` → no entries; :52625 not listening; guard trip 07:39                       |
+| Daemon commit custody             | `git show --stat` on 9f894cca/00d9076c/9b36ab88/a764bca6 → exactly my files, no foreign content                                    |
+| Push backlog                      | `git status -sb` (07:38) → `ahead 34`                                                                                              |

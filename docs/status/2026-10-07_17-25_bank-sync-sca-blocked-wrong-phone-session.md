@@ -6,7 +6,7 @@
 
 ## TL;DR
 
-Wise SCA has all **20/20 balances statement-blocked since 2026-09-30** (degraded transfers-only fallback active). Every technical layer on our side is verified green and aligned. The terminal root cause surfaced only in the third user turn: **Wise holds a wrong phone number on the account** — the OTP is undeliverable, so no approval path (dashboard, CLI, break-glass) can complete until the number is fixed *inside Wise*. A background watcher is armed (until ~18:50) to auto-verify + auto-backfill the moment approval lands.
+Wise SCA has all **20/20 balances statement-blocked since 2026-09-30** (degraded transfers-only fallback active). Every technical layer on our side is verified green and aligned. The terminal root cause surfaced only in the third user turn: **Wise holds a wrong phone number on the account** — the OTP is undeliverable, so no approval path (dashboard, CLI, break-glass) can complete until the number is fixed _inside Wise_. A background watcher is armed (until ~18:50) to auto-verify + auto-backfill the moment approval lands.
 
 ## a) FULLY DONE
 
@@ -41,7 +41,7 @@ Wise SCA has all **20/20 balances statement-blocked since 2026-09-30** (degraded
 
 ## d) TOTALLY FUCKED UP
 
-1. **The human handoff failed for three consecutive turns.** I anchored on "user just needs to click the button" while the real blocker was "the user *cannot* receive any code". My question-tool ask ("Have you completed the dashboard approval flow?") was a yes/no trap — it could surface *whether*, never *why not*. Cost: user frustration ("You do not give me a Auth one Time code I can enter!", "How about you check real logs?") and wasted turns. The correct first question was: **"Can you receive an SMS at the phone number Wise has on file?"** — it would have surfaced the wrong number in turn one.
+1. **The human handoff failed for three consecutive turns.** I anchored on "user just needs to click the button" while the real blocker was "the user _cannot_ receive any code". My question-tool ask ("Have you completed the dashboard approval flow?") was a yes/no trap — it could surface _whether_, never _why not_. Cost: user frustration ("You do not give me a Auth one Time code I can enter!", "How about you check real logs?") and wasted turns. The correct first question was: **"Can you receive an SMS at the phone number Wise has on file?"** — it would have surfaced the wrong number in turn one.
 2. **I over-claimed automation.** "Everything after is already automated" — the watcher automates detect+backfill but NOT notification; if it fires unobserved, nothing reaches the user. "Automated" without a delivery channel is a half-truth.
 3. **Late discoverability check.** I verified the amber banner's existence in the templates only AFTER the user failed to find it. A proactive "here is exactly what you should see, and here is the button that is NOT it (Backfill)" would have prevented the 16:18 mis-click.
 4. Minor waste: one dead fetch call on `/metrics` (gzip body vs UTF-8 tool assumption) before switching to python; first watcher window (30 min) was mis-sized for a user-gated chain — restarted at 2.5 h.
@@ -59,6 +59,7 @@ Wise SCA has all **20/20 balances statement-blocked since 2026-09-30** (degraded
 ## f) NEXT — up to 50 (honest count: 24; no filler)
 
 **Critical path (user-gated):**
+
 1. [blocked:user] Fix the phone number in Wise (Settings → Personal details, or Support + ID if old-number verification blocks it).
 2. [blocked:user] After fix: amber banner → Approve now → channel → Send code → OTP → Verify.
 3. [blocked:user|time] Confirm statements resume + window backfill — watcher 023 armed until ~18:50; re-arm or hand-verify after that.

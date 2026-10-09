@@ -57,36 +57,36 @@
 
 ## f) Next tasks (ranked; ⏳ = user-gated on §g answers)
 
-| # | Task | Impact | Effort | Cat | Gate |
-|---|------|--------|--------|-----|------|
-| 1 | ⏳ Answer §g.1: fix-forward vs rollback | Critical | S | Decision | user |
-| 2 | ⏳ Answer §g.2: authorize upstream pushes | Critical | S | Decision | user |
-| 3 | ⏳ Answer §g.3: retention ratification | Medium | S | Decision | user |
-| 4 | Fix-forward: shim the 6 FODs in `lib/lars-packages.nix` (hashes in `~/.cache/shim-verify2.log`) | Critical | M | Bug | §g.1=A |
-| 5 | Fix-forward: rebuild each shimmed package (`nix build .#<name> --no-link`) | Critical | M | Bug | #4 |
-| 6 | Fix-forward: confirm mr-sync/todo-list-ai/md-go-validator via `nix log` on their prepared-source drvs | High | S | Bug | §g.1=A |
-| 7 | Fix-forward: upstream crush-daily flake — add `go-sse` input (needs §g.2) | High | S | Bug | §g.2 |
-| 8 | Fix-forward: ltrace casualty — drop from systemPackages / overlay / upstream | High | M | Bug | §g.1=A |
-| 9 | Fix-forward: litestar wheel 404s — nixpkgs bump or overlay | High | M | Bug | §g.1=A |
-| 10 | Fix-forward: attribute + fix the JS frozen-lockfile build | Medium | S–M | Bug | §g.1=A |
-| 11 | Rollback: `git restore` flake.lock pre-`572ff71b` | Critical | S | Bug | §g.1=B |
-| 12 | Rollback: revert the 5 existing shims (re-break trap) | Critical | S | Bug | §g.1=B |
-| 13 | Re-verify toplevel green (`--keep-going`, quiescent moment — load/thermal check first) | Critical | M | Bug | #4 or #11 |
-| 14 | ⏳ User runs `nix run .#deploy` | Critical | S | Deploy | #13 |
-| 15 | ⏳ User runs `sudo bash scripts/migrate-caddy-logs-hot.sh finalize` | Critical | S | Deploy | #14 |
-| 16 | Post-finalize verify: findmnt target+source, fresh mtimes under mount, caddy pid | High | S | Verification | #15 |
-| 17 | Doc flips: AGENTS.md doctrine-C bullet (caddy-logs live), TODO_LIST ~554, storage.md ~161 | High | S | Documentation | #16 |
-| 18 | CHANGELOG entry (deployed generation + branch chosen) | Medium | S | Documentation | #16 |
-| 19 | Harvest this report's §f per the chosen branch (recorded deferral, see b.4) | High | S | Docs/TODO | §g.1 |
-| 20 | On §g.2=yes: push updated vendorHashes to 11+ repos, re-lock, drop all shims | High | L | Upstream | §g.2 |
-| 21 | Track shim drop conditions (lock moves past upstream-fixed rev) — revisit each re-lock | Medium | S | Quality | #4 |
-| 22 | Soak watch (~2 weeks): caddy writes landing on Samsung, no QLC regrowth | Medium | S | Verification | #16 |
-| 23 | End of soak: delete QLC shadow dir (1.8G) + QLC space reclaim review | Medium | S | Cleanup | #22 |
-| 24 | Watch daemon-swept commits of this arc's edits; verify by content greps, not message | Low | S | Hygiene | — |
-| 25 | Queue: audit scripts/docs for bare `nvmeX` device references (e.4) | Low | S | Cleanup | — |
-| 26 | Carried (prior legs): pre-deploy-check DB-validity probe `[ready]` (already queued) | Medium | S | Quality | — |
-| 27 | Carried: hot-db `*Directory=` stance + `106c340e` history decision | Low | S | Decision | user |
-| 28 | Foreign `M tests/test-paperless-gpt.nix` in tree — not mine, left untouched; owner session handles | Low | S | Hygiene | — |
+| #  | Task                                                                                                  | Impact   | Effort | Cat           | Gate      |
+| -- | ----------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- | --------- |
+| 1  | ⏳ Answer §g.1: fix-forward vs rollback                                                               | Critical | S      | Decision      | user      |
+| 2  | ⏳ Answer §g.2: authorize upstream pushes                                                             | Critical | S      | Decision      | user      |
+| 3  | ⏳ Answer §g.3: retention ratification                                                                | Medium   | S      | Decision      | user      |
+| 4  | Fix-forward: shim the 6 FODs in `lib/lars-packages.nix` (hashes in `~/.cache/shim-verify2.log`)       | Critical | M      | Bug           | §g.1=A    |
+| 5  | Fix-forward: rebuild each shimmed package (`nix build .#<name> --no-link`)                            | Critical | M      | Bug           | #4        |
+| 6  | Fix-forward: confirm mr-sync/todo-list-ai/md-go-validator via `nix log` on their prepared-source drvs | High     | S      | Bug           | §g.1=A    |
+| 7  | Fix-forward: upstream crush-daily flake — add `go-sse` input (needs §g.2)                             | High     | S      | Bug           | §g.2      |
+| 8  | Fix-forward: ltrace casualty — drop from systemPackages / overlay / upstream                          | High     | M      | Bug           | §g.1=A    |
+| 9  | Fix-forward: litestar wheel 404s — nixpkgs bump or overlay                                            | High     | M      | Bug           | §g.1=A    |
+| 10 | Fix-forward: attribute + fix the JS frozen-lockfile build                                             | Medium   | S–M    | Bug           | §g.1=A    |
+| 11 | Rollback: `git restore` flake.lock pre-`572ff71b`                                                     | Critical | S      | Bug           | §g.1=B    |
+| 12 | Rollback: revert the 5 existing shims (re-break trap)                                                 | Critical | S      | Bug           | §g.1=B    |
+| 13 | Re-verify toplevel green (`--keep-going`, quiescent moment — load/thermal check first)                | Critical | M      | Bug           | #4 or #11 |
+| 14 | ⏳ User runs `nix run .#deploy`                                                                       | Critical | S      | Deploy        | #13       |
+| 15 | ⏳ User runs `sudo bash scripts/migrate-caddy-logs-hot.sh finalize`                                   | Critical | S      | Deploy        | #14       |
+| 16 | Post-finalize verify: findmnt target+source, fresh mtimes under mount, caddy pid                      | High     | S      | Verification  | #15       |
+| 17 | Doc flips: AGENTS.md doctrine-C bullet (caddy-logs live), TODO_LIST ~554, storage.md ~161             | High     | S      | Documentation | #16       |
+| 18 | CHANGELOG entry (deployed generation + branch chosen)                                                 | Medium   | S      | Documentation | #16       |
+| 19 | Harvest this report's §f per the chosen branch (recorded deferral, see b.4)                           | High     | S      | Docs/TODO     | §g.1      |
+| 20 | On §g.2=yes: push updated vendorHashes to 11+ repos, re-lock, drop all shims                          | High     | L      | Upstream      | §g.2      |
+| 21 | Track shim drop conditions (lock moves past upstream-fixed rev) — revisit each re-lock                | Medium   | S      | Quality       | #4        |
+| 22 | Soak watch (~2 weeks): caddy writes landing on Samsung, no QLC regrowth                               | Medium   | S      | Verification  | #16       |
+| 23 | End of soak: delete QLC shadow dir (1.8G) + QLC space reclaim review                                  | Medium   | S      | Cleanup       | #22       |
+| 24 | Watch daemon-swept commits of this arc's edits; verify by content greps, not message                  | Low      | S      | Hygiene       | —         |
+| 25 | Queue: audit scripts/docs for bare `nvmeX` device references (e.4)                                    | Low      | S      | Cleanup       | —         |
+| 26 | Carried (prior legs): pre-deploy-check DB-validity probe `[ready]` (already queued)                   | Medium   | S      | Quality       | —         |
+| 27 | Carried: hot-db `*Directory=` stance + `106c340e` history decision                                    | Low      | S      | Decision      | user      |
+| 28 | Foreign `M tests/test-paperless-gpt.nix` in tree — not mine, left untouched; owner session handles    | Low      | S      | Hygiene       | —         |
 
 ## g) Questions I cannot answer myself
 
@@ -96,4 +96,4 @@
 
 ---
 
-*Point-in-time snapshot. Auto-commit daemon will sweep this file; verify by content. Next session: read §g answers first, then execute the chosen branch top-to-bottom.*
+_Point-in-time snapshot. Auto-commit daemon will sweep this file; verify by content. Next session: read §g answers first, then execute the chosen branch top-to-bottom._
