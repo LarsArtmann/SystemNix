@@ -5317,11 +5317,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791581017,
-        "narHash": "sha256-EARmCD8tfH861Q+ubho9B2pHSXSHMKdl5p6Am0nfZII=",
+        "lastModified": 1791581468,
+        "narHash": "sha256-VSAc30DKmtUs3MjrY8dh6/hI0PjSJSKN67qwhu0F6B4=",
         "ref": "refs/heads/master",
-        "rev": "f66974620eb8063821371151237a42c05bdf3e98",
-        "revCount": 1738,
+        "rev": "e8c49a0d8365ac90d24578cd77d0f7c4b91544fd",
+        "revCount": 1739,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-structure-linter"
       },
@@ -7301,11 +7301,11 @@
         "project-discovery-sdk": "project-discovery-sdk_8"
       },
       "locked": {
-        "lastModified": 1791579102,
-        "narHash": "sha256-bKQZFftYCIML1qPCn+93geDqTUbTby10xv2zX7tpG6Y=",
+        "lastModified": 1791581322,
+        "narHash": "sha256-brSx6y2/vdt4bW9F84x1RtqTFUGu30cCDykFcYG2n0E=",
         "ref": "refs/heads/master",
-        "rev": "3bb1059710568b62ee97b6d7dcde0af072922ccc",
-        "revCount": 748,
+        "rev": "7567b4ec60f0f9272aec2f8ec81b105430d4b7a5",
+        "revCount": 750,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-meta"
       },
