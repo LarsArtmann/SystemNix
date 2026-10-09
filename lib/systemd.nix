@@ -2,7 +2,12 @@
 args@{
   mode ? "system",
   MemoryMax ? "512M",
-  MemoryHigh ? null, # Throttle before the hard kill. Default: 80% of MemoryMax.
+  MemoryHigh ? null,
+  # Throttle before the hard kill. Default: 80% of MemoryMax — the ARGUMENT
+  # ABOVE, not whatever MemoryMax a caller later merges outside this fragment.
+  # Merging a custom MemoryMax alongside a bare `harden {}` call silently
+  # leaves MemoryHigh derived from the 512M default (llama-chat 2026-10-08:
+  # 410M watermark, 10.7G swapped, stuck load). Pass MemoryMax INTO harden.
   CPUQuota ? "200%", # Hard cap: 2 cores. Prevents CPU runaway from code bugs. Override for AI/build services.
   ProtectSystem ? "full",
   ProtectHome ? true,
