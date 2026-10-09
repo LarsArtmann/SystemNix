@@ -768,7 +768,6 @@
     go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     go-nix-helpers.inputs.nixpkgs.follows = "nixpkgs";
     go-structure-linter.inputs.flake-parts.follows = "flake-parts";
-    go-structure-linter.inputs.treefmt-nix.follows = "treefmt-nix";
     go-taskqueue.inputs.flake-parts.follows = "flake-parts";
     golangci-lint-auto-configure.inputs.flake-parts.follows = "flake-parts";
     inboxclean.inputs.flake-parts.follows = "flake-parts";
