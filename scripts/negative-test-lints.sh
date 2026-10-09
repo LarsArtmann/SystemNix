@@ -66,53 +66,10 @@ run_case() {
   local dir
   dir=$(make_copy "$group-$name")
 
-  local mut
-  for mut in "$@"; do
-    case "$mut" in
-    append:*)
-      local f="${mut#append:}"
-      f="${dir}/${f%%:*}"
-      local line="${mut#append:*:}"
-      printf '%s\n' "$line" >>"$f"
-      ;;
-    sed:*)
-      local rest="${mut#sed:}"
-      local f="${rest%%:*}"
-      local expr="${rest#*:}"
-      local premut
-      premut=$(mktemp)
-      # A silent sed failure (missing file) OR a no-op sed (expr matched
-      # nothing — exit 0!) leaves the copy UNMUTATED and the case reports
-      # the lint phantom-green (the gatus anchor-decay class, 2026-09-15).
-      # Detect BOTH: sed errors loudly, and a byte-identical file after a
-      # substitution expr means nothing matched.
-      if ! cp -- "$dir/$f" "$premut" 2>/dev/null; then
-        say "HARNESS BUG: sed target missing: $f"
-        failed=$((failed + 1))
-        rm -f "$premut"
-        return 0
-      fi
-      if ! sed -i "$expr" "$dir/$f" 2>/dev/null; then
-        say "HARNESS BUG: sed mutation failed (expr invalid): $expr on $f"
-        failed=$((failed + 1))
-        rm -f "$premut"
-        return 0
-      fi
-      if cmp -s -- "$premut" "$dir/$f"; then
-        say "HARNESS BUG: sed mutation was a NO-OP (expr matched nothing): $expr on $f"
-        failed=$((failed + 1))
-        rm -f "$premut"
-        return 0
-      fi
-      rm -f "$premut"
-      ;;
-    *)
-      say "HARNESS BUG: unknown mutation [$mut]"
-      failed=$((failed + 1))
-      return 0
-      ;;
-    esac
-  done
+  apply_mutations "$dir" "$@" || {
+    failed=$((failed + 1))
+    return 0
+  }
 
   local out status=0
   out=$(build_check "$dir" "$check") || status=$?
@@ -144,6 +101,114 @@ run_case() {
   esac
 }
 
+# apply_mutations <dir> <mutation...> — shared by run_case (check builds) and
+# eval_case (NixOS assertion audits). Returns 1 on harness bugs (bad target,
+# invalid sed, unknown form) so the caller counts one failed case.
+apply_mutations() {
+  local dir="$1"
+  shift
+  local mut
+  for mut in "$@"; do
+    case "$mut" in
+    append:*)
+      local f="${mut#append:}"
+      f="${dir}/${f%%:*}"
+      local line="${mut#append:*:}"
+      printf '%s\n' "$line" >>"$f"
+      ;;
+    sed:*)
+      local rest="${mut#sed:}"
+      local f="${rest%%:*}"
+      local expr="${rest#*:}"
+      local premut
+      premut=$(mktemp)
+      # A silent sed failure (missing file) OR a no-op sed (expr matched
+      # nothing — exit 0!) leaves the copy UNMUTATED and the case reports
+      # the lint phantom-green (the gatus anchor-decay class, 2026-09-15).
+      # Detect BOTH: sed errors loudly, and a byte-identical file after a
+      # substitution expr means nothing matched.
+      if ! cp -- "$dir/$f" "$premut" 2>/dev/null; then
+        say "HARNESS BUG: sed target missing: $f"
+        rm -f "$premut"
+        return 1
+      fi
+      if ! sed -i "$expr" "$dir/$f" 2>/dev/null; then
+        say "HARNESS BUG: sed mutation failed (expr invalid): $expr on $f"
+        rm -f "$premut"
+        return 1
+      fi
+      if cmp -s -- "$premut" "$dir/$f"; then
+        say "HARNESS BUG: sed mutation was a NO-OP (expr matched nothing): $expr on $f"
+        rm -f "$premut"
+        return 1
+      fi
+      rm -f "$premut"
+      ;;
+    *)
+      say "HARNESS BUG: unknown mutation [$mut]"
+      return 1
+      ;;
+    esac
+  done
+}
+
+# eval_toplevel <dir> — the enforcement surface of the NixOS ASSERTION
+# audits (they have no check derivation): the evo-x2 toplevel eval, which
+# `nix flake check` forces via its nixosConfigurations evaluation. stdout +
+# stderr — the assertion throw text is what the marker greps.
+eval_toplevel() {
+  local dir="$1"
+  nix eval --impure --raw --expr "(builtins.getFlake \"path:$dir\").nixosConfigurations.\"evo-x2\".config.system.build.toplevel" 2>&1
+}
+
+# eval_case <group> <name> <expect: fail|pass> <marker> <mutation...> —
+# same contract as run_case, but against the toplevel eval instead of a
+# check build. ~2min/case (full NixOS eval) — filter groups with CASES=.
+eval_case() {
+  local group="$1" name="$2" expect="$3" marker="$4"
+  shift 4
+
+  if [ -n "$FILTER" ] && [[ ",$FILTER," != *",$group,"* ]]; then
+    return 0
+  fi
+
+  local dir
+  dir=$(make_copy "$group-$name")
+  apply_mutations "$dir" "$@" || {
+    failed=$((failed + 1))
+    return 0
+  }
+
+  local out status=0
+  out=$(eval_toplevel "$dir") || status=$?
+
+  case "$expect" in
+  fail)
+    if [ "$status" -eq 0 ]; then
+      say "FAIL [$group/$name]: mutation PASSED the toplevel eval — audit did not fire (marker: $marker)"
+      failed=$((failed + 1))
+    elif ! grep -qE "$marker" <<<"$out"; then
+      say "FAIL [$group/$name]: eval failed but marker '$marker' absent — caught by EVAL accident, not the audit:"
+      grep -m3 'error:' <<<"$out" | sed 's/^/    /'
+      failed=$((failed + 1))
+    else
+      say "PASS [$group/$name]: toplevel eval threw the audit marker"
+      passed=$((passed + 1))
+    fi
+    ;;
+  pass)
+    if [ "$status" -eq 0 ]; then
+      say "PASS [$group/$name]: toplevel eval correctly stayed green"
+      passed=$((passed + 1))
+    else
+      say "FAIL [$group/$name]: toplevel eval should have stayed green but threw:"
+      grep -m3 -E 'error:' <<<"$out" | sed 's/^/    /'
+      failed=$((failed + 1))
+    fi
+    ;;
+  esac
+}
+
 SIGNALERTS="modules/nixos/services/_signoz-alerts.nix"
 
 # ── green controls: pristine copy, every touched check must build ──
@@ -162,6 +227,24 @@ if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]]; then
     fi
     unset status
   done
+fi
+
+# Eval control for the assertion audits: their enforcement surface IS the
+# toplevel eval, so the pristine copy must eval green. Also pulled in by
+# CASES=memory so the audit's group never runs without its control.
+if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]] || [[ ",$FILTER," == *,memory,* ]]; then
+  dir=$(make_copy "pristine-toplevel-eval")
+  out=$(eval_toplevel "$dir") || status=$? || true
+  status=${status:-0}
+  if [ "$status" -eq 0 ]; then
+    say "PASS [controls]: evo-x2 toplevel eval green on pristine copy"
+    passed=$((passed + 1))
+  else
+    say "FAIL [controls]: evo-x2 toplevel eval fails on the pristine copy — fix the tree first:"
+    grep -m3 -E 'error:' <<<"$out" | sed 's/^/    /'
+    failed=$((failed + 1))
+  fi
+  unset status
 fi
 
 # ── signoz-query-lint: the 4 trap classes + comment immunity ──
@@ -270,6 +353,14 @@ run_case deadguard evil-capture-guard dead-guard-lint fail 'DEAD GUARD' \
 run_case deadguard exempt-capture-guard dead-guard-lint pass 'never-match-marker' \
   'append:modules/nixos/services/_evil-dead-guard.nix:x=$(curl --silent http://x.example) # dead-guard-ok' \
   'append:modules/nixos/services/_evil-dead-guard.nix:if [ -z "$x" ]; then exit 0; fi'
+
+# ── memory-watermark-audit: the llama-chat 410M throttle trap ──
+# Assertion audit, no check derivation — enforced through the toplevel eval.
+# The mutation recreates the 2026-10-08 shape in FINAL-config terms: an
+# explicit sub-watermark riding an outside ceiling. The audit reads the
+# merged unit (not the call site), so ANY author-divergence shape must fire.
+eval_case memory llama-chat-trap fail 'memory-watermark-audit' \
+  'sed:modules/nixos/services/llama-chat.nix:s|(harden { MemoryMax = cfg.memoryMax; })|{ MemoryMax = cfg.memoryMax; MemoryHigh = "4G"; }|'
 
 say ""
 say "=== negative-test-lints: $passed passed, $failed failed ==="
