@@ -93,3 +93,15 @@ The error→auto-fix pipeline from the 22-05 design is now REAL CODE inside go-t
 *Harvest note: §f items are deliberately NOT harvested into SystemNix TODO_LIST.md — items 1-18 are go-taskqueue-repo work (that repo owns its own TODO system with format guards) and 19 is deployment-dependent on §g-3. Re-harvest after the owner answers §g.*
 
 *Awaiting instructions.*
+
+---
+
+## Addendum 2026-10-09 02:30 — remaining non-gated work CLOSED (follow-up session)
+
+Owner instructed "keep going" — everything in §f not marked ⚠ or gated on §g answers is now done. The §g questions remain OPEN and still gate first integration.
+
+- **§f-3 `clipStr` fixed properly, not just de-branched:** the identical if/else was replaced with real rune-safety — a valid-UTF-8 cut backs off to the rune boundary so multibyte messages never halve into U+FFFD; invalid input keeps byte-truncation. Pinned by a new regression case in `TestClipAndValidate` ("€" cuts at 4096 back off to 4095). §d-8 closed.
+- **§f-4..7 docs all landed:** DOMAIN_LANGUAGE gained six terms (Error report, Fingerprint, Incident, Mint, Regression, Incident status — every claim cross-checked against `Fingerprint`/`fold.go`/`journal.go` source before writing); AGENTS.md package-table row for `internal/incident` (9 B under the 18,500 B budget; the size-guard paren trimmed to make room — the script twin stays discoverable via the "Guards: check-*.sh" line); CHANGELOG [Unreleased] Added entry; README `tq incidents` command row + `POST /api/v1/errors` folded into the `tq api` row.
+- **§f-2 full gate battery GREEN:** root build/vet/test, journal module gate, `check-facade-parity.sh` (7 facades), `test-cmd-tq.sh`, `lint-baseline.sh` (0 baseline rows for incident/httpapi — no new debt pinned), `nix fmt` (fixed the un-gofmt'd journal facade const block + a policy.go whitespace line + a cmd/tq import order — all last-session residue), `check-doc-refs`, `check-agents-size` (18,491/18,500), `check-go-mods` (45 ok), vendor re-sync no-op, `ci-local.sh` (after a foreign unindexed status report from the parallel release-hardening session briefly redded the doc gate — they indexed it themselves; the 2 TRAILER WARNINGs are the pre-existing owner-ruling-pending f26 class, not this work).
+- **Concurrency note:** a parallel session (composition/ProjectionRuntime, release-hardening) was active the whole window — one edit-tool race on `incident_test.go` (content unchanged, mtime-only) and one 54 B AGENTS.md delta that turned out to be my own mis-measured row padding, both resolved by re-read. This window's work rode daemon sweeps `ec77e26a`, `f550c2eb`, `1c18a441`, `4bf0af82`, `2224fbc1` — the owner-gated squash (§f-1) now covers 9 heuristic commits total (4 from the original session + these 5).
+- **Still deliberately open, unchanged:** §f-1 squash (⚠), §f-8 examples/api producer, §f-9 harvest into go-taskqueue TODO_LIST, §f-10 webui view, §f-11..13 (the three §g decisions), §f-14..19. The 22-05/§g questions are the only blocker to real usage.
