@@ -5317,11 +5317,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791549993,
-        "narHash": "sha256-eHNgRkZSwziJarWMX2mVu6U0HMgIQzVsm3lrknde5LE=",
+        "lastModified": 1791581017,
+        "narHash": "sha256-EARmCD8tfH861Q+ubho9B2pHSXSHMKdl5p6Am0nfZII=",
         "ref": "refs/heads/master",
-        "rev": "ac1157e7e550d83094bd9169fbabe29d5e672b54",
-        "revCount": 1737,
+        "rev": "f66974620eb8063821371151237a42c05bdf3e98",
+        "revCount": 1738,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-structure-linter"
       },
