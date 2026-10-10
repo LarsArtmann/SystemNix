@@ -181,6 +181,12 @@
                   # tested); stage it like pressure-report.sh or the sweep
                   # dies at source time on every deploy.
                   cp ${root}/scripts/lib/memory-throttle-sweep.sh $out/bin/lib/memory-throttle-sweep.sh
+                  # The service-sanity sweep lib is sourced at smoke start
+                  # (same 2026-09-02 unstaged-source class): without this
+                  # line BOTH 2026-10-10 deploys aborted the entire smoke
+                  # at load time, so the InboxClean/CV/catchall legs never
+                  # ran for those deploys.
+                  cp ${root}/scripts/lib/service-sanity-sweep.sh $out/bin/lib/service-sanity-sweep.sh
                   # The crush smoke section resolves helpers relative to
                   # BASH_SOURCE (the store bin dir), so stage the
                   # rc-test harness too or the check always fails with
