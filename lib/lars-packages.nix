@@ -61,16 +61,15 @@ lib.filterAttrs (_: v: v != null) {
   # no-op derivation (BuildFlow `nix build .` needs it; the real CLI lives at
   # packages.cqrs-lint). The 2026-10-09 shim drop kept flakePkg, which resolved
   # to the empty derivation — deploying it would silently remove the binary.
-  # TEMPORARY vendorHash shim RE-ADDED (2026-10-09 ~23:00, first-hand FOD
-  # evidence — the documented bootstrap exception): the 00:55 drop was valid
-  # at lock rev 8ab092fa ("upstream ALREADY carries the got hash qRvdn5dH…"),
-  # but the lock moved to 0a05f681 at 01:06 and upstream still pins the
-  # 8ab092fa-era hash at BOTH the locked rev and master (ee2244d90). Evidence:
-  # the 22:36 deploy FOD run failed specified qRvdn5dH… vs got RmVOSlDz….
-  # Upstream repo is BUSY (live session, ~250-file churn, unmerged path) so
-  # the paste-upstream → push → re-lock → re-drop cycle is queued
-  # (docs/todo/upstream.md), not raced. Drop when upstream re-pins or the
-  # lock moves past an upstream-fixed rev.
+  # TEMPORARY vendorHash shim RE-PINNED (2026-10-10 wave, first-hand FOD
+  # evidence — the documented bootstrap exception): got 7wijvzQm… at
+  # locked rev f12a849b (first-hand keep-going enumeration,
+  # /tmp/toplevel-keepgoing.log). Upstream repo is BUSY (live session:
+  # dirty tree 12:43 same day, local branches incl.
+  # systemnix-cqrs-lint-hashfix) so the paste-upstream → push → re-lock →
+  # re-drop cycle stays queued (docs/todo/upstream.md), not raced.
+  # Drop when upstream re-pins or the lock moves past an upstream-fixed
+  # rev.
   cqrs-lint =
     let
       pkg = (inputs.go-cqrs-lite.packages.${system} or { }).cqrs-lint or null;
@@ -79,23 +78,15 @@ lib.filterAttrs (_: v: v != null) {
       null
     else
       pkg.overrideAttrs {
-        vendorHash = "sha256-RmVOSlDzlz1mhrh/w2/dKg3RC3ZR+FMjmI17lWqaATo=";
+        vendorHash = "sha256-7wijvzQmDIlEbRfNqkK/bmUiQDpMZ+Hz5GNJ1Ggx8Gs=";
       };
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-10 — class comment at
-  # buildflow): got NYg9nBod… at locked rev 5f7e9ef4 (upstream flake
-  # bakes N3/5p5IB… stale at locked rev AND HEAD, verified in the
-  # ~/projects/erraudit checkout). Drop when upstream re-pins
-  # or the lock moves past an upstream-fixed rev.
-  erraudit =
-    let
-      pkg = flakePkg inputs.erraudit;
-    in
-    if pkg == null then
-      null
-    else
-      pkg.overrideAttrs {
-        vendorHash = "sha256-NYg9nBodI4/6INf+gU2yS6mxi4ebx+qti+LZdlGoDGQ=";
-      };
+  # vendorHash shim DROPPED (2026-10-10 wave — drop-protocol,
+  # docs/agents/nix-flakes.md): upstream 3520e64 ALREADY bakes the got
+  # hash /D4X81jj… (first-hand keep-going enumeration,
+  # /tmp/toplevel-keepgoing.log); the NYg9nBod… shim pinned for the
+  # superseded rev 5f7e9ef4 only re-created the drift treadmill.
+  # Re-add ONLY via nix-hash-fix evidence, never by hand.
+  erraudit = flakePkg inputs.erraudit;
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 74baca53 ALREADY bakes the got
   # hash G0hMfZId… (first-hand keep-going enumeration,

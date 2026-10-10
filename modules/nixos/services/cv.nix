@@ -33,14 +33,22 @@
       # Where the cv-oidc-env bridge writes CV_OIDC_CLIENT_SECRET (the
       # StateDirectory below owns /var/lib/cv-oidc; dnsblockd pattern).
       oidcEnvFile = "/var/lib/cv-oidc/client-secret.env";
-      # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
-      # docs/agents/nix-flakes.md): upstream b3a9172f ALREADY bakes the got
-      # hash fpTOHKF+… (first-hand keep-going enumeration,
-      # /tmp/toplevel-fix-20261007.log); the stale override only re-created
-      # the drift treadmill. Serves BOTH consumers below
-      # (PATH CLI and service package are the same derivation, two attrs).
-      # Re-add ONLY via nix-hash-fix evidence, never by hand.
-      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # TEMPORARY vendorHash shim RE-ADDED (2026-10-10 wave, first-hand FOD
+      # evidence — the documented bootstrap exception): got uY1ZAA4r… at
+      # locked rev e425ffa (first-hand keep-going enumeration,
+      # /tmp/toplevel-keepgoing.log; FOD verified green at that rev). The
+      # 2026-10-07 drop was valid then (upstream b3a9172f baked fpTOHKF+…),
+      # but upstream moved and STILL bakes the stale GkoCgbVQ… at the locked
+      # rev AND master tip. Upstream push blocked by their red pre-commit
+      # go-vet gate (career-pipeline go.sum rot from their go-1.27 floor
+      # sweep, pre-existing at e425ffa) — the paste-upstream → push →
+      # re-lock → re-drop cycle is queued (docs/todo/upstream.md), not
+      # raced. Serves BOTH consumers below (PATH CLI and service package
+      # are the same derivation, two attrs). Drop when upstream re-pins or
+      # the lock moves past an upstream-fixed rev.
+      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+        vendorHash = "sha256-uY1ZAA4rzTcBnNQ9rSq+N/6VlvlShVxJHujGUCeCj8M=";
+      };
     in
     {
       imports = [

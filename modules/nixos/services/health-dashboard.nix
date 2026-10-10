@@ -58,17 +58,15 @@
 
         package = lib.mkOption {
           type = lib.types.package;
-          # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave —
-          # class comment at lib/lars-packages.nix): upstream hash stale at
-          # locked rev 17af7f1 AND HEAD (got w28MXo+Z…; first-hand
-          # keep-going enumeration, /tmp/toplevel-fix-20261007.log). Drop
-          # when upstream re-pins or the lock moves past an upstream-fixed
-          # rev.
+          # vendorHash shim DROPPED (2026-10-10 wave — drop-protocol,
+          # docs/agents/nix-flakes.md): upstream 60ecc25 (pushed this wave)
+          # ALREADY bakes the got hash 6CaEDN7… (first-hand keep-going
+          # enumeration, /tmp/toplevel-keepgoing.log; the w28MXo+Z… shim
+          # pinned for the superseded rev 17af7f1 only re-created the drift
+          # treadmill). Re-add ONLY via nix-hash-fix evidence, never by
+          # hand.
           default =
-            inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
-              {
-                vendorHash = "sha256-w28MXo+Z6RnzQJPwwNCov5EcnsLAY3SPEv412UOj5ts=";
-              };
+            inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default;
           defaultText = lib.literalExpression "inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default";
           description = "The health-hub package (github:LarsArtmann/go-health-dashboard).";
         };

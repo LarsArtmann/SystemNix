@@ -10,11 +10,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1791622285,
-        "narHash": "sha256-oxBTGQeb0ZVqEPxR+8mbX+wb7P2rBDbpq7S+C5HqiqA=",
+        "lastModified": 1791629643,
+        "narHash": "sha256-ycTGjlCfeUUF0l/SyhWcKTmqGkyN5mYdN2xpxMU1+SE=",
         "ref": "refs/heads/fork",
-        "rev": "bf87a6a2b1fecda6b7d2b39dfbd7abae8d341233",
-        "revCount": 2498,
+        "rev": "630038921022b3b2d83ab87022a11aea4335c0ac",
+        "revCount": 2499,
         "type": "git",
         "url": "https://github.com/LarsArtmann/art-dupl"
       },
@@ -268,11 +268,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791594425,
-        "narHash": "sha256-hh8xomKKdj89CD9AOHlJqqyOy6GdTKHS0f004k/fTg0=",
+        "lastModified": 1791629644,
+        "narHash": "sha256-Qw1g24djuRUo3cpGO0npmrTdBz6pqDVNJh0nu0LsE8s=",
         "ref": "refs/heads/master",
-        "rev": "fd062dbd8ad9a4ac47ebde0afadcfaae1552450f",
-        "revCount": 1479,
+        "rev": "4d33eca786bd11a09c51543216a832a4c03ef65d",
+        "revCount": 1480,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/browser-history"
       },
@@ -4080,11 +4080,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791615479,
-        "narHash": "sha256-Byx8Mj3HXbbgVFuktr3REZWGKagb107mUUPByEDwAUY=",
+        "lastModified": 1791629690,
+        "narHash": "sha256-xVylF03lIdNbYPoMYy/cPgCKMMMugmP5r56wh4oX3j8=",
         "owner": "LarsArtmann",
         "repo": "go-health-dashboard",
-        "rev": "2f36d173e8a39b3c755bb4e4cbc0b637181fd3f6",
+        "rev": "60ecc2565ae8f311ef39f4b5bdde37434c51d36d",
         "type": "github"
       },
       "original": {
@@ -5344,11 +5344,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791604517,
-        "narHash": "sha256-+ZlGUkTEWvhJ3dnr/Fpo4JZpuksLYYnL0YMQov7h/IE=",
+        "lastModified": 1791629688,
+        "narHash": "sha256-/3VpjjlYSjWQ4w6VNZ9TVkTR1IQvIvbPG5Kmf2klZvk=",
         "owner": "LarsArtmann",
         "repo": "go-taskqueue",
-        "rev": "f830bc5c37cef7d9c70b95e84f5a09bb6394705d",
+        "rev": "cc261ed79f72105d6f0c50baa9775d23d55f1227",
         "type": "github"
       },
       "original": {
