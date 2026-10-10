@@ -59,9 +59,12 @@ via an explicit vHost that landed in the SAME change — no behavior gap
 between deploys. Regression pins at three layers: `checks.cloud-domain`
 asserts both catch-alls keep `error 404` + `handle_errors` and rejects any
 dash `redir` returning to them; Gatus "Caddy Catch-All 404" probes
-`catchall-probe.home.lan` expecting 404 (resolves via the wildcard
-`*.home.lan` DNS record by design, deliberately NOT in dns-local — no ghost
-warning); `post-deploy-check.sh` smokes the same URL.
+`catchall-probe.home.lan` expecting 404 (deliberately NOT in dns-local — no
+ghost warning; KNOWN-FAILING since 2026-10-07: dnsblockd answers NXDOMAIN for
+unknown `*.home.lan` names — its local-record store is exact-match only, so
+the configured wildcard record never matches — and the probe dies on the DNS
+shape before Caddy is reached; fix tracked in docs/todo/services.md);
+`post-deploy-check.sh` smokes the same URL.
 
 ## TLS / cert flow
 

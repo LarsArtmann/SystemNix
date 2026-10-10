@@ -122,12 +122,17 @@ in
       tempAllowAll = false;
 
       # Local DNS records: home.lan zone with all service subdomains.
-      # The *.home.lan wildcard record makes UNKNOWN names resolve to the
-      # server on purpose: Caddy's catch-all answers them with a real 404
-      # page (a NXDOMAIN would only surface as a browser DNS error). The
-      # cloud zone is deliberately wildcard-free (sdns ignores wildcard
-      # local records anyway): unknown *.cloud names return NXDOMAIN at
-      # the zone boundary.
+      # INTENT (NOT LIVE): the *.home.lan wildcard record should make UNKNOWN
+      # names resolve to the server so Caddy's catch-all answers them with a
+      # real 404 page. LIVE-FALSIFIED 2026-10-07, re-verified 2026-10-10:
+      # dnsblockd's LocalZoneStore is exact-match only (internal/dns/
+      # localzone.go Lookup — a `*.` key is stored as a literal name no query
+      # can hit), so unknown *.home.lan names answer NXDOMAIN and never reach
+      # Caddy (source-verified at upstream HEAD 039ba0f, == the deployed
+      # binary). Fix tracked in docs/todo/services.md (upstream glob support
+      # or a config shape the binary honors). The cloud zone is wildcard-free
+      # by the same limitation (sdns ignores wildcard local records): unknown
+      # *.cloud names return NXDOMAIN at the zone boundary.
       localRecords =
         builtins.listToAttrs (
           map (subdomain: {
