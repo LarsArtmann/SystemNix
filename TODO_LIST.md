@@ -732,6 +732,7 @@
 - [ ] [ready] **Standardize the report harvest marker + teach it to check-todo-system** (ledger sections should carry the literal HARVESTED / NOT HARVESTED vocabulary the checker greps; the 08-22 report's freeform ledger style risks not registering) → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-08_09-10_self-review-brutal-post-execution-session.md §f.18)
 
 - [ ] [ready] **Wire negative-test-lints.sh into CI** (zero workflow references — all lint selftests incl. the new memory-watermark contract run only when a local session remembers) → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-09_22-20_memory-watermark-trap-audit-status.md §f.3)
+- [ ] [ready] **FOD rev-staleness guard: pre-deploy-check leg that flags a FOD hash-mismatch whose store-name rev ≠ the input's current lock rev** (the 2026-10-10 deploy block was diagnosed from error output already stale — erraudit's pasted got-hash differed from the fresh enumeration's because the input moved twice between build and triage; one rev-suffix-vs-lock jq compare tells the operator "re-enumerate before pasting") → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-10_02-02_vendorhash-wave6-fod-shim-fix-toplevel-green.md §f.8)
 ### pixel6
 
 - [ ] **Udev rule for Google USB vendor 18d1 (adb access)** → [docs/todo/pixel6.md](docs/todo/pixel6.md)

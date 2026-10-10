@@ -13,7 +13,7 @@ disposable. Upstream repo: `/home/lars/projects/crm` (runbooks in
 | Unit        | `crm-server.service` (system, `User=lars`)                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | Port        | `ports.crm` = 8091 (loopback only: `127.0.0.1:8091`)                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | vHost       | `crm.home.lan` — **plain layer** (own auth), claimed only once Twenty is frozen (see Cutover)                                                                                                                                                                                                                                                                                                                                                                                                           |
-| Auth        | WebAuthn passkey (`-auth`, `-rpid crm.home.lan`, `-secure true`); `/healthz` + bearer API stay outside the session gate                                                                                                                                                                                                                                                                                                                                                                                 |
+| Auth        | WebAuthn passkey (`-auth`, `-rpid crm.home.lan`, `-secure true`) + **native Pocket ID OIDC** (`-oidc-*`, client `crm`, callback `/auth/oauth/pocket-id/callback`, PKCE) — passkeys stay as break-glass; an unreachable Pocket ID at boot degrades to passkey-only (loud log). Secret via `crm-oidc-env` bridge → `CRM_OIDC_CLIENT_SECRET` (never argv). `/healthz` + bearer API stay outside the session gate                                                      |
 | Machine API | `-api-token` bearer → `/api` + `/rest` (Twenty-compatible surface for the CV pipeline sync)                                                                                                                                                                                                                                                                                                                                                                                                             |
 | Secret      | `crm_api_token` in `platforms/nixos/secrets/crm.yaml` (age-public-key-encrypted; same value as the pre-module `~/.local/share/crm/api-token`) → sops template `crm-server-env` → `EnvironmentFile`                                                                                                                                                                                                                                                                                                      |
 | Gatus       | "Kith CRM" on `/healthz` (loopback, 5m) — live from day one                                                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -43,6 +43,26 @@ First login: visit `https://crm.home.lan` → register the sole passkey
 (MaxUsers=1 closes registration). Escape hatch: `services.crm-server.auth.enable
 = false` + redeploy; API path documented in the crm repo
 `docs/ops/PASSKEY-RECOVERY.md`.
+
+## Native OIDC (Pocket ID, 2026-10-10)
+
+Pocket ID sign-in rides BESIDE the passkeys (Layer 1 in
+`docs/agents/sso-dns.md`): the login page renders a provider button, success
+mints the CRM session, and the first Pocket ID login LINKS to the existing
+passkey user by email (usermgmt matchOrCreateUser: provider+subject first,
+email fallback, then create-under-MaxUsers). Requirement: the Pocket ID
+account email must equal the passkey registration email — a different email
+hits the `MaxUsers=1` registration-closed rejection (linking works regardless
+of Pocket ID's per-user `email_verified`, which defaults FALSE fleet-wide). LAN coverage is the REASON for native
+OIDC here: the oauth2-proxy Layer 2 gate bypasses LAN clients, and
+`crm.home.lan` IS a LAN hostname. Wiring: registry `oidc` entry (clientId
+`crm`) → `pocket-id-provision` mints the client + secret → `crm-oidc-env`
+oneshot bridges the secret into `/var/lib/crm-oidc/client-secret.env` →
+crm-server `EnvironmentFile` reads it as `CRM_OIDC_CLIENT_SECRET`.
+Deploy-restart coupling lives in `scripts/deploy.sh` (is-active-gated
+restart block, deploy-restart-audit gate). Passkey-only degradation: if the
+issuer is unreachable at boot, or the bridge finds no secret, OIDC stays off
+and the passkey path keeps working.
 
 ## Traps
 

@@ -1829,11 +1829,11 @@
     "go-branded-id_14": {
       "flake": false,
       "locked": {
-        "lastModified": 1791201406,
-        "narHash": "sha256-kWpR0NT9I16TpuFAck95tkCFY0UHe9fBRmKD59tD1nU=",
+        "lastModified": 1791549805,
+        "narHash": "sha256-1NJJCPrLw9bhUuwtEqXJ5YXAXoiZR29DwLvPiafIplU=",
         "owner": "LarsArtmann",
         "repo": "go-branded-id",
-        "rev": "79ef83d6a2142a17a057fea03973ffc4e52d8052",
+        "rev": "484e22f6562db8c5f4b69e05fef5884719efc194",
         "type": "github"
       },
       "original": {
@@ -2832,11 +2832,11 @@
         "treefmt-nix": "treefmt-nix_7"
       },
       "locked": {
-        "lastModified": 1791550806,
-        "narHash": "sha256-qLKXv7hnptuvNEa0v4jbYzmNKCR8ws5BpcQLSu0vakE=",
+        "lastModified": 1791578992,
+        "narHash": "sha256-ulg8sNnpVYSKXj6PgCf7NMfjrVnN4YDeGKYTgW1Gpes=",
         "owner": "larsartmann",
         "repo": "go-cqrs-lite",
-        "rev": "cc4805374223e1454492f2c309326a7c4450ff8a",
+        "rev": "498f5c0c234f08eff83acff8cbcdf85d8874bc93",
         "type": "github"
       },
       "original": {
@@ -3205,11 +3205,11 @@
     "go-error-family_15": {
       "flake": false,
       "locked": {
-        "lastModified": 1791369666,
-        "narHash": "sha256-aLFML0qoqSoJJs+v+Dn6NKqwj+lLfx3ZxR1R5KSIiVI=",
+        "lastModified": 1791489327,
+        "narHash": "sha256-BHs/FUA0SQIB9hvNSwsAGvsISbEly2N/iau9PvcdVZY=",
         "owner": "LarsArtmann",
         "repo": "go-error-family",
-        "rev": "ace30f6132e47e96e53e30dce88ff769a788b840",
+        "rev": "2c6e05acc18223363df303e9ddde2c29bbd5239b",
         "type": "github"
       },
       "original": {
@@ -4762,11 +4762,11 @@
     "go-output_10": {
       "flake": false,
       "locked": {
-        "lastModified": 1791203353,
-        "narHash": "sha256-WgUggJgoYmqPu7Xw/jOlLqIsMd0pjT9rij/v4iaFtVU=",
+        "lastModified": 1791512429,
+        "narHash": "sha256-Ybt2LFdSepsDa4dkuvF9p/IrF00qHSq8halzolOA/QE=",
         "owner": "LarsArtmann",
         "repo": "go-output",
-        "rev": "9bf4bd808b26f8b9505a9c856de24ad21c55af04",
+        "rev": "2481b93b3627d693f00c761523813656d89dfb36",
         "type": "github"
       },
       "original": {
@@ -6827,17 +6827,18 @@
         ]
       },
       "locked": {
-        "lastModified": 1791560004,
-        "narHash": "sha256-2//nx9tae0maMIh6gidQ2xiMC2a2TGm4ZMMPJX945q8=",
+        "lastModified": 1791589412,
+        "narHash": "sha256-KQnVftNMVMNnZjXDe+3++V092zHtMuGG4wp71uyOwGE=",
         "ref": "refs/heads/master",
-        "rev": "749ca9af478bb1a46dd35b61af388f834ebab868",
-        "revCount": 1726,
+        "rev": "043f67f27494bca7da7db79651823a572ea238ef",
+        "revCount": 1750,
         "type": "git",
-        "url": "file:///home/lars/projects/nsfw-classifier"
+        "url": "ssh://git@github.com/LarsArtmann/nsfw-classifier"
       },
       "original": {
+        "ref": "refs/heads/master",
         "type": "git",
-        "url": "file:///home/lars/projects/nsfw-classifier"
+        "url": "ssh://git@github.com/LarsArtmann/nsfw-classifier"
       }
     },
     "nur": {
@@ -8403,11 +8404,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791474985,
-        "narHash": "sha256-nfQLQPbfB7ody6DY/qPg/rprpVhXVM+9dav+m/rUiRM=",
+        "lastModified": 1791490544,
+        "narHash": "sha256-qScE7Wz6Zg7eg8ItUpnkmKgst8weWschGe0E8jM4rj4=",
         "owner": "numtide",
         "repo": "treefmt-nix",
-        "rev": "2108ed809134967affc3f6ef203967c13af05a5f",
+        "rev": "4cfe8d7065cc8ca91c0a50361b6dd74920eeb1f5",
         "type": "github"
       },
       "original": {
