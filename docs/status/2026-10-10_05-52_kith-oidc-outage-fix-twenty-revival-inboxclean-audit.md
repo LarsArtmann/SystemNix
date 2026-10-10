@@ -300,3 +300,56 @@ post-state). Deliberately not harvested: §f.7-§f.35 — they are either
 already tracked by existing rows (dedupe, zombies, §17 sweep,
 multi-RPID), need no queue entry until a decision lands (§f.11, §f.27,
 §f.35), or are watch/roadmap fuel for the next docs-health HARVEST pass.
+
+## Verification appendix (2026-10-10 07:4x-08:1x, re-fire session)
+
+Residual verdicts + fixes landed after this report's authoring. The
+storm throughout: the owner's own crush fleet (ALL sshd sessions
+originate 192.168.1.62 = the protected carve-out; io PSI some avg60
+49-73%) — SIGSTOP license NOT applicable, so load-sensitive legs stay
+storm-labeled until a calm window.
+
+- **§f.7 CV `/rest` — GREEN.** Auth differential on crm `2db45bb`:
+  `GET /rest/opportunities` → 200 JSON with the bearer token, 401
+  without. ADJACENT FINDING folded into TODO_LIST row 155: the
+  long-running cv-server's 06:23 sync batch PATCHed 37 phantom
+  opportunity ULIDs → 42×404 in one 45s burst (first 404s in the crm
+  journal since 10-08; zero successful CV writes since the deploy) —
+  stale-external-id shape, the exact thing row 155's checkpoint/
+  upsert work fixes.
+- **§f.9 storm-suspect re-run — 2 of 4 CLEARED.** Fresh packaged smoke
+  (run 2): CV browser render + CV proxy-path render → real PASS.
+  Still STORM-SUSPECT (owner-fleet storm): Caddy catch-all 404,
+  InboxClean /health. Re-run when io PSI some avg60 < 20.
+- **§f.10 /data/docker "reads 0" — ANSWERED: permission artifact.**
+  `drwx--x--- root root`; du/ls print 0/empty with suppressed
+  "Permission denied". Top-dir mtime 2026-10-07 11:05 (pre-removal) =
+  no reclaim evidence; the ~15.5G AGENTS.md claim stands
+  UNVERIFIED-unchanged. The only truthful probe is the services.md
+  step-0 sudo inventory (owner). Rows closed: TODO_LIST reconcile row,
+  storage.md row-205 clause, AGENTS.md Docker bullet annotated.
+- **§f.12 Gatus "Kith CRM (HTTPS)" — conditions replay GREEN.**
+  `https://crm.home.lan/login` → 200 (text/html), `/healthz` → 200
+  (text/plain) with the Gatus UA; gatus journal shows a 05:26 check
+  CANCEL (deploy race), no FAIL lines. Dashboard-visual confirmation
+  stays owner-side (no agent-readable verdict surface — row 234).
+- **§d.7 CORRECTED (see inline annotation): §11 never lied.** The
+  failing toplevel build was the session's MANUAL run ~30 min BEFORE
+  deploy attempt 1; §11's 03:16 pass ran on the post-re-pin tree.
+  pipeline.md rows 436+449 carry the full evidence chain and close-outs.
+- **FIXED: post-deploy packaging** — `service-sanity-sweep.sh` staged
+  in the app derivation (pipeline.md row closed); the packaged smoke no
+  longer aborts at source time, and §18 ran for the first time in a
+  deployed form.
+- **FIXED: §18 silent-failure seam** — the sweep's FAIL path called the
+  smoke's silent baseline-recorder, printing no verdict and discarding
+  the tripped-service detail; switched to `report_fail` (prints +
+  counts + baseline-records), fixture + selftest green. First loud
+  verdict: `nix-daemon.service=2250%CPU` (the owner fleet's build).
+- **Notes, no action:** `paperless-gpt :8106 NOT loopback-only` FAIL in
+  run 2 was a transient false positive (live `ss`: `127.0.0.1:8106`, no
+  unit restart — storm-racy probe); Forgejo 502s = the documented
+  unmet `.subvol-migrated` condition-gate state (baseline); Bank-Sync
+  sync_errors + FastFlowLM :52625 dead = pre-existing baseline.
+- **§g owner questions: UNCHANGED** — (1) import route + all-139
+  consent, (2) GCP client choice, (3) feed scope.

@@ -15,7 +15,7 @@ VERDICTS=()
 report_pass() { VERDICTS+=("PASS $*"); }
 report_warn() { VERDICTS+=("WARN $*"); }
 report_skip() { VERDICTS+=("SKIP $*"); }
-record_fail() { VERDICTS+=("FAIL $*"); }
+report_fail() { VERDICTS+=("FAIL $*"); }
 
 fail() {
   echo "SELFTEST FAIL: $*"

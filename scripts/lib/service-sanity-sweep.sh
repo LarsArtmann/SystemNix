@@ -13,8 +13,13 @@
 #      unit.
 #
 # Sourced (NEVER executed). The sourcer MUST define report_pass/report_warn/
-# record_fail (FAIL integrates with the smoke fail-baseline: new fails exit
-# 3, persistent ones go advisory). Parameter-overridable per call (same
+# report_fail (FAILs PRINT + count AND integrate with the smoke fail-baseline:
+# new fails exit 3, persistent ones go advisory). The 2026-10-10 first live
+# §18 run proved the seam matters: the FAIL path originally called the
+# smoke's silent baseline-recorder directly, so a tripped sweep printed NO
+# verdict line, skipped the FAIL count, and DISCARDED the tripped-service
+# detail — the exact "never go silent" failure this lib exists to prevent.
+# Parameter-overridable per call (same
 # fixture pattern as memory-throttle-sweep.sh):
 #   systemnix_service_sanity_sweep [slice_dir] [sample_seconds]
 #                                [cpu_budget_pct] [journal_lines_per_min]
@@ -62,7 +67,7 @@ systemnix_service_sanity_sweep() {
     fi
   done
   if [ -n "$cpu_findings" ]; then
-    record_fail "Service Sanity CPU - sustained >${cpu_budget_pct}% of one core over ${sample_seconds}s: $cpu_findings"
+    report_fail "Service Sanity CPU - sustained >${cpu_budget_pct}% of one core over ${sample_seconds}s: $cpu_findings"
   else
     report_pass "Service Sanity CPU - no service above ${cpu_budget_pct}% of one core over ${sample_seconds}s"
   fi
@@ -96,7 +101,7 @@ systemnix_service_sanity_sweep() {
     rate_out+="${rate_out:+ }${unit}=${rate_findings[$unit]}/min"
   done
   if [ -n "$rate_out" ]; then
-    record_fail "Service Sanity journal - sustained >${journal_budget_per_min} lines/min over ${window_minutes}m: $rate_out"
+    report_fail "Service Sanity journal - sustained >${journal_budget_per_min} lines/min over ${window_minutes}m: $rate_out"
   else
     report_pass "Service Sanity journal - no service above ${journal_budget_per_min} lines/min over ${window_minutes}m"
   fi
