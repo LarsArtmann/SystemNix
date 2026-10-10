@@ -36,6 +36,7 @@
 | 3 | Live run 1 (io avg60 74%): banner fired; InboxClean timeout + catchall downgraded; baseline kept clean | exposed the §c counter bug |
 | 4 | Live run 2 (io avg60 61%): printed FAIL lines == FAIL counter (9); STORM-SUSPECT == 3 (InboxClean timeout, catchall `000`, CV proxy-path); CV loopback render PASSed; baseline = exactly the 9 genuine fails (Forgejo ×5+catchall-subvol set, FastFlowLM, Bank-Sync, Kith CRM), zero storm-leg names | arithmetic exact |
 | 5 | Ancestry + deployed-rev + 8s-budget chain (§b) | fix VERIFIED DEPLOYED |
+| 6 | Same-run sibling legs vs the same starved process (run 2): dashboard renders PASS, convergence guard `171de0d`==lock PASS, Paperless doc API PASS — only /health exhausts its budget | app-is-fine evidence without a calm window |
 
 Deferred: `nix flake check --no-build` eval not re-run this session (storm + parallel sessions; the script-only change is fully covered by the direct harness run — the same invocation the `post-deploy-pressure-selftest` flake check performs).
 
@@ -48,5 +49,5 @@ Deferred: `nix flake check --no-build` eval not re-run this session (storm + par
 
 1. **Timeout-fix row** → CLOSED both surfaces + CHANGELOG (§b). Harvested by closure.
 2. **Storm-mode row** → CLOSED both surfaces + CHANGELOG (§c). Harvested by closure.
-3. **Escape-hatch green probe** (`/health` 200 once calm) → storm RESURGED at report time (avg60 back to 54% under the same buildflow cycle); probe still 503@8.02s at 03:14. Harvested as a `[watch]` row in `docs/todo/services.md` — one green probe closes it.
+3. **Escape-hatch green probe** (`/health` 200 once calm) → storm persisted through a 10-poll/8-min watch (io some avg60 35–56%, never <20%; parallel buildflow cycles). Compensating evidence harvested into the watch row: same-run sibling legs (dashboard render, convergence guard, Paperless API) all PASSed against the same process, so only the /health handler's gmail-verdict/aggregate work is storm-delayed. Harvested as a `[watch]` row in `docs/todo/services.md` — one green probe when avg60 < 20% closes it.
 4. Pre-existing `Identify the 30s /health poller on :8099` row — NOT this session's finding, deliberately not harvested (already open in services.md).
