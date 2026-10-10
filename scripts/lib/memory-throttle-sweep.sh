@@ -21,12 +21,13 @@
 # is not this deploy's regression — a hard FAIL would blind the gate to
 # exactly the changed units. Throttle-only units (MemoryHigh without
 # MemoryMax, e.g. btrbk) count here BY DESIGN — the watermark firing is
-# their intended behavior. Count >= threshold (default 1000; llama-chat was
+# their intended behavior. Count >= threshold (default 1000,
+# env-overridable via SYSTEMNIX_THROTTLE_WARN_THRESHOLD — llama-chat was
 # 46k, a startup blip is tens) warns per-unit; sub-threshold counts land on
 # one compact advisory line; zero throttle anywhere is a PASS.
 systemnix_memory_throttle_sweep() {
   local slice_dir="${1:-/sys/fs/cgroup/system.slice}"
-  local warn_threshold="${2:-1000}"
+  local warn_threshold="${2:-${SYSTEMNIX_THROTTLE_WARN_THRESHOLD:-1000}}"
   if [ ! -d "$slice_dir" ]; then
     report_skip "Memory throttle sweep — $slice_dir not available"
     return 0
