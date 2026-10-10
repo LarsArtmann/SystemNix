@@ -167,6 +167,18 @@ Started from a single Gatus line: `FAIL Kith CRM (HTTPS) — expected HTTP
    rejected. If the pressure gate hadn't ALSO blocked the first attempt,
    I'd have shipped a switch that failed mid-build. Row filed
    (pipeline.md).
+   > **CORRECTION 2026-10-10 (verification re-fire): this claim is
+   > FALSE** — §11 never lied. The failing toplevel build was the
+   > session's MANUAL run ~30 min BEFORE deploy attempt 1 (mismatch
+   > `t1CRZVb6`/`uE1Zo2mE`, first in session history 02:18); `t1CRZVb6`
+   > was the vendorHash of the PRE-fix crm rev `9df0c4a`, stale only
+   > after the lock moved to `2db45bb`. §11's 03:16 pass ran on the
+   > POST-re-pin tree (an exit-0 FOD build is impossible on a stale
+   > hash) and honestly built crm's new FOD; 03:49 "all cached" is
+   > consistent. Evidence: /var/log/systemnix-deploys/2026-10-10_{02-36-57,03-16-24,03-49-38}.log.
+   > The REAL gap — verdict-to-tree auditability — is fixed same session
+   > (tree-pin tripwire + `[tree <rev>]` stamps; pipeline.md rows
+   > 436/449 close-outs).
 
 ## e) WHAT WE SHOULD IMPROVE
 
