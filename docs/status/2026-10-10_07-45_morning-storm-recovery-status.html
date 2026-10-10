@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report Title</title>
+    <title>2026-10-10 Morning Storm Recovery — Multi-Session Status</title>
     <style>
       /* =========================================================================
          BAUHAUS DARK — Dashboard template
@@ -826,207 +826,247 @@
     </style>
   </head>
   <body>
-    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>Status Dashboard</span>
+      <span>2026-10-10 07:45 CEST</span>
+      <span>Crush &middot; evo-x2 &middot; SystemNix</span>
     </div>
 
     <div class="layout">
-      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
       <aside class="sidebar" data-nav>
         <nav>
           <div class="label">Contents</div>
-          <a href="#summary">Summary</a>
-          <a href="#findings">Findings</a>
-          <a href="#issues">Issue Cards</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#plan">Plan</a>
+          <a href="#snapshot">Snapshot</a>
+          <a href="#done">a) Fully Done</a>
+          <a href="#partial">b) Partially Done</a>
+          <a href="#notstarted">c) Not Started</a>
+          <a href="#fucked">d) Fucked Up</a>
+          <a href="#improve">e) Improve</a>
+          <a href="#top25">f) Top 25 Next</a>
+          <a href="#question">g) The Question</a>
         </nav>
       </aside>
 
       <main class="main">
-        <!-- Hero -->
         <div class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="hero-badge">Report Type</div>
-          <h1>Report Title</h1>
+          <div class="hero-badge">Point-in-time Status Snapshot</div>
+          <h1>Morning Storm Recovery</h1>
           <p class="hero-subtitle">
-            One-sentence description of what this report covers.
+            Seven agent sessions since 02:35 CEST rode out a day-long IO storm:
+            an OIDC outage fixed, the InboxClean chat brain fixed and deployed,
+            the 55% sync-failure mystery triaged to a mechanism, and a staged
+            deploy train waiting for one calm PSI window.
           </p>
         </div>
 
-        <!-- Inline TOC (alternative to sidebar; pick one) -->
-        <nav class="toc">
-          <h3>Contents</h3>
-          <ul>
-            <li><a href="#summary">Summary</a></li>
-            <li><a href="#findings">Findings</a></li>
-            <li><a href="#issues">Issue Cards</a></li>
-            <li><a href="#proposal">Proposal</a></li>
-            <li><a href="#plan">Plan</a></li>
-          </ul>
-        </nav>
-
-        <!-- Stats Dashboard -->
-        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <h2 id="snapshot"><span class="num">00</span>Snapshot</h2>
         <div class="stat-grid">
-          <div class="stat-card">
-            <div class="stat-value">42</div>
-            <div class="stat-label">Total Items</div>
-          </div>
-          <div class="stat-card stat-bad">
-            <div class="stat-value">7</div>
-            <div class="stat-label">Critical</div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">9</div>
+            <div class="stat-label">Fully done today</div>
           </div>
           <div class="stat-card stat-warn">
-            <div class="stat-value">12</div>
-            <div class="stat-label">Warnings</div>
+            <div class="stat-value">7</div>
+            <div class="stat-label">Partially done</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">2</div>
+            <div class="stat-label">Systemic, fucked up</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">351</div>
+            <div class="stat-label">Queue rows [ready]</div>
+          </div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card stat-good">
+            <div class="stat-value">GREEN</div>
+            <div class="stat-label">inboxclean-sync 07:16 (both accounts, 5 s)</div>
           </div>
           <div class="stat-card stat-good">
-            <div class="stat-value">35</div>
-            <div class="stat-label">Resolved</div>
+            <div class="stat-value">200 OK</div>
+            <div class="stat-label">chat brain :8850 (140 s first token)</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">31%</div>
+            <div class="stat-label">io PSI avg10, falling (gate &lt;20)</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">1</div>
+            <div class="stat-label">Deploy train staged, not switched</div>
           </div>
         </div>
-
-        <!-- Findings as Cards -->
-        <h2 id="findings"><span class="num">01</span>Findings</h2>
-
-        <div class="card card-problem">
-          <h4>Critical Issue</h4>
-          <p>Description of the problem and its impact.</p>
+        <div class="callout callout-solution">
+          <strong>Nothing is on fire right now.</strong>
+          Mail is flowing on both accounts, the chat answers, Kith serves 200,
+          and the storm is receding. The open risk is all in the staged-but-
+          unverified bucket: one deploy + one soak away from closing six
+          verification chains.
         </div>
 
+        <h2 id="done"><span class="num">01</span>a) Fully Done</h2>
         <div class="card card-solution">
-          <h4>Recommended Fix</h4>
-          <p>Description of the solution with rationale.</p>
+          <h4>InboxClean sync 55% exit-75 failure rate &mdash; TRIAGED CLOSED</h4>
+          <p>Storm-share confirmed dominant (zero Google-side evidence) plus the amplifier: hardcoded 5-min run budget (<code>defaultRunTimeout</code>, upstream <code>commands.go:397</code>) eaten by the corpus-backup self-heal full pass; <code>work</code> account starved. Live pattern :15-green/:45-dead; 07:15:57 tick green on both accounts. Rows closed <code>[x]</code> in TODO_LIST + services.md; upstream fix queued. <em>(This session, live journal + DB probes.)</em></p>
+        </div>
+        <div class="card card-solution">
+          <h4>InboxClean AI chat &mdash; root-caused, fixed, deployed, verified</h4>
+          <p>Never worked since the llama-chat brain landed: Qwen3.6 thinking mode defaults ON under <code>--jinja</code>, every turn burned its 3-min budget on reasoning. Fixed server-side (<code>enable_thinking:false</code>), deployed generation 856 (04:45&ndash;06:05 session). This session verified end-to-end post-storm: <code>200 in 140.6 s &rarr; "OK"</code>.</p>
+        </div>
+        <div class="card card-solution">
+          <h4>Kith CRM OIDC 502 outage &mdash; fixed end-to-end</h4>
+          <p>Root-caused from one Gatus line to a deployed, verified fix (<code>bcaf689</code>&rarr;<code>2db45bb</code>; /login + /healthz 200). <em>(05:52 session.)</em></p>
+        </div>
+        <div class="card card-solution">
+          <h4>Twenty revival &mdash; SQL-dump import path proven</h4>
+          <p>Post-Docker-removal migration window closed mid-rehearsal; the revival restored the 2026-10-08 dump into a throwaway PG16 and reconciled importer CSVs, archives, manifest. <em>(05:52 session.)</em></p>
+        </div>
+        <div class="card card-solution">
+          <h4>Memory-throttle &sect;17 sweep + watermark-audit HM scope + negative-test CI leg</h4>
+          <p>New sweep script, post-deploy leg, HM audit scope, and a nightly negative-tests workflow; suite 33/33 PASS, flake check green. <em>(05:24 session.)</em></p>
+        </div>
+        <div class="card card-solution">
+          <h4>SigNoz Pareto P0 executed with live evidence</h4>
+          <p>T1/T2/T3/T4/T26 done (PSI thresholds, git-lag textfile, traces dashboard, rules); T5/T6/T9&ndash;T12/T15 authored lint/eval-green. <em>(04:48 session.)</em></p>
+        </div>
+        <div class="card card-solution">
+          <h4>bun memory watchdog &mdash; 16 GiB SIGKILL guard landed</h4>
+          <p>Per-process kill-watchdog after the ~70 GB bun near-freeze; script, module, wiring, selftest, runbook landed. <em>(07:31 session.)</em></p>
+        </div>
+        <div class="card card-solution">
+          <h4>/data watch 12th dispatch verified &mdash; no drift</h4>
+          <p>Re-dispatch verification only; prior verdict stands. <em>(02:35 session.)</em></p>
+        </div>
+        <div class="card card-solution">
+          <h4>Queue surfaces updated &mdash; this session's follow-ups self-harvested</h4>
+          <p>4 rows landed at authoring time: upstream sync-budget fix [blocked:push], upstream 2611 date-parse [ready], llama-chat depth probe [ready], build load-shaping decision [decision] &mdash; each in TODO_LIST + its domain library (ledger in the footer).</p>
         </div>
 
-        <!-- Issue Cards -->
-        <h2 id="issues"><span class="num">02</span>Issue Cards</h2>
+        <h2 id="partial"><span class="num">02</span>b) Partially Done</h2>
+        <div class="card card-warning">
+          <h4>The deploy train &mdash; staged, PSI-gated, not switched</h4>
+          <p>Carries: llama-rag enable flip + MemoryMax-into-harden watermark fix, FastFlowLM socket re-arm, the SigNoz P0 batch, and the bun watchdog. Fires at the first <code>io some avg10 &lt;20</code> window (<code>DEPLOY_FORCE_PRESSURE=1 nix run .#deploy</code>); PSI was 31% and falling at report time.</p>
+        </div>
+        <div class="card card-warning">
+          <h4>llama-rag re-enable &mdash; in-tree, unsoaked</h4>
+          <p>Embeddings-only flip is eval-verified, but the freeze-#5 discipline demands a 15-min real-unit CPU soak before trust; RE-DISABLE rule armed on the spin signature.</p>
+        </div>
+        <div class="card card-warning">
+          <h4>SigNoz P0 close-out battery &mdash; authored, awaiting live verify</h4>
+          <p>Percent thresholds, git-lag service+timer, traces dashboard, thermal/git-stale rules, coverage ratchet: all land with the train; closing rows is explicitly forbidden until verified live.</p>
+        </div>
+        <div class="card card-warning">
+          <h4>InboxClean upstream fix &mdash; diagnosed, not filed</h4>
+          <p>Configurable run budget + resumable self-heal + per-account fairness; agent sessions never push, and the filing needs a HEAD re-verify first (verify-before-filing).</p>
+        </div>
+        <div class="card card-warning">
+          <h4>Year-2611 corpus date-parse &mdash; evidence collected, filing pending</h4>
+          <p>Two Google mails sit at <code>received_at</code> 2611-09-1x in the live corpus; raw Date headers must be pinned before the issue goes upstream.</p>
+        </div>
+        <div class="card card-warning">
+          <h4>bun watchdog &mdash; inert until switched</h4>
+          <p>Landed but not deployed; kill&rarr;journal&rarr;prom&rarr;Gatus chain never proven end-to-end.</p>
+        </div>
+        <div class="card card-warning">
+          <h4>FastFlowLM socket re-arm &mdash; rides the train</h4>
+          <p>Cold-load verification (&le;480 s) pending post-deploy.</p>
+        </div>
 
+        <h2 id="notstarted"><span class="num">03</span>c) Not Started</h2>
+        <div class="card">
+          <h4>The 351-row [ready] queue (shape, not exhaustive)</h4>
+          <p>Queue composition right now: 351 ready &middot; 21 decision &middot; 16 watch &middot; 9 blocked:deploy &middot; 8 blocked:user. Representative unstarted, agent-actionable work: weekly <code>trash-empty 30d</code> prune loop, /data usage alarm at ~85%, <code>du -sb</code> baseline + /data/ai 459 G breakdown, machine-readable <code>gate:</code> fields for the harvester, btrbk retention live-verify vs flake, pre-deploy &sect;11 vendorHash preview fail-closed fix, ~/tmp/go-lint reclamation execution, CONTRIBUTING re-dispatch codifications.</p>
+        </div>
+
+        <h2 id="fucked"><span class="num">04</span>d) Totally Fucked Up</h2>
+        <div class="card card-problem">
+          <h4>The IO-storm class &mdash; the day's single root cause, still ungoverned</h4>
+          <p>Today's damage bill from successive unthrottled build sessions (monitor365 cargo, hardware-identity cargo test, emulated aarch64 rustc, a 20 GB model load): <strong>55% of Gmail syncs exit-75 for 7 days</strong>, the user-visible chat 503 + 140 s first tokens, 8.7 G llama-server swap, Tctl 98.6 &deg;C freeze-signature, a ~70 GB bun near-freeze, and a deploy train deferred for hours. Every incident today resolves back to this one governance gap. The decision row is queued (see g) &mdash; until an owner picks a policy, every parallel build session re-rolls these dice.</p>
+        </div>
+        <div class="card card-problem">
+          <h4>Doc-drift debt: 98 unharvested &sect;f-bearing status reports</h4>
+          <p><code>check-todo-system.sh</code> stands at FAIL: 98 reports carry follow-up sections cited by no queue/library surface &mdash; multiple sessions skipped the self-harvest duty. This is silent scope loss: verified next-steps entombed in timestamped files nobody reads. Needs a per-report triage strategy, not a blind mechanical pass.</p>
+        </div>
+
+        <h2 id="improve"><span class="num">05</span>e) What We Should Improve</h2>
         <div class="issue issue-critical">
-          <span class="severity severity-critical">Blocking</span>
-          <h3>Critical finding title</h3>
-          <div class="where">path/to/file.go:42-58</div>
-          <p>
-            Describe the problem and cite the code or behavior that proves it.
-          </p>
-          <div class="callout callout-solution">
-            <strong>Fix</strong>
-            State the concrete recommended action.
-          </div>
+          <span class="severity severity-critical">Systemic</span>
+          <h3>Pick a build load-shaping policy</h3>
+          <div class="where">docs/todo/stability.md (decision row, queued this session)</div>
+          <p>Status quo vs PSI-gated builder wrapper vs <code>ionice -c3</code> dev-shell defaults. This single decision retires the day's entire damage bill class.</p>
         </div>
-
         <div class="issue issue-important">
-          <span class="severity severity-important">Important</span>
-          <h3>Important finding title</h3>
-          <div class="where">path/to/another.go:12-19</div>
-          <p>
-            Explain the risk and why a careful reviewer would hesitate before
-            shipping.
-          </p>
+          <span class="severity severity-important">Monitoring honesty</span>
+          <h3>Health checks that lie while the service starves</h3>
+          <div class="where">llama-chat :8850 &mdash; Gatus reads green during a hung chat</div>
+          <p><code>/health</code> + <code>/v1/models</code> answered 200 while a trivial completion took 140 s. Same phantom-green family as the 2026-09-30 auth bug. Depth probe (completion smoke) queued.</p>
         </div>
-
+        <div class="issue issue-important">
+          <span class="severity severity-important">Queue hygiene</span>
+          <h3>351 ready rows is a swamp, not a queue</h3>
+          <div class="where">TODO_LIST.md</div>
+          <p>Add machine-readable <code>gate:</code> fields (sudo/owner/deploy), retire the 3&times;-fired tmp-reclaim no-op loop, cap dispatch-stamp clauses &mdash; rows exist, execution not started.</p>
+        </div>
         <div class="issue issue-nice">
-          <span class="severity severity-nice">Nice to have</span>
-          <h3>Polish suggestion</h3>
-          <div class="where">docs/ or config</div>
-          <p>
-            Minor documentation gaps or future-proofing suggestions go here.
-          </p>
+          <span class="severity severity-nice">Working well &mdash; keep</span>
+          <h3>Single deploy train + explicit non-deploy verdicts</h3>
+          <div class="where">04:48 + 07:31 reports</div>
+          <p>Deferring one consolidated switch instead of per-session deploys, and writing "NOTHING deployed &mdash; never claim fixed before verified", is exactly right. Preserve it.</p>
         </div>
 
-        <!-- Strengths -->
-        <h2>Strengths</h2>
-        <div class="strengths">
-          <div class="strength">
-            <div class="check">+</div>
-            <div class="text">
-              <strong>Specific strength</strong>
-              <span>Explain why it matters and what it enables.</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Table with Badges -->
-        <h2>Issue Table</h2>
+        <h2 id="top25"><span class="num">06</span>f) Top 25 Things To Do Next</h2>
         <table>
           <thead>
-            <tr>
-              <th>#</th>
-              <th>Severity</th>
-              <th>Issue</th>
-              <th>Status</th>
-            </tr>
+            <tr><th>#</th><th>Impact</th><th>Task</th><th>Surface</th></tr>
           </thead>
           <tbody>
-            <tr>
-              <td>1</td>
-              <td><span class="badge badge-critical">Critical</span></td>
-              <td>Missing error handling</td>
-              <td><span class="badge badge-fixed">Fixed</span></td>
-            </tr>
-            <tr>
-              <td>2</td>
-              <td><span class="badge badge-high">High</span></td>
-              <td>Race condition</td>
-              <td><span class="badge badge-low">Open</span></td>
-            </tr>
+            <tr><td>1</td><td><span class="badge badge-critical">Critical</span></td><td>Execute the staged deploy train at first io avg10 &lt;20 (three-check + SigNoz P0 + bun watchdog)</td><td>TODO_LIST / services.md</td></tr>
+            <tr><td>2</td><td><span class="badge badge-critical">Critical</span></td><td>llama-rag post-deploy soak: /health + 1024-dim embeddings + 15-min CPU; RE-DISABLE on spin</td><td>services.md</td></tr>
+            <tr><td>3</td><td><span class="badge badge-high">High</span></td><td>SigNoz P0 close-out battery: live-verify each rule/service before closing rows</td><td>monitoring.md</td></tr>
+            <tr><td>4</td><td><span class="badge badge-high">High</span></td><td>llama-chat depth health probe (completion smoke, 10 s WARN / 30 s FAIL)</td><td>monitoring.md &middot; NEW</td></tr>
+            <tr><td>5</td><td><span class="badge badge-high">High</span></td><td>File upstream InboxClean: sync run budget + resumable, per-account-fair self-heal (HEAD re-verify first)</td><td>upstream.md &middot; NEW</td></tr>
+            <tr><td>6</td><td><span class="badge badge-high">High</span></td><td>File upstream InboxClean: year-2611 date-parse (pin the Date-header evidence first)</td><td>upstream.md &middot; NEW</td></tr>
+            <tr><td>7</td><td><span class="badge badge-high">High</span></td><td>bun watchdog: deploy + first real kill event end-to-end (journal&rarr;prom&rarr;Gatus)</td><td>stability.md</td></tr>
+            <tr><td>8</td><td><span class="badge badge-high">High</span></td><td>FastFlowLM /v1/models cold-load verify post-deploy</td><td>services.md</td></tr>
+            <tr><td>9</td><td><span class="badge badge-medium">Medium</span></td><td>Build load-shaping policy owner call (status quo / PSI-gated builder / ionice-idle)</td><td>stability.md &middot; NEW</td></tr>
+            <tr><td>10</td><td><span class="badge badge-medium">Medium</span></td><td>Chat UX owner call: SDK plan-approval gate vs direct execution + max_tokens bound</td><td>upstream.md</td></tr>
+            <tr><td>11</td><td><span class="badge badge-medium">Medium</span></td><td>Per-account <code>auth_expired</code> Gatus paging policy</td><td>services.md</td></tr>
+            <tr><td>12</td><td><span class="badge badge-medium">Medium</span></td><td>Harvest-debt triage strategy for the 98 unharvested reports</td><td>not queued (owner strategy first)</td></tr>
+            <tr><td>13</td><td><span class="badge badge-medium">Medium</span></td><td>Queue gate fields (<code>gate:sudo/owner/deploy</code>) + retire tmp-reclaim no-op loop</td><td>TODO_LIST</td></tr>
+            <tr><td>14</td><td><span class="badge badge-medium">Medium</span></td><td>/data usage alarm at ~85% (Gatus or textfile threshold)</td><td>storage.md</td></tr>
+            <tr><td>15</td><td><span class="badge badge-medium">Medium</span></td><td>/data/ai 459 G <code>du</code> breakdown into the ai-stack docs</td><td>storage.md</td></tr>
+            <tr><td>16</td><td><span class="badge badge-medium">Medium</span></td><td>Weekly trash-prune mechanism (<code>trash-empty 30d</code> user timer)</td><td>storage.md</td></tr>
+            <tr><td>17</td><td><span class="badge badge-low">Low</span></td><td>Reconcile AGENTS "/data/docker ~15.5 GB" claim with live 0 reading</td><td>TODO_LIST</td></tr>
+            <tr><td>18</td><td><span class="badge badge-low">Low</span></td><td>btrbk retention: live rendered config vs flake assertion</td><td>storage.md</td></tr>
+            <tr><td>19</td><td><span class="badge badge-low">Low</span></td><td>Pre-deploy &sect;11 vendorHash preview fail-closed fix</td><td>pipeline.md</td></tr>
+            <tr><td>20</td><td><span class="badge badge-low">Low</span></td><td>~/tmp/go-lint (1.8 G) reclamation execution</td><td>storage.md</td></tr>
+            <tr><td>21</td><td><span class="badge badge-low">Low</span></td><td>Verify upstream CI green for the 2026-10-07 vendorHash paste pushes</td><td>upstream.md</td></tr>
+            <tr><td>22</td><td><span class="badge badge-low">Low</span></td><td>CONTRIBUTING re-dispatch codification batch (partial-landing, RETIRE outcome, footer discipline)</td><td>TODO_LIST</td></tr>
+            <tr><td>23</td><td><span class="badge badge-low">Low</span></td><td>SigNoz Pareto P1/P2 remaining waves (T7/T8/T13/T14&hellip;)</td><td>plan doc</td></tr>
+            <tr><td>24</td><td><span class="badge badge-low">Watch</span></td><td>InboxClean corpus-backup loop under calm PSI &mdash; confirm :45 ticks stop dying</td><td>observation only</td></tr>
+            <tr><td>25</td><td><span class="badge badge-low">Watch</span></td><td>Kith OIDC 48 h regression watch (Gatus covers it; no row needed)</td><td>observation only</td></tr>
           </tbody>
         </table>
 
-        <!-- Before/After Comparison -->
-        <h2 id="proposal">Before / After</h2>
-        <div class="compare-header">
-          <div class="compare-before">Before</div>
-          <div class="compare-after">After</div>
-        </div>
-        <div class="compare-row">
-          <div>
-            <pre><code><span class="tok-comment">// Old code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>(data <span class="tok-type">interface</span>{}) { }</code></pre>
-          </div>
-          <div>
-            <pre><code><span class="tok-comment">// New code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>[T <span class="tok-type">any</span>](data T) { }</code></pre>
-          </div>
-        </div>
-
-        <!-- ASCII Diagram -->
-        <h2>Dependency Tree</h2>
-        <div class="dep-tree">
-          <span class="root">root</span> ├──
-          <span class="ok">wanted-dep</span> └──
-          <span class="unwanted">unwanted-dep</span>
-        </div>
-
-        <!-- Numbered Steps -->
-        <h2 id="plan"><span class="num">03</span>Migration Plan</h2>
-        <div class="migration-step">
-          <div class="migration-num">1</div>
-          <div class="migration-content">
-            <h4>Add generic type parameter</h4>
-            <p>Update the function signature to accept a type parameter.</p>
-          </div>
-        </div>
-        <div class="migration-step">
-          <div class="migration-num">2</div>
-          <div class="migration-content">
-            <h4>Update all call sites</h4>
-            <p>Pass explicit types at each call site for type safety.</p>
-          </div>
+        <h2 id="question"><span class="num">07</span>g) The One Question I Cannot Figure Out Myself</h2>
+        <div class="card card-problem">
+          <h4>What is the load-shaping policy for your own dev builds?</h4>
+          <p>Today's entire incident pile &mdash; the dead chat you asked me about, the 55% sync failures you demanded fixed, the 98.6 &deg;C near-freeze, the 70 GB bun event, the deferred deploy &mdash; traces to one thing: parallel unthrottled build sessions sharing one QLC disk. I can diagnose every victim, but I cannot pick the policy because it trades <strong>your iteration speed</strong> against <strong>every background service's reliability</strong>:</p>
+          <p><strong>(a)</strong> status quo &mdash; storms happen, services degrade, we keep fire-fighting;
+          <strong>(b)</strong> PSI-gated builder wrapper &mdash; builds wait for calm windows like deploys do;
+          <strong>(c)</strong> <code>ionice -c3</code> + <code>renice 19</code> defaults in dev shells &mdash; builds always yield, never block.</p>
+          <p>Which trade do you want? (b) protects services hardest and slows you most; (c) is nearly free and would have prevented most of today's bill; (a) is the current answer by default.</p>
         </div>
 
         <footer class="footer">
-          Generated YYYY-MM-DD &middot; All claims verified against source code
-          where noted
+          Generated 2026-10-10 07:45 CEST &middot; Crush &middot; evidence: live journal/DB/PSI probes + today's seven status reports &middot;
+          Self-harvest ledger: 4 &sect;f rows landed (upstream sync-budget [blocked:push], upstream 2611 [ready], chat depth probe [ready], load-shaping [decision] &mdash; TODO_LIST + monitoring/stability/upstream libraries) &middot;
+          deliberately not queued: #12 (needs owner-ratified triage strategy, gate already enforces), #24/#25 (single-observation watches, existing checks cover)
         </footer>
       </main>
     </div>
