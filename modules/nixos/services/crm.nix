@@ -69,16 +69,16 @@
       # pattern): without it no client secret exists and the flags would
       # point at a client Pocket ID has never heard of.
       pocketIdProvisioned = config.services.pocket-id-config.provision.enable or false;
-      # TEMPORARY vendorHash shim (RE-PINNED 2026-10-10 — class comment at
-      # lib/lars-packages.nix): got t1CRZVb6… at local crm tip 9df0c4a
-      # (native Pocket ID OIDC: new usermgmt/oauth2 require + sibling lock
-      # bump; first-hand FOD build, git+file:///home/lars/projects/crm#default).
+      # TEMPORARY vendorHash shim (RE-PINNED 2026-10-10 for the OIDC fix
+      # deploy — class comment at lib/lars-packages.nix): got uE1Zo2mE… at
+      # pushed crm tip 2db45bb (OIDC flag wiring fix; the ride-along daemon
+      # commits d8b9b6f/551a7a0 churned go.mod, invalidating t1CRZVb6…).
       # STRUCTURAL, not lock-wave drift: upstream bakes ITS OWN hash under
       # ITS pinned go-nix-helpers while our flake resolves crm's full lock
       # graph — the overview precedent: upstream's hash can never match our
       # graph, so this shim does not converge by lock movement alone.
       crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-t1CRZVb6uS3V6PYQvev/WR0i/yvJKgl+MAy89Srx0Is=";
+        vendorHash = "sha256-uE1Zo2mEvJFRGB/22FYfByavBzPR1sN/xMXUZKA7oWA=";
       };
       twentyEnabled = config.services.twenty.enable or false;
     in
