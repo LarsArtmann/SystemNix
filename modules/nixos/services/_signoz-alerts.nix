@@ -132,11 +132,30 @@ in
       # node_amdgpu_gpu_temp_celsius does not exist (0 series — node_exporter
       # exposes GPU temp only via hwmon). Two-source OR for bus-renumber
       # resilience: the hwmon chip label is PCI-address-keyed (breaks silently
-      # when this box renumbers buses after hard crashes), while ClickHouse's
-      # async metric name (amdgpu_edge) is stable but only exists while CH
-      # runs. Together they cover each other's blind spot.
-      query = ''max(node_hwmon_temp_celsius{chip=~".*c5:00_0"} or ClickHouseAsyncMetrics_Temperature_amdgpu_edge)'';
+      # when this box renumbers buses after hard crashes — PROVEN AGAIN
+      # 2026-10-10: the chip moved c5:00_0 -> c6:00_0 and the old ".*c5:00_0"
+      # selector returned 0 series, only the ClickHouse fallback kept the rule
+      # alive), while ClickHouse's async metric name (amdgpu_edge) is stable
+      # but only exists while CH runs. Together they cover each other's blind
+      # spot. The regex matches ANY discrete-GPU PCI chip shape (:cN:00_0)
+      # without matching k10temp (00:18_x), nvme (nvme_nvmeN), or wifi
+      # (ieee80211_phy0) — live-verified 2026-10-10: 1 series at 47°C while
+      # the old form returned 0.
+      query = ''max(node_hwmon_temp_celsius{chip=~".*:c[0-9a-f]+:00_0"} or ClickHouseAsyncMetrics_Temperature_amdgpu_edge)'';
       target = 90;
+    };
+    "signoz/rules/cpu-thermal-ceiling.json".source = mkRule {
+      name = "CPU Thermal Ceiling (>=95°C sustained 30m)";
+      description = "k10temp Tctl ceiling >=95°C sustained over 30 minutes — the freeze #8/#9/#11 pre-crash signature (95-99°C rode zero CPU-temp alerting; T12 2026-10-10). k10temp PCI address 00:18.x is CPU-internal and stable across the bus renumbering class that moves the GPU chip label.";
+      # Sustained-ceiling semantics: max_over_time[30m] >= 95 means the
+      # temperature HELD at/above the ceiling for the window (a momentary
+      # spike alone cannot satisfy a 30m max unless it IS the max — a single
+      # high spike sets the 30m max high, so this catches trajectories: the
+      # hourly-max pattern the freeze forensics asked for).
+      query = ''max_over_time(node_hwmon_temp_celsius{chip=~"pci0000:00_0000:00:18_.*"}[30m])'';
+      target = 95;
+      step = 60;
+      interval = "5m";
     };
     "signoz/rules/dnsblockd-down.json".source = mkRule {
       name = "DNS Blocker Down";

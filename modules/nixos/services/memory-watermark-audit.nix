@@ -56,6 +56,31 @@ _: {
         );
       systemOffenders = lib.attrNames (lib.filterAttrs trap config.systemd.services);
       userOffenders = lib.attrNames (lib.filterAttrs trap config.systemd.user.services);
+      # HM user services carry the unit settings under Service (HM's
+      # attrsOf unitOption), not serviceConfig — same trap, different
+      # accessor.
+      trapHM =
+        name: svc:
+        !(builtins.elem name cfg.allowUnits)
+        && (
+          let
+            sc = svc.Service or { };
+            high = if sc ? MemoryHigh && sc.MemoryHigh != null then parseBytes sc.MemoryHigh else null;
+            max = if sc ? MemoryMax && sc.MemoryMax != null then parseBytes sc.MemoryMax else null;
+          in
+          high != null && max != null && max > 0 && high * 2 < max
+        );
+      # home-manager.users is absent on HM-less hosts (rpi3-dns) — `or { }`
+      # keeps the audit importable everywhere. Offenders carry the owning
+      # user as prefix: HM service names are only unique per user.
+      hmUserOffenders = lib.concatLists (
+        lib.mapAttrsToList (
+          user: hmCfg:
+          lib.map (name: "${user}:${name}") (
+            lib.attrNames (lib.filterAttrs trapHM (hmCfg.systemd.user.services or { }))
+          )
+        ) (config.home-manager.users or { })
+      );
       fix = ''
         Fix: pass MemoryMax INTO the harden{} call — the throttle watermark
         derives from that argument (llama-chat.nix is the reference) — or set
@@ -93,6 +118,18 @@ _: {
           message = ''
             memory-watermark-audit: MemoryHigh < 50% of MemoryMax on user units:
             ${lib.concatStringsSep ", " userOffenders}
+            The throttle watermark and the hard ceiling were set by different
+            authors; the kernel reclaim-thrashes under the watermark with the
+            unit `active (running)` and no log line (llama-chat 2026-10-08:
+            410M watermark under a 48G ceiling, 46k throttle events).
+            ${fix}
+          '';
+        }
+        {
+          assertion = hmUserOffenders == [ ];
+          message = ''
+            memory-watermark-audit: MemoryHigh < 50% of MemoryMax on home-manager user units (user:unit):
+            ${lib.concatStringsSep ", " hmUserOffenders}
             The throttle watermark and the hard ceiling were set by different
             authors; the kernel reclaim-thrashes under the watermark with the
             unit `active (running)` and no log line (llama-chat 2026-10-08:

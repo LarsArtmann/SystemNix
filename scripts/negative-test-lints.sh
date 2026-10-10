@@ -362,6 +362,14 @@ run_case deadguard exempt-capture-guard dead-guard-lint pass 'never-match-marker
 eval_case memory llama-chat-trap fail 'memory-watermark-audit' \
   'sed:modules/nixos/services/llama-chat.nix:s|(harden { MemoryMax = cfg.memoryMax; })|{ MemoryMax = cfg.memoryMax; MemoryHigh = "4G"; }|'
 
+# HM scope of the same audit: it also reads
+# config.home-manager.users.*.systemd.user.services (Service accessor).
+# Inject an incoherent pair into the REAL HM config; the toplevel eval
+# must throw with the same marker — proves the HM leg actually fires
+# (zero live HM memory knobs, so a mutation is the only way to exercise it).
+eval_case memory hm-user-trap fail 'memory-watermark-audit' \
+  'sed:platforms/nixos/users/home.nix:s|systemd.user.services.go-cqrs-nightly-bench = {|systemd.user.services.go-cqrs-nightly-bench.Service = { MemoryMax = "1G"; MemoryHigh = "1M"; }; systemd.user.services.go-cqrs-nightly-bench = {|'
+
 say ""
 say "=== negative-test-lints: $passed passed, $failed failed ==="
 [ "$failed" -eq 0 ]
