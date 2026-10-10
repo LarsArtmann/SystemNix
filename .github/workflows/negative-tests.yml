@@ -1,0 +1,79 @@
+# The negative-test harness (scripts/negative-test-lints.sh) is the
+# selftest suite for every eval-time assertion audit and lint contract in
+# this repo (gatus/scrub/bridge/coverage/deadguard/memory-watermark +
+# pristine green controls). Until 2026-10-10 it ran ONLY when a local
+# session remembered to — the CI leg closes that gap.
+#
+# Trigger map:
+#   - push (paths): the harness itself, any lint/script it exercises, and
+#     the module/lib/system trees its mutations and evals read.
+#   - nightly schedule: re-proves the contracts against the CURRENT lock
+#     (flake-update Monday, go-deps-audit 04:30 — this offsets after both).
+#   - workflow_dispatch: manual runs.
+#
+# Cost note: the full suite is eval-bound (~2min/case toplevel evals; ~30+
+# min cold on CI). That is why it is nightly + paths-gated instead of
+# every-push (same tradeoff as go-deps-audit.yml).
+name: Negative lint tests
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - scripts/negative-test-lints.sh
+      - scripts/lib/**
+      - scripts/check-*.sh
+      - scripts/audit-*.sh
+      - modules/nixos/services/**
+      - lib/**
+      - systems/**
+      - platforms/**
+      - tests/**
+      - flake.nix
+      - flake.lock
+      - .github/workflows/negative-tests.yml
+  schedule:
+    - cron: "15 5 * * *" # nightly, offset after go-deps-audit (04:30)
+  workflow_dispatch:
+
+jobs:
+  negative-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes pipe-operators
+            # NIX_GITHUB_RO_TOKEN: see nix-check.yml — GITHUB_TOKEN cannot read
+            # the owner's other private repos; 32 github:-type lock nodes need it.
+            access-tokens = github.com=${{ secrets.NIX_GITHUB_RO_TOKEN || secrets.GITHUB_TOKEN }}
+
+      # The harness's toplevel evals force every private flake input tree
+      # (CV, go-cqrs-lite, branching-flow — all git+ssh). Same auth block
+      # as nix-check.yml / go-deps-audit.yml; go-nix-helpers rides an
+      # HTTPS rewrite.
+      - name: Configure private flake-input auth
+        env:
+          NIX_DEPLOY_KEY_CV: ${{ secrets.NIX_DEPLOY_KEY_CV }}
+          NIX_DEPLOY_KEY_GO_CQRS_LITE: ${{ secrets.NIX_DEPLOY_KEY_GO_CQRS_LITE }}
+          NIX_DEPLOY_KEY_BRANCHING_FLOW: ${{ secrets.NIX_DEPLOY_KEY_BRANCHING_FLOW }}
+          NIX_DEPLOY_KEY_PROJECT_DEPENDENCY_GRAPH: ${{ secrets.NIX_DEPLOY_KEY_PROJECT_DEPENDENCY_GRAPH }}
+          NIX_DEPLOY_KEY_PROJECT_DISCOVERY_SDK: ${{ secrets.NIX_DEPLOY_KEY_PROJECT_DISCOVERY_SDK }}
+        run: |
+          eval "$(ssh-agent -s)" >/dev/null
+          printf '%s\n' "$NIX_DEPLOY_KEY_CV" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_GO_CQRS_LITE" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_BRANCHING_FLOW" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_PROJECT_DEPENDENCY_GRAPH" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_PROJECT_DISCOVERY_SDK" | ssh-add -
+          git config --global url."https://github.com/LarsArtmann/go-nix-helpers".insteadOf "git@github.com:LarsArtmann/go-nix-helpers"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new" >> "$GITHUB_ENV"
+
+      # Full suite unfiltered: includes the pristine green controls (which
+      # require a clean tree) and every group's fail/pass cases.
+      - name: Run negative-test harness
+        run: bash scripts/negative-test-lints.sh
