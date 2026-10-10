@@ -69,16 +69,16 @@
       # pattern): without it no client secret exists and the flags would
       # point at a client Pocket ID has never heard of.
       pocketIdProvisioned = config.services.pocket-id-config.provision.enable or false;
-      # TEMPORARY vendorHash shim (RE-PINNED 2026-10-09 — class comment at
-      # lib/lars-packages.nix): got jIP0Y7LD… at locked rev 0c1526bf
-      # (first-hand keep-going enumeration, /tmp/toplevel-fix-20261009.log).
-      # STRUCTURAL, not lock-wave drift: upstream 0c1526bf bakes nhFzbS2y…,
-      # computed under ITS OWN rev-pinned go-nix-helpers (0fc140f0), while
-      # our flake follows crm's go-nix-helpers to root (ad423c8f) — the
-      # overview precedent: upstream's hash can never match our graph, so
-      # this shim does not converge by lock movement alone.
+      # TEMPORARY vendorHash shim (RE-PINNED 2026-10-10 — class comment at
+      # lib/lars-packages.nix): got t1CRZVb6… at local crm tip 9df0c4a
+      # (native Pocket ID OIDC: new usermgmt/oauth2 require + sibling lock
+      # bump; first-hand FOD build, git+file:///home/lars/projects/crm#default).
+      # STRUCTURAL, not lock-wave drift: upstream bakes ITS OWN hash under
+      # ITS pinned go-nix-helpers while our flake resolves crm's full lock
+      # graph — the overview precedent: upstream's hash can never match our
+      # graph, so this shim does not converge by lock movement alone.
       crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-jIP0Y7LD1S8b1J8jHvXuA27tI+Hg9/a8QPXbkOJm+Wk=";
+        vendorHash = "sha256-t1CRZVb6uS3V6PYQvev/WR0i/yvJKgl+MAy89Srx0Is=";
       };
       twentyEnabled = config.services.twenty.enable or false;
     in

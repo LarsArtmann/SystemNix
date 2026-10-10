@@ -22,7 +22,11 @@ lands.
 | `go-cqrs-lite`           | `d84e4d6a42b2ed368a7d7110b716448d0c4093f9` (worktree)        | `git+ssh://git@github.com/LarsArtmann/go-cqrs-lite?ref=master`               | `cqrs-lint` vendorHash refresh                                                              |
 | `branching-flow`         | `46000f38ab44a35692bcdb39d0d061501750dd74`                   | `github:LarsArtmann/branching-flow?ref=master`                               | `samber-linter` publicDep + vendorHash                                                      |
 | `art-dupl`               | `9c370324dfcfaef23fa60079af0d9ebfcf84a489`                   | `github:LarsArtmann/art-dupl?ref=fork`                                       | vendorHash refresh                                                                          |
-| `nsfw-classifier`        | `git+file:///home/lars/projects/nsfw-classifier?rev=46f02bb` | `git+ssh://git@github.com/LarsArtmann/nsfw-classifier?ref=refs/heads/master` | push 46f02bb (vendorHash refresh + GOTOOLCHAIN pin) to origin/master; then drop the `?rev=` |
+
+Resolved 2026-10-10: `nsfw-classifier` — 46f02bb (vendorHash refresh +
+GOTOOLCHAIN pin) landed on origin/master, so the `git+file` pin flipped to
+`git+ssh://git@github.com/LarsArtmann/nsfw-classifier?ref=refs/heads/master`
+and the lock was re-pinned (749ca9af → 043f67f).
 
 Worktrees: `/home/lars/worktrees/go-nix-helpers-vnfix`,
 `/home/lars/worktrees/go-cqrs-lite-hashfix` (throwaway branches; the commits
