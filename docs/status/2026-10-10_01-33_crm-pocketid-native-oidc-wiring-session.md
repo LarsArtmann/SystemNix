@@ -88,3 +88,27 @@
 ## Harvest note
 
 Per the TODO-system rule, a status report must self-harvest its §f follow-ups at authoring time. **Deliberately NOT harvested yet** — the owner instructed "write the report, THEN WAIT FOR INSTRUCTIONS", so the queue edits are deferred to the next action on their word. This note is the explicit "deliberately not harvested because X" record the rule requires.
+
+---
+
+## COMPLETION ADDENDUM (2026-10-10 ~02:15, resuming session — §f.1–§f.35 + §f.50 executed)
+
+The owner's follow-up instruction ("keep going until everything works") executed §f items 1–35 + 50. State:
+
+**crm repo** (HEAD `9df0c4a`, 4 commits ahead of origin `bf2cfcd`, tree clean — daemon-carried):
+- `internal/identity/identity.go`: provider constructed (eager OIDC discovery), `ServiceConfig.OAuth2` wired via a nil-INTERFACE variable (typed-nil-pointer guard), handlerCfg `OAuth2SuccessURL="/"` + `OAuth2ErrorURL="/login"` + `OAuthRateLimit` 10/min.
+- `cmd/crm-server/main.go`: `-oidc-issuer/-oidc-client-id/-oidc-redirect-url` flags, `CRM_OIDC_CLIENT_SECRET` env read (never argv), `serverConfig.oidcOptions()` (all-empty = passkey-only nil; PARTIAL config = loud error; full = options), degrade-on-unreachable-issuer (log + passkey-only retry), posture logging.
+- `go.mod`: `usermgmt/oauth2/v4 v4.12.0` require + `schema/v4` dev-replace (the local `system` module needs the untagged local schema; cache-version lacked `EventSchema`) + tidy-bumped siblings (identity-model/metaengine/stack/system/templ-components v1.21.0) riding the local-replace module graphs.
+- `flake.nix` pins bumped to PUSHED tips: cqrs-htmx `0dfa7e50`, go-cqrs-lite `498f5c0c`; `flake.lock` re-locked (fetches from GitHub — revs proven pushed).
+- Tests: 4 new identity tests (`oauth2_test.go`: login-page button, begin-redirect PKCE/state contract against a fake discovery IdP, discovery-failure construction error, passkey-only page omits OAuth routes) + `TestOidcOptionsValidation` (3 subtests). `go build ./...` + `go test ./...` exit 0 (after regen-ui for the templ-components v1.21.0 class-list drift my tidy caused — TestLibraryClassesFresh).
+- Docs: FEATURES PLANNED→FULLY_FUNCTIONAL, ROADMAP done-note, AGENTS.md OIDC posture row (Pocket ID BESIDE passkeys, passkeys = break-glass).
+
+**SystemNix** (committed via daemon in `7c8b8e85` docs + `141c23cb` shim, on top of the parallel flake-split session):
+- `crm.nix`: registry `oidc` entry (clientId `crm`, callback `https://crm.${domain}/auth/oauth/pocket-id/callback`, pkceEnabled, launchURL), `crm-oidc-env` bridge (cv-oidc-env pattern: LoadCredential `client-secrets/crm` → `/var/lib/crm-oidc/client-secret.env` 0600, exit-0-without-write when secret absent), ExecStart `-oidc-*` flags (mkIf pocketIdProvisioned), EnvironmentFile mkForce-extend, header + registry comments, vendorHash shim re-pin `t1CRZVb6…` at crm `9df0c4a` (first-hand FOD build via git+file:// — the same overrideAttrs construction rebuilt the FULL package green).
+- `deploy.sh`: is-active-gated `crm-oidc-env` + `crm-server` restart block (deploy-restart-audit converger gate; daemon-gated like geometrikks — bridge is wantedBy-indirect). shellcheck -S warning clean.
+- Docs: `docs/services/crm.md` Auth row + new "Native OIDC (Pocket ID, 2026-10-10)" section (email-linking requirement: Pocket ID email must equal the passkey registration email — source-verified `matchOrCreateUser`: subject → email-link fallback → create-under-MaxUsers; linking works regardless of Pocket ID's default-false `email_verified`); `docs/agents/sso-dns.md` Layer-1 row + Kith CRM.
+- TODO: queue row `[blocked:push]` (TODO_LIST.md) + library row (docs/todo/services.md) — coordinated pair, no drift.
+
+**Verification evidence**: minimal-host eval (excludes the parallel session's then-broken nsfw-classifier edit) rendered the exact ExecStart (`…-secure true -oidc-issuer https://auth.home.lan -oidc-client-id crm -oidc-redirect-url https://crm.home.lan/auth/oauth/pocket-id/callback`), bridge (oneshot/LoadCredential/wantedBy), EnvironmentFile pair, Pocket ID provisioning fan-out (client `crm`, pkceEnabled); negative eval (provision off ⇒ no oidc flags, no bridge unit, single env file); then the parallel session landed its fix (`606dc6e1`) and the FULL evo-x2 toplevel eval passed (`cjgcvl5…` drv) + `nix flake check --no-build` "all checks passed" (aarch64-darwin omission expected per AGENTS.md).
+
+**Deliberately not done here**: push (owner-gated, §g-Q1 stands), `flake lock --update-input crm`, deploy, live SSO e2e — all queued as the `[blocked:push]` row. §f.2 (provider-name const), §f.33 (PASSKEY-RECOVERY cross-ref), §f.36 (CHANGELOG entries), §f.37–39 harvest remainder beyond the queue pair — small follow-ups noted in the library row's Source chain. §g answers baked in as defaults (both logins; clientId `crm`; home.lan-only callback) — owner can override by editing the registry entry.
