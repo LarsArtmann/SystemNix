@@ -272,6 +272,19 @@
           touch $out
         '';
 
+        # The §18 service-sanity sweep must never go silent (the
+        # DiscordSync class: 121% CPU + ~640 journal lines/min for hours,
+        # every liveness gate green). Fixture-driven through the SAME
+        # scripts/lib/service-sanity-sweep.sh post-deploy-check.sh sources.
+        post-deploy-service-sanity-selftest = pkgs.runCommand "post-deploy-service-sanity-selftest" { } ''
+          scratch=$(mktemp -d)
+          mkdir -p "$scratch/scripts/lib"
+          cp ${root}/scripts/test-post-deploy-service-sanity.sh "$scratch/scripts/test-post-deploy-service-sanity.sh"
+          cp ${root}/scripts/lib/service-sanity-sweep.sh "$scratch/scripts/lib/service-sanity-sweep.sh"
+          PATH=${pkgs.jq}/bin:$PATH ${pkgs.bash}/bin/bash "$scratch/scripts/test-post-deploy-service-sanity.sh"
+          touch $out
+        '';
+
         # The offsite-borg §13/§16 smoke verdicts BLOCK the go-live
         # deploy (and FAIL the post-deploy smoke); the blocks only fire
         # for real once services.offsite-borg.enable flips, so the

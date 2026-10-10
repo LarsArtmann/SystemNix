@@ -176,6 +176,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/offsite-borg-smoke.sh"
 # never go silent; first live run 2026-10-09 WARNed 10 units).
 # shellcheck source=scripts/lib/memory-throttle-sweep.sh disable=SC1091
 source "$(dirname "${BASH_SOURCE[0]}")/lib/memory-throttle-sweep.sh"
+# shellcheck source=scripts/lib/service-sanity-sweep.sh disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/lib/service-sanity-sweep.sh"
 # Read by the sourced lib (sandbox shellcheck cannot follow it).
 # shellcheck disable=SC2034
 OB_PASS=report_pass OB_FAIL=report_fail OB_WARN=report_warn OB_SKIP=report_skip
@@ -2020,6 +2022,9 @@ ob_post_deploy /etc/systemd/system/borgbackup-job-hetzner.service /var/lib/prome
 echo ""
 echo "=== §17 Runtime memory throttle sweep ==="
 systemnix_memory_throttle_sweep
+
+echo "=== §18 Service sanity (CPU + journal-rate, the DiscordSync hotloop class) ==="
+systemnix_service_sanity_sweep
 
 # --- Summary ---
 echo ""
