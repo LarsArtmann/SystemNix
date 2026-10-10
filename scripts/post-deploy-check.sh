@@ -1595,9 +1595,23 @@ for entry in "${AUTH_VHOSTS[@]}"; do
     PASS=$((PASS + 1))
     ;;
   500 | 502 | 503)
-    echo -e "${RED}FAIL${NC} $vhost → $status (auth gateway BROKEN - check oauth2-proxy)"
-    FAIL=$((FAIL + 1))
-    record_fail "$vhost → auth gateway broken"
+    # Session-scoped backends answer 502 through the proxy while the auth
+    # gateway itself is healthy: emeet-pixyd is a graphical-session user
+    # unit (down whenever no niri session) — its session-aware gatus meta
+    # check (system_emeet_pixyd_expected_down) owns that state, so a 5xx
+    # here is expected-down, not an oauth2-proxy regression. Keep the FAIL
+    # for every vhost NOT on this list (conservative default).
+    case "$vhost" in
+    "emeet-pixyd.$DOMAIN")
+      echo -e "${YELLOW}SKIP${NC} $vhost → $status (expected-down backend: session-scoped user unit, gatus meta check owns it)"
+      SKIP=$((SKIP + 1))
+      ;;
+    *)
+      echo -e "${RED}FAIL${NC} $vhost → $status (auth gateway BROKEN - check oauth2-proxy)"
+      FAIL=$((FAIL + 1))
+      record_fail "$vhost → auth gateway broken"
+      ;;
+    esac
     ;;
   000)
     case $curl_rc in
