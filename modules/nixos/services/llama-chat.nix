@@ -85,7 +85,10 @@ _: {
         + " --ctx-size ${toString cfg.ctxSize}"
         + " --threads ${toString cfg.threads}"
         + " --jinja"
-        + " --chat-template-kwargs {\"enable_thinking\":false}";
+        # Single-quoted for systemd: the unit parser strips bare double
+        # quotes and word-splits the JSON into separate argv entries
+        # (2026-10-10 deploy: llama-server received "{e" and exited 1).
+        + " --chat-template-kwargs '{\"enable_thinking\":false}'";
 
       # Convergence helper (2026-10-08): ConditionPathExists is evaluated
       # once per start attempt — a unit skipped at boot (model still a .part
