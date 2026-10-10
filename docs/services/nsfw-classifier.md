@@ -1,6 +1,6 @@
 # nsfw-classifier (browser-extension image filter backend)
 
-**Service:** `services.nsfw-classifier` — `modules/nixos/services/nsfw-classifier.nix` (Go/ONNX server from the `nsfw-classifier` flake input; models are the gitignored checkout at `/home/lars/projects/nsfw-classifier/models`, read-only). Port 8104 (`lib/ports.nix`). URL: `nsfw.<domain>` — **Layer 1-style PLAIN vHost** (registry; deliberately NOT protected: the classify API's auth IS the pairing token, and a forward-auth gate would break the extension's direct clients). DNS `nsfw`.
+**Service:** `services.nsfw-classifier` — `modules/nixos/services/nsfw-classifier.nix` (Go/ONNX server from the `nsfw-classifier` flake input; models are the gitignored checkout at `/home/lars/projects/nsfw-classifier/models`, read-only — the `modelsDir` option default). Port 8104 (`lib/ports.nix`). URL: `nsfw.<domain>` — **Layer 1-style PLAIN vHost** (registry; deliberately NOT protected: the classify API's auth IS the pairing token, and a forward-auth gate would break the extension's direct clients). DNS `nsfw`.
 
 Backend for the Helium NSFW extension (loaded via `--load-extension` from the source dir — see desktop.md): classifies images, pairs with the browser, serves verdicts.
 
@@ -13,7 +13,7 @@ Backend for the Helium NSFW extension (loaded via `--load-extension` from the so
 
 ## Ops
 
-- **Runs as `lars`, NOT DynamicUser** — the multi-GB models checkout sits under the 0700 home; only the owner can traverse it. `ProtectHome = false` is deliberate for the same reason (ProtectSystem stays strict; everything else locked down).
+- **Runs as `lars` (the `user` option default), NOT DynamicUser** — the multi-GB models checkout sits under the 0700 home; only the owner can traverse it. `ProtectHome = false` is deliberate for the same reason (ProtectSystem stays strict; everything else locked down, including `RestrictAddressFamilies = AF_INET/AF_INET6/AF_NETLINK/AF_UNIX`).
 - **Persistent state via `XDG_CACHE_HOME=/var/cache`** — `CacheDirectory=nsfw-classifier` (systemd-created, lars-owned): pairing token, verdict cache, feedback JSONL survive restarts, so the extension stays paired.
 - **Port binds BEFORE model load** (fast-fail on port-in-use; `Type=simple` is sufficient) — `/readyz` gates readiness during load + warmup; expect first-check red after a cold start.
 - **Limits** — MemoryMax 2G (ONNX runtime; MemoryHigh derived 1.6G), ioTier.background, start-limit 5 starts / 5 min (test-pinned).
