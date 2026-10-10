@@ -1,0 +1,463 @@
+{
+  "schemaVersion": "v6",
+  "name": "systemnix-traces",
+  "tags": [
+    {
+      "key": "owner",
+      "value": "systemnix"
+    }
+  ],
+  "spec": {
+    "display": {
+      "name": "Trace RED & Service Graph",
+      "description": "Request rate, p95 latency, error ratio per service plus the client-server dependency edges, from the cumulative traces_service_graph family. Spanmetrics delta series (signoz_calls_total, signoz_latency) are NOT PromQL-reachable in this SigNoz build - the native Services page reads those."
+    },
+    "variables": [],
+    "panels": {
+      "32fd633e-93f7-5b37-8adb-c98f0db17e84": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Requests/sec by Service (server side)",
+            "description": "Inbound request rate per service from the service-graph connector. The SigNoz Services page shows the same per-service RED from delta spanmetrics; this renders it on the dashboard wall from the PromQL-visible cumulative family."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum by (server) (rate(traces_service_graph_request_total[5m]))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "d1cbaf0c-4d73-5a4d-83e9-ca1c6765a6e2": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "p95 Latency by Service (server side, seconds)",
+            "description": "Server-side p95 per service. bank-sync dominated in the 2026-10-10 baseline (365 ms); dnsblockd and sqlite sub-2 ms."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "histogram_quantile(0.95, sum by (le, server) (rate({__name__=\"traces_service_graph_request_server.bucket\"}[10m])))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "2e7553da-1d3c-58c1-b92f-184bed5667f3": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Error Ratio by Service",
+            "description": "Failed requests divided by total requests per server service. Flat zero is healthy; any sustained rise above a few percent is an incident signal."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum by (server) (rate(traces_service_graph_request_failed_total[10m])) / clamp_min(sum by (server) (rate(traces_service_graph_request_total[10m])), 1e-9)",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "d6042a0b-0740-564b-95ef-d8a12382759d": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Top Edges by Request Rate (client to server)",
+            "description": "The dependency graph: who calls whom, top 10 edges by request rate. user is the external/browser client pseudo-service."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "topk(10, sum by (client, server) (rate(traces_service_graph_request_total[5m])))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "5e4b2c8f-8320-53d4-a11d-5d67a8751fef": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Top Failing Edges (client to server)",
+            "description": "Edges with failed requests. Only edges that have recorded failures appear; empty means zero failures fleet-wide."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "topk(10, sum by (client, server) (rate(traces_service_graph_request_failed_total[10m])))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "0101680f-c2f0-5673-b92f-dd1d0a40e806": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Edge p95 Latency (client to server, seconds)",
+            "description": "Per-edge client-side p95. nan gaps are edges whose buckets have no recent samples."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "none",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "histogram_quantile(0.95, sum by (le, client, server) (rate({__name__=\"traces_service_graph_request_client.bucket\"}[10m])))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/32fd633e-93f7-5b37-8adb-c98f0db17e84"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/d1cbaf0c-4d73-5a4d-83e9-ca1c6765a6e2"
+              }
+            },
+            {
+              "x": 0,
+              "y": 5,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/2e7553da-1d3c-58c1-b92f-184bed5667f3"
+              }
+            },
+            {
+              "x": 6,
+              "y": 5,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/d6042a0b-0740-564b-95ef-d8a12382759d"
+              }
+            },
+            {
+              "x": 0,
+              "y": 10,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/5e4b2c8f-8320-53d4-a11d-5d67a8751fef"
+              }
+            },
+            {
+              "x": 6,
+              "y": 10,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/0101680f-c2f0-5673-b92f-dd1d0a40e806"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "duration": "",
+    "refreshInterval": "5m",
+    "links": []
+  }
+}

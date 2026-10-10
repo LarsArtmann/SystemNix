@@ -862,7 +862,15 @@ in
       # root-caused at the llama.cpp/ROCm layer (bisect upstream, or verify via
       # `systemd-run` with the unit's exact sandbox + a 10-min soak under the
       # real service units — not a shell direct-run).
-      llama-rag.enable = false;
+      # RE-ENABLED 2026-10-10 (owner demand: fix the dark RAG check): same
+      # byte-identical pinned 0.3.0 build, now on kernel 7.2.9 (three
+      # kernels since the disable; the suspect set is kernel/GPU-state).
+      # The root+quiet-IO soak (scripts/llama-rag-soak.sh) could not run
+      # (root-gated); the REAL units' own post-deploy watch (>=15 min
+      # CPU-time deltas + /health + /v1/embeddings) is the empirical gate.
+      # RE-DISABLE IMMEDIATELY on the spin signature: CPU time climbing
+      # while /health stays 503 past the vocab-warning line.
+      llama-rag.enable = true;
 
       # llama.cpp chat server — the interactive brain for InboxClean's
       # dashboard /chat (see modules/nixos/services/llama-chat.nix for why

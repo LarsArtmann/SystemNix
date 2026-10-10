@@ -427,5 +427,7 @@ in
     "signoz/dashboards/pool-storage.json".source =
       "${inputs.self}/modules/nixos/services/dashboards/pool-storage.json";
     "signoz/dashboards/gcp.json".source = "${inputs.self}/modules/nixos/services/dashboards/gcp.json";
+    "signoz/dashboards/traces.json".source =
+      "${inputs.self}/modules/nixos/services/dashboards/traces.json";
   };
 }

@@ -177,6 +177,10 @@
                   # it like pressure-report.sh or the smoke dies at source
                   # time on every deploy.
                   cp ${root}/scripts/lib/offsite-borg-smoke.sh $out/bin/lib/offsite-borg-smoke.sh
+                  # §17 sources the memory-throttle sweep lib (fixture-
+                  # tested); stage it like pressure-report.sh or the sweep
+                  # dies at source time on every deploy.
+                  cp ${root}/scripts/lib/memory-throttle-sweep.sh $out/bin/lib/memory-throttle-sweep.sh
                   # The crush smoke section resolves helpers relative to
                   # BASH_SOURCE (the store bin dir), so stage the
                   # rc-test harness too or the check always fails with

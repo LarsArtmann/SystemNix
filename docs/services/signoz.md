@@ -29,6 +29,30 @@ Fleet telemetry backbone: traces/metrics/logs from every OTel-instrumented servi
 - **GCP Cloud Monitoring integration** — `services.signoz.gcpMonitoring` (see [signoz-gcp-monitoring.md](./signoz-gcp-monitoring.md)): `googlecloudmonitoring/<project>` receivers on the EXISTING collector. **Currently containment-disabled** — `google.FindDefaultCredentials` runs at receiver Start() and an unparseable/invalid key is FATAL for the whole collector (no safe inert state); flip only with the real key in sops. Gatus "GCP Metrics Receiver" checks receiver liveness.
 - **Eval assertion** — `background_pool_size` must never be set to 2 (ClickHouse sanity-check cascade; keep default 16 — details in monitoring.md ClickHouse traps).
 
+## Live-probe cheat-sheet (verify capabilities, never doc-parrot)
+
+The 2026-10-09 self-review's #1 finding was asserting capability from docs without probes. Copy-paste battery (all loopback, no auth):
+
+```bash
+# Spans/h per service (are traces flowing, for whom?)
+clickhouse-client --query "SELECT serviceName, round(count()/24,1) AS spans_per_h, max(timestamp) FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp > now() - INTERVAL 24 HOUR GROUP BY serviceName ORDER BY spans_per_h DESC"
+
+# Does a metric EXIST at all (phantom-metric sweep)? Swap metric_name.
+clickhouse-client --query "SELECT metric_name, temporality, count() FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name LIKE 'PREFIX%' GROUP BY metric_name, temporality"
+
+# Is a series PromQL-visible? (DELTA-blindness: delta-temporality metrics
+# return 0 series via the v1 API despite fresh samples — see below)
+python3 -c "import urllib.request,json,urllib.parse; print(len(json.load(urllib.request.urlopen('http://localhost:8080/api/v1/query?'+urllib.parse.urlencode({'query':'count(METRIC_NAME')})))['data']['result']))"
+
+# Log→trace pivot health (lines carrying trace_id vs total, 7d)
+clickhouse-client --query "SELECT countIf(trace_id != ''), count() FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= toUnixTimestamp64Nano(now64(9) - INTERVAL 7 DAY)"
+
+# Rule/policy parity (live vs _signoz-alerts.nix; policies keyed by rule UUID)
+python3 -c "import urllib.request,json; r=json.load(urllib.request.urlopen('http://localhost:8080/api/v1/rules',timeout=15))['data']['rules']; print(len(r), [x['alert'] for x in r if x['state']!='inactive'])"
+```
+
+**PromQL is DELTA-BLIND (live-verified 2026-10-10):** the v1 query API returns 0 series for Delta-temporality metrics — `signoz_calls_total`, `signoz_latency.*` (the `signozspanmetrics/delta` connector output) are unreachable from PromQL dashboards/alerts despite fresh samples (check `temporality` in `distributed_time_series_v4`). Only **Cumulative** metrics (`traces_service_graph_*`, node_exporter, all scraped prometheus metrics) are PromQL-reachable; the native Services page reads delta via the query-builder fine. Consequence: dashboards/alerts must consume the cumulative family or scraped metrics — `dashboards/traces.json` is built entirely on `traces_service_graph_*` for this reason.
+
 ## Related
 
 - [docs/agents/monitoring.md#signoz](../agents/monitoring.md#signoz) — the deep gotcha library: route policies, `{{$value}}` zero-spaces rule, job= label traps, dashboards one-query rule, exemplar drop, schema-drift migration gaps

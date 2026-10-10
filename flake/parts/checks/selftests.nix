@@ -259,6 +259,19 @@
           touch $out
         '';
 
+        # The §17 memory-throttle sweep must never go silent (the
+        # llama-chat class: 46k throttle events, zero alerts). Fixture-
+        # driven through the SAME scripts/lib/memory-throttle-sweep.sh
+        # post-deploy-check.sh sources (never a drifted copy).
+        post-deploy-memory-throttle-selftest = pkgs.runCommand "post-deploy-memory-throttle-selftest" { } ''
+          scratch=$(mktemp -d)
+          mkdir -p "$scratch/scripts/lib"
+          cp ${root}/scripts/test-post-deploy-memory-throttle.sh "$scratch/scripts/test-post-deploy-memory-throttle.sh"
+          cp ${root}/scripts/lib/memory-throttle-sweep.sh "$scratch/scripts/lib/memory-throttle-sweep.sh"
+          ${pkgs.bash}/bin/bash "$scratch/scripts/test-post-deploy-memory-throttle.sh"
+          touch $out
+        '';
+
         # The offsite-borg §13/§16 smoke verdicts BLOCK the go-live
         # deploy (and FAIL the post-deploy smoke); the blocks only fire
         # for real once services.offsite-borg.enable flips, so the

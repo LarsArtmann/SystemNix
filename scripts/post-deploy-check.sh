@@ -170,6 +170,12 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/pressure-report.sh"
 # flake check — the go-live smoke FAILs the post-deploy verdict on these.
 # shellcheck source=scripts/lib/offsite-borg-smoke.sh disable=SC1091
 source "$(dirname "${BASH_SOURCE[0]}")/lib/offsite-borg-smoke.sh"
+# Shared runtime memory-throttle sweep §17 (fixture-tested by
+# scripts/test-post-deploy-memory-throttle.sh + the
+# post-deploy-memory-throttle-selftest flake check — a throttled unit must
+# never go silent; first live run 2026-10-09 WARNed 10 units).
+# shellcheck source=scripts/lib/memory-throttle-sweep.sh disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/lib/memory-throttle-sweep.sh"
 # Read by the sourced lib (sandbox shellcheck cannot follow it).
 # shellcheck disable=SC2034
 OB_PASS=report_pass OB_FAIL=report_fail OB_WARN=report_warn OB_SKIP=report_skip
@@ -1998,6 +2004,22 @@ fi
 echo ""
 echo "=== Offsite Borg ==="
 ob_post_deploy /etc/systemd/system/borgbackup-job-hetzner.service /var/lib/prometheus-node-exporter/textfile_collectors/backups.prom
+
+# --- §17 Runtime memory throttle sweep (memory.events `high` counters) ---
+# The eval gate (memory-watermark-audit.nix) kills the High<<Max CONFIG
+# shape for NEW units; this leg is the runtime net over DEPLOYED units —
+# the kernel counts every reclaim pass under MemoryHigh in `high`
+# (llama-chat 2026-10-08: 46k events while active (running), silent, green).
+# First live run 2026-10-09: TEN units throttling, worst
+# mr-sync-dashboard 149k / inboxclean-web 136k / clickhouse 94k — the
+# "throttle non-stop and never know" class the sweep exists for (coherent
+# High/Max pairs, so invisible to the eval audit — budget triage queued on
+# docs/todo/monitoring.md). WARN-only advisory: counters reset on restart
+# (restarted units read 0 by construction) and a pre-existing throttle is
+# not this deploy's regression.
+echo ""
+echo "=== §17 Runtime memory throttle sweep ==="
+systemnix_memory_throttle_sweep
 
 # --- Summary ---
 echo ""
