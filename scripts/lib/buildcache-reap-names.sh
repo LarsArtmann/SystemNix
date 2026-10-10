@@ -16,7 +16,10 @@
 # slashes). 2026-09-17: gobuild/gocache/gomod — BuildFlow's cross-repo
 # fallback names the original list evaded forever.
 BUILDCACHE_REAP_CACHE_DIRS="goimports go go-build gobuild gocache gomod pnpm"
-BUILDCACHE_REAP_HOME_DIRS=".local/state/pnpm .cargo/registry .local/share/pnpm/store"
+# .npm (2026-10-10): env-less npm's DEFAULT cache location — the last
+# real-dir fallback from the 2026-09-22 sweep; converged onto
+# /mnt/buildcache/npm via the home.nix HM out-of-store symlink.
+BUILDCACHE_REAP_HOME_DIRS=".local/state/pnpm .cargo/registry .local/share/pnpm/store .npm"
 # Subset of BUILDCACHE_REAP_CACHE_DIRS that is reaped but deliberately NOT
 # an HM out-of-store symlink (no home.file entry): BuildFlow's cross-repo
 # fallback names exist only when an env-less tool ran without the mount, so

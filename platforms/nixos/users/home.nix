@@ -30,6 +30,7 @@ let
     ".cache/pnpm"
     ".local/state/pnpm"
     ".cargo/registry"
+    ".npm"
   ];
   buildcacheReapMissing = lib.flatten (
     map (
@@ -452,11 +453,23 @@ in
       ".cache/pnpm".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/pnpm-cache";
       ".local/state/pnpm".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/pnpm-state";
       ".cargo/registry".source = config.lib.file.mkOutOfStoreSymlink "/mnt/rust-cache/cargo/registry";
+      # 2026-10-10 (task queue): env-less npm falls back to its DEFAULT cache
+      # location ~/.npm on the QLC NVMe (npm_config_cache only reaches
+      # processes with the session env) — the last real-dir fallback from the
+      # 2026-09-22 sweep (51M stale since May 30). The mount-side target is a
+      # pre-existing buildcacheDirs entry the weekly gc already prunes via
+      # `npm cache verify`; a dead-mount real-dir occupant is reaped via
+      # scripts/lib/buildcache-reap-names.sh (.npm in BUILDCACHE_REAP_HOME_DIRS).
+      ".npm".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/npm";
 
       # golangci-lint-lsp wrapper — pins the lint cache to /mnt/buildcache but
-      # falls back to ~/tmp/go-lint when the mount is dead (the fish
-      # 00-go-cache-guard logic, SIGKILL-bounded so a wedged automount can
-      # never hang the LSP launch). Replaces the stray hand-copied wrapper
+      # falls back to /tmp/bc-fallback/go-lint when the mount is dead (the
+      # same tmpfs fallback target the fish 00-go-cache-guard redirects
+      # GOLANGCI_LINT_CACHE to; SIGKILL-bounded so a wedged automount can
+      # never hang the LSP launch). 2026-10-10: the fallback moved off
+      # ~/tmp/go-lint — QLC NVMe churn with no gc coverage — onto the tmpfs
+      # fallback the recovery unit's step-6 sweep reclaims after remount;
+      # buildcache-gc trims the legacy tree. Replaces the stray hand-copied wrapper
       # that pinned $HOME/tmp/golangci-lint-cache UNCONDITIONALLY and grew
       # ~900M of lint cache on the QLC NVMe even while the buildcache was
       # healthy. Referenced by the HM crushrc (golangci_lint_ls LSP).
@@ -472,7 +485,7 @@ in
             printf '%s' "$candidate"
             return 0
           fi
-          candidate="$HOME/tmp/go-lint"
+          candidate="/tmp/bc-fallback/go-lint"
           mkdir -p "$candidate"
           printf '%s' "$candidate"
         }

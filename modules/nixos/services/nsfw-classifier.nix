@@ -75,8 +75,13 @@
           description = "Single model key for --fast mode (must be exported under models/<key>/model.onnx).";
         };
 
-        package = lib.mkPackageOption pkgs "nsfw-classifier-go" {
+        # NOT lib.mkPackageOption: that helper resolves its default as an
+        # attrpath inside `pkgs`, but this package comes from the
+        # nsfw-classifier flake input, not nixpkgs.
+        package = lib.mkOption {
+          type = lib.types.package;
           default = inputs.nsfw-classifier.packages.${pkgs.stdenv.hostPlatform.system}.nsfw-classifier-go;
+          defaultText = lib.literalExpression "inputs.nsfw-classifier.packages.\${pkgs.stdenv.hostPlatform.system}.nsfw-classifier-go";
           description = "Package providing the nsfw-server binary (defaults to the nsfw-classifier flake input's build).";
         };
 

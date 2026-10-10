@@ -514,6 +514,7 @@
             pkgs.nodejs
             pkgs.pnpm
             pkgs.coreutils
+            pkgs.findutils
           ];
           inherit onFailure;
           serviceConfig = lib.mkMerge [
@@ -535,12 +536,17 @@
               # pnpm writes state/metadata under HOME: ~/.cache/pnpm (dlx +
               # project registries) and ~/.local/state/pnpm (pnpm-state.json) -
               # without these holes prune fails under read-only home (verified
-              # live 2026-08-15; the state hole added 2026-08-16).
+              # live 2026-08-15; the state hole added 2026-08-16). The `-`
+              # prefix makes the legacy go-lint trim paths OPTIONAL (step 2.5
+              # below skips absent dirs, and a fully-reclaimed tree must not
+              # fail the mount-namespacing setup).
               ProtectHome = "read-only";
               ReadWritePaths = [
                 cfg.mountPoint
                 "${homeDir}/.cache/pnpm"
                 "${homeDir}/.local/state/pnpm"
+                "-${homeDir}/tmp/go-lint"
+                "-${homeDir}/tmp/go-lint-analysis"
               ];
               MemoryMax = "512M";
             })
@@ -568,7 +574,20 @@
             #    (silent weekly prune failure, caught 2026-08-16).
             pnpm store prune --store "$mnt/pnpm-store" || echo "buildcache-gc: pnpm store prune failed (non-fatal)"
 
-            # 3. High watermark: go-build is the only unbounded cache (gopls
+            # 2.5. Legacy storm-fallback lint cache: the wrapper's dead-mount
+            #      fallback moved to /tmp/bc-fallback (tmpfs) on 2026-10-10, so
+            #      ~/tmp/go-lint is reclaimable residue (832M at the move).
+            #      7d mtime gate drains the legacy tree and bounds any future
+            #      regrowth (reverted wrapper, stray writer) without touching
+            #      fresh cache. Dirs are optional - skipped when absent.
+            for legacy in "${homeDir}/tmp/go-lint" "${homeDir}/tmp/go-lint-analysis"; do
+              if [ -d "$legacy" ]; then
+                find "$legacy" -xdev -type f -mtime +7 -delete || true
+                find "$legacy" -xdev -depth -mindepth 1 -type d -empty -delete || true
+              fi
+            done
+
+            # 4. High watermark: go-build is the only unbounded cache (gopls
             #    mtime refresh defeats Go's 5-day LRU trim). Cold it if needed.
             pct=$(usage)
             if [ -z "''${pct:-}" ]; then
