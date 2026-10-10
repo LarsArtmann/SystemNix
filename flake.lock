@@ -2827,7 +2827,10 @@
         "go-output": "go-output_10",
         "gogenfilter": "gogenfilter_14",
         "md-go-validator": "md-go-validator_3",
-        "nixpkgs": "nixpkgs_5",
+        "nixpkgs": [
+          "nsfw-classifier",
+          "nixpkgs"
+        ],
         "samber-do-auditlog": "samber-do-auditlog_7",
         "treefmt-nix": "treefmt-nix_7"
       },
@@ -6730,22 +6733,6 @@
     },
     "nixpkgs_5": {
       "locked": {
-        "lastModified": 1791456040,
-        "narHash": "sha256-H83yz/do+hjOO0uujHyH8RgtIQP2v7Mw+cLwcZK/xKc=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "e7439b6b14ad3cc35d05608ebca9bce01a25f5f8",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_6": {
-      "locked": {
         "lastModified": 1791031588,
         "narHash": "sha256-/FGDr01siZ8txrVzkOz6CYjiz0XR27JuVJP+aWchi4s=",
         "owner": "NixOS",
@@ -6760,7 +6747,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_7": {
+    "nixpkgs_6": {
       "locked": {
         "lastModified": 1791456040,
         "narHash": "sha256-H83yz/do+hjOO0uujHyH8RgtIQP2v7Mw+cLwcZK/xKc=",
@@ -6776,7 +6763,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_8": {
+    "nixpkgs_7": {
       "locked": {
         "lastModified": 1769188852,
         "narHash": "sha256-aBAGyMum27K7cP5OR7BMioJOF3icquJMZDDgk6ZEg1A=",
@@ -6827,11 +6814,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791589412,
-        "narHash": "sha256-KQnVftNMVMNnZjXDe+3++V092zHtMuGG4wp71uyOwGE=",
+        "lastModified": 1791605411,
+        "narHash": "sha256-Gc6DwcxtuF/6qZUBd9KjVjxOspnIRX8cTpxjD21l80k=",
         "ref": "refs/heads/master",
-        "rev": "043f67f27494bca7da7db79651823a572ea238ef",
-        "revCount": 1750,
+        "rev": "2b1702d2f9f5a6b2e0dc342e249a65e4c8cd0a85",
+        "revCount": 1809,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/nsfw-classifier"
       },
@@ -7010,7 +6997,7 @@
         "go-nix-helpers": "go-nix-helpers_8",
         "go-output": "go-output_11",
         "gogenfilter": "gogenfilter_16",
-        "nixpkgs": "nixpkgs_7",
+        "nixpkgs": "nixpkgs_6",
         "project-discovery-sdk": "project-discovery-sdk_6",
         "project-discovery-sdk-daemon": "project-discovery-sdk-daemon",
         "samber-do-auditlog": "samber-do-auditlog_8"
@@ -7478,7 +7465,7 @@
         "flake-utils": [
           "flake-utils"
         ],
-        "nixpkgs": "nixpkgs_8"
+        "nixpkgs": "nixpkgs_7"
       },
       "locked": {
         "lastModified": 1786919312,
@@ -8036,7 +8023,7 @@
     "templ-cli": {
       "inputs": {
         "gitignore": "gitignore_2",
-        "nixpkgs": "nixpkgs_6",
+        "nixpkgs": "nixpkgs_5",
         "nixpkgs-unstable": "nixpkgs-unstable_2",
         "version": "version_2"
       },
