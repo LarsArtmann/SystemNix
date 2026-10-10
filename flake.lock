@@ -2835,11 +2835,11 @@
         "treefmt-nix": "treefmt-nix_7"
       },
       "locked": {
-        "lastModified": 1791605328,
-        "narHash": "sha256-pbIPUN/XmXoSUStYeER6GZDg1uU37RNwoGpF205FO0Q=",
+        "lastModified": 1791605591,
+        "narHash": "sha256-DEtSRvVDfbNqmq9dolkqfKRvPooPFLUjynWYmcA1b68=",
         "owner": "larsartmann",
         "repo": "go-cqrs-lite",
-        "rev": "ea368b3424e7e3d3b7a4c6e3d022726911b8d591",
+        "rev": "0182023252dcebfe6c322a87be5fead5ee413b1d",
         "type": "github"
       },
       "original": {
@@ -6814,11 +6814,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791606929,
-        "narHash": "sha256-ZZf4k5grkArp39vSRbaJICa0uO8s16twPcmAY6Dlgeo=",
+        "lastModified": 1791614269,
+        "narHash": "sha256-Wf0hVORcTwZdRyFs6/VKGTkf8tNtl+G8BCd0ApTrceU=",
         "ref": "refs/heads/master",
-        "rev": "bc23462200329ae516bdcb8cbb85aa80f918edc2",
-        "revCount": 1821,
+        "rev": "5f584fc70ce11658630692059478292857e34fbb",
+        "revCount": 1857,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/nsfw-classifier"
       },
