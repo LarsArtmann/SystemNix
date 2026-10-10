@@ -159,6 +159,49 @@ else
   echo "  ok   [regression] memory PSI 77% never yields PASS"
 fi
 
+echo "=== Fixture: storm-mode detector (systemnix_io_storm_active, 2026-10-09 §f6) ==="
+psi_io_storm60="$TMP/psi_io_storm60"
+printf 'some avg10=64.18 avg60=35.00 avg300=12.00 total=0\nfull avg10=30.00 avg60=28.00 avg300=9.00 total=0\n' >"$psi_io_storm60"
+psi_io_boundary="$TMP/psi_io_boundary"
+printf 'some avg10=48.00 avg60=20.00 avg300=5.00 total=0\n' >"$psi_io_boundary"
+
+storm_out="$(systemnix_io_storm_active "$psi_io_storm60")"
+storm_rc=$?
+if [ "$storm_rc" -eq 0 ] && [ "$storm_out" = "35.00" ]; then
+  echo "  ok   [active] avg60=35 > 20 → active, prints the value"
+else
+  echo "  FAIL [active] avg60=35 → active, prints the value (rc=$storm_rc out='$storm_out')"
+  TEST_FAILURES=$((TEST_FAILURES + 1))
+fi
+
+if systemnix_io_storm_active "$psi_io_calm" >/dev/null; then
+  echo "  FAIL [calm] avg60=0 → must be inactive"
+  TEST_FAILURES=$((TEST_FAILURES + 1))
+else
+  echo "  ok   [calm] avg60=0 → inactive"
+fi
+
+if systemnix_io_storm_active "$psi_io_boundary" >/dev/null; then
+  echo "  FAIL [boundary] avg60=20.00 with strict >20 → must be inactive"
+  TEST_FAILURES=$((TEST_FAILURES + 1))
+else
+  echo "  ok   [boundary] avg60=20.00 → inactive (strict > threshold)"
+fi
+
+if systemnix_io_storm_active "$psi_io_storm60" 50 >/dev/null; then
+  echo "  FAIL [threshold] avg60=35 with custom threshold 50 → must be inactive"
+  TEST_FAILURES=$((TEST_FAILURES + 1))
+else
+  echo "  ok   [threshold] custom threshold respected"
+fi
+
+if systemnix_io_storm_active "$TMP/does-not-exist" >/dev/null; then
+  echo "  FAIL [missing] unreadable PSI file → must be inactive, never throw"
+  TEST_FAILURES=$((TEST_FAILURES + 1))
+else
+  echo "  ok   [missing] unreadable PSI file → inactive (never throws)"
+fi
+
 if [ "$TEST_FAILURES" -gt 0 ]; then
   echo ""
   echo "SELFTEST FAILED: $TEST_FAILURES assertion(s) broken"

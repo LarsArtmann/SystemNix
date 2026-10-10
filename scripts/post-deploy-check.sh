@@ -14,6 +14,8 @@ PASS=0
 FAIL=0
 SKIP=0
 WARN=0
+STORM_SUSPECT=0
+STORM_IO_AVG60=""
 
 # Every FAIL records a STABLE name (the text before the " - " detail
 # separator) so the summary can diff this run's fail set against the
@@ -167,6 +169,33 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/offsite-borg-smoke.sh"
 # shellcheck disable=SC2034
 OB_PASS=report_pass OB_FAIL=report_fail OB_WARN=report_warn OB_SKIP=report_skip
 
+# Storm-mode gate (2026-10-09 §f6 triage class): a parallel build saturating
+# the disk false-FAILs the load-sensitive checks on every busy deploy, and
+# the fail-baseline then absorbs the artifact as "known". Detected ONCE here
+# (io PSI some avg60 > 20% = sustained thrash, not a blip); the named
+# storm-sensitive legs below downgrade FAIL to STORM-SUSPECT - never a
+# silent pass, never into the fail baseline.
+systemnix_storm_mode=false
+if storm_read="$(systemnix_io_storm_active)"; then
+  systemnix_storm_mode=true
+  STORM_IO_AVG60="$storm_read"
+  echo "STORM MODE: io PSI some avg60=${storm_read}% > 20% - load-sensitive checks downgrade to STORM-SUSPECT (results unverified under load)"
+  echo ""
+fi
+
+# Convert a just-recorded storm-sensitive FAIL into STORM-SUSPECT: removes
+# ONE occurrence of the check's stable name from the fail set (exactly the
+# line the failed leg added, so a sibling CV leg that legitimately failed
+# stays in the baseline), moves the count, and prints the verdict.
+report_storm_suspect() {
+  local name="${1%% - *}"
+  awk -v n="$name" 'BEGIN { done = 0 } !done && $0 == n { done = 1; next } { print }' \
+    "$SMOKE_FAIL_NAMES" >"${SMOKE_FAIL_NAMES}.storm" && mv "${SMOKE_FAIL_NAMES}.storm" "$SMOKE_FAIL_NAMES"
+  FAIL=$((FAIL - 1))
+  STORM_SUSPECT=$((STORM_SUSPECT + 1))
+  echo -e "${YELLOW}STORM-SUSPECT${NC} $1"
+}
+
 echo "=== Post-Deploy Smoke Test ==="
 echo "Domain: $DOMAIN"
 echo ""
@@ -174,10 +203,17 @@ echo ""
 # --- Infrastructure ---
 check_local "Caddy metrics" "2019" "/metrics" "200" "" 2>/dev/null || true
 check "Caddy HTTP redirect" "http://dash.$DOMAIN" "301" "" 2>/dev/null || true
-check "Caddy catch-all 404" "https://catchall-probe.$DOMAIN/" "404" "" 2>/dev/null || true
+if ! check "Caddy catch-all 404" "https://catchall-probe.$DOMAIN/" "404" "" 2>/dev/null; then
+  $systemnix_storm_mode && report_storm_suspect "Caddy catch-all 404 - probe failed under I/O storm (io some avg60=${STORM_IO_AVG60}%) - TLS/TCP handshakes starve with the disk; re-verify when calm" || true
+fi
 
-check_local "Pocket ID" "1411" "/healthz" "204" 2>/dev/null ||
-  check_local "Pocket ID" "1411" "/" "200" "" 2>/dev/null || true
+# Pocket ID latency probes (healthz, then the page fallback): the SQLITE_BUSY
+# journal scan below stays a FAIL under storm mode - lock contention text in
+# the journal is evidence, not a timeout artifact.
+if ! { check_local "Pocket ID" "1411" "/healthz" "204" 2>/dev/null ||
+  check_local "Pocket ID" "1411" "/" "200" "" 2>/dev/null; }; then
+  $systemnix_storm_mode && report_storm_suspect "Pocket ID - health probes failed under I/O storm (io some avg60=${STORM_IO_AVG60}%) - re-verify when calm" || true
+fi
 
 # Pocket ID: scan recent journal for SQLITE_BUSY or francis panics.
 # Write to file then grep - avoids pipefail SIGPIPE trap on large journal output.
@@ -418,6 +454,8 @@ if $cv_enabled; then
   if [ -f /home/lars/projects/CV/scripts/render-smoke.ts ] && command -v bun >/dev/null 2>&1; then
     if bun /home/lars/projects/CV/scripts/render-smoke.ts http://127.0.0.1:8098 >/tmp/.smoke-cv-render.log 2>&1; then
       report_pass "CV - browser render smoke (cv + admin render real DOM text in chromium)"
+    elif $systemnix_storm_mode; then
+      report_storm_suspect "CV - browser render smoke failed under I/O storm (io some avg60=${STORM_IO_AVG60}%) - chromium rendering starves with the disk (see /tmp/.smoke-cv-render.log); re-verify when calm"
     else
       report_fail "CV - browser render smoke failed: pages load but do not RENDER (see /tmp/.smoke-cv-render.log) - string pins can pass while renders break"
     fi
@@ -430,6 +468,8 @@ if $cv_enabled; then
     # cv.home.lan), not a trust-environment artifact.
     if bun /home/lars/projects/CV/scripts/render-smoke.ts https://cv.home.lan >/tmp/.smoke-cv-render-proxy.log 2>&1; then
       report_pass "CV - proxy-path render smoke (cv.home.lan: renders + PDF export through the TLS proxy)"
+    elif $systemnix_storm_mode; then
+      report_storm_suspect "CV - proxy-path render smoke failed under I/O storm (io some avg60=${STORM_IO_AVG60}%) - re-verify when calm (see /tmp/.smoke-cv-render-proxy.log)"
     else
       report_fail "CV - proxy-path render smoke failed (see /tmp/.smoke-cv-render-proxy.log) - loopback is fine but the proxy path regressed"
     fi
@@ -748,7 +788,14 @@ if $inboxclean_enabled; then
   else
     inboxclean_health_status="$(jq -r '.status // "unparseable"' <<<"$inboxclean_health" 2>/dev/null)" || true
     if [ "$inboxclean_health_status" = "timeout" ]; then
-      report_fail "InboxClean - /health exceeded its handler budget (status 'timeout': box under load? cat /proc/pressure/io; the app itself may be fine - 2026-10-06 class, IO storm blew the 3s cap on every poll)"
+      # A 'timeout' body proves the app is UP (it answered the probe) - the
+      # handler budget expired, which under a detected storm is the box, not
+      # the service (2026-10-06/09 class). Downgrade instead of FAIL.
+      if $systemnix_storm_mode; then
+        report_storm_suspect "InboxClean - /health exceeded its handler budget (status 'timeout') under I/O storm (io some avg60=${STORM_IO_AVG60}%) - the app answered; re-verify when calm"
+      else
+        report_fail "InboxClean - /health exceeded its handler budget (status 'timeout': box under load? cat /proc/pressure/io; the app itself may be fine - 2026-10-06 class, IO storm blew the 3s cap on every poll)"
+      fi
     else
       report_fail "InboxClean - /health answered but status is '$inboxclean_health_status' (not ok)"
     fi
@@ -1921,7 +1968,10 @@ ob_post_deploy /etc/systemd/system/borgbackup-job-hetzner.service /var/lib/prome
 # --- Summary ---
 echo ""
 echo "=== Summary ==="
-echo -e "${GREEN}PASS: $PASS${NC}  ${RED}FAIL: $FAIL${NC}  ${YELLOW}SKIP: $SKIP${NC}  WARN: $WARN"
+echo -e "${GREEN}PASS: $PASS${NC}  ${RED}FAIL: $FAIL${NC}  ${YELLOW}SKIP: $SKIP${NC}  WARN: $WARN${NC}  ${YELLOW}STORM-SUSPECT: $STORM_SUSPECT${NC}"
+if [ "$STORM_SUSPECT" -gt 0 ]; then
+  echo -e "${YELLOW}Storm mode was active (io PSI some avg60=${STORM_IO_AVG60}% > 20%): $STORM_SUSPECT load-sensitive check(s) downgraded from FAIL to STORM-SUSPECT - treat those as UNVERIFIED and re-run when the box is calm${NC}"
+fi
 
 if [ "$FAIL" -gt 0 ]; then
   echo ""
