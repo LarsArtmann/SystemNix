@@ -425,5 +425,88 @@ lib.mkIf cfg.components.nodeExporter {
         };
       };
     }
+    {
+      # Git push-lag tripwire (T11 2026-10-10): the auto-commit daemon
+      # commits continuously but never pushes — 38 commits sat unpushed
+      # ~15h unnoticed (2026-10-08) because nothing observed the gap.
+      # `git push` updates the remote-tracking ref, so ahead_by grows
+      # exactly when pushes STOP (no fetch needed). Runs as lars: the
+      # repo is user-owned (root git would hit dubious-ownership).
+      services.git-lag-metrics = {
+        description = "SystemNix git push-lag metrics for node_exporter textfile";
+        serviceConfig = [
+          {
+            Type = "oneshot";
+            User = "lars";
+            Group = "users";
+            ExecStart =
+              let
+                gitLagMetrics = pkgs.writeShellApplication {
+                  name = "git-lag-metrics";
+                  runtimeInputs = [
+                    pkgs.git
+                    pkgs.coreutils
+                  ];
+                  text = ''
+                    OUT="/var/lib/prometheus-node-exporter/textfile_collectors/git-lag.prom"
+                    mkdir -p "/var/lib/prometheus-node-exporter/textfile_collectors"
+                    TMP="$(mktemp "/var/lib/prometheus-node-exporter/textfile_collectors/git-lag.prom.XXXXXX")"
+                    chmod 644 "$TMP"
+                    trap 'rm -f "$TMP"' EXIT
+
+                    REPO="/home/lars/projects/SystemNix"
+                    # Fail-closed: an unreadable repo must emit scrape_error 1,
+                    # never stale zeros (the unreadable-surface doctrine).
+                    if ! git -C "$REPO" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+                      {
+                        echo "# HELP systemnix_git_scrape_error 1 when the repo probe failed"
+                        echo "# TYPE systemnix_git_scrape_error gauge"
+                        echo "systemnix_git_scrape_error 1"
+                      } > "$TMP"
+                      mv "$TMP" "$OUT"
+                      exit 0
+                    fi
+
+                    AHEAD="$(git -C "$REPO" rev-list --count origin/master..master 2>/dev/null || echo -1)"
+                    HEAD_TS="$(git -C "$REPO" log -1 --format=%ct 2>/dev/null || echo 0)"
+                    NOW="$(date +%s)"
+                    AGE="$(( NOW - HEAD_TS ))"
+                    [ "$AHEAD" -ge 0 ] 2>/dev/null || AHEAD=0
+
+                    {
+                      echo "# HELP systemnix_git_scrape_error 1 when the repo probe failed"
+                      echo "# TYPE systemnix_git_scrape_error gauge"
+                      echo "systemnix_git_scrape_error 0"
+                      echo "# HELP systemnix_git_ahead_by Commits on master not yet on origin (push lag; git push updates the remote-tracking ref)"
+                      echo "# TYPE systemnix_git_ahead_by gauge"
+                      echo "systemnix_git_ahead_by ''${AHEAD}"
+                      echo "# HELP systemnix_git_head_age_seconds Seconds since the last commit on master (daemon-death detector)"
+                      echo "# TYPE systemnix_git_head_age_seconds gauge"
+                      echo "systemnix_git_head_age_seconds ''${AGE}"
+                    } > "$TMP"
+
+                    mv "$TMP" "$OUT"
+                  '';
+                };
+              in
+              "${gitLagMetrics}/bin/git-lag-metrics";
+          }
+          (harden {
+            # Repo + ssh config readable, home otherwise inaccessible.
+            ProtectHome = "read-only";
+            ReadWritePaths = [ "/var/lib/prometheus-node-exporter/textfile_collectors" ];
+          })
+        ];
+      };
+
+      timers.git-lag-metrics = {
+        description = "Collect SystemNix git push-lag every 5m";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "2m";
+          OnUnitActiveSec = "5m";
+        };
+      };
+    }
   ];
 }
