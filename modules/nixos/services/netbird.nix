@@ -92,6 +92,24 @@ _: {
           key = "netbird_setup_key";
         };
 
+        # Boot-safe enqueue (2026-10-10): nixpkgs pulls the login oneshot
+        # ONLY via netbird-evox2.service.wants, and systemd 261.3 NEVER
+        # QUEUED it that way — across four boots (2026-10-07) the unit has
+        # zero journal entries while its parent started cleanly every time
+        # (manager-level skips are debug-logged in 261, so it fails
+        # SILENTLY; the daemon then sits credential-less forever retrying
+        # "no peer auth method provided" against the management service).
+        # Sibling units wanted the same way but shaped Before=<parent>
+        # (cv-oidc-env, dnsblockd-oidc-secret) DO start — the
+        # Requires+After-back-on-the-wanter shape is the one that never
+        # fires on this box. multi-user.target.wants enqueues the oneshot
+        # directly at boot; its own Requires=/After=netbird-evox2.service
+        # still order it behind the daemon, and the script is a
+        # NeedsLogin-guarded no-op once enrolled. deploy.sh's converger
+        # loop re-runs it after every deploy (stale-key re-enrollment
+        # path).
+        systemd.services."netbird-evox2-login".wantedBy = [ "multi-user.target" ];
+
         # State hygiene (2026-10-06): the phase-2 deploy's string-form
         # "ManagementUrl" fragment poisoned /var/lib/netbird-evox2/config.json,
         # and the nixpkgs preStart jq fragment-merge never REMOVES keys — purge

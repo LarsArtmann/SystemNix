@@ -587,7 +587,7 @@ if nix run .#pre-deploy-check; then
   # forgejo-hermes-token: RemainAfterExit oneshot — re-runs re-install the
   # staged token as /run/hermes-forgejo-token after deploys that change the
   # hermes user/group or the token scripts.
-  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup browser-history-agent-token-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs cv-backup-dir crm-backup-dir inboxclean-backup-dir miniflux-backup-dir paperless-db-backup-dir browser-history-backup-dir discordsync-db-backup-dir clickhouse-db-backup-dir miniflux-oidc-setup llama-rag-model-fetch hermes-github-verify tq-storage-dir tq-bootstrap boot-mirror-sync hot-user-caches-nix-bootstrap restic-app-dumps-setup discordsync-attachments-dir borg-offsite-dir geometrikks-db-provision geometrikks-backup-dir; do
+  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup browser-history-agent-token-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs cv-backup-dir crm-backup-dir inboxclean-backup-dir miniflux-backup-dir paperless-db-backup-dir browser-history-backup-dir discordsync-db-backup-dir clickhouse-db-backup-dir miniflux-oidc-setup llama-rag-model-fetch hermes-github-verify tq-storage-dir tq-bootstrap boot-mirror-sync hot-user-caches-nix-bootstrap restic-app-dumps-setup discordsync-attachments-dir borg-offsite-dir geometrikks-db-provision geometrikks-backup-dir netbird-evox2-login; do
     # borg-offsite-dir: idempotent /mnt/hot/borg cache-dir bootstrap (offsite
     # Borg leg; gated on services.offsite-borg.enable — re-run converges).
     # restic-app-dumps-setup: idempotent repo-password bootstrap (creates
@@ -613,6 +613,12 @@ if nix run .#pre-deploy-check; then
     # nightly DB dump dir (cv-backup-dir pattern).
     # crm-backup-dir: mount-gated pool leaf creator for the nightly
     # Kith journal snapshot dir (cv-backup-dir pattern).
+    # netbird-evox2-login: enrollment oneshot — systemd 261 never queues
+    # it from netbird-evox2.service.wants (see modules/nixos/services/
+    # netbird.nix), and stc never restarts oneshots; the deploy-time
+    # restart both starts it after the first flipped deploy and re-runs
+    # enrollment when the sops setup key rotates (NeedsLogin-guarded, a
+    # no-op while Connected).
     if systemctl is-enabled --quiet "$provisioner.service" 2>/dev/null; then
       echo "Restarting provisioner: $provisioner.service"
       sudo systemctl restart "$provisioner.service" 2>/dev/null || true
