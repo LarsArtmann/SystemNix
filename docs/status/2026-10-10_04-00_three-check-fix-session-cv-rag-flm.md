@@ -87,9 +87,11 @@ buildflow, cargo/duckdb, nix builds reading the USB buildcache SSD at ~85 MB/s
 = 98% util) kept global IO PSI at 38-69% with only ~2-minute dips (observed
 floor 17.1% once at 04:39, then 21.1-21.5 kisses). Three hunt loops (~3.5 h,
 down to 40-45 s cadence, deploy chained to first qualifying window) found no
-sub-20 dip with a usable margin. The box never approached the freeze
-signatures (memory PSI ~0-8%, thermal throttling held), but the deploy gates
-honestly never opened.
+sub-20 dip with a usable margin. Memory PSI stayed 0-10% all night (no memory
+zone ever fired; the waves were pure IO/CPU stacking); a 07:2x transient wave
+(load 373, io some avg60 89%) matched the freeze-#19/#20 wave SHAPE but
+recovered within minutes — the box is riding exactly the episodic pattern the
+trip-recency gate exists for.
 
 ## §f Follow-ups (self-harvest)
 
