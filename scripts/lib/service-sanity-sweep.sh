@@ -53,10 +53,10 @@ systemnix_service_sanity_sweep() {
     cpu_b="$(awk '/^usage_usec / {print $2; exit}' "$unit/cpu.stat")"
     cpu_a="${usage_a[$name]:-}"
     [ -n "$cpu_a" ] || continue
-    delta_usec=$(( cpu_b - cpu_a ))
+    delta_usec=$((cpu_b - cpu_a))
     [ "$delta_usec" -le 0 ] && continue
     # pct of ONE core over the window, rounded to integer
-    pct=$(( delta_usec / ( sample_seconds * 10000 ) ))
+    pct=$((delta_usec / (sample_seconds * 10000)))
     if [ "$pct" -gt "$cpu_budget_pct" ] && ! printf '%s' "$name" | grep -Eq "$exempt_regex"; then
       cpu_findings+="${cpu_findings:+ }${name}=${pct}%CPU"
     fi
@@ -74,21 +74,21 @@ systemnix_service_sanity_sweep() {
   # SANITY_JOURNAL_CMD overrides the journalctl invocation (fixture tests).
   local -A rate_findings=()
   local total_lines
-  total_lines="$(eval "${SANITY_JOURNAL_CMD:-journalctl -q --since \"-${window_minutes} min\" -o json}" 2>/dev/null \
-    | jq -r '._SYSTEMD_UNIT // .SYSLOG_IDENTIFIER // "unknown"' \
-    | LC_ALL=C sort | uniq -c || true)"
+  total_lines="$(eval "${SANITY_JOURNAL_CMD:-journalctl -q --since \"-${window_minutes} min\" -o json}" 2>/dev/null |
+    jq -r '._SYSTEMD_UNIT // .SYSLOG_IDENTIFIER // "unknown"' |
+    LC_ALL=C sort | uniq -c || true)"
   if [ -z "$total_lines" ]; then
     report_warn "Service Sanity journal - journalctl walk returned nothing (journal offline or empty window)"
     return 0
   fi
-  local budget_total=$(( journal_budget_per_min * window_minutes ))
+  local budget_total=$((journal_budget_per_min * window_minutes))
   while read -r count identity; do
     case "$identity" in
-      *.service) ;;
-      *) continue ;; # only system.slice-shaped identities
+    *.service) ;;
+    *) continue ;; # only system.slice-shaped identities
     esac
     if [ "$count" -gt "$budget_total" ]; then
-      rate_findings["$identity"]=$(( count / window_minutes ))
+      rate_findings["$identity"]=$((count / window_minutes))
     fi
   done <<<"$total_lines"
   local rate_out=""

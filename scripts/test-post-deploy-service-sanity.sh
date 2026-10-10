@@ -17,7 +17,10 @@ report_warn() { VERDICTS+=("WARN $*"); }
 report_skip() { VERDICTS+=("SKIP $*"); }
 record_fail() { VERDICTS+=("FAIL $*"); }
 
-fail() { echo "SELFTEST FAIL: $*"; exit 1; }
+fail() {
+  echo "SELFTEST FAIL: $*"
+  exit 1
+}
 expect_kinds() {
   local want="$1"
   [ "${#VERDICTS[@]}" -eq 2 ] || fail "expected exactly 2 verdicts ($want), got ${#VERDICTS[@]}: ${VERDICTS[*]:-none}"
@@ -82,6 +85,6 @@ expect_kinds "WARN Service Sanity journal"
 VERDICTS=()
 systemnix_service_sanity_sweep "$scratch/does-not-exist" 1
 [ "${#VERDICTS[@]}" -eq 1 ] || fail "missing-dir: expected 1 verdict, got ${#VERDICTS[@]}"
-[[ "${VERDICTS[0]}" == SKIP* ]] || fail "missing-dir: expected SKIP, got ${VERDICTS[0]}"
+[[ ${VERDICTS[0]} == SKIP* ]] || fail "missing-dir: expected SKIP, got ${VERDICTS[0]}"
 
 echo "post-deploy-service-sanity selftest: all fixtures green"

@@ -160,7 +160,7 @@ in
     "signoz/rules/thermal-guard-trip-rate.json".source = mkRule {
       name = "Thermal Guard Trip Rate (>1.5/h sustained 2h)";
       description = "thermal_pstate_guard trips above 1.5/hour sustained for 2h (increase[2h] > 3) — the guard is load-bearing, root-cause the storm behind it. Thresholds are incident-derived arithmetic, not tuning: freeze #12 ran 90 trips over 2d (1.875/h avg → 3.75 per 2h window), #11 carried 38 in 16h (2.375/h → 4.75/2h) — target 4 would have MISSED #12's sustained average; target 3 catches both and a 2h window with 3 guard trips is notable on its own.";
-      query = ''increase(thermal_pstate_guard_trips_total[2h])'';
+      query = "increase(thermal_pstate_guard_trips_total[2h])";
       target = 3;
       step = 300;
       interval = "10m";
@@ -171,7 +171,7 @@ in
       description = "SystemNix master is more than 20 commits ahead of origin, OR the git-lag collector is absent (the absent() branch fires when systemnix_git_ahead_by vanishes — collector death must never read as healthy; 2026-10-08: 38 commits sat unpushed ~15h unnoticed; T11 2026-10-10). git push updates the remote-tracking ref, so this grows exactly when pushes stop.";
       # or-absent pattern: >20 fires on value; absent() yields 1 when the
       # series vanishes — both satisfy >= 1, collector death cannot hide.
-      query = ''(systemnix_git_ahead_by > 20) or absent(systemnix_git_ahead_by)'';
+      query = "(systemnix_git_ahead_by > 20) or absent(systemnix_git_ahead_by)";
       target = 1;
       step = 300;
       interval = "10m";
@@ -180,7 +180,7 @@ in
     "signoz/rules/git-head-stale.json".source = mkRule {
       name = "Git Head Stale (>72h without a commit)";
       description = "SystemNix master HEAD is older than 72h — the auto-commit daemon is dead or the repo moved (daemon cadence is ~10min; 72h of silence is a dead-daemon signature, not a quiet period; T11 2026-10-10). The absent() branch fires if the collector itself vanishes.";
-      query = ''(systemnix_git_head_age_seconds > 259200) or absent(systemnix_git_head_age_seconds)'';
+      query = "(systemnix_git_head_age_seconds > 259200) or absent(systemnix_git_head_age_seconds)";
       target = 1;
       step = 300;
       interval = "30m";

@@ -135,6 +135,44 @@
               touch $out
             '';
 
+        # discordsync-attachments-migrate is the DESTRUCTIVE one-shot
+        # (stop service → rsync ~40 GB → checksum verify → rm -rf source
+        # → restart) that auto-starts no-block at the next deploy. The
+        # unit script is EXTRACTED from the evaluated evo-x2 config
+        # (systemd.services…script — the same rendered text the unit
+        # runs), the baked absolute paths are sed-rewritten onto scratch
+        # trees, and the root-bound commands are PATH-stubbed
+        # (systemctl/chown; rsync/rm wrapped for failure injection)
+        # while REAL rsync does the copy + dry-run checksum verify.
+        # Covers: happy path, stop fail, copy fail, verify fail,
+        # rm fail, restart fail, plus eval-side asserts on the
+        # ConditionPathIsDirectory skip + RequiresMountsFor gating.
+        discordsync-attachments-migrate-fixture =
+          let
+            sys = inputs.self.nixosConfigurations.evo-x2;
+            migrateUnit = sys.config.systemd.services.discordsync-attachments-migrate;
+            migrateScript = pkgs.writeText "discordsync-attachments-migrate.sh" migrateUnit.script;
+          in
+          pkgs.runCommand "discordsync-attachments-migrate-fixture"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils-full
+                rsync
+                gnugrep
+                gnused
+                diffutils
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              cp ${root}/scripts/test-discordsync-attachments-migrate.sh "$scratch/test.sh"
+              bash "$scratch/test.sh" ${migrateScript} \
+                ${lib.escapeShellArg migrateUnit.unitConfig.ConditionPathIsDirectory} \
+                ${lib.escapeShellArg (lib.concatStringsSep " " migrateUnit.unitConfig.RequiresMountsFor)}
+              touch $out
+            '';
+
         # migrate-rust-cache.sh FORMATS the second SanDisk and moves the
         # live Rust caches off buildcache — its first live run
         # (2026-10-06) died at the mkfs call (missing -f) BEFORE any

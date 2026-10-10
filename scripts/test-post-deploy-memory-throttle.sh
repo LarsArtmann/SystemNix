@@ -15,11 +15,14 @@ report_pass() { VERDICTS+=("PASS $*"); }
 report_warn() { VERDICTS+=("WARN $*"); }
 report_skip() { VERDICTS+=("SKIP $*"); }
 
-fail() { echo "SELFTEST FAIL: $*"; exit 1; }
+fail() {
+  echo "SELFTEST FAIL: $*"
+  exit 1
+}
 expect_one() {
   local kind="$1" pattern="$2"
   [ "${#VERDICTS[@]}" -eq 1 ] || fail "expected exactly 1 verdict, got ${#VERDICTS[@]}: ${VERDICTS[*]:-none}"
-  [[ "${VERDICTS[0]}" == "$kind"* ]] || fail "expected $kind verdict, got: ${VERDICTS[0]}"
+  [[ ${VERDICTS[0]} == "$kind"* ]] || fail "expected $kind verdict, got: ${VERDICTS[0]}"
   grep -qE "$pattern" <<<"${VERDICTS[0]}" || fail "verdict '${VERDICTS[0]}' lacks pattern '$pattern'"
 }
 
