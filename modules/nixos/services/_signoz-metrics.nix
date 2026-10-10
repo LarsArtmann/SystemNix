@@ -434,7 +434,7 @@ lib.mkIf cfg.components.nodeExporter {
       # repo is user-owned (root git would hit dubious-ownership).
       services.git-lag-metrics = {
         description = "SystemNix git push-lag metrics for node_exporter textfile";
-        serviceConfig = [
+        serviceConfig = lib.mkMerge [
           {
             Type = "oneshot";
             User = "lars";

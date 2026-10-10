@@ -74,7 +74,6 @@ _: {
         Restart = "on-failure";
         RestartSec = "10";
         OOMScoreAdjust = 300;
-        MemoryMax = cfg.memoryMax;
         CPUQuota = "200%";
         # Bounded stop budget. A restart while the disk is saturated can
         # wedge the server in uninterruptible I/O (SIGTERM/SIGKILL both stay
@@ -445,7 +444,11 @@ _: {
                 ExecStartPre = "+${portGuardScript} ${toString cfg.embeddingsPort}";
               }
               rocm.deviceCgroup
-              (harden { })
+              # MemoryMax flows INTO harden so the MemoryHigh throttle
+              # watermark derives from it (80%); a bare outside merge leaves
+              # harden's phantom watermark strangling the unit
+              # (memory-watermark-audit class, llama-chat 2026-10-08).
+              (harden { MemoryMax = cfg.memoryMax; })
               ioTier.background
             ];
 
@@ -474,7 +477,7 @@ _: {
                 ExecStartPre = "+${portGuardScript} ${toString cfg.rerankerPort}";
               }
               rocm.deviceCgroup
-              (harden { })
+              (harden { MemoryMax = cfg.memoryMax; })
               ioTier.background
             ];
 
