@@ -86,3 +86,24 @@ systemnix_report_pressure() {
     report_skip "System — /proc/pressure/memory not available"
   fi
 }
+
+# Storm-mode detection for the load-sensitive smoke checks (2026-10-09 §f6:
+# InboxClean/CV/catchall/Pocket-ID false-FAIL every busy deploy because a
+# parallel build saturates the disk). Prints the io PSI `some avg60` value
+# and returns 0 when it exceeds the threshold (default 20%), returns 1 when
+# calm or the PSI file is unreadable — never throws. Parameter-overridable
+# per call (same fixture-test pattern as systemnix_report_pressure):
+#   systemnix_io_storm_active [psi_io_file] [threshold]
+systemnix_io_storm_active() {
+  local psi_io_file="${1:-/proc/pressure/io}"
+  local threshold="${2:-20}"
+  [ -r "$psi_io_file" ] || return 1
+  local avg60
+  avg60=$(awk '/^some/ { for (i = 1; i <= NF; i++) if (sub(/^avg60=/, "", $i)) { print $i; exit } }' "$psi_io_file" 2>/dev/null) || return 1
+  [ -n "$avg60" ] || return 1
+  if awk "BEGIN { exit !($avg60 > $threshold) }"; then
+    printf '%s' "$avg60"
+    return 0
+  fi
+  return 1
+}
