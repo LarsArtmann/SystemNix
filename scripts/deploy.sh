@@ -695,6 +695,21 @@ if nix run .#pre-deploy-check; then
     fi
   fi
 
+  # Kith CRM's Pocket ID bridge, same indirect-unit class as cv-oidc-env
+  # (found by the deploy-restart-audit eval guard 2026-10-10): crm-oidc-env
+  # is only wantedBy=crm-server.service (the provisioner loop's is-enabled
+  # gate skips it) and crm-server reads CRM_OIDC_CLIENT_SECRET from the env
+  # file at process start only. Gated on the DAEMON (geometrikks pattern):
+  # before the first provision run the bridge exits 0 without writing the
+  # env file, so gating on the bridge itself would skip that first converge.
+  # The unconditional crm-server restart is safe: the event-sourced journal
+  # replays idempotently on every boot (durable projections).
+  if systemctl is-active --quiet crm-server.service 2>/dev/null; then
+    echo "Restarting crm-oidc-env.service + crm-server.service (converge OIDC env)"
+    sudo systemctl restart crm-oidc-env.service 2>/dev/null || true
+    sudo systemctl restart crm-server.service 2>/dev/null || true
+  fi
+
   # GeoMetrikks' Pocket ID bridge, same indirect-unit class as cv-oidc-env —
   # but GATED ON THE DAEMON (paperless-oidc-setup pattern): the bridge is
   # ConditionPathExists-gated on the Pocket ID client secret and sits

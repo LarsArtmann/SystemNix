@@ -13,9 +13,10 @@
 # contract.
 #
 # Models are NOT in the store (multi-GB, gitignored): the unit reads the
-# live checkout at /home/lars/projects/nsfw-classifier/models read-only —
-# the same live-checkout contract as the extension load path. That is also
-# why the unit runs as User "lars" (the checkout sits under a 0700 home).
+# live checkout at services.nsfw-classifier.modelsDir read-only — the same
+# live-checkout contract as the extension load path. That is also why the
+# unit runs as services.nsfw-classifier.user (the default checkout sits
+# under a 0700 home).
 { inputs, ... }:
 {
   flake.nixosModules.nsfw-classifier =
@@ -38,8 +39,7 @@
 
       cfg = config.services.nsfw-classifier;
 
-      pkg = inputs.nsfw-classifier.packages.${pkgs.stdenv.hostPlatform.system}.nsfw-classifier-go;
-      modelsDir = "/home/lars/projects/nsfw-classifier/models";
+      pkg = cfg.package;
 
       # Fast mode (single model, minimum latency) — exactly what the
       # extension's quick-scan path wants. falconsai is the registry's
@@ -52,7 +52,7 @@
         "--port ${toString cfg.port}"
         "--fast"
         "--models ${cfg.model}"
-        "--models-dir ${modelsDir}"
+        "--models-dir ${cfg.modelsDir}"
         "--pair-token auto"
       ];
     in
@@ -73,6 +73,31 @@
           type = lib.types.str;
           default = "falconsai";
           description = "Single model key for --fast mode (must be exported under models/<key>/model.onnx).";
+        };
+
+        package = lib.mkPackageOption pkgs "nsfw-classifier-go" {
+          default = inputs.nsfw-classifier.packages.${pkgs.stdenv.hostPlatform.system}.nsfw-classifier-go;
+          description = "Package providing the nsfw-server binary (defaults to the nsfw-classifier flake input's build).";
+        };
+
+        user = lib.mkOption {
+          type = lib.types.str;
+          default = "lars";
+          description = ''
+            User the unit runs as. Must be able to traverse modelsDir (the
+            default checkout lives under a 0700 home, which rules out
+            DynamicUser).
+          '';
+        };
+
+        modelsDir = lib.mkOption {
+          type = lib.types.str;
+          default = "/home/lars/projects/nsfw-classifier/models";
+          description = ''
+            Directory holding the exported ONNX models. Multi-GB and
+            gitignored, so it is deliberately kept OUT of the Nix store and
+            read from the live checkout instead.
+          '';
         };
       };
 
@@ -109,9 +134,10 @@
               {
                 Type = "simple";
                 ExecStart = execStart;
-                # The models checkout lives under a 0700 home — only lars can
-                # traverse it (DynamicUser cannot; see header comment).
-                User = "lars";
+                # The models checkout lives under a 0700 home — only the
+                # configured user can traverse it (DynamicUser cannot; see
+                # header comment). Defaults to lars.
+                User = cfg.user;
                 # Pairing token, verdict cache, and feedback JSONL persist via
                 # os.UserCacheDir → XDG_CACHE_HOME → /var/cache/nsfw-classifier
                 # (systemd creates it; owner lars). Stable across restarts so
@@ -129,6 +155,17 @@
                 # "strict" + private tmp + no new privs from harden defaults).
                 ProtectHome = false;
                 ProtectSystem = "strict";
+                # LAN network service: it needs IPv4/IPv6 listeners, the
+                # kernel netlink family Go's net package uses for interface
+                # enumeration, and AF_UNIX for nss/systemd-resolved. Same
+                # baseline as dnsblockd, plus AF_UNIX. service-defaults omits
+                # this on purpose (family needs are service-specific).
+                RestrictAddressFamilies = [
+                  "AF_INET"
+                  "AF_INET6"
+                  "AF_NETLINK"
+                  "AF_UNIX"
+                ];
               })
               ioTier.background
             ];

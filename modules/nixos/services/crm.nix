@@ -12,6 +12,12 @@
 #     /healthz stays unauthenticated for Gatus (crm main.go: "always 200
 #     while the process can serve at all ... deliberately OUTSIDE the
 #     auth gate")
+#   - NATIVE OIDC (2026-10-10): Pocket ID sign-in rides BESIDE the
+#     passkeys (Layer 1 in docs/agents/sso-dns.md — the oauth2-proxy
+#     Layer 2 gate bypasses LAN clients, and crm.<domain> IS a LAN
+#     hostname, so only in-app OIDC covers them). Passkeys stay as the
+#     break-glass path; an unreachable Pocket ID at boot degrades to
+#     passkey-only (crm-server logs loudly, stays up).
 #   - the -api-token bearer gate (the Twenty-compatible /rest surface the
 #     CV pipeline sync mirrors into) is INDEPENDENT of the passkey session
 #     gate (api.go: "called OUTSIDE the CRM's session gate") — the CV
@@ -51,6 +57,18 @@
       # 2026-09-18 decision: the unit adopts the journal in place).
       stateDir = "/home/${user}/.local/share/crm";
       backupDir = "/mnt/pool/backups/crm";
+      # Native OIDC (Pocket ID): clientId keys the provisioned Pocket ID
+      # client AND the secret path the bridge reads; the provider key
+      # "pocket-id" forms the callback route segment
+      # /auth/oauth/pocket-id/callback (crm identity.go flag wiring).
+      crmOidcClientId = "crm";
+      # Where the crm-oidc-env bridge writes CRM_OIDC_CLIENT_SECRET (the
+      # cv-oidc-env pattern: StateDirectory owns /var/lib/crm-oidc).
+      oidcEnvFile = "/var/lib/crm-oidc/client-secret.env";
+      # OIDC rides only when Pocket ID's provisioning layer is on (the cv
+      # pattern): without it no client secret exists and the flags would
+      # point at a client Pocket ID has never heard of.
+      pocketIdProvisioned = config.services.pocket-id-config.provision.enable or false;
       # TEMPORARY vendorHash shim (RE-PINNED 2026-10-09 — class comment at
       # lib/lars-packages.nix): got jIP0Y7LD… at locked rev 0c1526bf
       # (first-hand keep-going enumeration, /tmp/toplevel-fix-20261009.log).
@@ -173,11 +191,30 @@
                     # vHost serves TLS; loopback HTTP is not used).
                     "-secure true"
                   ]
+                  ++ lib.optionals pocketIdProvisioned [
+                    # Native OIDC (Pocket ID beside the passkey login).
+                    # The client secret rides CRM_OIDC_CLIENT_SECRET from
+                    # the crm-oidc-env bridge (environment, never argv).
+                    "-oidc-issuer https://auth.${domain}"
+                    "-oidc-client-id ${crmOidcClientId}"
+                    "-oidc-redirect-url https://crm.${domain}/auth/oauth/pocket-id/callback"
+                  ]
                 );
                 # Strict + exactly one writable carve-out: the journal dir.
                 # Everything else on the filesystem is read-only to the
                 # process (ported from deploy/crm-server.service).
               }
+              (lib.mkIf pocketIdProvisioned {
+                # EXTENDS the sops env file with the OIDC bridge's secret
+                # file (cv-server mkForce pattern). A MISSING file (the
+                # bridge removed it: no secret provisioned) is a systemd
+                # warning, not a start failure — OIDC degrades off and the
+                # passkey path keeps working.
+                EnvironmentFile = lib.mkForce [
+                  config.sops.templates."crm-server-env".path
+                  oidcEnvFile
+                ];
+              })
               (harden {
                 ProtectSystem = "strict";
                 ProtectHome = "read-only";
@@ -186,6 +223,49 @@
               })
               (serviceDefaults { })
             ];
+          };
+
+          # Bridges the Pocket ID client secret into the env file
+          # crm-server consumes (cv-oidc-env pattern). When the secret is
+          # missing the unit exits 0 WITHOUT writing the env file, so OIDC
+          # sign-in stays off instead of blocking the service (passkey
+          # login is the break-glass path and always works).
+          crm-oidc-env = lib.mkIf pocketIdProvisioned {
+            description = "Kith CRM — Pocket ID OIDC client secret provisioning";
+            after = [ "pocket-id-provision.service" ];
+            wants = [ "pocket-id-provision.service" ];
+            before = [ "crm-server.service" ];
+            wantedBy = [ "crm-server.service" ];
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+
+            serviceConfig = {
+              Type = "oneshot";
+              RemainAfterExit = true;
+              StateDirectory = "crm-oidc";
+              LoadCredential = [
+                "pocket-id-secret:${
+                  config.services.pocket-id.dataDir or "/var/lib/pocket-id"
+                }/client-secrets/${crmOidcClientId}"
+              ];
+            };
+
+            path = [ pkgs.coreutils ];
+
+            script = ''
+              SECRET_FILE="$CREDENTIALS_DIRECTORY/pocket-id-secret"
+
+              if [ ! -s "$SECRET_FILE" ]; then
+                echo "crm-oidc-env: Pocket ID secret not found — removing env file so OIDC sign-in stays off"
+                rm -f "${oidcEnvFile}"
+                exit 0
+              fi
+
+              install -d -m 0755 "$(dirname "${oidcEnvFile}")"
+              echo "CRM_OIDC_CLIENT_SECRET=$(cat "$SECRET_FILE")" > "${oidcEnvFile}"
+              chmod 600 "${oidcEnvFile}"
+              echo "crm-oidc-env: Pocket ID client secret written"
+            '';
           };
 
           # Pool leaf creator (cv-backup-dir / miniflux-backup-dir pattern).
@@ -303,8 +383,9 @@
         # Service-integration registry entry: ONE declaration fans out to
         # Caddy vHost, Gatus checks, dashboard tile, backup freshness, and
         # system-health monitored-unit metrics. Layer "plain": the Kith
-        # carries its OWN auth (WebAuthn passkeys) — a "protected" layer
-        # would double-auth (native-OIDC double-auth doctrine).
+        # carries its OWN auth — WebAuthn passkeys plus NATIVE Pocket ID
+        # OIDC (the oidc entry below; a "protected" Layer 2 gate would
+        # double-auth and bypasses LAN clients anyway).
         # The vHost + tile stay dormant while Twenty owns the subdomain
         # (see the cutover note in the module header); the loopback health
         # check + backup + monitoring are live from day one.
@@ -340,6 +421,18 @@
                   group = "Productivity";
                   description = "Event-sourced personal CRM (passkey)";
                 };
+            # Native OIDC (Pocket ID) beside the passkey login — the CV
+            # pattern: the login page renders the provider button, success
+            # mints the app session. The secret lands in
+            # /var/lib/pocket-id/client-secrets/crm and reaches the server
+            # via the crm-oidc-env bridge (above). PKCE S256 enforced.
+            oidc = {
+              name = "Kith CRM";
+              clientId = crmOidcClientId;
+              launchURL = "https://crm.${domain}";
+              callbackURLs = [ "https://crm.${domain}/auth/oauth/pocket-id/callback" ];
+              pkceEnabled = true;
+            };
             backup = {
               # Nightly WAL-safe snapshots (crm-backup.timer, 03:40) onto
               # the mirrored pool: ledger-*.db AND identity-*.db. Freshness
