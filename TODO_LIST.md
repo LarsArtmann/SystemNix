@@ -278,6 +278,9 @@
 - [ ] [ready] **Push-lag tripwire: alert when master runs far ahead of origin or last-push ages out** (daemon commits but never pushes — proven 2026-10-08 when 38 commits sat unpushed ~15 h with remote fine; ahead-by > N or push-age > M → gatus/textfile alert) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-10-08_09-10_self-review-brutal-post-execution-session.md §f.13)
 
 - [ ] [ready] **Automated runtime throttle detection: memory.events `high` counter sweep in post-deploy-check (+ optional textfile/SigNoz rule)** — eval gate kills NEW config traps; a runtime-throttled unit still surfaces nowhere (llama-chat 2026-10-08: 46k events, zero alerts) → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-10-09_22-20_memory-watermark-trap-audit-status.md §f.1)
+- [ ] [ready] **Log→trace correlation for the span-emitting Go fleet (4 of 12.16M log lines carry trace_id — SigNoz's free drilldown bridge is empirically dead)** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-10-09_23-29_signoz-utilization-gap-analysis-self-review.md)
+- [ ] [decision] **GCP dashboard disposition: re-arm the receiver (sops key + enable=true, SA already done) or DELETE gcp.json's 10 dead panels** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/planning/2026-10-10_02-44_signoz-three-pillars-full-power-pareto-plan.md T3)
+- [ ] [ready] **Live-probe cheat-sheet in signoz.md + exemplar upstream-watch note (stop doc-parroting capabilities)** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-10-09_23-29_signoz-utilization-gap-analysis-self-review.md §e)
 ### ai-stack
 
 - [ ] **Bisect the llama.cpp 0.3.0 mid-load CPU-spin upstream (ROCm runtime / kernel / GPU-state — upstream of llama.cpp) — THE gate for re-enabling llama-rag and unblocking the paperless RAG item** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
