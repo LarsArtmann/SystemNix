@@ -80,6 +80,9 @@
         coreutils
         lm_sensors
         networkmanager
+        # hardware_identity mac_permanent collector: ethtool -P reads the
+        # etched NIC address (stable under Wi-Fi MAC randomization)
+        ethtool
         bluez
         # X11 (legacy — evo-x2 runs Wayland-only niri)
         xdotool
