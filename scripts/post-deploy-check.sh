@@ -183,15 +183,11 @@ if storm_read="$(systemnix_io_storm_active)"; then
   echo ""
 fi
 
-# Convert a just-recorded storm-sensitive FAIL into STORM-SUSPECT: removes
-# ONE occurrence of the check's stable name from the fail set (exactly the
-# line the failed leg added, so a sibling CV leg that legitimately failed
-# stays in the baseline), moves the count, and prints the verdict.
+# Storm-replacement verdict for a load-sensitive leg whose FAIL branch is
+# being suppressed: counts and prints ONLY. Never touches FAIL or the fail
+# set - the caller's if/elif structure simply never recorded a FAIL (the
+# timeout body proved the app answered; the storm owns the slowness).
 report_storm_suspect() {
-  local name="${1%% - *}"
-  awk -v n="$name" 'BEGIN { done = 0 } !done && $0 == n { done = 1; next } { print }' \
-    "$SMOKE_FAIL_NAMES" >"${SMOKE_FAIL_NAMES}.storm" && mv "${SMOKE_FAIL_NAMES}.storm" "$SMOKE_FAIL_NAMES"
-  FAIL=$((FAIL - 1))
   STORM_SUSPECT=$((STORM_SUSPECT + 1))
   echo -e "${YELLOW}STORM-SUSPECT${NC} $1"
 }
@@ -203,16 +199,35 @@ echo ""
 # --- Infrastructure ---
 check_local "Caddy metrics" "2019" "/metrics" "200" "" 2>/dev/null || true
 check "Caddy HTTP redirect" "http://dash.$DOMAIN" "301" "" 2>/dev/null || true
-if ! check "Caddy catch-all 404" "https://catchall-probe.$DOMAIN/" "404" "" 2>/dev/null; then
-  $systemnix_storm_mode && report_storm_suspect "Caddy catch-all 404 - probe failed under I/O storm (io some avg60=${STORM_IO_AVG60}%) - TLS/TCP handshakes starve with the disk; re-verify when calm" || true
+# Storm-sensitive legs use an explicit probe + 3-way verdict (pass / storm
+# suspect / fail) instead of check(), so the storm branch records NOTHING
+# (check() would count the FAIL before any conversion could happen).
+_catchall_status="$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://catchall-probe.$DOMAIN/" 2>/dev/null || true)"
+if [ "$_catchall_status" = "404" ]; then
+  report_pass "Caddy catch-all 404 (probe answered 404)"
+elif $systemnix_storm_mode; then
+  report_storm_suspect "Caddy catch-all 404 - probe answered '${_catchall_status:-nothing}' under I/O storm (io some avg60=${STORM_IO_AVG60}%) - TLS/TCP handshakes starve with the disk; re-verify when calm"
+else
+  report_fail "Caddy catch-all 404 - probe answered '${_catchall_status:-nothing}' (expected 404; unreachable = Caddy/TLS chain down)"
 fi
 
-# Pocket ID latency probes (healthz, then the page fallback): the SQLITE_BUSY
-# journal scan below stays a FAIL under storm mode - lock contention text in
-# the journal is evidence, not a timeout artifact.
-if ! { check_local "Pocket ID" "1411" "/healthz" "204" 2>/dev/null ||
-  check_local "Pocket ID" "1411" "/" "200" "" 2>/dev/null; }; then
-  $systemnix_storm_mode && report_storm_suspect "Pocket ID - health probes failed under I/O storm (io some avg60=${STORM_IO_AVG60}%) - re-verify when calm" || true
+# Pocket ID latency probes (healthz, then the page fallback). Recorded name
+# kept identical to the old check_local pair ("Pocket ID (localhost:1411)")
+# so the fail baseline does not churn. The SQLITE_BUSY journal scan below
+# stays a FAIL under storm mode - lock contention text in the journal is
+# evidence, not a timeout artifact.
+_pocketid_status="$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "http://localhost:1411/healthz" 2>/dev/null || true)"
+if [ "$_pocketid_status" != "204" ]; then
+  _pocketid_page="$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "http://localhost:1411/" 2>/dev/null || true)"
+else
+  _pocketid_page=""
+fi
+if [ "$_pocketid_status" = "204" ] || [ "$_pocketid_page" = "200" ]; then
+  report_pass "Pocket ID (localhost:1411, status ${_pocketid_status:-${_pocketid_page}})"
+elif $systemnix_storm_mode; then
+  report_storm_suspect "Pocket ID - health probes failed under I/O storm (io some avg60=${STORM_IO_AVG60}%; healthz '${_pocketid_status:-none}' / page '${_pocketid_page:-skipped}') - re-verify when calm"
+else
+  report_fail "Pocket ID (localhost:1411) - health probes failed (healthz: '${_pocketid_status:-none}', page: '${_pocketid_page:-skipped}')"
 fi
 
 # Pocket ID: scan recent journal for SQLITE_BUSY or francis panics.
