@@ -304,9 +304,13 @@ lib.mkIf cfg.components.nodeExporter {
 
                     # Derived alert: 1 when >50% of tasks stalled on memory (10s avg),
                     # or >10% fully stalled — early warning before OOM cascade.
+                    # /proc/pressure/* reports PERCENT (0-100), not a 0-1
+                    # fraction: thresholds are in percent (T4, 2026-10-10 —
+                    # the 0.50/0.10 fraction form made the alert fire at
+                    # 0.5% pressure, a standing red on calm memory).
                     alert=0
-                    awk "BEGIN{exit !($some_avg10 > 0.50)}" && alert=1
-                    awk "BEGIN{exit !($full_avg10 > 0.10)}" && alert=1
+                    awk "BEGIN{exit !($some_avg10 > 50)}" && alert=1
+                    awk "BEGIN{exit !($full_avg10 > 10)}" && alert=1
 
                     # Warning tier (2026-08-22): the CRITICAL alert fired 17s
                     # before the 05:49 freeze and 43min before the 00:27 one —
@@ -317,13 +321,14 @@ lib.mkIf cfg.components.nodeExporter {
                     # notification path handle the human loop; the memory
                     # emergency guard remains the only automated actor.
                     warning=0
-                    awk "BEGIN{exit !($some_avg60 >= 0.20)}" && warning=1
+                    awk "BEGIN{exit !($some_avg60 >= 20)}" && warning=1
 
                     # ── I/O pressure ────────────────────────────────────────────
-                    # avg300 = proportion of last 300s (5 min) where tasks stalled
+                    # avg300 = percent of last 300s (5 min) where tasks stalled
                     # on I/O. Equivalent to rate(node_pressure_io_stalled_seconds_total[5m]).
-                    # Alert at >0.10 (10% of wall-clock time stalled) — indicates
-                    # SLC cache exhaustion or sustained I/O starvation.
+                    # Alert at >10% of wall-clock time stalled — indicates
+                    # SLC cache exhaustion or sustained I/O starvation. Percent
+                    # semantics (see the memory thresholds note above).
                     io_some_avg300=0
                     io_full_avg300=0
                     io_alert=0
@@ -333,7 +338,7 @@ lib.mkIf cfg.components.nodeExporter {
                       io_full_avg300=$(awk '/^full/ {split($4, a, "="); print a[2]}' "$IO_PSI")
                       io_some_avg300="''${io_some_avg300:-0}"
                       io_full_avg300="''${io_full_avg300:-0}"
-                      awk "BEGIN{exit !($io_some_avg300 > 0.10)}" && io_alert=1
+                      awk "BEGIN{exit !($io_some_avg300 > 10)}" && io_alert=1
 
                     # ── Disk %util corroboration (crash3 phantom-saturation) ───
                     # D-state tasks parked on dead automounts saturate I/O PSI
@@ -374,10 +379,10 @@ lib.mkIf cfg.components.nodeExporter {
                       echo "# HELP node_psi_memory_some_avg60 Proportion of last 60s where some tasks stalled on memory (the storm-forming window)"
                       echo "# TYPE node_psi_memory_some_avg60 gauge"
                       echo "node_psi_memory_some_avg60 ''${some_avg60}"
-                      echo "# HELP node_psi_memory_warning Derived boolean: 1 when sustained memory stall (some avg60) >= 20% — storm forming, act now; alert-only, no automated action (user decision 2026-08-22)"
+                      echo "# HELP node_psi_memory_warning Derived boolean: 1 when sustained memory stall (some avg60) >= 20 percent — storm forming, act now; alert-only, no automated action (user decision 2026-08-22)"
                       echo "# TYPE node_psi_memory_warning gauge"
                       echo "node_psi_memory_warning ''${warning}"
-                      echo "# HELP node_psi_memory_alert Derived boolean: 1 when pressure exceeds early-warning threshold"
+                      echo "# HELP node_psi_memory_alert Derived boolean: 1 when memory pressure exceeds early-warning threshold (some avg10 > 50 percent or full avg10 > 10 percent)"
                       echo "# TYPE node_psi_memory_alert gauge"
                       echo "node_psi_memory_alert ''${alert}"
                       echo "# HELP node_psi_io_some_avg300 Proportion of last 5min where some tasks stalled on I/O"

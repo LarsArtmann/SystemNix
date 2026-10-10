@@ -1135,7 +1135,7 @@ _: {
                     "[STATUS] == 200"
                     "[BODY] == pat(*node_psi_memory_alert 0*)"
                   ];
-                  alerts = discordAlert "Memory pressure CRITICAL — PSI some>50% or full>10%. Risk of OOM cascade. Check Helium/Electron processes.";
+                  alerts = discordAlert "Memory pressure CRITICAL — node_psi_memory_alert is 1 (some avg10 >50 or full avg10 >10, kernel PERCENT values — NOT 0-1 fractions) OR the metric/scrape is unreachable (storm-timeout class: verify psi.prom freshness before diagnosing memory). Risk of OOM cascade. Check Helium/Electron processes.";
                 })
                 (mkHttpCheck {
                   name = "I/O Stall Rate";

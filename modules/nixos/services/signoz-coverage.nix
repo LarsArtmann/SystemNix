@@ -493,11 +493,12 @@
             };
           };
 
-        # Ratchet DOWN with the registry (2026-09-13): dnsblockd flipped to
-        # "config", leaving exactly these 4 upstream gaps (overview,
-        # projects-management-automation, papdashboard, hermes). Any NEW
-        # silent noop must trip the budget check again.
-        services.signoz-coverage.maxUpstreamGaps = 4;
+        # Ratchet DOWN with the registry: overview flipped to enforced
+        # 2026-09-29 and verified reporting live 2026-10-10 (T1 battery:
+        # signoz_traces_reporting{service="overview"} = 1), leaving exactly
+        # these 3 upstream gaps (projects-management-automation, papdashboard,
+        # hermes). Any NEW silent noop must trip the budget check again.
+        services.signoz-coverage.maxUpstreamGaps = 3;
 
         assertions = map (msg: {
           assertion = false;
