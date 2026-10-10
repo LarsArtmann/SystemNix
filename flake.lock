@@ -474,11 +474,11 @@
     "cmdguard_7": {
       "flake": false,
       "locked": {
-        "lastModified": 1791363447,
-        "narHash": "sha256-VxxchkSLviH0jyyo3xIjFSEFdAn6GAjmx8jJPhWOPd0=",
+        "lastModified": 1791594274,
+        "narHash": "sha256-PMPJ7r1Qj9JfJAgEvzkBHap9rlyim8bBrYF0fOqzRX4=",
         "owner": "LarsArtmann",
         "repo": "cmdguard",
-        "rev": "b17298d0dbf7027309fd557884675fcc34bb2420",
+        "rev": "896cbcedf104fa29c55b686a67df4833b6b8f91f",
         "type": "github"
       },
       "original": {
@@ -2835,11 +2835,11 @@
         "treefmt-nix": "treefmt-nix_7"
       },
       "locked": {
-        "lastModified": 1791578992,
-        "narHash": "sha256-ulg8sNnpVYSKXj6PgCf7NMfjrVnN4YDeGKYTgW1Gpes=",
+        "lastModified": 1791605328,
+        "narHash": "sha256-pbIPUN/XmXoSUStYeER6GZDg1uU37RNwoGpF205FO0Q=",
         "owner": "larsartmann",
         "repo": "go-cqrs-lite",
-        "rev": "498f5c0c234f08eff83acff8cbcdf85d8874bc93",
+        "rev": "ea368b3424e7e3d3b7a4c6e3d022726911b8d591",
         "type": "github"
       },
       "original": {
@@ -6814,11 +6814,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791605411,
-        "narHash": "sha256-Gc6DwcxtuF/6qZUBd9KjVjxOspnIRX8cTpxjD21l80k=",
+        "lastModified": 1791606929,
+        "narHash": "sha256-ZZf4k5grkArp39vSRbaJICa0uO8s16twPcmAY6Dlgeo=",
         "ref": "refs/heads/master",
-        "rev": "2b1702d2f9f5a6b2e0dc342e249a65e4c8cd0a85",
-        "revCount": 1809,
+        "rev": "bc23462200329ae516bdcb8cbb85aa80f918edc2",
+        "revCount": 1821,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/nsfw-classifier"
       },
@@ -7718,11 +7718,11 @@
     "samber-do-auditlog_7": {
       "flake": false,
       "locked": {
-        "lastModified": 1791368837,
-        "narHash": "sha256-VeCf6FyI3ILrwRYW/R5L4XLm6r4WbRPtg0OLBbmRFRQ=",
+        "lastModified": 1791573433,
+        "narHash": "sha256-txXI3MsQHFMNvtZRxYtoROCUjlLJS9Q8kzoafPok9mU=",
         "owner": "LarsArtmann",
         "repo": "samber-do-auditlog",
-        "rev": "3bb39c0ef3a72bf66d356a2302ac1c9cfe57dcd6",
+        "rev": "4d147cc65d7508c4d3d5d049076737b9170d62f5",
         "type": "github"
       },
       "original": {
