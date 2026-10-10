@@ -992,6 +992,15 @@ in
         enable = true;
       };
 
+      # 2026-10-10 near-freeze prevention: SIGKILLs any bun process past
+      # 16 GiB VmRSS — the qmd-mcp bun runtimes agent sessions spawn are
+      # plain user processes no systemd unit can cap, and `bun test` hit
+      # ~70 GB with no natural ceiling (module header has the narrative;
+      # runbook docs/services/bun-memory-watchdog.md).
+      bun-memory-watchdog = {
+        enable = true;
+      };
+
       # 2026-08-22 stability plan: bounding heavy-job demand (flock queue
       # `heavy-job` wrapper; build memory is separately bounded via
       # nix-daemon MemoryHigh in networking.nix).

@@ -88,6 +88,26 @@
               touch $out
             '';
 
+        # bun-memory-watchdog fixture selftest: kills the 17 GiB bun and
+        # the exactly-at-threshold bun, spares the 15 GiB bun and the
+        # over-threshold non-bun, accumulates the kill counter across
+        # sweeps, and stamps prom freshness. Runs the REAL sweep via
+        # `sweep-run` subprocesses against a fixture /proc tree.
+        bun-memory-watchdog-selftest =
+          pkgs.runCommand "bun-memory-watchdog-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              cp ${root}/scripts/bun-memory-watchdog.sh "$scratch/bun-memory-watchdog.sh"
+              ${pkgs.bash}/bin/bash "$scratch/bun-memory-watchdog.sh" selftest
+              touch $out
+            '';
+
         # The pre-deploy §11 vendorHash-freshness parsers BLOCK deploys
         # on FOD hash mismatch — the greps they replaced matched output
         # nix never produces and warned "unable to determine status" on

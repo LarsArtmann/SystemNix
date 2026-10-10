@@ -70,18 +70,23 @@ sweep() {
     [ "${exe_now##*/}" = "$base" ] || continue
     cmdline="$(tr '\0' ' ' <"$stat_dir/cmdline" 2>/dev/null || true)"
     cgroup="$(head -1 "$stat_dir/cgroup" 2>/dev/null || true)"
+    local action=""
     if [ -n "$DRY_RUN_FILE" ]; then
       printf '%s\n' "$pid" >>"$DRY_RUN_FILE"
+      action="DRY-RUN KILL"
     elif kill -9 "$pid" 2>/dev/null; then
+      action="KILLED"
+    else
       printf '%s %s\n' "$(date -Is)" \
-        "KILLED $base pid=$pid rss=${rss_kb}kB cgroup=${cgroup:-unknown} cmd=${cmdline:-unknown}" >&2
+        "kill FAILED $base pid=$pid rss=${rss_kb}kB (gone or EPERM)" >&2
+    fi
+    if [ -n "$action" ]; then
+      printf '%s %s\n' "$(date -Is)" \
+        "$action $base pid=$pid rss=${rss_kb}kB cgroup=${cgroup:-unknown} cmd=${cmdline:-unknown}" >&2
       printf '%s\n' "$pid" >"$STATE_DIR/last-kill-pid"
       printf '%s\n' "$rss_kb" >"$STATE_DIR/last-kill-rss-kb"
       date +%s >"$STATE_DIR/last-kill-epoch"
       kills=$((kills + 1))
-    else
-      printf '%s %s\n' "$(date -Is)" \
-        "kill FAILED $base pid=$pid rss=${rss_kb}kB (gone or EPERM)" >&2
     fi
   done
   echo "$kills"
@@ -203,7 +208,10 @@ selftest() {
   fi
 
   # counter persistence: a second run with one fresh offender must
-  # accumulate (kills_total 3, not 1).
+  # accumulate (kills_total 3, not 1). The run-1 offenders are REMOVED
+  # first — SIGKILLed processes no longer exist for the next sweep; a
+  # fixture that kept them would model a survivor, not a kill.
+  rm -rf "$fake_proc/111" "$fake_proc/444"
   mkdir -p "$fake_proc/555"
   ln -s "/nix/store/yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy-bun-1.3.6/bin/bun" "$fake_proc/555/exe"
   printf 'VmRSS:\t20971520 kB\n' >"$fake_proc/555/status"
