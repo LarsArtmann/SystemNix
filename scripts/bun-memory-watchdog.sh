@@ -34,6 +34,18 @@ THRESHOLD_KB="${BUN_WATCHDOG_THRESHOLD_KB:-16777216}"
 PROCESS_NAMES="${BUN_WATCHDOG_PROCESS_NAMES:-bun}"
 DRY_RUN_FILE="${BUN_WATCHDOG_DRY_RUN_FILE:-}"
 
+SCRATCH_DIR=""
+PROM_TMP=""
+cleanup() {
+  if [ -n "$PROM_TMP" ]; then
+    rm -f "$PROM_TMP"
+  fi
+  if [ -n "$SCRATCH_DIR" ]; then
+    rm -rf "$SCRATCH_DIR"
+  fi
+}
+trap cleanup EXIT
+
 read -ra process_names <<<"$PROCESS_NAMES"
 
 sweep() {
@@ -76,13 +88,6 @@ sweep() {
 }
 
 PROM_TMP=""
-cleanup() {
-  if [ -n "$PROM_TMP" ]; then
-    rm -f "$PROM_TMP"
-  fi
-}
-trap cleanup EXIT
-
 render_prom() {
   local kills_delta="$1"
 
@@ -136,12 +141,13 @@ render_prom() {
 }
 
 # --- selftest -------------------------------------------------------------
-# Fixture proc tree; asserts the kill rule, the non-bun exclusion, the
-# threshold boundary, and counter persistence across runs.
+# Fixture proc tree; drives the REAL sweep via `sweep-run` subprocesses
+# (env-configurable data sources) and asserts the kill rule, the non-bun
+# exclusion, the threshold boundary, and counter persistence across runs.
 selftest() {
   local scratch
   scratch="$(mktemp -d)"
-  trap 'rm -rf "$scratch"' EXIT
+  SCRATCH_DIR="$scratch"
 
   local fake_proc="$scratch/proc"
   mkdir -p "$fake_proc/111" "$fake_proc/222" "$fake_proc/333" "$fake_proc/444"
@@ -169,10 +175,10 @@ selftest() {
   run1="$(
     BUN_WATCHDOG_PROC_SRC="$fake_proc" \
       BUN_WATCHDOG_STATE_DIR="$state" \
+      BUN_WATCHDOG_OUT="$out" \
       BUN_WATCHDOG_DRY_RUN_FILE="$dry_run" \
-      sweep
+      bash "${BASH_SOURCE[0]}" sweep-run
   )"
-  BUN_WATCHDOG_OUT="$out" BUN_WATCHDOG_STATE_DIR="$state" render_prom "$run1"
 
   local fail=0
   if ! grep -qx '111' "$dry_run"; then
@@ -207,10 +213,10 @@ selftest() {
   run2="$(
     BUN_WATCHDOG_PROC_SRC="$fake_proc" \
       BUN_WATCHDOG_STATE_DIR="$state" \
+      BUN_WATCHDOG_OUT="$out" \
       BUN_WATCHDOG_DRY_RUN_FILE="$dry_run" \
-      sweep
+      bash "${BASH_SOURCE[0]}" sweep-run
   )"
-  BUN_WATCHDOG_OUT="$out" BUN_WATCHDOG_STATE_DIR="$state" render_prom "$run2"
 
   if [ "$run2" != "1" ]; then
     echo "selftest FAIL: second sweep reported $run2 kills, expected 1" >&2
@@ -251,3 +257,6 @@ mkdir -p "$STATE_DIR"
 
 kills="$(sweep)"
 render_prom "$kills"
+
+printf 'bun-watchdog sweep: kills=%s\n' "$kills" >&2
+echo "$kills"
