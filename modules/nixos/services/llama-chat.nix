@@ -9,8 +9,9 @@
 # rev-pinned 0.3.0 build spins identically to 0.4.0 (94% single-thread CPU
 # right after the vocab warning; see llama-rag.nix's ESCAPE CONDITION
 # narrative). Direct-run verification outside the unit context is
-# insufficient evidence there. The CPU llama.cpp build (0.5.0 from root
-# nixpkgs) is the proven-in-production path on this host — llama-vlm's
+# insufficient evidence there. The CPU llama.cpp build (0.6.0 from root
+# nixpkgs as of the 2026-10-10 thinking-fix deploy; 0.5.0 when this
+# module first landed) is the proven-in-production path on this host — llama-vlm's
 # caption/verdict servers run it under systemd daily. CPU is not a
 # compromise here: the model is a Qwen3.6 35B-A3B MoE (3B active params),
 # so CPU inference still streams interactive-fast tokens while the full

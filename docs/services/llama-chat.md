@@ -13,7 +13,7 @@ Always-on CPU llama-server (llama.cpp) serving Lars's abliterated Qwen3.6
   theirs. Ollama is owner-rejected as the standard.
 - **CPU, not GPU**: the llama.cpp/ROCm path wedges under systemd units on
   gfx1150 (freeze #5, 2026-09-18 — even the rev-pinned 0.3.0 build; see
-  llama-rag.nix). The CPU build (0.5.0) is proven in production by
+  llama-rag.nix). The CPU build (0.6.0 at the 2026-10-10 deploy; 0.5.0 proven earlier) is in production
   llama-vlm. A 3B-active MoE keeps CPU tokens interactive-fast.
 - **Native tool calls**: `--jinja` applies the GGUF's Qwen3.6 chat template,
   so OpenAI-format `tools` produce real `tool_calls` responses (verified
