@@ -10,6 +10,11 @@
 set -euo pipefail
 
 DOMAIN="${SYSTEMNIX_DOMAIN:-home.lan}"
+# vHost TLS probe budget: 20s matches the Gatus client timeout of the slowest
+# protected backend (mr-sync cold-start du-walks ~/projects + ~/forks,
+# docs/services/mr-sync.md) so a slow-but-alive backend is not misread as
+# unreachable.
+VHOST_PROBE_TIMEOUT=20
 PASS=0
 FAIL=0
 SKIP=0
@@ -1574,7 +1579,8 @@ for entry in "${AUTH_VHOSTS[@]}"; do
     SKIP=$((SKIP + 1))
     continue
   fi
-  status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://$vhost" 2>/dev/null || true)
+  curl_rc=0
+  status=$(curl -s -o /dev/null -w "%{http_code}" --max-time "$VHOST_PROBE_TIMEOUT" "https://$vhost" 2>/dev/null) || curl_rc=$?
   case "$status" in
   200 | 301 | 302 | 303)
     echo -e "${GREEN}PASS${NC} $vhost → $status (auth gateway healthy)"
@@ -1586,7 +1592,13 @@ for entry in "${AUTH_VHOSTS[@]}"; do
     record_fail "$vhost → auth gateway broken"
     ;;
   000)
-    echo -e "${YELLOW}SKIP${NC} $vhost unreachable"
+    case $curl_rc in
+    28) echo -e "${YELLOW}SKIP${NC} $vhost timeout >${VHOST_PROBE_TIMEOUT}s (backend processing, not down)" ;;
+    6) echo -e "${YELLOW}SKIP${NC} $vhost DNS resolution failed" ;;
+    7) echo -e "${YELLOW}SKIP${NC} $vhost connection refused (TLS edge down?)" ;;
+    35 | 51 | 60) echo -e "${YELLOW}SKIP${NC} $vhost TLS handshake failed (curl rc $curl_rc)" ;;
+    *) echo -e "${YELLOW}SKIP${NC} $vhost unreachable (curl rc $curl_rc)" ;;
+    esac
     SKIP=$((SKIP + 1))
     ;;
   *)
@@ -1610,10 +1622,17 @@ if [ "${#PLAIN_VHOSTS[@]}" -gt 0 ]; then
   vhost="${entry%%|*}"
   port="${entry#*|}"
   if backend_listening "$port"; then
-    status=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 10 "https://$vhost" 2>/dev/null || true)
+    curl_rc=0
+    status=$(curl -sk -o /dev/null -w "%{http_code}" --max-time "$VHOST_PROBE_TIMEOUT" "https://$vhost" 2>/dev/null) || curl_rc=$?
     case "$status" in
     000)
-      echo -e "${YELLOW}SKIP${NC} $vhost unreachable"
+      case $curl_rc in
+      28) echo -e "${YELLOW}SKIP${NC} $vhost timeout >${VHOST_PROBE_TIMEOUT}s (backend processing, not down)" ;;
+      6) echo -e "${YELLOW}SKIP${NC} $vhost DNS resolution failed" ;;
+      7) echo -e "${YELLOW}SKIP${NC} $vhost connection refused (TLS edge down?)" ;;
+      35 | 51 | 60) echo -e "${YELLOW}SKIP${NC} $vhost TLS handshake failed (curl rc $curl_rc)" ;;
+      *) echo -e "${YELLOW}SKIP${NC} $vhost unreachable (curl rc $curl_rc)" ;;
+      esac
       SKIP=$((SKIP + 1))
       ;;
     500 | 502 | 503)
