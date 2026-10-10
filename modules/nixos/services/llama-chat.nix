@@ -35,6 +35,17 @@
 # (modules/nixos/services/inboxclean.nix); `inboxclean doctor` verifies the
 # served model id against /v1/models at deploy time.
 #
+# Thinking OFF (--chat-template-kwargs, 2026-10-10): the Qwen3.6 template
+# defaults enable_thinking=true, so every chat completion opened a <think>
+# block BEFORE any content. Measured live: a trivial plan-style probe burned
+# 600/600 max_tokens on reasoning alone (content EMPTY, finish=length) in
+# 59s at ~10-25 t/s CPU; the real InboxClean turn (4.9k-token context) never
+# finished thinking inside the app's 3-minute turn budget — 4/4 turns died
+# with "context deadline exceeded" since the brain landed. With
+# enable_thinking=false the same probe returns converging JSON in 80 tokens
+# (finish=stop). Server-side (not per-request) so every OpenAI-compatible
+# consumer — InboxClean included, which sends no template kwargs — gets it.
+#
 # No fetch unit: the GGUF is part of the Jan-managed model tree
 # (/data/ai/models/jan/llamacpp, ~92 G, backed by the ai-models backup
 # exclusions), not a service-owned download. If the file is missing the
@@ -63,6 +74,8 @@ _: {
       # which is what turns OpenAI-format `tools` into native Qwen3.6
       # tool-call responses. No --n-gpu-layers: the ROCm path is wedged on
       # this host (freeze #5); CPU + MoE is the deliberate posture above.
+      # The template-kwargs kill the template's default <think> phase —
+      # see the header narrative (2026-10-10 deadline-exceeded class).
       execStart =
         "${llamaServer}"
         + " -m ${cfg.modelPath}"
@@ -71,7 +84,8 @@ _: {
         + " --port ${toString cfg.port}"
         + " --ctx-size ${toString cfg.ctxSize}"
         + " --threads ${toString cfg.threads}"
-        + " --jinja";
+        + " --jinja"
+        + " --chat-template-kwargs {\"enable_thinking\":false}";
 
       # Convergence helper (2026-10-08): ConditionPathExists is evaluated
       # once per start attempt — a unit skipped at boot (model still a .part

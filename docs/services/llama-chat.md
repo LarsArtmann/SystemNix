@@ -18,6 +18,18 @@ Always-on CPU llama-server (llama.cpp) serving Lars's abliterated Qwen3.6
 - **Native tool calls**: `--jinja` applies the GGUF's Qwen3.6 chat template,
   so OpenAI-format `tools` produce real `tool_calls` responses (verified
   live 2026-10-08). The InboxClean agent drives Gmail tools through this.
+- **Thinking OFF** (`--chat-template-kwargs {"enable_thinking":false}`,
+  2026-10-10): the Qwen3.6 template defaults `enable_thinking=true`, so every
+  completion opened a `<think>` block before any content. At CPU token rates
+  that tax is fatal: measured live, a trivial plan probe burned 600/600
+  `max_tokens` on reasoning with EMPTY content (`finish_reason=length`);
+  InboxClean's real turn (4.9k-token plan context) never finished thinking
+  inside the app's 3-minute turn budget — all 4 turns since the brain landed
+  died with `context deadline exceeded` (the 2026-10-10 "still broken"
+  incident; two flavors, both this: ollama-404 pre-wiring on 10-08, deadline
+  on 10-10). Thinking disabled server-side so consumers that send no
+  template kwargs (InboxClean's OpenAI client) get it too. Same probe with
+  thinking off: 80 tokens, `finish_reason=stop`, valid plan JSON.
 
 ## Model
 
