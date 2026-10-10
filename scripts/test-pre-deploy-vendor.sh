@@ -99,6 +99,18 @@ expect_eq "$(vendor_freshness_classify_build "$FIX_MISMATCH" 1)" "mismatch" "has
 expect_eq "$(vendor_freshness_classify_build "$FIX_CACHED" 0)" "ok" "clean build verdict"
 expect_eq "$(vendor_freshness_classify_build 'error: cannot connect to nix daemon' 100)" "error" "non-hash failure verdict"
 
+# F tree-state binding (the 2026-10-09 22:31 / 2026-10-10 misread class:
+# a §11 verdict must be auditable against the tree it evaluated and void
+# when that tree mutates mid-gate). Fake-rev fixtures are deterministic
+# in a repo AND in the git-less selftest sandbox (fail-closed branch).
+expect_eq "$(vendor_freshness_tree_pin | grep -qE '^(no-git|[0-9a-f]{7,40}) (clean|[0-9a-f]{64}|-)$' && echo shape-ok)" "shape-ok" "tree pin shape (repo or sandbox)"
+expect_eq "$(vendor_freshness_tree_stamp 'abcdef1234567890 clean')" "abcdef1" "stamp: short rev, clean tree"
+expect_eq "$(vendor_freshness_tree_stamp 'abcdef1234567890 e3b0c44298')" "abcdef1*" "stamp: dirty tree gets *"
+expect_eq "$(vendor_freshness_tree_stamp 'no-git -')" "no-git" "stamp: no-git outside a repo"
+expect_eq "$(vendor_freshness_tree_changed 'abc1234 clean' 'abc1234 clean' && echo changed || echo same)" "same" "identical pins: no change"
+expect_eq "$(vendor_freshness_tree_changed 'abc1234 clean' 'abc1234 deadbeef' && echo changed || echo same)" "changed" "same rev, tree content moved: change"
+expect_eq "$(vendor_freshness_tree_changed 'aaaaaaaa clean' 'bbbbbbbb clean' && echo changed || echo same)" "changed" "rev move, eval delta unresolvable: fail closed"
+
 echo ""
 if [ "$TEST_FAILURES" -gt 0 ]; then
   echo "❌ $TEST_FAILURES fixture test(s) FAILED"

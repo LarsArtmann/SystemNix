@@ -65,7 +65,7 @@ The guard exists, is correct by fixture + live probe, passes every eval gate, an
 
 ## f) UP TO 50 THINGS TO GET DONE NEXT
 
-Legend: **[Q]** harvested to `TODO_LIST.md` queue now · **[L]** harvested to `docs/todo/stability.md` library now (gated/decision/watch — deliberately NOT queue-harvested per the harvest rules) · **[U]** harvested to `docs/todo/upstream.md` · **[idea]** deliberately not harvested (long-term/unrefined → ROADMAP class; recorded here only).
+Legend: **[Q]** harvested to `TODO_LIST.md` queue now · **[L]** harvested to `docs/todo/stability.md` library now (gated/decision/watch — deliberately NOT queue-harvested per the harvest rules) · **[idea]** deliberately not harvested (long-term/unrefined → ROADMAP class; recorded here only).
 
 1. **[Q]** Deploy evo-x2 at a quiescent window (parallel session check first) — the guard is inert until then; then verify timer active + first journal line + prom file exists.
 2. **[Q]** Gatus freshness composite for `bun_memory_watchdog_last_run_timestamp_seconds` (mirror "Memory Guard Collector Fresh"; staleSeconds 300; read monitoring.md first — routing debt from §b.4).
@@ -73,7 +73,7 @@ Legend: **[Q]** harvested to `TODO_LIST.md` queue now · **[L]** harvested to `d
 4. **[Q]** Real-kill E2E drill: synthetic bun memory hog >16G in a throwaway session on a quiet window; verify SIGKILL, journal, prom, counter (the only untested branch).
 5. **[Q]** Runbook additions: `exec bun` node-shim nuance (node scripts run as bun → inside kill scope by design), ProtectProc-invisible must never be added to this unit's harden set (it would blind the /proc sweep), threshold recalibration criteria.
 6. **[Q]** Selftest additions: first-run-no-kill prom-zeros case; one-kB-below-boundary survivor (16777215); `exe (deleted)` suffix; vanished-pid race between listing and re-verify.
-7. **[U]** Verify + file upstream qmd/bun: `bun test` unbounded memory growth (pull the SigNoz ramp first, pin reproduce, verify-before-filing, then github-voice).
+7. **[Q]** Verify + file upstream qmd/bun (harvested to `docs/todo/stability.md`; fix-domain consolidated): `bun test` unbounded memory growth (pull the SigNoz ramp first, pin reproduce, verify-before-filing, then github-voice).
 8. **[Q]** Pull the 70 GB incident window from SigNoz (anon vs shmem vs zram composition) — calibration evidence for the threshold and the guard zones.
 9. **[Q]** Kill-log attribution: add PPID + session-scope to the KILLED line (which Crush session leaked).
 10. **[L]** `[decision]` Kill notification tier: Discord-only, sev1 `notify`, or nothing (movie-night HARD RULE says memory conditions never overlay; is a bun kill "ACTUALLY-impacted-soon"?).
