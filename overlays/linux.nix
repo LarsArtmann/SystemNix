@@ -252,7 +252,11 @@ let
   # checkPhase, blocking the toplevel (first-hand /tmp/toplevel-fix-20261012.log).
   # The gate below re-adds ONLY doCheck=false until that test is fixed or
   # adjudicated upstream.
-  crushDailyDoCheckGate = _final: prev: { crush-daily = prev.crush-daily.overrideAttrs (_old: { doCheck = false; }); };
+  crushDailyDoCheckGate = _final: prev: {
+    crush-daily = prev.crush-daily.overrideAttrs (_old: {
+      doCheck = false;
+    });
+  };
   # TEMPORARY version pin (2026-10-03): nixpkgs 7a0f122f (the 2026-10-01
   # lock) produced clickhouse 26.8.7.19 with a derivation that is ALREADY
   # built in the local store; the 2026-10-02 bump (c59305ba) changed the
