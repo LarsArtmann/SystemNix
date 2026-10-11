@@ -152,13 +152,15 @@ finalize: 53,172 entries + 43 sampled checksums verified, rename-only swap → d
 system-864). Forgejo 15.0.9 lives on the subvol; evidence trail in
 `docs/todo/services.md` (G1-window row) + `docs/status/2026-10-11_02-17_*`. Remaining
 owner tail: burn-in (≥2 btrbk legs at the 05:40/13:40/21:40 cadence + one full mirror
-cycle) → `sudo trash /var/lib/forgejo.qlc-pre-subvol` (reclaims 67G on the QLC). Seed
-state: attempt 1 (2026-10-11 05:40) was storm-killed by memory-emergency-guard trip
-#2663 mid-receive (17G/67G — by-design Zone-6 churn stop); the partial target self-heals
-and the seed re-lands via guard re-arm or the next slot — verify `sudo btrfs filesystem
-du -s` ≈67G on the newest snapshot BEFORE the trash (mtime-based freshness cannot see
-content or completeness — two phantom modes live-observed 2026-10-11, see
-`docs/status/2026-10-11_06-10_forgejo-backup-verification-phantom-window-seed-storm-kill.md`).
+cycle) → `sudo trash /var/lib/forgejo.qlc-pre-subvol` (reclaims 67G on the QLC). Seed state: LANDED 2026-10-11 07:13 via owner-manual start in a calm window —
+`forgejo.20261011T0706` received clean, du-verified **70.41GiB** (attempt 1 at 05:40 was
+storm-killed by memory-emergency-guard trip #2663 mid-receive — by-design Zone-6 churn
+stop). Residual: the killed attempt left a 17G STRAY partial — `sudo btrbk -c
+/etc/btrbk/forgejo.conf clean /mnt/pool/backups/forgejo-subvol` removes it; until then
+each btrbk run exits 10 and pages OnFailure despite the backup succeeding. Burn-in
+1/2 legs done; leg 2 = the next clean slot, then the qlc trash. Mtime-based freshness
+cannot see content or completeness — two phantom modes live-observed 2026-10-11, see
+`docs/status/2026-10-11_06-10_forgejo-backup-verification-phantom-window-seed-storm-kill.md`.
 Watch:
 forgejo.service MemoryHigh hits during first-boot mirror catch-up (25k in ~minutes,
 storm-attributed — re-check calm; watermark audit if sustained).
