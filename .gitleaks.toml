@@ -96,6 +96,15 @@ regexes = [
   # same region-matching caveat as above. Push-protection concern void: the
   # sibling ULID already rides origin/master (d53706c3).
   '''01M000JA6P0VR4Q1BNEPSJN3ME''',
+  # OpenAI API response enum `finish_reason=stop` quoted in prose (the
+  # llama-chat.md probe narratives) — a literal API response field value,
+  # not a credential; landed via daemon sweep e10611cf past the hook
+  # (generic-api-key, entropy 3.57) and wedged every manual commit's
+  # staged-tree scan from 2026-10-10 onward. Adjudicated FP per the
+  # lint-scanner doctrine (fix the scanner, not the call site); enum-family
+  # form because allowlist regexes match the captured secret region and any
+  # finish_reason assignment is by definition an API echo, never a secret.
+  '''finish_reason=(stop|length|tool_calls|content_filter)''',
 ]
 
 # Detector-coverage fixtures (tests/fixtures/gitleaks/, consumed by the

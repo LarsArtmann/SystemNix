@@ -106,3 +106,29 @@
 ---
 
 **Verification state at authoring time:** final keep-going toplevel build RUNNING (0 errors so far, pdd FOD building); everything else in §a is first-hand verified this session. Parallel-session note: an unrelated nsfw-classifier status report appeared in the tree mid-session (not mine, untouched); my SystemNix edits were daemon-committed as `ac4099bc` (contents NOT yet reviewed — §b2).
+
+---
+
+## Harvest ledger (close-out 2026-10-12 ~00:45 CEST)
+
+Self-harvest of §f per the todo-system rule (each item: landed, dedup'd, or deliberately not harvested):
+
+| §f | Disposition |
+| --- | --- |
+| 1–6 | DONE in the close-out session: build verdict watched to completion (see below); `ac4099bc` reviewed (it holds TODO_LIST + services.md rows from the PARALLEL session, NOT my files — my edits actually landed across daemon commits 215c98ab/25966d73/628f73c2/d397fde8/ed5f369c, interleaved with parallel-session doc files, all verified); flake check + fmt + statix + deadnix clean; upstream.md rows updated (wave8 bullet, crush-daily [x], cqrs-lint wave8 re-probe); nix-flakes.md sharpened (orphan falsification on the 09-02 bullet; got-hash lock-scope refinement on the 09-03 bullet) |
+| 7 | DEDUP — the existing go-cqrs-lite row IS this ask; updated with the wave8 re-probe evidence (orphan trap, true rev f12a849b, master c1993ba3f bakes 9y6O/R2f…) |
+| 8, 9 | Harvested → docs/todo/services.md `[blocked:user]` (disposition = open question §g.3) |
+| 10, 17, 18, 38 | Harvested → docs/todo/services.md `[ready]` |
+| 11 | DONE now: art-dupl row was STALE (asked for the eabf846c push; wave7 landed 63003892, shim gone, lock verified == 63003892) — row closed [x] |
+| 12 | Harvested → docs/todo/upstream.md `[watch]` |
+| 13, 22, 23, 24, 32, 33, 34, 37 | Harvested → docs/todo/pipeline.md (`[ready]`; 34's substantive half DONE standalone: statix/deadnix/alejandra re-ran clean on the daemon-swept files) |
+| 14, 20, 21 | Folded into the fleet infra-follows row (docs/todo/upstream.md line 13) as the live pdd two-context datapoint + the 7-repo instance list |
+| 15 | DEDUP — covered by the cqrs-lint row's MID-CHURN note (now 21 unpushed, re-counted 2026-10-12) |
+| 16, 19, 25, 26, 27 | Harvested → docs/todo/upstream.md `[ready]` |
+| 28, 35 | Harvested → services.md / pipeline.md `[decision]` |
+| 29 | Folded into item 9's row (one ask, one row) |
+| 30, 31 | DEDUP — rows already existed (upstream.md benchstat-pin + git+ssh→github) |
+| 36, 39 | DONE on sight (5-min rule): two bullets appended to docs/agents/go-ecosystem.md |
+| 40 | Deliberately NOT harvested — no new doc file landed; only edits to existing docs, routing table unchanged |
+
+**Queue additions:** 17 `[ready]` one-liners appended to TODO_LIST.md, each pointing at its library row. **§g questions remain OPEN** (push-authority scope; go-cqrs-lite session coordination; crush-daily reds disposition) — the `[blocked:user]` rows gate on them.
