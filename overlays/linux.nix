@@ -218,11 +218,18 @@ let
   # the same "got" hash the stale shim overrode with IrQ4Zsuw…
   # (first-hand keep-going enumeration, /tmp/toplevel-fix-20261009.log).
   # Re-add ONLY via nix-hash-fix evidence, never by hand.
-  # TEMPORARY vendorHash shims (class comment at lib/lars-packages.nix):
-  # discordsync (RE-PINNED 2026-10-07, 1ac31f8 update; got /NYfLmDMx…
-  # at rev 1ac31f8). prev (NOT final) — same recursion guard as above;
-  # stay AFTER the respective upstream overlays in the list below.
-  # Drop when upstreams re-pin or the lock moves past upstream-fixed revs.
+  # TEMPORARY vendorHash shims — REMAINING TWO DROPPED 2026-10-11 (class
+  # comment at lib/lars-packages.nix; drop-protocol,
+  # docs/agents/nix-flakes.md): discordsync DROPPED — the lock holds
+  # d8f79909, whose vendorHash.nix bakes the shim's own /NYfLmDMx… value
+  # (git show d8f79909:vendorHash.nix), so the override was bit-neutral at
+  # the current lock. crush-daily DROPPED — the hash leg was already
+  # neutral at lock 97e1fdde (upstream vendorHash.nix bakes the shim's
+  # xo4ePVg0…), and the doCheck leg's blocker is fixed upstream: a0faf6c
+  # migrated the chromedp v0.19 test API (browser suite green, BuildFlow
+  # fast 0 failed) and the lock moves past it in the same change.
+  # prev (NOT final) — recursion guard no longer needed, both overrides
+  # gone. Re-add ONLY via nix-hash-fix evidence, never by hand.
   # dnsblockdVendorHashShim DROPPED (2026-10-11): its drop condition
   # ("lock moves past an upstream-fixed rev") is met — the lock holds
   # 8b8e594, whose nix/vendor-hash.nix bakes vendorHash 0koFfQqs…
@@ -235,33 +242,8 @@ let
   # overrode with GkGHKtRQ…; first-hand keep-going enumeration,
   # /tmp/toplevel-fix-20261009b.log). Re-add ONLY via nix-hash-fix
   # evidence, never by hand.
-  discordsyncVendorHashShim = _final: prev: {
-    discordsync = prev.discordsync.overrideAttrs {
-      vendorHash = "sha256-/NYfLmDMxO+YDEJQqELmP4DXzxtKjgLXDiHLWjeL018=";
-    };
-  };
-  # TEMPORARY doCheck + vendorHash shim (doCheck leg 2026-10-05,
-  # vendorHash leg RE-PINNED 2026-10-10 — class comment at
-  # lib/lars-packages.nix): crush-daily's chromedp cdproto shadowing was
-  # fixed upstream (05fe675: chromedp v0.19.1 + pinned vendorHash), but
-  # internal/server/ui_behavior_test.go does not compile against the v0.19
-  # generic action API yet (Evaluate/Poll signature migration is upstream
-  # follow-up work) — the package itself builds green; the test gate stays
-  # off until the migration lands and the lock moves past it. The lock
-  # wave holds 3bc09ce4, where upstream's djxdMOJ… no longer reproduces
-  # (got xo4ePVg0…; first-hand keep-going enumeration,
-  # /tmp/toplevel-fix-20261009b.log; upstream stale at locked rev AND HEAD
-  # — a matching xo4ePVg0… fix sits UNCOMMITTED in
-  # ~/projects/crush-daily/vendorHash.nix, owned by a live session; drop
-  # when it is pushed AND the lock moves past it). prev (NOT final) — same
-  # recursion guard; stay AFTER crush-daily.overlays.default in the list
-  # below.
-  crushDailyVendorHashShim = _final: prev: {
-    crush-daily = prev.crush-daily.overrideAttrs {
-      vendorHash = "sha256-xo4ePVg0iOvmW0oXmpI1qMQftQSeYCh7+AY+X3g74k8=";
-      doCheck = false;
-    };
-  };
+  # TEMPORARY doCheck + vendorHash shim DROPPED (2026-10-11) — see the
+  # drop record in the vendorHash shim class comment above.
   # TEMPORARY version pin (2026-10-03): nixpkgs 7a0f122f (the 2026-10-01
   # lock) produced clickhouse 26.8.7.19 with a derivation that is ALREADY
   # built in the local store; the 2026-10-02 bump (c59305ba) changed the
@@ -300,11 +282,9 @@ in
   netwatchOverlay
   file-and-image-renamer.overlays.default
   crush-daily.overlays.default
-  crushDailyVendorHashShim
   bank-sync.overlays.default
   overview.overlays.default
   discordsync.overlays.default
-  discordsyncVendorHashShim
   bunMemoryLimitOverlay
   systemdGraphOverlay
   printSafeOverlay
