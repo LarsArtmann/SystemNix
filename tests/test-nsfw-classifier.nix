@@ -4,9 +4,10 @@
 # catalog.nix for the unconditional-entry case).
 #
 # Proves the zero-user-engagement extension contract:
-#   1. Enabled: the unit runs the server in ensemble mode (no --fast —
-#      the flag would load ONLY the first model) with --pair-token
-#      auto, bound on all interfaces at the registered port — the
+#   1. Enabled: the unit runs the server in FULL ensemble mode (--all —
+#      every NSFW model on disk, registry order keeps falconsai first)
+#      with --pair-token auto, bound on all interfaces at the registered
+#      port — the
 #      extension's discovery probes http://nsfw.home.lan:<port> and
 #      refuses tokenless servers (nsfw-extension/url-utils.js).
 #   2. Models come from the live checkout, so the unit runs as lars (the
@@ -71,13 +72,20 @@ let
       pass = enabledConfig.systemd.services ? nsfw-classifier;
     }
     {
-      # Ensemble posture: NO --fast (the flag loads ONLY the first model —
-      # fastKey takes keys[0]); the trio loads and per-request fast=true
-      # still resolves a single-model verdict from the first entry.
-      name = "ensemble-default-trio";
+      # FULL posture: --all loads EVERY NSFW-detection model on disk
+      # (registry order — keys[0] = falconsai still serves fast=true);
+      # NO --fast (the flag would load ONLY the first model).
+      name = "full-ensemble-all-models";
       pass =
         !(lib.hasInfix "--fast" sc.ExecStart)
-        && lib.hasInfix "--models falconsai,marqo,adamcodd" sc.ExecStart;
+        && lib.hasInfix "--all" sc.ExecStart
+        && !(lib.hasInfix "--models " sc.ExecStart);
+    }
+    {
+      # Cold-start budget: 17 model loads on CPU can exceed the global
+      # 3-min DefaultTimeoutStartSec.
+      name = "cold-start-timeout-budget";
+      pass = enabledConfig.systemd.services.nsfw-classifier.timeoutStartSec or "" == "10min";
     }
     {
       name = "pairing-token-auto";

@@ -43,22 +43,31 @@
 
       pkg = cfg.package;
 
-      # Ensemble posture (NO --fast flag): the flag would load ONLY the
-      # first model (fastKey takes keys[0]), so the trio is the point. The
-      # extension's quick-scan path sends fast=true and still gets a
-      # single-model verdict from the FIRST listed model; non-fast/stream
-      # requests get the full vote. falconsai stays first (registry
-      # DefaultModels[0] — the same model --fast would pick), so the fast
-      # path is unchanged; the explicit list keeps the unit deterministic
-      # if the registry default ever reorders.
-      execStart = lib.concatStringsSep " " [
-        "${pkg}/bin/nsfw-server"
-        "--host 0.0.0.0"
-        "--port ${toString cfg.port}"
-        "--models ${lib.concatStringsSep "," cfg.models}"
-        "--models-dir ${cfg.modelsDir}"
-        "--pair-token auto"
-      ];
+      # FULL posture: --all loads EVERY NSFW-detection model exported in
+      # modelsDir (17 of 18 registry entries — jiechau is product-moderation
+      # and excluded upstream). Registry ORDER is preserved
+      # (cli.AvailableModelsOnDisk iterates registry.NSFWDetectionModels()),
+      # so keys[0] stays falconsai: the extension's fast=true quick-scan
+      # still gets a single-model verdict from it; non-fast/stream requests
+      # run the whole ensemble vote. Explicit model lists remain available
+      # by setting models to a non-null list (a lean deterministic posture).
+      # The aux evidence stack (nudenet/skinseg/face) is disk-gated and
+      # independent of this flag.
+      execStart = lib.concatStringsSep " " (
+        [
+          "${pkg}/bin/nsfw-server"
+          "--host 0.0.0.0"
+          "--port ${toString cfg.port}"
+        ]
+        ++ lib.optionals (cfg.models != null) [
+          "--models ${lib.concatStringsSep "," cfg.models}"
+        ]
+        ++ lib.optionals (cfg.models == null) [ "--all" ]
+        ++ [
+          "--models-dir ${cfg.modelsDir}"
+          "--pair-token auto"
+        ]
+      );
     in
     {
       options.services.nsfw-classifier = {
@@ -74,17 +83,15 @@
         };
 
         models = lib.mkOption {
-          type = lib.types.listOf lib.types.str;
-          default = [
-            "falconsai"
-            "marqo"
-            "adamcodd"
-          ];
+          type = lib.types.nullOr (lib.types.listOf lib.types.str);
+          default = null;
           description = ''
-            Model keys loaded in ensemble mode (comma-joined into --models;
-            each must be exported under models/<key>/model.onnx). The FIRST
-            entry serves every fast=true quick-scan request, so it must
-            stay falconsai.
+            Model keys to load. null (default) passes --all: EVERY
+            NSFW-detection model exported under models/<key>/model.onnx
+            loads, in registry order (first entry serves fast=true
+            quick-scan requests — falconsai today). A non-null list pins a
+            lean deterministic posture instead. jiechau (product
+            moderation) is never auto-loaded.
           '';
         };
 
@@ -135,12 +142,16 @@
 
         (lib.mkIf cfg.enable {
           systemd.services.nsfw-classifier = {
-            description = "nsfw-classifier — NSFW image server (browser-extension backend, default-model ensemble)";
+            description = "nsfw-classifier — NSFW image server (browser-extension backend, full ensemble)";
             wantedBy = [ "multi-user.target" ];
             after = [ "network-online.target" ];
             wants = [ "network-online.target" ];
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
+            # Cold start loads 17 ONNX models on CPU — the global 3-min
+            # DefaultTimeoutStartSec is the queued watch-class trap; give
+            # the full posture an explicit budget.
+            timeoutStartSec = "10min";
             # Unit failures page via the notify-failure template (Discord) —
             # registry convention: silent failures are unacceptable.
             inherit onFailure;
@@ -166,10 +177,10 @@
               }
               (serviceDefaults { })
               (harden {
-                # Ensemble trio (two 86M-class ViTs + marqo 5.7M) loaded in
-                # parallel — ~1.5G resident peak; was 2G in the single-model
-                # fast posture.
-                MemoryMax = "4G";
+                # Full ensemble: 17 NSFW models (~6.3G fp32 weights) + ONNX
+                # arenas under parallel inference, plus the aux evidence
+                # stack. Was 2G (single model), then 4G (trio).
+                MemoryMax = "16G";
                 # ProtectHome must stay OFF: the multi-GB gitignored models
                 # checkout is the unit's only non-store input and sits under
                 # /home/lars. Everything else stays locked down (ProtectSystem
