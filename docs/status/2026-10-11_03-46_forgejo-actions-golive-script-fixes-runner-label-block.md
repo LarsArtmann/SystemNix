@@ -5,6 +5,8 @@
 - **Content pin:** SystemNix `64d01da3` (tree clean — daemon swept this session's edits); hub repo `feb0aad`-lineage, tree clean
 - **Scope:** post-G1 sync health, backup posture inquiry, Architecture-Catalog go-live chain execution (setup-forgejo.sh debugging ×3 → green), Actions-tab + runner-pickup root causes, label-fix deploy blocked by memory gate. **NOT in scope:** anything not touched this session.
 
+> **ADDENDUM 2026-10-11 ~04:20 — §a.8/§a.9/§b.1 root cause CORRECTED (post-deploy falsification).** Owner force-deployed 03:50; the config labels LANDED (`runner-config.yaml` now carries `labels: [native:host]`, store-verified) and the daemon STILL declared `[native]` — the "config gap" premise was wrong. Source-verified from forgejo-runner **v13.2.0** (code.forgejo.org/forgejo/runner): label syntax is `name:schema` (`labels.Parse` → `native:host` = name `native`, schema `host`); the daemon declares label **NAMES ONLY** (`daemon.go` `Declare(ls.Names())`); config `runner.labels` are DefaultLabels applied only to label-less connections while the legacy `.runner` registration (still passed `--labels native:host` by the register ExecStartPre) supplies the labels. So the daemon always declared name `native` — the real bug was the **workflows**: `runs-on: native:host` matches no declared name under v15's exact-string `ItRunsOn`. Fix: hub `build.yml` + `stale-sources.yml` → `runs-on: native` (daemon-swept); forgejo.nix comment corrected to the real semantics (kept the `runner.labels` line — correct as DefaultLabels source). Run 1 carries the old `runs-on` and will never match — needs cancel (owner) or ignore. New dispatch needed: owner script step 6 or the nightly cron `23 3 * * *`.
+
 ---
 
 ## a) FULLY DONE
