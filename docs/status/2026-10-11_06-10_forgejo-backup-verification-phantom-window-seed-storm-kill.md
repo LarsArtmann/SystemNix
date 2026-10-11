@@ -18,8 +18,8 @@ Date: 2026-10-11 05:10–06:10 CEST. Trigger: owner pasted the pool target listi
 ## c) NOT STARTED (owner)
 
 1. After the seed lands: `sudo btrfs filesystem du -s /mnt/pool/backups/forgejo-subvol/$(ls -1 /mnt/pool/backups/forgejo-subvol | tail -1)` — expect **Total ≈67G** (Exclusive will read ≈67G too on the newest snapshot — received extents share with nothing else on the pool; the live subvol lives on the Samsung fs. CORRECTED 06:35: the earlier "Exclusive ≈0" guess was wrong — sharing only counts within the scanned pool fs). Live-confirmed baseline: the killed partial reads Total 17.00GiB / Exclusive 17.00GiB / Set shared 0 (owner du 06:2x — exactly the 05:42:33 SIGTERM point). That closes the content-floor assertion. **VERIFIED: seed LANDED 07:13 — forgejo.20261011T0706 du 70.41GiB Total; assertion CLOSED.**
-2. ~~Stray cleanup~~ DONE 08:37 — `btrbk clean` deleted `forgejo.20261011T0540` (the 17G partial); exit-0 runs resume at the next slot (13:40 = burn-in leg 2). **→ LEG 2 DONE 13:40:14 (Finished, 14.7s/242M): burn-in COMPLETE, qlc trash ELIGIBLE.**
-3. Burn-in leg 2 = the next clean slot (13:40) → THEN `sudo trash /var/lib/forgejo.qlc-pre-subvol` (67G QLC reclaim; 02-17 §g.3 timing stands).
+2. ~~Stray cleanup~~ DONE 08:37 — `btrbk clean` deleted `forgejo.20261011T0540` (the 17G partial); exit-0 runs resume at the next slot (13:40 = burn-in leg 2). **→ LEG 2 DONE 13:40:14 (Finished, 14.7s/242M): burn-in COMPLETE, qlc trash ELIGIBLE. → TRASH DONE 18:35 (67G → root trash, SAME fs — frees on trash-empty). Remaining: F24 restore drill.**
+3. ~~Burn-in leg 2 → THEN qlc trash~~ DONE: leg 2 13:40:14 green (14.7s/242M); qlc shadow trashed 18:35 (67G → root trash on the SAME fs — the QLC space frees only on `trash-empty`; owner call).
 4. Optional manual seed in a calm window: `cat /proc/pressure/io` (some avg60 < 25) + `journalctl -t memory-emergency-guard-check --since '-15min'` clean, then `sudo systemctl start btrbk-forgejo`.
 5. Dump-zip spot check: `sudo ls -la /mnt/pool/backups/forgejo | tail` (the 03:43 zip is forgejo-owned 0700 — not agent-readable).
 

@@ -158,7 +158,9 @@ storm-killed by memory-emergency-guard trip #2663 mid-receive — by-design Zone
 stop). The stray partial was cleaned 2026-10-11 08:37 (`btrbk clean` deleted
 `forgejo.20261011T0540`) — runs exit-0 again from the next slot. Burn-in
 2/2 legs COMPLETE (leg 2: 13:40:14 run Finished — 14.7s, 242M, back-filled the cleaned
-0540 as a cheap incremental); the qlc-pre-subvol trash (67G) is eligible. Mtime-based freshness
+0540 as a cheap incremental); the qlc shadow was trashed 2026-10-11 18:35 (67G → root
+trash on the SAME fs — the QLC space frees only on `trash-empty`). Remaining hardening:
+an F24-style RESTORE drill (restore a pool snapshot to scratch + diff). Mtime-based freshness
 cannot see content or completeness — two phantom modes live-observed 2026-10-11, see
 `docs/status/2026-10-11_06-10_forgejo-backup-verification-phantom-window-seed-storm-kill.md`.
 Watch:
