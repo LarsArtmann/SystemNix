@@ -150,8 +150,9 @@
             startLimitIntervalSec = 300;
             # Cold start loads 17 ONNX models on CPU — the global 3-min
             # DefaultTimeoutStartSec is the queued watch-class trap; give
-            # the full posture an explicit budget.
-            timeoutStartSec = "10min";
+            # the full posture an explicit budget (TimeoutStartSec is a
+            # [Unit]-section key in modern systemd).
+            unitConfig.TimeoutStartSec = "10min";
             # Unit failures page via the notify-failure template (Discord) —
             # registry convention: silent failures are unacceptable.
             inherit onFailure;

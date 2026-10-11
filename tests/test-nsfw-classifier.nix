@@ -83,9 +83,10 @@ let
     }
     {
       # Cold-start budget: 17 model loads on CPU can exceed the global
-      # 3-min DefaultTimeoutStartSec.
+      # 3-min DefaultTimeoutStartSec (TimeoutStartSec is a [Unit]-section
+      # key — rendered via unitConfig).
       name = "cold-start-timeout-budget";
-      pass = enabledConfig.systemd.services.nsfw-classifier.timeoutStartSec or "" == "10min";
+      pass = (enabledConfig.systemd.services.nsfw-classifier.unitConfig.TimeoutStartSec or "") == "10min";
     }
     {
       name = "pairing-token-auto";
