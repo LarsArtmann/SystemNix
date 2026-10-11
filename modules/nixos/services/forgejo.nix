@@ -95,11 +95,16 @@ _: {
       runnerSettings = {
         log.level = "info";
         runner.capacity = 2;
-        # The v13 daemon DECLARES its labels from THIS config file and
-        # overwrites the registration labels at declare time — without this
-        # line it declared bare "native" while jobs request "native:host",
-        # so the task never matched a runner and sat queued forever
-        # (2026-10-11, eventcatalog-hub run 1).
+        # Label syntax is name:schema and the v13 daemon declares label NAMES
+        # only (source-verified v13.2.0: daemon.go Declare(ls.Names()),
+        # labels.Parse) — "native:host" declares name "native", so jobs must
+        # say `runs-on: native` (the 2026-10-11 run-1 block was build.yml
+        # requesting "native:host", not a runner-config gap). These config
+        # labels are DefaultLabels (config.go: applied only to connections
+        # without labels) — the legacy .runner registration (deprecated in
+        # v13, still used by the register ExecStartPre) currently supplies
+        # the same labels; this line keeps config the source of truth for
+        # when registration is retired.
         runner.labels = runnerLabels;
         container.network = "host";
       };
