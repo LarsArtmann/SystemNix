@@ -63,3 +63,11 @@ Date: 2026-10-11 04:30–05:05 CEST. Continuation of the eventcatalog-hub CI cha
 3. **Carried §g.3:** trash timing for `/var/lib/forgejo.qlc-pre-subvol` (67G; eligible after the 05:40 btrbk snapshot → ~13:40) and prune-or-keep the DarkBlocks/DialogesWebInterface dual mirror copies?
 
 *Session closed in WAITING FOR INSTRUCTIONS state; owner chain documented in TODO_LIST.md :315-:*.*
+
+---
+
+## POSTSCRIPT (2026-10-11 05:37 — added by the 05:37 session; point-in-time sections above untouched)
+
+1. **§f.4 premise FALSIFIED at 05:17:** "root file still valid" — the 05:17 script run revoked the 03:15 `architecture-catalog-sync-readonly` token (visible in its `(revoked old token …)` output) and minted a fresh one into the same path. Paste the CURRENT `/var/lib/forgejo/.eventcatalog-hub-setup/sync-token`, not the 03:15 value.
+2. **§f.7/8/11 were claimed harvested but never landed as rows** (verified 05:37 — no such rows existed anywhere in `docs/todo/`). Landed now by docs/status/2026-10-11_05-37_setup-forgejo-class7-gate-shape-runs45-postmortem.md §f (runbook capture, label-drift selftest, grep-guard, harvest-checker glob). The checker passed anyway because harvest-parity is citation-shaped, not item-shaped — see that report §d.3 and the new pipeline row.
+3. Class 5+6 fixes LIVE-VERIFIED by the 05:17 run; a NEW class-7 (gate JSON shape false-negative) was introduced by v4's own sha-gate and fixed as `bf86e06` — full narrative in the 05-37 report.
