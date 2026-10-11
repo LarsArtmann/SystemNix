@@ -7048,11 +7048,11 @@
         "project-discovery-sdk": "project-discovery-sdk_7"
       },
       "locked": {
-        "lastModified": 1791742849,
-        "narHash": "sha256-kaO0sAyULl0+9hf+i1CYHLZ1HqLRlMCqpB76vyq0brM=",
+        "lastModified": 1791743086,
+        "narHash": "sha256-8b4Rzj06iwDeFEaGr3+T0Epz3O3Y8qDu2SuKeI3OWKo=",
         "ref": "refs/heads/master",
-        "rev": "fec79c17c03d19062968a219545c4612bf1de57d",
-        "revCount": 125,
+        "rev": "ea6e8ce9ba32ac53c5e9180f9ae08bde7c73c328",
+        "revCount": 126,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-daemon"
       },

@@ -39,12 +39,15 @@ risk-ascending (regenerable stats first, the 11 GB event store last):
 - **Vehicle green**: `checks.x86_64-linux.migrate-hot-db-fixture` builds rc=0.
 - **Tier live**: `hot_tier_mounted 1`, `hot_db_scrape_errors 0`, Samsung
   `/mnt/hot` has ~768 GB free.
-- **GATE (wave 5)**: the discordsync dump leg is STALLED — newest
-  `discordsync-db-*.sql.gz` is 2026-10-01 (82 h at check; `backup_healthy{discordsync} 0`);
-  the 02:30 runs during the freeze-#12..#14 storms failed and `Persistent`
-  does NOT retry failed activations (only missed ones). Before the
-  discordsync window: `sudo systemctl start discordsync-db-backup.service`
-  and confirm a fresh dump + `backup_all_healthy 1` — with Turso blocked
+- **GATE (wave 5)**: the discordsync dump leg is STALLED — 9 consecutive
+  nightly failures 2026-10-03..11, each instant `database is locked`
+  (0-byte `.raw` litter; the CLI had busy_timeout=0 and the server's
+  near-continuous write churn holds locks at every 02:30:00 attempt).
+  Fix deployed in-tree 2026-10-11: `.timeout 30000` + 3-attempt retry in
+  the backup script (mechanism-proven against an EXCLUSIVE holder).
+  Before the discordsync window: deploy, then
+  `sudo systemctl start discordsync-db-backup.service` and confirm a
+  fresh dump + `backup_healthy{discordsync} 1` — with Turso blocked
   this dump is the event store's only backup once it leaves `@`.
 - **GATE (all waves)**: IO PSI avg10 was 54% at verification (Zone-6 storm,
   5 memory-guard trips/h) — no window until quiescence (the script's own

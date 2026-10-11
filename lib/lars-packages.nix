@@ -152,13 +152,12 @@ lib.filterAttrs (_: v: v != null) {
   # evidence, never by hand.
   project-meta = flakePkg inputs.project-meta;
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
-  # protocol): upstream fec79c1 bakes the through-our-lock got hash
-  # Mrn25ftf… (specified 8kSXYjwa vs got Mrn25ftf, first-hand keep-going
-  # enumeration; go.mod/go.sum unchanged since the pin). Lock moved
-  # 1f9b57c → fec79c1 the same day. Context caveat: pdd's OWN lock pins
-  # compute a different FOD hash (standalone dirty-tree probe wanted
-  # 6ZDAkBB…) — the deep infra-follows divergence class; our context is
-  # the one this hash must satisfy. Re-add ONLY via nix-hash-fix evidence,
+  # protocol): upstream ea6e8ce bakes the got hash 6ZDAkBB… (specified
+  # 8kSXYjwa vs got Mrn25ftf at 1f9b57c, then re-measured 6ZDAkBB at
+  # fec79c1 — pdd's OWN flake.lock moved between the revs and it does NOT
+  # follow our pins, so its own lock governs the FOD content; two push
+  # rounds, first-hand keep-going enumerations both times). Lock moved
+  # 1f9b57c → ea6e8ce the same day. Re-add ONLY via nix-hash-fix evidence,
   # never by hand.
   project-discovery-daemon = flakePkg inputs.project-discovery-daemon;
   # vendorHash shim DROPPED (2026-10-09): its drop condition ("lock moves
