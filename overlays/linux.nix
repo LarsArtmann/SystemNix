@@ -284,7 +284,6 @@ in
   clickhouseVersionPinOverlay
   niriLibdisplayInfoShim
   openaudibleOverlay
-  crushDailyDoCheckGate
   dnsblockd.overlays.default
   emeet-pixyd.overlays.default
   monitor365.overlays.default
@@ -298,4 +297,9 @@ in
   bunMemoryLimitOverlay
   systemdGraphOverlay
   printSafeOverlay
+  # AFTER crush-daily.overlays.default — overlay ORDER matters: the input's
+  # overlay CREATES pkgs.crush-daily, so any gate on it must come later or
+  # it is clobbered (first-hand: a pre-input listing produced an unchanged
+  # drv hash and the checkPhase still ran, /tmp/toplevel-fix-20261012b.log).
+  crushDailyDoCheckGate
 ]
