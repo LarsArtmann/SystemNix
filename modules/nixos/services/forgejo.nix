@@ -95,6 +95,12 @@ _: {
       runnerSettings = {
         log.level = "info";
         runner.capacity = 2;
+        # The v13 daemon DECLARES its labels from THIS config file and
+        # overwrites the registration labels at declare time — without this
+        # line it declared bare "native" while jobs request "native:host",
+        # so the task never matched a runner and sat queued forever
+        # (2026-10-11, eventcatalog-hub run 1).
+        runner.labels = runnerLabels;
         container.network = "host";
       };
       runnerConfigFile = (pkgs.formats.yaml { }).generate "runner-config.yaml" runnerSettings;
