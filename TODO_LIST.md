@@ -619,6 +619,7 @@
 - [ ] **Harvest resolution-grep** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Pre-commit fast path for docs-only diffs** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Audit recent `--no-verify` commits for skipped-guard exposure** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] [ready] **Narrow escape hatch for the chronically-red TODO gate: `.githooks/pre-commit` honors `CHECK_TODO_SYSTEM=skip` (or equivalent) to gate ONLY the check-todo-system leg** — the gate is failing repo-wide on pre-existing drift (wrong-link rows + 101 unharvested §f), so every docs commit either fixes unrelated debt or uses `--no-verify`, which silently disables ALL working legs (gitleaks, deadnix, statix, alejandra, flake check) for that commit (89410ee9 rode through zero lint legs). A leg-scoped skip keeps the working protection on while the drift is burned down (see the unharvested-sweep row above); selftest the skip path like the other check-todo legs. **Source:** docs/status/tasks/2026-10-11_03-25_task-000001a1288ceb1a14684b2d9c5200000000.md §d.1/§e.4
 - [ ] **Human-capability tag at task enqueue** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Task-queue dispatcher guard: grep newer status docs before dispatching trace items** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Document the amend-on-daemon-race repair as the standard queue-worker commit procedure** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
