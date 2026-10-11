@@ -17,7 +17,7 @@ Date: 2026-10-11 05:10–06:10 CEST. Trigger: owner pasted the pool target listi
 
 ## c) NOT STARTED (owner)
 
-1. After the seed lands: `sudo btrfs filesystem du -s /mnt/pool/backups/forgejo-subvol/$(ls -1 /mnt/pool/backups/forgejo-subvol | tail -1)` — expect Total ≈67G, Exclusive ≈0 (extents shared with the live subvol). That closes the content-floor assertion.
+1. After the seed lands: `sudo btrfs filesystem du -s /mnt/pool/backups/forgejo-subvol/$(ls -1 /mnt/pool/backups/forgejo-subvol | tail -1)` — expect **Total ≈67G** (Exclusive will read ≈67G too on the newest snapshot — received extents share with nothing else on the pool; the live subvol lives on the Samsung fs. CORRECTED 06:35: the earlier "Exclusive ≈0" guess was wrong — sharing only counts within the scanned pool fs). Live-confirmed baseline: the killed partial reads Total 17.00GiB / Exclusive 17.00GiB / Set shared 0 (owner du 06:2x — exactly the 05:42:33 SIGTERM point). That closes the content-floor assertion.
 2. Burn-in leg 2 = the next clean slot → THEN `sudo trash /var/lib/forgejo.qlc-pre-subvol` (67G QLC reclaim; 02-17 §g.3 timing stands).
 3. Optional manual seed in a calm window: `cat /proc/pressure/io` (some avg60 < 25) + `journalctl -t memory-emergency-guard-check --since '-15min'` clean, then `sudo systemctl start btrbk-forgejo`.
 4. Dump-zip spot check: `sudo ls -la /mnt/pool/backups/forgejo | tail` (the 03:43 zip is forgejo-owned 0700 — not agent-readable).
