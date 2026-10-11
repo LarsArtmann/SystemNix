@@ -61,15 +61,17 @@ lib.filterAttrs (_: v: v != null) {
   # no-op derivation (BuildFlow `nix build .` needs it; the real CLI lives at
   # packages.cqrs-lint). The 2026-10-09 shim drop kept flakePkg, which resolved
   # to the empty derivation — deploying it would silently remove the binary.
-  # TEMPORARY vendorHash shim RE-PINNED (2026-10-10 wave, first-hand FOD
-  # evidence — the documented bootstrap exception): got 7wijvzQm… at
-  # locked rev f12a849b (first-hand keep-going enumeration,
-  # /tmp/toplevel-keepgoing.log). Upstream repo is BUSY (live session:
-  # dirty tree 12:43 same day, local branches incl.
-  # systemnix-cqrs-lint-hashfix) so the paste-upstream → push → re-lock →
-  # re-drop cycle stays queued (docs/todo/upstream.md), not raced.
-  # Drop when upstream re-pins or the lock moves past an upstream-fixed
-  # rev.
+  # TEMPORARY vendorHash shim RE-PINNED (2026-10-11, first-hand FOD
+  # evidence — the documented bootstrap exception): got 7wijvzQm… at the
+  # TRUE locked rev f12a849b (node go-cqrs-lite_7; .nodes["go-cqrs-lite"]
+  # is an ORPHAN — jq root.inputs before reasoning, 2026-10-11 lesson).
+  # Upstream bakes qRvdn5dH… at f12a849b AND at origin/master c39e1e2fe —
+  # stale at both. NOT fixed upstream this wave: the repo is mid-churn by
+  # a live session (4 unpushed master commits + origin moved 164 files
+  # today) — pushing would publish their in-flight work; re-locking into
+  # that churn was rejected. The shim is the NECESSARY exception; the
+  # paste-upstream → push → re-lock → re-drop cycle stays queued
+  # (docs/todo/upstream.md). Re-evaluate on the next lock move.
   cqrs-lint =
     let
       pkg = (inputs.go-cqrs-lite.packages.${system} or { }).cqrs-lint or null;
@@ -93,10 +95,10 @@ lib.filterAttrs (_: v: v != null) {
   # /tmp/toplevel-fix-20261007.log). Re-add ONLY via nix-hash-fix
   # evidence, never by hand.
   go-auto-upgrade = flakePkg inputs.go-auto-upgrade;
-  # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07 wave — class
-  # comment at buildflow): got JrBhDyCx… at locked rev 4cee06df
-  # (upstream stale at locked rev AND HEAD). Drop when upstream re-pins
-  # or the lock moves past an upstream-fixed rev.
+  # TEMPORARY vendorHash shim DROPPED (2026-10-11): the lock moved
+  # 4cee06df → 7f9b7b19, whose flake bakes the shim's OWN JrBhDyCx… value
+  # (git show 7f9b7b19:flake.nix) — the override was bit-neutral at the
+  # current lock. Re-add ONLY via nix-hash-fix evidence, never by hand.
   go-humanize-linter =
     let
       pkg = flakePkg inputs.go-humanize-linter;
@@ -104,9 +106,7 @@ lib.filterAttrs (_: v: v != null) {
     if pkg == null then
       null
     else
-      pkg.overrideAttrs {
-        vendorHash = "sha256-JrBhDyCx9lr4sUoODRBgMZIpdag0TvlEOptBw2x51CU=";
-      };
+      pkg;
   go-structure-linter = flakePkg inputs.go-structure-linter;
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream cb9a8b79 ALREADY bakes the got
@@ -121,31 +121,14 @@ lib.filterAttrs (_: v: v != null) {
   # and `nix build .#library-policy` builds clean (verified 2026-10-09).
   # Re-add ONLY via nix-hash-fix evidence, never by hand.
   library-policy = flakePkg inputs.library-policy;
-  # TEMPORARY go toolchain + vendorHash shim (toolchain leg 2026-10-03,
-  # vendorHash leg RE-PINNED 2026-10-07 wave): md-go-validator's
-  # go.mod floor is 1.27.1 while nixpkgs' default go is 1.26.8 — the FOD
-  # dies "go: go.mod requires go >= 1.27.1 (GOTOOLCHAIN=local)" (the
-  # 2026-09-17 go 1.27 wave class; fix forward with go_1_27, never pin the
-  # toolchain back). Upstream's package.nix hardcodes the toolchain (its
-  # lambda takes no `go`), so the override rebinds `buildGoModule` itself
-  # (the documented wiring point 3) — that propagates go_1_27 into the
-  # go-modules FOD. vendorHash under go_1_27 RE-LEARNED via first-hand
-  # keep-going enumeration (got e+jOFi3m… at locked rev 5e70003,
-  # /tmp/toplevel-fix-20261007.log). Drop both when upstream
-  # bumps its toolchain and re-pins its hash.
-  md-go-validator =
-    let
-      pkg = flakePkg inputs.md-go-validator;
-    in
-    if pkg == null then
-      null
-    else
-      (pkg.override {
-        buildGoModule = inputs.nixpkgs.legacyPackages.${system}.buildGoModule.override {
-          go = inputs.nixpkgs.legacyPackages.${system}.go_1_27;
-        };
-      }).overrideAttrs
-        { vendorHash = "sha256-e+jOFi3mjRy4207Y56Fo5H1VMNpFQAaeZaPZk1ADFmw="; };
+  # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
+  # protocol): upstream 3f466de bakes the through-our-lock got hash
+  # e+jOFi3m… (specified uF0J63iQ vs got e+jOFi3m, first-hand keep-going
+  # enumeration) and already builds via go_1_27 — the toolchain override
+  # leg went with it. Lock moved 5e70003 → 3f466de the same day. The
+  # dirty-tree FOD built green standalone BEFORE the push. Re-add ONLY via
+  # nix-hash-fix evidence, never by hand.
+  md-go-validator = flakePkg inputs.md-go-validator;
   # depgraph CLI: renders the LarsArtmann Go monorepo dependency graph and
   # answers who-uses/why/update-plan/release-suggestions queries. Rides
   # PATH via base.nix attrValues (both hosts). Upstream repo is PRIVATE
@@ -168,19 +151,16 @@ lib.filterAttrs (_: v: v != null) {
   # /tmp/toplevel-fix-20261009b.log). Re-add ONLY via nix-hash-fix
   # evidence, never by hand.
   project-meta = flakePkg inputs.project-meta;
-  # TEMPORARY vendorHash shim (2026-10-05, a7868a7 wave — class comment at
-  # buildflow): got Mrn25ftf… vs upstream-specified 8kSXYjwa… at locked rev
-  # 1f9b57c.
-  project-discovery-daemon =
-    let
-      pkg = flakePkg inputs.project-discovery-daemon;
-    in
-    if pkg == null then
-      null
-    else
-      pkg.overrideAttrs {
-        vendorHash = "sha256-Mrn25ftfpqf9rov194lDd/JqiDeBbgiGSt9+r0hnYF8=";
-      };
+  # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
+  # protocol): upstream fec79c1 bakes the through-our-lock got hash
+  # Mrn25ftf… (specified 8kSXYjwa vs got Mrn25ftf, first-hand keep-going
+  # enumeration; go.mod/go.sum unchanged since the pin). Lock moved
+  # 1f9b57c → fec79c1 the same day. Context caveat: pdd's OWN lock pins
+  # compute a different FOD hash (standalone dirty-tree probe wanted
+  # 6ZDAkBB…) — the deep infra-follows divergence class; our context is
+  # the one this hash must satisfy. Re-add ONLY via nix-hash-fix evidence,
+  # never by hand.
+  project-discovery-daemon = flakePkg inputs.project-discovery-daemon;
   # vendorHash shim DROPPED (2026-10-09): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 96fd9304, whose
   # flake bakes vendorHash Bvuf0KUY… (the same "got" hash the stale shim

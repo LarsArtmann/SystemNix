@@ -859,11 +859,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791590914,
-        "narHash": "sha256-Jj3fQoQsWq762YTsh++p2QVq/1RO2zVk1MuI7fpxnug=",
+        "lastModified": 1791742018,
+        "narHash": "sha256-BRQqmCsfKPG9hRwKv3zEF8MZ3zD/r2kbkhrCRXfQXLQ=",
         "ref": "refs/heads/master",
-        "rev": "97e1fdde13424b12e07095aa313015d004f84b3a",
-        "revCount": 866,
+        "rev": "a0faf6ca1e467a59662de12977b49bb2e6aa4905",
+        "revCount": 868,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crush-daily"
       },
@@ -6235,11 +6235,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791350722,
-        "narHash": "sha256-y6FNsJjHABa5IcD7YNJnS3Thwmaptv15y9NvineRtrs=",
+        "lastModified": 1791742839,
+        "narHash": "sha256-l0kGlLmLLmB2nOugLW0E47QYj08cNTlRNgZC8xPfrU0=",
         "owner": "LarsArtmann",
         "repo": "md-go-validator",
-        "rev": "5e700039873c376f5e5dbaf0ae694c76f9073850",
+        "rev": "3f466de78df43628ca4c59803151f4345f67607a",
         "type": "github"
       },
       "original": {
@@ -7048,11 +7048,11 @@
         "project-discovery-sdk": "project-discovery-sdk_7"
       },
       "locked": {
-        "lastModified": 1791087131,
-        "narHash": "sha256-Qg8saAMWd4rPSOcBEoyu0Q+UUwOjf5BGgyhoPLIXywY=",
+        "lastModified": 1791742849,
+        "narHash": "sha256-kaO0sAyULl0+9hf+i1CYHLZ1HqLRlMCqpB76vyq0brM=",
         "ref": "refs/heads/master",
-        "rev": "1f9b57c54975c506ccdb1b4761b80edca562fbec",
-        "revCount": 123,
+        "rev": "fec79c17c03d19062968a219545c4612bf1de57d",
+        "revCount": 125,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-daemon"
       },

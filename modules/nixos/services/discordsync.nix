@@ -831,7 +831,24 @@
                 # the server (own user) holds it, poisoning the next open
                 # with SQLITE_READONLY (the browser-history 2026-09-22
                 # uid-drift class).
-                ${lib.getExe pkgs.sqlite} -readonly "$db" ".backup '$raw'"
+                # The CLI defaults to busy_timeout=0: one transient lock from
+                # the server's near-continuous write churn (GCS-URL refresh
+                # loop, turso-sync backoff retries) failed 9 consecutive
+                # 02:30 runs instantly (2026-10-03..11, 0-byte .raw litter).
+                # .timeout rides through short txns (the server's own
+                # connections use busy_timeout=15s for the same churn);
+                # the retry loop covers pathological seconds.
+                attempt=0
+                until err=$(${lib.getExe pkgs.sqlite} -readonly -cmd ".timeout 30000" "$db" ".backup '$raw'" 2>&1); do
+                  attempt=$((attempt + 1))
+                  if [ "$attempt" -ge 3 ]; then
+                    echo "discordsync-db-backup: .backup failed after 3 attempts: $err" >&2
+                    rm -f "$raw"
+                    exit 1
+                  fi
+                  echo "discordsync-db-backup: .backup attempt $attempt failed, retrying: $err" >&2
+                  sleep 15
+                done
                 ${lib.getExe pkgs.gzip} -1 -c "$raw" > "$dst.part"
                 mv "$dst.part" "$dst"
                 rm -f "$raw"
