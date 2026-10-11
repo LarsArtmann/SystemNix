@@ -135,18 +135,26 @@ then, but worth a periodic look.
 `sudo systemctl start forgejo-census && journalctl -u forgejo-census` — native-vs-mirror split
 per owner (the flip-rollout tracking numbers; census results land here at gate G2).
 
-### Storage (G1 flip STAGED 2026-09-30)
+### Storage (Samsung-TLC subvol — G1 EXECUTED 2026-10-11)
 
-`services.forgejo.dedicatedSubvolume` (= true since 2026-09-30, staged) mounts the Samsung-TLC
+`services.forgejo.dedicatedSubvolume` (true since 2026-09-30) mounts the Samsung-TLC
 subvol `hot/forgejo` AT `/var/lib/forgejo` (Set-B: own 8h btrbk leg to
-`/mnt/pool/backups/forgejo-subvol`, freshness Gatus `forgejo_subvol_backup_fresh`). Migration
-runbook: `scripts/migrate-forgejo-subvol.sh` header (prepare → build → finalize → deploy; abort
-path included). **Early-deploy safety:** the family condition-gates on the `.subvol-migrated`
-marker that `finalize` writes INTO the subvol — a deploy landing before `finalize` leaves
-forgejo DOWN (loud, Gatus), never minting fresh state on an empty/stale subvol. deploy.sh
-restarts `forgejo-subvol-bootstrap` (is-active-gated, indirect unit) so bootstrap fixes converge.
-Until the window runs, storage effectively stays on the QLC root (family down after the first
-flipped deploy).
+`/mnt/pool/backups/forgejo-subvol`, freshness Gatus `forgejo_subvol_backup_fresh`).
+Migration runbook: `scripts/migrate-forgejo-subvol.sh` header (prepare → build → finalize →
+deploy; abort path included). **Early-deploy safety:** the family condition-gates on the
+`.subvol-migrated` marker that `finalize` writes INTO the subvol — a deploy landing before
+`finalize` leaves forgejo DOWN (loud, Gatus), never minting fresh state on an empty/stale
+subvol. deploy.sh restarts `forgejo-subvol-bootstrap` (is-active-gated, indirect unit) so
+bootstrap fixes converge.
+
+**G1 executed 2026-10-11 01:45–02:07 CEST** (umount → du gate 67G → prepare 71.75G →
+finalize: 53,172 entries + 43 sampled checksums verified, rename-only swap → deploy
+system-864). Forgejo 15.0.9 lives on the subvol; evidence trail in
+`docs/todo/services.md` (G1-window row) + `docs/status/2026-10-11_02-17_*`. Remaining
+owner tail: burn-in (≥2 btrbk legs at the 05:40/13:40/21:40 cadence + one full mirror
+cycle) → `sudo trash /var/lib/forgejo.qlc-pre-subvol` (reclaims 67G on the QLC). Watch:
+forgejo.service MemoryHigh hits during first-boot mirror catch-up (25k in ~minutes,
+storm-attributed — re-check calm; watermark audit if sustained).
 
 ## Themes / UI (Catppuccin, 2026-09-23)
 
