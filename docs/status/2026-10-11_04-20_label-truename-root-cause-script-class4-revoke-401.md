@@ -2,7 +2,7 @@
 
 - **Date:** 2026-10-11 04:20 CEST
 - **Session span:** ~03:50–04:20 CEST (continues the 03:46 go-live session; starts at the owner's force-deploy)
-- **Content pin:** SystemNix `ea9c6e5e` at pin time (daemon-swept this session's queue/report edits; contents verified — 3 files, all mine); hub repo `8dbe9fb` + **3 modified-uncommitted files** (`build.yml`, `stale-sources.yml`, `setup-forgejo.sh` — the hub daemon idled 02:47→04:15+)
+- **Content pin:** SystemNix `ea9c6e5e` at pin time (daemon-swept this session's queue/report edits; contents verified — 3 files, all mine); hub repo daemon committed this session's 3 files as `22f5646` (contents verified: workflows ×2 + script class-4 fix) — **still UNPUSHED at 04:22**
 - **Scope:** post-deploy falsification of the 03:46 label fix, true root-cause from runner v13.2.0 source, the real workflow fix, setup-forgejo.sh failure class 4 (owner re-run 04:12, clone-token mint), backup-leg milestone. **NOT in scope:** anything else.
 
 ---
@@ -25,7 +25,7 @@
 
 ## b) PARTIALLY DONE
 
-1. **Hub-repo fixes UNCOMMITTED** — 3 files (2 workflows + script class-4 fix) sit modified; the hub daemon's last sweep was 02:47 (idle 90+ min, cadence assumption broken). Nothing pushed → the forgejo mirror still carries the OLD workflow → every existing run is unmatchable and even a fresh dispatch would use old YAML until commit+push+sync land.
+1. **Hub-repo fixes committed but UNPUSHED** — the daemon swept the 3 files as `22f5646` (~04:20; contents verified) but the push hasn't happened → GitHub → forgejo-mirror chain still stalled on ONE push; until it lands the mirror carries the OLD workflow and every existing run is unmatchable.
 2. **Class-4 fix UNVERIFIED against a live run** — agent cannot sudo; the fixed script needs one owner re-run (it now also re-dispatches build.yml at the end).
 3. **Token hygiene debt:** 2 orphaned all-scope setup PATs (see §a.6 — both trap-cleanups 401'd silently: one from 03:15, `eventcatalog-hub-setup-1791684734` from 04:12). INCIDENTAL GOOD NEWS: the 03:15 `GIT_CLONE_TOKEN` secret and the root-file sync token are still VALID (their revokes never succeeded) — the sops paste is NOT blocked by the failed script run.
 4. **Catalog go-live chain:** steps 1–2 stand; step 3 (sops paste) pending and unblocked; steps 4–5 wait on the first green run.
@@ -56,7 +56,7 @@
 
 ## f) NEXT (self-harvested into TODO_LIST.md + docs/todo/services.md at authoring time)
 
-1. **[blocked:user]** Owner chain to first green run: commit+push hub repo → mirror sync (Synchronize now / timer / cron `23 3 * * *`) → re-run setup-forgejo.sh (class-4-fixed, re-dispatches) → cancel stale runs 1–3. *(label row, both surfaces — updated)*
+1. **[blocked:user]** Owner chain to first green run: PUSH hub repo (`22f5646` committed, unpushed) → mirror sync (Synchronize now / timer / cron `23 3 * * *`) → re-run setup-forgejo.sh (class-4-fixed, re-dispatches) → cancel stale runs 1–3. *(label row, both surfaces — updated)*
 2. **[blocked:user]** Delete the 2 orphaned all-scope setup PATs (UI Settings → Applications). *(NEW row, both surfaces)*
 3. **[blocked:user]** sops paste `ARCHITECTURE_CATALOG_SYNC_TOKEN` — root file still valid (runbook step 4). *(go-live row premise updated: unblocked)*
 4. **[watch]** First green run + post-green verify chain. *(go-live row)*
@@ -72,3 +72,23 @@
 1. **Runs 2/3 provenance:** the journal shows exactly one API dispatch (03:21 → run 1) and no others — were runs 2/3 push-triggered (e.g., the 03:52:37 mirror sync landing commit `8dbe9fb`, or your 04:13 UI re-run clicks on run 3)? This settles whether `on: push` fires on mirror-sync on this Forgejo — if yes, tonight's sync of the FIXED workflow auto-dispatches and script step (3) of the chain becomes optional.
 2. **Carried §g.2:** promote `setup-forgejo.sh` to a SystemNix self-elevating app (versioned, pre-commit lint coverage — the daemon-bypass bit this session) or keep it in the hub repo?
 3. **Carried §g.3:** trash timing for `/var/lib/forgejo.qlc-pre-subvol` (67G; with the dump leg green it's eligible after the 05:40 snapshot → ~13:40) + prune-or-keep the DarkBlocks/DialogesWebInterface dual mirror copies?
+
+---
+
+## ADDENDUM (2026-10-11 ~04:45 — class 5: the class-4 fix was structurally impossible)
+
+**What happened at 04:26.** Owner pushed the hub repo (origin/master = `22f5646` ✓) and re-ran setup-forgejo.sh. It died EARLY: `revoke 'eventcatalog-hub-ci-readonly' failed (HTTP 401 — expected 204 via basic auth + numeric id)` — the class-4 fix itself.
+
+**Root cause (source-verified, v15.0.9).** `routers/api/v1/permissions/req_basic_or_rev_proxy_auth.go` requires `ctx.Authentication().IsPasswordAuthentication()` — basic auth where the password was validated as the ACCOUNT PASSWORD. A PAT used as the basic-auth password authenticates as TOKEN auth, not password auth → 401 "auth method not allowed". **No token — header or basic — can ever revoke a token in v15.** Journal smoking gun (04:26:28): `GET /users/lars/tokens` → 200 ×2 (id resolution WORKED; §c's "GET token-header OK" claim survives), then `DELETE /tokens/9` (ci-readonly) and `DELETE /tokens/12` (trap cleanup, the fresh setup token) → both 401 at `reqBasicOrRevProxyAuth.checkPermission`.
+
+**Consequence.** The 04:26 run minted a THIRD orphaned all-scope setup PAT (its trap cleanup 401'd) → orphan count 3 (03:15, 04:12, ~04:26). §f.2 row updated.
+
+**Run #3 provenance (§g.1 partially settled).** UI: run #3 = commit `8dbe9fb` "pushed by lars, 13 minutes ago" concurrent with "mirror synced 13 minutes ago" — the mirror sync landed pre-fix `8dbe9fb` (02:47) and fired a push event. **`on: push` DOES fire on mirror sync.** Run #3 ran the OLD `native:host` workflow → 0s forever (runner journal silent since the 03:50:48 `[native]` declare — no new runner fault). Run #2 provenance still owner-knowledge.
+
+**Fix (landed in hub tree, bash -n + shellcheck clean).**
+1. `revoke()`/`cleanup()` now DELETE directly in the forgejo sqlite DB (python3 stdlib sqlite3 — not in PATH as sqlite3 CLI; parameterized SQL scoped `uid`+`name`, rowcount reported, loud-fail kept, timeout=30). The API is a dead end; the CLI can mint but not delete (verified on the live binary: `admin user` has no delete-token), and the CLI rejects duplicate names (`cmd/admin_user_generate_access_token.go`: "access token name has been used already") — so revoke-before-mint stays mandatory. SQL verified against a throwaway schema replica (exact-row delete; another user's same-named token survives).
+2. NEW step 5d: mirror-sync the hub to GitHub tip + sha-gate (gh api as lars, 30×2s poll) BEFORE dispatching — run #3 was exactly a dispatch onto a stale mirror; this makes the failure mode structurally unreachable.
+
+**Owner chain (supersedes §f.1):** (1) push DONE; (2) re-run `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh` — it now self-syncs the mirror and dispatches the FIXED workflow; (3) cancel stale runs 1–3; (4) delete THREE orphaned PATs; (5) sops paste.
+
+**Corrections to this report:** §c/§d's class-4 fix description ("DELETEs with basic auth `-u user:token`") is falsified — basic-auth-with-PAT is still token auth. §f.1/§f.2 queue rows re-premised accordingly (both surfaces).
