@@ -1066,11 +1066,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1791562654,
-        "narHash": "sha256-skP5c9CeXfmJtaiQ5ZHvZ9UmEK1LjpHu99h5uOjKj1A=",
+        "lastModified": 1791738426,
+        "narHash": "sha256-m83Ee5Zp1UruQC9AnKRbmqtHglfafoI9GVw+WyXq75o=",
         "ref": "refs/heads/master",
-        "rev": "039ba0f0e754524da1943c76f6ad0fba7b38d59c",
-        "revCount": 2325,
+        "rev": "8b8e594d1ec201a94ca3bf767aa3360011e92bdc",
+        "revCount": 2336,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/dnsblockd"
       },
@@ -4131,16 +4131,16 @@
     "go-health_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1790323232,
-        "narHash": "sha256-ex/3Je7Yz7yfGATUBdN06bivifEVufEtlhywgRIIdOU=",
+        "lastModified": 1791557365,
+        "narHash": "sha256-RT6JPpDDe/N/wnAxq9po32E9lcNWZ44QZ6kuR88Niqw=",
         "owner": "LarsArtmann",
         "repo": "go-health",
-        "rev": "ffbcd86c5bca4ab7b428855a80080c987a1fb360",
+        "rev": "23db7fee3b7eb8cc7f8952a87fe182923a1b4bd0",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "v0.4.1",
+        "ref": "v0.5.1",
         "repo": "go-health",
         "type": "github"
       }
