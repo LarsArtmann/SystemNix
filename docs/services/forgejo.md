@@ -155,10 +155,9 @@ owner tail: burn-in (≥2 btrbk legs at the 05:40/13:40/21:40 cadence + one full
 cycle) → `sudo trash /var/lib/forgejo.qlc-pre-subvol` (reclaims 67G on the QLC). Seed state: LANDED 2026-10-11 07:13 via owner-manual start in a calm window —
 `forgejo.20261011T0706` received clean, du-verified **70.41GiB** (attempt 1 at 05:40 was
 storm-killed by memory-emergency-guard trip #2663 mid-receive — by-design Zone-6 churn
-stop). Residual: the killed attempt left a 17G STRAY partial — `sudo btrbk -c
-/etc/btrbk/forgejo.conf clean /mnt/pool/backups/forgejo-subvol` removes it; until then
-each btrbk run exits 10 and pages OnFailure despite the backup succeeding. Burn-in
-1/2 legs done; leg 2 = the next clean slot, then the qlc trash. Mtime-based freshness
+stop). The stray partial was cleaned 2026-10-11 08:37 (`btrbk clean` deleted
+`forgejo.20261011T0540`) — runs exit-0 again from the next slot. Burn-in
+1/2 legs done; leg 2 = the next clean slot (13:40), then the qlc trash. Mtime-based freshness
 cannot see content or completeness — two phantom modes live-observed 2026-10-11, see
 `docs/status/2026-10-11_06-10_forgejo-backup-verification-phantom-window-seed-storm-kill.md`.
 Watch:
