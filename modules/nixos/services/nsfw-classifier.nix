@@ -67,6 +67,22 @@
           "--models-dir ${cfg.modelsDir}"
           "--pair-token auto"
         ]
+        ++ lib.optionals (cfg.stateRoot != null) (
+          # ADR-0016 (upstream docs/adr/0016): durable stores belong in the
+          # STATE root — /var/cache's contract is "deletable to reclaim
+          # space", which is the wrong home for irreplaceable feedback
+          # (golden human labels), the DNS-feed evidence journal, and
+          # unrepeatable capture history. verdicts.db stays in cache
+          # (recomputable by design), as do feedback.jsonl (rebuilt from the
+          # journal when missing) and the pair token (auto re-pair). null =
+          # upstream cache-dir defaults (pre-migration rollback = set null).
+          [
+            "--feedback-db ${cfg.stateRoot}/feedback.db"
+            "--domain-db ${cfg.stateRoot}/domains.db"
+            "--history-db ${cfg.stateRoot}/history.db"
+            "--history-dir ${cfg.stateRoot}/history"
+          ]
+        )
       );
     in
     {
@@ -124,6 +140,21 @@
             read from the live checkout instead.
           '';
         };
+
+        stateRoot = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = "/var/lib/nsfw-classifier/state";
+          description = ''
+            State root for the DURABLE domain stores (feedback, domains,
+            history) per upstream ADR-0016: placement follows value class,
+            and these are the artifacts whose loss is NOT cheap recovery.
+            Rendered as StateDirectory + explicit --feedback-db/--domain-db/
+            --history-db/--history-dir flags. null restores the upstream
+            cache-dir defaults (migration rollback). verdicts.db, the
+            feedback.jsonl mirror, and the pair token ALWAYS stay in the
+            cache dir (recomputable/regenerable by design).
+          '';
+        };
       };
 
       config = lib.mkMerge [
@@ -175,6 +206,13 @@
                 # walks serviceConfig.Environment as a list.
                 CacheDirectory = "nsfw-classifier";
                 Environment = [ "XDG_CACHE_HOME=/var/cache" ];
+                # Durable stores live in the STATE root (ADR-0016): feedback
+                # is irreplaceable golden data, domains/history are
+                # unrepeatable observations — the cache dir's deletability
+                # contract must never apply to them. 0700: history blobs are
+                # sensitive browsing-derived images.
+                StateDirectory = lib.mkIf (cfg.stateRoot != null) "nsfw-classifier/state";
+                StateDirectoryMode = lib.mkIf (cfg.stateRoot != null) "0700";
               }
               (serviceDefaults { })
               (harden {

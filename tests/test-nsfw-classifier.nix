@@ -137,6 +137,22 @@ let
         && (sc.CacheDirectory or "") == "nsfw-classifier";
     }
     {
+      name = "durable-stores-in-state-root";
+      # ADR-0016 (upstream docs/adr/0016): feedback (irreplaceable golden
+      # data), domains (DNS-feed evidence), and history (unrepeatable
+      # captures) move OUT of /var/cache — whose contract is deletable —
+      # into the state root via StateDirectory + explicit flags. verdicts.db
+      # deliberately STAYS in cache (recomputable; see the pair-token case).
+      pass =
+        lib.hasInfix "--feedback-db /var/lib/nsfw-classifier/state/feedback.db" sc.ExecStart
+        && lib.hasInfix "--domain-db /var/lib/nsfw-classifier/state/domains.db" sc.ExecStart
+        && lib.hasInfix "--history-db /var/lib/nsfw-classifier/state/history.db" sc.ExecStart
+        && lib.hasInfix "--history-dir /var/lib/nsfw-classifier/state/history" sc.ExecStart
+        && (sc.StateDirectory or "") == "nsfw-classifier/state"
+        && (sc.StateDirectoryMode or "") == "0700"
+        && !(lib.hasInfix "--cache-db" sc.ExecStart);
+    }
+    {
       name = "start-limit-per-registry";
       # integration-registry step 5 MUST: the crash-loop budget is 5 starts
       # per 5 minutes, not systemd's default window of 5 starts / 10 s.
