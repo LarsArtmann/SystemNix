@@ -219,24 +219,22 @@ let
   # (first-hand keep-going enumeration, /tmp/toplevel-fix-20261009.log).
   # Re-add ONLY via nix-hash-fix evidence, never by hand.
   # TEMPORARY vendorHash shims (class comment at lib/lars-packages.nix):
-  # dnsblockd (ADDED 2026-10-10: got mpNspwwR… at locked rev 039ba0f —
-  # upstream nix/vendor-hash.nix 7kbAnQkq… stale at locked rev AND HEAD;
-  # first-hand keep-going enumeration, /tmp/toplevel-fix-20261009b.log)
-  # and discordsync (RE-PINNED 2026-10-07, 1ac31f8 update; got /NYfLmDMx…
+  # discordsync (RE-PINNED 2026-10-07, 1ac31f8 update; got /NYfLmDMx…
   # at rev 1ac31f8). prev (NOT final) — same recursion guard as above;
   # stay AFTER the respective upstream overlays in the list below.
   # Drop when upstreams re-pin or the lock moves past upstream-fixed revs.
+  # dnsblockdVendorHashShim DROPPED (2026-10-11): its drop condition
+  # ("lock moves past an upstream-fixed rev") is met — the lock holds
+  # 8b8e594, whose nix/vendor-hash.nix bakes vendorHash 0koFfQqs…
+  # upstream (the same "got" hash the stale shim overrode with
+  # mpNspwwR…; first-hand keep-going enumeration, the user's 2026-10-11
+  # nh build log). Re-add ONLY via nix-hash-fix evidence, never by hand.
   # overview shim DROPPED (2026-10-10): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 5730bd9, whose
   # flake bakes vendorHash I+gcCYgO… (the same "got" hash the stale shim
   # overrode with GkGHKtRQ…; first-hand keep-going enumeration,
   # /tmp/toplevel-fix-20261009b.log). Re-add ONLY via nix-hash-fix
   # evidence, never by hand.
-  dnsblockdVendorHashShim = _final: prev: {
-    dnsblockd = prev.dnsblockd.overrideAttrs {
-      vendorHash = "sha256-mpNspwwRvuVEc279U0iscUCcqMN5x+hSzuIHZdVEr5Y=";
-    };
-  };
   discordsyncVendorHashShim = _final: prev: {
     discordsync = prev.discordsync.overrideAttrs {
       vendorHash = "sha256-/NYfLmDMxO+YDEJQqELmP4DXzxtKjgLXDiHLWjeL018=";
@@ -296,7 +294,6 @@ in
   niriLibdisplayInfoShim
   openaudibleOverlay
   dnsblockd.overlays.default
-  dnsblockdVendorHashShim
   emeet-pixyd.overlays.default
   monitor365.overlays.default
   monitor365SwaggerUiFixOverlay
