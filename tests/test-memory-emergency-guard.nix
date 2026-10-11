@@ -173,8 +173,16 @@ in
       # via a backdated epoch) expires under io PSI below the resume bar.
       systemd.services.btrbk-root = {
         description = "dummy btrbk backup unit";
-        serviceConfig.ExecStart = "${pkgs.coreutils}/bin/sleep infinity";
-        wantedBy = [ "multi-user.target" ];
+        # REAL btrbk units are Type=oneshot: while ExecStart runs, systemd
+        # reports state "activating" and `systemctl is-active --quiet` exits
+        # non-zero for it. The fixture must reproduce that shape — the
+        # simple-type version let the recording path silently miss mid-send
+        # kills (2026-10-11 trip #2663: forgejo seed killed mid-receive,
+        # recorded NOTHING, re-arm/starvation/catch-up counters stuck at 0).
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${pkgs.coreutils}/bin/sleep 300";
+        };
         startLimitBurst = lib.mkForce 100;
       };
       # Dummy btrfs-scrub TEMPLATE mirroring the nixpkgs shape that matters
@@ -762,7 +770,12 @@ in
           "catch-up slot (2026-09-26..28: three missed pool-receive nights "
           "while the full re-arm bar was unreachable)"
       )
-      machine.succeed("systemctl is-active --quiet btrbk-root.service")
+      # the grant (re)started the oneshot mid-run — "running" here means
+      # state activating, which is-active --quiet does NOT accept (that is
+      # the exact blind spot the 2026-10-11 fixture flip reproduces)
+      machine.succeed(
+        "test \"$(systemctl show -p ActiveState --value btrbk-root.service)\" = activating"
+      )
       prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
       assert "memory_emergency_guard_backup_starved 1" in prom
       assert "memory_emergency_guard_backup_catchup_protected 1" in prom
@@ -786,7 +799,9 @@ in
           "a trip action inside the protection window must SKIP the backup "
           "unit in the churn stop"
       )
-      machine.succeed("systemctl is-active --quiet btrbk-root.service")
+      machine.succeed(
+          "test \"$(systemctl show -p ActiveState --value btrbk-root.service)\" = activating"
+      )
       machine.succeed("${writeFakes "zone6midb" (zone6mid // { diskTicks = 52000; })}")
       out = run_guard("zone6midb")
       assert "cooldown active" not in out, (

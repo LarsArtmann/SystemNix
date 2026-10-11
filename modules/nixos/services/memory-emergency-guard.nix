@@ -557,12 +557,23 @@ _: {
                     continue
                   fi
                   churn_stop_list="$churn_stop_list $cu"
-                  if systemctl is-active --quiet "$cu" 2>/dev/null; then
-                    churn_stopped_now="$churn_stopped_now $cu"
-                    if is_backup_unit "$cu"; then
-                      echo "$now" > "$BACKUP_STOPPED_EPOCH_FILE"
-                    fi
-                  fi
+                  # is-active --quiet exits NON-ZERO for a Type=oneshot unit
+                  # whose ExecStart is still running (state "activating") —
+                  # btrbk sends are exactly that, so a mid-send kill recorded
+                  # NOTHING: no churn-stopped file, no re-arm, no starvation
+                  # clock, no catch-up slots, counter 0 forever (2026-10-11
+                  # trip #2663 killed the forgejo seed mid-receive and the
+                  # guard's backup machinery never noticed). Ask for the
+                  # state and treat every running-ish state as live.
+                  cu_state="$(systemctl show -p ActiveState --value "$cu" 2>/dev/null || true)"
+                  case "$cu_state" in
+                    active | activating | reloading)
+                      churn_stopped_now="$churn_stopped_now $cu"
+                      if is_backup_unit "$cu"; then
+                        echo "$now" > "$BACKUP_STOPPED_EPOCH_FILE"
+                      fi
+                      ;;
+                  esac
                 done
                 if [ -n "$churn_stopped_now" ]; then
                   {
