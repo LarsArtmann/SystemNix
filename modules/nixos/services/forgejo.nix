@@ -979,8 +979,16 @@ _: {
             if [ -n "$newest" ] && [ -d "$dir/$newest" ]; then
               recv=$(stat -c %Y "$dir/$newest")
               age=$(( now - recv ))
-              if [ "$age" -lt 43200 ]; then fresh=1; else fresh=0; fi
-              printf '# forgejo subvol backup metrics\nforgejo_subvol_backup_scrape_errors 0\nforgejo_subvol_backup_last_age_seconds %s\nforgejo_subvol_backup_fresh %s\n' "$age" "$fresh" >> "$tmp"
+              # Content floor (2026-10-11 phantom classes): a snapshot of an
+              # EMPTY subvol and a GUARD-KILLED partial receive both carry a
+              # fresh mtime — mtime alone proved neither content nor
+              # completeness. A real forgejo tree has several top-level
+              # entries (data/, repositories/, custom/, ...); 0-2 = not a
+              # usable backup.
+              entries=$( (ls -1 "$dir/$newest" 2>/dev/null || true) | wc -l )
+              entries=$(( entries + 0 ))
+              if [ "$age" -lt 43200 ] && [ "$entries" -ge 3 ]; then fresh=1; else fresh=0; fi
+              printf '# forgejo subvol backup metrics\nforgejo_subvol_backup_scrape_errors 0\nforgejo_subvol_backup_last_age_seconds %s\nforgejo_subvol_backup_top_level_entries %s\nforgejo_subvol_backup_fresh %s\n' "$age" "$entries" "$fresh" >> "$tmp"
             else
               # Leg never completed a receive: fresh=0 pages (by design
               # until the first 8h slot after the option flip).
@@ -996,6 +1004,40 @@ _: {
           timerConfig = {
             OnCalendar = "*-*-* *:00/5:00";
             Persistent = true;
+          };
+        };
+
+        # Stray/incomplete receive targets (a storm-killed btrbk run leaves a
+        # partial subvol that btrbk never auto-deletes) poison the leg: every
+        # later run exits 10 and pages OnFailure on a SUCCEEDED backup
+        # (2026-10-11: the trip #2663 partial lingered all morning until the
+        # owner ran btrbk clean by hand). Daily sweep — btrbk's own
+        # prescription; quiet by design, kills already page via the main unit.
+        systemd.services.btrbk-forgejo-clean = lib.mkIf dedicated {
+          description = "Clean stray/incomplete btrbk receive targets (forgejo subvol leg)";
+          unitConfig.RequiresMountsFor = [
+            "/mnt/pool"
+            "/mnt/hot"
+          ];
+          serviceConfig = lib.mkMerge [
+            (serviceOneshotDefaults { })
+            ioTier.background
+            {
+              Type = "oneshot";
+              User = "root";
+              ExecStart = "${pkgs.btrbk}/bin/btrbk -c /etc/btrbk/forgejo.conf clean /mnt/pool/backups/forgejo-subvol";
+              TimeoutStartSec = "2h";
+            }
+          ];
+        };
+
+        systemd.timers.btrbk-forgejo-clean = lib.mkIf dedicated {
+          description = "Daily forgejo btrbk stray-target cleanup";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "*-*-* 04:15:00";
+            Persistent = true;
+            RandomizedDelaySec = "10m";
           };
         };
 

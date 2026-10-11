@@ -65,8 +65,7 @@
           # pinned for the superseded rev 17af7f1 only re-created the drift
           # treadmill). Re-add ONLY via nix-hash-fix evidence, never by
           # hand.
-          default =
-            inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          default = inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default;
           defaultText = lib.literalExpression "inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default";
           description = "The health-hub package (github:LarsArtmann/go-health-dashboard).";
         };
