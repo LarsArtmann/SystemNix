@@ -7,8 +7,10 @@
 # backend with ZERO user engagement: with default settings it probes
 # nsfw.home.lan:<port> (then localhost:8080), requires a pairing token from
 # /readyz, and sends X-Pair-Token on every classify. This module supplies
-# that backend — a fast-mode single-model nsfw-server bound to all
-# interfaces with --pair-token auto. See nsfw-extension/url-utils.js
+# that backend — an ensemble nsfw-server (default trio) bound to all
+# interfaces with --pair-token auto. Per-request fast=true still gets a
+# single-model verdict (the FIRST listed model). See
+# nsfw-extension/url-utils.js
 # (DEFAULT_SERVER_URLS, pairingTokenFromReadyz) for the client half of the
 # contract.
 #
@@ -41,17 +43,19 @@
 
       pkg = cfg.package;
 
-      # Fast mode (single model, minimum latency) — exactly what the
-      # extension's quick-scan path wants. falconsai is the registry's
-      # DefaultModels[0] (the same model `--fast` would pick implicitly);
-      # passing it explicitly keeps the unit deterministic if the registry
-      # default ever reorders.
+      # Ensemble posture (NO --fast flag): the flag would load ONLY the
+      # first model (fastKey takes keys[0]), so the trio is the point. The
+      # extension's quick-scan path sends fast=true and still gets a
+      # single-model verdict from the FIRST listed model; non-fast/stream
+      # requests get the full vote. falconsai stays first (registry
+      # DefaultModels[0] — the same model --fast would pick), so the fast
+      # path is unchanged; the explicit list keeps the unit deterministic
+      # if the registry default ever reorders.
       execStart = lib.concatStringsSep " " [
         "${pkg}/bin/nsfw-server"
         "--host 0.0.0.0"
         "--port ${toString cfg.port}"
-        "--fast"
-        "--models ${cfg.model}"
+        "--models ${lib.concatStringsSep "," cfg.models}"
         "--models-dir ${cfg.modelsDir}"
         "--pair-token auto"
       ];
@@ -60,7 +64,7 @@
       options.services.nsfw-classifier = {
         enable = lib.mkEnableOption ''
           nsfw-classifier — Go/ONNX NSFW image server on nsfw.home.lan
-          (browser-extension backend, fast mode, pairing-token gated)
+          (browser-extension backend, ensemble mode, pairing-token gated)
         '';
 
         port = lib.mkOption {
@@ -69,10 +73,19 @@
           description = "HTTP port; the extension's discovery candidate list hardcodes nsfw.home.lan:<port>.";
         };
 
-        model = lib.mkOption {
-          type = lib.types.str;
-          default = "falconsai";
-          description = "Single model key for --fast mode (must be exported under models/<key>/model.onnx).";
+        models = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [
+            "falconsai"
+            "marqo"
+            "adamcodd"
+          ];
+          description = ''
+            Model keys loaded in ensemble mode (comma-joined into --models;
+            each must be exported under models/<key>/model.onnx). The FIRST
+            entry serves every fast=true quick-scan request, so it must
+            stay falconsai.
+          '';
         };
 
         # NOT lib.mkPackageOption: that helper resolves its default as an
@@ -122,7 +135,7 @@
 
         (lib.mkIf cfg.enable {
           systemd.services.nsfw-classifier = {
-            description = "nsfw-classifier — NSFW image server (browser-extension backend, fast mode)";
+            description = "nsfw-classifier — NSFW image server (browser-extension backend, default-model ensemble)";
             wantedBy = [ "multi-user.target" ];
             after = [ "network-online.target" ];
             wants = [ "network-online.target" ];
@@ -153,7 +166,10 @@
               }
               (serviceDefaults { })
               (harden {
-                MemoryMax = "2G";
+                # Ensemble trio (two 86M-class ViTs + marqo 5.7M) loaded in
+                # parallel — ~1.5G resident peak; was 2G in the single-model
+                # fast posture.
+                MemoryMax = "4G";
                 # ProtectHome must stay OFF: the multi-GB gitignored models
                 # checkout is the unit's only non-store input and sits under
                 # /home/lars. Everything else stays locked down (ProtectSystem

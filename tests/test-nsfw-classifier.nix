@@ -4,7 +4,8 @@
 # catalog.nix for the unconditional-entry case).
 #
 # Proves the zero-user-engagement extension contract:
-#   1. Enabled: the unit runs the server in fast mode with --pair-token
+#   1. Enabled: the unit runs the server in ensemble mode (no --fast —
+#      the flag would load ONLY the first model) with --pair-token
 #      auto, bound on all interfaces at the registered port — the
 #      extension's discovery probes http://nsfw.home.lan:<port> and
 #      refuses tokenless servers (nsfw-extension/url-utils.js).
@@ -70,8 +71,13 @@ let
       pass = enabledConfig.systemd.services ? nsfw-classifier;
     }
     {
-      name = "fast-mode-flag";
-      pass = lib.hasInfix "--fast" sc.ExecStart;
+      # Ensemble posture: NO --fast (the flag loads ONLY the first model —
+      # fastKey takes keys[0]); the trio loads and per-request fast=true
+      # still resolves a single-model verdict from the first entry.
+      name = "ensemble-default-trio";
+      pass =
+        !(lib.hasInfix "--fast" sc.ExecStart)
+        && lib.hasInfix "--models falconsai,marqo,adamcodd" sc.ExecStart;
     }
     {
       name = "pairing-token-auto";
