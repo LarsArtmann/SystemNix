@@ -200,15 +200,25 @@ entries.discordsync = {
 };
 ```
 
-Future wave — postgres cluster (ratified; decide the paperless pg_dump gap
-first — see `docs/status/2026-09-21_00-25_*` §e):
+Future wave — postgres cluster (ratified; the paperless pg_dump gap that
+originally gated it CLOSED 2026-09-21 — `paperless-db-backup.timer` nightly
+dump):
 
 ```nix
 entries.postgres = {
   path = "/var/lib/postgresql";
   cow = false; # ratified: large-file fragmentation rationale
   unit = "postgresql.service";
-  extraUnits = [ "immich-db-backup.service" "miniflux-backup.service" ];
+  # every pg_dump leg on the cluster gets the protective condition-skip
+  # wiring (paperless-db-backup + geometrikks-db-backup joined the two
+  # originals, 2026-10-11; bank-sync + paperless-gpt ride plain
+  # postgresql.service ordering — no dataDir file access)
+  extraUnits = [
+    "immich-db-backup.service"
+    "miniflux-backup.service"
+    "paperless-db-backup.service"
+    "geometrikks-db-backup.service"
+  ];
 };
 ```
 

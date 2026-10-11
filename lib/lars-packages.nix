@@ -103,10 +103,7 @@ lib.filterAttrs (_: v: v != null) {
     let
       pkg = flakePkg inputs.go-humanize-linter;
     in
-    if pkg == null then
-      null
-    else
-      pkg;
+    if pkg == null then null else pkg;
   go-structure-linter = flakePkg inputs.go-structure-linter;
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream cb9a8b79 ALREADY bakes the got
