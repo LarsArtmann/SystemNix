@@ -22,8 +22,9 @@ doctrine), dump-only RPO.
 `services.hot-db.enable = true; entries = { }` (configuration.nix). Entries
 are added **ONE PER WAVE** — an entry deployed before its
 `prepare`/`cutover` mounts an EMPTY subvol over the live dataDir and
-shadow-splits the service. The five waves below are ordered
-risk-ascending (regenerable stats first, the 11 GB event store last):
+shadow-splits the service. The waves below are ordered
+risk-ascending (regenerable stats first, the 11 GB event store last;
+wave 6 is the lowest-risk of all and may jump the queue):
 
 ### Pre-flight verified (2026-10-04, agent session — tree untouched, throwaway extendModules)
 
@@ -64,11 +65,15 @@ risk-ascending (regenerable stats first, the 11 GB event store last):
 | 3    | `pocket-id`       | `/var/lib/pocket-id`                                                               | SSO blip                                                         | `pocket-id-backup` (04:00 sqlite .backup, pool)                                                   |
 | 4    | `browser-history` | `/var/lib/private/browser-history`                                                 | ingest retries on next 5-min tick                                | `browser-history-backup` (02:15, pool)                                                            |
 | 5    | `discordsync`     | `/var/lib/discordsync` (~11 GB — the longest delta+verify)                         | Discord capture gap ≈ any restart; keep tight                    | `discordsync-db-backup` (02:30 gzipped dump, pool — the dump-only RPO leg, Turso is plan-blocked) |
+| 6    | `storage-collector` | `/var/lib/private/storage-collector` (~60 MB today; flips to a 1 GiB window at cutover) | monitoring gap ~1 min (textfile gauges stall, Gatus reds once)   | `restic-storage-history` (04:20 nightly, no-prune pool repo — LANDED 2026-10-12, history survives regardless) |
 
-DynamicUser services (gatus, browser-history) mount the REAL dir behind the
-`/var/lib/<name> -> private/<name>` symlink — mounting the symlink path
-itself would not work. All five entries are `cow = true` (measurement
-doctrine above).
+DynamicUser services (gatus, browser-history, storage-collector) mount the
+REAL dir behind the `/var/lib/<name> -> private/<name>` symlink — mounting
+the symlink path itself would not work. All six entries are `cow = true`
+(measurement doctrine above). Wave 6 fail-closed note: the service carries
+`StateDirectory` → implicit `RequiresMountsFor`; a detached Samsung stops
+the collector (clean restart on remount; the pool history tier is
+unaffected) — accepted for a monitoring store, per the Pre-cutover check.
 
 ## The wave procedure (per service)
 
@@ -197,6 +202,30 @@ entries.discordsync = {
   cow = true;
   unit = "discordsync.service";
   extraUnits = [ "discordsync-db-heal.service" ];
+};
+```
+
+Wave 6 — storage-collector (eval-verified 2026-10-12 via throwaway
+extendModules: 0 failed assertions, mount renders `subvol=hot/storage-collector`,
+the daemon flags flip to `--max-file-mb 50 --keep-files 20`, anti-shadow
+wiring lands on the service AND the verify unit). Flip BOTH blocks in
+configuration.nix at the window — the knobs grow the rotation bound to
+1 GiB ONLY once the dataDir sits on the subvol (until then the 60 MiB
+bound stays on the QLC root on purpose):
+
+```nix
+entries.storage-collector = {
+  path = "/var/lib/private/storage-collector";
+  cow = true;
+  unit = "storage-collector.service";
+  extraUnits = [ "storage-collector-verify.service" ];
+};
+```
+
+```nix
+services.storage-collector = {
+  maxFileMb = 50; # with keepFiles = 20 → 1 GiB ≈ 27 d full-res hot window
+  keepFiles = 20;
 };
 ```
 
