@@ -1,0 +1,230 @@
+# Boot-duration metrics — textfile collector for per-boot phase timings.
+#
+# Why: the 2026-10-12 boot dispatch measured a 14min19s boot (62.7s firmware
+# + 12m57s userspace) and its four fixes shipped with NO regression signal —
+# the verdict waited on a human running `systemd-analyze` after a reboot
+# window (monitoring.md "Boot-duration textfile collector" row). With 15
+# crash-class boots in the 12 days before (zero clean reboots since Oct 1),
+# every reboot is a free verification boot IF the numbers are captured
+# automatically. This collector runs once per boot and emits:
+#
+#   boot_phase_duration_seconds{phase=firmware|loader|kernel|initrd|userspace}
+#   boot_total_duration_seconds
+#   boot_uptime_seconds            (age context: how old this sample is)
+#   boot_reset_reason_watchdog 1|0 (kernel-logged "hardware watchdog timer
+#                                   expired" — the freeze-class reset marker;
+#                                   full reason text goes to the unit journal)
+#   boot_userspace_regression 1|0  (userspace > threshold — pages via Gatus)
+#   boot_metrics_scrape_errors 1|0 (fail-closed; never a phantom green)
+#
+# Storm-boot tolerance: `systemd-analyze` refuses to answer ("Bootup is not
+# yet finished") until userspace target completes — 13min on the measured
+# storm boot. The script retries (2min sleep, bounded) instead of failing,
+# so storm boots still get captured.
+#
+# mktemp in the sticky textfile dir + CAP_FOWNER (mail-relay 2026-09-02..06
+# foreign-owned-prom class), buildcache/pool-smart collector pattern.
+{
+  flake.nixosModules.boot-metrics =
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
+    let
+      inherit (import ../../../lib/default.nix lib)
+        harden
+        serviceOneshotDefaults
+        onFailure
+        ;
+
+      cfg = config.services.boot-metrics;
+
+      textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
+    in
+    {
+      options.services.boot-metrics = {
+        enable = lib.mkEnableOption "boot-duration textfile collector (systemd-analyze phases → node_exporter)";
+
+        userspaceRegressionSeconds = lib.mkOption {
+          type = lib.types.int;
+          default = 180;
+          description = ''
+            Userspace-phase duration (seconds) above which
+            boot_userspace_regression flips to 1. Calibrated against the
+            post-2026-10-12-fix calm baseline (~40-60s expected) with headroom
+            for IO-cold first boots; the 12m57s storm class sits far above it.
+            Fine-grained regression trending belongs to the SigNoz dashboard
+            on boot_phase_duration_seconds — this flag is only the PAGER line.
+          '';
+        };
+
+        emitDelay = lib.mkOption {
+          type = lib.types.str;
+          default = "2min";
+          description = "OnBootSec delay before the first emission attempt (boot must reach the timer target first).";
+        };
+
+        maxRetries = lib.mkOption {
+          type = lib.types.int;
+          default = 12;
+          description = "Retry budget while systemd-analyze reports the boot as unfinished (2min sleep per retry — 12 covers ~26min userspace boots).";
+        };
+      };
+
+      config = lib.mkIf cfg.enable {
+        systemd.services.boot-metrics-emit = {
+          description = "Boot-duration metrics collector (systemd-analyze phases → textfile)";
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+          inherit onFailure;
+          wants = [ "network.target" ];
+          after = [ "multi-user.target" ];
+          path = [
+            pkgs.systemd
+            pkgs.coreutils
+            pkgs.gnugrep
+            pkgs.gawk
+          ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "root";
+              # maxRetries × 120s sleep + parse margin.
+              TimeoutStartSec = "45min";
+            }
+            (harden {
+              ReadWritePaths = [ textfileDir ];
+              CapabilityBoundingSet = "CAP_FOWNER";
+              MemoryMax = "64M";
+            })
+            (serviceOneshotDefaults { })
+          ];
+          script = ''
+            set -eu
+
+            OUT="${textfileDir}/boot-metrics.prom"
+            mkdir -p "${textfileDir}"
+            TMP="$(mktemp "${textfileDir}/boot-metrics.prom.XXXXXX")"
+            chmod 644 "$TMP"
+            trap 'rm -f "$TMP"' EXIT
+
+            METRICS="$(mktemp)"
+            scrape_errors=0
+
+            # ── systemd-analyze with bounded retry for storm boots ──────────
+            analysis=""
+            attempt=0
+            while [ "$attempt" -lt ${toString cfg.maxRetries} ]; do
+              attempt=$((attempt + 1))
+              analysis="$(${pkgs.systemd}/bin/systemd-analyze --no-pager 2>&1 || true)"
+              case "$analysis" in
+                *"Bootup is not yet finished"*|*"Bootup is not yet complete"*)
+                  echo "boot-metrics: boot unfinished (attempt $attempt/${toString cfg.maxRetries}), retrying in 120s" >&2
+                  sleep 120
+                  ;;
+                *) break ;;
+              esac
+            done
+
+            # to_seconds "12min 57.314s" | "4.036s" → seconds (3 decimals)
+            to_seconds() {
+              local t="$1" mins=0
+              case "$t" in
+                *min*)
+                  mins="''${t%%min*}"
+                  t="''${t#*min }"
+                  ;;
+              esac
+              awk -v m="$mins" -v s="''${t%s}" 'BEGIN { printf "%.3f", m * 60 + s }'
+            }
+
+            emit_phase() {
+              local phase="$1" body="$2"
+              local dur
+              dur="$(printf '%s\n' "$body" | grep -oE "[0-9]+min [0-9.]+s \(''${phase}\)|[0-9.]+s \(''${phase}\)" | head -1 || true)"
+              if [ -n "$dur" ]; then
+                dur="''${dur% (*}"
+                echo "boot_phase_duration_seconds{phase=\"$phase\"} $(to_seconds "''${dur# }")" >> "$METRICS"
+              fi
+            }
+
+            phase_body="$(printf '%s\n' "$analysis" | sed -n 's/^Startup finished in //p' | sed 's/ = .*//')"
+            if [ -n "$phase_body" ]; then
+              for phase in firmware loader kernel initrd userspace; do
+                emit_phase "$phase" "$phase_body"
+              done
+              total="$(printf '%s\n' "$analysis" | grep -oE '= [0-9]+min [0-9.]+s$|= [0-9.]+s$' | head -1 || true)"
+              if [ -n "$total" ]; then
+                echo "boot_total_duration_seconds $(to_seconds "''${total#= }")" >> "$METRICS"
+              fi
+            else
+              scrape_errors=1
+            fi
+
+            userspace_line="$(grep '^boot_phase_duration_seconds{phase="userspace"} ' "$METRICS" 2>/dev/null || true)"
+            regression=0
+            if [ -n "$userspace_line" ]; then
+              userspace_secs="''${userspace_line##* }"
+              if awk -v u="$userspace_secs" -v t="${toString cfg.userspaceRegressionSeconds}" 'BEGIN { exit !(u > t) }'; then
+                regression=1
+              fi
+            fi
+
+            # ── reset-reason classification (per-boot, automatic) ───────────
+            # The 2026-10-12 dispatch's key firmware probe, made standing:
+            # "x86/amd: Previous system reset reason [...]" one grep separates
+            # watchdog/cold/warm classes. Free text goes to the journal only
+            # (labels must stay bounded-cardinality).
+            reset_reason="$(journalctl -k -b 0 --no-pager --output cat 2>/dev/null | grep -m1 -o 'Previous system reset reason.*' || true)"
+            if [ -n "$reset_reason" ]; then
+              echo "boot-metrics: $reset_reason" >&2
+            fi
+            reset_watchdog=0
+            case "$reset_reason" in
+              *"hardware watchdog timer expired"*) reset_watchdog=1 ;;
+            esac
+
+            uptime_secs="$(awk '{ printf "%.0f", $1 }' /proc/uptime)"
+
+            {
+              echo "# HELP boot_phase_duration_seconds Duration of one boot phase (systemd-analyze), current boot only — sample age = boot_uptime_seconds"
+              echo "# TYPE boot_phase_duration_seconds gauge"
+              grep '^boot_phase_duration_seconds' "$METRICS" 2>/dev/null || true
+              echo "# HELP boot_total_duration_seconds Total boot time (systemd-analyze '= …' tail), current boot only"
+              echo "# TYPE boot_total_duration_seconds gauge"
+              grep '^boot_total_duration_seconds' "$METRICS" 2>/dev/null || true
+              echo "# HELP boot_uptime_seconds Seconds since boot when this sample was written (staleness/age context between reboots)"
+              echo "# TYPE boot_uptime_seconds gauge"
+              echo "boot_uptime_seconds $uptime_secs"
+              echo "# HELP boot_reset_reason_watchdog 1 if the kernel logged a hardware-watchdog reset for this boot (freeze-class marker; full reason text in the unit journal), 0 otherwise"
+              echo "# TYPE boot_reset_reason_watchdog gauge"
+              echo "boot_reset_reason_watchdog $reset_watchdog"
+              echo "# HELP boot_userspace_regression 1 if the userspace phase exceeded ${toString cfg.userspaceRegressionSeconds}s, 0 otherwise"
+              echo "# TYPE boot_userspace_regression gauge"
+              echo "boot_userspace_regression $regression"
+              echo "# HELP boot_metrics_scrape_errors 1 if systemd-analyze produced no parseable output after the retry budget, 0 otherwise"
+              echo "# TYPE boot_metrics_scrape_errors gauge"
+              echo "boot_metrics_scrape_errors $scrape_errors"
+            } > "$TMP"
+            mv "$TMP" "$OUT"
+            trap - EXIT
+            echo "boot-metrics: wrote $OUT ($(wc -l < "$OUT") lines)"
+          '';
+        };
+
+        systemd.timers.boot-metrics-emit = {
+          description = "Emit boot-duration metrics once per boot";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = cfg.emitDelay;
+            # Deliberately NOT Persistent: values are boot-relative and the
+            # sample is only meaningful for the CURRENT boot.
+            Persistent = false;
+            Unit = "boot-metrics-emit.service";
+          };
+        };
+      };
+    }
+}

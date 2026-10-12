@@ -868,6 +868,28 @@ _: {
               echo "system-health: WARN census durability ring write failed (non-fatal)" >&2
           fi
 
+          # === CPU thermal (k10temp by NAME — hwmon indices are unstable) ===
+          # Freezes #8/#9/#11/#12 rode sustained 98-99°C Tctl ceilings with
+          # ZERO thermal alerting (monitoring.md 2026-10-02/03 rows):
+          # node_exporter exposes the raw hwmon series, but nothing computes
+          # the 0/1 ALERT verdict a Gatus body-pat can match (the
+          # node_psi_*_alert house pattern). thermal-pstate-guard owns
+          # MITIGATION; this is the observability leg.
+          THERMAL_MS=""
+          for h in /sys/class/hwmon/hwmon*; do
+            if [ "$(cat "$h/name" 2>/dev/null)" = "k10temp" ]; then
+              THERMAL_MS=$(cat "$h/temp1_input" 2>/dev/null) || THERMAL_MS=""
+              if [ -n "$THERMAL_MS" ]; then break; fi
+            fi
+          done
+          case "$THERMAL_MS" in
+            "" | *[!0-9]*) THERMAL_MS="" ;;
+          esac
+          THERMAL_ALERT=0
+          if [ -n "$THERMAL_MS" ] && [ "$THERMAL_MS" -ge ${toString cfg.thermalAlertMilliCelsius} ]; then
+            THERMAL_ALERT=1
+          fi
+
           # === LAN NIC presence (bus-level disappearance) ===
           # 2026-08-22: after a hard crash the RTL8125 NIC was absent from
           # PCI enumeration entirely; r8125 had nothing to probe and the
@@ -1431,6 +1453,19 @@ _: {
               printf '%s' "$CENSUS_SAMPLE"
             fi
 
+            # === CPU thermal (k10temp Tctl) ===
+            # Plain Celsius gauge + the pre-computed ALERT verdict (Gatus
+            # body-pat house pattern — numeric thresholds cannot be expressed
+            # as a gatus [BODY] pat). Absent k10temp = nothing emitted.
+            if [ -n "$THERMAL_MS" ]; then
+              echo "# HELP system_cpu_temp_celsius k10temp Tctl (milli-Celsius / 1000)"
+              echo "# TYPE system_cpu_temp_celsius gauge"
+              echo "system_cpu_temp_celsius ''$(awk -v ms="$THERMAL_MS" 'BEGIN { printf "%.1f", ms / 1000 }')"
+              echo "# HELP system_thermal_alert 1 if k10temp Tctl >= ${toString cfg.thermalAlertMilliCelsius} milli-Celsius (sustained-ceiling pre-crash signal, freezes #8/#9/#11/#12 lineage), 0 otherwise"
+              echo "# TYPE system_thermal_alert gauge"
+              echo "system_thermal_alert ''${THERMAL_ALERT}"
+            fi
+
             echo "# HELP system_current_system_profiled 1 if /run/current-system matches a numbered nix profile generation (deployed via nix run .#deploy), 0 if manually activated (reboot would revert to the last real generation)"
             echo "# TYPE system_current_system_profiled gauge"
             echo "system_current_system_profiled ''${SYSTEM_PROFILED}"
@@ -1779,6 +1814,17 @@ _: {
           type = lib.types.bool;
           default = true;
           description = "Collect zram swap fill metrics from /sys/block/zram0/mm_stat (auto-disabled without zramSwap)";
+        };
+
+        thermalAlertMilliCelsius = lib.mkOption {
+          type = lib.types.int;
+          default = 95000;
+          description = ''
+            k10temp Tctl threshold (milli-Celsius) at which
+            system_thermal_alert flips to 1. Freezes #8/#9/#11/#12 rode
+            sustained 98-99°C ceilings; 95 gives warning before the
+            thermal-pstate-guard's guided throttle saturates.
+          '';
         };
 
         lanInterface = lib.mkOption {
