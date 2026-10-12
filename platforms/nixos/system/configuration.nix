@@ -772,7 +772,9 @@ in
       # Centralized AI model storage (/data/ai/)
       ai-models.enable = true;
 
-      # AI inference stack — Ollama ROCm, llama.cpp, gpu-python
+      # AI inference stack — llama.cpp (ROCm wrappers), gpu-python, AI tooling
+      # (ollama REMOVED 2026-10-12, owner directive: bad abstraction on top
+      # of llama.cpp — never re-add; see docs/services/llama-chat.md)
       ai-stack.enable = true;
 
       # FastFlowLM NPU LLM server — socket-activated, OpenAI-compatible.

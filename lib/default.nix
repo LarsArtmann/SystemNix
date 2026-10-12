@@ -184,7 +184,7 @@ in
       IOSchedulingPriority = 5;
     };
     # BE/6 — Standard background daemons tolerating I/O latency
-    # (signoz, discordsync, browser-history, ollama, attic).
+    # (signoz, discordsync, browser-history, attic).
     background = {
       IOSchedulingClass = "best-effort";
       IOSchedulingPriority = 6;
