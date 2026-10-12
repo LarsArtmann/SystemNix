@@ -53,14 +53,30 @@ driving the session-long IO storm with go test / nix builds / an image batch).
 - Eval: full flake check green (incl. gate-timeout-audit, deploy-restart-audit,
   systemd-shape-audit, memory-watermark-audit).
 - treefmt on the four files: 0 changed.
-- Pre-deploy suite: 78 passed / 16 warnings / 0 failed — then the PSI gate
-  BLOCKED the switch (io some avg10 65-87% for 20+ min, other sessions'
-  builds): deploy queued behind a drain poll (DEPLOY_FORCE_PRESSURE=1
-  deliberately NOT used — the gate documents the freeze-precursor class).
-- Post-switch (pending): systemd-analyze on the NEXT boot is the true verdict;
-  unit-level asserts after switch: compsize timer OnBootSec=30min +
-  TimeoutStartSec=10min, llama-chat ExecStartPost retry 400, forgejo wait-dns
-  scripts `seq 1 90`, pool-usb-recovery script `--no-block`.
+- Pre-deploy suite: 78 passed / 0 failed, twice. First attempt correctly
+  blocked by the PSI gate (real storm, other sessions' builds — waited ~35min
+  for drain); second attempt blocked by the PHANTOM leg (PSI 53% with disks at
+  1.0% busy) — verified the documented corpse-pile class before overriding:
+  0 D-state processes across 3 scans, all devices ≤1% util, rust-cache
+  automount healthy on /dev/sdc1 → `DEPLOY_FORCE_PRESSURE=1` (the classifier
+  gap itself is the standing stability.md phantom-PSI row).
+- First switch landed but left the profile UNANCHORED (reboot would revert);
+  re-ran deploy → **profile generation system-876 anchored**.
+- Post-switch live asserts, ALL GREEN: is-system-running=**running** (not
+  degraded), zero failed units; compsize TimeoutStartSec=10min + timer
+  OnBootSec=30min; llama-chat ExecStartPost `--retry 400` rendered;
+  forgejo-wait-dns store script `seq 1 90` (180s budget);
+  pool-usb-recovery store script `systemctl start --no-block` ×2.
+- Post-deploy smoke: 146 PASS / 3 FAIL — all three triaged as not-mine/
+  not-regressions: (1) nix-daemon 1479% CPU = parallel sessions' builds
+  (transient); (2) node_exporter 317 lines/min = the two textfile-collector
+  defects ALREADY FILED by the freeze-28 session (monitoring.md:20);
+  (3) bank-sync sync_errors_total>0 "since restart" = restart-transient,
+  ZERO errors in the 15min after, unit active.
+- The TRUE verdict is the NEXT boot's `systemd-analyze`: userspace should drop
+  the llama-chat 8min wasted-restart cycle, the compsize timeout, and the
+  converger serialization (structural storm remains until the storage.md
+  ClickHouse relocation).
 
 ## c) Fast Boot answer (the owner's actual question)
 
