@@ -8,7 +8,6 @@ _: {
     {
       pkgs,
       config,
-      options,
       lib,
       ...
     }:
@@ -40,7 +39,6 @@ _: {
       llama-cpp-rocwmma = pkgs.llama-cpp.override { rocmSupport = true; };
 
       cfg = config.services.ai-stack;
-      aiPaths = config.services.ai-models.paths;
     in
     {
       options.services.ai-stack = {

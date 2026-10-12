@@ -19,12 +19,21 @@ doctrine), dump-only RPO.
 
 ## Current state
 
-`services.hot-db.enable = true; entries = { }` (configuration.nix). Entries
-are added **ONE PER WAVE** — an entry deployed before its
-`prepare`/`cutover` mounts an EMPTY subvol over the live dataDir and
-shadow-splits the service. The waves below are ordered
-risk-ascending (regenerable stats first, the 11 GB event store last;
-wave 6 is the lowest-risk of all and may jump the queue):
+`services.hot-db.enable = true`; entries in configuration.nix:
+**`discordsync` LIVE since 2026-10-12 (wave 5 done, out of order — owner chose
+it first for downtime tolerance)**. Remaining waves: gatus, dnsblockd,
+pocket-id, browser-history, storage-collector. Entries are added **ONE PER
+WAVE** — an entry deployed before its `prepare`/`cutover` mounts an EMPTY
+subvol over the live dataDir and shadow-splits the service. **That landmine
+sprang once: 2026-10-12 14:31, the discordsync entry rode a parallel
+session's deploy before any `prepare` — the service crash-looped onto an
+empty subvol (fresh DB) while the real 994 MB store sat hidden under the
+mountpoint; recovered same day via stop → umount → prepare → cutover
+(byte-exact 5,744,992,552) → mount → start. Between an entry landing in the
+tree and its cutover, the tree MUST NOT be deployed (daemon commits sweep
+in-flight edits — see AGENTS.md multi-agent rules).** Waves are ordered
+risk-ascending (regenerable stats first; wave 6 is the lowest-risk of all
+and may jump the queue):
 
 ### Pre-flight verified (2026-10-04, agent session — tree untouched, throwaway extendModules)
 
@@ -51,10 +60,14 @@ wave 6 is the lowest-risk of all and may jump the queue):
   landed ~Sep 30, failures began Oct 3. Fix: timer moved to 03:45 (after
   the pass) + the script waits for 3 min of reconcile journal silence
   before the first open (`discordsync.nix`).
-  Before the discordsync window: deploy, then
-  `sudo systemctl start discordsync-db-backup.service` and confirm a
-  fresh dump + `backup_healthy{discordsync} 1` — with Turso blocked
-  this dump is the event store's only backup once it leaves `@`.
+  **STATUS (2026-10-12 evening): the wave-5 window ran WITHOUT the dump leg
+  verified** (owner chose discordsync first for downtime tolerance; the
+  shadow-split forced the window early). The event store now lives on the
+  UNSNAPSHOTTED Samsung tier, so tonight's 03:45 run is its ONLY backup —
+  verify it first thing next morning: fresh non-zero
+  `discordsync-db-2026-10-13.sql.gz` + `backup_healthy{discordsync} 1`.
+  If it fails again, `sudo systemctl start discordsync-db-backup.service`
+  and read the per-attempt journal lines the retry loop now emits.
 - **GATE (all waves)**: IO PSI avg10 was 54% at verification (Zone-6 storm,
   5 memory-guard trips/h) — no window until quiescence (the script's own
   ≥ 20% refusal fires anyway).
