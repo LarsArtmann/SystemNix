@@ -20,7 +20,10 @@ let
 in
 {
   # AMD NPU (XDNA) Support for Ryzen AI Max+ 395 (Strix Halo)
-  # Requires kernel 6.14+ (6.19.8 current) with built-in amdxdna driver
+  # Requires kernel 6.14+ (7.2.9 current) with built-in amdxdna driver.
+  # NOTE 2026-10-12: in-tree amdxdna registers NO hwmon (no NPU temp/power
+  # telemetry — see docs/todo/ai-stack.md decision row); upstream amd/xdna-driver
+  # has it, gated on amd_pmf sensor support.
   # Provides: XRT runtime, XDNA shim plugin, udev rules, memlock limits
 
   hardware.amd-npu = {
