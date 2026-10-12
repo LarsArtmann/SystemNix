@@ -12,9 +12,10 @@ Per-unit/per-PID attribution for the three IO actors the trip-line top-3 deltas 
 
 ## (b) inboxclean-web 39 GB (07:36) and 64 GB/105-min (09:21) windows
 
-- The unit's journal shows **no large scheduled job** in either window — instead an **IMAP reconnect storm**: first `account reconnected account=main` at **07:46:14** (just after the 07:36 trip window), then continuous churn — **575 reconnects** over the rest of the boot, including **42 in 09:10–09:25** (the 64 GB window).
-- Each cycle also shows `GET /health status=503 duration≈8.0s` + `failed to encode health response error="http: Handler timeout"` — the health handler was timing out because the worker loop was IO-saturated; the connection loop kept re-full-syncing the account on every reconnect.
-- Verdict: inboxclean-web's IO windows are the **07:46-onward IMAP reconnect/resync loop** (reconnect → resync → timeout → reconnect), starting between the 07:36 and 09:21 trips. Root cause of the initial disconnect not in the journal (no error line before 07:46:14).
+- **39 GB window (trip #2666, 07:36:42)**: the daemon's **dashboard DB aggregation queries** were saturating — repeated `WARN failed to query email state counts / top senders / paperless upload stats error="...: context canceled"` at 07:34:47–07:44:49 (queries not finishing inside their context window = IO-bound scans). The scheduled Gmail incremental syncs are NOT the cause — they run every 30 min and report near-zero deltas (0–21 new messages; 24 sync runs over the boot).
+- **64 GB/105-min window (trip #2667, 09:21:45)**: an **IMAP reconnect storm** layered on top — first `account reconnected account=main` at **07:46:14** (right after the 39 GB window), then continuous churn — **575 reconnects** over the rest of the boot, **42 in 09:10–09:25** (the window itself).
+- Throughout both windows: `GET /health status=503 duration≈8.0s` + `failed to encode health response error="http: Handler timeout"` — the health handler timed out because the worker loop was IO-saturated; each reconnect triggered a fresh full account resync.
+- Verdict: inboxclean-web's IO windows are **(1) unbounded dashboard aggregation scans** (07:36) feeding into **(2) an IMAP reconnect/resync loop** from 07:46 onward (64 GB window). Initial disconnect cause not in the journal (no error line before the first reconnect).
 
 ## (c) overnight system.slice 27–206 GB/10-min writer (trips #2640–#2660)
 
@@ -25,6 +26,6 @@ Per-unit/per-PID attribution for the three IO actors the trip-line top-3 deltas 
 ## Follow-on findings
 
 - tq-agent-pool's harvest tick should early-exit on `enqueued=0` history or batch its state read; the rescan-everything-every-5-min pattern alone sustained zone-6 for the whole boot. (Queued in TODO_LIST.)
-- inboxclean-web needs reconnect backoff + the health-timeout symptom investigated as an IO-saturation canary. (Queued in TODO_LIST.)
+- inboxclean-web needs reconnect backoff + bounded dashboard aggregation queries (the `context canceled` scan class) + the health-timeout symptom investigated as an IO-saturation canary. (Queued in TODO_LIST.)
 
 — Session: task 000001a132640f21ff8f7f35197300000000, item 2.
