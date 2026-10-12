@@ -43,11 +43,11 @@
     "art-dupl-src_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1790674725,
-        "narHash": "sha256-wMN/uTjMw1CoUs8kcBXTr/BzdxQF5KcD/ghL6xVU534=",
+        "lastModified": 1791750253,
+        "narHash": "sha256-Nuw8lUHTHsfToSDOLm2lAQWBh2JxKNoGyxtbpRcOgcw=",
         "owner": "LarsArtmann",
         "repo": "art-dupl",
-        "rev": "86d807ede669453a16e43fcf6d176e9a7a6b7dff",
+        "rev": "8ce4b2df95917ecaece9aa77104fbd200d5b9ded",
         "type": "github"
       },
       "original": {
@@ -1066,11 +1066,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1791738426,
-        "narHash": "sha256-m83Ee5Zp1UruQC9AnKRbmqtHglfafoI9GVw+WyXq75o=",
+        "lastModified": 1791763525,
+        "narHash": "sha256-j1RGrTUfY1Dmc7r/kXQP1GgIIKNALBAZ6ISxfJTVroo=",
         "ref": "refs/heads/master",
-        "rev": "8b8e594d1ec201a94ca3bf767aa3360011e92bdc",
-        "revCount": 2336,
+        "rev": "b842ff73be9570f5a97f9adf78edc319e268c129",
+        "revCount": 2347,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/dnsblockd"
       },
