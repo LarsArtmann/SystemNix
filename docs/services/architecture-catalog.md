@@ -55,20 +55,29 @@ Actions, nightly 03:23 + push-triggered) union-merges sources, lints, builds
    green + a `dist` branch. First-run watch-list: nix-daemon reachability
    for the DynamicUser runner, `npm` resolving inside the runner PATH
    (nodejs rides it), job-token git-push (PUSH_TOKEN fallback documented in
-   the workflow).
+   the workflow). **DONE 2026-10-11 (run 38 fully green at 173 pages; run
+   51 published `dist` to `lars/eventcatalog-hub-dist` after the
+   mirror-rejection fix, hub c00a61a).**
 4. Paste the sync token (read from the root-only file, never printed):
    ```
    SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops platforms/nixos/secrets/architecture-catalog.yaml
    ```
    — keep the env-file format `ARCHITECTURE_CATALOG_SYNC_TOKEN=<token>`,
    reading the token via `sudo cat /var/lib/forgejo/.eventcatalog-hub-setup/sync-token`.
+   **DONE 2026-10-12 (owner paste; the 03:15 sync token was still valid).**
 5. `nix run .#deploy` (the module + DNS + smoke §15 are already in-tree),
    then `nix run .#post-deploy-check` — §15 stops warning once
-   `/var/lib/architecture-catalog/current/index.html` exists.
+   `/var/lib/architecture-catalog/current/index.html` exists. **DONE
+   2026-10-12 (system-872 smoke: vHost 200 + EventCatalog title marker +
+   `fresh=1`; §15 passes).**
 6. Converge immediately instead of waiting for the timer:
    `sudo systemctl start architecture-catalog-sync`, then watch Gatus.
+   **DONE 2026-10-12 11:35 — `serving generation 20261012-113522 from
+   lars/eventcatalog-hub-dist@dist`; the sync PAT read the dist repo first
+   try (the PAT-scope watch-item did not fire); `dist_present 1`,
+   `fresh 1`, `scrape_errors 0`.**
 
-## PLACEHOLDER-inert pre-go-live behavior (by design)
+## PLACEHOLDER-inert pre-go-live behavior (by design — HISTORICAL, go-live completed 2026-10-12)
 
 Until step 3 lands a real token, the sync unit exits 0 with a journal WARN
 (skip, never a crash loop), `architecture_catalog_dist_present 0` /
