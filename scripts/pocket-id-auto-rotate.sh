@@ -330,7 +330,7 @@ rotate_secret() {
 }
 
 restart_consumers() {
-  local client=$1 spec unit daemon bridge envfile before after
+  local client=$1 spec unit before after
   spec=${CONSUMERS[$client]:-}
   if [ -z "$spec" ]; then
     warn "client $client has NO consumer mapping — rotation already applied, restart SKIPPED (flagging loudly)"

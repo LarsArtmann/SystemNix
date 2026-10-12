@@ -144,6 +144,80 @@
               touch $out
             '';
 
+        # Pocket ID secret-rotation automation selftest (guard + auto-rotate):
+        # runs the REAL scripts against fixtures — the regenerateSecretsFor
+        # stale-list guard (missing -> allow, fresh -> trip with actionable
+        # message, old -> allow) and the auto-rotation planner/parser
+        # selftest mode (cap, oldest-first, threshold boundary, hidden-file
+        # skip, consumer-spec forms) — plus static tripwires on the module
+        # wiring: the provisioner must invoke the guard, the auto-rotation
+        # unit must exist with a timeout bound and healthz gate, the cv
+        # idempotency-gate form must be in the consumer map, and the daily
+        # timer must exist. Dry-run never rotates; apply mode is capped at
+        # maxPerRun — the selftest exercises everything that does not need
+        # a live Pocket ID.
+        pocket-id-rotation-selftest =
+          pkgs.runCommand "pocket-id-rotation-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              guard=${root}/scripts/pocket-id-regenerate-guard.sh
+              auto=${root}/scripts/pocket-id-auto-rotate.sh
+              mod=${root}/modules/nixos/services/pocket-id.nix
+
+              # guard: missing file -> allow (recreation path)
+              if bash "$guard" "$scratch/missing" c 24; then :; else
+                echo "FAIL: guard must allow a missing secret file"
+                exit 1
+              fi
+
+              # guard: fresh file inside window -> trip, actionable message
+              echo x >"$scratch/fresh"
+              touch -d "1 hour ago" "$scratch/fresh"
+              if bash "$guard" "$scratch/fresh" c 24 2>"$scratch/err"; then
+                echo "FAIL: guard must trip on a fresh file still listed"
+                exit 1
+              fi
+              grep -q "regenerateSecretsFor GUARD" "$scratch/err" ||
+                { echo "FAIL: guard trip message missing"; exit 1; }
+              grep -q "regenerateSecretsFor and redeploy" "$scratch/err" ||
+                { echo "FAIL: guard fix hint missing"; exit 1; }
+
+              # guard: old file outside window -> allow
+              echo x >"$scratch/old"
+              touch -d "3 days ago" "$scratch/old"
+              if bash "$guard" "$scratch/old" c 24; then :; else
+                echo "FAIL: guard must allow a file older than the window"
+                exit 1
+              fi
+
+              # auto-rotate: planner/parser selftest mode (real artifact)
+              bash "$auto" selftest
+
+              # static tripwires on the module wiring
+              grep -q 'getExe regenerateGuard} "\$SECRET_FILE"' "$mod" ||
+                { echo "FAIL: provisioner does not invoke the stale-list guard"; exit 1; }
+              grep -q 'pocket-id-auto-rotation' "$mod" ||
+                { echo "FAIL: auto-rotation service/timer missing"; exit 1; }
+              grep -q 'TimeoutStartSec = "20min"' "$mod" ||
+                { echo "FAIL: auto-rotation unit lacks its TimeoutStartSec bound"; exit 1; }
+              grep -q '/healthz' "$mod" &&
+                grep -q 'autoRotateScript' "$mod" ||
+                { echo "FAIL: auto-rotation script or healthz gate missing"; exit 1; }
+              grep -q 'cv-server@cv-oidc-env:' "$mod" ||
+                { echo "FAIL: cv idempotency gate missing from consumer map"; exit 1; }
+              grep -q 'OnCalendar = "\*-\*-\* 05:00:00"' "$mod" ||
+                { echo "FAIL: auto-rotation daily timer missing"; exit 1; }
+
+              touch $out
+            '';
+
         # The pre-deploy §11 vendorHash-freshness parsers BLOCK deploys
         # on FOD hash mismatch — the greps they replaced matched output
         # nix never produces and warned "unable to determine status" on
