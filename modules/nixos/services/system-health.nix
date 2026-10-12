@@ -835,6 +835,14 @@ _: {
               echo "$cur $name"
             done | sort -rn | head -8 || true
           )
+          # Each census line MUST append its newline OUTSIDE the
+          # $(printf …): command substitution strips ALL trailing newlines,
+          # so a \n inside the format string never survives the +=. The
+          # 2026-10-12 live failure (system_health.prom line 686:
+          # "44361195520system_cgroup_mem_anon_bytes{…}" — value glued to
+          # the next label) was exactly this: the whole census rendered as
+          # ONE invalid line and node_exporter rejected the ENTIRE file,
+          # blinding every system_* metric mid-freeze-28.
           CENSUS_SAMPLE=""
           while read -r cur name; do
             [ -n "$name" ] || continue
@@ -843,17 +851,19 @@ _: {
             anon=$(awk '$1 == "anon" {print $2}' "$cgdir/memory.stat" 2>/dev/null) || anon=0
             shmem=$(awk '$1 == "shmem" {print $2}' "$cgdir/memory.stat" 2>/dev/null) || shmem=0
             unevict=$(awk '$1 == "unevictable" {print $2}' "$cgdir/memory.stat" 2>/dev/null) || unevict=0
-            CENSUS_SAMPLE+="$(printf 'system_cgroup_mem_bytes{cgroup="%s"} %s\n' "$label" "''${cur:-0}")"
-            CENSUS_SAMPLE+="$(printf 'system_cgroup_mem_anon_bytes{cgroup="%s"} %s\n' "$label" "''${anon:-0}")"
-            CENSUS_SAMPLE+="$(printf 'system_cgroup_mem_shmem_bytes{cgroup="%s"} %s\n' "$label" "''${shmem:-0}")"
-            CENSUS_SAMPLE+="$(printf 'system_cgroup_mem_unevictable_bytes{cgroup="%s"} %s\n' "$label" "''${unevict:-0}")"
+            CENSUS_SAMPLE+="$(printf 'system_cgroup_mem_bytes{cgroup="%s"} %s' "$label" "''${cur:-0}")"$'\n'
+            CENSUS_SAMPLE+="$(printf 'system_cgroup_mem_anon_bytes{cgroup="%s"} %s' "$label" "''${anon:-0}")"$'\n'
+            CENSUS_SAMPLE+="$(printf 'system_cgroup_mem_shmem_bytes{cgroup="%s"} %s' "$label" "''${shmem:-0}")"$'\n'
+            CENSUS_SAMPLE+="$(printf 'system_cgroup_mem_unevictable_bytes{cgroup="%s"} %s' "$label" "''${unevict:-0}")"$'\n'
           done <<<"$CENSUS_ENTRIES"
           # Durability ring: local rotate-last-N fallback so per-cgroup
           # memory at OOM time survives a SigNoz-ingest outage AND a
           # timeout-killed run. Non-fatal on failure — the ring is forensic
           # extra, not an alerting surface; the .prom contract is unaffected.
           if [ -n "$CENSUS_SAMPLE" ]; then
-            printf '%s\n' "$CENSUS_SAMPLE" |
+            # CENSUS_SAMPLE already ends with \n (appended outside the
+            # command substitutions above) — print WITHOUT adding one.
+            printf '%s' "$CENSUS_SAMPLE" |
               "${censusRing}/bin/system-health-census-ring" "${textfileDir}/census-memory-ring.log" ${toString censusRingKeepBlocks} ||
               echo "system-health: WARN census durability ring write failed (non-fatal)" >&2
           fi
@@ -1418,7 +1428,7 @@ _: {
             echo "# HELP system_cgroup_mem_unevictable_bytes mlocked/unevictable memory (memory.stat unevictable) of the same top cgroups"
             echo "# TYPE system_cgroup_mem_unevictable_bytes gauge"
             if [ -n "$CENSUS_SAMPLE" ]; then
-              echo "$CENSUS_SAMPLE"
+              printf '%s' "$CENSUS_SAMPLE"
             fi
 
             echo "# HELP system_current_system_profiled 1 if /run/current-system matches a numbered nix profile generation (deployed via nix run .#deploy), 0 if manually activated (reboot would revert to the last real generation)"
