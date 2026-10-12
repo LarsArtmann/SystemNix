@@ -493,6 +493,17 @@
       url = "git+ssh://git@github.com/LarsArtmann/branching-flow?ref=refs/heads/master";
     };
 
+    # go-branded-id — brandid-lint CLI (BD001/BD003 branded-ID linter).
+    # PUBLIC repo, so plain github: ref (no deploy key needed). Consumes only
+    # the flake's `packages.default` (= brandid-lint; exposed 2026-10-11,
+    # replacing CV's hand-built ~/go/bin binary). Branch-ref governed (pin
+    # policy 2026-09-16: ?ref=master; the lock holds the exact rev until an
+    # explicit update — owner decision 2026-10-11: master-tracking, no
+    # version pins).
+    go-branded-id = {
+      url = "github:LarsArtmann/go-branded-id?ref=master";
+    };
+
     # art-dupl — Code duplication detector
     art-dupl = {
       # Pinned to the fork-branch rev that carries the vendorHash refresh.
@@ -837,6 +848,9 @@
     go-cqrs-lite.inputs.go-nix-helpers.follows = "go-nix-helpers";
     go-cqrs-lite.inputs.nixpkgs.follows = "nixpkgs";
     go-cqrs-lite.inputs.treefmt-nix.follows = "treefmt-nix";
+    go-branded-id.inputs.flake-parts.follows = "flake-parts";
+    go-branded-id.inputs.nixpkgs.follows = "nixpkgs";
+    go-branded-id.inputs.treefmt-nix.follows = "treefmt-nix";
     go-health-dashboard.inputs.flake-parts.follows = "flake-parts";
     go-health-dashboard.inputs.nixpkgs.follows = "nixpkgs";
     go-health-dashboard.inputs.treefmt-nix.follows = "treefmt-nix";
