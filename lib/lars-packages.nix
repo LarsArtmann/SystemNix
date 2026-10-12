@@ -28,10 +28,12 @@ lib.filterAttrs (_: v: v != null) {
   # the override only re-created the drift treadmill. Re-add ONLY via
   # nix-hash-fix evidence, never by hand.
   branching-flow = flakePkg inputs.branching-flow;
-  # brandid-lint CLI from the go-branded-id flake (packages.default);
+  # brandid-lint CLI from the go-branded-id repo's flake (packages.default);
   # master-tracked per the 2026-10-11 owner decision. CV's change-gate
   # brandid leg consumes this via PATH instead of a hand-built binary.
-  brandid-lint = flakePkg inputs.go-branded-id;
+  # (Input is named brandid-lint, not go-branded-id: that name is taken
+  # by an older non-flake source pin in flake.nix.)
+  brandid-lint = flakePkg inputs.brandid-lint;
   # buildflow shim DROPPED (2026-09-23): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 5b3483a, where the
   # vendorHash fix IS pushed (upstream vendorHash.nix = sha256-WIFsGVLBMsCK…,
