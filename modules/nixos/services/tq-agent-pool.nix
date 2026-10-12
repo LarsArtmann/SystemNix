@@ -113,6 +113,15 @@ _: {
             # keys, so this key crash-looped the pool on locked 0.3.1
             # (2026-10-07 deploy). Re-add `"done-preflight" = "true";` at the
             # post-push consumption step (TODO_LIST.md → upstream.md).
+            # Owner-session park (2026-10-12, C15.3 two-writer policy):
+            # repos holding a LIVE owner crush session park their pending
+            # tasks for 15m instead of claiming into the owner's worktree
+            # (claim/conflict/requeue churn → visible, attempt-free parks).
+            # The flag is DEFAULT-ON upstream from the 2026-10-12 commit,
+            # so the policy activates at the next `nix flake update
+            # go-taskqueue`; add `"owner-session-park" = "true";` at that
+            # same consumption step to pin it explicitly (before the lock
+            # moves, the key would fail-fast the pool like done-preflight).
             yolo = "true";
             "project-exclusive" = "true";
             review = "true";
