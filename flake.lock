@@ -1066,11 +1066,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1791773897,
-        "narHash": "sha256-rsyHxD0+KSXLOCeAwezKV4HnMrypv4PlpmbR4q+w2vA=",
+        "lastModified": 1791777758,
+        "narHash": "sha256-LAzVykIxoQw41gV0Y7dhCkSVjHu/3DyqiibwgQW/5uM=",
         "ref": "refs/heads/master",
-        "rev": "4e1af5d0da91e0476a90ea98cec903111a85066d",
-        "revCount": 2358,
+        "rev": "d5a22a4bb63a68c5a60f8dbee26fb32252e778e8",
+        "revCount": 2362,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/dnsblockd"
       },

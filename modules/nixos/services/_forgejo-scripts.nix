@@ -550,9 +550,9 @@ in
       # Go duration strings ("8h0m0s", "30m0s", "2h", "") → seconds.
       dur_sec() {
         local d=$1 h=0 m=0 s=0
-        [[ "$d" =~ ([0-9]+)h ]] && h=${BASH_REMATCH[1]}
-        [[ "$d" =~ ([0-9]+)m ]] && m=${BASH_REMATCH[1]}
-        [[ "$d" =~ ([0-9]+)s ]] && s=${BASH_REMATCH[1]}
+        [[ "$d" =~ ([0-9]+)h ]] && h=''${BASH_REMATCH[1]}
+        [[ "$d" =~ ([0-9]+)m ]] && m=''${BASH_REMATCH[1]}
+        [[ "$d" =~ ([0-9]+)s ]] && s=''${BASH_REMATCH[1]}
         echo $((10#$h * 3600 + 10#$m * 60 + 10#$s))
       }
       target_sec=$(dur_sec "$TARGET_INTERVAL")
