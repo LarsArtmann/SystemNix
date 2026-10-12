@@ -212,6 +212,19 @@
                   config.sops.templates."crm-server-env".path
                   oidcEnvFile
                 ];
+                # Boot-race gate (2026-10-12): OIDC discovery runs once at
+                # startup; a start before auth.<domain> resolves+listens
+                # silently degraded crm.<domain> to passkey-only for days
+                # (never retried). Wait (bounded, fail-open) for the Pocket
+                # ID socket first — /dev/tcp needs no caps and no curl in
+                # the closure (cv-server's crm-wait idiom).
+                ExecStartPre = [
+                  "${pkgs.bash}/bin/bash -c 'deadline=$$((SECONDS + 120)); until (exec 3<>\"/dev/tcp/auth.${domain}/${toString ports.pocket-id}\") 2>/dev/null; do if [ \"$$SECONDS\" -ge \"$$deadline\" ]; then echo \"crm-server: Pocket ID auth.${domain}:${toString ports.pocket-id} not reachable within 120s — starting anyway (OIDC will degrade to passkey-only; restart once DNS is up)\" >&2; exit 0; fi; sleep 1; done'"
+                ];
+                # The wait window lives under the default 90s start budget
+                # (systemd.md: ExecStartPre-heavy units need an explicit
+                # TimeoutStartSec or switches report false start failures).
+                TimeoutStartSec = "3min";
               })
               (harden {
                 ProtectSystem = "strict";
