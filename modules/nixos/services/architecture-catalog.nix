@@ -172,6 +172,9 @@ _: {
 
         sops.secrets.architecture_catalog_sync_token = {
           sopsFile = ../../../platforms/nixos/secrets/architecture-catalog.yaml;
+          # 2026-10-12: re-pasted after the setup-script rotations orphaned
+          # the deployed copy (serving frozen at the 03:26 build; owner
+          # authorized the agent-side sops paste — byte-verified).
           # Root-owned 0400: systemd (PID 1) reads the EnvironmentFile as
           # root; nothing else ever needs the token. sops rotation restarts
           # the sync unit so a fresh token converges within one tick.
