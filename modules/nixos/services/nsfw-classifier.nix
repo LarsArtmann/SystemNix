@@ -67,7 +67,7 @@
           "--models-dir ${cfg.modelsDir}"
           "--pair-token auto"
         ]
-        ++ lib.optionals (cfg.stateRoot != null) (
+        ++ lib.optionals (cfg.stateRoot != null)
           # ADR-0016 (upstream docs/adr/0016): durable stores belong in the
           # STATE root — /var/cache's contract is "deletable to reclaim
           # space", which is the wrong home for irreplaceable feedback
@@ -82,7 +82,6 @@
             "--history-db ${cfg.stateRoot}/history.db"
             "--history-dir ${cfg.stateRoot}/history"
           ]
-        )
       );
     in
     {
