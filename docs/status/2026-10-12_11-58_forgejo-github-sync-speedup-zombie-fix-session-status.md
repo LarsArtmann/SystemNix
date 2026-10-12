@@ -1,0 +1,100 @@
+# Status: Forgejo GitHub-Sync Speedup Wave + Zombie-Mirror Incident (2026-10-12 11:58 CEST)
+
+**Scope:** this session only. Owner ask: *"Could we be faster for the GitHub <-> Forgejo sync?"* → analysis → "do it" → implementation → validation → deploy (blocked 45 min by the I/O pressure gate, landed via the parallel-session switch ~07:39) → post-deploy verification → zombie-mirror incident found + fixed → runbook/docs closed out. No unrelated research.
+
+**One-line outcome:** worst-case new-repo discovery 6h → **1h**, worst-case mirror content staleness 8h → **~2h**, all 462 mirrors converged at `2h0m0s`, sync unit green — after one self-inflicted miss turned a pre-existing zombie mirror into 5 hourly alert pages.
+
+---
+
+## a) FULLY DONE (evidence-cited)
+
+| # | Item | Evidence |
+| - | ---- | -------- |
+| a1 | **Latency structure analysis + live-state verification before any edit**: three independent latencies identified (6h discovery timer `forgejo.nix`, 8h `mirror.DEFAULT_INTERVAL` with the 30m×PULL_LIMIT=50 sweep floor = the REAL throughput ceiling, minutes converged run); swagger probe confirmed `PATCH /repos/{owner}/{repo}` accepts `mirror_interval` (`/swagger.v1.json` → `EditRepoOption.mirror_interval`, "8h30m0s" form) | live probes 04:0x this session |
+| a2 | **Live baseline recorded**: 461 mirrors at `8h0m0s` + 1 empty-interval repo (the later-identified zombie) | probe `/user/repos` distribution |
+| a3 | **`forgejo.nix` knobs**: timer `OnUnitActiveSec` 6h→1h, `mirror.DEFAULT_INTERVAL` 8h→2h (comment: applies at CREATION only), `cron.update_mirrors` `PULL_LIMIT` 50→150 (capacity math comment: 300/h > 470/2h), PUSH_LIMIT deliberately untouched (push phase inert) | commit `0d3d27af` |
+| a4 | **New converger `forgejo-reinterval-mirrors`** (`_forgejo-scripts.nix`): PATCHes every pull mirror's `mirror_interval` to target (default 2h), idempotent GET-compare-PATCH (converged run = ~470 localhost GETs), Go-duration parser (`dur_sec`, handles `8h0m0s`/`30m0s`/empty), phantom-green non-array guard, PATCH-failure warn + count + exit 1 AFTER full pass (timer = retry) | commit `0d3d27af` |
+| a5 | **Wired as sync phase 3** (mirror-github → reconcile → re-interval; push-mirror stays phase 4, inert behind `canonicalRepos = []`): ExecStart + restartTriggers + inherit list | commit `0d3d27af` |
+| a6 | **Fixture battery** in `forgejo-scripts-fixture`: converge case (4 checked / 3 patched incl. empty-interval + org namespace / 1 already-at-target untouched / non-mirror untouched, payload asserts `"mirror_interval":"2h"`), PATCH-500 warn-then-exit-1-after-full-pass, non-array listing fail-loud — all green | `nix build .#checks.x86_64-linux.forgejo-scripts-fixture` PASS (`mmcynqvg…`) |
+| a7 | **Validation gates**: `nix fmt` 3 files 0-changed after the one alejandra pass; `nix flake check --no-build` **all checks passed**; buildflow fast-mode green (after one spurious failure — see d3); `scripts/pre-deploy-check.sh` **78 passed / 0 failed** | session log |
+| a8 | **Docs closed out**: runbook cadence table (1h / 2h / PULL_LIMIT 150 + reinterval row), zombie-mirror operational fact (symptom, journal signature `Failed to get mirror: Mirror does not exist`, safe-delete checklist, do-NOT-delete frozen-archive exception), CHANGELOG entry, `deploy.sh` comment | commit `a05ac03c` + working tree |
+| a9 | **Deploy landed** ~07:39 via the parallel session's switch (my changes were in the shared tree); first reinterval run same minute | journal 07:39:22 `checked=462 patched=461` |
+| a10 | **Zombie mirror fixed live**: `lars/nix-international-telephony` (repo row `mirror=true`, mirror RECORD missing → every PATCH 500; `empty: true`, `mirror_updated` 0001-01-01 — never synced since creation). Upstream verified alive (pushed 09:42 today) + copy empty → runbook safe-delete path: DELETE 204 → sync start → auto-recreated 11:50:37 → `{"mirror":true,"mirror_interval":"2h0m0s","empty":false}` → re-interval `checked=462 patched=0 already-at-target=462 failed=0` → unit `Result=success` | journal + API probes |
+| a11 | **Cross-session race handled per doctrine**: flagged the foreign `flake.lock` change (dnsblockd `4e1af5d0`→`d5a22a4`) the daemon batched into my docs commit `a05ac03c`; did NOT force-deploy under a foreign 1.6 GB/s storm; stopped racing the lock once foreign same-tree deploys were evident | session log + `git show a05ac03c` |
+
+## b) PARTIALLY DONE
+
+1. **Content-freshness OUTCOME unproven over a full window.** Intervals are converged (verified), but "every mirror actually pulled within its 2h window" is asserted from capacity math (300/h sweep vs 462 mirrors = 1.54h drain), not observed. Needs a 24h look at `mirror_updated` spread / forgejo sync-queue metrics. Effort S. Blocker: none — just wall-clock.
+2. **Alert ergonomics fixed for THIS incident only.** The hourly-page loop is closed (unit green), but the design still exits 1 every run on ANY permanently-failing single mirror. N-strike de-escalation not implemented (see e1/f2).
+3. **Self-harvest of §f direct follow-ups**: done at authoring time (3 items queued to `TODO_LIST.md` + `docs/todo/services.md` §f1–f3 below); decision-gated items recorded as deliberately not harvested (§f notes).
+
+## c) NOT STARTED (planned, zero code)
+
+1. **Event-driven sync (GitHub webhook → forgejo)** — needs GitHub→home-lan reachability (tunnel/relay); owner-level infrastructure decision. Still wanted? Unknown — it was the biggest-hammer option on the ladder and was not chosen.
+2. **Post-push `mirror-sync` hook** (seconds-level freshness for actively-pushed repos via `POST /repos/{o}/{r}/mirror-sync`) — the sweet-spot option; never picked up. Cheap (S), needs a home (git hook vs fish abbr vs wrapper).
+3. **Forgejo→GitHub push direction (phase 3, `canonicalRepos`)** — stays inert by design; a flip needs the pull-vs-push clobber design settled first (documented in `_forgejo-scripts.nix`).
+4. **Pre-existing queue rows surfaced by this session, untouched** (not mine to drive without dispatch): per-org repo counts in mirror summary (`services.md`, ready), §g-question annotations + 32 frozen-archive inventory persistence (`services.md`, ready), mr-sync GitHub PAT go-live (`blocked:user`), GitHub Actions go-live (`blocked:user`).
+
+## d) TOTALLY FUCKED UP (radical honesty)
+
+1. **I SAW the zombie in my first live probe and walked past it.** The 04:0x interval distribution literally printed `1 ""` (empty interval) — I noted it parenthetically as "worth noting" and moved on instead of asking WHY an interval is empty. Two minutes of curiosity (GET the repo → `mirror_updated` epoch → journal) would have caught the broken mirror BEFORE deploy. As implemented, it cost **5 hourly failed-unit cycles (07:45–11:19) and 5 Discord OnFailure pages to the owner** before the owner's paste triggered the diagnosis. Severity: alert-noise + 4.5h delayed closure. Root cause of the miss: I optimized for the migration premise check and stopped probing at the first anomaly that CONFIRMED my plan instead of the first anomaly, period.
+2. **My handoff verification command was broken.** I told the owner to run `curl -H "Authorization: token $FORGEJO_TOKEN" …` knowing full well (a) the var only exists inside the unit via EnvironmentFile, and (b) I had myself hit `Permission denied` on the token file hours earlier. The owner's first probe 400'd/jq-erred. Inexcusable: I had the working sudo'd probe pattern in the same session.
+3. **Quality gate raced my own edits.** I started `buildflow --build-mode fast` in background, then edited CHANGELOG/deploy.sh while it hashed → one spurious step failure → `--failed-only` re-run to clear. Self-inflicted noise; gates and edits must be serialized.
+4. **My calm-window watcher used the wrong predicate.** I gated on `io some avg10 < 15%` while the deploy gate's actual condition is the CONJUNCTION (some ≥20% AND disk-busy ≥20%). Cost one full 8-minute polling cycle that would have fired ~3 minutes in. Calibration sloppiness: I re-derived the gate instead of reading `deploy.sh`.
+5. **Foreign commit contamination (flagged, unresolved attribution):** daemon commit `a05ac03c` batches MY docs with a foreign `flake.lock` move (dnsblockd `4e1af5d0`→`d5a22a4`) I did not author — consistent with the parallel dnsblockd session's wave, but per the co-verification rule it is flagged here as not-mine until the owner confirms.
+
+## e) WHAT WE SHOULD IMPROVE (patterns, not bugs)
+
+1. **Transient-vs-permanent failure classes for converger oneshots.** A single permanently-500ing item turns an hourly converger into an hourly pager. Fix: N-consecutive-strike state (e.g. fail loud only after 3 consecutive failures of the same key; WARN meanwhile). This repo now has ≥3 converger-style scripts — the pattern should be a shared lib, not per-script bash.
+2. **Mirror-record integrity is unmonitored.** The zombie class (repo row `mirror=true`, mirror record missing / `mirror_updated`=epoch / interval empty) is invisible to every current check: reconcile only compares NAMES, mirror-health watches forgejo's own queue. Add a zombie gauge to the reconcile publish (it already enumerates every mirror — one extra API read per repo or a `mirror_updated` epoch check) → automated red instead of today's manual diagnosis.
+3. **Deploy-contention etiquette is tribal knowledge.** Today: 5 deploy attempts across 3 sessions, all gate-aborted, lock ping-pong. When the lock holder is deploying the SAME tree, the correct move is wait-and-verify, not retry-race. Codify in `docs/CONTRIBUTING.md` next to the daemon-race policy.
+4. **Owner-handoff commands need execution-proofreading**: every pasted command must be run verbatim (env, sudo, shell) before handoff — today's `$FORGEJO_TOKEN` flop is the second instance of this class in recent memory.
+5. **Probe discipline**: the first anomaly in live data deserves one follow-up probe BEFORE proceeding, especially when it neither blocks nor confirms the current change (the empty interval neither blocked the migration nor was explained by it).
+6. **Same-day status-label staleness**: my own CHANGELOG entry said "deploy pending" and was stale within hours (deploys land via foreign sessions). Fixed on sight this time; the habit should be: annotate landing when observed, not next session.
+
+## f) TOP NEXT TASKS (ranked; harvest routing marked)
+
+Direct follow-ups of THIS session — **f1–f3 queued at authoring time** to `TODO_LIST.md` + `docs/todo/services.md`:
+
+| # | Task | Impact | Effort | Category | Harvest |
+| - | ---- | ------ | ------ | -------- | ------- |
+| f1 | **N-strike de-escalation for `forgejo-reinterval-mirrors`**: state-file counter per failing repo; exit 1 only after 3 consecutive failures of the same key, WARN otherwise (fixture: fail-fail-pass = rc 0) | High | M | Quality | QUEUED [ready] |
+| f2 | **Zombie-mirror detector**: reconcile already enumerates every mirror — add `forgejo_mirror_zombies` gauge (mirror=true AND (mirror_updated==epoch OR interval=="" OR "Mirror does not exist" PATCH class)) + Gatus rule; kills today's manual diagnosis class | High | M | Bug-prevention | QUEUED [ready] |
+| f3 | **Sibling sweep + 24h freshness proof**: one-shot script asserting ALL mirrors have `mirror_updated` within 2× interval after 24h (turns the capacity math into a measured outcome; would also have caught the zombie) | High | S | Verification | QUEUED [ready] |
+| f4 | Verify the recreated `nix-international-telephony` mirror content parity (branches vs upstream; first pull already landed `empty:false`) | Medium | S | Verification | deliberate no: folded into f3's sweep |
+| f5 | Shared "converger lib" (writeShellApplication helper: list→compare→act→strike-counter) so f1 isn't the third hand-rolled converge loop | Medium | M | Quality | deliberate no: design after f1 lands |
+| f6 | Per-org repo counts in mirror-github summary (scope-starved-PAT blindness) | Medium | S | Feature | pre-existing row, `services.md` — no dup |
+| f7 | Annotate 16-45 report §g questions RESOLVED + persist the 32 frozen-archive inventory out of journal-only | Medium | S | Documentation | pre-existing row, `services.md` |
+| f8 | `${VAR}`-in-nix-string latent-trap audit: grep all `writeShellApplication` texts for unescaped `${IDENT}` where IDENT could collide with a nix var in scope (BASH_REMATCH 500'd eval only because nix had no such var — a collision like `$name`/`$pkgs` would silently interpolate) | Medium | S | Bug-prevention | deliberate no: generic audit, separate dispatch |
+| f9 | Re-interval summary: emit count-by-interval histogram (drift detection: a stray `8h0m0s` re-appearing = someone re-migrated) | Low | S | Observability | deliberate no: nice-to-have |
+| f10 | Pagination fixture case for re-interval (listing >50 → second page) | Low | S | Quality | deliberate no: marginal after f3 |
+| f11 | `dur_sec` edge-form fixtures (`2h30m0s`, `90s`, `1d`) | Low | S | Quality | deliberate no: bundled with f10 if ever |
+| f12 | Codify deploy-contention wait-and-verify in CONTRIBUTING (same-tree lock holder → wait + verify, don't race) | Medium | S | Documentation | deliberate no: process change needs owner nod (§g3) |
+| f13 | Post-deploy-check §: sync-train leg (4 ExecStarts present, re-interval journal freshness <25h) | Medium | M | Quality | deliberate no: pairs with f3 outcome first |
+| f14 | Gatus: make the reconcile check assert `forgejo_mirror_zombies == 0` (depends f2) | Medium | S | Observability | folds into f2 |
+| f15 | Decide freshness end-state: keep 2h global, or add seconds-level for active repos via post-push `mirror-sync` hook | High | S(decision) | Feature | OWNER QUESTION §g2 |
+| f16 | Decide push-mirror direction go/no-go (canonicalRepos flip; pull-vs-push clobber design first) | Medium | S(decision) | Feature | OWNER QUESTION §g2 |
+| f17 | Decide alert policy: fail-loud-every-run vs N-strike (f1 default 3) | High | S(decision) | Quality | OWNER QUESTION §g1 |
+| f18 | Event-driven sync spike (tunnel/relay doc; GitHub webhook → `mirror-sync` + discovery trigger) | Low | L | Feature | ROADMAP fuel — not harvested |
+| f19 | Pressure-gate abort: log a structured storm-driver snapshot (top-3 io PIDs via /proc forensics) into the deploy log on every abort | Medium | S | Observability | deliberate no: deploy.sh touch, separate dispatch |
+| f20 | Forensic: when was the zombie CREATED (repo `created_at` + first journal mention) → gotchas-archive entry with the half-migrate root cause (which migrate run failed?) | Low | S | Documentation | deliberate no: archaeology, post-f2 |
+| f21 | Runbook: dedicated "Verify intervals" snippet section (sudo'd token pattern, fish-safe) instead of the parenthetical I added | Low | S | Documentation | deliberate no: cosmetic |
+| f22 | CHANGELOG habit: annotate "deployed <when>" on landing observation (same-day staleness class) | Low | S | Documentation | deliberate no: habit, not task |
+| f23–f32 | **Pre-existing adjacent rows re-surfaced this session (NOT re-queued, live in `services.md`/`TODO_LIST.md` already):** actions go-live (`blocked:user`), mr-sync PAT go-live (`blocked:user`), `/data/docker` 15.5G reclaim (`blocked:user`), HaGeZi blocklist drift automation (ready), textfile-collector coverage lint (TODO_LIST:895, ready), G1 burn-in tail → QLC `/var/lib/forgejo.qlc-pre-subvol` 67G reclaim after burn-in, G2 push-mirror probe (`blocked:user`), Q2 GitHub-Issues policy (`decision`), `forgejo_mirror_*` live metric verify (ready), predecessor-debt re-check trio (ready) | — | — | — | pre-existing |
+
+Beyond f32: padding. The honest backlog for this domain is f1–f22 + the ten pre-existing rows.
+
+## g) QUESTIONS I CANNOT ANSWER MYSELF
+
+1. **Alert policy (gates f1):** a permanently-failing single mirror paged you hourly this morning (5×, 07:45–11:19). Keep fail-loud-every-run (maximum honesty, noisy), or N-strike de-escalation with my default of 3 consecutive failures before the unit fails (quiet, but a stuck repo stops paging after 3 hours)? This is noise-tolerance, only you can set it.
+2. **End-state direction (gates f15/f16):** is **2h global + 1h discovery** the intended end state, or do you want seconds-level for actively-pushed repos (post-push `mirror-sync` hook)? And is the Forgejo→GitHub push direction (phase 3 `canonicalRepos`, currently inert) ever going live, or permanently pull-only?
+3. **Deploy-under-foreign-storm policy (gates f12/f19):** today every deploy was gate-blocked ~45 min by a foreign 12h-session writing 1.6 GB/s. Is that session's workload expected to keep recurring — and if so, should storm-window deploys stay hard-blocked (my default: yes, it is the crash-precursor class) with only YOU allowed `DEPLOY_FORCE_PRESSURE=1`, or should agents get standing override authority in documented calm-subwindows?
+
+## Verification index
+
+- Journal: `journalctl -u forgejo-github-sync.service --since "2026-10-12 07:30"` (re-interval summaries 07:39/07:45/08:39/09:38/10:38/10:42/11:19 + 11:51 converged), `journalctl -u forgejo --since "11:19:30"` (`Failed to get mirror: Mirror does not exist`, PATCH 500 @ `repo/repo.go:639`)
+- Live API (sudo'd admin token): interval distribution `461×2h0m0s + 1 ""` pre-fix → `462×2h0m0s` post-fix; recreated repo `{mirror:true, mirror_interval:"2h0m0s", empty:false}`
+- Unit: `forgejo-github-sync.service` `Result=success ExecMainStatus=0` (post-fix)
+- Fixture: `nix build .#checks.x86_64-linux.forgejo-scripts-fixture` PASS (`/nix/store/mmcynqvg…`)
+- Commits: `0d3d27af` (code+fixture), `a05ac03c` (docs+CHANGELOG+deploy.sh; **contains foreign flake.lock**), queue/library harvest rows this session
+- Upstream check: `gh api repos/LarsArtmann/nix-international-telephony` → alive, pushed 2026-10-12T09:42Z (delete-recreate safe)
