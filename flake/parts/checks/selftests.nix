@@ -129,6 +129,8 @@
             ''
               scratch=$(mktemp -d)
               cp ${root}/scripts/system-health-census-ring.sh "$scratch/system-health-census-ring.sh"
+              # The selftest re-executes the copy via "$0"; /usr/bin/env does not exist in the sandbox.
+              sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/system-health-census-ring.sh"
               ${pkgs.bash}/bin/bash "$scratch/system-health-census-ring.sh" selftest
               mod=${root}/modules/nixos/services/system-health.nix
               ring_line=$(grep -n 'bin/system-health-census-ring' "$mod" | head -n 1 | cut -d: -f1)
