@@ -128,8 +128,12 @@ debug targets.
 
 EventCatalog's built-in Architecture Change Detection is Scale-license
 gated; the license-free recipe lives in the hub repo
-(`scripts/check-architecture-changes.sh` + README wiring) and runs in SOURCE
-repos' PR pipelines — it fails on message removal (events/commands/queries,
+(`scripts/check-architecture-changes.sh` + README wiring) but is wired into
+NO source repo yet (2026-10-12 audit of bank-sync / cqrs-htmx /
+go-cqrs-lite CI configs — adoption is blocked on the source-repo CI
+ownership decision, hub session report §g.3; the hub-side gate is ready
+and self-tested). Designed for SOURCE repos' PR pipelines — it fails on
+message removal (events/commands/queries,
 incl. a whole kind tree vanishing), service removal, same-version
 schema changes, and producer/consumer shrinkage. Structured diffs arrive
 when go-cqrs-lite ships `catalog.index.json` (routed in its TODO_LIST).
