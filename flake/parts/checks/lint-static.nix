@@ -362,8 +362,8 @@
           #   4. Known-dead metric names (verified 0 series in the store).
           signoz-query-lint =
             let
-              alerts = (root + "/modules/nixos/services/_signoz-alerts.nix");
-              dashboards = (root + "/modules/nixos/services/dashboards");
+              alerts = root + "/modules/nixos/services/_signoz-alerts.nix";
+              dashboards = root + "/modules/nixos/services/dashboards";
               deadMetrics = [ "node_amdgpu_gpu_temp_celsius" ];
             in
             pkgs.runCommand "signoz-query-lint"
