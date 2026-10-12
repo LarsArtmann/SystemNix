@@ -2067,6 +2067,40 @@ STH_TIMER="${STH_TIMER:-/etc/systemd/system/restic-backups-storage-history.timer
 STH_PROM="${STH_PROM:-/var/lib/prometheus-node-exporter/textfile_collectors/backups.prom}"
 sh_post_deploy "$STH_UNIT" "$STH_TIMER" "$STH_PROM"
 
+# --- §20 Kith CRM OIDC readiness (the silent passkey-degrade class) ---
+# 2026-10-10→10-12: crm-server's one-shot OIDC discovery degraded to
+# passkey-only on every boot/deploy DNS race and NOTHING caught it — the
+# deploy smoke checked liveness (200 = "fixed", report §d.4) while the
+# headline feature stayed off. crm.nix now gates starts on local DNS; a
+# remaining "disabled" line after that gate means Pocket ID itself failed
+# discovery (true positive, not a race). The LAST oidc line since boot is
+# the verdict: enabled → PASS, disabled → FAIL (restart hint), no line
+# with OIDC flags deployed → WARN, OIDC not provisioned → SKIP.
+echo ""
+echo "=== §20 Kith CRM OIDC readiness (crm-server) ==="
+CRM_UNIT_FILE="/etc/systemd/system/crm-server.service"
+if [ ! -f "$CRM_UNIT_FILE" ]; then
+  report_skip "Kith CRM OIDC - crm-server unit absent (service not deployed)"
+elif ! grep -q '\-oidc-issuer' "$CRM_UNIT_FILE"; then
+  report_skip "Kith CRM OIDC - OIDC not provisioned (passkey-only unit by design)"
+else
+  crm_oidc_line="$(journalctl -u crm-server -b --no-pager 2>/dev/null | grep 'oidc sign-in' | tail -1 || true)"
+  case "$crm_oidc_line" in
+    *"oidc sign-in enabled"*)
+      report_pass "Kith CRM OIDC - Pocket ID sign-in enabled (last start: $crm_oidc_line)"
+      ;;
+    *"oidc sign-in disabled"*)
+      report_fail "Kith CRM OIDC - sign-in DISABLED (passkey-only degrade live) — restart crm-server once auth.home.lan DNS+Pocket ID are up (run: journalctl -u crm-server -b | grep 'oidc sign-in')"
+      ;;
+    "")
+      report_warn "Kith CRM OIDC - OIDC flags deployed but no readiness line since boot — verify unit actually restarted (run: journalctl -u crm-server -b | tail -20)"
+      ;;
+    *)
+      report_warn "Kith CRM OIDC - unrecognized readiness line: $crm_oidc_line"
+      ;;
+  esac
+fi
+
 # --- Summary ---
 echo ""
 echo "=== Summary ==="

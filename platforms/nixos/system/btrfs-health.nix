@@ -713,7 +713,7 @@ in
         };
       };
 
-      # ── Compsize metrics collector (hourly — compsize walks the extent tree) ─
+      # ── Compsize metrics collector (every 6h — compsize walks the extent tree) ─
       btrfs-compsize = {
         description = "BTRFS compression ratio metrics collector";
         inherit onFailure;
@@ -729,7 +729,11 @@ in
           {
             Type = "oneshot";
             ExecStart = lib.getExe btrfsCompsizeMetrics;
-            TimeoutStartSec = 120;
+            # 10min: 120s timed out at boot+5min (2026-10-12: 530ms CPU over
+            # 2m08s wall — pure IO-wait under the boot storm). The walk is
+            # latency-bound on the QLC root; the timeout must tolerate
+            # contention, not race it.
+            TimeoutStartSec = "10min";
           }
         ];
       };
@@ -817,7 +821,11 @@ in
         description = "BTRFS compression ratio check every 6 hours";
         wantedBy = [ "timers.target" ];
         timerConfig = {
-          OnBootSec = "5min";
+          # 30min: 5min landed the walk inside the boot IO storm
+          # (clickhouse/postgres recovery + model loads), guaranteeing the
+          # old 120s timeout's failure. 6h recurrence from boot keeps
+          # coverage; firing later keeps boot clean.
+          OnBootSec = "30min";
           OnUnitActiveSec = "6h";
           AccuracySec = "5m";
         };

@@ -262,12 +262,17 @@
               # inactive for the whole boot — no failed state, so an
               # is-failed-only gate never touched them and nothing else
               # started them. Disabled/masked units are never touched.
+              # --no-block: enqueue each start, never wait on it — a blocking
+              # start serialized this whole unit behind the slowest consumer
+              # (2026-10-12: the discordsync call blocked 12m44s while its
+              # db-heal oneshot starved under the boot IO storm) and held the
+              # flock, suppressing any concurrent run for the same window.
               converge_consumers() {
                 for unit in ${unitsStr}; do
                   if systemctl is-failed --quiet "$unit" 2>/dev/null; then
                     echo "pool-usb-recovery: restarting failed pool service: $unit"
                     systemctl reset-failed "$unit" 2>/dev/null || true
-                    systemctl start "$unit" 2>/dev/null || echo "pool-usb-recovery: start $unit failed (non-fatal)" >&2
+                    systemctl start --no-block "$unit" 2>/dev/null || echo "pool-usb-recovery: start $unit failed (non-fatal)" >&2
                   else
                     en="$(systemctl is-enabled "$unit" 2>/dev/null || true)"
                     case "$en" in
@@ -275,7 +280,7 @@
                     esac
                     if ! systemctl is-active --quiet "$unit" 2>/dev/null; then
                       echo "pool-usb-recovery: starting enabled-but-inactive pool service: $unit"
-                      systemctl start "$unit" 2>/dev/null || echo "pool-usb-recovery: start $unit failed (non-fatal)" >&2
+                      systemctl start --no-block "$unit" 2>/dev/null || echo "pool-usb-recovery: start $unit failed (non-fatal)" >&2
                     fi
                   fi
                 done
