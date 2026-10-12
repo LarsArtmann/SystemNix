@@ -26,5 +26,5 @@ Date: 2026-10-11 05:10–06:10 CEST. Trigger: owner pasted the pool target listi
 ## f) NEXT (self-harvested)
 
 1. **[done]** Seed landing + content verification — CLOSED 07:13/08:35: attempt 2 landed (owner-manual), du 70.41GiB, services.md G1-evidence row updated to the landed state; residual = the stray-clean owner command (§c.2).
-2. **[ready]** Guard churn re-arm never fired in production (counter 0 ever) while flm-restore evaluated on the same drain — root-cause the gate divergence. *(stability.md + TODO_LIST)*
-3. **[ready]** Freshness-metric content floor now evidenced by two live failure modes. *(services.md content-sanity row updated)*
+2. **[ready]** Guard churn re-arm never fired in production (counter 0 ever) while flm-restore evaluated on the same drain — root-cause the gate divergence. _(stability.md + TODO_LIST)_
+3. **[ready]** Freshness-metric content floor now evidenced by two live failure modes. _(services.md content-sanity row updated)_

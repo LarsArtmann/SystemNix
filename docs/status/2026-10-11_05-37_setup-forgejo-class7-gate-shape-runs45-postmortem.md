@@ -6,14 +6,14 @@
 
 ## Timeline (this session)
 
-| Time | Event |
-| --- | --- |
-| 05:06–05:09 | Resumed; live-verified pre-run state (hub ahead 1, runner healthy, zero pickups). Answered the owner's frustration with the trap-door inventory. |
-| 05:17 | Owner ran script v4. **Class 5+6 verified dead live**: both sqlite revokes hit `forgejo.db` (`(revoked old token …)` ×2), fatal cross-checks passed, secrets stored. Two NEW display bugs: gate `ERROR: mirror still behind … forgejo=none` + stray `jq … "name"` error. |
+| Time        | Event                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 05:06–05:09 | Resumed; live-verified pre-run state (hub ahead 1, runner healthy, zero pickups). Answered the owner's frustration with the trap-door inventory.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 05:17       | Owner ran script v4. **Class 5+6 verified dead live**: both sqlite revokes hit `forgejo.db` (`(revoked old token …)` ×2), fatal cross-checks passed, secrets stored. Two NEW display bugs: gate `ERROR: mirror still behind … forgejo=none` + stray `jq … "name"` error.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | 05:19–05:21 | Class-7 root-caused + fixed: (a) sha-gate read `.commit.sha` — a **GitHub** shape — but Forgejo's branch payload uses `commit.id` (journal: the polled endpoint returned 200 OK every 2s; jq extracted nothing → "none"); (b) cleanup's API cross-check authenticated with the setup token it had just deleted from sqlite → 401 `{"message":…}` object → `map(select(.name))` over an object = the jq noise. Fixes: `.commit.id // .commit.sha // empty`; cleanup cross-check removed (sqlite rowcount + revoke-time cross-check carry the guarantee — the revoke cross-check runs while the setup token still lives). bash -n + shellcheck clean; jq fixture-tested both shapes; daemon-swept as `bf86e06` (contents verified via `git show --stat`: 13+/3-, only the two fixes). |
-| 05:09–05:33 | **Run #4 discovered**: the 05:17 script's own mirror-sync POST of the hub fired a push event → build.yml@`8877b13` (fixed `runs-on: native`) auto-dispatched → **runner picked up task 1 at 05:09:34, ~200ms** — the goal of the entire arc. The gate ERROR was a false negative DURING the live dispatch. |
-| 05:23–05:33 | **Run #5**: nightly cron `23 3 * * *` is **UTC** in Forgejo → 05:23 CEST → schedule dispatch → task 2 pickup 05:23:42 (journal: `Failed to create commit status for job 5: head commit is missing in event payload` — schedule-event signature). Same death as #4. **Nightly auto-retry at 05:23 CEST until the workflow bug is fixed.** |
-| throughout | Failure-surface falsification for the job deaths (details §a.4). |
+| 05:09–05:33 | **Run #4 discovered**: the 05:17 script's own mirror-sync POST of the hub fired a push event → build.yml@`8877b13` (fixed `runs-on: native`) auto-dispatched → **runner picked up task 1 at 05:09:34, ~200ms** — the goal of the entire arc. The gate ERROR was a false negative DURING the live dispatch.                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| 05:23–05:33 | **Run #5**: nightly cron `23 3 * * *` is **UTC** in Forgejo → 05:23 CEST → schedule dispatch → task 2 pickup 05:23:42 (journal: `Failed to create commit status for job 5: head commit is missing in event payload` — schedule-event signature). Same death as #4. **Nightly auto-retry at 05:23 CEST until the workflow bug is fixed.**                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| throughout  | Failure-surface falsification for the job deaths (details §a.4).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 ## a) FULLY DONE
 
@@ -65,6 +65,7 @@
 **Could have done better:** capture fixtures from the LIVE service (one curl of the actual endpoint) instead of typing API shapes from memory of a different service's API; loud-fail on empty reads — a 200 OK with an unextractable field is a SHAPE BUG, not "behind" (§f.8 turns this into code); ask for authoritative artifacts in parallel with deep dives.
 
 **Still improve:**
+
 - Runner job observability: at info level the runner journal logs NOTHING between task receipt and terminal UpdateTask — dead-vs-alive took three probes (cgroup.procs, children, UpdateTask stream). A debug-level runner or a health/heartbeat line would collapse this to one glance (§f.10, deploy-gated).
 - Agent-side Actions-log access is impossible (root-only DB) — every CI failure costs an owner round-trip (§f.11 decision item: scoped read-only token).
 - Harvest-parity: `check-todo-system.sh` proves filename citation, not item landing; consider an item-count or anchor-word parity hint at authoring time (pipeline domain, folds into the existing checker-glob row).
@@ -72,28 +73,28 @@
 
 ## f) NEXT (22 real items — "up to 50" honored without padding; owner-gated items live in library rows, not the dispatch queue)
 
-1. **[blocked:user]** Paste run #5/#4 failed-step log → pins the exact error (THE blocker). *(library row :34 updated)*
-2. **[blocked:user]** Push hub `bf86e06` (or let the daemon pusher). *(row :34)*
-3. **[blocked:user]** Cancel runs 1–3. *(row :34)*
-4. **[blocked:user]** Delete the 4 orphaned PATs — count unchanged; 05:17/05:23 runs self-cleaned. *(row :35 updated)*
-5. **[blocked:user]** `sudo ls` + `sudo trash` the `gitea.db` fossil. *(row :36)*
-6. **[blocked:user]** sops-paste CURRENT sync-token → deploy. *(row :34)*
-7. **[watch]** Tonight 05:23 CEST the cron auto-retries — either the fix lands first or the failure repeats nightly. *(row :34)*
-8. **[ready]** Script: loud-fail on empty `FJ_SHA` after HTTP 200 (print the raw body — shape drift becomes self-identifying instead of "forgejo=none"). *(NEW queue + services row)*
-9. **[ready]** Forgejo + architecture-catalog runbook capture: v15 token-API auth semantics, revoke-via-sqlite + cross-check, `forgejo.db`-vs-`gitea.db` fossil, label name-vs-schema semantics, `on: push`-fires-on-mirror-sync, **`commit.id` vs `.sha` payload shape**, **cron is UTC (05:23 CEST)**, **cleanup must not authenticate with the token it deletes**. *(the 05-05 §f.7 row that never landed — NEW queue + services row, scope widened ×3)*
-10. **[ready]** Fixture-from-live discipline: capture the branch + token-list payloads from the live API as committed fixtures for the script's jq expressions. *(NEW services row)*
-11. **[ready]** Runner job-lifecycle observability (debug level or heartbeat line in forgejo.nix; deploy-gated). *(NEW services row)*
-12. **[decision]** Scoped read-only Forgejo token (sops) for agent CI post-mortems vs keep owner-paste round-trips. *(NEW services row — §g.2)*
-13. **[decision]** Promote setup-forgejo.sh to a SystemNix app with fixture coverage vs keep in hub (carried 05-05 §g.2; class count now 7). *(§g.3)*
-14. **[ready]** Label-drift eval selftest (carried, never landed — now landed). *(NEW services row)*
-15. **[ready]** Grep-guard pre-commit leg (carried, never landed — now landed). *(NEW pipeline row)*
-16. **[ready]** Harvest checker: accept basename-prefix globs + authoring-time harvest-parity hint (the 05-05 §f.11 row that never landed — now landed). *(NEW pipeline row)*
-17. **[watch]** btrbk 05:40 first snapshot + ~67G pool seed (carried; window is NOW). *(services.md :151 premise — not re-verified this session, next session picks it up)*
-18. **[watch]** Post-green chain: sync converge → collector `dist_present`/`fresh` → 3 Gatus → post-deploy §15. *(row :34)*
-19. **[watch]** Run #2 provenance (carried 05-05 §g.1 — still open). *(§g list, not re-asked)*
-20. **[watch]** QLC trash timing (`forgejo.qlc-pre-subvol`, eligible ~13:40) + dual-copy prune (carried 05-05 §g.3). *(library rows unchanged)*
-21. **[ready]** Workflow comment: document that `nix shell nixpkgs#go_1_27` rides the SYSTEM flake registry (implicit host dependency — resolution is host-state, not pinned in the workflow). *(folds into row §f.9 runbook capture; noted there)*
-22. **[ready]** After green: revisit `keep-until-hub-live` fixture-tree disposition (storage row :80 waits on hub-live). *(no new row — dependency note only)*
+1. **[blocked:user]** Paste run #5/#4 failed-step log → pins the exact error (THE blocker). _(library row :34 updated)_
+2. **[blocked:user]** Push hub `bf86e06` (or let the daemon pusher). _(row :34)_
+3. **[blocked:user]** Cancel runs 1–3. _(row :34)_
+4. **[blocked:user]** Delete the 4 orphaned PATs — count unchanged; 05:17/05:23 runs self-cleaned. _(row :35 updated)_
+5. **[blocked:user]** `sudo ls` + `sudo trash` the `gitea.db` fossil. _(row :36)_
+6. **[blocked:user]** sops-paste CURRENT sync-token → deploy. _(row :34)_
+7. **[watch]** Tonight 05:23 CEST the cron auto-retries — either the fix lands first or the failure repeats nightly. _(row :34)_
+8. **[ready]** Script: loud-fail on empty `FJ_SHA` after HTTP 200 (print the raw body — shape drift becomes self-identifying instead of "forgejo=none"). _(NEW queue + services row)_
+9. **[ready]** Forgejo + architecture-catalog runbook capture: v15 token-API auth semantics, revoke-via-sqlite + cross-check, `forgejo.db`-vs-`gitea.db` fossil, label name-vs-schema semantics, `on: push`-fires-on-mirror-sync, **`commit.id` vs `.sha` payload shape**, **cron is UTC (05:23 CEST)**, **cleanup must not authenticate with the token it deletes**. _(the 05-05 §f.7 row that never landed — NEW queue + services row, scope widened ×3)_
+10. **[ready]** Fixture-from-live discipline: capture the branch + token-list payloads from the live API as committed fixtures for the script's jq expressions. _(NEW services row)_
+11. **[ready]** Runner job-lifecycle observability (debug level or heartbeat line in forgejo.nix; deploy-gated). _(NEW services row)_
+12. **[decision]** Scoped read-only Forgejo token (sops) for agent CI post-mortems vs keep owner-paste round-trips. _(NEW services row — §g.2)_
+13. **[decision]** Promote setup-forgejo.sh to a SystemNix app with fixture coverage vs keep in hub (carried 05-05 §g.2; class count now 7). _(§g.3)_
+14. **[ready]** Label-drift eval selftest (carried, never landed — now landed). _(NEW services row)_
+15. **[ready]** Grep-guard pre-commit leg (carried, never landed — now landed). _(NEW pipeline row)_
+16. **[ready]** Harvest checker: accept basename-prefix globs + authoring-time harvest-parity hint (the 05-05 §f.11 row that never landed — now landed). _(NEW pipeline row)_
+17. **[watch]** btrbk 05:40 first snapshot + ~67G pool seed (carried; window is NOW). _(services.md :151 premise — not re-verified this session, next session picks it up)_
+18. **[watch]** Post-green chain: sync converge → collector `dist_present`/`fresh` → 3 Gatus → post-deploy §15. _(row :34)_
+19. **[watch]** Run #2 provenance (carried 05-05 §g.1 — still open). _(§g list, not re-asked)_
+20. **[watch]** QLC trash timing (`forgejo.qlc-pre-subvol`, eligible ~13:40) + dual-copy prune (carried 05-05 §g.3). _(library rows unchanged)_
+21. **[ready]** Workflow comment: document that `nix shell nixpkgs#go_1_27` rides the SYSTEM flake registry (implicit host dependency — resolution is host-state, not pinned in the workflow). _(folds into row §f.9 runbook capture; noted there)_
+22. **[ready]** After green: revisit `keep-until-hub-live` fixture-tree disposition (storage row :80 waits on hub-live). _(no new row — dependency note only)_
 
 **Deliberately not harvested:** §f.19/§g.1 (run #2 provenance) — cosmetic provenance, tracked here and in the 05-05 report only.
 
@@ -103,4 +104,4 @@
 2. **Read-only Forgejo token for agents?** A scoped read-only token (repo read, Actions logs) sops'd for agent use would let future CI post-mortems happen without owner pastes — every CI failure currently costs you a round-trip. Security tradeoff (another secret with repo-read) is yours to call.
 3. **Carried (05-05 §g.2, now urgent at class 7):** promote `setup-forgejo.sh` into SystemNix as a versioned app with lint + fixture legs, or keep it in the hub repo? Each new failure class has cost one owner round-trip; the SystemNix path would let me iterate classes offline.
 
-*Report written at authoring-time harvest discipline: queue + library rows updated with EXACT filename citations; 05-05 report got a postscript (§f.4 premise falsified at 05:17; §f.7/8/11 landed now). Session state: WAITING FOR INSTRUCTIONS.*
+_Report written at authoring-time harvest discipline: queue + library rows updated with EXACT filename citations; 05-05 report got a postscript (§f.4 premise falsified at 05:17; §f.7/8/11 landed now). Session state: WAITING FOR INSTRUCTIONS._

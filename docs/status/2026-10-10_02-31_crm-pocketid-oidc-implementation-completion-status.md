@@ -75,6 +75,7 @@
 ## f) NEXT — up to 50 (ordered by impact; brainstorm list, most beyond the first ~15 are ROADMAP fuel, NOT queue commitments)
 
 **Deploy chain (unblocks everything):**
+
 1. Owner pushes crm `bcaf689` (5 commits) — [blocked:push] row queued.
 2. `nix flake lock --update-input crm` in SystemNix.
 3. `nix run .#pre-deploy-check` (incl. §11 vendorHash preview — should confirm `t1CRZVb6…` against the pushed tip).
@@ -150,4 +151,4 @@
 
 ---
 
-*Harvest note: per the owner's standing instruction this report is written THEN WAIT. §f is brainstorm input for docs-health HARVEST — only items 1–10 are already queued (the `[blocked:push]` row). The §d3 boot-race finding (item 11) is the one item this session believes belongs in the queue immediately after the deploy chain lands.*
+_Harvest note: per the owner's standing instruction this report is written THEN WAIT. §f is brainstorm input for docs-health HARVEST — only items 1–10 are already queued (the `[blocked:push]` row). The §d3 boot-race finding (item 11) is the one item this session believes belongs in the queue immediately after the deploy chain lands._

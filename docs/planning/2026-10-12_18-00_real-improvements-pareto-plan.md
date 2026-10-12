@@ -92,15 +92,15 @@ plan ranks everything else.
 
 ## Execution log (this session)
 
-| Change | File(s) | State |
-| --- | --- | --- |
-| Census newline glue fix (whole-file rejection) | `modules/nixos/services/system-health.nix` | eval-green, **deploy-gated** |
-| Thermal alert leg + option (95°C default) | `modules/nixos/services/system-health.nix` | eval-green, **deploy-gated** |
+| Change                                                | File(s)                                                                      | State                                                                                |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Census newline glue fix (whole-file rejection)        | `modules/nixos/services/system-health.nix`                                   | eval-green, **deploy-gated**                                                         |
+| Thermal alert leg + option (95°C default)             | `modules/nixos/services/system-health.nix`                                   | eval-green, **deploy-gated**                                                         |
 | Boot-duration collector + reset-reason classification | `modules/nixos/services/boot-metrics.nix` (new) + `configuration.nix` enable | eval-green, parser functionally verified vs boot-0's exact numbers, **deploy-gated** |
-| 5 Gatus checks (canary/thermal/boot×3) | `modules/nixos/services/gatus-config.nix` | eval-green, **deploy-gated** |
-| storage-collector explicit-0644 lock bump | `flake.lock` (c0a3389c → 0ba7b4fe, 2026-10-12) | closes the parallel session's deploy coupling, **deploy-gated** |
-| ClickHouse relocation row premise correction | `docs/todo/storage.md` + 13-40 report annotation | landed |
-| `nix flake check --no-build` | — | **all checks passed** |
+| 5 Gatus checks (canary/thermal/boot×3)                | `modules/nixos/services/gatus-config.nix`                                    | eval-green, **deploy-gated**                                                         |
+| storage-collector explicit-0644 lock bump             | `flake.lock` (c0a3389c → 0ba7b4fe, 2026-10-12)                               | closes the parallel session's deploy coupling, **deploy-gated**                      |
+| ClickHouse relocation row premise correction          | `docs/todo/storage.md` + 13-40 report annotation                             | landed                                                                               |
+| `nix flake check --no-build`                          | —                                                                            | **all checks passed**                                                                |
 
 Mechanism note for the census fix (the reusable lesson): `$(printf …)` command
 substitution strips ALL trailing newlines — a `\n` inside the format string

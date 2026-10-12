@@ -10,11 +10,11 @@
 
 ## Relevant issues
 
-| Issue | Title | Opened | State |
-| ----- | ----- | ------ | ----- |
-| [forgejo/forgejo#3669](https://codeberg.org/forgejo/forgejo/issues/3669) | [FEAT] Security Tab | 2024-05-08 | open, 7 comments, no milestone |
-| [forgejo/forgejo#12667](https://codeberg.org/forgejo/forgejo/issues/12667) | enh: Support processing and storing security reports | 2026-05-21 | open, 5 comments, no milestone |
-| [forgejo/discussions#468](https://codeberg.org/forgejo/discussions/issues/468) | Security dashboard with vulnerability tracking | — | discussion (proposes `POST /api/v1/repos/{owner}/{repo}/security/sarif`, fingerprint dedup via rule ID + location + snippet hash) |
+| Issue                                                                          | Title                                                | Opened     | State                                                                                                                             |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| [forgejo/forgejo#3669](https://codeberg.org/forgejo/forgejo/issues/3669)       | [FEAT] Security Tab                                  | 2024-05-08 | open, 7 comments, no milestone                                                                                                    |
+| [forgejo/forgejo#12667](https://codeberg.org/forgejo/forgejo/issues/12667)     | enh: Support processing and storing security reports | 2026-05-21 | open, 5 comments, no milestone                                                                                                    |
+| [forgejo/discussions#468](https://codeberg.org/forgejo/discussions/issues/468) | Security dashboard with vulnerability tracking       | —          | discussion (proposes `POST /api/v1/repos/{owner}/{repo}/security/sarif`, fingerprint dedup via rule ID + location + snippet hash) |
 
 ## What people say
 
@@ -27,8 +27,8 @@
 
 ### Maintainer stance is lukewarm
 
-- **aahlenst** (May 2026), on "any news?": *"If there had been any news, you would have found it here. We welcome contributions."* First step = gather requirements and draft a plan for community feedback before coding. Also warned: *"do not build something that relies on Microsoft/GitHub technologies. That usually ends badly because Microsoft has zero interest in supporting usage outside Microsoft/GitHub."*
-- **mfenniak** (Jul 2026), skeptical of building it in-core: *"this sounds like introducing an entire new product inside Forgejo… I see many months of work being done on very tiny details. That makes me feel this belongs at an arms length from Forgejo."* Suggests integrating [DefectDojo](https://github.com/DefectDojo/django-DefectDojo) instead.
+- **aahlenst** (May 2026), on "any news?": _"If there had been any news, you would have found it here. We welcome contributions."_ First step = gather requirements and draft a plan for community feedback before coding. Also warned: _"do not build something that relies on Microsoft/GitHub technologies. That usually ends badly because Microsoft has zero interest in supporting usage outside Microsoft/GitHub."_
+- **mfenniak** (Jul 2026), skeptical of building it in-core: _"this sounds like introducing an entire new product inside Forgejo… I see many months of work being done on very tiny details. That makes me feel this belongs at an arms length from Forgejo."_ Suggests integrating [DefectDojo](https://github.com/DefectDojo/django-DefectDojo) instead.
 
 ### One active design effort, no PR
 

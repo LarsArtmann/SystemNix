@@ -1,6 +1,6 @@
 # 2026-10-12 13:40 — Boot-time dispatch: "boot is slow" measured, root-caused, four boot-path fixes landed
 
-Owner question: *"Boot is slow; should I enable Fast Boot in the BIOS?"*
+Owner question: _"Boot is slow; should I enable Fast Boot in the BIOS?"_
 One agent session among several (parallel sessions were root-causing the crm
 PocketID outage + the dnsblockd startup hang — both reports same day — and
 driving the session-long IO storm with go test / nix builds / an image batch).

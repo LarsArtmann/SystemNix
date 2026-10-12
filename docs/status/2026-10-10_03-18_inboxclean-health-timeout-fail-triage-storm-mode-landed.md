@@ -29,14 +29,14 @@
 
 ## d. Verification evidence
 
-| # | Proof | Result |
-|---|-------|--------|
-| 1 | `bash -n` + `shellcheck` (both files) | clean |
-| 2 | `scripts/test-post-deploy-pressure.sh` — 5 new detector cases (active/calm/strict-boundary/custom-threshold/missing-file) + all pre-existing cases | SELFTEST OK |
-| 3 | Live run 1 (io avg60 74%): banner fired; InboxClean timeout + catchall downgraded; baseline kept clean | exposed the §c counter bug |
-| 4 | Live run 2 (io avg60 61%): printed FAIL lines == FAIL counter (9); STORM-SUSPECT == 3 (InboxClean timeout, catchall `000`, CV proxy-path); CV loopback render PASSed; baseline = exactly the 9 genuine fails (Forgejo ×5+catchall-subvol set, FastFlowLM, Bank-Sync, Kith CRM), zero storm-leg names | arithmetic exact |
-| 5 | Ancestry + deployed-rev + 8s-budget chain (§b) | fix VERIFIED DEPLOYED |
-| 6 | Same-run sibling legs vs the same starved process (run 2): dashboard renders PASS, convergence guard `171de0d`==lock PASS, Paperless doc API PASS — only /health exhausts its budget | app-is-fine evidence without a calm window |
+| # | Proof                                                                                                                                                                                                                                                                                                | Result                                     |
+| - | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| 1 | `bash -n` + `shellcheck` (both files)                                                                                                                                                                                                                                                                | clean                                      |
+| 2 | `scripts/test-post-deploy-pressure.sh` — 5 new detector cases (active/calm/strict-boundary/custom-threshold/missing-file) + all pre-existing cases                                                                                                                                                   | SELFTEST OK                                |
+| 3 | Live run 1 (io avg60 74%): banner fired; InboxClean timeout + catchall downgraded; baseline kept clean                                                                                                                                                                                               | exposed the §c counter bug                 |
+| 4 | Live run 2 (io avg60 61%): printed FAIL lines == FAIL counter (9); STORM-SUSPECT == 3 (InboxClean timeout, catchall `000`, CV proxy-path); CV loopback render PASSed; baseline = exactly the 9 genuine fails (Forgejo ×5+catchall-subvol set, FastFlowLM, Bank-Sync, Kith CRM), zero storm-leg names | arithmetic exact                           |
+| 5 | Ancestry + deployed-rev + 8s-budget chain (§b)                                                                                                                                                                                                                                                       | fix VERIFIED DEPLOYED                      |
+| 6 | Same-run sibling legs vs the same starved process (run 2): dashboard renders PASS, convergence guard `171de0d`==lock PASS, Paperless doc API PASS — only /health exhausts its budget                                                                                                                 | app-is-fine evidence without a calm window |
 
 Deferred: `nix flake check --no-build` eval not re-run this session (storm + parallel sessions; the script-only change is fully covered by the direct harness run — the same invocation the `post-deploy-pressure-selftest` flake check performs).
 

@@ -65,7 +65,7 @@
 11. AGENTS.md "agent live-probe set": add `journalctl -u <unit>` (verified working) next to `ss`/`pgrep`/openssl.
 12. Consider a `rg -l`-based removal-precheck helper script (consumer enumeration) — candidate for scripts/ if a third removal happens (two data points so far: Docker, ollama).
 
-*Deliberately not padded to 50: this report is scoped to this session's run per the owner's instruction; items 1-12 are the real session-derived set, all of which are queued (2-9) or owner-gated (1, 5).*
+_Deliberately not padded to 50: this report is scoped to this session's run per the owner's instruction; items 1-12 are the real session-derived set, all of which are queued (2-9) or owner-gated (1, 5)._
 
 ## g) Questions I cannot answer myself
 
@@ -75,7 +75,7 @@
 
 ---
 
-*Report format note: `.md` at the owner's explicit path demand (the status-report skill's HTML default was overridden by instruction; flagged per skill convention).*
+_Report format note: `.md` at the owner's explicit path demand (the status-report skill's HTML default was overridden by instruction; flagged per skill convention)._
 
 ## Addendum (2026-10-12, post-report)
 

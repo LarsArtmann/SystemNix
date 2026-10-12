@@ -11,7 +11,7 @@
 
 **Rejected: periodic sdf (WOOACME) vault rotation.** The sdf drive is FROZEN by user decision ("do not touch them; yet", low-endurance W3A894), rotation is a manual cadence (rot gaps = unbounded RPO), and a drive rotating between house and drawer/office adds handling risk to the one low-endurance disk in the fleet.
 
-**Sizing caveat (must handle at implementation):** BX11 is 1 TB; /data carries ~700 G of largely rebuildable content (ai 291 G + models 210 G + Steam 106 G + llamacpp 92 G). The Borg job MUST exclude rebuildable trees (models, Steam, HF caches) so irreplaceable data (home, services, pool backups, configs) fits under 1 TB with dedup+prune headroom; if the irreplaceable set grows past ~800 G, upgrade BX11 → BX21 (5 TB, ~€7.70/mo more at 2026-10 prices: €10.90 vs €3.20 net — the earlier "~€3.20/mo more" figure predates the BX21 repricing, instant upgrade, same credentials).
+**Sizing caveat (must handle at implementation):** BX11 is 1 TB; /data carries ~700 G of largely rebuildable content (ai 291 G + models 210 G + Steam 106 G + llamacpp 92 G). The Borg job MUST exclude rebuildable trees (models, Steam, HF caches) so irreplaceable data (home, services, pool backups, configs) fits under 1 TB with dedup+prune headroom; if the irreplaceable set grows past ~800 G, upgrade BX11 → BX21 (5 TB, ~~€7.70/mo more at 2026-10 prices: €10.90 vs €3.20 net — the earlier "~~€3.20/mo more" figure predates the BX21 repricing, instant upgrade, same credentials).
 
 **Follow-up (new TODO):** implement per the blueprint below — module + sops secret + SSH key provisioning + Gatus/backup-coordination registration.
 

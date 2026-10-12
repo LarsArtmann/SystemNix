@@ -54,7 +54,7 @@ some avg10 oscillating 35–83% — no deploy was attempted (gate <20% by design
    (monitoring.md, tmp sweep at startup).
 8. **The "~60 MiB bounded" rationale documented in the answer** —
    storage-collector.nix:50-52 arithmetic (60 s cycles, maxFileMb×keepFiles)
-   + venue reasoning (QLC root churn + stopgap status vs monitor365's DuckDB).
+   - venue reasoning (QLC root churn + stopgap status vs monitor365's DuckDB).
 9. **Telemetry analysis #1 (first 100 records)** — pipeline validated (60 s
    cadence, v1 schema, per-mount/disk/PSI/btrfs/zram records); PSI unit
    semantics pinned (JSON value = kernel percent ×100, verified against
@@ -337,10 +337,10 @@ Deliberately NOT harvested (with reason):
 
 ---
 
-*Verification lineage: every "eval-verified/verified" claim in this report
+_Verification lineage: every "eval-verified/verified" claim in this report
 was executed this session (toplevel eval 0 failed assertions at
 `a4ab0f82`+docs; two throwaway extendModules runs: 0/2262 postgres snippet,
 0/2265 wave-6 snippet; rendered-unit inspections for storage-collector,
 postgres wiring, restic units; journal/stat/pgrep/findmnt live probes).
 Commits: `a4ab0f82` (code, daemon message), `c854c670` (docs), plus the
-report-time harvest edits.*
+report-time harvest edits._

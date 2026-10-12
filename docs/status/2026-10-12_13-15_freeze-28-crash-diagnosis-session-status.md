@@ -113,4 +113,4 @@
 - docs/todo/monitoring.md ← 1 new row (both textfile-collector defects, live-evidenced)
 - Deliberately NOT harvested: containment (§f.1, owner-action), Zone-6 unblock (§g.3, owner decision — existing [blocked:user] row already carries it), niri-loss impact (§g-adjacent, user memory)
 
-*Report format: Markdown at explicit user path demand (standing .md exception; HTML-canonical skipped — flagged per skill contract). No commit made: harness forbids unprompted commits; the auto-commit daemon will sweep this file.*
+_Report format: Markdown at explicit user path demand (standing .md exception; HTML-canonical skipped — flagged per skill contract). No commit made: harness forbids unprompted commits; the auto-commit daemon will sweep this file._

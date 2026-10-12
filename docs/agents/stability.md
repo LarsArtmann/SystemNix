@@ -42,7 +42,6 @@
 - **`vm.page-cluster=0` + `vm.watermark_boost_factor=0` (2026-09-05)** — every mainstream zram deployment (Fedora, Pop!_OS, ChromeOS) ships both; we sat at kernel defaults (3/15000) despite zram-only swap since forever. page-cluster=0 kills readahead-window amplification on swap-in (a clustered swap-in reads 8 pages to fault 1); watermark_boost=0 stops kswapd boosting off swap faults (pointless feedback on zram)
 - **zram compression ratio is ~3.2x live** — Measured via `/sys/block/zram0/mm_stat`. zstd level=1 is optimal (level 3 gains 1.7% ratio for 11.5% less speed)
 
-
 ## Kernel & Network Hardening (2026-09-10, borrowed from paepckehh/nixos)
 
 An external-repo study (github:paepckehh/nixos — a 532-module "company as Nix" repo with kernel/sysctl/sshd/known-hosts hardening in a central `siteconfig`) yielded a small adopted set, all in `platforms/nixos/system/`:

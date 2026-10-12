@@ -25,16 +25,16 @@ Three stacked upstream (dnsblockd repo) defects, none in SystemNix config:
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-| --- | --- |
-| Root-caused the vendorHash FOD failure to upstream, not SystemNix | user's nh log; `nix/vendor-hash.nix` at locked rev |
+| Item                                                                                             | Evidence                                                                                                |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| Root-caused the vendorHash FOD failure to upstream, not SystemNix                                | user's nh log; `nix/vendor-hash.nix` at locked rev                                                      |
 | Resolved the TRUE lock rev via `jq '.nodes[root.inputs["dnsblockd"]]'` (orphan-rev trap avoided) | `815e0258` → confirmed in failure drv name (`…-3faf986` was the prepared-source name, not the lock rev) |
-| Checked upstream-before-shimming (drift-treadmill protocol) | upstream already fixed → dropped nothing, re-locked only |
-| Regenerated ALL stale UI artifacts upstream, gate green | pre-commit: "byte-fresh (_templ.go, library-classes.txt, library-custom.css, app.min.css, styles.css)" |
-| Fixed dnsblockd's own broken art-dupl vendorHash | `nix build .#art-dupl` green in clone before commit |
-| Pushed upstream fix `f39dc7d0`, pushed cleanly after resolving upstream race | `git push`: `7677bbf9..f39dc7d0 master -> master` |
-| Re-locked SystemNix + full evo-x2 toplevel build green | build log: `nixos-system-evo-x2-26.11.20261008.e7439b6` built, no errors |
-| Lock commit verified for content (not assumed from output) | `2c2159f8:flake.lock` contains `f39dc7d0…` |
+| Checked upstream-before-shimming (drift-treadmill protocol)                                      | upstream already fixed → dropped nothing, re-locked only                                                |
+| Regenerated ALL stale UI artifacts upstream, gate green                                          | pre-commit: "byte-fresh (_templ.go, library-classes.txt, library-custom.css, app.min.css, styles.css)"  |
+| Fixed dnsblockd's own broken art-dupl vendorHash                                                 | `nix build .#art-dupl` green in clone before commit                                                     |
+| Pushed upstream fix `f39dc7d0`, pushed cleanly after resolving upstream race                     | `git push`: `7677bbf9..f39dc7d0 master -> master`                                                       |
+| Re-locked SystemNix + full evo-x2 toplevel build green                                           | build log: `nixos-system-evo-x2-26.11.20261008.e7439b6` built, no errors                                |
+| Lock commit verified for content (not assumed from output)                                       | `2c2159f8:flake.lock` contains `f39dc7d0…`                                                              |
 
 ## b) PARTIALLY DONE
 
@@ -74,6 +74,7 @@ Nothing data-destroying, but three real stumbles, ranked:
 Grouped; impact-ordered within groups. Items 1–8 are this-incident follow-ups, the rest are adjacent findings from this session (ROADMAP fuel — most are NOT for the dispatch queue).
 
 **This-incident closure**
+
 1. Verify the LIVE lock `4e1af5d0` builds (parallel session mid-refactor; either wait for it to quiesce, coordinate, or re-pin to `f39dc7d0` if owner wants a known-good).
 2. Re-run the deploy and complete post-deploy verification (dnsblockd `:53`/`:9090`, Gatus green, SigNoz `system_dnsblockd_metrics_fresh 1`).
 3. Confirm the two pre/post-boot probes I did NOT run: `nix flake check --no-build` post-re-lock, and darwin-host eval (aarch64 skipped by default — confirm no new breakage class).
@@ -121,4 +122,4 @@ Grouped; impact-ordered within groups. Items 1–8 are this-incident follow-ups,
 
 ---
 
-*Point-in-time snapshot 2026-10-12 05:11 CEST. Lock rev at writing: dnsblockd = `4e1af5d0` (UNVERIFIED, moved post-verification); last verified-buildable dnsblockd rev: `f39dc7d0` (SystemNix commit `2c2159f8`).*
+_Point-in-time snapshot 2026-10-12 05:11 CEST. Lock rev at writing: dnsblockd = `4e1af5d0` (UNVERIFIED, moved post-verification); last verified-buildable dnsblockd rev: `f39dc7d0` (SystemNix commit `2c2159f8`)._

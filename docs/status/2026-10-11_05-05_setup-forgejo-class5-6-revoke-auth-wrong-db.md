@@ -43,17 +43,17 @@ Date: 2026-10-11 04:30–05:05 CEST. Continuation of the eventcatalog-hub CI cha
 
 ## f) NEXT (self-harvested into TODO_LIST.md + docs/todo/services.md)
 
-1. **[blocked:user]** Owner chain: push hub after the daemon sweeps v4 → re-run `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh` → cancel stale runs 1–3. *(label row updated)*
-2. **[blocked:user]** Delete the 4 orphaned all-scope setup PATs. *(orphan row updated)*
-3. **[blocked:user]** Trash the stale `/var/lib/forgejo/data/gitea.db` fossil (sudo confirm unreferenced first). *(NEW row)*
-4. **[blocked:user]** sops paste `ARCHITECTURE_CATALOG_SYNC_TOKEN` (root file still valid). *(go-live row)*
-5. **[watch]** Verify runner pickup on the first post-sync push-event run (auto-dispatch) or the script's dispatch; then green + `dist` + watch-list. *(go-live row)*
-6. **[watch]** Post-green chain: sync converge, collector, 3 Gatus checks, post-deploy §15. *(go-live row)*
-7. **[ready]** Runbook `docs/services/forgejo.md` + architecture-catalog runbook: v15 token-API auth semantics (`IsPasswordAuthentication`), revoke-via-sqlite pattern + API cross-check, forgejo.db-vs-gitea.db fossil, label name semantics, `on: push`-fires-on-mirror-sync. *(carried, scope widened ×2)*
+1. **[blocked:user]** Owner chain: push hub after the daemon sweeps v4 → re-run `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh` → cancel stale runs 1–3. _(label row updated)_
+2. **[blocked:user]** Delete the 4 orphaned all-scope setup PATs. _(orphan row updated)_
+3. **[blocked:user]** Trash the stale `/var/lib/forgejo/data/gitea.db` fossil (sudo confirm unreferenced first). _(NEW row)_
+4. **[blocked:user]** sops paste `ARCHITECTURE_CATALOG_SYNC_TOKEN` (root file still valid). _(go-live row)_
+5. **[watch]** Verify runner pickup on the first post-sync push-event run (auto-dispatch) or the script's dispatch; then green + `dist` + watch-list. _(go-live row)_
+6. **[watch]** Post-green chain: sync converge, collector, 3 Gatus checks, post-deploy §15. _(go-live row)_
+7. **[ready]** Runbook `docs/services/forgejo.md` + architecture-catalog runbook: v15 token-API auth semantics (`IsPasswordAuthentication`), revoke-via-sqlite pattern + API cross-check, forgejo.db-vs-gitea.db fossil, label name semantics, `on: push`-fires-on-mirror-sync. _(carried, scope widened ×2)_
 8. **[ready]** Label-drift eval selftest (carried) / grep-guard pre-commit leg (carried).
 9. **[decision]** Promote setup-forgejo.sh to a SystemNix app with fixture coverage vs keep in hub (carried §g.2).
 10. **[watch]** btrbk first snapshot + ~67G pool seed (05:40 window) — update services.md :149 premise when verified (carried §f.5).
-11. **[ready]** Harvest checker: accept basename-prefix globs or emit an authoring-time hint (101-report backlog gate; scanner-side fix). *(NEW — pipeline domain)*
+11. **[ready]** Harvest checker: accept basename-prefix globs or emit an authoring-time hint (101-report backlog gate; scanner-side fix). _(NEW — pipeline domain)_
 12. **[watch]** Re-run shellcheck standalone after the daemon sweeps v4 (daemon commits bypass filetype lint legs — clean pre-sweep this session).
 
 ## g) QUESTIONS (cannot figure out myself)
@@ -62,7 +62,7 @@ Date: 2026-10-11 04:30–05:05 CEST. Continuation of the eventcatalog-hub CI cha
 2. **Carried §g.2:** promote `setup-forgejo.sh` into SystemNix (versioned, pre-commit lint + fixture legs — it is now on failure class 6, one owner round-trip per class) or keep it in the hub repo?
 3. **Carried §g.3:** trash timing for `/var/lib/forgejo.qlc-pre-subvol` (67G; eligible after the 05:40 btrbk snapshot → ~13:40) and prune-or-keep the DarkBlocks/DialogesWebInterface dual mirror copies?
 
-*Session closed in WAITING FOR INSTRUCTIONS state; owner chain documented in TODO_LIST.md :315-:*.*
+_Session closed in WAITING FOR INSTRUCTIONS state; owner chain documented in TODO_LIST.md :315-:_.*
 
 ---
 

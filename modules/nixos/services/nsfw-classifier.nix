@@ -67,21 +67,22 @@
           "--models-dir ${cfg.modelsDir}"
           "--pair-token auto"
         ]
-        ++ lib.optionals (cfg.stateRoot != null)
-          # ADR-0016 (upstream docs/adr/0016): durable stores belong in the
-          # STATE root — /var/cache's contract is "deletable to reclaim
-          # space", which is the wrong home for irreplaceable feedback
-          # (golden human labels), the DNS-feed evidence journal, and
-          # unrepeatable capture history. verdicts.db stays in cache
-          # (recomputable by design), as do feedback.jsonl (rebuilt from the
-          # journal when missing) and the pair token (auto re-pair). null =
-          # upstream cache-dir defaults (pre-migration rollback = set null).
-          [
-            "--feedback-db ${cfg.stateRoot}/feedback.db"
-            "--domain-db ${cfg.stateRoot}/domains.db"
-            "--history-db ${cfg.stateRoot}/history.db"
-            "--history-dir ${cfg.stateRoot}/history"
-          ]
+        ++
+          lib.optionals (cfg.stateRoot != null)
+            # ADR-0016 (upstream docs/adr/0016): durable stores belong in the
+            # STATE root — /var/cache's contract is "deletable to reclaim
+            # space", which is the wrong home for irreplaceable feedback
+            # (golden human labels), the DNS-feed evidence journal, and
+            # unrepeatable capture history. verdicts.db stays in cache
+            # (recomputable by design), as do feedback.jsonl (rebuilt from the
+            # journal when missing) and the pair token (auto re-pair). null =
+            # upstream cache-dir defaults (pre-migration rollback = set null).
+            [
+              "--feedback-db ${cfg.stateRoot}/feedback.db"
+              "--domain-db ${cfg.stateRoot}/domains.db"
+              "--history-db ${cfg.stateRoot}/history.db"
+              "--history-dir ${cfg.stateRoot}/history"
+            ]
       );
     in
     {

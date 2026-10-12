@@ -5,11 +5,11 @@ showing `SKIP llama.cpp RAG`, `FAIL FastFlowLM :52625`, `FAIL CV browser render 
 
 ## Verdict
 
-| Check              | Outcome                                                                                        |
-| ------------------ | ---------------------------------------------------------------------------------------------- |
-| CV render smoke    | **FIXED (was storm starvation, not a regression)** — re-run exit 0, 4/4 DOM renders + PDF PASS |
-| llama-rag (RAG)    | **FIXED IN TREE, activation deploy-gated** — enable flip + watermark-wiring fix landed, eval-verified |
-| FastFlowLM :52625  | **ROOT-CAUSED, fix rides the same deploy** — guard-sacrifice + restore-cap, socket re-arms on switch |
+| Check             | Outcome                                                                                               |
+| ----------------- | ----------------------------------------------------------------------------------------------------- |
+| CV render smoke   | **FIXED (was storm starvation, not a regression)** — re-run exit 0, 4/4 DOM renders + PDF PASS        |
+| llama-rag (RAG)   | **FIXED IN TREE, activation deploy-gated** — enable flip + watermark-wiring fix landed, eval-verified |
+| FastFlowLM :52625 | **ROOT-CAUSED, fix rides the same deploy** — guard-sacrifice + restore-cap, socket re-arms on switch  |
 
 ## CV — "pages load but do not RENDER"
 
@@ -36,9 +36,9 @@ change made; the storm-classification follow-up already exists as a queue row
   root+quiet-IO-gated (`sudo systemd-run` sandbox); the agent shell cannot
   sudo, and no quiet-IO window existed all night (chronic fleet batteries).
   The REAL deployed units' own post-activation watch (≥15 min CPU-time deltas
-  + functional probes) is the empirical spin gate in its place — RE-DISABLE
-  (`llama-rag.enable = false`) immediately on the freeze-#5 signature (CPU
-  climbing while /health stays 503 past the vocab-warning line).
+  - functional probes) is the empirical spin gate in its place — RE-DISABLE
+    (`llama-rag.enable = false`) immediately on the freeze-#5 signature (CPU
+    climbing while /health stays 503 past the vocab-warning line).
 - **Eval-blocking defect found and fixed at root:** enabling surfaced
   `memory-watermark-audit` assertion failure — `llama-embeddings` (and
   `llama-reranker`) merged bare `MemoryMax = cfg.memoryMax` OUTSIDE

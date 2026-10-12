@@ -56,14 +56,14 @@
 
 ## f) NEXT (self-harvested into TODO_LIST.md + docs/todo/services.md at authoring time)
 
-1. **[blocked:user]** Owner chain to first green run: PUSH hub repo (`22f5646` committed, unpushed) → mirror sync (Synchronize now / timer / cron `23 3 * * *`) → re-run setup-forgejo.sh (class-4-fixed, re-dispatches) → cancel stale runs 1–3. *(label row, both surfaces — updated)*
-2. **[blocked:user]** Delete the 2 orphaned all-scope setup PATs (UI Settings → Applications). *(NEW row, both surfaces)*
-3. **[blocked:user]** sops paste `ARCHITECTURE_CATALOG_SYNC_TOKEN` — root file still valid (runbook step 4). *(go-live row premise updated: unblocked)*
-4. **[watch]** First green run + post-green verify chain. *(go-live row)*
-5. **[watch]** btrbk first real snapshot 05:40 + ~67G pool seed; dump leg already green (03:43). *(services.md :149 premise updated)*
-6. **[ready]** Runbook + forgejo.md: v15 API shapes (has_actions PATCH, dispatch 201|204, token-route basic-auth + `{id}` DELETE), label NAME semantics, register-deprecation path. *(carried §f.7, scope widened)*
-7. **[ready]** Label-drift eval selftest: rendered runner config DefaultLabels == runnerLabels. *(carried §f.10, premise corrected)*
-8. **[ready]** grep-guard pre-commit leg for stderr-suppressed substitutions in set-e scripts. *(carried §f.11)*
+1. **[blocked:user]** Owner chain to first green run: PUSH hub repo (`22f5646` committed, unpushed) → mirror sync (Synchronize now / timer / cron `23 3 * * *`) → re-run setup-forgejo.sh (class-4-fixed, re-dispatches) → cancel stale runs 1–3. _(label row, both surfaces — updated)_
+2. **[blocked:user]** Delete the 2 orphaned all-scope setup PATs (UI Settings → Applications). _(NEW row, both surfaces)_
+3. **[blocked:user]** sops paste `ARCHITECTURE_CATALOG_SYNC_TOKEN` — root file still valid (runbook step 4). _(go-live row premise updated: unblocked)_
+4. **[watch]** First green run + post-green verify chain. _(go-live row)_
+5. **[watch]** btrbk first real snapshot 05:40 + ~67G pool seed; dump leg already green (03:43). _(services.md :149 premise updated)_
+6. **[ready]** Runbook + forgejo.md: v15 API shapes (has_actions PATCH, dispatch 201|204, token-route basic-auth + `{id}` DELETE), label NAME semantics, register-deprecation path. _(carried §f.7, scope widened)_
+7. **[ready]** Label-drift eval selftest: rendered runner config DefaultLabels == runnerLabels. _(carried §f.10, premise corrected)_
+8. **[ready]** grep-guard pre-commit leg for stderr-suppressed substitutions in set-e scripts. _(carried §f.11)_
 9. **[ready]** Re-run shellcheck standalone after the hub daemon sweeps the script (daemon commits bypass filetype lint legs — already clean via nix shell this session; re-assert post-sweep).
 10. **[watch]** FLM storm / guard trips every 30s through 04:15 — post-storm stability check (the 03:50 force-deploy rode this window).
 
@@ -86,6 +86,7 @@
 **Run #3 provenance (§g.1 partially settled).** UI: run #3 = commit `8dbe9fb` "pushed by lars, 13 minutes ago" concurrent with "mirror synced 13 minutes ago" — the mirror sync landed pre-fix `8dbe9fb` (02:47) and fired a push event. **`on: push` DOES fire on mirror sync.** Run #3 ran the OLD `native:host` workflow → 0s forever (runner journal silent since the 03:50:48 `[native]` declare — no new runner fault). Run #2 provenance still owner-knowledge.
 
 **Fix (landed in hub tree, bash -n + shellcheck clean).**
+
 1. `revoke()`/`cleanup()` now DELETE directly in the forgejo sqlite DB (python3 stdlib sqlite3 — not in PATH as sqlite3 CLI; parameterized SQL scoped `uid`+`name`, rowcount reported, loud-fail kept, timeout=30). The API is a dead end; the CLI can mint but not delete (verified on the live binary: `admin user` has no delete-token), and the CLI rejects duplicate names (`cmd/admin_user_generate_access_token.go`: "access token name has been used already") — so revoke-before-mint stays mandatory. SQL verified against a throwaway schema replica (exact-row delete; another user's same-named token survives).
 2. NEW step 5d: mirror-sync the hub to GitHub tip + sha-gate (gh api as lars, 30×2s poll) BEFORE dispatching — run #3 was exactly a dispatch onto a stale mirror; this makes the failure mode structurally unreachable.
 

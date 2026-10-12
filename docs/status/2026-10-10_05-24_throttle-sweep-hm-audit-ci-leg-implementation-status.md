@@ -41,7 +41,7 @@
 1. **Fabricated-claim bug, mine, caught in this self-review:** I wrote "threshold 1000 env-overridable (`SYSTEMNIX_THROTTLE_WARN_THRESHOLD`)" into TWO queue rows while the function's default was a hardcoded `1000` that never read the env var. The exact class this repo documents (2026-09-13 commit-message evidence rule; verify-external-claims). **Fixed + verified** (lib default now `${2:-${SYSTEMNIX_THROTTLE_WARN_THRESHOLD:-1000}}`, functional probe proves the override, header documents it, selftest + shellcheck + check derivation re-run green). The queue-row claims are now true.
 2. **First sweep version stripped `.service` from unit names** — caught by my own fixture test before anything shipped (which is the fixture test doing its job), but it shows the first draft was written before thinking about what grep-targets the WARN line needs.
 3. **One mangled edit on TODO_LIST.md during self-harvest:** a prefix anchor split the triage row's title from its body and produced a duplicate title line. Caught immediately by re-reading, repaired, dedup-verified (1× each row). No other surface affected.
-4. **Near-miss, not shipped:** the 10-unit discovery came from an *ad-hoc* live probe I ran "while I was there" — it was NOT a planned verification step. Without it, §17 ships unproven and the session's headline finding doesn't exist. That's luck, not process.
+4. **Near-miss, not shipped:** the 10-unit discovery came from an _ad-hoc_ live probe I ran "while I was there" — it was NOT a planned verification step. Without it, §17 ships unproven and the session's headline finding doesn't exist. That's luck, not process.
 5. Nothing broken in prod, no deploy executed, no foreign work touched (the crm.nix vendorHash re-pin and the storm-mode script pass were correctly left to their owner session and are swept/committed).
 
 ## e) WHAT WE SHOULD IMPROVE
@@ -114,5 +114,5 @@
 
 ---
 
-*Self-harvest at authoring time: §f items 1-4 landed in TODO_LIST.md + docs/todo/monitoring.md during this session (triage, continuous observability, HM runtime sweep, mislabeled gauge); §g = the standing decision rows. Everything else `[R]` is deliberately report-only (ROADMAP fuel / gated on items 1-2 / owner-gated), per the harvest contract.*
-*Report format: `.md` at the user's explicit path instruction — overrides the status-report skill's HTML default for this report only (same as the 2026-10-09 22-20 report).*
+_Self-harvest at authoring time: §f items 1-4 landed in TODO_LIST.md + docs/todo/monitoring.md during this session (triage, continuous observability, HM runtime sweep, mislabeled gauge); §g = the standing decision rows. Everything else `[R]` is deliberately report-only (ROADMAP fuel / gated on items 1-2 / owner-gated), per the harvest contract._
+_Report format: `.md` at the user's explicit path instruction — overrides the status-report skill's HTML default for this report only (same as the 2026-10-09 22-20 report)._

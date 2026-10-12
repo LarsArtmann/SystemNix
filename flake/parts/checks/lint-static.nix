@@ -7,7 +7,6 @@
   perSystem =
     {
       pkgs,
-      system,
       lib,
       ...
     }:

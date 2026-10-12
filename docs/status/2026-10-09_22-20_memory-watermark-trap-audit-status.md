@@ -7,13 +7,13 @@
 
 ## Verification matrix (one screen)
 
-| Claim | Method | Verdict |
-| --- | --- | --- |
-| No other unit has the trap (final configs) | `nix eval` over all evo-x2 system units (~300), HM user services, rpi3-dns units; byte-parse both watermarks, flag High < 50% of Max | **0 TRAP rows** in all three scopes; every both-watermarks unit sits at harden's 80% (or deliberate 100%) |
-| No unit is throttled RIGHT NOW | direct cgroupfs sweep `/sys/fs/cgroup/system.slice/*.service/memory.events` + user slice | **zero `high` events anywhere**; `llama-chat` re-switched 21:23 (38.4G watermark / 48G ceiling, counter clean) |
-| `llama-chat` was the sole victim | audit + git archaeology (17adf93b fix, 14b34d20 runbook, 5d4bb3be comment-only guard) | confirmed — only module that merged `MemoryMax` outside a bare `harden{}` |
-| New eval gate actually fires on the trap | `CASES=memory bash scripts/negative-test-lints.sh` then **full suite** | memory group 2/2, then **32/32 PASS** (control green, trap mutation throws `memory-watermark-audit` marker) |
-| Gate wired into the fleet | `nix eval toplevel` exit 0, `nix flake check --no-build` exit 0 | auto-discovery imported it on evo-x2 + rpi3-dns; zero offenders today |
+| Claim                                      | Method                                                                                                                               | Verdict                                                                                                        |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| No other unit has the trap (final configs) | `nix eval` over all evo-x2 system units (~300), HM user services, rpi3-dns units; byte-parse both watermarks, flag High < 50% of Max | **0 TRAP rows** in all three scopes; every both-watermarks unit sits at harden's 80% (or deliberate 100%)      |
+| No unit is throttled RIGHT NOW             | direct cgroupfs sweep `/sys/fs/cgroup/system.slice/*.service/memory.events` + user slice                                             | **zero `high` events anywhere**; `llama-chat` re-switched 21:23 (38.4G watermark / 48G ceiling, counter clean) |
+| `llama-chat` was the sole victim           | audit + git archaeology (17adf93b fix, 14b34d20 runbook, 5d4bb3be comment-only guard)                                                | confirmed — only module that merged `MemoryMax` outside a bare `harden{}`                                      |
+| New eval gate actually fires on the trap   | `CASES=memory bash scripts/negative-test-lints.sh` then **full suite**                                                               | memory group 2/2, then **32/32 PASS** (control green, trap mutation throws `memory-watermark-audit` marker)    |
+| Gate wired into the fleet                  | `nix eval toplevel` exit 0, `nix flake check --no-build` exit 0                                                                      | auto-discovery imported it on evo-x2 + rpi3-dns; zero offenders today                                          |
 
 ---
 
@@ -54,41 +54,41 @@ None of these block anything; all are ranked in (f).
 
 ## e) WHAT WE SHOULD IMPROVE (process, not bugs)
 
-1. **Verify-before-claiming the enforcement surface.** I nearly wrote "prevention complete" when the guard was a comment. The repo rule is now live twice: a *closed* gate needs (1) the assertion, (2) a negative test proving it fires, (3) proof the CI/local gates run it. Items (1)+(2) landed same-session this time; (3) turned out to be a fleet-wide hole (f.3) — worth a habit: every new audit module ships with its harness group in the same commit.
+1. **Verify-before-claiming the enforcement surface.** I nearly wrote "prevention complete" when the guard was a comment. The repo rule is now live twice: a _closed_ gate needs (1) the assertion, (2) a negative test proving it fires, (3) proof the CI/local gates run it. Items (1)+(2) landed same-session this time; (3) turned out to be a fleet-wide hole (f.3) — worth a habit: every new audit module ships with its harness group in the same commit.
 2. **Harness refactors need the FULL suite, not the new group.** `apply_mutations` is shared by every group; group-only testing would have masked a regression. Cost of full suite is ~10 min eval-bound — schedule it, don't skip it.
 3. **First-run tooling flags:** `builtins.toInt` (doesn't exist in plain Nix — `fromJSON` is the idiom) and an over-clever jq classifier both cost a ~2-min eval each. Keep eval one-liners dumb: parse defensively, classify in awk.
 4. **`systemctl` is tool-blocked in this harness** — cgroupfs reads are the equivalent and richer (`memory.events`, `memory.peak`). Worth a line in `docs/agents/shell-devtools.md` so the next session doesn't rediscover it.
-5. **The daemon-swept-commit lint gap is real:** the harness + docs committed via daemon (heuristic), so staged-path lint legs (shellcheck/ruff) silently skipped — standalone shellcheck had to be run by hand (done). The existing "re-run skipped lints standalone after daemon-swept amends" rule should say "after daemon-swept *commits*" too.
+5. **The daemon-swept-commit lint gap is real:** the harness + docs committed via daemon (heuristic), so staged-path lint legs (shellcheck/ruff) silently skipped — standalone shellcheck had to be run by hand (done). The existing "re-run skipped lints standalone after daemon-swept amends" rule should say "after daemon-swept _commits_" too.
 6. **Answer-first discipline worked and should stick:** the eval-time audit (merged config, not call sites) is what made the fleet question answerable in one pass — call-site greps (~160 hits) would have been both noisy and unsound.
 
 ## f) NEXT TASKS (ranked; harvest disposition explicit)
 
 Harvested this pass → TODO_LIST.md + domain library: f.1–f.5. Report-only with reason noted per item. (Impact/Effort/Category per the quality guide.)
 
-| # | Task | Impact | Effort | Category | Disposition |
-| --- | --- | --- | --- | --- | --- |
-| f.1 | Automated runtime throttle detection: `memory.events` `high` sweep in post-deploy-check + optional textfile/SigNoz rule | High | M | Feature | **HARVESTED** → monitoring.md + queue |
-| f.2 | Extend memory-watermark-audit to HM user services | Medium | S | Feature | **HARVESTED** → stability.md + queue |
-| f.3 | Wire negative-test-lints.sh into CI (nightly or push; CASES= splittable) | High | S–M | Quality | **HARVESTED** → pipeline.md + queue |
-| f.4 | Fix the `catalog` integration-subdomains eval warning (19 subdomains, prints on every eval) | Medium | S | Bug | **HARVESTED** → services.md + queue |
-| f.5 | Drop/fix the `go-structure-linter` `treefmt-nix` override warning in flake.nix | Low | S | Cleanup | **HARVESTED** → upstream.md + queue |
-| f.6 | Full negative-test suite as the standard closer for any harness/audit refactor (habit, not code) | Medium | S | Process | report-only — behavior, not a ticket |
-| f.7 | `[decision]` Runtime throttle finding: hard deploy gate vs advisory | High | — | Decision | **HARVESTED** → monitoring.md `[decision]` (asked in g.1) |
-| f.8 | `[decision]` Watermark threshold policy: single 50% tripwire vs per-class budgets | Medium | — | Decision | **HARVESTED** → stability.md `[decision]` (asked in g.2) |
-| f.9 | Percent-form watermark doctrine (forbid `"80%"`-style values in the audit, or document RAM-relative semantics) | Low | S | Quality | report-only — folds into f.8's outcome |
-| f.10 | Audit parser: support decimal sizes (`0.5G`) or fail loudly on unparseable values instead of silent skip | Low | S | Bug | report-only |
-| f.11 | Slice/scope MemoryHigh coverage (`systemd.slices` can throttle a group silently) | Low | M | Feature | report-only |
-| f.12 | Gatus latency budgets for memory-heavy endpoints (llama-chat `/health` 45s-timeout class) | Medium | M | Feature | report-only — needs the gatus coverage audit's pattern |
-| f.13 | Eval-vs-runtime watermark drift check (deployed unit pair vs tree pair; deploy-skew class) | Medium | M | Quality | report-only |
-| f.14 | Cross-link the throttle gotcha into `docs/agents/stability.md` (+ note memory-emergency-guard is PSI-based, blind to `memory.events`) | Low | S | Documentation | report-only |
-| f.15 | Audit CONTRIBUTING.md module templates + integration-registry examples for bare-`harden{}`-then-merge teaching shapes | Medium | S | Documentation | report-only — unverified this session |
-| f.16 | Verify `llama-rag` disabled state is deliberate + documented (module present, no live unit, dark-guard present) | Low | S | Documentation | report-only |
-| f.17 | Pre-existing SC2016 infos in negative-test-lints.sh fixture lines: add a targeted disable comment (intentional literal `$x`) so future shellcheck runs are noise-free | Low | S | Cleanup | report-only |
-| f.18 | rpi3-dns `dnsblockd` watermark resize to Pi-realistic values (cosmetic; inert today) | Low | S | Cleanup | report-only |
-| f.19 | `llama-chat` stale 5.6G swap resident post-fix — optional swapoff/swaprefill cycle at a maintenance window | Low | S | Cleanup | report-only — owner window |
-| f.20 | `systemd-analyze`-style one-shot: emit per-unit High/Max/ratio table as a flake app (formalizes this session's ad-hoc eval probe) | Low | S–M | Feature | report-only |
-| f.21 | `memory.events` `max` counter (hit-the-ceiling alloc failures) as an OOM-adjacent early-warning signal in the same sweep as f.1 | Low | S | Feature | report-only — pairs with f.1 |
-| f.22 | Decide whether `harden{}` should take `MemoryHigh` ONLY as a paired argument (API shape that makes the divergence unrepresentable at the call site, complementing the final-config audit) | Medium | M | Quality | report-only — design discussion |
+| #    | Task                                                                                                                                                                                      | Impact | Effort | Category      | Disposition                                               |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- | --------------------------------------------------------- |
+| f.1  | Automated runtime throttle detection: `memory.events` `high` sweep in post-deploy-check + optional textfile/SigNoz rule                                                                   | High   | M      | Feature       | **HARVESTED** → monitoring.md + queue                     |
+| f.2  | Extend memory-watermark-audit to HM user services                                                                                                                                         | Medium | S      | Feature       | **HARVESTED** → stability.md + queue                      |
+| f.3  | Wire negative-test-lints.sh into CI (nightly or push; CASES= splittable)                                                                                                                  | High   | S–M    | Quality       | **HARVESTED** → pipeline.md + queue                       |
+| f.4  | Fix the `catalog` integration-subdomains eval warning (19 subdomains, prints on every eval)                                                                                               | Medium | S      | Bug           | **HARVESTED** → services.md + queue                       |
+| f.5  | Drop/fix the `go-structure-linter` `treefmt-nix` override warning in flake.nix                                                                                                            | Low    | S      | Cleanup       | **HARVESTED** → upstream.md + queue                       |
+| f.6  | Full negative-test suite as the standard closer for any harness/audit refactor (habit, not code)                                                                                          | Medium | S      | Process       | report-only — behavior, not a ticket                      |
+| f.7  | `[decision]` Runtime throttle finding: hard deploy gate vs advisory                                                                                                                       | High   | —      | Decision      | **HARVESTED** → monitoring.md `[decision]` (asked in g.1) |
+| f.8  | `[decision]` Watermark threshold policy: single 50% tripwire vs per-class budgets                                                                                                         | Medium | —      | Decision      | **HARVESTED** → stability.md `[decision]` (asked in g.2)  |
+| f.9  | Percent-form watermark doctrine (forbid `"80%"`-style values in the audit, or document RAM-relative semantics)                                                                            | Low    | S      | Quality       | report-only — folds into f.8's outcome                    |
+| f.10 | Audit parser: support decimal sizes (`0.5G`) or fail loudly on unparseable values instead of silent skip                                                                                  | Low    | S      | Bug           | report-only                                               |
+| f.11 | Slice/scope MemoryHigh coverage (`systemd.slices` can throttle a group silently)                                                                                                          | Low    | M      | Feature       | report-only                                               |
+| f.12 | Gatus latency budgets for memory-heavy endpoints (llama-chat `/health` 45s-timeout class)                                                                                                 | Medium | M      | Feature       | report-only — needs the gatus coverage audit's pattern    |
+| f.13 | Eval-vs-runtime watermark drift check (deployed unit pair vs tree pair; deploy-skew class)                                                                                                | Medium | M      | Quality       | report-only                                               |
+| f.14 | Cross-link the throttle gotcha into `docs/agents/stability.md` (+ note memory-emergency-guard is PSI-based, blind to `memory.events`)                                                     | Low    | S      | Documentation | report-only                                               |
+| f.15 | Audit CONTRIBUTING.md module templates + integration-registry examples for bare-`harden{}`-then-merge teaching shapes                                                                     | Medium | S      | Documentation | report-only — unverified this session                     |
+| f.16 | Verify `llama-rag` disabled state is deliberate + documented (module present, no live unit, dark-guard present)                                                                           | Low    | S      | Documentation | report-only                                               |
+| f.17 | Pre-existing SC2016 infos in negative-test-lints.sh fixture lines: add a targeted disable comment (intentional literal `$x`) so future shellcheck runs are noise-free                     | Low    | S      | Cleanup       | report-only                                               |
+| f.18 | rpi3-dns `dnsblockd` watermark resize to Pi-realistic values (cosmetic; inert today)                                                                                                      | Low    | S      | Cleanup       | report-only                                               |
+| f.19 | `llama-chat` stale 5.6G swap resident post-fix — optional swapoff/swaprefill cycle at a maintenance window                                                                                | Low    | S      | Cleanup       | report-only — owner window                                |
+| f.20 | `systemd-analyze`-style one-shot: emit per-unit High/Max/ratio table as a flake app (formalizes this session's ad-hoc eval probe)                                                         | Low    | S–M    | Feature       | report-only                                               |
+| f.21 | `memory.events` `max` counter (hit-the-ceiling alloc failures) as an OOM-adjacent early-warning signal in the same sweep as f.1                                                           | Low    | S      | Feature       | report-only — pairs with f.1                              |
+| f.22 | Decide whether `harden{}` should take `MemoryHigh` ONLY as a paired argument (API shape that makes the divergence unrepresentable at the call site, complementing the final-config audit) | Medium | M      | Quality       | report-only — design discussion                           |
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 

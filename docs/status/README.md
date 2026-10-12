@@ -1,4 +1,3 @@
-
 ## Live pool addendum (2026-10-12 07:05)
 
 New live report: `2026-10-12_07-00_catchall-404-dnsblockd-wildcard-fix-live.md`

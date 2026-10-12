@@ -59,6 +59,7 @@
 ## f) NEXT (≤50, prioritized)
 
 **Immediate (this-week, small):**
+
 1. Add the overlay-order + eval-probe doctrine to `docs/agents/nix-flakes.md` (from e.3/e.5 — the inline comment alone will rot).
 2. Extend the planned vendorHash selftest to scan `modules/nixos/**` for second surfaces (e.4; makes BOTH-surfaces mechanical).
 3. Re-read the parallel session's committed `.gitleaks.toml`/`.githooks/pre-commit` changes for conflict/duplication with my `finish_reason` allowlist entry and my assumptions.

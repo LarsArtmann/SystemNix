@@ -17,15 +17,15 @@
 
 ### Evidence table
 
-| Phase | Probe | Result |
-| --- | --- | --- |
-| Safety | script source read (226 lines) | 7 guards present as documented; `--dry-run` exists |
-| Safety | `df /mnt/hot` | 746G free for 67G copy |
-| Window | owner terminal outputs | du gate 67G; prepare 71.75G/5m57s; finalize 1.97MB delta, 53,172 entries, 43 checksums, 4s |
-| Deploy | smoke | Forgejo local 200 + HTTPS 200 + theme asset/default-theme/slogan/meta PASS; 0 failed units |
-| Live | API / listener / mount | `15.0.9` / `:3000` / subvolid 260 |
-| Live | runner journal | clean start 01:57:43, poller launched, no error lines since |
-| Live | sync journal | mass org-mirror creation → finished 02:08:20, reconcile clean, transferred-kept ×2 |
+| Phase  | Probe                          | Result                                                                                     |
+| ------ | ------------------------------ | ------------------------------------------------------------------------------------------ |
+| Safety | script source read (226 lines) | 7 guards present as documented; `--dry-run` exists                                         |
+| Safety | `df /mnt/hot`                  | 746G free for 67G copy                                                                     |
+| Window | owner terminal outputs         | du gate 67G; prepare 71.75G/5m57s; finalize 1.97MB delta, 53,172 entries, 43 checksums, 4s |
+| Deploy | smoke                          | Forgejo local 200 + HTTPS 200 + theme asset/default-theme/slogan/meta PASS; 0 failed units |
+| Live   | API / listener / mount         | `15.0.9` / `:3000` / subvolid 260                                                          |
+| Live   | runner journal                 | clean start 01:57:43, poller launched, no error lines since                                |
+| Live   | sync journal                   | mass org-mirror creation → finished 02:08:20, reconcile clean, transferred-kept ×2         |
 
 ---
 

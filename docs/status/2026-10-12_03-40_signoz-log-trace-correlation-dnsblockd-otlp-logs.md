@@ -43,7 +43,7 @@
 3. **Edit-tool "must View before Edit" trip** — I "read" `otel.go` via `bash cat`, which does NOT satisfy the tool; the multiedit was rejected and I re-read via `view`. Repeated a known lesson.
 4. **Wrote nolints that weren't needed** — 6 `//nolint:ireturn`/`wrapcheck` directives `nolintlint` flagged as unused. I guessed which linters fire instead of running the linter first.
 5. **Depguard violation designed-in** — I put `AttachLogHandler` (needing `internal/logging`) inside `internal/otel`, which the very clearly-documented leaf-package rule forbids. I read the rule only when the linter quoted it. Should have checked `AGENTS.md`'s depguard paragraph before choosing the file.
-6. **Declared "no SystemNix change needed" too fast** — true for the *ingest* path, but I missed the duplicate-line consequence and the sampling-parity problem in that same breath.
+6. **Declared "no SystemNix change needed" too fast** — true for the _ingest_ path, but I missed the duplicate-line consequence and the sampling-parity problem in that same breath.
 7. **Encoding hazard** — the `—` (em-dash) in the reflowed `handlers.go` log message forced a golines rewrap and made exact-match edits fragile; I should have split the call site cleanly on the first try.
 8. **`nix build` never went green** — blocked by a parallel session's stale `app.min.css` (not my change), so I could not prove the nix-side build of my vendored deps. I stopped at "FOD passed," which is weaker than "package built."
 
@@ -115,7 +115,6 @@
 2. **Duplicate-line policy:** after the new dnsblockd binary deploys, should SigNoz keep BOTH the OTLP copy (trace-correlated) and the journald copy (redundant, no trace ID), or should I add the collector `drop()` to keep a single source? (Tradeoff: single-source clarity vs a silent gap if the OTLP export path breaks.)
 3. **OTLP log volume ceiling:** what is an acceptable SigNoz log-volume increase for dnsblockd — should the OTLP bridge mirror the local sampler exactly (my default), or export at a stricter min level (e.g. INFO-only) to bound ingest cost?
 
-*Report filed 2026-10-12_03-40. No SystemNix files changed this session; all work is in `~/projects/dnsblockd`.*
+_Report filed 2026-10-12_03-40. No SystemNix files changed this session; all work is in `~/projects/dnsblockd`._
 
 **§f harvest: DELIBERATELY NOT HARVESTED at authoring time** — the owner instruction for this session was "write the report, then WAIT FOR INSTRUCTIONS," and the three §g questions gate which §f items are real (fleet scope, duplicate policy, volume ceiling). Two items are ready to queue on the owner's go: (a) update the existing fleet item `docs/todo/monitoring.md:106` + `TODO_LIST.md:303` with the dnsblockd-prototype progress, and (b) add the "how to add OTLP logs to a Go service" note to `docs/services/signoz.md`. Neither is queued yet; queued on instruction.
-

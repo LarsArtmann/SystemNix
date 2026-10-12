@@ -14,15 +14,15 @@ The guard exists, is correct by fixture + live probe, passes every eval gate, an
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-| --- | --- |
-| Kill script `scripts/bun-memory-watchdog.sh` — sweep, SIGKILL at `VmRSS ≥ 16 GiB`, resolved-exe exact match, PID-reuse re-verify, dry-run mode, atomic `.prom` | shellcheck clean (`nix run nixpkgs#shellcheck`); live `/proc` sweep 3.1 s, 0 kills, well-formed prom |
-| Fixture selftest (17G bun killed; exactly-16G killed → `>=`; 15G spared; over-threshold non-bun spared; counter accumulates 2→3; killed pids removed = no resurrection) | `nix build .#checks.x86_64-linux.bun-memory-watchdog-selftest` → "selftest OK" |
+| Item                                                                                                                                                                                                                                                 | Evidence                                                                                                                                          |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Kill script `scripts/bun-memory-watchdog.sh` — sweep, SIGKILL at `VmRSS ≥ 16 GiB`, resolved-exe exact match, PID-reuse re-verify, dry-run mode, atomic `.prom`                                                                                       | shellcheck clean (`nix run nixpkgs#shellcheck`); live `/proc` sweep 3.1 s, 0 kills, well-formed prom                                              |
+| Fixture selftest (17G bun killed; exactly-16G killed → `>=`; 15G spared; over-threshold non-bun spared; counter accumulates 2→3; killed pids removed = no resurrection)                                                                              | `nix build .#checks.x86_64-linux.bun-memory-watchdog-selftest` → "selftest OK"                                                                    |
 | Module `modules/nixos/services/bun-memory-watchdog.nix` (auto-discovered), knobs `thresholdGiB=16` / `checkInterval=30s` / `processNames=["bun"]`, `harden{}` 64M + sticky-dir rename caps, oneshot+timer per the thermal-guard audit-clean template | `nix flake check --no-build` all passed; unit renders: ExecStart → hardened script, `OnUnitActiveSec "30s"`, `BUN_WATCHDOG_THRESHOLD_KB=16777216` |
-| evo-x2 wiring (`platforms/nixos/system/configuration.nix` next to the thermal guard) | `nix eval …system.build.toplevel.drvPath` succeeds on the exact tree (incl. all eval-time audits) |
-| Docs: runbook `docs/services/bun-memory-watchdog.md` + `docs/agents/stability.md` ZRAM-section pointer | committed `481df71b` / `6fd61c46` |
-| Daemon-race discipline: verified what the daemon staged (`git show --stat`), amend-forward with proper message, re-ran the hook-skipped shellcheck standalone | HEAD `6fd61c46` message + rationale; SHELLCHECK-CLEAN |
-| Pre-existing-failure non-attribution: the 4 buildflow `nix-checker` findings + the red TODO-system gate (98 unharvested §f) pre-date this session; none name my files; I added no queue rows before this report | `buildflow` run 07:15:40 findings list; gate output |
+| evo-x2 wiring (`platforms/nixos/system/configuration.nix` next to the thermal guard)                                                                                                                                                                 | `nix eval …system.build.toplevel.drvPath` succeeds on the exact tree (incl. all eval-time audits)                                                 |
+| Docs: runbook `docs/services/bun-memory-watchdog.md` + `docs/agents/stability.md` ZRAM-section pointer                                                                                                                                               | committed `481df71b` / `6fd61c46`                                                                                                                 |
+| Daemon-race discipline: verified what the daemon staged (`git show --stat`), amend-forward with proper message, re-ran the hook-skipped shellcheck standalone                                                                                        | HEAD `6fd61c46` message + rationale; SHELLCHECK-CLEAN                                                                                             |
+| Pre-existing-failure non-attribution: the 4 buildflow `nix-checker` findings + the red TODO-system gate (98 unharvested §f) pre-date this session; none name my files; I added no queue rows before this report                                      | `buildflow` run 07:15:40 findings list; gate output                                                                                               |
 
 ## b) PARTIALLY DONE
 
@@ -113,13 +113,13 @@ Legend: **[Q]** harvested to `TODO_LIST.md` queue now · **[L]** harvested to `d
 
 ## Verification matrix (what claim rests on what)
 
-| Claim | Command | Result |
-| --- | --- | --- |
-| Script lints | `nix run nixpkgs#shellcheck -- -x scripts/bun-memory-watchdog.sh` | SHELLCHECK-CLEAN |
-| Kill semantics | `bash scripts/bun-memory-watchdog.sh selftest` + `nix build .#checks.x86_64-linux.bun-memory-watchdog-selftest -L` | "selftest OK" |
-| Tree formatting | `nix fmt` | 2984 files, 0 changed |
-| Eval gates (audits) | `nix flake check --no-build` | all passed (darwin skip expected) |
-| Host wiring | `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath` | drv emitted |
-| Unit shape | `nix eval` ExecStart / OnUnitActiveSec / Environment | hardened script / 30s / 16 GiB+bun |
-| Live sweep safety | redirected-output run on real /proc | 0 kills, prom well-formed, 3.1 s |
-| Pre-existing reds not mine | `buildflow` (07:15:40) + pre-commit TODO gate | 4 nix-checker findings (transitive-input class, queued proof item) / 98 unharvested §f, none referencing this work |
+| Claim                      | Command                                                                                                            | Result                                                                                                             |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| Script lints               | `nix run nixpkgs#shellcheck -- -x scripts/bun-memory-watchdog.sh`                                                  | SHELLCHECK-CLEAN                                                                                                   |
+| Kill semantics             | `bash scripts/bun-memory-watchdog.sh selftest` + `nix build .#checks.x86_64-linux.bun-memory-watchdog-selftest -L` | "selftest OK"                                                                                                      |
+| Tree formatting            | `nix fmt`                                                                                                          | 2984 files, 0 changed                                                                                              |
+| Eval gates (audits)        | `nix flake check --no-build`                                                                                       | all passed (darwin skip expected)                                                                                  |
+| Host wiring                | `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath`                                       | drv emitted                                                                                                        |
+| Unit shape                 | `nix eval` ExecStart / OnUnitActiveSec / Environment                                                               | hardened script / 30s / 16 GiB+bun                                                                                 |
+| Live sweep safety          | redirected-output run on real /proc                                                                                | 0 kills, prom well-formed, 3.1 s                                                                                   |
+| Pre-existing reds not mine | `buildflow` (07:15:40) + pre-commit TODO gate                                                                      | 4 nix-checker findings (transitive-input class, queued proof item) / 98 unharvested §f, none referencing this work |

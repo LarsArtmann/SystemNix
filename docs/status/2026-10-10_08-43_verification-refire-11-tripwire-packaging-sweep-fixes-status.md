@@ -110,7 +110,7 @@ Sorted by impact; tagged: **NEW** = harvested this session (rows landed on both 
 49. **ROW (TODO_LIST) — `/data` usage alarm at ~85%** (Gatus rule or textfile threshold on existing node_filesystem metrics).
 50. **OWNER — Twenty dump archive retention/backup decision** for `/mnt/pool/backups/twenty/` (now the sole people-data source pre-import; nightly dumps stopped with Docker on 10-08).
 
-*Not harvested on purpose:* §f items that are pure ROADMAP fuel (SigNoz time_series_v2 retention study, log→trace correlation, library-deep-dive candidates) stay in ROADMAP per the HARVEST routing rules; the three owner-gated items stay `[blocked:user]` in services.md.
+_Not harvested on purpose:_ §f items that are pure ROADMAP fuel (SigNoz time_series_v2 retention study, log→trace correlation, library-deep-dive candidates) stay in ROADMAP per the HARVEST routing rules; the three owner-gated items stay `[blocked:user]` in services.md.
 
 ## g) Questions I can NOT figure out myself
 
@@ -119,4 +119,5 @@ Sorted by impact; tagged: **NEW** = harvested this session (rows landed on both 
 3. **InboxClean→CRM feed scope:** when live, does every feed-matched correspondent become a CRM person (volume = your inbox), or only a filtered subset — and do imported people win over feed-created ones on conflicts?
 
 ---
-*Point-in-time snapshot; stales on the next deploy/lock wave. Point-in-time corrections to the 05-52 report were applied inline (non-destructive) per the docs-health ANNOTATE convention. Report not manually committed (harness rule): the auto-commit daemon sweeps it.*
+
+_Point-in-time snapshot; stales on the next deploy/lock wave. Point-in-time corrections to the 05-52 report were applied inline (non-destructive) per the docs-health ANNOTATE convention. Report not manually committed (harness rule): the auto-commit daemon sweeps it._

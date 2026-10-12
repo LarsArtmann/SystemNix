@@ -89,4 +89,4 @@ Date: 2026-10-11 05:10–19:05 CEST (one session, three user pivots). Chain: "do
 2. **Trash-empty appetite:** empty root's trash now to actually free the 67G, or defer to a retention pass? (Irreversible — the shadow is the pre-migration safety copy.)
 3. **VM-test authorization:** if a sub-25-PSI window opens in the next hours, may I run the ~2-5 min qemu guard test autonomously, or do you want heavy builds to stay human-triggered regardless of window?
 
-*Session closed in WAITING FOR INSTRUCTIONS state.*
+_Session closed in WAITING FOR INSTRUCTIONS state._

@@ -11,17 +11,17 @@ entire session; every deploy had to fight it.
 
 ## a) FULLY DONE
 
-| Work | Evidence |
-| --- | --- |
-| **signoz-collector root-cause + fix** (`match_type = "strict"` in `modules/nixos/services/signoz.nix:1176`) — otelcol v0.144 rejects `exclude_fs_types` with empty `match_type`; the 05:09 deploy crash-looped the collector to `start-limit-hit`, fleet telemetry (OTLP 4317/4318, prometheus scrapes, journald pipeline) fully blind | Collector started once at 07:37:36 (`Everything is ready` in 1s), zero restarts since; ports 4317/4318/8888 bound; **20,401 logs + 3,073 traces in 10 min** post-fix |
-| **Pre-deploy verification method established** — no `validate` subcommand in the signoz fork, so: render yaml via `nix eval --raw … --apply`, boot the real binary under `timeout 25`; exit 124 after `Everything is ready` = healthy | Found the config bug in a 25s sandboxed boot instead of a deploy cycle; recipe + caveat recorded in `docs/services/signoz.md` (§Ops first bullets) |
-| **Hostmetrics feature actually works now** (the original intent of the config that crashed) | `system.cpu.time` + 512 `system.*` series in ClickHouse; Infrastructure → Hosts page can populate |
-| **Architecture Catalog 404 diagnosis** — two independent gaps: sync unit cloned the read-only GitHub mirror (`lars/eventcatalog-hub`) instead of the CI's new `lars/eventcatalog-hub-dist` publish target (hub `c00a61a`), AND the sync token was never sops-pasted (PLACEHOLDER skip, journal-verified) | `configuration.nix` `repo` override landed + eval-verified; live unit binary contains `eventcatalog-hub-dist` |
-| **Runbook + TODO hygiene for the catalog** | `docs/services/architecture-catalog.md` go-live checklist steps 0–6 all carry dated DONE stamps; PLACEHOLDER section marked HISTORICAL; go-live row → `[x] GO-LIVE COMPLETE` in `docs/todo/services.md`; `[watch]` tile row stamped condition-met; CHANGELOG entry under Unreleased |
-| **Go-live verified end-state** (after owner paste + system-872) | `current → generations/20261012-113522`, `dist_present 1 / fresh 1 / scrape_errors 0`, vHost 200 + EventCatalog title marker, sync log `serving generation … from lars/eventcatalog-hub-dist@dist` — the PAT read the dist repo first try (scope watch-item did not fire) |
-| **Boot-anchor incident detected + healed** — first catalog deploy shipped **exit 14 UNANCHORED** (reboot would have reverted the box); second deploy anchored **system-871**, user's deploy then anchored **system-872** | `readlink /run/current-system` == `system-871-link` verified before handoff; deploy.sh anchor assertion now exercised and understood |
-| **Throttle-sweep finding harvested** — inboxclean-web MemoryHigh hits grew 136k → 1.26M (~9×/2d) | Stamped onto `docs/todo/monitoring.md` continuous-throttle row (no parallel row minted) |
-| **Session follow-ups self-harvested at authoring time** (this report) | 4 new rows: llama-chat start budget (ai-stack), deploy.sh anchor gap (pipeline), `node_textfile_scrape_error` root-cause (monitoring + queue), signoz-collector MemoryMax watch (monitoring); queue one-liners in TODO_LIST |
+| Work                                                                                                                                                                                                                                                                                                                                   | Evidence                                                                                                                                                                                                                                                                            |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **signoz-collector root-cause + fix** (`match_type = "strict"` in `modules/nixos/services/signoz.nix:1176`) — otelcol v0.144 rejects `exclude_fs_types` with empty `match_type`; the 05:09 deploy crash-looped the collector to `start-limit-hit`, fleet telemetry (OTLP 4317/4318, prometheus scrapes, journald pipeline) fully blind | Collector started once at 07:37:36 (`Everything is ready` in 1s), zero restarts since; ports 4317/4318/8888 bound; **20,401 logs + 3,073 traces in 10 min** post-fix                                                                                                                |
+| **Pre-deploy verification method established** — no `validate` subcommand in the signoz fork, so: render yaml via `nix eval --raw … --apply`, boot the real binary under `timeout 25`; exit 124 after `Everything is ready` = healthy                                                                                                  | Found the config bug in a 25s sandboxed boot instead of a deploy cycle; recipe + caveat recorded in `docs/services/signoz.md` (§Ops first bullets)                                                                                                                                  |
+| **Hostmetrics feature actually works now** (the original intent of the config that crashed)                                                                                                                                                                                                                                            | `system.cpu.time` + 512 `system.*` series in ClickHouse; Infrastructure → Hosts page can populate                                                                                                                                                                                   |
+| **Architecture Catalog 404 diagnosis** — two independent gaps: sync unit cloned the read-only GitHub mirror (`lars/eventcatalog-hub`) instead of the CI's new `lars/eventcatalog-hub-dist` publish target (hub `c00a61a`), AND the sync token was never sops-pasted (PLACEHOLDER skip, journal-verified)                               | `configuration.nix` `repo` override landed + eval-verified; live unit binary contains `eventcatalog-hub-dist`                                                                                                                                                                       |
+| **Runbook + TODO hygiene for the catalog**                                                                                                                                                                                                                                                                                             | `docs/services/architecture-catalog.md` go-live checklist steps 0–6 all carry dated DONE stamps; PLACEHOLDER section marked HISTORICAL; go-live row → `[x] GO-LIVE COMPLETE` in `docs/todo/services.md`; `[watch]` tile row stamped condition-met; CHANGELOG entry under Unreleased |
+| **Go-live verified end-state** (after owner paste + system-872)                                                                                                                                                                                                                                                                        | `current → generations/20261012-113522`, `dist_present 1 / fresh 1 / scrape_errors 0`, vHost 200 + EventCatalog title marker, sync log `serving generation … from lars/eventcatalog-hub-dist@dist` — the PAT read the dist repo first try (scope watch-item did not fire)           |
+| **Boot-anchor incident detected + healed** — first catalog deploy shipped **exit 14 UNANCHORED** (reboot would have reverted the box); second deploy anchored **system-871**, user's deploy then anchored **system-872**                                                                                                               | `readlink /run/current-system` == `system-871-link` verified before handoff; deploy.sh anchor assertion now exercised and understood                                                                                                                                                |
+| **Throttle-sweep finding harvested** — inboxclean-web MemoryHigh hits grew 136k → 1.26M (~9×/2d)                                                                                                                                                                                                                                       | Stamped onto `docs/todo/monitoring.md` continuous-throttle row (no parallel row minted)                                                                                                                                                                                             |
+| **Session follow-ups self-harvested at authoring time** (this report)                                                                                                                                                                                                                                                                  | 4 new rows: llama-chat start budget (ai-stack), deploy.sh anchor gap (pipeline), `node_textfile_scrape_error` root-cause (monitoring + queue), signoz-collector MemoryMax watch (monitoring); queue one-liners in TODO_LIST                                                         |
 
 ## b) PARTIALLY DONE
 
@@ -31,8 +31,8 @@ entire session; every deploy had to fight it.
    all session and is presumably still running. Deploys were forced around it rather
    than the load being shed.
 2. **`node_textfile_scrape_error=1`** — seen on every deploy today (7 metric families
-   absent: storage_collector_*, system_niri_metrics_fresh, system_signoz_alert_rules_healthy,
-   system_stuck_dstate_processes, system_zram_*, system_emeet_pixyd_expected_down),
+   absent: storage_collector__, system_niri_metrics_fresh, system_signoz_alert_rules_healthy,
+   system_stuck_dstate_processes, system_zram__, system_emeet_pixyd_expected_down),
    downgraded to WARN each time, never root-caused → now queued (§f.3).
 3. **signoz-collector memory posture after hostmetrics** — §17 showed 2,195 → 3,069
    MemoryHigh hits; counter is since-boot (crash-loop era included), so it is
@@ -105,6 +105,7 @@ entire session; every deploy had to fight it.
 ## f) NEXT (harvest-marked; [H] = landed in TODO files this session, [N] = noticed only)
 
 **Direct follow-ups of this session**
+
 1. [H] deploy.sh anchor heal-or-fail-loud (pipeline.md + queue)
 2. [H] llama-chat start budget vs storm cold loads (ai-stack.md + queue)
 3. [H] Root-cause `node_textfile_scrape_error=1` (monitoring.md + queue)
@@ -126,17 +127,17 @@ entire session; every deploy had to fight it.
 12. [N] SigNoz freshness tile (condition met; row stamped)
 13. [N] Runbook-capture row: v15 token semantics etc. (services.md)
 14. [N] Hub-side: `eventcatalog-hub-dist` should get the same keep-N/CI-docs treatment
-    the runbook now documents (hub repo TODO owns it)
+the runbook now documents (hub repo TODO owns it)
 15. [N] `catalog:` eval warning — finish the ADR-008 catalog-entry migration for the 19
-    listed subdomains (pre-existing program, re-surfaced all day)
+listed subdomains (pre-existing program, re-surfaced all day)
 
 **Storm / stability (bigger rocks)**
 16. [N→Q1] tq-pool IO-awareness policy (owner)
 17. [N] Guard trip-recency gate: wire actual trip timestamps into the deploy gate
-    (already queued by the wave7 session — reaffirmed by today's llama-chat ride)
+(already queued by the wave7 session — reaffirmed by today's llama-chat ride)
 18. [N] PSI pre-check before the 72-check suite (already queued by the wave7 session)
 19. [N] Investigate whether the storm's `node-exporter 332/min` journal rate is its own
-    hotloop or storm-echo (§18 FAIL in every smoke today)
+hotloop or storm-echo (§18 FAIL in every smoke today)
 20. [N] Storm-night btrbk send verification (queued by wave7 session — still open)
 
 **Pre-existing rows I re-verified as still open (no action this session)**
@@ -144,37 +145,37 @@ entire session; every deploy had to fight it.
 22. [N] 4 orphaned Forgejo setup PATs (owner UI)
 23. [N] monitoring.md:103 mislabeled `system_service_memory_events_high` gauge
 24. [N] monitoring.md:104 continuous throttle textfile metric + SigNoz rule (my 10-12
-    stamp strengthened the case: inboxclean 9×/2d)
+stamp strengthened the case: inboxclean 9×/2d)
 25. [N] monitoring.md:105 HM user-slice sweep leg
 26. [N] trash-prune mechanism + the 55G Trash park (storage rows)
 27. [N] FastFlowLM staged go-live decision row (ai-stack)
 28. [N] llama-vlm soak + live verification (ai-stack watch row)
 29. [N] NPU-telemetry premise-check row (ai-stack, queued by the 03:17 session)
 30. [N] Em-dash style ruling for source code (pipeline decision row — directly relevant:
-    today's commits mix both styles)
+today's commits mix both styles)
 
 **Hygiene / docs**
 31. [N] This session produced no `docs/status/` report until now — earlier turns should
-    have authored one per phase; keep one report per session, not per incident
+have authored one per phase; keep one report per session, not per incident
 32. [N] `docs/agents/monitoring.md` ClickHouse table still cites the pre-hostmetrics
-    era for host.name sourcing — revisit after the Hosts page has data for a week
+era for host.name sourcing — revisit after the Hosts page has data for a week
 33. [N] The 19-subdomain warning text in evals is 4 lines of noise per eval — consider
-    a once-per-day warning or a progress counter
+a once-per-day warning or a progress counter
 34. [N] smoke-fail-baseline.txt rows could carry first-seen dates (see e.6)
 35. [N] `architecture-catalog-sync` retry: currently a failed clone exits 1 with hourly
-    retry only — a 5-min backoff for the first 3 retries would converge faster after
-    CI publishes (minor; hourly is fine for freshness)
+retry only — a 5-min backoff for the first 3 retries would converge faster after
+CI publishes (minor; hourly is fine for freshness)
 
 **Nice-to-have surfaced but deliberately not harvested**
 36. [N] Collector self-metrics scrape could add a `hostmetrics` receiver-accepted gauge
-    panel to the SigNoz self-watch (part of item 12's tile work)
+panel to the SigNoz self-watch (part of item 12's tile work)
 37. [N] `signoz.md` cheat-sheet could gain the boot-test one-liner as a copy-paste block
-    (it is in Ops prose today)
+(it is in Ops prose today)
 38. [N] deploy.sh could echo the profile bump as a first-class step line (it does — but
-    the "No new profile generation" branch needs the §f.1 fix first)
+the "No new profile generation" branch needs the §f.1 fix first)
 39. [N] tq agent sessions could log their cgroup path at start for instant attribution
 40. [N] The `docs/todo/pipeline.md` anchor row and the wave7 gate rows should be done
-    together (same file, same flow)
+together (same file, same flow)
 
 ## g) QUESTIONS (owner-only)
 

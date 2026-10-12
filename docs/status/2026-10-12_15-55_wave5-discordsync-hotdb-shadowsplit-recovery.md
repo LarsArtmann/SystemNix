@@ -76,4 +76,4 @@
 2. **Forced-gate policy**: for the remaining waves, do you want strict "only at PSI < 20%" (may take days given this storm), or the same explicit per-wave force decision you made today (and if so, should I add the loud `--i-accept-freeze-risk` flag to the script so bypasses are visible in history)?
 3. **Push now?** The 5 local commits include the other session's llama-chat feature and ollama-directive work alongside my wave/docs changes — push the bundle as-is, or do you want the parallel session to review its own commits first?
 
-*Arte in Aeternum*
+_Arte in Aeternum_

@@ -11,13 +11,13 @@
 
 Owner pasted `nix profile list` (6 entries) and asked "What do we need to fix?". I live-verified the three suspect repos and reported: **3 of 6 profile entries are `-dirty` builds** (built from uncommitted trees, match no commit), 1 of them additionally **untraceable** (no flake attribute — bare store-path install), plus a nixpkgs-lock split across the three nixpkgs-sourced tools. Delivered a fix sequence gated on committing the dirty trees; did not touch foreign-repo uncommitted work (multi-session rule).
 
-| Profile entry | Install state | Live repo state (verified this session) |
-| --- | --- | --- |
-| `projects-management-automation` | `-dirty` (`9292ab0e…-dirty`) | `/home/lars/projects/projects-management-automation` — **still dirty**: 13 modified Go files; HEAD `65ea7701` |
-| `buildflow` | `-dirty`, **no flake attribute / no original URL** (bare store-path install → cannot `nix profile upgrade`) | `/home/lars/projects/BuildFlow` — **still dirty**: 5 modified files (`.github/workflows/sarif-analysis.yml`, `README.md`, `action.yml`, 2 test files); HEAD `df61fc713` |
-| `cqrs-lint` | `-dirty` at old rev `cf77f1d`, locked `git+file:///home/lars/projects/DiscordSync?shallow=1` | `/home/lars/projects/DiscordSync` — tree **clean now** at HEAD `4c0502c3` → entry is stale relative to repo |
-| `dprint` 0.60.1, `lychee` 0.24.2 | clean | nixpkgs `e7439b6b` |
-| `typst` 0.15.1 | clean | nixpkgs `ec2d622d` (different lock → profile carries **two nixpkgs revisions**) |
+| Profile entry                    | Install state                                                                                               | Live repo state (verified this session)                                                                                                                                 |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `projects-management-automation` | `-dirty` (`9292ab0e…-dirty`)                                                                                | `/home/lars/projects/projects-management-automation` — **still dirty**: 13 modified Go files; HEAD `65ea7701`                                                           |
+| `buildflow`                      | `-dirty`, **no flake attribute / no original URL** (bare store-path install → cannot `nix profile upgrade`) | `/home/lars/projects/BuildFlow` — **still dirty**: 5 modified files (`.github/workflows/sarif-analysis.yml`, `README.md`, `action.yml`, 2 test files); HEAD `df61fc713` |
+| `cqrs-lint`                      | `-dirty` at old rev `cf77f1d`, locked `git+file:///home/lars/projects/DiscordSync?shallow=1`                | `/home/lars/projects/DiscordSync` — tree **clean now** at HEAD `4c0502c3` → entry is stale relative to repo                                                             |
+| `dprint` 0.60.1, `lychee` 0.24.2 | clean                                                                                                       | nixpkgs `e7439b6b`                                                                                                                                                      |
+| `typst` 0.15.1                   | clean                                                                                                       | nixpkgs `ec2d622d` (different lock → profile carries **two nixpkgs revisions**)                                                                                         |
 
 ---
 
@@ -43,11 +43,11 @@ Owner pasted `nix profile list` (6 entries) and asked "What do we need to fix?".
 2. `nix profile upgrade buildflow cqrs-lint projects-management-automation` (blocked by c.1).
 3. Unifying the profile's two nixpkgs locks (dprint/lychee/typst upgrade).
 4. Tracing/repairing the buildflow entry's missing flake attribute (needs remove + proper flake reinstall — no upgrade path exists for a bare store-path entry).
-5..hostname verification of the profile's machine (paste could be from any box).
-6. Tool-currency check (dprint 0.60.1 / lychee 0.24.2 / typst 0.15.1 vs latest — staleness unknown; I checked nothing upstream, per scope instruction).
-7. `nix profile history` / generation audit (when were these installed? drift cadence? dead-weight duplicates?).
-8. Post-fix smoke tests of the three rebuilt binaries (`--version`/`--help`) — install ≠ works.
-9. Harvest of §f into TODO systems (see disposition note at the end).
+   5..hostname verification of the profile's machine (paste could be from any box).
+5. Tool-currency check (dprint 0.60.1 / lychee 0.24.2 / typst 0.15.1 vs latest — staleness unknown; I checked nothing upstream, per scope instruction).
+6. `nix profile history` / generation audit (when were these installed? drift cadence? dead-weight duplicates?).
+7. Post-fix smoke tests of the three rebuilt binaries (`--version`/`--help`) — install ≠ works.
+8. Harvest of §f into TODO systems (see disposition note at the end).
 
 ## d) TOTALLY FUCKED UP!
 
@@ -61,16 +61,19 @@ Nothing executed this session was fucked up — one diagnostic task, correctly s
 ## e) WHAT WE SHOULD IMPROVE (self-critique: forgot / could do better / could still improve)
 
 **What I forgot:**
+
 - `hostname`/`uname` check before machine-level diagnosis — I analyzed a pasted profile and assumed the machine. A per-user-per-machine surface diagnosed without confirming the machine is a premise gap (the 2026-10-08 "live-verify the state the question presupposes" rule applies to my own question too).
 - Running `nix profile list` myself instead of trusting a paste — the paste contained the command twice (artifact), and a fresh run costs one command.
 - Actor attribution via the documented `/proc` + `.crush/crush.db` method for the 18 dirty files before asking the owner to adjudicate them.
 
 **What I could have done better:**
+
 - Noticed and dug into the buildflow entry's **missing flake attribute** immediately — it changes the fix from "upgrade" to "remove + reinstall" and makes the current install's provenance unrecoverable. I reported the symptom, deferred the consequence.
 - Checked `nix profile history` for install dates — "3 dirty entries" reads very differently if installed last week vs last year.
 - Pre-written the post-fix verification (expected `nix profile list` post-state) instead of leaving it as a future step — close-outs must answer the question asked with named surfaces.
 
 **What I could still improve (systemic):**
+
 - No guard exists anywhere against installing from a dirty tree — this class of traceability rot will recur (it already did 3×).
 - The profile's relationship to SystemNix is undefined: declarative (HM packages) vs imperative-vs-flake vs scratch — each answer implies different work.
 - PBX-lens context: the paste came from a Go 1.27.1 project shell — project-level vs user-level tool scope was never discussed (should cqrs-lint even be user-global?).
@@ -80,6 +83,7 @@ Nothing executed this session was fucked up — one diagnostic task, correctly s
 Brainstorm, impact-sorted within tiers. Scope tags: **[session]** direct follow-up · **[noticed]** adjacent observation from this session · **[roadmap]** generalization/ROADMAP fuel. Owner-gated items marked ⛔ (they gate whole tiers).
 
 **Tier 1 — unblock the fix (do first)**
+
 1. ⛔ [session] Adjudicate the 13 modified files in `projects-management-automation` (live work vs abandoned — owner or attributing session decides).
 2. ⛔ [session] Adjudicate the 5 modified files in `BuildFlow` (same).
 3. [session] Attribute the dirty changes via `/proc` + `.crush/crush.db` forensics before adjudication (removes guesswork from 1–2).

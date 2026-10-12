@@ -23,13 +23,13 @@ Ground truth established from config reads:
 - Exactly one runner: host-mode, label `native` (Docker labels removed with Docker 2026-10-08), capacity 2, `MemoryMax = 16G`, DynamicUser, PATH extended with nix/jq/python3 (forgejo.nix:1178–1223).
 - Mirror-sync push **provably fires `on: push` workflows** (2026-10-11 go-live evidence).
 
-| PRO | CONTRA |
-| --- | --- |
+| PRO                                                                              | CONTRA                                                                                                                                                      |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Nix-native CI GitHub can't do (`nix flake check`, buildflow, local-store builds) | Host-mode executor = arbitrary workflow code with nix-daemon socket access on the prod host (DNS, Immich, SigNoz, AI stack); no container isolation remains |
-| Prerequisite for Forgejo-as-primary (staged-primary Phase 1) | Enabling on mirrored repos = every upstream repo's `.github/workflows` auto-executes here; the `starred` org mirrors **third-party** code |
-| 128 GB host; no GitHub minute/queue limits | Getting ONE repo green took 5 script versions / 7 bug classes; Actions logs are root-only (agent CI post-mortems need owner round-trips) |
-| Cheaper than GitHub Actions for the LarsArtmann set | Freeze-history host: CI bursts compete with prod; runner+forgejo interlock already caused one crash-loop class |
-| Marginal per-repo cost is one PATCH; runner infra debugged | `DEFAULT_ACTIONS_URL = github` → unpinned third-party actions fetched at job time (supply chain); job builds pollute the host nix store |
+| Prerequisite for Forgejo-as-primary (staged-primary Phase 1)                     | Enabling on mirrored repos = every upstream repo's `.github/workflows` auto-executes here; the `starred` org mirrors **third-party** code                   |
+| 128 GB host; no GitHub minute/queue limits                                       | Getting ONE repo green took 5 script versions / 7 bug classes; Actions logs are root-only (agent CI post-mortems need owner round-trips)                    |
+| Cheaper than GitHub Actions for the LarsArtmann set                              | Freeze-history host: CI bursts compete with prod; runner+forgejo interlock already caused one crash-loop class                                              |
+| Marginal per-repo cost is one PATCH; runner infra debugged                       | `DEFAULT_ACTIONS_URL = github` → unpinned third-party actions fetched at job time (supply chain); job builds pollute the host nix store                     |
 
 **Recommendation:** flip Actions units on for LarsArtmann-canonical repos only (SystemNix, go libs, eventcatalog-hub); `starred` org + foreign mirrors stay Actions-off permanently. Dismissed alternative: global `DEFAULT_REPO_UNITS` flip — one malicious workflow in any starred mirror gets host + nix-daemon execution. Precondition: close the CI-log observability gap (scoped read-only token, existing `[decision]` row).
 
@@ -76,26 +76,26 @@ One near-miss worth naming honestly: the unverified "only eventcatalog-hub" prem
 
 **Forgejo Actions cluster (this session's domain; items 1–2 harvested THIS session):**
 
-| # | Item | Suggested status/landing |
-| --- | --- | --- |
-| 1 | **NEW** Live-census Forgejo Actions-unit state (all repos + `starred` org) — gates the enablement decision; falsifies/verifies the "only eventcatalog-hub" premise | `[ready]` → TODO_LIST + services.md (harvested now) |
-| 2 | **NEW** Ratify selective Actions enablement cohort (canonical-only; starred/foreign mirrors off forever) | `[decision]` → services.md (harvested now) |
-| 3 | Owner: paste run #5/#4 failed-step log (standing go-live chain head) | existing `[blocked:user]` |
-| 4 | Owner: push hub `bf86e06`, cancel runs 1–3, sops-paste current sync-token | existing `[blocked:user]` |
-| 5 | Delete 4 orphaned all-scope setup PATs (UI) | existing `[blocked:user]` |
-| 6 | Trash stale `/var/lib/forgejo/data/gitea.db` fossil | existing `[blocked:user]` |
-| 7 | setup-forgejo.sh loud-fail on empty `FJ_SHA` after HTTP 200 | existing `[ready]` |
-| 8 | Runbook capture: forgejo.md + architecture-catalog.md Actions ops (token-API auth semantics, `name:schema` labels, `on: push` fires on mirror sync, `commit.id` payload, UTC crons, system-flake-registry dependency) | existing `[ready]` |
-| 9 | Fixture-from-live discipline for setup-forgejo.sh jq payload shapes | existing `[ready]` |
-| 10 | Runner job-lifecycle observability (debug log level vs wrapper health line) | existing `[ready]` |
-| 11 | Scoped read-only Forgejo token (sops) for agent CI post-mortems | existing `[decision]` |
-| 12 | Label-semantics eval selftest in forgejo.nix (pin the corrected label contract) | existing `[ready]` |
-| 13 | **NEW (ROADMAP)** Runner isolation design before any wide cohort: dedicated CI user / rootless container / remote builder host | ROADMAP-grade |
-| 14 | **NEW (decision)** Dual-CI policy: which repos keep GitHub Actions vs migrate to Forgejo CI; divergent-results ownership | ROADMAP/decision |
-| 15 | **NEW (ROADMAP)** Actions log/artifact retention policy (forgejo.db growth → dump + btrbk pressure) | ROADMAP-grade |
-| 16 | **NEW (decision)** Cohort concurrency policy: capacity bump vs second runner instance vs schedule windows | decision-grade |
-| 17 | **NEW (ready, post-go-live)** Declarative Actions-unit enablement in `forgejo-repos.nix` (canonicalRepos `actions` attr → has_actions PATCH) — the cohort mechanism | after items 1–2 |
-| 18 | **NEW (decision)** Third-party action pinning policy for cohort workflows (`DEFAULT_ACTIONS_URL=github` supply chain) | decision-grade |
+| #  | Item                                                                                                                                                                                                                  | Suggested status/landing                            |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| 1  | **NEW** Live-census Forgejo Actions-unit state (all repos + `starred` org) — gates the enablement decision; falsifies/verifies the "only eventcatalog-hub" premise                                                    | `[ready]` → TODO_LIST + services.md (harvested now) |
+| 2  | **NEW** Ratify selective Actions enablement cohort (canonical-only; starred/foreign mirrors off forever)                                                                                                              | `[decision]` → services.md (harvested now)          |
+| 3  | Owner: paste run #5/#4 failed-step log (standing go-live chain head)                                                                                                                                                  | existing `[blocked:user]`                           |
+| 4  | Owner: push hub `bf86e06`, cancel runs 1–3, sops-paste current sync-token                                                                                                                                             | existing `[blocked:user]`                           |
+| 5  | Delete 4 orphaned all-scope setup PATs (UI)                                                                                                                                                                           | existing `[blocked:user]`                           |
+| 6  | Trash stale `/var/lib/forgejo/data/gitea.db` fossil                                                                                                                                                                   | existing `[blocked:user]`                           |
+| 7  | setup-forgejo.sh loud-fail on empty `FJ_SHA` after HTTP 200                                                                                                                                                           | existing `[ready]`                                  |
+| 8  | Runbook capture: forgejo.md + architecture-catalog.md Actions ops (token-API auth semantics, `name:schema` labels, `on: push` fires on mirror sync, `commit.id` payload, UTC crons, system-flake-registry dependency) | existing `[ready]`                                  |
+| 9  | Fixture-from-live discipline for setup-forgejo.sh jq payload shapes                                                                                                                                                   | existing `[ready]`                                  |
+| 10 | Runner job-lifecycle observability (debug log level vs wrapper health line)                                                                                                                                           | existing `[ready]`                                  |
+| 11 | Scoped read-only Forgejo token (sops) for agent CI post-mortems                                                                                                                                                       | existing `[decision]`                               |
+| 12 | Label-semantics eval selftest in forgejo.nix (pin the corrected label contract)                                                                                                                                       | existing `[ready]`                                  |
+| 13 | **NEW (ROADMAP)** Runner isolation design before any wide cohort: dedicated CI user / rootless container / remote builder host                                                                                        | ROADMAP-grade                                       |
+| 14 | **NEW (decision)** Dual-CI policy: which repos keep GitHub Actions vs migrate to Forgejo CI; divergent-results ownership                                                                                              | ROADMAP/decision                                    |
+| 15 | **NEW (ROADMAP)** Actions log/artifact retention policy (forgejo.db growth → dump + btrbk pressure)                                                                                                                   | ROADMAP-grade                                       |
+| 16 | **NEW (decision)** Cohort concurrency policy: capacity bump vs second runner instance vs schedule windows                                                                                                             | decision-grade                                      |
+| 17 | **NEW (ready, post-go-live)** Declarative Actions-unit enablement in `forgejo-repos.nix` (canonicalRepos `actions` attr → has_actions PATCH) — the cohort mechanism                                                   | after items 1–2                                     |
+| 18 | **NEW (decision)** Third-party action pinning policy for cohort workflows (`DEFAULT_ACTIONS_URL=github` supply chain)                                                                                                 | decision-grade                                      |
 
 **Architecture Catalog go-live residuals (today's adjacent state, observed in services.md:182):**
 

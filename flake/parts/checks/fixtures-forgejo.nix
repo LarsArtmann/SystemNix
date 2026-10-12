@@ -1,12 +1,11 @@
 # Behavioral fixtures for the forgejo staged-primary scripts and subvol
 # migration (stubbed curl/gh/sqlite3 harnesses; see the original comments).
 # Split out of flake.nix 2026-10-08.
-{ inputs, root, ... }:
+{ root, ... }:
 {
   perSystem =
     {
       pkgs,
-      system,
       lib,
       ...
     }:

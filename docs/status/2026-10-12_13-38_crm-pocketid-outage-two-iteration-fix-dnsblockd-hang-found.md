@@ -7,8 +7,8 @@ one of my TODO_LIST.md edits, re-applied; an image-generation batch
 (`qwen_edit_batch.py`) + multiple `go test` / `nix run .#test` processes drove
 the IO storm all session).
 
-Started from the owner question: *"Why does crm.home.lan lost it's PocketID
-integration???"*
+Started from the owner question: _"Why does crm.home.lan lost it's PocketID
+integration???"_
 
 ## a) FULLY DONE
 
@@ -182,6 +182,7 @@ Harvested at authoring time into TODO_LIST.md + docs/todo/*.md per the TODO
 system (ready/decision/watch tagged). Grouped, numbered:
 
 **This session's direct follow-ups (NEW rows filed):**
+
 1. dnsblockd startup hang — investigate root cause under controlled
    repro/storm correlation, add systemd init watchdog or fix init order
    (filed [ready], services.md:308 + TODO_LIST.md:177).
@@ -214,27 +215,27 @@ system (ready/decision/watch tagged). Grouped, numbered:
 13. Pocket ID SQLITE_BUSY restart bursts (corroborated twice today).
 14. discordsync hotloop (§18 FAIL: 103-201% CPU, 744-2,346 lines/min).
 15. crm-server api-token off ExecStart argv (ps-visible; blocked:user,
-    bundles with CV rev bump).
+bundles with CV rev bump).
 16. First Pocket-ID-login LINK on crm.home.lan (blocked:user).
 17. CV syncer durable replay checkpoint (the 404-burst stale-external-id
-    evidence).
+evidence).
 18. CRM dedupe ~10,489 opportunities (blocked:deploy, sequences after 17).
 19. Twenty→Kith people import, 139 contacts staged (blocked:user).
 20. CRM Google Contacts sync enablement ladder (blocked:user).
 21. InboxClean→CRM feed go-live (decision).
 22. Multi-RPID WebAuthn upstream draft (relevant again with SSO live).
 23. Pocket ID auto-rotation deploy window + apply-flip (blocked:deploy /
-    decision).
+decision).
 24. Fastflowlm :52625 unreachable (in today's baseline fails).
 25. Bank-sync sync errors >0 (in today's baseline fails).
 26. node-exporter journal rate 315-347/min (in today's baseline fails).
 27. `crm.home.lan` cloud-vHost per-domain auth (crm.larsartmann.cloud).
 28. Stray crm test servers :18091-95/:18099 ownership+liveness (watch).
 29. TODO-harvest pre-commit gate: 96 unharvested reports backlog (bypassed
-    again by upstream pushes — campaign row pending).
+again by upstream pushes — campaign row pending).
 30. Flake check memory: document the targeted-eval alternative
-    (single-host toplevel eval ~seconds, covers the same host audits) and
-    when full `nix flake check` is mandatory (filed [ready], docs row).
+(single-host toplevel eval ~seconds, covers the same host audits) and
+when full `nix flake check` is mandatory (filed [ready], docs row).
 
 **Deliberately NOT harvested:** the 20GB flake-check RAM explanation
 (knowledge, now in this report; item 30 captures its actionable core); the

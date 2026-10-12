@@ -14,14 +14,14 @@ gate, not behind anything technical.
 
 ## The actual live state (all probed this session, nothing from docs alone)
 
-| Surface | State | Evidence |
-| --- | --- | --- |
-| pbx control plane | **LIVE** (management/signal/relay/dex/nginx, LE certs) | runbooks + Gatus group "NetBird Control Plane" checks green (dashboard 200, /api/peers 401, /dex/healthz 200, relay 404) |
-| evo-x2 daemon | **RUNNING but NOT logged in** | PID 2065 since Oct 7 11:05 boot, netbird 0.80.0; every login attempt: `PermissionDenied: no peer auth method provided, please use a setup key or interactive SSO login` (journal, all boots since Oct 7) |
-| WireGuard/VPN interface | **ABSENT** | `/sys/class/net`: docker0, eno1, lo, wlan0 only |
-| Enrollment oneshot | **NEVER RAN — zero journal entries, ever** | `journalctl -u netbird-evox2-login` → "No entries" across all 5 retained boots; ActiveState=inactive, LoadState=loaded |
-| Setup key | minted 2026-10-06 14:48 on pbx (30d ⇒ valid to ~2026-11-05), sops file tracked + rendered at boot | `git ls-files platforms/nixos/secrets/netbird.yaml` OK; unit LoadCredential points at `/run/secrets/netbird_setup_key` |
-| DNS prereqs | OK | `dig @127.0.0.1 netbird/relay.larsartmann.cloud` → 46.62.241.133 |
+| Surface                 | State                                                                                             | Evidence                                                                                                                                                                                                 |
+| ----------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| pbx control plane       | **LIVE** (management/signal/relay/dex/nginx, LE certs)                                            | runbooks + Gatus group "NetBird Control Plane" checks green (dashboard 200, /api/peers 401, /dex/healthz 200, relay 404)                                                                                 |
+| evo-x2 daemon           | **RUNNING but NOT logged in**                                                                     | PID 2065 since Oct 7 11:05 boot, netbird 0.80.0; every login attempt: `PermissionDenied: no peer auth method provided, please use a setup key or interactive SSO login` (journal, all boots since Oct 7) |
+| WireGuard/VPN interface | **ABSENT**                                                                                        | `/sys/class/net`: docker0, eno1, lo, wlan0 only                                                                                                                                                          |
+| Enrollment oneshot      | **NEVER RAN — zero journal entries, ever**                                                        | `journalctl -u netbird-evox2-login` → "No entries" across all 5 retained boots; ActiveState=inactive, LoadState=loaded                                                                                   |
+| Setup key               | minted 2026-10-06 14:48 on pbx (30d ⇒ valid to ~2026-11-05), sops file tracked + rendered at boot | `git ls-files platforms/nixos/secrets/netbird.yaml` OK; unit LoadCredential points at `/run/secrets/netbird_setup_key`                                                                                   |
+| DNS prereqs             | OK                                                                                                | `dig @127.0.0.1 netbird/relay.larsartmann.cloud` → 46.62.241.133                                                                                                                                         |
 
 **So the honest answer to "how are we doing": pbx side done for 10 days; evo-x2 side has been
 silently dead-on-arrival since the flip, and every doc/TODO that implies enrollment succeeded or
@@ -34,7 +34,7 @@ was "automatic" is describing intent, not state.**
 1. **End-to-end live-state verification of both sides** — daemon, ports, DNS, unit files, booted
    generation contents, sops file tracking, journal forensics across all retained boots.
 2. **Root cause isolation (the session's core find):**
-   - The oneshot is correctly *wired*: present in the booted generation (gen 834 `w230ajy8…`
+   - The oneshot is correctly _wired_: present in the booted generation (gen 834 `w230ajy8…`
      verified by direct store listing), symlinked in `netbird-evox2.service.wants/`, unit loads,
      `CanStart=true`, zero Conditions (`Conditions a(sbbsi) 0`), and the running systemd's
      `Wants` property on the parent **includes** `netbird-evox2-login.service`.
@@ -91,7 +91,7 @@ was "automatic" is describing intent, not state.**
 
 - Nothing destructive; no wrong switch, no data touched, both repos intact.
 - Honest misses, self-caught: (1) my first journal pass used `-u` filtering, which cannot see
-  manager-level messages — the "zero entries" conclusion was right but I nearly missed *why*;
+  manager-level messages — the "zero entries" conclusion was right but I nearly missed _why_;
   (2) I watched the wrong deploy PID twice (nix-run wrapper vs bash child) burning ~10 min of
   poll loops; (3) deploy.sh v1 put the unit in the **gated** loop although the file's own
   crush-hot-db-migrate comment already documented the is-enabled mid-switch flake for exactly
@@ -104,11 +104,11 @@ was "automatic" is describing intent, not state.**
 
 1. **"Automatic enrollment" was never instrumented.** For 4 days the only failure signal would
    have been the daemon's PermissionDenied line — nothing watches `netbird-evox2-login.service`
-   state. The integration registry entry monitors the *daemon*, not *enrollment*. A gatus/unit
+   state. The integration registry entry monitors the _daemon_, not _enrollment_. A gatus/unit
    check or post-deploy assert on login-unit result would have caught this on day one.
 2. **systemd 261 silent-skip class:** any unit whose only pull-in is
    `<parent>.wants/` + `Requires=/After=` back on the parent is a potential silent never-runs.
-   We have a lint for unit *shapes* (systemd-shape-audit); this is a new eval-time check
+   We have a lint for unit _shapes_ (systemd-shape-audit); this is a new eval-time check
    candidate: flag oneshots enqueued solely via a parent's wants with a Requires-back edge, or
    force the multi-user enqueue in the wrapper.
 3. **Close-out honesty rule already on the books was violated by the 2026-10-06 close-outs**:
@@ -126,6 +126,7 @@ was "automatic" is describing intent, not state.**
 ## f) NEXT (up to 50, ordered; owner = needs you, agent = dispatchable)
 
 **Enrollment closure (P0):**
+
 1. [owner-choice] Fire enrollment: EITHER `sudo systemctl restart netbird-evox2-login.service`
    in your terminal (5 seconds, no deploy — my polkit blocks it) OR wait out the 60-min
    trip-free window and `nix run .#deploy` (also exercises the new explicit converger block).
@@ -139,39 +140,39 @@ was "automatic" is describing intent, not state.**
 
 **Truth-up (P1, mine, pending):**
 6. [agent] net-vpn.md: correct "DONE 2026-10-06 … enrollment is automatic" with the real
-   timeline (daemon-fixed ≠ enrolled) + add the systemd-261 wants-never-queues gotcha + the
-   is-enabled converger flake.
+timeline (daemon-fixed ≠ enrolled) + add the systemd-261 wants-never-queues gotcha + the
+is-enabled converger flake.
 7. [agent] docs/todo/services.md: close/rewrite the three stale rows
-   ("DEPLOY the ManagementUrl fix…verify enrollment", "Deploy evo-x2 (netbird client flip) once
-   IO PSI…", "Post-flip verify: provisioner converged incl. router") — enrollment verification
-   still open, deploy/flip themselves done.
+("DEPLOY the ManagementUrl fix…verify enrollment", "Deploy evo-x2 (netbird client flip) once
+IO PSI…", "Post-flip verify: provisioner converged incl. router") — enrollment verification
+still open, deploy/flip themselves done.
 8. [agent] TODO_LIST.md queue: prune/align the mirrored rows (§7) so queue and library don't
-   drift (surface-rule).
+drift (surface-rule).
 9. [agent] docs/agents/systemd.md: add the "wants-dir + Requires-back never queues (systemd
-   261, silent/debug-logged)" lesson next to the boot-mirror/journal forensics material.
+261, silent/debug-logged)" lesson next to the boot-mirror/journal forensics material.
 10. [agent] This report's §f self-harvest into TODO_LIST.md once items 6-9 land.
 
 **Hardening the class (P2):**
 11. [agent] Eval-time or pre-deploy check: enrollment-critical oneshots must have a success
-    witness (unit result probed post-deploy; post-deploy-check.sh already has a §-structure to
-    hang it on — coordinate: that file is currently dirty from a parallel session).
+witness (unit result probed post-deploy; post-deploy-check.sh already has a §-structure to
+hang it on — coordinate: that file is currently dirty from a parallel session).
 12. [agent] systemd-shape-audit extension: warn on `wantedBy = [<service>]` +
-    `Requires=<same service>` oneshots (the never-queued shape) — negative-test per repo doctrine.
+`Requires=<same service>` oneshots (the never-queued shape) — negative-test per repo doctrine.
 13. [agent] Consider upstream nixpkgs issue: netbird module login unit shape vs systemd 261
-    queue behavior (gate through verify-before-filing + github-voice; the upstream todo row for
-    the ManagementUrl bug already exists as a model).
+queue behavior (gate through verify-before-filing + github-voice; the upstream todo row for
+the ManagementUrl bug already exists as a model).
 14. [agent] deploy.sh: emit a WARN line when a converger-list name is skipped by is-enabled so
-    the flake is at least visible in deploy logs.
+the flake is at least visible in deploy logs.
 
 **Parallel-session flags (not mine, observed):**
 15. [owner] 13:14 deploy exited 3 with NEW smoke failures: `emeet-pixyd.home.lan → auth gateway
     broken` + journal-rate regressions (node-exporter 345/min, discordsync 619/min) +
-    discordsync CPU 103% — under storm mode (io PSI avg60 32.5%). Needs the owning session.
+discordsync CPU 103% — under storm mode (io PSI avg60 32.5%). Needs the owning session.
 16. [owner] Manual tq pool double-run guard tripped (`/tmp/tq-test-build … :18091`) — cutover
-    per docs/services/tq.md before relying on the systemd pool.
+per docs/services/tq.md before relying on the systemd pool.
 17. [owner] `M scripts/post-deploy-check.sh` uncommitted in the tree (foreign session).
 18. [owner] quickshell-wra core dump 13:18:31; memory-emergency-guard tripped within the last
-    hour; many services at MemoryHigh watermark (§17 sweep output in the 13:14 log).
+hour; many services at MemoryHigh watermark (§17 sweep output in the 13:14 log).
 
 **Phase-2 remainder (owner-gated, after burn-in):**
 19. MacBook enrollment mechanism decision (darwin netbird client runtime — decision row exists).
@@ -202,6 +203,7 @@ was "automatic" is describing intent, not state.**
 ---
 
 **Verification commands for whoever fires the next step:**
+
 ```bash
 journalctl -u netbird-evox2-login -f                      # the oneshot's first-ever lines
 journalctl -u netbird-evox2 -n 50 --no-pager              # expect ": Connected"

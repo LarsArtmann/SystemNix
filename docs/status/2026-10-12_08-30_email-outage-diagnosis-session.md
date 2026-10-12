@@ -24,14 +24,14 @@
 
 All from the fix map — not started because the user asked questions, and dispatch was explicitly deferred ("WAIT FOR INSTRUCTIONS"):
 
-| Item | Where queued | Why untouched |
-|---|---|---|
-| postfix `status=bounced` textfile metric + Gatus check + weekly relay canary | docs/todo/services.md:117 | [ready], not dispatched |
-| InboxClean upstream: year-2611 corpus date-parse filing (verify leg first) | docs/todo/upstream.md:162 | [ready]; verify-before-filing leg (raw Date header export) not run |
-| InboxClean upstream: `gmail` tag demote PATCH rejection root-cause | docs/todo/services.md:124 | [ready]; needs HTTP status capture |
-| gmail-verdict-cache regression test (second /health within TTL must not re-probe) | docs/todo/services.md:325 | [ready], rides next upstream push |
-| Paperless runbook mail-wiring PASS note | docs/todo/services.md:132 | [ready], trivial doc edit |
-| Non-owner relay delivery probe | docs/todo/services.md:151 | gated on Resend "Verified" + user go-ahead (emails a third party) |
+| Item                                                                              | Where queued              | Why untouched                                                      |
+| --------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------ |
+| postfix `status=bounced` textfile metric + Gatus check + weekly relay canary      | docs/todo/services.md:117 | [ready], not dispatched                                            |
+| InboxClean upstream: year-2611 corpus date-parse filing (verify leg first)        | docs/todo/upstream.md:162 | [ready]; verify-before-filing leg (raw Date header export) not run |
+| InboxClean upstream: `gmail` tag demote PATCH rejection root-cause                | docs/todo/services.md:124 | [ready]; needs HTTP status capture                                 |
+| gmail-verdict-cache regression test (second /health within TTL must not re-probe) | docs/todo/services.md:325 | [ready], rides next upstream push                                  |
+| Paperless runbook mail-wiring PASS note                                           | docs/todo/services.md:132 | [ready], trivial doc edit                                          |
+| Non-owner relay delivery probe                                                    | docs/todo/services.md:151 | gated on Resend "Verified" + user go-ahead (emails a third party)  |
 
 ## d) TOTALLY FUCKED UP
 
@@ -40,7 +40,7 @@ All from the fix map — not started because the user asked questions, and dispa
 3. **The `/health` signal itself is untrustworthy under load** — it cannot distinguish "process dead" from "disk busy", so the Gatus InboxClean checks page on storms. Design gap, not incident.
 4. **Pocket ID SMTP state unknown-and-unverifiable** — either dead since 2026-08-18 (doc record) or quietly fixed; the agent sandbox cannot decrypt the sops value or send a test mail. ~65 days with zero alerting either way (the security.md rows remain the only tracker).
 5. **No consumer email path is proven end-to-end** — zero sends in the postfix journal for 7+ days means forgejo notifications, paperless share-links, and cron mail have NO evidence of working (or of the 550-drain failure mode — the "Mail Relay Queue" check is blind to it, which is what services.md:117 fixes).
-6. **This session's own miss** — the first answer asserted "Pocket ID SMTP is dead" from doc claims without a live probe, then repeated it in the fixes table. Session discipline exists for exactly this ("never assert a service capability from a doc claim alone"); the re-probe found the truth is *unknowable* from here, which is a different (and more honest) statement. No production impact — diagnosis only — but the claim was stated more firmly than the evidence.
+6. **This session's own miss** — the first answer asserted "Pocket ID SMTP is dead" from doc claims without a live probe, then repeated it in the fixes table. Session discipline exists for exactly this ("never assert a service capability from a doc claim alone"); the re-probe found the truth is _unknowable_ from here, which is a different (and more honest) statement. No production impact — diagnosis only — but the claim was stated more firmly than the evidence.
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -52,36 +52,36 @@ All from the fix map — not started because the user asked questions, and dispa
 
 ## f) Top things to get done next (ranked by impact; all session-grounded, user ceiling 50 — 28 solid, not padded)
 
-| # | Task | Impact | Effort | Category |
-|---|---|---|---|---|
-| 1 | Hetzner console: submit/approve the pbx VPS mail-port limit request (gates ALL of §a.1/§d.1) | Critical | S | Feature (user) |
-| 2 | Paste ONE new Resend key into both sops files (pocket-id + mail-relay.yaml, interactive), restart postfix + pocket-id | Critical | S | Bug (user) |
-| 3 | postfix `status=bounced` journal-rate textfile metric + Gatus check + weekly relay canary send | High | M | Bug (services.md:117) |
-| 4 | Stalwart go-live ceremony per pbx-artmann `mail-go-live.md` once #1 lands; watch the two Mail checks flip green | Critical | M | Feature (user) |
-| 5 | Confirm `larsartmann.cloud` "Verified" in Resend dashboard, then run the non-owner delivery probe | High | S | Verification |
-| 6 | Enable parsedmarc on evo-x2 once `dmarc@larsartmann.cloud` can receive (post-#4) — currently `enable = false` by design | High | S | Feature |
-| 7 | Correct the stale `171de0d` close-out in services.md:324 → deployed+lock now `e067cb5` (surface-both rule) | Low | S | Documentation |
-| 8 | `scripts/gatus-status.sh` authenticated read-only status pull for agent sessions (§e.3) | Medium | S | Quality |
-| 9 | File upstream InboxClean: configurable sync run budget (unhardcode `commands.go:397`) with 08:20:06 + PSI evidence | High | M | Bug (upstream) |
-| 10 | File upstream InboxClean: year-2611 corpus date-parse (export raw Date headers first — verify-before-filing) | Medium | M | Bug (upstream) |
-| 11 | Root-cause InboxClean→Paperless `gmail` tag demote PATCH rejection (capture HTTP status since 2026-09-06) | Medium | M | Bug |
-| 12 | Add gmail-verdict-cache regression test (second /health within TTL must not re-probe) | Medium | S | Quality (upstream) |
-| 13 | Gatus InboxClean checks: storm-aware handling (PSI-correlated annotation or calm-window probe per services.md:323) | Medium | M | Quality |
-| 14 | Upstream InboxClean `/livez` liveness endpoint proposal (§e.4) | Medium | M | Feature (upstream) |
-| 15 | Papersync blind-window coverage for `main` after re-consent (rescan/backfill the 2026-09-04→10-04 gap) | Medium | M | Bug (services.md:126) |
-| 16 | Stale-historyId risk check: `main` retries from `start_history_id=5152620` — verify full-rescan fallback | Medium | S | Verification (services.md:125) |
-| 17 | Per-account `auth_expired` Gatus check decision — should ONE dead Gmail account page? (26-day silent dead class) | Medium | S | Decision (services.md:137) |
-| 18 | Push+deploy the InboxClean dead-grant honesty chain + lazy-reconnect slug fix (`1540a56`/`d23c48a`/`e9735c7`) | Medium | S | Bug (upstream.md:46, blocked:push) |
-| 19 | Fix the SIX pre-existing InboxClean test failures masking regressions | Medium | M | Quality (upstream.md:47) |
-| 20 | Add mail-wiring PASS-since-2026-09-05 note to paperless runbook monitoring map | Low | S | Documentation (services.md:132) |
-| 21 | DMARC fleet follow-ups: re-add TLS-RPT hardening row + annotate superseded 09-29 report lines | Medium | S | Documentation (services.md:47) |
-| 22 | DMARC flip-time verification bundle (post-#4/#6) | Medium | M | Verification |
-| 23 | Weekly DMARC `rua` receipt verification once mailbox live (reports currently black-holed) | Medium | S | Verification |
-| 24 | Post-#4: verify cron/system mail reaches the inbox end-to-end (canonical-map path, never proven) | Medium | S | Verification |
-| 25 | Post-#2: one Pocket ID email (invite/forgot-password) to close the key-rotation orbit cross-check | Medium | S | Verification (security.md:19) |
-| 26 | Add postfix queue+bounce state to post-deploy-check (relay leg) so deploys catch the 550-drain class | Medium | S | Quality |
-| 27 | Decide InboxClean→CRM feed scope (plumbed both ends, connected nowhere; zero `/api` hits) | Low | S | Decision (services.md:404) |
-| 28 | Re-check `main`-account sync-tick green + `gmail`-tag demote after next calm window (post-re-consent residue) | Medium | S | Verification (TODO_LIST.md:344) |
+| #  | Task                                                                                                                    | Impact   | Effort | Category                           |
+| -- | ----------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ---------------------------------- |
+| 1  | Hetzner console: submit/approve the pbx VPS mail-port limit request (gates ALL of §a.1/§d.1)                            | Critical | S      | Feature (user)                     |
+| 2  | Paste ONE new Resend key into both sops files (pocket-id + mail-relay.yaml, interactive), restart postfix + pocket-id   | Critical | S      | Bug (user)                         |
+| 3  | postfix `status=bounced` journal-rate textfile metric + Gatus check + weekly relay canary send                          | High     | M      | Bug (services.md:117)              |
+| 4  | Stalwart go-live ceremony per pbx-artmann `mail-go-live.md` once #1 lands; watch the two Mail checks flip green         | Critical | M      | Feature (user)                     |
+| 5  | Confirm `larsartmann.cloud` "Verified" in Resend dashboard, then run the non-owner delivery probe                       | High     | S      | Verification                       |
+| 6  | Enable parsedmarc on evo-x2 once `dmarc@larsartmann.cloud` can receive (post-#4) — currently `enable = false` by design | High     | S      | Feature                            |
+| 7  | Correct the stale `171de0d` close-out in services.md:324 → deployed+lock now `e067cb5` (surface-both rule)              | Low      | S      | Documentation                      |
+| 8  | `scripts/gatus-status.sh` authenticated read-only status pull for agent sessions (§e.3)                                 | Medium   | S      | Quality                            |
+| 9  | File upstream InboxClean: configurable sync run budget (unhardcode `commands.go:397`) with 08:20:06 + PSI evidence      | High     | M      | Bug (upstream)                     |
+| 10 | File upstream InboxClean: year-2611 corpus date-parse (export raw Date headers first — verify-before-filing)            | Medium   | M      | Bug (upstream)                     |
+| 11 | Root-cause InboxClean→Paperless `gmail` tag demote PATCH rejection (capture HTTP status since 2026-09-06)               | Medium   | M      | Bug                                |
+| 12 | Add gmail-verdict-cache regression test (second /health within TTL must not re-probe)                                   | Medium   | S      | Quality (upstream)                 |
+| 13 | Gatus InboxClean checks: storm-aware handling (PSI-correlated annotation or calm-window probe per services.md:323)      | Medium   | M      | Quality                            |
+| 14 | Upstream InboxClean `/livez` liveness endpoint proposal (§e.4)                                                          | Medium   | M      | Feature (upstream)                 |
+| 15 | Papersync blind-window coverage for `main` after re-consent (rescan/backfill the 2026-09-04→10-04 gap)                  | Medium   | M      | Bug (services.md:126)              |
+| 16 | Stale-historyId risk check: `main` retries from `start_history_id=5152620` — verify full-rescan fallback                | Medium   | S      | Verification (services.md:125)     |
+| 17 | Per-account `auth_expired` Gatus check decision — should ONE dead Gmail account page? (26-day silent dead class)        | Medium   | S      | Decision (services.md:137)         |
+| 18 | Push+deploy the InboxClean dead-grant honesty chain + lazy-reconnect slug fix (`1540a56`/`d23c48a`/`e9735c7`)           | Medium   | S      | Bug (upstream.md:46, blocked:push) |
+| 19 | Fix the SIX pre-existing InboxClean test failures masking regressions                                                   | Medium   | M      | Quality (upstream.md:47)           |
+| 20 | Add mail-wiring PASS-since-2026-09-05 note to paperless runbook monitoring map                                          | Low      | S      | Documentation (services.md:132)    |
+| 21 | DMARC fleet follow-ups: re-add TLS-RPT hardening row + annotate superseded 09-29 report lines                           | Medium   | S      | Documentation (services.md:47)     |
+| 22 | DMARC flip-time verification bundle (post-#4/#6)                                                                        | Medium   | M      | Verification                       |
+| 23 | Weekly DMARC `rua` receipt verification once mailbox live (reports currently black-holed)                               | Medium   | S      | Verification                       |
+| 24 | Post-#4: verify cron/system mail reaches the inbox end-to-end (canonical-map path, never proven)                        | Medium   | S      | Verification                       |
+| 25 | Post-#2: one Pocket ID email (invite/forgot-password) to close the key-rotation orbit cross-check                       | Medium   | S      | Verification (security.md:19)      |
+| 26 | Add postfix queue+bounce state to post-deploy-check (relay leg) so deploys catch the 550-drain class                    | Medium   | S      | Quality                            |
+| 27 | Decide InboxClean→CRM feed scope (plumbed both ends, connected nowhere; zero `/api` hits)                               | Low      | S      | Decision (services.md:404)         |
+| 28 | Re-check `main`-account sync-tick green + `gmail`-tag demote after next calm window (post-re-consent residue)           | Medium   | S      | Verification (TODO_LIST.md:344)    |
 
 HARVEST note: items 3, 5, 10-16, 18-21, 27, 28 are ALREADY queued in TODO_LIST.md / docs/todo (verified during session) — harvesting them is a no-op. Genuinely NEW rows this session produced: **#7** (stale close-out correction), **#8** (gatus-status script), **#13** (storm-aware handling variant), **#14** (/livez proposal), **#23/#24** (post-go-live verification legs). Per instruction, HARVEST is **deferred until owner go-ahead**.
 
@@ -93,4 +93,4 @@ HARVEST note: items 3, 5, 10-16, 18-21, 27, 28 are ALREADY queued in TODO_LIST.m
 
 ---
 
-*Self-critique summary (asked directly): forgot to live-verify the Pocket ID claim before asserting it (§d.6), under-explored the sanctioned runtime-secret path to the Gatus API (§b.1), and held the deployed-rev observation instead of surfacing it immediately (§e.2). Diagnosis work itself: all headline claims carry fresh live evidence (§a).*
+_Self-critique summary (asked directly): forgot to live-verify the Pocket ID claim before asserting it (§d.6), under-explored the sanctioned runtime-secret path to the Gatus API (§b.1), and held the deployed-rev observation instead of surfacing it immediately (§e.2). Diagnosis work itself: all headline claims carry fresh live evidence (§a)._

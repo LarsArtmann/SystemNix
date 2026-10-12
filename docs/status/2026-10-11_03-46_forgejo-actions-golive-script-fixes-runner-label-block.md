@@ -11,7 +11,7 @@
 
 ## a) FULLY DONE
 
-1. **First post-G1 sync verified healthy** — `forgejo-github-sync.service` Finished 02:08:20 (9m15s wall): *"✓ Done! 427 repos processed (367 user + 60 org), 0 failed"*, ~72 mirror creations, all 9 orgs fetched. Next run ~07:57 (6h timer restarted at deploy). Journal `forgejo-github-sync` since 01:50.
+1. **First post-G1 sync verified healthy** — `forgejo-github-sync.service` Finished 02:08:20 (9m15s wall): _"✓ Done! 427 repos processed (367 user + 60 org), 0 failed"_, ~72 mirror creations, all 9 orgs fetched. Next run ~07:57 (6h timer restarted at deploy). Journal `forgejo-github-sync` since 01:50.
 2. **Org-inclusive verification row CLOSED on both surfaces** — live node-exporter read 02:25: `forgejo_mirror_org_mirrors 60`, `total 463`, `transferred 2` (= DarkBlocks + DialogesWebInterface dual copies), `reconcile_scrape_errors 0`, `system_forgejo_mirror_errors_30m 0`. One benign `forgejo_mirror_health_scrape_errors 1` counter (consistent with the 01:52 family-stop window; not recurring). Rows: TODO_LIST org-mirrors row `[x]` + `docs/todo/services.md` org-inclusive row `[x]` (metric half closed — the row's last open remainder).
 3. **Backup posture fully mapped (evidence-complete):**
    - **Layer 1 local:** btrbk instance `forgejo`, 3/day 05:40/13:40/21:40 → `/mnt/hot/.snapshots` (Samsung), keep 3d — rollback tier.
@@ -57,11 +57,11 @@
 
 ## f) NEXT (self-harvested at authoring time)
 
-1. **[blocked:deploy] Deploy the staged runner label fix** when the memory gate clears (≥60min trip-free) or owner overrides; verify daemon declares `native:host` and run 1 auto-starts. *(harvested: TODO_LIST + services.md runner-label row)*
-2. **[blocked:user] sops paste `ARCHITECTURE_CATALOG_SYNC_TOKEN`** (runbook step 4) — ideally before item 1's deploy. *(harvested: catalog row)*
+1. **[blocked:deploy] Deploy the staged runner label fix** when the memory gate clears (≥60min trip-free) or owner overrides; verify daemon declares `native:host` and run 1 auto-starts. _(harvested: TODO_LIST + services.md runner-label row)_
+2. **[blocked:user] sops paste `ARCHITECTURE_CATALOG_SYNC_TOKEN`** (runbook step 4) — ideally before item 1's deploy. _(harvested: catalog row)_
 3. **[ready] Watch the first CI run** — green + `dist` branch; watch-list: nix-daemon reachability, npm in runner PATH, job-token git-push (PUSH_TOKEN fallback).
 4. **[ready] Post-green chain:** deploy(token) → converge sync → `current/index.html` + stamp → 3 Gatus checks green → post-deploy §15 silent.
-5. **[ready] Verify tonight's first REAL backup legs:** dump ~03:40 (zips in `/mnt/pool/backups/forgejo/`), snapshot 05:40 + ~67G pool seed over the DAS link. *(premise-updated rows :148/:151 on both surfaces)*
+5. **[ready] Verify tonight's first REAL backup legs:** dump ~03:40 (zips in `/mnt/pool/backups/forgejo/`), snapshot 05:40 + ~67G pool seed over the DAS link. _(premise-updated rows :148/:151 on both surfaces)_
 6. **[ready] Re-earn G1 gate evidence + F24 restore drill** on real-data snapshots (rows :148, both surfaces updated).
 7. **[ready] Docs: runbook `architecture-catalog.md` + `forgejo.md`** — v15 API shapes (`has_actions`, dispatch filename+201/204), runner-label gotcha, setup-forgejo failure-mode fixes.
 8. **[decision] setup-forgejo.sh promotion** to a SystemNix self-elevating app (`nix run .#architecture-catalog-setup`) — moves the cross-repo contract (binary path, token paths, sops key) into the repo that depends on it.

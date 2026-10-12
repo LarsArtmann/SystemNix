@@ -46,13 +46,13 @@ skill-default HTML.
    (AMI 5.36 retraining 128G LPDDR5X on cold power-on). Today's 62.7s was a
    **watchdog reset** (`x86/amd: Previous system reset reason [0x02000800]:
    hardware watchdog timer expired` — freeze-28). BIOS levers: plain Fast Boot
-   + Memory Context Restore / MRC Fast Boot where exposed. Expected cold
-   firmware → ~7-15s.
+   - Memory Context Restore / MRC Fast Boot where exposed. Expected cold
+     firmware → ~7-15s.
 5. **Memory/queue surfaces updated consistently:** systemd.md converger
    `--no-block` gotcha; stability.md BIOS row enriched twice (warm/cold split
-   + MCR knob + NVRAM verify); storage.md ClickHouse-relocation row +
-   TODO_LIST queue one-liner (both surfaces, no drift); Source pointers
-   de-dangled against the dispatch report.
+   - MCR knob + NVRAM verify); storage.md ClickHouse-relocation row +
+     TODO_LIST queue one-liner (both surfaces, no drift); Source pointers
+     de-dangled against the dispatch report.
 6. **Smoke FAIL triage (3/3 not-mine, evidenced):** nix-daemon 1479% = parallel
    sessions' builds; node_exporter 317 lines/min = two textfile-collector
    defects already filed by freeze-28 session (monitoring.md:20);
@@ -159,6 +159,7 @@ verify (stability.md), dnsblockd hang (services.md, parallel session),
 node_exporter textfile defects (monitoring.md:20).
 
 NEW items:
+
 1. Reboot in a quiet window → `systemd-analyze` verdict on the four fixes.
 2. Warm-reboot repro ×2-3 (`systemctl reboot`; expect ~7s firmware each).
 3. Per-boot reset-reason sweep across the journal record → confirm the
@@ -181,7 +182,7 @@ NEW items:
     definition), and consider window-based smoke semantics vs since-restart.
 13. Loader `timeout 2` → 1 (one-liner; menu still reachable with held key).
 14. Document the warm/cold firmware split in docs/agents/systemd.md boot
-   section (currently only in the todo row + this report's successor).
+    section (currently only in the todo row + this report's successor).
 15. If MRC is NOT exposed in BIOS 1.11: check GMKtec for a BIOS update.
 16. After Fast Boot enable: confirm the USB DAS still enumerates at kernel
     level (firmware skip is fine; verify pool mounts first Fast Boot).
@@ -230,7 +231,7 @@ existing storage row's execution), #24 (row-lifecycle duty, not a new item),
 
 ---
 
-*Sources: live probes (systemd-analyze, journalctl per-boot windows, pidstat/
+_Sources: live probes (systemd-analyze, journalctl per-boot windows, pidstat/
 iostat, /proc/pressure, bootctl, last -x, /boot-mirror verify scripts) and the
 session's own dispatch report `2026-10-12_13-40_boot-slow-fastboot-dispatch-
-four-bootpath-fixes.md`, both surfaces current as of 15:49.*
+four-bootpath-fixes.md`, both surfaces current as of 15:49._

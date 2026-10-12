@@ -27,12 +27,12 @@ skill-default HTML.
    node_exporter error re-confirmed at 17:20 (line 686:
    `44361195520system_cgroup_mem_anon_bytes{…}`, whole-file rejection, ALL
    system_* metrics blind). Fix appends `$'\n'` OUTSIDE the substitution ×4
-   + ring/emit normalizations. Verified: bash simulation (glued-before vs
-   per-line-after), evo-x2 toplevel eval green.
+   - ring/emit normalizations. Verified: bash simulation (glued-before vs
+     per-line-after), evo-x2 toplevel eval green.
 3. **Thermal alert leg LANDED** (system-health.nix): `system_cpu_temp_celsius`
-   + `system_thermal_alert` (k10temp located by hwmon NAME not index,
-   ≥95°C default via new `thermalAlertMilliCelsius` option) — freezes
-   #8/#9/#11/#12 rode 98-99°C ceilings with zero alerting.
+   - `system_thermal_alert` (k10temp located by hwmon NAME not index,
+     ≥95°C default via new `thermalAlertMilliCelsius` option) — freezes
+     #8/#9/#11/#12 rode 98-99°C ceilings with zero alerting.
 4. **boot-metrics.nix NEW MODULE** (+ configuration.nix enable): per-boot
    systemd-analyze phases, bounded retry for unfinished storm boots,
    `boot_reset_reason_watchdog` (kernel reset-reason classification, free
@@ -59,7 +59,7 @@ skill-default HTML.
    (closed as already-fixed-2026-10-03 + conflated — today's rejection was
    the census glue, different mechanism, same symptom), system-health canary
    (landed), boot collector (landed), thermal ×2 (CPU half landed; GPU-edge
-   + fan-gap remain as narrowed rows).
+   - fan-gap remain as narrowed rows).
 9. **Committed clean**: `b72c2f0c` (6 files) after a daemon race (see §d),
    tree clean, `nix flake check --no-build` ALL CHECKS PASSED on the final
    state, nothing pushed.
@@ -176,6 +176,7 @@ relocation (corrected premise, owner call §g.3 of 15-49), GPU-edge thermal,
 fan-telemetry gap.
 
 NEW:
+
 1. **Deploy the observability batch at the first PSI-calm window** (avg10
    AND avg60 <20) — `nix run .#deploy`; all five changes go live together.
 2. **Post-deploy verify battery** (one row, harvested): node_exporter
@@ -255,8 +256,8 @@ existing row.
 
 ---
 
-*Sources: this session's live probes (node_exporter journal 17:20, findmnt,
+_Sources: this session's live probes (node_exporter journal 17:20, findmnt,
 lsblk, hwmon, /proc/pressure ×3, flake.lock decode), the 13-40/15-49 reports
 of the lineage, the executed diffs in `b72c2f0c` + daemon commits
 d6893c5a/244d31fe/10ed8561 (already pushed, attribution rides the stamps),
-and `nix flake check --no-build` green on the final state at 17:4x.*
+and `nix flake check --no-build` green on the final state at 17:4x._

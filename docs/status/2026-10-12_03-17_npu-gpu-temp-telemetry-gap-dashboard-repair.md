@@ -20,19 +20,19 @@ Both thermal alert rules are **live and armed** (verified via the rules API: `GP
 
 ## Session timeline (with evidence)
 
-| # | Step | Evidence |
-| - | ---- | -------- |
-| 1 | Intake routed per AGENTS.md knowledge table → `docs/agents/monitoring.md` read | monitoring.md hwmon fingerprint table (live-derived 2026-10-10) showed 6 chips, NO NPU row |
-| 2 | Live hwmon triage on evo-x2 | `hwmon0/1` = nvme, `hwmon2` = amdgpu (one temp sensor, `edge` label), `hwmon3` = k10temp, `hwmon4` = acpitz, `hwmon5` = mt7925_phy0 — **exhaustive, no NPU chip** |
-| 3 | NPU device located | `accel0` → `/sys/devices/pci0000:00/0000:00:08.2/0000:c7:00.1`; no hwmon anywhere under it |
-| 4 | In-tree driver capability check | `grep -c amdxdna_hwmon /proc/kallsyms` → **0**; amd_pmf carries only SPS symbols, no sensor-bridge symbols |
-| 5 | Upstream capability check | `amd/xdna-driver` `amdxdna_sensors.c` (sourcegraph): registers `HWMON_T_INPUT|HWMON_T_LABEL` + power; label literal `NPU_temperature`; `amdxdna_hwmon_init` bails with *"No HWMON support due to missing PMF sensor support"* |
-| 6 | SigNoz live inventory | `max by (chip, sensor) (node_hwmon_temp_celsius)` → 11 series incl. GPU chip `0000:00:08_1_0000:c6:00_0` @ 52°C; `{__name__=~"(?i).*(npu|xdna).*"}` → only substring false-positives ("I**npu**t"), zero real NPU metrics |
-| 7 | Dashboard post-mortem | `dashboards/gpu.json` lines 109 + 256 still `chip=~".*c5:00_0"` → matches nothing (GPU moved to c6; nvme chips are `nvme_nvmeN`-labeled, so no accidental match either) → **both panels empty in the UI** |
-| 8 | CH fallback death certificate | exact-name instant query: 0 series; **full 24h range query: 0 series**; regex sweep finds 8 fresh (0.0 min ago) bare `ClickHouseAsyncMetrics_Temperature` series — values (99/99/53/99.25/42/56.85/56.85/63.85) map onto thermal zones, not hwmon chips |
-| 9 | Fixes applied | `gpu.json` both panels → `.*:c[0-9a-f]+:00_0` hwmon-only + truthful descriptions; `_signoz-alerts.nix` dead operand retired + evidence comment; `monitoring.md` NPU-telemetry + CH-death bullets; `ai-stack.md` `[decision]` row |
-| 10 | Verification gates | `signoz-query-lint` PASS; full `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` PASS; scoped `nix fmt` → 0 changed; live dashboard PUT (`systemnix-gpu`, id `01a00c44-76b4-77f7-951f-0ee51de11490`) → **CONVERGED** (sorted-spec byte-compare); both repaired panel PromQLs live-verified: **1 series @ 52°C each** |
-| 11 | Close-out sweep (status demand) | repo-wide grep for other `ClickHouseAsyncMetrics_Temperature`/`amdgpu_edge` consumers → **none** (only the two intentional doc references); live rules API check; guard-trip state query; 2 harvest rows landed; `amd-npu.nix` stale kernel comment fixed on sight |
+| #  | Step                                                                           | Evidence                                                                                                                                                                                                                                                                                                                                |
+| -- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | Intake routed per AGENTS.md knowledge table → `docs/agents/monitoring.md` read | monitoring.md hwmon fingerprint table (live-derived 2026-10-10) showed 6 chips, NO NPU row                                                                                                                                                                                                                                              |
+| 2  | Live hwmon triage on evo-x2                                                    | `hwmon0/1` = nvme, `hwmon2` = amdgpu (one temp sensor, `edge` label), `hwmon3` = k10temp, `hwmon4` = acpitz, `hwmon5` = mt7925_phy0 — **exhaustive, no NPU chip**                                                                                                                                                                       |
+| 3  | NPU device located                                                             | `accel0` → `/sys/devices/pci0000:00/0000:00:08.2/0000:c7:00.1`; no hwmon anywhere under it                                                                                                                                                                                                                                              |
+| 4  | In-tree driver capability check                                                | `grep -c amdxdna_hwmon /proc/kallsyms` → **0**; amd_pmf carries only SPS symbols, no sensor-bridge symbols                                                                                                                                                                                                                              |
+| 5  | Upstream capability check                                                      | `amd/xdna-driver` `amdxdna_sensors.c` (sourcegraph): registers `HWMON_T_INPUT                                                                                                                                                                                                                                                           |
+| 6  | SigNoz live inventory                                                          | `max by (chip, sensor) (node_hwmon_temp_celsius)` → 11 series incl. GPU chip `0000:00:08_1_0000:c6:00_0` @ 52°C; `{**name**=~"(?i).*(npu                                                                                                                                                                                                |
+| 7  | Dashboard post-mortem                                                          | `dashboards/gpu.json` lines 109 + 256 still `chip=~".*c5:00_0"` → matches nothing (GPU moved to c6; nvme chips are `nvme_nvmeN`-labeled, so no accidental match either) → **both panels empty in the UI**                                                                                                                               |
+| 8  | CH fallback death certificate                                                  | exact-name instant query: 0 series; **full 24h range query: 0 series**; regex sweep finds 8 fresh (0.0 min ago) bare `ClickHouseAsyncMetrics_Temperature` series — values (99/99/53/99.25/42/56.85/56.85/63.85) map onto thermal zones, not hwmon chips                                                                                 |
+| 9  | Fixes applied                                                                  | `gpu.json` both panels → `.*:c[0-9a-f]+:00_0` hwmon-only + truthful descriptions; `_signoz-alerts.nix` dead operand retired + evidence comment; `monitoring.md` NPU-telemetry + CH-death bullets; `ai-stack.md` `[decision]` row                                                                                                        |
+| 10 | Verification gates                                                             | `signoz-query-lint` PASS; full `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` PASS; scoped `nix fmt` → 0 changed; live dashboard PUT (`systemnix-gpu`, id `01a00c44-76b4-77f7-951f-0ee51de11490`) → **CONVERGED** (sorted-spec byte-compare); both repaired panel PromQLs live-verified: **1 series @ 52°C each** |
+| 11 | Close-out sweep (status demand)                                                | repo-wide grep for other `ClickHouseAsyncMetrics_Temperature`/`amdgpu_edge` consumers → **none** (only the two intentional doc references); live rules API check; guard-trip state query; 2 harvest rows landed; `amd-npu.nix` stale kernel comment fixed on sight                                                                      |
 
 ---
 
@@ -63,7 +63,7 @@ See §e — most of it is process (verification ordering, premise-checking decis
 
 ### Did I lie?
 
-No. Every load-bearing claim carries a live command + output in the appendix. One claim is explicitly inference, not verification: *"CH now emits bare Temperature series from thermal zones"* — the mechanism is inferred from value mapping (98/99/52/42 ↔ zone values) and freshness; what is VERIFIED is the name's absence (24h range, 0 series) and the 8 fresh bare-name series.
+No. Every load-bearing claim carries a live command + output in the appendix. One claim is explicitly inference, not verification: _"CH now emits bare Temperature series from thermal zones"_ — the mechanism is inferred from value mapping (98/99/52/42 ↔ zone values) and freshness; what is VERIFIED is the name's absence (24h range, 0 series) and the 8 fresh bare-name series.
 
 ---
 
@@ -162,7 +162,7 @@ Grounded ONLY in this session + rows directly noticed while in the todo librarie
 37. FastFlowLM staged go-live v1.0.2 → upstream (no crash-class fix in release notes; bump is accuracy/features only) `[decision]`
 38. llama-vlm live verification + soak (ports listening, never inference-tested) `[watch]`
 
-*(8 new + 30 pointers = 38 items; the user's "up to 50" is satisfied without padding — the remaining items the session did NOT notice stay unlisted on purpose.)*
+_(8 new + 30 pointers = 38 items; the user's "up to 50" is satisfied without padding — the remaining items the session did NOT notice stay unlisted on purpose.)_
 
 ## g) Three questions I cannot figure out myself
 
@@ -174,16 +174,16 @@ Grounded ONLY in this session + rows directly noticed while in the todo librarie
 
 ## Harvest disposition ledger (per the AGENTS.md self-harvest mandate)
 
-| §f item | Disposition |
-| ------- | ----------- |
-| 1 (xdna premise-check) | LANDED: `docs/todo/ai-stack.md` `[ready]` |
-| 2 (selector-freshness guard) | LANDED: `docs/todo/monitoring.md` `[ready]` |
-| 3 (NPU decision) | LANDED (during session): `docs/todo/ai-stack.md` `[decision]` |
-| 4 (deploy rides next deploy) | deliberately NOT harvested (rationale inline above) |
-| 5 (99°C/0-trips semantics) | deliberately NOT harvested (premise unverified; owner question §g2 gates) |
-| 6 (Discord delivery) | deliberately NOT harvested (owner-side only; §g3) |
-| 7, 8 (roadmap fuel) | deliberately NOT harvested into todo libraries (ROADMAP-class, contingent on unmade decision) |
-| B items 9-38 | already tracked in their libraries — intentionally NOT duplicated |
+| §f item                      | Disposition                                                                                   |
+| ---------------------------- | --------------------------------------------------------------------------------------------- |
+| 1 (xdna premise-check)       | LANDED: `docs/todo/ai-stack.md` `[ready]`                                                     |
+| 2 (selector-freshness guard) | LANDED: `docs/todo/monitoring.md` `[ready]`                                                   |
+| 3 (NPU decision)             | LANDED (during session): `docs/todo/ai-stack.md` `[decision]`                                 |
+| 4 (deploy rides next deploy) | deliberately NOT harvested (rationale inline above)                                           |
+| 5 (99°C/0-trips semantics)   | deliberately NOT harvested (premise unverified; owner question §g2 gates)                     |
+| 6 (Discord delivery)         | deliberately NOT harvested (owner-side only; §g3)                                             |
+| 7, 8 (roadmap fuel)          | deliberately NOT harvested into todo libraries (ROADMAP-class, contingent on unmade decision) |
+| B items 9-38                 | already tracked in their libraries — intentionally NOT duplicated                             |
 
 No `TODO_LIST.md` queue rows were added this session: every session-derived item is `[ready]`-in-library or non-agent-actionable, and the tq pool harvests only the queue — the two landed `[ready]` rows are eligible for queue promotion at the next harvest pass.
 
@@ -211,4 +211,4 @@ grep -rn 'ClickHouseAsyncMetrics_Temperature|amdgpu_edge'
 nix fmt <touched .nix + .json>                       → "formatted 2 files (0 changed)"
 ```
 
-*Report ends. Point-in-time snapshot — annotate, never rewrite (docs-health ANNOTATE mode).*
+_Report ends. Point-in-time snapshot — annotate, never rewrite (docs-health ANNOTATE mode)._

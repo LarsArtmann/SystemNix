@@ -11,61 +11,69 @@
 
 ### T1 — Live ground-truth battery (the plan's #1 task; every D-row resolved)
 
-| # | Micro | Result (live probe, timestamped) |
-|---|-------|----------------------------------|
+| #   | Micro                                                    | Result (live probe, timestamped)                                                                                                                                                                                                                       |
+| --- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1.1 | Spans/h per service, 24h (`distributed_signoz_index_v3`) | **9 services emitting**: dnsblockd 16,556/h, discordsync 5,977, cv-application 2,293, bank-sync 1,482, browser-history 983, overview 163, crush-daily 123, indexer-web 35.5 (stale since 10-09 08:10), dnsblockd-test 0.1. Last spans at 03:37 = live. |
-| 1.2 | `signoz_calls_total`/`signoz_latency` in store | 14,725 / 252,198 / 14,011 series; samples fresh to the minute (unix_milli 03:34). **All Delta temporality.** |
-| 1.3 | `traces_service_graph_*` edges | All 8 metrics **Cumulative**, 2,820 edge series, rates compute live. |
-| 1.4 | Config parity | Collector PID 1605988 healthy, **zero decode/invalid errors** since 10-09 12:00; spanmetrics flowing proves the deployed config carries the connector. D1 (blocked:deploy claim) is STALE — the batch IS deployed. |
-| 1.5 | Services-page sufficiency | Delta spanmetrics (the page's RED input) fresh ⇒ native per-service RED available ⇒ per plan deferral (monitoring.md:75) a duplicating panel set is NOT built; custom dashboard rescoped to what the page LACKS (edges/dependency). |
-| 1.6 | Verdict recorded | monitoring.md:75 row closed `[x]` with evidence + the delta-blindness discovery. |
+| 1.2 | `signoz_calls_total`/`signoz_latency` in store           | 14,725 / 252,198 / 14,011 series; samples fresh to the minute (unix_milli 03:34). **All Delta temporality.**                                                                                                                                           |
+| 1.3 | `traces_service_graph_*` edges                           | All 8 metrics **Cumulative**, 2,820 edge series, rates compute live.                                                                                                                                                                                   |
+| 1.4 | Config parity                                            | Collector PID 1605988 healthy, **zero decode/invalid errors** since 10-09 12:00; spanmetrics flowing proves the deployed config carries the connector. D1 (blocked:deploy claim) is STALE — the batch IS deployed.                                     |
+| 1.5 | Services-page sufficiency                                | Delta spanmetrics (the page's RED input) fresh ⇒ native per-service RED available ⇒ per plan deferral (monitoring.md:75) a duplicating panel set is NOT built; custom dashboard rescoped to what the page LACKS (edges/dependency).                    |
+| 1.6 | Verdict recorded                                         | monitoring.md:75 row closed `[x]` with evidence + the delta-blindness discovery.                                                                                                                                                                       |
 
 **THE discovery of the session:** SigNoz PromQL (v1 `/api/v1/query`) is **DELTA-BLIND** — `count(signoz_calls_total)` returns 0 series despite fresh samples; only Cumulative-temporality metrics are PromQL-reachable. The native Services page reads delta via the query-builder fine. Consequence: dashboards/alerts must consume `traces_service_graph_*` or scraped metrics. Documented in signoz.md (ops note + cheat-sheet) and monitoring.md (gotcha bullet).
 
 ### T2 — Rule/policy/dashboard census: CLEAN on all three legs
+
 - **2.1** 31 rules in `_signoz-alerts.nix` == 31 live, zero drift both directions.
 - **2.2** 31 route policies == exactly-one per rule UUID (policies are name==ruleId), zero orphans, zero missing.
 - **2.3** 7 live dashboards == 7 files, all owner=systemnix, **zero zombies**.
 - Observation: the one firing rule is "Swap Usage Critical (>80%)" — plausible on this zram box, not phantom (triage queued as f#15).
 
 ### T4 — Memory-PSI rule: root cause WORSE than the queued premise
+
 The D5 row guessed "reads the wrong PSI file". Live source read + kernel probe found the real bug: **units mismatch** — `/proc/pressure/*` reports PERCENT (kernel showed `some avg10=0.63` = 0.63%) but the emitter thresholds were FRACTIONS (`>0.50`, `>0.10`, `>=0.20`, `>0.10`) ⇒ `node_psi_memory_alert=1` at 0.5% pressure — **100× too sensitive, a standing red** (live proof: alert=1 while memory pressure was 0.63%). Fixed all four thresholds to percent semantics (50/10/20/10), HELP texts updated, gatus alert text sharpened to name the unreachable class (the 2026-10-08 storm misfire was "check failed" read as "PSI breach"). The emitter's file reads and atomic mv were CORRECT (no wrong-file bug).
 
 ### T26 — Probe cheat-sheet + hwmon table + exemplar watch
+
 - signoz.md: new "Live-probe cheat-sheet" section (spans/h, series-existence + temporality, PromQL-visibility, log→trace ratio, rule parity — all copy-paste, loopback, no auth) + delta-blindness ops bullet.
 - monitoring.md: hwmon chip **fingerprint table** live-derived 2026-10-10 (k10temp `pci0000:00_0000:00:18_3` Tctl; acpitz −2°C under Tctl; amdgpu edge on `0000:00:08_1_0000:c6:00_0`; nvme0/nvme1 sensor signatures; wifi) + the value-scan query pattern.
 - Exemplar upstream-watch note appended to the existing exemplar bullet (recheck `system.columns` on lock bumps).
 
 ### T3 — GCP disposition (decision-leg)
+
 T3.1 live-verified: **0** `monitoring_googleapis_com*` series, **10 dead panels** in the live UI. Decision brief written INTO the [decision] row: recommend re-arm (sunk SA/IAM/key, real key kills the falsified failure mode, delete throws away 10 built panels). Owner question outstanding (g#3).
 
 ### T9 (partial, rule-side) + a live phantom fix
+
 - **CPU Thermal Ceiling rule authored**: `max_over_time(node_hwmon_temp_celsius{chip=~"pci0000:00_0000:00:18_.*"}[30m]) >= 95` — k10temp address is CPU-internal (stable across the GPU bus-renumber class). Query live-verified. **Would have fired DURING this session** (30m-max 98.6°C at ~04:15) — true-positive evidence recorded.
 - **GPU Thermal rule phantom FIXED**: old selector `.*c5:00_0` returns **0 series live** (bus renumbered to c6:00_0 — the exact post-crash class the comment warned about); widened to `.*:c[0-9a-f]+:00_0` (uniquely matches discrete-GPU PCI chips; verified 47°C, and verified non-matching vs k10temp/nvme/wifi labels). Only the ClickHouse fallback had kept the rule alive.
 
 ### T10 — Service-sanity sweep (the DiscordSync hotloop class): BUILT + PROVEN
+
 - `scripts/lib/service-sanity-sweep.sh`: CPU% leg from cgroup cpu.stat deltas (rate-shaped — no restart blindness), journal line-rate leg (one `journalctl -o json` walk + jq), fail-closed WARNs, exempt regex (clickhouse, signoz-otel-collector), `SANITY_JOURNAL_CMD` injection point for fixtures.
 - `scripts/test-post-deploy-service-sanity.sh`: 7 fixtures incl. the DiscordSync shape (150% CPU; 640/min journal). **Green locally AND as flake check** `post-deploy-service-sanity-selftest` (built via nix; first attempt hit the tracked-files trap — see d).
 - §18 wired into `post-deploy-check.sh` (sourced like §17; FAIL integrates with the existing fail-baseline/exit-3 machinery).
 
 ### T13 — discovered ALREADY IMPLEMENTED (stale row)
+
 §17 sweep + `scripts/lib/memory-throttle-sweep.sh` + fixture selftest (flake check) + advisory semantics (decided 2026-10-09) all exist — monitoring.md:101 was stale at queueing time. Row close deferred to close-out (needs the "which surfaces" discipline: row + queue twin).
 
 ### T15 — Coverage ratchet (file-side)
+
 `maxUpstreamGaps` 4→3 + the stale "4 gaps incl. overview" comment corrected (3 remain: pma, papdashboard, hermes — exactly matching live `signoz_traces_upstream_gaps`=3, `over_threshold`=0; comparison operator verified `>` so 3/3 stays healthy). T15.1 (dnsblockd flip) verified already-deployed via T1.
 
 ---
 
 ## b) PARTIALLY DONE
 
-| Item | Done | Missing (why) |
-|------|------|---------------|
-| **Deploy batch** (T4 fix, T15 ratchet, T5/T6 dashboard, T9+T12+T11 rules, git-lag collector, §18) | All authored; signoz-query-lint GREEN (nix-built); service-sanity selftest check GREEN; eval green for MY files | **Not deployed.** Two blockers: io PSI avg10 26.6–81% all session (gate <20%, freeze doctrine — a toplevel build during the parallel battery is the freeze-#22 class), and a foreign eval red (below). |
-| **T5/T6 dashboard** | `dashboards/traces.json` (6 panels: calls/p95/error-ratio per service + top edges/failing edges/edge-p95; every query pre-verified live; uuid5 IDs; disjoint grid; one-query-per-panel; etc entry wired in `_signoz-alerts.nix`) | Provisioner run ("OK 8 dashboards", no FAILED lines) + render eyeball — deploy-gated. |
-| **T11 git-lag tripwire** | Collector (User=lars, ProtectHome=read-only, fail-closed scrape_error, ahead_by + head_age) + 2 absence-proof rules (`(X > N) or absent(X)` — collector death fires instead of phantom-green) | Deploy + live-metric verify + synthetic fire. |
-| **T12 trip-rate rule** | Authored, query live-verified (increase[2h]=0 now), threshold 3 = incident arithmetic (#11 4.75/2h, #12 3.75/2h avg — target 4 would have MISSED #12; that correction is IN the rule description) | Deploy + eval-state verify. |
-| **Close-out bookkeeping** | monitoring.md:75 closed; T3 brief; cheat-sheets | Rows 71/76/14/101 + TODO_LIST:166 twin, CHANGELOG, plan-file §1 sync — all deliberately deferred until deploy-verified (evidence rule). |
-| **Commits** | All work committed (daemon heuristic commits swept it; tree clean at 04:48) | Not amended-forward into attributed commits yet (HEAD carries a foreign llama-rag edit — amend would absorb it, the exact 2026-09-14 fragmentation trap); not pushed. |
+| Item                                                                                              | Done                                                                                                                                                                                                                             | Missing (why)                                                                                                                                                                                          |
+| ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Deploy batch** (T4 fix, T15 ratchet, T5/T6 dashboard, T9+T12+T11 rules, git-lag collector, §18) | All authored; signoz-query-lint GREEN (nix-built); service-sanity selftest check GREEN; eval green for MY files                                                                                                                  | **Not deployed.** Two blockers: io PSI avg10 26.6–81% all session (gate <20%, freeze doctrine — a toplevel build during the parallel battery is the freeze-#22 class), and a foreign eval red (below). |
+| **T5/T6 dashboard**                                                                               | `dashboards/traces.json` (6 panels: calls/p95/error-ratio per service + top edges/failing edges/edge-p95; every query pre-verified live; uuid5 IDs; disjoint grid; one-query-per-panel; etc entry wired in `_signoz-alerts.nix`) | Provisioner run ("OK 8 dashboards", no FAILED lines) + render eyeball — deploy-gated.                                                                                                                  |
+| **T11 git-lag tripwire**                                                                          | Collector (User=lars, ProtectHome=read-only, fail-closed scrape_error, ahead_by + head_age) + 2 absence-proof rules (`(X > N) or absent(X)` — collector death fires instead of phantom-green)                                    | Deploy + live-metric verify + synthetic fire.                                                                                                                                                          |
+| **T12 trip-rate rule**                                                                            | Authored, query live-verified (increase[2h]=0 now), threshold 3 = incident arithmetic (#11 4.75/2h, #12 3.75/2h avg — target 4 would have MISSED #12; that correction is IN the rule description)                                | Deploy + eval-state verify.                                                                                                                                                                            |
+| **Close-out bookkeeping**                                                                         | monitoring.md:75 closed; T3 brief; cheat-sheets                                                                                                                                                                                  | Rows 71/76/14/101 + TODO_LIST:166 twin, CHANGELOG, plan-file §1 sync — all deliberately deferred until deploy-verified (evidence rule).                                                                |
+| **Commits**                                                                                       | All work committed (daemon heuristic commits swept it; tree clean at 04:48)                                                                                                                                                      | Not amended-forward into attributed commits yet (HEAD carries a foreign llama-rag edit — amend would absorb it, the exact 2026-09-14 fragmentation trap); not pushed.                                  |
 
 **Foreign blocker (not mine, tracked for awareness):** evo-x2 eval fails `memory-watermark-audit` on **llama-embeddings** (MemoryHigh < 50% MemoryMax). HEAD (8a3a027f) carries a parallel session's llama-rag.nix edit that is visibly the same fix class (moving MemoryMax INTO `harden{}`) — they are MID-FLIGHT on it. I did not touch their file. This blocks every deploy until their fix lands. Question g#1.
 
