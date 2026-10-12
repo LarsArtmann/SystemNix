@@ -36,7 +36,7 @@
 
 - **`backup-coordination` module** — Generic backup monitoring via Prometheus textfile. Add backups to `services.backup-coordination.backups.<name>` in `configuration.nix`.
 - **`system-health` module** — Textfile collector for systemd state, memory, GPUActive, CPU%. Pre-computes boolean flags for Gatus (Gatus `pat()` can't do numeric comparison). **User-manager monitoring (2026-08-31):** `monitoredUserManagers` (default: the host's `users.primaryUser`) adds `system_user_units_failed{user}` / `system_user_manager_reachable{user}` / `system_user_units_scrape_errors{user}` via the machined bus proxy (`systemctl --machine=<u>@.host --user`, `timeout 10`-bounded) + the Gatus "User Unit Failures" check — catches USER-unit deaths the system-level checks can't see (smart-audio sat in start-limit-hit the whole 16:38 boot, nothing alerted). Logout ≠ wedge: `/run/user/<uid>` absent → reachable 0, failed 0 (legitimate logout, no alert); present-but-query-failed → scrape_errors 1 (the dnsblockd-:9090 wedge class, alerts).
-- **Secret rotation monitoring** — `pocket-id-secret-rotation` checks client secret freshness (90d threshold). Does NOT auto-rotate.
+- **Secret rotation** — `pocket-id-secret-rotation` monitors client secret freshness (90d threshold); `pocket-id-auto-rotation` (2026-10-12) drains stale clients daily (dry-run default — flip `services.pocket-id-config.autoRotation.mode` to `apply`), restarts consumers via the `clientConsumers` map, and alerts on failure via the "Pocket ID Secret Auto-Rotation" Gatus check.
 - **Gatus `[BODY].jsonpath.X` unreliable in v5.36.0** — Use `[STATUS]` + `[BODY] == pat(*)` instead.
 
 ## SigNoz
