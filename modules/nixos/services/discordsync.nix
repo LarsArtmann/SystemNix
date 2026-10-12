@@ -36,11 +36,15 @@
       # covers the pkgs.discordsync surface, this one the direct input
       # reference). Drop when upstream re-pins or the lock moves past an
       # upstream-fixed rev.
+      # discordsync vendorHash shim DROPPED (2026-10-12): its own drop
+      # condition met — the lock moved 1ac31f8-era → 86defd1 and upstream
+      # 86defd1 bakes a GREEN through-our-lock hash (first-hand probe:
+      # inputs.discordsync.packages.x86_64-linux.default.goModules built
+      # clean, store c1ffr7g8…; the shim's /NYfLmDMx… was measured at
+      # 1ac31f8 and hash-mismatched in the 2026-10-12 toplevel keep-going
+      # enumeration). Re-add ONLY via nix-hash-fix evidence, never by hand.
       discordsyncPkg =
-        inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
-          {
-            vendorHash = "sha256-/NYfLmDMxO+YDEJQqELmP4DXzxtKjgLXDiHLWjeL018=";
-          };
+        inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default;
       sopsEnvPath = config.sops.templates."discordsync-env".path;
 
       dbBackupDir = "/mnt/pool/backups/discordsync";
