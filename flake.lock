@@ -5347,11 +5347,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791745837,
-        "narHash": "sha256-mavd4J78DxHn2mwA3Q9RGUwU3arIqOl51ci+pVX2wNg=",
+        "lastModified": 1791832957,
+        "narHash": "sha256-f6WoUnoLPDaoa24vTNtAgSvxt8RPmyumnKGdu/4yVp8=",
         "ref": "refs/heads/master",
-        "rev": "d77b3f30805133c3cac2d283b05b6ba9213fea41",
-        "revCount": 1750,
+        "rev": "3f3c54678012bc1090734369ee61b2de1de30bba",
+        "revCount": 1751,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-structure-linter"
       },
@@ -6169,11 +6169,11 @@
         "templ-components": "templ-components_6"
       },
       "locked": {
-        "lastModified": 1791681997,
-        "narHash": "sha256-A3v035lH7z6Yq3M29+uSqSkGLGycjUuOvtjn1lFcOqA=",
+        "lastModified": 1791832946,
+        "narHash": "sha256-8GoJ5s2X+M1gTrC0mkaHpr23oB7DwnNDePjUKGfmmrI=",
         "ref": "refs/heads/master",
-        "rev": "30b47db41b2da24724d4fa6a7ea3b3e487922f32",
-        "revCount": 1334,
+        "rev": "9db1d5060c1f46c2a0836b776d7191f20c0db8ec",
+        "revCount": 1335,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/library-policy"
       },
@@ -7377,11 +7377,11 @@
         "samber-do-auditlog": "samber-do-auditlog_9"
       },
       "locked": {
-        "lastModified": 1791769471,
-        "narHash": "sha256-/FzqiLTSEIvdbp/pv7oCFMB8xMPQ73i9AoKxBxEhGaA=",
+        "lastModified": 1791832924,
+        "narHash": "sha256-7jR3+OiWjyR45YJvguGBndfeUrlRvsj6fS1RHI4BrwU=",
         "ref": "refs/heads/master",
-        "rev": "24270d59c88b0866a1b9fcfd9d52a16a578319b3",
-        "revCount": 4196,
+        "rev": "47b405f7c2d81852dc2fbe5ad7a87a5e92a4b90c",
+        "revCount": 4197,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/projects-management-automation"
       },

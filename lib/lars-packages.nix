@@ -78,16 +78,21 @@ lib.filterAttrs (_: v: v != null) {
   # that churn was rejected. The shim is the NECESSARY exception; the
   # paste-upstream → push → re-lock → re-drop cycle stays queued
   # (docs/todo/upstream.md). Re-evaluate on the next lock move.
+  # cqrs-lint vendorHash shim DROPPED (2026-10-12): the lock moved
+  # f12a849b → d15e0a48 — the "re-evaluate on the next lock move" trigger
+  # the 2026-10-11 re-pin note named — and upstream d15e0a48 bakes a GREEN
+  # through-our-lock hash (first-hand probe: inputs.go-cqrs-lite.packages.
+  # x86_64-linux.cqrs-lint.goModules built clean, store wzc06wa9…; the
+  # shim's 7wijvzQm… value was measured at f12a849b and hash-mismatched at
+  # d15e0a48 in the 2026-10-12 toplevel keep-going enumeration). The
+  # queued paste-upstream → push cycle is thereby closed upstream-side:
+  # no go-cqrs-lite edit was needed. Re-add ONLY via nix-hash-fix
+  # evidence, never by hand.
   cqrs-lint =
     let
       pkg = (inputs.go-cqrs-lite.packages.${system} or { }).cqrs-lint or null;
     in
-    if pkg == null then
-      null
-    else
-      pkg.overrideAttrs {
-        vendorHash = "sha256-7wijvzQmDIlEbRfNqkK/bmUiQDpMZ+Hz5GNJ1Ggx8Gs=";
-      };
+    if pkg == null then null else pkg;
   # vendorHash shim DROPPED (2026-10-10 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 3520e64 ALREADY bakes the got
   # hash /D4X81jj… (first-hand keep-going enumeration,
