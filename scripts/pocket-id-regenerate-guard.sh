@@ -27,7 +27,7 @@ CLIENT_ID=$2
 WINDOW_HOURS=$3
 
 case "$WINDOW_HOURS" in
-  '' | *[!0-9]*) usage ;;
+'' | *[!0-9]*) usage ;;
 esac
 
 # No file yet: nothing was rotated before, the regeneration is the
@@ -36,7 +36,7 @@ esac
 
 now=$(date +%s)
 mtime=$(stat -c %Y "$SECRET_FILE")
-age_hours=$(( (now - mtime) / 3600 ))
+age_hours=$(((now - mtime) / 3600))
 
 if [ "$age_hours" -lt "$WINDOW_HOURS" ]; then
   {

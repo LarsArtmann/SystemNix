@@ -31,7 +31,10 @@ SELF_NAME="pocket-id-auto-rotate"
 
 log() { echo "$SELF_NAME: $*"; }
 warn() { echo "$SELF_NAME: WARN: $*" >&2; }
-die() { echo "$SELF_NAME: ERROR: $*" >&2; return 1; }
+die() {
+  echo "$SELF_NAME: ERROR: $*" >&2
+  return 1
+}
 
 # ── planner (pure, selftest-covered) ────────────────────────────────────────
 # Emits "<client> <age_days>" for stale clients (age strictly greater than
@@ -59,11 +62,11 @@ parse_consumers() {
   local spec client
   for spec in "$@"; do
     case "$spec" in
-      *=*) client=${spec%%=*} ;;
-      *)
-        warn "malformed consumer spec (want client=units): $spec"
-        continue
-        ;;
+    *=*) client=${spec%%=*} ;;
+    *)
+      warn "malformed consumer spec (want client=units): $spec"
+      continue
+      ;;
     esac
     CONSUMERS[$client]=${spec#*=}
   done
@@ -77,15 +80,15 @@ split_consumer_unit() {
   SPLIT_BRIDGE=""
   SPLIT_ENVFILE=""
   case "$1" in
-    *@*:*)
-      SPLIT_DAEMON=${1%%@*}
-      SPLIT_BRIDGE=${1#*@}
-      SPLIT_BRIDGE=${SPLIT_BRIDGE%%:*}
-      SPLIT_ENVFILE=${1#*:@}
-      SPLIT_ENVFILE=${SPLIT_ENVFILE#*:}
-      return 0
-      ;;
-    *) return 1 ;;
+  *@*:*)
+    SPLIT_DAEMON=${1%%@*}
+    SPLIT_BRIDGE=${1#*@}
+    SPLIT_BRIDGE=${SPLIT_BRIDGE%%:*}
+    SPLIT_ENVFILE=${1#*:@}
+    SPLIT_ENVFILE=${SPLIT_ENVFILE#*:}
+    return 0
+    ;;
+  *) return 1 ;;
   esac
 }
 
@@ -94,10 +97,14 @@ if [ "${1:-}" = "selftest" ]; then
   set -euo pipefail
   scratch=$(mktemp -d)
   trap 'rm -rf "$scratch"' EXIT
-  echo fixture-secret >"$scratch/a"; touch -d "100 days ago" "$scratch/a"
-  echo fixture-secret >"$scratch/b"; touch -d "95 days ago" "$scratch/b"
-  echo fixture-secret >"$scratch/c"; touch -d "10 days ago" "$scratch/c"
-  echo fixture-secret >"$scratch/.hidden-state"; touch -d "400 days ago" "$scratch/.hidden-state"
+  echo fixture-secret >"$scratch/a"
+  touch -d "100 days ago" "$scratch/a"
+  echo fixture-secret >"$scratch/b"
+  touch -d "95 days ago" "$scratch/b"
+  echo fixture-secret >"$scratch/c"
+  touch -d "10 days ago" "$scratch/c"
+  echo fixture-secret >"$scratch/.hidden-state"
+  touch -d "400 days ago" "$scratch/.hidden-state"
   now=$(date +%s)
 
   plan=$(plan_rotations "$scratch" "$now" 90 1)
@@ -171,17 +178,17 @@ MAX_PER_RUN=$7
 shift 7
 
 case "$MODE" in
-  dry-run | apply) ;;
-  *)
-    echo "$SELF_NAME: ERROR: mode must be dry-run or apply, got '$MODE'" >&2
-    exit 2
-    ;;
+dry-run | apply) ;;
+*)
+  echo "$SELF_NAME: ERROR: mode must be dry-run or apply, got '$MODE'" >&2
+  exit 2
+  ;;
 esac
 case "$MAX_PER_RUN" in
-  '' | *[!0-9]*)
-    echo "$SELF_NAME: ERROR: max-per-run must be a number" >&2
-    exit 2
-    ;;
+'' | *[!0-9]*)
+  echo "$SELF_NAME: ERROR: max-per-run must be a number" >&2
+  exit 2
+  ;;
 esac
 [ -f "$API_KEY_FILE" ] || {
   echo "$SELF_NAME: ERROR: API key file missing: $API_KEY_FILE" >&2
@@ -226,7 +233,7 @@ write_prom() {
     echo "secret_rotation_auto_run_failed $RUN_FAILED"
     echo "# HELP secret_rotation_auto_dry_run 1 while auto-rotation only observes (never rotates)"
     echo "# TYPE secret_rotation_auto_dry_run gauge"
-    echo "secret_rotation_auto_dry_run $( [ "$MODE" = dry-run ] && echo 1 || echo 0)"
+    echo "secret_rotation_auto_dry_run $([ "$MODE" = dry-run ] && echo 1 || echo 0)"
     echo "# HELP secret_rotation_auto_rotated_total cumulative client secrets rotated by the automation"
     echo "# TYPE secret_rotation_auto_rotated_total counter"
     echo "secret_rotation_auto_rotated_total $ROTATED_TOTAL"

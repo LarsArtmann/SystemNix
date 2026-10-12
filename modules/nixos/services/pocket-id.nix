@@ -55,6 +55,34 @@ _: {
         '';
       };
 
+      # regenerateSecretsFor stale-list guard: a list entry that survives
+      # past its one intended deploy must fail the provision run LOUDLY
+      # instead of silently re-rotating the secret on every subsequent run
+      # (the 2026-08-22 dnsblockd LoadCredential-desync class). The script
+      # body lives in scripts/ so flake/parts/checks/selftests.nix runs the
+      # REAL artifact (never trust a test that greps its own copy).
+      regenerateGuard = pkgs.writeShellApplication {
+        name = "pocket-id-regenerate-guard";
+        runtimeInputs = [ pkgs.coreutils ];
+        text = builtins.readFile ../../../scripts/pocket-id-regenerate-guard.sh;
+      };
+
+      # Scheduled OIDC client secret auto-rotation: rotates stale clients
+      # via the multi-secret API, atomically rewrites the secret file, then
+      # restarts consumer units (the deploy.sh secret-bridge orderings,
+      # declaratively mapped via services.pocket-id-config.autoRotation).
+      autoRotateScript = pkgs.writeShellApplication {
+        name = "pocket-id-auto-rotate";
+        runtimeInputs = with pkgs; [
+          curl
+          jq
+          coreutils
+          util-linux
+          systemd
+        ];
+        text = builtins.readFile ../../../scripts/pocket-id-auto-rotate.sh;
+      };
+
       provisionScript = pkgs.writeShellApplication {
         name = "pocket-id-provision";
         runtimeInputs = [
@@ -279,9 +307,16 @@ _: {
               # Paperless provisioned, secret generation failed every run).
               SECRET_FILE="$CLIENT_SECRETS_DIR/${client.clientId}"
               ${lib.optionalString (builtins.elem client.clientId cfg.provision.regenerateSecretsFor) ''
-                # Force regeneration: delete stale file so the skip-if-exists
-                # check below falls through to POST /secret.
+                # Force regeneration: delete the file so the skip-if-exists
+                # check below falls through to POST /secrets — but ONLY after
+                # the stale-list guard: a list entry that survives past its
+                # one intended deploy must fail LOUDLY, not re-rotate
+                # silently on every subsequent run (dnsblockd 2026-08-22
+                # LoadCredential-desync class).
                 if [ -f "$SECRET_FILE" ]; then
+                  if ! ${lib.getExe regenerateGuard} "$SECRET_FILE" "${client.clientId}" "${toString cfg.provision.regenerateGuardWindowHours}"; then
+                    exit 1
+                  fi
                   echo "  Force-regenerating secret (listed in regenerateSecretsFor)..."
                   rm -f "$SECRET_FILE"
                 fi
@@ -520,6 +555,86 @@ _: {
               secret rotation on subsequent provision runs.
             '';
           };
+
+          # Guard for the list above: a surviving entry re-rotates on every
+          # provision run and desyncs every consumer still holding the
+          # previous secret. Inside the window a listed-but-fresh secret
+          # FAILS the provision run with the fix in the message.
+          regenerateGuardWindowHours = lib.mkOption {
+            type = lib.types.ints.positive;
+            default = 24;
+            description = ''
+              How long (hours) a regenerateSecretsFor entry stays guarded:
+              if the client's secret file was regenerated within this window
+              and the entry is still listed, the provision run fails loudly
+              instead of re-rotating. Set -> deploy -> clear, within a day,
+              is the intended lifecycle; the escape hatch for a genuine
+              re-rotation is rm of the secret file + provision restart.
+            '';
+          };
+        };
+
+        # Scheduled rotation of stale OIDC client secrets — the automation
+        # half of Secret Rotation Health (the hourly collector only
+        # monitors). Dry-run default: review a window of
+        # `journalctl -u pocket-id-auto-rotation` plans, then flip mode to
+        # "apply". Each apply rotates at most maxPerRun clients (oldest
+        # first) and restarts that client's consumer units via
+        # clientConsumers — unit forms: "unit.service" (restart when
+        # active) or "daemon@bridge:envfile" (restart bridge, then daemon
+        # ONLY if the bridge actually re-rendered the env file — the cv
+        # duplicate-opportunity trap, 2026-10-03).
+        autoRotation = {
+          enable = lib.mkEnableOption "scheduled OIDC client secret auto-rotation (stale-secret drain)";
+          mode = lib.mkOption {
+            type = lib.types.enum [
+              "dry-run"
+              "apply"
+            ];
+            default = "dry-run";
+            description = ''
+              dry-run plans and logs what WOULD rotate (plus
+              secret_rotation_auto_pending metrics) without touching
+              anything; apply rotates for real and bounces consumer units.
+            '';
+          };
+          maxAgeDays = lib.mkOption {
+            type = lib.types.ints.positive;
+            default = 90;
+            description = "Rotate a client secret once its file is older than this (matches the Secret Rotation Health threshold).";
+          };
+          maxPerRun = lib.mkOption {
+            type = lib.types.ints.positive;
+            default = 1;
+            description = "Maximum clients rotated per run — bounds the blast radius (each rotation restarts that client's consumer units).";
+          };
+          clientConsumers = lib.mkOption {
+            type = lib.types.attrsOf (lib.types.listOf lib.types.str);
+            default = {
+              oauth2-proxy = [ "oauth2-proxy.service" ];
+              forgejo = [ "forgejo.service" ];
+              gatus = [ "gatus.service" ];
+              immich = [ "immich-server.service" ];
+              monitor365 = [ "monitor365-server.service" ];
+              miniflux = [ "miniflux.service" ];
+              browser-history = [
+                "browser-history@browser-history-oidc-setup:/var/lib/browser-history-oidc/oauth2-secrets.env"
+              ];
+              cv = [ "cv-server@cv-oidc-env:/var/lib/cv-oidc/client-secret.env" ];
+              crm = [ "crm-server@crm-oidc-env:/var/lib/crm-oidc/client-secret.env" ];
+              geometrikks = [ "geometrikks@geometrikks-oidc-env:/var/lib/geometrikks-oidc/oidc.env" ];
+              paperless = [ "paperless-web@paperless-oidc-setup:/var/lib/paperless-oidc/pocket-id.env" ];
+              dnsblockd = [ "dnsblockd@dnsblockd-oidc-secret:/var/lib/dnsblockd-oidc/client-secret.env" ];
+            };
+            description = ''
+              Client ID -> consumer units to restart after rotating that
+              client's secret, mirroring the deploy.sh secret-bridge blocks
+              (keys must match the clientId the secret FILE is named by).
+              A stale client missing from this map is skipped loudly (flag
+              via secret_rotation_auto_unmapped_clients) — rotating without
+              a consumer restart desyncs the running daemon.
+            '';
+          };
         };
       };
 
@@ -562,6 +677,15 @@ _: {
               || !config.services.paperless.enable
               || builtins.any paperlessOidcClientOk (cfg.provision.oidcClients ++ cfg.provision.extraOidcClients);
             message = ''pocket-id: paperless is SSO-only but the paperless OIDC client registration is missing or malformed (expected clientId "paperless", pkceEnabled = true, exact callback "https://paperless.${domain}/accounts/oidc/pocket-id/login/callback/") — every paperless login would break with no fallback. Fix services.pocket-id-config.provision.oidcClients.'';
+          }
+          {
+            # Auto-rotation POSTs to the provisioned clients with the static
+            # API key — without provision.enable (and its sops key) it would
+            # run with a missing key file and fail every run.
+            assertion =
+              !cfg.autoRotation.enable
+              || (cfg.provision.enable && (config.sops.secrets ? pocket_id_static_api_key));
+            message = "pocket-id: autoRotation.enable requires provision.enable and the pocket_id_static_api_key sops secret.";
           }
         ];
 
@@ -713,6 +837,46 @@ _: {
               '';
             };
 
+            # Scheduled auto-rotation — the automation half of Secret
+            # Rotation Health. Dry-run by default; flip
+            # services.pocket-id-config.autoRotation.mode to "apply" after
+            # reviewing a window of dry-run plans. Runs as root UNHARDENED,
+            # mirroring pocket-id-provision: the script chowns secret files
+            # to pocket-id and restarts arbitrary consumer units, both of
+            # which a capability-trimmed bounding set would break.
+            pocket-id-auto-rotation = lib.mkIf cfg.autoRotation.enable {
+              description = "Pocket ID OIDC client secret auto-rotation";
+              after = [ "pocket-id.service" ];
+              wants = [ "pocket-id.service" ];
+              inherit onFailure;
+              restartTriggers = [ (lib.getExe autoRotateScript) ];
+              serviceConfig = {
+                Type = "oneshot";
+                User = "root";
+                TimeoutStartSec = "20min";
+                RuntimeDirectory = "pocket-id-auto-rotation";
+                ReadWritePaths = [
+                  clientSecretsDir
+                  "/var/lib/prometheus-node-exporter/textfile_collectors"
+                ];
+              };
+              script = ''
+                ${lib.getExe autoRotateScript} \
+                  "${cfg.autoRotation.mode}" \
+                  "${config.sops.secrets.pocket_id_static_api_key.path}" \
+                  "${apiUrl}" \
+                  "${clientSecretsDir}" \
+                  "/var/lib/prometheus-node-exporter/textfile_collectors" \
+                  ${toString cfg.autoRotation.maxAgeDays} \
+                  ${toString cfg.autoRotation.maxPerRun} \
+                  ${lib.concatStringsSep " " (
+                    lib.mapAttrsToList (
+                      client: units: "${client}=${lib.concatStringsSep "," units}"
+                    ) cfg.autoRotation.clientConsumers
+                  )}
+              '';
+            };
+
             # Pocket ID is the SSO backbone: losing its SQLite DB loses every
             # OIDC client, user, and keypair. Nightly sqlite3 `.backup` (WAL-safe
             # online copy) to the mirrored HDD pool (3-drive repurposing, 2026-08-16).
@@ -751,6 +915,20 @@ _: {
             timerConfig = {
               OnBootSec = "10m";
               OnUnitActiveSec = "1h";
+            };
+          };
+
+          timers.pocket-id-auto-rotation = lib.mkIf cfg.autoRotation.enable {
+            description = "Daily Pocket ID OIDC client secret auto-rotation";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              # After pocket-id-backup (04:00). OnBootSec gives a first run
+              # soon after boot/deploy so the Gatus auto-rotation check
+              # never sits red on a never-run unit.
+              OnBootSec = "15m";
+              OnCalendar = "*-*-* 05:00:00";
+              Persistent = true;
+              RandomizedDelaySec = "15m";
             };
           };
 
@@ -795,7 +973,7 @@ _: {
                   "[BODY] != pat(*secret_rotation_all_fresh 0\n*)"
                   "[BODY] == pat(*\nsecret_rotation_all_fresh *)"
                 ];
-                alert = "One or more OIDC client secrets are stale (>90d) — consider rotating";
+                alert = "One or more OIDC client secrets are stale (>90d) — auto-rotation drains these (dry-run only reports; flip services.pocket-id-config.autoRotation.mode to apply)";
               }
               {
                 name = "Pocket ID SQLite Health";
@@ -809,6 +987,21 @@ _: {
                   "[BODY] == pat(*\nsystem_pocket_id_busy_over_threshold 0\n*)"
                 ];
                 alert = "Pocket ID SQLite is locking up (SQLITE_BUSY storm or collector scan failed) — paperless SSO, forgejo/gatus/immich logins and every oauth2-proxy vHost are at risk. Check: journalctl -u pocket-id --since -24h --grep 'database is locked'. Collateral of memory/IO pressure (zram-full evenings); resolves when pressure drains.";
+              }
+            ]
+            ++ lib.optionals cfg.autoRotation.enable [
+              {
+                name = "Pocket ID Secret Auto-Rotation";
+                group = "Infrastructure";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "30m";
+                client.timeout = "10s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\nsecret_rotation_auto_run_failed 0\n*)"
+                  "[BODY] == pat(*\nsecret_rotation_auto_rotated_total *)"
+                ];
+                alert = "Pocket ID OIDC auto-rotation failed or never ran — stale client secrets are NOT self-healing. Check: journalctl -u pocket-id-auto-rotation";
               }
             ];
             backup = {
