@@ -98,10 +98,16 @@
         PRESERVE_EXISTING_METADATA = lib.boolToString cfg.preserveExistingMetadata;
       }
       // (lib.optionalAttrs (cfg.ocrProvider == "llm") {
+        # Vision-OCR route DEAD since the ollama removal (2026-10-12):
+        # upstream shares OPENAI_BASE_URL between main+vision LLMs, so the
+        # ollama provider was the only separately-pointable vision route.
+        # The OLLAMA_HOST throw below fails the eval LOUDLY if anyone sets
+        # ocrProvider = "llm" before a replacement lands (llama-vlm bridge
+        # or an upstream base-URL split) — never silently target a dead port.
         OCR_PROVIDER = "llm";
         VISION_LLM_PROVIDER = "ollama";
         VISION_LLM_MODEL = cfg.visionModel;
-        OLLAMA_HOST = "http://127.0.0.1:${toString config.services.ollama.port or 11434}";
+        OLLAMA_HOST = "http://127.0.0.1:${toString (throw "paperless-gpt vision-OCR (ocrProvider = llm) is dead since the ollama removal 2026-10-12 — re-point the vision route at a live LLM (llama-vlm bridge or upstream OPENAI_BASE_URL split) before enabling")}";
         OCR_LIMIT_PAGES = toString cfg.ocrLimitPages;
         OCR_MAX_RETRIES = "3";
       });
@@ -213,9 +219,11 @@
         # openai vision provider SHARES OPENAI_BASE_URL with the main LLM,
         # so llama-vlm (:8127/:8128) is NOT reachable as the vision backend
         # while the main LLM points at FastFlowLM — a second OpenAI base
-        # URL does not exist upstream. The working shape is the OLLAMA
-        # provider path against the local ollama daemon (qwen2.5vl:3b is
-        # already pulled). Do NOT wire VISION_LLM_PROVIDER=openai here.
+        # URL does not exist upstream. The working shape WAS the OLLAMA
+        # provider path — DEAD since the ollama removal (2026-10-12, owner
+        # directive: bad abstraction on top of llama.cpp). Do NOT wire
+        # VISION_LLM_PROVIDER=openai here; re-decide the vision route
+        # (llama-vlm bridge or upstream base-URL split) before using "llm".
         ocrProvider = lib.mkOption {
           type = lib.types.enum [
             "off"
@@ -233,7 +241,7 @@
         visionModel = lib.mkOption {
           type = lib.types.str;
           default = "qwen2.5vl:3b";
-          description = "Ollama vision model for the LLM OCR rescue path (ignored while ocrProvider = \"off\"; must exist in the local ollama daemon).";
+          description = "Vision model for the LLM OCR rescue path (DEAD route since the ollama removal 2026-10-12 — enabling ocrProvider = llm fails eval until the vision route is re-decided; see the OLLAMA_HOST throw above).";
         };
 
         ocrLimitPages = lib.mkOption {
