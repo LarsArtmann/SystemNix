@@ -325,6 +325,27 @@
               touch $out
             '';
 
+        # The storage-history §14/§19 smoke verdicts run on EVERY deploy
+        # (the tier ships enabled, unlike the enable-gated offsite-borg);
+        # the stale/never-worked/wiring-missing branches only occur for
+        # real at the worst moment (first 04:20 window, detached pool,
+        # config regression), so the fixture is the only cheap exercise
+        # they get. Runs the SAME scripts/lib/storage-history-smoke.sh the
+        # gates source (never a drifted copy).
+        storage-history-smoke-selftest =
+          pkgs.runCommand "storage-history-smoke-selftest"
+            {
+              nativeBuildInputs = [ pkgs.jq ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              mkdir -p "$scratch/scripts/lib"
+              cp ${root}/scripts/test-storage-history-smoke.sh "$scratch/scripts/test-storage-history-smoke.sh"
+              cp ${root}/scripts/lib/storage-history-smoke.sh "$scratch/scripts/lib/storage-history-smoke.sh"
+              ${pkgs.bash}/bin/bash "$scratch/scripts/test-storage-history-smoke.sh"
+              touch $out
+            '';
+
         # Fixture selftest for the pre-commit formatter memo
         # (scripts/lib/precommit-eval-cache.sh — sourced by the hook
         # and scripts/fmt-cached.sh, never a drifted copy). Proves the

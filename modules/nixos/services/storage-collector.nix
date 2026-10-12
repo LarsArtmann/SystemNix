@@ -94,6 +94,17 @@
           # must point at a storage-collector revision containing the
           # explicit-0644 textfile write (landed 2026-10-12) BEFORE this
           # deploys, else the .prom regresses to 0600 until the bump.
+          # Crash-orphan sweep (2026-10-12): the atomic state rewrite
+          # (tmp + rename) leaves `.state.json.*.tmp` behind whenever the
+          # process dies mid-write — three live orphans (Sep 19 ×2 + the
+          # Oct 10 23:22 crash cut, journal-attributed boot) proved nothing
+          # else cleans them; one orphan per crash doubles as a free
+          # crash-count signal. Best-effort (`-` prefix): a DynamicUser UID
+          # rotation could leave an old orphan undeletable, which must
+          # never block the daemon from starting.
+          ExecStartPre = [
+            "-${pkgs.findutils}/bin/find ${cfg.dataDir} -maxdepth 1 -name '.state.json.*.tmp' -delete"
+          ];
         };
 
         # Record integrity probe: verify parses the whole JSONL record and

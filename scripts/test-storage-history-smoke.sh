@@ -155,13 +155,16 @@ classify_expect "anomaly" "$SCRATCH/empty.err" "empty stderr → anomaly"
 
 echo "=== Post-deploy §19 (sh_post_deploy) ==="
 
-# systemctl stub: answers the two live queries from env, fails anything else
+# systemctl stub: answers the two live queries from env, fails anything else.
+# Shebang is the ambient bash — a literal /usr/bin/env does not exist in the
+# nix build sandbox (the selftest flake check runs there).
+STUB_BASH="$(command -v bash)"
 mkdir -p "$SCRATCH/bin"
-cat >"$SCRATCH/bin/systemctl" <<'STUB'
-#!/usr/bin/env bash
-case "$1 $2" in
-"is-enabled restic-backups-storage-history.timer") echo "${FIX_TIMER_STATE:-enabled}"; exit 0 ;;
-"is-active restic-storage-history-setup.service") echo "${FIX_SETUP_STATE:-active}"; exit 0 ;;
+cat >"$SCRATCH/bin/systemctl" <<STUB
+#!$STUB_BASH
+case "\$1 \$2" in
+"is-enabled restic-backups-storage-history.timer") echo "\${FIX_TIMER_STATE:-enabled}"; exit 0 ;;
+"is-active restic-storage-history-setup.service") echo "\${FIX_SETUP_STATE:-active}"; exit 0 ;;
 esac
 exit 1
 STUB
@@ -224,19 +227,23 @@ sh_post_deploy "$GOOD_UNIT_FILE" "$GOOD_TIMER_FILE" "$SCRATCH/backups.prom"
 expect "$ALL_PASS7" "full-green deploy → all seven PASS"
 
 reset
-sh_post_deploy "$(grep -v restic-storage-history/.last_success "$GOOD_UNIT_FILE")" "$GOOD_TIMER_FILE" "$SCRATCH/backups.prom"
+grep -v 'restic-storage-history/.last_success' "$GOOD_UNIT_FILE" >"$SCRATCH/mut-marker.service"
+sh_post_deploy "$SCRATCH/mut-marker.service" "$GOOD_TIMER_FILE" "$SCRATCH/backups.prom"
 expect "FAIL $FIRST_SIX" "marker wiring missing → exactly that FAIL"
 
 reset
-sh_post_deploy "$(grep -v '^RequiresMountsFor=' "$GOOD_UNIT_FILE")" "$GOOD_TIMER_FILE" "$SCRATCH/backups.prom"
+grep -v '^RequiresMountsFor=' "$GOOD_UNIT_FILE" >"$SCRATCH/mut-mount.service"
+sh_post_deploy "$SCRATCH/mut-mount.service" "$GOOD_TIMER_FILE" "$SCRATCH/backups.prom"
 expect "PASS FAIL PASS PASS PASS PASS PASS" "mount gate missing → exactly that FAIL"
 
 reset
-sh_post_deploy "$(sed s/best-effort/idle/ "$GOOD_UNIT_FILE")" "$GOOD_TIMER_FILE" "$SCRATCH/backups.prom"
+sed s/best-effort/idle/ "$GOOD_UNIT_FILE" >"$SCRATCH/mut-io.service"
+sh_post_deploy "$SCRATCH/mut-io.service" "$GOOD_TIMER_FILE" "$SCRATCH/backups.prom"
 expect "PASS PASS FAIL PASS PASS PASS PASS" "IO tier wrong in deployed unit → exactly that FAIL"
 
 reset
-sh_post_deploy "$GOOD_UNIT_FILE" "$(sed s/04:20:00/05:15:00/ "$GOOD_TIMER_FILE")" "$SCRATCH/backups.prom"
+sed s/04:20:00/05:15:00/ "$GOOD_TIMER_FILE" >"$SCRATCH/mut.timer"
+sh_post_deploy "$GOOD_UNIT_FILE" "$SCRATCH/mut.timer" "$SCRATCH/backups.prom"
 expect "PASS PASS PASS FAIL PASS PASS PASS" "timer shape wrong in deployed .timer → exactly that FAIL"
 
 prom_write "$SCRATCH/backups.prom" "$PROM_FRESH"
