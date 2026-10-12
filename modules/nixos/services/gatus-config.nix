@@ -1148,6 +1148,63 @@ _: {
                   ];
                   alerts = discordAlert "I/O pressure CRITICAL — PSI I/O stall high AND disk %util corroborates (crash3 phantom-filtered: idle-disk PSI = D-state corpse pile, covered by the Stuck D-State check, not this one). Check: nvme smart-log, fstrim status, btrfs filesystem usage. REVIEWED 2026-09-19 (permanently-red TODO): the signal is CORRECT by design — sustained some avg300 >10% with real disk corroboration IS an ongoing storm (the freeze-5/6 era red was real pressure, now structurally fixed via the crush-DB migration); a continuously red check means the box is genuinely IO-starved, do not mute it — fix the readers";
                 })
+                (mkHttpCheck {
+                  name = "System-Health Metrics";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_cgroup_mem_anon_bytes*)"
+                    "[BODY] == pat(*system_oomd_kills_total*)"
+                  ];
+                  alerts = discordAlert "system_health.prom is being REJECTED by node_exporter (whole-file textfile parse failure) or the collector died — EVERY system_* metric is blind: crash-loop, zram, oomd, census, thermal, user-unit monitoring all dark. THREE incidents of this class already (2026-09-20 nrestarts value, 2026-10-03 \\x2d label, 2026-10-12 census newline glue). Check: journalctl -u prometheus-node-exporter -n 5 (the 'failed to parse textfile' line names the exact line), then journalctl -u system-health-metrics -n 30. Fixes ride a deploy.";
+                })
+                (mkHttpCheck {
+                  name = "CPU Thermal Alert";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_thermal_alert 0*)"
+                  ];
+                  alerts = discordAlert "CPU Tctl ≥ 95°C (k10temp) — the sustained-ceiling pre-crash signal of the thermal freeze lineage #8/#9/#11/#12 (98-99°C before the instant cuts). thermal-pstate-guard should already be throttling (guided mode); if temp keeps climbing, stop heavy work and check fans/ambient. Raw trend: system_cpu_temp_celsius + node_hwmon_temp_celsius in SigNoz.";
+                })
+                (mkHttpCheck {
+                  name = "Boot Metrics";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*boot_phase_duration_seconds*)"
+                    "[BODY] == pat(*boot_metrics_scrape_errors 0*)"
+                  ];
+                  alerts = discordAlert "Boot-duration metrics missing or erroring — boot regressions are invisible again (the pre-2026-10-12 state: a 14min boot waited for a human to run systemd-analyze). Check: systemctl status boot-metrics-emit + journalctl -u boot-metrics-emit -n 20 (systemd-analyze retry budget exhausted?).";
+                })
+                (mkHttpCheck {
+                  name = "Boot Userspace Regression";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*boot_userspace_regression 0*)"
+                  ];
+                  alerts = discordAlert "This boot's USERSPACE phase exceeded 180s — the boot-path regression line (2026-10-12 fixes hold calm boots ≤~60s; the storm class runs 8-13min). Stays red until the next (good) boot by design. Check: boot_phase_duration_seconds per phase in SigNoz, systemd-analyze blame on the box; clickhouse recovery + llama-chat page-in are the usual suspects (storage.md relocation row).";
+                })
+                (mkHttpCheck {
+                  name = "Boot Watchdog Reset";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*boot_reset_reason_watchdog 0*)"
+                  ];
+                  alerts = discordAlert "The CURRENT boot was a hardware-watchdog reset — a freeze-class death (15 of these in the 12 days to 2026-10-12, all crash-class, zero clean reboots since Oct 1). Stays red until the next clean boot by design — treat a red-with-no-new-page state as 'running on a corpse boot', not a new incident. Freeze family + autopsy index: docs/agents/stability.md.";
+                })
               ]
               # Crush Daily / Dozzle / Overview checks moved to their owning
               # modules (services.integration.<name>.checks).

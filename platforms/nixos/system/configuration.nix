@@ -1364,6 +1364,12 @@ in
       # dashboard consume these.
       pool-smart-metrics.enable = true;
 
+      # Boot-duration metrics (systemd-analyze phases → textfile): every
+      # reboot becomes a free verification boot for the 2026-10-12 boot-path
+      # fixes; watchdog-reset classification + userspace regression paging
+      # ride the same sample (Gatus "Boot *" checks).
+      boot-metrics.enable = true;
+
       # Cross-service backup health monitoring. Checks all backup dirs for
       # freshness and writes Prometheus metrics. Gatus alerts on Discord
       # when any backup is stale (>25h). Schedules are staggered to avoid
