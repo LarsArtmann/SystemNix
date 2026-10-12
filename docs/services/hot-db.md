@@ -28,7 +28,9 @@ wave 6 is the lowest-risk of all and may jump the queue):
 
 ### Pre-flight verified (2026-10-04, agent session — tree untouched, throwaway extendModules)
 
-- **All six snippets eval-green**: every entry below (+ the postgres future
+- **All six snippets eval-green** (2026-10-04: the five waves + postgres;
+  wave 6 + the refreshed postgres snippet re-verified 2026-10-12, same
+  method): every entry below (+ the postgres future
   wave) applied to evo-x2 via `extendModules` — zero failed assertions
   (incl. the btrbk landmine scan), mounts render (`subvol=hot/<name>`,
   `nofail`, device `/dev/disk/by-label/tlc`; postgres carries `nodatacow`),
