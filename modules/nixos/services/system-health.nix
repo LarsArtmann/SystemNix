@@ -36,6 +36,25 @@ _: {
       allMonitoredServices = cfg.monitoredServices ++ cfg.extraMonitoredServices;
       textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
 
+      # Census durability ring (2026-10-12): the 10-03 OOM cascade lost the
+      # system_cgroup_mem_* census 07:18→17:00 — the .prom is published by a
+      # single atomic mv at the END of the run, so a timeout-killed or
+      # starved run loses the census with everything else, and the SigNoz
+      # ingest path starves under the exact pressure the census exists to
+      # explain. The collector appends each census sample to this local
+      # rotate-last-N ring immediately after computing it (before the slow
+      # journal sections). 720 blocks = 24h at the default 2-min cadence.
+      censusRingKeepBlocks = 720;
+      censusRing = pkgs.writeShellApplication {
+        name = "system-health-census-ring";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.gnugrep
+          pkgs.gawk
+        ];
+        text = builtins.readFile ../../../scripts/system-health-census-ring.sh;
+      };
+
       # user-1000.slice alert threshold DERIVED from the slice's own MemoryHigh
       # (declared in boot.nix). A flat 40G predated the 2026-08-04 limit raise
       # (56G/64G → 80G/90G) and false-fired on a normal desktop session (50G of
@@ -206,6 +225,9 @@ _: {
           # (run ceiling is 5min). Root has CAP_FOWNER; harmless as user.
           ${pkgs.findutils}/bin/find "${textfileDir}" -maxdepth 1 -type f -name 'system_health.prom.??????' -mmin +120 -delete 2>/dev/null || true
           ${pkgs.findutils}/bin/find "${textfileDir}" -maxdepth 1 -type f -name '.system_health_*_state.??????' -mmin +120 -delete 2>/dev/null || true
+          # Census-ring tmp corpses share the SIGKILL class above; never
+          # scraped (not *.prom).
+          ${pkgs.findutils}/bin/find "${textfileDir}" -maxdepth 1 -type f -name 'census-memory-ring.log.??????' -mmin +120 -delete 2>/dev/null || true
           # State-file tmp handles (mktemp, niri doctrine): a fixed
           # "<state>.tmp" truncate-open in this sticky 1777 dir dies EACCES
           # on a foreign-owned leftover — harden{} strips CAP_DAC_OVERRIDE
