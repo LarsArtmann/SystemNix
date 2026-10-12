@@ -26,8 +26,9 @@
 #     the conversation).
 #   - Ollama (:11434): owner-REJECTED — "bad abstraction on top of
 #     llama.cpp" (standing directive 2026-10-12, fleet-wide). Never wire a
-#     SystemNix service to it; the evo-x2 instance still running serves only
-#     the Quickshell DMS widget and is a removal candidate.
+#     SystemNix service to it; the evo-x2 instance was REMOVED the same day
+#     (service + widget + SigNoz rule + port + ai-models paths);
+#     /data/ai/models/ollama (~15 G) is owner-reclaim residue.
 #
 # Model: Lars's own abliterated Qwen3.6 MoE tune from the Jan model tree
 # (the April download was interrupted; completed + sha256-verified

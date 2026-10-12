@@ -483,7 +483,7 @@ in
     # pre-Docker-removal history). 60% sustained 30s catches genuine memory
     # exhaustion (slow leaks, runaway processes) while tolerating the
     # transient pressure spikes inherent to nix builds and AI model loads
-    # (Ollama 32G).
+    # (llama-chat's 48G ceiling is the largest single AI service bound).
     # nix-daemon is additionally exempted via ManagedOOMPreference=omit.
     # Per-slice MemoryMax limits (user-1000: 90G hard cap) remain as backstop.
     oomd = {

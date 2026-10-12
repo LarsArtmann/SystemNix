@@ -21,9 +21,12 @@ doctrine), dump-only RPO.
 
 `services.hot-db.enable = true`; entries in configuration.nix:
 **`discordsync` LIVE since 2026-10-12 (wave 5 done, out of order — owner chose
-it first for downtime tolerance)**. Remaining waves: gatus, dnsblockd,
-pocket-id, browser-history, storage-collector. Entries are added **ONE PER
-WAVE** — an entry deployed before its `prepare`/`cutover` mounts an EMPTY
+it first for downtime tolerance)**. Rollback insurance: the original QLC
+store (994 MB, pre-cutover) still sits hidden under the mountpoint — keep it
+until the soak ends (owner call, suggest ≥1 week incl. one verified 03:45
+dump), then reclaim per the finalize output. Remaining waves: gatus,
+dnsblockd, pocket-id, browser-history, storage-collector. Entries are added
+**ONE PER WAVE** — an entry deployed before its `prepare`/`cutover` mounts an EMPTY
 subvol over the live dataDir and shadow-splits the service. **That landmine
 sprang once: 2026-10-12 14:31, the discordsync entry rode a parallel
 session's deploy before any `prepare` — the service crash-looped onto an

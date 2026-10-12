@@ -87,7 +87,7 @@ The evo-x2 has a 2TB QLC NVMe (Lexar NQ790) with an SLC write cache that BTRFS C
 | Desktop           | `ioTier.desktop`     | BE/3           | niri, dms, pipewire, crush (wrapper)                | Compositor/audio must stay responsive   |
 | Service (default) | `ioTier.service`     | BE/4           | Most services                                       | Default for unclassified services       |
 | Heavy DB          | `ioTier.heavyDB`     | BE/5           | clickhouse, monitor365-server                       | Latency-sensitive databases             |
-| Background        | `ioTier.background`  | BE/6           | signoz, discordsync, browser-history, ollama, attic | Standard daemons tolerating I/O latency |
+| Background        | `ioTier.background`  | BE/6           | signoz, discordsync, browser-history, attic         | Standard daemons tolerating I/O latency |
 | Build             | `ioTier.build`       | BE/7 + Nice=10 | nix-daemon, forgejo-runner, PMA                     | Batch builds and CI — lowest BE         |
 | Maintenance       | `ioTier.maintenance` | idle + Nice=10 | fstrim, clamav                                      | Only runs when nothing else needs I/O   |
 

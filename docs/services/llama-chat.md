@@ -12,9 +12,10 @@ Always-on CPU llama-server (llama.cpp) serving Lars's abliterated Qwen3.6
   consumers (paperless-gpt tagging, commit-message generation) and stays
   theirs. Ollama is owner-REJECTED as an AI-stack foundation (standing
   directive 2026-10-12: "bad abstraction on top of llama.cpp — I do not want
-  ollama"). Never wire a SystemNix service to it; the instance still running
-  on evo-x2 exists only for the Quickshell DMS widget (`systemnix-ollama`
-  plugin) and is a removal candidate.
+  ollama"). Never wire a SystemNix service to it. The evo-x2 instance was
+  REMOVED the same day (service, gatus check, dashboard tile, SigNoz rule,
+  DMS widget, port 11434, ai-models paths); `/data/ai/models/ollama` (~15 G)
+  is owner-reclaim residue.
 - **CPU, not GPU**: the llama.cpp/ROCm path wedges under systemd units on
   gfx1150 (freeze #5, 2026-09-18 — even the rev-pinned 0.3.0 build; see
   llama-rag.nix). The CPU build (0.6.0 at the 2026-10-10 deploy; 0.5.0 proven earlier) is in production
