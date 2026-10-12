@@ -303,10 +303,24 @@ _: {
           {
             assertion =
               let
-                offenders = lib.filter (ep: lib.any (al: lib.hasInfix "\"" (al.description or "") || lib.hasInfix "\\" (al.description or "")) (ep.alerts or [ ])) config.services.gatus.settings.endpoints;
+                offenders = lib.filter (
+                  ep:
+                  lib.any (al: lib.hasInfix "\"" (al.description or "") || lib.hasInfix "\\" (al.description or "")) (
+                    ep.alerts or [ ]
+                  )
+                ) config.services.gatus.settings.endpoints;
               in
               offenders == [ ];
-            message = "gatus-alert-text-audit: alert description contains \" or \\ — Gatus crash-loops on config parse (2026-10-12 incident). Rewrite without backslashes/quotes: ${lib.concatMapStringsSep ", " (ep: ep.name or "?") (lib.filter (ep: lib.any (al: lib.hasInfix "\"" (al.description or "") || lib.hasInfix "\\" (al.description or "")) (ep.alerts or [ ])) config.services.gatus.settings.endpoints)}";
+            message = "gatus-alert-text-audit: alert description contains \" or \\ — Gatus crash-loops on config parse (2026-10-12 incident). Rewrite without backslashes/quotes: ${
+              lib.concatMapStringsSep ", " (ep: ep.name or "?") (
+                lib.filter (
+                  ep:
+                  lib.any (al: lib.hasInfix "\"" (al.description or "") || lib.hasInfix "\\" (al.description or "")) (
+                    ep.alerts or [ ]
+                  )
+                ) config.services.gatus.settings.endpoints
+              )
+            }";
           }
         ];
         services.gatus = {

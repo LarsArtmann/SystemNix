@@ -43,8 +43,7 @@
       # clean, store c1ffr7g8…; the shim's /NYfLmDMx… was measured at
       # 1ac31f8 and hash-mismatched in the 2026-10-12 toplevel keep-going
       # enumeration). Re-add ONLY via nix-hash-fix evidence, never by hand.
-      discordsyncPkg =
-        inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default;
       sopsEnvPath = config.sops.templates."discordsync-env".path;
 
       dbBackupDir = "/mnt/pool/backups/discordsync";
