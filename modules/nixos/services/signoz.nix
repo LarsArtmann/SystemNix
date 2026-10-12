@@ -1170,6 +1170,10 @@ in
                       disk = { };
                       filesystem = {
                         exclude_fs_types = {
+                          # 2026-10-12: otelcol v0.144 rejects an empty match_type
+                          # ("unrecognized match_type: ''" — crash-looped
+                          # signoz-collector to start-limit-hit on deploy).
+                          match_type = "strict";
                           fs_types = [
                             "proc"
                             "sysfs"
