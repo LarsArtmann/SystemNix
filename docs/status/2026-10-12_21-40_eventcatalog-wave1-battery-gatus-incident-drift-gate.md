@@ -105,6 +105,19 @@ Scope: `docs/planning/2026-10-12_18-20_eventcatalog-post-golive-pareto-execution
    guard rejection before rewriting with `sops --extract`. The set was
    right; my check was wrong; evidence discipline held (byte-compare
    before any "verified" claim) but cost three cycles.
+3. **The token paste verified the WRONG ENTITY — three deploys of
+   self-inflicted churn.** I followed the runbook's env-file wording,
+   created a NEW uppercase yaml key (`ARCHITECTURE_CATALOG_SYNC_TOKEN`)
+   instead of updating the existing lowercase one
+   (`architecture_catalog_sync_token`) that the module actually reads,
+   and stored the bare token instead of the whole env line. My
+   "byte-verified OK" checks compared the key I CREATED against the
+   forgejo file — exactly the "assert WHICH entity served it" failure
+   the repo rules warn about, one level down: assert WHICH KEY the
+   renderer reads. The live render kept serving the old token through
+   two deploys; the digest triad (tree yaml / forgejo file / rendered
+   file) finally exposed it. The runbook step-4 wording is now fixed
+   and the yaml carries only the correct key/shape.
 
 ## e) WHAT WE SHOULD IMPROVE
 

@@ -63,9 +63,17 @@ Actions, nightly 03:23 UTC = 05:23 CEST (cron `23 3 * * *` is TZ-less UTC — co
    ```
    SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops platforms/nixos/secrets/architecture-catalog.yaml
    ```
-   — keep the env-file format `ARCHITECTURE_CATALOG_SYNC_TOKEN=<token>`,
-   reading the token via `sudo cat /var/lib/forgejo/.eventcatalog-hub-setup/sync-token`.
-   **DONE 2026-10-12 (owner paste; the 03:15 sync token was still valid).**
+   — CRITICAL SHAPE (2026-10-12 lesson, 3-deploy odyssey): the yaml's key
+   is the LOWERCASE secret name `architecture_catalog_sync_token`, and its
+   VALUE must be the WHOLE env line `ARCHITECTURE_CATALOG_SYNC_TOKEN=<token>`
+   (prefix included) — sops-nix renders the value verbatim as the unit's
+   EnvironmentFile, so a bare token or a second uppercase key both ship a
+   file systemd cannot parse. Read the token via
+   `sudo cat /var/lib/forgejo/.eventcatalog-hub-setup/sync-token`.
+   **DONE 2026-10-12 (owner paste; the 03:15 sync token was still valid).
+   Re-done 2026-10-12 evening (agent paste, owner-authorized): the setup
+   script's 3 runs that day had rotated the token out from under the
+   deployed secret (serving frozen at the 03:26 build; converged 23:20).**
 5. `nix run .#deploy` (the module + DNS + smoke §15 are already in-tree),
    then `nix run .#post-deploy-check` — §15 stops warning once
    `/var/lib/architecture-catalog/current/index.html` exists. **DONE
