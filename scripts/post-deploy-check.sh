@@ -178,9 +178,17 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/offsite-borg-smoke.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/lib/memory-throttle-sweep.sh"
 # shellcheck source=scripts/lib/service-sanity-sweep.sh disable=SC1091
 source "$(dirname "${BASH_SOURCE[0]}")/lib/service-sanity-sweep.sh"
-# Read by the sourced lib (sandbox shellcheck cannot follow it).
+# Shared storage-history §19 smoke logic (fixture-tested by
+# scripts/test-storage-history-smoke.sh and the
+# storage-history-smoke-selftest flake check — the freshness verdicts feed
+# the deploy smoke summary).
+# shellcheck source=scripts/lib/storage-history-smoke.sh disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/lib/storage-history-smoke.sh"
+# Read by the sourced libs (sandbox shellcheck cannot follow them).
 # shellcheck disable=SC2034
 OB_PASS=report_pass OB_FAIL=report_fail OB_WARN=report_warn OB_SKIP=report_skip
+# shellcheck disable=SC2034
+STH_PASS=report_pass STH_FAIL=report_fail STH_WARN=report_warn
 
 # Storm-mode gate (2026-10-09 §f6 triage class): a parallel build saturating
 # the disk false-FAILs the load-sensitive checks on every busy deploy, and
@@ -2039,6 +2047,25 @@ systemnix_memory_throttle_sweep
 
 echo "=== §18 Service sanity (CPU + journal-rate, the DiscordSync hotloop class) ==="
 systemnix_service_sanity_sweep
+
+# --- §19 Storage history restic (restic-backups-storage-history) ---
+# Pre-deploy §14's runtime counterpart. Unlike offsite-borg this ships
+# ENABLED in the config (no enable gate), so a MISSING deployed unit is a
+# FAIL, not a skip — enabled+absent means the switch did not carry it (the
+# §16 enable-blind-SKIP bug class). Live freshness is read from the
+# world-readable backups.prom (backup_ever_succeeded distinguishes
+# never-worked from stale): the repo + .last_success marker are root-only
+# 0700 (mail-relay lesson — a user-run probe cannot read them), and on the
+# LANDING deploy the first 04:20 window may not have elapsed yet, so
+# never-worked grades WARN with the re-check pointer, not FAIL.
+echo ""
+echo "=== §19 Storage history (restic-storage-history) ==="
+# Paths are env-overridable with host defaults so the fixture harness
+# (scripts/test-storage-history-smoke.sh) drives the REAL lib, not a copy.
+STH_UNIT="${STH_UNIT:-/etc/systemd/system/restic-backups-storage-history.service}"
+STH_TIMER="${STH_TIMER:-/etc/systemd/system/restic-backups-storage-history.timer}"
+STH_PROM="${STH_PROM:-/var/lib/prometheus-node-exporter/textfile_collectors/backups.prom}"
+sh_post_deploy "$STH_UNIT" "$STH_TIMER" "$STH_PROM"
 
 # --- Summary ---
 echo ""

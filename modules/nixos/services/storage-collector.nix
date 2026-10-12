@@ -86,12 +86,14 @@
           # ProtectSystem=strict upstream: the textfile dir must be
           # writable next to the StateDirectory.
           ReadWritePaths = [ textfileDir ];
-          # Upstream pins UMask=0077 (DynamicUser), so the crate's tmp+rename
-          # lands a 0600 .prom that node_exporter cannot read
-          # (node_textfile_scrape_error=1, storage metrics absent, 2026-09-20).
-          # 0022 yields 0644 and self-heals on the next write cycle. The
-          # durable fix is upstream (chmod the .prom, keep 0077 for dataDir).
-          UMask = lib.mkForce "0022";
+          # The 2026-09-20 `UMask = mkForce "0022"` workaround is retired:
+          # the crate now chmods the published .prom to 0644 explicitly
+          # (umask-independent, regression-tested in textfile.rs), so the
+          # upstream UMask=0077 stands — dataDir files stay 0600 while the
+          # .prom stays scrapable. Deploy coupling: SystemNix flake.lock
+          # must point at a storage-collector revision containing the
+          # explicit-0644 textfile write (landed 2026-10-12) BEFORE this
+          # deploys, else the .prom regresses to 0600 until the bump.
         };
 
         # Record integrity probe: verify parses the whole JSONL record and

@@ -49,11 +49,18 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/metrics-gate.sh"
 # flake check — the go-live deploy BLOCKS on these verdicts).
 # shellcheck source=scripts/lib/offsite-borg-smoke.sh disable=SC1091
 source "$(dirname "${BASH_SOURCE[0]}")/lib/offsite-borg-smoke.sh"
+
+# Shared storage-history §14 smoke logic (fixture-tested by
+# scripts/test-storage-history-smoke.sh and the
+# storage-history-smoke-selftest flake check).
+# shellcheck source=scripts/lib/storage-history-smoke.sh disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/lib/storage-history-smoke.sh"
 # Verdict callbacks read indirectly inside the sourced lib (same SC2034
 # reasoning as the metrics-gate producers above); ob_pre_skip is invoked
 # only through "$OB_SKIP" dispatch.
 # shellcheck disable=SC2034
 OB_PASS=pass OB_FAIL=fail OB_SKIP=ob_pre_skip
+STH_PASS=pass STH_FAIL=fail
 # shellcheck disable=SC2329
 ob_pre_skip() { echo "   $1"; }
 # Shared §11 vendor-freshness FOD gate (fixture-tested by
@@ -841,6 +848,43 @@ else
   tail -20 "$BORG_EVAL_ERR"
 fi
 rm -f "$BORG_EVAL_ERR"
+
+# 14. restic storage-history wiring (storage-collector indefinite history tier)
+# Landed 2026-10-12 (a4ab0f82): nightly restic archive of the REAL
+# StateDirectory (/var/lib/private/storage-collector) to
+# /mnt/pool/backups/restic-storage-history with NO pruneOpts — indefinite
+# retention IS the design (the year-scale trend record; a pruneOpts addition
+# silently destroys it). Assertions live in scripts/lib/storage-history-smoke.sh
+# (sh_pre_deploy — fixture-tested, never a drifted copy). Catches the cv-backup
+# silent-no-op class at wiring level: the ExecStartPost .last_success marker
+# (backup-coordination freshness + the aggregate "All Backups Healthy" Gatus
+# check), RequiresMountsFor=/mnt/pool (no shadow-dir writes on a detached DAS),
+# the ioTier.background tier, and the 04:20 timer shape. Same anti-blind-skip
+# discipline as §13: only the exact attribute-missing shape (storage-collector
+# module disabled ⇒ the units are absent from systemd.services) may SKIP; any
+# other eval failure (daemon restart, store hiccup, real config error) FAILS
+# LOUD instead of skipping the gate.
+echo ""
+echo "14. restic storage-history wiring"
+SH_EVAL_ERR=$(mktemp)
+SH_SVC=""
+SH_SVC=$(nix eval --json .#nixosConfigurations.evo-x2.config.systemd.services.restic-backups-storage-history.serviceConfig 2>"$SH_EVAL_ERR") || true
+if [ -n "$SH_SVC" ]; then
+  SH_OPTS=$(nix eval --json .#nixosConfigurations.evo-x2.config.services.restic.backups.storage-history 2>/dev/null || echo "")
+  SH_UNIT=$(nix eval --json .#nixosConfigurations.evo-x2.config.systemd.services.restic-backups-storage-history.unitConfig 2>/dev/null || echo "")
+  SH_SETUP=$(nix eval --json .#nixosConfigurations.evo-x2.config.systemd.services.restic-storage-history-setup.serviceConfig 2>/dev/null || echo "")
+  if [ -z "$SH_OPTS" ] || [ -z "$SH_UNIT" ] || [ -z "$SH_SETUP" ]; then
+    fail "storage-history §14 secondary eval returned empty (opts/unit/setup) — refusing to assert against a half-read config"
+  else
+    sh_pre_deploy "$SH_OPTS" "$SH_SVC" "$SH_UNIT" "$SH_SETUP"
+  fi
+elif [ "$(sh_classify_eval_error "$SH_EVAL_ERR")" = "disabled" ]; then
+  warn "storage-history tier not rendered (storage-collector disabled in the to-be-deployed config) — skipped"
+else
+  fail "storage-history §14 eval failed — NOT the known disabled shape; refusing to blind-skip (raw error follows):"
+  tail -20 "$SH_EVAL_ERR"
+fi
+rm -f "$SH_EVAL_ERR"
 
 # Summary
 echo ""
