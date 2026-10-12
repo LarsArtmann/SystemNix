@@ -122,17 +122,23 @@ in
       tempAllowAll = false;
 
       # Local DNS records: home.lan zone with all service subdomains.
-      # INTENT (NOT LIVE): the *.home.lan wildcard record should make UNKNOWN
-      # names resolve to the server so Caddy's catch-all answers them with a
-      # real 404 page. LIVE-FALSIFIED 2026-10-07, re-verified 2026-10-10:
-      # dnsblockd's LocalZoneStore is exact-match only (internal/dns/
-      # localzone.go Lookup — a `*.` key is stored as a literal name no query
-      # can hit), so unknown *.home.lan names answer NXDOMAIN and never reach
-      # Caddy (source-verified at upstream HEAD 039ba0f, == the deployed
-      # binary). Fix tracked in docs/todo/services.md (upstream glob support
-      # or a config shape the binary honors). The cloud zone is wildcard-free
-      # by the same limitation (sdns ignores wildcard local records): unknown
-      # *.cloud names return NXDOMAIN at the zone boundary.
+      # LIVE 2026-10-12: the *.home.lan wildcard record makes UNKNOWN names
+      # resolve to the server so Caddy's catch-all answers them with a real
+      # 404 page. The wildcard was configured-but-dead 2026-10-07 → 2026-10-12
+      # (dnsblockd's LocalZoneStore was exact-match only — a `*.` key was
+      # stored as a literal name no query could hit, so unknown names
+      # NXDOMAINed before reaching Caddy); fixed upstream in dnsblockd
+      # d5a22a4b (RFC 4592 wildcard lookup + query-name owner synthesis),
+      # live-verified end-to-end the same day (unknown name → A answer with
+      # synthesised owner → Caddy 404 branded page; apex and exact records
+      # still win; AAAA on an A-only wildcard still NXDOMAINs at the zone
+      # boundary). NB: LAN clients with `search home.lan` now also resolve
+      # <anything>.<failed-tld>.home.lan through the wildcard — same
+      # behaviour a Unbound local-zone wildcard would produce. The cloud
+      # zone stays wildcard-free BY DESIGN (explicit records only, one
+      # namespace for the VPN alias set — not a tooling limitation; the
+      # old "sdns ignores wildcard local records" reasoning was wrong: the
+      # limit lived in LocalZoneStore, which now supports wildcards).
       localRecords =
         builtins.listToAttrs (
           map (subdomain: {
@@ -146,8 +152,10 @@ in
         }
         # Split-horizon alias zone (brainstorming 2026-09-30): the same
         # service set under the cloud domain so VPN clients get one
-        # namespace everywhere. No wildcard entry — sdns ignores wildcard
-        # local records (gotchas-archive.md), explicit records only.
+        # namespace everywhere. No wildcard entry — explicit records only,
+        # by design (unknown cloud names NXDOMAIN; a wildcard WOULD work
+        # since dnsblockd d5a22a4b, but a deliberately closed alias zone
+        # beats typos silently landing on the catch-all page).
         // builtins.listToAttrs (
           map (subdomain: {
             name = "${subdomain}.${cloudDomain}.";
