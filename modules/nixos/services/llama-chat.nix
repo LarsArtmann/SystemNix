@@ -265,9 +265,11 @@ _: {
         # wedged/missing brain until InboxClean chat turns start failing.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           llama-chat = {
-            inherit (cfg) enable;
+            inherit (cfg)
+              enable
+              port
+              ;
             subdomain = "llama";
-            port = cfg.port;
             vHost.layer = "protected";
             monitored = true;
             checks = [
