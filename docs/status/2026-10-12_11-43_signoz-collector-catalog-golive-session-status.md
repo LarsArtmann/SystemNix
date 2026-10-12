@@ -204,3 +204,33 @@ together (same file, same flow)
 - `docs/services/signoz.md`: boot-test caveat amended into the existing gotcha (no row needed)
 - Deliberately NOT harvested: §c/§f items 6–35 (pre-existing rows already tracked, or
   noticed-only items without a concrete ask yet — items 11–13 etc. live in their rows)
+
+---
+
+## Post-go-live verification battery (2026-10-12 ~20:15 CEST — Pareto plan Wave 1)
+
+Executive finding first: **Gatus itself was DOWN** (crash loop since 18:11 — a
+backslash inside an alert description on the `monitoring_system-health-metrics`
+endpoint failed config parse; fixed in `c18a78d6`, deploy pending an IO-pressure
+window), so check-state could NOT be read from Gatus; every verdict below comes
+from the underlying surfaces directly.
+
+| # | Surface (WHAT) | Verdict | Evidence (WHERE) |
+| --- | --- | --- | --- |
+| 1 | vHost `catalog.home.lan/` | PASS | `200` + `<title>EventCatalog \| EventCatalog</title>` via 192.168.1.150:443 (the chain Gatus checks; evo-x2 Caddy `.200:443` answers the dnsblockd block page for this SNI — .150 terminates protected vHosts) |
+| 2 | `/llms.txt` | PASS (stale host) | `200`, 5.5KB body, all 4 source domains present, 10/10 sampled links resolve in the served tree — but links carry `eventcatalog.dev` (served dist predates the run-68 homepageLink fix; hub §b.1's frozen-serving warning materialized) |
+| 3 | `/llms-full.txt` | PASS | `200` |
+| 4 | `/schemas.txt` | **FAIL — does not exist** | `404` live; served tree has `schemas/` dir (no index) + `llms-full.txt`. Runbook documented a phantom surface — corrected in the runbook 2026-10-12 |
+| 5 | Freshness gauges | PASS | textfile prom: `dist_present 1`, `fresh 1`, `stamp_age_seconds 49907` (~13.9h), `scrape_errors 0` |
+| 6 | build-stamp | PASS | `builtAt 2026-10-12T03:26:18Z` (nightly cron build), all 4 sources with revs |
+| 7 | Serving freshness window | **WATCH — frozen** | `current → generations/20261012-140000`; sync succeeded 12:00/13:00/14:00, then 401s (sync token rotated by today's 3 setup-forgejo.sh runs). dist advanced to run-68 but cannot serve. **Time-to-red ≈ 2026-10-13 15:26 UTC (17:26 CEST)** unless the sops token is re-pasted (owner action, hub report §g.1) |
+| 8 | Nightly cron TZ | TRUTH STAMPED | `build.yml` cron `23 3 * * *` = TZ-less UTC → **05:23 CEST**. Runbook (×3 spots) + Gatus alert text now say UTC |
+| 9 | Mesh content QA | PASS | orders-svc 6 pages + billing-svc 11 pages, real titles (no template fallback); `docs/domains/{banking,invoicing,ordering}`; 173 index.html total |
+| 10 | ID-collision audit | PASS | Zero cross-source collisions in the 4-source union (`order.cancelled/created`=demo, `order.completed/placed`=mesh, `balance_sync.*`=bank-sync; services 4 distinct). Latent risk: `order.*` prefix shared by demo+mesh — merge.py first-source-wins would silently shadow a future overlap (hub ROADMAP item 39 is the structural fix) |
+| 11 | Mirror cadence | MEASURED | Pull mirrors sync every **2h** (`forgejo.nix` `mirror.DEFAULT_INTERVAL`); hub scripts' "6h" comments stale. Worst-case staleness ≈27h < 36h budget; runbook freshness paragraph carries the arithmetic |
+
+Incident found en route: Gatus config-parse crash loop (400+ restarts, ALL
+monitoring dark 18:11→fix) — root cause `\\x2d` in an alert description,
+fixed + eval-guarded (`gatus-alert-text-audit` assertion over all 388 alert
+descriptions) in `c18a78d6`.
+

@@ -368,7 +368,7 @@ _: {
                   "[BODY] == pat(*\narchitecture_catalog_scrape_errors *)"
                   "[BODY] == pat(*\narchitecture_catalog_fresh 1*)"
                 ];
-                alert = "Architecture Catalog stale — the served EventCatalog build exceeds the freshness budget (hub CI dead, or the dist sync is failing while the last-good generation keeps serving). Check: journalctl -u architecture-catalog-sync; hub CI runs at https://forgejo.home.lan/lars/eventcatalog-hub/actions (nightly 03:23 + push-triggered).";
+                alert = "Architecture Catalog stale — the served EventCatalog build exceeds the freshness budget (hub CI dead, or the dist sync is failing while the last-good generation keeps serving). Check: journalctl -u architecture-catalog-sync; hub CI runs at https://forgejo.home.lan/lars/eventcatalog-hub/actions (nightly 03:23 UTC + push-triggered).";
               }
             ];
             homepage = {
