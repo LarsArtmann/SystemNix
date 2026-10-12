@@ -60,6 +60,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/storage-history-smoke.sh"
 # only through "$OB_SKIP" dispatch.
 # shellcheck disable=SC2034
 OB_PASS=pass OB_FAIL=fail OB_SKIP=ob_pre_skip
+# shellcheck disable=SC2034
 STH_PASS=pass STH_FAIL=fail
 # shellcheck disable=SC2329
 ob_pre_skip() { echo "   $1"; }

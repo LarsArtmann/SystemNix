@@ -137,6 +137,10 @@
                   # without a staging line — same 2026-09-02 class; every
                   # deploy aborted at source time until staged (2026-10-04).
                   cp ${root}/scripts/lib/vendor-freshness.sh $out/bin/lib/vendor-freshness.sh
+                  # §14 sources the storage-history smoke lib — stage it like
+                  # vendor-freshness.sh or the gate dies at source time on
+                  # every deploy (recurred 2026-10-12).
+                  cp ${root}/scripts/lib/storage-history-smoke.sh $out/bin/lib/storage-history-smoke.sh
                   chmod +x $out/bin/pre-deploy-check
                 ''
               }/bin/pre-deploy-check";
@@ -187,6 +191,10 @@
                   # at load time, so the InboxClean/CV/catchall legs never
                   # ran for those deploys.
                   cp ${root}/scripts/lib/service-sanity-sweep.sh $out/bin/lib/service-sanity-sweep.sh
+                  # §19 sources the storage-history smoke lib — stage it
+                  # like service-sanity-sweep.sh (same unstaged-source
+                  # class, recurred 2026-10-12).
+                  cp ${root}/scripts/lib/storage-history-smoke.sh $out/bin/lib/storage-history-smoke.sh
                   # The crush smoke section resolves helpers relative to
                   # BASH_SOURCE (the store bin dir), so stage the
                   # rc-test harness too or the check always fails with

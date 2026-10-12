@@ -1153,6 +1153,52 @@ in
                       };
                     };
                   };
+                  # VM host telemetry for SigNoz's Infrastructure → Hosts page.
+                  # That page lists hosts ONLY from hostmetrics metric names
+                  # (system.cpu.time/load, system.memory.usage, …) keyed by the
+                  # `host.name` resource attribute stamped by the
+                  # resourcedetection processor below — scraped node_exporter
+                  # metrics never populate it (they carry service.name=<job>
+                  # instead). Diagnosed 2026-10-12: the page had been empty
+                  # forever (zero system.* series in ClickHouse).
+                  hostmetrics = {
+                    collection_interval = "30s";
+                    scrapers = {
+                      cpu = { };
+                      load = { };
+                      memory = { };
+                      disk = { };
+                      filesystem = {
+                        exclude_fs_types = {
+                          fs_types = [
+                            "proc"
+                            "sysfs"
+                            "devtmpfs"
+                            "tmpfs"
+                            "ramfs"
+                            "squashfs"
+                            "overlay"
+                            "cgroup"
+                            "cgroup2"
+                            "bpf"
+                            "tracefs"
+                            "debugfs"
+                            "securityfs"
+                            "pstore"
+                            "efivarfs"
+                            "configfs"
+                            "fusectl"
+                            "hugetlbfs"
+                            "mqueue"
+                            "nsfs"
+                            "autofs"
+                          ];
+                        };
+                      };
+                      network = { };
+                      paging = { };
+                    };
+                  };
                 }
                 // lib.optionalAttrs cfg.components.nodeExporter {
                   prometheus = {
@@ -1291,6 +1337,15 @@ in
                     limit_mib = 768;
                     spike_limit_mib = 192;
                   };
+                  # Stamps host.name/host.id/os.type onto metrics so SigNoz's
+                  # Hosts page can key inventory by host (see the hostmetrics
+                  # receiver above). override=false keeps host.name already set
+                  # by OTLP senders (the http.server.* family) untouched.
+                  resourcedetection = {
+                    detectors = [ "system" ];
+                    timeout = "2s";
+                    override = false;
+                  };
                   # RED metrics derived from spans — SigNoz's NATIVE processor
                   # (not the contrib spanmetrics connector), mirroring upstream's
                   # own default collector config byte-for-byte in the parts that
@@ -1419,11 +1474,13 @@ in
                       receivers = [
                         "otlp"
                         "servicegraph"
+                        "hostmetrics"
                       ]
                       ++ lib.optional cfg.components.nodeExporter "prometheus"
                       ++ lib.optionals gcpMonitoringEnabled (builtins.attrNames gcpReceivers);
                       processors = [
                         "memory_limiter"
+                        "resourcedetection"
                         "batch"
                       ];
                       exporters = [ "signozclickhousemetrics" ];
