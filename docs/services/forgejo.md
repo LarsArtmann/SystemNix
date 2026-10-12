@@ -63,6 +63,16 @@ script probes stale names (mirror exists in Forgejo but not in the GitHub listin
 - `commit-graph.lock` warnings on golangci-lint / DynamicMinecraftNetwork mirrors: stale lock
   files in bare repos; cosmetic. Cleanup: remove
   `/var/lib/forgejo/repositories/lars/<name>.git/objects/info/commit-graph.lock` as forgejo user.
+- **Zombie mirror** (repo row `mirror=true` but the mirror record missing): any
+  `mirror_interval` PATCH 500s with journal `Failed to get mirror: Mirror does not exist`, and
+  `mirror_updated` = `0001-01-01` / `empty: true` (never synced — a migrate that half-failed).
+  mirror-github's existence check keeps "re-creating" it in place, so it never heals on its own.
+  Fix (proven 2026-10-12 on `lars/nix-international-telephony`): verify upstream EXISTS via
+  `gh api repos/<owner>/<name>` and the copy is `empty` (nothing to lose), then DELETE the repo
+  and start the sync — mirror-github recreates it with a healthy mirror record at
+  `DEFAULT_INTERVAL`. If upstream is deleted, the copy is a frozen archive — do NOT delete.
+  (Your interactive `$FORGEJO_TOKEN` probe needs the sudo'd admin token: the env var only exists
+  inside the sync unit via EnvironmentFile.)
 
 ## Break-glass
 
