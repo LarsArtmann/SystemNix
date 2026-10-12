@@ -32,7 +32,11 @@
 #
 # Model: Lars's own abliterated Qwen3.6 MoE tune from the Jan model tree
 # (the April download was interrupted; completed + sha256-verified
-# 2026-10-08). Qwen3.6 ships a native tool-call chat template, which --jinja
+# 2026-10-08). ABLITERATED IS A HARD REQUIREMENT (owner directive
+# 2026-10-12: gpt-oss-120b rejected — "OLD and NOT Abliterated"); swaps
+# stay within the abliterated Qwen3.6-35B-A3B family (quants/distills/
+# newer HauhauCS-class tunes of the same 3B-active architecture).
+# Qwen3.6 ships a native tool-call chat template, which --jinja
 # enables — the InboxClean agent drives its Gmail tools through OpenAI-format
 # tool calls (round-trip verified live 2026-10-08 on the sibling qwen3:4b:
 # finish_reason "tool_calls" with parsed arguments). To swap brains, change

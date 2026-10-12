@@ -38,6 +38,13 @@ Always-on CPU llama-server (llama.cpp) serving Lars's abliterated Qwen3.6
 
 ## Model
 
+**Abliterated/uncensored is a HARD requirement for this brain** (owner
+directive 2026-10-12: "gpt-oss-120b is OLD and NOT Abliterated so fucking
+no!") — mainstream-safety-tuned models are disqualified regardless of
+benchmarks or tool-calling reputation; model swaps stay within the
+abliterated Qwen3.6-35B-A3B family (HauhauCS tunes / distills /
+better quants of the same architecture).
+
 `/data/ai/models/jan/llamacpp/models/qwen3.6-35b-a3b-aggressive/
 Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q4_K_P.gguf` (23.4 GB,
 sha256 `8d344a4336d8ea7da0cbfc12792d1471e568be7abe8930c52260698bfd01d731`
