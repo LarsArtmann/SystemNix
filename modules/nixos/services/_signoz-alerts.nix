@@ -197,7 +197,8 @@ in
       # are unmatchable in PromQL), so no series ever carried a `job` label —
       # the rule was permanently phantom-green while the stats API wedged
       # 2026-08-27. The systemd collector's unit-state gauge is the real
-      # signal for process death (same fix as the ollama rule).
+      # signal for process death (the unit-state-gauge fix class — the ollama
+      # rule was its first instance; removed with the service 2026-10-12).
       query = ''node_systemd_unit_state{name="dnsblockd.service",state="active"}'';
       step = 60;
       op = "below";
@@ -300,19 +301,6 @@ in
       step = 60;
       target = 1;
       interval = "1m";
-    };
-    "signoz/rules/ollama-down.json".source = mkRule {
-      name = "Ollama Down";
-      description = "Ollama LLM service unit is not active — AI inference unavailable";
-      # ollama exposes no /metrics endpoint (404) — up{job="ollama"} was a
-      # phantom series that could never fire. The systemd collector's unit
-      # state gauge is the real signal.
-      query = ''node_systemd_unit_state{name="ollama.service",state="active"}'';
-      step = 60;
-      op = "below";
-      target = 1;
-      interval = "1m";
-      severity = "warning";
     };
     "signoz/rules/llama-embeddings-down.json".source = mkRule {
       name = "llama.cpp Embeddings Down";

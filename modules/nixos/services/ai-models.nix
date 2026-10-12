@@ -41,8 +41,9 @@ _: {
           type = lib.types.attrsOf lib.types.str;
           description = "Derived paths for all AI directories (computed from baseDir)";
           default = {
-            ollama = "${cfg.baseDir}/models/ollama";
-            ollama-models = "${cfg.baseDir}/models/ollama/models";
+            # ollama paths REMOVED 2026-10-12 with the service (owner
+            # directive: bad abstraction on top of llama.cpp);
+            # /data/ai/models/ollama on disk is owner-reclaim residue.
             gguf = "${cfg.baseDir}/models/gguf";
             whisper = "${cfg.baseDir}/models/whisper";
             jan = "${cfg.baseDir}/models/jan";
@@ -66,7 +67,6 @@ _: {
             "${cfg.baseDir}/models"
             "${cfg.baseDir}/cache"
             "${cfg.baseDir}/workspaces"
-            cfg.paths.ollama
             cfg.paths.gguf
             cfg.paths.whisper
             cfg.paths.jan
@@ -78,11 +78,9 @@ _: {
             cfg.paths.huggingface-hub
             cfg.paths.huggingface-transformers
             cfg.paths.fastflowlm
-          ]
-          ++ [ (mkStateDir cfg.paths.ollama-models "0775" cfg.user cfg.group) ];
+          ];
 
         environment.sessionVariables = {
-          OLLAMA_MODELS = cfg.paths.ollama-models;
           HF_HOME = cfg.paths.huggingface;
           HUGGINGFACE_HUB_CACHE = cfg.paths.huggingface-hub;
           TRANSFORMERS_CACHE = cfg.paths.huggingface-transformers;

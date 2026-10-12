@@ -1,4 +1,8 @@
-# AI stack: Ollama ROCm inference, llama.cpp, AI tooling
+# AI stack: llama.cpp (ROCm wrappers), AI tooling
+# Ollama was REMOVED 2026-10-12 (owner directive: "bad abstraction on top
+# of llama.cpp") — service, gatus check, dashboard tile, SigNoz rule,
+# Quickshell DMS widget, port 11434, and the ai-models ollama paths are all
+# gone; /data/ai/models/ollama (~15 G) is owner-reclaim residue.
 _: {
   flake.nixosModules.ai-stack =
     {
@@ -10,13 +14,6 @@ _: {
     }:
     let
       libHelpers = import ../../../lib/default.nix lib;
-      inherit (libHelpers)
-        harden
-        serviceDefaults
-        ports
-        ioTier
-        ;
-      inherit (config.users) primaryUser;
 
       rocm = libHelpers.rocm { inherit pkgs; };
       rocmEnv = rocm.env;
@@ -48,7 +45,7 @@ _: {
     {
       options.services.ai-stack = {
         enable =
-          lib.mkEnableOption "AI inference stack — Ollama ROCm, llama.cpp, gpu-python, AI tooling"
+          lib.mkEnableOption "AI inference stack — llama.cpp, gpu-python, AI tooling"
           // {
             default = false;
           };
@@ -69,63 +66,6 @@ _: {
             value = "unlimited";
           }
         ];
-
-        services.ollama = {
-          enable = true;
-          package = pkgs.ollama-rocm;
-          home = aiPaths.ollama;
-          modelsDir = aiPaths.ollama-models;
-          host = "127.0.0.1";
-          port = ports.ollama;
-          environmentVariables = rocmEnv // {
-            OLLAMA_FLASH_ATTENTION = "1";
-            OLLAMA_NUM_PARALLEL = "2";
-            OLLAMA_KV_CACHE_TYPE = "q8_0";
-            OLLAMA_KEEP_ALIVE = "1h";
-            OLLAMA_MAX_LOADED_MODELS = "1";
-            # 1 GiB headroom — hipMemGetInfo on this APU reports the GTT pool
-            # (≈ all system RAM post-carveout-reduction), so this biases ollama's
-            # model accounting to leave desktop headroom. The hard bound is the
-            # service cgroup MemoryMax below.
-            OLLAMA_GPU_OVERHEAD = "1073741824";
-            PYTORCH_CUDA_ALLOC_CONF = "per_process_memory_fraction:0.45";
-          };
-        };
-
-        systemd.services.ollama = {
-          # Let nixpkgs' default WantedBy=multi-user.target apply. The prior
-          # `wantedBy = lib.mkForce []` suppressed it, making an enabled service
-          # silently never start — every deploy left ollama dead with no log
-          # entries, a pure split-brain against the Gatus check that expects it.
-          # Models still unload after OLLAMA_KEEP_ALIVE; the service stays up so
-          # /api/tags is always reachable.
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
-          serviceConfig = lib.mkMerge [
-            {
-              DynamicUser = lib.mkForce false;
-              User = primaryUser;
-              Group = "users";
-              SupplementaryGroups = [ "render" ];
-              UMask = lib.mkForce "0007";
-              OOMScoreAdjust = 500;
-            }
-            (serviceDefaults { })
-            # NOTE: nixpkgs' ollama module already sets DevicePolicy=closed with
-            # char-drm/char-kfd DeviceAllow — /dev/accel is SUBSYSTEM=accel, so
-            # the NPU node is already denied (proven live: ollama served through
-            # the 2026-09-04 amdxdna wedge that killed every unprotected ROCm
-            # service). Do NOT add rocm.deviceCgroup here — it conflicts on
-            # DevicePolicy ("closed" vs "strict") and breaks the eval.
-            (harden {
-              MemoryMax = "32G";
-              CPUQuota = "400%"; # Model loading (GGUF quantization) is multi-threaded
-              ProtectHome = false;
-              NoNewPrivileges = false;
-            })
-            ioTier.background
-          ];
-        };
 
         environment.systemPackages = [
           llama-cpp-rocwmma
@@ -202,44 +142,7 @@ _: {
         # silently falls back to CPU — the GTT-backed GPU (512 MiB carveout +
         # system-RAM GTT) stays unused.
         # HSA_ENABLE_SDMA=0 avoids SDMA hang bugs on gfx11 APUs.
-        environment.sessionVariables = rocmEnv // {
-          OLLAMA_HOST = "127.0.0.1:${toString ports.ollama}";
-        };
-
-        # Service-integration registry entry: the Ollama Gatus check and the
-        # decorative homepage tile (loopback-only inference; no vHost).
-        # Replaces rows in gatus-config.nix / homepage.nix.
-        services.integration = lib.optionalAttrs (options ? services.integration) {
-          ai-stack = {
-            inherit (cfg) enable;
-            vHost.layer = "none";
-            checks = [
-              {
-                # Ollama runs persistently when enabled (WantedBy
-                # multi-user.target; idle models unload via OLLAMA_KEEP_ALIVE).
-                name = "Ollama";
-                group = "AI";
-                url = "http://localhost:${toString config.services.ollama.port}/api/tags";
-                interval = "60s";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[RESPONSE_TIME] < 2000"
-                ];
-                alert = "Ollama LLM inference down — local AI unavailable";
-              }
-            ];
-            homepage = {
-              name = "Ollama";
-              group = "AI";
-              description = "Local AI Inference";
-              icon = "ollama.png";
-              # Dot source for the decorative tile: the same loopback
-              # endpoint the Gatus check above already owns (PapDashboard
-              # adds a dashboard-visible liveness probe; no vHost exists).
-              checkUrl = "http://localhost:${toString config.services.ollama.port}/api/tags";
-            };
-          };
-        };
+        environment.sessionVariables = rocmEnv;
       };
     };
 }

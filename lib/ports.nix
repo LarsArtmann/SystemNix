@@ -46,8 +46,6 @@
 
     taskchampion = 10222;
 
-    ollama = 11434;
-
     gatus = 9110;
 
     emeet-pixyd = 8090;

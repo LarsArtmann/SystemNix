@@ -385,11 +385,6 @@ _: {
                 inactive = true;
               }
               {
-                name = "ollama";
-                disabled = false;
-                inactive = true;
-              }
-              {
                 name = "sourcehut";
                 disabled = false;
                 inactive = true;

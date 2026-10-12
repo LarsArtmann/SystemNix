@@ -108,14 +108,9 @@ in
       # SystemNix DMS plugins — declaratively installed via DMS's plugin system.
       # Each plugin's src points to its directory in pkgs/dms-plugins/.
       # Port values are templated from lib/ports.nix — never hardcoded.
+      # systemnix-ollama widget REMOVED 2026-10-12 with the ollama service
+      # (owner directive; plugin source deleted from pkgs/dms-plugins/).
       plugins = {
-        systemnix-ollama = {
-          src = ../../../pkgs/dms-plugins/systemnix-ollama;
-          settings = {
-            apiBase = "http://127.0.0.1:${toString ports.ollama}";
-            pollInterval = "5000";
-          };
-        };
         systemnix-dns-stats = {
           src = ../../../pkgs/dms-plugins/systemnix-dns-stats;
           settings = {
