@@ -15,7 +15,7 @@ record: `docs/status/2026-09-23_13-26_eventcatalog-hub-session3-t5-t13-executed.
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | UI           | `https://catalog.home.lan` — Layer 2 `protected` STATIC vHost (oauth2-proxy for external, LAN bypass, `file_server`; no port, no daemon) |
 | Serving root | `/var/lib/architecture-catalog/current` — RELATIVE symlink into `generations/<timestamp>` (keep 3), all files `a+rX` for Caddy           |
-| Sync         | `architecture-catalog-sync.service` (oneshot) + hourly `Persistent` timer — depth-1 clone of the hub's `dist` branch                     |
+| Sync         | `architecture-catalog-sync.service` (oneshot) + hourly `Persistent` timer — depth-1 clone of `lars/eventcatalog-hub-dist`'s `dist` branch (the `lars/eventcatalog-hub` Forgejo repo is a read-only GitHub pull-mirror and cannot carry the dist — run-38 lesson 2026-10-11) |
 | Freshness    | `architecture-catalog-metrics` (5-min textfile collector) → `architecture_catalog_*` gauges                                              |
 | Monitoring   | Gatus "Architecture Catalog" (+ llms.txt, silent) + "Architecture Catalog Freshness"; `architecture-catalog-sync` in system-health       |
 | Backup       | none — fully rebuildable from the `dist` branch                                                                                          |
@@ -25,7 +25,7 @@ Data flow: each source repo's Go binary exports an EventCatalog tree
 (bank-sync: `bank-sync catalog --format eventcatalog`; cqrs-htmx:
 `examples/catalog-demo -eventcatalog … -export-only`) → hub CI (Forgejo
 Actions, nightly 03:23 + push-triggered) union-merges sources, lints, builds
-`dist/`, pushes the `dist` branch → the sync unit pulls it hourly, gates on
+`dist/`, pushes the `dist` branch of `lars/eventcatalog-hub-dist` (dedicated plain repo — the hub repo is a read-only mirror) → the sync unit pulls it hourly, gates on
 `index.html`, atomically swaps `current`, prunes to 3 generations.
 
 ## Go-live checklist (owner steps, in order)
@@ -34,21 +34,23 @@ Actions, nightly 03:23 + push-triggered) union-merges sources, lints, builds
    python3 on `gitea-runner-evo-x2` — forgejo.nix). The hub workflow parses
    sources.json with `jq`, runs `merge.py` with `python3`, and shells go via
    `nix shell nixpkgs#go_1_27`; without the PATH fix the first CI run fails
-   at `jq` (command not found).
+   at `jq` (command not found). **DONE 2026-09-30 (system-810).**
 1. forgejo must be UP first (2026-10-07 live-verified prereq): the
    Samsung-subvol G1 finalize must have landed — until it does,
    `forgejo.service` (and the whole family) condition-skips on the missing
    `.subvol-migrated` marker and everything 502s. Owner:
    `sudo ./scripts/migrate-forgejo-subvol.sh finalize` (+ `nix run .#deploy`),
    then probe `https://forgejo.home.lan` answers. Open rows:
-   `docs/todo/services.md` G1 entries.
+   `docs/todo/services.md` G1 entries. **DONE 2026-10-11 01:57.**
 2. `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh` — mints
    the read-scoped `GIT_CLONE_TOKEN`, creates the hub pull mirror, enables
    Actions, mirror-syncs source repos, dispatches the first run, and stores
    the SERVING-side sync token at
    `/var/lib/forgejo/.eventcatalog-hub-setup/sync-token` (root-only 0600).
    Re-runnable: it rotates the CI + sync tokens instead of failing on the
-   unique token-name constraint.
+   unique token-name constraint. **DONE 2026-10-11 ~03:15 (3rd run green);
+   CI live — run 51 published `dist` to `lars/eventcatalog-hub-dist`
+   (2026-10-11).**
 3. Watch `https://forgejo.home.lan/lars/eventcatalog-hub/actions` — expect
    green + a `dist` branch. First-run watch-list: nix-daemon reachability
    for the DynamicUser runner, `npm` resolving inside the runner PATH

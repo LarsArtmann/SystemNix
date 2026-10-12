@@ -1126,13 +1126,17 @@ in
       # catalog.<domain> (static Layer 2 vHost over /var/lib/
       # architecture-catalog/current). The eventcatalog-hub CI (Forgejo
       # native:host runner) builds the union-merged catalog from every
-      # source repo's mirror and publishes to its `dist` branch; this unit
-      # pulls it hourly (atomic generation swap). Sync token ships
-      # PLACEHOLDER until scripts/setup-forgejo.sh ran in the hub repo —
-      # the Gatus checks stay red as the standing not-live-yet signal.
+      # source repo's mirror and publishes the `dist` branch to
+      # lars/eventcatalog-hub-dist (dedicated repo — the hub repo itself is
+      # a read-only GitHub pull-mirror that rejects pushes, run-38 lesson
+      # 2026-10-11); this unit pulls it hourly (atomic generation swap).
+      # Sync token ships PLACEHOLDER until the serving-side token is
+      # sops-pasted (runbook step 3) — the Gatus checks stay red as the
+      # standing not-live-yet signal.
       # Runbook: docs/services/architecture-catalog.md.
       architecture-catalog = {
         enable = true;
+        repo = "lars/eventcatalog-hub-dist";
       };
 
       # Overview — local project dashboard (discovers git repos, shows stats/activity)
