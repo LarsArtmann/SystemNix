@@ -70,9 +70,11 @@ Source: <https://huggingface.co/HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Agg
 
 ## Operations
 
+- Exposed: `https://llama.home.lan` (integration-registry entry: `subdomain = "llama"`, Layer 2 `protected` vHost — oauth2-proxy forward-auth for external clients, LAN bypass; the daemon keeps its loopback bind, Caddy proxies to 127.0.0.1:8850). Serves llama-server's built-in web UI at `/` and the OpenAI API at `/v1`. PapDashboard "AI" tab tile `llama.cpp Chat` probes the loopback `/health` via `checkUrl`.
 - Monitored: gatus check `llama.cpp Chat` probes `/health` every 60s (200 =
   model mapped and serving; 503 while loading; red when the unit is down or
-  skipped). The integration-registry entry lives in this module.
+  skipped) and the unit is in system-health's monitored set
+  (`monitored = true`). The integration-registry entry lives in this module.
 - Swap the brain: change `services.llama-chat.modelPath` + `alias` (the
   inboxclean `LLM_MODEL` follows automatically) — e.g. the dense 27B
   sibling, or a future GPU re-enable once the ROCm wedge is fixed upstream.

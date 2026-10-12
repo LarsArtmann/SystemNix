@@ -255,15 +255,21 @@ _: {
           };
         };
 
-        # Service-integration registry entry: loopback-only server (no vHost
-        # — the port registry forbids external exposure), so this is the sole
-        # Gatus surface watching :8850. Without it the port is served but
-        # nothing notices a wedged/missing brain (the freeze-#5 class) until
-        # InboxClean chat turns start failing.
+        # Service-integration registry entry: loopback-only daemon exposed
+        # via the Layer 2 vHost (https://llama.<domain>) — llama-server's
+        # built-in web UI (/) + OpenAI API (/v1) behind oauth2-proxy
+        # forward-auth for external clients, LAN bypass; the loopback-bind
+        # assertion above still holds (Caddy proxies, the port never binds
+        # externally). Gatus /health is the wedge detector (the freeze-#5
+        # class): without it the port is served but nothing notices a
+        # wedged/missing brain until InboxClean chat turns start failing.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           llama-chat = {
             inherit (cfg) enable;
-            vHost.layer = "none";
+            subdomain = "llama";
+            port = cfg.port;
+            vHost.layer = "protected";
+            monitored = true;
             checks = [
               {
                 # /health is 200 only after the GGUF is mapped and the model
@@ -280,6 +286,13 @@ _: {
                 alert = "llama.cpp chat server down — InboxClean /chat agent brain unreachable. Check: systemctl status llama-chat, journalctl -u llama-chat -n 50 (freeze-#5 class: 94% single-thread CPU spin after the vocab warning means the ROCm/CPU path wedged).";
               }
             ];
+            homepage = {
+              name = "llama.cpp Chat";
+              group = "AI";
+              description = "Qwen3.6 35B-A3B brain — OpenAI-compatible, native tool calls";
+              icon = "ollama.png";
+              checkUrl = "http://127.0.0.1:${toString cfg.port}/health";
+            };
           };
         };
       };
