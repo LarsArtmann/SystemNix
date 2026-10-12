@@ -520,6 +520,96 @@ in
     '';
   };
 
+  # Converger: PATCHes every pull mirror's sync interval to
+  # FORGEJO_TARGET_INTERVAL (default 2h). mirror.DEFAULT_INTERVAL only
+  # applies at mirror-CREATION time, so pre-existing mirrors keep their old
+  # 8h forever until this pass rewrites them (461 mirrors verified at
+  # 8h0m0s live 2026-10-12, one with an empty interval). Idempotent: repos
+  # already at the target are counted, never PATCHed — a converged run is
+  # ~470 localhost GETs, seconds. Also normalizes the empty-interval
+  # mirror (Go duration "" parses to 0 seconds = a PATCH target).
+  reintervalScript = pkgs.writeShellApplication {
+    name = "forgejo-reinterval-mirrors";
+    runtimeInputs = [
+      pkgs.curl
+      pkgs.jq
+      pkgs.coreutils
+      pkgs.gnugrep
+      pkgs.gawk
+    ];
+    text = ''
+      FORGEJO_URL="${forgejoUrl}"
+      FORGEJO_TOKEN="''${FORGEJO_TOKEN:-}"
+      TARGET_INTERVAL="''${FORGEJO_TARGET_INTERVAL:-2h}"
+
+      if [[ -z "$FORGEJO_TOKEN" ]]; then
+        echo "Error: FORGEJO_TOKEN not set (is forgejo-generate-token.service healthy?)"
+        exit 1
+      fi
+
+      # Go duration strings ("8h0m0s", "30m0s", "2h", "") → seconds.
+      dur_sec() {
+        local d=$1 h=0 m=0 s=0
+        [[ "$d" =~ ([0-9]+)h ]] && h=${BASH_REMATCH[1]}
+        [[ "$d" =~ ([0-9]+)m ]] && m=${BASH_REMATCH[1]}
+        [[ "$d" =~ ([0-9]+)s ]] && s=${BASH_REMATCH[1]}
+        echo $((10#$h * 3600 + 10#$m * 60 + 10#$s))
+      }
+      target_sec=$(dur_sec "$TARGET_INTERVAL")
+      if [[ "$target_sec" -eq 0 ]]; then
+        echo "Error: FORGEJO_TARGET_INTERVAL='$TARGET_INTERVAL' parses to 0 seconds"
+        exit 1
+      fi
+
+      echo "=== Forgejo mirror re-interval (target: $TARGET_INTERVAL) ==="
+
+      checked=0
+      patched=0
+      already=0
+      failed=0
+      page=1
+      while true; do
+        response=$(curl -s -H "Authorization: token $FORGEJO_TOKEN" \
+          "$FORGEJO_URL/api/v1/user/repos?limit=50&page=$page")
+        # Fail loud on non-array listings (rate limit / auth): the same
+        # phantom-green guard as reconcile — without it a failed listing
+        # "succeeds" having checked zero mirrors.
+        if ! echo "$response" | jq -e 'type == "array"' > /dev/null; then
+          echo "Error: Forgejo listing (page $page) did not return an array:"
+          echo "$response" | jq -r '.message // tostring' 2>/dev/null | head -3
+          exit 1
+        fi
+        while IFS=$'\t' read -r owner name cur; do
+          [[ -z "$owner" ]] && continue
+          checked=$((checked + 1))
+          if [[ "$(dur_sec "$cur")" -eq "$target_sec" ]]; then
+            already=$((already + 1))
+            continue
+          fi
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X PATCH \
+            -H "Authorization: token $FORGEJO_TOKEN" \
+            -H 'Content-Type: application/json' \
+            -d "{\"mirror_interval\":\"$TARGET_INTERVAL\"}" \
+            "$FORGEJO_URL/api/v1/repos/$owner/$name")
+          if [[ "$code" == "200" ]]; then
+            echo "  $owner/$name: '$cur' -> $TARGET_INTERVAL"
+            patched=$((patched + 1))
+          else
+            echo "  warn: PATCH $owner/$name failed (HTTP $code) — retried next run"
+            failed=$((failed + 1))
+          fi
+        done < <(echo "$response" | jq -r '.[] | select(.mirror == true) | "\(.owner.login)\t\(.name)\t\(.mirror_interval // "")"')
+        [[ $(echo "$response" | jq 'length') -lt 50 ]] && break
+        page=$((page + 1))
+      done
+
+      echo "=== Re-interval summary: checked=$checked patched=$patched already-at-target=$already failed=$failed"
+      # Fail loud AFTER the full pass: a transient PATCH 5xx must not skip
+      # the remaining repos; the next hourly timer run retries the misses.
+      [[ "$failed" -eq 0 ]]
+    '';
+  };
+
   mirrorStarredScript = pkgs.writeShellApplication {
     name = "forgejo-mirror-starred";
     runtimeInputs = [

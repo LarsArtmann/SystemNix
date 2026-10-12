@@ -128,6 +128,7 @@ _: {
         })
         mirrorGithubScript
         reconcileMirrorsScript
+        reintervalScript
         mirrorStarredScript
         pushMirrorScript
         flipRepoScript
@@ -289,7 +290,10 @@ _: {
 
             mirror = {
               ENABLED = true;
-              DEFAULT_INTERVAL = "8h";
+              # Content-freshness target: 2h (was 8h, 2026-10-12). Applies to
+              # NEW mirrors only — reintervalScript (sync phase 3) converges
+              # pre-existing mirrors via the API.
+              DEFAULT_INTERVAL = "2h";
               MIN_INTERVAL = "10m";
             };
 
@@ -297,7 +301,11 @@ _: {
               ENABLED = true;
               SCHEDULE = "@every 30m";
               RUN_AT_START = false;
-              PULL_LIMIT = 50;
+              # Sweep capacity: 150/30m = 300/h vs ~470 mirrors → a full
+              # eligible sweep drains in <2h, matching DEFAULT_INTERVAL (the
+              # old 50/30m = 100/h floor made any interval below ~4.5h a
+              # no-op). PUSH_LIMIT untouched: push mirrors are inert here.
+              PULL_LIMIT = 150;
               PUSH_LIMIT = 50;
             };
 
@@ -446,6 +454,7 @@ _: {
             restartTriggers = [
               (lib.getExe mirrorGithubScript)
               (lib.getExe reconcileMirrorsScript)
+              (lib.getExe reintervalScript)
               (lib.getExe pushMirrorScript)
             ];
             path = [
@@ -463,11 +472,14 @@ _: {
                 ];
                 # Sequential phases: (1) create missing mirrors (incl. private
                 # repos since the listing switch to /user/repos), (2) reconcile
-                # renames/transfers/deletions of existing mirrors, (3) attach
+                # renames/transfers/deletions of existing mirrors, (3) converge
+                # per-mirror sync intervals to mirror.DEFAULT_INTERVAL (the
+                # setting only applies at creation time), (4) attach
                 # GitHub push mirrors to canonical repos (plan M05).
                 ExecStart = [
                   (lib.getExe mirrorGithubScript)
                   (lib.getExe reconcileMirrorsScript)
+                  (lib.getExe reintervalScript)
                 ];
                 # First run after the private-repo listing switch migrates
                 # ~200 repos (2-8s each, synchronous migrate API) — the 3min
@@ -500,11 +512,13 @@ _: {
           };
 
           timers.forgejo-github-sync = {
-            description = "Sync GitHub repos to Forgejo every 6 hours";
+            description = "Sync GitHub repos to Forgejo hourly";
             wantedBy = [ "timers.target" ];
             timerConfig = {
               OnBootSec = "5m";
-              OnUnitActiveSec = "6h";
+              # New-repo discovery latency: 1h (was 6h, 2026-10-12). Converged
+              # runs take minutes (listing + reconcile probes + interval GETs).
+              OnUnitActiveSec = "1h";
               Unit = "forgejo-github-sync.service";
               Persistent = true;
             };

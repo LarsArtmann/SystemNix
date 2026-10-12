@@ -227,6 +227,53 @@
               # the migrate POST counter advanced — the mirror section
               # below continues it at .3 (flip used .1/.2).
 
+              # ============ reinterval (converger, 2026-10-12) ============
+              REINT="$FIX/forgejo-reinterval-mirrors"
+              inject ${lib.getExe forgejoScripts.reintervalScript} "$REINT"
+              FJL=localhost_3000_api_v1_user_repos_limit_50_page_1.GET
+              # numbered .1 here; the reconcile section below only defines
+              # the unnumbered fallback, so its runs continue at .2+
+              printf 200 > "$STUB_HTTP/$FJL.1.code"
+              cat > "$STUB_HTTP/$FJL.1.body" <<'JEOF'
+              [
+                {"owner":{"login":"lars"},"mirror":true,"name":"SystemNix","mirror_interval":"8h0m0s"},
+                {"owner":{"login":"lars"},"mirror":true,"name":"new-repo","mirror_interval":"2h0m0s"},
+                {"owner":{"login":"lars"},"mirror":false,"name":"native-repo","mirror_interval":""},
+                {"owner":{"login":"lars"},"mirror":true,"name":"unset-interval","mirror_interval":""},
+                {"owner":{"login":"Artmann-Minecraft"},"mirror":true,"name":"DarkBlocks","mirror_interval":"8h0m0s"}
+              ]
+              JEOF
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_SystemNix.PATCH.code"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_unset-interval.PATCH.code"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_Artmann-Minecraft_DarkBlocks.PATCH.code"
+              run "$REINT"; need_rc reint1 0
+              need_has reint1 "checked=4 patched=3 already-at-target=1 failed=0"
+              # the 8h and empty-interval mirrors get PATCHed to 2h; the
+              # 2h mirror and the native (non-mirror) repo are untouched
+              for rk in lars_SystemNix lars_unset-interval Artmann-Minecraft_DarkBlocks; do
+                grep -q '"mirror_interval":"2h"' "$STUB_STATE/req.localhost_3000_api_v1_repos_$rk.PATCH.1.json" \
+                  || { echo "FAIL reinterval: PATCH payload $rk"; cat "$STUB_STATE/req.localhost_3000_api_v1_repos_$rk.PATCH.1.json"; exit 1; }
+              done
+              [ ! -f "$STUB_STATE/req.localhost_3000_api_v1_repos_lars_new-repo.PATCH.1.json" ] \
+                || { echo "FAIL reinterval: already-converged repo was PATCHed"; exit 1; }
+              [ ! -f "$STUB_STATE/req.localhost_3000_api_v1_repos_lars_native-repo.PATCH.1.json" ] \
+                || { echo "FAIL reinterval: non-mirror repo was PATCHed"; exit 1; }
+
+              # PATCH failure: warn + counted, exit 1 AFTER the full pass
+              printf 200 > "$STUB_HTTP/$FJL.2.code"
+              printf '[{"owner":{"login":"lars"},"mirror":true,"name":"flaky","mirror_interval":"8h0m0s"}]' > "$STUB_HTTP/$FJL.2.body"
+              printf 500 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_flaky.PATCH.code"
+              run "$REINT"; need_rc reint2 1
+              need_has reint2 "PATCH lars/flaky failed (HTTP 500) — retried next run"
+              need_has reint2 "checked=1 patched=0 already-at-target=0 failed=1"
+
+              # non-array listing dies loud (phantom-green guard)
+              printf 200 > "$STUB_HTTP/$FJL.3.code"
+              printf '{"message":"token expired"}' > "$STUB_HTTP/$FJL.3.body"
+              run "$REINT"; need_rc reint3 1; need_has reint3 "did not return an array"
+              [ ! -f "$STUB_STATE/req.localhost_3000_api_v1_repos_lars_flaky.PATCH.2.json" ] \
+                || { echo "FAIL reinterval: ran after failed listing"; exit 1; }
+
               # ============ mirror-github (org-inclusive, 2026-10-02) ============
               GH_USER_REPOS=api.github.com_user_repos_visibility_all_affiliation_owner_per_page_100_page_1.GET
               GH_ORGS=api.github.com_user_orgs_per_page_100_page_1.GET
