@@ -819,6 +819,11 @@ _: {
           # trips" without kernel OOM-dump archaeology. This emits the top
           # cgroups by memory.current with anon/shmem/unevictable breakdown
           # (memory.stat) — the question becomes a dashboard glance.
+          # All four values are read in ONE pass here (not re-read at
+          # .prom-emit time) so the sample is internally consistent and can
+          # land in the durability ring BEFORE the slow journal sections can
+          # kill the run (10-03 class: a killed/starved run lost every census
+          # sample because the .prom only publishes at the very end).
           CENSUS_ENTRIES=$(
             ${pkgs.findutils}/bin/find /sys/fs/cgroup -xdev -maxdepth 4 -name memory.current 2>/dev/null |
             while read -r f; do
@@ -830,6 +835,28 @@ _: {
               echo "$cur $name"
             done | sort -rn | head -8 || true
           )
+          CENSUS_SAMPLE=""
+          while read -r cur name; do
+            [ -n "$name" ] || continue
+            label=$(echo "$name" | tr '/' '_')
+            cgdir="/sys/fs/cgroup/$name"
+            anon=$(awk '$1 == "anon" {print $2}' "$cgdir/memory.stat" 2>/dev/null) || anon=0
+            shmem=$(awk '$1 == "shmem" {print $2}' "$cgdir/memory.stat" 2>/dev/null) || shmem=0
+            unevict=$(awk '$1 == "unevictable" {print $2}' "$cgdir/memory.stat" 2>/dev/null) || unevict=0
+            CENSUS_SAMPLE+="$(printf 'system_cgroup_mem_bytes{cgroup="%s"} %s\n' "$label" "''${cur:-0}")"
+            CENSUS_SAMPLE+="$(printf 'system_cgroup_mem_anon_bytes{cgroup="%s"} %s\n' "$label" "''${anon:-0}")"
+            CENSUS_SAMPLE+="$(printf 'system_cgroup_mem_shmem_bytes{cgroup="%s"} %s\n' "$label" "''${shmem:-0}")"
+            CENSUS_SAMPLE+="$(printf 'system_cgroup_mem_unevictable_bytes{cgroup="%s"} %s\n' "$label" "''${unevict:-0}")"
+          done <<<"$CENSUS_ENTRIES"
+          # Durability ring: local rotate-last-N fallback so per-cgroup
+          # memory at OOM time survives a SigNoz-ingest outage AND a
+          # timeout-killed run. Non-fatal on failure — the ring is forensic
+          # extra, not an alerting surface; the .prom contract is unaffected.
+          if [ -n "$CENSUS_SAMPLE" ]; then
+            printf '%s\n' "$CENSUS_SAMPLE" |
+              "${censusRing}/bin/system-health-census-ring" "${textfileDir}/census-memory-ring.log" ${toString censusRingKeepBlocks} ||
+              echo "system-health: WARN census durability ring write failed (non-fatal)" >&2
+          fi
 
           # === LAN NIC presence (bus-level disappearance) ===
           # 2026-08-22: after a hard crash the RTL8125 NIC was absent from
@@ -1390,19 +1417,8 @@ _: {
             echo "# TYPE system_cgroup_mem_shmem_bytes gauge"
             echo "# HELP system_cgroup_mem_unevictable_bytes mlocked/unevictable memory (memory.stat unevictable) of the same top cgroups"
             echo "# TYPE system_cgroup_mem_unevictable_bytes gauge"
-            if [ -n "$CENSUS_ENTRIES" ]; then
-              echo "$CENSUS_ENTRIES" | while read -r cur name; do
-                [ -n "$name" ] || continue
-                label=$(echo "$name" | tr '/' '_')
-                cgdir="/sys/fs/cgroup/$name"
-                anon=$(awk '$1 == "anon" {print $2}' "$cgdir/memory.stat" 2>/dev/null) || anon=0
-                shmem=$(awk '$1 == "shmem" {print $2}' "$cgdir/memory.stat" 2>/dev/null) || shmem=0
-                unevict=$(awk '$1 == "unevictable" {print $2}' "$cgdir/memory.stat" 2>/dev/null) || unevict=0
-                echo "system_cgroup_mem_bytes{cgroup=\"$label\"} ''${cur:-0}"
-                echo "system_cgroup_mem_anon_bytes{cgroup=\"$label\"} ''${anon:-0}"
-                echo "system_cgroup_mem_shmem_bytes{cgroup=\"$label\"} ''${shmem:-0}"
-                echo "system_cgroup_mem_unevictable_bytes{cgroup=\"$label\"} ''${unevict:-0}"
-              done
+            if [ -n "$CENSUS_SAMPLE" ]; then
+              echo "$CENSUS_SAMPLE"
             fi
 
             echo "# HELP system_current_system_profiled 1 if /run/current-system matches a numbered nix profile generation (deployed via nix run .#deploy), 0 if manually activated (reboot would revert to the last real generation)"

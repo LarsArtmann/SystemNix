@@ -107,6 +107,43 @@
               touch $out
             '';
 
+        # Census durability-ring selftest (10-03 07:18→17:00 census gap):
+        # runs the REAL ring append against a fixture textfile dir —
+        # bounded rotate-last-N under a 300-tick pressure window, whole-block
+        # rotation (no torn samples), epoch monotonicity, corrupt-ring
+        # self-heal, SIGKILL-corpse tolerance, empty-sample no-op. Plus two
+        # static tripwires on the module the fixture cannot see: the ring
+        # append must precede the .prom publish (a run killed between the
+        # two still leaves its census sample — the incident property), and
+        # the ring must never be a .prom (a multi-sample log would poison
+        # the node_exporter exposition).
+        census-ring-selftest =
+          pkgs.runCommand "census-ring-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              cp ${root}/scripts/system-health-census-ring.sh "$scratch/system-health-census-ring.sh"
+              ${pkgs.bash}/bin/bash "$scratch/system-health-census-ring.sh" selftest
+              mod=${root}/modules/nixos/services/system-health.nix
+              ring_line=$(grep -n 'bin/system-health-census-ring' "$mod" | head -n 1 | cut -d: -f1)
+              mv_line=$(grep -n 'mv "\$TMP" "\$OUT"' "$mod" | head -n 1 | cut -d: -f1)
+              if [ -z "$ring_line" ] || [ -z "$mv_line" ] || [ "$ring_line" -ge "$mv_line" ]; then
+                echo "FAIL: census ring append missing or not before the .prom publish (ring@$ring_line mv@$mv_line)"
+                exit 1
+              fi
+              if grep -q 'census-memory-ring\.prom' "$mod"; then
+                echo "FAIL: census ring path must never end in .prom (node_exporter would scrape a multi-sample log)"
+                exit 1
+              fi
+              touch $out
+            '';
+
         # The pre-deploy §11 vendorHash-freshness parsers BLOCK deploys
         # on FOD hash mismatch — the greps they replaced matched output
         # nix never produces and warned "unable to determine status" on
