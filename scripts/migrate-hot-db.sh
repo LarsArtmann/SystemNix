@@ -70,7 +70,7 @@ Registry (defaults; the 3+ arg form overrides dataDir + stop-set for
 out-of-registry waves, e.g. the future postgres leg):
 EOF
   for n in gatus dnsblockd pocket-id browser-history discordsync; do
-    echo "  $n  ->  $(reg_dataDir "$n")  [$(echo "$(reg_units "$n")" | tr '\n' ' ')]" >&2
+    echo "  $n  ->  $(reg_dataDir "$n")  [$(reg_units "$n" | tr '\n' ' ')]" >&2
   done
   exit 2
 }

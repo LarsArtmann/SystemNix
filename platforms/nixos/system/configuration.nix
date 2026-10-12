@@ -490,7 +490,18 @@ in
       # dnsblockd → pocket-id → browser-history → discordsync).
       hot-db = {
         enable = true;
-        entries = { };
+        # Wave 5 (2026-10-12, owner-driven window): DiscordSync event store →
+        # Samsung TLC. Unit list per docs/services/hot-db.md (db-heal gets
+        # the clean condition-skip instead of a 226 on a detached Samsung).
+        # Stance: discordsync carries NO *Directory= implicit RequiresMountsFor
+        # (rendered-config sweep, hot-db.md pre-cutover table) — a detached
+        # Samsung degrades it gracefully, no caddy treatment needed.
+        entries.discordsync = {
+          path = "/var/lib/discordsync";
+          cow = true;
+          unit = "discordsync.service";
+          extraUnits = [ "discordsync-db-heal.service" ];
+        };
       };
       # User cache subvolumes → Samsung TLC (2026-09-18/19 IO-audit
       # relocation): the nix fetch cache (~8.7 G gitv3+tarballs) leaves the
