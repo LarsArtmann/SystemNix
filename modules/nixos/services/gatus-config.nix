@@ -293,6 +293,22 @@ _: {
       };
 
       config = lib.mkIf cfg.enable {
+        # Gatus refuses `"` and `\` in alert descriptions — the whole config
+        # fails to parse and the service crash-loops (2026-10-12 18:11: a
+        # `\\x2d` inside an incident-history note took ALL monitoring down
+        # for 70+ min, 400+ restarts, discovered by the eventcatalog Wave-1
+        # verification battery). Eval-time guard over the FINAL merged
+        # endpoint list (core + registry fan-out via extraEndpoints).
+        assertions = [
+          {
+            assertion =
+              let
+                offenders = lib.filter (ep: lib.any (al: lib.hasInfix "\"" (al.description or "") || lib.hasInfix "\\" (al.description or "")) (ep.alerts or [ ])) config.services.gatus.settings.endpoints;
+              in
+              offenders == [ ];
+            message = "gatus-alert-text-audit: alert description contains \" or \\ — Gatus crash-loops on config parse (2026-10-12 incident). Rewrite without backslashes/quotes: ${lib.concatMapStringsSep ", " (ep: ep.name or "?") (lib.filter (ep: lib.any (al: lib.hasInfix "\"" (al.description or "") || lib.hasInfix "\\" (al.description or "")) (ep.alerts or [ ])) config.services.gatus.settings.endpoints)}";
+          }
+        ];
         services.gatus = {
           enable = true;
           environmentFile = config.sops.templates."gatus-env".path;
@@ -1158,7 +1174,7 @@ _: {
                     "[BODY] == pat(*system_cgroup_mem_anon_bytes*)"
                     "[BODY] == pat(*system_oomd_kills_total*)"
                   ];
-                  alerts = discordAlert "system_health.prom is being REJECTED by node_exporter (whole-file textfile parse failure) or the collector died — EVERY system_* metric is blind: crash-loop, zram, oomd, census, thermal, user-unit monitoring all dark. THREE incidents of this class already (2026-09-20 nrestarts value, 2026-10-03 \\x2d label, 2026-10-12 census newline glue). Check: journalctl -u prometheus-node-exporter -n 5 (the 'failed to parse textfile' line names the exact line), then journalctl -u system-health-metrics -n 30. Fixes ride a deploy.";
+                  alerts = discordAlert "system_health.prom is being REJECTED by node_exporter (whole-file textfile parse failure) or the collector died — EVERY system_* metric is blind: crash-loop, zram, oomd, census, thermal, user-unit monitoring all dark. THREE incidents of this class already (2026-09-20 nrestarts value, 2026-10-03 backslash-x2d label, 2026-10-12 census newline glue). Check: journalctl -u prometheus-node-exporter -n 5 (the 'failed to parse textfile' line names the exact line), then journalctl -u system-health-metrics -n 30. Fixes ride a deploy.";
                 })
                 (mkHttpCheck {
                   name = "CPU Thermal Alert";
