@@ -52,16 +52,53 @@ plan_rotations() {
   printf '%s\n' "${lines[@]}" | sort -rn | head -n "$max_per_run" | awk '{print $2, $1}'
 }
 
+# ── consumer map ────────────────────────────────────────────────────────────
+declare -A CONSUMERS=()
+parse_consumers() {
+  CONSUMERS=()
+  local spec client
+  for spec in "$@"; do
+    case "$spec" in
+      *=*) client=${spec%%=*} ;;
+      *)
+        warn "malformed consumer spec (want client=units): $spec"
+        continue
+        ;;
+    esac
+    CONSUMERS[$client]=${spec#*=}
+  done
+  return 0
+}
+
+# Splits "daemon@bridge:envfile" into SPLIT_DAEMON/SPLIT_BRIDGE/SPLIT_ENVFILE.
+# Returns 1 when the spec is a plain unit.
+split_consumer_unit() {
+  SPLIT_DAEMON=""
+  SPLIT_BRIDGE=""
+  SPLIT_ENVFILE=""
+  case "$1" in
+    *@*:*)
+      SPLIT_DAEMON=${1%%@*}
+      SPLIT_BRIDGE=${1#*@}
+      SPLIT_BRIDGE=${SPLIT_BRIDGE%%:*}
+      SPLIT_ENVFILE=${1#*:@}
+      SPLIT_ENVFILE=${SPLIT_ENVFILE#*:}
+      return 0
+      ;;
+    *) return 1 ;;
+  esac
+}
+
 # ── selftest (no API, no systemd) ───────────────────────────────────────────
 if [ "${1:-}" = "selftest" ]; then
   set -euo pipefail
   scratch=$(mktemp -d)
   trap 'rm -rf "$scratch"' EXIT
+  echo fixture-secret >"$scratch/a"; touch -d "100 days ago" "$scratch/a"
+  echo fixture-secret >"$scratch/b"; touch -d "95 days ago" "$scratch/b"
+  echo fixture-secret >"$scratch/c"; touch -d "10 days ago" "$scratch/c"
+  echo fixture-secret >"$scratch/.hidden-state"; touch -d "400 days ago" "$scratch/.hidden-state"
   now=$(date +%s)
-  : >"$scratch/a"; touch -d "100 days ago" "$scratch/a"
-  : >"$scratch/b"; touch -d "95 days ago" "$scratch/b"
-  : >"$scratch/c"; touch -d "10 days ago" "$scratch/c"
-  : >"$scratch/.hidden-state"; touch -d "400 days ago" "$scratch/.hidden-state"
 
   plan=$(plan_rotations "$scratch" "$now" 90 1)
   [ "$plan" = "a 100" ] || {
@@ -74,7 +111,7 @@ if [ "${1:-}" = "selftest" ]; then
     echo "selftest: expected 2 stale clients, got: $plan" >&2
     exit 1
   }
-  [ "$(echo "$plan" | head -1 | awk '{print $2}')" = "a" ] || {
+  [ "$(echo "$plan" | head -1 | awk '{print $1}')" = "a" ] || {
     echo "selftest: oldest-first order wrong: $plan" >&2
     exit 1
   }
@@ -101,7 +138,7 @@ if [ "${1:-}" = "selftest" ]; then
     echo "selftest: forgejo consumer spec mangled" >&2
     exit 1
   }
-  [ "$(split_consumer_unit "cv-server@cv-oidc-env:/x/y.env" && echo ok)" = "ok" ] || {
+  split_consumer_unit "cv-server@cv-oidc-env:/x/y.env" || {
     echo "selftest: @-gate spec split failed" >&2
     exit 1
   }
@@ -109,6 +146,10 @@ if [ "${1:-}" = "selftest" ]; then
     echo "selftest: @-gate split wrong: daemon=$SPLIT_DAEMON bridge=$SPLIT_BRIDGE envfile=$SPLIT_ENVFILE" >&2
     exit 1
   }
+  split_consumer_unit "forgejo.service" && {
+    echo "selftest: plain unit must not split as @-gate" >&2
+    exit 1
+  } || true
 
   echo "$SELF_NAME selftest OK"
   exit 0
@@ -153,43 +194,6 @@ esac
 
 STATE_FILE="$SECRETS_DIR/.auto-rotation.state"
 
-# ── consumer map ────────────────────────────────────────────────────────────
-declare -A CONSUMERS =()
-parse_consumers() {
-  CONSUMERS=()
-  local spec client
-  for spec in "$@"; do
-    case "$spec" in
-      *=*) client=${spec%%=*} ;;
-      *)
-        warn "malformed consumer spec (want client=units): $spec"
-        continue
-        ;;
-    esac
-    CONSUMERS[$client]=${spec#*=}
-  done
-  return 0
-}
-
-# Splits "daemon@bridge:envfile" into SPLIT_DAEMON/SPLIT_BRIDGE/SPLIT_ENVFILE.
-# Returns 1 when the spec is a plain unit.
-split_consumer_unit() {
-  SPLIT_DAEMON=""
-  SPLIT_BRIDGE=""
-  SPLIT_ENVFILE=""
-  case "$1" in
-    *@*:*)
-      SPLIT_DAEMON=${1%%@*}
-      SPLIT_BRIDGE=${1#*@}
-      SPLIT_BRIDGE=${SPLIT_BRIDGE%%:*}
-      SPLIT_ENVFILE=${1#*:@}
-      SPLIT_ENVFILE=${SPLIT_ENVFILE#*:}
-      return 0
-      ;;
-    *) return 1 ;;
-  esac
-}
-
 parse_consumers "$@"
 
 # ── metrics ─────────────────────────────────────────────────────────────────
@@ -207,8 +211,14 @@ PENDING=0
 LAST_CLIENT="-"
 
 write_prom() {
-  local now temp
+  local now temp f client mtime age all_stale
   now=$(date +%s)
+  all_stale=$(plan_rotations "$SECRETS_DIR" "$now" "$MAX_AGE_DAYS" 100000)
+  if [ -n "$all_stale" ]; then
+    PENDING=$(echo "$all_stale" | wc -l)
+  else
+    PENDING=0
+  fi
   temp=$(mktemp "$TEXTFILE_DIR/secret-rotation-auto.prom.XXXXXX")
   {
     echo "# HELP secret_rotation_auto_run_failed 1 if the last auto-rotation run failed (rotation or consumer restart)"
@@ -237,7 +247,6 @@ write_prom() {
     echo "secret_rotation_auto_skipped_provision_active $SKIP_PROVISION"
     echo "# HELP secret_rotation_auto_age_days per-client secret file age in days"
     echo "# TYPE secret_rotation_auto_age_days gauge"
-    local f client mtime age
     for f in "$SECRETS_DIR"/*; do
       [ -f "$f" ] || continue
       client=$(basename "$f")
@@ -277,29 +286,6 @@ fi
 
 API_KEY=$(cat "$API_KEY_FILE")
 
-# ── plan ────────────────────────────────────────────────────────────────────
-now=$(date +%s)
-plan=$(plan_rotations "$SECRETS_DIR" "$now" "$MAX_AGE_DAYS" "$MAX_PER_RUN")
-
-all_stale=$(plan_rotations "$SECRETS_DIR" "$now" "$MAX_AGE_DAYS" 100000)
-if [ -n "$all_stale" ]; then
-  PENDING=$(echo "$all_stale" | wc -l)
-fi
-
-if [ -z "$plan" ]; then
-  log "no stale clients (threshold ${MAX_AGE_DAYS}d) — nothing to do"
-  write_prom
-  exit 0
-fi
-
-if [ "$MODE" = "dry-run" ]; then
-  while read -r client age; do
-    log "[DRY-RUN] would rotate client=$client age=${age}d consumers=${CONSUMERS[$client]:-<UNMAPPED>}"
-  done <<<"$plan"
-  write_prom
-  exit 0
-fi
-
 # ── rotate ──────────────────────────────────────────────────────────────────
 persist_state() {
   printf 'ROTATED_TOTAL=%s\nLAST_SUCCESS_TS=%s\n' "$ROTATED_TOTAL" "$LAST_SUCCESS_TS" >"$STATE_FILE"
@@ -314,7 +300,7 @@ rotate_secret() {
     code=$(printf '%s' "$response" | tail -n 1)
     body=$(printf '%s' "$response" | sed '$d')
     secret=$(printf '%s' "$body" | jq -er '.secret // empty' 2>/dev/null) || secret=""
-    if [ -n "$secret" ] && [ "$code" = "201" -o "$code" = "200" ]; then
+    if [ -n "$secret" ] && { [ "$code" = "201" ] || [ "$code" = "200" ]; }; then
       # Atomic write, mirrored from pocket-id-provision: a killed run must
       # never leave a truncated secret (crash-looping consumers).
       tmp=$(mktemp "$SECRETS_DIR/.secret.$client.XXXXXX")
@@ -325,7 +311,7 @@ rotate_secret() {
       log "rotated client=$client (HTTP $code) and rewrote $SECRETS_DIR/$client"
       return 0
     fi
-    warn "rotation POST for $client returned HTTP $code (attempt $attempt/2)"
+    warn "rotation POST for $client returned HTTP ${code:-none} (attempt $attempt/2)"
     sleep 5
   done
   # NOTE: if the POST succeeded but parsing/write failed, Pocket ID's DB
@@ -333,17 +319,17 @@ rotate_secret() {
   # That is exactly why this failure is LOUD (unit fails -> Discord alert)
   # and why the next run retries: the retry rotates again and rewrites the
   # file, converging file and DB.
-  die "failed to rotate $client after 2 attempts (HTTP $code) — DB/file desync possible, run again to converge"
+  die "failed to rotate $client after 2 attempts (HTTP ${code:-none}) — DB/file desync possible, run again to converge"
 }
 
 restart_consumers() {
-  local client=$1 spec daemon bridge envfile before after
+  local client=$1 spec unit daemon bridge envfile before after
   spec=${CONSUMERS[$client]:-}
   if [ -z "$spec" ]; then
-    warn "client $client has NO consumer mapping — rotation SKIPPED (rotating without a consumer restart would desync)"
+    warn "client $client has NO consumer mapping — rotation already applied, restart SKIPPED (flagging loudly)"
     return 2
   fi
-  local unit
+  local -a units
   IFS=, read -ra units <<<"$spec"
   for unit in "${units[@]}"; do
     if split_consumer_unit "$unit"; then
@@ -381,6 +367,24 @@ restart_consumers() {
   return 0
 }
 
+now=$(date +%s)
+plan=$(plan_rotations "$SECRETS_DIR" "$now" "$MAX_AGE_DAYS" "$MAX_PER_RUN")
+
+if [ -z "$plan" ]; then
+  log "no stale clients (threshold ${MAX_AGE_DAYS}d) — nothing to do"
+  write_prom
+  exit 0
+fi
+
+if [ "$MODE" = "dry-run" ]; then
+  while read -r client age; do
+    [ -n "$client" ] || continue
+    log "[DRY-RUN] would rotate client=$client age=${age}d consumers=${CONSUMERS[$client]:-<UNMAPPED>}"
+  done <<<"$plan"
+  write_prom
+  exit 0
+fi
+
 while read -r client age; do
   [ -n "$client" ] || continue
   log "rotating stale client=$client (age ${age}d > ${MAX_AGE_DAYS}d, cap $MAX_PER_RUN/run)"
@@ -392,7 +396,7 @@ while read -r client age; do
   rc=$?
   if [ "$rc" -eq 2 ]; then
     # Rotation already happened; a consumer-less client must not silently
-    # linger — flag it loudly via the unmapped metric AND the run failure.
+    # linger — flag it via the unmapped metric AND the run failure.
     UNMAPPED=$((UNMAPPED + 1))
     RUN_FAILED=1
     continue
@@ -412,5 +416,5 @@ if [ "$RUN_FAILED" -ne 0 ]; then
   die "run finished WITH FAILURES — see WARN/ERROR lines above"
 fi
 
-log "run complete: rotated this-run deltas applied (total $ROTATED_TOTAL)"
+log "run complete (cumulative rotations: $ROTATED_TOTAL)"
 exit 0
