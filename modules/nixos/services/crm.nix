@@ -223,7 +223,7 @@
                 # full 120s while discovery succeeded (first attempt, fixed
                 # same day). Bounded, fail-open (cv-server's wait idiom).
                 ExecStartPre = [
-                  "${pkgs.bash}/bin/bash -c 'deadline=$$((SECONDS + 120)); until ${pkgs.glibc}/bin/getent hosts auth.${domain} >/dev/null 2>&1; do if [ \"$$SECONDS\" -ge \"$$deadline\" ]; then echo \"crm-server: auth.${domain} not resolvable within 120s — starting anyway (OIDC will degrade to passkey-only; restart once DNS is up)\" >&2; exit 0; fi; sleep 1; done'"
+                  "${pkgs.bash}/bin/bash -c 'deadline=$$((SECONDS + 120)); until ${pkgs.getent}/bin/getent hosts auth.${domain} >/dev/null 2>&1; do if [ \"$$SECONDS\" -ge \"$$deadline\" ]; then echo \"crm-server: auth.${domain} not resolvable within 120s — starting anyway (OIDC will degrade to passkey-only; restart once DNS is up)\" >&2; exit 0; fi; sleep 1; done'"
                 ];
                 # The wait window lives under the default 90s start budget
                 # (systemd.md: ExecStartPre-heavy units need an explicit
