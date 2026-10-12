@@ -60,8 +60,8 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "name": "Temperature Sources (hwmon vs ClickHouse)",
-            "description": "Both temp sources overlaid: hwmon chip label is PCI-address-keyed (fragile to bus renumbering), ClickHouseAsyncMetrics is CH-dependent — one series flatlining/absent means that source broke while the alert keeps working via the other"
+            "name": "GPU Temperature (hwmon)",
+            "description": "amdgpu edge temp via node_exporter hwmon. Renumber-tolerant regex (:cN:00_0 shape) survives the post-crash bus-renumbering class — the 2026-10-10 shift moved this chip c5:00_0 -> c6:00_0 and stranded the old pinned selector at 0 series. ClickHouse's hwmon-derived async metric (Temperature_amdgpu_edge) ceased to exist 2026-10-12 (CH now emits bare Temperature series from thermal zones), so the old two-source overlay is retired. NPU (amdxdna) exposes NO hwmon temp — kernel-side gap, see docs/todo/ai-stack.md"
           },
           "plugin": {
             "kind": "signoz/TimeSeriesPanel",
@@ -106,7 +106,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "node_hwmon_temp_celsius{chip=~\".*c5:00_0\"} or ClickHouseAsyncMetrics_Temperature_amdgpu_edge",
+                    "query": "node_hwmon_temp_celsius{chip=~\".*:c[0-9a-f]+:00_0\"}",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
@@ -253,7 +253,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "max(node_hwmon_temp_celsius{chip=~\".*c5:00_0\"} or ClickHouseAsyncMetrics_Temperature_amdgpu_edge)",
+                    "query": "max(node_hwmon_temp_celsius{chip=~\".*:c[0-9a-f]+:00_0\"})",
                     "disabled": false,
                     "step": 0,
                     "stats": false,

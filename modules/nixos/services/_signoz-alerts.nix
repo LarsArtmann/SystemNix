@@ -130,18 +130,21 @@ in
       name = "GPU Thermal Throttling (>90°C)";
       description = "AMD GPU temperature above 90°C";
       # node_amdgpu_gpu_temp_celsius does not exist (0 series — node_exporter
-      # exposes GPU temp only via hwmon). Two-source OR for bus-renumber
-      # resilience: the hwmon chip label is PCI-address-keyed (breaks silently
-      # when this box renumbers buses after hard crashes — PROVEN AGAIN
-      # 2026-10-10: the chip moved c5:00_0 -> c6:00_0 and the old ".*c5:00_0"
-      # selector returned 0 series, only the ClickHouse fallback kept the rule
-      # alive), while ClickHouse's async metric name (amdgpu_edge) is stable
-      # but only exists while CH runs. Together they cover each other's blind
-      # spot. The regex matches ANY discrete-GPU PCI chip shape (:cN:00_0)
-      # without matching k10temp (00:18_x), nvme (nvme_nvmeN), or wifi
-      # (ieee80211_phy0) — live-verified 2026-10-10: 1 series at 47°C while
-      # the old form returned 0.
-      query = ''max(node_hwmon_temp_celsius{chip=~".*:c[0-9a-f]+:00_0"} or ClickHouseAsyncMetrics_Temperature_amdgpu_edge)'';
+      # exposes GPU temp only via hwmon). The hwmon chip label is
+      # PCI-address-keyed and breaks silently when this box renumbers buses
+      # after hard crashes — PROVEN AGAIN 2026-10-10: the chip moved
+      # c5:00_0 -> c6:00_0 and the old ".*c5:00_0" selector returned 0 series
+      # (only the ClickHouse fallback kept the rule alive that day). The regex
+      # matches ANY discrete-GPU PCI chip shape (:cN:00_0) without matching
+      # k10temp (00:18_x), nvme (nvme_nvmeN), or wifi (ieee80211_phy0) —
+      # live-verified 2026-10-10: 1 series at 47°C while the old form
+      # returned 0. The former ClickHouse OR-fallback
+      # (Temperature_amdgpu_edge) is RETIRED 2026-10-12: verified 0 series
+      # across a full 24h range (CH stopped emitting hwmon-derived async
+      # metric names; it now emits bare Temperature series from thermal
+      # zones), so the operand contributed nothing. Collector-death cover is
+      # the node-exporter liveness rules' job, not this query's.
+      query = ''max(node_hwmon_temp_celsius{chip=~".*:c[0-9a-f]+:00_0"})'';
       target = 90;
     };
     "signoz/rules/cpu-thermal-ceiling.json".source = mkRule {
