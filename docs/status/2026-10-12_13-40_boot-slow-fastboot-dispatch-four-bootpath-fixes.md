@@ -80,12 +80,19 @@ driving the session-long IO storm with go test / nix builds / an image batch).
 
 ## c) Fast Boot answer (the owner's actual question)
 
-Plain Fast Boot (NOT Ultra Fast): YES, worth ~60s/boot AND it mitigates the
-DAS boot-hang class — but it is a user BIOS action; enriched the existing
-[blocked:user] row in docs/todo/stability.md with the measured firmware data
-and the post-enable NVRAM verify (BootCurrent/LoaderDevicePartUUID must still
-decode to Samsung 000C — mirror has been first in BootOrder since 09-30 and
-the decode half of that verify is still open).
+CORRECTED after the 16-boot series: firmware time is a **warm-vs-cold split**,
+not flat — the one clean warm reboot in the record (boot -13, the 7.2.9 deploy
+reboot, 2026-10-05, 28s turnaround) posted **6.789s**; all 14 cold/watchdog
+boots posted 62.5-62.7s. Today's 62.7s was a **watchdog reset** (`x86/amd:
+Previous system reset reason [0x02000800]: hardware watchdog timer expired`,
+13:05:41 — the freeze-28 event; the parallel session's report covers the
+freeze itself). So: 62.7s is the COLD-boot firmware cost (AMI 5.36 retraining
+the 128G LPDDR5X), the 6.8s fast path EXISTS, and the BIOS levers are plain
+Fast Boot + (where exposed) Memory Context Restore / MRC Fast Boot — expected
+cold firmware → ~7-15s. The owner challenge was right: 62.7s cold-post IS a
+problem worth fixing at the BIOS layer. Full decision context + the
+post-enable NVRAM verify (Samsung 000C first) lives in the enriched
+[blocked:user] row, docs/todo/stability.md.
 
 ## f) Follow-ups (self-harvested at authoring time)
 

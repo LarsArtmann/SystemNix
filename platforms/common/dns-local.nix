@@ -53,5 +53,15 @@
   cloudPublicRecords = {
     netbird = "46.62.241.133";
     relay = "46.62.241.133";
+    # The pbx Pocket ID (pbx-artmann SSO, 2026-10-12). Same shadow class as
+    # netbird/relay but with a twist: "auth" is ALSO a localSubdomain (the
+    # evo-x2 Pocket ID at auth.home.lan), so the alias zone maps
+    # auth.larsartmann.cloud -> evo-x2 — where nothing serves that origin —
+    # while the public record points at the pbx. LAN/VPN browsers would hit
+    # the wrong box and every pbx gate login from the LAN dies (found
+    # 2026-10-12, TODO §38 row 1). cloudPublicRecords wins over the alias
+    # zone (the // chain in dns-blocker-config.nix), so this entry repoints
+    # the cloud name at the pbx IdP without touching auth.home.lan.
+    auth = "46.62.241.133";
   };
 }
