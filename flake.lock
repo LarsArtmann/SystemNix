@@ -195,11 +195,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791578251,
-        "narHash": "sha256-OzaZCOrhjgneVFHGcRDWGT69lUsbUgEDbFuT6SbdUbI=",
+        "lastModified": 1791743189,
+        "narHash": "sha256-5Z8gbiFR5jcByXaHV2JZPsvHMs4KFbvJqnbPaE1r5ZA=",
         "ref": "refs/heads/master",
-        "rev": "192031d227d6f2af859e15e48fc47dcdf5867b13",
-        "revCount": 2721,
+        "rev": "b5d011bd2670043e0959b5acb4f9602ce2c202f4",
+        "revCount": 2820,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
@@ -223,6 +223,33 @@
       "original": {
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
+      }
+    },
+    "brandid-lint": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1791800371,
+        "narHash": "sha256-f2rdyetaTKo7jo6ZhiC8iToBsSNetvxaJ90i0VnNadE=",
+        "owner": "LarsArtmann",
+        "repo": "go-branded-id",
+        "rev": "f5b52cd42133fe526df5f4f390c35d1255c48e79",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "master",
+        "repo": "go-branded-id",
+        "type": "github"
       }
     },
     "brew-src": {
@@ -1912,11 +1939,11 @@
     "go-branded-id_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1791549805,
-        "narHash": "sha256-1NJJCPrLw9bhUuwtEqXJ5YXAXoiZR29DwLvPiafIplU=",
+        "lastModified": 1791706742,
+        "narHash": "sha256-WPMHxrOlQwvbzvcQMrKW1SXE2ORR3kM/r6hcOkecm+o=",
         "owner": "LarsArtmann",
         "repo": "go-branded-id",
-        "rev": "484e22f6562db8c5f4b69e05fef5884719efc194",
+        "rev": "4d9b0c158d66ab608e38397efa0195652509f7cd",
         "type": "github"
       },
       "original": {
@@ -3748,11 +3775,11 @@
     "go-finding_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1791206617,
-        "narHash": "sha256-Jt0dSiuFoiG07P/Q1NhjgVNufM7oitt3O5vSMGA+hdA=",
+        "lastModified": 1791708941,
+        "narHash": "sha256-b9ThCzKWeb9k999Rba24JXx0hpcTzHNDQTzjJrUirsI=",
         "owner": "LarsArtmann",
         "repo": "go-finding",
-        "rev": "576c7384cfb93ce0b4c04d6998586ed04216d99d",
+        "rev": "9c675c77bc37a1c8fdd4adc2172ba3af4f712686",
         "type": "github"
       },
       "original": {
@@ -7487,6 +7514,7 @@
         "art-dupl-src": "art-dupl-src",
         "bank-sync": "bank-sync",
         "branching-flow": "branching-flow",
+        "brandid-lint": "brandid-lint",
         "browser-history": "browser-history",
         "buildflow": "buildflow",
         "cmdguard": "cmdguard_2",
