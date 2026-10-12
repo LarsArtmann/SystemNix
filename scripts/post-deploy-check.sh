@@ -2086,18 +2086,18 @@ elif ! grep -q '\-oidc-issuer' "$CRM_UNIT_FILE"; then
 else
   crm_oidc_line="$(journalctl -u crm-server -b --no-pager 2>/dev/null | grep 'oidc sign-in' | tail -1 || true)"
   case "$crm_oidc_line" in
-    *"oidc sign-in enabled"*)
-      report_pass "Kith CRM OIDC - Pocket ID sign-in enabled (last start: $crm_oidc_line)"
-      ;;
-    *"oidc sign-in disabled"*)
-      report_fail "Kith CRM OIDC - sign-in DISABLED (passkey-only degrade live) — restart crm-server once auth.home.lan DNS+Pocket ID are up (run: journalctl -u crm-server -b | grep 'oidc sign-in')"
-      ;;
-    "")
-      report_warn "Kith CRM OIDC - OIDC flags deployed but no readiness line since boot — verify unit actually restarted (run: journalctl -u crm-server -b | tail -20)"
-      ;;
-    *)
-      report_warn "Kith CRM OIDC - unrecognized readiness line: $crm_oidc_line"
-      ;;
+  *"oidc sign-in enabled"*)
+    report_pass "Kith CRM OIDC - Pocket ID sign-in enabled (last start: $crm_oidc_line)"
+    ;;
+  *"oidc sign-in disabled"*)
+    report_fail "Kith CRM OIDC - sign-in DISABLED (passkey-only degrade live) — restart crm-server once auth.home.lan DNS+Pocket ID are up (run: journalctl -u crm-server -b | grep 'oidc sign-in')"
+    ;;
+  "")
+    report_warn "Kith CRM OIDC - OIDC flags deployed but no readiness line since boot — verify unit actually restarted (run: journalctl -u crm-server -b | tail -20)"
+    ;;
+  *)
+    report_warn "Kith CRM OIDC - unrecognized readiness line: $crm_oidc_line"
+    ;;
   esac
 fi
 

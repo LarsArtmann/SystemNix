@@ -76,3 +76,7 @@
 ---
 
 *Report format note: `.md` at the owner's explicit path demand (the status-report skill's HTML default was overridden by instruction; flagged per skill convention).*
+
+## Addendum (2026-10-12, post-report)
+
+**§g Q1 ANSWERED by the owner:** "gpt-oss-120b is OLD and NOT Abliterated so fucking no!" — abliterated/uncensored is a HARD requirement for the llama-chat brain. Doctrine recorded in `docs/services/llama-chat.md` (Model section) + the `llama-chat.nix` header; the §f.5 bench item is un-gated and queued as a `[ready]` row in `docs/todo/ai-stack.md` with the narrowed candidate set (abliterated Qwen3.6-35B-A3B family quants/distills/tunes ONLY). Q2 (deploy go) and Q3 (Vulkan soak approval) remain open.

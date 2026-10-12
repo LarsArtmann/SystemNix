@@ -42,11 +42,9 @@ _: {
     in
     {
       options.services.ai-stack = {
-        enable =
-          lib.mkEnableOption "AI inference stack — llama.cpp, gpu-python, AI tooling"
-          // {
-            default = false;
-          };
+        enable = lib.mkEnableOption "AI inference stack — llama.cpp, gpu-python, AI tooling" // {
+          default = false;
+        };
       };
 
       config = lib.mkIf cfg.enable {

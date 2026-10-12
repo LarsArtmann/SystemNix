@@ -61,24 +61,23 @@ _: {
       };
 
       config = lib.mkIf cfg.enable {
-        systemd.tmpfiles.rules =
-          map (path: mkStateDir path "0755" cfg.user cfg.group) [
-            cfg.baseDir
-            "${cfg.baseDir}/models"
-            "${cfg.baseDir}/cache"
-            "${cfg.baseDir}/workspaces"
-            cfg.paths.gguf
-            cfg.paths.whisper
-            cfg.paths.jan
-            cfg.paths.vision
-            cfg.paths.image
-            cfg.paths.embeddings
-            cfg.paths.tts
-            cfg.paths.huggingface
-            cfg.paths.huggingface-hub
-            cfg.paths.huggingface-transformers
-            cfg.paths.fastflowlm
-          ];
+        systemd.tmpfiles.rules = map (path: mkStateDir path "0755" cfg.user cfg.group) [
+          cfg.baseDir
+          "${cfg.baseDir}/models"
+          "${cfg.baseDir}/cache"
+          "${cfg.baseDir}/workspaces"
+          cfg.paths.gguf
+          cfg.paths.whisper
+          cfg.paths.jan
+          cfg.paths.vision
+          cfg.paths.image
+          cfg.paths.embeddings
+          cfg.paths.tts
+          cfg.paths.huggingface
+          cfg.paths.huggingface-hub
+          cfg.paths.huggingface-transformers
+          cfg.paths.fastflowlm
+        ];
 
         environment.sessionVariables = {
           HF_HOME = cfg.paths.huggingface;
