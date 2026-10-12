@@ -28,6 +28,11 @@ driving the session-long IO storm with go test / nix builds / an image batch).
    - `clickhouse` 10m52s starting (state findmnt-verified on the QLC root
      subvol `nvme0n1p6[/@]`) + `crush-hot-db-migrate` 10m2s = the storm's eye
      and its timer-fed log-walk.
+     **CORRECTION 2026-10-12 17:4x:** the findmnt above was misread — live
+     state is `/dev/nvme0n1p9`, a DEDICATED 100G XFS partition on the SAME
+     QLC disk (not the root btrfs subvol). Same NAND, same storm conclusion;
+     different migration shape (partition copy, not subvol move). The
+     storage.md relocation row carries the corrected premise.
    - `btrfs-compsize` OnBootSec=5min fired INTO the storm and timed out
      (530ms CPU over 2m08s wall) → OnFailure noise.
    - `forgejo` restart-cascade: its `maxAttempts = 30` override (60s DNS-gate

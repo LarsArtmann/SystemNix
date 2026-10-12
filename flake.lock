@@ -567,11 +567,11 @@
     "collector-utils_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1789739099,
-        "narHash": "sha256-0FVU30TDi2jZ2q4IIsyDQH5YaUOKz0DelihLkFAQlkw=",
+        "lastModified": 1790750523,
+        "narHash": "sha256-4qMDC6C29BOJDdGponTt9TTxHsiMn1eCAkN1JW4BWlk=",
         "owner": "LarsArtmann",
         "repo": "collector-utils",
-        "rev": "9170adada36e1fd9c095707b829cf0552a50cbc0",
+        "rev": "2c571a1cedb56e9f09f26473031490dc189ff2f1",
         "type": "github"
       },
       "original": {
@@ -784,11 +784,11 @@
     },
     "crane_2": {
       "locked": {
-        "lastModified": 1789760033,
-        "narHash": "sha256-jtT4yxZpR8seYnlCMMWSSPlFN92zO6ICuZ8pJrmi86k=",
+        "lastModified": 1791754810,
+        "narHash": "sha256-cN0Mgk+sQtCJcGWs9H4M0CnLRAuC4I8aCwiBTcBJs6E=",
         "owner": "ipetkov",
         "repo": "crane",
-        "rev": "73b980519cefc727a5f6cc8e5c0947a2f9be6edd",
+        "rev": "bd63bf1d0a0f6dcacd7549c714a671ee63b0db6a",
         "type": "github"
       },
       "original": {
@@ -7954,11 +7954,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790464188,
-        "narHash": "sha256-JcU1YSAWv6eFioHBqB8qpKLbnoCfelc1D75BUp7Q+r8=",
+        "lastModified": 1791768595,
+        "narHash": "sha256-XGvdL1JQWvhizAVTsZAJHsz7KHJ91ZSEJq151fKdzzs=",
         "ref": "refs/heads/master",
-        "rev": "c0a3389c49b1dc46e37a959cbcb5f7fc732ca63b",
-        "revCount": 206,
+        "rev": "0ba7b4fe3147cf184f6d6c31c5d9098db0b21273",
+        "revCount": 214,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/storage-collector"
       },
