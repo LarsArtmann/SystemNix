@@ -42,12 +42,15 @@ wave 6 is the lowest-risk of all and may jump the queue):
 - **Vehicle green**: `checks.x86_64-linux.migrate-hot-db-fixture` builds rc=0.
 - **Tier live**: `hot_tier_mounted 1`, `hot_db_scrape_errors 0`, Samsung
   `/mnt/hot` has ~768 GB free.
-- **GATE (wave 5)**: the discordsync dump leg is STALLED — 9 consecutive
-  nightly failures 2026-10-03..11, each instant `database is locked`
-  (0-byte `.raw` litter; the CLI had busy_timeout=0 and the server's
-  near-continuous write churn holds locks at every 02:30:00 attempt).
-  Fix deployed in-tree 2026-10-11: `.timeout 30000` + 3-attempt retry in
-  the backup script (mechanism-proven against an EXCLUSIVE holder).
+- **GATE (wave 5)**: the discordsync dump leg is STALLED — 10 consecutive
+  nightly failures 2026-10-03..12. Stage 1 (fixed 2026-10-11): the CLI had
+  busy_timeout=0; `.timeout 30000` + 3-attempt retry deployed. Stage 2
+  (found via the 2026-10-12 run: retries still lost after 90 s): the
+  server's nightly GCS-URL reconcile pass (02:00 sharp, 77+ min span,
+  ~12 DB writes/sec) held locks across the WHOLE 02:30 slot — the feature
+  landed ~Sep 30, failures began Oct 3. Fix: timer moved to 03:45 (after
+  the pass) + the script waits for 3 min of reconcile journal silence
+  before the first open (`discordsync.nix`).
   Before the discordsync window: deploy, then
   `sudo systemctl start discordsync-db-backup.service` and confirm a
   fresh dump + `backup_healthy{discordsync} 1` — with Turso blocked
@@ -66,7 +69,7 @@ wave 6 is the lowest-risk of all and may jump the queue):
 | 2    | `dnsblockd`       | `/var/lib/dnsblockd` (~2.5 GB incl. the stale `dnsblockd_tracking.db` legacy file) | LAN DNS blip; gatus "DNS Resolver" pages once + resolves         | none — self-pruning tracking stats                                                                |
 | 3    | `pocket-id`       | `/var/lib/pocket-id`                                                               | SSO blip                                                         | `pocket-id-backup` (04:00 sqlite .backup, pool)                                                   |
 | 4    | `browser-history` | `/var/lib/private/browser-history`                                                 | ingest retries on next 5-min tick                                | `browser-history-backup` (02:15, pool)                                                            |
-| 5    | `discordsync`     | `/var/lib/discordsync` (~11 GB — the longest delta+verify)                         | Discord capture gap ≈ any restart; keep tight                    | `discordsync-db-backup` (02:30 gzipped dump, pool — the dump-only RPO leg, Turso is plan-blocked) |
+| 5    | `discordsync`     | `/var/lib/discordsync` (~11 GB — the longest delta+verify)                         | Discord capture gap ≈ any restart; keep tight                    | `discordsync-db-backup` (03:45 gzipped dump, pool — the dump-only RPO leg, Turso is plan-blocked) |
 | 6    | `storage-collector` | `/var/lib/private/storage-collector` (~60 MB today; flips to a 1 GiB window at cutover) | monitoring gap ~1 min (textfile gauges stall, Gatus reds once)   | `restic-storage-history` (04:20 nightly, no-prune pool repo — LANDED 2026-10-12, history survives regardless) |
 
 DynamicUser services (gatus, browser-history, storage-collector) mount the
@@ -285,4 +288,4 @@ Knowledge below moved verbatim from the root AGENTS.md restructure — it is the
 
 ### Hot-DB Service Tier (`services.hot-db`, waves armed 2026-09-30)
 
-Per-service BTRFS subvols on the Samsung, mounted AT each dataDir (`docs/services/hot-db.md` is the runbook — waves gatus → dnsblockd → pocket-id → browser-history → discordsync, one entry per maintenance window). `enable = true` with `entries = { }` ships ZERO mounts; adding an entry without running `migrate-hot-db.sh prepare/cutover` first mounts an EMPTY subvol over live data (shadow-split) — the runbook's 6-step window is mandatory. Vehicle (2026-09-30): `migrate-hot-db.sh` warm-prepare/cutover/finalize flow (registry of the five with stop-sets; stop window = cutover→switch only; finalize verifies via biggest-file floor + count-vs-marker; fixture-tested as `checks.migrate-hot-db-fixture`), T14 monitoring (`hot-db-metrics` fail-closed collector → `hot_db_entry_mounted{name}` + one anchored Gatus check per entry via the `gatus-config.extraEndpoints` seam; REVIEW-HARDENED 2026-09-30: "fail-closed" is EMISSION semantics — metric absence covers only the never-ran case, collector DEATH is owned by `onFailure` → `notify-failure@` + `hot-db-metrics` in `system-health.extraMonitoredServices` (`65e93b80`); the VM test asserts the entry-gauge-0 failure transition, not just the happy snapshot, `f2edc387`), and the discordsync dump-only RPO leg (`discordsync-db-backup` 02:30 gzipped sqlite `.backup` → `/mnt/pool/backups/discordsync`, registered in backup-coordination + restic — with Turso plan-blocked it is the event store's only backup once it leaves `@`). All five entries are `cow = true` (2026-09-21 measurement: nodatacow worthless on TLC, checksums free). DynamicUser services mount the REAL `/var/lib/private/<name>` dir behind the public symlink. Postgres wave (ratified, `cow = false`) rides the same vehicle via the script's generic `<name> <dataDir> <unit>` form.
+Per-service BTRFS subvols on the Samsung, mounted AT each dataDir (`docs/services/hot-db.md` is the runbook — waves gatus → dnsblockd → pocket-id → browser-history → discordsync, one entry per maintenance window). `enable = true` with `entries = { }` ships ZERO mounts; adding an entry without running `migrate-hot-db.sh prepare/cutover` first mounts an EMPTY subvol over live data (shadow-split) — the runbook's 6-step window is mandatory. Vehicle (2026-09-30): `migrate-hot-db.sh` warm-prepare/cutover/finalize flow (registry of the five with stop-sets; stop window = cutover→switch only; finalize verifies via biggest-file floor + count-vs-marker; fixture-tested as `checks.migrate-hot-db-fixture`), T14 monitoring (`hot-db-metrics` fail-closed collector → `hot_db_entry_mounted{name}` + one anchored Gatus check per entry via the `gatus-config.extraEndpoints` seam; REVIEW-HARDENED 2026-09-30: "fail-closed" is EMISSION semantics — metric absence covers only the never-ran case, collector DEATH is owned by `onFailure` → `notify-failure@` + `hot-db-metrics` in `system-health.extraMonitoredServices` (`65e93b80`); the VM test asserts the entry-gauge-0 failure transition, not just the happy snapshot, `f2edc387`), and the discordsync dump-only RPO leg (`discordsync-db-backup` 03:45 gzipped sqlite `.backup` → `/mnt/pool/backups/discordsync`, registered in backup-coordination + restic — with Turso plan-blocked it is the event store's only backup once it leaves `@`). All five entries are `cow = true` (2026-09-21 measurement: nodatacow worthless on TLC, checksums free). DynamicUser services mount the REAL `/var/lib/private/<name>` dir behind the public symlink. Postgres wave (ratified, `cow = false`) rides the same vehicle via the script's generic `<name> <dataDir> <unit>` form.

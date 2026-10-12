@@ -636,7 +636,8 @@ in
         attachmentsDir = "/mnt/pool/services/discordsync/attachments";
         # Dump-only RPO leg for the hot-db wave (2026-09-30): once the event
         # store leaves the btrbk `@` snapshot set and with Turso sync
-        # free-plan blocked, this nightly gzipped dump (02:30) is its only
+        # free-plan blocked, this nightly gzipped dump (03:45, scheduled
+        # AFTER the server's 02:00 GCS-reconcile pass) is its only
         # backup. Registered in backup-coordination + the restic repo.
         dbBackup.enable = true;
         # Immich cross-archive comparison on the /lookup page (ADR-062): the

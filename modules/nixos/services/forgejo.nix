@@ -151,7 +151,6 @@ _: {
         inherit pkgs;
         serviceName = "forgejo-oidc";
         hostname = "auth.home.lan";
-        maxAttempts = 30;
       };
 
       # DNS resolving is not enough: on the 2026-08-22 crash-recovery boot
@@ -180,7 +179,6 @@ _: {
         inherit pkgs;
         serviceName = "forgejo";
         hostname = "auth.${config.networking.domain}";
-        maxAttempts = 30;
       };
 
       # Notifications (issues, PRs, mirrors) ride the central Postfix

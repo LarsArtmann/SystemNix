@@ -814,8 +814,10 @@
             {
               Type = "oneshot";
               # 11 GB event store: .backup read + gzip write ≈ minutes on the
-              # pool HDDs; bounded well above the global 3min default.
-              TimeoutStartSec = "30min";
+              # pool HDDs; the quiet-gate below can legitimately wait out the
+              # tail of the nightly GCS reconcile pass, so bounded well above
+              # the global 3min default.
+              TimeoutStartSec = "60min";
               ExecStart = pkgs.writeShellScript "discordsync-db-backup" ''
                 set -euo pipefail
                 db="${cfg.databasePath}"
@@ -831,6 +833,24 @@
                 # the server (own user) holds it, poisoning the next open
                 # with SQLITE_READONLY (the browser-history 2026-09-22
                 # uid-drift class).
+                # The nightly GCS-URL reconcile pass (02:00 sharp start,
+                # 77+ min span observed 2026-10-12, DB writes ~12/sec) holds
+                # locks against a readonly open for its WHOLE span — the old
+                # 02:30 timer sat dead-center (9 instant failures
+                # 2026-10-03..11; the deployed timeout+retry still lost after
+                # 90 s on 2026-10-12). The timer now runs 03:45 AND this gate
+                # waits out any pass tail before the first open: pass over =
+                # 3 min of reconcile journal silence (bounded, runs anyway at
+                # the cap).
+                waits=0
+                until ! journalctl -u discordsync.service --since "-3 min" -g "refreshing GCS signed URLs" -q; do
+                  waits=$((waits + 1))
+                  if [ "$waits" -ge 25 ]; then
+                    echo "discordsync-db-backup: GCS reconcile still active after 25 min — running anyway" >&2
+                    break
+                  fi
+                  sleep 60
+                done
                 # The CLI defaults to busy_timeout=0: one transient lock from
                 # the server's near-continuous write churn (GCS-URL refresh
                 # loop, turso-sync backoff retries) failed 9 consecutive
@@ -876,9 +896,11 @@
           wantedBy = [ "timers.target" ];
           after = [ "mnt-pool.mount" ];
           timerConfig = {
-            # 02:30 — staggered: paperless-db 02:00, browser-history 02:15,
-            # this 02:30, miniflux 02:45.
-            OnCalendar = "*-*-* 02:30:00";
+            # 03:45 — AFTER the server's nightly GCS-URL reconcile pass
+            # (02:00 sharp, 77+ min span): the old 02:30 slot collided with
+            # it for 10 straight nights. Stagger: paperless-db 02:00,
+            # browser-history 02:15, miniflux 02:45, this 03:45.
+            OnCalendar = "*-*-* 03:45:00";
             Persistent = true;
           };
         };
@@ -981,7 +1003,7 @@
               icon = "discord.png";
             };
             monitored = true;
-            # Event-store dump freshness (discordsync-db-backup.timer, 02:30)
+            # Event-store dump freshness (discordsync-db-backup.timer, 03:45)
             # — gated so pool-less hosts register no phantom backup row. The
             # dump-only RPO leg for the hot-db wave: Turso sync is
             # free-plan blocked, so this dump is the event store's only

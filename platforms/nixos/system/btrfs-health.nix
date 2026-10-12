@@ -611,7 +611,7 @@ let
     '';
   };
 
-  # ── Compsize metrics: compression ratio (runs hourly — compsize is slow) ────
+  # ── Compsize metrics: compression ratio (runs every 6h — compsize is slow) ──
   btrfsCompsizeMetrics = pkgs.writeShellApplication {
     name = "btrfs-compsize-metrics";
     runtimeInputs = [

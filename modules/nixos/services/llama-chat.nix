@@ -216,7 +216,12 @@ _: {
               # --retry-all-errors retries through the whole load; a load
               # that wedges (freeze-#5 class) FAILS the unit and
               # Restart=on-failure heals instead of active-but-dead.
-              ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 240 --retry-delay 2 --retry-all-errors http://${cfg.host}:${toString cfg.port}/health";
+              # 400 retries (~13min at 2s/iter, attempts return instantly
+              # while 503ing) keeps the probe budget inside the 15min
+              # TimeoutStartSec: 240 exhausted at exactly 8min on the
+              # 2026-10-12 boot (page-in starved by the IO storm), wasting
+              # the 8min load and forcing a full remap on the restart.
+              ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 400 --retry-delay 2 --retry-all-errors http://${cfg.host}:${toString cfg.port}/health";
             }
             # harden derives MemoryHigh (the throttle watermark) as 80% of
             # the MemoryMax ARGUMENT — calling `harden {}` bare merges its
