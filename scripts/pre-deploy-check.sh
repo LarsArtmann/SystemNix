@@ -900,7 +900,10 @@ if PVG_OUT=$(bash scripts/pre-vacuum-evidence-gate.sh 2>&1); then
   echo "$PVG_OUT" | grep -E 'vacuum clock|unpulled' | sed 's/^/    /' || true
 else
   fail "pre-vacuum evidence gate REFUSED — pull the listed boot(s) into docs/status/ before deploying (journal vacuum can erase them any time):"
-  echo "$PVG_OUT" | sed 's/^/    /'
+  # printf not echo: shellcheck SC2001 flags the echo|sed indent form
+  # (parameter expansion cannot anchor per-line, so the lint is a false
+  # positive here — printf sidesteps the pattern without suppressing it).
+  printf '%s\n' "$PVG_OUT" | sed 's/^/    /'
 fi
 
 # Summary
