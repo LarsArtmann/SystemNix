@@ -65,7 +65,7 @@
             --since "-${toString windowMinutes} min" --no-pager 2>/dev/null \
             | timeout 30 grep -c 'Handler timeout')" || count=0
           case "$count" in
-            ''''|*[!0-9]*) count=0; errors=1 ;;
+            ""|*[!0-9]*) count=0; errors=1 ;;
           esac
 
           burst=0
