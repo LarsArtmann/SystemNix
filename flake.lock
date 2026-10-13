@@ -1013,11 +1013,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791910839,
-        "narHash": "sha256-dO2p4Pvi+Lr2csz8xPAsBC5LTGn4/uhbT87rt4JpeEM=",
+        "lastModified": 1791918694,
+        "narHash": "sha256-Fu2KVI5RJn4FWodVbAAW/vFrU502Ao8L8SQHx0RDbOI=",
         "ref": "refs/heads/master",
-        "rev": "12977fbc475ad57d5677cc9919488fb6da378668",
-        "revCount": 4370,
+        "rev": "8d0ee569cdda65fce48fe43b3521005bc2ccbd47",
+        "revCount": 4371,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/DiscordSync"
       },
@@ -2862,11 +2862,11 @@
         "treefmt-nix": "treefmt-nix_7"
       },
       "locked": {
-        "lastModified": 1791910313,
-        "narHash": "sha256-ibRfqni8m3wqVyt5/M/+tiWqw0rbOeNTP0xMk6HlL84=",
+        "lastModified": 1791912404,
+        "narHash": "sha256-HEueXSRTfmUJZJa4uqhQqPqVqMTvxEq859o9a1e4XsQ=",
         "owner": "larsartmann",
         "repo": "go-cqrs-lite",
-        "rev": "7ddc4e75a479030e44940ad53243eb335d4b255e",
+        "rev": "820d5aef14f142f731ecdfe961a6c057b4e13af0",
         "type": "github"
       },
       "original": {
@@ -6841,11 +6841,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791912544,
-        "narHash": "sha256-Zshg8+59xMPmwdTc8YngBUhOA5fhzci5ngXKizsijoY=",
+        "lastModified": 1791916821,
+        "narHash": "sha256-fPW3vACpGkea4JyPR5tQ/5ZxyQWULBXFmFX75V91Db0=",
         "ref": "refs/heads/master",
-        "rev": "f985ff521918fc977556bdb208aaf705e2a10d27",
-        "revCount": 2148,
+        "rev": "058a63d95ff2097eb6f4652377fb6a334b9a10df",
+        "revCount": 2151,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/nsfw-classifier"
       },
