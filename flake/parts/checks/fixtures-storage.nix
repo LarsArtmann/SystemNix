@@ -544,7 +544,7 @@
             '';
 
         # Behavioral fixture for scripts/discordsync-restore-drill.sh
-        # (2026-10-14 storage row: automate the weekly restore-drill).
+        # (2026-10-13 storage row: automate the weekly restore-drill).
         # REAL sqlite3 + gzip, no stubs: the script only reads dumps and
         # writes into $TMPDIR, so every fixture dump is built by
         # importing rows through the real CLI (the production dump is a

@@ -478,7 +478,7 @@
         # drill (dbBackup.enable, below) must never become a second
         # same-attrset definition of this option (that is a raw
         # attribute-already-defined eval error, caught by nix fmt
-        # 2026-10-14, not a module-system merge).
+        # 2026-10-13, not a module-system merge).
         services.system-health.extraMonitoredServices = lib.mkIf (options ? services.system-health) (
           lib.mkAfter (
             lib.optionals cfg.immich.enable [ "discordsync-immich-verify" ]
@@ -968,7 +968,7 @@
           };
         };
 
-        # Weekly restore drill for the dump leg above (2026-10-14): a
+        # Weekly restore drill for the dump leg above (2026-10-13): a
         # backup that was never restored is a rumor, and the 2026-10-13
         # manual drill of the 10-01 dump was the FIRST restore this leg
         # ever had (12+ days into its life). Restores the newest dump
