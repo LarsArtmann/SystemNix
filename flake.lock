@@ -349,11 +349,11 @@
         "securitymd": "securitymd"
       },
       "locked": {
-        "lastModified": 1791897968,
-        "narHash": "sha256-LpuhjlN/E4X9r4gxfZGVkdX2+FgW6v4uZsFRNLFmaYg=",
+        "lastModified": 1791900741,
+        "narHash": "sha256-w1gsBkaqBtyNT7I0ZYb7DnV9pLAR+p1DpLhzkUWDybQ=",
         "ref": "refs/heads/master",
-        "rev": "dcb4d19cc73c6787f7c1084b25b23b137f17fd7f",
-        "revCount": 7709,
+        "rev": "f1694ce82a5788b3206c7298c3821138fafd60f7",
+        "revCount": 7713,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
