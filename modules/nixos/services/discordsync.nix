@@ -474,10 +474,17 @@
         # OnFailure (Discord) + the system-health state metrics
         # (github-auto-assign pattern). The options?-guard mirrors the
         # integration-registry convention for hosts that enable this module
-        # without system-health.
-        services.system-health.extraMonitoredServices = lib.mkIf (
-          cfg.immich.enable && options ? services.system-health
-        ) (lib.mkAfter [ "discordsync-immich-verify" ]);
+        # without system-health. One COMBINED definition: the restore
+        # drill (dbBackup.enable, below) must never become a second
+        # same-attrset definition of this option (that is a raw
+        # attribute-already-defined eval error, caught by nix fmt
+        # 2026-10-14, not a module-system merge).
+        services.system-health.extraMonitoredServices = lib.mkIf (options ? services.system-health) (
+          lib.mkAfter (
+            lib.optionals cfg.immich.enable [ "discordsync-immich-verify" ]
+            ++ lib.optionals cfg.dbBackup.enable [ "discordsync-db-restore-drill" ]
+          )
+        );
 
         systemd.services.discordsync = {
           # SystemNix DNS-gate: dnsblockd must resolve before Discord connect.
@@ -1021,14 +1028,6 @@
             Persistent = true;
           };
         };
-
-        # Unit-state visibility beside the OnFailure alert (forgejo
-        # restore-drill wiring): system-health surfaces a FAILED drill
-        # between weekly runs. The options?-guard mirrors the immich
-        # block for hosts that skip system-health.
-        services.system-health.extraMonitoredServices = lib.mkIf (
-          cfg.dbBackup.enable && options ? services.system-health
-        ) (lib.mkAfter [ "discordsync-db-restore-drill" ]);
 
         # Service-integration registry entry: fans out to the Caddy vHost
         # (Layer 2), the three Gatus checks (liveness + DLQ + Turso sync),

@@ -604,7 +604,8 @@
               [ -z "$(ls -A "$TMPDIR")" ] || { echo "FAIL happy: scratch leftovers in TMPDIR"; ls -A "$TMPDIR"; exit 1; }
 
               echo "=== Case 2: newest dump torn (truncated gz)"
-              head -c 1000 "$DUMPS/discordsync-db-2026-06-01.sql.gz" > "$FIX/torn.gz"
+              sz=$(stat -c %s "$DUMPS/discordsync-db-2026-06-01.sql.gz")
+              head -c $((sz / 2)) "$DUMPS/discordsync-db-2026-06-01.sql.gz" > "$FIX/torn.gz"
               mv "$FIX/torn.gz" "$DUMPS/discordsync-db-2026-06-01.sql.gz"
               run; need_rc torn 1; need_has torn "gunzip"
 
