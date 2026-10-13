@@ -6097,11 +6097,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791893444,
-        "narHash": "sha256-AeV1GXdkseVwFc8n2fVduyCb4iItLHfJP/dggH8YiRA=",
+        "lastModified": 1791917565,
+        "narHash": "sha256-EBTn2Su5RPhqBlJ8bTix6X6wHO+YCoEV+7mMU1JuBW4=",
         "ref": "refs/heads/master",
-        "rev": "b1c8ad9c4ac549e749d3af84ffe919ea6d6d23ee",
-        "revCount": 1747,
+        "rev": "009e1fda1f3711340ef8848d33011bc67bd0d228",
+        "revCount": 1748,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/InboxClean"
       },
@@ -6122,11 +6122,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791893013,
-        "narHash": "sha256-1ZRHKsFnTTt3qTBdgdPlrdOjnC4Uoz64dWFyH+x4Qhw=",
+        "lastModified": 1791917615,
+        "narHash": "sha256-+HrUZEEgOS9hSD1NxebQVPO3RuIQjnFbWW6KWno0tkw=",
         "ref": "refs/heads/master",
-        "rev": "26de3785fcad0a40d32dc203cb35f466cb242fe6",
-        "revCount": 882,
+        "rev": "f583b68abd981df5663c235d3618a189bba51fe7",
+        "revCount": 883,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/index"
       },
