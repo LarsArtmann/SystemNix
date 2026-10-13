@@ -173,6 +173,33 @@
               touch $out
             '';
 
+        # Boot-evidence-pull selftest: runs the pull script's `selftest`
+        # mode (fixture journal through the canonical-section renderer:
+        # census counts, hex-boundary id8 citation for the pre-vacuum
+        # gate incl. a negative control, panic truncation, write-refusal)
+        # plus static tripwires: the stability remedy doc must still point
+        # at the script (doc-drift guard) and the script must carry the
+        # no-overwrite guard (evidence files are append-only).
+        boot-evidence-pull-selftest =
+          pkgs.runCommand "boot-evidence-pull-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              cp ${root}/scripts/boot-evidence-pull.sh "$scratch/boot-evidence-pull.sh"
+              # The selftest re-executes the copy via "$0"; /usr/bin/env does not exist in the sandbox.
+              sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/boot-evidence-pull.sh"
+              ${pkgs.bash}/bin/bash "$scratch/boot-evidence-pull.sh" selftest
+              grep -q 'boot-evidence-pull.sh' ${root}/docs/agents/stability.md
+              grep -q 'REFUSING to overwrite existing evidence file' "$scratch/boot-evidence-pull.sh"
+              touch $out
+            '';
+
         # Pocket ID secret-rotation automation selftest (guard + auto-rotate):
         # runs the REAL scripts against fixtures — the regenerateSecretsFor
         # stale-list guard (missing -> allow, fresh -> trip with actionable

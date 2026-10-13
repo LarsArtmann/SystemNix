@@ -232,6 +232,7 @@ bep_selftest() (
 BEP_ID=""
 BEP_FIRST_TS=""
 BEP_LAST_TS=""
+BEP_DUMP=""
 
 bep_resolve_boot() {
   # <spec> — resolve via --list-boots; sets BEP_ID/BEP_FIRST_TS/BEP_LAST_TS.
@@ -293,15 +294,15 @@ main() {
         return 1
       }
       bep_resolve_boot "$spec"
-      local id8 dump
+      local id8
       id8=${BEP_ID:0:8}
-      dump=$(mktemp "${TMPDIR:-/var/tmp}/boot-evidence.XXXXXX")
-      trap 'rm -f "$dump"' EXIT
-      journalctl --quiet --no-pager -b "$BEP_ID" >"$dump"
+      BEP_DUMP=$(mktemp "${TMPDIR:-/var/tmp}/boot-evidence.XXXXXX")
+      trap 'rm -f "$BEP_DUMP"' EXIT
+      journalctl --quiet --no-pager -b "$BEP_ID" >"$BEP_DUMP"
       if [ -z "$out" ]; then
         out="$TASKS_DIR/$(date -u '+%Y-%m-%d_%H-%M')_boot-${id8}-evidence-pull.md"
       fi
-      bep_render "$dump" "$id8" "$BEP_ID" "$BEP_FIRST_TS" "$BEP_LAST_TS" | bep_write "$out"
+      bep_render "$BEP_DUMP" "$id8" "$BEP_ID" "$BEP_FIRST_TS" "$BEP_LAST_TS" | bep_write "$out"
       ;;
   esac
 }
