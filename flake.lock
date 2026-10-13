@@ -1094,11 +1094,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1791916774,
-        "narHash": "sha256-DczdaOrb+/Uc5fi8ZI31EhZ95BWFM3ui+36YnWS+RDk=",
+        "lastModified": 1791917429,
+        "narHash": "sha256-zxrZaIB4xRCgoEZQQDlsQrRWHJZxUNlTlrRoxoT+Als=",
         "ref": "refs/heads/master",
-        "rev": "ab610cf4df942074c6b8c724999bad605c126c1d",
-        "revCount": 2368,
+        "rev": "1ab7b9b7a8e2a1e59ae80535b162446b60863896",
+        "revCount": 2369,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/dnsblockd"
       },
@@ -3082,16 +3082,16 @@
     "go-datastar_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1789762088,
-        "narHash": "sha256-buRz5jE+cmMdgFQQQWZzS7QNLUziDH0MfAhKQDNoj30=",
+        "lastModified": 1790647723,
+        "narHash": "sha256-sM+17zxVILB0MrynFrK9f2Zx7djFXrE1k8dX38qgCjA=",
         "owner": "LarsArtmann",
         "repo": "go-datastar",
-        "rev": "89cd0dc04efdff54de36ef172736789ecc8c6321",
+        "rev": "bb4f08dadf20a8b2e6d41435745e9ca304a6fefe",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "v0.6.0",
+        "ref": "v0.6.1",
         "repo": "go-datastar",
         "type": "github"
       }
@@ -8159,16 +8159,16 @@
     "templ-components_5": {
       "flake": false,
       "locked": {
-        "lastModified": 1790353862,
-        "narHash": "sha256-htrL7wCLMHyJv9NLUjw7tEcwApUE4VnZiB+RsGSai14=",
+        "lastModified": 1791831121,
+        "narHash": "sha256-VkmbWQs15GOSOwhBOb0rzaT7fsv/1BgofUG9JibMkus=",
         "owner": "LarsArtmann",
         "repo": "templ-components",
-        "rev": "7f7338181bc89095c736c7c4d142bee54fe4d9fa",
+        "rev": "0cb3501808b5b2799c25b6257648cc0bde1bb679",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "v1.19.4",
+        "ref": "v1.22.0",
         "repo": "templ-components",
         "type": "github"
       }
