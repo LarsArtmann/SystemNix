@@ -13,6 +13,8 @@ summary: >-
 
 # Status: eventcatalog Wave-1 battery + Gatus incident + drift-gate (2026-10-12, ~21:00–22:00 CEST)
 
+> **SUPERSEDED (§b only) by `docs/status/2026-10-13_13-01_eventcatalog-wave1-execution-gatus-incident-sync-rescue-drift-gate.md`** — its "deploy pending" states converged the same evening (serving generation 23:20, anchor healed); §a/§d stand.
+
 Scope: `docs/planning/2026-10-12_18-20_eventcatalog-post-golive-pareto-execution-plan.md` Wave 1 (P02–P04), the P01 owner battery, P05/P08/P09/P25 verdicts, and the P07 drift-gate implementation the §g.2 answer unblocked.
 
 ## a) FULLY DONE
