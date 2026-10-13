@@ -31,6 +31,12 @@
   - **Census metrics** (system-health): `system_crush_sessions`, and top-8 cgroups by `memory.current` with anon/shmem/unevictable breakdown (`system_cgroup_mem_{,anon_,shmem_,unevictable_}bytes{cgroup=…}`) — "who holds the 30 GiB" is now a dashboard glance, not OOM-dump archaeology
   - VM regression test: `tests/test-sev1-escalation.nix` (9 scenarios incl. the module-absent gate + alert-file format/severity tiers + dedup + notify-tier cooldown flap suppression)
 
+## Journal Retention & Pre-Vacuum Evidence Gate (2026-10-13)
+
+- **Vacuum mechanism** — journald auto-vacuums at `SystemMaxUse = 8G` (`platforms/nixos/system/boot.nix`, hot-tier `/var/log/journal` on the Samsung). There is NO cron vacuum and NO human in the loop: when the journal crosses 8G, the OLDEST boots vanish silently. Three autopsies were won-or-lost on the pull-before-vacuum race (10-03 triage lost its journal outright; freeze-27/28 pulled in time by dispatch luck).
+- **Pre-vacuum evidence gate** — `scripts/pre-vacuum-evidence-gate.sh` (live check; wired as pre-deploy-check §15, fixture-tested by `checks.pre-vacuum-gate-selftest`). For every non-current boot still on disk it checks for a committed evidence file under `docs/status/` citing the boot id (hex-boundary match — a bare 8-char id8 grep false-positives inside 40-char git SHAs) and, when absent, whether any UNCHECKED row in `docs/todo/stability.md` cites the boot's date window. Open row + no evidence → REFUSE (exit 1, pre-deploy BLOCKS). Unguarded-but-unreferenced boots degrade to a warning. It also prints the vacuum clock (journal disk usage vs SystemMaxUse).
+- **Remedy when the gate refuses** — pull the listed boot BEFORE anything else: `journalctl -b <boot-id>` first/last lines + OOM/guard/thermal census into `docs/status/tasks/<date>_boot-<id8>-evidence-pull.md`, commit, re-run the gate. The 2026-10-13 backfill example: `docs/status/tasks/2026-10-13_02-30_boot-evidence-backfill-oct05-10.md` (11 boots Oct 5–10 pulled at 7.1G/8G pressure).
+
 ## ZRAM & Memory Reclaim
 
 - **bun-memory-watchdog (2026-10-10)** — `bun test` (the qmd-mcp toolchain agent sessions spawn as plain user processes — no systemd unit to cap) hit ~70 GB RSS with no natural ceiling; a 30 s /proc sweep now SIGKILLs any bun whose VmRSS ≥ 16 GiB (exact resolved-exe match + PID-reuse re-verify, dry-run drill mode). Module `modules/nixos/services/bun-memory-watchdog.nix`, runbook `docs/services/bun-memory-watchdog.md`, fixture-tested by `checks.bun-memory-watchdog-selftest`

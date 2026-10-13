@@ -66,8 +66,14 @@ pvg_selftest() {
   local id8 dates
   id8=$(pvg_extract_id8 "$line")
   dates=$(pvg_boot_dates "$line")
-  [ "$id8" = "ee5791b9" ] || { echo "FAIL: id8 extraction got '$id8'"; failures=$((failures + 1)); }
-  [ "$dates" = "2026-10-07 2026-10-10" ] || { echo "FAIL: date extraction got '$dates'"; failures=$((failures + 1)); }
+  [ "$id8" = "ee5791b9" ] || {
+    echo "FAIL: id8 extraction got '$id8'"
+    failures=$((failures + 1))
+  }
+  [ "$dates" = "2026-10-07 2026-10-10" ] || {
+    echo "FAIL: date extraction got '$dates'"
+    failures=$((failures + 1))
+  }
 
   local scratch
   scratch=$(mktemp -d)
