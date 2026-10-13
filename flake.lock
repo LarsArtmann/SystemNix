@@ -813,11 +813,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1791912368,
-        "narHash": "sha256-tDOdJjnullZ/6Eti3UaBey7Ddk23PH31WleeXywIW4g=",
+        "lastModified": 1791916782,
+        "narHash": "sha256-0hC55afQbzBlPlR2to7VXupHHWRBLXB53e7eZtZuZgA=",
         "ref": "master",
-        "rev": "5a727ca995ac40cdeefaee4c4965f3b80bec3843",
-        "revCount": 740,
+        "rev": "1ee70909236a4e14546d81401d90a2116cc164f7",
+        "revCount": 741,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crm"
       },
@@ -1094,11 +1094,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1791906724,
-        "narHash": "sha256-bgbsoI3NLVHlvg+4hOmr8MoWnBSPESeih5toNtTP8tw=",
+        "lastModified": 1791916774,
+        "narHash": "sha256-DczdaOrb+/Uc5fi8ZI31EhZ95BWFM3ui+36YnWS+RDk=",
         "ref": "refs/heads/master",
-        "rev": "a3deeaab7ade241ded69a07f6c2ec04198109d65",
-        "revCount": 2367,
+        "rev": "ab610cf4df942074c6b8c724999bad605c126c1d",
+        "revCount": 2368,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/dnsblockd"
       },
@@ -6980,11 +6980,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791908549,
-        "narHash": "sha256-ReDZrXyhr59NEJ59CJLC35ciDsgIJdceLZOqe50jwWQ=",
+        "lastModified": 1791916768,
+        "narHash": "sha256-7zhBQRoWWS7qep5mqAwdVKfk1WP1i7KN2Ug2XhhVLkM=",
         "ref": "refs/heads/master",
-        "rev": "97d820bde34977443f934e3fc1d2c80dfff805d4",
-        "revCount": 1314,
+        "rev": "6350fb38d5c19610ded3721c420d39d52fad90f0",
+        "revCount": 1315,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/PapDashboard"
       },

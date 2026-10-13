@@ -54,23 +54,22 @@ and may jump the queue):
 - **Vehicle green**: `checks.x86_64-linux.migrate-hot-db-fixture` builds rc=0.
 - **Tier live**: `hot_tier_mounted 1`, `hot_db_scrape_errors 0`, Samsung
   `/mnt/hot` has ~768 GB free.
-- **GATE (wave 5)**: the discordsync dump leg is STALLED — 10 consecutive
-  nightly failures 2026-10-03..12. Stage 1 (fixed 2026-10-11): the CLI had
-  busy_timeout=0; `.timeout 30000` + 3-attempt retry deployed. Stage 2
-  (found via the 2026-10-12 run: retries still lost after 90 s): the
-  server's nightly GCS-URL reconcile pass (02:00 sharp, 77+ min span,
-  ~12 DB writes/sec) held locks across the WHOLE 02:30 slot — the feature
-  landed ~Sep 30, failures began Oct 3. Fix: timer moved to 03:45 (after
-  the pass) + the script waits for 3 min of reconcile journal silence
-  before the first open (`discordsync.nix`).
-  **STATUS (2026-10-12 evening): the wave-5 window ran WITHOUT the dump leg
-  verified** (owner chose discordsync first for downtime tolerance; the
-  shadow-split forced the window early). The event store now lives on the
-  UNSNAPSHOTTED Samsung tier, so tonight's 03:45 run is its ONLY backup —
-  verify it first thing next morning: fresh non-zero
-  `discordsync-db-2026-10-13.sql.gz` + `backup_healthy{discordsync} 1`.
-  If it fails again, `sudo systemctl start discordsync-db-backup.service`
-  and read the per-attempt journal lines the retry loop now emits.
+- **GATE (wave 5)**: the discordsync dump leg FAILED 11 consecutive nights
+  2026-10-03..13. Stage 1 (fixed 2026-10-11): the CLI had busy_timeout=0;
+  `.timeout 30000` + 3-attempt retry deployed. Stage 2: the GCS-URL
+  reconcile pass (02:00 sharp, 77+ min span, ~12 DB writes/sec) held locks
+  across the old 02:30 slot — timer moved to 03:45 + journal quiet-gate.
+  Stage 3 (2026-10-13): the first 03:45 run STILL lost after 90 s WHILE the
+  quiet-gate PASSED on 3-min reconcile silence — the holder is a different,
+  silent writer (post-shadow-split re-backfill after the 2026-10-12 21:52
+  restart is the prime suspect). Hardening (2026-10-13, eval-verified, rides
+  next deploy): catch-up windows 05:15 + 06:45 (Persistent re-runs MISSED
+  activations, never FAILED runs; the script's already-today guard makes
+  post-success catch-ups no-ops), pre-visibility `quick_check` gate on the
+  raw dump, upfront stale-intermediate cleanup, idempotency guard. The
+  10-01 dump itself was RESTORE-DRILLED 2026-10-13 (381 MB, quick_check ok,
+  43,617 messages, newest message 02:26 — the leg DID work until Oct 1).
+  Full narrative: `docs/status/2026-10-13_20-45_discordsync-backup-drill-and-catchup-windows.md`.
 - **GATE (all waves)**: IO PSI avg10 was 54% at verification (Zone-6 storm,
   5 memory-guard trips/h) — no window until quiescence (the script's own
   ≥ 20% refusal fires anyway).
@@ -85,7 +84,7 @@ and may jump the queue):
 | 2    | `dnsblockd`         | `/var/lib/dnsblockd` (~2.5 GB incl. the stale `dnsblockd_tracking.db` legacy file)      | LAN DNS blip; gatus "DNS Resolver" pages once + resolves         | none — self-pruning tracking stats                                                                            |
 | 3    | `pocket-id`         | `/var/lib/pocket-id`                                                                    | SSO blip                                                         | `pocket-id-backup` (04:00 sqlite .backup, pool)                                                               |
 | 4    | `browser-history`   | `/var/lib/private/browser-history`                                                      | ingest retries on next 5-min tick                                | `browser-history-backup` (02:15, pool)                                                                        |
-| 5    | `discordsync`       | `/var/lib/discordsync` (~11 GB — the longest delta+verify)                              | Discord capture gap ≈ any restart; keep tight                    | `discordsync-db-backup` (03:45 gzipped dump, pool — the dump-only RPO leg, Turso is plan-blocked)             |
+| 5    | `discordsync`       | `/var/lib/discordsync` (~380 MB event store — drill-verified 2026-10-13; the old "~11 GB" was a stale estimate — the longest delta+verify)  | Discord capture gap ≈ any restart; keep tight                    | `discordsync-db-backup` (03:45 + 05:15/06:45 catch-up gzipped dump, pool — the dump-only RPO leg, Turso is plan-blocked)             |
 | 6    | `storage-collector` | `/var/lib/private/storage-collector` (~60 MB today; flips to a 1 GiB window at cutover) | monitoring gap ~1 min (textfile gauges stall, Gatus reds once)   | `restic-storage-history` (04:20 nightly, no-prune pool repo — LANDED 2026-10-12, history survives regardless) |
 
 DynamicUser services (gatus, browser-history, storage-collector) mount the
