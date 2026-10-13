@@ -1078,6 +1078,20 @@ _: {
             "btrfs-scrub@-.service"
             "btrfs-scrub@data.service"
             "btrfs-scrub@mnt-pool.service"
+            # Per-boot RECOVERY READERS (freeze-6 rule (b), 2026-09-18 —
+            # landed 2026-10-13 after the freeze-28 report re-verified the
+            # rule had sat unlanded for six weeks): both units re-fire into
+            # EVERY post-crash boot (crush-hot-db-migrate's find walk over
+            # ~/projects + the migrate; discordsync-db-heal's sqlite
+            # integrity check) and re-fueled the recovery storm in 7
+            # documented post-crash boots (freezes #6, #13, #14, #20, #22,
+            # #25, #28) while sitting OUTSIDE the churn list — Zone 6
+            # structurally blind to the exact readers it needed to stop.
+            # Both are resumable/next-run-converges, so the re-arm path
+            # finishes them once io PSI drains (NOT btrfs-scrub@-style
+            # no-resume exclusions).
+            "crush-hot-db-migrate.service"
+            "discordsync-db-heal.service"
           ];
           description = "Resumable I/O churn units stopped on ANY trip (Zone 6's real mitigation: crash #3 was stacked full-disk readers). RE-ARMED (systemctl start, best-effort) by the guard once sustained io PSI drains under the trip threshold — without the re-arm a mid-receive stop pushed the nightly btrbk send a full +24h (the timer had already fired), and a second storm in the 3-day freshness window FAILED the backup check (2026-09-16 23:00 trip #299 class). btrfs-scrub@* instances are deliberately NOT re-armed: btrfs scrub has no resume, so restarting one re-reads the whole filesystem (the freeze-#7 restart loop) — they stay dead until their own weekly timer window. Each unit's own pre-start guards decide whether it is safe to run; an interrupted receive is healed by btrbk-pool-clean. Stopping an inactive unit is a no-op";
         };
