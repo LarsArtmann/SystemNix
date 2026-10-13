@@ -852,6 +852,17 @@
                 stamp=$(date +%Y-%m-%d)
                 raw="${dbBackupDir}/.discordsync-db-$stamp.raw"
                 dst="${dbBackupDir}/discordsync-db-$stamp.sql.gz"
+                # Idempotency for the catch-up windows (timer OnCalendar
+                # list): once today's dump exists, later windows are no-ops.
+                if [ -s "$dst" ]; then
+                  echo "discordsync-db-backup: $dst already exists — nothing to do"
+                  exit 0
+                fi
+                # Clean stale intermediates up front: the retention sweep at
+                # the bottom only runs on success, so a failure streak would
+                # otherwise litter the dir (2026-10-02..11 0-byte .raw
+                # corpses). .part can also outlive a mid-run failure.
+                find ${dbBackupDir} \( -name ".discordsync-db-*" -o -name "*.part" \) -mtime +2 -delete
                 # -readonly: a read-write root open of the live WAL database
                 # can create/replace the -shm/-wal sidecars ROOT-owned while
                 # the server (own user) holds it, poisoning the next open
@@ -893,6 +904,16 @@
                   echo "discordsync-db-backup: .backup attempt $attempt failed, retrying: $err" >&2
                   sleep 15
                 done
+                # Gate BEFORE anything becomes visible at the archive path:
+                # a torn .backup must never be archivable, and the raw file is
+                # the exact content about to be gzipped. quick_check reads the
+                # ~380 MB raw once — noise next to the dump read itself.
+                check=$(${lib.getExe pkgs.sqlite} -readonly "$raw" "PRAGMA quick_check;" 2>&1) || true
+                if [ "$check" != "ok" ]; then
+                  echo "discordsync-db-backup: quick_check failed on raw dump: $check" >&2
+                  rm -f "$raw"
+                  exit 1
+                fi
                 ${lib.getExe pkgs.gzip} -1 -c "$raw" > "$dst.part"
                 mv "$dst.part" "$dst"
                 rm -f "$raw"
@@ -920,11 +941,22 @@
           wantedBy = [ "timers.target" ];
           after = [ "mnt-pool.mount" ];
           timerConfig = {
-            # 03:45 — AFTER the server's nightly GCS-URL reconcile pass
-            # (02:00 sharp, 77+ min span): the old 02:30 slot collided with
-            # it for 10 straight nights. Stagger: paperless-db 02:00,
-            # browser-history 02:15, miniflux 02:45, this 03:45.
-            OnCalendar = "*-*-* 03:45:00";
+            # 03:45 primary — moved out of the 02:30 slot that collided with
+            # the GCS-URL reconcile pass for 10 nights (2026-10-03..12).
+            # Stagger: paperless-db 02:00, browser-history 02:15, miniflux
+            # 02:45, this 03:45. 2026-10-13 update: the first 03:45 run STILL
+            # lost the lock race WITH the reconcile quiet-gate passing on
+            # 3-min silence — a different, silent writer held it (the
+            # post-shadow-split re-backfill after the 2026-10-12 21:52
+            # restart is the prime suspect). Persistent re-fires MISSED
+            # activations, never FAILED runs, so catch-up windows are the
+            # same-day retry; the script's already-today guard makes a
+            # catch-up after a successful primary a no-op.
+            OnCalendar = [
+              "*-*-* 03:45:00"
+              "*-*-* 05:15:00"
+              "*-*-* 06:45:00"
+            ];
             Persistent = true;
           };
         };
