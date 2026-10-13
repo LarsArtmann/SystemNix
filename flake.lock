@@ -1013,11 +1013,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791918694,
-        "narHash": "sha256-Fu2KVI5RJn4FWodVbAAW/vFrU502Ao8L8SQHx0RDbOI=",
+        "lastModified": 1791919030,
+        "narHash": "sha256-yqglVtyUZWhqE2xPcoQiO4jD35fCbDbYdy6U9GmIaGQ=",
         "ref": "refs/heads/master",
-        "rev": "8d0ee569cdda65fce48fe43b3521005bc2ccbd47",
-        "revCount": 4371,
+        "rev": "2d5cba4d30999cd3850ece8638d41fc186fbd209",
+        "revCount": 4373,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/DiscordSync"
       },
@@ -8142,17 +8142,17 @@
     "templ-components_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1791489609,
-        "narHash": "sha256-lhNDMBWlFSKGIUHEfgyLnZdopoMXajb1+ij0ql3OSUI=",
+        "lastModified": 1791916000,
+        "narHash": "sha256-ffufS+TcUgERsyQpj4M+6pCBPQEQIUU68OR3AevGoLQ=",
         "owner": "LarsArtmann",
         "repo": "templ-components",
-        "rev": "904fa1eaaad543f74b19962d23206eea1eda9137",
+        "rev": "2126f3c877a4d383ec03f1af370828cdda8c2887",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
         "repo": "templ-components",
-        "rev": "904fa1eaaad543f74b19962d23206eea1eda9137",
+        "rev": "2126f3c877a4d383ec03f1af370828cdda8c2887",
         "type": "github"
       }
     },
