@@ -452,6 +452,23 @@ in
       interval = "10m";
       severity = "warning";
     };
+
+    # Freeze-#27/#28 IO-saturation canary: the inboxclean-web health handler
+    # timed out at its 8s budget through the whole 2026-10-12 freeze (the
+    # only symptom visible pre-mortem without this rule was journal
+    # archaeology). Metric source: the inboxclean-canary-metrics textfile
+    # collector (journal `Handler timeout` count over a 10m window). After
+    # the upstream cached-health deploy the burst should stay 0 — a post-
+    # deploy fire is either a cache regression or an IO storm deep enough
+    # to starve even background refreshes.
+    "signoz/rules/inboxclean-handler-timeout.json".source = mkRule {
+      name = "InboxClean Health Handler Timeout Burst (>=3 in 10m)";
+      description = "inboxclean-web is answering /health with 8s Handler timeouts — its worker loop is IO-saturated (DB scans / IMAP resync storm); the freeze-#27/#28 pre-crash signature. Check: journalctl -u inboxclean-web --since '-30 min' | grep -c 'Handler timeout'; the reconnect-storm and dashboard-scan windows are in docs/status/tasks/2026-10-13_01-40_freeze-27-unit-io-attribution.md";
+      query = "inboxclean_web_health_handler_timeout_burst";
+      target = 1;
+      interval = "5m";
+      severity = "warning";
+    };
   };
 
   dashboards = {
