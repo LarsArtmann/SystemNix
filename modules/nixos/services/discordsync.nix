@@ -961,6 +961,75 @@
           };
         };
 
+        # Weekly restore drill for the dump leg above (2026-10-14): a
+        # backup that was never restored is a rumor, and the 2026-10-13
+        # manual drill of the 10-01 dump was the FIRST restore this leg
+        # ever had (12+ days into its life). Restores the newest dump
+        # into tmpfs scratch and proves integrity_check + read-model
+        # counts + message freshness; any failure exits 1 so the unit
+        # FAILS and OnFailure pages (forgejo-restore-drill pattern: a
+        # drill is an event, not a continuous signal, so deliberately
+        # no metric/gatus layer). Fixture-tested:
+        # checks.x86_64-linux.discordsync-restore-drill-fixture.
+        systemd.services.discordsync-db-restore-drill = lib.mkIf cfg.dbBackup.enable {
+          description = "Weekly DiscordSync restore drill (newest dump: integrity + counts + freshness)";
+          # Ordering the backup unit in means a Sunday-morning drill can
+          # never race a still-running dump; the backup's already-today
+          # guard makes that start an instant no-op when the leg is
+          # healthy, and one extra dump ATTEMPT when it is not (drill
+          # then honestly fails freshness on the stale dump: the page IS
+          # the signal that the leg is still broken).
+          after = [ "discordsync-db-backup.service" ];
+          wants = [ "discordsync-db-backup.service" ];
+          unitConfig.RequiresMountsFor = [ dbBackupDir ];
+          inherit onFailure;
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+          path = [
+            pkgs.coreutils
+            pkgs.gzip
+            pkgs.sqlite
+          ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              # Gunzip + thorough integrity_check of the ~380 MB DB under
+              # IO churn; idle runs land near 1 min.
+              TimeoutStartSec = "15min";
+              ExecStart = "${pkgs.bash}/bin/bash ${../../../scripts/discordsync-restore-drill.sh}";
+              # Dumps are 0644 root:root in the 0755 backup dir: the
+              # service user reads them without any capability grant,
+              # and the scratch lives in the unit's PrivateTmp.
+              User = cfg.user;
+              Group = cfg.group;
+            }
+            (harden { MemoryMax = "1G"; })
+            (serviceOneshotDefaults { })
+            ioTier.background
+          ];
+        };
+
+        systemd.timers.discordsync-db-restore-drill = lib.mkIf cfg.dbBackup.enable {
+          description = "Weekly DiscordSync restore drill";
+          wantedBy = [ "timers.target" ];
+          after = [ "mnt-pool.mount" ];
+          timerConfig = {
+            # Sunday 08:00: after the 03:45 dump AND both same-day
+            # catch-up windows (05:15/06:45), so a repaired leg's fresh
+            # dump is what gets drilled.
+            OnCalendar = "Sun *-*-* 08:00:00";
+            Persistent = true;
+          };
+        };
+
+        # Unit-state visibility beside the OnFailure alert (forgejo
+        # restore-drill wiring): system-health surfaces a FAILED drill
+        # between weekly runs. The options?-guard mirrors the immich
+        # block for hosts that skip system-health.
+        services.system-health.extraMonitoredServices = lib.mkIf (
+          cfg.dbBackup.enable && options ? services.system-health
+        ) (lib.mkAfter [ "discordsync-db-restore-drill" ]);
+
         # Service-integration registry entry: fans out to the Caddy vHost
         # (Layer 2), the three Gatus checks (liveness + DLQ + Turso sync),
         # and the homepage tile. Replaces rows in caddy.nix /

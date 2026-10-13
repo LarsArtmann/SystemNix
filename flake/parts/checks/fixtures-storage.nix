@@ -543,6 +543,115 @@
               touch $out
             '';
 
+        # Behavioral fixture for scripts/discordsync-restore-drill.sh
+        # (2026-10-14 storage row: automate the weekly restore-drill).
+        # REAL sqlite3 + gzip, no stubs: the script only reads dumps and
+        # writes into $TMPDIR, so every fixture dump is built by
+        # importing rows through the real CLI (the production dump is a
+        # gzipped BINARY sqlite db, and the fixture mirrors that). Covers:
+        # happy path on the NEWEST of two dumps (old=1 msg, new=3: proves
+        # the sort pick), torn-gz die, valid-gz-but-not-sqlite die,
+        # 0-byte newest die, no-dump die, stale-message freshness fail
+        # (1h budget vs 3h-old rows), missing-table fail, empty-table
+        # fail, and post-run scratch cleanup in TMPDIR.
+        discordsync-restore-drill-fixture =
+          pkgs.runCommand "discordsync-restore-drill-fixture"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gzip
+                sqlite
+              ];
+            }
+            ''
+              set -euo pipefail
+              FIX=$(mktemp -d)
+              export TMPDIR="$FIX/tmp"; mkdir -p "$TMPDIR"
+              DUMPS="$FIX/dumps"; mkdir -p "$DUMPS"
+              export DRILL_DUMP_DIR="$DUMPS"
+              FRESH="strftime('%Y-%m-%d %H:%M:%S','now')"
+              STALE="strftime('%Y-%m-%d %H:%M:%S','now','-3 hours')"
+
+              mkdb() {
+                db="$1"; ts="$2"; m="$3"; e="$4"; a="$5"
+                sqlite3 "$db" "CREATE TABLE messages (id TEXT PRIMARY KEY, content TEXT, created_at DATETIME);
+                  CREATE TABLE events (id TEXT PRIMARY KEY, kind TEXT, created_at DATETIME);
+                  CREATE TABLE attachments (id TEXT PRIMARY KEY, message_id TEXT, created_at DATETIME);"
+                i=0; while [ "$i" -lt "$m" ]; do sqlite3 "$db" "INSERT INTO messages VALUES ('m$i', 'c$i', $ts);"; i=$((i + 1)); done
+                i=0; while [ "$i" -lt "$e" ]; do sqlite3 "$db" "INSERT INTO events VALUES ('e$i', 'k$i', $ts);"; i=$((i + 1)); done
+                i=0; while [ "$i" -lt "$a" ]; do sqlite3 "$db" "INSERT INTO attachments VALUES ('a$i', 'm0', $ts);"; i=$((i + 1)); done
+              }
+              mkgz() { gzip -c "$1" > "$DUMPS/$2"; }
+
+              DRILL="$FIX/drill.sh"
+              cp ${root}/scripts/discordsync-restore-drill.sh "$DRILL"
+              chmod +x "$DRILL"
+
+              rc=0; capt=""
+              run() { capt=$(bash "$DRILL" 2>&1) && rc=0 || rc=$?; }
+              need_rc() { [ "$rc" = "$2" ] || { echo "FAIL $1: rc=$rc want $2"; printf '%s\n' "$capt"; exit 1; }; }
+              need_has() { printf '%s\n' "$capt" | grep -qF -- "$2" || { echo "FAIL $1: missing text: $2"; printf '%s\n' "$capt"; exit 1; }; }
+
+              echo "=== Case 1: happy path, newest of two dumps wins"
+              mkdb "$FIX/old.db" "$FRESH" 1 1 1; mkgz "$FIX/old.db" discordsync-db-2026-01-01.sql.gz
+              mkdb "$FIX/new.db" "$FRESH" 3 4 2; mkgz "$FIX/new.db" discordsync-db-2026-06-01.sql.gz
+              run; need_rc happy 0
+              need_has happy "count[messages] = 3"
+              need_has happy "count[events] = 4"
+              need_has happy "count[attachments] = 2"
+              need_has happy "drill: OK"
+              [ -z "$(ls -A "$TMPDIR")" ] || { echo "FAIL happy: scratch leftovers in TMPDIR"; ls -A "$TMPDIR"; exit 1; }
+
+              echo "=== Case 2: newest dump torn (truncated gz)"
+              head -c 1000 "$DUMPS/discordsync-db-2026-06-01.sql.gz" > "$FIX/torn.gz"
+              mv "$FIX/torn.gz" "$DUMPS/discordsync-db-2026-06-01.sql.gz"
+              run; need_rc torn 1; need_has torn "gunzip"
+
+              echo "=== Case 3: newest dump valid gz but not a sqlite db"
+              rm "$DUMPS/discordsync-db-2026-06-01.sql.gz"
+              printf 'definitely not a database' | gzip -c > "$DUMPS/discordsync-db-2026-07-01.sql.gz"
+              run; need_rc notsqlite 1; need_has notsqlite "integrity_check"
+
+              echo "=== Case 4: newest dump 0 bytes"
+              rm "$DUMPS/discordsync-db-2026-07-01.sql.gz"
+              : > "$DUMPS/discordsync-db-2026-08-01.sql.gz"
+              run; need_rc zerobyte 1; need_has zerobyte "0 bytes"
+
+              echo "=== Case 5: no dumps at all"
+              rm -f "$DUMPS"/*
+              run; need_rc nodump 1; need_has nodump "no discordsync-db"
+
+              echo "=== Case 6: stale newest messages vs a 1h budget"
+              mkdb "$FIX/stale.db" "$STALE" 2 2 2; mkgz "$FIX/stale.db" discordsync-db-2026-09-01.sql.gz
+              export DRILL_MAX_MESSAGE_AGE_HOURS=1
+              run
+              unset DRILL_MAX_MESSAGE_AGE_HOURS
+              need_rc stale 1
+              need_has stale "newest message age"
+              need_has stale "FAILED"
+
+              echo "=== Case 7: missing attachments table (fresh timestamps)"
+              sqlite3 "$FIX/miss.db" "CREATE TABLE messages (id TEXT PRIMARY KEY, content TEXT, created_at DATETIME);
+                CREATE TABLE events (id TEXT PRIMARY KEY, kind TEXT, created_at DATETIME);
+                INSERT INTO messages VALUES ('m0', 'c0', $FRESH);
+                INSERT INTO events VALUES ('e0', 'k0', $FRESH);"
+              mkgz "$FIX/miss.db" discordsync-db-2026-10-01.sql.gz
+              run; need_rc missing 1; need_has missing "attachments"
+
+              echo "=== Case 8: empty messages table"
+              sqlite3 "$FIX/empty.db" "CREATE TABLE messages (id TEXT PRIMARY KEY, content TEXT, created_at DATETIME);
+                CREATE TABLE events (id TEXT PRIMARY KEY, kind TEXT, created_at DATETIME);
+                CREATE TABLE attachments (id TEXT PRIMARY KEY, message_id TEXT, created_at DATETIME);
+                INSERT INTO events VALUES ('e0', 'k0', $FRESH);
+                INSERT INTO attachments VALUES ('a0', 'm0', $FRESH);"
+              mkgz "$FIX/empty.db" discordsync-db-2026-11-01.sql.gz
+              run; need_rc empty 1; need_has empty "EMPTY"
+
+              echo "discordsync-restore-drill-fixture: PASS (8 cases)"
+              touch $out
+            '';
+
       };
     };
 }
