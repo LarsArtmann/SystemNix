@@ -146,6 +146,33 @@
               touch $out
             '';
 
+        # Pre-vacuum evidence-gate selftest: fixture-tests the pure helpers
+        # (boot-id/date extraction, hex-boundary evidence grep, open-row date
+        # matching against UNCHECKED rows only) plus a static tripwire that
+        # pre-deploy-check.sh still wires the gate as a deploy-blocking check
+        # (a deleted §15 call would go phantom-green otherwise).
+        pre-vacuum-gate-selftest =
+          pkgs.runCommand "pre-vacuum-gate-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              cp ${root}/scripts/pre-vacuum-evidence-gate.sh "$scratch/pre-vacuum-evidence-gate.sh"
+              # The selftest re-executes the copy via "$0"; /usr/bin/env does not exist in the sandbox.
+              sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/pre-vacuum-evidence-gate.sh"
+              ${pkgs.bash}/bin/bash "$scratch/pre-vacuum-evidence-gate.sh" selftest
+              if ! grep -q 'pre-vacuum-evidence-gate.sh' ${root}/scripts/pre-deploy-check.sh; then
+                echo "FAIL: pre-deploy-check no longer wires the pre-vacuum evidence gate"
+                exit 1
+              fi
+              touch $out
+            '';
+
         # Pocket ID secret-rotation automation selftest (guard + auto-rotate):
         # runs the REAL scripts against fixtures — the regenerateSecretsFor
         # stale-list guard (missing -> allow, fresh -> trip with actionable

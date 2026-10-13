@@ -887,6 +887,22 @@ else
 fi
 rm -f "$SH_EVAL_ERR"
 
+# 15. Pre-vacuum journal evidence gate
+# journald auto-vacuums at SystemMaxUse (8G); three autopsies (10-03 triage,
+# freeze-27, freeze-28) were won-or-lost on whether an evidence pull landed
+# before the vacuum ate the boot. The gate refuses when an exposed boot still
+# on disk has NO committed evidence file AND an open stability row cites its
+# window. Fixture-tested by checks.pre-vacuum-gate-selftest.
+echo ""
+echo "15. Pre-vacuum journal evidence gate"
+if PVG_OUT=$(bash scripts/pre-vacuum-evidence-gate.sh 2>&1); then
+  pass "pre-vacuum evidence gate: every exposed boot with an open stability row has committed evidence"
+  echo "$PVG_OUT" | grep -E 'vacuum clock|unpulled' | sed 's/^/    /' || true
+else
+  fail "pre-vacuum evidence gate REFUSED — pull the listed boot(s) into docs/status/ before deploying (journal vacuum can erase them any time):"
+  echo "$PVG_OUT" | sed 's/^/    /'
+fi
+
 # Summary
 echo ""
 echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="

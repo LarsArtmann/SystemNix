@@ -1,11 +1,11 @@
 # Boot evidence backfill: Oct 5 - Oct 10 boots (pre-vacuum gate)
 
 Pulled 2026-10-13 00:06 UTC before journal vacuum pressure (7.1G of 8G SystemMaxUse);
-backfills the gate REFUSED list: every exposed boot with an open stability row lacking committed evidence.
+includes late addition c819229e (2026-10-13 gate re-run); backfills the gate REFUSED list: every exposed boot with an open stability row lacking committed evidence.
 Per boot: first/last journal lines (crash-vs-clean-shutdown discriminator), kernel OOM lines,
 memory-emergency-guard lines, thermal THROTTLE lines, panic/BUG/oops counts.
 
-## Boot 449ef290 ( -> )
+## Boot 449ef290
 
 ### First 3 lines
     Oct 06 15:12:57.618501 evo-x2 bank-sync[224245]:   │ [corruption] wise.exchange_rate: wise: exchange rate PLN-EUR
@@ -216,7 +216,7 @@ memory-emergency-guard lines, thermal THROTTLE lines, panic/BUG/oops counts.
     Oct 07 01:03:33 evo-x2 thermal-pstate-guard-check[43418]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=98C(hi:95/lo:80)
     Oct 07 01:03:33 evo-x2 thermal-pstate-guard-check[43418]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=98C(hi:95/lo:80)
 
-## Boot c8cc4dee ( -> )
+## Boot c8cc4dee
 
 ### First 3 lines
     Oct 07 02:49:28.729809 evo-x2 file-renamer[1704]: 2026-10-07T02:49:28+02:00 INFO  watcher: Status requested status=warn fail_checks=0
@@ -287,3 +287,78 @@ memory-emergency-guard lines, thermal THROTTLE lines, panic/BUG/oops counts.
     Oct 10 23:13:23.854164 evo-x2 file-renamer[4019365]: 2026-10-10T23:13:23+02:00 INFO  watcher: request method=GET path=/status status=200 duration=1.379567ms client_ip=127.0.0.1 request_id=6acaaa73000006f79f9294fb3217b358
     Oct 10 23:13:31.934966 evo-x2 emeet-pixyd[436890]: 2026/10/10 23:13:31 INFO http request method=GET path=/ status=0 duration=180.075µs
     Oct 10 23:13:31.942165 evo-x2 ollama[3913980]: [GIN] 2026/10/10 - 23:13:31 | 200 |    2.510602ms |       127.0.0.1 | GET      "/api/tags"
+
+### Census: OOM-lines=190 guard-lines=11677 thermal-THROTTLE-lines=69 panic/BUG/oops=2747
+
+### OOM lines
+    Oct 08 02:14:11 evo-x2 kernel: find invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=0
+    Oct 08 02:14:11 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=tq-agent-pool.service,mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,task_memcg=/system.slice/tq-agent-pool.service,task=nix,pid=113924,uid=1000
+    Oct 08 02:14:11 evo-x2 kernel: Memory cgroup out of memory: Killed process 113924 (nix) total-vm:19333452kB, anon-rss:2154688kB, file-rss:35776kB, shmem-rss:0kB, UID:1000 pgtables:37208kB oom_score_adj:0
+    Oct 09 00:06:47 evo-x2 kernel: bash invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=0
+    Oct 09 00:06:47 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,task_memcg=/system.slice/tq-agent-pool.service,task=nix,pid=3860871,uid=1000
+    Oct 09 00:06:47 evo-x2 kernel: Memory cgroup out of memory: Killed process 3860871 (nix) total-vm:8728044kB, anon-rss:7673188kB, file-rss:67184kB, shmem-rss:0kB, UID:1000 pgtables:16344kB oom_score_adj:0
+    Oct 09 00:08:34 evo-x2 kernel: nix invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=0
+    Oct 09 00:08:34 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,task_memcg=/system.slice/tq-agent-pool.service,task=nix,pid=4161814,uid=1000
+    Oct 09 00:08:34 evo-x2 kernel: Memory cgroup out of memory: Killed process 4161814 (nix) total-vm:8271008kB, anon-rss:7892264kB, file-rss:35124kB, shmem-rss:0kB, UID:1000 pgtables:15680kB oom_score_adj:0
+    Oct 09 00:14:48 evo-x2 kernel: nix invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=0
+    Oct 09 00:14:48 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,task_memcg=/system.slice/tq-agent-pool.service,task=nix,pid=844290,uid=1000
+    Oct 09 00:14:48 evo-x2 kernel: Memory cgroup out of memory: Killed process 844290 (nix) total-vm:8023996kB, anon-rss:7417780kB, file-rss:35300kB, shmem-rss:0kB, UID:1000 pgtables:14776kB oom_score_adj:0
+    Oct 09 00:16:44 evo-x2 kernel: compile invoked oom-killer: gfp_mask=0x100cca(GFP_HIGHUSER_MOVABLE), order=0, oom_score_adj=0
+    Oct 09 00:16:44 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,task_memcg=/system.slice/tq-agent-pool.service,task=nix,pid=1063034,uid=1000
+    Oct 09 00:16:44 evo-x2 kernel: Memory cgroup out of memory: Killed process 1063034 (nix) total-vm:7793348kB, anon-rss:7413964kB, file-rss:35212kB, shmem-rss:0kB, UID:1000 pgtables:14772kB oom_score_adj:0
+    Oct 09 00:23:37 evo-x2 kernel: crush invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=0
+    Oct 09 00:23:37 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,task_memcg=/system.slice/tq-agent-pool.service,task=nix,pid=1977431,uid=1000
+    Oct 09 00:23:37 evo-x2 kernel: Memory cgroup out of memory: Killed process 1977431 (nix) total-vm:6578364kB, anon-rss:6197084kB, file-rss:35060kB, shmem-rss:0kB, UID:1000 pgtables:12380kB oom_score_adj:0
+    Oct 09 00:25:27 evo-x2 kernel: nix invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=0
+    Oct 09 00:25:27 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,task_memcg=/system.slice/tq-agent-pool.service,task=nix,pid=2161443,uid=1000
+    Oct 09 00:25:27 evo-x2 kernel: Memory cgroup out of memory: Killed process 2161443 (nix) total-vm:7682572kB, anon-rss:7295008kB, file-rss:35260kB, shmem-rss:0kB, UID:1000 pgtables:14528kB oom_score_adj:0
+    Oct 09 00:26:52 evo-x2 kernel: nix invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=0
+    Oct 09 00:26:52 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,task_memcg=/system.slice/tq-agent-pool.service,task=nix,pid=2318160,uid=1000
+    Oct 09 00:26:52 evo-x2 kernel: Memory cgroup out of memory: Killed process 2318160 (nix) total-vm:8057536kB, anon-rss:7670580kB, file-rss:35096kB, shmem-rss:0kB, UID:1000 pgtables:15260kB oom_score_adj:0
+    Oct 09 00:28:05 evo-x2 kernel: nix invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=0
+    Oct 09 00:28:05 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,task_memcg=/system.slice/tq-agent-pool.service,task=nix,pid=2482115,uid=1000
+    Oct 09 00:28:05 evo-x2 kernel: Memory cgroup out of memory: Killed process 2482115 (nix) total-vm:8048316kB, anon-rss:7671016kB, file-rss:35092kB, shmem-rss:0kB, UID:1000 pgtables:15268kB oom_score_adj:0
+    Oct 09 00:35:56 evo-x2 kernel: nix invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=0
+    Oct 09 00:35:56 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,task_memcg=/system.slice/tq-agent-pool.service,task=nix,pid=3440728,uid=1000
+    Oct 09 00:35:56 evo-x2 kernel: Memory cgroup out of memory: Killed process 3440728 (nix) total-vm:6654032kB, anon-rss:6269296kB, file-rss:34988kB, shmem-rss:0kB, UID:1000 pgtables:12524kB oom_score_adj:0
+
+### Thermal (first 5 / last 5)
+    Oct 07 11:06:47 evo-x2 thermal-pstate-guard-check[14806]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=96C(hi:95/lo:80)
+    Oct 07 13:50:19 evo-x2 thermal-pstate-guard-check[2178225]: thermal-pstate-guard: THERMAL THROTTLE EXIT: amd_pstate restored to active + performance after 12x cool ticks: k10temp=71C(hi:95/lo:80)
+    Oct 07 14:20:10 evo-x2 thermal-pstate-guard-check[3009617]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=97C(hi:95/lo:80)
+    Oct 07 14:22:13 evo-x2 thermal-pstate-guard-check[3024097]: thermal-pstate-guard: THERMAL THROTTLE EXIT: amd_pstate restored to active + performance after 12x cool ticks: k10temp=61C(hi:95/lo:80)
+    Oct 07 14:54:52 evo-x2 thermal-pstate-guard-check[3764041]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=98C(hi:95/lo:80)
+    Oct 10 16:21:38 evo-x2 thermal-pstate-guard-check[3109791]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=95C(hi:95/lo:80)
+    Oct 10 17:29:45 evo-x2 thermal-pstate-guard-check[596163]: thermal-pstate-guard: THERMAL THROTTLE EXIT: amd_pstate restored to active + performance after 12x cool ticks: k10temp=68C(hi:95/lo:80)
+    Oct 10 21:09:06 evo-x2 thermal-pstate-guard-check[3852457]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=98C(hi:95/lo:80)
+    Oct 10 22:46:24 evo-x2 thermal-pstate-guard-check[2761271]: thermal-pstate-guard: THERMAL THROTTLE EXIT: amd_pstate restored to active + performance after 12x cool ticks: k10temp=70C(hi:95/lo:80)
+    Oct 10 22:57:25 evo-x2 thermal-pstate-guard-check[2945332]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=98C(hi:95/lo:80)
+
+## Boot c819229e (first: Oct 07 02:51:12.145751 evo-x2 kernel: Linux version 7.2.9 (nixbld@localhost) (gcc (GCC) 16.2.0,
+
+### First 3 lines
+    Oct 07 08:32:54.476563 evo-x2 mr-sync[1463]: mr-sync: hierarchical-errors was renamed to erraudit on GitHub, but .mrconfig already tracks erraudit; leaving hierarchical-errors orphaned
+    Oct 07 08:32:56.624960 evo-x2 emeet-pixyd[15602]: 2026/10/07 08:32:56 INFO http request method=GET path=/ status=0 duration=254.161µs
+    Oct 07 08:32:56.650913 evo-x2 ollama[2016]: [GIN] 2026/10/07 - 08:32:56 | 200 |    3.383219ms |       127.0.0.1 | GET      "/api/tags"
+
+### Last 12 lines
+    Oct 07 08:32:52.971284 evo-x2 cv[4135]: INFO  request method=GET path=/health status=200 duration=246.512µs client_ip=127.0.0.1 request_id=6ac5e79400003096e8a5b2e3c218e3c6
+    Oct 07 08:32:53.105359 evo-x2 clickhouse-server[6443]: 2026.10.07 08:32:53.097583 [ 6685 ] {} <Warning> Context: High CPU usage: 98% busy (>= 90%) for at least 600 second(s)
+    Oct 07 08:32:53.662601 evo-x2 nix-daemon[2424]: accepted connection from pid 2500693, user lars
+    Oct 07 08:32:53.876239 evo-x2 mr-sync[1463]: mr-sync: go-plugin-mvp was renamed to plugmarket on GitHub, but .mrconfig already tracks plugmarket; leaving go-plugin-mvp orphaned
+    Oct 07 08:32:54.081906 evo-x2 systemd[1]: Starting SEV1 escalation bridge: local overlay + notification for critical conditions...
+    Oct 07 08:32:54.089449 evo-x2 systemd[1]: Starting Thermal pstate guard: switch amd_pstate to guided at the thermal ceiling, restore active when cool...
+    Oct 07 08:32:54.108111 evo-x2 nix-daemon[2424]: accepted connection from pid 2501268, user lars
+    Oct 07 08:32:54.247619 evo-x2 systemd[1]: thermal-pstate-guard.service: Deactivated successfully.
+    Oct 07 08:32:54.248557 evo-x2 systemd[1]: Finished Thermal pstate guard: switch amd_pstate to guided at the thermal ceiling, restore active when cool.
+    Oct 07 08:32:54.476563 evo-x2 mr-sync[1463]: mr-sync: hierarchical-errors was renamed to erraudit on GitHub, but .mrconfig already tracks erraudit; leaving hierarchical-errors orphaned
+    Oct 07 08:32:56.624960 evo-x2 emeet-pixyd[15602]: 2026/10/07 08:32:56 INFO http request method=GET path=/ status=0 duration=254.161µs
+    Oct 07 08:32:56.650913 evo-x2 ollama[2016]: [GIN] 2026/10/07 - 08:32:56 | 200 |    3.383219ms |       127.0.0.1 | GET      "/api/tags"
+
+### Census: OOM-lines=0 guard-lines=777 thermal-THROTTLE-lines=5 panic/BUG/oops=441
+    Oct 07 02:58:35 evo-x2 thermal-pstate-guard-check[181651]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=98C(hi:95/lo:80)
+    Oct 07 03:28:47 evo-x2 thermal-pstate-guard-check[1909693]: thermal-pstate-guard: THERMAL THROTTLE EXIT: amd_pstate restored to active + performance after 12x cool ticks: k10temp=66C(hi:95/lo:80)
+    Oct 07 04:33:43 evo-x2 thermal-pstate-guard-check[724656]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=97C(hi:95/lo:80)
+    Oct 07 05:05:04 evo-x2 thermal-pstate-guard-check[1769543]: thermal-pstate-guard: THERMAL THROTTLE EXIT: amd_pstate restored to active + performance after 12x cool ticks: k10temp=64C(hi:95/lo:80)
+    Oct 07 05:09:58 evo-x2 thermal-pstate-guard-check[2079151]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=95C(hi:95/lo:80)
+
