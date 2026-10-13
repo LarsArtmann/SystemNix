@@ -305,6 +305,22 @@
           description = "Pool directory for the attachment archive (null = legacy in-state <dataDir>/attachments layout)";
         };
 
+        # Deliberate data-loss override (upstream incident 2026-10-12):
+        # quarantine + re-replicate-from-remote discards the local replica
+        # file, so a STALE remote (quota-frozen pushes) silently rolls local
+        # data back. Upstream `refuseRemoteRebaseline` refuses unless this
+        # opt-in env is set and falls back to plain-SQLite local-only mode
+        # instead. Only enable after VERIFYING the remote is current.
+        allowRemoteRebaseline = lib.mkEnableOption ''
+          remote re-baselining: letting DiscordSync quarantine the local Turso
+          replica and re-replicate it from the remote on corruption-classified
+          open failures. This DISCARDS local data — only enable after verifying
+          the remote is current (2026-10-12: a quota-frozen remote rolled the
+          read model back five weeks). Default (false) keeps the local file and
+          serves it in local-only mode; recovery runbook:
+          docs/runbook/stale-remote-rebaseline.md in the DiscordSync repo.
+        '';
+
         # Nightly online sqlite .backup of the event store onto the HDD pool
         # — the dump-only RPO leg for the hot-db tier migration (2026-09-30):
         # once the DB leaves the btrbk `@` snapshot set its only other
@@ -515,6 +531,11 @@
             # map documents the intent; ~18% of a SATA SSD's sequential
             # bandwidth and further cushioned by ioTier.background (ionice).
             INTEGRITY_SWEEP_MAX_MBPS = "100";
+            # Remote re-baseline data-loss gate (upstream incident 2026-10-12).
+            # Kept explicit (always present) so the operator-visible env map
+            # documents the policy; flipping it requires a config change, which
+            # is the point. See the allowRemoteRebaseline option above.
+            TURSO_SYNC_ALLOW_REMOTE_REBASELINE = lib.boolToString cfg.allowRemoteRebaseline;
           }
           // lib.optionalAttrs (cfg.gcsBucket != null) {
             GCS_BUCKET = cfg.gcsBucket;
