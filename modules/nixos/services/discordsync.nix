@@ -354,19 +354,34 @@
       config = lib.mkIf cfg.enable {
         services.discordsync = {
           package = lib.mkDefault discordsyncPkg;
-          # Turso returns persistent 403 "SQL read operations are forbidden" on
-          # the current plan. Upstream `OpenTursoSync` now detects this quota
-          # error (tursostorage.IsQuotaExceeded) and falls back to opening the
-          # local replica as plain SQLite with cloud sync disabled, so the
-          # service runs fully local instead of crash-looping. A bare `sqlite`
-          # backend was tried but caused 40+ min startup backfill (FTS5 trigger
-          # contention with projection workers on a single connection) vs ~21
-          # min with `turso-sync`, so keep `turso-sync` and rely on the quota
-          # fallback. Cloud sync resumes automatically when the quota resets or
-          # the plan is upgraded. The upstream quota fallback (OpenTursoSync)
-          # is deployed (flake input bumped to the fix commit).
-          backend = lib.mkDefault "turso-sync";
-          backfillOnStartup = lib.mkDefault true;
+          # Served by the plain engine (2026-10-14, operator decision): the
+          # remote is quota-frozen (since Sep-04) and the live DB is restored
+          # from the Oct-1 plain dump (docs/runbook/stale-remote-rebaseline.md
+          # in DiscordSync). The turso-sync engine opening a PLAIN file does
+          # NOT fall back on the 403 quota pull — it logs "initial turso pull
+          # failed, continuing with local data" and keeps the sync engine,
+          # which then fails migrations because the sync build has no FTS5
+          # ("no such module: fts5"; the create-indexes step died on the
+          # restored schema — observed 2026-10-14 19:49). The quota-fallback
+          # assumption documented below was wrong for the restored-file case.
+          # The sqlite backend is the deterministic serving path while the
+          # remote stays frozen; revisit only with the Turso endgame decision
+          # (upgrade plan vs deprovision) AND a fresh sync-engine-formatted
+          # replica.
+          # (Historical, superseded: turso-sync was kept because the quota
+          # fallback was believed to serve local data on 403, and a bare
+          # sqlite backend had caused a 40+ min startup backfill — FTS5
+          # trigger contention with projection workers on a single
+          # connection. The backfill contention is now handled by disabling
+          # backfillOnStartup during the restore window, see below.)
+          backend = lib.mkDefault "sqlite";
+          # Off during the 2026-10-14 restore window: gap recovery happens via
+          # salvage replay (quarantine/.corrupt files) plus a deliberate
+          # Discord-API backfill sweep afterwards — a startup backfill would
+          # race those inserts and re-trigger the 40+ min single-connection
+          # FTS5/projection contention that the earlier sqlite-backend trial
+          # hit. Re-enable for the post-salvage convergence sweep.
+          backfillOnStartup = lib.mkDefault false;
           apiAddr = lib.mkDefault "127.0.0.1:${toString ports.discordsync-api}";
           # Upstream's ExecStartPost curls http://localhost:${cfg.apiAddr}/readyz
           # which expands to http://localhost:127.0.0.1:8085/readyz — a malformed
