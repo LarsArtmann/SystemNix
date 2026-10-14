@@ -265,3 +265,63 @@ owner's standing 2026-09-30 QLC-churn evacuation doctrine and the
 - Flake: `nix flake check --no-build` → `all checks passed!` (post-entries,
   post-pins)
 - Tree state at authoring: clean at `a493f8e1` (daemon-swept)
+
+---
+
+## Appendix A (2026-10-14 16:44): Live re-verification + the low-downtime retrospective
+
+### A.1 Owner challenge: "both fully migrated AND VERIFIED?" — re-verified live
+
+Fresh receipts at ~16:25, not from memory:
+
+| Check | hot/gatus | hot/browser-history |
+|---|---|---|
+| Kernel mount table | `/dev/nvme1n1p2[/hot/gatus]` at `/var/lib/private/gatus` | `/dev/nvme1n1p2[/hot/browser-history]` at `/var/lib/private/browser-history` |
+| Mounted-metric (fail-closed) | `hot_db_entry_mounted{name="gatus"} 1` | `hot_db_entry_mounted{name="browser-history"} 1` |
+| Functional | `:9110` → 200 OK, watchdog actively alerting | `/health` → 200 OK |
+| Writes flowing | checks landing in mounted DB | agent ingest 75 s old, `agents_active 1` |
+| Journals (30 min) | 0 errors | 0 errors |
+| Boot | ANCHORED: profile == current-system | same |
+
+Residuals unchanged (time-gated, queued): first 02:15 backup through the
+mount (tonight), one live btrbk cycle for the landmine scan, ≥1 week soak
+before shadow reclaim.
+
+### A.2 How the next waves get downtime to the ~3-minute floor
+
+The window is only as long as the riskiest thing that can still happen AFTER
+the units stop — so every failure mode must be forced to fail BEFORE cutover.
+This session's 48 minutes came from exactly one miss: the tree moved between
+pre-build (15:08, RC=0) and deploy (15:13) — the deploy re-evaluated a tree
+that had never been built, and the FOD failure landed with units already
+down. Timeline fix:
+
+| T-minus | Step | Downtime |
+| --- | --- | --- |
+| −30 min | Content-pin + tree-quiescence gate (no daemon commits ≥10 min, flock free, no other active session) | none |
+| −30 min | `prepare` (warm, services running) | none |
+| −25 min | Edit config + `nix flake check --no-build` | none |
+| −20 min | `nix build` toplevel — the ONLY heavy step, services up | none |
+| −1 min | **Fresh-drift gate (the missing step):** `git log -1` equals the built rev + one cached re-eval; any drift → rebuild while UP | none |
+| 0 | `cutover` (stop + seconds-scale delta + verify + marker) | **starts** |
+| +1 min | `deploy` — pure switch of the pre-built closure; anchor assert | |
+| +2 min | `finalize` + probes | **ends** |
+
+Structural candidates (awaiting owner go-ahead, not yet implemented):
+
+1. **`preflight` action for `migrate-hot-db.sh`** — eval + build + drift +
+   PSI + flock → GO/NO-GO verdict, so the window is mechanically
+   "preflight GO → cutover → deploy".
+2. **deploy.sh anchor self-heal** — already queued by the parallel session
+   (docs/todo/pipeline.md); cost this session ~7 min.
+3. **gatus waves last, or blind window accepted deliberately** — it is the
+   monitoring hub; also consider suppressing Discord resolve-notifications
+   during a planned window (the recovery alert storm).
+4. **Storm quiescence still matters** — not for the tiny rsync, but because
+   eval/build into 50% PSI is slowest exactly when the switch must be fast,
+   and the gates fire mid-window.
+5. **Combined windows** (see §g2): waves 2+3 as one prepared-and-cut-over
+   pair halves the DNS + SSO blips into a single shared window.
+
+Data movement was never the bottleneck: 20 MB + 200 MB quiesced deltas are
+seconds. The tree, the anchor, and the storm were.
