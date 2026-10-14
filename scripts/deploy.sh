@@ -362,6 +362,21 @@ if nix run .#pre-deploy-check; then
       ps -eo pid,stat,wchan:30,comm | awk '$2 ~ /D/' | head -8 | sed 's/^/    /' || true
       echo "  PSI still means tasks are stalled — activation restarts units INTO it and strands more corpses. Verify the missing device / corpse pile before forcing."
     fi
+    # Device-truth crosscheck beside the PSI line (2026-10-13 class): that
+    # refusal read PSI some avg10 53-65% sustained while iostat showed every
+    # device <=0.4% util, and the gate's own max-busy figure misread the
+    # entry sample as a REAL storm (29.8%). Root cause found 2026-10-14:
+    # ghostty's io_uring CQ-waiters sleep TASK_INTERRUPTIBLE with
+    # in_iowait=1 while holding never-completing ring requests, so the
+    # kernel books their cgroups at ~100% io PSI with zero io.stat and zero
+    # D-state. Print per-device %util + top-3 stalled cgroups so the
+    # wait-vs-force call has evidence, not PSI alone (best-effort).
+    echo "  device-truth crosscheck:"
+    if [ -x "$PWD/scripts/io-psi-crosscheck.sh" ]; then
+      timeout 30 "$PWD/scripts/io-psi-crosscheck.sh" 2>/dev/null | sed 's/^/    /' || true
+    else
+      echo "    (scripts/io-psi-crosscheck.sh missing — evidence skipped)"
+    fi
   fi
   if [ "$pressure_blocked" = "1" ]; then
     echo ""

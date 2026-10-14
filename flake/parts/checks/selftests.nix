@@ -173,6 +173,30 @@
               touch $out
             '';
 
+        # io-psi-crosscheck selftest: fixture-tests the pure helpers (io_ticks
+        # delta math incl. vanished-device drop, max util, cgroup io.pressure
+        # ranking with root exclusion + malformed skip + decimal order), runs
+        # the evidence mode end-to-end against a mutating fixture stat file,
+        # and a static tripwire that deploy.sh still wires the crosscheck
+        # beside the PSI refusal line (a deleted call would go phantom-green).
+        io-psi-crosscheck-selftest =
+          pkgs.runCommand "io-psi-crosscheck-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              cp ${root}/scripts/io-psi-crosscheck.sh "$scratch/io-psi-crosscheck.sh"
+              # The selftest re-executes the copy via "$0"; /usr/bin/env does not exist in the sandbox.
+              sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/io-psi-crosscheck.sh"
+              ${pkgs.bash}/bin/bash "$scratch/io-psi-crosscheck.sh" selftest ${root}/scripts/deploy.sh
+              touch $out
+            '';
+
         # Boot-evidence-pull selftest: runs the pull script's `selftest`
         # mode (fixture journal through the canonical-section renderer:
         # census counts, hex-boundary id8 citation for the pre-vacuum
