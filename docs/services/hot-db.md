@@ -298,6 +298,12 @@ The QLC original sits shadowed under the mountpoint with everything up to
 the cutover (post-cutover writes live only in the subvol) — flip back SOON
 after a bad wave to minimize divergence. `nix run .#migrate-hot-db --
 status` + `findmnt <dataDir>` tell you which side is live.
+**SECRET-STORE CAVEAT (pocket-id class): the shadow's `client-secrets/`
+freezes at cutover while rotations continue on the subvol — after ANY
+post-cutover secret rotation, a QLC rollback reinstates the OLD secret
+against consumers holding the NEW one (instant desync). Before rolling a
+secret-store back, re-run the provisioner's rotation for every client
+rotated since the cutover (or accept the consumer restarts).**
 
 ## Shadow-dir policy
 
