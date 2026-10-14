@@ -602,6 +602,15 @@ _: {
               echo "$now" > "$LAST_TRIP_FILE"
               tripped_total=$((tripped_total + 1))
               echo "$tripped_total" > "$COUNT_FILE"
+              # Persist-before-log (freeze-13 finding 11, 2026-10-14): the
+              # writes above are page-cache only — the freeze-13 power cut
+              # 12 s after a trip landed BEFORE the kernel flushed, and
+              # boot-0's first trip REUSED the dead trip's number (#1812
+              # twice). fsync the trip identity BEFORE the "action taken"
+              # journal line: the line then implies the counter survived
+              # the cut. Zone/history state is fsynced after its writes
+              # below.
+              sync -f "$LAST_TRIP_FILE" "$COUNT_FILE" 2>/dev/null || true
               case "$zone" in
                 1) zone1=$((zone1 + 1)) ;;
                 2) zone2=$((zone2 + 1)) ;;
@@ -616,6 +625,7 @@ _: {
               # change carry only $1 — they count in the aggregate, never
               # per-zone (the per-zone awk requires a valid $2).
               echo "$now $zone" >> "$HISTORY_FILE"
+              sync -f "$ZONE_FILE" "$HISTORY_FILE" 2>/dev/null || true
               # Top-I/O offender attribution (2026-09-28): 1300+ trips said
               # "I/O stalled" without naming a culprit — attribution lived
               # only in the forensics bundles. The per-cgroup io.stat walk

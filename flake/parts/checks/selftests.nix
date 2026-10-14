@@ -222,6 +222,44 @@
               touch $out
             '';
 
+        # Guard trip-counter persist-before-log selftest (freeze-13 finding
+        # 11): boot-0's first trip reused the death trip's number because the
+        # counter file write was page-cache only when the power cut landed.
+        # Static tripwires on the module the VM test cannot run mid-storm:
+        # the COUNT_FILE write must precede its fsync, and the fsync must
+        # precede the "action taken" journal line (the line implies the
+        # counter survived), plus the zone/history fsync leg.
+        guard-trip-persist-selftest =
+          pkgs.runCommand "guard-trip-persist-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+              ];
+            }
+            ''
+              mod=${root}/modules/nixos/services/memory-emergency-guard.nix
+              count_l=$(grep -n 'echo "\$tripped_total" > "\$COUNT_FILE"' "$mod" | head -1 | cut -d: -f1)
+              sync_l=$(grep -n 'sync -f "\$LAST_TRIP_FILE" "\$COUNT_FILE"' "$mod" | head -1 | cut -d: -f1)
+              log_l=$(grep -n 'MEMORY EMERGENCY action taken' "$mod" | head -1 | cut -d: -f1)
+              zsync_l=$(grep -n 'sync -f "\$ZONE_FILE" "\$HISTORY_FILE"' "$mod" | head -1 | cut -d: -f1)
+              hist_l=$(grep -n 'echo "\$now \$zone" >> "\$HISTORY_FILE"' "$mod" | head -1 | cut -d: -f1)
+              if [ -z "$count_l" ] || [ -z "$sync_l" ] || [ -z "$log_l" ]; then
+                echo "FAIL: trip-persist anchors missing (count@$count_l sync@$sync_l log@$log_l)"
+                exit 1
+              fi
+              if [ "$count_l" -ge "$sync_l" ] || [ "$sync_l" -ge "$log_l" ]; then
+                echo "FAIL: persist-before-log order broken (count@$count_l must precede sync@$sync_l must precede log@$log_l)"
+                exit 1
+              fi
+              if [ -z "$zsync_l" ] || [ -z "$hist_l" ] || [ "$hist_l" -ge "$zsync_l" ]; then
+                echo "FAIL: zone/history fsync leg missing or misordered (hist@$hist_l zsync@$zsync_l)"
+                exit 1
+              fi
+              touch $out
+            '';
+
         # Boot-evidence-pull selftest: runs the pull script's `selftest`
         # mode (fixture journal through the canonical-section renderer:
         # census counts, hex-boundary id8 citation for the pre-vacuum
