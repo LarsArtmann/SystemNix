@@ -51,7 +51,7 @@ trap 'rm -rf "$scratch"' EXIT
 
 # Restore into tmpfs scratch (PrivateTmp): the ~380 MB restored DB never
 # touches the QLC root and vanishes with the scratch dir.
-if ! gzip -dc "$dump" > "$scratch/restored.db"; then
+if ! gzip -dc "$dump" >"$scratch/restored.db"; then
   echo "drill: FAILED: gunzip of $(basename "$dump") failed (torn/corrupt gz)" >&2
   exit 1
 fi
@@ -68,17 +68,17 @@ echo "drill: integrity_check OK"
 for t in messages events attachments; do
   n=$(sqlite3 -readonly "$scratch/restored.db" "SELECT count(*) FROM $t;" 2>&1)
   case "$n" in
-    ''|*[!0-9]*)
-      echo "drill: FAILED: table $t missing/unreadable (sqlite3: $n)" >&2
-      fails=$((fails + 1))
-      ;;
-    0)
-      echo "drill: FAILED: table $t is EMPTY (logical rot / replaced-DB class)" >&2
-      fails=$((fails + 1))
-      ;;
-    *)
-      echo "drill: count[$t] = $n"
-      ;;
+  '' | *[!0-9]*)
+    echo "drill: FAILED: table $t missing/unreadable (sqlite3: $n)" >&2
+    fails=$((fails + 1))
+    ;;
+  0)
+    echo "drill: FAILED: table $t is EMPTY (logical rot / replaced-DB class)" >&2
+    fails=$((fails + 1))
+    ;;
+  *)
+    echo "drill: count[$t] = $n"
+    ;;
   esac
 done
 
@@ -88,19 +88,19 @@ done
 # the 72h budget.
 newest=$(sqlite3 -readonly "$scratch/restored.db" "SELECT strftime('%s', substr(MAX(created_at), 1, 19)) FROM messages;" 2>&1)
 case "$newest" in
-  ''|*[!0-9]*)
-    echo "drill: FAILED: cannot parse newest message timestamp (sqlite3: $newest)" >&2
+'' | *[!0-9]*)
+  echo "drill: FAILED: cannot parse newest message timestamp (sqlite3: $newest)" >&2
+  fails=$((fails + 1))
+  ;;
+*)
+  now=$(date +%s)
+  age_hours=$(((now - newest) / 3600))
+  echo "drill: newest message age = ${age_hours}h (budget ${max_message_age_hours}h)"
+  if [ "$age_hours" -gt "$max_message_age_hours" ]; then
+    echo "drill: FAILED: newest message is ${age_hours}h old (budget ${max_message_age_hours}h): the dump predates capture or capture stalled before the dump" >&2
     fails=$((fails + 1))
-    ;;
-  *)
-    now=$(date +%s)
-    age_hours=$(( (now - newest) / 3600 ))
-    echo "drill: newest message age = ${age_hours}h (budget ${max_message_age_hours}h)"
-    if [ "$age_hours" -gt "$max_message_age_hours" ]; then
-      echo "drill: FAILED: newest message is ${age_hours}h old (budget ${max_message_age_hours}h): the dump predates capture or capture stalled before the dump" >&2
-      fails=$((fails + 1))
-    fi
-    ;;
+  fi
+  ;;
 esac
 
 if [ "$fails" -gt 0 ]; then

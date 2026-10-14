@@ -150,7 +150,8 @@ full_mode() {
   io_a="$(mktemp)"
   io_b="$(mktemp)"
   for f in "$CROSSCHECK_PROC"/[0-9]*/io; do
-    pid="${f%/io}"; pid="${pid##*/}"
+    pid="${f%/io}"
+    pid="${pid##*/}"
     bytes="$(awk '$1 ~ /^read_bytes:$/ || $1 ~ /^write_bytes:$/ { t += $2 } END { print t + 0 }' "$f" 2>/dev/null)"
     if [ -n "$bytes" ]; then
       echo "$bytes $pid"
@@ -158,7 +159,8 @@ full_mode() {
   done >"$io_a"
   sleep 6
   for f in "$CROSSCHECK_PROC"/[0-9]*/io; do
-    pid="${f%/io}"; pid="${pid##*/}"
+    pid="${f%/io}"
+    pid="${pid##*/}"
     bytes="$(awk '$1 ~ /^read_bytes:$/ || $1 ~ /^write_bytes:$/ { t += $2 } END { print t + 0 }' "$f" 2>/dev/null)"
     if [ -n "$bytes" ]; then
       echo "$bytes $pid"
@@ -178,21 +180,42 @@ selftest() {
   # 1. util math: known io_ticks deltas through the pure helper.
   local out
   out="$(crosscheck_util_lines "$(printf 'sda 1000\n')" "$(printf 'sda 1004\n')" 1)"
-  if [ "$out" != "sda 0.4%" ]; then echo "FAIL util 4-tick delta: '$out'"; fails=$((fails + 1)); fi
+  if [ "$out" != "sda 0.4%" ]; then
+    echo "FAIL util 4-tick delta: '$out'"
+    fails=$((fails + 1))
+  fi
   out="$(crosscheck_util_lines "$(printf 'nvme0n1 50000\n')" "$(printf 'nvme0n1 51000\n')" 1)"
-  if [ "$out" != "nvme0n1 100.0%" ]; then echo "FAIL util saturated: '$out'"; fails=$((fails + 1)); fi
+  if [ "$out" != "nvme0n1 100.0%" ]; then
+    echo "FAIL util saturated: '$out'"
+    fails=$((fails + 1))
+  fi
   out="$(crosscheck_util_lines "$(printf 'sda 7\n')" "$(printf 'sda 7\n')" 1)"
-  if [ "$out" != "sda 0.0%" ]; then echo "FAIL util zero delta: '$out'"; fails=$((fails + 1)); fi
+  if [ "$out" != "sda 0.0%" ]; then
+    echo "FAIL util zero delta: '$out'"
+    fails=$((fails + 1))
+  fi
   out="$(crosscheck_util_lines "$(printf 'sda 0\n')" "$(printf 'sda 40\n')" 2)"
-  if [ "$out" != "sda 2.0%" ]; then echo "FAIL util 2s window: '$out'"; fails=$((fails + 1)); fi
+  if [ "$out" != "sda 2.0%" ]; then
+    echo "FAIL util 2s window: '$out'"
+    fails=$((fails + 1))
+  fi
   out="$(crosscheck_util_lines "$(printf 'sda 0\nsdb 5\n')" "$(printf 'sda 4\n')" 1)"
-  if [ "$out" != "sda 0.4%" ]; then echo "FAIL util vanished device dropped: '$out'"; fails=$((fails + 1)); fi
+  if [ "$out" != "sda 0.4%" ]; then
+    echo "FAIL util vanished device dropped: '$out'"
+    fails=$((fails + 1))
+  fi
 
   # 2. max util.
   out="$(printf 'sda 0.4%%\nnvme0n1 12.5%%\n' | crosscheck_max_util)"
-  if [ "$out" != "12.5" ]; then echo "FAIL max util: '$out'"; fails=$((fails + 1)); fi
+  if [ "$out" != "12.5" ]; then
+    echo "FAIL max util: '$out'"
+    fails=$((fails + 1))
+  fi
   out="$(printf '' | crosscheck_max_util)"
-  if [ "$out" != "0.0" ]; then echo "FAIL max util empty: '$out'"; fails=$((fails + 1)); fi
+  if [ "$out" != "0.0" ]; then
+    echo "FAIL max util empty: '$out'"
+    fails=$((fails + 1))
+  fi
 
   # 3. fixture cgroup tree: ranking, root exclusion, decimal order, malformed skip.
   local cgt
@@ -231,8 +254,14 @@ selftest() {
       CROSSCHECK_WINDOW_S=0 \
       bash "${BASH_SOURCE[0]}" gate
   )"
-  if ! grep -q "no block devices found" <<<"$out"; then echo "FAIL empty devices note"; fails=$((fails + 1)); fi
-  if ! grep -q "no readable io.pressure" <<<"$out"; then echo "FAIL empty cgroups note"; fails=$((fails + 1)); fi
+  if ! grep -q "no block devices found" <<<"$out"; then
+    echo "FAIL empty devices note"
+    fails=$((fails + 1))
+  fi
+  if ! grep -q "no readable io.pressure" <<<"$out"; then
+    echo "FAIL empty cgroups note"
+    fails=$((fails + 1))
+  fi
 
   # 5. end-to-end gate mode against a mutating fixture stat: the background
   # mutator bumps sda's io_ticks mid-window so the snapshot pair yields 0.4%.
@@ -248,7 +277,10 @@ selftest() {
       CROSSCHECK_WINDOW_S=1 \
       bash "${BASH_SOURCE[0]}" gate
   )"
-  if ! grep -q "sda 0.4%" <<<"$out"; then echo "FAIL e2e fixture delta: $out"; fails=$((fails + 1)); fi
+  if ! grep -q "sda 0.4%" <<<"$out"; then
+    echo "FAIL e2e fixture delta: $out"
+    fails=$((fails + 1))
+  fi
   wait
 
   # 6. static tripwire: deploy.sh must still wire the crosscheck beside the
@@ -271,12 +303,15 @@ selftest() {
 }
 
 case "$MODE" in
-  gate) gate_mode ;;
-  full) full_mode ;;
-  selftest) shift || true; selftest "${1:-}" ;;
-  *)
-    echo "usage: io-psi-crosscheck.sh [gate|full|selftest [deploy.sh]]" >&2
-    exit 1
-    ;;
+gate) gate_mode ;;
+full) full_mode ;;
+selftest)
+  shift || true
+  selftest "${1:-}"
+  ;;
+*)
+  echo "usage: io-psi-crosscheck.sh [gate|full|selftest [deploy.sh]]" >&2
+  exit 1
+  ;;
 esac
 exit 0

@@ -148,7 +148,6 @@ bep_selftest() (
   tmp=$(mktemp -d)
   trap 'rm -rf "$tmp"' EXIT
 
-
   check() { # <desc> <cmd...>
     local desc="$1"
     shift
@@ -255,19 +254,22 @@ bep_usage() {
 main() {
   local mode="pull"
   case "${1:-}" in
-    list | selftest)
-      mode="$1"
-      shift
-      ;;
+  list | selftest)
+    mode="$1"
+    shift
+    ;;
   esac
 
   local spec="-1" out=""
   while getopts ":b:o:h" opt; do
     case $opt in
-      b) spec=$OPTARG ;;
-      o) out=$OPTARG ;;
-      h) bep_usage; return 0 ;;
-      \?)
+    b) spec=$OPTARG ;;
+    o) out=$OPTARG ;;
+    h)
+      bep_usage
+      return 0
+      ;;
+    \?)
       echo "unknown option: -$OPTARG" >&2
       bep_usage >&2
       return 2
@@ -277,33 +279,33 @@ main() {
   shift $((OPTIND - 1))
 
   case "$mode" in
-    list)
-      exec journalctl --list-boots --no-pager
-      ;;
-    selftest)
-      bep_selftest
-      ;;
-    pull)
-      if [ "$#" -gt 0 ]; then
-        echo "unexpected argument: $1 (use -b <boot-spec>)" >&2
-        bep_usage >&2
-        return 2
-      fi
-      command -v journalctl >/dev/null 2>&1 || {
-        echo "journalctl not found on PATH" >&2
-        return 1
-      }
-      bep_resolve_boot "$spec"
-      local id8
-      id8=${BEP_ID:0:8}
-      BEP_DUMP=$(mktemp "${TMPDIR:-/var/tmp}/boot-evidence.XXXXXX")
-      trap 'rm -f "$BEP_DUMP"' EXIT
-      journalctl --quiet --no-pager -b "$BEP_ID" >"$BEP_DUMP"
-      if [ -z "$out" ]; then
-        out="$TASKS_DIR/$(date -u '+%Y-%m-%d_%H-%M')_boot-${id8}-evidence-pull.md"
-      fi
-      bep_render "$BEP_DUMP" "$id8" "$BEP_ID" "$BEP_FIRST_TS" "$BEP_LAST_TS" | bep_write "$out"
-      ;;
+  list)
+    exec journalctl --list-boots --no-pager
+    ;;
+  selftest)
+    bep_selftest
+    ;;
+  pull)
+    if [ "$#" -gt 0 ]; then
+      echo "unexpected argument: $1 (use -b <boot-spec>)" >&2
+      bep_usage >&2
+      return 2
+    fi
+    command -v journalctl >/dev/null 2>&1 || {
+      echo "journalctl not found on PATH" >&2
+      return 1
+    }
+    bep_resolve_boot "$spec"
+    local id8
+    id8=${BEP_ID:0:8}
+    BEP_DUMP=$(mktemp "${TMPDIR:-/var/tmp}/boot-evidence.XXXXXX")
+    trap 'rm -f "$BEP_DUMP"' EXIT
+    journalctl --quiet --no-pager -b "$BEP_ID" >"$BEP_DUMP"
+    if [ -z "$out" ]; then
+      out="$TASKS_DIR/$(date -u '+%Y-%m-%d_%H-%M')_boot-${id8}-evidence-pull.md"
+    fi
+    bep_render "$BEP_DUMP" "$id8" "$BEP_ID" "$BEP_FIRST_TS" "$BEP_LAST_TS" | bep_write "$out"
+    ;;
   esac
 }
 

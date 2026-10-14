@@ -109,7 +109,10 @@ if [ "$SELFTEST" -eq 1 ]; then
     fi
     case "$out" in
     *"io PSI some avg10"*) : ;;
-    *) echo "FAIL: refusal must name the PSI reading (out=$out)" >&2; fails=$((fails + 1)) ;;
+    *)
+      echo "FAIL: refusal must name the PSI reading (out=$out)" >&2
+      fails=$((fails + 1))
+      ;;
     esac
 
     # force override → passes through DESPITE high PSI
@@ -130,7 +133,10 @@ if [ "$SELFTEST" -eq 1 ]; then
     fi
     case "$out" in
     *"memory-emergency-guard tripped"*) : ;;
-    *) echo "FAIL: refusal must name the guard trips (out=$out)" >&2; fails=$((fails + 1)) ;;
+    *)
+      echo "FAIL: refusal must name the guard trips (out=$out)" >&2
+      fails=$((fails + 1))
+      ;;
     esac
 
     # old trips (outside window) → passes

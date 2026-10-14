@@ -1013,11 +1013,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791919030,
-        "narHash": "sha256-yqglVtyUZWhqE2xPcoQiO4jD35fCbDbYdy6U9GmIaGQ=",
+        "lastModified": 1791952233,
+        "narHash": "sha256-GupcOvuDaB9+6fdU/I9VH0PP34hxTTUXEP2L9tHfG8I=",
         "owner": "LarsArtmann",
         "repo": "DiscordSync",
-        "rev": "2d5cba4d30999cd3850ece8638d41fc186fbd209",
+        "rev": "582b826e9dae7bc182d5135a7bd46f0a58570e30",
         "type": "github"
       },
       "original": {
@@ -6712,11 +6712,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1791594108,
-        "narHash": "sha256-XK4KceonkwD8LuMAt/vNrz982mXJM5jeHAxMwsUXXAQ=",
+        "lastModified": 1791734076,
+        "narHash": "sha256-i5qk1kLiit98rRbh1AXmWBNT9QXC/y4l5Wk/u5EdpDQ=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "6510408d147d8c5e6d76043e899e9251756f6a75",
+        "rev": "7fd4004d0511991fff3a0524856a9be09e28c5f0",
         "type": "github"
       },
       "original": {
