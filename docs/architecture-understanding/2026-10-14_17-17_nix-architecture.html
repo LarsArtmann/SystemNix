@@ -827,211 +827,371 @@
   </head>
   <body>
     <!-- Full-bleed top bar (optional — remove for quieter reports) -->
-    <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+        <div class="top-bar">
+      <span>ARCHITECTURE REVIEW</span>
+      <span>2026-10-14</span>
+      <span>Crush &middot; deep-research session</span>
     </div>
 
     <div class="layout">
-      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
       <aside class="sidebar" data-nav>
         <nav>
           <div class="label">Contents</div>
           <a href="#summary">Summary</a>
           <a href="#findings">Findings</a>
           <a href="#issues">Issue Cards</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#plan">Plan</a>
+          <a href="#scores">Scores</a>
+          <a href="#executed">Executed This Session</a>
+          <a href="#roadmap">Roadmap</a>
+          <a href="#strengths">Strengths</a>
         </nav>
       </aside>
 
       <main class="main">
-        <!-- Hero -->
         <div class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="hero-badge">Report Type</div>
-          <h1>Report Title</h1>
+          <div class="hero-badge">Nix Architecture Review</div>
+          <h1>Thin Platform, Fat Services — Landed. Now Collect the Residual.</h1>
           <p class="hero-subtitle">
-            One-sentence description of what this report covers.
+            One month after the 2026-09-14 service-orientation review: the registry
+            inversion landed broadly, the flake split holds, and three specific
+            residual debt pockets carry nearly all remaining risk.
           </p>
         </div>
 
-        <!-- Inline TOC (alternative to sidebar; pick one) -->
         <nav class="toc">
           <h3>Contents</h3>
           <ul>
             <li><a href="#summary">Summary</a></li>
             <li><a href="#findings">Findings</a></li>
             <li><a href="#issues">Issue Cards</a></li>
-            <li><a href="#proposal">Proposal</a></li>
-            <li><a href="#plan">Plan</a></li>
+            <li><a href="#scores">Scores</a></li>
+            <li><a href="#executed">Executed This Session</a></li>
+            <li><a href="#roadmap">Roadmap</a></li>
+            <li><a href="#strengths">Strengths</a></li>
           </ul>
         </nav>
 
-        <!-- Stats Dashboard -->
         <h2 id="summary"><span class="num">00</span>Summary</h2>
         <div class="stat-grid">
           <div class="stat-card">
-            <div class="stat-value">42</div>
-            <div class="stat-label">Total Items</div>
-          </div>
-          <div class="stat-card stat-bad">
-            <div class="stat-value">7</div>
-            <div class="stat-label">Critical</div>
-          </div>
-          <div class="stat-card stat-warn">
-            <div class="stat-value">12</div>
-            <div class="stat-label">Warnings</div>
+            <div class="stat-value">301</div>
+            <div class="stat-label">.nix files (~82k lines)</div>
           </div>
           <div class="stat-card stat-good">
-            <div class="stat-value">35</div>
-            <div class="stat-label">Resolved</div>
+            <div class="stat-value">55/126</div>
+            <div class="stat-label">Modules writing integration-registry entries (was 0 at last review)</div>
           </div>
-        </div>
-
-        <!-- Findings as Cards -->
-        <h2 id="findings"><span class="num">01</span>Findings</h2>
-
-        <div class="card card-problem">
-          <h4>Critical Issue</h4>
-          <p>Description of the problem and its impact.</p>
+          <div class="stat-card stat-good">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Dead modules (all enable-optioned modules referenced)</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">3</div>
+            <div class="stat-label">God files still &gt;1300 lines (system-health, signoz, configuration)</div>
+          </div>
         </div>
 
         <div class="card card-solution">
-          <h4>Recommended Fix</h4>
-          <p>Description of the solution with rationale.</p>
+          <h4>The one-sentence diagnosis</h4>
+          <p>
+            The architecture the last review prescribed exists and is adopted &mdash;
+            but the two files it named as P1 cleanup both GREW (system-health
+            1616&rarr;2602, configuration.nix 1038&rarr;1522), and the remaining
+            debt is concentrated: per-service health collectors, host-side config
+            prose, and the SigNoz family scatter.
+          </p>
         </div>
 
-        <!-- Issue Cards -->
+        <h2 id="findings"><span class="num">01</span>Findings</h2>
+
+        <div class="card card-solution">
+          <h4>Registry inversion: LANDED (the big win since 2026-09-14)</h4>
+          <p>
+            <code>services.integration.&lt;name&gt;</code> fans out to Caddy vHosts,
+            Gatus checks, dashboard tiles, backup coordination, monitored units,
+            OTel env + signoz-coverage, and Pocket ID clients. 55 of 126 modules
+            declare entries; gatus-config.nix shrank 2479&rarr;1374 (infra checks
+            only); caddy.nix is a renderer with policy ownership. Adding a service
+            is now 2&ndash;3 files, not 9&ndash;11.
+          </p>
+        </div>
+
+        <div class="card card-problem">
+          <h4>system-health.nix grew 61% &mdash; the collector god-file</h4>
+          <p>
+            2602 lines, of which ~1400 are ONE <code>systemHealthMetrics</code>
+            shell script inline. Per-service readers (monitor365, signoz rules,
+            forgejo mirrors, pma commits, dnsblockd stats, pocket-id busy, zram)
+            are still centralized options &mdash; the exact shape the registry
+            removed for checks and tiles. There is an extraMonitoredServices seam
+            for UNITS, but no seam for COLLECTORS.
+          </p>
+        </div>
+
+        <div class="card card-problem">
+          <h4>configuration.nix is now a documentation carrier</h4>
+          <p>
+            1522 lines: 711 comment vs 579 code. Runbook prose duplicates
+            docs/services/*.md ownership (split-brain doc risk) and every new
+            service grows the hottest merge-conflict file on a multi-session tree.
+          </p>
+        </div>
+
+        <div class="card card-problem">
+          <h4>Deploy-gate packaging died 5&times; on the same trap class</h4>
+          <p>
+            pre/post-deploy-check apps hand-copied each <code>scripts/lib/*.sh</code>
+            into <code>bin/lib</code>; every new lib shipped without its staging
+            line killed the gate at source time (2026-09-02, 2026-10-04,
+            2026-10-10, 2026-10-12 &times;2). Fixed this session: glob staging.
+          </p>
+        </div>
+
+        <div class="card card-problem">
+          <h4>Convention drift: <code>with pkgs;</code> (29 sites) and 2 <code>rec</code> attrsets</h4>
+          <p>
+            The repo's own documented convention ("with pkgs; hides missing attrs")
+            was violated in 29 module/platform sites; rec attrsets hide dependency
+            structure. Both fixed this session, plus a lint so the class cannot
+            regrow.
+          </p>
+        </div>
+
         <h2 id="issues"><span class="num">02</span>Issue Cards</h2>
 
-        <div class="issue issue-critical">
-          <span class="severity severity-critical">Blocking</span>
-          <h3>Critical finding title</h3>
-          <div class="where">path/to/file.go:42-58</div>
+        <div class="issue issue-important">
+          <span class="severity severity-important">P0 &middot; queued</span>
+          <h3>system-health collector decomposition</h3>
+          <div class="where">modules/nixos/services/system-health.nix:201-1604</div>
           <p>
-            Describe the problem and cite the code or behavior that proves it.
+            One monolithic shell script collects every service family's metrics.
+            Split per-concern files behind an <code>extraCollectors</code> seam so
+            owning modules contribute stanzas (mirroring the gatus/checks inversion).
           </p>
           <div class="callout callout-solution">
-            <strong>Fix</strong>
-            State the concrete recommended action.
+            <strong>Constraint</strong>
+            Metric names must stay BYTE-STABLE across the split &mdash; the
+            phantom-metric pre-deploy gate and gatus <code>pat()</code> conditions
+            key on exact names; a rename here reds the fleet. Verify with the
+            worktree-baseline A/B method (same flake.lock both sides).
           </div>
         </div>
 
         <div class="issue issue-important">
-          <span class="severity severity-important">Important</span>
-          <h3>Important finding title</h3>
-          <div class="where">path/to/another.go:12-19</div>
+          <span class="severity severity-important">P1 &middot; queued</span>
+          <h3>configuration.nix &rarr; enable manifest + prose to owners</h3>
+          <div class="where">platforms/nixos/system/configuration.nix (1522 lines)</div>
           <p>
-            Explain the risk and why a careful reviewer would hesitate before
-            shipping.
+            55 per-service blocks, half the file is comments duplicating
+            docs/services runbooks. Move prose to the owning docs (AGENTS.md
+            already assigns that ownership), migrate host-invariant defaults into
+            owning modules with mkDefault, batch per service.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Target</strong>
+            &le;600 lines, one enable line + host deltas per service. The prior
+            review's P1 item, still open &mdash; the file GREW 47% instead.
+          </div>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">P1 &middot; queued</span>
+          <h3>SigNoz family scatter (~3900 lines, 4+ files)</h3>
+          <div class="where">signoz.nix (1650), _signoz-{metrics,alerts,packages,scripts}.nix</div>
+          <p>
+            One logical service across 5 files with invisible <code>_</code>-prefixed
+            ownership. A per-service directory (<code>services/signoz/</code>) needs
+            the flake.nix discovery change (one module per dir) &mdash; same change
+            the prior review's P2 named.
           </p>
         </div>
 
         <div class="issue issue-nice">
-          <span class="severity severity-nice">Nice to have</span>
-          <h3>Polish suggestion</h3>
-          <div class="where">docs/ or config</div>
+          <span class="severity severity-nice">P3 &middot; queued</span>
+          <h3>Hardcoded <code>/home/lars</code> in 6 module sites</h3>
+          <div class="where">cv.nix, nsfw-classifier.nix, activitywatch-data-to-pool.nix, _signoz-metrics.nix</div>
           <p>
-            Minor documentation gaps or future-proofing suggestions go here.
+            Option defaults and unit conditions pin one user's home. Options with
+            mkDefault defaults (cv, nsfw) are cheap fixes; activitywatch conditions
+            are host-pinned by design &mdash; document rather than abstract.
           </p>
         </div>
 
-        <!-- Strengths -->
-        <h2>Strengths</h2>
-        <div class="strengths">
-          <div class="strength">
-            <div class="check">+</div>
-            <div class="text">
-              <strong>Specific strength</strong>
-              <span>Explain why it matters and what it enables.</span>
-            </div>
+        <h2 id="scores"><span class="num">03</span>Scores (1&ndash;5, delta vs 2026-09-14)</h2>
+        <div class="scorecard">
+          <div class="score-card score-good">
+            <div class="score">4</div>
+            <div class="label">Coupling &mdash; registry interfaces for vHosts/checks/tiles/OIDC (was 2); collectors + host deltas still central</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">3</div>
+            <div class="label">Cohesion &mdash; service modules focused; god files still mix all services</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">4</div>
+            <div class="label">Modularity &mdash; thin hosts, flake/parts split, auto-discovery hold (was 3)</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">3</div>
+            <div class="label">Composability &mdash; harden/gates/registries good; no collector seam yet</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">3</div>
+            <div class="label">Scalability &mdash; new service = 2&ndash;3 files (was 2: 9&ndash;11); configuration.nix still a chokepoint</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">4</div>
+            <div class="label">Service orientation &mdash; 55 modules own their wiring (was 3); system-health the exception</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">4</div>
+            <div class="label">Dependency direction &mdash; services&rarr;lib unidirectional, registry fan-out one-way (was 3)</div>
           </div>
         </div>
 
-        <!-- Table with Badges -->
-        <h2>Issue Table</h2>
+        <h2 id="executed"><span class="num">04</span>Executed This Session (verified)</h2>
         <table>
           <thead>
-            <tr>
-              <th>#</th>
-              <th>Severity</th>
-              <th>Issue</th>
-              <th>Status</th>
-            </tr>
+            <tr><th>#</th><th>Change</th><th>Surface</th><th>Status</th></tr>
           </thead>
           <tbody>
             <tr>
               <td>1</td>
-              <td><span class="badge badge-critical">Critical</span></td>
-              <td>Missing error handling</td>
-              <td><span class="badge badge-fixed">Fixed</span></td>
+              <td>Glob-stage every scripts/lib helper into both deploy-check apps (kills the 5&times;-recurred unstaged-lib class)</td>
+              <td>flake/parts/apps.nix</td>
+              <td><span class="badge badge-fixed">Fixed &amp; built</span></td>
             </tr>
             <tr>
               <td>2</td>
-              <td><span class="badge badge-high">High</span></td>
-              <td>Race condition</td>
-              <td><span class="badge badge-low">Open</span></td>
+              <td>with pkgs; &rarr; explicit pkgs. prefixes (29 sites, 21 files)</td>
+              <td>modules/ + platforms/</td>
+              <td><span class="badge badge-fixed">Fixed &amp; eval-verified</span></td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>rec &rarr; let restructures, public surface byte-identical</td>
+              <td>lib/rocm.nix, platforms/common/theme.nix</td>
+              <td><span class="badge badge-fixed">Fixed &amp; value-verified</span></td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>with-pkgs-lint eval guard + 3 negative-test cases + green control</td>
+              <td>flake/parts/checks/lint-static.nix, scripts/negative-test-lints.sh</td>
+              <td><span class="badge badge-fixed">Fixed</span></td>
             </tr>
           </tbody>
         </table>
-
-        <!-- Before/After Comparison -->
-        <h2 id="proposal">Before / After</h2>
-        <div class="compare-header">
-          <div class="compare-before">Before</div>
-          <div class="compare-after">After</div>
-        </div>
-        <div class="compare-row">
-          <div>
-            <pre><code><span class="tok-comment">// Old code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>(data <span class="tok-type">interface</span>{}) { }</code></pre>
-          </div>
-          <div>
-            <pre><code><span class="tok-comment">// New code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>[T <span class="tok-type">any</span>](data T) { }</code></pre>
-          </div>
+        <div class="card card-solution">
+          <h4>Verification method (why drvPath A/B was insufficient here)</h4>
+          <p>
+            The toplevel drvPath could not serve as the sole oracle: it embeds
+            dirtyRev (changes on ANY edit), flake.lock moved mid-session (2-line
+            diff, parallel session), and pocket-id.nix carried parallel edits
+            (84-line delta vs my 8). Triangulated instead: (1) full toplevel eval
+            green &mdash; every explicit pkgs.X exists; (2) mechanical scope audit
+            &mdash; zero prefixed identifiers shadowed in their files; (3) rendered
+            values spot-checked (package set resolves, theme palette byte-identical
+            across all 11 public keys); (4) both app derivations built and their
+            bin/lib contents enumerated.
+          </p>
         </div>
 
-        <!-- ASCII Diagram -->
-        <h2>Dependency Tree</h2>
-        <div class="dep-tree">
-          <span class="root">root</span> ├──
-          <span class="ok">wanted-dep</span> └──
-          <span class="unwanted">unwanted-dep</span>
-        </div>
-
-        <!-- Numbered Steps -->
-        <h2 id="plan"><span class="num">03</span>Migration Plan</h2>
+        <h2 id="roadmap"><span class="num">05</span>Roadmap</h2>
         <div class="migration-step">
-          <div class="migration-num">1</div>
+          <div class="migration-num">P0</div>
           <div class="migration-content">
-            <h4>Add generic type parameter</h4>
-            <p>Update the function signature to accept a type parameter.</p>
+            <h4>system-health collector seam (effort M)</h4>
+            <p>
+              Split systemHealthMetrics per concern behind extraCollectors; owning
+              modules contribute. Metric names byte-stable; worktree-baseline A/B
+              with same lock. Queued &rarr; docs/todo/services.md.
+            </p>
           </div>
         </div>
         <div class="migration-step">
-          <div class="migration-num">2</div>
+          <div class="migration-num">P1</div>
           <div class="migration-content">
-            <h4>Update all call sites</h4>
-            <p>Pass explicit types at each call site for type safety.</p>
+            <h4>configuration.nix diet (effort M, batched)</h4>
+            <p>
+              Prose &rarr; docs/services owners; host-invariant defaults &rarr;
+              module mkDefault. Batch per service, surface-preservation baselines.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">P1</div>
+          <div class="migration-content">
+            <h4>SigNoz directory + discovery change (effort M)</h4>
+            <p>
+              One module per directory in modules/nixos/services/&lt;name&gt;/;
+              kills the _-prefix invisibility and unique-filename constraint.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">P2</div>
+          <div class="migration-content">
+            <h4>base.nix with-pkgs manifests (effort S, mechanical)</h4>
+            <p>
+              5 long package lists (~150 items); convert + extend with-pkgs-lint
+              scope to platforms/common/packages/ afterwards.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">P3</div>
+          <div class="migration-content">
+            <h4>Optionify /home/lars defaults (effort S)</h4>
+            <p>6 sites; document the deliberate host-pinned ones instead where abstraction adds nothing.</p>
+          </div>
+        </div>
+
+        <h2 id="strengths">Strengths</h2>
+        <div class="strengths">
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Eval-time guard army + negative-test harness</strong>
+              <span>Port registry, systemd shapes, lock hygiene, gatus patterns, binary coverage &mdash; each with fail-on-evil proof. This repo's structural differentiator.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>flake/parts conventions hold</strong>
+              <span>Explicit imports, root discipline, checks-grouping doctrine; the 927-line inputs registry is a Nix-grammar floor, not debt.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Options are typed and modules are alive</strong>
+              <span>563 options with types; zero dead modules across 126 auto-discovered files; 63 test files / 37 VM tests.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Thin hosts, single import point</strong>
+              <span>systems/*.nix at 70&ndash;108 lines; lib/default.nix as the only helper surface; ports centralized and eval-enforced.</span>
+            </div>
           </div>
         </div>
 
         <footer class="footer">
-          Generated YYYY-MM-DD &middot; All claims verified against source code
-          where noted
+          Generated 2026-10-14 &middot; All file/score claims verified against the
+          working tree this session; prior-review deltas cited against
+          2026-09-14_19-56_service-orientation.html
         </footer>
       </main>
     </div>
 
-    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+        <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
     <script>
       (function () {
         if (!("IntersectionObserver" in window)) return;

@@ -73,14 +73,14 @@ let
           makeWrapper $out/opt/helium/helium $out/bin/helium \
             --prefix LD_LIBRARY_PATH : "${
               pkgs.lib.makeLibraryPath (
-                with pkgs;
+                
                 [
-                  libGL
-                  libvdpau
-                  libva
-                  pipewire
-                  alsa-lib
-                  libpulseaudio
+                  pkgs.libGL
+                  pkgs.libvdpau
+                  pkgs.libva
+                  pkgs.pipewire
+                  pkgs.alsa-lib
+                  pkgs.libpulseaudio
                 ]
               )
             }" \
@@ -134,93 +134,93 @@ let
 
   # Essential CLI tools that work across platforms
   essentialPackages =
-    with pkgs;
+    
     [
       # Version control
-      git
-      gh # GitHub CLI
-      git-town # High-level Git workflow management
-      git-filter-repo # Rewrite git history
+      pkgs.git
+      pkgs.gh # GitHub CLI
+      pkgs.git-town # High-level Git workflow management
+      pkgs.git-filter-repo # Rewrite git history
       # NOTE: pkgs.jj is a JSON stream editor, NOT Jujutsu — do not re-add here.
       # Jujutsu is installed via programs.jujutsu in platforms/common/programs/jujutsu.nix.
-      mr # myrepos — manage multiple repositories via a single command
+      pkgs.mr # myrepos — manage multiple repositories via a single command
 
       # Essential editors
-      micro
-      neovim
+      pkgs.micro
+      pkgs.neovim
 
       # Terminal emulator
-      alacritty-graphics
+      pkgs.alacritty-graphics
 
       # Shells and prompts
-      fish
-      carapace
+      pkgs.fish
+      pkgs.carapace
 
       # File operations and browsing
-      curl
-      wget
-      tree
-      ripgrep
-      fd
-      eza
-      bat
-      trash-cli
+      pkgs.curl
+      pkgs.wget
+      pkgs.tree
+      pkgs.ripgrep
+      pkgs.fd
+      pkgs.eza
+      pkgs.bat
+      pkgs.trash-cli
 
       # Data manipulation
-      jq
-      yq-go
-      duckdb # In-process analytical SQL database (used by monitor365)
+      pkgs.jq
+      pkgs.yq-go
+      pkgs.duckdb # In-process analytical SQL database (used by monitor365)
 
       # Task runner
-      just
+      pkgs.just
 
       # Security tools
-      gitleaks
-      gnupg
-      pre-commit
-      openssh
-      ssh-to-age
+      pkgs.gitleaks
+      pkgs.gnupg
+      pkgs.pre-commit
+      pkgs.openssh
+      pkgs.ssh-to-age
       # Secrets-workflow CLIs (the sops-secret-management skill runs these).
       # GLOBAL operator tools — they must never ride a service module's
       # conditional systemPackages: services.forgejo-repos going enable=false
       # on 2026-10-03 silently dropped both from the system closure and
       # broke every `sops`/`age` invocation on the host until this restore.
-      sops
-      age
+      pkgs.sops
+      pkgs.age
 
       # Modern CLI productivity tools
-      glow # Render markdown on the CLI, with pizzazz
+      pkgs.glow # Render markdown on the CLI, with pizzazz
 
       # System monitoring
-      btop
-      bottom
-      fastfetch
+      pkgs.btop
+      pkgs.bottom
+      pkgs.fastfetch
 
       # Archive tools
-      unzip
-      zip
+      pkgs.unzip
+      pkgs.zip
 
       # File utilities
-      sd # Modern find and replace
-      dust # Modern du
+      pkgs.sd # Modern find and replace
+      pkgs.dust # Modern du
 
       # GNU utilities (cross-platform)
-      coreutils
-      findutils
-      gnused
+      pkgs.coreutils
+      pkgs.findutils
+      pkgs.gnused
 
       # Graph visualization
-      graphviz
-      d2 # Declarative diagram scripting language
-      mermaid-cli # CLI for Mermaid diagram generation from markdown
+      pkgs.graphviz
+      pkgs.d2 # Declarative diagram scripting language
+      pkgs.mermaid-cli # CLI for Mermaid diagram generation from markdown
 
       # Media tools
-      ffmpeg # Complete, cross-platform solution to record, convert and stream audio and video
+      pkgs.ffmpeg # Complete, cross-platform solution to record, convert and stream audio and video
 
       # Clipboard management (Linux-only, Wayland)
       # cliphist # Not available on Darwin (Linux-only package)
       # Desktop integration (cross-platform)
-      xdg-utils # XDG desktop utilities for both platforms
+      pkgs.xdg-utils # XDG desktop utilities for both platforms
     ]
     ++ lib.optionals stdenv.hostPlatform.isLinux [
       cliphist # Wayland clipboard history for Linux
@@ -228,13 +228,13 @@ let
 
   # Development tools (platform-agnostic)
   developmentPackages =
-    with pkgs;
+    
     [
       # JavaScript/TypeScript
-      bun # Incredibly fast JavaScript runtime
-      pnpm # Fast, disk space-efficient package manager
-      vtsls # TypeScript language server for IDE LSP support
-      esbuild # Fast JavaScript bundler and minifier
+      pkgs.bun # Incredibly fast JavaScript runtime
+      pkgs.pnpm # Fast, disk space-efficient package manager
+      pkgs.vtsls # TypeScript language server for IDE LSP support
+      pkgs.esbuild # Fast JavaScript bundler and minifier
 
       # Go development
       # go_1_27: pinned ahead of the nixpkgs default (1.26.7). The ecosystem
@@ -242,48 +242,48 @@ let
       # Shells run with GOTOOLCHAIN unset (2026-09-29 removal), so the
       # built-in auto mode never downloads a toolchain for floor-satisfied
       # repos.
-      go_1_27
-      golines # Go line-shortener (moved from stray ~/go/bin 2026-10-01, fifty-todos #45; nixpkgs 0.16.0 verified)
-      gopls
-      golangci-lint
-      golangci-lint-langserver
-      go-arch-lint
-      gofumpt
-      gotests
-      mockgen
-      sqlc
-      protoc-gen-go
-      buf
-      delve
-      gup
-      templ
+      pkgs.go_1_27
+      pkgs.golines # Go line-shortener (moved from stray ~/go/bin 2026-10-01, fifty-todos #45; nixpkgs 0.16.0 verified)
+      pkgs.gopls
+      pkgs.golangci-lint
+      pkgs.golangci-lint-langserver
+      pkgs.go-arch-lint
+      pkgs.gofumpt
+      pkgs.gotests
+      pkgs.mockgen
+      pkgs.sqlc
+      pkgs.protoc-gen-go
+      pkgs.buf
+      pkgs.delve
+      pkgs.gup
+      pkgs.templ
 
       # Document rendering
-      typst # Document typesetting compiler (CV PDF rendering; moved from imperative nix profile 2026-09-22)
+      pkgs.typst # Document typesetting compiler (CV PDF rendering; moved from imperative nix profile 2026-09-22)
 
       # CGO build tools for Go
-      gcc
-      gnumake
+      pkgs.gcc
+      pkgs.gnumake
 
       # Common libraries for CGO dependencies
-      pkg-config
+      pkgs.pkg-config
 
       # JavaScript/TypeScript development (Oxc tools)
-      oxlint
-      tsgolint
-      oxfmt
+      pkgs.oxlint
+      pkgs.tsgolint
+      pkgs.oxfmt
 
       # Code quality
-      scc # Sloc, Cloc and Code: fast lines of code counter
-      jscpd # Copy/paste detector for source code
+      pkgs.scc # Sloc, Cloc and Code: fast lines of code counter
+      pkgs.jscpd # Copy/paste detector for source code
 
       # Infrastructure as Code
-      terraform # Infrastructure as Code tool from HashiCorp
-      google-cloud-sdk # Google Cloud SDK for cloud management
+      pkgs.terraform # Infrastructure as Code tool from HashiCorp
+      pkgs.google-cloud-sdk # Google Cloud SDK for cloud management
 
       # Kubernetes tools
-      kubectl # Kubernetes CLI (includes fish/zsh/bash completions!)
-      k9s # Kubernetes CLI To Manage Your Clusters In Style
+      pkgs.kubectl # Kubernetes CLI (includes fish/zsh/bash completions!)
+      pkgs.k9s # Kubernetes CLI To Manage Your Clusters In Style
 
       # Observability tools (Linux-only — otel-tui builds from source, 40+ min on macOS)
     ]
@@ -315,7 +315,7 @@ let
 
   # Linux-specific utilities
   linuxUtilities =
-    with pkgs;
+    
     lib.optionals stdenv.hostPlatform.isLinux [
       jetbrains.idea
       openaudible
@@ -371,7 +371,7 @@ let
 
   # GUI Applications (cross-platform)
   guiPackages =
-    with pkgs;
+    
     lib.optional (heliumWrapped != null) heliumWrapped
     ++ lib.optionals stdenv.hostPlatform.isDarwin [
       google-chrome
