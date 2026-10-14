@@ -23,6 +23,14 @@
 # admission gate for agent + interactive sessions, not a jail. The
 # deploy.sh, thermal-pstate-guard, and memory-emergency-guard legs own the
 # rest of the stack.
+#
+# The escape hatch crosses sudo: deploy tooling re-invokes nix under
+# `sudo env …` (nh's post-switch profile-set leg), so
+# platforms/nixos/system/sudo.nix carries `Defaults env_keep +=
+# "NIX_HEAVY_GATE_FORCE"` — without it the sudo'd leg runs the shim
+# WITHOUT the var and refuses even though the caller forced every outer
+# call (the 2026-10-14 UNANCHORED class, pinned by the gate selftest's
+# tripwire).
 {
   flake.nixosModules.nix-heavy-builds-gate =
     {

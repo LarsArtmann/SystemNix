@@ -266,7 +266,10 @@
         # guard-trip-recency block (the freeze-25 dip-race class),
         # NIX_HEAVY_GATE_FORCE bypass, out-of-window trips pass, non-gated
         # subcommand passthrough under full storm, fail-open on unreadable
-        # fixture files.
+        # fixture files — plus a static tripwire: sudoers must env_keep the
+        # escape hatch, else nh's sudo'd profile-set leg runs the shim
+        # WITHOUT the var and a forced switch dies at the anchor step
+        # (the 2026-10-14 UNANCHORED class).
         nix-heavy-builds-gate-selftest =
           pkgs.runCommand "nix-heavy-builds-gate-selftest"
             {
@@ -282,6 +285,14 @@
               # The selftest re-executes the copy via "$0"; /usr/bin/env does not exist in the sandbox.
               sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/nix-heavy-builds-gate.sh"
               ${pkgs.bash}/bin/bash "$scratch/nix-heavy-builds-gate.sh" selftest
+              # Static tripwire: without the sudoers env_keep, sudo strips
+              # NIX_HEAVY_GATE_FORCE from nh's profile-set leg and a switch
+              # forced past the gate still refuses at the anchor step
+              # (2026-10-14: nh exit + deploy.sh exit 14 UNANCHORED).
+              if ! grep -q 'NIX_HEAVY_GATE_FORCE' ${root}/platforms/nixos/system/sudo.nix; then
+                echo "FAIL: sudo.nix lost the NIX_HEAVY_GATE_FORCE env_keep — forced switches refuse at nh's profile-set leg"
+                exit 1
+              fi
               touch $out
             '';
 

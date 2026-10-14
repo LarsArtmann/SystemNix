@@ -163,6 +163,11 @@
               recovered_check=$(sqlite3 "$recovered" "PRAGMA integrity_check;" 2>&1 || true)
               if [ "$recovered_check" = "ok" ]; then
                 mv "$recovered" "$db"
+                # The heal runs privileged (root) but the SERVICE user needs
+                # write — a root-owned DB makes every write SQLITE_READONLY
+                # forever (live 2026-10-14: silent since the 01:03 heal,
+                # found via the 6h crash-loop it caused).
+                chown ${cfg.user}:${cfg.group} "$db"
                 rm -f "$db-wal" "$db-shm" 2>/dev/null || true
                 echo "discordsync: recovered DB verified and replaces corrupt DB. Backup at $backup" >&2
                 exit 0
@@ -198,6 +203,7 @@
                     snap_rows=$(sqlite3 "$recovered" "SELECT count(*) FROM sqlite_master;" 2>/dev/null || echo "0")
                     echo "discordsync: snapshot restore succeeded — $snap_rows objects from $(basename "$snap")" >&2
                     mv "$recovered" "$db"
+                    chown ${cfg.user}:${cfg.group} "$db"
                     rm -f "$db-wal" "$db-shm" 2>/dev/null || true
                     echo "discordsync: snapshot DB verified and replaces corrupt DB. Corrupt backup at $backup" >&2
                     exit 0
