@@ -65,7 +65,129 @@ _: {
         onFailure
         ports
         ioTier
+        mkStateDir
         ;
+
+      textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
+
+      # Freeze-25 IO discipline (2026-10-14 task queue): the pool's 3 yolo
+      # agents read ~864 GB across five zone-6 trip windows in one morning
+      # (guard io.stat: +191/+128/+90/+272/+183 GB). Two legs:
+      #   1. PSI entry gate (this script) — refuse the unit start while
+      #      io-PSI some avg10 >= 30% (the same band the migrate-_ entry
+      #      gate row uses): starting a harvest/agent battery into a storm
+      #      is the crash-loop amplifier class (freezes #20-#22, six
+      #      post-crash re-fires).
+      #   2. tq-pool-io-metrics (below) — cumulative cgroup read/write
+      #      accounting + per-device io.stat + live agent count + newest
+      #      task log, so the next "~864 GB" morning answers WHICH agent
+      #      on WHICH disk in ONE Prom query.
+      tqPoolPsiGate = pkgs.writeShellApplication {
+        name = "tq-pool-psi-gate";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.gawk
+        ];
+        text = ''
+          threshold="${toString psiGatePercent}"
+          line=$(awk '/^some /{print $2}' /proc/pressure/io 2>/dev/null || true)
+          avg10="''${line#avg10=}"; avg10="''${avg10%%.*}"
+          case "$avg10" in '''|*[!0-9]*) avg10=0 ;; esac
+          if [ "$avg10" -ge "$threshold" ]; then
+            echo "tq-pool-psi-gate: REFUSING to start: io PSI some avg10=''${avg10}% >= ''${threshold}% — the box is already tripping (freeze-25 class: agent batteries read hundreds of GB into trip windows; a fresh harvest start here is the crash-loop amplifier). The next unit (re)start retries the gate." >&2
+            exit 1
+          fi
+          echo "tq-pool-psi-gate: io PSI some avg10=''${avg10}% < ''${threshold}% — entry allowed"
+        '';
+      };
+
+      tqPoolIoMetrics = pkgs.writeShellApplication {
+        name = "tq-pool-io-metrics";
+        runtimeInputs = [
+          pkgs.systemd
+          pkgs.coreutils
+          pkgs.gawk
+          pkgs.findutils
+          pkgs.gnugrep
+        ];
+        text = ''
+          OUT="${textfileDir}/tq_agent_pool_io.prom"
+          # Unique tmp per run (mktemp): the sticky 1777 textfile dir holds
+          # stale foreign-owned leftovers (mail-relay 2026-09-02 class).
+          mkdir -p "${textfileDir}"
+          TMP="$(mktemp "${textfileDir}/tq_agent_pool_io.prom.XXXXXX")"
+          chmod 644 "$TMP"
+          trap 'rm -f "$TMP"' EXIT
+
+          values=$(systemctl show tq-agent-pool.service -p IOReadBytes -p IOWriteBytes --value 2>/dev/null) || true
+          # systemctl --value prints "[not set]" (or empty) when IOAccounting
+          # is off or the unit has no cgroup yet — unguarded writes poison
+          # the textfile and node_exporter rejects the whole file
+          # (system-health nrestarts="[not" incident, 2026-09-20).
+          read_bytes=$(printf '%s\n' "$values" | head -n 1)
+          write_bytes=$(printf '%s\n' "$values" | tail -n 1)
+          case "$read_bytes" in '''|*[!0-9]*) read_bytes=0 ;; esac
+          case "$write_bytes" in '''|*[!0-9]*) write_bytes=0 ;; esac
+
+          # Live agent count: crush processes inside the pool cgroup only
+          # (never the whole user session tree — the owner's interactive
+          # fleet is out of scope by ruling, 2026-10-07).
+          cgroup="/sys/fs/cgroup/system.slice/tq-agent-pool.service"
+          agents=0
+          if [ -r "$cgroup/cgroup.procs" ]; then
+            while read -r pid; do
+              comm=$(cat "/proc/$pid/comm" 2>/dev/null) || continue
+              case "$comm" in crush*) agents=$((agents + 1)) ;; esac
+            done <"$cgroup/cgroup.procs"
+          fi
+
+          # Newest per-task log (which agent last touched work, and when):
+          # the freeze-25 attribution ask "which agent, which phase".
+          log_dir="/home/${primaryUser}/.local/state/tq/logs"
+          latest_line=$(find "$log_dir" -maxdepth 1 -type f -printf '%T@ %f\n' 2>/dev/null | sort -nr | head -n 1 || true)
+          latest_task=$(printf '%s' "$latest_line" | cut -d' ' -f2-)
+          latest_mtime=$(printf '%s' "$latest_line" | cut -d' ' -f1 | cut -d. -f1)
+          case "$latest_mtime" in '''|*[!0-9]*) latest_mtime=0 ;; esac
+          # Prom label safety: drop anything outside a conservative charset.
+          latest_task=$(printf '%s' "$latest_task" | tr -dc 'A-Za-z0-9._-')
+
+          {
+            echo "# HELP tq_pool_unit_io_read_bytes Cumulative disk read bytes of the tq-agent-pool unit cgroup (systemd IOAccounting; resets on unit restart)"
+            echo "# TYPE tq_pool_unit_io_read_bytes counter"
+            echo "tq_pool_unit_io_read_bytes $read_bytes"
+            echo "# HELP tq_pool_unit_io_write_bytes Cumulative disk write bytes of the tq-agent-pool unit cgroup (systemd IOAccounting; resets on unit restart)"
+            echo "# TYPE tq_pool_unit_io_write_bytes counter"
+            echo "tq_pool_unit_io_write_bytes $write_bytes"
+            echo "# HELP tq_pool_agents_active crush agent processes live in the tq-agent-pool cgroup right now"
+            echo "# TYPE tq_pool_agents_active gauge"
+            echo "tq_pool_agents_active $agents"
+            echo "# HELP tq_pool_task_log_latest_mtime_seconds mtime of the newest per-task tq log file"
+            echo "# TYPE tq_pool_task_log_latest_mtime_seconds gauge"
+            echo "tq_pool_task_log_latest_mtime_seconds{task=\"$latest_task\"} $latest_mtime"
+            echo "# HELP tq_pool_device_io_read_bytes_total Per-device cumulative read bytes of the tq-agent-pool cgroup (io.stat major:minor device)"
+            echo "# TYPE tq_pool_device_io_read_bytes_total counter"
+            echo "# HELP tq_pool_device_io_write_bytes_total Per-device cumulative write bytes of the tq-agent-pool cgroup (io.stat major:minor device)"
+            echo "# TYPE tq_pool_device_io_write_bytes_total counter"
+          } >"$TMP"
+          if [ -r "$cgroup/io.stat" ]; then
+            awk '{
+              dev=$1
+              for (i=2; i<=NF; i++) {
+                split($i, kv, "=")
+                if (kv[1] == "rbytes") print "tq_pool_device_io_read_bytes_total{device=\"" dev "\"} " kv[2]
+                if (kv[1] == "wbytes") print "tq_pool_device_io_write_bytes_total{device=\"" dev "\"} " kv[2]
+              }
+            }' "$cgroup/io.stat" >>"$TMP"
+          fi
+          mv "$TMP" "$OUT"
+        '';
+      };
+
+      # Entry-gate band: io-PSI some avg10 at or above this refuses the
+      # pool start. 30% matches the migrate-_ entry-gate row (the storm is
+      # already self-sustaining at that band; freeze-25's plateau sat at
+      # ~34 under a wedged sdb1).
+      psiGatePercent = 30;
     in
     {
       config = lib.mkIf cfg.enable {
@@ -277,6 +399,11 @@ _: {
               # build machinery.
               MemoryMax = "8G";
               CPUQuota = "400%";
+              # Freeze-25 IO discipline: cumulative cgroup accounting feeds
+              # tq-pool-io-metrics; the entry gate refuses starts into a
+              # live io-PSI storm (crash-loop amplifier class).
+              IOAccounting = true;
+              ExecStartPre = [ (lib.getExe tqPoolPsiGate) ];
             }
             ioTier.build
           ];
@@ -297,6 +424,43 @@ _: {
             ioTier.background
           ];
         };
+
+        # IO-attribution collector for the pool cgroup (discordsync-io-metrics
+        # pattern): 60s oneshot writing tq_agent_pool_io.prom so a repeat of
+        # the freeze-25 ~864 GB morning is attributable in one Prom query
+        # (which unit, which device, how many live agents, newest task).
+        systemd.services.tq-pool-io-metrics = {
+          description = "tq-agent-pool disk-I/O textfile collector for node_exporter";
+          inherit onFailure;
+          serviceConfig = lib.mkMerge [
+            (harden {
+              MemoryMax = "64M";
+              # Sticky-dir rename over a foreign-owned prom (mail-relay class).
+              CapabilityBoundingSet = "CAP_FOWNER";
+            })
+            (serviceOneshotDefaults { })
+            {
+              Type = "oneshot";
+              ExecStart = lib.getExe tqPoolIoMetrics;
+              ReadWritePaths = [ textfileDir ];
+            }
+          ];
+        };
+
+        systemd.timers.tq-pool-io-metrics = {
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "45s";
+            OnUnitActiveSec = "60s";
+          };
+        };
+
+        # The shared textfile dir exists only while a module creates it —
+        # the pool alone must not depend on discordsync/thermal-guard being
+        # enabled (same sticky-dir tmpfiles rule, idempotent).
+        systemd.tmpfiles.rules = [
+          (mkStateDir textfileDir "1777" "nobody" "nogroup")
+        ];
 
         # Service-integration registry entries: the pool liveness check +
         # the tq Dashboard check (serve-gated) + the homepage tile + the
