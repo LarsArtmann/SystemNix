@@ -144,6 +144,33 @@ apply_mutations() {
       fi
       rm -f "$premut"
       ;;
+    jq:*)
+      # JSON surgery for pretty-printed files (flake.lock): a sed on compact
+      # key:value text silently no-ops there — the 2026-10-14 inputpin legs
+      # premise-check caught exactly that. Same no-op detection as sed.
+      local rest="${mut#jq:}"
+      local f="${rest%%:*}"
+      local filter="${rest#*:}"
+      local premut
+      premut=$(mktemp)
+      if ! cp -- "$dir/$f" "$premut" 2>/dev/null; then
+        say "HARNESS BUG: jq target missing: $f"
+        rm -f "$premut"
+        return 1
+      fi
+      if ! jq -e "$filter" "$dir/$f" >"$dir/$f.jqout" 2>/dev/null; then
+        say "HARNESS BUG: jq mutation failed (filter invalid): $filter on $f"
+        rm -f "$premut" "$dir/$f.jqout"
+        return 1
+      fi
+      mv "$dir/$f.jqout" "$dir/$f"
+      if cmp -s -- "$premut" "$dir/$f"; then
+        say "HARNESS BUG: jq mutation was a NO-OP (filter matched nothing): $filter on $f"
+        rm -f "$premut"
+        return 1
+      fi
+      rm -f "$premut"
+      ;;
     *)
       say "HARNESS BUG: unknown mutation [$mut]"
       return 1
@@ -231,8 +258,9 @@ fi
 
 # Eval control for the assertion audits: their enforcement surface IS the
 # toplevel eval, so the pristine copy must eval green. Also pulled in by
-# CASES=memory so the audit's group never runs without its control.
-if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]] || [[ ",$FILTER," == *,memory,* ]]; then
+# CASES=memory / CASES=inputpin so the audit's group never runs without
+# its control.
+if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]] || [[ ",$FILTER," == *,memory,* ]] || [[ ",$FILTER," == *,inputpin,* ]]; then
   dir=$(make_copy "pristine-toplevel-eval")
   out=$(eval_toplevel "$dir") || status=$? || true
   status=${status:-0}
@@ -381,6 +409,24 @@ eval_case memory llama-chat-trap fail 'memory-watermark-audit' \
 # (zero live HM memory knobs, so a mutation is the only way to exercise it).
 eval_case memory hm-user-trap fail 'memory-watermark-audit' \
   'sed:platforms/nixos/users/home.nix:s|systemd.user.services.go-cqrs-nightly-bench = {|systemd.user.services.go-cqrs-nightly-bench.Service = { MemoryMax = "1G"; MemoryHigh = "1M"; }; systemd.user.services.go-cqrs-nightly-bench = {|'
+
+# ── flake-input-pin-audit: hardcoded version pins in input URLs ──
+# Eval guard in flake.nix allEvalGuards (no check derivation) — the
+# toplevel eval IS the enforcement surface. Each mutation pins BOTH the
+# declaration and the matching lock original: an original/declaration
+# mismatch would force a re-resolution (network) and the resulting eval
+# error would be an accident-catch, not the audit firing.
+# Leg 1: incident shape of the 2026-10-14 rollback-pin class — a clean
+# ?ref=master input flips to a 40-hex path rev.
+eval_case inputpin sha-path-pin fail 'go-taskqueue: hard REV pin' \
+  'sed:flake.nix:s|github:LarsArtmann/go-taskqueue?ref=master|github:LarsArtmann/go-taskqueue/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|' \
+  'jq:flake.lock:.nodes["go-taskqueue"].original = {"owner":"LarsArtmann","repo":"go-taskqueue","rev":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","type":"github"}'
+# Leg 2: the lift-forcing teeth — bank-sync's documented ceiling pin is
+# lifted in BOTH surfaces while its allowlist row remains; the stale row
+# must fail eval (never let the allowlist rot silently).
+eval_case inputpin lifted-pin-stale-allowlist fail 'matches no live pin' \
+  'sed:flake.nix:s|github:LarsArtmann/bank-sync/67dd64526e5a55d86ff40ab49ce4a07794922962|github:LarsArtmann/bank-sync?ref=refs/heads/master|' \
+  'jq:flake.lock:.nodes["bank-sync"].original = {"owner":"LarsArtmann","ref":"refs/heads/master","repo":"bank-sync","type":"github"}'
 
 say ""
 say "=== negative-test-lints: $passed passed, $failed failed ==="
