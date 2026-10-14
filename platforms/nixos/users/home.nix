@@ -94,11 +94,11 @@ let
   # waterfall), then detaches so the app survives SSH logout.
   openCommand = pkgs.writeShellApplication {
     name = "open";
-    runtimeInputs = with pkgs; [
-      coreutils # id, realpath, basename
-      file # xdg-mime query filetype shells out to `file`
-      util-linux # setsid
-      xdg-utils # xdg-open + xdg-mime
+    runtimeInputs = [
+      pkgs.coreutils # id, realpath, basename
+      pkgs.file # xdg-mime query filetype shells out to `file`
+      pkgs.util-linux # setsid
+      pkgs.xdg-utils # xdg-open + xdg-mime
     ];
     text = ''
       # Rebuild the graphical-session environment when missing (SSH).
@@ -692,27 +692,27 @@ in
     };
 
     # NixOS-specific packages
-    packages = with pkgs; [
+    packages = [
       # GUI Tools
-      pwvucontrol # Native PipeWire volume control (GTK, Rust)
-      mpv # Media player — default for audio MIME types (see mimeApps below)
-      signal-desktop # Secure messaging application
-      spotify # Music streaming (unfree — flake-level allowUnfree covers it)
+      pkgs.pwvucontrol # Native PipeWire volume control (GTK, Rust)
+      pkgs.mpv # Media player — default for audio MIME types (see mimeApps below)
+      pkgs.signal-desktop # Secure messaging application
+      pkgs.spotify # Music streaming (unfree — flake-level allowUnfree covers it)
 
       # AI Tools
-      jan # Local AI assistant — nixpkgs FHS-wrapped Tauri app (data → /data/ai/models/jan via activation)
+      pkgs.jan # Local AI assistant — nixpkgs FHS-wrapped Tauri app (data → /data/ai/models/jan via activation)
 
       # XL Cursor theme for TV viewing (2 meters away)
-      bibata-cursors
+      pkgs.bibata-cursors
 
       # Development tools
-      cargo # Rust package manager
-      rustc # Rust compiler
-      rustfmt # Rust code formatter
-      clippy # Rust linter
-      rust-analyzer # Rust language server
-      sccache # Rust/C compile cache — global, content-addressed, 32G LRU (see sessionVariables)
-      gitui # Terminal UI for git
+      pkgs.cargo # Rust package manager
+      pkgs.rustc # Rust compiler
+      pkgs.rustfmt # Rust code formatter
+      pkgs.clippy # Rust linter
+      pkgs.rust-analyzer # Rust language server
+      pkgs.sccache # Rust/C compile cache — global, content-addressed, 32G LRU (see sessionVariables)
+      pkgs.gitui # Terminal UI for git
 
       # Memory-limited + I/O-throttled dev commands — wrap go/cargo/pnpm with
       # cgroup MemoryMax (prevents OOM on Strix Halo under GPUActive pressure)
@@ -751,14 +751,14 @@ in
       })
 
       # Cursor themes
-      adwaita-icon-theme
-      hicolor-icon-theme
+      pkgs.adwaita-icon-theme
+      pkgs.hicolor-icon-theme
 
       # GTK Theming
-      catppuccin-gtk
-      papirus-icon-theme
-      libsForQt5.qt5ct
-      qt6.qtbase
+      pkgs.catppuccin-gtk
+      pkgs.papirus-icon-theme
+      pkgs.libsForQt5.qt5ct
+      pkgs.qt6.qtbase
 
       # System Tools
       # Note: xdg-utils moved to base.nix for cross-platform consistency
@@ -767,13 +767,13 @@ in
       # Note: ghostty managed by programs.ghostty above — don't add to packages
       # Note: kitty managed by programs.kitty above — don't add to packages
       # Note: cliphist CLI in base.nix (manual use only, service retired — DMS manages clipboard)
-      libnotify
-      swappy
-      playerctl
-      brightnessctl
-      ddcutil
-      wl-clipboard # Wayland clipboard utilities (wl-copy, wl-paste)
-      gawk # Text processing
+      pkgs.libnotify
+      pkgs.swappy
+      pkgs.playerctl
+      pkgs.brightnessctl
+      pkgs.ddcutil
+      pkgs.wl-clipboard # Wayland clipboard utilities (wl-copy, wl-paste)
+      pkgs.gawk # Text processing
 
       # macOS-style opener that works locally AND over SSH
       # (defined in the let block above)

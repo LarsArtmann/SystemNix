@@ -404,14 +404,12 @@
     };
 
     # golangci-lint-auto-configure — auto-configure golangci-lint for Go projects
-    # ROLLBACK PIN (2026-10-14): the 15:09 lock wave bumped to a HEAD whose
-    # goModules vendorHash is stale (FOD got EgfteIUmqz… vs specified
-    # zg+6ICkRu2…) and broke the toplevel. Restored to the last green rev
-    # ddb54527 (built green in the 13:10 toplevel; FOD probe re-verified
-    # 2026-10-14). LIFT: upstream refreshes the vendorHash → flip back to
-    # ?ref=master + `nix flake lock --update-input golangci-lint-auto-configure --refresh`.
+    # ?ref=master since 2026-10-14 (owner master-tracking directive lifted the
+    # same-day rollback pin ddb54527): upstream moved 69 commits past the pin;
+    # the goModules vendorHash is probed per lock move and shimmed in
+    # lib/lars-packages.nix when stale under the followed nixpkgs graph.
     golangci-lint-auto-configure = {
-      url = "github:LarsArtmann/golangci-lint-auto-configure/ddb545271270a012ad78f45e01ea557a296c02fc";
+      url = "github:LarsArtmann/golangci-lint-auto-configure?ref=master";
     };
 
     # mr-sync — CLI to keep ~/.mrconfig in sync with GitHub repos
@@ -432,14 +430,13 @@
     # erraudit — Error handling pattern analyzer for Go projects
     # (GitHub renamed the repo from hierarchical-errors; the input name and
     # the mkLarsPackages attr follow the new name. 2026-09-17.)
-    # ROLLBACK PIN (2026-10-14): master 492c233 ships a stale vendorHash
-    # (FOD got-hash LzoxcvFT… vs its specified /D4X81… — go.sum dep churn
-    # without a matching hash bump), breaking every toplevel build. Pinned
-    # to the last green rev d46cb98 (FOD + package probe green 2026-10-14).
-    # LIFT: upstream refreshes the vendorHash → flip the URL back to
-    # ?ref=refs/heads/master and `nix flake lock --update-input erraudit --refresh`.
+    # ?ref=refs/heads/master since 2026-10-14 (owner master-tracking directive
+    # lifted the same-day rollback pin d46cb98): root-nixpkgs FOLLOWER class —
+    # upstream's own hash never reproduces under our followed graph, so the
+    # goModules vendorHash is shimmed in lib/lars-packages.nix and re-measured
+    # on upstream source moves (nix-hash-fix evidence only, never by hand).
     erraudit = {
-      url = "github:LarsArtmann/erraudit/d46cb98264a154424f5c84bf08df7f60b21c233b";
+      url = "github:LarsArtmann/erraudit?ref=refs/heads/master";
     };
 
     # BuildFlow — Zero-configuration build automation for Go projects
@@ -683,14 +680,13 @@
     # (go.mod floor 1.27.1), so NO nixpkgs follows — it must consume its
     # own build environment. Consumed by modules/nixos/services/crm.nix
     # (services.crm-server unit); the CV syncer targets its REST surface.
-    # ROLLBACK PIN (2026-10-14): the 15:09 lock wave bumped crm to a410024b
-    # whose kith-crm goModules vendorHash is stale (FOD got AtAQS+x0Oj… vs
-    # specified gFpBC++z49…) and broke the toplevel. Restored to the last
-    # green rev 1ee70909 (built green in the 13:10 toplevel; FOD probe
-    # re-verified 2026-10-14). LIFT: upstream refreshes the vendorHash →
-    # flip back to ?ref=master + `nix flake lock --update-input crm --refresh`.
+    # ?ref=master since 2026-10-14 (owner master-tracking directive lifted
+    # the same-day rollback pin 1ee70909): non-follower class, so upstream
+    # pushes genuinely fix stale hashes; until each lands, the goModules
+    # vendorHash is shimmed consumer-side in crm.nix (nix-hash-fix evidence
+    # only, re-measured on upstream source moves).
     crm = {
-      url = "github:LarsArtmann/crm/1ee70909236a4e14546d81401d90a2116cc164f7";
+      url = "github:LarsArtmann/crm?ref=master";
     };
 
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)

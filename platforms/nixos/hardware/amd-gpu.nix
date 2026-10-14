@@ -9,14 +9,14 @@
     package32 = pkgs.pkgsi686Linux.mesa;
     # Note: amdvlk has been deprecated, RADV is now the default driver
     # OpenCL support via ROCm
-    extraPackages = with pkgs; [
-      rocmPackages.clr.icd # OpenCL support
-      rocmPackages.rocblas # BLAS operations for AI/ML
-      rocmPackages.rocminfo # GPU detection and topology
+    extraPackages = [
+      pkgs.rocmPackages.clr.icd # OpenCL support
+      pkgs.rocmPackages.rocblas # BLAS operations for AI/ML
+      pkgs.rocmPackages.rocminfo # GPU detection and topology
       # amdvlk removed - RADV is now the default AMD Vulkan driver
       # hipblaslt removed - optional rocblas optimization, fails to build from source
-      libva # Video acceleration API
-      libvdpau-va-gl # VDPAU backend for video acceleration
+      pkgs.libva # Video acceleration API
+      pkgs.libvdpau-va-gl # VDPAU backend for video acceleration
     ];
   };
 
@@ -42,15 +42,15 @@
   '';
 
   # Add essential system packages for AMD GPU monitoring and control
-  environment.systemPackages = with pkgs; [
+  environment.systemPackages = [
     # AMD GPU monitoring and control
-    amdgpu_top # GPU monitoring tool
-    corectrl # AMD CPU control
-    vulkan-tools # Vulkan utilities
-    mesa-demos # GPU testing tools
-    libva-utils # VA-API diagnostics (vainfo)
+    pkgs.amdgpu_top # GPU monitoring tool
+    pkgs.corectrl # AMD CPU control
+    pkgs.vulkan-tools # Vulkan utilities
+    pkgs.mesa-demos # GPU testing tools
+    pkgs.libva-utils # VA-API diagnostics (vainfo)
     # ROCm monitoring
-    rocmPackages.rocm-smi # Detailed GPU stats, clocks, memory usage
-    nvtopPackages.amd # htop-like GPU monitor
+    pkgs.rocmPackages.rocm-smi # Detailed GPU stats, clocks, memory usage
+    pkgs.nvtopPackages.amd # htop-like GPU monitor
   ];
 }

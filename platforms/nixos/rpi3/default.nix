@@ -174,8 +174,8 @@ in
     };
   };
 
-  environment.systemPackages = with pkgs; [
-    dig
+  environment.systemPackages = [
+    pkgs.dig
     pkgs.nur.repos.charmbracelet.crush
   ];
 

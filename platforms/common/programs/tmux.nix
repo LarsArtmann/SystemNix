@@ -18,9 +18,9 @@ in
     historyLimit = 10000;
     escapeTime = 0;
 
-    plugins = with pkgs; [
-      tmuxPlugins.resurrect
-      tmuxPlugins.yank
+    plugins = [
+      pkgs.tmuxPlugins.resurrect
+      pkgs.tmuxPlugins.yank
     ];
 
     extraConfig = ''

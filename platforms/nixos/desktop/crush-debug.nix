@@ -13,14 +13,14 @@ let
 
   crushDebug = pkgs.writeShellApplication {
     name = "crush-debug";
-    runtimeInputs = with pkgs; [
-      coreutils
-      fzf
-      findutils
-      gnugrep
-      gawk
-      systemd
-      trash-cli
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.fzf
+      pkgs.findutils
+      pkgs.gnugrep
+      pkgs.gawk
+      pkgs.systemd
+      pkgs.trash-cli
     ];
     text = ''
       # Hand a failing systemd unit or the active sev1 alert to a crush agent.

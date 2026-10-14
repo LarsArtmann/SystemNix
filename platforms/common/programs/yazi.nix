@@ -506,9 +506,9 @@ in
   };
 
   # Ensure image preview dependencies are available
-  home.packages = with pkgs; [
-    ffmpegthumbnailer
-    unar
-    poppler
+  home.packages = [
+    pkgs.ffmpegthumbnailer
+    pkgs.unar
+    pkgs.poppler
   ];
 }

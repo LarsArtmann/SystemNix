@@ -41,10 +41,10 @@ let
 in
 {
   # Shell configuration (platform-agnostic)
-  environment.shells = with pkgs; [
-    fish
-    zsh
-    bash
+  environment.shells = [
+    pkgs.fish
+    pkgs.zsh
+    pkgs.bash
   ];
 
   # Environment variables

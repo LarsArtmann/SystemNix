@@ -1,21 +1,7 @@
-rec {
+let
   variant = "mocha";
   accent = "lavender";
   density = "compact";
-
-  gtkThemeName = "Catppuccin-${variant}-${density}-${accent}-Dark";
-  iconTheme = "Papirus-Dark";
-  cursorTheme = "Bibata-Modern-Classic";
-  cursorSize = 96;
-
-  font = {
-    name = "Sans";
-    size = 16;
-    mono = "JetBrainsMono Nerd Font";
-    monoSize = 16;
-  };
-
-  colorSchemeName = "catppuccin-mocha";
 
   colors = {
     rosewater = "f5e0dc";
@@ -45,6 +31,22 @@ rec {
     mantle = "181825";
     crust = "11111b";
   };
+in
+{
+  inherit variant accent density colors;
+  gtkThemeName = "Catppuccin-${variant}-${density}-${accent}-Dark";
+  iconTheme = "Papirus-Dark";
+  cursorTheme = "Bibata-Modern-Classic";
+  cursorSize = 96;
+
+  font = {
+    name = "Sans";
+    size = 16;
+    mono = "JetBrainsMono Nerd Font";
+    monoSize = 16;
+  };
+
+  colorSchemeName = "catppuccin-mocha";
 
   colorScheme = {
     slug = "catppuccin-mocha";

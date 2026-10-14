@@ -11,9 +11,9 @@ in
   programs.rofi = {
     enable = true;
     package = pkgs.rofi.override {
-      plugins = with pkgs; [
-        rofi-calc
-        rofi-emoji
+      plugins = [
+        pkgs.rofi-calc
+        pkgs.rofi-emoji
       ];
     };
 

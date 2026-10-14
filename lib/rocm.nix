@@ -2,17 +2,20 @@
   pkgs,
   gfxVersion ? "11.5.1",
 }:
-rec {
-  runtimeLibs = with pkgs; [
-    stdenv.cc.cc.lib
-    zstd
-    rocmPackages.clr
-    rocmPackages.rocminfo
-    rocmPackages.rocrand
-    rocmPackages.rocblas
-    rocmPackages.rocm-runtime
-    rocmPackages.rocm-comgr
+let
+  runtimeLibs = [
+    pkgs.stdenv.cc.cc.lib
+    pkgs.zstd
+    pkgs.rocmPackages.clr
+    pkgs.rocmPackages.rocminfo
+    pkgs.rocmPackages.rocrand
+    pkgs.rocmPackages.rocblas
+    pkgs.rocmPackages.rocm-runtime
+    pkgs.rocmPackages.rocm-comgr
   ];
+in
+{
+  inherit runtimeLibs;
 
   env = {
     HSA_OVERRIDE_GFX_VERSION = gfxVersion;

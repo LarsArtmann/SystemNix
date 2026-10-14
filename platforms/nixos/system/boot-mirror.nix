@@ -43,12 +43,12 @@ let
   # --delete (rsync protects excluded files on the receiver by default).
   syncScript = pkgs.writeShellApplication {
     name = "boot-mirror-sync";
-    runtimeInputs = with pkgs; [
-      coreutils
-      diffutils
-      findutils # entry count (shellcheck SC2012: ls|wc is uncountable)
-      rsync
-      systemd # bootctl
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.diffutils
+      pkgs.findutils # entry count (shellcheck SC2012: ls|wc is uncountable)
+      pkgs.rsync
+      pkgs.systemd # bootctl
     ];
     text = ''
       set -euo pipefail
