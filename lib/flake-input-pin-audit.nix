@@ -125,8 +125,7 @@ let
     if url == null || isGitFile url then
       [ ]
     else
-      [ ]
-      ++ (filter (d: d != null) [
+      (filter (d: d != null) [
         (
           if hasRevQuery url then
             "URL carries ?rev= (overrides flake.lock, silently re-pins on every lock re-run)"
