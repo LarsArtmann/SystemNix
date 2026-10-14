@@ -5772,11 +5772,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791990902,
-        "narHash": "sha256-xEMuI0tv0FVQ5kkOJjtMZV2B8UNCSQAWmcY52r9C0J0=",
+        "lastModified": 1791991119,
+        "narHash": "sha256-DTYCf+IDyaLjQi0zXEMdRaxvtDqINbDQKBoSWmCnpqI=",
         "owner": "LarsArtmann",
         "repo": "golangci-lint-auto-configure",
-        "rev": "993950335c3ac5f3af35f3fec8efd27fa6fda75b",
+        "rev": "6676721ddec0210719edba3b84bdafc1e36de3dc",
         "type": "github"
       },
       "original": {
@@ -5862,11 +5862,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791989643,
-        "narHash": "sha256-7ooFyo99HngQDTrtdiVysTOuLQKboGCewbfgz5QG2P0=",
+        "lastModified": 1791991221,
+        "narHash": "sha256-lTlmAFVXDhcD6ScbTzzVB+xCHaRgYWOuByvDUPUQTiE=",
         "owner": "ogulcancelik",
         "repo": "herdr",
-        "rev": "f53f92dd40d5c21b36b4cca209cffeb91b69cd0e",
+        "rev": "287da8072ff8363f406f5d8c4e52fd3227eea58e",
         "type": "github"
       },
       "original": {
@@ -6837,11 +6837,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791990626,
-        "narHash": "sha256-qH9YHTaWLgHwlaqrnfESUxHfCLw6mnU0QccFCLgCVc0=",
+        "lastModified": 1791991090,
+        "narHash": "sha256-DrWV9yt1O+QsOytQ67Op94wc0dtCmiU3ae8js8NnwGA=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "e71892b4594796446a1e0791d7a282841afc7acb",
+        "rev": "2654616ceceb7b28ccfaa99aac7108748a3b59ff",
         "type": "github"
       },
       "original": {
