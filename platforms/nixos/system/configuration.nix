@@ -502,6 +502,36 @@ in
           unit = "discordsync.service";
           extraUnits = [ "discordsync-db-heal.service" ];
         };
+        # Waves 1+4 (2026-10-14, owner-directed combined window): gatus +
+        # browser-history → Samsung TLC. Both prepared AND cut over BEFORE
+        # this entry landed, so the empty-subvol shadow-split landmine
+        # (see above) cannot spring: the subvols were populated and
+        # verified before any tree carrying them could deploy. Stance:
+        # BOTH carry *Directory= settings (gatus: StateDirectory +
+        # RuntimeDirectory; browser-history: StateDirectory +
+        # WorkingDirectory — hot-db.md pre-cutover table) → the implicit
+        # RequiresMountsFor hard-requires the mounts; kept (not the caddy
+        # treatment) because fail-closed is CORRECT for DATABASE stores
+        # (never write the QLC shadow dir through the mount).
+        entries.gatus = {
+          path = "/var/lib/private/gatus";
+          cow = true;
+          unit = "gatus.service";
+        };
+        entries.browser-history = {
+          path = "/var/lib/private/browser-history";
+          cow = true;
+          unit = "browser-history.service";
+          # token-provision writes the DB; the backup reads it directly. The
+          # agent-metrics collector is deliberately NOT wired (ConditionPathIsMountPoint
+          # on the shared system-health collector would dark the whole fleet's
+          # metrics on a detached Samsung; the dedicated agent-metrics collector
+          # fails closed via its own scrape_errors instead).
+          extraUnits = [
+            "browser-history-agent-token-provision.service"
+            "browser-history-backup.service"
+          ];
+        };
       };
       # User cache subvolumes → Samsung TLC (2026-09-18/19 IO-audit
       # relocation): the nix fetch cache (~8.7 G gitv3+tarballs) leaves the
