@@ -128,19 +128,14 @@
                 pkgs.runCommand "pre-deploy-check" { } ''
                   mkdir -p $out/bin/lib
                   cp ${inner}/bin/pre-deploy-check $out/bin/pre-deploy-check
-                  cp ${root}/scripts/lib/metrics-gate.sh $out/bin/lib/metrics-gate.sh
-                  # §13 sources the offsite-borg smoke lib the same way;
-                  # unstaged = the gate dies at source time on EVERY deploy
-                  # (the 2026-09-02 metrics-gate staging class).
-                  cp ${root}/scripts/lib/offsite-borg-smoke.sh $out/bin/lib/offsite-borg-smoke.sh
-                  # vendor-freshness.sh was added to the script's sources
-                  # without a staging line — same 2026-09-02 class; every
-                  # deploy aborted at source time until staged (2026-10-04).
-                  cp ${root}/scripts/lib/vendor-freshness.sh $out/bin/lib/vendor-freshness.sh
-                  # §14 sources the storage-history smoke lib — stage it like
-                  # vendor-freshness.sh or the gate dies at source time on
-                  # every deploy (recurred 2026-10-12).
-                  cp ${root}/scripts/lib/storage-history-smoke.sh $out/bin/lib/storage-history-smoke.sh
+                  # Glob-stage EVERY scripts/lib helper: the script sources
+                  # them relative to its own bin/lib dir, and the hand-listed
+                  # form died at source time on five separate occasions when
+                  # a new lib shipped without its staging line (metrics-gate
+                  # 2026-09-02, vendor-freshness 2026-10-04, service-sanity
+                  # 2026-10-10, storage-history 2026-10-12 x2). A superset
+                  # costs bytes; a missing entry costs a dead deploy gate.
+                  cp ${root}/scripts/lib/*.sh $out/bin/lib/
                   chmod +x $out/bin/pre-deploy-check
                 ''
               }/bin/pre-deploy-check";
@@ -176,25 +171,12 @@
                 pkgs.runCommand "post-deploy-check" { } ''
                   mkdir -p $out/bin/lib
                   cp ${inner}/bin/post-deploy-check $out/bin/post-deploy-check
-                  cp ${root}/scripts/lib/pressure-report.sh $out/bin/lib/pressure-report.sh
-                  # §16 sources the shared offsite-borg smoke lib; stage
-                  # it like pressure-report.sh or the smoke dies at source
-                  # time on every deploy.
-                  cp ${root}/scripts/lib/offsite-borg-smoke.sh $out/bin/lib/offsite-borg-smoke.sh
-                  # §17 sources the memory-throttle sweep lib (fixture-
-                  # tested); stage it like pressure-report.sh or the sweep
-                  # dies at source time on every deploy.
-                  cp ${root}/scripts/lib/memory-throttle-sweep.sh $out/bin/lib/memory-throttle-sweep.sh
-                  # The service-sanity sweep lib is sourced at smoke start
-                  # (same 2026-09-02 unstaged-source class): without this
-                  # line BOTH 2026-10-10 deploys aborted the entire smoke
-                  # at load time, so the InboxClean/CV/catchall legs never
-                  # ran for those deploys.
-                  cp ${root}/scripts/lib/service-sanity-sweep.sh $out/bin/lib/service-sanity-sweep.sh
-                  # §19 sources the storage-history smoke lib — stage it
-                  # like service-sanity-sweep.sh (same unstaged-source
-                  # class, recurred 2026-10-12).
-                  cp ${root}/scripts/lib/storage-history-smoke.sh $out/bin/lib/storage-history-smoke.sh
+                  # Glob-stage EVERY scripts/lib helper (same rationale as
+                  # pre-deploy-check above): the script sources libs relative
+                  # to its own bin/lib dir, and every hand-listed entry here
+                  # was once a deploy-gate death (pressure-report 2026-09-02,
+                  # service-sanity 2026-10-10, storage-history 2026-10-12).
+                  cp ${root}/scripts/lib/*.sh $out/bin/lib/
                   # The crush smoke section resolves helpers relative to
                   # BASH_SOURCE (the store bin dir), so stage the
                   # rc-test harness too or the check always fails with
