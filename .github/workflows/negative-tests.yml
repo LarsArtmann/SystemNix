@@ -1,6 +1,6 @@
 # The negative-test harness (scripts/negative-test-lints.sh) is the
 # selftest suite for every eval-time assertion audit and lint contract in
-# this repo (gatus/scrub/bridge/coverage/deadguard/memory-watermark +
+# this repo (gatus/scrub/bridge/coverage/deadguard/memory-watermark/inputpin +
 # pristine green controls). Until 2026-10-10 it ran ONLY when a local
 # session remembered to — the CI leg closes that gap.
 #
