@@ -34,9 +34,19 @@ let
     hash = "sha256-9aeOeALvSd4kUWM+E+g8yrIY9BkFvkfuHSglfxjJfFo=";
   };
 
+  # Source for the PYTHON venv only: the readability patch (see the file's
+  # header) makes the access-log file listing capability-aware. The bun
+  # FODs keep the pristine src — the patch touches no file they consume,
+  # and their fixed-output hashes must stay tied to the upstream tarball.
+  patchedSrc = pkgs.applyPatches {
+    name = "geometrikks-${version}-src";
+    src = src;
+    patches = [ ./geometrikks-logfile-readability.patch ];
+  };
+
   # ---- Python: uv2nix virtualenv from uv.lock ----
   workspace = uv2nix.lib.workspace.loadWorkspace {
-    workspaceRoot = src;
+    workspaceRoot = patchedSrc;
   };
 
   overlay = workspace.mkPyprojectOverlay {
@@ -223,6 +233,16 @@ pkgs.stdenv.mkDerivation {
 
     cp "${serverWrapper}/bin/geometrikks-server" "$out/bin/geometrikks-server"
     cp "${cliWrapper}/bin/geometrikks-cli" "$out/bin/geometrikks-cli"
+
+    # Self-test: the readability patch (geometrikks-logfile-readability.patch)
+    # must be present in the built venv. A version bump that silently drops it
+    # would regress the UI's tailed-access-log list to all-"missing" again.
+    # -R (not -r): mkVirtualEnv links parts of site-packages, so recursive
+    # search must dereference symlinks to reach the installed module.
+    if ! grep -Rq "readable = _is_readable(path)" "${venv}/lib/"; then
+      echo "geometrikks: logfile-readability patch missing from the venv" >&2
+      exit 1
+    fi
     runHook postInstall
   '';
 
