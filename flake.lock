@@ -822,11 +822,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1792016855,
-        "narHash": "sha256-hodFnLIsxfEp8Lf6w3bEWCzGdjJ49FmAmY33O+Q45Tg=",
+        "lastModified": 1792017947,
+        "narHash": "sha256-3wVeo4muUOc+Pd8/UpF10VxxWx6f9791JwXJl+IIOAc=",
         "owner": "LarsArtmann",
         "repo": "crm",
-        "rev": "d0bd2b7b828a0a0ec930c567cf56ef48da3bca8d",
+        "rev": "124d8172644865bb1ca0e3bfa0d3e7ae572ffb7a",
         "type": "github"
       },
       "original": {
@@ -930,11 +930,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792012774,
-        "narHash": "sha256-Qz1fyaJDV3YMCznpBoI9T4/5uQA7GFHi9NfNRI1ZACA=",
+        "lastModified": 1792017506,
+        "narHash": "sha256-CvQIVLiEUevA2l4dbAPRRV46mqbN7wW8NAekKriwryQ=",
         "owner": "LarsArtmann",
         "repo": "CV",
-        "rev": "dacd9e0d884281f2a43c4bbd038414b380fb6289",
+        "rev": "72ad54b39f5b1a00ba89409866c79d51a9fcd29f",
         "type": "github"
       },
       "original": {
