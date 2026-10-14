@@ -109,7 +109,7 @@ let
     if m == null then null else elemAt m 0;
 
   hasRevQuery = url: match ".*[?&]rev=.*" url != null;
-  isGitFile = url: match "git\+file:.*" url != null;
+  isGitFile = url: match "git\\+file:.*" url != null;
 
   # ── surface 1: declared flake.nix inputs ────────────────────────────
 

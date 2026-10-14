@@ -126,13 +126,29 @@ _: {
               -d "$body" "$API_URL$path" 2>&1 || true
           }
 
-          # NOTE: POST /api/oidc/clients/{id}/secret ALWAYS generates a NEW secret
-          # (rotating the old one). POST /api/oidc/clients does NOT auto-generate one.
-          # The skip-if-exists check below prevents secret rotation on every provision run.
-          # To force regeneration: rm the file, then `systemctl RESTART pocket-id-provision`
-          # (NOT `start` — RemainAfterExit=true makes `start` a no-op on active service).
-          # The secret file is load-bearing for services using systemd LoadCredential
-          # (e.g. immich-server) — deleting it while the consumer runs causes crash-loops.
+          api_delete() {
+            local path="$1"
+            curl -s --compressed --max-time 30 --retry 3 --retry-delay 2 -w '\n%{http_code}' -X DELETE -H "X-API-Key: $API_KEY" \
+              "$API_URL$path" 2>&1 || true
+          }
+
+          # NOTE (Pocket ID 2.18, source-verified 2026-10-14): POST
+          # /api/oidc/clients/{id}/secrets (PLURAL) ADDS a new active secret —
+          # existing secrets stay valid. POST /api/oidc/clients DOES
+          # auto-generate a secret (createdSecret in the 201 response) when
+          # AutoCreateOIDCClientSecret is on (the 2.17+ multi-secret model);
+          # that value must be treated as a live credential (see the redacted
+          # echo below). The skip-if-exists check prevents adding a secret on
+          # every provision run — BUT it also means a client RE-CREATE (row
+          # lost across a Pocket ID crash-recovery, 2026-10-10) silently
+          # orphans the secret file: the file's value dies with the old row
+          # and nothing re-syncs it. Heal via provision.regenerateSecretsFor.
+          # To force regeneration WITHOUT a redeploy: rm the file, then
+          # `systemctl RESTART pocket-id-provision` (NOT `start` —
+          # RemainAfterExit=true makes `start` a no-op on active service).
+          # The secret file is load-bearing for services using systemd
+          # LoadCredential (e.g. immich-server) — deleting it while the
+          # consumer runs causes crash-loops.
 
           # ── Step 1: Admin User ──
           ADMIN_USERNAME="${cfg.provision.adminUser.username}"
@@ -268,7 +284,10 @@ _: {
               else
                 echo "  Creating OIDC client: ${client.name}"
                 CREATE_RESPONSE=$(api_post "/api/oidc/clients" '${builtins.toJSON createAttrs}')
-                echo "  Client create response: $CREATE_RESPONSE"
+                # createdSecret is a LIVE credential — echo it REDACTED (the
+                # 2026-10-10 run echoed three raw values into the journal;
+                # one stayed active for days).
+                echo "  Client create response: $(echo "$CREATE_RESPONSE" | sed '$d' | jq -c 'del(.createdSecret)' 2>/dev/null || echo 'unparseable — redacted')"
                 HTTP_CODE=$(echo "$CREATE_RESPONSE" | tail -1)
                 RESPONSE_BODY=$(echo "$CREATE_RESPONSE" | sed '$d')
                 CLIENT_ID=$(echo "$RESPONSE_BODY" | jq -r '.id // empty' 2>/dev/null || true)
@@ -306,18 +325,25 @@ _: {
               # after the pocket-id bump silently got no secret (live 2026-09-02:
               # Paperless provisioned, secret generation failed every run).
               SECRET_FILE="$CLIENT_SECRETS_DIR/${client.clientId}"
+              OLD_SECRET_IDS=""
               ${lib.optionalString (builtins.elem client.clientId cfg.provision.regenerateSecretsFor) ''
-                # Force regeneration: delete the file so the skip-if-exists
-                # check below falls through to POST /secrets — but ONLY after
-                # the stale-list guard: a list entry that survives past its
-                # one intended deploy must fail LOUDLY, not re-rotate
-                # silently on every subsequent run (dnsblockd 2026-08-22
+                # Force regeneration = REPLACE the client's whole secret set:
+                # delete the file so the skip-if-exists check below falls
+                # through to POST /secrets, then prune every secret that
+                # existed BEFORE the rotation (the new POST /secrets value is
+                # the only survivor). Without the prune an old secret keeps
+                # authenticating forever on the 2.17+ multi-secret model —
+                # and any previously leaked value stays live. Only after the
+                # stale-list guard: a list entry that survives past its one
+                # intended deploy must fail LOUDLY, not re-rotate silently
+                # on every subsequent run (dnsblockd 2026-08-22
                 # LoadCredential-desync class).
                 if [ -f "$SECRET_FILE" ]; then
                   if ! ${lib.getExe regenerateGuard} "$SECRET_FILE" "${client.clientId}" "${toString cfg.provision.regenerateGuardWindowHours}"; then
                     exit 1
                   fi
                   echo "  Force-regenerating secret (listed in regenerateSecretsFor)..."
+                  OLD_SECRET_IDS=$(api_get "/api/oidc/clients?pagination%5Blimit%5D=100" | jq -r --arg cid "${client.clientId}" '.data[] | select(.id == $cid) | .credentials.secrets[]?.id' 2>/dev/null | tr '\n' ' ' | sed 's/ $//')
                   rm -f "$SECRET_FILE"
                 fi
               ''}
@@ -343,6 +369,15 @@ _: {
                   chown pocket-id:pocket-id "$TMP_SECRET"
                   mv -f "$TMP_SECRET" "$SECRET_FILE"
                   echo "  Secret written to $SECRET_FILE"
+                  if [ -n "$OLD_SECRET_IDS" ]; then
+                    for SID in $OLD_SECRET_IDS; do
+                      PRUNE_CODE=$(api_delete "/api/oidc/clients/$CLIENT_ID/secrets/$SID" | tail -1)
+                      case "$PRUNE_CODE" in
+                        200|204|404) echo "  Pruned pre-rotation secret $SID (HTTP $PRUNE_CODE).";;
+                        *) echo "  WARNING: prune of pre-rotation secret $SID returned HTTP $PRUNE_CODE — it remains ACTIVE" >&2;;
+                      esac
+                    done
+                  fi
                 else
                   echo "  ERROR: Failed to generate secret for '${client.name}' — consumer service will crash-loop" >&2
                   exit 1
@@ -550,9 +585,14 @@ _: {
             description = ''
               Client IDs whose secrets should be force-regenerated on the next
               provision run. Use this to recover from client-secret file desync
-              (stale file value that doesn't match Pocket ID's database).
-              Clear the list after a successful deploy to prevent unwanted
-              secret rotation on subsequent provision runs.
+              (stale file value that doesn't match Pocket ID's database — e.g.
+              after a client row was re-created across a Pocket ID crash).
+              Regeneration REPLACES the client's secret set: the pre-rotation
+              secrets are pruned after the new one is written, so consumers
+              MUST be restarted with the new value (the deploy's
+              secret-bridge/restart ordering does this). Clear the list after
+              a successful deploy to prevent unwanted secret rotation on
+              subsequent provision runs.
             '';
           };
 

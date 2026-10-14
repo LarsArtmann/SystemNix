@@ -1048,37 +1048,36 @@
           '';
         true;
 
-      # Eval-time guard: a `?rev=` in a flake.nix input URL OVERRIDES
-      # flake.lock (the overview templ-components trap — every lock re-sync
-      # re-fetches the pinned tree and re-pins BACKWARD). The ONLY sanctioned
-      # ?rev= is the git+file: interim pin of a local checkout/worktree
-      # (2026-09-13 broken mass-update remediation): there it is the
-      # documented defense against the dirtyRev/narHash lock trap, and CI
-      # cannot fetch git+file anyway. Remote-scheme pins must move in
-      # flake.lock, never in the URL. Reads the LOCK's original URLs (the
-      # resolved-flake `.original` attr infinite-recurses here).
-      inputUrlRevOffenders =
-        let
-          rootInputs = lockFile.nodes.${lockFile.root}.inputs or { };
-          nodeUrl = key: lockFile.nodes.${key}.original.url or "";
-        in
-        lib.filter (n: n != null) (
-          lib.mapAttrsToList (
-            name: node:
-            let
-              url = if builtins.isString node then nodeUrl node else "";
-            in
-            if builtins.match ".*[?&]rev=.*" url != null && !lib.hasPrefix "git+file:" url then name else null
-          ) rootInputs
-        );
-      inputUrlRevGuard =
+      # Eval-time guard: hardcoded version pins in flake input URLs. A hard
+      # pin (rev/tag in the URL path, ?rev=, ?ref=<tag>) makes `nix flake
+      # lock --update-input <input>` a SILENT NO-OP — bumps then require
+      # flake.nix edits, and pins rot unnoticed (the 2026-10-14 class: four
+      # rollback pins landed in one lock wave, each hiding a stale upstream
+      # vendorHash behind an URL nobody remembers to lift). The former
+      # inline ?rev= guard is consolidated here. Scans the DECLARED inputs
+      # attrset (primary truth — catches pins even when flake.lock is
+      # stale) plus the lock's originals for ?rev=; git+file: interim pins
+      # are exempt. Allowlist (documented rollback pins, traced on every
+      # eval; stale entries fail) + semantics: lib/flake-input-pin-audit.nix.
+      flakeInputPinAudit = import ./lib/flake-input-pin-audit.nix {
+        inherit inputs;
+        lock = lockFile;
+      };
+      flakeInputPinAuditGuard =
         assert
-          inputUrlRevOffenders == [ ]
+          flakeInputPinAudit.violations == [ ]
           || throw ''
-            flake.nix input URL carries ?rev= (overrides flake.lock, silently re-pins on every lock re-run): ${lib.concatStringsSep ", " inputUrlRevOffenders}.
-            Fix: drop ?rev= from the URL and pin via flake.lock, or use a git+file: interim pin (local checkouts only).
+            flake.nix carries hardcoded version pins in input URLs:
+              ${lib.concatStringsSep "\n  " flakeInputPinAudit.violations}
+            Fix: pin via ?ref=master / ?ref=refs/heads/master (lock updates then track the branch), or — ONLY for a documented rollback/FOD-freeze reason — register the input in lib/flake-input-pin-audit.nix `allowlist` with the reason + LIFT condition.
           '';
-        true;
+        if flakeInputPinAudit.warnings == [ ] then
+          true
+        else
+          builtins.trace (
+            "flake-input-pin-audit: deliberate input pins in effect (LIFT these when their condition clears):\n    "
+            + lib.concatStringsSep "\n    " flakeInputPinAudit.warnings
+          ) true;
       # flake.lock hygiene gate (2026-10-02 dedup): fails eval when a root
       # input re-grows its own infra-dep lock node (blanket lock waves do
       # this silently). Semantics + deliberate non-follows: lib/lock-audit.nix.
@@ -1094,7 +1093,7 @@
             Fix: add '<input>.inputs.<dep>.follows = "<dep>";' to the infra-follows group at the end of the inputs attrset in flake.nix (eval-only deps are always safe to follow) — or, only if the consumer's FODs were validated against its own pin, a documented entry in lib/lock-audit.nix `deliberate`.
           '';
         true;
-      allEvalGuards = builtins.seq nixpkgsTarballGuard (builtins.seq inputUrlRevGuard lockAuditGuard);
+      allEvalGuards = builtins.seq nixpkgsTarballGuard (builtins.seq flakeInputPinAuditGuard lockAuditGuard);
     in
     builtins.seq allEvalGuards flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [
