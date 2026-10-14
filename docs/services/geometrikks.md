@@ -159,7 +159,11 @@ searchable log database. Upstream: github:GilbN/geometrikks.
   tailed. Historical import exists upstream:
   `sudo -u geometrikks env $(systemctl show geometrikks -p Environment | ...) geometrikks-cli import-logs <file>`
   (or run `geometrikks-cli` with the unit's env from a root shell).
-- The Banned-IPs/CrowdSec views are inert (no CrowdSec on this host).
+- The Banned-IPs/CrowdSec views are STILL inert: the CrowdSec engine itself
+  landed 2026-10-14 (stage 1, LAPI `127.0.0.1:8082` — runbook:
+  docs/services/crowdsec.md), but the views only activate once the geo unit
+  gets its read-only bouncer credentials (stage 2, owner-interactive sops
+  paste — queue row in docs/todo/services.md).
 - **Map home is auto-detected from the server's public IP — and the local DNS
   blocker eats the default endpoint.** `MAP_PUBLIC_IP_URL` defaults to
   `https://api64.ipify.org?format=json`; HaGeZi-ultimate (via `dnsblockd`)
