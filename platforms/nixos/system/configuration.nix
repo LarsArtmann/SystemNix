@@ -586,14 +586,6 @@ in
         smtp.from = "noreply@larsartmann.cloud";
         provision = {
           enable = true;
-          # ONE-SHOT heal (2026-10-14): the crm client row was re-created
-          # across the Oct 10 Pocket ID crash-recoveries while its secret
-          # file survived — the file's value died with the old row, so every
-          # CRM Pocket ID login died at token exchange (invalid_client).
-          # This rotates + prunes + rewrites the file + restarts consumers.
-          # REMOVE after the verifying deploy (guard fails provision after
-          # regenerateGuardWindowHours otherwise).
-          regenerateSecretsFor = [ "crm" ];
           adminUser = {
             username = "lars";
             email = "lars@larsartmann.cloud";
