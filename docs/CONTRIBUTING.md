@@ -288,6 +288,11 @@ guards (all in `modules/nixos/services/`, all with negative tests in `tests/`):
 Plus the `harden {}` lifecycle-key THROW in `lib/systemd.nix`, and static
 scanners: `scripts/audit-serviceconfig-merge.sh` (pre-commit + CI),
 `audit-shell-nullglob.sh`, `audit-textfile-tmp.sh`, `check-templ-committed.sh`.
+Flake-level gates (not service modules): `lib/lock-audit.nix` (infra-follows
+regrowth) and `lib/flake-input-pin-audit.nix` (hardcoded version pins in
+flake input URLs — rev/tag path pins, `?rev=`, tag `?ref=`; deliberate pins
+live in its `allowlist`, are traced on every eval, and a stale row fails
+eval once the pin is lifted).
 
 ### Adding a new guard
 

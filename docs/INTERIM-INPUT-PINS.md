@@ -13,6 +13,12 @@ inline.
 **Pins break CI and other machines' builds.** Revert each as its upstream fix
 lands.
 
+**Enforced since 2026-10-14** (`lib/flake-input-pin-audit.nix`, eval-time):
+a pin that is not registered in the audit's `allowlist` (reason + LIFT
+condition) fails every eval, every allowlisted pin is traced on every eval
+as a lift reminder, and lifting a pin without deleting its allowlist row
+fails eval too — this file and the allowlist must agree.
+
 ## A. Local `git+file` pins (fix exists only as an unpushed local commit)
 
 | Input                    | Rev                                                   | Upstream URL to restore                                        | Fix                                                    |
