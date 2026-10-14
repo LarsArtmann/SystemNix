@@ -300,7 +300,12 @@
                   User = "root";
                 }
                 (harden {
-                  CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_CHOWN CAP_FOWNER";
+                  # A service may own its subvolume root 0700 (discordsync
+                  # does); without CAP_DAC_OVERRIDE the guard's
+                  # `subvolume show` EACCESes, misreads the existing subvol
+                  # as missing, and the create aborts the unit (File exists,
+                  # 2026-10-14). Covers the chattr +C leg the same way.
+                  CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
                 })
                 (serviceOneshotDefaults { })
               ];
