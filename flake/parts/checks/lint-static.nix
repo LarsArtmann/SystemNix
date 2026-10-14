@@ -231,6 +231,40 @@
             touch $out
           '';
 
+          # with-pkgs lint (2026-10-14): `with pkgs;` hides missing attrs —
+          # an identifier absent from pkgs falls through to the enclosing
+          # scope (module args, let bindings) and resolves to something
+          # ELSE, or worse silently shadows (docs/agents/nix-flakes.md
+          # convention: explicit `pkgs.` prefixes). The sweep of 2026-10-14
+          # removed all 29 module/platform sites; this lint keeps the class
+          # from regrowing. Scope: modules/ + platforms/ (the config
+          # surfaces where shadow risk is real). flake/parts devshell/
+          # selftest `with pkgs;` list literals are out of scope. Exempt a
+          # deliberate use with `# with-pkgs-ok` on the line.
+          with-pkgs-lint =
+            let
+              lintFiles = builtins.filter (lib.hasSuffix ".nix") (
+                lib.filesystem.listFilesRecursive (root + "/modules")
+                ++ lib.filesystem.listFilesRecursive (root + "/platforms")
+              );
+            in
+            pkgs.runCommand "with-pkgs-lint" { } ''
+              fail=0
+              for f in ${lib.concatStringsSep " " lintFiles}; do
+                hits=$(grep -nE '\bwith pkgs(\.lib)?;' "$f" | grep -v '# with-pkgs-ok' | grep -vE '^[0-9]+:[[:space:]]*#' || true)
+                if [ -n "$hits" ]; then
+                  echo "FAIL: $f uses 'with pkgs;' — explicit pkgs. prefixes required:"
+                  echo "$hits" | sed 's/^/    /'
+                  echo "  Why: with-pkgs hides missing attrs (fall-through to enclosing"
+                  echo "  scope) and breaks greppability. Convention: docs/agents/nix-flakes.md."
+                  echo "  Deliberate exception: annotate the line with # with-pkgs-ok."
+                  fail=1
+                fi
+              done
+              [ "$fail" -eq 0 ] || exit 1
+              touch $out
+            '';
+
           # Dead-guard lint (2026-09-15): writeShellApplication runs
           # errexit+pipefail, so `VAR=$(cmd)` WITHOUT `|| true` EXITS the
           # script when cmd fails — any `[ -z "$VAR" ]` degraded-path

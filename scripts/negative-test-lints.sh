@@ -213,7 +213,7 @@ SIGNALERTS="modules/nixos/services/_signoz-alerts.nix"
 
 # ── green controls: pristine copy, every touched check must build ──
 if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]]; then
-  for check in signoz-query-lint gatus-pattern-lint module-shape-lint binary-coverage-lint dead-guard-lint gitleaks-coverage-selftest scrub-exit-contract bridge-exit-contract; do
+  for check in signoz-query-lint gatus-pattern-lint module-shape-lint binary-coverage-lint dead-guard-lint with-pkgs-lint gitleaks-coverage-selftest scrub-exit-contract bridge-exit-contract; do
     dir=$(make_copy "pristine-$check")
     out=$(build_check "$dir" "$check") || status=$? || true
     status=${status:-0}
@@ -263,6 +263,18 @@ run_case signoz comment-ignored signoz-query-lint pass '' \
 # 400s the provisioner. The mutation shifts a row-y so its rectangles collide.
 run_case signoz dashboard-overlap signoz-query-lint fail 'dashboard layout overlap' \
   'sed:modules/nixos/services/dashboards/overview.json:s/"y": 24,/"y": 19,/'
+
+# ── with-pkgs-lint: the shadow trap + exemption/comment immunity ──
+# The 2026-10-14 sweep removed all module/platform sites; the mutation
+# re-introduces the exact shape the convention bans. Anchored on a module
+# comment line so the mutation stays valid nix (append puts it inside the
+# wrapper attrset as a stray expression — use sed on a comment instead).
+run_case withpkgs bare-with-pkgs with-pkgs-lint fail "explicit pkgs. prefixes required" \
+  'sed:modules/nixos/services/monitor365.nix:s|# X11 (legacy — evo-x2 runs Wayland-only niri)|# X11 (legacy — evo-x2 runs Wayland-only niri)\n        evilInputs = with pkgs; [ curl ];|'
+run_case withpkgs with-pkgs-lib with-pkgs-lint fail "explicit pkgs. prefixes required" \
+  "append:modules/nixos/services/website-deploy-monitor.nix:# with pkgs.lib; mutation"
+run_case withpkgs exempt-ok with-pkgs-lint pass '' \
+  "append:modules/nixos/services/website-deploy-monitor.nix:# exempted = with pkgs; [ ]; # with-pkgs-ok"
 
 # ── gatus-pattern-lint: the 4 trap classes ──
 # gatus-config.nix is an auto-discovered flake-parts wrapper and IS parsed
