@@ -347,6 +347,16 @@
             # journald/SigNoz ingestion friendliness: structured JSON lines
             # instead of the text default (internal/config LogFormatJSON).
             logging.format = "json";
+            # DEPLOY-ORDER (CV 2026-10-14 provider-neutral wave): the chat/
+            # voice backend renamed groq.* → openaicompat.* (env
+            # GROQ_API_KEY → OPENAICOMPAT_API_KEY). Production Load ignores
+            # unknown sections (strict decode is test-only), so a mistimed
+            # key never breaks boot — it is silently INERT: the flip must
+            # ride the flake.lock `cv` bump in ONE commit — settings
+            # `openaicompat.enabled = false` (chat/voice is unconsumed —
+            # kills the permanent /health ChatService warn with zero keys)
+            # — otherwise the old binary ignores the new key and the warn
+            # survives the deploy. Delete this comment with the flip.
             # Absolute state-dir path: the default (data/graphrag.sqlite) is
             # CWD-relative, which happens to resolve correctly today but only
             # because WorkingDirectory = /var/lib/cv. Pin it so graphrag can
