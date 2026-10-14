@@ -167,5 +167,16 @@
     # bridge (services.paperless-gpt). Loopback ONLY: the embedded web UI
     # has NO built-in auth, so it must never gain a vHost.
     paperless-gpt = 8106;
+
+    # CrowdSec security engine (services.crowdsec) — agent + LAPI (SQLite
+    # decisions DB). Loopback ONLY: GeoMetrikks and the future firewall
+    # bouncer are same-host consumers. 8080 is the upstream default but is
+    # SigNoz's here; 8082 is the first live-free loopback port.
+    crowdsec-lapi = 8082;
+
+    # CrowdSec Prometheus endpoint (level=full, loopback-only). Upstream
+    # default 6060 is TAKEN by an unidentified Go pprof listener on *:6060
+    # (live-probed 2026-10-14, /debug/pprof/ answers 200) — do NOT reuse it.
+    crowdsec-metrics = 6061;
   };
 }
