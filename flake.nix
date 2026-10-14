@@ -1077,13 +1077,15 @@
       # flake.nix edits, and pins rot unnoticed (the 2026-10-14 class: four
       # rollback pins landed in one lock wave, each hiding a stale upstream
       # vendorHash behind an URL nobody remembers to lift). The former
-      # inline ?rev= guard is consolidated here. Scans the DECLARED inputs
-      # attrset (primary truth — catches pins even when flake.lock is
-      # stale) plus the lock's originals for ?rev=; git+file: interim pins
-      # are exempt. Allowlist (documented rollback pins, traced on every
-      # eval; stale entries fail) + semantics: lib/flake-input-pin-audit.nix.
+      # inline ?rev= guard is consolidated here. Scans the DECLARED URLs
+      # from the flake.nix SOURCE TEXT (primary truth — catches pins even
+      # when flake.lock is stale; the outputs-level `inputs` binding is
+      # resolved flakes — url-less, and iterating it recurses via self)
+      # plus the lock's originals for ?rev=; git+file: interim pins are
+      # exempt. Allowlist (documented rollback pins, traced on every eval;
+      # stale entries fail) + semantics: lib/flake-input-pin-audit.nix.
       flakeInputPinAudit = import ./lib/flake-input-pin-audit.nix {
-        inherit inputs;
+        flakeSource = builtins.readFile ./flake.nix;
         lock = lockFile;
       };
       flakeInputPinAuditGuard =

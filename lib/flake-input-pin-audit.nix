@@ -23,9 +23,18 @@
 # track upstream and lock updates move them).
 #
 # Surfaces scanned:
-#   - the DECLARED inputs attrset of flake.nix (primary truth: catches pins
-#     even when flake.lock is stale — the erraudit case, where the lock
-#     still held the pre-pin original while flake.nix carried the pin)
+#   - the DECLARED input URLs, extracted from the flake.nix SOURCE TEXT
+#     (primary truth: catches pins even when flake.lock is stale — the
+#     erraudit case, where the lock still held the pre-pin original).
+#     WHY source text and not the outputs-level `inputs` binding: there
+#     each input is the RESOLVED flake (an outputs attrset — it carries
+#     no `url`, so an attrset scan is blind), and iterating those forces
+#     every input flake's outputs inside our own guard (eager eval tax,
+#     GC-eviction fetch risk, and `self` recurses into the guard itself —
+#     both hit live 2026-10-14). A line-scanner over the `inputs = { … }`
+#     attrset region handles both declaration forms (`name.url = "…"` and
+#     `name = { url = "…"; };`) — the same source-scan method the repo's
+#     other lint guards use.
 #   - flake.lock `original` nodes for the ?rev= query class only (old
 #     inline-guard parity — hand lock surgery). Original ref/rev fields
 #     are deliberately NOT scanned: a stale lock lags lifted declarations
@@ -42,7 +51,7 @@
 # (stale entry — the pin was lifted, remove the row and re-verify
 # upstream green per the pin policy).
 {
-  inputs,
+  flakeSource,
   lock,
   allowlist ? {
     nixpkgs-llama-rag =
@@ -53,6 +62,8 @@
       "TAG-PINNED at v2.8.3. LIFT: bump the tag deliberately and re-verify the CLI + `qmd mcp` (upstream's nodeModules FOD is only valid per-tag).";
     bank-sync =
       "Documented-ceiling rollback 2026-10-14 (second float): a lock-only rollback edit floated past the ceiling within hours and unanchored a deploy; hard URL pin + lock override make updates and blanket re-locks NO-OPs by design. LIFT: edit the URL (docs/services/bank-sync.md RE-FLOAT gotcha).";
+    templ =
+      "TAG-PINNED at v0.3.1070 (root-promoted 2026-10-14 to collapse the inboxclean/overview duplicate subtrees — both locked the identical tag, byte-identical narHash; build-tool binary with committed *_templ.go, no vendorHash exposure). LIFT: bump the tag deliberately when a templ release is wanted (re-verify templ codegen against committed *_templ.go files).";
   },
 }:
 let
@@ -64,6 +75,8 @@ let
     filter
     concatStringsSep
     concatLists
+    split
+    foldl'
     ;
 
   mapAttrsToList = f: set: builtins.attrValues (builtins.mapAttrs f set);
@@ -111,31 +124,84 @@ let
   hasRevQuery = url: match ".*[?&]rev=.*" url != null;
   isGitFile = url: match "git\\+file:.*" url != null;
 
-  # ── surface 1: declared flake.nix inputs ────────────────────────────
+  # All violation details for one URL (empty list = clean).
+  classifyUrl =
+    url:
+    if url == null || isGitFile url then
+      [ ]
+    else
+      [ ]
+      ++ (filter (d: d != null) [
+        (
+          if hasRevQuery url then
+            "URL carries ?rev= (overrides flake.lock, silently re-pins on every lock re-run)"
+          else
+            null
+        )
+      ])
+      ++ (filter (d: d != null) (
+        map classifyRef (filter (r: r != null) [
+          (pathRef url)
+          (queryRef url)
+        ])
+      ));
+
+  # ── surface 1: declared URLs from the flake.nix source text ─────────
+  # Line-scanner over the `inputs = { … };` region (stops at the 2-space
+  # closer). Both declaration forms: `    name.url = "…";` (dotted,
+  # 4-space) and `    name = {` opener + `      url = "…";` (6-space).
 
   declaredFindings =
+    let
+      lines = filter builtins.isString (split "\n" flakeSource);
+      step =
+        state: line:
+        let
+          dotted = match "    ([a-zA-Z0-9_-]+)[.]url = \"([^\"]*)\";" line;
+          opener = match "    ([a-zA-Z0-9_-]+) = \\{" line;
+          inner = match "      url = \"([^\"]*)\";" line;
+          state' =
+            if match "  };" line != null then
+              state // { current = null; }
+            else if dotted != null then
+              state
+              // {
+                findings = state.findings ++ [
+                  {
+                    name = elemAt dotted 0;
+                    url = elemAt dotted 1;
+                  }
+                ];
+              }
+            else if opener != null then
+              state // { current = elemAt opener 0; }
+            else if inner != null && state.current != null then
+              state
+              // {
+                findings = state.findings ++ [
+                  {
+                    name = state.current;
+                    url = elemAt inner 0;
+                  }
+                ];
+              }
+            else state;
+        in
+        state';
+    in
     concatLists (
-      mapAttrsToList
+      map
         (
-          name: value:
-          let
-            url = if builtins.isString value then value else value.url or null;
-            classify =
-              url:
-              if url == null || isGitFile url then [ ]
-              else
-                [ ]
-                ++ (filter (d: d != null) [
-                  (if hasRevQuery url then "URL carries ?rev= (overrides flake.lock, silently re-pins on every lock re-run)" else null)
-                ])
-                ++ (filter (d: d != null) (map classifyRef (filter (r: r != null) [ (pathRef url) (queryRef url) ])));
-          in
-          map (detail: { inherit name detail; }) (classify url)
+          f:
+          map (detail: {
+            inherit (f) name;
+            inherit detail;
+          }) (classifyUrl f.url)
         )
-        # `self` is EXCLUDED: forcing it evaluates this flake's own outputs,
-        # which seq-force this audit — infinite recursion (hit live
-        # 2026-10-14). self can never carry a pin URL.
-        (builtins.removeAttrs inputs [ "self" ])
+        (foldl' step {
+          current = null;
+          findings = [ ];
+        } lines).findings
     );
 
   # ── surface 2: flake.lock originals (?rev= class only — old inline-guard
@@ -167,7 +233,7 @@ let
 
   # ── dedup per input, split allowlisted vs violations ────────────────
 
-  findingsByInput = builtins.foldl' (
+  findingsByInput = foldl' (
     acc: f:
     acc
     // {
@@ -175,13 +241,14 @@ let
     }
   ) { } (declaredFindings ++ lockFindings);
 
-  pinnedInputs = attrNames findingsByInput;
-
   violations =
-    map (name: "${name}: ${concatStringsSep "; " findingsByInput.${name}}") (filter (name: !hasAttr name allowlist) pinnedInputs)
-    ++ map (name: "allowlist entry '${name}' matches no live pin — the pin was LIFTED: remove the row from lib/flake-input-pin-audit.nix and re-verify upstream is green per the pin policy") (
-      filter (name: !hasAttr name findingsByInput) (attrNames allowlist)
-    );
+    map (name: "${name}: ${concatStringsSep "; " findingsByInput.${name}}") (
+      filter (name: !hasAttr name allowlist) (attrNames findingsByInput)
+    )
+    ++ map (
+      name:
+      "allowlist entry '${name}' matches no live pin — the pin was LIFTED: remove the row from lib/flake-input-pin-audit.nix and re-verify upstream is green per the pin policy"
+    ) (filter (name: !hasAttr name findingsByInput) (attrNames allowlist));
 
   warnings = map (name: "${name} is deliberately pinned — ${allowlist.${name}}") (
     filter (name: hasAttr name findingsByInput) (attrNames allowlist)
