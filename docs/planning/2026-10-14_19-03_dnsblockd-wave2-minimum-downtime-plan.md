@@ -1,6 +1,6 @@
 # Plan: dnsblockd → Samsung Hot-DB Tier (Wave 2) — Minimum-Downtime Engineering
 
-**Authored:** 2026-10-14 19:03 CEST · **Status:** PLAN ONLY (awaiting owner GO)
+**Authored:** 2026-10-14 19:03 CEST · **Status:** EXECUTED 2026-10-14 21:52–22:22 (owner GO); outcome + actuals in `docs/services/hot-db.md` "Current state" — headline: wave is LIVE and verified, but hard-down was ~40 min (21:35:45 stop → 22:16 clean proof) vs the ≤3.5 min target (checkpoint-on-stop inflated the quiesced delta to 4.06 GB; substituter needed the down resolver), deploy exited 3 on a HEALTHY service and the window's abort branch fired pre-finalize — R1 correctly skipped, anchor landed via the 22:43 parallel deploy
 **Blast radius if botched:** the sole LAN resolver — every client, every service lookup.
 **Historical failure classes to design out:** 48-min drift deploy (waves 1+4 window), 71-min shadow-split (pocket-id wave 3, same day).
 
@@ -28,7 +28,7 @@ Hard-down window = `dnsblockd` stopped → serving again:
 
 | Component | Est. | Depends on |
 | --- | --- | --- |
-| delta rsync (quiesced) | 10–60 s | prepare freshness (stats DB churns continuously) |
+| delta rsync (quiesced) | 10–60 s | prepare freshness (stats DB churns continuously) — WRONG for dnsblockd: actual 17+ min; the stop path checkpoint-rewrites tracking.db so the delta ∝ dirty pages (4.06 GB literal). Pre-stop `PRAGMA wal_checkpoint(TRUNCATE)` queued as the fix |
 | deploy re-eval | 60–90 s | observed on this box; unavoidable (`nix run .#deploy` contract) |
 | switch activation | 20–40 s | closure pre-built → cached; mount + restart |
 | service start → resolving | 2–5 s | ExecStart gates |

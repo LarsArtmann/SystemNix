@@ -2,6 +2,8 @@
 
 > Module: `modules/nixos/services/dns-blocker.nix`. Body migrated verbatim from AGENTS.md on 2026-10-01 (restructure) — treat the section below as authoritative agent notes for this service.
 
+**DataDir on the Samsung hot tier since 2026-10-14** (`services.hot-db.entries.dnsblockd` — wave 2; runbook `docs/services/hot-db.md`; the QLC original sits shadowed under the mountpoint as soak-end rollback insurance).
+
 ## DNS (dnsblockd)
 
 - **dnsblockd is the SOLE DNS resolver on :53** — Replaces unbound entirely. Embedded sdns handles DNSSEC, DoT/DoH, local zones, blocklists.

@@ -47,7 +47,27 @@ through-17:34 QLC store) → remount → finalize. Loss: SSO sessions created
 17:34→18:45 (re-login). `hot_db_entry_mounted{name="pocket-id"}` = 1,
 healthz/OIDC-discovery 200, provision + secret-bridge converged (the crm
 secret double-rotation self-healed via the partOf bridge chain, ~2.5 min
-window). Rollback insurance: the QLC store sits shadowed as always.** Remaining waves: dnsblockd, pocket-id, storage-collector. Entries
+window). Rollback insurance: the QLC store sits shadowed as always.**, and
+**`dnsblockd` LIVE since 2026-10-14 (wave 2, night window — the HARD-DOWN
+MEASUREMENT CASE: stop 21:35:45 → first clean functional proof 22:16,
+~40 min vs the 2–3.5 min target — the quiesced "delta" rsync moved 4.06 GB
+because dnsblockd's stop path checkpoint-rewrites tracking.db (2.37 GB), so
+the delta ∝ dirty pages, not the plan's 10–60 s; the deploy's substituter
+then needed the DOWN resolver for `cache.home.lan`. Queued fixes: pre-stop
+`PRAGMA wal_checkpoint(TRUNCATE)` per DB + an outcome-aware window
+post-deploy branch.) Verified: byte-exact cutover (9 files /
+4,823,594,355 B), finalize floor+count gates green,
+`hot_db_entry_mounted{name="dnsblockd"}` = 1, dig ×3 + `/health` 200 + live
+LAN client blocks in the journal. The deploy ACTIVATED the wave but exited 3
+(post-check DNS transient + UNANCHORED gate) and the window's abort branch
+fired on a HEALTHY service — R1 was correctly skipped, and the 22:43
+parallel-session deploy anchored the wave (subvol rows verifiable in the
+active generation's fstab). The window also surfaced the bootstrap guard
+bug: `btrfs subvolume show` EACCES on the 0700 discordsync subvol root
+(CAP_DAC_OVERRIDE dropped) misread it as missing → "File exists" on every
+activation since 2026-10-12 — fixed same night in the module's bounding
+set. Rollback insurance: the QLC store (4.82 GB, largest of the six) sits
+shadowed as always.** Remaining wave: storage-collector. Entries
 are added **ONE PER WAVE** — an entry deployed before its `prepare`/`cutover`
 mounts an EMPTY subvol over the live dataDir and shadow-splits the service.
 **That landmine sprang once: 2026-10-12 14:31, the discordsync entry rode a
@@ -103,7 +123,7 @@ and may jump the queue):
 | Wave | Entry               | dataDir (REAL path)                                                                     | Stop window blip                                                 | Backup leg                                                                                                    |
 | ---- | ------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | 1    | `gatus`             | `/var/lib/private/gatus` — **LIVE on tlc since 2026-10-14**                                                            | monitoring blind ~1-3 min (every check reds once, then resolves; ACTUAL 2026-10-14: ~48 min — the cutover→deploy gap stretched by a shared-tree build blocker, see docs/status/2026-10-14_16-20) | none — self-pruning stats, regenerable                                                                        |
-| 2    | `dnsblockd`         | `/var/lib/dnsblockd` (~2.5 GB incl. the stale `dnsblockd_tracking.db` legacy file)      | LAN DNS blip; gatus "DNS Resolver" pages once + resolves         | none — self-pruning tracking stats                                                                            |
+| 2    | `dnsblockd`         | `/var/lib/dnsblockd` — **LIVE on tlc since 2026-10-14** (4.82 GB actual; the old "~2.5 GB" was a stale estimate — tracking.db is 2.37 GB of it) | LAN DNS blip (ACTUAL 2026-10-14: ~40 min hard-down, 21:35:45 stop → 22:16 clean proof — checkpoint-on-stop inflated the delta to 4.06 GB, see Current state) | none — self-pruning tracking stats                            |
 | 3    | `pocket-id`         | `/var/lib/pocket-id` — **LIVE on tlc since 2026-10-14** (via shadow-split recovery, see Current state)                  | SSO blip (ACTUAL 2026-10-14: the parallel-deploy mount at 17:34 + the 18:45 repair = ~71 min on a torn warm copy, then a clean restart; SSO sessions from the split window require re-login) | `pocket-id-backup` (04:00 sqlite .backup, pool)                                                               |
 | 4    | `browser-history`   | `/var/lib/private/browser-history` — **LIVE on tlc since 2026-10-14**                                                   | ingest retries on next 5-min tick (ACTUAL 2026-10-14: ~48 min stall, same window)                                 | `browser-history-backup` (02:15, pool)                                                                        |
 | 5    | `discordsync`       | `/var/lib/discordsync` (~380 MB event store — drill-verified 2026-10-13; the old "~11 GB" was a stale estimate — the longest delta+verify)  | Discord capture gap ≈ any restart; keep tight                    | `discordsync-db-backup` (03:45 + 05:15/06:45 catch-up gzipped dump, pool — the dump-only RPO leg, Turso is plan-blocked)             |
@@ -127,6 +147,11 @@ sudo nix run .#migrate-hot-db -- prepare <name>
 # 3. Pre-build the closure so the deploy switch is seconds, not minutes:
 nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel
 # 4. Quiesce + delta + verify (units STOPPED from here until the deploy):
+#    BIG-SQLITE CAVEAT (2026-10-14 dnsblockd wave): a service whose stop path
+#    checkpoint-rewrites its main DB makes the quiesced delta GB-scale, not
+#    seconds — pre-stop each DB with
+#    `sqlite3 <db> "PRAGMA wal_checkpoint(TRUNCATE)"` while the service is
+#    still up (queued as a migrate-hot-db cutover step).
 sudo nix run .#migrate-hot-db -- cutover <name>
 # 5. Deploy (mounts the populated subvol AT the dataDir, restarts the service
 #    onto it via RequiresMountsFor):
@@ -306,6 +331,30 @@ post-cutover secret rotation, a QLC rollback reinstates the OLD secret
 against consumers holding the NEW one (instant desync). Before rolling a
 secret-store back, re-run the provisioner's rotation for every client
 rotated since the cutover (or accept the consumer restarts).**
+
+**OUTCOME-AWARE ABORT RULE (2026-10-14 wave-2 lesson): a deploy exit-3 is
+NOT "service down" — verify `findmnt <dataDir>` + `systemctl is-active` +
+a functional probe BEFORE routing to R1. The wave-2 window aborted
+pre-finalize on a healthy migrated service because the deploy's own
+post-check (DNS transient + UNANCHORED gate) tripped the failure branch.
+R1 was preserved as a manual paste, which is the only reason a destructive
+rollback didn't fire.**
+
+R1 quick-rollback card (abort back onto the untouched QLC shadow; entry
+removal from configuration.nix happens at leisure):
+
+```bash
+if mountpoint -q /var/lib/dnsblockd; then
+  umount /var/lib/dnsblockd && echo "R1: subvol unmounted"
+else
+  echo "R1: not mounted — nothing to unmount (deploy failed pre-switch)"
+fi
+systemctl start dnsblockd.service
+sleep 2
+systemctl is-active dnsblockd.service
+dig @127.0.0.1 home.lan +time=2 +tries=1 +short || true
+echo "R1 done — dnsblockd back on QLC. Diagnose offline before re-windowing."
+```
 
 ## Shadow-dir policy
 
