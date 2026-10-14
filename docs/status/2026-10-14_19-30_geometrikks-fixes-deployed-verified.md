@@ -214,3 +214,76 @@ investigated and remains **credential-blocked**.
 - Deploy log `2026-10-14_18-57-00.log`: switched `system-888/889`, anchor OK,
   exit 3 (nix-daemon CPU), summary `PASS 141 / FAIL 7 / SKIP 7 / WARN 15`.
 - `pg_hba`: `local all all peer` (no `lars` role confirmed) + `host … md5`.
+
+---
+
+## Post-deploy addendum 2 (2026-10-15 ~00:45): Q3 answered, advisory dispositioned, §18 exemption, anchor repairs, deploy state
+
+**Q3 — DB `~0 rows`: NOT a defect; the owner's planned paste was unnecessary.**
+Exact counts via a `sudo -u postgres psql` throwaway probe (peer auth):
+`access_logs=0`, `geo_events=0`, `access_log_debug=1218` (+105 during the
+probe — the write path is healthy). Zero chunks ever created on both
+hypertables. Persistence is gated on `record.access_log` (ingestion
+`_process_record`), which the parser builds only for GeoIP-resolvable
+(public) IPs — with 100% LAN traffic NOTHING persists, by design (the app's
+own advisory copy says private-address requests "never reach the map or
+Access logs"). The UI number is TimescaleDB `approximate_row_count()`
+(chunk reltuples), so it additionally lags ANALYZE. Public vhost traffic
+(larsartmann.cloud) is what populates them. Runbook gotcha added.
+
+**Private-address advisory: dispositioned via the upstream knob.**
+`APP_PROXY_ADVISORY=false` in the `geometrikks-env` sops template (the
+traffic mix is deliberate LAN-direct; upstream docs/configuration.md
+prescribes false for deliberate mixes). Also added `restartUnits` to the
+template — env-file-only template changes previously never restarted the
+service (secret rotations did; content changes didn't). Live-verified:
+`/health` `advisories: []` after the 22:08 restart.
+
+**Malformed debug rows (paste #2): by-design noise, documented.** All 1,113
+debug rows were Caddy default-logger runtime banners; the `access.log`
+tailing topology is deliberate (caddy.nix `logFormat` rationale,
+2026-09-30) and upstream captures malformed lines unconditionally
+(`store_debug_lines or record.is_malformed`). Module comment corrected (the
+old "drops runtime lines harmlessly" claim was optimistic — they land in
+`access_log_debug`, bounded by 30-day retention). Upstream filter idea
+queued (`docs/todo/upstream.md`).
+
+**§18 sweep: `nix-daemon.service` exempted from the CPU leg.** The 18:57
+exit-3 was the deploy's own closure work plus concurrent-session builds
+during the 10s sample. Default `exempt_regex` extended; fixture selftest
+green. Live proof: the only post-check that ran tonight (the 21:52 deploy)
+shows `Service Sanity CPU - PASS`; that post-check failed instead on a REAL
+new signal — node-exporter journal rate (below).
+
+**Deploy state (rerun_now): substance live, exit-0 formality pending a calm
+window.** All fixes reached the running system via the operator's forced
+deploys (`DEPLOY_FORCE_PRESSURE=1`): mkg0p71f (~22:08), 6hd6lr16 (~22:34).
+Live-verified: `/health` `advisories: []`, `missingFiles: []`. My own retry
+loop (11+ attempts, 20:33-23:00) was refused every time — real IO storm
+(nvme0n1/sdb >100% util windows; memory-emergency-guard tripped 5× in the
+60 min before 00:34, so the trip-recency gate refuses regardless of PSI).
+**Every refused attempt burns a ~7-min battery of IO, feeding the storm it
+waits out — the loop was stopped at 00:3x by design.** A clean exit-0
+deploy lands at the next calm window with whatever tree is current; no
+functional outcome waits on it. (One "exit 0" in the deploy logs,
+21-19-14, is MY OWN attempt killed mid-battery by my job_kill — the trap
+recorded 0; it is not a real pass.)
+
+**Anchor: repaired and verified.** The 21:52 deploy exited 14 UNANCHORED
+(profile-set no-op again) and the ~22:34 switch also left the profile at
+system-890. Repaired 22:43 per the AGENTS discipline (profile-set +
+`switch-to-configuration boot` → system-891 = 6hd6lr16, `readlink -f`
+verified; pre-reboot-check 20 passed / 0 failed). **New evidence for the
+pipeline.md UNANCHORED root-cause row: the no-op fired WITH the gate fully
+removed and env_keep moot — the gate/env theory is dead; nh's profile-set
+leg itself is the suspect.**
+
+**New live evidence for the monitoring node-exporter row:** ~448 lines/min
+at 00:3x (2,241 in 5 min), all `error encoding and sending metric family …
+broken pipe` — a scraper times out on the storm-slowed `/metrics`, then
+node-exporter errors on every remaining write. Storm-transient by
+mechanism; the row's calm-window recurrence test remains the decider.
+
+Also verified in passing: `nix flake check --no-build` passes bare (the
+gate removal is live on 890+) — the "hermes FOD re-pin" queue row's RED
+premise no longer held at ~20:25 (flagged for its owning session).

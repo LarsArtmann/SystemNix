@@ -159,7 +159,6 @@ if [ "$ACTION" != "status" ]; then
   }
 fi
 
-
 DATADIR=""
 STOP_UNITS=""
 if [ $# -ge 4 ]; then

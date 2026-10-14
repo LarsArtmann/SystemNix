@@ -63,7 +63,6 @@ flock -n 8 || die "another migrate-* script holds $MAINT_LOCK_DIR/systemnix-main
 maintenance-entry-gate --name migrate-hermes-subvol --psi-max 30 ||
   die "entry gate refused (see above) — a refused migration is free, a migration into a storm is freeze #19"
 
-
 QUIESCED=0
 prepare_exit_hint() {
   local rc=$?

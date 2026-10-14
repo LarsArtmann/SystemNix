@@ -52,7 +52,6 @@ flock -n 8 || die "another migrate-* script holds $MAINT_LOCK_DIR/systemnix-main
 maintenance-entry-gate --name migrate-clickhouse-xfs --psi-max 30 ||
   die "entry gate refused (see above) — a refused migration is free, a migration into a storm is freeze #19"
 
-
 # Resolve the QLC system disk via by-id (kernel nvme0/nvme1 enumeration
 # FLIPS across boots on this box — a hardcoded /dev/nvme0n1 could one boot
 # point at the Samsung). Falls back to whichever nvme carries the live root.

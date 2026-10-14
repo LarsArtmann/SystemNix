@@ -104,7 +104,6 @@ flock -n 8 || die "another migrate-* script holds $MAINT_LOCK_DIR/systemnix-main
 maintenance-entry-gate --name migrate-forgejo-subvol --psi-max 30 ||
   die "entry gate refused (see above) — a refused migration is free, a migration into a storm is freeze #19"
 
-
 mount_check() {
   "$SYSTEMCTL" is-active --quiet mnt-hot.mount ||
     die "/mnt/hot is not mounted — forgejo-subvol-bootstrap needs it (Samsung present?)"
