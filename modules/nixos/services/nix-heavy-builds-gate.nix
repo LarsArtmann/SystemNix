@@ -51,7 +51,7 @@
         mkdir -p $out/bin
         substitute ${gateScript}/bin/nix-heavy-builds-gate $out/bin/nix \
           --replace-fail '@realNix@' '${lib.getExe config.nix.package}' \
-          --replace-fail '{NIX_HEAVY_GATE_PSI:-20}' '{NIX_HEAVY_GATE_PSI:-${toString cfg.psiAvg10ThresholdPercent}}' \
+          --replace-fail '{NIX_HEAVY_GATE_PSI:-80}' '{NIX_HEAVY_GATE_PSI:-${toString cfg.psiAvg10ThresholdPercent}}' \
           --replace-fail '{NIX_HEAVY_GATE_TRIP_WINDOW:-3600}' '{NIX_HEAVY_GATE_TRIP_WINDOW:-${
             toString (cfg.tripWindowMinutes * 60)
           }}' \

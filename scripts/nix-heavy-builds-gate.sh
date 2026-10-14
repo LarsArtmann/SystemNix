@@ -100,7 +100,7 @@ if [ "$SELFTEST" -eq 1 ]; then
     fi
 
     # high PSI → gated nix build refused with exit 12, real nix NOT exec'd
-    printf 'some avg10=64.10 avg60=50.00 avg300=40.00 total=1\nfull avg10=30.00 avg60=30.00 avg300=30.00 total=1\n' >"$proc"
+    printf 'some avg10=84.10 avg60=50.00 avg300=40.00 total=1\nfull avg10=30.00 avg60=30.00 avg300=30.00 total=1\n' >"$proc"
     out="$(run_gate build hello 2>&1)"
     rc=$?
     if [ "$rc" -ne 12 ] || [ "$out" = "REAL-NIX-EXECUTED" ]; then

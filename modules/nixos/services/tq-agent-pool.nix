@@ -379,8 +379,15 @@ _: {
           after = [ "tq-storage-dir.service" ];
           wants = [ "tq-storage-dir.service" ];
           # docs/agents/integration-registry.md step 5: start-limit bounds + onFailure on every service.
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
+          # Sized for the tq-pool-psi-gate contract below: at RestartSec=30s,
+          # burst 5 / 300s (upstream's) exhausted in one 2.5-min PSI storm and
+          # left the pool dead until the next deploy (live 2026-10-14 12:41).
+          # 40 retries / 30 min ≈ 20 min of gate-retry headroom, still bounded
+          # for a genuine crash-loop (OnFailure alerts fire either way).
+          # Upstream ALSO sets serviceConfig.startLimitBurst — systemd ignores
+          # keys in [Service] (journal "Unknown key" warnings); [Unit] wins.
+          startLimitBurst = 40;
+          startLimitIntervalSec = 1800;
           inherit onFailure;
           # PapDashboard bridge key — systemd reads this as PID 1, so the
           # root-owned 0400 template stays unreadable to the pool process
