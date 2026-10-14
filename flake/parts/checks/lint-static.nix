@@ -654,6 +654,9 @@
                 aliasCollision = builtins.toJSON (
                   auditWith (root + "/tests/fixtures/lock-audit/evil-alias-collision.lock") { }
                 );
+                deepTreefmt = builtins.toJSON (
+                  auditWith (root + "/tests/fixtures/lock-audit/evil-deep-treefmt.lock") { }
+                );
                 allowlisted = builtins.toJSON (
                   auditWith (root + "/tests/fixtures/lock-audit/allowlisted.lock") {
                     "tool.nixpkgs" = "fixture reason";
@@ -674,6 +677,7 @@
                   drift
                   infraDup
                   aliasCollision
+                  deepTreefmt
                   allowlisted
                   stale
                   ;
@@ -692,10 +696,12 @@
                   || fail "evil-infra-dup (flake-compat own-copy edge) not flagged: $infraDup"
                 echo "$aliasCollision" | grep -q 'tool' && echo "$aliasCollision" | grep -q 'flake-parts' \
                   || fail "evil-alias-collision (edge names a root input but points at its own node — the art-dupl blind spot) not flagged: $aliasCollision"
+                echo "$deepTreefmt" | grep -q 'toolB' && echo "$deepTreefmt" | grep -q 'treefmt-nix' \
+                  || fail "evil-deep-treefmt (deep copy of treefmt-nix under a tool's tool — the discordsync → art-dupl_3 class) not flagged: $deepTreefmt"
                 [ "$allowlisted" = "[]" ] || fail "deliberate-allowlisted edge flagged (qmd/discordsync class): $allowlisted"
                 echo "$stale" | grep -q 'matches no live edge' \
                   || fail "stale deliberate entry not flagged (table rot): $stale"
-                echo "lock-audit: 7 legs green (clean, dup, drift, infra-dup, alias-collision, allowlisted, stale-deliberate)"
+                echo "lock-audit: 8 legs green (clean, dup, drift, infra-dup, alias-collision, deep-treefmt, allowlisted, stale-deliberate)"
                 touch $out
               '';
 

@@ -992,6 +992,23 @@
     vision-review-agent.inputs.flake-parts.follows = "flake-parts";
     vision-review-agent.inputs.nixpkgs.follows = "nixpkgs";
     vision-review-agent.inputs.treefmt-nix.follows = "treefmt-nix";
+    # 2026-10-14 deep treefmt-nix collapse (9 lock copies → 1): these deep
+    # edges — a tool's copy of ANOTHER tool locking treefmt-nix — had been
+    # classed "not fixable from SystemNix", but Nix input overrides chain
+    # to any depth, so the root pins a nested flake's copy directly. All
+    # copies are eval-only deps (never enter FOD hashes): 7 moved older
+    # revs onto root's 0d6d739 (6× 27b3b12, 1× ae79109), 1
+    # (nsfw-classifier → go-cqrs-lite) was already at root's rev — pure
+    # alias. Regrowth is guarded by the deep-treefmt leg in
+    # lib/lock-audit.nix; the other deep infra classes stay upstream-queued.
+    discordsync.inputs.art-dupl.inputs.treefmt-nix.follows = "treefmt-nix";
+    inboxclean.inputs.art-dupl.inputs.treefmt-nix.follows = "treefmt-nix";
+    nsfw-classifier.inputs.go-cqrs-lite.inputs.treefmt-nix.follows = "treefmt-nix";
+    go-taskqueue.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
+    index.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
+    project-dependency-graph.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
+    projects-management-automation.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
+    cv.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
   };
 
   outputs =

@@ -5,7 +5,9 @@
       "inputs": {
         "nixpkgs": "nixpkgs",
         "flake-parts": "flake-parts",
-        "tool": "tool"
+        "treefmt-nix": "treefmt-nix",
+        "tool": "tool",
+        "deep-owner": "deep-owner"
       }
     },
     "nixpkgs": {
@@ -14,12 +16,27 @@
     "flake-parts": {
       "locked": { "rev": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "type": "github" }
     },
+    "treefmt-nix": {
+      "locked": { "rev": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "type": "github" }
+    },
     "tool": {
       "inputs": {
         "nixpkgs": "nixpkgs",
         "flake-parts": "flake-parts"
       },
       "locked": { "rev": "cccccccccccccccccccccccccccccccccccccccc", "type": "github" }
+    },
+    "deep-owner": {
+      "inputs": {
+        "deep-user": "deep-user"
+      },
+      "locked": { "rev": "ffffffffffffffffffffffffffffffffffffffff", "type": "github" }
+    },
+    "deep-user": {
+      "inputs": {
+        "treefmt-nix": ["treefmt-nix"]
+      },
+      "locked": { "rev": "dddddddddddddddddddddddddddddddddddddddd", "type": "github" }
     }
   }
 }

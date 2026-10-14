@@ -12,8 +12,13 @@
 #
 # This audit runs at EVAL time (forced via builtins.seq in flake.nix outputs)
 # and fails any eval when a NEW root-owned, unfollowed infra edge appears.
-# Deep edges (a tool's copy of another tool locking infra) are IGNORED here —
-# they are only fixable upstream in the LarsArtmann tool repos (queued).
+# Deep edges (a tool's copy of another tool locking infra) are ignored for
+# all deps EXCEPT treefmt-nix: since 2026-10-14 every declared treefmt-nix
+# edge anywhere in the graph must resolve to the root pin — Nix input
+# overrides chain to any depth, so a deep treefmt copy IS fixable from
+# SystemNix (the discordsync.inputs.art-dupl.inputs.treefmt-nix.follows
+# class, see the infra-follows group in flake.nix) and is therefore
+# guarded here. The other deep infra classes remain upstream-queued.
 #
 # Semantics: for each root input X and infra dep D, the entry
 # nodes.X.inputs.D must be either
@@ -70,6 +75,63 @@ let
   rootNodeKeys = builtins.filter builtins.isString (builtins.attrValues rootInputs);
   isAlias = value: builtins.isString value && builtins.elem value rootNodeKeys;
 
+  # Resolve a follow path (list of input names, root-relative) to a node
+  # key; restarts at the root whenever a segment hits a nested follow
+  # array (canonical locks compose chained follows that way).
+  resolveFollow =
+    seg0:
+    let
+      go =
+        segs: cur:
+        if segs == [ ] then
+          cur
+        else
+          let
+            v = ((nodes.${cur}.inputs or { }).${builtins.head segs} or null);
+          in
+          if v == null then null
+          else if builtins.isString v then go (builtins.tail segs) v
+          else go (v ++ builtins.tail segs) (lock.root or "root");
+    in
+    go seg0 (lock.root or "root");
+
+  rootTreefmtKey =
+    let
+      v = rootInputs.treefmt-nix or null;
+    in
+    if v == null then null else if builtins.isString v then v else resolveFollow v;
+
+  # Deep treefmt-nix guard (2026-10-14): every declared treefmt-nix edge
+  # in the whole graph — not just root-owned ones — must resolve to the
+  # root pin. Catches both a re-grown deep copy (the discordsync →
+  # art-dupl_3 → treefmt-nix_2 class) and a root override that went inert
+  # (upstream dropped the input the override pointed through — the
+  # latent-drift class in docs/agents/nix-flakes.md).
+  deepTreefmtViolations = builtins.concatMap (
+    nodeName:
+    let
+      value = (nodes.${nodeName}.inputs or { }).treefmt-nix or null;
+      resolved =
+        if builtins.isString value then value
+        else if builtins.isList value then resolveFollow value
+        else null;
+    in
+    if value == null || rootTreefmtKey == null || resolved == rootTreefmtKey then
+      [ ]
+    else if builtins.isString value then
+      [
+        "${nodeName} locks its own treefmt-nix deep copy (node ${value}, rev ${
+          (nodes.${value}.locked or { }).rev or "?"
+        }) — add a \'<consumer>.inputs.<owner>.inputs.treefmt-nix.follows = \"treefmt-nix\";' override to the infra-follows group in flake.nix"
+      ]
+    else
+      [
+        "${nodeName} treefmt-nix follow resolves to node ${
+          if resolved == null then "<dangling-path>" else resolved
+        }, not the root treefmt-nix pin (${rootTreefmtKey}) — a root override went inert or points elsewhere"
+      ]
+  ) (builtins.attrNames nodes);
+
   edgeViolations =
     let
       checkInput =
@@ -123,4 +185,4 @@ let
       builtins.filter (key: !builtins.elem key activeEdges) (builtins.attrNames deliberate)
     );
 in
-edgeViolations ++ staleDeliberate
+edgeViolations ++ deepTreefmtViolations ++ staleDeliberate

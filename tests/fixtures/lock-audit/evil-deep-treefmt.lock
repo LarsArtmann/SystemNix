@@ -1,0 +1,33 @@
+{
+  "version": 7,
+  "nodes": {
+    "root": {
+      "inputs": {
+        "nixpkgs": "nixpkgs",
+        "treefmt-nix": "treefmt-nix",
+        "toolA": "toolA"
+      }
+    },
+    "nixpkgs": {
+      "locked": { "rev": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "type": "github" }
+    },
+    "treefmt-nix": {
+      "locked": { "rev": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "type": "github" }
+    },
+    "toolA": {
+      "inputs": {
+        "toolB": "toolB"
+      },
+      "locked": { "rev": "cccccccccccccccccccccccccccccccccccccccc", "type": "github" }
+    },
+    "toolB": {
+      "inputs": {
+        "treefmt-nix": "treefmt-nix_2"
+      },
+      "locked": { "rev": "dddddddddddddddddddddddddddddddddddddddd", "type": "github" }
+    },
+    "treefmt-nix_2": {
+      "locked": { "rev": "ffffffffffffffffffffffffffffffffffffffff", "type": "github" }
+    }
+  }
+}
