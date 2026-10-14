@@ -699,6 +699,84 @@
                 touch $out
               '';
 
+          # flake-input-pin-audit selftest (2026-10-14): proves the eval-time
+          # hardcoded-version-pin gate (lib/flake-input-pin-audit.nix, forced
+          # via allEvalGuards) fires on every pin class and stays quiet on
+          # every floating class. Mirrors the lock-audit-selftest pattern:
+          # fixtures + precomputed verdicts, all legs evaluated at CHECK
+          # EVAL time (pure Nix), bash only asserts. The fixture source text
+          # exercises BOTH declaration forms (name.url = and name = { url = }).
+          flake-input-pin-audit-selftest =
+            let
+              fixture = root + "/tests/fixtures/flake-input-pin-audit";
+              auditWith =
+                source: lockFile: allowlist:
+                (import (root + "/lib/flake-input-pin-audit.nix") {
+                  flakeSource = builtins.readFile source;
+                  lock = builtins.fromJSON (builtins.readFile lockFile);
+                  inherit allowlist;
+                });
+              emptySource = builtins.toFile "empty-inputs.nix" "inputs = {\n}\n";
+              sample = auditWith "${fixture}/sample-flake.nix" "${fixture}/clean.lock" { };
+              legs = {
+                violations = builtins.toJSON sample.violations;
+                warnings = builtins.toJSON sample.warnings;
+                allowlisted = builtins.toJSON (
+                  (auditWith "${fixture}/sample-flake.nix" "${fixture}/clean.lock" {
+                    sha40-path = "fixture reason";
+                  }).warnings
+                );
+                stale = builtins.toJSON (
+                  (auditWith "${fixture}/sample-flake.nix" "${fixture}/clean.lock" {
+                    ghost-input = "x";
+                  }).violations
+                );
+                lockRevQuery = builtins.toJSON (
+                  (auditWith emptySource "${fixture}/rev-query.lock" { }).violations
+                );
+              };
+            in
+            pkgs.runCommand "flake-input-pin-audit-selftest"
+              {
+                inherit (legs)
+                  violations
+                  warnings
+                  allowlisted
+                  stale
+                  lockRevQuery
+                  ;
+              }
+              ''
+                set -u
+                fail() { echo "SELFTEST FAIL: $1"; exit 1; }
+                # Every pin class flagged with its input name:
+                for cls in \
+                  'sha40-path: hard REV pin (?ref=aaaaaaaaaa' \
+                  'sha7-path: hard REV pin' \
+                  'tag-path: VERSION/TAG pin (?ref=v2.8.3' \
+                  'dotted-path: VERSION/TAG pin (?ref=24.05' \
+                  'ref-tags: VERSION/TAG pin (?ref=refs/tags/v1.0.0' \
+                  'ref-sha: hard REV pin (?ref=bbbbbbbbbb' \
+                  'rev-query: URL carries ?rev='; do
+                  echo "$violations" | grep -q "$cls" || fail "pin class not flagged: $cls — got: $violations"
+                done
+                # Every floating class quiet:
+                for ok in branch-path ref-master ref-heads-main stable-branch fork-branch local-interim; do
+                  echo "$violations" | grep -q "\"$ok:" && fail "floating input flagged: $ok — got: $violations"
+                done
+                [ "$warnings" = "[]" ] || fail "clean sample produced warnings: $warnings"
+                echo "$allowlisted" | grep -q 'sha40-path is deliberately pinned — fixture reason' \
+                  || fail "allowlisted pin not traced as warning: $allowlisted"
+                echo "$stale" | grep -q "'ghost-input' matches no live pin" \
+                  || fail "stale allowlist entry not flagged (lift-forcing teeth): $stale"
+                echo "$lockRevQuery" | grep -q 'bad: flake.lock original carries ?rev=' \
+                  || fail "lock-surface ?rev= not flagged: $lockRevQuery"
+                echo "$lockRevQuery" | grep -q '"local' \
+                  && fail "git+file lock original flagged (must stay exempt): $lockRevQuery"
+                echo "flake-input-pin-audit: 7 pin classes flagged, 6 floating classes quiet, allowlist + stale + lock-surface legs green"
+                touch $out
+              '';
+
           # Recursive chown/chmod walks in modules that also configure
           # Bind*Paths: systemd builds the mount namespace BEFORE any
           # ExecStartPre, so a recursive ownership walk descends into the
