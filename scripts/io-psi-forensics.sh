@@ -192,7 +192,7 @@ if [ "$SELFTEST" -eq 1 ]; then
     IO_PSI_FORENSICS_DIR="$tmp" IO_PSI_FORENSICS_KEEP=3 \
       bash "$0" "selftest-seed" >/dev/null 2>&1
     local got
-    got="$(ls -1d "${tmp}"/io-psi-forensics-* 2>/dev/null | wc -l)"
+    got="$(find "${tmp}" -mindepth 1 -maxdepth 1 -type d -name 'io-psi-forensics-*' | wc -l)"
     if [ "$got" -ne 3 ]; then
       echo "FAIL: retention kept $got bundles, expected 3" >&2
       fails=$((fails + 1))
@@ -208,7 +208,7 @@ if [ "$SELFTEST" -eq 1 ]; then
       fails=$((fails + 1))
     fi
     local fresh
-    fresh="$(ls -1dt "${tmp}"/io-psi-forensics-* | head -1)"
+    fresh="$(find "${tmp}" -mindepth 1 -maxdepth 1 -type d -name 'io-psi-forensics-*' -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2-)"
     if [ ! -s "$fresh/meta.txt" ]; then
       echo "FAIL: captured bundle has no meta.txt" >&2
       fails=$((fails + 1))
@@ -218,7 +218,9 @@ if [ "$SELFTEST" -eq 1 ]; then
     # before the "written" log, and the log carries the fsynced marker.
     local src sync_l mv_l log_l
     src="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+    # shellcheck disable=SC2016
     sync_l="$(grep -n 'sync -f "$f"' "$src" | head -1 | cut -d: -f1)"
+    # shellcheck disable=SC2016
     mv_l="$(grep -n 'if mv "$STAGING" "$OUT"' "$src" | head -1 | cut -d: -f1)"
     log_l="$(grep -n 'bundle written (fsynced)' "$src" | head -1 | cut -d: -f1)"
     if [ -z "$sync_l" ] || [ -z "$mv_l" ] || [ -z "$log_l" ]; then
