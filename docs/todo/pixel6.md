@@ -34,3 +34,4 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **WAV→FLAC/opus mirror + browsable web archive (player/search) over the UCR call archive** — Navidrome feeds on the FLAC leg
 - [ ] [ready] **Contacts VCF export to the pool + per-contact card decode** (the index.csv enrichment row covers call-log names, not VCF)
 - [ ] [ready] **RAG query CLI over the archive** ("when did we first talk about X") — rides the whisper-transcription row's output
+- [ ] [ready] **Extract the UCR pipeline to sibling repo `ucr-archive` (Go rewrite, parity-verified) then delete the Python originals from SystemNix** — 4 .py (1,475 LOC) + ucr-ffprobe-sweep.sh move together; parity = FLAC bit-identity + golden web/contacts/rag diffs on a /tmp sandbox copy (never write /mnt/pool); annotate the three shipped-2026-09-15 backlog rows at removal time (Source: docs/planning/2026-10-14_22-08_systemnix-zero-python-pareto-plan.md)
