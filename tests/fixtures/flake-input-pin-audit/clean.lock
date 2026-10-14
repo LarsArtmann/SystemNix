@@ -1,0 +1,8 @@
+{
+  "version": 7,
+  "root": "root",
+  "nodes": {
+    "root": { "inputs": { "tool": "tool" } },
+    "tool": { "original": { "owner": "example", "ref": "master", "repo": "tool", "type": "github" } }
+  }
+}

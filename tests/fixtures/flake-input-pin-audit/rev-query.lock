@@ -1,0 +1,9 @@
+{
+  "version": 7,
+  "root": "root",
+  "nodes": {
+    "root": { "inputs": { "bad": "bad", "local": "local" } },
+    "bad": { "original": { "type": "git", "url": "git+ssh://git@example.com/example/bad?rev=dddddddddddddddddddddddddddddddddddddddd" } },
+    "local": { "original": { "type": "git", "url": "git+file:/home/worktrees/local?rev=eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" } }
+  }
+}

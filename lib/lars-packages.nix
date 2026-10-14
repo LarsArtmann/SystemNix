@@ -105,7 +105,7 @@ lib.filterAttrs (_: v: v != null) {
     let
       pkg = flakePkg inputs.erraudit;
     in
-    if pkg == null then null else pkg.override {
+    if pkg == null then null else pkg.overrideAttrs {
       vendorHash = "sha256-LzoxcvFTbbhdWHfSfRes9/aiVXvG2UzrwEjPVHMkM+E=";
     };
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
@@ -136,7 +136,7 @@ lib.filterAttrs (_: v: v != null) {
     let
       pkg = flakePkg inputs.golangci-lint-auto-configure;
     in
-    if pkg == null then null else pkg.override {
+    if pkg == null then null else pkg.overrideAttrs {
       vendorHash = "sha256-EgfteIUmqzPBVCdM9XoAY/kuQe+G03BushBj+sGomIk=";
     };
   # library-policy shim DROPPED (2026-10-09): its drop condition ("lock

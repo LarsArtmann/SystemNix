@@ -77,7 +77,7 @@
       # so upstream pasting the got hash genuinely fixes it; drop then, or
       # when the lock moves past an upstream-fixed rev. Re-add ONLY via
       # nix-hash-fix evidence, never by hand.
-      crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+      crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
         vendorHash = "sha256-AtAQS+x0OjID6udRi88RD+OYPBT582IKTexudscI0/I=";
       };
       twentyEnabled = config.services.twenty.enable or false;
