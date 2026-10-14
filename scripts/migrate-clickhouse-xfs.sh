@@ -42,6 +42,17 @@ die() {
   exit 1
 }
 
+# ── Entry gate (freeze #19/#20/#21 class — see pkgs/maintenance-entry-gate.nix)
+# One migrate-* at a time (flock held for this script's lifetime) + refuse to
+# start into a tripped box. MAINT_ENTRY_GATE_LOCK_DIR exists for fixtures.
+MAINT_LOCK_DIR="${MAINT_ENTRY_GATE_LOCK_DIR:-/run/lock/systemnix-heavy}"
+mkdir -p "$MAINT_LOCK_DIR" 2>/dev/null || true
+exec 8>>"$MAINT_LOCK_DIR/systemnix-maintenance.lock" || die "cannot open maintenance lock in $MAINT_LOCK_DIR"
+flock -n 8 || die "another migrate-* script holds $MAINT_LOCK_DIR/systemnix-maintenance.lock — serialize maintenance, never stack it"
+maintenance-entry-gate --name migrate-clickhouse-xfs --psi-max 30 ||
+  die "entry gate refused (see above) — a refused migration is free, a migration into a storm is freeze #19"
+
+
 # Resolve the QLC system disk via by-id (kernel nvme0/nvme1 enumeration
 # FLIPS across boots on this box — a hardcoded /dev/nvme0n1 could one boot
 # point at the Samsung). Falls back to whichever nvme carries the live root.

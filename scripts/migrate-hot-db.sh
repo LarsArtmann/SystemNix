@@ -137,6 +137,29 @@ run() {
 ACTION=$1
 NAME=${2:-}
 
+# ── Entry gate (freeze #19/#20/#21 class — see pkgs/maintenance-entry-gate.nix)
+# One migrate-* at a time (flock held for this script's lifetime) + refuse to
+# start a MUTATING action into a tripped box. `status` stays ungated (read-only
+# triage during a storm is exactly when you need it). The fixture override
+# MAINT_ENTRY_GATE_LOCK_DIR exists for test-migrate-hot-db.sh.
+if [ "$ACTION" != "status" ]; then
+  MAINT_LOCK_DIR="${MAINT_ENTRY_GATE_LOCK_DIR:-/run/lock/systemnix-heavy}"
+  mkdir -p "$MAINT_LOCK_DIR" 2>/dev/null || true
+  exec 8>>"$MAINT_LOCK_DIR/systemnix-maintenance.lock" || {
+    echo "ERROR: cannot open maintenance lock in $MAINT_LOCK_DIR" >&2
+    exit 1
+  }
+  flock -n 8 || {
+    echo "ERROR: another migrate-* script holds $MAINT_LOCK_DIR/systemnix-maintenance.lock — serialize maintenance, never stack it" >&2
+    exit 1
+  }
+  maintenance-entry-gate --name migrate-hot-db --psi-max 30 || {
+    echo "ERROR: entry gate refused (see above) — a refused migration is free, a migration into a storm is freeze #19" >&2
+    exit 1
+  }
+fi
+
+
 DATADIR=""
 STOP_UNITS=""
 if [ $# -ge 4 ]; then

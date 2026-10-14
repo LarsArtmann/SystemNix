@@ -52,6 +52,9 @@ reset_state() {
   : >"$STATE/mount.log"
   : >"$STATE/fstype"
   : >"$STATE/label"
+  : >"$STATE/gate.log"
+  : >"$STATE/heavy.log"
+  echo admit >"$STATE/gate-mode"
 }
 
 # ── stubs ───────────────────────────────────────────────────────────────────
@@ -112,6 +115,32 @@ cat >"$BIN/chown" <<'EOF'
 #!/usr/bin/env bash
 exit 0
 EOF
+# maintenance-entry-gate: admits by default; $STATE/gate-mode=refuse flips it
+# to a PSI-band refusal (the freeze-19 verdict text) so scenario 5 can pin
+# "refusal happens BEFORE any destructive step".
+cat >"$BIN/maintenance-entry-gate" <<EOF
+#!$BASH
+echo "\$*" >>"$STATE/gate.log"
+if [ "\$(cat "$STATE/gate-mode" 2>/dev/null || echo admit)" = "refuse" ]; then
+  echo "REFUSE: migrate-rust-cache — IO PSI some avg10=99.00% (>= 30% band)." >&2
+  echo "  Wait for a quiet window; a refused run is free." >&2
+  exit 1
+fi
+echo "OK: migrate-rust-cache — IO PSI some avg10=5.00% (< 30), last guard trip: never"
+EOF
+# heavy-job: logs the wrapped command, then execs it (slot semantics reduced
+# to passthrough — the fixture runs one migration at a time by construction)
+cat >"$BIN/heavy-job" <<EOF
+#!$BASH
+echo "\$1" >>"$STATE/heavy.log"
+exec "\$@"
+EOF
+# flock: no util-linux in the fixture closure — non-blocking-acquire passthrough
+cat >"$BIN/flock" <<'EOF'
+#!/usr/bin/env bash
+shift # drop -n
+exit 0
+EOF
 # SANDBOX SHEBANG TRAP (test-migrate-hot-db lesson): rewrite stub
 # interpreters to the bash running this test
 for stub in "$BIN"/*; do
@@ -119,6 +148,10 @@ for stub in "$BIN"/*; do
 done
 chmod +x "$BIN"/*
 export PATH="$BIN:$PATH"
+# The maintenance lock must live in the sandbox (the canonical /run/lock
+# location is not writable here — see the env override in the script).
+export MAINT_ENTRY_GATE_LOCK_DIR="$SCRATCH/lock"
+mkdir -p "$MAINT_ENTRY_GATE_LOCK_DIR"
 
 # sed-patched copy: scratch paths, no sudo, current user gate
 COPY="$SCRATCH/migrate.sh"
@@ -178,6 +211,12 @@ done
   ok "scenario 1: 4 cache files landed on rust-cache" ||
   fail "scenario 1: file count on rust-cache wrong: $(find "$FIXTURE_MOUNT" -type f | wc -l)"
 grep -q 'done\.' "$SCRATCH/out1.log" && ok "scenario 1: done banner" || fail "scenario 1: no done banner"
+grep -q 'migrate-rust-cache' "$STATE/gate.log" &&
+  ok "scenario 1: entry gate consulted before any work" ||
+  fail "scenario 1: entry gate never invoked — $(cat "$STATE/gate.log")"
+[ "$(wc -l <"$STATE/heavy.log")" -eq 3 ] &&
+  ok "scenario 1: all 3 rsync legs ran under heavy-job" ||
+  fail "scenario 1: heavy-job wrap count wrong — $(cat "$STATE/heavy.log")"
 
 # ── scenario 2: re-run idempotency (no re-format; residual dir converges) ───
 mkdir -p "$FIXTURE_BUILD/sccache"
@@ -234,6 +273,29 @@ grep -q 'is mounted' "$SCRATCH/err4.log" &&
   fail "scenario 4: mounted-refusal message unclear — $(cat "$SCRATCH/err4.log")"
 [ -s "$STATE/mkfs.log" ] && fail "scenario 4: mkfs RAN on mounted device" ||
   ok "scenario 4: no mkfs on mounted device"
+
+# ── scenario 5: entry-gate refusal → nothing destructive runs (freeze #19) ──
+reset_state
+echo btrfs >"$STATE/fstype"
+echo ssd-btrfs >"$STATE/label"
+seed_buildcache
+echo refuse >"$STATE/gate-mode"
+if bash "$COPY" >"$SCRATCH/out5.log" 2>"$SCRATCH/err5.log"; then
+  fail "scenario 5: script ran despite entry-gate refusal"
+else
+  ok "scenario 5: entry-gate refusal aborts the script (nonzero exit)"
+fi
+grep -q 'REFUSE: migrate-rust-cache' "$SCRATCH/err5.log" &&
+  ok "scenario 5: gate verdict surfaces in the refusal" ||
+  fail "scenario 5: gate verdict missing — $(cat "$SCRATCH/err5.log")"
+grep -q 'entry gate refused' "$SCRATCH/err5.log" &&
+  ok "scenario 5: abort names the entry gate as the reason" ||
+  fail "scenario 5: abort reason unclear — $(cat "$SCRATCH/err5.log")"
+[ -s "$STATE/mkfs.log" ] && fail "scenario 5: mkfs RAN past an entry-gate refusal" ||
+  ok "scenario 5: no mkfs after entry-gate refusal"
+[ -f "$FIXTURE_BUILD/cargo/registry/cache-entry" ] &&
+  ok "scenario 5: sources untouched behind the entry gate" ||
+  fail "scenario 5: sources disturbed despite entry-gate refusal"
 
 # ── self-verifying assertion count ──────────────────────────────────────────
 EXPECTED=$(grep -cE '(^|[[:space:]])ok[[:space:]]"' "$0")

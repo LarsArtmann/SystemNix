@@ -30,6 +30,16 @@ fail() {
 }
 info() { echo "==> $*"; }
 
+# ── Entry gate (freeze #19/#20/#21 class — see pkgs/maintenance-entry-gate.nix)
+# One migrate-* at a time (flock held for this script's lifetime) + refuse to
+# start into a tripped box. MAINT_ENTRY_GATE_LOCK_DIR exists for fixtures.
+MAINT_LOCK_DIR="${MAINT_ENTRY_GATE_LOCK_DIR:-/run/lock/systemnix-heavy}"
+mkdir -p "$MAINT_LOCK_DIR" 2>/dev/null || true
+exec 8>>"$MAINT_LOCK_DIR/systemnix-maintenance.lock" || fail "cannot open maintenance lock in $MAINT_LOCK_DIR"
+flock -n 8 || fail "another migrate-* script holds $MAINT_LOCK_DIR/systemnix-maintenance.lock — serialize maintenance, never stack it"
+maintenance-entry-gate --name migrate-buildcache --psi-max 30 ||
+  fail "entry gate refused (see above) — a refused migration is free, a migration into a storm is freeze #19"
+
 [ "$(id -un)" = "lars" ] || fail "run as lars (nix run .#migrate-buildcache)"
 $SUDO true 2>/dev/null || fail "passwordless sudo required"
 
