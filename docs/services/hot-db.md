@@ -21,17 +21,26 @@ doctrine), dump-only RPO.
 
 `services.hot-db.enable = true`; entries in configuration.nix:
 **`discordsync` LIVE since 2026-10-12 (wave 5 done, out of order — owner chose
-it first for downtime tolerance)**. Rollback insurance: the original QLC
-store (994 MB, pre-cutover) still sits hidden under the mountpoint — keep it
-until the soak ends (owner call, suggest ≥1 week incl. one verified 03:45
-dump), then reclaim per the finalize output. Remaining waves: gatus,
-dnsblockd, pocket-id, browser-history, storage-collector. Entries are added
-**ONE PER WAVE** — an entry deployed before its `prepare`/`cutover` mounts an EMPTY
-subvol over the live dataDir and shadow-splits the service. **That landmine
-sprang once: 2026-10-12 14:31, the discordsync entry rode a parallel
-session's deploy before any `prepare` — the service crash-looped onto an
-empty subvol (fresh DB) while the real 994 MB store sat hidden under the
-mountpoint; recovered same day via stop → umount → prepare → cutover
+it first for downtime tolerance)** and **`gatus` + `browser-history` LIVE
+since 2026-10-14 (waves 1+4, ONE combined owner-directed window — both
+prepared AND cut over before the entry deploy, so the shadow-split landmine
+below was structurally unreachable; owner override ran the window through an
+active Zone-6 IO storm via the documented force escapes:
+`NIX_HEAVY_GATE_FORCE=1` + `MIGRATE_PSI_FILE=/dev/null` +
+`DEPLOY_FORCE_PRESSURE=1`). Verified: byte-exact cutover (gatus 3 files /
+19,940,064 B; browser-history 3 files / 204,124,160 B), finalize biggest-file
+floor + count gates green, `hot_db_entry_mounted{name}` = 1 for both, gatus
+`:9110` 200 + browser-history `/health` 200, clean journals, boot anchored
+at system-885. Rollback insurance: the original QLC stores (20 MB / 204 MB,
+pre-cutover) still sit hidden under the mountpoints — keep them until the
+soak ends (owner call, suggest ≥1 week), then reclaim per the finalize
+output.** Remaining waves: dnsblockd, pocket-id, storage-collector. Entries
+are added **ONE PER WAVE** — an entry deployed before its `prepare`/`cutover`
+mounts an EMPTY subvol over the live dataDir and shadow-splits the service.
+**That landmine sprang once: 2026-10-12 14:31, the discordsync entry rode a
+parallel session's deploy before any `prepare` — the service crash-looped
+onto an empty subvol (fresh DB) while the real 994 MB store sat hidden under
+the mountpoint; recovered same day via stop → umount → prepare → cutover
 (byte-exact 5,744,992,552) → mount → start. Between an entry landing in the
 tree and its cutover, the tree MUST NOT be deployed (daemon commits sweep
 in-flight edits — see AGENTS.md multi-agent rules).** Waves are ordered
