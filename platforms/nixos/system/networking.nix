@@ -24,6 +24,21 @@
     };
     enableIPv6 = true;
 
+    # Static pins for the names an UNATTENDED job resolves, whose only
+    # authoritative resolver is dnsblockd (127.0.0.1). The resolv.conf
+    # fallback (9.9.9.9, see dns-resolver.nix) cannot answer the private
+    # home.lan zone, so a NixOS switch that restarts or overloads dnsblockd
+    # opens a resolution window that fails CI and the catalog serving-sync
+    # (2026-10-14: runs 84/85 died at 19:07 after a switch restarted
+    # dnsblockd; runs 94/96 died mid-job at 20:15 during a switch-time stall).
+    # nsswitch resolves `files` BEFORE `dns`, so these entries keep resolving
+    # through the window. Keep this list to names consumed by unattended jobs
+    # — interactive browsing still uses the full dnsblockd zone.
+    hosts."${config.networking.local.lanIP}" = [
+      "forgejo.home.lan"
+      "catalog.home.lan"
+    ];
+
     # Firewall - deny by default, trust LAN, allow public-facing ports
     firewall = {
       enable = true;
