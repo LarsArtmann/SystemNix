@@ -27,7 +27,9 @@ prepared AND cut over before the entry deploy, so the shadow-split landmine
 below was structurally unreachable; owner override ran the window through an
 active Zone-6 IO storm via the documented force escapes:
 `NIX_HEAVY_GATE_FORCE=1` + `MIGRATE_PSI_FILE=/dev/null` +
-`DEPLOY_FORCE_PRESSURE=1`). Verified: byte-exact cutover (gatus 3 files /
+`DEPLOY_FORCE_PRESSURE=1`; the first var died with the no-heavy-builds
+gate's removal 2026-10-14 — the current equivalent escape is the last two).
+Verified: byte-exact cutover (gatus 3 files /
 19,940,064 B; browser-history 3 files / 204,124,160 B), finalize biggest-file
 floor + count gates green, `hot_db_entry_mounted{name}` = 1 for both, gatus
 `:9110` 200 + browser-history `/health` 200, clean journals, boot anchored

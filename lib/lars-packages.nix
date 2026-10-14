@@ -105,9 +105,12 @@ lib.filterAttrs (_: v: v != null) {
     let
       pkg = flakePkg inputs.erraudit;
     in
-    if pkg == null then null else pkg.overrideAttrs {
-      vendorHash = "sha256-LzoxcvFTbbhdWHfSfRes9/aiVXvG2UzrwEjPVHMkM+E=";
-    };
+    if pkg == null then
+      null
+    else
+      pkg.overrideAttrs {
+        vendorHash = "sha256-LzoxcvFTbbhdWHfSfRes9/aiVXvG2UzrwEjPVHMkM+E=";
+      };
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 74baca53 ALREADY bakes the got
   # hash G0hMfZId… (first-hand keep-going enumeration,
@@ -136,9 +139,12 @@ lib.filterAttrs (_: v: v != null) {
     let
       pkg = flakePkg inputs.golangci-lint-auto-configure;
     in
-    if pkg == null then null else pkg.overrideAttrs {
-      vendorHash = "sha256-EgfteIUmqzPBVCdM9XoAY/kuQe+G03BushBj+sGomIk=";
-    };
+    if pkg == null then
+      null
+    else
+      pkg.overrideAttrs {
+        vendorHash = "sha256-EgfteIUmqzPBVCdM9XoAY/kuQe+G03BushBj+sGomIk=";
+      };
   # library-policy shim DROPPED (2026-10-09): its drop condition ("lock
   # moves past an upstream-fixed rev") is met — the lock holds 5d2a670,
   # whose flake bakes vendorHash Qey6w74G… (the same "got" hash the stale

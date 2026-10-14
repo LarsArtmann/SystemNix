@@ -54,16 +54,11 @@
   flakeSource,
   lock,
   allowlist ? {
-    nixpkgs-llama-rag =
-      "REV-PINNED nixpkgs holding the llama.cpp 0.3.0 build (last build proven serving on gfx1150 before the 0.4.0 mid-model-load CPU-spin regression, live 2026-09-14). LIFT: 0.4.0+ spin regression fixed upstream + re-verified live — drop the input entirely, do not update it.";
-    paperless-gpt-src =
-      "TAG-PINNED at v0.28.0 so the vendorHash + npmDepsHash in pkgs/paperless-gpt.nix stay reproducible (a moving ref re-breaks the FODs on every lock update). LIFT: bump tag + both hashes together deliberately.";
-    qmd =
-      "TAG-PINNED at v2.8.3. LIFT: bump the tag deliberately and re-verify the CLI + `qmd mcp` (upstream's nodeModules FOD is only valid per-tag).";
-    bank-sync =
-      "Documented-ceiling rollback 2026-10-14 (second float): a lock-only rollback edit floated past the ceiling within hours and unanchored a deploy; hard URL pin + lock override make updates and blanket re-locks NO-OPs by design. LIFT: edit the URL (docs/services/bank-sync.md RE-FLOAT gotcha).";
-    templ =
-      "TAG-PINNED at v0.3.1070 (root-promoted 2026-10-14 to collapse the inboxclean/overview duplicate subtrees — both locked the identical tag, byte-identical narHash; build-tool binary with committed *_templ.go, no vendorHash exposure). LIFT: bump the tag deliberately when a templ release is wanted (re-verify templ codegen against committed *_templ.go files).";
+    nixpkgs-llama-rag = "REV-PINNED nixpkgs holding the llama.cpp 0.3.0 build (last build proven serving on gfx1150 before the 0.4.0 mid-model-load CPU-spin regression, live 2026-09-14). LIFT: 0.4.0+ spin regression fixed upstream + re-verified live — drop the input entirely, do not update it.";
+    paperless-gpt-src = "TAG-PINNED at v0.28.0 so the vendorHash + npmDepsHash in pkgs/paperless-gpt.nix stay reproducible (a moving ref re-breaks the FODs on every lock update). LIFT: bump tag + both hashes together deliberately.";
+    qmd = "TAG-PINNED at v2.8.3. LIFT: bump the tag deliberately and re-verify the CLI + `qmd mcp` (upstream's nodeModules FOD is only valid per-tag).";
+    bank-sync = "Documented-ceiling rollback 2026-10-14 (second float): a lock-only rollback edit floated past the ceiling within hours and unanchored a deploy; hard URL pin + lock override make updates and blanket re-locks NO-OPs by design. LIFT: edit the URL (docs/services/bank-sync.md RE-FLOAT gotcha).";
+    templ = "TAG-PINNED at v0.3.1070 (root-promoted 2026-10-14 to collapse the inboxclean/overview duplicate subtrees — both locked the identical tag, byte-identical narHash; build-tool binary with committed *_templ.go, no vendorHash exposure). LIFT: bump the tag deliberately when a templ release is wanted (re-verify templ codegen against committed *_templ.go files).";
   },
 }:
 let
@@ -84,25 +79,26 @@ let
   # ── ref classification ──────────────────────────────────────────────
 
   isHexSha =
-    s:
-    match "[0-9a-f]+" s != null && builtins.stringLength s >= 7 && builtins.stringLength s <= 40;
+    s: match "[0-9a-f]+" s != null && builtins.stringLength s >= 7 && builtins.stringLength s <= 40;
 
-  isVersionShaped =
-    s: match "v[0-9].*" s != null || match "[0-9]+([.][0-9a-zA-Z]+)*" s != null;
+  isVersionShaped = s: match "v[0-9].*" s != null || match "[0-9]+([.][0-9a-zA-Z]+)*" s != null;
 
   # master, main, refs/heads/*, bare branch names → floating. refs/tags/*
   # and version-shaped values → tag pins. SHA-shaped → rev pins.
   classifyRef =
     ref:
-    if ref == "master" || ref == "main" then null
-    else if match "refs/heads/.+" ref != null then null
+    if ref == "master" || ref == "main" then
+      null
+    else if match "refs/heads/.+" ref != null then
+      null
     else if match "refs/tags/.+" ref != null then
       "VERSION/TAG pin (?ref=${ref} — force-movable upstream, silently rots)"
     else if isHexSha ref then
       "hard REV pin (?ref=${ref} — `nix flake lock --update-input` is a SILENT NO-OP)"
     else if isVersionShaped ref then
       "VERSION/TAG pin (?ref=${ref} — force-movable upstream, silently rots)"
-    else null;
+    else
+      null;
 
   # URL-path ref for the shorthand schemes (github:owner/repo/<ref>), or
   # null when the URL has none.
@@ -140,10 +136,12 @@ let
         )
       ])
       ++ (filter (d: d != null) (
-        map classifyRef (filter (r: r != null) [
-          (pathRef url)
-          (queryRef url)
-        ])
+        map classifyRef (
+          filter (r: r != null) [
+            (pathRef url)
+            (queryRef url)
+          ]
+        )
       ));
 
   # ── surface 1: declared URLs from the flake.nix source text ─────────
@@ -185,7 +183,8 @@ let
                   }
                 ];
               }
-            else state;
+            else
+              state;
         in
         state';
     in
@@ -218,17 +217,14 @@ let
         let
           url = (lock.nodes.${nodeKey}.original or { }).url or "";
         in
-        if
-          url != "" && !isGitFile url && hasRevQuery url
-        then
+        if url != "" && !isGitFile url && hasRevQuery url then
           {
             inherit name;
             detail = "flake.lock original carries ?rev= (overrides the lock, silently re-pins on every lock re-run)";
           }
         else
           null
-      )
-      rootInputs
+      ) rootInputs
     );
 
   # ── dedup per input, split allowlisted vs violations ────────────────

@@ -33,7 +33,12 @@ let
   };
 in
 {
-  inherit variant accent density colors;
+  inherit
+    variant
+    accent
+    density
+    colors
+    ;
   gtkThemeName = "Catppuccin-${variant}-${density}-${accent}-Dark";
   iconTheme = "Papirus-Dark";
   cursorTheme = "Bibata-Modern-Classic";

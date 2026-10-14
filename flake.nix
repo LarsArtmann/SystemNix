@@ -1118,7 +1118,9 @@
             Fix: add '<input>.inputs.<dep>.follows = "<dep>";' to the infra-follows group at the end of the inputs attrset in flake.nix (eval-only deps are always safe to follow) — or, only if the consumer's FODs were validated against its own pin, a documented entry in lib/lock-audit.nix `deliberate`.
           '';
         true;
-      allEvalGuards = builtins.seq nixpkgsTarballGuard (builtins.seq flakeInputPinAuditGuard lockAuditGuard);
+      allEvalGuards = builtins.seq nixpkgsTarballGuard (
+        builtins.seq flakeInputPinAuditGuard lockAuditGuard
+      );
     in
     builtins.seq allEvalGuards flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [
