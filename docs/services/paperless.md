@@ -124,7 +124,8 @@ duplicates):
 # CLI sees only the main account and work-account ledger rows resolve no
 # source email, the 2026-08-29 auth-runbook trap), LLM_PROVIDER (the CLI's
 # global config gate exits config.api_key_required BEFORE dispatch without
-# it — the default provider is openai, the unit runs ollama),
+# it — read whatever the deployed unit carries (openai as of 2026-10-15),
+# the wrapper script extracts it; this inline block predates that),
 # GMAIL_CREDENTIALS_FILE/GMAIL_TOKEN_FILE (the MAIN account's client for
 # --decrypt-repair source re-fetch is built from these; the TOML only
 # covers extra accounts), DB_PATH, and PATH (carries qpdf).
@@ -139,6 +140,16 @@ sudo -u inboxclean env \
 
 The sed (not `grep -oP '\S+'`) for the decrypt password preserves embedded
 spaces; PAPERLESS_TOKEN is a single token so the cheaper grep is safe.
+
+**Wrapper (2026-10-15):** `scripts/inboxclean-paperless.sh <args…>` automates
+exactly this reconstruction (self-elevates, pulls the same vars + PATH from
+the unit file and the token/decrypt password from the rendered sops file,
+passes all args through to `inboxclean paperless`). Prefer it over the
+inline command; the inline form stays as the derivation source if the unit
+shape changes (the script fails loud with that pointer when extraction
+comes back empty). Live-verified 2026-10-15: `--dry-run` reached the Gmail
+listing (surfacing the dead main-account grant, row 472) instead of
+`paperless.not_configured`.
 
 ## Retro-decrypt repair (existing encrypted statements)
 

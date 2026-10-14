@@ -144,6 +144,17 @@
             echo "discordsync: DB integrity check passed"
             exit 0
           fi
+          # A lock is NOT corruption: a running writer (the daemon, a backup)
+          # holds the write lock and integrity_check cannot even start.
+          # Healing here destroyed a healthy DB on 2026-10-14 01:03 — the
+          # locked DB was "recovered" (failed) and the BTRFS snapshot fallback
+          # rolled it back hours. Skip; the next quiet run re-checks.
+          case "$result" in
+            *"database is locked"*|*"database table is locked"*)
+              echo "discordsync: DB locked by a running writer — integrity check inconclusive, skipping heal" >&2
+              exit 0
+              ;;
+          esac
           echo "discordsync: DB integrity check FAILED — attempting recovery" >&2
           echo "discordsync: integrity_check result: $result" >&2
           ts=$(date +%Y%m%dT%H%M%S)
