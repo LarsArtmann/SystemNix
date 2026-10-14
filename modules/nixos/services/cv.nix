@@ -44,7 +44,18 @@
       # upstream-side: no cv edit was needed. Serves BOTH consumers below
       # (PATH CLI and service package are the same derivation, two attrs).
       # Re-add ONLY via nix-hash-fix evidence, never by hand.
-      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # TEMPORARY vendorHash shim RE-ADDED (2026-10-14 wave-2 toplevel build,
+      # first-hand FOD evidence — the documented bootstrap exception): got
+      # XLIgHM1V… at locked rev 0ad2a6b (first-hand keep-going enumeration,
+      # /tmp/w2-build.log; the 2026-10-14 flake.lock rewrite moved cv
+      # 533ddc9 → 0ad2a6b = upstream master tip, which STILL bakes the stale
+      # NeXR9Ened… — no upstream-fixed rev exists to float to, gh-verified
+      # same day). Same shape as the 2026-10-10 shim. Drop when upstream
+      # re-pins or the lock moves past an upstream-fixed rev
+      # (paste-upstream → push → re-lock → re-drop, docs/todo/upstream.md).
+      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+        vendorHash = "sha256-XLIgHM1VDu+hJXTavd0uw7SFbdOAcyGuBG1zw8wcV7o=";
+      };
     in
     {
       imports = [
