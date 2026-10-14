@@ -72,17 +72,14 @@ let
           # at build time, invisible to eval-only checks.)
           makeWrapper $out/opt/helium/helium $out/bin/helium \
             --prefix LD_LIBRARY_PATH : "${
-              pkgs.lib.makeLibraryPath (
-                
-                [
-                  pkgs.libGL
-                  pkgs.libvdpau
-                  pkgs.libva
-                  pkgs.pipewire
-                  pkgs.alsa-lib
-                  pkgs.libpulseaudio
-                ]
-              )
+              pkgs.lib.makeLibraryPath ([
+                pkgs.libGL
+                pkgs.libvdpau
+                pkgs.libva
+                pkgs.pipewire
+                pkgs.alsa-lib
+                pkgs.libpulseaudio
+              ])
             }" \
             --add-flags "--ozone-platform-hint=auto" \
             --add-flags "--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo,WebAuthenticationHybridTransport" \
@@ -133,250 +130,243 @@ let
       heliumPackage;
 
   # Essential CLI tools that work across platforms
-  essentialPackages =
-    
-    [
-      # Version control
-      pkgs.git
-      pkgs.gh # GitHub CLI
-      pkgs.git-town # High-level Git workflow management
-      pkgs.git-filter-repo # Rewrite git history
-      # NOTE: pkgs.jj is a JSON stream editor, NOT Jujutsu — do not re-add here.
-      # Jujutsu is installed via programs.jujutsu in platforms/common/programs/jujutsu.nix.
-      pkgs.mr # myrepos — manage multiple repositories via a single command
+  essentialPackages = [
+    # Version control
+    pkgs.git
+    pkgs.gh # GitHub CLI
+    pkgs.git-town # High-level Git workflow management
+    pkgs.git-filter-repo # Rewrite git history
+    # NOTE: pkgs.jj is a JSON stream editor, NOT Jujutsu — do not re-add here.
+    # Jujutsu is installed via programs.jujutsu in platforms/common/programs/jujutsu.nix.
+    pkgs.mr # myrepos — manage multiple repositories via a single command
 
-      # Essential editors
-      pkgs.micro
-      pkgs.neovim
+    # Essential editors
+    pkgs.micro
+    pkgs.neovim
 
-      # Terminal emulator
-      pkgs.alacritty-graphics
+    # Terminal emulator
+    pkgs.alacritty-graphics
 
-      # Shells and prompts
-      pkgs.fish
-      pkgs.carapace
+    # Shells and prompts
+    pkgs.fish
+    pkgs.carapace
 
-      # File operations and browsing
-      pkgs.curl
-      pkgs.wget
-      pkgs.tree
-      pkgs.ripgrep
-      pkgs.fd
-      pkgs.eza
-      pkgs.bat
-      pkgs.trash-cli
+    # File operations and browsing
+    pkgs.curl
+    pkgs.wget
+    pkgs.tree
+    pkgs.ripgrep
+    pkgs.fd
+    pkgs.eza
+    pkgs.bat
+    pkgs.trash-cli
 
-      # Data manipulation
-      pkgs.jq
-      pkgs.yq-go
-      pkgs.duckdb # In-process analytical SQL database (used by monitor365)
+    # Data manipulation
+    pkgs.jq
+    pkgs.yq-go
+    pkgs.duckdb # In-process analytical SQL database (used by monitor365)
 
-      # Task runner
-      pkgs.just
+    # Task runner
+    pkgs.just
 
-      # Security tools
-      pkgs.gitleaks
-      pkgs.gnupg
-      pkgs.pre-commit
-      pkgs.openssh
-      pkgs.ssh-to-age
-      # Secrets-workflow CLIs (the sops-secret-management skill runs these).
-      # GLOBAL operator tools — they must never ride a service module's
-      # conditional systemPackages: services.forgejo-repos going enable=false
-      # on 2026-10-03 silently dropped both from the system closure and
-      # broke every `sops`/`age` invocation on the host until this restore.
-      pkgs.sops
-      pkgs.age
+    # Security tools
+    pkgs.gitleaks
+    pkgs.gnupg
+    pkgs.pre-commit
+    pkgs.openssh
+    pkgs.ssh-to-age
+    # Secrets-workflow CLIs (the sops-secret-management skill runs these).
+    # GLOBAL operator tools — they must never ride a service module's
+    # conditional systemPackages: services.forgejo-repos going enable=false
+    # on 2026-10-03 silently dropped both from the system closure and
+    # broke every `sops`/`age` invocation on the host until this restore.
+    pkgs.sops
+    pkgs.age
 
-      # Modern CLI productivity tools
-      pkgs.glow # Render markdown on the CLI, with pizzazz
+    # Modern CLI productivity tools
+    pkgs.glow # Render markdown on the CLI, with pizzazz
 
-      # System monitoring
-      pkgs.btop
-      pkgs.bottom
-      pkgs.fastfetch
+    # System monitoring
+    pkgs.btop
+    pkgs.bottom
+    pkgs.fastfetch
 
-      # Archive tools
-      pkgs.unzip
-      pkgs.zip
+    # Archive tools
+    pkgs.unzip
+    pkgs.zip
 
-      # File utilities
-      pkgs.sd # Modern find and replace
-      pkgs.dust # Modern du
+    # File utilities
+    pkgs.sd # Modern find and replace
+    pkgs.dust # Modern du
 
-      # GNU utilities (cross-platform)
-      pkgs.coreutils
-      pkgs.findutils
-      pkgs.gnused
+    # GNU utilities (cross-platform)
+    pkgs.coreutils
+    pkgs.findutils
+    pkgs.gnused
 
-      # Graph visualization
-      pkgs.graphviz
-      pkgs.d2 # Declarative diagram scripting language
-      pkgs.mermaid-cli # CLI for Mermaid diagram generation from markdown
+    # Graph visualization
+    pkgs.graphviz
+    pkgs.d2 # Declarative diagram scripting language
+    pkgs.mermaid-cli # CLI for Mermaid diagram generation from markdown
 
-      # Media tools
-      pkgs.ffmpeg # Complete, cross-platform solution to record, convert and stream audio and video
+    # Media tools
+    pkgs.ffmpeg # Complete, cross-platform solution to record, convert and stream audio and video
 
-      # Clipboard management (Linux-only, Wayland)
-      # cliphist # Not available on Darwin (Linux-only package)
-      # Desktop integration (cross-platform)
-      pkgs.xdg-utils # XDG desktop utilities for both platforms
-    ]
-    ++ lib.optionals stdenv.hostPlatform.isLinux [
-      cliphist # Wayland clipboard history for Linux
-    ];
+    # Clipboard management (Linux-only, Wayland)
+    # cliphist # Not available on Darwin (Linux-only package)
+    # Desktop integration (cross-platform)
+    pkgs.xdg-utils # XDG desktop utilities for both platforms
+  ]
+  ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+    pkgs.cliphist # Wayland clipboard history for Linux
+  ];
 
   # Development tools (platform-agnostic)
-  developmentPackages =
-    
-    [
-      # JavaScript/TypeScript
-      pkgs.bun # Incredibly fast JavaScript runtime
-      pkgs.pnpm # Fast, disk space-efficient package manager
-      pkgs.vtsls # TypeScript language server for IDE LSP support
-      pkgs.esbuild # Fast JavaScript bundler and minifier
+  developmentPackages = [
+    # JavaScript/TypeScript
+    pkgs.bun # Incredibly fast JavaScript runtime
+    pkgs.pnpm # Fast, disk space-efficient package manager
+    pkgs.vtsls # TypeScript language server for IDE LSP support
+    pkgs.esbuild # Fast JavaScript bundler and minifier
 
-      # Go development
-      # go_1_27: pinned ahead of the nixpkgs default (1.26.7). The ecosystem
-      # go.mod floor is 1.27.1; the shell's `go` must satisfy it natively.
-      # Shells run with GOTOOLCHAIN unset (2026-09-29 removal), so the
-      # built-in auto mode never downloads a toolchain for floor-satisfied
-      # repos.
-      pkgs.go_1_27
-      pkgs.golines # Go line-shortener (moved from stray ~/go/bin 2026-10-01, fifty-todos #45; nixpkgs 0.16.0 verified)
-      pkgs.gopls
-      pkgs.golangci-lint
-      pkgs.golangci-lint-langserver
-      pkgs.go-arch-lint
-      pkgs.gofumpt
-      pkgs.gotests
-      pkgs.mockgen
-      pkgs.sqlc
-      pkgs.protoc-gen-go
-      pkgs.buf
-      pkgs.delve
-      pkgs.gup
-      pkgs.templ
+    # Go development
+    # go_1_27: pinned ahead of the nixpkgs default (1.26.7). The ecosystem
+    # go.mod floor is 1.27.1; the shell's `go` must satisfy it natively.
+    # Shells run with GOTOOLCHAIN unset (2026-09-29 removal), so the
+    # built-in auto mode never downloads a toolchain for floor-satisfied
+    # repos.
+    pkgs.go_1_27
+    pkgs.golines # Go line-shortener (moved from stray ~/go/bin 2026-10-01, fifty-todos #45; nixpkgs 0.16.0 verified)
+    pkgs.gopls
+    pkgs.golangci-lint
+    pkgs.golangci-lint-langserver
+    pkgs.go-arch-lint
+    pkgs.gofumpt
+    pkgs.gotests
+    pkgs.mockgen
+    pkgs.sqlc
+    pkgs.protoc-gen-go
+    pkgs.buf
+    pkgs.delve
+    pkgs.gup
+    pkgs.templ
 
-      # Document rendering
-      pkgs.typst # Document typesetting compiler (CV PDF rendering; moved from imperative nix profile 2026-09-22)
+    # Document rendering
+    pkgs.typst # Document typesetting compiler (CV PDF rendering; moved from imperative nix profile 2026-09-22)
 
-      # CGO build tools for Go
-      pkgs.gcc
-      pkgs.gnumake
+    # CGO build tools for Go
+    pkgs.gcc
+    pkgs.gnumake
 
-      # Common libraries for CGO dependencies
-      pkgs.pkg-config
+    # Common libraries for CGO dependencies
+    pkgs.pkg-config
 
-      # JavaScript/TypeScript development (Oxc tools)
-      pkgs.oxlint
-      pkgs.tsgolint
-      pkgs.oxfmt
+    # JavaScript/TypeScript development (Oxc tools)
+    pkgs.oxlint
+    pkgs.tsgolint
+    pkgs.oxfmt
 
-      # Code quality
-      pkgs.scc # Sloc, Cloc and Code: fast lines of code counter
-      pkgs.jscpd # Copy/paste detector for source code
+    # Code quality
+    pkgs.scc # Sloc, Cloc and Code: fast lines of code counter
+    pkgs.jscpd # Copy/paste detector for source code
 
-      # Infrastructure as Code
-      pkgs.terraform # Infrastructure as Code tool from HashiCorp
-      pkgs.google-cloud-sdk # Google Cloud SDK for cloud management
+    # Infrastructure as Code
+    pkgs.terraform # Infrastructure as Code tool from HashiCorp
+    pkgs.google-cloud-sdk # Google Cloud SDK for cloud management
 
-      # Kubernetes tools
-      pkgs.kubectl # Kubernetes CLI (includes fish/zsh/bash completions!)
-      pkgs.k9s # Kubernetes CLI To Manage Your Clusters In Style
+    # Kubernetes tools
+    pkgs.kubectl # Kubernetes CLI (includes fish/zsh/bash completions!)
+    pkgs.k9s # Kubernetes CLI To Manage Your Clusters In Style
 
-      # Observability tools (Linux-only — otel-tui builds from source, 40+ min on macOS)
-    ]
-    ++ lib.optionals (otel-tui != null) [
-      otel-tui.packages.${system}.otel-tui # OpenTelemetry terminal viewer
-    ]
-    ++ lib.optionals (herdr != null) [
-      herdr.packages.${system}.default # Agent multiplexer for the terminal
-    ]
-    ++ [
-      # Nix helper tools
-      nh
-      statix # Lints and suggestions for Nix code
-      deadnix # Find and remove dead code (unused bindings) in Nix files
+    # Observability tools (Linux-only — otel-tui builds from source, 40+ min on macOS)
+  ]
+  ++ lib.optionals (otel-tui != null) [
+    otel-tui.packages.${system}.otel-tui # OpenTelemetry terminal viewer
+  ]
+  ++ lib.optionals (herdr != null) [
+    herdr.packages.${system}.default # Agent multiplexer for the terminal
+  ]
+  ++ [
+    # Nix helper tools
+    pkgs.nh
+    pkgs.statix # Lints and suggestions for Nix code
+    pkgs.deadnix # Find and remove dead code (unused bindings) in Nix files
 
-      # Go testing
-      ginkgo # BDD testing framework for Go
-      go-licenses # Dependency license reporting — go1.27-rebuilt via overlays/shared.nix (analyzers lead the fleet toolchain)
-      govalid # Type-safe struct validation code generator
-      gotools # Go tools (goimports, etc.)
+    # Go testing
+    pkgs.ginkgo # BDD testing framework for Go
+    pkgs.go-licenses # Dependency license reporting — go1.27-rebuilt via overlays/shared.nix (analyzers lead the fleet toolchain)
+    pkgs.govalid # Type-safe struct validation code generator
+    pkgs.gotools # Go tools (goimports, etc.)
 
-      # Wallpaper management tools (Linux-only)
-      imagemagick # Image manipulation for wallpaper management
-    ]
-    ++ lib.optionals stdenv.hostPlatform.isLinux [
-      geekbench_6 # Geekbench 6 includes AI/ML benchmarking capabilities (Linux-only)
-      goreleaser # Release Go projects with ease — global binary, Linux-only (Darwin disk-constrained)
-    ];
+    # Wallpaper management tools (Linux-only)
+    pkgs.imagemagick # Image manipulation for wallpaper management
+  ]
+  ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+    pkgs.geekbench_6 # Geekbench 6 includes AI/ML benchmarking capabilities (Linux-only)
+    pkgs.goreleaser # Release Go projects with ease — global binary, Linux-only (Darwin disk-constrained)
+  ];
 
   # Linux-specific utilities
-  linuxUtilities =
-    
-    lib.optionals stdenv.hostPlatform.isLinux [
-      jetbrains.idea
-      openaudible
-      prismlauncher # Minecraft launcher (MultiMC fork)
+  linuxUtilities = lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+    pkgs.jetbrains.idea
+    pkgs.openaudible
+    pkgs.prismlauncher # Minecraft launcher (MultiMC fork)
 
-      # Media streaming
-      fcast-client # FCast Client Terminal, media streaming client
-      fcast-receiver # FCast Receiver, media streaming receiver
-      ffcast # Run commands on rectangular screen regions
-      castnow # Command-line Chromecast player for Google Cast devices
+    # Media streaming
+    pkgs.fcast-client # FCast Client Terminal, media streaming client
+    pkgs.fcast-receiver # FCast Receiver, media streaming receiver
+    pkgs.ffcast # Run commands on rectangular screen regions
+    pkgs.castnow # Command-line Chromecast player for Google Cast devices
 
-      # Hardware monitoring (Linux-only)
-      lm_sensors # Hardware monitoring (GPU/CPU temperature)
+    # Hardware monitoring (Linux-only)
+    pkgs.lm_sensors # Hardware monitoring (GPU/CPU temperature)
 
-      # System diagnostics
-      radeontop # AMD GPU monitoring
-      strace # System call tracer
-      # 2026-10-01 nixpkgs bump: ltrace's testsuite dies under make check in
-      # the sandbox (ptrace class); the binary itself builds clean. Drop the
-      # override when nixpkgs ships a fixed ltrace.
-      (ltrace.overrideAttrs (_: {
-        doCheck = false;
-      })) # Library call tracer
-      nethogs # Per-process network bandwidth
-      iftop # Network interface bandwidth
-      netwatch # Real-time network diagnostics TUI (interfaces, connections, packets, health probes)
-      ecapture # Capture SSL/TLS text content without CA cert using eBPF
+    # System diagnostics
+    pkgs.radeontop # AMD GPU monitoring
+    pkgs.strace # System call tracer
+    # 2026-10-01 nixpkgs bump: ltrace's testsuite dies under make check in
+    # the sandbox (ptrace class); the binary itself builds clean. Drop the
+    # override when nixpkgs ships a fixed ltrace.
+    (pkgs.ltrace.overrideAttrs (_: {
+      doCheck = false;
+    })) # Library call tracer
+    pkgs.nethogs # Per-process network bandwidth
+    pkgs.iftop # Network interface bandwidth
+    pkgs.netwatch # Real-time network diagnostics TUI (interfaces, connections, packets, health probes)
+    pkgs.ecapture # Capture SSL/TLS text content without CA cert using eBPF
 
-      # Network & DNS diagnostics — always available, even during outages
-      bind.dnsutils # dig, nslookup, host, delv — DNS troubleshooting
-      ldns # drill — modern dig alternative with DNSSEC validation
-      dnstracer # Trace DNS delegation chain to authoritative servers
-      mtr # Combined ping + traceroute with real-time stats
-      traceroute # Classic network path tracing
-      tcpdump # Packet capture — essential for protocol-level debugging
-      nettools # netstat, ifconfig, route — legacy network tools (ss replacement kept too)
+    # Network & DNS diagnostics — always available, even during outages
+    pkgs.bind.dnsutils # dig, nslookup, host, delv — DNS troubleshooting
+    pkgs.ldns # drill — modern dig alternative with DNSSEC validation
+    pkgs.dnstracer # Trace DNS delegation chain to authoritative servers
+    pkgs.mtr # Combined ping + traceroute with real-time stats
+    pkgs.traceroute # Classic network path tracing
+    pkgs.tcpdump # Packet capture — essential for protocol-level debugging
+    pkgs.nettools # netstat, ifconfig, route — legacy network tools (ss replacement kept too)
 
-      # Privacy & anonymity
-      tor-browser # Anonymous browsing bundle
+    # Privacy & anonymity
+    pkgs.tor-browser # Anonymous browsing bundle
 
-      # Additional ricing tools discovered from community configs
-      wl-color-picker # Color picker for Wayland
-      imv # Minimal image viewer
-      wf-recorder # Screen recorder
-      brillo # Brightness control utility
-      pamixer # PulseAudio command line mixer
-      alsa-utils # speaker-test, aplay, amixer — audio debugging & test tones
-      pipewire # pw-cat, pw-play, pw-cli — PipeWire CLI for audio routing debug
+    # Additional ricing tools discovered from community configs
+    pkgs.wl-color-picker # Color picker for Wayland
+    pkgs.imv # Minimal image viewer
+    pkgs.wf-recorder # Screen recorder
+    pkgs.brillo # Brightness control utility
+    pkgs.pamixer # PulseAudio command line mixer
+    pkgs.alsa-utils # speaker-test, aplay, amixer — audio debugging & test tones
+    pkgs.pipewire # pw-cat, pw-play, pw-cli — PipeWire CLI for audio routing debug
 
-      # Disk space visualization
-      qdirstat # Qt-based disk usage analyzer with treemap visualization
-    ];
+    # Disk space visualization
+    pkgs.qdirstat # Qt-based disk usage analyzer with treemap visualization
+  ];
 
   # GUI Applications (cross-platform)
   guiPackages =
-    
     lib.optional (heliumWrapped != null) heliumWrapped
-    ++ lib.optionals stdenv.hostPlatform.isDarwin [
-      google-chrome
-      iterm2
-      duti # macOS file association utility (used by activation scripts)
+    ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
+      pkgs.google-chrome
+      pkgs.iterm2
+      pkgs.duti # macOS file association utility (used by activation scripts)
     ];
 
   # Use NUR (Nix User Repository) for the most up-to-date version of Crush
