@@ -1072,19 +1072,6 @@ in
         enable = true;
       };
 
-      # 2026-10-14 (freeze-14→#25 chain): the no-heavy-builds gate's
-      # ENFORCEMENT leg — a `nix` PATH shim refusing eval/build-class
-      # invocations while io PSI some avg10 ≥ 80% (death-band storm only,
-      # owner call 2026-10-14 — deploy.sh keeps its stricter 20% deploy
-      # gate) or the memory-emergency-guard tripped within 60 min.
-      # Cooperative: NIX_HEAVY_GATE_FORCE=1 bypasses loudly — and survives
-      # the sudo'd legs (env_keep in sudo.nix: nh's profile-set re-invokes
-      # nix under `sudo env`, which strips caller env); read-only
-      # subcommands pass through.
-      nix-heavy-builds-gate = {
-        enable = true;
-      };
-
       # 2026-08-22 stability plan: local SEV1 escalation — DMS notification
       # + fullscreen overlay for guard-trip/guard-dead/infra-criticals when
       # a graphical session is online (Discord stays the phone channel).

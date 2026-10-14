@@ -160,6 +160,29 @@ searchable log database. Upstream: github:GilbN/geometrikks.
   `sudo -u geometrikks env $(systemctl show geometrikks -p Environment | ...) geometrikks-cli import-logs <file>`
   (or run `geometrikks-cli` with the unit's env from a root shell).
 - The Banned-IPs/CrowdSec views are inert (no CrowdSec on this host).
+- **Map home is auto-detected from the server's public IP — and the local DNS
+  blocker eats the default endpoint.** `MAP_PUBLIC_IP_URL` defaults to
+  `https://api64.ipify.org?format=json`; HaGeZi-ultimate (via `dnsblockd`)
+  blocks it, so DNS answers the block IP `192.168.1.200`, whose HTML block page
+  breaks the app's JSON decode (`Expecting value: line 1 column 1 (char 0)`) →
+  the `map-home-undetected` advisory (routes lose their origin, home marker
+  hidden). Fix: `ipify.org` is whitelisted in
+  `platforms/common/dns-blocklists.nix` (parent-match also covers
+  `api.ipify.org`). The scheduled "Re-detect this instance's site home
+  location" job retries every `MAP_HOME_REFRESH_HOURS` (24h). Diagnose with
+  `journalctl -u geometrikks | grep -E 'home_location_resolved|auto-detect'` and
+  by fetching the public-IP URL (a block page = DNS filter, not the app).
+- **The UI's "Tailed access logs … missing" list is a capability artifact, not
+  an ingestion outage.** The list's `available` flag comes from
+  `os.access(path, os.R_OK)` in `geometrikks/services/logfiles.py`, but per
+  `access(2)` a non-root caller's check uses an EMPTY capability set — so it
+  reports Caddy's 0600 logs as unreadable even though the tailer reads them
+  through `CAP_DAC_READ_SEARCH` (the *ingestion* `file_missing` flag, surfaced
+  in `/health.missingFiles`, is the real signal: it stays `[]`). Fixed by
+  `pkgs/geometrikks-logfile-readability.patch` (an open()-based probe) wired as
+  `patchedSrc` in `pkgs/geometrikks.nix`, guarded by a build-time self-test.
+  Upstream still has `os.access` on `main` (checked 2026-10-14) — drop the
+  patch once upstream fixes it.
 - Upstream ships no license file — the package declares `licenses.unfree`
   (personal-use posture).
 
