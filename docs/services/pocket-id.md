@@ -1,6 +1,6 @@
 # pocket-id (passkey-only OIDC IdP)
 
-**Service:** `services.pocket-id-config` — `modules/nixos/services/pocket-id.nix` (wrapper over nixpkgs `services.pocket-id`). Port 1411 (`lib/ports.nix` `pocket-id`), Prometheus metrics on 9464 (`pocket-id-metrics`, loopback). URL: `auth.<domain>` — a **hand-written** Caddy vHost in `caddy.nix` (`vHost.layer = "none"` in the registry) that splits `/oauth2/*` to oauth2-proxy (:4180) and everything else to :1411. DNS `auth` in `platforms/common/dns-local.nix`.
+**Service:** `services.pocket-id-config` — `modules/nixos/services/pocket-id.nix` (wrapper over nixpkgs `services.pocket-id`). Port 1411 (`lib/ports.nix` `pocket-id`), Prometheus metrics on 9464 (`pocket-id-metrics`, loopback). URL: `auth.<domain>` — a **hand-written** Caddy vHost in `caddy.nix` (`vHost.layer = "none"` in the registry) that splits `/oauth2/*` to oauth2-proxy (:4180) and everything else to :1411. DNS `auth` in `platforms/common/dns-local.nix`. **DataDir on the Samsung hot tier since 2026-10-14** (`services.hot-db.entries.pocket-id` — wave 3; runbook `docs/services/hot-db.md`; the QLC original sits shadowed under the mountpoint as soak-end rollback insurance).
 
 The SSO backbone: every Layer 1 (native OIDC) and Layer 2 (forward-auth) consumer trusts it. Pocket ID down ⇒ no new logins fleet-wide (existing app sessions keep working). Layer semantics, CIMD decision, `email_verified`/`groups` claim facts live in [docs/agents/sso-dns.md](../agents/sso-dns.md).
 

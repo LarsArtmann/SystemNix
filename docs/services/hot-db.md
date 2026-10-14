@@ -21,7 +21,7 @@ doctrine), dump-only RPO.
 
 `services.hot-db.enable = true`; entries in configuration.nix:
 **`discordsync` LIVE since 2026-10-12 (wave 5 done, out of order — owner chose
-it first for downtime tolerance)** and **`gatus` + `browser-history` LIVE
+it first for downtime tolerance)**, **`gatus` + `browser-history` LIVE
 since 2026-10-14 (waves 1+4, ONE combined owner-directed window — both
 prepared AND cut over before the entry deploy, so the shadow-split landmine
 below was structurally unreachable; owner override ran the window through an
@@ -34,7 +34,18 @@ floor + count gates green, `hot_db_entry_mounted{name}` = 1 for both, gatus
 at system-885. Rollback insurance: the original QLC stores (20 MB / 204 MB,
 pre-cutover) still sit hidden under the mountpoints — keep them until the
 soak ends (owner call, suggest ≥1 week), then reclaim per the finalize
-output.** Remaining waves: dnsblockd, pocket-id, storage-collector. Entries
+output.**, and **`pocket-id` LIVE since 2026-10-14 (wave 3, evening window —
+but this wave is the SHADOW-SPLIT RECOVERY CASE: a parallel session deployed
+the tree mid-window (the daemon had swept the prepared entry into their
+commit), mounting the STALE warm copy over the live dataDir at 17:34 BEFORE
+the quiesced cutover ran — service served 71 min on the torn copy. Repaired
+18:45 same day per the discordsync 2026-10-12 playbook: stop → umount →
+script `cutover` (byte-exact 25 files / 5,314,305 B from the clean
+through-17:34 QLC store) → remount → finalize. Loss: SSO sessions created
+17:34→18:45 (re-login). `hot_db_entry_mounted{name="pocket-id"}` = 1,
+healthz/OIDC-discovery 200, provision + secret-bridge converged (the crm
+secret double-rotation self-healed via the partOf bridge chain, ~2.5 min
+window). Rollback insurance: the QLC store sits shadowed as always.** Remaining waves: dnsblockd, pocket-id, storage-collector. Entries
 are added **ONE PER WAVE** — an entry deployed before its `prepare`/`cutover`
 mounts an EMPTY subvol over the live dataDir and shadow-splits the service.
 **That landmine sprang once: 2026-10-12 14:31, the discordsync entry rode a
@@ -91,7 +102,7 @@ and may jump the queue):
 | ---- | ------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | 1    | `gatus`             | `/var/lib/private/gatus` — **LIVE on tlc since 2026-10-14**                                                            | monitoring blind ~1-3 min (every check reds once, then resolves; ACTUAL 2026-10-14: ~48 min — the cutover→deploy gap stretched by a shared-tree build blocker, see docs/status/2026-10-14_16-20) | none — self-pruning stats, regenerable                                                                        |
 | 2    | `dnsblockd`         | `/var/lib/dnsblockd` (~2.5 GB incl. the stale `dnsblockd_tracking.db` legacy file)      | LAN DNS blip; gatus "DNS Resolver" pages once + resolves         | none — self-pruning tracking stats                                                                            |
-| 3    | `pocket-id`         | `/var/lib/pocket-id`                                                                    | SSO blip                                                         | `pocket-id-backup` (04:00 sqlite .backup, pool)                                                               |
+| 3    | `pocket-id`         | `/var/lib/pocket-id` — **LIVE on tlc since 2026-10-14** (via shadow-split recovery, see Current state)                  | SSO blip (ACTUAL 2026-10-14: the parallel-deploy mount at 17:34 + the 18:45 repair = ~71 min on a torn warm copy, then a clean restart; SSO sessions from the split window require re-login) | `pocket-id-backup` (04:00 sqlite .backup, pool)                                                               |
 | 4    | `browser-history`   | `/var/lib/private/browser-history` — **LIVE on tlc since 2026-10-14**                                                   | ingest retries on next 5-min tick (ACTUAL 2026-10-14: ~48 min stall, same window)                                 | `browser-history-backup` (02:15, pool)                                                                        |
 | 5    | `discordsync`       | `/var/lib/discordsync` (~380 MB event store — drill-verified 2026-10-13; the old "~11 GB" was a stale estimate — the longest delta+verify)  | Discord capture gap ≈ any restart; keep tight                    | `discordsync-db-backup` (03:45 + 05:15/06:45 catch-up gzipped dump, pool — the dump-only RPO leg, Turso is plan-blocked)             |
 | 6    | `storage-collector` | `/var/lib/private/storage-collector` (~60 MB today; flips to a 1 GiB window at cutover) | monitoring gap ~1 min (textfile gauges stall, Gatus reds once)   | `restic-storage-history` (04:20 nightly, no-prune pool repo — LANDED 2026-10-12, history survives regardless) |
