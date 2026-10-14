@@ -617,6 +617,9 @@
                 infraDup = builtins.toJSON (
                   auditWith (root + "/tests/fixtures/lock-audit/evil-infra-dup.lock") { }
                 );
+                aliasCollision = builtins.toJSON (
+                  auditWith (root + "/tests/fixtures/lock-audit/evil-alias-collision.lock") { }
+                );
                 allowlisted = builtins.toJSON (
                   auditWith (root + "/tests/fixtures/lock-audit/allowlisted.lock") {
                     "tool.nixpkgs" = "fixture reason";
@@ -636,6 +639,7 @@
                   dup
                   drift
                   infraDup
+                  aliasCollision
                   allowlisted
                   stale
                   ;
@@ -652,10 +656,12 @@
                   || fail "evil-infra-dup (git-hooks own-copy edge) not flagged: $infraDup"
                 echo "$infraDup" | grep -q 'compat-tool' && echo "$infraDup" | grep -q 'flake-compat' \
                   || fail "evil-infra-dup (flake-compat own-copy edge) not flagged: $infraDup"
+                echo "$aliasCollision" | grep -q 'tool' && echo "$aliasCollision" | grep -q 'flake-parts' \
+                  || fail "evil-alias-collision (edge names a root input but points at its own node — the art-dupl blind spot) not flagged: $aliasCollision"
                 [ "$allowlisted" = "[]" ] || fail "deliberate-allowlisted edge flagged (qmd/discordsync class): $allowlisted"
                 echo "$stale" | grep -q 'matches no live edge' \
                   || fail "stale deliberate entry not flagged (table rot): $stale"
-                echo "lock-audit: 6 legs green (clean, dup, drift, infra-dup, allowlisted, stale-deliberate)"
+                echo "lock-audit: 7 legs green (clean, dup, drift, infra-dup, alias-collision, allowlisted, stale-deliberate)"
                 touch $out
               '';
 

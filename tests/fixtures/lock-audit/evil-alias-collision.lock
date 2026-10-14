@@ -1,0 +1,23 @@
+{
+  "version": 7,
+  "nodes": {
+    "root": {
+      "inputs": {
+        "flake-parts": "flake-parts_2",
+        "tool": "tool"
+      }
+    },
+    "flake-parts": {
+      "locked": { "rev": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "type": "github" }
+    },
+    "flake-parts_2": {
+      "locked": { "rev": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "type": "github" }
+    },
+    "tool": {
+      "inputs": {
+        "flake-parts": "flake-parts"
+      },
+      "locked": { "rev": "cccccccccccccccccccccccccccccccccccccccc", "type": "github" }
+    }
+  }
+}

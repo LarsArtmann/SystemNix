@@ -260,6 +260,18 @@
       url = "github:LarsArtmann/treefmt-full-flake";
     };
 
+    # templ — shared pin for the templ compiler. Root-promoted 2026-10-14
+    # to collapse the inboxclean ("templ") + overview ("templ-cli")
+    # duplicate subtrees: both locked the identical tag with a
+    # byte-identical narHash. Build-tool binary, NOT a vendored Go module
+    # (*_templ.go files are committed), so following it carries no
+    # vendorHash/FOD exposure. nixpkgs deliberately NOT followed (templ's
+    # go-modules FOD is validated against its own pin) — see the
+    # deliberate table in lib/lock-audit.nix.
+    templ = {
+      url = "github:a-h/templ/v0.3.1070";
+    };
+
     # todo-list-ai — AI-powered CLI tool for extracting TODOs from codebases
     # Was INTERIM-pinned to f9f3b335 (2026-09-13: auto-commit left the frozen
     # bun lockfile stale); master verified BUILDABLE at HEAD 2026-09-16
@@ -751,7 +763,9 @@
     #   only real rev flip below; go-nix-helpers/projects-management-automation
     #   copies already sat at the root rev (pure alias collapse). Deliberate
     #   non-follows: qmd nixpkgs (bun nodeModules FOD), discordsync nixpkgs
-    #   (FOD cache-hit rollback 2026-09-23).
+    #   (FOD cache-hit rollback 2026-09-23), templ nixpkgs (go-modules FOD
+    #   env, root-promoted 2026-10-14), crm nixpkgs (same rev as root
+    #   today; flip pending the crm follows [decision], docs/todo/upstream.md).
     # - NEVER follow Go MODULE tarballs (go-*) INTO Go tool flakes: that
     #   changes vendored module content and breaks vendorHash FODs
     #   (2026-08-25 got-hash drift class). The helper itself is the one
@@ -819,6 +833,13 @@
     todo-list-ai.inputs.flake-parts.follows = "flake-parts";
     todo-list-ai.inputs.treefmt-nix.follows = "treefmt-nix";
     art-dupl.inputs.nixpkgs.follows = "nixpkgs";
+    # 2026-10-14: art-dupl's own flake-parts copy (same rev as root — pure
+    # alias collapse) and treefmt-nix copy (eval-only dep; moves 4cfe8d70
+    # onto root's 0d6d7390) deduped — these survived two dedup passes
+    # because the lock-audit's old isAlias matched root input NAMES, not
+    # the node keys root actually resolves to.
+    art-dupl.inputs.flake-parts.follows = "flake-parts";
+    art-dupl.inputs.treefmt-nix.follows = "treefmt-nix";
     bank-sync.inputs.flake-parts.follows = "flake-parts";
     bank-sync.inputs.nixpkgs.follows = "nixpkgs";
     bank-sync.inputs.treefmt-nix.follows = "treefmt-nix";
@@ -902,6 +923,7 @@
     hermes-agent.inputs.uv2nix.follows = "uv2nix";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     inboxclean.inputs.nixpkgs.follows = "nixpkgs";
+    inboxclean.inputs.templ.follows = "templ";
     index.inputs.nixpkgs.follows = "nixpkgs";
     library-policy.inputs.flake-parts.follows = "flake-parts";
     library-policy.inputs.go-nix-helpers.follows = "go-nix-helpers";
@@ -934,6 +956,7 @@
     overview.inputs.go-nix-helpers.follows = "go-nix-helpers";
     overview.inputs.nixpkgs.follows = "nixpkgs";
     overview.inputs.treefmt-nix.follows = "treefmt-nix";
+    overview.inputs.templ-cli.follows = "templ";
     project-dependency-graph.inputs.flake-parts.follows = "flake-parts";
     project-discovery-daemon.inputs.flake-parts.follows = "flake-parts";
     project-discovery-daemon.inputs.go-nix-helpers.follows = "go-nix-helpers";

@@ -7,7 +7,8 @@
 # lock nodes for 235 unique revs; a blanket lock wave regrows it silently.
 # flake-compat + git-hooks joined the guarded set 2026-10-08 (root-promoted
 # at the consumers' shared revs — see the input blocks above the
-# infra-follows group in flake.nix).
+# infra-follows group in flake.nix). Alias detection was tightened to
+# node-key IMAGE semantics 2026-10-14 (see the isAlias comment below).
 #
 # This audit runs at EVAL time (forced via builtins.seq in flake.nix outputs)
 # and fails any eval when a NEW root-owned, unfollowed infra edge appears.
@@ -38,6 +39,10 @@
     "project-dependency-graph.nixpkgs" =
       "vendorHash validated against upstream's own locked nixpkgs (go 1.27.1 via nixos-unstable; following would re-tool the go-modules FOD on every root-nixpkgs bump — the 2026-10-05 a7868a7 wave class)";
     "qmd.nixpkgs" = "bun nodeModules FOD hash validated against upstream's own nixpkgs bun";
+    "templ.nixpkgs" =
+      "templ's go-modules FOD is validated against its own nixpkgs pin (root-promoted 2026-10-14 for the inboxclean/overview subtree collapse)";
+    "crm.nixpkgs" =
+      "same rev as root nixpkgs today (7fd4004); follow flip pending the crm follows [decision] (docs/todo/upstream.md wave5 note)";
   },
 }:
 let
@@ -54,10 +59,16 @@ let
     "git-hooks"
   ];
 
-  # A dep value is a follows alias iff the string names a root input (alias
-  # semantics dominate: the lock generator suffixes node keys on collision,
-  # so a plain node-key string can never collide with a root input name).
-  isAlias = value: builtins.isString value && builtins.hasAttr value rootInputs;
+  # A string dep value is a follows alias iff it names the node key a ROOT
+  # input actually resolves to (the IMAGE of rootInputs), never merely a
+  # root input NAME: node keys are allocation-order artifacts and CAN
+  # collide with input names (2026-10-14 blind spot — art-dupl's edge value
+  # "flake-parts" named the root INPUT while pointing at its own separate
+  # "flake-parts" node; root's real node was "flake-parts_4"). Canonical
+  # locks encode flake.nix follows as arrays; a plain string pointing at
+  # root's own node (shared-node form, see the clean fixture) is an alias.
+  rootNodeKeys = builtins.filter builtins.isString (builtins.attrValues rootInputs);
+  isAlias = value: builtins.isString value && builtins.elem value rootNodeKeys;
 
   edgeViolations =
     let

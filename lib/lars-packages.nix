@@ -93,13 +93,21 @@ lib.filterAttrs (_: v: v != null) {
       pkg = (inputs.go-cqrs-lite.packages.${system} or { }).cqrs-lint or null;
     in
     if pkg == null then null else pkg;
-  # vendorHash shim DROPPED (2026-10-10 wave — drop-protocol,
-  # docs/agents/nix-flakes.md): upstream 3520e64 ALREADY bakes the got
-  # hash /D4X81jj… (first-hand keep-going enumeration,
-  # /tmp/toplevel-keepgoing.log); the NYg9nBod… shim pinned for the
-  # superseded rev 5f7e9ef4 only re-created the drift treadmill.
-  # Re-add ONLY via nix-hash-fix evidence, never by hand.
-  erraudit = flakePkg inputs.erraudit;
+  # TEMPORARY vendorHash shim RE-PINNED (2026-10-14): the master-tracking
+  # flip (flake.nix, owner directive) landed erraudit on 492c233, whose
+  # specified hash /D4X81jj… no longer reproduces under the followed
+  # nixpkgs graph (follower class — upstream can never converge). Got
+  # LzoxcvFT… from a first-hand `nix build .#erraudit` FOD probe at the
+  # locked rev. Drop when upstream bakes the got hash or the lock moves
+  # past an upstream-fixed rev; re-add ONLY via nix-hash-fix evidence,
+  # never by hand.
+  erraudit =
+    let
+      pkg = flakePkg inputs.erraudit;
+    in
+    if pkg == null then null else pkg.override {
+      vendorHash = "sha256-LzoxcvFTbbhdWHfSfRes9/aiVXvG2UzrwEjPVHMkM+E=";
+    };
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 74baca53 ALREADY bakes the got
   # hash G0hMfZId… (first-hand keep-going enumeration,
@@ -116,12 +124,21 @@ lib.filterAttrs (_: v: v != null) {
     in
     if pkg == null then null else pkg;
   go-structure-linter = flakePkg inputs.go-structure-linter;
-  # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
-  # docs/agents/nix-flakes.md): upstream cb9a8b79 ALREADY bakes the got
-  # hash cdxICkri… (first-hand keep-going enumeration,
-  # /tmp/toplevel-fix-20261007.log). Re-add ONLY via nix-hash-fix
-  # evidence, never by hand.
-  golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
+  # TEMPORARY vendorHash shim RE-PINNED (2026-10-14): the master-tracking
+  # flip (flake.nix, owner directive) landed golangci-lint-auto-configure
+  # on 81446302, whose vendorHash.nix still pins zg+6ICkRu2… — 69 commits
+  # of source churn since the ddb54527 pin without a hash refresh. Got
+  # EgfteIUmqz… from a first-hand `nix build .#golangci-lint-auto-configure`
+  # FOD probe at the locked rev. Drop when upstream bakes the got hash or
+  # the lock moves past an upstream-fixed rev; re-add ONLY via
+  # nix-hash-fix evidence, never by hand.
+  golangci-lint-auto-configure =
+    let
+      pkg = flakePkg inputs.golangci-lint-auto-configure;
+    in
+    if pkg == null then null else pkg.override {
+      vendorHash = "sha256-EgfteIUmqzPBVCdM9XoAY/kuQe+G03BushBj+sGomIk=";
+    };
   # library-policy shim DROPPED (2026-10-09): its drop condition ("lock
   # moves past an upstream-fixed rev") is met — the lock holds 5d2a670,
   # whose flake bakes vendorHash Qey6w74G… (the same "got" hash the stale

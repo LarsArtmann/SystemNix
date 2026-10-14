@@ -69,15 +69,17 @@
       # pattern): without it no client secret exists and the flags would
       # point at a client Pocket ID has never heard of.
       pocketIdProvisioned = config.services.pocket-id-config.provision.enable or false;
-      # vendorHash shim DROPPED (2026-10-10 wave — drop-protocol,
-      # docs/agents/nix-flakes.md): upstream 87c60a0 ALREADY bakes the got
-      # hash cfeqsvd… (first-hand keep-going enumeration,
-      # /tmp/toplevel-keepgoing.log) — the structural non-convergence note
-      # below is SUPERSEDED: upstream converged to our graph this wave
-      # (same pinned nixpkgs e7439b6 both sides). The uE1Zo2mE… shim pinned
-      # for the superseded rev 2db45bb only re-created the drift treadmill.
-      # Re-add ONLY via nix-hash-fix evidence, never by hand.
-      crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # TEMPORARY vendorHash shim RE-PINNED (2026-10-14): the master-tracking
+      # flip (flake.nix, owner directive) landed crm on a410024b, whose
+      # kith-crm specified hash gFpBC++z49… no longer reproduces. Got
+      # AtAQS+x0Oj… from a first-hand FOD probe of
+      # services.crm-server.package at the locked rev. Non-follower class,
+      # so upstream pasting the got hash genuinely fixes it; drop then, or
+      # when the lock moves past an upstream-fixed rev. Re-add ONLY via
+      # nix-hash-fix evidence, never by hand.
+      crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+        vendorHash = "sha256-AtAQS+x0OjID6udRi88RD+OYPBT582IKTexudscI0/I=";
+      };
       twentyEnabled = config.services.twenty.enable or false;
     in
     {
