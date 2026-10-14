@@ -270,11 +270,11 @@ run_case signoz dashboard-overlap signoz-query-lint fail 'dashboard layout overl
 # comment line so the mutation stays valid nix (append puts it inside the
 # wrapper attrset as a stray expression — use sed on a comment instead).
 run_case withpkgs bare-with-pkgs with-pkgs-lint fail "explicit pkgs. prefixes required" \
-  'sed:modules/nixos/services/monitor365.nix:s|# X11 (legacy — evo-x2 runs Wayland-only niri)|# X11 (legacy — evo-x2 runs Wayland-only niri)\n        evilInputs = with pkgs; [ curl ];|'
+  'sed:modules/nixos/services/monitor365.nix:s|# Wired into the systemd service PATH by the upstream module.|# Wired into the systemd service PATH by the upstream module.\n      evilInputs = with pkgs; [ curl ];|'
 run_case withpkgs with-pkgs-lib with-pkgs-lint fail "explicit pkgs. prefixes required" \
-  "append:modules/nixos/services/website-deploy-monitor.nix:# with pkgs.lib; mutation"
+  'sed:modules/nixos/services/monitor365.nix:s|# Wired into the systemd service PATH by the upstream module.|# Wired into the systemd service PATH by the upstream module.\n      evilMeta = with pkgs.lib; { x = 1; };|'
 run_case withpkgs exempt-ok with-pkgs-lint pass '' \
-  "append:modules/nixos/services/website-deploy-monitor.nix:# exempted = with pkgs; [ ]; # with-pkgs-ok"
+  'sed:modules/nixos/services/monitor365.nix:s|# Wired into the systemd service PATH by the upstream module.|# Wired into the systemd service PATH by the upstream module.\n      evilExempt = with pkgs; [ curl ]; # with-pkgs-ok|'
 
 # ── gatus-pattern-lint: the 4 trap classes ──
 # gatus-config.nix is an auto-discovered flake-parts wrapper and IS parsed
