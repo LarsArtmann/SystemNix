@@ -161,16 +161,16 @@
     # Crush AI Agent Configuration — global AI assistant settings
     # This ensures AGENTS.md and all references are synced across machines
     crush-config = {
-      url = "git+ssh://git@github.com/LarsArtmann/crush-config?ref=refs/heads/master";
+      url = "github:LarsArtmann/crush-config?ref=refs/heads/master";
     };
 
     # dnsblockd — DNS blocklist service with block pages and blocklist processing
     dnsblockd = {
-      url = "git+ssh://git@github.com/LarsArtmann/dnsblockd?ref=refs/heads/master";
+      url = "github:LarsArtmann/dnsblockd?ref=refs/heads/master";
     };
 
     wallpapers-src = {
-      url = "git+ssh://git@github.com/LarsArtmann/wallpapers?ref=refs/heads/master";
+      url = "github:LarsArtmann/wallpapers?ref=refs/heads/master";
       flake = false;
     };
 
@@ -210,7 +210,7 @@
 
     # monitor365 — Device monitoring agent (Rust)
     monitor365 = {
-      url = "git+ssh://git@github.com/LarsArtmann/monitor365?ref=refs/heads/master";
+      url = "github:LarsArtmann/monitor365?ref=refs/heads/master";
     };
 
     # storage-collector — filesystem capacity tracking daemon (Rust).
@@ -222,12 +222,12 @@
     # sibling checkout until collector-utils is pushed and the sub-input
     # moves to `github:`.
     storage-collector = {
-      url = "git+ssh://git@github.com/LarsArtmann/storage-collector?ref=refs/heads/master";
+      url = "github:LarsArtmann/storage-collector?ref=refs/heads/master";
     };
 
     # PapDashboard — event-sourced alert hub with NPU insight enricher (Go)
     papdashboard = {
-      url = "git+ssh://git@github.com/LarsArtmann/PapDashboard?ref=refs/heads/master";
+      url = "github:LarsArtmann/PapDashboard?ref=refs/heads/master";
       # nixpkgs deliberately NOT followed (bank-sync/qmd vendorHash doctrine):
       # upstream derives its vendorHash against ITS pinned buildGoModule —
       # following our nixpkgs invalidates it on every bump (2026-09-17: 4
@@ -237,7 +237,7 @@
 
     # InboxClean — Gmail AI assistant: web dashboard + incremental sync (Go)
     inboxclean = {
-      url = "git+ssh://git@github.com/LarsArtmann/InboxClean?ref=refs/heads/master";
+      url = "github:LarsArtmann/InboxClean?ref=refs/heads/master";
     };
 
     # NixOS hardware profiles (Raspberry Pi, etc.)
@@ -265,7 +265,7 @@
     # bun lockfile stale); master verified BUILDABLE at HEAD 2026-09-16
     # (package build probe passed) — pin dropped per the pin policy.
     todo-list-ai = {
-      url = "git+ssh://git@github.com/LarsArtmann/todo-list-ai?ref=refs/heads/master";
+      url = "github:LarsArtmann/todo-list-ai?ref=refs/heads/master";
     };
 
     # library-policy — Banned/vulnerable library detector for Go projects
@@ -274,7 +274,7 @@
     # vendorHash refreshed; FOD + package verified). Bumps flow via
     # `nix flake lock --update-input library-policy --refresh`.
     library-policy = {
-      url = "git+ssh://git@github.com/LarsArtmann/library-policy?ref=refs/heads/master";
+      url = "github:LarsArtmann/library-policy?ref=refs/heads/master";
     };
 
     # file-and-image-renamer — AI-powered screenshot renaming tool
@@ -287,7 +287,7 @@
       # via the NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER read-only deploy key.
       # Branch-ref governed (pin policy 2026-09-16: ?ref=master as much as
       # possible; the lock holds the exact rev until an explicit update).
-      url = "git+ssh://git@github.com/LarsArtmann/file-and-image-renamer";
+      url = "github:LarsArtmann/file-and-image-renamer";
     };
 
     # nsfw-classifier — Go/ONNX NSFW image classifier. Backend for the
@@ -305,12 +305,12 @@
       # is on origin/master — so the row was removed from
       # docs/INTERIM-INPUT-PINS.md. Deploy-key fetch, same pattern as
       # file-and-image-renamer.
-      url = "git+ssh://git@github.com/LarsArtmann/nsfw-classifier?ref=refs/heads/master";
+      url = "github:LarsArtmann/nsfw-classifier?ref=refs/heads/master";
     };
 
     # crush-daily — Daily AI-powered insights from Crush development databases
     crush-daily = {
-      url = "git+ssh://git@github.com/LarsArtmann/crush-daily?ref=refs/heads/master";
+      url = "github:LarsArtmann/crush-daily?ref=refs/heads/master";
     };
 
     # bank-sync — Wise/Qonto bank transaction sync into SQLite + dashboard
@@ -322,7 +322,7 @@
       # bank-sync` and blanket re-locks NO-OPs BY DESIGN — the 2026-10-13 lock-only
       # rollback was floated forward again within hours by the evening re-lock wave.
       # Lift by editing this URL after upstream lands the fix, then /health/ready 200.
-      url = "git+ssh://git@github.com/LarsArtmann/bank-sync?ref=refs/heads/master&rev=67dd64526e5a55d86ff40ab49ce4a07794922962";
+      url = "github:LarsArtmann/bank-sync/67dd64526e5a55d86ff40ab49ce4a07794922962";
     };
 
     # index — project documentation indexer; the docs-archive-stats
@@ -330,7 +330,7 @@
     # the index repo and rides its auto-commit) daily at 06:15.
     # go-nix-helpers deliberately NOT followed (bank-sync FOD-mismatch trap).
     index = {
-      url = "git+ssh://git@github.com/LarsArtmann/index?ref=refs/heads/master";
+      url = "github:LarsArtmann/index?ref=refs/heads/master";
     };
 
     # go-taskqueue — projects-aware task work queue + agent pool (tq CLI).
@@ -413,7 +413,7 @@
     # followed — overriding them changes vendored content and breaks vendorHash.
     # Only build-infra inputs are followed.
     mr-sync = {
-      url = "git+ssh://git@github.com/LarsArtmann/mr-sync?ref=refs/heads/master";
+      url = "github:LarsArtmann/mr-sync?ref=refs/heads/master";
     };
 
     # go-health-dashboard — federated go-health hub (health.home.lan).
@@ -427,7 +427,7 @@
     # (GitHub renamed the repo from hierarchical-errors; the input name and
     # the mkLarsPackages attr follow the new name. 2026-09-17.)
     erraudit = {
-      url = "git+ssh://git@github.com/LarsArtmann/erraudit?ref=refs/heads/master";
+      url = "github:LarsArtmann/erraudit?ref=refs/heads/master";
     };
 
     # BuildFlow — Zero-configuration build automation for Go projects
@@ -445,7 +445,7 @@
       # after any `nix flake lock --update-input buildflow`, probe
       # `nix build .#buildflow` before switching, and re-shim ONLY via
       # nix-hash-fix evidence, never by hand.
-      url = "git+ssh://git@github.com/LarsArtmann/BuildFlow?ref=refs/heads/master";
+      url = "github:LarsArtmann/BuildFlow?ref=refs/heads/master";
     };
 
     # go-auto-upgrade — Automate Go library upgrades
@@ -453,7 +453,7 @@
     # vendorHash (FOD + package verified). Bumps flow via
     # `nix flake lock --update-input go-auto-upgrade --refresh`.
     go-auto-upgrade = {
-      url = "git+ssh://git@github.com/LarsArtmann/go-auto-upgrade?ref=refs/heads/master";
+      url = "github:LarsArtmann/go-auto-upgrade?ref=refs/heads/master";
     };
 
     # go-structure-linter — Go project structure validator
@@ -463,7 +463,7 @@
       # go-modules FOD dies under GOTOOLCHAIN=local. The lock node was rolled
       # back to 96b6a01f (gen-797-proven). Do NOT update-input until upstream
       # wires go_1_27 (the library-policy three-wiring-points pattern).
-      url = "git+ssh://git@github.com/LarsArtmann/go-structure-linter?ref=refs/heads/master";
+      url = "github:LarsArtmann/go-structure-linter?ref=refs/heads/master";
     };
 
     # samber-linter — static analyzer detecting health-washing in samber/do v2 containers
@@ -497,7 +497,7 @@
       # NIX_DEPLOY_KEY_BRANCHING_FLOW deploy key. Branch-ref governed (pin
       # policy 2026-09-16: ?ref=master as much as possible; the lock holds
       # the exact rev until an explicit update).
-      url = "git+ssh://git@github.com/LarsArtmann/branching-flow?ref=refs/heads/master";
+      url = "github:LarsArtmann/branching-flow?ref=refs/heads/master";
     };
 
     # brandid-lint — BD001/BD003 branded-ID linter CLI (from the PUBLIC
@@ -538,7 +538,7 @@
 
     # go-commit — Conventional commit helper (consumed by PMA via mkPreparedSource).
     go-commit = {
-      url = "git+ssh://git@github.com/LarsArtmann/go-commit?ref=refs/heads/master";
+      url = "github:LarsArtmann/go-commit?ref=refs/heads/master";
       flake = false;
     };
 
@@ -554,7 +554,7 @@
       # ?ref=master since 2026-09-17: upstream 4b634211 refreshed the stale
       # vendorHash (FOD + package verified, PMA's own lock). Bumps flow via
       # `nix flake lock --update-input projects-management-automation --refresh`.
-      url = "git+ssh://git@github.com/LarsArtmann/projects-management-automation?ref=refs/heads/master";
+      url = "github:LarsArtmann/projects-management-automation?ref=refs/heads/master";
     };
 
     # project-discovery-daemon — standalone discovery daemon owning
@@ -562,7 +562,7 @@
     # embedded daemon 2026-09-07). Must be at a rev that supports
     # PROJECT_DISCOVERY_SEARCH_PATHS and PROJECT_DISCOVERY_SOCKET_MODE.
     project-discovery-daemon = {
-      url = "git+ssh://git@github.com/LarsArtmann/project-discovery-daemon?ref=refs/heads/master";
+      url = "github:LarsArtmann/project-discovery-daemon?ref=refs/heads/master";
     };
 
     # project-dependency-graph — depgraph CLI: renders the LarsArtmann Go
@@ -574,12 +574,12 @@
     # following re-tools the FOD under SystemNix's nixpkgs and re-hashes it
     # on every root-nixpkgs bump (the 2026-10-05 a7868a7 wave class).
     project-dependency-graph = {
-      url = "git+ssh://git@github.com/LarsArtmann/project-dependency-graph?ref=refs/heads/master";
+      url = "github:LarsArtmann/project-dependency-graph?ref=refs/heads/master";
     };
 
     # project-meta — Per-project metadata management CLI
     project-meta = {
-      url = "git+ssh://git@github.com/LarsArtmann/project-meta?ref=refs/heads/master";
+      url = "github:LarsArtmann/project-meta?ref=refs/heads/master";
     };
 
     # Overview — local project dashboard (discovers and browses git repos via web UI)
@@ -587,7 +587,7 @@
       # ?ref=master since 2026-09-17: upstream a0cfbc2 refreshed the stale
       # vendorHash (FOD + package verified). Bumps flow via
       # `nix flake lock --update-input overview --refresh`.
-      url = "git+ssh://git@github.com/LarsArtmann/overview?ref=refs/heads/master";
+      url = "github:LarsArtmann/overview?ref=refs/heads/master";
     };
 
     # DiscordSync — Continuous Discord backup with Turso cloud sync
@@ -613,7 +613,7 @@
       # the gen-797-proven rev currently deployed (upstream nixpkgs NOT
       # followed, so the FOD is a cache hit). Do NOT update-input until
       # upstream wires go-sqlitestore and the FOD + package probe green.
-      url = "git+ssh://git@github.com/LarsArtmann/DiscordSync?ref=refs/heads/master";
+      url = "github:LarsArtmann/DiscordSync?ref=refs/heads/master";
     };
 
     # nix-email — Declarative mail stack (Stalwart + DMARC monitoring).
@@ -654,7 +654,7 @@
     # browser-history` — probe the go-modules FOD at the target rev first
     # (its build rides published cqrs-htmx tags; docs/agents/go-ecosystem.md probe protocol).
     browser-history = {
-      url = "git+ssh://git@github.com/LarsArtmann/browser-history?ref=refs/heads/master";
+      url = "github:LarsArtmann/browser-history?ref=refs/heads/master";
     };
 
     # CV — resume generator + career pipeline server (PRIVATE repo: git+ssh).
@@ -663,7 +663,7 @@
     # its own go 1.26.6 from the go.dev tarball (nixpkgs has 1.26.5 while the
     # go.mod floor is 1.26.6), so it must consume its own build environment.
     cv = {
-      url = "git+ssh://git@github.com/LarsArtmann/CV?ref=master";
+      url = "github:LarsArtmann/CV?ref=master";
     };
 
     # Kith CRM — LarsArtmann's own event-sourced CRM (PRIVATE repo:
@@ -672,7 +672,7 @@
     # own build environment. Consumed by modules/nixos/services/crm.nix
     # (services.crm-server unit); the CV syncer targets its REST surface.
     crm = {
-      url = "git+ssh://git@github.com/LarsArtmann/crm?ref=master";
+      url = "github:LarsArtmann/crm?ref=master";
     };
 
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)

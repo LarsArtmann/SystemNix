@@ -260,6 +260,31 @@
               touch $out
             '';
 
+        # nix-heavy-builds-gate selftest: runs the REAL committed gate
+        # script against fixture pressure/history files — clean-box
+        # passthrough, PSI block with rc 12 naming the reading,
+        # guard-trip-recency block (the freeze-25 dip-race class),
+        # NIX_HEAVY_GATE_FORCE bypass, out-of-window trips pass, non-gated
+        # subcommand passthrough under full storm, fail-open on unreadable
+        # fixture files.
+        nix-heavy-builds-gate-selftest =
+          pkgs.runCommand "nix-heavy-builds-gate-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              cp ${root}/scripts/nix-heavy-builds-gate.sh "$scratch/nix-heavy-builds-gate.sh"
+              # The selftest re-executes the copy via "$0"; /usr/bin/env does not exist in the sandbox.
+              sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/nix-heavy-builds-gate.sh"
+              ${pkgs.bash}/bin/bash "$scratch/nix-heavy-builds-gate.sh" selftest
+              touch $out
+            '';
+
         # Boot-evidence-pull selftest: runs the pull script's `selftest`
         # mode (fixture journal through the canonical-section renderer:
         # census counts, hex-boundary id8 citation for the pre-vacuum

@@ -1022,6 +1022,16 @@ in
         enable = true;
       };
 
+      # 2026-10-14 (freeze-14→#25 chain): the no-heavy-builds gate's
+      # ENFORCEMENT leg — a `nix` PATH shim refusing eval/build-class
+      # invocations while io PSI some avg10 ≥ 20% or the
+      # memory-emergency-guard tripped within 60 min (deploy.sh's entry
+      # gate, mirrored). Cooperative: NIX_HEAVY_GATE_FORCE=1 bypasses
+      # loudly; read-only subcommands pass through.
+      nix-heavy-builds-gate = {
+        enable = true;
+      };
+
       # 2026-08-22 stability plan: local SEV1 escalation — DMS notification
       # + fullscreen overlay for guard-trip/guard-dead/infra-criticals when
       # a graphical session is online (Discord stays the phone channel).
