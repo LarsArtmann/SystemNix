@@ -264,6 +264,8 @@ Only if all four probe clean does the failure count as INTRODUCED (the only shap
 
 **Fleet-incident rule (the /run/binfmt saga, 2026-09-25).** A gate failing for ALL agents/sessions is an ENVIRONMENT incident, not N task failures: triage the shared cause first (missing `/run/binfmt`, store-GC eviction, nix-daemon stale cache, IO storm) before touching any individual task — and record the bypass decision per attempt if a documented bypass is taken.
 
+**Ceiling-aware re-lock waves (2026-10-14 bank-sync re-float class).** Before and after any wave that moves LarsArtmann flake inputs, grep `docs/todo/*` + `docs/services/*` for ceiling rows naming those inputs (e.g. bank-sync `67dd64526`) and diff the moved lock revs against them — a wave that crosses a documented ceiling re-creates its incident (the Oct-13 wave re-broke bank-sync ~9 hours after its rollback, and the crash-loop exit-4-unanchored the next deploy).
+
 ## Eval-Time Guards (audit modules)
 
 Most documented incident classes are ENFORCED at eval time — `nix flake check`

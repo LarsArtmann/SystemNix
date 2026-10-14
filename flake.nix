@@ -315,7 +315,14 @@
 
     # bank-sync — Wise/Qonto bank transaction sync into SQLite + dashboard
     bank-sync = {
-      url = "git+ssh://git@github.com/LarsArtmann/bank-sync?ref=refs/heads/master";
+      # HARD PIN (2026-10-14): re-bump past 67dd64526 is BLOCKED until upstream
+      # restores go-cqrs-lite stream-key read compatibility (docs/todo/upstream.md;
+      # the d15e0a48 key rendering crash-loops the daemon against the prod journal,
+      # exit 65 journal_snapshot_divergence). The ?rev= pin makes `nix flake update
+      # bank-sync` and blanket re-locks NO-OPs BY DESIGN — the 2026-10-13 lock-only
+      # rollback was floated forward again within hours by the evening re-lock wave.
+      # Lift by editing this URL after upstream lands the fix, then /health/ready 200.
+      url = "git+ssh://git@github.com/LarsArtmann/bank-sync?ref=refs/heads/master&rev=67dd64526e5a55d86ff40ab49ce4a07794922962";
     };
 
     # index — project documentation indexer; the docs-archive-stats

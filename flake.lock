@@ -161,16 +161,17 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1791831315,
-        "narHash": "sha256-rCR947fU/tNb2NcfC/aJWSEbJdkYScVIK2bUmqmI9vQ=",
+        "lastModified": 1791567819,
+        "narHash": "sha256-ivm7vtcTbKQUiPya/2w0N3UnidDsNaSBppTu2iiszbQ=",
         "ref": "refs/heads/master",
-        "rev": "cef4a68ee99a3a4c7af4169ae09d1c0f8a8615e9",
-        "revCount": 1781,
+        "rev": "67dd64526e5a55d86ff40ab49ce4a07794922962",
+        "revCount": 1700,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/bank-sync"
       },
       "original": {
         "ref": "refs/heads/master",
+        "rev": "67dd64526e5a55d86ff40ab49ce4a07794922962",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/bank-sync"
       }
@@ -2328,17 +2329,17 @@
     "go-cqrs-lite": {
       "flake": false,
       "locked": {
-        "lastModified": 1791819919,
-        "narHash": "sha256-NV5rgqjrSxXB1rFp1XLpmpT0z4HI9ImKeuxF4EL9fto=",
+        "lastModified": 1790719671,
+        "narHash": "sha256-Ux1LlxNxgSNAUoGgqdBLlROwnaeVwFI6xTBFzBGULX0=",
         "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "d15e0a48d095f608010c93b594ddb3732af64cba",
+        "rev": "7142e43de4fdb1096a8b96b08048e8480bedb9df",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "d15e0a48d095f608010c93b594ddb3732af64cba",
+        "rev": "7142e43de4fdb1096a8b96b08048e8480bedb9df",
         "type": "github"
       }
     },
