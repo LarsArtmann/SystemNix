@@ -404,8 +404,14 @@
     };
 
     # golangci-lint-auto-configure — auto-configure golangci-lint for Go projects
+    # ROLLBACK PIN (2026-10-14): the 15:09 lock wave bumped to a HEAD whose
+    # goModules vendorHash is stale (FOD got EgfteIUmqz… vs specified
+    # zg+6ICkRu2…) and broke the toplevel. Restored to the last green rev
+    # ddb54527 (built green in the 13:10 toplevel; FOD probe re-verified
+    # 2026-10-14). LIFT: upstream refreshes the vendorHash → flip back to
+    # ?ref=master + `nix flake lock --update-input golangci-lint-auto-configure --refresh`.
     golangci-lint-auto-configure = {
-      url = "github:LarsArtmann/golangci-lint-auto-configure?ref=master";
+      url = "github:LarsArtmann/golangci-lint-auto-configure/ddb545271270a012ad78f45e01ea557a296c02fc";
     };
 
     # mr-sync — CLI to keep ~/.mrconfig in sync with GitHub repos
@@ -677,8 +683,14 @@
     # (go.mod floor 1.27.1), so NO nixpkgs follows — it must consume its
     # own build environment. Consumed by modules/nixos/services/crm.nix
     # (services.crm-server unit); the CV syncer targets its REST surface.
+    # ROLLBACK PIN (2026-10-14): the 15:09 lock wave bumped crm to a410024b
+    # whose kith-crm goModules vendorHash is stale (FOD got AtAQS+x0Oj… vs
+    # specified gFpBC++z49…) and broke the toplevel. Restored to the last
+    # green rev 1ee70909 (built green in the 13:10 toplevel; FOD probe
+    # re-verified 2026-10-14). LIFT: upstream refreshes the vendorHash →
+    # flip back to ?ref=master + `nix flake lock --update-input crm --refresh`.
     crm = {
-      url = "github:LarsArtmann/crm?ref=master";
+      url = "github:LarsArtmann/crm/1ee70909236a4e14546d81401d90a2116cc164f7";
     };
 
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)
