@@ -1267,3 +1267,5 @@
 - [ ] [ready] **migrate-hot-db: pre-stop sqlite WAL checkpoint step + outcome-aware window post-deploy branch (deploy exit-3 with a green service must NOT abort to R1)** → [docs/todo/services.md](docs/todo/services.md) (Source: same report §d1/§d2/§e1/§e2)
 - [ ] [watch] **First nightly btrbk cycle vs hot/dnsblockd (landmine live-cycle, all-cow class)** → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f6)
 - [ ] [watch] **Soak-end reclaim of the dnsblockd QLC shadow (4.82 GB quiesced through 2026-10-14 21:52)** → [docs/todo/storage.md](docs/todo/storage.md) (Source: same report §f7)
+- [ ] [ready] **Fix browser-history behavioural sync marshal failure upstream (engagement_metrics empty for ALL browsers; agent WARNs every tick)** → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: live journal 2026-10-14 22:09–22:24)
+- [ ] [ready] **Add Firefox search-query extraction upstream (searches surface: firefox=0 forever vs 225 helium)** → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: live DB counts + firefox.go at deployed rev 8900354)
