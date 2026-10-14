@@ -426,8 +426,14 @@
     # erraudit — Error handling pattern analyzer for Go projects
     # (GitHub renamed the repo from hierarchical-errors; the input name and
     # the mkLarsPackages attr follow the new name. 2026-09-17.)
+    # ROLLBACK PIN (2026-10-14): master 492c233 ships a stale vendorHash
+    # (FOD got-hash LzoxcvFT… vs its specified /D4X81… — go.sum dep churn
+    # without a matching hash bump), breaking every toplevel build. Pinned
+    # to the last green rev d46cb98 (FOD + package probe green 2026-10-14).
+    # LIFT: upstream refreshes the vendorHash → flip the URL back to
+    # ?ref=refs/heads/master and `nix flake lock --update-input erraudit --refresh`.
     erraudit = {
-      url = "github:LarsArtmann/erraudit?ref=refs/heads/master";
+      url = "github:LarsArtmann/erraudit/d46cb98264a154424f5c84bf08df7f60b21c233b";
     };
 
     # BuildFlow — Zero-configuration build automation for Go projects
