@@ -65,8 +65,8 @@
 
         psiAvg10ThresholdPercent = lib.mkOption {
           type = lib.types.int;
-          default = 20;
-          description = "io PSI some avg10 percentage at/over which nix eval/build invocations are refused. Mirrors deploy.sh's pressure gate so both layers share one line in the sand";
+          default = 80;
+          description = "io PSI some avg10 percentage at/over which nix eval/build invocations are refused. Deliberately ABOVE deploy.sh's 20% deploy gate (owner call 2026-10-14): the shim's job is stopping fresh eval/build batteries INTO a death-band storm, not blocking ordinary work in the chronic 20-60% noise band; deploy.sh's trip-recency veto still covers the storm band";
         };
 
         tripWindowMinutes = lib.mkOption {

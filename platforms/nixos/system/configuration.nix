@@ -1024,10 +1024,11 @@ in
 
       # 2026-10-14 (freeze-14→#25 chain): the no-heavy-builds gate's
       # ENFORCEMENT leg — a `nix` PATH shim refusing eval/build-class
-      # invocations while io PSI some avg10 ≥ 20% or the
-      # memory-emergency-guard tripped within 60 min (deploy.sh's entry
-      # gate, mirrored). Cooperative: NIX_HEAVY_GATE_FORCE=1 bypasses
-      # loudly; read-only subcommands pass through.
+      # invocations while io PSI some avg10 ≥ 80% (death-band storm only,
+      # owner call 2026-10-14 — deploy.sh keeps its stricter 20% deploy
+      # gate) or the memory-emergency-guard tripped within 60 min.
+      # Cooperative: NIX_HEAVY_GATE_FORCE=1 bypasses loudly; read-only
+      # subcommands pass through.
       nix-heavy-builds-gate = {
         enable = true;
       };

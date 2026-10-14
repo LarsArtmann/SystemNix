@@ -23,7 +23,7 @@
 # deploy.sh pressure-gate code, so scripts can share handling).
 set -uo pipefail
 
-PSI_THRESHOLD="${NIX_HEAVY_GATE_PSI:-20}"
+PSI_THRESHOLD="${NIX_HEAVY_GATE_PSI:-80}"
 TRIP_WINDOW="${NIX_HEAVY_GATE_TRIP_WINDOW:-3600}"
 PROC_FILE="${NIX_HEAVY_GATE_PROC:-/proc/pressure/io}"
 HISTORY_FILE="${NIX_HEAVY_GATE_HISTORY:-/var/lib/memory-emergency-guard/trip-history}"
