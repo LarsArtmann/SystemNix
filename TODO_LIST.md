@@ -1228,3 +1228,4 @@
 - [ ] [ready] **Pre-deploy build-class smoke for flake app FODs (shellcheck blind spot)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: 2026-10-14 12:09 io-psi-forensics failure)
 - [ ] [ready] **Document the two-var stormy-deploy escape (DEPLOY_FORCE_PRESSURE + NIX_HEAVY_GATE_FORCE)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: 2026-10-14 refusals)
 - [ ] [ready] **Codify the combined-window hot-db wave variant (waves 1+4 precedent)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-14_16-20_hot-db-waves-gatus-browser-history.md §b3)
+- [ ] [ready] **Pocket ID provisioner: force-sync the secret file after ANY client CREATE (re-create orphans the file)** → [docs/todo/services.md](docs/todo/services.md) (Source: 2026-10-14 CRM OIDC outage — Oct 10 crash-recovery double re-create + skip-if-exists guard)

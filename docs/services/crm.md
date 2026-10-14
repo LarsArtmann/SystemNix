@@ -69,6 +69,8 @@ and §20 of post-deploy-check flags it as FAIL.
 
 ## Traps
 
+- **Pocket ID login bounces back to the login page = token_exchange/invalid_client, i.e. the bridge file's secret is not in Pocket ID's DB.** Diagnose: `journalctl -u crm-server | grep oauth_login_failed` (CRM side) + `journalctl -u pocket-id | grep invalid_client` (IdP side — client auth fails BEFORE grant/PKCE checks, so an `invalid_client` there is always the shared secret, never redirect/PKCE wiring). 2026-10-14 root cause: the crm client row was created THREE times on Oct 10 (Pocket ID crashed exit-1 twice under SQLite contention; each crash-recovery lost the just-created row while the provisioner's secret FILE survived outside the DB) — every re-create minted a fresh auto-secret and the skip-if-exists guard kept the orphaned file forever. Heal is declarative: `pocket-id-config.provision.regenerateSecretsFor = [ "crm" ]` → deploy → verify → REMOVE the entry (its guard fails later provision runs past the 24h window). Never hand-edit either side.
+- **Provisioner create-echo used to leak `createdSecret` into the pocket-id journal** (fixed 2026-10-14: echo is now `jq del(.createdSecret)`-redacted, and force-regeneration PRUNES pre-rotation secrets so leaked/lost values die with the rotation). The Oct 10 journal still contains three now-dead secrets plus one the 2026-10-14 rotation pruned — treat pre-fix provision logs as credential-bearing.
 - **Never serve -auth without the vHost origin matching**: `-rpid`/`-origin`
   derive from `crm.${domain}`; a mismatched origin breaks the WebAuthn
   ceremony silently (browser-side).
