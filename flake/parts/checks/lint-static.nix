@@ -731,9 +731,7 @@
                     ghost-input = "x";
                   }).violations
                 );
-                lockRevQuery = builtins.toJSON (
-                  (auditWith emptySource "${fixture}/rev-query.lock" { }).violations
-                );
+                lockRevQuery = builtins.toJSON ((auditWith emptySource "${fixture}/rev-query.lock" { }).violations);
               };
             in
             pkgs.runCommand "flake-input-pin-audit-selftest"

@@ -165,6 +165,7 @@ let
     pkgs.jq
     pkgs.yq-go
     pkgs.duckdb # In-process analytical SQL database (used by monitor365)
+    pkgs.sqlite # sqlite3 CLI for inspecting service sqlite DBs
 
     # Task runner
     pkgs.just
