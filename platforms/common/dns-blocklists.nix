@@ -193,6 +193,14 @@ in
     "dlcdn.apache.org"
     "myip.is"
     "extreme-ip-lookup.com"
+    # Public-IP echo for GeoMetrikks's MAP_PUBLIC_IP_URL default
+    # (https://api64.ipify.org?format=json). HaGeZi-ultimate blocks it
+    # (telemetry category), so DNS answered 192.168.1.200 and the app's
+    # JSON parse died with "Expecting value: line 1 column 1 (char 0)" ->
+    # the map-home-undetected advisory + hidden home marker (live
+    # 2026-10-14). The filter walks parent domains, so `ipify.org` unblocks
+    # api.ipify.org / api64.ipify.org too.
+    "ipify.org"
     "itv.com"
     "cpt.itv.com"
     "tom.itv.com"

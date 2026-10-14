@@ -1,0 +1,40 @@
+Make the access-log file listing capability-aware.
+
+The service reads Caddy's 0600 access logs through CAP_DAC_READ_SEARCH, but
+os.access() answers "could the invoking real UID read this" and, per
+access(2), uses an EMPTY capability set for non-root callers. So every
+tailed access log was reported available=false ("missing" in the UI) even
+though ingestion read them fine. Probe with a real open() that honours the
+effective capability set. Upstream still has os.access() on main (checked
+2026-10-14); drop this patch once upstream fixes it.
+
+--- a/geometrikks/services/logfiles.py
++++ b/geometrikks/services/logfiles.py
+@@ -55,10 +55,26 @@
+     available: bool
+ 
+ 
++def _is_readable(path: Path) -> bool:
++    """True when the running process can actually read the file.
++
++    os.access() answers "could the invoking real UID read this" and ignores
++    capabilities for non-root callers (access(2)), so it reports Caddy's 0600
++    access logs as unreadable even though this service reads them through
++    CAP_DAC_READ_SEARCH. Probe with a real open() that honours the effective
++    capability set.
++    """
++    try:
++        with path.open("rb"):
++            return True
++    except OSError:
++        return False
++
++
+ def _entry(path: Path, kind: LogFileKind, name: str | None = None) -> LogFileEntry:
+     try:
+         stat = path.stat()
+-        readable = os.access(path, os.R_OK)
++        readable = _is_readable(path)
+         return LogFileEntry(
+             name=name or path.name,
+             kind=kind,
