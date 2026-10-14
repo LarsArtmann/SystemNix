@@ -183,6 +183,30 @@ searchable log database. Upstream: github:GilbN/geometrikks.
   `patchedSrc` in `pkgs/geometrikks.nix`, guarded by a build-time self-test.
   Upstream still has `os.access` on `main` (checked 2026-10-14) — drop the
   patch once upstream fixes it.
+- `access_logs`/`geo_events` read `~0 rows` on the Status page under LAN-only
+  traffic — BY DESIGN, not data loss (verified 2026-10-14: exact `count(*)` 0
+  on both, zero chunks ever created, `access_log_debug` growing — write path
+  healthy). Persistence is gated on `record.access_log` (ingestion
+  `_process_record`), which the parser builds only for GeoIP-resolvable
+  (public) IPs; the app's own advisory says private-address requests "never
+  reach the map or Access logs". The UI number is TimescaleDB
+  `approximate_row_count()` (chunk reltuples), so it lags ANALYZE on top of
+  being genuinely 0 here. Public vhost traffic (larsartmann.cloud) populates
+  them.
+- Caddy restart/runtime banners land in `access_log_debug` as malformed
+  (2026-10-14: 1,113 of 1,113 debug rows were Caddy startup lines). The
+  global `access.log` intentionally tails Caddy's DEFAULT logger (see the
+  `logPaths` comment in the module + caddy.nix `logFormat` rationale) and
+  upstream captures malformed lines unconditionally. Bounded: ~19 lines per
+  Caddy restart, 30-day retention. Upstream filter idea queued
+  (docs/todo/upstream.md).
+- `APP_PROXY_ADVISORY=false` (2026-10-14): the traffic mix is deliberate
+  LAN-direct (no tunnel, no proxy chain), so the proxy-peer advisory card
+  would nag forever (upstream docs/configuration.md prescribes false for
+  deliberate mixes; it also disables the 5-min CDN peer scan). Re-enable if
+  a tunnel/proxy ever fronts Caddy. The env template now carries
+  `restartUnits` — env-file-only changes restart the service on switch
+  (before, they silently waited for an unrelated restart).
 - Upstream ships no license file — the package declares `licenses.unfree`
   (personal-use posture).
 

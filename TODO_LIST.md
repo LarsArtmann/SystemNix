@@ -1241,3 +1241,5 @@
 - [ ] [ready] **HaGeZi FOD hash churn: pin a dated mirror snapshot or document the re-hash drill** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: 2026-10-14 16-stale-FOD build blackout)
 - [ ] [blocked:user] **InboxClean: Google OAuth re-consent (`inboxclean auth`)** → [docs/todo/services.md](docs/todo/services.md) (Source: 2026-10-14 18:45 invalid_grant — Testing-mode 7-day refresh-token expiry, same class as bank-sync SCA)
 - [ ] [ready] **Implement migrate-hot-db preflight (eval + build + drift + PSI + flock → GO/NO-GO) + per-step mounted-guard in the script** → [docs/todo/services.md](docs/todo/services.md) (Source: 2026-10-14 wave-3 shadow-split — the same drift class hit twice in one day)
+- [ ] [ready] **File the geometrikks os.access availability-probe issue upstream; drop the local patch once fixed** → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: docs/services/geometrikks.md os.access gotcha, 2026-10-14)
+- [ ] [ready] **File the geometrikks malformed-capture filter suggestion upstream** → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: docs/services/geometrikks.md debug-noise gotcha, 2026-10-14)

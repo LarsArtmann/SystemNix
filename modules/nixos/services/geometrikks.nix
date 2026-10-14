@@ -45,12 +45,12 @@
       # JSON per caddyserver.com/docs/caddyfile/directives/log). The
       # global access.log is Caddy's DEFAULT logger: it receives access
       # records for hosts without their own log block PLUS Caddy runtime
-      # log lines (JSON without a `request` object). The tailer drops
-      # runtime lines harmlessly by construction — formats/caddy.py
-      # parse() returns None when the decoded object has no `request` or
-      # no client IP (verified against geometrikks v0.19.0 source,
-      # 2026-10-04) — so the FULL list (global + every vhost) is the
-      # complete traffic picture.
+      # log lines (JSON without a `request` object). parse() returns None
+      # for those, so they never reach access_logs — but they ARE captured
+      # to access_log_debug as malformed (2026-10-14 live: Caddy restart
+      # banners were 1,113 of 1,113 debug rows; ~19 lines per Caddy
+      # restart, bounded by 30-day debug retention). Keeping the FULL
+      # list (global + every vhost) is the complete traffic picture.
       # Filenames replicate vhost-options.nix's own derivation: "/" and
       # " " -> "_". Derived from config.services.caddy.virtualHosts at
       # eval time, so new services are tracked automatically.
