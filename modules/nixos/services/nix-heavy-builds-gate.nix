@@ -52,8 +52,10 @@
         substitute ${gateScript}/bin/nix-heavy-builds-gate $out/bin/nix \
           --replace-fail '@realNix@' '${lib.getExe config.nix.package}' \
           --replace-fail '{NIX_HEAVY_GATE_PSI:-20}' '{NIX_HEAVY_GATE_PSI:-${toString cfg.psiAvg10ThresholdPercent}}' \
-          --replace-fail '{NIX_HEAVY_GATE_TRIP_WINDOW:-3600}' '{NIX_HEAVY_GATE_TRIP_WINDOW:-${toString (cfg.tripWindowMinutes * 60)}}' \
-          --replace-fail '{-:/var/lib/memory-emergency-guard/trip-history}' '{-:${cfg.guardStateDir}/trip-history}'
+          --replace-fail '{NIX_HEAVY_GATE_TRIP_WINDOW:-3600}' '{NIX_HEAVY_GATE_TRIP_WINDOW:-${
+            toString (cfg.tripWindowMinutes * 60)
+          }}' \
+          --replace-fail '{NIX_HEAVY_GATE_HISTORY:-/var/lib/memory-emergency-guard/trip-history}' '{NIX_HEAVY_GATE_HISTORY:-${cfg.guardStateDir}/trip-history}'
         chmod +x $out/bin/nix
       '';
     in
