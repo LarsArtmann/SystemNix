@@ -197,6 +197,31 @@
               touch $out
             '';
 
+        # io-psi-forensics selftest: durability + retention for the trap-time
+        # capture bundles. Fixture-tests (temp bundle dir, /var/tmp untouched):
+        # staging→fsync→atomic-rename ordering (the freeze-13/18 vanish class:
+        # a logged "bundle written" must imply fsynced bytes), no staging
+        # residue, bundle content present, KEEP-newest retention pruning
+        # oldest-first — plus source tripwires pinning the fsync-before-
+        # rename-before-log order.
+        io-psi-forensics-selftest =
+          pkgs.runCommand "io-psi-forensics-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              cp ${root}/scripts/io-psi-forensics.sh "$scratch/io-psi-forensics.sh"
+              # The selftest re-executes the copy via "$0"; /usr/bin/env does not exist in the sandbox.
+              sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/io-psi-forensics.sh"
+              ${pkgs.bash}/bin/bash "$scratch/io-psi-forensics.sh" selftest
+              touch $out
+            '';
+
         # Boot-evidence-pull selftest: runs the pull script's `selftest`
         # mode (fixture journal through the canonical-section renderer:
         # census counts, hex-boundary id8 citation for the pre-vacuum

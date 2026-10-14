@@ -1181,6 +1181,14 @@ _: {
         systemd = {
           tmpfiles.rules = [
             (mkStateDir textfileDir "1777" "nobody" "nogroup")
+            # Root-side retention backstop (freeze-13 finding 9, 2026-10-14):
+            # the capture-time KEEP-newest prune in the script only ever runs
+            # as the guard's root transient, and the pre-fix pile (2,915
+            # root-owned bundles since 09-14) is unremovable by user-space
+            # captures. The daily systemd-tmpfiles-clean pass ages the
+            # bundles out at the OS level regardless of who runs the next
+            # capture.
+            "R /var/tmp/io-psi-forensics-* - - - 30d"
           ];
 
           services.memory-emergency-guard = {
@@ -1218,6 +1226,7 @@ _: {
               OnUnitActiveSec = cfg.checkInterval;
             };
           };
+
         };
       };
     };
