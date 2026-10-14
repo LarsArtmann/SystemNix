@@ -1231,3 +1231,4 @@
 - [ ] [ready] **Pocket ID provisioner: force-sync the secret file after ANY client CREATE (re-create orphans the file)** → [docs/todo/services.md](docs/todo/services.md) (Source: 2026-10-14 CRM OIDC outage — Oct 10 crash-recovery double re-create + skip-if-exists guard)
 - [ ] [watch] **First pocket-id-backup through the hot mount (tonight 04:00)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/services/hot-db.md wave 3)
 - [ ] [ready] **HaGeZi FOD hash churn: pin a dated mirror snapshot or document the re-hash drill** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: 2026-10-14 16-stale-FOD build blackout)
+- [ ] [blocked:user] **InboxClean: Google OAuth re-consent (`inboxclean auth`)** → [docs/todo/services.md](docs/todo/services.md) (Source: 2026-10-14 18:45 invalid_grant — Testing-mode 7-day refresh-token expiry, same class as bank-sync SCA)
