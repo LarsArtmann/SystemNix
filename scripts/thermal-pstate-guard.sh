@@ -23,6 +23,13 @@ TEXTFILE_OUT="${THERMAL_GUARD_TEXTFILE_OUT:-/var/lib/prometheus-node-exporter/te
 SENSORS_SPEC="${THERMAL_GUARD_SENSORS:-k10temp=95/80 nvme=70/60 amdgpu=90/75 acpitz=85/70}"
 ENTER_TICKS="${THERMAL_GUARD_ENTER_TICKS:-2}"
 EXIT_TICKS="${THERMAL_GUARD_EXIT_TICKS:-12}"
+# Second rung (freeze-16/17 autopsy, 2026-10-14 task queue): guided alone
+# held 96-99 C through both crash boots — when heat persists at/above the
+# enter threshold for deepEnterTicks MORE ticks while already guided, cap
+# scaling_max_freq per policy to deepCapPercent of its snapshot. This is
+# the hard ceiling the firmware's guided policy failed to apply.
+DEEP_ENTER_TICKS="${THERMAL_GUARD_DEEP_ENTER_TICKS:-6}"
+DEEP_CAP_PERCENT="${THERMAL_GUARD_DEEP_CAP_PERCENT:-60}"
 VERBOSE_INTERVAL="${THERMAL_GUARD_VERBOSE_INTERVAL:-600}"
 NORMAL_GOVERNOR="${THERMAL_GUARD_NORMAL_GOVERNOR:-performance}"
 NORMAL_EPP="${THERMAL_GUARD_NORMAL_EPP:-performance}"
@@ -34,6 +41,9 @@ TRIPS_FILE="$STATE_DIR/trips"
 RESTORES_FILE="$STATE_DIR/restores"
 THROTTLE_LOG_EPOCH_FILE="$STATE_DIR/throttle-log-epoch"
 SNAPSHOT_FILE="$STATE_DIR/governor-epp.snapshot"
+DEEP_STREAK_FILE="$STATE_DIR/deep-streak"
+FREQ_SNAPSHOT_FILE="$STATE_DIR/max-freq.snapshot"
+DEEP_TRIPS_FILE="$STATE_DIR/deep-trips"
 
 read_count() {
   cat "$1" 2>/dev/null || echo 0
@@ -93,6 +103,32 @@ restore_performance() {
   fi
 }
 
+# Second rung: snapshot each policy's scaling_max_freq, then cap it to
+# deepCapPercent of the recorded maximum. Restored by restore_freq.
+cap_freq() {
+  local policy max capped
+  : >"$FREQ_SNAPSHOT_FILE.tmp"
+  for policy in "$CPUFREQ_ROOT"/policy*; do
+    [ -d "$policy" ] || continue
+    [ -r "$policy/scaling_max_freq" ] || continue
+    max=$(cat "$policy/scaling_max_freq")
+    echo "$(basename "$policy") $max" >>"$FREQ_SNAPSHOT_FILE.tmp"
+    capped=$((max * DEEP_CAP_PERCENT / 100))
+    write_sysfs "$capped" "$policy/scaling_max_freq" || true
+  done
+  mv -f "$FREQ_SNAPSHOT_FILE.tmp" "$FREQ_SNAPSHOT_FILE"
+}
+
+restore_freq() {
+  local policy max
+  while IFS=' ' read -r policy max; do
+    [ -n "$policy" ] || continue
+    write_sysfs "$max" "$CPUFREQ_ROOT/$policy/scaling_max_freq" || true
+  done <"$FREQ_SNAPSHOT_FILE"
+  rm -f "$FREQ_SNAPSHOT_FILE"
+  echo 0 >"$DEEP_STREAK_FILE"
+}
+
 snapshot_governors() {
   local policy governor epp
   : >"$SNAPSHOT_FILE.tmp"
@@ -108,8 +144,8 @@ snapshot_governors() {
 }
 
 write_metrics() {
-  local throttled="$1" missing="$2" trips="$3" restores="$4"
-  shift 4
+  local throttled="$1" missing="$2" trips="$3" restores="$4" deep="$5"
+  shift 5
   local out_dir
   out_dir="$(dirname "$TEXTFILE_OUT")"
   mkdir -p "$out_dir" 2>/dev/null || true
@@ -120,6 +156,9 @@ write_metrics() {
     echo "# HELP thermal_pstate_guard_throttled 1 when the guard has switched amd_pstate to guided"
     echo "# TYPE thermal_pstate_guard_throttled gauge"
     echo "thermal_pstate_guard_throttled $throttled"
+    echo "# HELP thermal_pstate_guard_deep_throttled 1 while the second-rung scaling_max_freq cap is applied (guided alone failed to cool)"
+    echo "# TYPE thermal_pstate_guard_deep_throttled gauge"
+    echo "thermal_pstate_guard_deep_throttled $deep"
     echo "# HELP thermal_pstate_guard_sensor_celsius Max temp per sensor name pattern (millidegree inputs, integer C)"
     echo "# TYPE thermal_pstate_guard_sensor_celsius gauge"
     local label value
@@ -138,6 +177,9 @@ write_metrics() {
     echo "# HELP thermal_pstate_guard_restores_total Completed restore transitions back to active"
     echo "# TYPE thermal_pstate_guard_restores_total counter"
     echo "thermal_pstate_guard_restores_total $restores"
+    echo "# HELP thermal_pstate_guard_deep_trips_total Completed second-rung frequency caps"
+    echo "# TYPE thermal_pstate_guard_deep_trips_total counter"
+    echo "thermal_pstate_guard_deep_trips_total $(read_count "$DEEP_TRIPS_FILE")"
     echo "# HELP thermal_pstate_guard_last_run_timestamp_seconds Unix time of the last completed tick (frozen file = dead guard)"
     echo "# TYPE thermal_pstate_guard_last_run_timestamp_seconds gauge"
     echo "thermal_pstate_guard_last_run_timestamp_seconds $(date +%s)"
@@ -166,6 +208,12 @@ tick() {
     state_mode="$current_mode"
     echo 0 >"$ENTER_STREAK_FILE"
     echo 0 >"$EXIT_STREAK_FILE"
+    # A second-rung cap left behind by an operator echo or a crash
+    # mid-deep: restore the recorded maxima before anything else.
+    if [ -e "$FREQ_SNAPSHOT_FILE" ]; then
+      restore_freq
+      log "dropped second-rung frequency cap (external mode change)"
+    fi
     if [ "$state_mode" = "active" ]; then
       if [ -f "$SNAPSHOT_FILE" ]; then
         restore_performance "$SNAPSHOT_FILE"
@@ -214,14 +262,24 @@ tick() {
     exit 0
   fi
 
-  local enter_streak exit_streak now
+  local enter_streak exit_streak now deep_streak deep_trips
   enter_streak=$(read_count "$ENTER_STREAK_FILE")
   exit_streak=$(read_count "$EXIT_STREAK_FILE")
+  deep_streak=$(read_count "$DEEP_STREAK_FILE")
   now=$(date +%s)
 
   if [ "$state_mode" = "guided" ]; then
     if [ "$hot" -eq 1 ]; then
       echo 0 >"$EXIT_STREAK_FILE"
+      deep_streak=$((deep_streak + 1))
+      echo "$deep_streak" >"$DEEP_STREAK_FILE"
+      if [ "$deep_streak" -ge "$DEEP_ENTER_TICKS" ] && [ ! -e "$FREQ_SNAPSHOT_FILE" ]; then
+        cap_freq
+        deep_trips=$(read_count "$DEEP_TRIPS_FILE")
+        echo "$((deep_trips + 1))" >"$DEEP_TRIPS_FILE"
+        echo "$now" >"$THROTTLE_LOG_EPOCH_FILE"
+        log "DEEP THROTTLE ENTER: scaling_max_freq capped to ${DEEP_CAP_PERCENT}% after $deep_streak hot ticks IN guided (first rung insufficient):$sensor_summary"
+      fi
       local last_log
       last_log=$(read_count "$THROTTLE_LOG_EPOCH_FILE")
       if [ $((now - last_log)) -ge "$VERBOSE_INTERVAL" ]; then
@@ -229,6 +287,10 @@ tick() {
         echo "$now" >"$THROTTLE_LOG_EPOCH_FILE"
       fi
     elif [ "$cool" -eq 1 ]; then
+      if [ -e "$FREQ_SNAPSHOT_FILE" ]; then
+        restore_freq
+        log "DEEP THROTTLE DROP: scaling_max_freq restored (cool band reached)"
+      fi
       exit_streak=$((exit_streak + 1))
       echo "$exit_streak" >"$EXIT_STREAK_FILE"
       if [ "$exit_streak" -ge "$EXIT_TICKS" ]; then
@@ -245,7 +307,12 @@ tick() {
         fi
       fi
     else
-      # Middle band: below high but above low — dwell resets, silent.
+      # Middle band: below high but above low — heat has broken; drop the
+      # deep cap (if applied) but stay guided; dwell resets, silent.
+      if [ -e "$FREQ_SNAPSHOT_FILE" ]; then
+        restore_freq
+        log "DEEP THROTTLE DROP: scaling_max_freq restored (heat broke below the high threshold)"
+      fi
       echo 0 >"$EXIT_STREAK_FILE"
     fi
   else
@@ -254,6 +321,7 @@ tick() {
       echo "$enter_streak" >"$ENTER_STREAK_FILE"
       if [ "$enter_streak" -ge "$ENTER_TICKS" ]; then
         snapshot_governors
+        echo 0 >"$DEEP_STREAK_FILE"
         if write_sysfs guided "$PSTATE_ROOT/status"; then
           echo guided >"$MODE_FILE"
           echo 0 >"$ENTER_STREAK_FILE"
@@ -273,7 +341,9 @@ tick() {
 
   local throttled=0
   [ "$(cat "$MODE_FILE" 2>/dev/null || echo "$current_mode")" = "guided" ] && throttled=1
-  write_metrics "$throttled" "$missing" "$(read_count "$TRIPS_FILE")" "$(read_count "$RESTORES_FILE")" "${sensor_labels[@]}"
+  local deep=0
+  [ -e "$FREQ_SNAPSHOT_FILE" ] && deep=1
+  write_metrics "$throttled" "$missing" "$(read_count "$TRIPS_FILE")" "$(read_count "$RESTORES_FILE")" "$deep" "${sensor_labels[@]}"
 }
 
 run_selftest() {
@@ -302,6 +372,8 @@ run_selftest() {
   echo performance >"$fixture/cpufreq/policy0/energy_performance_preference"
   echo performance >"$fixture/cpufreq/policy1/scaling_governor"
   echo performance >"$fixture/cpufreq/policy1/energy_performance_preference"
+  echo 4000000 >"$fixture/cpufreq/policy0/scaling_max_freq"
+  echo 4000000 >"$fixture/cpufreq/policy1/scaling_max_freq"
 
   local env_common=(
     HWMON_ROOT="$fixture/hwmon"
@@ -312,6 +384,8 @@ run_selftest() {
     THERMAL_GUARD_SENSORS="k10temp=95/80 nvme=70/60"
     THERMAL_GUARD_ENTER_TICKS=2
     THERMAL_GUARD_EXIT_TICKS=3
+    THERMAL_GUARD_DEEP_ENTER_TICKS=2
+    THERMAL_GUARD_DEEP_CAP_PERCENT=60
     THERMAL_GUARD_VERBOSE_INTERVAL=0
   )
 
@@ -341,17 +415,30 @@ run_selftest() {
   assert_eq "snapshot-exists" "$([ -s "$fixture/state/governor-epp.snapshot" ] && echo yes)" "yes"
   assert_eq "trips-1" "$(cat "$fixture/state/trips")" "1"
 
-  # 4. Still hot: stays guided, no double trip.
+  # 4. Still hot: stays guided, no double trip; deep streak accrues.
   env "${env_common[@]}" bash "$0" tick
   assert_eq "stays-guided" "$(cat "$fixture/pstate/status")" "guided"
   assert_eq "trips-still-1" "$(cat "$fixture/state/trips")" "1"
 
-  # 5. Middle band (85C, above low 80): dwell resets, stays guided.
+  # 4b. Second rung: DEEP_ENTER_TICKS=2 hot ticks IN guided -> cap fires.
+  env "${env_common[@]}" bash "$0" tick
+  assert_eq "deep-cap-applied" "$(cat "$fixture/cpufreq/policy0/scaling_max_freq")" "2400000"
+  assert_eq "deep-cap-policy1" "$(cat "$fixture/cpufreq/policy1/scaling_max_freq")" "2400000"
+  assert_eq "freq-snapshot-exists" "$([ -s "$fixture/state/max-freq.snapshot" ] && echo yes)" "yes"
+  assert_eq "deep-trips-1" "$(cat "$fixture/state/deep-trips")" "1"
+  grep -q '^thermal_pstate_guard_deep_throttled 1$' "$fixture/textfile/guard.prom"
+  assert_eq "metric-deep-throttled" "$?" "0"
+
+  # 5. Middle band (85C, above low 80): heat broke — deep cap dropped,
+  # still guided; dwell resets.
   echo 85000 >"$fixture/hwmon/hwmon3/temp1_input"
   env "${env_common[@]}" bash "$0" tick
+  assert_eq "middle-band-drops-deep-cap" "$(cat "$fixture/cpufreq/policy0/scaling_max_freq")" "4000000"
+  assert_eq "middle-band-stays" "$(cat "$fixture/pstate/status")" "guided"
   env "${env_common[@]}" bash "$0" tick
   assert_eq "middle-band-resets" "$(cat "$fixture/state/exit-streak")" "0"
-  assert_eq "middle-band-stays" "$(cat "$fixture/pstate/status")" "guided"
+  assert_eq "middle-band-stays-2" "$(cat "$fixture/pstate/status")" "guided"
+  assert_eq "deep-cap-still-off" "$(cat "$fixture/cpufreq/policy0/scaling_max_freq")" "4000000"
 
   # 6. Cool x3: restores active + snapshotted governor.
   echo 70000 >"$fixture/hwmon/hwmon3/temp1_input"
@@ -364,6 +451,7 @@ run_selftest() {
   assert_eq "epp-restored" "$(cat "$fixture/cpufreq/policy0/energy_performance_preference")" "performance"
   assert_eq "restores-1" "$(cat "$fixture/state/restores")" "1"
   assert_eq "snapshot-removed" "$([ -e "$fixture/state/governor-epp.snapshot" ] && echo yes || echo no)" "no"
+  assert_eq "freq-snapshot-removed" "$([ -e "$fixture/state/max-freq.snapshot" ] && echo yes || echo no)" "no"
 
   # 7. Metrics reflect the run.
   grep -q '^thermal_pstate_guard_throttled 0$' "$fixture/textfile/guard.prom"

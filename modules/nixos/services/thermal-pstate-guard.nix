@@ -19,6 +19,11 @@
 #             for enterTicks consecutive 10 s ticks
 #   restore = "active" + snapshotted governor/EPP once ALL sensors sit at or
 #             below their low thresholds for exitTicks ticks
+#   deep    = second rung (freeze-16/17 autopsy, 2026-10-14): guided alone
+#             held 96-99 C through BOTH crash boots; when heat persists at
+#             or above the high threshold for deepEnterTicks MORE ticks in
+#             guided, scaling_max_freq is capped per policy to
+#             deepCapPercent of its snapshot (restored when heat breaks)
 #
 # A written gate ("NO heavy builds") was violated within the hour it was
 # written (freeze-14's death-minute nix burst) — this guard is the enforcement
@@ -85,6 +90,18 @@ _: {
           type = lib.types.int;
           default = 12;
           description = "Consecutive all-cool ticks before restoring active (dwell; a mid-band excursion resets the counter). Default 2 min at the default cadence";
+        };
+
+        deepEnterTicks = lib.mkOption {
+          type = lib.types.int;
+          default = 6;
+          description = "Second rung (freeze-16/17 autopsy): consecutive hot ticks IN guided before capping scaling_max_freq per policy to deepCapPercent — guided alone held 96-99 °C through both crash boots, so sustained heat while already throttled gets a hard frequency ceiling the firmware did not apply";
+        };
+
+        deepCapPercent = lib.mkOption {
+          type = lib.types.int;
+          default = 60;
+          description = "Second rung: scaling_max_freq cap as a percent of each policy's snapshot maximum; restored when heat breaks below the high threshold (middle/cool band), on exit, or on external-override adoption";
         };
 
         verboseIntervalSeconds = lib.mkOption {
@@ -176,6 +193,8 @@ _: {
                   "THERMAL_GUARD_SENSORS=${sensorSpec}"
                   "THERMAL_GUARD_ENTER_TICKS=${toString cfg.enterTicks}"
                   "THERMAL_GUARD_EXIT_TICKS=${toString cfg.exitTicks}"
+                  "THERMAL_GUARD_DEEP_ENTER_TICKS=${toString cfg.deepEnterTicks}"
+                  "THERMAL_GUARD_DEEP_CAP_PERCENT=${toString cfg.deepCapPercent}"
                   "THERMAL_GUARD_VERBOSE_INTERVAL=${toString cfg.verboseIntervalSeconds}"
                   "THERMAL_GUARD_NORMAL_GOVERNOR=${cfg.normalGovernor}"
                   "THERMAL_GUARD_NORMAL_EPP=${cfg.normalEpp}"
