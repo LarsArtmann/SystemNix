@@ -132,7 +132,10 @@ let
           in
           map (detail: { inherit name detail; }) (classify url)
         )
-        inputs
+        # `self` is EXCLUDED: forcing it evaluates this flake's own outputs,
+        # which seq-force this audit — infinite recursion (hit live
+        # 2026-10-14). self can never carry a pin URL.
+        (builtins.removeAttrs inputs [ "self" ])
     );
 
   # ── surface 2: flake.lock originals (?rev= class only — old inline-guard

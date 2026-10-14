@@ -532,6 +532,26 @@ in
             "browser-history-backup.service"
           ];
         };
+        # Wave 3 (2026-10-14, owner-directed window, storm overrides per the
+        # waves-1+4 precedent): pocket-id → Samsung TLC. Stance: the service
+        # carries WorkingDirectory=/var/lib/pocket-id (hot-db.md pre-cutover
+        # table) → implicit RequiresMountsFor hard-requires the mount; kept
+        # (not the caddy treatment) — fail-closed is CORRECT for the SSO
+        # backbone's DB (never write the QLC shadow dir through the mount).
+        entries.pocket-id = {
+          path = "/var/lib/pocket-id";
+          cow = true;
+          unit = "pocket-id.service";
+          # pocket-id-backup reads the sqlite file directly;
+          # pocket-id-provision WRITES client-secrets/ under the dataDir —
+          # without the anti-shadow wiring a detached Samsung would let it
+          # shadow-write OIDC client secrets onto the root fs (the
+          # 2026-08-22 secret-desync class, self-inflicted by the tier).
+          extraUnits = [
+            "pocket-id-backup.service"
+            "pocket-id-provision.service"
+          ];
+        };
       };
       # User cache subvolumes → Samsung TLC (2026-09-18/19 IO-audit
       # relocation): the nix fetch cache (~8.7 G gitv3+tarballs) leaves the
