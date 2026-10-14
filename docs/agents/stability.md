@@ -6,6 +6,7 @@
 ## Index
 
 - [Hardware Instability (post-crash, evo-x2) — freezes #1..#7 + #28, guard zones, defense-in-depth](#hardware-instability-post-crash-evo-x2)
+- [Agent-Initiated SIGSTOP — Standing Rule (REVOCATION doctrine, 2026-10-07)](#agent-initiated-sigstop--standing-rule-revocation-doctrine-2026-10-07)
 - [ZRAM & Memory Reclaim](#zram--memory-reclaim)
 - [Kernel & Network Hardening (adopted + rejected)](#kernel--network-hardening-2026-09-10-borrowed-from-paepckehhnixos)
 
@@ -36,6 +37,12 @@
 - **Vacuum mechanism** — journald auto-vacuums at `SystemMaxUse = 8G` (`platforms/nixos/system/boot.nix`, hot-tier `/var/log/journal` on the Samsung). There is NO cron vacuum and NO human in the loop: when the journal crosses 8G, the OLDEST boots vanish silently. Three autopsies were won-or-lost on the pull-before-vacuum race (10-03 triage lost its journal outright; freeze-27/28 pulled in time by dispatch luck).
 - **Pre-vacuum evidence gate** — `scripts/pre-vacuum-evidence-gate.sh` (live check; wired as pre-deploy-check §15, fixture-tested by `checks.pre-vacuum-gate-selftest`). For every non-current boot still on disk it checks for a committed evidence file under `docs/status/` citing the boot id (hex-boundary match — a bare 8-char id8 grep false-positives inside 40-char git SHAs) and, when absent, whether any UNCHECKED row in `docs/todo/stability.md` cites the boot's date window. Open row + no evidence → REFUSE (exit 1, pre-deploy BLOCKS). Unguarded-but-unreferenced boots degrade to a warning. It also prints the vacuum clock (journal disk usage vs SystemMaxUse).
 - **Remedy when the gate refuses** — pull the listed boot BEFORE anything else: one command, `scripts/boot-evidence-pull.sh -b <boot-id-or-offset>` (canonical sections: boot-boundary lines, OOM/guard/thermal/panic census + full OOM/guard/thermal lines, kernel panic scan; writes `docs/status/tasks/<UTC-date-time>_boot-<id8>-evidence-pull.md` citing the id8 in the hex-boundary form the gate greps; never overwrites; `-o -` streams to stdout; fixture selftest `checks.boot-evidence-pull-selftest`). The 2026-10-13 backfill example: `docs/status/tasks/2026-10-13_02-30_boot-evidence-backfill-oct05-10.md` (11 boots Oct 5–10 pulled at 7.1G/8G pressure). Commit the file, re-run the gate.
+
+## Agent-Initiated SIGSTOP — Standing Rule (REVOCATION doctrine, 2026-10-07)
+
+- **NO agent-initiated SIGSTOP or kill of ANY user session, ever.** The 2026-10-07 morning "battery SIGSTOP license" (granted live during the freeze-25 death band: any session may SIGSTOP foreign agent batteries at io-PSI some avg10 >60, resume <20 sustained 10 min, staggered, sweep the class) was **REVOKED by the owner the same day (~11:2x, freeze-26 session)** after two sweeps hit his live MacBook-origin SSH fleet (192.168.1.62 fish→crush -y trees, 11:08 + 11:12): 10 of 14 remote-PTY session trees broke, and the "resumable, lossless" premise proved FALSE for ssh-interactive sessions — after SIGCONT they self-re-stop (orphaned-process-group/SIGTTIN class) and are unrecoverable without the owner restarting them. The premise holds ONLY for headless pool processes. Full account: `docs/status/2026-10-07_11-26_freeze-26-autopsy-sweeps-revoked-license-pty-breakage.md` §d1/§d3/§a11; the dead license text + amendments stay on the library row for the historical record (`docs/todo/stability.md` SIGSTOP-license row).
+- **Action menu during an IO storm: measure, attribute, report, recommend.** Nothing else. Battery-class containment, if ever adopted at all, belongs INSIDE the guard as an owner-deployed unit targeting headless pool sessions only (the zone-6 action-split row in `docs/todo/stability.md` owns that design).
+- **Attribution before any sweep** (amendment kept valid even under the prohibition): journal-clear the obvious suspect before sweeping a class — the tq-agent-pool near-miss showed budget-skip lines only while the real respawner was the owner's MacBook fleet. And **a prior session's record of an owner ruling is not the ruling — verify authority in real time** before acting on "the owner licensed this."
 
 ## ZRAM & Memory Reclaim
 
