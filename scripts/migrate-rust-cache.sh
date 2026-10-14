@@ -19,6 +19,17 @@
 #
 # Safe to re-run: if the disk is already btrfs labelled rust-cache and mounted,
 # the format step is skipped and the move steps converge (rsync is idempotent).
+#
+# IO DOCTRINE (freezes #19/#20/#21): this is a USB→USB full-disk copy — SOURCE
+# (/mnt/buildcache) and DEST are both full disks on the SAME USB DAS bus, so
+# the rsync legs are TWO saturating readers on one link, and the source is the
+# build battery's own cache disk. This script launched FOUR times on
+# 2026-10-06/07 and killed the box THREE times. It therefore refuses to start
+# unless the box admits it (maintenance-entry-gate: IO PSI band + guard-trip
+# recency), serializes against every other migrate-* script (flock), and runs
+# the rsync legs under the heavy-job admission queue. Never run it alongside
+# btrbk/scrub windows or live builds regardless — the gate reads the box, it
+# cannot read your intentions.
 set -Eeuo pipefail
 
 DEVICE="/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174244451713-part1"
@@ -33,6 +44,35 @@ fail() {
   exit 1
 }
 info() { echo "==> $*"; }
+
+# ── Entry gate (freeze #19/#20/#21 class) ──────────────────────────────────
+# Serialize: one migrate-* script at a time, held for THIS script's whole
+# lifetime (a gate-child's flock would die with the child — hence here, not
+# in maintenance-entry-gate). /run/lock is tmpfs: no stale-lock class, flock
+# releases on any exit including SIGKILL. The canonical dir is the
+# workload-admission slot dir (tmpfiles-created 0777); the env override
+# exists for fixture sandboxes only.
+MAINT_LOCK_DIR="${MAINT_ENTRY_GATE_LOCK_DIR:-/run/lock/systemnix-heavy}"
+mkdir -p "$MAINT_LOCK_DIR" 2>/dev/null || true
+exec 8>>"$MAINT_LOCK_DIR/systemnix-maintenance.lock" || fail "cannot open maintenance lock in $MAINT_LOCK_DIR"
+flock -n 8 || fail "another migrate-* script holds $MAINT_LOCK_DIR/systemnix-maintenance.lock — serialize maintenance, never stack it"
+# Admit: refuse to start into a tripped box (30% interactive band per the
+# freeze-19/21 queue row; the trip-recency leg covers the episodic-dip race).
+maintenance-entry-gate --name migrate-rust-cache --psi-max 30 ||
+  fail "entry gate refused (see above) — a refused migration is free, a migration into a storm is freeze #19"
+
+# heavy-job wrap (freeze #4 doctrine): the rsync legs are heavy jobs and queue
+# behind the workload-admission slots. Warn-and-run-unwrapped only where the
+# queue binary cannot exist (fixture sandboxes); on evo-x2 it is a system
+# package and always present.
+run_heavy() {
+  if command -v heavy-job >/dev/null 2>&1; then
+    heavy-job "$@"
+  else
+    echo "WARN: heavy-job not on PATH — running unwrapped (no workload-admission here?)" >&2
+    "$@"
+  fi
+}
 
 [ "$(id -un)" = "lars" ] || fail "run as lars (nix run .#migrate-rust-cache)"
 $SUDO true 2>/dev/null || fail "passwordless sudo required"
@@ -89,7 +129,7 @@ move() {
   if mountpoint -q "$SOURCES" && [ -d "$src" ] && [ ! -L "$src" ]; then
     info "moving $rel: $SOURCES/$rel -> $dst"
     mkdir -p "$(dirname "$dst")"
-    rsync -a --delete "$src/" "$dst/"
+    run_heavy rsync -a --delete "$src/" "$dst/"
     local sf dfc
     sf="$(find "$src" | wc -l)"
     dfc="$(find "$dst" | wc -l)"
