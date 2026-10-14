@@ -89,9 +89,12 @@ let
           let
             v = ((nodes.${cur}.inputs or { }).${builtins.head segs} or null);
           in
-          if v == null then null
-          else if builtins.isString v then go (builtins.tail segs) v
-          else go (v ++ builtins.tail segs) (lock.root or "root");
+          if v == null then
+            null
+          else if builtins.isString v then
+            go (builtins.tail segs) v
+          else
+            go (v ++ builtins.tail segs) (lock.root or "root");
     in
     go seg0 (lock.root or "root");
 
@@ -99,7 +102,12 @@ let
     let
       v = rootInputs.treefmt-nix or null;
     in
-    if v == null then null else if builtins.isString v then v else resolveFollow v;
+    if v == null then
+      null
+    else if builtins.isString v then
+      v
+    else
+      resolveFollow v;
 
   # Deep treefmt-nix guard (2026-10-14): every declared treefmt-nix edge
   # in the whole graph — not just root-owned ones — must resolve to the
@@ -112,9 +120,12 @@ let
     let
       value = (nodes.${nodeName}.inputs or { }).treefmt-nix or null;
       resolved =
-        if builtins.isString value then value
-        else if builtins.isList value then resolveFollow value
-        else null;
+        if builtins.isString value then
+          value
+        else if builtins.isList value then
+          resolveFollow value
+        else
+          null;
     in
     if value == null || rootTreefmtKey == null || resolved == rootTreefmtKey then
       [ ]

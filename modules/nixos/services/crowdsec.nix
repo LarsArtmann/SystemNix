@@ -49,6 +49,31 @@ _: {
       };
 
       lapiCredentialsFile = "/var/lib/crowdsec/lapi.yaml";
+
+      yaml = pkgs.formats.yaml { };
+      # Same content as the upstream module's own configFile (generated from
+      # the MERGED settings.general, defaults included) — cscli must see the
+      # identical db_config/paths or the repair could touch the wrong DB.
+      repairConfig = yaml.generate "crowdsec-repair-cscli.yaml" config.services.crowdsec.settings.general;
+
+      # Upstream gap (live 2026-10-14): `machine add --auto` writes the DB row
+      # FIRST and the credentials file SECOND — when the file write fails, the
+      # DB keeps an orphan machine and every later start fails with
+      # "user already exist" forever. If the credentials file is missing,
+      # delete the orphan so setup's machine add can succeed. --ignore-missing
+      # makes it a no-op on healthy boots (verified cmd/crowdsec-cli/climachine/
+      # delete.go v1.8.1: no confirmation prompt, errors return nil).
+      machineRepair = pkgs.writeShellApplication {
+        name = "crowdsec-machine-repair";
+        runtimeInputs = [ ];
+        text = ''
+          if [ ! -s ${lapiCredentialsFile} ]; then
+            echo "crowdsec-machine-repair: credentials file missing — deleting orphan DB machine"
+            ${lib.getExe' config.services.crowdsec.package "cscli"} \
+              -c ${repairConfig} machines delete ${config.services.crowdsec.name} --ignore-missing || true
+          fi
+        '';
+      };
     in
     {
       # Platform-truth catalog entry (ADR-008): unconditional inline-imports
@@ -67,6 +92,26 @@ _: {
       ];
 
       config = lib.mkIf config.services.crowdsec.enable {
+        # Upstream tmpfiles list creates stateDir/hubDir/confDir but NOT
+        # rootDir (/var/lib/crowdsec) itself — live 2026-10-14 it materialized
+        # root:root 0755 (boot-time side effect) and the LAPI credentials
+        # write EACCES'd. 'd' entries also re-chown existing dirs, healing
+        # the already-created root-owned dir on the next activation.
+        systemd.tmpfiles.settings."20-crowdsec-root" = {
+          "/var/lib/crowdsec".d = {
+            user = "crowdsec";
+            group = "crowdsec";
+            mode = "0750";
+          };
+        };
+
+        # Stage 1 has NO bouncer: the bouncer module's register oneshot still
+        # activates (its enable defaults to crowdsec.enable) and its
+        # `StateDirectory = … crowdsec` lets systemd re-own /var/lib/crowdsec
+        # to a DynamicUser — re-breaking the ownership the tmpfiles rule fixes.
+        # Stage 3 re-enables it deliberately together with the bouncer.
+        services.crowdsec-firewall-bouncer.registerBouncer.enable = false;
+
         services.crowdsec = {
           # LAPI on loopback (upstream default 8080 collides with SigNoz).
           settings.general = {
@@ -136,8 +181,12 @@ _: {
               # Prepend (mkBefore) so the DNS wait runs BEFORE the upstream
               # setup script's `cscli hub update` (which hard-fails without
               # DNS and would otherwise burn restarts through the ~2min
-              # dnsblockd boot window).
-              ExecStartPre = lib.mkBefore dnsGate.serviceConfig.ExecStartPre;
+              # dnsblockd boot window), and the orphan-machine repair runs
+              # BEFORE setup's `machine add --auto`.
+              ExecStartPre = lib.mkBefore [
+                dnsGate.serviceConfig.ExecStartPre
+                (lib.getExe machineRepair)
+              ];
               # 180s gate budget + setup (hub update + installs) — the
               # manager default of 3min is too tight on a cold boot.
               TimeoutStartSec = "6min";
