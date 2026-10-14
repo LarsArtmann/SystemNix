@@ -34,4 +34,4 @@ No config or code change was needed — the answer is a verdict, not a fix. The 
 
 ## e) Direct follow-up (harvested)
 
-- **13-19s prod dashboard renders vs 0.1s local on identical data** — journal 19:50-19:56 (200s at ~30s poll cadence), empty `/ingest` 8.2s at 20:36; suspects `MemoryMax=512M`/`GOMEMLIMIT=384MiB` GC pressure or the Samsung hot-tier read path (live since 16:00 today). Queued as `[ready]` in `TODO_LIST.md` + `docs/todo/services.md` (browser-history cluster). NOT harvested: none — the verdict itself needs no row.
+- ~~**13-19s prod dashboard renders vs 0.1s local on identical data**~~ **RETRACTED 21:47 same night (unit misread):** the journal `duration` field is NANOSECONDS — tonight's renders were 13-19 **ms**, not seconds (prod is faster than the 0.1s local repro, not slower). The queue row this section originally spawned was replaced by a [watch] row for the two GENUINE historical slow-render bursts (Oct 10 16:33-17:00 ×8, 10.7-37.7s; Oct 12 03:51 ×1, 49.2s — both pre-hot-tier, none today). Full retraction narrative: `docs/status/2026-10-14_21-47_browser-history-stats-full-status-retraction.md` §d.
