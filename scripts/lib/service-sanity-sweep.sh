@@ -35,7 +35,10 @@ systemnix_service_sanity_sweep() {
   local sample_seconds="${2:-10}"
   local cpu_budget_pct="${3:-100}"
   local journal_budget_per_min="${4:-300}"
-  local exempt_regex="${5:-^(clickhouse|signoz-otel-collector)\.service$}"
+  # nix-daemon is exempt: the sweep samples the post-switch window, where the
+  # deploy's own closure work (and any concurrent session's build) legitimately
+  # lands on it — 382% sustained there tripped a false exit-3 on 2026-10-14.
+  local exempt_regex="${5:-^(clickhouse|nix-daemon|signoz-otel-collector)\.service$}"
 
   if [ ! -d "$slice_dir" ]; then
     report_skip "Service Sanity - $slice_dir missing (test env?)"

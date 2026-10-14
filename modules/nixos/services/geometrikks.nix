@@ -388,12 +388,24 @@
             owner = "root";
             group = "root";
             mode = "0400";
+            # Template content changes (unlike secret rotations) touch no
+            # secret, so restartUnits MUST live here — without it the
+            # rendered env updates but the running process keeps the old
+            # environment until some unrelated restart.
+            restartUnits = [ "geometrikks.service" ];
             content = ''
               APP_ADMIN_USER=admin
               APP_ADMIN_PASSWORD=${config.sops.placeholder.geometrikks_admin_password}
               APP_SESSION_SECURE=true
               # Caddy proxies from loopback on this host (plain reverse_proxy)
               APP_TRUSTED_PROXIES=127.0.0.1
+              # Traffic mix is deliberate: LAN-direct clients (no tunnel, no
+              # proxy chain) always log private addresses, so the proxy-peer
+              # advisory would nag forever. Upstream docs/configuration.md
+              # prescribes false for deliberate mixes (this also disables the
+              # 5-min CDN peer scan). Re-enable if a tunnel/proxy ever fronts
+              # Caddy (2026-10-14 status-page session).
+              APP_PROXY_ADVISORY=false
               # Empty = geo-degraded (UI banner, no GeoLite2 download attempt)
               # — the go-live paste is user-gated (free maxmind.com signup).
               MAXMINDDB_USER_ID=${config.sops.placeholder.geometrikks_maxmind_user_id}
