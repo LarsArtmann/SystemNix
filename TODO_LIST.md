@@ -600,6 +600,8 @@
 
 ### pipeline
 
+- [ ] [ready] **pre-commit nixpkgs fast-guard honesty (rc≠0 = SKIP with stderr tail, not a false "lock regression"; heavy-gate refusals are infra state) + sweep all legs for stderr-swallowed infra refusals** — the 10-14 amend hit a false "registry rewrote nixpkgs" on a fine lock (heavy-gate refusal swallowed by `2>/dev/null` + `|| echo unknown`) → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-14_14-53_bank-sync-empty-sca-token-diagnosis-phone-change.md §d.2)
+- [ ] [ready] **AGENTS.md live-probe-set: add the service-env readability boundary** (service envs are NEVER agent-readable — /run/secrets root-only, templates user-0400, sudo banned; sanctioned surfaces = /metrics + journal + owner-run CLIs) → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: same report §e.6)
 - [ ] [ready] **Rows-after-closing-footer guard in `check-todo-system.sh`** (fail when any `- [ ]` row follows the `_Completed work: …_` pointer line — the ca60b35b/223278fa tail-harvest class, hand-relocated in 6f29e8fc after a reviewer finding) → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-03_05-25_task-000001a0fed8bb32fc7345a2452100000000.md §f.1)
 - [ ] [ready] **alejandra-format `platforms/nixos/desktop/niri-wrapped.nix` (drift exists at HEAD, pre-dates the 10-03 guard edit)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] [ready] **Root-cause the devshell-vs-FOD module-graph divergence (crush-daily chromedp case; identical pins, devshell green, FOD red)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-05_10-15_a7868a7-vendorhash-wave-25-fods-batch-fixed-deploy-pending.md §d.4)
