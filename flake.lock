@@ -5387,11 +5387,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791964159,
-        "narHash": "sha256-1ytBhzk4wwMwn4NBgmKvjxiXjlndrAX1Bzjpi3FUu10=",
+        "lastModified": 1791982887,
+        "narHash": "sha256-mK42Jbzl99Y+pdCybYf2zrLeWyEV6LX8jDaFUQi+hck=",
         "owner": "LarsArtmann",
         "repo": "go-structure-linter",
-        "rev": "58163a33c237e0a757bee20ee6d7ed0ba8f0cb73",
+        "rev": "0ee78c8db326386186e3b092f7f2981da3b8bcb2",
         "type": "github"
       },
       "original": {
