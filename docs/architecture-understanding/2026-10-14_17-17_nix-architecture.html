@@ -956,9 +956,9 @@
           <h4>Convention drift: <code>with pkgs;</code> (29 sites) and 2 <code>rec</code> attrsets</h4>
           <p>
             The repo's own documented convention ("with pkgs; hides missing attrs")
-            was violated in 29 module/platform sites; rec attrsets hide dependency
-            structure. Both fixed this session, plus a lint so the class cannot
-            regrow.
+            was violated in 34 sites (29 module/platform + the 5 base.nix manifest
+            lists, ~130 references); rec attrsets hide dependency structure. All
+            fixed this session, plus a lint so the class cannot regrow.
           </p>
         </div>
 
@@ -1068,8 +1068,8 @@
             </tr>
             <tr>
               <td>2</td>
-              <td>with pkgs; &rarr; explicit pkgs. prefixes (29 sites, 21 files)</td>
-              <td>modules/ + platforms/</td>
+              <td>with pkgs; &rarr; explicit pkgs. prefixes (34 sites, 22 files, ~130 refs)</td>
+              <td>modules/ + platforms/ incl. base.nix manifests</td>
               <td><span class="badge badge-fixed">Fixed &amp; eval-verified</span></td>
             </tr>
             <tr>
@@ -1130,16 +1130,6 @@
             <p>
               One module per directory in modules/nixos/services/&lt;name&gt;/;
               kills the _-prefix invisibility and unique-filename constraint.
-            </p>
-          </div>
-        </div>
-        <div class="migration-step">
-          <div class="migration-num">P2</div>
-          <div class="migration-content">
-            <h4>base.nix with-pkgs manifests (effort S, mechanical)</h4>
-            <p>
-              5 long package lists (~150 items); convert + extend with-pkgs-lint
-              scope to platforms/common/packages/ afterwards.
             </p>
           </div>
         </div>
