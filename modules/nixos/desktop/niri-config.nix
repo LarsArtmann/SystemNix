@@ -18,19 +18,19 @@ _: {
         ;
       drmHealthcheck = pkgs.writeShellApplication {
         name = "niri-drm-healthcheck";
-        runtimeInputs = with pkgs; [
-          procps
-          systemd
+        runtimeInputs = [
+          pkgs.procps
+          pkgs.systemd
         ];
         text = builtins.readFile ../../../scripts/niri-drm-healthcheck.sh;
       };
       displayWatchdog = pkgs.writeShellApplication {
         name = "display-watchdog";
-        runtimeInputs = with pkgs; [
-          procps
-          systemd
-          kbd
-          gawk # login-screen guard parses `loginctl list-sessions` with awk
+        runtimeInputs = [
+          pkgs.procps
+          pkgs.systemd
+          pkgs.kbd
+          pkgs.gawk # login-screen guard parses `loginctl list-sessions` with awk
         ];
         text = builtins.readFile ../../../scripts/display-watchdog.sh;
       };
@@ -185,7 +185,7 @@ _: {
           services = {
             display-watchdog = {
               description = "Detect dead display (connected but no signal) and recover";
-              path = with pkgs; [ kbd ];
+              path = [ pkgs.kbd ];
               inherit onFailure;
               serviceConfig = lib.mkMerge [
                 {
@@ -475,8 +475,8 @@ _: {
           };
         };
 
-        environment.systemPackages = with pkgs; [
-          xwayland-satellite
+        environment.systemPackages = [
+          pkgs.xwayland-satellite
         ];
       };
     };

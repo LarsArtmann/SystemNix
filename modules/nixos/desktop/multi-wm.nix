@@ -24,9 +24,9 @@ _: {
           sway = {
             enable = true;
             wrapperFeatures.gtk = true; # So that GTK applications work properly
-            extraPackages = with pkgs; [
-              swayidle # Idle management daemon
-              foot # Terminal
+            extraPackages = [
+              pkgs.swayidle # Idle management daemon
+              pkgs.foot # Terminal
             ];
           };
         };
@@ -41,22 +41,22 @@ _: {
         };
 
         # Additional packages needed for Sway backup WM
-        environment.systemPackages = with pkgs; [
+        environment.systemPackages = [
           # Application launcher for Sway (niri uses DMS spotlight)
-          rofi
+          pkgs.rofi
 
           # File manager
-          nautilus
+          pkgs.nautilus
 
           # Notification daemon - dunst configured via Home Manager (home.nix)
           # mako removed to avoid duplicate notification daemons
 
           # Screenshot tools
-          grim
-          slurp
+          pkgs.grim
+          pkgs.slurp
 
           # Clipboard
-          wl-clipboard
+          pkgs.wl-clipboard
         ];
       };
     };

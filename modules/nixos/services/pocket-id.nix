@@ -73,12 +73,12 @@ _: {
       # declaratively mapped via services.pocket-id-config.autoRotation).
       autoRotateScript = pkgs.writeShellApplication {
         name = "pocket-id-auto-rotate";
-        runtimeInputs = with pkgs; [
-          curl
-          jq
-          coreutils
-          util-linux
-          systemd
+        runtimeInputs = [
+          pkgs.curl
+          pkgs.jq
+          pkgs.coreutils
+          pkgs.util-linux
+          pkgs.systemd
         ];
         text = builtins.readFile ../../../scripts/pocket-id-auto-rotate.sh;
       };

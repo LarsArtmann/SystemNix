@@ -85,11 +85,11 @@ let
       runHook postInstall
     '';
 
-    meta = with pkgs.lib; {
+    meta = {
       description = "SigNoz frontend (community edition)";
       homepage = "https://signoz.io";
-      license = licenses.asl20;
-      platforms = platforms.linux;
+      license = lib.licenses.asl20;
+      platforms = lib.platforms.linux;
     };
   });
 

@@ -78,12 +78,12 @@ _: {
         name = "website-deploy-monitor";
         description = "Check larsartmann.com deploy freshness and notify when stale";
         inherit checkScript;
-        runtimeInputs = with pkgs; [
-          curl
-          jq
-          libnotify
-          coreutils
-          util-linux
+        runtimeInputs = [
+          pkgs.curl
+          pkgs.jq
+          pkgs.libnotify
+          pkgs.coreutils
+          pkgs.util-linux
         ];
         inherit (cfg) user;
         inherit uid;

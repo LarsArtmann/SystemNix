@@ -74,25 +74,25 @@
       # compatibility but are non-functional on niri (Wayland-only).
       # Wayland equivalents (grim, slurp, wtype) are provided for the
       # screenshot/keyboard collectors once upstream supports them.
-      runtimeDeps = with pkgs; [
-        procps
-        util-linux
-        coreutils
-        lm_sensors
-        networkmanager
+      runtimeDeps = [
+        pkgs.procps
+        pkgs.util-linux
+        pkgs.coreutils
+        pkgs.lm_sensors
+        pkgs.networkmanager
         # hardware_identity mac_permanent collector: ethtool -P reads the
         # etched NIC address (stable under Wi-Fi MAC randomization)
-        ethtool
-        bluez
+        pkgs.ethtool
+        pkgs.bluez
         # X11 (legacy — evo-x2 runs Wayland-only niri)
-        xdotool
-        xprintidle
-        scrot
-        wmctrl
+        pkgs.xdotool
+        pkgs.xprintidle
+        pkgs.scrot
+        pkgs.wmctrl
         # Wayland (functional on niri)
-        grim
-        slurp
-        wtype
+        pkgs.grim
+        pkgs.slurp
+        pkgs.wtype
       ];
 
       schemaMigrateScript = pkgs.writeShellApplication {
@@ -377,10 +377,10 @@
               NoNewPrivileges = true;
               PrivateTmp = true;
             };
-            path = with pkgs; [
-              systemd
-              curl
-              jq
+            path = [
+              pkgs.systemd
+              pkgs.curl
+              pkgs.jq
             ];
             script = ''
               AGENT_METRICS="http://localhost:${toString ports.monitor365-metrics}/metrics"
@@ -493,10 +493,10 @@
               NoNewPrivileges = true;
               PrivateTmp = true;
             };
-            path = with pkgs; [
-              systemd
-              curl
-              coreutils
+            path = [
+              pkgs.systemd
+              pkgs.curl
+              pkgs.coreutils
             ];
             script = ''
               SERVER_HEALTH="http://localhost:${toString ports.monitor365-server}/health"

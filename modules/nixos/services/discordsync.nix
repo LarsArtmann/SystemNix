@@ -684,10 +684,10 @@
           inherit onFailure;
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
-          path = with pkgs; [
-            rsync
-            coreutils
-            systemd
+          path = [
+            pkgs.rsync
+            pkgs.coreutils
+            pkgs.systemd
           ];
           serviceConfig = lib.mkMerge [
             {

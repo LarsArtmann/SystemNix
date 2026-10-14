@@ -70,14 +70,14 @@ _: {
           inherit onFailure;
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
-          path = with pkgs; [
-            rsync
-            btrfs-progs
-            coreutils
-            findutils
-            gnugrep
-            psmisc
-            e2fsprogs
+          path = [
+            pkgs.rsync
+            pkgs.btrfs-progs
+            pkgs.coreutils
+            pkgs.findutils
+            pkgs.gnugrep
+            pkgs.psmisc
+            pkgs.e2fsprogs
           ];
           serviceConfig = lib.mkMerge [
             {

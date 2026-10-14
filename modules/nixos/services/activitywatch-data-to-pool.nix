@@ -68,11 +68,11 @@
           inherit onFailure;
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
-          path = with pkgs; [
-            rsync
-            btrfs-progs
-            coreutils
-            procps
+          path = [
+            pkgs.rsync
+            pkgs.btrfs-progs
+            pkgs.coreutils
+            pkgs.procps
           ];
           serviceConfig = lib.mkMerge [
             {
