@@ -557,6 +557,19 @@ in
             "pocket-id-provision.service"
           ];
         };
+        # Wave 2 (2026-10-14, owner-directed window, storm overrides per the
+        # waves-1+4 precedent): dnsblockd → Samsung TLC. Stance: the service
+        # carries StateDirectory + WorkingDirectory=/var/lib/dnsblockd
+        # (hot-db.md pre-cutover table), so the implicit RequiresMountsFor
+        # hard-requires the mount; kept (not the caddy treatment) because
+        # fail-closed is CORRECT for the sole LAN resolver (never write the
+        # QLC shadow dir through the mount). Prepared BEFORE this entry
+        # landed: 13 files / 4.88 GB warm-copied with the service up.
+        entries.dnsblockd = {
+          path = "/var/lib/dnsblockd";
+          cow = true;
+          unit = "dnsblockd.service";
+        };
       };
       # User cache subvolumes → Samsung TLC (2026-09-18/19 IO-audit
       # relocation): the nix fetch cache (~8.7 G gitv3+tarballs) leaves the
