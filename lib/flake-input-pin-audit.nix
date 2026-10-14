@@ -58,7 +58,6 @@
     paperless-gpt-src = "TAG-PINNED at v0.28.0 so the vendorHash + npmDepsHash in pkgs/paperless-gpt.nix stay reproducible (a moving ref re-breaks the FODs on every lock update). LIFT: bump tag + both hashes together deliberately.";
     qmd = "TAG-PINNED at v2.8.3. LIFT: bump the tag deliberately and re-verify the CLI + `qmd mcp` (upstream's nodeModules FOD is only valid per-tag).";
     bank-sync = "Documented-ceiling rollback 2026-10-14 (second float): a lock-only rollback edit floated past the ceiling within hours and unanchored a deploy; hard URL pin + lock override make updates and blanket re-locks NO-OPs by design. LIFT: edit the URL (docs/services/bank-sync.md RE-FLOAT gotcha).";
-    templ = "TAG-PINNED at v0.3.1070 (root-promoted 2026-10-14 to collapse the inboxclean/overview duplicate subtrees — both locked the identical tag, byte-identical narHash; build-tool binary with committed *_templ.go, no vendorHash exposure). LIFT: bump the tag deliberately when a templ release is wanted (re-verify templ codegen against committed *_templ.go files).";
   },
 }:
 let

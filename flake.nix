@@ -260,7 +260,7 @@
       url = "github:LarsArtmann/treefmt-full-flake";
     };
 
-    # templ — shared pin for the templ compiler. Root-promoted 2026-10-14
+    # templ — shared input for the templ compiler. Root-promoted 2026-10-14
     # to collapse the inboxclean ("templ") + overview ("templ-cli")
     # duplicate subtrees: both locked the identical tag with a
     # byte-identical narHash. Build-tool binary, NOT a vendored Go module
@@ -268,8 +268,13 @@
     # vendorHash/FOD exposure. nixpkgs deliberately NOT followed (templ's
     # go-modules FOD is validated against its own pin) — see the
     # deliberate table in lib/lock-audit.nix.
+    # Floated to ?ref=refs/heads/main 2026-10-14 per owner + pin policy
+    # (was tag v0.3.1070, allowlist-lifted same day; upstream default
+    # branch is main, no master exists). Watch: templ CLI ahead of
+    # inboxclean/overview go.mod runtime v0.3.1070 = regen-skew warning
+    # class (2026-10-06 break) — upstream row pins CLI ≥ runtime.
     templ = {
-      url = "github:a-h/templ/v0.3.1070";
+      url = "github:a-h/templ?ref=refs/heads/main";
     };
 
     # todo-list-ai — AI-powered CLI tool for extracting TODOs from codebases

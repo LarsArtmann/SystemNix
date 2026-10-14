@@ -8010,16 +8010,16 @@
         "version": "version"
       },
       "locked": {
-        "lastModified": 1791126376,
-        "narHash": "sha256-9H5X5eiBP1n9CFlWtor3ZdF6uCNPoQdkoi90cyU+kxA=",
+        "lastModified": 1791447740,
+        "narHash": "sha256-rvdXWIXcsM0xT1gFoj2fYj/WtykURnuvbEpgoCv57Uw=",
         "owner": "a-h",
         "repo": "templ",
-        "rev": "07dfb6e0c7c47f56c6e8ed6601ecd65b18e210dc",
+        "rev": "8bbdcac97f59cd4fef43a834a9357b68da243d71",
         "type": "github"
       },
       "original": {
         "owner": "a-h",
-        "ref": "v0.3.1070",
+        "ref": "refs/heads/main",
         "repo": "templ",
         "type": "github"
       }
