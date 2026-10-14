@@ -222,3 +222,49 @@ credentials reachable without `sudo`). Flagged as open.
 - Upstream `logfiles.py` at `v0.19.0`, `v0.20.0`, and `main` all still use
   `os.access`.
 - `nix build .#geometrikks --no-link` → green (self-test passes).
+
+---
+
+## POST-DEPLOY ADDENDUM (19:20 CEST)
+
+**The fixes are LIVE and verified.** A concurrent session's deploy (log
+`2026-10-14_18-57-00.log`) evaluated the current tree and therefore shipped my
+commits; it switched to `system-888`/`889` and anchored correctly
+(`/run/current-system` == `system-889-link` → `jk0xm68a…`). My own
+`nix run .#deploy` aborted immediately on the concurrent-deploy flock (exit 13);
+no competing deploy was forced.
+
+Verification (all against live state):
+
+- **DNS fix live:** `getent ahostsv4 api64.ipify.org` → `104.237.62.213` (real
+  A record, no longer the block IP `192.168.1.200`); `ipify.org` → `104.26.13.205`.
+- **Map home fixed:** `journalctl -u geometrikks` shows
+  `home_location_resolved source=external_ip` at 19:08:48 (post-restart).
+- **Advisory cleared:** `fetch http://127.0.0.1:8102/health` → `"advisories":[]`
+  (no `map-home-undetected`); `"missingFiles":[]`; ingestion `running`.
+- **Patch deployed:** the running `geometrikks-server` (PID 3139026) executes the
+  **patched** venv `g5n5sbdiw…-geometrikks-0.19.0-env` (contains
+  `_is_readable`), so the tailed-access-log list + downloads will report
+  availability instead of "missing".
+
+Outstanding / notes:
+
+- The deploying session exited **code 3** (post-deploy smoke "NEW failure":
+  `Service Sanity CPU — nix-daemon 382%CPU`) — an artifact of the concurrent
+  builds in the smoke window, **not** a regression from these changes. Journal-rate
+  + memory-throttle WARNs are pre-existing advisories.
+- **DB row-count verification remains BLOCKED on credentials.** No unprivileged
+  path exists: `pg_hba` is `local all all peer` (no `lars` role) and
+  `host … 127.0.0.1/32 md5` needs the sops DB password (root-only env /
+  `/var/lib/geometrikks/.env` is 0600 geometrikks). Strong indirect evidence the
+  data is fine: `/health` reports `failedBatches:0 failedRecords:0`, and the app
+  log shows `Started log ingestion service` + `Total processed` counters growing.
+  The `~0 rows` reading comes from TimescaleDB `approximate_row_count` (an
+  estimate). **Owner query to settle it** (run as `postgres` or the
+  `geometrikks` role; `count(*)` forces an exact scan): `SELECT count(*) FROM
+  access_logs;` and the same for `geo_events` in the `geometrikks` DB.
+- Design decisions recorded: (1) DNS whitelist over hardcoding
+  `MAP_HOME_LATITUDE/LONGITUDE` (keeps auto-detection adaptive); (2) upstream
+  patch + self-test over re-permissioning Caddy's 0600 logs (Caddy has no mode
+  knob and POSIX ACLs are masked away by a 0600 create mode).
+
