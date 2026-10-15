@@ -238,6 +238,9 @@ let
     # repos.
     pkgs.go_1_27
     pkgs.golines # Go line-shortener (moved from stray ~/go/bin 2026-10-01, fifty-todos #45; nixpkgs 0.16.0 verified)
+    pkgs.gosec # Go security checker (nixpkgs 2.29.0)
+    pkgs.govulncheck # Go vulnerability scanner against the Go vuln DB (nixpkgs 1.9.0)
+    pkgs.actionlint # GitHub Actions workflow linter (nixpkgs 1.7.12)
     pkgs.gopls
     pkgs.golangci-lint
     pkgs.golangci-lint-langserver

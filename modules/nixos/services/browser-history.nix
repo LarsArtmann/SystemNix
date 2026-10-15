@@ -271,6 +271,18 @@
             # parses the env var as a URL (OTel spec) requires the scheme.
             otelEndpoint = lib.mkDefault "http://127.0.0.1:${toString ports.signoz-otlp-grpc}";
 
+            # AI suite (2026-10-15, owner decision: local fastflowlm — no
+            # external key; PMA/papdashboard precedent). The server treats AI
+            # as unconfigured until LLM_API_KEY is non-empty
+            # (api/server.go:557 gate) — the dummy "local" rides the unit
+            # Environment below. Model single-sourced from the fastflowlm
+            # module (strict binding, machineId precedent — eval fails loudly
+            # if that module goes away). 10m timeout: flm socket-activates
+            # with a 2-5 min cold load from idle; 90s default would abort.
+            llm.baseUrl = lib.mkDefault "http://127.0.0.1:${toString ports.fastflowlm}/v1";
+            llm.model = lib.mkDefault config.services.fastflowlm.model;
+            llm.timeout = lib.mkDefault "10m";
+
             # Module options, not unit-level env twins (2026-10-15 audit F4):
             # upstream renders LOG_LEVEL from logLevel and loads the sops
             # file from environmentFile — unit-level duplicates only worked
@@ -281,8 +293,7 @@
             # /health agent-freshness gate and the agentActivity textfile
             # collector read the same maxAgeMinutes value, so gatus and
             # /health cannot disagree. "0" would disable the server leg.
-            agentFreshness =
-              lib.mkDefault "${toString config.services.browser-history.agentActivity.maxAgeMinutes}m";
+            agentFreshness = lib.mkDefault "${toString config.services.browser-history.agentActivity.maxAgeMinutes}m";
           };
 
           systemd.services.browser-history = {
@@ -300,6 +311,12 @@
                 Environment = [
                   "GOMEMLIMIT=384MiB"
                   "MAX_USERS=1"
+                  # AI gate + chat subsystem: LLM_API_KEY non-empty flips the
+                  # provider on ("local" dummy — flm ignores it, PMA
+                  # precedent); CHAT_DB_PATH enables /chat (env-only upstream,
+                  # lives beside data.db in the DynamicUser StateDirectory).
+                  "LLM_API_KEY=local"
+                  "CHAT_DB_PATH=/var/lib/browser-history/chat.db"
                 ];
                 # Must exceed the 300s OIDC gate budget (slow-boot dnsblockd)
                 TimeoutStartSec = "6min";
@@ -819,6 +836,23 @@
                     "[RESPONSE_TIME] < 500"
                   ];
                   alert = "Browser History server down — browsing analytics unavailable";
+                }
+                {
+                  # Registration-bypass + deletion/rollback detector (2026-10-15,
+                  # row services.md:170): the count-gap exploitation class is
+                  # invisible to MAX_USERS alone. Baseline 9 = 1 real user + 8
+                  # zombie bring-up dupes (revoke queued [blocked:user]).
+                  name = "Browser History User Count";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.browser-history}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    # Anchored pat (leading \n) so the HELP comment can never
+                    # satisfy the pattern (2026-08-22 class).
+                    "[BODY] == pat(*\nbrowser_history_users 9\n*)"
+                  ];
+                  alert = "Browser History user count changed from the 2026-10-15 baseline of 9: an INCREASE = registration bypass (count-gap class — verify the MAX_USERS gate + /auth/import reachability); a DECREASE = deletion or read-model rollback. If you JUST revoked bring-up dupes ([blocked:user] row), this red is the expected confirmation — update the baseline literal in browser-history.nix and close the row.";
                 }
               ]
               ++ lib.optionals cfg.agentActivity.enable [

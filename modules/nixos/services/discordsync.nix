@@ -134,7 +134,10 @@
       # Attachments in the separate attachments/ dir are always preserved.
       dbHeal = pkgs.writeShellApplication {
         name = "discordsync-db-heal";
-        runtimeInputs = [ pkgs.sqlite pkgs.btrfs-progs ];
+        runtimeInputs = [
+          pkgs.sqlite
+          pkgs.btrfs-progs
+        ];
         text = ''
           db="${cfg.databasePath}"
           if [ ! -f "$db" ]; then

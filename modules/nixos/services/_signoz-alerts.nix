@@ -504,7 +504,7 @@ in
     "signoz/rules/discordsync-event-loss-gap.json".source = mkRule {
       name = "DiscordSync Event Loss Gap (emitted but not projected)";
       description = "Events were captured and dispatched but never projected — silent data loss in the CQRS pipeline (crash, DLQ, or bus gap). Check /api/projection/status worker errors and DLQ depth; projection poison = fix the poison class, then reset+replay from the journal";
-      query = ''sum(increase(discordsync_events_emitted_total[10m])) - sum(increase(discordsync_events_projected_total[10m]))'';
+      query = "sum(increase(discordsync_events_emitted_total[10m])) - sum(increase(discordsync_events_projected_total[10m]))";
       target = 5;
       interval = "5m";
       severity = "critical";

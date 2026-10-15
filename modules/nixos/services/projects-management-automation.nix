@@ -59,9 +59,11 @@
           # first-hand got-hash from the 02:46 nh enumeration at locked
           # rev 3149585c; class comment: lib/lars-packages.nix
           # flakePkgShim — same value as the lars-packages surface)
-          package = inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-lPN1fqTDp3jxmThsmdXIlbFpiM10h6qK1ksUYE1HvY8=";
-          };
+          package =
+            inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
+              {
+                vendorHash = "sha256-lPN1fqTDp3jxmThsmdXIlbFpiM10h6qK1ksUYE1HvY8=";
+              };
           user = primaryUser;
           group = "users";
           home = "/home/${primaryUser}";

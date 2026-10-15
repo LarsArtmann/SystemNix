@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>browser-history — Adoption &amp; Utilization Audit · 2026-10-15</title>
+    <title>
+      browser-history — Adoption &amp; Utilization Audit · 2026-10-15
+    </title>
     <style>
       /* =========================================================================
          BAUHAUS LIGHT — Editorial template
@@ -879,12 +881,12 @@
           <div class="eyebrow">LIBRARY DEEP DIVE &middot; 2026-10-15</div>
           <h1>browser-history — Adoption &amp; Utilization Audit</h1>
           <p class="subtitle">
-            LarsArtmann's self-hosted browsing-history platform (Go server + agent,
-            NixOS modules) consumed by SystemNix as a flake input on evo-x2. The
-            question asked: latest version, superbly and perfectly configured?
-            The answer: operationally superb, not perfect — one anti-pattern with
-            live residue, an entire AI feature suite dark, and a handful of module
-            options bypassed at the unit level.
+            LarsArtmann's self-hosted browsing-history platform (Go server +
+            agent, NixOS modules) consumed by SystemNix as a flake input on
+            evo-x2. The question asked: latest version, superbly and perfectly
+            configured? The answer: operationally superb, not perfect — one
+            anti-pattern with live residue, an entire AI feature suite dark, and
+            a handful of module options bypassed at the unit level.
           </p>
           <div class="meta">
             <span class="tag amber">Deployed: fff6034 (live-verified)</span>
@@ -920,33 +922,34 @@
         <section id="summary">
           <h2><span class="num">00</span>Summary</h2>
           <p>
-            SystemNix is one of the best-wired consumers in the LarsArtmann fleet:
-            the wrapper module stays thin, upstream owns hardening, and every
-            operational scar since 2026-08 (WDT crash loop, SQLITE_READONLY
-            uid-drift, agent timer races, quiet-day freshness 503) is encoded as
-            gates, heals, or VM-test steps. Version currency is healthy — the
-            deployed binary <strong>is</strong> the locked rev
+            SystemNix is one of the best-wired consumers in the LarsArtmann
+            fleet: the wrapper module stays thin, upstream owns hardening, and
+            every operational scar since 2026-08 (WDT crash loop,
+            SQLITE_READONLY uid-drift, agent timer races, quiet-day freshness
+            503) is encoded as gates, heals, or VM-test steps. Version currency
+            is healthy — the deployed binary <strong>is</strong> the locked rev
             (<code>fff6034</code>, verified live in
-            <code>/etc/systemd/system/browser-history.service</code> this session),
-            tracking unreleased master deliberately. What keeps this from
-            "perfect": the 2026-10-14 re-attribution was done with manual SQL
-            where upstream ships a replay-consistent <code>claim-orphaned</code>
-            CLI, leaving the event journal un-rewritten and 217 behavioural rows
-            unclaimed; the entire AI suite (<code>llm.*</code> options — summaries,
-            per-user cron digests, themes, and the brand-new chat-with-history)
-            is dark; and three module options are bypassed by unit-level
-            duplicates.
+            <code>/etc/systemd/system/browser-history.service</code> this
+            session), tracking unreleased master deliberately. What keeps this
+            from "perfect": the 2026-10-14 re-attribution was done with manual
+            SQL where upstream ships a replay-consistent
+            <code>claim-orphaned</code> CLI, leaving the event journal
+            un-rewritten and 217 behavioural rows unclaimed; the entire AI suite
+            (<code>llm.*</code> options — summaries, per-user cron digests,
+            themes, and the brand-new chat-with-history) is dark; and three
+            module options are bypassed by unit-level duplicates.
           </p>
           <div class="callout callout-amber">
             <strong>The bottom line</strong>
             No — not "perfectly." The operational layer is superb (9 of 13
             capability groups fully leveraged), but one anti-pattern has live
             residue (journal-inconsistent re-attribution; 217 zero-user rows),
-            the AI feature suite is entirely unconfigured, and upstream moved
-            86 commits past the lock today carrying chat-with-history and a
-            provider swap. Highest-value action: run the already-dry-run-verified
-            <code>claim-orphaned</code> (+ <code>compact-visit-journal</code>) in
-            one stop-window, then flip the LLM options on.
+            the AI feature suite is entirely unconfigured, and upstream moved 86
+            commits past the lock today carrying chat-with-history and a
+            provider swap. Highest-value action: run the
+            already-dry-run-verified
+            <code>claim-orphaned</code> (+ <code>compact-visit-journal</code>)
+            in one stop-window, then flip the LLM options on.
           </div>
         </section>
 
@@ -954,9 +957,10 @@
           <h2><span class="num">&#9670;</span>What's already excellent</h2>
           <p>
             Baseline established from
-            <code>modules/nixos/services/browser-history.nix</code> (the consumer
-            wrapper), <code>docs/services/browser-history.md</code> (runbook), and
-            the upstream modules at <code>nix/server-module.nix</code> /
+            <code>modules/nixos/services/browser-history.nix</code> (the
+            consumer wrapper),
+            <code>docs/services/browser-history.md</code> (runbook), and the
+            upstream modules at <code>nix/server-module.nix</code> /
             <code>nix/agent-module.nix</code>.
           </p>
 
@@ -964,57 +968,102 @@
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Thin-wrapper architecture, upstream owns hardening</strong>
-                <span>Wrapper imports both upstream nixosModules (browser-history.nix:171-174) and layers only SystemNix concerns; upstream's DynamicUser, ProtectSystem=strict, SystemCallFilter, MemoryMax 512M apply untouched.</span>
+                <strong
+                  >Thin-wrapper architecture, upstream owns hardening</strong
+                >
+                <span
+                  >Wrapper imports both upstream nixosModules
+                  (browser-history.nix:171-174) and layers only SystemNix
+                  concerns; upstream's DynamicUser, ProtectSystem=strict,
+                  SystemCallFilter, MemoryMax 512M apply untouched.</span
+                >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
                 <strong>Auth chain done right</strong>
-                <span>WebAuthn rpId/origins correctly bound to history.home.lan (:264-266); OAuth2 routed through a LoadCredential oneshot env-file so a missing Pocket ID secret degrades to WebAuthn-only instead of crash-looping; vHost deliberately plain-layer so forward-auth never breaks passkeys.</span>
+                <span
+                  >WebAuthn rpId/origins correctly bound to history.home.lan
+                  (:264-266); OAuth2 routed through a LoadCredential oneshot
+                  env-file so a missing Pocket ID secret degrades to
+                  WebAuthn-only instead of crash-looping; vHost deliberately
+                  plain-layer so forward-auth never breaks passkeys.</span
+                >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
                 <strong>Zero-touch agent token provisioning</strong>
-                <span>agent-token ensure mints a user-attributed bh_ token against the server DB (provisioner oneshot :534-561); sops hex token demoted to break-glass; machineId binding is eval-loud (no silent fallback since 2026-10-07).</span>
+                <span
+                  >agent-token ensure mints a user-attributed bh_ token against
+                  the server DB (provisioner oneshot :534-561); sops hex token
+                  demoted to break-glass; machineId binding is eval-loud (no
+                  silent fallback since 2026-10-07).</span
+                >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
                 <strong>Every incident scar is encoded</strong>
-                <span>[Unit]-section start limits (592-crash-loop class), timer-is-the-retry doctrine (Restart=no, browser-history.nix:510-518), ownership-heal ExecStartPre for DynamicUser uid-drift, GOMEMLIMIT=384MiB at 75% of MemoryMax, waitServerReady any-status gate for the freshness-503 class.</span>
+                <span
+                  >[Unit]-section start limits (592-crash-loop class),
+                  timer-is-the-retry doctrine (Restart=no,
+                  browser-history.nix:510-518), ownership-heal ExecStartPre for
+                  DynamicUser uid-drift, GOMEMLIMIT=384MiB at 75% of MemoryMax,
+                  waitServerReady any-status gate for the freshness-503
+                  class.</span
+                >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
                 <strong>Data durability</strong>
-                <span>Nightly WAL-safe sqlite3 -readonly .backup to a mount-gated /mnt/pool leaf (14d retention), DB on the Samsung hot tier since 2026-10-14 (waves 1+4, 204 MB), registered in backup-coordination + restic app-dumps.</span>
+                <span
+                  >Nightly WAL-safe sqlite3 -readonly .backup to a mount-gated
+                  /mnt/pool leaf (14d retention), DB on the Samsung hot tier
+                  since 2026-10-14 (waves 1+4, 204 MB), registered in
+                  backup-coordination + restic app-dumps.</span
+                >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
                 <strong>Observability closed-loop</strong>
-                <span>OTel traces to SigNoz (scheme-correct endpoint), two gatus checks (health + agent-data), and the agent-metrics textfile collector that closed the "server up, no data flowing" class (2026-09-16).</span>
+                <span
+                  >OTel traces to SigNoz (scheme-correct endpoint), two gatus
+                  checks (health + agent-data), and the agent-metrics textfile
+                  collector that closed the "server up, no data flowing" class
+                  (2026-09-16).</span
+                >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
                 <strong>Deployment wiring is contract-tested</strong>
-                <span>tests/test-browser-history.nix: 12 steps covering provisioner fail-loud, token idempotence, agent E2E, freshness heal, machine-attribution ingest, and the AD-2 cross-machine dedup verdict — green since 2026-10-07.</span>
+                <span
+                  >tests/test-browser-history.nix: 12 steps covering provisioner
+                  fail-loud, token idempotence, agent E2E, freshness heal,
+                  machine-attribution ingest, and the AD-2 cross-machine dedup
+                  verdict — green since 2026-10-07.</span
+                >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
                 <strong>Registration locked down and probed</strong>
-                <span>MAX_USERS=1 (env; upstream exposes no option), CSRF on, cookieSecure on; the count-gap bypass was found live and its follow-ups are queued (importUsers gate upstream, users-count gatus check).</span>
+                <span
+                  >MAX_USERS=1 (env; upstream exposes no option), CSRF on,
+                  cookieSecure on; the count-gap bypass was found live and its
+                  follow-ups are queued (importUsers gate upstream, users-count
+                  gatus check).</span
+                >
               </div>
             </div>
           </div>
@@ -1022,13 +1071,25 @@
 
         <section id="findings">
           <h2><span class="num">01</span>Findings</h2>
-          <p>Ordered by impact. Every claim was verified against source or the live host this session.</p>
+          <p>
+            Ordered by impact. Every claim was verified against source or the
+            live host this session.
+          </p>
 
           <div class="issue issue-critical" id="f1">
-            <span class="severity severity-critical">Anti-pattern &middot; High impact &middot; live residue</span>
-            <h3>Manual SQL re-attribution bypassed the replay-consistent claim-orphaned CLI</h3>
+            <span class="severity severity-critical"
+              >Anti-pattern &middot; High impact &middot; live residue</span
+            >
+            <h3>
+              Manual SQL re-attribution bypassed the replay-consistent
+              claim-orphaned CLI
+            </h3>
             <div class="where">
-              docs/status/2026-10-14 re-attribution op &middot; residue: docs/todo/services.md:492 (217 rows), :483 (runbook polish) &middot; tool: api/claim_orphaned_cli.go, cmd/browser-history-server/main.go:29 (in deployed fff6034 since 2026-10-07)
+              docs/status/2026-10-14 re-attribution op &middot; residue:
+              docs/todo/services.md:492 (217 rows), :483 (runbook polish)
+              &middot; tool: api/claim_orphaned_cli.go,
+              cmd/browser-history-server/main.go:29 (in deployed fff6034 since
+              2026-10-07)
             </div>
             <p>
               Upstream ships <code>claim-orphaned</code>: rewrites CBOR event
@@ -1039,12 +1100,13 @@
               "assert 3179 visits / 135,035 payloads"). The 2026-10-14
               owner-authorized op instead did a manual <code>tx UPDATE</code> on
               the <code>visits</code> table: 3,179 rows moved, but the event
-              journal stayed zero-user (the op report's own "replay caveat"), and
-              217 zero-user behavioural rows remain (searches 125, downloads 58,
-              forms 20, bookmarks 7, permissions 5, omnibox 2). A future full
-              replay (wipe + rebuild — exactly the recovery path the backups
-              exist for) would resurrect zero-user ownership. The CLI was built
-              for precisely this job and was in the deployed binary at op time.
+              journal stayed zero-user (the op report's own "replay caveat"),
+              and 217 zero-user behavioural rows remain (searches 125, downloads
+              58, forms 20, bookmarks 7, permissions 5, omnibox 2). A future
+              full replay (wipe + rebuild — exactly the recovery path the
+              backups exist for) would resurrect zero-user ownership. The CLI
+              was built for precisely this job and was in the deployed binary at
+              op time.
             </p>
             <pre><code># What ran (manual, journal-inconsistent):
 #   stop-window tx UPDATE visits SET user_id=&lt;owner&gt; WHERE user_id IS NULL/zero
@@ -1066,10 +1128,15 @@ browser-history-server compact-visit-journal -yes -vacuum</code></pre>
           </div>
 
           <div class="issue issue-critical" id="f2">
-            <span class="severity severity-critical">Missed Opportunity &middot; High impact</span>
+            <span class="severity severity-critical"
+              >Missed Opportunity &middot; High impact</span
+            >
             <h3>The entire AI suite is dark — llm.* never configured</h3>
             <div class="where">
-              modules/nixos/services/browser-history.nix:261-271 (option block sets no llm.*) &middot; upstream: nix/server-module.nix:296-313 (llm.model/baseUrl/timeout), :437 (searchThemeKeywords), LLM_API_KEY via environmentFile
+              modules/nixos/services/browser-history.nix:261-271 (option block
+              sets no llm.*) &middot; upstream: nix/server-module.nix:296-313
+              (llm.model/baseUrl/timeout), :437 (searchThemeKeywords),
+              LLM_API_KEY via environmentFile
             </div>
             <p>
               browser-history has grown a full AI layer: day/week/freelancer
@@ -1079,10 +1146,10 @@ browser-history-server compact-visit-journal -yes -vacuum</code></pre>
               budget, own sqlite). SystemNix sets none of it: no
               <code>llm.model</code>, no <code>llm.baseUrl</code>, no
               <code>LLM_API_KEY</code> in any env file, no
-              <code>searchThemeKeywords</code>. Verified: zero llm/LLM wiring for
-              browser-history anywhere in modules/, platforms/, systems/. The
-              infrastructure to enable it already exists (sops env template +
-              environmentFile option).
+              <code>searchThemeKeywords</code>. Verified: zero llm/LLM wiring
+              for browser-history anywhere in modules/, platforms/, systems/.
+              The infrastructure to enable it already exists (sops env template
+              + environmentFile option).
             </p>
             <pre><code># services.browser-history (wrapper, mkIf cfg.enable):
 llm.baseUrl = lib.mkDefault "http://127.0.0.1:${toString ports.fastflowlm}";
@@ -1099,20 +1166,25 @@ llm.model   = lib.mkDefault config.services.fastflowlm.model;
           </div>
 
           <div class="issue issue-important" id="f3">
-            <span class="severity severity-important">Missed Opportunity &middot; Medium impact &middot; owner-gated</span>
+            <span class="severity severity-important"
+              >Missed Opportunity &middot; Medium impact &middot;
+              owner-gated</span
+            >
             <h3>Multi-machine capability proven but single-machine deployed</h3>
             <div class="where">
-              platforms/darwin/ (no agent anywhere) &middot; open [decision] docs/todo/services.md:357 &middot; capability: machine labels + AD-2 dedup VM-proven (test steps 11-12)
+              platforms/darwin/ (no agent anywhere) &middot; open [decision]
+              docs/todo/services.md:357 &middot; capability: machine labels +
+              AD-2 dedup VM-proven (test steps 11-12)
             </div>
             <p>
               The whole point of machine attribution (X-Machine-ID →
               visits.machine_id → dashboard All-machines filter) is cross-device
               history. Today exactly one machine (evo-x2) reports. The macOS
-              MacBook is the obvious second agent: everything is one knob
-              (<code>machineId = "lars-macbook-air"</code>, own bh_ token), and
-              the darwin config already manages Chrome policy. Remote agents must
-              use their own DB token — the env-token path is anonymous and
-              invisible to the freshness metric.
+              MacBook is the obvious second agent: everything is one knob (<code
+                >machineId = "lars-macbook-air"</code
+              >, own bh_ token), and the darwin config already manages Chrome
+              policy. Remote agents must use their own DB token — the env-token
+              path is anonymous and invisible to the freshness metric.
             </p>
             <div class="callout callout-teal">
               <strong>Recommendation</strong>
@@ -1123,10 +1195,16 @@ llm.model   = lib.mkDefault config.services.fastflowlm.model;
           </div>
 
           <div class="issue issue-important" id="f4">
-            <span class="severity severity-important">Partially Used &middot; Medium impact</span>
+            <span class="severity severity-important"
+              >Partially Used &middot; Medium impact</span
+            >
             <h3>Three module options bypassed by unit-level duplicates</h3>
             <div class="where">
-              browser-history.nix:286 (LOG_LEVEL=debug env) vs upstream logLevel option (server-module.nix:275) &middot; :481 (User = primaryUser) vs upstream agent user option (agent-module.nix:40) &middot; :283 (EnvironmentFile unit-level) vs upstream environmentFile option (server-module.nix:458)
+              browser-history.nix:286 (LOG_LEVEL=debug env) vs upstream logLevel
+              option (server-module.nix:275) &middot; :481 (User = primaryUser)
+              vs upstream agent user option (agent-module.nix:40) &middot; :283
+              (EnvironmentFile unit-level) vs upstream environmentFile option
+              (server-module.nix:458)
             </div>
             <p>
               The wrapper sets <code>Environment = "LOG_LEVEL=debug"</code> at
@@ -1135,10 +1213,10 @@ llm.model   = lib.mkDefault config.services.fastflowlm.model;
               sources of the same variable, resolved only by systemd's
               last-assignment-wins plus Nix list-merge order. It works today
               because the wrapper's definitions concatenate after the imported
-              module's, but that is implicit ordering, not configuration.
-              Same pattern for the agent's <code>User</code> (upstream grew a
-              proper <code>user</code> option on 2026-10-06, after this wiring
-              was written) and for <code>environmentFile</code>.
+              module's, but that is implicit ordering, not configuration. Same
+              pattern for the agent's <code>User</code> (upstream grew a proper
+              <code>user</code> option on 2026-10-06, after this wiring was
+              written) and for <code>environmentFile</code>.
             </p>
             <pre><code># Fragile: unit-level duplicate (last-wins by merge order)
 Environment = [ "GOMEMLIMIT=384MiB" "LOG_LEVEL=debug" "MAX_USERS=1" ];
@@ -1154,31 +1232,43 @@ services.browser-history.logLevel = "debug";</code></pre>
           </div>
 
           <div class="issue issue-important" id="f5">
-            <span class="severity severity-important">Missed Opportunity &middot; Medium impact</span>
+            <span class="severity severity-important"
+              >Missed Opportunity &middot; Medium impact</span
+            >
             <h3>Maintenance CLI family never exercised on the live DB</h3>
             <div class="where">
-              compact-visit-journal, merge-duplicate-users (cmd/browser-history-server/main.go:33,37) &middot; journal: 135,035 payloads &middot; DB: 204 MB on the Samsung hot tier &middot; dry-run only (upstream 2026-10-07_09-49 report)
+              compact-visit-journal, merge-duplicate-users
+              (cmd/browser-history-server/main.go:33,37) &middot; journal:
+              135,035 payloads &middot; DB: 204 MB on the Samsung hot tier
+              &middot; dry-run only (upstream 2026-10-07_09-49 report)
             </div>
             <p>
               The event journal has never been compacted on the live DB. Dry-run
-              numbers from 2026-10-07 showed the compaction target is real
-              (135k payloads against 3,179 current visits), and the DB now lives
-              on the hot tier where size is cheap but fsync churn is not.
+              numbers from 2026-10-07 showed the compaction target is real (135k
+              payloads against 3,179 current visits), and the DB now lives on
+              the hot tier where size is cheap but fsync churn is not.
               <code>merge-duplicate-users</code> is the tool for the 5 bring-up
               users (revoke-cleanup is blocked:user) if merge beats revoke.
             </p>
             <div class="callout callout-teal">
               <strong>Recommendation</strong>
-              Ride compact-visit-journal in the same stop-window as F1 —
-              it was always planned as one op (S05).
+              Ride compact-visit-journal in the same stop-window as F1 — it was
+              always planned as one op (S05).
             </div>
           </div>
 
           <div class="issue issue-important" id="f6">
-            <span class="severity severity-important">Partially Used &middot; Low impact</span>
-            <h3>Two freshness clocks, 30m vs 60m, with a known quiet-day wart</h3>
+            <span class="severity severity-important"
+              >Partially Used &middot; Low impact</span
+            >
+            <h3>
+              Two freshness clocks, 30m vs 60m, with a known quiet-day wart
+            </h3>
             <div class="where">
-              upstream agentFreshness default 30m (server-module.nix:444, unset) &middot; SystemNix agentActivity.maxAgeMinutes=60 (browser-history.nix:188-214) &middot; open [ready] docs/todo/services.md:71
+              upstream agentFreshness default 30m (server-module.nix:444, unset)
+              &middot; SystemNix agentActivity.maxAgeMinutes=60
+              (browser-history.nix:188-214) &middot; open [ready]
+              docs/todo/services.md:71
             </div>
             <p>
               The server's /health freshness gate uses the upstream default 30m
@@ -1196,9 +1286,15 @@ services.browser-history.logLevel = "debug";</code></pre>
           </div>
 
           <div class="issue issue-nice" id="f7">
-            <span class="severity severity-nice">Missed Opportunity &middot; Low impact</span>
+            <span class="severity severity-nice"
+              >Missed Opportunity &middot; Low impact</span
+            >
             <h3>Browser extension (true dwell time) never deployed</h3>
-            <div class="where">extension/ upstream &middot; no wiring or runbook mention in SystemNix &middot; darwin already manages Chrome extension policy (platforms/darwin/programs/chrome.nix)</div>
+            <div class="where">
+              extension/ upstream &middot; no wiring or runbook mention in
+              SystemNix &middot; darwin already manages Chrome extension policy
+              (platforms/darwin/programs/chrome.nix)
+            </div>
             <p>
               Visits polled every 5 min carry no real dwell time; the extension
               measures active-tab duration and POSTs durationMs with a
@@ -1208,9 +1304,14 @@ services.browser-history.logLevel = "debug";</code></pre>
           </div>
 
           <div class="issue issue-nice" id="f8">
-            <span class="severity severity-nice">Hygiene &middot; Low impact</span>
+            <span class="severity severity-nice"
+              >Hygiene &middot; Low impact</span
+            >
             <h3>Stale flake.nix input comment + tag-less tracking</h3>
-            <div class="where">flake.nix:677-681 (comment still narrates the 2026-09-17 0971fe9c hold) &middot; last tag v0.5.0 = 2026-08-15</div>
+            <div class="where">
+              flake.nix:677-681 (comment still narrates the 2026-09-17 0971fe9c
+              hold) &middot; last tag v0.5.0 = 2026-08-15
+            </div>
             <p>
               The comment above the input predates four lock moves and now
               misleads (already flagged as item 10 in the 2026-10-14 21-47
@@ -1246,21 +1347,31 @@ services.browser-history.logLevel = "debug";</code></pre>
                 <td>1445ade</td>
                 <td>2026-08-15</td>
                 <td>Checkpointed restarts, drain gates</td>
-                <td class="no">2 months stale — master-follower is deliberate</td>
+                <td class="no">
+                  2 months stale — master-follower is deliberate
+                </td>
               </tr>
               <tr>
                 <td>Deployed = lock</td>
                 <td>fff6034</td>
                 <td>2026-10-14 23:23</td>
-                <td>Wave-9 rebuild; machine labels, tenancy, admin panel era</td>
+                <td>
+                  Wave-9 rebuild; machine labels, tenancy, admin panel era
+                </td>
                 <td class="yes">Current within fleet norms</td>
               </tr>
               <tr>
                 <td>Upstream HEAD</td>
                 <td>5917bad</td>
                 <td>2026-10-15 18:59</td>
-                <td>+86 commits: chat-with-history (/chat), go-aichat v0.3.0 provider swap, OS-user provenance axis + /credentials rename, timeline browser logos, DSN artifact fix (473c1f8)</td>
-                <td class="no">High — /chat and the DSN fix are reasons to bump</td>
+                <td>
+                  +86 commits: chat-with-history (/chat), go-aichat v0.3.0
+                  provider swap, OS-user provenance axis + /credentials rename,
+                  timeline browser logos, DSN artifact fix (473c1f8)
+                </td>
+                <td class="no">
+                  High — /chat and the DSN fix are reasons to bump
+                </td>
               </tr>
             </tbody>
           </table>
@@ -1276,7 +1387,10 @@ services.browser-history.logLevel = "debug";</code></pre>
 
         <section id="opportunities">
           <h2><span class="num">03</span>Top opportunities</h2>
-          <p>Ranked by impact &times; ease (each 1-5). Items 3 and 9 are already queued rows; they appear here for completeness of the Pareto view.</p>
+          <p>
+            Ranked by impact &times; ease (each 1-5). Items 3 and 9 are already
+            queued rows; they appear here for completeness of the Pareto view.
+          </p>
           <table class="compare">
             <thead>
               <tr>
@@ -1290,14 +1404,20 @@ services.browser-history.logLevel = "debug";</code></pre>
             <tbody>
               <tr>
                 <td>1</td>
-                <td>Stop-window: claim-orphaned + compact-visit-journal on live DB (heals replay caveat, closes 217 rows, shrinks 135k-payload journal)</td>
+                <td>
+                  Stop-window: claim-orphaned + compact-visit-journal on live DB
+                  (heals replay caveat, closes 217 rows, shrinks 135k-payload
+                  journal)
+                </td>
                 <td class="yes">5</td>
                 <td class="yes">4</td>
                 <td><span class="highlight">20</span></td>
               </tr>
               <tr>
                 <td>2</td>
-                <td>Enable AI suite (llm.baseUrl/model + LLM_API_KEY via sops)</td>
+                <td>
+                  Enable AI suite (llm.baseUrl/model + LLM_API_KEY via sops)
+                </td>
                 <td class="yes">4</td>
                 <td class="yes">4</td>
                 <td><span class="highlight">16</span></td>
@@ -1318,35 +1438,49 @@ services.browser-history.logLevel = "debug";</code></pre>
               </tr>
               <tr>
                 <td>5</td>
-                <td>Move LOG_LEVEL / agent User / EnvironmentFile onto module options</td>
+                <td>
+                  Move LOG_LEVEL / agent User / EnvironmentFile onto module
+                  options
+                </td>
                 <td>2</td>
                 <td class="yes">5</td>
                 <td><span class="highlight">10</span></td>
               </tr>
               <tr>
                 <td>6</td>
-                <td>Gatus check on browser_history_users (count-bypass detector, queued [ready])</td>
+                <td>
+                  Gatus check on browser_history_users (count-bypass detector,
+                  queued [ready])
+                </td>
                 <td>2</td>
                 <td class="yes">4</td>
                 <td><span class="highlight">8</span></td>
               </tr>
               <tr>
                 <td>7</td>
-                <td>Deploy dwell-time extension via existing Chrome policy plumbing</td>
+                <td>
+                  Deploy dwell-time extension via existing Chrome policy
+                  plumbing
+                </td>
                 <td>3</td>
                 <td>2</td>
                 <td>6</td>
               </tr>
               <tr>
                 <td>8</td>
-                <td>Upstream: empty-batch heartbeat (quiet-day 503, queued [ready])</td>
+                <td>
+                  Upstream: empty-batch heartbeat (quiet-day 503, queued
+                  [ready])
+                </td>
                 <td>2</td>
                 <td>3</td>
                 <td>6</td>
               </tr>
               <tr>
                 <td>9</td>
-                <td>Align freshness clocks (agentFreshness vs maxAgeMinutes)</td>
+                <td>
+                  Align freshness clocks (agentFreshness vs maxAgeMinutes)
+                </td>
                 <td>1</td>
                 <td class="yes">5</td>
                 <td>5</td>
@@ -1360,14 +1494,19 @@ services.browser-history.logLevel = "debug";</code></pre>
               </tr>
               <tr>
                 <td>11</td>
-                <td>Remove self-neutralized probeRegistrationCleanup block (queued [ready])</td>
+                <td>
+                  Remove self-neutralized probeRegistrationCleanup block (queued
+                  [ready])
+                </td>
                 <td>1</td>
                 <td>4</td>
                 <td>4</td>
               </tr>
               <tr>
                 <td>12</td>
-                <td>Pin-check AD-2 citations at deployed rev (queued [ready])</td>
+                <td>
+                  Pin-check AD-2 citations at deployed rev (queued [ready])
+                </td>
                 <td>1</td>
                 <td>3</td>
                 <td>3</td>
@@ -1377,13 +1516,15 @@ services.browser-history.logLevel = "debug";</code></pre>
         </section>
 
         <section id="appendix">
-          <h2><span class="num">04</span>Appendix — open-work inventory &amp; risk</h2>
+          <h2>
+            <span class="num">04</span>Appendix — open-work inventory &amp; risk
+          </h2>
           <p>
-            Open browser-history rows at audit time: 5 [blocked:user] (probe user
-            delete, OAuth2 first-login verify, E2E login test, revoke 4 bring-up
-            users, 217-row re-attribution), 8 [ready] (heartbeat upstream,
-            probe-cleanup removal, CSRF-dance smoke, users-count gatus,
-            registration-surface audit, AD-2 pin-check, runbook polish,
+            Open browser-history rows at audit time: 5 [blocked:user] (probe
+            user delete, OAuth2 first-login verify, E2E login test, revoke 4
+            bring-up users, 217-row re-attribution), 8 [ready] (heartbeat
+            upstream, probe-cleanup removal, CSRF-dance smoke, users-count
+            gatus, registration-surface audit, AD-2 pin-check, runbook polish,
             firefox-below-fold render-proof), 1 [decision] (macOS agent), 3
             [watch] (post-deploy tick, first hot-mount backup, slow-render
             bursts) — docs/todo/services.md. Standing risks: the journal replay
@@ -1423,20 +1564,23 @@ services.browser-history.logLevel = "debug";</code></pre>
             </tbody>
           </table>
           <p>
-            Method: consumer surface read from modules/nixos/services/browser-history.nix
-            + _browser-history-scripts.nix + configuration.nix enables; upstream
-            surface from nix/server-module.nix, nix/agent-module.nix, FEATURES.md,
-            CHANGELOG.md; rev arithmetic via git in ~/projects/browser-history;
-            deployed state live-verified via /etc/systemd/system/browser-history.service
-            (2026-10-15, this session).
+            Method: consumer surface read from
+            modules/nixos/services/browser-history.nix +
+            _browser-history-scripts.nix + configuration.nix enables; upstream
+            surface from nix/server-module.nix, nix/agent-module.nix,
+            FEATURES.md, CHANGELOG.md; rev arithmetic via git in
+            ~/projects/browser-history; deployed state live-verified via
+            /etc/systemd/system/browser-history.service (2026-10-15, this
+            session).
           </p>
         </section>
 
         <footer class="footer">
           <p>
-            Generated 2026-10-15 &middot; Reviewed against upstream master 5917bad
-            / deployed+locked fff6034 &middot; All rev and live-state claims
-            verified this session; doc-sourced claims cited to their reports
+            Generated 2026-10-15 &middot; Reviewed against upstream master
+            5917bad / deployed+locked fff6034 &middot; All rev and live-state
+            claims verified this session; doc-sourced claims cited to their
+            reports
           </p>
         </footer>
       </main>

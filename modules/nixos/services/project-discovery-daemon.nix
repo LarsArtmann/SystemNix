@@ -56,9 +56,11 @@ _: {
           # first-hand got-hash from the 02:46 nh enumeration at locked
           # rev df32945; class comment: lib/lars-packages.nix
           # flakePkgShim — same value as the lars-packages surface)
-          default = inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-nNKXDH5NoVlkjJMQbYICImrthGVxMvZybQgf5QcJBkY=";
-          };
+          default =
+            inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
+              {
+                vendorHash = "sha256-nNKXDH5NoVlkjJMQbYICImrthGVxMvZybQgf5QcJBkY=";
+              };
           defaultText = lib.literalExpression ''
             inputs.project-discovery-daemon.packages.''${system}.default
           '';

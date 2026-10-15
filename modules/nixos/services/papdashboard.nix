@@ -71,9 +71,11 @@
       # floated past upstream's broken-syntax commit c8d0cf92 — the 5a6794db
       # probe got the identical content hash while upstream still declares
       # pg/a63hg. Class comment: lib/lars-packages.nix flakePkgShim)
-      papdashboardPkg = inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server.overrideAttrs {
-        vendorHash = "sha256-CzxGeRncao0r7hc6mbzsAvpjs8WlBCXFl82KpsVP0NU=";
-      };
+      papdashboardPkg =
+        inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server.overrideAttrs
+          {
+            vendorHash = "sha256-CzxGeRncao0r7hc6mbzsAvpjs8WlBCXFl82KpsVP0NU=";
+          };
 
       checkEnv = mkSecretCheck pkgs {
         name = "papdashboard-env";

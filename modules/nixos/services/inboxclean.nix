@@ -119,9 +119,11 @@
       # TEMPORARY vendorHash shim ADDED (2026-10-15 fleet wave, first-hand
       # got-hash from the 02:46 nh enumeration at locked rev 7e23ec6; class
       # comment: lib/lars-packages.nix flakePkgShim)
-      inboxcleanPkg = inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-xekigUvjNAYMr/BdJSGcjzkkgP5CbtOaBzisW78+Zuc=";
-      };
+      inboxcleanPkg =
+        inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
+          {
+            vendorHash = "sha256-xekigUvjNAYMr/BdJSGcjzkkgP5CbtOaBzisW78+Zuc=";
+          };
     in
     {
       imports = [ inputs.inboxclean.nixosModules.default ];
