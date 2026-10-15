@@ -202,7 +202,9 @@
           default = 60;
           description = ''
             Ingest freshness window. The agent timer defaults to 5min, so 60
-            tolerates ~12 missed ticks before the alert fires.
+            tolerates ~12 missed ticks before the alert fires. ALSO drives the
+            server's agentFreshness /health window (single-sourced binding in
+            the config block below, 2026-10-15) so gatus and /health agree.
           '';
         };
 
@@ -268,6 +270,19 @@
             # gRPC exporter (which wants bare host:port) while anything that
             # parses the env var as a URL (OTel spec) requires the scheme.
             otelEndpoint = lib.mkDefault "http://127.0.0.1:${toString ports.signoz-otlp-grpc}";
+
+            # Module options, not unit-level env twins (2026-10-15 audit F4):
+            # upstream renders LOG_LEVEL from logLevel and loads the sops
+            # file from environmentFile — unit-level duplicates only worked
+            # via systemd last-wins-by-merge-order.
+            logLevel = lib.mkDefault "debug";
+            environmentFile = lib.mkDefault sopsEnvPath;
+            # One freshness window for BOTH clocks (audit F6): the server's
+            # /health agent-freshness gate and the agentActivity textfile
+            # collector read the same maxAgeMinutes value, so gatus and
+            # /health cannot disagree. "0" would disable the server leg.
+            agentFreshness =
+              lib.mkDefault "${toString config.services.browser-history.agentActivity.maxAgeMinutes}m";
           };
 
           systemd.services.browser-history = {
@@ -276,14 +291,14 @@
             startLimitBurst = 3;
             startLimitIntervalSec = 600;
 
-            # Agent token from sops. Systemd reads EnvironmentFile as root,
-            # so root-owned sops template works for the DynamicUser server.
+            # Agent token from sops loads via the upstream environmentFile
+            # option above (systemd reads EnvironmentFile as root, so the
+            # root-owned sops template works for the DynamicUser server).
+            # LOG_LEVEL likewise comes from the logLevel option.
             serviceConfig = lib.mkMerge [
               {
-                EnvironmentFile = [ sopsEnvPath ];
                 Environment = [
                   "GOMEMLIMIT=384MiB"
-                  "LOG_LEVEL=debug"
                   "MAX_USERS=1"
                 ];
                 # Must exceed the 300s OIDC gate budget (slow-boot dnsblockd)
@@ -469,16 +484,18 @@
           services.browser-history-agent = {
             package = lib.mkDefault agentPkg;
             tokenFile = lib.mkDefault sopsEnvPath;
+            # Run as the desktop user — browser profiles are mode 0700 and
+            # not readable by other users. ProtectHome=read-only (from the
+            # upstream module) still applies; StateDirectory ownership
+            # follows this user. Upstream option (agent-module user), not a
+            # unit-level twin (2026-10-15 audit F4).
+            user = lib.mkDefault primaryUser;
           };
 
           systemd.services.browser-history-agent = {
             inherit onFailure;
 
-            # Run as the desktop user — browser profiles are mode 0700 and
-            # not readable by other users. ProtectHome=read-only (from the
-            # upstream module) still applies.
             serviceConfig = {
-              User = primaryUser;
               MemoryMax = lib.mkDefault "512M";
             };
           };

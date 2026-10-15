@@ -174,6 +174,31 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
   — netbird ≥0.80 parses ManagementURL as a url.URL object and crashes at
   startup otherwise. The positive test probe pins both sides of that
   contract.
+- **systemd 261 never queues the enrollment oneshot from the daemon's
+  wants-dir (root cause of the 4-day silent non-enrollment, 2026-10-06→10)**:
+  nixpkgs wires `netbird-<name>-login` as wanted-by `netbird-<name>.service`
+  while the oneshot itself `Requires=`+`After=`s the daemon back — systemd
+  261.3 never enqueues that shape at boot, and the skip is debug-logged
+  (zero journal footprint). Fix (modules/nixos/services/netbird.nix):
+  `systemd.services."netbird-evox2-login".wantedBy = [ "multi-user.target" ]`
+  — direct boot-time enqueue; Requires/After still order it behind the
+  daemon and the script is NeedsLogin-guarded/idempotent. Full forensics:
+  `docs/status/2026-10-10_13-45_netbird-evox2-enrollment-never-ran-root-cause.md`.
+- **deploy.sh restarts the login oneshot via the unconditional explicit
+  block, not the is-enabled gated loop** — `systemctl is-enabled --quiet`
+  intermittently returns rc=1 mid-switch for indirectly-pulled units
+  (journal-proven both directions 2026-10-10), which would silently skip
+  the converger; the same trust-is-enabled trap applies to any future
+  indirect-pull converger (crush-hot-db-migrate precedent).
+- **Enrollment completed owner-run 2026-10-10/11 — the login oneshot still
+  has zero journal entries (expected)**: the owner ran `netbird up` in a
+  terminal during the Oct 10→11 journal gap, so the oneshot's clean history
+  proves nothing post-hoc. Mesh facts (live-verified 2026-10-15 19:21–23):
+  interface `nb-evox2`, mesh address `100.112.252.86/16` route via
+  `nb-evox2`, UDP 51820 bound on 0.0.0.0+[::], management stream +
+  signal + `rels://relay.larsartmann.cloud` connected with zero errors
+  since 12:00, and daemon re-authenticates across reboots (the Oct 15
+  03:14 boot came up logged in — no PermissionDenied).
 
 ---
 

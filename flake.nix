@@ -675,10 +675,12 @@
     };
 
     # browser-history — Browser history intelligence server (CQRS/ES, WebAuthn)
-    # Branch-ref governed (pin policy 2026-09-16): the lock still holds
-    # 0971fe9c until an explicit `nix flake lock --update-input
-    # browser-history` — probe the go-modules FOD at the target rev first
-    # (its build rides published cqrs-htmx tags; docs/agents/go-ecosystem.md probe protocol).
+    # Branch-ref governed (pin policy 2026-09-16): master-follower with an
+    # explicit lock update per bump (deployed == lock verified live
+    # 2026-10-15 at fff6034). Probe the go-modules FOD at the target rev
+    # before relocking (vendorHash lives upstream in vendorHash.nix; fix
+    # stale hashes there via buildflow nix-hash-fix, never hand-paste) —
+    # docs/agents/go-ecosystem.md probe protocol.
     browser-history = {
       url = "github:LarsArtmann/browser-history?ref=refs/heads/master";
     };
