@@ -69,7 +69,13 @@ _: {
             login = {
               enable = true;
               setupKeyFile = config.sops.secrets.netbird_setup_key.path;
-              systemdDependencies = [ "sops-install-secrets.service" ];
+              # NO extra systemdDependencies (default []): this flake renders
+              # sops secrets via the ACTIVATION script (no
+              # sops-install-secrets.service unit exists) — the nixpkgs
+              # doc-example value made the login unit Require a not-found
+              # unit, so ANY start (boot enqueue or manual) died on the
+              # dangling dep (discovered live 2026-10-15; sops files are
+              # rendered before sysinit, so no ordering edge is needed).
             };
             # openFirewall (default) opens 51820/udp for direct P2P;
             # openInternalFirewall (default) trusts the tunnel interface.
