@@ -41,6 +41,12 @@
 
       cfg = config.services.nsfw-classifier;
 
+      # The upstream flake's packages for this system. The `?` guard on the
+      # ROCm build below keeps evaluation working against a lock that predates
+      # the nsfw-classifier-go-rocm package (added 2026-10-15): an old lock
+      # silently keeps the CPU build, a bumped lock picks up GPU inference.
+      flakePkgs = inputs.nsfw-classifier.packages.${pkgs.stdenv.hostPlatform.system};
+
       pkg = cfg.package;
 
       # FULL posture: --all loads EVERY NSFW-detection model exported in
@@ -114,11 +120,27 @@
         # NOT lib.mkPackageOption: that helper resolves its default as an
         # attrpath inside `pkgs`, but this package comes from the
         # nsfw-classifier flake input, not nixpkgs.
+        #
+        # x86_64 prefers the ROCm-wrapped build: this host class is AMD
+        # (Strix Halo), and the CPU-wrapped package's ONNX Runtime (the
+        # Microsoft release) cannot enable MIGraphX — every model silently
+        # falls back to CPU inference. That ran unnoticed while the box was
+        # idle until 2026-10-15, when sibling-session load pushed CPU
+        # fast-mode inference to 5-15s and the browser extension's 10s
+        # upload timeout failed every classify (journal: "auto-detected
+        # provider unavailable, falling back to CPU" per model, every
+        # restart since at least Oct 7). The `?` guard keeps an old lock
+        # (pre-rocm-package) evaluating on the CPU build. Verify after
+        # deploy: /metrics "provider":"rocm" and provider_cpu_fallbacks 0.
         package = lib.mkOption {
           type = lib.types.package;
-          default = inputs.nsfw-classifier.packages.${pkgs.stdenv.hostPlatform.system}.nsfw-classifier-go;
-          defaultText = lib.literalExpression "inputs.nsfw-classifier.packages.\${pkgs.stdenv.hostPlatform.system}.nsfw-classifier-go";
-          description = "Package providing the nsfw-server binary (defaults to the nsfw-classifier flake input's build).";
+          default =
+            if pkgs.stdenv.hostPlatform.isx86_64 && flakePkgs ? nsfw-classifier-go-rocm then
+              flakePkgs.nsfw-classifier-go-rocm
+            else
+              flakePkgs.nsfw-classifier-go;
+          defaultText = lib.literalExpression "inputs.nsfw-classifier.packages.\${pkgs.stdenv.hostPlatform.system}.nsfw-classifier-go-rocm";
+          description = "Package providing the nsfw-server binary (defaults to the flake input's ROCm build on x86_64, CPU build otherwise).";
         };
 
         user = lib.mkOption {
