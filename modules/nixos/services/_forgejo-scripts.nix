@@ -673,9 +673,11 @@ in
         curl -s -f -L --max-time 60 -H "Authorization: token $2" "$1" -o "$AVATAR_TMP"
       }
 
-      # $1=forgejo api url, bytes in $AVATAR_TMP -> echoes HTTP code.
+      # $1=forgejo api url (the GET url); the avatar POST endpoint is the
+      # GET url + /avatar (/api/v1/user -> /api/v1/user/avatar, /api/v1/orgs/
+      # <org> -> /api/v1/orgs/<org>/avatar). Bytes in $AVATAR_TMP.
       push_avatar() {
-        local api="$1" code json
+        local api="$1/avatar" code json
         json=$(mktemp)
         jq -Rs '{image: .}' < "$AVATAR_TMP" > "$json"
         code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
