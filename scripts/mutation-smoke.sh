@@ -20,7 +20,10 @@ TEXTFILE=/var/lib/prometheus-node-exporter/textfile_collectors/browser-history-a
 TIMEOUT_S=120
 EXPECTED_USERS="${1:-}"
 
-fail() { echo "mutation-smoke: FAIL — $1" >&2; exit 1; }
+fail() {
+  echo "mutation-smoke: FAIL — $1" >&2
+  exit 1
+}
 
 since=$(date '+%Y-%m-%d %H:%M:%S')
 
@@ -41,8 +44,8 @@ echo "ok: /health answered (status $answered)"
 # Probe 2: one agent tick since the mutation window.
 tick=""
 for _ in $(seq 1 "$TIMEOUT_S"); do
-  if journalctl -u "$AGENT_UNIT" --since "$since" --no-pager 2>/dev/null \
-    | grep -Eq 'raw=[0-9]+|accepted:[0-9]+|total:[0-9]+'; then
+  if journalctl -u "$AGENT_UNIT" --since "$since" --no-pager 2>/dev/null |
+    grep -Eq 'raw=[0-9]+|accepted:[0-9]+|total:[0-9]+'; then
     tick=1
     break
   fi

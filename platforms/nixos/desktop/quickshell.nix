@@ -135,6 +135,10 @@ in
         fontScale = 1.5;
 
         showWorkspaceIndex = true;
+        # Hide empty workspaces in the bar pill strip: named workspaces
+        # always exist in niri (no hide-when-empty), so the compositor
+        # still routes to them; the bar just stops showing unused slots.
+        showOccupiedWorkspacesOnly = true;
 
         # PasteBot-style clipboard behavior: Enter/click on a history entry
         # pastes it directly into the focused window (DMS synthesizes Ctrl+V

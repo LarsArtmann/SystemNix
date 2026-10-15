@@ -779,25 +779,23 @@ in
         # primary output when DP-2 is disconnected.
         #
         # Strip position = alphabetical key order (the niri module renders
-        # the attrset sorted), and Mod+N walks that order per output. The
-        # names are chosen so the slot-1/2 workspaces sort where the
-        # numeric bindings expect them:
-        #   DP-1: 1-monitor, 2-web-dp1, browser, dev, main
-        #   DP-2: chat, dp2-web, media
-        # The per-monitor dedicated helium instances (helium-dp1/dp2 with
-        # private user-data-dirs) were REMOVED 2026-10-06 — one profile per
-        # browser was a split brain (History/cookies/KeePassXC fill each
-        # lived in its own copy). The web workspaces stay as landing spots
-        # for manually moved browser windows (Mod+Shift+Tab /
-        # move-column-to-monitor-next); ALL helium windows share the main
-        # profile and open on "main".
+        # the attrset sorted), and Mod+N walks that order per output:
+        #   DP-1: 1-monitor, browser, dev, main
+        #   DP-2: chat, media
+        # "2-web-dp1"/"dp2-web" REMOVED 2026-10-16 (user request): leftover
+        # landing spots from the per-monitor helium instances removed
+        # 2026-10-06, sitting empty ~always. Named workspaces render even
+        # with zero windows and niri has no hide-when-empty (upstream
+        # declined it, discussion #1700), so unused declarations are pure
+        # strip clutter. ALL helium windows share the main profile and open
+        # on "main"; bar-side empties are hidden instead via DMS
+        # showOccupiedWorkspacesOnly (quickshell.nix). Numeric slots after
+        # removal: Mod+2 = browser, Mod+3 = dev, Mod+4 = main.
         "1-monitor".open-on-output = "DP-1";
-        "2-web-dp1".open-on-output = "DP-1";
         browser.open-on-output = "DP-1";
         dev.open-on-output = "DP-1";
         main.open-on-output = "DP-1";
         chat.open-on-output = "DP-2";
-        "dp2-web".open-on-output = "DP-2";
         media.open-on-output = "DP-2";
       };
 

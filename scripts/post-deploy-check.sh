@@ -614,7 +614,7 @@ fi
 # extracted so the fixture exercises the SAME code this gate runs).
 if test -e /etc/systemd/system/browser-history.service; then
   BRS_URL="http://localhost:8087" \
-  BRS_PASS=report_pass BRS_FAIL=report_fail BRS_WARN=report_warn \
+    BRS_PASS=report_pass BRS_FAIL=report_fail BRS_WARN=report_warn \
     browser_history_registration_smoke || true
 else
   report_skip "Browser History - registration-gate smoke skipped (service not deployed)"

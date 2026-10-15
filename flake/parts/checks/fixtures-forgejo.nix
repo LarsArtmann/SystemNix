@@ -67,12 +67,15 @@
                   -o) out="$2"; shift 2 ;;
                   -w) wcode="$2"; shift 2 ;;
                   -d) data=1; payload="$2"; shift 2 ;;
+                  --data-binary) data=1; payload="$2"; shift 2 ;;
                   -sf|-s|-f|-k|-L|--compressed) case "$1" in *f*) fail=1;; esac; shift ;;
                   -H|--connect-timeout|--max-time) shift 2 ;;
                   http*) url="$1"; shift ;;
                   *) shift ;;
                 esac
               done
+              # --data-binary @file (avatar POST payload): capture content
+              case "$payload" in @*) [ -f "''${payload#@}" ] && payload=$(cat "''${payload#@}") ;; esac
               [ -n "$data" ] && [ "$method" = GET ] && method=POST
               key=$(printf '%s' "$url" | sed 's|https\{0,1\}://||; s|[^A-Za-z0-9._-]|_|g')
               base="$STUB_HTTP/''${key}.''${method}"
@@ -128,12 +131,14 @@
               RECON="$FIX/forgejo-reconcile-mirrors"
               HEALTH="$FIX/forgejo-mirror-health"
               CENSUS="$FIX/forgejo-census"
+              AVATAR="$FIX/forgejo-avatar-sync"
               inject ${lib.getExe forgejoScripts.pushMirrorScript} "$PUSH"
               inject ${lib.getExe forgejoScripts.flipRepoScript} "$FLIP"
               inject ${lib.getExe forgejoScripts.mirrorGithubScript} "$MIRROR"
               inject ${lib.getExe forgejoScripts.reconcileMirrorsScript} "$RECON"
               inject ${lib.getExe forgejoScripts.mirrorHealthScript} "$HEALTH"
               inject ${lib.getExe forgejoScripts.censusScript} "$CENSUS"
+              inject ${lib.getExe forgejoScripts.avatarSyncScript} "$AVATAR"
 
               export FORGEJO_TOKEN=fxtok GITHUB_TOKEN=gxtok GITHUB_USER=LarsArtmann
               rc=0; capt=""
@@ -449,6 +454,70 @@
                 || { echo "FAIL census: wrong counts"; printf '%s\n' "$capt"; exit 1; }
               echo "$census_out" | jq -e '(.per_owner | length) == 2' >/dev/null \
                 || { echo "FAIL census: per_owner grouping"; printf '%s\n' "$capt"; exit 1; }
+
+              # ============ avatar-sync (GitHub -> Forgejo, 2026-10-16) ====
+              # Fresh counters: this section owns the stub state from here
+              # on (earlier sections' asserts already ran).
+              rm -f "$STUB_STATE"/n.* "$STUB_STATE"/req.*
+              TF_A="$FIX/tfa"; mkdir -p "$TF_A"
+              export FORGEJO_AVATAR_TEXTFILE_DIR="$TF_A"
+
+              # GitHub: user + one org, each with an avatar_url. User bytes
+              # DIFFER from forgejo's (upload path); org bytes are already
+              # byte-equal (in-sync skip path).
+              printf 200 > "$STUB_HTTP/api.github.com_user.GET.code"
+              printf '{"login":"LarsArtmann","avatar_url":"https://avatars.githubusercontent.com/u/42?v=4"}' > "$STUB_HTTP/api.github.com_user.GET.body"
+              printf 200 > "$STUB_HTTP/api.github.com_user_orgs_per_page_100_page_1.GET.code"
+              printf '[{"login":"Artmann-Minecraft","avatar_url":"https://avatars.githubusercontent.com/orgs/Artmann-Minecraft/avatars/avatar-1?v=4"}]' > "$STUB_HTTP/api.github.com_user_orgs_per_page_100_page_1.GET.body"
+              printf 200 > "$STUB_HTTP/avatars.githubusercontent.com_u_42_v_4.GET.code"
+              printf 'USER-BYTES' > "$STUB_HTTP/avatars.githubusercontent.com_u_42_v_4.GET.body"
+              printf 200 > "$STUB_HTTP/avatars.githubusercontent.com_orgs_Artmann-Minecraft_avatars_avatar-1_v_4.GET.code"
+              printf 'ORG-BYTES' > "$STUB_HTTP/avatars.githubusercontent.com_orgs_Artmann-Minecraft_avatars_avatar-1_v_4.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_user.GET.code"
+              printf '{"id":1,"avatar_url":"http://localhost:3000/avatars/u-old"}' > "$STUB_HTTP/localhost_3000_api_v1_user.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_avatars_u-old.GET.code"
+              printf 'old-user-bytes' > "$STUB_HTTP/localhost_3000_avatars_u-old.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_orgs_Artmann-Minecraft.GET.code"
+              printf '{"id":7,"avatar_url":"http://localhost:3000/avatars/o-current"}' > "$STUB_HTTP/localhost_3000_api_v1_orgs_Artmann-Minecraft.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_avatars_o-current.GET.code"
+              printf 'ORG-BYTES' > "$STUB_HTTP/localhost_3000_avatars_o-current.GET.body"
+              printf 204 > "$STUB_HTTP/localhost_3000_api_v1_user_avatar.POST.code"
+
+              run "$AVATAR"; need_rc avatar-happy 0
+              need_has avatar-happy "user:LarsArtmann: avatar updated"
+              need_has avatar-happy "targets=2 updated=1 in-sync=1 failed=0"
+              # POST payload contract (swagger v15.0.10: {"image": base64})
+              grep -q '"image"' "$STUB_STATE/req.localhost_3000_api_v1_user_avatar.POST.1.json" \
+                || { echo "FAIL avatar: POST payload lacks image"; cat "$STUB_STATE/req.localhost_3000_api_v1_user_avatar.POST.1.json"; exit 1; }
+              [ "$(jq -r .image "$STUB_STATE/req.localhost_3000_api_v1_user_avatar.POST.1.json" | base64 -d)" = "USER-BYTES" ] \
+                || { echo "FAIL avatar: POST image is not the GitHub bytes round-trip"; exit 1; }
+              grep -q '^forgejo_avatar_uploaded 1$' "$TF_A/forgejo_avatar_sync.prom" \
+                || { echo "FAIL avatar: metrics uploaded"; cat "$TF_A/forgejo_avatar_sync.prom"; exit 1; }
+              grep -q '^forgejo_avatar_in_sync 1$' "$TF_A/forgejo_avatar_sync.prom" \
+                || { echo "FAIL avatar: metrics in_sync"; exit 1; }
+
+              # Converged run 2 + user kill-switch: byte-compare skips the
+              # org, the user avatar is NOT posted (OIDC owns it).
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_orgs_Artmann-Minecraft.GET.2.code"
+              printf '{"id":7,"avatar_url":"http://localhost:3000/avatars/o-current"}' > "$STUB_HTTP/localhost_3000_api_v1_orgs_Artmann-Minecraft.GET.2.body"
+              export FORGEJO_AVATAR_SYNC_USER=false
+              run "$AVATAR"; need_rc avatar-converged 0
+              need_has avatar-converged "User avatar sync disabled"
+              need_has avatar-converged "targets=1 updated=0 in-sync=1 failed=0"
+              [ "$(ls "$STUB_STATE" | grep -c 'req.localhost_3000_api_v1_user_avatar.POST')" = 1 ] \
+                || { echo "FAIL avatar: user avatar POSTed despite kill-switch"; exit 1; }
+              unset FORGEJO_AVATAR_SYNC_USER
+
+              # POST failure: warn + counted, exit AFTER the full pass
+              rm -f "$STUB_STATE"/n.*
+              printf 500 > "$STUB_HTTP/localhost_3000_api_v1_user_avatar.POST.code"
+              export FORGEJO_AVATAR_SYNC_USER=true
+              run "$AVATAR"; need_rc avatar-postfail 1
+              need_has avatar-postfail "user:LarsArtmann: avatar POST failed (HTTP 500) — retried next run"
+              need_has avatar-postfail "targets=2 updated=0 in-sync=1 failed=1"
+              grep -q '^forgejo_avatar_failed 1$' "$TF_A/forgejo_avatar_sync.prom" \
+                || { echo "FAIL avatar: metrics failed"; cat "$TF_A/forgejo_avatar_sync.prom"; exit 1; }
+              unset FORGEJO_AVATAR_SYNC_USER
 
               echo "PASS: all forgejo staged-primary script fixtures" > "$out"
             '';

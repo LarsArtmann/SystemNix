@@ -140,12 +140,12 @@ run_case() { # mode expect_verdict expect_rc description [expect_msg]
   fi
 }
 
-run_case gate-closed      PASS 0 "gate closed (403 + registration_closed body)"
-run_case gate-open        FAIL 1 "gate OPEN regression (400 invalid email) — the §f.15 branch" "gate OPEN"
-run_case no-csrf-headers  FAIL 1 "no CSRF headers on /health"
-run_case csrf-wall-403    FAIL 1 "bare 403 without registration_closed body (body match is load-bearing)"
-run_case rate-limited     WARN 0 "rate-limited probe (429) warns, never fails"
-run_case unexpected       FAIL 1 "unexpected status (500)"
+run_case gate-closed PASS 0 "gate closed (403 + registration_closed body)"
+run_case gate-open FAIL 1 "gate OPEN regression (400 invalid email) — the §f.15 branch" "gate OPEN"
+run_case no-csrf-headers FAIL 1 "no CSRF headers on /health"
+run_case csrf-wall-403 FAIL 1 "bare 403 without registration_closed body (body match is load-bearing)"
+run_case rate-limited WARN 0 "rate-limited probe (429) warns, never fails"
+run_case unexpected FAIL 1 "unexpected status (500)"
 
 if [ "$failures" -gt 0 ]; then
   echo "test-browser-history-registration-smoke: $failures failure(s)"

@@ -785,7 +785,7 @@ in
           "https://api.github.com/user")
         USER_URL=$(echo "$response" | jq -r '.avatar_url // empty' || true)
         if [[ -z "$USER_URL" ]]; then
-          echo "Error: GitHub /user listing failed: $(echo "$response" | jq -r '.message // "unknown"' 2>/dev/null | head -1)"
+          echo "  warn: GitHub /user listing failed: $(echo "$response" | jq -r '.message // "unknown"' 2>/dev/null | head -1) — orgs already synced; retried next run"
           failed=$((failed + 1))
         else
           sync_one "user:$GITHUB_USER" "$USER_URL" "$FORGEJO_URL/api/v1/user"
