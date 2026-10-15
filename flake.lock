@@ -2847,11 +2847,11 @@
     "go-cqrs-lite_9": {
       "flake": false,
       "locked": {
-        "lastModified": 1792009904,
-        "narHash": "sha256-FXWkseyDJhRiQj0fUx0lCNJpKLomutp86RXcwByl4pw=",
+        "lastModified": 1792025615,
+        "narHash": "sha256-C+1hDoesDLEsFgSQzO+zWw65yqptpxZQXI/1xXHacUk=",
         "owner": "larsartmann",
         "repo": "go-cqrs-lite",
-        "rev": "56d15d1675c6e81c9291c3237aba2357562b9b89",
+        "rev": "35ccad859336c2d43d333b7aa639fcbed7bffd0d",
         "type": "github"
       },
       "original": {
@@ -6970,11 +6970,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792024309,
-        "narHash": "sha256-Wur6XKIxqUAGapj+eqVXOVYEduOimYQcFWbOFw58XM8=",
+        "lastModified": 1792029628,
+        "narHash": "sha256-ACx9lX9DYOSyFwMWoog//VLlUms8odSMr6oHSROZ3fg=",
         "owner": "LarsArtmann",
         "repo": "PapDashboard",
-        "rev": "c8d0cf92a583912d3176d55f1eb05a9ccb2b79dd",
+        "rev": "5a6794dba61ef1718f7f9d53943eb8ec6779fd03",
         "type": "github"
       },
       "original": {

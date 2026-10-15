@@ -315,10 +315,17 @@ in
       pkgs.uv
       pkgs.shfmt
       pkgs.nodejs
-      # buildflow shim DROPPED 2026-10-07 (both surfaces — mkLarsPackages +
-      # this system-path one): upstream vendorHash.nix at locked rev 2346799
-      # already carries the got hash. Re-add ONLY via nix-hash-fix evidence.
-      inputs.buildflow.packages.${pkgs.stdenv.hostPlatform.system}.default
+      # buildflow vendorHash shim RE-ADDED 2026-10-15 fleet wave: upstream at
+      # locked rev d114f28 declares a stale vendorHash while the real dep
+      # content hashes to cCl3IWhu (first-hand evidence: toplevel keep-going
+      # enumeration /tmp/toplevel-20261015b.log, FOD 866x106r failed with
+      # exactly this got hash; the shimmed mkLarsPackages twin instance
+      # realized with the same value). Second surface — the first lives in
+      # lib/lars-packages.nix. Drop when upstream declares cCl3IWhu at this
+      # or a later rev (verify via nix build .#buildflow).
+      inputs.buildflow.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+        vendorHash = "sha256-cCl3IWhufWYGlRncOOKKvUwaOBceF7aapUXCwoyk2lA=";
+      }
       # flm CLI (NPU LLM; service consumes the same package). Replaces the
       # deleted ~/.local/bin/flm wrapper — the nix package sets its own
       # XILINX_XRT/LD_LIBRARY_PATH, no hand-maintained script needed.
