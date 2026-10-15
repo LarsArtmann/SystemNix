@@ -285,6 +285,7 @@
         "flake-parts": [
           "flake-parts"
         ],
+        "go-aichat": "go-aichat",
         "go-branded-id": "go-branded-id_3",
         "go-cqrs-lite": "go-cqrs-lite_2",
         "go-error-family": "go-error-family_3",
@@ -305,11 +306,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792020213,
-        "narHash": "sha256-yfdYYg2LaszqnKAmVGQc+pw3CGnvAv2lOnAQK64MfDE=",
+        "lastModified": 1792083584,
+        "narHash": "sha256-p8kjPbpF14JtE7mk/+sRUByuVJxNLo75eMLcZnkUdl8=",
         "owner": "LarsArtmann",
         "repo": "browser-history",
-        "rev": "fff60341306224e5e253d761ad95f6ddc59f511e",
+        "rev": "5917bada056626eed56bb6259c4ec706bd2b2703",
         "type": "github"
       },
       "original": {
@@ -1540,6 +1541,23 @@
       }
     },
     "go-aichat": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792043068,
+        "narHash": "sha256-d9ktrlnt2MB++RaaXhPgNTu5QEvx4qtC8NYj6cpDms4=",
+        "ref": "refs/heads/master",
+        "rev": "ea61a43a7c438939de49a2545628c138f216a832",
+        "revCount": 293,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-aichat"
+      },
+      "original": {
+        "rev": "ea61a43a7c438939de49a2545628c138f216a832",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-aichat"
+      }
+    },
+    "go-aichat_2": {
       "flake": false,
       "locked": {
         "lastModified": 1791037770,
@@ -6105,7 +6123,7 @@
         "git-hooks": [
           "git-hooks"
         ],
-        "go-aichat": "go-aichat",
+        "go-aichat": "go-aichat_2",
         "nixpkgs": [
           "nixpkgs"
         ],
