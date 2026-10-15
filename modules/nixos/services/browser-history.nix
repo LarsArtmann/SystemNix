@@ -239,6 +239,15 @@
             webauthn.rpId = lib.mkDefault fqdn;
             webauthn.rpName = lib.mkDefault "BrowserHistory";
             webauthn.origins = lib.mkDefault [ "https://${fqdn}" ];
+            # OAuth-only sign-in (owner policy 2026-10-16): passkeys disabled,
+            # Pocket ID the only auth method. Upstream renders
+            # PASSKEYS_DISABLED=true from this and eval-asserts a configured
+            # OAuth2 provider — the non-secret client ID rides the option;
+            # the secret keeps flowing via browser-history-oidc-setup's env
+            # file (a missing secret then fails the boot BY DESIGN — fail
+            # closed beats serving a login-less server).
+            webauthn.enable = false;
+            oauth2.pocketId.clientId = lib.mkDefault "browser-history";
             # Scheme included on purpose: v0.5.0 normalizes the value for the
             # gRPC exporter (which wants bare host:port) while anything that
             # parses the env var as a URL (OTel spec) requires the scheme.
@@ -783,7 +792,9 @@
         # integration.nix). enable-gated via the registry's own switch so
         # hosts without the integration module (VM tests) still evaluate.
         # The server entry REPLACES rows in caddy.nix (history vHost, plain:
-        # native WebAuthn/OIDC — protectedVHost would break passkey flows),
+        # the app handles OIDC natively — protectedVHost would double-auth
+        # the OAuth redirect flow; passkeys are disabled server-side since
+        # 2026-10-16, webauthn.enable = false above),
         # gatus-config.nix (Browser History check), homepage.nix (tile), and
         # pocket-id.nix (OIDC client). The agent registers its own unit with
         # system-health (moved out of monitoredServices' default list).
