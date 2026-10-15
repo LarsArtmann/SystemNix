@@ -54,7 +54,7 @@ platforms/common/      # Shared (~80%): home-base.nix, programs/, packages/, the
 platforms/darwin/      # macOS (nix-darwin) — user: larsartmann
 platforms/nixos/       # NixOS — user: lars
   desktop/quickshell.nix # Quickshell HM module (DankMaterialShell)
-scripts/               # Shell + Python operational scripts
+scripts/               # Shell operational scripts (zero Python since 2026-10-15 — UCR tooling rehomed to github:LarsArtmann/ucr-archive)
 ```
 
 **Module auto-discovery:** `flake.nix` scans `modules/nixos/{services,desktop}/` — filenames MUST be unique across both dirs (filename → `flake.nixosModules.<name>`). `_`-prefixed files are helpers (skipped). docs/patches live in `docs/services/`, not the module tree. `flake/parts/` files are imported EXPLICITLY in the mkFlake `imports` list (no auto-discovery there — new part file = one imports line in flake.nix; conventions: [docs/agents/nix-flakes.md](./docs/agents/nix-flakes.md)).
@@ -124,7 +124,7 @@ Universal, hard rules. Domain-specific critical rules live at the top of each `d
 
 - **Content-pin BEFORE every write**: `git rev-parse HEAD` + `git status --short` + `git log --stat` since your last known rev — parallel agent sessions commit continuously and may have touched YOUR target files in "heuristic" daemon commits. Diff-review anything new before editing.
 - **When the daemon commits your in-flight work** (heuristic message, ~every 10 min): verify its contents with `git show --stat`, then `git commit --amend` the unpushed HEAD into a properly-messaged commit. Never `git reset`; amend-forward preserves the tree.
-- **Daemon commits + amend can bypass pre-commit filetype legs** — the lint legs are keyed on STAGED paths; when the daemon commits your script first, your amend sees "No staged .sh files" and shellcheck/ruff silently skip (heal-breadcrumb.sh shipped this way, 2026-09-28 — proven clean only by luck at review). Re-run the skipped lint standalone after any daemon-swept amend; the full daemon-race policy (land-on-top vs amend, exclusivity checks) is in `docs/CONTRIBUTING.md` → "Daemon-race commit policy".
+- **Daemon commits + amend can bypass pre-commit filetype legs** — the lint legs are keyed on STAGED paths; when the daemon commits your script first, your amend sees "No staged .sh files" and shellcheck silently skips (ruff too until its 2026-10-15 removal; heal-breadcrumb.sh shipped this way, 2026-09-28 — proven clean only by luck at review). Re-run the skipped lint standalone after any daemon-swept amend; the full daemon-race policy (land-on-top vs amend, exclusivity checks) is in `docs/CONTRIBUTING.md` → "Daemon-race commit policy".
 - **Lint-scanner FPs get fixed in the SCANNER, not suppressed at the call site** (2026-09-19 dead-guard-lint): the `$((` arithmetic form false-positived as a shell capture — fix = 1-char lookahead in the flake.nix awk scanner (`substr(line, RSTART + RLENGTH, 1) == "("` → skip), NOT `# dead-guard-ok` on the foreign line that tripped it (llama-rag.nix `leaks=$((leaks + 1))` was never touched).
 
 ---

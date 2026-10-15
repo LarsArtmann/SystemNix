@@ -3,6 +3,18 @@
 **Date:** 2026-10-14 22:08 CEST
 **Goal:** SystemNix ends at **zero Python** — dead sweepers deleted, the UCR call-archive pipeline rehomed in a sibling Go repo, the last flake Python (`crush-daily-backfill`) rewritten in Go — with nothing broken in between.
 
+> **EXECUTED 2026-10-15** (same night, D→B→U→G block order): D-block = 4 sweepers
+> deleted (ad678174); B-block = crush-daily v0.1.0 Go `backfill` (21/21 gap dates
+> closed live), flake app swapped, `.py` deleted; U-block = `ucr-archive` v0.1.0
+> pushed, parity-verified (see that repo's README-VERIFICATION.md — FLAC
+> bit-identity, contacts/web/rag goldens, one upstream Python embed bug found:
+> ucr-rag.py's INSERT could never store vectors), originals deleted (191dd21f);
+> G-block = ruff leg + ruff.toml removed (37798e7b), docs/queue/CHANGELOG synced.
+> Residual: the 3 open questions in
+> docs/status/2026-10-15_03-58_zero-python-execution-d-b-done-u-midport-status.md
+> (dep-sweep completion commit, pre-existing crush-daily test, daemon-heuristic
+> commit-message repairs).
+
 ---
 
 ## 1. Current state (all facts verified live this session)
