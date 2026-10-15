@@ -21,6 +21,8 @@
 
 All private repos use `git+ssh://` URLs. Go tool packages defined in `mkLarsPackages` in `flake.nix` — NOT overlays.
 
+**Fleet-wave night 2026-10-15 refinements to the sweep doctrine (wave #9's live fix):** (1) **`overrideAttrs { … }` inside a nix LIST needs parentheses** — bare `pkg.overrideAttrs { vendorHash = …; }` inside `environment.systemPackages` parses as TWO elements (`overrideAttrs` partial → `types.package` eval failure + a stray attrset); the attrset form is only safe where the attrset is syntactically the function argument (let-bindings, config attrs) — in lists wrap the whole expression `(pkg.overrideAttrs { … })`. (2) **A stale REV annotation does not mean a stale VALUE**: vendorHash hashes the resolved go-module dep set; overnight upstream commits that only edit source (no import-set change) keep the old got-hash VALID — the 03:49 session's "~12 stale shims" fear was 100% wrong; only 2 real root causes existed (a missed 4th surface + a broken upstream commit). The CV lesson above ("source-only churn CAN change the hash" via import reshuffling) and this one are BOTH true — never assume either direction; probe. (3) **Never trust rev tables transcribed during lock churn** — the 03:49 report's table was wrong for 8 tools mid-wave; `jq` the live `flake.lock` (`root -> <input>` node → `.locked.rev`) as ground truth. (4) The keep-going toplevel build collapsed 23 failures to 2 root causes in ONE pass — again the only oracle that works.
+
 **Deploy-key recipe for CI-private flake inputs (proven 2026-09-16, file-and-image-renamer + BuildFlow):** a `git+ssh://` input in flake.nix is unreadable from CI (no interactive SSH). Per private repo, one-time:
 
 1. `ssh-keygen -t ed25519 -f /tmp/dk-<repo> -N ''`
