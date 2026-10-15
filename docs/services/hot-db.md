@@ -19,6 +19,14 @@ doctrine), dump-only RPO.
 
 ## Current state
 
+> **RECOVERY-SOURCE HOLD (2026-10-15): the discordsync QLC shadow (hidden under
+> the mountpoint, db+wal frozen at the Oct 12 ~15:00 cutover) is a recovery
+> source for the Oct 2–14 data loss** (the 2026-10-14 01:03 heal's WAL-blind
+> snapshot restore rolled the live DB back to ~Oct 1; see
+> docs/services/discordsync.md traps + docs/todo/services.md recovery row).
+> Do NOT reclaim it — and note the `@` btrbk snapshots hold copies of the same
+> shadow — until the owner-gated recovery is executed and verified.
+
 `services.hot-db.enable = true`; entries in configuration.nix:
 **`discordsync` LIVE since 2026-10-12 (wave 5 done, out of order — owner chose
 it first for downtime tolerance)**, **`gatus` + `browser-history` LIVE
