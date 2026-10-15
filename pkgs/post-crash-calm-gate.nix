@@ -39,12 +39,13 @@ writeShellApplication {
     TRIP_WINDOW_MIN="60"
     POLL_SECS="15"
     MAX_WAIT_MIN="60"
+    MAX_WAIT_SECS=""
     # Fixture override for the selftest; production uses the packaged gate.
     ENTRY_GATE="''${POST_CRASH_CALM_GATE_ENTRY_GATE:-${maintenance-entry-gate}/bin/maintenance-entry-gate}"
 
     usage() {
       echo "usage: post-crash-calm-gate [--name LABEL] [--psi-max N] [--trip-window-min N]" >&2
-      echo "                            [--poll-secs N] [--max-wait-min N] [selftest]" >&2
+      echo "                            [--poll-secs N] [--max-wait-min N] [--max-wait-secs N] [selftest]" >&2
       echo "  exit 0 = calm (admit), exit 1 = still storming at the wait cap (refuse)" >&2
       exit 64
     }
@@ -76,6 +77,11 @@ writeShellApplication {
         MAX_WAIT_MIN=$2
         shift 2
         ;;
+      --max-wait-secs)
+        [ "$#" -ge 2 ] || usage
+        MAX_WAIT_SECS=$2
+        shift 2
+        ;;
       selftest)
         SELFTEST=1
         shift
@@ -105,7 +111,7 @@ writeShellApplication {
       n=\$(cat "$COUNT_FILE" 2>/dev/null || echo 0)
       n=\$((n + 1))
       echo "\$n" >"$COUNT_FILE"
-      [ "\$n" -ge "''${FAKE_ADMIT_AFTER:-999999}" ] && exit 0
+      [ "\$n" -ge "\\''${FAKE_ADMIT_AFTER:-999999}" ] && exit 0
       echo "REFUSE: fake — invocation \$n" >&2
       exit 1
 FAKE_GATE
@@ -142,7 +148,7 @@ FAKE_GATE
 
       # 4: calm only after the cap — refuse at the deadline.
       echo 0 >"$COUNT_FILE"
-      FAKE_ADMIT_AFTER=999999 must_refuse "selftest 4 (refuse at wait cap)" --poll-secs 1 --max-wait-min 1
+      FAKE_ADMIT_AFTER=999999 must_refuse "selftest 4 (refuse at wait cap)" --poll-secs 1 --max-wait-secs 3
 
       # 5: the packaged maintenance-entry-gate is the default entry gate and
       # is executable (wiring proof, not behavior).
@@ -160,7 +166,12 @@ FAKE_GATE
     fi
 
     start=$(date +%s)
-    deadline=$((start + MAX_WAIT_MIN * 60))
+    if [ -n "$MAX_WAIT_SECS" ]; then
+      # Test/fixture granularity; production waits are minute-scaled.
+      deadline=$((start + MAX_WAIT_SECS))
+    else
+      deadline=$((start + MAX_WAIT_MIN * 60))
+    fi
     attempt=0
     while :; do
       attempt=$((attempt + 1))
