@@ -1,4 +1,4 @@
-# Status: Zero-Python executed end-to-end — UCR rehomed & parity-verified, ruff gone, CI-red triaged
+# Status: Zero-Python executed end-to-end (first-party scope — correction §h: one vendored upstream .py remains)
 
 **Date:** 2026-10-15 05:14 CEST
 **Scope of this report:** THIS session's run (the zero-Python Pareto plan U-block + G-block execution, plus the mid-session discoveries). Not a whole-project inventory — the per-domain state lives in `docs/todo/*` and `docs/services/*` as usual.
@@ -139,6 +139,12 @@ Sorted by impact. **[Q]** = already a queued/library row (no new filing needed);
 1. **`branching-flow` CI auth:** the VM tests 404 on `github:LarsArtmann/branching-flow/tarball/aa1611d…`. Is that repo private (→ CI needs a token in the workflow — which secret name do you want used), or is `aa1611d` simply unpushed (→ push it / repin to a pushed rev)? I cannot see the repo's visibility or your auth intent from here.
 2. **Should ucr-archive get real CI + a NixOS service surface now** (Actions on push + a module that serves/regenerates the web archive), or is it a manual operator tool where flake apps + tags are enough? This decides items 6/11 and whether v0.1.1 needs a release checklist.
 3. **crush-daily's pre-existing red test** (`TestLegacySnapshotRow_DecodesUnderNewStack`, fails on the pre-work baseline): dedicated fix dispatch in crush-daily, or document-and-leave? It is the only red unit test in the dependency chain SystemNix now consumes at v0.1.0.
+
+## h) Correction (2026-10-15, post-publication): "zero Python" was overbroad
+
+An scc run (`Python 1 490 37 57 396 80`) caught what this report's headline overclaimed: `pkgs/.systemd-timer-monitor/systemd-audit.py` (490 LOC, 396 code) is tracked, live, and third-party — vendored verbatim 2026-08-28 (`7e44ee2a`) because upstream cappy-dev/systemd-timer-monitor was deleted from GitHub (tarball 404). It powers the timers.home.lan service (5-min oneshot, gatus HTML check, deploy.sh post-switch trigger). The plan's asserts were scripts/-scoped (`rg '\.py$' scripts/` → empty holds TRUE); the vendored file was never in scope but was also never called out as an exception. A 2026-09-15 review had already asked "what is it, still needed?" (docs/status/2026-09-15_04-29 item 20) and it went unanswered — answered now.
+
+Corrected surfaces: this report's title; CHANGELOG `[Unreleased] → Removed` headline ("First-party Python is gone…" + precision note); the plan's EXECUTED banner (Residual 2); `[decision]` row queued in TODO_LIST.md + docs/todo/services.md (ratify the vendored exception vs clean-room Go behavioral port; upstream is UNLICENSED — `lib.licenses.unfree` — so a line-by-line translation is a derivative work; behavioral reimplementation only); AGENTS.md scripts/ line points at the vendored dir.
 
 ---
 
