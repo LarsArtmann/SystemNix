@@ -29,9 +29,14 @@ gate, not behind anything technical.
 > (the Oct 15 03:14 boot came up already logged in — no `PermissionDenied`). The §g questions resolve as:
 > **(1)** enrollment trigger = owner manual run (Oct 14 16:39); **(2)** parallel-session ownership remains unresolved
 > (not blocking — that session's deploy carried the fix); **(3)** stale-key path moot (enrollment succeeded; the
-> setup key stays valid to ~2026-11-05). STILL OPEN: the pbx-side confirmation (provisioner run printing
-> "created router … converged" + `/api/peers` listing evo-x2 — owner ssh, see the Post-flip verify row in
-> docs/todo/services.md) and §f items 12–13 (systemd-shape-audit never-queued-shape warning; nixpkgs upstream).
+> setup key stays valid to ~2026-11-05). STILL OPEN: the pbx-side post-switch
+> verification battery (row 174(b): management NRestarts flat + `/api/peers`
+> 200 with both peers + acme-mail/stalwart restarts + row-180 probes incl. the
+> Gatus token eyeball — owner ssh, pbx-artmann TODO §11; the provisioner
+> router-creation itself CONVERGED 2026-10-14 evening per the pbx runbook)
+> and §f items 12–13 (systemd-shape-audit never-queued-shape warning;
+> nixpkgs upstream), plus the SystemNix deploy of the 2026-10-15
+> dangling-Require fix (queue row in docs/todo/services.md).
 > Doc truth-ups landed 2026-10-15: net-vpn.md, services.md, TODO_LIST.md, systemd.md, rotations.md, README, FEATURES,
 > CHANGELOG, pbx-artmann runbook + TODO §11.
 

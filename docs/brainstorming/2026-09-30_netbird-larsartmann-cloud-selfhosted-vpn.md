@@ -150,7 +150,7 @@ needs the VPN → acceptable, since using the services needs the VPN anyway.
 
 | ID | Decision                                                                                  |
 | -- | ----------------------------------------------------------------------------------------- |
-| D1 | Option A: Pocket ID stays on evo-x2; Dex-static sidecar on VPS for NetBird dashboard only |
+| D1 | Option A: Pocket ID stays on evo-x2; Dex-static sidecar on VPS for NetBird dashboard only **(SUPERSEDED 2026-10-12: pbx-side SSO stage 1 replaced Dex with Pocket ID entirely — see pbx netbird-deploy.md UPDATE)** |
 | D2 | pbx-artmann server hosts NetBird control plane + Dex (accepted risks §7)                  |
 | D3 | dnsblockd CA wildcard for `*.larsartmann.cloud` on evo-x2 Caddy; LE HTTP-01 for VPS names |
 | D4 | Trim public `larsartmann.cloud` DNS to apex + `netbird.` + Resend records                 |
