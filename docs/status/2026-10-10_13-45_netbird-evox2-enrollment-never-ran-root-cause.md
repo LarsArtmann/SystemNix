@@ -14,14 +14,20 @@ gate, not behind anything technical.
 
 > **UPDATE 2026-10-15 ~19:25 CEST — RESOLVED: the mesh is CONNECTED.** The root-cause fix above went live via the
 > parallel session's 2026-10-10 13:14 deploy (the module half was already active; deploy.sh's explicit restart block
-> rode the same train). Enrollment completed 2026-10-10/11 — **owner-run `netbird up` in a terminal during the
-> Oct 10→11 journal gap**, which is why the login oneshot still has ZERO journal entries (expected post-hoc; a clean
-> oneshot history proves nothing once enrollment happened out-of-band). Live verification 2026-10-15 19:21–19:23 CEST:
+> rode the same train). Enrollment completed 2026-10-14 16:39 CEST — **owner-run
+> `netbird-evox2 up --setup-key-file /run/secrets/netbird_setup_key`** (journal boot -2: PermissionDenied at
+> 16:39:28 → "peer has been successfully registered" at 16:39:29; the earlier "Oct 10→11" guess in this UPDATE was
+> falsified by that same journal — denials persist through Oct 12 13:06). The login oneshot STILL has ZERO journal
+> entries, for a SECOND proven reason found 2026-10-15: the deployed unit Requires a NOT-FOUND
+> `sops-install-secrets.service` (our module pinned nixpkgs' doc-example `systemdDependencies` value while sops
+> secrets render via the activation script — no such unit exists), so every start dies on the dangling dep. Fix
+> landed in-tree 2026-10-15 (`systemdDependencies` dropped to default `[]`; eval + `checks.cloud-domain` green),
+> deploy owed; until then the manual command is the re-enrollment path. Live verification 2026-10-15 19:21–19:23 CEST:
 > interface `nb-evox2` up, mesh address `100.112.252.86` with the `100.112.0.0/16` route (`/proc/net/fib_trie`,
 > `/proc/net/route`), UDP 51820 bound on `0.0.0.0` + `[::]`, daemon connected to the Management stream + Signal +
 > `rels://relay.larsartmann.cloud` (stable since 12:00, zero errors), and daemon re-authenticates across reboots
 > (the Oct 15 03:14 boot came up already logged in — no `PermissionDenied`). The §g questions resolve as:
-> **(1)** enrollment trigger = owner manual run (Oct 10/11); **(2)** parallel-session ownership remains unresolved
+> **(1)** enrollment trigger = owner manual run (Oct 14 16:39); **(2)** parallel-session ownership remains unresolved
 > (not blocking — that session's deploy carried the fix); **(3)** stale-key path moot (enrollment succeeded; the
 > setup key stays valid to ~2026-11-05). STILL OPEN: the pbx-side confirmation (provisioner run printing
 > "created router … converged" + `/api/peers` listing evo-x2 — owner ssh, see the Post-flip verify row in
