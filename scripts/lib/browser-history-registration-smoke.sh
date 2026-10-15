@@ -34,6 +34,8 @@ browser_history_registration_smoke() {
   local csrf_hdr csrf_body token cookie reg_code body_matched body_head
   csrf_hdr=$(mktemp)
   csrf_body=$(mktemp)
+  token=""
+  cookie=""
   if "$curl_bin" -sS -I -o /dev/null -D "$csrf_hdr" --max-time 10 \
     "$url/health" >/dev/null 2>&1; then
     token=$(grep -i '^x-csrf-token:' "$csrf_hdr" | tail -1 | tr -d '\r' | cut -d' ' -f2)

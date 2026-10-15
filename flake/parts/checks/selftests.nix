@@ -185,6 +185,43 @@
               touch $out
             '';
 
+        # Browser-history registration-gate smoke selftest: runs the REAL
+        # smoke lib against python3 fixture servers (kernel-assigned ports)
+        # — the gate-closed PASS, the 400-open-gate regression branch (§f.15
+        # of the 2026-10-15 self-review: the leg shipped without a negative
+        # test), the no-CSRF-headers branch, the bare-403-without-body
+        # branch (the body match is load-bearing), 429-warn, unexpected
+        # status — plus a static tripwire that post-deploy-check.sh still
+        # sources the lib and calls the smoke (a deleted wiring would go
+        # phantom-green).
+        browser-history-registration-smoke-selftest =
+          pkgs.runCommand "browser-history-registration-smoke-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                curl
+                gnugrep
+                gnused
+                python3
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              cp ${root}/scripts/lib/browser-history-registration-smoke.sh "$scratch/lib-smoke.sh"
+              cp ${root}/scripts/test-browser-history-registration-smoke.sh "$scratch/test.sh"
+              # Repoint the test's lib source at the scratch copy and fix
+              # the shebang: /usr/bin/env does not exist in the sandbox.
+              sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/test.sh"
+              sed -i "s|source \"\$here/lib/browser-history-registration-smoke.sh\"|source \"$scratch/lib-smoke.sh\"|" "$scratch/test.sh"
+              ${pkgs.bash}/bin/bash "$scratch/test.sh"
+              if ! grep -q 'browser_history_registration_smoke' ${root}/scripts/post-deploy-check.sh; then
+                echo "FAIL: post-deploy-check no longer wires the registration-gate smoke"
+                exit 1
+              fi
+              touch $out
+            '';
+
         # io-psi-crosscheck selftest: fixture-tests the pure helpers (io_ticks
         # delta math incl. vanished-device drop, max util, cgroup io.pressure
         # ranking with root exclusion + malformed skip + decimal order), runs

@@ -22,12 +22,18 @@ fi
 failures=0
 fixture_pid=""
 
-start_fixture() { # port mode
-  python3 - "$1" "$2" <<'PY' &
-import http.server, sys
+# The fixture binds port 0 (kernel-assigned) and reports the chosen port
+# via a file — fixed high ports lose at ephemeral-port roulette: the kernel's
+# outbound range (32768-60999) overlaps any fixed port there, and an
+# unrelated ESTABLISHED connection (2026-10-15: 39452↔9100) blocks bind
+# with EADDRINUSE while ss -l shows nothing.
+start_fixture() { # portfile mode
+  local portfile="$1" mode="$2"
+  rm -f "$portfile"
+  python3 - "$portfile" "$mode" <<'PY' &
+import http.server, os, sys
 
-port = int(sys.argv[1])
-mode = sys.argv[2]
+portfile, mode = sys.argv[1], sys.argv[2]
 
 class H(http.server.BaseHTTPRequestHandler):
     def _dance_headers(self):
@@ -73,7 +79,10 @@ class H(http.server.BaseHTTPRequestHandler):
     def log_message(self, *args):
         pass
 
-http.server.HTTPServer(("127.0.0.1", port), H).serve_forever()
+srv = http.server.HTTPServer(("127.0.0.1", 0), H)
+with open(portfile, "w") as f:
+    f.write(str(srv.server_address[1]))
+srv.serve_forever()
 PY
   fixture_pid=$!
 }
@@ -88,42 +97,55 @@ stop_fixture() {
 trap stop_fixture EXIT
 
 bh_pass() { echo "VERDICT:PASS"; }
-bh_fail() { echo "VERDICT:FAIL"; }
+bh_fail() { echo "VERDICT:FAIL:$1"; }
 bh_warn() { echo "VERDICT:WARN"; }
 
-run_case() { # port mode expect_verdict expect_rc description
-  local port="$1" mode="$2" expect_verdict="$3" expect_rc="$4" desc="$5"
-  local out rc=0 verdict
-  start_fixture "$port" "$mode"
-  # Wait for the listener (bounded).
-  local i
-  for i in 1 2 3 4 5 6 7 8 9 10; do
-    curl -s -o /dev/null --max-time 1 "http://127.0.0.1:$port/health" && break
+run_case() { # mode expect_verdict expect_rc description [expect_msg]
+  local mode="$1" expect_verdict="$2" expect_rc="$3" desc="$4" expect_msg="${5:-}"
+  local out rc=0 verdict portfile port i
+  portfile=$(mktemp)
+  start_fixture "$portfile" "$mode"
+  # Wait for the fixture to report its kernel-assigned port (bounded).
+  port=""
+  for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+    port=$(cat "$portfile" 2>/dev/null || true)
+    [ -n "$port" ] && break
     sleep 0.3
   done
+  rm -f "$portfile"
+  if [ -z "$port" ]; then
+    echo "FAIL: $desc — fixture never reported a port"
+    stop_fixture
+    failures=$((failures + 1))
+    return
+  fi
   out=$(BRS_URL="http://127.0.0.1:$port" \
     BRS_PASS=bh_pass BRS_FAIL=bh_fail BRS_WARN=bh_warn \
     browser_history_registration_smoke) || rc=$?
   stop_fixture
   verdict=$(printf '%s\n' "$out" | sed -n 's/^VERDICT://p' | tail -1)
   verdict="${verdict:-none}"
-  if [ "$verdict" != "$expect_verdict" ]; then
+  verdict_class="${verdict%%:*}"
+  if [ "$verdict_class" != "$expect_verdict" ]; then
     echo "FAIL: $desc — expected verdict $expect_verdict, got '$verdict' (rc=$rc)"
     failures=$((failures + 1))
   elif [ "$rc" != "$expect_rc" ]; then
     echo "FAIL: $desc — expected rc $expect_rc, got $rc (verdict ok)"
+    failures=$((failures + 1))
+  elif [ -n "$expect_msg" ] && ! printf '%s\n' "$verdict" | grep -q "$expect_msg"; then
+    echo "FAIL: $desc — verdict did not come from the expected branch (wanted '$expect_msg' in: $verdict)"
     failures=$((failures + 1))
   else
     echo "ok: $desc -> $verdict (rc=$rc)"
   fi
 }
 
-run_case 18451 gate-closed      PASS 0 "gate closed (403 + registration_closed body)"
-run_case 18452 gate-open        FAIL 1 "gate OPEN regression (400 invalid email) — the §f.15 branch"
-run_case 18453 no-csrf-headers  FAIL 1 "no CSRF headers on /health"
-run_case 18454 csrf-wall-403    FAIL 1 "bare 403 without registration_closed body (body match is load-bearing)"
-run_case 18455 rate-limited     WARN 0 "rate-limited probe (429) warns, never fails"
-run_case 18456 unexpected       FAIL 1 "unexpected status (500)"
+run_case gate-closed      PASS 0 "gate closed (403 + registration_closed body)"
+run_case gate-open        FAIL 1 "gate OPEN regression (400 invalid email) — the §f.15 branch" "gate OPEN"
+run_case no-csrf-headers  FAIL 1 "no CSRF headers on /health"
+run_case csrf-wall-403    FAIL 1 "bare 403 without registration_closed body (body match is load-bearing)"
+run_case rate-limited     WARN 0 "rate-limited probe (429) warns, never fails"
+run_case unexpected       FAIL 1 "unexpected status (500)"
 
 if [ "$failures" -gt 0 ]; then
   echo "test-browser-history-registration-smoke: $failures failure(s)"
