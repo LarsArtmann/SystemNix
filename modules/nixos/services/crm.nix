@@ -77,8 +77,12 @@
       # so upstream pasting the got hash genuinely fixes it; drop then, or
       # when the lock moves past an upstream-fixed rev. Re-add ONLY via
       # nix-hash-fix evidence, never by hand.
+      # TEMPORARY vendorHash shim RE-PINNED (2026-10-15 fleet wave): the
+      # overnight lock float landed crm on a0341a0; the shim's AtAQS…
+      # (measured at a410024b) was the SPECIFIED hash in the 02:46 nh
+      # mismatch. Got WOZ2Iwqw… first-hand. Drop per the standing conditions.
       crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-AtAQS+x0OjID6udRi88RD+OYPBT582IKTexudscI0/I=";
+        vendorHash = "sha256-WOZ2IwqwAaI+Y7EBZyWGRfMPZ13p8rGWaHrMTDOxcE0=";
       };
       twentyEnabled = config.services.twenty.enable or false;
     in

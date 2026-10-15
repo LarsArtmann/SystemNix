@@ -65,7 +65,13 @@
           # pinned for the superseded rev 17af7f1 only re-created the drift
           # treadmill). Re-add ONLY via nix-hash-fix evidence, never by
           # hand.
-          default = inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          # TEMPORARY vendorHash shim RE-ADDED (2026-10-15 fleet wave,
+          # first-hand fakeHash FOD probe at locked rev 93d13fd; class
+          # comment: lib/lars-packages.nix flakePkgShim): the overnight
+          # lock float re-staled upstream's baked hash.
+          default = inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+            vendorHash = "sha256-IRv9RBXa8Hvi7xO9RDAKYhs16qGIQKFJpiTv8DgVwZY=";
+          };
           defaultText = lib.literalExpression "inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default";
           description = "The health-hub package (github:LarsArtmann/go-health-dashboard).";
         };

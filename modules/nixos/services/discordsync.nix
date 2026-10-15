@@ -43,7 +43,14 @@
       # clean, store c1ffr7g8…; the shim's /NYfLmDMx… was measured at
       # 1ac31f8 and hash-mismatched in the 2026-10-12 toplevel keep-going
       # enumeration). Re-add ONLY via nix-hash-fix evidence, never by hand.
-      discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # TEMPORARY vendorHash shim RE-ADDED (2026-10-15 fleet wave, first-hand
+      # fakeHash FOD probe at locked rev cac57aa; class comment:
+      # lib/lars-packages.nix flakePkgShim): the overnight lock float
+      # re-staled upstream's baked hash. Drop when upstream bakes the got
+      # hash or the lock moves past an upstream-fixed rev.
+      discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+        vendorHash = "sha256-UnFb4VRSMfx/VXcDxd+E70gFheSHL0EIiXyJrCXodEE=";
+      };
       sopsEnvPath = config.sops.templates."discordsync-env".path;
 
       dbBackupDir = "/mnt/pool/backups/discordsync";

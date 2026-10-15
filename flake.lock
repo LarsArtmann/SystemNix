@@ -661,11 +661,11 @@
     "cqrs-htmx_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1792016082,
-        "narHash": "sha256-OyFr9w01VAK4n9wRlKN1bPJni4yUmFdUurjs+u7WTs0=",
+        "lastModified": 1792020139,
+        "narHash": "sha256-kKMinRejosfRS8QyhpYNWB/iD3S7ZsIoHGXY5mNMWIQ=",
         "owner": "LarsArtmann",
         "repo": "cqrs-htmx",
-        "rev": "aee26c7951ccefd36b567eda2f481903dc50c024",
+        "rev": "9997cdfda664d238f035596bfd7753c014ea20f6",
         "type": "github"
       },
       "original": {
@@ -896,11 +896,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792022572,
-        "narHash": "sha256-uunfbYAfmVoJo2B/9yHap2D2tFssBn6+Sl+CMkTC8GI=",
+        "lastModified": 1792028315,
+        "narHash": "sha256-JwHZiLJbT2+Sho9bl10rMtp2R2v4JsFS+ZRkjpMafMk=",
         "owner": "LarsArtmann",
         "repo": "crush-daily",
-        "rev": "bc765f8511d82941eaee499dc90abb610595bdc7",
+        "rev": "16edaaeb9a97e1fd6b9a213a19049f59ab459f4c",
         "type": "github"
       },
       "original": {
@@ -8094,16 +8094,16 @@
     "templ-components_3": {
       "flake": false,
       "locked": {
-        "lastModified": 1790353862,
-        "narHash": "sha256-htrL7wCLMHyJv9NLUjw7tEcwApUE4VnZiB+RsGSai14=",
+        "lastModified": 1791916000,
+        "narHash": "sha256-ffufS+TcUgERsyQpj4M+6pCBPQEQIUU68OR3AevGoLQ=",
         "owner": "LarsArtmann",
         "repo": "templ-components",
-        "rev": "7f7338181bc89095c736c7c4d142bee54fe4d9fa",
+        "rev": "2126f3c877a4d383ec03f1af370828cdda8c2887",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "v1.19.4",
+        "ref": "v1.23.0",
         "repo": "templ-components",
         "type": "github"
       }

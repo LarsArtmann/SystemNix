@@ -65,7 +65,12 @@
         ports
         ;
 
-      papdashboardPkg = inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server;
+      # TEMPORARY vendorHash shim ADDED (2026-10-15 fleet wave, first-hand
+      # got-hash from the 02:46 nh enumeration at locked rev c8d0cf92; class
+      # comment: lib/lars-packages.nix flakePkgShim)
+      papdashboardPkg = inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server.overrideAttrs {
+        vendorHash = "sha256-CzxGeRncao0r7hc6mbzsAvpjs8WlBCXFl82KpsVP0NU=";
+      };
 
       checkEnv = mkSecretCheck pkgs {
         name = "papdashboard-env";

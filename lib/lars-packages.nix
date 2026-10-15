@@ -12,6 +12,21 @@
 system:
 let
   flakePkg = input: (input.packages.${system} or { }).default or null;
+  # flakePkgShim: consumer-side vendorHash shim (attrset overrideAttrs form
+  # — .override does NOT exist on upstream-flake packages). 2026-10-15
+  # fleet wave: the overnight master-tracking lock float re-staled ~22
+  # go-modules FODs with root nixpkgs STATIC (source churn, not toolchain
+  # drift). Every value below is a first-hand fakeHash FOD probe at the
+  # locked rev (/tmp/got-probe-20261015.log; cross-checked against the
+  # user's 02:46 nh enumeration). Drop per-tool when upstream bakes the
+  # got hash or the lock moves past an upstream-fixed rev; re-add ONLY
+  # via nix-hash-fix evidence, never by hand.
+  flakePkgShim =
+    input: attr: hash:
+    let
+      pkg = (input.packages.${system} or { }).${attr} or null;
+    in
+    if pkg == null then null else pkg.overrideAttrs { vendorHash = hash; };
 in
 lib.filterAttrs (_: v: v != null) {
   # art-dupl shim DROPPED (2026-09-29): its drop condition ("lock moves past
@@ -27,7 +42,9 @@ lib.filterAttrs (_: v: v != null) {
   # toplevel --keep-going enumeration, /tmp/toplevel-fix-20261007.log), so
   # the override only re-created the drift treadmill. Re-add ONLY via
   # nix-hash-fix evidence, never by hand.
-  branching-flow = flakePkg inputs.branching-flow;
+  branching-flow = flakePkgShim inputs.branching-flow "default"
+    # fleet-wave 2026-10-15 (see flakePkgShim class comment)
+    "sha256-0IxhvfLipHbgCDkOOt4gzot/y8vdYl2KZyMwaHWKE+w=";
   # brandid-lint CLI from the go-branded-id repo's flake (packages.default);
   # master-tracked per the 2026-10-11 owner decision. CV's change-gate
   # brandid leg consumes this via PATH instead of a hand-built binary.
@@ -62,7 +79,9 @@ lib.filterAttrs (_: v: v != null) {
   # hash (m8gL3Z4Z… == the 09:25 keep-going enumeration's got — shim-drop
   # protocol, docs/agents/nix-flakes.md). Re-add ONLY via nix-hash-fix
   # evidence, never by hand.
-  buildflow = flakePkg inputs.buildflow;
+  buildflow = flakePkgShim inputs.buildflow "default"
+    # fleet-wave 2026-10-15 (see flakePkgShim class comment)
+    "sha256-cCl3IWhufWYGlRncOOKKvUwaOBceF7aapUXCwoyk2lA=";
   # NOT flakePkg: upstream go-cqrs-lite's `packages.default` is a deliberate
   # no-op derivation (BuildFlow `nix build .` needs it; the real CLI lives at
   # packages.cqrs-lint). The 2026-10-09 shim drop kept flakePkg, which resolved
@@ -109,24 +128,28 @@ lib.filterAttrs (_: v: v != null) {
       null
     else
       pkg.overrideAttrs {
-        vendorHash = "sha256-LzoxcvFTbbhdWHfSfRes9/aiVXvG2UzrwEjPVHMkM+E=";
+        # fleet-wave 2026-10-15 re-pin: LzoxcvFT… lived ~12h before the
+        # lock float to bb57433 re-staled it (see flakePkgShim class comment)
+        vendorHash = "sha256-sKya91EScKy5TFuolADHdqYLTDpqJ94CLVtjMvUvIIk=";
       };
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 74baca53 ALREADY bakes the got
   # hash G0hMfZId… (first-hand keep-going enumeration,
   # /tmp/toplevel-fix-20261007.log). Re-add ONLY via nix-hash-fix
   # evidence, never by hand.
-  go-auto-upgrade = flakePkg inputs.go-auto-upgrade;
+  go-auto-upgrade = flakePkgShim inputs.go-auto-upgrade "default"
+    # fleet-wave 2026-10-15 (see flakePkgShim class comment)
+    "sha256-D5DnebMFnB4B455Sjm1hlPM8+IeshshLAhkys0F3cZg=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11): the lock moved
   # 4cee06df → 7f9b7b19, whose flake bakes the shim's OWN JrBhDyCx… value
   # (git show 7f9b7b19:flake.nix) — the override was bit-neutral at the
   # current lock. Re-add ONLY via nix-hash-fix evidence, never by hand.
-  go-humanize-linter =
-    let
-      pkg = flakePkg inputs.go-humanize-linter;
-    in
-    if pkg == null then null else pkg;
-  go-structure-linter = flakePkg inputs.go-structure-linter;
+  go-humanize-linter = flakePkgShim inputs.go-humanize-linter "default"
+    # fleet-wave 2026-10-15 (see flakePkgShim class comment)
+    "sha256-ZenhGNkklhWD/Ej4WZhZwtD16suWdQ0c2n+Lmf2J4ME=";
+  go-structure-linter = flakePkgShim inputs.go-structure-linter "default"
+    # fleet-wave 2026-10-15 (see flakePkgShim class comment)
+    "sha256-O2hpYHScgY0UlxTg94dVJ9wuWSJEnz0ourXRRFoIV3Q=";
   # TEMPORARY vendorHash shim RE-PINNED (2026-10-14): the master-tracking
   # flip (flake.nix, owner directive) landed golangci-lint-auto-configure
   # on 81446302, whose vendorHash.nix still pins zg+6ICkRu2… — 69 commits
@@ -143,7 +166,9 @@ lib.filterAttrs (_: v: v != null) {
       null
     else
       pkg.overrideAttrs {
-        vendorHash = "sha256-EgfteIUmqzPBVCdM9XoAY/kuQe+G03BushBj+sGomIk=";
+        # fleet-wave 2026-10-15 re-pin: EgfteIUmqz… re-staled at 104b54e6
+        # (see flakePkgShim class comment)
+        vendorHash = "sha256-YmWGO9br4TEiWZ22pCI6+hQBbjYHK2K9K53SuFTY2pw=";
       };
   # library-policy shim DROPPED (2026-10-09): its drop condition ("lock
   # moves past an upstream-fixed rev") is met — the lock holds 5d2a670,
@@ -151,7 +176,9 @@ lib.filterAttrs (_: v: v != null) {
   # shim overrode with MUWz8cpf…, re-breaking the FOD it existed to fix)
   # and `nix build .#library-policy` builds clean (verified 2026-10-09).
   # Re-add ONLY via nix-hash-fix evidence, never by hand.
-  library-policy = flakePkg inputs.library-policy;
+  library-policy = flakePkgShim inputs.library-policy "default"
+    # fleet-wave 2026-10-15 (see flakePkgShim class comment)
+    "sha256-LNKl6MJs31DOTzZ1ThMIfvJ3+XOgFlS2KhXWKL2ncMY=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream 3f466de bakes the through-our-lock got hash
   # e+jOFi3m… (specified uF0J63iQ vs got e+jOFi3m, first-hand keep-going
@@ -171,17 +198,24 @@ lib.filterAttrs (_: v: v != null) {
   # (the same "got" hash the stale shim overrode with w3uyGueT…;
   # first-hand keep-going enumeration, /tmp/toplevel-fix-20261009.log).
   # Re-add ONLY via nix-hash-fix evidence, never by hand.
-  project-dependency-graph = flakePkg inputs.project-dependency-graph;
+  project-dependency-graph = flakePkgShim inputs.project-dependency-graph "default"
+    # fleet-wave 2026-10-15 (see flakePkgShim class comment)
+    "sha256-lSE3snyu9xFnSekT4pBX23qaKeI22GI+R8rQzEFC3Bw=";
   # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.
   # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
-  mr-sync = flakePkg inputs.mr-sync;
+  mr-sync = flakePkgShim inputs.mr-sync "default"
+    # fleet-wave 2026-10-15 (see flakePkgShim class comment; the module
+    # default in modules/nixos/services/mr-sync.nix carries the same value)
+    "sha256-cFy4AGocSu4kSWQZSjkcmGA8ZpNbm+QamGaq8n5zyis=";
   # vendorHash shim DROPPED (2026-10-10): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 7567b4ec, whose
   # flake bakes vendorHash HWYco+tb… (the same "got" hash the stale shim
   # overrode with KDFDf97T…; first-hand keep-going enumeration,
   # /tmp/toplevel-fix-20261009b.log). Re-add ONLY via nix-hash-fix
   # evidence, never by hand.
-  project-meta = flakePkg inputs.project-meta;
+  project-meta = flakePkgShim inputs.project-meta "default"
+    # fleet-wave 2026-10-15 (see flakePkgShim class comment)
+    "sha256-RxJS6cpJ3x9VTvcroUeA2gMRNdbcD8xuRTzNUDSGYd0=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream ea6e8ce bakes the got hash 6ZDAkBB… (specified
   # 8kSXYjwa vs got Mrn25ftf at 1f9b57c, then re-measured 6ZDAkBB at
@@ -190,20 +224,28 @@ lib.filterAttrs (_: v: v != null) {
   # rounds, first-hand keep-going enumerations both times). Lock moved
   # 1f9b57c → ea6e8ce the same day. Re-add ONLY via nix-hash-fix evidence,
   # never by hand.
-  project-discovery-daemon = flakePkg inputs.project-discovery-daemon;
+  project-discovery-daemon = flakePkgShim inputs.project-discovery-daemon "default"
+    # fleet-wave 2026-10-15 (see flakePkgShim class comment; the module
+    # default in project-discovery-daemon.nix carries the same value)
+    "sha256-nNKXDH5NoVlkjJMQbYICImrthGVxMvZybQgf5QcJBkY=";
   # vendorHash shim DROPPED (2026-10-09): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 96fd9304, whose
   # flake bakes vendorHash Bvuf0KUY… (the same "got" hash the stale shim
   # overrode with +/NGC//7…, re-breaking the FOD it existed to fix;
   # first-hand keep-going enumeration, /tmp/toplevel-fix-20261009.log).
   # Re-add ONLY via nix-hash-fix evidence, never by hand.
-  projects-management-automation = flakePkg inputs.projects-management-automation;
+  projects-management-automation = flakePkgShim inputs.projects-management-automation "default"
+    # fleet-wave 2026-10-15 (see flakePkgShim class comment; the service
+    # config in projects-management-automation.nix carries the same value)
+    "sha256-lPN1fqTDp3jxmThsmdXIlbFpiM10h6qK1ksUYE1HvY8=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,
   # /tmp/toplevel-fix-20261007.log). Re-add ONLY via nix-hash-fix
   # evidence, never by hand.
-  samber-linter = flakePkg inputs.samber-linter;
+  samber-linter = flakePkgShim inputs.samber-linter "default"
+    # fleet-wave 2026-10-15 (see flakePkgShim class comment)
+    "sha256-79YZ0u7C+7oFhZS4YTMJzi3qroanbYTYbOkA2oDiKqY=";
   # todo-list-ai TEMPORARILY DROPPED (2026-10-03, null → filtered by the
   # null-safe guard below): the 2026-10-01 root-nixpkgs bump moved its
   # followed bun 1.4.1→1.4.2, which re-hashed the deps FOD (pinned
