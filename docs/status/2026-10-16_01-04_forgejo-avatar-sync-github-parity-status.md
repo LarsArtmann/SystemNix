@@ -102,3 +102,18 @@
 ---
 
 *Verification chain: deployed-swagger probe → fixture (behavior + wire-payload round-trip) → `nix flake check --no-build` ×2 → evo-x2 ExecStart eval → `nix fmt` 0-changed → todo-system checker clean. The remaining gap between "eval+fixture green" and "avatars live on forgejo.home.lan" is exactly one deploy — the queued row owns it.*
+
+---
+
+## ADDENDUM 2026-10-16 ~01:15 — §g Q1 ANSWERED: OIDC > GitHub for the user avatar
+
+Owner decision landed minutes after the report: `FORGEJO_AVATAR_SYNC_USER` now **defaults to false** — Pocket ID owns the user avatar via the OIDC picture claim (`oauth2_client.UPDATE_AVATAR`); `=true` opts back into GitHub sync. Orgs remain the phase's payload. Landed surfaces (all re-verified):
+
+- `modules/nixos/services/_forgejo-scripts.nix` — default flip + header/decision comments + skip-message reword ("User avatar sync skipped … OIDC (Pocket ID) owns it")
+- `modules/nixos/services/forgejo.nix` — unit phases comment corrected to ORG-only default
+- `flake/parts/checks/fixtures-forgejo.nix` — scenarios re-based: run 1 = user upload **only with explicit `FORGEJO_AVATAR_SYNC_USER=true`** (opt-in path still covered); run 2 = **env-UNSET default** asserts the user is skipped (no POST) while the org converges
+- `docs/services/forgejo.md` runbook row + `CHANGELOG.md` Added bullet retitled "orgs (user stays OIDC-owned)"
+- Queue rows updated on both surfaces (services.md + TODO_LIST.md) — no drift
+- §f row 3 and §g Q1 are thereby CLOSED; §b4's verbatim-storage assumption and the deploy-gated live verify (§b1) remain the open tail
+
+Re-verification after the flip: `forgejo-scripts-fixture` green, `nix flake check --no-build` re-run in flight at annotation time (previous full battery green).
