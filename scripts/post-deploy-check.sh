@@ -184,6 +184,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/service-sanity-sweep.sh"
 # the deploy smoke summary).
 # shellcheck source=scripts/lib/storage-history-smoke.sh disable=SC1091
 source "$(dirname "${BASH_SOURCE[0]}")/lib/storage-history-smoke.sh"
+# shellcheck source=scripts/lib/browser-history-registration-smoke.sh disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/lib/browser-history-registration-smoke.sh"
 # Read by the sourced libs (sandbox shellcheck cannot follow them).
 # shellcheck disable=SC2034
 OB_PASS=report_pass OB_FAIL=report_fail OB_WARN=report_warn OB_SKIP=report_skip
@@ -605,45 +607,15 @@ else
 fi
 
 # Browser History: registration gate CSRF double-submit smoke (2026-10-15).
-# /auth/register sits BEHIND the CSRF middleware, so a bare probe answers the
-# CSRF wall (403 csrf_invalid), never the gate — the gate's real state is
-# invisible without the dance: HEAD /health (the CSRF fetcher — middleware
-# sets X-Csrf-Token + csrf_token cookie on every request) then replay both
-# on POST /auth/register. The email is DELIBERATELY invalid: the Register
-# service checks the gate BEFORE validation (usermgmt v4.14.3
-# service_register.go: gate → validate), so gate-closed answers 403
-# usermgmt.registration_closed while a gate-left-open regression (count-gap
-# recurrence) answers 400 "invalid email" — loud, and ZERO debris either way.
+# The leg lives in scripts/lib/browser-history-registration-smoke.sh
+# (fixture-tested by scripts/test-browser-history-registration-smoke.sh +
+# the browser-history-registration-smoke-selftest flake check — the
+# 400-open-gate regression branch is proven there against a stub server;
+# extracted so the fixture exercises the SAME code this gate runs).
 if test -e /etc/systemd/system/browser-history.service; then
-  _bh_csrf_hdr=$(mktemp)
-  _bh_csrf_body=$(mktemp)
-  _bh_token=""
-  _bh_cookie=""
-  if curl -sS -I -o /dev/null -D "$_bh_csrf_hdr" --max-time 10 \
-    "http://localhost:8087/health" >/dev/null 2>&1; then
-    _bh_token=$(grep -i '^x-csrf-token:' "$_bh_csrf_hdr" | tail -1 | tr -d '\r' | cut -d' ' -f2)
-    _bh_cookie=$(grep -i '^set-cookie:' "$_bh_csrf_hdr" | grep -i 'csrf_token=' | tail -1 | tr -d '\r' | sed 's/^[Ss]et-[Cc]ookie: //' | cut -d';' -f1)
-  fi
-  if [ -z "$_bh_token" ] || [ -z "$_bh_cookie" ]; then
-    report_fail "Browser History - registration-gate smoke could not fetch CSRF token+cookie from /health (server answered no CSRF headers)"
-  else
-    _bh_reg_code=$(curl -s -o "$_bh_csrf_body" -w "%{http_code}" --max-time 10 \
-      -X POST "http://localhost:8087/auth/register" \
-      -H "Cookie: $_bh_cookie" \
-      -H "X-Csrf-Token: $_bh_token" \
-      -H "Content-Type: application/json" \
-      --data '{"email":"not-an-email"}' 2>/dev/null || echo none)
-    if [ "$_bh_reg_code" = "403" ] && grep -q 'registration_closed' "$_bh_csrf_body" 2>/dev/null; then
-      report_pass "Browser History - registration gate CLOSED (CSRF dance through the wall, 403 usermgmt.registration_closed)"
-    elif [ "$_bh_reg_code" = "400" ]; then
-      report_fail "Browser History - registration gate OPEN: /auth/register reached validation past MAX_USERS (count-gap recurrence — see docs/todo/upstream.md gate-count row)"
-    elif [ "$_bh_reg_code" = "429" ]; then
-      report_warn "Browser History - register probe rate-limited (429); gate state not proven this run"
-    else
-      report_fail "Browser History - register probe unexpected status ${_bh_reg_code:-none} (body: $(head -c 200 "$_bh_csrf_body" 2>/dev/null))"
-    fi
-  fi
-  rm -f "$_bh_csrf_hdr" "$_bh_csrf_body"
+  BRS_URL="http://localhost:8087" \
+  BRS_PASS=report_pass BRS_FAIL=report_fail BRS_WARN=report_warn \
+    browser_history_registration_smoke || true
 else
   report_skip "Browser History - registration-gate smoke skipped (service not deployed)"
 fi
