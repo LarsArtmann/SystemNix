@@ -239,15 +239,6 @@
             webauthn.rpId = lib.mkDefault fqdn;
             webauthn.rpName = lib.mkDefault "BrowserHistory";
             webauthn.origins = lib.mkDefault [ "https://${fqdn}" ];
-            # OAuth-only sign-in (owner policy 2026-10-16): passkeys disabled,
-            # Pocket ID the only auth method. Upstream renders
-            # PASSKEYS_DISABLED=true from this and eval-asserts a configured
-            # OAuth2 provider — the non-secret client ID rides the option;
-            # the secret keeps flowing via browser-history-oidc-setup's env
-            # file (a missing secret then fails the boot BY DESIGN — fail
-            # closed beats serving a login-less server).
-            webauthn.enable = false;
-            oauth2.pocketId.clientId = lib.mkDefault "browser-history";
             # Scheme included on purpose: v0.5.0 normalizes the value for the
             # gRPC exporter (which wants bare host:port) while anything that
             # parses the env var as a URL (OTel spec) requires the scheme.
@@ -386,6 +377,18 @@
           in
           {
             services.browser-history = {
+              # OAuth-only sign-in (owner policy 2026-10-16): passkeys
+              # disabled, Pocket ID the only auth method. Gated on Pocket ID
+              # PRESENCE (not just cfg.enable) because upstream eval-asserts
+              # a configured OAuth2 provider for every disable — the VM test
+              # exercises the passkeys-on default shape without Pocket ID.
+              # Upstream renders PASSKEYS_DISABLED=true; the non-secret client
+              # ID rides the option while the secret keeps flowing via
+              # browser-history-oidc-setup's env file (a missing secret then
+              # fails the boot BY DESIGN — fail closed beats serving a
+              # login-less server).
+              webauthn.enable = false;
+              oauth2.pocketId.clientId = lib.mkDefault "browser-history";
               oauth2.redirectBase = lib.mkDefault "https://${fqdn}";
             };
 
