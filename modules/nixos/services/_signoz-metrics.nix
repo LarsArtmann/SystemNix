@@ -143,7 +143,7 @@ lib.mkIf cfg.components.nodeExporter {
                     TMP="$(mktemp "/var/lib/prometheus-node-exporter/textfile_collectors/nvme.prom.XXXXXX")"
                     chmod 644 "$TMP"
                     trap 'rm -f "$TMP"' EXIT
-                    DEVICE="/dev/nvme0n1"
+                    DEVICE="/dev/disk/by-id/nvme-Lexar_SSD_NQ790_2TB_QBC838R010854P220C"
 
                     if ! command -v nvme &>/dev/null; then
                       echo "nvme-cli not found, skipping" >&2

@@ -987,7 +987,7 @@ _: {
                   interval = "5m";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*node_nvme_collector_keys_missing{device=\"nvme0n1\"} 0*)"
+                    "[BODY] == pat(*node_nvme_collector_keys_missing{device=\"nvme-Lexar_SSD_NQ790_2TB_QBC838R010854P220C\"} 0*)"
                   ];
                   alerts = discordAlert "nvme-metrics collector is missing smart-log JSON keys (nvme-cli key rename?). Affected metrics are omitted, not zeroed — but every alert depending on them has gone blind. The 2026-08 phantom-zero bug hid exactly this way for weeks. Check: journalctl -u nvme-metrics -n 20 (logs the available keys)";
                 })
@@ -998,9 +998,9 @@ _: {
                   interval = "1h";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*node_nvme_endurance_warning{device=\"nvme0n1\"} 0*)"
+                    "[BODY] == pat(*node_nvme_endurance_warning{device=\"nvme-Lexar_SSD_NQ790_2TB_QBC838R010854P220C\"} 0*)"
                   ];
-                  alerts = discordAlert "NVMe SSD endurance exceeds 50% — plan for drive replacement. Check: nvme smart-log /dev/nvme0n1";
+                  alerts = discordAlert "NVMe SSD endurance exceeds 50% — plan for drive replacement. Check: nvme smart-log /dev/disk/by-id/nvme-Lexar_SSD_NQ790_2TB_QBC838R010854P220C";
                 })
                 (mkHttpCheck {
                   name = "Niri Compositor";
