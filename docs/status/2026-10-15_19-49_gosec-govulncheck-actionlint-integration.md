@@ -148,3 +148,13 @@
 ---
 
 **HARVEST status:** §f not yet harvested into TODO_LIST.md / docs/todo/ — awaiting user go per the "WAIT FOR INSTRUCTIONS" gate. Items 1-10 are the session's own tail and would land first.
+
+---
+
+## Addendum (2026-10-15 19:55 — owner surfaced `/home/lars/go/bin/benchstat`)
+
+Correction to §c/§d framing, non-destructive:
+
+- `/home/lars/go/bin/benchstat` EXISTS: imperative `go install` build, `golang.org/x/perf` @ `be2c69f` (2026-10-09), go1.26.8-X:jsonv2, built Oct 11 18:43, 3.5 MB, functional. It **postdates the 2026-09-23 stray-list report** → a **12th stray** that report never enumerated.
+- The session's "benchstat NOT STARTED" claim was about NIX integration (still true — no nix-declared package, nixpkgs absent) and must not be read as "no benchstat on the machine". The tool was already available imperatively; §d item 1 (silent scope drop) stands for the nix path, with this mitigating fact.
+- §f item 16 (~/go/bin strays decision) now covers 12 tools, and §f item 1's vehicle question (Q1) gains a cheaper option (d): leave the imperative binary in place and only shadow/purge it once a nix package lands.
