@@ -1,0 +1,38 @@
+# Browser-history Pareto execution, packages P07-P14 (2026-10-15 20:50)
+
+Session 2 of the adoption-audit arc (`docs/planning/2026-10-15_19-35_BROWSER-HISTORY-SUPERB-ADOPTION-PARETO-PLAN.md`; session 1 landed P01a/P02/P03-lock/P04/P05/P06/P12-AD-2). This session executed every remaining agent-safe package; the only survivor is the PSI-gated FOD+deploy leg, correctly parked.
+
+## a) DONE this session
+
+1. **P07 (upstream heartbeat): verify-closed, ZERO new code.** The empty-batch heartbeat already shipped upstream `b1fd4d8` (2026-09-20): `Client.SendHeartbeat` (client.go:182, same auth/trace/retry as SendBatch) called on every quiet tick (main.go:121-135); server records freshness on empty batches (ingest.go:220 `resp.Total == 0 || Accepted+Duplicates > 0` → RecordIngest, no events/rows). Contained in deployed `fff6034` (merge-base verified). LIVE-VERIFIED: `/agents/health` = 200 `{active:1, lastIngestAt:18:10Z}`, and the process metrics show the 13-byte empty `POST /ingest` answered 200. The deep-dive's "503×354 this boot" was the PREVIOUS server process; this one has a single cold-start 503 then green. Verschlimmbessern guard: the 90-min feature budget was spent on reading, not rebuilding.
+2. **P08 (probeRegistrationCleanup removal): ALL four surfaces ripped.** configuration.nix wiring+comment, the option/ExecStartPre/assertion block in browser-history.nix, the whole `_browser-history-scripts.nix` (git rm — purge was its only script), and the `browser-history-probe-purge-fixture` check. KEEP-OR-RIP VERDICT: RIP (single-use, self-neutralized, 6 weeks old; the pattern survives in git history + the 09-19 04-57 report; a forever-fixture over a dead script is pure eval/build cost). Verified: toplevel eval green, checks attrNames carry no probe entry, rendered unit text has zero probe refs.
+3. **P09 (registration-gate close-outs): live-proven + wired.** (a) CSRF dance live: `HEAD /health` → `X-Csrf-Token` + `csrf_token` cookie; replay on `POST /auth/register` = exactly `403 {"code":"usermgmt.registration_closed"}`. (b) Wired as a post-deploy-check leg with a DELIBERATELY-invalid email — Register checks the gate BEFORE validation (usermgmt v4.14.3 service_register.go:68-84), so gate-closed=403, gate-open regression=400 "invalid email" (LOUD, ZERO debris — debris-free by construction, better than the row's original 201-risk design). 429=warn. shellcheck clean. (c) `/auth/import`: bare=403 csrf_invalid (wall in front), VALID dance + no session=401 "not authenticated" (ImportExportAuthorizer=RequireAdminRole) — unreachable unauthenticated. (d) registrationMu sweep at the PINNED usermgmt v4.14.3 (module cache, not the go.work local lie): exactly 3 `NewRegisterUserCmd` sites, ALL gated — no unknown-third class.
+4. **P10 (macOS one-pager): attached to the decision row** — darwin module wiring sketch, machineId, own-bh_-token provisioning flow from evo-x2, freshness visibility (DB tokens only), AD-2 cross-machine dedup, ~zero cost. Owner decides timing/label.
+5. **P11 (dwell-time extension): DROPPED, live-probed.** extension v0.1.0 posts to `/visits` with NO auth/CSRF: bare=403 csrf_invalid, full-dance=401. Cannot ingest until upstream adds token auth; policy wiring moot. Rationale + re-open condition in the runbook.
+6. **P12 (verification batch): all three.** (a) Burst correlation CLOSED with journal evidence: burst-1 (10-10 16:30-17:00) inside `io some avg10 57.08%` (storage-collector 16:30:09) + gatus "I/O Stall Rate" TRIGGERED (16:30:10-12); burst-2 (10-12 03:51) 2min after `io some avg10 33.58%` + nvme1 10.6 GiB/28.4s-busy (03:49:14), preceded by a 10.0s `/health` timeout (03:51:04, gatus max-time signature) — the 49.2s `GET /` landed at 03:51:16. Both PRE-hot-tier; explained-context. (b) Render-proof: page 1 = EXACTLY 20 rows / 0 firefox (all helium); `Limit: visitsPerPage` pinned at fff6034:346; `?browser=firefox` = 20 firefox rows, TOP = the wikivoyage Appleton landing. Harness keys discovered: `USE_SQLITE_READ_MODEL=1` is MANDATORY (default serves the in-memory event-rebuilt projection — raw UPDATEs invisible), poll `/readyz` not `/health` (drain gate), and NEVER copy the stale `-journal` companion (its "recovery" silently rolls back the visits table). Recipe codified in the runbook. (c) Alerting: SigNoz "Browser History Render Slow (p99 >5s)" rule + `browser-history` scrape job in signoz.nix — Gatus cannot see authenticated renders or read histograms, and the server's histogram had NEVER reached SigNoz (live-queried the API: zero series before the job). signoz-query-lint green.
+7. **P13 (owner consolidation runbook): written** — one login ceremony closes rows 77/79/87 (+ the 69 residue check), sequenced E2E-login → OAuth2-rejection-test → revoke-dupes, with post-gates (`browser_history_users` stays 9, /health 200).
+8. **P14 (verify-closes): 3 rows closed with evidence.** import-gate propagation (pinned v4.14.3 carries the fix — read first-hand; chain moot), empty-dashboard chain (converged; deployed dashboard renders the corpus), `reattribute` (superseded by claim-orphaned — measured dry-run covers every surface the row named). Count-gap row stays open (v4.14.3 still counts `readModel.Count()` — genuinely unfixed).
+9. **Row hygiene:** 13 rows closed/annotated across services.md + upstream.md + TODO_LIST.md, including the previous session's missed P06 gatus-row closure (both surfaces) and a glued-newline formatting bug in TODO_LIST 1272. check-todo-system: structure clean.
+
+## b) NOT done (parked, documented)
+
+1. **P03 FOD+deploy: PSI-gated all session** (avg10 46→81, avg300 ~67; drivers: gopls 99% CPU, live nix-daemon, wireguard_colle, parallel crush/buildflow sessions, nvme1 84-86% util). Freeze-14-class discipline holds; the row's own precondition (avg10 <20%) never came close. The deploy bundle GREW (now carries: P08 removal, P09 smoke leg, signoz scrape+rule, P06 gatus check, AI-suite env, lock 5917bad) — one lull deploy lands everything.
+2. **Upstream repo untouched** (P07 was verify-only; nothing to commit there).
+
+## c) Session gotchas (runbook-worthy, recorded)
+
+1. **This agent shell's `kill` is an UNSUPPORTED BUILTIN** — rc=2, and with `2>/dev/null` a silent no-op; harness servers survived THREE kill attempts until `/run/current-system/sw/bin/kill` was used. EXIT traps do NOT fire for this tool's `bash -c` invocations — kill by recorded PID.
+2. **`rg -rn` is replace-with-"n", not recursive-number** — it mangled every match into "n" and cost a detour ("header name n"??). The correct form is bare `rg -n`.
+3. **`go list -m` in browser-history resolves through go.work to the LOCAL cqrs-htmx checkout** (224 commits ahead) — pinned-rev sweeps must read the module cache path (`/mnt/buildcache/go-mod/.../usermgmt/v4@v4.14.3`), never trust `go list`.
+
+## d) Verification summary
+
+- evo-x2 toplevel eval green twice (post-P08, post-signoz) — drv `an5840wbv…`
+- signoz-query-lint build green (new rule passes the dotted-suffix/job-matcher lints)
+- post-deploy-check.sh: bash -n + shellcheck -S error clean
+- All live probes: CSRF dance 403 registration_closed; /auth/import 401; /agents/health 200 active:1; /metrics users 9
+- Harness cleanup verified: zero stray procs/ports (after the kill-builtin lesson)
+
+## e) Self-harvest (§f contract)
+
+Every follow-up already lives in a row — nothing new to harvest: the deploy bundle + post-deploy verifies = services.md lock-bump row (updated with the bundle + render-rule series check); owner ceremony = rows 77/79/87 (blocked:user) + the P13 runbook section; stop-window = row 500 (blocked:user) with the runbook recipe; remaining runbook-polish residue = trimmed TODO_LIST row (c)(e). Deliberately NOT harvested: nothing.
