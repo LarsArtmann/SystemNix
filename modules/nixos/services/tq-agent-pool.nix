@@ -217,7 +217,14 @@ _: {
             # cheap, daily-budget remains the real spend cap)
             concurrency = "3";
             interval = "5m";
-            task-timeout = "45m";
+            # 90m, raised from 45m (2026-10-15): the worker applies ONLY this
+            # pool-level cap (worker.go runCtx WithTimeout) and ignores the
+            # harvest's per-batch payload timeout_minutes — every 3-item
+            # batch is sized 90m by the harvest, so 45m dead-lettered
+            # 000001a13d2037332 at the wall on its only real run (3 attempts,
+            # zero landed items; the 45m ceiling also forced the completed
+            # 000001a1385cefde batch to skip its heavy build legs).
+            task-timeout = "90m";
             max-per-tick = "3";
             daily-budget = "30";
             repo-interval = "go-taskqueue=10m";

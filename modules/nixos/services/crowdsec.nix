@@ -168,25 +168,43 @@ _: {
           };
         };
 
+        # Gate + repair CANNOT ride crowdsec.service's ExecStartPre: upstream
+        # (nixos/modules/services/security/crowdsec.nix) opens that list with
+        # the " " reset marker, so systemd DISCARDS every entry merged before
+        # it — proven live 2026-10-15 04:46: the repair never ran, setup's
+        # `machines add` hit "user already exist" (the pre-fix generation's
+        # orphan row survived), the start failed, and the nh switch exited 4
+        # BEFORE the system profile was updated. They run as a separate
+        # oneshot ordered before crowdsec.service instead: requires+before
+        # keeps the gate FATAL (a failed DNS wait must hold crowdsec back or
+        # hub update burns the restart budget) and a fresh oneshot re-runs on
+        # every crowdsec restart.
+        systemd.services.crowdsec-prereq = {
+          description = "CrowdSec pre-start: DNS gate + orphan-machine repair";
+          after = dnsGate.after;
+          wants = dnsGate.wants;
+          before = [ "crowdsec.service" ];
+          serviceConfig = {
+            Type = "oneshot";
+            User = config.services.crowdsec.user;
+            Group = config.services.crowdsec.group;
+            ExecStart = [
+              (lib.removePrefix "+" (builtins.head dnsGate.serviceConfig.ExecStartPre))
+              (lib.getExe machineRepair)
+            ];
+            # 180s gate budget + margin (gate-timeout-audit floor is 4min).
+            TimeoutStartSec = "4min";
+          };
+        };
+
         systemd.services.crowdsec = {
           # House convention (start-limit-audit wants them OUTSIDE serviceConfig).
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
-
-          after = dnsGate.after;
-          wants = dnsGate.wants;
+          requires = [ "crowdsec-prereq.service" ];
 
           serviceConfig = lib.mkMerge [
             {
-              # Prepend (mkBefore) so the DNS wait runs BEFORE the upstream
-              # setup script's `cscli hub update` (which hard-fails without
-              # DNS and would otherwise burn restarts through the ~2min
-              # dnsblockd boot window), and the orphan-machine repair runs
-              # BEFORE setup's `machine add --auto`.
-              ExecStartPre = lib.mkBefore [
-                dnsGate.serviceConfig.ExecStartPre
-                (lib.getExe machineRepair)
-              ];
               # 180s gate budget + setup (hub update + installs) — the
               # manager default of 3min is too tight on a cold boot.
               TimeoutStartSec = "6min";
