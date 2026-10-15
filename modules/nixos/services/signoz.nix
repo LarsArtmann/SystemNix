@@ -1248,6 +1248,20 @@ in
                           metrics_path = "/metrics";
                         }
                         {
+                          # DiscordSync's own /metrics (2026-10-15): the API is
+                          # auth-exempt on localhost, so the collector can pull
+                          # the full discordsync_* gauge/counter surface. Until
+                          # this job existed, every discordsync_* SigNoz rule
+                          # (e.g. the Immich lookup-failure spike rule) queried
+                          # a series that never reached ClickHouse — shipped as
+                          # live coverage but structurally unable to fire.
+                          job_name = "discordsync";
+                          static_configs = [
+                            { targets = [ "127.0.0.1:${toString ports.discordsync-api}" ]; }
+                          ];
+                          metrics_path = "/metrics";
+                        }
+                        {
                           # The collector's own self-metrics (bound to :8888 by
                           # the OTel runtime): receiver accepted/sent rates,
                           # export failures, processor drops, process health.

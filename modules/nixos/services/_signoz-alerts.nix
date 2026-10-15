@@ -469,6 +469,60 @@ in
       interval = "5m";
       severity = "warning";
     };
+
+    # DiscordSync capture-gap mirror (2026-10-15, the Oct 2-14 data-loss
+    # incident's second proof). These mirror DiscordSync monitoring/alerts.yml
+    # rules that NO engine evaluated: the host has no Prometheus/vmalert, so
+    # alerts.yml (40+ rules incl. the whole 2026-10-12 data-flow dead-man
+    # group) was documentation-only. Live layers until now: Gatus (process
+    # liveness + pinned zero-states) and the two pre-existing discordsync
+    # SigNoz rules. Series source: the discordsync scrape job added to the
+    # collector's prometheus receiver the same day (before it, every
+    # discordsync_* rule here queried a series that never reached
+    # ClickHouse).
+    #
+    # Product form instead of alerts.yml's `and on()` vector match: when the
+    # gateway is disconnected the product is 0 (silent — Gatus owns process
+    # down, this rule owns connected-but-capturing-nothing zombie sessions,
+    # the exact pre-data-loss signature). Age gauge semantics verified in
+    # DiscordSync internal/observability/metrics_runtime.go (gateway flag is
+    # 0/1).
+    "signoz/rules/discordsync-capture-gap.json".source = mkRule {
+      name = "DiscordSync Capture Gap (connected but zero events 30+ min)";
+      description = "Gateway reports connected but no event has been captured for 30+ minutes — zombie-session / intent-loss / capture-policy signature (the Oct 2-14 dark-window class). Every event lost in the gap is permanent; run a backfill once recovered. See docs/runbook/no-data-flow.md in DiscordSync";
+      query = "discordsync_last_capture_age_seconds * discordsync_bot_gateway_connected";
+      target = 1800;
+      interval = "10m";
+      severity = "critical";
+    };
+
+    # Emitted-but-never-projected events (global sum; the alerts.yml original
+    # splits per event_type). Counter resets on deploy make the diff spurious
+    # negative for one window — safe no-fire. This is the projection-poison
+    # page: poison classes here previously surfaced only as retry_exhausted
+    # lines in the journal.
+    "signoz/rules/discordsync-event-loss-gap.json".source = mkRule {
+      name = "DiscordSync Event Loss Gap (emitted but not projected)";
+      description = "Events were captured and dispatched but never projected — silent data loss in the CQRS pipeline (crash, DLQ, or bus gap). Check /api/projection/status worker errors and DLQ depth; projection poison = fix the poison class, then reset+replay from the journal";
+      query = ''sum(increase(discordsync_events_emitted_total[10m])) - sum(increase(discordsync_events_projected_total[10m]))'';
+      target = 5;
+      interval = "5m";
+      severity = "critical";
+    };
+
+    # BackupHealth composite (0=healthy, 1=degraded, 2=critical; metric doc
+    # says "alert on == 2"). Covers dump age/staleness — the Oct 2-14 hole
+    # survived because the only freshness gates were the drill (endpoints
+    # only) and manual watch. Degraded (=1) stays unmirrored: warning-grade,
+    # owned by the repo alerts.yml text.
+    "signoz/rules/discordsync-backup-health.json".source = mkRule {
+      name = "DiscordSync Backup Health Critical";
+      description = "BackupHealth composite is CRITICAL — the DB dump pipeline (freshness, integrity, or pool placement) is failing. A backup bot whose backups rot is not a backup. Check /api/health/backup components and the pool dumps dir; runbook: docs/runbook/ in DiscordSync";
+      query = "discordsync_backup_health_status";
+      target = 2;
+      interval = "5m";
+      severity = "critical";
+    };
   };
 
   dashboards = {
