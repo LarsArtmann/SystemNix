@@ -1,5 +1,10 @@
 # Status: P2.6 Pixel-6 UCR sweep — mirror/web-archive/contacts/RAG tooling wave
 
+> **REHOMED 2026-10-15:** the five scripts this report shipped were ported to the
+> sibling repo `github:LarsArtmann/ucr-archive` (v0.1.0, single `ucr` Go binary,
+> parity-verified — see its `README-VERIFICATION.md`) and deleted from SystemNix
+> the same day. This report is the historical record of the Python originals.
+
 **Date:** 2026-09-15 05:46 CEST
 **Session scope:** the four P2.6 addition rows from TODO_LIST.md (`Full ffprobe sweep over all 591 UCR WAVs`, `WAV→FLAC/opus mirror + browsable web archive`, `Contacts VCF export to the pool + per-contact card decode`, `RAG query CLI over the archive`).
 **Tree state:** five new scripts in `scripts/`, zero nix config changes, zero deploys needed or made. Auto-commit daemon will have picked the scripts up.

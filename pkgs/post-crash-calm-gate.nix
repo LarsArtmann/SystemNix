@@ -122,16 +122,20 @@ FAKE_GATE
       export POST_CRASH_CALM_GATE_ENTRY_GATE="$FAKE"
 
       must_admit() {
+        msg=$1
+        shift
         if "$0" "$@" >/dev/null 2>&1; then
           ok
         else
-          echo "FAIL: $1 must admit" >&2
+          echo "FAIL: $msg must admit" >&2
           exit 1
         fi
       }
       must_refuse() {
+        msg=$1
+        shift
         if "$0" "$@" >/dev/null 2>&1; then
-          echo "FAIL: $1 must refuse" >&2
+          echo "FAIL: $msg must refuse" >&2
           exit 1
         fi
         ok
