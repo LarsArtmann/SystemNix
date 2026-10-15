@@ -2831,11 +2831,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792009904,
-        "narHash": "sha256-FXWkseyDJhRiQj0fUx0lCNJpKLomutp86RXcwByl4pw=",
+        "lastModified": 1792025615,
+        "narHash": "sha256-C+1hDoesDLEsFgSQzO+zWw65yqptpxZQXI/1xXHacUk=",
         "owner": "larsartmann",
         "repo": "go-cqrs-lite",
-        "rev": "56d15d1675c6e81c9291c3237aba2357562b9b89",
+        "rev": "35ccad859336c2d43d333b7aa639fcbed7bffd0d",
         "type": "github"
       },
       "original": {
@@ -6829,11 +6829,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792027320,
-        "narHash": "sha256-hQHtp9QcWwEOW9jpPZcN3wnMgQdQouwXo1VLF+lmMlM=",
+        "lastModified": 1792034579,
+        "narHash": "sha256-CrDiPgTWaFo0VR1G7cE6L1Oi+6a9FXDJ+fedHDWEXw0=",
         "owner": "LarsArtmann",
         "repo": "nsfw-classifier",
-        "rev": "eabc4b14ada8e196a9fe9417b3a321fcb6d2909b",
+        "rev": "2fa0e5772baeb939d1e9904449b650173580f34f",
         "type": "github"
       },
       "original": {
