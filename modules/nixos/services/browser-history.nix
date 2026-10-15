@@ -258,9 +258,7 @@
             # with a 2-5 min cold load from idle; 90s default would abort.
             llm.baseUrl = lib.mkDefault "http://127.0.0.1:${toString ports.fastflowlm}/v1";
             llm.model = lib.mkDefault (
-              if options.services ? fastflowlm
-              then config.services.fastflowlm.model
-              else "qwen3.6-moe:35b-a3b"
+              if options.services ? fastflowlm then config.services.fastflowlm.model else "qwen3.6-moe:35b-a3b"
             );
             llm.timeout = lib.mkDefault "10m";
 

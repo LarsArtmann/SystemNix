@@ -127,6 +127,23 @@ let
       pass = sc.User or "" == "lars";
     }
     {
+      # 2026-10-15 incident: the CPU-wrapped package cannot enable MIGraphX
+      # on AMD hosts — every model silently fell back to CPU inference and
+      # the extension's 10s upload timeout failed every classify under host
+      # load. On x86_64 the unit MUST run the ROCm-wrapped build as soon as
+      # the locked flake provides it (the module's `?` guard keeps an older
+      # lock on the CPU build; this case pins the switch once bumped).
+      name = "rocm-package-when-available";
+      pass =
+        let
+          flakePkgs = inputs.nsfw-classifier.packages.${system};
+        in
+        if flakePkgs ? nsfw-classifier-go-rocm then
+          lib.hasInfix "nsfw-classifier-go-rocm" sc.ExecStart
+        else
+          true;
+    }
+    {
       name = "pair-token-cache-persists";
       # os.UserCacheDir honors XDG_CACHE_HOME; CacheDirectory=nsfw-classifier
       # makes <XDG>/nsfw-classifier persistent across restarts so the
