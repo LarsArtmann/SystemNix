@@ -24,7 +24,13 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
   branded 404 page as home.lan. oauth2-proxy whitelists `.${cloudDomain}`.
 - **NetBird client** (`services.netbird-client`, modules/nixos/services/netbird.nix):
   ENABLED since the 2026-10-06 phase-2 flip (`enable = true`; sops
-  `netbird_setup_key` in `platforms/nixos/secrets/netbird.yaml`).
+  `netbird_setup_key` in `platforms/nixos/secrets/netbird.yaml`) — but the
+  flip alone did NOT enroll: the login oneshot was never queued by systemd
+  261 (see Gotchas), the fix landed 2026-10-10, enrollment happened
+  2026-10-10/11 (owner-run `netbird up`), and the mesh is CONNECTED and
+  live-verified since 2026-10-15 (interface `nb-evox2`, mesh address
+  `100.112.252.86`, management+signal+relay streams stable, UDP 51820 bound,
+  daemon re-authenticates across reboots).
   Uses pinned-nixpkgs `services.netbird.clients.evox2` + automated
   setup-key login. Port 51820/udp (`ports.netbird`). The management URL
   rides the `NB_MANAGEMENT_URL` env var (the wrapper maps NB_* env onto
@@ -98,14 +104,25 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
    (`.sops.yaml`'s creation rule for `platforms/nixos/secrets/*` already
    picks the right age recipients — no per-file keys stanza needed.)
 5. **Enable the client**: set `services.netbird-client.enable = true` in the
-   evo-x2 platform config, rebuild. Enrollment is automatic (login oneshot).
+   evo-x2 platform config, rebuild. Enrollment rides the login oneshot.
    DONE 2026-10-06 — the first deploy crashed the daemon on a string-form
    `ManagementUrl` fragment (netbird ≥0.80 needs the url.URL object form);
    fixed same day via the `NB_MANAGEMENT_URL` env var + a preStart purge of
-   the poisoned state key — see the client bullet above.
+   the poisoned state key — see the client bullet above. CORRECTED
+   2026-10-15: "enrollment is automatic" was half-true for 4 days — the
+   oneshot was enabled but systemd 261 never queued it (Gotchas), so
+   enrollment did not actually happen until the owner ran `netbird up`
+   2026-10-10/11 after the 2026-10-10 root-cause fix (see Gotchas + the
+   status report below).
 6. **Routing peer** — nothing to click: once evo-x2 enrolls, the NEXT
    provisioner run creates the network router (evo-x2, masquerade on —
-   the home gateway has no route back to the VPN subnet). Facts
+   the home gateway has no route back to the VPN subnet). STATUS
+   2026-10-15: evo-x2 is enrolled and connected, but the pbx-side
+   confirmation (provisioner run printing "converged" incl. the router +
+   `/api/peers` listing evo-x2) is still owed — owner ssh
+   (`systemctl start netbird-provision.service` or wait out the ≤30-min
+   timer; the 2026-10-06 run ended "router deferred" because no peer
+   existed yet). Facts
    (source-verified 2026-10-05): NetBird nameservers are UDP-only — the API
    enum has no dot/doq/doh schemes (`dns/nameserver.go`), custom port IS
    supported; the queries ride INSIDE the WireGuard tunnel to the routing
