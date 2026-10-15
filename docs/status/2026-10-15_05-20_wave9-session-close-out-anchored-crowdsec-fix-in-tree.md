@@ -21,6 +21,8 @@ run (~05:10–05:20). **Remaining:** one convergence `nh os switch` to activate 
 | USB DAS (`/mnt/pool`) | STILL HUNG (`[usb-storage]` D-state ~93 min as of 04:48; silent disk, io PSI = D-state waiters, cpu PSI ≈ 0). Owner physical check pending |
 | Tree | HEAD `780241d0`, clean; wave fix + crowdsec fix + all docs committed (daemon commits `acd30a5d`→`13e33a05`) |
 
+> **[ANNOTATED 2026-10-15 (adoption-audit session):]** the Fleet-runtime row's "browser-history `8900354` STILL STALE" did not hold — the live unit file carries `browser-history-server-fff6034` (== lock, verified 2026-10-15 via `/etc/systemd/system/browser-history.service`): the convergence switch landed after this report. overview/pdd staleness NOT re-verified by that probe. Evidence: `docs/2026-10-15_browser-history-deep-dive.html` §Version currency.
+
 ---
 
 ## a) FULLY DONE
