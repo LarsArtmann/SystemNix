@@ -24,6 +24,9 @@ in
       default =
         dankMaterialShell.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
           (prev: {
+            # postInstall patches Clipboard QML with perl (multi-line edits);
+            # the Go build env does not ship perl by default.
+            nativeBuildInputs = (prev.nativeBuildInputs or [ ]) ++ [ pkgs.perl ];
             postInstall = prev.postInstall + ''
               # Weather "pop": the bar weather widget inherits widgetIconColor/
               # widgetTextColor, which resolve to the muted surfaceText gray in dark
