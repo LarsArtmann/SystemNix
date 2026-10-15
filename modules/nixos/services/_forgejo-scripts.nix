@@ -630,9 +630,10 @@ in
   #
   # The USER side overlaps the OIDC flow (oauth2_client.UPDATE_AVATAR=true
   # rewrites the user avatar from the Pocket ID picture claim on every SSO
-  # login — same face, different source). Set FORGEJO_AVATAR_SYNC_USER=false
-  # to leave the user avatar to OIDC entirely; orgs are unaffected by that
-  # flag and are the reason this phase exists.
+  # login — same face, different source). OWNER DECISION 2026-10-16: OIDC >
+  # GitHub for the user avatar — the default is FORGEJO_AVATAR_SYNC_USER=false
+  # (Pocket ID owns it); set =true to opt the user back into GitHub sync.
+  # Orgs are unaffected by the flag and are the reason this phase exists.
   avatarSyncScript = pkgs.writeShellApplication {
     name = "forgejo-avatar-sync";
     runtimeInputs = [
@@ -646,7 +647,9 @@ in
       GITHUB_TOKEN="''${GITHUB_TOKEN:-}"
       GITHUB_USER="''${GITHUB_USER:-unknown}"
       TEXTFILE_DIR="''${FORGEJO_AVATAR_TEXTFILE_DIR:-/var/lib/prometheus-node-exporter/textfile_collectors}"
-      SYNC_USER="''${FORGEJO_AVATAR_SYNC_USER:-true}"
+      # Default false (owner decision 2026-10-16): Pocket ID owns the user
+      # avatar via the OIDC picture claim; orgs always sync from GitHub.
+      SYNC_USER="''${FORGEJO_AVATAR_SYNC_USER:-false}"
 
       if [[ -z "$FORGEJO_TOKEN" || -z "$GITHUB_TOKEN" ]]; then
         echo "Error: FORGEJO_TOKEN / GITHUB_TOKEN must both be set"
@@ -791,7 +794,7 @@ in
       done < "$ORGS_FILE"
 
       if [[ "$SYNC_USER" == "false" || "$SYNC_USER" == "0" || "$SYNC_USER" == "no" ]]; then
-        echo "User avatar sync disabled (FORGEJO_AVATAR_SYNC_USER=$SYNC_USER) — OIDC owns it"
+        echo "User avatar sync skipped (FORGEJO_AVATAR_SYNC_USER=$SYNC_USER) — OIDC (Pocket ID) owns it"
       else
         response=$(curl -s --compressed -H "Authorization: token $GITHUB_TOKEN" \
           "https://api.github.com/user")

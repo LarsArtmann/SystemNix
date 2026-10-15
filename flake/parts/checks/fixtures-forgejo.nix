@@ -467,6 +467,10 @@
               # GitHub: user + one org, each with an avatar_url. User bytes
               # DIFFER from forgejo's (upload path); org bytes are already
               # byte-equal (in-sync skip path).
+              # DEFAULT IS USER-OFF (owner decision 2026-10-16: OIDC > GitHub
+              # for the user avatar), so the upload scenario OPTS IN with
+              # FORGEJO_AVATAR_SYNC_USER=true; the default-off behavior is
+              # asserted in run 2.
               printf 200 > "$STUB_HTTP/api.github.com_user.GET.code"
               printf '{"login":"LarsArtmann","avatar_url":"https://avatars.githubusercontent.com/u/42?v=4"}' > "$STUB_HTTP/api.github.com_user.GET.body"
               for slot in 1 2; do
@@ -488,6 +492,8 @@
               printf 204 > "$STUB_HTTP/localhost_3000_api_v1_user_avatar.POST.code"
               : > "$STUB_HTTP/localhost_3000_api_v1_user_avatar.POST.body"
 
+              # Run 1 (user OPTED IN): user upload + org in-sync
+              export FORGEJO_AVATAR_SYNC_USER=true
               run "$AVATAR"; need_rc avatar-happy 0
               need_has avatar-happy "user:LarsArtmann: avatar updated"
               need_has avatar-happy "targets=2 updated=1 in-sync=1 failed=0"
@@ -501,17 +507,16 @@
               grep -q '^forgejo_avatar_in_sync 1$' "$TF_A/forgejo_avatar_sync.prom" \
                 || { echo "FAIL avatar: metrics in_sync"; exit 1; }
 
-              # Converged run 2 + user kill-switch: byte-compare skips the
-              # org, the user avatar is NOT posted (OIDC owns it).
+              # Run 2 = the DEFAULT (env unset): org converges, the user
+              # avatar is NOT posted (OIDC owns it by default).
               printf 200 > "$STUB_HTTP/localhost_3000_api_v1_orgs_Artmann-Minecraft.GET.2.code"
               printf '{"id":7,"avatar_url":"http://localhost:3000/avatars/o-current"}' > "$STUB_HTTP/localhost_3000_api_v1_orgs_Artmann-Minecraft.GET.2.body"
-              export FORGEJO_AVATAR_SYNC_USER=false
+              unset FORGEJO_AVATAR_SYNC_USER
               run "$AVATAR"; need_rc avatar-converged 0
-              need_has avatar-converged "User avatar sync disabled"
+              need_has avatar-converged "User avatar sync skipped"
               need_has avatar-converged "targets=1 updated=0 in-sync=1 failed=0"
               [ "$(ls "$STUB_STATE" | grep -c 'req.localhost_3000_api_v1_user_avatar.POST')" = 1 ] \
-                || { echo "FAIL avatar: user avatar POSTed despite kill-switch"; exit 1; }
-              unset FORGEJO_AVATAR_SYNC_USER
+                || { echo "FAIL avatar: user avatar POSTed despite default-off"; exit 1; }
 
               # POST failure: warn + counted, exit AFTER the full pass
               rm -f "$STUB_STATE"/n.*

@@ -474,10 +474,11 @@ _: {
                 # repos since the listing switch to /user/repos), (2) reconcile
                 # renames/transfers/deletions of existing mirrors, (3) converge
                 # per-mirror sync intervals to mirror.DEFAULT_INTERVAL (the
-                # setting only applies at creation time), (4) converge user +
-                # org avatars to their GitHub originals (orgs are created with
-                # no avatar by the create-if-missing POST), (5) attach GitHub
-                # push mirrors to canonical repos (plan M05).
+                # setting only applies at creation time), (4) converge the ORG
+                # avatars to their GitHub originals (orgs are created with no
+                # avatar by the create-if-missing POST; the USER avatar stays
+                # OIDC-owned by default — owner decision 2026-10-16), (5)
+                # attach GitHub push mirrors to canonical repos (plan M05).
                 ExecStart = [
                   (lib.getExe mirrorGithubScript)
                   (lib.getExe reconcileMirrorsScript)
