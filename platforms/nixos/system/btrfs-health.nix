@@ -6,14 +6,20 @@
 #
 # Five components:
 #   1. btrfs-health.service — collects Prometheus metrics every 5 min
-#   2. ExecStartPre guard on nix-gc + nix-build-cleanup — aborts reclamation
-#      when device-unallocated is below an absolute GiB floor (metadata
-#      churn headroom) or metadata utilization is >90% (the real ENOSPC
+#   2. ExecStartPre guard on nix-gc + nix-build-cleanup + both balance
+#      services — TWO admission legs. SPACE: aborts reclamation when
+#      device-unallocated is below an absolute GiB floor (metadata churn
+#      headroom) or metadata utilization is >90% (the real ENOSPC
 #      precursor). NEVER gate on a % of the device: 10% of a 723 GiB device
 #      is 72 GiB — a level GC itself cannot restore (deleting files frees
 #      extents WITHIN allocated chunks; only balance returns chunks), so a
 #      %-gate deadlocks exactly when reclamation is most needed (live
 #      2026-08-17..21: GC blocked 5 nights at 3% unalloc = 21 GiB idle).
+#      IO (freeze #21): delegates to maintenance-entry-gate — refuses when
+#      IO PSI some avg10 >= 20% or the memory-emergency-guard tripped
+#      within the last 60 min; the midnight GC passed the space checks at
+#      4% unallocated while the box sat in zone-6-trip IO PSI and died 59 s
+#      into the deletion burst. A skipped night is free; the timer refires.
 #   3. btrfs-balance-metadata.timer — weekly metadata chunk consolidation
 #   4. btrfs-balance-data.timer — weekly bounded data chunk consolidation
 #   5. btrfs-emergency-reserve.service — 10 GiB fallocated recovery reserve
@@ -117,11 +123,28 @@ let
   };
 
   # ── GC guard: exits 1 (block GC) if device-unallocated < threshold ──────────
+  # Two admission legs (freeze #21, 2026-10-07): SPACE (below) and IO — the
+  # midnight nix-gc passed the space checks at 4% unallocated while the box
+  # sat in zone-6-trip IO PSI and the kernel died 59 s into the 9,463-path
+  # deletion burst; the crash-interrupted GC also re-fired via the daily
+  # timer into the tripping recovery boot. The IO leg delegates to the
+  # shared maintenance-entry-gate (PSI some avg10 >= 20% band + guard-trip
+  # recency via its fsynced last-trip state file) and covers nix-gc,
+  # nix-build-cleanup, and both balance timers — a skipped night is free,
+  # the timer refires.
   btrfsGcGuard = pkgs.writeShellApplication {
     name = "btrfs-gc-guard";
-    runtimeInputs = [ btrfsChunkCheck ];
+    runtimeInputs = [
+      btrfsChunkCheck
+      pkgs.maintenance-entry-gate
+    ];
     text = ''
       set -uo pipefail
+      # ── IO admission leg ──────────────────────────────────────────────────
+      if ! maintenance-entry-gate --name btrfs-gc-guard; then
+        echo "BTRFS GUARD: ABORT — IO admission refused (see above); the timer refires." >&2
+        exit 1
+      fi
       # timeout: same ioctl-wedge class as the metrics collector (2026-08-31);
       # on timeout the UNALLOC_BYTES default of 0 makes the guard ABORT GC —
       # fail-closed (no GC on unknown chunk headroom), never a hang on nix-gc.
@@ -740,7 +763,12 @@ in
 
       # ── Metadata balance: weekly chunk consolidation ────────────────────────
       # Consolidates underused metadata chunks back to the unallocated pool.
-      # Fast and safe: metadata chunks are 256 MiB each.
+      # Fast and safe: metadata chunks are 256 MiB each. ExecStartPre = the
+      # gc guard (freeze #21): balance is the heaviest metadata-churn job on
+      # this fs and must refuse to start into an IO storm or a recent guard
+      # trip (the 2026-08-24 crash was a manual balance; the timer must not
+      # replay it unattended). The space leg also enforces the runbook's
+      # "free extents BEFORE balancing" ordering on the timer path.
       btrfs-balance-metadata = {
         description = "BTRFS metadata balance (consolidate underused metadata chunks)";
         inherit onFailure;
@@ -755,6 +783,7 @@ in
           })
           {
             Type = "oneshot";
+            ExecStartPre = lib.getExe btrfsGcGuard;
             ExecStart = lib.getExe btrfsBalanceMetadata;
             TimeoutStartSec = "1h";
           }
@@ -763,7 +792,9 @@ in
 
       # ── Data balance: weekly bounded chunk consolidation ─────────────────────
       # -dlimit=10 caps relocation to <= 10 chunks per run. Staggered after
-      # metadata balance (Mon 05:00, metadata runs at Mon 04:00).
+      # metadata balance (Mon 05:00, metadata runs at Mon 04:00). ExecStartPre
+      # = the gc guard (same IO-admission + space contract as the metadata
+      # balance above).
       btrfs-balance-data = {
         description = "BTRFS data balance (consolidate underused data chunks, bounded)";
         inherit onFailure;
@@ -778,6 +809,7 @@ in
           })
           {
             Type = "oneshot";
+            ExecStartPre = lib.getExe btrfsGcGuard;
             ExecStart = lib.getExe btrfsBalanceData;
             TimeoutStartSec = "2h";
           }
