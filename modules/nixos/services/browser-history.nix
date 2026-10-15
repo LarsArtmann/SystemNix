@@ -249,11 +249,19 @@
             # as unconfigured until LLM_API_KEY is non-empty
             # (api/server.go:557 gate) — the dummy "local" rides the unit
             # Environment below. Model single-sourced from the fastflowlm
-            # module (strict binding, machineId precedent — eval fails loudly
-            # if that module goes away). 10m timeout: flm socket-activates
+            # module WHEN that module is in scope; this module also evals
+            # standalone (flake.nixosModules.browser-history / VM tests import
+            # it alone) where it is not, so module absence falls back to the
+            # fastflowlm default literal (same reference class as baseUrl's
+            # ports-only lookup). An option RENAME still fails eval loudly on
+            # hosts (strict binding kept). 10m timeout: flm socket-activates
             # with a 2-5 min cold load from idle; 90s default would abort.
             llm.baseUrl = lib.mkDefault "http://127.0.0.1:${toString ports.fastflowlm}/v1";
-            llm.model = lib.mkDefault config.services.fastflowlm.model;
+            llm.model = lib.mkDefault (
+              if options.services ? fastflowlm
+              then config.services.fastflowlm.model
+              else "qwen3.6-moe:35b-a3b"
+            );
             llm.timeout = lib.mkDefault "10m";
 
             # Module options, not unit-level env twins (2026-10-15 audit F4):
