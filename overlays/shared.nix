@@ -53,6 +53,9 @@
 
   (_final: prev: {
     aw-watcher-utilization = prev.callPackage ../pkgs/aw-watcher-utilization.nix { };
+    # IO-pressure + guard-trip admission gate for heavy maintenance (the
+    # freeze #19/#20/#21 migrate-* class; btrfs-gc-guard delegates to it too).
+    maintenance-entry-gate = prev.callPackage ../pkgs/maintenance-entry-gate.nix { };
   })
 
   (

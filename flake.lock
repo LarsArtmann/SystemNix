@@ -930,11 +930,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792023057,
-        "narHash": "sha256-jTYiwtc7gRmCtrSqadIf9Lp0DUXELmwAkXw5PprLPFE=",
+        "lastModified": 1792024225,
+        "narHash": "sha256-UZaT5BLwM24gcGZXdeyS5FiFa2a03GKvou2ISarVVOE=",
         "owner": "LarsArtmann",
         "repo": "CV",
-        "rev": "0af6b7a0874e4d540ece103dc132bc71fd791945",
+        "rev": "0750bd6f7882eaf0085cdc802ada63019bfbe8bb",
         "type": "github"
       },
       "original": {
@@ -2949,11 +2949,11 @@
     "go-daemon_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1791962158,
-        "narHash": "sha256-uyMF5gjlO9bZh1wjkgj/+LCKyGCp5eyAq5kYxGRUHCI=",
+        "lastModified": 1792021795,
+        "narHash": "sha256-SQTpcCxxhP2SbgkeWC48Fbdw1dIpiK26ihVtfpPtFlE=",
         "ref": "refs/heads/master",
-        "rev": "a4d42050b3ada0f11e9f880554ea49d1f98028d1",
-        "revCount": 117,
+        "rev": "80f3b7b47c2c754c995c8c2775cfcfba1d1deb3b",
+        "revCount": 118,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-daemon"
       },
@@ -5908,11 +5908,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792022734,
-        "narHash": "sha256-Sg/bTrLSMp172Nh64fzj2VwYpozxKSKG48mDkbbBzac=",
+        "lastModified": 1792024724,
+        "narHash": "sha256-nUQv8Mnto5V8GJjR5YlHdiRRr1kuJ7Y3qQEoIeIsQVs=",
         "owner": "NousResearch",
         "repo": "hermes-agent",
-        "rev": "8f0367c8ec6cbc491f555245f6d0b585513c79dc",
+        "rev": "62629e285614db8cdcc9c48b6732b89d584def68",
         "type": "github"
       },
       "original": {
@@ -6853,11 +6853,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792023781,
-        "narHash": "sha256-+ObIdZiOEkAPuBf0OyULeGP6Z1aIjTnrPuOF2VSq2TU=",
+        "lastModified": 1792024565,
+        "narHash": "sha256-Jn5ykwADbBRrbJtTByFpMGgAmqbE+1j6DLpymZb52/Q=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "8620c412cec80c4e46314f103310a5a0486339a5",
+        "rev": "976eba71a0c8341a626b61d29d629cc95cb8a706",
         "type": "github"
       },
       "original": {
@@ -6970,11 +6970,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792023224,
-        "narHash": "sha256-q6cti7Mh7Aja3mTHJKAeuZNRlsTeZc5O6xUwkZSbh3s=",
+        "lastModified": 1792024309,
+        "narHash": "sha256-Wur6XKIxqUAGapj+eqVXOVYEduOimYQcFWbOFw58XM8=",
         "owner": "LarsArtmann",
         "repo": "PapDashboard",
-        "rev": "bee0d2753a215d71d0c7c358f99b02126a64bfb8",
+        "rev": "c8d0cf92a583912d3176d55f1eb05a9ccb2b79dd",
         "type": "github"
       },
       "original": {

@@ -97,7 +97,15 @@ _: {
       };
 
       config = lib.mkIf cfg.enable {
-        environment.systemPackages = [ heavyJob ];
+        # maintenance-entry-gate rides the same admission family: the raw
+        # `sudo bash scripts/migrate-*.sh` runbooks resolve it from
+        # /run/current-system/sw/bin (root's secure_path), the flake apps get
+        # it via their own runtimeInputs. Without it every migrate-* script's
+        # gate call dies "command not found" — fail-closed, but unusable.
+        environment.systemPackages = [
+          heavyJob
+          pkgs.maintenance-entry-gate
+        ];
 
         # The slot dir is runtime state under /run/lock (tmpfs) — nothing
         # persists across boots, no cleanup needed.

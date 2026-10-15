@@ -159,6 +159,22 @@ if [ "$ACTION" != "status" ]; then
   }
 fi
 
+# heavy-job wrap (freeze #4 doctrine): the WARM copy leg queues behind the
+# workload-admission slots instead of stacking on live builds (the freeze-21
+# migration-run-#4-into-a-build-battery overlap). The service-STOPPED legs
+# (cutover delta) deliberately stay unwrapped: waiting on a build slot with
+# units down would stretch the stop window. Warn-and-run-unwrapped only where
+# the queue binary cannot exist (fixture sandboxes); on evo-x2 it is a system
+# package and always present.
+run_heavy() {
+  if command -v heavy-job >/dev/null 2>&1; then
+    heavy-job "$@"
+  else
+    echo "WARN: heavy-job not on PATH — running unwrapped (no workload-admission here?)" >&2
+    "$@"
+  fi
+}
+
 DATADIR=""
 STOP_UNITS=""
 if [ $# -ge 4 ]; then
@@ -244,7 +260,7 @@ prepare)
   # the 2026-09-21 fsync matrix: nodatacow is worthless on TLC, cow keeps
   # checksums) must NOT get +C; the module bootstrap applies +C only to
   # cow=false entries, idempotently, at deploy time.
-  run ionice -c 3 nice -n 19 rsync -aHAX --numeric-ids --info=stats2 "$DATADIR"/ "$SUBVOL"/
+  run run_heavy ionice -c 3 nice -n 19 rsync -aHAX --numeric-ids --info=stats2 "$DATADIR"/ "$SUBVOL"/
   if [ "$DRY_RUN" != "1" ]; then
     echo "warm copy: $(count_files "$SUBVOL") files staged (source is LIVE — no verify yet; cutover re-syncs quiesced)"
   fi

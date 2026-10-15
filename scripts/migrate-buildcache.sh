@@ -40,6 +40,20 @@ flock -n 8 || fail "another migrate-* script holds $MAINT_LOCK_DIR/systemnix-mai
 maintenance-entry-gate --name migrate-buildcache --psi-max 30 ||
   fail "entry gate refused (see above) — a refused migration is free, a migration into a storm is freeze #19"
 
+# heavy-job wrap (freeze #4 doctrine): the copy legs queue behind the
+# workload-admission slots instead of stacking on live builds (freeze #21 ran
+# this class INTO a build battery). No service is held stopped here, so
+# waiting on a slot is always safe. Warn-and-run-unwrapped only where the
+# queue binary cannot exist (fixture sandboxes).
+run_heavy() {
+  if command -v heavy-job >/dev/null 2>&1; then
+    heavy-job "$@"
+  else
+    echo "WARN: heavy-job not on PATH — running unwrapped (no workload-admission here?)" >&2
+    "$@"
+  fi
+}
+
 [ "$(id -un)" = "lars" ] || fail "run as lars (nix run .#migrate-buildcache)"
 $SUDO true 2>/dev/null || fail "passwordless sudo required"
 
@@ -94,7 +108,7 @@ migrate() {
   tmp_list=$(mktemp)
   for pass in 1 2 3; do
     set +e
-    rsync -a --itemize-changes --out-format='%n' "$src/" "$dst/" >"$tmp_list"
+    run_heavy rsync -a --itemize-changes --out-format='%n' "$src/" "$dst/" >"$tmp_list"
     rsync_rc=$?
     set -e
     if [ "$rsync_rc" != 0 ] && [ "$rsync_rc" != 24 ]; then

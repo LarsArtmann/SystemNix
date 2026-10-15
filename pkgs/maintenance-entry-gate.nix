@@ -103,7 +103,7 @@ writeShellApplication {
         PSI_RAW="0"
       fi
       case "$PSI_RAW" in
-      *[!0-9.]* | '')
+      *[!0-9.]* | ''')
         echo "WARN: unparseable PSI value '$PSI_RAW' — treating as 0" >&2
         PSI_RAW="0"
         ;;
@@ -112,7 +112,7 @@ writeShellApplication {
       now=$(date +%s)
       last_trip=$(tr -d '[:space:]' <"$TRIP_STATE_FILE" 2>/dev/null || true)
       case "$last_trip" in
-      '' | *[!0-9]*)
+      ''' | *[!0-9]*)
         if [ -n "$last_trip" ]; then
           echo "WARN: unparseable last-trip epoch '$last_trip' — treating as no-trip-ever" >&2
         fi
@@ -156,6 +156,7 @@ writeShellApplication {
 
     if [ "$SELFTEST" = "1" ]; then
       PASS=0
+      EXPECT=11
       ok() {
         PASS=$((PASS + 1))
       }
@@ -163,11 +164,36 @@ writeShellApplication {
       trap 'rm -rf "$FIX"' EXIT
       PSI_F="$FIX/psi"
       TRIP_F="$FIX/last-trip"
+      # Point the gate AT the fixtures: without this the selftest reads the
+      # REAL /proc/pressure/io + guard state — a selftest that only passes on
+      # a quiet box is a random red, not a test (live: refused scenario 1
+      # while the host sat at PSI some avg10 >= 20 under build load).
+      PSI_FILE="$PSI_F"
+      TRIP_STATE_FILE="$TRIP_F"
       now=$(date +%s)
+
+      # Verdict helpers: shellcheck-clean admit/refuse assertions (the
+      # `cmd && ok || fail` shortcut is SC2015-unsound and writeShellApplication
+      # runs shellcheck as a build gate).
+      must_admit() {
+        if run_gate >/dev/null 2>&1; then
+          ok
+        else
+          echo "FAIL: $1 must admit" >&2
+          exit 1
+        fi
+      }
+      must_refuse() {
+        if run_gate >/dev/null 2>&1; then
+          echo "FAIL: $1 must refuse" >&2
+          exit 1
+        fi
+        ok
+      }
 
       # 1: calm PSI, no trip state ever
       printf 'some avg10=5.00 avg60=1.00 avg300=0.00\nfull avg10=0.00\n' >"$PSI_F"
-      if run_gate >/dev/null 2>&1; then ok; else echo "FAIL: selftest 1 must admit" >&2; exit 1; fi
+      must_admit "selftest 1"
       verdict_line | grep -q 'last guard trip: never' || {
         echo "FAIL: selftest 1 verdict must say never-tripped" >&2
         exit 1
@@ -175,46 +201,49 @@ writeShellApplication {
 
       # 2: PSI just under the band admits (decimal boundary)
       printf 'some avg10=19.99 avg60=9.00\n' >"$PSI_F"
-      run_gate >/dev/null 2>&1 && ok || { echo "FAIL: selftest 2 (19.99 < 20) must admit" >&2; exit 1; }
+      must_admit "selftest 2 (19.99 < 20)"
 
       # 3: PSI at the band refuses (>= semantics, decimal-safe)
       printf 'some avg10=20.00 avg60=9.00\n' >"$PSI_F"
-      run_gate >/dev/null 2>&1 && { echo "FAIL: selftest 3 (20.00 >= 20) must refuse" >&2; exit 1; } || ok
+      must_refuse "selftest 3 (20.00 >= 20)"
 
-      # 4: the migrate band boundary (--psi-max 30)
+      # 4: the migrate band boundary (--psi-max 30 — the interactive
+      # migrate-* scripts' band; the default 20 band was scenarios 2-3)
+      PSI_MAX="30"
       printf 'some avg10=29.50 avg60=9.00\n' >"$PSI_F"
-      run_gate >/dev/null 2>&1 && ok || { echo "FAIL: selftest 4 (29.5 < 30 band) must admit" >&2; exit 1; }
+      must_admit "selftest 4 (29.5 < 30 band)"
       printf 'some avg10=30.00 avg60=9.00\n' >"$PSI_F"
-      run_gate >/dev/null 2>&1 && { echo "FAIL: selftest 4b (30 >= 30) must refuse" >&2; exit 1; } || ok
+      must_refuse "selftest 4b (30 >= 30)"
+      PSI_MAX="20"
 
       # 5: trip 30 min ago blocks a 60-min window even at PSI 0
       printf 'some avg10=0.00\n' >"$PSI_F"
       echo "$((now - 30 * 60))" >"$TRIP_F"
-      run_gate >/dev/null 2>&1 && { echo "FAIL: selftest 5 (trip 30 min ago) must refuse" >&2; exit 1; } || ok
+      must_refuse "selftest 5 (trip 30 min ago)"
 
       # 6: trip 61 min ago admits
       echo "$((now - 61 * 60))" >"$TRIP_F"
-      run_gate >/dev/null 2>&1 && ok || { echo "FAIL: selftest 6 (trip 61 min ago) must admit" >&2; exit 1; }
+      must_admit "selftest 6 (trip 61 min ago)"
 
       # 7: future timestamp counts as a just-now trip (clock-skew safe)
       echo "$((now + 600))" >"$TRIP_F"
-      run_gate >/dev/null 2>&1 && { echo "FAIL: selftest 7 (future epoch) must refuse" >&2; exit 1; } || ok
+      must_refuse "selftest 7 (future epoch)"
 
       # 8: garbage trip file degrades to never-tripped
       echo "not-an-epoch" >"$TRIP_F"
-      run_gate >/dev/null 2>&1 && ok || { echo "FAIL: selftest 8 (garbage trip file) must admit with warning" >&2; exit 1; }
+      must_admit "selftest 8 (garbage trip file)"
 
       # 9: missing PSI file fails OPEN with a warning (PSI-less kernel)
       rm -f "$PSI_F" "$TRIP_F"
-      run_gate >/dev/null 2>&1 && ok || { echo "FAIL: selftest 9 (no PSI file) must admit" >&2; exit 1; }
+      must_admit "selftest 9 (no PSI file)"
 
       # 10: zero padding / whitespace around the trip epoch parses
       printf 'some avg10=1.00\n' >"$PSI_F"
       printf '  %s  \n' "$((now - 120 * 60))" >"$TRIP_F"
-      run_gate >/dev/null 2>&1 && ok || { echo "FAIL: selftest 10 (padded epoch) must admit" >&2; exit 1; }
+      must_admit "selftest 10 (padded epoch)"
 
-      if [ "$PASS" -ne 10 ]; then
-        echo "FAIL: selftest count drift: $PASS PASS lines vs 10 expected" >&2
+      if [ "$PASS" -ne "$EXPECT" ]; then
+        echo "FAIL: selftest count drift: $PASS PASS lines vs $EXPECT expected" >&2
         exit 1
       fi
       echo "maintenance-entry-gate selftest: $PASS/$EXPECT scenarios passed"

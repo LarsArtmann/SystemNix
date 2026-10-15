@@ -64,6 +64,18 @@
           touch $out
         '';
 
+        # maintenance-entry-gate selftest: runs the BUILT gate binary's
+        # 10-scenario fixture selftest (PSI band boundaries, trip-recency
+        # window, fail-open PSI-less kernel, clock-skew) — the freeze
+        # #19/#20/#21 admission gate every migrate-* script and
+        # btrfs-gc-guard delegate to. Testing the store artifact proves
+        # the build (writeShellApplication + shellcheck) AND the verdict
+        # logic in one shot.
+        maintenance-entry-gate-selftest = pkgs.runCommand "maintenance-entry-gate-selftest" { } ''
+          ${pkgs.maintenance-entry-gate}/bin/maintenance-entry-gate selftest
+          touch $out
+        '';
+
         # thermal-pstate-guard.sh flips the amd_pstate driver mode
         # (active<->guided) on hysteresis over hwmon sensors — the
         # freeze #8-#14 thermal-ceiling family's enforcement leg (a

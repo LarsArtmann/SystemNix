@@ -104,6 +104,20 @@ flock -n 8 || die "another migrate-* script holds $MAINT_LOCK_DIR/systemnix-main
 maintenance-entry-gate --name migrate-forgejo-subvol --psi-max 30 ||
   die "entry gate refused (see above) — a refused migration is free, a migration into a storm is freeze #19"
 
+# heavy-job wrap (freeze #4 doctrine): the LIVE pre-rsync (forgejo still
+# running) queues behind the workload-admission slots instead of stacking on
+# live builds. The finalize delta deliberately stays unwrapped: it runs with
+# the forgejo family STOPPED — waiting on a build slot would stretch the
+# outage. Warn-and-run-unwrapped only where the queue binary cannot exist.
+run_heavy() {
+  if command -v heavy-job >/dev/null 2>&1; then
+    heavy-job "$@"
+  else
+    echo "WARN: heavy-job not on PATH — running unwrapped (no workload-admission here?)" >&2
+    "$@"
+  fi
+}
+
 mount_check() {
   "$SYSTEMCTL" is-active --quiet mnt-hot.mount ||
     die "/mnt/hot is not mounted — forgejo-subvol-bootstrap needs it (Samsung present?)"
@@ -148,7 +162,7 @@ prepare)
   ensure_subvol
   echo "==> live pre-rsync (forgejo keeps running; no --delete)"
   # -H: hardlinks (git object store), -A/-X: ACLs/xattrs, --partial: resumable
-  "$RSYNC" -aHAX --partial --info=stats1 "$STATE_DIR/" "$SUBVOL/"
+  run_heavy "$RSYNC" -aHAX --partial --info=stats1 "$STATE_DIR/" "$SUBVOL/"
   echo "==> prepare done. Next: build the toplevel, then: sudo $0 finalize"
   ;;
 

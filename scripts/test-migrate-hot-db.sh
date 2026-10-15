@@ -93,6 +93,33 @@ cat >"$BIN/nice" <<'EOF'
 [ "$1" = "-n" ] && shift 2
 exec "$@"
 EOF
+# maintenance-entry-gate: admits by default; GATE_MODE=refuse flips it so a
+# scenario can pin "the entry gate refuses BEFORE any mutation" (the
+# freeze-19/20/21 entry-gate contract the script now carries).
+: >"$SCRATCH/gate.log"
+echo admit >"$SCRATCH/gate-mode"
+cat >"$BIN/maintenance-entry-gate" <<EOF
+#!$BASH
+echo "\$*" >>"$SCRATCH/gate.log"
+if [ "\$(cat "$SCRATCH/gate-mode" 2>/dev/null || echo admit)" = "refuse" ]; then
+  echo "REFUSE: migrate-hot-db — IO PSI some avg10=99.00% (>= 30% band)." >&2
+  exit 1
+fi
+echo "OK: migrate-hot-db — IO PSI some avg10=1.0% (< 30), last guard trip: never"
+EOF
+# flock: no util-linux in the fixture closure — acquire-always passthrough
+cat >"$BIN/flock" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+# heavy-job: logs the wrapped command, then execs it (slot semantics reduced
+# to passthrough — the fixture runs one migration at a time by construction)
+: >"$SCRATCH/heavy.log"
+cat >"$BIN/heavy-job" <<EOF
+#!$BASH
+echo "\$1" >>"$SCRATCH/heavy.log"
+exec "\$@"
+EOF
 # SANDBOX SHEBANG TRAP (forgejo-fixture lesson): /usr/bin/env does not
 # exist inside the nix build sandbox — rewrite every stub's interpreter
 # line to the bash RUNNING THIS TEST ($BASH), so the stubs exec there too.
@@ -101,6 +128,10 @@ for stub in "$BIN"/*; do
 done
 chmod +x "$BIN"/*
 export PATH="$BIN:$PATH"
+# The maintenance lock must live in the sandbox (the canonical /run/lock
+# location is not writable here — see the env override in the script).
+export MAINT_ENTRY_GATE_LOCK_DIR="$SCRATCH/lock"
+mkdir -p "$MAINT_ENTRY_GATE_LOCK_DIR"
 
 printf 'some avg10=1.0 avg60=1.0 avg300=1.0 total=0\n' >"$SCRATCH/psi-ok"
 printf 'some avg10=99.0 avg60=80.0 avg300=60.0 total=999999\n' >"$SCRATCH/psi-bad"
@@ -116,6 +147,7 @@ STATE="$MIGRATE_TOPLEVEL/hot/.migrate-state/fixture-name"
 mkfixture() {
   rm -rf "$DATA" "$SUBVOL"
   : >"$FAKE_SUBVOLS"
+  echo admit >"$SCRATCH/gate-mode"
   mkdir -p "$DATA/nested"
   echo "seed-data" >"$DATA/main.db"
   echo "wal" >"$DATA/main.db-wal"
@@ -135,6 +167,7 @@ out=$(run_migrate prepare fixture-name "$DATA" fixture.service extra.timer 2>&1)
 }
 grep -qxF "$SUBVOL" "$FAKE_SUBVOLS" && ok "prepare created the subvol" || fail "prepare did not create subvol"
 diff -r "$DATA" "$SUBVOL" >/dev/null && ok "prepare copied the tree verbatim" || fail "prepare copy differs"
+grep -qxF "ionice" "$SCRATCH/heavy.log" && ok "prepare warm rsync ran under heavy-job" || fail "prepare rsync bypassed heavy-job: $(cat "$SCRATCH/heavy.log")"
 [ ! -s "$SYSTEMCTL_LOG" ] && ok "prepare stopped NOTHING (warm)" || fail "prepare stopped units: $(cat "$SYSTEMCTL_LOG")"
 [ ! -f "$STATE" ] && ok "prepare wrote no marker" || fail "prepare wrote a marker early"
 
@@ -248,6 +281,16 @@ echo "$DATA" >>"$MOUNTPOINT_LIST"
 out=$(run_migrate --dry-run finalize fixture-name "$DATA" fixture.service extra.timer 2>&1) || fail "dry-run finalize exited non-zero: $out"
 [ ! -s "$SYSTEMCTL_LOG" ] && ok "dry-run finalize started no units" || fail "dry-run finalize ran systemctl: $(cat "$SYSTEMCTL_LOG")"
 grep -qF "== finalize" <<<"$out" && ok "dry-run finalize prints its banner" || fail "dry-run finalize output wrong: $out"
+
+# ── 13. entry-gate refusal: blocks BEFORE any mutation (freeze-19 contract) ──
+mkfixture
+echo refuse >"$SCRATCH/gate-mode"
+out=$(run_migrate prepare fixture-name "$DATA" fixture.service 2>&1) && fail "prepare ran under a refusing entry gate" || {
+  grep -q "entry gate refused" <<<"$out" && ok "prepare refuses under the entry gate" || fail "prepare failed for wrong reason: $out"
+}
+grep -qxF "$SUBVOL" "$FAKE_SUBVOLS" && fail "gate-refused prepare still created the subvol" || ok "gate-refused prepare created nothing"
+grep -q "migrate-hot-db" "$SCRATCH/gate.log" || fail "entry gate was never consulted"
+echo admit >"$SCRATCH/gate-mode"
 
 # ── self-verifying assertion count (storage.md row 177) ─────────────────────
 # Both sides are derived mechanically at runtime: emitted PASS lines (the

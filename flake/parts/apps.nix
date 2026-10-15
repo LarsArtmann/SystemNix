@@ -46,6 +46,7 @@
                 pkgs.coreutils
                 pkgs.findutils
                 pkgs.gawk
+                pkgs.maintenance-entry-gate # freeze #19/#20/#21 entry gate
                 pkgs.rsync
                 pkgs.util-linux
               ]
@@ -58,6 +59,7 @@
                 pkgs.e2fsprogs # e2label
                 pkgs.findutils
                 pkgs.gnugrep
+                pkgs.maintenance-entry-gate # freeze #19/#20/#21 entry gate
                 pkgs.rsync
                 pkgs.trash-cli
                 pkgs.util-linux # findmnt, mountpoint
@@ -88,8 +90,9 @@
                 pkgs.btrfs-progs # mkfs.btrfs
                 pkgs.coreutils # df, find, ls, rm, wc
                 pkgs.findutils
+                pkgs.maintenance-entry-gate # freeze #19/#20/#21 entry gate
                 pkgs.rsync
-                pkgs.util-linux # findmnt, mount, mountpoint
+                pkgs.util-linux # findmnt, mount, mountpoint, flock
               ]
               (root + "/scripts/migrate-rust-cache.sh");
           io-psi-forensics =

@@ -154,6 +154,24 @@ if [ "\${TAR_MODE:-}" = "truncated" ] && [ "\$1" = "-C" ]; then
 fi
 exec "$REAL_TAR" "\$@"
 EOF
+# maintenance-entry-gate: admits by default; GATE_MODE=refuse flips it so the
+# freeze-19 entry-gate contract (refusal BEFORE any mutation) stays pinned.
+: >"$SCRATCH/gate.log"
+echo admit >"$SCRATCH/gate-mode"
+cat >"$BIN/maintenance-entry-gate" <<EOF
+#!$BASH
+echo "\$*" >>"$SCRATCH/gate.log"
+if [ "\$(cat "$SCRATCH/gate-mode" 2>/dev/null || echo admit)" = "refuse" ]; then
+  echo "REFUSE: migrate-caddy-logs-hot — IO PSI some avg10=99.00% (>= 30% band)." >&2
+  exit 1
+fi
+echo "OK: migrate-caddy-logs-hot — IO PSI some avg10=1.0% (< 30), last guard trip: never"
+EOF
+# flock: no util-linux in the fixture closure — acquire-always passthrough
+cat >"$BIN/flock" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
 
 # SANDBOX SHEBANG TRAP (forgejo-fixture lesson): /usr/bin/env may not resolve
 # inside the nix build sandbox — rewrite every stub's interpreter to the bash
@@ -163,6 +181,10 @@ for stub in "$BIN"/*; do
 done
 chmod +x "$BIN"/*
 export PATH="$BIN:$PATH"
+# The maintenance lock must live in the sandbox (the canonical /run/lock
+# location is not writable here — see the env override in the script).
+export MAINT_ENTRY_GATE_LOCK_DIR="$SCRATCH/lock"
+mkdir -p "$MAINT_ENTRY_GATE_LOCK_DIR"
 
 printf 'some avg10=1.0 avg60=1.0 avg300=1.0 total=0\n' >"$SCRATCH/psi-ok"
 printf 'some avg10=99.0 avg60=80.0 avg300=60.0 total=999999\n' >"$SCRATCH/psi-bad"
@@ -175,6 +197,7 @@ mkshadow() {
   : >"$SYSTEMCTL_LOG"
   : >"$CHATTR_LOG"
   : >"$MOUNT_LOG"
+  echo admit >"$SCRATCH/gate-mode"
   mkdir -p "$SRC_F/nested" "$CADDY_MIGRATE_ARCHIVE_DIR"
   echo log-a >"$SRC_F/access-a.log"
   echo log-b >"$SRC_F/access-b.log"
@@ -211,6 +234,17 @@ mkshadow
 out=$(CADDY_MIGRATE_PSI_FILE="$SCRATCH/psi-bad" run_migrate prepare 2>&1) && fail "prepare ran during IO storm" || {
   grep -q "REFUSED: IO PSI" <<<"$out" && ok "prepare refuses on IO PSI" || fail "prepare failed for wrong reason: $out"
 }
+
+# ── 2b. entry-gate refusal: blocks BEFORE any mutation (freeze-19 contract) ─
+mkshadow
+echo refuse >"$SCRATCH/gate-mode"
+out=$(run_migrate prepare 2>&1) && fail "prepare ran under a refusing entry gate" || {
+  grep -q "entry gate refused" <<<"$out" && ok "prepare refuses under the entry gate" || fail "prepare failed for wrong reason: $out"
+}
+grep -qxF "$SUBVOL_F" "$FAKE_SUBVOLS" && fail "gate-refused prepare still created the subvol" || ok "gate-refused prepare created nothing"
+grep -q "stop caddy" "$SYSTEMCTL_LOG" && fail "gate-refused prepare stopped caddy" || ok "gate-refused prepare never quiesced caddy"
+grep -q "migrate-caddy-logs-hot" "$SCRATCH/gate.log" || fail "entry gate was never consulted"
+echo admit >"$SCRATCH/gate-mode"
 
 # ── 3. prepare refusal: already migrated ────────────────────────────────────
 mkshadow

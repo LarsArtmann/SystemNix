@@ -27,6 +27,36 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
+# ── Entry gate (freeze #19/#20/#21 class — see pkgs/maintenance-entry-gate.nix)
+# One migrate-* at a time (flock held for this script's lifetime) + refuse to
+# start into a tripped box. MAINT_ENTRY_GATE_LOCK_DIR exists for sandboxes.
+MAINT_LOCK_DIR="${MAINT_ENTRY_GATE_LOCK_DIR:-/run/lock/systemnix-heavy}"
+mkdir -p "$MAINT_LOCK_DIR" 2>/dev/null || true
+exec 8>>"$MAINT_LOCK_DIR/systemnix-maintenance.lock" || {
+  echo "ERROR: cannot open maintenance lock in $MAINT_LOCK_DIR" >&2
+  exit 1
+}
+flock -n 8 || {
+  echo "ERROR: another migrate-* script holds $MAINT_LOCK_DIR/systemnix-maintenance.lock — serialize maintenance, never stack it" >&2
+  exit 1
+}
+maintenance-entry-gate --name migrate-nix-subvol --psi-max 30 || {
+  echo "ERROR: entry gate refused (see above) — a refused migration is free, a migration into a storm is freeze #19" >&2
+  exit 1
+}
+
+# heavy-job wrap (freeze #4 doctrine): the delta rsync queues behind the
+# workload-admission slots instead of stacking on live builds. Warn-and-run-
+# unwrapped only where the queue binary cannot exist (sandboxes).
+run_heavy() {
+  if command -v heavy-job >/dev/null 2>&1; then
+    heavy-job "$@"
+  else
+    echo "WARN: heavy-job not on PATH — running unwrapped (no workload-admission here?)" >&2
+    "$@"
+  fi
+}
+
 mkdir -p "$BTRFS_ROOT"
 if ! findmnt -n "$BTRFS_ROOT" >/dev/null; then
   mount "$BTRFS_ROOT" || {
@@ -61,7 +91,7 @@ echo ":: Bulk copy $SRC -> @nix (cp --reflink, hardlinks preserved)"
 cp -a --reflink=always "$SRC/." "$DST/" || echo "  (cp hit a socket/uncopyable — expected, continuing)"
 
 echo ":: Delta pass (files changed during the bulk copy)"
-rsync -aH --delete --info=stats1 "$SRC/" "$DST/" || echo "  (rsync hit a socket — expected)"
+run_heavy rsync -aH --delete --info=stats1 "$SRC/" "$DST/" || echo "  (rsync hit a socket — expected)"
 
 echo
 echo "Done. Next steps:"

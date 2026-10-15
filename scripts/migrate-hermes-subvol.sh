@@ -63,6 +63,20 @@ flock -n 8 || die "another migrate-* script holds $MAINT_LOCK_DIR/systemnix-main
 maintenance-entry-gate --name migrate-hermes-subvol --psi-max 30 ||
   die "entry gate refused (see above) — a refused migration is free, a migration into a storm is freeze #19"
 
+# heavy-job wrap (freeze #4 doctrine): seed pass 1 (hermes still running)
+# queues behind the workload-admission slots instead of stacking on live
+# builds. Pass 2 + the verify dry-run deliberately stay unwrapped: they run
+# AFTER quiescing hermes — waiting on a build slot would stretch the stop
+# window. Warn-and-run-unwrapped only where the queue binary cannot exist.
+run_heavy() {
+  if command -v heavy-job >/dev/null 2>&1; then
+    heavy-job "$@"
+  else
+    echo "WARN: heavy-job not on PATH — running unwrapped (no workload-admission here?)" >&2
+    "$@"
+  fi
+}
+
 QUIESCED=0
 prepare_exit_hint() {
   local rc=$?
@@ -174,7 +188,7 @@ cmd_prepare() {
   info "source size: ${src_size:-unknown} (file COUNT dominates the copy time on this box, not bytes)"
 
   info "seed pass 1/2 (hermes may keep running; idle IO priority — yields to everything)"
-  ionice -c 3 nice -n 19 rsync -aHAX --info=progress2,stats2 "$SRC/" "$DST/"
+  run_heavy ionice -c 3 nice -n 19 rsync -aHAX --info=progress2,stats2 "$SRC/" "$DST/"
 
   info "quiescing hermes (gateway + its user manager so cron scopes drain)"
   QUIESCED=1
