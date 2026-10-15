@@ -424,13 +424,18 @@
           # connection. The backfill contention is now handled by disabling
           # backfillOnStartup during the restore window, see below.)
           backend = lib.mkDefault "sqlite";
-          # Off during the 2026-10-14 restore window: gap recovery happens via
-          # salvage replay (quarantine/.corrupt files) plus a deliberate
-          # Discord-API backfill sweep afterwards — a startup backfill would
-          # race those inserts and re-trigger the 40+ min single-connection
-          # FTS5/projection contention that the earlier sqlite-backend trial
-          # hit. Re-enable for the post-salvage convergence sweep.
-          backfillOnStartup = lib.mkDefault false;
+          # ON for the post-salvage convergence sweep (2026-10-15): the salvage
+          # replay is done, the Oct 2-14 read-model gap is still open (zero
+          # messages Oct 2-13 live-verified via /partials/activity-data), and
+          # all backfill progress rows were reset via POST /api/backfill/restart
+          # (44/44, 2026-10-15 ~21:20) so the next gateway GUILD_AVAILABLE
+          # re-walks every channel from scratch (idempotent, covers everything
+          # Discord still serves). The old contention rationale is gone: the
+          # quadratic startup FTS sync was fixed upstream (rowid watermark,
+          # deployed 2026-10-15 20:10 — startup now ~7s, sync_fts 3.6s) and the
+          # sweep is rate-limited (5 req/s). Flip back to false after the sweep
+          # converges if the per-connect full-skip walk ever shows up as noise.
+          backfillOnStartup = lib.mkDefault true;
           apiAddr = lib.mkDefault "127.0.0.1:${toString ports.discordsync-api}";
           # Upstream's ExecStartPost curls http://localhost:${cfg.apiAddr}/readyz
           # which expands to http://localhost:127.0.0.1:8085/readyz — a malformed
