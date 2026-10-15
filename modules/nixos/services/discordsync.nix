@@ -132,8 +132,10 @@
       #      rebuilds a new DB with all salvageable rows. This can recover most
       #      data even when the B-tree structure is damaged.
       #   3. If .recover fails → try BTRFS snapshot restore. Finds the newest
-      #      btrbk snapshot with a healthy DB and clones it via CoW (instant,
-      #      zero additional space). Recovers the pre-crash state.
+      #     btrbk snapshot with a healthy DB (main file + its -wal — the WAL
+      #     holds every commit since the last checkpoint) and clones the pair
+      #     via CoW (instant, zero additional space). Recovers the pre-crash
+      #     state.
       #   4. Only if ALL recovery fails → move corrupt DB aside for manual
       #      forensics and let DiscordSync start fresh (re-syncs from Turso).
       # Attachments in the separate attachments/ dir are always preserved.
@@ -168,8 +170,14 @@
           backup="''${db}.corrupt-$ts"
           recovered="''${db}.recovered-$ts"
 
-          # Back up the corrupt DB for forensics before touching it
+          # Back up the corrupt DB for forensics before touching it. The -wal
+          # holds every commit since the last checkpoint — a main-file-only
+          # quarantine silently truncates at the checkpoint boundary (the
+          # 2026-10-14 quarantine lost its WAL tail to the rm below).
           cp "$db" "$backup"
+          if [ -f "$db-wal" ]; then
+            cp "$db-wal" "$backup-wal"
+          fi
 
           # Attempt recovery: .recover scans pages directly, bypassing the
           # damaged B-tree structure, and writes all salvageable rows to a new DB.
@@ -216,13 +224,26 @@
                 echo "discordsync: trying BTRFS snapshot restore from $(basename "$snap")" >&2
                 # Try CoW clone first (instant), fall back to regular copy
                 if cp --reflink=always "$snap_db" "$recovered" 2>/dev/null || cp "$snap_db" "$recovered" 2>/dev/null; then
+                  # The snapshot's -wal holds every commit since the main
+                  # file's last checkpoint — cloning only the main DB restored
+                  # a days-stale file on 2026-10-14 01:03 (data through Oct 1
+                  # from an Oct 13 snapshot; the WAL beside it held the rest).
+                  # Copy the pair: sqlite applies the WAL on first open, so the
+                  # verify below sees the snapshot's true content.
+                  if [ -f "$snap_db-wal" ]; then
+                    cp --reflink=always "$snap_db-wal" "$recovered-wal" 2>/dev/null || cp "$snap_db-wal" "$recovered-wal"
+                  fi
                   snap_check=$(sqlite3 "$recovered" "PRAGMA integrity_check;" 2>&1 || true)
                   if [ "$snap_check" = "ok" ]; then
                     snap_rows=$(sqlite3 "$recovered" "SELECT count(*) FROM sqlite_master;" 2>/dev/null || echo "0")
                     echo "discordsync: snapshot restore succeeded — $snap_rows objects from $(basename "$snap")" >&2
                     mv "$recovered" "$db"
+                    if [ -f "$recovered-wal" ]; then
+                      mv "$recovered-wal" "$db-wal"
+                      chown ${cfg.user}:${cfg.group} "$db-wal"
+                    fi
                     chown ${cfg.user}:${cfg.group} "$db"
-                    rm -f "$db-wal" "$db-shm" 2>/dev/null || true
+                    rm -f "$db-shm" 2>/dev/null || true
                     echo "discordsync: snapshot DB verified and replaces corrupt DB. Corrupt backup at $backup" >&2
                     exit 0
                   else

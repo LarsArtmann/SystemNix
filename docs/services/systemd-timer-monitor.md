@@ -10,7 +10,7 @@ Python script (zero dependencies) that runs `systemctl list-units` and
 and writes an HTML report + JSON status to a state directory served by
 Caddy's `file_server`.
 
-- **Upstream**: [cappy-dev/systemd-timer-monitor](https://github.com/cappy-dev/systemd-timer-monitor)
+- **Upstream**: cappy-dev/systemd-timer-monitor — **DELETED from GitHub** (rev `ff68e41` tarball 404s); the runtime is vendored verbatim at `pkgs/.systemd-timer-monitor/systemd-audit.py` since 2026-08-28 (`7e44ee2a`, "replace with a maintained fork if one appears" — upstream was unlicensed). Ratify-exception vs clean-room-Go-port: [decision] in docs/todo/services.md
 - **URL**: `https://timers.home.lan/`
 - **Auth**: None (LAN-only, read-only public systemd data)
 - **State**: `/var/lib/systemd-timer-monitor/` (report.html, status.json)
