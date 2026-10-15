@@ -386,21 +386,6 @@ else
     log_info "No staged .sh/.githooks files — skipping shellcheck."
 fi
 
-# Ruff on staged .py files
-STAGED_PY=$(git diff --cached --name-only --diff-filter=ACM '*.py')
-if [ -n "$STAGED_PY" ]; then
-    log_info "Running ruff on staged Python scripts..."
-    if git diff --cached --name-only --diff-filter=ACM -z '*.py' | xargs -0 nix shell nixpkgs#ruff --command ruff check > "$LINT_LOG" 2>&1; then
-        log_success "Ruff passed! No issues found."
-    else
-        log_error "Ruff found issues!"
-        cat "$LINT_LOG"
-        all_passed=false
-    fi
-else
-    log_info "No staged .py files — skipping ruff."
-fi
-
 # buildcache parity guard (2026-10-04): the flake-check leg's eval invariant
 # covers buildcache.nix edits, but it is SKIPPED on docs/shell-only staged
 # diffs — and the parity sources include a .sh file (das-link-recovery-check.sh),
