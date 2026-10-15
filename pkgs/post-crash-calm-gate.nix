@@ -101,19 +101,22 @@ writeShellApplication {
       FIX=$(mktemp -d)
       trap 'rm -rf "$FIX"' EXIT
 
-      # Fake entry gate: exits 1 until the counter file reaches the value in
-      # $FAKE_ADMIT_AFTER, then exits 0 (records each invocation).
       FAKE="$FIX/fake-entry-gate"
       COUNT_FILE="$FIX/count"
       : >"$COUNT_FILE"
+      # Fake entry gate: exits 1 until the counter file reaches the value in
+      # $FAKE_ADMIT_AFTER (always set by the scenarios), then exits 0.
+      # Heredoc body MUST sit flush-left (nix strips the common indent, and
+      # the fake gate is executed directly, so `#!` must be at column 0);
+      # `\$` keeps the counters/expansions for the fake gate's own runtime.
       cat >"$FAKE" <<FAKE_GATE
-      #!/bin/sh
-      n=\$(cat "$COUNT_FILE" 2>/dev/null || echo 0)
-      n=\$((n + 1))
-      echo "\$n" >"$COUNT_FILE"
-      [ "\$n" -ge "\\''${FAKE_ADMIT_AFTER:-999999}" ] && exit 0
-      echo "REFUSE: fake — invocation \$n" >&2
-      exit 1
+#!/bin/sh
+n=\$(cat "$COUNT_FILE" 2>/dev/null || echo 0)
+n=\$((n + 1))
+echo "\$n" >"$COUNT_FILE"
+[ "\$n" -ge "\$FAKE_ADMIT_AFTER" ] && exit 0
+echo "REFUSE: fake — invocation \$n" >&2
+exit 1
 FAKE_GATE
       chmod +x "$FAKE"
       export POST_CRASH_CALM_GATE_ENTRY_GATE="$FAKE"
@@ -181,7 +184,7 @@ FAKE_GATE
       fi
       now=$(date +%s)
       if [ "$now" -ge "$deadline" ]; then
-        echo "REFUSE: $GATE_NAME still storming after ${MAX_WAIT_MIN} min / $attempt probe(s) — refusing admission." >&2
+        echo "REFUSE: $GATE_NAME still storming after ''${MAX_WAIT_MIN} min / $attempt probe(s) — refusing admission." >&2
         echo "  A skipped post-crash catch-up run is free (timer refire / next deploy / next boot);" >&2
         echo "  a catch-up run inside the storm killed this box 7x (freezes #19/#20/#22/#25/#28)." >&2
         echo "  Re-run later: systemctl start <gated-unit>, or wait for its next trigger." >&2

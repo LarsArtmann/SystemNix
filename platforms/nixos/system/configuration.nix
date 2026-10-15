@@ -323,9 +323,9 @@ in
       # realized with the same value). Second surface — the first lives in
       # lib/lars-packages.nix. Drop when upstream declares cCl3IWhu at this
       # or a later rev (verify via nix build .#buildflow).
-      inputs.buildflow.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+      (inputs.buildflow.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
         vendorHash = "sha256-cCl3IWhufWYGlRncOOKKvUwaOBceF7aapUXCwoyk2lA=";
-      }
+      })
       # flm CLI (NPU LLM; service consumes the same package). Replaces the
       # deleted ~/.local/bin/flm wrapper — the nix package sets its own
       # XILINX_XRT/LD_LIBRARY_PATH, no hand-maintained script needed.
