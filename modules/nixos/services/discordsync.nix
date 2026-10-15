@@ -135,13 +135,15 @@
       #     btrbk snapshot with a healthy DB (main file + its -wal — the WAL
       #     holds every commit since the last checkpoint) and clones the pair
       #     via CoW (instant, zero additional space). Recovers the pre-crash
-      #     state.
+      #     state. REFUSED for hot-tier DBs (own BTRFS subvolume): @ snapshots
+      #     do not track them — restoring would roll the live DB back to the
+      #     frozen shadow (2026-10-14 01:03 lost ~29k messages this way).
       #   4. Only if ALL recovery fails → move corrupt DB aside for manual
       #      forensics and let DiscordSync start fresh (re-syncs from Turso).
       # Attachments in the separate attachments/ dir are always preserved.
       dbHeal = pkgs.writeShellApplication {
         name = "discordsync-db-heal";
-        runtimeInputs = [ pkgs.sqlite ];
+        runtimeInputs = [ pkgs.sqlite pkgs.btrfs-progs ];
         text = ''
           db="${cfg.databasePath}"
           if [ ! -f "$db" ]; then
@@ -217,7 +219,21 @@
           # Snapshots live at /mnt/btrfs-root/.snapshots/@.YYYYMMDDTHHMM/
           db_rel="''${db#/}"
           snapshots_dir="/mnt/btrfs-root/.snapshots"
-          if [ -d "$snapshots_dir" ]; then
+          # STRUCTURAL GUARD (2026-10-15, closes the Oct 2-14 data-loss class):
+          # a DB living in its own BTRFS subvolume is hot-tier (services.hot-db,
+          # doctrine C: unsnapshotted, dump-only RPO). The @ btrbk snapshots
+          # belong to the ROOT subvolume and do NOT track it — the newest
+          # snapshot holds the frozen pre-cutover shadow, so "restoring" it
+          # over the live DB rolls the service back to the cutover moment
+          # (2026-10-14 01:03 discarded ~29k messages exactly this way). The
+          # runbook warning is not a control: refuse the restore outright.
+          # Legitimate hot-tier recovery sources: the dump leg
+          # (/mnt/pool/backups/discordsync) and the shadowed QLC store
+          # (docs/services/hot-db.md hold banner).
+          if btrfs subvolume show "$(dirname "$db")" >/dev/null 2>&1; then
+            echo "discordsync: DB is hot-tier (own BTRFS subvolume) — @ snapshots do not track it, snapshot restore REFUSED" >&2
+            echo "discordsync: hot-tier recovery sources: dump leg /mnt/pool/backups/discordsync, shadowed QLC store (docs/services/hot-db.md)" >&2
+          elif [ -d "$snapshots_dir" ]; then
             for snap in $(find "$snapshots_dir" -maxdepth 1 -name '@.*' -type d 2>/dev/null | sort -r); do
               snap_db="$snap/$db_rel"
               if [ -f "$snap_db" ]; then
