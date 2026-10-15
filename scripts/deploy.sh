@@ -100,6 +100,164 @@ if ! flock -n 9; then
 fi
 echo $$ >"$deploy_lock"
 
+echo ""
+# ── Deploy entry gates (freeze #22, 2026-10-07) ────────────────────────────
+# Freeze #22 died 2m55s into deploy #2's SECTION-1 flake evals with both
+# gates still unexecuted behind the 13-section pre-deploy validation
+# battery: a deploy launched into a tripped box ran its heaviest ungated IO
+# before any veto could fire. Both gates are therefore functions, called
+# ONCE HERE AT ENTRY (before the validation battery) and AGAIN pre-switch
+# (the activation itself is the most dangerous phase; the validation takes
+# minutes and storms build under it). Same exit code + escape hatch as the
+# pre-switch positions (exit 12, DEPLOY_FORCE_PRESSURE=1).
+deploy_pressure_gate() {
+echo "=== Memory pressure gate (2026-08-22 stability plan) ==="
+# A deploy is itself a multi-GB build + an activation storm; both freezes
+# had heavy builds as contributing load. Deploying INTO pressure adds fuel
+# — but deploying the FIX from pressure is sometimes exactly what is
+# needed, hence DEPLOY_FORCE_PRESSURE=1 as the escape hatch. Reads the
+# kernel directly (no curl, no metrics dependency).
+psi_avg10=$(awk '/^some/ {split($2, a, "="); print a[2]}' /proc/pressure/memory 2>/dev/null || echo 0)
+# I/O PSI + disk %util correlation (crash3 phantom-saturation class,
+# 2026-08-31 deploy at 78-80% IO PSI): D-state tasks parked on dead
+# automounts saturate PSI while disks sit IDLE. Read io_ticks twice 1s
+# apart, max %util across disks; a 1000ms window means delta_ms/10 = %.
+io_psi_avg10=$(awk '/^some/ {split($2, a, "="); print a[2]}' /proc/pressure/io 2>/dev/null || echo 0)
+# Per-disk %util, MAX across disks (a sum would exceed 100% on multi-disk
+# boxes; the phantom/real discriminator wants the busiest single disk).
+# io_ticks is field 10 of each /sys/block/<dev>/stat line; a 1000ms window
+# means delta_ms/10 = %util. Glob-guarded: an unmatched pattern must not
+# fail the sample under set -euo pipefail.
+sample_io_ticks() {
+  local d
+  for d in /sys/block/sd* /sys/block/nvme*n* /sys/block/vd*; do
+    [ -e "$d/stat" ] && awk '{printf "%s ", $10}' "$d/stat"
+  done
+  return 0
+}
+disk_busy=""
+io_ticks_a=$(sample_io_ticks)
+sleep 1
+io_ticks_b=$(sample_io_ticks)
+disk_busy=$(paste <(tr ' ' '\n' <<<"$io_ticks_a") <(tr ' ' '\n' <<<"$io_ticks_b") |
+  awk 'NF == 2 {d = $2 - $1; if (d > m) m = d} END {printf "%.1f", m / 10.0}')
+zram_fill=""
+if [ -r /sys/block/zram0/mm_stat ] && [ -r /sys/block/zram0/disksize ]; then
+  zram_orig=$(awk '{print $1}' /sys/block/zram0/mm_stat 2>/dev/null || echo 0)
+  zram_size=$(cat /sys/block/zram0/disksize 2>/dev/null || echo 0)
+  if [ "${zram_size:-0}" -gt 0 ] 2>/dev/null; then
+    zram_fill=$(awk -v o="$zram_orig" -v d="$zram_size" 'BEGIN { printf "%.1f", o * 100.0 / d }')
+  fi
+fi
+avail_pct=$(awk '/^MemAvailable:/ {a=$2} /^MemTotal:/ {t=$2} END { if (t > 0) printf "%.1f", a * 100.0 / t }' /proc/meminfo 2>/dev/null || echo 100)
+pressure_blocked=0
+if awk "BEGIN{exit !(${psi_avg10:-0} >= 20)}"; then
+  pressure_blocked=1
+  echo "✗ PSI memory some avg10 = ${psi_avg10}% (>= 20% — storm forming)"
+fi
+if awk "BEGIN{exit !(${avail_pct:-100} < 10)}"; then
+  pressure_blocked=1
+  echo "✗ MemAvailable = ${avail_pct}% (< 10% floor)"
+fi
+# zram near-full ALONE is NOT an emergency on this box: swappiness=150
+# keeps cold anon compressed in zram by design (steady state sits at
+# 90-99% with PSI 0.00 — measured 2026-08-22 evening, avail 25%). The
+# freeze precursor is zram full AND degraded margins (nothing left to
+# swap new pages while already stalling) — mirror the emergency guard's
+# combined-zone semantics.
+if [ -n "$zram_fill" ] && awk "BEGIN{exit !(${zram_fill:-0} >= 95)}" && awk "BEGIN{exit !(${psi_avg10:-0} >= 5)}"; then
+  pressure_blocked=1
+  echo "✗ zram swap fill = ${zram_fill}% (>= 95%) WITH PSI some avg10 = ${psi_avg10}% (>= 5%) — combined pre-freeze zone"
+fi
+if awk "BEGIN{exit !(${io_psi_avg10:-0} >= 20)}"; then
+  pressure_blocked=1
+  if awk "BEGIN{exit !(${disk_busy:-0} >= 20)}"; then
+    echo "✗ I/O PSI some avg10 = ${io_psi_avg10}% (>= 20%) WITH disk busy = ${disk_busy}% (>= 20%) — REAL I/O storm (crash #3 precursor class)"
+  else
+    echo "✗ I/O PSI some avg10 = ${io_psi_avg10}% (>= 20%) with IDLE disks (busy = ${disk_busy}%) — D-state phantom on a dead automount (corpse-pile signature, crash3):"
+    echo "  top D-state processes:"
+    ps -eo pid,stat,wchan:30,comm | awk '$2 ~ /D/' | head -8 | sed 's/^/    /' || true
+    echo "  PSI still means tasks are stalled — activation restarts units INTO it and strands more corpses. Verify the missing device / corpse pile before forcing."
+  fi
+  # Device-truth crosscheck beside the PSI line (2026-10-13 class): that
+  # refusal read PSI some avg10 53-65% sustained while iostat showed every
+  # device <=0.4% util, and the gate's own max-busy figure misread the
+  # entry sample as a REAL storm (29.8%). Root cause found 2026-10-14:
+  # ghostty's io_uring CQ-waiters sleep TASK_INTERRUPTIBLE with
+  # in_iowait=1 while holding never-completing ring requests, so the
+  # kernel books their cgroups at ~100% io PSI with zero io.stat and zero
+  # D-state. Print per-device %util + top-3 stalled cgroups so the
+  # wait-vs-force call has evidence, not PSI alone (best-effort).
+  echo "  device-truth crosscheck:"
+  if [ -x "$PWD/scripts/io-psi-crosscheck.sh" ]; then
+    timeout 30 "$PWD/scripts/io-psi-crosscheck.sh" 2>/dev/null | sed 's/^/    /' || true
+  else
+    echo "    (scripts/io-psi-crosscheck.sh missing — evidence skipped)"
+  fi
+fi
+if [ "$pressure_blocked" = "1" ]; then
+  echo ""
+  echo "  Deploying under this pressure risks contributing to a kernel freeze"
+  echo "  (both 2026-08-22 freezes had builds as contributing load)."
+  echo "  Options: wait for pressure to drain, shed heavy jobs — or override:"
+  echo "    DEPLOY_FORCE_PRESSURE=1 nix run .#deploy"
+  if [ "${DEPLOY_FORCE_PRESSURE:-0}" != "1" ]; then
+    exit 12
+  fi
+  echo "  DEPLOY_FORCE_PRESSURE=1 set — proceeding anyway"
+else
+  echo "  OK (PSI mem some avg10 = ${psi_avg10}%, PSI io some avg10 = ${io_psi_avg10:-0}%, disk busy = ${disk_busy:-n/a}%, zram = ${zram_fill:-n/a}%, MemAvailable = ${avail_pct}%)"
+fi
+}
+
+deploy_trip_recency_gate() {
+echo "=== Guard trip-recency gate (freeze #5 doctrine, 2026-09-20) ==="
+# The pressure gate above samples PSI at deploy ENTRY only. Freeze #5
+# taught that episodic storms oscillate: a deploy entering during a PSI dip
+# still died 9s into activation (2026-09-20 14:08: Zone-6 trips #650-653
+# bracketed a deploy that passed the point-in-time gate). Guard trips in
+# the last hour mean the current reading is NOT evidence of calm. A
+# timed-out journal read FAILS CLOSED (freeze #22); other journal-read
+# failures degrade to the pressure gate (unchanged legacy behavior).
+# grep -c prints 0 and exits 1 on no matches — `|| true` keeps that a pass;
+# journal discipline: bounded window + timeout 15.
+# Bounded read with an EXPLICIT status: pipefail + `|| true` used to swallow
+# a 124 (timeout) into grep's partial-output count — a timed-out mid-storm
+# read counted as ZERO trips, fail-open under the exact condition this gate
+# exists for (freeze #22). A timeout now refuses (fail-closed).
+journal_out=""
+journal_rc=0
+journal_out=$(timeout 15 journalctl -u memory-emergency-guard --since "-60 min" --no-pager 2>/dev/null) && journal_rc=0 || journal_rc=$?
+if [ "$journal_rc" -eq 124 ]; then
+  echo "✗ the 15s journalctl read TIMED OUT — guard-trip recency UNVERIFIABLE (a mid-storm read timing out is itself storm evidence)"
+  echo "  Current PSI may be a dip between trips; deploying now races the storm."
+  echo "  Wait for the box to quiet down, or override:"
+  echo "    DEPLOY_FORCE_PRESSURE=1 nix run .#deploy"
+  if [ "${DEPLOY_FORCE_PRESSURE:-0}" != "1" ]; then
+    exit 12
+  fi
+  echo "  DEPLOY_FORCE_PRESSURE=1 set — proceeding anyway"
+  return 0
+fi
+zone6_recent=$(grep -c 'MEMORY EMERGENCY action taken' <<<"$journal_out" || true)
+if [ "${zone6_recent:-0}" -ge 1 ]; then
+  echo "✗ memory-emergency-guard tripped ${zone6_recent}× in the last 60 min — episodic IO-storm window (freeze #5 class)"
+  echo "  Current PSI may be a dip between trips; deploying now races the storm."
+  echo "  Wait for ≥60 min without a trip, or override:"
+  echo "    DEPLOY_FORCE_PRESSURE=1 nix run .#deploy"
+  if [ "${DEPLOY_FORCE_PRESSURE:-0}" != "1" ]; then
+    exit 12
+  fi
+  echo "  DEPLOY_FORCE_PRESSURE=1 set — proceeding anyway"
+else
+  echo "  OK (no guard trips in the last 60 min)"
+fi
+}
+
+echo "=== ENTRY gates: pressure + guard-trip recency (freeze #22 — BEFORE the validation battery) ==="
+deploy_pressure_gate
+deploy_trip_recency_gate
+
 echo "=== Pre-Deploy Validation ==="
 if nix run .#pre-deploy-check; then
   echo ""
@@ -294,127 +452,10 @@ if nix run .#pre-deploy-check; then
   fi
 
   echo ""
-  echo "=== Memory pressure gate (2026-08-22 stability plan) ==="
-  # A deploy is itself a multi-GB build + an activation storm; both freezes
-  # had heavy builds as contributing load. Deploying INTO pressure adds fuel
-  # — but deploying the FIX from pressure is sometimes exactly what is
-  # needed, hence DEPLOY_FORCE_PRESSURE=1 as the escape hatch. Reads the
-  # kernel directly (no curl, no metrics dependency).
-  psi_avg10=$(awk '/^some/ {split($2, a, "="); print a[2]}' /proc/pressure/memory 2>/dev/null || echo 0)
-  # I/O PSI + disk %util correlation (crash3 phantom-saturation class,
-  # 2026-08-31 deploy at 78-80% IO PSI): D-state tasks parked on dead
-  # automounts saturate PSI while disks sit IDLE. Read io_ticks twice 1s
-  # apart, max %util across disks; a 1000ms window means delta_ms/10 = %.
-  io_psi_avg10=$(awk '/^some/ {split($2, a, "="); print a[2]}' /proc/pressure/io 2>/dev/null || echo 0)
-  # Per-disk %util, MAX across disks (a sum would exceed 100% on multi-disk
-  # boxes; the phantom/real discriminator wants the busiest single disk).
-  # io_ticks is field 10 of each /sys/block/<dev>/stat line; a 1000ms window
-  # means delta_ms/10 = %util. Glob-guarded: an unmatched pattern must not
-  # fail the sample under set -euo pipefail.
-  sample_io_ticks() {
-    local d
-    for d in /sys/block/sd* /sys/block/nvme*n* /sys/block/vd*; do
-      [ -e "$d/stat" ] && awk '{printf "%s ", $10}' "$d/stat"
-    done
-    return 0
-  }
-  disk_busy=""
-  io_ticks_a=$(sample_io_ticks)
-  sleep 1
-  io_ticks_b=$(sample_io_ticks)
-  disk_busy=$(paste <(tr ' ' '\n' <<<"$io_ticks_a") <(tr ' ' '\n' <<<"$io_ticks_b") |
-    awk 'NF == 2 {d = $2 - $1; if (d > m) m = d} END {printf "%.1f", m / 10.0}')
-  zram_fill=""
-  if [ -r /sys/block/zram0/mm_stat ] && [ -r /sys/block/zram0/disksize ]; then
-    zram_orig=$(awk '{print $1}' /sys/block/zram0/mm_stat 2>/dev/null || echo 0)
-    zram_size=$(cat /sys/block/zram0/disksize 2>/dev/null || echo 0)
-    if [ "${zram_size:-0}" -gt 0 ] 2>/dev/null; then
-      zram_fill=$(awk -v o="$zram_orig" -v d="$zram_size" 'BEGIN { printf "%.1f", o * 100.0 / d }')
-    fi
-  fi
-  avail_pct=$(awk '/^MemAvailable:/ {a=$2} /^MemTotal:/ {t=$2} END { if (t > 0) printf "%.1f", a * 100.0 / t }' /proc/meminfo 2>/dev/null || echo 100)
-  pressure_blocked=0
-  if awk "BEGIN{exit !(${psi_avg10:-0} >= 20)}"; then
-    pressure_blocked=1
-    echo "✗ PSI memory some avg10 = ${psi_avg10}% (>= 20% — storm forming)"
-  fi
-  if awk "BEGIN{exit !(${avail_pct:-100} < 10)}"; then
-    pressure_blocked=1
-    echo "✗ MemAvailable = ${avail_pct}% (< 10% floor)"
-  fi
-  # zram near-full ALONE is NOT an emergency on this box: swappiness=150
-  # keeps cold anon compressed in zram by design (steady state sits at
-  # 90-99% with PSI 0.00 — measured 2026-08-22 evening, avail 25%). The
-  # freeze precursor is zram full AND degraded margins (nothing left to
-  # swap new pages while already stalling) — mirror the emergency guard's
-  # combined-zone semantics.
-  if [ -n "$zram_fill" ] && awk "BEGIN{exit !(${zram_fill:-0} >= 95)}" && awk "BEGIN{exit !(${psi_avg10:-0} >= 5)}"; then
-    pressure_blocked=1
-    echo "✗ zram swap fill = ${zram_fill}% (>= 95%) WITH PSI some avg10 = ${psi_avg10}% (>= 5%) — combined pre-freeze zone"
-  fi
-  if awk "BEGIN{exit !(${io_psi_avg10:-0} >= 20)}"; then
-    pressure_blocked=1
-    if awk "BEGIN{exit !(${disk_busy:-0} >= 20)}"; then
-      echo "✗ I/O PSI some avg10 = ${io_psi_avg10}% (>= 20%) WITH disk busy = ${disk_busy}% (>= 20%) — REAL I/O storm (crash #3 precursor class)"
-    else
-      echo "✗ I/O PSI some avg10 = ${io_psi_avg10}% (>= 20%) with IDLE disks (busy = ${disk_busy}%) — D-state phantom on a dead automount (corpse-pile signature, crash3):"
-      echo "  top D-state processes:"
-      ps -eo pid,stat,wchan:30,comm | awk '$2 ~ /D/' | head -8 | sed 's/^/    /' || true
-      echo "  PSI still means tasks are stalled — activation restarts units INTO it and strands more corpses. Verify the missing device / corpse pile before forcing."
-    fi
-    # Device-truth crosscheck beside the PSI line (2026-10-13 class): that
-    # refusal read PSI some avg10 53-65% sustained while iostat showed every
-    # device <=0.4% util, and the gate's own max-busy figure misread the
-    # entry sample as a REAL storm (29.8%). Root cause found 2026-10-14:
-    # ghostty's io_uring CQ-waiters sleep TASK_INTERRUPTIBLE with
-    # in_iowait=1 while holding never-completing ring requests, so the
-    # kernel books their cgroups at ~100% io PSI with zero io.stat and zero
-    # D-state. Print per-device %util + top-3 stalled cgroups so the
-    # wait-vs-force call has evidence, not PSI alone (best-effort).
-    echo "  device-truth crosscheck:"
-    if [ -x "$PWD/scripts/io-psi-crosscheck.sh" ]; then
-      timeout 30 "$PWD/scripts/io-psi-crosscheck.sh" 2>/dev/null | sed 's/^/    /' || true
-    else
-      echo "    (scripts/io-psi-crosscheck.sh missing — evidence skipped)"
-    fi
-  fi
-  if [ "$pressure_blocked" = "1" ]; then
-    echo ""
-    echo "  Deploying under this pressure risks contributing to a kernel freeze"
-    echo "  (both 2026-08-22 freezes had builds as contributing load)."
-    echo "  Options: wait for pressure to drain, shed heavy jobs — or override:"
-    echo "    DEPLOY_FORCE_PRESSURE=1 nix run .#deploy"
-    if [ "${DEPLOY_FORCE_PRESSURE:-0}" != "1" ]; then
-      exit 12
-    fi
-    echo "  DEPLOY_FORCE_PRESSURE=1 set — proceeding anyway"
-  else
-    echo "  OK (PSI mem some avg10 = ${psi_avg10}%, PSI io some avg10 = ${io_psi_avg10:-0}%, disk busy = ${disk_busy:-n/a}%, zram = ${zram_fill:-n/a}%, MemAvailable = ${avail_pct}%)"
-  fi
+  deploy_pressure_gate
 
   echo ""
-  echo "=== Guard trip-recency gate (freeze #5 doctrine, 2026-09-20) ==="
-  # The pressure gate above samples PSI at deploy ENTRY only. Freeze #5
-  # taught that episodic storms oscillate: a deploy entering during a PSI dip
-  # still died 9s into activation (2026-09-20 14:08: Zone-6 trips #650-653
-  # bracketed a deploy that passed the point-in-time gate). Guard trips in
-  # the last hour mean the current reading is NOT evidence of calm. Fails
-  # open when the journal is unreadable (the pressure gate still applies).
-  # grep -c prints 0 and exits 1 on no matches — `|| true` keeps that a pass;
-  # journal discipline: bounded window + timeout 15.
-  zone6_recent=$(timeout 15 journalctl -u memory-emergency-guard --since "-60 min" --no-pager 2>/dev/null | grep -c 'MEMORY EMERGENCY action taken' || true)
-  if [ "${zone6_recent:-0}" -ge 1 ]; then
-    echo "✗ memory-emergency-guard tripped ${zone6_recent}× in the last 60 min — episodic IO-storm window (freeze #5 class)"
-    echo "  Current PSI may be a dip between trips; deploying now races the storm."
-    echo "  Wait for ≥60 min without a trip, or override:"
-    echo "    DEPLOY_FORCE_PRESSURE=1 nix run .#deploy"
-    if [ "${DEPLOY_FORCE_PRESSURE:-0}" != "1" ]; then
-      exit 12
-    fi
-    echo "  DEPLOY_FORCE_PRESSURE=1 set — proceeding anyway"
-  else
-    echo "  OK (no guard trips in the last 60 min)"
-  fi
+  deploy_trip_recency_gate
 
   echo ""
   echo "=== FastFlowLM wedged-backend guard (EADDRINUSE corpse class, 2026-09-09) ==="

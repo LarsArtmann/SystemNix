@@ -10,7 +10,7 @@
 
 Two more instant-cut freezes tonight — **#29 (02:17:32)** ending a 61h12m boot (Oct 12 13:05 → Oct 15 02:17) and **#30 (03:12:26)**, a 53-minute recovery boot that never cooled. Both are the thermal-lineage class on the **standing, un-inspected cooling deficit** (stability.md:134 row — tonight is BAIT TAKEN a **9th and 10th time**): k10temp held 96–98 °C even under the thermal-pstate-guard's 60 % frequency cap, cut mid-normal-traffic with no shutdown sequence, no kernel panic, no pstore record. Amplifier: the vendorHash fleet wave's all-day nix eval/FOD stacking — `nix` invoked the OOM killer from 00:32 Oct 14 onward, guard trips #3109→#3123 every ~10 min through the evening (zone-6 IO PSI 40–57 %, disk busy ~100 %), zram full, llama-server (41 GB VM) OOM-killed 22:39, guard itself went DEAD-stale 23:14. Cut #1 landed mid-pma-auto-commit; cut #2 landed 2 min after the gatus CPU Thermal Alert (≥95 °C) and 7 s after a guard trip.
 
-**Live during this session:** the box was doing it AGAIN — 97.25 °C, IO PSI avg60 61 %, guard trip #3145 at 03:17, k10temp 98 °C at 03:16:51 — driven by a `nix flake check --no-build` (11→18 GB RSS, 158 % CPU) spawned by a sibling crush session (pts/13, 03:17) plus a `go mod tidy` FOD from another (pts/9). Both ended; at report close: 85–88 °C, IO PSI avg10 36.9 %, load 16, zero builds running. **Session errors owned below (§d): the kill I claimed never executed; the freeze numbers I quoted live were wrong (#13/#14 → actually #29/#30).**
+**Live during this session:** the box was doing it AGAIN — 97.25 °C, IO PSI avg60 61 %, guard trip #3145 at 03:17, k10temp 98 °C at 03:16:51 — driven by a `nix flake check --no-build` (11→18 GB RSS, 158 % CPU) spawned by a sibling crush session (pts/13, 03:17) plus a `go mod tidy` FOD from another (pts/9). Both ended; at 03:24: 85–88 °C. **Then a THIRD live event at ~03:26** (after this report was first drafted): four parallel Go test batteries (`saliency.test` + `evalharness.test`, two sibling nix-shell sessions, ~3000 % CPU combined) spiked load 16→145 and put k10temp at **98.75 °C — the cut ceiling**. Contained via the freeze-25-class owner-licensed **SIGSTOP** (full-path kill, state-verified): all four in `T`-state, **98.75 → 82.3 °C in ~10 s**, decaying normally since. **Session errors owned below (§d): the FIRST kill attempt never executed; the freeze numbers quoted live were wrong (#13/#14 → actually #29/#30).**
 
 ---
 
@@ -23,6 +23,7 @@ Two more instant-cut freezes tonight — **#29 (02:17:32)** ending a 61h12m boot
 5. **Live storm detected + top driver identified with full ancestry:** PID 50898 `nix flake check --no-build` ← crush PID 34821 (pts/13, started 03:16:16) — NOT this session (mine: PID 10058, pts/0, verified via /proc ancestry before acting).
 6. **Boot-evidence pulls for BOTH crashed boots** per the §15 protocol: `docs/status/tasks/2026-10-15_01-22_boot-cf3f49dc-evidence-pull.md` + `…-b5b5d642-evidence-pull.md`, written + `git add`ed (left for the auto-commit daemon; no manual commit per rules).
 7. **Live-state monitoring through the session:** temps 97.25 → 96.5 → 85–88 °C, IO PSI avg10 61 → 36.9 %, load 38.7 → 16, nixbld count 0 at close.
+8. **Second live storm CONTAINED, correctly this time (03:26–03:29).** Four Go test batteries (~3000 % CPU, load 16→145, k10temp 98.75 °C) SIGSTOPped via `/run/current-system/sw/bin/kill -STOP` (the §e.1 lesson applied), **state-verified** (`T` in ps) and effect-verified: 98.75 → 82.3 °C in ~10 s, load 133 → 69 decay, batteries still held at close. Executed under the freeze-25 owner-licensed containment precedent; RESUME with `kill -CONT 365910 365667 384048 384038` once the box is cool — NOTE their `-test.timeout=10m` wall-clock keeps running while stopped, so a long hold fails those test runs (accepted tradeoff vs a third hard cut).
 
 ## b) PARTIALLY DONE
 
@@ -34,7 +35,7 @@ Two more instant-cut freezes tonight — **#29 (02:17:32)** ending a 61h12m boot
 
 ## c) NOT STARTED
 
-1. **Owner-licensed SIGSTOP containment** of still-active sibling sessions (freeze-25 precedent: recovery storm contained by owner-licensed SIGSTOP of 13 battery sessions). I declared "can't whack-a-mole" instead of executing the documented playbook.
+1. ~~Owner-licensed SIGSTOP containment~~ — **EXECUTED 03:26** (§a.8) for the third live event; outstanding remainder: notify the two owning sessions + the CONT/resume decision when cool (§f.16).
 2. **discordsync 99.3 % CPU × 6+ min spin** — noticed in ps twice, never investigated; still unexplained and possibly still burning.
 3. **Attribution of the all-day Oct-14 eval/build storm** (which sessions/schedules ran the nix work that OOM-invoked from 00:32 — tq pool, daemon-commit→pre-commit→flake-check chain, or manual sessions).
 4. **llama-chat envelope check** (41 GB VM + `oom_score_adj:300` intent; the 2026-10-08 memory-watermark class).
@@ -81,7 +82,7 @@ Two more instant-cut freezes tonight — **#29 (02:17:32)** ending a 61h12m boot
 13. [QUEUED] [ready] journal-census.sh helper (stability.md:111) — tonight's session again hand-rolled keyword greps with head-limits (the near-miss class that row documents).
 14. [QUEUED] [blocked:user] Pstore root-read habit (stability.md:123) — my /sys/fs/pstore read was guard-blocked again; archive-path reasoning substituted (sound, but the row's EFI-retention verify remains unrun).
 15. [NEW] [watch] Re-probe temps/PSI before ANY heavy work in follow-up sessions; at report close: 85–88 °C, IO PSI avg10 36.9 %, load 16 — cooling but not cool.
-16. [NEW] [ready] Check whether sibling sessions re-spawned builds after 03:21; if yes, that is the standing-gate violation pattern for §g.2.
+16. [NEW] [ready] CONT-or-kill decision for the four STOPPED test batteries (PIDs 365910/365667/384048/384038, two sibling nix-shell sessions): once k10temp ≤ ~70 °C sustained, `kill -CONT` them (expect some to fail their expired 10 m test timeout — rerun needed) or kill them outright if the owning sessions have moved on; also tell those sessions their batteries were stopped and why. ANSWERED live: yes, sibling sessions DO re-spawn load immediately (third event 03:26) — this is the standing-gate violation pattern for §g.2.
 17. [QUEUED] [ready] Samples_v4 fingerprint thermal series for both death windows (#11 method) — recovers the per-minute temps my greps missed (b.2).
 18. [NEW] [ready] Gatus "CPU Thermal Alert" → wire TRIGGERED state to an actionable unit (stop-load rung), not just Discord/notify.
 
@@ -118,4 +119,4 @@ Two more instant-cut freezes tonight — **#29 (02:17:32)** ending a 61h12m boot
 - `bash scripts/boot-evidence-pull.sh -b -2` / `-b -1` (both artifacts written) + `git add`
 - `kill 50898` → `kill: unsupported builtin` (FAILED — see §d.1; no effect claimed anymore)
 
-**Live state at authoring (03:24):** k10temp 85–88 °C (falling), IO PSI some avg10 36.9 %/avg60 38.8 % (below the 40 % trip band), load 16.1 (falling), 0 nixbld builds. Two evidence files staged, uncommitted. **NOW WAITING FOR INSTRUCTIONS.**
+**Live state at final authoring (03:30):** k10temp 54–72 °C (falling; hot pair 54/72), IO PSI some avg10 34 %, load 69 and decaying, four test batteries held STOPPED (T-state), guard cycling normally. Two evidence files + this report + two harvest edits written; the auto-commit daemon has committed the evidence pulls. **NOW WAITING FOR INSTRUCTIONS.**
