@@ -654,8 +654,12 @@ in
       fi
 
       AVATAR_TMP=$(mktemp)
+      # The GitHub bytes must survive the forgejo-side compare fetch: the
+      # avatar_url GET overwrites AVATAR_TMP before push_avatar reads it
+      # (upload-the-old-bytes-back bug, fixture-caught 2026-10-16).
+      GH_AVATAR_TMP=$(mktemp)
       ORGS_FILE=$(mktemp)
-      trap 'rm -f "$AVATAR_TMP" "$ORGS_FILE"' EXIT
+      trap 'rm -f "$AVATAR_TMP" "$GH_AVATAR_TMP" "$ORGS_FILE"' EXIT
 
       # Fail loud on non-array listing responses (rate limit, auth failure):
       # the same phantom-green guard as every other GitHub-listing phase.
@@ -675,11 +679,11 @@ in
 
       # $1=forgejo api url (the GET url); the avatar POST endpoint is the
       # GET url + /avatar (/api/v1/user -> /api/v1/user/avatar, /api/v1/orgs/
-      # <org> -> /api/v1/orgs/<org>/avatar). Bytes in $AVATAR_TMP.
+      # <org> -> /api/v1/orgs/<org>/avatar). Bytes in $GH_AVATAR_TMP.
       push_avatar() {
         local api="$1/avatar" code json
         json=$(mktemp)
-        jq -Rs '{image: .}' < "$AVATAR_TMP" > "$json"
+        jq -Rs '{image: .}' < "$GH_AVATAR_TMP" > "$json"
         code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
           -H "Authorization: token $FORGEJO_TOKEN" \
           -H 'Content-Type: application/json' \
@@ -714,6 +718,7 @@ in
           failed=$((failed + 1))
           return 0
         fi
+        cp "$AVATAR_TMP" "$GH_AVATAR_TMP"
         fj_url=$(curl -s -H "Authorization: token $FORGEJO_TOKEN" "$fj_api" \
           | jq -r '.avatar_url // empty' || true)
         if [[ -n "$fj_url" ]] \

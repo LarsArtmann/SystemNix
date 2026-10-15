@@ -457,7 +457,9 @@
 
               # ============ avatar-sync (GitHub -> Forgejo, 2026-10-16) ====
               # Fresh counters: this section owns the stub state from here
-              # on (earlier sections' asserts already ran).
+              # on (earlier sections' asserts already ran). It also re-owns
+              # org-listing slots .1/.2 — the mirror section's slot .1 has
+              # NO avatar_url (mirror fixtures predate the avatar phase).
               rm -f "$STUB_STATE"/n.* "$STUB_STATE"/req.*
               TF_A="$FIX/tfa"; mkdir -p "$TF_A"
               export FORGEJO_AVATAR_TEXTFILE_DIR="$TF_A"
@@ -467,8 +469,10 @@
               # byte-equal (in-sync skip path).
               printf 200 > "$STUB_HTTP/api.github.com_user.GET.code"
               printf '{"login":"LarsArtmann","avatar_url":"https://avatars.githubusercontent.com/u/42?v=4"}' > "$STUB_HTTP/api.github.com_user.GET.body"
-              printf 200 > "$STUB_HTTP/api.github.com_user_orgs_per_page_100_page_1.GET.code"
-              printf '[{"login":"Artmann-Minecraft","avatar_url":"https://avatars.githubusercontent.com/orgs/Artmann-Minecraft/avatars/avatar-1?v=4"}]' > "$STUB_HTTP/api.github.com_user_orgs_per_page_100_page_1.GET.body"
+              for slot in 1 2; do
+                printf 200 > "$STUB_HTTP/$GH_ORGS.$slot.code"
+                printf '[{"login":"Artmann-Minecraft","avatar_url":"https://avatars.githubusercontent.com/orgs/Artmann-Minecraft/avatars/avatar-1?v=4"}]' > "$STUB_HTTP/$GH_ORGS.$slot.body"
+              done
               printf 200 > "$STUB_HTTP/avatars.githubusercontent.com_u_42_v_4.GET.code"
               printf 'USER-BYTES' > "$STUB_HTTP/avatars.githubusercontent.com_u_42_v_4.GET.body"
               printf 200 > "$STUB_HTTP/avatars.githubusercontent.com_orgs_Artmann-Minecraft_avatars_avatar-1_v_4.GET.code"
@@ -482,6 +486,7 @@
               printf 200 > "$STUB_HTTP/localhost_3000_avatars_o-current.GET.code"
               printf 'ORG-BYTES' > "$STUB_HTTP/localhost_3000_avatars_o-current.GET.body"
               printf 204 > "$STUB_HTTP/localhost_3000_api_v1_user_avatar.POST.code"
+              : > "$STUB_HTTP/localhost_3000_api_v1_user_avatar.POST.body"
 
               run "$AVATAR"; need_rc avatar-happy 0
               need_has avatar-happy "user:LarsArtmann: avatar updated"
