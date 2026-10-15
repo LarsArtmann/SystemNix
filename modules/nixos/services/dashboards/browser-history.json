@@ -239,9 +239,10 @@
                     "legend": "p99"
                   }
                 }
-              },
-              {
-                "kind": "time_series",
+              }
+            },
+            {
+              "kind": "time_series",
                 "spec": {
                   "name": "B",
                   "plugin": {
@@ -257,7 +258,6 @@
                   }
                 }
               }
-            }
           ],
           "links": []
         }
@@ -319,9 +319,10 @@
                     "legend": "renders/s"
                   }
                 }
-              },
-              {
-                "kind": "time_series",
+              }
+            },
+            {
+              "kind": "time_series",
                 "spec": {
                   "name": "B",
                   "plugin": {
@@ -337,7 +338,6 @@
                   }
                 }
               }
-            }
           ],
           "links": []
         }
