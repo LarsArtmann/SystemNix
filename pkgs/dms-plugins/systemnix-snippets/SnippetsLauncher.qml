@@ -91,10 +91,13 @@ QtObject {
                     const name = fileName.replace(/\.txt$/i, "");
                     let preview = content.split("\n")[0] || "";
                     preview = preview.trim();
+                    const lineCount = content.replace(/\n+$/, "").split("\n").length;
                     if (preview.length > 80)
                         preview = preview.slice(0, 80) + "…";
                     if (preview.length === 0)
                         preview = content.trim().length > 0 ? "(multiline)" : "(empty)";
+                    if (lineCount > 1)
+                        preview = preview + "  ·  " + lineCount + " lines";
                     parsed.push({
                         fileName: fileName,
                         name: name,
