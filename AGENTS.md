@@ -55,6 +55,8 @@ platforms/darwin/      # macOS (nix-darwin) — user: larsartmann
 platforms/nixos/       # NixOS — user: lars
   desktop/quickshell.nix # Quickshell HM module (DankMaterialShell)
 scripts/               # Shell operational scripts (zero Python since 2026-10-15 — UCR tooling rehomed to github:LarsArtmann/ucr-archive)
+                       #   Repo's ONLY remaining .py: vendored upstream runtime pkgs/.systemd-timer-monitor/systemd-audit.py
+                       #   (cappy-dev/systemd-timer-monitor, upstream deleted from GitHub; powers timers.home.lan; [decision] queued in docs/todo/services.md)
 ```
 
 **Module auto-discovery:** `flake.nix` scans `modules/nixos/{services,desktop}/` — filenames MUST be unique across both dirs (filename → `flake.nixosModules.<name>`). `_`-prefixed files are helpers (skipped). docs/patches live in `docs/services/`, not the module tree. `flake/parts/` files are imported EXPLICITLY in the mkFlake `imports` list (no auto-discovery there — new part file = one imports line in flake.nix; conventions: [docs/agents/nix-flakes.md](./docs/agents/nix-flakes.md)).

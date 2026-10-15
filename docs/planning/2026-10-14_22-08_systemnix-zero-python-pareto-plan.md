@@ -14,6 +14,16 @@
 > docs/status/2026-10-15_03-58_zero-python-execution-d-b-done-u-midport-status.md
 > (dep-sweep completion commit, pre-existing crush-daily test, daemon-heuristic
 > commit-message repairs).
+>
+> Residual 2 (found 2026-10-15 post-execution via an scc "Python 1 490" challenge):
+> vendored upstream Python remains — `pkgs/.systemd-timer-monitor/systemd-audit.py`
+> (490 LOC; cappy-dev/systemd-timer-monitor, upstream DELETED from GitHub, vendored
+> verbatim `7e44ee2a` 2026-08-28) powers the live timers.home.lan service. This
+> plan's scope was first-party `scripts/` + ruff — the asserts were
+> `rg '\.py$' scripts/`-scoped and still hold — but the goal line ("zero Python")
+> overreached. Disposition queued [decision] in docs/todo/services.md (ratify the
+> vendored exception vs clean-room Go behavioral port; upstream is unlicensed, so a
+> line-by-line translation is a derivative work — behavioral reimplementation only).
 
 ---
 
