@@ -19,9 +19,17 @@
 #     clients must be un-bannable before the enforcement stage exists
 #   - boot gate: mkDnsGate prepended (mkBefore) to the upstream
 #     ExecStartPre list — dnsblockd needs ~2min at boot before DNS answers
-#   - CAP_DAC_READ_SEARCH: /var/log/caddy is 0750 caddy:caddy with 0600
-#     files (geometrikks 2026-10-07 lesson — group membership is NOT
-#     enough, the ambient capability is what grants the read)
+#   - /var/log/caddy is 0750 caddy:caddy with 0600 files. CORRECTION
+#     (2026-10-16 live verification): the rendered unit carries
+#     PrivateUsers=true, and capabilities held inside a user namespace are
+#     INERT for host inodes — the ambient CAP_DAC_READ_SEARCH below grants
+#     nothing there (file acquisition logged "No matching files for
+#     pattern /var/log/caddy/*.log", zero file-source hits in /metrics).
+#     The geometrikks 2026-10-07 lesson does not transfer: that unit has
+#     no PrivateUsers, so its ambient cap genuinely works. Working fix
+#     (queued [ready] docs/todo/services.md): crowdsec member of caddy
+#     group — systemd maps auxiliary gids through the userns and the DAC
+#     group check needs no capability.
 _: {
   flake.nixosModules.crowdsec =
     {

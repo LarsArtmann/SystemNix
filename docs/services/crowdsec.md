@@ -77,5 +77,21 @@ parser whitelist above already keeps household clients out of decisions.
 - **www.crowdsec.net / raw.githubusercontent.com must resolve+fetch** through
   dnsblockd (HaGeZi) — if hub update fails with block-page garbage, whitelist
   the domain in `platforms/common/dns-blocklists.nix` (ipify precedent).
+- **PrivateUsers=true makes CAP_DAC_READ_SEARCH inert (2026-10-16)** — the
+  rendered unit wraps crowdsec in a user namespace, and caps held inside a
+  userns do NOT apply to host inodes: the ambient cap granted for the
+  0750 caddy:caddy log dir reads nothing, so the file acquisition globs
+  ZERO files ("No matching files for pattern /var/log/caddy/*.log" at
+  every start) and no HTTP scenarios fire. The sshd journalctl source is
+  unaffected. Fix queued ([ready] docs/todo/services.md): add crowdsec to
+  the caddy group (auxiliary gids map through the userns).
+- **cdn-hub.crowdsec.net intermittently TLS-blocked (2026-10-15)** — two
+  start attempts failed ExecStartPre (`cscli hub update` → "remote error:
+  tls: internal error", dnsblockd-interception class; the 00:54 Oct 16
+  download succeeded, so the block is intermittent) → service down ~2h18m.
+  The gotcha above whitelists www.crowdsec.net but misses the CDN host —
+  cdn-hub.crowdsec.net (+ hub-data.crowdsec.net) needs the same treatment;
+  whether a hub-index flap may keep the engine offline at all is queued as
+  a decision (same [ready] row).
 - **SQLite WAL on the QLC root** — small and fine; decisions are ephemeral
   operational state (expire per profile 4h defaults). No backup entry by design.
