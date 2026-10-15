@@ -28,29 +28,20 @@
         serviceOneshotDefaults
         ;
       cfg = config.services.discordsync;
-      # TEMPORARY vendorHash shim (RE-PINNED 2026-10-07, 1ac31f8 update —
-      # class comment at lib/lars-packages.nix): upstream hash no longer
-      # reproduces at locked rev 1ac31f8 (got /NYfLmDMx…; evo-x2 toplevel
-      # --keep-going enumeration evidence after the browser-history,
-      # bank-sync, discordsync flake update; the overlays/linux.nix shim
-      # covers the pkgs.discordsync surface, this one the direct input
-      # reference). Drop when upstream re-pins or the lock moves past an
-      # upstream-fixed rev.
-      # discordsync vendorHash shim DROPPED (2026-10-12): its own drop
-      # condition met — the lock moved 1ac31f8-era → 86defd1 and upstream
-      # 86defd1 bakes a GREEN through-our-lock hash (first-hand probe:
-      # inputs.discordsync.packages.x86_64-linux.default.goModules built
-      # clean, store c1ffr7g8…; the shim's /NYfLmDMx… was measured at
-      # 1ac31f8 and hash-mismatched in the 2026-10-12 toplevel keep-going
-      # enumeration). Re-add ONLY via nix-hash-fix evidence, never by hand.
-      # TEMPORARY vendorHash shim RE-ADDED (2026-10-15 fleet wave, first-hand
-      # fakeHash FOD probe at locked rev cac57aa; class comment:
-      # lib/lars-packages.nix flakePkgShim): the overnight lock float
-      # re-staled upstream's baked hash. Drop when upstream bakes the got
-      # hash or the lock moves past an upstream-fixed rev.
-      discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-UnFb4VRSMfx/VXcDxd+E70gFheSHL0EIiXyJrCXodEE=";
-      };
+      # discordsync vendorHash shims DROPPED twice (2026-10-12 and
+      # 2026-10-15): each time the lock moved past the rev the shim was
+      # measured at and upstream re-baked a hash that is GREEN through our
+      # lock. The 2026-10-15 drop evidence: `nix flake update discordsync`
+      # moved bf7e459 → 0089b997, the shim (measured at cac57aa,
+      # UnFb4VRSMfx…) hash-mismatched in the 19:21 toplevel keep-going
+      # enumeration (got 3dje+f7TFwv13yGGCesJFhfiBpjWl2RPaQF1Dou1f50=),
+      # and upstream vendorHash.nix at 0089b997 bakes exactly that got hash
+      # (gh api; upstream's lock nixpkgs node 55bfb4d matches our
+      # discordsync/nixpkgs node, so the FOD environments are identical).
+      # Re-add ONLY via nix-hash-fix evidence, never by hand (class comment:
+      # lib/lars-packages.nix flakePkgShim; drop-first protocol:
+      # docs/agents/nix-flakes.md).
+      discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default;
       sopsEnvPath = config.sops.templates."discordsync-env".path;
 
       dbBackupDir = "/mnt/pool/backups/discordsync";
