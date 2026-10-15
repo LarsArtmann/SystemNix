@@ -26,11 +26,15 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
   ENABLED since the 2026-10-06 phase-2 flip (`enable = true`; sops
   `netbird_setup_key` in `platforms/nixos/secrets/netbird.yaml`) — but the
   flip alone did NOT enroll: the login oneshot was never queued by systemd
-  261 (see Gotchas), the fix landed 2026-10-10, enrollment happened
-  2026-10-10/11 (owner-run `netbird up`), and the mesh is CONNECTED and
-  live-verified since 2026-10-15 (interface `nb-evox2`, mesh address
-  `100.112.252.86`, management+signal+relay streams stable, UDP 51820 bound,
-  daemon re-authenticates across reboots).
+  261 (see Gotchas) and the deployed oneshot additionally died on a
+  dangling `sops-install-secrets.service` Require (not-found unit — see
+  Gotchas); the queue fix landed 2026-10-10, the dependency fix landed
+  in-tree 2026-10-15 (deploy owed), enrollment happened 2026-10-14 16:39
+  CEST (owner-run `netbird-evox2 up --setup-key-file /run/secrets/netbird_setup_key`
+  — journal: "peer has been successfully registered"), and the mesh is
+  CONNECTED and live-verified since 2026-10-15 (interface `nb-evox2`, mesh
+  address `100.112.252.86`, management+signal+relay streams stable, UDP
+  51820 bound, daemon re-authenticates across reboots).
   Uses pinned-nixpkgs `services.netbird.clients.evox2` + automated
   setup-key login. Port 51820/udp (`ports.netbird`). The management URL
   rides the `NB_MANAGEMENT_URL` env var (the wrapper maps NB_* env onto
@@ -109,20 +113,22 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
    `ManagementUrl` fragment (netbird ≥0.80 needs the url.URL object form);
    fixed same day via the `NB_MANAGEMENT_URL` env var + a preStart purge of
    the poisoned state key — see the client bullet above. CORRECTED
-   2026-10-15: "enrollment is automatic" was half-true for 4 days — the
-   oneshot was enabled but systemd 261 never queued it (Gotchas), so
-   enrollment did not actually happen until the owner ran `netbird up`
-   2026-10-10/11 after the 2026-10-10 root-cause fix (see Gotchas + the
-   status report below).
+   2026-10-15: "enrollment is automatic" was half-true for 8 days — the
+   oneshot was enabled but systemd 261 never queued it AND the deployed
+   unit died on a dangling `sops-install-secrets.service` Require
+   (Gotchas), so enrollment did not actually happen until the owner ran
+   `netbird-evox2 up` manually 2026-10-14 16:39 CEST (journal: "peer has
+   been successfully registered"). See Gotchas + the status report below.
 6. **Routing peer** — nothing to click: once evo-x2 enrolls, the NEXT
    provisioner run creates the network router (evo-x2, masquerade on —
    the home gateway has no route back to the VPN subnet). STATUS
-   2026-10-15: evo-x2 is enrolled and connected, but the pbx-side
-   confirmation (provisioner run printing "converged" incl. the router +
-   `/api/peers` listing evo-x2) is still owed — owner ssh
-   (`systemctl start netbird-provision.service` or wait out the ≤30-min
-   timer; the 2026-10-06 run ended "router deferred" because no peer
-   existed yet). Facts
+   2026-10-15: DONE — evo-x2 enrolled 2026-10-14 and the provisioner
+   CONVERGED incl. the LAN router the same evening (pbx-side runbook
+   record: "both peers enrolled + provisioner converged incl. the LAN
+   router", evo-x2 masquerades 192.168.1.0/24). Remaining pbx-side
+   verification (owner ssh, pbx TODO §11 rows 174/180): post-switch
+   management NRestarts flat + `/api/peers` 200 with both peers + the
+   Gatus "NetBird Control Plane" token eyeball. Facts
    (source-verified 2026-10-05): NetBird nameservers are UDP-only — the API
    enum has no dot/doq/doh schemes (`dns/nameserver.go`), custom port IS
    supported; the queries ride INSIDE the WireGuard tunnel to the routing
@@ -175,7 +181,7 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
   startup otherwise. The positive test probe pins both sides of that
   contract.
 - **systemd 261 never queues the enrollment oneshot from the daemon's
-  wants-dir (root cause of the 4-day silent non-enrollment, 2026-10-06→10)**:
+  wants-dir (root cause #1 of the silent non-enrollment, found 2026-10-10)**:
   nixpkgs wires `netbird-<name>-login` as wanted-by `netbird-<name>.service`
   while the oneshot itself `Requires=`+`After=`s the daemon back — systemd
   261.3 never enqueues that shape at boot, and the skip is debug-logged
@@ -184,21 +190,37 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
   — direct boot-time enqueue; Requires/After still order it behind the
   daemon and the script is NeedsLogin-guarded/idempotent. Full forensics:
   `docs/status/2026-10-10_13-45_netbird-evox2-enrollment-never-ran-root-cause.md`.
+- **Never pin nixpkgs' doc-EXAMPLE dependency value — the oneshot also
+  carried a dangling `sops-install-secrets.service` Require (root cause
+  #2, found live 2026-10-15)**: our module set `login.systemdDependencies
+  = [ "sops-install-secrets.service" ]` — nixpkgs' own doc example, valid
+  only when sops-nix runs in service mode. This flake renders sops secrets
+  via the ACTIVATION script, so that unit does not exist: the deployed
+  login unit Requires a NOT-FOUND unit and any start (boot enqueue or
+  manual) dies on the dependency — which is why even boots AFTER the
+  Oct 10 queue fix left zero oneshot journal entries and why the owner had
+  to enroll manually. Fix (in-tree 2026-10-15, deploy owed): drop the
+  override back to default `[]` (the sops key file exists before sysinit;
+  no ordering edge needed). Eval-verified: login unit Requires/After now
+  only the daemon.
 - **deploy.sh restarts the login oneshot via the unconditional explicit
   block, not the is-enabled gated loop** — `systemctl is-enabled --quiet`
   intermittently returns rc=1 mid-switch for indirectly-pulled units
   (journal-proven both directions 2026-10-10), which would silently skip
   the converger; the same trust-is-enabled trap applies to any future
   indirect-pull converger (crush-hot-db-migrate precedent).
-- **Enrollment completed owner-run 2026-10-10/11 — the login oneshot still
-  has zero journal entries (expected)**: the owner ran `netbird up` in a
-  terminal during the Oct 10→11 journal gap, so the oneshot's clean history
-  proves nothing post-hoc. Mesh facts (live-verified 2026-10-15 19:21–23):
-  interface `nb-evox2`, mesh address `100.112.252.86/16` route via
-  `nb-evox2`, UDP 51820 bound on 0.0.0.0+[::], management stream +
-  signal + `rels://relay.larsartmann.cloud` connected with zero errors
-  since 12:00, and daemon re-authenticates across reboots (the Oct 15
-  03:14 boot came up logged in — no PermissionDenied).
+- **Enrollment completed owner-run 2026-10-14 16:39 CEST — the login oneshot
+  still has zero journal entries (expected)**: the owner ran
+  `netbird-evox2 up --setup-key-file /run/secrets/netbird_setup_key` while
+  the oneshot was still dead on the dangling Require above (journal:
+  PermissionDenied at 16:39:28 → "peer has been successfully registered"
+  at 16:39:29), so the oneshot's clean history proves nothing post-hoc.
+  Mesh facts (live-verified 2026-10-15 19:21–23): interface `nb-evox2`,
+  mesh address `100.112.252.86/16` route via `nb-evox2`, UDP 51820 bound
+  on 0.0.0.0+[::], management stream + signal +
+  `rels://relay.larsartmann.cloud` connected with zero errors since 12:00,
+  and daemon re-authenticates across reboots (the Oct 15 03:14 boot came
+  up logged in — no PermissionDenied).
 
 ---
 
