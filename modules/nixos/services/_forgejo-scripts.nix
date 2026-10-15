@@ -610,6 +610,196 @@ in
     '';
   };
 
+  # Avatar parity sync (GitHub -> Forgejo), phase 4 of forgejo-github-sync.
+  #
+  # WHY: mirror-github creates orgs create-if-missing with {username} only, so
+  # every forgejo org wears the default generated avatar while its GitHub twin
+  # has the real one. This phase converges the USER + ORG avatars so the
+  # mirror instance reads like the GitHub account it backs up.
+  #
+  # CONTRACT (verified against the deployed swagger.v1.json, Forgejo 15.0.10):
+  #   POST /orgs/{org}/avatar  body {"image": base64} -> 204 (orgUpdateAvatar)
+  #   POST /user/avatar        body {"image": base64} -> 204 (userUpdateAvatar)
+  #   GitHub /user and /user/orgs responses both carry avatar_url.
+  #
+  # CONVERGENCE: stateless byte-compare — hash the GitHub avatar bytes and the
+  # bytes currently served at the forgejo target's avatar_url; skip when equal
+  # (forgejo stores uploads verbatim, so run 2 goes quiet; if forgejo ever
+  # re-encodes, the worst case is one idempotent re-upload per target per run).
+  # No state file, no drift: a manual UI avatar change is re-converged hourly.
+  #
+  # The USER side overlaps the OIDC flow (oauth2_client.UPDATE_AVATAR=true
+  # rewrites the user avatar from the Pocket ID picture claim on every SSO
+  # login — same face, different source). Set FORGEJO_AVATAR_SYNC_USER=false
+  # to leave the user avatar to OIDC entirely; orgs are unaffected by that
+  # flag and are the reason this phase exists.
+  avatarSyncScript = pkgs.writeShellApplication {
+    name = "forgejo-avatar-sync";
+    runtimeInputs = [
+      pkgs.curl
+      pkgs.jq
+      pkgs.coreutils
+    ];
+    text = ''
+      FORGEJO_URL="${forgejoUrl}"
+      FORGEJO_TOKEN="''${FORGEJO_TOKEN:-}"
+      GITHUB_TOKEN="''${GITHUB_TOKEN:-}"
+      GITHUB_USER="''${GITHUB_USER:-unknown}"
+      TEXTFILE_DIR="''${FORGEJO_AVATAR_TEXTFILE_DIR:-/var/lib/prometheus-node-exporter/textfile_collectors}"
+      SYNC_USER="''${FORGEJO_AVATAR_SYNC_USER:-true}"
+
+      if [[ -z "$FORGEJO_TOKEN" || -z "$GITHUB_TOKEN" ]]; then
+        echo "Error: FORGEJO_TOKEN / GITHUB_TOKEN must both be set"
+        exit 1
+      fi
+
+      AVATAR_TMP=$(mktemp)
+      ORGS_FILE=$(mktemp)
+      trap 'rm -f "$AVATAR_TMP" "$ORGS_FILE"' EXIT
+
+      # Fail loud on non-array listing responses (rate limit, auth failure):
+      # the same phantom-green guard as every other GitHub-listing phase.
+      gh_list_guard() {
+        if ! echo "$1" | jq -e 'type == "array"' > /dev/null; then
+          echo "Error: $2 did not return an array:"
+          echo "$1" | jq -r '.message // tostring' 2>/dev/null | head -3
+          exit 1
+        fi
+      }
+
+      # $1=url $2=token -> bytes in $AVATAR_TMP. Empty/leftover files are the
+      # caller's problem (checked via -s), never this function's.
+      fetch_avatar() {
+        curl -s -f -L --max-time 60 -H "Authorization: token $2" "$1" -o "$AVATAR_TMP"
+      }
+
+      # $1=forgejo api url, bytes in $AVATAR_TMP -> echoes HTTP code.
+      push_avatar() {
+        local api="$1" code json
+        json=$(mktemp)
+        jq -Rs '{image: .}' < "$AVATAR_TMP" > "$json"
+        code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+          -H "Authorization: token $FORGEJO_TOKEN" \
+          -H 'Content-Type: application/json' \
+          --data-binary "@$json" \
+          "$api")
+        rm -f "$json"
+        echo "$code"
+      }
+
+      targets=0
+      uploaded=0
+      in_sync=0
+      failed=0
+
+      # $1=label $2=GitHub avatar_url $3=forgejo api url (GET .avatar_url /
+      # POST avatar). Per-target failures WARN and count; the unit fails AFTER
+      # the full pass so the next hourly run retries the misses.
+      sync_one() {
+        local label="$1" gh_url="$2" fj_api="$3"
+        local gh_sha="" fj_url="" fj_sha="" code
+        targets=$((targets + 1))
+        if ! fetch_avatar "$gh_url" "$GITHUB_TOKEN" \
+          || [[ ! -s "$AVATAR_TMP" ]] \
+          || [[ $(wc -c < "$AVATAR_TMP") -gt 1048576 ]]; then
+          echo "  warn: $label: GitHub avatar unavailable (network or >1MiB) — retried next run"
+          failed=$((failed + 1))
+          return 0
+        fi
+        gh_sha=$(sha256sum "$AVATAR_TMP" | cut -d' ' -f1) || gh_sha=""
+        if [[ -z "$gh_sha" ]]; then
+          echo "  warn: $label: hash failed — retried next run"
+          failed=$((failed + 1))
+          return 0
+        fi
+        fj_url=$(curl -s -H "Authorization: token $FORGEJO_TOKEN" "$fj_api" \
+          | jq -r '.avatar_url // empty' || true)
+        if [[ -n "$fj_url" ]] \
+          && fetch_avatar "$fj_url" "$FORGEJO_TOKEN" \
+          && [[ -s "$AVATAR_TMP" ]]; then
+          fj_sha=$(sha256sum "$AVATAR_TMP" | cut -d' ' -f1) || fj_sha=""
+          if [[ -n "$fj_sha" && "$fj_sha" == "$gh_sha" ]]; then
+            in_sync=$((in_sync + 1))
+            return 0
+          fi
+        fi
+        code=$(push_avatar "$fj_api")
+        if [[ "$code" == "204" ]]; then
+          echo "  $label: avatar updated"
+          uploaded=$((uploaded + 1))
+        else
+          echo "  warn: $label: avatar POST failed (HTTP $code) — retried next run"
+          failed=$((failed + 1))
+        fi
+        return 0
+      }
+
+      publish_metrics() {
+        if [[ ! -d "$TEXTFILE_DIR" ]]; then
+          return 0
+        fi
+        local tmp
+        tmp=$(mktemp "$TEXTFILE_DIR/forgejo_avatar_sync.XXXXXX") || return 0
+        {
+          echo "# TYPE forgejo_avatar_targets gauge"
+          echo "forgejo_avatar_targets $targets"
+          echo "# TYPE forgejo_avatar_uploaded gauge"
+          echo "forgejo_avatar_uploaded $uploaded"
+          echo "# TYPE forgejo_avatar_in_sync gauge"
+          echo "forgejo_avatar_in_sync $in_sync"
+          echo "# TYPE forgejo_avatar_failed gauge"
+          echo "forgejo_avatar_failed $failed"
+          echo "forgejo_avatar_last_run_timestamp_seconds $(date +%s)"
+        } > "$tmp"
+        chmod 644 "$tmp"
+        mv "$tmp" "$TEXTFILE_DIR/forgejo_avatar_sync.prom" 2>/dev/null || {
+          echo "  warn: cannot publish forgejo_avatar_sync.prom (foreign-owned leftover?)"
+          rm -f "$tmp"
+        }
+      }
+
+      echo "=== Forgejo avatar sync (GitHub -> Forgejo) ==="
+
+      # Orgs come straight from the GitHub org listing — each entry already
+      # carries avatar_url, no per-org GitHub GET needed.
+      page=1
+      while true; do
+        response=$(curl -s --compressed -H "Authorization: token $GITHUB_TOKEN" \
+          "https://api.github.com/user/orgs?per_page=100&page=$page")
+        gh_list_guard "$response" "GitHub org listing (page $page)"
+        echo "$response" | jq -r '.[] | "\(.login)|\(.avatar_url // "")"' >> "$ORGS_FILE"
+        [[ $(echo "$response" | jq 'length') -lt 100 ]] && break
+        page=$((page + 1))
+      done
+      sort -u -o "$ORGS_FILE" "$ORGS_FILE"
+
+      while IFS='|' read -r org org_gh_url; do
+        [[ -z "$org" || -z "$org_gh_url" ]] && continue
+        sync_one "org:$org" "$org_gh_url" "$FORGEJO_URL/api/v1/orgs/$org"
+      done < "$ORGS_FILE"
+
+      if [[ "$SYNC_USER" == "false" || "$SYNC_USER" == "0" || "$SYNC_USER" == "no" ]]; then
+        echo "User avatar sync disabled (FORGEJO_AVATAR_SYNC_USER=$SYNC_USER) — OIDC owns it"
+      else
+        response=$(curl -s --compressed -H "Authorization: token $GITHUB_TOKEN" \
+          "https://api.github.com/user")
+        USER_URL=$(echo "$response" | jq -r '.avatar_url // empty' || true)
+        if [[ -z "$USER_URL" ]]; then
+          echo "Error: GitHub /user listing failed: $(echo "$response" | jq -r '.message // "unknown"' 2>/dev/null | head -1)"
+          failed=$((failed + 1))
+        else
+          sync_one "user:$GITHUB_USER" "$USER_URL" "$FORGEJO_URL/api/v1/user"
+        fi
+      fi
+
+      echo "=== Avatar sync summary: targets=$targets updated=$uploaded in-sync=$in_sync failed=$failed"
+      publish_metrics
+      # Fail loud AFTER the full pass (reinterval doctrine): the next hourly
+      # timer run retries the misses.
+      [[ "$failed" -eq 0 ]]
+    '';
+  };
+
   mirrorStarredScript = pkgs.writeShellApplication {
     name = "forgejo-mirror-starred";
     runtimeInputs = [

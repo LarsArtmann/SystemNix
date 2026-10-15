@@ -129,6 +129,7 @@ _: {
         mirrorGithubScript
         reconcileMirrorsScript
         reintervalScript
+        avatarSyncScript
         mirrorStarredScript
         pushMirrorScript
         flipRepoScript
@@ -453,6 +454,7 @@ _: {
               (lib.getExe mirrorGithubScript)
               (lib.getExe reconcileMirrorsScript)
               (lib.getExe reintervalScript)
+              (lib.getExe avatarSyncScript)
               (lib.getExe pushMirrorScript)
             ];
             path = [
@@ -472,12 +474,15 @@ _: {
                 # repos since the listing switch to /user/repos), (2) reconcile
                 # renames/transfers/deletions of existing mirrors, (3) converge
                 # per-mirror sync intervals to mirror.DEFAULT_INTERVAL (the
-                # setting only applies at creation time), (4) attach
-                # GitHub push mirrors to canonical repos (plan M05).
+                # setting only applies at creation time), (4) converge user +
+                # org avatars to their GitHub originals (orgs are created with
+                # no avatar by the create-if-missing POST), (5) attach GitHub
+                # push mirrors to canonical repos (plan M05).
                 ExecStart = [
                   (lib.getExe mirrorGithubScript)
                   (lib.getExe reconcileMirrorsScript)
                   (lib.getExe reintervalScript)
+                  (lib.getExe avatarSyncScript)
                 ];
                 # First run after the private-repo listing switch migrates
                 # ~200 repos (2-8s each, synchronous migrate API) — the 3min
@@ -486,9 +491,9 @@ _: {
                 # the next 6h timer run.
                 TimeoutStartSec = "2h";
               }
-              # Phase 3, gated: with canonicalRepos = [] (default) the phase
-              # is absent; a non-empty list runs forgejo-push-mirror after
-              # reconcile, which refuses any repo still marked mirror==true.
+              # Phase 5, gated: with canonicalRepos = [] (default) the phase
+              # is absent; a non-empty list runs forgejo-push-mirror after the
+              # avatar sync, which refuses any repo still marked mirror==true.
               (lib.mkIf (cfg.canonicalRepos != [ ]) {
                 Environment = [
                   "FORGEJO_CANONICAL_REPOS=${lib.concatStringsSep " " cfg.canonicalRepos}"
