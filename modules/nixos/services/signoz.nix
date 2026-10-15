@@ -1262,6 +1262,21 @@ in
                           metrics_path = "/metrics";
                         }
                         {
+                          # browser-history's own /metrics (2026-10-15): the
+                          # endpoint is auth-exempt on localhost (the Gatus
+                          # users-count check already pulls it). Carries the
+                          # http_request_duration_seconds histogram — the
+                          # render-duration p99 rule (the slow-render-burst
+                          # watch row) and browser_history_users reach
+                          # ClickHouse only through this job; before it, any
+                          # rule on the server's own metrics was phantom.
+                          job_name = "browser-history";
+                          static_configs = [
+                            { targets = [ "127.0.0.1:${toString ports.browser-history}" ]; }
+                          ];
+                          metrics_path = "/metrics";
+                        }
+                        {
                           # The collector's own self-metrics (bound to :8888 by
                           # the OTel runtime): receiver accepted/sent rates,
                           # export failures, processor drops, process health.

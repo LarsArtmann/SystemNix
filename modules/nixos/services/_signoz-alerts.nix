@@ -289,6 +289,21 @@ in
       target = 5;
       severity = "warning";
     };
+    # browser-history render-duration p99 (2026-10-15, slow-render-burst watch
+    # row): the two historical slow-render bursts (2026-10-10 16:33, 2026-10-12
+    # 03:51) were journal-corroborated IO-storm context (PSI some avg10 57%/34%,
+    # gatus I/O Stall Rate TRIGGERED / 10.6 GiB nvme1 write burst) — explained,
+    # closed. This rule pages on a REAL regression: sustained p99 >5s on the
+    # authenticated dashboard render (path "GET /{$}"). Depends on the
+    # browser-history scrape job in signoz.nix (histogram dotted-suffix form —
+    # the metric_sum/bucket underscore class is rejected by signoz-query-lint).
+    "signoz/rules/browser-history-render-slow.json".source = mkRule {
+      name = "Browser History Render Slow (p99 >5s)";
+      description = "browser-history dashboard render p99 above 5s for 5m — normal authenticated renders are 13-19ms (2026-10-14 measurement); sustained seconds mean a real query/IO regression, not monitor noise (IO-storm slowness is owned by the I/O Stall Rate check)";
+      query = ''histogram_quantile(0.99, sum by (le) (rate({__name__="http_request_duration_seconds.bucket", path="GET /{$}"}[5m])))'';
+      target = 5;
+      severity = "warning";
+    };
     "signoz/rules/niri-down.json".source = mkRule {
       name = "Niri Compositor Down";
       description = "Graphical session is active but niri is not running — desktop died mid-session";
