@@ -101,6 +101,13 @@ in
 
         showWorkspaceIndex = true;
 
+        # PasteBot-style clipboard behavior: Enter/click on a history entry
+        # pastes it directly into the focused window (DMS synthesizes Ctrl+V
+        # via the compositor's virtual-keyboard protocol; niri supports it).
+        # Without these, selecting an entry only copies it.
+        clipboardEnterToPaste = true;
+        clipboardClickToPaste = true;
+
         showWorkspaceApps = true;
         maxWorkspaceIcons = 5;
       };
@@ -168,6 +175,14 @@ in
             secretsDir = "/run/secrets";
             sopsFile = "/run/secrets/sops-nix-age-key";
           };
+        };
+        # Snippets launcher (PasteBot ⌘⇧C replacement): ":s" trigger in the
+        # spotlight, one .txt file per snippet, ":s > name" captures the
+        # current clipboard as a new snippet. Paste action reuses the DMS
+        # clipboard daemon (dms cl copy + send-paste) — no wtype/ydotool.
+        systemnix-snippets = {
+          src = ../../../pkgs/dms-plugins/systemnix-snippets;
+          settings.snippetsDir = "${config.home.homeDirectory}/.local/share/snippets";
         };
         # Community plugins — launcher-type plugins integrated into DMS spotlight
         dms-emoji-launcher = {

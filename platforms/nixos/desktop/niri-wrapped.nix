@@ -512,7 +512,16 @@ in
             "toggle"
             "niri"
           ];
-          # Clipboard history — DMS clipboard modal (replaces cliphist | rofi -dmenu)
+          # Clipboard history — DMS clipboard modal (PasteBot ⌘⇧V equivalent;
+          # replaces cliphist | rofi -dmenu). Enter/click pastes directly
+          # (clipboardEnterToPaste/clipboardClickToPaste in quickshell.nix).
+          "Mod+Shift+V".action.spawn = [
+            "dms"
+            "ipc"
+            "call"
+            "clipboard"
+            "toggle"
+          ];
           "Alt+C".action.spawn = [
             "dms"
             "ipc"
@@ -529,14 +538,26 @@ in
             "toggleQuery"
             ":e"
           ];
-          # Calculator — DMS spotlight via calculator plugin trigger = (replaces rofi-calc)
-          "Mod+Shift+C".action.spawn = [
+          # Calculator — DMS spotlight via calculator plugin trigger = (moved
+          # off Mod+Shift+C, which is now the snippets picker)
+          "Mod+Ctrl+C".action.spawn = [
             "dms"
             "ipc"
             "call"
             "spotlight"
             "toggleQuery"
             "="
+          ];
+          # Snippets picker — PasteBot ⌘⇧C equivalent. systemnix-snippets
+          # launcher plugin (":s > name" inside it saves the current
+          # clipboard as a new snippet; files live in ~/.local/share/snippets)
+          "Mod+Shift+C".action.spawn = [
+            "dms"
+            "ipc"
+            "call"
+            "spotlight"
+            "toggleQuery"
+            ":s"
           ];
           # dunstctl keybind removed — DankMaterialShell provides notification center
           "Mod+Shift+E".action.spawn = [ "emacs" ];
