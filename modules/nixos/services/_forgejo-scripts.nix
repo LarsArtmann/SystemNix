@@ -680,10 +680,15 @@ in
       # $1=forgejo api url (the GET url); the avatar POST endpoint is the
       # GET url + /avatar (/api/v1/user -> /api/v1/user/avatar, /api/v1/orgs/
       # <org> -> /api/v1/orgs/<org>/avatar). Bytes in $GH_AVATAR_TMP.
+      # base64 -w0 first (NOT jq -Rs on the raw bytes: that embeds them
+      # UNENCODED and chokes on binary PNG input); --rawfile then builds the
+      # JSON without argv-size limits.
       push_avatar() {
         local api="$1/avatar" code json
         json=$(mktemp)
-        jq -Rs '{image: .}' < "$GH_AVATAR_TMP" > "$json"
+        base64 -w0 < "$GH_AVATAR_TMP" > "$GH_AVATAR_TMP.b64"
+        jq -n --rawfile img "$GH_AVATAR_TMP.b64" '{image: $img}' > "$json"
+        rm -f "$GH_AVATAR_TMP.b64"
         code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
           -H "Authorization: token $FORGEJO_TOKEN" \
           -H 'Content-Type: application/json' \
