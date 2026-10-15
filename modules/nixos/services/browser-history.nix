@@ -724,6 +724,20 @@
                     exit 0
                   fi
                   dst="${backupDir}/browser-history-db-$(date +%Y-%m-%d).sqlite"
+                  # Crash-interrupted-run healing (the 2026-10-15 freeze-29/30
+                  # class): a run killed mid-.backup leaves a
+                  # <dst>-journal remnant whose sqlite "recovery" silently
+                  # ROLLS BACK any later copy of the sibling .sqlite (the
+                  # repro-harness landmine, 2026-10-15 session-2 §d1). The
+                  # journal present at run start is ALWAYS stale garbage (no
+                  # concurrent writer to this dir) — the journal+sqlite pair
+                  # is untrustworthy as a backup, so drop BOTH loudly; a
+                  # torn sibling must never look like a good backup. Orphan
+                  # journals without a sibling just go.
+                  find ${backupDir} -name "browser-history-db-*.sqlite-journal" | while read -r j; do
+                    echo "browser-history-backup: healing crash-interrupted backup remnant: $j (+ sibling)"
+                    rm -f "$j" "''${j%-journal}"
+                  done
                   # -readonly: a read-write root open of the live WAL database
                   # can create/replace the -shm/-wal sidecars ROOT-owned while
                   # the server is down, poisoning the next server start with
@@ -732,7 +746,9 @@
                   ${lib.getExe pkgs.sqlite} -readonly "$db" ".backup '$dst'"
                   # 14-day retention (cv/miniflux pattern): the online .backup
                   # rewrites every page, so nothing is shared between nights.
-                  find ${backupDir} -name "browser-history-db-*.sqlite" -mtime +14 -delete
+                  # Journals are matched too (belt for orphans that predate
+                  # the healing step or slip in after it).
+                  find ${backupDir} \( -name "browser-history-db-*.sqlite" -o -name "browser-history-db-*.sqlite-journal" \) -mtime +14 -delete
                   echo "browser-history-backup: wrote $dst"
                 '';
                 ReadWritePaths = [ backupDir ];
