@@ -54,7 +54,12 @@
       # re-pins or the lock moves past an upstream-fixed rev
       # (paste-upstream → push → re-lock → re-drop, docs/todo/upstream.md).
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-XLIgHM1VDu+hJXTavd0uw7SFbdOAcyGuBG1zw8wcV7o=";
+        # fleet-wave 2026-10-15: the lock floated 0ad2a6b → 0750bd6 (go-sum
+        # GUARD failure, consumer-unfixable) → aa637cbf (guard GONE — upstream
+        # tidied; plain hash mismatch). Got p7sOpco6… first-hand (fakeHash
+        # probe at aa637cbf). Class comment: lib/lars-packages.nix
+        # flakePkgShim.
+        vendorHash = "sha256-p7sOpco67lp1UtbwD21q0HxVHrITLuwVzCxeDo1EzTM=";
       };
     in
     {
