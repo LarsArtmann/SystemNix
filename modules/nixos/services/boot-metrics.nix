@@ -6,7 +6,7 @@
 # window (monitoring.md "Boot-duration textfile collector" row). With 15
 # crash-class boots in the 12 days before (zero clean reboots since Oct 1),
 # every reboot is a free verification boot IF the numbers are captured
-# automatically. This collector runs once per boot and emits:
+# automatically. This collector emits:
 #
 #   boot_phase_duration_seconds{phase=firmware|loader|kernel|initrd|userspace}
 #   boot_total_duration_seconds
@@ -20,7 +20,14 @@
 # Storm-boot tolerance: `systemd-analyze` refuses to answer ("Bootup is not
 # yet finished") until userspace target completes — 13min on the measured
 # storm boot. The script retries (2min sleep, bounded) instead of failing,
-# so storm boots still get captured.
+# so storm boots still get captured. A single run is still a bounded window:
+# the 2026-10-15 watchdog-reset storm boot finished userspace at 47m48s —
+# AFTER the 24min single-run budget — leaving the prom phase-less (only the
+# fail-closed scrape_errors=1) for the whole boot, which the pre-deploy
+# phantom-metric gate then trips on every deploy that day. The timer
+# therefore re-fires on `reEmitInterval` (OnUnitActiveSec): systemd-analyze
+# is boot-relative and stable once the boot finishes, so the re-run
+# converges the sample idempotently (boot_uptime_seconds carries sample age).
 #
 # mktemp in the sticky textfile dir + CAP_FOWNER (mail-relay 2026-09-02..06
 # foreign-owned-prom class), buildcache/pool-smart collector pattern.
@@ -70,6 +77,18 @@
           type = lib.types.int;
           default = 12;
           description = "Retry budget while systemd-analyze reports the boot as unfinished (2min sleep per retry — 12 covers ~26min userspace boots).";
+        };
+
+        reEmitInterval = lib.mkOption {
+          type = lib.types.str;
+          default = "30min";
+          description = ''
+            OnUnitActiveSec re-fire interval (convergence path for boots that
+            finish AFTER the single-run retry budget — see header). Re-runs
+            are idempotent for the current boot: systemd-analyze output is
+            boot-relative and stable post-boot; boot_uptime_seconds carries
+            the sample age between reboots.
+          '';
         };
       };
 
@@ -155,7 +174,10 @@
               for phase in firmware loader kernel initrd userspace; do
                 emit_phase "$phase" "$phase_body"
               done
-              total="$(printf '%s\n' "$analysis" | grep -oE '= [0-9]+min [0-9.]+s$|= [0-9.]+s$' | head -1 || true)"
+              # [[:space:]]*: systemd-analyze ends the summary line with a
+              # trailing space; a bare $ anchor never matched (total absent
+              # from every prom since launch, 2026-10-15).
+              total="$(printf '%s\n' "$analysis" | grep -oE '= [0-9]+min [0-9.]+s[[:space:]]*$|= [0-9.]+s[[:space:]]*$' | head -1 || true)"
               if [ -n "$total" ]; then
                 echo "boot_total_duration_seconds $(to_seconds "''${total#= }")" >> "$METRICS"
               fi
@@ -215,10 +237,11 @@
         };
 
         systemd.timers.boot-metrics-emit = {
-          description = "Emit boot-duration metrics once per boot";
+          description = "Emit boot-duration metrics (boot-start attempt + interval re-sample)";
           wantedBy = [ "timers.target" ];
           timerConfig = {
             OnBootSec = cfg.emitDelay;
+            OnUnitActiveSec = cfg.reEmitInterval;
             # Deliberately NOT Persistent: values are boot-relative and the
             # sample is only meaningful for the CURRENT boot.
             Persistent = false;
