@@ -206,11 +206,14 @@ _: {
             OFFLINE_BANNER_PROBE_HOST = cfg.probeHost;
             OFFLINE_BANNER_PROBE_TIMEOUT = toString cfg.probeTimeoutSeconds;
             OFFLINE_BANNER_FAILURES = toString cfg.failuresToShow;
-            PATH = lib.makeBinPath [
+            # mkForce: systemd's user-unit default PATH is also set via
+            # environment.PATH and would collide (eval-hard error). The
+            # probe is pure shell builtins + ping — bash provides sh,
+            # iputils' ping ships cap_net_raw.
+            PATH = lib.mkForce (lib.makeBinPath [
               pkgs.bash
-              pkgs.coreutils
               pkgs.iputils
-            ];
+            ]);
           };
 
           restartTriggers = [ offlineBannerShell ];
