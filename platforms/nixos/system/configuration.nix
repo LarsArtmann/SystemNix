@@ -626,6 +626,7 @@ in
       smart-audio.enable = true;
       focus-new-windows.enable = true;
       shutdown-overlay.enable = true;
+      offline-banner.enable = true;
       niri-desktop.enable = true;
       # niri-session-manager (upstream LarsArtmann/niri-session-manager):
       # WantedBy=graphical-session.target + Requires=niri.service. Deliberately
