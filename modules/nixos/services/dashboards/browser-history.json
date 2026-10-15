@@ -1,0 +1,413 @@
+{
+  "schemaVersion": "v6",
+  "name": "systemnix-browser-history",
+  "tags": [
+    {
+      "key": "owner",
+      "value": "systemnix"
+    }
+  ],
+  "spec": {
+    "display": {
+      "name": "Browser History — Renders & Users",
+      "description": "Dashboard render latency (p99/mean) + user-count gauge; feeds the render-slow rule and the user-count Gatus check"
+    },
+    "variables": [],
+    "panels": {
+      "0b1f2a3c-4d5e-4f60-8a71-82b9c3d0e1f2": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Users",
+            "description": "browser_history_users — baseline 9 (1 real + 8 zombie bring-up dupes until revoked); increase = registration bypass, decrease = rollback"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "{count}",
+                "decimalPrecision": "0"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "browser_history_users",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "1c2d3e4f-5a60-4b71-8c82-93a4b5c6d7e8": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Render p99",
+            "description": "same query as the browser-history-render-slow rule (target 5s; normal authenticated renders 13-19ms, 2026-10-14 measurement)"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "s",
+                "decimalPrecision": "3"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "histogram_quantile(0.99, sum by (le) (rate({__name__=\"http_request_duration_seconds.bucket\", path=\"GET /{$}\"}[5m])))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "2d3e4f50-6b7c-4d81-9e93-a4b5c6d7e8f9": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Render mean",
+            "description": "mean GET / render duration (sum/count over the scrape window)"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "s",
+                "decimalPrecision": "3"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "{__name__=\"http_request_duration_seconds.sum\", path=\"GET /{$}\"} / {__name__=\"http_request_duration_seconds.count\", path=\"GET /{$}\"}",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "3e4f5061-7c8d-4e92-8fa4-b5c6d7e8f9a0": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Render rate",
+            "description": "GET / renders per second (5m rate)"
+          },
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "unit": "reqps",
+                "decimalPrecision": "3"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum(rate({__name__=\"http_request_duration_seconds.count\", path=\"GET /{$}\"}[5m]))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": ""
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "4f506172-8d9e-4fa3-9ab5-c6d7e8f9a0b1": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Render p99 (5m)",
+            "description": "rule feed: browser-history-render-slow fires above 5s sustained; both historical bursts were IO-storm context (pre-hot-tier), not server regressions"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "s",
+                "decimalPrecision": "3"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "histogram_quantile(0.99, sum by (le) (rate({__name__=\"http_request_duration_seconds.bucket\", path=\"GET /{$}\"}[5m])))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": "p99"
+                  }
+                }
+              },
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "B",
+                  "plugin": {
+                    "kind": "signoz/PromQLQuery",
+                    "spec": {
+                      "name": "B",
+                      "query": "histogram_quantile(0.50, sum by (le) (rate({__name__=\"http_request_duration_seconds.bucket\", path=\"GET /{$}\"}[5m])))",
+                      "disabled": false,
+                      "step": 0,
+                      "stats": false,
+                      "legend": "p50"
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "50617283-9eaf-4ab4-8bc6-d7e8f9a0b1c2": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Render rate + users",
+            "description": "traffic context: GET / per second (A) and the user-count gauge (B) on one grid for regression triage"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "reqps",
+                "decimalPrecision": "3"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "name": "A",
+                    "query": "sum(rate({__name__=\"http_request_duration_seconds.count\", path=\"GET /{$}\"}[5m]))",
+                    "disabled": false,
+                    "step": 0,
+                    "stats": false,
+                    "legend": "renders/s"
+                  }
+                }
+              },
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "B",
+                  "plugin": {
+                    "kind": "signoz/PromQLQuery",
+                    "spec": {
+                      "name": "B",
+                      "query": "browser_history_users",
+                      "disabled": false,
+                      "step": 0,
+                      "stats": false,
+                      "legend": "users"
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 2,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/0b1f2a3c-4d5e-4f60-8a71-82b9c3d0e1f2"
+              }
+            },
+            {
+              "x": 2,
+              "y": 0,
+              "width": 2,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/1c2d3e4f-5a60-4b71-8c82-93a4b5c6d7e8"
+              }
+            },
+            {
+              "x": 4,
+              "y": 0,
+              "width": 2,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/2d3e4f50-6b7c-4d81-9e93-a4b5c6d7e8f9"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 2,
+              "height": 4,
+              "content": {
+                "$ref": "#/spec/panels/3e4f5061-7c8d-4e92-8fa4-b5c6d7e8f9a0"
+              }
+            },
+            {
+              "x": 0,
+              "y": 4,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/4f506172-8d9e-4fa3-9ab5-c6d7e8f9a0b1"
+              }
+            },
+            {
+              "x": 6,
+              "y": 4,
+              "width": 6,
+              "height": 5,
+              "content": {
+                "$ref": "#/spec/panels/50617283-9eaf-4ab4-8bc6-d7e8f9a0b1c2"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "duration": "",
+    "refreshInterval": "5m",
+    "links": []
+  }
+}

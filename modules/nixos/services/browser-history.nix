@@ -805,7 +805,7 @@
                     "[STATUS] == 200"
                     "[RESPONSE_TIME] < 500"
                   ];
-                  alert = "Browser History server down — browsing analytics unavailable";
+                  alert = "Browser History server down — browsing analytics unavailable. An exactly-10.0s response time is the Gatus client-timeout signature (server never answered within max-time — the 2026-10-12 burst-2 class: precedes/coincides with IO PSI 33%+ nvme write bursts; check the I/O Stall Rate check + /proc/pressure/io before blaming the server)";
                 }
                 {
                   # Registration-bypass + deletion/rollback detector (2026-10-15,

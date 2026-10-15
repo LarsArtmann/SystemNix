@@ -554,5 +554,7 @@ in
     "signoz/dashboards/gcp.json".source = "${inputs.self}/modules/nixos/services/dashboards/gcp.json";
     "signoz/dashboards/traces.json".source =
       "${inputs.self}/modules/nixos/services/dashboards/traces.json";
+    "signoz/dashboards/browser-history.json".source =
+      "${inputs.self}/modules/nixos/services/dashboards/browser-history.json";
   };
 }
