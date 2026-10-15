@@ -151,10 +151,6 @@
         '';
       };
 
-      # One-time probe-registration purge script lives in
-      # _browser-history-scripts.nix so flake checks can exercise it directly.
-      browserHistoryScripts = import ./_browser-history-scripts.nix { inherit pkgs; };
-
       domain = config.networking.domain;
       fqdn = "history.${domain}";
       pocketIdEnabled = config.services.pocket-id-config.enable;
@@ -226,29 +222,6 @@
             the pool mount (RequiresMountsFor), so only hosts with the pool
             opt in (evo-x2 via configuration.nix).
           '';
-        };
-      };
-
-      options.services.browser-history.probeRegistrationCleanup = {
-        enable = lib.mkOption {
-          type = lib.types.bool;
-          default = false;
-          description = ''
-            One-time purge of a probe registration's residue (2026-09-18: the
-            registration-gate verification created probe-gate@example.com on
-            prod; the freeze reboots already dropped its users_view row, so
-            only the UserRegistered journal event remains). Runs as a
-            marker-guarded server ExecStartPre — the DynamicUser service owns
-            the StateDirectory, so the service performs the delete itself:
-            no root path, no concurrent-writer window (the server process is
-            not running yet). Failure is non-fatal ("-"-prefixed): the server
-            starts anyway and the purge retries on the next start.
-          '';
-        };
-
-        email = lib.mkOption {
-          type = lib.types.str;
-          description = "Email of the probe registration to purge.";
         };
       };
 
@@ -428,31 +401,6 @@
             systemd.services.browser-history-oidc-setup = oidcSetupService;
           }
         ))
-
-        # ── One-time probe-registration purge (see probeRegistrationCleanup) ─────
-        # Appended AFTER the OIDC gate's ExecStartPre (list concatenation across
-        # mkMerge branches, same mechanism as the EnvironmentFile pair above).
-        (lib.mkIf (cfg.enable && cfg.probeRegistrationCleanup.enable) {
-          # Guard against the split-brain failure mode: option on but the
-          # ExecStartPre entry lost to a future refactor = a purge that never
-          # runs (phantom no-op). Reads the FINAL merged unit config.
-          assertions = [
-            {
-              assertion = lib.any (lib.hasInfix "browser-history-probe-registration-purge") (
-                config.systemd.services.browser-history.serviceConfig.ExecStartPre or [ ]
-              );
-              message = "browser-history probeRegistrationCleanup is enabled but the purge script is absent from ExecStartPre";
-            }
-          ];
-
-          systemd.services.browser-history.serviceConfig = lib.mkMerge [
-            {
-              ExecStartPre = [
-                "-${lib.getExe browserHistoryScripts.probeRegistrationPurge} ${cfg.probeRegistrationCleanup.email}"
-              ];
-            }
-          ];
-        })
 
         # ── DynamicUser uid-drift ownership heal ───────────────────────────
         # systemd re-resolves the dynamic uid on every unit stop/start; a mass

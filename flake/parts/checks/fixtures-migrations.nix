@@ -1,5 +1,5 @@
-# Behavioral fixtures for the hot-tier migration scripts + browser-history
-# probe purge. Split out of flake.nix 2026-10-08.
+# Behavioral fixtures for the hot-tier migration scripts. Split out of
+# flake.nix 2026-10-08.
 { inputs, root, ... }:
 {
   perSystem =
@@ -10,37 +10,7 @@
     }:
     {
       checks = {
-        # Behavioral fixture for the browser-history probe-registration
-        # purge (2026-09-18 gate-verification residue). Runs the REAL
-        # built script (its runtimeInputs supply the real sqlite3) —
-        # no stubs — against a scratch DB seeded with the true schemas:
-        # events (go-cqrs-lite sqlite dialect) + users_view (cqrs-htmx
-        # usermgmt AutoMapperWithTombstone). Covers: email-scoped delete
-        # incl. BLOB payloads (the CAST path), decoy survival, marker
-        # lifecycle (created on success only), idempotent re-run, the
-        # missing-db clean-skip, and argv guards (empty email).
-        # The unit WIRING (ExecStartPre entry + non-fatal "-" prefix,
-        # without clobbering the OIDC gate's entry) is pinned by the
-        # self-assertion inside browser-history.nix's purge block.
-        browser-history-probe-purge-fixture =
-          pkgs.runCommand "browser-history-probe-purge-fixture"
-            {
-              nativeBuildInputs = with pkgs; [
-                sqlite
-                coreutils
-                gnugrep
-              ];
-              purgeBin =
-                lib.getExe
-                  (import (root + "/modules/nixos/services/_browser-history-scripts.nix") { inherit pkgs; })
-                  .probeRegistrationPurge;
-            }
-            ''
-              set -euo pipefail
-              FIX=$(mktemp -d)
-              STATE="$FIX/state"; mkdir -p "$STATE"
-              DB="$STATE/data.db"
-              PROBE='probe-gate@example.com'
+        # migrate-hot-db.sh is the DESTRUCTIVE vehicle of the hot-DB
 
               sqlite3 "$DB" "
               CREATE TABLE IF NOT EXISTS events (
