@@ -54,3 +54,9 @@ Scope: the 20-55 report's §f follow-up list (agent-actionable subset) + the 3 o
 
 ---
 *All session work committed (pathspec `b89448c7` + daemon-batched earlier edits, verified intact at HEAD). Pre-commit todo gate failed ONLY on a live parallel session's rows (proven failing at HEAD in a throwaway worktree); every other hook leg re-run standalone green. Upstream repos untouched. Foreign files not disturbed.*
+
+---
+
+## POST-SCRIPT (2026-10-15 21:50 self-review correction — non-destructive annotation)
+
+§a.6 as written is WRONG in one load-bearing way: the dashboard originally shipped with TWO two-query panels ("Render p99 (5m)" p99+p50, "Render rate + users" rate+users) — the EXACT documented provision-detonation class (v2 API: "panel must have one query, found 2" → provisioner unit fails → THE DEPLOY fails; monitoring.md 2026-09-16 incident), and nothing lints dashboard query-counts, so it passed everything I ran. Caught by this session's own self-review pass, not by any gate: dashboard rewritten programmatically (7 single-query panels, deterministic uuid5 IDs, overlap-asserted) + a one-query-per-panel trap ADDED to signoz-query-lint (locally proven to fire on the bug shape; permanent negative-test harness case queued — needs a mutation-mechanism extension for JSON object duplication). Also corrected on sight: row 364's PSI range (20-70, not 36-69 — the 20.17 start reading belongs to this session) and row 300's stale `1535ddf` premise (live lock `176c494c`).

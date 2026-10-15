@@ -58,8 +58,9 @@ QtObject {
 
     // Async scan of the snippets directory. Records are framed with \x1e
     // (record separator) and \x1f (unit separator) so arbitrary multiline
-    // content round-trips safely.
-    Process {
+    // content round-trips safely. (Assigned to a property, not declared as a
+    // child: QtObject has no default property for children.)
+    property Process scanProcess: Process {
         id: scanProcess
         command: ["sh", "-c",
             "DIR=\"$1\"; " +
@@ -265,7 +266,7 @@ QtObject {
 
     // "dms cl paste" streams the live clipboard to stdout; we write it into
     // the snippets directory. Runs in the DMS session env (WAYLAND_DISPLAY).
-    Process {
+    property Process saveProcess: Process {
         id: saveProcess
         property string saveName: ""
         property string saveSlug: ""

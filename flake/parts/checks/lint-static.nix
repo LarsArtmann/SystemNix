@@ -500,12 +500,26 @@
                 import glob, itertools, json, sys
                 bad = 0
                 for f in sorted(glob.glob("${dashboards}/*.json")):
-                    items = json.load(open(f))["spec"]["layouts"][0]["spec"]["items"]
+                    doc = json.load(open(f))
+                    items = doc["spec"]["layouts"][0]["spec"]["items"]
                     for a, b in itertools.combinations(items, 2):
                         if (a["x"] < b["x"] + b["width"] and b["x"] < a["x"] + a["width"]
                                 and a["y"] < b["y"] + b["height"] and b["y"] < a["y"] + a["height"]):
                             print("%s: panels (x=%d,y=%d,w=%d,h=%d) and (x=%d,y=%d,w=%d,h=%d) intersect" %
                                   (f, a["x"], a["y"], a["width"], a["height"], b["x"], b["y"], b["width"], b["height"]))
+                            bad = 1
+                    # 6. one query per panel: the SigNoz v2 API rejects the
+                    # WHOLE dashboard with HTTP 400 ("panel must have one
+                    # query, found N") and the provisioner hard-fails the
+                    # deploy (2026-09-16 class; relitigated 2026-10-15 when
+                    # a two-query panel shipped green past this lint).
+                    # Multi-series panels use ONE query with
+                    # {__name__=~"a|b"} selector form, never two queries.
+                    for pid, panel in doc["spec"]["panels"].items():
+                        n = len(panel["spec"]["queries"])
+                        if n != 1:
+                            print("%s: panel %s (%s) has %d queries — the v2 API requires exactly 1 (multi-series via {__name__=~\"a|b\"})" %
+                                  (f, pid, panel["spec"]["display"]["name"], n))
                             bad = 1
                 sys.exit(bad)
                 PYOVERLAP
