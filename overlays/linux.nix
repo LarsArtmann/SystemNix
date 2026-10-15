@@ -257,6 +257,25 @@ let
       doCheck = false;
     });
   };
+  # TEMPORARY vendorHash shims (2026-10-15 fleet wave — first-hand fakeHash
+  # FOD probes at the locked revs; class comment: lib/lars-packages.nix
+  # flakePkgShim). The overnight master-tracking lock float re-staled the
+  # input overlays' baked hashes. Rides LAST so it sees the input-created
+  # attrs (same ordering rule as crushDailyDoCheckGate). Drop per-tool
+  # when upstream bakes the got hash or the lock moves past an
+  # upstream-fixed rev; re-add ONLY via nix-hash-fix evidence, never by
+  # hand.
+  fleetVendorHashShims = _final: prev: {
+    crush-daily = prev.crush-daily.overrideAttrs {
+      vendorHash = "sha256-AAXq+KGA17u2aUdmahn3OE8NZr4KcdK4j1lqmZ3Wt5o=";
+    };
+    overview = prev.overview.overrideAttrs {
+      vendorHash = "sha256-NXdLbWt+UbnP2boe/1sE1LR1qIg/EMHXBtPFZgLAoJk=";
+    };
+    file-and-image-renamer = prev.file-and-image-renamer.overrideAttrs {
+      vendorHash = "sha256-nN2cwwLQCekdM+7kRUS7uFTVCvjL/Akg3PnIFFE9Qmg=";
+    };
+  };
   # TEMPORARY version pin (2026-10-03): nixpkgs 7a0f122f (the 2026-10-01
   # lock) produced clickhouse 26.8.7.19 with a derivation that is ALREADY
   # built in the local store; the 2026-10-02 bump (c59305ba) changed the
@@ -306,4 +325,5 @@ in
   # it is clobbered (first-hand: a pre-input listing produced an unchanged
   # drv hash and the checkPhase still ran, /tmp/toplevel-fix-20261012b.log).
   crushDailyDoCheckGate
+  fleetVendorHashShims
 ]

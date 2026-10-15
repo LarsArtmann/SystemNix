@@ -53,7 +53,13 @@
           type = lib.types.package;
           # Same source the PATH CLI rides (lib/lars-packages.nix flakePkg) —
           # lars packages are flake outputs, NOT pkgs attributes.
-          default = inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          # TEMPORARY vendorHash shim ADDED (2026-10-15 fleet wave, first-hand
+          # got-hash from the 02:46 nh enumeration at locked rev f1a13263;
+          # class comment: lib/lars-packages.nix flakePkgShim — same value
+          # as the lars-packages surface)
+          default = inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+            vendorHash = "sha256-cFy4AGocSu4kSWQZSjkcmGA8ZpNbm+QamGaq8n5zyis=";
+          };
           defaultText = lib.literalExpression "inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default";
           description = "The mr-sync package (github:LarsArtmann/mr-sync).";
         };

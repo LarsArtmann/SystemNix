@@ -55,8 +55,13 @@
           # the same drift treadmill as lib/lars-packages.nix — upstream
           # 96fd9304 bakes the got hash Bvuf0KUY… directly (first-hand
           # keep-going enumeration, /tmp/toplevel-fix-20261009.log).
-          # Re-add ONLY via nix-hash-fix evidence, never by hand.
-          package = inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          # TEMPORARY vendorHash shim RE-ADDED (2026-10-15 fleet wave,
+          # first-hand got-hash from the 02:46 nh enumeration at locked
+          # rev 3149585c; class comment: lib/lars-packages.nix
+          # flakePkgShim — same value as the lars-packages surface)
+          package = inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+            vendorHash = "sha256-lPN1fqTDp3jxmThsmdXIlbFpiM10h6qK1ksUYE1HvY8=";
+          };
           user = primaryUser;
           group = "users";
           home = "/home/${primaryUser}";
