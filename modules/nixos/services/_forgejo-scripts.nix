@@ -1486,7 +1486,15 @@ in
       pkgs.forgejo-runner
     ];
     text = ''
-      export INSTANCE_DIR="$STATE_DIRECTORY/${hostName}"
+      # STATE_DIRECTORY is a colon-joined LIST since nixpkgs 55bfb4d (the
+      # gitea-actions-runner module now declares StateDirectory =
+      # [ "gitea-runner" "gitea-runner/<name>" ]); the naive
+      # "$STATE_DIRECTORY/${hostName}" interpolation produced the bogus path
+      # /var/lib/gitea-runner:/… (mkdir EROFS in the sandboxed ExecStartPre,
+      # 5 rapid failures → start-limit-hit, 2026-10-15 20:10 switch). Take
+      # the FIRST list entry — the instance dir lives under it, matching the
+      # module's own WorkingDirectory = /var/lib/gitea-runner/<name>.
+      export INSTANCE_DIR="''${STATE_DIRECTORY%%:*}/${hostName}"
       mkdir -vp "$INSTANCE_DIR"
       cd "$INSTANCE_DIR"
 
