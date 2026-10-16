@@ -391,13 +391,20 @@ Do NOT re-research — the verified facts:
 - **The DIY feed (if the cohort outgrows bookmarks)**: poll
   `GET /api/v1/repos/{owner}/{repo}/actions/tasks?status=failure&page=&limit=`
   per Actions-enabled repo (exists on v15.0, status enum:
-  unknown/waiting/running/success/failure/cancelled/skipped/blocked) into a
+  unknown/waiting/running/success/failure/cancelled/skipped/blocked; LIVE on
+  the instance 2026-10-16 ~07:40 — unauthenticated requests 404-mask like any
+  private repo, so the scoped read-only token is REQUIRED, confirming the
+  prerequisite) into a
   textfile metric — the `system_forgejo_mirror_sync_stale_count` house pattern
   (Gatus presence + SigNoz rule). Prerequisite: the scoped read-only Forgejo
   token `[decision]` row. Org-scope live-queue probe:
   `GET /api/v1/orgs/{org}/actions/runners/jobs` (waiting/running ONLY — a
-  "jobs stuck = runner wedged" Gatus check). v17-only workflow-job webhooks are
-  the push alternative but pin an LTS-major jump.
+  "jobs stuck = runner wedged" Gatus check; route live but needs a real ORG —
+  `lars` is a user, so org-scope is moot for a single-user instance).
+  v17-only workflow-job webhooks are
+  the push alternative but pin an LTS-major jump. Swagger note: `/api/swagger`
+  (UI) serves 200 while the JSON spec at `/api/swagger.v1.json` 404s on both
+  loopback and vhost — cosmetic; the API itself demonstrably works.
 - Per-repo Actions tabs + browser bookmarks remain the sufficient answer at the
   current cohort size (eventcatalog-hub + domains, G2-flipped 2026-10-16).
 

@@ -236,12 +236,6 @@ _: {
         # parsers dir is crowdsec-owned 0750, no capability needed. REMOVE
         # this + pr1943Parser when PR #1943 merges (cscli's install then
         # keeps the hub file).
-        systemd.services.crowdsec.serviceConfig.ExecStartPre = lib.mkAfter [
-          "ln -sfn ${pr1943Parser} /etc/crowdsec/parsers/s01-parse/sshd-success-logs.yaml"
-        ];
-
-        systemd.services.crowdsec.restartTriggers = [ pr1943Parser ];
-
         # Stage 1 has NO bouncer: the bouncer module's register oneshot still
         # activates (its enable defaults to crowdsec.enable) and its
         # `StateDirectory = … crowdsec` lets systemd re-own /var/lib/crowdsec
@@ -339,6 +333,10 @@ _: {
           startLimitIntervalSec = 300;
           requires = [ "crowdsec-prereq.service" ];
 
+          # PR #1943 patch-apply (see pr1943Parser above): reload the parser
+          # on deploy — parsers load at agent start only.
+          restartTriggers = [ pr1943Parser ];
+
           serviceConfig = lib.mkMerge [
             {
               # 180s gate budget + setup (hub update + installs) — the
@@ -359,6 +357,25 @@ _: {
               # until that fix is proven live, then a drop candidate.
               AmbientCapabilities = [ "CAP_DAC_READ_SEARCH" ];
               CapabilityBoundingSet = [ "CAP_DAC_READ_SEARCH" ];
+            }
+            {
+              # PR #1943 patch-apply (see pr1943Parser above): re-assert the
+              # install symlink at every engine start. switch-to-configuration
+              # does NOT run systemd-tmpfiles (live-proven 2026-10-16: zero
+              # tmpfiles invocations in the switch binary; the deploy script
+              # heals /run entries only), so a boot-only L+ rule never
+              # applied post-deploy. mkAfter lands after the upstream setup's
+              # " "-reset ExecStartPre list — setup's cscli install runs
+              # FIRST (a hub version change may rewrite the link; ours wins),
+              # then the engine loads the override at that same start
+              # (restartTriggers above forces the restart on content change).
+              # Runs as the unit's User=crowdsec — the parsers dir is
+              # crowdsec-owned 0750, no capability needed. REMOVE this +
+              # pr1943Parser when PR #1943 merges (cscli's install then
+              # keeps the hub file).
+              ExecStartPre = lib.mkAfter [
+                "ln -sfn ${pr1943Parser} /etc/crowdsec/parsers/s01-parse/sshd-success-logs.yaml"
+              ];
             }
           ];
         };

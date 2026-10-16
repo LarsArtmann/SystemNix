@@ -39,11 +39,6 @@ let
   );
   gatusConditions = lib.concatStringsSep "\n" (gatusCheck.conditions or [ ]);
 
-  pr1943Rule =
-    (evox2.systemd.tmpfiles.settings."20-crowdsec-pr1943" or { })
-    ."/etc/crowdsec/parsers/s01-parse/sshd-success-logs.yaml" or { };
-  pr1943Link = pr1943Rule.link or { };
-
   restartTriggers = map toString (cs.crowdsec.restartTriggers or [ ]);
 
   acquisJson = builtins.toJSON crowdsec.localConfig.acquisitions;
@@ -82,8 +77,10 @@ let
       pass = lib.hasInfix "no bouncer key rendered" moduleSource;
     }
     {
-      name = "pr1943-override-tmpfiles-rule-missing";
-      pass = (pr1943Link.type or "") == "L+" && pr1943Link.argument or "" != "";
+      name = "pr1943-override-execstartpre-missing";
+      pass = lib.any (e: lib.hasInfix "sshd-success-logs.yaml" e) (
+        map toString (cs.crowdsec.serviceConfig.ExecStartPre or [ ])
+      );
     }
     {
       name = "pr1943-override-not-a-crowdsec-restart-trigger";
