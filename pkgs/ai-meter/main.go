@@ -68,7 +68,7 @@ func run(configPath string, logger *slog.Logger) error {
 	}
 	adminServer := &http.Server{
 		Addr:              cfg.MetricsListen,
-		Handler:           NewAdminHandler(registry, logger),
+		Handler:           NewAdminHandler(registry),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,
