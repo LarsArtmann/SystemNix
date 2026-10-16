@@ -847,3 +847,603 @@
       }
     </style>
   </head>
+  <body>
+    <div class="top-bar">
+      <span>RESEARCH DEEP-DIVE</span>
+      <span>2026-10-16</span>
+      <span>CRUSH / GLM-5.3</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#strengths">What it does well</a>
+          <a href="#evidence">Evidence base</a>
+          <a href="#fit">Fit assessment</a>
+          <a href="#frictions">Frictions</a>
+          <a href="#angles">Angles beyond deployment</a>
+          <a href="#target">Target shape</a>
+          <a href="#recommendation">Recommendation</a>
+          <a href="#appendix">Appendix</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="hero">
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">RESEARCH DEEP-DIVE &middot; 2026-10-16</div>
+          <h1>Agent Router — Leverage Evaluation for SystemNix</h1>
+          <p class="subtitle">
+            Should the homelab adopt the Envoy-based AI gateway? An evidence-first
+            assessment of where Agent Router fits this stack, where it does not,
+            and the exact triggers that should flip the decision from watch to deploy.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Subject: Agent Router 1.2 (ex-Envoy AI Gateway)</span>
+            <span class="tag">Scope: AI gateway adoption</span>
+            <span class="tag teal">Verdict: Watch — do not deploy</span>
+          </div>
+        </header>
+
+        <section id="scorecard" class="scorecard">
+          <div class="score-card score-good">
+            <div class="score">4</div>
+            <div class="label">High-value leverage points</div>
+          </div>
+          <div class="score-card score-bad">
+            <div class="score">2</div>
+            <div class="label">Hard adoption blockers</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">4</div>
+            <div class="label">Named watch triggers</div>
+          </div>
+          <div class="score-card">
+            <div class="score">0</div>
+            <div class="label">Mentions in repo or plans</div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">00</span>Summary</h2>
+          <p>
+            <strong>Agent Router</strong> is the Envoy AI Gateway renamed — an
+            Agentic AI Foundation (Linux Foundation) project, current release 1.2,
+            Apache 2.0, powered by Envoy and Envoy Gateway. It puts one
+            OpenAI-compatible API in front of 21 providers (plus any
+            OpenAI-compatible backend, including local llama.cpp), and moves
+            credentials, failover, token limits, model-name virtualization, and
+            MCP tool aggregation out of agents and into gateway configuration.
+            It runs standalone via <code>aigw run</code> on loopback:1975 with an
+            admin interface on :1064 — no Kubernetes, no Docker.
+          </p>
+          <p>
+            For this stack — one host, one user, a Crush-centric agent fleet
+            (interactive sessions, <code>crush-daily</code>, <code>tq-agent-pool</code>),
+            a local GTT-backed llama.cpp/Jan serving tier, and OpenRouter as the
+            de-facto cloud router — the verdict is <strong>watch, do not
+            deploy</strong>. The project&rsquo;s core pitch (multi-team credential
+            governance and quotas) does not exist here, and the real integration
+            cost is Nix packaging: <code>aigw</code> is absent from nixpkgs and
+            downloads Envoy at runtime via func-e into
+            <code>~/.local/share/aigw</code>, which violates the declarative model.
+            This is the same class of verdict as the Ollama removal: a heavy
+            abstraction whose center of value sits outside this deployment shape.
+          </p>
+          <p>
+            What <em>is</em> genuinely valuable here: OTel GenAI attribution into
+            SigNoz, credential centralization that matches the sops doctrine,
+            unified local&rarr;cloud failover, and LAN exposure of the GPU stack to
+            the MacBook — the first three only become worth their cost when
+            specific triggers fire. Two moves are available today at zero
+            deployment cost: stealing the OTel GenAI observability pattern, and
+            using <code>aigw run</code> as a dev/test harness for go-aichat.
+          </p>
+          <div class="callout callout-amber">
+            <strong>The bottom line</strong>
+            Do not deploy. Record a <code>[watch]</code> row in
+            <code>docs/todo/ai-stack.md</code> with the four named triggers from
+            &sect;06 (event-driven, no revisit date), and take the two
+            zero-deployment moves now if desired. Reassess the moment
+            <code>aigw</code> lands in nixpkgs — that alone removes the largest
+            friction.
+          </div>
+        </section>
+
+        <section id="strengths">
+          <h2><span class="num">&#9670;</span>What Agent Router does well</h2>
+          <p>
+            Credible engineering, not vaporware — this is Envoy Gateway&rsquo;s AI
+            control plane with production adopters (Bloomberg, LY Corporation,
+            Nutanix, Tencent Cloud, Stacklok) and a foundation home. The merits
+            that matter for a hypothetical future here:
+          </p>
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>One API, 21 providers, any OpenAI-compatible backend</strong>
+                <span>Model switching becomes a model-name change; auto-configuration accepts plain <code>OPENAI_BASE_URL</code>, so local llama.cpp or Jan slots in as a first-class backend next to cloud keys.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Standalone mode without Kubernetes</strong>
+                <span><code>aigw run config.yaml</code> is a real single-process deployment (Envoy child + extproc), which is the only shape that could run on this Docker-free host. Config mirrors the k8s CRDs, so a laptop trial graduates to a cluster unchanged.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Observability is first-class, not an afterthought</strong>
+                <span>OTel spans with OpenInference or GenAI semantic conventions, request/response capture behind explicit redaction switches, header&rarr;span mapping for session attribution (<code>agent-session-id:session.id</code> by default), and a Prometheus <code>/metrics</code> LLM endpoint on the admin port.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Credential centralization done right</strong>
+                <span>Clients authenticate to the router and nothing else; provider keys live in one config, rotated in one place. This is the gateway restatement of this repo&rsquo;s own sops doctrine — and the direct answer to the fish_history leak class.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Institutional durability</strong>
+                <span>LF-hosted (Agentic AI Foundation), weekly public meetings, four maintainer companies, stable CRD/API group guaranteed across the rename — a low-likelihood-of-abandonment dependency if it ever enters this stack.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="evidence">
+          <h2><span class="num">01</span>Evidence base — what was verified this session</h2>
+          <p>
+            Every load-bearing claim below was checked against live sources or the
+            repo on 2026-10-16. This is a snapshot of a fast-moving upstream (the
+            rename itself is five weeks old); re-verify before acting on any row.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Claim</th>
+                <th>Verification</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Standalone mode: no Docker/Kubernetes, Linux + macOS, proxy on :1975</td>
+                <td>theagentrouter.ai/docs/cli/aigwrun (v1.2)</td>
+                <td class="yes">Confirmed</td>
+              </tr>
+              <tr>
+                <td>Admin plane on :1064 — Prometheus LLM metrics + extproc health</td>
+                <td>same doc, &sect;Admin Endpoints</td>
+                <td class="yes">Confirmed</td>
+              </tr>
+              <tr>
+                <td>Any OpenAI-compatible backend accepted (local llama.cpp/Jan viable)</td>
+                <td>auto-config via <code>OPENAI_BASE_URL</code>; Ollama example in docs</td>
+                <td class="yes">Confirmed</td>
+              </tr>
+              <tr>
+                <td>MCP gateway speaks http/streamable-http only — no stdio servers</td>
+                <td>same doc, &sect;MCP Configuration</td>
+                <td class="no">Confirmed gap — excludes qmd-style local stdio MCP</td>
+              </tr>
+              <tr>
+                <td>Envoy downloaded at runtime via func-e into <code>~/.local/share/aigw</code></td>
+                <td>same doc, &sect;File Locations (<code>AIGW_DATA_HOME</code>)</td>
+                <td class="no">Confirmed — breaks Nix hermeticity</td>
+              </tr>
+              <tr>
+                <td>No <code>aigw</code> package in nixpkgs</td>
+                <td>Sourcegraph: <code>repo:github.com/NixOS/nixpkgs file:^pkgs/by-name/ai/aigw/package.nix$</code></td>
+                <td class="no">0 matches</td>
+              </tr>
+              <tr>
+                <td>No prior art in SystemNix — no mentions, no ratified plan</td>
+                <td><code>rg 'agent-router|agentrouter|theagentrouter'</code> over repo; scan of docs/brainstorming + docs/planning</td>
+                <td class="yes">0 matches — clean-slate decision</td>
+              </tr>
+              <tr>
+                <td>Rename preserves APIs: CRDs, <code>aigw</code> CLI, images, Go module path unchanged</td>
+                <td>README (main branch)</td>
+                <td class="yes">Confirmed</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-amber">
+            <strong>Scope note</strong>
+            Linux-portability, memory footprint, and failover behavior under load
+            were <em>not</em> benchmarked — nothing was run. This is an
+            adoption-shape assessment from primary docs, not a trial.
+          </div>
+        </section>
+
+        <section id="fit">
+          <h2><span class="num">02</span>Fit assessment for this stack</h2>
+          <p>
+            The deployment shape that would receive Agent Router: one NixOS host
+            (evo-x2, 128 GB, GTT-first GPU), one user, Crush as the primary agent
+            surface plus daemon sessions, SigNoz for OTel, Caddy + Pocket-ID at
+            the edge, sops for secrets, zero Docker, zero Python.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Leverage point</th>
+                <th>Fit</th>
+                <th>Reasoning</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Unified local+cloud endpoint — Jan/llama-router + zai/minimax/openrouter behind one URL; local&rarr;cloud failover as config, not per-agent logic</td>
+                <td class="yes">Medium — trigger-bound</td>
+                <td>Aligns with the pending llama.cpp router-mode revisit row (2026-10-12 status); today llama.cpp&rsquo;s own router mode covers the local-only slice more cheaply</td>
+              </tr>
+              <tr>
+                <td>Credential centralization — provider keys only in sops-rendered router config; Crush/hermes/go-aichat daemons hold one router key each</td>
+                <td class="yes">High</td>
+                <td>Directly serves the fish_history leak lessons; rotation collapses to one sops file; per-client keys give free attribution</td>
+              </tr>
+              <tr>
+                <td>OTel GenAI spans + :1064 metrics &rarr; SigNoz — per-agent token/cost attribution, TTFT, which model answered, where fallback fired</td>
+                <td class="yes">High — strongest single-user value</td>
+                <td>Native fit with the existing SigNoz stack and monitoring discipline; no agent-side instrumentation required</td>
+              </tr>
+              <tr>
+                <td>Hard spend caps for the daemon fleet (crush-daily, tq-agent-pool) via per-key token limits</td>
+                <td>Medium</td>
+                <td>The memory-emergency-guard philosophy applied to money; only matters once cost is a live constraint</td>
+              </tr>
+              <tr>
+                <td>MCP gateway — one tool catalog, per-agent filtering</td>
+                <td class="no">Low</td>
+                <td>HTTP-only transport excludes local stdio servers (qmd); Crush already owns MCP per-client; single-user means no identity-filtering value</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-teal">
+            <strong>When it becomes compelling</strong>
+            Any two of the three high/medium rows activating at once — e.g. the
+            router-mode consolidation landing <em>while</em> wanting cloud failover
+            <em>and</em> spend attribution. One alone does not justify owning an
+            Envoy control plane.
+          </div>
+        </section>
+
+        <section id="frictions">
+          <h2><span class="num">03</span>Frictions — why not today</h2>
+          <p>Honest blockers and costs, ordered by weight.</p>
+
+          <div class="issue issue-critical" id="friction-packaging">
+            <span class="severity severity-critical">Blocking &middot; The real cost</span>
+            <h3>Nix packaging friction</h3>
+            <div class="where">nixpkgs by-name search &middot; docs/cli/aigwrun &sect;File Locations</div>
+            <p>
+              <code>aigw</code> is not in nixpkgs, and standalone mode downloads
+              Envoy at runtime via func-e into <code>~/.local/share/aigw</code>.
+              A deployment here means: a custom <code>buildGoModule</code> package,
+              pinning Envoy from nixpkgs, neutralizing func-e (pre-provisioned
+              <code>AIGW_DATA_HOME</code> or a wrapper), and maintaining it across
+              a fast-moving upstream. That is the dominant cost of adoption —
+              larger than configuration, larger than operations.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: wait out the friction</strong>
+              The &ldquo;aigw lands in nixpkgs&rdquo; trigger (T4 in &sect;06)
+              deletes this entire issue. Contributing the packaging upstream is
+              the constructive alternative — see &sect;04.
+            </div>
+          </div>
+
+          <div class="issue issue-important" id="friction-governance">
+            <span class="severity severity-important">Important &middot; Wrong shape</span>
+            <h3>The core pitch does not exist here</h3>
+            <div class="where">theagentrouter.ai solutions &middot; repo precedents: Ollama removal, Docker removal</div>
+            <p>
+              Multi-team credential isolation, per-team quotas, platform-team
+              governance — v1.2&rsquo;s headline features — have no buyer in a
+              single-user homelab. Deploying anyway risks the Ollama verdict
+              (&ldquo;bad abstraction on top of llama.cpp&rdquo;): an always-on
+              Envoy control plane owned for plumbing value. The two-tier gateway
+              pattern&rsquo;s Tier Two (k8s InferencePool endpoint picking) is
+              k8s-only and permanently out of scope here.
+            </p>
+          </div>
+
+          <div class="issue issue-important" id="friction-spof">
+            <span class="severity severity-important">Important &middot; Blast radius</span>
+            <h3>Single point of failure for all agent traffic</h3>
+            <div class="where">deployment-shape consequence</div>
+            <p>
+              One wedged gateway takes down every daemon simultaneously —
+              crush-daily, tq-agent-pool, and interactive sessions alike. It would
+              need the full treatment from day one: <code>lib/systemd.nix</code>
+              hardening, gatus liveness coverage (the in-use-port audit generalizes
+              to a served-port check), MemoryMax doctrine, and a documented
+              client-side escape hatch back to direct provider keys.
+            </p>
+          </div>
+
+          <div class="issue issue-nice" id="friction-churn">
+            <span class="severity severity-nice">Watch &middot; Low weight</span>
+            <h3>Upstream velocity and rename churn</h3>
+            <div class="where">project blog &middot; release notes</div>
+            <p>
+              Renamed 2026-09-10; v1.2 is the first release under the new name.
+              API stability is explicitly promised (&ldquo;manifests from yesterday
+              apply tomorrow&rdquo;), but a five-week-old identity moving at this
+              pace warrants pinning discipline (tag, never float) if it ever
+              enters the flake — the repo already enforces that pattern for inputs.
+            </p>
+          </div>
+
+          <div class="issue issue-nice" id="friction-mcp">
+            <span class="severity severity-nice">Gap &middot; Low weight here</span>
+            <h3>MCP stdio gap</h3>
+            <div class="where">docs/cli/aigwrun &sect;MCP Configuration</div>
+            <p>
+              The MCP gateway accepts <code>http</code> / <code>streamable-http</code>
+              transports only. Local stdio servers (the qmd MCP pattern) cannot be
+              aggregated without a bridging hop — one more moving part that erases
+              the simplification the feature promises.
+            </p>
+          </div>
+        </section>
+
+        <section id="angles">
+          <h2><span class="num">04</span>Angles beyond deployment</h2>
+          <p>
+            Value extractable from Agent Router without putting it in the
+            critical path — ranked by leverage per unit of cost.
+          </p>
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">1</div>
+              <div class="text">
+                <strong>LAN GPU endpoint for the MacBook — the one genuinely new capability</strong>
+                <span>Today no model endpoint is reachable off-host: Jan&rsquo;s router is ephemeral loopback by design (docs/services/jan.md). A router on evo-x2 behind Caddy + Pocket-ID SSO (<code>ai.home.lan</code>) would hand the 24 GB MacBook a credentialed OpenAI-compatible endpoint into the 124 GB GTT stack, with cloud failover when the GPU is saturated. That is a product feature, not plumbing — and the strongest future justification for the whole exercise.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">2</div>
+              <div class="text">
+                <strong>go-aichat dev/test harness — zero-deployment leverage, available today</strong>
+                <span><code>aigw run</code> is explicitly pitched for &ldquo;local development of provider-agnostic AI applications&rdquo;. go-aichat is exactly that: the router provides provider-switching and model-name-virtualization test paths against local llama.cpp, without burning N real provider keys in CI. Runs on the dev laptop, never enters the flake.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">3</div>
+              <div class="text">
+                <strong>nixpkgs packaging as the decisive watch signal — and a contribution opening</strong>
+                <span>Someone else packaging <code>aigw</code> deletes the main blocker (T4). Conversely, contributing that packaging upstream fits the established OSS contribution pattern (charmbracelet, jj) — an LF project with weekly public meetings is a receptive venue, and it converts adoption cost into reputation.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">4</div>
+              <div class="text">
+                <strong>If triggers fire, compare LiteLLM first</strong>
+                <span>LiteLLM is the default everyone reaches for — and it is Python, which collides with the zero-Python doctrine (2026-10-15). Agent Router (Go + Envoy) fits the Go-native stack without a fight. The comparison must still be made honestly before any deploy: LiteLLM&rsquo;s operational surface is a single pip-installable process.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">5</div>
+              <div class="text">
+                <strong>Steal the patterns without the gateway</strong>
+                <span>OTel GenAI semantic-convention dashboards in SigNoz and per-session attribution headers (the <code>OTEL_AIGW_REQUEST_HEADER_ATTRIBUTES</code> pattern) apply equally to direct OpenRouter and llama.cpp traffic. The observability value is mostly a <em>convention</em>, and conventions are free.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">6</div>
+              <div class="text">
+                <strong>Tetrate hosted service: no</strong>
+                <span><code>router.tetrate.ai</code> relays every prompt through a third party, cannot serve the local GPU tier, and its trust model is OpenRouter minus the local-model capability. It solves exactly the part of the problem this stack does not have (managed infrastructure) while breaking the part it does (local models).</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="target">
+          <h2><span class="num">05</span>Target shape if a trigger fires</h2>
+          <p>
+            A sketch, not a plan — the point is to show the shape a deployment
+            would take as an ordinary SystemNix service module, so the eventual
+            cost is legible now. Sequence matters: one client first, evidence in
+            SigNoz, then the fleet.
+          </p>
+          <pre><code>modules/nixos/services/agent-router.nix
+  systemd.services.agent-router
+    serviceConfig = lib.harden { ... }          # lib/systemd.nix defaults
+    loopback bind (default) or Caddy-fronted    # vHost only when LAN access wanted
+  ports: 1975 (proxy) + 1064 (admin)            # lib/ports.nix — registry-audited
+  config: sops template                         # provider keys never in the repo
+  OTEL_EXPORTER_OTLP_ENDPOINT -> SigNoz         # GenAI semconv spans
+  backends: llama-server (local GTT) + zai / minimax / openrouter
+  clients: Crush provider -> http://localhost:1975/v1</code></pre>
+
+          <div class="migration-step">
+            <div class="migration-num">1</div>
+            <div class="migration-content">
+              <h4>Package it</h4>
+              <p><code>buildGoModule</code> for aigw + Envoy pinned from nixpkgs; neutralize func-e by pre-provisioning <code>AIGW_DATA_HOME</code> or wrapping the launcher. Skip entirely if T4 fired first.</p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">2</div>
+            <div class="migration-content">
+              <h4>Module + registry</h4>
+              <p>Service module with harden{}; ports registered in <code>lib/ports.nix</code> so the eval-time port audit passes by construction; gatus check wired from day one.</p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">3</div>
+            <div class="migration-content">
+              <h4>Secrets + per-client keys</h4>
+              <p>Provider keys via sops template only. Distinct router keys per client class (crush-daily, tq pool, interactive) — attribution comes free at the gateway.</p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">4</div>
+            <div class="migration-content">
+              <h4>Observability</h4>
+              <p>OTLP &rarr; SigNoz (GenAI semconv, content capture OFF by default); :1064 scraped into the metrics pipeline; dashboards for tokens/cost/TTFT/fallback per client key.</p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">5</div>
+            <div class="migration-content">
+              <h4>Cut over ONE daemon client first</h4>
+              <p>Not interactive Crush. Verify attribution and failover in SigNoz, keep direct-provider escape hatch documented, then expand to the fleet.</p>
+            </div>
+          </div>
+
+          <div class="callout callout-teal">
+            <strong>Doctrine check</strong>
+            This sequence honors two repo rules: land the replacement before
+            removing the old source (direct provider configs stay until the
+            gateway proves parity), and never assert success from output text —
+            assert <em>which entity served the request</em>, visible in the SigNoz
+            attribution spans.
+          </div>
+        </section>
+
+        <section id="recommendation">
+          <h2><span class="num">06</span>Recommendation — watch triggers</h2>
+          <p>
+            One <code>[watch]</code> row in <code>docs/todo/ai-stack.md</code>,
+            event-driven, no revisit date. The row flips to
+            <code>[ready]</code> when any trigger fires:
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Trigger</th>
+                <th>Fires when</th>
+                <th>Consequence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>T1 &middot; Router-mode consolidation</strong></td>
+                <td>The llama.cpp router-mode revisit row (2026-10-12 status) resolves AND unified local&rarr;cloud failover is wanted</td>
+                <td class="yes">Deploy evaluation flips to [ready]</td>
+              </tr>
+              <tr>
+                <td><strong>T2 &middot; Spend enforcement</strong></td>
+                <td>A cost incident or budget policy makes hard caps for crush-daily / tq-agent-pool a requirement</td>
+                <td class="yes">Deploy for quota enforcement</td>
+              </tr>
+              <tr>
+                <td><strong>T3 &middot; MCP catalog</strong></td>
+                <td>3+ heterogeneous agent clients (beyond Crush) need a shared tool catalog — HTTP-transport servers only</td>
+                <td class="yes">MCP gateway re-evaluated</td>
+              </tr>
+              <tr>
+                <td><strong>T4 &middot; nixpkgs packaging</strong></td>
+                <td><code>aigw</code> appears in nixpkgs (by-name/ai/aigw)</td>
+                <td class="yes">Reassess: main blocker gone; weigh contributing it upstream instead</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-amber">
+            <strong>Available now, zero deployment</strong>
+            OTel GenAI semconv dashboards for direct OpenRouter/llama.cpp traffic,
+            and <code>aigw run</code> as a throwaway go-aichat dev harness on the
+            laptop. Neither touches the flake, the host, or the critical path.
+          </div>
+        </section>
+
+        <section id="appendix">
+          <h2><span class="num">07</span>Appendix</h2>
+          <p>Sources, verification commands, and related state in this repo.</p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Primary sources (fetched 2026-10-16)</td>
+                <td>theagentrouter.ai (homepage), theagentrouter.ai/docs/cli/aigwrun (v1.2), github.com/theagentrouter/agent-router README (main)</td>
+              </tr>
+              <tr>
+                <td>Repo sweep</td>
+                <td><code>rg 'agent-router|agentrouter|theagentrouter'</code> &rarr; 0 matches; docs/brainstorming + docs/planning scanned &rarr; no related ratified plan (2026-10-05 planning-layer pre-read rule satisfied)</td>
+              </tr>
+              <tr>
+                <td>nixpkgs check</td>
+                <td>Sourcegraph <code>repo:github.com/NixOS/nixpkgs file:^pkgs/by-name/ai/aigw/package.nix$</code> &rarr; 0 matches</td>
+              </tr>
+              <tr>
+                <td>Related repo state</td>
+                <td>docs/services/jan.md (llama.cpp router mode, ephemeral loopback port); docs/status 2026-10-12 (router-mode revisit row); AGENTS.md (Docker removal 2026-10-08, Ollama removal 2026-10-12, zero-Python 2026-10-15, sops doctrine, port-registry audit, systemd harden helpers)</td>
+              </tr>
+              <tr>
+                <td>Upstream identity</td>
+                <td>Envoy AI Gateway &rarr; Agent Router, 2026-09-10, Agentic AI Foundation; CRDs, CLI, images, Go module path unchanged; Apache 2.0; adopters include Bloomberg, LY Corp, Nutanix, Tencent Cloud, Stacklok</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <footer class="footer">
+          <p>
+            Generated 2026-10-16 &middot; Crush (glm-5.3) &middot; Snapshot of a
+            fast-moving upstream — re-verify load-bearing claims before acting
+            &middot; Nothing was deployed or run on the host
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
