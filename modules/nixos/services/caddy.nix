@@ -654,8 +654,33 @@ _: {
               # through the same helpers as every hand-written vHost above.
               // (lib.mapAttrs' (sub: v: lib.nameValuePair "${sub}.${domain}" (renderVHost v)) registryVHosts);
             in
-            homeLanVHosts
-            // (lib.optionalAttrs (cloudDomain != null) (
+            # Log-file mode override: caddy's file writer defaults to 0600
+            # (caddyserver.com/docs/caddyfile/directives/log, verified
+            # 2026-10-16), which leaves NO group access — the crowdsec
+            # caddy-group acquis fix could traverse the 0750 dir but still
+            # cannot OPEN the files (live-proven 2026-10-16: "Error setting
+            # up tail ... permission denied" per file, zero file-source hits
+            # even with the group live). mode 0640 = caddy rw + group r.
+            # Two caddy caveats (docs, same page): a server RESTART (not a
+            # reload) applies output-file option changes, and open(2) never
+            # re-modes EXISTING files — the crowdsec-caddy-logs-readable
+            # timer (crowdsec.nix) re-chmods the live files per tick until
+            # every file has rolled over under the new mode.
+            lib.mapAttrs
+              (
+                host: opts:
+                  opts
+                  // {
+                    logFormat = ''
+                      output file /var/log/caddy/access-${lib.replaceStrings [ "/" " " ] [ "_" "_" ] host}.log {
+                        mode 0640
+                      }
+                    '';
+                  }
+              )
+              (
+                homeLanVHosts
+                // (lib.optionalAttrs (cloudDomain != null) (
               # Split-horizon aliases (brainstorming 2026-09-30): every
               # home.lan vHost mirrored under the cloud domain — identical
               # extraConfig (same dual-zone cert, same backends). Auth
@@ -685,7 +710,7 @@ _: {
                   '';
                 };
               }
-            ));
+            )));
         };
 
         networking.firewall.allowedTCPPorts = [
