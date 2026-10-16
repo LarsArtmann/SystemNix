@@ -838,39 +838,46 @@
       <aside class="sidebar" data-nav>
         <nav>
           <div class="label">Contents</div>
-          <a href="#summary">Summary</a>
-          <a href="#findings">Findings</a>
-          <a href="#issues">Issue Cards</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#plan">Plan</a>
+          <a href="#summary">00 Summary</a>
+          <a href="#q1">01 What did I forget?</a>
+          <a href="#q2">02 Stupid anyway</a>
+          <a href="#q3">03 Done better</a>
+          <a href="#q4">04 Still improve</a>
+          <a href="#q5">05 Did I lie?</a>
+          <a href="#q6">06 Less stupid</a>
+          <a href="#q7">07 Ghost systems</a>
+          <a href="#q8">08 Scope creep</a>
+          <a href="#q10">10 Split brains</a>
+          <a href="#q11">11 Tests</a>
+          <a href="#plan">What's Next</a>
         </nav>
       </aside>
 
       <main class="main">
         <!-- Hero -->
         <div class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="hero-badge">Report Type</div>
-          <h1>Report Title</h1>
+          <div class="hero-badge">Brutal Self-Review</div>
+          <h1>PasteBot Parity — What I Got Wrong</h1>
           <p class="hero-subtitle">
-            One-sentence description of what this report covers.
+            Honest review of the 2026-10-15/16 clipboard-history + snippets session
+            (DMS plugin, niri binds, QML patches). Series episode 3 — cross-references
+            the 2026-09-16 review.
           </p>
         </div>
 
-        <!-- Inline TOC (alternative to sidebar; pick one) -->
         <nav class="toc">
           <h3>Contents</h3>
           <ul>
-            <li><a href="#summary">Summary</a></li>
-            <li><a href="#findings">Findings</a></li>
-            <li><a href="#issues">Issue Cards</a></li>
-            <li><a href="#proposal">Proposal</a></li>
-            <li><a href="#plan">Plan</a></li>
+            <li><a href="#summary">00 Summary</a></li>
+            <li><a href="#q1">01–04 Forgetting / stupidity / better</a></li>
+            <li><a href="#q5">05–07 Honesty / ghosts</a></li>
+            <li><a href="#q8">08–11 Scope / removals / split brains / tests</a></li>
+            <li><a href="#plan">What's Next (prioritized)</a></li>
           </ul>
         </nav>
 
@@ -878,91 +885,292 @@
         <h2 id="summary"><span class="num">00</span>Summary</h2>
         <div class="stat-grid">
           <div class="stat-card">
-            <div class="stat-value">42</div>
-            <div class="stat-label">Total Items</div>
+            <div class="stat-value">11</div>
+            <div class="stat-label">Questions answered</div>
           </div>
           <div class="stat-card stat-bad">
-            <div class="stat-value">7</div>
-            <div class="stat-label">Critical</div>
+            <div class="stat-value">1</div>
+            <div class="stat-label">Real hole found (secret perms)</div>
           </div>
           <div class="stat-card stat-warn">
-            <div class="stat-value">12</div>
-            <div class="stat-label">Warnings</div>
+            <div class="stat-value">4</div>
+            <div class="stat-label">Debts harvested</div>
           </div>
           <div class="stat-card stat-good">
-            <div class="stat-value">35</div>
-            <div class="stat-label">Resolved</div>
+            <div class="stat-value">2</div>
+            <div class="stat-label">Fixed on the spot</div>
           </div>
-        </div>
-
-        <!-- Findings as Cards -->
-        <h2 id="findings"><span class="num">01</span>Findings</h2>
-
-        <div class="card card-problem">
-          <h4>Critical Issue</h4>
-          <p>Description of the problem and its impact.</p>
+          <div class="stat-card stat-good">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Ghost systems</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Split brains</div>
+          </div>
         </div>
 
         <div class="card card-solution">
-          <h4>Recommended Fix</h4>
-          <p>Description of the solution with rationale.</p>
+          <h4>Verdict up front</h4>
+          <p>
+            The feature work itself holds: every functional claim in the status report
+            survived re-verification against the code and the live system today.
+            The review found <strong>one genuine hygiene hole</strong> (saved snippets
+            were world-readable 644 inside a <em>forever-pool-snapshotted</em> home
+            subvolume), <strong>one unverified surface</strong> (Shift+Enter path was
+            never live-probed, unlike its two sibling flows), and <strong>one weak
+            build guard</strong> whose comment promised more than it enforced. The
+            first two-and-a-half are now fixed or queued; the rest is polish.
+          </p>
         </div>
 
-        <!-- Issue Cards -->
-        <h2 id="issues"><span class="num">02</span>Issue Cards</h2>
+        <h2 id="q1"><span class="num">01</span>What did I forget?</h2>
 
         <div class="issue issue-critical">
-          <span class="severity severity-critical">Blocking</span>
-          <h3>Critical finding title</h3>
-          <div class="where">path/to/file.go:42-58</div>
+          <span class="severity severity-critical">Hygiene hole</span>
+          <h3>Snippet files were world-readable — and secrets ride snapshots forever</h3>
+          <div class="where">pkgs/dms-plugins/systemnix-snippets/SnippetsLauncher.qml (save flow) + ~/.local/share/snippets/</div>
           <p>
-            Describe the problem and cite the code or behavior that proves it.
+            The save flow wrote clipboard content with umask-default perms. Verified
+            live today: both seed snippets sat at <code>-rw-r--r--</code>. The feature's
+            entire purpose is "save whatever is on my clipboard" — that includes
+            passwords, tokens, and keys. Worse: <code>~/.local/share/snippets</code>
+            lives inside the <code>@</code> home subvolume, whose <strong>pool-side
+            retention is forever</strong> (docs/agents/storage.md — the exact property
+            that motivated @home-hermes's bounded pool). A secret snippet saved then
+            deleted today still exists in pool snapshots indefinitely.
           </p>
           <div class="callout callout-solution">
-            <strong>Fix</strong>
-            State the concrete recommended action.
+            <strong>Fixed on the spot (repo):</strong> save flow now runs
+            <code>chmod 600</code> after writing; live seed files chmod'd 600.
+            <strong>Still open (owner):</strong> even 600 files ride forever-pool
+            snapshots — accept ("no secrets in snippets" doctrine), bound the
+            retention, or relocate the dir. Queued as a decision row.
           </div>
         </div>
 
         <div class="issue issue-important">
-          <span class="severity severity-important">Important</span>
-          <h3>Important finding title</h3>
-          <div class="where">path/to/another.go:12-19</div>
+          <span class="severity severity-important">Probe debt</span>
+          <h3>Shift+Enter (getPasteArgs) was never live-verified</h3>
+          <div class="where">SnippetsLauncher.qml:261-265 vs status report §b.2</div>
           <p>
-            Explain the risk and why a careful reviewer would hesitate before
-            shipping.
+            Two of the three flows have probe evidence: Enter-to-paste and
+            save-from-clipboard were each proven end-to-end (probes run, artifacts
+            deleted from history — IDs 232/233/239). Shift+Enter has only
+            code-path reasoning: "the launcher's Controller runs these args then
+            sendPasteKeystroke." The status report lists it in the same paragraph as
+            the proven flows without marking the asymmetry — a mild
+            evidence-conflation that this review corrects. Per repo doctrine
+            ("assert WHICH question your evidence answers"), a 30-second probe next
+            time the box is touched closes it.
           </p>
         </div>
 
-        <div class="issue issue-nice">
-          <span class="severity severity-nice">Nice to have</span>
-          <h3>Polish suggestion</h3>
-          <div class="where">docs/ or config</div>
+        <h2 id="q2"><span class="num">02</span>What is stupid that we do anyway?</h2>
+
+        <div class="card card-problem">
+          <h4>Perishable evidence parked as [decision]</h4>
           <p>
-            Minor documentation gaps or future-proofing suggestions go here.
+            Three unexplained reboots (2026-10-15 22:30 / 22:59 / 23:29) are parked
+            behind an owner decision while the journal sits at 7.8/8&nbsp;Gig cap.
+            The §15 pre-vacuum gate protects exposed boots, but "protected from
+            vacuum" is not "classified" — if these are freezes #31+, every day of
+            deferral is a day of unexamined crash evidence. Not this feature's
+            scope, but it is the most time-sensitive open item in the repo right now.
+          </p>
+        </div>
+
+        <div class="card card-warning">
+          <h4>Tolerated unknowns are compounding</h4>
+          <p>
+            Boot-mirror NVRAM reversion is on occurrence #2 with "cause unknown."
+            Unknown-cause events that recur stop being incidents and start being
+            architecture. Each gets a runbook paragraph instead of a root cause.
+            This is a pattern, not a one-off.
+          </p>
+        </div>
+
+        <h2 id="q3"><span class="num">03</span>What could I have done better?</h2>
+
+        <div class="card card-warning">
+          <h4>Guard claims verified a session too late</h4>
+          <p>
+            The patch-block comment claims "build fails if upstream text drifts."
+            I verified that claim <em>today</em> — it was true for five of six
+            markers and weak for one (see 05). The 2026-09-16 review's finding was
+            exactly "guard text overclaim went unchallenged"; the lesson from that
+            episode should have made verifying the guard text part of the same
+            session that wrote it. A reviewer a day later is better than none, but
+            the right time was before "verified" appeared in the status report.
+          </p>
+        </div>
+
+        <div class="card card-warning">
+          <h4>The perms fix belonged in the first draft</h4>
+          <p>
+            "Write clipboard content to disk" should trip a secret-hygiene reflex
+            at design time, not at review time. The data-model question — "what is
+            the most sensitive thing this store can contain?" — was never asked.
+            The answer (everything the clipboard ever held) dictates 600 perms and
+            a retention stance by default.
+          </p>
+        </div>
+
+        <h2 id="q4"><span class="num">04</span>What can I still improve?</h2>
+
+        <div class="card card-solution">
+          <h4>Queued improvements (all harvested)</h4>
+          <p>
+            Size guard in the scan (a multi-MB snippet loads full content into QML
+            memory per item — clipboard MaxEntrySize 5M bounds it, but nothing
+            guards a hand-dropped file); snippet delete action (already queued);
+            DMS upstream filings that would let us <em>delete</em> the QML patches
+            entirely (settings keys) and fix recents persistence
+            (savePluginState); a calm-box post-deploy-check baseline refresh.
+          </p>
+        </div>
+
+        <h2 id="q5"><span class="num">05</span>Did I lie to you?</h2>
+
+        <div class="card card-solution">
+          <h4>No — every re-checkable claim held, with one nuance</h4>
+          <p>
+            Re-verified today against code and live state: niri binds exist at
+            niri-wrapped.nix:518/543/554; plugin registration, settings wiring, and
+            getPasteArgs are all real code (not vaporware); hot-swap copies cleaned,
+            managed symlink final; the fail-loud guard comment is accurate for the
+            perl insert and both constants patches. The one nuance:
+            <code>grep -q 'maximumLineCount: 2'</code> is weak-positive — upstream
+            could carry that literal independently and a silently-skipped sed would
+            pass the guard. <strong>Fixed on the spot:</strong> a negative guard now
+            asserts the old upstream expression is gone, so drift fails the build
+            from both directions. The status report's only soft spot is the
+            Shift+Enter evidence asymmetry (01).
+          </p>
+        </div>
+
+        <h2 id="q6"><span class="num">06</span>How can we be less stupid?</h2>
+
+        <div class="card card-solution">
+          <h4>Two patterns to adopt</h4>
+          <p>
+            <strong>Pair every positive grep guard with its negative twin</strong>
+            (post-state present AND pre-state absent) — presence checks alone can
+            false-pass. <strong>Any feature that persists clipboard or user content
+            to disk gets a secret-hygiene line in its design notes</strong> (perms,
+            retention, backup exposure) before the first line of implementation
+            code. Both are now one-line culture rules in this review; the repo's
+            eval-audit machinery can enforce the first class where it applies.
+          </p>
+        </div>
+
+        <h2 id="q7"><span class="num">07</span>Ghost systems?</h2>
+
+        <div class="card card-solution">
+          <h4>None found — and I looked</h4>
+          <p>
+            Every surface in the plugin is reachable: getPasteArgs is called by the
+            launcher's Shift+Enter path; SnippetsSettings/snippetsDir round-trips
+            through loadPluginData and the HM setting in quickshell.nix:226;
+            recentFiles recents are in-memory by documented necessity (upstream
+            savePluginState broken), not by neglect; the ToastService error path
+            exists for save failures. Nothing registered-but-dead, nothing
+            built-but-unwired.
+          </p>
+        </div>
+
+        <h2 id="q8"><span class="num">08</span>Scope creep?</h2>
+
+        <div class="card card-solution">
+          <h4>Two additions, both necessary</h4>
+          <p>
+            The save flow (<code>:s &gt; name</code>) goes beyond the literal ask,
+            but a paste-only snippet picker is a read-only museum — saving is core
+            to PasteBot parity. The calculator relocation (Super+Ctrl+C) was forced
+            by the bind collision. UI polish was user-ordered mid-session. No gold-plating.
+          </p>
+        </div>
+
+        <h2 id="q9"><span class="num">09</span>Did we remove something useful?</h2>
+
+        <div class="card card-solution">
+          <h4>No</h4>
+          <p>
+            Alt+C survives as the secondary clipboard bind; the calculator moved,
+            it did not die; nothing was deleted in this session except the three
+            probe entries (deliberate, documented). PasteBot itself still runs on
+            macOS — removing that dependency is the user's switch decision, not ours.
+          </p>
+        </div>
+
+        <h2 id="q10"><span class="num">10</span>Split brains?</h2>
+
+        <div class="card card-solution">
+          <h4>None — one near-miss caught mid-review</h4>
+          <p>
+            Checked: hot-swap plugin copies removed (single managed symlink),
+            TODO queue rows paired with library entries, per-service state owned by
+            desktop.md alone, status report is point-in-time by design. Near-miss:
+            my own perms edit this session briefly replaced the save-flow
+            explanatory comment instead of extending it — caught in review and
+            restored. Deleting words while adding words is the one-character-scale
+            version of the split-brain failure mode.
+          </p>
+        </div>
+
+        <h2 id="q11"><span class="num">11</span>Tests — how are we doing?</h2>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Gap</span>
+          <h3>Zero automated coverage for the new surfaces</h3>
+          <div class="where">flake/parts/checks/ — nothing covers binds or plugin</div>
+          <p>
+            The patch block is effectively self-testing (build fails on drift, now
+            from both directions). But the three niri binds and the plugin
+            registration have no guard: a refactor that drops or renames
+            <code>Mod+Shift+C</code> ships silently. The repo already has the
+            pattern (port-registry-audit, systemd-shape-audit) — a tiny eval-time
+            check asserting the three binds exist in the generated niri config and
+            the plugin key resolves would close the class. Cost: one small module;
+            value: the feature that motivated the whole macOS-switch can never
+            silently regress.
           </p>
         </div>
 
         <!-- Strengths -->
-        <h2>Strengths</h2>
+        <h2>What to preserve</h2>
         <div class="strengths">
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
-              <strong>Specific strength</strong>
-              <span>Explain why it matters and what it enables.</span>
+              <strong>Built on DMS primitives, zero new daemons</strong>
+              <span>Rejected cliphist/wtype/ydotool; the compositor's virtual-keyboard protocol does the pasting. One dependency fewer, native theming for free.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Fail-loud patch guards (now bidirectional)</strong>
+              <span>String surgery on upstream QML is defensible only because the build dies on drift — and the pinned rev means drift happens only on explicit bumps.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Probe-then-delete verification discipline</strong>
+              <span>Enter and save flows proven end-to-end with artifacts cleaned from history afterward. Shift+Enter joins them next touch (01).</span>
             </div>
           </div>
         </div>
 
         <!-- Table with Badges -->
-        <h2>Issue Table</h2>
+        <h2>Findings Ledger</h2>
         <table>
           <thead>
             <tr>
               <th>#</th>
               <th>Severity</th>
-              <th>Issue</th>
+              <th>Finding</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -970,63 +1178,90 @@
             <tr>
               <td>1</td>
               <td><span class="badge badge-critical">Critical</span></td>
-              <td>Missing error handling</td>
-              <td><span class="badge badge-fixed">Fixed</span></td>
+              <td>Snippet files 644 + forever-pool snapshots (secret hygiene)</td>
+              <td><span class="badge badge-fixed">Perms fixed; retention = owner decision</span></td>
             </tr>
             <tr>
               <td>2</td>
               <td><span class="badge badge-high">High</span></td>
-              <td>Race condition</td>
-              <td><span class="badge badge-low">Open</span></td>
+              <td>Shift+Enter path never live-probed</td>
+              <td><span class="badge badge-low">Queued [ready]</span></td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>Weak-positive grep guard could false-pass on drift</td>
+              <td><span class="badge badge-fixed">Fixed (negative guard added)</span></td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>No eval guard for binds / plugin registration</td>
+              <td><span class="badge badge-low">Queued [ready]</span></td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>No size guard in snippet scan</td>
+              <td><span class="badge badge-low">Queued [ready]</span></td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>Recents amnesia on DMS restart (upstream bug)</td>
+              <td><span class="badge badge-fixed">Documented; upstream filing queued</span></td>
             </tr>
           </tbody>
         </table>
 
-        <!-- Before/After Comparison -->
-        <h2 id="proposal">Before / After</h2>
-        <div class="compare-header">
-          <div class="compare-before">Before</div>
-          <div class="compare-after">After</div>
-        </div>
-        <div class="compare-row">
-          <div>
-            <pre><code><span class="tok-comment">// Old code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>(data <span class="tok-type">interface</span>{}) { }</code></pre>
-          </div>
-          <div>
-            <pre><code><span class="tok-comment">// New code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>[T <span class="tok-type">any</span>](data T) { }</code></pre>
-          </div>
-        </div>
-
-        <!-- ASCII Diagram -->
-        <h2>Dependency Tree</h2>
-        <div class="dep-tree">
-          <span class="root">root</span> ├──
-          <span class="ok">wanted-dep</span> └──
-          <span class="unwanted">unwanted-dep</span>
-        </div>
-
         <!-- Numbered Steps -->
-        <h2 id="plan"><span class="num">03</span>Migration Plan</h2>
+        <h2 id="plan">What's Next — prioritized</h2>
         <div class="migration-step">
           <div class="migration-num">1</div>
           <div class="migration-content">
-            <h4>Add generic type parameter</h4>
-            <p>Update the function signature to accept a type parameter.</p>
+            <h4>Owner: eyeball the two pickers (the only "great job" gate)</h4>
+            <p>Super+Shift+V and Super+Shift+C. Taste tuning is one-line patches in the quickshell.nix postInstall block. Everything else is done.</p>
           </div>
         </div>
         <div class="migration-step">
           <div class="migration-num">2</div>
           <div class="migration-content">
-            <h4>Update all call sites</h4>
-            <p>Pass explicit types at each call site for type safety.</p>
+            <h4>Owner: classify the three reboots (evidence is perishable)</h4>
+            <p>Planned or freezes #31+? If crashes: autopsies + evidence pulls before the journal cap eats them.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">3</div>
+          <div class="migration-content">
+            <h4>Owner: decide snippet-vs-snapshot exposure</h4>
+            <p>Accept "no secrets" doctrine, bound @ pool retention, or relocate the snippets dir. Perms fix already landed; this decides the snapshot leg.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">4</div>
+          <div class="migration-content">
+            <h4>Dispatch: DMS upstream filings</h4>
+            <p>savePluginState bug + settings-key proposals (modal size, preview lines, item height) that would delete our patches wholesale. Gated by verify-before-filing.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">5</div>
+          <div class="migration-content">
+            <h4>Dispatch: the three small guards</h4>
+            <p>Shift+Enter live probe (30 s); eval-time bind/plugin-presence check (one module, port-registry-audit pattern); snippet scan size cap.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">6</div>
+          <div class="migration-content">
+            <h4>Dispatch: snippet delete + calm-box baseline</h4>
+            <p>Delete action (already queued) and a post-deploy-check re-run on a calm box to refresh the storm-contaminated smoke baseline.</p>
           </div>
         </div>
 
         <footer class="footer">
-          Generated YYYY-MM-DD &middot; All claims verified against source code
-          where noted
+          Generated 2026-10-16 &middot; Every claim in this review re-verified against
+          code or live state in-session &middot; Series: 2026-08-21, 2026-09-16, this
         </footer>
       </main>
     </div>
