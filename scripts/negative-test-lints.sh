@@ -440,11 +440,11 @@ eval_case pastebot bind-key-lost fail 'pastebot-parity-audit: niri bind' \
 # presence-only guards would pass; the audit pins the full command.
 eval_case pastebot bind-repointed fail 'pastebot-parity-audit: niri bind' \
   'sed:platforms/nixos/desktop/niri-wrapped.nix:s|^            ":s"$|            "="|'
-# Leg 3: deregister the plugin (attr-key rename) — the ':s' trigger dies
-# while the Mod+Shift+C bind still points at it; only the plugin assertion
-# catches this shape.
-eval_case pastebot plugin-dropped fail 'pastebot-parity-audit: the systemnix-snippets DMS launcher plugin' \
-  'sed:platforms/nixos/desktop/quickshell.nix:s|systemnix-snippets = {|systemnix-snippets-retired = {|'
+# Leg 3: disable the dms-paste module (the home module registers the
+# plugin) — the ':s' trigger dies while the Mod+Shift+C bind still points
+# at it; only the plugin assertion catches this shape.
+eval_case pastebot plugin-dropped fail 'pastebot-parity-audit: the paste-snippets DMS launcher plugin' \
+  'sed:platforms/nixos/desktop/quickshell.nix:s|programs.dms-paste.enable = true;|programs.dms-paste.enable = false;|'
 
 say ""
 say "=== negative-test-lints: $passed passed, $failed failed ==="

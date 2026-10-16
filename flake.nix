@@ -718,6 +718,15 @@
       url = "github:AvengeMedia/DankMaterialShell/stable";
     };
 
+    # dms-paste — PasteBot-style paste workflow for DMS (snippets launcher
+    # plugin + clipboard-parity settings + clipboard-modal patcher).
+    # Extracted from this tree 2026-10-16 (was pkgs/dms-plugins/
+    # systemnix-snippets + the clipboard legs of quickshell.nix's package
+    # override). Consumed via homeModules.dms-paste + lib.patchDms.
+    dms-paste = {
+      url = "github:LarsArtmann/dms-paste";
+    };
+
     # herdr — Agent multiplexer for the terminal (runs multiple AI coding agents with real panes)
     herdr = {
       url = "github:ogulcancelik/herdr";
@@ -813,6 +822,8 @@
     crm.inputs.flake-parts.follows = "flake-parts";
     crush-config.inputs.treefmt-nix.follows = "treefmt-nix";
     dankMaterialShell.inputs.flake-compat.follows = "flake-compat";
+    dms-paste.inputs.nixpkgs.follows = "nixpkgs";
+    dms-paste.inputs.treefmt-nix.follows = "treefmt-nix";
     erraudit.inputs.flake-parts.follows = "flake-parts";
     go-auto-upgrade.inputs.flake-parts.follows = "flake-parts";
     go-nix-helpers.inputs.flake-parts.follows = "flake-parts";

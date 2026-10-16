@@ -1059,6 +1059,29 @@
         "type": "github"
       }
     },
+    "dms-paste": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792185337,
+        "narHash": "sha256-5id2RH4TExl5KtcDE9lsYPxL1eF+UmNmFmjFM9nDD0Q=",
+        "owner": "LarsArtmann",
+        "repo": "dms-paste",
+        "rev": "b1d9d27ebc06989a15075f508c29739b6a0e91cc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "repo": "dms-paste",
+        "type": "github"
+      }
+    },
     "dnsblockd": {
       "inputs": {
         "art-dupl-src": "art-dupl-src_2",
@@ -7534,6 +7557,7 @@
         "dankMaterialShell": "dankMaterialShell",
         "discordsync": "discordsync",
         "disko": "disko",
+        "dms-paste": "dms-paste",
         "dnsblockd": "dnsblockd",
         "emeet-pixyd": "emeet-pixyd",
         "erraudit": "erraudit_3",

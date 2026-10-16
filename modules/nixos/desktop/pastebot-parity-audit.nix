@@ -1,5 +1,6 @@
 # Eval-time audit: the PasteBot-parity surface (2026-10-15) — three niri
-# binds + the systemnix-snippets DMS launcher plugin — must survive refactors.
+# binds + the paste-snippets DMS launcher plugin (github:LarsArtmann/
+# dms-paste, extracted from this tree 2026-10-16) — must survive refactors.
 #
 # Why this exists: the whole feature is the blocker-removal for switching
 # fully to NixOS (replacing PasteBot on macOS). Unlike ports or systemd
@@ -91,14 +92,15 @@
           dmsEnabled = (uc.programs.dank-material-shell or { }).enable or false;
           pluginAssertions = lib.optionals dmsEnabled [
             {
-              assertion = (uc.programs.dank-material-shell.plugins or { }) ? "systemnix-snippets";
+              assertion = (uc.programs.dank-material-shell.plugins or { }) ? "paste-snippets";
               message = ''
-                pastebot-parity-audit: the systemnix-snippets DMS launcher plugin is
+                pastebot-parity-audit: the paste-snippets DMS launcher plugin is
                 not registered for user '${user}' (programs.dank-material-shell.plugins
                 lacks the key). Without it the ':s' trigger — and therefore the
-                Mod+Shift+C snippets picker — is dead. Fix: restore the plugin block in
-                platforms/nixos/desktop/quickshell.nix, or update this audit if the
-                plugin was deliberately retired.'';
+                Mod+Shift+C snippets picker — is dead. Fix: restore
+                programs.dms-paste.enable in platforms/nixos/desktop/quickshell.nix
+                (the dms-paste home module wires the registration), or update this
+                audit if the plugin was deliberately retired.'';
             }
           ];
         in

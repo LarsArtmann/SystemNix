@@ -3,6 +3,7 @@
   lib,
   pkgs,
   dankMaterialShell,
+  dmsPaste,
   ...
 }:
 let
@@ -14,6 +15,10 @@ in
   imports = [
     dankMaterialShell.homeModules.niri
     dankMaterialShell.homeModules.dank-material-shell
+    # PasteBot-parity paste workflow (snippets launcher plugin +
+    # clipboard-parity settings) — github:LarsArtmann/dms-paste,
+    # extracted from this tree 2026-10-16.
+    dmsPaste.homeModules.dms-paste
   ];
 
   options.programs.systemnix-quickshell = {
@@ -21,12 +26,13 @@ in
 
     package = lib.mkOption {
       type = lib.types.package;
+      # Clipboard-modal density/cleanliness patches come from the dms-paste
+      # input (lib.patchDms — it also adds the perl its perl -0pi leg needs;
+      # the DMS Go build env ships none); the weather recolor below stays
+      # host-side. Compose further legs as chained overrideAttrs.
       default =
-        dankMaterialShell.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
+        (dmsPaste.lib.patchDms pkgs dankMaterialShell.packages.${pkgs.stdenv.hostPlatform.system}.default).overrideAttrs
           (prev: {
-            # postInstall patches Clipboard QML with perl (multi-line edits);
-            # the Go build env does not ship perl by default.
-            nativeBuildInputs = (prev.nativeBuildInputs or [ ]) ++ [ pkgs.perl ];
             postInstall = prev.postInstall + ''
               # Weather "pop": the bar weather widget inherits widgetIconColor/
               # widgetTextColor, which resolve to the muted surfaceText gray in dark
@@ -42,45 +48,6 @@ in
                 -e 's/color: Theme\.widgetTextColor/color: Theme.primary/g' \
                 "$weatherQml"
               grep -q 'color: Theme\.primary' "$weatherQml"
-
-              # Clipboard modal density + cleanliness (2026-10-15, PasteBot-parity
-              # pass). Upstream ships a "Text" caption above EVERY plain-text row,
-              # one preview line, and a 650x550 modal. Changes, all verified by the
-              # grep guards below (build fails if upstream text drifts):
-              #   1. No per-row type caption for plain "text" entries (Image/Long
-              #      Text captions stay — they carry information).
-              #   2. Two preview lines instead of one (fits itemHeight 68: label 18
-              #      + 2x21 text + spacing = 64 <= 68).
-              #   3. Wider/taller modal: 650x550 -> 880x620 (more entries, longer
-              #      previews per line).
-              #   4. Denser rows: itemHeight 72 -> 68.
-              # Drop these patches if upstream grows settings keys for them.
-              clipDir="$out/share/quickshell/dms/Modals/Clipboard"
-              test -f "$clipDir/ClipboardEntry.qml" && test -f "$clipDir/ClipboardConstants.qml"
-              chmod -R u+w "$clipDir"
-              entryQml="$clipDir/ClipboardEntry.qml"
-              perl -0pi -e 's/(switch \(entryType\) \{.*?\n                \}\n)/$1                visible: entryType !== "text"\n/s' "$entryQml"
-              sed -i \
-                -e 's/maximumLineCount: entryType === "long_text" ? 3 : 1/maximumLineCount: 2/' \
-                "$entryQml"
-              grep -q 'visible: entryType !== "text"' "$entryQml"
-              grep -q 'maximumLineCount: 2' "$entryQml"
-              # Negative guard: "maximumLineCount: 2" alone is weak-positive
-              # (upstream could carry it independently) — also assert the OLD
-              # upstream expression is GONE, so a silently-skipped sed fails.
-              if grep -q 'maximumLineCount: entryType === "long_text" ? 3 : 1' "$entryQml"; then
-                echo "clipboard patch drift: sed target survived" >&2
-                exit 1
-              fi
-              constQml="$clipDir/ClipboardConstants.qml"
-              sed -i \
-                -e 's/property int modalWidth: 650/property int modalWidth: 880/' \
-                -e 's/property int modalHeight: 550/property int modalHeight: 620/' \
-                -e 's/property int itemHeight: 72/property int itemHeight: 68/' \
-                "$constQml"
-              grep -q 'modalWidth: 880' "$constQml"
-              grep -q 'modalHeight: 620' "$constQml"
-              grep -q 'itemHeight: 68' "$constQml"
             '';
           });
       description = "The DankMaterialShell package";
@@ -88,15 +55,16 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # PasteBot-parity paste workflow: registers the paste-snippets launcher
+    # plugin (":s" trigger) and mkDefaults the clipboard-parity settings
+    # (enterToPaste/clickToPaste/maxHistory 100000/visibleEntryActions=["pin"])
+    # from the dms-paste input. Pinned by pastebot-parity-audit.nix.
+    programs.dms-paste.enable = true;
+
     programs.dank-material-shell = {
       enable = true;
       systemd.enable = true;
       inherit (cfg) package;
-
-      # Clipboard daemon config (clsettings.json → core clipboard.Config).
-      # maxHistory is NOT a settings.json key — it lives here. Missing keys keep
-      # the Go defaults (MaxEntrySize 5M, MaxPinned 25).
-      clipboardSettings.maxHistory = 100000;
 
       enableSystemMonitoring = true;
       enableDynamicTheming = false;
@@ -146,17 +114,6 @@ in
         # always exist in niri (no hide-when-empty), so the compositor
         # still routes to them; the bar just stops showing unused slots.
         showOccupiedWorkspacesOnly = true;
-
-        # PasteBot-style clipboard behavior: Enter/click on a history entry
-        # pastes it directly into the focused window (DMS synthesizes Ctrl+V
-        # via the compositor's virtual-keyboard protocol; niri supports it).
-        # Without these, selecting an entry only copies it.
-        clipboardEnterToPaste = true;
-        clipboardClickToPaste = true;
-        # Per-row chrome: keep ONLY pin (all actions stay in the right-click
-        # context menu). Default ["pin","edit","delete"] put a 3-icon cluster
-        # on every row — visual noise in a dense history list.
-        clipboardVisibleEntryActions = [ "pin" ];
 
         showWorkspaceApps = true;
         maxWorkspaceIcons = 5;
@@ -226,14 +183,9 @@ in
             sopsFile = "/run/secrets/sops-nix-age-key";
           };
         };
-        # Snippets launcher (PasteBot ⌘⇧C replacement): ":s" trigger in the
-        # spotlight, one .txt file per snippet, ":s > name" captures the
-        # current clipboard as a new snippet. Paste action reuses the DMS
-        # clipboard daemon (dms cl copy + send-paste) — no wtype/ydotool.
-        systemnix-snippets = {
-          src = ../../../pkgs/dms-plugins/systemnix-snippets;
-          settings.snippetsDir = "${config.home.homeDirectory}/.local/share/snippets";
-        };
+        # Snippets launcher (paste-snippets, github:LarsArtmann/dms-paste):
+        # registered by the dms-paste home module via programs.dms-paste —
+        # not listed here anymore.
         # Community plugins — launcher-type plugins integrated into DMS spotlight
         dms-emoji-launcher = {
           src = pkgs.fetchFromGitHub {
