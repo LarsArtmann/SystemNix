@@ -1353,6 +1353,11 @@ _: {
               ]
             )
           ++ [
+            # the PARENT must be declared too: tmpfiles only modes the FINAL
+            # component, so an undeclared parent lands root:root 0755 and the
+            # runner's group-writable children become unwritable (2026-10-16
+            # run 98: Go build cache init died against the 755 parent)
+            "d /mnt/buildcache/ci-runner-cache 2770 root gitea-runner-cache - -"
             "d /mnt/buildcache/ci-runner-cache/gomodcache 0770 root gitea-runner-cache - -"
             "d /mnt/buildcache/ci-runner-cache/gocache 0770 root gitea-runner-cache - -"
             "d /mnt/buildcache/ci-runner-cache/npm 0770 root gitea-runner-cache - -"
