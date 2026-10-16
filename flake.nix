@@ -255,6 +255,16 @@
       url = "github:LarsArtmann/niri-session-manager";
     };
 
+    # offline-banner — yellow offline banner strip (Quickshell layer-shell)
+    # on every monitor while offline; consumed as a NixOS module ONLY
+    # (services.offline-banner). Extracted from this repo's
+    # modules/nixos/desktop/offline-banner.nix 2026-10-16 at v3 behavior
+    # (bar push-down, last-online caption, click-dismiss); the local wrapper
+    # module keeps the systemnix: layer namespace for live parity.
+    offline-banner = {
+      url = "github:LarsArtmann/offline-banner?ref=refs/heads/master";
+    };
+
     # Treefmt formatter with auto-discovery for nix fmt
     treefmt-full-flake = {
       url = "github:LarsArtmann/treefmt-full-flake";
@@ -842,6 +852,10 @@
     nsfw-classifier.inputs.flake-parts.follows = "flake-parts";
     nsfw-classifier.inputs.nixpkgs.follows = "nixpkgs";
     nsfw-classifier.inputs.treefmt-nix.follows = "treefmt-nix";
+    # offline-banner is module-only consumption for this flake (eval-safe,
+    # no FOD builds ride its inputs) — both edges follow root.
+    offline-banner.inputs.nixpkgs.follows = "nixpkgs";
+    offline-banner.inputs.treefmt-nix.follows = "treefmt-nix";
     papdashboard.inputs.flake-parts.follows = "flake-parts";
     papdashboard.inputs.treefmt-nix.follows = "treefmt-nix";
     papdashboard.inputs.nixpkgs.follows = "nixpkgs";

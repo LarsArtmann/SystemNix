@@ -60,13 +60,20 @@ in
         # mirror its contract loosely: every declared secret has a
         # placeholder string (empty here; the VM overrides the template
         # path, so only eval-ability matters).
-        {
-          options.sops.placeholder = lib.mkOption {
-            type = lib.types.attrsOf lib.types.str;
-            default = { };
-          };
-          config.sops.placeholder = lib.mapAttrs (_: _: "") config.sops.secrets;
-        }
+        (
+          {
+            config,
+            lib,
+            ...
+          }:
+          {
+            options.sops.placeholder = lib.mkOption {
+              type = lib.types.attrsOf lib.types.str;
+              default = { };
+            };
+            config.sops.placeholder = lib.mapAttrs (_: _: "") config.sops.secrets;
+          }
+        )
       ];
 
       services.ai-meter = {

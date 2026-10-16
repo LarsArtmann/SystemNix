@@ -6907,6 +6907,30 @@
         "type": "github"
       }
     },
+    "offline-banner": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792187839,
+        "narHash": "sha256-xT6tpzvlChPbKgdE87dvCIeSY53bCbmuHtuwUqDzERA=",
+        "owner": "LarsArtmann",
+        "repo": "offline-banner",
+        "rev": "fff0b61a4a696f2003b85c38e1e34bf9c2f283c0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "refs/heads/master",
+        "repo": "offline-banner",
+        "type": "github"
+      }
+    },
     "otel-tui": {
       "inputs": {
         "flake-utils": [
@@ -7605,6 +7629,7 @@
         "nixpkgs-llama-rag": "nixpkgs-llama-rag",
         "nsfw-classifier": "nsfw-classifier",
         "nur": "nur",
+        "offline-banner": "offline-banner",
         "otel-tui": "otel-tui",
         "overview": "overview",
         "papdashboard": "papdashboard",

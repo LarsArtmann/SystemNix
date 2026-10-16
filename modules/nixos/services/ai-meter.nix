@@ -327,7 +327,8 @@ in
         {
           Type = "oneshot";
           RemainAfterExit = true;
-          ExecStart = lib.getExe' mintScript mintScript.name;
+          # writeShellScript's store path IS the executable (no bin/).
+          ExecStart = "${mintScript}";
           RuntimeDirectory = "ai-meter-keys";
           RuntimeDirectoryMode = "0711";
           # Re-runs (deploy convergence) must not wipe consumer keys:
