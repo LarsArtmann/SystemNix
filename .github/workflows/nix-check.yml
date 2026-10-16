@@ -60,7 +60,11 @@ jobs:
         run: nix flake show --allow-import-from-derivation 2>&1 | head -20
 
       - name: Run statix linter
-        run: nix run nixpkgs#statix -- check .
+        run: |
+          # Pinned to the repo's own lock rev (TODO 863: the registry float
+          # nixpkgs-weekly reded CI overnight twice without a repo change).
+          REV=$(jq -r '.nodes[.nodes.root.inputs.nixpkgs].locked.rev' flake.lock)
+          nix run "github:NixOS/nixpkgs/${REV}" -- statix check .
 
       - name: Run deadnix linter
         run: nix run nixpkgs#deadnix -- --fail --no-lambda-pattern-names .

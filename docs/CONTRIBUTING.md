@@ -174,6 +174,33 @@ if pkgs.stdenv.isLinux then "..." else "..."
 
 Only override in platform dirs for things that genuinely differ.
 
+## Deploy-intent convention (concurrent agent loops)
+
+Multiple agent sessions deploy the same box. Two same-day storms (2026-10-16)
+made this a rule. Before ANY `nix run .#deploy`:
+
+1. **Intent lock** — write `/tmp/systemnix-deploy-intent` containing
+   `session-id + PID + ISO timestamp`, and check it first: if another
+   live intent exists (mtime < 30 min, PID still running), WAIT — do not
+   race the switch. Delete the file when the switch completes (boot or
+   failure).
+2. **Jitter** — sleep a random 0-90 s before starting the build. Two
+   sessions passing step 1 in the same second must not enter the nix
+   daemon together; scale the upper bound up (2-5 min) after any
+   PSI-gate refusal within the last hour.
+3. **Pressure gate** — `/proc/pressure/io` `some avg10 >= 60` = NOT a
+   lull: defer and re-check later (the running nix shim hard-blocks at 80
+   until the shim removal deploys). Deploying into an IO storm produces
+   the 2026-10-16 signature: 58 s ClickHouse queries, phantom-metric
+   pre-deploy failures, multi-hour build windows.
+4. **Quiet-tree precondition** — `git status --short` must show no
+   files you did not author, and `git log --since='10 minutes ago'`
+   must be empty (a daemon commit mid-eval invalidates the §11 FOD
+   preview's tree pin).
+
+The tooling (intent-lock helper + jitter wrapper) is queued in
+docs/todo/pipeline.md; until it lands, steps 1-4 are manual discipline.
+
 ## Verification
 
 ```bash
