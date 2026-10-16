@@ -96,6 +96,41 @@ exists in v0.19.0); pick green via the UI accent toggle.
 - **X-Forwarded-For**: `APP_TRUSTED_PROXIES=127.0.0.1` (Caddy proxies from
   loopback — README's same-host nginx guidance).
 
+## Remote log feeds (multi-source, since 2026-10-16)
+
+Upstream's "shipped files" shape (verified against pinned v0.19.0 + tag
+README): this one instance tails remote access logs shipped into
+`/var/lib/geometrikks-remote-logs/*.log`, kept apart from local traffic by
+per-path `LOGPARSER_HOST_NAME` labels (the UI hostname filter + the map's
+Source filter and per-site home beacons key on them). Plan + traps:
+`docs/planning/2026-10-16_02-38_pbx-traffic-into-geometrikks.md`.
+
+- **Options**: `services.geometrikks.extraLogFiles` (path + format +
+  hostName per file), `logPulls` (name + sshTarget + remotePath + interval),
+  `mapHomeLocations` (hostname → [lat, lon] — every remote source needs an
+  explicit pin; auto-detection resolves a shipped source to THIS host's
+  public-IP location and overlaps the beacons).
+- **The pbx feed** (live config): `geometrikks-log-pull-pbx.timer` pulls
+  `root@pbx.artmann.tech:/var/log/nginx/geometrikks.log` every minute
+  (offset-delta append; auth rides root's default ssh identity — the
+  pbx-backup-pull kit's live-proven path; the PBX holds zero credentials
+  for this host), label `pbx`, format `geometrikks-json`, home pinned to
+  Helsinki hel1. The PBX side is pbx-artmann `hosts/pbx/geometrikks-feed.nix`
+  (upstream's `geometrikks_json` nginx log_format + a second access_log).
+- **DO NOT rsync the raw remote file into the feed dir** — the tailer reads
+  an inode flip (or a ≥99% shrink) as rotation and re-ingests the whole
+  file; only the pull script's append-delta shape is safe. Local feed-file
+  rotation rename-style is safe (new inode = clean rotation, new file read
+  from start).
+- **Failure modes**: ssh failure fails the unit loudly (`onFailure` →
+  notify-failure); a MISSING remote file is a clean exit (remote side not
+  deployed yet — the timer retries); remote logrotate resets the offset
+  (lines written between the last pull and rotation are lost — bounded by
+  the 1-min cadence).
+- **Reading the feed dir** requires nothing extra: the geometrikks unit's
+  ambient `CAP_DAC_READ_SEARCH` (the Caddy 0600-file mechanism above)
+  covers the 0700 root-owned feed files too.
+
 ## Migration notes (from the Docker era)
 
 - **No data migration was needed**: the docker DB was empty (the service ran
