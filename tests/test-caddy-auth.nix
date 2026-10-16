@@ -92,6 +92,11 @@ let
           handle_response @unauth {
             redir * https://auth.test.local/oauth2/sign_in?rd={scheme}://{host}{uri}
           }
+
+          @gatefail status 5xx
+          handle_response @gatefail {
+            respond "auth gateway unavailable" 503
+          }
         }
         reverse_proxy localhost:9002
       }
@@ -197,5 +202,30 @@ in
             found_handle_bare = True
     assert found_handle_external, "protectedVHost must have 'handle @external' block for external auth"
     assert found_handle_bare, "protectedVHost must have bare 'handle' block for LAN bypass"
+
+    # 7. DEAD-GATE arm (2026-10-16, the pbx-artmann lens-burn class: a
+    # caddy forward_auth chain once swallowed a dead-gate dial error into
+    # a BLANK 200). From an EXTERNAL source address: gate up = the 302
+    # sign-in redirect; gate DOWN = an error status, NEVER backend
+    # content.
+    machine.succeed("ip addr add 203.0.113.10/32 dev lo")
+    ext = "curl -s -o /dev/null -w '%{http_code}' --interface 203.0.113.10 --max-time 8 http://127.0.0.1:8082/"
+    up = machine.succeed(ext).strip()
+    assert up in ("302", "403", "401"), f"external + gate up must gate (302/401/403), got: {up}"
+    machine.succeed("systemctl stop mock-oauth2-proxy.service")
+    import time
+    time.sleep(1)
+    dead_code = ""
+    try:
+        dead_code = machine.succeed(ext).strip()
+    except Exception:
+        dead_code = "curl-failed"
+    body = machine.succeed(
+        "curl -s --interface 203.0.113.10 --max-time 8 http://127.0.0.1:8082/ || true"
+    )
+    assert "backend-protected" not in body, (
+        f"DEAD GATE SERVED BACKEND CONTENT (the failblank class): code={dead_code} body={body[:120]}"
+    )
+    print(f"dead-gate arm: gate down answered {dead_code}, no backend content — fail-closed holds")
   '';
 }

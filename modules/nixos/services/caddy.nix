@@ -143,6 +143,14 @@ _: {
           handle_response @unauth {
             redir * https://auth.${domain}/oauth2/sign_in?rd={scheme}://{host}{uri}
           }
+
+          # Fail-closed arm (the 2026-10-16 pbx-artmann lens-burn class):
+          # a gate answering 5xx must NEVER fall through to the backend —
+          # the client gets an honest 503, never protected content.
+          @gatefail status 5xx
+          handle_response @gatefail {
+            respond "auth gateway unavailable" 503
+          }
         }
       '';
 
