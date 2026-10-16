@@ -365,6 +365,18 @@ through the outage) — first runs surfaced three migration gaps, all fixed:
   publickey after the origin flip. Fixed: `id_ed25519.pub` registered as
   forgejo key `lars-evo-x2-id_ed25519` (revocable; UI-equivalent). Probe:
   `ssh -T forgejo@evo-x2.home.lan` (user `forgejo`, NOT `git`).
+- **ProtectSystem=strict + warm-cache env (runs 98/99)**: the nixpkgs runner
+  module defaults `ProtectSystem=strict` — the unit's mount namespace binds
+  the WHOLE hierarchy ro+nosuid, so `mkdir $GOCACHE/00` died EROFS even with
+  correct 2770 group perms (EROFS ≠ EACCES is the fingerprint; verify with
+  `grep sdb1 /proc/$(systemctl show -p MainPID --value …)/mounts`). Fixed:
+  `ReadWritePaths = [ "/mnt/buildcache/ci-runner-cache" ]` — the mount
+  gating (`unitConfig.RequiresMountsFor`) was already in place, satisfying
+  the /mnt/ ReadWritePaths eval rule. Related tmpfiles gotcha: tmpfiles `d`
+  modes ONLY the final path component — the undeclared PARENT
+  `ci-runner-cache/` landed root:root 0755 and broke group writes; the
+  parent now has its own `d` rule (2770, setgid so children inherit the
+  group).
 
 Domain CI note: the domains terraform runs (`Nix checks…`, `Plan/Apply
 Changes`) were failing on the same runner INDEPENDENTLY of the hub work
