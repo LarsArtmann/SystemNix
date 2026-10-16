@@ -27,6 +27,12 @@ QtObject {
     property string snippetsDir: "~/.local/share/snippets"
 
     property var snippets: []           // [{ fileName, name, content, preview }]
+    // Session-scoped (in-memory only): DMS 1.6.3's PluginService state
+    // writer is broken ("_flushStateToDisk" createObject returns false →
+    // "Property 'connect' of object false is not a function" — every
+    // savePluginState call WARNs and persists nothing). Recency ordering
+    // survives within a session; re-add persistence when upstream fixes the
+    // state writer.
     property var recentFiles: []        // fileNames, most recent first
     property bool refreshInFlight: false
     property real lastRefreshAt: 0
@@ -37,11 +43,6 @@ QtObject {
         const dir = pluginService.loadPluginData("systemnix-snippets", "snippetsDir", snippetsDir);
         if (dir && dir.trim().length > 0)
             snippetsDir = dir.trim();
-        recentFiles = pluginService.loadPluginState("systemnix-snippets", "recentFiles", []) || [];
-        // Instant cache on instance creation: last session's snapshot.
-        const snapshot = pluginService.loadPluginState("systemnix-snippets", "snapshot", null);
-        if (snapshot && snippets.length === 0)
-            snippets = snapshot;
         refresh();
     }
 
@@ -113,10 +114,8 @@ QtObject {
                     return a.name.localeCompare(b.name);
                 });
                 root.snippets = parsed;
-                if (root.pluginService) {
-                    root.pluginService.savePluginState("systemnix-snippets", "snapshot", parsed);
-                    root.pluginService.savePluginState("systemnix-snippets", "recentFiles", root.recentFiles);
-                }
+                // Deliberately NO savePluginState here — see recentFiles note
+                // above (upstream state writer is broken in DMS 1.6.3).
             }
         }
     }
@@ -229,8 +228,6 @@ QtObject {
         if (next.length > 10)
             next.length = 10;
         recentFiles = next;
-        if (pluginService)
-            pluginService.savePluginState("systemnix-snippets", "recentFiles", recentFiles);
     }
 
     // PasteBot-style Enter: copy into the DMS clipboard (which also records
