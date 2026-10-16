@@ -75,6 +75,10 @@ _: {
       # Dedicated Samsung-TLC subvolume storage (Set-B, 2026-09-18 staged-
       # primary plan docs/planning/2026-09-18_16-44_*). Inert until enabled.
       dedicated = config.services.forgejo.dedicatedSubvolume;
+      # Code-search index dir (see the settings.indexer comment): plain dir
+      # on the Samsung hot toplevel, deliberately outside the subvol.
+      forgejoIndexDir = "/mnt/hot/forgejo-index";
+      repoIndexerEnabled = (cfg.settings.indexer.REPO_INDEXER_ENABLED or false);
       dataDirMountUnit = "${utils.escapeSystemdPath stateDir}.mount";
       # G1 migration marker: scripts/migrate-forgejo-subvol.sh `finalize`
       # touches this INSIDE the subvol after the delta-verify. Every stateful
@@ -370,6 +374,50 @@ _: {
               DEFAULT_ACTIONS_URL = "github";
             };
 
+            # Code search (wave-1 idea #2, enabled 2026-10-16): the bleve
+            # indexer turns all ~470 mirrors into a private code-search
+            # engine over everything LarsArtmann owns, public AND private.
+            # v15 key names verified against the v15.0 config cheat sheet:
+            # INCLUDE/EXCLUDE are comma-separated GLOB lists (gobwas/glob),
+            # MAX_FILE_SIZE is BYTES, vendored dirs are excluded by default.
+            # The index lives on /mnt/hot (Samsung toplevel, plain dir) —
+            # OUTSIDE the forgejo subvol so the 8h btrbk leg never ships
+            # rebuildable derived data and index churn never bloats the
+            # pool sends, and OUTSIDE the QLC @ snapshots so churn never
+            # pins root bytes. /var/lib/forgejo already lives on the same
+            # NVMe, so this adds no new availability coupling (the service
+            # additionally RequiresMountsFor the dir below).
+            indexer = {
+              REPO_INDEXER_ENABLED = true;
+              REPO_INDEXER_TYPE = "bleve";
+              REPO_INDEXER_PATH = "/mnt/hot/forgejo-index/repos.bleve";
+              # 512 KiB: source files only — skips generated blobs and
+              # data dumps that would dominate index size for marginal
+              # search value.
+              MAX_FILE_SIZE = 524288;
+              REPO_INDEXER_EXCLUDE = lib.concatStringsSep "," [
+                "package-lock.json"
+                "**.sum"
+                "**.min.js"
+                "**.min.css"
+                "**.map"
+                "**.pb.go"
+                "**_pb2.py"
+                "**.svg"
+                "**.png"
+                "**.jpg"
+                "**.jpeg"
+                "**.gif"
+                "**.pdf"
+                "**.woff"
+                "**.woff2"
+                "**.ttf"
+                "**.otf"
+                "dist/**"
+                "node_modules/**"
+              ];
+            };
+
             other = {
               SHOW_FOOTER_VERSION = false;
               SHOW_FOOTER_TEMPLATE_LOAD_TIME = false;
@@ -416,6 +464,15 @@ _: {
                 RequiresMountsFor = [ stateDir ];
                 ConditionPathIsMountPoint = stateDir;
                 ConditionPathExists = subvolMigratedCondition;
+              })
+              # Index dir on the hot tier: pull the mount into the start
+              # transaction the same way the subvol is pulled (writing the
+              # index onto a shadow dir would silently burn QLC + pin
+              # snapshot bytes — the exact split-brain the hot-tier
+              # doctrine forbids). Same-NVMe as stateDir, so this widens
+              # the failure surface by nothing real.
+              (lib.mkIf repoIndexerEnabled {
+                RequiresMountsFor = [ forgejoIndexDir ];
               })
             ];
             serviceConfig = lib.mkMerge [
@@ -1198,6 +1255,18 @@ _: {
           };
         };
 
+        # Warm-cache CI (wave-1 #7, 2026-10-16): host-mode jobs inherit the
+        # runner's env, so pointing the standard cache vars at ONE persistent
+        # location turns every workflow's first cold build into a one-time
+        # cost. /mnt/buildcache is the house build-cache disk (unsnapshotted,
+        # churn-safe — the same home ~/.npm and GOMODCACHE already converged
+        # onto for interactive work). A DynamicUser cannot own tmpfiles
+        # dirs, so the dirs are group-owned by a static group the runner
+        # joins via SupplementaryGroups; RequiresMountsFor keeps the runner
+        # from starting against a shadow dir on the QLC root (loud Gatus,
+        # never silent churn).
+        users.groups.gitea-runner-cache = { };
+
         systemd.services."gitea-runner-${utils.escapeSystemdPath hostName}" = {
           after = [ "forgejo.service" ];
           wants = [ "forgejo.service" ];
@@ -1221,13 +1290,14 @@ _: {
           ];
           serviceConfig = lib.mkMerge [
             {
-              EnvironmentFile = lib.mkForce "-/run/forgejo-runner/token";
-              ExecStartPre = lib.mkForce [
-                ("+" + lib.getExe genRunnerToken)
-                (lib.getExe registerRunner)
-              ];
-              TimeoutStartSec = "3min";
-              MemoryMax = "16G";
+            EnvironmentFile = lib.mkForce "-/run/forgejo-runner/token";
+            ExecStartPre = lib.mkForce [
+            ("+" + lib.getExe genRunnerToken)
+            (lib.getExe registerRunner)
+            ];
+            TimeoutStartSec = "3min";
+            MemoryMax = "16G";
+            SupplementaryGroups = [ "gitea-runner-cache" ];
             }
             ioTier.build
           ];
@@ -1237,10 +1307,20 @@ _: {
         systemd.tmpfiles.rules =
           lib.throwIf (themeAuditErrors != [ ])
             "forgejo theme audit: ${lib.concatStringsSep "; " themeAuditErrors}"
-            [
-              "Z ${stateDir} 0750 forgejo forgejo - -"
-              "d ${forgejoBackupDir} 0750 forgejo forgejo -"
-            ]
+            (
+              [
+                "Z ${stateDir} 0750 forgejo forgejo - -"
+                "d ${forgejoBackupDir} 0750 forgejo forgejo -"
+              ]
+              ++ lib.optionals repoIndexerEnabled [
+                "d ${forgejoIndexDir} 0750 forgejo forgejo - -"
+              ]
+            )
+          ++ [
+            "d /mnt/buildcache/ci-runner-cache/gomodcache 0770 root gitea-runner-cache - -"
+            "d /mnt/buildcache/ci-runner-cache/gocache 0770 root gitea-runner-cache - -"
+            "d /mnt/buildcache/ci-runner-cache/npm 0770 root gitea-runner-cache - -"
+          ]
           ++ lib.mapAttrsToList (
             name: path: "L+ /var/lib/forgejo/custom/public/assets/css/${name} - - - - ${path}"
           ) forgejoThemes;
@@ -1287,6 +1367,13 @@ _: {
                   "[BODY] == pat(*system_forgejo_mirror_scrape_errors 0*)"
                   "[BODY] == pat(*system_forgejo_mirror_sync_stalled 0*)"
                   "[BODY] == pat(*system_forgejo_mirror_erroring 0*)"
+                  # Presence-only (2026-10-16): the two counts legitimately
+                  # read high during a post-boot catch-up, so exact-0 here
+                  # would page every boot. Threshold paging is the SigNoz
+                  # rules (Forgejo Mirror Sync Backlog / Auth Failures);
+                  # a vanished line = collector blind = red.
+                  "[BODY] == pat(*\nsystem_forgejo_mirror_sync_stale_count *)"
+                  "[BODY] == pat(*\nsystem_forgejo_auth_failures_24h *)"
                 ];
                 alert = "Forgejo pull-mirror syncing broken. stalled=1: freshest mirror sync >10h old — dead queue (restart forgejo.service; the unique queue wedges after a hard freeze, cron pushes then dedup-skip silently). erroring=1: syncs actively failing — journalctl -u forgejo --grep SyncMirrors (credential-helper ENOENT / DNS allowlist rejects). scrape_errors=1: forgejo sqlite unreadable.";
               }

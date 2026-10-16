@@ -538,6 +538,38 @@ in
       interval = "5m";
       severity = "critical";
     };
+
+    # Forgejo mirror sync backlog (2026-10-16): mirrors whose last sync
+    # ATTEMPT is older than 4h (2x the 2h pull interval). TouchMirror
+    # advances updated_unix on FAILED attempts too, so this climbs only
+    # when the update queue is not running — the partial-wedge shape the
+    # freshest-age stall flag cannot see. Gatus owns metric presence; the
+    # threshold lives here because a post-boot catch-up legitimately reads
+    # high for minutes. 20 of ~470 mirrors = a systemic queue problem, not
+    # stragglers.
+    "signoz/rules/forgejo-mirror-backlog.json".source = mkRule {
+      name = "Forgejo Mirror Sync Backlog (>20 stale)";
+      description = "20+ pull mirrors have no sync attempt for 4h+ — the mirror update queue is wedged (restart forgejo.service; the unique queue dedup-skips silently after a hard freeze) or a post-outage backlog is not draining";
+      query = "system_forgejo_mirror_sync_stale_count";
+      target = 20;
+      interval = "5m";
+      severity = "warning";
+    };
+
+    # Forgejo auth-failure audit (2026-10-16): the SSO-only instance's
+    # rejected-auth volume. Baseline is ~15/day anonymous git probes from
+    # the runner's unauthenticated retry ladder; hundreds+ is a revoked or
+    # rotted token looping in a consumer (the 2026-10-12 sync-token-401
+    # incident logged thousands/hour with zero pages). This is the
+    # instance's only auth-audit signal — v15 has no audit-log subsystem.
+    "signoz/rules/forgejo-auth-failures.json".source = mkRule {
+      name = "Forgejo Auth Failures (24h >500)";
+      description = "forgejo rejected 500+ auth attempts in 24h — a consumer is looping with a revoked/rotted token (the 2026-10-12 sync-token 401 class). Find the caller: journalctl -u forgejo --grep '401 Unauthorized' --since -24h, source IPs + repo paths name the loop";
+      query = "system_forgejo_auth_failures_24h";
+      target = 500;
+      interval = "5m";
+      severity = "warning";
+    };
   };
 
   dashboards = {
