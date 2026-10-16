@@ -1205,11 +1205,11 @@
         "samber-do-auditlog": "samber-do-auditlog_3"
       },
       "locked": {
-        "lastModified": 1792172952,
-        "narHash": "sha256-gYGi6BCSTiLpwycEz1dyj85t5edr1g5wtHlyyC1nyaM=",
+        "lastModified": 1792182553,
+        "narHash": "sha256-l0Yoop12GESSz3gUJBYblv1u7t+7O0G33gigQ7fDvgA=",
         "owner": "LarsArtmann",
         "repo": "erraudit",
-        "rev": "42278718ffd5e3e66a9cb2a166fe5ed57a2f9feb",
+        "rev": "100ce1ce0b2ddbe533aef7cf789a70cfaf10e2ec",
         "type": "github"
       },
       "original": {
