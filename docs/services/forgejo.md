@@ -366,3 +366,61 @@ authenticate, so forgejo's managed authorized_keys (forced `forgejo serv key-N`
 commands, written by forgejo-ssh-keys) were unreachable. `allowUsers` now
 includes `forgejo`; the forced commands expose exactly the git transport. Push
 URL shape: `forgejo@evo-x2.home.lan:<owner>/<repo>.git`.
+
+## Actions overview/dashboard — research CLOSED, no native tool exists (2026-10-16)
+
+Research chain complete (source-level, live-probe-backed; full evidence in
+`docs/status/2026-10-16_07-05_forgejo-actions-dashboard-research-complete.md`).
+Do NOT re-research — the verified facts:
+
+- **NO native instance-wide Actions overview** — web routes AND API both lack it
+  (only repo/org-scoped history; the one cross-repo API query returns
+  waiting/running jobs only). No implementing PR anywhere: gitea#31692 +
+  #33162 are OPEN proposals (no maintainer work, no linked PRs); Forgejo tracks
+  no equivalent request (3 search surfaces). No third-party dashboard tool
+  exists (delightful-forgejo + GitHub + web search; Grafana registry
+  bot-blocked from CLI). Nobody is building this.
+- **No metrics path at either component** — runner has no Prometheus endpoint;
+  the server's `/metrics` registers exactly ONE collector codebase-wide
+  (`routers/web/web.go:405`) with zero Actions counters. Dead end, do not revisit.
+- **Deployed version live-verified 15.0.10** (`GET /api/v1/version`,
+  2026-10-16) → the #14843 Actions log-transfer regression IS present
+  (retried `UpdateLog(NoMore)` 500s → zombie-reap as failed 10–15 min). Fix =
+  v15.0 backport **PR 14856, still open, no milestone** — ride the next 15.0.x
+  patch carrying it. Watch row: `docs/todo/services.md`.
+- **The DIY feed (if the cohort outgrows bookmarks)**: poll
+  `GET /api/v1/repos/{owner}/{repo}/actions/tasks?status=failure&page=&limit=`
+  per Actions-enabled repo (exists on v15.0, status enum:
+  unknown/waiting/running/success/failure/cancelled/skipped/blocked) into a
+  textfile metric — the `system_forgejo_mirror_sync_stale_count` house pattern
+  (Gatus presence + SigNoz rule). Prerequisite: the scoped read-only Forgejo
+  token `[decision]` row. Org-scope live-queue probe:
+  `GET /api/v1/orgs/{org}/actions/runners/jobs` (waiting/running ONLY — a
+  "jobs stuck = runner wedged" Gatus check). v17-only workflow-job webhooks are
+  the push alternative but pin an LTS-major jump.
+- Per-repo Actions tabs + browser bookmarks remain the sufficient answer at the
+  current cohort size (eventcatalog-hub + domains, G2-flipped 2026-10-16).
+
+## Go module registry (first publish 2026-10-16)
+
+Publish-only proxy (NOT a pull-through cache — modules not uploaded 404; it
+never fetches proxy.golang.org on miss). First module:
+`github.com/larsartmann/go-cqrs-lite v1.7.1`.
+
+- **Publish** (v15 contract verified live): `PUT /api/packages/lars/go/upload`
+  with the module zip as MULTIPART `file` field (`curl -F "file=@x.zip"` — the
+  docs' "zip in the body" phrasing is wrong, a raw body 500s
+  "Content-Type isn't multipart/form-data"). Zip source for public modules:
+  `https://proxy.golang.org/<module>/@v/<version with / → %2F>.zip` (canonical
+  go.dev zip). Same name+version re-upload = 409 (immutable; delete first).
+  Subdirectory tags (`watermill/v4.7.0`) are NESTED modules — publish the
+  root module path.
+- **Consume** (local dev, forgejo-first with graceful fallback):
+  `GOPROXY="http://localhost:3000/api/packages/lars/go,https://proxy.golang.org" go build ./...`
+  — verified v1.7.1 downloads FROM FORGEJO with sumdb verification intact
+  (bytes are proxy.golang.org's). Private modules additionally need
+  `GOPRIVATE` + `.netrc` credentials (not yet exercised — no private module
+  published yet).
+- Expansion path (owner: "one day lars.software"): vanity import meta tags +
+  this registry = self-hosted module distribution; blocked only on a public
+  ingress story.
