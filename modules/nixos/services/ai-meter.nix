@@ -86,9 +86,16 @@ _: {
           api_key = "${config.sops.placeholder.ai-meter-openrouter-key}";
         }
         {
+          # NATIVE Google transport (crush's gemini provider rides
+          # google-genai-sdk): bare host — clients append
+          # v1beta/models/<model>:streamGenerateContent themselves — and
+          # the key forwards as X-Goog-Api-Key (native endpoints reject
+          # Bearer API keys). Probe evidence: docs/todo/ai-stack.md gemini
+          # row.
           name = "gemini";
-          base_url = "https://generativelanguage.googleapis.com/v1beta/openai";
+          base_url = "https://generativelanguage.googleapis.com";
           api_key = "${config.sops.placeholder.ai-meter-gemini-key}";
+          auth_style = "x-goog-api-key";
         }
         {
           name = "llama-chat";

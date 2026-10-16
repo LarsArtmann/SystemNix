@@ -20,12 +20,14 @@ Path-based, so client model vocabularies stay identical everywhere:
 ```
 crush provider zai        → http://127.0.0.1:8107/v1/zai/chat/completions        → https://api.z.ai/api/paas/v4
 crush provider kimi-coding → http://127.0.0.1:8107/v1/kimi/chat/completions       → https://api.moonshot.ai/v1
+crush provider gemini      → http://127.0.0.1:8107/v1/gemini/v1beta/models/<m>:streamGenerateContent
+                           → https://generativelanguage.googleapis.com (NATIVE genai protocol, X-Goog-Api-Key)
 paperless-gpt             → http://127.0.0.1:8107/v1/fastflowlm/chat/completions  → 127.0.0.1:52625 (FastFlowLM)
 inboxclean chat           → http://127.0.0.1:8107/v1/llama-chat/chat/completions  → 127.0.0.1:8850 (llama.cpp)
-(+ openrouter, gemini, llama-embeddings upstreams declared; unused ones cost nothing)
+(+ openrouter, llama-embeddings upstreams declared; unused ones cost nothing)
 ```
 
-The proxy is TRANSPARENT: bodies pass through untouched except one opt-in injection — `stream_options.include_usage: true` on streaming requests that lack it, so the final SSE chunk carries the usage block the metering needs. `inject_stream_usage: false` in the rendered config disables it.
+The proxy is TRANSPARENT: bodies pass through untouched except one opt-in injection — `stream_options.include_usage: true` on streaming requests that lack it, so the final SSE chunk carries the usage block the metering needs. `inject_stream_usage: false` in the rendered config disables it. Native genai traffic is exempt from the injection (genai bodies would reject the foreign field); its usage comes from `usageMetadata` instead (genai.go adapter, 2026-10-17).
 
 ## Secrets & clients
 
@@ -35,7 +37,7 @@ The proxy is TRANSPARENT: bodies pass through untouched except one opt-in inject
 
 | Client | Key consumption | Routed via |
 | --- | --- | --- |
-| `crush` | raw file, `$(cat /run/ai-meter-keys/crush)` in the crushrc `extraRc` (home.nix) — overrides `zai` + `kimi-coding` base URLs; later provider-add statements win | zai, kimi |
+| `crush` | raw file, `$(cat /run/ai-meter-keys/crush)` in the crushrc `extraRc` (home.nix) — overrides `zai` + `kimi-coding` + `gemini` base URLs; later provider-add statements win | zai, kimi, gemini (native) |
 | `paperless-gpt` | env file `OPENAI_API_KEY=…` on the daemon unit | fastflowlm |
 | `inboxclean` | env file on `inboxclean-web` | llama-chat |
 
@@ -54,7 +56,7 @@ Durable ledger: `/var/lib/ai-meter/usage.jsonl` — one JSON object per call (th
 
 ## Traps
 
-- **gemini is NOT routed — protocol VERIFIED native (2026-10-17), adapter queued** — crush v0.98.1's `gemini` provider rides google-genai-sdk NATIVE transport even with a custom `--base-url` (`POST {base}/v1beta/models/<model>:streamGenerateContent?alt=sse`, `X-Goog-Api-Key` auth, genai bodies — probe evidence in docs/todo/ai-stack.md). Wiring it needs a native adapter in the Go proxy (alt auth header, genai usage parsing), NOT an extraRc line; a blind override would 401 and meter nothing. No gemini models are declared in crushrc today, so nothing is unmetered meanwhile.
+- **gemini rides the NATIVE genai protocol** (probe 2026-10-17: crush v0.98.1's gemini provider = google-genai-sdk transport, `v1beta/models/<model>:streamGenerateContent?alt=sse`, `X-Goog-Api-Key` auth — even with a custom `--base-url`). The genai.go adapter handles all of it: client auth via the X-Goog-Api-Key channel, upstream auth via `auth_style = "x-goog-api-key"`, model-from-URL metering, `usageMetadata` extraction (thoughtsTokenCount folds into completion tokens), query-string preservation (`?alt=sse` is REQUIRED — dropping it silently changes the response format). No gemini models are declared in crushrc yet, so nothing routes there until one is `model add`-ed; gemini tokens meter exactly, cost $0 until a cost entry exists (no invented prices).
 - **Key rotation**: delete `/run/ai-meter-keys/*` + restart `ai-meter-keys` + restart consumers — or just reboot (fresh mint at boot).
 - **Metering must never break a call**: parse failures degrade to request-counting (`model="none"`, `usage_missing`) and increment `ai_meter_metering_errors_total` — check it before trusting dashboards.
 - **hermes** calls GLM/MiniMax from its own app config — wiring it needs a hermes-repo change (open row in docs/todo/ai-stack.md).
@@ -65,5 +67,5 @@ Gatus: "ai-meter" (:8107/health, 200 + <500ms) and "ai-meter metrics" (:8108/met
 
 ## Tests
 
-- Go: `buildflow -s test-race` (auth, routing, streaming usage capture, injection, cost math, ledger, label escaping, e2e vs a fake upstream)
-- VM: `nix build .#checks.x86_64-linux.ai-meter-vm` — unit boot, key mint ownership/perms, health, unauthorized 401, unknown-upstream 404, metrics exposition
+- Go: `buildflow -s test-race` (auth, routing, streaming usage capture, injection, cost math, ledger, label escaping, e2e vs a fake upstream; genai.go adapter: native path/auth/usage/query-preservation e2e vs a fake gemini upstream)
+- VM: `nix build .#checks.x86_64-linux.ai-meter-vm` — unit boot, key mint ownership/perms (consumer copies + ai-meter mirrors + non-root chown path), health, unauthorized 401, unknown-upstream 404, metrics exposition
