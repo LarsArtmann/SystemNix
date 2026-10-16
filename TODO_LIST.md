@@ -563,7 +563,7 @@
 - [ ] [ready] **Eval lint: volatile credential sources** (reject/flag `LoadCredential=`/`EnvironmentFile=` paths under /run/ whose writer is the SAME unit's ExecStartPre — the gitea-runner every-boot class, invisible to the sops eval gate) → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-16_00-07_boot-failure-triage.md §e.1/§f.6)
 
 ### upstream
-- [ ] [ready] **File DMS upstream issues: savePluginState writer bug + getItems doc drift (verify-before-filing: repro on main + issue search first)** → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: same report §a.4)
+- [x] [ready] **File DMS upstream issues: savePluginState writer bug + getItems doc drift** — CLOSED: bug already filed upstream (#3611) + FIXED (PR #3733, merged 2026-10-11, after our rev); layout-settings feature request drafted + voice-checked, HELD for owner review → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: same report §a.4 + docs/drafts/2026-10-16_dms-clipboard-modal-layout-settings.md)
 
 - [ ] **PMA OTel span instrumentation upstream (overview `fff1035` pattern)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **papdashboard OTel span instrumentation upstream (clone first)** → [docs/todo/upstream.md](docs/todo/upstream.md)
