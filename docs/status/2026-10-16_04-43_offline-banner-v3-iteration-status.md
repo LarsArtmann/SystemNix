@@ -43,7 +43,7 @@
 
 | Item | Works | Open | Blocker | Effort |
 | --- | --- | --- | --- | --- |
-| **Deploy banner v3** | committed, eval+lint green | live system runs v1 (gen 904): no push-down, no caption, no dismissal | shared tree does not compile: `browser-history-server` fails on `unknown field StateShape … snapshot.Snapshot` (`_local_deps/cqrs-htmx/usermgmt/snapshot.go:200`) — the concurrent session's vendored-code vs `go-cqrs-lite d15e0a4` skew from their lock bump; two deploy attempts failed on THEIR derivation before mine ever builds | external — their session; S once healed |
+| **Deploy banner v3** | committed, eval+lint green | live system runs v1 (gen 904): no push-down, no caption, no dismissal | KNOWN ENUMERATED DEPLOY-BLOCKER (CHANGELOG 2026-10-16, the concurrent session): upstream `browser-history` master `cbe6bac` has a drifted vendored cqrs-htmx copy (`snapshot.go:200` `StateShape`) — fix is upstream-side, then SystemNix relock; "NO evo-x2 deploy can go green until this lands". My two failed attempts hit exactly this documented blocker | external — upstream browser-history fix + relock; S once landed |
 | Click-to-dismiss | logic committed (one MouseArea → proven slide binding) | never clicked by human or machine | needs a live click (deploy first) or a virtual-pointer harness | S |
 | v1→v3 doc parity | module header is v3 | desktop.md + FEATURES.md still say v1 — being fixed in THIS report's harvest (fix-on-sight, not queued) | none | done in harvest |
 | Bar-overlap question (report 1 §f.3) | RESOLVED by owner decision + v2 implementation (push-down chosen) | stale `[blocked:user]` row being closed in this harvest | none | done in harvest |
@@ -79,7 +79,7 @@ Nothing shipped is broken; the honest failures this segment:
 
 | # | Task | Impact | Effort | Category | Harvest |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Deploy banner v3 as soon as the shared tree compiles (blocked by browser-history `StateShape`; retry after the concurrent session's migration settles) | High | S | Feature | → TODO_LIST + desktop.md [blocked:deploy] |
+| 1 | Deploy banner v3 once the KNOWN deploy-blocker clears: upstream `browser-history` StateShape fix + SystemNix relock (enumerated in CHANGELOG 2026-10-16 by the concurrent session; blocked 2 of my deploys tonight) | High | S | Feature | → TODO_LIST + desktop.md [blocked:deploy] |
 | 2 | Click-to-dismiss verification: first live outage/deploy click, or virtual-pointer harness | Medium | S | Verification | → merged into existing [watch] live-debts row |
 | 3 | `OFFLINE_BANNER_DEMO=1` env: force-show without probes (makes demos + post-deploy checks a one-liner; retires the unroutable-IP drop-in hack) | Medium | S | Feature | → TODO_LIST + desktop.md [ready] |
 | 4 | Broken-toplevel build signal: local-tree `nh`/toplevel failures page nowhere (two silent failures tonight); deploy-log watcher metric or failure hook | High | M | Feature | → TODO_LIST + pipeline.md [ready] |
