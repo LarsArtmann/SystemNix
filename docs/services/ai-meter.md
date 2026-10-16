@@ -54,7 +54,7 @@ Durable ledger: `/var/lib/ai-meter/usage.jsonl` — one JSON object per call (th
 
 ## Traps
 
-- **gemini is NOT routed yet** — crush's gemini provider type is unverified against the proxy path (native-API risk). Verify, then add the extraRc override (land-the-replacement-first doctrine).
+- **gemini is NOT routed — protocol VERIFIED native (2026-10-17), adapter queued** — crush v0.98.1's `gemini` provider rides google-genai-sdk NATIVE transport even with a custom `--base-url` (`POST {base}/v1beta/models/<model>:streamGenerateContent?alt=sse`, `X-Goog-Api-Key` auth, genai bodies — probe evidence in docs/todo/ai-stack.md). Wiring it needs a native adapter in the Go proxy (alt auth header, genai usage parsing), NOT an extraRc line; a blind override would 401 and meter nothing. No gemini models are declared in crushrc today, so nothing is unmetered meanwhile.
 - **Key rotation**: delete `/run/ai-meter-keys/*` + restart `ai-meter-keys` + restart consumers — or just reboot (fresh mint at boot).
 - **Metering must never break a call**: parse failures degrade to request-counting (`model="none"`, `usage_missing`) and increment `ai_meter_metering_errors_total` — check it before trusting dashboards.
 - **hermes** calls GLM/MiniMax from its own app config — wiring it needs a hermes-repo change (open row in docs/todo/ai-stack.md).
