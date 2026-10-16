@@ -274,8 +274,11 @@ _: {
         # rotation (content changes touch no secret file — geometrikks-env
         # precedent).
         sops.templates."crowdsec-bouncer-geometrikks-env" = lib.mkIf bouncerInScope {
-          owner = config.services.crowdsec.user;
-          group = config.services.crowdsec.group;
+          # root:root 0400 (geometrikks-env precedent + sops-key-audit):
+          # systemd's manager itself reads EnvironmentFile and injects the
+          # var — the crowdsec DynamicUser process never opens the file.
+          owner = "root";
+          group = "root";
           mode = "0400";
           restartUnits = [ "crowdsec-bouncer-register.service" ];
           content = ''
