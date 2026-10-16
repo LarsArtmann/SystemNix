@@ -15,6 +15,9 @@
 #   - pr1943: tmpfiles L+ rule + restartTriggers (patch-apply class)
 #   - counts collector: unit + 5min timer + fail-closed emission
 #   - gatus: the CrowdSec check carries the cs_parser_hits_total health leg
+#   - group-read: timer ExecStart hits the bin/ executable (203/EXEC class:
+#     interpolating the writeShellApplication derivation = a directory) and
+#     crowdsec's pre-start re-mode runs +-privileged
 {
   pkgs,
   inputs,
@@ -113,10 +116,22 @@ let
       pass = lib.any (f: lib.hasInfix "mode 0640" f) caddyLogFormats;
     }
     {
-      name = "caddy-logs-groupread-timer-missing";
+      # 203/EXEC class: ExecStart interpolating the writeShellApplication
+      # DERIVATION (a directory) instead of its bin/ executable — shipped
+      # in dc09d036, live-failed every 5 min from 16:27 on 2026-10-16.
+      name = "caddy-logs-groupread-timer-execstart-not-bin";
       pass =
         (cs.crowdsec-caddy-logs-readable or { }) != { }
-        && (evox2.systemd.timers.crowdsec-caddy-logs-readable or { }) != { };
+        && (evox2.systemd.timers.crowdsec-caddy-logs-readable or { }) != { }
+        && lib.hasInfix "/bin/caddy-logs-group-read" (
+          toString (cs.crowdsec-caddy-logs-readable.serviceConfig.ExecStart or "")
+        );
+    }
+    {
+      name = "caddy-logs-groupread-prestart-not-privileged";
+      pass = lib.any (e: lib.hasPrefix "+" e && lib.hasInfix "/bin/caddy-logs-group-read" e) (
+        map toString (cs.crowdsec.serviceConfig.ExecStartPre or [ ])
+      );
     }
     {
       name = "counts-collector-bouncer-gauge-lost";

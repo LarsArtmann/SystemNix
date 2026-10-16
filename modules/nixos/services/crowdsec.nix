@@ -80,6 +80,22 @@ _: {
         hash = "sha256-DDx0NhuWLhz1a6FrmmtW0YlUgAFiJkBxliwNjkOb3gQ=";
       };
 
+      # Group-read re-assert for caddy access logs (crowdsec acquis tails).
+      # caddy's mode 0640 applies at CREATE only — open(2) never re-modes
+      # existing files, so pre-override 0600 files stay unreadable to the
+      # tails until re-moded. Shared by the 5-min timer and crowdsec's
+      # +-privileged ExecStartPre (chmod needs file owner or root; crowdsec
+      # is neither on caddy:caddy files). ExecStart must interpolate the
+      # bin/ EXECUTABLE — the bare derivation is a directory (203/EXEC,
+      # live 2026-10-16).
+      caddyLogsGroupRead = pkgs.writeShellApplication {
+        name = "caddy-logs-group-read";
+        runtimeInputs = [ pkgs.coreutils ];
+        text = ''
+          chmod g+r /var/log/caddy/*.log 2>/dev/null || true
+        '';
+      };
+
       lapiCredentialsFile = "/var/lib/crowdsec/lapi.yaml";
 
       yaml = pkgs.formats.yaml { };
@@ -340,8 +356,13 @@ _: {
           requires = [ "crowdsec-prereq.service" ];
 
           # PR #1943 patch-apply (see pr1943Parser above): reload the parser
-          # on deploy — parsers load at agent start only.
-          restartTriggers = [ pr1943Parser ];
+          # on deploy — parsers load at agent start only. The group-read
+          # script rides along: a script change must restart the tails,
+          # not just the timer.
+          restartTriggers = [
+            pr1943Parser
+            caddyLogsGroupRead
+          ];
 
           serviceConfig = lib.mkMerge [
             {
@@ -384,6 +405,12 @@ _: {
                 # coreutils — bare `ln` failed EXEC at the 08:07 start
                 # (live 2026-10-16).
                 "${pkgs.coreutils}/bin/ln -sfn ${pr1943Parser} /etc/crowdsec/parsers/s01-parse/sshd-success-logs.yaml"
+                # Re-mode pre-override 0600 caddy logs BEFORE the tails
+                # open them — a failed tail setup DROPS the caddy source
+                # for the process lifetime (no retry until restart,
+                # live 2026-10-16). "+" = run as root: crowdsec is neither
+                # owner nor privileged on caddy:caddy files.
+                "+${caddyLogsGroupRead}/bin/caddy-logs-group-read"
               ];
             }
           ];
@@ -478,13 +505,7 @@ _: {
             {
               Type = "oneshot";
               ReadWritePaths = [ "/var/log/caddy" ];
-              ExecStart = pkgs.writeShellApplication {
-                name = "caddy-logs-group-read";
-                runtimeInputs = [ pkgs.coreutils ];
-                text = ''
-                  chmod g+r /var/log/caddy/*.log 2>/dev/null || true
-                '';
-              };
+              ExecStart = "${caddyLogsGroupRead}/bin/caddy-logs-group-read";
               TimeoutStartSec = "1min";
             }
           ];
