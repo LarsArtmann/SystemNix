@@ -35,7 +35,12 @@ let
       metrics_listen = "127.0.0.1:8108";
       ledger_path = "/var/lib/ai-meter/usage.jsonl";
       inject_stream_usage = true;
-      clients = [ { name = "vmtest"; key_file = "/run/ai-meter-keys/config/vmtest"; } ];
+      clients = [
+        {
+          name = "vmtest";
+          key_file = "/run/ai-meter-keys/config/vmtest";
+        }
+      ];
       upstreams = [
         {
           name = "dead";

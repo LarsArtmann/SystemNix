@@ -452,24 +452,23 @@ in
       # paperless-gpt (→ fastflowlm upstream), inboxclean (→ llama-chat
       # upstream). Runbook: docs/services/ai-meter.md.
       ai-meter.enable = true;
-      ai-meter.clients =
-        {
-          # crush interactive + daemon sessions read the raw key at
-          # session start (crushrc extraRc in home.nix).
-          crush.user = config.users.primaryUser;
-        }
-        // lib.optionalAttrs config.services.paperless-gpt.enable {
-          paperless-gpt = {
-            user = "paperless-gpt";
-            envKey = "OPENAI_API_KEY";
-          };
-        }
-        // lib.optionalAttrs (config.services.inboxclean.enable or false) {
-          inboxclean = {
-            user = "inboxclean";
-            envKey = "OPENAI_API_KEY";
-          };
+      ai-meter.clients = {
+        # crush interactive + daemon sessions read the raw key at
+        # session start (crushrc extraRc in home.nix).
+        crush.user = config.users.primaryUser;
+      }
+      // lib.optionalAttrs config.services.paperless-gpt.enable {
+        paperless-gpt = {
+          user = "paperless-gpt";
+          envKey = "OPENAI_API_KEY";
         };
+      }
+      // lib.optionalAttrs (config.services.inboxclean.enable or false) {
+        inboxclean = {
+          user = "inboxclean";
+          envKey = "OPENAI_API_KEY";
+        };
+      };
       # Miniflux RSS reader (rss.home.lan). Admin password rides sops
       # platforms/nixos/secrets/miniflux.yaml — retrieve with the Sops + Age
       # one-liner (break-glass only); daily login is Pocket ID OIDC. The

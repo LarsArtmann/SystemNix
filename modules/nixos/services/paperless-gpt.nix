@@ -83,7 +83,11 @@
         # direct, or through ai-meter when the metering proxy is enabled.
         LLM_PROVIDER = "openai";
         LLM_MODEL = config.services.fastflowlm.model;
-        OPENAI_BASE_URL = if aiMeterEnabled then "http://127.0.0.1:${toString ports.ai-meter}/v1/fastflowlm" else "http://127.0.0.1:${toString config.services.fastflowlm.port}/v1";
+        OPENAI_BASE_URL =
+          if aiMeterEnabled then
+            "http://127.0.0.1:${toString ports.ai-meter}/v1/fastflowlm"
+          else
+            "http://127.0.0.1:${toString config.services.fastflowlm.port}/v1";
         OPENAI_API_KEY = "fastflowlm-local-no-auth";
         # Suggestion language pinned to the archive's majority language,
         # matching PAPERLESS_AI_LLM_OUTPUT_LANGUAGE in paperless.nix (A11).
@@ -391,8 +395,10 @@
               StateDirectoryMode = "0700";
               WorkingDirectory = stateDir;
               ExecStart = lib.getExe pkg;
-              EnvironmentFile = [ runtimeEnvFile ]
-                ++ lib.optionals aiMeterEnabled [ "/run/ai-meter-keys/paperless-gpt.env" ];
+              EnvironmentFile = [
+                runtimeEnvFile
+              ]
+              ++ lib.optionals aiMeterEnabled [ "/run/ai-meter-keys/paperless-gpt.env" ];
             }
             (harden {
               MemoryMax = "512M";

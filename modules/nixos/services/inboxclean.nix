@@ -203,7 +203,11 @@
           # through it).
           extraEnvironment = {
             LLM_PROVIDER = "openai";
-            OPENAI_BASE_URL = if aiMeterEnabled then "http://127.0.0.1:${toString ports.ai-meter}/v1/llama-chat" else "http://127.0.0.1:${toString config.services.llama-chat.port}/v1";
+            OPENAI_BASE_URL =
+              if aiMeterEnabled then
+                "http://127.0.0.1:${toString ports.ai-meter}/v1/llama-chat"
+              else
+                "http://127.0.0.1:${toString config.services.llama-chat.port}/v1";
             LLM_MODEL = config.services.llama-chat.alias;
           };
         };
@@ -212,10 +216,8 @@
         # GOMEMLIMIT=384MiB / start-limit guards now ship upstream with
         # identical mkDefault values; ReadWritePaths=dataDir likewise.
         systemd.services.inboxclean-web = {
-          after = [ "sops-nix.service" ]
-            ++ lib.optionals aiMeterEnabled [ "ai-meter.service" ];
-          wants = [ "sops-nix.service" ]
-            ++ lib.optionals aiMeterEnabled [ "ai-meter.service" ];
+          after = [ "sops-nix.service" ] ++ lib.optionals aiMeterEnabled [ "ai-meter.service" ];
+          wants = [ "sops-nix.service" ] ++ lib.optionals aiMeterEnabled [ "ai-meter.service" ];
           inherit onFailure;
 
           serviceConfig = lib.mkMerge [
