@@ -240,6 +240,15 @@ _: {
           cfg.backendPort
         ];
 
+        # Ephemeral-port collision guard (live 2026-10-16 07:11): with the
+        # socket-activation design the backend port is usually UNBOUND, so
+        # outbound connections (probes to node_exporter, etc.) can grab it
+        # from the ephemeral range — flm's bind then fails EADDRINUSE and
+        # the backend crash-loops. Reserve both ports from the kernel's
+        # ephemeral allocation.
+        boot.kernel.sysctl."net.ipv4.ip_local_reserved_ports" =
+          lib.mkDefault "${toString cfg.port},${toString cfg.backendPort}";
+
         systemd.sockets.fastflowlm = {
           description = "FastFlowLM NPU LLM server (public socket)";
           wantedBy = [ "sockets.target" ];

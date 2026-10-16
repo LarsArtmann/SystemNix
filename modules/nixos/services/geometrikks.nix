@@ -305,12 +305,13 @@
           pull:
           let
             feedDir = "/var/lib/geometrikks-remote-logs";
+            sshBin = lib.getExe pkgs.openssh;
             pullScript = pkgs.writeShellScript "geometrikks-log-pull-${pull.name}" ''
               set -euo pipefail
               feed="${feedDir}/${pull.name}.log"
               offset_file="${feedDir}/${pull.name}.offset"
               ssh_opts=(-o BatchMode=yes -o ConnectTimeout=20)
-              remote_size="$(ssh "''${ssh_opts[@]}" "${pull.sshTarget}" "stat -c %s '${pull.remotePath}' 2>/dev/null || echo MISSING")"
+              remote_size="$(${sshBin} "''${ssh_opts[@]}" "${pull.sshTarget}" "stat -c %s '${pull.remotePath}' 2>/dev/null || echo MISSING")"
               if [ "$remote_size" = "MISSING" ]; then
                 # Remote log not deployed yet (or removed) — clean exit,
                 # the timer retries every interval. Loud-fail class is
@@ -333,7 +334,7 @@
               # Append-only: same inode on the feed path, so the
               # tailer sees pure growth (an inode flip reads as
               # rotation and would re-ingest everything).
-              ssh "''${ssh_opts[@]}" "${pull.sshTarget}" "tail -c +$((offset + 1)) '${pull.remotePath}'" >> "$feed"
+              ${sshBin} "''${ssh_opts[@]}" "${pull.sshTarget}" "tail -c +$((offset + 1)) '${pull.remotePath}'" >> "$feed"
               printf '%s\n' "$remote_size" > "$offset_file.tmp"
               mv "$offset_file.tmp" "$offset_file"
             '';

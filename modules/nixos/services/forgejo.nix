@@ -488,6 +488,14 @@ _: {
                 TimeoutStartSec = "4min";
               }
               { ExecStartPre = forgejoMainDnsGate.serviceConfig.ExecStartPre; }
+              # The bleve indexer writes under /mnt/hot/forgejo-index
+              # (REPO_INDEXER_PATH); ProtectSystem=strict (nixpkgs module
+              # default) makes everything outside ReadWritePaths read-only —
+              # without this leg the first start after the indexer went live
+              # EROFS'd at index init (live 2026-10-16 07:10).
+              (lib.mkIf repoIndexerEnabled {
+                ReadWritePaths = [ forgejoIndexDir ];
+              })
             ];
             preStart = lib.getExe adminSetup;
           };
