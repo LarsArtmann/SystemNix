@@ -13,17 +13,17 @@ in
     {
       name = "HaGeZi-ultimate";
       url = hagezi "hosts/ultimate.txt";
-      hash = "sha256-NnfzUkrGmPy9++YSWlNZKzatg3nV4PyLGpV5o0wcUpI=";
+      hash = "sha256-EhTG2hTsybKbmQZp3/ydVcyVUpRwT6vc8DbxmczbZQ4=";
     }
     {
       name = "HaGeZi-tif";
       url = hagezi "hosts/tif.txt";
-      hash = "sha256-0OgTrZjwVPEpZ93v0xECxZ27DIIbozu/iWf6Xk99zEE=";
+      hash = "sha256-ReEh7Mum9YsCeQJLCymUXErvpVlyRsG6EA92cjpKCWQ=";
     }
     {
       name = "HaGeZi-doh";
       url = hagezi "hosts/doh.txt";
-      hash = "sha256-uJuS2gPbvmSAco+oGdIPtSHCPOc54Z6+DGYubO34FCY=";
+      hash = "sha256-z00/JP8zQiCjlo3gdtgPzLgyz5WrWRSc2OKnEjb/Qmo=";
     }
     {
       name = "HaGeZi-native-apple";
@@ -83,17 +83,17 @@ in
     {
       name = "HaGeZi-gambling";
       url = hagezi "dnsmasq/gambling.txt";
-      hash = "sha256-ujbbeu2OHaWbb/TNmuz8tKB/IwwRfiut2RCzpMHUgFw=";
+      hash = "sha256-buvN31Nlcg2F4dnJTbskCFSp77KT13e+MC/YCkuTPOA=";
     }
     {
       name = "HaGeZi-nsfw";
       url = hagezi "dnsmasq/nsfw.txt";
-      hash = "sha256-8PKZR3KneG5ri8/fqNuEN2AJdT50SVXByl30J5uyt8U=";
+      hash = "sha256-gtSwYCrGSZ4PO2msFin844qwMjIRxgEwlwtkKttdTvc=";
     }
     {
       name = "HaGeZi-social";
       url = hagezi "dnsmasq/social.txt";
-      hash = "sha256-Sy0loMyFaPI5bdF7MOZ6swDI9K+0IVfm/r5Ribx455s=";
+      hash = "sha256-mxTyflhNFLuGl4Sfvd7M0va5GM38fz+d9dZ2FnTUoCk=";
     }
     {
       name = "HaGeZi-dyndns";
@@ -112,12 +112,12 @@ in
       # Re-pinned 2026-10-14: upstream content update broke the build with a
       # hash mismatch (old yq5KLUId…); new content probed STABLE twice 20s
       # apart via nix store prefetch-file before this edit.
-      hash = "sha256-ehhA9Nf/7hBMIInGC5OCqYuEbmUA6l/Mwu0Asn5gY+w=";
+      hash = "sha256-xiO3b1plZhSRR1+BfGlhUivcAneiJ6oApdiJX9g0qDc=";
     }
     {
       name = "HaGeZi-urlshortener";
       url = hagezi "dnsmasq/urlshortener.txt";
-      hash = "sha256-plNxd4DW04LEaqwBOHBOOgZXXeLAfIy/CIwiPCHTqi0=";
+      hash = "sha256-KYstcKMWiwZ+A14q+3RECCdhtml3A/TnELEGDG8n4lc=";
     }
     {
       name = "HaGeZi-nosafesearch";
@@ -127,7 +127,7 @@ in
     {
       name = "HaGeZi-dga7";
       url = hagezi "domains/dga7.txt";
-      hash = "sha256-surykTj2MNssI0VO3vA/cKfIgIO4H4sdwouRxEJOPHc=";
+      hash = "sha256-6fDRn6q1L66O8gRCWEc7N3e71jMzh8Ljtn/nX2KuqSw=";
     }
   ];
 
