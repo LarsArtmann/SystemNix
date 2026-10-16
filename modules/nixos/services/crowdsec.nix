@@ -59,6 +59,25 @@ _: {
         hostname = "www.crowdsec.net";
       };
 
+      # PR #1943 patch-apply (2026-10-16, owner ask "patch-apply our #1943 PR
+      # via nix"): the hub's sshd-success-logs parser still filters
+      # `program == 'sshd'`, so OpenSSH >= 9.8 "sshd-session" Accepted lines
+      # never parse into auth_success events (runbook acquis CAVEAT a).
+      # Until the PR merges upstream and ships via a hub update, pin the
+      # PR's patched parser (fork branch head 99985ff6, byte-verified against
+      # the local hubtest-green clone) and overwrite the hub item's install
+      # symlink with it (tmpfiles rule below). The content mismatch marks the
+      # item TAINTED, and cscli never overwrites tainted items on
+      # install/upgrade without --force (pkg/cwhub sync.go setVersionState —
+      # source-verified v1.8.1), so the override survives the unconditional
+      # `hub update` + `collections install` at every agent start, and every
+      # activation re-asserts the L+ link. REMOVE this entry once PR #1943
+      # merges — the next cscli install then restores the hub file.
+      pr1943Parser = pkgs.fetchurl {
+        url = "https://raw.githubusercontent.com/LarsArtmann/hub/99985ff655a62dbb5b174441ae2295f19d02b2be/parsers/s01-parse/crowdsecurity/sshd-success-logs.yaml";
+        hash = "sha256-DDx0NhuWLhz1a6FrmmtW0YlUgAFiJkBxliwNjkOb3gQ=";
+      };
+
       lapiCredentialsFile = "/var/lib/crowdsec/lapi.yaml";
 
       yaml = pkgs.formats.yaml { };
@@ -170,6 +189,17 @@ _: {
         users.users.${config.services.crowdsec.user}.extraGroups = lib.mkIf config.services.caddy.enable [
           "caddy"
         ];
+
+        # PR #1943 patch-apply (see pr1943Parser above): L+ force-replaces
+        # cscli's install symlink at every activation; restartTriggers makes
+        # a deploy actually reload it (parsers load at agent start only).
+        systemd.tmpfiles.settings."20-crowdsec-pr1943" = {
+          "/etc/crowdsec/parsers/s01-parse/sshd-success-logs.yaml".link = {
+            type = "L+";
+            argument = "${pr1943Parser}";
+          };
+        };
+        systemd.services.crowdsec.restartTriggers = [ pr1943Parser ];
 
         # Stage 1 has NO bouncer: the bouncer module's register oneshot still
         # activates (its enable defaults to crowdsec.enable) and its
