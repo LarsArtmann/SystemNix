@@ -102,9 +102,12 @@ let
     in
     bindAssertions ++ pluginAssertions;
 
+  # home-manager is absent on HM-less hosts (rpi3-dns) and in the
+  # flake-parts eval context (discovered modules are imported BOTH as
+  # flake-parts registrations and NixOS host modules) — `or { }` guards both.
   niriUsers = lib.filterAttrs (
     user: uc: (uc.programs.niri or { }).enable or false
-  ) config.home-manager.users;
+  ) (config.home-manager.users or { });
 in
 {
   config.assertions = lib.concatLists (lib.mapAttrsToList userAssertions niriUsers);

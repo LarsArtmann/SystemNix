@@ -67,8 +67,13 @@ QtObject {
             "DIR=\"$1\"; " +
             "for f in \"$DIR\"/*.txt; do " +
             "  [ -f \"$f\" ] || continue; " +
-            "  printf '\\036%s\\037' \"${f##*/}\"; " +
-            "  cat \"$f\"; " +
+            "  size=$(wc -c < \"$f\"); " +
+            "  if [ \"$size\" -gt 65536 ]; then " +
+            "    printf '\\036%s\\037\\001TOO_LARGE\\001%s\\n' \"${f##*/}\" \"$size\"; " +
+            "  else " +
+            "    printf '\\036%s\\037' \"${f##*/}\"; " +
+            "    cat \"$f\"; " +
+            "  fi; " +
             "done",
             "scan", root.expandedDir()
         ]
@@ -89,20 +94,29 @@ QtObject {
                         continue;
                     const fileName = record.slice(0, sep);
                     const content = record.slice(sep + 1);
+                    const oversized = content.startsWith("\x01TOO_LARGE\x01");
+                    const oversizeBytes = oversized ? (parseInt(content.slice(11), 10) || 0) : 0;
                     const name = fileName.replace(/\.txt$/i, "");
-                    let preview = content.split("\n")[0] || "";
-                    preview = preview.trim();
-                    const lineCount = content.replace(/\n+$/, "").split("\n").length;
-                    if (preview.length > 80)
-                        preview = preview.slice(0, 80) + "…";
-                    if (preview.length === 0)
-                        preview = content.trim().length > 0 ? "(multiline)" : "(empty)";
+                    const lineCount = oversized ? 1 : content.replace(/\n+$/, "").split("\n").length;
+                    let preview;
+                    if (!oversized) {
+                        let pv = content.split("\n")[0] || "";
+                        pv = pv.trim();
+                        if (pv.length > 80)
+                            pv = pv.slice(0, 80) + "…";
+                        if (pv.length === 0)
+                            pv = content.trim().length > 0 ? "(multiline)" : "(empty)";
+                        preview = pv;
+                    } else {
+                        preview = "(too large: " + Math.round(oversizeBytes / 1024) + " KB — not listed; open the file directly)";
+                    }
                     if (lineCount > 1)
                         preview = preview + "  ·  " + lineCount + " lines";
                     parsed.push({
                         fileName: fileName,
                         name: name,
-                        content: content,
+                        content: oversized ? "" : content,
+                        oversized: oversized,
                         preview: preview
                     });
                 }
@@ -185,12 +199,55 @@ QtObject {
             }];
         }
 
+        // Delete mode: ":s -name" lists matching snippets; Enter trashes
+        // the file (trash, never rm — recoverable from the desktop trash).
+        if (trimmed.startsWith("-")) {
+            const deleteQuery = trimmed.slice(1).trim();
+            const dTokens = deleteQuery.length > 0 ? deleteQuery.toLowerCase().split(/\s+/) : [];
+            const dItems = [];
+            for (let i = 0; i < snippets.length; i++) {
+                const snippet = snippets[i];
+                if (snippet.oversized)
+                    continue;
+                const relevance = deleteQuery.length === 0 ? 1 : score(snippet, deleteQuery.toLowerCase(), dTokens);
+                if (relevance === 0)
+                    continue;
+                dItems.push({
+                    name: snippet.name,
+                    comment: "Move " + snippet.fileName + " to trash",
+                    action: "delete",
+                    icon: "delete",
+                    categories: ["Snippets"],
+                    _fileName: snippet.fileName
+                });
+            }
+            if (dItems.length === 0)
+                dItems.push({
+                    name: "No matching snippets",
+                    comment: "Type part of a name after - to trash it",
+                    action: "hint",
+                    icon: "info",
+                    categories: ["Snippets"]
+                });
+            return dItems.slice(0, 50);
+        }
+
         const lowerQuery = trimmed.toLowerCase();
         const tokens = lowerQuery.length > 0 ? lowerQuery.split(/\s+/) : [];
         const items = [];
 
         for (let i = 0; i < snippets.length; i++) {
             const snippet = snippets[i];
+            if (snippet.oversized) {
+                items.push({
+                    name: snippet.name,
+                    comment: snippet.preview,
+                    action: "hint",
+                    icon: "warning",
+                    categories: ["Snippets"]
+                });
+                continue;
+            }
             const relevance = lowerQuery.length === 0 ? 1 : score(snippet, lowerQuery, tokens);
             if (relevance === 0)
                 continue;
@@ -248,6 +305,11 @@ QtObject {
             ToastService?.showInfo("Pasted snippet: " + item.name);
             trackRecent(item._fileName);
             break;
+        case "delete":
+            deleteProcess.deleteName = item.name;
+            deleteProcess.deleteFile = item._fileName;
+            deleteProcess.running = true;
+            break;
         case "save":
             saveProcess.saveName = item._saveName;
             saveProcess.saveSlug = item._saveSlug;
@@ -262,6 +324,34 @@ QtObject {
         if (!item || item.action !== "paste")
             return null;
         return ["sh", "-c", "printf '%s' \"$1\" | setsid dms cl copy", "snippet-copy", item._content || ""];
+    }
+
+    // Delete goes through `trash` (system path — repo doctrine: never rm),
+    // so a mistaken delete is recoverable from the desktop trash. The -n
+    // guard refuses an empty NAME: `trash "$DIR/"` would swallow the whole
+    // snippets directory.
+    property Process deleteProcess: Process {
+        id: deleteProcess
+        property string deleteName: ""
+        property string deleteFile: ""
+        command: ["sh", "-c",
+            "DIR=\"$1\"; NAME=\"$2\"; [ -n \"$NAME\" ] || exit 2; trash \"$DIR/$NAME\"",
+            "delete", root.expandedDir(), deleteFile
+        ]
+        running: false
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.refresh();
+            }
+        }
+
+        onExited: function (exitCode, exitStatus) {
+            if (exitCode === 0)
+                ToastService?.showInfo("Snippet trashed: " + deleteName);
+            else
+                ToastService?.showError("Failed to trash snippet (exit " + exitCode + ")");
+        }
     }
 
     // "dms cl paste" streams the live clipboard to stdout; we write it into
