@@ -63,6 +63,7 @@ in
   port-registry-audit = import ./test-port-registry-audit.nix { inherit pkgs inputs system; };
   harden-lifecycle = import ./test-harden-lifecycle.nix { inherit pkgs inputs; };
   geometrikks-caps = import ./test-geometrikks-caps.nix { inherit pkgs inputs; };
+  crowdsec-render = import ./test-crowdsec-render.nix { inherit pkgs inputs; };
   mkfilesystem =
     let
       outcome = import ./test-mkFilesystem.nix { inherit (pkgs) lib; };
