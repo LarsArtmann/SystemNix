@@ -973,6 +973,7 @@
 - [x] [ready] **systemnix-snippets delete action** — LANDED 2026-10-16: `:s -name` form + trash-based deleteProcess (empty-name guarded); rides next deploy → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §c.1)
 
 - [ ] [ready] **Trace the 10:48 session-restore helium non-spawn + journal-pin when the wedged launch guard actually started swallowing main launches** → [docs/todo/desktop.md](docs/todo/desktop.md)
+- [ ] [ready] **Stop niri.service Restart=on-failure from resurrecting an oomd-killed niri as a headless zombie during session teardown (var-based condition passes mid-teardown; SDDM-lockout class, live 2026-10-17)** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [ready] **Live-verify KeePassXC passkeys in Helium (user-assisted ceremony: chrome://policy + one real passkey create/re-auth — policy went live with the 10-06 deploy)** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [x] [ready] **Attribute the gkr-pam `couldn't unlock the login keyring` activation bursts (promptless, post-password-store=basic; incl. the 2 pre-login lines)** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [x] [ready] **Login instance audit: helium.service + session-manager restore must converge on ONE instance (guard not stuck in wait-loop; crash-restart execs the new wrapper)** → [docs/todo/desktop.md](docs/todo/desktop.md)
@@ -1424,3 +1425,4 @@
 - [ ] [ready] **Journald truncated-file warnings (`system@…journal~ is truncated`) — check rotation health** (hit 4× in one session) → [docs/todo/stability.md](docs/todo/stability.md) (Source: docs/status/2026-10-16_19-55_bank-sync-cli-backfill-split-brain-sca-rearm-zero-render.md §f31)
 - [ ] [ready] **ai-meter follow-ups: gemini-via-proxy verification, hermes wiring, SigNoz dashboard** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md) (Source: ai-meter build session 2026-10-16 + docs/services/ai-meter.md)
 - [ ] [watch] **Agent Router adoption triggers T1–T4** (ai-meter owns metering; residual value = failover/quotas) → [docs/todo/ai-stack.md](docs/todo/ai-stack.md) (Source: docs/research/2026-10-16_agent-router-deep-dive.html)
+- [ ] [ready] **ai-meter BLOCKER: daemon cannot read client keys (two-copy mint fix) + ai-meter-vm green + deploy + live verification chain** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md) (Source: docs/status/2026-10-17_00-17_ai-meter-build-session-status.html §04/§06 — VM-caught 0400 foreign-owner read, fix shape documented)
