@@ -20,8 +20,8 @@ A failed start is expected during a cold boot until dnsblockd is answering;
 
 ## Data sources (acquisitions)
 
-- **sshd** via journald (`_SYSTEMD_UNIT=sshd.service`, `type: syslog`) — collection `crowdsecurity/linux`. **Verified healthy 2026-10-16** (an earlier "100% parse-ko" alarm was noise lines behaving correctly — retracted, docs/todo/services.md): s00-raw parses all lines OK; sshd-logs covers `sshd-session` (OpenSSH ≥9.8). CAVEATS: (a) `sshd-success-logs` hub parser still filters `program == 'sshd'` → successful logins unparsed (queued, docs/todo/services.md); (b) the journalctl source runs `-n 0` — **no backfill**: lines landing while the engine is down/restarting are never analyzed.
-- **Caddy access logs** via `/var/log/caddy/*.log` (JSON; covers `access.log` + every `access-<host>.log`) — collection `crowdsecurity/caddy`. **STATUS 2026-10-16: DARK** — `PrivateUsers=true` nullifies `CAP_DAC_READ_SEARCH`, glob matches zero files (fix queued, docs/todo/services.md). The cap-vs-group note below predates that finding; group membership inside the userns is the working fix.
+- **sshd** via journald (`_SYSTEMD_UNIT=sshd.service`, `type: syslog`) — collection `crowdsecurity/linux`. **Verified healthy 2026-10-16** (an earlier "100% parse-ko" alarm was noise lines behaving correctly — retracted, docs/todo/services.md): s00-raw parses all lines OK; sshd-logs covers `sshd-session` (OpenSSH ≥9.8). CAVEATS: (a) `sshd-success-logs` hub parser still filters `program == 'sshd'` → successful logins unparsed — hub master verified STILL unfixed 2026-10-16; route = upstream PR (verify-before-filing done), arrives via the hub update at an agent start after the merge (which needs the cdn-hub whitelist, deployed); (b) the journalctl source runs `-n 0` — **no backfill**: lines landing while the engine is down/restarting are never analyzed.
+- **Caddy access logs** via `/var/log/caddy/*.log` (JSON; covers `access.log` + every `access-<host>.log`) — collection `crowdsecurity/caddy`. **STATUS 2026-10-16: fix landed in-tree, verify-pending deploy** — the RUNNING generation is still DARK (`PrivateUsers=true` nullifies `CAP_DAC_READ_SEARCH`, glob matches zero files); the fix puts crowdsec in the `caddy` group (crowdsec.nix — auxiliary gids map through the userns). Post-deploy verify: file-source hits > 0 in /metrics + one synthetic request parsed.
 
 **LAN whitelist (parser s02-enrich):** `127.0.0.1`, `::1`, RFC1918 never become
 alerts. This is deliberate — household clients must be un-bannable before the
@@ -100,15 +100,20 @@ parser whitelist above already keeps household clients out of decisions.
   0750 caddy:caddy log dir reads nothing, so the file acquisition globs
   ZERO files ("No matching files for pattern /var/log/caddy/*.log" at
   every start) and no HTTP scenarios fire. The sshd journalctl source is
-  unaffected. Fix queued ([ready] docs/todo/services.md): add crowdsec to
-  the caddy group (auxiliary gids map through the userns).
+  unaffected. Fix landed in-tree 2026-10-16 (crowdsec.nix extraGroups,
+  verify-pending deploy): crowdsec in the caddy group (auxiliary gids
+  map through the userns); the ambient cap STAYS until the group is
+  proven live in /metrics, then it is a drop candidate.
 - **cdn-hub.crowdsec.net intermittently TLS-blocked (2026-10-15)** — two
   start attempts failed ExecStartPre (`cscli hub update` → "remote error:
   tls: internal error", dnsblockd-interception class; the 00:54 Oct 16
   download succeeded, so the block is intermittent) → service down ~2h18m.
-  The gotcha above whitelists www.crowdsec.net but misses the CDN host —
-  cdn-hub.crowdsec.net (+ hub-data.crowdsec.net) needs the same treatment;
-  whether a hub-index flap may keep the engine offline at all is queued as
-  a decision (same [ready] row).
+  RESOLUTION (2026-10-16): cdn-hub.crowdsec.net + hub-data.crowdsec.net
+  whitelisted in `platforms/common/dns-blocklists.nix` (landed in-tree,
+  verify-pending deploy). Hub-update stays START-FATAL by decision: the
+  whitelist makes the fetch deterministic, and a real hub outage keeping
+  detection down is honest — a degrade-to-warning start would leave a
+  BLIND engine that gatus liveness still calls healthy. Revisit the
+  fatality only if the flap recurs through the whitelist.
 - **SQLite WAL on the QLC root** — small and fine; decisions are ephemeral
   operational state (expire per profile 4h defaults). No backup entry by design.

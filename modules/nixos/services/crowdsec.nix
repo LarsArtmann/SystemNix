@@ -27,10 +27,12 @@
 #     nothing there (file acquisition logged "No matching files for
 #     pattern /var/log/caddy/*.log", zero file-source hits in /metrics).
 #     The geometrikks 2026-10-07 lesson does not transfer: that unit has
-#     no PrivateUsers, so its ambient cap genuinely works. Working fix
-#     (queued [ready] docs/todo/services.md): crowdsec member of caddy
-#     group — systemd maps auxiliary gids through the userns and the DAC
-#     group check needs no capability.
+#     no PrivateUsers, so its ambient cap genuinely works. Fix (landed
+#     in-tree 2026-10-16, verify-pending deploy): crowdsec member of the
+#     caddy group — systemd maps auxiliary gids through the userns and
+#     the DAC group check needs no capability. The ambient cap below is
+#     KEPT until the group fix is proven live in /metrics (drop candidate
+#     then).
 _: {
   flake.nixosModules.crowdsec =
     {
@@ -151,6 +153,23 @@ _: {
           };
         };
 
+        # Caddy acquis fix (2026-10-16, verify-pending deploy): upstream
+        # PrivateUsers=true wraps the engine in a user namespace where
+        # capabilities do NOT reach host inodes, so the ambient
+        # CAP_DAC_READ_SEARCH below cannot open /var/log/caddy (0750
+        # caddy:caddy, 0600 files) and the file acquisition globs zero
+        # files ("No matching files for pattern" at every start, stage-1
+        # battery 2026-10-16). Supplementary-group membership is the
+        # working fix: systemd maps auxiliary gids through the userns and
+        # the DAC GROUP check needs no capability. Guarded on
+        # caddy.enable — without Caddy the group is undeclared and the
+        # acquis glob has nothing to read anyway. Upstream already
+        # declares extraGroups ([ "systemd-journal" ],
+        # nixos/modules/services/security/crowdsec.nix); list options
+        # concatenate across modules, no override needed.
+        users.users.${config.services.crowdsec.user}.extraGroups =
+          lib.mkIf config.services.caddy.enable [ "caddy" ];
+
         # Stage 1 has NO bouncer: the bouncer module's register oneshot still
         # activates (its enable defaults to crowdsec.enable) and its
         # `StateDirectory = … crowdsec` lets systemd re-own /var/lib/crowdsec
@@ -262,8 +281,11 @@ _: {
 
               # Read /var/log/caddy (0750 caddy:caddy dir, 0600 files).
               # Upstream bounding set is ["", "CAP_SYSLOG"] — list merge
-              # appends ours. Ambient is what GRANTS to the non-root
-              # DynamicUser (geometrikks 2026-10-07 mail-relay lesson).
+              # appends ours. INERT under upstream PrivateUsers=true
+              # (caps held inside a userns do not apply to host inodes —
+              # live-proven 2026-10-16, zero files globbed); the working
+              # access path is the caddy group membership above. KEPT
+              # until that fix is proven live, then a drop candidate.
               AmbientCapabilities = [ "CAP_DAC_READ_SEARCH" ];
               CapabilityBoundingSet = [ "CAP_DAC_READ_SEARCH" ];
             }

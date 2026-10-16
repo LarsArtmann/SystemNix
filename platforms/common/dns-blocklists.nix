@@ -215,6 +215,15 @@ in
     "toots-a.akamaihd.net"
     "akamaihd.net"
     "region1.analytics.google.com"
+    # CrowdSec hub CDN + data hosts (2026-10-16): `cscli hub update` runs
+    # start-fatal at every crowdsec start and fetches from cdn-hub.crowdsec.net
+    # (Cloudfront) + hub-data.crowdsec.net (Cloudflare); HaGeZi intermittently
+    # TLS-intercepts the CDN host ("remote error: tls: internal error",
+    # dnsblockd class) — two fatal starts 2026-10-15 22:37/23:30 = ~2h18m
+    # engine outage. The www.crowdsec.net whitelist entry misses the CDN;
+    # whitelisting makes the start-critical fetch deterministic.
+    "cdn-hub.crowdsec.net"
+    "hub-data.crowdsec.net"
     # SBS On Demand streaming — required for video playback
     "pubads.g.doubleclick.net"
     "licensing.bitmovin.com"
