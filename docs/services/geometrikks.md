@@ -182,14 +182,20 @@ Source filter and per-site home beacons key on them). Plan + traps:
 2. **MaxMind GeoLite2** (free): sign up at maxmind.com/en/geolite2/signup,
    then paste `MAXMINDDB_USER_ID` + `MAXMINDDB_LICENSE_KEY` into the sops file
    (`sops platforms/nixos/secrets/geometrikks.yaml` with the same one-liner)
-   and `sudo systemctl restart geometrikks`. Until then ingestion is DEAD —
-   the journal shows `Cannot start ingestion: failed to create GeoIP2 reader
-   ... GeoLite2-City.mmdb: FileNotFoundError` (live 2026-10-01) — so the map
-   AND the log DB stay empty; the earlier "geo-degraded, ingestion + log
-   search still work" claim was falsified live.
+   and `sudo systemctl restart geometrikks`. **DONE 2026-10-06** — the
+   "ingestion is DEAD" text below described the pre-paste window only
+   (live 2026-10-01); as of 2026-10-16 the journal shows the GeoLite2
+   refresh job scheduled every 7d + `home_location_resolved` — keys live,
+   ingestion armed. Left for provenance, do not re-do.
 3. **CARTO basemap key** (optional, free tier at carto.com/basemaps/apikey):
    paste `MAP_CARTO_API_KEY`. Keyless tiles work today but CARTO may cut them
    off at any time.
+4. **CrowdSec Security views (post-deploy, after the bouncer is live)**:
+   geo.home.lan → Settings → Status → toggle **Enabled** (unlocks the
+   Banned-IPs + Security views against the LAPI). Then the accent: UI
+   accent toggle → **green** (per-browser localStorage; upstream has no
+   server-side default in v0.19.0). Exact click-path prepared 2026-10-16
+   (plan T10) — the agent never drives the UI.
 
 ## Gotchas
 

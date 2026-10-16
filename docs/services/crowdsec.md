@@ -141,3 +141,12 @@ Stage 3 unlocks after **7 consecutive clean-informed days** (window opened
   fatality only if the flap recurs through the whitelist.
 - **SQLite WAL on the QLC root** — small and fine; decisions are ephemeral
   operational state (expire per profile 4h defaults). No backup entry by design.
+- **Bump drill (nixpkgs crowdsec > 1.8.1)** — when the module/package moves
+  past 1.8.1, re-audit ALL THREE local mitigations against the new module
+  before trusting the flip: (1) the tmpfiles rootDir rule (upstream may
+  have added it — remove ours), (2) the machine-repair orphan delete
+  (upstream setup may be idempotent now), (3) the caddy-group acquis fix
+  + the ambient cap drop candidate, and (4) the bouncer-register flags
+  (`bouncers delete --ignore-missing` / `add --key`) against the new
+  cscli. Also re-check PrivateUsers: if upstream drops it, the cap route
+  becomes viable again and the extraGroups comment needs a truth-sync.
