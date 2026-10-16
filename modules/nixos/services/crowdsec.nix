@@ -82,6 +82,43 @@ _: {
           fi
         '';
       };
+
+      # Stage-2 declarative bouncer registration (2026-10-16, owner ask
+      # "make it nix managed"): the geometrikks bouncer key lives in sops
+      # (geometrikks_crowdsec_bouncer_api_key) and this converger makes the
+      # LAPI DB match it on every boot — delete+add so the stored hash ALWAYS
+      # equals the sops value (rotation-safe; an identical-key re-register
+      # keeps live bouncer sessions valid since only the hash is stored).
+      # No human ever sees the key: replaces the old print-once owner flow.
+      # Flags verified against cmd/crowdsec-cli/clibouncer/{add,delete}.go
+      # v1.8.1; add echoes the key to stdout EVEN WITH --key, hence the
+      # redirect. Graceful-skip while the sops secret does not exist yet —
+      # the unit converges silently once the owner-facing step is done.
+      bouncerRegister = pkgs.writeShellApplication {
+        name = "crowdsec-bouncer-register";
+        runtimeInputs = [ ];
+        text = ''
+          if [ -z "''${CROWDSEC_BOUNCER_API_KEY:-}" ]; then
+            echo "crowdsec-bouncer-register: no bouncer key rendered (sops secret not created yet) — skipping; converges when it exists" >&2
+            exit 0
+          fi
+          ${lib.getExe' config.services.crowdsec.package "cscli"} \
+            -c ${repairConfig} bouncers delete geometrikks --ignore-missing
+          ${lib.getExe' config.services.crowdsec.package "cscli"} \
+            -c ${repairConfig} bouncers add geometrikks --key "$CROWDSEC_BOUNCER_API_KEY" > /dev/null
+          echo "crowdsec-bouncer-register: bouncer 'geometrikks' converged from sops"
+        '';
+      };
+
+      # The bouncer key is declared by the geometrikks module's sops block
+      # (mkIf geometrikks.enable) — eval-guard the whole registration on
+      # option existence (VM-test co-import pattern) + enable state, so a
+      # crowdsec-without-geometrikks eval never forces an undeclared secret.
+      bouncerInScope =
+        (options.services ? geometrikks)
+        && ((config.services.geometrikks or { }).enable or false)
+        && (options ? sops)
+        && (options.sops ? templates);
     in
     {
       # Platform-truth catalog entry (ADR-008): unconditional inline-imports
@@ -230,6 +267,39 @@ _: {
               CapabilityBoundingSet = [ "CAP_DAC_READ_SEARCH" ];
             }
           ];
+        };
+
+        # Stage-2 declarative bouncer registration — sops-rendered key env
+        # for the converger + the unit itself. Template restartUnits handle
+        # rotation (content changes touch no secret file — geometrikks-env
+        # precedent).
+        sops.templates."crowdsec-bouncer-geometrikks-env" = lib.mkIf bouncerInScope {
+          owner = config.services.crowdsec.user;
+          group = config.services.crowdsec.group;
+          mode = "0400";
+          restartUnits = [ "crowdsec-bouncer-register.service" ];
+          content = ''
+            CROWDSEC_BOUNCER_API_KEY=${config.sops.placeholder.geometrikks_crowdsec_bouncer_api_key}
+          '';
+        };
+
+        systemd.services.crowdsec-bouncer-register = lib.mkIf bouncerInScope {
+          description = "CrowdSec declarative bouncer registration (geometrikks)";
+          after = [ "crowdsec.service" ];
+          wants = [ "crowdsec.service" ];
+          # Converge before geo starts pulling (its poll would 401 meanwhile)
+          before = [ "geometrikks.service" ];
+          wantedBy = [ "multi-user.target" ];
+          serviceConfig = {
+            Type = "oneshot";
+            # Same DB access pattern as crowdsec-prereq (sqlite via
+            # repairConfig's db_config, live-proven by the repair leg).
+            User = config.services.crowdsec.user;
+            Group = config.services.crowdsec.group;
+            EnvironmentFile = [ config.sops.templates."crowdsec-bouncer-geometrikks-env".path ];
+            ExecStart = lib.getExe bouncerRegister;
+            TimeoutStartSec = "2min";
+          };
         };
 
         # The options?-guard (NOT leaf mkIf) — VM tests must co-import

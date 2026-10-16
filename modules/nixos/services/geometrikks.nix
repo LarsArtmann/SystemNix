@@ -377,6 +377,7 @@
                 "geometrikks_maxmind_user_id"
                 "geometrikks_maxmind_license_key"
                 "geometrikks_carto_api_key"
+                "geometrikks_crowdsec_bouncer_api_key"
               ]
               (_: {
                 sopsFile = lib.path.append secretsDir "geometrikks.yaml";
@@ -412,6 +413,12 @@
               MAXMINDDB_LICENSE_KEY=${config.sops.placeholder.geometrikks_maxmind_license_key}
               MAP_CARTO_API_KEY=${config.sops.placeholder.geometrikks_carto_api_key}
               DB_PASSWORD=${config.sops.placeholder.geometrikks_db_password}
+              # CrowdSec bouncer identity (read-only Security/Banned-IPs
+              # views). The key is REGISTERED into the LAPI declaratively by
+              # crowdsec-bouncer-register.service (crowdsec module) — this
+              # env is the consumer half; the URL is loopback by design.
+              CROWDSEC_LAPI_URL=http://127.0.0.1:${toString ports.crowdsec-lapi}
+              CROWDSEC_BOUNCER_API_KEY=${config.sops.placeholder.geometrikks_crowdsec_bouncer_api_key}
             '';
           };
         };
