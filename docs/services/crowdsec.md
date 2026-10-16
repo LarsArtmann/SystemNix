@@ -20,7 +20,7 @@ A failed start is expected during a cold boot until dnsblockd is answering;
 
 ## Data sources (acquisitions)
 
-- **sshd** via journald (`_SYSTEMD_UNIT=sshd.service`, `type: syslog`) — collection `crowdsecurity/linux`. **STATUS 2026-10-16: READS but parses NOTHING** — `/metrics`: 189 lines read, 189 parse-ko (100% failure), so the ssh-bf scenario family has never seen one parsed event (fix queued, docs/todo/services.md).
+- **sshd** via journald (`_SYSTEMD_UNIT=sshd.service`, `type: syslog`) — collection `crowdsecurity/linux`. **Verified healthy 2026-10-16** (an earlier "100% parse-ko" alarm was noise lines behaving correctly — retracted, docs/todo/services.md): s00-raw parses all lines OK; sshd-logs covers `sshd-session` (OpenSSH ≥9.8). CAVEATS: (a) `sshd-success-logs` hub parser still filters `program == 'sshd'` → successful logins unparsed (queued, docs/todo/services.md); (b) the journalctl source runs `-n 0` — **no backfill**: lines landing while the engine is down/restarting are never analyzed.
 - **Caddy access logs** via `/var/log/caddy/*.log` (JSON; covers `access.log` + every `access-<host>.log`) — collection `crowdsecurity/caddy`. **STATUS 2026-10-16: DARK** — `PrivateUsers=true` nullifies `CAP_DAC_READ_SEARCH`, glob matches zero files (fix queued, docs/todo/services.md). The cap-vs-group note below predates that finding; group membership inside the userns is the working fix.
 
 **LAN whitelist (parser s02-enrich):** `127.0.0.1`, `::1`, RFC1918 never become
