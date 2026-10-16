@@ -138,19 +138,19 @@
         envFile = "${keysDir}/${client.name}.env";
       in
       ''
-        if [ ! -s ${lib.shellEscape keyFile} ]; then
-          ${lib.getExe pkgs.openssl} rand -hex 24 > ${lib.shellEscape keyFile}
+        if [ ! -s ${lib.escapeShellArg keyFile} ]; then
+          ${lib.getExe pkgs.openssl} rand -hex 24 > ${lib.escapeShellArg keyFile}
           echo "ai-meter-keys: minted client key for ${client.name}"
         fi
-        chown ${lib.shellEscape client.user}: ${lib.shellEscape keyFile}
-        chmod 0400 ${lib.shellEscape keyFile}
+        chown ${lib.escapeShellArg client.user}: ${lib.escapeShellArg keyFile}
+        chmod 0400 ${lib.escapeShellArg keyFile}
       ''
       + lib.optionalString (client.envKey != null) ''
-        if [ ! -s ${lib.shellEscape envFile} ]; then
-          printf '%s=%s\n' ${lib.shellEscape client.envKey} "$(cat ${lib.shellEscape keyFile})" > ${lib.shellEscape envFile}
+        if [ ! -s ${lib.escapeShellArg envFile} ]; then
+          printf '%s=%s\n' ${lib.escapeShellArg client.envKey} "$(cat ${lib.escapeShellArg keyFile})" > ${lib.escapeShellArg envFile}
         fi
-        chown ${lib.shellEscape client.user}: ${lib.shellEscape envFile}
-        chmod 0400 ${lib.shellEscape envFile}
+        chown ${lib.escapeShellArg client.user}: ${lib.escapeShellArg envFile}
+        chmod 0400 ${lib.escapeShellArg envFile}
       ''
     ) clientList
   );
@@ -327,7 +327,7 @@ in
         {
           Type = "oneshot";
           RemainAfterExit = true;
-          ExecStart = lib.getExe mintScript;
+          ExecStart = lib.getExe' mintScript mintScript.name;
           RuntimeDirectory = "ai-meter-keys";
           RuntimeDirectoryMode = "0711";
           # Re-runs (deploy convergence) must not wipe consumer keys:
@@ -401,4 +401,5 @@ in
       };
     };
   };
+    };
 }
