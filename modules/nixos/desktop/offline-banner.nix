@@ -20,7 +20,11 @@
 # layer with ExclusionMode.Auto and an ANIMATED height, so instead of
 # floating over the DMS bar it CLAIMS the top edge and the bar slides
 # down beneath it (slow InOutCubic push, slides back up on recovery).
-# Click-through (mask: Region {}) still passes clicks to windows beneath.
+# DISMISSABLE (owner request 2026-10-16): clicking anywhere on the strip
+# slides it up for the rest of the outage; the next clean probe re-arms
+# it, so a fresh outage shows again. The strip therefore takes pointer
+# input (no click-through mask) — the bar has been pushed below it, so
+# nothing clickable is underneath.
 # STATIC yellow — the sev1 "non-flashing yellow" doctrine
 # (2026-09-02): connectivity loss is a warning, not a page. The banner
 # appears after `failuresToShow` consecutive failed probes (default 2 =
@@ -71,6 +75,10 @@ _: {
             // session — banner then says "unknown" instead of lying).
             property real lastOnlineAt: 0
             property int tick: 0
+            // Click-to-dismiss (owner request 2026-10-16): dismissing
+            // hides the banner for the REST OF THIS OUTAGE; the next
+            // clean probe re-arms it, so a fresh outage shows again.
+            property bool dismissed: false
             readonly property string lastOnlineAgo: {
                 root.tick;
                 return root.lastOnlineAt > 0 ? root.fmtAgo(root.lastOnlineAt) : "unknown";
@@ -89,6 +97,7 @@ _: {
                 const result = (text ?? "").trim().split("\n")[0];
                 if (result === "ok") {
                     root.lastOnlineAt = Date.now() / 1000;
+                    root.dismissed = false;
                     root.failures = 0;
                     root.reason = "";
                     return;
@@ -164,7 +173,7 @@ _: {
                     // the compositor on every animation frame — the slow
                     // slide-down the owner asked for; it slides back up on
                     // recovery as the height animates to 0.
-                    property real animHeight: root.offline ? banner.shownHeight : 0
+                    property real animHeight: (root.offline && !root.dismissed) ? banner.shownHeight : 0
                     Behavior on animHeight {
                         NumberAnimation {
                             duration: 450
@@ -173,8 +182,8 @@ _: {
                     }
 
                     screen: modelData
-                    visible: root.offline || banner.animHeight > 1
-                    updatesEnabled: root.offline || banner.animHeight > 1
+                    visible: (root.offline && !root.dismissed) || banner.animHeight > 1
+                    updatesEnabled: (root.offline && !root.dismissed) || banner.animHeight > 1
 
                     WlrLayershell.namespace: "systemnix:offline-banner"
                     WlrLayershell.layer: WlrLayer.Top
@@ -188,11 +197,17 @@ _: {
 
                     implicitHeight: banner.animHeight
                     color: "transparent"
-                    mask: Region {}
 
                     Rectangle {
                         anchors.fill: parent
                         color: "#f2f9e2af"
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+
+                            onClicked: root.dismissed = true
+                        }
 
                         Column {
                             anchors.centerIn: parent
@@ -209,7 +224,7 @@ _: {
 
                             Text {
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                text: "last online " + root.lastOnlineAgo + " ago"
+                                text: "last online " + root.lastOnlineAgo + " ago  ·  click to dismiss"
                                 color: "#1e1e2e"
                                 opacity: 0.75
                                 font.pixelSize: Math.max(11, Math.round(modelData.height * 0.007))
