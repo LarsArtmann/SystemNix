@@ -39,22 +39,22 @@
       oidcSubsFile = "/var/lib/geometrikks-oidc/allowed-subs";
       poolBackupDir = "/mnt/pool/backups/geometrikks";
 
-      # Tail every Caddy access-log sink (host paths now — no container
-      # mount mapping anymore). The nixpkgs caddy module writes each vhost
-      # to access-<host>.log (file output => Caddy's default encoder is
-      # JSON per caddyserver.com/docs/caddyfile/directives/log). The
-      # global access.log is Caddy's DEFAULT logger: it receives access
-      # records for hosts without their own log block PLUS Caddy runtime
-      # log lines (JSON without a `request` object). parse() returns None
-      # for those, so they never reach access_logs — but they ARE captured
-      # to access_log_debug as malformed (2026-10-14 live: Caddy restart
-      # banners were 1,113 of 1,113 debug rows; ~19 lines per Caddy
-      # restart, bounded by 30-day debug retention). Keeping the FULL
-      # list (global + every vhost) is the complete traffic picture.
+      # Caddy vhost sinks (host paths now — no container mount mapping
+      # anymore). The nixpkgs caddy module writes each vhost to
+      # access-<host>.log (file output => Caddy's default encoder is JSON
+      # per caddyserver.com/docs/caddyfile/directives/log). The global
+      # access.log is Caddy's DEFAULT logger: it receives access records
+      # for hosts without their own log block PLUS Caddy runtime log lines
+      # (JSON without a `request` object). parse() returns None for those,
+      # so they never reach access_logs — but they ARE captured to
+      # access_log_debug as malformed (2026-10-14 live: Caddy restart
+      # banners were 1,113 of 1,113 debug rows; ~19 lines per Caddy restart,
+      # bounded by 30-day debug retention). Keeping the FULL list (global +
+      # every vhost) is the complete traffic picture.
       # Filenames replicate vhost-options.nix's own derivation: "/" and
       # " " -> "_". Derived from config.services.caddy.virtualHosts at
       # eval time, so new services are tracked automatically.
-      logPaths = builtins.toJSON (
+      caddyLogPaths =
         [ "/var/log/caddy/access.log" ]
         ++ map (
           host:
@@ -70,7 +70,21 @@
               ]
               host
           }.log"
-        ) (builtins.attrNames config.services.caddy.virtualHosts)
+        ) (builtins.attrNames config.services.caddy.virtualHosts);
+
+      # Multi-source ingestion (upstream "shipped files" shape, verified
+      # against pinned v0.19.0 + tag README 2026-10-16):
+      # LOGPARSER_LOG_PATHS / _LOG_FORMATS / _HOST_NAME each accept a JSON
+      # list positional to the paths; a host name per file is what keeps
+      # remote sources apart in the UI hostname filter and on the map
+      # (per-site home beacons). Plan:
+      # docs/planning/2026-10-16_02-38_pbx-traffic-into-geometrikks.md
+      logPaths = builtins.toJSON (caddyLogPaths ++ map (f: f.path) cfg.extraLogFiles);
+      logFormats = builtins.toJSON (
+        map (_: "caddy-json") caddyLogPaths ++ map (f: f.format) cfg.extraLogFiles
+      );
+      logHostNames = builtins.toJSON (
+        map (_: "evo-x2") caddyLogPaths ++ map (f: f.hostName) cfg.extraLogFiles
       );
 
       # Stamp-gated copy of the store-shipped runtime assets into the
@@ -315,6 +329,95 @@
             set.
           '';
         };
+
+        extraLogFiles = lib.mkOption {
+          type = lib.types.listOf (
+            lib.types.submodule {
+              options = {
+                path = lib.mkOption {
+                  type = lib.types.str;
+                  description = "Absolute path of an additional access-log file to tail (appended to the Caddy vhost sinks in LOGPARSER_LOG_PATHS).";
+                };
+                format = lib.mkOption {
+                  type = lib.types.enum [
+                    "auto"
+                    "geometrikks-json"
+                    "nginx"
+                    "traefik-json"
+                    "caddy-json"
+                  ];
+                  default = "auto";
+                  description = "Parser format pin for this file (LOGPARSER_LOG_FORMATS, positional). 'auto' sniffs per file.";
+                };
+                hostName = lib.mkOption {
+                  type = lib.types.str;
+                  description = "Source hostname stamped on records from this file (LOGPARSER_HOST_NAME, positional) — the UI hostname filter and per-site map home beacon key on it.";
+                };
+              };
+            }
+          );
+          default = [ ];
+          description = ''
+            Non-Caddy log files to ingest (upstream multi-source "shipped
+            files" shape). Typically feeds written by services.geometrikks.logPulls.
+          '';
+        };
+
+        logPulls = lib.mkOption {
+          type = lib.types.listOf (
+            lib.types.submodule {
+              options = {
+                name = lib.mkOption {
+                  type = lib.types.str;
+                  description = "Feed name — unit suffix and feed file stem (geometrikks-log-pull-<name>, /var/lib/geometrikks-remote-logs/<name>.log).";
+                };
+                sshTarget = lib.mkOption {
+                  type = lib.types.str;
+                  description = "ssh target to pull from (e.g. root@host). Auth rides root's default ssh identity resolution — the pbx-backup-pull kit pattern.";
+                };
+                remotePath = lib.mkOption {
+                  type = lib.types.str;
+                  description = "Absolute remote path of the access log to pull.";
+                };
+                interval = lib.mkOption {
+                  type = lib.types.str;
+                  default = "1min";
+                  description = "Pull cadence (OnUnitActiveSec).";
+                };
+              };
+            }
+          );
+          default = [ ];
+          description = ''
+            Offset-delta ssh pulls of remote access logs into append-only
+            feed files under /var/lib/geometrikks-remote-logs/ (0700 root;
+            the geometrikks tailer reads them via its CAP_DAC_READ_SEARCH
+            ambient grant — the same mechanism as the Caddy 0600 files).
+            PULL direction by design: the remote holds zero credentials for
+            this host. The script treats a smaller remote file as rotation
+            (offset reset) and an absent remote file as not-yet-deployed
+            (clean exit — the timer retries). Never mirror the raw file:
+            an inode flip on the feed path reads as rotation and re-ingests
+            the full content (verified tailer rotation logic, plan doc §4).
+          '';
+        };
+
+        mapHomeLocations = lib.mkOption {
+          type = lib.types.attrsOf (lib.types.listOf lib.types.float);
+          default = { };
+          example = {
+            pbx = [
+              60.17
+              24.94
+            ];
+          };
+          description = ''
+            Per-source map home pins, MAP_HOME_LOCATIONS (hostname ->
+            [latitude, longitude]). Upstream auto-detects each source's
+            home from THIS host's public IP — wrong for shipped logs, so
+            every remote source needs an explicit pin (README "Site homes").
+          '';
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -500,7 +603,16 @@
                 DB_DATABASE = "geometrikks";
                 DB_STARTUP_WAIT_SECONDS = "60";
                 LOGPARSER_LOG_PATHS = logPaths;
-                LOGPARSER_HOST_NAME = "evo-x2";
+                # Positional lists (upstream: single value OR list matching
+                # LOGPARSER_LOG_PATHS by position — pinned v0.19.0). Pinning
+                # caddy-json for the Caddy sinks replaces 'auto' sniffing
+                # with the deterministic truth; extras carry their own pin.
+                LOGPARSER_LOG_FORMATS = logFormats;
+                LOGPARSER_HOST_NAME = logHostNames;
+                # Per-source home pins for shipped-log sources (upstream
+                # would otherwise resolve their home to THIS host's public
+                # IP). Empty dict = no overrides.
+                MAP_HOME_LOCATIONS = builtins.toJSON cfg.mapHomeLocations;
                 LOG_DIR = "${stateDir}/logs";
                 GEOIP_DB_PATH = "${stateDir}/geoip/GeoLite2-City.mmdb";
                 GEOIP_ASN_DB_PATH = "${stateDir}/geoip/GeoLite2-ASN.mmdb";
@@ -634,7 +746,90 @@
               RandomizedDelaySec = "10m";
             };
           };
-        };
+
+          # Offset-delta ssh pulls of remote access logs (cfg.logPulls).
+          # Root units on purpose: auth rides root's default ssh identity
+          # (the pbx-backup-pull kit's live-proven pattern — the remote
+          # authorizes this host's root key). ProtectHome=read-only keeps
+          # /root/.ssh readable and nothing else writable.
+          geometrikksLogPullUnits = lib.listToAttrs (
+            map (
+              pull:
+              let
+                feedDir = "/var/lib/geometrikks-remote-logs";
+                pullScript = pkgs.writeShellScript "geometrikks-log-pull-${pull.name}" ''
+                  set -euo pipefail
+                  feed="${feedDir}/${pull.name}.log"
+                  offset_file="${feedDir}/${pull.name}.offset"
+                  ssh_opts=(-o BatchMode=yes -o ConnectTimeout=20)
+                  remote_size="$(ssh "''${ssh_opts[@]}" "${pull.sshTarget}" "stat -c %s '${pull.remotePath}' 2>/dev/null || echo MISSING")"
+                  if [ "$remote_size" = "MISSING" ]; then
+                    # Remote log not deployed yet (or removed) — clean exit,
+                    # the timer retries every interval. Loud-fail class is
+                    # reserved for ssh itself failing (set -e).
+                    echo "geometrikks-log-pull-${pull.name}: remote '${pull.remotePath}' not present on ${pull.sshTarget} — nothing to pull"
+                    exit 0
+                  fi
+                  offset="$(cat "$offset_file" 2>/dev/null || echo 0)"
+                  if [ "$remote_size" -lt "$offset" ]; then
+                    # Remote rotated (logrotate shrank the file): restart
+                    # from its beginning. Lines written between the last
+                    # pull and the rotation are lost — accepted gap (plan
+                    # doc §4), bounded by the pull cadence.
+                    echo "geometrikks-log-pull-${pull.name}: remote rotated (${offset} -> ${"$"}{remote_size} bytes), resetting offset" >&2
+                    offset=0
+                  fi
+                  if [ "$remote_size" -eq "$offset" ]; then
+                    exit 0
+                  fi
+                  # Append-only: same inode on the feed path, so the
+                  # tailer sees pure growth (an inode flip reads as
+                  # rotation and would re-ingest everything).
+                  ssh "''${ssh_opts[@]}" "${pull.sshTarget}" "tail -c +$((offset + 1)) '${pull.remotePath}'" >> "$feed"
+                  printf '%s\n' "$remote_size" > "$offset_file.tmp"
+                  mv "$offset_file.tmp" "$offset_file"
+                '';
+              in
+              lib.nameValuePair "geometrikks-log-pull-${pull.name}" {
+                description = "GeoMetrikks remote log pull (${pull.name} -> ${pull.sshTarget})";
+                wants = [ "network-online.target" ];
+                after = [ "network-online.target" ];
+                serviceConfig = lib.mkMerge [
+                  (serviceOneshotDefaults { })
+                  {
+                    Type = "oneshot";
+                    User = "root";
+                    ExecStart = "${pullScript}";
+                    StateDirectory = "geometrikks-remote-logs";
+                    StateDirectoryMode = "0700";
+                    UMask = "0077";
+                    TimeoutStartSec = "90s";
+                  }
+                  (harden {
+                    MemoryMax = "128M";
+                    ProtectHome = "read-only";
+                  })
+                ];
+                inherit onFailure;
+              }
+            ) cfg.logPulls
+          );
+
+          geometrikksLogPullTimers = lib.mapAttrs' (
+            name: unit:
+            lib.nameValuePair name {
+              description = unit.description;
+              wantedBy = [ "timers.target" ];
+              timerConfig = {
+                OnBootSec = "3min";
+                OnUnitActiveSec = "1min";
+                AccuracySec = "10s";
+                Persistent = false;
+              };
+            }
+          ) geometrikksLogPullUnits;
+        in
+        {
 
         # Service-integration registry entry: the geo tile, the geo vHost —
         # LAYER 1 PLAIN now (native OIDC behind protectedVHost would
