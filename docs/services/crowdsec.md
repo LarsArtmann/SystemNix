@@ -83,6 +83,30 @@ reads EnvironmentFile and injects the var, the engine process never opens it.
 enabling: review a week of `cscli alerts list` for LAN false positives; the
 parser whitelist above already keeps household clients out of decisions.
 
+### Ban/unban machine creds (stage-3 UI unlock; staging shape, NOT landed)
+
+The old `-f -` print-once flow is superseded by a declarative shape that
+mirrors §Stage 2: pre-create `geometrikks_crowdsec_machine_password` in sops
+(machine-generated 48-hex, paste inside the sops editor — no plaintext in
+history), then converge per boot with
+`cscli machines add geometrikks --password "$KEY" --force` (flags verified
+v1.8.1 `cscli machines add --help`: `--password` replaces the print-once
+flow entirely; `--force` re-adds over an existing row; `-f -` only feeds the
+old interactive path). Render `CROWDSEC_MACHINE_ID=geometrikks` +
+`CROWDSEC_MACHINE_PASSWORD` into the `geometrikks-env` template (rotation
+restarts geo via restartUnits). Rides the stage-3 enable decision — do not
+land while enforcement is off (an unused machine row is drift).
+
+### Alert-review cadence (the stage-3 gate)
+
+Weekly, before any stage-3 flip: (1) `cscli alerts list` — count + sources;
+(2) `cscli decisions list` — anything stale/sticky; (3) scenario hit-rate
+skew (`cscli metrics` → top triggered scenarios) — a LAN-only box should
+show ~zero; (4) verdict line appended to
+[docs/services/crowdsec-alert-review-log.md](crowdsec-alert-review-log.md).
+Stage 3 unlocks after **7 consecutive clean-informed days** (window opened
+2026-10-16); a single LAN false-positive resets the window.
+
 ## Gotchas
 
 - **Port 6060 is NOT free** — an unidentified Go pprof listener sits on
