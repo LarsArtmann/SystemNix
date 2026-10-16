@@ -1293,6 +1293,17 @@ in
                           static_configs = [ { targets = [ "127.0.0.1:${toString ports.signoz-clickhouse-metrics}" ]; } ];
                           metrics_path = "/metrics";
                         }
+                        {
+                          # CrowdSec engine metrics (2026-10-16, T14): node-level
+                          # parse counters (cs_node_hits_*), LAPI request
+                          # surfaces, machine heartbeats. The s00-raw
+                          # parse-pipeline rule consumes this job; without it
+                          # every cs_* rule is phantom (series never reach
+                          # ClickHouse — the scrape-coverage doctrine).
+                          job_name = "crowdsec";
+                          static_configs = [ { targets = [ "127.0.0.1:${toString ports.crowdsec-metrics}" ]; } ];
+                          metrics_path = "/metrics";
+                        }
                       ];
                     };
                   };

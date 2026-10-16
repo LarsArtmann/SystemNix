@@ -46,6 +46,8 @@ _: {
       inherit (import ../../../lib/default.nix lib)
         ports
         mkDnsGate
+        harden
+        serviceOneshotDefaults
         ;
 
       # The gate hostname is the hub index host `cscli hub update` fetches
@@ -129,6 +131,37 @@ _: {
           ${lib.getExe' config.services.crowdsec.package "cscli"} \
             -c ${repairConfig} bouncers add geometrikks --key "$CROWDSEC_BOUNCER_API_KEY" > /dev/null
           echo "crowdsec-bouncer-register: bouncer 'geometrikks' converged from sops"
+        '';
+      };
+
+      # Stage-1 counts collector (2026-10-16, wave T14.3): the :6061 metrics
+      # surface has NO decision/alert-count gauges (probed live — only LAPI
+      # request counters), so SigNoz and the weekly alert-review cadence
+      # cannot see active-ban pressure. cscli (as the crowdsec user, same
+      # repairConfig as the register unit) is the sanctioned reader; both
+      # lists are BOUNDED (cscli page limits — 50 alerts default) and
+      # saturation is itself the alarm. Fail-closed per the textfile
+      # doctrine: scrape_errors 1, value metrics held back, timeout inside
+      # the script AND on the unit.
+      crowdsecCounts = pkgs.writeShellApplication {
+        name = "crowdsec-counts-collector";
+        runtimeInputs = [ pkgs.jq ];
+        text = ''
+          OUT="/var/lib/prometheus-node-exporter/textfile_collectors/crowdsec-counts.prom"
+          TMP="$(mktemp "$OUT.XXXXXX")"
+          errors=0
+          decisions=$(${lib.getExe' config.services.crowdsec.package "cscli"} -c ${repairConfig} decisions list -o json 2>/dev/null | jq 'length') || errors=1
+          alerts=$(${lib.getExe' config.services.crowdsec.package "cscli"} -c ${repairConfig} alerts list --since 24h -o json 2>/dev/null | jq 'length') || errors=1
+          if [ "$errors" -eq 1 ] || [ -z "''${decisions:-}" ] || [ -z "''${alerts:-}" ]; then
+            echo "crowdsec_collector_scrape_errors 1" > "$TMP"
+          else
+            {
+              echo "crowdsec_decisions_active $decisions"
+              echo "crowdsec_alerts_24h $alerts"
+              echo "crowdsec_collector_scrape_errors 0"
+            } > "$TMP"
+          fi
+          mv "$TMP" "$OUT"
         '';
       };
 
@@ -358,6 +391,40 @@ _: {
           };
         };
 
+        # Counts collector (see crowdsecCounts above): 5-min textfile feed
+        # for SigNoz (scrape of node-exporter) + the weekly alert-review
+        # cadence. Fail-closed; bounded lists (cscli page limits).
+        systemd.services.crowdsec-counts = {
+          description = "CrowdSec decisions/alerts counts (textfile collector)";
+          after = [ "crowdsec.service" ];
+          wants = [ "crowdsec.service" ];
+          serviceConfig = lib.mkMerge [
+            (harden {
+              # Same-user rename into the 1777 textfile dir; no foreign
+              # owner possible (this unit is the only writer).
+              ReadWritePaths = [
+                "/var/lib/prometheus-node-exporter/textfile_collectors"
+              ];
+            })
+            (serviceOneshotDefaults { })
+            {
+              Type = "oneshot";
+              User = config.services.crowdsec.user;
+              Group = config.services.crowdsec.group;
+              ExecStart = lib.getExe crowdsecCounts;
+              TimeoutStartSec = "1min";
+            }
+          ];
+        };
+        systemd.timers.crowdsec-counts = {
+          description = "Collect CrowdSec decisions/alerts counts every 5 minutes";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "2min";
+            OnUnitActiveSec = "5min";
+          };
+        };
+
         # The options?-guard (NOT leaf mkIf) — VM tests must co-import
         # modules/nixos/services/integration.nix or this evaluates as the
         # empty attrset (flake-check-proven 2026-09-15 pattern).
@@ -373,7 +440,14 @@ _: {
                 group = "Security";
                 path = "/metrics";
                 interval = "1m";
-                conditions = [ "[STATUS] == 200" ];
+                # Health leg (monitoring.md: liveness alone gives false
+                # greens): the body must carry a real cs_ counter, not just
+                # any HTTP 200. cs_parser_hits_total is live-verified on the
+                # :6061 surface (2026-10-16 probe).
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*cs_parser_hits_total*)"
+                ];
                 alert = "CrowdSec metrics down — engine may be dead: systemctl status crowdsec, journalctl -u crowdsec";
               }
             ];

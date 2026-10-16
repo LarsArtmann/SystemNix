@@ -226,6 +226,34 @@ in
       interval = "1m";
       severity = "warning";
     };
+    "signoz/rules/crowdsec-down.json".source = mkRule {
+      name = "CrowdSec Agent Down";
+      description = "crowdsec.service unit is not active — detection engine dead: no log analysis, no LAPI, bouncer stream stale";
+      # Unit-state-gauge pattern (DNS Blocker Down above): process liveness
+      # from the systemd collector, never from a job label (the
+      # phantom-green up{job=...} class).
+      query = ''node_systemd_unit_state{name="crowdsec.service",state="active"}'';
+      step = 60;
+      op = "below";
+      target = 1;
+      interval = "1m";
+    };
+    "signoz/rules/crowdsec-parse-pipeline-errors.json".source = mkRule {
+      name = "CrowdSec Parse Pipeline Errors (s00-raw)";
+      description = "Lines failing the s00-raw syslog stage — the parse pipeline itself is broken (hub update or parser corruption)";
+      # Calibrated live 2026-10-16: s00-raw parses 100% of delivered lines
+      # OK (714/714) BY DESIGN — syslog-logs accepts every line, so ANY ko
+      # there is a real pipeline break. The s01+ ko counters are ~97%
+      # noise lines behaving correctly (the retracted 2026-10-16
+      # false-alarm class, runbook §verification) and MUST NOT gate an
+      # alert. Engine-down (stale series, no increases) is covered by
+      # CrowdSec Agent Down.
+      query = ''sum(increase(cs_node_hits_ko_total{stage="s00-raw"}[10m]))'';
+      step = 300;
+      op = "above_or_equal";
+      target = 1;
+      interval = "5m";
+    };
     "signoz/rules/dnsblockd-crashes.json".source = mkRule {
       name = "DNS Blocker Listener Crashes";
       description = "dnsblockd DNS listener crashed and may not have recovered";
