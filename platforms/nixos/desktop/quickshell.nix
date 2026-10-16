@@ -31,7 +31,8 @@ in
       # the DMS Go build env ships none); the weather recolor below stays
       # host-side. Compose further legs as chained overrideAttrs.
       default =
-        (dmsPaste.lib.patchDms pkgs dankMaterialShell.packages.${pkgs.stdenv.hostPlatform.system}.default).overrideAttrs
+        (dmsPaste.lib.patchDms pkgs dankMaterialShell.packages.${pkgs.stdenv.hostPlatform.system}.default)
+        .overrideAttrs
           (prev: {
             postInstall = prev.postInstall + ''
               # Weather "pop": the bar weather widget inherits widgetIconColor/
