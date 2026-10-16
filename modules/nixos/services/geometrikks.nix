@@ -507,6 +507,17 @@
       };
 
       config = lib.mkIf cfg.enable {
+        # Host-key pin for the logPulls ssh targets pulled from the PBX
+        # (live incident 2026-10-16 07:34: the first post-deploy runs died
+        # exit-255 "Host key verification failed" — root's known_hosts never
+        # held the pbx key, and BatchMode can't TOFU). Pin is TOFU via
+        # ssh-keyscan at pin time (2026-10-16, from this host); rotation =
+        # re-keyscan and update this pin.
+        programs.ssh.knownHosts."pbx.artmann.tech" = {
+          hostNames = [ "pbx.artmann.tech" ];
+          publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKeSDCZ29+AJ2YIZOIZkBIpYfHQl46/hmQu1ni7f8cxe";
+        };
+
         assertions = [
           {
             assertion = config.services.caddy.enable or false;
