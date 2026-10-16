@@ -52,9 +52,12 @@ find_hash_line() {
   for ((i = start + 1; i <= start + HASH_LOOKAHEAD; i++)); do
     line=$(sed -n "${i}p" "$file")
     case "$line" in
-      '' | *'#'*) continue ;;
-      *'hash = "'*) printf '%s\n' "$i"; return 0 ;;
-      *) return 0 ;;
+    '' | *'#'*) continue ;;
+    *'hash = "'*)
+      printf '%s\n' "$i"
+      return 0
+      ;;
+    *) return 0 ;;
     esac
   done
   return 0

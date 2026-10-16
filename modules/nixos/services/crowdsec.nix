@@ -167,8 +167,9 @@ _: {
         # declares extraGroups ([ "systemd-journal" ],
         # nixos/modules/services/security/crowdsec.nix); list options
         # concatenate across modules, no override needed.
-        users.users.${config.services.crowdsec.user}.extraGroups =
-          lib.mkIf config.services.caddy.enable [ "caddy" ];
+        users.users.${config.services.crowdsec.user}.extraGroups = lib.mkIf config.services.caddy.enable [
+          "caddy"
+        ];
 
         # Stage 1 has NO bouncer: the bouncer module's register oneshot still
         # activates (its enable defaults to crowdsec.enable) and its

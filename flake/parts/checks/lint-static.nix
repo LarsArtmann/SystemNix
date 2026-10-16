@@ -741,12 +741,16 @@
               legs = {
                 violations = builtins.toJSON sample.violations;
                 warnings = builtins.toJSON sample.warnings;
-                allowlisted = builtins.toJSON (auditWith "${fixture}/sample-flake.nix" "${fixture}/clean.lock" {
-                  sha40-path = "fixture reason";
-                }).warnings;
-                stale = builtins.toJSON (auditWith "${fixture}/sample-flake.nix" "${fixture}/clean.lock" {
-                  ghost-input = "x";
-                }).violations;
+                allowlisted =
+                  builtins.toJSON
+                    (auditWith "${fixture}/sample-flake.nix" "${fixture}/clean.lock" {
+                      sha40-path = "fixture reason";
+                    }).warnings;
+                stale =
+                  builtins.toJSON
+                    (auditWith "${fixture}/sample-flake.nix" "${fixture}/clean.lock" {
+                      ghost-input = "x";
+                    }).violations;
                 lockRevQuery = builtins.toJSON (auditWith emptySource "${fixture}/rev-query.lock" { }).violations;
               };
             in
