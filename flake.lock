@@ -169,17 +169,17 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1791567819,
-        "narHash": "sha256-ivm7vtcTbKQUiPya/2w0N3UnidDsNaSBppTu2iiszbQ=",
+        "lastModified": 1792114270,
+        "narHash": "sha256-OcmRpcq2lwYILlq8nc/y5o3MWaJoOG3I1E4oxR9P11o=",
         "owner": "LarsArtmann",
         "repo": "bank-sync",
-        "rev": "67dd64526e5a55d86ff40ab49ce4a07794922962",
+        "rev": "8e384027e9f8dfabf19565463e79dfd0542362d8",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
+        "ref": "refs/heads/master",
         "repo": "bank-sync",
-        "rev": "67dd64526e5a55d86ff40ab49ce4a07794922962",
         "type": "github"
       }
     },
@@ -2313,17 +2313,17 @@
     "go-cqrs-lite": {
       "flake": false,
       "locked": {
-        "lastModified": 1790719671,
-        "narHash": "sha256-Ux1LlxNxgSNAUoGgqdBLlROwnaeVwFI6xTBFzBGULX0=",
+        "lastModified": 1791819919,
+        "narHash": "sha256-NV5rgqjrSxXB1rFp1XLpmpT0z4HI9ImKeuxF4EL9fto=",
         "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "7142e43de4fdb1096a8b96b08048e8480bedb9df",
+        "rev": "d15e0a48d095f608010c93b594ddb3732af64cba",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "7142e43de4fdb1096a8b96b08048e8480bedb9df",
+        "rev": "d15e0a48d095f608010c93b594ddb3732af64cba",
         "type": "github"
       }
     },
@@ -8061,16 +8061,16 @@
     "templ-components": {
       "flake": false,
       "locked": {
-        "lastModified": 1791489609,
-        "narHash": "sha256-lhNDMBWlFSKGIUHEfgyLnZdopoMXajb1+ij0ql3OSUI=",
+        "lastModified": 1791916000,
+        "narHash": "sha256-ffufS+TcUgERsyQpj4M+6pCBPQEQIUU68OR3AevGoLQ=",
         "owner": "LarsArtmann",
         "repo": "templ-components",
-        "rev": "904fa1eaaad543f74b19962d23206eea1eda9137",
+        "rev": "2126f3c877a4d383ec03f1af370828cdda8c2887",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "v1.21.0",
+        "ref": "v1.23.0",
         "repo": "templ-components",
         "type": "github"
       }

@@ -332,14 +332,18 @@
 
     # bank-sync — Wise/Qonto bank transaction sync into SQLite + dashboard
     bank-sync = {
-      # HARD PIN (2026-10-14): re-bump past 67dd64526 is BLOCKED until upstream
-      # restores go-cqrs-lite stream-key read compatibility (docs/todo/upstream.md;
-      # the d15e0a48 key rendering crash-loops the daemon against the prod journal,
-      # exit 65 journal_snapshot_divergence). The ?rev= pin makes `nix flake update
-      # bank-sync` and blanket re-locks NO-OPs BY DESIGN — the 2026-10-13 lock-only
-      # rollback was floated forward again within hours by the evening re-lock wave.
-      # Lift by editing this URL after upstream lands the fix, then /health/ready 200.
-      url = "github:LarsArtmann/bank-sync/67dd64526e5a55d86ff40ab49ce4a07794922962";
+      # PIN LIFTED 2026-10-16 (owner-ratified fresh-start cutover). The
+      # 2026-10-14 hard pin (67dd64526 ceiling) existed because the d15e0a48
+      # go-cqrs-lite key rendering crash-loops the daemon against the PROD
+      # journal (exit-65 journal_snapshot_divergence). Resolved by moving the
+      # prod dataDir aside ONCE (bank-sync-fresh-start oneshot in
+      # modules/nixos/services/bank-sync.nix; archive
+      # bank-sync-pre-keybump-20261016, nothing deleted) so the floated binary
+      # boots on an empty journal under the new key basis; history re-fetches
+      # from Wise via the full-history backfill after the SCA re-approval.
+      # Floating master per the pin policy. Re-pin ONLY with a fresh
+      # first-hand documented reason (the allowlist-traced class).
+      url = "github:LarsArtmann/bank-sync?ref=refs/heads/master";
     };
 
     # index — project documentation indexer; the docs-archive-stats

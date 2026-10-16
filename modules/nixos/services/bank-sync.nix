@@ -174,6 +174,63 @@
             '';
           };
 
+          # ONE-TIME fresh-start migration (2026-10-16, owner-ratified). The
+          # 2026-10-14 hard pin (bank-sync 67dd64526) existed because any
+          # post-re-pin binary crash-loops against the prod journal: the
+          # go-cqrs-lite d15e0a48 key rendering addresses the existing
+          # journal/snapshots under keys matching zero rows → exit-65
+          # journal_snapshot_divergence (docs/services/bank-sync.md RE-FLOAT
+          # gotcha). Instead of waiting on upstream key compatibility, the
+          # cutover moves the prod dataDir aside ONCE so the floated binary
+          # boots on an empty journal under the new key basis — all history is
+          # Wise-derived and re-fetches via the full-history backfill after
+          # the SCA re-approval. The archive dir IS the marker: re-runs and
+          # every later boot no-op. Nothing is deleted (the archive keeps its
+          # pre-move btrbk snapshots; the frozen subvolume drops out of
+          # snapshots.nix, see docs/services/bank-sync.md). Same-FS rename is
+          # atomic; the switch stops bank-sync before the start phase, and
+          # Before= orders this ahead of both the daemon and storage-dir, so
+          # the fresh subvolume is created only after the old one is moved.
+          systemd.services.bank-sync-fresh-start = {
+            description = "One-time bank-sync dataDir fresh-start migration (2026-10-16 key-basis cutover)";
+            wantedBy = [ "multi-user.target" ];
+            before = [
+              "bank-sync.service"
+              "bank-sync-storage-dir.service"
+            ];
+            unitConfig.RequiresMountsFor = [ cfg.dataDir ];
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = "root";
+                RemainAfterExit = true;
+              }
+              (harden {
+                # Rename on the pool needs write access to the parent; root
+                # bypasses DAC only with the override capability (storage-dir
+                # precedent). No chown/chmod here — rename preserves the
+                # subvolume and its ownership untouched.
+                CapabilityBoundingSet = "CAP_DAC_OVERRIDE";
+                ReadWritePaths = [ (dirOf cfg.dataDir) ];
+              })
+              (serviceOneshotDefaults { })
+            ];
+            script = ''
+              data="${toString cfg.dataDir}"
+              archive="''${data}-pre-keybump-20261016"
+              if [ -e "$archive" ]; then
+                echo "bank-sync-fresh-start: $archive already present — migration already done, no-op"
+                exit 0
+              fi
+              if [ ! -e "$data" ]; then
+                echo "bank-sync-fresh-start: no $data (fresh host) — nothing to move"
+                exit 0
+              fi
+              ${pkgs.coreutils}/bin/mv "$data" "$archive"
+              echo "bank-sync-fresh-start: moved $data -> $archive (old journal preserved; history re-fetches from Wise via full-history backfill after SCA re-approval)"
+            '';
+          };
+
           systemd.services.bank-sync = {
             after = [ "bank-sync-storage-dir.service" ];
             wants = [ "bank-sync-storage-dir.service" ];

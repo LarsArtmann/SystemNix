@@ -57,7 +57,9 @@
     nixpkgs-llama-rag = "REV-PINNED nixpkgs holding the llama.cpp 0.3.0 build (last build proven serving on gfx1150 before the 0.4.0 mid-model-load CPU-spin regression, live 2026-09-14). LIFT: 0.4.0+ spin regression fixed upstream + re-verified live — drop the input entirely, do not update it.";
     paperless-gpt-src = "TAG-PINNED at v0.28.0 so the vendorHash + npmDepsHash in pkgs/paperless-gpt.nix stay reproducible (a moving ref re-breaks the FODs on every lock update). LIFT: bump tag + both hashes together deliberately.";
     qmd = "TAG-PINNED at v2.8.3. LIFT: bump the tag deliberately and re-verify the CLI + `qmd mcp` (upstream's nodeModules FOD is only valid per-tag).";
-    bank-sync = "Documented-ceiling rollback 2026-10-14 (second float): a lock-only rollback edit floated past the ceiling within hours and unanchored a deploy; hard URL pin + lock override make updates and blanket re-locks NO-OPs by design. LIFT: edit the URL (docs/services/bank-sync.md RE-FLOAT gotcha).";
+    # bank-sync row REMOVED 2026-10-16: the 2026-10-14 ceiling pin was lifted
+    # by the owner-ratified fresh-start cutover (prod journal archived once by
+    # the bank-sync-fresh-start oneshot; see flake.nix bank-sync comment).
   },
 }:
 let
