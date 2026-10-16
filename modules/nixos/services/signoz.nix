@@ -1304,6 +1304,17 @@ in
                           static_configs = [ { targets = [ "127.0.0.1:${toString ports.crowdsec-metrics}" ]; } ];
                           metrics_path = "/metrics";
                         }
+                      ]
+                      ++ lib.optionals (config.services.ai-meter.enable or false) [
+                        {
+                          # ai-meter metering surface (2026-10-16): per-client
+                          # token/cost/latency attribution for every routed AI
+                          # call. Without this job the ai_meter_* families
+                          # never reach ClickHouse (scrape-coverage doctrine).
+                          job_name = "ai-meter";
+                          static_configs = [ { targets = [ "127.0.0.1:${toString ports.ai-meter-metrics}" ]; } ];
+                          metrics_path = "/metrics";
+                        }
                       ];
                     };
                   };

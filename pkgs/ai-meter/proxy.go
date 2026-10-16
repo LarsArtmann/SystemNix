@@ -44,6 +44,14 @@ func NewProxy(cfg *Config, registry *Registry, ledger *Ledger, logger *slog.Logg
 }
 
 func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Health is served on the proxy port too (unauthenticated, cheap) so
+	// consumers can readiness-check the exact endpoint they call.
+	if r.URL.Path == "/health" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = io.WriteString(w, `{"status":"ok"}`)
+		return
+	}
 	if !strings.HasPrefix(r.URL.Path, "/v1/") {
 		writeError(w, http.StatusNotFound, "unknown route — expected /v1/<upstream>/<path>")
 		return

@@ -144,6 +144,15 @@ func TestProxyRejectsBadAuth(t *testing.T) {
 func TestProxyUnknownUpstreamAndRoute(t *testing.T) {
 	s := newTestStack(t, nil)
 
+	health, err := http.Get(s.proxy.URL + "/health")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = health.Body.Close() }()
+	if health.StatusCode != http.StatusOK {
+		t.Fatalf("proxy-port /health: want 200, got %d", health.StatusCode)
+	}
+
 	resp := s.post("/v1/nope/chat/completions", "test-key-1", `{"model":"m"}`)
 	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusNotFound {

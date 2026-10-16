@@ -86,6 +86,13 @@
           paperless-gpt = pkgs.callPackage (root + "/pkgs/paperless-gpt.nix") {
             src = inputs.paperless-gpt-src;
           };
+          # ai-meter — in-tree Go source (pkgs/ai-meter/), stdlib only,
+          # vendorHash = null forever (no FOD, no toolchain-skew re-hash
+          # waves). Same callPackage + src on the module side → identical
+          # store path.
+          ai-meter = pkgs.callPackage (root + "/pkgs/ai-meter.nix") {
+            src = lib.sources.cleanSource (root + "/pkgs/ai-meter");
+          };
           freebsd-zfs-vm = import (root + "/pkgs/freebsd-zfs-vm.nix") { inherit pkgs; };
           # Native GeoMetrikks (uv2nix + bun frontend; the Docker→native
           # migration pilot — see docs/planning/2026-09-29_*GEOMETRIKKS*).
