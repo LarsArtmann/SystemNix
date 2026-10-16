@@ -1298,6 +1298,16 @@ _: {
               TimeoutStartSec = "3min";
               MemoryMax = "16G";
               SupplementaryGroups = [ "gitea-runner-cache" ];
+              # Kill the nixpkgs module's LoadCredential=token:<tokenFile>
+              # (nixpkgs lock 55bfb4d added it): systemd sets up credentials
+              # BEFORE ExecStartPre, but /run is tmpfs and gen-runner-token
+              # writes the file INSIDE the start — every boot failed the
+              # CREDENTIALS step ("No such file or directory") into
+              # start-limit-hit; the runner was DOWN from the 2026-10-16
+              # 00:07 boot until this line (hub Actions runs sat "waiting";
+              # the 00:07 triage queued the class, this closes it). TOKEN
+              # reaches the daemon via EnvironmentFile instead.
+              LoadCredential = lib.mkForce [ ];
             }
             ioTier.build
           ];
