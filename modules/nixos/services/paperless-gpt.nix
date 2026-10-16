@@ -50,6 +50,12 @@
       paperlessCfg = config.services.paperless;
       paperlessPort = paperlessCfg.port;
       fastflowlmEnabled = config.services.fastflowlm.enable or false;
+      # ai-meter metering proxy (2026-10-16): when enabled, LLM traffic
+      # routes through the loopback proxy (attribution + token metering;
+      # the upstream is still FastFlowLM — only the base URL changes). The
+      # proxy key arrives via the runtime-minted env file; it OVERRIDES
+      # the dummy OPENAI_API_KEY below (EnvironmentFile beats Environment).
+      aiMeterEnabled = config.services.ai-meter.enable or false;
 
       stateDir = "/var/lib/paperless-gpt";
       runtimeEnvFile = "/run/paperless-gpt/env";
@@ -73,10 +79,11 @@
         LISTEN_INTERFACE = "127.0.0.1:${toString cfg.port}";
         GIN_MODE = "release";
         LOG_LEVEL = cfg.logLevel;
-        # LLM: FastFlowLM (OpenAI-compatible, ignores Authorization).
+        # LLM: FastFlowLM (OpenAI-compatible, ignores Authorization) —
+        # direct, or through ai-meter when the metering proxy is enabled.
         LLM_PROVIDER = "openai";
         LLM_MODEL = config.services.fastflowlm.model;
-        OPENAI_BASE_URL = "http://127.0.0.1:${toString config.services.fastflowlm.port}/v1";
+        OPENAI_BASE_URL = if aiMeterEnabled then "http://127.0.0.1:${toString ports.ai-meter}/v1/fastflowlm" else "http://127.0.0.1:${toString config.services.fastflowlm.port}/v1";
         OPENAI_API_KEY = "fastflowlm-local-no-auth";
         # Suggestion language pinned to the archive's majority language,
         # matching PAPERLESS_AI_LLM_OUTPUT_LANGUAGE in paperless.nix (A11).
@@ -347,11 +354,13 @@
             "network-online.target"
             "paperless-web.service"
             "paperless-gpt-token.service"
-          ];
+          ]
+          ++ lib.optionals aiMeterEnabled [ "ai-meter.service" ];
           wants = [
             "network-online.target"
             "paperless-web.service"
-          ];
+          ]
+          ++ lib.optionals aiMeterEnabled [ "ai-meter.service" ];
           requires = [ "paperless-gpt-token.service" ];
           wantedBy = [ "multi-user.target" ];
           inherit onFailure;
@@ -382,7 +391,8 @@
               StateDirectoryMode = "0700";
               WorkingDirectory = stateDir;
               ExecStart = lib.getExe pkg;
-              EnvironmentFile = [ runtimeEnvFile ];
+              EnvironmentFile = [ runtimeEnvFile ]
+                ++ lib.optionals aiMeterEnabled [ "/run/ai-meter-keys/paperless-gpt.env" ];
             }
             (harden {
               MemoryMax = "512M";

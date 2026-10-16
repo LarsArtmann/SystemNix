@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  osConfig,
   nix-ssh-config,
   crush-config,
   colorScheme,
@@ -216,6 +217,21 @@ in
     enable = true;
     # secretsDir defaults to "/run/secrets" (the sops-nix render dir).
     golangciLintLspCommand = "$HOME/.local/bin/golangci-lint-lsp-wrapper";
+    # ai-meter metering proxy (services.ai-meter on evo-x2): re-point the
+    # OpenAI-compat providers at the loopback proxy so every crush call is
+    # metered (attribution key = the runtime-minted client key, read per
+    # session start). Later statements WIN over the renderer's provider
+    # adds, so these override base URL + key only — models, prices and
+    # everything else stay owned by the crush-config repo. gemini stays
+    # DIRECT for now: its provider type is not confirmed OpenAI-compat
+    # with the proxy path (verify first, then route — the land-the-
+    # replacement-first doctrine).
+    extraRc = lib.mkIf ((osConfig.services.ai-meter or { }).enable or false) ''
+      if [ -f /run/ai-meter-keys/crush ]; then
+        provider add zai --base-url "http://127.0.0.1:${toString osConfig.services.ai-meter.port}/v1/zai" --api-key "$(cat /run/ai-meter-keys/crush)"
+        provider add kimi-coding --base-url "http://127.0.0.1:${toString osConfig.services.ai-meter.port}/v1/kimi" --api-key "$(cat /run/ai-meter-keys/crush)"
+      fi
+    '';
   };
 
   # SSH hosts defined in common/programs/ssh-config.nix

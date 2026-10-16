@@ -178,5 +178,12 @@
     # default 6060 is TAKEN by an unidentified Go pprof listener on *:6060
     # (live-probed 2026-10-14, /debug/pprof/ answers 200) — do NOT reuse it.
     crowdsec-metrics = 6061;
+
+    # ai-meter — transparent metering proxy for every OpenAI-compatible AI
+    # call on the host (services.ai-meter). Proxy on 8107 (per-client
+    # Bearer keys), admin plane (Prometheus /metrics + /health) on 8108 —
+    # both loopback-only, no vHost by design.
+    ai-meter = 8107;
+    ai-meter-metrics = 8108;
   };
 }
