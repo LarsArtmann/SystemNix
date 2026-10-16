@@ -117,6 +117,12 @@ Source filter and per-site home beacons key on them). Plan + traps:
   for this host), label `pbx`, format `geometrikks-json`, home pinned to
   Helsinki hel1. The PBX side is pbx-artmann `hosts/pbx/geometrikks-feed.nix`
   (upstream's `geometrikks_json` nginx log_format + a second access_log).
+  **Auth chain (live-proven 2026-10-16):** the host key is pinned in
+  `programs.ssh.knownHosts."pbx.artmann.tech"` (geometrikks.nix — BatchMode
+  can't TOFU; first deploy died exit-255 "Host key verification failed"
+  until the pin landed); the identity leg still requires root's pubkey to be
+  authorized in the PBX's `authorized_keys` — until that lands the unit
+  fails loudly every minute with `Permission denied (publickey)`.
 - **DO NOT rsync the raw remote file into the feed dir** — the tailer reads
   an inode flip (or a ≥99% shrink) as rotation and re-ingests the whole
   file; only the pull script's append-delta shape is safe. Local feed-file
