@@ -138,9 +138,30 @@ scrape error = red). Expect ONE red cycle right after the first deploy carrying 
 stale file does not exist until the first reconcile run completes — deploy.sh's post-switch sync
 start publishes it within minutes).
 
-Note: the notices table accumulates one row per failed sync (the frozen mirrors generate
-~1.6k rows/day). Admin UI → Site Administration → Monitor → Notices has a purge; harmless until
-then, but worth a periodic look.
+Note: the notices table accumulates one row per failed sync. The 2026-09-18 frozen-mirror flood
+(~1.6k rows/day) is GONE — the frozen mirrors were resolved via reconcile and the live census
+(2026-10-16, full-table review) reads **102 rows total** (2026-08-17 → today, all Type=1, zero
+Type=2). The only ACTIVE generator is `lars/auto-deduplicate`'s PRUNE step ("Failed to prune
+mirror repository ... could not read Password ... terminal prompts disabled", ~2.5h cadence since
+2026-09-24): the mirror's FETCH/UPDATE itself succeeds and stays fresh (stale remote-tracking refs
+accumulate — no data loss). Its e-invoicing twin healed when the reconcile deleted the
+renamed-upstream stale mirror 2026-10-11 (`e-invoicing` → `ksef-sandbox` on GitHub; the canonical
+mirror now syncs clean). NOTE: the mirror-health collector greps UPDATE notices only — the prune
+class is invisible to `forgejo_mirror_dead_candidates` (queued in docs/todo/services.md). Admin
+UI → Site Administration → Monitor → Notices has a purge; with 102 rows it is cosmetic — the 22
+August empty-reason rows + the 08-21 migrate-credential one-off are the purge-safe set.
+
+**forgejo-mirror-health "DB not readable" — red-from-birth, FIXED in-tree 2026-10-16 (deploy
+pending):** the unit runs as root but `harden{}` bounded it to `CAP_FOWNER` only; root WITHOUT
+`CAP_DAC_READ_SEARCH` cannot traverse forgejo's 0700 StateDirectory, so EVERY 5-min run since
+2026-09-18 (ship day, e71362b4) printed "DB not readable" and emitted
+`forgejo_mirror_health_scrape_errors 1` — Gatus "Forgejo Dead Mirror Candidates" never had a
+green window (the 2026-10-11 02:17 report's "one benign counter" read was this permanent gap,
+not the 01:52 family-stop window). Fix: `CapabilityBoundingSet = "CAP_FOWNER
+CAP_DAC_READ_SEARCH"` — the same pair as `forgejo-subvol-backup-metrics`; the
+capability-grant-audit only governs non-root units (root acquires bounding caps, which is why
+the bounding entry alone works here). Post-deploy verify: no "not readable" journal line,
+`forgejo_mirror_health_scrape_errors 0`.
 
 ### Census (`forgejo-census`)
 
