@@ -156,6 +156,15 @@ _: {
       # not page. >=3 = a systematic failure retrying every cron round.
       forgejoMirrorErrorThreshold = 3;
 
+      # Per-mirror staleness bound for the sync-backlog count (wave-2 #7,
+      # 2026-10-16): mirrors whose last sync ATTEMPT is older than 2× the 2h
+      # pull interval. TouchMirror advances updated_unix on FAILED attempts
+      # too, so this climbs ONLY when the queue is not running at all —
+      # exactly the partial-wedge shape the freshest-age stall flag cannot
+      # see (freshest advances while dozens lag). GitHub-outage failures
+      # show in _erroring instead. Threshold paging is a SigNoz rule; Gatus
+      # owns metric PRESENCE only (a boot catch-up legitimately reads high).
+
       # PMA commit-failure threshold per 1h window. The 2026-08-22..09-02
       # blackout logged hundreds of "commit failed" lines per hour (dead AI
       # provider, ~3,800 total) while liveness stayed green; a single
@@ -630,6 +639,8 @@ _: {
           FORGEJO_MIRROR_STALLED=""
           FORGEJO_MIRROR_ERRORS_30M=""
           FORGEJO_MIRROR_ERRORING=""
+          FORGEJO_MIRROR_STALE_COUNT=""
+          FORGEJO_AUTH_FAILURES_24H=""
           if [ "$collect_forgejo_mirrors" = "true" ] && [ -r "${cfg.forgejo.dbPath}" ]; then
             # .timeout: forgejo's DB is hot (action_runner heartbeats every
             # ~2s) — without a busy-timeout the readonly query dies on the
@@ -651,6 +662,14 @@ _: {
               if [ "$FORGEJO_MIRROR_LAST_SYNC_AGE" -ge ${toString forgejoMirrorStalenessSeconds} ] 2>/dev/null; then
                 FORGEJO_MIRROR_STALLED=1
               fi
+              # Backlog count: mirrors whose last ATTEMPT is older than 2×
+              # the 2h pull interval. Same DB read, one extra aggregate —
+              # see the constant's comment for why a COUNT beats the
+              # freshest-age flag for partial wedges.
+              FORGEJO_MIRROR_STALE_COUNT=$(sqlite3 -readonly "${cfg.forgejo.dbPath}" ".timeout 5000" \
+                "SELECT COUNT(*) FROM mirror WHERE updated_unix < (strftime('%s','now') - ${toString (4 * 3600)})" 2>/dev/null) \
+                || FORGEJO_MIRROR_STALE_COUNT=""
+              echo "$FORGEJO_MIRROR_STALE_COUNT" | grep -qE '^[0-9]+$' || FORGEJO_MIRROR_STALE_COUNT=""
               # BOTH bounds are load-bearing (the 2026-08-31 oomd lesson):
               # `--since` bounds the journal walk, `timeout 60` bounds the
               # wall clock (raised from 30 on 2026-09-02: under a 40-80%
@@ -667,6 +686,20 @@ _: {
               FORGEJO_WALK_LAUNCHED=1
               walk_journal "$WALK_DIR/forgejo" forgejo.service "-30 min" "AddAuthCredentialHelperForRemote Error|failed to update mirror repository|pull mirror failed to meet migration URL requirements|failed to get remote address" 60 &
             fi
+
+          # Auth-failure audit walk (wave-2 #6, 2026-10-16): forgejo has no
+          # audit-log subsystem on v15, but every rejected auth lands in the
+          # journal as a router 401 line (git-http + API) or a
+          # "Failed authentication" line. Local password auth is DISABLED
+          # (SSO-only), so 401s are anonymous-git probes (~15/day baseline
+          # from the runner's unauthenticated retry ladder) or a revoked
+          # token looping — the 2026-10-12 sync-token-401 class logged
+          # thousands/hour with zero pages. SigNoz owns the threshold rule;
+          # this walk only makes the count exist. Runs UNCONDITIONALLY (not
+          # gated on the mirror DB) — auth telemetry must not blink when a
+          # sqlite read hiccups.
+          walk_journal "$WALK_DIR/forgejo-auth" forgejo.service "-24h" "401 Unauthorized|Failed authentication" 60 &
+          FORGEJO_AUTH_WALK_LAUNCHED=1
           fi
 
           # === PMA auto-commit health ===
@@ -1063,6 +1096,18 @@ _: {
               fi
             fi
 
+            if [ "''${FORGEJO_AUTH_WALK_LAUNCHED:-0}" = 1 ]; then
+              forgejo_auth_status=2
+              read -r forgejo_auth_status FORGEJO_AUTH_FAILURES_24H < "$WALK_DIR/forgejo-auth" 2>/dev/null || { forgejo_auth_status=2; FORGEJO_AUTH_FAILURES_24H=""; }
+              if [ "''${forgejo_auth_status:-2}" -le 1 ]; then
+                FORGEJO_AUTH_FAILURES_24H="''${FORGEJO_AUTH_FAILURES_24H:-0}"
+              else
+                echo "system-health: forgejo auth journal scan failed (status ''${forgejo_auth_status:-?})" >&2
+                FORGEJO_AUTH_FAILURES_24H=""
+                FORGEJO_MIRROR_SCRAPE_ERRORS=1
+              fi
+            fi
+
             if [ "''${PMA_WALKS_LAUNCHED:-0}" = 1 ]; then
               pma_fail_status=2
               pma_fb_status=2
@@ -1332,6 +1377,18 @@ _: {
               echo "# HELP system_forgejo_mirror_erroring Error flag: 1 when >=${toString forgejoMirrorErrorThreshold} mirror-sync Error lines hit the forgejo journal within 30 minutes, 0 otherwise"
               echo "# TYPE system_forgejo_mirror_erroring gauge"
               echo "system_forgejo_mirror_erroring ''${FORGEJO_MIRROR_ERRORING}"
+            fi
+
+            if [ -n "$FORGEJO_MIRROR_STALE_COUNT" ]; then
+              echo "# HELP system_forgejo_mirror_sync_stale_count Pull mirrors whose last sync ATTEMPT is older than 4h (2x the 2h interval). TouchMirror advances updated_unix on failures too, so this climbs ONLY when the queue is not running (partial wedge / dead scheduler); an active GitHub outage shows in _erroring instead. Threshold paging is the SigNoz rule; a post-boot catch-up legitimately reads high"
+              echo "# TYPE system_forgejo_mirror_sync_stale_count gauge"
+              echo "system_forgejo_mirror_sync_stale_count ''${FORGEJO_MIRROR_STALE_COUNT}"
+            fi
+
+            if [ -n "$FORGEJO_AUTH_FAILURES_24H" ]; then
+              echo "# HELP system_forgejo_auth_failures_24h forgejo journal auth-failure lines (HTTP 401 Unauthorized / Failed authentication) in the last 24h. SSO-only instance: baseline is ~15/day anonymous git probes; hundreds+ = a revoked or rotted token looping in a consumer (the 2026-10-12 sync-token class)"
+              echo "# TYPE system_forgejo_auth_failures_24h gauge"
+              echo "system_forgejo_auth_failures_24h ''${FORGEJO_AUTH_FAILURES_24H}"
             fi
 
             if [ "$collect_pma_commits" = "true" ]; then
