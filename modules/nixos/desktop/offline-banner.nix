@@ -14,15 +14,20 @@
 #      the network is half-broken.
 # `ping` needs no wrapper on NixOS (nixpkgs iputils ships cap_net_raw).
 #
-# Rendering follows the shutdown-overlay / sev1-overlay pattern: a SECOND
-# Quickshell instance (DMS plugins cannot render layer-shell surfaces) with
-# a top-anchored, click-through (mask: Region {}) Overlay-layer strip on
-# every screen. STATIC yellow — the sev1 "non-flashing yellow" doctrine
+# Rendering follows the shutdown-overlay / sev1-overlay second-Quickshell-
+# instance pattern (DMS plugins cannot render layer-shell surfaces), with
+# ONE owner-requested difference (2026-10-16): the strip lives on the TOP
+# layer with ExclusionMode.Auto and an ANIMATED height, so instead of
+# floating over the DMS bar it CLAIMS the top edge and the bar slides
+# down beneath it (slow InOutCubic push, slides back up on recovery).
+# Click-through (mask: Region {}) still passes clicks to windows beneath.
+# STATIC yellow — the sev1 "non-flashing yellow" doctrine
 # (2026-09-02): connectivity loss is a warning, not a page. The banner
 # appears after `failuresToShow` consecutive failed probes (default 2 =
 # ~10 s grace, no flash on a single lost ping) and hides on the first
-# clean probe. A probe that cannot even run (empty output) counts as
-# "net" — fail visible, never fail silent.
+# clean probe; a 1 s display tick keeps the "last online X ago" caption
+# honest while it is up. A probe that cannot even run (empty output)
+# counts as "net" — fail visible, never fail silent.
 _: {
   flake.nixosModules.offline-banner =
     {
@@ -62,10 +67,28 @@ _: {
             readonly property string reasonText: root.reason === "link"
                 ? "Network link is down"
                 : "No internet connection"
+            // Last confirmed-good probe (epoch seconds; 0 = not seen this
+            // session — banner then says "unknown" instead of lying).
+            property real lastOnlineAt: 0
+            property int tick: 0
+            readonly property string lastOnlineAgo: {
+                root.tick;
+                return root.lastOnlineAt > 0 ? root.fmtAgo(root.lastOnlineAt) : "unknown";
+            }
+
+            function fmtAgo(epochSec) {
+                const s = Math.max(0, Math.floor(Date.now() / 1000 - epochSec));
+                if (s < 60) return s + "s";
+                const m = Math.floor(s / 60);
+                if (m < 60) return m + "m " + (s % 60) + "s";
+                const h = Math.floor(m / 60);
+                return h + "h " + (m % 60) + "m";
+            }
 
             function applyProbe(text) {
                 const result = (text ?? "").trim().split("\n")[0];
                 if (result === "ok") {
+                    root.lastOnlineAt = Date.now() / 1000;
                     root.failures = 0;
                     root.reason = "";
                     return;
@@ -114,6 +137,18 @@ _: {
                 }
             }
 
+            // 1 s display tick: re-evaluates the "last online X ago"
+            // caption while the banner is visible (QML bindings do not
+            // re-run on wall-clock passage by themselves).
+            Timer {
+                interval: 1000
+                running: root.offline
+                repeat: true
+                triggeredOnStart: true
+
+                onTriggered: root.tick = root.tick + 1
+            }
+
             Variants {
                 model: Quickshell.screens
 
@@ -122,13 +157,28 @@ _: {
 
                     required property var modelData
 
+                    readonly property int shownHeight: Math.max(52, Math.round(modelData.height * 0.032))
+                    // Animated height drives BOTH the surface size and its
+                    // exclusive zone (ExclusionMode.Auto): the DMS bar
+                    // (Top layer, exclusive, top edge) is repositioned by
+                    // the compositor on every animation frame — the slow
+                    // slide-down the owner asked for; it slides back up on
+                    // recovery as the height animates to 0.
+                    property real animHeight: root.offline ? banner.shownHeight : 0
+                    Behavior on animHeight {
+                        NumberAnimation {
+                            duration: 450
+                            easing.type: Easing.InOutCubic
+                        }
+                    }
+
                     screen: modelData
-                    visible: root.offline
-                    updatesEnabled: root.offline
+                    visible: root.offline || banner.animHeight > 1
+                    updatesEnabled: root.offline || banner.animHeight > 1
 
                     WlrLayershell.namespace: "systemnix:offline-banner"
-                    WlrLayershell.layer: WlrLayer.Overlay
-                    WlrLayershell.exclusionMode: ExclusionMode.Ignore
+                    WlrLayershell.layer: WlrLayer.Top
+                    WlrLayershell.exclusionMode: ExclusionMode.Auto
 
                     anchors {
                         top: true
@@ -136,7 +186,7 @@ _: {
                         right: true
                     }
 
-                    implicitHeight: Math.max(44, Math.round(modelData.height * 0.03))
+                    implicitHeight: banner.animHeight
                     color: "transparent"
                     mask: Region {}
 
@@ -144,13 +194,27 @@ _: {
                         anchors.fill: parent
                         color: "#f2f9e2af"
 
-                        Text {
+                        Column {
                             anchors.centerIn: parent
-                            text: "⚠  OFFLINE — " + root.reasonText
-                            color: "#1e1e2e"
-                            font.pixelSize: Math.max(16, Math.round(modelData.height * 0.014))
-                            font.weight: Font.Black
-                            font.letterSpacing: 2
+                            spacing: 2
+
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: "⚠  OFFLINE — " + root.reasonText
+                                color: "#1e1e2e"
+                                font.pixelSize: Math.max(15, Math.round(modelData.height * 0.012))
+                                font.weight: Font.Black
+                                font.letterSpacing: 2
+                            }
+
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: "last online " + root.lastOnlineAgo + " ago"
+                                color: "#1e1e2e"
+                                opacity: 0.75
+                                font.pixelSize: Math.max(11, Math.round(modelData.height * 0.007))
+                                font.weight: Font.DemiBold
+                            }
                         }
                     }
                 }

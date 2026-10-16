@@ -41,21 +41,32 @@ cscli lapi status          # LAPI up
 Prometheus metrics: `127.0.0.1:6061/metrics` (Gatus check "CrowdSec", 1m).
 LAPI has no anonymous HTTP endpoint — the metrics check is the liveness probe.
 
-## Stage 2 — GeoMetrikks unlock (OWNER-INTERACTIVE)
+## Stage 2 — GeoMetrikks unlock (DECLARATIVE since 2026-10-16)
 
-1. Register a read-only bouncer for GeoMetrikks (sudo, interactive):
-   `sudo -u crowdsec cscli bouncers add geometrikks` → prints the API key ONCE.
-2. Paste it into `platforms/nixos/secrets/geometrikks.yaml` via `sops` (editor —
-   **never on a command line**, fish_history rule). Suggested keys:
-   `geometrikks_crowdsec_lapi_url = http://127.0.0.1:8082`,
-   `geometrikks_crowdsec_bouncer_api_key`.
-3. Wire a sops template → EnvironmentFile on `geometrikks.service` with
-   `CROWDSEC_LAPI_URL` + `CROWDSEC_BOUNCER_API_KEY` (names verified upstream).
-   Result: Security page + Banned-IPs map go live, `geo.home.lan/settings/status`
-   flips to Enabled. Ban/unban from the UI additionally needs machine creds
-   (`cscli machines add geometrikks --auto -f -` → `CROWDSEC_MACHINE_ID/_PASSWORD`).
-4. Keep sops env on the GEOMETRIKKS unit (static user) — never on crowdsec's
-   DynamicUser units (dynamic-user-audit class).
+The key + registration are nix-managed — the old owner-interactive
+`cscli bouncers add` (print-once key, manual sops paste) is GONE:
+
+1. **Key**: `geometrikks_crowdsec_bouncer_api_key` in
+   `platforms/nixos/secrets/geometrikks.yaml` (machine-generated 2026-10-16,
+   sops-only; NO human has ever needed it). Rotation = change that one sops
+   value via sops editor — `crowdsec-bouncer-register.service` and
+   `geometrikks.service` both restart from template restartUnits and converge.
+2. **Registration**: `crowdsec-bouncer-register.service` (oneshot, after
+   crowdsec, before geometrikks) runs delete+add per boot so the LAPI DB hash
+   ALWAYS matches the sops value (same-key re-register keeps live bouncer
+   sessions valid). Graceful-skip with a warning while the sops key is absent.
+3. **Consumer env**: the `geometrikks-env` template carries
+   `CROWDSEC_LAPI_URL` + `CROWDSEC_BOUNCER_API_KEY` (names verified verbatim
+   upstream, study doc 2026-10-14).
+
+Remaining (NOT nix-managed): flip `geo.home.lan/settings/status` → Enabled in
+the geo admin UI after the next deploy carries the units + key. Ban/unban from
+the UI (stage 3) additionally needs machine creds
+(`cscli machines add geometrikks --auto -f -` → `CROWDSEC_MACHINE_ID/_PASSWORD`).
+
+sops env stays off crowdsec's own DynamicUser units (dynamic-user-audit
+class): the bouncer env template renders root:root 0400 — systemd's manager
+reads EnvironmentFile and injects the var, the engine process never opens it.
 
 ## Stage 3 — firewall bouncer (enforcement; NOT enabled)
 

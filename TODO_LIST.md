@@ -376,6 +376,7 @@
 - [ ] **Bisect the llama.cpp 0.3.0 mid-load CPU-spin upstream (ROCm runtime / kernel / GPU-state — upstream of llama.cpp) — THE gate for re-enabling llama-rag and unblocking the paperless RAG item** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
 
 ### services
+- [ ] [ready] **discordsync hotloop triage (§18 class: 2812 journal lines/min, exit 69)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-16_02-15_pastebot-parity-clipboard-snippets-status.md §d.2)
 
 - [ ] [ready] **Diagnose (then fix or consciously tolerate) the `lars/auto-deduplicate` PRUNE failure — the only live forgejo notice generator** (every ~2.5h since 09-24, credential-prompt class, mirror otherwise healthy; verify against the DEPLOYED forgejo source first) → [docs/todo/services.md](docs/todo/services.md) (Source: 2026-10-16 full notices review, docs/services/forgejo.md §dead-mirror)
 - [ ] [ready] **Extend forgejo-mirror-health with a prune-notice signal** (`forgejo_mirror_health_prune_candidates` + known-stale subtraction + Gatus anchor — the update-notice grep is blind to the prune class) → [docs/todo/services.md](docs/todo/services.md) (Source: 2026-10-16 full notices review, docs/services/forgejo.md §dead-mirror)
@@ -562,6 +563,7 @@
 - [ ] [ready] **Eval lint: volatile credential sources** (reject/flag `LoadCredential=`/`EnvironmentFile=` paths under /run/ whose writer is the SAME unit's ExecStartPre — the gitea-runner every-boot class, invisible to the sops eval gate) → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-16_00-07_boot-failure-triage.md §e.1/§f.6)
 
 ### upstream
+- [ ] [ready] **File DMS upstream issues: savePluginState writer bug + getItems doc drift (verify-before-filing: repro on main + issue search first)** → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: same report §a.4)
 
 - [ ] **PMA OTel span instrumentation upstream (overview `fff1035` pattern)** → [docs/todo/upstream.md](docs/todo/upstream.md)
 - [ ] **papdashboard OTel span instrumentation upstream (clone first)** → [docs/todo/upstream.md](docs/todo/upstream.md)
@@ -952,6 +954,7 @@
 | [docs/todo/pixel6.md](docs/todo/pixel6.md)         | Pixel 6 recovery → media-archive project                                                                 |
 
 ### desktop
+- [ ] [ready] **systemnix-snippets delete action (`:s -name` or context menu; trash via Process, never rm)** → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §c.1)
 
 - [ ] [ready] **Trace the 10:48 session-restore helium non-spawn + journal-pin when the wedged launch guard actually started swallowing main launches** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [ready] **Live-verify KeePassXC passkeys in Helium (user-assisted ceremony: chrome://policy + one real passkey create/re-auth — policy went live with the 10-06 deploy)** → [docs/todo/desktop.md](docs/todo/desktop.md)
@@ -1329,6 +1332,8 @@
 - [ ] [ready] **Fix CrowdSec caddy acquisition — PrivateUsers makes CAP_DAC_READ_SEARCH inert (caddy logs unmonitored, HTTP scenarios dark)** → [docs/todo/services.md](docs/todo/services.md) (Source: 2026-10-16 stage-1 live verification)
 - [ ] [ready] **Fix CrowdSec sshd journal acquisition — 100% parse-ko, zero parseable input engine-wide (no scenario can ever fire)** → [docs/todo/services.md](docs/todo/services.md) (Source: /metrics scrape 2026-10-16, PID 1607147)
 - [ ] [ready] **Whitelist cdn-hub.crowdsec.net in dnsblockd + decide hub-update-failure start policy (2h18m crowdsec outage Oct 15)** → [docs/todo/services.md](docs/todo/services.md) (Source: crowdsec journal 2026-10-15 22:37/23:30)
+- [x] [blocked:user] ~~**CrowdSec stage 2 — GeoMetrikks bouncer key (owner-interactive)**~~ **OBSOLETE 2026-10-16: stage 2 made DECLARATIVE** (owner ask) — key machine-generated into sops, `crowdsec-bouncer-register.service` converges LAPI on every boot, geo env template wired; no owner step remains except the post-deploy geo UI Enabled flip → [docs/todo/services.md](docs/todo/services.md) (Source: owner request 2026-10-16 + docs/services/crowdsec.md §Stage 2)
+- [ ] [watch] **CrowdSec stage-2 units on the next switch: bouncer-register converges + geo Security page unlock** → [docs/todo/services.md](docs/todo/services.md) (Source: stage-2 declarative landing 2026-10-16)
 - [x] ~~[ready] **Provision or delete the `boot_phase_duration_seconds` metric expectation**~~ **DONE 2026-10-15 (same-day):** the emitter existed all along (`boot-metrics.nix`) but the watchdog-reset storm boot finished userspace at 47m48s — AFTER the 24min single-run retry budget — leaving the prom phase-less (fail-closed `scrape_errors=1`) for the whole boot. Fix: timer grew `OnUnitActiveSec=30min` re-fire (idempotent boot-relative re-sample; converges once the boot finishes) + one manual unit start converged the current boot; also fixed the never-matching `boot_total_duration_seconds` extraction (systemd-analyze trailing space vs bare `$` anchor). Pre-deploy battery: 100 passed / 0 failed. → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-10-15_04-51_vendorhash-wave-fixed-live-unanchored.md §1.6)
 - [ ] [ready] **Un-red the CI Nix-flake-check workflow** — VM tests 404 on the private `branching-flow` tarball (needs CI token or pushed rev) + statix leg exit-1; red on every master push since ≤2026-10-15 00:11 → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-15_05-14_zero-python-execution-complete-close-out.md §d)
 - [ ] [decision] **Ratify or clean-room-port the vendored cappy-dev systemd-audit.py (the repo's last Python, 490 LOC)** — `pkgs/.systemd-timer-monitor/systemd-audit.py` was vendored verbatim 2026-08-28 (upstream deleted from GitHub, unlicensed) and powers the live timers.home.lan service; ratify-as-sanctioned-exception (zero FIRST-party Python stands, python3 stays in the closure) vs first-party Go behavioral reimplementation (report.html + status.json + exit codes 0/1/2, vendored file deleted, python3 leaves the closure — service-affecting) → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-15_05-14_zero-python-execution-complete-close-out.md §h; first flagged docs/status/2026-09-15_04-29_repo-cleanup-pareto-sweep-brutal-self-review.md item 20)
