@@ -670,7 +670,12 @@ _: {
               ProtectHome = "read-only";
               # mktemp+rename over a possible foreign-owned leftover in the
               # sticky 1777 textfile dir (audit-textfile-tmp pattern)
-              CapabilityBoundingSet = "CAP_FOWNER";
+              # CAP_DAC_READ_SEARCH: root needs it to traverse forgejo's 0700
+              # StateDirectory + read the 0600 sqlite DB/WAL once harden drops
+              # DAC_OVERRIDE — without it every run printed "DB not readable"
+              # (scrape_errors 1, red Gatus, since 2026-09-18; live-confirmed
+              # 2026-10-16). Same pair as forgejo-subvol-backup-metrics below.
+              CapabilityBoundingSet = "CAP_FOWNER CAP_DAC_READ_SEARCH";
               ReadWritePaths = [ "/var/lib/prometheus-node-exporter/textfile_collectors" ];
             })
           ];
