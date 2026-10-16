@@ -223,15 +223,23 @@ _: {
           "caddy"
         ];
 
-        # PR #1943 patch-apply (see pr1943Parser above): L+ force-replaces
-        # cscli's install symlink at every activation; restartTriggers makes
-        # a deploy actually reload it (parsers load at agent start only).
-        systemd.tmpfiles.settings."20-crowdsec-pr1943" = {
-          "/etc/crowdsec/parsers/s01-parse/sshd-success-logs.yaml".link = {
-            type = "L+";
-            argument = "${pr1943Parser}";
-          };
-        };
+        # PR #1943 patch-apply (see pr1943Parser above): re-assert the install
+        # symlink at every engine start. switch-to-configuration does NOT run
+        # systemd-tmpfiles (live-proven 2026-10-16: zero tmpfiles invocations
+        # in the switch binary; the deploy script heals /run entries only),
+        # so the first-boot-only L+ variant of this override never applied
+        # post-deploy. mkAfter lands after the upstream setup's " "-reset
+        # ExecStartPre list — setup's cscli install runs FIRST (a hub
+        # version change may rewrite the link; ours wins), then the engine
+        # loads the override at that same start (restartTriggers forces the
+        # restart on content change). Runs as the unit's User=crowdsec — the
+        # parsers dir is crowdsec-owned 0750, no capability needed. REMOVE
+        # this + pr1943Parser when PR #1943 merges (cscli's install then
+        # keeps the hub file).
+        systemd.services.crowdsec.serviceConfig.ExecStartPre = lib.mkAfter [
+          "ln -sfn ${pr1943Parser} /etc/crowdsec/parsers/s01-parse/sshd-success-logs.yaml"
+        ];
+
         systemd.services.crowdsec.restartTriggers = [ pr1943Parser ];
 
         # Stage 1 has NO bouncer: the bouncer module's register oneshot still
