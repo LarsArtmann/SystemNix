@@ -230,6 +230,7 @@ in
       if [ -f /run/ai-meter-keys/crush ]; then
         provider add zai --base-url "http://127.0.0.1:${toString osConfig.services.ai-meter.port}/v1/zai" --api-key "$(cat /run/ai-meter-keys/crush)"
         provider add kimi-coding --base-url "http://127.0.0.1:${toString osConfig.services.ai-meter.port}/v1/kimi" --api-key "$(cat /run/ai-meter-keys/crush)"
+        provider add gemini --base-url "http://127.0.0.1:${toString osConfig.services.ai-meter.port}/v1/gemini" --api-key "$(cat /run/ai-meter-keys/crush)"
       fi
     '';
   };
