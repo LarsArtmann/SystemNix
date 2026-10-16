@@ -1285,9 +1285,9 @@ _: {
           # a skipped (API-down) forgejo in a ~63s fail-loop on every dedicated
           # generation deployed before `migrate-forgejo-subvol.sh finalize`
           # (observed live 2026-10-06, boots -3..0).
-          unitConfig.RequiresMountsFor = lib.optionals dedicated [ stateDir ];
+          unitConfig.RequiresMountsFor =
+            lib.optionals dedicated [ stateDir ] ++ [ "/mnt/buildcache/ci-runner-cache" ];
           unitConfig.ConditionPathExists = subvolMigratedCondition;
-          # Host-mode CI jobs inherit the runner's PATH — the hub workflow
           # (eventcatalog-hub build.yml) needs nix (go_1_27 shell), jq
           # (sources.json parsing), and python3 (merge.py) beyond the
           # nixpkgs module's default tool set.
@@ -1298,6 +1298,11 @@ _: {
           ];
           serviceConfig = lib.mkMerge [
             {
+              Environment = [
+                "GOMODCACHE=/mnt/buildcache/ci-runner-cache/gomodcache"
+                "GOCACHE=/mnt/buildcache/ci-runner-cache/gocache"
+                "npm_config_cache=/mnt/buildcache/ci-runner-cache/npm"
+              ];
               EnvironmentFile = lib.mkForce "-/run/forgejo-runner/token";
               ExecStartPre = lib.mkForce [
                 ("+" + lib.getExe genRunnerToken)
