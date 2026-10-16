@@ -98,8 +98,6 @@ func jsonString(v any) string {
 }
 
 func (s *testStack) post(path, key, body string) *http.Response {
-	t := &testing.T{}
-	_ = t
 	req, _ := http.NewRequest(http.MethodPost, s.proxy.URL+path, strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+key)
@@ -134,7 +132,7 @@ func TestProxyRejectsBadAuth(t *testing.T) {
 	s := newTestStack(t, nil)
 
 	resp := s.post("/v1/fake/chat/completions", "wrong-key", `{"model":"m"}`)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusUnauthorized {
 		t.Fatalf("want 401, got %d", resp.StatusCode)
 	}
@@ -147,13 +145,13 @@ func TestProxyUnknownUpstreamAndRoute(t *testing.T) {
 	s := newTestStack(t, nil)
 
 	resp := s.post("/v1/nope/chat/completions", "test-key-1", `{"model":"m"}`)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusNotFound {
 		t.Fatalf("want 404, got %d", resp.StatusCode)
 	}
 
 	resp = s.post("/v1/fake", "test-key-1", `{"model":"m"}`)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusNotFound {
 		t.Fatalf("want 404 for route without subpath, got %d", resp.StatusCode)
 	}
@@ -163,7 +161,7 @@ func TestProxyMetersNonStreamingChat(t *testing.T) {
 	s := newTestStack(t, map[string]Cost{"m": {Input: 2, Output: 4, CachedInput: 0.5}})
 
 	resp := s.post("/v1/fake/chat/completions", "test-key-1", `{"model":"m","messages":[{"role":"user","content":"hi"}]}`)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("want 200, got %d", resp.StatusCode)
 	}
@@ -202,7 +200,7 @@ func TestProxyMetersStreamingChat(t *testing.T) {
 	s := newTestStack(t, nil)
 
 	resp := s.post("/v1/fake/chat/completions", "test-key-1", `{"model":"m","stream":true,"messages":[]}`)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("want 200, got %d", resp.StatusCode)
 	}
@@ -238,7 +236,7 @@ func TestProxyRecordsUpstreamErrors(t *testing.T) {
 	s.cfg.Upstreams[0].BaseURL = "http://127.0.0.1:1"
 
 	resp := s.post("/v1/fake/chat/completions", "test-key-1", `{"model":"m"}`)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusBadGateway {
 		t.Fatalf("want 502, got %d", resp.StatusCode)
 	}
@@ -256,7 +254,7 @@ func TestProxyPassthroughModels(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("want 200, got %d", resp.StatusCode)
 	}

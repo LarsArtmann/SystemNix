@@ -7,15 +7,6 @@ import (
 	"testing"
 )
 
-func writeTemp(t *testing.T, content string) string {
-	t.Helper()
-	path := filepath.Join(t.TempDir(), "file")
-	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	return path
-}
-
 func TestParseRequest(t *testing.T) {
 	tests := []struct {
 		name        string
