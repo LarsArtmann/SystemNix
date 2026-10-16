@@ -293,6 +293,92 @@
         find ${poolBackupDir} -name "*.sql" -mtime +14 -delete
         echo "geometrikks-db-backup: dump landed in ${poolBackupDir}"
       '';
+
+      # Offset-delta ssh pulls of remote access logs (cfg.logPulls).
+      # Root units on purpose: auth rides root's default ssh identity
+      # (the pbx-backup-pull kit's live-proven pattern — the remote
+      # authorizes this host's root key). ProtectHome=read-only keeps
+      # /root/.ssh readable and nothing else writable.
+      geometrikksLogPullUnits = lib.listToAttrs (
+        map (
+          pull:
+          let
+            feedDir = "/var/lib/geometrikks-remote-logs";
+            pullScript = pkgs.writeShellScript "geometrikks-log-pull-${pull.name}" ''
+              set -euo pipefail
+              feed="${feedDir}/${pull.name}.log"
+              offset_file="${feedDir}/${pull.name}.offset"
+              ssh_opts=(-o BatchMode=yes -o ConnectTimeout=20)
+              remote_size="$(ssh "''${ssh_opts[@]}" "${pull.sshTarget}" "stat -c %s '${pull.remotePath}' 2>/dev/null || echo MISSING")"
+              if [ "$remote_size" = "MISSING" ]; then
+                # Remote log not deployed yet (or removed) — clean exit,
+                # the timer retries every interval. Loud-fail class is
+                # reserved for ssh itself failing (set -e).
+                echo "geometrikks-log-pull-${pull.name}: remote '${pull.remotePath}' not present on ${pull.sshTarget} — nothing to pull"
+                exit 0
+              fi
+              offset="$(cat "$offset_file" 2>/dev/null || echo 0)"
+              if [ "$remote_size" -lt "$offset" ]; then
+                # Remote rotated (logrotate shrank the file): restart
+                # from its beginning. Lines written between the last
+                # pull and the rotation are lost — accepted gap (plan
+                # doc §4), bounded by the pull cadence.
+                echo "geometrikks-log-pull-${pull.name}: remote rotated ($offset -> $remote_size bytes), resetting offset" >&2
+                offset=0
+              fi
+              if [ "$remote_size" -eq "$offset" ]; then
+                exit 0
+              fi
+              # Append-only: same inode on the feed path, so the
+              # tailer sees pure growth (an inode flip reads as
+              # rotation and would re-ingest everything).
+              ssh "''${ssh_opts[@]}" "${pull.sshTarget}" "tail -c +$((offset + 1)) '${pull.remotePath}'" >> "$feed"
+              printf '%s\n' "$remote_size" > "$offset_file.tmp"
+              mv "$offset_file.tmp" "$offset_file"
+            '';
+          in
+          lib.nameValuePair "geometrikks-log-pull-${pull.name}" {
+            description = "GeoMetrikks remote log pull (${pull.name} -> ${pull.sshTarget})";
+            wants = [ "network-online.target" ];
+            after = [ "network-online.target" ];
+            serviceConfig = lib.mkMerge [
+              (serviceOneshotDefaults { })
+              {
+                Type = "oneshot";
+                User = "root";
+                ExecStart = "${pullScript}";
+                StateDirectory = "geometrikks-remote-logs";
+                StateDirectoryMode = "0700";
+                UMask = "0077";
+                TimeoutStartSec = "90s";
+              }
+              (harden {
+                MemoryMax = "128M";
+                ProtectHome = "read-only";
+              })
+            ];
+            inherit onFailure;
+          }
+        ) cfg.logPulls
+      );
+
+      geometrikksLogPullTimers = lib.listToAttrs (
+        map
+          (
+            pull:
+            lib.nameValuePair "geometrikks-log-pull-${pull.name}" {
+              description = "GeoMetrikks remote log pull (${pull.name} -> ${pull.sshTarget})";
+              wantedBy = [ "timers.target" ];
+              timerConfig = {
+                OnBootSec = "3min";
+                OnUnitActiveSec = pull.interval;
+                AccuracySec = "10s";
+                Persistent = false;
+              };
+            }
+          )
+          cfg.logPulls
+      );
     in
     {
       # Platform-truth catalog entry (ADR-008): unconditional — GeoMetrikks
@@ -735,102 +821,22 @@
               ];
               inherit onFailure;
             };
-          };
+          } // geometrikksLogPullUnits;
 
-          timers.geometrikks-db-backup = {
-            description = "GeoMetrikks nightly pg_dump";
-            wantedBy = [ "timers.target" ];
-            timerConfig = {
-              OnCalendar = "*-*-* 05:15:00";
-              Persistent = true;
-              RandomizedDelaySec = "10m";
-            };
-          };
-
-          # Offset-delta ssh pulls of remote access logs (cfg.logPulls).
-          # Root units on purpose: auth rides root's default ssh identity
-          # (the pbx-backup-pull kit's live-proven pattern — the remote
-          # authorizes this host's root key). ProtectHome=read-only keeps
-          # /root/.ssh readable and nothing else writable.
-          geometrikksLogPullUnits = lib.listToAttrs (
-            map (
-              pull:
-              let
-                feedDir = "/var/lib/geometrikks-remote-logs";
-                pullScript = pkgs.writeShellScript "geometrikks-log-pull-${pull.name}" ''
-                  set -euo pipefail
-                  feed="${feedDir}/${pull.name}.log"
-                  offset_file="${feedDir}/${pull.name}.offset"
-                  ssh_opts=(-o BatchMode=yes -o ConnectTimeout=20)
-                  remote_size="$(ssh "''${ssh_opts[@]}" "${pull.sshTarget}" "stat -c %s '${pull.remotePath}' 2>/dev/null || echo MISSING")"
-                  if [ "$remote_size" = "MISSING" ]; then
-                    # Remote log not deployed yet (or removed) — clean exit,
-                    # the timer retries every interval. Loud-fail class is
-                    # reserved for ssh itself failing (set -e).
-                    echo "geometrikks-log-pull-${pull.name}: remote '${pull.remotePath}' not present on ${pull.sshTarget} — nothing to pull"
-                    exit 0
-                  fi
-                  offset="$(cat "$offset_file" 2>/dev/null || echo 0)"
-                  if [ "$remote_size" -lt "$offset" ]; then
-                    # Remote rotated (logrotate shrank the file): restart
-                    # from its beginning. Lines written between the last
-                    # pull and the rotation are lost — accepted gap (plan
-                    # doc §4), bounded by the pull cadence.
-                    echo "geometrikks-log-pull-${pull.name}: remote rotated (${offset} -> ${"$"}{remote_size} bytes), resetting offset" >&2
-                    offset=0
-                  fi
-                  if [ "$remote_size" -eq "$offset" ]; then
-                    exit 0
-                  fi
-                  # Append-only: same inode on the feed path, so the
-                  # tailer sees pure growth (an inode flip reads as
-                  # rotation and would re-ingest everything).
-                  ssh "''${ssh_opts[@]}" "${pull.sshTarget}" "tail -c +$((offset + 1)) '${pull.remotePath}'" >> "$feed"
-                  printf '%s\n' "$remote_size" > "$offset_file.tmp"
-                  mv "$offset_file.tmp" "$offset_file"
-                '';
-              in
-              lib.nameValuePair "geometrikks-log-pull-${pull.name}" {
-                description = "GeoMetrikks remote log pull (${pull.name} -> ${pull.sshTarget})";
-                wants = [ "network-online.target" ];
-                after = [ "network-online.target" ];
-                serviceConfig = lib.mkMerge [
-                  (serviceOneshotDefaults { })
-                  {
-                    Type = "oneshot";
-                    User = "root";
-                    ExecStart = "${pullScript}";
-                    StateDirectory = "geometrikks-remote-logs";
-                    StateDirectoryMode = "0700";
-                    UMask = "0077";
-                    TimeoutStartSec = "90s";
-                  }
-                  (harden {
-                    MemoryMax = "128M";
-                    ProtectHome = "read-only";
-                  })
-                ];
-                inherit onFailure;
-              }
-            ) cfg.logPulls
-          );
-
-          geometrikksLogPullTimers = lib.mapAttrs' (
-            name: unit:
-            lib.nameValuePair name {
-              description = unit.description;
+          # Wrapper form (was a dotted timers.geometrikks-db-backup attrpath):
+          # the pull timers merge in from the module-level let via //.
+          timers = {
+            geometrikks-db-backup = {
+              description = "GeoMetrikks nightly pg_dump";
               wantedBy = [ "timers.target" ];
               timerConfig = {
-                OnBootSec = "3min";
-                OnUnitActiveSec = "1min";
-                AccuracySec = "10s";
-                Persistent = false;
+                OnCalendar = "*-*-* 05:15:00";
+                Persistent = true;
+                RandomizedDelaySec = "10m";
               };
-            }
-          ) geometrikksLogPullUnits;
-        in
-        {
-
+            };
+          } // geometrikksLogPullTimers;
+        };
         # Service-integration registry entry: the geo tile, the geo vHost —
         # LAYER 1 PLAIN now (native OIDC behind protectedVHost would
         # double-auth), pg_dump backup freshness, unit-state monitoring,

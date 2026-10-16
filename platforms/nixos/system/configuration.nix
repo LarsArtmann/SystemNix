@@ -1195,8 +1195,34 @@ in
       # MaxMind GeoLite2, live world map + searchable log DB on TimescaleDB).
       # MaxMind/CARTO keys ship EMPTY (geo-degraded + keyless tiles) until a
       # free MaxMind account exists — runbook: docs/services/geometrikks.md.
+      # Since 2026-10-16 also ingests the PBX's Hetzner WEB traffic: a 1-min
+      # offset-delta ssh pull of the PBX nginx geometrikks_json access log
+      # (plan: docs/planning/2026-10-16_02-38_pbx-traffic-into-geometrikks.md)
+      # — pull-based like the backup kit (the PBX holds no credentials for
+      # this host); SIP/mail/NetBird planes stay CrowdSec territory.
       geometrikks = {
         enable = true;
+        extraLogFiles = [
+          {
+            path = "/var/lib/geometrikks-remote-logs/pbx.log";
+            format = "geometrikks-json";
+            hostName = "pbx";
+          }
+        ];
+        logPulls = [
+          {
+            name = "pbx";
+            sshTarget = "root@pbx.artmann.tech";
+            remotePath = "/var/log/nginx/geometrikks.log";
+          }
+        ];
+        # Pin the pbx source's map home to Helsinki (Hetzner hel1) —
+        # auto-detection would resolve a shipped source to THIS host's
+        # public-IP location and overlap both beacons.
+        mapHomeLocations.pbx = [
+          60.17
+          24.94
+        ];
       };
 
       # indexer-web — event-sourced docs index WebUI at index.<domain>
