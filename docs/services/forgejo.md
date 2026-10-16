@@ -341,6 +341,35 @@ SSD, unsnapshotted). DynamicUser can't own tmpfiles dirs → static group
 `RequiresMountsFor /mnt/buildcache/ci-runner-cache` keeps the runner off the
 QLC root (loud Gatus, never shadow-dir churn).
 
+## Hub workflow first-run hardening (2026-10-16)
+
+The hub `build.yml` had NEVER executed on the forgejo host runner (queued
+through the outage) — first runs surfaced three migration gaps, all fixed:
+
+- **GitHub Actions secrets do NOT migrate** with the repo (the migrate API
+  has no secrets surface). The job's `ls-remote` preflight failed as "mirror
+  missing or token cannot read it" — the `lars/go-daemon` mirror EXISTED; the
+  job token was the missing piece. Fixed: forgejo CLI
+  `admin user generate-access-token --token-name ci-dist-push --scopes
+  read:repository,write:repository` (token API needs basic auth; the CLI is
+  the path) → repo Actions secrets `GIT_CLONE_TOKEN` + `DIST_PUSH_TOKEN`.
+  `EC_LICENSE` deliberately NOT set — its step is fail-open (key-free build,
+  banner only).
+- **Unit PATH toolchain**: run 96 died at `tar (child): gzip: Cannot exec` —
+  the vendored-tarball extraction in build.sh execs gzip, and the unit PATH
+  carried only nix/jq/python3. The unit now supplies the full set the
+  workflow invokes outside nix shells: nix, jq, python3, go, git, nodejs
+  (npm), gzip, gnutar, gcc, curl.
+- **Push auth for human clones**: the nix-declared forgejo key ("nix-declared")
+  has no private half on this machine — `git push origin` failed
+  publickey after the origin flip. Fixed: `id_ed25519.pub` registered as
+  forgejo key `lars-evo-x2-id_ed25519` (revocable; UI-equivalent). Probe:
+  `ssh -T forgejo@evo-x2.home.lan` (user `forgejo`, NOT `git`).
+
+Domain CI note: the domains terraform runs (`Nix checks…`, `Plan/Apply
+Changes`) were failing on the same runner INDEPENDENTLY of the hub work
+(secrets class, same migrate gap) — owned by the dmarc/terraform session.
+
 ## New signals (2026-10-16): sync backlog + auth-failure audit
 
 - `system_forgejo_mirror_sync_stale_count` (system-health-metrics, sqlite):
