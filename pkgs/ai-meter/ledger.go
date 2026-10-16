@@ -50,6 +50,10 @@ func OpenLedger(path string, logger *slog.Logger) (*Ledger, error) {
 // Append records one call. Errors are returned (the caller counts them as
 // metering errors) but never fail live traffic.
 func (l *Ledger) Append(rec Record) error {
+	ttft := rec.TTFTMS
+	if !rec.Stream || ttft < 0 {
+		ttft = -1
+	}
 	entry := ledgerEntry{
 		Time:             time.Now().UTC().Format(time.RFC3339Nano),
 		Client:           rec.Client,
@@ -64,7 +68,7 @@ func (l *Ledger) Append(rec Record) error {
 		TotalTokens:      rec.PromptTokens + rec.CompletionTokens,
 		CostUSD:          rec.CostUSD,
 		DurationMS:       rec.DurationMS,
-		TTFTMS:           rec.TTFTMS,
+		TTFTMS:           ttft,
 		UsageMissing:     rec.UsageMissing,
 	}
 	line, err := json.Marshal(entry)

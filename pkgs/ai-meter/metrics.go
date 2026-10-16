@@ -22,8 +22,11 @@ type Record struct {
 	CachedTokens     int
 	CostUSD          float64
 	DurationMS       int64
-	TTFTMS           int64 // time to first streamed byte; 0 when not streaming
-	UsageMissing     bool  // upstream returned no usage block
+	// TTFTMS: >= 0 is a valid time-to-first-byte sample in milliseconds
+	// (0 is legal — sub-millisecond streams truncate to it). <0 means no
+	// sample: non-streaming call, or the stream ended before any byte.
+	TTFTMS       int64
+	UsageMissing bool // upstream returned no usage block
 }
 
 // Registry is a minimal hand-rolled Prometheus registry. Counters and
@@ -114,7 +117,7 @@ func (r *Registry) Record(rec Record) {
 	dk := durKey{rec.Client, rec.Upstream, rec.Model, rec.Stream}
 	r.secondsSum[dk] += float64(rec.DurationMS) / 1000
 	r.secondsCount[dk]++
-	if rec.Stream && rec.TTFTMS > 0 {
+	if rec.Stream && rec.TTFTMS >= 0 {
 		r.ttftSum[dk] += float64(rec.TTFTMS) / 1000
 		r.ttftCount[dk]++
 	}

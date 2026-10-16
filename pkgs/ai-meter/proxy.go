@@ -215,6 +215,7 @@ func (p *Proxy) bufferedResponse(w http.ResponseWriter, resp *http.Response, cli
 		Model:            info.Model,
 		Status:           resp.StatusCode,
 		Path:             path,
+		TTFTMS:           -1,
 		PromptTokens:     usage.PromptTokens,
 		CompletionTokens: usage.CompletionTokens,
 		CachedTokens:     usage.CachedTokens,
@@ -232,13 +233,13 @@ func (p *Proxy) streamResponse(w http.ResponseWriter, resp *http.Response, clien
 
 	usage := Usage{}
 	hasUsage := false
-	ttft := int64(0)
+	ttft := int64(-1) // no sample until the first byte is written
 
 	reader := bufio.NewReaderSize(resp.Body, 64*1024)
 	for {
 		line, err := reader.ReadBytes('\n')
 		if len(line) > 0 {
-			if ttft == 0 {
+			if ttft < 0 {
 				ttft = time.Since(start).Milliseconds()
 			}
 			_, _ = w.Write(line)
