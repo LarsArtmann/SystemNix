@@ -48,8 +48,14 @@ fi
   echo "FAIL: fio not found (set FIO=/path/to/fio; a nix build may need NIX_HEAVY_GATE_FORCE=1 while the heavy-gate shim is deployed)"
   exit 1
 }
-command -v jq >/dev/null || { echo "FAIL: jq required for result parsing"; exit 1; }
-command -v chattr >/dev/null || { echo "FAIL: chattr required (e2fsprogs)"; exit 1; }
+command -v jq >/dev/null || {
+  echo "FAIL: jq required for result parsing"
+  exit 1
+}
+command -v chattr >/dev/null || {
+  echo "FAIL: chattr required (e2fsprogs)"
+  exit 1
+}
 
 SAM=""
 LEX=""
@@ -60,7 +66,10 @@ for d in /sys/class/nvme/nvme*; do
   *Lexar*) LEX="$d" ;;
   esac
 done
-[ -n "$SAM" ] || { echo "FAIL: no Samsung NVMe found"; exit 1; }
+[ -n "$SAM" ] || {
+  echo "FAIL: no Samsung NVMe found"
+  exit 1
+}
 SAM_T="$(find -L "$SAM" -maxdepth 2 -name temp1_input 2>/dev/null | head -1 || true)"
 LEX_T="$(find -L "$LEX" -maxdepth 2 -name temp1_input 2>/dev/null | head -1 || true)"
 
