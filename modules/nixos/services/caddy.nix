@@ -669,48 +669,49 @@ _: {
             lib.mapAttrs
               (
                 host: opts:
-                  opts
-                  // {
-                    logFormat = ''
-                      output file /var/log/caddy/access-${lib.replaceStrings [ "/" " " ] [ "_" "_" ] host}.log {
-                        mode 0640
-                      }
-                    '';
-                  }
+                opts
+                // {
+                  logFormat = ''
+                    output file /var/log/caddy/access-${lib.replaceStrings [ "/" " " ] [ "_" "_" ] host}.log {
+                      mode 0640
+                    }
+                  '';
+                }
               )
               (
                 homeLanVHosts
                 // (lib.optionalAttrs (cloudDomain != null) (
-              # Split-horizon aliases (brainstorming 2026-09-30): every
-              # home.lan vHost mirrored under the cloud domain — identical
-              # extraConfig (same dual-zone cert, same backends). Auth
-              # redirects stay on auth.<home.lan> by design: VPN clients
-              # resolve both zones, and the oauth2-proxy whitelist covers
-              # the cloud domain for post-login redirects.
-              (lib.mapAttrs' (
-                k: v: lib.nameValuePair (lib.replaceStrings [ "${domain}" ] [ "${cloudDomain}" ] k) v
-              ) (lib.filterAttrs (k: _: lib.hasInfix "${domain}" k && k != "https://*.${domain}") homeLanVHosts))
-              // {
-                # Cloud catch-all: same 404 page as the home.lan catch-all
-                # (mirror semantics). Unknown cloud names NXDOMAIN in DNS
-                # (explicit records only, sdns ignores wildcards), so only
-                # explicit-record names without a vHost land here. The
-                # page's dashboard link stays on dash.home.lan by design
-                # (auth-redirect doctrine: VPN clients resolve both zones).
-                "https://*.${cloudDomain}" = {
-                  extraConfig = ''
-                    ${tlsConfig}
-                    ${commonConfig}
-                    root * ${notFoundRoot}
-                    error 404
-                    handle_errors {
-                      rewrite * /index.html
-                      file_server
-                    }
-                  '';
-                };
-              }
-            )));
+                  # Split-horizon aliases (brainstorming 2026-09-30): every
+                  # home.lan vHost mirrored under the cloud domain — identical
+                  # extraConfig (same dual-zone cert, same backends). Auth
+                  # redirects stay on auth.<home.lan> by design: VPN clients
+                  # resolve both zones, and the oauth2-proxy whitelist covers
+                  # the cloud domain for post-login redirects.
+                  (lib.mapAttrs' (
+                    k: v: lib.nameValuePair (lib.replaceStrings [ "${domain}" ] [ "${cloudDomain}" ] k) v
+                  ) (lib.filterAttrs (k: _: lib.hasInfix "${domain}" k && k != "https://*.${domain}") homeLanVHosts))
+                  // {
+                    # Cloud catch-all: same 404 page as the home.lan catch-all
+                    # (mirror semantics). Unknown cloud names NXDOMAIN in DNS
+                    # (explicit records only, sdns ignores wildcards), so only
+                    # explicit-record names without a vHost land here. The
+                    # page's dashboard link stays on dash.home.lan by design
+                    # (auth-redirect doctrine: VPN clients resolve both zones).
+                    "https://*.${cloudDomain}" = {
+                      extraConfig = ''
+                        ${tlsConfig}
+                        ${commonConfig}
+                        root * ${notFoundRoot}
+                        error 404
+                        handle_errors {
+                          rewrite * /index.html
+                          file_server
+                        }
+                      '';
+                    };
+                  }
+                ))
+              );
         };
 
         networking.firewall.allowedTCPPorts = [

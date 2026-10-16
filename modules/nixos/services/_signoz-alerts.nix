@@ -254,6 +254,20 @@ in
       target = 1;
       interval = "5m";
     };
+    "signoz/rules/crowdsec-bouncer-not-registered.json".source = mkRule {
+      name = "CrowdSec Bouncer Not Registered";
+      description = "geometrikks bouncer missing or revoked in the CrowdSec LAPI — the geo decisions stream is dead (register unit did not converge)";
+      # T15.1 (oneshot-result liveness): the register unit is a oneshot —
+      # gatus cannot probe its result, so the counts collector (crowdsec.nix)
+      # emits the LAPI-observed registration state every 5 min and this rule
+      # is the alert leg. 0 = missing/revoked; 1 = live.
+      query = "crowdsec_bouncer_geometrikks_registered";
+      step = 300;
+      op = "below";
+      target = 1;
+      interval = "5m";
+      severity = "warning";
+    };
     "signoz/rules/dnsblockd-crashes.json".source = mkRule {
       name = "DNS Blocker Listener Crashes";
       description = "dnsblockd DNS listener crashed and may not have recovered";

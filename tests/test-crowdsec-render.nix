@@ -43,6 +43,12 @@ let
 
   acquisJson = builtins.toJSON crowdsec.localConfig.acquisitions;
 
+  # Caddy vhost logFormat override (caddy.nix mapAttrs): every vhost's log
+  # block must carry mode 0640 — the group-read leg of the caddy acquis fix.
+  caddyLogFormats = map (opts: opts.logFormat or "") (
+    builtins.attrValues evox2.services.caddy.virtualHosts
+  );
+
   cases = [
     {
       name = "prereq-not-required-by-crowdsec";
@@ -101,6 +107,20 @@ let
     {
       name = "gatus-crowdsec-health-leg-missing";
       pass = lib.hasInfix "pat(*cs_parser_hits_total*)" gatusConditions;
+    }
+    {
+      name = "caddy-vhost-log-mode-0640-missing";
+      pass = lib.any (f: lib.hasInfix "mode 0640" f) caddyLogFormats;
+    }
+    {
+      name = "caddy-logs-groupread-timer-missing";
+      pass =
+        (cs.crowdsec-caddy-logs-readable or { }) != { }
+        && (evox2.systemd.timers.crowdsec-caddy-logs-readable or { }) != { };
+    }
+    {
+      name = "counts-collector-bouncer-gauge-lost";
+      pass = lib.hasInfix "crowdsec_bouncer_geometrikks_registered" moduleSource;
     }
   ];
 

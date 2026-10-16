@@ -152,15 +152,21 @@ _: {
           errors=0
           decisions=$(${lib.getExe' config.services.crowdsec.package "cscli"} -c ${repairConfig} decisions list -o json 2>/dev/null | jq 'length') || errors=1
           alerts=$(${lib.getExe' config.services.crowdsec.package "cscli"} -c ${repairConfig} alerts list --since 24h -o json 2>/dev/null | jq 'length') || errors=1
-          if [ "$errors" -eq 1 ] || [ -z "''${decisions:-}" ] || [ -z "''${alerts:-}" ]; then
+          bouncer=$(${lib.getExe' config.services.crowdsec.package "cscli"} -c ${repairConfig} bouncers list -o json 2>/dev/null | jq '[.[] | select(.name == "geometrikks" and .revoked == false)] | length') || errors=1
+          if [ "$errors" -eq 1 ] || [ -z "''${decisions:-}" ] || [ -z "''${alerts:-}" ] || [ -z "''${bouncer:-}" ]; then
             echo "crowdsec_collector_scrape_errors 1" > "$TMP"
           else
             {
               echo "crowdsec_decisions_active $decisions"
               echo "crowdsec_alerts_24h $alerts"
+              echo "crowdsec_bouncer_geometrikks_registered $bouncer"
               echo "crowdsec_collector_scrape_errors 0"
             } > "$TMP"
           fi
+          # mktemp creates 0600; node-exporter (its own user, live-verified
+          # 2026-10-16) must READ the prom — every sibling collector ships
+          # 0644 (the first live run shipped 0600 and exported NOTHING).
+          chmod 0644 "$TMP"
           mv "$TMP" "$OUT"
         '';
       };
@@ -446,6 +452,45 @@ _: {
         };
         systemd.timers.crowdsec-counts = {
           description = "Collect CrowdSec decisions/alerts counts every 5 minutes";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "2min";
+            OnUnitActiveSec = "5min";
+          };
+        };
+
+        # Caddy log group-read enforcement (companion to the caddy.nix vhost
+        # logFormat `mode 0640` override, live root cause 2026-10-16): caddy
+        # applies output-file option changes on RESTART only, and open(2)
+        # never re-modes EXISTING files — until every live access-<host>.log
+        # has rolled over under the new mode, the 0600 originals stay
+        # unreadable to the caddy group and the acquis tail errors per file
+        # ("Error setting up tail ... permission denied"). This 5-min timer
+        # keeps the group-read bit asserted (idempotent chmod; no-op cost)
+        # and closes roll-created 0600 windows within one tick.
+        systemd.services.crowdsec-caddy-logs-readable = lib.mkIf config.services.caddy.enable {
+          description = "Re-assert group-read on caddy access logs (crowdsec acquis)";
+          after = [ "caddy.service" ];
+          wants = [ "caddy.service" ];
+          serviceConfig = lib.mkMerge [
+            (harden { })
+            (serviceOneshotDefaults { })
+            {
+              Type = "oneshot";
+              ReadWritePaths = [ "/var/log/caddy" ];
+              ExecStart = pkgs.writeShellApplication {
+                name = "caddy-logs-group-read";
+                runtimeInputs = [ pkgs.coreutils ];
+                text = ''
+                  chmod g+r /var/log/caddy/*.log 2>/dev/null || true
+                '';
+              };
+              TimeoutStartSec = "1min";
+            }
+          ];
+        };
+        systemd.timers.crowdsec-caddy-logs-readable = lib.mkIf config.services.caddy.enable {
+          description = "Re-assert caddy log group-read every 5 minutes";
           wantedBy = [ "timers.target" ];
           timerConfig = {
             OnBootSec = "2min";
