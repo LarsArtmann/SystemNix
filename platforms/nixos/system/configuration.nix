@@ -418,6 +418,14 @@ in
       # → finalize → deploy. Runbook: scripts/migrate-forgejo-subvol.sh header
       # + docs/services/forgejo.md (Storage).
       forgejo.dedicatedSubvolume = true;
+      # First PRIMARY repo (owner decision 2026-10-16): flip the GitHub pull
+      # mirror of `domains` to native + attach the GitHub push mirror (phase 5
+      # of forgejo-github-sync; inert until the flip — the phase refuses
+      # repos still marked pull-mirror). Driver: GitHub Actions billing-dead
+      # since 2026-09-08; CI moves to the native forgejo runner (label
+      # `native`). Runbook: docs/services/forgejo.md (Staged-primary);
+      # migration queue: ~/projects/domains/TODO_LIST.md.
+      forgejo.canonicalRepos = [ "domains" ];
       immich.enable = true;
       paperless.enable = true;
       # Declarative dashboards: saved views provisioned via the REST API
