@@ -8,6 +8,19 @@ searchable log database. Upstream: github:GilbN/geometrikks.
 `mkDockerService` deployment with the timescaledb-ha sidecar is gone — plan:
 `docs/planning/2026-09-29_21-41_GEOMETRIKKS-NATIVE-NIX-MIGRATION.md`).
 
+**Auth = OAuth-only (2026-10-16, owner ask)**: `APP_ADMIN_PASSWORD` removed
+from the env template — upstream `server/auth.py` then logs
+`password_login_disabled (APP_ADMIN_PASSWORD unset, OIDC enabled)` and rejects
+the password form; Pocket-ID OIDC (`oidc.env`) is the only login path.
+`APP_AUTH_DISABLED` deliberately stays FALSE (that flag disables ALL auth for
+proxy-fronted mode). The sops key `geometrikks_admin_password` is now an
+undeclared orphan in `geometrikks.yaml` (harmless; delete at next rotation).
+**Retention = 100 years (2026-10-16)**: `ANALYTICS_{RAW,DEBUG,HOURLY}_RETENTION_DAYS=36500`
+(daily aggregates are permanent upstream anyway). **Theme**: upstream has NO
+"Fjord green" — accents are `teal` (default) / `green` / `copper`, and the
+accent is a per-BROWSER localStorage preference (no server-side default
+exists in v0.19.0); pick green via the UI accent toggle.
+
 ## Architecture
 
 - **Package**: `pkgs/geometrikks.nix` — builds from source at the pinned tag
@@ -159,11 +172,16 @@ searchable log database. Upstream: github:GilbN/geometrikks.
   tailed. Historical import exists upstream:
   `sudo -u geometrikks env $(systemctl show geometrikks -p Environment | ...) geometrikks-cli import-logs <file>`
   (or run `geometrikks-cli` with the unit's env from a root shell).
-- The Banned-IPs/CrowdSec views are STILL inert: the CrowdSec engine itself
-  landed 2026-10-14 (stage 1, LAPI `127.0.0.1:8082` — runbook:
-  docs/services/crowdsec.md), but the views only activate once the geo unit
-  gets its read-only bouncer credentials (stage 2, owner-interactive sops
-  paste — queue row in docs/todo/services.md).
+- **Format-sniff startup gap (observed 2026-10-16)**: every listed file gets a
+  60 s format-validation window at ingest start; quiet vhosts with no traffic
+  log `Timeout of 60 seconds reached validating the log format` + `Log format
+  not detected yet; will sniff incoming lines` — COSMETIC: the file streams
+  anyway and the next real request line parses normally (374 warnings across
+  restarts, zero open failures, all 76 files streaming). NOT a data gap.
+- The Banned-IPs/CrowdSec views: stage 2 went DECLARATIVE 2026-10-16 — the
+  bouncer key + registration are nix-managed (`crowdsec-bouncer-register.service`,
+  crowdsec module); views unlock after the next deploy + the geo UI Enabled
+  flip (crowdsec runbook §Stage 2).
 - **Map home is auto-detected from the server's public IP — and the local DNS
   blocker eats the default endpoint.** `MAP_PUBLIC_IP_URL` defaults to
   `https://api64.ipify.org?format=json`; HaGeZi-ultimate (via `dnsblockd`)
