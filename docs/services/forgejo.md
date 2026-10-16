@@ -271,3 +271,98 @@ Knowledge below moved verbatim from the root AGENTS.md restructure — it is the
 
 - **Forgejo SSH keys** — Forgejo doesn't read NixOS `openssh.authorizedKeys.keys`. Provisioned via admin API (`forgejo-ssh-keys` oneshot).
 - **Forgejo `GET /admin/users/{u}/keys` → 405** — Use public `GET /api/v1/users/{u}/keys` for dedup. POST stays on admin path.
+
+---
+
+## G2 pilot flips — EXECUTED 2026-10-16 (eventcatalog-hub + domains)
+
+First two canonical (forgejo-native primary) repos, both flipped live via
+`forgejo-flip@<name>` with the dry-run twin first (units were already deployed
+inert — no deploy needed to flip):
+
+- **`eventcatalog-hub`** — mirror:false + full import verified (0 issues, 0
+  releases, no wiki = zero lossiness exposure), push mirror to GitHub attached
+  (8h + sync_on_commit). Local `~/projects/eventcatalog-hub` origin switched to
+  `forgejo@evo-x2.home.lan:lars/eventcatalog-hub.git`, GitHub remote kept as
+  `github` fallback. CI (`build.yml`) now triggers on REAL forgejo pushes
+  (previously mirror-sync events); rehearsal `workflow_dispatch` run returned
+  204.
+- **`domains`** — owner-ratified in the parallel 06:37 session (canonicalRepos
+  landed there); flip executed 2026-10-16 ~07:00. Local origin switched the
+  same way.
+
+### Flip bug found + fixed same day: `service: "git"` silently skips issue import
+
+The flip script's migrate payload used `service: "git"` + `issues: true` — the
+git service imports GIT DATA ONLY; issue/PR/label/milestone import requires
+`service: "github"`. The post-flip verify caught it live on domains (GitHub had
+2 open issues, forgejo imported 0 → die BEFORE attaching the push mirror), but
+the same miss had already passed VACUOUSLY on eventcatalog-hub (0 open issues —
+its CLOSED issues/PR history did NOT import and stays GitHub-only; accepted for
+the catalog pipeline repo). Fix: `service: "github"` (all flips in this
+deployment are GitHub-sourced). Domains redone cleanly: 1 issue + 1 PR, parity
+with GitHub both sides. **Lesson: `open_issues_count` on the GitHub repo API
+includes PRs — verify the issue/PR SPLIT, not just the count.**
+
+### ⚠ GitHub-side push freeze (active for flipped repos)
+
+Once a repo is forgejo-primary, the 8h push-mirror interval makes ANY
+GitHub-only push a CLOBBER RISK (the push mirror replaces the GitHub ref with
+forgejo's). Both local clones are switched (`origin` = forgejo, `github` =
+fallback). **Any OTHER clone (macOS `/Users/larsartmann/...`!) must switch
+origin BEFORE its next push** — the parallel session's migration queue tracks
+this for domains; the hub needs the same treatment on the Mac.
+
+---
+
+## Code search (bleve repo indexer — enabled 2026-10-16)
+
+`[indexer]` in forgejo.nix: `REPO_INDEXER_ENABLED`, bleve, global code search
+across ALL repo types (incl. the ~470 mirrors — v15 `REPO_INDEXER_REPO_TYPES`
+default covers mirrors). v15 key names verified against the v15.0 cheat sheet:
+INCLUDE/EXCLUDE are comma glob lists, `MAX_FILE_SIZE` is BYTES (512 KiB here),
+vendored dirs excluded by default. Aggressive EXCLUDE (minified/maps/svg/fonts/
+pb-generated/dist/node_modules) + 512 KiB cap keep the index to source files.
+
+**Placement:** `/mnt/hot/forgejo-index` — plain dir on the Samsung hot toplevel,
+deliberately OUTSIDE the forgejo subvol so the 8h btrbk leg never ships
+rebuildable derived data and index churn never bloats pool sends; outside QLC
+`@` snapshots so churn never pins root bytes. forgejo.service
+`RequiresMountsFor` the dir (same NVMe as stateDir — no new failure surface).
+First-enable indexing of ~470 repos runs as a background queue; disk is ~595G
+free on the Samsung. Index loss = rebuild (derived artifact).
+
+## Runner warm-cache (2026-10-16)
+
+Host-mode jobs inherit the runner unit's env: `GOMODCACHE`/`GOCACHE`/
+`npm_config_cache` → `/mnt/buildcache/ci-runner-cache/*` (the house build-cache
+SSD, unsnapshotted). DynamicUser can't own tmpfiles dirs → static group
+`gitea-runner-cache` owns them, runner joins via `SupplementaryGroups`;
+`RequiresMountsFor /mnt/buildcache/ci-runner-cache` keeps the runner off the
+QLC root (loud Gatus, never shadow-dir churn).
+
+## New signals (2026-10-16): sync backlog + auth-failure audit
+
+- `system_forgejo_mirror_sync_stale_count` (system-health-metrics, sqlite):
+  mirrors whose last sync ATTEMPT is >4h old (2× the 2h interval). TouchMirror
+  advances `updated_unix` on failures too, so this climbs ONLY when the queue
+  is not running — the partial-wedge shape the freshest-age `sync_stalled`
+  flag cannot see. Gatus "Forgejo Mirror Sync" asserts PRESENCE (a post-boot
+  catch-up legitimately reads high); the >20 threshold pages via SigNoz rule
+  "Forgejo Mirror Sync Backlog".
+- `system_forgejo_auth_failures_24h` (journal walk, `401 Unauthorized|Failed
+  authentication`): the SSO-only instance's rejected-auth volume. Baseline
+  ~15/day (anonymous git probes from the runner retry ladder); hundreds+ = a
+  revoked/rotted token looping (the 2026-10-12 sync-token class — it logged
+  thousands/hour with zero pages). Presence in Gatus; >500/24h pages via
+  SigNoz rule "Forgejo Auth Failures".
+- v15 has NO audit-log subsystem; journald→SigNoz already ingests forgejo's
+  log stream — these two metrics make the security-relevant slices PAGEABLE.
+
+## Git-over-SSH fix (2026-10-16)
+
+sshd had `allowUsers = [ primaryUser ]` only — the forgejo user could NEVER
+authenticate, so forgejo's managed authorized_keys (forced `forgejo serv key-N`
+commands, written by forgejo-ssh-keys) were unreachable. `allowUsers` now
+includes `forgejo`; the forced commands expose exactly the git transport. Push
+URL shape: `forgejo@evo-x2.home.lan:<owner>/<repo>.git`.
