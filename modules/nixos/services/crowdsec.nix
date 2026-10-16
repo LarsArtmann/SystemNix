@@ -2,8 +2,9 @@
 # CrowdSec security engine — agent + LAPI on the pinned nixpkgs module
 # (services.crowdsec, crowdsec 1.8.1). Stage 1 of the staged adoption
 # (docs/planning/2026-10-14_20-25_crowdsec-nixos-study.md): detection +
-# decisions + metrics + monitoring, NO bouncer/enforcement yet (the
-# firewall bouncer is stage 3, after a week of alert review — banning is
+# decisions + metrics + monitoring; stage 2 (geometrikks bouncer identity)
+# is DECLARATIVE here since 2026-10-16 (crowdsec-bouncer-register, below);
+# stage 3 (firewall-bouncer ENFORCEMENT) is still NOT enabled (banning is
 # deferred because Caddy acquisition sees LAN clients).
 #
 # The upstream module owns crowdsec.service's unit text wholesale
@@ -130,7 +131,7 @@ _: {
             subdomain = null; # loopback service — no DNS presence, no vHost
             port = ports.crowdsec-lapi;
             owner = "lars";
-            description = "CrowdSec engine: log-based threat detection + LAPI (bouncer stage pending)";
+            description = "CrowdSec engine: log-based threat detection + LAPI (stage-2 bouncer registration declarative; enforcement still pending)";
             healthPath = null;
           };
         }

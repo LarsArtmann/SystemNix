@@ -41,6 +41,12 @@ cscli lapi status          # LAPI up
 Prometheus metrics: `127.0.0.1:6061/metrics` (Gatus check "CrowdSec", 1m).
 LAPI has no anonymous HTTP endpoint — the metrics check is the liveness probe.
 
+When verifying parsing health, read the NODE-LEVEL counters
+(`cs_node_hits_ok_total` / `cs_node_hits_ko_total` with their stage labels),
+NOT the aggregate `cs_parser_hits_*`: a 100%-ko aggregate can simply mean the
+window contained only noise lines no parser should match (the 2026-10-16
+false-alarm lesson — see docs/status/2026-10-16_04-16_* §d).
+
 ## Stage 2 — GeoMetrikks unlock (DECLARATIVE since 2026-10-16)
 
 The key + registration are nix-managed — the old owner-interactive
