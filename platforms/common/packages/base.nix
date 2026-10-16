@@ -72,14 +72,14 @@ let
           # at build time, invisible to eval-only checks.)
           makeWrapper $out/opt/helium/helium $out/bin/helium \
             --prefix LD_LIBRARY_PATH : "${
-              pkgs.lib.makeLibraryPath ([
+              pkgs.lib.makeLibraryPath [
                 pkgs.libGL
                 pkgs.libvdpau
                 pkgs.libva
                 pkgs.pipewire
                 pkgs.alsa-lib
                 pkgs.libpulseaudio
-              ])
+              ]
             }" \
             --add-flags "--ozone-platform-hint=auto" \
             --add-flags "--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo,WebAuthenticationHybridTransport" \

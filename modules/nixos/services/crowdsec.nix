@@ -246,8 +246,7 @@ _: {
         # every crowdsec restart.
         systemd.services.crowdsec-prereq = {
           description = "CrowdSec pre-start: DNS gate + orphan-machine repair";
-          after = dnsGate.after;
-          wants = dnsGate.wants;
+          inherit (dnsGate) after wants;
           before = [ "crowdsec.service" ];
           serviceConfig = {
             Type = "oneshot";

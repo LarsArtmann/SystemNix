@@ -87,7 +87,7 @@ let
           cur
         else
           let
-            v = ((nodes.${cur}.inputs or { }).${builtins.head segs} or null);
+            v = (nodes.${cur}.inputs or { }).${builtins.head segs} or null;
           in
           if v == null then
             null

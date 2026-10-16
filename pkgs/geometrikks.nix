@@ -40,7 +40,7 @@ let
   # and their fixed-output hashes must stay tied to the upstream tarball.
   patchedSrc = pkgs.applyPatches {
     name = "geometrikks-${version}-src";
-    src = src;
+    inherit src;
     patches = [ ./geometrikks-logfile-readability.patch ];
   };
 

@@ -98,7 +98,13 @@ in
     {
       name = "HaGeZi-dyndns";
       url = hagezi "dnsmasq/dyndns.txt";
-      hash = "sha256-sEWGDR5ztxevOvkGC0l+0IRD1j13d6z0wdGAIWyIm08=";
+      # Re-pinned 2026-10-16: upstream reverted to an older content state
+      # (matches the store output of a pre-sEWGDR5z build, byte-identical),
+      # so this value may flip back on a future mismatch — if it does,
+      # upstream is oscillating and the list needs a commit-pinned URL
+      # instead of hash bumps. Probed STABLE twice 20s apart via
+      # nix store prefetch-file before this edit.
+      hash = "sha256-msvz1YA+TtLril0jY2SUpogtEPiAtpCxNE+lxjDG56E=";
     }
     {
       name = "HaGeZi-hoster";
