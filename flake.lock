@@ -1205,11 +1205,11 @@
         "samber-do-auditlog": "samber-do-auditlog_3"
       },
       "locked": {
-        "lastModified": 1792021726,
-        "narHash": "sha256-WIBPvKNWJtaoKukTG2cxZeI+AHdBKE3bDirZak17M/0=",
+        "lastModified": 1792172952,
+        "narHash": "sha256-gYGi6BCSTiLpwycEz1dyj85t5edr1g5wtHlyyC1nyaM=",
         "owner": "LarsArtmann",
         "repo": "erraudit",
-        "rev": "bb57433dd4cc5533526f22b48aca727d83565641",
+        "rev": "42278718ffd5e3e66a9cb2a166fe5ed57a2f9feb",
         "type": "github"
       },
       "original": {
@@ -3578,11 +3578,11 @@
     "go-filewatcher": {
       "flake": false,
       "locked": {
-        "lastModified": 1791768135,
-        "narHash": "sha256-Le2l++ru8bgldt3jAJciao45NHRzTIIqpvAiPSkAI8E=",
+        "lastModified": 1792148637,
+        "narHash": "sha256-SpWVWpYCrsJGk2fQEjltxOHB5NDODyjlaq5i/7Yk158=",
         "owner": "LarsArtmann",
         "repo": "go-filewatcher",
-        "rev": "ed391e1b042fe5d9ff5842acb529dfff6a688837",
+        "rev": "4bd95be4ad5a68a404b9be9bbf3b009135d6a803",
         "type": "github"
       },
       "original": {
@@ -3847,16 +3847,16 @@
     "go-finding_5": {
       "flake": false,
       "locked": {
-        "lastModified": 1791155944,
-        "narHash": "sha256-OozbIQ2QkR8nkn27ctce1+0b+Da1Yle9yNSoFc4ze7k=",
+        "lastModified": 1791708941,
+        "narHash": "sha256-b9ThCzKWeb9k999Rba24JXx0hpcTzHNDQTzjJrUirsI=",
         "owner": "LarsArtmann",
         "repo": "go-finding",
-        "rev": "a3d22d107ae77ab5a963cbcccd47a6e8a1cc0818",
+        "rev": "9c675c77bc37a1c8fdd4adc2172ba3af4f712686",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "toolsdk/v1.15.0",
+        "ref": "toolsdk/v1.16.0",
         "repo": "go-finding",
         "type": "github"
       }
@@ -5727,11 +5727,11 @@
     "gogenfilter_7": {
       "flake": false,
       "locked": {
-        "lastModified": 1791200432,
-        "narHash": "sha256-P26DbX9ts4ialtWEnSwE1rPqL0/6fT6u5LVlGuzQ2V0=",
+        "lastModified": 1792085290,
+        "narHash": "sha256-r58GjvxpfaGyyV+f3gRm3YsL9typC+lIoMxJZXl6xro=",
         "owner": "LarsArtmann",
         "repo": "gogenfilter",
-        "rev": "599f1568d9a9516958329876b9b56126ec601a60",
+        "rev": "e8a33dd56d9a848efcedc493931af811dc6ed49e",
         "type": "github"
       },
       "original": {
