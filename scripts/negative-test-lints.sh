@@ -434,17 +434,17 @@ eval_case inputpin lifted-pin-stale-allowlist fail 'matches no live pin' \
 # regression classes: bind KEY lost, bind REPINTED (key present, command
 # drifted — subtler than absence), and plugin registration dropped.
 # Leg 1: rename the snippets bind key — the picker entrypoint vanishes.
-eval_case pastebot bind-key-lost fail 'pastebot-parity-audit' \
+eval_case pastebot bind-key-lost fail 'pastebot-parity-audit: niri bind' \
   'sed:platforms/nixos/desktop/niri-wrapped.nix:s|"Mod+Shift+C".action.spawn = \[|"Mod+Shift+X".action.spawn = [|'
 # Leg 2: keep the key, repoint the spawn at the calculator trigger —
 # presence-only guards would pass; the audit pins the full command.
-eval_case pastebot bind-repointed fail 'pastebot-parity-audit' \
+eval_case pastebot bind-repointed fail 'pastebot-parity-audit: niri bind' \
   'sed:platforms/nixos/desktop/niri-wrapped.nix:s|^            ":s"$|            "="|'
 # Leg 3: deregister the plugin (attr-key rename) — the ':s' trigger dies
 # while the Mod+Shift+C bind still points at it; only the plugin assertion
 # catches this shape.
 eval_case pastebot plugin-dropped fail 'pastebot-parity-audit: the systemnix-snippets DMS launcher plugin' \
-  'sed:platforms/nixos/desktop/quickshell.nix:s|systemnix-snippets = \{|systemnix-snippets-retired = {|'
+  'sed:platforms/nixos/desktop/quickshell.nix:s|systemnix-snippets = {|systemnix-snippets-retired = {|'
 
 say ""
 say "=== negative-test-lints: $passed passed, $failed failed ==="
