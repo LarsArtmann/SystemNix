@@ -353,14 +353,20 @@ in
           # Re-runs (deploy convergence) must not wipe consumer keys:
           # the dir lives for the boot, not the unit activation.
           RuntimeDirectoryPreserve = true;
-          # The mint chowns keys to consumer users and to ai-meter —
-          # impossible under harden's empty default bounding set. A
-          # chown-to-ROOT target is a kernel no-op that hides this (the
-          # first VM run passed mint with a root client, then prod-shape
-          # clients would have failed). Exactly a provisioner's two caps.
+          # The mint chowns keys to consumer users and to ai-meter, and
+          # chmods files it no longer owns (install runs chown BEFORE
+          # chmod; consumer loop runs chmod after chown) — impossible
+          # under harden's empty default bounding set. A chown-to-ROOT
+          # target is a kernel no-op that hides this (the first VM run
+          # passed mint with a root client; the prod-shape clients would
+          # have failed). Exactly a provisioner's three caps:
+          #   CAP_CHOWN        - hand keys to consumer users / ai-meter
+          #   CAP_DAC_OVERRIDE - re-open 0400 mirrors on converging re-runs
+          #   CAP_FOWNER       - chmod files already chowned away
           CapabilityBoundingSet = [
             "CAP_CHOWN"
             "CAP_DAC_OVERRIDE"
+            "CAP_FOWNER"
           ];
         }
         (harden { ProtectSystem = "strict"; })
