@@ -1103,7 +1103,7 @@ in
             releases: true,
             milestones: true,
             lfs: true,
-            service: "git"
+            service: "github"
           }')")
       if [[ "$code" != "200" && "$code" != "201" ]]; then
         die "migrate of $name failed (HTTP $code) — mirror already deleted. Recovery: re-run this script, or forgejo-mirror-github recreates the mirror"

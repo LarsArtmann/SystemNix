@@ -418,14 +418,22 @@ in
       # → finalize → deploy. Runbook: scripts/migrate-forgejo-subvol.sh header
       # + docs/services/forgejo.md (Storage).
       forgejo.dedicatedSubvolume = true;
-      # First PRIMARY repo (owner decision 2026-10-16): flip the GitHub pull
-      # mirror of `domains` to native + attach the GitHub push mirror (phase 5
-      # of forgejo-github-sync; inert until the flip — the phase refuses
-      # repos still marked pull-mirror). Driver: GitHub Actions billing-dead
-      # since 2026-09-08; CI moves to the native forgejo runner (label
-      # `native`). Runbook: docs/services/forgejo.md (Staged-primary);
-      # migration queue: ~/projects/domains/TODO_LIST.md.
-      forgejo.canonicalRepos = [ "domains" ];
+      # First PRIMARY repos (owner decisions 2026-10-16): `domains` (GitHub
+      # Actions billing-dead since 2026-09-08; CI moves to the native
+      # forgejo runner, label `native`; migration queue:
+      # ~/projects/domains/TODO_LIST.md) and `eventcatalog-hub` (flipped
+      # live 2026-10-16 via forgejo-flip@ — native flag + full import
+      # verified, push mirror to GitHub attached 8h + sync_on_commit;
+      # local dev origin = forgejo@evo-x2.home.lan, `github` remote =
+      # fallback). Everything else stays GitHub-primary. Phase 5 of
+      # forgejo-github-sync keeps the push mirrors attached idempotently
+      # and refuses any listed repo still marked pull-mirror — flip first
+      # (forgejo-flip@<name>), then deploy a change to this list.
+      # Runbook: docs/services/forgejo.md (Staged-primary).
+      forgejo.canonicalRepos = [
+        "domains"
+        "eventcatalog-hub"
+      ];
       immich.enable = true;
       paperless.enable = true;
       # Declarative dashboards: saved views provisioned via the REST API
@@ -1510,7 +1518,16 @@ in
       # SSH server with hardening (from nix-ssh-config)
       ssh-server = {
         enable = true;
-        allowUsers = [ config.users.primaryUser ];
+        # forgejo: git-over-SSH (2026-10-16, G2 pilot). The forgejo user's
+        # authorized_keys carry forced `forgejo serv key-N` commands — no
+        # shell, no port-forwarding — so allowing the user here exposes
+        # exactly the git transport, nothing else. Without this, every
+        # forgejo SSH push died "Permission denied" at sshd's AllowUsers
+        # gate (live-verified 2026-10-16).
+        allowUsers = [
+          config.users.primaryUser
+          "forgejo"
+        ];
         passwordAuthentication = false;
         allowRootLogin = false;
         authorizedKeys = [ nix-ssh-config.sshKeys.lars ];

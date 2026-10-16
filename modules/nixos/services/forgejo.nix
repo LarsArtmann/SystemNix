@@ -1290,14 +1290,14 @@ _: {
           ];
           serviceConfig = lib.mkMerge [
             {
-            EnvironmentFile = lib.mkForce "-/run/forgejo-runner/token";
-            ExecStartPre = lib.mkForce [
-            ("+" + lib.getExe genRunnerToken)
-            (lib.getExe registerRunner)
-            ];
-            TimeoutStartSec = "3min";
-            MemoryMax = "16G";
-            SupplementaryGroups = [ "gitea-runner-cache" ];
+              EnvironmentFile = lib.mkForce "-/run/forgejo-runner/token";
+              ExecStartPre = lib.mkForce [
+                ("+" + lib.getExe genRunnerToken)
+                (lib.getExe registerRunner)
+              ];
+              TimeoutStartSec = "3min";
+              MemoryMax = "16G";
+              SupplementaryGroups = [ "gitea-runner-cache" ];
             }
             ioTier.build
           ];
