@@ -81,9 +81,13 @@ _: {
 
       config = lib.mkMerge [
         {
-          services.display-manager-heal.enable = lib.mkDefault config.services.display-manager.enable;
+          # The repo's SDDM composition root is services.display-manager-config
+          # (modules/nixos/desktop/display-manager.nix) — a phantom
+          # `services.display-manager` option never existed; it broke every
+          # evo-x2 eval from 2026-10-17 00:56 until this fix.
+          services.display-manager-heal.enable = lib.mkDefault config.services.display-manager-config.enable;
         }
-        (lib.mkIf (cfg.enable && config.services.display-manager.enable) {
+        (lib.mkIf (cfg.enable && config.services.display-manager-config.enable) {
           assertions = [
             {
               assertion = cfg.users != [ ];
