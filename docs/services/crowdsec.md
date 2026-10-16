@@ -20,8 +20,8 @@ A failed start is expected during a cold boot until dnsblockd is answering;
 
 ## Data sources (acquisitions)
 
-- **sshd** via journald (`_SYSTEMD_UNIT=sshd.service`, `type: syslog`) — collection `crowdsecurity/linux`. **Verified healthy 2026-10-16** (an earlier "100% parse-ko" alarm was noise lines behaving correctly — retracted, docs/todo/services.md): s00-raw parses all lines OK; sshd-logs covers `sshd-session` (OpenSSH ≥9.8). CAVEATS: (a) `sshd-success-logs` hub parser still filters `program == 'sshd'` → successful logins unparsed — hub master verified STILL unfixed 2026-10-16; route = upstream PR #1943 (verify-before-filing done) **+ IN-TREE PATCH-APPLY landed 2026-10-16 (crowdsec.nix `pr1943Parser`, verify-pending deploy)**: the PR's parser (fetchurl @ branch head 99985ff6, byte-verified) is re-pointed over the hub item's install symlink by an ExecStartPre at EVERY engine start (switch-to-configuration never runs tmpfiles — boot-only rules were inert); the content mismatch marks the item TAINTED and cscli never clobbers tainted items on install/upgrade without `--force` (source-verified v1.8.1 pkg/cwhub/sync.go) — REMOVE the override when PR #1943 merges (the hub file then equals the PR and cscli's install keeps it); (b) the journalctl source runs `-n 0` — **no backfill**: lines landing while the engine is down/restarting are never analyzed.
-- **Caddy access logs** via `/var/log/caddy/*.log` (JSON; covers `access.log` + every `access-<host>.log`) — collection `crowdsecurity/caddy`. **STATUS 2026-10-16: fix landed in-tree, verify-pending deploy** — the RUNNING generation is still DARK (`PrivateUsers=true` nullifies `CAP_DAC_READ_SEARCH`, glob matches zero files); the fix puts crowdsec in the `caddy` group (crowdsec.nix — auxiliary gids map through the userns). Post-deploy verify: file-source hits > 0 in /metrics + one synthetic request parsed.
+- **sshd** via journald (`_SYSTEMD_UNIT=sshd.service`, `type: syslog`) — collection `crowdsecurity/linux`. **Verified healthy 2026-10-16** (an earlier "100% parse-ko" alarm was noise lines behaving correctly — retracted, docs/todo/services.md): s00-raw parses all lines OK; sshd-logs covers `sshd-session` (OpenSSH ≥9.8). CAVEATS: (a) `sshd-success-logs` hub parser still filters `program == 'sshd'` → successful logins unparsed — hub master verified STILL unfixed 2026-10-16; route = upstream PR #1943 (verify-before-filing done) **+ IN-TREE PATCH-APPLY LIVE 2026-10-16 (crowdsec.nix `pr1943Parser`; deployed + engine-proven: cscli reports the item local, `cs_parser_hits_total{source="journalctl-_SYSTEMD_UNIT=sshd.service"}` accumulating real login hits)**: the PR's parser (fetchurl @ branch head 99985ff6, byte-verified) is re-pointed over the hub item's install symlink by an ExecStartPre at EVERY engine start (switch-to-configuration never runs tmpfiles — boot-only rules were inert); the content mismatch marks the item TAINTED and cscli never clobbers tainted items on install/upgrade without `--force` (source-verified v1.8.1 pkg/cwhub/sync.go) — REMOVE the override when PR #1943 merges (the hub file then equals the PR and cscli's install keeps it); (b) the journalctl source runs `-n 0` — **no backfill**: lines landing while the engine is down/restarting are never analyzed.
+- **Caddy access logs** via `/var/log/caddy/*.log` (JSON; covers `access.log` + every `access-<host>.log`) — collection `crowdsecurity/caddy`. **STATUS 2026-10-16: three-layer fix, verify-pending deploy #2** — layer 1 group (crowdsec in `caddy`, `id crowdsec`-verified); layer 2 file mode (caddy vhost logFormat `mode 0640` — CREATE-only: open(2) never re-modes, so pre-override 0600 files stay unreadable; `crowdsec-caddy-logs-readable` re-modes them — its first build interpolated the writeShellApplication DERIVATION (a directory) as ExecStart → 203/EXEC every 5 min from 16:27, fixed to the bin/ executable); layer 3 convergence (crowdsec ExecStartPre `+`-privileged chmod BEFORE engine start — a failed tail setup DROPS the source for the process lifetime, and a running engine does not retry, see the gotcha below). Post-deploy verify: `cscli metrics` Acquisition table carries the caddy source + file-source hits > 0 in /metrics + one synthetic request parsed.
 
 **LAN whitelist (parser s02-enrich):** `127.0.0.1`, `::1`, RFC1918 never become
 alerts. This is deliberate — household clients must be un-bannable before the
@@ -134,10 +134,22 @@ Stage 3 unlocks after **7 consecutive clean-informed days** (window opened
   0750 caddy:caddy log dir reads nothing, so the file acquisition globs
   ZERO files ("No matching files for pattern /var/log/caddy/*.log" at
   every start) and no HTTP scenarios fire. The sshd journalctl source is
-  unaffected. Fix landed in-tree 2026-10-16 (crowdsec.nix extraGroups,
-  verify-pending deploy): crowdsec in the caddy group (auxiliary gids
-  map through the userns); the ambient cap STAYS until the group is
-  proven live in /metrics, then it is a drop candidate.
+  unaffected. Fix is THREE-layered (2026-10-16): crowdsec in the caddy
+  group (extraGroups; auxiliary gids map through the userns — `id crowdsec`
+  verified live) + caddy logFormat `mode 0640` on CREATE + a root chmod
+  pre-start/timer for pre-existing 0600 files; the ambient cap STAYS until
+  file-source hits are proven live in /metrics, then it is a drop candidate.
+- **A failed file-source setup is dropped for the engine's LIFETIME
+  (2026-10-16)** — crowdsec attempts the acquis glob ONCE at start; a
+  permission failure at that moment drops the source with no retry until
+  the next restart (the 08:14 process served sshd-only through generations
+  910→912). Corollaries: (a) put any access-heal BEFORE engine start
+  (crowdsec ExecStartPre `+`-chmod, caddy-logs-hot pattern), (b) `cscli
+  metrics` Acquisition table is ground truth for which sources are LIVE —
+  zero tail errors in the journal means nothing when the source never
+  registered, (c) an engine restart only happens when the crowdsec UNIT
+  content changes — a fix that touches only timers/filesystems leaves a
+  running engine dark indefinitely.
 - **cdn-hub.crowdsec.net intermittently TLS-blocked (2026-10-15)** — two
   start attempts failed ExecStartPre (`cscli hub update` → "remote error:
   tls: internal error", dnsblockd-interception class; the 00:54 Oct 16
