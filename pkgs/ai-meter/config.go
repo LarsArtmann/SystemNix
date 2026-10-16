@@ -21,10 +21,14 @@ type Client struct {
 // Upstream is one OpenAI-compatible backend. Local backends
 // (llama.cpp, FastFlowLM) use the literal key "unused" — the header is
 // still sent, matching those servers' key-ignoring behavior.
+// AuthStyle selects how the upstream key is presented: "bearer"
+// (default, OpenAI-compatible) or "x-goog-api-key" (native Google
+// GenAI endpoints reject Bearer API keys).
 type Upstream struct {
-	Name    string `json:"name"`
-	BaseURL string `json:"base_url"`
-	APIKey  string `json:"api_key"`
+	Name      string `json:"name"`
+	BaseURL   string `json:"base_url"`
+	APIKey    string `json:"api_key"`
+	AuthStyle string `json:"auth_style,omitempty"`
 }
 
 // Cost is USD per 1M tokens, matching provider pricing pages and crush's
@@ -117,6 +121,13 @@ func (c *Config) loadAndValidate() error {
 		up.BaseURL = strings.TrimSuffix(up.BaseURL, "/")
 		if up.APIKey == "" {
 			up.APIKey = "unused"
+		}
+		switch up.AuthStyle {
+		case "":
+			up.AuthStyle = "bearer"
+		case "bearer", "x-goog-api-key":
+		default:
+			return fmt.Errorf("upstream %s: unknown auth_style %q (want bearer or x-goog-api-key)", up.Name, up.AuthStyle)
 		}
 	}
 	return nil

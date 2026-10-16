@@ -18,6 +18,10 @@ type Usage struct {
 type RequestInfo struct {
 	Model  string
 	Stream bool
+	// GenAI marks native Gemini traffic: model/stream came from the URL
+	// path, the body is genai-format, and OpenAI-specific handling (the
+	// include_usage injection) must never touch it.
+	GenAI bool
 }
 
 // ParseRequest decodes an OpenAI-compatible request body (chat/completions,
@@ -44,7 +48,7 @@ func ParseRequest(body []byte) (RequestInfo, []byte, error) {
 // block the proxy meters. Returns the original body when no change is
 // needed (already present, not streaming, or injection disabled).
 func InjectStreamUsage(body []byte, info RequestInfo, enabled bool) []byte {
-	if !enabled || !info.Stream {
+	if !enabled || !info.Stream || info.GenAI {
 		return body
 	}
 	var payload map[string]any

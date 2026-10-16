@@ -80,7 +80,11 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer p.registry.End()
 
 	if isMeteredPath(subPath) && r.Method == http.MethodPost {
-		p.serveMetered(w, r, client, upstream, subPath)
+		p.serveMetered(w, r, client, upstream, subPath, nil)
+		return
+	}
+	if genai, ok := ParseGenAIPath(subPath); ok && r.Method == http.MethodPost {
+		p.serveMetered(w, r, client, upstream, subPath, &genai)
 		return
 	}
 	p.servePassthrough(w, r, client, upstream, subPath)
@@ -97,13 +101,19 @@ func (p *Proxy) findUpstream(name string) (Upstream, bool) {
 
 func (p *Proxy) authenticate(r *http.Request) (Client, bool) {
 	auth := r.Header.Get("Authorization")
-	const prefix = "Bearer "
-	if !strings.HasPrefix(auth, prefix) {
+	var presented string
+	if strings.HasPrefix(auth, "Bearer ") {
+		presented = strings.TrimSpace(auth[len("Bearer "):])
+	} else if k := r.Header.Get("X-Goog-Api-Key"); k != "" {
+		// Native genai clients (crush's gemini provider) carry their proxy
+		// key in Google's header — same key material, same constant-time
+		// compare.
+		presented = k
+	} else {
 		return Client{}, false
 	}
-	presented := []byte(strings.TrimSpace(auth[len(prefix):]))
 	for _, cl := range p.cfg.Clients {
-		if subtle.ConstantTimeCompare(presented, []byte(cl.key)) == 1 {
+		if subtle.ConstantTimeCompare([]byte(presented), []byte(cl.key)) == 1 {
 			return cl, true
 		}
 	}
@@ -120,7 +130,7 @@ func isMeteredPath(subPath string) bool {
 	return false
 }
 
-func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, client Client, upstream Upstream, subPath string) {
+func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, client Client, upstream Upstream, subPath string, genai *GenAIRequest) {
 	start := time.Now()
 
 	body, err := io.ReadAll(io.LimitReader(r.Body, maxMeteredBodyBytes+1))
@@ -135,22 +145,30 @@ func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, client Clie
 
 	info, _, err := ParseRequest(body)
 	if err != nil {
-		// Not an OpenAI JSON body on a metered path: forward it anyway so
-		// the proxy never becomes the reason a call fails — metered as a
+		// Not a JSON body on a metered path: forward it anyway so the
+		// proxy never becomes the reason a call fails — metered as a
 		// request with unknown model and no token counts.
-		p.forwardAndRecord(w, r, client, upstream, subPath, body, RequestInfo{}, start)
+		p.forwardAndRecord(w, r, client, upstream, subPath, body, info, start)
 		return
+	}
+	if genai != nil {
+		// Native genai call: model and streaming live in the URL, the
+		// body stays untouched (no include_usage injection — the flag in
+		// RequestInfo enforces that inside InjectStreamUsage).
+		info.Model = genai.Model
+		info.Stream = genai.Stream
+		info.GenAI = true
 	}
 
 	forwardBody := InjectStreamUsage(body, info, p.cfg.InjectStreamUsage)
 
-	req, err := http.NewRequestWithContext(r.Context(), http.MethodPost, upstream.BaseURL+"/"+subPath, bytes.NewReader(forwardBody))
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodPost, upstreamURL(upstream, subPath, r.URL.RawQuery), bytes.NewReader(forwardBody))
 	if err != nil {
 		writeError(w, http.StatusBadGateway, "build upstream request: "+err.Error())
 		return
 	}
 	copyForwardHeaders(req, r)
-	req.Header.Set("Authorization", "Bearer "+upstream.APIKey)
+	applyUpstreamAuth(req, upstream)
 	req.ContentLength = int64(len(forwardBody))
 
 	resp, err := p.client.Do(req)
@@ -176,13 +194,13 @@ func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, client Clie
 // forwardAndRecord passes a non-JSON body through untouched and records
 // the call with empty token counts.
 func (p *Proxy) forwardAndRecord(w http.ResponseWriter, r *http.Request, client Client, upstream Upstream, subPath string, body []byte, info RequestInfo, start time.Time) {
-	req, err := http.NewRequestWithContext(r.Context(), r.Method, upstream.BaseURL+"/"+subPath, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(r.Context(), r.Method, upstreamURL(upstream, subPath, r.URL.RawQuery), bytes.NewReader(body))
 	if err != nil {
 		writeError(w, http.StatusBadGateway, "build upstream request: "+err.Error())
 		return
 	}
 	copyForwardHeaders(req, r)
-	req.Header.Set("Authorization", "Bearer "+upstream.APIKey)
+	applyUpstreamAuth(req, upstream)
 	req.ContentLength = int64(len(body))
 
 	resp, err := p.client.Do(req)
@@ -211,7 +229,7 @@ func (p *Proxy) bufferedResponse(w http.ResponseWriter, resp *http.Response, cli
 		return
 	}
 
-	usage, hasUsage := ExtractUsageJSON(body)
+	usage, hasUsage := extractUsageAny(body)
 
 	copyResponseHeaders(w, resp)
 	w.WriteHeader(resp.StatusCode)
@@ -261,6 +279,9 @@ func (p *Proxy) streamResponse(w http.ResponseWriter, resp *http.Response, clien
 					if u, ok := ExtractUsageSSE(payload); ok {
 						usage = u
 						hasUsage = true
+					} else if u, ok := ExtractGenAIUsageSSE(payload); ok {
+						usage = u
+						hasUsage = true
 					}
 				}
 			}
@@ -292,13 +313,13 @@ func (p *Proxy) streamResponse(w http.ResponseWriter, resp *http.Response, clien
 func (p *Proxy) servePassthrough(w http.ResponseWriter, r *http.Request, client Client, upstream Upstream, subPath string) {
 	start := time.Now()
 
-	req, err := http.NewRequestWithContext(r.Context(), r.Method, upstream.BaseURL+"/"+subPath, r.Body)
+	req, err := http.NewRequestWithContext(r.Context(), r.Method, upstreamURL(upstream, subPath, r.URL.RawQuery), r.Body)
 	if err != nil {
 		writeError(w, http.StatusBadGateway, "build upstream request: "+err.Error())
 		return
 	}
 	copyForwardHeaders(req, r)
-	req.Header.Set("Authorization", "Bearer "+upstream.APIKey)
+	applyUpstreamAuth(req, upstream)
 
 	resp, err := p.client.Do(req)
 	if err != nil {
@@ -342,13 +363,47 @@ func (p *Proxy) record(rec Record) {
 	}
 }
 
+// extractUsageAny reads usage from a buffered response body in either
+// protocol shape (OpenAI "usage" first, native genai "usageMetadata"
+// second — a body never carries both).
+func extractUsageAny(body []byte) (Usage, bool) {
+	if u, ok := ExtractUsageJSON(body); ok {
+		return u, true
+	}
+	return ExtractGenAIUsageJSON(body)
+}
+
+// upstreamURL builds the forward target, preserving the client's query
+// string (native genai streaming REQUIRES ?alt=sse — dropping it silently
+// downgrades the response format).
+func upstreamURL(upstream Upstream, subPath, rawQuery string) string {
+	target := upstream.BaseURL + "/" + subPath
+	if rawQuery != "" {
+		target += "?" + rawQuery
+	}
+	return target
+}
+
+// applyUpstreamAuth presents the upstream key in the style that backend
+// expects. Native Google endpoints reject Bearer API keys, so an
+// x-goog-api-key upstream forwards via Google's header instead.
+func applyUpstreamAuth(req *http.Request, upstream Upstream) {
+	if upstream.AuthStyle == "x-goog-api-key" {
+		req.Header.Set("X-Goog-Api-Key", upstream.APIKey)
+		req.Header.Del("Authorization")
+		return
+	}
+	req.Header.Set("Authorization", "Bearer "+upstream.APIKey)
+}
+
 // copyForwardHeaders mirrors request headers to the upstream request
-// except hop-by-hop headers, client auth, and Accept-Encoding (the proxy
-// must be able to read response bodies; it never asks for compression).
+// except hop-by-hop headers, client auth (both channels), and
+// Accept-Encoding (the proxy must be able to read response bodies; it
+// never asks for compression).
 func copyForwardHeaders(dst, src *http.Request) {
 	for name, values := range src.Header {
 		switch name {
-		case "Authorization", "Host", "Accept-Encoding", "Connection",
+		case "Authorization", "X-Goog-Api-Key", "Host", "Accept-Encoding", "Connection",
 			"Keep-Alive", "Te", "Trailer", "Transfer-Encoding", "Upgrade",
 			"Proxy-Authenticate", "Proxy-Authorization":
 			continue
