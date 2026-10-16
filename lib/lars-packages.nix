@@ -130,9 +130,10 @@ lib.filterAttrs (_: v: v != null) {
       null
     else
       pkg.overrideAttrs {
-        # fleet-wave 2026-10-15 re-pin: LzoxcvFT… lived ~12h before the
-        # lock float to bb57433 re-staled it (see flakePkgShim class comment)
-        vendorHash = "sha256-sKya91EScKy5TFuolADHdqYLTDpqJ94CLVtjMvUvIIk=";
+        # fleet-wave re-pin (lock float bb57433 → 100ce1c): sKya91ES… lived
+        # one wave; got ICUaudG… from the 2026-10-16 toplevel enumeration
+        # at the locked rev (see flakePkgShim class comment)
+        vendorHash = "sha256-ICUaudG+K7ZayDgCN/91zXG7ZIEyWSUfkHjgN6HCL6A=";
       };
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 74baca53 ALREADY bakes the got
