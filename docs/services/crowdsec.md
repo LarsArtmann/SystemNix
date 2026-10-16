@@ -20,7 +20,7 @@ A failed start is expected during a cold boot until dnsblockd is answering;
 
 ## Data sources (acquisitions)
 
-- **sshd** via journald (`_SYSTEMD_UNIT=sshd.service`, `type: syslog`) — collection `crowdsecurity/linux`. **Verified healthy 2026-10-16** (an earlier "100% parse-ko" alarm was noise lines behaving correctly — retracted, docs/todo/services.md): s00-raw parses all lines OK; sshd-logs covers `sshd-session` (OpenSSH ≥9.8). CAVEATS: (a) `sshd-success-logs` hub parser still filters `program == 'sshd'` → successful logins unparsed — hub master verified STILL unfixed 2026-10-16; route = upstream PR (verify-before-filing done), arrives via the hub update at an agent start after the merge (which needs the cdn-hub whitelist, deployed); (b) the journalctl source runs `-n 0` — **no backfill**: lines landing while the engine is down/restarting are never analyzed.
+- **sshd** via journald (`_SYSTEMD_UNIT=sshd.service`, `type: syslog`) — collection `crowdsecurity/linux`. **Verified healthy 2026-10-16** (an earlier "100% parse-ko" alarm was noise lines behaving correctly — retracted, docs/todo/services.md): s00-raw parses all lines OK; sshd-logs covers `sshd-session` (OpenSSH ≥9.8). CAVEATS: (a) `sshd-success-logs` hub parser still filters `program == 'sshd'` → successful logins unparsed — hub master verified STILL unfixed 2026-10-16; route = upstream PR #1943 (verify-before-filing done) **+ IN-TREE PATCH-APPLY landed 2026-10-16 (crowdsec.nix `pr1943Parser`, verify-pending deploy)**: the PR's parser (fetchurl @ branch head 99985ff6, byte-verified) overwrites the hub item's install symlink via tmpfiles `L+`; the content mismatch marks the item TAINTED and cscli never clobbers tainted items on install/upgrade without `--force` (source-verified v1.8.1 pkg/cwhub/sync.go) — REMOVE the override when PR #1943 merges (the hub file then equals the PR and cscli's install restores it); (b) the journalctl source runs `-n 0` — **no backfill**: lines landing while the engine is down/restarting are never analyzed.
 - **Caddy access logs** via `/var/log/caddy/*.log` (JSON; covers `access.log` + every `access-<host>.log`) — collection `crowdsecurity/caddy`. **STATUS 2026-10-16: fix landed in-tree, verify-pending deploy** — the RUNNING generation is still DARK (`PrivateUsers=true` nullifies `CAP_DAC_READ_SEARCH`, glob matches zero files); the fix puts crowdsec in the `caddy` group (crowdsec.nix — auxiliary gids map through the userns). Post-deploy verify: file-source hits > 0 in /metrics + one synthetic request parsed.
 
 **LAN whitelist (parser s02-enrich):** `127.0.0.1`, `::1`, RFC1918 never become
@@ -114,7 +114,13 @@ Stage 3 unlocks after **7 consecutive clean-informed days** (window opened
   reported in the 2026-10-14 crowdsec status report). Metrics = 6061.
 - **Hub state is runtime-mutable** (`/var/lib/crowdsec/state/hub`): declarative
   hub lists only seed installs at start; manual `cscli hub install` drifts are
-  NOT reverted. Keep hub changes declarative.
+  NOT reverted. Keep hub changes declarative. Same-name local OVERRIDES of hub
+  parsers are the designed safe path: a content-mismatched install-symlink
+  target marks the item **tainted** and cscli never overwrites tainted items
+  on install/upgrade without `--force` (source-verified v1.8.1
+  pkg/cwhub/sync.go) — the sshd-success-logs PR #1943 patch-apply
+  (`pr1943Parser` in crowdsec.nix) rides exactly this; every activation
+  re-asserts the `L+` link, so even a clobbered link self-heals.
 - **www.crowdsec.net / raw.githubusercontent.com must resolve+fetch** through
   dnsblockd (HaGeZi) — if hub update fails with block-page garbage, whitelist
   the domain in `platforms/common/dns-blocklists.nix` (ipify precedent).
