@@ -1316,6 +1316,12 @@ _: {
                 "GOCACHE=/mnt/buildcache/ci-runner-cache/gocache"
                 "npm_config_cache=/mnt/buildcache/ci-runner-cache/npm"
               ];
+              # the nixpkgs runner module defaults to ProtectSystem=strict —
+              # the whole hierarchy mounts ro+nosuid in the unit's namespace,
+              # so the cache env above needs this explicit exemption (run 99:
+              # Go cache init EROFS despite 2770 group perms; mount gating via
+              # unitConfig.RequiresMountsFor is already in place)
+              ReadWritePaths = [ "/mnt/buildcache/ci-runner-cache" ];
               EnvironmentFile = lib.mkForce "-/run/forgejo-runner/token";
               ExecStartPre = lib.mkForce [
                 ("+" + lib.getExe genRunnerToken)
