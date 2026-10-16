@@ -266,13 +266,15 @@ QtObject {
 
     // "dms cl paste" streams the live clipboard to stdout; we write it into
     // the snippets directory. Runs in the DMS session env (WAYLAND_DISPLAY).
+    // chmod 600: saved clipboard content can carry secrets; snippets live
+    // inside the snapshotted @ home subvol — keep files owner-only.
     property Process saveProcess: Process {
         id: saveProcess
         property string saveName: ""
         property string saveSlug: ""
         command: ["sh", "-c",
             "DIR=\"$1\"; NAME=\"$2\"; " +
-            "mkdir -p \"$DIR\" && dms cl paste > \"$DIR/$NAME.txt\" && echo saved",
+            "mkdir -p \"$DIR\" && dms cl paste > \"$DIR/$NAME.txt\" && chmod 600 \"$DIR/$NAME.txt\" && echo saved",
             "save", root.expandedDir(), saveSlug
         ]
         running: false

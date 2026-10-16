@@ -372,7 +372,6 @@
           secrets =
             lib.genAttrs
               [
-                "geometrikks_admin_password"
                 "geometrikks_db_password"
                 "geometrikks_maxmind_user_id"
                 "geometrikks_maxmind_license_key"
@@ -395,8 +394,13 @@
             # environment until some unrelated restart.
             restartUnits = [ "geometrikks.service" ];
             content = ''
-              APP_ADMIN_USER=admin
-              APP_ADMIN_PASSWORD=${config.sops.placeholder.geometrikks_admin_password}
+              # OAuth-only (owner ask 2026-10-16): APP_ADMIN_PASSWORD is
+              # deliberately ABSENT — upstream auth.py then logs
+              # "password_login_disabled (APP_ADMIN_PASSWORD unset, OIDC
+              # enabled)" and rejects the password form entirely; Pocket-ID
+              # OIDC (oidc.env EnvironmentFile) is the only login path.
+              # APP_AUTH_DISABLED stays FALSE — that flag kills ALL auth
+              # (proxy-fronted mode), not just passwords.
               APP_SESSION_SECURE=true
               # Caddy proxies from loopback on this host (plain reverse_proxy)
               APP_TRUSTED_PROXIES=127.0.0.1
@@ -413,6 +417,12 @@
               MAXMINDDB_LICENSE_KEY=${config.sops.placeholder.geometrikks_maxmind_license_key}
               MAP_CARTO_API_KEY=${config.sops.placeholder.geometrikks_carto_api_key}
               DB_PASSWORD=${config.sops.placeholder.geometrikks_db_password}
+              # Infinite-ish retention (owner ask 2026-10-16): 100 years on
+              # every policy tier; daily aggregates are permanent upstream.
+              # TimescaleDB just stops deleting chunks — storage cost only.
+              ANALYTICS_RAW_RETENTION_DAYS=36500
+              ANALYTICS_DEBUG_RETENTION_DAYS=36500
+              ANALYTICS_HOURLY_RETENTION_DAYS=36500
               # CrowdSec bouncer identity (read-only Security/Banned-IPs
               # views). The key is REGISTERED into the LAPI declaratively by
               # crowdsec-bouncer-register.service (crowdsec module) — this

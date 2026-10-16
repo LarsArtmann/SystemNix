@@ -65,6 +65,13 @@ in
                 "$entryQml"
               grep -q 'visible: entryType !== "text"' "$entryQml"
               grep -q 'maximumLineCount: 2' "$entryQml"
+              # Negative guard: "maximumLineCount: 2" alone is weak-positive
+              # (upstream could carry it independently) — also assert the OLD
+              # upstream expression is GONE, so a silently-skipped sed fails.
+              if grep -q 'maximumLineCount: entryType === "long_text" ? 3 : 1' "$entryQml"; then
+                echo "clipboard patch drift: sed target survived" >&2
+                exit 1
+              fi
               constQml="$clipDir/ClipboardConstants.qml"
               sed -i \
                 -e 's/property int modalWidth: 650/property int modalWidth: 880/' \
