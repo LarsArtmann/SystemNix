@@ -745,7 +745,10 @@ in
         # every browser POST as "forged same-origin attestation"
         # (incident 2026-10-15 21:57: first deploy of a b2df343a-era
         # httputil binary took down all browser mutations site-wide).
-        trustedProxies = [ "127.0.0.1" "::1" ];
+        trustedProxies = [
+          "127.0.0.1"
+          "::1"
+        ];
         # Nightly sqlite .backup of the server DB onto the pool
         # (browser-history-backup.timer 02:15, cv-backup pattern) — the
         # backup leg of the re-scoped NVMe→pool item (the DB itself stays on

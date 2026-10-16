@@ -210,10 +210,12 @@ _: {
             # environment.PATH and would collide (eval-hard error). The
             # probe is pure shell builtins + ping — bash provides sh,
             # iputils' ping ships cap_net_raw.
-            PATH = lib.mkForce (lib.makeBinPath [
-              pkgs.bash
-              pkgs.iputils
-            ]);
+            PATH = lib.mkForce (
+              lib.makeBinPath [
+                pkgs.bash
+                pkgs.iputils
+              ]
+            );
           };
 
           restartTriggers = [ offlineBannerShell ];
