@@ -1006,6 +1006,12 @@ in
   # - On migrate failure AFTER the delete: the repo is gone on forgejo;
   #   recovery = re-run this script, or forgejo-mirror-github recreates
   #   the mirror. GitHub never lost anything.
+  # - A migrate that SUCCEEDS but lands wrong (e.g. the 2026-10-16
+  #   eventcatalog-hub flip whose payload said service "git" and
+  #   silently skipped issue/PR import) is NOT re-runnable: the repo
+  #   is now native and the guard above refuses. Recovery = confirm
+  #   GitHub still holds the missing data, delete the native repo via
+  #   the API, let forgejo-mirror-github recreate the mirror, re-flip.
   #
   # Operator paths: `sudo systemctl start forgejo-flip@<name>.service`
   # (env + onFailure wired), `forgejo-flip-check@<name>` for the dry-run

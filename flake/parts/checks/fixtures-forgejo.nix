@@ -201,6 +201,14 @@
 
               run "$FLIP" flip-pilot --dry-run; need_rc flip-dry 0; need_has flip-dry "DRY RUN"
               run "$FLIP" flip-pilot; need_rc flip-happy 0; need_has flip-happy "FLIPPED flip-pilot"
+              # the migrate payload must declare the GitHub service:
+              # service "git" silently skips issue/PR import (the
+              # 2026-10-16 eventcatalog-hub flip lost its closed history)
+              mig_service=$(jq -r '.service' "$STUB_STATE/req.$MIG.1.json")
+              [ "$mig_service" = "github" ] || {
+                echo "FAIL migrate-payload: service=$mig_service want github"
+                exit 1
+              }
               # sequential counters advanced by the dry-run's GETs: the
               # happy path consumed .2 for the repo GET — re-arm both
               # for the failure scenarios with fresh names.

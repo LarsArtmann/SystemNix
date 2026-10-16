@@ -839,194 +839,347 @@
         <nav>
           <div class="label">Contents</div>
           <a href="#summary">Summary</a>
-          <a href="#findings">Findings</a>
-          <a href="#issues">Issue Cards</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#plan">Plan</a>
+          <a href="#done">a) Fully Done</a>
+          <a href="#partial">b) Partially Done</a>
+          <a href="#notstarted">c) Not Started</a>
+          <a href="#fucked">d) Fucked Up</a>
+          <a href="#improve">e) Improve</a>
+          <a href="#next">f) Next Tasks</a>
+          <a href="#question">g) Top Question</a>
         </nav>
       </aside>
 
       <main class="main">
-        <!-- Hero -->
         <div class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="hero-badge">Report Type</div>
-          <h1>Report Title</h1>
+          <div class="hero-badge">Status Update</div>
+          <h1>PasteBot-Parity Follow-Up Dispatch</h1>
           <p class="hero-subtitle">
-            One-sentence description of what this report covers.
+            The "do it" session after the 03:21 brutal self-review: every
+            dispatchable finding from the review executed, verified, and
+            harvested. 2026-10-16 03:30–08:30.
           </p>
         </div>
 
-        <!-- Inline TOC (alternative to sidebar; pick one) -->
         <nav class="toc">
           <h3>Contents</h3>
           <ul>
             <li><a href="#summary">Summary</a></li>
-            <li><a href="#findings">Findings</a></li>
-            <li><a href="#issues">Issue Cards</a></li>
-            <li><a href="#proposal">Proposal</a></li>
-            <li><a href="#plan">Plan</a></li>
+            <li><a href="#done">a) Fully Done — 7 items, evidence-cited</a></li>
+            <li><a href="#partial">b) Partially Done — deploy-pending batch</a></li>
+            <li><a href="#notstarted">c) Not Started</a></li>
+            <li><a href="#fucked">d) Fucked Up — process stumbles, honestly</a></li>
+            <li><a href="#improve">e) Improve</a></li>
+            <li><a href="#next">f) Next — ranked, harvested</a></li>
+            <li><a href="#question">g) Top Question</a></li>
           </ul>
         </nav>
 
-        <!-- Stats Dashboard -->
-        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <h2 id="summary">Summary</h2>
         <div class="stat-grid">
-          <div class="stat-card">
-            <div class="stat-value">42</div>
-            <div class="stat-label">Total Items</div>
-          </div>
-          <div class="stat-card stat-bad">
+          <div class="stat-card stat-good">
             <div class="stat-value">7</div>
-            <div class="stat-label">Critical</div>
+            <div class="stat-label">Fully done (verified)</div>
           </div>
           <div class="stat-card stat-warn">
-            <div class="stat-value">12</div>
-            <div class="stat-label">Warnings</div>
+            <div class="stat-value">4</div>
+            <div class="stat-label">Deploy-pending</div>
           </div>
-          <div class="stat-card stat-good">
-            <div class="stat-value">35</div>
-            <div class="stat-label">Resolved</div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">3</div>
+            <div class="stat-label">Self-inflicted stumbles</div>
           </div>
-        </div>
-
-        <!-- Findings as Cards -->
-        <h2 id="findings"><span class="num">01</span>Findings</h2>
-
-        <div class="card card-problem">
-          <h4>Critical Issue</h4>
-          <p>Description of the problem and its impact.</p>
+          <div class="stat-card">
+            <div class="stat-value">4</div>
+            <div class="stat-label">Owner-gated items</div>
+          </div>
         </div>
 
         <div class="card card-solution">
-          <h4>Recommended Fix</h4>
-          <p>Description of the solution with rationale.</p>
+          <h4>Where we are</h4>
+          <p>
+            The PasteBot-parity feature (clipboard history + snippets pickers)
+            is live and stable since 02:15. The review's dispatchable findings
+            are ALL executed: the regression guard is in the eval path with
+            proven teeth, the reboot mystery is forensically closed (planned
+            kernel-activation cycle — freeze count stays at #30), the upstream
+            bug turned out to be already fixed upstream, and the snippet
+            lifecycle hardening (delete / size cap / perms) is in-repo riding
+            the next deploy. Nothing is broken live. The four remaining items
+            all need the owner: eyeballs, one confirmation word, one decision,
+            one draft review.
+          </p>
         </div>
 
-        <!-- Issue Cards -->
-        <h2 id="issues"><span class="num">02</span>Issue Cards</h2>
+        <h2 id="done">a) Fully Done</h2>
 
-        <div class="issue issue-critical">
-          <span class="severity severity-critical">Blocking</span>
-          <h3>Critical finding title</h3>
-          <div class="where">path/to/file.go:42-58</div>
+        <div class="card card-solution">
+          <h4>1. Reboot classification — evidence-complete</h4>
           <p>
-            Describe the problem and cite the code or behavior that proves it.
+            All three 2026-10-15 night boundaries (22:30 / 22:59 / 23:29) are
+            GRACEFUL shutdowns: hermes drain, postgres fast-shutdown checkpoint,
+            server "graceful shutdown complete result=ok", ordered unmounts,
+            wtmp <code>shutdown</code> records (every real freeze since Oct 1
+            shows <code>crash</code>) + kernel 7.2.9→7.2.10 transition across
+            them + a 30-min powered-off gap. Verdict: planned deploy-reboot
+            cycle, NOT freezes #31+. Evidence block written into the
+            stability.md decision row; owner confirmation is now a yes/no.
           </p>
-          <div class="callout callout-solution">
-            <strong>Fix</strong>
-            State the concrete recommended action.
-          </div>
+        </div>
+
+        <div class="card card-solution">
+          <h4>2. pastebot-parity-audit eval guard — landed with proven teeth</h4>
+          <p>
+            <code>modules/nixos/desktop/pastebot-parity-audit.nix</code> pins
+            the three picker binds with FULL spawn commands plus the
+            systemnix-snippets plugin key; any regression fails every evo-x2
+            eval. Verified green on pristine (<code>nix eval</code> toplevel
+            passes) and 3/3 negative legs fire with assertion-specific markers
+            (<code>CASES=pastebot</code>: bind lost / bind repointed / plugin
+            dropped). Two false starts caught by the tests themselves — see (d).
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>3. Shift+Enter gap closed by source-chain verification</h4>
+          <p>
+            Full path verified against the DEPLOYED store
+            (8d3cr570…): SpotlightLauncherContent.qml:196-199 Shift+Enter →
+            pasteSelected → Controller.qml:183-188 copyProcess runs plugin
+            args → 200 ms timer → ClipboardService.sendPasteKeystroke — the
+            same probe-proven paste leg as the Enter path. Rows closed on both
+            surfaces (queue + desktop.md).
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>4. Upstream investigation — filings obligation dissolved</h4>
+          <p>
+            The savePluginState writer bug is ALREADY FIXED upstream: issue
+            #3611 (2026-10-09, identical WARN text) + merged PR #3733
+            (2026-10-11) — our pin 4a87e82 (2026-10-07) predates it. Filing
+            closed as not-needed; replaced by a DMS-bump + restore-persistence
+            row. getItems doc-drift sub-item dropped (contract documented
+            in-tree at PLUGINS/LauncherExample/README.md:88).
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>5. DMS layout-settings feature request — drafted, voice-checked, held</h4>
+          <p>
+            Verified against master b08f3f8: itemHeight 72, the
+            maximumLineCount ternary, and the per-row "Text" caption are all
+            still hardcoded; clipboardSize covers modal dimensions (ask
+            dropped). Draft at
+            docs/drafts/2026-10-16_dms-clipboard-modal-layout-settings.md —
+            provenance banner, TL;DR, check-draft 0 FAIL / 0 WARN. Awaiting
+            owner review; the banner box is unticked by policy.
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>6. Bidirectional patch guard</h4>
+          <p>
+            quickshell.nix clipboard patch block now asserts the OLD upstream
+            expression is absent in addition to the new text present — a
+            silently-skipped sed fails the build from both directions.
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>7. Documentation + harvests current</h4>
+          <p>
+            desktop.md (delete mode, size cap, perms, upstream-fix status),
+            CHANGELOG row, upstream.md rows, stability.md row, both TODO
+            surfaces synced (queue ↔ library, no drift),
+            check-todo-system.sh structure-clean, shellcheck clean, post-format
+            eval green. Brutal self-review report (03:21) + its harvests
+            landed earlier in the session.
+          </p>
+        </div>
+
+        <h2 id="partial">b) Partially Done</h2>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Deploy-pending</span>
+          <h3>Snippet lifecycle batch — implemented in repo, live system still on the old plugin</h3>
+          <div class="where">pkgs/dms-plugins/systemnix-snippets/SnippetsLauncher.qml (uncommitted-to-host)</div>
+          <p>
+            <strong>Works now:</strong> all three changes build into the plugin
+            source and eval green. <strong>Not yet live:</strong> the deployed
+            DMS store path predates them, so until the next switch the running
+            plugin has no delete mode, no size cap, and new saves still land
+            644 (live seed files were manually chmod'd 600 — only future saves
+            are affected). <strong>Blocker:</strong> deploy needs a fresh
+            reason per session discipline — the batch itself IS the fresh
+            reason. Effort: <strong>S</strong> (one <code>nix run .#deploy</code>
+            + smoke).
+          </p>
         </div>
 
         <div class="issue issue-important">
-          <span class="severity severity-important">Important</span>
-          <h3>Important finding title</h3>
-          <div class="where">path/to/another.go:12-19</div>
+          <span class="severity severity-important">Owner-side</span>
+          <h3>PasteBot-parity visual pass — the only "great job" gate</h3>
+          <div class="where">Super+Shift+V and Super+Shift+C, owner eyeballs</div>
           <p>
-            Explain the risk and why a careful reviewer would hesitate before
-            shipping.
+            Feature live since 02:15; agent cannot view images, so taste
+            tuning (modal size, row height, preview lines — one-line patches in
+            the quickshell.nix postInstall block) waits on the owner's eyes.
+            Effort: <strong>S</strong>.
           </p>
         </div>
 
-        <div class="issue issue-nice">
-          <span class="severity severity-nice">Nice to have</span>
-          <h3>Polish suggestion</h3>
-          <div class="where">docs/ or config</div>
+        <h2 id="notstarted">c) Not Started</h2>
+
+        <div class="card card-warning">
+          <h4>DMS input bump + recents persistence restore</h4>
           <p>
-            Minor documentation gaps or future-proofing suggestions go here.
+            Planned (row in upstream.md): bump past 2026-10-11 so PR #3733's
+            writer fix reaches us; then re-add savePluginState to the plugin,
+            delete the in-memory workaround, re-check patch anchors (master's
+            clipboardSize may replace the modalWidth/Height sed legs), verify
+            state lands in the _state.json. Blocked on: nothing technical —
+            sequenced after the visual pass so taste tuning and the bump ride
+            one deploy. Priority: Medium. Effort: <strong>M</strong>.
           </p>
         </div>
 
-        <!-- Strengths -->
-        <h2>Strengths</h2>
-        <div class="strengths">
-          <div class="strength">
-            <div class="check">+</div>
-            <div class="text">
-              <strong>Specific strength</strong>
-              <span>Explain why it matters and what it enables.</span>
-            </div>
-          </div>
+        <div class="card card-warning">
+          <h4>Calm-window post-deploy-check baseline refresh</h4>
+          <p>
+            Skipped this session — IO PSI avg10=70% at check time (diffuse QLC
+            baseline, not a storm). Needs a quiet window to be meaningful.
+            Priority: Low. Effort: <strong>S</strong>.
+          </p>
         </div>
 
-        <!-- Table with Badges -->
-        <h2>Issue Table</h2>
+        <div class="card card-warning">
+          <h4>Snippet-vs-snapshot exposure decision (owner)</h4>
+          <p>
+            Perms are handled (600); the open question is retention: snippets
+            live inside <code>@</code>, whose pool-side retention is forever.
+            Owner picks: accept "no secrets in snippets" doctrine / bound
+            <code>@</code> pool retention / relocate the dir. Row in
+            desktop.md [blocked:user]. Priority: Medium.
+          </p>
+        </div>
+
+        <h2 id="fucked">d) Totally Fucked Up</h2>
+
+        <div class="card card-problem">
+          <h4>1. The audit shipped INERT first — the negative tests caught it</h4>
+          <p>
+            v1 of pastebot-parity-audit filtered on
+            <code>programs.niri.enable</code>, which niri-wrapped.nix NEVER
+            sets (enable lives at the NixOS level) — the filter matched zero
+            users, zero assertions, eval green, zero protection. Both
+            bind-mutation legs "passed the eval" and exposed it. Severity:
+            would have shipped a phantom guard. Root cause: inferred the option
+            from the module name instead of reading where enable is set.
+            Mitigation: scope now filters DMS-enabled users (quickshell.nix
+            sets enable = true, verified); lesson recorded in the module
+            header.
+          </p>
+        </div>
+
+        <div class="card card-problem">
+          <h4>2. Negative-test markers matched the FILENAME, not the assertion</h4>
+          <p>
+            Legs 1/2 first "PASSED" while the audit was actually broken: the
+            marker regex <code>pastebot-parity-audit</code> matched the module
+            FILE PATH inside an unrelated eval error (duplicate let binding —
+            also mine). The harness's own "caught by EVAL accident" warning
+            fired only for leg 3 (specific marker). Fixed: all three markers
+            now anchor on assertion text (<code>pastebot-parity-audit: niri
+            bind</code> / <code>…DMS launcher plugin</code>). Class lesson:
+            generic markers + file paths in errors = false-pass surface.
+          </p>
+        </div>
+
+        <div class="card card-problem">
+          <h4>3. Blind perl one-liners on TODO rows deleted + mangled</h4>
+          <p>
+            Two sloppy <code>perl -0pi</code> sweeps: one silently deleted the
+            freshly-harvested size-cap queue row (restored), another mangled a
+            desktop.md bullet (<code>*: 0:</code> garbage, repaired). Root
+            cause: batch-editing markdown rows with regex instead of
+            read-first edit. Mitigation: done repairing; rule for me — edit
+            tool with read-first for TODO rows, perl only for surgical
+            single-occurrence replacements verified by immediate rg.
+          </p>
+        </div>
+
+        <h2 id="improve">e) What We Should Improve</h2>
+
+        <div class="card card-warning">
+          <h4>Negative-test marker convention should be structural</h4>
+          <p>
+            The filename-collision false-pass (d.2) is a HARNESS gap, not just
+            my mistake: nothing stops the next author from writing a generic
+            marker. Concrete fix: a one-line convention note in the harness
+            header + optionally a self-check that markers contain a colon
+            (assertion text always does, file paths never do). Harvested to
+            pipeline.md.
+          </p>
+        </div>
+
+        <div class="card card-warning">
+          <h4>Unattributed DMS restart at 03:15:26</h4>
+          <p>
+            DMS restarted mid-session (no systemd stop record = killed, likely
+            <code>pkill</code> by a concurrent session — several were active).
+            Feature verified healthy after (plugin loaded, zero state WARNs),
+            so no action taken; noting per the shared-tree attribution rule.
+            If it recurs without an owning session, it becomes a row.
+          </p>
+        </div>
+
+        <h2 id="next">f) Top Next Tasks</h2>
         <table>
           <thead>
-            <tr>
-              <th>#</th>
-              <th>Severity</th>
-              <th>Issue</th>
-              <th>Status</th>
-            </tr>
+            <tr><th>#</th><th>Task</th><th>Impact</th><th>Effort</th><th>Category</th></tr>
           </thead>
           <tbody>
-            <tr>
-              <td>1</td>
-              <td><span class="badge badge-critical">Critical</span></td>
-              <td>Missing error handling</td>
-              <td><span class="badge badge-fixed">Fixed</span></td>
-            </tr>
-            <tr>
-              <td>2</td>
-              <td><span class="badge badge-high">High</span></td>
-              <td>Race condition</td>
-              <td><span class="badge badge-low">Open</span></td>
-            </tr>
+            <tr><td>1</td><td>Owner: visual pass on Super+Shift+V + <code>:s</code> pickers; batch any taste patches</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>Feature</td></tr>
+            <tr><td>2</td><td>Owner: confirm the 2026-10-15 reboots were deliberate (closes the stability row; freeze count stays #30)</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>Documentation</td></tr>
+            <tr><td>3</td><td>Deploy the follow-up batch (delete + cap + chmod 600 + audit module) — the batch is the fresh reason</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Feature</td></tr>
+            <tr><td>4</td><td>Owner: review + ship the DMS layout-settings draft (tick the banner box) or kill it</td><td><span class="badge badge-high">High</span></td><td>S</td><td>Upstream</td></tr>
+            <tr><td>5</td><td>Owner: snippet-vs-snapshot exposure decision (doctrine / bound retention / relocate)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Decision</td></tr>
+            <tr><td>6</td><td>DMS input bump past 2026-10-11 + restore recents persistence + re-check patch anchors (clipboardSize may retire 2 sed legs)</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td>Feature</td></tr>
+            <tr><td>7</td><td>Harness convention: negative-test markers must anchor on assertion text (colon rule), header note + optional self-check</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>Quality</td></tr>
+            <tr><td>8</td><td>Calm-window post-deploy-check baseline refresh (~/.local/state/systemnix/smoke-fail-baseline.txt)</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>Quality</td></tr>
+            <tr><td>9</td><td>discordsync hotloop triage (queued since the 02:15 harvest, untouched)</td><td><span class="badge badge-low">Low</span></td><td>M</td><td>Bug</td></tr>
           </tbody>
         </table>
 
-        <!-- Before/After Comparison -->
-        <h2 id="proposal">Before / After</h2>
-        <div class="compare-header">
-          <div class="compare-before">Before</div>
-          <div class="compare-after">After</div>
-        </div>
-        <div class="compare-row">
-          <div>
-            <pre><code><span class="tok-comment">// Old code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>(data <span class="tok-type">interface</span>{}) { }</code></pre>
-          </div>
-          <div>
-            <pre><code><span class="tok-comment">// New code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>[T <span class="tok-type">any</span>](data T) { }</code></pre>
-          </div>
-        </div>
+        <h2 id="question">g) Top Question</h2>
 
-        <!-- ASCII Diagram -->
-        <h2>Dependency Tree</h2>
-        <div class="dep-tree">
-          <span class="root">root</span> ├──
-          <span class="ok">wanted-dep</span> └──
-          <span class="unwanted">unwanted-dep</span>
-        </div>
-
-        <!-- Numbered Steps -->
-        <h2 id="plan"><span class="num">03</span>Migration Plan</h2>
-        <div class="migration-step">
-          <div class="migration-num">1</div>
-          <div class="migration-content">
-            <h4>Add generic type parameter</h4>
-            <p>Update the function signature to accept a type parameter.</p>
-          </div>
-        </div>
-        <div class="migration-step">
-          <div class="migration-num">2</div>
-          <div class="migration-content">
-            <h4>Update all call sites</h4>
-            <p>Pass explicit types at each call site for type safety.</p>
-          </div>
+        <div class="card card-problem">
+          <h4>Did you deliberately reboot evo-x2 at 22:30 and 22:59 on 2026-10-15?</h4>
+          <p>
+            Tried to answer myself: journal forensics on both boundaries
+            (graceful teardown, wtmp shutdown records, kernel 7.2.9→7.2.10
+            activation shape, 30-min dark gap — all consistent with deliberate
+            reboots after a deploy), the 03:21 review's session context
+            (deploys were landing all evening), and wtmp history (every
+            involuntary cut since Oct 1 left a <code>crash</code> marker;
+            these didn't). Everything says "yes, planned" — but intent is
+            unknowable from logs, and the answer decides whether the freeze
+            cluster grows to #31+ (autopsies + evidence pulls owed) or the
+            drought-of-clean-reboots row just closes. One word unblocks either
+            branch.
+          </p>
         </div>
 
         <footer class="footer">
-          Generated YYYY-MM-DD &middot; All claims verified against source code
-          where noted
+          Generated 2026-10-16 08:28 &middot; Every claim verified against
+          live state or deployed store paths in-session &middot; §f items 3+7
+          harvested at authoring time; 1/2/4/5 are owner-gated and already
+          live as rows
         </footer>
       </main>
     </div>
