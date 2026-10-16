@@ -140,9 +140,13 @@ _: {
       umask 077
       mkdir -p ${keysDir}
       chmod 0711 ${keysDir}
+      # Daemon-mirror dir: root-owned but group-traversable by ai-meter —
+      # the daemon reads mirrors via its group; the mint (root) writes via
+      # ownership. Never ai-meter-owned: sandboxed root could not create
+      # files inside it.
       mkdir -p ${keysDir}/config
-      chown ai-meter:ai-meter ${keysDir}/config
-      chmod 0700 ${keysDir}/config
+      chown root:ai-meter ${keysDir}/config
+      chmod 0750 ${keysDir}/config
     ''
     + lib.concatMapStringsSep "\n" (
       client:
@@ -349,6 +353,15 @@ in
           # Re-runs (deploy convergence) must not wipe consumer keys:
           # the dir lives for the boot, not the unit activation.
           RuntimeDirectoryPreserve = true;
+          # The mint chowns keys to consumer users and to ai-meter —
+          # impossible under harden's empty default bounding set. A
+          # chown-to-ROOT target is a kernel no-op that hides this (the
+          # first VM run passed mint with a root client, then prod-shape
+          # clients would have failed). Exactly a provisioner's two caps.
+          CapabilityBoundingSet = [
+            "CAP_CHOWN"
+            "CAP_DAC_OVERRIDE"
+          ];
         }
         (harden { ProtectSystem = "strict"; })
         (serviceOneshotDefaults { })

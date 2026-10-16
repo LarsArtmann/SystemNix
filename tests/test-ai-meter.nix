@@ -81,6 +81,11 @@ in
       services.ai-meter = {
         enable = true;
         clients.vmtest.user = "root";
+        # Non-root consumer: exercises the CAP_CHOWN chown path the prod
+        # clients (lars, paperless-gpt, inboxclean) actually take — a
+        # chown-to-ROOT target is a kernel no-op that would mask a
+        # missing capability (exactly how the first mint draft slipped).
+        clients.vmtest2.user = "nobody";
       };
 
       # Point the template at the store-rendered config (mock-sops cannot
@@ -96,6 +101,8 @@ in
     with subtest("client key mint"):
         machine.wait_for_unit("ai-meter-keys.service")
         machine.succeed("stat -c '%U %a' /run/ai-meter-keys/vmtest | grep 'root 400'")
+        machine.succeed("stat -c '%U %a' /run/ai-meter-keys/vmtest2 | grep 'nobody 400'")
+        machine.succeed("stat -c '%U:%G %a' /run/ai-meter-keys/config | grep 'root:ai-meter 750'")
         machine.succeed("stat -c '%U %a' /run/ai-meter-keys/config/vmtest | grep 'ai-meter 400'")
         machine.succeed("cmp /run/ai-meter-keys/vmtest /run/ai-meter-keys/config/vmtest")
 
