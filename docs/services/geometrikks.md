@@ -207,6 +207,11 @@ Source filter and per-site home beacons key on them). Plan + traps:
   tailed. Historical import exists upstream:
   `sudo -u geometrikks env $(systemctl show geometrikks -p Environment | ...) geometrikks-cli import-logs <file>`
   (or run `geometrikks-cli` with the unit's env from a root shell).
+  DECISION 2026-10-16: a backfill timer is approved IN PRINCIPLE — the
+  36500-day retention ask is the owner's keep-forever intent — but its
+  implementation (timer + rotated-file walk through the unit-env
+  `import-logs` reconstruction) is queued for the next geo deploy wave,
+  not a solo switch (single-switch doctrine); row in docs/todo/services.md.
 - **Format-sniff startup gap (observed 2026-10-16)**: every listed file gets a
   60 s format-validation window at ingest start; quiet vhosts with no traffic
   log `Timeout of 60 seconds reached validating the log format` + `Log format
