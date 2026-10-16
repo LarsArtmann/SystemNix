@@ -30,7 +30,7 @@
 # for ALL AI calls; Agent Router's packaging cost (no nixpkgs package,
 # func-e Envoy downloads) buys governance features this single-user host
 # does not need. This proxy is the exact-scope replacement.
-{
+_: {
   flake.nixosModules.ai-meter =
     {
       config,

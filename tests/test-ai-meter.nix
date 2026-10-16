@@ -57,13 +57,15 @@ in
         integrationModule
         ../tests/mock-sops.nix
         # mock-sops declares no sops.placeholder (the real module does) —
-        # the ai-meter template content references placeholders, which must
-        # eval to a string even though the VM overrides the template path.
+        # mirror its contract loosely: every declared secret has a
+        # placeholder string (empty here; the VM overrides the template
+        # path, so only eval-ability matters).
         {
           options.sops.placeholder = lib.mkOption {
             type = lib.types.attrsOf lib.types.str;
             default = { };
           };
+          config.sops.placeholder = lib.mapAttrs (_: _: "") config.sops.secrets;
         }
       ];
 
