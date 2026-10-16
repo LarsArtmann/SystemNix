@@ -116,6 +116,11 @@
         ioTier
         ;
       cfg = config.services.inboxclean;
+      # ai-meter metering proxy (2026-10-16): when enabled, the chat LLM
+      # routes through the loopback proxy (attribution + token metering;
+      # upstream stays llama-chat — only the base URL changes; the minted
+      # proxy key arrives via EnvironmentFile on the -web unit below).
+      aiMeterEnabled = config.services.ai-meter.enable or false;
       # TEMPORARY vendorHash shim ADDED (2026-10-15 fleet wave, first-hand
       # got-hash from the 02:46 nh enumeration at locked rev 7e23ec6; class
       # comment: lib/lars-packages.nix flakePkgShim)
@@ -186,16 +191,19 @@
           # llama-server), overriding the upstream module's keyless
           # LLM_PROVIDER=ollama placeholder. NOT FastFlowLM (socket-activated
           # NPU: 2-5 min cold load + memory-guard sacrifice — async
-          # workloads only). Keyless: llama-server ignores Authorization.
+          # workloads only). Direct: keyless (llama-server ignores
+          # Authorization); through ai-meter: the minted proxy key.
           # LLM_MODEL tracks llama-chat's alias (single source); chat agent
           # turns send native OpenAI-format tool calls, so the model must
           # keep a tool-call chat template. 2026-10-08 incident: without an
           # explicit model the built-in Ollama default silently 404'd every
           # chat turn — `inboxclean doctor` now probes /v1/models and fails
-          # loudly if base URL or model id ever drifts.
+          # loudly if base URL or model id ever drifts (the proxy serves the
+          # same /v1/<upstream>/models passthrough, so doctor stays honest
+          # through it).
           extraEnvironment = {
             LLM_PROVIDER = "openai";
-            OPENAI_BASE_URL = "http://127.0.0.1:${toString config.services.llama-chat.port}/v1";
+            OPENAI_BASE_URL = if aiMeterEnabled then "http://127.0.0.1:${toString ports.ai-meter}/v1/llama-chat" else "http://127.0.0.1:${toString config.services.llama-chat.port}/v1";
             LLM_MODEL = config.services.llama-chat.alias;
           };
         };
@@ -204,14 +212,21 @@
         # GOMEMLIMIT=384MiB / start-limit guards now ship upstream with
         # identical mkDefault values; ReadWritePaths=dataDir likewise.
         systemd.services.inboxclean-web = {
-          after = [ "sops-nix.service" ];
-          wants = [ "sops-nix.service" ];
+          after = [ "sops-nix.service" ]
+            ++ lib.optionals aiMeterEnabled [ "ai-meter.service" ];
+          wants = [ "sops-nix.service" ]
+            ++ lib.optionals aiMeterEnabled [ "ai-meter.service" ];
           inherit onFailure;
 
           serviceConfig = lib.mkMerge [
             (harden { })
             (serviceDefaults { })
             ioTier.background
+            (lib.mkIf aiMeterEnabled {
+              # Runtime-minted proxy key (ai-meter-keys oneshot); its
+              # OPENAI_API_KEY also satisfies key-required clients.
+              EnvironmentFile = [ "/run/ai-meter-keys/inboxclean.env" ];
+            })
           ];
         };
 

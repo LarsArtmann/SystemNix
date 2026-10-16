@@ -85,6 +85,7 @@ in
   caddy-logs-hot = makeTest (import ./test-caddy-logs-hot.nix { inherit pkgs; });
   crush-hot-db = makeTest (import ./test-crush-hot-db.nix { inherit pkgs; });
   crush-config = import ./test-crush-config.nix { inherit pkgs inputs; };
+  ai-meter-vm = makeTest (import ./test-ai-meter.nix { inherit pkgs; });
   restic-app-dumps = makeTest (import ./test-restic-app-dumps.nix { inherit pkgs; });
   nix-email-contract = import ./test-nix-email.nix { inherit pkgs inputs system; };
   nsfw-classifier = import ./test-nsfw-classifier.nix { inherit pkgs inputs system; };

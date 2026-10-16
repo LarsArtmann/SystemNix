@@ -31,21 +31,23 @@
 # func-e Envoy downloads) buys governance features this single-user host
 # does not need. This proxy is the exact-scope replacement.
 {
-  config,
-  options,
-  lib,
-  pkgs,
-  ...
-}:
-let
+  flake.nixosModules.ai-meter =
+    {
+      config,
+      options,
+      pkgs,
+      lib,
+      ...
+    }:
+    let
   cfg = config.services.ai-meter;
-  inherit (import ../../../lib/default.nix lib)
-    harden
-    serviceDefaults
-    serviceOneshotDefaults
-    onFailure
-    ports
-    ;
+      inherit (import ../../../lib/default.nix lib)
+        harden
+        serviceDefaults
+        serviceOneshotDefaults
+        onFailure
+        ports
+        ;
 
   stateDir = "/var/lib/ai-meter";
   keysDir = "/run/ai-meter-keys";
