@@ -1290,13 +1290,24 @@ _: {
           ];
           unitConfig.ConditionPathExists = subvolMigratedCondition;
           # Host-mode CI jobs inherit the runner's PATH — the hub workflow
-          # (eventcatalog-hub build.yml) needs nix (go_1_27 shell), jq
-          # (sources.json parsing), and python3 (merge.py) beyond the
-          # nixpkgs module's default tool set.
+          # (eventcatalog-hub build.yml) invokes these OUTSIDE nix shells:
+          # nix (go_1_27 shell), jq (sources.json parsing), python3
+          # (merge.py), go/git/npm/node/gcc (workspace build steps), and
+          # gzip+gnutar (the 2026-10-16 first-run discovery: vendored
+          # tarball extraction exec'd gzip and the unit PATH had none —
+          # run 96 died at "tar (child): gzip: Cannot exec"). curl is for
+          # the publish step's dispatch callbacks.
           path = [
             pkgs.nix
             pkgs.jq
             pkgs.python3
+            pkgs.go
+            pkgs.git
+            pkgs.nodejs
+            pkgs.gzip
+            pkgs.gnutar
+            pkgs.gcc
+            pkgs.curl
           ];
           serviceConfig = lib.mkMerge [
             {
