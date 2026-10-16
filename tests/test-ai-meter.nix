@@ -5,7 +5,9 @@
 # fake upstream — duplicating that in a VM buys nothing. This test verifies
 # what only the assembled SYSTEM can prove:
 #   1. The ai-meter-keys oneshot mints a per-client key with the right
-#      owner (root) and mode (0400) in /run/ai-meter-keys.
+#      owner (root) and mode (0400) in /run/ai-meter-keys, PLUS the
+#      ai-meter-owned daemon mirror (config/<name>, 0400) the proxy
+#      actually authenticates against.
 #   2. The daemon boots against a store-rendered config at the sops
 #      template path (mock-sops path-override pattern) and binds both
 #      loopback ports.
@@ -33,7 +35,7 @@ let
       metrics_listen = "127.0.0.1:8108";
       ledger_path = "/var/lib/ai-meter/usage.jsonl";
       inject_stream_usage = true;
-      clients = [ { name = "vmtest"; key_file = "/run/ai-meter-keys/vmtest"; } ];
+      clients = [ { name = "vmtest"; key_file = "/run/ai-meter-keys/config/vmtest"; } ];
       upstreams = [
         {
           name = "dead";
@@ -94,6 +96,8 @@ in
     with subtest("client key mint"):
         machine.wait_for_unit("ai-meter-keys.service")
         machine.succeed("stat -c '%U %a' /run/ai-meter-keys/vmtest | grep 'root 400'")
+        machine.succeed("stat -c '%U %a' /run/ai-meter-keys/config/vmtest | grep 'ai-meter 400'")
+        machine.succeed("cmp /run/ai-meter-keys/vmtest /run/ai-meter-keys/config/vmtest")
 
     with subtest("daemon boots and binds both loopback ports"):
         machine.wait_for_unit("ai-meter.service")

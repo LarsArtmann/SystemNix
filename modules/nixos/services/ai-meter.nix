@@ -24,6 +24,11 @@
 #     bank-sync runtime-mint pattern; NO client key ever exists in the
 #     repo or in sops. Keys live for the boot; consumers read them at
 #     start (daemons) or per session (crush via $(cat) in the crushrc).
+#     TWO COPIES per client: the consumer copy (consumer-user-owned 0400)
+#     and an ai-meter-owned mirror at /run/ai-meter-keys/config/<name>
+#     (0400) — the daemon authenticates ONLY against the mirror; it
+#     cannot read consumer-owned files (the 2026-10-17 VM start-loop
+#     this two-copy mint closed).
 #
 # Origin: the 2026-10-16 Agent Router evaluation (docs/research/
 # 2026-10-16_agent-router-deep-dive.html) — owner wants metrics + metering
@@ -108,8 +113,10 @@ _: {
     metrics_listen = "127.0.0.1:${toString cfg.metricsPort}";
     ledger_path = "${stateDir}/usage.jsonl";
     inject_stream_usage = true;
+    # Daemon reads the ai-meter-owned mirror copies (see mintScript) —
+    # never the consumer-owned 0400 originals.
     clients = lib.mapAttrsToList (
-      name: client: { inherit name; key_file = "${keysDir}/${name}"; }
+      name: client: { inherit name; key_file = "${keysDir}/config/${name}"; }
     ) cfg.clients;
     inherit upstreams;
     costs = lib.mapAttrs (_: cost: {
@@ -124,17 +131,24 @@ _: {
   # Runtime client-key mint: idempotent per boot, root-owned oneshot.
   # Existing keys are NEVER regenerated (running daemons hold them in
   # memory; a silent rotation would 401 every consumer until restart).
+  # Each key is mirrored ai-meter-owned into config/ so the daemon can
+  # read it; `install` re-syncs the mirror on every run, so the pair can
+  # never diverge.
   mintScript = pkgs.writeShellScript "ai-meter-keys-mint" (
     ''
       set -eu
       umask 077
       mkdir -p ${keysDir}
       chmod 0711 ${keysDir}
+      mkdir -p ${keysDir}/config
+      chown ai-meter:ai-meter ${keysDir}/config
+      chmod 0700 ${keysDir}/config
     ''
     + lib.concatMapStringsSep "\n" (
       client:
       let
         keyFile = "${keysDir}/${client.name}";
+        daemonKeyFile = "${keysDir}/config/${client.name}";
         envFile = "${keysDir}/${client.name}.env";
       in
       ''
@@ -144,6 +158,7 @@ _: {
         fi
         chown ${lib.escapeShellArg client.user}: ${lib.escapeShellArg keyFile}
         chmod 0400 ${lib.escapeShellArg keyFile}
+        install -o ai-meter -g ai-meter -m 0400 ${lib.escapeShellArg keyFile} ${lib.escapeShellArg daemonKeyFile}
       ''
       + lib.optionalString (client.envKey != null) ''
         if [ ! -s ${lib.escapeShellArg envFile} ]; then

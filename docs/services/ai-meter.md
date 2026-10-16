@@ -31,6 +31,7 @@ The proxy is TRANSPARENT: bodies pass through untouched except one opt-in inject
 
 - **Upstream provider keys**: sops COPIES owned by the `ai-meter` user (`ai-meter-{zai,kimi,gemini,openrouter}-key` → crush.yaml / openseo.yaml keys). Independent of the source blocks' enablement.
 - **Client keys**: RUNTIME-MINTED by the `ai-meter-keys` oneshot (`openssl rand -hex 24` → `/run/ai-meter-keys/<client>`, 0400, owned by the consumer's user). Never in the repo, never in sops. Keys live for the boot; existing keys are NEVER regenerated (a silent rotation would 401 running consumers).
+- **Two-copy mint (2026-10-17)**: the daemon (`ai-meter` user) cannot read consumer-owned 0400 files — the first VM run start-looped on exactly that. Each key therefore ALSO exists as an `ai-meter`-owned 0400 mirror at `/run/ai-meter-keys/config/<client>` (dir 0700); the proxy config points ONLY at the mirrors, and the mint re-syncs each mirror (`install`) on every run so the pair can never diverge.
 
 | Client | Key consumption | Routed via |
 | --- | --- | --- |
