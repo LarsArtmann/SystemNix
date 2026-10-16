@@ -54,23 +54,24 @@
       # Filenames replicate vhost-options.nix's own derivation: "/" and
       # " " -> "_". Derived from config.services.caddy.virtualHosts at
       # eval time, so new services are tracked automatically.
-      caddyLogPaths =
-        [ "/var/log/caddy/access.log" ]
-        ++ map (
-          host:
-          "/var/log/caddy/access-${
-            lib.replaceStrings
-              [
-                "/"
-                " "
-              ]
-              [
-                "_"
-                "_"
-              ]
-              host
-          }.log"
-        ) (builtins.attrNames config.services.caddy.virtualHosts);
+      caddyLogPaths = [
+        "/var/log/caddy/access.log"
+      ]
+      ++ map (
+        host:
+        "/var/log/caddy/access-${
+          lib.replaceStrings
+            [
+              "/"
+              " "
+            ]
+            [
+              "_"
+              "_"
+            ]
+            host
+        }.log"
+      ) (builtins.attrNames config.services.caddy.virtualHosts);
 
       # Multi-source ingestion (upstream "shipped files" shape, verified
       # against pinned v0.19.0 + tag README 2026-10-16):
@@ -363,21 +364,19 @@
       );
 
       geometrikksLogPullTimers = lib.listToAttrs (
-        map
-          (
-            pull:
-            lib.nameValuePair "geometrikks-log-pull-${pull.name}" {
-              description = "GeoMetrikks remote log pull (${pull.name} -> ${pull.sshTarget})";
-              wantedBy = [ "timers.target" ];
-              timerConfig = {
-                OnBootSec = "3min";
-                OnUnitActiveSec = pull.interval;
-                AccuracySec = "10s";
-                Persistent = false;
-              };
-            }
-          )
-          cfg.logPulls
+        map (
+          pull:
+          lib.nameValuePair "geometrikks-log-pull-${pull.name}" {
+            description = "GeoMetrikks remote log pull (${pull.name} -> ${pull.sshTarget})";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnBootSec = "3min";
+              OnUnitActiveSec = pull.interval;
+              AccuracySec = "10s";
+              Persistent = false;
+            };
+          }
+        ) cfg.logPulls
       );
     in
     {
@@ -821,7 +820,8 @@
               ];
               inherit onFailure;
             };
-          } // geometrikksLogPullUnits;
+          }
+          // geometrikksLogPullUnits;
 
           # Wrapper form (was a dotted timers.geometrikks-db-backup attrpath):
           # the pull timers merge in from the module-level let via //.
@@ -835,7 +835,8 @@
                 RandomizedDelaySec = "10m";
               };
             };
-          } // geometrikksLogPullTimers;
+          }
+          // geometrikksLogPullTimers;
         };
         # Service-integration registry entry: the geo tile, the geo vHost —
         # LAYER 1 PLAIN now (native OIDC behind protectedVHost would
