@@ -115,7 +115,7 @@ func (s *testStack) ledgerLines(t *testing.T) []map[string]any {
 		t.Fatal(err)
 	}
 	var entries []map[string]any
-	for _, line := range strings.Split(strings.TrimSpace(string(raw)), "\n") {
+	for line := range strings.SplitSeq(strings.TrimSpace(string(raw)), "\n") {
 		if line == "" {
 			continue
 		}
@@ -175,12 +175,12 @@ func TestProxyMetersNonStreamingChat(t *testing.T) {
 
 	out := s.registry.Render()
 	for _, want := range []string{
-		`ai_meter_requests_total{client="crush",code="200",model="m",upstream="fake"} 1`,
-		`ai_meter_tokens_total{client="crush",kind="prompt",model="m",upstream="fake"} 100`,
-		`ai_meter_tokens_total{client="crush",kind="completion",model="m",upstream="fake"} 50`,
-		`ai_meter_tokens_total{client="crush",kind="cached",model="m",upstream="fake"} 20`,
+		`ai_meter_requests_total{client="crush",upstream="fake",model="m",code="200"} 1`,
+		`ai_meter_tokens_total{client="crush",upstream="fake",model="m",kind="prompt"} 100`,
+		`ai_meter_tokens_total{client="crush",upstream="fake",model="m",kind="completion"} 50`,
+		`ai_meter_tokens_total{client="crush",upstream="fake",model="m",kind="cached"} 20`,
 		// cost: (100-20)*2/1e6 + 20*0.5/1e6 + 50*4/1e6 = 0.00037
-		`ai_meter_cost_usd_total{client="crush",model="m",upstream="fake"} 0.00037`,
+		`ai_meter_cost_usd_total{client="crush",upstream="fake",model="m"} 0.00037`,
 	} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("metrics missing %q\nexposition:\n%s", want, out)
@@ -211,6 +211,9 @@ func TestProxyMetersStreamingChat(t *testing.T) {
 			sawDone = true
 		}
 	}
+	if err := scanner.Err(); err != nil {
+		t.Fatalf("stream read: %v", err)
+	}
 	if !sawDone {
 		t.Fatal("stream not fully forwarded")
 	}
@@ -220,9 +223,9 @@ func TestProxyMetersStreamingChat(t *testing.T) {
 
 	out := s.registry.Render()
 	for _, want := range []string{
-		`ai_meter_tokens_total{client="crush",kind="prompt",model="m",upstream="fake"} 12`,
-		`ai_meter_tokens_total{client="crush",kind="completion",model="m",upstream="fake"} 4`,
-		`ai_meter_ttft_seconds_count{client="crush",model="m",upstream="fake"} 1`,
+		`ai_meter_tokens_total{client="crush",upstream="fake",model="m",kind="prompt"} 12`,
+		`ai_meter_tokens_total{client="crush",upstream="fake",model="m",kind="completion"} 4`,
+		`ai_meter_ttft_seconds_count{client="crush",upstream="fake",model="m"} 1`,
 	} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("metrics missing %q\nexposition:\n%s", want, out)

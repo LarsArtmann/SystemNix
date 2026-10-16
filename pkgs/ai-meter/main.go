@@ -54,7 +54,11 @@ func run(configPath string, logger *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("open ledger: %w", err)
 	}
-	defer ledger.Close()
+	defer func() {
+		if err := ledger.Close(); err != nil {
+			logger.Warn("ledger close", "err", err)
+		}
+	}()
 
 	registry := NewRegistry()
 	proxy := NewProxy(cfg, registry, ledger, logger)

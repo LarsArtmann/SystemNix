@@ -137,8 +137,8 @@ func (c *Config) CostFor(model string) Cost {
 	if cost, ok := c.Costs[model]; ok {
 		return cost
 	}
-	if idx := strings.Index(model, "/"); idx >= 0 {
-		if cost, ok := c.Costs[model[idx+1:]]; ok {
+	if _, stripped, found := strings.Cut(model, "/"); found {
+		if cost, ok := c.Costs[stripped]; ok {
 			return cost
 		}
 	}
