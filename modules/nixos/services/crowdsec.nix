@@ -374,7 +374,10 @@ _: {
               # pr1943Parser when PR #1943 merges (cscli's install then
               # keeps the hub file).
               ExecStartPre = lib.mkAfter [
-                "ln -sfn ${pr1943Parser} /etc/crowdsec/parsers/s01-parse/sshd-success-logs.yaml"
+                # Absolute store path: the hardened unit's PATH has no
+                # coreutils — bare `ln` failed EXEC at the 08:07 start
+                # (live 2026-10-16).
+                "${pkgs.coreutils}/bin/ln -sfn ${pr1943Parser} /etc/crowdsec/parsers/s01-parse/sshd-success-logs.yaml"
               ];
             }
           ];
