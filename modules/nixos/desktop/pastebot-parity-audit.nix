@@ -16,99 +16,100 @@
 #
 # Scope: only home-manager users with programs.niri.enable — the desktop
 # surface exists only there. DMS plugin assertion fires only when the
-# user has dank-material-shell enabled.
+# user has dank-material-shell enabled. home-manager is absent on
+# HM-less hosts (rpi3-dns) — `or { }` guards.
 #
 # Deliberate changes (moving a bind, retiring the feature): update this
 # module IN THE SAME CHANGE — the failure message is the tripwire, not
 # an obstacle. Verify both directions via
 # `CASES=pastebot bash scripts/negative-test-lints.sh`.
 {
-  config,
-  lib,
-  ...
-}:
-let
-  expectedBindSpawns = {
-    # Clipboard history picker (PasteBot cmd+shift+V equivalent)
-    "Mod+Shift+V" = [
-      "dms"
-      "ipc"
-      "call"
-      "clipboard"
-      "toggle"
-    ];
-    # Snippets picker (PasteBot cmd+shift+C equivalent) — :s trigger
-    "Mod+Shift+C" = [
-      "dms"
-      "ipc"
-      "call"
-      "spotlight"
-      "toggleQuery"
-      ":s"
-    ];
-    # Calculator — displaced to Mod+Ctrl+C by the snippets bind
-    "Mod+Ctrl+C" = [
-      "dms"
-      "ipc"
-      "call"
-      "spotlight"
-      "toggleQuery"
-      "="
-    ];
-  };
-
-  userAssertions =
-    user: uc:
+  flake.nixosModules.pastebot-parity-audit =
+    {
+      config,
+      lib,
+      ...
+    }:
     let
-      binds = (uc.programs.niri.settings or { }).binds or { };
+      expectedBindSpawns = {
+        # Clipboard history picker (PasteBot cmd+shift+V equivalent)
+        "Mod+Shift+V" = [
+          "dms"
+          "ipc"
+          "call"
+          "clipboard"
+          "toggle"
+        ];
+        # Snippets picker (PasteBot cmd+shift+C equivalent) — :s trigger
+        "Mod+Shift+C" = [
+          "dms"
+          "ipc"
+          "call"
+          "spotlight"
+          "toggleQuery"
+          ":s"
+        ];
+        # Calculator — displaced to Mod+Ctrl+C by the snippets bind
+        "Mod+Ctrl+C" = [
+          "dms"
+          "ipc"
+          "call"
+          "spotlight"
+          "toggleQuery"
+          "="
+        ];
+      };
 
-      bindAssertions =
-        lib.mapAttrsToList
-          (
-            bind: spawn:
-              let
-                actual = binds."${bind}".action.spawn or null;
-              in
-              {
-                assertion = actual == spawn;
-                message = ''
-                  pastebot-parity-audit: niri bind '${bind}' for user '${user}' is
-                  missing or repointed (expected spawn: ${lib.concatStringsSep " " spawn},
-                  got: ${
-                    if actual == null then "(bind absent)" else lib.concatStringsSep " " actual
-                  }).
-                  This bind is the PasteBot-parity picker entrypoint — dropping or
-                  repointing it silently removes the feature that unblocked the
-                  NixOS switch. Fix: restore the bind in platforms/nixos/desktop/niri-wrapped.nix,
-                  or — for a deliberate move — update expectedBindSpawns in
-                  modules/nixos/desktop/pastebot-parity-audit.nix in the same change.'';
-              }
-          )
-          expectedBindSpawns;
+      userAssertions =
+        user: uc:
+        let
+          binds = (uc.programs.niri.settings or { }).binds or { };
 
-      dmsEnabled = (uc.programs.dank-material-shell or { }).enable or false;
-      pluginAssertions = lib.optionals dmsEnabled [
-        {
-          assertion = (uc.programs.dank-material-shell.plugins or { }) ? "systemnix-snippets";
-          message = ''
-            pastebot-parity-audit: the systemnix-snippets DMS launcher plugin is
-            not registered for user '${user}' (programs.dank-material-shell.plugins
-            lacks the key). Without it the ':s' trigger — and therefore the
-            Mod+Shift+C snippets picker — is dead. Fix: restore the plugin block in
-            platforms/nixos/desktop/quickshell.nix, or update this audit if the
-            plugin was deliberately retired.'';
-        }
-      ];
+          bindAssertions =
+            lib.mapAttrsToList
+              (
+                bind: spawn:
+                let
+                  actual = binds."${bind}".action.spawn or null;
+                in
+                {
+                  assertion = actual == spawn;
+                  message = ''
+                    pastebot-parity-audit: niri bind '${bind}' for user '${user}' is
+                    missing or repointed (expected spawn: ${lib.concatStringsSep " " spawn},
+                    got: ${
+                      if actual == null then "(bind absent)" else lib.concatStringsSep " " actual
+                    }).
+                    This bind is the PasteBot-parity picker entrypoint — dropping or
+                    repointing it silently removes the feature that unblocked the
+                    NixOS switch. Fix: restore the bind in platforms/nixos/desktop/niri-wrapped.nix,
+                    or — for a deliberate move — update expectedBindSpawns in
+                    modules/nixos/desktop/pastebot-parity-audit.nix in the same change.'';
+                }
+              )
+              expectedBindSpawns;
+
+          dmsEnabled = (uc.programs.dank-material-shell or { }).enable or false;
+          pluginAssertions = lib.optionals dmsEnabled [
+            {
+              assertion = (uc.programs.dank-material-shell.plugins or { }) ? "systemnix-snippets";
+              message = ''
+                pastebot-parity-audit: the systemnix-snippets DMS launcher plugin is
+                not registered for user '${user}' (programs.dank-material-shell.plugins
+                lacks the key). Without it the ':s' trigger — and therefore the
+                Mod+Shift+C snippets picker — is dead. Fix: restore the plugin block in
+                platforms/nixos/desktop/quickshell.nix, or update this audit if the
+                plugin was deliberately retired.'';
+            }
+          ];
+        in
+        bindAssertions ++ pluginAssertions;
+
+      niriUsers = lib.filterAttrs (
+        user: uc: (uc.programs.niri or { }).enable or false
+      ) (config.home-manager.users or { });
     in
-    bindAssertions ++ pluginAssertions;
-
-  # home-manager is absent on HM-less hosts (rpi3-dns) and in the
-  # flake-parts eval context (discovered modules are imported BOTH as
-  # flake-parts registrations and NixOS host modules) — `or { }` guards both.
-  niriUsers = lib.filterAttrs (
-    user: uc: (uc.programs.niri or { }).enable or false
-  ) (config.home-manager.users or { });
-in
-{
-  config.assertions = lib.concatLists (lib.mapAttrsToList userAssertions niriUsers);
+    {
+      config.assertions = lib.concatLists (lib.mapAttrsToList userAssertions niriUsers);
+    };
 }
