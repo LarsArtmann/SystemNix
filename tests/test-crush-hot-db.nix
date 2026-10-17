@@ -292,6 +292,17 @@ in
     )
     machine.succeed("systemctl start crush-fake-session.service")
     machine.succeed("pgrep -x crush")  # guard must be live BEFORE the restart
+    # Control-of-the-control: the guard's ONLY detection input is an fd (or
+    # cwd) under the project's .crush — assert the fake session actually
+    # holds one before restarting. A fake that silently holds no fd turns
+    # any guard regression into a mystery (and the failure output IS the
+    # fd table, the diagnostic we'd want anyway).
+    fake_pid = machine.succeed("pgrep -x crush | head -1").strip()
+    fd_dump = machine.succeed(f"ls -l /proc/{fake_pid}/fd")
+    assert "late/.crush/crush.db" in fd_dump, (
+        f"fake crush session (pid {fake_pid}) holds no fd on late/.crush/crush.db — "
+        f"the live-writer guard is blind by construction:\n{fd_dump}"
+    )
     machine.succeed("systemctl restart crush-hot-db-migrate.service")
     guard_log = machine.succeed(
         "journalctl -b -u crush-hot-db-migrate.service --output cat"
