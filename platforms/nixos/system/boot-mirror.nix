@@ -113,7 +113,7 @@ let
       fi
 
       counters=$(find ${mirrorPath}/loader/entries -maxdepth 1 -name '*+*.conf' -type f -printf '%f\n' | tr '\n' ' ')
-      echo "boot-mirror-sync: OK — $(find ${mirrorPath}/loader/entries -maxdepth 1 -name 'nixos-*.conf' -type f | wc -l) entries, counters[${"counters:-none"}], $(du -sh ${mirrorPath} 2>/dev/null | cut -f1) mirrored"
+      echo "boot-mirror-sync: OK — $(find ${mirrorPath}/loader/entries -maxdepth 1 -name 'nixos-*.conf' -type f | wc -l) entries, counters[''${counters:-none}], $(du -sh ${mirrorPath} 2>/dev/null | cut -f1) mirrored"
     '';
   };
 in
