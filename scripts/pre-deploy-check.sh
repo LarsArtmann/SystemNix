@@ -912,6 +912,62 @@ else
   printf '%s\n' "$PVG_OUT" | sed 's/^/    /'
 fi
 
+# 16. PapDashboard tile-icon inventory (2026-10-17 icon-pack go-live)
+# Every pack-relative icon in the to-be-deployed rendered config must exist
+# in the pack subset the unit will serve (PAP_ICONS_DIR). The eval gates in
+# papdashboard.nix catch icon FORM (assertion) and build-time existence
+# (dashboardIcons runCommand); this leg re-verifies the pair end-to-end
+# against the config about to switch, so a half-wired icon surface cannot
+# ship (the "merge carried the values, dropped the feature" class that left
+# the dashboard monogram-only for a month). A config with ZERO pack icons
+# also fails: that shape is the capability dropped, not a choice. Same
+# anti-blind-skip discipline as §13/§14: only the exact attribute-missing
+# shape (module disabled) may SKIP; any other eval failure fails LOUD.
+echo ""
+echo "16. PapDashboard tile icons resolve in the pinned pack"
+PAP_EVAL_ERR=$(mktemp)
+PAP_ENV=""
+PAP_ENV=$(nix eval --json .#nixosConfigurations.evo-x2.config.systemd.services.papdashboard.environment 2>"$PAP_EVAL_ERR") || true
+if [ -n "$PAP_ENV" ]; then
+  PAP_ICONS_DIR_VAL=$(printf '%s' "$PAP_ENV" | jq -r '."PAP_ICONS_DIR" // empty')
+  if [ -z "$PAP_ICONS_DIR_VAL" ]; then
+    fail "papdashboard unit has NO PAP_ICONS_DIR — the icon pack is not wired into the to-be-deployed config (stale module? partial revert?)"
+  elif [ ! -d "$PAP_ICONS_DIR_VAL" ]; then
+    fail "PAP_ICONS_DIR $PAP_ICONS_DIR_VAL does not exist as a directory"
+  else
+    PAP_ICON_NAMES=$(
+      {
+        nix eval --json .#nixosConfigurations.evo-x2.config.services.papdashboard.dashboard.groups --apply 'gs: builtins.concatMap (g: map (t: t.icon or null) g.tiles) gs' 2>/dev/null || true
+        nix eval --json .#nixosConfigurations.evo-x2.config.services.papdashboard.extraTiles --apply 'ts: map (t: t.icon or null) ts' 2>/dev/null || true
+      } | jq -r '.[]'
+    )
+    pap_pack_total=0
+    pap_missing=0
+    while IFS= read -r pap_icon; do
+      { [ -z "$pap_icon" ] || [ "$pap_icon" = "null" ]; } && continue
+      case "$pap_icon" in http://* | https://*) continue ;; esac
+      pap_pack_total=$((pap_pack_total + 1))
+      if [ ! -f "$PAP_ICONS_DIR_VAL/$pap_icon" ]; then
+        fail "tile icon '$pap_icon' not in the pack subset $PAP_ICONS_DIR_VAL (build gate should have caught this — investigate the pin)"
+        pap_missing=$((pap_missing + 1))
+      fi
+    done <<EOF
+$PAP_ICON_NAMES
+EOF
+    if [ "$pap_pack_total" -eq 0 ]; then
+      fail "rendered config carries ZERO tile icons — the tile-logo capability is dropped from the to-be-deployed config (the 2026-10-17 regression class this gate exists for)"
+    elif [ "$pap_missing" -eq 0 ]; then
+      pass "all $pap_pack_total pack-relative tile icons exist in $PAP_ICONS_DIR_VAL"
+    fi
+  fi
+elif grep -q "does not provide attribute" "$PAP_EVAL_ERR" && grep -q "papdashboard" "$PAP_EVAL_ERR"; then
+  warn "papdashboard not rendered (module disabled) — icon inventory skipped"
+else
+  fail "papdashboard §16 eval failed — NOT the known disabled shape; refusing to blind-skip (raw error follows):"
+  tail -5 "$PAP_EVAL_ERR"
+fi
+rm -f "$PAP_EVAL_ERR"
+
 # Summary
 echo ""
 echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="
