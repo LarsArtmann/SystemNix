@@ -1,5 +1,5 @@
 # Runbook: docs/services/architecture-catalog.md (platform inventory leg)
-# catalog-inventory-sync — daily regeneration of the eventcatalog-hub's
+# catalog-inventory-sync — hourly regeneration of the eventcatalog-hub's
 # committed inventory.json from THIS repo's registry.
 #
 # The platform inventory (owner directive 2026-10-17: everything in
@@ -21,12 +21,16 @@
 # inventory (a broken regeneration must never look like a real one; the
 # last-good committed file stays until the next healthy run).
 #
-# Scheduling: 04:47 + 15min jitter, local time — after the midnight system
-# nightly churn, before the hub CI's 05:23 CEST build, and niced/idle-IO
-# under everything (the freeze history is a chronicle of ungated eval
-# batteries — this one stays a background citizen). Persistent: downtime
-# catches up on the next boot. No port, no daemon, no deploy.sh converger —
-# the timer converges on its own after every boot/deploy.
+# Scheduling: HOURLY at :47 + 15min jitter (owner call 2026-10-17) — a
+# registry change converges into the committed inventory within ~1h. The
+# cadence costs evals, not commits: generate-inventory.sh NO-OPS on
+# content-identical exports while the committed generatedAt is <24h old,
+# so the hub sees commits only on real changes (+ at most one stamp
+# refresh/day). Niced/idle-IO under everything — the freeze history is a
+# chronicle of ungated eval batteries; this one stays a background citizen
+# (24 eval bursts/day, all yielding). Persistent: downtime catches up on
+# the next boot. No port, no daemon, no deploy.sh converger — the timer
+# converges on its own after every boot/deploy.
 _: {
   flake.nixosModules.catalog-inventory-sync =
     {
@@ -46,7 +50,7 @@ _: {
     in
     {
       options.services.catalog-inventory-sync = {
-        enable = lib.mkEnableOption "daily inventory.json regeneration for the federated EventCatalog (evals the SystemNix registry across the real hosts, rewrites the hub checkout)";
+        enable = lib.mkEnableOption "hourly inventory.json regeneration for the federated EventCatalog (evals the SystemNix registry across the real hosts, rewrites the hub checkout)";
 
         hubDir = lib.mkOption {
           type = lib.types.str;
@@ -66,11 +70,12 @@ _: {
 
         calendar = lib.mkOption {
           type = lib.types.str;
-          default = "*-*-* 04:47:00";
+          default = "*-*-* *:47:00";
           description = ''
-            Regeneration calendar (local time). The default lands after the
-            midnight system nightlies and before the hub CI's 05:23 CEST
-            nightly build.
+            Regeneration calendar (local time). Default: hourly at :47 — a
+            registry change converges into the committed inventory.json
+            within ~1h (the write path no-ops on unchanged content, so the
+            cadence costs evals, not commits).
           '';
         };
       };
@@ -115,7 +120,7 @@ _: {
         };
 
         systemd.timers.catalog-inventory-sync = {
-          description = "Daily inventory.json regeneration for catalog.home.lan";
+          description = "Hourly inventory.json regeneration for catalog.home.lan";
           wantedBy = [ "timers.target" ];
           timerConfig = {
             OnCalendar = cfg.calendar;
