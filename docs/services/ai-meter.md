@@ -18,7 +18,7 @@ Both loopback-only. No vHost — deliberately: the proxy is infrastructure, not 
 Path-based, so client model vocabularies stay identical everywhere:
 
 ```
-crush provider zai        → http://127.0.0.1:8107/v1/zai/chat/completions        → https://api.z.ai/api/paas/v4
+crush provider zai        → http://127.0.0.1:8107/v1/zai/chat/completions        → https://api.z.ai/api/coding/paas/v4
 crush provider kimi-coding → http://127.0.0.1:8107/v1/kimi/chat/completions       → https://api.moonshot.ai/v1
 crush provider gemini      → http://127.0.0.1:8107/v1/gemini/v1beta/models/<m>:streamGenerateContent
                            → https://generativelanguage.googleapis.com (NATIVE genai protocol, X-Goog-Api-Key)
@@ -28,6 +28,8 @@ inboxclean chat           → http://127.0.0.1:8107/v1/llama-chat/chat/completio
 ```
 
 The proxy is TRANSPARENT: bodies pass through untouched except one opt-in injection — `stream_options.include_usage: true` on streaming requests that lack it, so the final SSE chunk carries the usage block the metering needs. `inject_stream_usage: false` in the rendered config disables it. Native genai traffic is exempt from the injection (genai bodies would reject the foreign field); its usage comes from `usageMetadata` instead (genai.go adapter, 2026-10-17).
+
+zai routes to the **coding** endpoint (`/api/coding/paas/v4`), NOT the general one: the account bills via a GLM Coding Plan (**Max Yearly**) resource package that only applies there — the general endpoint has zero pay-as-you-go balance and 429s with code 1113 "Insufficient balance or no resource package" (2026-10-17 outage; incident report: `docs/status/2026-10-17_08-58_zai-1113-outage-ai-meter-fix-signoz-integration.md`). Per docs.z.ai the plan covers exactly glm-5.3 + glm-5.3-flash (older ids auto-route), quota is credit-based (Max: 28,000 credits/5h, 140,000/week), and concurrency is unpublished ("Max > Pro > Lite", dynamically adjusted, higher off-peak) — billing rejections and rate limits both arrive as HTTP 429, so watch the upstream error body, not just the status code.
 
 ## Secrets & clients
 
@@ -49,7 +51,7 @@ Prometheus families on :8108 (job `ai-meter`, SigNoz collector):
 
 - `ai_meter_requests_total{client,upstream,model,code}`
 - `ai_meter_tokens_total{client,upstream,model,kind=prompt|completion|cached}`
-- `ai_meter_cost_usd_total{client,upstream,model}` — from `services.ai-meter.costs` (USD per 1M tokens; `glm-5.3-flash` mirrors the crushrc prices; unknown/local models cost $0 but meter tokens exactly)
+- `ai_meter_cost_usd_total{client,upstream,model}` — from `services.ai-meter.costs` (USD per 1M tokens; zai models are deliberately $0: plan-covered by the GLM Coding Plan Max Yearly, which bills credits not tokens — PAYG reference prices preserved in a comment in `ai-meter.nix`; unknown/local models cost $0 but meter tokens exactly)
 - `ai_meter_request_seconds_{sum,count}`, `ai_meter_ttft_seconds_{sum,count}` (streaming only), `ai_meter_active_requests`, `ai_meter_unauthorized_total`, `ai_meter_metering_errors_total` (recording failures that did NOT fail live traffic — watch this: nonzero means usage blocks are going missing)
 
 Durable ledger: `/var/lib/ai-meter/usage.jsonl` — one JSON object per call (the true-up source; Prometheus counters reset on restart, the ledger does not).

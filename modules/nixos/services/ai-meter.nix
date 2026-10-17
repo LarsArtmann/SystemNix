@@ -76,12 +76,15 @@ _: {
         {
           name = "zai";
           # Coding-plan endpoint, NOT the general /api/paas/v4 one: the
-          # account bills via a GLM Coding Plan resource package that only
-          # applies here. The general endpoint has zero pay-as-you-go
-          # balance, so it 429s with code 1113 "Insufficient balance or
-          # no resource package" (verified 2026-10-17; coding endpoint
-          # returned 200 for glm-5.3 and glm-5.3-flash, general 1113).
-          # This also matches crush's built-in zai provider default.
+          # account bills via a GLM Coding Plan (Max Yearly) resource
+          # package that only applies here. The general endpoint has zero
+          # pay-as-you-go balance, so it 429s with code 1113 "Insufficient
+          # balance or no resource package" (verified 2026-10-17; coding
+          # endpoint returned 200 for glm-5.3 and glm-5.3-flash, general
+          # 1113). This also matches crush's built-in zai provider default.
+          # The plan covers exactly glm-5.3 + glm-5.3-flash (older ids
+          # auto-route; docs.z.ai/devpack/overview); concurrency is
+          # unpublished ("Max > Pro > Lite", dynamically adjusted).
           base_url = "https://api.z.ai/api/coding/paas/v4";
           api_key = "${config.sops.placeholder.ai-meter-zai-key}";
         }
@@ -279,14 +282,24 @@ _: {
             }
           );
           default = {
-            # Mirrors the crushrc's own model declaration (crush-config
-            # model add zai/glm-5.3-flash --price-input 0.15 --price-output 0.5
-            # --price-cache-hit 0.03). Extend per model as consumers adopt
-            # them; unknown models meter tokens exactly and cost $0.
+            # Both zai models are covered by the GLM Coding Plan (Max
+            # Yearly, confirmed 2026-10-17): the plan bills credits, not
+            # tokens, so the marginal USD cost per request is $0. Prices
+            # stay 0.0 so spend panels report real spend, not fabricated
+            # pay-as-you-go spend. PAYG reference prices if the plan ever
+            # lapses (glm-5.3-flash mirrors the crushrc model declaration):
+            # input 0.15 / output 0.5 / cachedInput 0.03. Extend per model
+            # as consumers adopt them; unknown models meter tokens exactly
+            # and cost $0.
+            "glm-5.3" = {
+              input = 0.0;
+              output = 0.0;
+              cachedInput = 0.0;
+            };
             "glm-5.3-flash" = {
-              input = 0.15;
-              output = 0.5;
-              cachedInput = 0.03;
+              input = 0.0;
+              output = 0.0;
+              cachedInput = 0.0;
             };
           };
           description = "Per-model cost table (USD per 1M tokens). Best-effort: tokens are always exact, cost only for known models.";

@@ -82,14 +82,16 @@ glm-5.3-flash **22×200 vs 100×429**.
    "scrape-coverage doctrine" (every scraped job appears in the coverage dashboard) was
    violated by ai-meter since 2026-10-16 and I repeated the violation by adding a separate
    dashboard instead of also extending coverage.
-3. `docs/services/ai-meter.md` runbook update (the module header references it) — endpoint
-   fix, 1113 semantics, and the incident belong there.
+3. ~~`docs/services/ai-meter.md` runbook update~~ DONE 2026-10-17: coding endpoint in the
+   routing table, billing/1113 semantics, incident cross-link, and plan specs added.
 4. **Blast-radius check for other ai-meter clients**: paperless-gpt and inboxclean are
    documented consumers of the proxy. If any routes zai, they were silently 1113-failing all
    morning too. Never checked (metrics showed only `client="crush"` — suggestive but not
    proof of configuration, only of traffic).
-5. Coding-plan concurrency tier fact-check (Lite/Pro/Max caps vs the observed
-   "Rate limit reached for requests" 429s under 17 concurrent instances).
+5. Coding-plan concurrency tier fact-check — ANSWERED 2026-10-17: Max Yearly. Caps are
+   officially unpublished ("Max > Pro > Lite", dynamically adjusted, higher off-peak;
+   quota 28k credits/5h, 140k/week) → the real cap must be measured empirically from
+   post-deploy "Rate limit reached" 429 rates under the ~17 concurrent instances.
 6. SystemNix AGENTS.md/docs knowledge capture of this debugging session (admin :8108,
    ledger `/var/lib/ai-meter/usage.jsonl`, crushrc override location).
 
@@ -151,13 +153,16 @@ dirty laundry:
 8. Extend `telemetry-coverage.json` with the ai-meter job (doctrine compliance).
 9. Update `docs/services/ai-meter.md` runbook: coding vs general endpoint, 1113 semantics,
    incident timeline, verification commands.
-10. Add glm-5.3 cost-table entry (or explicit `plan-covered` marker + dashboard annotation).
+10. ~~Add glm-5.3 cost-table entry~~ DONE 2026-10-17: both zai models carry explicit
+    plan-covered $0 entries in `services.ai-meter.costs` (PAYG reference prices preserved
+    in a comment). Dashboard annotation dropped — the runbook documents the $0 semantics.
 11. Canary probe per cloud upstream (cron/systemd timer → 1-token request; alert on non-200)
     so idle hosts still detect dead accounts.
 12. ai-meter: per-upstream circuit breaker / error rewriting (fail fast, name the upstream).
 13. Run `nix flake check` (or full module eval) on SystemNix — the session only parse-checked.
-14. Concurrency tier fact-check: which GLM coding plan is active; document its caps next to
-    the observed "Rate limit reached" 429s.
+14. ~~Concurrency tier fact-check~~ DONE 2026-10-17: Max Yearly; caps officially
+    unpublished (quota 28k credits/5h + 140k/week; concurrency only "Max > Pro > Lite") —
+    documented in the runbook. Empirical cap measurement remains open via post-deploy 429s.
 15. Consider taming concurrency at the source: tq agent-pool size / crush instance count vs
     plan caps.
 16. Admin endpoint on :8108 serving recent ledger records (readable by primary user) —
@@ -221,15 +226,23 @@ dirty laundry:
 1. **Deploy timing**: OK to run `nix run .#deploy` right now? It restarts ai-meter and drops
    every in-flight AI call on the host (this session, ~17 crush instances, tq agent-pool) —
    or should it wait for a quiet window you pick?
-2. **Which GLM coding plan tier is on the account** (Lite / Pro / Max)? That determines the
-   real concurrency cap behind the "Rate limit reached for requests" 429s and whether ~17
-   concurrent crush instances + the agent pool is even sustainable on the coding endpoint.
-3. **Cost semantics for glm-5.3**: should the cost table carry its pay-as-you-go reference
-   price (visibility at the cost of overstating real spend on a subscription), or stay $0
-   with an explicit "plan-covered" marker so spend panels stop silently understating?
+2. **GLM coding plan tier — ANSWERED 2026-10-17: Max Yearly.** Concurrency is officially
+   unpublished (docs.z.ai/devpack/usage-policy: "Max > Pro > Lite", dynamically adjusted,
+   higher off-peak) — the real cap behind the "Rate limit reached" 429s stays an empirical
+   question; watch post-deploy 429 rates. Quota is credit-based since 2026-07-30
+   (docs.z.ai/devpack/overview: Max = 28,000 credits/5h, 140,000/week) and the plan covers
+   exactly glm-5.3 + glm-5.3-flash (glm-4.7 auto-routes to flash) — both crush models, so
+   ~17 instances is a concurrency question, not a model-coverage one.
+3. **Cost semantics for glm-5.3 — DECIDED 2026-10-17 (pending veto): plan-covered $0.**
+   With a Max Yearly subscription the marginal cost per request is genuinely $0 (billed in
+   credits, not tokens), so both zai entries in `services.ai-meter.costs` now carry 0.0
+   with the PAYG reference prices (flash 0.15/0.5/0.03) preserved in a comment. This stops
+   spend panels fabricating pay-as-you-go spend; flip the floats back if reference-cost
+   visibility is preferred instead.
 
 ---
 
 *Point-in-time snapshot. Report format: `.md` at explicit user demand (skill default is HTML);
 written to SystemNix (where all session work lives), not the session's cwd repo. Committed by
-the auto-commit daemon per harness rules. **WAITING FOR INSTRUCTIONS.***
+the auto-commit daemon per harness rules. **REMAINING DECISION: deploy timing (g1). Answers
+g2 (Max Yearly) and g3 (plan-covered $0) are folded into the staged config.***
