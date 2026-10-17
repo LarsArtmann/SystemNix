@@ -71,7 +71,12 @@ Resume/CV generator (`cv serve`, Go + Typst) from the private
 ## Continuous funnel automation
 
 `cv-scan.timer` fires every 6 hours and drives the server over HTTP with
-the same `CV_API_KEY` the server reads (sops `cv-env` template):
+the same `CV_API_KEY` the server reads (sops `cv-env` template). Boot-race
+close (2026-10-17): `after/wants cv-server` alone was not enough — cv-server
+is Type=simple, so systemd marks it Started at fork, ~15s before the Go app
+binds 8098 (2026-10-17 boot: scan curl exit-7 at 18:14:18, listener up
+18:14:31). A bounded 60s fail-open `/dev/tcp` ExecStartPre wait now covers
+that gap; if cv-server is genuinely down the curls fail loudly as designed.
 
 1. `POST /api/pipeline/scan` — empty body scans ALL portals from
    `pipeline.portals` in `cv.nix` settings (the generated config.yaml IS

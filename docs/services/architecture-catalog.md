@@ -27,7 +27,11 @@ Data flow: each source repo's Go binary exports an EventCatalog tree
 `example/mesh-demo export -domain orders|billing -skip-bootstrap`) → hub CI (Forgejo
 Actions, nightly 03:23 UTC = 05:23 CEST (cron `23 3 * * *` is TZ-less UTC — corrected 2026-10-12 from the run-38-era prose) + push-triggered) union-merges sources, lints, builds
 `dist/`, pushes the `dist` branch of `lars/eventcatalog-hub-dist` (dedicated plain repo — the hub repo is a read-only mirror) → the sync unit pulls it hourly, gates on
-`index.html`, atomically swaps `current`, prunes to 3 generations.
+`index.html`, atomically swaps `current`, prunes to 3 generations. Boot ordering
+(2026-10-17): after/wants `caddy.service` + `forgejo.service` (the clone goes over
+HTTPS through Caddy) on top of the mkDnsGate DNS wait, plus a bounded 120s fail-open
+`/dev/tcp` wait for `${host} port 443` — the 2026-10-17 18:14 boot had DNS ready but
+Caddy 7s from binding and the sync died into start-limit noise.
 
 **Platform inventory leg (owner directive 2026-10-17: EVERYTHING in
 catalog.home.lan + known deployment locations, zero included):** SystemNix

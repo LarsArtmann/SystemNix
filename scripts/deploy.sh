@@ -32,6 +32,23 @@ deploy_exit_record() {
 }
 trap deploy_exit_record EXIT
 
+# Bounded provisioner restart (2026-10-17: netbird-evox2-login's ExecStart
+# polls `netbird status` with no retry limit — a management-plane outage
+# (pbx-side 502) blocked a deploy's `sudo systemctl restart` for 27 min).
+# timeout SIGTERMs sudo only; the start job keeps running in systemd, so a
+# slow unit still converges in the background — only the deploy stops
+# waiting. rc 124 (timeout) warns with the journal pointer; every other
+# failure stays silent (the old `|| true` semantics: provisioner re-runs
+# converge, units self-report via their own monitoring).
+deploy_restart() {
+  local unit="$1" budget="${2:-120}" rc=0
+  timeout "$budget" sudo systemctl restart "$unit.service" 2>/dev/null || rc=$?
+  if [ "$rc" -eq 124 ]; then
+    echo "⚠ $unit.service not active after ${budget}s — still converging in the background; check: journalctl -u $unit.service -n 30"
+  fi
+  return 0
+}
+
 # Concurrent-deploy guard (T13, 2026-09-04): flock BEFORE any build or check
 # runs. Two overlapping deploys double the build I/O and the loser dies at the
 # switch step (exit 11, "Could not acquire lock") after minutes of wasted
@@ -679,7 +696,14 @@ if nix run .#pre-deploy-check; then
     # pull + is-enabled flake mid-switch.)
     if systemctl is-enabled --quiet "$provisioner.service" 2>/dev/null; then
       echo "Restarting provisioner: $provisioner.service"
-      sudo systemctl restart "$provisioner.service" 2>/dev/null || true
+      # Heavy convergence units get a bigger budget (model fetches and DB
+      # schema migrations legitimately run minutes; the job continues
+      # server-side either way — the budget only bounds the deploy's wait).
+      case "$provisioner" in
+        llama-rag-model-fetch) deploy_restart "$provisioner" 600 ;;
+        monitor365-schema-migrate) deploy_restart "$provisioner" 300 ;;
+        *) deploy_restart "$provisioner" ;;
+      esac
     fi
   done
 
@@ -693,7 +717,7 @@ if nix run .#pre-deploy-check; then
   # here instead (RemainAfterExit=true: restart = re-run, converges; the
   # name staying in this file keeps the deploy-restart-audit green).
   echo "Restarting provisioner: crush-hot-db-migrate.service (explicit, timer-static)"
-  sudo systemctl restart crush-hot-db-migrate.service 2>/dev/null || true
+  deploy_restart crush-hot-db-migrate 300
 
   # netbird-evox2-login: enrollment oneshot — systemd 261 never queues
   # it from netbird-evox2.service.wants (see modules/nixos/services/
@@ -706,7 +730,7 @@ if nix run .#pre-deploy-check; then
   # on the 2026-10-10 13:14 deploy (journal-proven) while the same query
   # returns "enabled" once the box settles.
   echo "Restarting provisioner: netbird-evox2-login.service (explicit, indirect-pull)"
-  sudo systemctl restart netbird-evox2-login.service 2>/dev/null || true
+  deploy_restart netbird-evox2-login 180
 
   # discordsync-db-heal: RemainAfterExit oneshot pulled INDIRECTLY by
   # discordsync (is-enabled returns rc=1, so the loop above skips it). A
