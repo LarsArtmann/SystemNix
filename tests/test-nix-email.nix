@@ -145,8 +145,11 @@ let
     ) "fallback-admin macro does not track the stalwart-mail rename (stateVersion 25.11)")
 
     # Relay wiring (upstream v0.2.0): the credential appears exactly when a
-    # relay with SASL is configured, and the generated queue route carries
-    # the verified IfBlock strategy with the relay id in the else branch.
+    # relay with SASL is configured, and the generated MtaRoute carries the
+    # smarthost Relay with SASL auth while the outbound strategy expression
+    # routes everything non-local to the relay id (0.16 plan objects - the
+    # 0.15 queue.route/queue.strategy.route TOML keys are gone from the
+    # module).
     (throwIfNot (
       relayCfg.services.stalwart.credentials ? "mail-server-relay"
       &&
@@ -154,13 +157,18 @@ let
     ) "relay credential not wired from the sops secret path")
 
     (throwIfNot (
-      relayCfg.services.stalwart.settings.queue.route."smarthost".address == "smtp.resend.com"
-      && relayCfg.services.stalwart.settings.queue.route."smarthost".auth.username == "resend"
-    ) "generated queue route missing or wrong (expected route.smarthost with auth.username)")
+      let
+        relay = relayCfg.services.stalwart.provision.objects.MtaRoute.objects."smarthost";
+      in
+        relay.address == "smtp.resend.com"
+        && relay.authUsername == "resend"
+        && relay.authSecret."@type" == "File"
+        && relay.authSecret.filePath == "/run/credentials/stalwart.service/mail-server-relay"
+    ) "generated MtaRoute relay object missing or wrong (expected smarthost Relay with authUsername + File authSecret)")
 
     (throwIfNot (
-      relayCfg.services.stalwart.settings.queue.strategy.route."2"."else" == "'smarthost'"
-    ) "queue strategy else-branch does not route to the relay id")
+      relayCfg.services.stalwart.provision.singletons.MtaOutboundStrategy.route."else" == "'smarthost'"
+    ) "MtaOutboundStrategy else-branch does not route to the relay id")
   ];
 in
 assert assertions;
