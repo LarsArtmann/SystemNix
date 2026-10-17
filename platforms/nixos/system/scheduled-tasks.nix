@@ -394,7 +394,9 @@ in
                   # $2 = "user" classifies against the user manager.
                   # shellcheck disable=SC2317
                   is_pending_retry() {
-                      if [ "$2" = "user" ]; then
+                      # nounset-safe: callers may omit $2 (system manager)
+                      mode="''${2:-system}"
+                      if [ "$mode" = "user" ]; then
                           systemctl --user is-active --quiet "$1.timer" 2>/dev/null || return 1
                           last_trigger="$(systemctl --user show "$1.timer" -p LastTriggerUSec --value 2>/dev/null)"
                           failed_at="$(systemctl --user show "$1" -p InactiveEnterTimestamp --value 2>/dev/null)"
