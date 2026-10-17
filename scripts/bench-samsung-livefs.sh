@@ -8,12 +8,16 @@
 # no checksums; seq-write prefilled (fallocate leaves holes -> reads hit holes
 # -> fake IOPS; 2026-10-16 lesson).
 #
-# Gate discipline: refuses to run unless io PSI some<20 AND full<15 for 3
-# consecutive 5s samples. NEVER "times out and runs anyway" — the 2026-10-16
-# storm-contaminated run produced numbers 2.5-9x under baseline (QD32
-# inversion = host-side queueing signature), which is worse than no numbers.
-# The 2026-10-16 session burned three gate windows (55m/120m/180m) under a
-# 5.5h+ concurrent-session Go-build storm; default patience is now 24h.
+# Gate discipline: refuses to run unless io PSI some<5 AND full<3 for 6
+# consecutive 5s samples (30s sustained TRUE quiet). NEVER "times out and runs
+# anyway" — the 2026-10-16 storm-contaminated run produced numbers 2.5-9x under
+# baseline (QD32 inversion = host-side queueing signature), which is worse than
+# no numbers. The original some<20/full<15 gate fired on a load-wave tail
+# (2026-10-17 19:25, some=19.82) and STILL contaminated rr1 (122.9µs vs 27.8µs
+# baseline, 4.4x); live probes showed rr1 clusters 8-13k IOPS across PSI 20-72,
+# so only TRUE quiet settles floor-vs-contamination. The 2026-10-16 session
+# burned three gate windows (55m/120m/180m) under a 5.5h+ concurrent-session
+# Go-build storm; default patience is now 24h.
 #
 # Method caveats vs the raw baseline (printed with results too):
 #   - fsync test measures btrfs+device via the file (raw baseline bypassed fs)
@@ -104,17 +108,17 @@ sync
 psi_some() { awk '$1=="some"{gsub("avg10=","",$2); print $2}' /proc/pressure/io; }
 psi_full() { awk '$1=="full"{gsub("avg10=","",$2); print $2}' /proc/pressure/io; }
 
-# --- PSI gate: some<20 AND full<15, 3 consecutive 5s samples; heartbeat 60s ---
+# --- PSI gate: some<5 AND full<3 (TRUE quiet), 6 consecutive 5s samples; heartbeat 60s ---
 gate=0
 waited=0
 beats=0
 deadline=$(($(date +%s) + MAX_WAIT_MIN * 60))
-echo "--- gate: up to ${MAX_WAIT_MIN}min for some<20 full<15 (3x5s); now some=$(psi_some) full=$(psi_full) ---"
+echo "--- gate: up to ${MAX_WAIT_MIN}min for some<5 full<3 (6x5s); now some=$(psi_some) full=$(psi_full) ---"
 while [ "$(date +%s)" -lt "$deadline" ]; do
   s=$(psi_some)
   f=$(psi_full)
-  if awk -v s="$s" -v f="$f" 'BEGIN{exit !(s<20 && f<15)}'; then gate=$((gate + 1)); else gate=0; fi
-  [ "$gate" -ge 3 ] && break
+  if awk -v s="$s" -v f="$f" 'BEGIN{exit !(s<5 && f<3)}'; then gate=$((gate + 1)); else gate=0; fi
+  [ "$gate" -ge 6 ] && break
   waited=$((waited + 5))
   beats=$((beats + 5))
   if [ "$beats" -ge 60 ]; then
