@@ -1126,6 +1126,19 @@ in
         enable = true;
       };
 
+      # GitHub Actions canary watchdog for the domains repo (2026-10-17):
+      # treats runner-health.yml's every-30-min scheduled run as the
+      # Actions-liveness canary from OUTSIDE Actions — the 2026-06→08
+      # billing block went unnoticed ~8 weeks because every watcher lived
+      # inside the thing that died. Check program = the domains flake's
+      # ci-watchdog app (single source of truth); runs as the primary user
+      # so gh reads its token from ~/.config/gh (module header + runbook
+      # docs/services/ci-watchdog.md).
+      ci-watchdog = {
+        enable = true;
+        checkProgram = inputs.domains.apps.${pkgs.stdenv.hostPlatform.system}.ci-watchdog.program;
+      };
+
       # 2026-08-22 stability plan: bounding heavy-job demand (flock queue
       # `heavy-job` wrapper; build memory is separately bounded via
       # nix-daemon MemoryHigh in networking.nix).

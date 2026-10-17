@@ -213,6 +213,15 @@
       url = "github:LarsArtmann/monitor365?ref=refs/heads/master";
     };
 
+    # domains — Terraform DNS management (Namecheap). Consumed ONLY for
+    # the `ci-watchdog` app program (services.ci-watchdog): the GitHub
+    # Actions canary watchdog that treats runner-health.yml's every-30-min
+    # scheduled run as the Actions-liveness canary. Forgejo-primary repo;
+    # github: points at the kept-current push mirror.
+    domains = {
+      url = "github:LarsArtmann/domains?ref=refs/heads/master";
+    };
+
     # storage-collector — filesystem capacity tracking daemon (Rust).
     # Private GitHub repo. Flake-input fetches happen outside the build
     # sandbox with the user's git credentials, so `github:` works where
@@ -967,6 +976,10 @@
     md-go-validator.inputs.flake-parts.follows = "flake-parts";
     md-go-validator.inputs.nixpkgs.follows = "nixpkgs";
     md-go-validator.inputs.treefmt-nix.follows = "treefmt-nix";
+    domains.inputs.flake-parts.follows = "flake-parts";
+    domains.inputs.git-hooks.follows = "git-hooks";
+    domains.inputs.nixpkgs.follows = "nixpkgs";
+    domains.inputs.treefmt-nix.follows = "treefmt-nix";
     monitor365.inputs.nixpkgs.follows = "nixpkgs";
     mr-sync.inputs.flake-parts.follows = "flake-parts";
     mr-sync.inputs.go-nix-helpers.follows = "go-nix-helpers";
