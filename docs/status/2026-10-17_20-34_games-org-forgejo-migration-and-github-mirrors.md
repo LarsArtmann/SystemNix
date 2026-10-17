@@ -26,7 +26,7 @@
 
 1. Scrubbing the leaked names from tracked files (`scripts/update-vendor-hash.sh` lines 45+56, `docs/todo/services.md` line 578, status reports incl. archived) — blocked on owner choice.
 2. History rewrite for already-committed names — blocked on owner choice (needs full rewrite checklist, force-push approval).
-3. Deleting the orphaned `LarsArtmann/motivation` GitHub duplicate — owner decision (Artmann-Games/motivation is now the mirror target and must stay).
+3. ~~Deleting the orphaned `LarsArtmann/motivation` GitHub duplicate~~ **RETRACTED in §h — no duplicate exists; the old name is a native-transfer redirect.**
 4. Declarative org-namespace support in `forgejo-github-sync` (would subsume the new script; the 2026-09-18 audit already flagged this gap).
 5. Forgejo CI/Actions for the games repos (never requested; noted for completeness).
 
@@ -52,7 +52,7 @@
 3. Observe the first real `sync_on_commit` round-trip on a games repo push. [ready — rides the next natural push]
 4. Owner decision: scrub leaked names from tracked files (3 files named in §d.4) — cheap, keeps history. [blocked:user]
 5. Owner decision: history rewrite vs accept for the committed names (public repo; needs rewrite checklist + force-push approval). [blocked:user]
-6. Owner decision: delete orphaned `LarsArtmann/motivation` on GitHub (Artmann-Games copy is the live mirror target — keep that one). [blocked:user]
+6. ~~Owner decision: delete orphaned `LarsArtmann/motivation` on GitHub~~ **RETRACTED — see §h: the name is a transfer redirect; deleting through it would destroy the live org repo.**
 7. Design declarative org-namespace push-mirror support in forgejo-github-sync (subsumes the new script; audit-flagged since 2026-09-18). [decision]
 8. Consider a forgejo dump restore drill covering push-mirror re-attach (the generic script is the recovery path — prove it on a scratch repo). [ready]
 9. The 17 repos ride the forgejo subvol btrbk leg + weekly forgejo dump automatically — verify the next dump includes them (size delta check). [ready]
@@ -61,9 +61,20 @@
 ## g) QUESTIONS (cannot figure out myself)
 
 1. **Leak disposition**: scrub tracked files only, full history rewrite, or accept? (Rewrite on a public repo with clones/CI is irreversible-ish and breaks the auto-commit daemon's assumptions — my recommendation: scrub files now, accept history, rotate nothing since no secrets are in the leaked set.)
-2. **Delete `LarsArtmann/motivation` on GitHub?** It is now fully redundant (Artmann-Games copy in sync, forgejo canonical). Deletion is permanent.
+2. ~~**Delete `LarsArtmann/motivation` on GitHub?**~~ **RETRACTED (§h): the old name redirects to the live org repo — nothing to delete, and deleting through the redirect would be catastrophic.**
 3. **Do the games repos need CI on forgejo** (Actions/runner, like eventcatalog-hub) or are they mirror-only? This decides whether the runner needs org-repo grants (the auto-assign phase's org gap).
 
 ---
 
 **Verification evidence:** remote survey outputs (this session); forgejo↔GitHub HEAD parity table 17/17 SYNCED; idempotent re-run of `scripts/forgejo-attach-org-push-mirrors.sh` 17/17 already-attached; ancestor check `aa147e1` ⊂ games/motivation history.
+
+---
+
+## h) Correction addendum (same day, post-report)
+
+**The "duplicate LarsArtmann/motivation repo" never existed — it is a GitHub native-transfer REDIRECT.** Owner question ("did we use the GitHub native transfer?") triggered the check: `gh api repos/LarsArtmann/motivation` returns `full_name: "Artmann-Games/motivation"` (gh follows the 302; a bare `200 OK` header check is NOT sufficient to prove a repo exists — the final hop after redirect returns 200). Consequences:
+
+1. Every "both repos" comparison in the session (identical issues/PRs/pushed_at/created_at, 0/0 divergence) was the SAME repo observed twice through the redirect. The transfer predates this session (actor/date unknown — consistent with today's parallel cleanup: dependabot PR closes 17:33Z, top-level `~/projects/motivation` checkout removed between turns).
+2. The §c.3/§f.6/§g.2 delete suggestions were a live hazard: `gh repo delete LarsArtmann/motivation` follows the redirect and would destroy the org repo — the canonical mirror target. All three surfaces retracted inline; the library row flipped to a [x]-RETRACTED state in docs/todo/services.md.
+3. New lesson (generalizes): before claiming a GitHub repo "exists as a duplicate," check `.full_name` of the API response — name redirects (transfer/rename) are silent through gh and git (ls-remote follows them server-side too; the "LarsArtmann" remote on games/motivation was pushing to the org repo all along — which is also why it was always in sync).
+
