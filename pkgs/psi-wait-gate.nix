@@ -246,10 +246,14 @@ writeShellApplication {
       MAX_WAIT_SEC=1200
 
       # 4: storm that FLIPS to calm mid-wait — the fixture is re-read every
-      # round, admission lands on a LATER check (the ordering contract)
+      # round, admission lands on a LATER check (the ordering contract).
+      # Budget 8s: proves the re-check WITHOUT hanging 20 min if the flip
+      # subshell ever failed (the exhaustion line would fail the assert).
       printf 'some avg10=88.00\n' >"$PSI_F"
       (sleep 1.2; printf 'some avg10=4.00\n' >"$PSI_F") &
+      MAX_WAIT_SEC=8
       must_admit_later "selftest 4 (storm→calm flip admits on re-check)"
+      MAX_WAIT_SEC=1200
       wait
 
       # 5: fresh guard trip + window 60 keeps waiting at CALM PSI
@@ -273,11 +277,11 @@ writeShellApplication {
       TRIP_WINDOW_MIN=0
       must_admit_now "selftest 8 (no PSI file, fail-open)"
 
-      # 9: usage error exits 64 (the only nonzero shape) — `usage` is
-      # invoked directly: self-referencing the binary needs its bin dir on
-      # PATH, which writeShellApplication does not guarantee.
+      # 9: usage error exits 64 (the only nonzero shape) — invoked in a
+      # SUBSHELL: usage() always exits, and a bare `usage || rc=$?` makes
+      # static analysis mark the entire tail unreachable (the cascade).
       rc=0
-      usage >/dev/null 2>&1 || rc=$?
+      ( usage ) >/dev/null 2>&1 || rc=$?
       if [ "$rc" -eq 64 ]; then ok; else fail "selftest 9 (usage must exit 64, got $rc)"; fi
 
       if [ "$PASS" -ne "$EXPECT" ]; then
