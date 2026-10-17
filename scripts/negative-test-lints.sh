@@ -575,5 +575,16 @@ eval_case shapeaudit oneshot-unbounded fail 'boot-blocking Type=oneshot unit\(s\
 # landed unit-level onFailure back into serviceConfig — the audit must throw.
 eval_case shapeaudit onfailure-in-serviceconfig fail 'OnFailure nested inside serviceConfig' \
   'sed:modules/nixos/services/visionreviewd.nix:s|systemd.services.visionreviewd.onFailure = onFailure;|systemd.services.visionreviewd.serviceConfig.OnFailure = onFailure;|'
+
+# ── io-tier-coverage-audit: boot-gated units must carry an IO tier ──
+# The llama-chat/compssize class (untiered bulk boot I/O on the QLC). Leg 1
+# strips a landed tier from a boot-gated unit (boot-mirror-sync); leg 2
+# removes an allowlist entry (gatus — steady daemon, justified exemption).
+# Both must throw the audit marker; the legs also prove the audit module is
+# imported by evo-x2 auto-discovery (an absent module would let both PASS).
+eval_case iotier tier-stripped fail 'boot-gated unit\(s\) without an IO tier' \
+  'sed:platforms/nixos/system/boot-mirror.nix:s|      (ioTier.background)|      # tier stripped for negative test|'
+eval_case iotier allowlist-entry-removed fail 'boot-gated unit\(s\) without an IO tier' \
+  'sed:modules/nixos/services/io-tier-coverage-audit.nix:s|            "gatus"|            # "gatus" removed for negative test|'
 say "=== negative-test-lints: $passed passed, $failed failed ==="
 [ "$failed" -eq 0 ]
