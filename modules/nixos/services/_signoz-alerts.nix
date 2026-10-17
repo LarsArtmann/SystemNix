@@ -612,6 +612,19 @@ in
       interval = "5m";
       severity = "warning";
     };
+    # ai-meter upstream failure audit (2026-10-17): routed-AI-call failure
+    # ratio. Would have caught the Z.ai 1113 outage that morning (coding-plan
+    # key pointed at the general endpoint; ~85-93% of requests failed for
+    # hours with no signal — billing rejections arrive as HTTP 429, so this
+    # rule keys on status, not on error-class labels that don't exist here).
+    "signoz/rules/ai-upstream-failure-rate.json".source = mkRule {
+      name = "AI Upstream Failure Rate High (>30%)";
+      description = "More than 30% of routed AI calls (ai-meter) failed over 10m — upstream billing rejection (Z.ai 1113 arrives as HTTP 429), rate limit, or outage. Check the AI Meter dashboard: the Requests by Model × Code panel names the model and status.";
+      query = ''100 * sum(rate(ai_meter_requests_total{code=~"4..|5.."}[10m])) / clamp_min(sum(rate(ai_meter_requests_total[10m])), 1e-9)'';
+      target = 30;
+      interval = "10m";
+      severity = "critical";
+    };
   };
 
   dashboards = {
@@ -630,5 +643,7 @@ in
       "${inputs.self}/modules/nixos/services/dashboards/traces.json";
     "signoz/dashboards/browser-history.json".source =
       "${inputs.self}/modules/nixos/services/dashboards/browser-history.json";
+    "signoz/dashboards/ai-meter.json".source =
+      "${inputs.self}/modules/nixos/services/dashboards/ai-meter.json";
   };
 }

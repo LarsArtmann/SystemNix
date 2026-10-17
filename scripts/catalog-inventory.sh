@@ -59,7 +59,7 @@ eval_host() {
 				subdomain = e.subdomain;
 				port = e.port;
 				layer = e.vHost.layer;
-				description = e.homepage.description;
+				description = (if e.homepage == null then null else e.homepage.description);
 			}) (c.services.integration or {});
 			catalog = c.services.catalog or {};
 		}
