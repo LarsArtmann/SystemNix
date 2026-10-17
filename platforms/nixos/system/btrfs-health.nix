@@ -53,6 +53,31 @@ let
   # ── Shared parser: btrfs filesystem usage → KEY=VALUE pairs on stdout ──────
   # Used by both the metrics collector and the GC guard.
   # Always exits 0 (fail-open on errors). Diagnostics go to stderr.
+  # IO-admission as ExecCondition (2026-10-17): a PSI/trip-window refusal is
+  # a deliberate SKIP ("a refused run is free, the timer refires") — but wired
+  # via ExecStartPre it landed as unit-FAILED + an onFailure page on every
+  # timer fire inside a storm window (nix-build-cleanup ambered the deploy
+  # health section through the whole 2026-10-17 build battery while doing
+  # exactly its job). ExecCondition exit 1 skips the unit cleanly (reason
+  # still journalled); exit 255 fails it. Only the gate's refuse verdict maps
+  # to skip — usage/parser errors (64) escalate to 255 so they can never be
+  # masked as skips. Space/metadata aborts stay in the ExecStartPre guard:
+  # those page deliberately (the 2026-06-26 GC-on-starved-fs crash intent).
+  btrfsGcAdmission = pkgs.writeShellApplication {
+    name = "btrfs-gc-admission";
+    runtimeInputs = [ pkgs.maintenance-entry-gate ];
+    text = ''
+      set -uo pipefail
+      rc=0
+      maintenance-entry-gate "$@" || rc=$?
+      case "$rc" in
+        0) exit 0 ;;
+        1) exit 1 ;;
+        *) exit 255 ;;
+      esac
+    '';
+  };
+
   btrfsChunkCheck = pkgs.writeShellApplication {
     name = "btrfs-chunk-check";
     runtimeInputs = [
@@ -135,17 +160,12 @@ let
   # the timer refires.
   btrfsGcGuard = pkgs.writeShellApplication {
     name = "btrfs-gc-guard";
-    runtimeInputs = [
-      btrfsChunkCheck
-      pkgs.maintenance-entry-gate
-    ];
+    runtimeInputs = [ btrfsChunkCheck ];
     text = ''
       set -uo pipefail
-      # ── IO admission leg ──────────────────────────────────────────────────
-      if ! maintenance-entry-gate --name btrfs-gc-guard; then
-        echo "BTRFS GUARD: ABORT — IO admission refused (see above); the timer refires." >&2
-        exit 1
-      fi
+      # IO admission lives in the ExecCondition wrapper (btrfsGcAdmission)
+      # since 2026-10-17: a PSI/trip-window refusal is a SKIP, not a failure.
+      # This guard keeps the SPACE legs only — its aborts page deliberately.
       # timeout: same ioctl-wedge class as the metrics collector (2026-08-31);
       # on timeout the UNALLOC_BYTES default of 0 makes the guard ABORT GC —
       # fail-closed (no GC on unknown chunk headroom), never a hang on nix-gc.
@@ -714,17 +734,20 @@ in
         ];
       };
 
-      # ── GC guard: ExecStartPre on nix-gc ────────────────────────────────────
+      # ── GC guard: ExecCondition (IO admission, skip-on-refuse) + ExecStartPre
+      # (space legs) on nix-gc ────────────────────────────────────────────────
       # Gates (fixed 2026-08-21, was the 5-night deadlock): absolute
       # device-unallocated floor (< 5 GiB) + metadata >90% hard block. The
       # old "<10% of device" gate demanded 72 GiB of chunk-level unalloc that
-      # GC itself can never restore (only balance returns chunks). On abort
-      # the guard exits 1 → systemd marks nix-gc as failed → OnFailure
+      # GC itself can never restore (only balance returns chunks). On a SPACE
+      # abort the guard exits 1 → systemd marks nix-gc as failed → OnFailure
       # triggers notify-failure (desktop notification). This PREVENTS the
-      # 2026-06-26 crash: GC on a metadata-starved filesystem.
+      # 2026-06-26 crash: GC on a metadata-starved filesystem. IO-storm
+      # refusals skip instead (ExecCondition, 2026-10-17).
       nix-gc = {
         inherit onFailure;
         serviceConfig = {
+          ExecCondition = "${lib.getExe btrfsGcAdmission} --name nix-gc";
           ExecStartPre = lib.getExe btrfsGcGuard;
         };
       };
@@ -733,6 +756,7 @@ in
       # nix-build-cleanup does rm -rf on build sandboxes — also metadata-intensive.
       nix-build-cleanup = {
         serviceConfig = {
+          ExecCondition = "${lib.getExe btrfsGcAdmission} --name nix-build-cleanup";
           ExecStartPre = lib.getExe btrfsGcGuard;
         };
       };
@@ -757,7 +781,9 @@ in
             # INSIDE the boot storm (io PSI some avg10 ~87% at 23:57) — the
             # exact class the balance/gc fleet already refuses. Same
             # contract: a skipped collection is free, the 6h timer refires.
-            ExecStartPre = "${lib.getExe pkgs.maintenance-entry-gate} --name btrfs-compsize";
+            # ExecCondition (2026-10-17): a refusal skips the unit instead
+            # of failing it — same amber-noise class as nix-build-cleanup.
+            ExecCondition = "${lib.getExe btrfsGcAdmission} --name btrfs-compsize";
             ExecStart = lib.getExe btrfsCompsizeMetrics;
             # 10min: 120s timed out at boot+5min (2026-10-12: 530ms CPU over
             # 2m08s wall — pure IO-wait under the boot storm). The walk is
@@ -794,6 +820,7 @@ in
           })
           {
             Type = "oneshot";
+            ExecCondition = "${lib.getExe btrfsGcAdmission} --name btrfs-balance-metadata";
             ExecStartPre = lib.getExe btrfsGcGuard;
             ExecStart = lib.getExe btrfsBalanceMetadata;
             TimeoutStartSec = "1h";
@@ -820,6 +847,7 @@ in
           })
           {
             Type = "oneshot";
+            ExecCondition = "${lib.getExe btrfsGcAdmission} --name btrfs-balance-data";
             ExecStartPre = lib.getExe btrfsGcGuard;
             ExecStart = lib.getExe btrfsBalanceData;
             TimeoutStartSec = "2h";

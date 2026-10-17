@@ -79,6 +79,13 @@ _: {
                 "GH_CONFIG_DIR=/home/${primaryUser}/.config/gh"
                 # gh's cache must not try the read-only $HOME.
                 "XDG_CACHE_HOME=/var/lib/ci-watchdog/cache"
+                # gh resolves the target repo from the CWD's git remotes when
+                # no -R/GH_REPO is given — inside this hardened unit there is
+                # no git binary and no checkout, so `gh run list` died with
+                # "unable to find git executable in PATH" on every fire
+                # (journal-proven 2026-10-17). GH_REPO removes the git
+                # dependency entirely.
+                "GH_REPO=LarsArtmann/domains"
               ];
               TimeoutStartSec = "2min";
             }
