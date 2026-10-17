@@ -642,6 +642,10 @@
 
 - [ ] [ready] **go-taskqueue harvest tick log line: add duration + items-scanned** — `harvest tick repos=3 items=1605 enqueued=0 skipped=1605` carries no duration or scanned-count, so IO windows attributable to the tick currently require journal math; add `durMs=` + `scanned=` to the tick line (pairs with the skip-cursor fix) → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: docs/status/tasks/2026-10-13_01-22_task-000001a132640f21ff8f7f35197300000000.md §f.16)
 
+- [ ] [ready] **Re-green the evo-x2 toplevel (2026-10-17 blanket-update wave, 15 build failures): transcribe the 12 LarsArtmann go-modules got-hashes into the consumer-side shims + re-derive the signoz pnpmDeps.hash** — full specified→got table + fix loci (lib/lars-packages.nix flakePkgShim, crm.nix:85, _signoz-packages.nix:51) in upstream.md; 10th fleet wave since 2026-10-01; art-dupl + go-taskqueue are NOT hash-fixable (separate rows) → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: docs/status/2026-10-17_05-39_nix-email-contract-stalwart-016-fix-and-deploy-build-blockers.md §d1)
+- [ ] [ready] **Triage the go-taskqueue 0.3.4 build break: its go-modules store lacks go-cqrs-lite/decider/v4@v4.8.0's .mod file** — classify local packaging submodule-inclusion bug vs upstream go.mod graph issue before any hash touch; go-taskqueue is also a tq-pool repo (queue-side blast radius) → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: same report §d3)
+- [ ] [decision] **art-dupl 0.9.0 does not compile at the pinned rev (`printer/actionability/actionability.go:47:3: undefined: isTemplChildrenIdiom`)** — templ-generated identifier missing upstream; pin back to last-building rev vs drop from the evo-x2 package set vs wait for the upstream fix (owner availability call) → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: same report §d2)
+
 ### security
 
 - [ ] **ROOT: settle the `/run/secrets/sops-nix-age-key` ghost** → [docs/todo/security.md](docs/todo/security.md)
