@@ -75,6 +75,7 @@ echo "B. content-addressed flake-check stamp (check #1)"
 # stamp with the same 12h expiry.
 assert_contains "pre-deploy-check.sh pins the stamp key pipeline" "$(grep -c 'flakecheck_key=$(' "$PDC_SH")" "1"
 assert_contains "pre-deploy-check.sh keeps the 12h expiry window (check #1 + check #2)" "$(grep -c -- '-mmin +720' "$PDC_SH")" "2"
+assert_contains "check #2 toplevel-eval stamp + manifest sidecar pinned" "$(grep -c 'evalcheck_stamp="/tmp/systemnix-predeploy-evalcheck' "$PDC_SH")" "1"
 
 fixture_repo=$(mktemp -d)
 trap 'rm -rf "$fixture_repo" "$shim_dir"' EXIT

@@ -219,13 +219,37 @@ echo "=== Post-Deploy Smoke Test ==="
 echo "Domain: $DOMAIN"
 echo ""
 
+# Parallel probe batches (2026-10-17 evening, M14): adjacent independent
+# status probes ran sequentially, so an outage window stacked their full
+# --max-time budgets (30s in the entry trio, 50s in the cv trio). Same
+# PROBE_DIR pattern as pre-deploy-check.sh: fire the curls concurrently,
+# wait once, and the sequential verdict code reads the recorded codes.
+# Verdict order and names unchanged (fail-baseline stability). Bodies for
+# these probes still go to their original /tmp/.smoke-* paths so the
+# verdict code below reads them exactly as before.
+PROBE_DIR="$(mktemp -d /tmp/systemnix-postdeploy-probes.XXXXXX)"
+trap 'rm -f "$SMOKE_FAIL_NAMES"; rm -rf "$PROBE_DIR"' EXIT
+
 # --- Infrastructure ---
 check_local "Caddy metrics" "2019" "/metrics" "200" "" 2>/dev/null || true
 check "Caddy HTTP redirect" "http://dash.$DOMAIN" "301" "" 2>/dev/null || true
 # Storm-sensitive legs use an explicit probe + 3-way verdict (pass / storm
 # suspect / fail) instead of check(), so the storm branch records NOTHING
 # (check() would count the FAIL before any conversion could happen).
-_catchall_status="$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://catchall-probe.$DOMAIN/" 2>/dev/null || true)"
+# Entry trio in ONE parallel batch: catch-all + Pocket ID healthz + the page
+# fallback (all three independent — the page result is simply unused when
+# healthz passes; probing it is harmless and removes the sequential
+# dependency). Recorded names stay identical to the old check_local pair so
+# the fail baseline does not churn. The SQLITE_BUSY journal scan below stays
+# a FAIL under storm mode - lock contention text in the journal is evidence,
+# not a timeout artifact.
+curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://catchall-probe.$DOMAIN/" >"$PROBE_DIR/catchall.code" 2>/dev/null &
+curl -s -o /dev/null -w "%{http_code}" --max-time 10 "http://localhost:1411/healthz" >"$PROBE_DIR/pocketid-healthz.code" 2>/dev/null &
+curl -s -o /dev/null -w "%{http_code}" --max-time 10 "http://localhost:1411/" >"$PROBE_DIR/pocketid-page.code" 2>/dev/null &
+wait
+_catchall_status="$(cat "$PROBE_DIR/catchall.code" 2>/dev/null || true)"
+_pocketid_status="$(cat "$PROBE_DIR/pocketid-healthz.code" 2>/dev/null || true)"
+_pocketid_page="$(cat "$PROBE_DIR/pocketid-page.code" 2>/dev/null || true)"
 if [ "$_catchall_status" = "404" ]; then
   report_pass "Caddy catch-all 404 (probe answered 404)"
 elif $systemnix_storm_mode; then
@@ -234,17 +258,6 @@ else
   report_fail "Caddy catch-all 404 - probe answered '${_catchall_status:-nothing}' (expected 404; unreachable = Caddy/TLS chain down)"
 fi
 
-# Pocket ID latency probes (healthz, then the page fallback). Recorded name
-# kept identical to the old check_local pair ("Pocket ID (localhost:1411)")
-# so the fail baseline does not churn. The SQLITE_BUSY journal scan below
-# stays a FAIL under storm mode - lock contention text in the journal is
-# evidence, not a timeout artifact.
-_pocketid_status="$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "http://localhost:1411/healthz" 2>/dev/null || true)"
-if [ "$_pocketid_status" != "204" ]; then
-  _pocketid_page="$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "http://localhost:1411/" 2>/dev/null || true)"
-else
-  _pocketid_page=""
-fi
 if [ "$_pocketid_status" = "204" ] || [ "$_pocketid_page" = "200" ]; then
   report_pass "Pocket ID (localhost:1411, status ${_pocketid_status:-${_pocketid_page}})"
 elif $systemnix_storm_mode; then
@@ -453,15 +466,25 @@ cv_enabled=false
 systemctl list-unit-files 'cv-server*' --no-legend 2>/dev/null | grep -q cv-server && cv_enabled=true
 
 if $cv_enabled; then
-  cv_health=$(curl -s --compressed -o /tmp/.smoke-cv-health -w "%{http_code}" --max-time 10 "http://127.0.0.1:8098/health/live" 2>/dev/null || true)
+  # Trio in ONE parallel batch (independent verdicts — liveness, a real PDF
+  # compile, and the funnel-store check never gate each other). An outage
+  # window stacked 10+30+10s sequentially; the batch's wall time is the
+  # slowest single leg (the typst compile). Bodies land on the original
+  # /tmp/.smoke-* paths the verdict code reads.
+  rm -f /tmp/.smoke-cv-health /tmp/.smoke-cv-pdf /tmp/.smoke-cv-store
+  curl -s --compressed -o /tmp/.smoke-cv-health -w "%{http_code}" --max-time 10 "http://127.0.0.1:8098/health/live" >"$PROBE_DIR/cv-healthlive.code" 2>/dev/null &
+  # max-time 30: typst compile + first-render font cache on a fresh restart.
+  curl -s --compressed -o /tmp/.smoke-cv-pdf --max-time 30 "http://127.0.0.1:8098/export/pdf" 2>/dev/null &
+  curl -s --compressed --max-time 10 "http://127.0.0.1:8098/health" -o /tmp/.smoke-cv-store 2>/dev/null &
+  wait
+  cv_health="$(cat "$PROBE_DIR/cv-healthlive.code" 2>/dev/null || true)"
   if [ "$cv_health" = "200" ] && grep -q '"status":"pass"' /tmp/.smoke-cv-health 2>/dev/null; then
     cv_ver=$(sed -n 's/.*"version":"\([^"]*\)".*/\1/p' /tmp/.smoke-cv-health | head -1)
     report_pass "CV - /health/live pass (version ${cv_ver:-unknown})"
   else
     report_fail "CV - /health/live not passing (status '${cv_health:-none}') - cv-server down or unhealthy (journalctl -u cv-server -n 50)"
   fi
-  # max-time 30: typst compile + first-render font cache on a fresh restart.
-  if curl -s --compressed --max-time 30 -o /tmp/.smoke-cv-pdf "http://127.0.0.1:8098/export/pdf" 2>/dev/null && head -c 8 /tmp/.smoke-cv-pdf 2>/dev/null | grep -q '%PDF'; then
+  if head -c 8 /tmp/.smoke-cv-pdf 2>/dev/null | grep -q '%PDF'; then
     report_pass "CV - /export/pdf compiles a real PDF (typst path, assets synced)"
   else
     report_fail "CV - /export/pdf broken: typst template missing from /var/lib/cv/assets or renderer failed (restart re-syncs assets; journalctl -u cv-server -n 50)"
@@ -475,7 +498,7 @@ if $cv_enabled; then
   # sibling "database" check is the optional Turso analytics DB (disabled
   # by design in prod): its "not configured" verdict is benign and
   # deliberately NOT asserted here.
-  cv_store=$(curl -s --compressed --max-time 10 "http://127.0.0.1:8098/health" 2>/dev/null | grep -o 'eventstore.PipelineStore":{"status":"[a-z]*"' || true)
+  cv_store=$(grep -o 'eventstore.PipelineStore":{"status":"[a-z]*"' /tmp/.smoke-cv-store 2>/dev/null || true)
   case "$cv_store" in
   *'"status":"pass"'*)
     report_pass "CV - pipeline-store healthy (SQLite funnel store reachable)"
@@ -1181,13 +1204,18 @@ test -e /etc/systemd/system/multi-user.target.wants/health-dashboard.service && 
 if $healthhub_enabled; then
   healthhub_addr=$(systemctl show health-dashboard --property=Environment 2>/dev/null | grep -o 'HEALTH_HUB_ADDR=[^ "]*' | cut -d= -f2 | head -1)
   healthhub_addr="${healthhub_addr:-127.0.0.1:8103}"
-  healthhub_live=$(curl -s --compressed -o /tmp/.smoke-healthhub -w "%{http_code}" --max-time 10 "http://$healthhub_addr/healthz" 2>/dev/null || true)
+  # Pair in ONE parallel batch (independent verdicts): liveness + readiness
+  # aggregate never gate each other; an outage stacked 10+15s sequentially.
+  curl -s --compressed -o /tmp/.smoke-healthhub -w "%{http_code}" --max-time 10 "http://$healthhub_addr/healthz" >"$PROBE_DIR/healthhub-live.code" 2>/dev/null &
+  curl -s --compressed -o /tmp/.smoke-healthhub-ready -w "%{http_code}" --max-time 15 "http://$healthhub_addr/readyz" >"$PROBE_DIR/healthhub-ready.code" 2>/dev/null &
+  wait
+  healthhub_live="$(cat "$PROBE_DIR/healthhub-live.code" 2>/dev/null || true)"
   if [ "$healthhub_live" = "200" ]; then
     report_pass "Health Hub - /healthz 200 (hub process serving on $healthhub_addr)"
   else
     report_fail "Health Hub - /healthz status '${healthhub_live:-none}' on $healthhub_addr - hub down or bound elsewhere (systemctl status health-dashboard, journalctl -u health-dashboard -n 50)"
   fi
-  healthhub_ready=$(curl -s --compressed -o /tmp/.smoke-healthhub-ready -w "%{http_code}" --max-time 15 "http://$healthhub_addr/readyz" 2>/dev/null || true)
+  healthhub_ready="$(cat "$PROBE_DIR/healthhub-ready.code" 2>/dev/null || true)"
   if [ "$healthhub_ready" = "200" ]; then
     report_pass "Health Hub - /readyz 200 (federation aggregate: no remote dark or failing; warn tolerated by design)"
   else
