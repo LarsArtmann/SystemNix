@@ -142,9 +142,7 @@
           elif [ -f "${iconPackSrc}/svg/$name" ]; then
             cp "${iconPackSrc}/svg/$name" "$out/$name"
           else
-            echo "papdashboard: icon '$name' is not in the dashboard-icons pack — pick an existing name under ${
-              iconPackSrc
-            }/png or use an absolute URL" >&2
+            echo "papdashboard: icon '$name' is not in the dashboard-icons pack — pick an existing name under ${iconPackSrc}/png or use an absolute URL" >&2
             exit 1
           fi
         done

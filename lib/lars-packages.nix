@@ -39,13 +39,11 @@ lib.filterAttrs (_: v: v != null) {
   # moves it out of templ's namespace; semantics identical. DROP when
   # upstream renames the file and pushes (re-lock past that rev).
   art-dupl = (flakePkg inputs.art-dupl).overrideAttrs (old: {
-    postPatch =
-      (old.postPatch or "")
-      + ''
-        if [ -f printer/actionability/actionability_templ.go ]; then
-          mv printer/actionability/actionability_templ.go printer/actionability/actionability_templ_idioms.go
-        fi
-      '';
+    postPatch = (old.postPatch or "") + ''
+      if [ -f printer/actionability/actionability_templ.go ]; then
+        mv printer/actionability/actionability_templ.go printer/actionability/actionability_templ_idioms.go
+      fi
+    '';
   });
   # vendorHash shim DROPPED (2026-10-07 wave — the 13:14/14:59 lock commits
   # moved the input; drop-protocol, docs/agents/nix-flakes.md): upstream
@@ -129,7 +127,10 @@ lib.filterAttrs (_: v: v != null) {
     # followed graph — first-hand keep-going enumeration: specified
     # Zfte0X5r… got J7gNXzrVQ4cPdAXBHTjwu7mvvHZskDsFYIURJuoBIEM=.
     # Drop when upstream bakes the got hash or the lock moves past it.
-    if pkg == null then null else pkg.overrideAttrs { vendorHash = "sha256-J7gNXzrVQ4cPdAXBHTjwu7mvvHZskDsFYIURJuoBIEM="; };
+    if pkg == null then
+      null
+    else
+      pkg.overrideAttrs { vendorHash = "sha256-J7gNXzrVQ4cPdAXBHTjwu7mvvHZskDsFYIURJuoBIEM="; };
   # TEMPORARY vendorHash shim RE-PINNED (2026-10-14): the master-tracking
   # flip (flake.nix, owner directive) landed erraudit on 492c233, whose
   # specified hash /D4X81jj… no longer reproduces under the followed

@@ -284,7 +284,14 @@ _: {
                       icon = lib.mkOption {
                         type = lib.types.nullOr lib.types.str;
                         default = null;
-                        description = "Icon name (accepted for registry compatibility; PapDashboard renders monograms)";
+                        description = ''
+                          Tile logo: a dashboard-icons pack file name
+                          (e.g. "miniflux.png"; served at /icons/ by
+                          PapDashboard from the pack the module renders) or
+                          an absolute http(s) image URL. Null renders the
+                          tile monogram; names are verified against the pack
+                          at build time (modules/nixos/services/papdashboard.nix).
+                        '';
                       };
                       checkUrl = lib.mkOption {
                         type = lib.types.nullOr lib.types.str;
