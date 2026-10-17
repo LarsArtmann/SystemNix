@@ -229,7 +229,7 @@ let
               name = "Demo";
               group = "Media";
               description = "Demo service";
-              icon = "demo.png";
+              icon = "miniflux.png";
             };
             backup = {
               directory = "/mnt/pool/backups/demo";
@@ -295,6 +295,11 @@ let
       dashboard-tile-present = tile != null;
       dashboard-tile-href-derived = tile.href == "https://graph.home.lan";
       dashboard-tile-group = tile.group == "Media";
+      # The tile logo must survive the fan-out verbatim (it is what the
+      # PapDashboard tile renders, and papdashboard.nix's icon gates check it
+      # against the pack). Kept a REAL pack name so enabling papdashboard in
+      # this fixture cannot fail the build-time icon gate.
+      dashboard-tile-icon = tile.icon == "miniflux.png";
       backup-registered =
         (c.services.backup-coordination.backups ? demo)
         && c.services.backup-coordination.backups.demo.directory == "/mnt/pool/backups/demo"

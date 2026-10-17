@@ -135,18 +135,20 @@
       # path, so the gate cannot be skipped) instead of shipping a tile with
       # a broken logo.
       dashboardIcons = pkgs.runCommand "papdashboard-icons" { } ''
+        pack="${iconPackSrc}"
         mkdir -p $out
         for name in ${lib.escapeShellArgs packIconNames}; do
-          if [ -f "${iconPackSrc}/png/$name" ]; then
-            cp "${iconPackSrc}/png/$name" "$out/$name"
-          elif [ -f "${iconPackSrc}/svg/$name" ]; then
-            cp "${iconPackSrc}/svg/$name" "$out/$name"
+          if [ -f "$pack/png/$name" ]; then
+            cp "$pack/png/$name" "$out/$name"
+          elif [ -f "$pack/svg/$name" ]; then
+            cp "$pack/svg/$name" "$out/$name"
           else
-            echo "papdashboard: icon '$name' is not in the dashboard-icons pack — pick an existing name under ${iconPackSrc}/png or use an absolute URL" >&2
+            echo "papdashboard: icon '$name' is not in the dashboard-icons pack" >&2
+            echo "  available under $pack/png — or use an absolute http(s) URL" >&2
             exit 1
           fi
         done
-        cp "${iconPackSrc}/LICENSE" "$out/dashboard-icons-LICENSE"
+        cp "$pack/LICENSE" "$out/dashboard-icons-LICENSE"
       '';
 
       # Extra tile from the services.integration registry fan-out. `icon` is
