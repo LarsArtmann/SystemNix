@@ -101,7 +101,16 @@ on; 404 = stale flake pin), unauthenticated `GET /api/ingest` must 401 (machine-
 gate armed; the auth middleware runs before routing), `/api/system` must 200
 with nonzero `memTotalBytes`, `/api/fragments/services` must render group headings + tiles
 with zero inline `onclick`, plus the existing `/api/health`, ingest-route, and gatus-ingest-
-in-journal checks. Manual deep-dive:
+in-journal checks. **Tile-icon probes (2026-10-17 icon-pack go-live, both fail CLOSED):**
+the fragment must carry `src="/icons/` tile imgs (zero = the capability dropped — stale
+flake pin or `PAP_ICONS_DIR` unset), the route must serve a fragment-derived icon file with
+`Cache-Control: public, max-age=604800, immutable` (the probed file is taken from the
+fragment itself, so the probe tracks the config with no hardcoded name). The pre-deploy
+counterpart is **§16 of `scripts/pre-deploy-check.sh`**: every pack-relative icon in the
+to-be-deployed rendered config must exist in the pinned pack subset (eval of
+`dashboard.groups` + `extraTiles` vs `PAP_ICONS_DIR`), zero pack icons fails too, and the
+leg follows the §13/§14 anti-blind-skip discipline (only the module-disabled eval shape may
+SKIP). Manual deep-dive:
 
 ```bash
 journalctl -u papdashboard -n 50          # boot order: listener bind BEFORE first probe cycle
